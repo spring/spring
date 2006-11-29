@@ -270,26 +270,25 @@ bool CCommandAI::isAttackCapable() const
 
 bool CCommandAI::AllowedCommand(const Command& c)
 {
-	if(c.id==CMD_RESURRECT && !owner->unitDef->canResurrect)
-		return false;
-	if(c.id==CMD_CAPTURE && !owner->unitDef->canCapture)
-		return false;
-	if(c.id==CMD_RECLAIM && !owner->unitDef->canReclaim)
-		return false;
-	if(c.id==CMD_RESTORE && !owner->unitDef->canRestore)
-		return false;
-	if(c.id==CMD_GUARD && !owner->unitDef->canGuard)
-		return false;
-	if(c.id==CMD_REPAIR && !owner->unitDef->canRepair && !owner->unitDef->canAssist)
-		return false;
-	if(c.id==CMD_MOVE && !owner->unitDef->canmove)
-		return false;
-	if(c.id==CMD_ATTACK && (!owner->unitDef->canAttack || !isAttackCapable()))
-		return false;
-	if(c.id==CMD_PATROL && !owner->unitDef->canPatrol)
-		return false;
-	if(c.id==CMD_FIGHT && !owner->unitDef->canFight)
-		return false;
+	const UnitDef* ud = owner->unitDef;
+
+	switch (c.id) {
+		case CMD_ATTACK:
+		case CMD_DGUN: {
+			if (!ud->canAttack || !isAttackCapable()) return false; break;
+		}
+		case CMD_MOVE:      if (!ud->canmove)       return false; break;
+		case CMD_FIGHT:     if (!ud->canFight)      return false; break;
+		case CMD_GUARD:     if (!ud->canGuard)      return false; break;
+		case CMD_PATROL:    if (!ud->canPatrol)     return false; break;
+		case CMD_CAPTURE:   if (!ud->canCapture)    return false; break;
+		case CMD_RECLAIM:   if (!ud->canReclaim)    return false; break;
+		case CMD_RESTORE:   if (!ud->canRestore)    return false; break;
+		case CMD_RESURRECT: if (!ud->canResurrect)  return false; break;
+		case CMD_REPAIR: {
+			if (!ud->canRepair && !ud->canAssist)     return false; break;
+		}
+	}
 
 	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
 		const int unitID = (int)c.params[0];
@@ -306,27 +305,28 @@ bool CCommandAI::AllowedCommand(const Command& c)
 
 	if((c.id == CMD_REPAIR) && (c.params.size() == 1)){
 		CUnit* unit = uh->units[(int)c.params[0]];
-		if (unit && ((unit->beingBuilt && !owner->unitDef->canAssist) || (!unit->beingBuilt && !owner->unitDef->canRepair)))
+		if (unit && ((unit->beingBuilt && !ud->canAssist) || (!unit->beingBuilt && !ud->canRepair)))
 			return false;
 	}
 
-	if (c.id == CMD_FIRE_STATE && (c.params.empty() || owner->unitDef->noAutoFire || (owner->unitDef->weapons.empty() && owner->unitDef->type!="Factory")))
+	if (c.id == CMD_FIRE_STATE && (c.params.empty() || ud->noAutoFire || (ud->weapons.empty() && ud->type!="Factory")))
 		return false;
-	if (c.id == CMD_MOVE_STATE && (c.params.empty() || (!owner->unitDef->canmove && !owner->unitDef->builder)))
+	if (c.id == CMD_MOVE_STATE && (c.params.empty() || (!ud->canmove && !ud->builder)))
 		return false;
-	if (c.id == CMD_REPEAT && (c.params.empty() || !owner->unitDef->canRepeat))
+	if (c.id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat))
 		return false;
-	if (c.id == CMD_TRAJECTORY && (c.params.empty() || owner->unitDef->highTrajectoryType<2))
+	if (c.id == CMD_TRAJECTORY && (c.params.empty() || ud->highTrajectoryType<2))
 		return false;
-	if (c.id == CMD_ONOFF && (c.params.empty() || !owner->unitDef->onoffable || owner->beingBuilt))
+	if (c.id == CMD_ONOFF && (c.params.empty() || !ud->onoffable || owner->beingBuilt))
 		return false;
-	if (c.id == CMD_CLOAK && (c.params.empty() || !owner->unitDef->canCloak))
+	if (c.id == CMD_CLOAK && (c.params.empty() || !ud->canCloak))
 		return false;
 	if(c.id == CMD_STOCKPILE && !stockpileWeapon)
 		return false;
 
 	return true;
 }
+
 
 void CCommandAI::GiveCommand(const Command& c)
 {
@@ -335,6 +335,7 @@ void CCommandAI::GiveCommand(const Command& c)
 
 	GiveAllowedCommand(c);
 }
+
 
 void CCommandAI::GiveAllowedCommand(const Command& c)
 {
