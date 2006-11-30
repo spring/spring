@@ -14,14 +14,14 @@ fi
 
 version=$1
 svnbase=https://taspring.clan-sy.com/svn/spring
-svnurl=$svnbase/tags/taspring_$version
-dir=taspring_$version
-tbz=taspring_${version}_src.tar.bz2
-tgz=taspring_${version}_src.tar.gz
-zip=taspring_${version}_src.zip
-seven_zip=taspring_${version}_src.7z
+svnurl=$svnbase/tags/spring_$version
+dir=spring_$version
+tbz=spring_${version}_src.tar.bz2
+tgz=spring_${version}_src.tar.gz
+zip=spring_${version}_src.zip
+seven_zip=spring_${version}_src.7z
 
-exclude="backup tools/Upspring"
+exclude="backup tools/Upspring omni/resource/units"
 
 if [ -d $dir ]; then
 	cd $dir
