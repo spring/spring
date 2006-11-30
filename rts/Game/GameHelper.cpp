@@ -230,10 +230,10 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
 			if((*ui)==exclude)
 				continue;
-			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || (useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)) || gu->spectating){
+			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || (useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)) || gu->spectatingFullView){
 				float3 pos;
 
-				if (gu->spectating)
+				if (gu->spectatingFullView)
 					pos = (*ui)->midPos;
 				else
 					pos = GetUnitErrorPos(*ui,gu->myAllyTeam);
@@ -381,21 +381,33 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 {
-	float closeDist=radius*radius;
-	CUnit* closeUnit=0;
-	vector<int> quads=qf->GetQuads(pos,radius);
+	float closeDist = (radius * radius);
+	CUnit* closeUnit = NULL;
+	vector<int> quads = qf->GetQuads(pos, radius);
 
-	int tempNum=gs->tempNum++;
+	int tempNum = gs->tempNum++;
 	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		list<CUnit*>& bqUnits = qf->baseQuads[*qi].units;
 		list<CUnit*>::iterator ui;
-		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum) {
-				(*ui)->tempNum=tempNum;
-				float sqDist=(pos-(*ui)->midPos).SqLength2D();
-				if(sqDist <= closeDist){
-					closeDist=sqDist;
-					closeUnit=*ui;
+		for(ui = bqUnits.begin(); ui != bqUnits.end(); ++ui) {
+			CUnit* unit = *ui;
+			if (unit->tempNum != tempNum) {
+				unit->tempNum = tempNum;
+				if ((unit->allyteam == gu->myAllyTeam) ||
+						(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
+						gu->spectatingFullView) {
+					float3 unitPos;
+					if (gu->spectatingFullView) {
+						unitPos = unit->midPos;
+					} else {
+						unitPos = GetUnitErrorPos(*ui,gu->myAllyTeam);
+					}
+					float sqDist=(pos - unitPos).SqLength2D();
+					if (sqDist <= closeDist) {
+						closeDist = sqDist;
+						closeUnit = unit;
+					}
 				}
 			}
 		}

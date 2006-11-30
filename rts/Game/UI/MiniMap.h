@@ -70,7 +70,7 @@ class CMiniMap : public CInputReceiver {
 		float unitSizeX;
 		float unitSizeY;
 		float unitSelectRadius;
-
+		
 		bool fullProxy;
 
 		bool proxyMode;

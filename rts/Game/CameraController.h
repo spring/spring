@@ -82,6 +82,7 @@ public:
 	float oldAltHeight;
 	bool changeAltHeight;
 	float maxHeight;
+	float tiltSpeed;
 };
 
 class CTWController : public CCameraController

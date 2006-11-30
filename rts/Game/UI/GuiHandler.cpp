@@ -3449,7 +3449,7 @@ void CGuiHandler::DrawMapStuff(void)
 	if(GetQueueKeystate()){
 		CUnit* unit = 0;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
-		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 			pointedAt = unit;
 			//draw weapon range
 			if(unit->maxRange>0){
@@ -3654,7 +3654,7 @@ void CGuiHandler::DrawMapStuff(void)
 			if (unit == pointedAt) {
 				continue;
 			}
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating)){
+			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 				glColor4fv(cmdColors.rangeAttack);
 				glBegin(GL_LINE_STRIP);
 				float h=unit->pos.y;

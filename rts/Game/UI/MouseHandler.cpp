@@ -561,7 +561,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 	if(unit){
 		// don't show the tooltip if it's a radar dot
-		if(!gu->spectating && gs->AllyTeam(unit->team) != gu->myAllyTeam && !loshandler->InLos(unit,gu->myAllyTeam)){
+		if(!gu->spectatingFullView && gs->AllyTeam(unit->team) != gu->myAllyTeam && !loshandler->InLos(unit,gu->myAllyTeam)){
 			return "Enemy unit";
 		}
 		// show the player name instead of unit name if it has FBI tag showPlayerName
@@ -571,7 +571,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 			s=unit->tooltip;
 		}
 		// don't show the unit health and other info if it has FBI tag hideDamage and isn't on our ally team
-		if(!(!gu->spectating && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam)){
+		if(!(!gu->spectatingFullView && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam)){
 			char tmp[500];
 
 			sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);

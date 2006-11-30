@@ -609,11 +609,14 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		attacker->experience+=0.1f*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
 		attacker->ExperienceChange();
 		ENTER_UNSYNCED;
-		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) || (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum)) && team==gu->myTeam && !camera->InView(midPos,radius+50) && !gu->spectating) {
+		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) ||
+		     (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))
+		    && (team == gu->myTeam) && !camera->InView(midPos,radius+50) && !gu->spectatingFullView) {
 			logOutput.Print("%s is being attacked",unitDef->humanName.c_str());
 			logOutput.SetLastMsgPos(pos);
-			if(unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum)
+			if (unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum) {
 				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
+			}
 			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander?1:0.5f);	//todo: make compatible with new gui
 			
 			uh->lastDamageWarning=gs->frameNum;
@@ -745,7 +748,7 @@ void CUnit::Draw()
 
 void CUnit::DrawStats()
 {
-	if(gu->myAllyTeam!=allyteam && !gu->spectating && unitDef->hideDamage){
+	if(gu->myAllyTeam!=allyteam && !gu->spectatingFullView && unitDef->hideDamage){
 		return;
 	}
 
@@ -778,7 +781,7 @@ void CUnit::DrawStats()
 	glVertexf3(interPos+(camera->up*4-camera->right*end));
 	glVertexf3(interPos+(camera->up*4-camera->right*5));
 
-	if(gu->myTeam!=team && !gu->spectating){
+	if(gu->myTeam!=team && !gu->spectatingFullView){
 		glEnd();
 		return;
 	}
@@ -845,16 +848,19 @@ void CUnit::ChangeLos(int l,int airlos)
 	loshandler->MoveUnit(this,false);
 }
 
-void CUnit::ChangeTeam(int newteam,ChangeType type)
+void CUnit::ChangeTeam(int newteam, ChangeType type)
 {
-	int oldteam=team;
-	globalAI->UnitTaken (this, team);
+	const int oldteam = team;
+	globalAI->UnitTaken(this, oldteam);
+	
+	uh->unitsType[oldteam][unitDef->id]--;
+	uh->unitsType[newteam][unitDef->id]++;
 
 	qf->RemoveUnit(this);
 	quads.clear();
 	loshandler->FreeInstance(los);
-	los=0;
-	losStatus[allyteam]=0;
+	los = 0;
+	losStatus[allyteam] = 0;
 	if(hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
 
@@ -865,37 +871,37 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 	// Sharing commander in com ends game kills you.
 	// Note that this will kill the com too.
 	if (unitDef->isCommander)
-		gs->Team(team)->CommanderDied(this);
+		gs->Team(oldteam)->CommanderDied(this);
 
 	if(type==ChangeGiven){
-		gs->Team(team)->RemoveUnit(this,CTeam::RemoveGiven);
-		gs->Team(newteam)->AddUnit(this,CTeam::AddGiven);
+		gs->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
+		gs->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
 	} else {
-		gs->Team(team)->RemoveUnit(this,CTeam::RemoveCaptured);
-		gs->Team(newteam)->AddUnit(this,CTeam::AddCaptured);
+		gs->Team(oldteam)->RemoveUnit(this, CTeam::RemoveCaptured);
+		gs->Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
 	}
 
 	if(!beingBuilt){
-		gs->Team(team)->metalStorage-=unitDef->metalStorage;
-		gs->Team(team)->energyStorage-=unitDef->energyStorage;
+		gs->Team(oldteam)->metalStorage  -= unitDef->metalStorage;
+		gs->Team(oldteam)->energyStorage -= unitDef->energyStorage;
 
-		gs->Team(newteam)->metalStorage+=unitDef->metalStorage;
-		gs->Team(newteam)->energyStorage+=unitDef->energyStorage;
+		gs->Team(newteam)->metalStorage  += unitDef->metalStorage;
+		gs->Team(newteam)->energyStorage += unitDef->energyStorage;
 	}
 
 	commandAI->commandQue.clear();
 
-	team=newteam;
-	allyteam=gs->AllyTeam(team);
+	team = newteam;
+	allyteam = gs->AllyTeam(newteam);
 
 	loshandler->MoveUnit(this,false);
-	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 	qf->MovedUnit(this);
 	if(hasRadarCapacity)
 		radarhandler->MoveUnit(this);
 
 	//model=unitModelLoader->GetModel(model->name,newteam);
-	model = modelParser->Load3DO(model->name.c_str(),1,newteam);
+	model = modelParser->Load3DO(model->name.c_str(), 1, newteam);
 	delete localmodel;
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
 
@@ -903,15 +909,16 @@ void CUnit::ChangeTeam(int newteam,ChangeType type)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	if(type==ChangeGiven && unitDef->energyUpkeep>25){//deactivate to prevent the old give metal maker trick
+	if((type == ChangeGiven) && (unitDef->energyUpkeep > 25)){
+		//deactivate to prevent the old give metal maker trick
 		Command c;
-		c.id=CMD_ONOFF;
+		c.id = CMD_ONOFF;
 
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
 	}
 
-	globalAI->UnitGiven (this, oldteam);
+	globalAI->UnitGiven(this, oldteam);
 }
 
 bool CUnit::AttackUnit(CUnit *unit,bool dgun)

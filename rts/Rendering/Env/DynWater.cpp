@@ -1090,7 +1090,7 @@ void CDynWater::AddShipWakes()
 			float3 pos=unit->pos;
 			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
+			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 				continue;
 			if(pos.y>-4 && pos.y<1){
 				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
@@ -1108,7 +1108,7 @@ void CDynWater::AddShipWakes()
 			float3 pos=unit->pos;
 			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectating)
+			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 				continue;
 			if(pos.y>-4 && pos.y<4){
 				float3 frontAdd=unit->frontdir*unit->radius*0.75f;

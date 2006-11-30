@@ -1,5 +1,15 @@
 TASpring change log
 
+
+
+- Added "OverheadTiltSpeed" config parameter
+
+- Added the "/specfullview [0|1]" action
+  (setting it to 0 gives the same minimap and viewport visibility as the selected team)
+
+- Fixed the unit-limit vs. sharing bug
+
+
 0.74b1
 
 - Linux vs Windows is now synced if binaries are built using gcc 4.0 or higher.

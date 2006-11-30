@@ -66,7 +66,7 @@ CMiniMap::CMiniMap()
   minimized(false),
   showButtons(false),
   useIcons(true)
-{
+ {
 	lastWindowSizeX = gu->viewSizeX;
 	lastWindowSizeY = gu->viewSizeY;
 
@@ -290,13 +290,6 @@ void CMiniMap::ConfigCommand(const std::string& line)
 			useIcons = !useIcons;
 		}
 	}
-	else if (command == "drawcommands") {
-		if (words.size() >= 2) {
-			drawCommands = !!atoi(words[1].c_str());
-		} else {
-			drawCommands = !drawCommands;
-		}
-	}
 	else if (command == "unitexp") {
 		if (words.size() >= 2) {
 			unitExponent = atof(words[1].c_str());
@@ -309,6 +302,20 @@ void CMiniMap::ConfigCommand(const std::string& line)
 		}
 		unitBaseSize = max(0.0f, unitBaseSize);
 		UpdateGeometry();
+	}
+	else if (command == "drawcommands") {
+		if (words.size() >= 2) {
+			drawCommands = !!atoi(words[1].c_str());
+		} else {
+			drawCommands = !drawCommands;
+		}
+	}
+	else if (command == "simplecolors") {
+		if (words.size() >= 2) {
+			simpleColors = !!atoi(words[1].c_str());
+		} else {
+			simpleColors = !simpleColors;
+		}
 	}
 
 	// the following commands can not be used in dualscreen mode
@@ -681,7 +688,7 @@ CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 	CUnit* unit = helper->GetClosestUnit(pos, unitSelectRadius);
 	if (unit != NULL) {
 		const int losMask = (LOS_INLOS | LOS_INRADAR);
-		if ((unit->losStatus[gu->myAllyTeam] & losMask) || gu->spectating) {
+		if ((unit->losStatus[gu->myAllyTeam] & losMask) || gu->spectatingFullView) {
 			return unit;
 		} else {
 			return NULL;
@@ -707,8 +714,12 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
 	if (unit) {
-		mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-		mapPos.y = readmap->maxheight + 1000.0f;
+		if (gu->spectatingFullView) {
+			mapPos = unit->midPos;
+		} else {
+			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos.y = readmap->maxheight + 1000.0f;
+		}
 	}
 
 	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
@@ -727,8 +738,12 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
 	if (unit) {
-		mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-		mapPos.y = readmap->maxheight + 1000.0f;
+		if (gu->spectatingFullView) {
+			mapPos = unit->midPos;
+		} else {
+			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+			mapPos.y = readmap->maxheight + 1000.0f;
+		}
 	}
 
 	mouse->dir = float3(0.0f, -1.0f, 0.0f);
@@ -797,7 +812,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	
 	if (unit) {
 		// don't show the tooltip if it's a radar dot
-		if(!gu->spectating && (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
+		if(!gu->spectatingFullView && (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
 		   !loshandler->InLos(unit,gu->myAllyTeam)){
 			return "Enemy unit";
 		}
@@ -810,7 +825,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		}
 		// don't show the unit health and other info if it has
 		// FBI tag hideDamage and isn't on our ally team
-		if(!(!gu->spectating && unit->unitDef->hideDamage &&
+		if(!(!gu->spectatingFullView && unit->unitDef->hideDamage &&
 		     (gs->AllyTeam(unit->team) != gu->myAllyTeam))){
 			char tmp[512];
 
@@ -1241,7 +1256,8 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 		if ((unit->allyteam == gu->myAllyTeam) ||
 				(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
 				((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) &&
-				 (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) || gu->spectating) {
+				 (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) ||
+				gu->spectatingFullView) {
 			CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
 			if (icon->radiusAdjust) {
 				scale *= (unit->radius / 30.0f);
@@ -1264,11 +1280,12 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		return;
 	}
 
-	const float3 pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-/*	if(pos.z<0 || pos.z>gs->mapy*SQUARE_SIZE){
-		logOutput.Print("Erroneous position in minimap::drawunit %f %f %f",pos.x,pos.y,pos.z);
-		return;
-	}*/
+	float3 pos;
+	if (gu->spectatingFullView) {
+		pos = unit->midPos;
+	} else {
+		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+	}
 
 	float iconScale;
 	CIcon* icon = GetUnitIcon(unit, iconScale);

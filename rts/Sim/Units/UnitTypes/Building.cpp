@@ -32,7 +32,7 @@ CBuilding::~CBuilding()
 {
 	CUnitDrawer::GhostBuilding* mygb=0;
 	if(!gameSetup || gameSetup->ghostedBuildings) {
-		if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectating){
+		if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView){
 			CUnitDrawer::GhostBuilding* gb=new CUnitDrawer::GhostBuilding;
 			gb->pos=pos;
 			gb->model=model;

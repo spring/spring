@@ -172,7 +172,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 			continue;
 #endif
 		if(camera->InView((*usi)->midPos,(*usi)->radius+30)){
-			if(gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating){
+			if(gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView){
 				if(drawReflection){
 					float3 zeroPos;
 					if((*usi)->midPos.y<0){
@@ -300,7 +300,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){
-		if((gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectating) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
+		if((gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
 			float sqDist=((*usi)->pos-camera->pos).SqLength();
 			float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){
