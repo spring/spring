@@ -820,6 +820,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gu->myAllyTeam = gs->AllyTeam(team);
 		}
 	}
+	else if ((cmd == "specfullview") && (gu->spectating)) {
+		if (!action.extra.empty()) {
+			gu->spectatingFullView = atoi(action.extra.c_str());
+		} else {
+			gu->spectatingFullView = !gu->spectatingFullView;
+		}
+	}
 	else if (cmd == "group0") {
 		grouphandler->GroupCommand(0);
 	}
@@ -1183,7 +1190,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		keyBindings->Load("uikeys.txt");
 	}
 	else if (cmd == "keysave") {
-		keyBindings->Save("uikeys.tmp"); // tmp, not txt
+		if (keyBindings->Save("uikeys.tmp")) {  // tmp, not txt
+			logOutput.Print("Saved uikeys.tmp");
+		} else {
+			logOutput.Print("Could not save uikeys.tmp");
+		}
 	}
 	else if (cmd == "keyprint") {
 		keyBindings->Print();

@@ -247,7 +247,7 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
 	int team=gs->players[msg[2]]->team;
 	int allyteam=gs->AllyTeam(team);
-	if((!gs->Ally(gu->myAllyTeam,allyteam) || !gs->Ally(allyteam,gu->myAllyTeam) || gs->players[msg[2]]->spectator) && !gu->spectating)
+	if((!gs->Ally(gu->myAllyTeam,allyteam) || !gs->Ally(allyteam,gu->myAllyTeam) || gs->players[msg[2]]->spectator) && !gu->spectatingFullView)
 		return;
 
 	switch(msg[3]){

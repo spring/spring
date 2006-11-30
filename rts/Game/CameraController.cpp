@@ -160,6 +160,7 @@ COverheadController::COverheadController()
 	changeAltHeight(true)
 {
 	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1f;
+	tiltSpeed=atof(configHandler.GetString("OverheadTiltSpeed","1").c_str());
 	enabled=!!configHandler.GetInt("OverheadEnabled",1);
 }
 
@@ -187,7 +188,7 @@ void COverheadController::MouseWheelMove(float move)
 {
 	// tilt the camera if LCTRL is pressed
 	if (keys[SDLK_LCTRL]) {
-		zscale *= (1.0f + (move * mouseScale * (keys[SDLK_LSHIFT] ? 3.0f : 1.0f)));
+		zscale *= (1.0f + (move * tiltSpeed * mouseScale * (keys[SDLK_LSHIFT] ? 3.0f : 1.0f)));
 		if (zscale < 0.05f) zscale = 0.05f;
 		if (zscale > 10) zscale = 10;
 	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function

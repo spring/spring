@@ -380,7 +380,9 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 		CFeature* f=(*fi);
 		FeatureDef* def=f->def;
 
-		if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam || loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectating) && def->drawType==DRAWTYPE_3DO){
+		if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam ||
+		    loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectatingFullView)
+		   && def->drawType==DRAWTYPE_3DO){
 			if(drawReflection){
 				float3 zeroPos;
 				if(f->midPos.y<0){

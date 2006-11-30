@@ -505,9 +505,17 @@ public:
 	 * @brief spectating
 	 * 
 	 * Whether this player is spectating
-	 * (can see everything but can't give orders)
+	 * (can't give orders, and can see everything if spectateFullView is true)
 	 */
 	bool spectating;
+
+	/**
+	 * @brief spectatingFullView
+	 * 
+	 * Whether this player is a spectator, and can see everything
+	 * (if set to true, visibility is determined by the current team)
+	 */
+	bool spectatingFullView;
 
 	/**
 	 * @brief draw debug

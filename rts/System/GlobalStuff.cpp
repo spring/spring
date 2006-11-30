@@ -150,6 +150,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	myTeam=1;
 	myAllyTeam=1;
 	spectating=false;
+	spectatingFullView=false;
 	drawdebug=false;
 	active=true;
 	viewRange=MAX_VIEW_RANGE;
