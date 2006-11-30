@@ -193,7 +193,8 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		connections[0].active=true;
 		connections[0].readyLength=0;
 		connected=true;
-		gu->spectating=true;
+		gu->spectating = true;
+		gu->spectatingFullView = gu->spectating;
 		return 1;
 	} else {
 		if(!gameSetup || !gameSetup->hostDemo)

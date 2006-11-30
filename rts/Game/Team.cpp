@@ -246,8 +246,10 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 		for(int a=0;a<MAX_PLAYERS;++a){
 			if(gs->players[a]->active && gs->players[a]->team==teamNum){
 				gs->players[a]->spectator=true;
-				if(a==gu->myPlayerNum)
-					gu->spectating=true;
+				if(a==gu->myPlayerNum){
+					gu->spectating = true;
+					gu->spectatingFullView = gu->spectating;
+				}
 			}
 		} 
 	}

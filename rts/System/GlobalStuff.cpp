@@ -149,8 +149,8 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	myPlayerNum=0;
 	myTeam=1;
 	myAllyTeam=1;
-	spectating=false;
-	spectatingFullView=false;
+	spectating = false;
+	spectatingFullView = spectating;
 	drawdebug=false;
 	active=true;
 	viewRange=MAX_VIEW_RANGE;
