@@ -2949,8 +2949,10 @@ void CGame::HandleChatMsg(std::string s,int player)
 
 	if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
 		gs->players[player]->spectator=true;
-		if(player==gu->myPlayerNum)
-			gu->spectating=true;
+		if(player==gu->myPlayerNum){
+			gu->spectating = true;
+			gu->spectatingFullView = gu->spectating;
+		}
 	}
 	if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
 		int team=atoi(&s.c_str()[s.find(" ")]);
@@ -2958,10 +2960,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 			gs->players[player]->team=team;
 			gs->players[player]->spectator=false;
 			if(player==gu->myPlayerNum){
-				gu->spectating=false;
-				gu->myTeam=team;
-				gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
-				grouphandler->team=gu->myTeam;
+				gu->spectating = false;
+				gu->spectatingFullView = gu->spectating;
+				gu->myTeam = team;
+				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+				grouphandler->team = gu->myTeam;
 			}
 		}
 	}
