@@ -2,9 +2,11 @@ TASpring change log
 
 
 
+- Added the "minimap simplecolors [0|1]" action
+
 - Added "OverheadTiltSpeed" config parameter
 
-- Added the "/specfullview [0|1]" action
+- Added the "specfullview [0|1]" action
   (setting it to 0 gives the same minimap and viewport visibility as the selected team)
 
 - Fixed the unit-limit vs. sharing bug
