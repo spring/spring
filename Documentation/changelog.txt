@@ -9,10 +9,10 @@ TASpring change log
 
 - Added minimap commands (two modes, see the MiniMapFullProxy config param)
 
-- Added "MiniMapGeometry" config parametery
-- Added "TooltipGeometry" config parametery
-- Added "TooltipOutlineFont" config parametery
-- Added "InfoConsoleGeometry" config parametery
+- Added "MiniMapGeometry" config parameter
+- Added "TooltipGeometry" config parameter
+- Added "TooltipOutlineFont" config parameter
+- Added "InfoConsoleGeometry" config parameter
 
 - Added "/resbar [0|1]" action
 - Added "/tooltip [0|1]" action
