@@ -156,6 +156,7 @@ static int DrawClear(lua_State* L);
 
 static int DrawLighting(lua_State* L);
 static int DrawShadeModel(lua_State* L);
+static int DrawScissor(lua_State* L);
 static int DrawDepthMask(lua_State* L);
 static int DrawDepthTest(lua_State* L);
 static int DrawCulling(lua_State* L);
@@ -197,7 +198,6 @@ static int ParseFloatArray(lua_State* L, float* array, int size);
 // Local Variables
 
 static bool drawingEnabled = false;
-static bool screenTransform = false;
 
 static float screenWidth = 0.36f;
 static float screenDistance = 0.60f;
@@ -391,6 +391,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Clear);
 	REGISTER_LUA_DRAW_CFUNC(Lighting);
 	REGISTER_LUA_DRAW_CFUNC(ShadeModel);
+	REGISTER_LUA_DRAW_CFUNC(Scissor);
 	REGISTER_LUA_DRAW_CFUNC(DepthMask);
 	REGISTER_LUA_DRAW_CFUNC(DepthTest);
 	REGISTER_LUA_DRAW_CFUNC(Culling);
@@ -758,15 +759,13 @@ bool CLuaUI::DrawWorldItems()
 	glPopAttrib();
 	
 	drawingEnabled = false;
-	
+
 	return retval;
 }
 
 
 static void SetupScreenTransform()
 {
-	glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
-
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -872,7 +871,6 @@ bool CLuaUI::DrawScreenItems()
 	}
 
 	drawingEnabled = true;
-	screenTransform = true;
 
 	// push the current GL state
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
@@ -913,7 +911,6 @@ bool CLuaUI::DrawScreenItems()
 	// pop the GL state
 	glPopAttrib();
 	
-	screenTransform = false;
 	drawingEnabled = false;
 
 	return retval;
@@ -1717,7 +1714,9 @@ static int SendCommands(lua_State* L)
 		}
 		lua_pop(L, 1);
 	}
-	guihandler->RunCustomCommands(cmds, false);
+	if (guihandler != NULL) {
+		guihandler->RunCustomCommands(cmds, false);
+	}
 	return 0;
 }
 
@@ -4045,6 +4044,7 @@ static void ResetGLState()
 	glCullFace(GL_BACK);
 	glShadeModel(GL_SMOOTH);
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_SCISSOR_TEST);
 }
 
 
@@ -4100,6 +4100,45 @@ static int DrawShadeModel(lua_State* L)
 
 	glShadeModel((GLenum)lua_tonumber(L, 1));
 
+	return 0;
+}
+
+
+static int DrawScissor(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 1) {
+		if (!lua_isboolean(L, 1)) {
+			lua_pushstring(L, "Incorrect arguments to DrawScissor()");
+			lua_error(L);
+		}
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_SCISSOR_TEST);
+		} else {
+			glDisable(GL_SCISSOR_TEST);
+		}
+	}
+	else if (args == 4) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+		    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+			lua_pushstring(L, "Incorrect arguments to DrawScissor()");
+			lua_error(L);
+		}
+		glEnable(GL_SCISSOR_TEST);
+		const GLint   x =   (GLint)lua_tonumber(L, 1);
+		const GLint   y =   (GLint)lua_tonumber(L, 2);
+		const GLsizei w = (GLsizei)lua_tonumber(L, 3);
+		const GLsizei h = (GLsizei)lua_tonumber(L, 4);
+		glScissor(x, y, w, h);
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawScissor()");
+		lua_error(L);
+	}
+	
 	return 0;
 }
 

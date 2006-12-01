@@ -151,6 +151,7 @@
 
   Draw.Lighting()
   Draw.ShadeModel()
+  Draw.Scissor()
   Draw.DepthMask()
   Draw.DepthTest()   
   Draw.Culling()
@@ -687,6 +688,7 @@ AddWorldUnit(number unitDefID,
 --    * glLogicOp()
 --    * glCullFace()
 --    * glShadeModel()
+--    * glScissor()
 --    * glGenLists()
 --    * glNewList()
 --    * glDeleteLists()
@@ -696,6 +698,7 @@ Draw.ScreenGeometry(number width, number dist) -> nil
 
 Draw.ResetState() -> nil
 -- ShadeModel = GL_SMOOTH
+-- Scissor    = false
 -- Texture    = false
 -- DepthMask  = false
 -- DepthTest  = false  (GL_LEQUAL)
@@ -713,14 +716,15 @@ Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
 
 
 Draw.ShadeModel(number mode) -> nil
-Draw.Lighting  (boolean enabled) -> nil
-Draw.DepthMask (boolean enabled) -> nil
-Draw.DepthTest (boolean enabled | number func) -> nil
-Draw.Culling   (boolean enabled | number func) -> nil
-Draw.LogicOp   (boolean enabled | number func) -> nil  
-Draw.AlphaTest (boolean enabled | number func, number threshold) -> nil 
-Draw.Blending  (boolean enabled | number srcmode, number dstmode) -> nil
-Draw.Texture   (boolean enabled | string "filename") -> boolean success
+Draw.Scissor   (boolean enable | number x, number y, number w, number h) -> nil
+Draw.Lighting  (boolean enable) -> nil
+Draw.DepthMask (boolean enable) -> nil
+Draw.DepthTest (boolean enable | number func) -> nil
+Draw.Culling   (boolean enable | number func) -> nil
+Draw.LogicOp   (boolean enable | number func) -> nil  
+Draw.AlphaTest (boolean enable | number func, number threshold) -> nil 
+Draw.Blending  (boolean enable | number srcmode, number dstmode) -> nil
+Draw.Texture   (boolean enable | string "filename") -> boolean success
 
 Draw.Material({
     ambient   = {number r, number g, number b[, number a]},
