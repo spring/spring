@@ -3002,9 +3002,9 @@ void CGame::HandleChatMsg(std::string s,int player)
 				tempUnitName=tempUnitName.substr(tempUnitName.find_first_of("0123456789"),tempUnitName.find_last_of("0123456789") +1 -tempUnitName.find_first_of("0123456789"));
 				numUnits = atoi(tempUnitName.c_str());
 			}
-			if (unitDefHandler->GetUnitByName(unitName)!=0)   {
 
-				UnitDef *unitDef= unitDefHandler->GetUnitByName(unitName);
+			UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+			if (unitDef != NULL) {
 				int xsize=unitDef->xsize;
 				int zsize=unitDef->ysize;
 				int total=numUnits;
@@ -3014,12 +3014,14 @@ void CGame::HandleChatMsg(std::string s,int player)
 				minpos.z-=((squareSize-1)*zsize*SQUARE_SIZE)/2;
 				for(int z=0;z<squareSize;++z){
 					for(int x=0;x<squareSize && total>0;++x){
-						unitLoader.LoadUnit(unitName,float3(minpos.x + x * xsize*SQUARE_SIZE, minpos.y, minpos.z + z * zsize*SQUARE_SIZE),team,createNano);
+						unitLoader.LoadUnit(unitName,float3(minpos.x + x * xsize*SQUARE_SIZE, minpos.y,
+						                                    minpos.z + z * zsize*SQUARE_SIZE), team, createNano);
+						uh->unitsType[team][unitDef->id]++; 
 						--total;
 					}
 				}
-				logOutput.Print("Giving %i %s to team %i",numUnits,unitName.c_str(),team);
-			}else{
+				logOutput.Print("Giving %i %s to team %i", numUnits, unitName.c_str(),team);
+			} else {
 				logOutput.Print(unitName+" is not a valid unitname");
 			}
 		}
