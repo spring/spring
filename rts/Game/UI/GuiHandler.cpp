@@ -938,6 +938,8 @@ void CGuiHandler::SetShowingMetal(bool show)
 
 void CGuiHandler::Update()
 {
+	SetCursorIcon();
+	
 	if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
 		SetShowingMetal(false);
 		inCommand=-1;
@@ -964,8 +966,6 @@ void CGuiHandler::Update()
 	if (fadein > 0) {
 		fadein -= 5;
 	}
-
-	SetCursorIcon();
 }
 
 

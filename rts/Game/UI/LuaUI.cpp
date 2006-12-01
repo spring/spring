@@ -75,6 +75,8 @@ static int GetGameSeconds(lua_State* L);
 static int GetLastFrameSeconds(lua_State* L);
 static int GetInCommand(lua_State* L);
 static int GetMouseState(lua_State* L);
+static int GetMouseCursor(lua_State* L);
+static int SetMouseCursor(lua_State* L);
 
 static int GetCurrentTooltip(lua_State* L);
 
@@ -269,6 +271,7 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
+	Shutdown();
 	for (int i = 0; i < (int)displayLists.size(); i++) {
 		glDeleteLists(displayLists[i], 1);
 	}
@@ -313,6 +316,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLastFrameSeconds);
 	REGISTER_LUA_CFUNC(GetInCommand);
 	REGISTER_LUA_CFUNC(GetMouseState);
+	REGISTER_LUA_CFUNC(GetMouseCursor);
+	REGISTER_LUA_CFUNC(SetMouseCursor);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
@@ -444,6 +449,31 @@ bool CLuaUI::LoadCode(lua_State* L,
 
 
 /******************************************************************************/
+
+void CLuaUI::Shutdown()
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return;
+	}
+	lua_pop(L, lua_gettop(L));
+	
+	lua_getglobal(L, "Shutdown");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return;
+	}
+
+	const int error = lua_pcall(L, 0, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_Shutdown", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return;
+	}
+	return;
+}
+
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
@@ -1769,6 +1799,36 @@ static int GetMouseState(lua_State* L)
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
 	return 5;
+}
+
+
+static int GetMouseCursor(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetMouseCursor() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushstring(L, mouse->cursorText.c_str());
+	lua_pushnumber(L, mouse->cursorScale);
+	return 2;
+}
+
+
+static int SetMouseCursor(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isnumber(L, 2))) {
+		lua_pushstring(L,
+			"Incorrect arguments to SetMouseCursor(\"name\", [scale])");
+		lua_error(L);
+	}
+	mouse->cursorText = lua_tostring(L, 1);
+	if (args >= 2) {
+		mouse->cursorScale = lua_tonumber(L, 2);
+	}
+	return 0;
 }
 
 
@@ -3585,6 +3645,7 @@ static int DrawText(lua_State* L)
 	bool right = false;
 	bool center = false;
 	bool outline = false;
+	bool lightOut;
 	
 	if ((args >= 4) && lua_isnumber(L, 4)) {
 		size = lua_tonumber(L, 4);
@@ -3593,7 +3654,8 @@ static int DrawText(lua_State* L)
 		const string opts = lua_tostring(L, 5);
 		if (strstr(opts.c_str(), "r") != NULL) { right = true; }
 		if (strstr(opts.c_str(), "c") != NULL) { center = true; }
-		if (strstr(opts.c_str(), "o") != NULL) { outline = true; }
+		if (strstr(opts.c_str(), "o") != NULL) { outline = true; lightOut = false; }
+		if (strstr(opts.c_str(), "O") != NULL) { outline = true; lightOut = true; }
 	}
 
 	const float yScale = size / textHeight;
@@ -3610,11 +3672,16 @@ static int DrawText(lua_State* L)
 	if (!outline) {
 		font->glPrintColor("%s", text.c_str());
 	} else {
-		const float dark[4] = { 0.25f, 0.25f, 0.25f, 0.8f };
+		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
 		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		const float xPixel = 1.0f / xScale;
 		const float yPixel = 1.0f / yScale;
-		font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, dark);
+		if (lightOut) {
+			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, lightOutline);
+		} else {
+			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, darkOutline);
+		}
 		font->glPrintColor("%s", text.c_str());
 	}
 	glPopMatrix();

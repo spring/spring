@@ -204,6 +204,13 @@ CProjectileHandler::~CProjectileHandler()
 	delete groundFXAtlas;
 }
 
+
+void CProjectileHandler::SetMaxParticles(int value)
+{
+	maxParticles = value;
+}
+
+
 void CProjectileHandler::Update()
 {
 START_TIME_PROFILE

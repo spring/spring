@@ -29,6 +29,8 @@ class CLuaUI {
 		static CLuaUI* GetHandler(const string& filename);
 		
 		~CLuaUI();
+		
+		void Shutdown();
 
 		struct ReStringPair {
 			int cmdIndex;
