@@ -28,6 +28,8 @@
 --  the call-ins are optional, except for LayoutButtons().
 --
 
+  Shutdown()
+
   LayoutButtons()
 
   UpdateLayout()
@@ -70,6 +72,9 @@
   GetGameSeconds()
   GetInCommand()
   GetMouseState()
+  GetMouseCursor()
+  SetMouseCursor()
+
   GetCurrentTooltip()
 
   GetKeyCode()
@@ -180,6 +185,13 @@
 --
 --  CALL-INS, in detail
 --
+
+
+--
+--  Called whenever LuaUI is being terminated.
+--
+Shutdown() -> nil
+
 
 --
 --  Called whenever the active commands changed, or if forced
@@ -386,6 +398,11 @@ GetMouseState()  ->
   boolean leftButton,
   boolean middleButton,
   boolean rightButton
+
+GetMouseCursor() -> string "cursor", number scale
+
+SetMouseCursor(string "cursor"[, number scale]) -> nil
+
 
 GetCurrentTooltip() -> string "tooltip"
 

@@ -1299,6 +1299,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			minimap->ConfigCommand(action.extra);
 		}
 	}
+	else if (cmd == "maxparticles") {
+		if (ph && !action.extra.empty()) {
+			const int value = max(1, atoi(action.extra.c_str()));
+			ph->SetMaxParticles(value);
+			logOutput.Print("Set maximum particles to: %i", value);
+		}
+	}
 	else if (cmd == "gathermode") {
 		if (guihandler != NULL) {
 			if (action.extra.empty()) {

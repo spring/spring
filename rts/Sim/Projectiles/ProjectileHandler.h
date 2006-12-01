@@ -34,6 +34,8 @@ public:
 	void CheckUnitCol();
 	void LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile);
 
+	void SetMaxParticles(int value);
+
 	void Draw(bool drawReflection,bool drawRefraction=false);
 	void UpdateTextures();
 	void AddProjectile(CProjectile* p);
@@ -45,7 +47,7 @@ public:
 	void DrawShadowPass(void);
 	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts);
-
+	
 	struct projdist{
 		float dist;
 		CProjectile* proj;
