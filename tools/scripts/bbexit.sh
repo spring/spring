@@ -17,7 +17,7 @@ echo "Creating spring-r$1.zip containing spring.exe"
 cd game
 if zip "spring-r$1.zip" "spring.exe" "spring.def"; then
 	chmod 644 "spring-r$1.zip"
-	mv "spring-r$1.zip" "/home/tvo/public_html/spring/"
+	mv "spring-r$1.zip" "/home/tvo/public_html/spring/executable/"
 else
 	echo "failed to zip spring.exe into spring-r$1.zip"
 	exitstatus=1
