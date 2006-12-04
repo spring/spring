@@ -1550,7 +1550,7 @@ bool CGame::Draw()
 	sky->DrawSun();
 
 	lineDrawer.UpdateLineStipple();
-	if(cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
+	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
 		cursorIcons.Draw();
 	}
@@ -3023,7 +3023,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 					for(int x=0;x<squareSize && total>0;++x){
 						unitLoader.LoadUnit(unitName,float3(minpos.x + x * xsize*SQUARE_SIZE, minpos.y,
 						                                    minpos.z + z * zsize*SQUARE_SIZE), team, createNano);
-						uh->unitsType[team][unitDef->id]++; 
 						--total;
 					}
 				}

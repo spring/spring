@@ -174,7 +174,6 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push(unit);
-	unitsType[unit->team][unit->unitDef->id]--;
 }
 
 void CUnitHandler::Update()
@@ -185,15 +184,21 @@ START_TIME_PROFILE;
 		CUnit* delUnit=toBeRemoved.top();
 		toBeRemoved.pop();
 
+		int delTeam;
+		int delType;
 		list<CUnit*>::iterator usi;
 		for(usi=activeUnits.begin();usi!=activeUnits.end();++usi){
 			if(*usi==delUnit){
-				if(slowUpdateIterator!=activeUnits.end() && *usi==*slowUpdateIterator)
+				if (slowUpdateIterator!=activeUnits.end() && *usi==*slowUpdateIterator) {
 					slowUpdateIterator++;
+				}
 				activeUnits.erase(usi);
 				units[delUnit->id]=0;
 				freeIDs.push_front(delUnit->id);
 				gs->Team(delUnit->team)->RemoveUnit(delUnit,CTeam::RemoveDied);
+				delTeam = delUnit->team;
+				delType = delUnit->unitDef->id;
+				unitsType[delTeam][delType]--;
 				delete delUnit;
 				break;
 			}
@@ -203,6 +208,7 @@ START_TIME_PROFILE;
 			if(*usi==delUnit){
 				logOutput.Print("Error: Duplicated unit found in active units on erase");
 				usi=activeUnits.erase(usi);
+				unitsType[delTeam][delType]--;
 			} else {
 				++usi;
 			}
