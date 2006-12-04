@@ -38,6 +38,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/Sound.h"
@@ -461,9 +462,10 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 void CMiniMap::MouseRelease(int x, int y, int button)
 {
 	if (mouseMove || mouseResize || mouseLook) {
-		mouseMove=false;
-		mouseResize=false;
-		mouseLook=false;
+		mouseMove = false;
+		mouseResize = false;
+		mouseLook = false;
+		proxyMode = false;
 		return;
 	}
 	

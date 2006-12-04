@@ -55,7 +55,7 @@ extern Uint8 *keys;
 CGuiHandler* guihandler = NULL;
 
 
-const char* CGuiHandler::luaLayoutFile = "gui.lua";
+const char* CGuiHandler::luaUiFile = "gui.lua";
 
 
 CGuiHandler::CGuiHandler()
@@ -139,6 +139,12 @@ void CGuiHandler::AddConsoleLine(const std::string& line, int priority)
 	if (luaUI != NULL) {
 		luaUI->AddConsoleLine(line, priority);
 	}
+}
+
+
+void CGuiHandler::GroupChanged(int groupID)
+{
+	changedGroups.insert(groupID);
 }
 
 
@@ -532,7 +538,9 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	// try using the custom layout handler
 	if (firstLayout) {
 		firstLayout = false;
-		luaUI = CLuaUI::GetHandler(luaLayoutFile);
+		if (!!configHandler.GetInt("LuaUI", 0)) {
+			luaUI = CLuaUI::GetHandler(luaUiFile);
+		}
 	}
 	if (luaUI != NULL) {
 		if (LayoutCustomIcons(useSelectionPage)) {
@@ -939,6 +947,17 @@ void CGuiHandler::SetShowingMetal(bool show)
 void CGuiHandler::Update()
 {
 	SetCursorIcon();
+
+	// Notify LuaUI about groups that have changed	
+	if (!changedGroups.empty()) {
+		if (luaUI != NULL) {
+			set<int>::const_iterator it;
+			for (it = changedGroups.begin(); it != changedGroups.end(); ++it) {	
+				luaUI->GroupChanged(*it);
+			}
+		}
+		changedGroups.clear();
+	}
 	
 	if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
 		SetShowingMetal(false);
@@ -1584,15 +1603,15 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 {
 	if (command == "reload") {
 		if (luaUI == NULL) {
-			logOutput.Print("Loading: \"%s\"\n", luaLayoutFile);
-			luaUI = CLuaUI::GetHandler(luaLayoutFile);
+			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
+			luaUI = CLuaUI::GetHandler(luaUiFile);
 			if (luaUI == NULL) {
 				logOutput.Print("Loading failed\n");
 			}
 		} else {
-			logOutput.Print("Reloading: \"%s\"\n", luaLayoutFile);
+			logOutput.Print("Reloading: \"%s\"\n", luaUiFile);
 			delete luaUI;
-			luaUI = CLuaUI::GetHandler(luaLayoutFile);
+			luaUI = CLuaUI::GetHandler(luaUiFile);
 			if (luaUI == NULL) {
 				logOutput.Print("Reloading failed\n");
 				LoadConfig("ctrlpanel.txt");
@@ -1611,8 +1630,8 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 		if (luaUI != NULL) {
 			luaUI->ConfigCommand(command);
 		} else {
-			logOutput.Print("Loading: \"%s\"\n", luaLayoutFile);
-			luaUI = CLuaUI::GetHandler(luaLayoutFile);
+			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
+			luaUI = CLuaUI::GetHandler(luaUiFile);
 			if (luaUI == NULL) {
 				logOutput.Print("Loading failed\n");
 			} else {

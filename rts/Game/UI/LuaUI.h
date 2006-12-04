@@ -77,6 +77,8 @@ class CLuaUI {
 		bool UnitReady(CUnit* unit, CUnit* builder);
 		bool UnitDestroyed(CUnit* victim, CUnit* attacker);
 		
+		bool GroupChanged(int groupID);
+		
 	private:
 		CLuaUI();
 
