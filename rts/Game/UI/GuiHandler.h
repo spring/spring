@@ -69,6 +69,9 @@ class CGuiHandler : public CInputReceiver {
 		void UnitReady(CUnit* unit, CUnit* builder);
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
 		void AddConsoleLine(const std::string& line, int priority);
+		void GroupChanged(int groupID);
+
+		int  GetDefaultCommand(int x, int y) const;
 		
 	public:
 		vector<CommandDescription> commands;
@@ -91,7 +94,6 @@ class CGuiHandler : public CInputReceiver {
 		int  FindInCommandPage();
 		void RevertToCmdDesc(const CommandDescription& cmdDesc, bool samePage);
 
-		int  GetDefaultCommand(int x,int y) const;
 		void CreateOptions(Command& c,bool rmb);
 		void FinishCommand(int button);
 		void SetShowingMetal(bool show);
@@ -212,7 +214,9 @@ class CGuiHandler : public CInputReceiver {
 		
 		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 		
-		static const char* luaLayoutFile;
+		std::set<int> changedGroups;		
+		
+		static const char* luaUiFile;
 };
 
 

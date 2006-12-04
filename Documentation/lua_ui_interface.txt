@@ -14,7 +14,7 @@
 --
 --  * Screen origin is left-bottom (0, 0)
 --    (this is used for both mouse and screen drawing coordinates)
---  
+--
 --
 
 
@@ -52,6 +52,8 @@
   UnitCreated()
   UnitReady()
   UnitDestroyed()
+
+  GroupChanged()
 
 
 --------------------------------------------------------------------------------
@@ -96,12 +98,13 @@
 
   GetSelectedUnits()
   GetSelectedUnitsSorted()
+  GetSelectedUnitsCounts()
   GetGroupUnits()
   GetGroupUnitsSorted()
-  GetMyTeamUnits()
-  GetMyTeamUnitsSorted()
-  GetAlliedUnits()
-  GetAlliedUnitsSorted()
+  GetGroupUnitsCounts()
+  GetTeamUnits()
+  GetTeamUnitsSorted()
+  GetTeamUnitsCounts()
 
   GetUnitDefID()
   GetUnitTeam()
@@ -117,13 +120,19 @@
   GetFullBuildQueue()
   GetRealBuildQueue()
 
-  GetAllyteamList()
+  GetMyAllyTeamID()
+  GetMyTeamID()
+  GetMyPlayerID()
+
+  GetAllyTeamList()
+  GetTeamList()
+  GetPlayerList()
+
   GetTeamInfo()
   GetTeamResources()
-  GetTeamUnitStats()    
+  GetTeamUnitStats()
   SetShareLevel()
 
-  GetMyPlayerID()
   GetPlayerInfo()
 
   AreTeamsAllied()
@@ -131,6 +140,10 @@
 
   GetCameraState()
   SetCameraState()
+  GetCameraPos()
+  GetCameraVectors()
+  WorldToScreenCoords()
+  TraceScreenRay()
 
   SendCommands()
   GiveOrder()
@@ -151,18 +164,20 @@
 
   Draw.Lighting()
   Draw.ShadeModel()
+
   Draw.Scissor()
   Draw.DepthMask()
-  Draw.DepthTest()   
+  Draw.DepthTest()
   Draw.Culling()
-  Draw.LogicOp()  
+  Draw.LogicOp()
   Draw.Blending()
-  Draw.AlphaTest() 
-  Draw.Texture() 
+  Draw.AlphaTest()
+  Draw.LineStipple()
+  Draw.Texture()
   Draw.Material()
   Draw.Color()
 
-  Draw.FreeTexture() 
+  Draw.FreeTexture()
 
   Draw.Shape()
   Draw.UnitDef()
@@ -359,6 +374,12 @@ UnitReady(number unitID,    number unitDefID,
 UnitDestroyed(number unitID, number unitDefID) -> nil
 
 
+--
+--  Called when units are added or removed from
+--  a group,or when the group's AI is changed
+--
+GroupChanged(number groupID) -> nil
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -366,7 +387,7 @@ UnitDestroyed(number unitID, number unitDefID) -> nil
 --  CALL-OUTS, in detail
 --
 --  Call-outs are the functions which may be used from within the LUA
---  code. They are bound to the lua workspace before the 
+--  code. They are bound to the lua workspace before the
 --
 
 LoadTextVFS(string "filename") -> nil | string "filecontents"
@@ -457,18 +478,10 @@ GetGroupAIList() ->
 
 GetSelectedUnits() -> unitTable = { [1] = unitID, etc... }
 
+GetSelectedUnitsCounts() ->
+  countTable = { [unitDefID] = count, etc... }
+
 GetSelectedUnitsSorted() ->
-  unitDefTable = {
-    [number unitDefID] = {
-      [number unitID] = number unitDefID,
-      etc...
-    },
-    etc...
-  }
-
-GetGroupUnits() -> unitTable = { [1] = unitID, etc... }
-
-GetGroupUnitsSorted() ->
   unitDefTable = {
     [number unitDefID] = {
       [number unitID] = number groupID,
@@ -477,9 +490,13 @@ GetGroupUnitsSorted() ->
     etc...
   }
 
-GetMyTeamUnits() -> unitTable = { [1] = unitID, etc... }
 
-GetMyTeamUnitsSorted() -> unitTable = { [1] = unitID, etc... }
+GetGroupUnits(groupID) -> nil | unitTable = { [1] = unitID, etc... }
+
+GetGroupUnitsCounts(groupID) ->
+  nil | countTable = { [unitDefID] = count, etc... }
+
+GetGroupUnitsSorted(groupID) -> nil |
   unitDefTable = {
     [number unitDefID] = {
       [number unitID] = number unitDefID,
@@ -488,15 +505,16 @@ GetMyTeamUnitsSorted() -> unitTable = { [1] = unitID, etc... }
     etc...
   }
 
-GetAlliedUnits() -> teamTable = { [number teamID] = { [1] = unitID, etc... }, etc... }
 
-GetAlliedUnitsSorted() ->
-  teamTable = {
-    [number teamID] = {
-      [number unitDefID] = {
-        [number unitID] = number teamID,
-        etc...
-      },
+GetTeamUnits(teamID) -> nil | unitTable = { [1] = unitID, etc... }
+
+GetTeamUnitsCounts(teamID) ->
+  nil | countTable = { [unitDefID] = count, etc... }
+
+GetTeamUnitsSorted(teamID) -> nil |
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number unitDefID,
       etc...
     },
     etc...
@@ -573,17 +591,23 @@ GetRealBuildQueue(number unitID) ->
           [1] = { [number unitDefID] = number count },  etc...
         }
 
-GetAllyteamList() ->
-  allegianceTable = {
-    [number allyTeamID] = {
-      [number teamID] = {
-        [number playerID] = string "playerName",
-        etc...
-      },
-      etc...
-    },
-    etc...
-  }
+
+GetMyAllyTeamID() -> number allyTeamID
+
+GetMyTeamID()     -> number teamID
+
+GetMyPlayerID()   -> number playerID
+
+
+GetAllyTeamList() ->
+  allyteamTable = { [1] = number allyTeamID, etc... }
+
+GetTeamList([number allyTeamID]) ->
+  nil | teamTable = { [1] = number teamID, etc... }
+
+GetPlayerList([number teamID]) ->
+  nil | playerTable = { [1] = number playerID, etc... }
+
 
 GetTeamInfo(number teamID) ->
   nil | number teamNum,
@@ -617,17 +641,15 @@ GetTeamUnitStats(number teamID) ->
 SetShareLevel(string "metal" | "energy", number fraction) -> nil
 
 
-GetMyPlayerID() -> number playerID
-
 GetPlayerInfo(number playerID) ->
-  nil | string "name",
+  nil | string  "name",
         boolean active,
         boolean spectator,
-        number teamID,
-        number allyTeamID,
-        number pingTime,
-        number cpuUsage
-  
+        number  teamID,
+        number  allyTeamID,
+        number  pingTime,
+        number  cpuUsage
+
 
 AreTeamsAllied(number teamID1, number teamID2) -> nil | boolean allied
 
@@ -638,8 +660,30 @@ GetCameraState() -> table[] camstate  (opaque handle)
 
 SetCameraState(table[] camstate) -> nil
 
+GetCameraPos() -> number x, number y, number z
 
-SendCommands(commands = { string "cmd1", string "cmd2", string "cmd3", ... }) -> nil
+GetCameraVectors() ->
+  vectorTable = {
+    forward   = { [1] = number x, [2] = number y, [3] = number z },
+    up        = { [1] = number x, [2] = number y, [3] = number z },
+    right     = { [1] = number x, [2] = number y, [3] = number z },
+    top       = { [1] = number x, [2] = number y, [3] = number z },
+    bottom    = { [1] = number x, [2] = number y, [3] = number z },
+    leftside  = { [1] = number x, [2] = number y, [3] = number z },
+    rightside = { [1] = number x, [2] = number y, [3] = number z }
+  }
+
+WorldToScreenCoords(number x, number y, number z) ->
+  number x, number y, number z
+
+TraceScreenRay(number mouseX, number mouseY) ->
+  nil |
+  string "unit",    number unitID    |
+  string "feature", number featureID |
+  string "ground",  { [1] = number x, [2] = number y, [3] = number z }
+
+
+SendCommands(commands = { string "cmd1", string "cmd2", ... }) -> nil
 
 GiveOrder(number cmdID,
           params = {number, number, number},
@@ -677,8 +721,8 @@ AddWorldUnit(number unitDefID,
 --  The calls in the Spring.Draw table are based on OpenGL functions.
 --  You may wish to read the documentation for the following OpenGL
 --  functions to better understand them:
---    * glBegin()        
---    * glEnable()       
+--    * glBegin()
+--    * glEnable()
 --    * glVertex()
 --    * glNormal()
 --    * glTexCoord()
@@ -716,15 +760,16 @@ Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
 
 
 Draw.ShadeModel(number mode) -> nil
-Draw.Scissor   (boolean enable | number x, number y, number w, number h) -> nil
-Draw.Lighting  (boolean enable) -> nil
-Draw.DepthMask (boolean enable) -> nil
-Draw.DepthTest (boolean enable | number func) -> nil
-Draw.Culling   (boolean enable | number func) -> nil
-Draw.LogicOp   (boolean enable | number func) -> nil  
-Draw.AlphaTest (boolean enable | number func, number threshold) -> nil 
-Draw.Blending  (boolean enable | number srcmode, number dstmode) -> nil
-Draw.Texture   (boolean enable | string "filename") -> boolean success
+Draw.Scissor    (boolean enable | number x, number y, number w, number h) -> nil
+Draw.Lighting   (boolean enable) -> nil
+Draw.DepthMask  (boolean enable) -> nil
+Draw.DepthTest  (boolean enable | number func) -> nil
+Draw.Culling    (boolean enable | number func) -> nil
+Draw.LogicOp    (boolean enable | number func) -> nil
+Draw.AlphaTest  (boolean enable | number func, number threshold) -> nil
+Draw.Blending   (boolean enable | number srcmode, number dstmode) -> nil
+Draw.LineStipple(boolean enable | string "" | number f, number pattern) -> nil
+Draw.Texture    (boolean enable | string "filename") -> boolean success
 
 Draw.Material({
     ambient   = {number r, number g, number b[, number a]},
