@@ -535,7 +535,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	tdfparser.GetDef(ud.buildpicname, "", "UNITINFO\\BuildPic");
 
-	ud.power = (ud.metalCost + ud.energyCost/60.0f);
+	//ud.power = (ud.metalCost + ud.energyCost/60.0f);
+	tdfparser.GetTDef(ud.power, (ud.metalCost + ud.energyCost/60.0f), "UNITINFO\\power");
+
 	// Prevent a division by zero in experience calculations.
 	if(ud.power<1e-3f){
 		logOutput.Print("Unit %s is really cheap? %f",ud.humanName.c_str(),ud.power);

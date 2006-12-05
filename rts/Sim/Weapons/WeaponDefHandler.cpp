@@ -448,7 +448,9 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGenHandler->LoadGenerator(explgentag);
 
 	float gd=max(30.f,weaponDefs[id].damages[0]/20);
-	weaponDefs[id].explosionSpeed = (8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;
+	//weaponDefs[id].explosionSpeed = (8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;
+	sunparser->GetTDef(weaponDefs[id].explosionSpeed, (8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f , weaponname + "\\explosionSpeed");
+
 
 	weaponDefs[id].id = id;
 	weaponID[weaponname] = id;
