@@ -82,7 +82,6 @@ public:
 	bool gameOver;
 	bool windowedEdgeMove;
 	bool showClock;
-	bool showPlayerInfo;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 
 	Uint64 lastModGameTimeMeasure;

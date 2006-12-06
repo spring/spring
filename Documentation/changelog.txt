@@ -1,5 +1,12 @@
 TASpring change log
 
+- Added sorting options to "/info", you can use names or numbers:
+  0 - "off",   disable display
+  1 - "ally",  allies  (you, your team, your allyteam, your enemies, then spectators)
+  2 - "team",  player team id
+  3 - "name",  player name alphabetic sort
+  4 - "cpu",   player cpu usage
+  5 - "ping",  player ping time
 
 - Added the "maxparticles <value>"       action
 - Added the "minimap simplecolors [0|1]" action

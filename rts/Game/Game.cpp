@@ -31,6 +31,7 @@
 #include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
+#include "PlayerRoster.h"
 #include "SyncTracer.h"
 #include "Team.h"
 #include "TimeProfiler.h"
@@ -186,12 +187,12 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	allReady=false;
 	hideInterface=false;
 	gameOver=false;
-	showClock=!!configHandler.GetInt("ShowClock",1);
-	showPlayerInfo=!!configHandler.GetInt("ShowPlayerInfo",1);
 	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove",1);
+	showClock=!!configHandler.GetInt("ShowClock",1);
+	playerRoster.SetSortTypeByName(configHandler.GetString("ShowPlayerInfo","1"));
+
 	gamePausable=true;
 	noSpectatorChat=false;
-
 
 	inbufpos=0;
 	inbuflength=0;
@@ -1206,12 +1207,27 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		keyCodes->PrintCodeToName();
 	}
 	else if (cmd == "clock") {
-		showClock = !showClock;
-    configHandler.SetInt("ShowClock", showClock ? 1 : 0);
+		if (action.extra.empty()) {
+			showClock = !showClock;
+		} else {
+			showClock = !atoi(action.extra.c_str());
+		}
+		configHandler.SetInt("ShowClock", showClock ? 1 : 0);
 	}
 	else if (cmd == "info") {
-		showPlayerInfo = !showPlayerInfo;
-    configHandler.SetInt("ShowPlayerInfo", showPlayerInfo ? 1 : 0);
+		if (action.extra.empty()) {
+			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
+				playerRoster.SetSortTypeByCode(PlayerRoster::Allies);
+			} else {
+				playerRoster.SetSortTypeByCode(PlayerRoster::Disabled);
+			}
+		} else {
+			playerRoster.SetSortTypeByName(action.extra);
+		}
+		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
+			logOutput.Print("Sorting roster by %s", playerRoster.GetSortName());
+		}
+		configHandler.SetInt("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
 	else if (cmd == "techlevels") {
 		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
@@ -1708,45 +1724,52 @@ bool CGame::Draw()
 		glLoadIdentity();
 	}
 
-	if(showPlayerInfo){
+	if (playerRoster.GetSortType() != PlayerRoster::Disabled){
 		char buf[128];
 		const float xScale = 0.015f;
 		const float yScale = 0.020f;
 		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
 		const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-		for (int a=0; a<gs->activePlayers; ++a) {
-			if (gs->players[a]->active) {
-				float color[4];
-				const char* prefix;
-				if (gs->players[a]->spectator) {
-					color[0] = 1.0f;
-					color[1] = 1.0f;
-					color[2] = 1.0f;
-					color[3] = 1.0f;
-					prefix = "s:";
-				} else {
-					const unsigned char* bColor = gs->Team(gs->players[a]->team)->color;
-					color[0] = (float)bColor[0] / 255.0f;
-					color[1] = (float)bColor[1] / 255.0f;
-					color[2] = (float)bColor[2] / 255.0f;
-					color[3] = (float)bColor[3] / 255.0f;
-					prefix = gu->myAllyTeam == gs->AllyTeam(gs->players[a]->team) ? "a:" : "e:";
-				}
-				SNPRINTF(buf, sizeof(buf), "%s(%i) %s%s %3.0f%% Ping:%d ms",
-				         gu->spectating && gu->myTeam == gs->players[a]->team ? ">> " : "",
-				         gs->players[a]->team, prefix,
-				         gs->players[a]->playerName.c_str(), gs->players[a]->cpuUsage*100,
-				         (int)((gs->players[a]->ping-1)*1000/(30*gs->speedFactor)));
-				glTranslatef(0.76f, 0.01f + (0.02f * a), 1.0f);
-				glScalef(xScale, yScale, 1.0f);
-				glColor4fv(color);
-				if (!outlineFont.IsEnabled()) {
-					font->glPrintRaw(buf);
-				} else {
-					outlineFont.print(xPixel, yPixel, color, buf);
-				}
-				glLoadIdentity();
+		int count;
+		const int* indices = playerRoster.GetIndices(&count);
+		for (int a = 0; a < count; ++a) {
+			const CPlayer* p = gs->players[indices[a]];
+			float color[4];
+			const char* prefix;
+			if (p->spectator) {
+				color[0] = 1.0f;
+				color[1] = 1.0f;
+				color[2] = 1.0f;
+				color[3] = 1.0f;
+				prefix = "S|";
+			} else {
+				const unsigned char* bColor = gs->Team(p->team)->color;
+				color[0] = (float)bColor[0] / 255.0f;
+				color[1] = (float)bColor[1] / 255.0f;
+				color[2] = (float)bColor[2] / 255.0f;
+				color[3] = (float)bColor[3] / 255.0f;
+				prefix = gu->myAllyTeam == gs->AllyTeam(p->team) ? "A|" : "E|";
 			}
+			const char format1[] = " %i:%s %s %3.0f%% Ping:%d ms";
+			const char format2[] = "-%i:%s %s %3.0f%% Ping:%d ms";
+			const char* format;
+			if (gu->spectating && !p->spectator && (gu->myTeam == p->team)) {
+				format = format2;
+			} else {
+				format = format1;
+			}
+			SNPRINTF(buf, sizeof(buf), format,
+							 p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
+							 (int)(((p->ping-1) * 1000) / (30 * gs->speedFactor)));
+			glTranslatef(0.76f, 0.01f + (0.02f * (count - a - 1)), 1.0f);
+			glScalef(xScale, yScale, 1.0f);
+			glColor4fv(color);
+			if (!outlineFont.IsEnabled()) {
+				font->glPrintRaw(buf);
+			} else {
+				outlineFont.print(xPixel, yPixel, color, buf);
+			}
+			glLoadIdentity();
 		}
 	}
 

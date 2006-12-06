@@ -23,6 +23,7 @@ extern "C" {
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/PlayerRoster.h"
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -134,6 +135,7 @@ static int GetMyPlayerID(lua_State* L);
 static int GetAllyTeamList(lua_State* L);
 static int GetTeamList(lua_State* L);
 static int GetPlayerList(lua_State* L);
+static int GetPlayerRoster(lua_State* L);
 
 static int GetTeamPlayerList(lua_State* L);
 
@@ -379,6 +381,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetAllyTeamList);
 	REGISTER_LUA_CFUNC(GetTeamList);
 	REGISTER_LUA_CFUNC(GetPlayerList);
+	REGISTER_LUA_CFUNC(GetPlayerRoster);
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetTeamUnitStats);
@@ -3110,28 +3113,66 @@ static int GetPlayerList(lua_State* L)
 }
 
 
-static int ComparePlayers(const void* a, const void* b) // FIXME
+/******************************************************************************/
+
+static void AddPlayerToRoster(lua_State* L, int playerID)
 {
-	const int aID = *((const int*)a);
-	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
-	if ((aP != NULL) && (bP == NULL)) { return +1; }
-	if ((aP == NULL) && (bP != NULL)) { return -1; }
-	if ( aP->active && !bP->active) { return +1; }
-	if (!aP->active &&  bP->active) { return -1; }
-	if (!aP->spectator &&  bP->spectator) { return +1; }
-	if ( aP->spectator && !bP->spectator) { return -1; }
-	const int myPNum = gu->myPlayerNum;
-	if ((aID == myPNum) && (bID != myPNum)) { return +1; }
-	if ((aID != myPNum) && (bID == myPNum)) { return -1; }
-	const int aAlly = gs->AllyTeam(aP->team);
-	const int bAlly = gs->AllyTeam(bP->team);
-	if (aAlly < bAlly) { return +1; }
-	if (aAlly > bAlly) { return -1; }
-	if (aP->team < bP->team) { return +1; }
-	if (aP->team > bP->team) { return -1; }
-	return (aID < bID);
+	const CPlayer* p = gs->players[playerID];
+	int index = 1;
+	lua_newtable(L);
+	lua_pushnumber(L, index); index++;
+	lua_pushstring(L, p->playerName.c_str());
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushnumber(L, playerID);
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushnumber(L, p->team);
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushnumber(L, gs->AllyTeam(p->team));
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushboolean(L, p->spectator);
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushnumber(L, p->cpuUsage);
+	lua_rawset(L, -3);
+	lua_pushnumber(L, index); index++;
+	lua_pushnumber(L, p->ping);
+	lua_rawset(L, -3);
+}
+
+
+static int GetPlayerRoster(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
+		lua_pushstring(L, "Incorrect arguments to GetPlayerRoster([type])");
+		lua_error(L);
+	}
+	
+	if (args == 1) {
+		const int type = (int)lua_tonumber(L, 1);
+		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
+	} else {
+		playerRoster.SetSortTypeByCode(PlayerRoster::Allies);
+	}
+
+	int count;
+	const int* players = playerRoster.GetIndices(&count);
+
+	lua_newtable(L);
+	for (int i = 0; i < count; i++) {
+		lua_pushnumber(L, i + 1);
+		AddPlayerToRoster(L, players[i]);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+
+	return 1;	
 }
 
 
