@@ -355,7 +355,7 @@
   Sent by server to all clients when a new client joins the battle.
 
   * LEFTBATTLE BATTLE_ID username
-  Sent by server to all users when client left a battle (or got disconnected from server).
+  Sent by server to all users when client left a battle (or got disconnected from the server).
 
   * LEAVEBATTLE
   Sent by the client when he leaves a battle. Also sent by a founder of the battle when he
@@ -493,11 +493,14 @@
 
   * FORCEQUITBATTLE
   Sent by server to client for whom founder requested kick with KICKFROMBATTLE command.
-  Client should immediately disconnect from the battle.
+  Client doesn't need to send LEAVEBATTLE command, that is already done by the server.
+  The only purpose this commands serves to is to notify client that he was kicked from
+  the battle. Note that client should close the battle internally, since he is no longer
+  a part of it (or he can do that once he receives LEFTBATTLE command containing his username).
 
   * FORCETEAMNO username teamno
   Sent by founder of battle when he is trying to force some other client's team number
-  to <teamno>. Server will update client's battle status automatically. 
+  to <teamno>. Server will update client's battle status automatically.
 
   * FORCEALLYNO username teamno
   Sent by founder of battle when he is trying to force some other client's ally number
