@@ -223,28 +223,6 @@ static int CompareTeamIDs(const void* a, const void* b)
 
 /******************************************************************************/
 
-static int ComparePlayerIDs(const void* a, const void* b)
-{
-	const int aID = *((const int*)a);
-	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
-
-	const int basic = CompareBasics(aP, bP);
-	if (basic != 0) {
-		return basic;
-	}	
-
-	// sort by player id
-	if (aID < bID) { return -1; }
-	if (aID > bID) { return +1; }
-
-	return 0;
-}
-
-
-/******************************************************************************/
-
 static int ComparePlayerNames(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
