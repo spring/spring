@@ -135,7 +135,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 		glEnd();
 	}
 	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s",VERSION_STRING);
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s (%s)", VERSION_STRING, __DATE__);
 	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
 	if (swapbuffers)
 		SDL_GL_SwapBuffers();
