@@ -169,7 +169,7 @@ void Class::SerializeInstance (ISerializer *s, void *ptr)
 
 void* Class::CreateInstance()
 {
-	void *inst = new char[binder->size];
+	void *inst = ::operator new(binder->size);
 	if (binder->constructor) binder->constructor (inst);
 	return inst;
 }
@@ -177,8 +177,7 @@ void* Class::CreateInstance()
 void Class::DeleteInstance (void *inst)
 {
 	if (binder->destructor) binder->destructor(inst);
-	char *d = (char*)inst;
-	delete[] d;
+	::operator delete(inst);
 }
 
 void Class::CalculateChecksum (unsigned int& checksum)
