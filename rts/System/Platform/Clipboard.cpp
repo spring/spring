@@ -3,7 +3,9 @@
 #include "StdAfx.h"
 #include "Clipboard.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#  include <windows.h>
+#else
 #  include <SDL_syswm.h>
 #endif
 
