@@ -187,9 +187,17 @@ def check_headers(env, conf):
 	if not conf.CheckCHeader('SDL/SDL.h') and not conf.CheckCHeader('SDL11/SDL.h'):
 		print 'LibSDL headers are required for this program'
 		env.Exit(1)
-	if not conf.CheckCHeader('AL/al.h'):
-		print 'OpenAL headers are required for this program'
-		env.Exit(1)
+	if env['platform'] == 'windows':
+		# Somehow this fails when including dsound.h even if it's there.
+		# Possibly it needs other files included before it (windows.h?)
+		#if not conf.CheckCHeader('dsound.h'):
+		#	print 'DirectSound header is required for this program'
+		#	env.Exit(1)
+		pass
+	else:
+		if not conf.CheckCHeader('AL/al.h'):
+			print 'OpenAL headers are required for this program'
+			env.Exit(1)
 	if not conf.CheckCHeader('GL/gl.h'):
 		print 'OpenGL headers are required for this program'
 		env.Exit(1)
@@ -234,12 +242,7 @@ def check_libraries(env, conf):
 	if not conf.CheckLib("freetype"):
 		print "Freetype2 is required for this program"
 		env.Exit(1)
-	# second check for Windows.
-	if not conf.CheckLib('openal') and not conf.CheckLib('openal32'):
-		print 'OpenAL is required for this program'
-		env.Exit(1)
 
-	#FIXME unitsync doesn't compile on mingw, also this breaks current mingwlibs when crosscompiling..
 	# second check for Windows.
 	if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
 		print 'python is required for this program'
@@ -286,6 +289,11 @@ def check_libraries(env, conf):
 			env.Exit(1)
 		if not conf.CheckLib('SDLmain'):
 			print "On windows you need the SDLmain library for this program"
+			env.Exit(1)
+	else:
+		# second check was for Windows.
+		if not conf.CheckLib('openal'):   #and not conf.CheckLib('openal32'):
+			print 'OpenAL is required for this program'
 			env.Exit(1)
 
 	# second check for FreeBSD.
