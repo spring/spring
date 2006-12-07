@@ -428,7 +428,9 @@ bool SpringApp::SetSDLVideoMode ()
 
 	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 0, sdlflags);
 	if (!screen) {
-		handleerror(NULL,"Could not set video mode","ERROR",MBF_OK|MBF_EXCL);
+		char buf[1024];
+		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
+		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
 

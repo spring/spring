@@ -27,6 +27,7 @@
 #include <SDL_keysym.h>
 #include "GameServer.h"
 #include "FPUCheck.h"
+#include "Platform/Clipboard.h"
 #include "mmgr.h"
 
 CPreGame* pregame=0;
@@ -126,17 +127,11 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 
 	if (userWriting){
 		keys[k] = true;
-#ifndef NO_CLIPBOARD
 		if (k == SDLK_v && keys[SDLK_LCTRL]){
-			OpenClipboard(0);
-			void* p;
-			if((p=GetClipboardData(CF_TEXT))!=0){
-				userInput+=(char*)p;
-			}
-			CloseClipboard();
+			CClipboard clipboard;
+			userInput += clipboard.GetContents();
 			return 0;
 		}
-#endif
 		if(k == SDLK_BACKSPACE){ //backspace
 			if(userInput.size()!=0)
 				userInput.erase(userInput.size()-1,1);

@@ -91,7 +91,8 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
-#include "System/Sound.h"
+#include "Sound.h"
+#include "Platform/Clipboard.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
@@ -124,10 +125,6 @@
 #endif
 
 #include "mmgr.h"
-
-#ifndef _WIN32
-#  include <SDL_syswm.h>
-#endif
 
 GLfloat LightDiffuseLand[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat LightAmbientLand[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -527,33 +524,8 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				if (!action.extra.empty()) {
 					userInput += action.extra;
 				} else {
-#ifdef _WIN32
-#  ifndef NO_CLIPBOARD
-					OpenClipboard(NULL);
-					const void* p = GetClipboardData(CF_TEXT);
-					if (p != NULL) {
-						userInput += (char*)p;
-					}
-					CloseClipboard();
-#  endif // NO_CLIPBOARD
-#else // _WIN32
-					// only works with the cut-buffer method (xterm)
-					// (and not with the more recent selections method)
-					SDL_SysWMinfo sdlinfo;
-					SDL_VERSION(&sdlinfo.version);
-					if (SDL_GetWMInfo(&sdlinfo)) {
-						sdlinfo.info.x11.lock_func();
-						Display* display = sdlinfo.info.x11.display;
-						int count = 0;
-						char* msg = XFetchBytes(display, &count);
-						if ((msg != NULL) && (count > 0)) {
-							msg[count - 1] = 0; // terminate
-							userInput += (char*)msg;
-						}
-						XFree(msg);
-						sdlinfo.info.x11.unlock_func();
-					}
-#endif
+					CClipboard clipboard;
+					userInput += clipboard.GetContents();
 				}
 				return 0;
 			}

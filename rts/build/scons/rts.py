@@ -98,7 +98,6 @@ def generate(env):
 		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
 		#porting options - optional in a first phase
 		('disable_avi',       'Set to no to turn on avi support', True),
-		('disable_clipboard', 'Set to no to turn on clipboard code', True),
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
@@ -294,7 +293,6 @@ def generate(env):
 
 		bool_opt('strip', True)
 		bool_opt('disable_avi', True)
-		bool_opt('disable_clipboard', True)
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
@@ -319,7 +317,6 @@ def generate(env):
 		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
 		# and some AIs maybe.  Just make exceptions in SConstruct.
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
-		if env['disable_clipboard']: spring_defines += ['NO_CLIPBOARD']
 		if env['disable_avi']      : spring_defines += ['NO_AVI']
 		if env['use_mmgr']         : spring_defines += ['USE_MMGR']
 
