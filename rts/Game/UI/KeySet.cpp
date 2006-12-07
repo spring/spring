@@ -137,6 +137,11 @@ bool CKeySet::Parse(const string& token)
 			logOutput.Print("Bad hex value: %s\n", s.c_str());
 			return false;
 		}
+		if (key >= SDLK_LAST) {
+			Reset();
+			logOutput.Print("Hex value out of range: %s\n", s.c_str());
+			return false;
+		}
 	}
 	else {
 		key = keyCodes->GetCode(s);
