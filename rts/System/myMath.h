@@ -5,7 +5,7 @@
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
-#define SHORTINT_MAXVALUE	32767
+#define SHORTINT_MAXVALUE	32768
 
 extern float2 headingToVectorTable[1024];
 
@@ -70,38 +70,15 @@ struct shortint2{
 inline shortint2 GetHAndPFromVector(const float3& vec)
 {
 	shortint2 ret;
-	float h;
-	if(vec.z!=0){
-		float d=vec.x/vec.z;
-		if(d > 1){
-			h=(PI/2) - d/(d*d + 0.28f);
-		} else if (d < -1){
-			h=-(PI/2) - d/(d*d + 0.28f);
-		}else{
-			h=d/(1 + 0.28f * d*d);
-		}
 
-		if(vec.z<0)
-			h+=PI;
-	} else {
-		if(vec.x>0)
-			h=PI;
-		else
-			h=-PI;
-	}
-
-//	h+=PI;
-	h*=SHORTINT_MAXVALUE/PI;
-	
-	// Prevents h from going beyond SHORTINT_MAXVALUE.
+	// Prevents ret.y from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following 
 	// conversion to a short int crashes.
 	//this change destroys the whole meaning with using short ints....
-#ifndef WIN32
-	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
-#endif
-	ret.x=(short int) h;
-	ret.y=(short int) (asin(vec.y)*(SHORTINT_MAXVALUE/PI));
+	int iy = (int) (asin(vec.y)*(SHORTINT_MAXVALUE/PI));
+	iy %= SHORTINT_MAXVALUE;
+	ret.y=(short int) iy;
+	ret.x=GetHeadingFromVector(vec.x, vec.z);
 	return ret;
 }
 
