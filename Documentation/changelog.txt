@@ -1,5 +1,10 @@
 TASpring change log
 
+0.next
+
+- Fixed FPS mode aiming to the northwest.
+- Fixed FPU control word assertion that made spring unplayable with some sound drivers.
+
 - Added sorting options to "/info", you can use names or numbers:
   0 - "off",   disable display
   1 - "ally",  allies  (you, your team, your allyteam, your enemies, then spectators)
