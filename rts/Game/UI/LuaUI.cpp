@@ -84,6 +84,9 @@ static int GetMouseState(lua_State* L);
 static int GetMouseCursor(lua_State* L);
 static int SetMouseCursor(lua_State* L);
 
+static int GetKeyState(lua_State* L);
+static int GetPressedKeys(lua_State* L);
+
 static int GetCurrentTooltip(lua_State* L);
 
 static int GetKeyCode(lua_State* L);
@@ -336,6 +339,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
+	REGISTER_LUA_CFUNC(GetKeyState);
+	REGISTER_LUA_CFUNC(GetPressedKeys);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
@@ -1909,6 +1914,48 @@ static int SetMouseCursor(lua_State* L)
 	}
 	return 0;
 }
+
+
+static int GetKeyState(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetKeyState(keycode)");
+		lua_error(L);
+	}
+	const int key = (int)lua_tonumber(L, 1);
+	if ((key < 0) || (key >= SDLK_LAST)) {
+		lua_pushboolean(L, 0);
+	} else {
+		lua_pushboolean(L, keys[key]);
+	}
+	return 1;
+}
+
+
+static int GetPressedKeys(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetPressedKeys() takes no arguments");
+		lua_error(L);
+	}
+	lua_newtable(L);
+	int count = 0;
+	for (int i = 0; i < SDLK_LAST; i++) {
+		if (keys[i]) {
+			lua_pushnumber(L, i);
+			lua_pushboolean(L, 1);
+			lua_rawset(L, -3);
+			count++;
+		}
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
 
 
 static int GetCurrentTooltip(lua_State* L)

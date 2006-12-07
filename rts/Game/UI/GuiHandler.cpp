@@ -1606,6 +1606,7 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
 			luaUI = CLuaUI::GetHandler(luaUiFile);
 			if (luaUI == NULL) {
+				LoadConfig("ctrlpanel.txt");
 				logOutput.Print("Loading failed\n");
 			}
 		} else {
@@ -1613,8 +1614,8 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 			delete luaUI;
 			luaUI = CLuaUI::GetHandler(luaUiFile);
 			if (luaUI == NULL) {
-				logOutput.Print("Reloading failed\n");
 				LoadConfig("ctrlpanel.txt");
+				logOutput.Print("Reloading failed\n");
 			}
 		}
 	}
@@ -1630,13 +1631,7 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 		if (luaUI != NULL) {
 			luaUI->ConfigCommand(command);
 		} else {
-			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
-			luaUI = CLuaUI::GetHandler(luaUiFile);
-			if (luaUI == NULL) {
-				logOutput.Print("Loading failed\n");
-			} else {
-				luaUI->ConfigCommand(command);
-			}
+			logOutput.Print("LuaUI is not loaded\n");
 		}
 	}
 
