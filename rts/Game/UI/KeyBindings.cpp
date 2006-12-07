@@ -456,10 +456,6 @@ bool CKeyBindings::SetFakeMetaKey(const string& keystr)
 		logOutput.Print("SetFakeMetaKey: could not parse key: %s\n", keystr.c_str());
 		return false;
 	}
-	if (fakeMetaKey >= SDLK_LAST) {
-		logOutput.Print("SetFakeMetaKey: key code is invalid\n");
-		return false;
-	}
 	fakeMetaKey = ks.Key();
 	return true;
 }
