@@ -121,7 +121,8 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	}
 
 	if ((c.id == CMD_ATTACK) &&
-			((c.params.size() == 4) || (c.params.size() == 6))) {
+			((c.params.size() == 6) ||
+			 ((c.params.size() == 4) && (c.params[3] > 0.001f)))) {
 		SelectAttack(c, player);
 		return;
 	}
