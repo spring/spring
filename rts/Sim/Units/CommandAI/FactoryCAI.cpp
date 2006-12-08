@@ -238,15 +238,17 @@ void CFactoryCAI::SlowUpdate()
 			} else {
 				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
 				if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
-					if(!repeatOrders)
-					{
+					if(!repeatOrders){
 						boi->second.numQued--;
-						if(lastRestrictedWarning+100<gs->frameNum)
-						{
-							logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
-							logOutput.SetLastMsgPos(owner->pos);
-							lastRestrictedWarning = gs->frameNum;
+						ENTER_MIXED;
+						if (owner->team == gu->myTeam) {
+							if(lastRestrictedWarning+100<gs->frameNum){
+								logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+								logOutput.SetLastMsgPos(owner->pos);
+								lastRestrictedWarning = gs->frameNum;
+							}
 						}
+						ENTER_SYNCED;
 					}
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();

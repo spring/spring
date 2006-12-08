@@ -154,8 +154,12 @@ void CBuilderCAI::SlowUpdate()
 				if(build.pos.distance2D(fac->pos)<fac->buildDistance*0.6f+radius){
 					StopMove();
 					if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
-						logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
-						logOutput.SetLastMsgPos(owner->pos);
+						ENTER_MIXED;
+						if(owner->team == gu->myTeam){
+							logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+							logOutput.SetLastMsgPos(owner->pos);
+						}
+						ENTER_SYNCED;
 						FinishCommand();
 					}
 					else if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){ //max unitlimit reached
