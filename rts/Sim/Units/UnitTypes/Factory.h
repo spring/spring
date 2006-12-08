@@ -38,7 +38,7 @@ public:
 	int lastBuild;						//last frame we wanted to build something
 	void SendToEmptySpot(CUnit* unit);
 	void SlowUpdate(void);
-	void ChangeTeam(int newTeam,ChangeType type);
+	bool ChangeTeam(int newTeam, ChangeType type);
 };
 
 #endif // __FACTORY_H__

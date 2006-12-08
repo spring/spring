@@ -198,7 +198,11 @@ START_TIME_PROFILE;
 				gs->Team(delUnit->team)->RemoveUnit(delUnit,CTeam::RemoveDied);
 				delTeam = delUnit->team;
 				delType = delUnit->unitDef->id;
-				unitsType[delTeam][delType]--;
+				if (unitsType[delTeam][delType] > 0) {
+					unitsType[delTeam][delType]--;
+				} else {
+					logOutput.Print("CUnitHandler::Update() unitsType underflow\n");
+				}
 				delete delUnit;
 				break;
 			}
@@ -208,7 +212,11 @@ START_TIME_PROFILE;
 			if(*usi==delUnit){
 				logOutput.Print("Error: Duplicated unit found in active units on erase");
 				usi=activeUnits.erase(usi);
-				unitsType[delTeam][delType]--;
+				if (unitsType[delTeam][delType] > 0) {
+					unitsType[delTeam][delType]--;
+				} else {
+					logOutput.Print("CUnitHandler::Update() unitsType underflow\n");
+				}
 			} else {
 				++usi;
 			}

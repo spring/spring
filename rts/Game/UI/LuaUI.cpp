@@ -140,8 +140,6 @@ static int GetTeamList(lua_State* L);
 static int GetPlayerList(lua_State* L);
 static int GetPlayerRoster(lua_State* L);
 
-static int GetTeamPlayerList(lua_State* L);
-
 static int GetTeamInfo(lua_State* L);
 static int GetTeamResources(lua_State* L);
 static int GetTeamUnitStats(lua_State* L);

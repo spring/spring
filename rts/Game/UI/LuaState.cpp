@@ -249,6 +249,7 @@ bool CLuaState::LoadUnitDefInfo()
 		ADD_STRING(filename,  ud.filename);
 
 		ADD_INT(techLevel, ud.techLevel);
+		ADD_INT(maxThisUnit, ud.maxThisUnit);
 		
 		ADD_STRING(TEDClass,       ud.TEDClassString);
 		ADD_STRING(iconType,       ud.iconType);

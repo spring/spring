@@ -89,7 +89,7 @@ public:
 		ChangeGiven,
 		ChangeCaptured
 	};
-	virtual void ChangeTeam(int team,ChangeType type);
+	virtual bool ChangeTeam(int team, ChangeType type);
 
 	UnitDef *unitDef;
 

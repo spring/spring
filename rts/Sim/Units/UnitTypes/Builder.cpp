@@ -231,8 +231,16 @@ void CBuilder::Update()
 		if(curCapture->team!=team){
 			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/buildSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
 			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
-			if(curCapture->captureProgress>1){
-				curCapture->ChangeTeam(team,CUnit::ChangeCaptured);
+			if(curCapture->captureProgress > 1.0f){
+				if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
+					PUSH_CODE_MODE
+					ENTER_MIXED
+					if (team == gu->myTeam) {
+						logOutput.Print("Capture failed: unit type limit reached");
+						logOutput.SetLastMsgPos(pos);
+					}
+					POP_CODE_MODE
+				}
 				curCapture->captureProgress=0.5f;	//make units somewhat easier to capture back after first capture
 				StopBuild(true);
 			}
