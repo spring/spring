@@ -848,12 +848,22 @@ void CUnit::ChangeLos(int l,int airlos)
 	loshandler->MoveUnit(this,false);
 }
 
-void CUnit::ChangeTeam(int newteam, ChangeType type)
+bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
+	// do not allow unit count violations due to team swapping
+	// (this includes unit captures)
+	if (uh->unitsType[newteam][unitDef->id] >= unitDef->maxThisUnit) {
+		return false;
+	}
+	
 	const int oldteam = team;
 	globalAI->UnitTaken(this, oldteam);
 	
-	uh->unitsType[oldteam][unitDef->id]--;
+	if (uh->unitsType[oldteam][unitDef->id] > 0) {
+		uh->unitsType[oldteam][unitDef->id]--;
+	} else {
+		logOutput.Print("CUnit::ChangeTeam() unitsType underflow\n");
+	}
 	uh->unitsType[newteam][unitDef->id]++;
 
 	qf->RemoveUnit(this);
@@ -919,6 +929,8 @@ void CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	globalAI->UnitGiven(this, oldteam);
+	
+	return true;
 }
 
 bool CUnit::AttackUnit(CUnit *unit,bool dgun)

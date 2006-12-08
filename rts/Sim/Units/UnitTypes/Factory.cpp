@@ -258,8 +258,8 @@ void CFactory::SlowUpdate(void)
 	CBuilding::SlowUpdate();
 }
 
-void CFactory::ChangeTeam(int newTeam,ChangeType type)
+bool CFactory::ChangeTeam(int newTeam,ChangeType type)
 {
 	StopBuild();
-	CBuilding::ChangeTeam(newTeam,type);
+	return CBuilding::ChangeTeam(newTeam,type);
 }
