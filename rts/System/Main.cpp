@@ -40,15 +40,17 @@
 #include <SDL_syswm.h>
 #include "mmgr.h"
 
-#ifdef _WIN32
-#ifndef __MINGW32__
-#include "CrashRpt.h"
-#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
-#endif
-#include "Platform/Win/win32.h"
-#include <winreg.h>
-#include <direct.h>
-#endif
+#ifdef WIN32
+	#ifdef __MINGW32__
+		#include "Platform/Win/CrashHandler.h"
+	#else
+		#include "CrashRpt.h"
+		#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
+	#endif
+	#include "Platform/Win/win32.h"
+	#include <winreg.h>
+	#include <direct.h>
+#endif // WIN32
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
 #ifndef WIN32
@@ -258,15 +260,18 @@ bool SpringApp::Initialize ()
 	// Initialize class system
 	creg::ClassBinder::InitializeClasses ();
 
-#ifdef _MSC_VER
 	// Initialize crash reporting
+#ifdef _MSC_VER
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
 	if (!GetInstance())
 	{
 		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
 		return false;
 	}
-#endif
+#endif // _MSC_VER
+#ifdef __MINGW32__
+	CrashHandler::Install();
+#endif // __MINGW32__
 
 	FileSystemHandler::Initialize(true);
 
@@ -379,7 +384,7 @@ static bool MultisampleVerify(void)
 bool SpringApp::InitWindow (const char* title)
 {
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
-#ifdef _MSC_VER
+#ifdef WIN32
 	// the crash reporter should be catching the errors 
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
