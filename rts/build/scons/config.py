@@ -269,6 +269,9 @@ def check_libraries(env, conf):
 		env.Exit(1)
 
 	if env['platform'] == 'windows':
+		if not conf.CheckLib('imagehlp'):
+			print "On windows you need the imagehlp library for this program"
+			env.Exit(1)
 		if not conf.CheckLib('dsound'):
 			print "On windows you need the dsound library for this program"
 			env.Exit(1)
