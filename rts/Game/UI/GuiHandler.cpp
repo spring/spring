@@ -3544,7 +3544,7 @@ void CGuiHandler::DrawMapStuff(void)
 		set<CBuilderCAI*>::const_iterator bi;
 		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {	    
 			const CUnit* unit = (*bi)->owner;
-			if (unit == pointedAt) {
+			if (unit == pointedAt || unit->team!=gu->myTeam) {
 				continue;
 			}
 			const UnitDef* unitdef = unit->unitDef;
