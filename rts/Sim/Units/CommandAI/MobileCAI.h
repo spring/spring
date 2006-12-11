@@ -8,10 +8,10 @@ class CMobileCAI :
 {
 public:
 	CMobileCAI(CUnit* owner);
-	~CMobileCAI(void);
+	virtual ~CMobileCAI(void);
 
 	void StopMove();
-	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
+	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
 	void GiveCommand(const Command &c);
@@ -21,6 +21,18 @@ public:
 	void FinishCommand(void);
 	void IdleCheck(void);
 	bool CanSetMaxSpeed() const { return true; }
+	void StopSlowGuard();
+	void StartSlowGuard(float speed);
+	void ExecuteAttack(Command &c);
+	void ExecuteDGun(Command &c);
+	void ExecuteStop(Command &c);
+
+	virtual void Execute();
+	virtual void ExecuteGuard(Command &c);
+	virtual void ExecuteFight(Command &c);
+	virtual void ExecutePatrol(Command &c);
+	virtual void ExecuteMove(Command &c);
+	virtual void ExecuteSetWantedMaxSpeed(Command &c);
 
 	float3 goalPos;
 	float3 lastUserGoal;
@@ -41,7 +53,10 @@ public:
 	float3 commandPos1;			//used to avoid stuff in maneuvre mode moving to far away from patrol path
 	float3 commandPos2;
 
+
 protected:
+	int cancelDistance;
+	bool slowGuard;
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}

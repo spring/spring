@@ -31,7 +31,9 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	lastIdleCheck(0),
 	commandPos1(ZeroVector),
 	commandPos2(ZeroVector),
-	lastPC(-1)
+	lastPC(-1),
+	cancelDistance(1024),
+	slowGuard(false)
 {
 	lastUserGoal=owner->pos;
 	CommandDescription c;
@@ -137,6 +139,7 @@ void CMobileCAI::GiveCommand(const Command &c)
 
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		tempOrder=false;
+		StopSlowGuard();
 	}
 	CCommandAI::GiveAllowedCommand(c);
 }
@@ -188,13 +191,13 @@ void CMobileCAI::SlowUpdate()
 							myPlane->SetState(CTAAirMoveType::AIRCRAFT_TAKEOFF);
 						}
 						return;
-					}		
+					}
 				}
 			}
 		}
 	}
 
-	if(!commandQue.empty() && commandQue.front().timeOut<gs->frameNum){
+	if(!commandQue.empty() && commandQue.front().timeOut < gs->frameNum){
 		StopMove();
 		FinishCommand();
 		return;
@@ -204,15 +207,17 @@ void CMobileCAI::SlowUpdate()
 //		if(!owner->ai || owner->ai->State() != CHasState::Active) {
 			IdleCheck();
 //		}
-		if(commandQue.empty() || commandQue.front().id==CMD_ATTACK)	//the attack order could terminate directly and thus cause a loop
+		//the attack order could terminate directly and thus cause a loop
+		if(commandQue.empty() || commandQue.front().id == CMD_ATTACK) {
 			return;
+		}
 	}
 
-	float3 curPos=owner->pos;
+	const float3& curPos=owner->pos;
 	
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
-	// to the current command  (and ignore them when it's their turn)
-	if (commandQue.size() >= 2) {
+	// to the current command  (and ignore them when it's their turn
+	if (commandQue.size() >= 2 && !slowGuard) {
 		deque<Command>::iterator it = commandQue.begin();
 		it++;
 		const Command& c = *it;
@@ -221,235 +226,286 @@ void CMobileCAI::SlowUpdate()
 			const float newMaxSpeed = min(c.params[0], defMaxSpeed);
 			owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
-	}	 
+	}
+	return Execute();
+}
 
+/**
+* @brief Executes the first command in the commandQue
+*/
+void CMobileCAI::Execute(){
 	Command& c=commandQue.front();
 	switch(c.id){
-	case CMD_WAIT:{
-		break;
+	case CMD_SET_WANTED_MAX_SPEED:
+		return ExecuteSetWantedMaxSpeed(c);
+	case CMD_MOVE:
+		return ExecuteMove(c);
+	case CMD_PATROL:
+		return ExecutePatrol(c);
+	case CMD_FIGHT:
+		return ExecuteFight(c);
+	case CMD_GUARD:
+		return ExecuteGuard(c);
+	default:
+		return CCommandAI::SlowUpdate();
 	}
-	case CMD_STOP:{
-		StopMove();
-		CCommandAI::SlowUpdate();
-		break;
-	}
-	case CMD_SET_WANTED_MAX_SPEED:{
-	  if (repeatOrders && (commandQue.size() >= 2) &&
-	      (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
-	  	commandQue.push_back(commandQue.front());
-		}
-		commandQue.pop_front();
-		SlowUpdate();
-		break;
-	}
-	case CMD_MOVE:{
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		if(!(pos==goalPos)){
-			SetGoal(pos,curPos);
-		}
-		if((curPos-goalPos).SqLength2D()<1024 || owner->moveType->progressState==CMoveType::Failed){
-			FinishCommand();
-		}
-		break;
-	}
-	case CMD_PATROL:{
-		assert(owner->unitDef->canPatrol);
-		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in mobilecai",
-				owner->unitDef->humanName.c_str());
-			return;
-		}
-		Command temp;
-		temp.id = CMD_FIGHT;
-		temp.params.push_back(c.params[0]);
-		temp.params.push_back(c.params[1]);
-		temp.params.push_back(c.params[2]);
-		temp.options = c.options|INTERNAL_ORDER;
-		commandQue.push_back(c);
-		commandQue.pop_front();
-		commandQue.push_front(temp);
-		if(owner->group){
-			owner->group->CommandFinished(owner->id,CMD_PATROL);
-		}
-		SlowUpdate();
-		return;
-	}
-	case CMD_FIGHT:{
-		assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-		if(tempOrder){
-			inCommand = true;
-			tempOrder = false;
-		}
-		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got fight cmd with less than 3 params on %s in mobilecai",
-				owner->unitDef->humanName.c_str());
-			return;
-		}
-		if(c.params.size() >= 6){
-			if(!inCommand){
-				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
-			}
-		} else {
-			// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
-			// rotated (only shortened) if we reach this because the previous return
-			// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
-			// condition, but is actually updated correctly if you click somewhere
-			// outside the area close to the line (for a new command).
-			commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, curPos);
-			if ((curPos-commandPos1).SqLength2D()>(96*96)) {
-				commandPos1 = curPos;
-			}
-		}
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		if(!inCommand){
-			inCommand = true;
-			commandPos2 = pos;
-		}
-		if(pos!=goalPos){
-			SetGoal(pos,curPos);
-		}
+}
 
-		if(owner->unitDef->canAttack && owner->fireState==2){
-			float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, curPos);
-			CUnit* enemy=helper->GetClosestEnemyUnit(
-				curPosOnLine, owner->maxRange+100*owner->moveState*owner->moveState, owner->allyteam);
-			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-						&& !(owner->unitDef->noChaseCategory & enemy->category) && !owner->weapons.empty()){
-				Command c2;
-				c2.id=CMD_ATTACK;
-				c2.options=c.options|INTERNAL_ORDER;
-				c2.params.push_back(enemy->id);
-				PushOrUpdateReturnFight();
-				commandQue.push_front(c2);
-				inCommand=false;
-				tempOrder=true;
-				if(lastPC!=gs->frameNum){	//avoid infinite loops
-					lastPC=gs->frameNum;
-					SlowUpdate();
-				}
-				return;
-			}
-		}
-		if((curPos-goalPos).SqLength2D()<(64*64) || owner->moveType->progressState==CMoveType::Failed){
-			FinishCommand();
-		}
+/**
+* @brief executes the set wanted max speed command
+*/
+void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c){
+	if (repeatOrders && (commandQue.size() >= 2) &&
+			(commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+		commandQue.push_back(commandQue.front());
+	}
+	commandQue.pop_front();
+	SlowUpdate();
+	return;
+}
+
+/**
+* @brief executes the move command
+*/
+void CMobileCAI::ExecuteMove(Command &c){
+	float3 pos(c.params[0], c.params[1], c.params[2]);
+	if(!(pos == goalPos)){
+		SetGoal(pos, owner->pos);
+	}
+	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
+			owner->moveType->progressState == CMoveType::Failed){
+		FinishCommand();
+	}
+	return;
+}
+
+/**
+* @brief Executes the Patrol command c
+*/
+void CMobileCAI::ExecutePatrol(Command &c){
+	assert(owner->unitDef->canPatrol);
+	assert(c.params.size() >= 3);
+	Command temp;
+	temp.id = CMD_FIGHT;
+	temp.params.push_back(c.params[0]);
+	temp.params.push_back(c.params[1]);
+	temp.params.push_back(c.params[2]);
+	temp.options = c.options | INTERNAL_ORDER;
+	commandQue.push_back(c);
+	commandQue.pop_front();
+	commandQue.push_front(temp);
+	if(owner->group){
+		owner->group->CommandFinished(owner->id, CMD_PATROL);
+	}
+	ExecuteFight(temp);
+	return;
+}
+
+/**
+* @brief Executes the Fight command c
+*/
+void CMobileCAI::ExecuteFight(Command &c){
+	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+	if(tempOrder){
+		inCommand = true;
+		tempOrder = false;
+	}
+	if(c.params.size()<3){		//this shouldnt happen but anyway ...
+		logOutput.Print("Error: got fight cmd with less than 3 params on %s in mobilecai",
+			owner->unitDef->humanName.c_str());
 		return;
 	}
-	case CMD_DGUN:
-		if(uh->limitDgun && owner->unitDef->isCommander
-		  && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
-			StopMove();
-			FinishCommand();
+	if(c.params.size() >= 6){
+		if(!inCommand){
+			commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
+		}
+	} else {
+		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
+		// rotated (only shortened) if we reach this because the previous return
+		// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
+		// condition, but is actually updated correctly if you click somewhere
+		// outside the area close to the line (for a new command).
+		commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		if ((owner->pos - commandPos1).SqLength2D() > (96 * 96)) {
+			commandPos1 = owner->pos;
+		}
+	}
+	float3 pos(c.params[0],c.params[1],c.params[2]);
+	if(!inCommand){
+		inCommand = true;
+		commandPos2 = pos;
+	}
+	if(c.params.size() >= 6){
+		pos = ClosestPointOnLine(commandPos1, commandPos2, pos);
+	}
+	if(pos!=goalPos){
+		SetGoal(pos, owner->pos);
+	}
+
+	if(owner->unitDef->canAttack && owner->fireState==2){
+		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		CUnit* enemy=helper->GetClosestEnemyUnit(
+			curPosOnLine, owner->maxRange + 100 * owner->moveState * owner->moveState,
+			owner->allyteam);
+		if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
+				&& !(owner->unitDef->noChaseCategory & enemy->category)
+				&& !owner->weapons.empty()){
+			Command c2;
+			c2.id=CMD_ATTACK;
+			c2.options=c.options|INTERNAL_ORDER;
+			c2.params.push_back(enemy->id);
+			PushOrUpdateReturnFight();
+			commandQue.push_front(c2);
+			inCommand=false;
+			tempOrder=true;
+			if(lastPC!=gs->frameNum){	//avoid infinite loops
+				lastPC=gs->frameNum;
+				SlowUpdate();
+			}
 			return;
 		}
-		//no break
-	case CMD_ATTACK:
-		assert(owner->unitDef->canAttack);
-		if(tempOrder && owner->moveState<2){		//limit how far away we fly
-			if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500+owner->maxRange){
-				StopMove();
-				FinishCommand();
-				break;
+	}
+	if((owner->pos - goalPos).SqLength2D() < (64 * 64)
+			|| (owner->moveType->progressState == CMoveType::Failed)){
+		FinishCommand();
+	}
+	return;
+}
+
+/**
+* @breif Executs the guard command c
+*/
+void CMobileCAI::ExecuteGuard(Command &c){
+	assert(owner->unitDef->canGuard);
+	assert(!c.params.empty());
+	if(int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
+			&& UpdateTargetLostTimer(int(c.params[0]))){
+		CUnit* guarded = uh->units[int(c.params[0])];
+		if(owner->unitDef->canAttack && guarded->lastAttacker
+				&& guarded->lastAttack + 40 < gs->frameNum
+				&& (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
+			StopSlowGuard();
+			Command nc;
+			nc.id=CMD_ATTACK;
+			nc.params.push_back(guarded->lastAttacker->id);
+			nc.options = c.options;
+			commandQue.push_front(nc);
+			SlowUpdate();
+			return;
+		} else {
+			//float3 dif = guarded->speed * guarded->frontdir;
+			float3 dif = guarded->pos - owner->pos;
+			dif.Normalize();
+			float3 goal = guarded->pos - dif * (guarded->radius + owner->radius + 64);
+			if((goalPos - goal).SqLength2D() > 1600
+					|| (goalPos - owner->pos).SqLength2D()
+						< (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)
+						 * (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)){
+				SetGoal(goal, owner->pos);
 			}
-		}
-		if(!inCommand){
-			if(c.params.size()==1){
-				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
-					float3 fix=uh->units[int(c.params[0])]->pos+owner->posErrorVector*128;
-					SetGoal(fix,curPos);
-					orderTarget=uh->units[int(c.params[0])];
-					AddDeathDependence(orderTarget);
-					inCommand=true;
-				} else {
-					StopMove();		//cancel keeppointingto
-					FinishCommand();
-					break;
+			if((goal - owner->pos).SqLength2D() < 6400) {
+				StartSlowGuard(guarded->maxSpeed);
+				if((goal-owner->pos).SqLength2D() < 1800){
+					StopMove();
+					NonMoving(); 
 				}
 			} else {
-				float3 pos(c.params[0],c.params[1],c.params[2]);
-				SetGoal(pos,curPos);
-				inCommand=true;
+				StopSlowGuard();
 			}
 		}
-		else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-			// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
-			if ((commandQue.size() != 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
-				StopMove();
-				FinishCommand();
-				break;
-			}
-		}
+	} else {
+		FinishCommand();
+	}
+	return;
+}
 
-		if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
-			StopMove();		//cancel keeppointingto
-			FinishCommand();
-			break;
+/**
+* @breif executes the stop command c
+*/
+void CMobileCAI::ExecuteStop(Command &c){
+	StopMove();
+	return CCommandAI::ExecuteStop(c);
+}
+
+/**
+* @breif executes the DGun command c
+*/
+void CMobileCAI::ExecuteDGun(Command &c){
+	if(uh->limitDgun && owner->unitDef->isCommander
+			&& owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
+		StopMove();
+		return FinishCommand();
+	}
+	return ExecuteAttack(c);
+}
+
+
+/**
+* @breif Causes this CMoblieCAI to execute the attack order c
+*/
+void CMobileCAI::ExecuteAttack(Command &c){
+	assert(owner->unitDef->canAttack);
+	if(tempOrder && owner->moveState < 2){		//limit how far away we fly
+		if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500 + owner->maxRange){
+			StopMove();
+			return FinishCommand();
 		}
-		if(orderTarget){
-			//note that we handle aircrafts slightly differently
-			if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN)
-					&& owner->weapons.size() > 0 
-					&& owner->weapons.front()->range -
-						owner->weapons.front()->relWeaponPos.Length() >
-						orderTarget->pos.distance(owner->pos))
-					|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
-					&& (owner->pos-orderTarget->pos).Length2D() <
-						owner->maxRange*0.9f)
-					|| (owner->pos-orderTarget->pos).SqLength2D()<1024){
-				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget,
-					min((float)(owner->losRadius*SQUARE_SIZE*2),
-					owner->maxRange*0.9f), true);
-			} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2f){
-				float3 fix=orderTarget->pos+owner->posErrorVector*128;
-				SetGoal(fix,curPos);
+	}
+	if(!inCommand){
+		if(c.params.size()==1){
+			if(uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner){
+				float3 fix=uh->units[int(c.params[0])]->pos+owner->posErrorVector*128;
+				SetGoal(fix, owner->pos);
+				orderTarget=uh->units[int(c.params[0])];
+				AddDeathDependence(orderTarget);
+				inCommand=true;
+			} else {
+				StopMove();		//cancel keeppointingto
+				return FinishCommand();
 			}
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);
-			if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
-					&& (owner->pos-pos).Length() < 
-						owner->weapons.front()->range -
-						owner->weapons.front()->relWeaponPos.Length())
-					|| (owner->pos-pos).SqLength2D()<1024){
-				StopMove();
-				owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9f, true);
-			} else if(pos.distance2D(goalPos)>10){
-				SetGoal(pos,curPos);
-			}
+			SetGoal(pos, owner->pos);
+			inCommand=true;
 		}
-		break;
-	case CMD_GUARD:
-		assert(owner->unitDef->canGuard);
-		if(int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL && UpdateTargetLostTimer(int(c.params[0]))){
-			CUnit* guarded=uh->units[int(c.params[0])];
-			if(owner->unitDef->canAttack && guarded->lastAttacker && guarded->lastAttack+40<gs->frameNum
-			  && (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
-				Command nc;
-				nc.id=CMD_ATTACK;
-				nc.params.push_back(guarded->lastAttacker->id);
-				nc.options=c.options;
-				commandQue.push_front(nc);
-				SlowUpdate();
-				return;
-			} else {
-				float3 dif=guarded->pos-curPos;
-				dif.Normalize();
-				float3 goal=guarded->pos-dif*(guarded->radius+owner->radius+64);
-				if((goal-curPos).SqLength2D()<8000){
-					StopMove();
-					NonMoving();
-				}else{
-					if((goalPos-goal).SqLength2D()>3600)
-						SetGoal(goal,curPos);
-				}
-			}
-		} else {
-			FinishCommand();
+		return;
+	}
+
+	if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
+		StopMove();		//cancel keeppointingto
+		return FinishCommand();
+	}
+	if(orderTarget){
+		//note that we handle aircrafts slightly differently
+		if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN)
+				&& owner->weapons.size() > 0 
+				&& owner->weapons.front()->range -
+					owner->weapons.front()->relWeaponPos.Length() >
+					orderTarget->pos.distance(owner->pos))
+				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
+				&& (owner->pos-orderTarget->pos).Length2D() <
+					owner->maxRange*0.9f)
+				|| (owner->pos-orderTarget->pos).SqLength2D()<1024){
+			StopMove();
+			owner->moveType->KeepPointingTo(orderTarget,
+				min((float)(owner->losRadius*SQUARE_SIZE*2),
+				owner->maxRange*0.9f), true);
+		} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2f){
+			float3 fix=orderTarget->pos+owner->posErrorVector*128;
+			SetGoal(fix, owner->pos);
 		}
-		break;
-	default:
-		CCommandAI::SlowUpdate();
-		break;
+	} else {
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
+				&& (owner->pos-pos).Length() < 
+					owner->weapons.front()->range -
+					owner->weapons.front()->relWeaponPos.Length())
+				|| (owner->pos-pos).SqLength2D()<1024){
+			StopMove();
+			owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9f, true);
+		} else if(pos.distance2D(goalPos)>10){
+			SetGoal(pos, owner->pos);
+		}
 	}
 }
 
@@ -471,9 +527,9 @@ int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius)
 {
-	if(pos==goalPos)
+	if(pos == goalPos)
 		return;
-	goalPos=pos;
+	goalPos = pos;
 	owner->moveType->StartMoving(pos, goalRadius);
 }
 
@@ -563,19 +619,19 @@ void CMobileCAI::NonMoving(void)
 		float length=dif.Length();
 		if(!length) {
 			length=0.1f;
-			dif=float3(0.1f,0.0f,0.0f);
+			dif = float3(0.1f, 0.0f, 0.0f);
 		}
 		if(length<buggerOffRadius){
-			float3 goalPos=buggerOffPos+dif*((buggerOffRadius+128)/length);
+			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
 			Command c;
-			c.id=CMD_MOVE;
-			c.options=0;//INTERNAL_ORDER;
+			c.id = CMD_MOVE;
+			c.options = 0;//INTERNAL_ORDER;
 			c.params.push_back(goalPos.x);
 			c.params.push_back(goalPos.y);
 			c.params.push_back(goalPos.z);
-			c.timeOut=gs->frameNum+40;
+			c.timeOut = gs->frameNum + 40;
 			commandQue.push_front(c);
-			unimportantMove=true;
+			unimportantMove = true;
 		}
 	}
 }
@@ -586,6 +642,7 @@ void CMobileCAI::FinishCommand(void)
 		lastUserGoal=owner->pos;
 //		logOutput.Print("Reseting user goal");
 	}
+	StopSlowGuard();
 	CCommandAI::FinishCommand();
 }
 
@@ -632,5 +689,30 @@ void CMobileCAI::IdleCheck(void)
 		unimportantMove=true;
 	} else {
 		NonMoving();
+	}
+}
+
+void CMobileCAI::StopSlowGuard(){
+	if(slowGuard){
+		slowGuard = false;
+		owner->moveType->SetMaxSpeed(owner->maxSpeed);
+	}
+}
+
+void CMobileCAI::StartSlowGuard(float speed){
+	if(!slowGuard){
+		slowGuard = true;
+		//speed /= 30;
+		if(owner->maxSpeed >= speed){
+			speed;
+			if(!commandQue.empty()){
+				Command currCommand = commandQue.front();
+				if(commandQue.size() <= 1
+						|| commandQue[1].id != CMD_SET_WANTED_MAX_SPEED
+						|| commandQue[1].params[0] > speed){
+					owner->moveType->SetMaxSpeed(speed);
+				}
+			}
+		}
 	}
 }

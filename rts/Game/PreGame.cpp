@@ -273,7 +273,8 @@ bool CPreGame::Update()
 			if (ars.empty())
 				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", modName.c_str());
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-				hpiHandler->AddArchive(*i, false);
+				if (!hpiHandler->AddArchive(*i, false))
+					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 
 			// Determine if the map is inside an archive, and possibly map needed archives
 			CFileHandler* f = new CFileHandler("maps/" + mapName);
@@ -282,7 +283,8 @@ bool CPreGame::Update()
 				if (ars.empty())
 					logOutput.Print("Warning: map archive \"%s\" is missing?\n", mapName.c_str());
 				for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-					hpiHandler->AddArchive(*i, false);
+					if (!hpiHandler->AddArchive(*i, false))
+						logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 				}
 			}
 			delete f;

@@ -19,6 +19,10 @@ public:
 	void DrawCommands(void);
 	void FinishCommand(void);
 
+	virtual void ExecuteUnloadUnit(Command &c);
+	virtual void ExecuteUnloadUnits(Command &c);
+	virtual void ExecuteLoadUnits(Command &c);
+
 	int toBeTransportedUnitId;
 	bool scriptReady;
 	int lastCall;

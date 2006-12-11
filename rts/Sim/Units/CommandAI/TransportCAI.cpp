@@ -65,162 +65,173 @@ void CTransportCAI::SlowUpdate(void)
 		return;
 	}
 
-	CTransportUnit* transport=(CTransportUnit*)owner;
 	Command& c=commandQue.front();
 	switch(c.id){
 	case CMD_LOAD_UNITS:
-		if(c.params.size()==1){		//load single unit
-			if(transport->transportCapacityUsed >= owner->unitDef->transportCapacity){
-				FinishCommand();
-				return;
-			}
-			if(inCommand){
-				if(!owner->cob->busy)
-					FinishCommand();
-				return;
-			}
-			CUnit* unit=uh->units[(int)c.params[0]];
-			if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
-				toBeTransportedUnitId=unit->id;
-				unit->toBeTransported=true;
-				if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass){
-					FinishCommand();
-					return;
-				}
-				if(goalPos.distance2D(unit->pos)>10){
-					float3 fix = unit->pos;
-					SetGoal(fix,owner->pos,64);
-				}
-				if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
-					if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
-						float3 wantedPos=unit->pos+UpVector*unit->model->height;
-						SetGoal(wantedPos,owner->pos);
-						am->dontCheckCol=true;
-						am->ForceHeading(unit->heading);
-						am->SetWantedAltitude(unit->model->height);
-						am->maxDrift=1;
-						//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
-						if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995f){
-							am->dontCheckCol=false;
-							am->dontLand=true;
-							std::vector<int> args;
-							args.push_back((int)(unit->model->height*65536));
-							owner->cob->Call("BeginTransport",args);
-							std::vector<int> args2;
-							args2.push_back(0);
-							args2.push_back((int)(unit->model->height*65536));
-							owner->cob->Call("QueryTransport",args2);
-							((CTransportUnit*)owner)->AttachUnit(unit,args2[0]);
-							am->SetWantedAltitude(0);
-							FinishCommand();
-							return;
-						}
-					} else {
-						inCommand=true;
-						scriptReady=false;
-						StopMove();
-						std::vector<int> args;
-						args.push_back(unit->id);
-						owner->cob->Call("TransportPickup",args,ScriptCallback,this,0);
-					}
-				}
-			} else {
-				FinishCommand();
-			}
-		} else if(c.params.size()==4){		//load in radius
-			if(lastCall==gs->frameNum)	//avoid infinite loops
-				return;
-			lastCall=gs->frameNum;
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius=c.params[3];
-			CUnit* unit=FindUnitToTransport(pos,radius);
-			if(unit && ((CTransportUnit*)owner)->transportCapacityUsed < owner->unitDef->transportCapacity){
-				Command c2;
-				c2.id=CMD_LOAD_UNITS;
-				c2.params.push_back(unit->id);
-				c2.options=c.options | INTERNAL_ORDER;
-				commandQue.push_front(c2);
-				inCommand=false;
-				SlowUpdate();
-				return;
-			} else {
-				FinishCommand();
-				return;
-			}
-		}
-		break;
-	case CMD_UNLOAD_UNITS:{
-		if(lastCall==gs->frameNum)	//avoid infinite loops
-			return;
-		lastCall=gs->frameNum;
-		if(((CTransportUnit*)owner)->transported.empty()){
-			FinishCommand();
-			return;
-		}
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		float radius=c.params[3];
-		float3 found;
-		bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius,found);
-		if(canUnload){
-			Command c2;
-			c2.id=CMD_UNLOAD_UNIT;
-			c2.params.push_back(found.x);
-			c2.params.push_back(found.y);
-			c2.params.push_back(found.z);
-			c2.options=c.options | INTERNAL_ORDER;
-			commandQue.push_front(c2);
-			SlowUpdate();
-			return;
-		} else {
-			FinishCommand();
-		}
-		break;}
+		return ExecuteLoadUnits(c);
+	case CMD_UNLOAD_UNITS:
+		return ExecuteUnloadUnits(c);
 	case CMD_UNLOAD_UNIT:
+		return ExecuteUnloadUnit(c);
+	default:
+		return CMobileCAI::SlowUpdate();
+	}
+}
+
+void CTransportCAI::ExecuteLoadUnits(Command &c){
+	CTransportUnit* transport=(CTransportUnit*)owner;
+	if(c.params.size()==1){		//load single unit
+		if(transport->transportCapacityUsed >= owner->unitDef->transportCapacity){
+			FinishCommand();
+			return;
+		}
 		if(inCommand){
 			if(!owner->cob->busy)
-//			if(scriptReady)
 				FinishCommand();
-		} else {
-			if(((CTransportUnit*)owner)->transported.empty()){
+			return;
+		}
+		CUnit* unit=uh->units[(int)c.params[0]];
+		if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
+			toBeTransportedUnitId=unit->id;
+			unit->toBeTransported=true;
+			if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass){
 				FinishCommand();
 				return;
 			}
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			if(goalPos.distance2D(pos)>20){
-				SetGoal(pos,owner->pos);
+			if(goalPos.distance2D(unit->pos)>10){
+				float3 fix = unit->pos;
+				SetGoal(fix,owner->pos,64);
 			}
-			if(pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
+			if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
 				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
-					pos.y=ground->GetHeight(pos.x,pos.z);
-					CUnit* unit=((CTransportUnit*)owner)->transported.front().unit;
-					float3 wantedPos=pos+UpVector*unit->model->height;
+					float3 wantedPos=unit->pos+UpVector*unit->model->height;
 					SetGoal(wantedPos,owner->pos);
+					am->dontCheckCol=true;
+					am->ForceHeading(unit->heading);
 					am->SetWantedAltitude(unit->model->height);
 					am->maxDrift=1;
-					if(owner->pos.distance(wantedPos)<8 && owner->updir.dot(UpVector)>0.99f){
-						am->dontLand=false;
-						owner->cob->Call("EndTransport");
-						((CTransportUnit*)owner)->DetachUnit(unit);
-						float3 fix = owner->pos+owner->frontdir*20;
-						SetGoal(fix,owner->pos);		//move the transport away slightly
+					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
+					if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995f){
+						am->dontCheckCol=false;
+						am->dontLand=true;
+						std::vector<int> args;
+						args.push_back((int)(unit->model->height*65536));
+						owner->cob->Call("BeginTransport",args);
+						std::vector<int> args2;
+						args2.push_back(0);
+						args2.push_back((int)(unit->model->height*65536));
+						owner->cob->Call("QueryTransport",args2);
+						((CTransportUnit*)owner)->AttachUnit(unit,args2[0]);
+						am->SetWantedAltitude(0);
 						FinishCommand();
+						return;
 					}
 				} else {
 					inCommand=true;
 					scriptReady=false;
 					StopMove();
 					std::vector<int> args;
-					args.push_back(((CTransportUnit*)owner)->transported.front().unit->id);
-					args.push_back(PACKXZ(pos.x, pos.z));
-					owner->cob->Call("TransportDrop",args,ScriptCallback,this,0);
+					args.push_back(unit->id);
+					owner->cob->Call("TransportPickup",args,ScriptCallback,this,0);
 				}
 			}
+		} else {
+			FinishCommand();
 		}
-		break;
-	default:
-		CMobileCAI::SlowUpdate();
-		break;
+	} else if(c.params.size()==4){		//load in radius
+		if(lastCall==gs->frameNum)	//avoid infinite loops
+			return;
+		lastCall=gs->frameNum;
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius=c.params[3];
+		CUnit* unit=FindUnitToTransport(pos,radius);
+		if(unit && ((CTransportUnit*)owner)->transportCapacityUsed < owner->unitDef->transportCapacity){
+			Command c2;
+			c2.id=CMD_LOAD_UNITS;
+			c2.params.push_back(unit->id);
+			c2.options=c.options | INTERNAL_ORDER;
+			commandQue.push_front(c2);
+			inCommand=false;
+			SlowUpdate();
+			return;
+		} else {
+			FinishCommand();
+			return;
+		}
 	}
+	return;
+}
+
+void CTransportCAI::ExecuteUnloadUnits(Command &c){
+	if(lastCall==gs->frameNum)	//avoid infinite loops
+		return;
+	lastCall=gs->frameNum;
+	if(((CTransportUnit*)owner)->transported.empty()){
+		FinishCommand();
+		return;
+	}
+	float3 pos(c.params[0],c.params[1],c.params[2]);
+	float radius=c.params[3];
+	float3 found;
+	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius,found);
+	if(canUnload){
+		Command c2;
+		c2.id=CMD_UNLOAD_UNIT;
+		c2.params.push_back(found.x);
+		c2.params.push_back(found.y);
+		c2.params.push_back(found.z);
+		c2.options=c.options | INTERNAL_ORDER;
+		commandQue.push_front(c2);
+		SlowUpdate();
+		return;
+	} else {
+		FinishCommand();
+	}
+	return;
+}
+
+void CTransportCAI::ExecuteUnloadUnit(Command &c){
+	if(inCommand){
+		if(!owner->cob->busy)
+	//			if(scriptReady)
+			FinishCommand();
+	} else {
+		if(((CTransportUnit*)owner)->transported.empty()){
+			FinishCommand();
+			return;
+		}
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		if(goalPos.distance2D(pos)>20){
+			SetGoal(pos,owner->pos);
+		}
+		if(pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
+			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
+				pos.y=ground->GetHeight(pos.x,pos.z);
+				CUnit* unit=((CTransportUnit*)owner)->transported.front().unit;
+				float3 wantedPos=pos+UpVector*unit->model->height;
+				SetGoal(wantedPos,owner->pos);
+				am->SetWantedAltitude(unit->model->height);
+				am->maxDrift=1;
+				if(owner->pos.distance(wantedPos)<8 && owner->updir.dot(UpVector)>0.99f){
+					am->dontLand=false;
+					owner->cob->Call("EndTransport");
+					((CTransportUnit*)owner)->DetachUnit(unit);
+					float3 fix = owner->pos+owner->frontdir*20;
+					SetGoal(fix,owner->pos);		//move the transport away slightly
+					FinishCommand();
+				}
+			} else {
+				inCommand=true;
+				scriptReady=false;
+				StopMove();
+				std::vector<int> args;
+				args.push_back(((CTransportUnit*)owner)->transported.front().unit->id);
+				args.push_back(PACKXZ(pos.x, pos.z));
+				owner->cob->Call("TransportDrop",args,ScriptCallback,this,0);
+			}
+		}
+	}
+	return;
 }
 
 void CTransportCAI::ScriptReady(void)

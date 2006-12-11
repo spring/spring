@@ -30,7 +30,7 @@ public:
 
 	vector<string> GetFilesInDir(string dir);
 
-	void AddArchive(string arName, bool override);
+	bool AddArchive(string arName, bool override);
 };
 
 extern CVFSHandler* hpiHandler;
