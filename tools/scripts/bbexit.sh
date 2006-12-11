@@ -16,8 +16,8 @@ exitstatus=0
 echo "Creating spring-r$1.zip containing spring.exe"
 cd game
 if zip "spring-r$1.zip" "spring.exe" "spring.def"; then
-	chmod 644 "spring-r$1.zip"
-	mv "spring-r$1.zip" "/home/tvo/public_html/spring/executable/"
+	chmod 644 "spring-r$1.zip" || exit 1
+	mv "spring-r$1.zip" "/home/tvo/public_html/spring/executable/" || exit 1
 else
 	echo "failed to zip spring.exe into spring-r$1.zip"
 	exitstatus=1
@@ -28,8 +28,8 @@ echo
 
 # Build installer & put online
 if installer/make_test_installer.sh "$1"; then
-	chmod 644 "installer/spring_r$1_nightly.exe"
-	mv "installer/spring_r$1_nightly.exe" "/home/tvo/public_html/spring/installer/"
+	chmod 644 "installer/spring_r$1_nightly_gpl.exe" || exit 1
+	mv "installer/spring_r$1_nightly_gpl.exe" "/home/tvo/public_html/spring/installer/" || exit 1
 else
 	echo "failed to build installer"
 	exitstatus=1

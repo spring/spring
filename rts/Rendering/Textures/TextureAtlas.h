@@ -23,6 +23,9 @@ class CTextureAtlas
 {
 public:
 
+	// set to true to write finalized texture atlas to disk
+	static bool debug;
+
 	unsigned int gltex;
 
 	CTextureAtlas(int maxxSize, int maxySize);

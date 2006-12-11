@@ -657,6 +657,7 @@ bool SpringApp::ParseCmdLine()
 	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
 	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
 	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
+	cmdline->addoption('t',"textureatlas", OPTPARM_NONE, "", "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->addoption('q',"quit", OPTPARM_INT, "T", "Quit immediately on game over or after T seconds");
 	cmdline->parse();
 
@@ -683,6 +684,9 @@ bool SpringApp::ParseCmdLine()
 		fullscreen = false;
 	else if (cmdline->result("fullscreen"))
 		fullscreen = true;
+
+	if (cmdline->result("textureatlas"))
+		CTextureAtlas::debug = true;
 
 	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);

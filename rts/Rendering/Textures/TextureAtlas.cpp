@@ -8,6 +8,8 @@
 
 CR_BIND_STRUCT(AtlasedTexture);
 
+bool CTextureAtlas::debug;
+
 CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 {
 	this->maxxsize = maxxsize;
@@ -226,12 +228,19 @@ void CTextureAtlas::CreateTexture()
 			}
 	}
 
-	//CBitmap save(data,xsize,ysize);
-	//save.Save("textureatlas1.tga");
-	//CBitmap save2(data[1],xsize>>1,ysize>>1);
-	//save2.Save("textureatlas2.tga");
-	//CBitmap save3(data[2],xsize>>2,ysize>>2);
-	//save3.Save("textureatlas3.tga");
+	if (debug) {
+		// hack to make sure we don't overwrite our own atlases
+		static int count = 0;
+		char fname[256];
+		SNPRINTF(fname, sizeof(fname), "textureatlas%d.png", ++count);
+		CBitmap save(data,xsize,ysize);
+		save.Save(fname);
+		logOutput.Print("Saved finalized textureatlas to '%s'.", fname);
+		//CBitmap save2(data[1],xsize>>1,ysize>>1);
+		//save2.Save("textureatlas2.tga");
+		//CBitmap save3(data[2],xsize>>2,ysize>>2);
+		//save3.Save("textureatlas3.tga");
+	}
 
 
 	glGenTextures(1, &gltex);
