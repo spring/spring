@@ -38,7 +38,7 @@ void CVFSHandler::FindArchives(const string& pattern, const string& path)
 }
 
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
-void CVFSHandler::AddArchive(string arName, bool override)
+bool CVFSHandler::AddArchive(string arName, bool override)
 {
 //	StringToLowerInPlace(arName);
 
@@ -46,7 +46,7 @@ void CVFSHandler::AddArchive(string arName, bool override)
 	if (!ar) {
 		ar = CArchiveFactory::OpenArchive(arName);
 		if (!ar)
-			return;
+			return false;
 		archives[arName] = ar;
 	}
 
@@ -64,6 +64,7 @@ void CVFSHandler::AddArchive(string arName, bool override)
 		d.size = size;
 		files[name] = d;
 	}
+	return true;
 }
 
 CVFSHandler::~CVFSHandler(void)

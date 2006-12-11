@@ -24,6 +24,16 @@ public:
 	bool FindRepairTargetAndRepair(float3 pos, float radius,unsigned char options,bool attackEnemy);
 	bool FindCaptureTargetAndCapture(float3 pos, float radius,unsigned char options);
 
+	void ExecutePatrol(Command &c);
+	void ExecuteFight(Command &c);
+	void ExecuteGuard(Command &c);
+	void ExecuteStop(Command &c);
+	virtual void ExecuteRepair(Command &c);
+	virtual void ExecuteCapture(Command &c);
+	virtual void ExecuteReclaim(Command &c);
+	virtual void ExecuteResurrect(Command &c);
+	virtual void ExecuteRestore(Command &c);
+
 	map<int,string> buildOptions;
 	bool building;
 	BuildInfo build;

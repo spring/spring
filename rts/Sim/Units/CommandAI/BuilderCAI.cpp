@@ -222,357 +222,418 @@ void CBuilderCAI::SlowUpdate()
 	}
 	switch(c.id){
 	case CMD_STOP:
-		building=false;
-		fac->StopBuild();
-		break;
-	case CMD_REPAIR:{
-		assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
-		if(c.params.size()==1){		//repair unit
-			CUnit* unit=uh->units[(int)c.params[0]];
-			if(tempOrder && owner->moveState==1){		//limit how far away we go
-				if(unit && LinePointDist(commandPos1,commandPos2,unit->pos) > 500){
-					StopMove();
-					FinishCommand();
-					break;
-				}
-			}
-			if(unit && unit->health<unit->maxHealth && unit!=owner && UpdateTargetLostTimer((int)c.params[0])){
-				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
-					StopMove();
-					fac->SetRepairTarget(unit);
-					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
-				} else {
-					if (goalPos.distance2D(unit->pos)>1) {
-						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
-					}
-				}
-			} else {
-				StopMove();
-				FinishCommand();
-			}
-		} else {			//repair area
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius=c.params[3];
-			if(FindRepairTargetAndRepair(pos,radius,c.options,false)){
-				inCommand=false;
-				SlowUpdate();
-				return;
-			}
-			if(!(c.options & ALT_KEY)){
-				FinishCommand();
-			}
-		}
-		return;}
-	case CMD_CAPTURE:{
-		assert(owner->unitDef->canCapture);
-		if(c.params.size()==1){		//capture unit
-			CUnit* unit=uh->units[(int)c.params[0]];
-			if(unit && unit->team!=owner->team && UpdateTargetLostTimer((int)c.params[0])){
-				if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
-					StopMove();
-					fac->SetCaptureTarget(unit);
-					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
-				} else {
-					if(goalPos.distance2D(unit->pos)>1)
-						SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
-				}
-			} else {
-				StopMove();
-				FinishCommand();
-			}
-		} else {			//capture area
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius=c.params[3];
-			if(FindCaptureTargetAndCapture(pos,radius,c.options)){
-				inCommand=false;
-				SlowUpdate();
-				return;
-			}
-			if(!(c.options & ALT_KEY)){
-				FinishCommand();
-			}
-		}
-		return;}
-	case CMD_GUARD:{
-		assert(owner->unitDef->canGuard);
-		CUnit* guarded=uh->units[(int)c.params[0]];
-		if(guarded && guarded!=owner && UpdateTargetLostTimer((int)c.params[0])){
-			if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
-				if(b->terraforming){
-					if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8f+b->terraformRadius*0.7f){
-						StopMove();
-						owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
-						fac->HelpTerraform(b);
-					} else {
-						SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
-					}
-					return;
-				}
-				if (b->curBuild && ((b->curBuild->beingBuilt && owner->unitDef->canAssist) || (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
-					Command nc;
-					nc.id=CMD_REPAIR;
-					nc.options=c.options;
-					nc.params.push_back(b->curBuild->id);
-					commandQue.push_front(nc);
-					inCommand=false;
-//					SlowUpdate();
-					return;
-				}
-			}
-			if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
-				if (f->curBuild && ((f->curBuild->beingBuilt && owner->unitDef->canAssist) || (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
-					Command nc;
-					nc.id=CMD_REPAIR;
-					nc.options=c.options;
-					nc.params.push_back(f->curBuild->id);
-					commandQue.push_front(nc);
-					inCommand=false;
-//					SlowUpdate();
-					return;
-				}
-			}
-			float3 curPos=owner->pos;
-			float3 dif=guarded->pos-curPos;
-			dif.Normalize();
-			float3 goal=guarded->pos-dif*(fac->buildDistance-5);
-			if((guarded->pos-curPos).SqLength2D()<(fac->buildDistance*0.9f+guarded->radius)*(fac->buildDistance*0.9f+guarded->radius)){
-				StopMove();
-//				logOutput.Print("should point with type 3?");
-				owner->moveType->KeepPointingTo(guarded->pos, fac->buildDistance*0.9f+guarded->radius, false);
-				if(guarded->health<guarded->maxHealth && ((guarded->beingBuilt && owner->unitDef->canAssist) || (!guarded->beingBuilt && owner->unitDef->canRepair)))
-					fac->SetRepairTarget(guarded);
-				else
-					NonMoving();
-			}else{
-				if((goalPos-goal).SqLength2D()>4000)
-					SetGoal(goal,curPos);
-			}
-		} else {
-			FinishCommand();
-		}
-		return;}
-	case CMD_RECLAIM:{
-		assert(owner->unitDef->canReclaim);
-		if(c.params.size()==1){
-			int id=(int) c.params[0];
-			if(id>=MAX_UNITS){		//reclaim feature
-				CFeature* feature=featureHandler->features[id-MAX_UNITS];
-				if(feature){
-					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
-						StopMove();
-						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
-						fac->SetReclaimTarget(feature);
-					} else {
-						if(goalPos.distance2D(feature->pos)>1){
-							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
-						} else {
-							if(owner->moveType->progressState==CMoveType::Failed){
-								StopMove();
-								FinishCommand();
-							}
-						}
-					}
-				} else {
-					StopMove();
-					FinishCommand();
-				}
-
-			} else {							//reclaim unit
-				CUnit* unit=uh->units[id];
-				if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
-					if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
-						StopMove();
-						owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
-						fac->SetReclaimTarget(unit);
-					} else {
-						if(goalPos.distance2D(unit->pos)>1){
-							SetGoal(unit->pos,owner->pos);
-						}else{
-							if(owner->moveType->progressState==CMoveType::Failed){
-								StopMove();
-								FinishCommand();
-							}
-						}
-					}
-				} else {
-					FinishCommand();
-				}
-			}
-		} else if(c.params.size()==4){//area reclaim
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius=c.params[3];
-			if(FindReclaimableFeatureAndReclaim(pos,radius,c.options,true)){
-				inCommand=false;
-				SlowUpdate();
-				return;
-			}
-			if(!(c.options & ALT_KEY)){
-				FinishCommand();
-			}
-		} else {	//wrong number of parameters
-			FinishCommand();
-		}
-		return;}
-	case CMD_RESURRECT:{
-		assert(owner->unitDef->canResurrect);
-		if(c.params.size()==1){
-			int id=(int)c.params[0];
-			if(id>=MAX_UNITS){		//resurrect feature
-				CFeature* feature=featureHandler->features[id-MAX_UNITS];
-				if(feature && feature->createdFromUnit!=""){
-					if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
-						StopMove();
-						owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
-						fac->SetResurrectTarget(feature);
-					} else {
-						if(goalPos.distance2D(feature->pos)>1){
-							SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
-						} else {
-							if(owner->moveType->progressState==CMoveType::Failed){
-								StopMove();
-								FinishCommand();
-							}
-						}
-					}
-				} else {
-					if(fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair){	//resurrection finished, start repair
-						c.id=CMD_REPAIR;		//kind of hackery to overwrite the current order i suppose
-						c.params.clear();
-						c.params.push_back(fac->lastResurrected);
-						c.options|=INTERNAL_ORDER;
-						fac->lastResurrected=0;
-						inCommand=false;
-						SlowUpdate();
-						return;
-					}
-					StopMove();
-					FinishCommand();
-				}
-			} else {							//resurrect unit
-				FinishCommand();
-			}
-		} else if(c.params.size()==4){//area resurect
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius=c.params[3];
-			if(FindResurrectableFeatureAndResurrect(pos,radius,c.options)){
-				inCommand=false;
-				SlowUpdate();
-				return;
-			}
-			if(!(c.options & ALT_KEY)){
-				FinishCommand();
-			}
-		} else {	//wrong number of parameters
-			FinishCommand();
-		}
-		return;}
-	case CMD_PATROL:{
-		assert(owner->unitDef->canPatrol);
-		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
-				owner->unitDef->humanName.c_str());
-			return;
-		}
-		Command temp;
-		temp.id = CMD_FIGHT;
-		temp.params.push_back(c.params[0]);
-		temp.params.push_back(c.params[1]);
-		temp.params.push_back(c.params[2]);
-		temp.options = c.options|INTERNAL_ORDER;
-		commandQue.push_back(c);
-		commandQue.pop_front();
-		commandQue.push_front(temp);
-		if(owner->group){
-			owner->group->CommandFinished(owner->id,CMD_PATROL);
-		}
-		SlowUpdate();
-		return;}
-	case CMD_FIGHT:{
-		assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-		if(tempOrder){
-			tempOrder=false;
-			inCommand=true;
-		}
-		if(c.params.size()<3){		//this shouldnt happen but anyway ...
-			logOutput.Print("Error: got fight cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
-			return;
-		}
-		if(c.params.size() >= 6){
-			if(!inCommand){
-				commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
-			}
-		} else {
-			// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
-			// rotated (only shortened) if we reach this because the previous return
-			// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
-			// condition, but is actually updated correctly if you click somewhere
-			// outside the area close to the line (for a new command).
-			commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, curPos);
-			if ((curPos-commandPos1).SqLength2D()>(96*96)) {
-				commandPos1 = curPos;
-			}
-		}
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		if(!inCommand){
-			inCommand = true;
-			commandPos2=pos;
-		}
-		if(!(pos==goalPos)){
-			SetGoal(pos,curPos);
-		}
-		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, curPos);
-		if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPosOnLine,300*owner->moveState+fac->buildDistance-8,c.options,true)){
-			CUnit* target=uh->units[(int)commandQue.front().params[0]];
-			tempOrder=true;
-			inCommand=false;
-			if(lastPC1!=gs->frameNum){	//avoid infinite loops
-				lastPC1=gs->frameNum;
-				SlowUpdate();
-			}
-			return;
-		}
-		if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false)){
-			tempOrder=true;
-			inCommand=false;
-			if(lastPC2!=gs->frameNum){	//avoid infinite loops
-				lastPC2=gs->frameNum;
-				SlowUpdate();
-			}
-			return;
-		}
-		if((curPos-pos).SqLength2D()<(64*64)){
-			FinishCommand();
-			return;
-		}
-		if(owner->haveTarget && owner->moveType->progressState!=CMoveType::Done){
-			StopMove();
-		} else if(owner->moveType->progressState!=CMoveType::Active){
-			owner->moveType->StartMoving(goalPos, 8);
-		}
-		return;}
-	case CMD_RESTORE:{
-		assert(owner->unitDef->canRestore);
-		if(inCommand){
-			if(!fac->terraforming){
-				FinishCommand();
-			}
-		} else if(owner->unitDef->canRestore){
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius(c.params[3]);
-			if(fac->pos.distance2D(pos)<fac->buildDistance-1){
-				StopMove();
-				fac->StartRestore(pos,radius);
-				owner->moveType->KeepPointingTo(pos, fac->buildDistance*0.9f, false);
-				inCommand=true;
-			} else {
-				SetGoal(pos,owner->pos, fac->buildDistance*0.9f);
-			}
-		}
-		return;}
+		return ExecuteStop(c);
+	case CMD_REPAIR:
+		return ExecuteRepair(c);
+	case CMD_CAPTURE:
+		return ExecuteCapture(c);
+	case CMD_GUARD:
+		return ExecuteGuard(c);
+	case CMD_RECLAIM:
+		return ExecuteReclaim(c);
+	case CMD_RESURRECT:
+		return ExecuteResurrect(c);
+	case CMD_PATROL:
+		return ExecutePatrol(c);
+	case CMD_FIGHT:
+		return ExecuteFight(c);
+	case CMD_RESTORE:
+		return ExecuteRestore(c);
 	default:
 		break;
 	}
 	CMobileCAI::SlowUpdate();
+}
+
+void CBuilderCAI::ExecuteStop(Command &c){
+	CBuilder* fac=(CBuilder*)owner;
+	building=false;
+	fac->StopBuild();
+	CMobileCAI::ExecuteStop(c);
+}
+
+void CBuilderCAI::ExecuteRepair(Command &c){
+	CBuilder* fac=(CBuilder*)owner;
+	assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
+	if(c.params.size()==1){		//repair unit
+		CUnit* unit=uh->units[(int)c.params[0]];
+		if(tempOrder && owner->moveState==1){		//limit how far away we go
+			if(unit && LinePointDist(commandPos1,commandPos2,unit->pos) > 500){
+				StopMove();
+				FinishCommand();
+				return;
+			}
+		}
+		if(unit && unit->health<unit->maxHealth && unit!=owner && UpdateTargetLostTimer((int)c.params[0])){
+			if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
+				StopMove();
+				fac->SetRepairTarget(unit);
+				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
+			} else {
+				if (goalPos.distance2D(unit->pos)>1) {
+					SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
+				}
+			}
+		} else {
+			StopMove();
+			FinishCommand();
+		}
+	} else {			//repair area
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius=c.params[3];
+		if(FindRepairTargetAndRepair(pos,radius,c.options,false)){
+			inCommand=false;
+			SlowUpdate();
+			return;
+		}
+		if(!(c.options & ALT_KEY)){
+			FinishCommand();
+		}
+	}
+	return;
+}
+
+void CBuilderCAI::ExecuteCapture(Command &c){
+	assert(owner->unitDef->canCapture);
+	CBuilder* fac=(CBuilder*)owner;
+	if(c.params.size()==1){		//capture unit
+		CUnit* unit=uh->units[(int)c.params[0]];
+		if(unit && unit->team!=owner->team && UpdateTargetLostTimer((int)c.params[0])){
+			if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
+				StopMove();
+				fac->SetCaptureTarget(unit);
+				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
+			} else {
+				if(goalPos.distance2D(unit->pos)>1)
+					SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
+			}
+		} else {
+			StopMove();
+			FinishCommand();
+		}
+	} else {			//capture area
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius=c.params[3];
+		if(FindCaptureTargetAndCapture(pos,radius,c.options)){
+			inCommand=false;
+			SlowUpdate();
+			return;
+		}
+		if(!(c.options & ALT_KEY)){
+			FinishCommand();
+		}
+	}
+	return;
+}
+
+void CBuilderCAI::ExecuteGuard(Command &c){
+	assert(owner->unitDef->canGuard);
+	CBuilder* fac=(CBuilder*)owner;
+	CUnit* guarded=uh->units[(int)c.params[0]];
+	if(guarded && guarded!=owner && UpdateTargetLostTimer((int)c.params[0])){
+		if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
+			if(b->terraforming){
+				if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8f+b->terraformRadius*0.7f){
+					StopMove();
+					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
+					fac->HelpTerraform(b);
+				} else {
+					SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
+				}
+				return;
+			}
+			if (b->curBuild && ((b->curBuild->beingBuilt && owner->unitDef->canAssist) || (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+				Command nc;
+				nc.id=CMD_REPAIR;
+				nc.options=c.options;
+				nc.params.push_back(b->curBuild->id);
+				commandQue.push_front(nc);
+				inCommand=false;
+//					SlowUpdate();
+				return;
+			}
+		}
+		if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
+			if (f->curBuild
+					&& ((f->curBuild->beingBuilt && owner->unitDef->canAssist)
+					|| (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+				Command nc;
+				nc.id=CMD_REPAIR;
+				nc.options=c.options;
+				nc.params.push_back(f->curBuild->id);
+				commandQue.push_front(nc);
+				inCommand=false;
+//					SlowUpdate();
+				return;
+			}
+		}
+		float3 curPos=owner->pos;
+		float3 dif=guarded->pos-curPos;
+		dif.Normalize();
+		float3 goal=guarded->pos-dif*(fac->buildDistance*.5);
+		if((guarded->pos-curPos).SqLength2D()<
+				(fac->buildDistance*1.9f + guarded->radius)
+				*(fac->buildDistance*1.9f + guarded->radius)){
+			StartSlowGuard(guarded->maxSpeed);
+		} else {
+			StopSlowGuard();
+		}
+		if((guarded->pos-curPos).SqLength2D()<
+				(fac->buildDistance*0.9f + guarded->radius)
+				*(fac->buildDistance*0.9f + guarded->radius)){
+			StopMove();
+//				logOutput.Print("should point with type 3?");
+			owner->moveType->KeepPointingTo(guarded->pos,
+				fac->buildDistance*0.9f+guarded->radius, false);
+			if(guarded->health<guarded->maxHealth
+					&& ((guarded->beingBuilt && owner->unitDef->canAssist)
+					|| (!guarded->beingBuilt && owner->unitDef->canRepair)))
+				fac->SetRepairTarget(guarded);
+			else
+				NonMoving();
+		}else{
+			if((goalPos-goal).SqLength2D()>4000
+					|| (goalPos - owner->pos).SqLength2D() <
+						(owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)
+						* (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)){
+				SetGoal(goal,curPos);
+			}
+		}
+	} else {
+		FinishCommand();
+	}
+	return;
+}
+
+void CBuilderCAI::ExecuteReclaim(Command &c){
+	assert(owner->unitDef->canReclaim);
+	CBuilder* fac=(CBuilder*)owner;
+	if(c.params.size()==1){
+		int id=(int) c.params[0];
+		if(id>=MAX_UNITS){		//reclaim feature
+			CFeature* feature=featureHandler->features[id-MAX_UNITS];
+			if(feature){
+				if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
+					StopMove();
+					owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
+					fac->SetReclaimTarget(feature);
+				} else {
+					if(goalPos.distance2D(feature->pos)>1){
+						SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
+					} else {
+						if(owner->moveType->progressState==CMoveType::Failed){
+							StopMove();
+							FinishCommand();
+						}
+					}
+				}
+			} else {
+				StopMove();
+				FinishCommand();
+			}
+
+		} else {							//reclaim unit
+			CUnit* unit=uh->units[id];
+			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
+				if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
+					StopMove();
+					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
+					fac->SetReclaimTarget(unit);
+				} else {
+					if(goalPos.distance2D(unit->pos)>1){
+						SetGoal(unit->pos,owner->pos);
+					}else{
+						if(owner->moveType->progressState==CMoveType::Failed){
+							StopMove();
+							FinishCommand();
+						}
+					}
+				}
+			} else {
+				FinishCommand();
+			}
+		}
+	} else if(c.params.size()==4){//area reclaim
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius=c.params[3];
+		if(FindReclaimableFeatureAndReclaim(pos,radius,c.options,true)){
+			inCommand=false;
+			SlowUpdate();
+			return;
+		}
+		if(!(c.options & ALT_KEY)){
+			FinishCommand();
+		}
+	} else {	//wrong number of parameters
+		FinishCommand();
+	}
+	return;
+}
+
+void CBuilderCAI::ExecuteResurrect(Command &c){
+	assert(owner->unitDef->canResurrect);
+	CBuilder* fac=(CBuilder*)owner;
+	if(c.params.size()==1){
+		int id=(int)c.params[0];
+		if(id>=MAX_UNITS){		//resurrect feature
+			CFeature* feature=featureHandler->features[id-MAX_UNITS];
+			if(feature && feature->createdFromUnit!=""){
+				if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
+					StopMove();
+					owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
+					fac->SetResurrectTarget(feature);
+				} else {
+					if(goalPos.distance2D(feature->pos)>1){
+						SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
+					} else {
+						if(owner->moveType->progressState==CMoveType::Failed){
+							StopMove();
+							FinishCommand();
+						}
+					}
+				}
+			} else {
+				if(fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair){	//resurrection finished, start repair
+					c.id=CMD_REPAIR;		//kind of hackery to overwrite the current order i suppose
+					c.params.clear();
+					c.params.push_back(fac->lastResurrected);
+					c.options|=INTERNAL_ORDER;
+					fac->lastResurrected=0;
+					inCommand=false;
+					SlowUpdate();
+					return;
+				}
+				StopMove();
+				FinishCommand();
+			}
+		} else {							//resurrect unit
+			FinishCommand();
+		}
+	} else if(c.params.size()==4){//area resurect
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius=c.params[3];
+		if(FindResurrectableFeatureAndResurrect(pos,radius,c.options)){
+			inCommand=false;
+			SlowUpdate();
+			return;
+		}
+		if(!(c.options & ALT_KEY)){
+			FinishCommand();
+		}
+	} else {	//wrong number of parameters
+		FinishCommand();
+	}
+	return;
+}
+
+void CBuilderCAI::ExecutePatrol(Command &c){
+	assert(owner->unitDef->canPatrol);
+	if(c.params.size()<3){		//this shouldnt happen but anyway ...
+		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
+			owner->unitDef->humanName.c_str());
+		return;
+	}
+	Command temp;
+	temp.id = CMD_FIGHT;
+	temp.params.push_back(c.params[0]);
+	temp.params.push_back(c.params[1]);
+	temp.params.push_back(c.params[2]);
+	temp.options = c.options|INTERNAL_ORDER;
+	commandQue.push_back(c);
+	commandQue.pop_front();
+	commandQue.push_front(temp);
+	if(owner->group){
+		owner->group->CommandFinished(owner->id,CMD_PATROL);
+	}
+	SlowUpdate();
+	return;
+}
+
+void CBuilderCAI::ExecuteFight(Command &c){
+	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+	CBuilder* fac=(CBuilder*)owner;
+	if(tempOrder){
+		tempOrder=false;
+		inCommand=true;
+	}
+	if(c.params.size()<3){		//this shouldnt happen but anyway ...
+		logOutput.Print("Error: got fight cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
+		return;
+	}
+	if(c.params.size() >= 6){
+		if(!inCommand){
+			commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
+		}
+	} else {
+		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
+		// rotated (only shortened) if we reach this because the previous return
+		// fight command finished by the 'if((curPos-pos).SqLength2D()<(64*64)){'
+		// condition, but is actually updated correctly if you click somewhere
+		// outside the area close to the line (for a new command).
+		commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		if ((owner->pos - commandPos1).SqLength2D()>(96*96)) {
+			commandPos1 = owner->pos;
+		}
+	}
+	float3 pos(c.params[0],c.params[1],c.params[2]);
+	if(!inCommand){
+		inCommand = true;
+		commandPos2=pos;
+	}
+	if(!(pos==goalPos)){
+		SetGoal(pos,owner->pos);
+	}
+	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+	if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPosOnLine,300*owner->moveState+fac->buildDistance-8,c.options,true)){
+		CUnit* target=uh->units[(int)commandQue.front().params[0]];
+		tempOrder=true;
+		inCommand=false;
+		if(lastPC1!=gs->frameNum){	//avoid infinite loops
+			lastPC1=gs->frameNum;
+			SlowUpdate();
+		}
+		return;
+	}
+	if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false)){
+		tempOrder=true;
+		inCommand=false;
+		if(lastPC2!=gs->frameNum){	//avoid infinite loops
+			lastPC2=gs->frameNum;
+			SlowUpdate();
+		}
+		return;
+	}
+	if((owner->pos - pos).SqLength2D()<(64*64)){
+		FinishCommand();
+		return;
+	}
+	if(owner->haveTarget && owner->moveType->progressState!=CMoveType::Done){
+		StopMove();
+	} else if(owner->moveType->progressState!=CMoveType::Active){
+		owner->moveType->StartMoving(goalPos, 8);
+	}
+	return;
+}
+void CBuilderCAI::ExecuteRestore(Command &c){
+	assert(owner->unitDef->canRestore);
+	CBuilder* fac=(CBuilder*)owner;
+	if(inCommand){
+		if(!fac->terraforming){
+			FinishCommand();
+		}
+	} else if(owner->unitDef->canRestore){
+		float3 pos(c.params[0],c.params[1],c.params[2]);
+		float radius(c.params[3]);
+		if(fac->pos.distance2D(pos)<fac->buildDistance-1){
+			StopMove();
+			fac->StartRestore(pos,radius);
+			owner->moveType->KeepPointingTo(pos, fac->buildDistance*0.9f, false);
+			inCommand=true;
+		} else {
+			SetGoal(pos,owner->pos, fac->buildDistance*0.9f);
+		}
+	}
+	return;
 }
 
 int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)

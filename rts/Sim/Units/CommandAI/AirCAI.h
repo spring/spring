@@ -4,10 +4,10 @@
 #ifndef __AIR_CAI_H__
 #define __AIR_CAI_H__
 
-#include "CommandAI.h"
+#include "MobileCAI.h"
 
 class CAirCAI :
-	public CCommandAI
+	public CMobileCAI
 {
 public:
 	CAirCAI(CUnit* owner);
@@ -21,13 +21,17 @@ public:
 	void FinishCommand(void);
 	void BuggerOff(float3 pos, float radius);
 	void StopMove();
-
-	float3 goalPos;
+	
+	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
+	
+	void ExecuteGuard(Command &c);
+	void ExecuteAreaAttack(Command &c);
+	void ExecuteAttack(Command &c);
+	void ExecuteFight(Command &c);
+//	void ExecuteMove(Command &c);
 
 	float3 basePos;
 	float3 baseDir;
-
-	bool tempOrder;
 
 	int activeCommand;
 	int targetAge;
@@ -35,9 +39,6 @@ public:
 
 	int lastPC1;
 	int lastPC2;
-
-	float3 commandPos1;		//used to limit how far away stuff can fly from path
-	float3 commandPos2;
 
 protected:
 	void PushOrUpdateReturnFight() {

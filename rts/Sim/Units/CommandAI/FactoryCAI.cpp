@@ -261,10 +261,6 @@ void CFactoryCAI::SlowUpdate()
 		} else {
 			switch(c.id){
 			case CMD_STOP:
-				building=false;
-				fac->StopBuild();
-				commandQue.pop_front();
-				break;
 			default:
 				CCommandAI::SlowUpdate();
 				return;
@@ -272,6 +268,14 @@ void CFactoryCAI::SlowUpdate()
 		}
 	}while(oldSize!=commandQue.size() && !commandQue.empty());
 
+	return;
+}
+
+void CFactoryCAI::ExecuteStop(Command &c){
+	CFactory* fac=(CFactory*)owner;
+	building=false;
+	fac->StopBuild();
+	commandQue.pop_front();
 	return;
 }
 

@@ -20,6 +20,7 @@
 #include "SDL_keysym.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
+#include "LogOutput.h"
 
 CGameSetup* gameSetup=0;
 
@@ -100,7 +101,8 @@ bool CGameSetup::Init(char* buf, int size)
 	if (!f->FileExists()) {
 		vector<string> ars = archiveScanner->GetArchivesForMap(mapname);
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-			hpiHandler->AddArchive(*i, false);
+			if (!hpiHandler->AddArchive(*i, false))
+				logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 		}
 	}
 	delete f;

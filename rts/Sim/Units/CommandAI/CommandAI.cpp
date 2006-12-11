@@ -761,65 +761,86 @@ int CCommandAI::UpdateTargetLostTimer(int unitid)
 	return targetLostTimer;
 }
 
+/**
+* @breif Causes this CommandAI to execute the attack order c
+*/
+void CCommandAI::ExecuteAttack(Command &c){
+	assert(owner->unitDef->canAttack);
+	if(inCommand){
+		if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
+			return FinishCommand();
+		}
+		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+			return FinishCommand();
+		}
+	} else {
+		if(c.params.size()==1){
+			if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
+				owner->AttackUnit(uh->units[int(c.params[0])], c.id==CMD_DGUN);
+				if(orderTarget)
+					DeleteDeathDependence(orderTarget);
+				orderTarget=uh->units[int(c.params[0])];
+				AddDeathDependence(orderTarget);
+				inCommand=true;
+			} else {
+				return FinishCommand();
+			}
+		} else {
+			float3 pos(c.params[0],c.params[1],c.params[2]);
+			owner->AttackGround(pos, c.id==CMD_DGUN);
+			inCommand=true;
+		}
+	}
+}
+
+/**
+* @breif executes the stop command c
+*/
+void CCommandAI::ExecuteStop(Command &c){
+	owner->AttackUnit(0,true);
+	std::vector<CWeapon*>::iterator wi;
+	for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi){
+		(*wi)->HoldFire();
+	}
+	return FinishCommand();
+}
+
+/**
+* @breif executes the DGun command c
+*/
+void CCommandAI::ExecuteDGun(Command &c){
+	return ExecuteAttack(c);
+}
+
 void CCommandAI::SlowUpdate()
 {
-	if(commandQue.empty())
+	if(commandQue.empty()){
 		return;
+	}
 
 	Command& c=commandQue.front();
 
 	switch(c.id){
-	case CMD_WAIT:
-		break;
-	case CMD_SELFD:{
-		if(owner->selfDCountdown != 0){
-			owner->selfDCountdown=0;
-		} else {
-			owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
-		}
-		FinishCommand();
-		break;}
-	case CMD_STOP:{
-		owner->AttackUnit(0,true);
-		std::vector<CWeapon*>::iterator wi;
-		for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi)
-			(*wi)->HoldFire();
-		FinishCommand();
-		break;};
-	case CMD_ATTACK:
-	case CMD_DGUN:
-		assert(owner->unitDef->canAttack);
-		if(inCommand){
-			if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
-				FinishCommand();
-				break;
-			}
-			if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-				FinishCommand();
-				break;
-			}
-		} else {
-			if(c.params.size()==1){
-				if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
-					owner->AttackUnit(uh->units[int(c.params[0])], c.id==CMD_DGUN);
-					if(orderTarget)
-						DeleteDeathDependence(orderTarget);
-					orderTarget=uh->units[int(c.params[0])];
-					AddDeathDependence(orderTarget);
-					inCommand=true;
-				} else {
-					FinishCommand();
-				}
+		case CMD_WAIT:
+			return;
+	case CMD_SELFD:
+		{
+			if(owner->selfDCountdown != 0){
+				owner->selfDCountdown=0;
 			} else {
-				float3 pos(c.params[0],c.params[1],c.params[2]);
-				owner->AttackGround(pos, c.id==CMD_DGUN);
-				inCommand=true;
+				owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
 			}
+			FinishCommand();
+			return;
 		}
-		break;
-	default:
-		FinishCommand();
-		break;
+		case CMD_STOP:
+			return ExecuteStop(c);
+		case CMD_ATTACK:
+			return ExecuteAttack(c);
+		case CMD_DGUN:
+			return ExecuteDGun(c);
+		default:
+			return FinishCommand();
 	}
 }
 
@@ -903,8 +924,10 @@ void CCommandAI::DrawCommands(void)
 void CCommandAI::FinishCommand(void)
 {
 	int type=commandQue.front().id;
-	if(repeatOrders && type!=CMD_STOP && type != CMD_PATROL && !(commandQue.front().options & INTERNAL_ORDER))
+	if(repeatOrders && type!=CMD_STOP && type != CMD_PATROL
+			&& !(commandQue.front().options & INTERNAL_ORDER)){
 		commandQue.push_back(commandQue.front());
+	}
 	commandQue.pop_front();
 	inCommand=false;
 	targetDied=false;

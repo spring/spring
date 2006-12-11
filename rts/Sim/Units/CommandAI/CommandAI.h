@@ -40,6 +40,9 @@ public:
 	std::vector<Command> GetOverlapQueued(const Command &c);
 	std::vector<Command> GetOverlapQueued(const Command &c,
 	                                      std::deque<Command>& queue);
+	virtual void ExecuteAttack(Command &c);
+	virtual void ExecuteDGun(Command &c);
+	virtual void ExecuteStop(Command &c);
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
