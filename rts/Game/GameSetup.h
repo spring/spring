@@ -27,7 +27,7 @@ public:
 	int hostport;
 	int sourceport;			//the port clients will try to connect from
 
-	float readyTime;
+	int readyTime;
 	bool forceReady;
 
 	bool Init(char* buf, int size);
