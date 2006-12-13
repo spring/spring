@@ -62,7 +62,7 @@ CDynWater::CDynWater(void)
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,256, 256, 0,GL_RGBA, GL_FLOAT, 0);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	float* temp=new float[1024*1024*4];
+	float* temp=SAFE_NEW float[1024*1024*4];
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
@@ -78,7 +78,7 @@ CDynWater::CDynWater(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,64, 64, 0,GL_RGBA, GL_FLOAT, temp);
 
-	unsigned char* scrap=new unsigned char[256*256*4];
+	unsigned char* scrap=SAFE_NEW unsigned char[256*256*4];
 	CBitmap foam;
 	if (!foam.Load("bitmaps/foam.jpg") || foam.xsize != 256 || foam.ysize != 256)
 		throw content_error("Could not load foam from file bitmaps/foam.jpg");

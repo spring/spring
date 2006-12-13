@@ -26,7 +26,7 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
-	AirBase* ab=new AirBase;
+	AirBase* ab=SAFE_NEW AirBase;
 	ab->unit=base;
 
 	std::vector<int> args;
@@ -35,7 +35,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 
 	base->cob->Call("QueryLandingPad",args);
 
-	LandingPad* pad=new LandingPad;
+	LandingPad* pad=SAFE_NEW LandingPad;
 	
 	pad->unit=base;
 	pad->piece=args[0];
@@ -45,7 +45,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 	ab->freePads.push_back(pad);
 
 	if(args[0]!=args[1]){	//if we get two different pieces we assume the unit has two pads, not sure what is the correct way
-		LandingPad* pad=new LandingPad;
+		LandingPad* pad=SAFE_NEW LandingPad;
 		
 		pad->unit=base;
 		pad->piece=args[1];

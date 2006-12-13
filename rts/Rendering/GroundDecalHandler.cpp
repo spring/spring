@@ -26,7 +26,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	if(decalLevel==0)
 		return;
 
-	unsigned char* buf=new unsigned char[512*512*4];
+	unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
 
 	TdfParser tdfparser("gamedata/resources.tdf");
@@ -45,7 +45,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 
 	scarFieldX=gs->mapx/32;
 	scarFieldY=gs->mapy/32;
-	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
+	scarField=SAFE_NEW std::set<Scar*>[scarFieldX*scarFieldY];
 	
 	lastTest=0;
 	maxOverlap=decalLevel+1;
@@ -321,7 +321,7 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 
 	TrackType* type=trackTypes[unit->unitDef->trackType];
 	if(!unit->myTrack){
-		UnitTrackStruct* ts=new UnitTrackStruct;
+		UnitTrackStruct* ts=SAFE_NEW UnitTrackStruct;
 		ts->owner=unit;
 		ts->lifeTime=(int)(30*decalLevel*unit->unitDef->trackStrength);
 		ts->trackAlpha=(int)(unit->unitDef->trackStrength*25);
@@ -386,7 +386,7 @@ int CGroundDecalHandler::GetTrackType(std::string name)
 		}
 		++a;
 	}
-	TrackType* tt=new TrackType;
+	TrackType* tt=SAFE_NEW TrackType;
 	tt->name=name;
 	tt->texture=LoadTexture(name);
 	trackTypes.push_back(tt);
@@ -443,7 +443,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 
 	pos.CheckInBounds();
 
-	Scar* s=new Scar;
+	Scar* s=SAFE_NEW Scar;
 	s->pos=pos;
 	s->radius=radius*1.4f;
 	s->creationTime=gs->frameNum;
@@ -578,7 +578,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 		return;
 
 	BuildingDecalType* type=buildingDecalTypes[building->unitDef->buildingDecalType];
-	BuildingGroundDecal* decal=new BuildingGroundDecal;
+	BuildingGroundDecal* decal=SAFE_NEW BuildingGroundDecal;
 
 	int posx=int(building->pos.x/8);
 	int posy=int(building->pos.z/8);
@@ -626,7 +626,7 @@ int CGroundDecalHandler::GetBuildingDecalType(std::string name)
 		}
 		++a;
 	}
-	BuildingDecalType* tt=new BuildingDecalType;
+	BuildingDecalType* tt=SAFE_NEW BuildingDecalType;
 	tt->name=name;
 	CBitmap bm;
 	if (!bm.Load(string("unittextures/") + name))

@@ -51,7 +51,7 @@ void VertexBuffer::Init (int bytesize)
 		data=0;
 		glGenBuffersARB(1,&id);
 	} else {
-		data=new char[bytesize];
+		data=SAFE_NEW char[bytesize];
 	}
 	size=bytesize;
 	totalBufferSize+=size;

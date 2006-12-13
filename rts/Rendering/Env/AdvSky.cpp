@@ -228,14 +228,14 @@ float3 CAdvSky::GetCoord(int x, int y)
 
 void CAdvSky::CreateClouds()
 {
-	cloudThickness2=new unsigned char[CLOUD_SIZE*CLOUD_SIZE+1];
-	cloudTexMem=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4];
+	cloudThickness2=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE+1];
+	cloudTexMem=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE*4];
 
 	glGenTextures(1, &skyTex);
 	glGenTextures(1, &skyDot3Tex);
 	glGenTextures(1, &cloudDot3Tex);
 
-	unsigned char (* skytex)[512][4]=new unsigned char[512][512][4];
+	unsigned char (* skytex)[512][4]=SAFE_NEW unsigned char[512][512][4];
 
 	glGenTextures(1, &cdtex);
 //	CBitmap pic("bitmaps/clouddetail.bmp");
@@ -318,7 +318,7 @@ void CAdvSky::CreateClouds()
 		CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
 	}
 
-	char* scrap=new char[CLOUD_SIZE*CLOUD_SIZE*4];
+	char* scrap=SAFE_NEW char[CLOUD_SIZE*CLOUD_SIZE*4];
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -371,7 +371,7 @@ START_TIME_PROFILE
 		}
 
 		//create the raw clouds from the perlin noice octaves
-		int (*rawClouds)[CLOUD_SIZE]=new int[CLOUD_SIZE][CLOUD_SIZE];
+		int (*rawClouds)[CLOUD_SIZE]=SAFE_NEW int[CLOUD_SIZE][CLOUD_SIZE];
 
 		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++){
 			rawClouds[0][a]=0;
@@ -644,7 +644,7 @@ void CAdvSky::DrawShafts()
 
 void CAdvSky::InitSun()
 {
-	unsigned char* mem=new unsigned char[128*128*4];
+	unsigned char* mem=SAFE_NEW unsigned char[128*128*4];
 
 	for(int y=0;y<128;++y){
 		for(int x=0;x<128;++x){

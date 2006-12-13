@@ -94,7 +94,7 @@ void CMissileProjectile::Collision()
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y && fabs(speed.y)>0.001f)
 		pos-=speed*std::min((float)1,float((h-pos.y)/fabs(speed.y)));
-	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
+	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
 	//helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
 	oldSmoke=pos;
@@ -102,7 +102,7 @@ void CMissileProjectile::Collision()
 
 void CMissileProjectile::Collision(CUnit *unit)
 {
-	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
+	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,false,true,7,Smoke_Time,0.6f,drawTrail);
 //	unit->DoDamage(damages,owner);
 	//helper->Explosion(pos,damages,areaOfEffect,owner);
 
@@ -181,7 +181,7 @@ void CMissileProjectile::Update(void)
 	age++;
 	numParts++;
 	if(!(age&7)){
-		CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,age==8,false,7,Smoke_Time,0.6f,drawTrail);
+		CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,age==8,false,7,Smoke_Time,0.6f,drawTrail);
 		oldSmoke=pos;
 		oldDir=dir;
 		numParts=0;

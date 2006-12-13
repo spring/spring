@@ -32,7 +32,7 @@ CInMapDraw::CInMapDraw(void)
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
 	numQuads=drawQuadsX*drawQuadsY;
-	drawQuads=new DrawQuad[numQuads];
+	drawQuads=SAFE_NEW DrawQuad[numQuads];
 
 	unsigned char tex[64][128][4];
 	for(int y=0;y<64;y++){

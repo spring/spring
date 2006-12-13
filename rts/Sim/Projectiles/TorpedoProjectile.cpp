@@ -120,7 +120,7 @@ void CTorpedoProjectile::Update(void)
 
 			float3 pspeed=gs->randVector()*0.1f;
 			pspeed.y+=0.2f;
-			new CBubbleProjectile(pos+gs->randVector(),pspeed,40+gs->randFloat()*30,1+gs->randFloat()*2,0.01f,owner,0.3f+gs->randFloat()*0.3f);
+			SAFE_NEW CBubbleProjectile(pos+gs->randVector(),pspeed,40+gs->randFloat()*30,1+gs->randFloat()*2,0.01f,owner,0.3f+gs->randFloat()*0.3f);
 		}
 	}
 }

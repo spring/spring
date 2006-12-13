@@ -49,7 +49,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	ifs=new CFileHandler(string("maps/")+mapname);
+	ifs=SAFE_NEW CFileHandler(string("maps/")+mapname);
 	if(!ifs->FileExists())
 		throw content_error("Couldn't open map file " + mapname);
 	POP_CODE_MODE;
@@ -72,7 +72,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
-	heightmap=new float[(gs->mapx+1)*(gs->mapy+1)];//new float[(gs->mapx+1)*(gs->mapy+1)];
+	heightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];//SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
 
 	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
@@ -80,7 +80,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float mod=(header.maxHeight-header.minHeight)/65536.0f;
 
 	int hmx=gs->mapx+1, hmy=gs->mapy+1;
-	unsigned short* temphm=new unsigned short[hmx * hmy];
+	unsigned short* temphm=SAFE_NEW unsigned short[hmx * hmy];
 	ifs->Seek(header.heightmapPtr);
 	ifs->Read(temphm,hmx*hmy*2);
 
@@ -110,7 +110,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Creating overhead texture");
 
-	unsigned char* buf=new unsigned char[MINIMAP_SIZE];
+	unsigned char* buf=SAFE_NEW unsigned char[MINIMAP_SIZE];
 	ifs->Seek(header.minimapPtr);
 	ifs->Read(buf,MINIMAP_SIZE);
 	glGenTextures(1, &minimapTex);
@@ -137,7 +137,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-//	unsigned char* tempMem=new unsigned char[1024*1024*4];
+//	unsigned char* tempMem=SAFE_NEW unsigned char[1024*1024*4];
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 //	delete [] tempMem;
 
@@ -148,7 +148,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	HeightmapUpdated(0, gs->mapx, 0, gs->mapy);
 
-	groundDrawer=new CBFGroundDrawer(this);
+	groundDrawer=SAFE_NEW CBFGroundDrawer(this);
 
 	ReadFeatureInfo ();
 }
@@ -176,7 +176,7 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	int ysize=y2-y1;
 
 	//logOutput.Print("%i %i %i %i",x1,x2,y1,y2);
-	unsigned char* tempMem=new unsigned char[xsize*ysize*4];
+	unsigned char* tempMem=SAFE_NEW unsigned char[xsize*ysize*4];
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
 			float height = centerheightmap[(x+x1)+(y+y1)*gs->mapx];
@@ -444,7 +444,7 @@ void CSmfReadMap::ReadFeatureInfo()
 	ifs->Seek(header.featurePtr);
 	READ_MAPFEATUREHEADER(featureHeader, ifs);
 
-	featureTypes=new string[featureHeader.numFeatureType];
+	featureTypes=SAFE_NEW string[featureHeader.numFeatureType];
 
 	for(int a=0;a<featureHeader.numFeatureType;++a){
 		char c;

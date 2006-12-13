@@ -33,7 +33,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	extraTexPal=0;
 	extractDepthMap=0;
 
-	infoTexMem=new unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
+	infoTexMem=SAFE_NEW unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
 	for(int a=0;a<gs->pwr2mapx*gs->pwr2mapy*4;++a)
 		infoTexMem[a]=255;
 

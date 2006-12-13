@@ -30,7 +30,7 @@ CFileHandler::CFileHandler(std::string filename)
 
 void CFileHandler::Init(const char* filename)
 {
-	ifs=new std::ifstream(filesystem.LocateFile(filename).c_str(), ios::in|ios::binary);
+	ifs=SAFE_NEW std::ifstream(filesystem.LocateFile(filename).c_str(), ios::in|ios::binary);
 	if (ifs && !ifs->bad() && ifs->is_open()) {
 		ifs->seekg(0, ios_base::end);
 		filesize = ifs->tellg();
@@ -48,7 +48,7 @@ void CFileHandler::Init(const char* filename)
 
 	hpiLength=hpiHandler->GetFileSize(file);
 	if(hpiLength!=-1){
-		hpiFileBuffer=new unsigned char[hpiLength];
+		hpiFileBuffer=SAFE_NEW unsigned char[hpiLength];
 		if (hpiHandler->LoadFile(file,hpiFileBuffer) < 0) {
 			delete[] hpiFileBuffer;
 			hpiFileBuffer = 0;

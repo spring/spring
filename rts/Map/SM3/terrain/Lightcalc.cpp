@@ -159,7 +159,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	uchar *shadingTexData=new uchar[w*w*4], *td = shadingTexData;
+	uchar *shadingTexData=SAFE_NEW uchar[w*w*4], *td = shadingTexData;
 	for(int y=0;y<w;y++) {
 		for (int x=0;x<w;x++) {
 			shadingTexData[(y*w+x)*4+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);

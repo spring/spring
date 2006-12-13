@@ -86,22 +86,22 @@ START_TIME_PROFILE;
 		side = MAX_TEAMS-1;
 
 	if(type=="GroundUnit"){
-		unit=new CUnit;
+		unit=SAFE_NEW CUnit;
 		blocking = true;
 	} else if (type=="Transport"){
-		unit=new CTransportUnit;
+		unit=SAFE_NEW CTransportUnit;
 		blocking = true;
 	} else if (type=="Building"){
-		unit=new CBuilding;
+		unit=SAFE_NEW CBuilding;
 		blocking = true;
 	} else if (type=="Factory"){
-		unit=new CFactory;
+		unit=SAFE_NEW CFactory;
 		blocking = true;
 	} else if (type=="Builder"){
-		unit=new CBuilder;
+		unit=SAFE_NEW CBuilder;
 		blocking = true;
 	} else if (type=="Bomber" || type=="Fighter"){
-		unit=new CUnit;
+		unit=SAFE_NEW CUnit;
 	} else if (type == "MetalExtractor") {
 		unit = SAFE_NEW CExtractorBuilding;
 		blocking = true;
@@ -161,29 +161,29 @@ START_TIME_PROFILE;
 	}
 
 	if(type=="GroundUnit"){
-		new CMobileCAI(unit);
+		SAFE_NEW CMobileCAI(unit);
 	} else if(type=="Transport"){
-		new CTransportCAI(unit);
+		SAFE_NEW CTransportCAI(unit);
 	} else if(type=="Factory"){
-		new CFactoryCAI(unit);
+		SAFE_NEW CFactoryCAI(unit);
 	} else if(type=="Builder"){
-		new CBuilderCAI(unit);
+		SAFE_NEW CBuilderCAI(unit);
 	} else if(type=="Bomber"){
 		if (ud->hoverAttack)
-			new CMobileCAI(unit);
+			SAFE_NEW CMobileCAI(unit);
 		else
-			new CAirCAI(unit);
+			SAFE_NEW CAirCAI(unit);
 	} else if(type=="Fighter"){
 		if (ud->hoverAttack)
-			new CMobileCAI(unit);
+			SAFE_NEW CMobileCAI(unit);
 		else
-			new CAirCAI(unit);
+			SAFE_NEW CAirCAI(unit);
 	} else {
-		new CCommandAI(unit);
+		SAFE_NEW CCommandAI(unit);
 	}
 
 	if(ud->canmove && !ud->canfly && type!="Factory"){
-		CGroundMoveType* mt=new CGroundMoveType(unit);
+		CGroundMoveType* mt=SAFE_NEW CGroundMoveType(unit);
 		mt->maxSpeed=ud->speed/GAME_SPEED;
 		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
 		mt->turnRate=ud->turnRate;
@@ -260,7 +260,7 @@ START_TIME_PROFILE;
 			unit->moveType = mt;
 		}
 	} else {
-		unit->moveType=new CMoveType(unit);
+		unit->moveType=SAFE_NEW CMoveType(unit);
 		unit->upright=true;
 	}
 
@@ -330,48 +330,48 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	}
 
 	if(udw->name=="NOWEAPON"){
-		weapon=new CNoWeapon(owner);
+		weapon=SAFE_NEW CNoWeapon(owner);
 	} else if(weapondef->type=="Cannon"){
-		weapon=new CCannon(owner);
+		weapon=SAFE_NEW CCannon(owner);
 		((CCannon*)weapon)->selfExplode=weapondef->selfExplode;
 	} else if(weapondef->type=="Rifle"){
-		weapon=new CRifle(owner);
+		weapon=SAFE_NEW CRifle(owner);
 	} else if(weapondef->type=="Melee"){
-		weapon=new CMeleeWeapon(owner);
+		weapon=SAFE_NEW CMeleeWeapon(owner);
 	} else if(weapondef->type=="AircraftBomb"){
-		weapon=new CBombDropper(owner,false);
+		weapon=SAFE_NEW CBombDropper(owner,false);
 	} else if(weapondef->type=="Shield"){
-		weapon=new CPlasmaRepulser(owner);
+		weapon=SAFE_NEW CPlasmaRepulser(owner);
 	} else if(weapondef->type=="Flame"){
-		weapon=new CFlameThrower(owner);
+		weapon=SAFE_NEW CFlameThrower(owner);
 	} else if(weapondef->type=="MissileLauncher"){
-		weapon=new CMissileLauncher(owner);
+		weapon=SAFE_NEW CMissileLauncher(owner);
 	} else if(weapondef->type=="TorpedoLauncher"){
 		if(owner->unitDef->canfly){	
-			weapon=new CBombDropper(owner,true);
+			weapon=SAFE_NEW CBombDropper(owner,true);
 			if(weapondef->tracks)
 				((CBombDropper*)weapon)->tracking=weapondef->turnrate;
 			((CBombDropper*)weapon)->bombMoveRange=weapondef->range;
 		} else {
-			weapon=new CTorpedoLauncher(owner);
+			weapon=SAFE_NEW CTorpedoLauncher(owner);
 			if(weapondef->tracks)
 				((CTorpedoLauncher*)weapon)->tracking=weapondef->turnrate;
 		}
 	} else if(weapondef->type=="LaserCannon"){
-		weapon=new CLaserCannon(owner);
+		weapon=SAFE_NEW CLaserCannon(owner);
 		((CLaserCannon*)weapon)->color=weapondef->visuals.color;
 	} else if(weapondef->type=="BeamLaser"){
-		weapon=new CBeamLaser(owner);
+		weapon=SAFE_NEW CBeamLaser(owner);
 		((CBeamLaser*)weapon)->color=weapondef->visuals.color;
 	} else if(weapondef->type=="LightingCannon"){
-		weapon=new CLightingCannon(owner);
+		weapon=SAFE_NEW CLightingCannon(owner);
 		((CLightingCannon*)weapon)->color=weapondef->visuals.color;
 	} else if(weapondef->type=="EmgCannon"){
-		weapon=new CEmgCannon(owner);
+		weapon=SAFE_NEW CEmgCannon(owner);
 	} else if(weapondef->type=="DGun"){
-		weapon=new CDGunWeapon(owner);
+		weapon=SAFE_NEW CDGunWeapon(owner);
 	} else if(weapondef->type=="StarburstLauncher"){
-		weapon=new CStarburstLauncher(owner);
+		weapon=SAFE_NEW CStarburstLauncher(owner);
 		if(weapondef->tracks)
 			((CStarburstLauncher*)weapon)->tracking=weapondef->turnrate;
 		else

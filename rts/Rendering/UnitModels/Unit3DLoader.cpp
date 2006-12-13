@@ -25,7 +25,7 @@ CUnit3DLoader* unitModelLoader=0;
 CUnit3DLoader::CUnit3DLoader()
 : usedFarTextures(0)
 {
-	farTextureMem=new unsigned char[1024*1024*4];
+	farTextureMem=SAFE_NEW unsigned char[1024*1024*4];
 
 	for(int a=0;a<1024*1024*4;++a)
 		farTextureMem[a]=0;
@@ -73,9 +73,9 @@ CUnit3DLoader::UnitModel* CUnit3DLoader::GetModel(string name,int team)
 			return ui->second;
 	
 	if(texturehandler==0)
-		texturehandler=new CTextureHandler;
+		texturehandler=SAFE_NEW CTextureHandler;
 
-	UnitModel* model=new UnitModel;
+	UnitModel* model=SAFE_NEW UnitModel;
 
 	model->team=team;
 	model->name=name;
@@ -158,7 +158,7 @@ int CUnit3DLoader::ParseSub(CFileHandler& ifs, UnitModel &model,const string& fi
 	bool firstGeometryPass=false;
 
 	if(geometryModels.find(treename)==geometryModels.end()){
-		geometryModels[treename]=new UnitModelGeometry();
+		geometryModels[treename]=SAFE_NEW UnitModelGeometry();
 		UnitModelGeometry& geometry=*geometryModels[treename];
 		firstGeometryPass=true;
 		geometry.normalBuffer=0;
@@ -271,7 +271,7 @@ int CUnit3DLoader::ParseSub(CFileHandler& ifs, UnitModel &model,const string& fi
 			geometry.radius=atof(GetWord(ifs).c_str());
 
 		} else if(s=="subobject"){
-			UnitModel* um=new UnitModel;
+			UnitModel* um=SAFE_NEW UnitModel;
 			model.subModels.push_back(um);
 			um->name=GetWord(ifs);
 			float3 off,rot;
@@ -296,7 +296,7 @@ int CUnit3DLoader::ParseSub(CFileHandler& ifs, UnitModel &model,const string& fi
 				curAnim=0;
 			else{
 				if(geometry.animations.find(name)==geometry.animations.end()){
-					geometry.animations[name]=new Animation;
+					geometry.animations[name]=SAFE_NEW Animation;
 				}
 				curAnim=geometry.animations[name];
 			}

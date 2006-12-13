@@ -135,9 +135,9 @@ void CBeamLaser::Fire(void)
 		float endAlpha=(1-(curLength+length)/(range*1.3f))*baseAlpha;
 
 		if(weaponDef->largeBeamLaser)
-			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner,weaponDef);
+			SAFE_NEW CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner,weaponDef);
 		else
-			new CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize, weaponDef);
+			SAFE_NEW CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize, weaponDef);
 
 		curPos=hitPos;
 		curLength+=length;

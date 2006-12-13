@@ -36,7 +36,7 @@ CGroupHandler::CGroupHandler(int team)
 	FindDlls();
 
 	for(int a=0;a<10;++a){
-		groups.push_back(new CGroup(defaultKey,a,this));
+		groups.push_back(SAFE_NEW CGroup(defaultKey,a,this));
 	}
 }
 
@@ -179,7 +179,7 @@ void CGroupHandler::FindDlls(void)
 CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 {
 	if(freeGroups.empty()){
-		CGroup* group=new CGroup(aiKey,firstUnusedGroup++,this);
+		CGroup* group=SAFE_NEW CGroup(aiKey,firstUnusedGroup++,this);
 		groups.push_back(group);
 		if(group!=groups[group->id]){
 			handleerror(0,"Id error when creating group","Error",0);
@@ -188,7 +188,7 @@ CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 	} else {
 		int id=freeGroups.back();
 		freeGroups.pop_back();
-		CGroup* group=new CGroup(aiKey,id,this);
+		CGroup* group=SAFE_NEW CGroup(aiKey,id,this);
 		groups[id]=group;
 		return group;
 	}

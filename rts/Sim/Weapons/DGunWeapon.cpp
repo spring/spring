@@ -46,7 +46,7 @@ void CDGunWeapon::Fire(void)
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
-	new CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
+	SAFE_NEW CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume*0.2f);
 }

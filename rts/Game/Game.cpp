@@ -217,49 +217,49 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	sound->SetVolume(gameSoundVolume);
 	sound->SetUnitReplyVolume (configHandler.GetInt ("UnitReplySoundVolume",80)*0.01f);
 
-	camera=new CCamera();
-	cam2=new CCamera();
-	mouse=new CMouseHandler();
-	selectionKeys=new CSelectionKeyHandler();
-	tooltip=new CTooltipConsole();
+	camera=SAFE_NEW CCamera();
+	cam2=SAFE_NEW CCamera();
+	mouse=SAFE_NEW CMouseHandler();
+	selectionKeys=SAFE_NEW CSelectionKeyHandler();
+	tooltip=SAFE_NEW CTooltipConsole();
 
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
-	helper=new CGameHelper(this);
+	helper=SAFE_NEW CGameHelper(this);
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 	ENTER_SYNCED;
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 	ENTER_UNSYNCED;
-	shadowHandler=new CShadowHandler();
+	shadowHandler=SAFE_NEW CShadowHandler();
 
-	modInfo=new CModInfo(modName.c_str());
+	modInfo=SAFE_NEW CModInfo(modName.c_str());
 
 	ENTER_SYNCED;
-	ground=new CGround();
+	ground=SAFE_NEW CGround();
 	readmap = CReadMap::LoadMap (mapname);
 	wind.LoadWind();
-	moveinfo=new CMoveInfo();
-	groundDecals=new CGroundDecalHandler();
+	moveinfo=SAFE_NEW CMoveInfo();
+	groundDecals=SAFE_NEW CGroundDecalHandler();
 
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_UNSYNCED;
 #ifndef NEW_GUI
-	guihandler=new CGuiHandler();
-	minimap=new CMiniMap();
+	guihandler=SAFE_NEW CGuiHandler();
+	minimap=SAFE_NEW CMiniMap();
 #endif
 
 	ENTER_MIXED;
-	ph=new CProjectileHandler();
+	ph=SAFE_NEW CProjectileHandler();
 
 	ENTER_SYNCED;
-	sensorHandler=new CSensorHandler();
-	damageArrayHandler=new CDamageArrayHandler();
-	unitDefHandler=new CUnitDefHandler();
+	sensorHandler=SAFE_NEW CSensorHandler();
+	damageArrayHandler=SAFE_NEW CDamageArrayHandler();
+	unitDefHandler=SAFE_NEW CUnitDefHandler();
 
 	ENTER_UNSYNCED;
-	inMapDrawer=new CInMapDraw();
+	inMapDrawer=SAFE_NEW CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
@@ -268,24 +268,24 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	  wordCompletion->AddWord(uit->first, false, true);
 	}
 
-	geometricObjects=new CGeometricObjects();
+	geometricObjects=SAFE_NEW CGeometricObjects();
 
 	ENTER_SYNCED;
-	qf=new CQuadField();
+	qf=SAFE_NEW CQuadField();
 
 	ENTER_MIXED;
-	featureHandler=new CFeatureHandler();
+	featureHandler=SAFE_NEW CFeatureHandler();
 
 	ENTER_SYNCED;
 	mapDamage=IMapDamage::GetMapDamage();
-	loshandler=new CLosHandler();
-	radarhandler=new CRadarHandler(false);
+	loshandler=SAFE_NEW CLosHandler();
+	radarhandler=SAFE_NEW CRadarHandler(false);
 	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_MIXED;
-	uh=new CUnitHandler();
-	iconHandler=new CIconHandler();
-	unitDrawer=new CUnitDrawer();
+	uh=SAFE_NEW CUnitHandler();
+	iconHandler=SAFE_NEW CIconHandler();
+	unitDrawer=SAFE_NEW CUnitDrawer();
 	fartextureHandler = SAFE_NEW CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
 	modelParser = SAFE_NEW C3DModelParser();
@@ -300,16 +300,16 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
 #ifndef NEW_GUI
-	resourceBar=new CResourceBar();
-	keyCodes=new CKeyCodes();
-	keyBindings=new CKeyBindings();
+	resourceBar=SAFE_NEW CResourceBar();
+	keyCodes=SAFE_NEW CKeyCodes();
+	keyBindings=SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 #endif
 	if(!server) net->Update();	//prevent timing out during load
 
 	water=CBaseWater::GetWater();
-	grouphandler=new CGroupHandler(gu->myTeam);
-	globalAI=new CGlobalAIHandler();
+	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
+	globalAI=SAFE_NEW CGlobalAIHandler();
 
 	ENTER_MIXED;
 	if(!shadowHandler->drawShadows){
@@ -930,7 +930,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			bih.biClrUsed=0;
 			bih.biClrImportant=0;
 
-			aviGenerator=new CAVIGenerator();
+			aviGenerator=SAFE_NEW CAVIGenerator();
 			aviGenerator->SetFileName(name.c_str());
 			aviGenerator->SetRate(30);
 			aviGenerator->SetBitmapHeader(&bih);
@@ -1064,7 +1064,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
-			new CShareBox();
+			SAFE_NEW CShareBox();
 	}
 	else if (cmd == "quitwarn") {
 		const CKeyBindings::HotkeyList hkl = keyBindings->GetHotkeys("quit");
@@ -1100,7 +1100,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		// Present him with the options given in CQuitBox.
 		if(!userMayQuit){
 			if(!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front())==0){
-				new CQuitBox();
+				SAFE_NEW CQuitBox();
 			}
 		} else {
 			logOutput.Print("User exited");
@@ -1122,7 +1122,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			int x=gu->viewSizeX;
 			if(x%4)
 				x+=4-x%4;
-			unsigned char* buf=new unsigned char[x*gu->viewSizeY*4];
+			unsigned char* buf=SAFE_NEW unsigned char[x*gu->viewSizeY*4];
 			glReadPixels(0,0,x,gu->viewSizeY,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 			CBitmap b(buf,x,gu->viewSizeY);
 			b.ReverseYAxis();
@@ -1765,7 +1765,7 @@ bool CGame::Draw()
 		gu->lastFrameTime=1.0f/GAME_SPEED;
 		LPBITMAPINFOHEADER ih;
 		ih=aviGenerator->GetBitmapHeader();
-		unsigned char* buf=new unsigned char[ih->biWidth*ih->biHeight*3];
+		unsigned char* buf=SAFE_NEW unsigned char[ih->biWidth*ih->biHeight*3];
 		glReadPixels(0,0,ih->biWidth,ih->biHeight,GL_BGR_EXT,GL_UNSIGNED_BYTE,buf);
 
 		aviGenerator->AddFrame(buf);
@@ -2108,7 +2108,7 @@ bool CGame::ClientReadNet()
 				logOutput.Print("Automatical quit enforced from commandline");
 				globalQuit = true;
 			} else {
-				new CEndGameBox();
+				SAFE_NEW CEndGameBox();
 			}
 			lastLength=1;
 			ENTER_SYNCED;
@@ -3155,7 +3155,7 @@ unsigned  int CGame::CreateExeChecksum(void)
 #endif
 			);
 	int l=f.FileSize();
-	unsigned char* buf=new unsigned char[l];
+	unsigned char* buf=SAFE_NEW unsigned char[l];
 	f.Read(buf,l);
 
 	for(int a=0;a<l;++a){

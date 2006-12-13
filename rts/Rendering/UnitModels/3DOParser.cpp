@@ -179,7 +179,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
-	fileBuf=new unsigned char[file.FileSize()];
+	fileBuf=SAFE_NEW unsigned char[file.FileSize()];
 	//hpiHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
@@ -188,7 +188,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	}
 	
 	S3DOModel *model = SAFE_NEW S3DOModel;
-	S3DO* object=new S3DO;
+	S3DO* object=SAFE_NEW S3DO;
 	model->rootobject3do=object;
 	model->rootobjects3o=0;
 	model->textureType=0;
@@ -402,7 +402,7 @@ bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 {
 	(*numobj)++;
 
-	S3DO* object=new S3DO;
+	S3DO* object=SAFE_NEW S3DO;
 	_3DObject me;
 
 	curOffset=pos;

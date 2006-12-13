@@ -441,7 +441,7 @@ void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
 	if(!c->active || c->lastInOrder>=packetNum || c->waitingPackets.find(packetNum)!=c->waitingPackets.end())
 		return;
 
-	Packet* p=new Packet(data+hsize,length-hsize);
+	Packet* p=SAFE_NEW Packet(data+hsize,length-hsize);
 	c->waitingPackets[packetNum]=p;
 }
 
@@ -555,7 +555,7 @@ void CNet::FlushConnection(int conn)
 	c->lastSendTime=curTime;
 
 	SendRawPacket(conn,c->outgoingData,c->outgoingLength,c->currentNum++);
-	Packet* p=new Packet(c->outgoingData,c->outgoingLength);
+	Packet* p=SAFE_NEW Packet(c->outgoingData,c->outgoingLength);
 	c->outgoingLength=0;
 	c->unackedPackets.push_back(p);
 }
@@ -646,7 +646,7 @@ void CNet::CreateDemoFile()
 			}
 		}
 		demoName = buf;
-		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
+		recordDemo=SAFE_NEW std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 
 		// add a TDF section containing the game version to the startup script
 		string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
@@ -668,7 +668,7 @@ void CNet::CreateDemoFile()
 		_mktemp(buf);
 #endif
 		demoName = buf;
-		recordDemo=new std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
+		recordDemo=SAFE_NEW std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
 		char c=0;
 		recordDemo->write(&c,1);
 	}
@@ -686,10 +686,10 @@ bool CNet::FindDemoFile(const char* name)
 {
 	string firstTry = name;
 	firstTry = "demos/" + firstTry;
-	playbackDemo=new CFileHandler(firstTry);
+	playbackDemo=SAFE_NEW CFileHandler(firstTry);
 	if (!playbackDemo->FileExists()) {
 		delete playbackDemo;
-		playbackDemo=new CFileHandler(name);
+		playbackDemo=SAFE_NEW CFileHandler(name);
 	}
 
 	if(playbackDemo->FileExists()){
@@ -699,10 +699,10 @@ bool CNet::FindDemoFile(const char* name)
 		if(c){
 			int length;
 			playbackDemo->Read(&length,sizeof(int));
-			char* buf=new char[length];
+			char* buf=SAFE_NEW char[length];
 			playbackDemo->Read(buf,length);
 
-			gameSetup=new CGameSetup();
+			gameSetup=SAFE_NEW CGameSetup();
 			gameSetup->Init(buf,length);
 			delete[] buf;
 		}
@@ -769,7 +769,7 @@ void CNet::CreateDemoServer(std::string demoname)
 {
 	string firstTry = demoname;
 	firstTry = "./demos/" + firstTry;
-	playbackDemo=new CFileHandler(firstTry);
+	playbackDemo=SAFE_NEW CFileHandler(firstTry);
 	if (!playbackDemo->FileExists()) {
 		delete playbackDemo;
 		playbackDemo = SAFE_NEW CFileHandler(demoname);
@@ -781,10 +781,10 @@ void CNet::CreateDemoServer(std::string demoname)
 		if(c){
 			int length;
 			playbackDemo->Read(&length,sizeof(int));
-			char* buf=new char[length];
+			char* buf=SAFE_NEW char[length];
 			playbackDemo->Read(buf,length);
 
-			//gameSetup=new CGameSetup();	//we have already initialized ...
+			//gameSetup=SAFE_NEW CGameSetup();	//we have already initialized ...
 			//gameSetup->Init(buf,length);
 			delete[] buf;
 			nextDemoRead=gu->modGameTime+100000000;

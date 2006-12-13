@@ -65,7 +65,7 @@ CBasicSky::CBasicSky()
 		cloudDown[a]=false;
 
 	lastCloudUpdate=-30;
-	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
+	cloudThickness=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
 	CreateClouds();
 	InitSun();
 	oldCoverBaseX=-5;
@@ -308,7 +308,7 @@ void CBasicSky::CreateClouds()
 	glGenTextures(1, &cloudDot3Tex);
 	int y;
 
-	static unsigned char skytex[512][512][4];//=new unsigned char[512][512][4];
+	static unsigned char skytex[512][512][4];//=SAFE_NEW unsigned char[512][512][4];
 	static unsigned char skytex2[256][256][4];
 	
 	for(y=0;y<512;y++){
@@ -364,7 +364,7 @@ void CBasicSky::CreateClouds()
 		CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
 	}
 
-	char* scrap=new char[CLOUD_SIZE*CLOUD_SIZE*4];
+	char* scrap=SAFE_NEW char[CLOUD_SIZE*CLOUD_SIZE*4];
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -409,7 +409,7 @@ START_TIME_PROFILE
 			}
 		}
 	}
-	int rawClouds[CLOUD_SIZE][CLOUD_SIZE];//=new int[CLOUD_SIZE][CLOUD_SIZE];
+	int rawClouds[CLOUD_SIZE][CLOUD_SIZE];//=SAFE_NEW int[CLOUD_SIZE][CLOUD_SIZE];
 
 	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++){
 		rawClouds[0][a]=0;
@@ -665,7 +665,7 @@ void CBasicSky::DrawShafts()
 
 void CBasicSky::InitSun()
 {
-	unsigned char* mem=new unsigned char[128*128*4];
+	unsigned char* mem=SAFE_NEW unsigned char[128*128*4];
 
 	for(int y=0;y<128;++y){
 		for(int x=0;x<128;++x){

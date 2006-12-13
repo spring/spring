@@ -31,24 +31,26 @@ CScriptHandler::CScriptHandler() : chosenScript(0), callback(0)
 /** Load all scripts. */
 void CScriptHandler::LoadScripts() {
 
-	loaded_scripts.push_back( new CCommanderScript() );
-	loaded_scripts.push_back( new CCommanderScript2() );
-	loaded_scripts.push_back( new CAirScript() );
-	loaded_scripts.push_back( new CEmptyScript() );
-	loaded_scripts.push_back( new CSpawnScript(false) );
-	loaded_scripts.push_back( new CSpawnScript(true) );
-	loaded_scripts.push_back( new CTestScript() );
+	ENTER_SYNCED;
+	loaded_scripts.push_back( SAFE_NEW CCommanderScript() );
+	loaded_scripts.push_back( SAFE_NEW CCommanderScript2() );
+	loaded_scripts.push_back( SAFE_NEW CAirScript() );
+	loaded_scripts.push_back( SAFE_NEW CEmptyScript() );
+	loaded_scripts.push_back( SAFE_NEW CSpawnScript(false) );
+	loaded_scripts.push_back( SAFE_NEW CSpawnScript(true) );
+	loaded_scripts.push_back( SAFE_NEW CTestScript() );
 
 	const char *path = "AI/Bot-libs/";
 	std::vector<std::string> f = CFileHandler::FindFiles(path, std::string("*.") + SharedLib::GetLibExtension());
 
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) 
-		loaded_scripts.push_back(new CGlobalAITestScript(*fi));
+		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*fi));
 
 	f = CFileHandler::FindFiles("", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
-		loaded_scripts.push_back(new CLoadScript(*fi));
+		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
 	}
+	ENTER_UNSYNCED;
 }
 
 void CScriptHandler::StartLua()

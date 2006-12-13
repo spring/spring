@@ -21,7 +21,7 @@ CMoveInfo::CMoveInfo()
     if( ! parser.SectionExist( class_name ) )
       break;
 	
-		MoveData* md=new MoveData;
+		MoveData* md=SAFE_NEW MoveData;
 		string name=parser.SGetValueDef("",class_name+"\\name");
 
 		md->maxSlope=1;

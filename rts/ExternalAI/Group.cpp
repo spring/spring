@@ -26,7 +26,7 @@ CGroup::CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler)
 	handler(grouphandler),
 	lib(0)
 {
-	callback=new CGroupAICallback(this);
+	callback=SAFE_NEW CGroupAICallback(this);
 	SetNewAI(aiKey);
 
 	int a=0;

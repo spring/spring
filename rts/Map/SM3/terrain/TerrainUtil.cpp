@@ -57,7 +57,7 @@ namespace terrain {
 	void Heightmap::Alloc (int W,int H)
 	{
 		w=W; h=H;
-		data=new float[w*h];
+		data=SAFE_NEW float[w*h];
 	}
 
 	void Heightmap::LodScaleDown (Heightmap* dst)
@@ -257,7 +257,7 @@ namespace terrain {
 	void AlphaImage::Alloc (int W,int H)
 	{
 		w=W; h=H;
-		data=new float[w*h];
+		data=SAFE_NEW float[w*h];
 		fill(data,data+w*h,0.0f);
 	}
 

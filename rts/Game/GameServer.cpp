@@ -43,7 +43,7 @@ CGameServer::CGameServer()
 		port=gameSetup->hostport;
 		myPlayer=gameSetup->myPlayer;
 	}
-	serverNet=new CNet();
+	serverNet=SAFE_NEW CNet();
 	serverNet->InitServer(port);
 	net->InitClient("localhost",port,0,true);
 	serverNet->connections[myPlayer].localConnection=&net->connections[0];

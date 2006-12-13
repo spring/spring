@@ -27,7 +27,7 @@ CAdvTreeGenerator* treeGen;
 CAdvTreeGenerator::CAdvTreeGenerator()
 {
 	PrintLoadMsg("Generating trees");
-	unsigned char(* tree)[2048][4]=new unsigned char[256][2048][4]; 
+	unsigned char(* tree)[2048][4]=SAFE_NEW unsigned char[256][2048][4]; 
 	memset(tree[0][0],128,256*2048*4);
 
 	TdfParser resources("gamedata/resources.tdf");
@@ -277,8 +277,8 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 
 void CAdvTreeGenerator::CreateFarTex()
 {
-	unsigned char* data=new unsigned char[512*512*4]; 
-	unsigned char* data2=new unsigned char[512*512*4]; 
+	unsigned char* data=SAFE_NEW unsigned char[512*512*4]; 
+	unsigned char* data2=SAFE_NEW unsigned char[512*512*4]; 
 	for(int y=0;y<512;++y){
 		for(int x=0;x<512;++x){
 				data[((y)*512+x)*4+0]=60;
@@ -380,7 +380,7 @@ void CAdvTreeGenerator::CreateFarTex()
 
 void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned int displist)
 {
-	unsigned char* buf=new unsigned char[64*64*4];
+	unsigned char* buf=SAFE_NEW unsigned char[64*64*4];
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -482,7 +482,7 @@ void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsiz
 		if(ysize!=1)
 			ysize/=2;
 		mipnum++;
-		mipmaps[mipnum]=new unsigned char[max(2,xsize)*max(2,ysize)*4];
+		mipmaps[mipnum]=SAFE_NEW unsigned char[max(2,xsize)*max(2,ysize)*4];
 		memset(mipmaps[mipnum],0,max(2,xsize)*max(2,ysize)*4);
 		for(int y=0;y<ysize;++y){
 			for(int x=0;x<xsize;++x){
@@ -589,7 +589,7 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 	
 	CreateGranTexBranch(ZeroVector,float3(0.93f,0.93f,0));
 
-	unsigned char* buf=new unsigned char[256*256*4];
+	unsigned char* buf=SAFE_NEW unsigned char[256*256*4];
 	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 
 	for(int y=0;y<256;++y){
@@ -745,7 +745,7 @@ float CAdvTreeGenerator::fRand(float size)
 
 void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,unsigned char buf[256][2048][4])
 {
-	unsigned char* buf2=new unsigned char[256*256*4];
+	unsigned char* buf2=SAFE_NEW unsigned char[256*256*4];
 
 	glViewport(0,0,256,256);
 	glPushMatrix();

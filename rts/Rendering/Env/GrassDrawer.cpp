@@ -52,7 +52,7 @@ CGrassDrawer::CGrassDrawer()
 		}
 
 		int grassMapSize = gs->mapx*gs->mapy/(grassSquareSize*grassSquareSize);
-		grassMap=new unsigned char[grassMapSize];
+		grassMap=SAFE_NEW unsigned char[grassMapSize];
 
 		memcpy(grassMap, grassdata, grassMapSize);
 		readmap->FreeInfoMap ("grass", grassdata);
@@ -208,7 +208,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 								}
 							}
 						} else {//near but not close, save for later drawing
-							InviewNearGrass* iv=new InviewNearGrass;
+							InviewNearGrass* iv=SAFE_NEW InviewNearGrass;
 							iv->dist=sqdist;
 							iv->x=x*grassBlockSize+x2;
 							iv->y=y*grassBlockSize+y2;
@@ -242,7 +242,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 			}
 		}
 		if(!grass[curModSquare].va){
-			grass[curModSquare].va=new CVertexArray;;
+			grass[curModSquare].va=SAFE_NEW CVertexArray;;
 			grass[curModSquare].pos=float3((x+0.5f)*SQUARE_SIZE*blockMapSize,ground->GetHeight2((x+0.5f)*SQUARE_SIZE*blockMapSize,(y+0.5f)*SQUARE_SIZE*blockMapSize),(y+0.5f)*SQUARE_SIZE*blockMapSize);
 			va=grass[curModSquare].va;
 			va->Initialize();
@@ -269,7 +269,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 				}
 			}
 		}
-		InviewGrass* ig=new InviewGrass;
+		InviewGrass* ig=SAFE_NEW InviewGrass;
 		ig->num=curModSquare;
 		ig->dist=dist;
 		inviewGrass.push_back(ig);	
@@ -673,8 +673,8 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 void CGrassDrawer::CreateFarTex(void)
 {
 	int sizeMod=2;
-	unsigned char* buf=new unsigned char[64*sizeMod*1024*sizeMod*4];
-	unsigned char* buf2=new unsigned char[256*sizeMod*256*sizeMod*4];
+	unsigned char* buf=SAFE_NEW unsigned char[64*sizeMod*1024*sizeMod*4];
+	unsigned char* buf2=SAFE_NEW unsigned char[256*sizeMod*256*sizeMod*4];
 	memset(buf,0,64*sizeMod*1024*sizeMod*4);
 	memset(buf2,0,256*sizeMod*256*sizeMod*4);
 

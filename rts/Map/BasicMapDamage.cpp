@@ -29,7 +29,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 		}
 	}
 	nextRejuv=0;
-	inRelosQue=new bool[qf->numQuadsX*qf->numQuadsZ];
+	inRelosQue=SAFE_NEW bool[qf->numQuadsX*qf->numQuadsZ];
 	for(int a=0;a<qf->numQuadsX*qf->numQuadsZ;++a){
 		inRelosQue[a]=false;
 	}
@@ -72,7 +72,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 
 	radius*=1.5f;
 
-	Explo* e=new Explo;
+	Explo* e=SAFE_NEW Explo;
 	e->pos=pos;
 	e->strength=strength;
 	e->ttl=10;

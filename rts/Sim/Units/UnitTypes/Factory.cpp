@@ -137,7 +137,7 @@ void CFactory::Update()
 					unsigned char* tcol=gs->Team(team)->color;
 					color = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
 				}
-				new CGfxProjectile(weaponPos,dif,(int)l,color);
+				SAFE_NEW CGfxProjectile(weaponPos,dif,(int)l,color);
 			}
 		} else {
 			if(!curBuild->beingBuilt){

@@ -43,7 +43,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 
 	drawRadius=maxSpeed*8;
 	ENTER_MIXED;
-	numCallback=new int;
+	numCallback=SAFE_NEW int;
 	*numCallback=0;
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
@@ -51,7 +51,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	ENTER_SYNCED;
 
 	for(int a=0;a<5;++a){
-		oldInfos[a]=new OldInfo;
+		oldInfos[a]=SAFE_NEW OldInfo;
 		oldInfos[a]->dir=dir;
 		oldInfos[a]->pos=pos;
 		oldInfos[a]->speedf=curSpeed;
@@ -80,7 +80,7 @@ void CStarburstProjectile::Collision()
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y)
 		pos+=speed*(h-pos.y)/speed.y;
-	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
 	oldSmokeDir=dir;
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
@@ -89,7 +89,7 @@ void CStarburstProjectile::Collision()
 
 void CStarburstProjectile::Collision(CUnit *unit)
 {
-	CSmokeTrailProjectile* tp=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
 	oldSmokeDir=dir;
 //	unit->DoDamage(damages,owner);
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
@@ -170,7 +170,7 @@ void CStarburstProjectile::Update(void)
 	if(!(age&7)){
 		if(curCallback)
 			curCallback->drawCallbacker=0;
-		curCallback=new CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,7,Smoke_Time,0.7f,drawTrail,this);
+		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,7,Smoke_Time,0.7f,drawTrail,this);
 		oldSmoke=pos;
 		oldSmokeDir=dir;
 		numParts=0;

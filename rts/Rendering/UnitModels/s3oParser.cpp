@@ -77,7 +77,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
-	unsigned char* fileBuf=new unsigned char[file.FileSize()];
+	unsigned char* fileBuf=SAFE_NEW unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
@@ -199,7 +199,7 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 {
 	model->numobjects++;
 
-	SS3O* piece=new SS3O;
+	SS3O* piece=SAFE_NEW SS3O;
 
 	Piece* fp=(Piece*)&buf[offset];
 

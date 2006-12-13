@@ -288,9 +288,9 @@ bool SpringApp::Initialize ()
 
 	// Global structures
 	ENTER_SYNCED;
-	gs=new CGlobalSyncedStuff();
+	gs=SAFE_NEW CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
-	gu=new CGlobalUnsyncedStuff();
+	gu=SAFE_NEW CGlobalUnsyncedStuff();
 
 	if (cmdline->result("minimise")) {
 		gu->active = false;
@@ -764,7 +764,7 @@ void SpringApp::CreateGameSetup ()
 {
 	ENTER_SYNCED;
 	if (!startscript.empty()) {
-		gameSetup=new CGameSetup();
+		gameSetup=SAFE_NEW CGameSetup();
 		if(!gameSetup->Init(startscript)){
 			delete gameSetup;
 			gameSetup=0;
