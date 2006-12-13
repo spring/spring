@@ -71,13 +71,13 @@ public:
 // Pointer type
 template<typename T>
 struct DeduceType <T *> {
-	IType* Get () { return SAFE_NEW ObjectPointerType <T>(); }
+	IType* Get () { return new ObjectPointerType <T>(); }
 };
 
 // Reference type, handled as a pointer
 template<typename T>
 struct DeduceType <T&> {
-	IType* Get () { return SAFE_NEW ObjectPointerType <T>(); }
+	IType* Get () { return new ObjectPointerType <T>(); }
 };
 
 // Static array type
@@ -85,7 +85,7 @@ template<typename T, size_t ArraySize>
 struct DeduceType <T[ArraySize]> {
 	IType* Get () { 
 		DeduceType<T> subtype;
-		return SAFE_NEW StaticArrayType <T, ArraySize> (subtype.Get());
+		return new StaticArrayType <T, ArraySize> (subtype.Get());
 	}
 };
 
@@ -94,7 +94,7 @@ template<typename T>
 struct DeduceType < std::vector <T> > {
 	IType* Get () { 
 		DeduceType<T> elemtype;
-		return SAFE_NEW DynamicArrayType < std::vector<T> > (elemtype.Get());
+		return new DynamicArrayType < std::vector<T> > (elemtype.Get());
 	}
 };
 

@@ -1,26 +1,25 @@
 #include "StdAfx.h"
-#include "GameSetup.h"
-#include "TdfParser.h"
-#include "Player.h"
-#include "Team.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
 #include <algorithm>
 #include <cctype>
-#include "UI/MouseHandler.h"
+#include <SDL.h>
 #include "CameraController.h"
-#include "Rendering/Textures/TAPalette.h"
-#include "Net.h"
-#include "FileSystem/FileHandler.h"
-#include "UI/StartPosSelecter.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/VFSHandler.h"
+#include "GameSetup.h"
 #include "GameVersion.h"
-#include "SDL_types.h"
-#include "SDL_keysym.h"
+#include "LogOutput.h"
+#include "Net.h"
+#include "Player.h"
+#include "TdfParser.h"
+#include "Team.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
-#include "LogOutput.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/TAPalette.h"
+#include "UI/MouseHandler.h"
+#include "UI/StartPosSelecter.h"
 
 CGameSetup* gameSetup=0;
 
@@ -256,7 +255,7 @@ void CGameSetup::Draw()
 	if(!serverNet && net->inInitialConnect){
 		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastReceiveTime));
 	}else if(readyTime>0)
-		font->glPrint("Starting in %i",3-(int)readyTime);
+		font->glPrint("Starting in %i", 3 - (SDL_GetTicks() - readyTime) / 1000);
 	else if(!readyTeams[gu->myTeam])
 		font->glPrint("Choose start pos");
 	else if(gu->myPlayerNum==0){
@@ -310,12 +309,8 @@ bool CGameSetup::Update()
 			mouse->currentCamControllerNum=mode;
 			mouse->currentCamController->SetPos(gs->Team(gu->myTeam)->startPos);
 			mouse->CameraTransition(1.0f);
+			readyTime = SDL_GetTicks();
 		}
-		readyTime+=gu->lastFrameTime;
-		if (!gu->active) // dirty hack to get readyTime updated when minimised
-			++readyTime;
-	} else {
-		readyTime=0;
 	}
-	return readyTime>3;
+	return readyTime && (SDL_GetTicks() - readyTime) > 3000;
 }
