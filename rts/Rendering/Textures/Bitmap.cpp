@@ -107,7 +107,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	mem = NULL;
 
 	if(filename.find(".dds")!=string::npos){
-		ddsimage = new nv_dds::CDDSImage();
+		ddsimage = SAFE_NEW nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
 		return ddsimage->load(filename);
 	}
@@ -120,7 +120,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		return false;
 	}
 
-	unsigned char *buffer = new unsigned char[file.FileSize()+2];
+	unsigned char *buffer = SAFE_NEW unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
 #if defined(__APPLE__) // Use QuickTime to load images on Mac
@@ -187,7 +187,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem = new unsigned char[xsize * ysize * 4];
+	mem = SAFE_NEW unsigned char[xsize * ysize * 4];
 	//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
 	memcpy(mem, ilGetData(), xsize * ysize * 4);
 
@@ -216,7 +216,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(!file.FileExists())
 		return false;
 
-	unsigned char *buffer = new unsigned char[file.FileSize()+1];
+	unsigned char *buffer = SAFE_NEW unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
 
 	ILuint ImageName = 0;
@@ -235,13 +235,13 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem = new unsigned char[xsize * ysize];
+	mem = SAFE_NEW unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
 #else
 	xsize = 4;
 	ysize = 4;
 
-	mem = new unsigned char[xsize * ysize];
+	mem = SAFE_NEW unsigned char[xsize * ysize];
 #endif
 
 	ilDeleteImages(1, &ImageName); 
@@ -698,7 +698,7 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 	rowStride = xsize * 4; // (width * depth_bpp / 8)
 	
 	// GWorld - Allocate output buffer
-	imageData = new unsigned char[rowStride * ysize];
+	imageData = SAFE_NEW unsigned char[rowStride * ysize];
 	
 	// GWorld - Actually Create IT!
 	QTNewGWorldFromPtr(&gworld, pixelFormat, &rectImage, 0, 0, 0, imageData, rowStride);

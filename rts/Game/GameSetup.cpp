@@ -97,7 +97,7 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
-	CFileHandler* f = new CFileHandler("maps/" + mapname);
+	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapname);
 	if (!f->FileExists()) {
 		vector<string> ars = archiveScanner->GetArchivesForMap(mapname);
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {

@@ -88,7 +88,7 @@ namespace terrain {
 	void QuadMap::Alloc (int W)
 	{
 		w=W;
-		map = new TQuad*[w*w];
+		map = SAFE_NEW TQuad*[w*w];
 		memset (map, 0, sizeof(TQuad*) * w*w);
 	}
 
@@ -141,7 +141,7 @@ namespace terrain {
 		// create child nodes if necessary
 		if (hm->highDetail) {
 			for (int a=0;a<4;a++) {
-				childs[a] = new TQuad;
+				childs[a] = SAFE_NEW TQuad;
 				childs[a]->parent = this;
 
 				int2 sqPos (sqStart.x + (a&1)*w/2, sqStart.y + (a&2)*w/4); // square pos
@@ -930,7 +930,7 @@ namespace terrain {
 
 		// build a quadtree and a vertex buffer for each quad tree
 		// prev is now the lowest detail heightmap, and will be used for the root quad tree node
-		quadtree = new TQuad;
+		quadtree = SAFE_NEW TQuad;
 		quadtree->Build (lowdetailhm, int2(), int2(), int2(), heightmap->w-1, 0);
 
 		// create a quad map for each LOD level
@@ -938,11 +938,11 @@ namespace terrain {
 		QuadMap *qm = 0;
 		while (cur) {
 			if (qm) {
-				qm->highDetail = new QuadMap;
+				qm->highDetail = SAFE_NEW QuadMap;
 				qm->highDetail->lowDetail = qm;
 				qm = qm->highDetail;
 			} else {
-				qm = new QuadMap;
+				qm = SAFE_NEW QuadMap;
 			}
 			qm->Alloc ((cur->w-1)/QUAD_W);
 			qmaps.push_back(qm);
@@ -960,10 +960,10 @@ namespace terrain {
 		if (cb) cb->PrintMsg ("initializing texturing system...");
 
 		// load textures
-		texturing = new TerrainTexture;
+		texturing = SAFE_NEW TerrainTexture;
 		texturing->Load (&tdf, heightmap, quadtree, qmaps, &config, cb, li);
 
-		renderDataManager = new RenderDataManager (lowdetailhm, qmaps.front());
+		renderDataManager = SAFE_NEW RenderDataManager (lowdetailhm, qmaps.front());
 
 		// calculate index table
 		indexTable=new IndexTable;
@@ -1006,7 +1006,7 @@ namespace terrain {
 		bits*=8;
 		if (w<0) return 0;
 
-		Heightmap *hm = new Heightmap;
+		Heightmap *hm = SAFE_NEW Heightmap;
 		hm->Alloc (w,w);
 
 		if (bits==16) {
@@ -1075,7 +1075,7 @@ namespace terrain {
 		}
 
 		// copy the data into the highest detail heightmap
-		Heightmap *hm = new Heightmap;
+		Heightmap *hm = SAFE_NEW Heightmap;
 		hm->Alloc (hmWidth,hmHeight);
 		ushort* data=(ushort*)ilGetData ();
 
@@ -1157,7 +1157,7 @@ namespace terrain {
 
 	RenderContext* Terrain::AddRenderContext (Camera* cam, bool needsTexturing)
 	{
-		RenderContext *rc = new RenderContext;
+		RenderContext *rc = SAFE_NEW RenderContext;
 
 		rc->cam = cam;
 		rc->needsTexturing = needsTexturing;

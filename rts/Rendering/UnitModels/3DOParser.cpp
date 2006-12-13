@@ -187,7 +187,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 		throw content_error("Failed to read file "+name);
 	}
 	
-	S3DOModel *model = new S3DOModel;
+	S3DOModel *model = SAFE_NEW S3DOModel;
 	S3DO* object=new S3DO;
 	model->rootobject3do=object;
 	model->rootobjects3o=0;
@@ -660,13 +660,13 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 
 LocalS3DOModel *C3DOParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
 {
-	LocalS3DOModel *lmodel = new LocalS3DOModel;
+	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
 	lmodel->numpieces = model->numobjects;
 
 	int piecenum=0;
-	lmodel->pieces = new LocalS3DO[model->numobjects];
+	lmodel->pieces = SAFE_NEW LocalS3DO[model->numobjects];
 	lmodel->pieces->parent = NULL;
-	lmodel->scritoa = new int[pieces->size()];
+	lmodel->scritoa = SAFE_NEW int[pieces->size()];
 	for(int a=0;a<pieces->size();++a)
 		lmodel->scritoa[a]=-1;
 

@@ -26,13 +26,13 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName)
 	CArchiveBase* ret = NULL;
 
 	if (ext == "sd7")
-		ret = new CArchive7Zip(fn);
+		ret = SAFE_NEW CArchive7Zip(fn);
 	else if (ext == "sdz")
-		ret = new CArchiveZip(fn);
+		ret = SAFE_NEW CArchiveZip(fn);
 	else if (ext == "sdd")
-		ret = new CArchiveDir(fn);
+		ret = SAFE_NEW CArchiveDir(fn);
 	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") || (ext == "gp3") || (ext == "gp4") || (ext == "swx"))
-		ret = new CArchiveHPI(fn);
+		ret = SAFE_NEW CArchiveHPI(fn);
 
 	if (ret && ret->IsOpen())
 		return ret;

@@ -334,7 +334,7 @@ int CCobThread::Tick(int deltaTime)
 					args.push_back(r4);
 				}		
 
-				thread = new CCobThread(script, owner);
+				thread = SAFE_NEW CCobThread(script, owner);
 				thread->Start(r1, args, true);
 
 				//Seems that threads should inherit signal mask from creator

@@ -75,7 +75,7 @@ CGuiHandler::CGuiHandler()
   luaUIClick(false),
   gatherMode(false)
 {
-	icons = new IconInfo[16];
+	icons = SAFE_NEW IconInfo[16];
 	iconsSize = 16;
 	iconsCount = 0;
 
@@ -453,7 +453,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
 		delete[] icons;
-		icons = new IconInfo[iconsSize];
+		icons = SAFE_NEW IconInfo[iconsSize];
 	}
 }
 
@@ -1913,7 +1913,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 						}
 					}
 					inCommand = a;
-					list = new CglList(cd.name.c_str(), MenuSelection);
+					list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
 					list->cancelPlace = 0;
 					list->tooltip = "Choose the AI you want to assign to this group.\n"
 							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"

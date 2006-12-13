@@ -772,7 +772,7 @@ void CNet::CreateDemoServer(std::string demoname)
 	playbackDemo=new CFileHandler(firstTry);
 	if (!playbackDemo->FileExists()) {
 		delete playbackDemo;
-		playbackDemo = new CFileHandler(demoname);
+		playbackDemo = SAFE_NEW CFileHandler(demoname);
 	}
 
 	if(playbackDemo->FileExists()){

@@ -82,7 +82,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 			float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y, (z + 0.5f) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
 			float sqrCenterDistance = msqrPos.distance2D(this->pos);
 			if(sqrCenterDistance < extractionRange) {	//... and add whose within the circle.
-				MetalSquareOfControl *msqr = new MetalSquareOfControl;
+				MetalSquareOfControl *msqr = SAFE_NEW MetalSquareOfControl;
 				msqr->x = x;
 				msqr->z = z;
 				msqr->extractionDepth = readmap->metalMap->requestExtraction(x, z, depth);	//Extraction is done in a cylinder

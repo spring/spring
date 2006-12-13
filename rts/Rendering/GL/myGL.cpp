@@ -107,6 +107,8 @@ void UnloadStartPicture()
 
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
+	PUSH_CODE_MODE;
+	ENTER_UNSYNCED;
 	// this is just a practical place to check this, as this function is
 	// called on regular intervals during loading.
 	assert(good_fpu_control_registers(text));
@@ -139,6 +141,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
 	if (swapbuffers)
 		SDL_GL_SwapBuffers();
+	POP_CODE_MODE;
 }
 
 /**
@@ -164,7 +167,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 		logOutput << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
 		return false;
 	}
-	char *VPbuf = new char[VPFile.FileSize()];
+	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	// clear any current GL errors so that the following check is valid
@@ -232,7 +235,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 		SNPRINTF(c,512,"Cannot find %s program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
-	char *VPbuf = new char[VPFile.FileSize()];
+	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	glGenProgramsARB( 1, &ret );

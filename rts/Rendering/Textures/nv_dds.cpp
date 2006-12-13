@@ -456,7 +456,7 @@ bool CDDSImage::load(string filename, bool flipImage)
         unsigned int size = (this->*sizefunc)(width, height)*depth;
 
         // load surface
-        unsigned char *pixels = new unsigned char[size];
+        unsigned char *pixels = SAFE_NEW unsigned char[size];
         //fread(pixels, 1, size, fp);
 		file.Read(pixels, size);
 
@@ -490,7 +490,7 @@ bool CDDSImage::load(string filename, bool flipImage)
             // calculate mipmap size
             size = (this->*sizefunc)(w, h)*d;
 
-            unsigned char *pixels = new unsigned char[size];
+            unsigned char *pixels = SAFE_NEW unsigned char[size];
             //fread(pixels, 1, size, fp);
 			file.Read(pixels, size);
 
@@ -1039,7 +1039,7 @@ void CDDSImage::flip_texture(CTexture &texture)
 // swap to sections of memory
 void CDDSImage::swap(void *byte1, void *byte2, unsigned int size)
 {
-    unsigned char *tmp = new unsigned char[size];
+    unsigned char *tmp = SAFE_NEW unsigned char[size];
 
     memcpy(tmp, byte1, size);
     memcpy(byte1, byte2, size);
@@ -1288,7 +1288,7 @@ CSurface::CSurface(const CSurface &copy)
         m_height = copy.get_height();
         m_depth = copy.get_depth();
 
-        m_pixels = new unsigned char[m_size];
+        m_pixels = SAFE_NEW unsigned char[m_size];
         memcpy(m_pixels, copy, m_size);
     }
 }
@@ -1308,7 +1308,7 @@ CSurface &CSurface::operator= (const CSurface &rhs)
             m_height = rhs.get_height();
             m_depth = rhs.get_depth();
 
-            m_pixels = new unsigned char[m_size];
+            m_pixels = SAFE_NEW unsigned char[m_size];
             memcpy(m_pixels, rhs, m_size);
         }
     }
@@ -1346,7 +1346,7 @@ void CSurface::create(unsigned int w, unsigned int h, unsigned int d, unsigned i
     m_height = h;
     m_depth = d;
     m_size = imgsize;
-    m_pixels = new unsigned char[imgsize];
+    m_pixels = SAFE_NEW unsigned char[imgsize];
     memcpy(m_pixels, pixels, imgsize);
 }
 

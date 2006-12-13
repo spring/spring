@@ -47,7 +47,7 @@ CProjectileHandler::CProjectileHandler()
 	numPerlinProjectiles=0;
 
 	TdfParser resources("gamedata/resources.tdf");
-	textureAtlas = new CTextureAtlas(2048, 2048);
+	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 
 	//add all textures in projectiletextures section
 	std::map<std::string,std::string> ptex = resources.GetAllValues("resources\\graphics\\projectiletextures");
@@ -109,7 +109,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 
-	groundFXAtlas = new CTextureAtlas(2048, 2048);
+	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
 	ptex = resources.GetAllValues("resources\\graphics\\groundfx");
 	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
@@ -139,7 +139,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 
-	flying3doPieces = new FlyingPiece_List;
+	flying3doPieces = SAFE_NEW FlyingPiece_List;
 	flyingPieces.push_back(flying3doPieces);
 
 	for(int a=0;a<4;++a){
@@ -628,7 +628,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	while(flyings3oPieces[textureType].size()<=team){
 		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
 
-		FlyingPiece_List * fpl = new FlyingPiece_List;
+		FlyingPiece_List * fpl = SAFE_NEW FlyingPiece_List;
 		flyings3oPieces[textureType].push_back(fpl);
 		flyingPieces.push_back(fpl);
 	}

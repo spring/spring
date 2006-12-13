@@ -43,7 +43,7 @@ CGameHelper::CGameHelper(CGame* game)
 {
 	this->game=game;
 
-	stdExplosionGenerator = new CStdExplosionGenerator;
+	stdExplosionGenerator = SAFE_NEW CStdExplosionGenerator;
 }
 
 CGameHelper::~CGameHelper()
@@ -148,7 +148,9 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	explosionGraphics->Explosion(pos,damages[0],radius,owner,gfxMod,hit,impactDir);
 	groundDecals->AddExplosion(pos,damages[0],radius);
 	//sound->PlaySample(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
+	ENTER_UNSYNCED;
 	water->AddExplosion(pos,damages[0],radius);
+	ENTER_SYNCED;
 }
 
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit)

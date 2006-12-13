@@ -59,7 +59,7 @@ CGameServer::CGameServer()
 	exeChecksum = game ? game->CreateExeChecksum() : 0;
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
-	thread = new boost::thread(boost::bind(GameServerThreadProc,this));
+	thread = SAFE_NEW boost::thread(boost::bind(GameServerThreadProc,this));
 #endif
 #ifdef SYNCDEBUG
 	fakeDesync = false;

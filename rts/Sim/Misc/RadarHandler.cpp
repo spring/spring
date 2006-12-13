@@ -26,7 +26,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		radarMaps[a]=new unsigned short[xsize*ysize];
 		sonarMaps[a]=new unsigned short[xsize*ysize];
-		seismicMaps[a] = new unsigned short[xsize*ysize];
+		seismicMaps[a] = SAFE_NEW unsigned short[xsize*ysize];
 
 		if(circularRadar)																			//if we use circular radar air radar and standard radar is the same
 			airRadarMaps[a]=radarMaps[a];

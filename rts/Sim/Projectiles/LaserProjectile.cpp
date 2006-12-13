@@ -98,7 +98,7 @@ void CLaserProjectile::Collision()
 		pos=oldPos;
 	}
 
-	//CSimpleParticleSystem *ps = new CSimpleParticleSystem();
+	//CSimpleParticleSystem *ps = SAFE_NEW CSimpleParticleSystem();
 	//ps->particleLife = 30*3;
 	//ps->particleLifeSpread = 30*3;
 	//ps->particleSize = 6;

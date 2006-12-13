@@ -62,22 +62,22 @@ namespace luafunctions
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(string name, float3 pos, int team, bool buil)
 	{
 		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil);
-		return new CObject_pointer<CUnit>(x);
+		return SAFE_NEW CObject_pointer<CUnit>(x);
 	}
 
 	CObject_pointer<CFeature>* FeatureLoaderLoadFeature( string name, float3 pos, int team )
 	{
 		FeatureDef *def = featureHandler->GetFeatureDef(name);
-		CFeature* feature = new CFeature();
+		CFeature* feature = SAFE_NEW CFeature();
 		feature->Initialize( pos,def,0, 0, team,"" );
-		return new CObject_pointer<CFeature>(feature);
+		return SAFE_NEW CObject_pointer<CFeature>(feature);
 	}
 
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u)
 	{
 		CUnit* x = u->held;
 		if (x->transporter)
-			return new CObject_pointer<CUnit>(x->transporter);
+			return SAFE_NEW CObject_pointer<CUnit>(x->transporter);
 		else 
 			return NULL;
 	}
@@ -98,7 +98,7 @@ namespace luafunctions
 
 		int count = 1;
 		for (vector<CUnit*>::iterator i = x.begin(); i != x.end(); ++i)
-			o[count++] = new CObject_pointer<CUnit>(*i);
+			o[count++] = SAFE_NEW CObject_pointer<CUnit>(*i);
 		
 		return o;
 	}
@@ -113,7 +113,7 @@ namespace luafunctions
 		for (int a=0;a<ft.size();a++)
 		{
 			CFeature *f = ft[a];
-			o[count++] = new CObject_pointer<CFeature>(f);
+			o[count++] = SAFE_NEW CObject_pointer<CFeature>(f);
 		}
 
 		return o;
@@ -128,7 +128,7 @@ namespace luafunctions
 	//CObject_pointer<UnitDef>* GetUnitDefById( int id )
 	//{
 	//	UnitDef *def = unitDefHandler->GetUnitByID (id);
-	//	return new CObject_pointer<UnitDef>(def);
+	//	return SAFE_NEW CObject_pointer<UnitDef>(def);
 	//}
 
 	/* This doesnt work, not sure why; Spring crashes
@@ -137,14 +137,14 @@ namespace luafunctions
 		object o = newtable(L);
 		//UnitDef *def = unitDefHandler->GetUnitByID (1);
 		UnitDef *def = unitDefHandler->GetUnitByName ("ARMCOM");
-		o[1] = new CObject_pointer<UnitDef>(def);
+		o[1] = SAFE_NEW CObject_pointer<UnitDef>(def);
 		return o;
 
 		int count = 1;
 		for (int a=0;a<unitDefHandler->numUnits && a < 10;a++)
 		{
 			UnitDef *def = unitDefHandler->GetUnitByID (a+1);
-			o[count++] = new CObject_pointer<UnitDef>(def);
+			o[count++] = SAFE_NEW CObject_pointer<UnitDef>(def);
 		}
 
 		return o;
@@ -156,7 +156,7 @@ namespace luafunctions
 		object o = newtable(L);
 
 		for (int i = 0; i < selectedUnits.netSelected[player].size(); ++i)
-			o[i+1] = new CObject_pointer<CUnit>(uh->units[selectedUnits.netSelected[player][i]]);
+			o[i+1] = SAFE_NEW CObject_pointer<CUnit>(uh->units[selectedUnits.netSelected[player][i]]);
 
 		return o;
 	}

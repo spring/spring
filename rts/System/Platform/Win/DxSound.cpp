@@ -165,7 +165,7 @@ int CDxSound::GetBuf(int id,float volume)
 		HRESULT r=m_pDS->DuplicateSoundBuffer(buffers[s->firstBuf],&(buffers.back()));
 		if(r!=DS_OK){
 			MessageBox(0,"Couldnt duplicate sound buffer","Sound error",0);
-			sound = new CNullSound;
+			sound = SAFE_NEW CNullSound;
 			delete this;
 			return -2;
 		}
@@ -343,7 +343,7 @@ bool CDxSound::CreateStaticBuffer(const string& path)
 	CFileHandler file(path);
 	int fileSize = file.FileSize();
 	if(file.FileExists()){
-		buf = new Uint8[fileSize];
+		buf = SAFE_NEW Uint8[fileSize];
 		file.Read(buf, fileSize);
 	} else {
 		//handleerror(0, "Couldnt open wav file",path.c_str(),0);

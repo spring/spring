@@ -495,7 +495,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 		if (*si == "groundflash")
 			continue;
 
-		psi = new ProjectileSpawnInfo;
+		psi = SAFE_NEW ProjectileSpawnInfo;
 		projectileSpawn.push_back (psi);
 
 		std::string location = tag + "\\" + *si + "\\";
@@ -527,7 +527,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 	string location = tag + "\\groundflash\\";
 	int ttl = atoi(parser.SGetValueDef ("0", location + "ttl").c_str());
 	if (ttl) {
-		groundFlash = new GroundFlashInfo;
+		groundFlash = SAFE_NEW GroundFlashInfo;
 		groundFlash->circleAlpha = atof(parser.SGetValueDef ("0",location + "circleAlpha" ).c_str());
 		groundFlash->flashSize = atof(parser.SGetValueDef ("0",location + "flashSize" ).c_str());
 		groundFlash->flashAlpha = atof(parser.SGetValueDef ("0",location + "flashAlpha" ).c_str());

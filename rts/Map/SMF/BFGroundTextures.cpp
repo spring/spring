@@ -28,8 +28,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader,ifs);
 
-	tileMap = new int[(header->mapx*header->mapy)/16];
-	tiles = new char[tileHeader.numTiles*SMALL_TILE_SIZE];
+	tileMap = SAFE_NEW int[(header->mapx*header->mapy)/16];
+	tiles = SAFE_NEW char[tileHeader.numTiles*SMALL_TILE_SIZE];
 	int curTile=0;
 
 	for(int a=0;a<tileHeader.numTileFiles;++a){

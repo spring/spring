@@ -152,14 +152,14 @@ namespace terrain {
 			if (isBumpmap) 
 				throw content_error(name + " should be a bumpmap, not a blendmap.");
 
-			Blendmap *bm = new Blendmap;
+			Blendmap *bm = SAFE_NEW Blendmap;
 			bm->Load (name, basepath + name, heightmap, cb, tdfParser);
 			blendMaps.push_back (bm);
 			btex = bm;
 		}
 		else // a regular texturemap?
 		{
-			TiledTexture *tex = new TiledTexture;
+			TiledTexture *tex = SAFE_NEW TiledTexture;
 			tex->Load (name, basepath + name, cb, tdfParser, isBumpmap);
 			if (!tex->id) {
 				delete tex;
@@ -236,7 +236,7 @@ namespace terrain {
 		}
 
 		// Generate blendmap mipmaps
-		deque<AlphaImage*>* bmMipmaps = new deque<AlphaImage*>[blendMaps.size()];
+		deque<AlphaImage*>* bmMipmaps = SAFE_NEW deque<AlphaImage*>[blendMaps.size()];
 		GenerateInfo gi;
 		gi.bmMipmaps = bmMipmaps;
 
@@ -295,16 +295,16 @@ namespace terrain {
 		// Create texture application object
 		if (!cfg->forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader && 
 			GLEW_ARB_shader_objects && GLEW_ARB_shading_language_100) {
-			shaderHandler = new GLSLShaderHandler;
+			shaderHandler = SAFE_NEW GLSLShaderHandler;
 		} else {
 			// texture_env_combine as fallback
-			shaderHandler = new TexEnvSetupHandler;
+			shaderHandler = SAFE_NEW TexEnvSetupHandler;
 		}
 
 		// Calculate shadows
 		if (cfg->useStaticShadow) {
 			if (cb) cb->PrintMsg("  calculating lightmap");
-			lightmap = new Lightmap(heightmap, 2, 1,li);
+			lightmap = SAFE_NEW Lightmap(heightmap, 2, 1,li);
 		}
 
 		// see how lighting should be implemented, based on config and avaiable textures
@@ -340,7 +340,7 @@ namespace terrain {
 		delete[] bmMipmaps;
 
 		if (cfg->useShadowMaps)
-			shadowMapParams = new ShadowMapParams;
+			shadowMapParams = SAFE_NEW ShadowMapParams;
 	}
 
 	void TerrainTexture::CreateTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi)
@@ -363,7 +363,7 @@ namespace terrain {
 
 		uint key = CalcBlendmapSortKey ();
 		if (gi->nodesetup.find (key) == gi->nodesetup.end()) {
-			RenderSetupCollection* tns = gi->nodesetup[key] = new RenderSetupCollection;
+			RenderSetupCollection* tns = gi->nodesetup[key] = SAFE_NEW RenderSetupCollection;
 
 			tns->renderSetup.resize (shaders.size());
 			uint vda = 0;
@@ -371,7 +371,7 @@ namespace terrain {
 			// create a rendersetup for every shader expression
 			for (int a=0;a<shaders.size();a++)
 			{
-				RenderSetup *rs = tns->renderSetup [a] = new RenderSetup;
+				RenderSetup *rs = tns->renderSetup [a] = SAFE_NEW RenderSetup;
 
 				shaders[a]->def.Optimize(&rs->shaderDef);
 				shaderHandler->BuildNodeSetup(&rs->shaderDef, rs);

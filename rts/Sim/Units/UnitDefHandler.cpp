@@ -38,7 +38,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	PrintLoadMsg("Loading units and weapons");
 
-	weaponDefHandler = new CWeaponDefHandler();
+	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
 
 	numUnits = 0;
 
@@ -57,7 +57,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	}
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
-	unitDefs = new UnitDef[numUnits + 1];
+	unitDefs = SAFE_NEW UnitDef[numUnits + 1];
 
 	unsigned int id = 1;  // Start at unit id 1
 	
@@ -636,9 +636,13 @@ void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::str
 	{
 		const string soundFile = "sounds/" + gsound.name + ".wav";
 		CFileHandler file(soundFile);
-		if(file.FileExists())
-			gsound.id = sound->GetWaveId(soundFile);
-		else
+		if(file.FileExists()) {
+			PUSH_CODE_MODE;
+			ENTER_UNSYNCED;
+			int id = sound->GetWaveId(soundFile);
+			POP_CODE_MODE;
+			gsound.id = id;
+		} else
 			gsound.id = 0;
 	}
 	gsound.volume = 5.0f;
@@ -706,9 +710,9 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 
 	//Creates the map.
 	for (int u=0;u<4;u++)
-		def->yardmaps[u] = new unsigned char[def->xsize * def->ysize];
+		def->yardmaps[u] = SAFE_NEW unsigned char[def->xsize * def->ysize];
 
-	unsigned char *originalMap = new unsigned char[def->xsize * def->ysize / 4];		//TAS resolution is double of TA resolution.
+	unsigned char *originalMap = SAFE_NEW unsigned char[def->xsize * def->ysize / 4];		//TAS resolution is double of TA resolution.
 	memset(originalMap, 1, def->xsize * def->ysize / 4);
 
 	if(!yardmapStr.empty()){
@@ -773,7 +777,11 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	{
 		CBitmap bitmap;
 		bitmap.Load("unitpics/" + unitdef->buildpicname);
-		unitdef->unitimage = bitmap.CreateTexture(false);
+		unsigned int id = bitmap.CreateTexture(false);
+		PUSH_CODE_MODE;
+		ENTER_SYNCED;
+		unitdef->unitimage = id;
+		POP_CODE_MODE;
 	}
 	return unitdef->unitimage;
 }

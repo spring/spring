@@ -43,14 +43,14 @@ CPreGame::CPreGame(bool server, const string& demo):
 {
 	CommandDescription::Init();
 
-	infoConsole = new CInfoConsole;
+	infoConsole = SAFE_NEW CInfoConsole;
 
 	pregame = this; // prevent crashes if Select* is called from ctor
-	net = new CNet;
+	net = SAFE_NEW CNet;
 
 	if (server) {
 		assert(good_fpu_control_registers());
-		gameServer = new CGameServer;
+		gameServer = SAFE_NEW CGameServer;
 		assert(good_fpu_control_registers());
 	}
 
@@ -277,7 +277,7 @@ bool CPreGame::Update()
 					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 
 			// Determine if the map is inside an archive, and possibly map needed archives
-			CFileHandler* f = new CFileHandler("maps/" + mapName);
+			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 			if (!f->FileExists()) {
 				vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 				if (ars.empty())
@@ -294,7 +294,7 @@ bool CPreGame::Update()
 
 			LoadStartPicture();
 
-			game = new CGame(server, mapName, modName, infoConsole);
+			game = SAFE_NEW CGame(server, mapName, modName, infoConsole);
 
 			infoConsole = 0;
 
@@ -446,7 +446,7 @@ void CPreGame::SelectMap(std::string s)
 /** Create a CglList for selecting the map. */
 void CPreGame::ShowMapList()
 {
-	CglList* list = new CglList("Select map", SelectMap, 2);
+	CglList* list = SAFE_NEW CglList("Select map", SelectMap, 2);
 	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
@@ -496,7 +496,7 @@ void CPreGame::SelectMod(std::string s)
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
 {
-	CglList* list = new CglList("Select mod", SelectMod, 3);
+	CglList* list = SAFE_NEW CglList("Select mod", SelectMod, 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
 		handleerror(0, "Couldn't find any mod files", "PreGame error", 0);

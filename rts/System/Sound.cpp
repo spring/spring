@@ -23,15 +23,15 @@ CSound* CSound::GetSoundSystem()
 	const int maxSounds = configHandler.GetInt("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		logOutput.Print("Sound disabled with \"MaxSounds=%i\"", maxSounds);
-		return new CNullSound;
+		return SAFE_NEW CNullSound;
 	}
 
 	// try to get a real sound driver
 	try {
 #ifdef _WIN32
-		sound = new CDxSound();
+		sound = SAFE_NEW CDxSound();
 #else
-		sound = new COpenALSound();  
+		sound = SAFE_NEW COpenALSound();  
 #endif
 	}
 	catch (content_error& e) {
@@ -39,7 +39,7 @@ CSound* CSound::GetSoundSystem()
 		logOutput.Print("Error: %s", e.what());
       	
 		delete sound;
-		sound = new CNullSound;
+		sound = SAFE_NEW CNullSound;
 	}
 
 	// Something in DirectSoundCreate (sound drivers?) messes with the FPU control word.

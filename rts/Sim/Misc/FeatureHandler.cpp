@@ -263,7 +263,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 	if(!onlyCreateDefs){
 		int numFeatures = readmap->GetNumFeatures ();
-		MapFeatureInfo *mfi = new MapFeatureInfo [numFeatures];
+		MapFeatureInfo *mfi = SAFE_NEW MapFeatureInfo [numFeatures];
 		readmap->GetFeatureInfo (mfi);
 
 		for(int a=0;a<numFeatures;++a){
@@ -340,7 +340,7 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 				file->lsShort(rotation);
 				string fromUnit;
 				file->lsString(fromUnit);
-				CFeature* f = new CFeature;
+				CFeature* f = SAFE_NEW CFeature;
 				f->Initialize (pos,featureDefs[def],rotation,0,-1,fromUnit);
 			} else {
 				file->lsFloat3(features[a]->pos);

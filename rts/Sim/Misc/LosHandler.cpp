@@ -341,7 +341,7 @@ void CLosHandler::OutputTable(int Table)
 	LosTable lostable;
 
   int Radius = Table;
-  PaintTable = new char[(Radius+1)*Radius];
+  PaintTable = SAFE_NEW char[(Radius+1)*Radius];
   memset(PaintTable, 0 , (Radius+1)*Radius);
   CPoint P;
   int Lines = 0;

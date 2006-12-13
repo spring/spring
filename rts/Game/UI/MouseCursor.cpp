@@ -17,7 +17,7 @@ static const float defFrameLength = 0.100f;  // seconds
 
 CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 {
-	CMouseCursor* c = new CMouseCursor(name, hs);
+	CMouseCursor* c = SAFE_NEW CMouseCursor(name, hs);
 	if (c->frames.size() <= 0) {
 		delete c;
 		return NULL;
@@ -144,7 +144,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		ext = exts[e];
 		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
 		         name.c_str(), 0, ext);
-		CFileHandler* f = new CFileHandler(namebuf);
+		CFileHandler* f = SAFE_NEW CFileHandler(namebuf);
 		if (f->FileExists()) {
 			delete f;
 			break;
@@ -170,7 +170,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 
 bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 {
-	CFileHandler* f = new CFileHandler(name);
+	CFileHandler* f = SAFE_NEW CFileHandler(name);
 	if (!f->FileExists()) {
 		return false;
 	}
@@ -221,7 +221,7 @@ CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 	const int nx = next_power_of_2(orig.xsize);
 	const int ny = next_power_of_2(orig.ysize);
 
-	unsigned char* data = new unsigned char[nx * ny * 4];
+	unsigned char* data = SAFE_NEW unsigned char[nx * ny * 4];
 	memset(data, 0, nx * ny * 4);
 
 	for (int y = 0; y < orig.ysize; ++y) {
@@ -232,7 +232,7 @@ CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 		}
 	}
 
-	nb = new CBitmap(data, nx, ny);
+	nb = SAFE_NEW CBitmap(data, nx, ny);
 	delete[] data;
 	return nb;
 }

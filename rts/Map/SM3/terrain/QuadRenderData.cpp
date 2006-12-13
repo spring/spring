@@ -85,7 +85,7 @@ namespace terrain {
 			rd = freeRD.back();
 			freeRD.pop_back();
 		}
-		else rd = new QuadRenderData;
+		else rd = SAFE_NEW QuadRenderData;
 
 		rd->index = qrd.size();
 		qrd.push_back (rd);
@@ -259,7 +259,7 @@ namespace terrain {
 		}
 
 		// allocate temporary storage for normals
-		uchar *normals = new uchar[texw*texw*3];
+		uchar *normals = SAFE_NEW uchar[texw*texw*3];
 
 		// calculate normals
 		for (int y=0; y<h; y++) {

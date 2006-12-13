@@ -74,7 +74,7 @@ namespace terrain {
 
 	Heightmap* Heightmap::CreateLowDetailHM ()
 	{
-		lowDetail = new Heightmap;
+		lowDetail = SAFE_NEW Heightmap;
 		LodScaleDown (lowDetail);
 		lowDetail->highDetail = this;
 		return lowDetail;
@@ -112,7 +112,7 @@ namespace terrain {
 
 	void Heightmap::GenerateNormals ()
 	{
-		normalData = new uchar [3 * w * h];
+		normalData = SAFE_NEW uchar [3 * w * h];
 
 		uchar *cnorm = normalData;
 		for (int y=0;y<h;y++)
@@ -284,7 +284,7 @@ namespace terrain {
 		if (!nw) { nw = 1; }
 		if (!nh) { nh = 1; }
 
-		AlphaImage *mipmap = new AlphaImage;
+		AlphaImage *mipmap = SAFE_NEW AlphaImage;
 		mipmap->Alloc (nw,nh);
 
 		// Scale X&Y

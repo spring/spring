@@ -7,6 +7,7 @@
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
+#include "StdAfx.h"
 #include <assert.h>
 #include <vector>
 #include "IFramebuffer.h"
@@ -18,7 +19,7 @@ IFramebuffer* instantiate_fb(const int w, const int h, int requires)
 {
 	if (GLEW_EXT_framebuffer_object) {
 		//logOutput.Print("Using EXT_framebuffer_object");
-		return new FBO(requires, w, h);
+		return SAFE_NEW FBO(requires, w, h);
 	}
 	//logOutput.Print("No supported pixel buffer found");
 	return NULL;
