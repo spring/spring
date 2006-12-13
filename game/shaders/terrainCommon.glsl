@@ -28,23 +28,22 @@
 */
 
 #ifdef UseBumpMapping
+	varying vec3 tsLightDir;
+	varying vec3 tsEyeDir;
+	//varying vec3 tsHalfDir;
 
-varying vec3 tsLightDir;
-varying vec3 tsEyeDir;
-//varying vec3 tsHalfDir;
-
+#else
+	varying vec3 wsEyeDir;
+	varying vec3 normal;
 #endif
 
 #ifdef UseShadowMapping
+	uniform mat4 shadowMatrix;
+	uniform vec4 shadowParams; // A,B, mid[0], mid[1]
+	uniform sampler2DShadow shadowMap;
 
-uniform mat4 shadowMatrix;
-uniform vec4 shadowParams; // A,B, mid[0], mid[1]
-uniform sampler2DShadow shadowMap;
-
-varying vec4 shadowTexCoord;
-
+	varying vec4 shadowTexCoord;
 #endif
 
 uniform vec3 wsLightDir;
 uniform vec3 wsEyePos;
-

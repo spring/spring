@@ -195,9 +195,9 @@ namespace terrain {
 
 		// Load textures
 		map<string, BaseTexture*> nametbl;
-		int texUnit=0;
 
 		if (cb) cb->PrintMsg ("  loading textures and blendmaps...");
+		bool hasBumpmaps = false;
 		for (int a=0;a<shaderDef.stages.size();a++)
 		{
 			ShaderDef::Stage* st = &shaderDef.stages [a];
@@ -205,8 +205,13 @@ namespace terrain {
 			if (nametbl.find (st->sourceName) == nametbl.end()) 
 				nametbl[st->sourceName] = LoadImageSource(st->sourceName, basepath, heightmap, cb, cfg);
 			st->source = nametbl[st->sourceName];
+
+			std::string bm;
+			if (tdf->SGetValue (bm, basepath + st->sourceName + "\\Bumpmap"))
+				hasBumpmaps = true;
 		}
-		if (cfg->useBumpMaps)
+
+		if (cfg->useBumpMaps && hasBumpmaps)
 		{
 			for (int a=0;a<shaderDef.normalMapStages.size();a++)
 			{
@@ -234,6 +239,7 @@ namespace terrain {
 				st->source = nametbl[st->sourceName];
 			}
 		}
+		else cfg->useBumpMaps = false;
 
 		// Generate blendmap mipmaps
 		deque<AlphaImage*>* bmMipmaps = SAFE_NEW deque<AlphaImage*>[blendMaps.size()];
@@ -313,7 +319,9 @@ namespace terrain {
         if (cb) cb->PrintMsg ("  initializing terrain node shaders...");
 
 		CreateTexProg (quadtree, &gi);
+		shaderHandler->EndBuild();
 
+		// count passes
 		maxPasses = 0;
 		for (map<uint, RenderSetupCollection*>::iterator mi=gi.nodesetup.begin();mi!=gi.nodesetup.end();++mi)
 		{
@@ -322,9 +330,6 @@ namespace terrain {
 
 				if (rs->passes.size () > maxPasses)
 					maxPasses = rs->passes.size();
-
-			//	rs->shaderDef.Output();
-			//	rs->DebugOutput();
 			}
 			texNodeSetup.push_back (mi->second);
 		}
@@ -482,7 +487,9 @@ namespace terrain {
 		parms.pass = passIndex;
 		parms.shadowMapParams = shadowMapParams;
 
-		glDepthMask(p->depthWrite ? GL_TRUE : GL_FALSE);
+		//glDepthMask(p->depthWrite ? GL_TRUE : GL_FALSE);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_DEPTH_TEST);
 
         bool blend=true;
 		switch (p->operation) {
@@ -547,7 +554,7 @@ namespace terrain {
 	}
 	void TerrainTexture::BeginPass(int p)
 	{
-		shaderHandler->BeginPass(blendMaps, textures);
+		shaderHandler->BeginPass(blendMaps, textures, p);
 	}
 
 	void TerrainTexture::SetShaderParams (const Vector3& lightDir, const Vector3& eyePos)
@@ -653,7 +660,7 @@ namespace terrain {
 
 					Stage& bmst = normalMapStages.back();
 					bmst.operation = st.operation;
-					bmst.sourceName = st.sourceName;//tdf.SGetValueDef(string(), path + st.sourceName + "\\Bumpmap");
+					bmst.sourceName = st.sourceName;
 				}
 			}
 			else { 

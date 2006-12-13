@@ -61,8 +61,9 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
 			renderer->config.useBumpMaps = true;
 			renderer->config.anisotropicFiltering = 0.0f;
-		} else
-			renderer->config.useStaticShadow = true;
+		} 
+
+		renderer->config.useStaticShadow = false;
 
 		renderer->config.terrainNormalMaps = false;
 		renderer->config.normalMapLevel = 3;

@@ -53,13 +53,13 @@ namespace terrain {
 	{
 		IShaderSetup () {}
 		virtual ~IShaderSetup() {}
-		virtual uint GetVertexDataRequirements () = 0;
+		virtual uint GetVertexDataRequirements () { return VRT_Basic; }
 		virtual std::string GetDebugDesc () { return std::string();} 
 
 		virtual void BindTSM(Vector3* buf, uint vertexSize) {}
 		virtual void UnbindTSM() {}
 
-		virtual void GetTextureUnits(BaseTexture *tex, int& imageUnit, int& coordUnit) = 0;
+		virtual void GetTextureUnits(BaseTexture *tex, int& imageUnit, int& coordUnit) {}
 	};
 
 	// Helper class to determine how to implement the shader stages (with multipass or multitexturing)
@@ -165,7 +165,7 @@ namespace terrain {
 
 		virtual bool SetupShader (IShaderSetup *shader, NodeSetupParams& params) = 0;// returns false if it doesn't have to be drawn
 
-		virtual void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures) = 0;
+		virtual void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass) = 0;
 		virtual void EndPass () = 0;
 
 		virtual void EndTexturing () {}
@@ -177,6 +177,7 @@ namespace terrain {
 
 		// Construction
 		virtual void BuildNodeSetup (ShaderDef* shaderDef, RenderSetup *rs) = 0;
+		virtual void EndBuild() {}
 	};
 
 	struct QuadMap;

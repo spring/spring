@@ -234,16 +234,8 @@ namespace terrain {
 	
 	void SetTexGen (float scale)
 	{
-		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-
-		Plane s(scale,0,0,0);
-		glTexGenfv (GL_S, GL_OBJECT_PLANE, (float*)&s);
-		Plane t(0,0,scale,0);
-		glTexGenfv (GL_T, GL_OBJECT_PLANE, (float*)&t);
-
-		glEnable (GL_TEXTURE_GEN_S);
-		glEnable (GL_TEXTURE_GEN_T);
+		float tgv[4] = { scale, scale, 0.0f, 0.0f };
+		SetTexCoordGen(tgv);
 	}
 
 //-----------------------------------------------------------------------
@@ -353,7 +345,7 @@ namespace terrain {
 				if(coordUnits[a]==texture) return a;
 		}
 
-		if (maxCoords == (int)coordUnits.size())
+		if (maxCoords >= 0 && maxCoords == (int)coordUnits.size())
 			return -1;
 		
 		coordUnits.push_back (texture);
@@ -362,7 +354,7 @@ namespace terrain {
 
 	int TextureUsage::AddTextureRead (int maxUnits, BaseTexture *texture)
 	{
-		if (maxUnits == (int)texUnits.size())
+		if (maxUnits >= 0 && maxUnits == (int)texUnits.size())
 			return -1;
 
 		for(int a=0;a<texUnits.size();a++)

@@ -41,10 +41,10 @@ void CalcShadowTexCoord()
 	temp.y = dot(gl_Vertex, shadowMatrix[1]);
 	
 	at = abs(temp);
-	at += vec4(shadowParams.x,shadowParams.x,0.0,0.0);
+	at += vec2(shadowParams.x,shadowParams.x);
 	at.x = inversesqrt(at.x);
 	at.y = inversesqrt(at.y);
-	at += vec4(shadowParams.y,shadowParams.y,0.0,0.0);
+	at += vec2(shadowParams.y,shadowParams.y);
 
 	shadowTexCoord.xy = temp * at + vec2(shadowParams.z,shadowParams.w);
 	shadowTexCoord.z = dot(gl_Vertex, shadowMatrix[2]);
@@ -72,6 +72,9 @@ void main (void)
 	tsLightDir = TangentSpaceMatrix * (-wsLightDir);
 	vec3 eyeDir = normalize(gl_Vertex.xyz - wsEyePos);
 	tsEyeDir = TangentSpaceMatrix * eyeDir;
+#else
+	normal = gl_NormalMatrix * gl_Normal;
+	wsEyeDir = normalize(gl_Vertex.xyz - wsEyePos);
 #endif
 }
 
