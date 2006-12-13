@@ -43,12 +43,12 @@ CAdvTreeDrawer::CAdvTreeDrawer()
 	PrintLoadMsg("Loading tree texture");
 	oldTreeDistance=4;
 
-	treeGen=new CAdvTreeGenerator;
-	grassDrawer=new CGrassDrawer();
+	treeGen=SAFE_NEW CAdvTreeGenerator;
+	grassDrawer=SAFE_NEW CGrassDrawer();
 	lastListClean=0;
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;
-	trees=new TreeSquareStruct[treesX*treesY];
+	trees=SAFE_NEW TreeSquareStruct[treesX*treesY];
 
 	for(int y=0;y<treesY;y++){
 		for(int x=0;x<treesX;x++){

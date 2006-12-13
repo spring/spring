@@ -34,7 +34,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap *rm)
 		}
 	}
 
-	textures=new CBFGroundTextures(map);
+	textures=SAFE_NEW CBFGroundTextures(map);
 
 	viewRadius=configHandler.GetInt("GroundDetail",40);
 	viewRadius+=viewRadius%2;
@@ -235,7 +235,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 					for(x=xs;x<xe;x+=lod){
 						if((lod==1) || 
 							(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-							(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terräng
+							(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrï¿½g
 								if(!inStrip){
 									DrawVertexA(x,y);
 									DrawVertexA(x,y+lod);
@@ -243,7 +243,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 								}
 								DrawVertexA(x+lod,y);
 								DrawVertexA(x+lod,y+lod);
-							} else {  //inre begränsning mot föregående lod
+							} else {  //inre begrï¿½sning mot fï¿½egï¿½nde lod
 								if((x>=(cx)+viewRadius*hlod)){
 									float h1=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x]*(oldcamxpart);
 									float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(oldcamxpart);
@@ -353,7 +353,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 						inStrip=false;
 					}
 				}
-				//rita yttre begränsnings yta mot nästa lod
+				//rita yttre begrï¿½snings yta mot nï¿½ta lod
 				if(maxlx<maxtx && maxlx>=mintx){
 					x=maxlx;
 					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
@@ -613,7 +613,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 				for(x=xs;x<xe;x+=lod){
 				if((lod==1) || 
 					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terräng
+					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrï¿½g
 						if(!inStrip){
 							DrawVertexA(x,y);
 							DrawVertexA(x,y+lod);
@@ -621,7 +621,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 						}
 						DrawVertexA(x+lod,y);
 						DrawVertexA(x+lod,y+lod);
-					} else {  //inre begränsning mot föregående lod
+					} else {  //inre begrï¿½sning mot fï¿½egï¿½nde lod
 						if((x>=(cx)+viewRadius*hlod)){
 							float h1=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x]*(oldcamxpart);
 							float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(oldcamxpart);
@@ -731,7 +731,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 				inStrip=false;
 			}
 		}
-		//rita yttre begränsnings yta mot nästa lod
+		//rita yttre begrï¿½snings yta mot nï¿½ta lod
 		if(maxlx<maxtx && maxlx>=mintx){
 			x=maxlx;
 			for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){

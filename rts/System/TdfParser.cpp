@@ -107,7 +107,7 @@ void TdfParser::LoadFile(std::string const& filename)
     throw content_error( ("file " + filename + " not found").c_str() );
 
 	int size = file.FileSize();
-  boost::scoped_array<char> filebuf( new char[size+2] );
+  boost::scoped_array<char> filebuf( SAFE_NEW char[size+2] );
 
 	file.Read( filebuf.get(), file.FileSize());
   filebuf[size] = '\0'; //append newline at end to avoid parsing error at eof

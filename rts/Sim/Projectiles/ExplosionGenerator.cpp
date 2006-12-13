@@ -163,7 +163,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 			moveLength=camLength-2;
 		float3 npos=pos+camVect*moveLength;
 
-		CHeatCloudProjectile* p=new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
+		CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
 
 		//p->Update();
 		//p->maxheat=p->heat;
@@ -182,7 +182,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 			if(npos.y<h)
 				npos.y=h;
 			float time=(40+sqrt(smokeDamage)*15)*(0.8f+gu->usRandFloat()*0.7f);
-			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4f,owner,0.6f);
+			SAFE_NEW CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4f,owner,0.6f);
 		}
 		if(!airExplosion && !uwExplosion && !waterExplosion){
 			int numDirt=(int)min(20.f,damage*0.8f);
@@ -191,7 +191,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 				float3 speed((0.5f-gu->usRandFloat())*1.5f,1.7f+gu->usRandFloat()*1.6f,(0.5f-gu->usRandFloat())*1.5f);
 				speed*=0.7f+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.6f),pos.y-2.0f-damage*0.2f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.6f));
-				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
+				CDirtProjectile* dp=SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
 			}
 		}
 		if(!airExplosion && !uwExplosion && waterExplosion){
@@ -201,7 +201,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 				float3 speed((0.5f-gu->usRandFloat())*0.2f,a*0.1f+gu->usRandFloat()*0.8f,(0.5f-gu->usRandFloat())*0.2f);
 				speed*=0.7f+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.2f),pos.y-2.0f-sqrt(damage)*2.0f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.2f));
-				CDirtProjectile* dp=new CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*2.0f,0.3f,0.99f,owner,color);
+				CDirtProjectile* dp=SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*2.0f,0.3f,0.99f,owner,color);
 			}
 		}
 		if(damage>=20 && !uwExplosion && !airExplosion){
@@ -216,19 +216,19 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 					speed=float3(gu->usRandVector()*2);
 				speed*=0.7f+min((float)30,damage)/23;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*1),pos.y,pos.z-(0.5f-gu->usRandFloat())*(radius*1));
-				new CWreckProjectile(npos,speed,90+damage*2,owner);
+				SAFE_NEW CWreckProjectile(npos,speed,90+damage*2,owner);
 			}
 		}
 		if(uwExplosion){
 			int numBubbles=(int)(damage*0.7f);
 			for(int a=0;a<numBubbles;++a){
-				new CBubbleProjectile(pos+gu->usRandVector()*radius*0.5f,gu->usRandVector()*0.2f+float3(0,0.2f,0),damage*2+gu->usRandFloat()*damage,1+gu->usRandFloat()*2,0.02f,owner,0.5f+gu->usRandFloat()*0.3f);
+				SAFE_NEW CBubbleProjectile(pos+gu->usRandVector()*radius*0.5f,gu->usRandVector()*0.2f+float3(0,0.2f,0),damage*2+gu->usRandFloat()*damage,1+gu->usRandFloat()*2,0.02f,owner,0.5f+gu->usRandFloat()*0.3f);
 			}
 		}
 		if(waterExplosion && !uwExplosion && !airExplosion){
 			int numWake=(int)(damage*0.5f);
 			for(int a=0;a<numWake;++a){
-				new CWakeProjectile(pos+gu->usRandVector()*radius*0.2f,gu->usRandVector()*radius*0.003f,sqrt(damage)*4,damage*0.03f,owner,0.3f+gu->usRandFloat()*0.2f,0.8f/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
+				SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*radius*0.2f,gu->usRandVector()*radius*0.003f,sqrt(damage)*4,damage*0.03f,owner,0.3f+gu->usRandFloat()*0.2f,0.8f/(sqrt(damage)*3+50+gu->usRandFloat()*90),1);
 			}
 		}
 		if(radius>10 && damage>4){
@@ -239,7 +239,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 				speed*=(8+damage*3.0f)/(9+sqrt(damage)*0.7f)*0.35f;
 				if(!airExplosion && !waterExplosion && speed.y<0)
 					speed.y=-speed.y;
-				new CExploSpikeProjectile(pos+speed,speed*(0.9f+gu->usRandFloat()*0.4f),radius*0.1f,radius*0.1f,0.6f,0.8f/(8+sqrt(damage)),owner);
+				SAFE_NEW CExploSpikeProjectile(pos+speed,speed*(0.9f+gu->usRandFloat()*0.4f),radius*0.1f,radius*0.1f,0.6f,0.8f/(8+sqrt(damage)),owner);
 			}
 		}
 	}
@@ -255,7 +255,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 		}
 		float flashSize=modSize;
 		float flashAlpha=min(0.8f,damage*0.01f);
-		new CStandardGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
+		SAFE_NEW CStandardGroundFlash(pos,circleAlpha,flashAlpha,flashSize,circleGrowth,ttl);
 	}
 
 	if(radius>40 && damage>12){
@@ -588,7 +588,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 	}
 
 	if ((flags & SPW_GROUND) && groundFlash)
-		new CStandardGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
+		SAFE_NEW CStandardGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
 
 	if (useDefaultExplosions)
 		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);

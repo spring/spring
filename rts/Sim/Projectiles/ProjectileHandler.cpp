@@ -659,7 +659,7 @@ void CProjectileHandler::UpdateTextures()
 	if(gs->frameNum==300){
 		logOutput.Print("Saving tex");
 		perlinFB->select();
-		unsigned char* buf=new unsigned char[512*512*4];
+		unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
 		glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 		CBitmap b(buf,512,512);
 		b.ReverseYAxis();
@@ -756,7 +756,7 @@ void CProjectileHandler::UpdatePerlin()
 
 void CProjectileHandler::GenerateNoiseTex(unsigned int tex,int size)
 {
-	unsigned char* mem=new unsigned char[4*size*size];
+	unsigned char* mem=SAFE_NEW unsigned char[4*size*size];
 
 	for(int a=0;a<size*size;++a){
 		unsigned char rnd=int(max(0.f,gu->usRandFloat()*555-300));

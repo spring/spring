@@ -39,7 +39,7 @@ CUnitDrawer::CUnitDrawer(void)
 	updateFace(0)
 {
 	if(texturehandler==0)
-		texturehandler=new CTextureHandler;
+		texturehandler=SAFE_NEW CTextureHandler;
 
 	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
 	unitIconDist=configHandler.GetInt("UnitIconDist",200);
@@ -934,7 +934,7 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
 
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
 {
-	unsigned char* buf=new unsigned char[size*size*4];
+	unsigned char* buf=SAFE_NEW unsigned char[size*size*4];
 	for(int y=0;y<size;++y){
 		for(int x=0;x<size;++x){
 			float3 vec=baseDir+(xdif*(x+0.5f))/size+(ydif*(y+0.5f))/size;

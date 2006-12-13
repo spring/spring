@@ -10,7 +10,7 @@ namespace creg
 	struct DeduceType < std::deque <T> > {
 		IType* Get () { 
 			DeduceType<T> elemtype;
-			return new DynamicArrayType < std::deque<T> > (elemtype.Get());
+			return SAFE_NEW DynamicArrayType < std::deque<T> > (elemtype.Get());
 		}
 	};
 };

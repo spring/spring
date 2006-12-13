@@ -66,7 +66,7 @@ std::string BasicType::GetName()
 
 IType* IType::CreateBasicType (BasicTypeID t)
 {
-	return new BasicType (t);
+	return SAFE_NEW BasicType (t);
 }
 
 std::string StringType::GetName()
@@ -77,7 +77,7 @@ std::string StringType::GetName()
 IType* IType::CreateStringType ()
 {
 	DeduceType<char> charType;
-	return new DynamicArrayType<string> (charType.Get());
+	return SAFE_NEW DynamicArrayType<string> (charType.Get());
 }
 
 void ObjectInstanceType::Serialize (ISerializer *s, void *inst)
@@ -92,15 +92,15 @@ std::string ObjectInstanceType::GetName()
 
 IType* IType::CreateObjInstanceType (Class *objectType)
 {
-	return new ObjectInstanceType (objectType);
+	return SAFE_NEW ObjectInstanceType (objectType);
 }
 
 IType* IType::CreateEnumeratedType (size_t size)
 {
 	switch (size) {
-		case 1: return new BasicType (crUChar);
-		case 2: return new BasicType (crUShort);
-		case 4: return new BasicType (crUInt);
+		case 1: return SAFE_NEW BasicType (crUChar);
+		case 2: return SAFE_NEW BasicType (crUShort);
+		case 4: return SAFE_NEW BasicType (crUInt);
 	}
 	return 0;
 }

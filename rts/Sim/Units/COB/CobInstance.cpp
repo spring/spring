@@ -576,30 +576,30 @@ void CCobInstance::EmitSfx(int type, int piece)
 			//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 3:			//wake 2, in TA it lives longer..
 		case 2:		{	//regular ship wake
 			//float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 259:	{	//submarine bubble. does not provide direction through piece vertices..
 			float3 pspeed=gu->usRandVector()*0.1f;
 			pspeed.y+=0.2f;
-			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
+			SAFE_NEW CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
 			break;}
 		case 257:	//damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
+			SAFE_NEW CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
 		case 258:		//damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
+			SAFE_NEW CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
 		case 0:{		//vtol
 			//relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
-			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
+			CHeatCloudProjectile* hc=SAFE_NEW CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
 			hc->size=3;
 			break;}
 		default:
@@ -725,7 +725,7 @@ void CCobInstance::Explode(int piece, int flags)
 #endif
 
 	//Do an explosion at the location first
-	CHeatCloudProjectile* p=new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+	CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	//If this is true, no stuff should fly off
 	if (flags & 32) 
@@ -840,7 +840,7 @@ void CCobInstance::Explode(int piece, int flags)
 	else {
 		if (pieceData->original3do != NULL || pieceData->originals3o != NULL) {
 			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
+			SAFE_NEW CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
 #endif
@@ -866,7 +866,7 @@ void CCobInstance::ShowFlare(int piece)
 
 	float size=unit->lastMuzzleFlameSize;
 
-	new CMuzzleFlame(pos, unit->speed,dir, size);
+	SAFE_NEW CMuzzleFlame(pos, unit->speed,dir, size);
 #endif
 }
 

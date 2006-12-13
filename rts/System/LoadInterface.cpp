@@ -55,7 +55,7 @@ void CLoadInterface::lsString(std::string& v)
 	int size;
 	ifs->read((char*)&size,sizeof(int));
 
-	char* txt=new char[size+2];
+	char* txt=SAFE_NEW char[size+2];
 	ifs->read(txt,size);
 	txt[size]=0;
 	v=txt;

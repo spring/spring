@@ -82,7 +82,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 	tileMapXSize = header->mapx/4;
 	tileMapYSize = header->mapy/4;
 
-	squares=new GroundSquare[numBigTexX*numBigTexY];
+	squares=SAFE_NEW GroundSquare[numBigTexX*numBigTexY];
 
 	for(int y=0;y<numBigTexY;++y){
 		for(int x=0;x<numBigTexX;++x){
@@ -176,7 +176,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	int size=1024>>level;
 	//int hsize=size/2;
 
-	char* buf=new char[size*size/2];
+	char* buf=SAFE_NEW char[size*size/2];
 
 	int tilepitch = 64/(1<<level);
 	int bufpitch = tilepitch*32;

@@ -15,8 +15,8 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	xsize=gs->mapx/RADAR_SIZE;
 	ysize=gs->mapy/RADAR_SIZE;
 
-	commonJammerMap=new unsigned short[xsize*ysize];
-	commonSonarJammerMap=new unsigned short[xsize*ysize];
+	commonJammerMap=SAFE_NEW unsigned short[xsize*ysize];
+	commonSonarJammerMap=SAFE_NEW unsigned short[xsize*ysize];
 
 	for(int b=0;b<xsize*ysize;++b){
 		commonJammerMap[b]=0;
@@ -24,16 +24,16 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	}
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
-		radarMaps[a]=new unsigned short[xsize*ysize];
-		sonarMaps[a]=new unsigned short[xsize*ysize];
+		radarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
+		sonarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
 		seismicMaps[a] = SAFE_NEW unsigned short[xsize*ysize];
 
 		if(circularRadar)																			//if we use circular radar air radar and standard radar is the same
 			airRadarMaps[a]=radarMaps[a];
 		else
-			airRadarMaps[a]=new unsigned short[xsize*ysize];
+			airRadarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
 
-		jammerMaps[a]=new unsigned short[xsize*ysize];
+		jammerMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
 
 		for(int b=0;b<xsize*ysize;++b){
 			radarMaps[a][b]=0;

@@ -39,7 +39,7 @@ void ClassBinder::InitializeClasses ()
 {
 	// Create Class instances
 	for (ClassBinder *c = binderList; c; c = c->nextBinder)
-		c->class_ = new Class;
+		c->class_ = SAFE_NEW Class;
 
 	// Initialize class instances
 	for (ClassBinder *c = binderList; c; c = c->nextBinder) {
@@ -112,7 +112,7 @@ void Class::EndFlag (ClassMemberFlag flag)
 
 void Class::AddMember (const char *name, IType* type, unsigned int offset)
 {
-	Member *member = new Member;
+	Member *member = SAFE_NEW Member;
 
 	member->name = name;
 	member->offset = offset;

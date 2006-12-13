@@ -526,7 +526,7 @@ void CUnit::SlowUpdate()
 
 #ifndef SYNCDEBUG
 			if(!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
-				new CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
+				SAFE_NEW CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
 #endif
 
 			for(int a=0;a<gs->activeAllyTeams;++a){
@@ -1422,7 +1422,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 		AddDeathDependence(missile);
 
 		if(lastFlareDrop < gs->frameNum - unitDef->flareReloadTime*30){
-			new CFlareProjectile(pos,speed,this,(int)(gs->frameNum+unitDef->flareDelay*(1+gs->randFloat())*15));
+			SAFE_NEW CFlareProjectile(pos,speed,this,(int)(gs->frameNum+unitDef->flareDelay*(1+gs->randFloat())*15));
 			lastFlareDrop=gs->frameNum;
 		}
 	}

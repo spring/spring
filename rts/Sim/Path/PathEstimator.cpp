@@ -163,7 +163,7 @@ moveMathOptions(mmOpt)
 	directionVertex[PATHDIR_DOWN] = int(PATHDIR_UP) - (nbrOfBlocksX * PATH_DIRECTION_VERTICES);
 	directionVertex[PATHDIR_LEFT_DOWN] = int(PATHDIR_RIGHT_UP) - (nbrOfBlocksX * PATH_DIRECTION_VERTICES) + PATH_DIRECTION_VERTICES;
 
-	pathCache=new CPathCache(nbrOfBlocksX,nbrOfBlocksZ);
+	pathCache=SAFE_NEW CPathCache(nbrOfBlocksX,nbrOfBlocksZ);
 }
 
 

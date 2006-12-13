@@ -37,7 +37,7 @@ namespace luafunctions
 	// This should use net stuff instead of duplicating code here
 	void EndGame()
 	{
-		new CEndGameBox();
+		SAFE_NEW CEndGameBox();
 		game->gameOver = true;
 	}
 

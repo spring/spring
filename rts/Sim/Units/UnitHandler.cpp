@@ -99,7 +99,7 @@ CUnitHandler::CUnitHandler()
 	diminishingMetalMakers(false),
 	limitDgun(false)
 {
-	//unitModelLoader=new CUnit3DLoader;
+	//unitModelLoader=SAFE_NEW CUnit3DLoader;
 
 	for(int a=1;a<MAX_UNITS;a++){
 		freeIDs.push_back(a);
@@ -124,7 +124,7 @@ CUnitHandler::CUnitHandler()
 		if(gameSetup->diminishingMMs)
 			diminishingMetalMakers=true;
 	}
-	airBaseHandler=new CAirBaseHandler;
+	airBaseHandler=SAFE_NEW CAirBaseHandler;
 
 	for(int i=0; i<MAX_TEAMS; i++)
 	{

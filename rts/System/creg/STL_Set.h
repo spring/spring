@@ -46,7 +46,7 @@ namespace creg
 	struct DeduceType < std::set<T> > {
 		IType* Get () {
 			DeduceType<T> elemtype;
-			return new SetType < std::set <T> > (elemtype.Get());
+			return SAFE_NEW SetType < std::set <T> > (elemtype.Get());
 		}
 	};
 	// Multiset
@@ -54,7 +54,7 @@ namespace creg
 	struct DeduceType < std::multiset<T> > {
 		IType* Get () {
 			DeduceType<T> elemtype;
-			return new SetType < std::multiset<T> > (elemtype.Get());
+			return SAFE_NEW SetType < std::multiset<T> > (elemtype.Get());
 		}
 	};
 	// Hash set
@@ -62,7 +62,7 @@ namespace creg
 	struct DeduceType < SPRING_HASH_SET<T> > {
 		IType* Get () {
 			DeduceType<T> elemtype;
-			return new SetType < SPRING_HASH_SET<T> > (elemtype.Get());
+			return SAFE_NEW SetType < SPRING_HASH_SET<T> > (elemtype.Get());
 		}
 	};
 };

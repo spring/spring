@@ -29,10 +29,10 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 		// presents C interface
         logOutput << dll <<  " has C interface\n";
 		IsCInterface = true;
-		AbicProxy* ai=new AbicProxy; // keep as AbicProxy, so InitAI works ok
+		AbicProxy* ai=SAFE_NEW AbicProxy; // keep as AbicProxy, so InitAI works ok
 		this->ai = ai;
-		gh=new CGroupHandler(team);
-		callback=new CGlobalAICallback(this);
+		gh=SAFE_NEW CGroupHandler(team);
+		callback=SAFE_NEW CGlobalAICallback(this);
 		ai->InitAI(dll,callback,team);
 	}
 	else
@@ -57,8 +57,8 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 		ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 
 		ai=GetNewAI();
-		gh=new CGroupHandler(team);
-		callback=new CGlobalAICallback(this);
+		gh=SAFE_NEW CGroupHandler(team);
+		callback=SAFE_NEW CGlobalAICallback(this);
 		ai->InitAI(callback,team);
 	}
 }

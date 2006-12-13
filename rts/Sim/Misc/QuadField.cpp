@@ -22,7 +22,7 @@ CQuadField::CQuadField()
 	numQuadsX=gs->mapx*SQUARE_SIZE/QUAD_SIZE;
 	numQuadsZ=gs->mapy*SQUARE_SIZE/QUAD_SIZE;
 
-	baseQuads=new Quad[numQuadsX*numQuadsZ];
+	baseQuads=SAFE_NEW Quad[numQuadsX*numQuadsZ];
 
 	for(int y=0;y<numQuadsZ;++y){
 		for(int x=0;x<numQuadsX;++x){

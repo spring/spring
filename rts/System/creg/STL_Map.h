@@ -51,7 +51,7 @@ namespace creg
 		IType* Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return new MapType < std::map <TKey, TValue> > (elemtype.Get());
+			return SAFE_NEW MapType < std::map <TKey, TValue> > (elemtype.Get());
 		}
 	};
 	// Multimap
@@ -59,7 +59,7 @@ namespace creg
 	struct DeduceType < std::multimap<TKey, TValue> > {
 		IType* Get () {
 			DeduceType elemtype;
-			return new MapType < std::multimap<T> > (elemtype.Get());
+			return SAFE_NEW MapType < std::multimap<T> > (elemtype.Get());
 		}
 	};
 	// Hash map
@@ -67,7 +67,7 @@ namespace creg
 	struct DeduceType < SPRING_HASH_MAP<TKey, TValue> > {
 		IType* Get () {
 			DeduceType elemtype;
-			return new MapType < SPRING_HASH_SET<TKey, TValue> > (elemtype.Get());
+			return SAFE_NEW MapType < SPRING_HASH_SET<TKey, TValue> > (elemtype.Get());
 		}
 	};
 
@@ -96,7 +96,7 @@ namespace creg
 		IType* Get () {
 			DeduceType<TFirst> first;
 			DeduceType<TSecond> second;
-			PairType *pt = new PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get());
+			PairType *pt = SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get());
 			return pt;
 		}
 	};

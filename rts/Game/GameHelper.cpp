@@ -112,7 +112,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		if(dist2<explosionSpeed*4){	//damage directly
 			(*ui)->DoDamage(damageDone,owner,addedImpulse);
 		}else {	//damage later
-			WaitingDamage* wd=new WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse);
+			WaitingDamage* wd=SAFE_NEW WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse);
 			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed)-3)&127].push_front(wd);
 		}
 	}

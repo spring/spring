@@ -86,7 +86,7 @@ void CLightingCannon::Fire(void)
 //		u->DoDamage(damages,owner,ZeroVector);
 	helper->Explosion(weaponPos+dir*r,damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir);
 
-	new CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,weaponDef,10,this);
+	SAFE_NEW CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,weaponDef,10,this);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 

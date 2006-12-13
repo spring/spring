@@ -41,7 +41,7 @@ CFeatureHandler::CFeatureHandler()
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
 	numQuads=drawQuadsX*drawQuadsY;
-	drawQuads=new DrawQuad[numQuads];
+	drawQuads=SAFE_NEW DrawQuad[numQuads];
 
 	LoadWreckFeatures();
 
@@ -83,7 +83,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,allyteam,emitSmoke,"");
 	} else {
 		if(!fd->modelname.empty()){
-			CFeature* f=new CFeature;
+			CFeature* f=SAFE_NEW CFeature;
 			f->Initialize (pos,fd,(short int)rot,facing,allyteam,fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
@@ -221,7 +221,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	for(int a=0;a<numType;++a){
 		string name=readmap->GetFeatureType (a);
 		if(name.find("TreeType")!=string::npos){
-			FeatureDef* fd=new FeatureDef;
+			FeatureDef* fd=SAFE_NEW FeatureDef;
 			fd->blocking=1;
 			fd->burnable=true;
 			fd->destructable=1;
@@ -238,7 +238,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->mass=20;
 			featureDefs[name]=fd;
 		} else if(name.find("GeoVent")!=string::npos){
-			FeatureDef* fd=new FeatureDef;
+			FeatureDef* fd=SAFE_NEW FeatureDef;
 			fd->blocking=0;
 			fd->burnable=0;
 			fd->destructable=0;
@@ -277,7 +277,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			float ypos = ground->GetHeight2(mfi[a].pos.x,mfi[a].pos.z);
-			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,0,-1,"");
+			(SAFE_NEW CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,0,-1,"");
 		}
 		delete[] mfi;
 	}
@@ -463,7 +463,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 			logOutput.Print("Couldnt find wreckage info %s",name.c_str());
 			return 0;
 		}
-		FeatureDef* fd=new FeatureDef;
+		FeatureDef* fd=SAFE_NEW FeatureDef;
 		fd->blocking=!!atoi(wreckParser.SGetValueDef("1",name+"\\blocking").c_str());
 		fd->destructable=!atoi(wreckParser.SGetValueDef("0",name+"\\indestructible").c_str());
 		fd->burnable=!!atoi(wreckParser.SGetValueDef("0",name+"\\flammable").c_str());

@@ -13,8 +13,8 @@
 
 CVertexArray::CVertexArray()
 {
-	drawArray=new float[1000];
-	stripArray=new int[100];
+	drawArray=SAFE_NEW float[1000];
+	stripArray=SAFE_NEW int[100];
 
 	drawArraySize=1000;
 	stripArraySize=100;
@@ -239,7 +239,7 @@ void CVertexArray::DrawArrayTC(int drawType, int stride)
 
 void CVertexArray::EnlargeDrawArray()
 {
-	float* tempArray=new float[drawArraySize*2];
+	float* tempArray=SAFE_NEW float[drawArraySize*2];
 	for(int a=0;a<drawIndex;++a)
 		tempArray[a]=drawArray[a];
 
@@ -250,7 +250,7 @@ void CVertexArray::EnlargeDrawArray()
 
 void CVertexArray::EnlargeStripArray()
 {
-	int* tempArray=new int[stripArraySize*2];
+	int* tempArray=SAFE_NEW int[stripArraySize*2];
 	for(int a=0;a<stripIndex;++a)
 		tempArray[a]=stripArray[a];
 

@@ -55,12 +55,12 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	sunVector4[3]=0;
 
 	for(int a=0;a<MAX_TEAMS;a++){
-		teams[a]=new CTeam();
+		teams[a]=SAFE_NEW CTeam();
 		teams[a]->teamNum=a;
 		team2allyteam[a]=a;
 	}
 	for(int a=0;a<MAX_PLAYERS;a++){
-		players[a]=new CPlayer();
+		players[a]=SAFE_NEW CPlayer();
 		players[a]->team=(a%2);
 	}
 

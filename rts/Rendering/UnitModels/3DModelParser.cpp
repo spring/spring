@@ -9,8 +9,8 @@ C3DModelParser* modelParser=0;
 
 C3DModelParser::C3DModelParser(void)
 {
-	unit3doparser=new C3DOParser();
-	units3oparser=new CS3OParser();
+	unit3doparser=SAFE_NEW C3DOParser();
+	units3oparser=SAFE_NEW CS3OParser();
 }
 
 C3DModelParser::~C3DModelParser(void)

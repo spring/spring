@@ -52,7 +52,7 @@ bool CGameSetup::Init(std::string setupFile)
 	CFileHandler fh(setupFile);
 	if (!fh.FileExists())
 		return false;
-	char* c=new char[fh.FileSize()];
+	char* c=SAFE_NEW char[fh.FileSize()];
 	fh.Read(c,fh.FileSize());
 
 	bool ret=Init(c,fh.FileSize());
@@ -68,7 +68,7 @@ bool CGameSetup::Init(char* buf, int size)
 		gs->players[a]->team=0;					//needed in case one tries to spec a game with only one team
 	}
 
-	gameSetupText=new char[size];
+	gameSetupText=SAFE_NEW char[size];
 	memcpy(gameSetupText,buf,size);
 	gameSetupTextLength=size;
 
@@ -119,7 +119,7 @@ bool CGameSetup::Init(char* buf, int size)
 			readyTeams[a]=false;
 		for(int a=0;a<gs->activeTeams;++a)
 			teamStartNum[a]=a;
-		new CStartPosSelecter();
+		SAFE_NEW CStartPosSelecter();
 	} else {
 		for(int a=0;a<gs->activeTeams;++a)
 			readyTeams[a]=true;

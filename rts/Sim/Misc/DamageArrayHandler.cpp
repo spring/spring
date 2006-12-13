@@ -60,7 +60,7 @@ DamageArray::DamageArray() {
 	paralyzeDamageTime=0;
 	impulseBoost=craterBoost=0.0f;
 	impulseFactor=craterMult=1.0f;
-	damages=new float[numTypes];
+	damages=SAFE_NEW float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=1;
 }
@@ -71,7 +71,7 @@ DamageArray::DamageArray(const DamageArray& other){
 	craterBoost=other.craterBoost;
 	impulseFactor=other.impulseFactor;
 	craterMult=other.craterMult;
-	damages=new float[numTypes];
+	damages=SAFE_NEW float[numTypes];
 	for(int a=0;a<numTypes;++a)
 		damages[a]=other.damages[a];
 }

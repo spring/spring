@@ -24,7 +24,7 @@ IAICheats* CGlobalAICallback::GetCheatInterface()
 		return cheats;
 
 	logOutput.Print ("AI has enabled cheating.");
-	cheats=new CAICheats(ai);
+	cheats=SAFE_NEW CAICheats(ai);
 	return cheats;
 }
 

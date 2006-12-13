@@ -1217,7 +1217,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 				if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
 					inCommand=iconCmd;
 					CommandDescription& cd=commands[iconCmd];
-					list=new CglList(cd.name.c_str(),MenuSelection);
+					list=SAFE_NEW CglList(cd.name.c_str(),MenuSelection);
 					list->cancelPlace = 0;
 					list->tooltip = "Choose the AI you want to assign to this group.\n"
 							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"

@@ -58,7 +58,7 @@ CBitmap::CBitmap(const CBitmap& old)
 	if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
 	else size = xsize*ysize; // Alpha
 
-	mem=new unsigned char[size];
+	mem=SAFE_NEW unsigned char[size];
 	memcpy(mem,old.mem,size);
 }
 
@@ -67,7 +67,7 @@ CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 {
 	type = BitmapTypeStandardRGBA;
 	ddsimage = 0;
-	mem=new unsigned char[xsize*ysize*4];
+	mem=SAFE_NEW unsigned char[xsize*ysize*4];
 	memcpy(mem,data,xsize*ysize*4);
 }
 
@@ -81,7 +81,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 		if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
 		else size = xsize*ysize; // Alpha
 
-		mem=new unsigned char[size];
+		mem=SAFE_NEW unsigned char[size];
 		memcpy(mem,bm.mem,size);
 	}
 	return *this;
@@ -95,7 +95,7 @@ void CBitmap::Alloc (int w,int h)
 	xsize=w;
 	ysize=h;
 	type=BitmapTypeStandardRGBA;
-	mem=new unsigned char[w*h*4];
+	mem=SAFE_NEW unsigned char[w*h*4];
 	memset(mem, 0, w*h*4);
 }
 
@@ -136,7 +136,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	if (!mem) {
 		xsize = 1;
 		ysize = 1;
-		mem=new unsigned char[4];
+		mem=SAFE_NEW unsigned char[4];
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
@@ -174,7 +174,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	{
 		xsize = 1;
 		ysize = 1;
-		mem=new unsigned char[4];
+		mem=SAFE_NEW unsigned char[4];
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
@@ -260,7 +260,7 @@ void CBitmap::Save(string const& filename)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	unsigned char* buf=new unsigned char[xsize*ysize*4];
+	unsigned char* buf=SAFE_NEW unsigned char[xsize*ysize*4];
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
 		Duplicated with ReverseYAxis. */
@@ -497,7 +497,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.mem=new unsigned char[width*height*4];
+	bm.mem=SAFE_NEW unsigned char[width*height*4];
 	bm.xsize=width;
 	bm.ysize=height;
 
@@ -520,7 +520,7 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	delete[] bm.mem;
 	bm.xsize=xsize/2;
 	bm.ysize=ysize/2;
-	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
+	bm.mem=SAFE_NEW unsigned char[bm.xsize*bm.ysize*4];
 
 	for(int y=0;y<ysize/2;++y){
 		for(int x=0;x<xsize/2;++x){
@@ -551,7 +551,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 	delete[] bm.mem;
 	bm.xsize=newx;
 	bm.ysize=newy;
-	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
+	bm.mem=SAFE_NEW unsigned char[bm.xsize*bm.ysize*4];
 
 	float dx=float(xsize)/newx;
 	float dy=float(ysize)/newy;
@@ -592,7 +592,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 
 void CBitmap::ReverseYAxis(void)
 {
-	unsigned char* buf=new unsigned char[xsize*ysize*4];
+	unsigned char* buf=SAFE_NEW unsigned char[xsize*ysize*4];
 
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
@@ -643,7 +643,7 @@ Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	// Release old handler which does not have the extensions
 	DisposeHandle(dataRef);
 	
-	// Grab the new version of the data ref from the data handler
+	// Grab the SAFE_NEW version of the data ref from the data handler
 	/*err = */ DataHGetDataRef(dataRefHandler, &dataRef);
 	
 	return dataRef;

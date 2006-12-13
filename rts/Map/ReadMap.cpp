@@ -150,16 +150,16 @@ void CReadMap::CalcHeightfieldData()
 {
 	float* heightmap = GetHeightmap();
 
-	orgheightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
-	//	normals=new float3[(gs->mapx+1)*(gs->mapy+1)];
-	facenormals=new float3[gs->mapx*gs->mapy*2];
-	centerheightmap=new float[gs->mapx*gs->mapy];
-	//halfHeightmap=new float[gs->hmapx*gs->hmapy];
+	orgheightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
+	//	normals=SAFE_NEW float3[(gs->mapx+1)*(gs->mapy+1)];
+	facenormals=SAFE_NEW float3[gs->mapx*gs->mapy*2];
+	centerheightmap=SAFE_NEW float[gs->mapx*gs->mapy];
+	//halfHeightmap=SAFE_NEW float[gs->hmapx*gs->hmapy];
 	mipHeightmap[0] = centerheightmap;
 	for(int i=1; i<numHeightMipMaps; i++)
 		mipHeightmap[i] = SAFE_NEW float[(gs->mapx>>i)*(gs->mapy>>i)];
 
-	slopemap=new float[gs->hmapx*gs->hmapy];
+	slopemap=SAFE_NEW float[gs->hmapx*gs->hmapy];
 
 	minheight=1000;
 	maxheight=-1000;
@@ -245,7 +245,7 @@ void CReadMap::CalcHeightfieldData()
 		}
 	}
 
-	heightLinePal=new unsigned char[3*256];
+	heightLinePal=SAFE_NEW unsigned char[3*256];
 	if(configHandler.GetInt("ColorElev",1)){
 		for(int a=0;a<86;++a){
 			heightLinePal[a*3+0]=255-a*3;

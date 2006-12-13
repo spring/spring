@@ -49,8 +49,8 @@ void LoadExtensions()
 		exit(0);
 	}
 	
-	vertexArray1=new CVertexArray;
-	vertexArray2=new CVertexArray;
+	vertexArray1=SAFE_NEW CVertexArray;
+	vertexArray2=SAFE_NEW CVertexArray;
 
 	std::string s= (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++) 

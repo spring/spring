@@ -49,7 +49,7 @@ void CPlasmaRepulser::Init(void)
 	if(weaponDef->visibleShield){
 		for(int y=0;y<16;y+=4){
 			for(int x=0;x<32;x+=4){
-				visibleShieldParts.push_back(new CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
+				visibleShieldParts.push_back(SAFE_NEW CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
 			}
 		}
 	}
@@ -99,7 +99,7 @@ void CPlasmaRepulser::Update(void)
 								hasGfx.insert(*pi);
 								float colorMix=min(1.f,curPower/(max(1.f,weaponDef->shieldPower)));
 								float3 color=weaponDef->shieldGoodColor*colorMix+weaponDef->shieldBadColor*(1-colorMix);
-								new CRepulseGfx(owner,*pi,radius,color);
+								SAFE_NEW CRepulseGfx(owner,*pi,radius,color);
 							}
 						}
 					} else {						//kill the projectile

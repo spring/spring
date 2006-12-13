@@ -94,7 +94,7 @@ CDxSound::CDxSound()
 	
 	SAFE_RELEASE( pDSBPrimary );
 	waveid[""]=0;
-	SoundInfo* si=new SoundInfo;
+	SoundInfo* si=SAFE_NEW SoundInfo;
 	loadedSounds.push_back(si);
 }
 
@@ -131,7 +131,7 @@ int CDxSound::InitFile(const string& name)
 
 	waveid[name]=loadedSounds.size();
 	buf2id.push_back(loadedSounds.size());
-	SoundInfo* si=new SoundInfo;
+	SoundInfo* si=SAFE_NEW SoundInfo;
 	si->firstBuf=buffers.size()-1;
 	si->freebufs.push_back(buffers.size()-1);
 	loadedSounds.push_back(si);

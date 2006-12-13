@@ -46,8 +46,8 @@ void CLoadSaveHandler::SaveGame(std::string file)
 //this just loads the mapname and some other early stuff
 void CLoadSaveHandler::LoadGame(std::string file)
 {
-	ifs=new std::ifstream(filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
-	load=new CLoadInterface(ifs);
+	ifs=SAFE_NEW std::ifstream(filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
+	load=SAFE_NEW CLoadInterface(ifs);
 
 	load->lsString(mapName);
 	load->lsString(modName);

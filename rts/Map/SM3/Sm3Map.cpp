@@ -121,7 +121,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 			for (int a=0;a<numTypes;a++) {
 				char loc[40];
 				SNPRINTF(loc, 16, "map\\featuretypes\\type%d", a);
-				featureTypes.push_back (new std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
+				featureTypes.push_back (SAFE_NEW std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
 			}
 		}
 		LoadFeatureData();
@@ -275,7 +275,7 @@ void CSm3ReadMap::LoadFeatureData()
 		}
 	}/* //testing features...
 	else {
-		featureTypes.push_back(new std::string("TreeType0"));
+		featureTypes.push_back(SAFE_NEW std::string("TreeType0"));
 
 		numFeatures = 1000;
 		featureInfo = SAFE_NEW MapFeatureInfo[numFeatures];

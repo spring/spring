@@ -37,7 +37,7 @@ namespace creg {
 	struct DeduceType < std::list <T> > {
 		IType* Get () { 
 			DeduceType<T> elemtype;
-			return new ListType < std::list<T> > (elemtype.Get());
+			return SAFE_NEW ListType < std::list<T> > (elemtype.Get());
 		}
 	};
 };

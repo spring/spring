@@ -78,7 +78,7 @@ CTextureHandler::CTextureHandler()
 		usedNames.insert(s2);
 
 		if(teamTexes.find(s2)==teamTexes.end()){
-			TexFile* tex=new TexFile;
+			TexFile* tex=SAFE_NEW TexFile;
 			tex->tex.Load(s,30);
 			tex->name=s2;	
 			texfiles[numfiles++]=tex;
@@ -97,7 +97,7 @@ CTextureHandler::CTextureHandler()
 		char t[50];
 		sprintf(t,"%i",a);
 		name+=t;
-		TexFile* tex=new TexFile;
+		TexFile* tex=SAFE_NEW TexFile;
 		tex->name=name;
 		tex->tex.Alloc(1,1);
 		tex->tex.mem[0]=palette[a][0];
@@ -127,7 +127,7 @@ CTextureHandler::CTextureHandler()
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
 
-	unsigned char* tex=new unsigned char[bigTexX*bigTexY*4];    
+	unsigned char* tex=SAFE_NEW unsigned char[bigTexX*bigTexY*4];    
 	for(int a=0;a<bigTexX*bigTexY*4;++a){
 		tex[a]=128;
 	}
@@ -193,7 +193,7 @@ CTextureHandler::CTextureHandler()
 			}
 		}
 
-		UnitTexture* unittex=new UnitTexture;
+		UnitTexture* unittex=SAFE_NEW UnitTexture;
 
 		unittex->xstart=(foundx+0.5f)/(float)bigTexX;
 		unittex->ystart=(foundy+0.5f)/(float)bigTexY;
@@ -214,7 +214,7 @@ CTextureHandler::CTextureHandler()
 //	CBitmap save(tex,bigTexX,bigTexY);
 	//save.Save("unittex-1x.jpg");
 
-	UnitTexture* t=new UnitTexture;
+	UnitTexture* t=SAFE_NEW UnitTexture;
 	t->xstart=0;
 	t->ystart=0;
 	t->xend=1;
@@ -336,7 +336,7 @@ string CTextureHandler::GetLine(CFileHandler& fh)
 
 TexFile* CTextureHandler::CreateTeamTex(string name, string name2,int team)
 {
-	TexFile* tex=new TexFile;
+	TexFile* tex=SAFE_NEW TexFile;
 	tex->tex.Load(name,30);
 	char tmp[256];
 	sprintf(tmp,"%s%02i",name2.c_str(),team);

@@ -129,12 +129,12 @@ CMouseHandler::CMouseHandler()
   doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	//fps camera must always be the first one in the list
-	camControllers.push_back(new CFPSController);
-	camControllers.push_back(new COverheadController);
-	camControllers.push_back(new CTWController);
-	camControllers.push_back(new CRotOverheadController);
+	camControllers.push_back(SAFE_NEW CFPSController);
+	camControllers.push_back(SAFE_NEW COverheadController);
+	camControllers.push_back(SAFE_NEW CTWController);
+	camControllers.push_back(SAFE_NEW CRotOverheadController);
 
-	overviewController=new COverviewController();
+	overviewController=SAFE_NEW COverviewController();
 	int mode=configHandler.GetInt("CamMode",1);
 	currentCamController=camControllers[mode];
 	currentCamControllerNum=mode;

@@ -26,7 +26,7 @@ CLosHandler* loshandler;
 static void* myNew(int size)
 {
 	int msize=size+4000;
-	unsigned char* ret=new unsigned char[msize];
+	unsigned char* ret=SAFE_NEW unsigned char[msize];
 	for(int a=0;a<2000;++a)
 		ret[a]=0x0;
 

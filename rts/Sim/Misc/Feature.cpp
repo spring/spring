@@ -298,7 +298,7 @@ bool CFeature::Update(void)
 		ENTER_MIXED;
 #ifndef SYNCDEBUG
 		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7f){
-			new CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3f,gu->usRandVector()*0.3f+UpVector,emitSmokeTime/6+20,6,0.4f,0,0.5f);
+			SAFE_NEW CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3f,gu->usRandVector()*0.3f+UpVector,emitSmokeTime/6+20,6,0.4f,0,0.5f);
 		}
 #endif
 		POP_CODE_MODE;
@@ -347,7 +347,7 @@ bool CFeature::Update(void)
 				float3 speed=gu->usRandVector()*0.5f;
 				speed.y+=2.0f;
 
-				new CGeoThermSmokeProjectile(gu->usRandVector()*10 + float3(pos.x,pos.y-10,pos.z),speed,int(50+gu->usRandFloat()*7), this);
+				SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector()*10 + float3(pos.x,pos.y-10,pos.z),speed,int(50+gu->usRandFloat()*7), this);
 			}
 		}
 #endif
@@ -368,7 +368,7 @@ void CFeature::StartFire(void)
 	fireTime=200+(int)(gs->randFloat()*30);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire=new CFireProjectile(midPos,UpVector,0,300,radius*0.8f,70,20);
+	myFire=SAFE_NEW CFireProjectile(midPos,UpVector,0,300,radius*0.8f,70,20);
 }
 
 void CFeature::DrawS3O()

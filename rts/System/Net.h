@@ -95,7 +95,7 @@ class CNet
       boost::scoped_array<unsigned char> message_buffer;
       size_t index;
       AssembleBuffer( NETMSG msg, size_t buffer_size )
-        : message_buffer( new unsigned char[buffer_size] ), index(1)
+        : message_buffer( SAFE_NEW unsigned char[buffer_size] ), index(1)
         { message_buffer[0] = msg; }
 
       template<typename T>
@@ -319,7 +319,7 @@ public:
 		unsigned char* data;
 
 		Packet(): data(0),length(0){};
-		Packet(const void* indata,int length): length(length){data=new unsigned char[length];memcpy(data,indata,length);};
+		Packet(const void* indata,int length): length(length){data=SAFE_NEW unsigned char[length];memcpy(data,indata,length);};
 
 		~Packet(){delete[] data;};
 	};

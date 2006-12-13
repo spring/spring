@@ -24,7 +24,7 @@ public:
 
 	static CCategoryHandler* Instance(){
 		if(instance==0){
-			instance=new CCategoryHandler();
+			instance=SAFE_NEW CCategoryHandler();
 			categoryHandler=instance;
 		}
 		return instance;

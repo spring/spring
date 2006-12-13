@@ -31,7 +31,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		throw content_error("Could not load tree texture from " + fn);
 	TexImage.ReverseYAxis();
 	//unsigned char gran[1024][512][4];
-	unsigned char (*gran)[512][4]=new unsigned char[1024][512][4]; 
+	unsigned char (*gran)[512][4]=SAFE_NEW unsigned char[1024][512][4]; 
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
 			for(int x=0;x<256;x++){
@@ -144,7 +144,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;
-	trees=new TreeSquareStruct[treesX*treesY];
+	trees=SAFE_NEW TreeSquareStruct[treesX*treesY];
 
 	for(int y=0;y<treesY;y++){
 		for(int x=0;x<treesX;x++){

@@ -966,7 +966,7 @@ namespace terrain {
 		renderDataManager = SAFE_NEW RenderDataManager (lowdetailhm, qmaps.front());
 
 		// calculate index table
-		indexTable=new IndexTable;
+		indexTable=SAFE_NEW IndexTable;
 		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize ());
 	}
 
@@ -1010,7 +1010,7 @@ namespace terrain {
 		hm->Alloc (w,w);
 
 		if (bits==16) {
-			ushort *tmp=new ushort[w*w];
+			ushort *tmp=SAFE_NEW ushort[w*w];
 			fh.Read (tmp, len);
 			for (int y=0;y<w*w;y++) hm->data[y]=float(tmp[y]) / float((1<<16)-1);
 #ifdef SWAP_SHORT
@@ -1019,7 +1019,7 @@ namespace terrain {
 				std::swap (p[0],p[1]);
 #endif
 		} else {
-			uchar *buf=new uchar[len], *p=buf;
+			uchar *buf=SAFE_NEW uchar[len], *p=buf;
 			fh.Read(buf,len);
 			for (w=w*w-1;w>=0;w--) 
 				hm->data[w]=*(p++)/255.0f;
@@ -1040,7 +1040,7 @@ namespace terrain {
 
 		int len=fh.FileSize();
 
-		char *buffer=new char[len];
+		char *buffer=SAFE_NEW char[len];
 		fh.Read(buffer, len);
         bool success = ilLoadL(IL_TYPE_UNKNOWN, buffer, len);
 		delete [] buffer;

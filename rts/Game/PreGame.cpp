@@ -54,7 +54,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 		assert(good_fpu_control_registers());
 	}
 
-	//hpiHandler=new CHpiHandler();
+	//hpiHandler=SAFE_NEW CHpiHandler();
 
 	activeController=this;
 
