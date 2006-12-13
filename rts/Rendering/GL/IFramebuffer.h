@@ -27,9 +27,9 @@ public:
 
 enum FramebufferProperties
 {
-	FBO_NEED_DEPTH, // zbuffering is needed, but only for rendering
-	FBO_NEED_DEPTH_TEXTURE, // for shadow mapping
-	FBO_NEED_COLOR 
+	FBO_NEED_DEPTH = 1, // zbuffering is needed, but only for rendering
+	FBO_NEED_DEPTH_TEXTURE = 2, // for shadow mapping
+	FBO_NEED_COLOR = 4
 };
 
 IFramebuffer* instantiate_fb(const int w, const int h, int requires);

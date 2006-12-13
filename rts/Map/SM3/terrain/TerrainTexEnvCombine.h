@@ -83,13 +83,14 @@ namespace terrain {
 		// ITexShaderHandler interface
 		void BeginTexturing();
 		void EndTexturing();
-		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures);
+		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
 		void EndPass() {}
 		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
 		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
 
 		int MaxTextureUnits ();
 		int MaxTextureCoords ();
+
 	protected:
 		int maxtu;
 		bool hasDot3;

@@ -22,6 +22,7 @@ TASpring change log
 
 - Fixed the unit-limit vs. sharing bug
 
+- Shadow mapping works for SM3
 
 0.74b1
 

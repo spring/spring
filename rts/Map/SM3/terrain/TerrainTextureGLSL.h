@@ -32,7 +32,38 @@ namespace terrain
 	struct TiledTexture;
 	class BufferTexture;
 
-	struct NodeGLSLShader : public IShaderSetup
+	struct GLSLBaseShader : public IShaderSetup
+	{
+		virtual void Setup(NodeSetupParams& params) = 0;
+		virtual void Cleanup() = 0;
+	};
+
+	struct SimpleCopyShader 
+	{
+		SimpleCopyShader(BufferTexture *src);
+		~SimpleCopyShader();
+
+		void Setup();
+		void Cleanup();
+
+		BufferTexture *source;
+		GLhandleARB vertexShader;
+		GLhandleARB fragmentShader;
+		GLhandleARB program;
+	};
+
+	struct SimpleCopyNodeShader : public GLSLBaseShader
+	{
+		SimpleCopyNodeShader(SimpleCopyShader *scs) :
+			shader(scs) {}
+
+		void Setup(NodeSetupParams& params) { shader->Setup(); }
+		void Cleanup() { shader->Cleanup(); }
+
+		SimpleCopyShader* shader;
+	};
+
+	struct NodeGLSLShader : public GLSLBaseShader
 	{
 		NodeGLSLShader ();
 		~NodeGLSLShader ();
@@ -64,15 +95,6 @@ namespace terrain
 
 		void Setup(NodeSetupParams& params);
 		void Cleanup();
-
-		enum RenderMethod
-		{
-			RM_Direct, // direct diffuse + bumpmap + lighting in a single pass
-			RM_SingleBuffer, // bumpmap rendered to buffer, then diffuse + lighting (possibly multipass) rendered to screen
-			RM_MultiBuffer, // multipass bumpmap rendering, then diffuse (possibly multipass) rendered to screen
-		};
-
-		RenderMethod renderMethod;
 	};
 
 	class GLSLShaderHandler : public ITexShaderHandler
@@ -82,7 +104,7 @@ namespace terrain
 		~GLSLShaderHandler ();
 
 		// ITexShaderHandler interface
-		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures);
+		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
 		void EndPass () {}
 
 		void BeginTexturing();
@@ -91,12 +113,17 @@ namespace terrain
 		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
 		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
 
+		void EndBuild();
+
 		int MaxTextureUnits ();
 		int MaxTextureCoords ();
 	protected:
-		NodeGLSLShader* curShader;
+		GLSLBaseShader* curShader;
 
-		std::vector<BufferTexture*> buffers;
+		BufferTexture *buffer;
+		std::vector<RenderSetup*> renderSetups;
+
+		SimpleCopyShader *scShader;
 	};
 };
 

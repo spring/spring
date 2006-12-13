@@ -147,9 +147,14 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	if (drawMode != drawNormal)
 	{
 		glEnable(GL_BLEND);
+		glDepthMask(GL_FALSE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(0.0f,- 10.0f);
 		glColor4f(1.0f,1.0f,1.0f,0.5f);
 		tr->DrawOverlayTexture (infoTex);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDepthMask(GL_FALSE);
 		glDisable(GL_BLEND);
 	}
 

@@ -644,6 +644,8 @@ namespace terrain {
 		{  
 			int numPasses=texturing->NumPasses();
 
+			glEnable(GL_DEPTH_TEST);
+			
 			if (fill) texturing->BeginTexturing();
 
 			if (!fill) numPasses=1;
@@ -653,8 +655,6 @@ namespace terrain {
 
 				if (fill)
 					texturing->BeginPass(pass);
-
-				glEnable(GL_DEPTH_TEST);
 
 				for (int a=0;a<activeRC->quads.size();a++) 
 				{

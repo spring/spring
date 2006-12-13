@@ -233,7 +233,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	}	
 }
 
-void TexEnvSetupHandler::BeginPass (const vector<Blendmap*>& blendMaps, const vector<TiledTexture*>& textures)
+void TexEnvSetupHandler::BeginPass (const vector<Blendmap*>& blendMaps, const vector<TiledTexture*>& textures, int pass)
 {}
 
 bool TexEnvSetupHandler::SetupShader (IShaderSetup *shadercfg, NodeSetupParams& parms)
