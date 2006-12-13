@@ -26,7 +26,7 @@ IMapDamage * IMapDamage::GetMapDamage()
 		disable = true;
 	
 	if (disable)
-		return new CNoMapDamage;
+		return SAFE_NEW CNoMapDamage;
 	else
-		return new CBasicMapDamage;
+		return SAFE_NEW CBasicMapDamage;
 }

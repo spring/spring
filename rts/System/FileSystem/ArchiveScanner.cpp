@@ -290,7 +290,7 @@ bool CArchiveScanner::GetCRC(const string& filename, unsigned int& crc)
 		return false;
 
 	crc ^= 0xFFFFFFFF;
-	unsigned char* buf = new unsigned char[100000];
+	unsigned char* buf = SAFE_NEW unsigned char[100000];
 	size_t bytes;
 	do {
 		bytes = fread((void*)buf, 1, 100000, fp);

@@ -20,9 +20,9 @@
 SharedLib *SharedLib::Instantiate(const char *filename)
 {
 #ifdef _WIN32
-	return new DllLib(filename);
+	return SAFE_NEW DllLib(filename);
 #else
-	return new SoLib(filename);
+	return SAFE_NEW SoLib(filename);
 #endif
 }
 

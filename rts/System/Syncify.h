@@ -3,19 +3,22 @@
 
 #include <new>
 
-//#define SYNCIFY
+// #define SYNCIFY
 
 #ifdef SYNCIFY
 
+struct Syncify_t {};
+static Syncify_t syncify;
+
 // Not sure this is needed.
 #ifdef _WIN32
-	void	*operator new(size_t reportedSize);
-	void	*operator new[](size_t reportedSize);
+	void	*operator new(size_t reportedSize, Syncify_t);
+	void	*operator new[](size_t reportedSize, Syncify_t);
 	void	operator delete(void *reportedAddress);
 	void	operator delete[](void *reportedAddress);
 #else
-	void	*operator new(size_t reportedSize) throw(std::bad_alloc);
-	void	*operator new[](size_t reportedSize) throw(std::bad_alloc);
+	void	*operator new(size_t reportedSize, Syncify_t) throw(std::bad_alloc);
+	void	*operator new[](size_t reportedSize, Syncify_t) throw(std::bad_alloc);
 	void	operator delete(void *reportedAddress) throw();
 	void	operator delete[](void *reportedAddress) throw();
 #endif
@@ -45,6 +48,7 @@
 	#define ASSERT_SYNCED_MODE Syncify::AssertSyncedMode(__FILE__,__LINE__);
 	#define ASSERT_UNSYNCED_MODE Syncify::AssertUnsyncedMode(__FILE__,__LINE__);
 	#define ASSERT_MIXED_MODE Syncify::AssertMixedMode(__FILE__,__LINE__);
+	#define SAFE_NEW new(syncify)
 
 #else
 
@@ -59,5 +63,6 @@
 	#define ASSERT_SYNCED_MODE
 	#define ASSERT_UNSYNCED_MODE
 	#define ASSERT_MIXED_MODE
+	#define SAFE_NEW new
 #endif
 #endif /* SYNCIFY_H */

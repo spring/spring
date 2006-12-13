@@ -58,10 +58,10 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 
 	CReadMap *rm = 0;
 	if (extension=="sm3") {
-		rm = new CSm3ReadMap;
+		rm = SAFE_NEW CSm3ReadMap;
 		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
 	} else
-		rm = new CSmfReadMap(mapname);
+		rm = SAFE_NEW CSmfReadMap(mapname);
 	
 	if (!rm)
 		return 0;
@@ -74,16 +74,16 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (metalmap && mbi.width == rm->width/2 && mbi.height == rm->height/2)
 	{
 		int size = mbi.width*mbi.height;
-		unsigned char *map = new unsigned char[size];
+		unsigned char *map = SAFE_NEW unsigned char[size];
 		memcpy(map, metalmap, size);
-		rm->metalMap = new CMetalMap(map, mbi.width, mbi.height, rm->maxMetal);
+		rm->metalMap = SAFE_NEW CMetalMap(map, mbi.width, mbi.height, rm->maxMetal);
 	}
 	if (metalmap) rm->FreeInfoMap ("metal", metalmap);
 	
 	if (!rm->metalMap) {
-		unsigned char *zd = new unsigned char[rm->width*rm->height/4];
+		unsigned char *zd = SAFE_NEW unsigned char[rm->width*rm->height/4];
 		memset(zd,0,rm->width*rm->height/4);
-		rm->metalMap = new CMetalMap(zd, rm->width/2,rm->height/2, 1.0f);
+		rm->metalMap = SAFE_NEW CMetalMap(zd, rm->width/2,rm->height/2, 1.0f);
 	}
 
 	/* Read type map */
@@ -92,7 +92,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (typemap && tbi.width == rm->width/2 && tbi.height == rm->height/2)
 	{
 		assert (gs->hmapx == tbi.width && gs->hmapy == tbi.height);
-		rm->typemap = new unsigned char[tbi.width*tbi.height];
+		rm->typemap = SAFE_NEW unsigned char[tbi.width*tbi.height];
 		memcpy(rm->typemap, typemap, tbi.width*tbi.height);
 
 		rm->terrainTypes.resize(256);
@@ -113,7 +113,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		throw content_error("Bad/no terrain type map.");
 	if (typemap) rm->FreeInfoMap ("type", typemap);
 
-	rm->groundBlockingObjectMap = new CSolidObject*[gs->mapSquares];
+	rm->groundBlockingObjectMap = SAFE_NEW CSolidObject*[gs->mapSquares];
 	memset(rm->groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
 
 	return rm;
@@ -157,7 +157,7 @@ void CReadMap::CalcHeightfieldData()
 	//halfHeightmap=new float[gs->hmapx*gs->hmapy];
 	mipHeightmap[0] = centerheightmap;
 	for(int i=1; i<numHeightMipMaps; i++)
-		mipHeightmap[i] = new float[(gs->mapx>>i)*(gs->mapy>>i)];
+		mipHeightmap[i] = SAFE_NEW float[(gs->mapx>>i)*(gs->mapy>>i)];
 
 	slopemap=new float[gs->hmapx*gs->hmapy];
 

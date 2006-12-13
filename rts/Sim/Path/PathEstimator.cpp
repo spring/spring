@@ -90,9 +90,9 @@ moveMathOptions(mmOpt)
 	nbrOfBlocksZ = gs->mapy / BLOCK_SIZE;
 	nbrOfBlocks = nbrOfBlocksX * nbrOfBlocksZ;
 
-	blockState = new BlockInfo[nbrOfBlocks];
+	blockState = SAFE_NEW BlockInfo[nbrOfBlocks];
 	nbrOfVertices = moveinfo->moveData.size() * nbrOfBlocks * PATH_DIRECTION_VERTICES;
-	vertex = new float[nbrOfVertices];
+	vertex = SAFE_NEW float[nbrOfVertices];
 	openBlockBufferPointer=openBlockBuffer;
 
 	int i;
@@ -108,7 +108,7 @@ moveMathOptions(mmOpt)
 			blockState[blocknr].options = 0;
 			blockState[blocknr].parentBlock.x = -1;
 			blockState[blocknr].parentBlock.y = -1;
-			blockState[blocknr].sqrCenter = new int2[moveinfo->moveData.size()];
+			blockState[blocknr].sqrCenter = SAFE_NEW int2[moveinfo->moveData.size()];
 		}
 	}
 
@@ -653,7 +653,7 @@ bool CPathEstimator::ReadFile(string name)
 	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
-	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
+	CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
 
 	if (!pfile || !pfile->IsOpen()) {
 		delete pfile;

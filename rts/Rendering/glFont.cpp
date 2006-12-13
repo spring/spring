@@ -66,15 +66,15 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 	charend = end;
 	charstart = start;
 
-	charWidths = new int[chars];
-	charHeights = new int[chars];
-	textures = new GLuint[chars];
+	charWidths = SAFE_NEW int[chars];
+	charHeights = SAFE_NEW int[chars];
+	textures = SAFE_NEW GLuint[chars];
 
 	listbase        = glGenLists(chars);
 	listbaseNoshift = glGenLists(chars);
 	glGenTextures(chars, textures);
 	
-	StoredGlyph * glyphs = new StoredGlyph[chars];
+	StoredGlyph * glyphs = SAFE_NEW StoredGlyph[chars];
 
 	int maxabove = 0;
 	int maxbelow = 0;
@@ -111,7 +111,7 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 		g->advance_x = slot->advance.x;
 		g->height = slot->metrics.height;
 		
-		g->bitmap_buffer = new unsigned char[slot->bitmap.rows * slot->bitmap.width];
+		g->bitmap_buffer = SAFE_NEW unsigned char[slot->bitmap.rows * slot->bitmap.width];
 		memcpy(g->bitmap_buffer, 
 			slot->bitmap.buffer, 
 			slot->bitmap.width * slot->bitmap.rows);
@@ -167,7 +167,7 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 	   the right size. */
 	
 	// variable sized arrays on stack is a GCC-specific feature unfortunately...
-	unsigned char *tex = new unsigned char[texsize*texsize*2];
+	unsigned char *tex = SAFE_NEW unsigned char[texsize*texsize*2];
 	
 	for (int ch = charstart; ch <= charend; ch++) {
 		StoredGlyph* g = &(glyphs[ch - charstart]);

@@ -184,9 +184,9 @@ IMouseInput *IMouseInput::Get ()
 {
 	if (!mouseInput) {
 #ifdef WIN32
-		mouseInput = new CWin32MouseInput;
+		mouseInput = SAFE_NEW CWin32MouseInput;
 #else
-		mouseInput = new CDefaultMouseInput;
+		mouseInput = SAFE_NEW CDefaultMouseInput;
 #endif
 	}
 	return mouseInput;

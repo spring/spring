@@ -213,7 +213,7 @@ int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1
 //it will continue to run. Otherwise it will be killed. Returns 1 in this case.
 int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	CCobThread *t = new CCobThread(script, this);
+	CCobThread *t = SAFE_NEW CCobThread(script, this);
 	t->Start(functionId, args, false);
 
 #if COB_DEBUG > 0
@@ -427,7 +427,7 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
-		ai = new struct AnimInfo;
+		ai = SAFE_NEW struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
@@ -787,7 +787,7 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 					
-					SS3OVertex * verts = new SS3OVertex[4];
+					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
 					
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
@@ -804,7 +804,7 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 					
-					SS3OVertex * verts = new SS3OVertex[4];
+					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
 					
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 2]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
@@ -822,7 +822,7 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 					
-					SS3OVertex * verts = new SS3OVertex[4];
+					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
 					
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];

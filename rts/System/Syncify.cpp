@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Syncify.h"
 
 #ifdef SYNCIFY
@@ -27,7 +28,7 @@ namespace Syncify{
 #define nothrow() throw()
 #endif
 
-void	*operator new(size_t reportedSize) throw(std::bad_alloc)
+void	*operator new(size_t reportedSize, Syncify_t) throw(std::bad_alloc)
 {
 	void* p = Syncify::Alloc(reportedSize);
 	if (!p)
@@ -35,7 +36,7 @@ void	*operator new(size_t reportedSize) throw(std::bad_alloc)
 	return p;
 }
 
-void	*operator new[](size_t reportedSize) throw(std::bad_alloc)
+void	*operator new[](size_t reportedSize, Syncify_t) throw(std::bad_alloc)
 {
 	void* p = Syncify::Alloc(reportedSize);
 	if (!p)

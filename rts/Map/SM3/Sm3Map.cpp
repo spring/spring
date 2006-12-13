@@ -52,7 +52,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		int tu;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
-		renderer = new terrain::Terrain;
+		renderer = SAFE_NEW terrain::Terrain;
 		
 		renderer->config.cacheTextures=false;
 
@@ -126,7 +126,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		}
 		LoadFeatureData();
 
-		groundDrawer = new CSm3GroundDrawer (this);
+		groundDrawer = SAFE_NEW CSm3GroundDrawer (this);
 	}
 	catch(content_error& e)
 	{
@@ -260,7 +260,7 @@ void CSm3ReadMap::LoadFeatureData()
 		fh.Read(&nf, 4);
 		numFeatures = swabdword(nf);
 
-		featureInfo = new MapFeatureInfo[numFeatures];
+		featureInfo = SAFE_NEW MapFeatureInfo[numFeatures];
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fh.Read(&fi.featureType, 4);
@@ -278,7 +278,7 @@ void CSm3ReadMap::LoadFeatureData()
 		featureTypes.push_back(new std::string("TreeType0"));
 
 		numFeatures = 1000;
-		featureInfo = new MapFeatureInfo[numFeatures];
+		featureInfo = SAFE_NEW MapFeatureInfo[numFeatures];
 
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];

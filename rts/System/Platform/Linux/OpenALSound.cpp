@@ -45,7 +45,7 @@ COpenALSound::COpenALSound()
 	}
 	
 	// Generate sound sources
-	Sources = new ALuint[maxSounds];
+	Sources = SAFE_NEW ALuint[maxSounds];
 	for (int a=0;a<maxSounds;a++) {
 		Sources[a]=0;
 	}
@@ -285,7 +285,7 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 		return 0;
 	CFileHandler file(path);
 	if(file.FileExists()){
-		buf = new Uint8[file.FileSize()];
+		buf = SAFE_NEW Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
 	} else {
 		handleerror(0, "Couldnt open wav file",path.c_str(),0);

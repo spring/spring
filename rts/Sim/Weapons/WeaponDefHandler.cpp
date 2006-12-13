@@ -44,7 +44,7 @@ CWeaponDefHandler::CWeaponDefHandler(void)
 
 	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
-	weaponDefs = new WeaponDef[weaponlist.size()+1];
+	weaponDefs = SAFE_NEW WeaponDef[weaponlist.size()+1];
 	for(std::size_t taid=0; taid<weaponlist.size(); taid++)
 	{
 		ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
@@ -474,7 +474,11 @@ void CWeaponDefHandler::LoadSound(GuiSound &gsound)
 		gsound.id = 0;
 		return;
 	}
-	gsound.id = sound->GetWaveId(soundPath);
+	PUSH_CODE_MODE;
+	ENTER_UNSYNCED;
+	int id = sound->GetWaveId(soundPath);
+	POP_CODE_MODE;
+	gsound.id = id;
 }
 
 

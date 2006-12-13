@@ -30,9 +30,9 @@ Creates pathfinder and estimators.
 CPathManager::CPathManager() {
 	//--TODO: Move to creation of MoveData!--//
 	//Create MoveMaths.
-	ground = new CGroundMoveMath();
-	hover = new CHoverMoveMath();
-	sea = new CShipMoveMath();
+	ground = SAFE_NEW CGroundMoveMath();
+	hover = SAFE_NEW CHoverMoveMath();
+	sea = SAFE_NEW CShipMoveMath();
 
 	float waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str());
 	if(waterDamage>=1000)
@@ -101,7 +101,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 		goalPos.z=gs->mapy*SQUARE_SIZE-5;
 
 	//Create a estimator definition.
-	CRangedGoalWithCircularConstraint * rangedGoalPED = new CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius,3,2000);
+	CRangedGoalWithCircularConstraint * rangedGoalPED = SAFE_NEW CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius,3,2000);
 
 	//Make request.
 	return RequestPath(moveData, startPos, rangedGoalPED,goalPos,caller);
@@ -118,7 +118,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	START_TIME_PROFILE;
 
 	//Creates a new multipath.
-	MultiPath* newPath = new MultiPath(startPos, peDef, moveData);
+	MultiPath* newPath = SAFE_NEW MultiPath(startPos, peDef, moveData);
 	newPath->finalGoal=goalPos;
 	newPath->caller=caller;
 

@@ -20,7 +20,7 @@ bool CSyncTracer::init()
 	if (logfile == 0) {
 		char c[100];
 		sprintf(c, "trace%i.log", gu->myTeam);
-		logfile = new std::ofstream(c);
+		logfile = SAFE_NEW std::ofstream(c);
 	}
 #endif
 	return logfile != 0;
@@ -48,7 +48,7 @@ void CSyncTracer::Commit()
 	if(file == 0){
 		char c[100];
 		sprintf(c, "trace%i.txt", gu->myTeam);
-		file = new std::ofstream(c);
+		file = SAFE_NEW std::ofstream(c);
 	}
 #endif
 

@@ -42,7 +42,7 @@ using namespace std;
 
 void BlurGrayscaleImage(int w, int h, uchar *data)
 {
-	uchar *nd = new uchar [w*h];
+	uchar *nd = SAFE_NEW uchar [w*h];
 
 	for (int y=0;y<h;y++) {
 		for (int x=0;x<w;x++) {
@@ -101,15 +101,15 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	float org2c = w/float(orghm->w-1);
 	float c2org = (float)(orghm->w-1)/w;
 
-	float *centerhm = new float[w*w];
-	Vector3 *shading = new Vector3[w*w];
+	float *centerhm = SAFE_NEW float[w*w];
+	Vector3 *shading = SAFE_NEW Vector3[w*w];
 	for (int y=0;y<w;y++)
 		for (int x=0;x<w;x++) {
 			centerhm[y*w+x] =/* hm->scale * */ 0.25f * ( (int)hm->at(x,y)+ (int)hm->at(x+1,y)+ (int)hm->at(x,y+1) + (int)hm->at(x+1,y+1) ); //+ hm->offset;
 			shading[y*w+x] = li->ambient;
 		}
 
-	uchar *lightMap = new uchar[shadowW*shadowW];
+	uchar *lightMap = SAFE_NEW uchar[shadowW*shadowW];
 	int lightIndex = 0;
 	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l) 
 	{

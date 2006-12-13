@@ -80,7 +80,7 @@ void* VertexBuffer::LockData ()
 		/*glBindBufferARB(type, id);
 		glBufferDataARB(type, size, 0, GL_STATIC_DRAW_ARB);
 		return glMapBufferARB(type, GL_WRITE_ONLY);*/
-		data = new char [size];
+		data = SAFE_NEW char [size];
 		return data;
 	} else
 		return data;

@@ -82,7 +82,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
 	
-	S3DOModel *model = new S3DOModel;
+	S3DOModel *model = SAFE_NEW S3DOModel;
 	model->numobjects=0;
 	SS3O* object=LoadPiece(fileBuf,header.rootPiece,model);
 	model->rootobjects3o=object;
@@ -123,13 +123,13 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 
 LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
 {
-	LocalS3DOModel *lmodel = new LocalS3DOModel;
+	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
 	lmodel->numpieces = model->numobjects;
 
 	int piecenum=0;
-	lmodel->pieces = new LocalS3DO[model->numobjects];
+	lmodel->pieces = SAFE_NEW LocalS3DO[model->numobjects];
 	lmodel->pieces->parent = NULL;
-	lmodel->scritoa = new int[pieces->size()];
+	lmodel->scritoa = SAFE_NEW int[pieces->size()];
 	for(int a=0;a<pieces->size();++a)
 		lmodel->scritoa[a]=-1;
 

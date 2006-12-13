@@ -66,7 +66,7 @@ TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection( std::string 
   if( it != sections.end() ) 
     return it->second;
   else {
-    TdfSection* ret = new TdfSection;
+    TdfSection* ret = SAFE_NEW TdfSection;
     sections[lowerd_name] = ret;
     return ret;
   }

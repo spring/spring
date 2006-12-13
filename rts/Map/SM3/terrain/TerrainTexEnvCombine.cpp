@@ -125,7 +125,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	unsigned int c = 0;
 
 	NodeTexEnvSetup *setup;
-	IShaderSetup *ts = setup = curSetup = new NodeTexEnvSetup;
+	IShaderSetup *ts = setup = curSetup = SAFE_NEW NodeTexEnvSetup;
 	renderSetup->passes.push_back(RenderPass());
 	renderSetup->passes.back().shaderSetup = setup;
 	renderSetup->passes.back().depthWrite = true;
@@ -172,7 +172,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 
 		renderSetup->passes.push_back(RenderPass());
 		RenderPass& rp = renderSetup->passes.back();
-		rp.shaderSetup = setup = new NodeTexEnvSetup;
+		rp.shaderSetup = setup = SAFE_NEW NodeTexEnvSetup;
 
 		if (st.operation == ShaderDef::Alpha) {
 			assert (shaderDef->stages[c+1].operation == ShaderDef::Blend);
@@ -225,7 +225,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 			// extra pass
 			renderSetup->passes.push_back(RenderPass());
 			renderSetup->passes.back().operation = Pass_Mul;
-			renderSetup->passes.back().shaderSetup = setup = new NodeTexEnvSetup;
+			renderSetup->passes.back().shaderSetup = setup = SAFE_NEW NodeTexEnvSetup;
 			setup->stages.push_back (TexEnvStage());
 			setup->stages.back().source = TexEnvStage::ColorSrc;
 			setup->stages.back().operation = TexEnvStage::Replace;

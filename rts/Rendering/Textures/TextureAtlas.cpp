@@ -29,13 +29,13 @@ CTextureAtlas::~CTextureAtlas(void)
 int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void  *data)
 {
 	int gpp = GetBPP(texType);
-	MemTex *memtex = new MemTex;
+	MemTex *memtex = SAFE_NEW MemTex;
 	memtex->xsize = xsize;
 	memtex->ysize = ysize;
 	memtex->xpos = 0;
 	memtex->ypos = 0;
 	memtex->texType = texType;
-	memtex->data = new char[xsize*ysize*gpp/8];
+	memtex->data = SAFE_NEW char[xsize*ysize*gpp/8];
 	StringToLowerInPlace(name);
 	memtex->names.push_back(name);
 	memcpy(memtex->data, data, xsize*ysize*gpp/8);
@@ -180,7 +180,7 @@ void CTextureAtlas::CreateTexture()
 	unsigned char *data;
 	//for(int i=0,xmip=0,ymip=0; (xsize>>i) || (ysize>>i); i++)
 	//{
-	//	data[i] = new unsigned char[(xsize>>xmip)*(ysize>>ymip)*4];
+	//	data[i] = SAFE_NEW unsigned char[(xsize>>xmip)*(ysize>>ymip)*4];
 
 	//	xmip = (xsize>>i)>1 ? xmip+=1 : xmip;
 	//	ymip = (ysize>>i)>1 ? ymip+=1 : ymip;
@@ -197,7 +197,7 @@ void CTextureAtlas::CreateTexture()
 	//			mipcell = (unsigned char*)tex->data;
 	//		else
 	//		{
-	//			mipcell = new unsigned char[(tex->xsize>>xmip)*(tex->ysize>>ymip)*4];
+	//			mipcell = SAFE_NEW unsigned char[(tex->xsize>>xmip)*(tex->ysize>>ymip)*4];
 	//			gluScaleImage(GL_RGBA, tex->xsize, tex->ysize, GL_UNSIGNED_BYTE, tex->data, (tex->xsize>>xmip), (tex->ysize>>ymip), GL_UNSIGNED_BYTE, mipcell);
 	//		}
 
@@ -216,7 +216,7 @@ void CTextureAtlas::CreateTexture()
 	//	}
 	//}
 
-	data = new unsigned char[xsize*ysize*4];
+	data = SAFE_NEW unsigned char[xsize*ysize*4];
 
 	for(int i=0; i<memtextures.size(); i++)
 	{

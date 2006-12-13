@@ -26,7 +26,7 @@ CIconHandler::CIconHandler()
 	// If the default icon doesn't exist we'll have to create one
 	// (as unitdef->iconType defaults to "default").
 	if (icons.find("default") == icons.end()) {
-		icons["default"] = new CIcon(*GetStandardTexture(), 1, 1, false);
+		icons["default"] = SAFE_NEW CIcon(*GetStandardTexture(), 1, 1, false);
 	}
 }
 
@@ -63,7 +63,7 @@ bool CIconHandler::LoadTDFicons(const std::string& filename)
 			} else {
 				texture = *GetStandardTexture();
 			}
-			icons[*it] = new CIcon(texture,size,distance,radiusAdjust);
+			icons[*it] = SAFE_NEW CIcon(texture,size,distance,radiusAdjust);
 		}
 	}
 	catch (const TdfParser::parse_error& e) {

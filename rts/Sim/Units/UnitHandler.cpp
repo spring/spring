@@ -128,7 +128,7 @@ CUnitHandler::CUnitHandler()
 
 	for(int i=0; i<MAX_TEAMS; i++)
 	{
-		unitsType[i] = new unsigned int[unitDefHandler->numUnits+1]; //unit ids start at 1
+		unitsType[i] = SAFE_NEW unsigned int[unitDefHandler->numUnits+1]; //unit ids start at 1
 		memset(unitsType[i], 0, (unitDefHandler->numUnits+1) *  sizeof(int));
 	}
 }

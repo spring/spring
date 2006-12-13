@@ -381,7 +381,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 		bmInfo->width = header.mapx / 4;
 		bmInfo->height = header.mapy / 4;
 
-		unsigned char *data = new unsigned char[bmInfo->width*bmInfo->height];
+		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
 		ReadGrassMap (data);
 		return data;
 	}
@@ -389,7 +389,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 		bmInfo->width = header.mapx/2;
 		bmInfo->height = header.mapy/2;
 
-		unsigned char *data = new unsigned char[bmInfo->width*bmInfo->height];
+		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
 		ifs->Seek(header.metalmapPtr);
 		ifs->Read(data,header.mapx/2*header.mapy/2);
         return data;
@@ -397,7 +397,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 	else if(name == "type") {
 		bmInfo->width = header.mapx/2;
 		bmInfo->height = header.mapy/2;
-		unsigned char *data = new unsigned char[bmInfo->width*bmInfo->height];
+		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
 		ifs->Seek(header.typeMapPtr);
 		ifs->Read(data,gs->mapx*gs->mapy/4);
 		return data;

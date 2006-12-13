@@ -81,7 +81,7 @@ START_TIME_PROFILE;
 	}
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
-	//unit = new CUnit(pos, side);
+	//unit = SAFE_NEW CUnit(pos, side);
 	if (side < 0)
 		side = MAX_TEAMS-1;
 
@@ -103,7 +103,7 @@ START_TIME_PROFILE;
 	} else if (type=="Bomber" || type=="Fighter"){
 		unit=new CUnit;
 	} else if (type == "MetalExtractor") {
-		unit = new CExtractorBuilding;
+		unit = SAFE_NEW CExtractorBuilding;
 		blocking = true;
 	} else {
 		logOutput << "Unknown unit type " << type.c_str() << "\n";
@@ -199,7 +199,7 @@ START_TIME_PROFILE;
 
 
 		//Ground-mobility
-		unit->mobility = new CMobility();
+		unit->mobility = SAFE_NEW CMobility();
 		unit->mobility->canFly = false;
 		unit->mobility->subMarine = false;		//Not always correct, as submarines are treated as ships.
 		unit->mobility->maxAcceleration = ud->maxAcc;
@@ -210,7 +210,7 @@ START_TIME_PROFILE;
 
 	} else if(ud->canfly){
 		//Air-mobility
-		unit->mobility = new CMobility();
+		unit->mobility = SAFE_NEW CMobility();
 		unit->mobility->canFly = true;
 		unit->mobility->subMarine = false;
 		unit->mobility->maxAcceleration = ud->maxAcc;
@@ -223,7 +223,7 @@ START_TIME_PROFILE;
 			unit->mass=ud->mass; //otherwise set this when finished building instead
 
 		if ((type == "Builder") || ud->hoverAttack || ud->transportCapacity) {
-			CTAAirMoveType *mt = new CTAAirMoveType(unit);
+			CTAAirMoveType *mt = SAFE_NEW CTAAirMoveType(unit);
 
 			mt->turnRate = ud->turnRate;
 			mt->maxSpeed = ud->speed / GAME_SPEED;
@@ -236,7 +236,7 @@ START_TIME_PROFILE;
 			unit->moveType = mt;
 		}
 		else {
-			CAirMoveType *mt = new CAirMoveType(unit);
+			CAirMoveType *mt = SAFE_NEW CAirMoveType(unit);
 		
 			if(type=="Fighter")
 				mt->isFighter=true;
@@ -282,7 +282,7 @@ START_TIME_PROFILE;
 		unit->pos.y=ground->GetHeight2(unit->pos.x,unit->pos.z);
 	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
-	unit->cob = new CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
+	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
 	for(unsigned int i=0; i< ud->weapons.size(); i++)

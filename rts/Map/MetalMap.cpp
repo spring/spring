@@ -18,7 +18,7 @@ CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
 	this->metalscale = metalscale;
 	
 	//Creating an empty map over extraction.
-	extractionMap = new float[sizex * sizez];
+	extractionMap = SAFE_NEW float[sizex * sizez];
 	int i;
 	for(i = 0; i < (sizex * sizez); i++) {
 		extractionMap[i] = 0.0f;

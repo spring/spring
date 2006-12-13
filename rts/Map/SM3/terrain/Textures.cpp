@@ -123,7 +123,7 @@ namespace terrain {
 
 	TiledTexture* TiledTexture::CreateFlatBumpmap()
 	{
-		TiledTexture *tt = new TiledTexture;
+		TiledTexture *tt = SAFE_NEW TiledTexture;
 		glGenTextures(1, &tt->id);
 		glBindTexture(GL_TEXTURE_2D, tt->id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -159,7 +159,7 @@ namespace terrain {
 		bool generateBlendmap = blendmapImg.empty();
 		if (generateBlendmap) {
 			// Load blendfactor function parameters
-			GeneratorInfo *gi = generatorInfo = new GeneratorInfo;
+			GeneratorInfo *gi = generatorInfo = SAFE_NEW GeneratorInfo;
 			gi->coverage = atof (tdf->SGetValueDef ("1", section + "\\Coverage").c_str());
 			gi->noise = atof (tdf->SGetValueDef ("0", section + "\\Noise").c_str());
 			gi->minSlope = atof (tdf->SGetValueDef ("0", section + "\\MinSlope").c_str());
@@ -186,14 +186,14 @@ namespace terrain {
 
 			if (cb) cb->PrintMsg ("    loading blendmap %s from %s...", name.c_str(), blendmapImg.c_str());
 
-			image = new AlphaImage;
+			image = SAFE_NEW AlphaImage;
 			image->CopyFromBitmap (bitmap);
 		}
 	}
 
 	static void BlendmapFilter(AlphaImage *img) 
 	{
-		float *nd = new float[img->w*img->h];
+		float *nd = SAFE_NEW float[img->w*img->h];
 
 		//3.95f*(x-.5f)^3+.5
 
@@ -233,7 +233,7 @@ namespace terrain {
 		Heightmap *heightmap = rootHm->GetLevel(-lodLevel);
 
 		// Allocate the blendmap image
-		AlphaImage *bm = new AlphaImage;
+		AlphaImage *bm = SAFE_NEW AlphaImage;
 		bm->Alloc (heightmap->w-1, heightmap->h-1); // texture dimensions have to be power-of-two
 
 		Blendmap::GeneratorInfo *gi = generatorInfo;

@@ -34,12 +34,12 @@ ConfigHandler& ConfigHandler::GetInstance()
 {
 	if (!instance) {
 #ifdef _WIN32
-		instance = new RegHandler("Software\\SJ\\spring");
+		instance = SAFE_NEW RegHandler("Software\\SJ\\spring");
 #elif defined(__APPLE__)
 		PreInitMac();
-		instance = new UserDefsHandler(); // Config path is based on bundle id
+		instance = SAFE_NEW UserDefsHandler(); // Config path is based on bundle id
 #else
-		instance = new DotfileHandler(DOTCONFIGPATH);
+		instance = SAFE_NEW DotfileHandler(DOTCONFIGPATH);
 #endif
 	}
 	return *instance;

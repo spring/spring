@@ -312,11 +312,11 @@ bool SpringApp::Initialize ()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 	
-	keys = new Uint8[SDLK_LAST];
+	keys = SAFE_NEW Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	// Initialize font
-	font = new CglFont(configHandler.GetInt("FontCharFirst", 32),
+	font = SAFE_NEW CglFont(configHandler.GetInt("FontCharFirst", 32),
 	                   configHandler.GetInt("FontCharLast", 223),
 	                   configHandler.GetString("FontFile", "Luxi.ttf").c_str());
 
@@ -788,9 +788,9 @@ void SpringApp::CreateGameSetup ()
 #endif
 
 	if (!demofile.empty()) {
-		pregame = new CPreGame(false, demofile);
+		pregame = SAFE_NEW CPreGame(false, demofile);
 	} else {
-		pregame = new CPreGame(server, "");
+		pregame = SAFE_NEW CPreGame(server, "");
 	}
 }
 

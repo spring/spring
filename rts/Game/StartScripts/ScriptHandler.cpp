@@ -56,7 +56,7 @@ void CScriptHandler::StartLua()
 #ifndef NO_LUA
 	std::vector<string> files = CFileHandler::FindFiles("startscripts/", "*.lua");
 	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
-		CLuaBinder* lua = new CLuaBinder();
+		CLuaBinder* lua = SAFE_NEW CLuaBinder();
 		if (!lua->LoadScript(*i)) 
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
 		lua_binders.push_back(lua);
@@ -109,7 +109,7 @@ void CScriptHandler::SelectScript(std::string s)
 /** Generate a CglList with all available scripts. */
 CglList* CScriptHandler::GenList(ListSelectCallback callb)
 {
-	CglList* list = new CglList("Select script", SelectScript, 1);
+	CglList* list = SAFE_NEW CglList("Select script", SelectScript, 1);
 	for (std::map<std::string,CScript*>::const_iterator it = scripts.begin(); it != scripts.end(); ++it)
 		list->AddItem(it->first.c_str(), it->first.c_str());
 	callback = callb;

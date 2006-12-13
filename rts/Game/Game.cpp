@@ -198,8 +198,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	userInput="";
 	userPrompt="";
 
-	consoleHistory = new CConsoleHistory;
-	wordCompletion = new CWordCompletion;
+	consoleHistory = SAFE_NEW CConsoleHistory;
+	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
 	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false);
 	}
@@ -226,9 +226,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ENTER_MIXED;
 	if(!server) net->Update();	//prevent timing out during load
 	helper=new CGameHelper(this);
-	//	physicsEngine = new CPhysicsEngine();
+	//	physicsEngine = SAFE_NEW CPhysicsEngine();
+	ENTER_SYNCED;
+	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 	ENTER_UNSYNCED;
-	explGenHandler = new CExplosionGeneratorHandler();
 	shadowHandler=new CShadowHandler();
 
 	modInfo=new CModInfo(modName.c_str());
@@ -285,15 +286,15 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	uh=new CUnitHandler();
 	iconHandler=new CIconHandler();
 	unitDrawer=new CUnitDrawer();
-	fartextureHandler = new CFartextureHandler();
+	fartextureHandler = SAFE_NEW CFartextureHandler();
 	if(!server) net->Update();	//prevent timing out during load
-	modelParser = new C3DModelParser();
+	modelParser = SAFE_NEW C3DModelParser();
 
  	ENTER_SYNCED;
  	if(!server) net->Update();	//prevent timing out during load
  	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
  	if(!server) net->Update();	//prevent timing out during load
- 	pathManager = new CPathManager();
+ 	pathManager = SAFE_NEW CPathManager();
  	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_UNSYNCED;
@@ -683,7 +684,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		configHandler.SetInt("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
-		shadowHandler = new CShadowHandler();
+		shadowHandler = SAFE_NEW CShadowHandler();
 	}
 	else if (cmd == "water") {
 		delete water;
@@ -1220,7 +1221,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "font") {
 		CglFont* newFont = NULL;
 		try {
-			newFont = new CglFont(font->GetCharStart(), font->GetCharEnd(),
+			newFont = SAFE_NEW CglFont(font->GetCharStart(), font->GetCharEnd(),
 			                      action.extra.c_str());
 		} catch (std::exception e) {
 			delete newFont;
@@ -1928,7 +1929,9 @@ END_TIME_PROFILE("Sim time")
 
 #endif
 
+	ENTER_UNSYNCED;
 	water->Update();
+	ENTER_SYNCED;
 
 	//feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 }
