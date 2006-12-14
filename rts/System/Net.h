@@ -23,47 +23,59 @@
 
 class CFileHandler;
 
+/*
+Comment behind NETMSG enumeration constant gives the extra data belonging to
+the net message. An empty comment means no extra data (message is only 1 byte).
+Messages either consist of:
+ 1. uchar command; (NETMSG_* constant) and the specified extra data; or
+ 2. uchar command; uchar messageSize; and the specified extra data, for messages
+    that contain a trailing std::string in the extra data; or
+ 3. uchar command; short messageSize; and the specified extra data, for messages
+    that contain a trailing std::vector in the extra data.
+Note that NETMSG_MAPDRAW can behave like 1. or 2. depending on the
+CInMapDraw::NET_* command. messageSize is always the size of the entire message
+including `command' and `messageSize'.
+*/
+
 enum NETMSG {
-	NETMSG_HELLO            = 1,
-	NETMSG_QUIT             = 2,
-	NETMSG_NEWFRAME         = 3,
-	NETMSG_STARTPLAYING     = 4,
-	NETMSG_SETPLAYERNUM     = 5,
-	NETMSG_PLAYERNAME       = 6,
-	NETMSG_CHAT             = 7,
-	NETMSG_RANDSEED         = 8,
-	//NETMSG_COMPARE          = 9,
-	//NETMSG_PROJCOMPARE      = 10,
-	NETMSG_COMMAND          = 11,
-	NETMSG_SELECT           = 12,
-	NETMSG_PAUSE            = 13,
-	NETMSG_AICOMMAND        = 14,
-	//NETMSG_SPENDING         = 15,
-	NETMSG_SCRIPT           = 16,
-	NETMSG_MEMDUMP          = 17,
-	NETMSG_MAPNAME          = 18,
-	NETMSG_USER_SPEED       = 19,
-	NETMSG_INTERNAL_SPEED   = 20,
-	NETMSG_CPU_USAGE        = 21,
-	NETMSG_DIRECT_CONTROL   = 22,
-	NETMSG_DC_UPDATE        = 23,
-	//NETMSG_SETACTIVEPLAYERS = 24,
-	NETMSG_ATTEMPTCONNECT   = 25,
-	NETMSG_SHARE            = 26,
-	NETMSG_SETSHARE         = 27,
-	NETMSG_SENDPLAYERSTAT   = 28,
-	NETMSG_PLAYERSTAT       = 29,
-	NETMSG_GAMEOVER         = 30,
-	NETMSG_MAPDRAW          = 31,
-	NETMSG_SYNCREQUEST      = 32,
-	NETMSG_SYNCRESPONSE     = 33,
-	NETMSG_SYNCERROR        = 34,
-	NETMSG_SYSTEMMSG        = 35,
-	NETMSG_STARTPOS         = 36,
-	NETMSG_EXECHECKSUM      = 37,
-	NETMSG_PLAYERINFO       = 38,
-	NETMSG_PLAYERLEFT       = 39,
-	NETMSG_MODNAME          = 40,
+	NETMSG_HELLO            = 1,  //
+	NETMSG_QUIT             = 2,  //
+	NETMSG_NEWFRAME         = 3,  // int frameNum;
+	NETMSG_STARTPLAYING     = 4,  //
+	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
+	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
+	NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
+	NETMSG_RANDSEED         = 8,  // uint randSeed;
+	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
+	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
+	NETMSG_PAUSE            = 13, // uchar myPlayerNum, bNotPaused;
+	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
+	NETMSG_SCRIPT           = 16, // std::string scriptName;
+	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
+	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;
+	NETMSG_USER_SPEED       = 19, // float userSpeed;
+	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
+	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
+	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
+	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
+	NETMSG_ATTEMPTCONNECT   = 25, // uchar myPlayerNum, networkVersion;
+	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
+	NETMSG_SETSHARE         = 27, // uchar myTeam; float metalShareFraction, energyShareFraction;
+	NETMSG_SENDPLAYERSTAT   = 28, //
+	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
+	NETMSG_GAMEOVER         = 30, //
+	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
+	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
+	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
+	NETMSG_SYNCREQUEST      = 32, // int frameNum;
+	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; CChecksum checksum;
+	NETMSG_SYNCERROR        = 34, // (NEVER SENT)
+	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
+	NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
+	NETMSG_EXECHECKSUM      = 37, // uint checksum = 0;
+	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
+	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left*/;
+	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;
 #ifdef SYNCDEBUG
 	NETMSG_SD_CHKREQUEST    = 41,
 	NETMSG_SD_CHKRESPONSE   = 42,
