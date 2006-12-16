@@ -35,10 +35,10 @@
   * local status with server's after server has actually updated his status (serves also as
   * confirmation).
   * 
-  * All commands except for some admin specific commands are listed here. See tryToExecCommand
-  * method in TASServer.java for those.
+  * All commands except for some admin specific commands are listed here. See "AdminCommands.txt"
+  * for those. For more details on specific command, see tryToExecCommand() method in TASServer.java.
   *
-  * Also, check notes (under "--- NOTES ---" field) in TASServer.java since they contain some 
+  * Also, check notes (under "--- NOTES ---" field) in TASServer.java since they contain some
   * information and tricks on implementing this protocol.
   *
   * Legend:
@@ -164,10 +164,12 @@
   Sent by server as a response to client's UDP packet (used with "hole punching" NAT traversal
   technique)
 
-  * CLIENTPORT username port
-  Sent by server to battle's host notifying him about another client's UDP source port.
-  Host needs to know public UDP source ports of all players in his battle in order
-  for "hole punching" technique to work.
+  * CLIENTIPPORT username ip port
+  Sent by server to battle's host notifying him about another client's IP address and his
+  public UDP source port. Host needs to know public UDP source ports of all players in his
+  battle in order for "hole punching" technique to work. IP is needed with both nat traversal
+  methods ("hole punching" and "fixed source ports").
+  This command is sent to the battle host immediately after new user joins the battle.
 
   * HOSTPORT port
   Sent by server to all clients participating in the battle (except for the host) notifying
@@ -184,13 +186,13 @@
   This is a message sent by server that should open in message box dialog window (and not
   just in the console).
 
-  * ADDUSER username country cpu IP
+  * ADDUSER username country cpu
   Sent by server to client telling him new user joined a server. Client should add this
   user to his clients list which he must maintain while he is connected to the server.
   Server will send multiple commands of this kind once client logs in, sending him the list
   of all users currently connected.
   See login command for CPU field description.
-  Country is a two-character country code based on ISO 3166.  
+  Country is a two-character country code based on ISO 3166.
 
   * REMOVEUSER username
   Sent by server to client telling him a user disconnected from server. Client should
