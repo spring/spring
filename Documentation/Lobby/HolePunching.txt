@@ -10,7 +10,7 @@ from the server before sending JOINBATTLE command. Once he has done that
 and joined the battle, he should keep sendings some udp packets to server
 on regular intervals, just to make sure router doesn't forget about it 
 and remove it from translation table (some routers have timeout as short
-as 20 seconds, so this should also be a minimum refresh interval). Once
+as 20 seconds, so this should also be the minimum refresh interval). Once
 the game actually starts, lobby should stop sending udp packets to server
 since OS will not allow it anyway (won't be able to bind same source port
 as it will already be binded by spring.exe), also there is no need for it
