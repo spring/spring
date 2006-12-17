@@ -147,17 +147,14 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 		delete net->recordDemo;
 
 	// Inform user.
-	// TODO fix this message...
-	const char* const msg =
-		"We regret it, but something terrible just happened:\n\n"
-		"Spring has crashed\n\n"
-		"Obviously we don't want this to happen again. However, to be able to look into\n"
-		"fixing it, we need you to do us a small favour. Report this crash bug to the\n"
-		"Spring development team, and attach the file infolog.txt to your bug report.\n"
-		"This file can be found in your Spring installation directory:\n\n"
-		"C:\\Program Files\\Spring\\infolog.txt\n\n"   // TODO make this point to the correct dir
-		"Visit our website at: http://taspring.clan-sy.com/\n";
-	MessageBox(NULL, msg, "Spring: Unhandled exception\n", 0);
+	char dir[MAX_PATH], msg[MAX_PATH+200];
+	GetCurrentDirectory(sizeof(dir) - 1, dir);
+	SNPRINTF(msg, sizeof(msg),
+		"Spring has crashed.\n\n"
+		"To be able to fix this bug, please file a bug report at\n"
+		"http://taspring.clan-sy.com/mantis and attach the file\n"
+		"%s\\infolog.txt", dir);
+	MessageBox(NULL, msg, "Spring: Unhandled exception", 0);
 }
 
 /** Install crash handler. */
