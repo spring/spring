@@ -13,9 +13,9 @@ int CShareBox::lastShareTeam=0;
 CShareBox::CShareBox(void)
 {
 	box.x1 = 0.34f;
-	box.y1 = 0.25f;
+	box.y1 = 0.18f;
 	box.x2 = 0.66f;
-	box.y2 = 0.75f;
+	box.y2 = 0.82f;
 
 	okBox.x1=0.22f;
 	okBox.y1=0.02f;
@@ -35,7 +35,7 @@ CShareBox::CShareBox(void)
 	teamBox.x1=0.02f;
 	teamBox.y1=0.25f;
 	teamBox.x2=0.30f;
-	teamBox.y2=0.48f;
+	teamBox.y2=0.62f;
 
 	unitBox.x1=0.01f;
 	unitBox.y1=0.07f;

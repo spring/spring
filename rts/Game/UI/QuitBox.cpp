@@ -15,29 +15,29 @@ extern bool globalQuit;
 CQuitBox::CQuitBox(void)
 {
 	box.x1 = 0.34f;
-	box.y1 = 0.25f;
+	box.y1 = 0.18f;
 	box.x2 = 0.66f;
-	box.y2 = 0.75f;
+	box.y2 = 0.82f;
 
 	resignQuitBox.x1=0.02f;
-	resignQuitBox.y1=0.42f;
+	resignQuitBox.y1=0.57f;
 	resignQuitBox.x2=0.30f;
-	resignQuitBox.y2=0.46f;
+	resignQuitBox.y2=0.61f;
 
 	resignBox.x1=0.02f;
-	resignBox.y1=0.38f;
+	resignBox.y1=0.53f;
 	resignBox.x2=0.30f;
-	resignBox.y2=0.42f;
+	resignBox.y2=0.57f;
 
 	giveAwayBox.x1=0.02f;
-	giveAwayBox.y1=0.34f;
+	giveAwayBox.y1=0.49f;
 	giveAwayBox.x2=0.30f;
-	giveAwayBox.y2=0.38f;
+	giveAwayBox.y2=0.53f;
 
 	teamBox.x1=0.02f;
 	teamBox.y1=0.11f;
 	teamBox.x2=0.30f;
-	teamBox.y2=0.33f;
+	teamBox.y2=0.48f;
 
 	quitBox.x1=0.02f;
 	quitBox.y1=0.06f;
@@ -120,7 +120,7 @@ void CQuitBox::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,0.4f,0.8f);
-	font->glPrintAt(box.x1+0.045f,box.y1+0.47f,0.7f,"Do you want to ...");
+	font->glPrintAt(box.x1+0.045f,box.y1+0.62f,0.7f,"Do you want to ...");
 	glColor4f(1,1,1,0.8f);
 	font->glPrintAt(box.x1+resignQuitBox.x1+0.025f,box.y1+resignQuitBox.y1+0.005f,1,"Quit and resign");
 	font->glPrintAt(box.x1+resignBox.x1+0.025f,box.y1+resignBox.y1+0.005f,1,"Resign");

@@ -335,7 +335,6 @@ public:
 
 		~Packet(){delete[] data;};
 	};
-	struct RawPacket : public Packet{};
 
 	struct Connection {
 		sockaddr_in addr;
