@@ -1,6 +1,8 @@
 TASpring change log
 
-0.next
+0.74b2
+
+- Added mingw compatible crashhandler.
 
 - Fixed FPS mode aiming to the northwest.
 - Fixed FPU control word assertion that made spring unplayable with some sound drivers.
