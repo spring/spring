@@ -4,6 +4,7 @@ TASpring change log
 
 - Added mingw compatible crashhandler.
 
+- Fixed sharebox and quitbox for 16 players.
 - Fixed FPS mode aiming to the northwest.
 - Fixed FPU control word assertion that made spring unplayable with some sound drivers.
 
