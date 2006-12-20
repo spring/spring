@@ -60,7 +60,7 @@ class CUnit;
 #define XZ_HYPOT			13	// get hypot of packed x,z coords
 #define ATAN				14	// get ordinary two-parameter atan
 #define HYPOT				15	// get ordinary two-parameter hypot
-#define GROUND_HEIGHT		16	// get
+#define GROUND_HEIGHT		16	// get land height, 0 if below water
 #define BUILD_PERCENT_LEFT	17	// get 0 = unit is built and ready, 1-100 = How much is left to build
 #define YARD_OPEN			18	// set or get (change which plots we occupy when building opens and closes)
 #define BUGGER_OFF			19	// set or get (ask other units to clear the area)
@@ -85,6 +85,7 @@ class CUnit;
 #define MAX_SPEED					75
 #define CLOAKED					76
 #define WANT_CLOAK				77
+#define GROUND_WATER_HEIGHT		78 // get land height, negative if below water
 
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
@@ -950,6 +951,8 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return (int)hypot((float)p1, (float)p2);
 	case GROUND_HEIGHT:
 		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
+	case GROUND_WATER_HEIGHT:
+		return (int)(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
 	case BUILD_PERCENT_LEFT:
 		return (int)((1 - unit->buildProgress) * 100);
 	case YARD_OPEN:
@@ -1049,6 +1052,8 @@ void CCobInstance::SetUnitVal(int val, int param)
 	case HYPOT:
 		break;
 	case GROUND_HEIGHT:
+		break;
+	case GROUND_WATER_HEIGHT:
 		break;
 	case BUILD_PERCENT_LEFT:
 		break;
