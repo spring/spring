@@ -121,7 +121,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.onlyKey = true;
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
 	possibleCommands.push_back(c);
-	
+
 	c.id=CMD_SELFD;
 	c.action="selfd";
 	c.type=CMDTYPE_ICON;
@@ -458,7 +458,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			}
 			return;
 		}
-	  case CMD_SET_WANTED_MAX_SPEED: {    
+	  case CMD_SET_WANTED_MAX_SPEED: {
 			if (CanSetMaxSpeed() &&
 			    (commandQue.empty() ||
 			     (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED))) {
@@ -507,7 +507,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 		}
 	}
 
-	// flush the queue for immediate commands	
+	// flush the queue for immediate commands
 	if(!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
 			if ((commandQue.front().id == CMD_DGUN)      ||
@@ -615,10 +615,10 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(const Command &c,
 
 		ci--; //iterate from the end and dont check the current order
 		const Command& t = *ci;
-		
+
 		if (((c.id == t.id) || ((c.id < 0) && (t.id < 0))) &&
 		    (t.params.size() == c.params.size())) {
-			if (c.params.size() == 1) { 
+			if (c.params.size() == 1) {
 			  // assume the param is a unit of feature id
 				if ((t.params[0] == c.params[0]) &&
 				    (t.id != CMD_SET_WANTED_MAX_SPEED)) {
@@ -662,10 +662,10 @@ int CCommandAI::CancelCommands(const Command &c, std::deque<Command>& q,
 		}
 		first = first || (ci == q.begin());
 		cancelCount++;
-		
+
 		std::deque<Command>::iterator firstErase = ci;
 		std::deque<Command>::iterator lastErase = ci;
-		
+
 		ci++;
 		if ((ci != q.end()) && (ci->id == CMD_SET_WANTED_MAX_SPEED)) {
 			lastErase = ci;
@@ -682,11 +682,11 @@ int CCommandAI::CancelCommands(const Command &c, std::deque<Command>& q,
 
 		lastErase++; // STL: erase the range [first, last)
 		q.erase(firstErase, lastErase);
-		
+
 		if (c.id >= 0) {
 			return cancelCount; // only delete one non-build order
 		}
-	}	
+	}
 
 	return cancelCount;
 }
@@ -876,12 +876,12 @@ void CCommandAI::DrawWaitIcon(const Command& cmd) const
 {
 	waitCommandsAI.AddIcon(cmd, lineDrawer.GetLastPos());
 }
-  
+
 
 void CCommandAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);
-	
+
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
@@ -1044,4 +1044,22 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 		c2.options = c.options|INTERNAL_ORDER;
 		commandQue.push_front(c2);
 	}
+}
+
+bool CCommandAI::HasMoreMoveCommands(){
+    for(deque<Command>::iterator i = (commandQue.begin()++); i != commandQue.end(); i++){
+        int id = i->id;
+        if(id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE || id == CMD_DGUN
+                || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE || id == CMD_PATROL
+                 || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE || id == CMD_RESURRECT
+                  || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
+        {
+            return true;
+        } else if(id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD || id == CMD_SQUADWAIT
+                || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
+        {
+            return false;
+        }
+    }
+    return false;
 }

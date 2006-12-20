@@ -66,7 +66,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	skidRotVector(UpVector),
 	skidRotSpeed2(0),
 	skidRotPos2(0),
-	
+
 	pathId(0),
 	goal(0,0,0),
 	goalRadius(0),
@@ -150,7 +150,7 @@ void CGroundMoveType::Update()
 		if(owner->directControl->right){
 			deltaHeading-=(short)turnRate;
 		}
-		
+
 		ENTER_UNSYNCED;
 		if(gu->directControl==owner)
 			camera->rot.y+=deltaHeading*PI/32768;
@@ -203,7 +203,8 @@ void CGroundMoveType::Update()
 		if(nextDeltaSpeedUpdate<=gs->frameNum){
 			wantedSpeed = pathId ? requestedSpeed : 0;
 			//If arriving at waypoint, then need to slow down, or may pass it.
-			if(currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+			if(!owner->commandAI->HasMoreMoveCommands()
+                    && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
 				wantedSpeed = std::min((float)wantedSpeed, (float)(sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 			}
 			wantedSpeed*=max(0.f,std::min(1.f,desiredVelocity.dot(owner->frontdir)+0.1f));
@@ -334,7 +335,7 @@ void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
 /*
 Sets owner unit to start moving against given position with requested speed.
 */
-void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float speed) 
+void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float speed)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Start moving called: ";
@@ -630,7 +631,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 				pos=midPos-owner->frontdir*owner->relMidPos.z - owner->updir*owner->relMidPos.y - owner->rightdir*owner->relMidPos.x;
 				owner->speed=(owner->speed+dif*impactSpeed)*(1-part);
 				u->midPos+=dif*(dist-totRad)*(part);
-				u->pos=u->midPos-u->frontdir*u->relMidPos.z - u->updir*u->relMidPos.y - u->rightdir*u->relMidPos.x;	
+				u->pos=u->midPos-u->frontdir*u->relMidPos.z - u->updir*u->relMidPos.y - u->rightdir*u->relMidPos.x;
 
 				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f*(1-part),0,dif*impactSpeed*(owner->mass*(1-part)));
 				owner->speed*=0.9f;
@@ -746,7 +747,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			float avoidLeft = 0;
 			float avoidRight = 0;
-			
+
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf*35 + 30 + owner->xsize/2);
 			vector<CSolidObject*> objectsOnPath;
 
@@ -819,7 +820,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 Calculates an aproximation of the physical 2D-distance
 between given two objects.
 */
-float CGroundMoveType::Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal) 
+float CGroundMoveType::Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal)
 {
 	//Calculating the distance in (x,z) depening in the look of the footprint.
 	float dist2D;
@@ -847,7 +848,7 @@ float CGroundMoveType::Distance2D(CSolidObject *object1, CSolidObject *object2, 
 /*
 Creates a path to the goal.
 */
-void CGroundMoveType::GetNewPath() 
+void CGroundMoveType::GetNewPath()
 {
 	if(owner->pos.distance2D(lastGetPathPos)<20){
 		if(DEBUG_CONTROLLER)
@@ -887,7 +888,7 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint() 
+void CGroundMoveType::GetNextWaypoint()
 {
 	if(pathId) {
 		waypoint=nextWaypoint;
@@ -923,7 +924,7 @@ void CGroundMoveType::GetNextWaypoint()
 The distance the unit will move at max breaking before stopping,
 starting from given speed.
 */
-float CGroundMoveType::BreakingDistance(float speed) 
+float CGroundMoveType::BreakingDistance(float speed)
 {
 	if (!owner->mobility->maxBreaking) {
 		logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
@@ -937,7 +938,7 @@ float CGroundMoveType::BreakingDistance(float speed)
 Gives the position this unit will end up at with full breaking
 from current velocity.
 */
-float3 CGroundMoveType::Here() 
+float3 CGroundMoveType::Here()
 {
 	float3 motionDir = owner->speed;
 	if(motionDir.SqLength2D() == 0) {
@@ -953,7 +954,7 @@ float3 CGroundMoveType::Here()
 Gives the minimum distance to next waypoint that should be used,
 based on current speed.
 */
-float CGroundMoveType::MinDistanceToWaypoint() 
+float CGroundMoveType::MinDistanceToWaypoint()
 {
 	return BreakingDistance(owner->speed.Length2D()) + CPathManager::PATH_RESOLUTION;
 }
@@ -963,7 +964,7 @@ float CGroundMoveType::MinDistanceToWaypoint()
 Gives the maximum distance from it's waypoint a unit could be
 before a new path is requested.
 */
-float CGroundMoveType::MaxDistanceToWaypoint() 
+float CGroundMoveType::MaxDistanceToWaypoint()
 {
 	return MinDistanceToWaypoint() * MAX_OFF_PATH_FACTOR;
 }
@@ -982,7 +983,7 @@ void CGroundMoveType::StartEngine() {
 			etaFailures=0;
 			owner->isMoving=true;
 			owner->cob->Call(COBFN_StartMoving);
-		
+
 			if(DEBUG_CONTROLLER)
 				logOutput << "Engine started" << " " << owner->id << "\n";
 		} else {
@@ -993,7 +994,7 @@ void CGroundMoveType::StartEngine() {
 		}
 	}
 	nextObstacleAvoidanceUpdate=gs->frameNum;
-	SetDeltaSpeed();
+	//SetDeltaSpeed();
 }
 
 /*
@@ -1016,14 +1017,14 @@ void CGroundMoveType::StopEngine() {
 	}
 	owner->isMoving=false;
 	wantedSpeed=0;
-	SetDeltaSpeed();
+	//SetDeltaSpeed();
 }
 
 
 /*
 Called when the unit arrives at it's waypoint.
 */
-void CGroundMoveType::Arrived() 
+void CGroundMoveType::Arrived()
 {
 	//Can only "arrive" if the engine is active.
 	if(progressState == Active) {
@@ -1042,6 +1043,7 @@ void CGroundMoveType::Arrived()
 
 		//And the action is done.
 		progressState = Done;
+		owner->commandAI->SlowUpdate();
 
 		if(DEBUG_CONTROLLER)
 			logOutput << "Unit arrived!\n";
@@ -1052,7 +1054,7 @@ void CGroundMoveType::Arrived()
 Makes the unit fail this action.
 No more trials will be done before a new goal is given.
 */
-void CGroundMoveType::Fail() 
+void CGroundMoveType::Fail()
 {
 	if(DEBUG_CONTROLLER)
 		logOutput.Print("Unit failed! %i",owner->id);
@@ -1398,7 +1400,7 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 					numSquares+=0.3f;
 				} else {
 					numSquares+=1.0f;
-					if(blockingType) 
+					if(blockingType)
 						numBlocked+=1.0f;
 				}
 			}

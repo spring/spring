@@ -32,6 +32,7 @@ public:
 	virtual bool WillCancelQueued(Command &c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
+	virtual bool HasMoreMoveCommands();
 
 	int CancelCommands(const Command &c, std::deque<Command>& queue,
 	                   bool& first);
