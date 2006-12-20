@@ -2,6 +2,9 @@ TASpring change log
 
 0.74b2
 
+- Added GROUND_WATER_HEIGHT (78) to get in cob script.
+  Same as GROUND_HEIGHT (16) but in water it returns negative water depth instead of 0.
+
 - Units don't slowdown on intermediate waypoints anymore.
 
 - Added mingw compatible crashhandler.
