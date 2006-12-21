@@ -866,7 +866,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 		return false;
 
 	float h = ground->GetApproximateHeight(pos.x, pos.z);
-	if (h < 0)
+	if (h < 0 && !owner->unitDef->floater)
 		return false;
 
 	float3 tpos=owner->pos;
