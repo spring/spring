@@ -3051,56 +3051,63 @@ void CGame::HandleChatMsg(std::string s,int player)
 		}
 	}
 
-	if (s.find(".kickbynum") == 0 && player == 0 && gameServer && serverNet) {
-		int a = atoi(s.substr(11, string::npos).c_str());
-		if (a != 0 && gs->players[a]->active) {
-			unsigned char c=NETMSG_QUIT;
-			serverNet->SendData(&c,1,a);
-			serverNet->FlushConnection(a);
-
-			serverNet->connections[a].readyData[0]=NETMSG_QUIT; //this will rather ungracefully close the connection from our side
-			serverNet->connections[a].readyLength=1;            //so if the above was lost in packetlos etc it will never be resent
+	if (player == 0 && gameServer && serverNet) {
+		if (s.find(".kickbynum") == 0) {
+			if (s.length() >= 11) {
+				int a = atoi(s.substr(11, string::npos).c_str());
+				if (a != 0 && gs->players[a]->active) {
+					unsigned char c=NETMSG_QUIT;
+					serverNet->SendData(&c,1,a);
+					serverNet->FlushConnection(a);
+					//this will rather ungracefully close the connection from our side
+					serverNet->connections[a].readyData[0]=NETMSG_QUIT;
+					//so if the above was lost in packetlos etc it will never be resent
+					serverNet->connections[a].readyLength=1;
+				}
+			}
 		}
-	}
-	else if (s.find(".kick") == 0 && player == 0 && gameServer && serverNet){
-		string name=s.substr(6,string::npos);
-		if(!name.empty()){
-			StringToLowerInPlace(name);
-
-			for(int a=1;a<gs->activePlayers;++a){
-				if(gs->players[a]->active){
-					string p = StringToLower(gs->players[a]->playerName);
-
-					if(p.find(name)==0){               //can kick on substrings of name
-						unsigned char c=NETMSG_QUIT;
-						serverNet->SendData(&c,1,a);
-						serverNet->FlushConnection(a);
-
-						serverNet->connections[a].readyData[0]=NETMSG_QUIT; //this will rather ungracefully close the connection from our side
-						serverNet->connections[a].readyLength=1;            //so if the above was lost in packetlos etc it will never be resent
+		else if (s.find(".kick") == 0){
+			if (s.length() >= 6) {
+				string name=s.substr(6,string::npos);
+				if (!name.empty()){
+					StringToLowerInPlace(name);
+					for (int a=1;a<gs->activePlayers;++a){
+						if (gs->players[a]->active){
+							string p = StringToLower(gs->players[a]->playerName);
+							if (p.find(name)==0){               //can kick on substrings of name
+								unsigned char c=NETMSG_QUIT;
+								serverNet->SendData(&c,1,a);
+								serverNet->FlushConnection(a);
+								//this will rather ungracefully close the connection from our side
+								serverNet->connections[a].readyData[0]=NETMSG_QUIT;
+								//so if the above was lost in packetlos etc it will never be resent
+								serverNet->connections[a].readyLength=1;
+							}
+						}
 					}
 				}
 			}
 		}
 	}
 
-	if(s.find(".nospectatorchat")==0 && player==0){
-		noSpectatorChat=!noSpectatorChat;
-		logOutput.Print("No spectator chat %i",noSpectatorChat);
-	}
-
-	if(s.find(".nopause")==0 && player==0){
-		gamePausable=!gamePausable;
-	}
-	if(s.find(".setmaxspeed")==0 && player==0){
-		maxUserSpeed=atof(s.substr(12).c_str());
-		if(gs->userSpeedFactor>maxUserSpeed)
-			gs->userSpeedFactor=maxUserSpeed;
-	}
-	if(s.find(".setminspeed")==0 && player==0){
-		minUserSpeed=atof(s.substr(12).c_str());
-		if(gs->userSpeedFactor<minUserSpeed)
-			gs->userSpeedFactor=minUserSpeed;
+	if (player == 0) {
+		if (s.find(".nospectatorchat")==0) {
+			noSpectatorChat=!noSpectatorChat;
+			logOutput.Print("No spectator chat %i",noSpectatorChat);
+		}
+		if (s.find(".nopause")==0) {
+			gamePausable=!gamePausable;
+		}
+		if (s.find(".setmaxspeed")==0) {
+			maxUserSpeed=atof(s.substr(12).c_str());
+			if(gs->userSpeedFactor>maxUserSpeed)
+				gs->userSpeedFactor=maxUserSpeed;
+		}
+		if (s.find(".setminspeed")==0) {
+			minUserSpeed=atof(s.substr(12).c_str());
+			if(gs->userSpeedFactor<minUserSpeed)
+				gs->userSpeedFactor=minUserSpeed;
+		}
 	}
 
 	if(noSpectatorChat && gs->players[player]->spectator && !gu->spectating)
