@@ -2,6 +2,8 @@ TASpring change log
 
 0.74b2
 
+- Planes can land on water surface if FBI tag floater is set to true.
+
 - Added GROUND_WATER_HEIGHT (78) to get in cob script.
   Same as GROUND_HEIGHT (16) but in water it returns negative water depth instead of 0.
 
