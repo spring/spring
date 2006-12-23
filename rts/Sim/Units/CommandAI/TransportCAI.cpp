@@ -64,21 +64,20 @@ void CTransportCAI::SlowUpdate(void)
 		CMobileCAI::SlowUpdate();
 		return;
 	}
-
 	Command& c=commandQue.front();
 	switch(c.id){
-	case CMD_LOAD_UNITS:
-		return ExecuteLoadUnits(c);
-	case CMD_UNLOAD_UNITS:
-		return ExecuteUnloadUnits(c);
-	case CMD_UNLOAD_UNIT:
-		return ExecuteUnloadUnit(c);
-	default:
-		return CMobileCAI::SlowUpdate();
+		case CMD_LOAD_UNITS:   { ExecuteLoadUnits(c);   return; }
+		case CMD_UNLOAD_UNITS: { ExecuteUnloadUnits(c); return; }
+		case CMD_UNLOAD_UNIT:  { ExecuteUnloadUnit(c);  return; }
+		default:{
+			CMobileCAI::SlowUpdate();
+			return;
+		}
 	}
 }
 
-void CTransportCAI::ExecuteLoadUnits(Command &c){
+void CTransportCAI::ExecuteLoadUnits(Command &c)
+{
 	CTransportUnit* transport=(CTransportUnit*)owner;
 	if(c.params.size()==1){		//load single unit
 		if(transport->transportCapacityUsed >= owner->unitDef->transportCapacity){
@@ -162,7 +161,8 @@ void CTransportCAI::ExecuteLoadUnits(Command &c){
 	return;
 }
 
-void CTransportCAI::ExecuteUnloadUnits(Command &c){
+void CTransportCAI::ExecuteUnloadUnits(Command &c)
+{
 	if(lastCall==gs->frameNum)	//avoid infinite loops
 		return;
 	lastCall=gs->frameNum;
@@ -190,7 +190,8 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c){
 	return;
 }
 
-void CTransportCAI::ExecuteUnloadUnit(Command &c){
+void CTransportCAI::ExecuteUnloadUnit(Command &c)
+{
 	if(inCommand){
 		if(!owner->cob->busy)
 	//			if(scriptReady)

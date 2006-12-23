@@ -764,7 +764,8 @@ int CCommandAI::UpdateTargetLostTimer(int unitid)
 /**
 * @brief Causes this CommandAI to execute the attack order c
 */
-void CCommandAI::ExecuteAttack(Command &c){
+void CCommandAI::ExecuteAttack(Command &c)
+{
 	assert(owner->unitDef->canAttack);
 	if(inCommand){
 		if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
@@ -796,7 +797,8 @@ void CCommandAI::ExecuteAttack(Command &c){
 /**
 * @brief executes the stop command c
 */
-void CCommandAI::ExecuteStop(Command &c){
+void CCommandAI::ExecuteStop(Command &c)
+{
 	owner->AttackUnit(0,true);
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi){
@@ -808,8 +810,10 @@ void CCommandAI::ExecuteStop(Command &c){
 /**
 * @brief executes the DGun command c
 */
-void CCommandAI::ExecuteDGun(Command &c){
-	return ExecuteAttack(c);
+void CCommandAI::ExecuteDGun(Command &c)
+{
+	ExecuteAttack(c);
+	return;
 }
 
 void CCommandAI::SlowUpdate()
@@ -821,10 +825,10 @@ void CCommandAI::SlowUpdate()
 	Command& c=commandQue.front();
 
 	switch(c.id){
-		case CMD_WAIT:
+		case CMD_WAIT:{
 			return;
-	case CMD_SELFD:
-		{
+    }
+  	case CMD_SELFD:{
 			if(owner->selfDCountdown != 0){
 				owner->selfDCountdown=0;
 			} else {
@@ -833,14 +837,22 @@ void CCommandAI::SlowUpdate()
 			FinishCommand();
 			return;
 		}
-		case CMD_STOP:
-			return ExecuteStop(c);
-		case CMD_ATTACK:
-			return ExecuteAttack(c);
-		case CMD_DGUN:
-			return ExecuteDGun(c);
-		default:
-			return FinishCommand();
+		case CMD_STOP:{
+			ExecuteStop(c);
+			return;
+    }
+		case CMD_ATTACK:{
+			ExecuteAttack(c);
+			return;
+    }
+		case CMD_DGUN:{
+			ExecuteDGun(c);
+			return;
+    }
+		default:{
+			FinishCommand();
+			return;
+    }
 	}
 }
 

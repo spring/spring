@@ -311,10 +311,14 @@ void CAirCAI::SlowUpdate()
 	float3 curPos=owner->pos;
 
 	switch(c.id){
-	case CMD_AREA_ATTACK:
-		return ExecuteAreaAttack(c);
-	default:
-		return CMobileCAI::Execute();
+		case CMD_AREA_ATTACK:{
+			ExecuteAreaAttack(c);
+			return;
+		}
+		default:{
+			CMobileCAI::Execute();
+			return;
+		}
 	}
 }
 
@@ -384,7 +388,8 @@ void CAirCAI::ExecuteMove(Command &c){
 	return;
 }*/
 
-void CAirCAI::ExecuteFight(Command &c){
+void CAirCAI::ExecuteFight(Command &c)
+{
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	CAirMoveType* myPlane = (CAirMoveType*) owner->moveType;
 	if(tempOrder){
@@ -471,7 +476,8 @@ void CAirCAI::ExecuteFight(Command &c){
 	return;
 }
 
-void CAirCAI::ExecuteAttack(Command &c){
+void CAirCAI::ExecuteAttack(Command &c)
+{
 	assert(owner->unitDef->canAttack);
 	CAirMoveType* myPlane = (CAirMoveType*) owner->moveType;
 	targetAge++;
@@ -538,7 +544,8 @@ void CAirCAI::ExecuteAttack(Command &c){
 	return;
 }
 
-void CAirCAI::ExecuteAreaAttack(Command &c){
+void CAirCAI::ExecuteAreaAttack(Command &c)
+{
 	assert(owner->unitDef->canAttack);
 	CAirMoveType* myPlane = (CAirMoveType*) owner->moveType;
 	if(targetDied){
@@ -579,7 +586,8 @@ void CAirCAI::ExecuteAreaAttack(Command &c){
 	}
 }
 
-void CAirCAI::ExecuteGuard(Command &c){
+void CAirCAI::ExecuteGuard(Command &c)
+{
 	assert(owner->unitDef->canGuard);
 	if (int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
 			&& UpdateTargetLostTimer(int(c.params[0]))) {

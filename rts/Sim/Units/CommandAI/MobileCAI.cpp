@@ -227,34 +227,34 @@ void CMobileCAI::SlowUpdate()
 			owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
 	}
-	return Execute();
+
+	Execute();
 }
 
 /**
 * @brief Executes the first command in the commandQue
 */
-void CMobileCAI::Execute(){
+void CMobileCAI::Execute()
+{
 	Command& c=commandQue.front();
 	switch(c.id){
-	case CMD_SET_WANTED_MAX_SPEED:
-		return ExecuteSetWantedMaxSpeed(c);
-	case CMD_MOVE:
-		return ExecuteMove(c);
-	case CMD_PATROL:
-		return ExecutePatrol(c);
-	case CMD_FIGHT:
-		return ExecuteFight(c);
-	case CMD_GUARD:
-		return ExecuteGuard(c);
-	default:
-		return CCommandAI::SlowUpdate();
+		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c); return; }
+		case CMD_MOVE:                 { ExecuteMove(c);              return; }
+		case CMD_PATROL:               { ExecutePatrol(c);            return; }
+		case CMD_FIGHT:                { ExecuteFight(c);             return; }
+		case CMD_GUARD:                { ExecuteGuard(c);             return; }
+		default:{
+			CCommandAI::SlowUpdate();
+			return;
+		}
 	}
 }
 
 /**
 * @brief executes the set wanted max speed command
 */
-void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c){
+void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
+{
 	if (repeatOrders && (commandQue.size() >= 2) &&
 			(commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
 		commandQue.push_back(commandQue.front());
@@ -267,7 +267,8 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c){
 /**
 * @brief executes the move command
 */
-void CMobileCAI::ExecuteMove(Command &c){
+void CMobileCAI::ExecuteMove(Command &c)
+{
 	float3 pos(c.params[0], c.params[1], c.params[2]);
 	if(!(pos == goalPos)){
 		SetGoal(pos, owner->pos);
@@ -282,7 +283,8 @@ void CMobileCAI::ExecuteMove(Command &c){
 /**
 * @brief Executes the Patrol command c
 */
-void CMobileCAI::ExecutePatrol(Command &c){
+void CMobileCAI::ExecutePatrol(Command &c)
+{
 	assert(owner->unitDef->canPatrol);
 	assert(c.params.size() >= 3);
 	Command temp;
@@ -304,7 +306,8 @@ void CMobileCAI::ExecutePatrol(Command &c){
 /**
 * @brief Executes the Fight command c
 */
-void CMobileCAI::ExecuteFight(Command &c){
+void CMobileCAI::ExecuteFight(Command &c)
+{
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	if(tempOrder){
 		inCommand = true;
@@ -375,7 +378,8 @@ void CMobileCAI::ExecuteFight(Command &c){
 /**
 * @brief Executes the guard command c
 */
-void CMobileCAI::ExecuteGuard(Command &c){
+void CMobileCAI::ExecuteGuard(Command &c)
+{
 	assert(owner->unitDef->canGuard);
 	assert(!c.params.empty());
 	if(int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
@@ -422,7 +426,8 @@ void CMobileCAI::ExecuteGuard(Command &c){
 /**
 * @brief Executes the stop command c
 */
-void CMobileCAI::ExecuteStop(Command &c){
+void CMobileCAI::ExecuteStop(Command &c)
+{
 	StopMove();
 	return CCommandAI::ExecuteStop(c);
 }
@@ -430,20 +435,22 @@ void CMobileCAI::ExecuteStop(Command &c){
 /**
 * @brief Executes the DGun command c
 */
-void CMobileCAI::ExecuteDGun(Command &c){
+void CMobileCAI::ExecuteDGun(Command &c)
+{
 	if(uh->limitDgun && owner->unitDef->isCommander
 			&& owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
 		StopMove();
 		return FinishCommand();
 	}
-	return ExecuteAttack(c);
+	ExecuteAttack(c);
 }
 
 
 /**
 * @brief Causes this CMobileCAI to execute the attack order c
 */
-void CMobileCAI::ExecuteAttack(Command &c){
+void CMobileCAI::ExecuteAttack(Command &c)
+{
 	assert(owner->unitDef->canAttack);
 	if(tempOrder && owner->moveState < 2){		//limit how far away we fly
 		if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500 + owner->maxRange){
