@@ -373,7 +373,7 @@ void CMobileCAI::ExecuteFight(Command &c){
 }
 
 /**
-* @breif Executs the guard command c
+* @brief Executes the guard command c
 */
 void CMobileCAI::ExecuteGuard(Command &c){
 	assert(owner->unitDef->canGuard);
@@ -420,7 +420,7 @@ void CMobileCAI::ExecuteGuard(Command &c){
 }
 
 /**
-* @breif executes the stop command c
+* @brief Executes the stop command c
 */
 void CMobileCAI::ExecuteStop(Command &c){
 	StopMove();
@@ -428,7 +428,7 @@ void CMobileCAI::ExecuteStop(Command &c){
 }
 
 /**
-* @breif executes the DGun command c
+* @brief Executes the DGun command c
 */
 void CMobileCAI::ExecuteDGun(Command &c){
 	if(uh->limitDgun && owner->unitDef->isCommander
@@ -441,14 +441,15 @@ void CMobileCAI::ExecuteDGun(Command &c){
 
 
 /**
-* @breif Causes this CMoblieCAI to execute the attack order c
+* @brief Causes this CMobileCAI to execute the attack order c
 */
 void CMobileCAI::ExecuteAttack(Command &c){
 	assert(owner->unitDef->canAttack);
 	if(tempOrder && owner->moveState < 2){		//limit how far away we fly
 		if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500 + owner->maxRange){
 			StopMove();
-			return FinishCommand();
+			FinishCommand();
+			return;
 		}
 	}
 	if(!inCommand){
@@ -461,19 +462,27 @@ void CMobileCAI::ExecuteAttack(Command &c){
 				inCommand=true;
 			} else {
 				StopMove();		//cancel keeppointingto
-				return FinishCommand();
+				FinishCommand();
+				return;
 			}
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);
 			SetGoal(pos, owner->pos);
 			inCommand=true;
 		}
-		return;
+	} else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
+		if ((commandQue.size() != 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+			StopMove();
+			FinishCommand();
+			return;
+		}
 	}
 
 	if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
 		StopMove();		//cancel keeppointingto
-		return FinishCommand();
+		FinishCommand();
+		return;
 	}
 	if(orderTarget){
 		//note that we handle aircrafts slightly differently
