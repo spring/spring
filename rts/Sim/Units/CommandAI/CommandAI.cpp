@@ -762,7 +762,7 @@ int CCommandAI::UpdateTargetLostTimer(int unitid)
 }
 
 /**
-* @breif Causes this CommandAI to execute the attack order c
+* @brief Causes this CommandAI to execute the attack order c
 */
 void CCommandAI::ExecuteAttack(Command &c){
 	assert(owner->unitDef->canAttack);
@@ -794,7 +794,7 @@ void CCommandAI::ExecuteAttack(Command &c){
 }
 
 /**
-* @breif executes the stop command c
+* @brief executes the stop command c
 */
 void CCommandAI::ExecuteStop(Command &c){
 	owner->AttackUnit(0,true);
@@ -806,7 +806,7 @@ void CCommandAI::ExecuteStop(Command &c){
 }
 
 /**
-* @breif executes the DGun command c
+* @brief executes the DGun command c
 */
 void CCommandAI::ExecuteDGun(Command &c){
 	return ExecuteAttack(c);
