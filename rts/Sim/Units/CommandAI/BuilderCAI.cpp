@@ -220,39 +220,35 @@ void CBuilderCAI::SlowUpdate()
 		}
 		return;
 	}
-	switch(c.id){
-	case CMD_STOP:
-		return ExecuteStop(c);
-	case CMD_REPAIR:
-		return ExecuteRepair(c);
-	case CMD_CAPTURE:
-		return ExecuteCapture(c);
-	case CMD_GUARD:
-		return ExecuteGuard(c);
-	case CMD_RECLAIM:
-		return ExecuteReclaim(c);
-	case CMD_RESURRECT:
-		return ExecuteResurrect(c);
-	case CMD_PATROL:
-		return ExecutePatrol(c);
-	case CMD_FIGHT:
-		return ExecuteFight(c);
-	case CMD_RESTORE:
-		return ExecuteRestore(c);
-	default:
-		break;
+
+	switch (c.id) {
+		case CMD_STOP:      { ExecuteStop(c);      return; }
+		case CMD_REPAIR:    { ExecuteRepair(c);    return; }
+		case CMD_CAPTURE:   { ExecuteCapture(c);   return; }
+		case CMD_GUARD:     { ExecuteGuard(c);     return; }
+		case CMD_RECLAIM:   { ExecuteReclaim(c);   return; }
+		case CMD_RESURRECT: { ExecuteResurrect(c); return; }
+		case CMD_PATROL:    { ExecutePatrol(c);    return; }
+		case CMD_FIGHT:     { ExecuteFight(c);     return; }
+		case CMD_RESTORE:   { ExecuteRestore(c);   return; }
+		default: {
+			CMobileCAI::SlowUpdate();
+			return;
+		}
 	}
-	CMobileCAI::SlowUpdate();
 }
 
-void CBuilderCAI::ExecuteStop(Command &c){
+
+void CBuilderCAI::ExecuteStop(Command &c)
+{
 	CBuilder* fac=(CBuilder*)owner;
 	building=false;
 	fac->StopBuild();
 	CMobileCAI::ExecuteStop(c);
 }
 
-void CBuilderCAI::ExecuteRepair(Command &c){
+void CBuilderCAI::ExecuteRepair(Command &c)
+{
 	CBuilder* fac=(CBuilder*)owner;
 	assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
 	if(c.params.size()==1){		//repair unit
@@ -293,7 +289,8 @@ void CBuilderCAI::ExecuteRepair(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecuteCapture(Command &c){
+void CBuilderCAI::ExecuteCapture(Command &c)
+{
 	assert(owner->unitDef->canCapture);
 	CBuilder* fac=(CBuilder*)owner;
 	if(c.params.size()==1){		//capture unit
@@ -326,7 +323,8 @@ void CBuilderCAI::ExecuteCapture(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecuteGuard(Command &c){
+void CBuilderCAI::ExecuteGuard(Command &c)
+{
 	assert(owner->unitDef->canGuard);
 	CBuilder* fac=(CBuilder*)owner;
 	CUnit* guarded=uh->units[(int)c.params[0]];
@@ -405,7 +403,8 @@ void CBuilderCAI::ExecuteGuard(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecuteReclaim(Command &c){
+void CBuilderCAI::ExecuteReclaim(Command &c)
+{
 	assert(owner->unitDef->canReclaim);
 	CBuilder* fac=(CBuilder*)owner;
 	if(c.params.size()==1){
@@ -470,7 +469,8 @@ void CBuilderCAI::ExecuteReclaim(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecuteResurrect(Command &c){
+void CBuilderCAI::ExecuteResurrect(Command &c)
+{
 	assert(owner->unitDef->canResurrect);
 	CBuilder* fac=(CBuilder*)owner;
 	if(c.params.size()==1){
@@ -526,7 +526,8 @@ void CBuilderCAI::ExecuteResurrect(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecutePatrol(Command &c){
+void CBuilderCAI::ExecutePatrol(Command &c)
+{
 	assert(owner->unitDef->canPatrol);
 	if(c.params.size()<3){		//this shouldnt happen but anyway ...
 		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
@@ -549,7 +550,8 @@ void CBuilderCAI::ExecutePatrol(Command &c){
 	return;
 }
 
-void CBuilderCAI::ExecuteFight(Command &c){
+void CBuilderCAI::ExecuteFight(Command &c)
+{
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	CBuilder* fac=(CBuilder*)owner;
 	if(tempOrder){
@@ -614,7 +616,9 @@ void CBuilderCAI::ExecuteFight(Command &c){
 	}
 	return;
 }
-void CBuilderCAI::ExecuteRestore(Command &c){
+
+void CBuilderCAI::ExecuteRestore(Command &c)
+{
 	assert(owner->unitDef->canRestore);
 	CBuilder* fac=(CBuilder*)owner;
 	if(inCommand){

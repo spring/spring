@@ -214,13 +214,14 @@ void CFactoryCAI::GiveCommand(const Command& c)
 
 void CFactoryCAI::SlowUpdate()
 {
-	if(commandQue.empty() || owner->beingBuilt)
+	if (commandQue.empty() || owner->beingBuilt) {
 		return;
+	}
 
 	CFactory* fac=(CFactory*)owner;
 
 	unsigned int oldSize;
-	do{
+	do {
 		Command& c=commandQue.front();
 		oldSize=commandQue.size();
 		map<int,BuildOption>::iterator boi;
@@ -271,7 +272,8 @@ void CFactoryCAI::SlowUpdate()
 	return;
 }
 
-void CFactoryCAI::ExecuteStop(Command &c){
+void CFactoryCAI::ExecuteStop(Command &c)
+{
 	CFactory* fac=(CFactory*)owner;
 	building=false;
 	fac->StopBuild();
