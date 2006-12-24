@@ -28,8 +28,8 @@ class CGuiHandler : public CInputReceiver {
 		void Update();
 
 		void Draw();
-		void DrawMapStuff(void);
-		void DrawCentroidCursor(void);
+		void DrawMapStuff(bool onMinimap);
+		void DrawCentroidCursor();
 		
 		bool AboveGui(int x,int y);
 		bool KeyPressed(unsigned short key, bool isRepeat);
@@ -41,7 +41,7 @@ class CGuiHandler : public CInputReceiver {
 		std::string GetTooltip(int x, int y);
 		std::string GetBuildTooltip() const;
 
-		Command GetOrderPreview(void);
+		Command GetOrderPreview();
 		Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
 		std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
 		                                   const BuildInfo& endInfo);
@@ -120,7 +120,8 @@ class CGuiHandler : public CInputReceiver {
 		void DrawSelectionInfo();
 		void DrawNumberInput();
 		void DrawMiniMapMarker();
-		void DrawFront(int button,float maxSize,float sizeDiv);
+		void DrawFront(int button, float maxSize,float sizeDiv,
+			       bool onMinimap);
 		void DrawArea(float3 pos, float radius, const float* color);
 		void DrawSelectBox(const float3& start, const float3& end);
 		void DrawSelectCircle(const float3& pos, float radius,

@@ -45,7 +45,9 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.name="Move";
 		c.hotkey="m";
 		c.tooltip="Move: Order the unit to move to a position";
+		c.params.push_back("1000000"); // max distance
 		possibleCommands.push_back(c);
+		c.params.clear();
 	}
 
 	if(owner->unitDef->canPatrol){

@@ -1051,6 +1051,9 @@ void CMiniMap::Draw()
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	
+	// draw the selection shape, and some ranges
+	guihandler->DrawMapStuff(true);
+	
 	glRotatef(+90.0f, +1.0f, 0.0f, 0.0f); // revert to the 2d xform
 
 	// draw unit ranges
@@ -1105,9 +1108,9 @@ void CMiniMap::Draw()
 	DrawNotes();
 
 	glLoadIdentity(); // reset the modelview
-	
+
 	DrawButtons();
-	
+
 	// outline
 	glLineWidth(1.51f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
