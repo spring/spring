@@ -3519,7 +3519,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (unit->maxRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
-													unit->weapons.front()->heightMod, 40);
+				                  unit->weapons.front()->heightMod, 40);
 			}
 			// draw decloak distance
 			if (unitdef->decloakDistance > 0) {
@@ -3712,7 +3712,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
-													unit->weapons.front()->heightMod, 40);
+				                  unit->weapons.front()->heightMod, 40);
 			}
 		}
 	}
