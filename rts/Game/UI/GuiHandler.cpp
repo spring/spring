@@ -24,6 +24,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/glList.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -2228,7 +2229,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					return defaultRet;
 				}
 				float3 pos2=camera->pos+mouse->dir*dist;
-				if(!commands[tempInCommand].params.empty() && pos.distance2D(pos2)>atoi(commands[tempInCommand].params[0].c_str())){
+				if (!commands[tempInCommand].params.empty() &&
+				    pos.distance2D(pos2) > atof(commands[tempInCommand].params[0].c_str())) {
 					float3 dif=pos2-pos;
 					dif.Normalize();
 					pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
@@ -2397,8 +2399,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			bi.FillCmd(c);
 			bool cancel = false;
 			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
-			{
+			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
 				if((*ui)->commandAI->WillCancelQueued(c))
 					cancel = true;
 			}
@@ -2486,7 +2487,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		}
 	} else {			//build a line
 		BuildInfo bi=startInfo;
-		if(fabs(start.x-end.x)>fabs(start.z-end.z)){
+		if (fabs(start.x - end.x) > fabs(start.z - end.z)) {
 			float step=startInfo.GetXSize()*8+buildSpacing*16;
 			float3 dir=end-start;
 			if(dir.x==0){
@@ -2499,6 +2500,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				dir.z=0;
 			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4f;p+=dir*step) {
 				bi.pos=p;
+				bi.pos=helper->Pos2BuildPos(bi);
 				ret.push_back(bi);
 			}
 		} else {
@@ -2514,6 +2516,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				dir.x=0;
 			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4f;p+=dir*step) {
 				bi.pos=p;
+				bi.pos=helper->Pos2BuildPos(bi);
 				ret.push_back(bi);
 			}
 		}
@@ -2527,7 +2530,32 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 void CGuiHandler::Draw()
 {
-	DrawButtons();
+	Update();
+	
+	if ((iconsCount <= 0) && (luaUI == NULL)) {
+		return;
+	}
+
+	glPushAttrib(GL_ENABLE_BIT);
+
+	glDisable(GL_FOG);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GEQUAL, 0.01f);
+
+	if (iconsCount > 0) {
+		DrawButtons();
+	}
+	
+	if (luaUI != NULL) {
+		luaUI->DrawScreenItems();
+	}
+
+	glPopAttrib();
 }
 
 
@@ -2959,23 +2987,6 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 
 void CGuiHandler::DrawButtons()
 {
-	Update();
-
-	if (iconsCount <= 0) {
-		return;
-	}
-
-	glPushAttrib(GL_ENABLE_BIT);
-
-	glDisable(GL_FOG);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GEQUAL, 0.01f);
-
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
 	if (alpha > 0.0f) {
@@ -3119,12 +3130,6 @@ void CGuiHandler::DrawButtons()
 	DrawSelectionInfo();
 	
 	DrawNumberInput();
-
-	if (luaUI != NULL) {
-		luaUI->DrawScreenItems();
-	}
-
-	glPopAttrib();
 }
 
 
@@ -3343,131 +3348,171 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 /******************************************************************************/
 /******************************************************************************/
 
-void CGuiHandler::DrawMapStuff(void)
+void CGuiHandler::DrawMapStuff(bool onMinimap)
 {
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_ALPHA_TEST);
+	if (!onMinimap) {
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_ALPHA_TEST);
+	}
 	
 	// setup for minimap proxying
 	float3 tmpCamPos, tmpMouseDir;
-	const bool useMinimap =
+	const bool minimapCoords =
 		(minimap->ProxyMode() ||
 		 ((mouse->activeReceiver != this) && !game->hideInterface &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
-	if (useMinimap) {
+	if (minimapCoords) {
 		tmpCamPos = camera->pos;
 		tmpMouseDir = mouse->dir;
 		camera->pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 		mouse->dir = float3(0.0f, -1.0f, 0.0f);
-		if (miniMapMarker && minimap->FullProxy() && !minimap->GetMinimized()) {
+		if (miniMapMarker && minimap->FullProxy() &&
+		    !onMinimap && !minimap->GetMinimized()) {
 			DrawMiniMapMarker();
 		}
 	}
+
+	glLineWidth(1.49f);
 	
 	if (activeMousePress) {
-		int cc=-1;
-		int button=SDL_BUTTON_LEFT;
-		if(inCommand!=-1){
-			cc=inCommand;
+		int cmdIndex = -1;
+		int button = SDL_BUTTON_LEFT;
+		if ((inCommand >= 0) && (inCommand < commands.size())) {
+			cmdIndex = inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
 			    ((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
-				cc = defaultCmdMemory;
+				cmdIndex = defaultCmdMemory;
 				button = SDL_BUTTON_RIGHT;
 			}
 		}
 
-		if(cc>=0 && cc<commands.size()){
-			switch(commands[cc].type){
-			case CMDTYPE_ICON_FRONT:
-				if(mouse->buttons[button].movement>30){
-					if(commands[cc].params.size()>0)
-						if(commands[cc].params.size()>1)
-							DrawFront(button,atoi(commands[cc].params[0].c_str()),atof(commands[cc].params[1].c_str()));
-						else
-							DrawFront(button,atoi(commands[cc].params[0].c_str()),0);
-					else
-						DrawFront(button,1000,0);
+		if ((cmdIndex >= 0) && (cmdIndex < commands.size())) {
+			const CommandDescription& cmdDesc = commands[cmdIndex];
+			switch (cmdDesc.type) {
+				case CMDTYPE_ICON_FRONT: {
+					if (mouse->buttons[button].movement > 30) {
+						float maxSize = 1000000.0f;
+						float sizeDiv = 0.0f;
+						if (cmdDesc.params.size() > 0) {
+							maxSize = atof(cmdDesc.params[0].c_str());
+						}
+						if (cmdDesc.params.size() > 1) {
+							sizeDiv = atof(cmdDesc.params[1].c_str());
+						}
+						DrawFront(button, maxSize, sizeDiv, onMinimap);
+					}
+					break;
 				}
-				break;
-			case CMDTYPE_ICON_UNIT_OR_AREA:
-			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
-			case CMDTYPE_ICON_AREA:{
-				float maxRadius=100000;
-				if(commands[cc].params.size()==1)
-					maxRadius=atof(commands[cc].params[0].c_str());
-				if(mouse->buttons[button].movement>4){
-					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
+				case CMDTYPE_ICON_UNIT_OR_AREA:
+				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
+				case CMDTYPE_ICON_AREA: {
+					float maxRadius=100000;
+					if (cmdDesc.params.size() == 1) {
+						maxRadius = atof(cmdDesc.params[0].c_str());
 					}
-					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
-					}
-					float3 pos2=camera->pos+mouse->dir*dist;
-					const float* color;
-					switch (commands[cc].id) {
-						case CMD_ATTACK:
-						case CMD_AREA_ATTACK:  { color = cmdColors.attack;      break; }
-						case CMD_REPAIR:       { color = cmdColors.repair;      break; }
-						case CMD_RECLAIM:      { color = cmdColors.reclaim;     break; }
-						case CMD_RESTORE:      { color = cmdColors.restore;     break; }
-						case CMD_RESURRECT:    { color = cmdColors.resurrect;   break; }
-						case CMD_LOAD_UNITS:   { color = cmdColors.load;        break; } 
-						case CMD_UNLOAD_UNIT:
-						case CMD_UNLOAD_UNITS: { color = cmdColors.unload;      break; }
-						case CMD_CAPTURE:      { color = cmdColors.capture;     break; }
-						default: {
-							static const float grey[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
-							color = grey;
+					if (mouse->buttons[button].movement > 4) {
+						float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
+						if(dist<0){
+							break;
+						}
+						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+						dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+						if (dist < 0) {
+							break;
+						}
+						float3 pos2 = camera->pos + mouse->dir * dist;
+						const float* color;
+						switch (cmdDesc.id) {
+							case CMD_ATTACK:
+							case CMD_AREA_ATTACK:  { color = cmdColors.attack;      break; }
+							case CMD_REPAIR:       { color = cmdColors.repair;      break; }
+							case CMD_RECLAIM:      { color = cmdColors.reclaim;     break; }
+							case CMD_RESTORE:      { color = cmdColors.restore;     break; }
+							case CMD_RESURRECT:    { color = cmdColors.resurrect;   break; }
+							case CMD_LOAD_UNITS:   { color = cmdColors.load;        break; } 
+							case CMD_UNLOAD_UNIT:
+							case CMD_UNLOAD_UNITS: { color = cmdColors.unload;      break; }
+							case CMD_CAPTURE:      { color = cmdColors.capture;     break; }
+							default: {
+								static const float grey[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+								color = grey;
+							}
+						}
+						const float radius = min(maxRadius, pos.distance2D(pos2));
+						if (!onMinimap) {
+							DrawArea(pos, radius, color);
+						}
+						else {
+							glColor4f(color[0], color[1], color[2], 0.5f);
+							glBegin(GL_TRIANGLE_FAN);
+							const int divs = 256;
+							for(int i = 0; i <= divs; ++i) {
+								const float radians = (2 * PI) * (float)i / (float)divs;
+								float3 p(pos.x, 0.0f, pos.z);
+								p.x += sin(radians) * radius;
+								p.z += cos(radians) * radius;
+								if (!onMinimap) {
+									p.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
+								}
+								glVertexf3(p);
+							}
+							glEnd();
 						}
 					}
-					DrawArea(pos, min(maxRadius, pos.distance2D(pos2)), color);
+					break;
 				}
-				break;}
-			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
-				if(mouse->buttons[button].movement>=16){
-					float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
+				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
+					if (mouse->buttons[button].movement >= 16) {
+						float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*gu->viewRange*1.4f);
+						if (dist < 0) {
+							break;
+						}
+						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+						dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+						if (dist < 0) {
+							break;
+						}
+						const float3 pos2 = camera->pos+mouse->dir*dist;
+						if (!onMinimap) {
+							DrawSelectBox(pos1, pos2);
+						} else {
+							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+							glBegin(GL_QUADS);
+							glVertex3f(pos1.x, 0.0f, pos1.z);
+							glVertex3f(pos2.x, 0.0f, pos1.z);
+							glVertex3f(pos2.x, 0.0f, pos2.z);
+							glVertex3f(pos1.x, 0.0f, pos2.z);
+							glEnd();
+						}
 					}
-					float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-					dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-					if(dist<0){
-						break;
-					}
-					float3 pos2=camera->pos+mouse->dir*dist;
-					DrawSelectBox(pos, pos2);
+					break;
 				}
-				break;}
-			default:
-				break;
 			}
 		}
 	}
 
-	glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-	            (GLenum)cmdColors.SelectedBlendDst());
-	glEnable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
-	glLineWidth(cmdColors.SelectedLineWidth());
+	if (!onMinimap) {
+		glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+								(GLenum)cmdColors.SelectedBlendDst());
+		glLineWidth(cmdColors.SelectedLineWidth());
+	}
 
 	// draw the ranges for the unit that is being pointed at
-	CUnit* pointedAt = 0;
-	if(GetQueueKeystate()){
-		CUnit* unit = 0;
+	CUnit* pointedAt = NULL;
+	if (GetQueueKeystate()) {
+		CUnit* unit = NULL;
 		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,false);
 		if(unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 			pointedAt = unit;
 			//draw weapon range
 			if(unit->maxRange>0){
-				glColor4fv(cmdColors.rangeAttack);				glBegin(GL_LINE_STRIP);
+				glColor4fv(cmdColors.rangeAttack);
+				glBegin(GL_LINE_STRIP);
 				float h=unit->pos.y;
 				for(int a=0;a<=40;++a){
 					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
@@ -3483,38 +3528,16 @@ void CGuiHandler::DrawMapStuff(void)
 			//draw decloak distance
 			if(unit->unitDef->decloakDistance > 0){
 				glColor4fv(cmdColors.rangeDecloak);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->decloakDistance,0,sin(a*2*PI/40)*unit->unitDef->decloakDistance);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
+				glSurfaceCircle(unit->pos, unit->unitDef->decloakDistance, 40);
 			}
 			//draw self destruct and damage distance
 			if(unit->unitDef->kamikazeDist > 0){
 				glColor4fv(cmdColors.rangeKamikaze);
-				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->unitDef->kamikazeDist,0,sin(a*2*PI/40)*unit->unitDef->kamikazeDist);
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
+				glSurfaceCircle(unit->pos, unit->unitDef->kamikazeDist, 40);
 				if(!unit->unitDef->selfDExplosion.empty()){
 					glColor4fv(cmdColors.rangeSelfDestruct);
-					WeaponDef* wd=weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
-
-					glBegin(GL_LINE_STRIP);
-					for(int a=0;a<=40;++a){
-						float3 pos(cos(a*2*PI/40)*wd->areaOfEffect,0,sin(a*2*PI/40)*wd->areaOfEffect);
-						pos+=unit->pos;
-						pos.y=ground->GetHeight(pos.x,pos.z)+8;
-						glVertexf3(pos);
-					}
-					glEnd();
+					WeaponDef* wd = weaponDefHandler->GetWeapon(unit->unitDef->selfDExplosion);
+					glSurfaceCircle(unit->pos, wd->areaOfEffect, 40);
 				}
 			}
 			// draw build distance for immobile builders
@@ -3522,15 +3545,7 @@ void CGuiHandler::DrawMapStuff(void)
 				const float radius = unit->unitDef->buildDistance;
 				if (radius > 0.0f) {
 					glColor4fv(cmdColors.rangeBuild);
-					glBegin(GL_LINE_STRIP);
-					for(int a = 0; a <= 40; ++a){
-						const float radians = a * (2.0f * PI) / 40.0f;
-						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-						pos += unit->pos;
-						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-						glVertexf3(pos);
-					}
-					glEnd();
+					glSurfaceCircle(unit->pos, radius, 40);
 				}
 			}
 		}
@@ -3544,7 +3559,7 @@ void CGuiHandler::DrawMapStuff(void)
 		set<CBuilderCAI*>::const_iterator bi;
 		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {	    
 			const CUnit* unit = (*bi)->owner;
-			if (unit == pointedAt || unit->team!=gu->myTeam) {
+			if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
 				continue;
 			}
 			const UnitDef* unitdef = unit->unitDef;
@@ -3554,26 +3569,18 @@ void CGuiHandler::DrawMapStuff(void)
 					glDisable(GL_TEXTURE_2D);
 					const float* color = cmdColors.rangeBuild;
 					glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
-					glBegin(GL_LINE_LOOP);
-					for(int a = 0; a < 40; ++a){
-						const float radians = a * (2.0f * PI) / 40.0f;
-						float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-						pos += unit->pos;
-						pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-						glVertexf3(pos);
-					}
-					glEnd();
+					glSurfaceCircle(unit->pos, radius, 40);
 				}
 			}
 		}
 
-		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-		if(dist>0){
+		float dist = ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+		if (dist > 0) {
 			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
 
-			if(unitdef){
+			if (unitdef) {
 				// get the build information
-				float3 pos=camera->pos+mouse->dir*dist;
+				float3 pos = camera->pos+mouse->dir*dist;
 				std::vector<BuildInfo> buildPos;
 				if(GetQueueKeystate() && mouse->buttons[SDL_BUTTON_LEFT].pressed){
 					float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
@@ -3584,76 +3591,54 @@ void CGuiHandler::DrawMapStuff(void)
 					buildPos=GetBuildPos(bi,bi);
 				}
 
-				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi)
-				{
+				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi) {
 					const float3& buildpos = bpi->pos;
 				
-					if(unitdef->weapons.size() > 0){	// draw weapon range
+					if (unitdef->weapons.size() > 0) { // draw weapon range
 						glColor4fv(cmdColors.rangeAttack);
-						glBegin(GL_LINE_STRIP);
-						for(int a=0;a<=40;++a){
-							float3 pos(cos(a*2*PI/40)*unitdef->weapons[0].def->range,0,sin(a*2*PI/40)*unitdef->weapons[0].def->range);
-							pos+=buildpos;
-							float dh=ground->GetHeight(pos.x,pos.z)-buildpos.y;
-							float modRange=unitdef->weapons[0].def->range-dh*unitdef->weapons[0].def->heightmod;
-							pos=float3(cos(a*2*PI/40)*(modRange),0,sin(a*2*PI/40)*(modRange));
-							pos+=buildpos;
-							pos.y=ground->GetHeight(pos.x,pos.z)+8;
-							glVertexf3(pos);
-						}
-						glEnd();
+						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
+						                  unitdef->weapons[0].def->heightmod, 40);
 					}
-					if(unitdef->extractRange > 0){	// draw extraction range
+					if (unitdef->extractRange > 0) { // draw extraction range
 						glDisable(GL_TEXTURE_2D);
 						glColor4fv(cmdColors.rangeExtract);
-						glBegin(GL_LINE_STRIP);
-						for(int a=0;a<=40;++a){
-							float3 pos(cos(a*2*PI/40)*unitdef->extractRange,0,sin(a*2*PI/40)*unitdef->extractRange);
-							pos+=buildpos;
-							pos.y=ground->GetHeight(pos.x,pos.z)+8;
-							glVertexf3(pos);
-						}
-						glEnd();
+						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
 					}
 					if (unitdef->builder && !unitdef->canmove) { // draw build range
 						const float radius = unitdef->buildDistance;
 						if (radius > 0.0f) {
 							glDisable(GL_TEXTURE_2D);
 							glColor4fv(cmdColors.rangeBuild);
-							glBegin(GL_LINE_STRIP);
-							for(int a = 0; a <= 40; ++a){
-								const float radians = a * (2.0f * PI) / 40.0f;
-								float3 pos(cos(radians)*radius, 0.0f, sin(radians)*radius);
-								pos += buildpos;
-								pos.y = ground->GetHeight(pos.x, pos.z) + 8.0f;
-								glVertexf3(pos);
-							}
-							glEnd();
+							glSurfaceCircle(buildpos, radius, 40);
 						}
 					}
 
 					std::vector<Command> cv;
-					if(GetQueueKeystate()){
+					if (GetQueueKeystate()) {
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
 						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-						for(; ui != selectedUnits.selectedUnits.end(); ui++){
+						for (; ui != selectedUnits.selectedUnits.end(); ui++) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
-							for(; ti != temp.end(); ti++)
+							for (; ti != temp.end(); ti++) {
 								cv.insert(cv.end(),*ti);
+							}
 						}
 					}
-					if(uh->ShowUnitBuildSquare(*bpi, cv))
+					if (uh->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
-					else
+					} else {
 						glColor4f(1,0.5f,0.5f,0.4f);
+					}
 
-					unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+					if (!onMinimap) {
+						unitDrawer->DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
 
-					glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-											(GLenum)cmdColors.SelectedBlendDst());
+						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
+												(GLenum)cmdColors.SelectedBlendDst());
+					}
 				}
 			}
 		}
@@ -3670,30 +3655,21 @@ void CGuiHandler::DrawMapStuff(void)
 			}
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 				glColor4fv(cmdColors.rangeAttack);
-				glBegin(GL_LINE_STRIP);
-				float h=unit->pos.y;
-				for(int a=0;a<=40;++a){
-					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-					pos+=unit->pos;
-					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod), 0,
-					           sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
+				glBallisticCircle(unit->pos, unit->maxRange,
+													unit->weapons.front()->heightMod, 40);
 			}
 		}
 	}
 
 	glLineWidth(1.0f);
 	
-	if (luaUI != NULL) {
-		luaUI->DrawWorldItems();
+	if (!onMinimap) {
+		if (luaUI != NULL) {
+			luaUI->DrawWorldItems();
+		}
 	}
 
-	if (useMinimap) {
+	if (minimapCoords) {
 		camera->pos = tmpCamPos;
 		mouse->dir = tmpMouseDir;
 	}
@@ -3837,22 +3813,21 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 }
 
 
-void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
+void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap)
 {
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.5f,1,0.5f,0.5f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	CMouseHandler::ButtonPress& bp=mouse->buttons[button];
-	if(bp.movement<5)
+	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
+	if(bp.movement<5){
 		return;
+	}
 	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*gu->viewRange*1.4f);
-	if(dist<0)
+	if(dist<0){
 		return;
+	}
 	float3 pos1=bp.camPos+bp.dir*dist;
 	dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
-	if(dist<0)
+	if(dist<0){
 		return;
+	}
 	float3 pos2=camera->pos+mouse->dir*dist;
 	float3 forward=(pos1-pos2).cross(UpVector);
 	forward.Normalize();
@@ -3861,6 +3836,21 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 		pos2=pos1+side*maxSize;
 		pos2.y=ground->GetHeight(pos2.x,pos2.z);
 	}
+	
+	glColor4f(0.5f, 1.0f, 0.5f, 0.5f);
+
+	if (onMinimap) {
+		pos1 += (pos1 - pos2);
+		glBegin(GL_LINES);
+		glVertexf3(pos1);
+		glVertexf3(pos2);
+		glEnd();
+		return;
+	}
+
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_DEPTH_TEST);
 	glBegin(GL_QUADS);
@@ -3875,7 +3865,6 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv)
 		glVertexf3(pos1+forward*100);
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
-
 
 	pos1+=pos1-pos2;
 	glDisable(GL_FOG);
