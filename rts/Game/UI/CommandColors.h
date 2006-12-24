@@ -69,6 +69,11 @@ class CCommandColors {
 		// for selected unit range rendering
 		const float* rangeAttack;
 		const float* rangeBuild;
+		const float* rangeRadar;
+		const float* rangeSonar;
+		const float* rangeSeismic;
+		const float* rangeJammer;
+		const float* rangeSonarJammer;
 		const float* rangeDecloak;
 		const float* rangeExtract;
 		const float* rangeKamikaze;
@@ -99,6 +104,11 @@ class CCommandColors {
 			deathWait_index,
 			rangeAttack_index,
 			rangeBuild_index,
+			rangeRadar_index,
+			rangeSonar_index,
+			rangeSeismic_index,
+			rangeJammer_index,
+			rangeSonarJammer_index,
 			rangeDecloak_index,
 			rangeExtract_index,
 			rangeKamikaze_index,

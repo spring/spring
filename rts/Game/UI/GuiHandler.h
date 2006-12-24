@@ -28,7 +28,7 @@ class CGuiHandler : public CInputReceiver {
 		void Update();
 
 		void Draw();
-		void DrawMapStuff(bool onMinimap);
+		void DrawMapStuff(int minimapLevel);
 		void DrawCentroidCursor();
 		
 		bool AboveGui(int x,int y);
@@ -120,8 +120,7 @@ class CGuiHandler : public CInputReceiver {
 		void DrawSelectionInfo();
 		void DrawNumberInput();
 		void DrawMiniMapMarker();
-		void DrawFront(int button, float maxSize,float sizeDiv,
-			       bool onMinimap);
+		void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap);
 		void DrawArea(float3 pos, float radius, const float* color);
 		void DrawSelectBox(const float3& start, const float3& end);
 		void DrawSelectCircle(const float3& pos, float radius,

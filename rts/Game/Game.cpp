@@ -1547,7 +1547,7 @@ bool CGame::Draw()
 	mouse->Draw();
 
 #ifndef NEW_GUI
-	guihandler->DrawMapStuff(false);
+	guihandler->DrawMapStuff(0);
 #endif
 
 	inMapDrawer->Draw();

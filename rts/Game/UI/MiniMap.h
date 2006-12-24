@@ -54,10 +54,13 @@ class CMiniMap : public CInputReceiver {
 		void DrawButtons();
 		void DrawUnit(CUnit* unit);
 		void DrawUnitHighlight(CUnit* unit);
-		void DrawCircle(float x, float z, float radius);
+		void DrawCircle(const float3& pos, float radius);
 		CIcon* GetUnitIcon(CUnit* unit, float& scale) const;
 		void GetFrustumSide(float3& side);
 		
+	protected:
+		static void DrawSurfaceCircle(const float3& pos, float radius,
+		                              unsigned int resolution);
 	protected:
 		int xpos, ypos;
 		int height, width;
@@ -104,7 +107,7 @@ class CMiniMap : public CInputReceiver {
 		int lastWindowSizeY;
 		
 		bool useIcons;
-		bool drawCommands;
+		int drawCommands;
 		float cursorScale;
 		
 		bool simpleColors;

@@ -86,6 +86,11 @@ CCommandColors::CCommandColors()
 	SETUP_COLOR(deathWait,         0.5f, 0.5f, 0.5f, 0.7f);
 	SETUP_COLOR(rangeAttack,       1.0f, 0.3f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeBuild,        0.3f, 1.0f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeRadar,        0.3f, 1.0f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeSonar,        0.3f, 0.3f, 1.0f, 0.7f);
+	SETUP_COLOR(rangeSeismic,      0.8f, 0.1f, 0.8f, 0.7f);
+	SETUP_COLOR(rangeJammer,  	   1.0f, 0.3f, 0.3f, 0.7f);
+	SETUP_COLOR(rangeSonarJammer,  1.0f, 0.3f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeDecloak,      0.3f, 0.3f, 1.0f, 0.7f);
 	SETUP_COLOR(rangeExtract,      1.0f, 0.3f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeKamikaze,     0.8f, 0.8f, 0.1f, 0.7f);

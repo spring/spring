@@ -8,11 +8,15 @@
  &
  *  Note: Uses the current color.
  */
-void glSurfaceCircle(const float3& center, float radius,
-                     unsigned int resolution = 20);
+ 
+typedef void (*SurfaceCircleFunc)(const float3& center, float radius,
+                                  unsigned int resolution);
 
-void glBallisticCircle(const float3& center, float radius, float slope,
-                       unsigned int resolution = 20);
+extern SurfaceCircleFunc glSurfaceCircle;
 
+extern void glBallisticCircle(const float3& center, float radius, float slope,
+                              unsigned int resolution);
+
+extern void setSurfaceCircleFunc(SurfaceCircleFunc func);
 
 #endif
