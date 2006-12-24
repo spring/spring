@@ -31,6 +31,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/GL/glExtra.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -99,7 +100,7 @@ CMiniMap::CMiniMap()
 
 	useIcons = !!configHandler.GetInt("MiniMapIcons", 1);
 	
-	drawCommands = !!configHandler.GetInt("MiniMapDrawCommands", 0);
+	drawCommands = max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
 	
 	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
 
@@ -125,7 +126,7 @@ CMiniMap::CMiniMap()
 		const int divs = (1 << (cl + 3));
 		for (int d = 0; d < divs; d++) {
 			const float rads = float(2.0 * PI) * float(d) / float(divs);
-			glVertex2f(sin(rads), cos(rads));
+			glVertex3f(sin(rads), 0.0f, cos(rads));
 		}
 		glEnd();
 		glEndList();
@@ -306,9 +307,10 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	}
 	else if (command == "drawcommands") {
 		if (words.size() >= 2) {
-			drawCommands = !!atoi(words[1].c_str());
+			drawCommands = max(0, atoi(words[1].c_str()));
+			
 		} else {
-			drawCommands = !drawCommands;
+			drawCommands = (drawCommands > 0) ? 0 : 1;
 		}
 	}
 	else if (command == "simplecolors") {
@@ -897,11 +899,11 @@ inline void DrawInMap2D(float x, float z)
 }
 
 
-void CMiniMap::DrawCircle(float x, float z, float radius)
+void CMiniMap::DrawCircle(const float3& pos, float radius)
 {
 	glPushMatrix();
-	glTranslatef(x, z, 0.0f);
-	glScalef(radius, radius, 1.0f);
+	glTranslatef(pos.x, pos.y, pos.z);
+	glScalef(radius, 1.0f, radius);
 	
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
@@ -913,8 +915,16 @@ void CMiniMap::DrawCircle(float x, float z, float radius)
 }
 
 
+void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
+{
+	minimap->DrawCircle(pos, radius);
+}
+
+
 void CMiniMap::Draw()
 {
+	setSurfaceCircleFunc(DrawSurfaceCircle);
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1042,7 +1052,7 @@ void CMiniMap::Draw()
 	glEnd();
 
 	// draw the queued commands
-	if (drawCommands && guihandler->GetQueueKeystate()) {
+	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
 	  // NOTE: this needlessly adds to the CursorIcons list, but at least
 	  //       they are not drawn  (because the input receivers are drawn
 	  //       after the command queues)
@@ -1052,38 +1062,40 @@ void CMiniMap::Draw()
 	}
 	
 	// draw the selection shape, and some ranges
-	guihandler->DrawMapStuff(true);
+	if (drawCommands > 0) {
+		guihandler->DrawMapStuff(drawCommands);
+	}
 	
-	glRotatef(+90.0f, +1.0f, 0.0f, 0.0f); // revert to the 2d xform
-
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
 	set<CUnit*>& selUnits = selectedUnits.selectedUnits;
 	for(set<CUnit*>::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 		CUnit* unit = *si;
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3f(0.3f,1.0f,0.3f);
-			DrawCircle(unit->pos.x, unit->pos.z, (unit->radarRadius * radarSquare));
+			glColor3fv(cmdColors.rangeRadar);
+			DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3f(0.3f,1.0f,0.3f);
-			DrawCircle(unit->pos.x, unit->pos.z, (unit->sonarRadius * radarSquare));
+			glColor3fv(cmdColors.rangeSonar);
+			DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
-			glColor3f(1.0f,0.2f,0.2f);
-			DrawCircle(unit->pos.x, unit->pos.z, (unit->jammerRadius * radarSquare));
+			glColor3fv(cmdColors.rangeJammer);
+			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
 		}
 		// change if someone someday create a non stockpiled interceptor
 		if(unit->stockpileWeapon && unit->stockpileWeapon->weaponDef->interceptor) {
-			CWeapon* w = unit->stockpileWeapon;
+			const CWeapon* w = unit->stockpileWeapon;
 			if (w->numStockpiled) {
 				glColor4f(1.0f,1.0f,1.0f,1.0f);
 			} else {
 				glColor4f(0.0f,0.0f,0.0f,0.6f);
 			}
-			DrawCircle(unit->pos.x, unit->pos.z, w->weaponDef->coverageRange);
+			DrawCircle(unit->pos, w->weaponDef->coverageRange);
 		}
 	}
+
+	glRotatef(+90.0f, +1.0f, 0.0f, 0.0f); // revert to the 2d xform
 
 	// selection box
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1124,6 +1136,8 @@ void CMiniMap::Draw()
 	glLineWidth(1.0f);
 	
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	
+	setSurfaceCircleFunc(NULL);
 }
 
 

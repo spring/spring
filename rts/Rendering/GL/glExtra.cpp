@@ -7,7 +7,8 @@
 /*
  *  Draws a trigonometric circle in 'resolution' steps.
  */
-void glSurfaceCircle(const float3& center, float radius, unsigned int resolution)
+static void defSurfaceCircle(const float3& center, float radius,
+                             unsigned int resolution)
 {
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < resolution; ++i) {
@@ -19,6 +20,17 @@ void glSurfaceCircle(const float3& center, float radius, unsigned int resolution
 		glVertexf3(pos);
 	}
 	glEnd();
+}
+
+SurfaceCircleFunc glSurfaceCircle = defSurfaceCircle;
+
+void setSurfaceCircleFunc(SurfaceCircleFunc func)
+{
+	if (func == NULL) {
+		glSurfaceCircle = defSurfaceCircle;
+	} else {
+		glSurfaceCircle = func;
+	} 
 }
 
 
@@ -45,3 +57,5 @@ void glBallisticCircle(const float3& center, float radius, float slope,
 	}
 	glEnd();
 }
+
+

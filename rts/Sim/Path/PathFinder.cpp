@@ -561,7 +561,7 @@ Draw a circle around the goal, indicating the goal area.
 */
 void CPathFinderDef::Draw() const {
 	glColor4f(0, 1, 1, 1);
-	glSurfaceCircle(goal, sqrt(sqGoalRadius));
+	glSurfaceCircle(goal, sqrt(sqGoalRadius), 20);
 }
 
 void CPathFinder::Draw(void)
