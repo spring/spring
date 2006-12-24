@@ -3515,28 +3515,18 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
 			const UnitDef* unitdef = unit->unitDef;
-			//draw weapon range
+			// draw weapon range
 			if (unit->maxRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
-				glBegin(GL_LINE_STRIP);
-				float h=unit->pos.y;
-				for (int a=0;a<=40;++a) {
-					float3 pos(cos(a*2*PI/40)*unit->maxRange,0,sin(a*2*PI/40)*unit->maxRange);
-					pos+=unit->pos;
-					float dh=ground->GetHeight(pos.x,pos.z)-h;
-					pos=float3(cos(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod),0,sin(a*2*PI/40)*(unit->maxRange-dh*unit->weapons.front()->heightMod));
-					pos+=unit->pos;
-					pos.y=ground->GetHeight(pos.x,pos.z)+8;
-					glVertexf3(pos);
-				}
-				glEnd();
+				glBallisticCircle(unit->pos, unit->maxRange,
+													unit->weapons.front()->heightMod, 40);
 			}
-			//draw decloak distance
+			// draw decloak distance
 			if (unitdef->decloakDistance > 0) {
 				glColor4fv(cmdColors.rangeDecloak);
 				glSurfaceCircle(unit->pos, unitdef->decloakDistance, 40);
 			}
-			//draw self destruct and damage distance
+			// draw self destruct and damage distance
 			if (unitdef->kamikazeDist > 0) {
 				glColor4fv(cmdColors.rangeKamikaze);
 				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
