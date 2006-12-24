@@ -3348,6 +3348,18 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 /******************************************************************************/
 /******************************************************************************/
 
+static inline void DrawSensorRange(int radius,
+                                   const float* color, const float3& pos)
+{
+	const int sensorScale = (SQUARE_SIZE * RADAR_SIZE);
+	const int realRadius = ((radius / sensorScale) * sensorScale);
+	if (realRadius > 0) {
+		glColor4fv(color);
+		glSurfaceCircle(pos, (float)realRadius, 40);
+	}
+}
+
+
 void CGuiHandler::DrawMapStuff(int onMinimap)
 {
 	if (!onMinimap) {
@@ -3544,32 +3556,14 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					glSurfaceCircle(unit->pos, radius, 40);
 				}
 			}
+			// draw sensor and jammer ranges
 			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-				// draw radar range
-				if (unitdef->radarRadius > 0) {
-					glColor4fv(cmdColors.rangeRadar);
-					glSurfaceCircle(unit->pos, unitdef->radarRadius, 40);
-				}
-				// draw sonar range
-				if (unitdef->sonarRadius > 0) {
-					glColor4fv(cmdColors.rangeSonar);
-					glSurfaceCircle(unit->pos, unitdef->sonarRadius, 40);
-				}
-				// draw seismic range
-				if (unitdef->seismicRadius > 0) {
-					glColor4fv(cmdColors.rangeSeismic);
-					glSurfaceCircle(unit->pos, unitdef->seismicRadius, 40);
-				}
-				// draw jammer range
-				if (unitdef->jammerRadius > 0) {
-					glColor4fv(cmdColors.rangeJammer);
-					glSurfaceCircle(unit->pos, unitdef->jammerRadius, 40);
-				}
-				// draw sonar jammer range
-				if (unitdef->sonarJamRadius > 0) {
-					glColor4fv(cmdColors.rangeSonarJammer);
-					glSurfaceCircle(unit->pos, unitdef->sonarJamRadius, 40);
-				}
+				const float3& p = unit->pos;
+				DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
+				DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
+				DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
+				DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
+				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
 			}
 		}
 	}
@@ -3638,32 +3632,14 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							glSurfaceCircle(buildpos, radius, 40);
 						}
 					}
+					// draw sensor and jammer ranges
 					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-						// draw radar range
-						if (unitdef->radarRadius > 0) {
-							glColor4fv(cmdColors.rangeRadar);
-							glSurfaceCircle(buildpos, unitdef->radarRadius, 40);
-						}
-						// draw sonar range
-						if (unitdef->sonarRadius > 0) {
-							glColor4fv(cmdColors.rangeSonar);
-							glSurfaceCircle(buildpos, unitdef->sonarRadius, 40);
-						}
-						// draw seismic range
-						if (unitdef->seismicRadius > 0) {
-							glColor4fv(cmdColors.rangeSeismic);
-							glSurfaceCircle(buildpos, unitdef->seismicRadius, 40);
-						}
-						// draw jammer range
-						if (unitdef->jammerRadius > 0) {
-							glColor4fv(cmdColors.rangeJammer);
-							glSurfaceCircle(buildpos, unitdef->jammerRadius, 40);
-						}
-						// draw sonar jammer range
-						if (unitdef->sonarJamRadius > 0) {
-							glColor4fv(cmdColors.rangeSonarJammer);
-							glSurfaceCircle(buildpos, unitdef->sonarJamRadius, 40);
-						}
+						const float3& p = buildpos;
+						DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
+						DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
+						DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
+						DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
+						DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
 					}
 					
 					std::vector<Command> cv;
@@ -3697,10 +3673,10 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		}
 	}
 
-	//draw range circles if attack orders are imminent
+	// draw range circles if attack orders are imminent
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
-	if((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-		 (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
+	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
 		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
 			CUnit* unit = *si;
 			if (unit == pointedAt) {
