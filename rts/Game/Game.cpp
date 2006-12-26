@@ -83,6 +83,7 @@
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
+//#include "Sim/Units/UnitDefTracker.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -201,7 +202,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
-	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false);
+	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false, false);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -257,6 +258,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	sensorHandler=SAFE_NEW CSensorHandler();
 	damageArrayHandler=SAFE_NEW CDamageArrayHandler();
 	unitDefHandler=SAFE_NEW CUnitDefHandler();
+//	udt.Init(); // initialize the UnitDefTracker
 
 	ENTER_UNSYNCED;
 	inMapDrawer=SAFE_NEW CInMapDraw();
@@ -265,7 +267,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-	  wordCompletion->AddWord(uit->first, false, true);
+	  wordCompletion->AddWord(uit->first, false, true, false);
 	}
 
 	geometricObjects=SAFE_NEW CGeometricObjects();
@@ -2214,7 +2216,7 @@ bool CGame::ClientReadNet()
 				gs->players[player]->playerName=(char*)(&inbuf[inbufpos+3]);
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
-				wordCompletion->AddWord(gs->players[player]->playerName, false, false); // required?
+				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
 			}
 			lastLength=inbuf[inbufpos+1];
 			break;}
