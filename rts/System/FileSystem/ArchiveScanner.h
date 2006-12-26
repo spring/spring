@@ -46,8 +46,12 @@ public:
 	vector<string> GetMaps();
 	vector<string> GetArchivesForMap(const string& mapName);
 	unsigned int GetArchiveChecksum(const string& name);
-	unsigned int GetChecksum(const string& root);
-	unsigned int GetChecksumForMap(const string& mapName);
+	unsigned int GetModChecksum(const string& root);
+	unsigned int GetMapChecksum(const string& mapName);
+	void CheckMod(const string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
+	void CheckMap(const string& mapName, unsigned checksum);
+	std::string ModNameToModArchive(const std::string& s);
+	std::string ModArchiveToModName(const std::string& s);
 protected:
 	struct ArchiveInfo {
 		string path;

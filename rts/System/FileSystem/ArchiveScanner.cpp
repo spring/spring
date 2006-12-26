@@ -527,7 +527,7 @@ vector<string> CArchiveScanner::GetArchives(const string& root)
 			return ret;
 	}
 
-	ret.push_back(aii->second.path + "/" + aii->second.origName);
+	ret.push_back(aii->second.path + aii->second.origName);
 
 	if (aii->second.modData.name == "")
 		return ret;
@@ -590,19 +590,8 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	return aii->second.checksum;
 }
 
-/*void CArchiveScanner::WriteData(FILE* out, const Data& data)
-{
-	fprintf(out, "\t\t\tName=%s;\n", data.name.c_str());
-	fprintf(out, "\t\t\tNumDependencies=%d;\n", data.dependencies.size());
-	int cur = 0;
-	for (vector<string>::const_iterator i = data.dependencies.begin(); i != data.dependencies.end(); ++i) {
-		fprintf(out, "\t\t\tDependency%d=%s;\n", cur, (*i).c_str());
-		cur++;
-	}
-}*/
-
 /** Get checksum of all required archives depending on selected mod. */
-unsigned int CArchiveScanner::GetChecksum(const string& root)
+unsigned int CArchiveScanner::GetModChecksum(const string& root)
 {
 	unsigned int checksum = 0;
 	vector<string> ars = GetArchives(root);
@@ -614,20 +603,68 @@ unsigned int CArchiveScanner::GetChecksum(const string& root)
 
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 		if (i->find("base") == std::string::npos)
-			checksum  ^= GetArchiveChecksum(*i);
+			checksum ^= GetArchiveChecksum(*i);
 	}
-
-	if (!ars.empty())
-		checksum = GetArchiveChecksum(ars.front());
 	return checksum;
 }
 
 /** Get checksum of all required archives depending on selected map. */
-unsigned int CArchiveScanner::GetChecksumForMap(const string& mapName)
+unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 {
 	unsigned int checksum = 0;
 	vector<string> ars = GetArchivesForMap(mapName);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 		checksum ^= GetArchiveChecksum(*i);
 	return checksum;
+}
+
+/** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
+void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
+{
+	if (GetModChecksum(root) != checksum) {
+		throw content_error(
+				"Your mod differs from the host's mod. This may be caused by a\n"
+				"missing archive, a corrupted download, or there may even be\n"
+				"2 different versions in circulation. Make sure you and the host\n"
+				"have installed the chosen mod and it's dependencies and\n"
+				"consider redownloading the mod.");
+	}
+}
+
+/** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
+void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
+{
+	if (GetMapChecksum(mapName) != checksum) {
+		throw content_error(
+				"Your map differs from the host's map. This may be caused by a\n"
+				"missing archive, a corrupted download, or there may even be\n"
+				"2 different versions in circulation. Make sure you and the host\n"
+				"have installed the chosen map and it's dependencies and\n"
+				"consider redownloading the map.");
+	}
+}
+
+/** Convert mod name to mod primary archive, e.g. ModNameToModArchive("XTA v8.1") returns "xtape.sd7". */
+std::string CArchiveScanner::ModNameToModArchive(const std::string& s)
+{
+	// Convert mod name to mod archive
+	std::vector<ModData> found = GetPrimaryMods();
+	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		if (it->name == s)
+			return it->dependencies.front();
+	}
+	return s;
+}
+
+/** The reverse of ModNameToModArchive() */
+std::string CArchiveScanner::ModArchiveToModName(const std::string& s)
+{
+	// Convert mod archive to mod name
+	std::vector<ModData> found = GetPrimaryMods();
+	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		if (it->dependencies.front() == s) {
+			return it->name;
+		}
+	}
+	return s;
 }

@@ -55,7 +55,7 @@ namespace creg {
 	class IMemberRegistrator
 	{
 	public:
-                virtual ~IMemberRegistrator();
+		virtual ~IMemberRegistrator();
 		virtual void RegisterMembers (Class *cls) = 0;
 	};
 

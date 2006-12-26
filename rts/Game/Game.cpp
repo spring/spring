@@ -2193,8 +2193,16 @@ bool CGame::ClientReadNet()
 			break;
 
 		case NETMSG_SCRIPT:
+			lastLength = inbuf[inbufpos+1];
+			break;
+
 		case NETMSG_MAPNAME:
+			archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[inbufpos+2]));
+			lastLength = inbuf[inbufpos+1];
+			break;
+
 		case NETMSG_MODNAME:
+			archiveScanner->CheckMod(modInfo->name, *(unsigned*)(&inbuf[inbufpos+2]));
 			lastLength = inbuf[inbufpos+1];
 			break;
 

@@ -39,9 +39,6 @@ public:
 	int inbufpos;								//where in the input buffer we are
 	int inbuflength;						//last byte in input buffer
 
-	unsigned GetMapChecksum() const;
-	unsigned GetModChecksum() const;
-
 private:
 	CInfoConsole* infoConsole;
 
