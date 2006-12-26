@@ -2868,7 +2868,7 @@ void CGame::SendNetChat(const std::string& message)
 		return;
 	}
 	string msg = message;
-	if (msg.find(".give") == 0) {
+	if ((msg.find(".give") == 0) && (msg.find('@') == string::npos)) {
 		const float3& pos = camera->pos;
 		const float3& dir = mouse->dir;
 		const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
