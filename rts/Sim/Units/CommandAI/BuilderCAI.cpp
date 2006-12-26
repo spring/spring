@@ -114,6 +114,21 @@ CBuilderCAI::~CBuilderCAI()
 	uh->RemoveBuilderCAI(this);
 }
 
+
+float CBuilderCAI::GetUnitRadius(const UnitDef* ud, int cmdId)
+{
+	float radius;
+	if (cachedRadiusId == cmdId) {
+		radius = cachedRadius;
+	} else {
+		radius = modelParser->Load3DO(ud->model.modelpath, 1.0f, owner->team)->radius;
+		cachedRadius = radius;
+		cachedRadiusId = cmdId;
+	}
+	return radius;
+}
+
+
 void CBuilderCAI::SlowUpdate()
 {
 	if(commandQue.empty()){
@@ -127,18 +142,11 @@ void CBuilderCAI::SlowUpdate()
 
 	map<int,string>::iterator boi;
 	if((boi=buildOptions.find(c.id))!=buildOptions.end()){
-		float radius;
-		if(cachedRadiusId==c.id){
-			radius=cachedRadius;
-		} else {
-			radius=modelParser->Load3DO(
-				unitDefHandler->GetUnitByName(boi->second)->model.modelpath,1,owner->team)->radius;
-			cachedRadiusId=c.id;
-			cachedRadius=radius;
-		}
-		if(inCommand){
-			if(building){
-				if(build.pos.distance2D(fac->pos)>fac->buildDistance+radius-8){
+		const UnitDef* ud = unitDefHandler->GetUnitByName(boi->second);
+		const float radius = GetUnitRadius(ud, c.id);
+		if (inCommand) {
+			if (building) {
+				if (build.pos.distance2D(fac->pos) > fac->buildDistance+radius-8.0f) {
 					owner->moveType->StartMoving(build.pos, fac->buildDistance*0.5f+radius);
 				} else {
 					StopMove();
@@ -151,7 +159,9 @@ void CBuilderCAI::SlowUpdate()
 				}
 			} else {
 				build.Parse(c);
-				if(build.pos.distance2D(fac->pos)<fac->buildDistance*0.6f+radius){
+				const float dist = build.pos.distance2D(fac->pos);
+				if ((dist < (fac->buildDistance * 0.6f + radius)) ||
+				    (!owner->unitDef->canmove && (dist <= (fac->buildDistance+radius-8.0f)))) {
 					StopMove();
 					if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
 						ENTER_MIXED;
@@ -843,6 +853,14 @@ void CBuilderCAI::GiveCommand(const Command& c)
 		if(c.params.size()==4) bi.buildFacing=int(c.params[3]);
 		bi.def = unitDefHandler->GetUnitByName(boi->second);
 		bi.pos=helper->Pos2BuildPos(bi);
+		if (!owner->unitDef->canmove) {
+			const CBuilder* builder = (CBuilder*)owner;
+			const float dist = (builder->pos - bi.pos).Length2D();
+			const float radius = GetUnitRadius(bi.def, c.id);
+			if (dist > (builder->buildDistance + radius - 8.0f)) {
+				return;
+			}
+		}
 		CFeature* feature;
 		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam)) {
 			if (!feature && owner->unitDef->canAssist) {
@@ -850,7 +868,8 @@ void CBuilderCAI::GiveCommand(const Command& c)
 				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
 				CSolidObject* s;
 				CUnit* u;
-				if((s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)) && (u=dynamic_cast<CUnit*>(s)) && u->beingBuilt && u->buildProgress == 0.0f) {
+				if((s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
+				   (u=dynamic_cast<CUnit*>(s)) && u->beingBuilt && u->buildProgress == 0.0f) {
 					Command c2;
 					c2.id = CMD_REPAIR;
 					c2.params.push_back(u->id);

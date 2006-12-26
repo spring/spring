@@ -33,13 +33,14 @@ public:
 	virtual void ExecuteReclaim(Command &c);
 	virtual void ExecuteResurrect(Command &c);
 	virtual void ExecuteRestore(Command &c);
-
+	
 	map<int,string> buildOptions;
 	bool building;
 	BuildInfo build;
 
-	float cachedRadius;
 	int cachedRadiusId;
+	float cachedRadius;
+	float GetUnitRadius(const UnitDef* unitdef, int cmdId);
 
 	int buildRetries;
 
