@@ -8,7 +8,7 @@
 #include "myMath.h"
 #include "LogOutput.h"
 #include "Sim/Units/UnitHandler.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/CobFile.h"

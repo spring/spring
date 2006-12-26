@@ -8,7 +8,7 @@
 #include "StdAfx.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/Textures/TAPalette.h"

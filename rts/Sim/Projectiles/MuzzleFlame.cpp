@@ -2,7 +2,7 @@
 #include "MuzzleFlame.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 

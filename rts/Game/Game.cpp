@@ -32,7 +32,7 @@
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerRoster.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Team.h"
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"

@@ -2,7 +2,7 @@
 #include "EmgProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

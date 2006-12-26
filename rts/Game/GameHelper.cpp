@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Sim/Misc/QuadField.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sound.h"
 #include "Map/MapDamage.h"

@@ -8,7 +8,7 @@
 #include "Sim/Projectiles/EmgProjectile.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
