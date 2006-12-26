@@ -337,13 +337,7 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_MAPNAME:
 			SelectMap((char*)(&inbuf[inbufpos+6]));
-			if (GetMapChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
-				char buf[256];
-				sprintf(buf, "Local map archive(s) are not binary equal to host map archive(s).\n"
-						"Make sure you installed all map dependencies & consider redownloading the map."
-						"\n\nLocal checksum = %u\nRemote checksum = %u", GetMapChecksum(), *(unsigned*)(&inbuf[inbufpos+2]));
-				throw content_error(buf);
-			}
+			archiveScanner->CheckMap(mapName, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
 			else if (modName.empty()) state = WAIT_ON_MOD;
 			else state = ALL_READY;
@@ -352,13 +346,7 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_MODNAME:
 			SelectMod((char*)(&inbuf[inbufpos+6]));
-			if (GetModChecksum() != *(unsigned*)(&inbuf[inbufpos+2])) {
-				char buf[256];
-				sprintf(buf, "Local mod archive(s) are not binary equal to host mod archive(s).\n"
-						"Make sure you installed all mod dependencies & consider redownloading the mod."
-						"\n\nLocal checksum = %u\nRemote checksum = %u", GetModChecksum(), *(unsigned*)(&inbuf[inbufpos+2]));
-				throw content_error(buf);
-			}
+			archiveScanner->CheckMod(modName, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
 			else if (mapName.empty()) state = WAIT_ON_MAP;
 			else state = ALL_READY;
@@ -418,7 +406,7 @@ void CPreGame::SelectScript(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Using script " << s.c_str() << "\n";
-	if (pregame->server && !gameSetup)
+	if (pregame->server)
 		serverNet->SetScript(s);
 }
 
@@ -439,8 +427,8 @@ void CPreGame::SelectMap(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
-	if (pregame->server && !gameSetup)
-		serverNet->SetMap(pregame->GetMapChecksum(), pregame->mapName);
+	if (pregame->server)
+		serverNet->SetMap(archiveScanner->GetMapChecksum(pregame->mapName), pregame->mapName);
 }
 
 /** Create a CglList for selecting the map. */
@@ -473,24 +461,16 @@ void CPreGame::ShowMapList()
 /** Called by the mod-selecting CglList. */
 void CPreGame::SelectMod(std::string s)
 {
-	std::string origName = s;
 	if (s == "Random mod") {
-		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
+		pregame->modName = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
+	} else {
+		pregame->modName = archiveScanner->ModNameToModArchive(s);
 	}
-	// Convert mod name to mod archive
-	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
-		if (it->name == s) {
-			s = it->dependencies.front();
-			break;
-		}
-	}
-	pregame->modName = s;
 	delete pregame->showList;
 	pregame->showList = 0;
-	logOutput << "Mod: \"" << origName.c_str() << "\" from " << s.c_str() << "\n";
-	if (pregame->server && !gameSetup)
-		serverNet->SetMod(pregame->GetModChecksum(), origName);
+	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modName.c_str() << "\n";
+	if (pregame->server)
+		serverNet->SetMod(archiveScanner->GetModChecksum(pregame->modName), s);
 }
 
 /** Create a CglList for selecting the mod. */
@@ -514,19 +494,4 @@ void CPreGame::ShowModList()
 		list->AddItem(mit->first.c_str(), mit->second.c_str());
 	}
 	showList = list;
-}
-
-/** Determine if the map is inside an archive, if so get checksum of all required archives. */
-unsigned CPreGame::GetMapChecksum() const
-{
-	CFileHandler f("maps/" + mapName);
-	if (!f.FileExists())
-		return archiveScanner->GetChecksumForMap(mapName);
-	return 0;
-}
-
-/** Get checksum of all required archives depending on selected mod(s). */
-unsigned CPreGame::GetModChecksum() const
-{
-	return archiveScanner->GetChecksum(modName);
 }

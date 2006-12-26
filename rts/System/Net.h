@@ -52,7 +52,7 @@ enum NETMSG {
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
-	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;
+	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
 	NETMSG_USER_SPEED       = 19, // float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
@@ -75,7 +75,7 @@ enum NETMSG {
 	NETMSG_EXECHECKSUM      = 37, // uint checksum = 0;
 	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
 	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left*/;
-	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;
+	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
 #ifdef SYNCDEBUG
 	NETMSG_SD_CHKREQUEST    = 41,
 	NETMSG_SD_CHKRESPONSE   = 42,

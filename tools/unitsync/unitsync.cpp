@@ -413,10 +413,7 @@ DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetMapChecksum.");
 	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapChecksum.");
-	CFileHandler f("maps/" + mapNames[index]);
-	if (!f.FileExists())
-		return archiveScanner->GetChecksumForMap(mapNames[index]);
-	return 0;
+	return archiveScanner->GetMapChecksum(mapNames[index]);
 }
 
 #define RM	0x0000F800
@@ -693,7 +690,7 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModChecksum.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModChecksum.");
-	return archiveScanner->GetChecksum(GetPrimaryModArchive(index));
+	return archiveScanner->GetModChecksum(GetPrimaryModArchive(index));
 }
 
 //////////////////////////
