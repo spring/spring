@@ -5,7 +5,7 @@
 
 #include "HeatCloudProjectile.h"
 #include "Game/Camera.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"

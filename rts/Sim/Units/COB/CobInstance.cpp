@@ -16,7 +16,7 @@
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/MuzzleFlame.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/BubbleProjectile.h"
 #include "Sim/Projectiles/WakeProjectile.h"

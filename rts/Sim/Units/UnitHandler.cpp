@@ -25,7 +25,7 @@
 #include "Sim/Units/Unit.h"
 #include "LoadSaveInterface.h"
 #include "UnitLoader.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Game/GameSetup.h"
 #include "Game/command.h"
 #include "Sim/Misc/AirBaseHandler.h"

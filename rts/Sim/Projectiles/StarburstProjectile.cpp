@@ -11,7 +11,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Matrix44f.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 

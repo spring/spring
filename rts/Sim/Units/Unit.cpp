@@ -50,7 +50,7 @@
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/Sound.h"
-#include "System/SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 #include "Game/GameSetup.h"

@@ -12,7 +12,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "SmokeTrailProjectile.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"

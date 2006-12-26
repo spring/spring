@@ -21,7 +21,7 @@
 #include "Matrix44f.h"
 #include "myMath.h"
 #include "Sim/Units/COB/CobFile.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Map/ReadMap.h"
 #include "Sound.h"
 #include "Sim/Misc/QuadField.h"

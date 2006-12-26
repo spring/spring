@@ -8,7 +8,7 @@
 #include "Sim/Units/Unit.h"
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Sound.h"
 #include "Map/Ground.h"
 #include "LogOutput.h"

@@ -14,7 +14,7 @@
 #include "Platform/Win/win32.h"
 #endif
  
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Platform/ConfigHandler.h"
 #include "InputReceiver.h"
 

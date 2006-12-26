@@ -9,7 +9,7 @@
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "LogOutput.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Sound.h"
 #include "Map/Ground.h"
 #include "Game/GameHelper.h"

@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include <stdio.h>
 #include "LogOutput.h"
 #include "mmgr.h"

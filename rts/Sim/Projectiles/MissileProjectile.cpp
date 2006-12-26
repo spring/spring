@@ -11,7 +11,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Matrix44f.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "LogOutput.h"
 #include "mmgr.h"

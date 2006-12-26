@@ -12,7 +12,7 @@
 #include "myMath.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "SyncTracer.h"
+#include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Misc/InterceptHandler.h"
