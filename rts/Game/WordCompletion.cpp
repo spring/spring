@@ -21,53 +21,76 @@ CWordCompletion::~CWordCompletion()
 void CWordCompletion::Reset()
 {
 	words.clear();
-	WordProperties wp(true, false);
+	WordProperties sl(true, false, false);
+
 	// local commands
-	words["/clock"] = wp;
-	words["/cmdcolors"] = wp;
-	words["/ctrlpanel"] = wp;
-	words["/echo "] = wp;
-	words["/info"] = wp;
-	words["/gameinfo"] = wp;
-	words["/luaui "] = wp;
-	words["/say "] = wp;
-	words["/shadows "] = wp;
-	words["/water "] = wp;
-	words["/bind "] = wp;
-	words["/unbind "] = wp;
-	words["/unbindall"] = wp;
-	words["/unbindaction "] = wp;
-	words["/unbindkeyset "] = wp;
-	words["/keyload"] = wp;
-	words["/keyreload"] = wp;
-	words["/keysave"] = wp;
-	words["/keysyms"] = wp;
-	words["/keycodes"] = wp;
-	words["/keyprint"] = wp;
-	words["/keydebug"] = wp;
+	words["/clock"] = sl;
+	words["/cmdcolors"] = sl;
+	words["/ctrlpanel"] = sl;
+	words["/echo "] = sl;
+	words["/font "] = sl;
+	words["/gameinfo"] = sl;
+	words["/info"] = sl;
+	words["/luaui "] = sl;
+	words["/maxparticles "] = sl;
+	words["/minimap "] = sl;
+	words["/say "] = sl;
+	words["/shadows "] = sl;
+	words["/specfullview "] = sl;
+	words["/water "] = sl;
+	words["/bind "] = sl;
+	words["/unbind "] = sl;
+	words["/unbindall"] = sl;
+	words["/unbindaction "] = sl;
+	words["/unbindkeyset "] = sl;
+	words["/keyload"] = sl;
+	words["/keyreload"] = sl;
+	words["/keysave"] = sl;
+	words["/keysyms"] = sl;
+	words["/keycodes"] = sl;
+	words["/keyprint"] = sl;
+	words["/keydebug"] = sl;
+	words["/fakemeta "] = sl;
+
+	// minimap sub-commands
+	WordProperties mm(false, false, true);
+	words["fullproxy "] = mm;
+	words["drawcommands "] = mm;
+	words["icons "] = mm;
+	words["unitexp "] = mm;
+	words["unitsize "] = mm;
+	words["simplecolors "] = mm;
+	words["geometry "] = mm;
+	words["minimize "] = mm;
+	words["maximize "] = mm;
+	words["maxspect "] = mm;
+	
 	// remote commands
-	words[".atm"] = wp;
-	words[".cheat"] = wp;
-	words[".cmd "] = wp;
-	words[".give "] = wp;
-	words[".kick "] = wp;
-	words[".nocost"] = wp;
-	words[".nopause"] = wp;
-	words[".nospectatorchat"] = wp;
-	words[".setmaxspeed "] = wp;
-	words[".setminspeed "] = wp;
-	words[".spectator"] = wp;
-	words[".take"] = wp;
-	words[".team "] = wp;
-	// words[".crash"] = wp; // don't make it too easy
+	words[".atm"] = sl;
+	words[".cheat"] = sl;
+	words[".cmd "] = sl;
+	words[".give "] = sl;
+	words[".kick "] = sl;
+	words[".kickbynum "] = sl;
+	words[".nocost"] = sl;
+	words[".nopause"] = sl;
+	words[".nospectatorchat"] = sl;
+	words[".setmaxspeed "] = sl;
+	words[".setminspeed "] = sl;
+	words[".spectator"] = sl;
+	words[".take"] = sl;
+	words[".team "] = sl;
+	// words[".crash"] = sl; // don't make it too easy
+
 	return;
 }
 
 
-void CWordCompletion::AddWord(const string& word, bool startOfLine, bool unitName)
+void CWordCompletion::AddWord(const string& word,
+                              bool startOfLine, bool unitName, bool minimap)
 {
 	if (!word.empty()) {
-		words[word] = WordProperties(startOfLine, unitName);
+		words[word] = WordProperties(startOfLine, unitName, minimap);
 	}
 	return;
 }
@@ -78,6 +101,7 @@ vector<string> CWordCompletion::Complete(string& msg) const
 	vector<string> partials;
 
 	const bool unitName = (msg.find(".give ") == 0);
+	const bool minimap = (msg.find("/minimap ") == 0);
 	  
 	// strip "a:" and "s:" prefixes
 	string prefix, rawmsg;
@@ -109,7 +133,8 @@ vector<string> CWordCompletion::Complete(string& msg) const
 		if (cmp < 0) continue;
 		if (cmp > 0) break;
 		if ((!it->second.startOfLine || startOfLine) &&
-			(!it->second.unitName || unitName)) {
+		    (!it->second.unitName || unitName) &&
+		    (!it->second.minimap || minimap)) {
 			partials.push_back(it->first);
 		}
 	}

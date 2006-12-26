@@ -18,17 +18,21 @@ class CWordCompletion
 		CWordCompletion();
 		~CWordCompletion();
 		void Reset();
-		void AddWord(const string& word, bool startOfLine, bool unitName);
+		void AddWord(const string& word,
+		             bool startOfLine, bool unitName, bool minimap);
 		vector<string> Complete(string& msg) const; // returns partial matches
 
 	protected:
 		class WordProperties {
 			public:
-				WordProperties() : startOfLine(false), unitName(false) {}
-				WordProperties(bool sol, bool un) : startOfLine(sol), unitName(un) {}
+				WordProperties()
+				: startOfLine(false), unitName(false), minimap(false) {}
+				WordProperties(bool sol, bool un, bool mm)
+				: startOfLine(sol), unitName(un), minimap(mm) {}
 			public:
 				bool startOfLine;
 				bool unitName;
+				bool minimap;
 		};
 		map<string, WordProperties> words;
 };
