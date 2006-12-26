@@ -328,7 +328,8 @@ void CPreGame::UpdateClientNet()
 			break;
 
 		case NETMSG_SCRIPT:
-			CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
+			if (!gameSetup)
+				CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
 			if (mapName.empty()) state = WAIT_ON_MAP;
 			else if (modName.empty()) state = WAIT_ON_MOD;
 			else state = ALL_READY;
@@ -336,7 +337,8 @@ void CPreGame::UpdateClientNet()
 			break;
 
 		case NETMSG_MAPNAME:
-			SelectMap((char*)(&inbuf[inbufpos+6]));
+			if (!gameSetup)
+				SelectMap((char*)(&inbuf[inbufpos+6]));
 			archiveScanner->CheckMap(mapName, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
 			else if (modName.empty()) state = WAIT_ON_MOD;
@@ -345,7 +347,8 @@ void CPreGame::UpdateClientNet()
 			break;
 
 		case NETMSG_MODNAME:
-			SelectMod((char*)(&inbuf[inbufpos+6]));
+			if (!gameSetup)
+				SelectMod((char*)(&inbuf[inbufpos+6]));
 			archiveScanner->CheckMod(modName, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
 			else if (mapName.empty()) state = WAIT_ON_MAP;
