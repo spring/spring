@@ -244,7 +244,7 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 {
 	CTransportUnit* transport=(CTransportUnit*)owner;
 
-	if(unit->mass>=100000 || unit->beingBuilt)
+	if(unit->mass>=100000 || unit->beingBuilt || unit->isCloaked)
 		return false;
 	if(unit->unitDef->canhover || unit->unitDef->floater || unit->unitDef->canfly)
 		return false;
