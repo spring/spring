@@ -1,6 +1,10 @@
   ------ CHANGELOG ------
 
-  *** 0.31 (??x??x??) ***
+  *** 0.32 (??x??x??) ***
+  * fixed an issue with hosts being unable to kick players from their battles in certain situations
+  * fixed drawing "original" clients from a battle replay when hosting one (colors were drawn incorrectly)
+
+  *** 0.31 (27x11x06) ***
   * fixed crash bug when re-joining battle for which you don't have the right map
   * workaround for problem with windows disappearing from the screen on program crash and some other occasions
   * added "bot mode" indicator
