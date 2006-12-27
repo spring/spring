@@ -5,6 +5,7 @@
 #include "Game/command.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Game/Camera.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Platform/ConfigHandler.h"
@@ -34,8 +35,22 @@ CAirScript::~CAirScript()
 {
 }
 
+static const char* FindUnit(const char** name)
+{
+	for (int i = 0; name[i]; ++i) {
+		if (unitDefHandler->GetUnitByName(name[i]))
+			return name[i];
+	}
+	return name[0];
+}
+
 void CAirScript::Update()
 {
+	static const char* armhawk_name[] = { "arm_hawk", "ARMHAWK", NULL };
+	static const char* armfig_name [] = { "arm_freedom_fighter", "ARMFIG", NULL };
+	static const char* corvamp_name[] = { "core_vamp", "CORVAMP", NULL };
+	static const char* corape_name [] = { "core_rapier", "CORAPE", NULL };
+
 	switch(gs->frameNum){
 	case 0:
 		doRoll=!configHandler.GetInt("ReflectiveWater",1);
@@ -47,9 +62,9 @@ void CAirScript::Update()
 		for(int a=0;a<10;++a){
 			CUnit* u;
 			if(gs->randFloat()<0.5f)
-				u=unitLoader.LoadUnit("ARMHAWK",float3(1650,300,2100+a*150),0,false);
+				u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1650,300,2100+a*150),0,false);
 			else
-				u=unitLoader.LoadUnit("ARMFIG",float3(1650,300,2100+a*150),0,false);
+				u=unitLoader.LoadUnit(FindUnit(armfig_name),float3(1650,300,2100+a*150),0,false);
 			u->pos.y=350;
 			u->experience=0.3f;
 			((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
@@ -68,10 +83,10 @@ void CAirScript::Update()
 			u->commandAI->GiveCommand(c);
 
 			if(gs->randFloat()<0.5f){
-				u=unitLoader.LoadUnit("CORVAMP",float3(3880,300,2100+a*150),1,false);
+				u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(3880,300,2100+a*150),1,false);
 				((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 			}else{
-				u=unitLoader.LoadUnit("CORAPE",float3(3880,300,2100+a*150),1,false);
+				u=unitLoader.LoadUnit(FindUnit(corape_name),float3(3880,300,2100+a*150),1,false);
 			}
 			u->pos.y=350;
 			u->experience=0.3f;
@@ -88,9 +103,9 @@ void CAirScript::Update()
 			if(uh->units[*pi]==0){
 				CUnit* u;
 				if(!(num&1))
-					u=unitLoader.LoadUnit("ARMHAWK",float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false);
+					u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false);
 				else
-					u=unitLoader.LoadUnit("CORVAMP",float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false);
+					u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false);
 				u->pos.y=ground->GetHeight(1000+(num&1)*5000,2100+num*120)+350;
 				u->experience=0.3f;
 				u->speed.x=2.8f;
@@ -108,11 +123,10 @@ void CAirScript::Update()
 				c2.id=CMD_MOVE_STATE;
 				c2.params.push_back(1);
 				u->commandAI->GiveCommand(c2);
-				u->commandAI->GiveCommand(c);				
-			} else {
+				u->commandAI->GiveCommand(c);
 			}
 			num++;
-		}		
+		}
 		break;
 	}
 }
