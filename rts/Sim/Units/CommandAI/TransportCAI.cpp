@@ -244,7 +244,10 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 {
 	CTransportUnit* transport=(CTransportUnit*)owner;
 
-	if(unit->mass>=100000 || unit->beingBuilt || unit->isCloaked)
+	if(unit->mass>=100000 || unit->beingBuilt)
+		return false;
+	// don't transport cloaked enemies
+	if (unit->isCloaked && !gs->AlliedTeams(unit->team, owner->team))
 		return false;
 	if(unit->unitDef->canhover || unit->unitDef->floater || unit->unitDef->canfly)
 		return false;
@@ -311,7 +314,8 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		CUnit* unit=(*ui);
 		float dist=unit->pos.distance2D(owner->pos);
-		if(CanTransport(unit) && dist<bestDist && !unit->toBeTransported){
+		if(CanTransport(unit) && dist<bestDist && !unit->toBeTransported &&
+				 (unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))){
 			bestDist=dist;
 			best=unit;
 		}
