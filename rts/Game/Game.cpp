@@ -83,7 +83,6 @@
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
-//#include "Sim/Units/UnitDefTracker.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -258,7 +257,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	sensorHandler=SAFE_NEW CSensorHandler();
 	damageArrayHandler=SAFE_NEW CDamageArrayHandler();
 	unitDefHandler=SAFE_NEW CUnitDefHandler();
-//	udt.Init(); // initialize the UnitDefTracker
 
 	ENTER_UNSYNCED;
 	inMapDrawer=SAFE_NEW CInMapDraw();

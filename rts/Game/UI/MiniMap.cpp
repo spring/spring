@@ -12,6 +12,7 @@
 #include <SDL_mouse.h>
 #include <SDL_types.h>
 #include "CommandColors.h"
+#include "CursorIcons.h"
 #include "GuiHandler.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
@@ -924,6 +925,7 @@ void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
 void CMiniMap::Draw()
 {
 	setSurfaceCircleFunc(DrawSurfaceCircle);
+	cursorIcons.Enable(false);
 	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1084,12 +1086,12 @@ void CMiniMap::Draw()
 			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
 		}
 		// change if someone someday create a non stockpiled interceptor
-		if(unit->stockpileWeapon && unit->stockpileWeapon->weaponDef->interceptor) {
-			const CWeapon* w = unit->stockpileWeapon;
+		const CWeapon* w = unit->stockpileWeapon;
+		if((w != NULL) && w->weaponDef->interceptor) {
 			if (w->numStockpiled) {
-				glColor4f(1.0f,1.0f,1.0f,1.0f);
+				glColor3fv(cmdColors.rangeInterceptorOn);
 			} else {
-				glColor4f(0.0f,0.0f,0.0f,0.6f);
+				glColor3fv(cmdColors.rangeInterceptorOff);
 			}
 			DrawCircle(unit->pos, w->weaponDef->coverageRange);
 		}
@@ -1137,6 +1139,7 @@ void CMiniMap::Draw()
 	
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	
+	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
 }
 

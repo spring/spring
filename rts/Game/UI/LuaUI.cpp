@@ -120,6 +120,7 @@ static int GetUnitDefID(lua_State* L);
 static int GetUnitTeam(lua_State* L);
 static int GetUnitAllyTeam(lua_State* L);
 static int GetUnitHealth(lua_State* L);
+static int GetUnitResources(lua_State* L);
 static int GetUnitStates(lua_State* L);
 static int GetUnitStockpile(lua_State* L);
 static int GetUnitRadius(lua_State* L);
@@ -369,6 +370,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
+	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitStockpile);
 	REGISTER_LUA_CFUNC(GetUnitRadius);
@@ -1281,6 +1283,24 @@ bool CLuaUI::AddConsoleLine(const string& line, int priority)
 		return false;
 	}
 
+	return true;
+}
+
+
+bool CLuaUI::HasLayoutButtons()
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "LayoutButtons");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
 	return true;
 }
 
@@ -2777,6 +2797,20 @@ static int GetUnitHealth(lua_State* L)
 	lua_pushnumber(L, unit->captureProgress);
 	lua_pushnumber(L, unit->buildProgress);
 	return 5;
+}
+
+
+static int GetUnitResources(lua_State* L)
+{
+	CUnit* unit = AlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->metalMake);
+	lua_pushnumber(L, unit->metalUse);
+	lua_pushnumber(L, unit->energyMake);
+	lua_pushnumber(L, unit->energyUse);
+	return 4;
 }
 
 

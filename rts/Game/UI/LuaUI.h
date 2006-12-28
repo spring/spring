@@ -42,6 +42,8 @@ class CLuaUI {
 			map<int, string> params;
 		};
 
+		bool HasLayoutButtons();
+		
 		bool LayoutButtons(int& xButtons, int& yButtons,
 		                   const vector<CommandDescription>& cmds,
 		                   vector<int>& removeCmds,

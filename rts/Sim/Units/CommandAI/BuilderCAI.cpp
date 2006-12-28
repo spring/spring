@@ -350,7 +350,9 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 				}
 				return;
 			}
-			if (b->curBuild && ((b->curBuild->beingBuilt && owner->unitDef->canAssist) || (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			if (b->curBuild &&
+			    (( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+			     (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
@@ -362,9 +364,9 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			}
 		}
 		if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
-			if (f->curBuild
-					&& ((f->curBuild->beingBuilt && owner->unitDef->canAssist)
-					|| (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			if (f->curBuild &&
+					(( f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+					 (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
