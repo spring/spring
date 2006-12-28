@@ -18,9 +18,8 @@ echo Creating normal installer
 echo Creating GPL installer
 "C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DNO_TOTALA taspring.nsi 
 
-
-rem echo Creating update installer
-rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_UPDATE taspring.nsi  
+echo Creating update installer
+"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DSP_UPDATE taspring.nsi  
 
 rem echo Creating patch installer
 rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_PATCH taspring.nsi
