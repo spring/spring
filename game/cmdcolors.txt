@@ -76,15 +76,18 @@ selectedLineWidth  1.49
 selectedBlendSrc   src_alpha
 selectedBlendDst   one_minus_src_alpha
 
-rangeAttack        1.0  0.3  0.3  0.7
-rangeBuild         0.3  1.0  0.3  0.7
-rangeRadar         0.3  1.0  0.3  0.7
-rangeSonar         0.3  0.3  1.0  0.7
-rangeSeismic       0.8  0.1  0.8  0.7
-rangeJammer        1.0  0.3  0.3  0.7
-rangeSonarJammer   1.0  0.3  0.3  0.7
-rangeDecloak       0.3  0.3  1.0  0.7
-rangeExtract       1.0  0.3  0.3  0.7
-rangeKamikaze      0.8  0.8  0.1  0.7
-rangeSelfDestruct  0.8  0.1  0.1  0.7
+rangeAttack          1.0  0.3  0.3  0.7
+rangeBuild           0.3  1.0  0.3  0.7
+rangeRadar           0.3  1.0  0.3  0.7
+rangeSonar           0.3  0.3  1.0  0.7
+rangeSeismic         0.8  0.1  0.8  0.7
+rangeJammer          1.0  0.3  0.3  0.7
+rangeSonarJammer     1.0  0.3  0.3  0.7
+rangeShield          0.8  0.8  0.3  0.7
+rangeDecloak         0.3  0.3  1.0  0.7
+rangeExtract         1.0  0.3  0.3  0.7
+rangeKamikaze        0.8  0.8  0.1  0.7
+rangeSelfDestruct    0.8  0.1  0.1  0.7
+rangeInterceptorOn   1.0  1.0  1.0  0.7
+rangeInterceptorOff  0.0  0.0  0.0  0.7
 

@@ -74,10 +74,13 @@ class CCommandColors {
 		const float* rangeSeismic;
 		const float* rangeJammer;
 		const float* rangeSonarJammer;
+		const float* rangeShield;
 		const float* rangeDecloak;
 		const float* rangeExtract;
 		const float* rangeKamikaze;
 		const float* rangeSelfDestruct;
+		const float* rangeInterceptorOn;
+		const float* rangeInterceptorOff;
 
 	private:
 
@@ -109,10 +112,13 @@ class CCommandColors {
 			rangeSeismic_index,
 			rangeJammer_index,
 			rangeSonarJammer_index,
+			rangeShield_index,
 			rangeDecloak_index,
 			rangeExtract_index,
 			rangeKamikaze_index,
 			rangeSelfDestruct_index,
+			rangeInterceptorOn_index,
+			rangeInterceptorOff_index,
 			unitBox_index,
 			mouseBox_index,
 			ColorCount

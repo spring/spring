@@ -13,6 +13,8 @@ class CCursorIcons
 	public:
 		CCursorIcons();
 		~CCursorIcons();
+		
+		void Enable(bool);
 
 		inline void AddIcon(int cmd, const float3& pos);
 		inline void AddIconText(const string& text, const float3& pos);
@@ -27,6 +29,8 @@ class CCursorIcons
 		CMouseCursor* GetCursor(int cmd);
 
 	protected:
+	
+		bool enabled;
 
 		struct Icon {
 			Icon(int c, const float3& p)
@@ -104,23 +108,29 @@ class CCursorIcons
 
 inline void CCursorIcons::AddIcon(int cmd, const float3& pos)
 {
-	Icon icon(cmd, pos);
-	icons.insert(icon);
+	if (enabled) {
+		Icon icon(cmd, pos);
+		icons.insert(icon);
+	}
 }
 
 
 inline void CCursorIcons::AddIconText(const string& text, const float3& pos)
 {
-	IconText iconText(text, pos);
-	texts.insert(iconText);
+	if (enabled) {
+		IconText iconText(text, pos);
+		texts.insert(iconText);
+	}
 }
 
 
 inline void CCursorIcons::AddBuildIcon(int cmd, const float3& pos,
                                        int team, int facing)
 {
-	BuildIcon icon(cmd, pos, team, facing);
-	buildIcons.insert(icon);
+	if (enabled) {
+		BuildIcon icon(cmd, pos, team, facing);
+		buildIcons.insert(icon);
+	}
 }
 
 

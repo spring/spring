@@ -543,7 +543,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			luaUI = CLuaUI::GetHandler(luaUiFile);
 		}
 	}
-	if (luaUI != NULL) {
+	if ((luaUI != NULL) && luaUI->HasLayoutButtons()) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {
 				RevertToCmdDesc(cmdDesc, samePage);
@@ -3556,6 +3556,21 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					glSurfaceCircle(unit->pos, radius, 40);
 				}
 			}
+			// draw shield range for immobile units
+			if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+				glColor4fv(cmdColors.rangeShield);
+				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
+			}
+			// draw interceptor range
+			const CWeapon* w = unit->stockpileWeapon;
+			if ((w != NULL) && w->weaponDef->interceptor) {
+				if (w->numStockpiled) {
+					glColor4fv(cmdColors.rangeInterceptorOn);
+				} else {
+					glColor4fv(cmdColors.rangeInterceptorOff);
+				}
+				glSurfaceCircle(unit->pos, w->weaponDef->coverageRange, 40);
+			}
 			// draw sensor and jammer ranges
 			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 				const float3& p = unit->pos;
@@ -3612,7 +3627,6 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi) {
 					const float3& buildpos = bpi->pos;
-				
 					// draw weapon range
 					if (unitdef->weapons.size() > 0) {
 						glColor4fv(cmdColors.rangeAttack);
@@ -3624,13 +3638,24 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						glColor4fv(cmdColors.rangeExtract);
 						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
 					}
-					// draw build range
+					// draw build range for immobile builders
 					if (unitdef->builder && !unitdef->canmove) {
 						const float radius = unitdef->buildDistance;
 						if (radius > 0.0f) {
 							glColor4fv(cmdColors.rangeBuild);
 							glSurfaceCircle(buildpos, radius, 40);
 						}
+					}
+					// draw shield range for immobile units
+					if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+						glColor4fv(cmdColors.rangeShield);
+						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
+					}
+					// draw interceptor range
+					const WeaponDef* wd = unitdef->stockpileWeaponDef;
+					if ((wd != NULL) && wd->interceptor) {
+						glColor4fv(cmdColors.rangeInterceptorOn);
+						glSurfaceCircle(buildpos, wd->coverageRange, 40);
 					}
 					// draw sensor and jammer ranges
 					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
@@ -3899,18 +3924,28 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
 
-	pos1+=pos1-pos2;
+	pos1 += (pos1 - pos2);
+	const int maxSteps = 256;
+	const float frontLen = (pos1 - pos2).Length2D();
+	const int steps = min(maxSteps, max(1, int(frontLen / 16.0f)));
+	
 	glDisable(GL_FOG);
-	glBegin(GL_QUADS);
-		glVertexf3(pos1-float3(0,-100,0));
-		glVertexf3(pos1+float3(0,-100,0));
-		glVertexf3(pos2+float3(0,-100,0));
-		glVertexf3(pos2-float3(0,-100,0));
+	glBegin(GL_QUAD_STRIP);
+	const float3 delta = (pos2 - pos1) / (float)steps;
+	for (int i = 0; i <= steps; i++) {
+		float3 p;
+		const float d = (float)i;
+		p.x = pos1.x + (d * delta.x);
+		p.z = pos1.z + (d * delta.z);
+		p.y = ground->GetHeight(p.x, p.z);
+		p.y -= 100.f; glVertexf3(p);
+		p.y += 200.f; glVertexf3(p);
+	}
 	glEnd();
 
 	if(sizeDiv!=0){
 		char c[40];
-		SNPRINTF(c, 40, "%d", (int)(pos1.distance2D(pos2)/sizeDiv) );
+		SNPRINTF(c, 40, "%d", (int)(frontLen / sizeDiv) );
 		mouse->cursorTextRight=c;
 	}
 	glEnable(GL_FOG);

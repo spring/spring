@@ -25,7 +25,7 @@
 --
 --  Call-ins are functions that the lua code can provide that will
 --  be called from the Spring executable when appropriate. All of
---  the call-ins are optional, except for LayoutButtons().
+--  the call-ins are optional.
 --
 
   Shutdown()
@@ -110,6 +110,7 @@
   GetUnitTeam()
   GetUnitAllyTeam()
   GetUnitHealth()
+  GetUnitResources()
   GetUnitStates()
   GetUnitStockpile()
   GetUnitPosition()
@@ -536,6 +537,12 @@ GetUnitHealth(number unitID) ->
         number paralyzeDamage,
         number captureProgress,
         number buildProgress
+
+GetUnitResources(number unitID) ->
+  nil | number metalMake,
+        number metalUse,
+        number energyMake,
+        number energyUse
 
 GetUnitStates(number unitID) ->
   nil | states = {

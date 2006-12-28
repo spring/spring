@@ -396,6 +396,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.iconType=tdfparser.SGetValueDef("default", "UNITINFO\\iconType");
 
+	ud.shieldWeaponDef = NULL;
+	ud.stockpileWeaponDef = NULL;
+
 	for(int a=0;a<16;++a){
 		char c[50];
 		sprintf(c,"%i",a+1);
@@ -412,11 +415,12 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		}
 
 		while(ud.weapons.size()<a){
-			if(!weaponDefHandler->GetWeapon("NOWEAPON")) {
+			if (!weaponDefHandler->GetWeapon("NOWEAPON")) {
 				logOutput.Print("Error: Spring requires a NOWEAPON weapon type to be present as a placeholder for missing weapons");
 				break;
-			} else
+			} else {
 				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0,0));
+			}
 		}
 
 		string badTarget;
@@ -455,7 +459,23 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		float fuelUse=atof(tdfparser.SGetValueDef("0", string("UNITINFO\\WeaponFuelUsage")+c).c_str());
 
 		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc,otc,fuelUse));
+
+		if (wd->isShield) {
+			if (!ud.shieldWeaponDef || // use the biggest shield
+			    (ud.shieldWeaponDef->shieldRadius < wd->shieldRadius)) {
+				ud.shieldWeaponDef = wd;
+			}
+		}
+		if (wd->stockpile) {
+			// interceptors have priority
+			if (wd->interceptor        ||
+			    !ud.stockpileWeaponDef ||
+			    !ud.stockpileWeaponDef->interceptor) {
+				ud.stockpileWeaponDef = wd;
+			}
+		}
 	}
+
 	tdfparser.GetDef(ud.canDGun, "0", "UNITINFO\\candgun");
 
 	string TEDClass=tdfparser.SGetValueDef("0", "UNITINFO\\TEDClass").c_str();

@@ -20,11 +20,18 @@ CCursorIcons cursorIcons;
 
 CCursorIcons::CCursorIcons()
 {
+	enabled = true;
 }
 
 
 CCursorIcons::~CCursorIcons()
 {
+}
+
+
+void CCursorIcons::Enable(bool value)
+{
+	enabled = value;
 }
 
 

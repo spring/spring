@@ -122,6 +122,8 @@ struct UnitDef
 		unsigned int onlyTargetCat;
 	};
 	std::vector<UnitDefWeapon> weapons;
+	WeaponDef* shieldWeaponDef;
+	WeaponDef* stockpileWeaponDef;
 
 	std::map<int,std::string> buildOptions;
 
