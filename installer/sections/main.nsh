@@ -9,16 +9,17 @@
   Delete "$INSTDIR\armor.txt"
   Delete "$INSTDIR\bagge.fnt"
   Delete "$INSTDIR\hpiutil.dll"
-  File "..\game\luxi.ttf"
-  File "..\game\SelectionEditor.exe"
-  
+
   ; Can be nice and not overwrite these. or not
   SetOverWrite on
   File "..\game\selectkeys.txt"
   File "..\game\uikeys.txt"
   File "..\game\cmdcolors.txt"
   File "..\game\ctrlpanel.txt"
-  
+
+!ifndef SP_UPDATE
+  File "..\game\luxi.ttf"
+  File "..\game\SelectionEditor.exe"
   SetOverWrite on
   File "..\game\settings.exe"
   File "..\game\settingstemplate.xml"
@@ -90,6 +91,8 @@
   RmDir "$INSTDIR\bitmaps\tracks"
   RmDir "$INSTDIR\bitmaps"
 
+!endif ; SP_UPDATE
+
   SetOutPath "$INSTDIR\startscripts"
   File "..\game\startscripts\*.lua"
 
@@ -142,7 +145,9 @@
   File "..\game\AI\Bot-libs\EmptyAI.dll"
   Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
 !endif
-  
+
+!ifndef SP_UPDATE
+
   SetOverWrite on
   ; XTA
 ;  File "..\game\taenheter.ccx"
@@ -156,9 +161,7 @@
 ;  File "..\game\base\tacontent.sdz"
   Delete "$INSTDIR\base\tacontent.sdz"
 
-!ifndef SP_UPDATE
   File "..\game\base\otacontent.sdz"
-!endif
   File "..\game\base\tacontent_v2.sdz"
 !endif
   File "..\game\base\springcontent.sdz"
@@ -175,6 +178,8 @@
 !else
   File "..\game\mods\xtape.sd7"
 !endif
+
+!endif ; SP_UPDATE
 
   Delete "$INSTDIR\mods\xtapev3.sd7"
   Delete "$INSTDIR\mods\xta_se_v065.sdz"
