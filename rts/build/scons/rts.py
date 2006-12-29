@@ -93,8 +93,11 @@ def generate(env):
 		('cpppath',           'Set path to extra header files', []),
 		('libpath',           'Set path to extra libraries', []),
 		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', '387'),
-		('prefix',            'Install prefix', '/usr/local'),
-		('datadir',           'Data directory', '$prefix/games/taspring'),
+		('prefix',            'Install prefix used at runtime', '/usr/local'),
+		('installprefix',     'Install prefix used for installion', '$prefix'),
+		('datadir',           'Data directory (relative to prefix)', 'share/games/spring'),
+		('bindir',            'Directory for executables (rel. to prefix)', 'games'),
+		('libdir',            'Directory for AI plugin modules (rel. to prefix)', 'lib/spring'),
 		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
 		#porting options - optional in a first phase
 		('disable_avi',       'Set to no to turn on avi support', True),
@@ -125,7 +128,7 @@ def generate(env):
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)
 
-	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 4) or env.GetOption('clean')):
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 5) or env.GetOption('clean')):
 		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
@@ -133,7 +136,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
+		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
 			'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 
 			'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
@@ -154,7 +157,7 @@ def generate(env):
 
 		args = makeHashTable(sys.argv)
 
-		env['is_configured'] = 4
+		env['is_configured'] = 5
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
@@ -296,7 +299,8 @@ def generate(env):
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
-		string_opt('datadir', '$prefix/games/taspring')
+		string_opt('installprefix', env.subst('$prefix'))
+		string_opt('datadir', 'share/games/spring')
 		string_opt('cachedir', None)
 
 		# Make a list of preprocessor defines.

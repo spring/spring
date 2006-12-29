@@ -39,13 +39,17 @@ spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon
 if sys.platform == 'win32':
-	spring_files += env.RES('rts/build/scons/icon.rc', CPPPATH=[])
+	spring_files += env.RES(env['builddir'] + '/rts/build/scons/icon.rc', CPPPATH=[])
+
+# calculate datadir locations
+datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
+           'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
 
 # Build UnixDataDirHandler.cpp separately from the other sources.  This is to prevent recompilation of
-# the entire source if one wants to change just the install prefix (and hence the datadir).
+# the entire source if one wants to change just the install installprefix (and hence the datadir).
 
 if env['platform'] != 'windows':
-	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
+	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
 	spring_files += [ufshcpp]
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
@@ -53,7 +57,7 @@ else: # create import library and .def file on Windows
 
 Alias('spring', spring)
 Default(spring)
-inst = Install(os.path.join(env['prefix'], 'bin'), spring)
+inst = Install(os.path.join(env['installprefix'], env['bindir']), spring)
 Alias('install', inst)
 Alias('install-spring', inst)
 
@@ -64,7 +68,8 @@ if env['strip']:
 # Build unitsync shared object
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
-unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
+unitsync_files = filelist.get_source(env, 'tools/unitsync');
+unitsync_extra_files = \
 	['rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/System/TdfParser.cpp',
@@ -98,29 +103,31 @@ unitsync_files = filelist.get_source(env, 'tools/unitsync') + \
 	'rts/lib/minizip/ioapi.c',
 	'rts/lib/minizip/unzip.c',
 	'rts/lib/minizip/zip.c']
+for f in unitsync_extra_files:
+	unitsync_files += [os.path.join(env['builddir'], f)]
 
 if env['platform'] == 'windows':
-	unitsync_files += ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']
+	for f in ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
+		unitsync_files += [os.path.join(env['builddir'], f)]
 else:
-	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+['SPRING_DATADIR="\\"'+env['datadir']+'\\""'])
-	unitsync_files += ['rts/System/Platform/Linux/DotfileHandler.cpp', ufshcpp]
+	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+datadir)
+	unitsync_files += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'), ufshcpp]
 
-unitsync = env.SharedLibrary('omni/unitsync', unitsync_files)
-unitsync2 = env.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
-Alias('unitsync', unitsync, unitsync2)
+unitsync = env.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
+Alias('unitsync', unitsync)
 
 # Somehow unitsync fails to build with mingw:
 #  "build\tools\unitsync\pybind.o(.text+0x129d): In function `initunitsync':
 #   pybind.cpp:663: undefined reference to `_imp__Py_InitModule4TraceRefs'"
 if env['platform'] != 'windows':
-	Default(unitsync, unitsync2)
+	Default(unitsync)
 
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 aienv = env.Copy(LIBS=[], LIBPATH=[])
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
 
-# Use subst() to substitute $prefix in datadir.
-install_dir = os.path.join(aienv.subst(aienv['datadir']), 'AI/Helper-libs')
+# Use subst() to substitute $installprefix in datadir.
+install_dir = os.path.join(aienv['installprefix'], aienv['libdir'], 'AI/Helper-libs')
 
 #Build GroupAIs
 for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
@@ -132,10 +139,10 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 	Alias('install', inst)
 	Alias('install-GroupAI', inst)
 	Alias('install-'+f, inst)
-	if env['strip']:
-		env.AddPostAction(lib, Action([['strip','$TARGET']]))
+	if aienv['strip']:
+		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
-install_dir = os.path.join(aienv.subst(aienv['datadir']), 'AI/Bot-libs')
+install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']), 'AI/Bot-libs')
 
 #Build GlobalAIs
 for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI']):
@@ -147,8 +154,8 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
-	if env['strip']:
-		env.AddPostAction(lib, Action([['strip','$TARGET']]))
+	if aienv['strip']:
+		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 # build TestABICAI
 lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['AI/Global/TestABICAI/myaimingw.cpp','game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
@@ -199,20 +206,27 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		else:
 			os.system("installer/make_gamedata_arch.sh")
 
-inst = Install(os.path.join(env.subst(env['datadir']), 'base'), 'game/base/springcontent.sdz')
+inst = Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
 Alias('install', inst)
-inst = Install(os.path.join(env.subst(env['datadir']), 'base/spring'), 'game/base/spring/bitmaps.sdz')
+inst = Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)
 
 # install shaders
 shaders=os.listdir('game/shaders')
 for shader in shaders:
 	if not os.path.isdir(os.path.join('game/shaders', shader)):
-		inst = Install(os.path.join(env.subst(env['datadir']), 'shaders'), os.path.join('game/shaders', shader))
+		inst = Install(os.path.join(env['installprefix'], env['datadir'], 'shaders'), os.path.join('game/shaders', shader))
+		Alias('install', inst)
+
+# install AAI config files
+aai_data=filelist.list_files_recursive(env, 'game/AI/AAI')
+for f in aai_data:
+	if not os.path.isdir(f):
+		inst = Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
 		Alias('install', inst)
 
 # install menu entry & icon
-inst = Install(os.path.join(env['prefix'], 'share/pixmaps'), 'rts/spring.png')
+inst = Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spring.png')
 Alias('install', inst)
-inst = Install(os.path.join(env['prefix'], 'share/applications'), 'rts/spring.desktop')
+inst = Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
 Alias('install', inst)

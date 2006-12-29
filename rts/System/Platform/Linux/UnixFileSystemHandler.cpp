@@ -179,7 +179,12 @@ void UnixFileSystemHandler::LocateDataDirs()
 		fclose(f);
 	}
 
+#ifdef SPRING_DATADIR
 	datadirs.push_back(SubstEnvVars(SPRING_DATADIR));
+#endif
+#ifdef SPRING_DATADIR_2
+	datadirs.push_back(SubstEnvVars(SPRING_DATADIR_2));
+#endif
 
 	// Figure out permissions of all datadirs
 	bool cwdWarning = false;

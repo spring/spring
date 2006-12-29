@@ -35,6 +35,22 @@ def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	return dirs
 
 
+def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.'):
+	path_stack = [path]
+	exclude = re.compile(exclude_regexp)
+	ffiles = []
+	while len(path_stack) > 0:
+		path = path_stack.pop()
+		files = os.listdir(path)
+		for f in files:
+			g = os.path.join(path, f)
+			if os.path.exists(g) and not f in exclude_list and not exclude.search(f):
+				ffiles += [g]
+				if os.path.isdir(g):
+					path_stack += [g]
+	return ffiles
+
+
 def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	basepath = path
 	path_stack = [path]
