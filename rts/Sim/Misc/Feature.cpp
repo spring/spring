@@ -296,11 +296,9 @@ bool CFeature::Update(void)
 		--emitSmokeTime;
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-#ifndef SYNCDEBUG
 		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7f){
 			SAFE_NEW CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3f,gu->usRandVector()*0.3f+UpVector,emitSmokeTime/6+20,6,0.4f,0,0.5f);
 		}
-#endif
 		POP_CODE_MODE;
 		retValue=true;
 	}
@@ -339,7 +337,6 @@ bool CFeature::Update(void)
 			solidOnTop = so;
 		}
 
-#ifndef SYNCDEBUG
 		// Hide the smoke if there is a geothermal unit on the vent
 		CUnit *u = dynamic_cast<CUnit*>(solidOnTop);
 		if (!u || !u->unitDef->needGeo) {
@@ -350,7 +347,6 @@ bool CFeature::Update(void)
 				SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector()*10 + float3(pos.x,pos.y-10,pos.z),speed,int(50+gu->usRandFloat()*7), this);
 			}
 		}
-#endif
 
 		POP_CODE_MODE;
 		retValue=true;

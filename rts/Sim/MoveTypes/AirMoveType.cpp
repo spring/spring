@@ -89,7 +89,7 @@ CAirMoveType::~CAirMoveType(void)
 
 void CAirMoveType::Update(void)
 {
-	SyncedFloat3 &pos=owner->pos;
+	float3 &pos=owner->pos;
 
 	//This is only set to false after the plane has finished constructing
 	if (useHeading){
@@ -368,7 +368,7 @@ void CAirMoveType::UpdateManeuver(void)
 
 void CAirMoveType::UpdateFighterAttack(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -559,7 +559,7 @@ void CAirMoveType::UpdateAttack(void)
 
 void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -668,7 +668,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 
 void CAirMoveType::UpdateLanded(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -685,7 +685,7 @@ void CAirMoveType::UpdateLanded(void)
 
 void CAirMoveType::UpdateTakeOff(float wantedHeight)
 {
-	SyncedFloat3& pos=owner->pos;
+	float3& pos=owner->pos;
 	float3& speed=owner->speed;
 	float h=pos.y-ground->GetHeight(pos.x,pos.z);
 	
@@ -712,7 +712,7 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 
 void CAirMoveType::UpdateLanding(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -809,7 +809,7 @@ void CAirMoveType::UpdateLanding(void)
 
 void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;

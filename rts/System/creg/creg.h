@@ -27,7 +27,7 @@ namespace creg {
 		crFloat,
 		crDouble,
 		crBool,
-#ifdef SYNCDEBUG
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
 		crSyncedSint,   crSyncedUint,
 		crSyncedSshort, crSyncedUshort,
 		crSyncedSchar,  crSyncedUchar,

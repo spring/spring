@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 
-#ifdef SYNCDEBUG
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 CR_BIND_STRUCT(SyncedFloat3);
 CR_REG_METADATA(SyncedFloat3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
@@ -41,4 +41,4 @@ bool SyncedFloat3::CheckInBounds()
 	return in;
 }
 
-#endif // SYNCDEBUG
+#endif // SYNCDEBUG || SYNCCHECK

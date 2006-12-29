@@ -19,9 +19,9 @@ public:
 	virtual ~CWorldObject();
 	virtual void DrawS3O(){};
 
-	SyncedFloat3 pos;
+	float3 pos;
 	float radius;					//used for collisions
-	float sqRadius;				
+	float sqRadius;
 
 	float drawRadius;			//used to see if in los
 	bool useAirLos;

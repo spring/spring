@@ -7,7 +7,7 @@
 #ifndef SYNCEDFLOAT3_H
 #define SYNCEDFLOAT3_H
 
-#ifdef SYNCDEBUG
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 /**
  * @brief SyncedFloat3 class
@@ -506,10 +506,10 @@ public:
 	operator float3() const { return float3(x, y, z); }
 };
 
-#else
+#else // SYNCDEBUG || SYNCCHECK
 
 typedef float3 SyncedFloat3;
 
-#endif // SYNCDEBUG
+#endif // !SYNCDEBUG && !SYNCCHECK
 
 #endif // SYNCEDFLOAT3_H

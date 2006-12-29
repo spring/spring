@@ -48,7 +48,7 @@ enum NETMSG {
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
-	NETMSG_PAUSE            = 13, // uchar myPlayerNum, bNotPaused;
+	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
@@ -68,7 +68,7 @@ enum NETMSG {
 	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
 	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
 	NETMSG_SYNCREQUEST      = 32, // int frameNum;
-	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; CChecksum checksum;
+	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYNCERROR        = 34, // (NEVER SENT)
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
@@ -82,7 +82,7 @@ enum NETMSG {
 	NETMSG_SD_BLKREQUEST    = 43,
 	NETMSG_SD_BLKRESPONSE   = 44,
 	NETMSG_SD_RESET         = 45,
-#endif
+#endif // SYNCDEBUG
 };
 
 
