@@ -539,7 +539,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	// try using the custom layout handler
 	if (firstLayout) {
 		firstLayout = false;
-		if (!!configHandler.GetInt("LuaUI", 0)) {
+		if (!!configHandler.GetInt("LuaUI", 1)) {
 			luaUI = CLuaUI::GetHandler(luaUiFile);
 		}
 	}
