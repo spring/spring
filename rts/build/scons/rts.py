@@ -136,7 +136,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
+		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
 			'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 
 			'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
@@ -299,8 +299,10 @@ def generate(env):
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
-		string_opt('installprefix', env.subst('$prefix'))
+		string_opt('installprefix', '$prefix')
 		string_opt('datadir', 'share/games/spring')
+		string_opt('bindir', 'games')
+		string_opt('libdir', 'lib/spring')
 		string_opt('cachedir', None)
 
 		# Make a list of preprocessor defines.
@@ -366,6 +368,9 @@ def generate(env):
 
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)
+
+	# Substitute prefix in installprefix
+	env['installprefix'] = env.subst(env['installprefix'])
 
 	# Fix up some suffices for mingw crosscompile.
 	if env['platform'] == 'windows':
