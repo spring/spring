@@ -183,9 +183,13 @@ static int DrawLogicOp(lua_State* L);
 static int DrawBlending(lua_State* L);
 static int DrawAlphaTest(lua_State* L);
 static int DrawLineStipple(lua_State* L);
+
 static int DrawTexture(lua_State* L);
 static int DrawMaterial(lua_State* L);
 static int DrawColor(lua_State* L);
+
+static int DrawLineWidth(lua_State* L);
+static int DrawPointSize(lua_State* L);
 
 static int DrawFreeTexture(lua_State* L);
 
@@ -194,6 +198,8 @@ static int DrawUnitDef(lua_State* L);
 static int DrawText(lua_State* L);
 static int DrawGetTextWidth(lua_State* L);
 
+static int DrawMatrixMode(lua_State* L);
+static int DrawLoadIdentity(lua_State* L);
 static int DrawTranslate(lua_State* L);
 static int DrawScale(lua_State* L);
 static int DrawRotate(lua_State* L);
@@ -430,9 +436,13 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Blending);
 	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
 	REGISTER_LUA_DRAW_CFUNC(LineStipple);
+
 	REGISTER_LUA_DRAW_CFUNC(Texture);
 	REGISTER_LUA_DRAW_CFUNC(Material);
 	REGISTER_LUA_DRAW_CFUNC(Color);
+
+	REGISTER_LUA_DRAW_CFUNC(LineWidth);
+	REGISTER_LUA_DRAW_CFUNC(PointSize);
 
 	REGISTER_LUA_DRAW_CFUNC(FreeTexture);
 
@@ -445,6 +455,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(ListRun);
 	REGISTER_LUA_DRAW_CFUNC(ListDelete);
 
+	REGISTER_LUA_DRAW_CFUNC(MatrixMode);
+	REGISTER_LUA_DRAW_CFUNC(LoadIdentity);
 	REGISTER_LUA_DRAW_CFUNC(Translate);
 	REGISTER_LUA_DRAW_CFUNC(Scale);
 	REGISTER_LUA_DRAW_CFUNC(Rotate);
@@ -784,7 +796,9 @@ bool CLuaUI::DrawWorldItems()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// push the current GL state
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
+	             GL_POLYGON_BIT | GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT |
+	             GL_LINE_BIT | GL_POINT_BIT);
 
 	// setup a known state
 	ResetGLState();
@@ -931,7 +945,9 @@ bool CLuaUI::DrawScreenItems()
 	drawingEnabled = true;
 
 	// push the current GL state
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_LIGHTING_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
+	             GL_POLYGON_BIT | GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT |
+	             GL_LINE_BIT | GL_POINT_BIT);
 
 	// setup a known state
 	ResetGLState();
@@ -4435,6 +4451,8 @@ static void ResetGLState()
 	glShadeModel(GL_SMOOTH);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_SCISSOR_TEST);
+	glLineWidth(1.0f);
+	glPointSize(1.0f);
 }
 
 
@@ -4762,6 +4780,30 @@ static int DrawLineStipple(lua_State* L)
 }
 
 
+static int DrawLineWidth(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawLineWidth()");
+		lua_error(L);
+	}
+	glLineWidth((float)lua_tonumber(L, 1));
+	return 0;
+}
+
+
+static int DrawPointSize(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawPointSize()");
+		lua_error(L);
+	}
+	glPointSize((float)lua_tonumber(L, 1));
+	return 0;
+}
+
+
 static int DrawTexture(lua_State* L)
 {
 	if (!drawingEnabled) {
@@ -4953,6 +4995,30 @@ static int DrawRotate(lua_State* L)
 
 
 /******************************************************************************/
+
+static int DrawMatrixMode(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to DrawLoadIdentity");
+		lua_error(L);
+	}
+	glMatrixMode((GLenum)lua_tonumber(L, 1));
+	return 0;
+}
+
+
+static int DrawLoadIdentity(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "DrawLoadIdentity takes no arguments");
+		lua_error(L);
+	}
+	glLoadIdentity();
+	return 0;
+}
+
 
 static int DrawPushMatrix(lua_State* L)
 {
