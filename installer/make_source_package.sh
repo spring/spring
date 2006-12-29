@@ -21,7 +21,8 @@ tgz=spring_${version}_src.tar.gz
 zip=spring_${version}_src.zip
 seven_zip=spring_${version}_src.7z
 
-exclude="backup tools/Upspring"
+# these bloat the source package way too much
+exclude="backup tools/Upspring tools/MapDesigner"
 
 if [ -d $dir ]; then
 	cd $dir
