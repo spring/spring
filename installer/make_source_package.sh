@@ -21,7 +21,7 @@ tgz=spring_${version}_src.tar.gz
 zip=spring_${version}_src.zip
 seven_zip=spring_${version}_src.7z
 
-exclude="backup tools/Upspring omni/resource/units"
+exclude="backup tools/Upspring"
 
 if [ -d $dir ]; then
 	cd $dir
