@@ -1,27 +1,26 @@
 
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
+  SetOverWrite on
 
   ; Main stuff
   File "..\game\spring.exe"
   File "..\game\spring.def"
+  File "..\game\settings.exe"
+
 ;  File "..\game\armor.txt"
   Delete "$INSTDIR\armor.txt"
   Delete "$INSTDIR\bagge.fnt"
   Delete "$INSTDIR\hpiutil.dll"
 
-  ; Can be nice and not overwrite these. or not
-  SetOverWrite on
+!ifndef SP_UPDATE
   File "..\game\selectkeys.txt"
   File "..\game\uikeys.txt"
   File "..\game\cmdcolors.txt"
   File "..\game\ctrlpanel.txt"
 
-!ifndef SP_UPDATE
   File "..\game\luxi.ttf"
   File "..\game\SelectionEditor.exe"
-  SetOverWrite on
-  File "..\game\settings.exe"
   File "..\game\settingstemplate.xml"
 
   ; DLLs
@@ -100,6 +99,8 @@
   File "..\game\shaders\*.fp"
   File "..\game\shaders\*.vp"
   File "..\game\shaders\*.glsl"
+
+!ifndef SP_UPDATE
   
   SetOutPath "$INSTDIR\AI\Helper-libs"
 ; Someone fix the vc projects so this can be merged to one block please.
@@ -145,8 +146,6 @@
   File "..\game\AI\Bot-libs\EmptyAI.dll"
   Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
 !endif
-
-!ifndef SP_UPDATE
 
   SetOverWrite on
   ; XTA
