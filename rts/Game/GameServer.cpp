@@ -12,6 +12,8 @@
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
 
+#define SYNCCHECK_TIMEOUT 300 //frames
+
 CGameServer* gameServer=0;
 
 extern bool globalQuit;
@@ -25,14 +27,16 @@ static Uint32 GameServerThreadProc(void* lpParameter)
 
 CGameServer::CGameServer()
 {
+#ifdef SYNCCHECK
+	syncErrorFrame=0;
+#endif
+	lastPlayerInfo = 0;
 	makeMemDump=true;
 	serverframenum=0;
 	timeLeft=0;
 	gameLoading=true;
 	gameEndDetected=false;
 	gameEndTime=0;
-	outstandingSyncFrame=-1;
-	lastSyncRequest=0;
 	quitServer=false;
 	gameClientUpdated=false;
 	maxTimeLeft=2;
@@ -54,9 +58,7 @@ CGameServer::CGameServer()
 	if(gameSetup && gameSetup->hostDemo)
 		serverNet->CreateDemoServer(gameSetup->demoName);
 
-	lastframe = SDL_GetTicks();
-
-	exeChecksum = game ? game->CreateExeChecksum() : 0;
+	lastTick = SDL_GetTicks();
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thread = SAFE_NEW boost::thread(boost::bind(GameServerThreadProc,this));
@@ -81,81 +83,10 @@ CGameServer::~CGameServer()
 
 bool CGameServer::Update()
 {
-	if(lastSyncRequest<gu->gameTime-2){
-		lastSyncRequest=gu->gameTime;
+	if(lastPlayerInfo<gu->gameTime-2){
+		lastPlayerInfo=gu->gameTime;
 
 		if (game && game->playing) {
-			//check if last times sync responses is correct
-			if (outstandingSyncFrame > 0) {
-				// I've disabled majority voting for now.
-				// Should be tested in a few big multiplayer games first.
-#if 0
-				std::map<CChecksum, int> freq; // maps checksums to their frequency
-				for(int a = 0; a < gs->activePlayers; ++a)
-					if(gs->players[a]->active) {
-						//if the checksum really happens to be 0 we will get lots of falls positives here
-						if(!syncResponses[a]) {
-							if (!serverNet->playbackDemo)
-								logOutput.Print("No response from %s", gs->players[a]->playerName.c_str());
-						} else
-							++freq[syncResponses[a]];
-					}
-				if (freq.size() != 1) {
-					CChecksum correctSync;
-					int highestFreq = 0;
-					for (std::map<CChecksum, int>::const_iterator it = freq.begin(); it != freq.end(); ++it)
-						if (it->second > highestFreq) {
-							correctSync = it->first;
-							highestFreq = it->second;
-						}
-					if (correctSync)
-						for (int a = 0; a < gs->activePlayers; ++a)
-							if (gs->players[a]->active && syncResponses[a] && correctSync != syncResponses[a]) {
-								char buf[10];
-								SendSystemMsg("Sync error for %s %i %s",
-									gs->players[a]->playerName.c_str(), outstandingSyncFrame, correctSync.diff(buf, syncResponses[a]));
-							}
-				}
-#else
-				CChecksum correctSync;
-				bool err = false;
-				for(int a = 0; a < gs->activePlayers; ++a)
-					if(gs->players[a]->active) {
-						//if the checksum really happens to be 0 we will get lots of falls positives here
-						if(!syncResponses[a] && !serverNet->playbackDemo) {
-							logOutput.Print("No response from %s", gs->players[a]->playerName.c_str());
-							continue;
-						}
-						if (correctSync && correctSync != syncResponses[a]) {
-							char buf[10];
-							SendSystemMsg("Sync error for %s %i %s",
-										  gs->players[a]->playerName.c_str(), outstandingSyncFrame, correctSync.diff(buf, syncResponses[a]));
-							err = true;
-							continue;
-						}
-						//this assumes the lowest num player is the correct one, should maybe some sort of majority voting instead
-						correctSync = syncResponses[a];
-					}
-#endif
-#ifdef SYNCDEBUG
-				if (err || fakeDesync) {
-					CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
-					fakeDesync = false;
-				}
-#else // SYNCDEBUG
-				if (err && gu->autoQuit)
-					serverNet->SendData(NETMSG_QUIT);
-#endif // !SYNCDEBUG
-			}
-			for(int a=0;a<gs->activePlayers;++a)
-				syncResponses[a]=0;
-			
-			if(!serverNet->playbackDemo){
-				//send sync request
-				serverNet->SendData<int>(NETMSG_SYNCREQUEST, serverframenum);
-				outstandingSyncFrame=serverframenum;
-			}
-
 			int firstReal=0;
 			if(gameSetup)
 				firstReal=gameSetup->numDemoPlayers;
@@ -196,9 +127,50 @@ bool CGameServer::Update()
 		return false;
 	}
 	if (game && game->playing && !serverNet->playbackDemo){
-		Uint64 currentFrame;
-		currentFrame = SDL_GetTicks();
-		float timeElapsed=((float)(currentFrame - lastframe))/1000.f;
+#ifdef SYNCCHECK
+		// Check sync
+		std::deque<int>::iterator f = outstandingSyncFrames.begin();
+		while (f != outstandingSyncFrames.end()) {
+			bool complete = true;
+			unsigned correctChecksum = 0;
+			for (int a = 0; a < MAX_PLAYERS; ++a) {
+				if (!gs->players[a]->active)
+					continue;
+				std::map<int, unsigned>::iterator it = syncResponse[a].find(*f);
+				if (it == syncResponse[a].end()) {
+					if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
+						complete = false;
+					else
+						logOutput.Print("No sync response from %s for frame %d", gs->players[a]->playerName.c_str(), *f);
+				} else {
+					if (!correctChecksum)
+						correctChecksum = it->second;
+					else if (it->second != correctChecksum) {
+						// TODO start resync somewhere here
+						SendSystemMsg("Sync error for %s in frame %d", gs->players[a]->playerName.c_str(), *f);
+						if (!syncErrorFrame) {
+							syncErrorFrame = *f;
+							serverNet->SendData<unsigned char, unsigned char>(NETMSG_PAUSE, gu->myPlayerNum, true);
+						}
+					}
+				}
+			}
+			if (complete) {
+// 				if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
+// 					logOutput.Print("Succesfully purged outstanding sync frame %d from the deque", *f);
+				for (int a = 0; a < MAX_PLAYERS; ++a) {
+					if (gs->players[a]->active)
+						syncResponse[a].erase(*f);
+				}
+				f = outstandingSyncFrames.erase(f);
+			} else
+				++f;
+		}
+#endif
+
+		// Send out new frame messages.
+		unsigned currentTick = SDL_GetTicks();
+		float timeElapsed=((float)(currentTick - lastTick))/1000.f;
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		logOutput.Print("float value is %f",timeElapsed);
@@ -212,7 +184,7 @@ bool CGameServer::Update()
 		maxTimeLeft-=timeElapsed;
 
 		timeLeft+=GAME_SPEED*gs->speedFactor*timeElapsed;
-		lastframe=currentFrame;
+		lastTick=currentTick;
 
 		while((timeLeft>0) && (!gs->paused || game->bOneStep)){
 			if(!game->creatingVideo){
@@ -271,9 +243,13 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_PAUSE:
-				if(inbuf[inbufpos+2]!=a){
-					logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
+				if(inbuf[inbufpos+1]!=a){
+					logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
+#ifdef SYNCCHECK
+					if (!inbuf[inbufpos+2])  // reset sync checker
+						syncErrorFrame = 0;
+#endif
 					assert(game);
 					if(game->gamePausable || a==0){
 						timeLeft=0;
@@ -307,13 +283,6 @@ bool CGameServer::ServerReadNet()
 				ENTER_MIXED;
 				gs->players[a]->cpuUsage=*((float*)&inbuf[inbufpos+1]);
 				ENTER_UNSYNCED;
-				lastLength=5;
-				break;
-
-			case NETMSG_EXECHECKSUM: 
-				if(exeChecksum!=*((unsigned int*)&inbuf[inbufpos+1])){
-					SendSystemMsg("Wrong exe checksum from %i got %X instead of %X",a,*((unsigned int*)&inbuf[inbufpos+1]),exeChecksum);
-				}
 				lastLength=5;
 				break;
 
@@ -399,20 +368,22 @@ bool CGameServer::ServerReadNet()
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
-			case NETMSG_SYNCRESPONSE:{
+			case NETMSG_SYNCRESPONSE:
+#ifdef SYNCCHECK
 				if(inbuf[inbufpos+1]!=a){
 					SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
 				} else {
 					if(!serverNet->playbackDemo){
-						int frame = *(int*)&inbuf[inbufpos+2];
-						if(outstandingSyncFrame == frame)
-							syncResponses[inbuf[inbufpos+1]] = *(CChecksum*)&inbuf[inbufpos+6];
+						int frameNum = *(int*)&inbuf[inbufpos+2];
+						if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+							syncResponse[a][frameNum] = *(unsigned*)&inbuf[inbufpos+6];
 						else
-							logOutput.Print("Delayed respone from %s (%i instead of %i)",
-										  gs->players[inbuf[inbufpos+1]]->playerName.c_str(), frame, outstandingSyncFrame);
+							logOutput.Print("Delayed sync respone from %s for frame %d (current %d)",
+											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
 					}
 				}
-				lastLength=6+sizeof(CChecksum);}
+#endif
+				lastLength=10;
 				break;
 
 			case NETMSG_SHARE:
@@ -566,6 +537,9 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		logOutput.Print("Server net couldnt send new frame");
 		globalQuit=true;
 	}
+#ifdef SYNCCHECK
+	outstandingSyncFrames.push_back(serverframenum);
+#endif
 }
 
 void CGameServer::UpdateLoop()

@@ -115,7 +115,6 @@ public:
 #endif
 	
 	void HandleChatMsg(std::string msg,int player);
-	unsigned  int CreateExeChecksum(void);
 	
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
