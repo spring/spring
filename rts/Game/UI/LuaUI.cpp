@@ -85,6 +85,7 @@ static int GetMouseCursor(lua_State* L);
 static int SetMouseCursor(lua_State* L);
 
 static int GetKeyState(lua_State* L);
+static int GetModKeyState(lua_State* L);
 static int GetPressedKeys(lua_State* L);
 
 static int GetCurrentTooltip(lua_State* L);
@@ -339,6 +340,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
 	REGISTER_LUA_CFUNC(GetKeyState);
+	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 	REGISTER_LUA_CFUNC(GetKeyCode);
@@ -1948,6 +1950,21 @@ static int GetKeyState(lua_State* L)
 		lua_pushboolean(L, keys[key]);
 	}
 	return 1;
+}
+
+
+static int GetModKeyState(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetModKeyState() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushboolean(L, keys[SDLK_LALT]);
+	lua_pushboolean(L, keys[SDLK_LCTRL]);
+	lua_pushboolean(L, keys[SDLK_LMETA]);
+	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	return 4;
 }
 
 
