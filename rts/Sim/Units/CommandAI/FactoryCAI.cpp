@@ -259,15 +259,20 @@ void CFactoryCAI::SlowUpdate()
 					building=true;
 				}
 			}
-		} else {
+		}
+		else {
 			switch(c.id){
-			case CMD_STOP:
-			default:
-				CCommandAI::SlowUpdate();
-				return;
+				case CMD_STOP: {
+					ExecuteStop(c);
+					break;
+				}
+				default: {
+					CCommandAI::SlowUpdate();
+					return;
+				}
 			}
 		}
-	}while(oldSize!=commandQue.size() && !commandQue.empty());
+	} while ((oldSize != commandQue.size()) && !commandQue.empty());
 
 	return;
 }
