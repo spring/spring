@@ -184,9 +184,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	allReady=false;
 	hideInterface=false;
 	gameOver=false;
-	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove",1);
-	showClock=!!configHandler.GetInt("ShowClock",1);
-	playerRoster.SetSortTypeByName(configHandler.GetString("ShowPlayerInfo","1"));
+	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove", 1);
+	showClock=!!configHandler.GetInt("ShowClock", 1);
+	playerRoster.SetSortTypeByCode(
+	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
 
 	gamePausable=true;
 	noSpectatorChat=false;
@@ -544,9 +545,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				} else {
 					command = userInput;
 				}
-				if ((command.find(".info") == 0)  ||
-				    (command.find(".clock") == 0) ||
-				    (command[0] == '/')) {
+				if (command[0] == '/') {
 					consoleHistory->AddLine(command);
 					const string actionLine = command.substr(1); // strip the '/' or '.'
 					chatting = false;
