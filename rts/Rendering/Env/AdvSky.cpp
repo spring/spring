@@ -26,6 +26,7 @@ extern GLfloat FogLand[];
 
 #define CLOUD_DETAIL 6
 #define CLOUD_SIZE 256
+#define CLOUD_MASK (CLOUD_SIZE-1)
 
 //static unsigned int cdtex;
 
@@ -586,10 +587,10 @@ void CAdvSky::DrawSun()
 
 	float ymod=(sunTexCoordY-0.5f)*domeWidth*0.025f*256;
 	float fy=ymod+modCamera.z*CLOUD_SIZE*0.000025f;
-	int baseY=int(floor(fy))%256;
+	int baseY=int(floor(fy))&CLOUD_MASK;
 	fy-=floor(fy);
 	float fx=gs->frameNum*0.00005f*CLOUD_SIZE+modCamera.x*CLOUD_SIZE*0.000025f;
-	int baseX=int(floor(fx))%256;
+	int baseX=int(floor(fx))&CLOUD_MASK;
 	fx-=floor(fx);
 
 	if(baseX!=oldCoverBaseX || baseY!=oldCoverBaseY){
@@ -712,7 +713,16 @@ void CAdvSky::InitSun()
 
 void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
 {
-	static int line[]={ 5, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 5, 0, 1, 0, 2, 1, 3, 1, 4, 1, 5, 5, 0, 1, 1, 2, 1, 3, 2, 4, 2, 5, 4, 1, 1, 2, 2, 2, 3, 3, 4, 4, 1, 1, 2, 2, 3, 3, 4, 4, 4, 1, 1, 2, 2, 3, 2, 4, 3, 5, 1, 0, 2, 1, 3, 1, 4, 2, 5, 2, 5, 1, 0, 2, 0, 3, 1, 4, 1, 5, 1};
+	static const int line[]={
+		5, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5,
+		5, 0, 1, 0, 2, 1, 3, 1, 4, 1, 5,
+		5, 0, 1, 1, 2, 1, 3, 2, 4, 2, 5,
+		4, 1, 1, 2, 2, 2, 3, 3, 4,
+		4, 1, 1, 2, 2, 3, 3, 4, 4,
+		4, 1, 1, 2, 2, 3, 2, 4, 3,
+		5, 1, 0, 2, 1, 3, 1, 4, 2, 5, 2,
+		5, 1, 0, 2, 0, 3, 1, 4, 1, 5, 1
+	};
 	int i=0;
 
 	for(int l=0;l<8;++l){
@@ -725,11 +735,15 @@ void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
 		for(int x=0;x<num;++x){
 			int dx=line[i++];
 			int dy=line[i++];
-			
-			cover1+=(255-cloudThickness2[((baseY+dy)*CLOUD_SIZE+baseX-dx)]);//*(num-x);
-			cover2+=(255-cloudThickness2[((baseY-dx)*CLOUD_SIZE+baseX-dy)]);//*(num-x);
-			cover3+=(255-cloudThickness2[((baseY-dy)*CLOUD_SIZE+baseX+dx)]);//*(num-x);
-			cover4+=(255-cloudThickness2[((baseY+dx)*CLOUD_SIZE+baseX+dy)]);//*(num-x);
+			int incy = ((baseY+dy) & CLOUD_MASK) * CLOUD_SIZE;
+			int decy = ((baseY-dy) & CLOUD_MASK) * CLOUD_SIZE;
+			int incx = (baseX+dx) & CLOUD_MASK;
+			int decx = (baseX-dx) & CLOUD_MASK;
+
+			cover1+=255-cloudThickness2[incy+decx];//*(num-x);
+			cover2+=255-cloudThickness2[decy+decx];//*(num-x);
+			cover3+=255-cloudThickness2[decy+incx];//*(num-x);
+			cover4+=255-cloudThickness2[incy+incx];//*(num-x);
 			total+=1;//(num-x);
 		}
 
