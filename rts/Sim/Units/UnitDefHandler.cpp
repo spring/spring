@@ -260,6 +260,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.tooltip=tdfparser.SGetValueDef(ud.name,"UNITINFO\\Description");
 	ud.moveType=0;
 
+	tdfparser.GetDef(ud.canSubmerge, "0", "UNITINFO\\canSubmerge");
 	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
 	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
 	tdfparser.GetDef(ud.reclaimable, "1", "UNITINFO\\reclaimable");
@@ -273,6 +274,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 	string x = "0";
 	if(ud.builder) x = "1";
+
 	tdfparser.GetDef(ud.canRestore,x,"UNITINFO\\canrestore");
 	tdfparser.GetDef(ud.canRepair,x,"UNITINFO\\canrepair");
 	tdfparser.GetDef(ud.canReclaim,x,"UNITINFO\\canreclaim");
@@ -287,8 +289,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.maxSlope = cos(ud.maxSlope*(PI/180));
 	tdfparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
 	tdfparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");
+
 	std::string value;
 	ud.floater = tdfparser.SGetValue(value, "UNITINFO\\Waterline");
+
 	tdfparser.GetDef(ud.waterline, "0", "UNITINFO\\Waterline");
 	if(ud.waterline>8 && ud.canmove)
 		ud.waterline+=5;		//make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
@@ -339,13 +343,12 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.showNanoSpray, "1", "UNITINFO\\shownanospray");
 	ud.nanoColor=tdfparser.GetFloat3(float3(0.2f,0.7f,0.2f),"UNITINFO\\nanocolor");
 
-	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
-	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
 	tdfparser.GetDef(ud.canhover, "0", "UNITINFO\\canhover");
+
 	if(tdfparser.SGetValue(value, "UNITINFO\\floater"))
 		tdfparser.GetDef(ud.floater, "0", "UNITINFO\\floater");
-	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 
+	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 	if(ud.builder && !ud.buildSpeed)		//core anti is flagged as builder for some reason
 		ud.builder=false;
 
@@ -387,7 +390,6 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.maxThisUnit = min(ud.maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
 		}
 	}
-
 
 	ud.categoryString=tdfparser.SGetValueDef("", "UNITINFO\\Category");
 	ud.category=CCategoryHandler::Instance()->GetCategories(tdfparser.SGetValueDef("", "UNITINFO\\Category"));
@@ -585,7 +587,6 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.trackStretch=atof(tdfparser.SGetValueDef("1", "UNITINFO\\TrackStretch").c_str());
 	if(ud.leaveTracks && groundDecals)
 		ud.trackType=groundDecals->GetTrackType(tdfparser.SGetValueDef("StdTank", "UNITINFO\\TrackType"));
-
 
 	ud.useBuildingGroundDecal=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\UseBuildingGroundDecal").c_str());
 	ud.buildingDecalSizeX=atoi(tdfparser.SGetValueDef("4", "UNITINFO\\BuildingGroundDecalSizeX").c_str());

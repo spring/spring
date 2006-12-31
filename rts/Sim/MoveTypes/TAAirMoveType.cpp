@@ -252,12 +252,19 @@ void CTAAirMoveType::Idle()
 	StopMoving();
 }
 
+
+
 void CTAAirMoveType::UpdateLanded()
 {
 	float3 &pos = owner->pos;
 
-	if(padStatus==0)		//dont place on ground if we are on a repair pad
-		pos.y = ground->GetHeight(pos.x, pos.z);
+	//dont place on ground if we are on a repair pad
+	if (padStatus == 0) {
+		if (owner -> unitDef -> canSubmerge)
+			pos.y = ground -> GetApproximateHeight(pos.x, pos.z);
+		else
+			pos.y = ground -> GetHeight(pos.x, pos.z);
+	}
 
 	owner->speed=ZeroVector;
 }
@@ -270,13 +277,19 @@ void CTAAirMoveType::UpdateTakeoff()
 
 	UpdateAirPhysics();
 
-	float h = pos.y - ground->GetHeight(pos.x, pos.z);
+	float h = 0.0f;
+	if (owner -> unitDef -> canSubmerge)
+		h = pos.y - ground -> GetApproximateHeight(pos.x, pos.z);
+	else
+		h = pos.y - ground -> GetHeight(pos.x, pos.z);
 
 	if (h > orgWantedHeight*0.8f) {
 		//logOutput.Print("Houston, we have liftoff %f %f", h, wantedHeight);
 		SetState(AIRCRAFT_FLYING);
 	}
 }
+
+
 
 // Move the unit around a bit.. and when it gets too far away from goal position it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
@@ -430,6 +443,8 @@ void CTAAirMoveType::UpdateFlying()
 		wantedHeading = GetHeadingFromVector(dir.x, dir.z);
 }
 
+
+
 void CTAAirMoveType::UpdateLanding()
 {
 	float3 &pos = owner->pos;
@@ -475,16 +490,29 @@ void CTAAirMoveType::UpdateLanding()
 	}
 
 	//We have stopped, time to land
-	wantedHeight=-2;
+	float gah = ground->GetApproximateHeight(pos.x, pos.z);
+	float h = 0.0f;
+
+	// if aircraft submergible and above water we want height of ocean floor
+	if ((owner -> unitDef -> canSubmerge) && (gah < 0)) {
+		h = pos.y - gah;
+		wantedHeight = gah;
+	}
+	else {
+		h = pos.y - ground->GetHeight(pos.x, pos.z);
+		wantedHeight = -2;
+	}
+
 	UpdateAirPhysics();
-	float h = pos.y - ground->GetHeight(pos.x, pos.z);
 
 	if (h <= 0) {
 		//logOutput.Print("Landed");
 		SetState(AIRCRAFT_LANDED);
-		pos.y = ground->GetHeight(pos.x, pos.z);
+		pos.y = gah;
 	}
 }
+
+
 
 void CTAAirMoveType::UpdateHeading()
 {
@@ -866,7 +894,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 		return false;
 
 	float h = ground->GetApproximateHeight(pos.x, pos.z);
-	if (h < 0 && !owner->unitDef->floater)
+	if ((h < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge))
 		return false;
 
 	float3 tpos=owner->pos;

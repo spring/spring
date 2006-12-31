@@ -1,5 +1,12 @@
 TASpring change log
 
+0.next
+
+- Added FBI tag canSubmerge for planes. The following rules apply:
+    1) If a plane only has the 'floater' tag set to 1, it will land on the ocean surface.
+    2) If a plane only has the 'canSubmerge' tag set to 1, it will land on the ocean floor.
+    3) If a plane has both tags set to 1, it will obey rule 2.
+
 0.74b2
 
 - Planes can land on water surface if FBI tag floater is set to true.

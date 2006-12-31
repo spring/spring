@@ -141,6 +141,7 @@ struct UnitDef
 
 	int selfDCountdown;
 
+	bool canSubmerge;
 	bool canfly;
 	bool canmove;
 	bool canhover;
