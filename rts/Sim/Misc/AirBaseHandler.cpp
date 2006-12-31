@@ -82,9 +82,9 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 //Try to find an airbase and reserve it if one can be found
 //caller must call LeaveLandingPad if it gets one and is finished with it or dies
 //its the callers responsibility to detect if the base dies while its reserved
-CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float maxDist,float minPower)
+CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
-	float closest=maxDist;
+	float closest=1e6f;
 	std::list<LandingPad*>::iterator foundPad;
 	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
 
@@ -113,9 +113,9 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 }
 
 //Try to find the closest airbase even if its reserved
-float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float maxDist,float minPower)
+float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
-	float closest=maxDist;
+	float closest=1e6f;
 	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
 
 	for(std::list<AirBase*>::iterator bi=freeBases[unit->allyteam].begin();bi!=freeBases[unit->allyteam].end();++bi){
