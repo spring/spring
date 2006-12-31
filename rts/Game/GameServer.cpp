@@ -331,7 +331,7 @@ bool CGameServer::ServerReadNet()
 
 			case NETMSG_STARTPOS:
 				if(inbuf[inbufpos+1]!=gs->players[a]->team && a!=0){
-					SendSystemMsg("Server: Warning got select msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
+					SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
 				} else {
 					serverNet->SendData(&inbuf[inbufpos],15); //forward data
 				}

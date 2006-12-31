@@ -528,7 +528,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 		}
 		if(gameSetup){
 			for(int a=0;a<gs->activeTeams;a++){
-				serverNet->SendData<unsigned char, unsigned char, float, float, float>(
+				SendData<unsigned char, unsigned char, float, float, float>(
 						NETMSG_STARTPOS, a, 2, gs->Team(a)->startPos.x,
 						gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 			}
