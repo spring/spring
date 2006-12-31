@@ -19,8 +19,10 @@ Moderator commands:
   plays a "ring" sound on user's client program.
 /ip <username>
   returns user's IP address.
-/mute <channel> <username> [minutes]
-  will mute user for specified time or for indefinit time if "minutes" are not specified.
+/mute <channel> <username> [minutes] [ip]
+  will mute user for specified time or for indefinite time if "minutes" are not specified.
+  Use "ip" (literal keyword, not the IP address) to make mute persistent, that is if user
+  will rename his account or register a new one, mute will still affect him (based on his IP)
 /unmute <channel> <username>
 /mutelist <channel>
   this command is available to normal users as well.
