@@ -48,4 +48,14 @@
 	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #endif
 
+#include "Game/command.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+
+// Changing these classes or classes being a member of these classes breaks ABI.
+// This also means any classes not in this list nor being a member of one of
+// these classes may not be used by AI code.
+#define AI_INTERFACE_GENERATED_VERSION \
+		(sizeof(CommandDescription) + sizeof(Command) + sizeof(UnitDef) + sizeof(UnitDef::UnitDefWeapon) + sizeof(WeaponDef))
+
 #endif /* AIBASE_H */

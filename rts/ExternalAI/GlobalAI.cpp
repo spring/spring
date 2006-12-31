@@ -38,14 +38,14 @@ CGlobalAI::CGlobalAI(int team, const char* dll)
 	else
 	{
 		// presents C++ interface
-        logOutput << dll <<  " has C++ interface\n";
-	
+		logOutput << dll <<  " has C++ interface\n";
+
 		GetGlobalAiVersion = (GETGLOBALAIVERSION)lib->FindAddress("GetGlobalAiVersion");
 		if (GetGlobalAiVersion==0){
 			handleerror(NULL,dll,"Incorrect Global AI dll",MBF_OK|MBF_EXCL);
 			return;
 		}
-		
+
 		int i=GetGlobalAiVersion();
 
 		if (i!=GLOBAL_AI_INTERFACE_VERSION){

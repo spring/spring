@@ -6,6 +6,7 @@
 #include <map>
 
 #include "creg/creg.h"
+#include "float3.h"
 
 struct MoveData;
 struct WeaponDef;
