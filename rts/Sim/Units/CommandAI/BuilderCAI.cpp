@@ -346,6 +346,7 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
 					fac->HelpTerraform(b);
 				} else {
+					StopSlowGuard();
 					SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
 				}
 				return;
@@ -353,13 +354,14 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			if (b->curBuild &&
 			    (( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 			     (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			    StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
 				nc.params.push_back(b->curBuild->id);
 				commandQue.push_front(nc);
 				inCommand=false;
-//					SlowUpdate();
+				SlowUpdate();
 				return;
 			}
 		}
@@ -367,6 +369,7 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			if (f->curBuild &&
 					(( f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 					 (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			    StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
@@ -381,26 +384,27 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 		float3 dif=guarded->pos-curPos;
 		dif.Normalize();
 		float3 goal=guarded->pos-dif*(fac->buildDistance*.5);
-		if((guarded->pos-curPos).SqLength2D()<
-				(fac->buildDistance*1.9f + guarded->radius)
-				*(fac->buildDistance*1.9f + guarded->radius)){
-			StartSlowGuard(guarded->maxSpeed);
-		} else {
+		if((guarded->pos-curPos).SqLength2D() >
+				(fac->buildDistance*1.1f + guarded->radius)
+				*(fac->buildDistance*1.1f + guarded->radius)){
 			StopSlowGuard();
 		}
 		if((guarded->pos-curPos).SqLength2D()<
 				(fac->buildDistance*0.9f + guarded->radius)
 				*(fac->buildDistance*0.9f + guarded->radius)){
+			StartSlowGuard(guarded->maxSpeed);
 			StopMove();
 //				logOutput.Print("should point with type 3?");
 			owner->moveType->KeepPointingTo(guarded->pos,
 				fac->buildDistance*0.9f+guarded->radius, false);
 			if(guarded->health<guarded->maxHealth
 					&& ((guarded->beingBuilt && owner->unitDef->canAssist)
-					|| (!guarded->beingBuilt && owner->unitDef->canRepair)))
+					|| (!guarded->beingBuilt && owner->unitDef->canRepair))) {
+				StopSlowGuard();
 				fac->SetRepairTarget(guarded);
-			else
+			} else {
 				NonMoving();
+			}
 		}else{
 			if((goalPos-goal).SqLength2D()>4000
 					|| (goalPos - owner->pos).SqLength2D() <
