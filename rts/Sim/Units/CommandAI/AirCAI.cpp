@@ -205,7 +205,7 @@ void CAirCAI::SlowUpdate()
 				inCommand=false;
 
 				CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
-					owner, 8000, owner->unitDef->minAirBasePower);
+					owner, owner->unitDef->minAirBasePower);
 				if(lp){
 					myPlane->AddDeathDependence(lp);
 					myPlane->reservedPad = lp;
@@ -214,7 +214,7 @@ void CAirCAI::SlowUpdate()
 					return;
 				}
 				float3 landingPos = airBaseHandler->FindClosestAirBasePos(
-					owner, 8000, owner->unitDef->minAirBasePower);
+					owner, owner->unitDef->minAirBasePower);
 				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
 					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED
 							&& owner->pos.distance2D(landingPos) > 800) {
@@ -230,7 +230,7 @@ void CAirCAI::SlowUpdate()
 			if(owner->currentFuel < myPlane->repairBelowHealth * owner->unitDef->maxFuel){
 				if(commandQue.empty() || commandQue.front().id == CMD_PATROL){
 					CAirBaseHandler::LandingPad* lp =
-						airBaseHandler->FindAirBase(owner, 8000, owner->unitDef->minAirBasePower);
+						airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 					if(lp){
 						owner->userAttackGround=false;
 						owner->userTarget=0;

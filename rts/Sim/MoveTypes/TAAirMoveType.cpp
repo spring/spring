@@ -856,7 +856,7 @@ void CTAAirMoveType::SlowUpdate(void)
 		owner->currentFuel = max(0.f, owner->currentFuel - (16.f/GAME_SPEED));
 
 	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth){
-		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,8000,owner->unitDef->minAirBasePower);
+		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,owner->unitDef->minAirBasePower);
 		if(lp){
 			AddDeathDependence(lp);
 			reservedPad=lp;
