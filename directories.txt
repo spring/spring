@@ -1,61 +1,70 @@
-rts
-rts/build
-rts/build/vstudio7
-rts/build/... linux scons build files?
+rts/build/kdevelop			Kdevelop project files
+rts/build				Project files / build scripts
+rts/build/scons				Scons build files (for Linux & MinGW)
+rts/build/vstudio7			Visual Studio 7 project files
+rts/build/vstudio8			Visual Studio 8 project files
+rts/build/xcode				xcode project file
 rts/ExternalAI				AI interfaces
-rts/Sim 				All code involving game simulation
-rts/Sim/Units				Unit handling code
-rts/Sim/Units/CommandAI
-rts/Sim/Units/UnitTypes			CUnit implementations
-rts/Sim/Units/COB			COB scripts VM
-rts/Sim/MoveTypes
-rts/Sim/MoveTypes/MoveMath
-rts/Sim/Objects				SolidObject, WorldObject
-rts/Sim/Projectiles
-rts/Sim/Misc                            Radar, los, damage array, quadfield, features, categories
-rts/Sim/Map
-rts/Sim/Path				Pathfinding
-rts/Sim/Weapons
-rts/Rendering				General rendering code, font rendering
-rts/Rendering/UnitModels		S3O and 3DO rendering
-rts/Rendering/Textures			Texture management/texture filtering code
-rts/Rendering/GL			OpenGL extension loading, vertex arrays and utility code
-rts/Rendering/Env			Sky(box), trees, water, grass
-rts/Rendering/Map			Map rendering code
 rts/Game				General game code
+rts/Game/StartScripts			Hardcoded startscripts
 rts/Game/UI				Game controls including current gui
-rts/Game/UI/GUI				Temporary storage for new gui
-rts/Game/StartScripts
+rts/lib/7zip				7zip library
+rts/lib/hpiutil2			TA archive loading
+rts/lib/libhpi				Unused (old version of hpiutil2?)
+rts/lib/minizip				zip library
+rts/lib/streflop/libm			Math libary (long double, double and float implementations)
+rts/lib/streflop/softfloat		Emulated FP library
+rts/lib/streflop			STandalone REproducable FLOating Point lib
+rts/lib					Third party libraries
+rts/Map					Map loading & rendering
+rts/Map/SM3				SM3 map support
+rts/Map/SMF				SMF map support
+rts/Rendering
+rts/Rendering/Env			Sky(box), trees, water, grass
+rts/Rendering/GL			OpenGL extension loading, vertex arrays and utility code
+rts/Rendering/Textures			Texture management / texture filtering code
+rts/Rendering/UnitModels		S3O and 3DO rendering
+rts/Sim/Misc				Radar, LOS, damage array, quadfield, features, categories
+rts/Sim/MoveTypes			Unit move types and move math
+rts/Sim/Objects				SolidObject, WorldObject
+rts/Sim/Path				Pathfinding
+rts/Sim/Projectiles			ProjectileHandler & all projectiles
+rts/Sim					Simulation code
+rts/Sim/Units/COB			COB scripts VM
+rts/Sim/Units/CommandAI			Unit AI
+rts/Sim/Units				Unit handling code
+rts/Sim/Units/UnitTypes			CUnit implementations
+rts/Sim/Weapons				Weapon code
+rts					Spring engine source code
 rts/System
-rts/System/Filesystem
+rts/System/creg				Class register system (reflection)
+rts/System/FileSystem			Virtual File System
 rts/System/Platform			Code handling differences between OSes/processors
-rts/System/Platform/Win
-rts/lib					7zip, minizip, HPIUtil
+rts/System/Platform/Linux		Linux/Unix specific code
+rts/System/Platform/Mac			Mac specific code
+rts/System/Platform/Win			Windows specific code
+rts/System/Script			LUA bindings for scripts
+rts/System/Sync				Sync debuggers
 
-omni                    The linux spring client written by Ace07
+AI					AI sourcecode..
+AI/Global				..for GlobalAIs (Bot-libs)
+AI/Group				..for GroupAIs (Helper-libs)
 
-ai
-ai/Global
-ai/Global/JCAI
-ai/Global/NTAI
-ai/Group
-ai/Group/MetalMaker
-ai/Group/CentralBuild
-ai/Group/SimpleFormation
+game/AI/Bot-libs			Output directory for global AI binaries
+game/AI					Files related to AI
+game/AI/Helper-libs			Output directory for group AI binaries
+game/base				Output directory for springcontent.sdz & bitmaps.sdz
+game/maps				Map archives (sd7,sdz,sdd)
+game/mods				Mod archives (sd7,sdz,sdd)
+game					Output directory for binaries / data directory
+game/shaders				OpenGL vertex / fragment shaders
+game/startscripts			LUA startscripts
 
-game					Output directory for binaries
-game/gui				GUI interfaces (new gui code has configurable UIs)
-game/shaders
-game/startscripts
-game/bitmaps
-game/mods				Mod archives (sd7,sdz)
-game/aidll                              Output directory for group AI binaries
-game/aidll/globalai                     Output directory for global AI binaries, and storage for AI data
+omni					The linux spring client written by Ace07
+UnityLobby				The linux spring client written by hollowsoul
 
-mods					Mods development versions
-
-backup                  Holds older files no longer needed by the spring project
-backup/SpringClient     Contains the old spring client built by Jouninkomiko
-backup/Lobby            Temp directory with little use
-backup/unitsync         The old code used to sync units between clients
-backup/server           The old server for the old lobby built by Jouninkomiko
+backup					Holds older files no longer needed by the spring project
+backup/Lobby				Temp directory with little use
+backup/server				The old server for the old lobby built by Jouninkomiko
+backup/SpringClient			Contains the old spring client built by Jouninkomiko
+backup/unitsync				The old code used to sync units between clients

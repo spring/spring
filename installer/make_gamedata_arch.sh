@@ -1,11 +1,17 @@
 #!/bin/sh
 # Author: Tobi Vollebregt
 
+# Sanity check.
+if ! which zip >/dev/null; then
+	echo "Error: Could not find zip."
+	exit 1
+fi
+
 # Find correct working directory.
 # (Compatible with SConstruct, which is in trunk root)
 
 while [ ! -d installer ]; do
-	if [ "$PWD" == "/" ]; then
+	if [ "$PWD" = "/" ]; then
 		echo "Error: Could not find installer directory."
 		echo "Make sure to run this script from a directory below your checkout directory."
 		exit 1
