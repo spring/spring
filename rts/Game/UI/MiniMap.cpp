@@ -931,7 +931,7 @@ void CMiniMap::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (minimized) {
-	  DrawMinimizedButton();
+		DrawMinimizedButton();
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
 		return;

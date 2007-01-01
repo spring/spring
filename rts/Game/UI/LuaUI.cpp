@@ -748,6 +748,43 @@ bool CLuaUI::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
+bool CLuaUI::UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam)
+{
+	if ((gu->myAllyTeam != gs->AllyTeam(oldTeam)) &&
+	    (gu->myAllyTeam != gs->AllyTeam(newTeam))) {
+		return false;
+	}
+
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "UnitChangedTeam");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);	
+	lua_pushnumber(L, unit->unitDef->id);	
+	lua_pushnumber(L, oldTeam);	
+	lua_pushnumber(L, newTeam);	
+
+	// call the routine
+	const int error = lua_pcall(L, 4, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_UnitChangedTeam", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	return true;
+}
+
+
 bool CLuaUI::GroupChanged(int groupID)
 {
 	lua_State* L = LUASTATE.GetL();
@@ -802,6 +839,7 @@ bool CLuaUI::DrawWorldItems()
 
 	// setup a known state
 	ResetGLState();
+	glEnable(GL_NORMALIZE);
 
 	glPushMatrix();
 
@@ -816,7 +854,8 @@ bool CLuaUI::DrawWorldItems()
 		lua_pop(L, 1);
 		retval = false;
 	}
-	else if (matrixDepth != 0) {
+
+	if (matrixDepth != 0) {
 		logOutput.Print("DrawWorldItems: matrix mismatch");
 		while (matrixDepth > 0) {
 			glPopMatrix();
@@ -824,9 +863,10 @@ bool CLuaUI::DrawWorldItems()
 		}
 	}
 
-
 	glPopMatrix();
 
+	glDisable(GL_NORMALIZE);
+	
 	// pop the GL state
 	glPopAttrib();
 
@@ -971,7 +1011,8 @@ bool CLuaUI::DrawScreenItems()
 		lua_pop(L, 1);
 		retval = false;
 	}
-	else if (matrixDepth != 0) {
+	
+	if (matrixDepth != 0) {
 		logOutput.Print("DrawScreenItems: matrix mismatch");
 		while (matrixDepth > 0) {
 			glPopMatrix();
@@ -3623,8 +3664,9 @@ static int WorldToScreenCoords(lua_State* L)
 static int TraceScreenRay(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to TraceScreenRay(x, y)");
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+	    ((args >= 3) && !lua_isboolean(L, 3))) {
+		lua_pushstring(L, "Incorrect arguments to TraceScreenRay()");
 		lua_error(L);
 	}
 
@@ -3642,6 +3684,8 @@ static int TraceScreenRay(lua_State* L)
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
 
+	const bool onlyCoords = ((args >= 3) && lua_toboolean(L, 3));
+	
 	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
 	const float fdist = helper->GuiTraceRayFeature(pos, dir, range,feature);
 
@@ -3650,20 +3694,22 @@ static int TraceScreenRay(lua_State* L)
 		return 0;
 	}
 
-	if (udist > fdist) {
-		unit = NULL;
-	}
+	if (!onlyCoords) {
+		if (udist > fdist) {
+			unit = NULL;
+		}
 
-	if (unit != NULL) {
-		lua_pushstring(L, "unit");
-		lua_pushnumber(L, unit->id);
-		return 2;
-	}
+		if (unit != NULL) {
+			lua_pushstring(L, "unit");
+			lua_pushnumber(L, unit->id);
+			return 2;
+		}
 
-	if (feature != NULL) {
-		lua_pushstring(L, "feature");
-		lua_pushnumber(L, feature->id);
-		return 2;
+		if (feature != NULL) {
+			lua_pushstring(L, "feature");
+			lua_pushnumber(L, feature->id);
+			return 2;
+		}
 	}
 
 	const float3 groundPos = pos + (dir * udist);
@@ -4049,17 +4095,24 @@ static int DrawText(lua_State* L)
 	bool right = false;
 	bool center = false;
 	bool outline = false;
+	bool colorCodes = true;
 	bool lightOut;
 
 	if ((args >= 4) && lua_isnumber(L, 4)) {
 		size = lua_tonumber(L, 4);
 	}
 	if ((args >= 5) && lua_isstring(L, 5)) {
-		const string opts = lua_tostring(L, 5);
-		if (strstr(opts.c_str(), "r") != NULL) { right = true; }
-		if (strstr(opts.c_str(), "c") != NULL) { center = true; }
-		if (strstr(opts.c_str(), "o") != NULL) { outline = true; lightOut = false; }
-		if (strstr(opts.c_str(), "O") != NULL) { outline = true; lightOut = true; }
+	  const char* c = lua_tostring(L, 5);
+	  while (*c != 0) {
+	  	switch (*c) {
+	  	  case 'c': { center = true;                    break; }
+	  	  case 'r': { right = true;                     break; }
+			  case 'n': { colorCodes = false;               break; }
+			  case 'o': { outline = true; lightOut = false; break; }
+			  case 'O': { outline = true; lightOut = true;  break; }
+			}
+	  	c++;
+		}
 	}
 
 	const float yScale = size / textHeight;
@@ -4086,7 +4139,11 @@ static int DrawText(lua_State* L)
 		} else {
 			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, darkOutline);
 		}
-		font->glPrintColor("%s", text.c_str());
+		if (colorCodes) {
+			font->glPrintColor("%s", text.c_str());
+		} else {
+			font->glPrint("%s", text.c_str());
+		}
 	}
 	glPopMatrix();
 
