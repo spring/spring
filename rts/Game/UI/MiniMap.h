@@ -52,6 +52,7 @@ class CMiniMap : public CInputReceiver {
 		
 		void DrawNotes(void);
 		void DrawButtons();
+		void DrawMinimizedButton();
 		void DrawUnit(CUnit* unit);
 		void DrawUnitHighlight(CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
