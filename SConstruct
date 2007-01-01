@@ -57,7 +57,7 @@ else: # create import library and .def file on Windows
 
 Alias('spring', spring)
 Default(spring)
-inst = Install(os.path.join(env['installprefix'], env['bindir']), spring)
+inst = env.Install(os.path.join(env['installprefix'], env['bindir']), spring)
 Alias('install', inst)
 Alias('install-spring', inst)
 
@@ -135,7 +135,7 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 	Alias(f, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
 	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
 	Default(lib)
-	inst = Install(install_dir, lib)
+	inst = env.Install(install_dir, lib)
 	Alias('install', inst)
 	Alias('install-GroupAI', inst)
 	Alias('install-'+f, inst)
@@ -150,7 +150,7 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
 	Default(lib)
-	inst = Install(install_dir, lib)
+	inst = env.Install(install_dir, lib)
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	Alias('install-'+f, inst)
@@ -164,7 +164,7 @@ Alias('install-TestABICAI', inst)
 if sys.platform == 'win32':
 	Alias('GlobalAI', lib)
 	Default(lib)
-	inst = Install(install_dir, lib)
+	inst = env.Install(install_dir, lib)
 	Alias('install', inst)
 	Alias('install-GlobalAI', inst)
 	if env['strip']:
@@ -206,27 +206,37 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		else:
 			os.system("installer/make_gamedata_arch.sh")
 
-inst = Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
+inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
 Alias('install', inst)
-inst = Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
+inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)
 
 # install shaders
-shaders=os.listdir('game/shaders')
-for shader in shaders:
+for shader in os.listdir('game/shaders'):
 	if not os.path.isdir(os.path.join('game/shaders', shader)):
-		inst = Install(os.path.join(env['installprefix'], env['datadir'], 'shaders'), os.path.join('game/shaders', shader))
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'shaders'), os.path.join('game/shaders', shader))
 		Alias('install', inst)
+
+# install startscripts
+for f in os.listdir('game/startscripts'):
+	if not os.path.isdir(f):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'startscripts'), os.path.join('game/startscripts', f))
+		Alias('install', inst)
+
+# install some files from root of datadir
+for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'Luxi.ttf', 'Vera.ttf']:
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	Alias('install', inst)
+
+# install menu entry & icon
+inst = env.Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spring.png')
+Alias('install', inst)
+inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
+Alias('install', inst)
 
 # install AAI config files
 aai_data=filelist.list_files_recursive(env, 'game/AI/AAI')
 for f in aai_data:
 	if not os.path.isdir(f):
-		inst = Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
+		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
 		Alias('install', inst)
-
-# install menu entry & icon
-inst = Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spring.png')
-Alias('install', inst)
-inst = Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
-Alias('install', inst)
