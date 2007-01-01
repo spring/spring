@@ -55,6 +55,8 @@
 
   GroupChanged()
 
+	AddConsoleLine()  FIXME
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -391,17 +393,26 @@ GroupChanged(number groupID) -> nil
 --  code. They are bound to the lua workspace before the
 --
 
+--
+--  loads archived and unarchived files
+--
 LoadTextVFS(string "filename") -> nil | string "filecontents"
 
+--
+--  only lists archived files
+--
 GetDirListVFS(string "dir") ->
   vfsFiles = {
     [1] = string "filename",
     etc...
   }
 
--- options characters are:
---   "d" - include directories
---   "r" - recursive search
+--
+--  only lists unarchived files (real files)
+--
+--  options characters are:
+--    "d" - include directories
+--    "r" - recursive search
 GetDirList(string "dir", string "pattern", string "options") ->
   normalFiles = {
     [1] = string "filename",
@@ -683,7 +694,7 @@ GetCameraVectors() ->
 WorldToScreenCoords(number x, number y, number z) ->
   number x, number y, number z
 
-TraceScreenRay(number mouseX, number mouseY) ->
+TraceScreenRay(number mouseX, number mouseY[, boolean onlyCoords]) ->
   nil |
   string "unit",    number unitID    |
   string "feature", number featureID |

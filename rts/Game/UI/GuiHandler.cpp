@@ -135,6 +135,14 @@ void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
+void CGuiHandler::UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitChangedTeam(unit, oldTeam, newTeam);
+	}
+}
+
+
 void CGuiHandler::AddConsoleLine(const std::string& line, int priority)
 {
 	if (luaUI != NULL) {

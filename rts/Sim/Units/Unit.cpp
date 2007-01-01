@@ -857,6 +857,10 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	const int oldteam = team;
 	globalAI->UnitTaken(this, oldteam);
 	
+	if (guihandler) {
+		guihandler->UnitChangedTeam(this, oldteam, newteam);
+	}
+	
 	if (uh->unitsType[oldteam][unitDef->id] > 0) {
 		uh->unitsType[oldteam][unitDef->id]--;
 	} else {
