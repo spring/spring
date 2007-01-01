@@ -931,41 +931,9 @@ void CMiniMap::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (minimized) {
-		const int bs = buttonSize + 0;
-		glViewport(gu->viewPosX + 1, gu->viewSizeY - bs - 1, bs, bs);
-		if (!buttonsTexture) {
-			glDisable(GL_TEXTURE_2D);
-			glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-		} else {
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, buttonsTexture);
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			const IntBox& mb = minimizeBox;
-			glBegin(GL_QUADS);
-				glTexCoord2f(mb.xminTx, mb.yminTx); glVertex2f(0.0f, 0.0f);
-				glTexCoord2f(mb.xmaxTx, mb.yminTx); glVertex2f(1.0f, 0.0f);
-				glTexCoord2f(mb.xmaxTx, mb.ymaxTx); glVertex2f(1.0f, 1.0f);
-				glTexCoord2f(mb.xminTx, mb.ymaxTx); glVertex2f(0.0f, 1.0f);
-			glEnd();
-			glDisable(GL_TEXTURE_2D);
-		}
-		// highlight
-		if ((mouse->lastx < buttonSize) && (mouse->lasty < buttonSize)) {
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-			glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-			glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
-		// outline
-		glViewport(gu->viewPosX, gu->viewSizeY - bs - 2, bs + 2, bs + 2);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glLineWidth(1.51f);
-		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-		glLineWidth(1.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	  DrawMinimizedButton();
+		cursorIcons.Enable(true);
+		setSurfaceCircleFunc(NULL);
 		return;
 	}
 
@@ -1141,6 +1109,47 @@ void CMiniMap::Draw()
 	
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
+}
+
+
+void CMiniMap::DrawMinimizedButton()
+{
+	const int bs = buttonSize + 0;
+	glViewport(gu->viewPosX + 1, gu->viewSizeY - bs - 1, bs, bs);
+	if (!buttonsTexture) {
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	} else {
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		const IntBox& mb = minimizeBox;
+		glBegin(GL_QUADS);
+			glTexCoord2f(mb.xminTx, mb.yminTx); glVertex2f(0.0f, 0.0f);
+			glTexCoord2f(mb.xmaxTx, mb.yminTx); glVertex2f(1.0f, 0.0f);
+			glTexCoord2f(mb.xmaxTx, mb.ymaxTx); glVertex2f(1.0f, 1.0f);
+			glTexCoord2f(mb.xminTx, mb.ymaxTx); glVertex2f(0.0f, 1.0f);
+		glEnd();
+		glDisable(GL_TEXTURE_2D);
+	}
+	// highlight
+	if ((mouse->lastx < buttonSize) && (mouse->lasty < buttonSize)) {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	// outline
+	glViewport(gu->viewPosX, gu->viewSizeY - bs - 2, bs + 2, bs + 2);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glLineWidth(1.51f);
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	glLineWidth(1.0f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 }
 
 
