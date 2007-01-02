@@ -71,7 +71,7 @@
         <tr>
           <td colspan="2">
             <h3>Description</h3>
-            <xsl:value-of select="Description"/>
+            <xsl:apply-templates select="Description" />
             <br />
             <br />
             
@@ -90,14 +90,17 @@
               <br />
             </xsl:if>
             
-            <xsl:if test="string(Examples)">
-              <h3>Usage examples</h3>
-  
-              <span style='white-space:pre;'><xsl:apply-templates select="Examples"/></span>
-              
-              <br />
+            <xsl:if test="Examples/*">
+              <h3>Examples</h3>
+              <xsl:for-each select="Examples/Example">
+		        <xsl:if test="string(.)">
+                  <xsl:apply-templates select="."/>
+                  <br />
+		        </xsl:if>
+              </xsl:for-each>
               <br />
             </xsl:if>
+            
           </td>
         </tr>
       </table>
@@ -107,10 +110,6 @@
     
   </body>
   </html>
-</xsl:template>
-
-<xsl:template name="commontext_handler">
-  <span style='white-space:pre'><xsl:apply-templates /></span>
 </xsl:template>
 
 <xsl:template match="clink">
@@ -128,5 +127,18 @@
 <xsl:template match="u">
   <span style="text-decoration: underline;"><xsl:apply-templates /></span>
 </xsl:template>
+
+<xsl:template match="br">
+  <br /><xsl:apply-templates />
+</xsl:template>
+
+<xsl:template match="ul">
+  <ul><xsl:apply-templates /></ul>
+</xsl:template>
+
+<xsl:template match="li">
+  <li><xsl:apply-templates /></li>
+</xsl:template>
+
 
 </xsl:stylesheet>

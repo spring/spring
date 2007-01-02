@@ -21,11 +21,14 @@
   some html-like tags and links to other command IDs.
 
 -->
-<!ENTITY % CommonText "(#PCDATA|clink|u|i|b)*">
+<!ENTITY % CommonText "(#PCDATA|clink|u|i|b|br|ul|li)*">
 
 <!ELEMENT u %CommonText;> <!-- underline tag -->
 <!ELEMENT i %CommonText;> <!-- italics tag -->
 <!ELEMENT b %CommonText;> <!-- bold tag -->
+<!ELEMENT br %CommonText;> <!-- same as HTML BR tag -->
+<!ELEMENT ul (li)+> <!-- same as HTML UL tag -->
+<!ELEMENT li %CommonText;> <!-- same as HTML LI tag -->
 <!-- clink is a "command link", it points to another command: -->
 <!ELEMENT clink EMPTY>
 <!ATTLIST clink
@@ -36,7 +39,7 @@
 <!ELEMENT ProtocolDescription (Intro, CommandList)>
 <!ELEMENT Intro %CommonText;>
 <!ELEMENT CommandList (Command*)>
-<!ELEMENT Command (Arguments, Description, Response, Examples?)>
+<!ELEMENT Command (Arguments?, Description, Response?, Examples?)>
 <!ATTLIST Command
    Name ID #REQUIRED
    Source (client|server) #REQUIRED
@@ -44,10 +47,11 @@
 <!ELEMENT Arguments (Argument*)>
 <!ELEMENT Argument %CommonText;>
 <!ATTLIST Argument
-   Name NMTOKEN #REQUIRED
+   Name NMTOKENS #REQUIRED
    Optional (yes|no) #REQUIRED
    Sentence (yes|no) #REQUIRED
    >
 <!ELEMENT Description %CommonText;>
 <!ELEMENT Response %CommonText;>
-<!ELEMENT Examples (#PCDATA)>
+<!ELEMENT Examples (Example*)>
+<!ELEMENT Example (#PCDATA)>
