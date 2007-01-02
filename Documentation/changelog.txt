@@ -1,11 +1,16 @@
 TASpring change log
 
-0.next
+0.74b3
 
+- Fixed FBI tag floater for planes,
 - Added FBI tag canSubmerge for planes. The following rules apply:
     1) If a plane only has the 'floater' tag set to 1, it will land on the ocean surface.
     2) If a plane only has the 'canSubmerge' tag set to 1, it will land on the ocean floor.
     3) If a plane has both tags set to 1, it will obey rule 2.
+
+- Fixed the factory cancelled-build delay bug.
+- Fixed units get stuck while guarding factories bug.
+- Fixed planes can't find landing pad on large maps bug.
 
 0.74b2
 
