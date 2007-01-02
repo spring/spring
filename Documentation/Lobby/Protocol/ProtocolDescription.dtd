@@ -1,0 +1,53 @@
+<!--
+  This DTD describes format of Spring lobby protocol description document.
+
+
+  *** notes on document structure ***
+
+  'Source' field indicates the direction of the command, that is if
+  source is 'client', the command is sent by the client, and likewise for
+  the 'server'.
+
+  'Argument' may contain some text describing the argument itself, 'Optional' tells
+  us whether this argument is optional or mandatory, and 'Sentence' tells us
+  if this argument may contain more than one word combined with space character
+  as a delimiter.
+  
+  Use 'clink' element in order to reference to other commands.
+  
+  'Examples' may contain some text to denote actual usage of the command.
+
+  'CommonText' entity is used for general text formatting that may contain
+  some html-like tags and links to other command IDs.
+
+-->
+<!ENTITY % CommonText "(#PCDATA|clink|u|i|b)*">
+
+<!ELEMENT u %CommonText;> <!-- underline tag -->
+<!ELEMENT i %CommonText;> <!-- italics tag -->
+<!ELEMENT b %CommonText;> <!-- bold tag -->
+<!-- clink is a "command link", it points to another command: -->
+<!ELEMENT clink EMPTY>
+<!ATTLIST clink
+  name IDREF #REQUIRED
+  >
+
+<!-- root element: -->
+<!ELEMENT ProtocolDescription (Intro, CommandList)>
+<!ELEMENT Intro %CommonText;>
+<!ELEMENT CommandList (Command*)>
+<!ELEMENT Command (Arguments, Description, Response, Examples?)>
+<!ATTLIST Command
+   Name ID #REQUIRED
+   Source (client|server) #REQUIRED
+   >
+<!ELEMENT Arguments (Argument*)>
+<!ELEMENT Argument %CommonText;>
+<!ATTLIST Argument
+   Name NMTOKEN #REQUIRED
+   Optional (yes|no) #REQUIRED
+   Sentence (yes|no) #REQUIRED
+   >
+<!ELEMENT Description %CommonText;>
+<!ELEMENT Response %CommonText;>
+<!ELEMENT Examples (#PCDATA)>
