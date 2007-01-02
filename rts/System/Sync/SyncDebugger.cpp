@@ -323,7 +323,7 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
-		serverNet->SendData< unsigned char, unsigned char >(NETMSG_PAUSE, gu->myPlayerNum, true);
+		serverNet->SendData< unsigned char, unsigned char >(NETMSG_PAUSE, true, gu->myPlayerNum);
 		serverNet->SendData< int >(NETMSG_SD_CHKREQUEST, serverframenum);
 	}
 }

@@ -55,8 +55,8 @@ public:
 	set<CUnit*> units;
 	float3 startPos;
 
-	SyncedFloat metal;
-	SyncedFloat energy;
+	float metal;
+	float energy;
 
 	float metalPull,    prevMetalPull;
 	float metalIncome,  prevMetalIncome;

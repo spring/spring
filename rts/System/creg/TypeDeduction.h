@@ -37,7 +37,7 @@ CREG_SUPPORT_BASIC_TYPE(float, crFloat)
 CREG_SUPPORT_BASIC_TYPE(double, crDouble)
 CREG_SUPPORT_BASIC_TYPE(bool, crBool)
 
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+#ifdef SYNCDEBUG
 CREG_SUPPORT_BASIC_TYPE(SyncedSint,   crSyncedSint)
 CREG_SUPPORT_BASIC_TYPE(SyncedUint,   crSyncedUint)
 CREG_SUPPORT_BASIC_TYPE(SyncedSshort, crSyncedSshort)

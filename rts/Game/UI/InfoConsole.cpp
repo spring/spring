@@ -28,8 +28,11 @@ CInfoConsole::CInfoConsole()
 : lastMsgPos(0,0,0), disabled(false)
 {
 	data.clear();
-
+	
+	
 	lastTime=0;
+	lifetime=400;
+
 	lifetime     = configHandler.GetInt("InfoMessageTime", 400);
 	verboseLevel = configHandler.GetInt("VerboseLevel", 0);
 
@@ -45,7 +48,7 @@ CInfoConsole::CInfoConsole()
 	}
 
 	numLines = 8;
-
+	
 	logOutput.AddSubscriber(this);
 }
 
@@ -59,7 +62,7 @@ void CInfoConsole::Draw()
 	if (disabled) {
 		return;
 	}
-
+	
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	glPushMatrix();

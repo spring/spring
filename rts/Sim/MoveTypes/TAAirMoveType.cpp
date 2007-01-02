@@ -256,7 +256,7 @@ void CTAAirMoveType::Idle()
 
 void CTAAirMoveType::UpdateLanded()
 {
-	float3 &pos = owner->pos;
+	SyncedFloat3 &pos = owner->pos;
 
 	//dont place on ground if we are on a repair pad
 	if (padStatus == 0) {
@@ -271,7 +271,7 @@ void CTAAirMoveType::UpdateLanded()
 
 void CTAAirMoveType::UpdateTakeoff()
 {
-	float3 &pos = owner->pos;
+	SyncedFloat3 &pos = owner->pos;
 	wantedSpeed=ZeroVector;
 	wantedHeight=orgWantedHeight;
 
@@ -311,7 +311,7 @@ void CTAAirMoveType::UpdateHovering()
 
 void CTAAirMoveType::UpdateFlying()
 {
-	float3 &pos = owner->pos;
+	SyncedFloat3 &pos = owner->pos;
 	float3 &speed = owner->speed;
 
 	//Direction to where we would like to be
@@ -447,7 +447,7 @@ void CTAAirMoveType::UpdateFlying()
 
 void CTAAirMoveType::UpdateLanding()
 {
-	float3 &pos = owner->pos;
+	SyncedFloat3 &pos = owner->pos;
 	float3 &speed = owner->speed;
 
 	//We want to land, and therefore cancel our speed first
@@ -571,7 +571,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 void CTAAirMoveType::UpdateAirPhysics()
 {
-	float3& pos=owner->pos;
+	SyncedFloat3& pos=owner->pos;
 	float3& speed=owner->speed;
 
 	if(!((gs->frameNum+owner->id)&3))
@@ -667,7 +667,7 @@ void CTAAirMoveType::UpdateMoveRate()
 void CTAAirMoveType::Update()
 {
 	//Handy stuff. Wonder if there is a better way?
-	float3 &pos=owner->pos;
+	SyncedFloat3 &pos=owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;

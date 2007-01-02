@@ -66,6 +66,21 @@ bool BuildInfo::Parse(const Command& c)
 	return false;
 }
 
+//////////////////////////////////////////////////////////////////////
+// CChecksum implementation
+//////////////////////////////////////////////////////////////////////
+
+char* CChecksum::diff(char* buf, const CChecksum& c) {
+	char* p = buf;
+	if (x != c.x) *(p++) = 'X';
+	if (y != c.y) *(p++) = 'Y';
+	if (z != c.z) *(p++) = 'Z';
+	if (m != c.m) *(p++) = 'M';
+	if (e != c.e) *(p++) = 'E';
+	*(p++) = 0;
+	return buf;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -233,6 +248,34 @@ END_TIME_PROFILE("Unit slow update");
 
 END_TIME_PROFILE("Unit handler");
 
+}
+
+CChecksum CUnitHandler::CreateChecksum()
+{
+	CChecksum checksum;
+
+	list<CUnit*>::iterator usi;
+	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++){
+		checksum.x^=*((int*)&((*usi)->midPos.x));
+		checksum.y^=*((int*)&((*usi)->midPos.y));
+		checksum.z^=*((int*)&((*usi)->midPos.z));
+	}
+
+#ifdef TRACE_SYNC
+		tracefile << gs->frameNum << " X "<< checksum.x << "\n";
+		tracefile << gs->frameNum << " Y "<< checksum.y << "\n";
+		tracefile << gs->frameNum << " Z "<< checksum.z << "\n";
+#endif
+
+	for(int a=0;a<gs->activeTeams;++a){
+		checksum.m^=*((int*)&(gs->Team(a)->metal));
+		checksum.e^=*((int*)&(gs->Team(a)->energy));
+	}
+#ifdef TRACE_SYNC
+		tracefile << gs->frameNum << " M "<< checksum.m << "\n";
+		tracefile << gs->frameNum << " E "<< checksum.e << "\n";
+#endif
+	return checksum;
 }
 
 float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)

@@ -88,7 +88,6 @@ def generate(env):
 		('platform',          'Set to linux, freebsd or windows', None),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
-		('synccheck',         'Set to yes to enable sync checker & resyncer', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('cpppath',           'Set path to extra header files', []),
@@ -259,10 +258,6 @@ def generate(env):
 
 		# Must come before the '-fvisibility=hidden' code.
 		bool_opt('syncdebug', False)
-		bool_opt('synccheck', False)
-		if env['syncdebug'] and env['synccheck']:
-			print "syncdebug and synccheck are mutually exclusive. Please choose one."
-			env.Exit(1)
 		string_opt('fpmath', '387')
 
 		# If sync debugger is on, disable inlining, as it makes it much harder to follow backtraces.
@@ -324,8 +319,6 @@ def generate(env):
 		# Add/remove SYNCDEBUG to enable/disable sync debugging.
 		if env['syncdebug']:
 			spring_defines += ['SYNCDEBUG']
-		if env['synccheck']:
-			spring_defines += ['SYNCCHECK']
 
 		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
 		# and some AIs maybe.  Just make exceptions in SConstruct.
