@@ -3,7 +3,7 @@
 #ifndef SYNCEDPRIMITIVEIO_H
 #define SYNCEDPRIMITIVEIO_H
 
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+#ifdef SYNCDEBUG
 
 #include <iostream>
 #include "SyncedPrimitive.h"
@@ -26,6 +26,6 @@ template<class T> inline std::istream& operator>>(std::istream& is, SyncedPrimit
 	return is;
 }
 
-#endif // SYNCDEBUG || SYNCCHECK
+#endif // SYNCDEBUG
 
 #endif // SYNCEDPRIMITIVEIO_H

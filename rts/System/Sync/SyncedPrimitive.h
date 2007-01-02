@@ -3,10 +3,9 @@
 #ifndef SYNCEDPRIMITIVE_H
 #define SYNCEDPRIMITIVE_H
 
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+#ifdef SYNCDEBUG
 
-#include "SyncChecker.h"  // for CSyncedPrimitiveBase (if SYNCCHECK is defined)
-#include "SyncDebugger.h" // for CSyncedPrimitiveBase (if SYNCDEBUG is defined)
+#include "SyncDebugger.h" // for CSyncedPrimitiveBase
 #include "Upcast.h"       // for UPCAST macro
 
 /*
@@ -180,7 +179,7 @@ typedef SyncedPrimitive<         Sint64 > SyncedSint64;
 typedef SyncedPrimitive<         Uint64 > SyncedUint64;
 #endif // UPCAST_USE_64_BIT_TYPES
 
-#else // SYNCDEBUG || SYNCCHECK
+#else // SYNCDEBUG
 
 // 64 bit types are missing here because they made AIs depend on SDL
 // (SDL_types.h specifically)
@@ -197,6 +196,6 @@ typedef          float SyncedFloat;
 typedef         double SyncedDouble;
 typedef    long double SyncedLongDouble;
 
-#endif // !SYNCDEBUG && !SYNCCHECK
+#endif // !SYNCDEBUG
 
 #endif // SYNCEDPRIMITIVE_H

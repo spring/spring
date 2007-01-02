@@ -19,7 +19,7 @@ public:
 	virtual void lsDouble(double& v)=0;
 	virtual void lsString(std::string& v)=0;
 
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+#ifdef SYNCDEBUG
 	inline void lsBool(SyncedBool& v) {
 		bool w = v;
 		this->lsBool(w);
