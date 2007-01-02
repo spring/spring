@@ -87,24 +87,27 @@ CAirMoveType::~CAirMoveType(void)
 	}
 }
 
+
+
 void CAirMoveType::Update(void)
 {
 	float3 &pos=owner->pos;
 
 	//This is only set to false after the plane has finished constructing
-	if (useHeading){
+	if (useHeading) {
 		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
-	if(owner->stunned){
-		UpdateAirPhysics(0,lastAileronPos,lastElevatorPos,0,ZeroVector);
+	if (owner->stunned) {
+		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		goto EndNormalControl;
 	}
+
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(owner->directControl && !(aircraftState==AIRCRAFT_CRASHING)){
+	if (owner->directControl && !(aircraftState == AIRCRAFT_CRASHING)) {
 		SetState(AIRCRAFT_FLYING);
-		DirectControlStruct* dc=owner->directControl;
+		DirectControlStruct* dc = owner->directControl;
 		
 		inefficientAttackTime=0;
 		if(dc->forward || dc->back || dc->left || dc->right){
@@ -125,36 +128,37 @@ void CAirMoveType::Update(void)
 	}
 #endif
 
-	if(reservedPad){
+	if (reservedPad) {
 		CUnit* unit=reservedPad->unit;
 		float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
-		float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
-		if(padStatus==0){
-			if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)
+		float3 pos = unit->pos + (unit->frontdir * relPos.z) + (unit->updir * relPos.y) + (unit->rightdir * relPos.x);
+
+		if (padStatus == 0) {
+			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
 				SetState(AIRCRAFT_FLYING);
 
-			goalPos=pos;
+			goalPos = pos;
 
-			if(pos.distance(owner->pos)<400){
-				padStatus=1;
+			if (pos.distance(owner->pos) < 400) {
+				padStatus = 1;
 			}
 			//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
-		} else if(padStatus==1){
-			if(aircraftState!=AIRCRAFT_LANDING)
+		} else if (padStatus == 1) {
+			if (aircraftState != AIRCRAFT_LANDING)
 				SetState(AIRCRAFT_LANDING);
 
-			goalPos=pos;
-			reservedLandingPos=pos;
+			goalPos = pos;
+			reservedLandingPos = pos;
 
-			if(owner->pos.distance(pos)<3 || aircraftState==AIRCRAFT_LANDED){
-				padStatus=2;
+			if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED){
+				padStatus = 2;
 			}
 			//			geometricObjects->AddLine(owner->pos,pos,10,0,1);
 		} else {
-			if(aircraftState!=AIRCRAFT_LANDED)
+			if (aircraftState != AIRCRAFT_LANDED)
 				SetState(AIRCRAFT_LANDED);
 
-			owner->pos=pos;
+			owner->pos = pos;
 
 			owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
 			owner->currentFuel = min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
@@ -169,11 +173,12 @@ void CAirMoveType::Update(void)
 		}
 	}
 
-	switch(aircraftState){
+
+	switch (aircraftState) {
 	case AIRCRAFT_FLYING:
 #ifdef DEBUG_AIRCRAFT
-	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
-		logOutput.Print("Flying %i %i %.1f %i",moveState,fireState,inefficientAttackTime,(int)isFighter);
+	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
+		logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
 	}
 #endif
 		owner->restTime=0;
@@ -219,7 +224,9 @@ void CAirMoveType::Update(void)
 	default:
 		break;
 	}
+
 EndNormalControl:
+
 	if(pos!=oldpos){
 		oldpos=pos;
 		if(aircraftState==AIRCRAFT_FLYING || aircraftState==AIRCRAFT_CRASHING){
@@ -283,6 +290,7 @@ EndNormalControl:
 	}
 #endif
 }
+
 
 void CAirMoveType::SlowUpdate(void)
 {
@@ -365,6 +373,7 @@ void CAirMoveType::UpdateManeuver(void)
 		break;
 	}
 }
+
 
 void CAirMoveType::UpdateFighterAttack(void)
 {
@@ -544,6 +553,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	lines.push_back(dl);/**/
 }
 
+
 void CAirMoveType::UpdateAttack(void)
 {
 /*	std::vector<CWeapon*>::iterator wi;
@@ -556,6 +566,7 @@ void CAirMoveType::UpdateAttack(void)
 */
 	UpdateFlying(wantedHeight,1);
 }
+
 
 void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 {
@@ -657,14 +668,17 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 			}
 		}
 	} else {
-		if(frontdir.y<-0.1f){
-			elevator=1;
-		} else if(frontdir.y>0.15f){
-			elevator=-1;
+		if (frontdir.y < -0.1f) {
+			elevator = 1;
+		} else if (frontdir.y > 0.15f) {
+			elevator = -1;
 		}
 	}
-	UpdateAirPhysics(rudder,aileron,elevator,engine,owner->frontdir);
+
+	UpdateAirPhysics(rudder, aileron, elevator, engine, owner->frontdir);
 }
+
+
 
 void CAirMoveType::UpdateLanded(void)
 {
@@ -672,42 +686,48 @@ void CAirMoveType::UpdateLanded(void)
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	float3 &speed = owner -> speed;
 
-	speed=ZeroVector;
+	speed = ZeroVector;
 
-	updir=ground->GetNormal(pos.x,pos.z);
+	updir = ground->GetNormal(pos.x, pos.z);
 	frontdir.Normalize();
-	rightdir=frontdir.cross(updir);
+	rightdir = frontdir.cross(updir);
 	rightdir.Normalize();
-	updir=rightdir.cross(frontdir);
+	updir = rightdir.cross(frontdir);
 }
 
 void CAirMoveType::UpdateTakeOff(float wantedHeight)
 {
 	float3& pos=owner->pos;
 	float3& speed=owner->speed;
-	float h=pos.y-ground->GetHeight(pos.x,pos.z);
+
+	float h = 0.0f;
+	if (owner->unitDef->canSubmerge)
+		h = pos.y - ground->GetApproximateHeight(pos.x, pos.z);
+	else
+		h = pos.y - ground->GetHeight(pos.x,pos.z);
 	
-	if(h>wantedHeight)
+	if (h > wantedHeight)
 		SetState(AIRCRAFT_FLYING);
 
-	if(h+speed.y*20<wantedHeight*1.02f)
-		speed.y+=maxAcc;
+	if ((h + speed.y * 20) < (wantedHeight * 1.02f))
+		speed.y += maxAcc;
 	else
-		speed.y-=maxAcc;
-	if(h>wantedHeight*0.4f)
-		speed+=owner->frontdir*maxAcc;
+		speed.y -= maxAcc;
 
-	speed*=invDrag;
+	if (h > wantedHeight * 0.4f)
+		speed += owner->frontdir * maxAcc;
+
+	speed *= invDrag;
 
 	owner->frontdir.Normalize();
-	owner->rightdir=owner->frontdir.cross(owner->updir);
+	owner->rightdir = owner->frontdir.cross(owner->updir);
 	owner->rightdir.Normalize();
-	owner->updir=owner->rightdir.cross(owner->frontdir);
+	owner->updir = owner->rightdir.cross(owner->frontdir);
 
-	pos+=speed;
-	owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;
+	pos += speed;
+	owner->midPos = pos + (owner->frontdir * owner->relMidPos.z) + (owner->updir * owner->relMidPos.y) + (owner->rightdir * owner->relMidPos.x);
 }
 
 void CAirMoveType::UpdateLanding(void)
@@ -717,95 +737,109 @@ void CAirMoveType::UpdateLanding(void)
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
-	float speedf=speed.Length();
+	float speedf = speed.Length();
 
-	//find a landing spot if we dont have one
-	if(reservedLandingPos.x<0){
-		reservedLandingPos=FindLandingPos();
-		if(reservedLandingPos.x>0){
-			reservedLandingPos.y+=wantedHeight;
-			float3 tp=pos;
-			pos=reservedLandingPos;
+	// find a landing spot if we dont have one
+	if (reservedLandingPos.x < 0) {
+		reservedLandingPos = FindLandingPos();
+		if (reservedLandingPos.x > 0) {
+			reservedLandingPos.y += wantedHeight;
+			float3 tp = pos;
+			pos = reservedLandingPos;
 			owner->physicalState = CSolidObject::OnGround;
 			owner->Block();
 			owner->physicalState = CSolidObject::Flying;
-			pos=tp;
+			pos = tp;
 			owner->Deactivate();
 			owner->cob->Call(COBFN_StopMoving);
 		} else {
 			goalPos.CheckInBounds();
-			UpdateFlying(wantedHeight,1);
+			UpdateFlying(wantedHeight, 1);
 			return;
 		}
-	} else {	//see if landing spot is still empty
-/*		float3 tpos=owner->pos;
-		owner->pos=reservedLandingPos;
-		int2 mp=owner->GetMapPos();
-		owner->pos=tpos;
+	} else {
+		// see if landing spot is still empty
+		/*
+		float3 tpos = owner->pos;
+		owner->pos = reservedLandingPos;
+		int2 mp = owner->GetMapPos();
+		owner->pos = tpos;
 
-		for(int z=mp.y; z<mp.y+owner->ysize; z++){
-			for(int x=mp.x; x<mp.x+owner->xsize; x++){
-				if(readmap->groundBlockingObjectMap[z*gs->mapx+x]!=owner){
-					owner->UnBlock();
-					reservedLandingPos.x=-1;
-					UpdateFlying(wantedHeight,1);
+		for (int z = mp.y; z < mp.y + owner -> ysize; z++) {
+			for (int x = mp.x; x < mp.x + owner -> xsize; x++) {
+				if (readmap -> groundBlockingObjectMap[z * gs -> mapx + x] != owner){
+					owner -> UnBlock();
+					reservedLandingPos.x = -1;
+					UpdateFlying(wantedHeight, 1);
 					return;
 				}
 			}
 		}*/
 	}
 
-	//update our speed
-	float3 dif=reservedLandingPos-pos;
-	float dist=dif.Length();
-	dif/=dist;
+	// update our speed
+	float3 dif = reservedLandingPos - pos;
+	float dist = dif.Length();
+	dif /= dist;
 	
-	float wsf=min(owner->unitDef->speed,dist/speedf*1.8f*maxAcc);
-	float3 wantedSpeed=dif*wsf;
+	float wsf = min(owner->unitDef->speed, dist / speedf * 1.8f * maxAcc);
+	float3 wantedSpeed = dif * wsf;
 
 	float3 delta = wantedSpeed - speed;
-	float dl=delta.Length();
+	float dl = delta.Length();
 
-	if(dl<maxAcc*3)
-		speed=wantedSpeed;
+	if (dl < maxAcc * 3)
+		speed = wantedSpeed;
 	else
-		speed+=delta/dl*maxAcc*3;
+		speed += delta / dl * maxAcc * 3;
 
-	pos+=speed;
+	pos += speed;
 
-	//make the aircraft right itself up and turn toward goal
-	if(rightdir.y<-0.01f)
-		updir-=rightdir*0.02f;
-	else if(rightdir.y>0.01f)
-		updir+=rightdir*0.02f;
+	// make the aircraft right itself up and turn toward goal
+	if (rightdir.y < -0.01f)
+		updir -= rightdir * 0.02f;
+	else if (rightdir.y > 0.01f)
+		updir += rightdir * 0.02f;
 
-	if(frontdir.y<-0.01f)
-		frontdir+=updir*0.02f;
-	else if(frontdir.y>0.01f)
-		frontdir-=updir*0.02f;
+	if (frontdir.y < -0.01f)
+		frontdir += updir * 0.02f;
+	else if (frontdir.y > 0.01f)
+		frontdir -= updir * 0.02f;
 
-	if(rightdir.dot(dif)>0.01f)
-		frontdir+=rightdir*0.02f;
-	else if(rightdir.dot(dif)<-0.01f)
-		frontdir-=rightdir*0.02f;
+	if (rightdir.dot(dif) > 0.01f)
+		frontdir += rightdir * 0.02f;
+	else if (rightdir.dot(dif) < -0.01f)
+		frontdir -= rightdir * 0.02f;
 
 	frontdir.Normalize();
-	rightdir=frontdir.cross(updir);
+	rightdir = frontdir.cross(updir);
 	rightdir.Normalize();
-	updir=rightdir.cross(frontdir);
+	updir = rightdir.cross(frontdir);
 
-	owner->midPos=pos+frontdir*owner->relMidPos.z + updir*owner->relMidPos.y + rightdir*owner->relMidPos.x;
+	owner->midPos = pos + (frontdir * owner->relMidPos.z) + (updir * owner->relMidPos.y) + (rightdir * owner->relMidPos.x);
 
-	//see if we are at the landing spot
-	if(dist<1){
-		float h=ground->GetHeight(pos.x,pos.z);
-		if(fabs(reservedLandingPos.y-h)>1)
-			reservedLandingPos.y=h;
-		else{
-			SetState(AIRCRAFT_LANDED);
+	// see if we are at the reserved (not user-clicked) landing spot
+	if (dist < 1) {
+		float gh = ground -> GetHeight(pos.x, pos.z);
+		float gah = ground -> GetApproximateHeight(pos.x, pos.z);
+		float alt = 0.0f;
+
+		// can we submerge and are we still above water?
+		if ((owner -> unitDef -> canSubmerge) && (gah < 0)) {
+			alt = pos.y - gah;
+			reservedLandingPos.y = gah;
 		}
+		else {
+			alt = pos.y - gh;
+			reservedLandingPos.y = gh;
+		}
+
+		if (alt <= 1)
+			SetState(AIRCRAFT_LANDED);
 	}
 }
+
+
 
 void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector)
 {
@@ -931,35 +965,40 @@ void CAirMoveType::ImpulseAdded(void)
 	}
 }
 
+
+
 float3 CAirMoveType::FindLandingPos(void)
 {
-	float3 ret(-1,-1,-1);
+	float3 ret(-1, -1, -1);
+	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
+	tryPos.y = ground -> GetHeight2(tryPos.x, tryPos.z);
 
-	float3 tryPos=owner->pos+owner->speed*owner->speed.Length()/(maxAcc*3);
-	tryPos.y=ground->GetHeight2(tryPos.x,tryPos.z);
-
-	if(tryPos.y<0)
+	if ((tryPos.y < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge)) {
 		return ret;
+	}
+
 	tryPos.CheckInBounds();
 
-	float3 tpos=owner->pos;
-	owner->pos=tryPos;
-	int2 mp=owner->GetMapPos();
-	owner->pos=tpos;
+	float3 tpos = owner->pos;
+	owner->pos = tryPos;
+	int2 mp = owner->GetMapPos();
+	owner->pos = tpos;
 
-	for(int z=mp.y; z<mp.y+owner->ysize; z++){
-		for(int x=mp.x; x<mp.x+owner->xsize; x++){
-			if(readmap->groundBlockingObjectMap[z*gs->mapx+x]){
+	for (int z = mp.y; z < mp.y + owner -> ysize; z++) {
+		for (int x = mp.x; x < mp.x + owner -> xsize; x++) {
+			if (readmap -> groundBlockingObjectMap[z * gs->mapx + x]) {
 				return ret;
 			}
 		}
 	}
 
-	if(ground->GetSlope(tryPos.x,tryPos.z)>0.03f)
+	if (ground -> GetSlope(tryPos.x, tryPos.z) > 0.03f)
 		return ret;
 
 	return tryPos;
 }
+
+
 
 void CAirMoveType::CheckForCollision(void)
 {

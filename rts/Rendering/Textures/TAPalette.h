@@ -4,15 +4,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CTAPalette  
+class CTAPalette
 {
 public:
 	CTAPalette();
-	virtual ~CTAPalette();
+	~CTAPalette();
 
-/*	const_reference operator[](size_type _P) const
-		{return (*(begin() + _P)); }
-*/
 	inline unsigned char* operator[] (int a){
 		return p[a];
 	}

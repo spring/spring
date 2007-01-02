@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Author: Tobi Vollebregt
 # Python distutils build script for unitsync.
 
@@ -14,15 +16,20 @@ unitsync_files = [
 	'tools/unitsync/Syncer.cpp',
 	'tools/unitsync/SyncServer.cpp',
 	'tools/unitsync/unitsync.cpp',
+	'rts/Rendering/Textures/Bitmap.cpp',
+	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/System/TdfParser.cpp',
 	'rts/System/FileSystem/Archive7Zip.cpp',
 	'rts/System/FileSystem/ArchiveBuffered.cpp',
+	'rts/System/FileSystem/ArchiveDir.cpp',
 	'rts/System/FileSystem/ArchiveFactory.cpp',
 	'rts/System/FileSystem/ArchiveHPI.cpp',
 	'rts/System/FileSystem/ArchiveScanner.cpp',
 	'rts/System/FileSystem/ArchiveZip.cpp',
 	'rts/System/FileSystem/FileHandler.cpp',
 	'rts/System/FileSystem/VFSHandler.cpp',
+	'rts/System/Platform/ConfigHandler.cpp',
+	'rts/System/Platform/FileSystem.cpp',
 	'rts/lib/7zip/7zAlloc.c',
 	'rts/lib/7zip/7zBuffer.c',
 	'rts/lib/7zip/7zCrc.c',
@@ -42,37 +49,30 @@ unitsync_files = [
 	'rts/lib/minizip/ioapi.c',
 	'rts/lib/minizip/unzip.c',
 	'rts/lib/minizip/zip.c']
-if platform == 'win32':
-	unitsync_files += ['rts/lib/minizip/iowin32.c']
 
-"""
-# Process CPPDEFINES. (Extension() expects them as 1- or 2-element tuples.)
-# Disable because we only seem to need _SZ_ONE_DIRECTORY.
-cppdefines = []
-for define in intopts.CPPDEFINES:
-	eq = define.find('=')
-	if eq != -1:
-		cppdefines += [(define[:eq], define[eq+1:])]
-	else:
-		cppdefines += [(define, 1)]
-print cppdefines
-"""
+if platform == 'win32':
+	unitsync_files += ['rts/lib/minizip/iowin32.c',
+		'rts/System/Platform/Win/WinFileSystemHandler.cpp',
+		'rts/System/Platform/Win/RegHandler.cpp']
+else:
+	unitsync_files += ['rts/System/Platform/Linux/DotfileHandler.cpp',
+		'rts/System/Platform/Linux/UnixFileSystemHandler.cpp']
 
 # Setup the unitsync library.
 unitsync = Extension (
 	name          = 'unitsync',
 	define_macros = [('_SZ_ONE_DIRECTORY', 1)],
-#	define_macros = cppdefines,
 	include_dirs  = intopts.CPPPATH,
 	libraries     = intopts.LIBS,
 	library_dirs  = intopts.LIBPATH,
-	sources       = unitsync_files
+	sources       = unitsync_files,
+	extra_compile_args = ['-Wno-strict-aliasing']
 )
 setup (
 	name = 'unitsync',
 	version = '0.1',
 	description = 'TODO',
-	author = 'SY',
+	author = 'Clan SY',
 	author_email = 'taspring-linux@lolut.utbm.info',
 	url = 'http://spring.clan-sy.com/',
 	long_description = '''TODO''',
