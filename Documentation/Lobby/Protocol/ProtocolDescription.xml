@@ -1,0 +1,439 @@
+﻿<?xml version='1.0'?>
+<!DOCTYPE ProtocolDescription SYSTEM "ProtocolDescription.dtd">
+
+<!-- transform this xml into html (so you can view it in a browser): -->
+<?xml-stylesheet type="text/xsl" href="xml2html.xsl"?>
+
+<ProtocolDescription>
+
+  <Intro>
+
+  This is a simple text protocol in a "human readable form". I decided for text protocol since
+  it's easier to debug and implement on the client side. It does require some more overhead,
+  but since server and clients do not communicate much anyway, this is not an issue. What
+  really eats the bandwidth is the game itself, not lobby.
+  
+  Single word arguments are separated by spaces, "sentences" (a sentence is a series of words
+  separated by spaces, denoting a single argument) are separated by TABs. Don't forget
+  to replace any TABs in your sentences with spaces! If you don't, your command is invalid
+  and will not be read correctly by server.
+
+  A client must maintain a constant connection with server, that is if no data is to be
+  transfered, client must send a PING command to the server on regular intervals. This
+  ensures server to properly detect any network timeouts/disconnects. Server will automatically
+  disconnect a client if no data has been received from it within a certain time period.
+  Client should send some data at least on half of that interval.
+
+  Whether battle is in progress or not, clients may find out by monitoring battle's founder
+  status. If his status changes to "in game", battle's status is also "in game".
+
+  Client's status and battle status are assumed to be 0 if not said otherwise. Each client
+  should assume that every other client's status and battle status are 0 if not stated
+  otherwise by the server. So when client joins the server, he is notified about statuses
+  of only those users, who have status or battle status different from 0. This way we also
+  save some bandwidth (although that is not really an issue here. If we were worried about
+  this protocol taking up too much bandwidth, we wouldn't use text protocol, now would we?).
+
+  I use two terms for "clients": a client and an user. At first user was considered to
+  be a registered client, that is client who is logged-in. I started to mix the two
+  terms after a while but that should not confuse you.
+
+  Most of the commands that notify about some changes are forwarded to the source of the
+  change too. For example: When client sends MYBATTLESTATUS command, server sends
+  CLIENTBATTLESTATUS command to all users in the battle, including the client who sent
+  MYBATTLESTATUS command. This is a good practice, because this way client can synchronize his
+  local status with server's after server has actually updated his status (serves also as
+  confirmation).
+
+  All commands except for some admin specific commands are listed here. See "AdminCommands.txt"
+  for those. For more details on specific command, see tryToExecCommand() method in TASServer.java.
+
+  Also, check notes (under "--- NOTES ---" field) in TASServer.java since they contain some
+  information and tricks on implementing this protocol.
+
+  As of version 0.33, command syntax has been slightly changed. Messages may now contain IDs:
+  Any message may be prefixed with a message ID. For an example:
+    "#123 SAY main hello!"
+  Server will use this ID with a reply (if any reply to the message is prescribed and the command
+  actually supports it - not every command type uses an ID), for an example:
+    "#123 SAID main Betalord hello!
+  The message ID has only one function: to ease tracking server responses for the client.
+  Using message IDs means that client can also use synchronous communication (with certain commands),
+  which makes it easier to implement certain command that require multiple responses in both directions.
+
+  Legend:
+  - {} = sentence = several words (at least one!) separated by space characters
+  - {} {} ... = two or more sentences. They are separated by TAB characters.
+  - words are always separated by space characters.
+  - | = separates choices ("OR")
+  
+  </Intro>
+
+  <CommandList>
+
+    <Command Name="PING" Source="client">
+      <Arguments>
+        <Argument Name="key" Optional="yes" Sentence="no">
+        If used, server will respond with a "PONG key" command instead of just "PONG"
+        so that the client will be able to calculate lag between server and himself.
+        </Argument>
+      </Arguments>
+      <Description>
+      Client should send this command on every few seconds to maintain constant connection to the server.
+      Server will assume timeout occured if it does not hear from client for more than x seconds.
+      </Description>
+      <Response>
+      See <clink name="PONG"/>.
+      </Response>
+      <Examples>
+        <Example>PONG</Example>
+        <Example>PONG 123</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="PONG" Source="server">
+      <Arguments>
+        <Argument Name="key" Optional="yes" Sentence="no">
+        Only used if <clink name="PING"/> was using key parameter as well.
+        </Argument>
+      </Arguments>
+      <Description>
+      Used as a response to a <clink name="PING"/> command.
+      </Description>
+      <Response />
+      <Examples>
+        <Example>PING</Example>
+        <Example>PING 123</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="TASSERVER" Source="server">
+      <Arguments>
+        <Argument Name="version" Optional="no" Sentence="no">
+        This is server's version number (client should check if it supports this server
+        version before attempting to log in. If it does not support it, it should send
+        <clink name="REQUESTUPDATEFILE"/> command).
+        </Argument>
+        <Argument Name="udpport" Optional="no" Sentence="no">
+        This is server's UDP port where "NAT Help Server" is running. This is the port to
+        which clients should send their UDP packets when trying to figure out their public
+        UDP source port. This is used with some NAT traversal techniques (e.g. "hole punching").
+        </Argument>
+      </Arguments>
+      <Description>
+      This is the first message (i.e. "greeting message") that client receives upon connecting to the server.
+      </Description>
+      <Response />
+      <Examples>
+        <Example>TASSERVER 0.30 8201</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="REQUESTUPDATEFILE" Source="client">
+      <Arguments>
+        <Argument Name="version" Optional="no" Sentence="no">
+        Version of client's lobby program. Server will use it to verify if any update
+        exists for this program version.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client who is trying to find out if update exist for him since he doesn't
+      support this server's version (see <clink name="TASSERVER"/> command). Send it only when server version
+      is NOT supported by the lobby program!
+      </Description>
+      <Response />
+    </Command>
+
+    <Command Name="REGISTER" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+        <Argument Name="password" Optional="no" Sentence="no">
+        Must be sent in encoded form (MD5 hash in base-64 form).
+        </Argument>
+      </Arguments>
+      <Description>
+      Client sends this command when trying to register a new account. Note that client mustn't already be
+      logged in, or else server will deny his request. If server is running in LAN_MODE, this command will be ignored.
+      </Description>
+      <Response>
+      Server will respond with either <clink name="REGISTRATIONDENIED"/> or <clink name="REGISTRATIONACCEPTED"/> command.
+      </Response>
+      <Examples>
+        <Example>REGISTER Johnny Gnmk1g3mcY6OWzJuM4rlMw==</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="REGISTRATIONDENIED" Source="server">
+      <Arguments>
+        <Argument Name="reason" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      Sent to client who has just sent <clink name="REGISTER"/> command, if registration has been refused.
+      </Description>
+    </Command>
+
+    <Command Name="REGISTRATIONACCEPTED" Source="server">
+      <Description>
+      Sent to client who has just sent <clink name="REGISTER"/> command, if registration has been accepted.
+      </Description>
+    </Command>
+
+    <Command Name="RENAMEACCOUNT" Source="client">
+      <Arguments>
+        <Argument Name="newUsername" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Will rename current account which is being used by the user to newUsername. User has to be logged in for this
+      to work. After server renames the account, it will disconnect him.
+      </Description>
+      <Response>
+      No response is prescribed, although server may reply with some <clink name="SERVERMSG"/> command.
+      </Response>
+      <Examples>
+        <Example>RENAMEACCOUNT Johnny2</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="CHANGEPASSWORD" Source="client">
+      <Arguments>
+        <Argument Name="oldPassword" Optional="no" Sentence="no" />
+        <Argument Name="newPassword" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Will change password of client's account (which he is currently using).
+      </Description>
+      <Response>
+      No response is prescribed, although server may reply with some <clink name="SERVERMSG"/> command.
+      </Response>
+    </Command>
+
+    <Command Name="LOGIN" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+        <Argument Name="password" Optional="no" Sentence="no">
+        Should be sent in encoded form (MD5 hash in base-64 form).
+        Note that when server is running in lan mode, you can specify any username and password
+        (password will be ignored, but you must send some string anyway - you mustn't ommit it!)
+        </Argument>
+        <Argument Name="cpu" Optional="no" Sentence="no">
+        An integer denoting the speed of client's processor in MHz (or value of x+ tag if AMD).
+        Client should leave this value at 0 if it can't figure out its CPU speed.
+        </Argument>
+        <Argument Name="localIP" Optional="no" Sentence="no">
+        As localIP client should send his local IP (e.g. 192.168.x.y, or whatever it uses)
+        so server can forward local IPs to clients behind same NAT (this resolves some
+        of the host/joining issues). If client is unable to determine his local IP,
+        he should send "*" instead.
+        </Argument>
+        <Argument Name="application name and version" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to log on the server. Server may respond with
+      <clink name="ACCEPTED"/> or <clink name="DENIED"/> command.
+      Note that if client hasn't yet confirmed the server agreement, then server will
+      send the agreement to client upon receiving LOGIN command (LOGIN command
+      will be ignored - client should resend LOGIN command once user has agreed to
+      the agreement or disconnect from the server if user has rejected the agreement).
+      <br />
+      Also see <clink name="LOGININFOEND"/> command.
+      </Description>
+      <Response />
+      <Examples>
+        <Example>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 192.168.1.100 TASClient 0.30</Example>
+        <Example>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="ACCEPTED" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent as a response to <clink name="LOGIN"/> command if it succeeded.
+      After server has finished sending info on clients and battles, it will send <clink name="LOGININFOEND"/>
+      command indicating that it has finished sending the login info.
+      </Description>
+      <Response />
+      <Examples />
+    </Command>
+
+    <Command Name="DENIED" Source="server">
+      <Arguments>
+        <Argument Name="reason" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      Sent as a response to a failed <clink name="LOGIN"/> command.
+      </Description>
+    </Command>
+
+
+    <Command Name="LOGININFOEND" Source="server">
+      <Description>
+      Sent by server indicating that it has finished sending the login info (which is sent
+      immediately after accepting the LOGIN command). This way client can figure out when
+      server has finished updating clients and battles info and can so figure out when login
+      sequence is finished.
+      <br />
+      Note that sending login info consists of 4 phases:
+      <ul>
+        <li>sending MOTD</li>
+        <li>sending list of all users currently logged on the server</li>
+        <li>sending info currently active battles</li>
+        <li>sending statuses of all users</li>
+      </ul>
+      LOGININFOEND command is sent when server has finished sending this info.
+      </Description>
+      <Examples>
+      </Examples>
+    </Command>
+
+    <Command Name="AGREEMENT" Source="server">
+      <Arguments>
+        <Argument Name="agreement" Optional="no" Sentence="yes">
+        Agreement is sent in "Rich Text" format (.rtf file streamed via socket).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server upon receiving LOGIN command, if client has not yet agreed to server's
+      "terms-of-use" agreement. Server may send multiple AGREEMENT commands (which corresponds to multiple
+      new lines in agreement), finishing it by <clink name="AGREEMENTEND"/> command. Client should send
+      <clink name="CONFIRMAGREEMENT"/> and then resend LOGIN command, or disconnect from the server if he has
+      chosen to refuse the agreement.      </Description>
+      <Response>
+      No response is expected until <clink name="AGREEMENTEND"/> is received. See that command for more info.
+      </Response>
+      <Examples>
+      </Examples>
+    </Command>
+
+    <Command Name="AGREEMENTEND" Source="server">
+      <Description>
+      Sent by server after multiple <clink name="AGREEMENT"/> commands. This way server tells the client
+      that he has finished sending the agreement (this is the time when lobby should popup
+      the "agreement" screen and wait for user to accept/reject it).
+      </Description>
+      <Response>
+      <clink name="CONFIRMAGREEMENT"/> command is expected from the client in case user agreed to the agreement.
+      Or else client should disconnect from the server.
+      </Response>
+    </Command>
+
+    <Command Name="CONFIRMAGREEMENT" Source="client">
+      <Description>
+      Sent by client notifying the server that user has confirmed the agreement.
+      Also see <clink name="AGREEMENT"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="MOTD" Source="server">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+       Sent by server after client has successfully logged in. Server can send multiple MOTD
+       commands (each MOTD corresponds to one line, for example).
+      </Description>
+      <Examples>
+      </Examples>
+    </Command>
+
+    <Command Name="OFFERFILE" Source="server">
+      <Arguments>
+        <Argument Name="options" Optional="no" Sentence="no">
+        An integer (in text format), where each bit has its own meaning:
+        <ul>
+          <li>bit0 - should file be opened once it is downloaded</li>
+          <li>bit1 - should program be closed once file is downloaded</li>
+          <li>bit2 - is this file "mandatory" (e.g. patch - if user doesn't accept it, it must disconnect from the server)</li>
+        </ul>
+        </Argument>
+        <Argument Name="filename" Optional="no" Sentence="yes">
+        Filename is the name of the file to which the file should
+        be saved on client's side. If filename = *, then client should extract
+        file name from URL and use it instead of filename.
+        </Argument>
+        <Argument Name="url" Optional="no" Sentence="yes">
+        URL from which lobby program should download the update file.
+        </Argument>
+        <Argument Name="description" Optional="no" Sentence="yes">
+        Description of the file offered. Lobby program should display this description (in a message box, for example).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent as a response to <clink name="REQUESTUPDATEFILE"/> command.
+      </Description>
+      <Examples>
+        <Example>OFFERFILE 7 *  http://taspring.clan-sy.com/dl/spring_0.74b2_update.exe This is a 0.74b1->0.74b2 patch.</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="UDPSOURCEPORT" Source="server">
+      <Arguments>
+        <Argument Name="port" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent as a response to client's UDP packet (used with "hole punching" NAT traversal
+      technique). For more info see the description of NAT traversal technique used
+      by the lobby.
+      </Description>
+      <Examples>
+        <Example>UDPSOURCEPORT 52361</Example>
+      </Examples>
+    </Command>
+    
+    <Command Name="CLIENTIPPORT" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+        <Argument Name="ip" Optional="no" Sentence="no" />
+        <Argument Name="port" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent to battle's host notifying him about another client's IP address and his
+      public UDP source port. Host needs to know public UDP source ports of all players in his
+      battle in order for "hole punching" technique to work. IP is needed with both nat traversal
+      methods ("hole punching" and "fixed source ports").
+      This command is sent to the battle host immediately after new user joins the battle
+      (currently only if some nat traversal technique is used).
+      </Description>
+    </Command>
+
+    <Command Name="HOSTPORT" Source="server">
+      <Arguments>
+        <Argument Name="port" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent by server to all clients participating in the battle (except for the host) notifying
+      them about the new host port. This message will only be sent right before host starts a game,
+      if this battle is being hosted using "hole punching" NAT traversal technique. When client
+      receives this message, he should replace battle's host port with this new port, so that when
+      game actually starts, he will connect to this new port rather than the port which host selected
+      when he initialy started the battle (with <clink name="OPENBATTLE"/> command).
+      </Description>
+    </Command>
+    
+    <Command Name="SERVERMSG" Source="server">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      A general purpose message sent by the server. Lobby program should display it either in the chat log
+      or in some kind of system log, where client will notice it. Also see <clink name="SERVERMSGBOX"/> command.
+      </Description>
+      <Examples>
+        <Example>SERVERMSG Server is going down in 5 minutes for a restart, due to a new update.</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="SERVERMSGBOX" Source="server">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      This is a message sent by the server that should open in a message box dialog window (and not
+      just in the console). Also see <clink name="SERVERMSG"/> command.
+      </Description>
+    </Command>
+
+  </CommandList>
+
+</ProtocolDescription>
