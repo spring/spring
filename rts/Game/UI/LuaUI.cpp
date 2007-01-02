@@ -35,6 +35,7 @@ extern "C" {
 #include "Map/Ground.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -128,6 +129,8 @@ static int GetUnitRadius(lua_State* L);
 static int GetUnitPosition(lua_State* L);
 static int GetUnitHeading(lua_State* L);
 static int GetUnitBuildFacing(lua_State* L);
+
+static int GetUnitDefDimensions(lua_State* L);
 
 static int GetCommandQueue(lua_State* L);
 static int GetFullBuildQueue(lua_State* L);
@@ -385,6 +388,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
+	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
 	REGISTER_LUA_CFUNC(GetCommandQueue);
 	REGISTER_LUA_CFUNC(GetFullBuildQueue);
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
@@ -2932,6 +2936,42 @@ static int GetUnitBuildFacing(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, unit->buildFacing);
+	return 1;
+}
+
+
+static int GetUnitDefDimensions(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		lua_pushstring(L, "Incorrect arguments to GetUnitDefDimensions()");
+		lua_error(L);
+	}
+	const int unitDefID = (int)lua_tonumber(L, 1);
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return 0;
+	}
+
+	const S3DOModel* model;
+	model = modelParser->Load3DO(ud->model.modelpath, 1.0f, gu->myTeam);
+	if (model == NULL) {
+		return 0;
+	}
+	const S3DOModel& m = *model;
+	const float3& mid = model->relMidPos;
+	lua_newtable(L);
+	lua_pushstring(L, "height"); lua_pushnumber(L, m.height); lua_rawset(L, -3);
+	lua_pushstring(L, "radius"); lua_pushnumber(L, m.radius); lua_rawset(L, -3);
+	lua_pushstring(L, "midx");   lua_pushnumber(L, mid.x);    lua_rawset(L, -3);
+	lua_pushstring(L, "minx");   lua_pushnumber(L, m.minx);   lua_rawset(L, -3);
+	lua_pushstring(L, "maxx");   lua_pushnumber(L, m.maxx);   lua_rawset(L, -3);
+	lua_pushstring(L, "midy");   lua_pushnumber(L, mid.y);    lua_rawset(L, -3);
+	lua_pushstring(L, "miny");   lua_pushnumber(L, m.miny);   lua_rawset(L, -3);
+	lua_pushstring(L, "maxy");   lua_pushnumber(L, m.maxy);   lua_rawset(L, -3);
+	lua_pushstring(L, "midz");   lua_pushnumber(L, mid.z);    lua_rawset(L, -3);
+	lua_pushstring(L, "minz");   lua_pushnumber(L, m.minz);   lua_rawset(L, -3);
+	lua_pushstring(L, "maxz");   lua_pushnumber(L, m.maxz);   lua_rawset(L, -3);
 	return 1;
 }
 
