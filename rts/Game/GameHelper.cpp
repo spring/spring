@@ -89,26 +89,32 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if(ignoreOwner && (*ui)==owner)
 				continue;
+		// dist = max(distance from center of unit to center of explosion, unit->radius+0.1) 
 		float3 dif=(*ui)->midPos-pos;
 		float dist=dif.Length();
 		if(dist<(*ui)->radius+0.1f)
 			dist=(*ui)->radius+0.1f;
+		// dist2 = distance from boundary of unit's hitsphere to center of explosion,
+		// unless unit->isUnderwater and explosion is above water: then it's center to center distance
 		float dist2=dist - (*ui)->radius;
 		if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
 			dist2+=(*ui)->radius;
 			if(dist2>radius)
 				dist2=radius;
 		}
-		float mod=(radius-dist)/(radius-dist*edgeEffectiveness);
+		// Clamp dist to radius to prevent division by zero. (dist2 can never be > radius)
+		// We still need the original dist later to normalize dif.
+		float dist1 = dist;
+		if (dist1 > radius)
+			dist1 = radius;
+		float mod =(radius-dist1)/(radius-dist1*edgeEffectiveness);
 		float mod2=(radius-dist2)/(radius-dist2*edgeEffectiveness);
-		if(mod<0)
-			mod=0;
-		dif/=dist+0.0001f;
+		dif/=dist; // dist > (*ui)->radius+0.1f, see above
 		dif.y+=0.12f;
-		
+
 		DamageArray damageDone = damages*mod2;
 		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
-		
+
 		if(dist2<explosionSpeed*4){	//damage directly
 			(*ui)->DoDamage(damageDone,owner,addedImpulse);
 		}else {	//damage later

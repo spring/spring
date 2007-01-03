@@ -49,9 +49,9 @@ CPreGame::CPreGame(bool server, const string& demo):
 	net = SAFE_NEW CNet;
 
 	if (server) {
-		assert(good_fpu_control_registers());
+		good_fpu_control_registers("before CGameServer creation");
 		gameServer = SAFE_NEW CGameServer;
-		assert(good_fpu_control_registers());
+		good_fpu_control_registers("after CGameServer creation");
 	}
 
 	//hpiHandler=SAFE_NEW CHpiHandler();
@@ -203,7 +203,7 @@ bool CPreGame::Draw()
 
 bool CPreGame::Update()
 {
-	assert(good_fpu_control_registers("CPreGame::Update"));
+	good_fpu_control_registers("CPreGame::Update");
 
 	switch (state) {
 

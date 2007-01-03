@@ -219,6 +219,7 @@ def generate(env):
 		if int(level) == 0:
 			print "debugging NOT enabled,",
 			env['debug'] = 0
+			env.AppendUnique(CPPDEFINES=['NDEBUG'])
 		elif int(level) >= 1 and int(level) <= 3:
 			print "level", level, "debugging enabled,",
 			env['debug'] = level
