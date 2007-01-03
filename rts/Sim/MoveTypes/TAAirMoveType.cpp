@@ -996,8 +996,3 @@ void CTAAirMoveType::DependentDied(CObject* o)
 	}
 	CMoveType::DependentDied(o);
 }
-
-void CTAAirMoveType::SetMaxSpeed(float speed)
-{
-	maxSpeed=speed;
-}

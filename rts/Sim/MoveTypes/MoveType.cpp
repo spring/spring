@@ -19,8 +19,14 @@ CMoveType::~CMoveType(void)
 {
 }
 
+void CMoveType::SetMaxSpeed(float speed)
+{
+	assert(speed > 0);
+	maxSpeed=speed;
+}
 
-void CMoveType::SetWantedMaxSpeed(float speed) {
+void CMoveType::SetWantedMaxSpeed(float speed)
+{
 	if(speed > maxSpeed)
 		maxWantedSpeed = maxSpeed;
 	else if(speed < 0.001f)
@@ -45,6 +51,7 @@ void CMoveType::LeaveTransport(void)
 {
 }
 
-void CMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive) {
+void CMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
+{
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
 };

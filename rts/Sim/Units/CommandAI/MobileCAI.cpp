@@ -226,7 +226,8 @@ void CMobileCAI::SlowUpdate()
 		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
 			const float defMaxSpeed = owner->maxSpeed;
 			const float newMaxSpeed = min(c.params[0], defMaxSpeed);
-			owner->moveType->SetMaxSpeed(newMaxSpeed);
+			if (newMaxSpeed > 0)
+				owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
 	}
 
@@ -722,13 +723,13 @@ void CMobileCAI::StartSlowGuard(float speed){
 		slowGuard = true;
 		//speed /= 30;
 		if(owner->maxSpeed >= speed){
-			speed;
 			if(!commandQue.empty()){
 				Command currCommand = commandQue.front();
 				if(commandQue.size() <= 1
 						|| commandQue[1].id != CMD_SET_WANTED_MAX_SPEED
 						|| commandQue[1].params[0] > speed){
-					owner->moveType->SetMaxSpeed(speed);
+					if (speed > 0)
+						owner->moveType->SetMaxSpeed(speed);
 				}
 			}
 		}
