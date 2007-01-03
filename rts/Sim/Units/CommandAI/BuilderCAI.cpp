@@ -45,6 +45,14 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.name="Repair";
 		c.tooltip="Repair: Repairs another unit";
 		possibleCommands.push_back(c);
+	} else if(owner->unitDef->canAssist){
+		c.id=CMD_REPAIR;
+		c.action="assist (r)";
+		c.hotkey="r";
+		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
+		c.name="Assist (r)";
+		c.tooltip="Assist: Help build something";
+		possibleCommands.push_back(c);
 	}
 
 	if(owner->unitDef->canReclaim){
