@@ -1371,7 +1371,7 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 
 bool CGame::Update()
 {
-	assert(good_fpu_control_registers("CGame::Update"));
+	good_fpu_control_registers("CGame::Update");
 
 	mouse->EmptyMsgQueUpdate();
 	script = CScriptHandler::Instance().chosenScript;
@@ -1792,8 +1792,10 @@ void CGame::StartPlaying()
 void CGame::SimFrame()
 {
 	// Enable trapping of NaNs and divisions by zero to make debugging easier.
-	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
-	assert(good_fpu_control_registers("CGame::SimFrame"));
+#ifdef DEBUG
+	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+#endif
+	good_fpu_control_registers("CGame::SimFrame");
 
 	ASSERT_SYNCED_MODE;
 //	logOutput.Print("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
@@ -1932,7 +1934,9 @@ END_TIME_PROFILE("Sim time")
 	water->Update();
 	ENTER_SYNCED;
 
-	//feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+#ifdef DEBUG
+	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+#endif
 }
 
 bool CGame::ClientReadNet()
@@ -2160,14 +2164,15 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_USER_SPEED:
-			gs->userSpeedFactor=*((float*)&inbuf[inbufpos+1]);
-			if(gs->userSpeedFactor>maxUserSpeed)
-				gs->userSpeedFactor=maxUserSpeed;
-			if(gs->userSpeedFactor<minUserSpeed)
-				gs->userSpeedFactor=minUserSpeed;
-
+			if (!net->playbackDemo) {
+				gs->userSpeedFactor=*((float*)&inbuf[inbufpos+1]);
+				if(gs->userSpeedFactor>maxUserSpeed)
+					gs->userSpeedFactor=maxUserSpeed;
+				if(gs->userSpeedFactor<minUserSpeed)
+					gs->userSpeedFactor=minUserSpeed;
+				logOutput.Print("Speed set to %.1f",gs->userSpeedFactor);
+			}
 			lastLength=5;
-			logOutput.Print("Speed set to %.1f",gs->userSpeedFactor);
 			break;
 
 		case NETMSG_CPU_USAGE:

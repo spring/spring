@@ -64,7 +64,7 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
-static inline bool good_fpu_control_registers(const char* text = NULL)
+static inline bool good_fpu_control_registers(const char* text)
 {
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
@@ -73,26 +73,22 @@ static inline bool good_fpu_control_registers(const char* text = NULL)
 	fegetenv(&fenv);
 	bool ret = ((fenv.sse_mode & 0xFF80) == 0x1D00 || (fenv.sse_mode & 0xFF80) == 0x1F80) &&
 	           ((fenv.x87_mode & 0x1F3F) == 0x003A || (fenv.x87_mode & 0x1F3F) == 0x003F);
-#ifndef NDEBUG
 	if (!ret) {
-		logOutput.Print("MXCSR: 0x%04X instead of 0x1D00 or 0x1F80", fenv.sse_mode);
-		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv.x87_mode);
-		if (text)
-			logOutput.Print("debug text: \"%s\"", text);
+		logOutput.Print("Sync warning: MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", fenv.sse_mode, text);
+		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv.x87_mode, text);
+		// Set single precision floating point math.
+		streflop_init<streflop::Simple>();
 	}
-#endif
 	return ret;
 #elif defined(STREFLOP_X87)
 	fenv_t fenv;
 	fegetenv(&fenv);
 	bool ret = (fenv & 0x1F3F) == 0x003A || (fenv & 0x1F3F) == 0x003F;
-#ifndef NDEBUG
 	if (!ret) {
-		logOutput.Print("FPUCW: 0x%04X instead of 0x003A or 0x003F", fenv);
-		if (text)
-			logOutput.Print("debug text: \"%s\"", text);
+		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv, text);
+		// Set single precision floating point math.
+		streflop_init<streflop::Simple>();
 	}
-#endif
 	return ret;
 #endif
 }

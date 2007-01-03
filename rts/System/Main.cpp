@@ -1038,7 +1038,7 @@ int Run(int argc, char *argv[])
 
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
-	assert(good_fpu_control_registers());
+	good_fpu_control_registers("::Run");
 
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
