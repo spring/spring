@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-<xsl:output method="html" omit-xml-declaration="yes" media-type="text/html" encoding="utf-8" indent="yes"/>
+<xsl:output method="html" omit-xml-declaration="yes" media-type="text/html" encoding="utf-8"/>
 
 <!-- 
   Some useful links:
@@ -37,6 +37,14 @@
   </head>
   <body>
     <h1>Spring lobby protocol description</h1>
+    
+    <h2>Introduction</h2>
+    <table border="0" style='width: 750px; table-layout: fixed; border: 2px dotted gray;'>
+      <tr><td>
+        <xsl:apply-templates select="Intro"/>
+      </td></tr>
+    </table>  
+    
     <h2>Command list</h2>
    
     <xsl:for-each select="CommandList/Command">
@@ -52,17 +60,17 @@
         <xsl:value-of select="@Name"/>
         <xsl:for-each select="Arguments/Argument">
           <xsl:choose>
-            <xsl:when test="@Optional='yes' and @Sentence='yes'"> [{<xsl:value-of select="@Name"/>}]</xsl:when>
-            <xsl:when test="@Optional='no' and @Sentence='no'">&#x20;<xsl:value-of select="@Name"/></xsl:when><xsl:when test="@Optional=yes and @Sentence=yes">[{<xsl:value-of select="@Name"/>}]</xsl:when>
-            <xsl:when test="@Optional='yes' and @Sentence='no'"> [<xsl:value-of select="@Name"/>]</xsl:when>
-            <xsl:when test="@Optional='no' and @Sentence='yes'"> {<xsl:value-of select="@Name"/>}</xsl:when>
+            <xsl:when test="@Optional='yes' and @Sentence='yes'"><xsl:text> </xsl:text>[{<xsl:value-of select="@Name"/>}]</xsl:when>
+            <xsl:when test="@Optional='no' and @Sentence='no'"><xsl:text> </xsl:text><xsl:value-of select="@Name"/></xsl:when>
+            <xsl:when test="@Optional='yes' and @Sentence='no'"><xsl:text> </xsl:text>[<xsl:value-of select="@Name"/>]</xsl:when>
+            <xsl:when test="@Optional='no' and @Sentence='yes'"><xsl:text> </xsl:text>{<xsl:value-of select="@Name"/>}</xsl:when>
           </xsl:choose>
         </xsl:for-each>
       </xsl:variable>
     
-      <table border="0" style='width: 750px; table-layout: fixed; border: 2px dashed gray;'>
+      <a name="{@Name}"/> <!-- we need this to reference it with "a href" tag -->
+      <table border="0" style='width: 750px; table-layout: fixed; border: 2px dotted gray;'>
         <tr bgcolor="{$headercolor}">
-          <a name="{@Name}"/> <!-- we need this to reference it with "a href" tag -->
           <td style='font-weight: bold; color: #4E5152'><xsl:value-of select="$commfull"/></td>
           <td style='width: 120px; text-align: center; font-style: italic'>
           Source: <xsl:value-of select="@Source"/>
@@ -112,6 +120,11 @@
   </html>
 </xsl:template>
 
+<!-- this overrides default built-in template for text nodes. Currently doesn't do anything useful! -->
+<xsl:template match="text()">
+  <xsl:value-of select="(.)"/>
+</xsl:template>
+
 <xsl:template match="clink">
   <a href="#{@name}"><xsl:value-of select="@name"/></a>
 </xsl:template>
@@ -132,6 +145,14 @@
   <br /><xsl:apply-templates />
 </xsl:template>
 
+<xsl:template match="br2">
+  <br /><br /><xsl:apply-templates />
+</xsl:template>
+
+<xsl:template match="p">
+  <p><xsl:apply-templates /></p>
+</xsl:template>
+
 <xsl:template match="ul">
   <ul><xsl:apply-templates /></ul>
 </xsl:template>
@@ -140,5 +161,29 @@
   <li><xsl:apply-templates /></li>
 </xsl:template>
 
+<xsl:template match="url">
+  <xsl:variable name="link"><xsl:value-of select="." /></xsl:variable>
+  <a href="{$link}"><xsl:value-of select="$link" /></a>
+</xsl:template>
+
+<!-- This template replaces all newlines with html BR tags 
+     Code has been copied from: 
+     http://www.biglist.com/lists/xsl-list/archives/200310/msg01013.html
+-->
+<xsl:template name="insertBreaks">
+   <xsl:param name="text" select="."/>
+   <xsl:choose>
+   <xsl:when test="contains($text, '&#xa;')">
+      <xsl:value-of select="substring-before($text, '&#xa;')"/>
+      <br />
+      <xsl:call-template name="insertBreaks">
+          <xsl:with-param name="text" select="substring-after($text,'&#xa;')"/>
+      </xsl:call-template>
+   </xsl:when>
+   <xsl:otherwise>
+	<xsl:value-of select="$text"/>
+   </xsl:otherwise>
+   </xsl:choose>
+</xsl:template>
 
 </xsl:stylesheet>
