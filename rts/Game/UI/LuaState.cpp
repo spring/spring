@@ -64,6 +64,8 @@ CLuaState& CLuaState::GetSingleton()
 }
 
 
+/******************************************************************************/
+
 CLuaState::CLuaState()
 {
 	L = NULL;
@@ -89,6 +91,17 @@ void CLuaState::Init()
 		}
 	}
 	inited = true;
+}
+
+
+void CLuaState::Reload()
+{
+	if (L != NULL) {
+		lua_close(L);
+		L = NULL;
+	}
+	unitDefParams.clear();
+	Init();
 }
 
 

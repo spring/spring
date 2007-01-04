@@ -19,11 +19,14 @@ extern "C" {
 class CLuaState {
 
 	public:
-		~CLuaState();
-		
 		static CLuaState& GetSingleton();
 		
+	public:
+		~CLuaState();
+
 		lua_State* GetL() { return L; }
+
+		void Reload();
 
 		const set<string>& GetUnitDefParams() const { return unitDefParams; }
 		

@@ -2952,7 +2952,6 @@ static int GetUnitDefDimensions(lua_State* L)
 	if (ud == NULL) {
 		return 0;
 	}
-
 	const S3DOModel* model;
 	model = modelParser->Load3DO(ud->model.modelpath, 1.0f, gu->myTeam);
 	if (model == NULL) {
