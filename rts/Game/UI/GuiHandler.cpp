@@ -13,6 +13,7 @@
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "LuaUI.h"
+#include "LuaState.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "OutlineFont.h"
@@ -1610,7 +1611,10 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 
 void CGuiHandler::RunLayoutCommand(const string& command)
 {
-	if (command == "reload") {
+	if (command.find("reload") == 0) {
+		if (command == "reload fresh") {
+			LUASTATE.Reload(); // setup a new lua state
+		}
 		if (luaUI == NULL) {
 			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
 			luaUI = CLuaUI::GetHandler(luaUiFile);
