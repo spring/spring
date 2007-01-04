@@ -7,65 +7,79 @@
 <ProtocolDescription>
 
   <Intro>
-
+  
+  <p>
   This is a simple text protocol in a "human readable form". I decided for text protocol since
   it's easier to debug and implement on the client side. It does require some more overhead,
   but since server and clients do not communicate much anyway, this is not an issue. What
   really eats the bandwidth is the game itself, not lobby.
-  
+  </p>
+  <p>
   Single word arguments are separated by spaces, "sentences" (a sentence is a series of words
   separated by spaces, denoting a single argument) are separated by TABs. Don't forget
   to replace any TABs in your sentences with spaces! If you don't, your command is invalid
   and will not be read correctly by server.
-
+  </p>
+  <p>
   A client must maintain a constant connection with server, that is if no data is to be
   transfered, client must send a PING command to the server on regular intervals. This
   ensures server to properly detect any network timeouts/disconnects. Server will automatically
   disconnect a client if no data has been received from it within a certain time period.
   Client should send some data at least on half of that interval.
-
+  </p>
+  <p>
   Whether battle is in progress or not, clients may find out by monitoring battle's founder
   status. If his status changes to "in game", battle's status is also "in game".
-
+  </p>
+  <p>
   Client's status and battle status are assumed to be 0 if not said otherwise. Each client
   should assume that every other client's status and battle status are 0 if not stated
   otherwise by the server. So when client joins the server, he is notified about statuses
   of only those users, who have status or battle status different from 0. This way we also
   save some bandwidth (although that is not really an issue here. If we were worried about
   this protocol taking up too much bandwidth, we wouldn't use text protocol, now would we?).
-
+  </p>
+  <p>
   I use two terms for "clients": a client and an user. At first user was considered to
   be a registered client, that is client who is logged-in. I started to mix the two
   terms after a while but that should not confuse you.
-
+  </p>
+  <p>
   Most of the commands that notify about some changes are forwarded to the source of the
   change too. For example: When client sends MYBATTLESTATUS command, server sends
   CLIENTBATTLESTATUS command to all users in the battle, including the client who sent
   MYBATTLESTATUS command. This is a good practice, because this way client can synchronize his
   local status with server's after server has actually updated his status (serves also as
   confirmation).
-
+  </p>
+  <p>
   All commands except for some admin specific commands are listed here. See "AdminCommands.txt"
   for those. For more details on specific command, see tryToExecCommand() method in TASServer.java.
-
+  </p>
+  <p>
   Also, check notes (under "--- NOTES ---" field) in TASServer.java since they contain some
   information and tricks on implementing this protocol.
-
+  </p>
+  <p>
   As of version 0.33, command syntax has been slightly changed. Messages may now contain IDs:
   Any message may be prefixed with a message ID. For an example:
-    "#123 SAY main hello!"
+  "#123 SAY main hello!" <br /> 
   Server will use this ID with a reply (if any reply to the message is prescribed and the command
   actually supports it - not every command type uses an ID), for an example:
-    "#123 SAID main Betalord hello!
+  "#123 SAID main Betalord hello!" <br /> 
   The message ID has only one function: to ease tracking server responses for the client.
   Using message IDs means that client can also use synchronous communication (with certain commands),
   which makes it easier to implement certain command that require multiple responses in both directions.
-
+  </p>
+  <p>
   Legend:
-  - {} = sentence = several words (at least one!) separated by space characters
-  - {} {} ... = two or more sentences. They are separated by TAB characters.
-  - words are always separated by space characters.
-  - | = separates choices ("OR")
+  <ul>
+    <li>{} = sentence = several words (at least one!) separated by space characters</li>
+    <li>{} {} ... = two or more sentences. They are separated by TAB characters.</li>
+    <li>words are always separated by space characters.</li>
+    <li>| = separates choices ("OR")</li>
+  </ul>
+  </p>
   
   </Intro>
 
@@ -433,6 +447,181 @@
       just in the console). Also see <clink name="SERVERMSG"/> command.
       </Description>
     </Command>
+
+    <Command Name="ADDUSER" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+        <Argument Name="country" Optional="no" Sentence="no">
+        A two-character country code based on ISO 3166 standard. See <url>http://www.iso.org/iso/en/prods-services/iso3166ma/index.html</url>
+        </Argument>
+        <Argument Name="cpu" Optional="no" Sentence="no">
+        See <clink name="LOGIN"/> command for CPU field.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server to client telling him new user joined a server. Client should add this
+      user to his clients list which he must maintain while he is connected to the server.
+      Server will send multiple commands of this kind once client logs in, sending him the list
+      of all users currently connected.
+      </Description>
+    </Command>
+
+    <Command Name="REMOVEUSER" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent to client telling him a user disconnected from server. Client should
+      remove this user from his clients list which he must maintain while he is connected
+      to the server.
+      </Description>
+    </Command>
+
+    <Command Name="JOIN" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no" />
+        <Argument Name="key" Optional="yes" Sentence="no">
+        If channel is locked, then client must
+        supply a correct key to join the channel (clients with access >= Account.ADMIN_ACCESS
+        can join locked channels withouth supplying the key - needed for ChanServ bot).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client trying to join a channel.
+      </Description>
+      <Examples>
+        <Example>JOIN main</Example>
+        <Example>JOIN myprivatechannel mypassword</Example>
+      </Examples>
+    </Command>
+
+    <Command Name="JOIN" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no">
+        Name of the channel to which client has just joined (by previously sending the <clink name="JOIN"/> command).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent to a client who has successfully joined a channel.
+      </Description>
+      <Examples>
+        <Example>JOIN main</Example>
+      </Examples>
+    </Command>
+    
+    <Command Name="JOINFAILED" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="reason" Optional="no" Sentence="yes">
+        Always provided.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent if joining a channel failed for some reason.
+      </Description>
+    </Command>
+
+    <Command Name="CHANNELS" Source="client">
+      <Description>
+      Sent by client when requesting channels list
+      </Description>
+      <Response>
+      Server will respond with a series of <clink name="CHANNEL" /> command, ending it with <clink name="ENDOFCHANNELS" /> command.
+      </Response>
+      <Examples>
+        <Example>JOIN main</Example>
+      </Examples>
+    </Command>   
+    
+    <Command Name="CHANNEL" Source="server">
+    <Arguments>
+      <Argument Name="channame" Optional="no" Sentence="no" />
+      <Argument Name="usercount" Optional="no" Sentence="no">
+      Number of users in channel.
+      </Argument>
+    </Arguments>
+    <Description>
+    Sent by server to client who requested channel list via <clink name="CHANNELS" /> command. 
+    A series of these commands will be sent to user, one for each open channel. Topic parameter 
+    may be omited if topic is not set for the channel. A series of CHANNEL commands is ended
+    by <clink name="ENDOFCHANNELS" /> command. 
+    </Description>
+    </Command>
+    
+    <Command Name="ENDOFCHANNELS" Source="server">
+      <Description>
+      Sent to client who previously requested channel list, after a
+      series of CHANNEL commands (one for each channel).
+      </Description>
+    </Command>
+
+    <Command Name="MUTELIST" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent by client when requesting mute list of a channel.
+      </Description>
+      <Examples>
+        <Example>MUTELIST main</Example>
+      </Examples>
+    </Command>
+    
+    <Command Name="MUTELISTBEGIN" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Sent by server when sending channel's mute list to the client. This command is immediately followed
+      by 0 or more MUTELIST commands and finally by a MUTELISTEND command.      
+      </Description>
+      <Response>
+      Followed by 0 or more <clink name="MUTELIST"/> commands and finally by a <clink name="MUTELISTEND"/> command. 
+      </Response>
+    </Command>
+
+    <Command Name="MUTELIST" Source="server">
+      <Arguments>
+        <Argument Name="mute description" Optional="no" Sentence="yes">
+        Form of this argument is not prescribed (it may vary from version to version).
+        Lobby program should simply display it as it receives it.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent after <clink name="MUTELISTSTART"/> command. Multiple commands of this kind may be sent
+      after MUTELISTSTART command (or none, if mute list is empty).
+      </Description>
+      <Examples>
+        <Example>MUTELIST Johnny, 345 seconds remaining</Example>
+        <Example>MUTELIST rabbit, indefinite time remaining</Example>
+      </Examples>
+    </Command>
+    
+    <Command Name="CHANNELTOPIC" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="author" Optional="no" Sentence="no"/>
+        <Argument Name="changedtime" Optional="no" Sentence="no">
+        Time in milliseconds since Jan 1, 1970 (UTC). Divide by 1000 to get unix time.
+        </Argument>
+        <Argument Name="topic" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent to client who just joined the channel, if some topic is set for this channel.
+      </Description>
+    </Command>
+
+    <Command Name="CHANNELTOPIC" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="topic" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by privileged user who is trying to change channel's topic. Use * as topic if you wish
+      to disable it.
+      </Description>
+    </Command>
+
 
   </CommandList>
 
