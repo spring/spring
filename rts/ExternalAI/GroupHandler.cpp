@@ -166,6 +166,60 @@ void CGroupHandler::GroupCommand(int num)
 	selectedUnits.SelectGroup(num);
 }
 
+void CGroupHandler::GroupCommand(int num, const string& cmd)
+{
+	if ((cmd == "set") || (cmd == "add")) {
+		if (cmd == "set") {
+			groups[num]->ClearUnits();
+		}
+		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		set<CUnit*>::const_iterator ui;
+		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
+			(*ui)->SetGroup(groups[num]);
+		}
+	}
+	else if (cmd == "selectadd")  {
+		// do not select the group, just add its members to the current selection
+		std::set<CUnit*>::const_iterator gi;
+		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
+			selectedUnits.AddUnit(*gi);
+		}
+		return;
+	}
+	else if (cmd == "selectclear")  {
+		// do not select the group, just remove its members from the current selection
+		std::set<CUnit*>::const_iterator gi;
+		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
+			selectedUnits.RemoveUnit(*gi);
+		}
+		return;
+	}
+	else if (cmd == "selecttoggle")  {
+		// do not select the group, just toggle its members with the current selection
+		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		std::set<CUnit*>::const_iterator gi;
+		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
+			if (selUnits.find(*gi) == selUnits.end()) {
+				selectedUnits.AddUnit(*gi);
+			} else {
+				selectedUnits.RemoveUnit(*gi);
+			}
+		}
+		return;
+	}
+	
+	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
+		float3 p(0,0,0);
+		for(std::set<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+			p+=(*gi)->pos;
+		}
+		p/=groups[num]->units.size();
+		mouse->currentCamController->SetPos(p);
+	}
+	
+	selectedUnits.SelectGroup(num);
+}
+
 void CGroupHandler::FindDlls(void)
 {
 	std::vector<std::string> match;

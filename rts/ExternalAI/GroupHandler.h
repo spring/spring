@@ -25,6 +25,7 @@ public:
 	void Update();
 	void DrawCommands();
 	void GroupCommand(int num);
+	void GroupCommand(int num, const string& cmd);
 	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);
 

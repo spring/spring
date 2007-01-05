@@ -800,6 +800,15 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gu->spectatingFullView = !gu->spectatingFullView;
 		}
 	}
+	else if (cmd == "group") {
+		const char* c = action.extra.c_str();
+		const int t = c[0];
+		if ((t >= '0') && (t <= '9')) {
+			const int team = (t - '0');
+			do { c++; } while ((c[0] != 0) && isspace(c[0]));
+			grouphandler->GroupCommand(team, c);
+		}
+	}
 	else if (cmd == "group0") {
 		grouphandler->GroupCommand(0);
 	}
