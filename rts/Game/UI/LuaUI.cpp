@@ -4045,8 +4045,13 @@ static int ShareResources(lua_State* L)
 	}
 	const string& type = lua_tostring(L, 2);
 	if (type == "units") {
+		// update the selection, and clear the unit command queues
+		Command c;
+		c.id = CMD_STOP;
+		selectedUnits.GiveCommand(c, false);
 		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
 			NETMSG_SHARE, gu->myPlayerNum, teamID, 1, 0.0f, 0.0f);
+		selectedUnits.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = (float)lua_tonumber(L, 3);
