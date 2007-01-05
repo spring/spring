@@ -149,6 +149,7 @@ static int GetTeamInfo(lua_State* L);
 static int GetTeamResources(lua_State* L);
 static int GetTeamUnitStats(lua_State* L);
 static int SetShareLevel(lua_State* L);
+static int ShareResources(lua_State* L);
 
 static int GetPlayerInfo(lua_State* L);
 
@@ -403,6 +404,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetTeamUnitStats);
 	REGISTER_LUA_CFUNC(SetShareLevel);
+	REGISTER_LUA_CFUNC(ShareResources);
 	REGISTER_LUA_CFUNC(GetPlayerInfo);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
@@ -4020,6 +4022,42 @@ static int SetShareLevel(lua_State* L)
 	}
 	else {
 		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
+	}
+	return 0;
+}
+
+
+static int ShareResources(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||
+	    ((args >= 3) && !lua_isnumber(L, 3))) {
+		lua_pushstring(L, "Incorrect arguments to ShareResources()");
+		lua_error(L);
+	}
+	const int teamID = (int)lua_tonumber(L, 1);
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return 0;
+	}
+	const CTeam* team = gs->Team(teamID);
+	if ((team == NULL) || team->isDead) {
+		return 0;
+	}
+	const string& type = lua_tostring(L, 2);
+	if (type == "units") {
+		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
+			NETMSG_SHARE, gu->myPlayerNum, teamID, 1, 0.0f, 0.0f);
+	}
+	else if (args >= 3) {
+		const float amount = (float)lua_tonumber(L, 3);
+		if (type == "metal") {
+			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
+				NETMSG_SHARE, gu->myPlayerNum, teamID, 0, amount, 0.0f);
+		}
+		else if (type == "energy") {
+			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
+				NETMSG_SHARE, gu->myPlayerNum, teamID, 0, 0.0f, amount);
+		}
 	}
 	return 0;
 }
