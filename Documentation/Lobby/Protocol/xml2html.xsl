@@ -3,6 +3,9 @@
 <xsl:output method="html" omit-xml-declaration="yes" media-type="text/html" encoding="utf-8"/>
 
 <!-- 
+
+  See DTD file for more info on various elements/attributes!
+   
   Some useful links:
   ******************
   
@@ -68,7 +71,7 @@
         </xsl:for-each>
       </xsl:variable>
     
-      <a name="{@Name}"/> <!-- we need this to reference it with "a href" tag -->
+      <a name="{@Name}:{@Source}"/> <!-- we need this to reference it with "a href" tag -->
       <table border="0" style='width: 750px; table-layout: fixed; border: 2px dotted gray;'>
         <tr bgcolor="{$headercolor}">
           <td style='font-weight: bold; color: #4E5152'><xsl:value-of select="$commfull"/></td>
@@ -126,7 +129,42 @@
 </xsl:template>
 
 <xsl:template match="clink">
-  <a href="#{@name}"><xsl:value-of select="@name"/></a>
+
+  <xsl:variable name="type"><xsl:value-of select="substring-after(@name, ':')"/></xsl:variable> <!-- doesn't neccessarily exist! -->
+  
+  <xsl:choose>
+    <xsl:when test="$type=''">
+      <!-- the ":x" post-fix doesn't exist -->
+      <xsl:choose>
+        <xsl:when test="//Command[@Name=current()/@name and @Source='client']">
+          <a href="#{@name}:client"><xsl:value-of select="@name"/></a>
+        </xsl:when>
+        <xsl:when test="//Command[@Name=current()/@name and @Source='server']">
+          <a href="#{@name}:server"><xsl:value-of select="@name"/></a>
+        </xsl:when>
+		<xsl:otherwise>
+		  <!-- error: command does not exist! (link is broken) -->
+          <a href="#{@name}"><xsl:value-of select="@name"/></a><span style="color: red"> [broken link]</span>
+		</xsl:otherwise>        
+      </xsl:choose>
+    </xsl:when>
+    <xsl:otherwise>
+      <!-- the ":x" post-fix exists -->
+      <xsl:choose>
+        <xsl:when test="starts-with($type,'c')">
+          <a href="#{substring-before(@name, ':')}:client"><xsl:value-of select="substring-before(@name, ':')"/></a>
+        </xsl:when>
+        <xsl:when test="starts-with($type,'s')">
+          <a href="#{substring-before(@name, ':')}:server"><xsl:value-of select="substring-before(@name, ':')"/></a>
+        </xsl:when>
+		<xsl:otherwise>
+		  <!-- error: command does not exist! (link is broken) -->
+          <a href="#{@name}"><xsl:value-of select="@name"/></a><span style="color: red"> [broken link]</span>
+		</xsl:otherwise>         
+      </xsl:choose>
+    </xsl:otherwise>
+  </xsl:choose>
+
 </xsl:template>
 
 <xsl:template match="i">

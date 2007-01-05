@@ -13,7 +13,15 @@
   if this argument may contain more than one word combined with space character
   as a delimiter.
   
-  Use 'clink' element in order to reference to other commands.
+  Use 'clink' element in order to reference to other commands. Use "name" to
+  reference to a command (you must put the command name in UPPERCASE!). You may
+  also specify to which command you reference by Source type if there are two
+  different commands with same name (one sent by the server and the other by
+  the client, for example JOIN command). In this case add :client or :server,
+  or simply just :c or :s. For example: <clink name="JOIN:client" /> and
+  <clink name="JOIN:server" /> or shortly: <clink name="JOIN:c" /> and
+  <clink name="JOIN:s" />. Also note that if reference is invalid xslt
+  transformation will add a "[broken link]" tag to it (as html text).
   
   'Examples' may contain some text to denote actual usage of the command.
 
@@ -22,8 +30,6 @@
 
 -->
 <!ENTITY % CommonText "(#PCDATA|clink|u|i|b|br|br2|p|ul|li|url)*">
-<!ATTLIST Name
-	xml:space (default | preserve) "preserve">
 <!ELEMENT u %CommonText;> <!-- underline tag -->
 <!ELEMENT i %CommonText;> <!-- italics tag -->
 <!ELEMENT b %CommonText;> <!-- bold tag -->
@@ -36,7 +42,7 @@
 <!-- clink is a "command link", it points to another command: -->
 <!ELEMENT clink EMPTY>
 <!ATTLIST clink
-  name IDREF #REQUIRED
+  name NMTOKEN #REQUIRED
   >
 
 <!-- root element: -->
@@ -45,7 +51,7 @@
 <!ELEMENT CommandList (Command*)>
 <!ELEMENT Command (Arguments?, Description, Response?, Examples?)>
 <!ATTLIST Command
-   Name ID #REQUIRED
+   Name NMTOKEN #REQUIRED
    Source (client|server) #REQUIRED
    >
 <!ELEMENT Arguments (Argument*)>

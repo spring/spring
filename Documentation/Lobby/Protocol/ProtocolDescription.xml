@@ -498,7 +498,7 @@
     <Command Name="JOIN" Source="server">
       <Arguments>
         <Argument Name="channame" Optional="no" Sentence="no">
-        Name of the channel to which client has just joined (by previously sending the <clink name="JOIN"/> command).
+        Name of the channel to which client has just joined (by previously sending the <clink name="JOIN:client"/> command).
         </Argument>
       </Arguments>
       <Description>
@@ -576,7 +576,7 @@
       by 0 or more MUTELIST commands and finally by a MUTELISTEND command.      
       </Description>
       <Response>
-      Followed by 0 or more <clink name="MUTELIST"/> commands and finally by a <clink name="MUTELISTEND"/> command. 
+      Followed by 0 or more <clink name="MUTELIST:server"/> commands and finally by a <clink name="MUTELISTEND"/> command. 
       </Response>
     </Command>
 
@@ -588,7 +588,7 @@
         </Argument>
       </Arguments>
       <Description>
-      Sent after <clink name="MUTELISTSTART"/> command. Multiple commands of this kind may be sent
+      Sent after <clink name="MUTELISTBEGIN"/> command. Multiple commands of this kind may be sent
       after MUTELISTSTART command (or none, if mute list is empty).
       </Description>
       <Examples>
