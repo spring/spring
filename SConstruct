@@ -68,7 +68,12 @@ if env['strip']:
 # Build unitsync shared object
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
-unitsync_files = filelist.get_source(env, 'tools/unitsync');
+# Need a new env otherwise scons chokes on equal targets built with different flags.
+uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
+for d in filelist.list_directories(uenv, 'rts'):
+	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
+uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
+unitsync_files = filelist.get_source(uenv, 'tools/unitsync');
 unitsync_extra_files = \
 	['rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
@@ -104,16 +109,16 @@ unitsync_extra_files = \
 	'rts/lib/minizip/unzip.c',
 	'rts/lib/minizip/zip.c']
 for f in unitsync_extra_files:
-	unitsync_files += [os.path.join(env['builddir'], f)]
+	unitsync_files += [os.path.join(uenv['builddir'], f)]
 
 if env['platform'] == 'windows':
 	for f in ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
-		unitsync_files += [os.path.join(env['builddir'], f)]
+		unitsync_files += [os.path.join(uenv['builddir'], f)]
 else:
-	ufshcpp = env.SharedObject(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+datadir)
-	unitsync_files += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'), ufshcpp]
+	ufshcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+	unitsync_files += [os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'), ufshcpp]
 
-unitsync = env.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
+unitsync = uenv.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
 Alias('unitsync', unitsync)
 
 # Somehow unitsync fails to build with mingw:
