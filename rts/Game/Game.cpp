@@ -18,6 +18,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
+#include <SDL_events.h>
 
 #include "Game.h"
 #include "float.h"
@@ -911,7 +912,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			creatingVideo=true;
 			string name;
-			for(int a=0;a<99;++a){
+			for(int a=0;a<999;++a){
 				char t[50];
 				itoa(a,t,10);
 				name=string("video")+t+".avi";
@@ -919,34 +920,36 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				if(!ifs.FileExists())
 					break;
 			}
-			int x=gu->viewSizeX;
-			x-=gu->viewSizeX%4;
-
-			int y=gu->viewSizeY;
-			y-=gu->viewSizeY%4;
 
 			BITMAPINFOHEADER bih;
+			memset(&bih,0, sizeof(BITMAPINFOHEADER));
+
+			// filling bitmap info structure.
 			bih.biSize=sizeof(BITMAPINFOHEADER);
-			bih.biWidth=x;
-			bih.biHeight=y;
+			bih.biWidth=(gu->viewSizeX/4)*4;
+			bih.biHeight=(gu->viewSizeY/4)*4;
 			bih.biPlanes=1;
 			bih.biBitCount=24;
+			bih.biSizeImage=bih.biWidth*bih.biHeight*3; 
 			bih.biCompression=BI_RGB;
-			bih.biSizeImage=0;
-			bih.biXPelsPerMeter=1000;
-			bih.biYPelsPerMeter=1000;
-			bih.biClrUsed=0;
-			bih.biClrImportant=0;
 
-			aviGenerator=SAFE_NEW CAVIGenerator();
-			aviGenerator->SetFileName(name.c_str());
-			aviGenerator->SetRate(30);
-			aviGenerator->SetBitmapHeader(&bih);
-			Sint32 hr=aviGenerator->InitEngine();
+
+			aviGenerator = SAFE_NEW CAVIGenerator(name, &bih, 30);
+			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
+			SDL_ShowCursor(SDL_ENABLE);
+			HRESULT hr=aviGenerator->InitEngine();
+			SDL_ShowCursor(savedCursorMode);
+			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
+			//Setting it back to 'normal'.
+			streflop_init<streflop::Simple>();
+
 			if(hr!=AVIERR_OK){
 				creatingVideo=false;
+				logOutput.Print(aviGenerator->GetLastErrorMessage());
+				delete aviGenerator;
+				aviGenerator=0;
 			} else {
-				logOutput.Print("Recording avi to %s size %i %i",name.c_str(),x,y);
+				logOutput.Print("Recording avi to %s size %i %i",name.c_str(), bih.biWidth, bih.biHeight);
 			}
 		}
 	}
@@ -1431,7 +1434,8 @@ bool CGame::Update()
 		gameServer->gameClientUpdated=true;
 
 #ifdef SYNCIFY		//syncify doesnt support multithreading ...
-	gameServer->Update();
+	if (gameServer)
+		gameServer->Update();
 #endif
 
 	if(creatingVideo && playing && gameServer){
@@ -1772,13 +1776,12 @@ bool CGame::Draw()
 	if(creatingVideo){
 		gu->lastFrameTime=1.0f/GAME_SPEED;
 		LPBITMAPINFOHEADER ih;
-		ih=aviGenerator->GetBitmapHeader();
-		unsigned char* buf=SAFE_NEW unsigned char[ih->biWidth*ih->biHeight*3];
-		glReadPixels(0,0,ih->biWidth,ih->biHeight,GL_BGR_EXT,GL_UNSIGNED_BYTE,buf);
+		ih = aviGenerator->GetBitmapHeader();
+		unsigned char* buf = aviGenerator->GetPixelBuf();
+		glReadPixels(0,0,ih->biWidth, ih->biHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, buf);
 
 		aviGenerator->AddFrame(buf);
 
-		delete buf;
 //		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
 	}
 #endif
