@@ -714,7 +714,8 @@ void CMobileCAI::IdleCheck(void)
 void CMobileCAI::StopSlowGuard(){
 	if(slowGuard){
 		slowGuard = false;
-		owner->moveType->SetMaxSpeed(owner->maxSpeed);
+		if (owner->maxSpeed)
+			owner->moveType->SetMaxSpeed(owner->maxSpeed);
 	}
 }
 
