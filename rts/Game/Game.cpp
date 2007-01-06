@@ -410,6 +410,7 @@ CGame::~CGame()
 	delete water;
 	delete sky;
 
+	delete guihandler;
 	delete resourceBar;
 	delete uh;
 	delete unitDrawer;
@@ -418,8 +419,7 @@ CGame::~CGame()
 	delete ph;
 	delete globalAI;
 	delete grouphandler;
-	if ( minimap )
-		delete minimap;
+	delete minimap;
 	delete pathManager;
 	delete groundDecals;
 	delete ground;
@@ -433,8 +433,6 @@ CGame::~CGame()
 	delete keyBindings;
 	delete keyCodes;
 	delete sound;
-	if ( guihandler )
-		delete guihandler;
 	delete selectionKeys;
 	delete mouse;
 	delete helper;
