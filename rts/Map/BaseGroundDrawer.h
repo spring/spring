@@ -66,6 +66,9 @@ public:
 	float infoTexAlpha;
 
 	DrawMode drawMode;
+
+	bool highResLosTex;
+	bool smoothLosTex;
 };
 
 #endif // __BASE_GROUND_DRAWER__

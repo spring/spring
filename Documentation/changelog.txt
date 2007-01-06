@@ -11,8 +11,9 @@ TASpring change log
 - Fixed the factory cancelled-build delay bug.
 - Fixed units get stuck while guarding factories bug.
 - Fixed planes can't find landing pad on large maps bug.
-
 - Fixed in game video creation (default binding F10).
+
+- Smoothed LOS / Radar view.
 
 0.74b2
 
