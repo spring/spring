@@ -193,10 +193,9 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 #endif
 
-	if (buttons[SDL_BUTTON_MIDDLE].pressed &&
-	    !((minimap != NULL) && (activeReceiver == minimap))) {
-		float cameraSpeed = 1.0f;
-		currentCamController->MouseMove(float3(dx * cameraSpeed, dy * cameraSpeed, invertMouse ? -1 : 1));
+	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL)) {
+		const float cameraSpeed = 1.0f;
+		currentCamController->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		return;
 	} 
 }
@@ -213,7 +212,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	if(button==4){
 		if (guihandler->buildSpacing > 0)
-			guihandler->buildSpacing --;
+			guihandler->buildSpacing--;
 		return;
 	}
 	if(button==5){
@@ -238,10 +237,20 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	if (button==SDL_BUTTON_MIDDLE){
-		if ((minimap != NULL) && minimap->FullProxy() && !locked) {
-			if (minimap->MousePress(x, y, button)) {
-				activeReceiver = minimap;
+	// limited receivers for MMB
+	if (button == SDL_BUTTON_MIDDLE){
+		if (!locked) {
+			if ((minimap != NULL) && minimap->FullProxy()) {
+				if (minimap->MousePress(x, y, button)) {
+					activeReceiver = minimap;
+					return;
+				}
+			}
+			if (guihandler != NULL) {
+				if (guihandler->MousePress(x, y, button)) {
+					activeReceiver = guihandler;
+					return;
+				}
 			}
 		}
 		return;
@@ -259,7 +268,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		}
 	} else if (guihandler) {
 		if (guihandler->MousePress(x,y,button)) {
-			activeReceiver = guihandler;
+			activeReceiver = guihandler; // for default (rmb) commands
 		}
 	}
 #endif
@@ -281,13 +290,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (button == SDL_BUTTON_MIDDLE) {
-		if ((minimap != NULL) && (activeReceiver == minimap)) {
-			minimap->MouseRelease(x, y, button);
-			activeReceiver = 0;
-			return;
-		}
-		if (buttons[SDL_BUTTON_MIDDLE].time>gu->gameTime-0.3f) {
+	if ((button == SDL_BUTTON_MIDDLE) && (activeReceiver == NULL)) {
+		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f)) {
 			ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 		}
 		return;		

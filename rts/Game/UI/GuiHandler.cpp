@@ -1072,13 +1072,17 @@ void CGuiHandler::SetCursorIcon() const
 }
 
 
-bool CGuiHandler::MousePress(int x,int y,int button)
+bool CGuiHandler::MousePress(int x, int y, int button)
 {
 	if (luaUI != NULL) {
 		luaUIClick = luaUI->MousePress(x, y, button);
 		if (luaUIClick) {
 			return true;
 		}
+	}
+
+	if (button == SDL_BUTTON_MIDDLE) {
+		return false;
 	}
 	
 	if (button < 0) {

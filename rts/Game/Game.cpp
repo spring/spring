@@ -1191,7 +1191,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (action.extra.empty()) {
 			showClock = !showClock;
 		} else {
-			showClock = !atoi(action.extra.c_str());
+			showClock = !!atoi(action.extra.c_str());
 		}
 		configHandler.SetInt("ShowClock", showClock ? 1 : 0);
 	}
