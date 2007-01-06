@@ -100,7 +100,7 @@ def generate(env):
 		('libdir',            'Directory for AI plugin modules (rel. to prefix)', 'lib/spring'),
 		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
 		#porting options - optional in a first phase
-		('disable_avi',       'Set to no to turn on avi support', True),
+		('disable_avi',       'Set to no to turn on avi support', 'False on windows, True otherwise'),
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
@@ -296,7 +296,7 @@ def generate(env):
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
 		bool_opt('strip', True)
-		bool_opt('disable_avi', True)
+		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
 		string_opt('prefix', '/usr/local')
