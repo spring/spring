@@ -101,8 +101,8 @@ CGuiHandler::CGuiHandler()
 
 CGuiHandler::~CGuiHandler()
 {
-	delete[] icons;
 	delete luaUI;
+	delete[] icons;
 
 	std::map<std::string, unsigned int>::iterator it;
 	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
