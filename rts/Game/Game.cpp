@@ -390,9 +390,15 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 CGame::~CGame()
 {
-	if (treeDrawer) configHandler.SetInt("TreeRadius",(unsigned int)(treeDrawer->baseTreeDistance*256));
+	if (treeDrawer) {
+		configHandler.SetInt("TreeRadius",
+		                     (unsigned int)(treeDrawer->baseTreeDistance * 256));
+	}
 
 	ENTER_MIXED;
+	
+	delete guihandler;
+	
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
@@ -410,7 +416,6 @@ CGame::~CGame()
 	delete water;
 	delete sky;
 
-	delete guihandler;
 	delete resourceBar;
 	delete uh;
 	delete unitDrawer;
