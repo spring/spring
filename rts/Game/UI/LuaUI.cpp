@@ -188,6 +188,8 @@ static int DrawLogicOp(lua_State* L);
 static int DrawBlending(lua_State* L);
 static int DrawAlphaTest(lua_State* L);
 static int DrawLineStipple(lua_State* L);
+static int DrawPolygonMode(lua_State* L);
+static int DrawPolygonOffset(lua_State* L);
 
 static int DrawTexture(lua_State* L);
 static int DrawMaterial(lua_State* L);
@@ -444,6 +446,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_DRAW_CFUNC(Blending);
 	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
 	REGISTER_LUA_DRAW_CFUNC(LineStipple);
+	REGISTER_LUA_DRAW_CFUNC(PolygonMode);
+	REGISTER_LUA_DRAW_CFUNC(PolygonOffset);
 
 	REGISTER_LUA_DRAW_CFUNC(Texture);
 	REGISTER_LUA_DRAW_CFUNC(Material);
@@ -4603,6 +4607,10 @@ static void ResetGLState()
 	glShadeModel(GL_SMOOTH);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_SCISSOR_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_POLYGON_OFFSET_LINE);
+	glDisable(GL_POLYGON_OFFSET_POINT);
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
 }
@@ -4878,6 +4886,64 @@ static int DrawAlphaTest(lua_State* L)
 	}
 	else {
 		lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
+		lua_error(L);
+	}
+	return 0;
+}
+
+
+static int DrawPolygonMode(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+		lua_pushstring(L, "Incorrect arguments to DrawPolygonMode()");
+		lua_error(L);
+	}
+	const GLenum face = (GLenum)lua_tonumber(L, 1);
+	const GLenum mode = (GLenum)lua_tonumber(L, 2);
+	glPolygonMode(face, mode);
+	return 0;
+}
+
+
+static int DrawPolygonOffset(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 1) {
+		if (!lua_isboolean(L, 1)) {
+			lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
+			lua_error(L);
+		}
+		if (lua_toboolean(L, 1)) {
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glEnable(GL_POLYGON_OFFSET_LINE);
+			glEnable(GL_POLYGON_OFFSET_POINT);
+		} else {
+			glDisable(GL_POLYGON_OFFSET_FILL);
+			glDisable(GL_POLYGON_OFFSET_LINE);
+			glDisable(GL_POLYGON_OFFSET_POINT);
+		}
+	}
+	else if (args == 2) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+			lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
+			lua_error(L);
+		}
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glEnable(GL_POLYGON_OFFSET_POINT);
+		glPolygonOffset((GLfloat)lua_tonumber(L, 1), (GLfloat)lua_tonumber(L, 2));
+	}
+	else {
+		lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
 		lua_error(L);
 	}
 	return 0;
