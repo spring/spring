@@ -122,11 +122,16 @@ void CQuitBox::Draw(void)
 	glColor4f(1,1,0.4f,0.8f);
 	font->glPrintAt(box.x1+0.045f,box.y1+0.62f,0.7f,"Do you want to ...");
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+resignQuitBox.x1+0.025f,box.y1+resignQuitBox.y1+0.005f,1,"Quit and resign");
-	font->glPrintAt(box.x1+resignBox.x1+0.025f,box.y1+resignBox.y1+0.005f,1,"Resign");
-	font->glPrintAt(box.x1+giveAwayBox.x1+0.025f,box.y1+giveAwayBox.y1+0.005f,1,"Give everything to ...");
-	font->glPrintAt(box.x1+cancelBox.x1+0.025f,box.y1+cancelBox.y1+0.005f,1,"Cancel");
-	font->glPrintAt(box.x1+quitBox.x1+0.025f,box.y1+quitBox.y1+0.005f,1,"Quit");
+	font->glPrintAt(box.x1 + resignQuitBox.x1 + 0.025f,
+	                box.y1 + resignQuitBox.y1 + 0.005f, 1, "Quit and resign");
+	font->glPrintAt(box.x1 + resignBox.x1     + 0.025f,
+	                box.y1 + resignBox.y1     + 0.005f, 1, "Resign");
+	font->glPrintAt(box.x1 + giveAwayBox.x1   + 0.025f,
+	                box.y1 + giveAwayBox.y1   + 0.005f, 1, "Give everything to ...");
+	font->glPrintAt(box.x1 + cancelBox.x1     + 0.025f,
+	                box.y1 + cancelBox.y1     + 0.005f, 1, "Cancel");
+	font->glPrintAt(box.x1 + quitBox.x1       + 0.025f,
+	                box.y1 + quitBox.y1       + 0.005f, 1, "Quit");
 
 	for(int team=0;team<gs->activeTeams-1;++team){
 		int actualTeam=team;
