@@ -255,8 +255,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			}
 			break;
 		case drawLos: {
-			int lowRes = highResInfoTex ? 0 : -1;
-			int endx = highResInfoTex ? gs->mapx : gs->hmapx;
+			int lowRes = highResInfoTexWanted ? 0 : -1;
+			int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
 			int pwr2mapx = gs->pwr2mapx >> (-lowRes);
 			for(int y=starty;y<endy;++y){
 				for(int x=0;x<endx;++x){
@@ -295,13 +295,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, gs->pwr2mapx>>1, gs->pwr2mapy>>1,0,GL_RGBA, GL_UNSIGNED_BYTE, infoTexMem);
 			highResInfoTex=highResInfoTexWanted;
 			updateTextureState=0;
-// 			return true;
+			return true;
 		}
 
 	}
 	if(updateTextureState>=50){
 		glBindTexture(GL_TEXTURE_2D, infoTex);
-		if(highResInfoTexWanted)
+		if(highResInfoTex)
 			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/8),gs->pwr2mapx, (gs->pwr2mapy/8),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/8)*gs->pwr2mapx*4]);
 		else
 			glTexSubImage2D(GL_TEXTURE_2D,0, 0,(updateTextureState-50)*(gs->pwr2mapy/16),gs->pwr2mapx>>1, (gs->pwr2mapy/16),GL_RGBA, GL_UNSIGNED_BYTE, &infoTexMem[(updateTextureState-50)*(gs->pwr2mapy/16)*(gs->pwr2mapx>>1)*4]);
