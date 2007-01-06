@@ -390,7 +390,6 @@ def generate(env):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 		for d in filelist.list_directories(env, 'lua'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
-		env.BuildDir(os.path.join(env['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 		for d in filelist.list_directories(env, 'AI'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 

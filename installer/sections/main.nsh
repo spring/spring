@@ -29,7 +29,7 @@
   ; File "..\game\7zxa.dll"
   Delete "$INSTDIR\7zxa.dll"
 !ifdef MINGW
-  File "..\game\eaxac3.dll"
+  Delete "..\game\eaxac3.dll"        ; Was needed by openal32.dll in the past..
   File "..\game\freetype6.dll"
   File "..\game\glew32.dll"
   File "..\game\zlib1.dll"
