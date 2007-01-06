@@ -40,7 +40,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	highResInfoTexWanted=false;
 
 	highResLosTex = !!configHandler.GetInt("HighResLos", 0);
-	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
+// 	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
 }
 
 CBaseGroundDrawer::~CBaseGroundDrawer(void)

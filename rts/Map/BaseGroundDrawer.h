@@ -68,7 +68,7 @@ public:
 	DrawMode drawMode;
 
 	bool highResLosTex;
-	bool smoothLosTex;
+// 	bool smoothLosTex;
 };
 
 #endif // __BASE_GROUND_DRAWER__
