@@ -14,7 +14,7 @@ CR_REG_METADATA(CExpGenSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-CExpGenSpawner::CExpGenSpawner(void)
+CExpGenSpawner::CExpGenSpawner(void) : damage(0)
 {
 	checkCol=false;
 	deleteMe=false;

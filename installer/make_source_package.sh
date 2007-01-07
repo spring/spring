@@ -48,7 +48,8 @@ seven_zip="spring_${version}_src.7z"
 # (directories are included recursively)
 include=" \
  $dir/AI/Group/ \
- $dir/AI/Global/ \
+ $dir/AI/Global/AAI/ \
+ $dir/AI/Global/TestGlobalAI/ \
  $dir/Documentation/ \
  $dir/Doxyfile \
  $dir/game/ \
