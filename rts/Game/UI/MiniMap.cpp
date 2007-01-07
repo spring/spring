@@ -281,7 +281,11 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	const string command = StringToLower(words[0]);
 
 	if (command == "draw") {
+		glMatrixMode(GL_PROJECTION); glPushMatrix();
+		glMatrixMode(GL_MODELVIEW);  glPushMatrix();
 		DrawForReal();
+		glMatrixMode(GL_PROJECTION); glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
 	}
 	else if (command == "slavemode") {
 		if (words.size() >= 2) {
@@ -971,11 +975,6 @@ void CMiniMap::DrawForReal()
 		return;
 	}
 	
-	if (slaveDrawMode) {
-		glMatrixMode(GL_PROJECTION); glPushMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPushMatrix();
-	}
-	
 	glViewport(xpos, ypos, width, height);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -1148,11 +1147,6 @@ void CMiniMap::DrawForReal()
 		
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
-	if (slaveDrawMode) {
-		glMatrixMode(GL_PROJECTION); glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
-	}
-	
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
 }
