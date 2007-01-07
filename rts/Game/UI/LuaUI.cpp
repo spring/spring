@@ -1966,7 +1966,7 @@ static int GetMouseState(lua_State* L)
 		lua_pushstring(L, "GetMouseState() takes no arguments");
 		lua_error(L);
 	}
-	lua_pushnumber(L, mouse->lastx);
+	lua_pushnumber(L, mouse->lastx - gu->viewPosX);
 	lua_pushnumber(L, gu->viewSizeY - mouse->lasty - 1);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
@@ -3729,7 +3729,7 @@ static int TraceScreenRay(lua_State* L)
 	}
 
 	// window coordinates	
-	const int wx = (int)lua_tonumber(L, 1);
+	const int wx = (int)lua_tonumber(L, 1) - gu->viewPosX;
 	const int wy = gu->viewSizeY - 1 - (int)lua_tonumber(L, 2);
 	if ((wx < gu->viewPosX) || (wx >= (gu->viewSizeX + gu->viewPosX)) ||
 	    (wy < gu->viewPosY) || (wy >= (gu->viewSizeY + gu->viewPosY))) {
