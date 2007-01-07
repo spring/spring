@@ -74,10 +74,13 @@ void CCannon::Update()
 		} else {
 			float3 dif=targetPos-weaponPos;
 			dif.y-=predict*predict*gs->gravity*0.5f;
-			predict=dif.Length()/projectileSpeed;
-
-			if(predict>maxPredict)
-				predict=maxPredict;
+			if (projectileSpeed == 0)
+				predict = maxPredict;
+			else {
+				predict=dif.Length()/projectileSpeed;
+				if(predict>maxPredict)
+					predict=maxPredict;
+			}
 			wantedDir=dif;
 			wantedDir.Normalize();
 		}
@@ -101,6 +104,8 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 			return false;
 	}
 
+	if (projectileSpeed == 0)
+		return true;
 	float3 dif(pos-weaponPos);
 	float predictTime=dif.Length()/projectileSpeed;
 	if(predictTime==0)
