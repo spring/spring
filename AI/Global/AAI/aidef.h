@@ -35,25 +35,14 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define MAP_DATA_VERSION "MAP_DATA_0_60"
 
 // all paths 
-#ifdef WIN32
-    #define MAIN_PATH "ai\\aai\\"
-	#define AILOG_PATH "log\\"
-	#define MOD_CFG_PATH "cfg\\mod\\"
-	#define GENERAL_CFG_FILE "cfg\\general.cfg"
-	#define MOD_LEARN_PATH "learn\\mod\\"
-	#define MAP_CFG_PATH "cfg\\map\\"
-	#define MAP_CACHE_PATH "cache\\"
-	#define MAP_LEARN_PATH "learn\\map\\"
-#else
-	#define MAIN_PATH "AI/AAI/"
-	#define AILOG_PATH "log/"
-	#define MOD_CFG_PATH "cfg/mod/"
-	#define GENERAL_CFG_FILE "cfg/general.cfg"
-	#define MOD_LEARN_PATH "learn/mod/"
-	#define MAP_CFG_PATH "cfg/map/"
-	#define MAP_CACHE_PATH "cache/"
-	#define MAP_LEARN_PATH "learn/map/"
-#endif
+#define MAIN_PATH "AI/AAI/"
+#define AILOG_PATH "log/"
+#define MOD_CFG_PATH "cfg/mod/"
+#define GENERAL_CFG_FILE "cfg/general.cfg"
+#define MOD_LEARN_PATH "learn/mod/"
+#define MAP_CFG_PATH "cfg/map/"
+#define MAP_CACHE_PATH "cache/"
+#define MAP_LEARN_PATH "learn/map/"
 
 extern AAIConfig *cfg;
 

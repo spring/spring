@@ -87,8 +87,6 @@ AAIConfig::AAIConfig(void)
 	WATER_MAP_RATIO = 0.8;
 	LAND_WATER_MAP_RATIO = 0.3;
 
-	strcpy(AI_PATH, MAIN_PATH);
-	
 	initialized = false;
 }
 
@@ -106,17 +104,14 @@ AAIConfig::~AAIConfig(void)
 
 void AAIConfig::LoadConfig(AAI *ai)
 {
-	// get path to writable dir
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, AI_PATH); 
-
 	char filename[500];
 	char buffer[500];
 
-	strcpy(buffer, AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MOD_CFG_PATH);
 	strcat(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
-	strcpy(cfg_file, filename);	
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file = fopen(filename, "r");
 	char keyword[50];
@@ -485,9 +480,10 @@ void AAIConfig::LoadConfig(AAI *ai)
 	
 
 	// load general settings
-	strcpy(buffer, AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	file = fopen(filename, "r");
 

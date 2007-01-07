@@ -55,12 +55,13 @@ AAIMap::~AAIMap(void)
 	// save map data
 	char filename[500];
 	char buffer[500];
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_LEARN_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), "_");
 	strcat(filename, cb->GetModName());
 	ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE *save_file = fopen(buffer, "w+");
 
@@ -185,10 +186,11 @@ void AAIMap::Init()
 	bool loaded = false;
 	char filename[500];
 	char buffer[500];
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_CACHE_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file;
 
@@ -243,7 +245,11 @@ void AAIMap::Init()
 		// scan for water
 		DetectWater();
 
-		// save data
+		// save data (filename has been clobbered by previous LOCATE_FILE_R call,
+		// restore it from buffer, using ReplaceExtension).
+		ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+
 		file = fopen(filename, "w+");
 
 		fprintf(file, "%s\n",  MAP_DATA_VERSION);
@@ -268,10 +274,11 @@ void AAIMap::Init()
 
 	// determine map type
 	loaded = true;
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_CFG_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	if(file = fopen(filename, "r"))
 	{
@@ -341,10 +348,11 @@ void AAIMap::Init()
 		fprintf(ai->file, "\n\n");
 
 		// save results to cfg file
-		strcpy(buffer, cfg->AI_PATH);
+		strcpy(buffer, MAIN_PATH);
 		strcat(buffer, MAP_CFG_PATH);
 		strcat(buffer, cb->GetMapName());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 		file = fopen(filename, "w+");
 		fprintf(file, "%s\n", GetMapTypeString(this->mapType));
@@ -399,13 +407,14 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	char filename[500];
 	char buffer[500];
 
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_LEARN_PATH);
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), "_");
 	strcpy(buffer, filename);
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	// open learning files 
 	FILE *load_file = fopen(filename, "r");
