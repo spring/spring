@@ -24,6 +24,8 @@ class CMiniMap : public CInputReceiver {
 		bool IsAbove(int x, int y);
 		void Draw();
 		std::string GetTooltip(int x, int y);
+
+		void DrawForReal();
 		
 		void ConfigCommand(const std::string& command);
 
@@ -85,6 +87,8 @@ class CMiniMap : public CInputReceiver {
 		bool mouseLook;
 		bool mouseMove;
 		bool mouseResize;
+
+		bool slaveDrawMode;
 
 		struct IntBox {
 			bool Inside(int x, int y) const {
