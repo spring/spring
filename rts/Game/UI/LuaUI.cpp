@@ -5218,7 +5218,7 @@ static int DrawMatrixMode(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawLoadIdentity");
+		lua_pushstring(L, "Incorrect arguments to DrawMatrixMode");
 		lua_error(L);
 	}
 	glMatrixMode((GLenum)lua_tonumber(L, 1));

@@ -68,7 +68,8 @@ CMiniMap::CMiniMap()
   maximized(false),
   minimized(false),
   showButtons(false),
-  useIcons(true)
+  useIcons(true),
+  slaveDrawMode(false)
  {
 	lastWindowSizeX = gu->viewSizeX;
 	lastWindowSizeY = gu->viewSizeY;
@@ -279,7 +280,30 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	}
 	const string command = StringToLower(words[0]);
 
-	if (command == "fullproxy") {
+	if (command == "draw") {
+		DrawForReal();
+	}
+	else if (command == "slavemode") {
+		if (words.size() >= 2) {
+			slaveDrawMode = !!atoi(words[1].c_str());
+		} else {
+			slaveDrawMode = !slaveDrawMode;
+		}
+		static int oldButtonSize = 16;
+		if (slaveDrawMode) {
+			oldButtonSize = buttonSize;
+			maxspect = false;
+			maximized = false;
+			minimized = false;
+			mouseLook = false;
+			mouseMove = false;
+			mouseResize = false;
+		} else {
+			buttonSize = oldButtonSize;
+		}
+		UpdateGeometry();
+	}
+	else if (command == "fullproxy") {
 		if (words.size() >= 2) {
 			fullProxy = !!atoi(words[1].c_str());
 		} else {
@@ -924,6 +948,14 @@ void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
 
 void CMiniMap::Draw()
 {
+	if (!slaveDrawMode) {
+		DrawForReal();
+	}
+}
+
+
+void CMiniMap::DrawForReal()
+{
 	setSurfaceCircleFunc(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
 	
@@ -931,12 +963,19 @@ void CMiniMap::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (minimized) {
-		DrawMinimizedButton();
+		if (!slaveDrawMode) {
+			DrawMinimizedButton();
+		}
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
 		return;
 	}
-
+	
+	if (slaveDrawMode) {
+		glMatrixMode(GL_PROJECTION); glPushMatrix();
+		glMatrixMode(GL_MODELVIEW);  glPushMatrix();
+	}
+	
 	glViewport(xpos, ypos, width, height);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -1091,21 +1130,28 @@ void CMiniMap::Draw()
 
 	glLoadIdentity(); // reset the modelview
 
-	DrawButtons();
+	if (!slaveDrawMode) {
+		DrawButtons();
 
-	// outline
-	glLineWidth(1.51f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glViewport(xpos - 1, ypos - 1, width + 2, height + 2);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-	glViewport(xpos - 2, ypos - 2, width + 4, height + 4);
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glLineWidth(1.0f);
-	
+		// outline
+		glLineWidth(1.51f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glViewport(xpos - 1, ypos - 1, width + 2, height + 2);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		glViewport(xpos - 2, ypos - 2, width + 4, height + 4);
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glLineWidth(1.0f);
+	}
+		
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+
+	if (slaveDrawMode) {
+		glMatrixMode(GL_PROJECTION); glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
+	}
 	
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
