@@ -16,8 +16,6 @@ public:
 
 	bool initialized;
 
-	char cfg_file[100];
- 
 	// constants (will be loaded in aaiconfig)
 
 	// mod specific
@@ -100,5 +98,4 @@ public:
 	int LEARN_RATE;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;
-	char AI_PATH[500];
 };

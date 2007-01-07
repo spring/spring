@@ -2479,7 +2479,7 @@ bool AAIBuildTable::CanBuildUnit(int id_builder, int id_unit)
 			return true;
 	}
 
-	// unit not found in builder´s buildoptions
+	// unit not found in builders buildoptions
 	return false;
 }
 
@@ -2556,10 +2556,11 @@ bool AAIBuildTable::LoadBuildTable()
 		// get filename
 		char filename[500];
 		char buffer[500];
-		strcpy(buffer, cfg->AI_PATH);
+		strcpy(buffer, MAIN_PATH);
 		strcat(buffer, MOD_LEARN_PATH);
 		strcat(buffer, cb->GetModName());
 		ReplaceExtension (buffer, filename, sizeof(filename), ".dat");
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 		FILE *load_file;
 
@@ -2704,10 +2705,11 @@ void AAIBuildTable::SaveBuildTable()
 	// get filename
 	char filename[500];
 	char buffer[500];
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MOD_LEARN_PATH);
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".dat");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	//fprintf(ai->file, "Saving buildtable to %s\n", filename);
 
@@ -2841,11 +2843,12 @@ void AAIBuildTable::DebugPrint()
 	UnitType unitType;
 	char filename[500];
 	char buffer[500];
-	strcpy(buffer, cfg->AI_PATH);
+	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, AILOG_PATH);
 	strcat(buffer, "BuildTable_");
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE *file = fopen(filename, "w");
 
