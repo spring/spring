@@ -88,7 +88,7 @@
 				EnableFunctionLevelLinking="TRUE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="0"
 				WarningLevel="1"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="2"
@@ -155,7 +155,7 @@
 				EnableFunctionLevelLinking="TRUE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="0"
 				WarningLevel="1"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="2"/>
@@ -221,7 +221,7 @@
 				EnableFunctionLevelLinking="TRUE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				RuntimeTypeInfo="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				WarningLevel="1"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="2"/>
@@ -409,6 +409,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\Player.h">
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRoster.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRoster.h">
 			</File>
 			<File
 				RelativePath="..\..\Game\PreGame.cpp">
@@ -1774,30 +1780,6 @@
 				RelativePath="..\..\System\StdAfx.h">
 			</File>
 			<File
-				RelativePath="..\..\System\Syncify.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Syncify.h">
-			</File>
-			<File
-				RelativePath="..\..\System\SyncTracer.cpp">
-			</File>
-			<File
-				RelativePath="..\..\System\SyncTracer.h">
-			</File>
-			<File
 				RelativePath="..\..\System\tdf_grammar.hpp">
 			</File>
 			<File
@@ -2406,6 +2388,12 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\byteorder.h">
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Clipboard.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Clipboard.h">
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.cpp">
@@ -4253,6 +4241,18 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\SyncedPrimitiveIO.h">
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\Syncify.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\Syncify.h">
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncTracer.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncTracer.h">
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\Upcast.h">
