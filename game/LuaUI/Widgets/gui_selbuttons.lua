@@ -26,13 +26,12 @@ end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 --
---  Disabled for Spring versions older the 0.74b3  (no GetUnitDimensions())
+--  Disabled for Spring versions older then 0.74b3 (no GetUnitDefDimensions())
 --
 
-if (Game.version < '0.74b3') then
-  -- remove this on the first call to Update()
-  Spring.SendCommands({"echo Selection Buttons widget has been disabled"})
-  widget.Update = function(self, dt)
+function widget:Initialize()
+  if (Spring.GetUnitDefDimensions == nil) then
+    Spring.SendCommands({"echo Selection Buttons widget has been disabled"})
     widgetHandler:RemoveWidget()
   end
 end
@@ -292,6 +291,7 @@ end
 
 
 -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 function widget:MousePress(x, y, button)
   mouseIcon = MouseOverIcon(x, y)
@@ -301,7 +301,6 @@ end
 
 
 -------------------------------------------------------------------------------
-
 
 local function LeftMouseButton(unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
@@ -371,6 +370,8 @@ local function RightMouseButton(unitTable)
   Spring.SendCommands({"selectunits" .. unitString})
 end
 
+
+-------------------------------------------------------------------------------
 
 function widget:MouseRelease(x, y, button)
   if (not activePress) then

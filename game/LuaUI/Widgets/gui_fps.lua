@@ -107,6 +107,7 @@ function widget:GetConfigData()
   return tbl
 end
 
+
 --------------------------------------------------------------------------------
 
 -- returns a fraction,pixel pair
@@ -117,6 +118,7 @@ local function LoadGeoPair(tbl, fName, pName, oldPixelValue)
   end
 end
 
+
 function widget:SetConfigData(data)
   color  = data.color  or color
   format = data.format or format
@@ -126,6 +128,7 @@ function widget:SetConfigData(data)
   UpdateGeometry()
   return
 end
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
