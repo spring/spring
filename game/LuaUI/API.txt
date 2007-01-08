@@ -54,7 +54,7 @@
 
   GroupChanged()
 
-	AddConsoleLine()  FIXME
+  AddConsoleLine()  FIXME
 
 
 --------------------------------------------------------------------------------

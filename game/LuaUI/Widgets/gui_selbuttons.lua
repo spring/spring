@@ -231,7 +231,8 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   gl.Scissor(xmin, ymin, xmax - xmin, ymax - ymin)
   gl.Translate(xmid, ymid, 0)
   gl.Rotate(15.0, 1, 0, 0)
-  gl.Rotate(math.cos(0.5 * math.pi * Spring.GetGameSeconds()) * 60.0, 0, 1, 0)
+  local timer = 1.5 * widgetHandler:GetHourTimer()
+  gl.Rotate(math.cos(0.5 * math.pi * timer) * 60.0, 0, 1, 0)
 
   CenterUnitDef(unitDefID)
 
