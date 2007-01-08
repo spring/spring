@@ -246,6 +246,12 @@ Section "Maps" SEC_MAPS
 SectionEnd
 !endif
 
+Section "LuaUI" SEC_LUAUI
+  !define INSTALL
+  !include "sections\luaui.nsh"
+  !undef INSTALL
+SectionEnd
+
 Section "Start menu shortcuts" SEC_START
   !define INSTALL
   !include "sections\shortcuts.nsh"
@@ -360,6 +366,7 @@ Section Uninstall
   !include "sections\shortcuts.nsh"
   !include "sections\aai.nsh"
   !include "sections\battleroom.nsh"
+  !include "sections\luaui.nsh"
 
   Delete "$DESKTOP\TA Spring battleroom.lnk"
 
