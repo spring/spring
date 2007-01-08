@@ -399,9 +399,6 @@ function widgetHandler:InsertWidget(widget)
   if (widget == nil) then
     return
   end
-  if (widget.Initialize) then
-    widget:Initialize()
-  end
   local function Insert(t, f, w)
     if (f) then
       for _,v in ipairs(t) do
@@ -415,6 +412,9 @@ function widgetHandler:InsertWidget(widget)
   Insert(self.widgets, true, widget)
   for _,listname in callInLists do
     Insert(self[listname..'List'], widget[listname], widget)
+  end
+  if (widget.Initialize) then
+    widget:Initialize()
   end
 end
 
