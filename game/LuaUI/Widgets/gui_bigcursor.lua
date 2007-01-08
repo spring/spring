@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "BigCursor",
     desc      = "Displays a fullscreen cursor",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 3,
     enabled   = true  --  loaded by default?

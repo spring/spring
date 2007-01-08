@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "CopyQueue",
     desc      = "CTRL+GUARD copies a units commands instead of guarding",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 0,
     enabled   = true  --  loaded by default?

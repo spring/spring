@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "CircleFormation",
     desc      = "Adds '/luaui circle' to position mobile units",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 0,
     enabled   = true  --  loaded by default?
