@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 --
 --  file:    dbg_debug.lua
---  brief:   HEADER_DESCRIPTION
+--  brief:   a widget that prints debug data
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.

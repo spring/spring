@@ -92,10 +92,11 @@ end
 --
 
 activePage = 0
-
+local forceUpdate = true
 
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
-  local needUpdate = false
+  local needUpdate = forceUpdate
+  forceUpdate = false
 
 --  needUpdate = needUpdate or (activePage ~= page)
 --  activePage = page

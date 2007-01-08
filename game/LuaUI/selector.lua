@@ -129,7 +129,7 @@ function widget:DrawScreen()
   gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
 
   -- draw the box
-  gl.Color(0.25, 0.25, 0.25, 1.0)
+  gl.Color(0.3, 0.3, 0.3, 1.0)
   gl.Texture("bitmaps/detailtex.bmp")
   local ts = (2.0 / 512)  --  texture scale 
   gl.Shape(GL_QUADS, {
@@ -324,7 +324,8 @@ function widget:GetTooltip(x, y)
   local name = namedata[1]
   local data = namedata[2]
   
-  local tt = GreenStr..name..'\n'
+  local tt = (data.active and GreenStr) or RedStr
+  tt = tt..name..'\n'
   tt = data.desc   and tt..WhiteStr..data.desc..'\n'
   tt = data.author and tt..BlueStr..'Author:  '..CyanStr..data.author..'\n'
   tt = tt..MagentaStr..data.basename
