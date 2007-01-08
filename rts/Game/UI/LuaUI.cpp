@@ -4226,7 +4226,11 @@ static int DrawText(lua_State* L)
 	glTranslatef(xj, y, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	if (!outline) {
-		font->glPrintColor("%s", text.c_str());
+		if (colorCodes) {
+			font->glPrintColor("%s", text.c_str());
+		} else {
+			font->glPrint("%s", text.c_str());
+		}
 	} else {
 		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
 		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
