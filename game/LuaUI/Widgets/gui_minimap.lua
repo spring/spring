@@ -64,16 +64,11 @@ end
 
 function widget:DrawScreen()
   if (widgetHandler:InTweakMode()) then
-    Spring.SendCommands({
-      "minimap min 1",
-      "minimap draw"
-    })
+    Spring.SendCommands({ "minimap min 1", "minimap draw" })
   else
-    Spring.SendCommands({
-      "minimap min 0",
-      "minimap draw"
-    })
+    Spring.SendCommands({ "minimap min 0", "minimap draw" })
   end
+  gl.ResetState()
   
   local xn = minx - 0.5
   local xp = maxx + 0.5
