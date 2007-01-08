@@ -62,8 +62,8 @@ local countsTable = {}
 local activePress = false
 local mouseIcon = -1
 
-local iconSizeX = 100
-local iconSizeY = iconSizeX * 0.75
+local iconSizeX = math.floor(100)
+local iconSizeY = math.floor(iconSizeX * 0.75)
 local fontSize = iconSizeY * 0.25
 
 local rectMinX = 0
@@ -111,11 +111,11 @@ end
 
 function SetupDimensions(count)
   xmid = vsx * 0.5
-  width = iconSizeX * count
-  rectMinX = xmid - (0.5 * width)
-  rectMaxX = xmid + (0.5 * width)
-  rectMinY = 5
-  rectMaxY = rectMinY + iconSizeY
+  width = math.floor(iconSizeX * count)
+  rectMinX = math.floor(xmid - (0.5 * width))
+  rectMaxX = math.floor(xmid + (0.5 * width))
+  rectMinY = math.floor(0)
+  rectMaxY = math.floor(rectMinY + iconSizeY)
 end
 
 
@@ -201,7 +201,7 @@ end
 
 
 function DrawUnitDefIcon(unitDefID, iconPos, count)
-  local xmin = rectMinX + (iconSizeX * iconPos)
+  local xmin = math.floor(rectMinX + (iconSizeX * iconPos))
   local xmax = xmin + iconSizeX
   if ((xmax < 0) or (xmin > vsx)) then return end  -- bail
   
@@ -219,8 +219,8 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   gl.Shape(GL_QUADS, {
     { v = { xmin + 1, ymin + 1 }, t = { 0, 1 } },
     { v = { xmax - 0, ymin + 1 }, t = { 1, 1 } },
-    { v = { xmax - 0, ymax - 1 }, t = { 1, 0 } },
-    { v = { xmin + 1, ymax - 1 }, t = { 0, 0 } },
+    { v = { xmax - 0, ymax - 0 }, t = { 1, 0 } },
+    { v = { xmin + 1, ymax - 0 }, t = { 0, 0 } },
   })
   gl.Texture(false)
 
