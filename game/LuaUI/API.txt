@@ -1,0 +1,1181 @@
+--
+--  General Notes
+--
+--
+--  * LuaUI (Spring 0.74b3) is based on Lua 5.0
+--
+--  * All of the standard lua libraries are available
+--    (base, io, math, string, table, debug)
+--
+--  * The Game[], UnitDefs[], and WeaponDefs[] tables are available.
+--    These tables can be printed into the infolog.txt by adding
+--    "keydebug 2" in the uikeys.txt file. There are example tables at
+--    the end of this file.
+--
+--  * Screen origin is left-bottom (0, 0)
+--    (this is used for both mouse and screen drawing coordinates)
+--
+--
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-INS
+--
+--  Call-ins are functions that the lua code can provide that will
+--  be called from the Spring executable when appropriate. All of
+--  the call-ins are optional.
+--
+
+  Shutdown()
+
+  LayoutButtons()
+
+  UpdateLayout()
+  ConfigureLayout()
+
+  CommandNotify()
+
+  DrawWorldItems()
+  DrawScreenItems()
+
+  KeyPress()
+  KeyRelease()
+  MouseMove()
+  MousePress()
+  MouseRelease()
+
+  IsAbove()
+  GetTooltip()
+
+  UnitCreated()
+  UnitReady()
+  UnitDestroyed()
+
+  GroupChanged()
+
+	AddConsoleLine()  FIXME
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-OUTS
+--
+--  Call-outs are the functions which may be used from within the LUA code.
+--  They are all placed in the Spring[] table  (ex: use Spring.LoadTextVFS()
+--  or Spring.Draw.Text())
+--
+
+  LoadTextVFS()
+  GetDirListVFS()
+  GetDirList()
+
+  GetFPS()
+  GetGameSeconds()
+  GetInCommand()
+  GetMouseState()
+  GetMouseCursor()
+  SetMouseCursor()
+
+  GetCurrentTooltip()
+
+  GetKeyState()
+  GetModKeyState()
+  GetPressedKeys()
+
+  GetKeyCode()
+  GetKeySymbol()
+  GetKeyBindings()
+  GetActionHotKeys()
+
+  GetConfigInt()
+  SetConfigInt()
+  GetConfigString()
+  SetConfigString()
+
+  SetUnitDefIcon()
+
+  GetSelectedGroup()
+  GetGroupList()
+  GetGroupAIName()
+  GetGroupAIList()
+
+  GetSelectedUnits()
+  GetSelectedUnitsSorted()
+  GetSelectedUnitsCounts()
+  GetGroupUnits()
+  GetGroupUnitsSorted()
+  GetGroupUnitsCounts()
+  GetTeamUnits()
+  GetTeamUnitsSorted()
+  GetTeamUnitsCounts()
+
+  GetUnitDefID()
+  GetUnitTeam()
+  GetUnitAllyTeam()
+  GetUnitHealth()
+  GetUnitResources()
+  GetUnitStates()
+  GetUnitStockpile()
+  GetUnitPosition()
+  GetUnitHeading()
+  GetUnitBuildFacing()
+
+  GetCommandQueue()
+  GetFullBuildQueue()
+  GetRealBuildQueue()
+
+  GetMyAllyTeamID()
+  GetMyTeamID()
+  GetMyPlayerID()
+
+  GetAllyTeamList()
+  GetTeamList()
+  GetPlayerList()
+
+  GetTeamInfo()
+  GetTeamResources()
+  GetTeamUnitStats()
+  SetShareLevel()
+
+  GetPlayerInfo()
+
+  AreTeamsAllied()
+  ArePlayersAllied()
+
+  GetCameraState()
+  SetCameraState()
+  GetCameraPos()
+  GetCameraVectors()
+  WorldToScreenCoords()
+  TraceScreenRay()
+
+  SendCommands()
+  GiveOrder()
+
+  GetGroundHeight()
+  TestBuildOrder()
+  Pos2BuildPos()
+
+  PlaySoundFile()
+
+  AddWorldIcon()
+  AddWorldText()
+  AddWorldUnit()
+
+  Draw.ScreenGeometry()
+  Draw.ResetState()
+  Draw.Clear()
+
+  Draw.Lighting()
+  Draw.ShadeModel()
+
+  Draw.Scissor()
+  Draw.DepthMask()
+  Draw.DepthTest()
+  Draw.Culling()
+  Draw.LogicOp()
+  Draw.Blending()
+  Draw.AlphaTest()
+  Draw.LineStipple()
+  Draw.Texture()
+  Draw.Material()
+  Draw.Color()
+
+  Draw.FreeTexture()
+
+  Draw.Shape()
+  Draw.UnitDef()
+  Draw.Text()
+  Draw.GetTextWidth()
+
+  Draw.Translate()
+  Draw.Scale()
+  Draw.Rotate()
+
+  Draw.PushMatrix()
+  Draw.PopMatrix()
+
+  Draw.ListCreate()
+  Draw.ListRun()
+  Draw.ListDelete()
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-INS, in detail
+--
+
+
+--
+--  Called whenever LuaUI is being terminated.
+--
+Shutdown() -> nil
+
+
+--
+--  Called whenever the active commands changed, or if forced
+--
+LayoutButtons(number xButtons, number yButtons, number cmdCount,
+              commands = {  --  the list of commands currently available
+                [0] = { id = number,
+                        type = number,
+                        action = string,
+                        hidden = boolean,
+                        params = { string "param1", string "param2", etc...}
+                      },
+                [1] = { ... },
+                [2] = { ... },
+                etc...
+              }) ->
+  string menuName,
+  number xButtons,
+  number yButtons,
+  removeCmds = {
+    [1] = number cmdIndex1,  etc...
+  },
+  customCmds = {                 -- all parameters are optional
+    [1] = {
+      id        = number,
+      type      = number,
+      action    = string,
+      iconname  = string,
+      mouseicon = string,
+      tooltip   = string,
+      nwtext    = string,
+      netext    = string,
+      swtext    = string,
+      setext    = string,
+      actions = { string "action1", string "action2",  etc...}
+      -- Actions can have a key modifier specification prefix that
+      -- will control when they are enabled, and what the effective
+      -- key modifiers will be when they are executed. Here's an
+      -- example:    actions = { "@-c+s+R-A+M@togglelos" }
+      -- The lower case letters control when the action is enabled.
+      -- A '+' before the letter means that the modifier key must
+      -- be active for the action to execute. A '-' before the letter
+      -- means that the modifier key must not be active for the
+      -- action to execute. The same pattens holds for the effective
+      -- state of the modifiers during execution. A '+' enables the
+      -- modifier, and a '-' disables it. Manipulating the effective
+      -- state of the modifiers can be useful for actions such as
+      -- "group1", "group2", etc...
+      --
+      --   a/A:  ALT KEY
+      --   c/C:  CONTROL KEY
+      --   m/M:  META KEY
+      --   s/S:  SHIFT KEY
+      --   r/R:  RIGHT MOUSE BUTTON
+    },
+    etc...
+  }
+  onlyTextureCmds = {
+    [1] = number cmdIndex1,  etc...
+  },
+  reTextureCmds = {
+    [number cmdIndex1] = string "texture1",  etc...
+  },
+  reNamedCmds = {
+    [number cmdIndex1] = string "name1",  etc...
+  },
+  reTooltipCmds = {
+    [number cmdIndex1] = string "tooltip1",  etc...
+  },
+  reParamsCmds = {
+    -- paramNum starts at 0
+    [number cmdIndex1] = { [number paramNum] = string "value", etc... },  etc...
+  },
+  buttonList = {
+    -- buttonSlots start at 0
+    [number buttonSlot] = number cmdIndex1,  etc...
+  }
+
+
+--
+--  Called every frame. Return 'true' if you wish to force a re-layout
+--  (ex: if you need to change the appearance of a custom button)
+--
+UpdateLayout(
+  boolean commandsChanged,
+  number page,
+  boolean alt,
+  boolean ctrl,
+  boolean meta,
+  boolean shift
+) -> boolean forceLayout
+
+
+--
+--  Called from the "/luaui <command>" in-game command
+--
+ConfigureLayout(string "command") -> nil
+
+
+--
+--  Called whenever the user produces a new command. If the
+--  returned value is true, then the command is not sent.
+--
+CommandNotify(
+  number commandID,
+  params  = { string "param1", string "param2", etc... },
+  options = { boolean alt, boolean ctrl, boolean shift, boolean right }
+) -> boolean takeCommand
+
+
+--
+--  Called every frame
+--
+DrawWorldItems() -> nil
+
+DrawScreenItems(number width, number height) -> nil
+
+
+--
+--  The following are called when the associated user input is given
+--
+KeyPress(unsigned short key, bool isRepeat) -> boolean takeEvent
+
+KeyRelease(unsigned short key) -> boolean takeEvent
+
+
+MouseMove(int x, int y, int dx, int dy, int button) -> boolean takeEvent
+
+MousePress(int x, int y, int button) -> boolean takeEvent
+
+MouseRelease(int x, int y, int button) ->
+  number commandIndex  (-1 for no command)
+
+
+--
+--  Called be Spring to find out if the cursor is over the
+--  any part of the user interface. This is used to determine
+--  the current tooltip, whether or not to execute a default
+--  command, etc...
+--
+IsAbove(int x, int y) -> boolean above
+
+--
+--  Called when Spring thinks the user interface owns the tooltip
+--
+GetTooltip(int x, int y) -> string "tooltip"
+
+
+--
+--  Called when a unit is created
+--
+UnitCreated(number unitID, number unitDefID) -> nil
+
+
+--
+--  Called when a unit first reaches 100% health
+--
+UnitReady(number unitID,    number unitDefID,
+          number builderID, number builderUnitDefID) -> nil
+
+--
+--  Called when a unit is destroyed
+--
+UnitDestroyed(number unitID, number unitDefID) -> nil
+
+
+--
+--  Called when units are added or removed from
+--  a group,or when the group's AI is changed
+--
+GroupChanged(number groupID) -> nil
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  CALL-OUTS, in detail
+--
+--  Call-outs are the functions which may be used from within the LUA
+--  code. They are bound to the lua workspace before the
+--
+
+--
+--  loads archived and unarchived files
+--
+LoadTextVFS(string "filename") -> nil | string "filecontents"
+
+--
+--  only lists archived files
+--
+GetDirListVFS(string "dir") ->
+  vfsFiles = {
+    [1] = string "filename",
+    etc...
+  }
+
+--
+--  only lists unarchived files (real files)
+--
+--  options characters are:
+--    "d" - include directories
+--    "r" - recursive search
+GetDirList(string "dir", string "pattern", string "options") ->
+  normalFiles = {
+    [1] = string "filename",
+    etc...
+  }
+
+
+GetFPS()         -> number fps
+
+GetGameSeconds() -> number seconds
+
+GetInCommand()   -> number inCommand
+
+GetMouseState()  ->
+  number x,
+  number y,
+  boolean leftButton,
+  boolean middleButton,
+  boolean rightButton
+
+GetMouseCursor() -> string "cursor", number scale
+
+SetMouseCursor(string "cursor"[, number scale]) -> nil
+
+
+GetCurrentTooltip() -> string "tooltip"
+
+
+GetKeyState(number keycode) -> boolean pressed
+
+GetModKeyState() -> boolean alt, boolean ctrl, boolean meta, boolean shift
+
+GetPressedKeys() -> { [1] = number keycode, etc... }
+
+
+GetKeyCode(string "keysym") -> number keycode
+
+GetKeySymbol(number keycode) -> string "defKeySym", string "userKeySym"
+
+GetKeyBindings(string "keyset") ->
+  bindings = {
+    [1] = { string "command" = string "arguments" },
+    etc...
+  }
+
+GetActionHotKeys(string "command") ->
+  hotkeys = {
+    [1] = string "hotkey1",
+    etc...
+  }
+
+
+GetConfigInt(string varname [,number default])    -> number value
+
+SetConfigInt(string varname, number)              -> nil
+
+GetConfigString(string varname [,string default]) -> string value
+
+SetConfigString(string varname, string value)     -> nil
+
+
+SetUnitDefIcon(number unitDefID, string "iconName") -> nil
+
+
+GetSelectedGroup() -> number groupID
+
+GetGroupList() ->
+  groups = {
+     [number groupID] = number groupCount,
+     etc...
+  }
+
+GetGroupAIName(number groupID) ->
+  nil | string "aiName"
+
+GetGroupAIList() ->
+  aiList = {
+    [1] = string "aiName",
+    etc...
+  }
+
+
+GetSelectedUnits() -> unitTable = { [1] = unitID, etc... }
+
+GetSelectedUnitsCounts() ->
+  countTable = { [unitDefID] = count, etc... }
+
+GetSelectedUnitsSorted() ->
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number groupID,
+      etc...
+    },
+    etc...
+  }
+
+
+GetGroupUnits(groupID) -> nil | unitTable = { [1] = unitID, etc... }
+
+GetGroupUnitsCounts(groupID) ->
+  nil | countTable = { [unitDefID] = count, etc... }
+
+GetGroupUnitsSorted(groupID) -> nil |
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number unitDefID,
+      etc...
+    },
+    etc...
+  }
+
+
+GetTeamUnits(teamID) -> nil | unitTable = { [1] = unitID, etc... }
+
+GetTeamUnitsCounts(teamID) ->
+  nil | countTable = { [unitDefID] = count, etc... }
+
+GetTeamUnitsSorted(teamID) -> nil |
+  unitDefTable = {
+    [number unitDefID] = {
+      [number unitID] = number unitDefID,
+      etc...
+    },
+    etc...
+  }
+
+
+GetUnitDefID(number unitID) ->
+  nil | number unitDefID
+
+GetUnitTeam(number unitID) ->
+  nil | number teamID
+
+GetUnitAllyTeam(number unitID) ->
+  nil | number allyTeamID
+
+GetUnitHealth(number unitID) ->
+  nil | number health,
+        number maxHealth,
+        number paralyzeDamage,
+        number captureProgress,
+        number buildProgress
+
+GetUnitResources(number unitID) ->
+  nil | number metalMake,
+        number metalUse,
+        number energyMake,
+        number energyUse
+
+GetUnitStates(number unitID) ->
+  nil | states = {
+          firestate  = number,
+          movestate  = number,
+          repeating  = boolean,
+          cloak      = boolean,
+          active     = boolean,
+          trajectory = boolean
+        }
+
+GetUnitStockpile(number unitID) ->
+  nil | number currentStockpile,
+        number queuedStockpile
+
+GetUnitPosition(number unitID) ->
+  nil | number x,
+        number y,
+        number z
+
+GetUnitHeading(number unitID) ->
+  nil | number x,
+        number y,
+        number z
+
+GetUnitBuildFacing(number unitID) ->
+  nil | number buildFacing
+
+
+GetCommandQueue(number unitID [, number maxCommands]) ->
+  nil | commands = {
+    [1] = {
+            id = number,
+            params = { number, number, etc... },
+            options = {
+              boolean alt,
+              boolean ctrl,
+              boolean shift,
+              boolean right,
+              boolean internal
+            }
+          },
+          etc...
+        }
+
+GetFullBuildQueue(number unitID) ->
+  nil | buildOrders = {
+          [1] = { [number unitDefID] = number count },  etc...
+        }
+
+GetRealBuildQueue(number unitID) ->
+  nil | buildOrders = {
+          [1] = { [number unitDefID] = number count },  etc...
+        }
+
+
+GetMyAllyTeamID() -> number allyTeamID
+
+GetMyTeamID()     -> number teamID
+
+GetMyPlayerID()   -> number playerID
+
+
+GetAllyTeamList() ->
+  allyteamTable = { [1] = number allyTeamID, etc... }
+
+GetTeamList([number allyTeamID]) ->
+  nil | teamTable = { [1] = number teamID, etc... }
+
+GetPlayerList([number teamID]) ->
+  nil | playerTable = { [1] = number playerID, etc... }
+
+
+GetTeamInfo(number teamID) ->
+  nil | number teamNum,
+        number leader,
+        boolean active,
+        boolean isDead,
+        string  "side",
+        number  colorRed,
+        number  colorGreen,
+        number  colorBlue,
+        number  colorAlpha
+
+GetTeamResources(string "metal" | "energy", number teamID) ->
+  nil | number currentLevel,
+        number storage,
+        number pull,
+        number income,
+        number expense,
+        number share,
+        number sent,
+        number received
+
+GetTeamUnitStats(number teamID) ->
+  nil | number killed,
+        number died,
+        number capturedBy,
+        number capturedFrom,
+        number received,
+        number sent
+
+SetShareLevel(string "metal" | "energy", number fraction) -> nil
+
+
+GetPlayerInfo(number playerID) ->
+  nil | string  "name",
+        boolean active,
+        boolean spectator,
+        number  teamID,
+        number  allyTeamID,
+        number  pingTime,
+        number  cpuUsage
+
+
+AreTeamsAllied(number teamID1, number teamID2) -> nil | boolean allied
+
+ArePlayersAllied(number playerID1, number playerID2) -> nil | boolean allied
+
+
+GetCameraState() -> table[] camstate  (opaque handle)
+
+SetCameraState(table[] camstate) -> nil
+
+GetCameraPos() -> number x, number y, number z
+
+GetCameraVectors() ->
+  vectorTable = {
+    forward   = { [1] = number x, [2] = number y, [3] = number z },
+    up        = { [1] = number x, [2] = number y, [3] = number z },
+    right     = { [1] = number x, [2] = number y, [3] = number z },
+    top       = { [1] = number x, [2] = number y, [3] = number z },
+    bottom    = { [1] = number x, [2] = number y, [3] = number z },
+    leftside  = { [1] = number x, [2] = number y, [3] = number z },
+    rightside = { [1] = number x, [2] = number y, [3] = number z }
+  }
+
+WorldToScreenCoords(number x, number y, number z) ->
+  number x, number y, number z
+
+TraceScreenRay(number mouseX, number mouseY[, boolean onlyCoords]) ->
+  nil |
+  string "unit",    number unitID    |
+  string "feature", number featureID |
+  string "ground",  { [1] = number x, [2] = number y, [3] = number z }
+
+
+SendCommands(commands = { string "cmd1", string "cmd2", ... }) -> nil
+
+GiveOrder(number cmdID,
+          params = {number, number, number},
+          options = {"alt", "ctrl", "shift", "right"}) -> nil
+
+
+GetGroundHeight(number x, number y) -> number z
+
+TestBuildOrder(number unitDefID,
+               number x, number y, number z
+               number facing) -> boolean willBuild
+
+Pos2BuildPos(number unitDefID, number x, number y, number z) ->
+  nil | number x,
+        number y,
+        number z
+
+
+PlaySoundFile(string "filename") -> nil
+
+
+AddWorldIcon(number cmdID, number x, number y, number z) -> nil
+
+AddWorldText(string "text", number x, number y, number z) -> nil
+
+AddWorldUnit(number unitDefID,
+             number x, number y, number z,
+             number team, number facing) -> nil
+
+
+----------------------
+--  Draw sub-table  --
+----------------------
+--
+--  The calls in the Spring.Draw table are based on OpenGL functions.
+--  You may wish to read the documentation for the following OpenGL
+--  functions to better understand them:
+--    * glBegin()
+--    * glEnable()
+--    * glVertex()
+--    * glNormal()
+--    * glTexCoord()
+--    * glAlphaFunc()
+--    * glBlendFunc()
+--    * glDepthFunc()
+--    * glLogicOp()
+--    * glCullFace()
+--    * glShadeModel()
+--    * glScissor()
+--    * glGenLists()
+--    * glNewList()
+--    * glDeleteLists()
+--
+
+Draw.ScreenGeometry(number width, number dist) -> nil
+
+Draw.ResetState() -> nil
+-- ShadeModel = GL_SMOOTH
+-- Scissor    = false
+-- Texture    = false
+-- DepthMask  = false
+-- DepthTest  = false  (GL_LEQUAL)
+-- Culling    = false  (GL_BACK)
+-- LogicOp    = false  (GL_INVERT)
+-- AlphaTest  = false  (GL_GREATER, 0.5f)
+-- Blending   = GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+
+Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
+-- bits:
+--   GL_COLOR_BUFFER_BIT    (4 values)
+--   GL_ACCUM_BUFFER_BIT    (4 values)
+--   GL_DEPTH_BUFFER_BIT    (1 value)
+--   GL_STENCIL_BUFFER_BIT  (1 value)
+
+
+Draw.ShadeModel(number mode) -> nil
+Draw.Scissor      (boolean enable | number x, number y, number w, number h) -> nil
+Draw.Lighting     (boolean enable) -> nil
+Draw.DepthMask    (boolean enable) -> nil
+Draw.DepthTest    (boolean enable | number func) -> nil
+Draw.Culling      (boolean enable | number face) -> nil
+Draw.LogicOp      (boolean enable | number func) -> nil
+Draw.AlphaTest    (boolean enable | number func, number threshold) -> nil
+Draw.Blending     (boolean enable | number srcmode, number dstmode) -> nil
+Draw.LineStipple  (boolean enable | string "" | number f, number pattern) -> nil
+Draw.PolygonOffset(boolean enable | number factor, number units) -> nil
+Draw.PolygonMode  (number face, number mode) -> nil
+
+Draw.Texture(boolean enable | string "filename") -> boolean success
+
+Draw.Material({
+    ambient   = {number r, number g, number b[, number a]},
+    diffuse   = {number r, number g, number b[, number a]},
+    ambidiff  = {number r, number g, number b[, number a]},
+    emission  = {number r, number g, number b[, number a]},
+    specular  = {number r, number g, number b[, number a]},
+    shininess = number specularExponent
+  }) -> nil
+
+Draw.Color({ number r, number g, number b[, number a] } |
+             number r, number g, number b[, number a]) -> nil
+
+Draw.FreeTexture(string "texname") -> boolean success
+
+Draw.Shape(
+  number GLtype,
+  elements = {
+    [1] = { v | vertex   = { number x, number y, number z },           -- required
+            n | normal   = { number x, number y, number z },           -- optional
+            t | texcoord = { number x, number y },                     -- optional
+            c | color    = { number r, number g, number b, number a }  -- optional
+    },
+    etc ...
+  }
+) -> nil
+
+Draw.UnitDef(number unitDefID, number teamID) -> nil
+
+-- the text option characters are:
+--   "o" - outline
+--   "r" - right justify
+--   "c" - center justify
+Draw.Text(string "text", number x, number y, number size, string "options") -> nil
+Draw.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
+
+
+Draw.Translate(number x, number y, number z) -> nil
+Draw.Scale(number x, number y, number z) -> nil
+Draw.Rotate(number angle, number x, number y, number z) -> nil
+
+Draw.PushMatrix() -> nil
+Draw.PopMatrix()  -> nil
+
+
+Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
+Draw.ListRun(number listID)    -> nil
+Draw.ListDelete(number listID) -> nil
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  Examples of Game[], WeaponDefs[], and UnitDefs[] tables
+--
+
+Game = {}
+Game.version = "0.74b1"
+Game.commEnds = false
+Game.gravity = 100.000000
+Game.tidal = 60.000000
+Game.windMin = 10.000000
+Game.windMax = 20.000000
+Game.mapX = 16
+Game.mapY = 16
+Game.mapName = "Castles.smf"
+Game.modName = "AASS223.sdz"
+Game.limitDGun = false
+Game.diminishingMetal = false
+Game.springCategories = { "special", "noweapon", "notair", "notsub", "all", "weapon", "notship", "notland", "mobile", "kbot", "plant", "ship", "antiemg", "antigator", "antilaser", "antiflame", "underwater", "tank", "hover", "phib", "constr", "strategic", "commander", "mine", "kamikaze", "jam", "minelayer", "notstructure", "tport", "fort", "notspace" }
+
+WeaponDefs = {}
+WeaponDefs[1] = {}
+WeaponDefs[1].name = "adv_decklaser"
+WeaponDefs[1].id = 1
+WeaponDefs[1].onlyTargetCategory = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
+WeaponDefs[1].type = "BeamLaser"
+WeaponDefs[1].isAircraftBomb = false
+WeaponDefs[1].isStarburstLauncher = false
+WeaponDefs[1].isBeamLaser = true
+WeaponDefs[1].isShield = false
+WeaponDefs[1].isTorpedoLauncher = false
+WeaponDefs[1].isDGun = false
+WeaponDefs[1].isLightingCannon = false
+WeaponDefs[1].isLaserCannon = false
+WeaponDefs[1].isMissileLauncher = false
+WeaponDefs[1].isEmgCannon = false
+WeaponDefs[1].isFlame = false
+WeaponDefs[1].isCannon = false
+WeaponDefs[1].range = 450.000000
+WeaponDefs[1].heightmod = 0.200000
+WeaponDefs[1].accuracy = 0.000000
+WeaponDefs[1].sprayangle = 0.000000
+WeaponDefs[1].movingAccuracy = 0.000000
+WeaponDefs[1].targetMoveError = 0.100000
+WeaponDefs[1].damages = { ["amphibious"] = 60.000000, ["anniddm"] = 60.000000, ["antibomber"] = 60.000000, ["antifighter"] = 60.000000, ["antiraider"] = 60.000000, ["atl"] = 60.000000, ["blackhydra"] = 60.000000, ["commanders"] = 60.000000, ["crawlingbombs"] = 60.000000, ["dl"] = 60.000000, ["else"] = 60.000000, ["flakboats"] = 60.000000, ["flaks"] = 60.000000, ["flamethrowers"] = 60.000000, ["gunships"] = 15.000000, ["hgunships"] = 15.000000, ["jammerboats"] = 60.000000, ["krogoth"] = 60.000000, ["l1bombers"] = 15.000000, ["l1fighters"] = 15.000000, ["l1subs"] = 5.000000, ["l2bombers"] = 15.000000, ["l2fighters"] = 15.000000, ["l2subs"] = 5.000000, ["l3subs"] = 5.000000, ["mechs"] = 60.000000, ["minelayers"] = 60.000000, ["mines"] = 60.000000, ["nanos"] = 60.000000, ["orcone"] = 60.000000, ["otherboats"] = 60.000000, ["plasmaguns"] = 60.000000, ["radar"] = 60.000000, ["seadragon"] = 60.000000, ["spies"] = 60.000000, ["tl"] = 60.000000, ["vradar"] = 15.000000, ["vtol"] = 15.000000, ["vtrans"] = 15.000000, ["vulcbuzz"] = 60.000000 }
+WeaponDefs[1].paralyzeDamageTime = 0
+WeaponDefs[1].impulseFactor = 0.234000
+WeaponDefs[1].impulseBoost = 0.234000
+WeaponDefs[1].craterMult = 0.000000
+WeaponDefs[1].craterBoost = 0.000000
+WeaponDefs[1].noSelfDamage = true
+WeaponDefs[1].areaOfEffect = 4.000000
+WeaponDefs[1].fireStarter = 0.300000
+WeaponDefs[1].edgeEffectiveness = 0.000000
+WeaponDefs[1].size = 2.150000
+WeaponDefs[1].sizeGrowth = 0.200000
+WeaponDefs[1].collisionSize = 0.050000
+WeaponDefs[1].salvoSize = 1
+WeaponDefs[1].salvoDelay = 0.100000
+WeaponDefs[1].reload = 0.400000
+WeaponDefs[1].beamTime = 0.100000
+WeaponDefs[1].maxAngle = 54.933315
+WeaponDefs[1].restTime = 0.000000
+WeaponDefs[1].uptime = 0.000000
+WeaponDefs[1].metalCost = 0.000000
+WeaponDefs[1].energyCost = 10.000000
+WeaponDefs[1].supplyCost = 0.000000
+WeaponDefs[1].turret = true
+WeaponDefs[1].onlyForward = false
+WeaponDefs[1].waterweapon = false
+WeaponDefs[1].tracks = false
+WeaponDefs[1].dropped = false
+WeaponDefs[1].paralyzer = false
+WeaponDefs[1].noAutoTarget = false
+WeaponDefs[1].manualFire = false
+WeaponDefs[1].interceptor = 0
+WeaponDefs[1].targetable = 0
+WeaponDefs[1].stockpile = false
+WeaponDefs[1].coverageRange = 0.000000
+WeaponDefs[1].intensity = 0.900000
+WeaponDefs[1].thickness = 1.350000
+WeaponDefs[1].laserFlareSize = 12.000000
+WeaponDefs[1].coreThickness = 0.550000
+WeaponDefs[1].duration = 0.050000
+WeaponDefs[1].graphicsType = 0
+WeaponDefs[1].soundTrigger = true
+WeaponDefs[1].selfExplode = false
+WeaponDefs[1].gravityAffected = false
+WeaponDefs[1].twoPhase = false
+WeaponDefs[1].guided = false
+WeaponDefs[1].vlaunch = false
+WeaponDefs[1].selfProp = false
+WeaponDefs[1].noExplode = false
+WeaponDefs[1].startVelocity = 0.010000
+WeaponDefs[1].weaponAcceleration = 0.000000
+WeaponDefs[1].turnRate = 0.000000
+WeaponDefs[1].maxVelocity = 800.000000
+WeaponDefs[1].projectileSpeed = 26.666666
+WeaponDefs[1].explosionSpeed = 3.233584
+WeaponDefs[1].wobble = 0.000000
+WeaponDefs[1].trajectoryHeight = 0.000000
+WeaponDefs[1].largeBeamLaser = false
+WeaponDefs[1].isShield = false
+WeaponDefs[1].shieldRepulser = false
+WeaponDefs[1].smartShield = false
+WeaponDefs[1].exteriorShield = false
+WeaponDefs[1].visibleShield = false
+WeaponDefs[1].visibleShieldRepulse = false
+WeaponDefs[1].shieldEnergyUse = 0.000000
+WeaponDefs[1].shieldRadius = 0.000000
+WeaponDefs[1].shieldForce = 0.000000
+WeaponDefs[1].shieldMaxSpeed = 0.000000
+WeaponDefs[1].shieldPower = 0.000000
+WeaponDefs[1].shieldPowerRegen = 0.000000
+WeaponDefs[1].shieldPowerRegenEnergy = 0.000000
+WeaponDefs[1].shieldAlpha = 0.200000
+WeaponDefs[1].shieldInterceptType = 0
+WeaponDefs[1].interceptedByShieldType = 2
+WeaponDefs[1].collisionNoFeature = true
+WeaponDefs[1].collisionNoFriendly = true
+WeaponDefs[1].avoidFriendly = true
+
+UnitDefs = {}
+UnitDefs[43] = {}
+UnitDefs[43].name = "ARMCOM"
+UnitDefs[43].humanName = "Commander"
+UnitDefs[43].filename = "units/armcom.fbi"
+UnitDefs[43].techLevel = 0
+UnitDefs[43].TEDClass = "COMMANDER"
+UnitDefs[43].iconType = "default"
+UnitDefs[43].modCategories = { ["arm"] = true, ["commander"] = true, ["weapon"] = true, ["notair"] = true, ["notsub"] = true, ["ctrl_c"] = true, ["notship"] = true, ["level10"] = true, ["all"] = true }
+UnitDefs[43].springCategories = { ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["commander"] = true }
+UnitDefs[43].armorType = "commanders"
+UnitDefs[43].type = "Builder"
+UnitDefs[43].isBomber = false
+UnitDefs[43].isFighter = false
+UnitDefs[43].isBuilder = true
+UnitDefs[43].isFactory = false
+UnitDefs[43].isBuilding = false
+UnitDefs[43].isTransport = false
+UnitDefs[43].isGroundUnit = false
+UnitDefs[43].isMetalExtractor = false
+UnitDefs[43].isFeature = false
+UnitDefs[43].weaponCount = 3
+UnitDefs[43].weapons = {}
+UnitDefs[43].weapons[0] = {}
+UnitDefs[43].weapons[0].weaponDef = WeaponDefs[41]
+UnitDefs[43].weapons[0].fuelUsage = 0.000000
+UnitDefs[43].weapons[0].badTargets = { ["antilaser"] = true }
+UnitDefs[43].weapons[0].onlyTargets = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
+UnitDefs[43].weapons[1] = {}
+UnitDefs[43].weapons[1].weaponDef = WeaponDefs[210]
+UnitDefs[43].weapons[1].fuelUsage = 0.000000
+UnitDefs[43].weapons[1].badTargets = {}
+UnitDefs[43].weapons[1].onlyTargets = {}
+UnitDefs[43].weapons[2] = {}
+UnitDefs[43].weapons[2].weaponDef = WeaponDefs[13]
+UnitDefs[43].weapons[2].fuelUsage = 0.000000
+UnitDefs[43].weapons[2].badTargets = {}
+UnitDefs[43].weapons[2].onlyTargets = { ["special"] = true, ["noweapon"] = true, ["notair"] = true, ["notsub"] = true, ["all"] = true, ["weapon"] = true, ["notship"] = true, ["notland"] = true, ["mobile"] = true, ["kbot"] = true, ["plant"] = true, ["ship"] = true, ["antiemg"] = true, ["antigator"] = true, ["antilaser"] = true, ["antiflame"] = true, ["underwater"] = true, ["tank"] = true, ["hover"] = true, ["phib"] = true, ["constr"] = true, ["strategic"] = true, ["commander"] = true, ["mine"] = true, ["kamikaze"] = true, ["jam"] = true, ["minelayer"] = true, ["notstructure"] = true, ["tport"] = true, ["fort"] = true, ["notspace"] = true }
+UnitDefs[43].maxRange = 300.000000
+UnitDefs[43].hasShield = false
+UnitDefs[43].canParalyze = false
+UnitDefs[43].canStockpile = false
+UnitDefs[43].canAttackWater = false
+UnitDefs[43].deathExplosion = WeaponDefs[96]
+UnitDefs[43].selfDExplosion = WeaponDefs[96]
+UnitDefs[43].builder = true
+UnitDefs[43].buildSpeed = 300.000000
+UnitDefs[43].buildDistance = 128.000000
+UnitDefs[43].buildOptionsCount = 25
+UnitDefs[43].buildOptions = {}
+UnitDefs[43].buildOptions[0] = UnitDefs[143]
+UnitDefs[43].buildOptions[1] = UnitDefs[156]
+UnitDefs[43].buildOptions[2] = UnitDefs[172]
+UnitDefs[43].buildOptions[3] = UnitDefs[110]
+UnitDefs[43].buildOptions[4] = UnitDefs[56]
+UnitDefs[43].buildOptions[5] = UnitDefs[166]
+UnitDefs[43].buildOptions[6] = UnitDefs[161]
+UnitDefs[43].buildOptions[7] = UnitDefs[99]
+UnitDefs[43].buildOptions[8] = UnitDefs[163]
+UnitDefs[43].buildOptions[9] = UnitDefs[94]
+UnitDefs[43].buildOptions[10] = UnitDefs[73]
+UnitDefs[43].buildOptions[11] = UnitDefs[90]
+UnitDefs[43].buildOptions[12] = UnitDefs[169]
+UnitDefs[43].buildOptions[13] = UnitDefs[20]
+UnitDefs[43].buildOptions[14] = UnitDefs[152]
+UnitDefs[43].buildOptions[15] = UnitDefs[57]
+UnitDefs[43].buildOptions[16] = UnitDefs[119]
+UnitDefs[43].buildOptions[17] = UnitDefs[144]
+UnitDefs[43].buildOptions[18] = UnitDefs[54]
+UnitDefs[43].buildOptions[19] = UnitDefs[63]
+UnitDefs[43].buildOptions[20] = UnitDefs[93]
+UnitDefs[43].buildOptions[21] = UnitDefs[157]
+UnitDefs[43].buildOptions[22] = UnitDefs[124]
+UnitDefs[43].buildOptions[23] = UnitDefs[76]
+UnitDefs[43].buildOptions[24] = UnitDefs[53]
+UnitDefs[43].selfDCountdown = 10
+UnitDefs[43].buildTime = 75000.000000
+UnitDefs[43].energyCost = 2500.000000
+UnitDefs[43].metalCost = 2500.000000
+UnitDefs[43].energyMake = 25.000000
+UnitDefs[43].windGenerator = 0.000000
+UnitDefs[43].tidalGenerator = 0.000000
+UnitDefs[43].extractRange = 0.000000
+UnitDefs[43].extractsMetal = 0.000000
+UnitDefs[43].metalMake = 1.500000
+UnitDefs[43].makesMetal = 0.000000
+UnitDefs[43].energyStorage = 0.000000
+UnitDefs[43].metalStorage = 0.000000
+UnitDefs[43].energyUpkeep = 0.000000
+UnitDefs[43].metalUpkeep = 0.000000
+UnitDefs[43].needGeo = false
+UnitDefs[43].isMetalMaker = false
+UnitDefs[43].totalEnergyOut = 25.000000
+UnitDefs[43].autoHeal = 2.666667
+UnitDefs[43].idleAutoHeal = 2.666667
+UnitDefs[43].idleTime = 1800
+UnitDefs[43].power = 2541.666748
+UnitDefs[43].health = 3000.000000
+UnitDefs[43].speed = 37.500000
+UnitDefs[43].turnRate = 1148.000000
+UnitDefs[43].moveType = 0
+UnitDefs[43].upright = true
+UnitDefs[43].canAssist = true
+UnitDefs[43].canAttack = true
+UnitDefs[43].canBuild = true
+UnitDefs[43].canCapture = true
+UnitDefs[43].canCloak = true
+UnitDefs[43].canDGun = true
+UnitDefs[43].canFly = false
+UnitDefs[43].canGuard = true
+UnitDefs[43].canHover = false
+UnitDefs[43].canKamikaze = false
+UnitDefs[43].canMove = true
+UnitDefs[43].canPatrol = true
+UnitDefs[43].canReclaim = true
+UnitDefs[43].canRepair = true
+UnitDefs[43].canRestore = true
+UnitDefs[43].canResurrect = false
+UnitDefs[43].noAutoFire = false
+UnitDefs[43].reclaimable = false
+UnitDefs[43].onOffable = false
+UnitDefs[43].floater = false
+UnitDefs[43].activateWhenBuilt = true
+UnitDefs[43].mass = 5000.000000
+UnitDefs[43].xSize = 4
+UnitDefs[43].ySize = 4
+UnitDefs[43].buildAngle = 0
+UnitDefs[43].radarRadius = 700
+UnitDefs[43].sonarRadius = 300
+UnitDefs[43].jammerRadius = 0
+UnitDefs[43].sonarJamRadius = 0
+UnitDefs[43].seismicRadius = 0
+UnitDefs[43].seismicSignature = 1.000000
+UnitDefs[43].stealth = false
+UnitDefs[43].controlRadius = 32.000000
+UnitDefs[43].losRadius = 28.125000
+UnitDefs[43].airLosRadius = 21.093750
+UnitDefs[43].losHeight = 20.000000
+UnitDefs[43].maxSlope = 0.939693
+UnitDefs[43].maxHeightDif = 14.558809
+UnitDefs[43].minWaterDepth = -10000000.000000
+UnitDefs[43].waterline = 0.000000
+UnitDefs[43].maxWaterDepth = 35.000000
+UnitDefs[43].armoredMultiple = 1.000000
+UnitDefs[43].wingDrag = 0.070000
+UnitDefs[43].wingAngle = 0.080000
+UnitDefs[43].drag = 0.130461
+UnitDefs[43].frontToSpeed = 0.100000
+UnitDefs[43].speedToFront = 0.070000
+UnitDefs[43].myGravity = 0.400000
+UnitDefs[43].maxBank = 0.800000
+UnitDefs[43].maxPitch = 0.450000
+UnitDefs[43].turnRadius = 500.000000
+UnitDefs[43].wantedHeight = 0.000000
+UnitDefs[43].hoverAttack = false
+UnitDefs[43].dlHoverFactor = -1.000000
+UnitDefs[43].dontLand = false
+UnitDefs[43].maxAcc = 0.180000
+UnitDefs[43].maxDec = 0.037500
+UnitDefs[43].maxAileron = 0.015000
+UnitDefs[43].maxElevator = 0.010000
+UnitDefs[43].maxRudder = 0.004000
+UnitDefs[43].maxFuel = 0.000000
+UnitDefs[43].refuelTime = 5.000000
+UnitDefs[43].minAirBasePower = 0.000000
+UnitDefs[43].loadingRadius = 220.000000
+UnitDefs[43].transportCapacity = 0
+UnitDefs[43].transportSize = 0
+UnitDefs[43].isAirBase = false
+UnitDefs[43].transportMass = 100000.000000
+UnitDefs[43].startCloaked = false
+UnitDefs[43].cloakCost = 100.000000
+UnitDefs[43].cloakCostMoving = 1000.000000
+UnitDefs[43].decloakDistance = 50.000000
+UnitDefs[43].kamikazeDist = 0.000000
+UnitDefs[43].targfac = false
+UnitDefs[43].hideDamage = true
+UnitDefs[43].isCommander = true
+UnitDefs[43].showPlayerName = true
+UnitDefs[43].highTrajectoryType = 0
+UnitDefs[43].noChaseCategory = { ["all"] = true }
+UnitDefs[43].canDropFlare = false
+UnitDefs[43].flareReloadTime = 5.000000
+UnitDefs[43].flareEfficieny = 0.500000
+UnitDefs[43].flareDelay = 0.300000
+UnitDefs[43].flareDropVectorX = 0.000000
+UnitDefs[43].flareDropVectorY = 0.000000
+UnitDefs[43].flareDropVectorZ = 0.000000
+UnitDefs[43].flareTime = 90
+UnitDefs[43].flareSalvoSize = 4
+UnitDefs[43].flareSalvoDelay = 0
+UnitDefs[43].smoothAnim = true
+UnitDefs[43].canLoopbackAttack = false
+UnitDefs[43].levelGround = true
+UnitDefs[43].useBuildingGroundDecal = false
+UnitDefs[43].buildingDecalType = 64
+UnitDefs[43].buildingDecalSizeX = 4
+UnitDefs[43].buildingDecalSizeY = 4
+UnitDefs[43].buildingDecalDecaySpeed = 0.100000
+UnitDefs[43].isFirePlatform = false
+UnitDefs[43].showNanoFrame = true
+UnitDefs[43].showNanoSpray = true
+UnitDefs[43].nanoColorR = 0.200000
+UnitDefs[43].nanoColorG = 0.700000
+UnitDefs[43].nanoColorB = 0.200000
