@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "DoLine",
     desc      = "Adds '/luaui doline ...' to run lua commands  (for devs)",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 0,
     enabled   = true  --  loaded by default?

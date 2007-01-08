@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "Debug",
     desc      = "Adds '/luaui debug' and prints debug info  (for devs)",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 0,
     enabled   = false  --  loaded by default?

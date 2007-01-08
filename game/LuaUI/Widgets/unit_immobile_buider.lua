@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "ImmobileBuilder",
     desc      = "Sets immobile builders to ROAM, with a PATROL command",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 0,
     enabled   = true  --  loaded by default?

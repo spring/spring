@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "Minimap",
     desc      = "Minimap redirection -- does nothing  (for devs)",
     author    = "trepan",
-    date      = "Jan 11, 2007",
+    date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     drawLayer = 1,
     enabled   = false  --  loaded by default?
