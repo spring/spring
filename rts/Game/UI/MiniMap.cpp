@@ -288,22 +288,30 @@ void CMiniMap::ConfigCommand(const std::string& line)
 		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
 	}
 	else if (command == "slavemode") {
+		const bool oldMode = slaveDrawMode;
 		if (words.size() >= 2) {
 			slaveDrawMode = !!atoi(words[1].c_str());
 		} else {
 			slaveDrawMode = !slaveDrawMode;
 		}
-		static int oldButtonSize = 16;
 		if (slaveDrawMode) {
-			oldButtonSize = buttonSize;
+			proxyMode = false;
+			selecting = false;
 			maxspect = false;
 			maximized = false;
 			minimized = false;
 			mouseLook = false;
 			mouseMove = false;
 			mouseResize = false;
-		} else {
-			buttonSize = oldButtonSize;
+		}
+		static int oldButtonSize = 16;
+		if (slaveDrawMode != oldMode) {
+			if (slaveDrawMode) {
+				oldButtonSize = buttonSize;
+				buttonSize = 0;
+			} else {
+				buttonSize = oldButtonSize;
+			}
 		}
 		UpdateGeometry();
 	}
