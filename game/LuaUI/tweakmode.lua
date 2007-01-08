@@ -20,8 +20,9 @@ include("keysym.h.lua")
 
 local xmin = 0
 local ymin = 0
-local xmax = 100
-local ymax = 100
+local xmax = 400
+local ymax = 400
+
 local xscale = 1
 local yscale = 1
 local xyscale = 1
@@ -138,7 +139,7 @@ function widget:TweakMouseMove(x, y, dx, dy, button)
     return false
   end
   
-  local vsx,vsy = widgetHandler.GetViewSizes()
+  local vsx,vsy = widgetHandler:GetViewSizes()
   if (button == 1) then
     if ((xmin + dx) < 0) then dx = - xmin end
     if ((ymin + dy) < 0) then dy = - ymin end
