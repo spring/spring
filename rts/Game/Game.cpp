@@ -396,67 +396,69 @@ CGame::~CGame()
 	}
 
 	ENTER_MIXED;
-	
+
 	delete guihandler;
+	guihandler = NULL;
 	
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
 		aviGenerator->ReleaseEngine();
 		delete aviGenerator;
-		aviGenerator=0;
+		aviGenerator = NULL;
 	}
 #endif
 #ifdef TRACE_SYNC
 	tracefile << "End game\n";
 #endif
-	delete gameServer;
+
+	delete gameServer;         gameServer         = NULL;
 
 	globalAI->PreDestroy ();
-	delete water;
-	delete sky;
+	delete water;              water              = NULL;
+	delete sky;                sky                = NULL;
 
-	delete resourceBar;
-	delete uh;
-	delete unitDrawer;
-	delete featureHandler;
-	delete geometricObjects;
-	delete ph;
-	delete globalAI;
-	delete grouphandler;
-	delete minimap;
-	delete pathManager;
-	delete groundDecals;
-	delete ground;
-	delete inMapDrawer;
-	delete net;
-	delete radarhandler;
-	delete loshandler;
-	delete mapDamage;
-	delete qf;
-	delete tooltip;
-	delete keyBindings;
-	delete keyCodes;
-	delete sound;
-	delete selectionKeys;
-	delete mouse;
-	delete helper;
-	delete shadowHandler;
-	delete moveinfo;
-	delete unitDefHandler;
-	delete damageArrayHandler;
-	delete hpiHandler;
-	delete archiveScanner;
-	delete modelParser;
-	delete fartextureHandler;
+	delete resourceBar;        resourceBar        = NULL;
+	delete uh;                 uh                 = NULL;
+	delete unitDrawer;         unitDrawer         = NULL;
+	delete featureHandler;     featureHandler     = NULL;
+	delete geometricObjects;   geometricObjects   = NULL;
+	delete ph;                 ph                 = NULL;
+	delete globalAI;           globalAI           = NULL;
+	delete grouphandler;       grouphandler       = NULL;
+	delete minimap;            minimap            = NULL;
+	delete pathManager;        pathManager        = NULL;
+	delete groundDecals;       groundDecals       = NULL;
+	delete ground;             ground             = NULL;
+	delete inMapDrawer;        inMapDrawer        = NULL;
+	delete net;                net                = NULL;
+	delete radarhandler;       radarhandler       = NULL;
+	delete loshandler;         loshandler         = NULL;
+	delete mapDamage;          mapDamage          = NULL;
+	delete qf;                 qf                 = NULL;
+	delete tooltip;            tooltip            = NULL;
+	delete keyBindings;        keyBindings        = NULL;
+	delete keyCodes;           keyCodes           = NULL;
+	delete sound;              sound              = NULL;
+	delete selectionKeys;      selectionKeys      = NULL;
+	delete mouse;              mouse              = NULL;
+	delete helper;             helper             = NULL;
+	delete shadowHandler;      shadowHandler      = NULL;
+	delete moveinfo;           moveinfo           = NULL;
+	delete unitDefHandler;     unitDefHandler     = NULL;
+	delete damageArrayHandler; damageArrayHandler = NULL;
+	delete hpiHandler;         hpiHandler         = NULL;
+	delete archiveScanner;     archiveScanner     = NULL;
+	delete modelParser;        modelParser        = NULL;
+	delete fartextureHandler;  fartextureHandler  = NULL;
+	delete modInfo;            modInfo            = NULL;
+	delete camera;             camera             = NULL;
+	delete cam2;               cam2               = NULL;
+	delete infoConsole;        infoConsole        = NULL;
+	delete consoleHistory;     consoleHistory     = NULL;
+	delete wordCompletion;     wordCompletion     = NULL;
+	delete explGenHandler;     explGenHandler     = NULL;
 	CCategoryHandler::RemoveInstance();
-	delete modInfo;
-	delete camera;
-	delete cam2;
-	delete infoConsole;
-	delete consoleHistory;
-	delete wordCompletion;
-	delete explGenHandler;
 	CColorMap::DeleteColormaps();
 }
 
