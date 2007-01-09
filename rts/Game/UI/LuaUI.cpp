@@ -4183,9 +4183,9 @@ static int AddWorldUnit(lua_State* L)
 
 static int MarkerAddPoint(lua_State* L)
 {
-  if (inMapDrawer == NULL) {
-  	return 0;
-  }
+	if (inMapDrawer == NULL) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
@@ -4205,15 +4205,15 @@ static int MarkerAddPoint(lua_State* L)
 	
 	inMapDrawer->CreatePoint(pos, text);
 	    
-  return 0;
+	return 0;
 }
 
 
 static int MarkerAddLine(lua_State* L)
 {
-  if (inMapDrawer == NULL) {
-  	return 0;
-  }
+	if (inMapDrawer == NULL) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 6) ||
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
@@ -4234,15 +4234,15 @@ static int MarkerAddLine(lua_State* L)
 	
 	inMapDrawer->AddLine(pos1, pos2);
 	    
-  return 0;
+	return 0;
 }
 
 
 static int MarkerErasePosition(lua_State* L)
 {
-  if (inMapDrawer == NULL) {
-  	return 0;
-  }
+	if (inMapDrawer == NULL) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 3) ||
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
@@ -4257,7 +4257,7 @@ static int MarkerErasePosition(lua_State* L)
 	
 	inMapDrawer->ErasePos(pos);
 	    
-  return 0;
+	return 0;
 }
 
 
