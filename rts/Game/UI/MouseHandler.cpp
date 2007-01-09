@@ -380,15 +380,25 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			set<CUnit*>::iterator ui;
 			CUnit* unit;
 			int addedunits=0;
-			for(ui=gs->Team(gu->myTeam)->units.begin();ui!=gs->Team(gu->myTeam)->units.end();++ui){
-				float3 vec=(*ui)->midPos-camera->pos;
-				if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
-						selectedUnits.RemoveUnit(*ui);
-					} else {
-						selectedUnits.AddUnit(*ui);
-						unit = *ui;
-						addedunits++;
+			int team, lastTeam;
+			if (gu->spectatingFullSelect) {
+				team = 0;
+				lastTeam = gs->activeTeams - 1;
+			} else {
+				team = gu->myTeam;
+				lastTeam = gu->myTeam;
+			}
+			for (; team <= lastTeam; team++) {
+				for(ui=gs->Team(team)->units.begin();ui!=gs->Team(team)->units.end();++ui){
+					float3 vec=(*ui)->midPos-camera->pos;
+					if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
+						if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
+							selectedUnits.RemoveUnit(*ui);
+						} else {
+							selectedUnits.AddUnit(*ui);
+							unit = *ui;
+							addedunits++;
+						}
 					}
 				}
 			}
@@ -402,7 +412,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		} else {
 			CUnit* unit;
 			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
-			if(unit && unit->team==gu->myTeam){
+			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
@@ -417,12 +427,22 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 						selectedUnits.SelectGroup(unit->group->id);
 					} else {
 						//select all units of same type (on screen, unless CTRL is pressed)
-						set<CUnit*>::iterator ui;
-						set<CUnit*>& myTeamUnits = gs->Team(gu->myTeam)->units;
-						for (ui = myTeamUnits.begin(); ui != myTeamUnits.end(); ++ui) {
-							if (((*ui)->aihint == unit->aihint) &&
-							    (camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {
-								selectedUnits.AddUnit(*ui);
+						int team, lastTeam;
+						if (gu->spectatingFullSelect) {
+							team = 0;
+							lastTeam = gs->activeTeams - 1;
+						} else {
+							team = gu->myTeam;
+							lastTeam = gu->myTeam;
+						}
+						for (; team <= lastTeam; team++) {
+							set<CUnit*>::iterator ui;
+							set<CUnit*>& teamUnits = gs->Team(team)->units;
+							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+								if (((*ui)->aihint == unit->aihint) &&
+										(camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {
+									selectedUnits.AddUnit(*ui);
+								}
 							}
 						}
 					}

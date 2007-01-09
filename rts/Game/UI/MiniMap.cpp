@@ -652,20 +652,31 @@ void CMiniMap::SelectUnits(int x, int y) const
 		
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
-		set<CUnit*>& myUnits = gs->Team(gu->myTeam)->units;
 
 		CUnit* unit;
 		int addedunits = 0;
-		for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
-			const float3& midPos = (*ui)->midPos;
-			if ((midPos.x > xmin) && (midPos.x < xmax) &&
-			    (midPos.z > zmin) && (midPos.z < zmax)) {
-				if (keys[SDLK_LCTRL] && (selection.find(*ui) != selection.end())) {
-					selectedUnits.RemoveUnit(*ui);
-				} else {
-					selectedUnits.AddUnit(*ui);
-					unit = *ui;
-					addedunits++;
+
+		int team, lastTeam;
+		if (gu->spectatingFullSelect) {
+			team = 0;
+			lastTeam = gs->activeTeams - 1;
+		} else {
+			team = gu->myTeam;
+			lastTeam = gu->myTeam;
+		}
+		for (; team <= lastTeam; team++) {
+			set<CUnit*>& teamUnits = gs->Team(team)->units;
+			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+				const float3& midPos = (*ui)->midPos;
+				if ((midPos.x > xmin) && (midPos.x < xmax) &&
+						(midPos.z > zmin) && (midPos.z < zmax)) {
+					if (keys[SDLK_LCTRL] && (selection.find(*ui) != selection.end())) {
+						selectedUnits.RemoveUnit(*ui);
+					} else {
+						selectedUnits.AddUnit(*ui);
+						unit = *ui;
+						addedunits++;
+					}
 				}
 			}
 		}
@@ -688,9 +699,8 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
-		set<CUnit*>& myUnits = gs->Team(gu->myTeam)->units;
 		
-		if (unit && (unit->team == gu->myTeam)){
+		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
 				if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
 					selectedUnits.RemoveUnit(unit);
@@ -704,9 +714,20 @@ void CMiniMap::SelectUnits(int x, int y) const
 					selectedUnits.SelectGroup(unit->group->id);
 				} else {
 					//select all units of same type
-					for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
-						if ((*ui)->aihint == unit->aihint) {
-							selectedUnits.AddUnit(*ui);
+					int team, lastTeam;
+					if (gu->spectatingFullSelect) {
+						team = 0;
+						lastTeam = gs->activeTeams - 1;
+					} else {
+						team = gu->myTeam;
+						lastTeam = gu->myTeam;
+					}
+					for (; team <= lastTeam; team++) {
+						set<CUnit*>& myUnits = gs->Team(team)->units;
+						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
+							if ((*ui)->aihint == unit->aihint) {
+								selectedUnits.AddUnit(*ui);
+							}
 						}
 					}
 				}

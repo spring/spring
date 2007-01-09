@@ -1,21 +1,22 @@
 #include "StdAfx.h"
 #include <fstream>
+#include "SDL_keysym.h"
+#include "SDL_types.h"
 #include "SelectionKeyHandler.h"
 #include "InfoConsole.h"
-#include "Game/Team.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/Unit.h"
-#include "Game/Camera.h"
 #include "MouseHandler.h"
 #include "Game/CameraController.h"
+#include "Game/Camera.h"
+#include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Map/Ground.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitTypes/Building.h"
+#include "Platform/FileSystem.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "SDL_types.h"
-#include "SDL_keysym.h"
-#include "Platform/FileSystem.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTypes/Building.h"
 #include "mmgr.h"
 
 CSelectionKeyHandler *selectionKeys;
@@ -143,17 +144,37 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	string s=ReadToken(selectString);
 
 	if(s=="AllMap"){
-		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
-			selection.push_back(*ui);
+		if (!gu->spectatingFullSelect) {
+		  // team units
+			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+				selection.push_back(*ui);
+			}
+		} else {
+		  // all units
+			list<CUnit*>* au=&uh->activeUnits;
+			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+				selection.push_back(*ui);
+			}
 		}
 	} else if(s=="Visible"){
-		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
-			if(camera->InView((*ui)->midPos,(*ui)->radius))
-				selection.push_back(*ui);
+		if (!gu->spectatingFullSelect) {
+		  // team units in viewport
+			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+				if(camera->InView((*ui)->midPos,(*ui)->radius)){
+					selection.push_back(*ui);
+				}
+			}
+		} else {
+		  // all units in viewport
+			list<CUnit*>* au=&uh->activeUnits;
+			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+				if(camera->InView((*ui)->midPos,(*ui)->radius)){
+					selection.push_back(*ui);
+				}
+			}
 		}
-
 	} else if(s=="FromMouse"){
 		ReadDelimiter(selectString);
 		float maxDist=atof(ReadToken(selectString).c_str());
@@ -161,14 +182,26 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*8000);
 		float3 mp=camera->pos+mouse->dir*dist;
 
-		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
-			if(mp.distance((*ui)->pos)<maxDist)
-				selection.push_back(*ui);
+		if (!gu->spectatingFullSelect) {
+		  // team units in mouse range
+			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+				if(mp.distance((*ui)->pos)<maxDist){
+					selection.push_back(*ui);
+				}
+			}
+		} else {
+		  // all units in mouse range
+			list<CUnit*>* au=&uh->activeUnits;
+			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+				if(mp.distance((*ui)->pos)<maxDist){
+					selection.push_back(*ui);
+				}
+			}
 		}
 	} else if(s=="PrevSelection"){
-		set<CUnit*>* tu=&selectedUnits.selectedUnits;
-		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+		set<CUnit*>* su=&selectedUnits.selectedUnits;
+		for(set<CUnit*>::iterator ui=su->begin();ui!=su->end();++ui){
 			selection.push_back(*ui);
 		}
 	} else {

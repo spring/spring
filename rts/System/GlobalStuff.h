@@ -513,9 +513,16 @@ public:
 	 * @brief spectatingFullView
 	 * 
 	 * Whether this player is a spectator, and can see everything
-	 * (if set to true, visibility is determined by the current team)
+	 * (if set to false, visibility is determined by the current team)
 	 */
 	bool spectatingFullView;
+
+	/**
+	 * @brief spectatingFullSelect
+	 * 
+	 * Can all units be selected when spectating?
+	 */
+	bool spectatingFullSelect;
 
 	/**
 	 * @brief draw debug
