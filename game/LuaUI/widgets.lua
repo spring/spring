@@ -308,7 +308,7 @@ function widgetHandler:LoadWidget(filename)
   end
   knownInfo.active = true
 
-  local info  = widget:GetInfo()
+  local info  = widget.GetInfo and widget:GetInfo()
   local order = self.orderList[name]
   if (((order ~= nil) and (order > 0)) or
       ((order == nil) and ((info == nil) or info.enabled))) then
