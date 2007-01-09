@@ -245,3 +245,13 @@ for f in aai_data:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
 		Alias('install', inst)
+
+# install LuaUI files
+for f in ['gui.lua', 'usericons.tdf']:
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	Alias('install', inst)
+luaui_files=filelist.list_files_recursive(env, 'game/LuaUI')
+for f in luaui_files:
+	if not os.path.isdir(f):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)
+		Alias('install', inst)
