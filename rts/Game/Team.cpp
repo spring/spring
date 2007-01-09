@@ -249,6 +249,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 				if(a==gu->myPlayerNum){
 					gu->spectating = true;
 					gu->spectatingFullView = gu->spectating;
+					gu->spectatingFullSelect = false;
 				}
 			}
 		} 

@@ -799,9 +799,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if ((cmd == "specfullview") && (gu->spectating)) {
 		if (!action.extra.empty()) {
-			gu->spectatingFullView = atoi(action.extra.c_str());
+			const int mode = atoi(action.extra.c_str());
+			gu->spectatingFullView   = (mode >= 1);
+			gu->spectatingFullSelect = (mode >= 2);
 		} else {
 			gu->spectatingFullView = !gu->spectatingFullView;
+			gu->spectatingFullSelect = false;
 		}
 	}
 	else if (cmd == "group") {
@@ -2985,6 +2988,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if(player==gu->myPlayerNum){
 			gu->spectating = true;
 			gu->spectatingFullView = gu->spectating;
+			gu->spectatingFullSelect = false;
 		}
 	}
 	if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
@@ -2995,6 +2999,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			if(player==gu->myPlayerNum){
 				gu->spectating = false;
 				gu->spectatingFullView = gu->spectating;
+				gu->spectatingFullSelect = false;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 				grouphandler->team = gu->myTeam;
@@ -3226,9 +3231,11 @@ static void SelectUnits(const string& line)
 			if (unit == NULL) {
 				continue; // bad pointer
 			}
-			const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-			if (teamUnits.find(unit) == teamUnits.end()) {
-				continue; // not mine to select
+			if (!gu->spectatingFullSelect) {
+				const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+				if (teamUnits.find(unit) == teamUnits.end()) {
+					continue; // not mine to select
+				}
 			}
 
 			// perform the selection

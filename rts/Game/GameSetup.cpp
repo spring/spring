@@ -152,6 +152,7 @@ bool CGameSetup::Init(char* buf, int size)
 	}
 	gu->spectating = gs->players[myPlayer]->spectator;
 	gu->spectatingFullView = gu->spectating;
+	gu->spectatingFullSelect = false;
 
 	TdfParser p2;
 	CReadMap::OpenTDF (mapname, p2);

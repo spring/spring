@@ -357,7 +357,12 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	//  * The square root of the camera distance.
 	//  * The mod defined 'iconSize' (which acts a multiplier).
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	float3 pos=helper->GetUnitErrorPos(unit,gu->myAllyTeam);
+	float3 pos;
+	if (gu->spectatingFullView) {
+		pos = unit->midPos;
+	} else {
+		pos = helper->GetUnitErrorPos(unit,gu->myAllyTeam);
+	}
 	float dist=sqrt((pos-camera->pos).Length());
 	float scale=0.4f*icon->size*dist;
 	if(icon->radiusAdjust && !asRadarBlip)
