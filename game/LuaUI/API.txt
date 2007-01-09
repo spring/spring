@@ -831,19 +831,26 @@ Draw.Shape(
 Draw.UnitDef(number unitDefID, number teamID) -> nil
 
 -- the text option characters are:
---   "o" - outline
+--
+--   "o" - outline with black
+--   "O" - outline with white
 --   "r" - right justify
 --   "c" - center justify
+--   "n" - ignore embedded color codes  (enables Draw.Color() for text)
+--
 Draw.Text(string "text", number x, number y, number size, string "options") -> nil
 Draw.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
 
 
-Draw.Translate(number x, number y, number z) -> nil
-Draw.Scale(number x, number y, number z) -> nil
-Draw.Rotate(number angle, number x, number y, number z) -> nil
+Draw.MatrixMode(number mode) -> nil
 
-Draw.PushMatrix() -> nil
-Draw.PopMatrix()  -> nil
+Draw.PushMatrix()   -> nil
+Draw.PopMatrix()    -> nil
+Draw.LoadIdentity() -> nil
+
+Draw.Translate(number x, number y, number z)            -> nil
+Draw.Scale(number x, number y, number z)                -> nil
+Draw.Rotate(number angle, number x, number y, number z) -> nil
 
 
 Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
