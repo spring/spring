@@ -57,7 +57,6 @@ end
 
 --------------------------------------------------------------------------------
 
-
 function widget:Initialize()
   -- Setup the unitdef icons
   for udid,ud in pairs(UnitDefs) do
