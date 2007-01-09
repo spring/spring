@@ -13,7 +13,7 @@
 
 function pwl() -- ???  (print widget list)
   for k,v in ipairs(widgetHandler.widgets) do
-    print(k, v.whInfo.name)
+    print(k, v.whInfo.layer, v.whInfo.name)
   end
 end
 
@@ -59,8 +59,10 @@ widgetHandler = {
 
   configData = {},
   orderList = {},
+
   knownWidgets = {},
   knownCount = 0,
+  knownChanged = true,
 
   commands = {},
 
@@ -222,6 +224,11 @@ function widgetHandler:Initialize()
   
   -- sort the widgets  
   table.sort(unsortedWidgets, function(w1, w2)
+    local l1 = w1.whInfo.layer
+    local l2 = w2.whInfo.layer
+    if (l1 ~= l2) then
+      return (l1 < l2)
+    end
     local n1 = w1.whInfo.name
     local n2 = w2.whInfo.name
     local o1 = self.orderList[n1]
@@ -272,6 +279,9 @@ function widgetHandler:LoadWidget(filename)
 
   self:FinalizeWidget(widget, filename, basename)
   local name = widget.whInfo.name
+  if (basename == SELECTOR_BASENAME) then
+    self.orderList[name] = 1  --  always enabled
+  end
 
   err = self:ValidateWidget(widget)
   if (err) then
@@ -294,6 +304,7 @@ function widgetHandler:LoadWidget(filename)
     knownInfo.filename = widget.whInfo.filename
     self.knownWidgets[name] = knownInfo
     self.knownCount = self.knownCount + 1
+    self.knownChanged = true
   end
   knownInfo.active = true
 
@@ -359,16 +370,16 @@ function widgetHandler:FinalizeWidget(widget, filename, basename)
   wi.filename = filename
   wi.basename = basename
   if (widget.GetInfo == nil) then
-    wi.name = string.sub(basename, 1, -5)
-    wi.drawLevel = 0
+    wi.name  = string.sub(basename, 1, -5)
+    wi.layer = 0
   else
     local info = widget:GetInfo()
-    wi.name      = info.name      or string.sub(basename, 1, -5)
-    wi.drawLevel = info.drawLevel or 0
-    wi.desc      = info.desc      or ""
-    wi.author    = info.author    or ""
-    wi.license   = info.license   or ""
-    wi.enabled   = info.enabled   or false
+    wi.name      = info.name    or string.sub(basename, 1, -5)
+    wi.layer     = info.layer   or 0
+    wi.desc      = info.desc    or ""
+    wi.author    = info.author  or ""
+    wi.license   = info.license or ""
+    wi.enabled   = info.enabled or false
   end
 
   widget.whInfo = {}  --  a proxy table
@@ -401,12 +412,17 @@ function widgetHandler:InsertWidget(widget)
   end
   local function Insert(t, f, w)
     if (f) then
-      for _,v in ipairs(t) do
+      local layer = w.whInfo.layer
+      local index = 1
+      for i,v in ipairs(t) do
         if (v == w) then
           return -- already in the table
         end
+        if (layer >= v.whInfo.layer) then
+          index = i + 1
+        end
       end
-      table.insert(t, w)
+      table.insert(t, index, w)
     end
   end
   Insert(self.widgets, true, widget)
@@ -446,19 +462,40 @@ function widgetHandler:RemoveWidget(widget)
 end
 
 
+--------------------------------------------------------------------------------
+
+local function FindWidgetIndex(t, w)
+  for k,v in ipairs(t) do
+    if (v == w) then
+      return k
+    end
+  end
+  return nil
+end
+
+
+local function FindLowestIndex(t, i, layer)
+  for x = (i - 1), 1, -1 do
+    if (t[x].whInfo.layer < layer) then
+      return x + 1
+    end
+  end
+  return 1
+end
+
+
 function widgetHandler:RaiseWidget(widget)
   if (widget == nil) then
     return
   end
   local function Raise(t, f, w)
-    if (f) then
-      for k,v in ipairs(t) do
-        if (v == w) then
-          table.remove(t, k)     -- remove the widget
-          table.insert(t, 1, w)  -- add at the beginning
-          break
-        end
-      end
+    if (f == nil) then return end
+    local i = FindWidgetIndex(t, w)
+    if (i == nil) then return end
+    local n = FindLowestIndex(t, i, w.whInfo.layer)
+    if (n and (n < i)) then
+      table.remove(t, i)
+      table.insert(t, n, w)
     end
   end
   Raise(self.widgets, true, widget)
@@ -468,19 +505,29 @@ function widgetHandler:RaiseWidget(widget)
 end
 
 
+local function FindHighestIndex(t, i, layer)
+  local ts = table.getn(t)
+  for x = (i + 1),ts do
+    if (t[x].whInfo.layer > layer) then
+      return (x - 1)
+    end
+  end
+  return (ts + 1)
+end
+
+
 function widgetHandler:LowerWidget(widget)
   if (widget == nil) then
     return
   end
   local function Lower(t, f, w)
-    if (f) then
-      for k,v in ipairs(t) do
-        if (v == w) then
-          table.remove(t, k)  -- remove the widget
-          table.insert(t, w)  -- add to the end
-          break
-        end
-      end
+    if (f == nil) then return end
+    local i = FindWidgetIndex(t, w)
+    if (i == nil) then return end
+    local n = FindHighestIndex(t, i, w.whInfo.layer)
+    if (n and (n > i)) then
+      table.insert(t, n, w)
+      table.remove(t, i)
     end
   end
   Lower(self.widgets, true, widget)

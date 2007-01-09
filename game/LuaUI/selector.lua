@@ -18,7 +18,7 @@ function widget:GetInfo()
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
-    drawLayer = 3,
+    layer     = -9,
     enabled   = true  --  loaded by default?
   }
 end
@@ -31,9 +31,12 @@ include("opengl.h.lua")
 include("keysym.h.lua")
 
 
-local vsx, vsy = widgetHandler:GetViewSizes()
+widgetHandler.knownChanged = true
+
 
 local widgetsList = {}
+
+local vsx, vsy = widgetHandler:GetViewSizes()
 
 local fontSize = 15
 local fontSpace = 5
@@ -49,7 +52,6 @@ local maxx = vsx * 0.6
 local midy = vsy * 0.5
 local miny = vsy * 0.4
 local maxy = vsy * 0.6
-
 
 -------------------------------------------------------------------------------
 
@@ -70,9 +72,10 @@ UpdateGeometry()
 
 local function UpdateList()
   local myCount = table.getn(widgetsList)
-  if (widgetHandler.knownCount == (myCount + 1)) then
+  if (not widgetHandler.knownChanged) then
     return
   end
+  widgetHandler.knownChanged = false
 
   local myName = widget:GetInfo().name
   maxWidth = 0

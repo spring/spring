@@ -22,6 +22,29 @@ PERM_FILENAME   = LUAUI_DIRNAME .. 'Config/modui_list.lua'
 MOD_FILENAME = 'ModUI/main.lua'
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  Spring 0.74b3 doesn't handle missing sound files gracefully.
+--  We make sure that the sound file exists, and hope that it is
+--  a valid sound file
+--
+
+do
+  local origFunc = Spring.PlaySoundFile
+  Spring.PlaySoundFile = function(filename, ...)
+    local f = io.open(filename)
+    if (f) then
+      f:close()
+      origFunc(filename, unpack(arg))
+    end
+  end
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function Echo(msg)
   Spring.SendCommands({'echo ' .. msg})
 end

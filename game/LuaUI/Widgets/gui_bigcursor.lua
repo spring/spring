@@ -18,7 +18,7 @@ function widget:GetInfo()
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
-    drawLayer = 3,
+    layer     = -5,
     enabled   = true  --  loaded by default?
   }
 end

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    gui_customicons.lua
+--  file:    ico_customicons.lua
 --  brief:   controls the custom icons (see usericons.tdf)
 --  author:  Dave Rodgers
 --
@@ -18,7 +18,7 @@ function widget:GetInfo()
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
-    drawLayer = 0,
+    layer     = 0,
     enabled   = true  --  loaded by default?
   }
 end
