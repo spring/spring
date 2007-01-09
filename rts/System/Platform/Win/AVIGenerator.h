@@ -14,9 +14,9 @@
 #include <windows.h>
 #include <vfw.h>
 
-#include <gl/gl.h>
+#include <GL/gl.h>
 #if defined(_WIN32) && defined(__MINGW32__)
-#include <gl/glext.h>
+#include <GL/glext.h>
 #endif
 
 #include <string>
