@@ -1558,6 +1558,7 @@ bool CGame::Draw()
 		selectedUnits.DrawCommands();
 		cursorIcons.Draw();
 	}
+	cursorIcons.Clear();
 
 	mouse->Draw();
 
