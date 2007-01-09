@@ -35,6 +35,14 @@ void CCursorIcons::Enable(bool value)
 }
 
 
+void CCursorIcons::Clear()
+{
+	icons.clear();
+	texts.clear();
+	buildIcons.clear();
+}
+
+
 void CCursorIcons::Draw()
 {
 	glEnable(GL_TEXTURE_2D);
@@ -50,11 +58,6 @@ void CCursorIcons::Draw()
 	glDepthMask(GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
-
-	// clear the lists
-	icons.clear();
-	texts.clear();
-	buildIcons.clear();
 }
 
 

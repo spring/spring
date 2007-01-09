@@ -20,12 +20,15 @@ class CCursorIcons
 		inline void AddIconText(const string& text, const float3& pos);
 		inline void AddBuildIcon(int cmd, const float3& pos, int team, int facing);
 
-		void Draw(); // also clears the list
+		void Draw();
+
+		void Clear();
+
+	protected:
 		void DrawCursors();
 		void DrawTexts();
 		void DrawBuilds();
 
-	protected:
 		CMouseCursor* GetCursor(int cmd);
 
 	protected:
