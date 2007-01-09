@@ -324,14 +324,14 @@ function widget:GetTooltip(x, y)
            '\255\200\200\255'..'MMB: lower widget'
   end
 
-  local name = namedata[1]
-  local data = namedata[2]
+  local n = namedata[1]
+  local d = namedata[2]
   
-  local tt = (data.active and GreenStr) or RedStr
-  tt = tt..name..'\n'
-  tt = data.desc   and tt..WhiteStr..data.desc..'\n'
-  tt = data.author and tt..BlueStr..'Author:  '..CyanStr..data.author..'\n'
-  tt = tt..MagentaStr..data.basename
+  local tt = (d.active and GreenStr) or RedStr
+  tt = tt..n..'\n'
+  tt = d.desc   and tt..WhiteStr..d.desc..'\n' or tt
+  tt = d.author and tt..BlueStr..'Author:  '..CyanStr..d.author..'\n' or tt
+  tt = tt..MagentaStr..d.basename
   return tt
 end
 

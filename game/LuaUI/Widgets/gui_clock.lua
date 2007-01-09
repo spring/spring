@@ -49,6 +49,26 @@ local timeString = "00:00"
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
+--  Default GUI override
+--
+
+local defaultClockUsed = 0
+
+
+function widget:Initialize()
+  defaultClockUsed = Spring.GetConfigInt("ShowClock", 1)
+  Spring.SendCommands({"clock 0"})
+end
+
+
+function widget:Shutdown()
+  Spring.SendCommands({"clock " .. defaultClockUsed})
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
 --  Rendering
 --
 
