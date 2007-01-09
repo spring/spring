@@ -35,6 +35,7 @@ extern "C" {
 #include "Map/Ground.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/InMapDraw.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Feature.h"
@@ -173,6 +174,10 @@ static int PlaySoundFile(lua_State* L);
 static int AddWorldIcon(lua_State* L);
 static int AddWorldText(lua_State* L);
 static int AddWorldUnit(lua_State* L);
+
+static int MarkerAddPoint(lua_State* L);
+static int MarkerAddLine(lua_State* L);
+static int MarkerErasePosition(lua_State* L);
 
 static int DrawScreenGeometry(lua_State* L);
 static int DrawResetState(lua_State* L);
@@ -424,6 +429,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(AddWorldIcon);
 	REGISTER_LUA_CFUNC(AddWorldText);
 	REGISTER_LUA_CFUNC(AddWorldUnit);
+	REGISTER_LUA_CFUNC(MarkerAddPoint);
+	REGISTER_LUA_CFUNC(MarkerAddLine);
+	REGISTER_LUA_CFUNC(MarkerErasePosition);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 
 #define REGISTER_LUA_DRAW_CFUNC(x) \
@@ -4153,7 +4161,7 @@ static int AddWorldUnit(lua_State* L)
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		lua_pushstring(L,
-			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing");
+			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
 		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
@@ -4168,6 +4176,88 @@ static int AddWorldUnit(lua_State* L)
 	const int facing = (int)lua_tonumber(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
 	return 0;
+}
+
+
+/******************************************************************************/
+
+static int MarkerAddPoint(lua_State* L)
+{
+  if (inMapDrawer == NULL) {
+  	return 0;
+  }
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
+	    ((args >= 4) && !lua_isstring(L, 4))) {
+		lua_pushstring(L,
+			"Incorrect arguments to MarkerAddPoint(x, y, z[, text])");
+		lua_error(L);
+	}
+	float3 pos;
+	pos.x = (float)lua_tonumber(L, 1);
+	pos.y = (float)lua_tonumber(L, 2);
+	pos.z = (float)lua_tonumber(L, 3);
+	string text = "";
+	if (args >= 4) {
+	  text = lua_tostring(L, 4);
+	}
+	
+	inMapDrawer->CreatePoint(pos, text);
+	    
+  return 0;
+}
+
+
+static int MarkerAddLine(lua_State* L)
+{
+  if (inMapDrawer == NULL) {
+  	return 0;
+  }
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 6) ||
+	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
+	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
+		lua_pushstring(L,
+			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2)");
+		lua_error(L);
+	}
+	float3 pos1;
+	pos1.x = (float)lua_tonumber(L, 1);
+	pos1.y = (float)lua_tonumber(L, 2);
+	pos1.z = (float)lua_tonumber(L, 3);
+	float3 pos2;
+	pos2.x = (float)lua_tonumber(L, 4);
+	pos2.y = (float)lua_tonumber(L, 5);
+	pos2.z = (float)lua_tonumber(L, 6);
+	
+	inMapDrawer->AddLine(pos1, pos2);
+	    
+  return 0;
+}
+
+
+static int MarkerErasePosition(lua_State* L)
+{
+  if (inMapDrawer == NULL) {
+  	return 0;
+  }
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 3) ||
+	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L,
+			"Incorrect arguments to MarkerDeletePositionl(x, y, z)");
+		lua_error(L);
+	}
+	float3 pos;
+	pos.x = (float)lua_tonumber(L, 1);
+	pos.y = (float)lua_tonumber(L, 2);
+	pos.z = (float)lua_tonumber(L, 3);
+	
+	inMapDrawer->ErasePos(pos);
+	    
+  return 0;
 }
 
 

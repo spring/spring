@@ -2,6 +2,8 @@ TASpring change log
 
 0.74b3
 
+- Added "/specfullview 2" spectator mode, where you can both view and select all units
+
 - Fixed FBI tag floater for planes,
 - Added FBI tag canSubmerge for planes. The following rules apply:
     1) If a plane only has the 'floater' tag set to 1, it will land on the ocean surface.
