@@ -19,7 +19,7 @@ class CTeam
 public:
 	CTeam();
 	virtual ~CTeam();
-	void Update();
+	void SlowUpdate();
 
 	void AddMetal(float amount);
 	void AddEnergy(float amount);
@@ -71,6 +71,7 @@ public:
 	float metalStorage, energyStorage;
 
 	float metalShare, energyShare;
+	float delayedMetalShare, delayedEnergyShare; //excess that might be shared next SlowUpdate
 	
 	float metalSent;
 	float metalReceived;

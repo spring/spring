@@ -1888,7 +1888,7 @@ END_TIME_PROFILE("Collisions");
 
 	if(!(gs->frameNum&31)){
 		for(int a=0;a<gs->activeTeams;++a)
-			gs->Team(a)->Update();
+			gs->Team(a)->SlowUpdate();
 	}
 //	CPathFinder::Instance()->Update();
 
