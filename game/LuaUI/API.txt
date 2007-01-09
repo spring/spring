@@ -746,7 +746,7 @@ AddWorldUnit(number unitDefID,
              number team, number facing) -> nil
 
 
-MarkerAddPoint(number x, number y, number z, string "text") -> nil
+MarkerAddPoint(number x, number y, number z[, string "text"]) -> nil
 
 MarkerAddLine(number x1, number y1, number z1,
               number x2, number y2, number z2)    -> nil
