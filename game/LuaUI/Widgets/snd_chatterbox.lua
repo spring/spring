@@ -16,7 +16,7 @@ function widget:GetInfo()
     name      = "ChatterBox",
     desc      = "annoying sounds",
     author    = "trepan",
-    date      = "Jan 8, 2007",
+    date      = "Jan 9, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = -10,
     enabled   = false  --  loaded by default?
