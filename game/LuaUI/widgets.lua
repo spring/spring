@@ -370,11 +370,11 @@ function widgetHandler:FinalizeWidget(widget, filename, basename)
   wi.filename = filename
   wi.basename = basename
   if (widget.GetInfo == nil) then
-    wi.name  = string.sub(basename, 1, -5)
+    wi.name  = basename
     wi.layer = 0
   else
     local info = widget:GetInfo()
-    wi.name      = info.name    or string.sub(basename, 1, -5)
+    wi.name      = info.name    or basename
     wi.layer     = info.layer   or 0
     wi.desc      = info.desc    or ""
     wi.author    = info.author  or ""
