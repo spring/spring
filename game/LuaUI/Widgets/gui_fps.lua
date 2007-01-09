@@ -67,6 +67,9 @@ local function UpdateGeometry()
   xpos = (xposf and (xposf * vsx)) or xpos
   ypos = (yposf and (yposf * vsy)) or ypos
   size = (sizef and (sizef * vsy)) or size
+  -- negative values reference the right/top edges
+  xpos = (xpos < 0) and (vsx + xpos) or xpos
+  ypos = (ypos < 0) and (vsy + ypos) or ypos
 end
 UpdateGeometry()
 
