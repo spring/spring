@@ -29,8 +29,8 @@ end
 include("spring.h.lua")
 
 
-local  ON_LIMIT = 0.8
-local OFF_LIMIT = 0.5
+local  ON_LIMIT = 0.7
+local OFF_LIMIT = 0.3
 
 local metalMakers = {}
 
