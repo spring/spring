@@ -68,34 +68,8 @@ function widget:MouseRelease(x, y, button)
 end
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---
---  UnitReady() events can come from multiple builders, and the arrival of
---  the events from some of the builders can be delayed. We avoid playing
---  multiple sounds for the same new unit by storing a timecheck to keep
---  track of the last time this unit id generated a sound.
---
-
-local unitReady = false
-local unitTable = {}
-
-
-function widget:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
+function widget:UnitFinished(unitID, unitDefID)
   if (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID()) then
-    local nowTime = Spring.GetGameSeconds()
-    local nextTime = unitTable[unitID]
-    if (not nextTime or (nowTime > nextTime)) then
-      unitReady = true
-      unitTable[unitID] = nowTime + 120  --  nextTime
-    end
-  end
-end
-
-
-function widget:Update(deltaTime)
-  if (unitReady) then
-    unitReady = false
     playSound('teamgrab.wav')
   end
 end

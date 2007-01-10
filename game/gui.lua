@@ -14,12 +14,12 @@
 LUAUI_VERSION = "LuaUI v0.1"
 
 LUAUI_DIRNAME   = 'LuaUI/'
-
 USER_FILENAME   = LUAUI_DIRNAME .. 'main.lua'
 CHOOSE_FILENAME = LUAUI_DIRNAME .. 'modui_dialog.lua'
 PERM_FILENAME   = LUAUI_DIRNAME .. 'Config/modui_list.lua'
 
-MOD_FILENAME = 'ModUI/main.lua'
+MODUI_DIRNAME   = 'ModUI/'
+MOD_FILENAME    = MODUI_DIRNAME .. 'main.lua'
 
 
 --------------------------------------------------------------------------------

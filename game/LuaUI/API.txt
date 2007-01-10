@@ -49,6 +49,7 @@
   GetTooltip()
 
   UnitCreated()
+  UnitFinished()
   UnitReady()
   UnitDestroyed()
 
@@ -373,9 +374,13 @@ GetTooltip(int x, int y) -> string "tooltip"
 --
 UnitCreated(number unitID, number unitDefID) -> nil
 
-
 --
 --  Called when a unit first reaches 100% health
+--
+UnitFinished(number unitID, number unitDefID) -> nil
+
+--
+--  Called when a unit first reaches 100% health, for each builder
 --
 UnitReady(number unitID,    number unitDefID,
           number builderID, number builderUnitDefID) -> nil

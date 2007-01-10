@@ -703,6 +703,40 @@ bool CLuaUI::UnitCreated(CUnit* unit)
 }
 
 
+bool CLuaUI::UnitFinished(CUnit* unit)
+{
+	if (unit->allyteam != gu->myAllyTeam) {
+		return false;
+	}
+
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "UnitFinished");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);	
+	lua_pushnumber(L, unit->unitDef->id);	
+
+	// call the routine
+	const int error = lua_pcall(L, 2, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_UnitFinished", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	return true;	
+}
+
+
 bool CLuaUI::UnitReady(CUnit* unit, CUnit* builder)
 {
 	if (unit->allyteam != gu->myAllyTeam) {

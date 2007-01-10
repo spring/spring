@@ -66,6 +66,7 @@ class CGuiHandler : public CInputReceiver {
 		bool FreeNamedTexture(const std::string& texName);
 		
 		void UnitCreated(CUnit* unit);
+		void UnitFinished(CUnit* unit);
 		void UnitReady(CUnit* unit, CUnit* builder);
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
 		void UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam);

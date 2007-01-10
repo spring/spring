@@ -120,6 +120,14 @@ void CGuiHandler::UnitCreated(CUnit* unit)
 }
 
 
+void CGuiHandler::UnitFinished(CUnit* unit)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitFinished(unit);
+	}
+}
+
+
 void CGuiHandler::UnitReady(CUnit* unit, CUnit* builder)
 {
 	if (luaUI != NULL) {

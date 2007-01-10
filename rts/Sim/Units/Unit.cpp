@@ -1212,6 +1212,9 @@ void CUnit::FinishedBuilding(void)
 	}
 
 	globalAI->UnitFinished(this);
+	if (guihandler) {
+		guihandler->UnitFinished(this);
+	}
 
 	if(unitDef->isFeature){
 		UnBlock();
