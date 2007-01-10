@@ -361,6 +361,7 @@ function widgetHandler:NewWidget()
   local wh = widget.widgetHandler
   local self = self
   widget.include  = function (f) include(f, widget) end
+  wh.ForceLayout  = function (_) self:ForceLayout() end
   wh.RaiseWidget  = function (_) self:RaiseWidget(widget) end
   wh.LowerWidget  = function (_) self:LowerWidget(widget) end
   wh.RemoveWidget = function (_) self:RemoveWidget(widget) end
@@ -584,6 +585,11 @@ function widgetHandler:GetViewSizes()
 end
 
 
+function widgetHandler:ForceLayout()
+  forceLayout = true  --  in main.lua
+end
+
+
 function widgetHandler:ConfigLayoutHandler(data)
   ConfigLayoutHandler(data)
 end
@@ -605,16 +611,14 @@ function widgetHandler:Shutdown()
 end
 
 
-function widgetHandler:UpdateLayout(deltaTime)
+function widgetHandler:Update()
+  local lastSecs = Spring.GetLastFrameSeconds()  
   -- update the hour timer
-  hourTimer = math.mod(hourTimer + deltaTime, 3600.0)
-  local forceUpdate = false
+  hourTimer = math.mod(hourTimer + lastSecs, 3600.0)
   for _,w in ipairs(self.UpdateList) do
-    if (w:Update(deltaTime)) then
-      forceUpdate = true
-    end
+    w:Update(lastSecs)
   end
-  return forceUpdate
+  return
 end
 
 

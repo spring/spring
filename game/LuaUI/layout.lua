@@ -164,9 +164,6 @@ end
 --------------------------------------------------------------------------------
 
 function ConfigLayoutHandler(data)
-
-  -- ???: should also send a forced update via UpdateLayout()
-
   if (type(data) == 'function') then
     layoutButtonFunc = data
   elseif (type(data) == 'boolean') then
@@ -178,6 +175,8 @@ function ConfigLayoutHandler(data)
   elseif (data == nil) then
     LayoutButtons = nil
   end
+
+  forceLayout = true
 end
 
 

@@ -93,22 +93,20 @@ end
 
 activePage = 0
 
-local forceUpdate = true
+forceLayout = true
 
 
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
-  local needUpdate = forceUpdate
-  forceUpdate = false
 
---  needUpdate = needUpdate or (activePage ~= page)
---  activePage = page
-  
-  if (cmdsChanged) then
-    widgetHandler:CommandsChanged()
+  local needUpdate = forceLayout
+  forceLayout = false
+
+  if (activePage ~= page) then
+    needUpdate = true
   end
+  activePage = page
 
-  local lastSecs = Spring.GetLastFrameSeconds()  
-  needUpdate = needUpdate or widgetHandler:UpdateLayout(lastSecs)
+  widgetHandler:Update()
   
   return needUpdate
 end
