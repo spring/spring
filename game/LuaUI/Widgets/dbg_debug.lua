@@ -77,7 +77,7 @@ function widget:Update(deltaTime)
     printUpdate = false
     print('DEBUG (Update) '..deltaTime)
   end
-  return false
+  return
 end
 
 
