@@ -8,7 +8,7 @@
   SetOutPath "$INSTDIR\LuaUI"
   File /r /x .svn /x Config\*.lua "..\game\LuaUI\*.*"
 
-  WriteRegDWORD HKCU "Software\SJ\spring" "LuaUI" "1"
+  WriteRegDWORD HKCU "Software\SJ\spring" "LuaUI" 1
 
 !else
 
