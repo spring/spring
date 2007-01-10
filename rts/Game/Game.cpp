@@ -1484,6 +1484,8 @@ bool CGame::Draw()
 	ASSERT_UNSYNCED_MODE;
 
 	if (!gu->active) {
+		// update LuaUI
+		guihandler->Update();
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
