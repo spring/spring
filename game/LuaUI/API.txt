@@ -183,6 +183,8 @@
   Draw.Blending()
   Draw.AlphaTest()
   Draw.LineStipple()
+  Draw.PolygonOffset()
+  Draw.PolygonMode()
   Draw.Texture()
   Draw.Material()
   Draw.Color()
