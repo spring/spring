@@ -100,6 +100,9 @@ static int GetActionHotKeys(lua_State* L);
 static int SendCommands(lua_State* L);
 static int GiveOrder(lua_State* L);
 
+static int SelectUnitsByKeys(lua_State* L);
+static int SelectUnitsByValues(lua_State* L);
+
 static int GetGroupList(lua_State* L);
 static int GetSelectedGroup(lua_State* L);
 static int GetGroupAIName(lua_State* L);
@@ -349,6 +352,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDirList);
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
+	REGISTER_LUA_CFUNC(SelectUnitsByKeys);
+	REGISTER_LUA_CFUNC(SelectUnitsByValues);
 	REGISTER_LUA_CFUNC(GetFPS);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetLastFrameSeconds);
@@ -1848,6 +1853,78 @@ static int GetDirList(lua_State* L)
 
 	return 1;
 }
+
+
+static int SelectUnitsByKeys(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_istable(L, 1) ||
+	    ((args >= 2) && !lua_isboolean(L, 2))) {
+		lua_pushstring(L, "Incorrect arguments to SelectUnitsByKeys()");
+		lua_error(L);
+	}
+
+	// clear the current units, unless the append flag is present
+	if ((args < 2) || !lua_toboolean(L, 2)) {
+		selectedUnits.ClearSelected();
+	}
+			
+	const int table = 1;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2)) {
+			const int unitID = (int)lua_tonumber(L, -2); // the key
+			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+				continue; // bad index
+			}
+			CUnit* unit = uh->units[unitID];
+			if (unit == NULL) {
+				continue; // bad pointer
+			}
+			if ((unit->team != gu->myTeam) && !gu->spectatingFullSelect) {
+				continue; // not mine to select
+			}
+			selectedUnits.AddUnit(unit);
+		}
+	}
+	return 0;
+}
+
+
+static int SelectUnitsByValues(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_istable(L, 1) ||
+	    ((args >= 2) && !lua_isboolean(L, 2))) {
+		lua_pushstring(L, "Incorrect arguments to SelectUnitsByValues()");
+		lua_error(L);
+	}
+
+	// clear the current units, unless the append flag is present
+	if ((args < 2) || !lua_toboolean(L, 2)) {
+		selectedUnits.ClearSelected();
+	}
+			
+	const int table = 1;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) { // avoid 'n'
+			const int unitID = (int)lua_tonumber(L, -1); // the value
+			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+				continue; // bad index
+			}
+			CUnit* unit = uh->units[unitID];
+			if (unit == NULL) {
+				continue; // bad pointer
+			}
+			if ((unit->team != gu->myTeam) && !gu->spectatingFullSelect) {
+				continue; // not mine to select
+			}
+			selectedUnits.AddUnit(unit);
+		}
+	}
+	return 0;
+}
+
+
 
 
 static int SendCommands(lua_State* L)
