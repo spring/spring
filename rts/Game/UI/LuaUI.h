@@ -76,6 +76,7 @@ class CLuaUI {
 		bool AddConsoleLine(const string& line, int priority);
 		
 		bool UnitCreated(CUnit* unit);
+		bool UnitFinished(CUnit* unit);
 		bool UnitReady(CUnit* unit, CUnit* builder);
 		bool UnitDestroyed(CUnit* victim, CUnit* attacker);
 		bool UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam);

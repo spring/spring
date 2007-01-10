@@ -193,6 +193,10 @@ function UnitCreated(unitID, unitDefID)
   return widgetHandler:UnitCreated(unitID, unitDefID)
 end
 
+function UnitFinished(unitID, unitDefID)
+  return widgetHandler:UnitFinished(unitID, unitDefID)
+end
+
 function UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
   return widgetHandler:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
 end

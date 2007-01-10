@@ -180,6 +180,12 @@ function widget:UnitCreated(unitID, unitDefID)
 end
 
 
+function widget:UnitFinished(unitID, unitDefID)
+  print('DEBUG (UnitFinished) '..unitID..' '..unitDefID)
+  return
+end
+
+
 function widget:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
   print('DEBUG (UnitReady) '
         ..unitID   ..' '..unitDefID..' '

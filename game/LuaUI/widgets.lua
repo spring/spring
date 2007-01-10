@@ -27,9 +27,10 @@ include("opengl.h.lua")
 
 local gl = Spring.Draw
 
-local WIDGET_DIRNAME  = LUAUI_DIRNAME .. 'Widgets/'
-local ORDER_FILENAME  = LUAUI_DIRNAME .. 'Config/widget_order.lua'
-local CONFIG_FILENAME = LUAUI_DIRNAME .. 'Config/widget_data.lua'
+local ORDER_FILENAME     = LUAUI_DIRNAME .. 'Config/widget_order.lua'
+local CONFIG_FILENAME    = LUAUI_DIRNAME .. 'Config/widget_data.lua'
+local WIDGET_DIRNAME     = LUAUI_DIRNAME .. 'Widgets/'
+local MOD_WIDGET_DIRNAME = MODUI_DIRNAME .. 'Widgets/'
 
 local SELECTOR_BASENAME = 'selector.lua'
 
@@ -95,6 +96,7 @@ local callInLists = {
   'GroupChanged',
   'CommandsChanged',
   'UnitCreated',
+  'UnitFinished',
   'UnitReady',
   'UnitDestroyed',
   'UnitChangedTeam',
@@ -211,6 +213,19 @@ function widgetHandler:Initialize()
   
   local widgetFiles = Spring.GetDirList(WIDGET_DIRNAME, "*.lua")
   table.sort(widgetFiles)
+
+  -- add mod widgets
+--[[
+  if (Spring.GetConfigInt("LuaUI", 1) > 1) then
+    local modWidgetFiles = Spring.GetDirListVFS(MOD_WIDGET_DIRNAME)
+    table.sort(modWidgetFiles)
+    for _,fn in ipairs(modWidgetFiles) do
+      if (string.find(fn, ".lua", -4, true)) then
+        table.insert(widgetFiles, fn)
+      end
+    end
+  end
+--]]
   
   local unsortedWidgets = {}
 
@@ -884,6 +899,14 @@ end
 function widgetHandler:UnitCreated(unitID, unitDefID)
   for _,w in ipairs(self.UnitCreatedList) do
     w:UnitCreated(unitID, unitDefID)
+  end
+  return
+end
+
+
+function widgetHandler:UnitFinished(unitID, unitDefID)
+  for _,w in ipairs(self.UnitFinishedList) do
+    w:UnitFinished(unitID, unitDefID)
   end
   return
 end
