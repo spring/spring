@@ -45,6 +45,14 @@
     <table border="0" style='width: 750px; table-layout: fixed; border: 2px dotted gray;'>
       <tr><td>
         <xsl:apply-templates select="Intro"/>
+        <p>
+        Some statistics on this document:<br />
+        <ul>
+        <li>Number of commands described: <xsl:value-of select="count(//Command)"/></li>
+        <li>Number of client commands: <xsl:value-of select="count(//Command[@Source='client'])"/></li>
+        <li>Number of server commands: <xsl:value-of select="count(//Command[@Source='server'])"/></li>
+        </ul>
+        </p>
       </td></tr>
     </table>  
     

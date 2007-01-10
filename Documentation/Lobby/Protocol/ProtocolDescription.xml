@@ -597,6 +597,13 @@
       </Examples>
     </Command>
     
+    <Command Name="MUTELISTEND" Source="server">
+      <Description>
+      Sent by server after it has finished sending the list of mutes for a channel.
+      Also see <clink name="MUTELIST:server"/> and <clink name="MUTELISTBEGIN"/> commands.
+      </Description>
+    </Command>
+    
     <Command Name="CHANNELTOPIC" Source="server">
       <Arguments>
         <Argument Name="channame" Optional="no" Sentence="no"/>
@@ -621,7 +628,629 @@
       to disable it.
       </Description>
     </Command>
+    
+    <Command Name="CLIENTS" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="clients" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent to a client who just joined the channel. Note: Multiple commands of this
+      kind can be sent in a row. Server takes the list of clients in a channel and separates
+      it into several lines and sends each line seperately. This ensures no line is too long,
+      because client may have some limit set on the maximum length of the line and it could
+      ignore it if it was too long. Also note that the client itself (his username) is sent in 
+      this list too! So when client receives JOIN command he should not add his name in the clients
+      list of the channel - he should wait for CLIENTS command which will contain his name too
+      and he will add himself then automatically.
+      </Description>
+    </Command>
 
+    <Command Name="JOINED" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent to all clients in a channel (except the new client) when a new client
+      joins the channel.
+      </Description>
+    </Command>
+    
+    <Command Name="LEAVE" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to leave a channel. When client is disconnected, he is
+      automatically removed from all channels.
+      </Description>
+    </Command>
+
+    <Command Name="LEFT" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="reason" Optional="yes" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients in a channel when some client left this channel.
+      WARNING: Server does not send this command to a client that has just left a channel,
+      because there is no need to (client who has left the channel knows that already).
+      Client that was kicked from the channel is notified about it via <clink name="FORCELEAVECHANNEL:server"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="FORCELEAVECHANNEL" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="reason" Optional="yes" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by client (moderator) requsting that the user is removed from the channel.
+      User will be notified with <clink name="FORCELEAVECHANNEL:server"/> command.
+      </Description>
+    </Command>
+    
+    <Command Name="FORCELEAVECHANNEL" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="reason" Optional="yes" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent to user who has just been kicked from the channel #channame
+      by user "username". (lobby client should now internally close/detach from the channel
+      as he was removed from the clients list of #channame on server side)
+      </Description>
+    </Command>
+    
+    <Command Name="CHANNELMESSAGE" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients in a channel. Used to broadcast messages
+      in the channel.
+      </Description>
+    </Command>
+    
+    <Command Name="SAY" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to say something in a specific channel. Client must
+      first join the channel before he can receive or send messages to that channel.
+      </Description>
+      <Response>
+      See <clink name="SAID:server"/> command.
+      </Response>
+    </Command>
+
+    <Command Name="SAID" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="userame" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients participating in this channel when one of the clients 
+      sent a message to it (including the author of this message).
+      </Description>
+    </Command>
+
+    <Command Name="SAYEX" Source="client">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by any client when he is trying to say something in "/me" irc style.
+      Also see <clink name="SAY:client"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="SAIDEX" Source="server">
+      <Arguments>
+        <Argument Name="channame" Optional="no" Sentence="no"/>
+        <Argument Name="userame" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server when client said something using <clink name="SAYEX:client"/> command.
+      </Description>
+    </Command>
+    
+    <Command Name="SAYPRIVATE" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to send a private message to some other client.
+      </Description>
+      <Response>
+      Server will respond with a <clink name="SAYPRIVATE:server"/> command.
+      </Response>
+    </Command>
+
+    <Command Name="SAYPRIVATE" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to a client who just sent SAYPRIVATE command to server. This way client
+      can verify that server did get his message and that receiver will get it too.
+      </Description>
+    </Command>
+
+    <Command Name="SAIDPRIVATE" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server when some client sent this client a private message.
+      </Description>
+    </Command>
+    
+
+    <Command Name="OPENBATTLE" Source="client">
+      <Arguments>
+        <Argument Name="type" Optional="no" Sentence="no">
+        Can be 0 or 1 (0 = normal battle, 1 = battle replay)
+        </Argument>
+        <Argument Name="natType" Optional="no" Sentence="no">
+        NAT traversal method used by the host. Must be a number (0 means no NAT traversal
+        technique should be applied).
+        </Argument>
+        <Argument Name="password" Optional="no" Sentence="no">
+        Must be "*" if founder does not wish to have password-protected game.
+        </Argument>
+        <Argument Name="port" Optional="no" Sentence="no"/>
+        <Argument Name="maxplayers" Optional="no" Sentence="no"/>
+        <Argument Name="startingmetal" Optional="no" Sentence="no"/>
+        <Argument Name="startingenergy" Optional="no" Sentence="no"/>
+        <Argument Name="maxunits" Optional="no" Sentence="no"/>
+        <Argument Name="startpos" Optional="no" Sentence="no">
+        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        </Argument>
+        <Argument Name="gameendcondition" Optional="no" Sentence="no">
+        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies)
+        </Argument>
+        <Argument Name="limitdgun" Optional="no" Sentence="no"/>
+        <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
+        <Argument Name="ghostedBuildings" Optional="no" Sentence="no"/>
+        <Argument Name="hashcode" Optional="no" Sentence="no">
+        A signed 32-bit integer (acquired via unitsync.dll).
+        </Argument>
+        <Argument Name="rank" Optional="no" Sentence="no"/>
+        <Argument Name="maphash" Optional="no" Sentence="no">
+        A signed 32-bit integer as returned from unitsync.dll.
+        </Argument>
+        <Argument Name="map" Optional="no" Sentence="yes"/>
+        <Argument Name="title" Optional="no" Sentence="yes"/>
+        <Argument Name="modname" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to open a new battle. The client becomes a founder of this battle, if command is successful
+      (see Response section).
+      </Description>
+      <Response>
+      Client is notified about this command's success via <clink name="OPENBATTLE:server"/>/<clink name="OPENBATTLEFAILED:server"/> commands.
+      </Response>
+    </Command>
+    
+    <Command Name="OPENBATTLE" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent to a client who previously sent <clink name="OPENBATTLE:client"/> command to server, if client's
+      request to open new battle has been approved. If server rejected client's request, client
+      is notified via <clink name="OPENBATTLEFAILED"/> command. Server first sends BATTLEOPENED command, then
+      OPENBATTLE command (this is important - client must have the battle in his battle list
+      before he receives OPENBATTLE command!).
+      </Description>
+    </Command>
+
+    <Command Name="BATTLEOPENED" Source="server">
+      <Arguments>
+        <Argument Name="type" Optional="no" Sentence="no">
+        Can be 0 or 1 (0 = normal battle, 1 = battle replay)
+        </Argument>
+        <Argument Name="natType" Optional="no" Sentence="no">
+        NAT traversal method used by the host. Must be a number (0 means no NAT traversal
+        technique should be applied).
+        </Argument>
+        <Argument Name="founder" Optional="no" Sentence="no">
+        Username of the client who started this battle.
+        </Argument>
+        <Argument Name="IP" Optional="no" Sentence="no"/>
+        <Argument Name="port" Optional="no" Sentence="no"/>
+        <Argument Name="maxplayers" Optional="no" Sentence="no"/>
+        <Argument Name="passworded" Optional="no" Sentence="no">
+        A boolean - must be "0" or "1" and not "true" or "false" as it
+        is default in Java! Use Misc.strToBool and Misc.boolToStr methods (from TASServer source)
+        to convert from one to another.
+        </Argument>
+        <Argument Name="rank" Optional="no" Sentence="no"/>
+        <Argument Name="maphash" Optional="no" Sentence="no">
+        A signed 32-bit integer as returned from unitsync.dll.
+        </Argument>
+        <Argument Name="map" Optional="no" Sentence="yes"/>
+        <Argument Name="title" Optional="no" Sentence="yes"/>
+        <Argument Name="modname" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all registered users, when a new battle has been opened.
+      Series of BATTLEOPENED commands are sent to user when he logs in (1 command for each battle).
+      Use Battle.createBattleOpenedCommand method to create this command in a String (when modifying TASServer source).
+      </Description>
+    </Command>
+    
+    <Command Name="BATTLECLOSED" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent when founder has closed a battle (or if he was disconnected).
+      </Description>
+    </Command>
+    
+    <Command Name="JOINBATTLE" Source="client">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+        <Argument Name="parameter" Optional="yes" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by a client trying to join a battle. Password is an optional parameter.
+      </Description>
+    </Command>
+
+    <Command Name="JOINBATTLE" Source="server">
+      <Arguments>
+        <Argument Name="startingmetal" Optional="no" Sentence="no"/>
+        <Argument Name="startingenergy" Optional="no" Sentence="no"/>
+        <Argument Name="maxunits" Optional="no" Sentence="no"/>
+        <Argument Name="startpos" Optional="no" Sentence="no"/>
+        <Argument Name="gameendcondition" Optional="no" Sentence="no"/>
+        <Argument Name="limitdgun" Optional="no" Sentence="no">
+        A boolean (0 or 1).
+        </Argument>
+        <Argument Name="diminishingMMs" Optional="no" Sentence="no">
+        A boolean (0 or 1).
+        </Argument>
+        <Argument Name="ghostedBuildings" Optional="no" Sentence="no">
+        A boolean (0 or 1).
+        </Argument>
+        <Argument Name="hashcode" Optional="no" Sentence="no">
+        A signed 32-bit integer.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server telling the client that he has just joined the battle successfully.
+      Server will also send a series of CLIENTBATTLESTATUS commands after this command,
+      so that user will get the battle statuses of all the clients in the battle.
+      </Description>
+    </Command>
+
+    <Command Name="JOINEDBATTLE" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients when a new client joins the battle.
+      </Description>
+    </Command>
+
+    <Command Name="LEFTBATTLE" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all users when client left a battle (or got disconnected from the server).
+      </Description>
+    </Command>
+
+    <Command Name="LEAVEBATTLE" Source="client">
+      <Description>
+      Sent by the client when he leaves a battle. Also sent by a founder of the battle when he
+      closes the battle.
+      </Description>
+    </Command>
+
+    <Command Name="JOINBATTLEFAILED" Source="server">
+      <Arguments>
+        <Argument Name="reason" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to user who just tried to join a battle but has been rejected by server.
+      </Description>
+    </Command>
+
+    <Command Name="OPENBATTLEFAILED" Source="server">
+      <Arguments>
+        <Argument Name="reason" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to user who just tried to open(=host) a new battle and was rejected by
+      the server.
+      </Description>
+    </Command>
+
+    <Command Name="UPDATEBATTLEINFO" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
+        <Argument Name="SpectatorCount" Optional="no" Sentence="no">
+        Assume that spectator count is 0 if battle type is 0 (normal battle) and
+        1 if battle type is 1 (battle replay), as founder of the battle is automatically set
+        as a spectator in that case.
+        </Argument>
+        <Argument Name="locked" Optional="no" Sentence="no">
+        A boolean (0 or 1). Note that when client creates a battle, server assumes
+        it is unlocked (by default). Client must make sure it actually is.
+        </Argument>
+        <Argument Name="maphash" Optional="no" Sentence="no">
+        A signed 32-bit integer. See <clink name="OPENBATTLE"/> command for more info.
+        </Argument>
+        <Argument Name="mapname" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all registered clients telling them
+      some of the parameters of the battle changed. Battle's inside
+      changes, like starting metal, energy, starting position etc., are sent only to clients
+      participating in the battle via <clink name="UPDATEBATTLEDETAILS:server"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="UPDATEBATTLEINFO" Source="server">
+      <Arguments>
+        <Argument Name="SpectatorCount" Optional="no" Sentence="no"/>
+        <Argument Name="locked" Optional="no" Sentence="no">
+        A boolean (0 or 1). Note that when client creates a battle, server assumes
+        it is unlocked (by default). Client must make sure it actually is.
+        </Argument>
+        <Argument Name="maphash" Optional="no" Sentence="no">
+        A signed 32-bit integer. See <clink name="OPENBATTLE"/> command for more info.
+        </Argument>
+        <Argument Name="mapname" Optional="no" Sentence="yes">
+        Must NOT contain file extension!
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by the founder of the battle telling the server some of the "outside" parameters
+      of the battle changed.
+      </Description>
+    </Command>
+
+    <Command Name="UPDATEBATTLEDETAILS" Source="server">
+      <Arguments>
+        <Argument Name="startingmetal" Optional="no" Sentence="no">
+        Must be between 0 and 10000.
+        </Argument>
+        <Argument Name="startingenergy" Optional="no" Sentence="no">
+        Must be between 0 and 10000.
+        </Argument>
+        <Argument Name="maxunits" Optional="no" Sentence="no">
+        Must be between 10 and 5000.
+        </Argument>
+        <Argument Name="startpos" Optional="no" Sentence="no">
+        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        </Argument>
+        <Argument Name="gameendcondition" Optional="no" Sentence="no">
+        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies).
+        </Argument>
+        <Argument Name="limitdgun" Optional="no" Sentence="no"/>
+        <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
+        <Argument Name="ghostedBuildings" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients participating in a battle when some of the battle's "inside"
+      parameters change. Also see <clink name="UPDATEBATTLEINFO:client"/> command!
+      </Description>
+    </Command>
+
+    <Command Name="UPDATEBATTLEDETAILS" Source="client">
+      <Arguments>
+        <Argument Name="startingmetal" Optional="no" Sentence="no">
+        Must be between 0 and 10000.
+        </Argument>
+        <Argument Name="startingenergy" Optional="no" Sentence="no">
+        Must be between 0 and 10000.
+        </Argument>
+        <Argument Name="maxunits" Optional="no" Sentence="no">
+        Must be between 10 and 5000.
+        </Argument>
+        <Argument Name="startpos" Optional="no" Sentence="no">
+        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        </Argument>
+        <Argument Name="gameendcondition" Optional="no" Sentence="no">
+        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies).
+        </Argument>
+        <Argument Name="limitdgun" Optional="no" Sentence="no"/>
+        <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
+        <Argument Name="ghostedBuildings" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle to server telling him some of the "inside" parameters
+      of the battle changed. Even if only one of the parameters changed, all must be sent.
+      This does create some more overhead, but it simplifies communication between server
+      and clients. Note that this command is broadcasted to all the clients in the battle,
+      including the founder.
+      </Description>
+    </Command>
+
+    <Command Name="SAYBATTLE" Source="client">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by client who is participating in a battle to server, who forwards this message
+      to all other clients in the battle. BATTLE_ID is not required since every user can
+      participate in only one battle at the time. If user is not participating in the battle,
+      this command is ignored and is considered invalid.
+      </Description>
+    </Command>
+
+    <Command Name="SAIDBATTLE" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients participating in a battle when client sent a message
+      to it using SAYBATTLE command. BATTLE_ID is not required since every client knows in
+      which battle he is participating in, since every client may participate in only one
+      battle at the time. If client is not participating in a battle, he should ignore
+      this command or raise an error (this should never happen!).
+      </Description>
+    </Command>
+
+    <Command Name="SAYBATTLEEX" Source="client">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by any client participating in a battle when he wants to say something in "/me" irc style.
+      Server can forge this command too (for example when founder of the battle kicks a user, server
+      uses SAYBATTLEEX saying founder kicked a user).
+      </Description>
+    </Command>
+    
+    <Command Name="SAIDBATTLEEX" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients participating in a battle when client used SAYBATTLEEX command.
+      See <clink name="SAYBATTLEEX:client"/> for more info.
+      </Description>
+    </Command>
+
+    <Command Name="MYSTATUS" Source="client">
+      <Arguments>
+        <Argument Name="status" Optional="no" Sentence="no">
+        A signed integer in text form (e.g. "1234").
+		Each bit has its meaning:
+	    <ul>
+		  <li>b0 = in game (0 - normal, 1 - in game)</li>
+          <li>b1 = away status (0 - normal, 1 - away)</li>
+          <li>b2-b4 = rank (see Account class implementation for description of rank) - client is not
+              allowed to change rank bits himself (only server may set them).</li>
+          <li>b5 = access status (tells us whether this client is a server moderator or not) - client is not
+              allowed to change this bit himself (only server may set them).</li>
+          <li>b6 = bot mode (0 - normal user, 1 - automated bot). This bit is copied from user's account
+              and can not be changed by the client himself. Bots differ from human players in that
+              they are fully automated and that some anti-flood limitations do not apply to them.</li>
+        </ul>        
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client to server telling him his status changed. 
+      To figure out if battle is "in-game", client must check in-game status of the host.
+      </Description>
+    </Command>
+
+    <Command Name="CLIENTSTATUS" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="status" Optional="no" Sentence="no">
+        See <clink name="MYSTATUS:client"/> command for possible values of this parameter.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server to all registered clients indicating that client's status changed.
+      Note that client's status is considered 0 if not said otherwise (for example,
+      when you logon, server sends only statuses of those clients whose statuses differ
+      from 0, to save the bandwidth).
+      </Description>
+    </Command>    
+
+    <Command Name="MYBATTLESTATUS" Source="client">
+      <Arguments>
+        <Argument Name="battlestatus" Optional="no" Sentence="no">
+          An integer but with limited range: 0..2147483647 (use signed int and
+          consider only positive values and zero). Number is sent as text. Each bit has its meaning:
+          <ul>
+            <li>b0 = undefined (reserved for future use)</li>
+            <li>b1 = ready (0=not ready, 1=ready)</li>
+            <li>b2..b5 = team no. (from 0 to 15. b2 is LSB, b5 is MSB)</li>
+            <li>b6..b9 = ally team no. (from 0 to 15. b6 is LSB, b9 is MSB)</li>
+            <li>b10 = mode (0 = spectator, 1 = normal player)</li>
+            <li>b11..b17 = handicap (7-bit number. Must be in range 0..100). Note: Only host can
+                change handicap values of the players in the battle (with HANDICAP command).
+                These 7 bits are always ignored in this command. They can only be changed
+                using HANDICAP command.</li>
+            <li>b18..b21 = reserved for future use (with pre 0.71 versions these bits were used for team color index)</li>
+            <li>b22..b23 = sync status (0 = unknown, 1 = synced, 2 = unsynced)</li>
+            <li>b24..b27 = side (e.g.: arm, core, tll, ... Side index can be between 0 and 15, inclusive)</li>
+            <li>b28..b31 = undefined (reserved for future use)</li>
+          </ul>
+        </Argument>
+        <Argument Name="myteamcolor" Optional="no" Sentence="no">
+        Should be 32-bit signed integer in decimal form (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R = red).
+        Example: 255 stands for $000000FF.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by a client to the server telling him his status in the battle changed.
+      </Description>
+    </Command>
+
+    <Command Name="CLIENTBATTLESTATUS" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="battlestatus" Optional="no" Sentence="no">
+        See <clink name="MYBATTLESTATUS:client"/> command for possible values
+        of this parameter.
+        </Argument>
+        <Argument Name="teamcolor" Optional="no" Sentence="no">
+        Uses same format as the one used with <clink name="MYBATTLESTATUS:client"/> command.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server to users participating in a battle when one of the clients changes his
+      battle status.
+      </Description>
+    </Command>
+
+    <Command Name="REQUESTBATTLESTATUS" Source="client">
+      <Description>
+      Sent by server to user who just opened a battle or joined one.
+      This command is sent after all CLIENTBATTLESTATUS commands for
+      all clients have been sent. This way user can choose suitable team, ally and color numbers
+      since he knows battle statuses of other clients already.
+      </Description>
+      <Response>
+      When client receives this command, he must send MYBATTLESTATUS command to the server so that 
+      server can synchronize battle status with user's.
+      </Response>
+    </Command>
+
+    <Command Name="HANDICAP" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="value" Optional="no" Sentence="no">
+        Must be in range [0, 100] (inclusive).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle changing username's handicap value (of his battle status).
+      Only founder can change other users handicap values (even they themselves can't change it).
+      </Description>
+    </Command>    
+    
 
   </CommandList>
 
