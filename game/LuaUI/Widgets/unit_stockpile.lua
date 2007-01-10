@@ -14,7 +14,7 @@
 function widget:GetInfo()
   return {
     name      = "Stockpiler",
-    desc      = "Automatically adds 100 stockpile builds for units",
+    desc      = "Automatically adds 100 stockpile builds to new units",
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
