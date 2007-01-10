@@ -24,7 +24,7 @@ MagentaStr = "\255\255\001\255"
 
 Colors = {}
 Colors.white   = { 1.0, 1.0, 1.0, 1.0 }
-Colors.black   = { 1.0, 1.0, 1.0, 1.0 }
+Colors.black   = { 0.0, 0.0, 0.0, 1.0 }
 Colors.grey    = { 0.5, 0.5, 0.5, 1.0 }
 Colors.red     = { 1.0, 0.0, 0.0, 1.0 }
 Colors.green   = { 0.0, 1.0, 0.0, 1.0 }
