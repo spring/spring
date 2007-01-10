@@ -14,7 +14,7 @@
 function widget:GetInfo()
   return {
     name      = "ChatterBox",
-    desc      = "annoying sounds",
+    desc      = "Annoying sounds",
     author    = "trepan",
     date      = "Jan 9, 2007",
     license   = "GNU GPL, v2 or later",
