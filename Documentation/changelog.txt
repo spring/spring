@@ -2,7 +2,16 @@ TASpring change log
 
 0.74b3
 
+
+- Renamed docs/lua_ui_interface.txt to LuaUI/API.txt
+
+- Added "/minimap slavemode [0|1]" and "/minimap draw" for use with LuaUI
+
 - Added "/specfullview 2" spectator mode, where you can both view and select all units
+
+- Added "group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]"
+  action as an alternative to the group[0|9] commands  (note that the key modifiers can
+  be setup differently from the default)
 
 - Fixed FBI tag floater for planes,
 - Added FBI tag canSubmerge for planes. The following rules apply:
