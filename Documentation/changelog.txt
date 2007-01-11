@@ -23,6 +23,7 @@ TASpring change log
 - Fixed units get stuck while guarding factories bug.
 - Fixed planes can't find landing pad on large maps bug.
 - Fixed in game video creation (default binding F10).
+- Fixed a bug causing much metal/energy to be lost instead of shared to allies.
 
 - Smoothed LOS / Radar view.
 
