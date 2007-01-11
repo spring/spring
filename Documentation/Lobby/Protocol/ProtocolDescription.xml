@@ -1251,6 +1251,470 @@
       </Description>
     </Command>    
     
+    <Command Name="KICKFROMBATTLE" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle when he kicks the client out of the battle. Server remove client
+      from the battle and notify him about it via <clink name="FORCEQUITBATTLE:server"/> command.
+      </Description>
+    </Command>    
+    
+    <Command Name="FORCEQUITBATTLE" Source="server">
+      <Description>
+      Sent to client for whom founder requested kick with KICKFROMBATTLE command.
+      Client doesn't need to send LEAVEBATTLE command, that is already done by the server.
+      The only purpose this commands serves to is to notify client that he was kicked from
+      the battle. Note that client should close the battle internally, since he is no longer
+      a part of it (or he can do that once he receives LEFTBATTLE command containing his username).
+      </Description>
+    </Command>    
+    
+    <Command Name="FORCETEAMNO" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="teamno" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder the of battle when he is trying to force some other client's team number
+      to 'teamno'. Server will update client's battle status automatically.
+      </Description>
+    </Command>
+    
+    <Command Name="FORCEALLYNO" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="teamno" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle when he is trying to force some other client's ally number
+      to 'allyno'. Server will update client's battle status automatically.  
+      </Description>
+    </Command> 
+    
+    <Command Name="FORCETEAMCOLOR" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+        <Argument Name="color" Optional="no" Sentence="no">
+        Should be a 32-bit signed integer in decimal form (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R  = red). 
+        Example: 255 stands for $000000FF.  
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle when he is trying to force some other client's team color
+      to 'color'. Server will update client's battle status automatically.
+      </Description>
+    </Command>
+    
+    <Command Name="FORCESPECTATORMODE" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle when he is trying to force some other client's mode
+      to spectator. Server will update client's battle status automatically.
+      </Description>
+    </Command>
+
+    <Command Name="DISABLEUNITS" Source="client">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle to server telling him he disabled one or more units.
+      At least one unit name must be passed as an argument.
+      </Description>
+    </Command>
+
+    <Command Name="DISABLEUNITS" Source="server">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients in the battle except for the founder, notifying them
+      some units have been added to disabled units list. Also see <clink name="DISABLEUNITS:client"/>
+      </Description>
+    </Command>
+
+    <Command Name="ENABLEUNITS" Source="client">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle to server telling him he enabled one or more previous
+      disabled units. At least one unit name must be passed as an argument.
+      </Description>
+    </Command>
+
+    <Command Name="ENABLEUNITS" Source="server">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients in the battle except for the founder, notifying them
+      some units have been removed from disabled units list.
+      </Description>
+    </Command>
+
+    <Command Name="ENABLEALLUNITS" Source="client">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by founder of the battle to server telling him he enabled ALL units and so clearing
+      the disabled units list.
+      </Description>
+    </Command>
+    
+    <Command Name="ENABLEALLUNITS" Source="server">
+      <Arguments>
+        <Argument Name="unitname1" Optional="no" Sentence="no">
+        Multiple units may follow, but at least one must be present in the arguments list.
+        </Argument>
+        <Argument Name="unitname2" Optional="no" Sentence="no"/>
+        <Argument Name="..." Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to all clients in the battle except for the founder, telling them that
+      disabled units list has been cleared.
+      </Description>
+    </Command>
+
+    <Command Name="RING" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by client to server when trying to play a "ring" sound to user 'username'.
+      Only privileged users can ring anyone, although "normal" clients can ring
+      only when they are hosting and only players participating in their battle.
+      </Description>
+    </Command>
+
+    <Command Name="RING" Source="server">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to client telling him user 'username' just rang (client should play
+      the "ring" sound once he receives this command).
+      </Description>
+    </Command>
+
+    <Command Name="REDIRECT" Source="server">
+      <Arguments>
+        <Argument Name="ipaddress" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server when in "redirection mode". When client connects, server will send him
+      only this message and disconnect the socket immediately. Client should connect to 'ipaddress'
+      in that case. This command may be useful when official server address changes, so that
+      clients are automatically redirected to the new one.
+      </Description>
+      <Examples>
+        <Example>
+        REDIRECT 87.96.164.14
+        </Example>
+      </Examples>
+    </Command>    
+
+    <Command Name="BROADCAST" Source="server">
+      <Arguments>
+        <Argument Name="message" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server when urgent message has to be delivered to all users.
+      Lobby program should display this message either in some system log or
+      in some message box (user must see this message!).
+      </Description>
+    </Command>
+
+    <Command Name="ADDBOT" Source="client">
+      <Arguments>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+        <Argument Name="battlestatus" Optional="no" Sentence="no"/>
+        <Argument Name="teamcolor" Optional="no" Sentence="no">
+        Should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R  = red).
+        </Argument>
+        <Argument Name="AIDLL" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      With this command client can add bots to the battle.
+      </Description>
+    </Command>
+
+    <Command Name="ADDBOT" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no">
+        BATTLE_ID is there just to help client verify that
+        the bot is meant for his battle.
+        </Argument>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+        <Argument Name="owner" Optional="no" Sentence="no"/>
+        <Argument Name="battlestatus" Optional="no" Sentence="no"/>
+        <Argument Name="teamcolor" Optional="no" Sentence="no">
+        Should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R  = red).
+        </Argument>
+        <Argument Name="AIDLL" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      This command indicates that client has added a bot to the battle.
+      </Description>
+    </Command>
+
+    <Command Name="REMOVEBOT" Source="client">
+      <Arguments>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Removes a bot from the battle.
+      </Description>
+    </Command>
+
+    <Command Name="REMOVEBOT" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no">
+        BATTLE_ID is there just to help client verify that
+        the bot is meant for his battle.
+        </Argument>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Indicates that bot has been removed from the battle.
+      Sent by server.
+      </Description>
+    </Command>
+    
+    <Command Name="UPDATEBOT" Source="client">
+      <Arguments>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+        <Argument Name="battlestatus" Optional="no" Sentence="no">
+        Similar to that of the normal client's, see <clink name="MYSTATUC:client"/> for more info.
+        </Argument>
+        <Argument Name="teamcolor" Optional="no" Sentence="no">
+        Should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R  = red).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client when he is trying to update status of one of his own bots (only bot owner and
+      battle host may update bot).
+      </Description>
+    </Command>
+
+    <Command Name="UPDATEBOT" Source="server">
+      <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no">
+        BATTLE_ID is there just to help client verify that
+        the bot is meant for his battle.
+        </Argument>
+        <Argument Name="name" Optional="no" Sentence="no"/>
+        <Argument Name="battlestatus" Optional="no" Sentence="no">
+        Similar to that of the normal client's, see <clink name="MYSTATUC:client"/> for more info.
+        </Argument>
+        <Argument Name="teamcolor" Optional="no" Sentence="no">
+        Should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
+        where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR,
+        B = blue, G = green, R  = red).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server notifying client in the battle that one of the bots just got his status updated.
+      Also see <clink name="UPDATEBOT:client"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="ADDSTARTRECT" Source="client">
+      <Arguments>
+        <Argument Name="allyno" Optional="no" Sentence="no"/>
+        <Argument Name="left" Optional="no" Sentence="no"/>
+        <Argument Name="top" Optional="no" Sentence="no"/>
+        <Argument Name="right" Optional="no" Sentence="no"/>
+        <Argument Name="bottom" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by host of the battle adding a start rectangle for 'allyno' ally team. See lobby client 
+      implementation and Spring docs for more info on this one.
+      "left", "top", "right" and "bottom" refer to a virtual rectangle that is 200x200 in size,
+      where coordinates should be in interval [0, 200].
+      </Description>
+    </Command>
+
+    <Command Name="ADDSTARTRECT" Source="server">
+      <Arguments>
+        <Argument Name="allyno" Optional="no" Sentence="no"/>
+        <Argument Name="left" Optional="no" Sentence="no"/>
+        <Argument Name="top" Optional="no" Sentence="no"/>
+        <Argument Name="right" Optional="no" Sentence="no"/>
+        <Argument Name="bottom" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by server to clients participating in a battle (except for the host).
+      See lobby client implementation and Spring docs for more info on this one.
+      "left", "top", "right" and "bottom" refer to a virtual rectangle that is 200x200 in size,
+      where coordinates should be in interval [0, 200].
+      </Description>
+    </Command>
+
+    <Command Name="REMOVESTARTRECT" Source="client">
+      <Arguments>
+        <Argument Name="allyno" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by host of the battle removing a start rectangle for 'allyno' ally team. See client implementation
+      and Spring docs for more info on this one.
+      </Description>
+    </Command>
+
+    <Command Name="REMOVESTARTRECT" Source="server">
+      <Arguments>
+        <Argument Name="allyno" Optional="no" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent to clients participating in a battle (except for the host). Also see <clink name="ADDSTARTRECT:client"/> command.
+      </Description>
+    </Command>
+
+    <Command Name="MAPGRADES" Source="client">
+      <Arguments>
+        <Argument Name="hashlist" Optional="no" Sentence="no">
+        This is a list containing map hashes (32-bit unsigned, in hexadecimal form. Use unitsync.dll to
+        retrieve map hashes!) followed by an integer in range [0..10], where 0 means user hasn't graded the
+        map yet and 1 to 10 means user's map grade. Server will return MAPGRADES command containing
+        global grades for all the maps specified with this command.
+        Note that only grades from players with rank greater than "beginner" will get written to
+        global grades (this is to avoid exploiting of this system - anyone could register multiple
+        accounts and vote for some map).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client when trying to commit his local map grade list and retrieve public one.
+      </Description>
+      <Response>
+      Server will respond with either a <clink name="MAPGRADES:server"/> or <clink name="MAPGRADESFAILED:server"/> command.
+      </Response>
+      <Examples>
+        <Example>
+        MAPGRADES 3008EC6D 0 D1F52CD2 0 6BCC6FFD 7 A3D0DA60 0
+        </Example>
+      </Examples>
+    </Command>
+    
+    <Command Name="MAPGRADES" Source="server">
+      <Arguments>
+        <Argument Name="hashlist" Optional="no" Sentence="no">
+        Has a similar format as <clink name="MAPGRADES:client"/> command sent by the client, containing hash code
+        of the map followed by the avarage grade (real number with "." as decimal separator in
+        range [1.0, 10.0], or 0 if noone has graded it yet) and number of votes (integer).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server as a response to <clink name="MAPGRADES:client"/> command sent by the client.
+      </Description>
+      <Examples>
+        <Example>
+        MAPGRADES 3008EC6D 7.181818 22 D1F52CD2 4.5833335 12 6BCC6FFD 7.638889 72 A3D0DA60 6.0 1
+        </Example>
+      </Examples>
+    </Command>
+
+    <Command Name="MAPGRADESFAILED" Source="server">
+      <Arguments>
+        <Argument Name="reason" Optional="no" Sentence="yes"/>
+      </Arguments>
+      <Description>
+      Sent by server if it could not respond to MAPGRADES command for some reason.
+      </Description>
+    </Command>
+    
+    <Command Name="SCRIPTSTART" Source="client">
+      <Description>
+      Sent by client who is hosting a battle replay game indicating he is now sending us the game script
+      used in the original replay. Server will then forward this script to all other participants in his battle.
+      Correct sequence of commands when sending the script file is this:
+      <ul>
+        <li>1) SCRIPTSTART command</li>
+        <li>2) multiple SCRIPT commands</li>
+        <li>3) SCRIPTEND command</li>
+      </ul>
+      </Description>
+    </Command>    
+    
+    <Command Name="SCRIPTSTART" Source="server">
+      <Description>
+      Sent by server to clients participating in a battle replay indicating that server will now begin
+      sending game script from the original replay file (also see SCRIPTSTART comments when sent by the
+      client).
+      </Description>
+    </Command>
+
+    <Command Name="SCRIPT" Source="client">
+      <Arguments>
+        <Argument Name="line" Optional="no" Sentence="yes">
+        This is s a line read from the replay script file (use one SCRIPT command for each line!).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by client who previously sent SCRIPTSTART command. Multiple commands of this type are expected
+      after SCRIPTSTART command, ending with SCRIPTEND command as the last command in the sequence
+      (also see SCRIPTSTART comments when sent by the client).
+      </Description>
+    </Command>
+
+    <Command Name="SCRIPT" Source="server">
+      <Arguments>
+        <Argument Name="line" Optional="no" Sentence="yes">
+        This is s a line read from the replay script file (one line per one SCRIPT command).
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent by server after sending SCRIPTSTART command. Multiple commands of this type are expected
+      after SCRIPTSTART command, ending with SCRIPTEND command as the last command in the sequence
+      (also see comments for SCRIPTSTART command when sent by the client).
+      </Description>
+    </Command>
+
+    <Command Name="SCRIPTEND" Source="client">
+      <Description>
+      Seny by client indicating he has finished sending us the game script from the battle replay
+      (also see comments for SCRIPTSTART command).
+      </Description>
+    </Command>
+
+    <Command Name="SCRIPTEND" Source="server">
+      <Description>
+      Seny by server indicating he has finished sending the game script from the battle replay
+      (also see comments for SCRIPTSTART command).
+      </Description>
+    </Command>
 
   </CommandList>
 
