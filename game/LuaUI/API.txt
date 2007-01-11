@@ -50,8 +50,9 @@
 
   UnitCreated()
   UnitFinished()
-  UnitReady()
+  UnitFromFactory()
   UnitDestroyed()
+  UnitChangedTeam()
 
   GroupChanged()
 
@@ -380,10 +381,11 @@ UnitCreated(number unitID, number unitDefID) -> nil
 UnitFinished(number unitID, number unitDefID) -> nil
 
 --
---  Called when a unit first reaches 100% health, for each builder
+--  Called when a unit is produced by a factory (after UnitFinished())
 --
-UnitReady(number unitID,    number unitDefID,
-          number builderID, number builderUnitDefID) -> nil
+UnitFromFactory(number unitID, number unitDefID,
+                number factID, number factUnitDefID,
+                boolean userOrders) -> nil
 
 --
 --  Called when a unit is destroyed
