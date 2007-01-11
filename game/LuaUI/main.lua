@@ -11,6 +11,8 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Spring.SendCommands({"ctrlpanel LuaUI/ctrlpanel.txt"})
+
 dofile(LUAUI_DIRNAME .. "utils.lua")
 
 include("colors.h.lua")

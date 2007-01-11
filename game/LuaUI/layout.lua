@@ -28,7 +28,7 @@
 local FrameTexture   = "bitmaps/icons/frame_slate_128x96.png"
 local PageNumTexture = "bitmaps/circularthingy.tga"
 
-if (false) then
+if (true) then  --  disable textured buttons
   FrameTexture   = ""
   PageNumTexture = ""
 end
