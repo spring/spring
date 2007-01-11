@@ -53,10 +53,10 @@ local black  = { 0.0, 0.0, 0.0, alpha }
 
 local function UpdateGeometry(vsx, vsy)
   local gap = 8
-  lEye.x = (vsx - 100) - 0.5 * (lEye.sx + eyeGap + lineWidth)
-  rEye.x = (vsx - 100) + 0.5 * (rEye.sx + eyeGap + lineWidth)
-  lEye.y = (vsy - 100)
-  rEye.y = (vsy - 100)
+  lEye.x = (vsx * 0.25) - (0.5 * (lEye.sx + eyeGap + lineWidth))
+  rEye.x = (vsx * 0.25) + (0.5 * (rEye.sx + eyeGap + lineWidth))
+  lEye.y = (vsy * 0.20)
+  rEye.y = (vsy * 0.20)
   -- center the pupils
   lEye.px, lEye.py = lEye.x, lEye.y
   rEye.px, rEye.py = rEye.x, rEye.y
@@ -154,8 +154,8 @@ function widget:GetTooltip(x, y)
   local w = WhiteStr
   local tt = w
   local tt = tt.."Use "..cs1.."F11"..w.." to enable/disable widgets\n"
-  local tt = tt.."Use "..cs2.."CTRL+F11"..w.." to tweak widget geometry\n"
-  local tt = tt.."\255\160\160\225(for those widgets which support it)"
+--  local tt = tt.."Use "..cs2.."CTRL+F11"..w.." to tweak widget geometry\n"
+--  local tt = tt.."\255\160\160\225(for those widgets which support it)"
   return tt
 end
 
