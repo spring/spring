@@ -4,7 +4,6 @@
   File "..\LICENSE.html"
   File "..\Documentation\changelog.txt"
   File "..\Documentation\lobbychangelog.txt"
-  File "..\Documentation\lua_ui_interface.txt"
   Delete "$INSTDIR\docs\xtachanges.txt"
 
   File "..\Documentation\userdocs\Q&A.html"
@@ -18,7 +17,6 @@
   Delete "$INSTDIR\docs\LICENSE.html"
   Delete "$INSTDIR\docs\changelog.txt"
   Delete "$INSTDIR\docs\lobbychangelog.txt"
-  Delete "$INSTDIR\docs\lua_ui_interface.txt"
   Delete "$INSTDIR\docs\Q&A.html"
   Delete "$INSTDIR\docs\Getting Started.html"
   Delete "$INSTDIR\docs\Legal.html"
