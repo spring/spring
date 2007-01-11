@@ -7,7 +7,10 @@
 <ProtocolDescription>
 
   <Intro>
-  
+  <p>
+  <i>NOTE: This document is available in a HTML form at the following address: 
+  <url>http://spring.clan-sy.com:8202/protocol/ProtocolDescription.xml</url></i>
+  </p>
   <p>
   This is a simple text protocol in a "human readable form". I decided for text protocol since
   it's easier to debug and implement on the client side. It does require some more overhead,
