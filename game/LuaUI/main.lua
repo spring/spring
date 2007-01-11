@@ -46,24 +46,6 @@ end
 
 --------------------------------------------------------------------------------
 
--- ???: playing around
-do
-  for i = 0,9 do
-    Spring.SendCommands({
-      "unbindaction     group"..i,
-      "bind     "..i.." group "..i,
-      "bind   C+"..i.." group "..i.." set",
-      "bind C+S+"..i.." group "..i.." add",
-      "bind   S+"..i.." group "..i.." selectadd",
-      "bind   A+"..i.." group "..i.." selecttoggle",
-      "bind   M+"..i.." group "..i.." selecttoggle"
-    })
-  end
-end
-
-
---------------------------------------------------------------------------------
-
 widgetHandler:Initialize()
 
 local gl = Spring.Draw  --  easier to use
