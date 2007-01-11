@@ -152,17 +152,20 @@ void CFactory::Update()
 				c.id=CMD_FIRE_STATE;
 				c.params.push_back(fireState);
 				curBuild->commandAI->GiveCommand(c);
+				bool userOrders = true;
 				if(curBuild->commandAI->commandQue.empty() || (dynamic_cast<CMobileCAI*>(curBuild->commandAI) && ((CMobileCAI*)curBuild->commandAI)->unimportantMove)){
+					userOrders = false;
 					if(((CFactoryCAI*)commandAI)->newUnitCommands.empty()){
 						SendToEmptySpot(curBuild);
 					} else {
-						for(std::deque<Command>::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci)
+						for(std::deque<Command>::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci){
 							curBuild->commandAI->GiveCommand(*ci);
+						}
 					}
 					waitCommandsAI.AddLocalUnit(curBuild, this);
-					if (guihandler) {
-						guihandler->UnitReady(curBuild, this);
-					}
+				}
+				if (guihandler) {
+					guihandler->UnitFromFactory(curBuild, this, userOrders);
 				}
 				StopBuild();
 			}

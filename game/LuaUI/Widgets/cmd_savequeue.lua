@@ -19,7 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = true  --  loaded by default?
+    enabled   = false  --  loaded by default?
   }
 end
 
@@ -44,29 +44,9 @@ end
 
 --------------------------------------------------------------------------------
 
-local function SelectedString()
-  local s = ""
-  uidTable = Spring.GetSelectedUnits()
-  uidTable.n = nil  --  or use ipairs
-  for k,v in pairs(uidTable) do
-     s = s .. ' +' .. v
-  end
-  return s
-end
-
-
-local function GiveUnitOrders(unitID, func)
-  local selstr = SelectedString()
-  Spring.SendCommands({ "selectunits clear +" .. unitID })
-  func(unitID)
-  Spring.SendCommands({ "selectunits clear" .. selstr })
-end
-
-
 function SaveQueue()
   local uTable = Spring.GetSelectedUnits()
-  uTable.n = nil
-  for x,uid in pairs(uTable) do
+  for _,uid in ipairs(uTable) do
     savedQueue[uid] = Spring.GetCommandQueue(uid)
   end
 end
@@ -74,10 +54,8 @@ end
 
 function LoadQueue()
   local reselect = false
-  local selstr = SelectedString()
-  local uTable = Spring.GetSelectedUnits()
-  uTable.n = nil
-  for x,uid in pairs(uTable) do
+  local selUnits = Spring.GetSelectedUnits()
+  for _,uid in ipairs(selUnits) do
     local queue = savedQueue[uid]
     if (queue ~= nil) then
       for k,v in ipairs(queue) do  --  in order
@@ -87,7 +65,7 @@ function LoadQueue()
           if (v.options.alt)   then table.insert(opts, "alt")   end
           if (v.options.ctrl)  then table.insert(opts, "ctrl")  end
           if (v.options.right) then table.insert(opts, "right") end
-          Spring.SendCommands({ "selectunits clear +" .. uid })
+          Spring.SelectUnitsByValues({uid})
           Spring.GiveOrder( v.id, v.params, opts )
           reselect = true
         end
@@ -95,6 +73,10 @@ function LoadQueue()
     end
   end
   if (reselect) then
-    Spring.SendCommands({"selectunits clear" .. selstr})
+    Spring.SelectUnitsByValues(selUnits)
   end
 end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

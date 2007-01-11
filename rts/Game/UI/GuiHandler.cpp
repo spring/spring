@@ -128,10 +128,10 @@ void CGuiHandler::UnitFinished(CUnit* unit)
 }
 
 
-void CGuiHandler::UnitReady(CUnit* unit, CUnit* builder)
+void CGuiHandler::UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders)
 {
 	if (luaUI != NULL) {
-		luaUI->UnitReady(unit, builder);
+		luaUI->UnitFromFactory(unit, factory, userOrders);
 	}
 }
 

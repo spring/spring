@@ -19,7 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = true  --  loaded by default?
+    enabled   = false  --  loaded by default?
   }
 end
 
@@ -307,28 +307,17 @@ local function LeftMouseButton(unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   if (not ctrl) then
     -- select units of icon type
-    unitString = ""
-    for uid,tmp in pairs(unitTable) do
-      unitString = unitString .. " +" .. uid
-      if ((alt or meta) and (unitString ~= "")) then
-        break  --  only select 1 unit if ALT or META are active
-      end
+    if (alt or meta) then
+      Spring.SelectUnitsByValues({ next(unitTable, nil) })  -- only 1
+    else
+      Spring.SelectUnitsByKeys(unitTable)
     end
-    Spring.SendCommands({"selectunits clear" .. unitString})
   else
     -- select all units of the icon type
-    units = Spring.GetTeamUnitsSorted(Spring.GetMyTeamID())
-    unitTable = units[unitDefID]
-    if (unitTable ~= nil) then
-      if (shift) then
-        unitString = " "
-      else
-        unitString = " clear"
-      end
-      for uid,tmp in pairs(unitTable) do
-        unitString = unitString .. " +" .. uid
-      end
-      Spring.SendCommands({"selectunits " .. unitString})
+    local sorted = Spring.GetTeamUnitsSorted(Spring.GetMyTeamID())
+    local units = sorted[unitDefID]
+    if (units) then
+      Spring.SelectUnitsByKeys(units, shift)
     end
   end
 end
@@ -342,18 +331,10 @@ local function MiddleMouseButton(unitTable)
     Spring.SendCommands({"viewselection"})
   else
     -- center the view on this type on unit
-    local rawunits = Spring.GetSelectedUnits()
-    unitString = ""
-    for uid,_ in pairs(unitTable) do
-      unitString = unitString .. " +" .. uid
-    end
-    Spring.SendCommands({"selectunits clear" .. unitString})
+    local selUnits = Spring.GetSelectedUnits()
+    Spring.SelectUnitsByKeys(unitTable)
     Spring.SendCommands({"viewselection"})
-    unitString = ""
-    for _,uid in ipairs(rawunits) do
-      unitString = unitString .. " +" .. uid
-    end
-    Spring.SendCommands({"selectunits clear" .. unitString})
+    Spring.SelectUnitsByValues(selUnits)
   end
 end
 
@@ -361,14 +342,14 @@ end
 local function RightMouseButton(unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   -- remove selected units of icon type
-  unitString = ""
-  for uid,tmp in pairs(unitTable) do
-    unitString = unitString .. " -" .. uid
-    if (ctrl and (unitString ~= "")) then
-      break  --  only remove 1 unit if CTRL is active
-    end
+  local selUnits = Spring.GetSelectedUnits()
+  local map = {}
+  for _,uid in ipairs(selUnits) do map[uid] = true end
+  for uid in pairs(unitTable) do
+    map[uid] = nil
+    if (ctrl) then break end -- only remove 1 unit
   end
-  Spring.SendCommands({"selectunits" .. unitString})
+  Spring.SelectUnitsByKeys(map)
 end
 
 

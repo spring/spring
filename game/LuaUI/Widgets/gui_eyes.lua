@@ -13,7 +13,7 @@
 
 function widget:GetInfo()
   return {
-    name      = "SpringEyes",
+    name      = "Eyes",
     desc      = "XEyes clone",
     author    = "trepan",
     date      = "Jan 8, 2007",

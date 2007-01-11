@@ -62,12 +62,6 @@ function widget:MousePress(x, y, button)
 end
 
 
-function widget:MouseRelease(x, y, button)
-  playSound('teamgrab.wav')
-  return -1
-end
-
-
 function widget:UnitFinished(unitID, unitDefID)
   if (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID()) then
     playSound('teamgrab.wav')

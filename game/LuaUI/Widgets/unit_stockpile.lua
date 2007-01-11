@@ -19,7 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = true  --  loaded by default?
+    enabled   = false  --  loaded by default?
   }
 end
 
@@ -29,22 +29,11 @@ end
 include("spring.h.lua")
 
 
-local function SelectedString()
-  local s = ""
-  uidTable = Spring.GetSelectedUnits()
-  uidTable.n = nil  --  or use ipairs
-  for k,v in pairs(uidTable) do
-   	s = s .. ' +' .. v
-  end
-  return s
-end
-
-
 local function GiveUnitOrders(unitID, func)
-  local selstr = SelectedString()
-  Spring.SendCommands({ "selectunits clear +" .. unitID })
+  local selUnits = Spring.GetSelectedUnits()
+  Spring.SelectUnitsByValues({unitID})
   func(unitID)
-  Spring.SendCommands({ "selectunits clear" .. selstr })
+  Spring.SelectUnitsByValues(selUnits)
 end
 
 
