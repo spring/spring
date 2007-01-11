@@ -82,6 +82,7 @@ AddConsoleLine  = nil
 GroupChanged    = nil
 UnitCreated     = nil
 UnitFinished    = nil
+UnitFromFactory = nil
 UnitDestroyed   = nil
 UnitChangedTeam = nil
 
