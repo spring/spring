@@ -209,7 +209,7 @@
 
 <xsl:template match="url">
   <xsl:variable name="link"><xsl:value-of select="." /></xsl:variable>
-  <a href="{$link}"><xsl:value-of select="$link" /></a>
+  <a href="{$link}" style="white-space: nowrap"><xsl:value-of select="$link" /></a>
 </xsl:template>
 
 <!-- This template replaces all newlines with html BR tags 
