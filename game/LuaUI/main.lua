@@ -177,8 +177,9 @@ function UnitFinished(unitID, unitDefID)
   return widgetHandler:UnitFinished(unitID, unitDefID)
 end
 
-function UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
-  return widgetHandler:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
+function UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+  return widgetHandler:UnitFromFactory(unitID, unitDefID,
+                                        facID,  facDefID, userOrders)
 end
 
 function UnitDestroyed(unitID, unitDefID)

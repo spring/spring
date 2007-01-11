@@ -97,7 +97,7 @@ local callInLists = {
   'CommandsChanged',
   'UnitCreated',
   'UnitFinished',
-  'UnitReady',
+  'UnitFromFactory',
   'UnitDestroyed',
   'UnitChangedTeam',
   'TweakMousePress',
@@ -610,13 +610,12 @@ function widgetHandler:Shutdown()
   return
 end
 
-
 function widgetHandler:Update()
-  local lastSecs = Spring.GetLastFrameSeconds()  
+  local deltaTime = Spring.GetLastFrameSeconds()  
   -- update the hour timer
-  hourTimer = math.mod(hourTimer + lastSecs, 3600.0)
+  hourTimer = math.mod(hourTimer + deltaTime, 3600.0)
   for _,w in ipairs(self.UpdateList) do
-    w:Update(lastSecs)
+    w:Update(deltaTime)
   end
   return
 end
@@ -916,9 +915,9 @@ function widgetHandler:UnitFinished(unitID, unitDefID)
 end
 
 
-function widgetHandler:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
-  for _,w in ipairs(self.UnitReadyList) do
-    w:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
+function widgetHandler:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+  for _,w in ipairs(self.UnitFromFactoryList) do
+    w:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
   end
   return
 end

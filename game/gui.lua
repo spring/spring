@@ -81,7 +81,7 @@ GetTooltip      = nil
 AddConsoleLine  = nil
 GroupChanged    = nil
 UnitCreated     = nil
-UnitReady       = nil
+UnitFinished    = nil
 UnitDestroyed   = nil
 UnitChangedTeam = nil
 

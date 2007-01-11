@@ -183,9 +183,6 @@ void CBuilder::Update()
 				CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5f,false);
 			} else {
 				if(!curBuild->beingBuilt && curBuild->health>=curBuild->maxHealth){
-					if (guihandler) {
-						guihandler->UnitReady(curBuild, this);
-					}
 					StopBuild();
 				}
 			}

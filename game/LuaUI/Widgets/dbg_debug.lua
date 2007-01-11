@@ -186,10 +186,11 @@ function widget:UnitFinished(unitID, unitDefID)
 end
 
 
-function widget:UnitReady(unitID, unitDefID, builderID, builderUnitDefID)
-  print('DEBUG (UnitReady) '
-        ..unitID   ..' '..unitDefID..' '
-        ..builderID..' '..builderUnitDefID)
+function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+  print('DEBUG (UnitFromFactory) '
+        ..unitID ..' '..unitDefID..' '
+        ..facID  ..' '..facDefID..' '
+        ..tostring(userOrders))
   return
 end
 

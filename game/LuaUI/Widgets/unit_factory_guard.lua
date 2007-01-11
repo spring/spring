@@ -19,7 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = true  --  loaded by default?
+    enabled   = false  --  loaded by default?
   }
 end
 
@@ -29,28 +29,20 @@ end
 include("spring.h.lua")
 
 
-local function SelectedString()
-  local s = ""
-  uidTable = Spring.GetSelectedUnits()
-  uidTable.n = nil  --  or use ipairs
-  for k,v in pairs(uidTable) do
-   	s = s .. ' +' .. v
-  end
-  return s
-end
-
-
 local function GiveUnitOrders(unitID, func)
-  local selstr = SelectedString()
-  Spring.SendCommands({ "selectunits clear +" .. unitID })
+  local selUnits = Spring.GetSelectedUnits()
+  Spring.SelectUnitsByValues({unitID})
   func(unitID)
-  Spring.SendCommands({ "selectunits clear" .. selstr })
+  Spring.SelectUnitsByValues(selUnits)
 end
 
 
-function widget:UnitReady(unitID, unitDefID, builderID, builderDefID)
+function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
   -- is the builder a factory?
-  local bd = UnitDefs[builderDefID]
+  if (userOrders) then
+    return
+  end
+  local bd = UnitDefs[facDefID]
   if (not (bd and bd.isFactory)) then
     return
   end
@@ -60,10 +52,10 @@ function widget:UnitReady(unitID, unitDefID, builderID, builderDefID)
       (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
     -- set builders to guard/assist their factories
     GiveUnitOrders(unitID, function ()
-      x, y, z = Spring.GetUnitPosition(builderID)
+      x, y, z = Spring.GetUnitPosition(facID)
       Spring.GiveOrder( CMD_MOVE,  { x + 100, y, z + 100 }, { "" } )
       Spring.GiveOrder( CMD_MOVE,  { x + 100, y, z },       { "shift" } )
-      Spring.GiveOrder( CMD_GUARD, { builderID },           { "shift" } )
+      Spring.GiveOrder( CMD_GUARD, { facID },           { "shift" } )
     end)
   end
 end

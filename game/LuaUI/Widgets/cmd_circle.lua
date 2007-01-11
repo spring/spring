@@ -19,7 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = true  --  loaded by default?
+    enabled   = false  --  loaded by default?
   }
 end
 
@@ -39,17 +39,6 @@ function widget:TextCommand(command)
 	return true
 end
         
-
-function SelectedString()
-  local s = ""
-  uidTable = Spring.GetSelectedUnits()
-  uidTable.n = nil  --  or use ipairs
-  for k,v in pairs(uidTable) do
-     s = s .. ' +' .. v
-  end
-  return s
-end  
-
 
 function CircleUnits()
   local units = Spring.GetSelectedUnits()
@@ -80,7 +69,7 @@ function CircleUnits()
   local radius0 = (radsum / math.pi) * (count / (count - 1.5))
   local radius1 = radius0 + 50
 
-  local selstr = SelectedString()
+  local selUnits = Spring.GetSelectedUnits()
   local pi2 = math.pi * 2.0
   local _,first = next(units)  
   
@@ -93,12 +82,12 @@ function CircleUnits()
     local ux = x + radius0 * math.sin(rads)  
     local uz = z - radius0 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
-    Spring.SendCommands({"selectunits clear +" .. uid})
+    Spring.SelectUnitsByValues({uid})
     Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
-  Spring.SendCommands({"selectunits clear" .. selstr})
+  Spring.SelectUnitsByValues(selUnits)
   Spring.GiveOrder(CMD_GATHERWAIT, {}, {})
 
   local arcdist = 0
@@ -110,12 +99,12 @@ function CircleUnits()
     local ux = x + radius1 * math.sin(rads)  
     local uz = z - radius1 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
-    Spring.SendCommands({"selectunits clear +" .. uid})
+    Spring.SelectUnitsByValues({uid})
     Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {"shift"})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
-  Spring.SendCommands({"selectunits clear" .. selstr})
+  Spring.SelectUnitsByValues(selUnits)
 
   -- helps to avoid last minute pushing
   --Spring.GiveOrder(CMD_WAIT, {}, {"shift"})

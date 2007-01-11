@@ -737,7 +737,7 @@ bool CLuaUI::UnitFinished(CUnit* unit)
 }
 
 
-bool CLuaUI::UnitReady(CUnit* unit, CUnit* builder)
+bool CLuaUI::UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders)
 {
 	if (unit->allyteam != gu->myAllyTeam) {
 		return false;
@@ -749,7 +749,7 @@ bool CLuaUI::UnitReady(CUnit* unit, CUnit* builder)
 	}
 	lua_pop(L, lua_gettop(L));
 
-	lua_getglobal(L, "UnitReady");
+	lua_getglobal(L, "UnitFromFactory");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
 		return true; // the call is not defined
@@ -757,14 +757,15 @@ bool CLuaUI::UnitReady(CUnit* unit, CUnit* builder)
 
 	lua_pushnumber(L, unit->id);	
 	lua_pushnumber(L, unit->unitDef->id);	
-	lua_pushnumber(L, builder->id);	
-	lua_pushnumber(L, builder->unitDef->id);	
+	lua_pushnumber(L, factory->id);	
+	lua_pushnumber(L, factory->unitDef->id);	
+	lua_pushboolean(L, userOrders);	
 
 	// call the routine
-	const int error = lua_pcall(L, 4, 0, 0);
+	const int error = lua_pcall(L, 5, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitReady", lua_tostring(L, -1));
+		                "Call_UnitFromFactory", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -1957,8 +1958,6 @@ static int SelectUnitsByValues(lua_State* L)
 	}
 	return 0;
 }
-
-
 
 
 static int SendCommands(lua_State* L)
