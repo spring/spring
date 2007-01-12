@@ -2,6 +2,11 @@ TASpring change log
 
 0.74b3
 
+- Added LuaUI v0.1  (with widget management code, somewhat experimental)
+  (requires the LuaUI setting to be on to be autoloaded,
+   "/luaui disable"      to disable in-game
+   "/luaui reload"       to load in-game
+   "/luaui reload fresh" to load in-game, but with fresh state)
 
 - Renamed docs/lua_ui_interface.txt to LuaUI/API.txt
 
