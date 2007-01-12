@@ -1,0 +1,42 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Spring Control Panel Configuration
+//
+
+// outlinefont       0
+// dropShadows       1
+// useOptionLEDs     1
+textureAlpha       1.0
+frameAlpha         0.0  // use the GUI alpha if < 0.0
+selectGaps           0
+selectThrough        1
+
+// newAttackMode     1  // enable attack by area selection
+// attackRect        1  // use a rectangular selection
+// invColorSelect    1  // use color inversion instead of tinting
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Extended 3x8
+//
+
+xIcons         3
+yIcons         9
+prevPageSlot   j0
+deadIconSlot   j1
+nextPageSlot   j2
+xIconSize      0.0585
+yIconSize      0.0585
+
+textBorder     0.003
+iconBorder     0.000
+frameBorder    0.000
+
+xPos           0.000
+yPos           0.147
+xSelectionPos  0.018
+ySelectionPos  0.115
+
+
+////////////////////////////////////////////////////////////////////////////////
