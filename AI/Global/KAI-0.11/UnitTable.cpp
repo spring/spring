@@ -83,8 +83,15 @@ int CUnitTable::GetCategory (const UnitDef* unitdef)
 
 int CUnitTable::GetCategory (int unit)
 {
-	assert(ai->cb->GetUnitDef(unit) != NULL);
-	return unittypearray[ai->cb->GetUnitDef(unit)->id].category;
+	// somehow this actually happens
+//	assert(ai->cb->GetUnitDef(unit) != NULL);
+	const UnitDef *ud = ai->cb->GetUnitDef(unit);
+	if (!ud) {
+		L("CUnitTable::GetCategory: GetUnitDef returned 0");
+		return -1;
+	}
+
+	return unittypearray[ud->id].category;
 }
 
 float CUnitTable::GetDPS(const UnitDef* unit)
