@@ -101,7 +101,23 @@ end
 
 
 function widget:UnitDestroyed(unitID, unitDefID)
+  if (metalMakers[unitID]) then
+    print("Removed metal maker: "..unitID)
+  end
   metalMakers[unitID] = nil
+end
+
+
+function widget:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
+  if (oldTeam == newTeam) then
+    return
+  end
+  local myTeam = Spring.GetMyTeamID()
+  if (newTeam == myTeam) then
+    widget:UnitFinished(unitID, unitDefID)
+  elseif (oldTeam == myTeam) then
+    widget:UnitDestroyed(unitID, unitDefID)
+  end
 end
 
 
