@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
@@ -149,7 +149,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib ../../lib/ft/freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib comsuppw.lib gdi32.lib advapi32.lib"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib comsuppw.lib gdi32.lib advapi32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
@@ -494,6 +494,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\PlayerRoster.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRoster.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\PreGame.cpp"
 				>
 			</File>
@@ -585,14 +593,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\UI\IconLayoutHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\UI\IconLayoutHandler.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp"
 					>
 				</File>
@@ -646,6 +646,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\UI\LuaState.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\LuaUI.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\LuaUI.h"
 					>
 				</File>
 				<File
@@ -2763,6 +2771,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\byteorder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Clipboard.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Clipboard.h"
 					>
 				</File>
 				<File
