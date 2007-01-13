@@ -33,6 +33,7 @@ if (System == nil) then
     --  Standard libraries
     --
     io = io,
+    os = os,
     math = math,
     debug = debug,
     table = table,
