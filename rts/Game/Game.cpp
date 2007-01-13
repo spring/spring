@@ -683,7 +683,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		delete shadowHandler;
 		int next = 0;
 		if (!action.extra.empty()) {
-			next = atoi(action.extra.c_str());
+			int mapsize = 2048;
+			const char* args = action.extra.c_str();
+			const int argcount = sscanf(args, "%i %i", &next, &mapsize);
+			if (argcount > 1) {
+				configHandler.SetInt("ShadowMapSize", mapsize);
+			}
 		} else {
 			next = (current == 0) ? 1 : 0;
 		}
