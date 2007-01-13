@@ -343,16 +343,17 @@ DrawScreenItems(number width, number height) -> nil
 --
 --  The following are called when the associated user input is given
 --
-KeyPress(unsigned short key, bool isRepeat) -> boolean takeEvent
+KeyPress(number key, boolean isRepeat) -> boolean takeEvent
 
-KeyRelease(unsigned short key) -> boolean takeEvent
+KeyRelease(number key) -> boolean takeEvent
 
 
-MouseMove(int x, int y, int dx, int dy, int button) -> boolean takeEvent
+MouseMove(number x, number y, number dx, number dy, number button) ->
+  boolean takeEvent
 
-MousePress(int x, int y, int button) -> boolean takeEvent
+MousePress(number x, number y, number button) -> boolean takeEvent
 
-MouseRelease(int x, int y, int button) ->
+MouseRelease(number x, number y, number button) ->
   number commandIndex  (-1 for no command)
 
 
@@ -362,12 +363,12 @@ MouseRelease(int x, int y, int button) ->
 --  the current tooltip, whether or not to execute a default
 --  command, etc...
 --
-IsAbove(int x, int y) -> boolean above
+IsAbove(number x, number y) -> boolean above
 
 --
 --  Called when Spring thinks the user interface owns the tooltip
 --
-GetTooltip(int x, int y) -> string "tooltip"
+GetTooltip(number x, number y) -> string "tooltip"
 
 
 --
