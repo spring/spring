@@ -185,7 +185,11 @@ int CDxSound::GetBuf(int id,float volume)
 void CDxSound::SetVolume (float v)
 {
   // place the volume within the 0.5 to 1.0 range
-	globalVolume = 0.5f + (0.5f * max(0.0f, min(1.0f, v)));
+  if (v < 0.01f) {
+		globalVolume = 0.0f;
+	} else {
+		globalVolume = 0.5f + (0.5f * max(0.0f, min(1.0f, v)));
+	}
 }
 
 void CDxSound::PlaySample(int id,float volume)
@@ -197,7 +201,7 @@ void CDxSound::PlaySample(int id,float volume)
 		return;
 	}
 
-	const float v = 1.0f - (globalVolume * max(1.0f, volume));
+	const float v = 1.0f - (globalVolume * max(0.0f, min(1.0f, volume)));
 
 	int num = GetBuf(id,v);
 	if (num == -2) {
