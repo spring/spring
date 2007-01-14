@@ -744,7 +744,7 @@ Pos2BuildPos(number unitDefID, number x, number y, number z) ->
         number z
 
 
-PlaySoundFile(string "filename") -> nil
+PlaySoundFile(string "filename"[, number volume]) -> nil  -- 1.0 = maxVolume
 
 
 AddWorldIcon(number cmdID, number x, number y, number z) -> nil
