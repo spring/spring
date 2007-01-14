@@ -32,6 +32,7 @@ public:
 	float sqRadius;
 
 	bool isEnabled;
+	bool startShowingShield;
 };
 
 #endif

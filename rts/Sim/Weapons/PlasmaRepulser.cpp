@@ -24,7 +24,8 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	radius(0),
 	sqRadius(0),
 	curPower(0),
-	isEnabled(true)
+	isEnabled(true),
+	startShowingShield(true)
 {
 	interceptHandler.AddPlasmaRepulser(this);
 }
@@ -46,17 +47,22 @@ void CPlasmaRepulser::Init(void)
 	if(weaponDef->shieldPower==0)
 		curPower=99999999999.0f;
 
-	if(weaponDef->visibleShield){
-		for(int y=0;y<16;y+=4){
-			for(int x=0;x<32;x+=4){
-				visibleShieldParts.push_back(SAFE_NEW CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
-			}
-		}
-	}
 	CWeapon::Init();
 }
 void CPlasmaRepulser::Update(void)
 {
+	if(startShowingShield)
+	{
+		startShowingShield=false;
+		if(weaponDef->visibleShield){
+			for(int y=0;y<16;y+=4){
+				for(int x=0;x<32;x+=4){
+					visibleShieldParts.push_back(SAFE_NEW CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
+				}
+			}
+		}
+	}
+
 	if(curPower<weaponDef->shieldPower && isEnabled){
 		if(owner->UseEnergy(weaponDef->shieldPowerRegenEnergy*(1.0f/30)))
 			curPower+=weaponDef->shieldPowerRegen*(1.0f/30);
