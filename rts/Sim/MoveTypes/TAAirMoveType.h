@@ -1,7 +1,6 @@
 #ifndef TAAIRMOVETYPE_H
 #define TAAIRMOVETYPE_H
 
-#include "StdAfx.h"
 #include "MoveType.h"
 #include "Sim/Misc/AirBaseHandler.h"
 
