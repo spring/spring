@@ -43,7 +43,7 @@ public:
 	// In case the InfoConsole and other in game subscribers 
 	// should not be used anymore (SDL shutdown)
 	void RemoveAllSubscribers(); 
-	// Close the output file, so the crash reporter can copy it to the 
+	// Close the output file, so the crash reporter can copy it  
 	void End(); 
 
 	void AddSubscriber(ILogSubscriber *ls);
