@@ -225,6 +225,7 @@ Section "Main application (req)" SEC_MAIN
 
   !define INSTALL
   !include "sections\main.nsh"
+  !include "sections\luaui.nsh"
   !undef INSTALL
 SectionEnd
 
@@ -245,12 +246,6 @@ Section "Maps" SEC_MAPS
   !undef INSTALL
 SectionEnd
 !endif
-
-Section "LuaUI" SEC_LUAUI
-  !define INSTALL
-  !include "sections\luaui.nsh"
-  !undef INSTALL
-SectionEnd
 
 Section "Start menu shortcuts" SEC_START
   !define INSTALL
