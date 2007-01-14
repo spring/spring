@@ -196,7 +196,7 @@ void CDxSound::PlaySample(int id,float volume)
 		return;
 	}
 
-	float v=1.0f-globalVolume*volume;
+	const float v = 1.0f - (globalVolume * max(1.0f, volume));
 
 	int num = GetBuf(id,v);
 	if (num == -2) {
@@ -236,11 +236,15 @@ void CDxSound::PlaySample(int id,const float3& p,float volume)
 	float dl=dif.Length();
 	float pan=dif.dot(camera->right)*DSBPAN_RIGHT/dl;
 	float v=0;
-	if(volume!=0.0f)
-		v=dl/((globalVolume + 0.01f)*volume*2000);
-	if(v>0.6f){
+	if (volume != 0.0f) {
+		v = dl / ((globalVolume + 0.01f) * volume * 2000.0f);
+	}
+
+	if (v > 0.6f) {
 		POP_CODE_MODE;
-		return;
+		return; // too quiet
+	} else {
+	  v = max(v, (1.0f - globalVolume)); // clamp so that it isn't too loud
 	}
 
 //	logOutput.Print("%i %i %f",maxSounds,playingSounds.size(),v);
@@ -260,7 +264,7 @@ void CDxSound::PlaySample(int id,const float3& p,float volume)
 	if( FAILED( hr = RestoreBuffers(num) ) )
 		return;
 	
-	buffers[num]->SetVolume(int(DSBVOLUME_MIN*v-100));
+	buffers[num]->SetVolume(int(DSBVOLUME_MIN * v - 100));
 	buffers[num]->SetPan(int(pan));
 
 	if( FAILED( hr = buffers[num]->Play( 0, 0, 0/*dwLooped*/ ) ) ){
