@@ -158,6 +158,8 @@ CLogOutput& CLogOutput::operator<< (float f)
 
 CLogOutput& CLogOutput::operator<< (const char* c)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
+
 	for(int a=0;c[a];a++) {
 		if (c[a] == '\n') {
 			Output(0, tempstr.c_str());
