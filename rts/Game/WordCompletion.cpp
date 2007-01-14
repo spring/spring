@@ -51,6 +51,7 @@ void CWordCompletion::Reset()
 	words["/keyprint"] = sl;
 	words["/keydebug"] = sl;
 	words["/fakemeta "] = sl;
+	words["/volume "] = sl;
 
 	// minimap sub-commands
 	WordProperties mm(false, false, true);
