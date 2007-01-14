@@ -196,7 +196,7 @@ void CDxSound::PlaySample(int id,float volume)
 		return;
 	}
 
-	const float v = globalVolume * volume;
+	float v=1.0f-globalVolume*volume;
 
 	int num = GetBuf(id,v);
 	if (num == -2) {
