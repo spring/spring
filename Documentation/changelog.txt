@@ -14,6 +14,8 @@ TASpring change log
 
 - Added "/specfullview 2" spectator mode, where you can both view and select all units
 
+- Added "/volume <fraction>" command  (0.0 to 1.0 range)
+
 - Added "group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]"
   action as an alternative to the group[0|9] commands  (note that the key modifiers can
   be setup differently from the default)
