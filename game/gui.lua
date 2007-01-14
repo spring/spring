@@ -13,12 +13,28 @@
 
 LUAUI_VERSION = "LuaUI v0.1"
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 LUAUI_DIRNAME   = 'LuaUI/'
+do
+  -- use a versionned directory name if it exists
+  local sansslash = string.sub(LUAUI_DIRNAME, 1, -2)
+  local versiondir = sansslash .. '-' .. Game.version .. '/'
+  local f = io.open(versiondir  .. 'main.lua')
+  if (f) then
+    f:close()
+    LUAUI_DIRNAME = versiondir
+  end
+end
+print('Using LUAUI_DIRNAME = ' .. LUAUI_DIRNAME)
+
+
 USER_FILENAME   = LUAUI_DIRNAME .. 'main.lua'
 CHOOSE_FILENAME = LUAUI_DIRNAME .. 'modui_dialog.lua'
 PERM_FILENAME   = LUAUI_DIRNAME .. 'Config/modui_list.lua'
 
-MODUI_DIRNAME   = 'ModUI/'
+MODUI_DIRNAME   = 'ModUI/'  --  should version this too, exceptions?
 MOD_FILENAME    = MODUI_DIRNAME .. 'main.lua'
 
 
