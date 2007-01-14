@@ -59,6 +59,8 @@ include=" \
  $dir/README.* \
  $dir/rts/ \
  $dir/SConstruct \
+ $dir/tools/RtsSettings/ \
+ $dir/tools/SelectionEditor/ \
  $dir/tools/unitsync/ \
  $dir/TASClient \
  $dir/TASServer \
