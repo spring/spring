@@ -907,6 +907,16 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		soundEnabled=!soundEnabled;
 		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
 	}
+	else if (cmd == "volume") {
+		char* endPtr;
+		const char* startPtr = action.extra.c_str();
+		float volume = (float)strtod(startPtr, &endPtr);
+		if (endPtr != startPtr) {
+			gameSoundVolume = max(0.0f, min(1.0f, volume));
+			sound->SetVolume(gameSoundVolume);
+			configHandler.SetInt("SoundVolume", (int)(gameSoundVolume * 100.0f));
+		}
+	}
 	else if (cmd == "savegame"){
 		CLoadSaveHandler ls;
 		ls.mapName = stupidGlobalMapname;
