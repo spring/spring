@@ -156,6 +156,9 @@
   SendCommands()
   GiveOrder()
 
+  SelectUnitsByKeys()
+  SelectUnitsByValues()
+
   GetGroundHeight()
   TestBuildOrder()
   Pos2BuildPos()
@@ -730,6 +733,11 @@ SendCommands(commands = { string "cmd1", string "cmd2", ... }) -> nil
 GiveOrder(number cmdID,
           params = {number, number, number},
           options = {"alt", "ctrl", "shift", "right"}) -> nil
+
+
+SelectUnitsByKeys(unitIDs = { [unitID1] = x1 , [unitID2] = x2 , ...}) -> nil
+
+SelectUnitsByValues(unitIDs = { [1] = unitID1 , [2] = unitID2 , ...}) -> nil
 
 
 GetGroundHeight(number x, number y) -> number z
