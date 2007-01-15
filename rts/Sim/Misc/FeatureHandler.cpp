@@ -225,6 +225,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->blocking=1;
 			fd->burnable=true;
 			fd->destructable=1;
+			fd->reclaimable=true;
 			fd->drawType=DRAWTYPE_TREE;
 			fd->modelType=atoi(name.substr(8).c_str());
 			fd->energy=250;
@@ -242,6 +243,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->blocking=0;
 			fd->burnable=0;
 			fd->destructable=0;
+			fd->reclaimable=false;
 			fd->geoThermal=1;
 			fd->drawType=DRAWTYPE_NONE;	//geos are drawn into the ground texture and emit smoke to be visible
 			fd->modelType=0;
@@ -466,10 +468,13 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		FeatureDef* fd=SAFE_NEW FeatureDef;
 		fd->blocking=!!atoi(wreckParser.SGetValueDef("1",name+"\\blocking").c_str());
 		fd->destructable=!atoi(wreckParser.SGetValueDef("0",name+"\\indestructible").c_str());
+		fd->reclaimable=!!atoi(wreckParser.SGetValueDef(
+			fd->destructable ? "1" : "0",name+"\\reclaimable").c_str());
 		fd->burnable=!!atoi(wreckParser.SGetValueDef("0",name+"\\flammable").c_str());
 		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
-		if(fd->floating && !fd->blocking)
+		if(fd->floating && !fd->blocking){
 			fd->floating=false;
+		}
 
 		fd->deathFeature=wreckParser.SGetValueDef("",name+"\\featuredead");
 		fd->upright=!!atoi(wreckParser.SGetValueDef("0",name+"\\upright").c_str());
@@ -479,8 +484,9 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		fd->metal=atof(wreckParser.SGetValueDef("0",name+"\\metal").c_str());
 		fd->model=0;
 		fd->modelname=wreckParser.SGetValueDef("",name+"\\object");
-		if(!fd->modelname.empty())
+		if(!fd->modelname.empty()){
 			fd->modelname=string("objects3d/")+fd->modelname;
+		}
 		fd->radius=0;
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;

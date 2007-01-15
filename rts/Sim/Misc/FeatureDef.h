@@ -12,7 +12,7 @@ struct FeatureDef
 	CR_DECLARE(FeatureDef);
 	virtual ~FeatureDef();
 
-	FeatureDef():upright(false),floating(false),geoThermal(0){};
+	FeatureDef():upright(false),floating(false),geoThermal(0),reclaimable(true){};
 
 	std::string myName;
 	std::string description;
@@ -31,6 +31,7 @@ struct FeatureDef
 	int modelType;							//used by tree etc
 
 	bool destructable;
+	bool reclaimable;
 	bool blocking;
 	bool burnable;
 	bool floating;
