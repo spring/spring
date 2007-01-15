@@ -218,7 +218,7 @@ void CBuilderCAI::SlowUpdate()
 
 			uh->TestUnitBuildSquare(bi,f,owner->allyteam);
 			if(f){
-				if (!owner->unitDef->canReclaim || !f->def->destructable) {
+				if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
 					// FIXME user shouldn't be able to queue buildings on top of features
 					// in the first place (in this case).
 					StopMove();
@@ -349,7 +349,8 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 	if(guarded && guarded!=owner && UpdateTargetLostTimer((int)c.params[0])){
 		if(CBuilder* b=dynamic_cast<CBuilder*>(guarded)){
 			if(b->terraforming){
-				if(fac->pos.distance2D(b->terraformCenter)<fac->buildDistance*0.8f+b->terraformRadius*0.7f){
+				if(fac->pos.distance2D(b->terraformCenter) <
+						(fac->buildDistance * 0.8f) + (b->terraformRadius * 0.7f)){
 					StopMove();
 					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
 					fac->HelpTerraform(b);
@@ -358,11 +359,19 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 					SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
 				}
 				return;
+			} else if (b->curReclaim && owner->unitDef->canReclaim){
+				StopSlowGuard();
+				if(!ReclaimObject(b->curReclaim)){
+					StopMove();
+				}
+				return;
+			} else {
+				fac->StopBuild();
 			}
 			if (b->curBuild &&
-			    (( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
-			     (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
-			    StopSlowGuard();
+					(( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+					(!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+				StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
@@ -375,16 +384,16 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 		}
 		if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
 			if (f->curBuild &&
-					(( f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
-					 (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
-			    StopSlowGuard();
+					((f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+					(!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+				StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
 				nc.options=c.options;
 				nc.params.push_back(f->curBuild->id);
 				commandQue.push_front(nc);
 				inCommand=false;
-//					SlowUpdate();
+				//					SlowUpdate();
 				return;
 			}
 		}
@@ -402,7 +411,7 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 				*(fac->buildDistance*0.9f + guarded->radius)){
 			StartSlowGuard(guarded->maxSpeed);
 			StopMove();
-//				logOutput.Print("should point with type 3?");
+			//				logOutput.Print("should point with type 3?");
 			owner->moveType->KeepPointingTo(guarded->pos,
 				fac->buildDistance*0.9f+guarded->radius, false);
 			if(guarded->health<guarded->maxHealth
@@ -413,11 +422,11 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			} else {
 				NonMoving();
 			}
-		}else{
+		} else {
 			if((goalPos-goal).SqLength2D()>4000
 					|| (goalPos - owner->pos).SqLength2D() <
-						(owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)
-						* (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)){
+					(owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)
+					* (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)){
 				SetGoal(goal,curPos);
 			}
 		}
@@ -436,19 +445,9 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 		if(id>=MAX_UNITS){		//reclaim feature
 			CFeature* feature=featureHandler->features[id-MAX_UNITS];
 			if(feature){
-				if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
+				if(!ReclaimObject(feature)){
 					StopMove();
-					owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
-					fac->SetReclaimTarget(feature);
-				} else {
-					if(goalPos.distance2D(feature->pos)>1){
-						SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
-					} else {
-						if(owner->moveType->progressState==CMoveType::Failed){
-							StopMove();
-							FinishCommand();
-						}
-					}
+					FinishCommand();
 				}
 			} else {
 				StopMove();
@@ -458,19 +457,9 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 		} else {							//reclaim unit
 			CUnit* unit=uh->units[id];
 			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
-				if(unit->pos.distance2D(fac->pos)<fac->buildDistance-1+unit->radius){
+				if(!ReclaimObject(unit)){
 					StopMove();
-					owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
-					fac->SetReclaimTarget(unit);
-				} else {
-					if(goalPos.distance2D(unit->pos)>1){
-						SetGoal(unit->pos,owner->pos);
-					}else{
-						if(owner->moveType->progressState==CMoveType::Failed){
-							StopMove();
-							FinishCommand();
-						}
-					}
+					FinishCommand();
 				}
 			} else {
 				FinishCommand();
@@ -684,7 +673,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 	if (feature) {
 		if (owner->unitDef->canResurrect && !feature->createdFromUnit.empty()) {
 			return CMD_RESURRECT;
-		} else if(owner->unitDef->canReclaim && feature->def->destructable) {
+		} else if(owner->unitDef->canReclaim && feature->def->reclaimable) {
 			return CMD_RECLAIM;
 		}
 	}
@@ -925,7 +914,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsi
 	float bestDist=10000000;
 	std::vector<CFeature*> features=qf->GetFeaturesExact(pos,radius);
 	for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-		if((*fi)->def->destructable && (*fi)->allyteam!=owner->allyteam){
+		if((*fi)->def->reclaimable && (*fi)->allyteam!=owner->allyteam){
 			float dist=(*fi)->pos.distance2D(owner->pos);
 			if(dist<bestDist && (recAny
 			  ||((*fi)->def->energy > 0 && gs->Team(owner->team)->energy < gs->Team(owner->team)->energyStorage)
@@ -1043,4 +1032,22 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(float3 pos, float radius,unsigned 
 		}
 	}
 	return false;
+}
+
+bool CBuilderCAI::ReclaimObject(CSolidObject* object){
+	CBuilder* fac=(CBuilder*)owner;
+	if(object->pos.distance2D(fac->pos)<fac->buildDistance-1+object->radius){
+		StopMove();
+		owner->moveType->KeepPointingTo(object->pos, fac->buildDistance*0.9f+object->radius, false);
+		fac->SetReclaimTarget(object);
+	} else {
+		if(goalPos.distance2D(object->pos)>1){
+			SetGoal(object->pos,owner->pos);
+		}else{
+			if(owner->moveType->progressState==CMoveType::Failed){
+				return false;
+			}
+		}
+	}
+	return true;
 }

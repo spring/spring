@@ -272,11 +272,17 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if(dynamic_cast<CFeature*>(target) && !((CFeature*)target)->def->destructable)
+	if(dynamic_cast<CFeature*>(target) && !((CFeature*) target)->def->reclaimable){
 		return;
+	}
 
-	if(curReclaim==target)
+	if(dynamic_cast<CUnit*>(target) && !((CUnit*) target)->unitDef->reclaimable){
 		return;
+	}
+
+	if(curReclaim==target || this == target){
+		return;
+	}
 
 	StopBuild(false);
 	TempHoldFire();

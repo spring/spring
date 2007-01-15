@@ -298,7 +298,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 				return false;
 		} else {
 			CFeature* feature = featureHandler->features[unitID - MAX_UNITS];
-			if (feature && !feature->def->destructable)
+			if (feature && !feature->def->reclaimable)
 				return false;
 		}
 	}

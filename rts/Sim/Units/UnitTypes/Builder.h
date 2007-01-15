@@ -13,6 +13,8 @@ class CFeature;
 
 class CBuilder : public CUnit  
 {
+private:
+	void UnitInit (UnitDef* def, int team, const float3& position);
 public:
 	CR_DECLARE(CBuilder);
 
@@ -30,8 +32,6 @@ public:
 	void SetReclaimTarget(CSolidObject* object);
 	void StartRestore(float3 centerPos, float radius);
 	void SetBuildStanceToward(float3 pos);
-
-	void UnitInit (UnitDef* def, int team, const float3& position);
 
 	float buildSpeed;
 	float buildDistance;
