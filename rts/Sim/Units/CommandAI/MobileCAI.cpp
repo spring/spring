@@ -659,7 +659,6 @@ void CMobileCAI::FinishCommand(void)
 {
 	if(!(commandQue.front().options & INTERNAL_ORDER)){
 		lastUserGoal=owner->pos;
-//		logOutput.Print("Reseting user goal");
 	}
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
@@ -668,7 +667,7 @@ void CMobileCAI::FinishCommand(void)
 void CMobileCAI::IdleCheck(void)
 {
 	if(owner->unitDef->canAttack && owner->moveState && owner->fireState && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
-		if(owner->lastAttacker && owner->lastAttack+100>gs->frameNum && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
+		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
 			float3 apos=owner->lastAttacker->pos;
 			float dist=apos.distance2D(owner->pos);
 			if(dist<owner->maxRange+200*owner->moveState*owner->moveState){
@@ -682,7 +681,7 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
-	if(owner->unitDef->canAttack && (gs->frameNum!=lastIdleCheck+16) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
+	if(owner->unitDef->canAttack && (gs->frameNum>=lastIdleCheck+10) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
 		if(!owner->unitDef->noAutoFire){
 			CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
 			if(u && !(owner->unitDef->noChaseCategory & u->category)){
