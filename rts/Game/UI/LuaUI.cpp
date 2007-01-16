@@ -3903,6 +3903,11 @@ static int TraceScreenRay(lua_State* L)
 
 static int GiveOrder(lua_State* L)
 {
+	if (gu->spectating) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 3) || !lua_isnumber(L, -3) ||
 	    !lua_istable(L, -2) || !lua_istable(L, -1)) {
@@ -5554,9 +5559,6 @@ static int DrawListRun(lua_State* L)
 
 static int DrawListDelete(lua_State* L)
 {
-	if (!drawingEnabled) {
-		return 0;
-	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isnumber(L, 1)) {
 		lua_pushstring(L,
