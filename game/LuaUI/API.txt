@@ -135,6 +135,7 @@
   GetAllyTeamList()
   GetTeamList()
   GetPlayerList()
+  GetPlayerRoster()
 
   GetTeamInfo()
   GetTeamResources()
@@ -652,6 +653,29 @@ GetTeamList([number allyTeamID]) ->
 
 GetPlayerList([number teamID]) ->
   nil | playerTable = { [1] = number playerID, etc... }
+
+--
+-- Sort codes:
+--
+--   1 = Sort by allies
+--   2 = Sort by teamID
+--   3 = Sort by playerName
+--   4 = Sort by CPU usage
+--   5 = Sort by ping time
+--
+GetPlayerRoster([number sortType]) ->
+  nil | playerTable = {
+          [1] = {
+            string  name,
+            number  playerID,
+            number  teamID,
+            number  allyTeamID,
+            boolean spectator,
+            numebr  cpuUsage,
+            number  pingTime
+          },
+          etc...
+        }
 
 
 GetTeamInfo(number teamID) ->
