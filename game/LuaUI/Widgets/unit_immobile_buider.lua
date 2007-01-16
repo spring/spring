@@ -29,6 +29,9 @@ end
 include("spring.h.lua")
 
 
+local changedUnits = {}  --  work-around for the UnitChangedTeam() order
+
+
 local function GiveUnitOrders(unitID, func)
   local selUnits = Spring.GetSelectedUnits()
   Spring.SelectUnitsByValues({unitID})
@@ -37,18 +40,55 @@ local function GiveUnitOrders(unitID, func)
 end
 
 
-function widget:UnitCreated(unitID, unitDefID)
-  local ud = UnitDefs[unitDefID]
-  if ((ud ~= nil) and
-      (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
-    if (ud.builder and not ud.canMove) then
-      -- set immobile builders (nanotowers) to the ROAM movestate,
-      -- and give them a PATROL order (does not matter where, afaict)
-      GiveUnitOrders(unitID, function ()
-        x, y, z = Spring.GetUnitPosition(unitID)
-        Spring.GiveOrder( CMD_MOVE_STATE, { 2 }, { } )
-        Spring.GiveOrder( CMD_PATROL, { x + 25, y, z - 25 }, { } )
-      end)
-    end   
+local function SetupUnit(unitID)
+  -- set immobile builders (nanotowers) to the ROAM movestate,
+  -- and give them a PATROL order (does not matter where, afaict)
+  GiveUnitOrders(unitID, function ()
+    x, y, z = Spring.GetUnitPosition(unitID)
+    Spring.GiveOrder( CMD_STOP, { }, { } )
+    Spring.GiveOrder( CMD_MOVE_STATE, { 2 }, { } )
+    Spring.GiveOrder( CMD_PATROL, { x + 25, y, z - 25 }, { } )
+  end)
+end
+
+
+function widget:Initialize()
+  for _,unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID())) do
+    local unitDefID = Spring.GetUnitDefID(unitID)
+    local ud = unitDefID and UnitDefs[unitDefID] or nil
+    if (ud and ud.builder and not ud.canMove) then
+      SetupUnit(unitID)
+    end
   end
 end
+
+
+function widget:Update(dt)
+  for unitID,udid in pairs(changedUnits) do
+    local ud = UnitDefs[udid]
+    if (ud and ud.builder and not ud.canMove) then
+      SetupUnit(unitID)
+    end
+  end
+  changedUnits = {}
+end
+
+
+function widget:UnitCreated(unitID, unitDefID)
+  local ud = UnitDefs[unitDefID]
+  if (ud and ud.builder and not ud.canMove) then
+    SetupUnit(unitID)
+  end
+end
+
+
+function widget:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
+  if ((oldTeam == newTeam) or (newTeam ~= Spring.GetMyTeamID())) then
+    return
+  end
+  changedUnits[unitID] = unitDefID
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

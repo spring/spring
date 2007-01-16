@@ -34,6 +34,8 @@ local OFF_LIMIT = 0.3
 
 local metalMakers = {}
 
+local changedMakers = {}
+
 local currentState = true
 
 
@@ -70,6 +72,11 @@ end
 
 
 function widget:Update(deltaTime)
+  for uid, udid in pairs(changedMakers) do
+    widget:UnitFinished(uid, udid)
+  end
+  changedMakers = {}
+  
   local now, max = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy")
   local frac = (now / max)
   
@@ -114,7 +121,7 @@ function widget:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
   end
   local myTeam = Spring.GetMyTeamID()
   if (newTeam == myTeam) then
-    widget:UnitFinished(unitID, unitDefID)
+    changedMakers[unitID] = unitDefID
   elseif (oldTeam == myTeam) then
     widget:UnitDestroyed(unitID, unitDefID)
   end
