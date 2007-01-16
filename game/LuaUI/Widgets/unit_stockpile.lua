@@ -42,7 +42,7 @@ function widget:UnitCreated(unitID, unitDefID)
   if ((ud ~= nil) and
       (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
     if (ud.canStockpile) then
-      -- give stockpilers 5 units to build
+      -- give stockpilers 100 units to build
       GiveUnitOrders(unitID, function ()
       	Spring.GiveOrder( CMD_STOCKPILE, { }, { "ctrl", "shift" } )
       end)
@@ -51,4 +51,5 @@ function widget:UnitCreated(unitID, unitDefID)
 end
 
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
