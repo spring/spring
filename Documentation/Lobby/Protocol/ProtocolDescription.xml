@@ -1519,7 +1519,7 @@
       <Arguments>
         <Argument Name="name" Optional="no" Sentence="no"/>
         <Argument Name="battlestatus" Optional="no" Sentence="no">
-        Similar to that of the normal client's, see <clink name="MYSTATUC:client"/> for more info.
+        Similar to that of the normal client's, see <clink name="MYBATTLESTATUS:client"/> for more info.
         </Argument>
         <Argument Name="teamcolor" Optional="no" Sentence="no">
         Should be 32-bit signed integer in decimal system (e.g. 255 and not FF)
