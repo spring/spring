@@ -975,10 +975,13 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	lastAttack=gs->frameNum;
+	if(gs->Ally(team, attacker->team)){
+		return;
+	}
 	if(lastAttacker && lastAttacker!=userTarget)
 		DeleteDeathDependence(lastAttacker);
 
+	lastAttack=gs->frameNum;
 	lastAttacker=attacker;
 	if(attacker)
 		AddDeathDependence(attacker);
