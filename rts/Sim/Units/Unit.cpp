@@ -559,6 +559,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 
 	if(attacker){
+		SetLastAttacker(attacker);
 		float3 adir=attacker->pos-pos;
 		adir.Normalize();
 		bonusShieldDir+=adir*bonusShieldSaved;		//not the best way to do it(but fast)
