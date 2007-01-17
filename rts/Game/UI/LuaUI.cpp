@@ -122,6 +122,7 @@ static int GetTeamUnitsCounts(lua_State* L);
 static int GetUnitsInBox(lua_State* L);
 static int GetUnitsInPlanes(lua_State* L);
 static int GetUnitsInCylinder(lua_State* L);
+static int IsUnitInView(lua_State* L);
 
 static int GetUnitDefID(lua_State* L);
 static int GetUnitTeam(lua_State* L);
@@ -393,6 +394,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitsInBox);
 	REGISTER_LUA_CFUNC(GetUnitsInPlanes);
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
+	REGISTER_LUA_CFUNC(IsUnitInView);
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
@@ -2902,6 +2904,21 @@ static CUnit* AlliedUnit(lua_State* L, const char* caller)
 		return NULL;
 	}
 	return unit;
+}
+
+
+static int IsUnitInView(lua_State* L)
+{
+	CUnit* unit = AlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (camera->InView(unit->midPos, unit->radius)) {
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	return 1;
 }
 
 
