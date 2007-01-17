@@ -1,6 +1,6 @@
 CC=g++
 IFLAGS=-I../../../ -I../../../rts -I../../../rts/System -I../../../rts/System/creg -I../../../rts/Sim/Units -I../../../rts/Sim/Weapons
-TARGET=KAI021-gcc-32.so
+TARGET=KAI022-gcc-32.so
 BUILD_DIR=build-gcc-32
 
 all:
