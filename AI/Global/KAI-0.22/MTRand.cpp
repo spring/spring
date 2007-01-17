@@ -1,4 +1,4 @@
-#include "mtrand.h"
+#include "MTRand.h"
 // non-inline function definitions and static member definitions cannot
 // reside in header file because of the risk of multiple declarations
 

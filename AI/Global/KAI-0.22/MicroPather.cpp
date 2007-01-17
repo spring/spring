@@ -28,16 +28,12 @@ Updated and changed by Tournesol (on the TA Spring client).
 May (currenty) only be used to compile KAI (AI for TA Spring).
 Take care when you use it!
 
-This notice may not be removed or altered from any source 
+This notice may not be removed or altered from any source
 */
-//#define USE_ASSERTIONS
 
-#ifdef _MSC_VER
-#pragma warning( disable : 4786 )	// Debugger truncating names.
-#pragma warning( disable : 4530 )	// Exception handler isn't used
-#endif
 
-#include "micropather.h"
+
+#include "MicroPather.h"
 
 using namespace micropather;
 
