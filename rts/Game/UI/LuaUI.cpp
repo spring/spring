@@ -99,6 +99,7 @@ static int GetActionHotKeys(lua_State* L);
 
 static int SendCommands(lua_State* L);
 static int GiveOrder(lua_State* L);
+static int GiveOrderToUnit(lua_State* L);
 
 static int SelectUnitsByKeys(lua_State* L);
 static int SelectUnitsByValues(lua_State* L);
@@ -352,6 +353,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDirList);
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
+	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(SelectUnitsByKeys);
 	REGISTER_LUA_CFUNC(SelectUnitsByValues);
 	REGISTER_LUA_CFUNC(GetFPS);
@@ -3480,16 +3482,18 @@ static int GetPlayerRoster(lua_State* L)
 		lua_pushstring(L, "Incorrect arguments to GetPlayerRoster([type])");
 		lua_error(L);
 	}
-	
+
+	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
+
 	if (args == 1) {
 		const int type = (int)lua_tonumber(L, 1);
 		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
-	} else {
-		playerRoster.SetSortTypeByCode(PlayerRoster::Allies);
 	}
 
 	int count;
 	const int* players = playerRoster.GetIndices(&count);
+
+	playerRoster.SetSortTypeByCode(oldSort); // revert
 
 	lua_newtable(L);
 	for (int i = 0; i < count; i++) {
@@ -3901,6 +3905,51 @@ static int TraceScreenRay(lua_State* L)
 
 /******************************************************************************/
 
+static bool ParseCommand(lua_State* L, Command& cmd, const int top)
+{
+	// cmdID	
+	cmd.id = (int)lua_tonumber(L, top - 2);
+
+	// params
+	const int paramTable = (top - 1);
+	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2)) { // avoid 'n'
+			if (!lua_isnumber(L, -1)) {
+				lua_pushstring(L, "Error parsing command parameters");
+				lua_error(L);
+			}
+			const float value = (float)lua_tonumber(L, -1);
+			cmd.params.push_back(value);
+		}
+	}
+
+	// options
+	const int optionTable = top;
+	for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2)) { // avoid 'n'
+			if (!lua_isstring(L, -1)) {
+				lua_pushstring(L, "Error parsing command options");
+				lua_error(L);
+			}
+			const string value = lua_tostring(L, -1);
+			if (value == "right") {
+				cmd.options |= RIGHT_MOUSE_KEY;
+			} else if (value == "alt") {
+				cmd.options |= ALT_KEY;
+			} else if (value == "ctrl") {
+				cmd.options |= CONTROL_KEY;
+			} else if (value == "shift") {
+				cmd.options |= SHIFT_KEY;
+			}	
+		}
+	}
+
+	// FIXME -- do some sanity checking
+
+	return true;
+}
+
+
 static int GiveOrder(lua_State* L)
 {
 	if (gu->spectating) {
@@ -3909,160 +3958,63 @@ static int GiveOrder(lua_State* L)
 	}
 	
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) || !lua_isnumber(L, -3) ||
-	    !lua_istable(L, -2) || !lua_istable(L, -1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to GiveOrder(id, params[], options[])");
+	if ((args != 3) || !lua_isnumber(L, 1) ||
+	    !lua_istable(L, 2) || !lua_istable(L, 3)) {
+		lua_pushstring(L, "Incorrect arguments to GiveOrder()");
 		lua_error(L);
 	}
 
 	Command cmd;
-
-	// options
-	const int optionTable = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, optionTable) != 0) {
-		if (!lua_isstring(L, -1)) {
-			lua_pushstring(L,
-				"Incorrect option table in GiveOrder(id, params[], options[])");
-			lua_error(L);
-		}
-		const string key = lua_tostring(L, -1);
-		if (key == "right") {
-			cmd.options |= RIGHT_MOUSE_KEY;
-		} else if (key == "alt") {
-			cmd.options |= ALT_KEY;
-		} else if (key == "ctrl") {
-			cmd.options |= CONTROL_KEY;
-		} else if (key == "shift") {
-			cmd.options |= SHIFT_KEY;
-		}	
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
-	}
-	lua_pop(L, 1); // pop the table
-
-	// params
-	const int paramTable = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, paramTable) != 0) {
-		if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
-			lua_pushstring(L,
-				"Incorrect param table in GiveOrder(id, params[], options[])");
-			lua_error(L);
-		}
-		const float value = (float)lua_tonumber(L, -1);
-		cmd.params.push_back(value);
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
-	}
-	lua_pop(L, 1); // pop the table
-
-	// id	
-	cmd.id = (int)lua_tonumber(L, 1);
-	lua_pop(L, 1); // pop the id
+	ParseCommand(L, cmd, args);
 
 	selectedUnits.GiveCommand(cmd);
 
 	lua_pushboolean(L, true);
 
 	return 1;
+}
 
 
-	// FIXME -- do some basic checks
-	printf("LUA: GiveCommand %i\n", cmd.id);
-	for (int i = 0; i < cmd.params.size(); i++) {
-		printf("%f\n", cmd.params[i]);
+static int GiveOrderToUnit(lua_State* L)
+{
+	if (gu->spectating) {
+		lua_pushboolean(L, false);
+		return 1;
 	}
-	printf("%s%s%s%s\n",
-	       (cmd.options & RIGHT_MOUSE_KEY) ? " right" : "",
-	       (cmd.options & ALT_KEY)         ? " alt" : "",
-	       (cmd.options & CONTROL_KEY)     ? " ctrl" : "",
-	       (cmd.options & SHIFT_KEY)       ? " shift" : "");
-
-	int type1 = -1;
-	int type2 = -1;
-
-	switch (cmd.id) {
-		case CMD_STOP:
-		case CMD_WAIT:
-		case CMD_SELFD:
-		case CMD_STOCKPILE: 
-		case CMD_GATHERWAIT: {
-			type1 = CMDTYPE_ICON;
-			break;
-		}
-		case CMD_TIMEWAIT:
-		case CMD_SQUADWAIT: {
-			type1 = CMDTYPE_NUMBER;
-			break;
-		}
-		case CMD_DEATHWAIT: {
-			type1 = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
-			break;
-		}
-		case CMD_DGUN:
-		case CMD_ATTACK: {
-			type1 = CMDTYPE_ICON_UNIT_OR_MAP;
-			break;
-		}
-		case CMD_ONOFF:
-		case CMD_CLOAK:
-		case CMD_REPEAT:
-		case CMD_FIRE_STATE:
-		case CMD_MOVE_STATE:
-		case CMD_TRAJECTORY:
-		case CMD_LOOPBACKATTACK:
-		case CMD_AUTOREPAIRLEVEL: {
-			type1 = CMDTYPE_ICON_MODE;
-			break;
-		}
-		case CMD_MOVE: {
-			type2 = CMDTYPE_ICON_FRONT;
-			// fallthru
-		}
-		case CMD_PATROL:
-		case CMD_FIGHT: {
-			type1 = CMDTYPE_ICON_MAP;
-			break;
-		}
-		case CMD_RESTORE:
-		case CMD_AREA_ATTACK:
-		case CMD_UNLOAD_UNITS: {
-			type1 = CMDTYPE_ICON_AREA;
-			break;
-		}
-		case CMD_GUARD: {
-			type1 = CMDTYPE_ICON_UNIT;
-			break;
-		}
-		case CMD_AISELECT: {
-			type1 = CMDTYPE_COMBO_BOX;
-			break;
-		}
-		case CMD_REPAIR:
-		case CMD_CAPTURE:
-		case CMD_LOAD_UNITS: {
-			type1 = CMDTYPE_ICON_UNIT_OR_AREA;
-			break;
-		}
-		case CMD_RECLAIM:
-		case CMD_RESURRECT: {
-			type1 = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
-			break;
-		}
-//		case CMD_GROUPSELECT:
-//		case CMD_GROUPADD:
-//		case CMD_GROUPCLEAR:
-//		case CMD_SETBASE:
-//		case CMD_INTERNAL:
-//		case CMD_SET_WANTED_MAX_SPEED:
-//		case CMD_UNLOAD_UNIT:
+	
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_istable(L, 3) || !lua_istable(L, 4)) {
+		lua_pushstring(L, "Incorrect arguments to GiveOrderToUnit()");
+		lua_error(L);
 	}
+
+	// unitID	
+	const int unitID = (int)lua_tonumber(L, 1);
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		lua_pushstring(L, "Invalid unitID given to GiveOrderToUnit()");
+		lua_error(L);
+	}
+	CUnit* unit = uh->units[unitID];
+	if ((unit == NULL) || (unit->team != gu->myTeam)) {
+		lua_pushstring(L, "Invalid unitID given to GiveOrderToUnit()");
+		lua_error(L);
+	}
+	
+	Command cmd;
+	ParseCommand(L, cmd, args);
+
+	net->SendSTLData<unsigned char, short, int, unsigned char, std::vector<float> >(
+  	NETMSG_AICOMMAND, gu->myPlayerNum, unitID, cmd.id, cmd.options, cmd.params);
 
 	lua_pushboolean(L, true);
 
 	return 1;
 }
 
+
+/******************************************************************************/
 
 static int GetGroundHeight(lua_State* L)
 {
