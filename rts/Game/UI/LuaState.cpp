@@ -257,6 +257,8 @@ bool CLuaState::LoadUnitDefInfo()
 	unitDefParams.insert(#name);  \
 	code += def + "." #name " = " + SafeString(value) + endlStr
 
+		ADD_INT(id, ud.id);
+
 		ADD_STRING(name,      ud.name);
 		ADD_STRING(humanName, ud.humanName);
 		ADD_STRING(filename,  ud.filename);
