@@ -4062,13 +4062,19 @@ static int TestBuildOrder(lua_State* L)
 		lua_pushboolean(L, 0);
 		return 1;
 	}
+	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
+	if (unitDef == NULL) {
+		lua_pushboolean(L, 0);
+		return 1;
+	}
 
 	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
 	const int facing = (int)lua_tonumber(L, 5);
 
 	BuildInfo bi;
 	bi.buildFacing = facing;
-	bi.def = unitDefHandler->GetUnitByID(unitDefID);
+	bi.def = unitDef;
+	bi.pos = pos;
 	bi.pos = helper->Pos2BuildPos(bi);
 	CFeature* feature;
 	if(!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam)) {
