@@ -1,0 +1,44 @@
+#ifndef GLOBALAI_H
+#define GLOBALAI_H
+
+
+#include "Include.h"
+
+const char AI_NAME[] = "KAI 0.12 (0.11 Patched)";
+
+class CAttackHandler;
+class CGlobalAI: public IGlobalAI {
+	public:
+		CGlobalAI();
+		virtual ~CGlobalAI();
+
+		void InitAI(IGlobalAICallback* callback, int team);
+
+		void UnitCreated(int unit);
+		void UnitFinished(int unit);
+		void UnitDestroyed(int unit, int attacker);
+		void UnitIdle(int unit);
+		void UnitDamaged(int damaged, int attacker, float damage, float3 dir);
+		void EnemyDamaged(int damaged, int attacker, float damage, float3 dir);
+		void UnitMoveFailed(int unit);
+
+		void EnemyEnterLOS(int enemy);
+		void EnemyLeaveLOS(int enemy);
+		void EnemyEnterRadar(int enemy);
+		void EnemyLeaveRadar(int enemy);
+		void EnemyDestroyed(int enemy, int attacker);
+
+		void GotChatMsg(const char* msg, int player);
+		int HandleEvent (int msg, const void* data);
+
+		void Update();
+
+
+		AIClasses* ai;
+		std::vector<CUNIT> MyUnits;
+
+		char c[1024];
+};
+
+
+#endif
