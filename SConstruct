@@ -35,8 +35,6 @@ if sys.platform == 'win32':
 else:
 	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
-#if env['use_gch']:
-#	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
 spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon

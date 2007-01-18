@@ -109,11 +109,7 @@ def get_spring_source(env):
 		exclude += [f.replace('/','\\')]
 
 	source = get_source(env, 'rts', exclude_list = exclude)
-	if env['external_lua']:
-		lua='lua/luabind'
-	else:
-		lua='lua'
-	source += get_source(env, lua)
+	source += get_source(env, 'lua')
 	return source
 
 
