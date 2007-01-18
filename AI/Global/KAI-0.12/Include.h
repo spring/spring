@@ -64,7 +64,7 @@ static inline void itoa(int i, char* buf, int size) {
 #include "ThreatMap.h"
 #include "UnitHandler.h"
 #include "Unit.h"
-#include "EconomyTracker.h"						// Temp only
+#include "EconomyTracker.h"
 #include "DefenseMatrix.h"
 #include "BuildUp.h"
 #include "AttackHandler.h"

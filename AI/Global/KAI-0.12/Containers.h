@@ -18,7 +18,6 @@ class CEconomyTracker;
 class CBuildUp;
 class CAttackHandler;
 class CEconomyManager;
-
 // added by Kloot
 class DGunController;
 
@@ -78,65 +77,63 @@ class integer2 {
 
 
 /*
-This is a builder container.
-Its main task is to make sure that tracking builders is easy (making asserts and tests)
-*/
+ * builder container: main task is to make sure that tracking builders is easy (making asserts and tests)
+ */
 struct BuilderTracker {
 	int builderID;
-	// If not NULL then this worker belongs to this BuildTask.
+	// if not NULL then this worker belongs to this BuildTask.
 	int buildTaskId;
-	// If not NULL then this worker belongs to this TaskPlan.
+	// if not NULL then this worker belongs to this TaskPlan.
 	int taskPlanId;
-	// If not NULL then this worker belongs to this Factory.
+	// if not NULL then this worker belongs to this Factory.
 	int factoryId;
-	// If not NULL then this worker is on reclaim job or something, not tracked until it gets idle (spring call)
+	// if not NULL then this worker is on reclaim job or something, not tracked until it gets idle
 	int customOrderId;
 
-	// If not NULL then this worker is stuck or something
+	// if not NULL then this worker is stuck or something
 	int stuckCount;
-	// If this builder ends up without orders for some time, try IdleUnitAdd() ("hack" as spring doesn't call UnitIdle()?)
+	// if this builder ends up without orders for some time, try IdleUnitAdd()
 	int idleStartFrame;
-	// The frame an order is given, needed for lag tolerance when verifying unit command
+	// the frame an order is given, needed for lag tolerance when verifying unit command
 	int commandOrderPushFrame;
-	// TODO: This is (or will be in the future) a hint of what this builder will make
-	// NOTE: Will be temp only until a better system is made
+	// TODO: this is (or will be in the future) a hint of what this builder will make
 	int categoryMaker;
 
-	// These are unused atm.
+	// these are unused
 
-	// What frame this builder will start working
+	// what frame this builder will start working
 	int estimateRealStartFrame;
-	// This will be constant or based on the last startup time
+	// this will be constant or based on the last startup time
 	int estimateFramesForNanoBuildActivation;
-	// Simple eta, updated every 16 frames or so (0 means its there)
+	// Simple ETA, updated every 16 frames or so (0 means it's there)
 	int estimateETAforMoveingToBuildSite;
-	// The def->buildDistance or something
+	// the def -> buildDistance or something
 	float distanceToSiteBeforeItCanStartBuilding;
 };
 
 struct BuildTask {
 	int id;
 	int category;
-	// Temp only, for compability atm (will be removed)
+	// temp only, for compability (will be removed)
 	list<int> builders;
-	// The new container
+	// the new container
 	list<BuilderTracker*> builderTrackers;
-	// Temp?
+	// temp?
 	float currentBuildPower;
-	// For speed up, and debugging
+	// for speed up, and debugging
 	const UnitDef* def;
-	// Needed for command verify and debugging
+	// needed for command verify and debugging
 	float3 pos;
 };
 
 struct TaskPlan {
-	// This will be some smart number (a counter?)
+	// this will be some smart number (a counter?)
 	int id;
-	// Temp only, for compability atm (will be removed)
+	// temp only, for compability (will be removed)
 	list<int> builders;
-	// The new container
+	// the new container
 	list<BuilderTracker*> builderTrackers;
-	// Temp ?
+
 	float currentBuildPower;
 	const UnitDef* def;
 	float3 pos;
@@ -144,9 +141,9 @@ struct TaskPlan {
 
 struct Factory {
 	int id;
-	// Temp only, for compability atm (will be removed)
+	// temp only, for compability (will be removed)
 	list<int> supportbuilders;
-	// The new container
+	// the new container
 	list<BuilderTracker*> supportBuilderTrackers;
 };
 
