@@ -67,6 +67,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai -> econTracker		= new CEconomyTracker(ai);
 	ai -> bu				= new CBuildUp(ai);
 	ai -> ah				= new CAttackHandler(ai);
+	// added by Kloot
 	ai -> dgunController	= new DGunController();
 
 	// L("All Class pointers initialized");

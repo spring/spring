@@ -31,18 +31,17 @@
  */
 
 
-/**
-  * @mainpage MicroPather
-  *
-  * MicroPather is a path finder and A* solver (astar or a-star) written in platform independent
-  * C++ that can be easily integrated into existing code. MicroPather focuses on being a path
-  * finding engine for video games but is a generic A* solver. MicroPather is open source, with
-  * a license suitable for open source or commercial use.
-  *
-  * An overview of using MicroPather is in the <A HREF="../readme.htm">readme</A> or
-  * on the Grinning Lizard website: http://grinninglizard.com/micropather/
-  */
-
+/*
+ * @mainpage MicroPather
+ *
+ * MicroPather is a path finder and A* solver (astar or a-star) written in platform independent
+ * C++ that can be easily integrated into existing code. MicroPather focuses on being a path
+ * finding engine for video games but is a generic A* solver. MicroPather is open source, with
+ * a license suitable for open source or commercial use.
+ *
+ * An overview of using MicroPather is in the <A HREF="../readme.htm">readme</A> or
+ * on the Grinning Lizard website: http://grinninglizard.com/micropather/
+ */
 
 
 #include "GlobalAI.h"
@@ -68,20 +67,20 @@
 namespace NSMicroPather {
 	const float FLT_BIG = FLT_MAX / 2.0f;
 
-	/**
-	  * A pure abstract class used to define a set of callbacks.
-	  * The client application inherits from 
-	  * this class, and the methods will be called when MicroPather::Solve() is invoked.
-	  *
-	  * The notion of a "state" is very important. It must have the following properties:
-	  * - Unique
-	  * - Unchanging (unless MicroPather::Reset() is called)
-	  *
-	  * If the client application represents states as objects, then the state is usually
-	  * just the object cast to a void*. If the client application sees states as numerical
-	  * values, (x, y) for example, then state is an encoding of these values. MicroPather
-	  * never interprets or modifies the value of state.
-	  */
+	/*
+	 * A pure abstract class used to define a set of callbacks.
+	 * The client application inherits from 
+	 * this class, and the methods will be called when MicroPather::Solve() is invoked.
+	 *
+	 * The notion of a "state" is very important. It must have the following properties:
+	 * - Unique
+	 * - Unchanging (unless MicroPather::Reset() is called)
+	 *
+	 * If the client application represents states as objects, then the state is usually
+	 * just the object cast to a void*. If the client application sees states as numerical
+	 * values, (x, y) for example, then state is an encoding of these values. MicroPather
+	 * never interprets or modifies the value of state.
+	 */
 
 	class Graph {
 		public:
@@ -93,12 +92,12 @@ namespace NSMicroPather {
 		//	virtual ~Graph() = 0;
 		//	#endif
 
-			/**
-			  * This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
-			  * aren't really human readable, normally you print out some concise info (like "(1,2)")
-			  * without an ending newline.
-			  * @note If you are using other grinning lizard utilities, you should use GLOUTPUT for output.
-			  */
+			/*
+			 * This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
+			 * aren't really human readable, normally you print out some concise info (like "(1,2)")
+			 * without an ending newline.
+			 * @note If you are using other grinning lizard utilities, you should use GLOUTPUT for output.
+			 */
 			virtual void PrintStateInfo(void* state) = 0;
 			virtual void PrintData(string s) = 0;
 		};
@@ -106,10 +105,8 @@ namespace NSMicroPather {
 
 
 	class PathNode {
-		// Trashy trick to get rid of compiler warning, because
-		// this class has a private constructor and destructor -
-		// it can never be "new" or created on the stack, only
-		// by special allocators.
+		// trashy trick to get rid of compiler warning because this class has a private constructor and destructor
+		// (it can never be "new" or created on the stack, only by special allocators)
 		friend class none;
 
 		public:
@@ -119,7 +116,6 @@ namespace NSMicroPather {
 				parent = _parent;
 				frame = _frame;
 
-				//left = 0;
 				#ifdef USE_BINARY_HASH
 				right = 0;
 				#endif
@@ -148,7 +144,6 @@ namespace NSMicroPather {
 
 			// Binary tree, where the 'state' is what is being compared.
 			// Also used as a "next" pointer for memory layout.
-			// PathNode* left;
 
 			#ifdef USE_BINARY_HASH
 			PathNode* right;
@@ -159,8 +154,8 @@ namespace NSMicroPather {
 
 			unsigned inOpen:1;
 			unsigned inClosed:1;
-			unsigned isEndNode:1;	// This must be cleared by the call that sets it
-			unsigned frame:16;		// This might be set to more that 16
+			unsigned isEndNode:1;	// this must be cleared by the call that sets it
+			unsigned frame:16;		// this might be set to more that 16
 
 			#ifdef USE_LIST
 			void Unlink() {
@@ -192,9 +187,7 @@ namespace NSMicroPather {
 		};
 
 
-	/**
-	  * Create a MicroPather object to solve for a best path. Detailed usage notes are on the main page.
-	  */
+	// create a MicroPather object to solve for a best path
 	class MicroPather {
 		friend class NSMicroPather::PathNode;
 
@@ -205,33 +198,33 @@ namespace NSMicroPather {
 				START_END_SAME,
 			};
 
-			/**
-			  * Construct the pather, passing a pointer to the object that implements the Graph callbacks.
-			  *
-			  * @param graph		The "map" that implements the Graph callbacks.
-			  * @param allocate		The block size that the node cache is allocated from. In some
-			  *						cases setting this parameter will improve the perfomance of the pather.
-			  *						- If you have a small map, for example the size of a chessboard, set allocate
-			  *						 to be the number of states+1. 65 for a chessboard. This will allow
-			  *						 MicroPather to used a fixed amount of memory.
-			  *						- If your map is large, something like 1/4 the number of possible
-			  *						 states is good. For example, Lilith3D normally has about 16,000 
-			  *						 states, so 'allocate' should be about 4000.
-			  */
+			/*
+			 * Construct the pather, passing a pointer to the object that implements the Graph callbacks.
+			 *
+			 * @param graph		The "map" that implements the Graph callbacks.
+			 * @param allocate		The block size that the node cache is allocated from. In some
+			 *						cases setting this parameter will improve the perfomance of the pather.
+			 *						- If you have a small map, for example the size of a chessboard, set allocate
+			 *						 to be the number of states + 1. 65 for a chessboard. This will allow
+			 *						 MicroPather to used a fixed amount of memory.
+			 *						- If your map is large, something like 1/4 the number of possible
+			 *						 states is good. For example, Lilith3D normally has about 16000
+			 *						 states, so 'allocate' should be about 4000.
+			 */
 			MicroPather(Graph* graph, AIClasses* ai, unsigned allocate);
 			~MicroPather();
 
 			AIClasses* ai;
 
-			/**
-			  * Solve for the path from start to end.
-			  *
-			  * @param startState	Input, the starting state for the path.
-			  * @param endState		Input, the ending state for the path.
-			  * @param path			Output, a vector of states that define the path. Empty if not found.
-			  * @param totalCost	Output, the cost of the path, if found.
-			  * @return				Success or failure, expressed as SOLVED, NO_SOLUTION, or START_END_SAME.
-			  */
+			/*
+			 * Solve for the path from start to end.
+			 *
+			 * @param startState	Input, the starting state for the path.
+			 * @param endState		Input, the ending state for the path.
+			 * @param path			Output, a vector of states that define the path. Empty if not found.
+			 * @param totalCost	Output, the cost of the path, if found.
+			 * @return				Success or failure, expressed as SOLVED, NO_SOLUTION, or START_END_SAME.
+			 */
 			int Solve( void* startState, void* endState, std::vector<void*>* path, float* totalCost );
 
 			// Should not be called unless there is danger for frame overflow (16bit atm)
@@ -245,7 +238,7 @@ namespace NSMicroPather {
 				return checksum;
 			}
 
-			// Tounesol's stuff:
+			// Tournesol's stuff
 			unsigned int* lockUpCount;
 			bool* canMoveArray;
 			float* costArray;
@@ -264,7 +257,7 @@ namespace NSMicroPather {
 			float LeastCostEstimateLocal(int nodeStartIndex);
 			void FixNode(void** Node);
 
-			// Allocates the node array, don't call more than once.
+			// allocates the node array, don't call more than once
 			PathNode* AllocatePathNode();
 
 			const unsigned ALLOCATE;		// how big a block of pathnodes to allocate at once
