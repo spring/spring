@@ -2,9 +2,8 @@
 #define INCLUDE_H
 
 
-
-#include <ctime>		// Time
-#include <fstream>		// File Streams
+#include <ctime>
+#include <fstream>
 #include <algorithm>
 #include <deque>
 #include <sstream>
@@ -15,29 +14,28 @@
 #include <assert.h>
 #include <float.h>
 
-#ifdef WIN32
-#include <direct.h>		// Folder manipulation
-#include <io.h>
-//#include <windows.h>
-#else
+
+
+#ifndef WIN32
 #include <sys/time.h>
+
 #define LARGE_INTEGER struct timeval
 static inline void itoa(int i, char* buf, int size) {
-        snprintf(buf, size, "%d", i);
+	snprintf(buf, size, "%d", i);
 }
 #endif
+
 
 
 // Spring Standard Header
 #include "./System/StdAfx.h"
 
 // Spring Engine
-#include "./Game/command.h"                     // Commands
-#include "./Sim/Units/UnitDef.h"                // Unit Definitions
-#include "./Sim/Misc/FeatureDef.h"            // Feature Definitions
-#include "./Sim/MoveTypes/MoveInfo.h"           // Types of Movement units can have
+#include "./Game/command.h"						// Commands
+#include "./Sim/Units/UnitDef.h"				// Unit Definitions
+#include "./Sim/Misc/FeatureDef.h"				// Feature Definitions
+#include "./Sim/MoveTypes/MoveInfo.h"			// Types of Movement units can have
 #include "./Sim/Weapons/WeaponDefHandler.h"		// Weapon Definitions
-//#include "float3.h"								// Float3 container and operators
 
 // Spring AI
 #include "ExternalAI/aibase.h"					// DLL exports and definitions
@@ -69,12 +67,8 @@ static inline void itoa(int i, char* buf, int size) {
 #include "AttackGroup.h"
 #include "EconomyManager.h"
 #include "DamageControl.h"
+// added by Kloot
+#include "DGunController.hpp"
 
 
-
-
-            
-
-
-
-#endif /* INCLUDE_H */
+#endif
