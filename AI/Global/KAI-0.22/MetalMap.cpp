@@ -1,6 +1,4 @@
 #include "MetalMap.h"
-#include <iostream>
-
 
 
 CMetalMap::CMetalMap(AIClasses* ai) {
