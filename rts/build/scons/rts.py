@@ -104,7 +104,7 @@ def generate(env):
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
-		('use_gch',           'Use gcc precompiled header', True),
+		#('use_gch',           'Use gcc precompiled header', True),
 		#('external_lua',      'Use lua-config to find lua install instead of compiling our own', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
 
