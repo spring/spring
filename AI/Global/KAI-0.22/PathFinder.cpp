@@ -49,7 +49,7 @@ void CPathFinder::Init() {
 
 
 
-	// This must be removed!!!!!!
+	// this must be removed!
 	// (KLOOTNOTE: what? outer loop only? outer loop and inner loop?)
 	for (int y = 2;y < mapy - 2; y += 2) {
 		for (int x = 2; x < mapx - 2; x += 2) {
@@ -287,7 +287,7 @@ void CPathFinder::Init() {
 	}
 
 
-	// KLOOTNOTE: should m be reset here?
+
 	// m = groundUnitWaterLinesStart;
 	for (list<float>::iterator i = groundUnitWaterLines.begin(); i != groundUnitWaterLines.end(); i++) {
 		char k[10];
