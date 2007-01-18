@@ -245,9 +245,6 @@ static bool drawingEnabled = false;
 static float screenWidth = 0.36f;
 static float screenDistance = 0.60f;
 
-static int matrixDepth = 0;
-static const int maxMatrixDepth = 16;
-
 static vector<unsigned int> displayLists;
 
 static set<UnitDef*> commanderDefs;
@@ -522,6 +519,7 @@ bool CLuaUI::LoadCode(lua_State* L,
 }
 
 
+/******************************************************************************/
 /******************************************************************************/
 
 void CLuaUI::Shutdown()
@@ -878,6 +876,41 @@ bool CLuaUI::GroupChanged(int groupID)
 }
 
 
+/******************************************************************************/
+
+static void ClearMatrixStack()
+{
+	int i;
+	GLenum err;
+	for (i = 0; i < 12345; i++) {
+		err = glGetError();
+		if (err == GL_NONE) {
+			break;
+		}
+	}
+	for (i = 0; i < 64; i++) {
+		glPopMatrix();
+		err = glGetError();
+		if (err != GL_NONE) {
+			break; // we're looking for GL_STACK_UNDERFLOW
+		}
+	}
+}
+
+
+static void ResetGLMaterial()
+{
+	const float ambient[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+	const float diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	const float black[4]   = { 0.0f, 0.0f, 0.0f, 1.0f };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+}
+
+
 bool CLuaUI::DrawWorldItems()
 {
 	lua_State* L = LUASTATE.GetL();
@@ -893,9 +926,7 @@ bool CLuaUI::DrawWorldItems()
 	}
 
 	drawingEnabled = true;
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
+	
 	// push the current GL state
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
 	             GL_POLYGON_BIT | GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT |
@@ -903,11 +934,14 @@ bool CLuaUI::DrawWorldItems()
 
 	// setup a known state
 	ResetGLState();
+	ResetGLMaterial();
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
+	glEnable(GL_LIGHT1);
+
 	glEnable(GL_NORMALIZE);
-
-	glPushMatrix();
-
-	matrixDepth = 0;
 
 	// call the routine
 	bool retval = true;
@@ -919,18 +953,25 @@ bool CLuaUI::DrawWorldItems()
 		retval = false;
 	}
 
-	if (matrixDepth != 0) {
-		logOutput.Print("DrawWorldItems: matrix mismatch");
-		while (matrixDepth > 0) {
-			glPopMatrix();
-			matrixDepth--;
-		}
+	glDisable(GL_NORMALIZE);
+
+	glDisable(GL_LIGHT1);
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+
+	// reset the matrices
+	glMatrixMode(GL_TEXTURE); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		ClearMatrixStack();
+		glLoadMatrixd(camera->projection);
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		ClearMatrixStack();
+		glLoadMatrixd(camera->modelview);
 	}
 
-	glPopMatrix();
-
-	glDisable(GL_NORMALIZE);
-	
 	// pop the GL state
 	glPopAttrib();
 
@@ -942,8 +983,8 @@ bool CLuaUI::DrawWorldItems()
 
 static void SetupScreenTransform()
 {
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
 	glLoadIdentity();
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
@@ -967,13 +1008,16 @@ static void SetupScreenTransform()
 	glFrustum(left, right, bottom, top, znear, zfar);
 
 	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
 	glLoadIdentity();
 	// translate so that (0,0,0) is on the zplane,
 	// on the window's bottom left corner
 	const float distAdj = (zplane / znear);
 	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
+}
 
+
+static void SetupScreenLighting()
+{
 	// back light
 	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
 	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1003,32 +1047,18 @@ static void SetupScreenTransform()
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 	glPopMatrix();
 
+	// Enable the GL lights
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
-
-	const float grey[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, grey);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-
-	glEnable(GL_NORMALIZE);
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 }
 
 
-static void RevertScreenTransform()
+static void RevertScreenLighting()
 {
-	glDisable(GL_NORMALIZE);
-
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 	glDisable(GL_LIGHT1);
 	glDisable(GL_LIGHT0);
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
 }
 
 
@@ -1055,13 +1085,14 @@ bool CLuaUI::DrawScreenItems()
 
 	// setup a known state
 	ResetGLState();
+	ResetGLMaterial();
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// setup the screen transformation
 	SetupScreenTransform();
+	SetupScreenLighting();
 
-	matrixDepth = 0;
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_NORMALIZE);
 
 	lua_pushnumber(L, gu->viewSizeX);	
 	lua_pushnumber(L, gu->viewSizeY);	
@@ -1075,17 +1106,26 @@ bool CLuaUI::DrawScreenItems()
 		lua_pop(L, 1);
 		retval = false;
 	}
-	
-	if (matrixDepth != 0) {
-		logOutput.Print("DrawScreenItems: matrix mismatch");
-		while (matrixDepth > 0) {
-			glPopMatrix();
-			matrixDepth--;
-		}
-	}
 
+	glDisable(GL_NORMALIZE);
+	
 	// revert the screen transform
-	RevertScreenTransform();
+	RevertScreenLighting();
+
+	// reset the matrices
+	glMatrixMode(GL_TEXTURE); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		ClearMatrixStack();
+		glLoadIdentity();
+		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
 
 	// pop the GL state
 	glPopAttrib();
@@ -1095,6 +1135,8 @@ bool CLuaUI::DrawScreenItems()
 	return retval;
 }
 
+
+/******************************************************************************/
 
 bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 {
@@ -4711,7 +4753,7 @@ static int DrawMaterial(lua_State* L)
 		if (key == "shininess") {
 			if (lua_isnumber(L, -1)) {
 				const GLfloat specExp = (GLfloat)lua_tonumber(L, -1);
-				glMaterialf(GL_FRONT_AND_BACK, GL_EMISSION, specExp);
+				glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, specExp);
 			}
 			continue;
 		}
@@ -4797,6 +4839,9 @@ static void ResetGLState()
 	glDisable(GL_POLYGON_OFFSET_POINT);
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	ResetGLMaterial();
 }
 
 
@@ -5433,13 +5478,7 @@ static int DrawPushMatrix(lua_State* L)
 		lua_error(L);
 	}
 
-	if (matrixDepth >= maxMatrixDepth) {
-		lua_pushstring(L, "DrawPushMatrix: matrix overflow");
-		lua_error(L);
-	}
-		
 	glPushMatrix();
-	matrixDepth++;			
 
 	return 0;
 }
@@ -5456,13 +5495,7 @@ static int DrawPopMatrix(lua_State* L)
 		lua_error(L);
 	}
 
-	if (matrixDepth <= 0) {
-		lua_pushstring(L, "DrawPopMatrix: matrix underflow");
-		lua_error(L);
-	}
-		
 	glPopMatrix();
-	matrixDepth--;			
 
 	return 0;
 }
@@ -5488,8 +5521,6 @@ static int DrawListCreate(lua_State* L)
 	// save the current state
 	const bool origDrawingEnabled = drawingEnabled;
 	drawingEnabled = true;
-	const int	origMatrixDepth = matrixDepth;
-	matrixDepth = 0;
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
@@ -5506,7 +5537,6 @@ static int DrawListCreate(lua_State* L)
 	}
 
 	// restore the state	
-	matrixDepth = origMatrixDepth;
 	drawingEnabled = origDrawingEnabled;
 
 	return 1;
