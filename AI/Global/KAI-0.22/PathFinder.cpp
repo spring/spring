@@ -153,7 +153,7 @@ void CPathFinder::Init() {
 
 
 	CumulativeSlopeMeter.resize(CumulativeSlopeMeterFast.size());
-	for (int i = 1; i != CumulativeSlopeMeterFast.size(); i++) {
+	for (unsigned int i = 1; i != CumulativeSlopeMeterFast.size(); i++) {
 		// L(i << "\t" << double(CumulativeSlopeMeterFast[i]) / totalcells);
 		CumulativeSlopeMeter[i] = CumulativeSlopeMeterFast[i];
 	}
@@ -403,8 +403,8 @@ void CPathFinder::CreateDefenseMatrix(){
 	const int* enemycomms = ai -> sh -> GetEnemiesList();
 	float3 enemyposes[16];
 	ai -> dm -> ChokeMapsByMovetype.resize(NumOfMoveTypes + 1);
-	ai -> debug -> MakeBWTGA(SlopeMap,PathMapXSize,PathMapYSize,string("SlopeMap"));
-	//ai -> debug -> MakeBWTGA(TestMoveArray,PathMapXSize,PathMapYSize,string("Plane Move Array"));
+	// ai -> debug -> MakeBWTGA(SlopeMap, PathMapXSize, PathMapYSize, string("SlopeMap"));
+	// ai -> debug -> MakeBWTGA(TestMoveArray, PathMapXSize, PathMapYSize, string("Plane Move Array"));
 
 	int Range = int(sqrt(float(PathMapXSize*PathMapYSize))/ THREATRES / 3);
 	L("Range: " << Range);
@@ -423,7 +423,8 @@ void CPathFinder::CreateDefenseMatrix(){
 			}
 		}
 	}
-	int kitty = ai -> dm -> ChokeMapsByMovetype.size();
+
+	// int kitty
 	ai -> dm -> ChokeMapsByMovetype[NumOfMoveTypes] = new float [totalcells];
 	for(int i = 0; i < totalcells; i++)	{
 		ai -> dm -> ChokeMapsByMovetype[NumOfMoveTypes][i] = 1;
@@ -669,7 +670,7 @@ float CPathFinder::FindBestPath(vector<float3> *posPath, float3 *startPos, float
 		//L("2");
 		offsets = new pair<int, int>[DoubleRadius*5];
 		int index = 0;
-		int startPos = 0;
+
 		//L("3");
 		offsets[index].first = 0;
 		//L("offsets[index].first: " << offsets[index].first);

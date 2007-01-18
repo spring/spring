@@ -1,6 +1,6 @@
 #ifndef ATTACKGROUP_H
 #define ATTACKGROUP_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 

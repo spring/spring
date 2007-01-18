@@ -1,12 +1,10 @@
 #include "DefenseMatrix.h"
 
-CDefenseMatrix::CDefenseMatrix(AIClasses *ai)
-{
-	this->ai = ai;
+CDefenseMatrix::CDefenseMatrix(AIClasses* ai) {
+	this -> ai = ai;
 }
-CDefenseMatrix::~CDefenseMatrix()
-{
-	for(int i = 0; i != ChokeMapsByMovetype.size();i++){
+CDefenseMatrix::~CDefenseMatrix() {
+	for (unsigned int i = 0; i != ChokeMapsByMovetype.size();i++){
 		delete [] ChokeMapsByMovetype[i];
 	}
 	delete [] ChokePointArray;
@@ -14,8 +12,7 @@ CDefenseMatrix::~CDefenseMatrix()
 }
 
 int getDefensePosTime;
-void CDefenseMatrix::Init()
-{
+void CDefenseMatrix::Init() {
 	ChokePointArray = new float[ai->pather->totalcells];
 	BuildMaskArray = new int[ai->pather->totalcells]; // This is a temp only, it will be used to mask bad spots that workers cant build at
 	for(int i = 0; i < ai->pather->totalcells; i++)
@@ -49,8 +46,7 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
 		Range = 1;
 	}
 
-	int squarerange = Range * Range;
-	float bestscore = 0;
+
 	int bestspotx = 0;
 	int bestspoty = 0;
 	L("GetDefensePos: Range: " << Range);
@@ -256,7 +252,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def)
 			for (int myy = y - Range; myy <= y + Range; myy++){
 				int distance = int((x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5);
 				if (myy >= 0 && myy < ai->pather->PathMapYSize && (distance) <= squarerange){
-					for(int i = 0; i != ChokeMapsByMovetype.size();i++){
+					for (unsigned int i = 0; i != ChokeMapsByMovetype.size();i++) {
 						ChokeMapsByMovetype[i][myy * ai->pather->PathMapXSize + myx] /= 2;
 					}
 				}
@@ -284,7 +280,7 @@ void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def)
 			for (int myy = y - Range; myy <= y + Range; myy++){
 				int distance = int((x - myx)*(x - myx) + (y - myy)*(y - myy) - 0.5);
 				if (myy >= 0 && myy < ai->pather->PathMapYSize && (distance) <= squarerange){
-					for(int i = 0; i != ChokeMapsByMovetype.size();i++){
+					for (unsigned int i = 0; i != ChokeMapsByMovetype.size();i++) {
 						ChokeMapsByMovetype[i][myy * ai->pather->PathMapXSize + myx] *= 2;
 					}
 				}

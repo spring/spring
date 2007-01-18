@@ -1,16 +1,12 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
-/*pragma once removed*/
 
 
 #include "Include.h"
 
-const char AI_NAME[]="KAI";
+const char AI_NAME[] = "KAI 0.22 (0.21 Patched)";
 
 using namespace std;
-//#pragma warning(disable: 4244 4018 4996 4129)
-
-//edit:
 class CAttackHandler;
 
 class CGlobalAI : public IGlobalAI  

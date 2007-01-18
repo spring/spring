@@ -139,10 +139,9 @@ void CBuildUp::FactoryBuildup()
 				if(buildercounter > 0)
 					buildercounter--;
 			}
-			else{
+			else {
 				// Look at all factorys, and find the best builder they have.
 				// Then find the builder that there are least of.
-				int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
 				const UnitDef* leastBuiltBuilder = NULL;
 				int leastBuiltBuilderCount = 50000;
 				//assert(factoryCount > 0);
@@ -214,8 +213,9 @@ void CBuildUp::FactoryBuildup()
 /*
 Returns the factory that is needed most (globaly).
 */
-const UnitDef* CBuildUp::GetBestFactoryThatCanBeBuilt(float3 builderPos)
-{
+const UnitDef* CBuildUp::GetBestFactoryThatCanBeBuilt(float3 builderPos) {
+	builderPos = builderPos;
+
 	// Look at all factories, and find the factories we can make
 	list<const UnitDef*> canMakeList;
 	for(int side = 0; side < ai->ut->numOfSides; side++) {
@@ -313,8 +313,8 @@ const UnitDef* CBuildUp::GetBestMexThatCanBeBuilt()
 Returns true if the builder was assigned an order.
 factory is the current target factory thats needed (globaly).
 */
-bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBuilder)
-{
+bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBuilder) {
+	forceUseBuilder = forceUseBuilder;
 	bool mexupgrader = false;
 	for(list<int>::iterator i = MexUpgraders.begin(); i != MexUpgraders.end();i++){
 		L("Mex upgrader number: " << *i);
@@ -395,9 +395,9 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 /*
 Returns true if the builder was assigned an order.
 */
-bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder)
-{
-	bool builderIsUsed = false;	
+bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder) {
+	forceUseBuilder = forceUseBuilder;
+	bool builderIsUsed = false;
 	//L("Checking defense building: totaldefensecosts = " <<  totaldefensecosts << " totalbuildingcosts = " << totalbuildingcosts " ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() = " << ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() << " ai->uh->AllUnitsByCat[CAT_FACTORY]->size() = " << ai->uh->AllUnitsByCat[CAT_FACTORY]->size());
 	if(ai->uh->AllUnitsByCat[CAT_FACTORY]->size() > ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() / DEFENSEFACTORYRATIO){
 	//if(totalbuildingcosts > totaldefensecosts * DEFENSEFACTORYRATIO && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
@@ -434,8 +434,9 @@ Returns true if the builder was assigned an order to build a factory or
 the builder was added to a factory (assist) or
 it helps to make a factory.
 */
-bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool forceUseBuilder)
-{
+bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool forceUseBuilder) {
+	forceUseBuilder = forceUseBuilder;;
+
 	if(!ai->uh->BuildTaskAddBuilder(builder,CAT_FACTORY)){
 		if(!ai->uh->FactoryBuilderAdd(builder)){
 			L("trying to build Factory.");
@@ -475,8 +476,9 @@ bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool for
 Returns true if the builder was assigned an order.
 Makes either metal or energy storage
 */
-bool CBuildUp::MakeStorage(int builder, bool forceUseBuilder)
-{
+bool CBuildUp::MakeStorage(int builder, bool forceUseBuilder) {
+	forceUseBuilder = forceUseBuilder;;
+
 	if (ai->cb->GetEnergyStorage() / (ai->cb->GetEnergyIncome() + 0.01) < STORAGETIME && ai->ut->energy_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
 		if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ESTOR)){
 			L("Trying to build Estorage, storagecounter: " << storagecounter);

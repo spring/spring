@@ -1,4 +1,3 @@
-/*#pragma once removed*/
 #include "ThreatMap.h"
 
 CThreatMap::CThreatMap(AIClasses *ai)

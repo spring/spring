@@ -1,11 +1,10 @@
 #ifndef METALMAKER_H
 #define METALMAKER_H
-#if !defined(somethinglong945867948579687)
-#define somethinglong945867948579687
-/*pragma once removed*/
+
 #include "ExternalAI/IGroupAI.h"
 #include <map>
 #include <set>
+
 using namespace std;
 
 class CMetalMaker
@@ -31,6 +30,6 @@ public:
 	int addedDelay;
 
 };
-#endif
+
 
 #endif /* METALMAKER_H */

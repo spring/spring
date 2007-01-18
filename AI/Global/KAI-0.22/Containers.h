@@ -1,25 +1,25 @@
 #ifndef CONTAINERS_H
 #define CONTAINERS_H
-/*pragma once removed*/
 
-class	IAICallback;
-class	IAICheats;
-class	CSunParser;
-class	CMetalMap;
-class	CMaths;
-class	CDebug;
-class	CPathFinder;
-class	CUnitTable;
-class	CThreatMap;
-class	CUnitHandler;
-class	CUNIT;
-class	CDefenseMatrix;
-class	CEconomyTracker;
-class	CBuildUp;
-class	CAttackHandler;
-class	CEconomyManager;
-class	CSurveillanceHandler;
-class	CDamageControl;
+
+class IAICallback;
+class IAICheats;
+class CSunParser;
+class CMetalMap;
+class CMaths;
+class CDebug;
+class CPathFinder;
+class CUnitTable;
+class CThreatMap;
+class CUnitHandler;
+class CUNIT;
+class CDefenseMatrix;
+class CEconomyTracker;
+class CBuildUp;
+class CAttackHandler;
+class CEconomyManager;
+class CSurveillanceHandler;
+class CDamageControl;
 
 struct AIClasses{
 	IAICallback*		cb;

@@ -115,16 +115,11 @@ void CSpotFinder::SetRadius(int radius)
 	}
 }
 
+
 /*
 This is a temp/test only
-
 */
-void CSpotFinder::MakeCachePoints()
-{
-	float currentBest = -FLT_MAX;
-	int currentBestX = 0;
-	int currentBestY = 0;
-	
+void CSpotFinder::MakeCachePoints() {
 	for (int y = 0; y < MapHeight / CACHEFACTOR; y++){
 		for (int x = 0; x < MapWidth / CACHEFACTOR; x++){
 			int cacheIndex = y * MapWidth/CACHEFACTOR + x;
@@ -185,7 +180,7 @@ float* CSpotFinder::MakeSumMap()
 	L("Starting MakeSumMap");
 	isValid = true;
 	int XtractorRadius = radius;
-	int DoubleRadius = XtractorRadius * 2;
+
 	//int SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
 	//int DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above
 	
@@ -444,7 +439,6 @@ void CSpotFinder::UpdateSumMap(int coordx, int coordy, int clearRadius)
 	haveTheBestSpotReady = false; // TODO: this is not needed all the time
 	
 	int XtractorRadius = radius;
-	int DoubleRadius = XtractorRadius * 2;
 	//int SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
 	//int DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above
 	

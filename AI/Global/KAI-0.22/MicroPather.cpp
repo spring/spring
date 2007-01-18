@@ -37,29 +37,23 @@ This notice may not be removed or altered from any source
 
 using namespace micropather;
 
-class OpenQueueBH
-{
+class OpenQueueBH {
 	public:
-	
-	OpenQueueBH() :
-	ai(ai), size(0), heapArray(0)
-	{
-	}
-	
-	void setData(AIClasses *ai, PathNode** heapArray)
-	{
-		this->ai = ai;
-		this->heapArray = heapArray;
+
+	OpenQueueBH(): ai(ai), size(0), heapArray(0) {
 	}
 
-	void clear()
-	{
+	void setData(AIClasses *ai, PathNode** heapArray) {
+		this -> ai = ai;
+		this -> heapArray = heapArray;
+	}
+
+	void clear() {
 		size = 0;
 	}
 	~OpenQueueBH() {}
 
-	void Push(PathNode* pNode)
-	{
+	void Push(PathNode* pNode) {
 		//assert(pNode->inOpen == 0);
 		pNode->inOpen = 1;
 		//L("Push: " << size);
@@ -260,9 +254,9 @@ class OpenQueueBH
 	bool Empty()	{ return size == 0; }
 	
 	private:
-	PathNode** heapArray;
-	AIClasses *ai; // for debugging
-	int size;
+		PathNode** heapArray;
+		AIClasses* ai;
+		int size;
 };
 
 OpenQueueBH openQueueBH;
@@ -465,12 +459,12 @@ void MicroPather::FixStartEndNode( unsigned& startNode, unsigned& endNode )
 	// No node can be at the edge !
 	if(x == 0)
 		x = 1;
-	else if(x == mapSizeX)
+	else if (x == (int) mapSizeX)
 		x = mapSizeX -1;
 	
 	if(y == 0)
 		y = 1;
-	else if(y == mapSizeY)
+	else if(y == (int) mapSizeY)
 		y = mapSizeY -1;
 	xEndNode = x;
 	yEndNode = y;
@@ -487,12 +481,12 @@ void MicroPather::FixNode(unsigned& node)
 	// But fixing this here might be bad
 	if(x == 0)
 		x = 1;
-	else if(x == mapSizeX)
+	else if (x == (int) mapSizeX)
 		x = mapSizeX -1;
 	
 	if(y == 0)
 		y = 1;
-	else if(y == mapSizeY)
+	else if (y == (int) mapSizeY)
 		y = mapSizeY -1;
 	node = (y*mapSizeX+x);
 }

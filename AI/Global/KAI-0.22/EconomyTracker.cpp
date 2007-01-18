@@ -545,7 +545,6 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		float minTimeNeeded =  buildTime / maxBuildPower;    //seconds
 		assert(minTimeNeeded > 0);
 		float currentMaxE_usage = eNeed / minTimeNeeded;
-		float currentMaxM_usage = mNeed / minTimeNeeded;
 		
 		// Find the delta hp from last frame, note that the first 0.1 hp is a free loan that is payed at the end
 		float deltaHP = hp - oldHP;
@@ -579,7 +578,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker * bt)
 		assert(currentMaxE_usage > 0);
 		float usedE_ThisFrame = deltaHP / endHp * eNeed;
 		float usedM_ThisFrame = deltaHP / endHp * mNeed;
-		float calcUsedE_ThisFrame = currentMaxE_usage / 30;
+
 		float currentBuildPower =  32.0 * maxBuildPower * (usedE_ThisFrame / currentMaxE_usage);
 		constructionEnergy += usedE_ThisFrame;
 		constructionMetal += usedM_ThisFrame;

@@ -1,36 +1,22 @@
-// SunParser.cpp: implementation of the CSunParser class.
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "SunParser.h"
 
 
-#pragma warning(disable:4786)
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
 // extern HWND hWnd;
 
-CSunParser::CSunParser(AIClasses* ai)
-{
-  this->ai=ai;
+CSunParser::CSunParser(AIClasses* ai) {
+	this -> ai = ai;
 }
-CSunParser::~CSunParser()
-{
+CSunParser::~CSunParser() {
     //L("CSunParser::~CSunParser()");
 	DeleteSection(&sections);
-	//L("~");
 }
 void CSunParser::DeleteSection(map<string,SSection*> *section)
 {
     //L("CSunParser::DeleteSection(" << section << ")" << endl);
 	map<string, SSection*>::iterator ui;
-	for(ui=section->begin();ui!=section->end();ui++)
-	{
-		DeleteSection(&ui->second->sections);
-		delete ui->second;
+	for (ui = section->begin(); ui != section -> end(); ui++) {
+		DeleteSection(&ui -> second -> sections);
+		delete ui -> second;
 	}
 }
 void CSunParser::LoadVirtualFile(string filename)
@@ -139,26 +125,18 @@ void CSunParser::Parse(char *buf, int size)
 	//vector<map<string,SSection*>*> sectionlist;
 	//sectionlist.push_back(&sections);
 
-	int se = 0; //for section start/end errorchecking
-
 	char *endptr = buf+size;
 
-	while(buf<=endptr)
-	{
-
-		if(buf[0]=='/' && buf[1]=='/') //comment
-		{
-			while((buf != endptr) && *buf!='\n' && *buf!='\r')
-			{
-
+	while (buf<=endptr) {
+		// comment
+		if (buf[0] == '/' && buf[1] == '/') {
+			while ((buf != endptr) && *buf!='\n' && *buf!='\r') {
 				buf++;
 			}
 		}
-		else if(buf[0]=='/' && buf[1]=='*') //comment
-		{
-			while((buf != endptr) && buf[0]!='*' || buf[1]!='/')
-			{
-
+		 // comment
+		else if (buf[0]=='/' && buf[1]=='*') {
+			while ((buf != endptr) && buf[0]!='*' || buf[1]!='/') {
 				buf++;
 			}
 		}
@@ -199,35 +177,25 @@ char *CSunParser::ParseSection(char *buf, int size, SSection *section)
     //L("CSunParser::ParseSection(buf, " << size << ", " << section << ")" << endl);
 	string thissection;
 
-	int se = 0; //for section start/end errorchecking
-
 	char *endptr = buf+size;
 
-	while(buf<=endptr)
-	{
-
-		if(buf[0]=='/' && buf[1]=='/') //comment
-		{
-			while(*buf!='\n' && *buf!='\r')
-			{
-
+	while (buf<=endptr) {
+		// comment
+		if (buf[0]=='/' && buf[1]=='/') {
+			while (*buf!='\n' && *buf!='\r') {
 				buf++;
 			}
 		}
-		else if(buf[0]=='/' && buf[1]=='*') //comment
-		{
-			while(buf[0]!='*' || buf[1]!='/')
-			{
-
+		// comment
+		else if (buf[0]=='/' && buf[1]=='*') {
+			while (buf[0]!='*' || buf[1]!='/') {
 				buf++;
 			}
 		}
-		else if(*buf == '[') //sectionname
-		{
+		// sectionname
+		else if (*buf == '[') {
 			thissection = "";
-			while(*(++buf)!=']')
-			{
-
+			while (*(++buf)!=']') {
 				thissection += *buf;
 			}
 		}
@@ -522,49 +490,22 @@ vector<string> CSunParser::GetLocationVector(string location)
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int))tolower);
 	vector<string> loclist;
 	int start = 0;
-	int next = 0;
+	unsigned int next = 0;
 	static const basic_string <char>::size_type npos = -1;
 
-	while((next = location.find_first_of("\\", start)) != npos)
-	{
+	while ((next = location.find_first_of("\\", start)) != npos) {
 		loclist.push_back(location.substr(start, next-start));
-		start = next+1;
+		start = next + 1;
 	}
+
 	loclist.push_back(location.substr(start, -1));
 
     return loclist;
 }
-/*
-template<typename T>
-void CSunParser::GetMsg(T& value, const string& key)
-{
-	string str;
-	str = SGetValueMSG(key);
 
-	stringstream stream;
-	stream << str;
-	stream >> value;
-}
 
-template<typename T>
-void CSunParser::GetDef(T& value, const string& key, const string& defvalue)
-{
-	string str;
-	str = SGetValueDef(key, defvalue);
-
-	stringstream stream;
-	stream << str;
-	stream >> value;
-	}*/
-float3 CSunParser::GetFloat3(float3 def, string location)
-{
-  /*  //L("CSunParser::GetFloat3((" << def.x << ", " << def.y << ", " << def.z << "), " << location << ")" << endl);
-	string s=SGetValueDef("",location);
-	if(s.empty())
-		return def;
-
-	float3 ret;
-	ParseArray(s,ret.xyz,3);
-	return ret;*/ // Temporarily disabled because of xyz error
-	return float3(0,0,0);
+float3 CSunParser::GetFloat3(float3 def, string location) {
+	def = def;
+	location = location;
+	return float3(0, 0, 0);
 }

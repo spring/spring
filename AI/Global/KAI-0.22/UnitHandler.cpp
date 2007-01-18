@@ -180,9 +180,8 @@ void CUnitHandler::IdleUnitUpdate()
 	}
 }
 
-void CUnitHandler::UnitMoveFailed(int unit)
-{
-	
+void CUnitHandler::UnitMoveFailed(int unit) {
+	unit = unit;
 }
 
 void CUnitHandler::UnitCreated(int unit)
@@ -514,8 +513,8 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 	assert(builderTracker->customOrderId == 0);
 }
 
-void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
-{
+void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError) {
+	reportError = reportError;
 	// If its without orders then try to find the lost command
 	
 	// TODO: All of it!!!!!!!!!!!!!!
@@ -538,7 +537,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		L("c->params[0]: " <<  c->params[0]);
 		if(debugPoints) {
 			char text[512];
-			sprintf(text, "builder %i: was clamed idle, but it have a command c->id: %i, c->params[0]: %i", builderTracker->builderID, c->id, c->params[0]);
+			sprintf(text, "builder %i: was clamed idle, but it have a command c->id: %i, c->params[0]: %g", builderTracker->builderID, c->id, c->params[0]);
 			AIHCAddMapPoint amp;
 			amp.label = text;
 			amp.pos = ai->cb->GetUnitPos(builderTracker->builderID);
@@ -814,41 +813,30 @@ void CUnitHandler::BuildTaskCreate(int id)
 							if(builderTracker->buildTaskId != 0)
 							{
 								// Hmm, why is this builder idle ???
-								bool hit = true;
 								BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
-								if(buildTask->builderTrackers.size() > 1)
-								{
+								if (buildTask->builderTrackers.size() > 1) {
 									BuildTaskRemoved(builderTracker);
 								}
-								else
-								{
+								else {
 									// This is the only builder of this thing, and now its idle...
 									BuildTaskRemoved(builderTracker); // IS this smart at all ???
 								}
 							}
-							if(builderTracker->taskPlanId != 0)
-							{
+							if (builderTracker->taskPlanId != 0) {
 								assert(!hit);
-								bool hit = true;
 								// Hmm, why is this builder idle ???
-								// 
-								TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
 								TaskPlanRemoved(builderTracker);
 							}
-							if(builderTracker->factoryId != 0)
-							{
+							if (builderTracker->factoryId != 0) {
 								assert(!hit);
-								bool hit = true;
 								FactoryBuilderRemoved(builderTracker);
 							}
-							if(builderTracker->customOrderId != 0)
-							{
+							if (builderTracker->customOrderId != 0) {
 								assert(!hit);
-								bool hit = true;
 								builderTracker->customOrderId = 0;
 							}
 							// This builder is now free.
-							if(builderTracker->idleStartFrame == -2)
+							if (builderTracker->idleStartFrame == -2)
 								IdleUnitRemove(builderTracker->builderID); // It was in the idle list
 							// Add it to this task
 							L("Added builder " << builderTracker->builderID << " to this new unit buildTask");
@@ -963,20 +951,21 @@ void CUnitHandler::BuildTaskRemoved(BuilderTracker* builderTracker)
 		return;
 	}
 	int category = ai->ut->GetCategory(builderTracker->buildTaskId);
+
 	// TODO: Hack fix
-	if(category == -1)
+	if (category == -1)
 		return;
+
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
 	assert(builderTracker->buildTaskId != 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
 	assert(builderTracker->customOrderId == 0);
-	//list<BuildTask>::iterator killtask;
 	bool found = false;
-	bool found2 = false;
-	for(list<BuildTask*>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++){
-		if((*i)->id == builderTracker->buildTaskId){
+
+	for (list<BuildTask*>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+		if ((*i)->id == builderTracker->buildTaskId) {
 			//killtask = i;
 			assert(!found);
 			/*

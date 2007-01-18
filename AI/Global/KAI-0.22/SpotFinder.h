@@ -1,6 +1,6 @@
 #ifndef SPOTFINDER_H
 #define SPOTFINDER_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 
