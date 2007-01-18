@@ -28,13 +28,15 @@ import filelist
 
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
-	env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['mingw', 'gch', 'rts'], toolpath = ['.', 'rts/build/scons'])
 	# resource builder (the default one of mingw gcc 4.1.1 crashes because of a popen bug in msvcrt.dll)
 	rcbld = Builder(action = 'windres --use-temp-file -i $SOURCE -o $TARGET', suffix = '.o', src_suffix = '.rc')
 	env.Append(BUILDERS = {'RES': rcbld})
 else:
-	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['default', 'gch', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
+if env['use_gch']:
+	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
 spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon

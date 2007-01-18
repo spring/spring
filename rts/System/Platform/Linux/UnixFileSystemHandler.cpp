@@ -159,13 +159,13 @@ void UnixFileSystemHandler::LocateDataDirs()
 
 	datadirs.clear();
 
-	std::string cfg = configHandler.GetString("SpringData","");
-	if (!cfg.empty())
-		AddDirs(SubstEnvVars(cfg));
-
 	char* env = getenv("SPRING_DATADIR");
 	if (env && *env)
 		AddDirs(SubstEnvVars(env));
+
+	std::string cfg = configHandler.GetString("SpringData","");
+	if (!cfg.empty())
+		AddDirs(SubstEnvVars(cfg));
 
 	FILE* f = ::fopen("/etc/spring/datadir", "r");
 	if (f) {

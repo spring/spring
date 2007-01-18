@@ -168,6 +168,22 @@ def check_openal(env, conf):
 		guess_include_path(env, conf, 'OpenAL', 'AL')
 
 
+def check_lua(env, conf):
+	print "Checking for LUA..."
+	print "  Checking for lua-config...",
+	# put this here for crosscompiling
+	if env['platform'] == 'windows':
+		guess_include_path(env, conf, 'LUA', 'lua')
+		return
+	luacfg = env.WhereIs("lua-config")
+	if luacfg:
+		print luacfg
+		env.ParseConfig(luacfg+" --include --libs")
+	else:
+		print "not found"
+		guess_include_path(env, conf, 'LUA', 'lua')
+
+
 def check_python(env, conf):
 	print "Checking for Python 2.4...",
 	print ""
@@ -221,6 +237,9 @@ def check_headers(env, conf):
 		env.Exit(1)
 	if not conf.CheckCHeader('IL/il.h'):
 		print ' Cannot find DevIL image library header'
+		env.Exit(1)
+	if not conf.CheckCHeader('lua.h'):
+		print ' Cannot find LUA library header'
 		env.Exit(1)
 
 
@@ -319,6 +338,8 @@ def configure(env, conf_dir):
 	check_sdl(env, conf)
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
+	if env['external_lua']:
+		check_lua(env, conf)
 	check_python(env, conf)
 	check_headers(env, conf)
 	check_libraries(env, conf)
