@@ -714,15 +714,7 @@ bool CUNIT::PatrolShift(float3 pos){
 	return false;
 }
 
-bool CUNIT::DGun(float3 pos){
-	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command* c = MakePosCommand(CMD_DGUN, &pos);
-	if(c->id != 0){
-		ai->cb->GiveOrder(myid, c);
-		return true;
-	}
-	return false;
-}
+
 
 //-----------|Radius Abilities|------------//
 bool CUNIT::Attack(float3 pos, float radius){

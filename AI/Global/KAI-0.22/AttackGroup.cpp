@@ -300,7 +300,6 @@ void CAttackGroup::RecalcAssignedEnemies() {
 	if (!isDefending) {
 		int numTaken = ai->cheat->GetEnemyUnits(unitArray, attackPosition, attackRadius);
 		for(int i = 0; i < numTaken; i++) {
-			int takenEnemy = unitArray[i];
 			assignedEnemies.push_back(unitArray[i]);
 		}
 	}
@@ -399,13 +398,14 @@ bool CAttackGroup::ConfirmPathToTargetIsOK()
 	return true;
 }
 
-void CAttackGroup::PathToBase(float3 groupPosition)
-{
+void CAttackGroup::PathToBase(float3 groupPosition) {
+	groupPosition = groupPosition;
+
 //	L("AG: pathing back to base. group:" << groupID);
     pathToTarget.clear();
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
 	ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
-	float costToTarget = ai->pather->PathToSet(&pathToTarget, groupPosition, ai->ah->GetKMeansBase());
+
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 	if (pathToTarget.size() <= 2) {
 		//isMoving = false;
@@ -457,7 +457,6 @@ bool CAttackGroup::FindDefenseTarget(float3 groupPosition)
 		if (enemyPositions.size() < 1) {
 			for (int i = 0; i < numOfEnemies; i++) {
 				if (enemyArray[i] != -1) {
-					const UnitDef *enemy_ud = ai->cheat->GetUnitDef(enemyArray[i]);
 					float3 enemyPos = ai->cheat->GetUnitPos(enemyArray[i]);
 					enemyPositions.push_back(enemyPos);
 				}

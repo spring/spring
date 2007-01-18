@@ -56,18 +56,16 @@ float3  CMaths::XY2F3(int x ,int y, int resolution)
 	return testpos;
 }
 
-float CMaths::BuildMetalPerSecond(const UnitDef* builder,const UnitDef* built)
-{
-	if(builder->buildSpeed){
+float CMaths::BuildMetalPerSecond(const UnitDef* builder,const UnitDef* built) {
+	if (builder->buildSpeed) {
 		float buildtime = built->buildTime / builder->buildSpeed;
-		built->metalCost;
 		return built->metalCost / buildtime;
 	}
 	ai->cb->SendTextMsg("MPS FAILED, unit has no buildspeed!",0);
 	return -1;
 }
-float CMaths::BuildEnergyPerSecond(const UnitDef* builder,const UnitDef* built)
-{
+
+float CMaths::BuildEnergyPerSecond(const UnitDef* builder,const UnitDef* built) {
 	if(builder->buildSpeed){
 		float buildtime = built->buildTime / builder->buildSpeed;
 		return built->energyCost / buildtime;

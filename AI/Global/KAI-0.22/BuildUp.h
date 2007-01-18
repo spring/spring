@@ -1,6 +1,6 @@
 #ifndef BUILDUP_H
 #define BUILDUP_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 

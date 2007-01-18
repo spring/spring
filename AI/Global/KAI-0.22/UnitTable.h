@@ -1,6 +1,6 @@
 #ifndef UNITTABLE_H
 #define UNITTABLE_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 

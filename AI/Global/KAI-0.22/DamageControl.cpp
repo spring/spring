@@ -203,13 +203,13 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 	}
 
 	//L(" score " << score << " TheirTotalCost " << TheirTotalCost);
-	if(TheirTotalArmyCost <= 0)
+	if (TheirTotalArmyCost <= 0)
 		return 1;
-	if(category = CAT_G_ATTACK){
+	if (category == CAT_G_ATTACK) {
 		return score / TheirTotalArmyCost / (TheirUnitsAll[unit->id].Damage + 1);
 	}
 
-	else if(category = CAT_DEFENCE){
+	else if (category == CAT_DEFENCE) {
 		return score / TheirTotalArmyCost / (TheirArmy[unit->id].Damage + 1);
 	}
 	L("***** Getdamagescore Error! *****");
@@ -229,14 +229,14 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 		//string targetcat;	
 		int armortype = victim->armorType;
 		int numberofdamages;
-		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES,&numberofdamages);			
-		if(ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0){
+		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES,&numberofdamages);
+		if (ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0) {
 			underwater = true;
 		}
 
 		//L("Starting weapon loop");
-		for(int i = 0; i != unit->weapons.size(); i++){
-			if (!unit->weapons[i].def->paralyzer){	
+		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
+			if (!unit->weapons[i].def->paralyzer) {
 				//L(ai->ut->unittypearray[unit->id].TargetCategories[i]);
 				//targetcat = ai->ut->unittypearray[unit->id].TargetCategories[i];
 				//L(unit->weapons[i].name << " Targcat: " <<  targetcat);
@@ -246,23 +246,22 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory; // This is what the weapon can target
 				unsigned int c = unit->weapons[i].onlyTargetCat; // This is what the unit accepts as this weapons target
-				unsigned int d = unit->weapons[i].badTargetCat; // This is what the unit thinks this weapon must be used for (hmm ?)
+//				unsigned int d = unit->weapons[i].badTargetCat; // This is what the unit thinks this weapon must be used for (hmm ?)
 				bool canWeaponTarget = (a & b) > 0;
 				bool canUnitTarget = (a & c) > 0; // How is this used in spring, needs testing...
-				bool badUnitTarget = (a & d) > 0; // This probably means that it have low priority, ignore it for now
+//				bool badUnitTarget = (a & d) > 0; // This probably means that it have low priority, ignore it for now
 
 				canhit = (canWeaponTarget && canUnitTarget);
-				
-				if(!unit->weapons[i].def->waterweapon && underwater){
+
+				if (!unit->weapons[i].def->waterweapon && underwater) {
 					canhit = false;
 					//L("This weapon cannot hit this sub");
 				}
-				if(unit->weapons[i].def->waterweapon && victim->minWaterDepth <= 0){
+				if (unit->weapons[i].def->waterweapon && victim->minWaterDepth <= 0) {
 						canhit = false;
 				}
 
-				bool bomb = unit->weapons[i].def->dropped; // Used for breakpoint 
-				
+
 				// Bombers are useless against more stuff:
 				if(unit->weapons[i].def->dropped){
 					if(victim->canfly && unit->wantedHeight <= victim->wantedHeight)

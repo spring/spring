@@ -25,9 +25,7 @@ CGlobalAI::~CGlobalAI()
 	delete ai;
 }
 
-void CGlobalAI::InitAI(IGlobalAICallback* callback, int team)
-{
-	int timetaken = clock();
+void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 
 	// Initialize Log filename
 	string mapname = string(callback->GetAICallback()->GetMapName());
@@ -139,8 +137,8 @@ void CGlobalAI::UnitFinished(int unit)
 	ai->math->StopTimer(totalSumTime);
 }
 
-void CGlobalAI::UnitDestroyed(int unit,int attacker)
-{
+void CGlobalAI::UnitDestroyed(int unit,int attacker) {
+	attacker = attacker;
 	ai->bu->MexUpgraders.remove(unit);
 	ai->math->StartTimer(totalSumTime);
 	ai->math->StartTimer(globalAILogTime);
@@ -156,36 +154,35 @@ void CGlobalAI::UnitDestroyed(int unit,int attacker)
 	ai->math->StopTimer(totalSumTime);
 }
 
-void CGlobalAI::EnemyEnterLOS(int enemy)
-{
-
+void CGlobalAI::EnemyEnterLOS(int enemy) {
+	enemy = enemy;
 }
 
-void CGlobalAI::EnemyLeaveLOS(int enemy)
-{
-
+void CGlobalAI::EnemyLeaveLOS(int enemy) {
+	enemy = enemy;
 }
 
-void CGlobalAI::EnemyEnterRadar(int enemy)
-{
+void CGlobalAI::EnemyEnterRadar(int enemy) {
+	enemy = enemy;
 }
 
-void CGlobalAI::EnemyLeaveRadar(int enemy)
-{
-
+void CGlobalAI::EnemyLeaveRadar(int enemy) {
+	enemy = enemy;
 }
 
-void CGlobalAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir)
-{
+void CGlobalAI::EnemyDamaged(int damaged, int attacker, float damage, float3 dir) {
+	damaged = damaged;
+	attacker = attacker;
+	damage = damage;
+	dir = dir;
 }
 
-void CGlobalAI::EnemyDestroyed(int enemy,int attacker)
-{
-
+void CGlobalAI::EnemyDestroyed(int enemy, int attacker) {
+	enemy = enemy;
+	attacker = attacker;
 }
 
-void CGlobalAI::UnitIdle(int unit)
-{
+void CGlobalAI::UnitIdle(int unit) {
 	ai->math->StartTimer(totalSumTime);
 	ai->math->StartTimer(globalAILogTime);
 	L("Idle: " << unit);
@@ -202,13 +199,14 @@ void CGlobalAI::UnitIdle(int unit)
 	ai->math->StopTimer(totalSumTime);
 }
 
-void CGlobalAI::GotChatMsg(const char* msg,int player)
-{
-
+void CGlobalAI::GotChatMsg(const char* msg, int player) {
+	msg = msg;
+	player = player;
 }
 
-void CGlobalAI::UnitDamaged(int damaged,int attacker,float damage,float3 dir)
-{
+void CGlobalAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir) {
+	attacker = attacker;
+	dir = dir;
 	ai->econTracker->UnitDamaged(damaged, damage);
 }
 
@@ -295,10 +293,7 @@ void CGlobalAI::Update()
 	ai->math->StartTimer(MMakerUpdateTime);
 	ai->uh->MMakerUpdate();
 	ai->math->StopTimer(MMakerUpdateTime);
-	//int count = ai->sh->GetCountEnemiesFullThisFrame();
-	//if(count > 0)
-	//	L("GetCountEnemiesFullThisFrame: " << count);
-	float updateTime = ai->math->StopTimer(updateTimerGroup);
+
 	ai->math->StartTimer(globalAILogTime);
 //	L("end: " << frame << ", updateTime: " << updateTime);
 	ai->math->StopTimer(globalAILogTime);

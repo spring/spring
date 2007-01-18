@@ -1,6 +1,6 @@
 #ifndef MATHS_H
 #define MATHS_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 struct TimerStruct

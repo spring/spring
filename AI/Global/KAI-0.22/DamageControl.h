@@ -1,6 +1,6 @@
 #ifndef DAMAGECONTROL_H
 #define DAMAGECONTROL_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 class CDamageControl

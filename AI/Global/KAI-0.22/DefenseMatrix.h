@@ -1,6 +1,6 @@
 #ifndef DEFENSEMATRIX_H
 #define DEFENSEMATRIX_H
-/*pragma once removed*/
+
 
 #include "GlobalAI.h"
 class CSpotFinder;

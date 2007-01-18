@@ -1,6 +1,6 @@
 #ifndef SURVEILLANCEHANDLER_H
 #define SURVEILLANCEHANDLER_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 

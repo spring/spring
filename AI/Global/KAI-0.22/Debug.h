@@ -1,6 +1,6 @@
 #ifndef DEBUG_H
 #define DEBUG_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 class CDebug

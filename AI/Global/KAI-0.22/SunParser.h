@@ -1,22 +1,8 @@
 #ifndef SUNPARSER_H
 #define SUNPARSER_H
-// SunParser.h: interface for the CSunParser class.
-//
-//////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SUNPARSER_H__3B578919_AC8F_438C_81EC_AAC59B692324__INCLUDED_)
-#define AFX_SUNPARSER_H__3B578919_AC8F_438C_81EC_AAC59B692324__INCLUDED_
-
-#if _MSC_VER > 1000
-/*pragma once removed*/
-#endif // _MSC_VER > 1000
-
-//#pragma warning(disable:4786)
 
 #include "GlobalAI.h"
-
-
-
 
 
 class CSunParser
@@ -78,7 +64,7 @@ public:
 		}
 	}
 
-	//template funktion för att häta ett värde, ger errormessagebox om värdet inte fins
+	//template funktion fï¿½ att hï¿½a ett vï¿½de, ger errormessagebox om vï¿½det inte fins
 	template<typename T>
 	void GetMsg(T& value, const string& key)
 	{
@@ -90,7 +76,7 @@ public:
 		stream >> value;
 	}
 
-	//template funktion för att häta ett värde, tar defaultvärde om värdet inte fins
+	//template funktion fï¿½ att hï¿½a ett vï¿½de, tar defaultvï¿½de om vï¿½det inte fins
 	template<typename T>
 	void GetDef(T& value, const string& defvalue, const string& key)
 	{
@@ -123,6 +109,6 @@ public:
 	void LoadBuffer(char* buf, int size);
 	AIClasses* ai;
 };
-#endif // !defined(AFX_SUNPARSER_H__3B578919_AC8F_438C_81EC_AAC59B692324__INCLUDED_)
+
 
 #endif /* SUNPARSER_H */

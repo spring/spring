@@ -1,6 +1,6 @@
 #ifndef UNIT_H
 #define UNIT_H
-/*pragma once removed*/
+
 #include "GlobalAI.h"
 
 class CUNIT
@@ -57,7 +57,6 @@ public:
 	bool MoveTwice(const float3* pos1, const float3* pos2);
 	bool Patrol(float3 pos);
 	bool PatrolShift(float3 pos);
-	bool DGun(float3 pos);
 
 	//-----------|Radius Abilities|------------//
 	bool Attack(float3 pos, float radius);

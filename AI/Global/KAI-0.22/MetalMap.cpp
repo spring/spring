@@ -52,7 +52,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor)
 	//L("Getting Metal spot. Ave threat = " << ai->tm->GetAverageThreat());
 	if(VectoredSpots.size()){
 		int* temparray = new int [MAXUNITS];
-		for (int i = 0; i != VectoredSpots.size(); i++){
+		for (unsigned int i = 0; i != VectoredSpots.size(); i++){
 			spotcoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i],MaxDivergence,2);
 			if (spotcoords.x != -1){
 				distance = spotcoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
@@ -264,7 +264,7 @@ void CMetalMap::GetMetalPoints()
 		}
 	}
 
-	int printDebug1 = 100;
+
 	for (int a = 0; a < MaxSpots; a++){	
 		if(!Stopme){
 			TempMetal = 0; //reset tempmetal so it can find new spots
@@ -474,7 +474,7 @@ bool CMetalMap::LoadMetalMap()
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
 	FILE *load_file;
 	// load Spots if file exists 
-	if(load_file = fopen(filename_buf, "rb")){
+	if ((load_file = fopen(filename_buf, "rb"))) {
 		fread(&NumSpotsFound, sizeof(int), 1, load_file);
 		VectoredSpots.resize(NumSpotsFound);
 		fread(&AverageMetal, sizeof(float), 1, load_file);

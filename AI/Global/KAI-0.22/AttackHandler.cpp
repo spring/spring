@@ -204,8 +204,8 @@ bool CAttackHandler::PlaceIdleUnit(int unit)
 //returns a safe spot from k-means, adjacent to myPos, safety params are (0..1).
 //this is going away or changing.
 //change to: decide on the random float 0...1 first, then find it. waaaay easier.
-float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafety)
-{
+float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafety) {
+	myPos = myPos;
 	//find a safe spot
 	int startIndex = int(minSafety * this->kMeansK);
 	if (startIndex < 0) startIndex = 0;
@@ -222,7 +222,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(startIndex < kMeansK);
 	assert(endIndex <= kMeansK);
 	//get a subset of the kmeans
-	int size = endIndex - startIndex;
+
 	vector<float3> subset;
 	for(int i = startIndex; i < endIndex; i++) {
 		assert ( i < kMeansK);
@@ -294,7 +294,7 @@ float3 CAttackHandler::GetClosestBaseSpot(float3 pos) {
 		float3 mean = this->kMeansBase[i];
 		float distance = pos.distance2D(mean);
 		if (distance < closestDistance) {
-			closestDistance = distance, closestDistance;
+			closestDistance = distance;
 			index = i;
 		}
 	}
@@ -534,7 +534,7 @@ void CAttackHandler::UpdateAir() {
 				outerMeans.push_back(kMeansBase[0] + float3(250*i, 0, 0));
 			}
 		}
-		assert(outerMeans.size() == num);
+		assert(outerMeans.size() == (unsigned) num);
 		//give the patrol orders to the outer means
 		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
 			CUNIT* u = ai->MyUnits[*it];
@@ -618,10 +618,10 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		//ai->pather->micropather->SetMapData(ai->pather->MoveArrays[group_in->GetWorstMoveType()],ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight);
 //		float costToTarget = ai->pather->PathToSet(&pathToTarget, groupPos, &enemyPositions);
 		float myGroupDPS = group_in->DPS();		
-		float maxAcceptableThreat = myGroupDPS * ATTACK_MAX_THREAT_DIFFERENCE;
+
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
 		ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, group_in->GetWorstMoveType());
-		float costToTarget = ai->pather->PathToSetRadius(&pathToTarget, groupPos, &enemyPositions, group_in->GetLowestAttackRange(), maxAcceptableThreat);
+
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 		if (pathToTarget.size() > 2) { //if it found something below max threat
 			int lastIndex = pathToTarget.size()-1;
@@ -819,7 +819,7 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 			it->Log();
 		}
 		float airPower = 0;
-		int counter_ = 0;
+
 		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
 			airPower += ai->ut->unittypearray[ai->MyUnits[*it]->def()->id].AverageDPS;
 			L("" << counter++ << ":" << ai->MyUnits[*it]->def()->humanName);
