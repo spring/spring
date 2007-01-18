@@ -139,7 +139,7 @@ void CAirMoveType::Update(void)
 
 			goalPos = pos;
 
-			if (pos.distance(owner->pos) < 400) {
+			if (pos.distance2D(owner->pos) < 400) {
 				padStatus = 1;
 			}
 			//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
