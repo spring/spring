@@ -104,6 +104,8 @@ def generate(env):
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
+		('use_gch',           'Use gcc precompiled header', True),
+		('external_lua',      'Use lua-config to find lua install instead of compiling our own', False),
 		('cachedir',          'Cache directory (see scons manual)', None))
 
 	#internal options
@@ -128,7 +130,7 @@ def generate(env):
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)
 
-	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 5) or env.GetOption('clean')):
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 6) or env.GetOption('clean')):
 		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
@@ -136,9 +138,9 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
-			'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 
-			'spring_defines']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 
+			'libdir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'external_lua', 'LINKFLAGS', 
+			'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -157,7 +159,7 @@ def generate(env):
 
 		args = makeHashTable(sys.argv)
 
-		env['is_configured'] = 5
+		env['is_configured'] = 6
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
@@ -199,7 +201,7 @@ def generate(env):
 		# Use single precision constants only.
 		# This should be redundant with the modifications done by tools/double_to_single_precision.sed.
 		# Other options copied from streflop makefiles.
-		env['CCFLAGS'] = ['-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp']
+		env['CCFLAGS'] = ['-Winvalid-pch', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp']
 
 		# profile?
 		bool_opt('profile', False)
@@ -299,6 +301,8 @@ def generate(env):
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
+		bool_opt('use_gch', True)
+		bool_opt('external_lua', False)
 		string_opt('prefix', '/usr/local')
 		string_opt('installprefix', '$prefix')
 		string_opt('datadir', 'share/games/spring')
@@ -333,7 +337,9 @@ def generate(env):
 		stringarray_opt('libpath', [])
 
 		include_path = env['cpppath'] + ['rts', 'rts/System']
-		include_path += ['lua/luabind', 'lua/lua/include']
+		include_path += ['lua/luabind']
+		if not env['external_lua']:
+			include_path += ['lua/lua/include']
 		lib_path = env['libpath'] + ['rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':

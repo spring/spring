@@ -45,6 +45,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #endif
 
 // This reduces compile-time with precompiled headers on msvc
+// It increases compile-time with precompiled headers on gcc
 #ifdef _MSC_VER
 #include <vector>
 #include <algorithm>

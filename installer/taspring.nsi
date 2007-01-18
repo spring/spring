@@ -268,6 +268,12 @@ SectionGroup "AI opponent plugins (Bots)"
 	!include "sections\aai.nsh"
 	!undef INSTALL
 	SectionEnd
+
+	Section "KAI" SEC_KAI
+	!define INSTALL
+	!include "sections\kai.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 !endif
 
@@ -360,6 +366,7 @@ Section Uninstall
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
   !include "sections\aai.nsh"
+  !include "sections\kai.nsh"
   !include "sections\battleroom.nsh"
   !include "sections\luaui.nsh"
 
