@@ -199,6 +199,9 @@ void DGunController::issueOrder(float3 target, int orderType, unsigned int curre
 	Command c;
 	c.id = orderType;
 	c.options |= keyMod;
+	c.params.push_back(target.x);
+	c.params.push_back(target.y);
+	c.params.push_back(target.z);
 
 	this -> targetID = -1;
 	this -> orderFrame = currentFrame;
@@ -206,28 +209,25 @@ void DGunController::issueOrder(float3 target, int orderType, unsigned int curre
 	if (orderType == CMD_MOVE) {
 		// regard CMD_MOVE as order to retreat
 		this -> hasRetreatOrder = true;
-
-		c.params.push_back(target.x);
-		c.params.push_back(target.y);
-		c.params.push_back(target.z);
 	}
+
+	CALLBACK -> GiveOrder(this -> commanderID, &c);
 }
 
 void DGunController::issueOrder(int target, int orderType, unsigned int currentFrame, int keyMod) {
 	Command c;
 	c.id = orderType;
 	c.options |= keyMod;
+	c.params.push_back(target);
 
 	this -> targetID = target;
 	this -> orderFrame = currentFrame;
 
 	if (orderType == CMD_DGUN) {
 		this -> hasDGunOrder = true;
-		c.params.push_back(target);
 	}
 	if (orderType == CMD_RECLAIM) {
 		this -> hasReclaimOrder = true;
-		c.params.push_back(target);
 	}
 
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
