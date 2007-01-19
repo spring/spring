@@ -24,6 +24,7 @@ void DGunController::init(IAICallback* callback, int commanderID) {
 
 	this -> targetID = -1;
 	this -> hasDGunOrder = false;
+	this -> hasReclaimOrder = false;
 	this -> orderFrame = 0;
 
 	// set commander to hold fire
@@ -80,7 +81,7 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 						}
 					}
 
-					this -> issueOrder(attackerID, CMD_DGUN, CALLBACK -> GetCurrentFrame(), 0);
+					this -> issueOrder(attackerID, CMD_DGUN, currentFrame, 0);
 				}
 
 				// no, suck it instead
@@ -100,7 +101,7 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 						}
 					}
 
-					this -> issueOrder(attackerID, CMD_RECLAIM, CALLBACK -> GetCurrentFrame(), 0);
+					this -> issueOrder(attackerID, CMD_RECLAIM, currentFrame, 0);
 				}
 			}
 		}
@@ -109,12 +110,12 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	// if we are close to going boom then it's time to run our boy
 	if ((healthCur / healthMax) < DGUN_MIN_HEALTH_RATIO) {
 		// retreat back to commander starting pos
-		this -> issueOrder(this -> startingPos, CMD_MOVE, 0, 0);
+		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
 	}
 	// if we are under attack from something nasty and can't shoot back
 	if (damage >= DGUN_MAX_DAMAGE_LEVEL) {
 		// retreat back to commander starting pos
-		this -> issueOrder(this -> startingPos, CMD_MOVE, 0, 0);
+		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
 	}
 }
 
