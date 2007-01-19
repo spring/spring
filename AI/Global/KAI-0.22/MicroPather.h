@@ -48,7 +48,7 @@
  */
 
 
-namespace MicroPatherNS {
+namespace NSMicroPather {
 	const float FLT_BIG = FLT_MAX / 2.0f;
 
 	class PathNode {
@@ -92,7 +92,7 @@ namespace MicroPatherNS {
 
 	// create a MicroPather object to solve for a best path
 	class MicroPather {
-		friend class MicroPatherNS::PathNode;
+		friend class NSMicroPather::PathNode;
 
 		public:
 			enum {

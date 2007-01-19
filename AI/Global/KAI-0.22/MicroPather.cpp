@@ -35,7 +35,7 @@
 
 #include "MicroPather.h"
 
-using namespace MicroPatherNS;
+using namespace NSMicroPather;
 
 class OpenQueueBH {
 	public:
