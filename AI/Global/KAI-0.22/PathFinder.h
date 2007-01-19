@@ -3,7 +3,7 @@
 
 #include "GlobalAI.h"
 
-using namespace MicroPatherNS;
+using namespace NSMicroPather;
 
 class CPathFinder {
 	public:

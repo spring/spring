@@ -4,9 +4,10 @@
 
 #include "Include.h"
 
-#define CALLBACK (this -> gAICallback)
-
+#define CALLBACK				(this -> gAICallback)
+#define DGUN_MIN_HEALTH_RATIO	0.25
 #define DGUN_MIN_ENERGY_LEVEL	380
+#define DGUN_MAX_DAMAGE_LEVEL	250
 #define FRAMERATE				 30
 
 
@@ -23,20 +24,21 @@ class DGunController {
 	private:
 		void evadeIncomingFire(float3, float3, int);
 		void issueOrder(int, int, unsigned int, int);
-
-		bool inRange(float3, float3);
+		void issueOrder(float3, int, unsigned int, int);
+		bool inRange(float3, float3, float);
 		void setFireState(int);
 
 		IAICallback* gAICallback;
+		const UnitDef* commanderUD;
+		int* units;
 
 		int commanderID;
 		int targetID;
 		bool hasDGunOrder;
 		bool hasReclaimOrder;
-		unsigned int dgunOrderFrame;
-		unsigned int reclaimOrderFrame;
-
-		int* units;
+		bool hasRetreatOrder;
+		unsigned int orderFrame;
+		float3 startingPos;
 };
 
 
