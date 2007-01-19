@@ -25,8 +25,9 @@ class DGunController {
 		void evadeIncomingFire(float3, float3, int);
 		void issueOrder(int, int, unsigned int, int);
 		void issueOrder(float3, int, unsigned int, int);
-		bool inRange(float3, float3, float);
+		void clearOrders(unsigned int);
 		void setFireState(int);
+		bool inRange(float3, float3, float);
 
 		IAICallback* gAICallback;
 		const UnitDef* commanderUD;
@@ -37,7 +38,9 @@ class DGunController {
 		bool hasDGunOrder;
 		bool hasReclaimOrder;
 		bool hasRetreatOrder;
-		unsigned int orderFrame;
+		unsigned int dgunOrderFrame;
+		unsigned int reclaimOrderFrame;
+		unsigned int retreatOrderFrame;
 		float3 startingPos;
 };
 
