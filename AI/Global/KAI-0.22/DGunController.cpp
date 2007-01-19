@@ -22,10 +22,13 @@ void DGunController::init(IAICallback* callback, int commanderID) {
 	this -> commanderUD = callback -> GetUnitDef(commanderID);
 	this -> startingPos = callback -> GetUnitPos(commanderID);
 
-	this -> targetID = -1;
-	this -> hasDGunOrder = false;
-	this -> hasReclaimOrder = false;
-	this -> orderFrame = 0;
+	this -> targetID			= -1;
+	this -> hasDGunOrder		= false;
+	this -> hasReclaimOrder		= false;
+	this -> hasRetreatOrder		= false;
+	this -> dgunOrderFrame		= 0;
+	this -> reclaimOrderFrame	= 0;
+	this -> retreatOrderFrame	= 0;
 
 	// set commander to hold fire
 	this -> setFireState(0);
@@ -60,28 +63,17 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
 
 	// check if target within immediate range (if not then better call backup)
-	if (this -> inRange(commanderPos, attackerPos, 1.0)) {
+	if (this -> inRange(commanderPos, attackerPos, 1.15)) {
 		// do we have valid target?
 		if ((attackerID > 0) && (CALLBACK -> GetUnitHealth(attackerID) > 0)) {
 			// prevent friendly-fire "incidents"
 			if ((CALLBACK -> GetMyTeam()) != (CALLBACK -> GetUnitTeam(attackerID))) {
-
 				// can we blast it right now?
 				if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
 					// check if we already issued a dgun order
-					if (this -> hasDGunOrder) {
-						// check age of order so we do not get stuck in idle mode forever
-						if ((currentFrame - (this -> orderFrame)) <= (FRAMERATE >> 2)) {
-							return;
-						}
-						else {
-							// order expired
-							this -> targetID = -1;
-							this -> hasDGunOrder = false;
-						}
+					if (!this -> hasDGunOrder) {
+						this -> issueOrder(attackerID, CMD_DGUN, currentFrame, 0);
 					}
-
-					this -> issueOrder(attackerID, CMD_DGUN, currentFrame, 0);
 				}
 
 				// no, suck it instead
@@ -89,23 +81,14 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 					// if we are already reclaiming one unit ignore attacks
 					// from others (while we do not have energy to dgun and
 					// order not too old)
-					if (this -> hasReclaimOrder) {
-						// check age of order so we do not get stuck in idle mode forever
-						if ((currentFrame - (this -> orderFrame)) <= (FRAMERATE << 2)) {
-							return;
-						}
-						else {
-							// order expired
-							this -> targetID = -1;
-							this -> hasReclaimOrder = false;
-						}
+					if (!this -> hasReclaimOrder) {
+						this -> issueOrder(attackerID, CMD_RECLAIM, currentFrame, 0);
 					}
-
-					this -> issueOrder(attackerID, CMD_RECLAIM, currentFrame, 0);
 				}
 			}
 		}
 	}
+
 
 	// if we are close to going boom then it's time to run our boy
 	if ((healthCur / healthMax) < DGUN_MIN_HEALTH_RATIO) {
@@ -122,6 +105,9 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 
 // update routine to ensure dgun behavior is not solely reactive
 void DGunController::update(unsigned int currentFrame) {
+	// make sure over-age dgun and reclaim orders are erased
+	this -> clearOrders(currentFrame);
+
 	if (this -> hasRetreatOrder) {
 		float healthCur = CALLBACK -> GetUnitHealth(this -> commanderID);
 		float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
@@ -147,7 +133,7 @@ void DGunController::update(unsigned int currentFrame) {
 
 		// get all units within near-immediate dgun range
 		float maxRange = CALLBACK -> GetUnitMaxRange(this -> commanderID);
-		int numUnits = CALLBACK -> GetEnemyUnits(this -> units, commanderPos, maxRange * 2);
+		int numUnits = CALLBACK -> GetEnemyUnits(this -> units, commanderPos, maxRange * 2.0f);
 
 		for (int i = 0; i < numUnits; i++) {
 			// if enemy unit found in array
@@ -170,7 +156,6 @@ void DGunController::update(unsigned int currentFrame) {
 				}
 			}
 		}
-
 	}
 }
 
@@ -204,11 +189,11 @@ void DGunController::issueOrder(float3 target, int orderType, unsigned int curre
 	c.params.push_back(target.z);
 
 	this -> targetID = -1;
-	this -> orderFrame = currentFrame;
 
 	if (orderType == CMD_MOVE) {
 		// regard CMD_MOVE as order to retreat
 		this -> hasRetreatOrder = true;
+		this -> retreatOrderFrame = currentFrame;
 	}
 
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
@@ -221,16 +206,28 @@ void DGunController::issueOrder(int target, int orderType, unsigned int currentF
 	c.params.push_back(target);
 
 	this -> targetID = target;
-	this -> orderFrame = currentFrame;
 
 	if (orderType == CMD_DGUN) {
 		this -> hasDGunOrder = true;
+		this -> dgunOrderFrame = currentFrame;
 	}
 	if (orderType == CMD_RECLAIM) {
 		this -> hasReclaimOrder = true;
+		this -> reclaimOrderFrame = currentFrame;
 	}
 
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
+}
+
+void DGunController::clearOrders(unsigned int currentFrame) {
+	if ((currentFrame - (this -> dgunOrderFrame)) > (FRAMERATE >> 2)) {
+		// dgun order expired
+		this -> hasDGunOrder = false;
+	}
+	if ((currentFrame - (this -> reclaimOrderFrame)) > (FRAMERATE << 2)) {
+		// reclaim order expired
+		this -> hasReclaimOrder = false;
+	}
 }
 
 
