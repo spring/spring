@@ -69,7 +69,8 @@ class CGuiHandler : public CInputReceiver {
 		void UnitFinished(CUnit* unit);
 		void UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders);
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
-		void UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam);
+		void UnitTaken(CUnit* unit);
+		void UnitGiven(CUnit* unit);
 		void AddConsoleLine(const std::string& line, int priority);
 		void GroupChanged(int groupID);
 

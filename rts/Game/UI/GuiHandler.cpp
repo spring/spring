@@ -144,10 +144,18 @@ void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
-void CGuiHandler::UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam)
+void CGuiHandler::UnitTaken(CUnit* unit)
 {
 	if (luaUI != NULL) {
-		luaUI->UnitChangedTeam(unit, oldTeam, newTeam);
+		luaUI->UnitTaken(unit);
+	}
+}
+
+
+void CGuiHandler::UnitGiven(CUnit* unit)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitGiven(unit);
 	}
 }
 

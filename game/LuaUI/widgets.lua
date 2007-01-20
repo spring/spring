@@ -99,7 +99,8 @@ local callInLists = {
   'UnitFinished',
   'UnitFromFactory',
   'UnitDestroyed',
-  'UnitChangedTeam',
+  'UnitTaken',
+  'UnitGiven',
   'TweakMousePress',
   'TweakIsAbove',
   'TweakGetTooltip',
@@ -899,41 +900,51 @@ end
 --  Unit call-ins
 --
 
-function widgetHandler:UnitCreated(unitID, unitDefID)
+function widgetHandler:UnitCreated(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitCreatedList) do
-    w:UnitCreated(unitID, unitDefID)
+    w:UnitCreated(unitID, unitDefID, unitTeam)
   end
   return
 end
 
 
-function widgetHandler:UnitFinished(unitID, unitDefID)
+function widgetHandler:UnitFinished(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitFinishedList) do
-    w:UnitFinished(unitID, unitDefID)
+    w:UnitFinished(unitID, unitDefID, unitTeam)
   end
   return
 end
 
 
-function widgetHandler:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+function widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
+                                       factID, factDefID, userOrders)
   for _,w in ipairs(self.UnitFromFactoryList) do
-    w:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+    w:UnitFromFactory(unitID, unitDefID, unitTeam,
+                      factID, factDefID, userOrders)
   end
   return
 end
 
 
-function widgetHandler:UnitDestroyed(unitID, unitDefID)
+function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitDestroyedList) do
-    w:UnitDestroyed(unitID, unitDefID)
+    w:UnitDestroyed(unitID, unitDefID, unitTeam)
   end
   return
 end
 
 
-function widgetHandler:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
-  for _,w in ipairs(self.UnitChangedTeamList) do
-    w:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
+function widgetHandler:UnitTaken(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitTakenList) do
+    w:UnitTaken(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitGiven(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitGivenList) do
+    w:UnitGiven(unitID, unitDefID, unitTeam)
   end
   return
 end
