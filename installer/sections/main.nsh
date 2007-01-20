@@ -100,7 +100,6 @@
   File "..\game\shaders\*.vp"
   File "..\game\shaders\*.glsl"
 
-!ifndef SP_UPDATE
   
   SetOutPath "$INSTDIR\AI\Helper-libs"
 ; Someone fix the vc projects so this can be merged to one block please.
@@ -146,6 +145,8 @@
   File "..\game\AI\Bot-libs\EmptyAI.dll"
   Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
 !endif
+
+!ifndef SP_UPDATE
 
   SetOverWrite on
   ; XTA

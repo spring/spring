@@ -204,8 +204,9 @@ Function CheckVersion
 ;  IntCmp $1 2650112 Done	      ; 0.70b2
 ;  IntCmp $1 2707456 Done	      ; 0.70b3
   IntCmp $1 5438464 Done              ; 0.74b1
+  IntCmp $1 5487104 Done              ; 0.74b2
 Fail:
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.74b1. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.74b1 or 0.74b2. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
   Abort "Unable to upgrade, version 0.74b1 not found.."
   Goto done
 
@@ -261,7 +262,7 @@ Section /o "Desktop shortcut" SEC_DESKTOP
 SectionEnd
 !endif
 
-!ifndef SP_UPDATE
+;!ifndef SP_UPDATE
 SectionGroup "AI opponent plugins (Bots)"
 	Section "AAI" SEC_AAI
 	!define INSTALL
@@ -275,7 +276,7 @@ SectionGroup "AI opponent plugins (Bots)"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
-!endif
+;!endif
 
 !include "sections\sectiondesc.nsh"
 
