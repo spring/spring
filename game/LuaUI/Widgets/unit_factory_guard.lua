@@ -29,12 +29,7 @@ end
 include("spring.h.lua")
 
 
-local function GiveUnitOrders(unitID, func)
-  local selUnits = Spring.GetSelectedUnits()
-  Spring.SelectUnitsByValues({unitID})
-  func(unitID)
-  Spring.SelectUnitsByValues(selUnits)
-end
+local OrderUnit = Spring.GiveOrderToUnit
 
 
 function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
@@ -51,12 +46,10 @@ function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
   if ((ud ~= nil) and ud.builder and ud.canAssist and
       (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
     -- set builders to guard/assist their factories
-    GiveUnitOrders(unitID, function ()
-      x, y, z = Spring.GetUnitPosition(facID)
-      Spring.GiveOrder( CMD_MOVE,  { x + 100, y, z + 100 }, { "" } )
-      Spring.GiveOrder( CMD_MOVE,  { x + 100, y, z },       { "shift" } )
-      Spring.GiveOrder( CMD_GUARD, { facID },           { "shift" } )
-    end)
+    local x, y, z = Spring.GetUnitPosition(facID)
+    OrderUnit(unitID, CMD_MOVE,  { x + 100, y, z + 100 }, { "" })
+    OrderUnit(unitID, CMD_MOVE,  { x + 100, y, z },       { "shift" })
+    OrderUnit(unitID, CMD_GUARD, { facID },               { "shift" })
   end
 end
 

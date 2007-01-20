@@ -32,23 +32,13 @@ include("spring.h.lua")
 local changedUnits = {}  --  work-around for the UnitChangedTeam() order
 
 
-local function GiveUnitOrders(unitID, func)
-  local selUnits = Spring.GetSelectedUnits()
-  Spring.SelectUnitsByValues({unitID})
-  func(unitID)
-  Spring.SelectUnitsByValues(selUnits)
-end
-
-
 local function SetupUnit(unitID)
   -- set immobile builders (nanotowers) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
-  GiveUnitOrders(unitID, function ()
-    x, y, z = Spring.GetUnitPosition(unitID)
-    Spring.GiveOrder( CMD_STOP, { }, { } )
-    Spring.GiveOrder( CMD_MOVE_STATE, { 2 }, { } )
-    Spring.GiveOrder( CMD_PATROL, { x + 25, y, z - 25 }, { } )
-  end)
+  local x, y, z = Spring.GetUnitPosition(unitID)
+  Spring.GiveOrderToUnit(unitID, CMD_STOP, {}, {})
+  Spring.GiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
+  Spring.GiveOrderToUnit(unitID, CMD_PATROL, { x + 25, y, z - 25 }, {})
 end
 
 
