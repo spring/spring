@@ -308,6 +308,9 @@ void CAirMoveType::SlowUpdate(void)
 	}
 	if(owner->pos!=oldSlowUpdatePos){
 		oldSlowUpdatePos=owner->pos;
+		if(owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 5 + 100)	//try to handle aircraft getting unlimited height
+			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5  + 100;
+
 		int newmapSquare=ground->GetSquare(owner->pos);
 		if(newmapSquare!=owner->mapSquare){
 			owner->mapSquare=newmapSquare;
@@ -348,6 +351,8 @@ void CAirMoveType::UpdateManeuver(void)
 		UpdateAirPhysics(0,aileron,elevator,1,owner->frontdir);
 		if((owner->updir.y<0 && owner->frontdir.y<0) || speedf<0.8f)
 			maneuver=0;
+		if(owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4)	//some seem to report that the "unlimited altitude" thing is because of these maneuvers
+			maneuver = 0;
 		break;}
 	case 2:{	//inverted immelman
 		int aileron=0,elevator=0;
