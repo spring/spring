@@ -141,6 +141,7 @@
   GetTeamResources()
   GetTeamUnitStats()
   SetShareLevel()
+  ShareResources()
 
   GetPlayerInfo()
 
@@ -708,6 +709,9 @@ GetTeamUnitStats(number teamID) ->
         number sent
 
 SetShareLevel(string "metal" | "energy", number fraction) -> nil
+
+ShareResources(number team,
+               string "units" | "metal" | "energy"[, number amount) -> nil
 
 
 GetPlayerInfo(number playerID) ->

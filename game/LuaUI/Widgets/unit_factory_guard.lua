@@ -32,24 +32,26 @@ include("spring.h.lua")
 local OrderUnit = Spring.GiveOrderToUnit
 
 
-function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
-  -- is the builder a factory?
-  if (userOrders) then
-    return
+function widget:UnitFromFactory(unitID, unitDefID, unitTeam,
+                                factID, factDefID, userOrders)
+  if (unitTeam ~= Spring.GetMyTeamID()) then
+    return -- not my unit
   end
-  local bd = UnitDefs[facDefID]
+  if (userOrders) then
+    return -- already has user assigned orders
+  end
+  local bd = UnitDefs[factDefID]
   if (not (bd and bd.isFactory)) then
-    return
+    return -- not a factory
   end
   -- can this unit assist?
   local ud = UnitDefs[unitDefID]
-  if ((ud ~= nil) and ud.builder and ud.canAssist and
-      (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
+  if (ud and ud.builder and ud.canAssist) then
     -- set builders to guard/assist their factories
-    local x, y, z = Spring.GetUnitPosition(facID)
+    local x, y, z = Spring.GetUnitPosition(factID)
     OrderUnit(unitID, CMD_MOVE,  { x + 100, y, z + 100 }, { "" })
     OrderUnit(unitID, CMD_MOVE,  { x + 100, y, z },       { "shift" })
-    OrderUnit(unitID, CMD_GUARD, { facID },               { "shift" })
+    OrderUnit(unitID, CMD_GUARD, { factID },              { "shift" })
   end
 end
 

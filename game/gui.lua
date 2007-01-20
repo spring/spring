@@ -100,7 +100,8 @@ UnitCreated     = nil
 UnitFinished    = nil
 UnitFromFactory = nil
 UnitDestroyed   = nil
-UnitChangedTeam = nil
+UnitTaken       = nil
+UnitGiven       = nil
 
 
 --------------------------------------------------------------------------------

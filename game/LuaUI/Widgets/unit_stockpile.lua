@@ -29,10 +29,9 @@ end
 include("spring.h.lua")
 
 
-function widget:UnitCreated(unitID, unitDefID)
+function widget:UnitCreated(unitID, unitDefID, unitTeam)
   local ud = UnitDefs[unitDefID]
-  if ((ud ~= nil) and
-      (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
+  if ((ud ~= nil) and (unitTeam == Spring.GetMyTeamID())) then
     if (ud.canStockpile) then
       -- give stockpilers 100 units to build
       Spring.GiveOrderToUnit(unitID, CMD_STOCKPILE, {}, { "ctrl", "shift" })

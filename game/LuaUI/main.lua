@@ -171,25 +171,31 @@ function GroupChanged(groupID)
   return widgetHandler:GroupChanged(groupID)
 end
 
-function UnitCreated(unitID, unitDefID)
-  return widgetHandler:UnitCreated(unitID, unitDefID)
+function UnitCreated(unitID, unitDefID, unitTeam)
+  return widgetHandler:UnitCreated(unitID, unitDefID, unitTeam)
 end
 
-function UnitFinished(unitID, unitDefID)
-  return widgetHandler:UnitFinished(unitID, unitDefID)
+function UnitFinished(unitID, unitDefID, unitTeam)
+  return widgetHandler:UnitFinished(unitID, unitDefID, unitTeam)
 end
 
-function UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
-  return widgetHandler:UnitFromFactory(unitID, unitDefID,
-                                        facID,  facDefID, userOrders)
+function UnitFromFactory(unitID, unitDefID, unitTeam,
+                         factID, factDefID, userOrders)
+  return widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
+                                       factID, factDefID, userOrders)
 end
 
-function UnitDestroyed(unitID, unitDefID)
-  return widgetHandler:UnitDestroyed(unitID, unitDefID)
+function UnitDestroyed(unitID, unitDefID, unitTeam)
+  return widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
-function UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
-  return widgetHandler:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
+function UnitTaken(unitID, unitDefID, unitTeam)
+  return widgetHandler:UnitTaken(unitID, unitDefID, unitTeam)
+end
+
+
+function UnitGiven(unitID, unitDefID, unitTeam)
+  return widgetHandler:UnitGiven(unitID, unitDefID, unitTeam)
 end
 
 

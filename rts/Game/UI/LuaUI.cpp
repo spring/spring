@@ -186,6 +186,7 @@ static int MarkerErasePosition(lua_State* L);
 
 static int DrawScreenGeometry(lua_State* L);
 static int DrawResetState(lua_State* L);
+static int DrawResetMatrices(lua_State* L);
 static int DrawClear(lua_State* L);
 
 static int DrawLighting(lua_State* L);
@@ -241,6 +242,7 @@ static int ParseFloatArray(lua_State* L, float* array, int size);
 // Local Variables
 
 static bool drawingEnabled = false;
+static bool drawWorldMode = false;
 
 static float screenWidth = 0.36f;
 static float screenDistance = 0.60f;
@@ -449,6 +451,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_newtable(L);
 	REGISTER_LUA_DRAW_CFUNC(ScreenGeometry);
 	REGISTER_LUA_DRAW_CFUNC(ResetState);
+	REGISTER_LUA_DRAW_CFUNC(ResetMatrices);
 	REGISTER_LUA_DRAW_CFUNC(Clear);
 	REGISTER_LUA_DRAW_CFUNC(Lighting);
 	REGISTER_LUA_DRAW_CFUNC(ShadeModel);
@@ -689,11 +692,12 @@ bool CLuaUI::UnitCreated(CUnit* unit)
 		return true; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);	
-	lua_pushnumber(L, unit->unitDef->id);	
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
 
 	// call the routine
-	const int error = lua_pcall(L, 2, 0, 0);
+	const int error = lua_pcall(L, 3, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_UnitCreated", lua_tostring(L, -1));
@@ -725,9 +729,10 @@ bool CLuaUI::UnitFinished(CUnit* unit)
 
 	lua_pushnumber(L, unit->id);	
 	lua_pushnumber(L, unit->unitDef->id);	
+	lua_pushnumber(L, unit->team);	
 
 	// call the routine
-	const int error = lua_pcall(L, 2, 0, 0);
+	const int error = lua_pcall(L, 3, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_UnitFinished", lua_tostring(L, -1));
@@ -757,14 +762,15 @@ bool CLuaUI::UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders)
 		return true; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);	
-	lua_pushnumber(L, unit->unitDef->id);	
-	lua_pushnumber(L, factory->id);	
-	lua_pushnumber(L, factory->unitDef->id);	
-	lua_pushboolean(L, userOrders);	
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, factory->id);
+	lua_pushnumber(L, factory->unitDef->id);
+	lua_pushboolean(L, userOrders);
 
 	// call the routine
-	const int error = lua_pcall(L, 5, 0, 0);
+	const int error = lua_pcall(L, 6, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_UnitFromFactory", lua_tostring(L, -1));
@@ -796,9 +802,10 @@ bool CLuaUI::UnitDestroyed(CUnit* victim, CUnit* attacker)
 
 	lua_pushnumber(L, victim->id);	
 	lua_pushnumber(L, victim->unitDef->id);	
+	lua_pushnumber(L, victim->team);
 
 	// call the routine
-	const int error = lua_pcall(L, 2, 0, 0);
+	const int error = lua_pcall(L, 3, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
 		                "Call_UnitDestroyed", lua_tostring(L, -1));
@@ -810,10 +817,9 @@ bool CLuaUI::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
-bool CLuaUI::UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam)
+bool CLuaUI::UnitTaken(CUnit* unit)
 {
-	if ((gu->myAllyTeam != gs->AllyTeam(oldTeam)) &&
-	    (gu->myAllyTeam != gs->AllyTeam(newTeam))) {
+	if (unit->allyteam != gu->myAllyTeam) {
 		return false;
 	}
 
@@ -823,22 +829,56 @@ bool CLuaUI::UnitChangedTeam(CUnit* unit, int oldTeam, int newTeam)
 	}
 	lua_pop(L, lua_gettop(L));
 
-	lua_getglobal(L, "UnitChangedTeam");
+	lua_getglobal(L, "UnitTaken");
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, lua_gettop(L));
 		return true; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);	
-	lua_pushnumber(L, unit->unitDef->id);	
-	lua_pushnumber(L, oldTeam);	
-	lua_pushnumber(L, newTeam);	
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
 
 	// call the routine
-	const int error = lua_pcall(L, 4, 0, 0);
+	const int error = lua_pcall(L, 3, 0, 0);
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitChangedTeam", lua_tostring(L, -1));
+		                "Call_UnitTaken", lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	return true;
+}
+
+
+bool CLuaUI::UnitGiven(CUnit* unit)
+{
+	if (unit->allyteam != gu->myAllyTeam) {
+		return false;
+	}
+
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, "UnitGiven");
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	const int error = lua_pcall(L, 3, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                "Call_UnitGiven", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -911,6 +951,24 @@ static void ResetGLMaterial()
 }
 
 
+static void ResetWorldMatrices()
+{
+	// reset the matrices
+	glMatrixMode(GL_TEXTURE); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		ClearMatrixStack();
+		glLoadMatrixd(camera->projection);
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		ClearMatrixStack();
+		glLoadMatrixd(camera->modelview);
+	}
+}
+
+
 bool CLuaUI::DrawWorldItems()
 {
 	lua_State* L = LUASTATE.GetL();
@@ -926,6 +984,7 @@ bool CLuaUI::DrawWorldItems()
 	}
 
 	drawingEnabled = true;
+	drawWorldMode = true;
 	
 	// push the current GL state
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
@@ -959,22 +1018,12 @@ bool CLuaUI::DrawWorldItems()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
 	// reset the matrices
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
-		glLoadMatrixd(camera->projection);
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
-		glLoadMatrixd(camera->modelview);
-	}
+	ResetWorldMatrices();
 
 	// pop the GL state
 	glPopAttrib();
 
+	drawWorldMode = false;
 	drawingEnabled = false;
 
 	return retval;
@@ -1062,6 +1111,25 @@ static void RevertScreenLighting()
 }
 
 
+static void ResetScreenMatrices()
+{
+	// reset the matrices
+	glMatrixMode(GL_TEXTURE); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		ClearMatrixStack();
+		glLoadIdentity();
+	}
+	SetupScreenTransform();
+}
+
+
 bool CLuaUI::DrawScreenItems()
 {
 	lua_State* L = LUASTATE.GetL();
@@ -1112,7 +1180,7 @@ bool CLuaUI::DrawScreenItems()
 	// revert the screen transform
 	RevertScreenLighting();
 
-	// reset the matrices
+	// reset the matrices  (to the pre-LuaUI transform)
 	glMatrixMode(GL_TEXTURE); {
 		ClearMatrixStack();
 		glLoadIdentity();
@@ -4820,23 +4888,34 @@ static void ResetGLState()
 	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_LINE_STIPPLE);
 	glAlphaFunc(GL_GREATER, 0.5f);
+
 	glDisable(GL_LIGHTING);
+
+	glShadeModel(GL_SMOOTH);
+
 	glDisable(GL_COLOR_LOGIC_OP);
 	glLogicOp(GL_INVERT);
+
 	glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glShadeModel(GL_SMOOTH);
-	glDisable(GL_TEXTURE_2D);
+
 	glDisable(GL_SCISSOR_TEST);
+
+	glDisable(GL_TEXTURE_2D);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_POLYGON_OFFSET_LINE);
 	glDisable(GL_POLYGON_OFFSET_POINT);
+
+	glDisable(GL_LINE_STIPPLE);
+
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
 
@@ -4858,6 +4937,28 @@ static int DrawResetState(lua_State* L)
 	}
 
 	ResetGLState();
+
+	return 0;
+}
+
+
+static int DrawResetMatrices(lua_State* L)
+{
+	if (!drawingEnabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "DrawResetMatrices takes no arguments");
+		lua_error(L);
+	}
+	
+	if (drawWorldMode) {
+		ResetWorldMatrices();
+	} else {
+		ResetScreenMatrices();
+	}
 
 	return 0;
 }

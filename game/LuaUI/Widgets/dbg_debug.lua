@@ -174,36 +174,41 @@ function widget:CommandsChanged()
 end
 
 
-function widget:UnitCreated(unitID, unitDefID)
-  print('DEBUG (UnitCreated) '..unitID..' '..unitDefID)
+function widget:UnitCreated(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitCreated) '..unitID..' '..unitDefID..' '..unitTeam)
   return
 end
 
 
-function widget:UnitFinished(unitID, unitDefID)
-  print('DEBUG (UnitFinished) '..unitID..' '..unitDefID)
+function widget:UnitFinished(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitFinished) '..unitID..' '..unitDefID..' '..unitTeam)
   return
 end
 
 
-function widget:UnitFromFactory(unitID, unitDefID, facID, facDefID, userOrders)
+function widget:UnitFromFactory(unitID, unitDefID, unitTeam,
+                                factID, factDefID, userOrders)
   print('DEBUG (UnitFromFactory) '
-        ..unitID ..' '..unitDefID..' '
-        ..facID  ..' '..facDefID..' '
-        ..tostring(userOrders))
+        ..unitID..' '..unitDefID..' '..unitTeam..' '
+        ..factID..' '..factDefID..' '..tostring(userOrders))
   return
 end
 
 
-function widget:UnitDestroyed(unitID, unitDefID)
-  print('DEBUG (UnitDestroyed) '..unitID..' '..unitDefID)
+function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitDestroyed) '..unitID..' '..unitDefID..' '..unitTeam)
   return
 end
 
 
-function widget:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
-  print('DEBUG (UnitChangedTeam) '
-        ..unitID..' '..unitDefID..' '..oldTeam..' '..newTeam)
+function widget:UnitTaken(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitTaken) '..unitID..' '..unitDefID..' '..unitTeam)
+  return
+end
+
+
+function widget:UnitGiven(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitGiven) '..unitID..' '..unitDefID..' '..unitTeam)
   return
 end
 

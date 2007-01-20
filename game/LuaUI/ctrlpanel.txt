@@ -3,7 +3,7 @@
 //  Spring Control Panel Configuration
 //
 
-// outlinefont       0
+outlinefont       1
 // dropShadows       1
 // useOptionLEDs     1
 textureAlpha       1.0

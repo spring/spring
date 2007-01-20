@@ -29,9 +29,6 @@ end
 include("spring.h.lua")
 
 
-local changedUnits = {}  --  work-around for the UnitChangedTeam() order
-
-
 local function SetupUnit(unitID)
   -- set immobile builders (nanotowers) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
@@ -53,18 +50,10 @@ function widget:Initialize()
 end
 
 
-function widget:Update(dt)
-  for unitID,udid in pairs(changedUnits) do
-    local ud = UnitDefs[udid]
-    if (ud and ud.builder and not ud.canMove) then
-      SetupUnit(unitID)
-    end
+function widget:UnitCreated(unitID, unitDefID, unitTeam)
+  if (unitTeam ~= Spring.GetMyTeamID()) then
+    return
   end
-  changedUnits = {}
-end
-
-
-function widget:UnitCreated(unitID, unitDefID)
   local ud = UnitDefs[unitDefID]
   if (ud and ud.builder and not ud.canMove) then
     SetupUnit(unitID)
@@ -72,11 +61,8 @@ function widget:UnitCreated(unitID, unitDefID)
 end
 
 
-function widget:UnitChangedTeam(unitID, unitDefID, oldTeam, newTeam)
-  if ((oldTeam == newTeam) or (newTeam ~= Spring.GetMyTeamID())) then
-    return
-  end
-  changedUnits[unitID] = unitDefID
+function widget:UnitGiven(unitID, unitDefID, unitTeam)
+  widget:UnitCreated(unitID, unitDefID, unitTeam)
 end
 
 
