@@ -63,7 +63,7 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
 
 	// check if target within immediate range (if not then better call backup)
-	if (this -> inRange(commanderPos, attackerPos, 1.15)) {
+	if (this -> inRange(commanderPos, attackerPos, 1.0f)) {
 		// do we have valid target?
 		if ((attackerID > 0) && (CALLBACK -> GetUnitHealth(attackerID) > 0)) {
 			// prevent friendly-fire "incidents"
@@ -91,7 +91,7 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 
 
 	// if we are close to going boom then it's time to run our boy
-	if ((healthCur / healthMax) < DGUN_MIN_HEALTH_RATIO) {
+	if ((healthMax > 0) && ((healthCur / healthMax) < DGUN_MIN_HEALTH_RATIO)) {
 		// retreat back to commander starting pos
 		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
 	}
@@ -112,7 +112,7 @@ void DGunController::update(unsigned int currentFrame) {
 		float healthCur = CALLBACK -> GetUnitHealth(this -> commanderID);
 		float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
 
-		if ((healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2)) {
+		if ((healthMax > 0) && ((healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2))) {
 			// cancel retreat order if we are no longer in danger
 			this -> hasRetreatOrder = false;
 		}
