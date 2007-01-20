@@ -112,11 +112,7 @@ void DGunController::update(unsigned int currentFrame) {
 		float healthCur = CALLBACK -> GetUnitHealth(this -> commanderID);
 		float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
 
-<<<<<<< .mine
 		if ((healthMax > 0) && ((healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2))) {
-=======
-		if (healthMax != 0 && (healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2)) {
->>>>>>> .r3239
 			// cancel retreat order if we are no longer in danger
 			this -> hasRetreatOrder = false;
 		}
