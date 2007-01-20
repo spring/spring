@@ -230,7 +230,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 
 	CGrassDrawer::GrassStruct *grass = gd->grass;
 				
-	if(dist<gd->maxDetailedDist){
+	if(dist<gd->maxGrassDist){
 		int curSquare=y*gd->blocksX+x;
 		int curModSquare=(y&31)*32+(x&31);
 		grass[curModSquare].lastSeen=gs->frameNum;
