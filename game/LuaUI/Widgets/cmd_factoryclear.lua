@@ -40,15 +40,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function GiveUnitOrders(unitID, func)
-  local selUnits = Spring.GetSelectedUnits()
-  Spring.SelectUnitsByValues({unitID})
-  func(unitID)
-  Spring.SelectUnitsByValues(selUnits)
-end
-
-
-local function RemoveUnits(unitDefID, count)
+local function RemoveBuildOrders(unitID, buildDefID, count)
   local opts = {}
   while (count > 0) do
     if (count >= 100) then
@@ -64,7 +56,7 @@ local function RemoveUnits(unitDefID, count)
       opts = { "right" }
       count = count - 1
     end    
-    Spring.GiveOrder(-unitDefID, {}, opts)
+    Spring.GiveOrderToUnit(unitID, -buildDefID, {}, opts)
   end
 end
 
@@ -80,10 +72,8 @@ function ClearFactoryQueues()
         local queue = Spring.GetRealBuildQueue(uid)
         if (queue ~= nil) then
           for udid,buildPair in ipairs(queue) do
-            GiveUnitOrders(uid, function ()
-              local udid, count = next(buildPair, nil)
-              RemoveUnits(udid, count)
-            end)
+            local udid, count = next(buildPair, nil)
+            RemoveBuildOrders(uid, udid, count)
           end
         end
       end

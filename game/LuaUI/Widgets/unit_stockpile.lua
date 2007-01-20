@@ -29,23 +29,13 @@ end
 include("spring.h.lua")
 
 
-local function GiveUnitOrders(unitID, func)
-  local selUnits = Spring.GetSelectedUnits()
-  Spring.SelectUnitsByValues({unitID})
-  func(unitID)
-  Spring.SelectUnitsByValues(selUnits)
-end
-
-
 function widget:UnitCreated(unitID, unitDefID)
   local ud = UnitDefs[unitDefID]
   if ((ud ~= nil) and
       (Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID())) then
     if (ud.canStockpile) then
       -- give stockpilers 100 units to build
-      GiveUnitOrders(unitID, function ()
-      	Spring.GiveOrder( CMD_STOCKPILE, { }, { "ctrl", "shift" } )
-      end)
+      Spring.GiveOrderToUnit(unitID, CMD_STOCKPILE, {}, { "ctrl", "shift" })
     end
   end
 end

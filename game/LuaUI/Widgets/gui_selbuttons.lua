@@ -235,25 +235,28 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   gl.Rotate(math.cos(0.5 * math.pi * timer) * 60.0, 0, 1, 0)
 
   CenterUnitDef(unitDefID)
-
---  gl.Lighting(false)
---  gl.Culling(false)
---  gl.Color(0,0,0,1)
+  
+  local scribe = false
+  if (scribe) then
+    gl.Lighting(false)
+    gl.Culling(false)
+    gl.Color(0,0,0,1)
+  end
 
   gl.UnitDef(unitDefID, Spring.GetMyTeamID())
 
---[[
---  gl.LineWidth(2)
-  gl.Lighting(false)
-  gl.DepthMask(false)
-  gl.Color(1,1,1,1)
-  gl.PolygonOffset(-4, -4)
-  gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-  gl.UnitDef(unitDefID, Spring.GetMyTeamID())
-  gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-  gl.PolygonOffset(false)
-]]
-
+  if (scribe) then
+--    gl.LineWidth(0.1)
+    gl.Lighting(false)
+    gl.DepthMask(false)
+    gl.Color(1,1,1,1)
+    gl.PolygonOffset(-4, -4)
+    gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+    gl.UnitDef(unitDefID, Spring.GetMyTeamID())
+    gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+    gl.PolygonOffset(false)
+--    gl.LineWidth(1.0)
+  end
 
   gl.Scissor(false)
   gl.PopMatrix()

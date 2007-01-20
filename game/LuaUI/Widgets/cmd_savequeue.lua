@@ -53,27 +53,21 @@ end
 
 
 function LoadQueue()
-  local reselect = false
   local selUnits = Spring.GetSelectedUnits()
   for _,uid in ipairs(selUnits) do
     local queue = savedQueue[uid]
     if (queue ~= nil) then
-      for k,v in ipairs(queue) do  --  in order
-        if (not v.options.internal) then
+      for k,cmd in ipairs(queue) do  --  in order
+        if (not cmd.options.internal) then
           local opts = {}
           table.insert(opts, "shift") -- appending
-          if (v.options.alt)   then table.insert(opts, "alt")   end
-          if (v.options.ctrl)  then table.insert(opts, "ctrl")  end
-          if (v.options.right) then table.insert(opts, "right") end
-          Spring.SelectUnitsByValues({uid})
-          Spring.GiveOrder( v.id, v.params, opts )
-          reselect = true
+          if (cmd.options.alt)   then table.insert(opts, "alt")   end
+          if (cmd.options.ctrl)  then table.insert(opts, "ctrl")  end
+          if (cmd.options.right) then table.insert(opts, "right") end
+          Spring.GiveOrderToUnit(uid, cmd.id, cmd.params, opts)
         end
       end
     end
-  end
-  if (reselect) then
-    Spring.SelectUnitsByValues(selUnits)
   end
 end
 

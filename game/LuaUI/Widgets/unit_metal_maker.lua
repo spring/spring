@@ -95,8 +95,6 @@ function widget:UnitFinished(unitID, unitDefID)
   local ud = UnitDefs[unitDefID]
   if (ud.isMetalMaker) then
     print("Added metal maker: "..unitID)
-    if (metalMakers[unitID]) then
-    end
     metalMakers[unitID] = true
     -- set the new unit to our currentState
     local tmpMakers = metalMakers
