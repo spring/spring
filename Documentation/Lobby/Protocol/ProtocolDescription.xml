@@ -1379,13 +1379,6 @@
     </Command>
 
     <Command Name="ENABLEALLUNITS" Source="client">
-      <Arguments>
-        <Argument Name="unitname1" Optional="no" Sentence="no">
-        Multiple units may follow, but at least one must be present in the arguments list.
-        </Argument>
-        <Argument Name="unitname2" Optional="no" Sentence="no"/>
-        <Argument Name="..." Optional="no" Sentence="no"/>
-      </Arguments>
       <Description>
       Sent by founder of the battle to server telling him he enabled ALL units and so clearing
       the disabled units list.
@@ -1393,13 +1386,6 @@
     </Command>
     
     <Command Name="ENABLEALLUNITS" Source="server">
-      <Arguments>
-        <Argument Name="unitname1" Optional="no" Sentence="no">
-        Multiple units may follow, but at least one must be present in the arguments list.
-        </Argument>
-        <Argument Name="unitname2" Optional="no" Sentence="no"/>
-        <Argument Name="..." Optional="no" Sentence="no"/>
-      </Arguments>
       <Description>
       Sent by server to all clients in the battle except for the founder, telling them that
       disabled units list has been cleared.
