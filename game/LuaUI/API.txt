@@ -52,7 +52,8 @@
   UnitFinished()
   UnitFromFactory()
   UnitDestroyed()
-  UnitChangedTeam()
+  UnitTaken()
+  UnitGiven()
 
   GroupChanged()
 
@@ -177,6 +178,7 @@
 
   Draw.ScreenGeometry()
   Draw.ResetState()
+  Draw.ResetMatrices()
   Draw.Clear()
 
   Draw.Lighting()
@@ -379,24 +381,33 @@ GetTooltip(number x, number y) -> string "tooltip"
 --
 --  Called when a unit is created
 --
-UnitCreated(number unitID, number unitDefID) -> nil
+UnitCreated(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
 --  Called when a unit first reaches 100% health
 --
-UnitFinished(number unitID, number unitDefID) -> nil
+UnitFinished(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
 --  Called when a unit is produced by a factory (after UnitFinished())
 --
-UnitFromFactory(number unitID, number unitDefID,
-                number factID, number factUnitDefID,
-                boolean userOrders) -> nil
+UnitFromFactory(number unitID, number unitDefID, number unitTeam,
+                number factID, number factDefID, boolean userOrders) -> nil
 
 --
 --  Called when a unit is destroyed
 --
-UnitDestroyed(number unitID, number unitDefID) -> nil
+UnitDestroyed(number unitID, number unitDefID, number unitTeam) -> nil
+
+--
+--  Called just before a unit is taken from a team
+--
+UnitTaken(number unitID, number unitDefID, number unitTeam) -> nil
+
+--
+--  Called after a unit is given to a team
+--
+UnitGiven(number unitID, number unitDefID, number unitTeam) -> nil
 
 
 --
@@ -826,6 +837,7 @@ MarkerErasePosition(number x, number y, number z) -> nil
 
 Draw.ScreenGeometry(number width, number dist) -> nil
 
+
 Draw.ResetState() -> nil
 -- ShadeModel = GL_SMOOTH
 -- Scissor    = false
@@ -836,6 +848,13 @@ Draw.ResetState() -> nil
 -- LogicOp    = false  (GL_INVERT)
 -- AlphaTest  = false  (GL_GREATER, 0.5f)
 -- Blending   = GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+
+
+Draw.ResetMatrices() -> nil
+-- Resets GL_TEXTURE matrix stack
+-- Resets GL_MODELVIEW matrix stack
+-- Resets GL_PROJECTION matrix stack
+
 
 Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
 -- bits:
