@@ -41,7 +41,7 @@ SetCompressor lzma
 !ifndef SP_PATCH
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
-!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed on your computer. It is recommended that you configure TA Spring settings now if this is a fresh installation, otherwise you may encounter problems."
+!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed on your computer. It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
 
 !define MUI_FINISHPAGE_RUN "$INSTDIR\settings.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
@@ -206,8 +206,8 @@ Function CheckVersion
   IntCmp $1 5438464 Done              ; 0.74b1
   IntCmp $1 5487104 Done              ; 0.74b2
 Fail:
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of TA Spring 0.74b1 or 0.74b2. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.74b1 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.74b1 or 0.74b2. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
+  Abort "Unable to upgrade, version 0.74b1 or 0.74b2 not found.."
   Goto done
 
 Done:
@@ -371,7 +371,7 @@ Section Uninstall
   !include "sections\battleroom.nsh"
   !include "sections\luaui.nsh"
 
-  Delete "$DESKTOP\TA Spring battleroom.lnk"
+  Delete "$DESKTOP\${PRODUCT_NAME} Spring battleroom.lnk"
 
   ; All done
   RMDir "$INSTDIR"
