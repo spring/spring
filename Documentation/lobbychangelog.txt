@@ -1,6 +1,12 @@
   ------ CHANGELOG ------
 
-  *** 0.32 (??x??x??) ***
+  *** 0.33 (??x??x??) ***
+  * fixed bug with nat traversal not working anymore in previous version (hopefully)
+  * added new "Office12" skin
+  * added Wine autodetection to disable SpTBX title bars (this fixes some issues with TASClient running under Wine),
+    alternatively it can be forced by providing a -wine switch to TASClient.exe
+
+  *** 0.32 (29x12x06) ***
   * fixed an issue with hosts being unable to kick players from their battles in certain situations
   * fixed drawing "original" clients from a battle replay when hosting one (colors were drawn incorrectly)
 
