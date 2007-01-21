@@ -93,7 +93,6 @@
     <li>TASSERVER command has been modified, see documentation bellow for further details.
         Note that clients should now acquire local Spring version by running "spring.exe /version"
         (they need this info to compare local Spring version to the server's).</li>
-    <li>OFFERFILE command has been modified, see documentation bellow for further details</li>
     <li>REQUESTUPDATEFILE command has been modified, see documentation bellow for further details</li>    
     <li>Note that MsgIDs (as described in the "Introduction" part) aren't fully supported yet - server will
         parse IDs, but won't include them in the response.</li>
