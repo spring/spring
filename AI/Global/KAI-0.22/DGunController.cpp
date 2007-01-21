@@ -92,13 +92,17 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 
 	// if we are close to going boom then it's time to run our boy
 	if ((healthMax > 0) && ((healthCur / healthMax) < DGUN_MIN_HEALTH_RATIO)) {
-		// retreat back to commander starting pos
-		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+		// retreat back to commander starting pos if we aren't already there
+		if (!this -> inRange(commanderPos, this -> startingPos, 0.5f)) {
+			this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+		}
 	}
 	// if we are under attack from something nasty and can't shoot back
 	if (damage >= DGUN_MAX_DAMAGE_LEVEL) {
-		// retreat back to commander starting pos
-		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+		// retreat back to commander starting pos if we aren't already there
+		if (!this -> inRange(commanderPos, this -> startingPos, 0.5f)) {
+			this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+		}
 	}
 }
 
