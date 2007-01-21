@@ -1086,9 +1086,9 @@ void CGroundMoveType::CheckCollision(void)
 {
 	int2 newmp=owner->GetMapPos();
 	if(newmp.x!=owner->mapPos.x || newmp.y!=owner->mapPos.y){		//now make sure we dont overrun any other units
-		bool haveCollided=true;
+		bool haveCollided=false;
 		int retest=0;
-		while(haveCollided && retest<2){
+		do {
 			if(fabs(owner->frontdir.x)>fabs(owner->frontdir.z)){
 				if(newmp.y<owner->mapPos.y){
 					haveCollided|=CheckColV(newmp.y,newmp.x,newmp.x+owner->xsize-1,(owner->mapPos.y+owner->ysize/2)*SQUARE_SIZE-3.99f,owner->mapPos.y);
@@ -1122,6 +1122,8 @@ void CGroundMoveType::CheckCollision(void)
 			}
 			++retest;
 		}
+		while(haveCollided && retest < 2);
+
 		owner->UnBlock();
 		owner->Block();
 	}
