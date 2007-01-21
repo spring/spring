@@ -326,7 +326,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
 	}
 
-	logOutput.Print("TA Spring %s",VERSION_STRING);
+	logOutput.Print("Spring %s",VERSION_STRING);
 
 	if(!server)
 		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());

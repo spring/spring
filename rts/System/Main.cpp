@@ -262,7 +262,7 @@ bool SpringApp::Initialize ()
 
 	// Initialize crash reporting
 #ifdef _MSC_VER
-	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "TA Spring Crashreport");
+	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
 	if (!GetInstance())
 	{
 		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
@@ -669,10 +669,10 @@ bool SpringApp::ParseCmdLine()
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->result("help")) {
-		cmdline->usage("TA:Spring",VERSION_STRING);
+		cmdline->usage("Spring",VERSION_STRING);
 		return false;
 	} else if (cmdline->result("version")) {
-		std::cout << "TA:Spring " << VERSION_STRING << std::endl;
+		std::cout << "Spring " << VERSION_STRING << std::endl;
 		return false;
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
