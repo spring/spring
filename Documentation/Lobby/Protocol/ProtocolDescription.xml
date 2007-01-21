@@ -85,6 +85,21 @@
   </p>
   
   </Intro>
+  
+  <RecentChanges>
+  <p>
+  <b><u>Version 0.33:</u></b><br />
+  <ul>
+    <li>TASSERVER command has been modified, see documentation bellow for further details.
+        Note that clients should now acquire local Spring version by running "spring.exe /version"
+        (they need this info to compare local Spring version to the server's).</li>
+    <li>OFFERFILE command has been modified, see documentation bellow for further details</li>
+    <li>REQUESTUPDATEFILE command has been modified, see documentation bellow for further details</li>    
+    <li>Note that MsgIDs (as described in the "Introduction" part) aren't fully supported yet - server will
+        parse IDs, but won't include them in the response.</li>
+  </ul>
+  </p>
+  </RecentChanges>
 
   <CommandList>
 
@@ -126,10 +141,19 @@
 
     <Command Name="TASSERVER" Source="server">
       <Arguments>
-        <Argument Name="version" Optional="no" Sentence="no">
+        <Argument Name="server_version" Optional="no" Sentence="no">
         This is server's version number (client should check if it supports this server
         version before attempting to log in. If it does not support it, it should send
         <clink name="REQUESTUPDATEFILE"/> command).
+        </Argument>
+        <Argument Name="spring_version" Optional="no" Sentence="no">
+        This is the latest Spring version which user needs in order to play with other players on this server. 
+        Client should check if it has this Spring version before attempting to log in. If it does not have it, 
+        it should send a <clink name="REQUESTUPDATEFILE"/> command.
+        <br />
+        Note that if the value of this parameter is "*", client should simply ignore it since this means that
+        server does not contain any updates nor does it require latest Spring version (this is usually so
+        when server is running in LAN mode).
         </Argument>
         <Argument Name="udpport" Optional="no" Sentence="no">
         This is server's UDP port where "NAT Help Server" is running. This is the port to
@@ -142,23 +166,35 @@
       </Description>
       <Response />
       <Examples>
-        <Example>TASSERVER 0.30 8201</Example>
+        <Example>TASSERVER 0.30 0.72b1 8201</Example>
+        <Example>TASSERVER 0.30 * 8201</Example>
       </Examples>
     </Command>
 
     <Command Name="REQUESTUPDATEFILE" Source="client">
       <Arguments>
-        <Argument Name="version" Optional="no" Sentence="no">
-        Version of client's lobby program. Server will use it to verify if any update
-        exists for this program version.
+        <Argument Name="name and version" Optional="no" Sentence="yes">
+        Program name and version for which client is requesting an update. For example,
+        if user's Spring is outdated it will provide for example "Spring 0.72b1", or if
+        TASClient is outdated it will provide for example "TASClient 0.30", similar for
+        other lobby clients or bots, for which server provides updates.
         </Argument>
       </Arguments>
       <Description>
-      Sent by client who is trying to find out if update exist for him since he doesn't
-      support this server's version (see <clink name="TASSERVER"/> command). Send it only when server version
-      is NOT supported by the lobby program!
+      Sent by client who is using an outdated Spring or lobby program and is trying to figure
+      out if server has some update for him (client can figure out if he is using outdated
+      software via <clink name="TASSERVER"/> command).
+      If both, Spring and lobby program are outdated, request only Spring update since it will most
+      likely contain an update for the lobby program as well.
       </Description>
-      <Response />
+      <Response>
+      Server will respond with <clink name="OFFERFILE"/> command if it has an update for the client,
+      or else it will display a message box (via <clink name="SERVERMSGBOX"/> command) or similar.
+      </Response>
+      <Examples>
+        <Example>REQUESTUPDATEFILE Spring 0.72b1</Example>
+        <Example>REQUESTUPDATEFILE TASClient 0.30</Example>
+      </Examples>      
     </Command>
 
     <Command Name="REGISTER" Source="client">
@@ -242,7 +278,7 @@
         of the host/joining issues). If client is unable to determine his local IP,
         he should send "*" instead.
         </Argument>
-        <Argument Name="application name and version" Optional="no" Sentence="yes" />
+        <Argument Name="lobby name and version" Optional="no" Sentence="yes" />
       </Arguments>
       <Description>
       Sent by client when he is trying to log on the server. Server may respond with

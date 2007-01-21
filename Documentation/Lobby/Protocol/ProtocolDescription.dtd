@@ -46,8 +46,9 @@
   >
 
 <!-- root element: -->
-<!ELEMENT ProtocolDescription (Intro, CommandList)>
+<!ELEMENT ProtocolDescription (Intro, RecentChanges?, CommandList)>
 <!ELEMENT Intro %CommonText;>
+<!ELEMENT RecentChanges %CommonText;>
 <!ELEMENT CommandList (Command*)>
 <!ELEMENT Command (Arguments?, Description, Response?, Examples?)>
 <!ATTLIST Command
