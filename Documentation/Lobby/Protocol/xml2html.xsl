@@ -56,6 +56,15 @@
       </td></tr>
     </table>  
     
+    <xsl:if test="./RecentChanges">
+      <h2>Recent changes</h2>
+      <table border="0" style='width: 750px; table-layout: fixed; border: 2px dotted gray;'>
+      <tr><td>
+        <xsl:apply-templates select="RecentChanges"/>
+      </td></tr>
+      </table>  
+    </xsl:if>
+    
     <h2>Command list</h2>
    
     <xsl:for-each select="CommandList/Command">

@@ -119,4 +119,10 @@ callgarbagecollector
   server performance considerably.
 updateip2country
   will update local IP2Country database from the internet in a background thread.
-    
+setlatestspringversion <latestSpringVersion>
+  will set "latest spring version" field to the specified one. This will force all clients
+  who are not using this spring version to request an update from the server. If server
+  can not provide a link to the updated installer, it will simply point them to official
+  Spring web site and ask them to download the latest Spring version.
+reloadupdateproperties
+  will reload "update properties" from the file (updates.xml, for example)
