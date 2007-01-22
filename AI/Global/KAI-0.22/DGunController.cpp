@@ -46,7 +46,7 @@ bool DGunController::inRange(float3 commanderPos, float3 attackerPos, float s) {
 
 void DGunController::handleDestroyEvent(int attackerID, int targetID) {
 	// if we were dgunning or reclaiming this unit and it died
-	// (NOTE: reclaiming unit causes attackerID of 0 to be passed)
+	// (reclaiming unit causes attackerID of 0 to be passed)
 	if (attackerID == 0 || this -> targetID == targetID) {
 		this -> targetID = -1;
 		this -> hasDGunOrder = false;
@@ -122,7 +122,7 @@ void DGunController::update(unsigned int currentFrame) {
 		}
 		else {
 			// otherwise prevent our boy from making any rash moves
-			return;
+			// return;
 		}
 	}
 
@@ -137,7 +137,8 @@ void DGunController::update(unsigned int currentFrame) {
 
 		// get all units within near-immediate dgun range
 		float maxRange = CALLBACK -> GetUnitMaxRange(this -> commanderID);
-		int numUnits = CALLBACK -> GetEnemyUnits(this -> units, commanderPos, maxRange * 2.0f);
+		float s = (this -> hasRetreatOrder)? 1.0f: 2.0f;
+		int numUnits = CALLBACK -> GetEnemyUnits(this -> units, commanderPos, maxRange * s);
 
 		for (int i = 0; i < numUnits; i++) {
 			// if enemy unit found in array
