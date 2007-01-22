@@ -22,7 +22,6 @@ DLL_EXPORT void ReleaseAI(IGlobalAI* i) {
 	delete (CGlobalAI*) i;
 }
 
-// KLOOTNOTE: uncomment this for 0.74b3
-//DLL_EXPORT int IsCInterface(void) {
-//	return 0;
-//}
+DLL_EXPORT int IsCInterface(void) {
+	return 0;
+}
