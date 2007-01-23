@@ -4228,6 +4228,10 @@ static int Pos2BuildPos(lua_State* L)
 
 static int SetShareLevel(lua_State* L)
 {
+	if (gu->spectating) {
+		return 0;
+	}
+	
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
 		lua_pushstring(L, "Incorrect arguments to SetShareLevel(\"type\", level");
@@ -4254,6 +4258,10 @@ static int SetShareLevel(lua_State* L)
 
 static int ShareResources(lua_State* L)
 {
+	if (gu->spectating) {
+		return 0;
+	}
+	
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||
 	    ((args >= 3) && !lua_isnumber(L, 3))) {
