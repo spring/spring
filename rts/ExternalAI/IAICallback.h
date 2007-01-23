@@ -15,22 +15,23 @@ struct WeaponDef;
 #define AIVAL_CURRENT_FUEL	2  // float
 
 // GetValue() constants
-#define AIVAL_NUMDAMAGETYPES 1 // int
-#define AIVAL_EXCEPTION_HANDLING 2 // bool
-#define AIVAL_MAP_CHECKSUM 3 // unsinged int
-#define AIVAL_DEBUG_MODE 4 // bool
-#define AIVAL_GAME_MODE 5 // int
-#define AIVAL_GAME_PAUSED 6 // bool
-#define AIVAL_GAME_SPEED_FACTOR 7 // float
-#define AIVAL_GUI_VIEW_RANGE 8 // float
-#define AIVAL_GUI_SCREENX 9 // float
-#define AIVAL_GUI_SCREENY 10 // float
-#define AIVAL_GUI_CAMERA_DIR 11 // float3
-#define AIVAL_GUI_CAMERA_POS 12 // float3
+#define AIVAL_NUMDAMAGETYPES              1 // int
+#define AIVAL_EXCEPTION_HANDLING          2 // bool
+#define AIVAL_MAP_CHECKSUM                3 // unsinged int
+#define AIVAL_DEBUG_MODE                  4 // bool
+#define AIVAL_GAME_MODE                   5 // int
+#define AIVAL_GAME_PAUSED                 6 // bool
+#define AIVAL_GAME_SPEED_FACTOR           7 // float
+#define AIVAL_GUI_VIEW_RANGE              8 // float
+#define AIVAL_GUI_SCREENX                 9 // float
+#define AIVAL_GUI_SCREENY                10 // float
+#define AIVAL_GUI_CAMERA_DIR             11 // float3
+#define AIVAL_GUI_CAMERA_POS             12 // float3
 #define AIVAL_SCRIPT_FILENAME_DEPRECATED 13 // std::string, hence unsafe, don't use!
-#define AIVAL_SCRIPT_FILENAME_CSTR 14       // data points to char buffer of sufficient size
-#define AIVAL_LOCATE_FILE_R 15 // char*
-#define AIVAL_LOCATE_FILE_W 16 // char*
+#define AIVAL_SCRIPT_FILENAME_CSTR       14 // data points to char buffer of sufficient size
+#define AIVAL_LOCATE_FILE_R              15 // char*
+#define AIVAL_LOCATE_FILE_W              16 // char*
+#define AIVAL_UNIT_LIMIT                 17 // int
 
 struct UnitResourceInfo
 {

@@ -1013,6 +1013,10 @@ bool CAICallback::GetValue(int id, void *data)
 			strcpy((char*) data, f.c_str());
 			return true;
 		}
+		case AIVAL_UNIT_LIMIT: {
+			*(int*) data = uh->maxUnits;
+			return true;
+		}
 		default:
 			return false;
 	}
