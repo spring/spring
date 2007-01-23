@@ -701,7 +701,7 @@ GetTeamInfo(number teamID) ->
         number  colorBlue,
         number  colorAlpha
 
-GetTeamResources(string "metal" | "energy", number teamID) ->
+GetTeamResources(number teamID, string "metal" | "energy") ->
   nil | number currentLevel,
         number storage,
         number pull,
