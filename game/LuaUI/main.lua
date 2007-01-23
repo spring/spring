@@ -11,7 +11,7 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Spring.SendCommands({"ctrlpanel LuaUI/ctrlpanel.txt"})
+Spring.SendCommands({"ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt"})
 
 dofile(LUAUI_DIRNAME .. "utils.lua")
 
