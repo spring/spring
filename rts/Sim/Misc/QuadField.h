@@ -22,7 +22,7 @@ using namespace std;
 class CQuadField  
 {
 public:
-	vector<int> GetQuadsOnRay(float3 start, float3 dir,float length);
+	vector<int> GetQuadsOnRay(const float3& start, float3 dir,float length);
 	vector<CUnit*> GetUnits(const float3& pos,float radius);
 	vector<CUnit*> GetUnitsExact(const float3& pos,float radius);
 	vector<CUnit*> GetUnitsExact(const float3& mins, const float3& maxs);
@@ -31,12 +31,15 @@ public:
 	void AddFeature(CFeature* feature);
 	void RemoveFeature(CFeature* feature);
 	vector<int> GetQuads(float3 pos,float radius);
-	void GetQuads(float3 pos,float radius, vector<int>& dst);
 	vector<int> GetQuadsRectangle(const float3& pos,const float3& pos2);
 	vector<CFeature*> GetFeaturesExact(const float3& pos,float radius);
 	vector<CSolidObject*> GetSolidsExact(const float3& pos,float radius);
-	// optimization specifically for projectile collisions
-	void GetUnitsAndFeaturesExact(const float3& pos, float radius, const vector<int>& quads, vector<CUnit*>& dstunits, vector<CFeature*>& dstfeatures);
+
+
+	// optimized functions, somewhat less userfriendly
+	void GetQuads(float3 pos,float radius, int*& dst);
+	void GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst);
+	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
 	struct Quad {
 		float startx;
@@ -52,6 +55,11 @@ public:
 	Quad* baseQuads;
 	int numQuadsX;
 	int numQuadsZ;
+
+	CUnit** tempUnitsArray;
+	CFeature** tempFeaturesArray;
+private:
+	int* tempQuads;
 };
 
 extern CQuadField* qf;

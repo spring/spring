@@ -2939,7 +2939,7 @@ static int GetUnitsInCylinder(lua_State* L)
 }
 
 
-typedef struct Plane {
+struct Plane {
 	float x, y, z, d;  // ax + by + cz + d = 0
 };
 

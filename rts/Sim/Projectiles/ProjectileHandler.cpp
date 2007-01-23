@@ -474,22 +474,21 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;
-	static vector<CUnit*> units;
-	static vector<CFeature*> features;
-	static vector<int> quads;
+
+	CUnit* tempUnits[MAX_UNITS];
+	CFeature* tempFeatures[MAX_UNITS];
 
 	for(psi=ps.begin();psi != ps.end();++psi){
 		CProjectile* p=(*psi);
 		if(p->checkCol && !p->deleteMe){
 			float speedf=p->speed.Length();
 
-			units.clear();
-			features.clear();
-			quads.clear();
-			qf->GetQuads(p->pos, p->radius+speedf, quads);
-			qf->GetUnitsAndFeaturesExact(p->pos, p->radius+speedf, quads, units, features);
+			CUnit** endUnit = tempUnits;
+			CFeature** endFeature = tempFeatures;
 
-			for(vector<CUnit*>::iterator ui(units.begin());ui!=units.end();++ui){
+			qf->GetUnitsAndFeaturesExact(p->pos, p->radius+speedf, endUnit, endFeature);
+
+			for(CUnit** ui=tempUnits;ui!=endUnit;++ui){
 				CUnit* unit=*ui;
 				if(p->owner == unit || ((p->collisionFlags&COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam==p->owner->allyteam)) )
 					continue;
@@ -522,7 +521,7 @@ void CProjectileHandler::CheckUnitCol()
 
 			//if(!(p->collisionFlags&COLLISION_NOFEATURE))
 			//{
-				for(vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
+				for(CFeature** fi=tempFeatures;fi!=endFeature;++fi){
 					if(!(*fi)->blocking)
 						continue;
 					float ispeedf=1.0f/speedf;

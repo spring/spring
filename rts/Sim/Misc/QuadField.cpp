@@ -30,11 +30,18 @@ CQuadField::CQuadField()
 			baseQuads[y*numQuadsX+x].starty=y*QUAD_SIZE;
 		}
 	}
+
+	tempQuads = new int[1000];
+	tempUnitsArray = new (CUnit(*[MAX_UNITS]));
+	tempFeaturesArray = new (CFeature(*[MAX_UNITS]));
 }
 
 CQuadField::~CQuadField()
 {
 	delete[] baseQuads;
+	delete[] tempQuads;
+	delete[] tempUnitsArray;
+	delete[] tempFeaturesArray;
 }
 
 vector<int> CQuadField::GetQuads(float3 pos,float radius)
@@ -62,7 +69,7 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 }
 
 
-void CQuadField::GetQuads(float3 pos,float radius, vector<int> &dst)
+void CQuadField::GetQuads(float3 pos,float radius, int*& dst)
 {
 	pos.CheckInBounds();
 
@@ -75,12 +82,15 @@ void CQuadField::GetQuads(float3 pos,float radius, vector<int> &dst)
 	if(maxy<miny || maxx<minx)
 		return;
 
+	int* org = dst;
 	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
-	dst.reserve(dst.size()+(maxy-miny)*(maxx-minx));
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)
 			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5f,0,y*QUAD_SIZE+QUAD_SIZE*0.5f)).SqLength2D()<maxSqLength)
-				dst.push_back(y*numQuadsX+x);
+			{
+				*dst = y*numQuadsX+x;
+				++dst;
+			}
 }
 
 
@@ -127,14 +137,14 @@ vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 {
 	vector<CUnit*> units;
 
-	vector<int> quads=GetQuads(pos,radius);
+	int* endQuad=tempQuads;
+	GetQuads(pos,radius,endQuad);
 	
 	int tempNum=gs->tempNum++;
 
-	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	for(int* a=tempQuads;a!=endQuad;++a){
+		Quad& quad = baseQuads[*a];
+		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
 			if((*ui)->tempNum!=tempNum){
 				(*ui)->tempNum=tempNum;
 				units.push_back(*ui);
@@ -153,14 +163,14 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 		return units;
 	}*/
 
-	vector<int> quads=GetQuads(pos,radius);
+	int* endQuad=tempQuads;
+	GetQuads(pos,radius,endQuad);
 	
 	int tempNum=gs->tempNum++;
 
-	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	for(int* a=tempQuads;a!=endQuad;++a){
+		Quad& quad = baseQuads[*a];
+		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
 			float totRad=radius+(*ui)->radius;
 			if((*ui)->tempNum!=tempNum && (pos-(*ui)->midPos).SqLength()<totRad*totRad){
 				(*ui)->tempNum=tempNum;
@@ -200,10 +210,17 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 	return units;
 }
 
-vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
+vector<int> CQuadField::GetQuadsOnRay(const float3& start, float3 dir, float length)
 {
-	vector<int> quads;
 
+	int* end = tempQuads;
+	GetQuadsOnRay(start,dir,length,end);
+
+	return vector<int>(tempQuads,end);
+}
+
+void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
+{
 	if(start.x<1){
 		if(dir.x==0)
 			dir.x=0.00001f;
@@ -277,29 +294,39 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 	float invQuadSize=1.0f/QUAD_SIZE;
 
 	if((floor(start.x*invQuadSize)==floor(to.x*invQuadSize)) && (floor(start.z*invQuadSize)==floor(to.z*invQuadSize))){
-		quads.push_back((int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX);
+		*dst=((int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX);
+		++dst;
 	} else if(floor(start.x*invQuadSize)==floor(to.x*invQuadSize)){
 		int first=(int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX;
 		int last=(int(to.x*invQuadSize))+(int(to.z*invQuadSize))*numQuadsX;
 		if(dz>0)
-			for(int a=first;a<=last;a+=numQuadsX)
-				quads.push_back(a);
+			for(int a=first;a<=last;a+=numQuadsX){
+				*dst=(a);
+				++dst;
+			}
 		else
-			for(int a=first;a>=last;a-=numQuadsX)
-				quads.push_back(a);
+			for(int a=first;a>=last;a-=numQuadsX){
+				*dst=(a);
+				++dst;
+			}
 	} else if(floor(start.z*invQuadSize)==floor(to.z*invQuadSize)){
 		int first=(int(start.x*invQuadSize))+(int(start.z*invQuadSize))*numQuadsX;
 		int last=(int(to.x*invQuadSize))+(int(to.z*invQuadSize))*numQuadsX;
 		if(dx>0)
-			for(int a=first;a<=last;a++)
-				quads.push_back(a);
+			for(int a=first;a<=last;a++){
+				*dst=(a);
+				++dst;
+			}
 		else
-			for(int a=first;a>=last;a--)
-				quads.push_back(a);
+			for(int a=first;a>=last;a--){
+				*dst=(a);
+				++dst;
+			}
 	} else {
 		bool keepgoing=true;
 		while(keepgoing){
-			quads.push_back((int(zp*invQuadSize))*numQuadsX+(int(xp*invQuadSize)));
+			*dst=((int(zp*invQuadSize))*numQuadsX+(int(xp*invQuadSize)));
+			++dst;
 
 			if(dx>0){
 				xn=(floor(xp*invQuadSize)*QUAD_SIZE+QUAD_SIZE-xp)/dx;
@@ -320,11 +347,8 @@ vector<int> CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length)
 				zp+=(zn+0.0001f)*dz;
 			}
 			keepgoing=fabs(xp-start.x)<fabs(to.x-start.x) && fabs(zp-start.z)<fabs(to.z-start.z);
-
 		}
 	}
-
-	return quads;
 }
 
 void CQuadField::RemoveUnit(CUnit* unit)
@@ -470,28 +494,29 @@ vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
 }
 
 // optimization specifically for projectile collisions
-void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, const vector<int>& quads, vector<CUnit*>& dstunits, vector<CFeature*>& dstfeatures)
+void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
 {
 	int tempNum=gs->tempNum++;
 
-	vector<int>::const_iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	int* endQuad = tempQuads;
+	GetQuads(pos, radius, endQuad);
+
+	for(int* a=tempQuads;a!=endQuad;++a){
+		Quad& quad = baseQuads[*a];
+		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
 			if((*ui)->tempNum!=tempNum){
 				(*ui)->tempNum=tempNum;
-				dstunits.push_back(*ui);
+				*dstUnit=(*ui);
+				++dstUnit;
 			}
 		}
-	}
 
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CFeature*>::iterator fi;
-		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
+		for(list<CFeature*>::iterator fi=quad.features.begin();fi!=quad.features.end();++fi){
 			float totRad=radius+(*fi)->radius;
 			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
 				(*fi)->tempNum=tempNum;
-				dstfeatures.push_back(*fi);
+				*dstFeature=(*fi);
+				++dstFeature;
 			}
 		}
 	}
