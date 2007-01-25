@@ -1902,12 +1902,24 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 static int LoadTextVFS(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to LoadTextVFS(\"filename\")");
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isstring(L, 2))) {
+		lua_pushstring(L, "Incorrect arguments to LoadTextVFS()");
 		lua_error(L);
 	}
-	const string& filename = lua_tostring(L, -1);
-	CFileHandler fh(filename);
+
+	CFileHandler::VFSmode vfsMode = CFileHandler::AnyFS;
+	if (args >= 2) {
+		const string& vfsModeStr = lua_tostring(L, 2);
+		if (vfsModeStr == "raw") {
+			vfsMode = CFileHandler::OnlyRawFS;
+		} else if (vfsModeStr == "archive") {
+			vfsMode = CFileHandler::OnlyArchiveFS;
+		}
+	}
+
+	const string& filename = lua_tostring(L, 1);
+	CFileHandler fh(filename, vfsMode);
 	if (!fh.FileExists()) {
 		return 0;
 	}

@@ -7,8 +7,13 @@
 class CFileHandler
 {
 public:
-	CFileHandler(const char* filename);
-	CFileHandler(std::string filename);
+	enum VFSmode {
+		AnyFS,
+		OnlyRawFS,
+		OnlyArchiveFS
+	};
+	CFileHandler(const char* filename, VFSmode vfsMode = AnyFS);
+	CFileHandler(std::string filename, VFSmode vfsMode = AnyFS);
 	~CFileHandler(void);
 	
 	bool FileExists();
@@ -22,7 +27,7 @@ public:
 
 	static std::vector<std::string> FindFiles(const std::string& path, const std::string& pattern);
 private:
-	void Init(const char* filename);
+	void Init(const char* filename, VFSmode vfsMode);
 
 	std::ifstream* ifs;
 	unsigned char* hpiFileBuffer;

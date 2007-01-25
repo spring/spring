@@ -74,7 +74,7 @@ std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) c
 {
 	std::vector<std::string> names;
 	unsigned int bit;
-	for (bit = 1; bit = (bit << 1);  bit != 0) {
+	for (bit = 1; bit != 0; bit = (bit << 1)) {
 		if ((bit & bits) != 0) {
 			std::map<std::string,unsigned int>::const_iterator it;
 			for (it = categories.begin(); it != categories.end(); ++it) {
