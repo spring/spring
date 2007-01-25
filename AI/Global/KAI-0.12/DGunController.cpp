@@ -66,25 +66,30 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	if (this -> inRange(commanderPos, attackerPos, 1.0f)) {
 		// do we have valid target?
 		if ((attackerID > 0) && (CALLBACK -> GetUnitHealth(attackerID) > 0)) {
-			// prevent friendly-fire "incidents"
-			if ((CALLBACK -> GetMyTeam()) != (CALLBACK -> GetUnitTeam(attackerID))) {
-				// can we blast it right now?
-				if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
-					// check if we already issued a dgun order
-					if (!this -> hasDGunOrder) {
-						this -> issueOrder(attackerID, CMD_DGUN, currentFrame, 0);
+			// don't bother trying to kill planes
+			if (!(CALLBACK -> GetUnitDef(attackerID)) -> canfly) {
+
+				// prevent friendly-fire "incidents"
+				if ((CALLBACK -> GetMyTeam()) != (CALLBACK -> GetUnitTeam(attackerID))) {
+					// can we blast it right now?
+					if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
+						// check if we already issued a dgun order
+						if (!this -> hasDGunOrder) {
+							this -> issueOrder(attackerID, CMD_DGUN, currentFrame, 0);
+						}
+					}
+
+					// no, suck it instead
+					else {
+						// if we are already reclaiming one unit ignore attacks
+						// from others (while we do not have energy to dgun and
+						// order not too old)
+						if (!this -> hasReclaimOrder) {
+							this -> issueOrder(attackerID, CMD_RECLAIM, currentFrame, 0);
+						}
 					}
 				}
 
-				// no, suck it instead
-				else {
-					// if we are already reclaiming one unit ignore attacks
-					// from others (while we do not have energy to dgun and
-					// order not too old)
-					if (!this -> hasReclaimOrder) {
-						this -> issueOrder(attackerID, CMD_RECLAIM, currentFrame, 0);
-					}
-				}
 			}
 		}
 	}
@@ -146,18 +151,22 @@ void DGunController::update(unsigned int currentFrame) {
 				// check if unit still alive (needed since when UnitDestroyed()
 				// triggered GetEnemyUnits() is not immediately updated as well)
 				if (CALLBACK -> GetUnitHealth(units[i]) > 0) {
-					// blast it
-					if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
-						this -> issueOrder(units[i], CMD_DGUN, currentFrame, 0);
-						units[i] = -1;
-					}
-					// suck it
-					else {
-						this -> issueOrder(units[i], CMD_RECLAIM, currentFrame, 0);
-						units[i] = -1;
-					}
+					// don't bother trying to kill planes
+					if (!(CALLBACK -> GetUnitDef(units[i])) -> canfly) {
 
-					return;
+						// blast it
+						if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
+							this -> issueOrder(units[i], CMD_DGUN, currentFrame, 0);
+							units[i] = -1;
+						}
+						// suck it
+						else {
+							this -> issueOrder(units[i], CMD_RECLAIM, currentFrame, 0);
+							units[i] = -1;
+						}
+
+						return;
+					}
 				}
 			}
 		}
