@@ -123,7 +123,7 @@ void COpenALSound::PlaySample(int id, float volume)
 
 void COpenALSound::PlaySample(int id,const float3& p,float volume)
 {
-	PlaySample(id,p,volume,false);
+	PlaySample(id, p, volume, false);
 }
 
 

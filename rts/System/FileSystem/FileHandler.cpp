@@ -10,40 +10,46 @@
 
 using namespace std;
 
-CFileHandler::CFileHandler(const char* filename)
+
+CFileHandler::CFileHandler(const char* filename, VFSmode vfsMode)
 : hpiFileBuffer(0),
 	hpiOffset(0),
 	filesize(-1),
 	ifs(0)
 {
-	Init(filename);
+	Init(filename, vfsMode);
 }
 
-CFileHandler::CFileHandler(std::string filename)
+
+CFileHandler::CFileHandler(std::string filename, VFSmode vfsMode)
 : hpiFileBuffer(0),
 	hpiOffset(0),
 	filesize(-1),
 	ifs(0)
 {
-	Init(filename.c_str());
+	Init(filename.c_str(), vfsMode);
 }
 
-void CFileHandler::Init(const char* filename)
+
+void CFileHandler::Init(const char* filename, VFSmode vfsMode)
 {
-	ifs=SAFE_NEW std::ifstream(filesystem.LocateFile(filename).c_str(), ios::in|ios::binary);
-	if (ifs && !ifs->bad() && ifs->is_open()) {
-		ifs->seekg(0, ios_base::end);
-		filesize = ifs->tellg();
-		ifs->seekg(0, ios_base::beg);
+	if (vfsMode != OnlyArchiveFS) {
+		ifs=SAFE_NEW std::ifstream(filesystem.LocateFile(filename).c_str(), ios::in|ios::binary);
+		if (ifs && !ifs->bad() && ifs->is_open()) {
+			ifs->seekg(0, ios_base::end);
+			filesize = ifs->tellg();
+			ifs->seekg(0, ios_base::beg);
+			return;
+		}
+		delete ifs;
+		ifs = 0;
+	}
+
+	if (!hpiHandler || (vfsMode == OnlyRawFS)) {
 		return;
 	}
-	delete ifs;
-	ifs = 0;
 
-	if(!hpiHandler)
-		return;
-
-	//hpi dont have info about directory
+	// hpi dont have info about directory
 	std::string file = StringToLower(filename);
 
 	hpiLength=hpiHandler->GetFileSize(file);
@@ -53,10 +59,12 @@ void CFileHandler::Init(const char* filename)
 			delete[] hpiFileBuffer;
 			hpiFileBuffer = 0;
 		}
-		else
+		else {
 			filesize = hpiLength;
+		}
 	}
 }
+
 
 CFileHandler::~CFileHandler(void)
 {
@@ -67,10 +75,12 @@ CFileHandler::~CFileHandler(void)
 		delete[] hpiFileBuffer;
 }
 
+
 bool CFileHandler::FileExists()
 {
 	return (ifs || hpiFileBuffer);
 }
+
 
 void CFileHandler::Read(void* buf,int length)
 {
@@ -86,6 +96,7 @@ void CFileHandler::Read(void* buf,int length)
 	}
 }
 
+
 void CFileHandler::Seek(int length)
 {
 	if(ifs){
@@ -94,6 +105,7 @@ void CFileHandler::Seek(int length)
 		hpiOffset=length;
 	}
 }
+
 
 int CFileHandler::Peek()
 {
@@ -108,6 +120,7 @@ int CFileHandler::Peek()
 	return EOF;
 }
 
+
 bool CFileHandler::Eof()
 {
 	if(ifs){
@@ -117,6 +130,7 @@ bool CFileHandler::Eof()
 	}
 	return true;
 }
+
 
 std::vector<std::string> CFileHandler::FindFiles(const std::string& path, const std::string& pattern)
 {
@@ -135,10 +149,12 @@ std::vector<std::string> CFileHandler::FindFiles(const std::string& path, const 
 	return found;
 }
 
+
 int CFileHandler::FileSize()
 {
    return filesize;
 }
+
 
 int CFileHandler::GetPos()
 {
