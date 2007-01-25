@@ -889,12 +889,18 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
 	}
 	else if (cmd == "pause") {
-		if(net->playbackDemo){
-			gs->paused=!gs->paused;
+		bool newPause;
+		if (action.extra.empty()) {
+			newPause = !gs->paused;
+		} else {
+			newPause = !!atoi(action.extra.c_str());
+		}
+		if (net->playbackDemo) {
+			gs->paused = newPause;
 		} else {
 			net->SendData<unsigned char, unsigned char>(
-					NETMSG_PAUSE, !gs->paused, gu->myPlayerNum);
-			lastframe = SDL_GetTicks();
+					NETMSG_PAUSE, newPause, gu->myPlayerNum);
+			lastframe = SDL_GetTicks(); // this required here?
 		}
 	}
 	else if (cmd == "singlestep") {
