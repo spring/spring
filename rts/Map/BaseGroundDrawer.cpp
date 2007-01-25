@@ -188,95 +188,113 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		}
 
 		switch(drawMode) {
-		case drawPath:{
-			if(selectedUnits.selectedUnits.empty() || !(*selectedUnits.selectedUnits.begin())->unitDef->movedata)
-				return true;
-
-			MoveData *md=(*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->hmapx;++x){
-					int a=y*gs->pwr2mapx/2+x;
-
-					float m;
-					//todo: fix for new gui
-					if(guihandler->inCommand>0 && guihandler->inCommand<guihandler->commands.size() && guihandler->commands[guihandler->inCommand].type==CMDTYPE_ICON_BUILDING){
-						if(!loshandler->InLos(float3(x*16+8,0,y*16+8),gu->myAllyTeam)){
-							m=0.25f;
-						}else{
-							UnitDef *unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
-
-							CFeature* f;
-							if(uh->TestUnitBuildSquare(BuildInfo(unitdef,float3(x*16+8,0,y*16+8),guihandler->buildFacing),f,gu->myAllyTeam))
-								m=1;
-							else
-								m=0;
-							if(f && m)
-								m=0.5f;
+			case drawPath: {
+				if (guihandler->inCommand > 0 && guihandler->inCommand < guihandler->commands.size() &&
+						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
+					// use the current build order
+					for (int y = starty; y < endy; ++y) {
+						for (int x = 0; x < gs->hmapx; ++x) {
+							float m;
+							if (!loshandler->InLos(float3(x*16+8, 0, y*16+8), gu->myAllyTeam)) {
+								m = 0.25f;
+							} else {
+								const UnitDef* unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
+								CFeature* f;
+								if(uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y*16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
+									if (f) {
+										m = 0.5f;
+									} else {
+										m = 1.0f;
+									}
+								} else {
+									m = 0.0f;
+								}
+							}
+							const int a=y*gs->pwr2mapx/2+x;
+							infoTexMem[a*4+0]=255-int(m*255.0f);
+							infoTexMem[a*4+1]=int(m*255.0f);
+							infoTexMem[a*4+2]=0;
 						}
-
-					} else {
-						m=md->moveMath->SpeedMod(*md, x*2,y*2);
-						if(gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
-							m=0;
-						m=min(1.0f,(float)sqrt(m));
 					}
-					infoTexMem[a*4+0]=255-int(m*255.0f);
-					infoTexMem[a*4+1]=int(m*255.0f);
-					infoTexMem[a*4+2]=0;
 				}
-			}
-			break;}
-		case drawMetal:
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->hmapx;++x){
-					int a=y*gs->pwr2mapx/2+x;
-					if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]) {
-						float extractDepth = extractDepthMap[y*gs->hmapx+x];
-						infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
-					} else
-						infoTexMem[a*4]=0;
-					infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
-					infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
-				}
-			}
-			break;
-		case drawHeight:
-			extraTexPal=readmap->heightLinePal;
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<gs->mapx;++x){
-					int a=y*gs->pwr2mapx+x;
-					float height=readmap->centerheightmap[y*gs->mapx+x];
-					unsigned char value=(unsigned char)(height*8);
-					infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
-					infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
-					infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
-				}
-			}
-			break;
-		case drawLos: {
-			int lowRes = highResInfoTexWanted ? 0 : -1;
-			int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
-			int pwr2mapx = gs->pwr2mapx >> (-lowRes);
-			for(int y=starty;y<endy;++y){
-				for(int x=0;x<endx;++x){
-					int a=y*pwr2mapx+x;
-					int inRadar=0;
-					int inJam=0;
-					if (drawRadarAndJammer){
-						inRadar = InterpolateLos(myRadar, radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
-						inJam =  InterpolateLos(myJammer, radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
+				else {
+					// use the first selected unit
+					if (selectedUnits.selectedUnits.empty()) {
+						return true;
 					}
-					int inLos = InterpolateLos(myLos,    loshandler->losSizeX, loshandler->losSizeY, loshandler->losMipLevel+lowRes, 32, x, y);
-					int inAir = InterpolateLos(myAirLos, loshandler->airSizeX, loshandler->airSizeY, loshandler->airMipLevel+lowRes, 32, x, y);
-					infoTexMem[a*4] = 64+inLos+inAir+inJam;
-					infoTexMem[a*4+1] = 64+inLos+inAir+inRadar;
-					infoTexMem[a*4+2] = 64+inLos+inAir;
+					const MoveData* md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+					if (md == NULL) {
+						return true;
+					}
+					for (int y = starty; y < endy; ++y) {
+						for (int x = 0; x < gs->hmapx; ++x) {
+							float m = md->moveMath->SpeedMod(*md, x*2, y*2);
+							if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
+								m = 0.0f;
+							}
+							m = min(1.0f, (float)sqrt(m));
+							const int a=y*gs->pwr2mapx/2+x;
+							infoTexMem[a*4+0]=255-int(m*255.0f);
+							infoTexMem[a*4+1]=int(m*255.0f);
+							infoTexMem[a*4+2]=0;
+						}
+					}
 				}
+				break;
 			}
-			break;}
-		}
-	}
+			case drawMetal: {
+				for(int y=starty;y<endy;++y){
+					for(int x=0;x<gs->hmapx;++x){
+						int a=y*gs->pwr2mapx/2+x;
+						if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]) {
+							float extractDepth = extractDepthMap[y*gs->hmapx+x];
+							infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
+						} else
+							infoTexMem[a*4]=0;
+						infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
+						infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
+					}
+				}
+				break;
+			}
+			case drawHeight: {
+				extraTexPal=readmap->heightLinePal;
+				for(int y=starty;y<endy;++y){
+					for(int x=0;x<gs->mapx;++x){
+						int a=y*gs->pwr2mapx+x;
+						float height=readmap->centerheightmap[y*gs->mapx+x];
+						unsigned char value=(unsigned char)(height*8);
+						infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
+						infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
+						infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
+					}
+				}
+				break;
+			}
+			case drawLos: {
+				int lowRes = highResInfoTexWanted ? 0 : -1;
+				int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
+				int pwr2mapx = gs->pwr2mapx >> (-lowRes);
+				for(int y=starty;y<endy;++y){
+					for(int x=0;x<endx;++x){
+						int a=y*pwr2mapx+x;
+						int inRadar=0;
+						int inJam=0;
+						if (drawRadarAndJammer){
+							inRadar = InterpolateLos(myRadar,  radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
+							inJam   = InterpolateLos(myJammer, radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
+						}
+						int inLos = InterpolateLos(myLos,    loshandler->losSizeX, loshandler->losSizeY, loshandler->losMipLevel+lowRes, 32, x, y);
+						int inAir = InterpolateLos(myAirLos, loshandler->airSizeX, loshandler->airSizeY, loshandler->airMipLevel+lowRes, 32, x, y);
+						infoTexMem[a*4] = 64+inLos+inAir+inJam;
+						infoTexMem[a*4+1] = 64+inLos+inAir+inRadar;
+						infoTexMem[a*4+2] = 64+inLos+inAir;
+					}
+				}
+				break;
+			}
+		} // switch (drawMode)
+	} // if (updateTextureState < 50)
 
 	if(updateTextureState==50){
 		if(infoTex!=0 && highResInfoTexWanted!=highResInfoTex){
