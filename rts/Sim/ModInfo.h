@@ -9,6 +9,7 @@ public:
 	~CModInfo();
 
 	std::string name;
+	std::string humanName;
 	bool allowTeamColors;
 
 	// Reclaim behaviour

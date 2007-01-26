@@ -465,7 +465,9 @@ void CPreGame::ShowMapList()
 void CPreGame::SelectMod(std::string s)
 {
 	if (s == "Random mod") {
-		pregame->modName = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
+		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
+		const string& modName = pregame->showList->items[index];
+		pregame->modName = archiveScanner->ModNameToModArchive(modName);
 	} else {
 		pregame->modName = archiveScanner->ModNameToModArchive(s);
 	}

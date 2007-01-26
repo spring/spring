@@ -177,23 +177,24 @@ bool CLuaState::LoadGameInfo()
 
 	code += "Game = {}" + endlStr;
 
+	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
 	code += "Game.version = "   + SafeString(VERSION_STRING) + endlStr;
 	code += "Game.commEnds = "  + BoolToString(!!gs->gameMode) + endlStr;
-	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
 	code += "Game.gravity = "   + FloatToString(gravity) + endlStr;
 	code += "Game.tidal = "     + FloatToString(readmap->tidalStrength) + endlStr;
 	code += "Game.windMin = "   + FloatToString(wind.minWind) + endlStr;
 	code += "Game.windMax = "   + FloatToString(wind.maxWind) + endlStr;
 	code += "Game.mapX = "      + IntToString(readmap->width / 64) + endlStr;
 	code += "Game.mapY = "      + IntToString(readmap->height / 64) + endlStr;
-	code += "Game.mapName = \"" + readmap->mapName + "\"" + endlStr;
-	code += "Game.modName = \"" + modInfo->name + "\"" + endlStr;
-	
+	code += "Game.mapName = "   + SafeString(readmap->mapName) + endlStr;
+	code += "Game.modName = "   + SafeString(modInfo->name) + endlStr;
+	code += "Game.modHumanName = " + SafeString(modInfo->humanName) + endlStr;
+
 	const bool limitDGun      = gameSetup ? gameSetup->limitDgun      : false;
 	const bool diminishingMMs = gameSetup ? gameSetup->diminishingMMs : false;
 	code += "Game.limitDGun = "        + BoolToString(limitDGun) + endlStr;
 	code += "Game.diminishingMetal = " + BoolToString(diminishingMMs) + endlStr;
-	
+
 	code += "Game.springCategories = " + GetCategoryTableFromBits(~0) + endlStr;
 
 	if (keyBindings->GetDebug() > 1) {
@@ -203,7 +204,7 @@ bool CLuaState::LoadGameInfo()
 	if (!LoadCode(code, "Game[]")) {
 		return false;
 	}
-	
+
 	return true;	
 }
 
