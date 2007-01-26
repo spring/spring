@@ -4,12 +4,14 @@
 #include "ModInfo.h"
 #include "TdfParser.h"
 #include "Platform/ConfigHandler.h"
+#include "FileSystem/ArchiveScanner.h"
 
 CModInfo* modInfo = 0;
 
 CModInfo::CModInfo(const char* modname)
 {
 	name = modname;
+	humanName = archiveScanner->ModArchiveToModName(modname);
 
 	// determine whether the modder allows the user to use team coloured nanospray
 	try {
