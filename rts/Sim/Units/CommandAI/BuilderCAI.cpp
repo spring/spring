@@ -418,7 +418,14 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 					&& ((guarded->beingBuilt && owner->unitDef->canAssist)
 					|| (!guarded->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
-				fac->SetRepairTarget(guarded);
+
+				Command nc;
+				nc.id=CMD_REPAIR;
+				nc.options=c.options;
+				nc.params.push_back(guarded->id);
+				commandQue.push_front(nc);
+				inCommand=false;
+				return;
 			} else {
 				NonMoving();
 			}
