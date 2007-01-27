@@ -3,7 +3,7 @@
 #include <memory.h>
 #include "mmgr.h"
 
-CR_BIND_STRUCT(CMatrix44f);
+CR_BIND(CMatrix44f, );
 
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
 

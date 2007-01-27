@@ -9,11 +9,14 @@ class CGeoSquareProjectile;
 
 class CGeometricObjects
 {
+	CR_DECLARE(CGeometricObjects);
+	CR_DECLARE_SUB(GeoGroup);
 public:
 	CGeometricObjects(void);
 	~CGeometricObjects(void);
 
 	struct GeoGroup{
+		CR_DECLARE_STRUCT(GeoGroup);
 		std::vector<CGeoSquareProjectile*> squares;
 	};
 

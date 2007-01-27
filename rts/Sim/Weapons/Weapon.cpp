@@ -22,9 +22,69 @@
 #include "Game/Player.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "mmgr.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "creg/STL_List.h"
+#include "mmgr.h"
 
+CR_BIND_DERIVED(CWeapon, CObject, (NULL));
+
+CR_REG_METADATA(CWeapon,(
+	CR_MEMBER(owner),
+	CR_MEMBER(range),
+	CR_MEMBER(heightMod),	
+	CR_MEMBER(reloadTime),
+	CR_MEMBER(reloadStatus),
+	CR_MEMBER(salvoLeft),
+	CR_MEMBER(salvoDelay),
+	CR_MEMBER(salvoSize),
+	CR_MEMBER(nextSalvo),
+	CR_MEMBER(predict),
+	CR_MEMBER(targetUnit),
+	CR_MEMBER(accuracy),
+	CR_MEMBER(projectileSpeed),
+	CR_MEMBER(predictSpeedMod),
+	CR_MEMBER(metalFireCost),
+	CR_MEMBER(energyFireCost),
+	CR_MEMBER(targetPos),
+	CR_MEMBER(fireSoundId),
+	CR_MEMBER(fireSoundVolume),
+	CR_MEMBER(angleGood),
+	CR_MEMBER(maxAngleDif),
+	CR_MEMBER(wantedDir),
+	CR_MEMBER(lastRequestedDir),
+	CR_MEMBER(haveUserTarget),
+	CR_MEMBER(subClassReady),
+	CR_MEMBER(onlyForward),
+	CR_MEMBER(weaponPos),
+	CR_MEMBER(lastRequest),
+	CR_MEMBER(damages),	
+	CR_MEMBER(relWeaponPos),
+	CR_MEMBER(muzzleFlareSize),
+	CR_MEMBER(lastTargetRetry),
+	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(badTargetCategory),
+	CR_MEMBER(onlyTargetCategory),
+	CR_MEMBER(incoming),
+	CR_MEMBER(weaponDef),
+	CR_MEMBER(buildPercent),
+	CR_MEMBER(numStockpiled),
+	CR_MEMBER(numStockpileQued),
+	CR_MEMBER(interceptTarget),
+	CR_MEMBER(salvoError),
+	CR_ENUM_MEMBER(targetType),	
+	CR_MEMBER(sprayangle),
+	CR_MEMBER(useWeaponPosForAim),
+	CR_MEMBER(errorVector),
+	CR_MEMBER(errorVectorAdd),
+	CR_MEMBER(lastErrorVectorUpdate),
+	CR_MEMBER(slavedTo),
+	CR_MEMBER(mainDir),
+	CR_MEMBER(maxMainDirAngleDif),
+	CR_MEMBER(hasCloseTarget),
+	CR_MEMBER(avoidFriendly),
+	CR_MEMBER(collisionFlags),
+	CR_MEMBER(fuelUsage)));
+	
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -39,6 +99,7 @@ CWeapon::CWeapon(CUnit* owner)
 :	targetType(Target_None),
 	owner(owner),
 	range(1),
+	heightMod(0),
 	reloadTime(1),
 	reloadStatus(0),
 	salvoLeft(0),
@@ -53,7 +114,10 @@ CWeapon::CWeapon(CUnit* owner)
 	metalFireCost(0),
 	energyFireCost(0),
 	targetPos(1,1,1),
+	fireSoundId(0),
+	fireSoundVolume(0),
 	angleGood(false),
+	maxAngleDif(0),
 	wantedDir(0,1,0),
 	lastRequestedDir(0,-1,0),
 	haveUserTarget(false),
@@ -82,6 +146,8 @@ CWeapon::CWeapon(CUnit* owner)
 	mainDir(0,0,1),
 	maxMainDirAngleDif(-1),
 	hasCloseTarget(false),
+	avoidFriendly(true),
+	collisionFlags(0),
 	fuelUsage(0)
 {
 }

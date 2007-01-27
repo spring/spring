@@ -13,6 +13,13 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,0,0));
+
+CR_REG_METADATA(CExplosiveProjectile, (
+	CR_MEMBER(ttl),
+	CR_MEMBER(areaOfEffect)
+	));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

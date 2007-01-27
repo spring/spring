@@ -11,6 +11,21 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
+CR_BIND_DERIVED(CTorpedoProjectile, CTorpedoProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
+
+CR_REG_METADATA(CTorpedoProjectile,(
+	CR_MEMBER(tracking),
+	CR_MEMBER(dir),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(curSpeed),
+	CR_MEMBER(ttl),
+	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(target),
+	CR_MEMBER(nextBubble),
+	CR_MEMBER(texx),
+	CR_MEMBER(texy)
+	));
+
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
 : CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,0),
 	ttl(ttl),

@@ -5,11 +5,10 @@
 #include "creg/creg.h"
 
 class CMobility {
+	CR_DECLARE(CMobility);
 public:
 	CMobility();
 	virtual ~CMobility();
-
-	CR_DECLARE(CMobility);
 
 	MoveData* moveData;
 

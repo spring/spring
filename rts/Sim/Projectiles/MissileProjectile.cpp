@@ -19,6 +19,31 @@
 
 static const float Smoke_Time=60;
 
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,NULL,float3(0,0,0)));
+
+CR_REG_METADATA(CMissileProjectile,(
+	CR_MEMBER(dir),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(curSpeed),
+	CR_MEMBER(ttl),
+	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(age),
+	CR_MEMBER(oldSmoke),
+	CR_MEMBER(oldDir),
+	CR_MEMBER(target),
+	CR_MEMBER(decoyTarget),
+	CR_MEMBER(drawTrail),
+	CR_MEMBER(numParts),
+	CR_MEMBER(targPos),
+	CR_MEMBER(isWobbling),
+	CR_MEMBER(wobbleDir),
+	CR_MEMBER(wobbleTime),
+	CR_MEMBER(wobbleDif),
+	CR_MEMBER(extraHeight),
+	CR_MEMBER(extraHeightDecay),	
+	CR_MEMBER(extraHeightTime)
+	));
+
 CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)
 : CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,0),
 	ttl(ttl),

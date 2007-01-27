@@ -8,6 +8,7 @@
 class CMoveMath;
 
 struct MoveData{
+	CR_DECLARE_STRUCT(MoveData);
 	enum MoveType {
 		Ground_Move,
 		Hover_Move,
@@ -29,6 +30,7 @@ struct MoveData{
 
 class CMoveInfo
 {
+	CR_DECLARE(CMoveInfo);
 public:
 	CMoveInfo();
 	~CMoveInfo();

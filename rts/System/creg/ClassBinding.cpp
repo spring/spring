@@ -19,7 +19,7 @@ static int currentMemberFlags = 0; // used when registering class members
 ClassBinder* ClassBinder::binderList = 0;
 vector<Class*> ClassBinder::classes;
 
-ClassBinder::ClassBinder (const char *className, ClassFlags cf, ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, void (*constructorProc)(void *Inst), void (*destructorProc)(void *Inst))
+ClassBinder::ClassBinder (const char *className, unsigned int cf, ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, void (*constructorProc)(void *Inst), void (*destructorProc)(void *Inst))
 {
 	class_ = 0;
 	name = className;
@@ -28,7 +28,7 @@ ClassBinder::ClassBinder (const char *className, ClassFlags cf, ClassBinder* bas
 	destructor = destructorProc;
 	base = baseClsBinder;
 	size = instanceSize;
-	flags = cf;
+	flags = (ClassFlags)cf;
 
 	// link to the list of class binders
 	nextBinder = binderList;

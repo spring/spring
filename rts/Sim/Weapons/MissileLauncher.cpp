@@ -10,6 +10,8 @@
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
+
 CMissileLauncher::CMissileLauncher(CUnit* owner)
 : CWeapon(owner)
 {

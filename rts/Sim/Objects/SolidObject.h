@@ -22,8 +22,8 @@ public:
 		Submarine
 	};
 
-	CSolidObject();
-	virtual ~CSolidObject(void);
+	CSolidObject(EObjectType synced = OT_Unknown);
+	virtual ~CSolidObject();
 
 	virtual bool AddBuildPower(float amount, CUnit* builder);
 

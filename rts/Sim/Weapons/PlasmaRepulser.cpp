@@ -12,7 +12,22 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Projectiles/ShieldPartProjectile.h"
 #include "Game/Team.h"
+#include "Weapon.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Set.h"
 #include "mmgr.h"
+
+CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
+
+CR_REG_METADATA(CPlasmaRepulser, (
+	CR_MEMBER(radius),
+	CR_MEMBER(sqRadius),
+	CR_MEMBER(curPower),
+	CR_MEMBER(isEnabled),
+	CR_MEMBER(incoming),
+	CR_MEMBER(hasGfx),
+	CR_MEMBER(visibleShieldParts)
+	));
 
 static void ShieldScriptCallback(int retCode,void* p1,void* p2)
 {

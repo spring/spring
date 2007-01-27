@@ -6,6 +6,16 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL,NULL,0,float3(0,0,0)));
+
+CR_REG_METADATA(CRepulseGfx,(
+	CR_MEMBER(repulsed),
+	CR_MEMBER(sqMaxDist),
+	CR_MEMBER(age),
+	CR_MEMBER(color),
+	CR_MEMBER(difs)
+	));
+
 CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color)
 : CProjectile(repulsed->pos,repulsed->speed,owner),
 	repulsed(repulsed),

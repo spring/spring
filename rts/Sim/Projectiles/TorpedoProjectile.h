@@ -7,6 +7,7 @@
 class CTorpedoProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CTorpedoProjectile);
 public:
 	CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef);
 	~CTorpedoProjectile(void);

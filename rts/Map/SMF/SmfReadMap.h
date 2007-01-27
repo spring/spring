@@ -10,6 +10,8 @@ class CBFGroundDrawer;
 class CSmfReadMap : public CReadMap
 {
 public:
+	CR_DECLARE(CSmfReadMap)
+
 	CSmfReadMap(std::string mapname);
 	~CSmfReadMap(void);
 

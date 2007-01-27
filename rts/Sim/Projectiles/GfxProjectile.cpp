@@ -9,7 +9,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGfxProjectile, CProjectile);
+CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
 
 CR_REG_METADATA(CGfxProjectile, 
 (

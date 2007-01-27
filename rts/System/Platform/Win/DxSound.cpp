@@ -184,8 +184,8 @@ int CDxSound::GetBuf(int id,float volume)
 
 void CDxSound::SetVolume (float v)
 {
-  // place the volume within the 0.5 to 1.0 range
-  if (v < 0.01f) {
+	// place the volume within the 0.5 to 1.0 range
+	if (v < 0.01f) {
 		globalVolume = 0.0f;
 	} else {
 		globalVolume = 0.5f + (0.5f * max(0.0f, min(1.0f, v)));

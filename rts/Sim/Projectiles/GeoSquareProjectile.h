@@ -5,6 +5,7 @@
 
 class CGeoSquareProjectile : public CProjectile
 {
+	CR_DECLARE(CGeoSquareProjectile);
 public:
 	CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2);
 	virtual ~CGeoSquareProjectile(void);

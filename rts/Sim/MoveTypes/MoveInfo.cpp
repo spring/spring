@@ -4,8 +4,35 @@
 #include "TdfParser.h"
 #include "LogOutput.h"
 #include "Map/ReadMap.h"
+#include "MoveMath/MoveMath.h"
 #include <boost/lexical_cast.hpp>
+#include "creg/STL_Deque.h"
+#include "creg/STL_Map.h"
 #include "mmgr.h"
+
+CR_BIND(MoveData, );
+CR_BIND(CMoveInfo, );
+
+CR_REG_METADATA(MoveData, (
+		CR_ENUM_MEMBER(moveType),
+		CR_MEMBER(size),
+
+		CR_MEMBER(depth),
+		CR_MEMBER(maxSlope),
+		CR_MEMBER(slopeMod),
+		CR_MEMBER(depthMod),
+
+		CR_MEMBER(pathType),
+		CR_MEMBER(moveMath),
+		CR_MEMBER(crushStrength),
+		CR_MEMBER(moveFamily)));
+
+CR_REG_METADATA(CMoveInfo, (
+		CR_MEMBER(moveData),
+		CR_MEMBER(name2moveData),
+		CR_MEMBER(moveInfoChecksum),
+		CR_MEMBER(terrainType2MoveFamilySpeed)));
+
 
 CMoveInfo* moveinfo;
 using namespace std;

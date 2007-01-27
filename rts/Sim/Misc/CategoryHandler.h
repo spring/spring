@@ -11,8 +11,9 @@ extern CCategoryHandler* categoryHandler;
 
 class CCategoryHandler
 {
+	CR_DECLARE(CCategoryHandler);
 public:
-	~CCategoryHandler(void);
+	~CCategoryHandler();
 
 	std::map<std::string,unsigned int> categories;
 
@@ -34,7 +35,7 @@ public:
 		instance=0;
 	}
 protected:
-	CCategoryHandler(void);
+	CCategoryHandler();
 	static CCategoryHandler* instance;
 };
 

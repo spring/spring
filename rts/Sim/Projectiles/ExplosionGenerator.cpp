@@ -122,7 +122,7 @@ CExplosionGenerator::~CExplosionGenerator()
 // Default explosion generator: everything is calculated from damage and radius
 // -------------------------------------------------------------------------------
 
-CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator);
+CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator, );
 
 CStdExplosionGenerator::CStdExplosionGenerator()
 {}
@@ -135,7 +135,6 @@ void CStdExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::str
 
 void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir)
 {
-#ifndef SYNCDEBUG
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	float h2=ground->GetHeight2(pos.x,pos.z);
@@ -262,14 +261,13 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 		CSpherePartProjectile::CreateSphere(pos,min(0.7f,damage*0.02f),5+(int)(sqrt(damage)*0.7f),(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.5f,owner);	
 	}
 	POP_CODE_MODE;
-#endif // !SYNCDEBUG
 }
 
 // -------------------------------------------------------------------------------
 // CCustomExplosionGenerator: Uses explosion info from a TDF file
 // -------------------------------------------------------------------------------
 
-CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator);
+CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
 #define SPW_WATER 1
 #define SPW_GROUND 2
@@ -560,7 +558,6 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 
 void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir)
 {
-#ifndef SYNCDEBUG
 	float h2=ground->GetHeight2(pos.x,pos.z);
 
 	unsigned int flags = 0;
@@ -592,7 +589,6 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 
 	if (useDefaultExplosions)
 		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);
-#endif // !SYNCDEBUG
 }
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()

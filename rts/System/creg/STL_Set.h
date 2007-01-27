@@ -37,7 +37,7 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() {	return std::string(); }
+		std::string GetName() { return "set<" + elemType->GetName() + ">"; }
 	};
 
 

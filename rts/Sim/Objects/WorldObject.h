@@ -12,18 +12,20 @@ class CWorldObject : public CObject
 public:
 	CR_DECLARE(CWorldObject);
 
-	CWorldObject() : useAirLos(false),alwaysVisible(false) {}
-	CWorldObject(const float3& pos) : pos(pos), useAirLos(false),alwaysVisible(false) {}
+	CWorldObject(EObjectType synced = OT_Unknown):
+		CObject(synced), useAirLos(false), alwaysVisible(false) {}
+	CWorldObject(const float3& pos, EObjectType synced = OT_Unknown):
+		CObject(synced), pos(pos), useAirLos(false), alwaysVisible(false) {}
 
 	void SetRadius(float r);
 	virtual ~CWorldObject();
-	virtual void DrawS3O(){};
+	virtual void DrawS3O(){}
 
-	SyncedFloat3 pos;
-	float radius;					//used for collisions
-	float sqRadius;				
+	float3 pos;
+	float radius;     //used for collisions
+	float sqRadius;
 
-	float drawRadius;			//used to see if in los
+	float drawRadius; //used to see if in los
 	bool useAirLos;
 	bool alwaysVisible;
 };

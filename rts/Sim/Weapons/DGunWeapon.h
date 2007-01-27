@@ -6,6 +6,7 @@
 class CDGunWeapon :
 	public CWeapon
 {
+	CR_DECLARE(CDGunWeapon);
 public:
 	CDGunWeapon(CUnit* owner);
 	~CDGunWeapon(void);

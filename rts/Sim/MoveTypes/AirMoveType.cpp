@@ -18,6 +18,82 @@
 #include "Mobility.h"
 #include "myMath.h"
 
+CR_BIND_DERIVED(CAirMoveType, CMoveType, (NULL));
+CR_BIND(CAirMoveType::DrawLine, );
+CR_BIND(CAirMoveType::RudderInfo, );
+
+CR_REG_METADATA(CAirMoveType, (
+		CR_MEMBER(subState),
+
+		CR_MEMBER(maneuver),
+		CR_MEMBER(maneuverSubState),
+
+		CR_MEMBER(loopbackAttack),
+		CR_MEMBER(isFighter),
+
+		CR_MEMBER(wingDrag),
+		CR_MEMBER(wingAngle),
+		CR_MEMBER(invDrag),
+		CR_MEMBER(frontToSpeed),
+		CR_MEMBER(speedToFront),
+		CR_MEMBER(myGravity),
+
+		CR_MEMBER(maxBank),
+		CR_MEMBER(maxPitch),
+		CR_MEMBER(maxSpeed),
+		CR_MEMBER(turnRadius),
+		CR_MEMBER(wantedHeight),
+
+		CR_MEMBER(maxAcc),
+		CR_MEMBER(maxAileron),
+		CR_MEMBER(maxElevator),
+		CR_MEMBER(maxRudder),
+
+		CR_MEMBER(goalPos),
+
+		CR_MEMBER(inSupply),
+
+		CR_MEMBER(reservedLandingPos),
+
+		CR_MEMBER(mySide),
+		CR_MEMBER(crashAileron),
+		CR_MEMBER(crashElevator),
+		CR_MEMBER(crashRudder),
+
+		CR_MEMBER(oldpos),
+		CR_MEMBER(oldGoalPos),
+		CR_MEMBER(oldSlowUpdatePos),
+
+		CR_MEMBER(lines),
+
+		CR_MEMBER(rudder),
+		CR_MEMBER(elevator),
+		CR_MEMBER(aileronRight),
+		CR_MEMBER(aileronLeft),
+		CR_MEMBER(rudders),
+
+		CR_MEMBER(lastRudderUpdate),
+		CR_MEMBER(lastRudderPos),
+		CR_MEMBER(lastElevatorPos),
+		CR_MEMBER(lastAileronPos),
+	
+		CR_MEMBER(inefficientAttackTime),
+		CR_MEMBER(exitVector),
+
+		CR_MEMBER(lastColWarning),
+		CR_MEMBER(lastColWarningType),
+
+		CR_MEMBER(repairBelowHealth),
+		CR_MEMBER(reservedPad),
+		CR_MEMBER(padStatus)));
+
+CR_REG_METADATA_SUB(CAirMoveType, DrawLine, (
+		CR_MEMBER(pos1), CR_MEMBER(pos2),
+		CR_MEMBER(color)));
+
+CR_REG_METADATA_SUB(CAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
+
+
 CAirMoveType::CAirMoveType(CUnit* owner):
 	CMoveType(owner),
 	wingDrag(0.07f),
@@ -91,7 +167,7 @@ CAirMoveType::~CAirMoveType(void)
 
 void CAirMoveType::Update(void)
 {
-	SyncedFloat3 &pos=owner->pos;
+	float3 &pos=owner->pos;
 
 	//This is only set to false after the plane has finished constructing
 	if (useHeading) {
@@ -382,7 +458,7 @@ void CAirMoveType::UpdateManeuver(void)
 
 void CAirMoveType::UpdateFighterAttack(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -575,7 +651,7 @@ void CAirMoveType::UpdateAttack(void)
 
 void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -687,7 +763,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 
 void CAirMoveType::UpdateLanded(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -704,7 +780,7 @@ void CAirMoveType::UpdateLanded(void)
 
 void CAirMoveType::UpdateTakeOff(float wantedHeight)
 {
-	SyncedFloat3& pos=owner->pos;
+	float3& pos=owner->pos;
 	float3& speed=owner->speed;
 
 	float h = 0.0f;
@@ -737,7 +813,7 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 
 void CAirMoveType::UpdateLanding(void)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -848,7 +924,7 @@ void CAirMoveType::UpdateLanding(void)
 
 void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector)
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;

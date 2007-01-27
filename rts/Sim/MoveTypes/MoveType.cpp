@@ -4,6 +4,18 @@
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CMoveType, CObject, (NULL));
+
+CR_REG_METADATA(CMoveType, (
+		CR_MEMBER(forceTurn),
+		CR_MEMBER(forceTurnTo),
+		CR_MEMBER(owner),
+		CR_MEMBER(maxSpeed),
+		CR_MEMBER(maxWantedSpeed),
+		CR_MEMBER(useHeading),
+		CR_ENUM_MEMBER(progressState)));
+
+
 CMoveType::CMoveType(CUnit* owner)
 : owner(owner),
 	forceTurn(0),

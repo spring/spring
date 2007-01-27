@@ -3,6 +3,7 @@
 
 struct DamageArray
 {
+	CR_DECLARE_STRUCT(DamageArray);
 	static int numTypes;
 	float* damages;
 	int paralyzeDamageTime;
@@ -30,6 +31,9 @@ struct DamageArray
 			da.damages[a]*=mul;
 		return da;
 	}
+
+private:
+	void creg_Serialize(creg::ISerializer& s);
 };
 
 #endif // __DAMAGE_ARRAY_H__

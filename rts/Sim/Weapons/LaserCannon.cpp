@@ -10,6 +10,12 @@
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
+
+CR_REG_METADATA(CLaserCannon,(
+	CR_MEMBER(color)
+	));
+
 CLaserCannon::CLaserCannon(CUnit* owner)
 : CWeapon(owner)
 {

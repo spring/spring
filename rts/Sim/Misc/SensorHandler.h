@@ -4,9 +4,10 @@
 //This class is responsible for reading the sensor.tdf file and parsing relevant data.
 class CSensorHandler
 {
+	CR_DECLARE(CSensorHandler);
 public:
-	CSensorHandler(void);
-	~CSensorHandler(void);
+	CSensorHandler();
+	virtual ~CSensorHandler();
 
 	int losMipLevel;	//miplevel for los
 	int airMipLevel;	//miplevel to use for airlos

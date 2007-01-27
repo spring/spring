@@ -8,7 +8,7 @@
 std::vector<CColorMap *> CColorMap::colorMaps;
 std::map<std::string, CColorMap *> CColorMap::colorMapsMap;
 
-CR_BIND(CColorMap);
+CR_BIND(CColorMap, );
 
 CColorMap::CColorMap(void)
 {

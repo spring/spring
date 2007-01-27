@@ -8,6 +8,7 @@
 
 class CRifle : public CWeapon  
 {
+	CR_DECLARE(CRifle);
 public:
 	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
 	void Update();

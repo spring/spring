@@ -6,6 +6,7 @@
 class CBeamLaserProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CBeamLaserProjectile);
 public:
 	CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize, WeaponDef *weaponDef);
 	~CBeamLaserProjectile(void);

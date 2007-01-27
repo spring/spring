@@ -6,6 +6,7 @@
 class CTorpedoLauncher :
 	public CWeapon
 {
+	CR_DECLARE(CTorpedoLauncher);
 public:
 	CTorpedoLauncher(CUnit* owner);
 	virtual ~CTorpedoLauncher(void);

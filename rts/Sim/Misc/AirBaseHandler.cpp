@@ -3,9 +3,19 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
 
 CAirBaseHandler* airBaseHandler=0;
+
+CR_BIND_DERIVED(CAirBaseHandler, CObject, )
+CR_REG_METADATA(CAirBaseHandler, (CR_MEMBER(freeBases), CR_MEMBER(bases)))
+
+CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, );
+CR_REG_METADATA_SUB(CAirBaseHandler, LandingPad, (CR_MEMBER(unit), CR_MEMBER(base), CR_MEMBER(piece)))
+
+CR_BIND(CAirBaseHandler::AirBase, )
+CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (CR_MEMBER(unit), CR_MEMBER(freePads), CR_MEMBER(pads)))
 
 CAirBaseHandler::CAirBaseHandler(void)
 {

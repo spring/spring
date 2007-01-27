@@ -9,6 +9,7 @@ class CUnit;
 class CMissileProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CMissileProjectile);
 public:
 	CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos);
 	~CMissileProjectile(void);

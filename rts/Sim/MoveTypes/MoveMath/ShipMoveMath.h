@@ -9,6 +9,7 @@ Ie. ships.
 #include "MoveMath.h"
 
 class CShipMoveMath : public CMoveMath {
+	CR_DECLARE(CShipMoveMath);
 public:
 	//SpeedMod returns a speed-multiplier for given position or data.
 	float SpeedMod(const MoveData& moveData, float height, float slope);

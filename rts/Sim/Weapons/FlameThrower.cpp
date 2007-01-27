@@ -8,6 +8,13 @@
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL));
+
+CR_REG_METADATA(CFlameThrower,(
+	CR_MEMBER(color),
+	CR_MEMBER(color2)
+	));
+
 CFlameThrower::CFlameThrower(CUnit* owner)
 : CWeapon(owner)
 {

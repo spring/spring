@@ -328,9 +328,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	logOutput.Print("Spring %s",VERSION_STRING);
 
-	if(!server)
-		net->SendData<unsigned int>(NETMSG_EXECHECKSUM, CreateExeChecksum());
-
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
@@ -899,7 +896,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gs->paused = newPause;
 		} else {
 			net->SendData<unsigned char, unsigned char>(
-					NETMSG_PAUSE, newPause, gu->myPlayerNum);
+					NETMSG_PAUSE, gu->myPlayerNum, newPause);
 			lastframe = SDL_GetTicks(); // this required here?
 		}
 	}
@@ -2184,11 +2181,11 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_PAUSE:{
-			int player=inbuf[inbufpos+2];
+			int player=inbuf[inbufpos+1];
 			if(player>=MAX_PLAYERS || player<0){
 				logOutput.Print("Got invalid player num %i in pause msg",player);
 			} else {
-				gs->paused=!!inbuf[inbufpos+1];
+				gs->paused=!!inbuf[inbufpos+2];
 				if(gs->paused){
 					logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
 				} else {
@@ -2308,8 +2305,11 @@ bool CGame::ClientReadNet()
 				timeLeft-=1;
 			net->SendData<int>(NETMSG_NEWFRAME, gs->frameNum);
 			SimFrame();
-			lastLength=5;
-
+#ifdef SYNCCHECK
+			net->SendData<unsigned char, int, unsigned>(NETMSG_SYNCRESPONSE,
+					gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+			CSyncChecker::NewFrame();
+#endif
 			if(gameServer && serverNet && serverNet->playbackDemo)	//server doesnt update framenums automatically while playing demo
 				gameServer->serverframenum=gs->frameNum;
 
@@ -2317,6 +2317,7 @@ bool CGame::ClientReadNet()
 				POP_CODE_MODE;
 				return true;
 			}
+			lastLength=5;
 			break;
 
 		case NETMSG_COMMAND:{
@@ -2380,13 +2381,12 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_SYNCREQUEST:{
+			// TODO rename this net message, change error msg, etc.
 			ENTER_MIXED;
 			int frame=*((int*)&inbuf[inbufpos+1]);
 			if(frame!=gs->frameNum){
 				logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 			}
-			net->SendData<unsigned char, int, CChecksum>(
-					NETMSG_SYNCRESPONSE, gu->myPlayerNum, gs->frameNum, uh->CreateChecksum());
 
 			net->SendData<float>(NETMSG_CPU_USAGE,
 #ifdef PROFILE_TIME
@@ -2399,6 +2399,7 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_SYNCERROR:
+			// TODO unused msg
 			logOutput.Print("Sync error");
 			lastLength=5;
 			break;
@@ -2981,6 +2982,17 @@ void CGame::HandleChatMsg(std::string s,int player)
 		logOutput.Print("Result: %f", 1.0f/a);
 	}
 
+	if (s.find(".resync") == 0 && gs->cheatEnabled) {
+		CObject* o = CObject::GetSyncedObjects();
+		for (; o; o = o->GetNext()) {
+			creg::Class* c = o->GetClass();
+			logOutput.Print("%s\n", c->name.c_str());
+			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
+				logOutput.Print("  %s\n", (*m)->name);
+			}
+		}
+	}
+
 	if (s.find(".desync") == 0 && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
@@ -3208,31 +3220,6 @@ void CGame::HandleChatMsg(std::string s,int player)
 		sound->PlaySample(chatSound,5);
 	}
 }
-
-unsigned  int CGame::CreateExeChecksum(void)
-{
-/*	unsigned int ret=0;
-	CFileHandler f(
-#ifdef _WIN32
-			"spring.exe"
-#else
-			"spring"
-#endif
-			);
-	int l=f.FileSize();
-	unsigned char* buf=SAFE_NEW unsigned char[l];
-	f.Read(buf,l);
-
-	for(int a=0;a<l;++a){
-		ret+=buf[a];
-		ret*=max((unsigned char)1,buf[a]);
-	}
-
-	delete[] buf;
-	return ret;*/
-	return 0;
-}
-
 
 static void SelectUnits(const string& line)
 {

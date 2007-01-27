@@ -8,6 +8,17 @@
 
 using namespace std;
 
+CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (float3(0,0,0),0,0,0,float3(0,0,0),0,NULL,NULL));
+
+CR_REG_METADATA(CShieldPartProjectile,(
+	CR_MEMBER(centerPos),
+	CR_MEMBER(vectors),
+	CR_MEMBER(texCoords),
+	CR_MEMBER(sphereSize),
+	CR_MEMBER(baseAlpha),
+	CR_MEMBER(color)
+	));
+
 CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float sphereSize,float3 color,float alpha,AtlasedTexture *texture,CUnit* owner)
 : CProjectile(centerPos,ZeroVector,owner),
 	centerPos(centerPos),

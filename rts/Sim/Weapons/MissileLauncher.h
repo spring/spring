@@ -6,6 +6,7 @@
 class CMissileLauncher :
 	public CWeapon
 {
+	CR_DECLARE(CMissileLauncher);
 public:
 	CMissileLauncher(CUnit* owner);
 	~CMissileLauncher(void);

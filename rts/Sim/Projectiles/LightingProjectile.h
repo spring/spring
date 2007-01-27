@@ -8,6 +8,7 @@ class CWeapon;
 class CLightingProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CLightingProjectile);
 public:
 	CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, WeaponDef *weaponDef, int ttl=10,CWeapon* weap=0);
 	~CLightingProjectile(void);

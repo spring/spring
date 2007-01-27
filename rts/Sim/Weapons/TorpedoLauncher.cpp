@@ -9,6 +9,11 @@
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL));
+
+CR_REG_METADATA(CTorpedoLauncher,(
+       CR_MEMBER(tracking)));
+
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),
 	tracking(0)

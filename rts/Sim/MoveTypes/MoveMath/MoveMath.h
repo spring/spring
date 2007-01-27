@@ -6,6 +6,7 @@
 #include "Sim/Objects/SolidObject.h"
 
 class CMoveMath {
+	CR_DECLARE(CMoveMath);
 public:
 	//Block-check-options
 	//Note: Whose options are hierarchial, with CHECK_STRUCTURE as the first check.

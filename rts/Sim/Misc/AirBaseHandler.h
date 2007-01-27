@@ -9,6 +9,10 @@ class CAirBaseHandler :
 	public CObject
 {
 public:
+	CR_DECLARE(CAirBaseHandler)
+	CR_DECLARE_SUB(LandingPad)
+	CR_DECLARE_SUB(AirBase)
+
 	CAirBaseHandler(void);
 	~CAirBaseHandler(void);
 
@@ -19,12 +23,15 @@ public:
 
 	class LandingPad : public CObject{
 	public:
+		CR_DECLARE(LandingPad)
 		CUnit* unit;
 		AirBase* base;
 		int piece;
 	};
 
 	struct AirBase {
+		CR_DECLARE_STRUCT(AirBase)
+
 		CUnit* unit;
 		std::list<LandingPad*> freePads;
 		std::list<LandingPad*> pads;

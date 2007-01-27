@@ -7,6 +7,21 @@
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL));
+
+CR_REG_METADATA(CBeamLaserProjectile,(
+	CR_MEMBER(startPos),
+	CR_MEMBER(endPos),
+	CR_MEMBER(corecolstart),
+	CR_MEMBER(corecolend),
+	CR_MEMBER(kocolstart),
+	CR_MEMBER(kocolend),
+	CR_MEMBER(thickness),
+	CR_MEMBER(corethickness),
+	CR_MEMBER(flaresize),
+	CR_MEMBER(midtexx)
+	));
+
 CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize, WeaponDef *weaponDef)
 :	CWeaponProjectile((startPos+endPos)*0.5f,ZeroVector, owner, 0, ZeroVector, weaponDef,0), //CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),

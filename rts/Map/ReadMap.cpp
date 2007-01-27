@@ -36,6 +36,9 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////
 CReadMap* readmap=0;
 
+CR_BIND_INTERFACE(CReadMap)
+CR_REG_METADATA(CReadMap, (CR_SERIALIZER(Serialize)))
+
 void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 {
 	parser.LoadFile(GetTDFName(mapname));
@@ -135,22 +138,36 @@ CReadMap::CReadMap() :
 CReadMap::~CReadMap()
 {
 	delete metalMap;
-	delete[] facenormals;
 	delete[] typemap;
 	delete[] slopemap;
+
+	delete[] facenormals;
 	delete[] centerheightmap;
 	for(int i=1; i<numHeightMipMaps; i++)	//don't delete first pointer since it points to centerheightmap
 		delete[] mipHeightmap[i];
+
 	delete[] orgheightmap;
 	delete[] groundBlockingObjectMap;
 	delete[] heightLinePal;
 }
 
-void CReadMap::CalcHeightfieldData()
+void CReadMap::Serialize(creg::ISerializer& s)
+{
+	float *hm = GetHeightmap();
+	s.Serialize(hm, 4 * (gs->mapx+1) * (gs->mapy+1));
+
+	if (!s.IsWriting())
+		CalcHeightfieldData();
+}
+
+void CReadMap::Initialize()
 {
 	float* heightmap = GetHeightmap();
 
 	orgheightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
+	for(int y=0;y<(gs->mapy+1)*(gs->mapx+1);++y)
+		orgheightmap[y]=heightmap[y];
+
 	//	normals=SAFE_NEW float3[(gs->mapx+1)*(gs->mapy+1)];
 	facenormals=SAFE_NEW float3[gs->mapx*gs->mapy*2];
 	centerheightmap=SAFE_NEW float[gs->mapx*gs->mapy];
@@ -160,6 +177,43 @@ void CReadMap::CalcHeightfieldData()
 		mipHeightmap[i] = SAFE_NEW float[(gs->mapx>>i)*(gs->mapy>>i)];
 
 	slopemap=SAFE_NEW float[gs->hmapx*gs->hmapy];
+
+	heightLinePal=SAFE_NEW unsigned char[3*256];
+	if(configHandler.GetInt("ColorElev",1)){
+		for(int a=0;a<86;++a){
+			heightLinePal[a*3+0]=255-a*3;
+			heightLinePal[a*3+1]=a*3;
+			heightLinePal[a*3+2]=0;
+		}
+		for(int a=86;a<172;++a){
+			heightLinePal[a*3+0]=0;
+			heightLinePal[a*3+1]=255-(a-86)*3;
+			heightLinePal[a*3+2]=(a-86)*3;
+		}
+		for(int a=172;a<256;++a){
+			heightLinePal[a*3+0]=(a-172)*3;
+			heightLinePal[a*3+1]=0;
+			heightLinePal[a*3+2]=255-(a-172)*3;
+		}
+	} else {
+		for(int a=0;a<29;++a){
+			heightLinePal[a*3+0]=255-a*8;
+			heightLinePal[a*3+1]=255-a*8;
+			heightLinePal[a*3+2]=255-a*8;
+		}
+		for(int a=29;a<256;++a){
+			heightLinePal[a*3+0]=a;
+			heightLinePal[a*3+1]=a;
+			heightLinePal[a*3+2]=a;
+		}
+	}
+
+	CalcHeightfieldData();
+}
+
+void CReadMap::CalcHeightfieldData()
+{
+	float* heightmap = GetHeightmap();
 
 	minheight=1000;
 	maxheight=-1000;
@@ -173,6 +227,8 @@ void CReadMap::CalcHeightfieldData()
 		mapChecksum+=(unsigned int)(heightmap[y]*100);
 		mapChecksum^=*(unsigned int*)&heightmap[y];
 	}
+
+	PrintLoadMsg("Creating surface normals");
 
 	for(int y=0;y<(gs->mapy);y++){
 		for(int x=0;x<(gs->mapx);x++){
@@ -197,8 +253,6 @@ void CReadMap::CalcHeightfieldData()
 			}
 		}
 	}
-
-	PrintLoadMsg("Creating surface normals");
 
 	for(int y=0;y<gs->mapy;y++){
 		for(int x=0;x<gs->mapx;x++){
@@ -242,36 +296,6 @@ void CReadMap::CalcHeightfieldData()
 			n2.Normalize();
 
 			slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5f;
-		}
-	}
-
-	heightLinePal=SAFE_NEW unsigned char[3*256];
-	if(configHandler.GetInt("ColorElev",1)){
-		for(int a=0;a<86;++a){
-			heightLinePal[a*3+0]=255-a*3;
-			heightLinePal[a*3+1]=a*3;
-			heightLinePal[a*3+2]=0;
-		}
-		for(int a=86;a<172;++a){
-			heightLinePal[a*3+0]=0;
-			heightLinePal[a*3+1]=255-(a-86)*3;
-			heightLinePal[a*3+2]=(a-86)*3;
-		}
-		for(int a=172;a<256;++a){
-			heightLinePal[a*3+0]=(a-172)*3;
-			heightLinePal[a*3+1]=0;
-			heightLinePal[a*3+2]=255-(a-172)*3;
-		}
-	} else {
-		for(int a=0;a<29;++a){
-			heightLinePal[a*3+0]=255-a*8;
-			heightLinePal[a*3+1]=255-a*8;
-			heightLinePal[a*3+2]=255-a*8;
-		}
-		for(int a=29;a<256;++a){
-			heightLinePal[a*3+0]=a;
-			heightLinePal[a*3+1]=a;
-			heightLinePal[a*3+2]=a;
 		}
 	}
 }

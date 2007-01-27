@@ -15,6 +15,10 @@ struct SS3O;
 
 class CPieceProjectile : public CProjectile
 {
+	CR_DECLARE(CPieceProjectile);
+
+	void creg_Serialize(creg::ISerializer& s);
+
 	int flags;
 	int dispList;
 	S3DO* piece3do;

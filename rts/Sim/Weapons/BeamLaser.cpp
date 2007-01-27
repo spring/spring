@@ -14,6 +14,14 @@
 #include "mmgr.h"
 #include "Sim/Projectiles/LargeBeamLaserProjectile.h"
 
+CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
+
+CR_REG_METADATA(CBeamLaser,(
+	CR_MEMBER(color),
+	CR_MEMBER(oldDir),
+	CR_MEMBER(damageMul)
+	));
+
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),
 	oldDir(ZeroVector)

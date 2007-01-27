@@ -7,6 +7,7 @@
 class CMoveType :
 	public CObject
 {
+	CR_DECLARE(CMoveType);
 public:
 	CMoveType(CUnit* owner);
 	virtual ~CMoveType(void);

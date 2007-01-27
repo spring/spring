@@ -9,6 +9,12 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
+
+CR_REG_METADATA(CStarburstLauncher,(
+	CR_MEMBER(uptime),
+	CR_MEMBER(tracking)));
+
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),
 	uptime(3),

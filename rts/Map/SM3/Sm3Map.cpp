@@ -20,6 +20,8 @@
 #include <fstream>
 #include "bitops.h"
 
+CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
+
 CSm3ReadMap::CSm3ReadMap()
 {
 	groundDrawer=0;
@@ -115,7 +117,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		float3::maxxpos=width*SQUARE_SIZE-1;
 		float3::maxzpos=height*SQUARE_SIZE-1;
 
-		CalcHeightfieldData();
+		CReadMap::Initialize();
 
 		if (mapDefParser.SectionExist("map\\featuretypes")) {
 			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());

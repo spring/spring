@@ -11,7 +11,7 @@ public:
 	CR_DECLARE(CTransportUnit);
 
 	CTransportUnit();
-	~CTransportUnit(void);
+	~CTransportUnit();
 
 	struct TransportedUnit{
 		CUnit* unit;
@@ -24,7 +24,7 @@ public:
 	int transportCapacityUsed;
 	float transportMassUsed;
 
-	void Update(void);
+	void Update();
 	void DependentDied(CObject* object);
 	void KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker);
 	void AttachUnit(CUnit* unit, int piece);

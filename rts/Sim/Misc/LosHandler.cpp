@@ -11,8 +11,61 @@
 #include "TimeProfiler.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
-#include "mmgr.h"
 #include "Sim/Misc/SensorHandler.h"
+#include "creg/STL_Deque.h"
+#include "creg/STL_List.h"
+#include "mmgr.h"
+
+CR_BIND(LosInstance, );
+CR_BIND_DERIVED(CLosHandler, CObject, );
+CR_BIND(CLosHandler::DelayedInstance, );
+CR_BIND(CLosHandler::CPoint, );
+
+CR_REG_METADATA(LosInstance,(
+		CR_MEMBER(losSquares),
+		CR_MEMBER(losSize),
+		CR_MEMBER(airLosSize),
+		CR_MEMBER(refCount),
+		CR_MEMBER(allyteam),
+		CR_MEMBER(baseSquare),
+		CR_MEMBER(baseAirSquare),
+		CR_MEMBER(hashNum),
+		CR_MEMBER(baseHeight),
+		CR_MEMBER(toBeDeleted)));
+
+void CLosHandler::creg_Serialize(creg::ISerializer& s)
+{
+	// NOTE This could be tricky if gs is serialized after losHandler.
+	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+		s.Serialize(losMap[a], losSizeX*losSizeY*2);
+		s.Serialize(airLosMap[a], airSizeX*airSizeY*2);
+	}
+}
+
+CR_REG_METADATA(CLosHandler,(
+		CR_SERIALIZER(creg_Serialize), // losMap, airLosMap
+		CR_MEMBER(losMipLevel),
+		CR_MEMBER(airMipLevel),
+		CR_MEMBER(invLosDiv),
+		CR_MEMBER(invAirDiv),
+		CR_MEMBER(airSizeX),
+		CR_MEMBER(airSizeY),
+		CR_MEMBER(losSizeX),
+		CR_MEMBER(losSizeY),
+		CR_MEMBER(instanceHash),
+		CR_MEMBER(toBeDeleted),
+		CR_MEMBER(delayQue),
+		CR_MEMBER(Points),
+		CR_MEMBER(terrainHeight),
+		CR_MEMBER(lostables)));
+
+CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
+		CR_MEMBER(instance),
+		CR_MEMBER(timeoutTime)));
+
+CR_REG_METADATA_SUB(CLosHandler,CPoint,(
+		CR_MEMBER(x),
+		CR_MEMBER(y)));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -150,7 +203,7 @@ START_TIME_PROFILE;
 			}
 		}
 		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
-		instance=new LosInstance(unit->losRadius,allyteam,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
+		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius,allyteam,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
@@ -341,7 +394,7 @@ void CLosHandler::OutputTable(int Table)
 	LosTable lostable;
 
   int Radius = Table;
-  PaintTable = SAFE_NEW char[(Radius+1)*Radius];
+  char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
   memset(PaintTable, 0 , (Radius+1)*Radius);
   CPoint P;
   int Lines = 0;
@@ -362,14 +415,14 @@ void CLosHandler::OutputTable(int Table)
     while (x < y) {
       if(!PaintTable[x+y*Radius])
 			{
-        DrawLine(x, y, Radius);
+        DrawLine(PaintTable, x, y, Radius);
         P.x = x;
         P.y = y;
         Points.push_back(P);
 			}
       if(!PaintTable[y+x*Radius])
 			{
-        DrawLine(y, x, Radius);
+        DrawLine(PaintTable, y, x, Radius);
         P.x = y;
         P.y = x;
         Points.push_back(P);
@@ -381,7 +434,7 @@ void CLosHandler::OutputTable(int Table)
 		if (x == y) {
 			if(!PaintTable[x+y*Radius])
 			{
-				DrawLine(x, y, Radius);
+				DrawLine(PaintTable, x, y, Radius);
 				P.x = x;
 				P.y = y;
 				Points.push_back(P);
@@ -438,7 +491,7 @@ CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
 	return losline;				
 }
 
-void CLosHandler::DrawLine(int x, int y, int Size)
+void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 {
 	
 	int x0 = 0;
@@ -505,7 +558,8 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 				for(lii=instanceHash[i->hashNum].begin();lii!=instanceHash[i->hashNum].end();++lii){
 					if((*lii)==i){
 						instanceHash[i->hashNum].erase(lii);
-						delete i;
+						i->_DestructInstance(i);
+						mempool.Free(i,sizeof(LosInstance));
 						break;
 					}
 				}

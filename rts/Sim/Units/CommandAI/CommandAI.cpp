@@ -1036,7 +1036,8 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
  *	unit), and the second being the location of the origional command.
  * @param c the command to return to
  **/
-void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2){
+void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
+{
 	float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
 	Command& c(commandQue.front());
 	assert(c.id == CMD_FIGHT && c.params.size() >= 3);
@@ -1058,19 +1059,22 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 	}
 }
 
-bool CCommandAI::HasMoreMoveCommands(){
-	for(deque<Command>::iterator i = (commandQue.begin()++); i != commandQue.end(); i++){
-		int id = i->id;
-		if(id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
-			|| id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
-			|| id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
-			|| id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
-		{
-			return true;
-		} else if(id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
-			|| id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
-		{
-			return false;
+bool CCommandAI::HasMoreMoveCommands()
+{
+	if (!commandQue.empty()) {
+		for(deque<Command>::iterator i = (commandQue.begin()++); i != commandQue.end(); i++) {
+			int id = i->id;
+			if(id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
+				|| id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
+				|| id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
+				|| id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
+			{
+				return true;
+			} else if(id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
+				|| id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
+			{
+				return false;
+			}
 		}
 	}
 	return false;

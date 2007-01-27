@@ -13,7 +13,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CProjectile, CWorldObject);
+CR_BIND_DERIVED(CProjectile, CWorldObject, );
 
 CR_REG_METADATA(CProjectile,
 (

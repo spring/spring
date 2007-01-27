@@ -27,7 +27,7 @@
 #include <algorithm>
 using namespace std;
 
-CR_BIND_DERIVED(CBuilder, CUnit);
+CR_BIND_DERIVED(CBuilder, CUnit, );
 
 CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(buildSpeed),

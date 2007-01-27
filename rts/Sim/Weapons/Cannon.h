@@ -9,6 +9,7 @@
 
 class CCannon : public CWeapon  
 {
+	CR_DECLARE(CCannon);
 public:
 	CCannon(CUnit* owner);
 	virtual ~CCannon();

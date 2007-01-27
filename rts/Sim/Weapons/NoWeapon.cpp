@@ -2,6 +2,8 @@
 #include "NoWeapon.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CNoWeapon, CWeapon, (NULL));
+
 CNoWeapon::CNoWeapon(CUnit *owner) : CWeapon(owner)
 {
 	weaponDef=0;

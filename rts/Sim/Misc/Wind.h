@@ -6,8 +6,10 @@
 class CWind
 {
 public:
-	CWind(void);
-	~CWind(void);
+	CR_DECLARE(CWind);
+
+	CWind();
+	~CWind();
 	void LoadWind();
 	void Update();
 

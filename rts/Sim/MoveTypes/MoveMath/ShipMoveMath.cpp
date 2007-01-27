@@ -4,6 +4,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CShipMoveMath, CMoveMath, );
 
 /*
 Calculate speed-multiplier for given height and slope data.

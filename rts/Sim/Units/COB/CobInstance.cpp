@@ -537,7 +537,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 		return;
 	}
 
-#if !defined(SYNCDEBUG) && !defined(_CONSOLE)
+#ifndef _CONSOLE
 	ENTER_MIXED;
 	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
 		ENTER_SYNCED;
@@ -641,8 +641,9 @@ void CCobInstance::EmitSfx(int type, int piece)
 			break;
 	}
 
+
 	ENTER_SYNCED;
-#endif // !_CONSOLE && !SYNCDEBUG
+#endif
 }
 
 void CCobInstance::AttachUnit(int piece, int u)

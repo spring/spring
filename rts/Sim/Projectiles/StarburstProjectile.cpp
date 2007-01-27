@@ -17,6 +17,36 @@
 
 static const float Smoke_Time=70;
 
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL));
+
+CR_REG_METADATA(CStarburstProjectile,(
+	CR_MEMBER(tracking),
+	CR_MEMBER(maxGoodDif),
+	CR_MEMBER(dir),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(curSpeed),
+	CR_MEMBER(ttl),
+	CR_MEMBER(uptime),
+	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(age),
+	CR_MEMBER(oldSmoke),
+	CR_MEMBER(oldSmokeDir),
+	CR_MEMBER(drawTrail),
+	CR_MEMBER(numParts),
+	CR_MEMBER(doturn),
+	CR_MEMBER(curCallback),
+	CR_MEMBER(missileAge)
+	));
+
+void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
+{
+	s.Serialize(numCallback, sizeof(int));
+	// NOTE This could be tricky if gs is serialized after losHandler.
+	for(int a=0;a<5;++a){
+		s.Serialize(oldInfos[a],sizeof(struct CStarburstProjectile::OldInfo));
+	}
+}
+
 CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect,float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef, CWeaponProjectile* interceptTarget)
 : CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,interceptTarget),
 	ttl(200),

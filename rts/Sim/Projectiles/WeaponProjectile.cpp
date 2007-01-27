@@ -16,6 +16,18 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
+
+CR_REG_METADATA(CWeaponProjectile,(
+	CR_MEMBER(targeted),
+	CR_MEMBER(weaponDef),
+	CR_MEMBER(target),
+	CR_MEMBER(targetPos),
+	CR_MEMBER(startpos),
+	CR_MEMBER(ttl),
+	CR_MEMBER(modelDispList)
+	));
+
 CWeaponProjectile::CWeaponProjectile()
 {
 	targeted=false;				//if we are a nuke and a anti is on the way

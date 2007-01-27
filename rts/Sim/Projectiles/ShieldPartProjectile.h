@@ -6,6 +6,7 @@ struct AtlasedTexture;
 class CShieldPartProjectile :
 	public CProjectile
 {
+	CR_DECLARE(CShieldPartProjectile);
 public:
 	CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float size,float3 color,float alpha, AtlasedTexture *texture,CUnit* owner);
 	~CShieldPartProjectile(void);

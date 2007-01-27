@@ -23,6 +23,35 @@
 
 static const float Smoke_Time=40;
 
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,NULL,0));
+
+CR_REG_METADATA(CPieceProjectile,(
+	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
+	CR_MEMBER(flags),
+	CR_MEMBER(dispList),
+	// TODO what to do with the next two fields
+	//CR_MEMBER(piece3do),
+	//CR_MEMBER(pieces3o),
+	CR_MEMBER(spinVec),
+	CR_MEMBER(spinSpeed),
+	CR_MEMBER(spinPos),
+	CR_MEMBER(oldSmoke),
+	CR_MEMBER(oldSmokeDir),
+	CR_MEMBER(target),
+	CR_MEMBER(drawTrail),
+	CR_MEMBER(curCallback),
+	CR_MEMBER(age),
+	CR_MEMBER(team)
+	));
+
+void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
+{	
+	s.Serialize(numCallback, sizeof(int));
+	for(int i=0;i<8;i++) {
+		s.Serialize(oldInfos[i],sizeof(CPieceProjectile::OldInfo));
+	}
+}
+
 CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO * piece, int flags,CUnit* owner,float radius)
 : CProjectile(pos,speed,owner),
   flags(flags),

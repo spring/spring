@@ -6,6 +6,7 @@
 class CBubbleProjectile :
 	public CProjectile
 {
+	CR_DECLARE(CBubbleProjectile);
 public:
 	CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float alpha);
 	virtual ~CBubbleProjectile();

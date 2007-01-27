@@ -54,9 +54,10 @@
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 #include "Game/GameSetup.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CUnit, CSolidObject);
+CR_BIND_DERIVED(CUnit, CSolidObject, );
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
@@ -524,10 +525,8 @@ void CUnit::SlowUpdate()
 			float rx = gs->randFloat();
 			float rz = gs->randFloat();
 
-#ifndef SYNCDEBUG
 			if(!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
 				SAFE_NEW CSimpleGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
-#endif
 
 			for(int a=0;a<gs->activeAllyTeams;++a){
                 if(radarhandler->InSeismicDistance(this, a))
@@ -1510,7 +1509,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(category),
 
 				CR_MEMBER(quads),
-				//CR_MEMBER(los)
+				CR_MEMBER(los),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(lastSlowUpdate),
 				CR_MEMBER(mapSquare),
@@ -1606,7 +1605,7 @@ CR_REG_METADATA(CUnit, (
 				//CR_MEMBER(directControl),
 
 				//CR_MEMBER(myTrack),
-				//CR_MEMBER(incomingMissiles),
+				CR_MEMBER(incomingMissiles),
 				CR_MEMBER(lastFlareDrop))
 				);
 

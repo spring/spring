@@ -6,6 +6,21 @@
 #include "ProjectileHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL));
+
+CR_REG_METADATA(CGenericParticleProjectile,(
+	CR_MEMBER(gravity),
+	CR_MEMBER(texture),
+	CR_MEMBER(colorMap),
+	CR_MEMBER(directional),
+	CR_MEMBER(life),
+	CR_MEMBER(decayrate),
+	CR_MEMBER(size),
+	CR_MEMBER(airdrag),
+	CR_MEMBER(sizeGrowth),
+	CR_MEMBER(sizeMod)
+	));
+
 CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner) :
 	CProjectile(pos, speed, owner)
 {

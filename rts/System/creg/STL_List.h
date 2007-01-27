@@ -14,7 +14,7 @@ namespace creg {
 		void Serialize (ISerializer *s, void *inst) {
 			T& ct = *(T*)inst;
 			if (s->IsWriting ()) {
-				int size = ct.size();
+				int size = (int)ct.size();
 				s->Serialize (&size,sizeof(int));
 				for (typename T::iterator it = ct.begin(); it!=ct.end(); ++it)
 					elemType->Serialize (s, &*it);

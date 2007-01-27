@@ -6,6 +6,7 @@
 class CLightingCannon :
 	public CWeapon
 {
+	CR_DECLARE(CLightingCannon);
 public:
 	CLightingCannon(CUnit* owner);
 	~CLightingCannon(void);

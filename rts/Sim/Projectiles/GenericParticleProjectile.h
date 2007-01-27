@@ -7,6 +7,7 @@
 class CColorMap;
 class CGenericParticleProjectile : public CProjectile
 {
+	CR_DECLARE(CGenericParticleProjectile);
 public:
 	float3 gravity;
 

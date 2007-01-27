@@ -6,7 +6,30 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
+#include "creg/STL_Map.h"
 #include "mmgr.h"
+
+CR_BIND(DamageArray, );
+CR_BIND(CDamageArrayHandler, );
+
+void DamageArray::creg_Serialize(creg::ISerializer& s)
+{
+	s.Serialize(damages, numTypes * sizeof(damages[0]));
+}
+
+CR_REG_METADATA(DamageArray, (
+		CR_SERIALIZER(creg_Serialize),
+		CR_MEMBER(paralyzeDamageTime),
+		CR_MEMBER(impulseFactor),
+		CR_MEMBER(impulseBoost),
+		CR_MEMBER(craterMult),
+		CR_MEMBER(craterBoost)));
+
+CR_REG_METADATA(CDamageArrayHandler, (
+		CR_MEMBER(numTypes),
+		CR_MEMBER(name2type),
+		CR_MEMBER(typeList)));
+
 
 CDamageArrayHandler* damageArrayHandler;
 int DamageArray::numTypes=1;

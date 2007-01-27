@@ -7,11 +7,24 @@
 #include "Rendering/Env/BaseWater.h"
 #include "ProjectileHandler.h"
 
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,NULL,0,0,0));
+
+CR_REG_METADATA(CWakeProjectile,(
+	CR_MEMBER(alpha),
+	CR_MEMBER(alphaFalloff),
+	CR_MEMBER(alphaAdd),
+	CR_MEMBER(alphaAddTime),
+	CR_MEMBER(size),
+	CR_MEMBER(sizeExpansion),
+	CR_MEMBER(rotation),
+	CR_MEMBER(rotSpeed)
+	));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(float3 pos,float3 speed,float startSize,float sizeExpansion, CUnit* owner, float alpha,float alphaFalloff,float fadeupTime)
+CWakeProjectile::CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner, float alpha,float alphaFalloff,float fadeupTime)
 : CProjectile(pos,speed,owner),
 	alpha(0),
 	alphaAdd(alpha/fadeupTime),

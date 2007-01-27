@@ -5,6 +5,17 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,0,NULL,0));
+
+CR_REG_METADATA(CBubbleProjectile, (
+	CR_MEMBER(ttl),
+	CR_MEMBER(alpha),
+	CR_MEMBER(size),
+	CR_MEMBER(startSize),
+	CR_MEMBER(sizeExpansion)
+	));
+
+
 CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float alpha)
 : CProjectile(pos,speed,owner),
 	alpha(alpha),

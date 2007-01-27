@@ -2,6 +2,7 @@
 #define LOADSAVEHANDLER_H
 
 #include <string>
+#include <fstream>
 
 class CLoadInterface;
 
@@ -11,13 +12,13 @@ public:
 	CLoadSaveHandler(void);
 	~CLoadSaveHandler(void);
 	void SaveGame(std::string file);
-	void LoadGame(std::string file);
-	void LoadGame2(void);
+	void LoadGameStartInfo(std::string file); // load things such as map/mod, needed to fire up the engine
+	void LoadGame(); 
 
-	std::ifstream* ifs;
-	CLoadInterface* load;
 	std::string mapName;
 	std::string modName;
+protected:
+	std::ifstream *ifs;
 };
 
 
