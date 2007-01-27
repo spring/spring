@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
 
-CR_BIND_STRUCT(AtlasedTexture);
+CR_BIND(AtlasedTexture, );
 
 bool CTextureAtlas::debug;
 

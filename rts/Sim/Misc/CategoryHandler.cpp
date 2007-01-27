@@ -3,18 +3,25 @@
 #include "LogOutput.h"
 #include <algorithm>
 #include <cctype>
+#include "creg/STL_Map.h"
 #include "mmgr.h"
+
+CR_BIND(CCategoryHandler, );
+
+CR_REG_METADATA(CCategoryHandler, (
+		CR_MEMBER(categories),
+		CR_MEMBER(firstUnused)));
 
 using namespace std;
 CCategoryHandler* CCategoryHandler::instance=0;
 CCategoryHandler* categoryHandler=0;
 
-CCategoryHandler::CCategoryHandler(void)
+CCategoryHandler::CCategoryHandler()
 :	firstUnused(0)
 {
 }
 
-CCategoryHandler::~CCategoryHandler(void)
+CCategoryHandler::~CCategoryHandler()
 {
 }
 

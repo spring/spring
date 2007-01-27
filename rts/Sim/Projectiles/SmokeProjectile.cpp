@@ -11,7 +11,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CR_BIND_DERIVED(CSmokeProjectile, CProjectile);
+CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
 
 CR_REG_METADATA(CSmokeProjectile, 
 (

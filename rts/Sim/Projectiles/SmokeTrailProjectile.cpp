@@ -13,6 +13,28 @@
 #include "Sim/Misc/Wind.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL));
+
+CR_REG_METADATA(CSmokeTrailProjectile,(
+	CR_MEMBER(pos1),
+	CR_MEMBER(pos2),
+	CR_MEMBER(orgSize),
+	CR_MEMBER(creationTime),
+	CR_MEMBER(lifeTime),
+	CR_MEMBER(color),
+	CR_MEMBER(dir1),
+	CR_MEMBER(dir2),
+	CR_MEMBER(drawTrail),
+	CR_MEMBER(dirpos1),
+	CR_MEMBER(dirpos2),
+	CR_MEMBER(midpos),
+	CR_MEMBER(middir),
+	CR_MEMBER(drawSegmented),
+	CR_MEMBER(firstSegment),
+	CR_MEMBER(lastSegment),
+	CR_MEMBER(drawCallbacker)
+	));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

@@ -4,6 +4,8 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Map/Ground.h"
 
+CR_BIND_DERIVED(CHoverMoveMath, CMoveMath, );
+
 const float HOVERING_HEIGHT = 5;
 bool CHoverMoveMath::noWaterMove;
 

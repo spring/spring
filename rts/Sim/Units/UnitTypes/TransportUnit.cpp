@@ -7,7 +7,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CTransportUnit, CUnit);
+CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
 CTransportUnit::CTransportUnit()
 :	transportCapacityUsed(0),
@@ -15,11 +15,11 @@ CTransportUnit::CTransportUnit()
 {
 }
 
-CTransportUnit::~CTransportUnit(void)
+CTransportUnit::~CTransportUnit()
 {
 }
 
-void CTransportUnit::Update(void)
+void CTransportUnit::Update()
 {
 	CUnit::Update();
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){

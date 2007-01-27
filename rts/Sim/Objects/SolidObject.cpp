@@ -8,7 +8,7 @@
 #include "myMath.h"
 #include "Rendering/GL/glExtra.h"
 
-CR_BIND_DERIVED(CSolidObject, CWorldObject);
+CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 
 CR_REG_METADATA(CSolidObject, 
 (
@@ -32,8 +32,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(speed))
 );
 
-CSolidObject::CSolidObject()
-:	mass(100000),
+CSolidObject::CSolidObject(EObjectType synced):
+	CWorldObject(synced),
+	mass(100000),
 	blocking(false),
 	blockHeightChanges(false),
 	floatOnWater(false),
@@ -71,7 +72,7 @@ CSolidObject::CSolidObject()
 /*
 Destructor
 */
-CSolidObject::~CSolidObject(void) {
+CSolidObject::~CSolidObject() {
 	UnBlock();
 //	readmap->CleanBlockingMap(this);	//Debug
 

@@ -12,6 +12,7 @@ Classes for serialization of registrated class instances
 #include <assert.h>
 #include <stdexcept>
 #include <map>
+#include "LogOutput.h"
 
 using namespace std;
 using namespace creg;
@@ -165,8 +166,9 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	PackageHeader ph;
 
 	stream = s;
+	unsigned startOffset = stream->tellp();
 
-	stream->seekp (sizeof (PackageHeader));
+	stream->seekp (startOffset + sizeof (PackageHeader));
 	ph.objDataOffset = (int)stream->tellp();
 
 	// Insert the first object that will provide references to everything
@@ -242,10 +244,12 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	}
 	printf("Checksum: %d\n", ph.metadataChecksum);
 
-	stream->seekp (0);
+	stream->seekp (startOffset);
 	memcpy(ph.magic, CREG_PACKAGE_FILE_ID, 4);
 	ph.SwapBytes ();
 	stream->write ((const char *)&ph, sizeof(PackageHeader));
+
+	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size()); 
 
 	objects.clear();
 	ptrToID.clear();

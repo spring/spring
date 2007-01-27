@@ -151,14 +151,14 @@ void CShareBox::Draw(void)
 	font->glPrintAt(box.x1+0.01f,box.y1+0.16f,0.7f,"Share Energy");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+0.25f,box.y1+0.12f,0.7f,"%.0f",gs->Team(gu->myTeam)->energy);
+	font->glPrintAt(box.x1+0.25f,box.y1+0.12f,0.7f,"%.0f",float(gs->Team(gu->myTeam)->energy));
 	font->glPrintAt(box.x1+0.14f,box.y1+0.12f,0.7f,"%.0f",gs->Team(gu->myTeam)->energy*energyShare);
 
 	glColor4f(0.8f,0.8f,0.9f,0.8f);
 	font->glPrintAt(box.x1+0.01f,box.y1+0.22f,0.7f,"Share Metal");
 
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+0.25f,box.y1+0.18f,0.7f,"%.0f",gs->Team(gu->myTeam)->metal);
+	font->glPrintAt(box.x1+0.25f,box.y1+0.18f,0.7f,"%.0f",float(gs->Team(gu->myTeam)->metal));
 	font->glPrintAt(box.x1+0.14f,box.y1+0.18f,0.7f,"%.0f",gs->Team(gu->myTeam)->metal*metalShare);
 
 	for(int team=0;team<gs->activeTeams-1;++team){

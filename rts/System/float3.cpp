@@ -6,7 +6,7 @@
  */
 #include "StdAfx.h"
 
-CR_BIND_STRUCT(float3);
+CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 
 float float3::maxxpos=2048; /**< Maximum X position is 2048 */

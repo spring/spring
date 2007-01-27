@@ -10,7 +10,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile);
+CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
 
 CR_REG_METADATA(CHeatCloudProjectile, 
 (

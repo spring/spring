@@ -22,6 +22,9 @@ using namespace std;
 class CQuadField  
 {
 public:
+	CR_DECLARE(CQuadField)
+	CR_DECLARE_SUB(Quad)
+
 	vector<int> GetQuadsOnRay(const float3& start, float3 dir,float length);
 	vector<CUnit*> GetUnits(const float3& pos,float radius);
 	vector<CUnit*> GetUnitsExact(const float3& pos,float radius);
@@ -42,6 +45,7 @@ public:
 	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
 	struct Quad {
+		CR_DECLARE_STRUCT(Quad);
 		float startx;
 		float starty;
 		list<CUnit*> units;		
@@ -60,6 +64,8 @@ public:
 	CFeature** tempFeaturesArray;
 private:
 	int* tempQuads;
+
+	void creg_Serialize(creg::ISerializer& s);
 };
 
 extern CQuadField* qf;

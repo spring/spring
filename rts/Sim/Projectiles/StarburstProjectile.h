@@ -10,6 +10,8 @@ class CSmokeTrailProjectile;
 class CStarburstProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CStarburstProjectile);
+	void creg_Serialize(creg::ISerializer& s);
 public:
 	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect, float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
 	~CStarburstProjectile(void);

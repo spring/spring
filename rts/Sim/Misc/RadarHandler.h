@@ -6,12 +6,12 @@
 
 #define RADAR_SIZE 8
 
-class CRadarHandler :
-	public CObject
+class CRadarHandler : public CObject
 {
+	CR_DECLARE(CRadarHandler);
 public:
 	CRadarHandler(bool circularRadar);
-	~CRadarHandler(void);
+	~CRadarHandler();
 	void MoveUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
@@ -55,6 +55,9 @@ protected:
 	void AddMapArea(int2 pos, int radius, unsigned short* map, int amount);
 
 	void SafeLosRadarAdd(CUnit* unit);
+
+private:
+	void creg_Serialize(creg::ISerializer& s);
 };
 
 extern CRadarHandler* radarhandler;

@@ -7,6 +7,7 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 
+CR_BIND_INTERFACE(CMoveMath);
 
 /*
 Converts a point-request into a square-positional request.

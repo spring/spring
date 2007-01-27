@@ -2,7 +2,7 @@
 #include "ExpGenSpawner.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
-CR_BIND_DERIVED(CExpGenSpawner, CProjectile);
+CR_BIND_DERIVED(CExpGenSpawner, CProjectile, );
 
 CR_REG_METADATA(CExpGenSpawner, 
 (

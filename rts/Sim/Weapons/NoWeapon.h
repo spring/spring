@@ -6,9 +6,9 @@
 class CNoWeapon :
 	public CWeapon
 {
+	CR_DECLARE(CNoWeapon);
 public:
-	CNoWeapon(CUnit *owner);
-	CNoWeapon();
+	CNoWeapon(CUnit *owner = 0);
 	~CNoWeapon(void);
 
 	void Update(void);

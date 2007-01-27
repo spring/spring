@@ -3,10 +3,10 @@
 #include "myMath.h"
 #include "mmgr.h"
 
-CR_BIND_STRUCT(float2);
+CR_BIND(float2, );
 CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
 
-CR_BIND_STRUCT(int2);
+CR_BIND(int2, );
 CR_REG_METADATA(int2, (CR_MEMBER(x),CR_MEMBER(y)));
 
 float2 headingToVectorTable[1024];

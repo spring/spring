@@ -8,6 +8,19 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL,0));
+
+CR_REG_METADATA(CFlameProjectile,(
+	CR_MEMBER(color),
+	CR_MEMBER(color2),
+	CR_MEMBER(intensity),
+	CR_MEMBER(spread),
+	CR_MEMBER(curTime),
+	CR_MEMBER(physLife),
+	CR_MEMBER(invttl)
+	));
+
+
 CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),
 	color(color),

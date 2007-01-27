@@ -20,11 +20,11 @@
 
 using namespace std;
 
-CR_BIND(WeaponDef);
+CR_BIND(WeaponDef, );
 
 CWeaponDefHandler* weaponDefHandler;
 
-CWeaponDefHandler::CWeaponDefHandler(void)
+CWeaponDefHandler::CWeaponDefHandler()
 {
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/", "*.tdf");
 	//std::cout << " getting files from weapons/*.tdf ... " << std::endl;
@@ -51,7 +51,7 @@ CWeaponDefHandler::CWeaponDefHandler(void)
 	}
 }
 
-CWeaponDefHandler::~CWeaponDefHandler(void)
+CWeaponDefHandler::~CWeaponDefHandler()
 {
 	delete[] weaponDefs;
 }

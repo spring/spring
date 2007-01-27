@@ -7,11 +7,12 @@
 #include "MoveType.h"
 #include "Sim/Misc/AirBaseHandler.h"
 
-class CPropeller;
-
 class CAirMoveType :
 	public CMoveType
 {
+	CR_DECLARE(CAirMoveType);
+	CR_DECLARE_SUB(DrawLine);
+	CR_DECLARE_SUB(RudderInfo);
 public:
 	enum AircraftState{
 		AIRCRAFT_LANDED,
@@ -78,21 +79,19 @@ public:
 	float crashElevator;
 	float crashRudder;
 
-//	static float transMatrix[16];
-
 	float3 oldpos;
 	float3 oldGoalPos;
 	float3 oldSlowUpdatePos;
 
 	struct DrawLine {
+		CR_DECLARE_STRUCT(DrawLine);
 		float3 pos1,pos2;
 		float3 color;
 	};
 	std::vector<DrawLine> lines;
-	std::vector<CPropeller*> myPropellers;
 
 	struct RudderInfo{
-		//CUnit3DLoader::UnitModel* model;
+		CR_DECLARE_STRUCT(RudderInfo);
 		float rotation;
 	};
 

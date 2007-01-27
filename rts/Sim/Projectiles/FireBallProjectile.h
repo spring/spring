@@ -7,6 +7,8 @@
 class CFireBallProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CFireBallProjectile);
+	CR_DECLARE_SUB(Spark);
 public:
 	CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef);
 	~CFireBallProjectile(void);
@@ -15,6 +17,7 @@ public:
 	void Update();
 
 	struct Spark {
+		CR_DECLARE_STRUCT(Spark);
 		float3 pos;
 		float3 speed;
 		float size;

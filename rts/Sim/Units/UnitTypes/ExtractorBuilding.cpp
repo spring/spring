@@ -18,7 +18,7 @@
 #include "Sync/SyncTracer.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CExtractorBuilding, CBuilding);
+CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
 
 /*
 Constructor

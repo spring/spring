@@ -20,14 +20,13 @@ CLoadScript::~CLoadScript(void)
 
 void CLoadScript::Update(void)
 {
-	if(gs->frameNum==0){
-		loader.LoadGame2();
-	}
+	if(gs->frameNum==0)
+		loader.LoadGame();
 }
 
 std::string CLoadScript::GetMapName(void)
 {
-	loader.LoadGame(file);		//this is the first time we get called after getting choosen
+	loader.LoadGameStartInfo(file);		//this is the first time we get called after getting choosen
 	loadGame=true;
 	return loader.mapName;
 }

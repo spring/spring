@@ -10,6 +10,7 @@ class CShieldPartProjectile;
 class CPlasmaRepulser :
 	public CWeapon
 {
+	CR_DECLARE(CPlasmaRepulser);
 public:
 	CPlasmaRepulser(CUnit* owner);
 	~CPlasmaRepulser(void);

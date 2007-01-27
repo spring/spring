@@ -6,8 +6,9 @@
 class CWakeProjectile :
 	public CProjectile
 {
+	CR_DECLARE(CWakeProjectile);
 public:
-	CWakeProjectile(float3 pos,float3 speed,float startSize,float sizeExpansion, CUnit* owner,float alpha,float alphaFalloff,float fadeupTime);
+	CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner,float alpha,float alphaFalloff,float fadeupTime);
 	virtual ~CWakeProjectile();
 	void Update();
 	void Draw();

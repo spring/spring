@@ -16,7 +16,7 @@
 
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CBuilding, CUnit);
+CR_BIND_DERIVED(CBuilding, CUnit, );
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

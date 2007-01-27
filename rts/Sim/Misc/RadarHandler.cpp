@@ -5,15 +5,52 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CRadarHandler, CObject, (false));
+
+void CRadarHandler::creg_Serialize(creg::ISerializer& s)
+{
+	const int size = xsize*ysize*2;
+
+	// NOTE This could be tricky if gs is serialized after radarHandler.
+	for(int a = 0; a < gs->activeAllyTeams; ++a) {
+		s.Serialize(radarMaps[a], size);
+		if (!circularRadar)
+			s.Serialize(airRadarMaps[a], size);
+		s.Serialize(sonarMaps[a], size);
+		s.Serialize(jammerMaps[a], size);
+		s.Serialize(seismicMaps[a], size);
+	}
+	s.Serialize(commonJammerMap, size);
+	s.Serialize(commonSonarJammerMap, size);
+}
+
+CR_REG_METADATA(CRadarHandler,(
+		CR_SERIALIZER(creg_Serialize), // radarMaps, airRadarMaps, sonarMaps, jammerMaps, seismicMaps, commonJammerMap, commonSonarJammerMap
+		CR_MEMBER(circularRadar),
+		CR_MEMBER(radarErrorSize),
+		CR_MEMBER(baseRadarErrorSize),
+		CR_MEMBER(xsize),
+		CR_MEMBER(ysize),
+		CR_MEMBER(targFacEffect)));
+
+
 CRadarHandler* radarhandler=0;
 
 
-CRadarHandler::CRadarHandler(bool circularRadar)
-: circularRadar(circularRadar),
-	targFacEffect(2)
+CRadarHandler::CRadarHandler(bool circularRadar):
+		circularRadar(false),
+		commonJammerMap(NULL),
+		commonSonarJammerMap(NULL),
+		baseRadarErrorSize(96),
+		xsize(gs->mapx / RADAR_SIZE),
+		ysize(gs->mapy / RADAR_SIZE),
+		targFacEffect(2)
 {
-	xsize=gs->mapx/RADAR_SIZE;
-	ysize=gs->mapy/RADAR_SIZE;
+	memset(radarMaps, 0, sizeof(radarMaps));
+	memset(airRadarMaps, 0, sizeof(airRadarMaps));
+	memset(sonarMaps, 0, sizeof(sonarMaps));
+	memset(jammerMaps, 0, sizeof(jammerMaps));
+	memset(seismicMaps, 0, sizeof(seismicMaps));
 
 	commonJammerMap=SAFE_NEW unsigned short[xsize*ysize];
 	commonSonarJammerMap=SAFE_NEW unsigned short[xsize*ysize];
@@ -28,7 +65,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 		sonarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
 		seismicMaps[a] = SAFE_NEW unsigned short[xsize*ysize];
 
-		if(circularRadar)																			//if we use circular radar air radar and standard radar is the same
+		if(circularRadar) //if we use circular radar air radar and standard radar is the same
 			airRadarMaps[a]=radarMaps[a];
 		else
 			airRadarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
@@ -44,10 +81,9 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 		}
 		radarErrorSize[a]=96;
 	}
-	baseRadarErrorSize=96;
 }
 
-CRadarHandler::~CRadarHandler(void)
+CRadarHandler::~CRadarHandler()
 {
 	delete[] commonJammerMap;
 	delete[] commonSonarJammerMap;

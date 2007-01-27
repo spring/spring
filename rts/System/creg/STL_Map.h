@@ -5,8 +5,30 @@
 // hash_map, defined in stdafx.h
 #include SPRING_HASH_MAP_H
 
-namespace creg 
+namespace creg
 {
+	// implement map insert() function with an interface common to all map types
+	template<typename T>
+	struct MapInserter
+	{
+		typedef typename T::iterator iterator;
+		typedef typename T::value_type value_type;
+		iterator insert(T& m, value_type& p) {
+			// std::map<>::insert returns std::pair<iterator, bool>.
+			return m.insert(p).first;
+		}
+	};
+	template<typename TKey, typename TValue>
+	struct MapInserter < std::multimap <TKey, TValue> >
+	{
+		typedef typename std::multimap <TKey, TValue>::iterator iterator;
+		typedef typename std::multimap <TKey, TValue>::value_type value_type;
+		iterator insert(std::multimap<TKey, TValue>& m, value_type& p) {
+			// std::multimap<>::insert returns iterator.
+			return m.insert(p);
+		}
+	};
+
 	// map/multimap, this template assumes that the map key type is copyable
 	template<typename T>
 	struct MapType : public IType
@@ -16,7 +38,7 @@ namespace creg
 
 		MapType (IType *keyType,IType *mappedType) :
 			keyType (keyType), mappedType(mappedType) {}
-		~MapType () { 
+		~MapType () {
 			delete keyType;
 			delete mappedType;
 		}
@@ -28,7 +50,7 @@ namespace creg
 				int size=ct.size();
 				s->Serialize (&size, sizeof(int));
 				for (iterator i=ct.begin();i!=ct.end();++i)  {
-					keyType->Serialize (s, &i->first);
+					keyType->Serialize (s, (void*) &i->first);
 					mappedType->Serialize (s, &i->second);
 				}
 			} else {
@@ -37,12 +59,13 @@ namespace creg
 				for (int a=0;a<size;a++) {
 					typename T::value_type pt;
 					// only allow copying of the key type
-					keyType->Serialize (s, &pt.first);
-					iterator i = ct.insert (pt);
+					keyType->Serialize (s, (void*) &pt.first);
+					iterator i = MapInserter<T>().insert(ct, pt);
 					mappedType->Serialize (s, &i->second);
 				}
 			}
 		}
+		std::string GetName() { return "map<" + keyType->GetName() + ", " + mappedType->GetName(); }
 	};
 
 	// Map type
@@ -51,23 +74,25 @@ namespace creg
 		IType* Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return SAFE_NEW MapType < std::map <TKey, TValue> > (elemtype.Get());
+			return SAFE_NEW MapType < std::map <TKey, TValue> > (keytype.Get(), valuetype.Get());
 		}
 	};
 	// Multimap
 	template<typename TKey, typename TValue>
 	struct DeduceType < std::multimap<TKey, TValue> > {
 		IType* Get () {
-			DeduceType elemtype;
-			return SAFE_NEW MapType < std::multimap<T> > (elemtype.Get());
+			DeduceType<TValue> valuetype;
+			DeduceType<TKey> keytype;
+			return SAFE_NEW MapType < std::multimap<TKey, TValue> > (keytype.Get(), valuetype.Get());
 		}
 	};
 	// Hash map
 	template<typename TKey, typename TValue>
 	struct DeduceType < SPRING_HASH_MAP<TKey, TValue> > {
 		IType* Get () {
-			DeduceType elemtype;
-			return SAFE_NEW MapType < SPRING_HASH_SET<TKey, TValue> > (elemtype.Get());
+			DeduceType<TValue> valuetype;
+			DeduceType<TKey> keytype;
+			return SAFE_NEW MapType < SPRING_HASH_MAP<TKey, TValue> > (keytype.Get(), valuetype.Get());
 		}
 	};
 
@@ -96,7 +121,7 @@ namespace creg
 		IType* Get () {
 			DeduceType<TFirst> first;
 			DeduceType<TSecond> second;
-			PairType *pt = SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get());
+			PairType <std::pair<TFirst, TSecond> > *pt = SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get());
 			return pt;
 		}
 	};

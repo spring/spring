@@ -7,6 +7,8 @@
 class CFireProjectile :
 	public CProjectile
 {
+	CR_DECLARE(CFireProjectile);
+	CR_DECLARE_SUB(SubParticle);
 public:
 	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize);
 	~CFireProjectile(void);
@@ -24,6 +26,7 @@ public:
 	float ageSpeed;
 
 	struct SubParticle {
+		CR_DECLARE(SubParticle);
 		float3 pos;
 		float3 posDif;
 		float age;

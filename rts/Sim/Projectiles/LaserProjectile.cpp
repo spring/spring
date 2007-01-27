@@ -8,6 +8,21 @@
 #include "ProjectileHandler.h"
 #include "SimpleParticleSystem.h"
 
+CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
+
+CR_REG_METADATA(CLaserProjectile,(
+	CR_MEMBER(dir),
+	CR_MEMBER(ttl),
+	CR_MEMBER(intensity),
+	CR_MEMBER(color),
+	CR_MEMBER(color2),
+	CR_MEMBER(length),
+	CR_MEMBER(curLength),
+	CR_MEMBER(speedf),
+	CR_MEMBER(intensityFalloff),
+	CR_MEMBER(midtexx)
+	));
+
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0),
 	ttl(ttl),

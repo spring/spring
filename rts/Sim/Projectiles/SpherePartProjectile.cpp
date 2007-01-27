@@ -7,7 +7,24 @@ using namespace std;
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner, float3 &color)
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (float3(0,0,0),0,0,0.0,0.0,0,NULL,float3(0,0,0)));
+
+CR_REG_METADATA(CSpherePartProjectile,(
+	CR_MEMBER(centerPos),
+	CR_MEMBER(vectors),
+	CR_MEMBER(color),
+	CR_MEMBER(sphereSize),
+	CR_MEMBER(expansionSpeed),
+	CR_MEMBER(xbase),
+	CR_MEMBER(ybase),
+	CR_MEMBER(baseAlpha),
+	CR_MEMBER(age),
+	CR_MEMBER(ttl),
+	CR_MEMBER(texx),
+	CR_MEMBER(texy)
+	));
+
+CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color)
 : CProjectile(centerPos,ZeroVector,owner),
 	centerPos(centerPos),
 	expansionSpeed(expansionSpeed),
@@ -94,7 +111,7 @@ CSpherePartSpawner::~CSpherePartSpawner()
 {
 }
 
-CR_BIND_DERIVED(CSpherePartSpawner, CProjectile);
+CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, );
 
 CR_REG_METADATA(CSpherePartSpawner, 
 (

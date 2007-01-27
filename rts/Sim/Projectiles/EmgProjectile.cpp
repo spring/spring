@@ -7,6 +7,14 @@
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
+
+CR_REG_METADATA(CEmgProjectile,(        
+    CR_MEMBER(ttl),
+    CR_MEMBER(intensity),
+    CR_MEMBER(color)
+    ));
+
 CEmgProjectile::CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const float3& color,float intensity, int ttl, WeaponDef *weaponDef)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector, weaponDef,0),
 	ttl(ttl),

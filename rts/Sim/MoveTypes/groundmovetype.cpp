@@ -31,6 +31,73 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CGroundMoveType, CMoveType, (NULL));
+
+CR_REG_METADATA(CGroundMoveType, (
+		CR_MEMBER(baseTurnRate),
+		CR_MEMBER(turnRate),
+		CR_MEMBER(accRate),
+
+		CR_MEMBER(wantedSpeed),
+		CR_MEMBER(currentSpeed),
+		CR_MEMBER(deltaSpeed),
+		CR_MEMBER(deltaHeading),
+
+		CR_MEMBER(oldPos),
+		CR_MEMBER(oldSlowUpdatePos),
+		CR_MEMBER(flatFrontDir),
+
+		CR_MEMBER(pathId),
+		CR_MEMBER(goal),
+		CR_MEMBER(goalRadius),
+
+		CR_MEMBER(waypoint),
+		CR_MEMBER(nextWaypoint),
+		CR_MEMBER(etaWaypoint),
+		CR_MEMBER(etaWaypoint2),
+		CR_MEMBER(atGoal),
+		CR_MEMBER(haveFinalWaypoint),
+		CR_MEMBER(terrainSpeed),
+
+		CR_MEMBER(requestedSpeed),
+		CR_MEMBER(requestedTurnRate),
+
+		CR_MEMBER(currentDistanceToWaypoint),
+
+		CR_MEMBER(avoidanceVec),
+
+		CR_MEMBER(restartDelay),
+		CR_MEMBER(lastGetPathPos),
+
+		CR_MEMBER(pathFailures),
+		CR_MEMBER(etaFailures),
+		CR_MEMBER(nonMovingFailures),
+
+		CR_MEMBER(moveType),
+
+		CR_MEMBER(floatOnWater),
+
+		CR_MEMBER(moveSquareX),
+		CR_MEMBER(moveSquareY),
+
+		CR_MEMBER(nextDeltaSpeedUpdate),
+		CR_MEMBER(nextObstacleAvoidanceUpdate),
+
+		CR_MEMBER(lastTrackUpdate),
+
+		CR_MEMBER(skidding),
+		CR_MEMBER(flying),
+		CR_MEMBER(skidRotSpeed),
+
+		CR_MEMBER(skidRotVector),
+		CR_MEMBER(skidRotSpeed2),
+		CR_MEMBER(skidRotPos2),
+		CR_ENUM_MEMBER(oldPhysState),
+
+		CR_MEMBER(mainHeadingPos),
+		CR_MEMBER(useMainHeading)));
+
+
 const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.
 
 const float ETA_ESTIMATION = 1.5f;					//How much time the unit are given to reach the waypoint.
@@ -529,7 +596,7 @@ void CGroundMoveType::ImpulseAdded(void)
 void CGroundMoveType::UpdateSkid(void)
 {
 	float3& speed=owner->speed;
-	SyncedFloat3& pos=owner->pos;
+	float3& pos=owner->pos;
 	SyncedFloat3& midPos=owner->midPos;
 
 	if(flying){
@@ -604,7 +671,7 @@ void CGroundMoveType::UpdateSkid(void)
 
 void CGroundMoveType::CheckCollisionSkid(void)
 {
-	SyncedFloat3& pos=owner->pos;
+	float3& pos=owner->pos;
 	SyncedFloat3& midPos=owner->midPos;
 
 	vector<CUnit*> nearUnits=qf->GetUnitsExact(midPos,owner->radius);

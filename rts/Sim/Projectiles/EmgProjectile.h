@@ -7,6 +7,7 @@
 class CEmgProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CEmgProjectile);
 public:
 	CEmgProjectile(const float3& pos,const float3& speed,CUnit* owner,const float3& color,float intensity, int ttl, WeaponDef *weaponDef);
 	virtual ~CEmgProjectile();

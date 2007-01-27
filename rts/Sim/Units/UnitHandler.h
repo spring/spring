@@ -20,28 +20,17 @@ class CBuilderCAI;
 class CFeature;
 class CLoadSaveInterface;
 
-
-struct CChecksum {
-	CChecksum() : x(0), y(0), z(0), m(0), e(0) {}
-	int toInt() const                          { return x ^ y ^ z ^ m ^ e; }
-	bool operator<(const CChecksum& c) const   { return toInt() < c.toInt(); }
-	operator bool() const                      { return toInt() != 0; }
-	bool operator==(const CChecksum& c) const  { return x == c.x && y == c.y && z == c.z && m == c.m && e == c.e; }
-	bool operator!=(const CChecksum& c) const  { return !(*this == c); }
-	CChecksum& operator=(int a)                { x = y = z = m = e = a; return *this; }
-	char* diff(char* buf, const CChecksum& c);
-	int x, y, z, m, e; // midPos.x, midPos.y, midPos.z, metal, energy
-};
-
-
-class CUnitHandler  
+class CUnitHandler
 {
 public:
-	CChecksum CreateChecksum();
+	CR_DECLARE(CUnitHandler)
+
 	void Update();
 	void DeleteUnit(CUnit* unit);
 	int AddUnit(CUnit* unit);
-	CUnitHandler();
+	CUnitHandler(bool serializing=false);
+	void Serialize(creg::ISerializer& s);
+	void PostLoad();
 	virtual ~CUnitHandler();
 	void PushNewWind(float x, float z, float strength);
 
@@ -69,9 +58,8 @@ public:
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::deque<int> freeIDs;
 	CUnit* units[MAX_UNITS];							//used to get units from IDs (0 if not created)
-	int overrideId;
 
-	std::stack<CUnit*> toBeRemoved;			//units that will be removed at start of next update
+	std::vector<CUnit*> toBeRemoved;			//units that will be removed at start of next update
 
 	std::list<CUnit*>::iterator slowUpdateIterator;
 

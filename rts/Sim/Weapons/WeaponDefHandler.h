@@ -181,8 +181,8 @@ public:
 	std::map<std::string, int> weaponID;
 	int numWeapons;
 
-	CWeaponDefHandler(void);
-	~CWeaponDefHandler(void);
+	CWeaponDefHandler();
+	~CWeaponDefHandler();
 
 	WeaponDef *GetWeapon(const std::string weaponname);
 

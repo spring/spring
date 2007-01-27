@@ -2,9 +2,17 @@
 #include "SensorHandler.h"
 #include "TdfParser.h"
 
+CR_BIND(CSensorHandler, );
+
+CR_REG_METADATA(CSensorHandler, (
+		CR_MEMBER(losMipLevel),
+		CR_MEMBER(airMipLevel),
+		CR_MEMBER(losMul),
+		CR_MEMBER(airLosMul)));
+
 CSensorHandler* sensorHandler=0;
 
-CSensorHandler::CSensorHandler(void)
+CSensorHandler::CSensorHandler()
 {
 	TdfParser tdfparser;
 
@@ -24,6 +32,6 @@ CSensorHandler::CSensorHandler(void)
 	tdfparser.GetDef(airLosMul, "1", "Sensors\\Los\\AirLosMul");
 }
 
-CSensorHandler::~CSensorHandler(void)
+CSensorHandler::~CSensorHandler()
 {
 }

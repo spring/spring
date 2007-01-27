@@ -18,6 +18,8 @@
 
 using namespace std;
 
+CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
+
 CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer ()
 {
 	return groundDrawer;
@@ -90,7 +92,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	delete[] temphm;
 
-	CalcHeightfieldData();
+	CReadMap::Initialize();
 
 	for(unsigned int a=0;a<mapname.size();++a){
 		mapChecksum+=mapname[a];

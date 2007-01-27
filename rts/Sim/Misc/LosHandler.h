@@ -18,9 +18,11 @@
 #define MAX_LOS_TABLE 110
 
 struct LosInstance{
-	inline void* operator new(size_t size){return mempool.Alloc(size);};
-	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+	CR_DECLARE_STRUCT(LosInstance);
+	//inline void* operator new(size_t size){return mempool.Alloc(size);};
+	//inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
  	std::vector<int> losSquares;
+	LosInstance() {} // default constructor for creg
 	inline LosInstance(int lossize,int allyteam,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
@@ -44,8 +46,12 @@ struct LosInstance{
 
 class CRadarHandler;
 
-class CLosHandler  
+class CLosHandler: public CObject
 {
+	CR_DECLARE(CLosHandler);
+	CR_DECLARE_SUB(CPoint);
+	CR_DECLARE_SUB(DelayedInstance);
+
 public:
 	void MoveUnit(CUnit* unit,bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
@@ -93,6 +99,7 @@ public:
 
 private:
 
+	void creg_Serialize(creg::ISerializer& s);
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);
 	int GetHashNum(CUnit* unit);
@@ -105,14 +112,17 @@ private:
 	std::deque<LosInstance*> toBeDeleted;
 
 	struct DelayedInstance {
+		CR_DECLARE_STRUCT(DelayedInstance);
+
 		LosInstance* instance;
 		int timeoutTime;
 	};
 
 	std::deque<DelayedInstance> delayQue;
 
-	struct CPoint
-	{
+	struct CPoint {
+		CR_DECLARE_STRUCT(CPoint);
+
 		CPoint(){};
 		CPoint(int x,int y):x(x),y(y){};
 
@@ -127,7 +137,6 @@ private:
 				return y<a.y;
 		}
 	};
-	char *PaintTable;
 	typedef std::list<CPoint> TPoints;
 	TPoints Points;
 	float terrainHeight[256];
@@ -138,7 +147,7 @@ private:
 	std::vector<LosTable> lostables;
 
 	int Round(float num);
-	void DrawLine(int x,int y,int Size);
+	void DrawLine(char* PaintTable, int x,int y,int Size);
 	LosLine OutputLine(int x,int y,int line);
 	void OutputTable(int table);
 public:

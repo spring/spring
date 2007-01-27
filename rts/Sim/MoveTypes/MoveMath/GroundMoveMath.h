@@ -9,6 +9,7 @@ Ie. tanks and k-bots.
 #include "MoveMath.h"
 
 class CGroundMoveMath :	public CMoveMath {
+	CR_DECLARE(CGroundMoveMath);
 public:
 	//SpeedMod returns a speed-multiplier for given position or data.
 	float SpeedMod(const MoveData& moveData, float height, float slope);

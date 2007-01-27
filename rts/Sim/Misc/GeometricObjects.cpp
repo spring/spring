@@ -4,7 +4,19 @@
 #include "Sim/Projectiles/GeoSquareProjectile.h"
 #include "LogOutput.h"
 #include "Map/ReadMap.h"
+#include "creg/STL_Map.h"
 #include "mmgr.h"
+
+CR_BIND(CGeometricObjects, );
+CR_BIND(CGeometricObjects::GeoGroup, );
+
+CR_REG_METADATA(CGeometricObjects, (
+		CR_MEMBER(geoGroups),
+		CR_MEMBER(toBeDeleted),
+		CR_MEMBER(firstFreeGroup)));
+
+CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)));
+
 
 CGeometricObjects* geometricObjects=0;
 

@@ -6,6 +6,7 @@
 class CStarburstLauncher :
 	public CWeapon
 {
+	CR_DECLARE(CStarburstLauncher);
 public:
 	CStarburstLauncher(CUnit* owner);
 	~CStarburstLauncher(void);

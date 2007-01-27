@@ -6,6 +6,7 @@
 class CLaserCannon :
 	public CWeapon
 {
+	CR_DECLARE(CLaserCannon);
 public:
 	CLaserCannon(CUnit* owner);
 	~CLaserCannon(void);

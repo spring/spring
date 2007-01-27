@@ -10,7 +10,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CR_BIND_DERIVED(CWorldObject, CObject)
+CR_BIND_DERIVED(CWorldObject, CObject, )
 
 CR_REG_METADATA(CWorldObject, (
 				CR_MEMBER(radius),

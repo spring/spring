@@ -6,6 +6,7 @@
 class CBeamLaser :
 	public CWeapon
 {
+	CR_DECLARE(CBeamLaser);
 public:
 	CBeamLaser(CUnit* owner);
 	~CBeamLaser(void);

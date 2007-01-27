@@ -12,6 +12,8 @@
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL));
+
 CEmgCannon::CEmgCannon(CUnit* owner)
 : CWeapon(owner)
 {

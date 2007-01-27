@@ -8,6 +8,8 @@
 #include "Game/Team.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
+
 CDGunWeapon::CDGunWeapon(CUnit* owner)
 : CWeapon(owner)
 {

@@ -14,6 +14,8 @@ class CInterceptHandler :
 	public CObject
 {
 public:
+	CR_DECLARE(CInterceptHandler)
+
 	CInterceptHandler(void);
 	~CInterceptHandler(void);
 	void AddInterceptorWeapon(CWeapon* weapon);

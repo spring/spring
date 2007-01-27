@@ -8,6 +8,7 @@
 
 class CSmokeTrailProjectile : public CProjectile  
 {
+	CR_DECLARE(CSmokeTrailProjectile);
 public:
 	void Update();
 	void Draw();

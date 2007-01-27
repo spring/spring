@@ -9,7 +9,30 @@
 #include "Sim/Units/UnitHandler.h"
 #include "LogOutput.h"
 #include "Feature.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
+
+CR_BIND(CQuadField, );
+CR_REG_METADATA(CQuadField, (
+				CR_MEMBER(numQuadsX), CR_MEMBER(numQuadsZ), CR_SERIALIZER(creg_Serialize)));
+
+void CQuadField::creg_Serialize(creg::ISerializer& s)
+{
+	// no need to alloc quad array, this has already been done in constructor
+	for(int y=0;y<numQuadsZ;++y)
+		for(int x=0;x<numQuadsX;++x)
+			s.SerializeObjectInstance(&baseQuads[y*numQuadsX+x], Quad::StaticClass());
+}
+
+CR_BIND(CQuadField::Quad, );
+
+CR_REG_METADATA_SUB(CQuadField, Quad, (
+		//float startx;  // constant, assigned in constructor
+		//float starty;
+		CR_MEMBER(units),
+		CR_MEMBER(teamUnits),
+		CR_MEMBER(features)
+		));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

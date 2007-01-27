@@ -5,7 +5,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile);
+CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
 
 CR_REG_METADATA(CExploSpikeProjectile, 
 (
@@ -14,7 +14,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 		CR_MEMBER(width),
 		CR_MEMBER(alpha),
 		CR_MEMBER(alphaDecay),
-		//CR_MEMBER(lengthGrowth),
+		CR_MEMBER(lengthGrowth),
 		CR_MEMBER(dir),
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config)

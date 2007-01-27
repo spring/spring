@@ -109,7 +109,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){		//calculate how much to offset the buildings in the explosion radius with (while still keeping the ground under them flat
 		if((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap){
 			CUnit* unit=*ui;
-			SyncedFloat3& upos=(*ui)->pos;
+			float3& upos=(*ui)->pos;
 
 			float totalDif=0;
 			for(int z=unit->mapPos.y; z<unit->mapPos.y+unit->ysize; z++){

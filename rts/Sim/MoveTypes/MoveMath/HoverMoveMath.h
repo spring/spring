@@ -9,6 +9,7 @@ Ie. hover-tanks.
 #include "MoveMath.h"
 
 class CHoverMoveMath : public CMoveMath {
+	CR_DECLARE(CHoverMoveMath);
 public:
 	//SpeedMod returns a speed-multiplier for given position or data.
 	float SpeedMod(const MoveData& moveData, float height, float slope);

@@ -14,12 +14,23 @@ class CObject
 public:
 	CR_DECLARE(CObject);
 
+	enum EObjectType { OT_Unknown, OT_Unsynced, OT_Synced };
+
+	CObject(EObjectType synced = OT_Unknown);
+	virtual ~CObject();
+
+	static CObject* GetSyncedObjects() { return syncedObjects; }
+	CObject* GetNext()     const { return next; }
+	CObject* GetPrevious() const { return prev; }
+	bool IsSynchronized()  const { return prev || next; }
+
 	void DeleteDeathDependence(CObject* o);
 	void AddDeathDependence(CObject* o);
 	virtual void DependentDied(CObject* o);
-	inline CObject(){};
-	virtual ~CObject();
-	
+
+private:
+	static CObject* syncedObjects;
+	CObject *prev, *next;
 	std::multiset<CObject*> listeners,listening;
 };
 

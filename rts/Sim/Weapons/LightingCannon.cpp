@@ -10,6 +10,12 @@
 #include "mmgr.h"
 #include "Sim/Misc/InterceptHandler.h"
 
+CR_BIND_DERIVED(CLightingCannon, CWeapon, (NULL));
+
+CR_REG_METADATA(CLightingCannon,(
+	CR_MEMBER(color)
+	));
+
 CLightingCannon::CLightingCannon(CUnit* owner)
 : CWeapon(owner)
 {

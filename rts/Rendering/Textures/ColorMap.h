@@ -10,7 +10,7 @@
 //Do not delete an instance of this class created by any Load function, they are deleted automaticly
 class CColorMap
 {
-	CR_DECLARE(CHeatCloudProjectile);
+	CR_DECLARE(CColorMap);
 public:
 	CColorMap(void);
 	CColorMap(std::vector<float> &vec);  //loads from a float vector

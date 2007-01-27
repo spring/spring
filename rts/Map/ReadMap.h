@@ -33,7 +33,11 @@ struct MapBitmapInfo
 class CReadMap
 {
 public:
+	CR_DECLARE(CReadMap);
+
 	virtual ~CReadMap();
+
+	void Serialize(creg::ISerializer& s); // creg serialize callback
 
 	void AddGroundBlockingObject(CSolidObject *object);
 	void AddGroundBlockingObject(CSolidObject *object, unsigned char *blockingMap);
@@ -50,6 +54,9 @@ public:
 	static void OpenTDF (const std::string& mapname, TdfParser& parser);
 	static CReadMap* LoadMap (const std::string& mapname);
 
+protected:
+	void Initialize(); // called by implementations of CReadMap
+public:
 	void CalcHeightfieldData(); /// Calculates derived heightmap information such as normals, centerheightmap and slopemap
 	void ParseSettings(TdfParser& resources);
 

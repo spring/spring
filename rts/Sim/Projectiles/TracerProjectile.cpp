@@ -7,7 +7,7 @@
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CTracerProjectile, CProjectile)
+CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
 
 CR_REG_METADATA(CTracerProjectile, 
 (

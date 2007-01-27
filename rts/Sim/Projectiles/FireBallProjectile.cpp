@@ -3,8 +3,23 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "creg/STL_Deque.h"
 #include "mmgr.h"
 #include "ProjectileHandler.h"
+
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,float3(0,0,0),NULL));
+CR_BIND(CFireBallProjectile::Spark, );
+
+CR_REG_METADATA(CFireBallProjectile,(
+	CR_MEMBER(sparks)
+	));
+	
+CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
+	CR_MEMBER(pos),
+	CR_MEMBER(speed),
+	CR_MEMBER(size),
+	CR_MEMBER(ttl)
+	));
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
 	: CWeaponProjectile(pos,speed, owner, target, targetPos, weaponDef,0)

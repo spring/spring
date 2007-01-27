@@ -27,7 +27,7 @@ namespace creg {
 		crFloat,
 		crDouble,
 		crBool,
-#ifdef SYNCDEBUG
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
 		crSyncedSint,   crSyncedUint,
 		crSyncedSshort, crSyncedUshort,
 		crSyncedSchar,  crSyncedUchar,
@@ -60,8 +60,7 @@ namespace creg {
 	};
 
 	enum ClassFlags {
-		CF_AllowCopy = 1,   // copying is allowed
-		CF_AllowLocal = 2,  // can be used as type in local script variables
+		CF_None = 0,
 		CF_Abstract = 4
 	};
 
@@ -118,7 +117,7 @@ namespace creg {
 // Container Type templates
 // -------------------------------------------------------------------
 
-	// vector,deque container (from script, both look like a vector)
+	// vector,deque container 
 	template<typename T>
 	class DynamicArrayType : public IType
 	{
@@ -184,7 +183,7 @@ namespace creg {
 	class ClassBinder
 	{
 	public:
-		ClassBinder (const char *className, ClassFlags cf, ClassBinder* base, IMemberRegistrator **mreg, int instanceSize, void (*constructorProc)(void *instance), void (*destructorProc)(void *instance));
+		ClassBinder (const char *className, unsigned int cf, ClassBinder* base, IMemberRegistrator **mreg, int instanceSize, void (*constructorProc)(void *instance), void (*destructorProc)(void *instance));
 
 		Class *class_;
 		ClassBinder *base;
@@ -218,25 +217,34 @@ namespace creg {
 #define CR_DECLARE(TCls)	public:					\
 	static creg::ClassBinder binder;				\
 	static creg::IMemberRegistrator *memberRegistrator;	 \
+	static void _ConstructInstance(void* d);			\
+	static void _DestructInstance(void* d);			\
+	typedef TCls MyType;							\
 	friend struct TCls##MemberRegistrator;			\
 	virtual creg::Class* GetClass();				\
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
 /** @def CR_DECLARE_STRUCT
- * Use this to declare a structure (POD, no vtable),
- * this should be put in the class definition, instead of CR_DECLARE */
+ * Use this to declare a structure 
+ * this should be put in the class definition, instead of CR_DECLARE
+ * For creg, the only difference between a class and a structure is having a vtable or not
+ */
 #define CR_DECLARE_STRUCT(TStr)		public:			\
 	static creg::ClassBinder binder;				\
+	typedef TStr MyType;							\
 	static creg::IMemberRegistrator *memberRegistrator;	\
+	static void _ConstructInstance(void* d);			\
+	static void _DestructInstance(void* d);			\
 	friend struct TStr##MemberRegistrator;			\
-		creg::Class* GetClass() { return binder.class_; }	\
+	creg::Class* GetClass();						\
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
-/** @def CR_BIND_STRUCT
- * Bind a structure (POD, no vtable) declared with CR_DECLARE_STRUCT */
-#define CR_BIND_STRUCT(TStr)					\
-	creg::IMemberRegistrator* TStr::memberRegistrator=0;	\
-	creg::ClassBinder TStr::binder(#TStr, (creg::ClassFlags)(creg::CF_AllowCopy | creg::CF_AllowLocal), 0, &TStr::memberRegistrator, sizeof(TStr), 0, 0);
+/** @def CR_DECLARE_SUB
+ *  @author Tobi Vollebregt
+ * Use this to declare a sub class. This should be put in the class definition
+ * of the superclass, alongside CR_DECLARE(CSuperClass) (or CR_DECLARE_STRUCT). */
+#define CR_DECLARE_SUB(cl) \
+	struct cl##MemberRegistrator;
 
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
@@ -244,24 +252,38 @@ namespace creg {
  * @param TCls class to bind
  * @param TBase base class of TCls
  */
-#define CR_BIND_DERIVED(TCls, TBase)				\
+#define CR_BIND_DERIVED(TCls, TBase, ctor_args) \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() { return binder.class_; } \
-	void TCls##ConstructInstance(void *d) { new(d) TCls; } \
-	void TCls##DestructInstance(void *d) { ((TCls*)d)->~TCls(); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_AllowLocal, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), TCls##ConstructInstance, TCls##DestructInstance);
+	void TCls::_ConstructInstance(void *d) { new(d) MyType ctor_args; } \
+	void TCls::_DestructInstance(void *d) { ((MyType*)d)->~MyType(); } \
+	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+
+/** @def CR_BIND_DERIVED_SUB
+ * Bind a derived class inside another class to creg
+ * Should be used in the source file 
+ * @param TSuper class that contains the class to register
+ * @param TCls subclass to bind
+ * @param TBase base class of TCls
+ */
+#define CR_BIND_DERIVED_SUB(TSuper, TCls, TBase, ctor_args) \
+	creg::IMemberRegistrator* TSuper::TCls::memberRegistrator=0;	 \
+	creg::Class* TSuper::TCls::GetClass() { return binder.class_; }  \
+	void TSuper::TCls::_ConstructInstance(void *d) { new(d) TCls ctor_args; }  \
+	void TSuper::TCls::_DestructInstance(void *d) { ((TCls*)d)->~TCls(); }  \
+	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
 
 /** @def CR_BIND
  * Bind a class not derived from CObject
  * should be used in the source file
  * @param TCls class to bind
  */
-#define CR_BIND(TCls)								\
+#define CR_BIND(TCls, ctor_args) \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() { return binder.class_; } \
-	void TCls##ConstructInstance(void *d) { new(d) TCls; } \
-	void TCls##DestructInstance(void *d) { ((TCls*)d)->~TCls(); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_AllowLocal, 0, &TCls::memberRegistrator, sizeof(TCls), TCls##ConstructInstance, TCls##DestructInstance);
+	void TCls::_ConstructInstance(void *d) { new(d) MyType ctor_args; } \
+	void TCls::_DestructInstance(void *d) { ((MyType*)d)->~MyType(); } \
+	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
@@ -272,7 +294,7 @@ namespace creg {
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -282,13 +304,13 @@ namespace creg {
 #define CR_BIND_INTERFACE(TCls)	\
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself
  * should be used in the source file
  * @param TClass class to register the info to
- * @param Data the metadata of the class\n
+ * @param Members the metadata of the class\n
  * should consist of a series of single expression of metadata macros\n
  * for example: (CR_MEMBER(a),CR_POSTLOAD(PostLoadCallback))
  * @see CR_MEMBER
@@ -307,6 +329,22 @@ namespace creg {
 		TClass* null=(Type*)0;						\
 		Members; }									\
 	} static TClass##mreg;
+
+/** @def CR_REG_METADATA_SUB
+ *  @author Tobi Vollebregt
+ * Just like CR_REG_METADATA, but for a subclass.
+ *  @see CR_REG_METADATA
+ */
+#define CR_REG_METADATA_SUB(TSuperClass, TSubClass, Members)				\
+	struct TSuperClass::TSubClass##MemberRegistrator : creg::IMemberRegistrator {\
+	typedef TSuperClass::TSubClass Type;						\
+	TSubClass##MemberRegistrator() {				\
+		Type::memberRegistrator=this;				\
+	}												\
+	void RegisterMembers(creg::Class* class_) {		\
+		Type* null=(Type*)0;						\
+		Members; }									\
+	} static TSuperClass##TSubClass##mreg;
 
 /** @def CR_MEMBER
  * Registers a class/struct member variable, of a type that is:
@@ -356,14 +394,14 @@ namespace creg {
  * @param SerializeFunc the serialize method, should be a member function of the class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&))Type::SerializeFunc)
+	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&)) &Type::SerializeFunc)
 
 /** @def CR_POSTLOAD 
  * Registers a custom post-loading method for the class/struct
  * this function will be called during package loading when all serialization is finished 
  * There can only be one postload method per class/struct */
 #define CR_POSTLOAD(PostLoadFunc) \
-	(class_->postLoadProc = (void(creg::_DummyStruct::*)())Type::PostLoadFunc)
+	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
 };
 
 #endif

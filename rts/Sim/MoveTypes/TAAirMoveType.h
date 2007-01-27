@@ -7,6 +7,7 @@
 class CTAAirMoveType :
 	public CMoveType
 {
+	CR_DECLARE(CMoveType);
 public:
 	enum AircraftState{
 		AIRCRAFT_LANDED,
@@ -64,6 +65,12 @@ public:
 	CUnit* lastColWarning;		//unit found to be dangerously close to our path
 	int lastColWarningType;		//1=generally forward of us,2=directly in path
 
+	float repairBelowHealth;
+	CAirBaseHandler::LandingPad* reservedPad;
+	int padStatus;						//0 flying toward,1 landing at,2 landed
+	float3 oldGoalPos;				//goalpos to resume flying to after landing
+
+
 	CTAAirMoveType(CUnit* owner);
 	~CTAAirMoveType(void);
 
@@ -100,11 +107,6 @@ public:
 	void SetWantedAltitude(float altitude);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
-
-	float repairBelowHealth;
-	CAirBaseHandler::LandingPad* reservedPad;
-	int padStatus;						//0 flying toward,1 landing at,2 landed
-	float3 oldGoalPos;				//goalpos to resume flying to after landing
 };
 
 

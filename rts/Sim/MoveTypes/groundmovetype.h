@@ -9,6 +9,7 @@ struct MoveData;
 class CGroundMoveType :
 	public CMoveType
 {
+	CR_DECLARE(CGroundMoveType);
 public:
 	CGroundMoveType(CUnit* owner);
 	~CGroundMoveType(void);
@@ -16,9 +17,6 @@ public:
 	void Update();
 	void SlowUpdate();
 
-//	void SetGoal(float3 pos);
-//	void SetWantedSpeed(float speed);
-	
 	void SetDeltaSpeed(void);
 	bool TestNewPathGoal(const float3& newgoal);
 
@@ -33,8 +31,6 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
-	//float baseSpeed;		//Not used
-	//float maxSpeed;		//Moved to CMoveType, by Lars 04-08-23
 	float baseTurnRate;
 	float turnRate;
 	float accRate;

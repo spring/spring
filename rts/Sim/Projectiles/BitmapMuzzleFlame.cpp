@@ -5,7 +5,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Textures/ColorMap.h"
 
-CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile);
+CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 
 CR_REG_METADATA(CBitmapMuzzleFlame, 
 (

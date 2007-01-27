@@ -10,7 +10,7 @@
 #include "mmgr.h"
 #include "ProjectileHandler.h"
 
-CR_BIND_DERIVED(CDirtProjectile, CProjectile);
+CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
 
 CR_REG_METADATA(CDirtProjectile, 
 (

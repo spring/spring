@@ -7,6 +7,7 @@
 
 class CDamageArrayHandler
 {
+	CR_DECLARE(CDamageArrayHandler);
 public:
 	CDamageArrayHandler(void);
 	~CDamageArrayHandler(void);

@@ -4,6 +4,8 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Feature.h"
 
+CR_BIND_DERIVED(CGroundMoveMath, CMoveMath, );
+
 using namespace std;
 
 float CGroundMoveMath::waterCost=0;

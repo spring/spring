@@ -8,9 +8,10 @@
 
 class CBombDropper : public CWeapon  
 {
+	CR_DECLARE(CBombDropper);
 public:
 	void Update();
-	CBombDropper(CUnit* owner,bool useTorps);
+	CBombDropper(CUnit* owner, bool useTorps);
 	virtual ~CBombDropper();
 
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);

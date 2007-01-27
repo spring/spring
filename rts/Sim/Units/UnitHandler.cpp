@@ -29,6 +29,8 @@
 #include "Game/GameSetup.h"
 #include "Game/command.h"
 #include "Sim/Misc/AirBaseHandler.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Deque.h"
 #include "mmgr.h"
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
@@ -66,21 +68,6 @@ bool BuildInfo::Parse(const Command& c)
 	return false;
 }
 
-//////////////////////////////////////////////////////////////////////
-// CChecksum implementation
-//////////////////////////////////////////////////////////////////////
-
-char* CChecksum::diff(char* buf, const CChecksum& c) {
-	char* p = buf;
-	if (x != c.x) *(p++) = 'X';
-	if (y != c.y) *(p++) = 'Y';
-	if (z != c.z) *(p++) = 'Z';
-	if (m != c.m) *(p++) = 'M';
-	if (e != c.e) *(p++) = 'E';
-	*(p++) = 0;
-	return buf;
-}
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -89,8 +76,37 @@ char* CChecksum::diff(char* buf, const CChecksum& c) {
 CUnitHandler* uh;
 using namespace std;
 
-CUnitHandler::CUnitHandler()
-:	overrideId(-1),
+CR_BIND(CUnitHandler, (true));
+CR_REG_METADATA(CUnitHandler, (
+	CR_MEMBER(activeUnits),
+	CR_MEMBER(units),
+	CR_MEMBER(freeIDs),
+	CR_MEMBER(waterDamage),
+	CR_MEMBER(maxUnits),
+	CR_MEMBER(lastDamageWarning),
+	CR_MEMBER(lastCmdDamageWarning),
+	CR_MEMBER(limitDgun),
+	CR_MEMBER(dgunRadius),
+	CR_MEMBER(diminishingMetalMakers),
+	CR_MEMBER(metalMakerIncome),
+	CR_MEMBER(metalMakerEfficiency),
+	CR_MEMBER(toBeRemoved),
+	CR_POSTLOAD(PostLoad),
+	CR_SERIALIZER(Serialize)
+	));
+
+void CUnitHandler::Serialize(creg::ISerializer& s)
+{
+}
+
+void CUnitHandler::PostLoad()
+{
+	// reset any synced stuff that is not saved
+	slowUpdateIterator = activeUnits.end();
+}
+
+CUnitHandler::CUnitHandler(bool serializing)
+:
 	maxUnits(500),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
@@ -124,14 +140,19 @@ CUnitHandler::CUnitHandler()
 		if(gameSetup->diminishingMMs)
 			diminishingMetalMakers=true;
 	}
-	airBaseHandler=SAFE_NEW CAirBaseHandler;
 
-	for(int i=0; i<MAX_TEAMS; i++)
+	if (!serializing)
 	{
-		unitsType[i] = SAFE_NEW unsigned int[unitDefHandler->numUnits+1]; //unit ids start at 1
-		memset(unitsType[i], 0, (unitDefHandler->numUnits+1) *  sizeof(int));
+		airBaseHandler=SAFE_NEW CAirBaseHandler;
+
+		for(int i=0; i<MAX_TEAMS; i++)
+		{
+			unitsType[i] = SAFE_NEW unsigned int[unitDefHandler->numUnits+1]; //unit ids start at 1
+			memset(unitsType[i], 0, (unitDefHandler->numUnits+1) *  sizeof(int));
+		}
 	}
 }
+
 
 CUnitHandler::~CUnitHandler()
 {
@@ -158,12 +179,9 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	activeUnits.insert(ui,unit);		//randomize this to make the order in slowupdate random (good if one build say many buildings at once and then many mobile ones etc)
 
 	int id;
-	if(overrideId!=-1){
-		id=overrideId;
-	} else {
-		id=freeIDs.back();
-		freeIDs.pop_back();
-	}
+	id=freeIDs.back();
+	freeIDs.pop_back();
+
 	units[id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
 	unitsType[unit->team][unit->unitDef->id]++;
@@ -173,7 +191,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	ASSERT_SYNCED_MODE;
-	toBeRemoved.push(unit);
+	toBeRemoved.push_back(unit);
 }
 
 void CUnitHandler::Update()
@@ -181,8 +199,8 @@ void CUnitHandler::Update()
 	ASSERT_SYNCED_MODE;
 START_TIME_PROFILE;
 	while(!toBeRemoved.empty()){
-		CUnit* delUnit=toBeRemoved.top();
-		toBeRemoved.pop();
+		CUnit* delUnit=toBeRemoved.back();
+		toBeRemoved.pop_back();
 
 		int delTeam;
 		int delType;
@@ -248,34 +266,6 @@ END_TIME_PROFILE("Unit slow update");
 
 END_TIME_PROFILE("Unit handler");
 
-}
-
-CChecksum CUnitHandler::CreateChecksum()
-{
-	CChecksum checksum;
-
-	list<CUnit*>::iterator usi;
-	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++){
-		checksum.x^=*((int*)&((*usi)->midPos.x));
-		checksum.y^=*((int*)&((*usi)->midPos.y));
-		checksum.z^=*((int*)&((*usi)->midPos.z));
-	}
-
-#ifdef TRACE_SYNC
-		tracefile << gs->frameNum << " X "<< checksum.x << "\n";
-		tracefile << gs->frameNum << " Y "<< checksum.y << "\n";
-		tracefile << gs->frameNum << " Z "<< checksum.z << "\n";
-#endif
-
-	for(int a=0;a<gs->activeTeams;++a){
-		checksum.m^=*((int*)&(gs->Team(a)->metal));
-		checksum.e^=*((int*)&(gs->Team(a)->energy));
-	}
-#ifdef TRACE_SYNC
-		tracefile << gs->frameNum << " M "<< checksum.m << "\n";
-		tracefile << gs->frameNum << " E "<< checksum.e << "\n";
-#endif
-	return checksum;
 }
 
 float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
@@ -545,7 +535,7 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 
 void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 {
-	for(int a=0;a<MAX_UNITS;++a){
+/*	for(int a=0;a<MAX_UNITS;++a){
 		bool exists=!!units[a];
 		file->lsBool(exists);
 		if(exists){
@@ -575,7 +565,7 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 		if(units[a])
 			units[a]->LoadSave(file,loading);
 	}
-	overrideId=-1;
+	overrideId=-1;*/
 }
 
 bool CUnitHandler::CanCloseYard(CUnit* unit)

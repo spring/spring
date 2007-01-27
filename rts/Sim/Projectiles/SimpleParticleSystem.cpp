@@ -7,7 +7,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "GenericParticleProjectile.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile);
+CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
 CR_REG_METADATA(CSimpleParticleSystem, 
 (
@@ -148,7 +148,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 }
 
 
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem);
+CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, );
 
 CR_REG_METADATA(CSphereParticleSpawner, 
 (

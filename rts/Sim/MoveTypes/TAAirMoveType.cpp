@@ -16,6 +16,53 @@
 #include "Mobility.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 
+CR_BIND_DERIVED(CTAAirMoveType, CMoveType, (NULL));
+
+CR_REG_METADATA(CTAAirMoveType, (
+	CR_MEMBER(dontCheckCol),
+
+	CR_MEMBER(goalPos),
+	CR_MEMBER(oldpos),
+	CR_MEMBER(wantedHeight),
+	CR_MEMBER(orgWantedHeight),
+	
+	CR_MEMBER(reservedLandingPos),
+	CR_MEMBER(circlingPos),
+	CR_MEMBER(goalDistance),
+	CR_MEMBER(waitCounter),
+	CR_MEMBER(wantToStop),
+	
+	CR_MEMBER(wantedHeading),
+
+	CR_MEMBER(wantedSpeed),
+	CR_MEMBER(deltaSpeed),
+
+	CR_MEMBER(currentBank),
+	CR_MEMBER(currentPitch),
+
+	CR_MEMBER(turnRate),
+	CR_MEMBER(accRate),
+	CR_MEMBER(decRate),
+	CR_MEMBER(altitudeRate),
+
+	CR_MEMBER(breakDistance),
+	CR_MEMBER(dontLand),
+	CR_MEMBER(lastMoveRate),
+
+	CR_MEMBER(forceHeading),
+	CR_MEMBER(forceHeadingTo),
+
+	CR_MEMBER(maxDrift),
+
+	CR_MEMBER(lastColWarning),
+	CR_MEMBER(lastColWarningType),
+
+	CR_MEMBER(repairBelowHealth),
+	CR_MEMBER(reservedPad),
+	CR_MEMBER(padStatus),
+	CR_MEMBER(oldGoalPos)));
+
+
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	CMoveType(owner),
 	aircraftState(AIRCRAFT_LANDED),
@@ -256,7 +303,7 @@ void CTAAirMoveType::Idle()
 
 void CTAAirMoveType::UpdateLanded()
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 
 	//dont place on ground if we are on a repair pad
 	if (padStatus == 0) {
@@ -271,7 +318,7 @@ void CTAAirMoveType::UpdateLanded()
 
 void CTAAirMoveType::UpdateTakeoff()
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	wantedSpeed=ZeroVector;
 	wantedHeight=orgWantedHeight;
 
@@ -311,7 +358,7 @@ void CTAAirMoveType::UpdateHovering()
 
 void CTAAirMoveType::UpdateFlying()
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	float3 &speed = owner->speed;
 
 	//Direction to where we would like to be
@@ -447,7 +494,7 @@ void CTAAirMoveType::UpdateFlying()
 
 void CTAAirMoveType::UpdateLanding()
 {
-	SyncedFloat3 &pos = owner->pos;
+	float3 &pos = owner->pos;
 	float3 &speed = owner->speed;
 
 	//We want to land, and therefore cancel our speed first
@@ -571,7 +618,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 void CTAAirMoveType::UpdateAirPhysics()
 {
-	SyncedFloat3& pos=owner->pos;
+	float3& pos=owner->pos;
 	float3& speed=owner->speed;
 
 	if(!((gs->frameNum+owner->id)&3))
@@ -667,7 +714,7 @@ void CTAAirMoveType::UpdateMoveRate()
 void CTAAirMoveType::Update()
 {
 	//Handy stuff. Wonder if there is a better way?
-	SyncedFloat3 &pos=owner->pos;
+	float3 &pos=owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;

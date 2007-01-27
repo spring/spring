@@ -19,6 +19,15 @@
 #include "mmgr.h"
 #include "Rendering/Env/BaseWater.h"
 
+CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
+
+CR_REG_METADATA(CCannon,(
+	CR_MEMBER(maxPredict),
+	CR_MEMBER(minPredict),
+	CR_MEMBER(highTrajectory),
+	CR_MEMBER(selfExplode)
+	));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

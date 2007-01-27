@@ -21,6 +21,7 @@ enum TargetType {
 
 class CWeapon : public CObject
 {
+	CR_DECLARE(CWeapon);
 public:
 	CWeapon(CUnit* owner);
 	virtual ~CWeapon();

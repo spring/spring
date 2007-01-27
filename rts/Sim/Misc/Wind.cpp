@@ -6,7 +6,23 @@
 
 CWind wind;
 
-CWind::CWind(void)
+CR_BIND(CWind, );
+
+CR_REG_METADATA(CWind, (
+				
+	CR_MEMBER(maxWind),
+	CR_MEMBER(minWind),
+
+	CR_MEMBER(curWind),
+	CR_MEMBER(curStrength),
+	CR_MEMBER(curDir),
+
+	CR_MEMBER(newWind),
+	CR_MEMBER(oldWind),
+	CR_MEMBER(status)
+	));
+
+CWind::CWind()
 {
 	curDir=float3(1,0,0);
 	curStrength=0;
@@ -18,7 +34,7 @@ CWind::CWind(void)
 	status=895;						//make sure we can read in the correct wind before we try to set it
 }
 
-CWind::~CWind(void)
+CWind::~CWind()
 {
 }
 

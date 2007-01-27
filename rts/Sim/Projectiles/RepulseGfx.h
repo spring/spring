@@ -8,6 +8,7 @@ class CUnit;
 class CRepulseGfx :
 	public CProjectile
 {
+	CR_DECLARE(CRepulseGfx);
 public:
 	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color);
 	~CRepulseGfx(void);

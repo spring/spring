@@ -6,7 +6,11 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "LogOutput.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
+
+CR_BIND_DERIVED(CInterceptHandler, CObject, )
+CR_REG_METADATA(CInterceptHandler, (CR_MEMBER(interceptors), CR_MEMBER(plasmaRepulsors)));
 
 CInterceptHandler interceptHandler;
 

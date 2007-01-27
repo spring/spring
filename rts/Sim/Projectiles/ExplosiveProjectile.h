@@ -10,6 +10,7 @@
 
 class CExplosiveProjectile : public CWeaponProjectile  
 {
+	CR_DECLARE(CExplosiveProjectile);
 public:
 	CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner, WeaponDef *weaponDef, int ttl=100000,float areaOfEffect=8);
 	virtual ~CExplosiveProjectile();

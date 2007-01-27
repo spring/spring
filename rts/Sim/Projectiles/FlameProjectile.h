@@ -7,6 +7,7 @@
 class CFlameProjectile :
 	public CWeaponProjectile
 {
+	CR_DECLARE(CFlameProjectile);
 public:
 	CFlameProjectile(const float3& pos,const float3& speed,const float3& spread,CUnit* owner, WeaponDef *weaponDef, int ttl=50);
 	~CFlameProjectile(void);
