@@ -26,6 +26,7 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Platform/ConfigHandler.h"
 #include "Player.h"
 #include "Camera.h"
@@ -321,15 +322,23 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 void CSelectedUnits::AddUnit(CUnit* unit)
 {
+	// if unit is being transported by eg. Hulk or Atlas
+	// then we should not be able to select it
+	if (unit->transporter != NULL && !unit->transporter->unitDef->isfireplatform) {
+		return;
+	}
+
 	selectedUnits.insert(unit);
 	AddDeathDependence(unit);
-	selectionChanged=true;
-	possibleCommandsChanged=true;
-	if(!(unit->group) || unit->group->id != selectedGroup)
-		selectedGroup=-1;
+	selectionChanged = true;
+	possibleCommandsChanged = true;
+
+	if (!(unit->group) || unit->group->id != selectedGroup)
+		selectedGroup = -1;
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	unit->commandAI->selected=true;
+	unit->commandAI->selected = true;
 	POP_CODE_MODE;
 }
 
