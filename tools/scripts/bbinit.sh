@@ -29,11 +29,12 @@ if [ "x$quit" != "x0" ]; then
 fi
 
 # Extract files
-root="/home/tvo/Buildbot/spring_slave"
+root="~/spring_slave"
+
 # Libs/includes needed for crosscompilation
 7z x -y "$root/mingwlibs.exe" | grep 'Extracting  ' | sed 's/Extracting  //g' | tee files
 # Files needed for installer building
-tar xzfv "$root/extracontent.tar.gz" | tee -a files
+#tar xzfv "$root/extracontent.tar.gz" | tee -a files
 
 # touch files so the cleanup scripts dont kill them
 # (note how it can still happen that cleanup scripts kill the files just between
