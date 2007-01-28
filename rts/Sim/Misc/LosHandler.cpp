@@ -151,7 +151,9 @@ CLosHandler::~CLosHandler()
 	std::list<LosInstance*>::iterator li;
 	for(int a=0;a<2309;++a){
 		for(li=instanceHash[a].begin();li!=instanceHash[a].end();++li){
-			delete *li;
+			LosInstance* i = *li;
+			i->_DestructInstance(i);
+			mempool.Free(i, sizeof(LosInstance));
 		}
 	}
 
