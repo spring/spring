@@ -10,21 +10,15 @@ if [ "$#" != "1" ]; then
 	exit 1
 fi
 
-quit=0
-
 # 7z installed?
-if [ "x$(which 7z)" = "x" ]; then
+if [ -z "`which 7z`" ]; then
 	echo 7z not found
-	quit=1
+	exit 1
 fi
 
 # zip installed?
-if [ "x$(which zip)" = "x" ]; then
+if [ -z "`which zip`" ]; then
 	echo zip not found
-	quit=1
-fi
-
-if [ "x$quit" != "x0" ]; then
 	exit 1
 fi
 
@@ -32,14 +26,9 @@ fi
 root="~/spring_slave"
 
 # Libs/includes needed for crosscompilation
-7z x -y "$root/mingwlibs.exe" | grep 'Extracting  ' | sed 's/Extracting  //g' | tee files
+7z x -y "$root/mingwlibs.exe" || exit 1
 # Files needed for installer building
-#tar xzfv "$root/extracontent.tar.gz" | tee -a files
-
-# touch files so the cleanup scripts dont kill them
-# (note how it can still happen that cleanup scripts kill the files just between
-# extracting and touching them, no clue how to solve that....)
-cat files | xargs touch
+#tar xzfv "$root/extracontent.tar.gz" || exit 1
 
 # Update version
 if [ "$#" != "0" ]; then
