@@ -449,38 +449,54 @@ void CMobileCAI::ExecuteDGun(Command &c)
 }
 
 
+
+
 /**
 * @brief Causes this CMobileCAI to execute the attack order c
 */
 void CMobileCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
-	if(tempOrder && owner->moveState < 2){		//limit how far away we fly
-		if(orderTarget && LinePointDist(commandPos1,commandPos2,orderTarget->pos) > 500 + owner->maxRange){
+
+	if ((tempOrder) && (owner->moveState < 2)) {
+		// limit how far away we fly
+		if ((orderTarget) && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > (500 + owner->maxRange)) {
 			StopMove();
 			FinishCommand();
 			return;
 		}
 	}
-	if(!inCommand){
-		if(c.params.size()==1){
-			if(uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner){
-				float3 fix=uh->units[int(c.params[0])]->pos+owner->posErrorVector*128;
+
+
+	// check if we are in direct command of attacker
+	if (!inCommand) {
+		if (c.params.size() == 1) {
+			int unitID = int(c.params[0]);
+
+			// check if we have valid target parameter and that we aren't attacking ourselves
+			if (uh->units[unitID] != 0 && uh->units[unitID] != owner) {
+				float3 fix = uh->units[unitID]->pos + owner->posErrorVector * 128;
 				SetGoal(fix, owner->pos);
-				orderTarget=uh->units[int(c.params[0])];
+				// get ID of attack-order target unit
+				orderTarget = uh->units[unitID];
 				AddDeathDependence(orderTarget);
-				inCommand=true;
-			} else {
-				StopMove();		//cancel keeppointingto
+				inCommand = true;
+			}
+			else {
+				// unit may not fire on itself, cancel order
+				StopMove();
 				FinishCommand();
 				return;
 			}
-		} else {
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			SetGoal(pos, owner->pos);
-			inCommand=true;
 		}
-	} else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+		else {
+			// user gave force-fire attack command
+			float3 pos(c.params[0], c.params[1], c.params[2]);
+ 			SetGoal(pos, owner->pos);
+			inCommand = true;
+		}
+	}
+	else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
 		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
 		if ((commandQue.size() != 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
 			StopMove();
@@ -489,44 +505,101 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 	}
 
-	if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
-		StopMove();		//cancel keeppointingto
+	// if our target is dead or we lost it then stop attacking
+	// NOTE: unit should actually just continue to target area!
+	if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
+		// cancel keeppointingto
+		StopMove();
 		FinishCommand();
 		return;
 	}
-	if(orderTarget){
-		//note that we handle aircrafts slightly differently
-		if((((owner->AttackUnit(orderTarget, c.id==CMD_DGUN)
-				&& owner->weapons.size() > 0 
-				&& owner->weapons.front()->range -
-					owner->weapons.front()->relWeaponPos.Length() >
-					orderTarget->pos.distance(owner->pos))
-				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				&& (owner->pos-orderTarget->pos).Length2D() <
-					owner->maxRange*0.9f)
-				|| (owner->pos-orderTarget->pos).SqLength2D()<1024){
+
+
+	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
+	if (orderTarget) {
+		bool b1 = owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
+		bool b2 = false;
+		bool b3 = false;
+
+		if (owner->weapons.size() > 0) {
+			// if we have at least one weapon then check if we
+			// can hit target with our first (meanest) one
+			CWeapon* w = owner->weapons.front();
+			b2 = w->AttackUnit(orderTarget, c.id == CMD_DGUN);
+			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
+		}
+
+		// if w->AttackUnit() returned true then we are already
+		// in range with our biggest weapon so stop moving
+		if (b1 && b2) {
 			StopMove();
 			owner->moveType->KeepPointingTo(orderTarget,
-				min((float)(owner->losRadius*SQUARE_SIZE*2),
-				owner->maxRange*0.9f), true);
-		} else if((orderTarget->pos+owner->posErrorVector*128).distance2D(goalPos) > 10+orderTarget->pos.distance2D(owner->pos)*0.2f){
-			float3 fix=orderTarget->pos+owner->posErrorVector*128;
+				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+		}
+
+		// if (((first weapon range minus first weapon length greater than distance to target
+		// or our movetype has type TAAirMoveType) and length of 2D vector from us to target
+		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
+		// less than 1024) then we are close enough
+		else if (((b3
+				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
+				&& (owner->pos - orderTarget->pos).Length2D() < (owner->maxRange * 0.9f))
+				|| (owner->pos - orderTarget->pos).SqLength2D() < 1024) {
+			StopMove();
+			owner->moveType->KeepPointingTo(orderTarget,
+				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+		}
+
+		// if 2D distance of (target position plus attacker error vector times 128) to goal position
+		// greater than (10 plus 20% of 2D distance between attacker and target) then we need to close
+		// in on target more
+		else if ((orderTarget->pos + owner->posErrorVector * 128).distance2D(goalPos)
+				> (10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
+			float3 fix = orderTarget->pos + owner->posErrorVector * 128;
 			SetGoal(fix, owner->pos);
 		}
-	} else {
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		if((owner->AttackGround(pos,c.id==CMD_DGUN) && owner->weapons.size() > 0
-				&& (owner->pos-pos).Length() < 
-					owner->weapons.front()->range -
-					owner->weapons.front()->relWeaponPos.Length())
-				|| (owner->pos-pos).SqLength2D()<1024){
+	}
+
+	// user is attacking ground
+	else {
+		float3 pos(c.params[0], c.params[1], c.params[2]);
+
+		bool b1 = owner->AttackGround(pos, c.id == CMD_DGUN);
+		bool b2 = false;
+		bool b3 = false;
+		bool b4 = (owner->pos - pos).SqLength2D() < 1024;
+
+		if (owner->weapons.size() > 0) {
+			// if we have at least one weapon then check if
+			// we can hit position with our first (meanest) one
+			CWeapon* w = owner->weapons.front();
+			b2 = w->AttackGround(pos, c.id == CMD_DGUN);
+			b3 = (owner->pos - pos).Length() < (w->range - (w->relWeaponPos).Length());
+		}
+
+		// if w->AttackGround() returned true then we are already
+		// in range with our biggest weapon so stop moving
+		if (b1 && b2 && b3) {
 			StopMove();
-			owner->moveType->KeepPointingTo(pos, owner->maxRange*0.9f, true);
-		} else if(pos.distance2D(goalPos)>10){
+			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+		}
+
+		// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus first weapon length
+		// OR squared length of 2D vector from our pos. to attack pos. less than 1024) then we are close enough
+		else if (b3 || b4) {
+			StopMove();
+			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+		}
+
+		// if we are more than 10 units distant from target position then keeping moving closer
+		else if (pos.distance2D(goalPos) > 10) {
 			SetGoal(pos, owner->pos);
 		}
 	}
 }
+
+
+
 
 int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
