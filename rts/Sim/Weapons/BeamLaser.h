@@ -16,10 +16,13 @@ public:
 
 	void Init(void);
 	void Fire(void);
+	void FireInternal(float3 dir, bool sweepFire);
 
 	float3 color;
 	float3 oldDir;
 	float damageMul;
+
+	unsigned int lastFireFrame;
 };
 
 #endif

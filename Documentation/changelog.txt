@@ -1,5 +1,11 @@
 TASpring change log
 
+0.next
+
+- Added weapon tdf command SweepFire, if 1 (default 0) it will make the weapon continue
+  firing while it aims for a new target. Only works on continous beam lasers currently.
+
+
 0.74b3
 
 - Added LuaUI v0.1  (with widget management code, somewhat experimental)

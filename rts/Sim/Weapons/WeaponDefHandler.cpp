@@ -246,6 +246,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].metalcost, "0", weaponname + "\\metalpershot");
 	sunparser->GetDef(weaponDefs[id].energycost, "0", weaponname + "\\energypershot");
 	sunparser->GetDef(weaponDefs[id].selfExplode, "0", weaponname + "\\burnblow");
+	sunparser->GetDef(weaponDefs[id].sweepFire, "0", weaponname + "\\sweepfire");
 	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01f;
 	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
 	if(weaponDefs[id].paralyzer)
