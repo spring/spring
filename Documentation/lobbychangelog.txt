@@ -1,6 +1,10 @@
   ------ CHANGELOG ------
 
-  *** 0.33 (??x??x??) ***
+  *** 0.34 (??x??x??) ***
+  * added "balance teams" feature for hosts
+  * added "auto setup start rectangles" feature for hosts
+
+  *** 0.33 (21x01x07) ***
   * fixed bug with nat traversal not working anymore in previous version (hopefully)
   * added new "Office12" skin
   * added Wine autodetection to disable SpTBX title bars (this fixes some issues with TASClient running under Wine),

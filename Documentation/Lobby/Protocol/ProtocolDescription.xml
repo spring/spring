@@ -67,12 +67,14 @@
   As of version 0.33, command syntax has been slightly changed. Messages may now contain IDs:
   Any message may be prefixed with a message ID. For an example:
   "#123 SAY main hello!" <br /> 
-  Server will use this ID with a reply (if any reply to the message is prescribed and the command
-  actually supports it - not every command type uses an ID), for an example:
+  Server will use this ID with a reply, for an example:
   "#123 SAID main Betalord hello!" <br /> 
   The message ID has only one function: to ease tracking server responses for the client.
   Using message IDs means that client can also use synchronous communication (with certain commands),
   which makes it easier to implement certain command that require multiple responses in both directions.
+  <br />
+  Note that IDs should be non-negative values, in 31-bit range (0..2147483647). Negative values are
+  reserved for internal handling logic of server / lobby clients.
   </p>
   <p>
   Legend:
@@ -89,6 +91,7 @@
   <RecentChanges>
   <p>
   <b><u>Version 0.33:</u></b><br />
+  
   <ul>
     <li>TASSERVER command has been modified, see documentation bellow for further details.
         Note that clients should now acquire local Spring version by running "spring.exe /version"
@@ -97,6 +100,14 @@
     <li>Note that MsgIDs (as described in the "Introduction" part) aren't fully supported yet - server will
         parse IDs, but won't include them in the response.</li>
   </ul>
+
+  <b><u>Version 0.34:</u></b><br />
+  <ul>
+    <li>Message/command ID system has been implemented to automatically (and transparently) support any
+        command regardless of the method handler implementation. This means that the response to any command
+        will always contain message ID if you specifed it with the original command.</li>
+  </ul>
+  
   </p>
   </RecentChanges>
 
