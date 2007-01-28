@@ -13,6 +13,11 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 #include "Sim/Projectiles/LargeBeamLaserProjectile.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Matrix44f.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Game/Team.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 
@@ -24,7 +29,8 @@ CR_REG_METADATA(CBeamLaser,(
 
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),
-	oldDir(ZeroVector)
+	oldDir(ZeroVector),
+	lastFireFrame(0)
 {
 }
 
@@ -43,6 +49,26 @@ void CBeamLaser::Update(void)
 		predict=salvoSize/2;
 	}
 	CWeapon::Update();
+
+	if(lastFireFrame > gs->frameNum - 18 && lastFireFrame != gs->frameNum  && weaponDef->sweepFire)
+	{
+		if (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost)
+		{
+			owner->UseEnergy(energyFireCost / salvoSize);
+			owner->UseMetal(metalFireCost / salvoSize);
+
+			std::vector<int> args;
+			args.push_back(0);
+			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+			CMatrix44f weaponMat = owner->localmodel->GetPieceMatrix(args[0]);
+
+			float3 relWeaponPos = weaponMat.GetPos();
+			weaponPos=owner->pos+owner->frontdir*-relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*-relWeaponPos.x;
+
+			float3 dir = owner->frontdir * weaponMat[10] + owner->updir * weaponMat[6] + -owner->rightdir * weaponMat[2];
+			FireInternal(dir, true);
+		}
+	}
 }
 
 bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
@@ -109,6 +135,11 @@ void CBeamLaser::Fire(void)
 	dir+=(salvoError)*(1-owner->limExperience*0.7f);
 	dir.Normalize();
 
+	FireInternal(dir, false);
+}
+
+void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
+{
 	float rangeMod=1.3f;
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
@@ -125,6 +156,11 @@ void CBeamLaser::Fire(void)
 		tryAgain=false;
 		hit=0;
 		float length=helper->TraceRay(curPos,dir,maxLength-curLength,damages[0],owner,hit);
+
+		if(hit && hit->allyteam == owner->allyteam && sweepFire){	//never damage friendlies with sweepfire
+			lastFireFrame = 0;
+			return;
+		}
 
 		float3 newDir;
 		CPlasmaRepulser* shieldHit;
@@ -153,5 +189,8 @@ void CBeamLaser::Fire(void)
 	}
 	float	intensity=1-(curLength)/(range*2);
 	if(curLength<maxLength)
-		helper->Explosion(hitPos,weaponDef->damages*(intensity*damageMul),areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner, true, 1.0f, false,weaponDef->explosionGenerator,hit,dir);
+		helper->Explosion(hitPos, weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir);
+
+	if(targetUnit)
+		lastFireFrame = gs->frameNum;
 }

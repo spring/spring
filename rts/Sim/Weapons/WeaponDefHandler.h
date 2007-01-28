@@ -170,6 +170,8 @@ struct WeaponDef
 	unsigned int collisionFlags;
 
 	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
+
+	bool sweepFire;
 };
 
 class CExplosionGeneratorHandler;
