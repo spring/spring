@@ -6,7 +6,7 @@ class 'MissionHelper' (Script)
 function MissionHelper:__init() super('LUA missionbuilder')
     self.state = 0
     self.team = 0
-    
+
     -- Set to true to not have to press enter at start
     self.onlySinglePlayer = true
 
@@ -26,15 +26,15 @@ function MissionHelper:Update()
     if self.state == 0 then
         self.state = 1
         self:Setup()
-        
+
         print("This script can help in constructing Lua missions")
         print("Type .help for more information")
     end
-    
+
     -- Run SlowUpdate once every second
     if math.mod(gs.frameNum, 15) == 0 then
         self:SlowUpdate()
-    end    
+    end
 end
 
 function MissionHelper:GotChatMsg(msg, player)
@@ -44,7 +44,7 @@ function MissionHelper:GotChatMsg(msg, player)
         param = string.sub(msg, varpos + 1)
         msg = string.sub(msg, 1, varpos - 1)
     end
-                         
+
     local cmd = self.commands[msg]
     if cmd then
         cmd(self, param)
@@ -86,7 +86,7 @@ function MissionHelper:DumpAvailableUnitNames(param)
     --for i = 1, table.getn(list) do
       -- local def = list[i].definition
       -- print( "   " .. def.name .. " " .. def.humanname )
-    --end   
+    --end
 end
 
 function MissionHelper:SaveFeatures(param)
@@ -102,7 +102,7 @@ function MissionHelper:SaveFeatures(param)
             if tab and i == table.getn(list) then
                 suffix = ""
             end
-    
+
             print(prefix .. "features.Load(\"" .. def.name .. "\", float3(" ..
                   pos .. "), 1 )" .. suffix)
         end
@@ -130,7 +130,7 @@ function MissionHelper:Save(param, tab)
         suffix = ","
     end
 
-    local i 
+    local i
     for i = 1, table.getn(list) do
         local def = list[i].definition
         local pos = string.format("%.1f, %.1f, %.1f", list[i].pos.x,
@@ -165,19 +165,19 @@ end
 function MissionHelper:Setup()
     local p = TdfParser()
     p:LoadFile("gamedata\\sidedata.tdf")
-    
+
     local s0 = p:GetString("armcom", "side0\\commander");
     local s1 = p:GetString("corcom", "side1\\commander");
-    
+
     p = TdfParser()
     p:LoadFile(map.GetTDFName())
-    
+
     local x0, z0, x1, z1
     x0 = p:GetFloat(1000, "MAP\\TEAM0\\StartPosX")
     z0 = p:GetFloat(1000, "MAP\\TEAM0\\StartPosZ")
     x1 = p:GetFloat(1200, "MAP\\TEAM1\\StartPosX")
     z1 = p:GetFloat(1200, "MAP\\TEAM1\\StartPosZ")
-    
+
     units.Load(s0, float3(x0, 80, z0), 0, false)
     units.Load(s1, float3(x1, 80, z1), 1, false)
 end
