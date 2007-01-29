@@ -144,6 +144,10 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
+	if(owner->stunned){
+		return;
+	}
+
 	Command& c=commandQue.front();
 	CBuilder* fac=(CBuilder*)owner;
 	float3 curPos=owner->pos;
