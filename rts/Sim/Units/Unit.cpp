@@ -942,17 +942,18 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 {
-	bool r=false;
-	haveDGunRequest=dgun;
-	userAttackGround=false;
-	commandShotCount=0;
+	bool r = false;
+	haveDGunRequest = dgun;
+	userAttackGround = false;
+	commandShotCount = 0;
 	SetUserTarget(unit);
 	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi){
-		(*wi)->haveUserTarget=false;
+	for(wi = weapons.begin(); wi != weapons.end(); ++wi){
+		(*wi)->haveUserTarget = false;
+		(*wi)->targetType = Target_None;
 		if(dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
-			if((*wi)->AttackUnit(unit,true))
-				r=true;
+			if((*wi)->AttackUnit(unit, true))
+				r = true;
 	}
 	return r;
 }
