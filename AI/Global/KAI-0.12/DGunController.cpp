@@ -9,6 +9,7 @@
 DGunController::DGunController(void) {
 	srand((unsigned) time(0));
 
+	this -> inited = false;
 	(this -> units) = (int*) calloc(MAX_UNITS, sizeof(int));
 }
 DGunController::~DGunController(void) {
@@ -18,6 +19,7 @@ DGunController::~DGunController(void) {
 void DGunController::init(IAICallback* callback, int commanderID) {
 	CALLBACK = callback;
 
+	this -> inited = true;
 	this -> commanderID = commanderID;
 	this -> commanderUD = callback -> GetUnitDef(commanderID);
 	this -> startingPos = callback -> GetUnitPos(commanderID);
@@ -57,6 +59,10 @@ void DGunController::handleDestroyEvent(int attackerID, int targetID) {
 
 // function that handles UnitDamaged() event for commander
 void DGunController::handleAttackEvent(int attackerID, float damage, float3 attackerDir, float3 attackerPos) {
+	// in eg. EE init() is never called (no dgun)
+	if (!this -> inited)
+		return;
+
 	int currentFrame = CALLBACK -> GetCurrentFrame();
 	float3 commanderPos = CALLBACK -> GetUnitPos(this -> commanderID);
 	float healthCur = CALLBACK -> GetUnitHealth(this -> commanderID);
@@ -114,6 +120,10 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 
 // update routine to ensure dgun behavior is not solely reactive
 void DGunController::update(unsigned int currentFrame) {
+	// in eg. EE init() is never called (no dgun)
+	if (!this -> inited)
+		return;
+
 	// make sure over-age dgun and reclaim orders are erased
 	this -> clearOrders(currentFrame);
 

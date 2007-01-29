@@ -70,11 +70,13 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	// added by Kloot
 	ai -> dgunController	= new DGunController();
 
-	// L("All Class pointers initialized");
+	L("All Class pointers initialized");
 
 	ai -> mm -> Init();
 	ai -> ut -> Init();
 	ai -> pather -> Init();
+
+	L("InitAI() complete");
 }
 
 
