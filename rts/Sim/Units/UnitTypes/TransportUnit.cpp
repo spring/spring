@@ -5,6 +5,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Game/SelectedUnits.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
@@ -94,8 +95,10 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence (this);
     unit->transporter = this;
 	unit->toBeTransported=false;
-	if (!unitDef->isfireplatform)
+	if (!unitDef->isfireplatform) {
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
+		selectedUnits.RemoveUnit(unit);
+	}
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
 	unit->los=0;
