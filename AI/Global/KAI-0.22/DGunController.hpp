@@ -33,6 +33,7 @@ class DGunController {
 		const UnitDef* commanderUD;
 		int* units;
 
+		bool inited;
 		int commanderID;
 		int targetID;
 		bool hasDGunOrder;

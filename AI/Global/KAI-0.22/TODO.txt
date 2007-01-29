@@ -3,9 +3,6 @@ threat threshold (orcones ignoring crashers)
 
 
 
-
-
-
 my immediate list (firenu):
 * air back to normal groups (test FF)
 length ahead in actual range based on SPEED
