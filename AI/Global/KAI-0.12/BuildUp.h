@@ -13,11 +13,12 @@ class CBuildUp {
 
 	private:
 		void Buildup();
+		void FactoryCycle(int);
 		void EconBuildup(int builder, const UnitDef* factory);
 
-		int factorycounter;
-		int buildercounter;
-		int storagecounter;
+		int factoryCounter;
+		int builderCounter;
+		int storageCounter;
 
 		AIClasses* ai;
 };

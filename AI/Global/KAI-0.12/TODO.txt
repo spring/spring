@@ -1,3 +1,2 @@
-support for construction hubs (EE-style, light-, medium-, heavy-)
 support for Gundam (crashes ingame)
 fix "air group is attacking" crash

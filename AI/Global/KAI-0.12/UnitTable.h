@@ -14,7 +14,6 @@ class CUnitTable {
 		void Init();
 
 		// Temp stuff
-		void Init_nr2();
 		const UnitDef* GetBestEconomyBuilding(int builder, float minUsefulness);
 
 
