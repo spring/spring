@@ -51,6 +51,7 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	all_lists.push_back(ground_defences);
 	all_lists.push_back(metal_storages);
 	all_lists.push_back(energy_storages);
+
 	// L("UnitTable Inited!");
 }
 
@@ -69,6 +70,8 @@ CUnitTable::~CUnitTable() {
 	delete[] energy_storages;
 }
 
+
+
 int CUnitTable::GetSide(int unit) {
 	assert(ai -> cb -> GetUnitDef(unit) != NULL);
 	return unittypearray[ai -> cb -> GetUnitDef(unit) -> id].side;
@@ -83,6 +86,9 @@ int CUnitTable::GetCategory(int unit) {
 
 	return (unittypearray[ai -> cb -> GetUnitDef(unit) -> id].category);
 }
+
+
+
 
 float CUnitTable::GetDPS(const UnitDef* unit) {
 	// L("");
@@ -533,6 +539,9 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 	return NULL;
 }
 
+
+
+
 void CUnitTable::Init() {
 	ai -> math -> TimerStart();
 	numOfUnits = ai -> cb -> GetNumUnitDefs();
@@ -613,9 +622,17 @@ void CUnitTable::Init() {
 					me -> category = CAT_G_ATTACK;
 				}
 			}
+
+
+
 			else if (!me -> def -> canfly) {
 				if (me -> def -> minWaterDepth <= 0) {
 					if (me -> def -> buildOptions.size() > 1) {
+						if ((me -> def) -> TEDClassString == "PLANT")
+							ai -> MyUnits[i] -> isHub = false;
+						else
+							ai -> MyUnits[i] -> isHub = true;
+
 						ground_factories[me -> side].push_back(i);
 						me -> category = CAT_FACTORY;
 					}
@@ -657,8 +674,12 @@ void CUnitTable::Init() {
 	char k[256];
 	sprintf(k, "UnitTable loaded in %fs", ai -> math -> TimerSecs());
 	ai -> cb -> SendTextMsg(k, 0);
-	// L(k);
+	// KLOOTNOTE: dump generated unit table to file
+	this -> DebugPrint();
 }
+
+
+
 
 
 bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
@@ -688,6 +709,8 @@ void CUnitTable::CalcBuildTree(int unit) {
 		// if already checked end recursion
 	}
 }
+
+
 
 void CUnitTable::DebugPrint() {
 	if (!unitList)
@@ -752,10 +775,4 @@ float CUnitTable::GetMinRange(const UnitDef* unit) {
 	}
 
 	return min_range;
-}
-
-/*
- * Temp-test for the new unit data analyser
- */
-void CUnitTable::Init_nr2() {
 }
