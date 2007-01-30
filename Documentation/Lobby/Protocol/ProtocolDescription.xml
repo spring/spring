@@ -71,7 +71,7 @@
   "#123 SAID main Betalord hello!" <br /> 
   The message ID has only one function: to ease tracking server responses for the client.
   Using message IDs means that client can also use synchronous communication (with certain commands),
-  which makes it easier to implement certain command that require multiple responses in both directions.
+  which makes it easier to implement certain commands that require multiple responses in both directions.
   <br />
   Note that IDs should be non-negative values, in 31-bit range (0..2147483647). Negative values are
   reserved for internal handling logic of server / lobby clients.
@@ -106,6 +106,7 @@
     <li>Message/command ID system has been implemented to automatically (and transparently) support any
         command regardless of the method handler implementation. This means that the response to any command
         will always contain message ID if you specifed it with the original command.</li>
+    <li>PING command no longer supports 'key' argument since it is not needed anymore (use message ID instead)</li>
   </ul>
   
   </p>
@@ -114,39 +115,22 @@
   <CommandList>
 
     <Command Name="PING" Source="client">
-      <Arguments>
-        <Argument Name="key" Optional="yes" Sentence="no">
-        If used, server will respond with a "PONG key" command instead of just "PONG"
-        so that the client will be able to calculate lag between server and himself.
-        </Argument>
-      </Arguments>
       <Description>
       Client should send this command on every few seconds to maintain constant connection to the server.
       Server will assume timeout occured if it does not hear from client for more than x seconds.
+      To figure out how long does a reply take, use message ID with this command.
       </Description>
       <Response>
       See <clink name="PONG"/>.
       </Response>
-      <Examples>
-        <Example>PONG</Example>
-        <Example>PONG 123</Example>
-      </Examples>
     </Command>
 
     <Command Name="PONG" Source="server">
-      <Arguments>
-        <Argument Name="key" Optional="yes" Sentence="no">
-        Only used if <clink name="PING"/> was using key parameter as well.
-        </Argument>
-      </Arguments>
       <Description>
-      Used as a response to a <clink name="PING"/> command.
+      Used as a response to a <clink name="PING"/> command. You can determine how long
+      did the reply took by using a message ID with the PING command.
       </Description>
       <Response />
-      <Examples>
-        <Example>PING</Example>
-        <Example>PING 123</Example>
-      </Examples>
     </Command>
 
     <Command Name="TASSERVER" Source="server">
