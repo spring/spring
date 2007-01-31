@@ -342,7 +342,7 @@ bool CWeapon::AttackGround(float3 pos,bool userTarget)
 {
 	if((!userTarget && weaponDef->noAutoTarget))
 		return false;
-	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff)
+	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff || !weaponDef->canAttackGround)
 		return false;
 
 	if(!weaponDef->waterweapon && pos.y<1)

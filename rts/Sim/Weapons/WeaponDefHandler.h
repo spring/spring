@@ -172,6 +172,8 @@ struct WeaponDef
 	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
 
 	bool sweepFire;
+
+	bool canAttackGround;
 };
 
 class CExplosionGeneratorHandler;
