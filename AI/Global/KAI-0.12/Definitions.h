@@ -85,4 +85,15 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 #define CACHEFACTOR				8
 
 
+// hub build-placement stuff added by Kloot
+#define QUADRANT_TOP_LEFT	0
+#define QUADRANT_TOP_RIGHT	1
+#define QUADRANT_BOT_RIGHT	2
+#define QUADRANT_BOT_LEFT	3
+#define FACING_DOWN			0
+#define FACING_RIGHT		1
+#define FACING_UP			2
+#define FACING_LEFT			3
+
+
 #endif
