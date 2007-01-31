@@ -352,8 +352,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.builder && !ud.buildSpeed)		//core anti is flagged as builder for some reason
 		ud.builder=false;
 
-	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str());;
-	ud.hoverAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\hoverattack").c_str());
+	ud.wantedHeight=atof(tdfparser.SGetValueDef("0", "UNITINFO\\cruisealt").c_str());
+	tdfparser.GetDef(ud.hoverAttack,"0", "UNITINFO\\hoverattack");
+	tdfparser.GetDef(ud.airStrafe,"1", "UNITINFO\\airStrafe");
 	ud.dlHoverFactor = atof(tdfparser.SGetValueDef("-1", "UNITINFO\\airhoverfactor").c_str());
 
 	tdfparser.GetDef(ud.transportSize, "0", "UNITINFO\\transportsize");

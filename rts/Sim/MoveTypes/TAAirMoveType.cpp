@@ -390,43 +390,48 @@ void CTAAirMoveType::UpdateFlying()
 				//logOutput.Print("In position, landing");
 				return;
 			case FLY_CIRCLING:
+				// break;
 				waitCounter++;
 				if (waitCounter > 100) {
 					//logOutput.Print("moving circlepos");
+					if(owner->unitDef->airStrafe){
+						float3 relPos = pos - circlingPos;
+						if(relPos.x<0.0001f && relPos.x>-0.0001f)
+							relPos.x=0.0001f;
+						relPos.y = 0;
+						relPos.Normalize();
+						CMatrix44f rot;
+						rot.RotateY(1.0f);
+						float3 newPos = rot.Mul(relPos);
+
+						//Make sure the point is on the circle
+						newPos = newPos.Normalize() * goalDistance;
+
+						//Go there in a straight line
+						goalPos = circlingPos + newPos;
+					}
+					waitCounter = 0;
+				}
+				break;
+			case FLY_ATTACKING:{
+				//logOutput.Print("wait is %d", waitCounter);
+				if(owner->unitDef->airStrafe){
 					float3 relPos = pos - circlingPos;
 					if(relPos.x<0.0001f && relPos.x>-0.0001f)
 						relPos.x=0.0001f;
 					relPos.y = 0;
 					relPos.Normalize();
 					CMatrix44f rot;
-					rot.RotateY(1.0f);
+					if (gs->randFloat()>0.5f)
+						rot.RotateY(0.6f+gs->randFloat()*0.6f);
+					else
+						rot.RotateY(-(0.6f+gs->randFloat()*0.6f));
 					float3 newPos = rot.Mul(relPos);
-
-					//Make sure the point is on the circle
 					newPos = newPos.Normalize() * goalDistance;
 
 					//Go there in a straight line
 					goalPos = circlingPos + newPos;
-					waitCounter = 0;
 				}
-				break;
-			case FLY_ATTACKING:{
-				//logOutput.Print("wait is %d", waitCounter);
-				float3 relPos = pos - circlingPos;
-				if(relPos.x<0.0001f && relPos.x>-0.0001f)
-					relPos.x=0.0001f;
-				relPos.y = 0;
-				relPos.Normalize();
-				CMatrix44f rot;
-				if (gs->randFloat()>0.5f)
-					rot.RotateY(0.6f+gs->randFloat()*0.6f);
-				else
-					rot.RotateY(-(0.6f+gs->randFloat()*0.6f));
-				float3 newPos = rot.Mul(relPos);
-				newPos = newPos.Normalize() * goalDistance;
-
-				//Go there in a straight line
-				goalPos = circlingPos + newPos;
 //				logOutput.Print("Changed circle pos");
 				break;}
 			case FLY_LANDING:{
