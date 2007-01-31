@@ -2,6 +2,13 @@ TASpring change log
 
 0.next
 
+- Added boolean FBI tag AirStrafe.  Only effective if HoverAttack=1.
+  If AirStrafe=1, gunships and construction aircraft will strafe in a circle around the target.
+  If AirStrafe=0, they will not strafe, they will sit stationary in the air firing their weapons.
+  around their target, if set to 0 they sit at one place
+
+- Added boolean weapon tdf tag canAttackGround.
+
 - Added weapon tdf command SweepFire, if 1 (default 0) it will make the weapon continue
   firing while it aims for a new target. Only works on continous beam lasers currently.
 

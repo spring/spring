@@ -177,6 +177,7 @@ struct UnitDef
 	float turnRadius;
 	float wantedHeight;
 	bool hoverAttack;
+	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot
 	bool DontLand () { return dlHoverFactor >= 0.0f; }
 
