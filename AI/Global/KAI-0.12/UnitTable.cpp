@@ -628,10 +628,10 @@ void CUnitTable::Init() {
 			else if (!me -> def -> canfly) {
 				if (me -> def -> minWaterDepth <= 0) {
 					if (me -> def -> buildOptions.size() > 1) {
-						if ((me -> def) -> TEDClassString == "PLANT")
-							ai -> MyUnits[i] -> isHub = false;
+						if ((((me -> def) -> TEDClassString) == "PLANT") || (((me -> def) -> speed) > 0.0f))
+							(ai -> MyUnits[i]) -> isHub = false;
 						else
-							ai -> MyUnits[i] -> isHub = true;
+							(ai -> MyUnits[i]) -> isHub = true;
 
 						ground_factories[me -> side].push_back(i);
 						me -> category = CAT_FACTORY;
