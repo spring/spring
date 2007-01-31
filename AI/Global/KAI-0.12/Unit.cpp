@@ -108,6 +108,7 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
 
 	return true;
 }
+
 // added by Kloot
 // tell a hub to build something
 bool CUNIT::HubBuild(const UnitDef* toBuild) {
@@ -119,6 +120,42 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	float maxRadius = ai -> cb -> GetUnitDef(hub) -> buildDistance;
 	float minRadius = 40.0f;
 
+	int frame = (ai -> cb) -> GetCurrentFrame();
+	int mapWidth = (ai -> cb) -> GetMapWidth();
+	int mapHeight = (ai -> cb) -> GetMapHeight();
+	int mapQuadrant = -1;
+	int facing = -1;
+
+	if (hubPos.x < (mapWidth >> 1)) {
+		if (hubPos.z < (mapHeight >> 1))
+			mapQuadrant = QUADRANT_TOP_LEFT;
+		else
+			mapQuadrant = QUADRANT_BOT_LEFT;
+	}
+	else {
+		if (hubPos.z < (mapHeight >> 1))
+			mapQuadrant = QUADRANT_TOP_RIGHT;
+		else
+			mapQuadrant = QUADRANT_BOT_RIGHT;
+	}
+
+
+	switch (mapQuadrant) {
+		case QUADRANT_TOP_LEFT: {
+			facing = (frame % 2)? FACING_DOWN: FACING_RIGHT; break;
+		}
+		case QUADRANT_TOP_RIGHT: {
+			facing = (frame % 2)? FACING_DOWN: FACING_LEFT; break;
+		}
+		case QUADRANT_BOT_RIGHT: {
+			facing = (frame % 2)? FACING_UP: FACING_LEFT; break;
+		}
+		case QUADRANT_BOT_LEFT: {
+			facing = (frame % 2)? FACING_UP: FACING_RIGHT; break;
+		}
+	}
+
+
 	// NOTE: this can still go wrong if there is another
 	// hub or open factory anywhere inside build radius!
 	for (float radius = maxRadius; radius >= minRadius; radius -= 5.0f) {
@@ -127,7 +164,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 			buildPos.y = hubPos.y;
 			buildPos.z = hubPos.z + (radius * sin(angle * DEG2RAD));
 
-			float3 closestPos = ai -> cb -> ClosestBuildSite(toBuild, buildPos, minRadius, 1);
+			float3 closestPos = ai -> cb -> ClosestBuildSite(toBuild, buildPos, minRadius, 1, facing);
 
 			if (closestPos.x >= 0.0f) {
 				Command c;
@@ -135,6 +172,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 				c.params.push_back(closestPos.x);
 				c.params.push_back(closestPos.y);
 				c.params.push_back(closestPos.z);
+				c.params.push_back(facing);
 				ai -> cb -> GiveOrder(hub, &c);
 				ai -> uh -> IdleUnitRemove(hub);
 

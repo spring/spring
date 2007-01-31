@@ -42,9 +42,13 @@ void CBuildUp::Buildup() {
 		const UnitDef* builderDef = ai -> cb -> GetUnitDef(builder);
 		const UnitDef* factoryDef = ai -> ut -> GetUnitByScore(builder, CAT_FACTORY);
 
+		// KLOOTNOTE: TODO
+	//	int factoriesOfTypeDef = ((ai -> uh) -> AllUnitsByType[factoryDef -> id]) -> size();
+	//	int factoriesOfTypeMax = factoryDef -> maxThisUnit;
+
 		bool makersOn  = ai -> uh -> metalMaker -> AllAreOn();									// are all our metal makers active?
 
-		bool mLevel50  = (ai -> cb -> GetMetal()) < (ai -> cb -> GetMetalStorage() * 0.5);			// is our current metal level less than 50% of our current metal storage capacity?
+		bool mLevel50  = (ai -> cb -> GetMetal()) < (ai -> cb -> GetMetalStorage() * 0.5);		// is our current metal level less than 50% of our current metal storage capacity?
 		bool eLevel50  = (ai -> cb -> GetEnergy()) > (ai -> cb -> GetEnergyStorage() * 0.5);	// is our current energy level more than 50% of our current energy storage capacity?
 		bool eLevel80  = (ai -> cb -> GetEnergy()) > (ai -> cb -> GetEnergyStorage() * 0.8);	// is our current energy level more than 80% of our current energy storage capacity?
 
