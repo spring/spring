@@ -24,8 +24,11 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+const int CInfoConsole::maxRawLines = 1024;
+
+
 CInfoConsole::CInfoConsole()
-: lastMsgPos(0,0,0), disabled(false)
+: lastMsgPos(0,0,0), disabled(false), newLines(0), rawId(0)
 {
 	data.clear();
 
@@ -123,6 +126,31 @@ void CInfoConsole::Update()
 }
 
 
+int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
+{
+	int tmp;
+	{
+		boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+		lines = rawData;
+		tmp = newLines;
+		newLines = 0;
+	}
+	return tmp;
+}
+
+
+void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
+{
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	const int count = (int)rawData.size();
+	const int start = count - newLines;
+	for (int i = start; i < count; i++) {
+		lines.push_back(rawData[i]);
+	}
+	newLines = 0;
+}
+
+
 void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 {
 	if (priority > verboseLevel) {
@@ -133,8 +161,18 @@ void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	if (guihandler) {
-		guihandler->AddConsoleLine(text, priority);
+	RawLine rl;
+	rl.text = text;
+	rl.priority = priority;
+	rl.time = 0; // filled in later
+	rl.id = rawId;
+	rawId++;
+	rawData.push_back(rl);
+	if (rawData.size() > maxRawLines) {
+		rawData.pop_front();
+	}
+	if (newLines < maxRawLines) {
+		newLines++;
 	}
 
 	float maxWidth = 25.0f;

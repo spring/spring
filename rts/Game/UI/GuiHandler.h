@@ -71,7 +71,6 @@ class CGuiHandler : public CInputReceiver {
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
 		void UnitTaken(CUnit* unit);
 		void UnitGiven(CUnit* unit);
-		void AddConsoleLine(const std::string& line, int priority);
 		void GroupChanged(int groupID);
 
 		int  GetDefaultCommand(int x, int y) const;

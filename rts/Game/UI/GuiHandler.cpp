@@ -160,14 +160,6 @@ void CGuiHandler::UnitGiven(CUnit* unit)
 }
 
 
-void CGuiHandler::AddConsoleLine(const std::string& line, int priority)
-{
-	if (luaUI != NULL) {
-		luaUI->AddConsoleLine(line, priority);
-	}
-}
-
-
 void CGuiHandler::GroupChanged(int groupID)
 {
 	changedGroups.insert(groupID);
