@@ -28,6 +28,7 @@ extern "C" {
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
+#include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
@@ -90,6 +91,7 @@ static int GetKeyState(lua_State* L);
 static int GetModKeyState(lua_State* L);
 static int GetPressedKeys(lua_State* L);
 
+static int GetConsoleBuffer(lua_State* L);
 static int GetCurrentTooltip(lua_State* L);
 
 static int GetKeyCode(lua_State* L);
@@ -367,6 +369,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
+	REGISTER_LUA_CFUNC(GetConsoleBuffer);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
@@ -576,6 +579,43 @@ bool CLuaUI::ConfigCommand(const string& command)
 }
 
 
+static bool AddConsoleLines(lua_State* L)
+{
+	CInfoConsole* ic = game->infoConsole;
+	if (ic == NULL) {
+		return true;
+	}
+
+	vector<CInfoConsole::RawLine> lines;
+	ic->GetNewRawLines(lines);
+
+	const int count = (int)lines.size();
+	for (int i = 0; i < count; i++) {
+		const CInfoConsole::RawLine& rl = lines[i];
+
+		lua_getglobal(L, "AddConsoleLine");
+		if (!lua_isfunction(L, -1)) {
+			lua_pop(L, lua_gettop(L));
+			return true; // the call is not defined
+		}
+		lua_pushstring(L, rl.text.c_str());
+		lua_pushnumber(L, rl.priority);
+		
+		// call the function
+		const int error = lua_pcall(L, 2, 0, 0);
+		if (error != 0) {
+			logOutput.Print("error = %i, %s, %s\n", error,
+											"Call_AddConsoleLine", lua_tostring(L, -1));
+			lua_pop(L, lua_gettop(L));
+			return false;
+		}
+
+		lua_pop(L, lua_gettop(L));
+	}
+	return true;
+}
+
+
 bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 {
 	lua_State* L = LUASTATE.GetL();
@@ -583,6 +623,9 @@ bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 		return false;
 	}
 	lua_pop(L, lua_gettop(L));
+
+	// add new lines from the console buffer	
+	AddConsoleLines(L);
 
 	lua_getglobal(L, "UpdateLayout");
 	if (!lua_isfunction(L, -1)) {
@@ -1490,36 +1533,6 @@ string CLuaUI::GetTooltip(int x, int y)
 }
 
 
-bool CLuaUI::AddConsoleLine(const string& line, int priority)
-{
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "AddConsoleLine");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushstring(L, line.c_str());
-	lua_pushnumber(L, priority);
-
-	// call the function
-	const int error = lua_pcall(L, 2, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_AddConsoleLine", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
 bool CLuaUI::HasLayoutButtons()
 {
 	lua_State* L = LUASTATE.GetL();
@@ -2304,6 +2317,54 @@ static int GetPressedKeys(lua_State* L)
 	return 1;
 }
 
+
+static int GetConsoleBuffer(lua_State* L)
+{
+	CInfoConsole* ic = game->infoConsole;
+	if (ic == NULL) {
+		return true;
+	}
+	
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
+		lua_pushstring(L, "Incorrect arguments to GetConsoleBuffer([count])");
+		lua_error(L);
+	}
+
+	deque<CInfoConsole::RawLine> lines;
+	const int newLines = ic->GetRawLines(lines);
+	const int lineCount = (int)lines.size();
+
+	int start = 0;
+	if (args >= 1) {
+		const int maxLines = (int)lua_tonumber(L, 1);
+		if (maxLines < lineCount) {
+			start = (lineCount - maxLines);
+		}
+	}
+
+	// table = { [1] = { text = string, priority = number}, etc... }
+	lua_newtable(L);
+	int count = 0;
+	for (int i = start; i < lineCount; i++) {
+		count++;
+		lua_pushnumber(L, count);
+		lua_newtable(L); {
+			lua_pushstring(L, "text");
+			lua_pushstring(L, lines[i].text.c_str());
+			lua_rawset(L, -3);
+			lua_pushstring(L, "priority");
+			lua_pushnumber(L, lines[i].priority);
+			lua_rawset(L, -3);
+		}
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+
+	return 1;
+}
 
 
 static int GetCurrentTooltip(lua_State* L)
