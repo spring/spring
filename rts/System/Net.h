@@ -50,6 +50,9 @@ enum NETMSG {
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
+	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
+	                              // short unitIDCount;  unitIDCount X short(unitID)
+	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params } 
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')

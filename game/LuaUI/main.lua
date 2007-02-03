@@ -91,6 +91,40 @@ function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
   activePage = page
 
   widgetHandler:Update()
+
+
+if (false) then  -- FIXME
+    local mx, my = Spring.GetMouseState()
+    local type,data = Spring.TraceScreenRay(mx, my)
+    if (type == 'unit') then
+      local udid = Spring.GetUnitDefID(data)
+      Spring.SendCommands({'echo unit('..data..') '..udid..' '..UnitDefs[udid].name})
+    end
+end
+
+
+
+if (false) then   -- FIXME
+  if (Spring.GetGameSeconds() > 0) then
+    local mx, my = Spring.GetMouseState()
+    local type,pos = Spring.TraceScreenRay(mx, my)
+    local id = pos
+    if (type == 'ground') then
+      print('ground', pos[1], pos[2], pos[3])
+      print('ground', pos[1], Spring.GetGroundHeight(pos[1], pos[3]), pos[3])
+      print('normal', Spring.GetGroundNormal(pos[1], pos[3]))
+      local n,m,h,ts,ks,hs,ss = Spring.GetGroundInfo(pos[1], pos[3])
+      print(n,m,h,ts,ks,hs,ss)
+    elseif (type == 'unit') then
+      print('unit('..id..')', Spring.GetUnitPosition(id))
+    elseif (type == 'feature') then
+      local x,y,z = Spring.GetFeaturePosition(id)
+      print('feature('..id..')', x,y,z,
+                                 Spring.GetFeatureResources(id))
+      print('  ', Spring.GetFeatureInfo(id))
+    end    
+  end
+end
   
   return needUpdate
 end
@@ -189,13 +223,13 @@ function UnitDestroyed(unitID, unitDefID, unitTeam)
   return widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
-function UnitTaken(unitID, unitDefID, unitTeam)
-  return widgetHandler:UnitTaken(unitID, unitDefID, unitTeam)
+function UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+  return widgetHandler:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
 end
 
 
-function UnitGiven(unitID, unitDefID, unitTeam)
-  return widgetHandler:UnitGiven(unitID, unitDefID, unitTeam)
+function UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+  return widgetHandler:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
 end
 
 

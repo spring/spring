@@ -24,14 +24,15 @@ public:
 
 
 	UnitDef *unitDefs;
-	std::map<std::string, int> unitID;
-	std::set<int> commanderIDs;
 	int numUnits;
-	
+	std::map<std::string, int> unitID;
+	std::map<UnitDef*, std::set<UnitDef*> > decoyMap;
+	std::set<int> commanderIDs;
 
 	CUnitDefHandler(void);
 	~CUnitDefHandler(void);
 	void Init();
+	void ProcessDecoys();
 	void AssignTechLevels();
 	UnitDef *GetUnitByName(std::string name);
 	UnitDef *GetUnitByID(int id);
@@ -58,6 +59,7 @@ public:
 
 private:
 	void CreateYardMap(UnitDef *def, std::string yardmap);
+	std::map<std::string, std::string> decoyNameMap;
 };
 
 extern CUnitDefHandler* unitDefHandler;

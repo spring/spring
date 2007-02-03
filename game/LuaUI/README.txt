@@ -1,4 +1,5 @@
 
 Author:  Dave Rodgers  (aka: trepan)
 
-When in doubt, use the source  :)
+>>  When in doubt, use the source  << 
+

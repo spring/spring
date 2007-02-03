@@ -257,24 +257,7 @@ function widget:MouseRelease(x, y, button)
   local data = namedata[2]
   
   if (button == 1) then
-    if (data.active) then
-      local w = widgetHandler:FindWidget(name)
-      if (not w) then return -1 end
-      print('Removed:  '..data.filename)
-      widgetHandler:RemoveWidget(w)     -- deactivate
-      widgetHandler.orderList[name] = 0 -- disable
-      widgetHandler:SaveOrderList()
-    else
-      print('Loading:  '..data.filename)
-      local order = widgetHandler.orderList[name]
-      if (not order or (order <= 0)) then
-        widgetHandler.orderList[name] = 1
-      end
-      local w = widgetHandler:LoadWidget(data.filename)
-      if (not w) then return -1 end
-      widgetHandler:InsertWidget(w)
-      widgetHandler:SaveOrderList()
-    end
+    widgetHandler:ToggleWidget(name)
   elseif ((button == 2) or (button == 3)) then
     local w = widgetHandler:FindWidget(name)
     if (not w) then return -1 end

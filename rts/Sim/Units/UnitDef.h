@@ -41,6 +41,8 @@ struct UnitDef
 	int id;											//unique id for this type of unit
 	unsigned int unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
 	std::string buildpicname;
+	
+	UnitDef* decoyDef;
 
 	int aihint;
 	int techLevel;

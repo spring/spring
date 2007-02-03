@@ -27,19 +27,23 @@ end
 --------------------------------------------------------------------------------
 
 
-local commanderUnitDef = -1
+local commanderUnitDefs = {}
 
 
 --------------------------------------------------------------------------------
 
 function widget:Update(deltaTime)
   -- animated Commander(s) icon
-  if (commanderUnitDef >= 0) then
+  if (commanderUnitDefs) then
     local timer = widgetHandler:GetHourTimer()
+    local iconName
     if (math.mod(timer, 0.5) > 0.25) then
-      Spring.SetUnitDefIcon(commanderUnitDef, "star.user")
+      iconName = "star.user"
     else
-      Spring.SetUnitDefIcon(commanderUnitDef, "star-dark.user")
+      iconName = "star-dark.user"
+    end
+    for _,udid in ipairs(commanderUnitDefs) do
+      Spring.SetUnitDefIcon(udid, iconName)
     end
   end
 end
@@ -65,9 +69,9 @@ function widget:Initialize()
         ud.origIconType = ud.iconType
       end
 
-      if (ud.isCommander or (ud.TEDClass == "COMMANDER")) then
+      if (ud.isCommander) then
         -- commanders
-        commanderUnitDef = udid -- save for animation
+        table.insert(commanderUnitDefs, udid) -- save for animation
         Spring.SetUnitDefIcon(udid, "star.user")
       elseif (ud.isFactory) then
         -- factories

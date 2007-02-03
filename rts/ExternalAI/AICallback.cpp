@@ -358,9 +358,22 @@ const UnitDef* CAICallback::GetUnitDef(int unitid)
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->unitDef;
+		CUnit* unit = uh->units[unitid];
+		if (unit == NULL) {
+			return NULL;
+		}
+		const UnitDef* unitDef = unit->unitDef;
+		const int allyTeam = gs->AllyTeam(team);
+		if (gs->Ally(unit->allyteam, allyTeam)) {
+			return unitDef;
+		}
+		if (unit->losStatus[allyTeam] & LOS_INLOS) {
+			const UnitDef* decoyDef = unitDef->decoyDef;
+			if (decoyDef == NULL) {
+				return unitDef;
+			} else {				
+				return decoyDef;
+			}
 		}
 	}
 	return 0;

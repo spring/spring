@@ -860,7 +860,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	globalAI->UnitTaken(this, oldteam);
 	if (guihandler) {
-		guihandler->UnitTaken(this);
+		guihandler->UnitTaken(this, newteam);
 	}
 	
 	if (uh->unitsType[oldteam][unitDef->id] > 0) {
@@ -934,7 +934,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	globalAI->UnitGiven(this, oldteam);
 	if (guihandler) {
-		guihandler->UnitGiven(this);
+		guihandler->UnitGiven(this, oldteam);
 	}
 	
 	return true;

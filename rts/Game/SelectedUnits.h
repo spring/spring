@@ -20,6 +20,8 @@ class CSelectedUnits : public CObject
 public:
 	void SelectGroup(int num);
 	void AiOrder(int unitid,Command& c);
+	void SendOrdersToUnits(const vector<int>& unitIDs,
+	                       const vector<Command>& commands);
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);
 	bool CommandsChanged();
 	void NetOrder(Command& c,int player);
@@ -57,6 +59,8 @@ public:
 	void SetCommandPage(int page);
 	void SendSelection(void);
 	void SendCommand(Command& c);
+	void SendCommandsToUnits(const vector<int>& unitIDs,
+	                         const vector<Command>& commands);
 };
 
 extern CSelectedUnits selectedUnits;

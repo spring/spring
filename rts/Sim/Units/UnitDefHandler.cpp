@@ -28,7 +28,6 @@ CR_BIND(UnitDef, );
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
-
 CUnitDefHandler* unitDefHandler;
 
 CUnitDefHandler::CUnitDefHandler(void)
@@ -84,6 +83,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 		unitDefs[id].buildangle = 0;
 		unitDefs[id].unitimage = 0;
 		unitDefs[id].techLevel = -1;
+		unitDefs[id].decoyDef = NULL;
 		unitID[unitname] = id;
 		for (int ym = 0; ym < 4; ym++) {
 			unitDefs[id].yardmaps[ym] = 0;
@@ -101,6 +101,8 @@ CUnitDefHandler::CUnitDefHandler(void)
 	
 	FindTABuildOpt();
 
+	ProcessDecoys();
+	
 	AssignTechLevels();
 }
 
@@ -119,6 +121,25 @@ CUnitDefHandler::~CUnitDefHandler(void)
 	}
 	delete[] unitDefs;
 	delete weaponDefHandler;
+}
+
+
+void CUnitDefHandler::ProcessDecoys()
+{
+	// assign the decoy pointers, and build the decoy map
+	map<string, string>::const_iterator mit;
+	for (mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
+		map<string, int>::iterator fakeIt, realIt;
+		fakeIt = unitID.find(mit->first);
+		realIt = unitID.find(mit->second);
+		if ((fakeIt != unitID.end()) && (realIt != unitID.end())) {
+			UnitDef* fake = &unitDefs[fakeIt->second];
+			UnitDef* real = &unitDefs[realIt->second];
+			fake->decoyDef = real;
+			decoyMap[real].insert(fake);
+		}
+	}
+	decoyNameMap.clear();
 }
 
 
@@ -213,9 +234,14 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	UnitDef& ud=unitDefs[id];
 
+	const string decoy = tdfparser.SGetValueDef("", "UNITINFO\\DecoyFor");
+	if (!decoy.empty()) {
+		decoyNameMap[ud.name] = decoy;
+	}
+
 	ud.name = tdfparser.SGetValueMSG("UNITINFO\\UnitName");
 	ud.humanName = tdfparser.SGetValueMSG("UNITINFO\\name");
-
+	
 	tdfparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
 	tdfparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
 	tdfparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
@@ -525,20 +551,27 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	if(ud.canmove && !ud.canfly && ud.type!="Factory"){
 		string moveclass=tdfparser.SGetValueDef("", "UNITINFO\\MovementClass");
 		ud.movedata=moveinfo->GetMoveDataFromName(moveclass);
-		if(ud.movedata->moveType==MoveData::Hover_Move || ud.movedata->moveType==MoveData::Ship_Move){
+		if (ud.movedata->moveType==MoveData::Hover_Move ||
+		    ud.movedata->moveType==MoveData::Ship_Move) {
 			ud.upright=true;
 		}
-		if(ud.canhover){
-			if(ud.movedata->moveType!=MoveData::Hover_Move){
-				logOutput.Print("Inconsistant move data hover %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+		if (ud.canhover) {
+			if (ud.movedata->moveType!=MoveData::Hover_Move) {
+				logOutput.Print("Inconsistant move data hover %i %s %s",
+				                ud.movedata->pathType,ud.humanName.c_str(),
+				                moveclass.c_str());
 			}
 		} else if(ud.floater){
-			if(ud.movedata->moveType!=MoveData::Ship_Move){
-				logOutput.Print("Inconsistant move data ship %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+			if (ud.movedata->moveType!=MoveData::Ship_Move) {
+				logOutput.Print("Inconsistant move data ship %i %s %s",
+				                ud.movedata->pathType,ud.humanName.c_str(),
+				                moveclass.c_str());
 			}
 		} else {
-			if(ud.movedata->moveType!=MoveData::Ground_Move){
-				logOutput.Print("Inconsistant move data ground %i %s %s",ud.movedata->pathType,ud.humanName.c_str(),moveclass.c_str());
+			if (ud.movedata->moveType!=MoveData::Ground_Move) {
+				logOutput.Print("Inconsistant move data ground %i %s %s",
+				                 ud.movedata->pathType,ud.humanName.c_str(),
+				                 moveclass.c_str());
 			}
 		}
 //		logOutput.Print("%s uses movetype %i",ud.humanName.c_str(),ud.movedata->pathType);

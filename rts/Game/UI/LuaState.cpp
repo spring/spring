@@ -275,6 +275,11 @@ bool CLuaState::LoadUnitDefInfo()
 		code += def + ".springCategories = "
 		            + GetCategoryTableFromBits(ud.category) + endlStr;
 
+		if (ud.decoyDef) {
+			code += def + ".decoyDef = UnitDefs[" +
+			  IntToString(ud.decoyDef->id) + "]" + endlStr;
+		}
+		
 		// damage type IDs are offset by 1
 		const int damageID = damageArrayHandler->GetTypeFromName(ud.name);
 		if (damageID > 0) {
@@ -616,7 +621,7 @@ bool CLuaState::LoadWeaponDefInfo()
 		ADD_W_BOOL(isEmgCannon,         wd.type == "EmgCannon");
 		ADD_W_BOOL(isFlame,             wd.type == "flame");
 		ADD_W_BOOL(isCannon,            wd.type == "Cannon");
-		
+
 		ADD_W_FLOAT(range,           wd.range);
 		ADD_W_FLOAT(heightmod,       wd.heightmod);
 		ADD_W_FLOAT(accuracy,        wd.accuracy);
@@ -673,12 +678,13 @@ bool CLuaState::LoadWeaponDefInfo()
 		ADD_W_BOOL(dropped,     wd.dropped);
 		ADD_W_BOOL(paralyzer,   wd.paralyzer);
 
-		ADD_W_BOOL(noAutoTarget,   wd.noAutoTarget);  //cant target stuff (for antinuke,dgun)
-		ADD_W_BOOL(manualFire,     wd.manualfire);    //use dgun button
-		ADD_W_INT(interceptor,     wd.interceptor);   //anti nuke
-		ADD_W_INT(targetable,      wd.targetable);    //nuke (can be shot by interceptor)
-		ADD_W_BOOL(stockpile,      wd.stockpile);					
-		ADD_W_FLOAT(coverageRange, wd.coverageRange); //range of anti nuke
+		ADD_W_BOOL(canAttackGround, wd.canAttackGround);
+		ADD_W_BOOL(noAutoTarget,    wd.noAutoTarget);  //cant target stuff (for antinuke,dgun)
+		ADD_W_BOOL(manualFire,      wd.manualfire);    //use dgun button
+		ADD_W_INT(interceptor,      wd.interceptor);   //anti nuke
+		ADD_W_INT(targetable,       wd.targetable);    //nuke (can be shot by interceptor)
+		ADD_W_BOOL(stockpile,       wd.stockpile);					
+		ADD_W_FLOAT(coverageRange,  wd.coverageRange); //range of anti nuke
 
 		ADD_W_FLOAT(intensity,      wd.intensity);
 		ADD_W_FLOAT(thickness,      wd.thickness);

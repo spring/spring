@@ -44,12 +44,12 @@ local function SetMetalMakers(state)
 
   local selUnits = Spring.GetSelectedUnits()
 
-  Spring.SelectUnitsByKeys(metalMakers)
+  Spring.SelectUnitMap(metalMakers)
   
   local numState = currentState and 1 or 0
   Spring.GiveOrder( CMD_ONOFF, { numState }, {} )
   
-  Spring.SelectUnitsByValues(selUnits)
+  Spring.SelectUnitArray(selUnits)
 end
 
 
@@ -106,12 +106,12 @@ function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
 
-function widget:UnitTaken(unitID, unitDefID, unitTeam)
+function widget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   widget:UnitDestroyed(unitID, unitDefID)
 end
 
 
-function widget:UnitGiven(unitID, unitDefID, unitTeam)
+function widget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   widget:UnitFinished(unitID, unitDefID, unitTeam)
 end
 

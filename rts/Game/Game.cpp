@@ -713,7 +713,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		logOutput.Print(action.extra);
 	}
 	else if (cmd == "drawinmap") {
-		inMapDrawer->keyPressed=true;
+		inMapDrawer->keyPressed = true;
 	}
 	else if (cmd == "drawlabel") {
 		float3 pos = inMapDrawer->GetMouseMapPos();
@@ -883,7 +883,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->ToggleOverviewCamera();
 	}
 	else if (cmd == "showhealthbars") {
-		unitDrawer->showHealthBars=!unitDrawer->showHealthBars;
+		if (action.extra.empty()) {
+			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
+		} else {
+			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
+		}
 	}
 	else if (cmd == "pause") {
 		bool newPause;
@@ -982,13 +986,25 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 #endif
 
 	else if (cmd == "updatefov") {
-		gd->updateFov=!gd->updateFov;
+		if (action.extra.empty()) {
+			gd->updateFov = !gd->updateFov;
+		} else {
+			gd->updateFov = !!atoi(action.extra.c_str());
+		}
 	}
 	else if (cmd == "drawtrees") {
-		treeDrawer->drawTrees=!treeDrawer->drawTrees;
+		if (action.extra.empty()) {
+			treeDrawer->drawTrees = !treeDrawer->drawTrees;
+		} else {
+			treeDrawer->drawTrees = !!atoi(action.extra.c_str());
+		}
 	}
 	else if (cmd == "dynamicsky") {
-		sky->dynamicSky=!sky->dynamicSky;
+		if (action.extra.empty()) {
+			sky->dynamicSky = !sky->dynamicSky;
+		} else {
+			sky->dynamicSky = !!atoi(action.extra.c_str());
+		}
 	}
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
@@ -998,7 +1014,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "hideinterface") {
-		hideInterface=!hideInterface;
+		if (action.extra.empty()) {
+			hideInterface = !hideInterface;
+		} else {
+			hideInterface = !!atoi(action.extra.c_str());
+		}
 	}
 	else if (cmd == "increaseviewradius") {
 		gd->IncreaseDetail();
@@ -2377,6 +2397,51 @@ bool CGame::ClientReadNet()
 			for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-11)/4);++a)
 				c.params.push_back(*((float*)&inbuf[inbufpos+11+a*4]));
 			selectedUnits.AiOrder(unitid,c);
+			lastLength=*((short int*)&inbuf[inbufpos+1]);
+			break;}
+
+		case NETMSG_AICOMMANDS:{
+			int u, c;
+			const int player = inbuf[inbufpos+3];
+			if (player>=MAX_PLAYERS || player<0) {
+				logOutput.Print("Got invalid player num %i in aicommands msg",player);
+				lastLength = *((short int*)&inbuf[inbufpos+1]);
+				break;
+			}
+
+			unsigned char* ptr = &inbuf[inbufpos + 4];
+
+// FIXME -- hackish
+#define UNPACK(type)  *((type*)ptr); ptr = ptr + sizeof(type);
+			
+			// parse the unit list
+			vector<int> unitIDs;
+			const int unitCount = UNPACK(short);
+			for (u = 0; u < unitCount; u++) {
+				const int unitID = UNPACK(short);
+				unitIDs.push_back(unitID);
+			}
+			// parse the command list
+			vector<Command> commands;
+			const int commandCount = UNPACK(short);
+			for (c = 0; c < commandCount; c++) {
+				Command cmd;
+				cmd.id               = UNPACK(int);
+				cmd.options          = UNPACK(unsigned char);
+				const int paramCount = UNPACK(short);
+				for (int p = 0; p < paramCount; p++) {
+					const float param = UNPACK(float);
+					cmd.params.push_back(param);
+				}
+				commands.push_back(cmd);
+			}
+			printf("\n");
+			// apply the commands
+			for (c = 0; c < commandCount; c++) {
+				for (u = 0; u < unitCount; u++) {
+					selectedUnits.AiOrder(unitIDs[u], commands[c]);
+				}
+			}
 			lastLength=*((short int*)&inbuf[inbufpos+1]);
 			break;}
 
