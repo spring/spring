@@ -80,6 +80,22 @@ activePage = 0
 forceLayout = true
 
 
+-- FIXME
+function ptuc(teamID)
+  local tuc = Spring.GetTeamUnitsCounts(teamID)
+  tuc.n = nil
+  if (tuc.unknown) then
+    print('Unknown = ' .. tuc.unknown)
+    tuc.unknown = nil
+  end
+  
+  for udid,count in pairs(tuc) do
+    print(UnitDefs[udid].name .. ' = ' .. count)
+  end
+end
+
+
+
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
 
   local needUpdate = forceLayout

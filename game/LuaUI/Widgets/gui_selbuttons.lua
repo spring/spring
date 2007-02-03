@@ -110,8 +110,8 @@ end
 
 
 function SetupDimensions(count)
-  xmid = vsx * 0.5
-  width = math.floor(iconSizeX * count)
+  local xmid = vsx * 0.5
+  local width = math.floor(iconSizeX * count)
   rectMinX = math.floor(xmid - (0.5 * width))
   rectMaxX = math.floor(xmid + (0.5 * width))
   rectMinY = math.floor(0)
@@ -278,10 +278,10 @@ end
 
 
 function DrawIconQuad(iconPos, color)
-  xmin = rectMinX + (iconSizeX * iconPos)
-  xmax = xmin + iconSizeX
-  ymin = rectMinY
-  ymax = rectMaxY
+  local xmin = rectMinX + (iconSizeX * iconPos)
+  local xmax = xmin + iconSizeX
+  local ymin = rectMinY
+  local ymax = rectMaxY
   gl.Color(color)
   gl.Blending(GL_SRC_ALPHA, GL_ONE)
   gl.Shape(GL_QUADS, {
@@ -306,27 +306,27 @@ end
 
 -------------------------------------------------------------------------------
 
-local function LeftMouseButton(unitTable)
+local function LeftMouseButton(unitDefID, unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   if (not ctrl) then
     -- select units of icon type
     if (alt or meta) then
-      Spring.SelectUnitArray({ next(unitTable, nil) })  -- only 1
+      Spring.SelectUnitArray({ unitTable[1] })  -- only 1
     else
-      Spring.SelectUnitMap(unitTable)
+      Spring.SelectUnitArray(unitTable)
     end
   else
     -- select all units of the icon type
     local sorted = Spring.GetTeamUnitsSorted(Spring.GetMyTeamID())
     local units = sorted[unitDefID]
     if (units) then
-      Spring.SelectUnitMap(units, shift)
+      Spring.SelectUnitArray(units, shift)
     end
   end
 end
 
 
-local function MiddleMouseButton(unitTable)
+local function MiddleMouseButton(unitDefID, unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   -- center the view
   if (ctrl) then
@@ -335,20 +335,20 @@ local function MiddleMouseButton(unitTable)
   else
     -- center the view on this type on unit
     local selUnits = Spring.GetSelectedUnits()
-    Spring.SelectUnitMap(unitTable)
+    Spring.SelectUnitArray(unitTable)
     Spring.SendCommands({"viewselection"})
     Spring.SelectUnitArray(selUnits)
   end
 end
 
 
-local function RightMouseButton(unitTable)
+local function RightMouseButton(unitDefID, unitTable)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   -- remove selected units of icon type
   local selUnits = Spring.GetSelectedUnits()
   local map = {}
   for _,uid in ipairs(selUnits) do map[uid] = true end
-  for uid in pairs(unitTable) do
+  for _,uid in ipairs(unitTable) do
     map[uid] = nil
     if (ctrl) then break end -- only remove 1 unit
   end
@@ -363,22 +363,21 @@ function widget:MouseRelease(x, y, button)
     return -1
   end
   activePress = false
-  icon = MouseOverIcon(x, y)
+  local icon = MouseOverIcon(x, y)
 
-  units = Spring.GetSelectedUnitsSorted()
+  local units = Spring.GetSelectedUnitsSorted()
   if (units.n ~= unitTypes) then
     return -1  -- discard this click
   end
   units.n = nil
 
-  unitDefID = -1
-  unitTable = nil
-  index = 0
+  local unitDefID = -1
+  local unitTable = nil
+  local index = 0
   for udid,uTable in pairs(units) do
     if (index == icon) then
       unitDefID = udid
       unitTable = uTable
-      unitTable.n = 0
       break
     end
     index = index + 1
@@ -390,11 +389,11 @@ function widget:MouseRelease(x, y, button)
   local alt, ctrl, meta, shift = Spring.GetModKeyState()
   
   if (button == 1) then
-    LeftMouseButton(unitTable)
+    LeftMouseButton(unitDefID, unitTable)
   elseif (button == 2) then
-    MiddleMouseButton(unitTable)
+    MiddleMouseButton(unitDefID, unitTable)
   elseif (button == 3) then
-    RightMouseButton(unitTable)
+    RightMouseButton(unitDefID, unitTable)
   end
 
   return -1
@@ -408,7 +407,7 @@ function MouseOverIcon(x, y)
   if (y < rectMinY)   then return -1 end
   if (y > rectMaxY)   then return -1 end
 
-  icon = math.floor((x - rectMinX) / iconSizeX)
+  local icon = math.floor((x - rectMinX) / iconSizeX)
   -- clamp the icon range
   if (icon < 0) then
     icon = 0

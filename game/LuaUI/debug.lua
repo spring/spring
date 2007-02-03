@@ -40,9 +40,9 @@ function PrintSelection()
   for udid,uTable in pairs(udTable) do
      print('  ' .. udid .. '=' .. UnitDefs[udid].name .. ' count ' .. uTable.n)
     uTable.n = nil
-    for uid,udid2 in pairs(uTable) do
+    for _,uid in ipairs(uTable) do
     	health, maxHealth, paralyze, capture, build = Spring.GetUnitHealth(uid)
-      print('  ', uid, udid2, health, maxHealth, paralyze, capture, build)
+      print('  ', uid, health, maxHealth, paralyze, capture, build)
       PrintCommandQueue(uid)
     end
   end
@@ -94,8 +94,8 @@ function PrintGroups()
     for udid,uTable in pairs(udTable) do
        print('    ' .. udid .. '=' .. UnitDefs[udid].name .. ' count ' .. uTable.n)
       uTable.n = nil
-      for uid,udid2 in pairs(uTable) do
-        print('    ', uid, udid2)
+      for _,uid in ipairs(uTable) do
+        print('    ', uid)
       end
     end
   end
@@ -113,8 +113,8 @@ function PrintTeamUnits(team)
   for udid,uTable in pairs(udTable) do
     print('  ' .. udid .. '=' .. UnitDefs[udid].name .. ' count ' .. uTable.n)
     uTable.n = nil
-    for uid,udid2 in pairs(uTable) do
-      print('  ', uid, udid2)
+    for _,uid in ipairs(uTable) do
+      print('  ', uid)
     end
   end
 end
