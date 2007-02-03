@@ -367,7 +367,10 @@ const UnitDef* CAICallback::GetUnitDef(int unitid)
 		if (gs->Ally(unit->allyteam, allyTeam)) {
 			return unitDef;
 		}
-		if (unit->losStatus[allyTeam] & LOS_INLOS) {
+		const int losStatus = unit->losStatus[allyTeam];
+		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+		if (((losStatus & LOS_INLOS) != 0) ||
+		    ((losStatus & prevMask) == prevMask)) {
 			const UnitDef* decoyDef = unitDef->decoyDef;
 			if (decoyDef == NULL) {
 				return unitDef;

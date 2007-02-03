@@ -3059,12 +3059,14 @@ static int GetTeamUnitsCounts(lua_State* L)
 			lua_rawset(L, -3);
 			count++;
 		}
+		if (unknownCount > 0) {
+			lua_pushstring(L, "unknown");
+			lua_pushnumber(L, unknownCount);
+			lua_rawset(L, -3);
+			count++;
+		}
 		lua_pushstring(L, "n");
 		lua_pushnumber(L, count);
-		lua_rawset(L, -3);
-
-		lua_pushstring(L, "unknown");
-		lua_pushnumber(L, unknownCount);
 		lua_rawset(L, -3);
 	}
 
