@@ -121,6 +121,7 @@
   GetUnitDefID()
   GetUnitTeam()
   GetUnitAllyTeam()
+  GetUnitGroup()
   GetUnitHealth()
   GetUnitResources()
   GetUnitStates()
@@ -559,47 +560,39 @@ GetGroupAIList() ->
   }
 
 
-GetSelectedUnits() -> unitTable = { [1] = unitID, etc... }
+GetSelectedUnits() -> unitTable = { [1] = number unitID, etc... }
 
 GetSelectedUnitsCounts() ->
-  countTable = { [unitDefID] = count, etc... }
+  countTable = { [number unitDefID] = number count, etc... }
 
 GetSelectedUnitsSorted() ->
   unitDefTable = {
-    [number unitDefID] = {
-      [number unitID] = number groupID,
-      etc...
-    },
+    [number unitDefID] = { [1] = [number unitID], etc...},
     etc...
   }
 
 
-GetGroupUnits(groupID) -> nil | unitTable = { [1] = unitID, etc... }
+GetGroupUnits(groupID) -> nil | unitTable = { [1] = number unitID, etc... }
 
 GetGroupUnitsCounts(groupID) ->
-  nil | countTable = { [unitDefID] = count, etc... }
+  nil | countTable = { [number unitDefID] = count, etc... }
 
 GetGroupUnitsSorted(groupID) -> nil |
   unitDefTable = {
-    [number unitDefID] = {
-      [number unitID] = number unitDefID,
-      etc...
-    },
+    [number unitDefID] = { [1] = [number unitID], etc... },
     etc...
   }
 
 
-GetTeamUnits(teamID) -> nil | unitTable = { [1] = unitID, etc... }
+GetTeamUnits(teamID) -> nil | unitTable = { [1] = number unitID, etc... }
 
 GetTeamUnitsCounts(teamID) ->
-  nil | countTable = { [unitDefID] = count, etc... }
+  nil | countTable = { [number unitDefID] = count, etc... }
+
 
 GetTeamUnitsSorted(teamID) -> nil |
   unitDefTable = {
-    [number unitDefID] = {
-      [number unitID] = number unitDefID,
-      etc...
-    },
+    [number unitDefID] = { [1] = [number unitID], etc... },
     etc...
   }
 
@@ -612,6 +605,9 @@ GetUnitTeam(number unitID) ->
 
 GetUnitAllyTeam(number unitID) ->
   nil | number allyTeamID
+
+GetUnitGroup(number unitID) ->
+  nil | number groupID  --  (-1 for no group)
 
 GetUnitHealth(number unitID) ->
   nil | number health,

@@ -44,6 +44,7 @@ extern "C" {
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -129,6 +130,7 @@ static int GetTeamUnits(lua_State* L);
 static int GetTeamUnitsSorted(lua_State* L);
 static int GetTeamUnitsCounts(lua_State* L);
 
+static int GetUnitsInRectangle(lua_State* L);
 static int GetUnitsInBox(lua_State* L);
 static int GetUnitsInPlanes(lua_State* L);
 static int GetUnitsInCylinder(lua_State* L);
@@ -137,6 +139,7 @@ static int IsUnitInView(lua_State* L);
 static int GetUnitDefID(lua_State* L);
 static int GetUnitTeam(lua_State* L);
 static int GetUnitAllyTeam(lua_State* L);
+static int GetUnitGroup(lua_State* L);
 static int GetUnitHealth(lua_State* L);
 static int GetUnitResources(lua_State* L);
 static int GetUnitExperience(lua_State* L);
@@ -403,6 +406,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamUnits);
 	REGISTER_LUA_CFUNC(GetTeamUnitsSorted);
 	REGISTER_LUA_CFUNC(GetTeamUnitsCounts);
+	REGISTER_LUA_CFUNC(GetUnitsInRectangle);
 	REGISTER_LUA_CFUNC(GetUnitsInBox);
 	REGISTER_LUA_CFUNC(GetUnitsInPlanes);
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
@@ -410,6 +414,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
+	REGISTER_LUA_CFUNC(GetUnitGroup);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
@@ -1934,7 +1939,7 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 // Lua Callbacks
 //
 
-static inline const UnitDef* EffectUnitDef(CUnit* unit)
+static inline const UnitDef* EffectiveUnitDef(CUnit* unit)
 {
 	const UnitDef* ud = unit->unitDef;
 	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
@@ -2706,8 +2711,7 @@ enum UnitExtraParam {
 };
 
 
-static void PackUnitsUnsorted(lua_State* L, const set<CUnit*>& unitSet,
-                              UnitExtraParam extraParam)
+static void PackUnitsUnsorted(lua_State* L, const set<CUnit*>& unitSet)
 {
 
 	lua_newtable(L);
@@ -2731,7 +2735,7 @@ static void PackUnitsCounts(lua_State* L, const set<CUnit*>& unitSet)
 	set<CUnit*>::const_iterator uit;
 	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
 		CUnit* unit = *uit;
-		const int udID = EffectUnitDef(unit)->id;
+		const int udID = EffectiveUnitDef(unit)->id;
 		map<int, int>::iterator mit = countMap.find(udID);
 		if (mit == countMap.end()) {
 			countMap[udID] = 1;
@@ -2753,48 +2757,31 @@ static void PackUnitsCounts(lua_State* L, const set<CUnit*>& unitSet)
 }
 
 
-static void PackUnitsSorted(lua_State* L, const set<CUnit*>& unitSet,
-                            UnitExtraParam extraParam)
+static void PackUnitsSorted(lua_State* L, const set<CUnit*>& unitSet)
 {
 	map<int, vector<CUnit*> > unitDefMap;
 	set<CUnit*>::const_iterator uit;
 	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
 		CUnit* unit = *uit;
-		unitDefMap[EffectUnitDef(unit)->id].push_back(unit);
+		unitDefMap[EffectiveUnitDef(unit)->id].push_back(unit);
 	}
 
 	lua_newtable(L);
 	map<int, vector<CUnit*> >::const_iterator mit;
 	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
 		lua_pushnumber(L, mit->first); // push the UnitDef index
-		lua_newtable(L);
-		const vector<CUnit*>& v = mit->second;
-		for (int i = 0; i < (int)v.size(); i++) {
-			CUnit* unit = v[i];
-			switch (extraParam) {
-				case UnitGroupId: {
-					const int groupID = (unit->group == NULL) ? -1 : unit->group->id;
-					lua_pushnumber(L, unit->id);
-					lua_pushnumber(L, groupID);
-					break;
-				}
-				case UnitTeamId: {
-					lua_pushnumber(L, unit->id);
-					lua_pushnumber(L, unit->team);
-					break;
-				}
-				default: { // UnitDefId
-					lua_pushnumber(L, unit->id);
-					lua_pushnumber(L, EffectUnitDef(unit)->id);
-					break;
-				}
+		lua_newtable(L); {
+			const vector<CUnit*>& v = mit->second;
+			for (int i = 0; i < (int)v.size(); i++) {
+				CUnit* unit = v[i];
+				lua_pushnumber(L, i + 1);
+				lua_pushnumber(L, unit->id);
+				lua_rawset(L, -3);
 			}
+			lua_pushliteral(L, "n");
+			lua_pushnumber(L, v.size());
 			lua_rawset(L, -3);
 		}
-		lua_pushliteral(L, "n");
-		lua_pushnumber(L, v.size());
-		lua_rawset(L, -3);
-
 		lua_rawset(L, -3);
 	}
 
@@ -2811,7 +2798,7 @@ static int GetSelectedUnits(lua_State* L)
 		lua_pushstring(L, "GetSelectedUnits() takes no arguments");
 		lua_error(L);
 	}
-	PackUnitsUnsorted(L, selectedUnits.selectedUnits, UnitGroupId);
+	PackUnitsUnsorted(L, selectedUnits.selectedUnits);
 	return 1;
 }
 
@@ -2823,7 +2810,7 @@ static int GetSelectedUnitsSorted(lua_State* L)
 		lua_pushstring(L, "GetSelectedUnitsSorted() takes no arguments");
 		lua_error(L);
 	}
-	PackUnitsSorted(L, selectedUnits.selectedUnits, UnitGroupId);
+	PackUnitsSorted(L, selectedUnits.selectedUnits);
 	return 1;
 }
 
@@ -2853,7 +2840,7 @@ static int GetGroupUnits(lua_State* L)
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
-	PackUnitsUnsorted(L, groups[groupID]->units, UnitDefId);
+	PackUnitsUnsorted(L, groups[groupID]->units);
 	return 1;
 }
 
@@ -2871,7 +2858,7 @@ static int GetGroupUnitsSorted(lua_State* L)
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
-	PackUnitsSorted(L, groups[groupID]->units, UnitDefId);
+	PackUnitsSorted(L, groups[groupID]->units);
 	return 1;
 }
 
@@ -2894,6 +2881,20 @@ static int GetGroupUnitsCounts(lua_State* L)
 }
 
 
+static inline void GetEnemyTeamUnits(const set<CUnit*>& inSet,
+                                     set<CUnit*>& outSet)
+{
+	set<CUnit*>::const_iterator it;
+	for (it = inSet.begin(); it != inSet.end(); it++) {
+		CUnit* unit = *it;
+		const int losMask = (LOS_INLOS | LOS_INRADAR);
+		if (unit->losStatus[gu->myAllyTeam] & losMask) {
+			outSet.insert(unit);
+		}
+	}	
+}
+
+
 static int GetTeamUnits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -2906,10 +2907,16 @@ static int GetTeamUnits(lua_State* L)
 		return 0;
 	}
 	const CTeam* team = gs->Team(teamID);
-	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
+	if (team == NULL) {
 		return 0;
 	}
-	PackUnitsUnsorted(L, gs->Team(teamID)->units, UnitDefId);
+	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
+		PackUnitsUnsorted(L, team->units);
+	} else {
+		set<CUnit*> unitSet;
+		GetEnemyTeamUnits(team->units, unitSet);
+		PackUnitsUnsorted(L, unitSet);
+	}
 	return 1;
 }
 
@@ -2926,10 +2933,16 @@ static int GetTeamUnitsSorted(lua_State* L)
 		return 0;
 	}
 	const CTeam* team = gs->Team(teamID);
-	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
+	if (team == NULL) {
 		return 0;
 	}
-	PackUnitsSorted(L, gs->Team(teamID)->units, UnitDefId);
+	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
+		PackUnitsSorted(L, team->units);
+	} else {
+		set<CUnit*> unitSet;
+		GetEnemyTeamUnits(team->units, unitSet);
+		PackUnitsSorted(L, unitSet);
+	}
 	return 1;
 }
 
@@ -2946,30 +2959,116 @@ static int GetTeamUnitsCounts(lua_State* L)
 		return 0;
 	}
 	const CTeam* team = gs->Team(teamID);
-	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
+	if (team == NULL) {
 		return 0;
 	}
 
-	lua_newtable(L);
-	int count = 0;
-	for (int udID = 0; udID < (unitDefHandler->numUnits + 1); udID++) {
-		const int unitCount = uh->unitsType[teamID][udID];
-		if (unitCount > 0) {
-			lua_pushnumber(L, udID);
-			lua_pushnumber(L, unitCount);
+	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
+		lua_newtable(L);
+		int count = 0;
+		for (int udID = 0; udID < (unitDefHandler->numUnits + 1); udID++) {
+			const int unitCount = uh->unitsType[teamID][udID];
+			if (unitCount > 0) {
+				lua_pushnumber(L, udID);
+				lua_pushnumber(L, unitCount);
+				lua_rawset(L, -3);
+				count++;
+			}
+		}
+		lua_pushstring(L, "n");
+		lua_pushnumber(L, count);
+		lua_rawset(L, -3);
+	}
+	else {
+		// check LOS and decoys for enemy team counts
+		int unknownCount = 0;
+		map<const UnitDef*, int> unitDefCounts;
+		map<const UnitDef*, int>::iterator mit;
+		const set<CUnit*> teamUnits = team->units;
+		set<CUnit*>::const_iterator sit;
+		for (sit = teamUnits.begin(); sit != teamUnits.end(); ++sit) {
+			CUnit* unit = *sit;
+			const int losStatus = unit->losStatus[gu->myAllyTeam];
+			if ((losStatus & (LOS_INLOS | LOS_INRADAR)) == 0) {
+				continue;
+			}
+			const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+			if (((losStatus & LOS_INLOS) == 0) &&
+			    ((losStatus & prevMask) != prevMask)) {
+				unknownCount++;
+				continue;
+			}
+			const UnitDef* ud = EffectiveUnitDef(unit);
+			mit = unitDefCounts.find(ud);
+			if (mit != unitDefCounts.end()) {
+				mit->second += 1;
+			} else {
+				unitDefCounts[ud] = 1;
+			}
+		}
+
+		lua_newtable(L);
+		int count = 0;		
+		for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
+			lua_pushnumber(L, mit->first->id);
+			lua_pushnumber(L, mit->second);
 			lua_rawset(L, -3);
 			count++;
 		}
+		lua_pushstring(L, "n");
+		lua_pushnumber(L, count);
+		lua_rawset(L, -3);
+
+		lua_pushstring(L, "unknown");
+		lua_pushnumber(L, unknownCount);
+		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
 
 	return 1;
 }
 
 
 /******************************************************************************/
+
+static int GetUnitsInRectangle(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 4) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 3)) {
+		lua_pushstring(L,
+			"Incorrect arguments to GetUnitsInRectangle(minx,minz, maxx,maxz");
+		lua_error(L);
+	}
+	const float minx = (float)lua_tonumber(L, 1);
+	const float minz = (float)lua_tonumber(L, 2);
+	const float maxx = (float)lua_tonumber(L, 3);
+	const float maxz = (float)lua_tonumber(L, 4);
+
+	const float3 mins(minx, 0.0f, minz);
+	const float3 maxs(maxx, 0.0f, maxz);
+
+	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
+	const int rectUnitCount = (int)rectUnits.size();
+
+	lua_newtable(L);
+	int count = 0;
+	for (int i = 0; i < rectUnitCount; i++) {
+		const CUnit* unit = rectUnits[i];
+		if (unit->team != gu->myTeam) {
+			continue;
+		}
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, unit->id);
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, count);
+	lua_rawset(L, -3);
+	return 1;
+}
+
 
 static int GetUnitsInBox(lua_State* L)
 {
@@ -3256,7 +3355,7 @@ static int GetUnitDefID(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, EffectUnitDef(unit)->id);
+	lua_pushnumber(L, EffectiveUnitDef(unit)->id);
 	return 1;
 }
 
@@ -3279,6 +3378,21 @@ static int GetUnitAllyTeam(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, unit->allyteam);
+	return 1;
+}
+
+
+static int GetUnitGroup(lua_State* L)
+{
+	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->team != gu->myTeam) {
+		return 0;
+	}
+	const int groupID = (unit->group == NULL) ? -1 : unit->group->id;
+	lua_pushnumber(L, groupID);
 	return 1;
 }
 
