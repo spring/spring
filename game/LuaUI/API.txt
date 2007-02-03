@@ -129,7 +129,7 @@
   GetUnitHeading()
   GetUnitBuildFacing()
 
-	GetFeatureInfo()
+  GetFeatureInfo()
   GetFeaturePosition()
   GetFeatureResources()
 
@@ -841,21 +841,21 @@ GiveOrderToUnitArray(unitArray = { [1] = unitID, etc... },
                      options = {"alt", "ctrl", "shift", "right"}) -> nil
 
 GiveOrderArrayToUnitMap(
-  unitMap = { [unitID] = dontCare, etc... },
+  unitMap = { [number unitID] = dontCare, etc... },
   orderArray = {
     { number cmdID,
       params = {number, etc...},
-      options = {"alt", "ctrl", "shift", "right"
+      options = {"alt", "ctrl", "shift", "right"}
     },
     etc...
   }) -> nil
 
 GiveOrderArrayToUnitArray(
-  unitArray = { [1] = unitID, etc... },
+  unitArray = { [1] = number unitID, etc... },
   orderArray = {
     { number cmdID,
       params = {number, etc...},
-      options = {"alt", "ctrl", "shift", "right"
+      options = {"alt", "ctrl", "shift", "right"}
     },
     etc...
   }) -> nil
