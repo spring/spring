@@ -2713,7 +2713,6 @@ enum UnitExtraParam {
 
 static void PackUnitsUnsorted(lua_State* L, const set<CUnit*>& unitSet)
 {
-
 	lua_newtable(L);
 	int count = 0;
 	set<CUnit*>::const_iterator uit;
@@ -2784,7 +2783,6 @@ static void PackUnitsSorted(lua_State* L, const set<CUnit*>& unitSet)
 		}
 		lua_rawset(L, -3);
 	}
-
 	lua_pushliteral(L, "n");
 	lua_pushnumber(L, unitDefMap.size());
 	lua_rawset(L, -3);
@@ -2881,20 +2879,6 @@ static int GetGroupUnitsCounts(lua_State* L)
 }
 
 
-static inline void GetEnemyTeamUnits(const set<CUnit*>& inSet,
-                                     set<CUnit*>& outSet)
-{
-	set<CUnit*>::const_iterator it;
-	for (it = inSet.begin(); it != inSet.end(); it++) {
-		CUnit* unit = *it;
-		const int losMask = (LOS_INLOS | LOS_INRADAR);
-		if (unit->losStatus[gu->myAllyTeam] & losMask) {
-			outSet.insert(unit);
-		}
-	}	
-}
-
-
 static int GetTeamUnits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -2910,12 +2894,29 @@ static int GetTeamUnits(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
+
 	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
 		PackUnitsUnsorted(L, team->units);
-	} else {
-		set<CUnit*> unitSet;
-		GetEnemyTeamUnits(team->units, unitSet);
-		PackUnitsUnsorted(L, unitSet);
+	}
+	else {
+		lua_newtable(L);
+		int count = 0;
+		set<CUnit*>::const_iterator uit;
+		for (uit = team->units.begin(); uit != team->units.end(); ++uit) {
+			CUnit* unit = *uit;
+			const int losMask = (LOS_INLOS | LOS_INRADAR);
+			const int losStatus = unit->losStatus[gu->myAllyTeam];
+			if ((losStatus & losMask) == 0) {
+				continue; // can't see this unit
+			}
+			count++;
+			lua_pushnumber(L, count);
+			lua_pushnumber(L, unit->id);
+			lua_rawset(L, -3);
+		}
+		lua_pushstring(L, "n");
+		lua_pushnumber(L, count);
+		lua_rawset(L, -3);
 	}
 	return 1;
 }
@@ -2936,12 +2937,55 @@ static int GetTeamUnitsSorted(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
+
 	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
 		PackUnitsSorted(L, team->units);
-	} else {
-		set<CUnit*> unitSet;
-		GetEnemyTeamUnits(team->units, unitSet);
-		PackUnitsSorted(L, unitSet);
+	}
+	else {
+		map<int, vector<CUnit*> > unitDefMap;
+		set<CUnit*>::const_iterator uit;
+		for (uit = team->units.begin(); uit != team->units.end(); ++uit) {
+			CUnit* unit = *uit;
+			const int losMask = (LOS_INLOS | LOS_INRADAR);
+			const int losStatus = unit->losStatus[gu->myAllyTeam];
+			if ((losStatus & losMask) == 0) {
+				continue; // can't see this unit
+			}
+			const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+			if (((losStatus & LOS_INLOS) == 0) &&
+			    ((losStatus & prevMask) != prevMask)) {
+				unitDefMap[-1].push_back(unit);
+				continue; // don't know this unit's unitdef
+			}
+			const UnitDef* ud = EffectiveUnitDef(unit);
+			unitDefMap[EffectiveUnitDef(unit)->id].push_back(unit);
+		}
+
+		lua_newtable(L);
+		map<int, vector<CUnit*> >::const_iterator mit;
+		for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
+			if (mit->first == -1) {
+				lua_pushstring(L, "unknown"); // push the UnitDef index
+			} else {
+				lua_pushnumber(L, mit->first); // push the UnitDef index
+			}
+			lua_newtable(L); {
+				const vector<CUnit*>& v = mit->second;
+				for (int i = 0; i < (int)v.size(); i++) {
+					CUnit* unit = v[i];
+					lua_pushnumber(L, i + 1);
+					lua_pushnumber(L, unit->id);
+					lua_rawset(L, -3);
+				}
+				lua_pushliteral(L, "n");
+				lua_pushnumber(L, v.size());
+				lua_rawset(L, -3);
+			}
+			lua_rawset(L, -3);
+		}
+		lua_pushliteral(L, "n");
+		lua_pushnumber(L, unitDefMap.size());
+		lua_rawset(L, -3);
 	}
 	return 1;
 }

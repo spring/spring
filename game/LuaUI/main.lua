@@ -95,6 +95,27 @@ function ptuc(teamID)
 end
 
 
+-- FIXME
+function ptus(teamID)
+  local tus = Spring.GetTeamUnitsSorted(teamID)
+  for udid,utable in pairs(tus) do
+    if (udid ~= 'n') then
+      local msg = ''
+      if (udid == 'unknown') then
+        msg = 'unknown'
+      else
+        msg = UnitDefs[udid].name
+      end
+      msg = msg .. '(' .. utable.n .. ')'
+      for _,uid in ipairs(utable) do
+        msg = msg .. ' ' .. uid
+      end
+      print(msg)
+    end
+  end
+end
+
+
 
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
 
