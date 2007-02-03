@@ -82,12 +82,12 @@ function CircleUnits()
     local ux = x + radius0 * math.sin(rads)  
     local uz = z - radius0 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
-    Spring.SelectUnitsByValues({uid})
+    Spring.SelectUnitArray({uid})
     Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
-  Spring.SelectUnitsByValues(selUnits)
+  Spring.SelectUnitArray(selUnits)
   Spring.GiveOrder(CMD_GATHERWAIT, {}, {})
 
   local arcdist = 0
@@ -99,12 +99,12 @@ function CircleUnits()
     local ux = x + radius1 * math.sin(rads)  
     local uz = z - radius1 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
-    Spring.SelectUnitsByValues({uid})
+    Spring.SelectUnitArray({uid})
     Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {"shift"})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
-  Spring.SelectUnitsByValues(selUnits)
+  Spring.SelectUnitArray(selUnits)
 
   -- helps to avoid last minute pushing
   --Spring.GiveOrder(CMD_WAIT, {}, {"shift"})

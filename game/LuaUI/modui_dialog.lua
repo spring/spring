@@ -274,7 +274,7 @@ function DrawScreenItems(viewSizeX, viewSizeY)
   DrawButton(frame)
 
   -- draw frame border
-  timer = math.mod(timer + Spring.GetLastFrameSeconds(), 60.0)
+  timer = math.mod(timer + Spring.GetUpdateFrameSeconds(), 60.0)
   local blink = math.abs(0.5 - math.mod(timer * 1.5, 1.0)) * 2.0
   gl.LineWidth(3.0)
   gl.Color(0.3 + (blink * 0.7), 0, 0)

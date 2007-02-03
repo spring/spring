@@ -471,33 +471,6 @@ void CSelectedUnits::NetOrder(Command &c, int player)
 
 	if (netSelected[player].size() > 0)
 		globalAI->PlayerCommandGiven(netSelected[player],c,player);
-
-/*	if(!(c.options & CONTROL_KEY) && c.params.size()==3) {//fix: some better way to detect if its a map position
-		float3 oldPos(0,0,0);
-		vector<int>::iterator ui;
-		for(ui=netSelected[player].begin();ui!=netSelected[player].end();++ui){
-			oldPos+=uh->units[*ui]->pos;
-		}
-		oldPos/=netSelected[player].size();
-		float3 newPos(c.params[0],c.params[1],c.params[2]);
-		float3 dif=newPos-oldPos;
-		for(ui=netSelected[player].begin();ui!=netSelected[player].end();++ui){
-			newPos=uh->units[*ui]->pos+dif;
-			c.params[0]=newPos.x;
-			c.params[1]=newPos.y;
-			c.params[2]=newPos.z;
-			uh->units[*ui]->commandAI->GiveCommand(c);
-			uh->units[*ui]->commandAI->lastUserCommand=gs->frameNum;
-		}
-	} else {
-		vector<int>::iterator ui;
-		for(ui=netSelected[player].begin();ui!=netSelected[player].end();++ui){
-			if(uh->units[*ui]!=0){
-				uh->units[*ui]->commandAI->GiveCommand(c);
-				uh->units[*ui]->commandAI->lastUserCommand=gs->frameNum;
-			}
-		}
-	}*/
 }
 
 
@@ -749,4 +722,71 @@ void CSelectedUnits::SendCommand(Command& c)
 	}
 	net->SendSTLData<unsigned char, int, unsigned char, std::vector<float> >(
 			NETMSG_COMMAND, gu->myPlayerNum, c.id, c.options, c.params);
+}
+
+
+void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
+                                         const vector<Command>& commands)
+{
+	// NOTE: does not check for invalid unitIDs
+
+	if (gu->spectating) {
+		return; // don't waste bandwidth
+	}
+	
+	int u, c;
+	unsigned char buf[8192];
+	const int unitIDCount  = (int)unitIDs.size();
+	const int commandCount = (int)commands.size();
+
+	if ((unitIDCount <= 0) || (commandCount <= 0)) {
+		return;
+	}
+
+	int totalParams = 0;
+	for (c = 0; c < commandCount; c++) {
+		totalParams += commands[c].params.size();
+	}
+
+	int msgLen = 
+	msgLen += (1 + 2 + 1); // msg type, msg size, player ID
+	msgLen += 2; // unitID count
+	msgLen += unitIDCount * 2;
+	msgLen += 2; // command count
+	msgLen += commandCount * (4 + 1 + 2); // id, options, params size
+	msgLen += totalParams * 4; 
+	if (msgLen > sizeof(buf)) {
+		logOutput.Print("Discarded oversized NETMSG_AICOMMANDS packet: %i\n",
+		                msgLen);
+		return; // drop the oversized packet
+	}
+
+	unsigned char* ptr = buf;
+
+// FIXME -- hackish
+#define PACK(type, value) *((type*)(ptr)) = value; ptr = ptr + sizeof(type)
+
+	PACK(unsigned char,  NETMSG_AICOMMANDS);
+	PACK(unsigned short, msgLen);
+	PACK(unsigned char,  gu->myPlayerNum);
+
+	PACK(unsigned short, unitIDCount);
+	for (u = 0; u < unitIDCount; u++) {
+		PACK(unsigned short, unitIDs[u]);
+	}
+
+	PACK(unsigned short, commandCount);
+	for (c = 0; c < commandCount; c++) {
+		const Command& cmd = commands[c];
+		PACK(unsigned int,   cmd.id);
+		PACK(unsigned char,  cmd.options);
+		PACK(unsigned short, cmd.params.size());
+		for (int p = 0; p < (int)cmd.params.size(); p++) {
+			PACK(float, cmd.params[p]);
+		}
+	}
+
+	net->SendData(buf, msgLen);
+	
+	return;
 }

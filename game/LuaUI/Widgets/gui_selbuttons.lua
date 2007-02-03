@@ -311,16 +311,16 @@ local function LeftMouseButton(unitTable)
   if (not ctrl) then
     -- select units of icon type
     if (alt or meta) then
-      Spring.SelectUnitsByValues({ next(unitTable, nil) })  -- only 1
+      Spring.SelectUnitArray({ next(unitTable, nil) })  -- only 1
     else
-      Spring.SelectUnitsByKeys(unitTable)
+      Spring.SelectUnitMap(unitTable)
     end
   else
     -- select all units of the icon type
     local sorted = Spring.GetTeamUnitsSorted(Spring.GetMyTeamID())
     local units = sorted[unitDefID]
     if (units) then
-      Spring.SelectUnitsByKeys(units, shift)
+      Spring.SelectUnitMap(units, shift)
     end
   end
 end
@@ -335,9 +335,9 @@ local function MiddleMouseButton(unitTable)
   else
     -- center the view on this type on unit
     local selUnits = Spring.GetSelectedUnits()
-    Spring.SelectUnitsByKeys(unitTable)
+    Spring.SelectUnitMap(unitTable)
     Spring.SendCommands({"viewselection"})
-    Spring.SelectUnitsByValues(selUnits)
+    Spring.SelectUnitArray(selUnits)
   end
 end
 
@@ -352,7 +352,7 @@ local function RightMouseButton(unitTable)
     map[uid] = nil
     if (ctrl) then break end -- only remove 1 unit
   end
-  Spring.SelectUnitsByKeys(map)
+  Spring.SelectUnitMap(map)
 end
 
 

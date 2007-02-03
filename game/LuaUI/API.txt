@@ -57,7 +57,7 @@
 
   GroupChanged()
 
-  AddConsoleLine()  FIXME
+  AddConsoleLine()
 
 
 --------------------------------------------------------------------------------
@@ -76,11 +76,15 @@
 
   GetFPS()
   GetGameSeconds()
-  GetInCommand()
+  GetLastUpdateSeconds()
+
+  GetActiveCommand()
+
   GetMouseState()
   GetMouseCursor()
   SetMouseCursor()
 
+  GetConsoleBuffer()
   GetCurrentTooltip()
 
   GetKeyState()
@@ -125,6 +129,9 @@
   GetUnitHeading()
   GetUnitBuildFacing()
 
+  GetFeaturePosition()
+  GetFeatureResources()
+
   GetCommandQueue()
   GetFullBuildQueue()
   GetRealBuildQueue()
@@ -158,11 +165,13 @@
 
   SendCommands()
   GiveOrder()
+  GiveOrderToUnit()
 
   SelectUnitsByKeys()
   SelectUnitsByValues()
 
   GetGroundHeight()
+  GetGroundNormal()
   TestBuildOrder()
   Pos2BuildPos()
 
@@ -416,6 +425,11 @@ UnitGiven(number unitID, number unitDefID, number unitTeam) -> nil
 --
 GroupChanged(number groupID) -> nil
 
+--
+--  Called when a new line of text is added to the console
+--  (or with unviewed lines after LuaUI is initialized)
+--
+AddConsoleLine(string "text", number priority) -> nil
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -457,7 +471,11 @@ GetFPS()         -> number fps
 
 GetGameSeconds() -> number seconds
 
-GetInCommand()   -> number inCommand
+GetLastUpdateSeconds() -> number of seconds since the last update
+
+
+GetActiveCommand()   -> number activeCommand
+
 
 GetMouseState()  ->
   number x,
@@ -470,6 +488,12 @@ GetMouseCursor() -> string "cursor", number scale
 
 SetMouseCursor(string "cursor"[, number scale]) -> nil
 
+
+GetConsoleBuffer([number maxLines]) ->
+  lines = {
+    [1] = { text = string "text", priority = number priority },
+    etc...
+  }
 
 GetCurrentTooltip() -> string "tooltip"
 
@@ -623,6 +647,12 @@ GetUnitBuildFacing(number unitID) ->
   nil | number buildFacing
 
 
+GetFeaturePosition(number featureID) -> nil | number x, number y, number z
+
+GetFeatureResources(number featureID) ->
+  nil | number metalLeft, number energyLeft
+
+
 GetCommandQueue(number unitID [, number maxCommands]) ->
   nil | commands = {
     [1] = {
@@ -769,9 +799,15 @@ TraceScreenRay(number mouseX, number mouseY[, boolean onlyCoords]) ->
 
 SendCommands(commands = { string "cmd1", string "cmd2", ... }) -> nil
 
+
 GiveOrder(number cmdID,
-          params = {number, number, number},
+          params = {number, etc...},
           options = {"alt", "ctrl", "shift", "right"}) -> nil
+
+GiveOrderToUnit(number unitID,
+                number cmdID,
+                params = {number, etc...},
+                options = {"alt", "ctrl", "shift", "right"}) -> nil
 
 
 SelectUnitsByKeys(unitIDs = { [unitID1] = x1 , [unitID2] = x2 , ...}) -> nil
@@ -780,6 +816,9 @@ SelectUnitsByValues(unitIDs = { [1] = unitID1 , [2] = unitID2 , ...}) -> nil
 
 
 GetGroundHeight(number x, number y) -> number z
+
+GetGroundNormal(number x, number y) -> number x, number y, number z
+
 
 TestBuildOrder(number unitDefID,
                number x, number y, number z

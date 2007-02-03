@@ -404,6 +404,16 @@ bool CGameServer::ServerReadNet()
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
 
+			case NETMSG_AICOMMANDS:
+				if(inbuf[inbufpos+3]!=a){
+					SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
+				} else {
+					if(!serverNet->playbackDemo)
+						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
+				}
+				lastLength=*((short int*)&inbuf[inbufpos+1]);
+				break;
+
 			case NETMSG_SYNCRESPONSE:
 #ifdef SYNCCHECK
 				if(inbuf[inbufpos+1]!=a){

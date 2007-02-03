@@ -479,6 +479,57 @@ function widgetHandler:RemoveWidget(widget)
 end
 
 
+function widgetHandler:EnableWidget(name)
+  local ki = self.knownWidgets[name]
+  if (not ki) then
+    Echo("EnableWidget(), could not find widget: " .. tostring(name))
+    return
+  end
+  if (not ki.active) then
+    print('Loading:  '..ki.filename)
+    local order = widgetHandler.orderList[name]
+    if (not order or (order <= 0)) then
+      self.orderList[name] = 1
+    end
+    local w = self:LoadWidget(ki.filename)
+    if (not w) then return -1 end
+    self:InsertWidget(w)
+    self:SaveOrderList()
+  end
+end
+
+
+function widgetHandler:DisableWidget(name)
+  local ki = self.knownWidgets[name]
+  if (not ki) then
+    Echo("DisableWidget(), could not find widget: " .. tostring(name))
+    return
+  end
+  if (ki.active) then
+    local w = self:FindWidget(name)
+    if (not w) then return -1 end
+    print('Removed:  '..ki.filename)
+    self:RemoveWidget(w)     -- deactivate
+    self.orderList[name] = 0 -- disable
+    self:SaveOrderList()
+  end
+end
+
+
+function widgetHandler:ToggleWidget(name)
+  local ki = self.knownWidgets[name]
+  if (not ki) then
+    Echo("ToggleWidget(), could not find widget: " .. tostring(name))
+    return
+  end
+  if (ki.active) then
+    self:DisableWidget(name)
+  else
+    self:EnableWidget(name)
+  end
+end
+
+
 --------------------------------------------------------------------------------
 
 local function FindWidgetIndex(t, w)
@@ -612,7 +663,7 @@ function widgetHandler:Shutdown()
 end
 
 function widgetHandler:Update()
-  local deltaTime = Spring.GetLastFrameSeconds()  
+  local deltaTime = Spring.GetLastUpdateSeconds()  
   -- update the hour timer
   hourTimer = math.mod(hourTimer + deltaTime, 3600.0)
   for _,w in ipairs(self.UpdateList) do
@@ -639,6 +690,15 @@ function widgetHandler:ConfigureLayout(command)
     local sw = self:LoadWidget(LUAUI_DIRNAME .. SELECTOR_BASENAME)
     self:InsertWidget(sw)
     self:RaiseWidget(sw)
+    return true
+  elseif (string.find(command, 'togglewidget') == 1) then
+    self:ToggleWidget(string.sub(command, 14))
+    return true
+  elseif (string.find(command, 'enablewidget') == 1) then
+    self:EnableWidget(string.sub(command, 14))
+    return true
+  elseif (string.find(command, 'disablewidget') == 1) then
+    self:DisableWidget(string.sub(command, 15))
     return true
   end
 
@@ -934,17 +994,17 @@ function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitTaken(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   for _,w in ipairs(self.UnitTakenList) do
-    w:UnitTaken(unitID, unitDefID, unitTeam)
+    w:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   end
   return
 end
 
 
-function widgetHandler:UnitGiven(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   for _,w in ipairs(self.UnitGivenList) do
-    w:UnitGiven(unitID, unitDefID, unitTeam)
+    w:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   end
   return
 end

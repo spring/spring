@@ -144,18 +144,18 @@ void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
 }
 
 
-void CGuiHandler::UnitTaken(CUnit* unit)
+void CGuiHandler::UnitTaken(CUnit* unit, int newTeam)
 {
 	if (luaUI != NULL) {
-		luaUI->UnitTaken(unit);
+		luaUI->UnitTaken(unit, newTeam);
 	}
 }
 
 
-void CGuiHandler::UnitGiven(CUnit* unit)
+void CGuiHandler::UnitGiven(CUnit* unit, int oldTeam)
 {
 	if (luaUI != NULL) {
-		luaUI->UnitGiven(unit);
+		luaUI->UnitGiven(unit, oldTeam);
 	}
 }
 
@@ -1508,7 +1508,7 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 	}
 	else {
-    const float3 camPos = camera->pos;
+		const float3 camPos = camera->pos;
 		const float3 camDir = mouse->dir;
 		const float viewRange = gu->viewRange*1.4f;
 		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, 20, true);
@@ -3551,6 +3551,11 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
 			const UnitDef* unitdef = unit->unitDef;
+			if ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView) {
+				if (unitdef->decoyDef) {
+					unitdef = unitdef->decoyDef;
+				}
+			}
 			// draw weapon range
 			if (unit->maxRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
