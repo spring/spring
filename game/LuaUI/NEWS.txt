@@ -1,10 +1,12 @@
 
-LuaUI v0.2
-----------
+LuaUI v0.2  (Unveiled)
+----------------------
+
+- Added querying of enemy units
 
 - Use the VFS for core file loading
 
-- Added the ability to use mod widget's from "ModUI/Widgets/*.lua"
+- Added the ability to use mod widgets from "ModUI/Widgets/*.lua"
 
 - Fixed a possible crash bug related to server generated console messages
   (only affected the host player)
@@ -16,5 +18,3 @@ LuaUI v0.1  (Toys)
 - Initial release
   * widget handler functionality
   * a few demo widgets
-
-

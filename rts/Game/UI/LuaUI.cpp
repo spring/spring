@@ -3081,7 +3081,7 @@ static int GetUnitsInRectangle(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 4) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 3)) {
+	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
 		lua_pushstring(L,
 			"Incorrect arguments to GetUnitsInRectangle(minx,minz, maxx,maxz");
 		lua_error(L);
@@ -3101,7 +3101,7 @@ static int GetUnitsInRectangle(lua_State* L)
 	int count = 0;
 	for (int i = 0; i < rectUnitCount; i++) {
 		const CUnit* unit = rectUnits[i];
-		if (unit->team != gu->myTeam) {
+		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
 			continue;
 		}
 		count++;
@@ -3455,7 +3455,7 @@ static int GetUnitGroup(lua_State* L)
 
 static int GetUnitHealth(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
+	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3504,7 +3504,17 @@ static int GetUnitRadius(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->radius);
+	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
+		lua_pushnumber(L, unit->radius);
+	} else {
+		const int losStatus = unit->losStatus[gu->myAllyTeam];
+		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+		if (((losStatus & LOS_INLOS) == 0) &&
+				((losStatus & prevMask) != prevMask)) {
+			return 0;
+		}
+		lua_pushnumber(L, unit->radius);
+	} 
 	return 1;
 }
 
@@ -3530,7 +3540,7 @@ static int GetUnitPosition(lua_State* L)
 
 static int GetUnitHeading(lua_State* L)
 {
-	// FIXME: just LOS_INLOS, not LOS_INRADAR  --  or prevlos for immobiles?
+	// FIXME: prevlos for immobiles?
 	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
 	if (unit == NULL) {
 		return 0;
@@ -3544,7 +3554,7 @@ static int GetUnitHeading(lua_State* L)
 
 static int GetUnitBuildFacing(lua_State* L)
 {
-	// FIXME: just LOS_INLOS, not LOS_INRADAR  --  or prevlos for immobiles?
+	// FIXME: prevlos for immobiles?
 	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
 	if (unit == NULL) {
 		return 0;
