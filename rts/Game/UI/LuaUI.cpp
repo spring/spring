@@ -3399,7 +3399,17 @@ static int GetUnitDefID(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, EffectiveUnitDef(unit)->id);
+	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
+		lua_pushnumber(L, unit->unitDef->id);
+	} else {
+		const int losStatus = unit->losStatus[gu->myAllyTeam];
+		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+		if (((losStatus & LOS_INLOS) == 0) &&
+				((losStatus & prevMask) != prevMask)) {
+			return 0;
+		}
+		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
+	} 
 	return 1;
 }
 
