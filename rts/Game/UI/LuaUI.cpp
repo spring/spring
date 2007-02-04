@@ -3547,15 +3547,25 @@ static int GetUnitHealth(lua_State* L)
 		return 0;
 	}
 	const UnitDef* ud = unit->unitDef;
-	if (ud->hideDamage &&
-	    (unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView) {
+	const bool enemyUnit = (unit->allyteam != gu->myAllyTeam) &&
+	                       !gu->spectatingFullView;
+	if (ud->hideDamage && enemyUnit) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->health);
-	lua_pushnumber(L, unit->maxHealth);
-	lua_pushnumber(L, unit->paralyzeDamage);
-	lua_pushnumber(L, unit->captureProgress);
-	lua_pushnumber(L, unit->buildProgress);
+	if (!enemyUnit || (ud->decoyDef == NULL)) {
+		lua_pushnumber(L, unit->health);
+		lua_pushnumber(L, unit->maxHealth);
+		lua_pushnumber(L, unit->paralyzeDamage);
+		lua_pushnumber(L, unit->captureProgress);
+		lua_pushnumber(L, unit->buildProgress);
+	} else {
+		const float scale = (ud->health / ud->decoyDef->health);
+		lua_pushnumber(L, scale * unit->health);
+		lua_pushnumber(L, scale * unit->maxHealth);
+		lua_pushnumber(L, scale * unit->paralyzeDamage);
+		lua_pushnumber(L, scale * unit->captureProgress);
+		lua_pushnumber(L, scale * unit->buildProgress);
+	}
 	return 5;
 }
 
