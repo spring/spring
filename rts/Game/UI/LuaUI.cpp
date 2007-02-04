@@ -149,6 +149,7 @@ static int GetUnitRadius(lua_State* L);
 static int GetUnitPosition(lua_State* L);
 static int GetUnitHeading(lua_State* L);
 static int GetUnitBuildFacing(lua_State* L);
+static int IsUnitAllied(lua_State* L);
 
 static int GetUnitDefDimensions(lua_State* L);
 
@@ -424,6 +425,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
+	REGISTER_LUA_CFUNC(IsUnitAllied);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
 	REGISTER_LUA_CFUNC(GetFeatureInfo);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
@@ -3545,8 +3547,8 @@ static int GetUnitHealth(lua_State* L)
 		return 0;
 	}
 	const UnitDef* ud = unit->unitDef;
-	if ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView &&
-	    (ud->showPlayerName || ud->hideDamage)) {
+	if (ud->hideDamage &&
+	    (unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView) {
 		return 0;
 	}
 	lua_pushnumber(L, unit->health);
@@ -3645,6 +3647,17 @@ static int GetUnitBuildFacing(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, unit->buildFacing);
+	return 1;
+}
+
+
+static int IsUnitAllied(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->allyteam == gu->myAllyTeam);
 	return 1;
 }
 
@@ -4838,6 +4851,8 @@ static bool ParseCommandTable(lua_State* L, int table, Command& cmd)
 		}
 	}
 	lua_pop(L, 1);
+
+	// FIXME -- do some sanity checking
 
 	return true;
 }

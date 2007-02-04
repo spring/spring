@@ -4,6 +4,14 @@
 #include "OutlineFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
+#include "Game/Player.h"
+#include "Game/Team.h"
+#include "Map/Ground.h"
+#include "Map/MapDamage.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureDef.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Units/Unit.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
 
@@ -111,4 +119,147 @@ bool CTooltipConsole::IsAbove(int x,int y)
 	
 	return ((mx > (x + 0.01f)) && (mx < (x + w)) &&
 	        (my > (y + 0.01f)) && (my < (y + h)));
+}
+
+
+#define RED       "\xff\xff\x50\x01"
+#define BLUE      "\xff\xd3\xdb\xff"
+#define GREEN     "\xff\x50\xff\x50"
+#define GREY      "\xff\x90\x90\x90"
+#define DARKBLUE  "\xff\xc0\xc0\xff"
+
+
+std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
+{
+	std::string s;
+	
+	const UnitDef* unitDef = unit->unitDef;
+	const UnitDef* decoyDef = unitDef->decoyDef;
+	const bool enemyUnit = (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
+	                       !gu->spectatingFullView;
+	
+	// don't show the tooltip if it's a radar dot
+	if (enemyUnit && !loshandler->InLos(unit, gu->myAllyTeam)) {
+		return "Enemy unit";
+	}
+
+	// show the player name instead of unit name if it has FBI tag showPlayerName
+	if (unit->unitDef->showPlayerName) {
+		s = gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
+	} else {
+		if (!enemyUnit || (unitDef->decoyDef == NULL)) {
+			s = unit->tooltip;
+		} else {
+			s = decoyDef->humanName + " " + decoyDef->tooltip;
+		}
+	}
+
+	// don't show the unit health and other info if it has
+	// the FBI tag hideDamage and is not on our ally team
+	if (!enemyUnit || !unitDef->hideDamage) {
+		if (!enemyUnit || (unitDef->decoyDef == NULL)) {
+			const float cost = unit->metalCost + (unit->energyCost / 60.0f);
+			s += MakeUnitStatsString(
+						 unit->health, unit->maxHealth,
+						 unit->currentFuel, unitDef->maxFuel,
+						 unit->experience, cost, unit->maxRange,
+						 unit->metalMake,  unit->metalUse,
+						 unit->energyMake, unit->energyUse);
+		} else {
+			// display adjusted decoy stats  --  FIXME:  not finished
+			const float cost = unitDef->metalCost + (unitDef->energyCost / 60.0f);
+			const float healthScale = (unitDef->health / decoyDef->health);
+			s += MakeUnitStatsString(
+						 unit->health * healthScale, unit->maxHealth * healthScale,
+//						 unit->currentFuel * (unitDef->maxFuel / decoyDef->maxFuel),
+						 unit->currentFuel,
+						 unitDef->maxFuel,
+						 unit->experience,
+						 cost,
+						 unit->maxRange,
+						 unit->metalMake,
+						 unit->metalUse,
+						 unit->energyMake,
+						 unit->energyUse);
+		}
+	}
+
+	if (gs->cheatEnabled) {
+		char buf[32];
+		SNPRINTF(buf, 32, DARKBLUE "  [TechLevel %i]", unit->unitDef->techLevel);
+		s += buf;
+	}
+	return s;
+}
+
+
+std::string CTooltipConsole::MakeUnitStatsString(
+	float health, float maxHealth,
+	float currentFuel, float maxFuel,
+	float experience, float cost, float maxRange,
+	float metalMake,  float metalUse,
+	float energyMake, float energyUse)
+{
+	string s;
+
+	char tmp[512];
+	sprintf(tmp,"\nHealth %.0f/%.0f", health, maxHealth);
+	s += tmp;
+
+	if (maxFuel > 0.0f) {
+		sprintf(tmp," Fuel %.0f/%.0f", currentFuel, maxFuel);
+		s += tmp;
+	}
+
+	sprintf(tmp, "\nExperience %.2f Cost %.0f Range %.0f\n"
+							 BLUE "Metal: "  GREEN "%.1f" GREY "/" RED "-%.1f "
+							 BLUE "Energy: " GREEN "%.1f" GREY "/" RED "-%.1f",
+					experience, cost, maxRange,
+					metalMake,  metalUse,
+					energyMake, energyUse);
+	s += tmp;
+
+	return s;
+}
+
+
+std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
+{
+	std::string s;
+	
+	if (feature->def->description == "") {
+		s = "Feature";
+	} else {
+		s = feature->def->description;
+	}
+
+	const float remainingMetal  = feature->RemainingMetal();
+	const float remainingEnergy = feature->RemainingEnergy();
+
+	const std::string metalColor  = (remainingMetal  > 0) ? GREEN : RED;
+	const std::string energyColor = (remainingEnergy > 0) ? GREEN : RED;
+	
+	char tmp[500];
+	sprintf(tmp,"\n" BLUE "Metal: %s%.0f  " BLUE "Energy: %s%.0f",
+	        metalColor.c_str(),  remainingMetal,
+          energyColor.c_str(), remainingEnergy);
+
+	s += tmp;
+
+	return s;
+}
+
+
+std::string CTooltipConsole::MakeGroundString(const float3& pos)
+{
+	char tmp[500];
+	CReadMap::TerrainType* tt = &readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+	string ttype = tt->name;
+	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\n"
+	             "Speeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",
+	        pos.x, pos.z, pos.y, ttype.c_str(),
+	        tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
+	        tt->hardness * mapDamage->mapHardness,
+	        readmap->metalMap->getMetalAmount((int)(pos.x/16), (int)(pos.z/16)));
+	return tmp;
 }

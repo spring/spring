@@ -993,8 +993,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 			if (!owner->unitDef->canmove) {
 				const CBuilder* builder = (CBuilder*)owner;
 				const float distSqr = (owner->pos - unit->pos).SqLength2D();
-				const float maxRange = builder->buildDistance + unit->radius - 9.0f;
-				if (distSqr > (maxRange * maxRange)) {
+				const float buildDist = builder->buildDistance + unit->radius - 9.0f;
+				if (distSqr > (buildDist * buildDist)) {
 					continue;
 				}
 			}

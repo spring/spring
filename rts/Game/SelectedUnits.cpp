@@ -16,6 +16,7 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
+#include "UI/TooltipConsole.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SelectedUnitsAI.h"
@@ -635,49 +636,57 @@ void CSelectedUnits::DrawCommands()
 std::string CSelectedUnits::GetTooltip(void)
 {
 	std::string s;
-	if(selectedGroup!=-1 && grouphandler->groups[selectedGroup]->ai){
-		s="Group selected";
-	} else if(!selectedUnits.empty()){
+	if ((selectedGroup != -1) && grouphandler->groups[selectedGroup]->ai) {
+		s = "Group selected";
+	} else if (!selectedUnits.empty()) {
 		// show the player name instead of unit name if it has FBI tag showPlayerName
-		if((*selectedUnits.begin())->unitDef->showPlayerName)
-		{
-			s=gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
+		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
+			s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
 		} else {
-			s=(*selectedUnits.begin())->tooltip;
+			s = (*selectedUnits.begin())->tooltip;
 		}
 	}
-	if(selectedUnits.empty()){
+	if (selectedUnits.empty()) {
 		return s;
 	}
+
 	char tmp[500];
-	float maxHealth=0,curHealth=0,cost=0,exp=0,range=0,metalMake=0,metalUse=0,energyMake=0,energyUse=0,maxfuel=0,curfuel=0,numfuel=0;
-	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		maxHealth+=(*ui)->maxHealth;
-		curHealth+=(*ui)->health;
-		exp+=(*ui)->experience;
-		cost+=(*ui)->metalCost+(*ui)->energyCost/60;
-		range+=(*ui)->maxRange;
-		metalMake+=(*ui)->metalMake;
-		metalUse+=(*ui)->metalUse;
-		energyMake+=(*ui)->energyMake;
-		energyUse+=(*ui)->energyUse;
-		maxfuel+=(*ui)->unitDef->maxFuel;
-		curfuel+=(*ui)->currentFuel;
-		if((*ui)->unitDef->maxFuel > 0)
-			numfuel++;
-	}
-	float num=selectedUnits.size();
-	sprintf(tmp,"\nHealth %.0f/%.0f",curHealth,maxHealth);
-	s+=tmp;
+	int numFuel = 0;
+	float maxHealth = 0.0f, curHealth = 0.0f;
+	float maxFuel = 0.0f, curFuel = 0.0f;
+	float exp = 0.0f, cost = 0.0f, range = 0.0f;
+	float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
 
-	if(maxfuel>0){
-		sprintf(tmp," Fuel %.0f/%.0f",curfuel/numfuel,maxfuel/numfuel);
-		s+=tmp;
+	set<CUnit*>::iterator ui;
+	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+		const CUnit* unit = *ui;
+		maxHealth  += unit->maxHealth;
+		curHealth  += unit->health;
+		exp        += unit->experience;
+		cost       += unit->metalCost + (unit->energyCost / 60.0f);
+		range      += unit->maxRange;
+		metalMake  += unit->metalMake;
+		metalUse   += unit->metalUse;
+		energyMake += unit->energyMake;
+		energyUse  += unit->energyUse;
+		maxFuel    += unit->unitDef->maxFuel;
+		curFuel    += unit->currentFuel;
+		if (unit->unitDef->maxFuel > 0) {
+			numFuel++;
+		}
 	}
+	if ((numFuel > 0) && (maxFuel > 0.0f)) {
+		curFuel = curFuel / numFuel;
+		maxFuel = maxFuel / numFuel;
+	}
+	const float num = selectedUnits.size();
 
-	sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-	        exp/num,cost,range/num, metalMake, metalUse, energyMake, energyUse);
-	s += tmp;
+	s += CTooltipConsole::MakeUnitStatsString(
+	       curHealth, maxHealth,
+	       curFuel,   maxFuel,
+	       (exp / num), cost, (range / num),
+	       metalMake,  metalUse,
+	       energyMake, energyUse);
 	
   if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
   	CUnit* unit = *selectedUnits.begin();

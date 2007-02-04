@@ -27,9 +27,9 @@ public:
 	void Kill(float3& impulse);
 	virtual bool Update(void);
 	void StartFire(void);
-	float RemainingResource(float res);
-	float RemainingMetal(void);
-	float RemainingEnergy(void);
+	float RemainingResource(float res) const;
+	float RemainingMetal(void) const;
+	float RemainingEnergy(void) const;
 	int ChunkNumber(float f);
 	void DrawS3O();
 	void CalculateTransform();

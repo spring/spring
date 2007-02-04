@@ -122,6 +122,10 @@
   GetTeamUnitsSorted()
   GetTeamUnitsCounts()
 
+  GetUnitsInRectangle()
+  GetUnitsInCylinder()
+  GetUnitsInPlanes()
+
   GetUnitDefID()
   GetUnitTeam()
   GetUnitAllyTeam()
@@ -133,6 +137,8 @@
   GetUnitPosition()
   GetUnitHeading()
   GetUnitBuildFacing()
+  IsUnitInView()
+  IsUnitAllied()
 
   GetFeatureInfo()
   GetFeaturePosition()
@@ -398,34 +404,34 @@ GetTooltip(number x, number y) -> string "tooltip"
 
 
 --
---  Called when a unit is created
+--  Called when an allied unit is created
 --
 UnitCreated(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
---  Called when a unit first reaches 100% health
+--  Called when an allied unit first reaches 100% health
 --
 UnitFinished(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
---  Called when a unit is produced by a factory (after UnitFinished())
+--  Called when an allied unit is produced by a factory (after UnitFinished())
 --
 UnitFromFactory(number unitID, number unitDefID, number unitTeam,
                 number factID, number factDefID, boolean userOrders) -> nil
 
 --
---  Called when a unit is destroyed
+--  Called when an allied unit is destroyed
 --
 UnitDestroyed(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
---  Called just before a unit is taken from a team
+--  Called just before an allied unit is taken from a team
 --
 UnitTaken(number unitID, number unitDefID,
           number unitTeam, number newTeam) -> nil
 
 --
---  Called after a unit is given to a team
+--  Called after an allied unit is given to a team
 --
 UnitGiven(number unitID, number unitDefID,
           number unitTeam, number oldTeam) -> nil
@@ -462,13 +468,11 @@ GroupChanged(number groupID) -> nil
 --
 AddConsoleLine(string "text", number priority) -> nil
 
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
 --  CALL-OUTS, in detail
---
---  Call-outs are the functions which may be used from within the LUA
---  code. They are bound to the lua workspace before the
 --
 
 --
@@ -620,6 +624,28 @@ GetTeamUnitsSorted(teamID) -> nil |
   }
 
 
+GetUnitsInRectangle(number xmin, number zmin, number xmax, number zmax) ->
+  unitTable = { [1] = number unitID, etc... }
+
+GetUnitsInCylinder(number x, number z, number radius) ->
+  unitTable = { [1] = number unitID, etc... }
+
+GetUnitsInPlanes(planes = {
+    [1] = { number nx, number ny, number nz, number d },
+    etc...
+  }) ->
+  unitTable = { [1] = number unitID, etc... }
+--
+-- plane normals point towards accepted space,
+-- so the acceptance criteria for each plane is:
+--
+-- radius     = unit radius
+-- px, py, pz = unit position
+--
+-- [(nx * px) + (ny * py) + (nz * pz) + (d - radius)]  <=  0
+--
+
+
 GetUnitDefID(number unitID) ->
   nil | number unitDefID
 
@@ -671,6 +697,12 @@ GetUnitHeading(number unitID) ->
 
 GetUnitBuildFacing(number unitID) ->
   nil | number buildFacing
+
+IsUnitInView(number unitID) ->
+  nil | boolean inview
+
+IsUnitAllied(number unitID) ->
+  nil | boolean allied
 
 
 GetFeatureInfo(number featureID) ->
@@ -739,7 +771,7 @@ GetPlayerList([number teamID]) ->
 --
 -- Sort codes:
 --
---   1 = Sort by allies
+--   1 = Sort by allies  (the default)
 --   2 = Sort by teamID
 --   3 = Sort by playerName
 --   4 = Sort by CPU usage

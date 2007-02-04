@@ -11,6 +11,7 @@
 #include "MiniMap.h"
 #include "MouseCursor.h"
 #include "MouseInput.h"
+#include "TooltipConsole.h"
 #include "ExternalAI/Group.h"
 #include "Game/CameraController.h"
 #include "Game/Camera.h"
@@ -548,110 +549,53 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	std::string s;
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->IsAbove(lastx,lasty)){
-			s=(*ri)->GetTooltip(lastx,lasty);
-			if(s!="")
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+		if ((*ri) && (*ri)->IsAbove(lastx, lasty)) {
+			s = (*ri)->GetTooltip(lastx, lasty);
+			if (s != "") {
 				return s;
+			}
 		}
 	}
 
-#ifndef NEW_GUI
-	s=guihandler->GetBuildTooltip();
-	if(s!="")
-		return s;
-#endif
+	const string buildTip = guihandler->GetBuildTooltip();
+	if (!buildTip.empty()) {
+		return buildTip;
+	}
 
-	/*
-	NOTE:
-	The code below (up untill "if(unit)...") is exactly the same as
-	some lines in CGuiHandler::GetDefaultCommand().
-	Perhaps it would be possible to integrate the two, because now a
-	racetray for units and features might be performed twice per frame.
-	*/
-	CUnit* unit=0;
-	CFeature* feature=0;
-	float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,true);
-	float dist2=helper->GuiTraceRayFeature(camera->pos,dir,gu->viewRange*1.4f,feature);
+	const float range = (gu->viewRange * 1.4f);
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
+	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, 20, true);
+	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
 
-	if(dist>gu->viewRange*1.4f-300 && dist2>gu->viewRange*1.4f-300 && unit==0){
+	if ((udist > (range - 300.0f)) &&
+	    (fdist > (range - 300.0f)) && (unit == NULL)) {
 		return "";
 	}
 
-	if(dist>dist2)
-		unit=0;
-	else
-		feature=0;
-
-	if(unit){
-		// don't show the tooltip if it's a radar dot
-		if(!gu->spectatingFullView && gs->AllyTeam(unit->team) != gu->myAllyTeam && !loshandler->InLos(unit,gu->myAllyTeam)){
-			return "Enemy unit";
-		}
-		// show the player name instead of unit name if it has FBI tag showPlayerName
-		if(unit->unitDef->showPlayerName){
-			s=gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
-		} else {
-			s=unit->tooltip;
-		}
-		// don't show the unit health and other info if it has FBI tag hideDamage and isn't on our ally team
-		if(!(!gu->spectatingFullView && unit->unitDef->hideDamage && gs->AllyTeam(unit->team) != gu->myAllyTeam)){
-			char tmp[500];
-
-			sprintf(tmp,"\nHealth %.0f/%.0f",unit->health,unit->maxHealth);
-			s+=tmp;
-
-			if(unit->unitDef->maxFuel>0){
-				sprintf(tmp," Fuel %.0f/%.0f",unit->currentFuel,unit->unitDef->maxFuel);
-				s+=tmp;
-			}
-
-			sprintf(tmp,"\nExperience %.2f Cost %.0f Range %.0f \n\xff\xd3\xdb\xffMetal: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f\xff\xd3\xdb\xff Energy: \xff\x50\xff\x50%.1f\xff\x90\x90\x90/\xff\xff\x50\x01-%.1f",
-				unit->experience,unit->metalCost+unit->energyCost/60,unit->maxRange, unit->metalMake, unit->metalUse, unit->energyMake, unit->energyUse);
-			s+=tmp;
-		}
-
-		if (gs->cheatEnabled) {
-			char buf[32];
-			SNPRINTF(buf, 32, "\xff\xc0\xc0\xff  [TechLevel %i]", unit->unitDef->techLevel);
-			s += buf;
-		}
-		return s;
-	}
-	
-	if(feature){
-		if(feature->def->description==""){
-			s="Feature";
-		} else {
-			s=feature->def->description;
-		}
-
-		float remainingMetal = feature->RemainingMetal();
-		float remainingEnergy = feature->RemainingEnergy();
-
-		std::string metalColor = remainingMetal > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
-		std::string energyColor = remainingEnergy > 0 ? "\xff\x50\xff\x50" : "\xff\xff\x50\x01";
-		
-		char tmp[500];
-		sprintf(tmp,"\n\xff\xd3\xdb\xffMetal: %s%.0f \xff\xd3\xdb\xff Energy: %s%.0f",
-			metalColor.c_str(), remainingMetal,
-			energyColor.c_str(), remainingEnergy);
-		s+=tmp;
-
-		return s;
+	if (udist > fdist) {
+		unit = NULL;
+	} else {
+		feature = NULL;
 	}
 
-	s=selectedUnits.GetTooltip();
-	if(s!="")
-		return s;
+	if (unit) {
+		return CTooltipConsole::MakeUnitString(unit);
+	}
 
-	if(dist<gu->viewRange*1.4f-100){
-		float3 pos=camera->pos+dir*dist;
-		char tmp[500];
-		CReadMap::TerrainType* tt=&readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
-		string ttype=tt->name;
-		sprintf(tmp,"Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\nSpeeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",pos.x,pos.z,pos.y,ttype.c_str(),tt->tankSpeed,tt->kbotSpeed,tt->hoverSpeed,tt->shipSpeed,tt->hardness*mapDamage->mapHardness,readmap->metalMap->getMetalAmount((int)(pos.x/16),(int)(pos.z/16)));
-		return tmp;
+	if (feature) {
+		return CTooltipConsole::MakeFeatureString(feature);
+	}
+
+	const string selTip = selectedUnits.GetTooltip();
+	if (selTip != "") {
+		return selTip;
+	}
+
+	if (udist < (range - 100.0f)) {
+		const float3 pos = camera->pos + (dir * udist);
+		return CTooltipConsole::MakeGroundString(pos);
 	}
 
 	return "";

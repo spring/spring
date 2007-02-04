@@ -558,10 +558,11 @@ void CWeapon::Init(void)
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 //	logOutput.Print("RelPos %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
-	if(range>owner->maxRange)
-		owner->maxRange=range;
+	if (range > owner->maxRange) {
+		owner->maxRange = range;
+	}
 
-	muzzleFlareSize=min(areaOfEffect*0.2f,min(1500.f,damages[0])*0.003f);
+	muzzleFlareSize = min(areaOfEffect*0.2f,min(1500.f,damages[0])*0.003f);
 
 	if(weaponDef->interceptor){
 		interceptHandler.AddInterceptorWeapon(this);
@@ -570,7 +571,7 @@ void CWeapon::Init(void)
 	}
 
 	if(weaponDef->stockpile){
-		owner->stockpileWeapon=this;
+		owner->stockpileWeapon = this;
 		owner->commandAI->AddStockpileWeapon(this);
 	}
 }
