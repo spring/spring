@@ -4,6 +4,10 @@ LuaUI v0.2  (Unveiled)
 
 - Added querying of enemy units
 
+- Added LOS and Radar call-ins
+
+- Added call-outs to give orders to units more efficiently
+
 - Use the VFS for core file loading
 
 - Added the ability to use mod widgets from "ModUI/Widgets/*.lua"

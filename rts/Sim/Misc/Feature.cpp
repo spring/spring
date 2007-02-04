@@ -380,7 +380,7 @@ int CFeature::ChunkNumber(float f)
 	return (int) ceil(f * modInfo->reclaimMethod);	
 }
 
-float CFeature::RemainingResource(float res)
+float CFeature::RemainingResource(float res) const
 {
 	// Old style - all reclaimed at the end
 	if(modInfo->reclaimMethod == 0)
@@ -396,11 +396,11 @@ float CFeature::RemainingResource(float res)
 	return chunkSize * chunksLeft;
 }
 
-float CFeature::RemainingMetal()
+float CFeature::RemainingMetal() const
 {
 	return RemainingResource(def->metal);
 }
-float CFeature::RemainingEnergy()
+float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);
 }

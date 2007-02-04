@@ -58,24 +58,17 @@ function widget:DrawScreen()
   local bland = "\255\211\219\255"
   local mSub, eSub
   local tooltip = Spring.GetCurrentTooltip()
-  tooltip, mSub = string.gsub(tooltip, bland.."Me", "\255\1\255\255Me")
-  tooltip, eSub = string.gsub(tooltip, bland.." E", "\255\255\255\1   E")
---[[
-  tooltip = string.gsub(tooltip, "Experience(.*)Cost(.*)Range([^\n]*)",
-                        "Experience"..white.."%1"..bland..
-                        "Cost"      ..white.."%2"..bland..
-                        "Range"     ..white.."%3"..bland)
-]]
-  tooltip = string.gsub(tooltip, "Hotkeys:", "\255\255\128\128Hotkeys:\255\128\128\255")
+  tooltip, mSub = string.gsub(tooltip, bland.."Me",   "\255\1\255\255Me")
+  tooltip, eSub = string.gsub(tooltip, bland.."En", "  \255\255\255\1En")
+  tooltip = string.gsub(tooltip,
+                        "Hotkeys:", "\255\255\128\128Hotkeys:\255\128\128\255")
   tooptip =       string.gsub(tooltip, "a", "b")
   local unitTip = ((mSub + eSub) == 2)
---  local _,count = string.gsub(tooltip, "\n", "")
   local i = 0
   for line in string.gfind(tooltip, "([^\n]*)\n?") do
     if (unitTip) then
       if (i == 0) then
         line = "\255\255\128\255" .. line
---        line = "\255\255\128\2" .. line
       else
         line = "\255\200\200\200" .. line
       end

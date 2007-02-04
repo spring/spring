@@ -246,8 +246,9 @@ float3 CInMapDraw::GetMouseMapPos(void)
 void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
 	const CPlayer* sender = gs->players[msg[2]];
-	int team = sender->team;
-	int allyteam = gs->AllyTeam(team);
+	const int team = sender->team;
+	const int allyteam = gs->AllyTeam(team);
+
 	if (!gu->spectating &&
 	    (sender->spectator
 	     || !gs->Ally(gu->myAllyTeam, allyteam)
