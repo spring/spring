@@ -347,7 +347,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 			}
 	} else {
 		bool keepgoing=true;
-		while(keepgoing){
+		for(int i = 0; i < 1000 && keepgoing; i++){
 			*dst=((int(zp*invQuadSize))*numQuadsX+(int(xp*invQuadSize)));
 			++dst;
 
