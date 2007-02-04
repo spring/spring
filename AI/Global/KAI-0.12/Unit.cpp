@@ -191,7 +191,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 
 bool CUNIT::ReclaimBest(bool metal, float radius) {
 	int features[1000];
-	int numfound = ai -> cb -> GetFeatures(features, 1000, pos(),radius);
+	int numfound = ai -> cb -> GetFeatures(features, 1000, pos(), radius);
 	float bestscore = 0;
 	float myscore = 0;
 	float bestdistance = 100000;
