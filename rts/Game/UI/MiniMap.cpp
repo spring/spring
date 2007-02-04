@@ -695,7 +695,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 		// Single unit
 		const float size = unitSelectRadius;
 		const float3 pos = GetMapPosition(x, y);
-		CUnit* unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
+		
+		CUnit* unit;
+		if (gu->spectatingFullSelect) {
+			unit = helper->GetClosestUnit(pos, size);
+		} else {
+			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
+		}
 
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
