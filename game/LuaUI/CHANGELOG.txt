@@ -2,17 +2,21 @@
 LuaUI v0.2
 ----------
 
+CALL-INS:
+
+- added UnitEnteredRadar() call-in
+- added UnitEnteredLos()   call-in
+- added UnitLeftRadar()    call-in
+- added UnitLeftLos()      call-in
+
+- added newTeam parameter to UnitTaken() call-in
+- added oldTeam parameter to UnitGiven() call-in
+
+CALL-OUTS:
+
 - changed the GetSelectedUnitsSorted() return format
 - changed the GetGroupUnitsSorted()    return format
 - changed the GetTeamUnitsSorted()     return format
-
-- added GetUnitGroup()
-
-- added enemy visibility call-ins:
-  UnitEnteredRadar()
-  UnitEnteredLos()
-  UnitLeftRadar()
-  UnitLeftLos()
 
 - added enemy querying to most unit related call-outs:
   - GetUnitDefID()
@@ -27,6 +31,8 @@ LuaUI v0.2
   - GetTeamUnitsCounts()
   - GetTeamUnitsSorted()
   - IsUnitInView()
+
+- added GetUnitGroup() call-out
 
 - renamed SelectUnitsByKeys()   to SelectUnitMap()
 - renamed SelectUnitsByValues() to SelectUnitArray()
@@ -48,9 +54,6 @@ LuaUI v0.2
 - added GetFeatureInfo()      call-out
 - added GetFeaturePosition()  call-out
 - added GetFeatureResources() call-out
-
-- added newTeam parameter to UnitTaken() call-in
-- added oldTeam parameter to UnitGiven() call-in
 
 
 LuaUI v0.1
