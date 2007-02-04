@@ -72,8 +72,10 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	if (this -> inRange(commanderPos, attackerPos, 1.0f)) {
 		// do we have valid target?
 		if ((attackerID > 0) && (CALLBACK -> GetUnitHealth(attackerID) > 0)) {
-			// don't bother trying to kill planes
-			if (!(CALLBACK -> GetUnitDef(attackerID)) -> canfly) {
+			const UnitDef* attackerDef = CALLBACK -> GetUnitDef(attackerID);
+
+			// don't bother trying to kill planes and also don't directly pop enemy commanders
+			if (!attackerDef -> canfly && (!attackerDef -> isCommander && !attackerDef -> canDGun)) {
 
 				// prevent friendly-fire "incidents"
 				if ((CALLBACK -> GetMyTeam()) != (CALLBACK -> GetUnitTeam(attackerID))) {
@@ -161,8 +163,10 @@ void DGunController::update(unsigned int currentFrame) {
 				// check if unit still alive (needed since when UnitDestroyed()
 				// triggered GetEnemyUnits() is not immediately updated as well)
 				if (CALLBACK -> GetUnitHealth(units[i]) > 0) {
-					// don't bother trying to kill planes
-					if (!(CALLBACK -> GetUnitDef(units[i])) -> canfly) {
+					const UnitDef* attackerDef = CALLBACK -> GetUnitDef(attackerID);
+
+					// don't bother trying to kill planes and also don't directly pop enemy commanders
+					if (!attackerDef -> canfly && (!attackerDef -> isCommander && !attackerDef -> canDGun)) {
 
 						// blast it
 						if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
