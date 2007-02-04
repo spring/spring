@@ -25,9 +25,6 @@
 #define	METALFOLDER		ROOTFOLDER"Metal/"
 #define TGAFOLDER		ROOTFOLDER"TGAs/"
 
-// KAI version to be appended to files generated. If older, remove them
-#define KAIVERSION		1
-
 // Error outputs
 #define ERRORDEF		ai-cb->GetUnitDef("")
 #define	ZEROVECTOR		float3(0,0,0)
