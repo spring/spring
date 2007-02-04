@@ -54,6 +54,10 @@
   UnitDestroyed()
   UnitTaken()
   UnitGiven()
+  UnitEnteredRadar()
+  UnitEnteredLos()
+  UnitLeftRadar()
+  UnitLeftLos()
 
   GroupChanged()
 
@@ -426,6 +430,25 @@ UnitTaken(number unitID, number unitDefID,
 UnitGiven(number unitID, number unitDefID,
           number unitTeam, number oldTeam) -> nil
 
+--
+--  Called when an enemy unit enter radar
+--
+UnitEnteredRadar(unitID, unitTeam) -> nil
+
+--
+--  Called when an enemy unit enters line of sight
+--
+UnitEnteredLos(number unitID, number unitDefID, number unitTeam) -> nil
+
+--
+--  Called when an enemy unit leaves radar range
+--
+UnitLeftRadar(number unitID, number unitTeam) -> nil
+
+--
+--  Called when an enemy unit leaves line of sight
+--
+UnitLeftLos(number unitID, number unitDefID, number unitTeam) -> nil
 
 --
 --  Called when units are added or removed from

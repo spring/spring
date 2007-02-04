@@ -79,6 +79,21 @@ widgetHandler = {
 }
 
 
+-- these call-ins are set to 'nil' if not used
+
+local flexCallIns = {
+  'UnitCreated',
+  'UnitFinished',
+  'UnitFromFactory',
+  'UnitDestroyed',
+  'UnitTaken',
+  'UnitGiven',
+  'UnitEnteredRadar',
+  'UnitEnteredLos',
+  'UnitLeftRadar',
+  'UnitLeftLos',
+}
+
 local callInLists = {
   'Shutdown',
   'Update',
@@ -95,12 +110,6 @@ local callInLists = {
   'GetTooltip',
   'GroupChanged',
   'CommandsChanged',
-  'UnitCreated',
-  'UnitFinished',
-  'UnitFromFactory',
-  'UnitDestroyed',
-  'UnitTaken',
-  'UnitGiven',
   'TweakMousePress',
   'TweakIsAbove',
   'TweakGetTooltip',
@@ -116,6 +125,11 @@ local callInLists = {
 -- uses the DrawScreenList
 --  'TweakDrawScreen',
 }
+
+-- append the flex call-ins
+for _,uci in ipairs(flexCallIns) do
+  table.insert(callInLists, uci)
+end
 
 
 -- initialize the call-in lists
@@ -446,6 +460,7 @@ function widgetHandler:InsertWidget(widget)
   for _,listname in callInLists do
     Insert(self[listname..'List'], widget[listname], widget)
   end
+  self:UpdateCallIns()
   if (widget.Initialize) then
     widget:Initialize()
   end
@@ -475,6 +490,24 @@ function widgetHandler:RemoveWidget(widget)
   Remove(self.widgets, widget)
   for _,listname in callInLists do
     Remove(self[listname..'List'], widget)
+  end
+  self:UpdateCallIns()
+end
+
+
+function widgetHandler:UpdateCallIns()
+  for _,name in ipairs(flexCallIns) do
+    local listName = name .. 'List'
+    if (table.getn(self[listName]) > 0) then
+      local selffunc = self[name]
+      _G[name] = function(...)
+        return selffunc(self, unpack(arg))
+      end
+      print('UpdateCallIns() using '..name)
+    else
+      _G[name] = nil
+      print('UpdateCallIns()  nil  '..name)
+    end
   end
 end
 
@@ -1005,6 +1038,38 @@ end
 function widgetHandler:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   for _,w in ipairs(self.UnitGivenList) do
     w:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitEnteredRadar(unitID, unitTeam)
+  for _,w in ipairs(self.UnitEnteredRadarList) do
+    w:UnitEnteredRadar(unitID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitEnteredLos(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitEnteredLosList) do
+    w:UnitEnteredLos(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitLeftRadar(unitID, unitTeam)
+  for _,w in ipairs(self.UnitLeftRadarList) do
+    w:UnitLeftRadar(unitID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitLeftLos(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitLeftLosList) do
+    w:UnitLeftLos(unitID, unitDefID, unitTeam)
   end
   return
 end

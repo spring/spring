@@ -58,7 +58,7 @@ public:
 	virtual void UnitDamaged(int damaged,int attacker,float damage,float3 dir)=0;					//called when one of your units are damaged
 	virtual void UnitMoveFailed(int unit)=0;							// called when a ground unit failed to reach it's destination
 
-    virtual int HandleEvent (int msg, const void *data)=0; // general messaging function to be used for future API extensions.
+	virtual int HandleEvent (int msg, const void *data)=0; // general messaging function to be used for future API extensions.
 
 	//called every frame
 	virtual void Update()=0;

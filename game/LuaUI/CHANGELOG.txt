@@ -8,6 +8,12 @@ LuaUI v0.2
 
 - added GetUnitGroup()
 
+- added enemy visibility call-ins:
+  UnitEnteredRadar()
+  UnitEnteredLos()
+  UnitLeftRadar()
+  UnitLeftLos()
+
 - added enemy querying to most unit related call-outs:
   - GetUnitDefID()
   - GetUnitTeam()

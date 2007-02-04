@@ -81,6 +81,10 @@ class CLuaUI {
 		bool UnitDestroyed(CUnit* victim, CUnit* attacker);
 		bool UnitTaken(CUnit* unit, int newTeam);
 		bool UnitGiven(CUnit* unit, int oldTeam);
+		bool UnitEnteredRadar(CUnit* unit, int allyteam);
+		bool UnitEnteredLos(CUnit* unit, int allyteam);
+		bool UnitLeftRadar(CUnit* unit, int allyteam);
+		bool UnitLeftLos(CUnit* unit, int allyteam);
 		
 		bool GroupChanged(int groupID);
 		

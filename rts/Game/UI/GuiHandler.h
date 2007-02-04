@@ -71,6 +71,10 @@ class CGuiHandler : public CInputReceiver {
 		void UnitDestroyed(CUnit* victim, CUnit* attacker);
 		void UnitTaken(CUnit* unit, int newTeam);
 		void UnitGiven(CUnit* unit, int oldTeam);
+		void UnitEnteredRadar(CUnit* unit, int allyteam);   
+		void UnitEnteredLos(CUnit* unit, int allyteam);             
+		void UnitLeftRadar(CUnit* unit, int allyteam);
+		void UnitLeftLos(CUnit* unit, int allyteam);
 		void GroupChanged(int groupID);
 
 		int  GetDefaultCommand(int x, int y) const;
