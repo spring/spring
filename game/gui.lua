@@ -80,28 +80,32 @@ end
 -- clear the call-ins
 --
 
-Shutdown        = nil
-LayoutButtons   = nil
-UpdateLayout    = nil
-ConfigureLayout = nil
-CommandNotify   = nil
-DrawWorldItems  = nil
-DrawScreenItems = nil
-KeyPress        = nil
-KeyRelease      = nil
-MouseMove       = nil
-MousePress      = nil
-MouseRelease    = nil
-IsAbove         = nil
-GetTooltip      = nil
-AddConsoleLine  = nil
-GroupChanged    = nil
-UnitCreated     = nil
-UnitFinished    = nil
-UnitFromFactory = nil
-UnitDestroyed   = nil
-UnitTaken       = nil
-UnitGiven       = nil
+Shutdown         = nil
+LayoutButtons    = nil
+UpdateLayout     = nil
+ConfigureLayout  = nil
+CommandNotify    = nil
+DrawWorldItems   = nil
+DrawScreenItems  = nil
+KeyPress         = nil
+KeyRelease       = nil
+MouseMove        = nil
+MousePress       = nil
+MouseRelease     = nil
+IsAbove          = nil
+GetTooltip       = nil
+AddConsoleLine   = nil
+GroupChanged     = nil
+UnitCreated      = nil
+UnitFinished     = nil
+UnitFromFactory  = nil
+UnitDestroyed    = nil
+UnitTaken        = nil
+UnitGiven        = nil
+UnitEnteredRadar = nil
+UnitEnteredLos   = nil
+UnitLeftRadar    = nil
+UnitLeftLos      = nil
 
 
 --------------------------------------------------------------------------------

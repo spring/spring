@@ -242,32 +242,11 @@ function GroupChanged(groupID)
   return widgetHandler:GroupChanged(groupID)
 end
 
-function UnitCreated(unitID, unitDefID, unitTeam)
-  return widgetHandler:UnitCreated(unitID, unitDefID, unitTeam)
-end
 
-function UnitFinished(unitID, unitDefID, unitTeam)
-  return widgetHandler:UnitFinished(unitID, unitDefID, unitTeam)
-end
-
-function UnitFromFactory(unitID, unitDefID, unitTeam,
-                         factID, factDefID, userOrders)
-  return widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
-                                       factID, factDefID, userOrders)
-end
-
-function UnitDestroyed(unitID, unitDefID, unitTeam)
-  return widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
-end
-
-function UnitTaken(unitID, unitDefID, unitTeam, newTeam)
-  return widgetHandler:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
-end
-
-
-function UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
-  return widgetHandler:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
-end
+--
+-- The unit call-Ins are handled differently
+-- (see LuaUI/widgets.lua / UpdateCallIns())
+--
 
 
 --------------------------------------------------------------------------------

@@ -322,24 +322,31 @@ void CUnit::SlowUpdate()
 
 				if(!(prevLosStatus&LOS_INRADAR)){
 					globalAI->UnitEnteredRadar(this,a);
+					if (guihandler) { guihandler->UnitEnteredRadar(this, a); }
 				}
 				globalAI->UnitEnteredLos(this,a);
+				if (guihandler) { guihandler->UnitEnteredLos(this, a); }
 			}
 		} else if(radarhandler->InRadar(this,a)){
 			if((losStatus[a] & LOS_INLOS)){
 				globalAI->UnitLeftLos(this,a);
+				if (guihandler) { guihandler->UnitLeftLos(this, a); }
 				losStatus[a]&= ~LOS_INLOS;
 			} else if(!(losStatus[a] & LOS_INRADAR)){
 				losStatus[a]|= LOS_INRADAR;
 				globalAI->UnitEnteredRadar(this,a);
+				if (guihandler) { guihandler->UnitEnteredRadar(this, a); }
 			}
 		} else {
 			if((losStatus[a]&LOS_INRADAR)){
 				if((losStatus[a]&LOS_INLOS)){
 					globalAI->UnitLeftLos(this,a);
 					globalAI->UnitLeftRadar(this,a);
+					if (guihandler) { guihandler->UnitLeftLos(this, a); }
+					if (guihandler) { guihandler->UnitLeftRadar(this, a); }
 				}else{
 					globalAI->UnitLeftRadar(this,a);
+					if (guihandler) { guihandler->UnitLeftRadar(this, a); }
 				}
 				losStatus[a]&= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
 			}

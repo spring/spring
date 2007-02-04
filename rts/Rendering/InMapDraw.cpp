@@ -245,10 +245,15 @@ float3 CInMapDraw::GetMouseMapPos(void)
 
 void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
-	int team=gs->players[msg[2]]->team;
-	int allyteam=gs->AllyTeam(team);
-	if((!gs->Ally(gu->myAllyTeam,allyteam) || !gs->Ally(allyteam,gu->myAllyTeam) || gs->players[msg[2]]->spectator) && !gu->spectatingFullView)
+	const CPlayer* sender = gs->players[msg[2]];
+	int team = sender->team;
+	int allyteam = gs->AllyTeam(team);
+	if (!gu->spectating &&
+	    (sender->spectator
+	     || !gs->Ally(gu->myAllyTeam, allyteam)
+	     || !gs->Ally(allyteam, gu->myAllyTeam))) {
 		return;
+	}
 
 	switch(msg[3]){
 	case NET_POINT:{
@@ -263,7 +268,7 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
 		drawQuads[quad].points.push_back(p);
 
-		logOutput.Print("%s added point: %s",gs->players[msg[2]]->playerName.c_str(),p.label.c_str());
+		logOutput.Print("%s added point: %s", sender->playerName.c_str(), p.label.c_str());
 		logOutput.SetLastMsgPos(pos);
 		sound->PlaySample(blippSound);
 		minimap->AddNotification(pos,float3(1,1,1),1);	//todo: make compatible with new gui

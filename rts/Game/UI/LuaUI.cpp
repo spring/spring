@@ -742,6 +742,19 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 }
 
 
+static inline const UnitDef* EffectiveUnitDef(CUnit* unit)
+{
+	const UnitDef* ud = unit->unitDef;
+	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
+		return ud;
+	} else if (ud->decoyDef) {
+		return ud->decoyDef;
+	} else {
+		return ud;
+	}
+}
+
+
 bool CLuaUI::UnitCreated(CUnit* unit)
 {
 	if (unit->allyteam != gu->myAllyTeam) {
@@ -954,6 +967,75 @@ bool CLuaUI::UnitGiven(CUnit* unit, int oldTeam)
 	}
 
 	return true;
+}
+
+
+static bool UnitCallIn(const char* callInName, CUnit* unit, bool unitdef)
+{
+	lua_State* L = LUASTATE.GetL();
+	if (L == NULL) {
+		return false;
+	}
+	lua_pop(L, lua_gettop(L));
+
+	lua_getglobal(L, callInName);
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, lua_gettop(L));
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	if (unitdef) {
+		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
+	}
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	const int error = lua_pcall(L, unitdef ? 3 : 2, 0, 0);
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n", error,
+		                callInName, lua_tostring(L, -1));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	return true;
+}
+
+
+bool CLuaUI::UnitEnteredRadar(CUnit* unit, int allyteam)
+{
+	if (gu->myAllyTeam != allyteam) {
+		return false;
+	}
+	return UnitCallIn(__FUNCTION__, unit, false);
+}
+
+
+bool CLuaUI::UnitEnteredLos(CUnit* unit, int allyteam)
+{
+	if (gu->myAllyTeam != allyteam) {
+		return false;
+	}
+	return UnitCallIn(__FUNCTION__, unit, true);
+}
+
+
+bool CLuaUI::UnitLeftRadar(CUnit* unit, int allyteam)
+{
+	if (gu->myAllyTeam != allyteam) {
+		return false;
+	}
+	return UnitCallIn(__FUNCTION__, unit, false);
+}
+
+
+bool CLuaUI::UnitLeftLos(CUnit* unit, int allyteam)
+{
+	if (gu->myAllyTeam != allyteam) {
+		return false;
+	}
+	return UnitCallIn(__FUNCTION__, unit, true);
 }
 
 
@@ -1938,19 +2020,6 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 //
 // Lua Callbacks
 //
-
-static inline const UnitDef* EffectiveUnitDef(CUnit* unit)
-{
-	const UnitDef* ud = unit->unitDef;
-	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
-		return ud;
-	} else if (ud->decoyDef) {
-		return ud->decoyDef;
-	} else {
-		return ud;
-	}
-}
-
 
 static int LoadTextVFS(lua_State* L)
 {
@@ -2957,7 +3026,6 @@ static int GetTeamUnitsSorted(lua_State* L)
 				unitDefMap[-1].push_back(unit);
 				continue; // don't know this unit's unitdef
 			}
-			const UnitDef* ud = EffectiveUnitDef(unit);
 			unitDefMap[EffectiveUnitDef(unit)->id].push_back(unit);
 		}
 
@@ -3083,16 +3151,16 @@ static int GetUnitsInRectangle(lua_State* L)
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
 		lua_pushstring(L,
-			"Incorrect arguments to GetUnitsInRectangle(minx,minz, maxx,maxz");
+			"Incorrect arguments to GetUnitsInRectangle(xmin,zmin, xmax,zmax");
 		lua_error(L);
 	}
-	const float minx = (float)lua_tonumber(L, 1);
-	const float minz = (float)lua_tonumber(L, 2);
-	const float maxx = (float)lua_tonumber(L, 3);
-	const float maxz = (float)lua_tonumber(L, 4);
+	const float xmin = (float)lua_tonumber(L, 1);
+	const float zmin = (float)lua_tonumber(L, 2);
+	const float xmax = (float)lua_tonumber(L, 3);
+	const float zmax = (float)lua_tonumber(L, 4);
 
-	const float3 mins(minx, 0.0f, minz);
-	const float3 maxs(maxx, 0.0f, maxz);
+	const float3 mins(xmin, 0.0f, zmin);
+	const float3 maxs(xmax, 0.0f, zmax);
 
 	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
 	const int rectUnitCount = (int)rectUnits.size();
@@ -3123,26 +3191,31 @@ static int GetUnitsInBox(lua_State* L)
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
 	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		lua_pushstring(L,
-			"Incorrect arguments to GetUnitsInBox(minx,miny,minz, maxx,maxy,maxz");
+			"Incorrect arguments to GetUnitsInBox(xmin,ymin,zmin, xmax,ymax,zmax");
 		lua_error(L);
 	}
-	const float minx = (float)lua_tonumber(L, 1);
-	const float miny = (float)lua_tonumber(L, 2);
-	const float minz = (float)lua_tonumber(L, 3);
-	const float maxx = (float)lua_tonumber(L, 4);
-	const float maxy = (float)lua_tonumber(L, 5);
-	const float maxz = (float)lua_tonumber(L, 6);
+	const float xmin = (float)lua_tonumber(L, 1);
+	const float ymin = (float)lua_tonumber(L, 2);
+	const float zmin = (float)lua_tonumber(L, 3);
+	const float xmax = (float)lua_tonumber(L, 4);
+	const float ymax = (float)lua_tonumber(L, 5);
+	const float zmax = (float)lua_tonumber(L, 6);
+
+	const float3 mins(xmin, 0.0f, zmin);
+	const float3 maxs(xmax, 0.0f, zmax);
+
+	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
+	const int rectUnitCount = (int)rectUnits.size();
 
 	lua_newtable(L);
 	int count = 0;
-	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-	set<CUnit*>::const_iterator it;
-	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
-		const CUnit* unit = (*it);
-		const float r = unit->radius;
-		const float3& p = unit->midPos;
-		if (((p.x + r) < minx) || ((p.y + r) < miny) || ((p.z + r) < minz) ||
-		    ((p.x - r) > maxx) || ((p.y - r) > maxy) || ((p.z - r) > maxz)) {
+	for (int i = 0; i < rectUnitCount; i++) {
+		const CUnit* unit = rectUnits[i];
+		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+			continue;
+		}
+		const float y = unit->midPos.y;
+		if ((y < ymin) || (y > ymax)) {
 			continue;
 		}
 		count++;
@@ -3168,18 +3241,27 @@ static int GetUnitsInCylinder(lua_State* L)
 	const float x = (float)lua_tonumber(L, 1);
 	const float z = (float)lua_tonumber(L, 2);
 	const float radius = (float)lua_tonumber(L, 3);
+	const float radSqr = (radius * radius);
+
+	const float3 pos(x, 0.0f, z);
+	const float3 mins(x - radius, 0.0f, z - radius);
+	const float3 maxs(x + radius, 0.0f, z + radius);
+
+	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
+	const int rectUnitCount = (int)rectUnits.size();
 
 	lua_newtable(L);
 	int count = 0;
-	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-	set<CUnit*>::const_iterator it;
-	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
-		const CUnit* unit = (*it);
-		const float3& pos = unit->midPos;
-		const float dx = x - pos.x;
-		const float dz = z - pos.z;
-		const float dist = sqrtf((dx * dx) + (dz * dz));
-		if ((dist - unit->radius) > radius) {
+	for (int i = 0; i < rectUnitCount; i++) {
+		const CUnit* unit = rectUnits[i];
+		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+			continue;
+		}
+		const float3& p = unit->midPos;
+		const float dx = (p.x - x);
+		const float dz = (p.z - z);
+		const float dist = ((dx * dx) + (dz * dz));
+		if (dist > radSqr) {
 			continue;
 		}
 		count++;
@@ -3201,7 +3283,7 @@ struct Plane {
 static int GetUnitsInPlanes(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, 1)) {
+	if ((args < 1) || !lua_istable(L, 1)) {
 		lua_pushstring(L, "Incorrect arguments to GetUnitsInPlanes()");
 		lua_error(L);
 	}
@@ -3225,6 +3307,9 @@ static int GetUnitsInPlanes(lua_State* L)
 	set<CUnit*>::const_iterator it;
 	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
 		const CUnit* unit = (*it);
+		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+			continue;
+		}
 		const float3& pos = unit->midPos;
 		int i;
 		for (i = 0; i < (int)planes.size(); i++) {
@@ -3618,12 +3703,11 @@ static CFeature* ParseFeature(lua_State* L, const char* caller)
 	if (f == NULL) {
 		return NULL;
 	}
-	if ((f->allyteam != gu->myAllyTeam) &&
-	    !loshandler->InLos(f->pos, gu->myAllyTeam) &&
-	    !gu->spectatingFullView) {
-		return NULL;
+	if ((f->allyteam < 0) || (f->allyteam == gu->myAllyTeam) ||
+	    loshandler->InLos(f->pos, gu->myAllyTeam) || gu->spectatingFullView) {	
+		return f;
 	}
-	return f;
+	return NULL;
 }
 
 

@@ -160,6 +160,38 @@ void CGuiHandler::UnitGiven(CUnit* unit, int oldTeam)
 }
 
 
+void CGuiHandler::UnitEnteredRadar(CUnit* unit, int allyteam)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitEnteredRadar(unit, allyteam);
+	}
+}
+
+
+void CGuiHandler::UnitEnteredLos(CUnit* unit, int allyteam)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitEnteredLos(unit, allyteam);
+	}
+}
+
+
+void CGuiHandler::UnitLeftRadar(CUnit* unit, int allyteam)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitLeftRadar(unit, allyteam);
+	}
+}
+
+
+void CGuiHandler::UnitLeftLos(CUnit* unit, int allyteam)
+{
+	if (luaUI != NULL) {
+		luaUI->UnitLeftLos(unit, allyteam);
+	}
+}
+
+
 void CGuiHandler::GroupChanged(int groupID)
 {
 	changedGroups.insert(groupID);
