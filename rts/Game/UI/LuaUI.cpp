@@ -2666,7 +2666,7 @@ static int SetUnitDefIcon(lua_State* L)
 	}
 	if (fit != decoyMap.end()) {
 		const set<UnitDef*>& decoySet = fit->second;
-		set<UnitDef*>::iterator dit;
+		set<UnitDef*>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
 			(*dit)->iconType = ud->iconType;
 		}

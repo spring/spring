@@ -57,6 +57,7 @@ public:
 protected:
 	int cancelDistance;
 	bool slowGuard;
+	bool moveDir;
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}

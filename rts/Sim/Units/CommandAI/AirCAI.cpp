@@ -421,6 +421,9 @@ void CAirCAI::ExecuteFight(Command &c)
 		inCommand = true;
 		commandPos2=goalPos;
 	}
+	if(c.params.size() >= 6){
+		goalPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+	}
 
 	// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
 	if (owner->unitDef->canAttack && owner->fireState == 2 && owner->moveState != 0 && owner->maxRange > 0) {

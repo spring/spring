@@ -33,7 +33,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	commandPos2(ZeroVector),
 	lastPC(-1),
 	cancelDistance(1024),
-	slowGuard(false)
+	slowGuard(false),
+	moveDir(gs->randFloat() > 0.5)
 {
 	lastUserGoal=owner->pos;
 	CommandDescription c;
@@ -312,6 +313,20 @@ void CMobileCAI::ExecutePatrol(Command &c)
 void CMobileCAI::ExecuteFight(Command &c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+	if(c.params.size() == 1) {
+		if(orderTarget && !owner->AttackUnit(orderTarget, false)) {
+			CUnit* newTarget = helper->GetClosestEnemyUnit(
+				owner->pos, owner->maxRange, owner->allyteam);
+			if(owner->AttackUnit(newTarget, false)) {
+				c.params[0] = newTarget->id;
+				inCommand = false;
+			} else {
+				owner->AttackUnit(orderTarget, false);
+			}
+		}
+		ExecuteAttack(c);
+		return;
+	}
 	if(tempOrder){
 		inCommand = true;
 		tempOrder = false;
@@ -342,7 +357,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		commandPos2 = pos;
 	}
 	if(c.params.size() >= 6){
-		pos = ClosestPointOnLine(commandPos1, commandPos2, pos);
+		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
 	if(pos!=goalPos){
 		SetGoal(pos, owner->pos);
@@ -357,7 +372,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 				&& !(owner->unitDef->noChaseCategory & enemy->category)
 				&& !owner->weapons.empty()){
 			Command c2;
-			c2.id=CMD_ATTACK;
+			c2.id=CMD_FIGHT;
 			c2.options=c.options|INTERNAL_ORDER;
 			c2.params.push_back(enemy->id);
 			PushOrUpdateReturnFight();
@@ -458,9 +473,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 
-	if ((tempOrder) && (owner->moveState < 2)) {
+	if (tempOrder && (owner->moveState < 2)) {
 		// limit how far away we fly
-		if ((orderTarget) && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > (500 + owner->maxRange)) {
+		if ((orderTarget) && LinePointDist(commandPos1, commandPos2, orderTarget->pos)
+				> (500*owner->moveState + owner->maxRange)) {
 			StopMove();
 			FinishCommand();
 			return;
@@ -528,7 +544,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b2 = w->AttackUnit(orderTarget, c.id == CMD_DGUN);
 			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
 		}
-
+		float3 diff = owner->pos - orderTarget->pos;
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
 		if (b1 && b2) {
@@ -540,14 +556,21 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// if (((first weapon range minus first weapon length greater than distance to target
 		// or our movetype has type TAAirMoveType) and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
-		// less than 1024) then we are close enough
+		// less than 1024) then we are close enough, but something is in the way. Move a little
+		// closer or further away, and to the side (arbitrary direction).
 		else if (((b3
 				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				&& (owner->pos - orderTarget->pos).Length2D() < (owner->maxRange * 0.9f))
-				|| (owner->pos - orderTarget->pos).SqLength2D() < 1024) {
-			StopMove();
-			owner->moveType->KeepPointingTo(orderTarget,
-				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+				&& diff.Length2D() < (owner->maxRange * 0.9f))
+				|| diff.SqLength2D() < 1024) {
+			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
+			float sin = moveDir ? 3.0/5 : -3.0/5;
+			float cos = 4.0/5;
+			float3 goalDiff(0, 0, 0);
+			goalDiff.x = diff.dot(float3(cos, 0, -sin));
+			goalDiff.z = diff.dot(float3(sin, 0, cos));
+			goalDiff *= diff.Length2D() < (owner->maxRange * 0.3f) ? 1/cos : cos;
+			goalDiff += orderTarget->pos;
+			SetGoal(goalDiff, owner->pos);
 		}
 
 		// if 2D distance of (target position plus attacker error vector times 128) to goal position
@@ -576,6 +599,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b2 = w->AttackGround(pos, c.id == CMD_DGUN);
 			b3 = (owner->pos - pos).Length() < (w->range - (w->relWeaponPos).Length());
 		}
+		float3 diff = owner->pos - pos;
 
 		// if w->AttackGround() returned true then we are already
 		// in range with our biggest weapon so stop moving
@@ -584,11 +608,20 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 		}
 
-		// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus first weapon length
-		// OR squared length of 2D vector from our pos. to attack pos. less than 1024) then we are close enough
+		// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus
+		// first weapon length OR squared length of 2D vector from our pos. to attack pos. less
+		// than 1024) then we are close enough, but something is in the way. Move a little closer
+		// or further away, and to the side (arbitrary direction).
 		else if (b3 || b4) {
-			StopMove();
-			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
+			float sin = moveDir ? 3.0/5 : -3.0/5;
+			float cos = 4.0/5;
+			float3 goalDiff(0, 0, 0);
+			goalDiff.x = diff.dot(float3(cos, 0, -sin));
+			goalDiff.z = diff.dot(float3(sin, 0, cos));
+			goalDiff *= diff.Length2D() < (owner->maxRange * 0.3f) ? 1/cos : cos;
+			goalDiff += pos;
+			SetGoal(goalDiff, owner->pos);
 		}
 
 		// if we are more than 10 units distant from target position then keeping moving closer
@@ -648,15 +681,17 @@ void CMobileCAI::DrawCommands(void)
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_FIGHT:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
-				break;
-			}
 			case CMD_PATROL:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
+			}
+			case CMD_FIGHT:{
+				if(ci->params.size() != 1){
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+					break;
+				}
 			}
 			case CMD_ATTACK:
 			case CMD_DGUN:{
