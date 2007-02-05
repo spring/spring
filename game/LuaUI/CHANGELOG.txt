@@ -2,6 +2,14 @@
 LuaUI v0.2
 ----------
 
+GAME TABLES:
+
+- added the modHumanName         parameter to Game[]
+
+- added the tooltip              parameter to UnitDefs[] tables
+- added the maxWeaponRange       parameter to UnitDefs[] tables
+- added the collisionSphereScale parameter to UnitDefs[] tables
+
 CALL-INS:
 
 - added UnitEnteredRadar() call-in
@@ -18,6 +26,8 @@ CALL-OUTS:
 - changed the GetGroupUnitsSorted()    return format
 - changed the GetTeamUnitsSorted()     return format
 
+- added buildPercent parameter to GetUnitStockpile()
+
 - added enemy querying to most unit related call-outs:
   - GetUnitDefID()
   - GetUnitTeam()
@@ -33,6 +43,8 @@ CALL-OUTS:
   - IsUnitInView()
 
 - added GetUnitGroup() call-out
+
+- added GetGameSpeed() call-out
 
 - renamed SelectUnitsByKeys()   to SelectUnitMap()
 - renamed SelectUnitsByValues() to SelectUnitArray()

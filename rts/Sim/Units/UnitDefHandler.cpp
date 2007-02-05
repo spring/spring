@@ -232,11 +232,11 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 {
 	TdfParser tdfparser(file);
 
-	UnitDef& ud=unitDefs[id];
+	UnitDef& ud = unitDefs[id];
 
 	const string decoy = tdfparser.SGetValueDef("", "UNITINFO\\DecoyFor");
 	if (!decoy.empty()) {
-		decoyNameMap[ud.name] = decoy;
+		decoyNameMap[ud.name] = StringToLower(decoy);
 	}
 
 	ud.name = tdfparser.SGetValueMSG("UNITINFO\\UnitName");
@@ -428,6 +428,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.shieldWeaponDef = NULL;
 	ud.stockpileWeaponDef = NULL;
 
+	ud.maxWeaponRange = 0.0f;
+
 	for(int a=0;a<16;++a){
 		char c[50];
 		sprintf(c,"%i",a+1);
@@ -451,7 +453,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0,0));
 			}
 		}
-
+		
 		string badTarget;
 		tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
 		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
@@ -489,6 +491,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 		ud.weapons.push_back(UnitDef::UnitDefWeapon(name,wd,slaveTo,mainDir,angleDif,btc,otc,fuelUse));
 
+		if (wd->range > ud.maxWeaponRange) {
+			ud.maxWeaponRange = wd->range;
+		}
 		if (wd->isShield) {
 			if (!ud.shieldWeaponDef || // use the biggest shield
 			    (ud.shieldWeaponDef->shieldRadius < wd->shieldRadius)) {
@@ -641,6 +646,11 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.smoothAnim = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SmoothAnim").c_str());
 	ud.canLoopbackAttack = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\CanLoopbackAttack").c_str());
 	ud.levelGround = !!atoi(tdfparser.SGetValueDef("1", "UNITINFO\\LevelGround").c_str());
+
+	// aircraft collision sizes default to half their visual size, to
+	// make them less likely to collide or get hit by nontracking weapons
+	const char* defScale = ud.canfly ? "0.5" : "1";
+	ud.collisionSphereScale = atof(tdfparser.SGetValueDef(defScale, "UNITINFO\\CollisionSphereScale").c_str());
 
 	ud.seismicRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\seismicDistance").c_str());
 	ud.seismicSignature=atoi(tdfparser.SGetValueDef("-1", "UNITINFO\\seismicSignature").c_str());

@@ -262,13 +262,14 @@ bool CLuaState::LoadUnitDefInfo()
 
 		ADD_STRING(name,      ud.name);
 		ADD_STRING(humanName, ud.humanName);
+		ADD_STRING(tooltip,   ud.tooltip);
 		ADD_STRING(filename,  ud.filename);
 
-		ADD_INT(techLevel, ud.techLevel);
+		ADD_INT(techLevel,   ud.techLevel);
 		ADD_INT(maxThisUnit, ud.maxThisUnit);
 		
-		ADD_STRING(TEDClass,       ud.TEDClassString);
-		ADD_STRING(iconType,       ud.iconType);
+		ADD_STRING(TEDClass, ud.TEDClassString);
+		ADD_STRING(iconType, ud.iconType);
 
 		code += def + ".modCategories = "
 		            + GetCategoryTableFromString(ud.categoryString) + endlStr;
@@ -334,11 +335,12 @@ bool CLuaState::LoadUnitDefInfo()
 				wCount++;
 			}
 		}
-		ADD_FLOAT(maxRange,      maxRange);       // CUSTOM
-		ADD_BOOL(hasShield,      hasShield);      // CUSTOM
-		ADD_BOOL(canParalyze,    canParalyze);    // CUSTOM
-		ADD_BOOL(canStockpile,   canStockpile);   // CUSTOM
-		ADD_BOOL(canAttackWater, canAttackWater); // CUSTOM
+		ADD_FLOAT(maxWeaponRange, ud.maxWeaponRange);
+		ADD_FLOAT(maxRange,       maxRange);       // CUSTOM
+		ADD_BOOL(hasShield,       hasShield);      // CUSTOM
+		ADD_BOOL(canParalyze,     canParalyze);    // CUSTOM
+		ADD_BOOL(canStockpile,    canStockpile);   // CUSTOM
+		ADD_BOOL(canAttackWater,  canAttackWater); // CUSTOM
 
 		// FIXME:  canShootAir
 		
@@ -439,9 +441,10 @@ bool CLuaState::LoadUnitDefInfo()
 
 		ADD_BOOL(activateWhenBuilt, ud.activateWhenBuilt);
 
-		ADD_FLOAT(mass, ud.mass);
 		ADD_INT(xSize,  ud.xsize); //each size is 8 units
 		ADD_INT(ySize,  ud.ysize); //each size is 8 units
+		ADD_FLOAT(mass, ud.mass);
+		ADD_FLOAT(collisionSphereScale, ud.collisionSphereScale);
 
 		ADD_INT(buildAngle, ud.buildangle);
 
