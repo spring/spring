@@ -57,18 +57,7 @@ void CAttackHandler::AddUnit(int unitID) {
 	if (debug) L("CAttackHandler::AddUnit frame:"<<ai -> cb -> GetCurrentFrame()<<" unit:"<<unitID<<" name:"<<ud -> humanName<<" movetypething:"<< ai -> MyUnits[unitID] -> GetMoveType());
 	ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTime);
 	ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
-	/*
-	if (ai -> MyUnits[unitID] -> def() -> canfly) {
-		//the groupID of this "group" is 0, to separate them from other idle units
-		ai -> MyUnits[unitID] -> groupID = AIR_GROUP_ID;
-		//this might be a new unit with the same id as an older dead unit
-		ai -> MyUnits[unitID] -> stuckCounter = 0;
-		//do some checking then essentially add it to defense group
-		airUnits.push_back(unitID);
-		//patrol orders need to be updated
-		airPatrolOrdersGiven = false;
-	} else 
-	*/
+
 	{
 		//the groupID of this "group" is 0, to separate them from other idle units
 		ai -> MyUnits[unitID] -> groupID = IDLE_GROUP_ID;
@@ -79,6 +68,7 @@ void CAttackHandler::AddUnit(int unitID) {
 		//TODO: this aint that good tbh, but usually does move it away from the factory
 		this -> PlaceIdleUnit(unitID);
 	}
+
 	ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTime);
 	ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
 }
