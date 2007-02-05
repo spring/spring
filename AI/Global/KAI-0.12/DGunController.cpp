@@ -163,7 +163,7 @@ void DGunController::update(unsigned int currentFrame) {
 				// check if unit still alive (needed since when UnitDestroyed()
 				// triggered GetEnemyUnits() is not immediately updated as well)
 				if (CALLBACK -> GetUnitHealth(units[i]) > 0) {
-					const UnitDef* attackerDef = CALLBACK -> GetUnitDef(attackerID);
+					const UnitDef* attackerDef = CALLBACK -> GetUnitDef(units[i]);
 
 					// don't bother trying to kill planes and also don't directly pop enemy commanders
 					if (!attackerDef -> canfly && (!attackerDef -> isCommander && !attackerDef -> canDGun)) {
