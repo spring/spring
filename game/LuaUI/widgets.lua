@@ -503,10 +503,10 @@ function widgetHandler:UpdateCallIns()
       _G[name] = function(...)
         return selffunc(self, unpack(arg))
       end
-      print('UpdateCallIns() using '..name)
+--      print('UpdateCallIns() using '..name)
     else
       _G[name] = nil
-      print('UpdateCallIns()  nil  '..name)
+--      print('UpdateCallIns()  nil  '..name)
     end
   end
 end

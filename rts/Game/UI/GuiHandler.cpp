@@ -3583,16 +3583,16 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
 			const UnitDef* unitdef = unit->unitDef;
-			if ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView) {
-				if (unitdef->decoyDef) {
-					unitdef = unitdef->decoyDef;
-				}
+			const bool enemyUnit = ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView);
+			if (enemyUnit && unitdef->decoyDef) {
+				unitdef = unitdef->decoyDef;
 			}
+			
 			// draw weapon range
-			if (unit->maxRange > 0) {
+			if (unitdef->maxWeaponRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unit->maxRange,
-				                  unit->weapons.front()->heightMod, 40);
+				glBallisticCircle(unit->pos, unitdef->maxWeaponRange,
+				                  unitdef->weapons[0].def->heightmod, 40);
 			}
 			// draw decloak distance
 			if (unitdef->decloakDistance > 0) {
@@ -3622,16 +3622,6 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				glColor4fv(cmdColors.rangeShield);
 				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
 			}
-			// draw interceptor range
-			const CWeapon* w = unit->stockpileWeapon;
-			if ((w != NULL) && w->weaponDef->interceptor) {
-				if (w->numStockpiled) {
-					glColor4fv(cmdColors.rangeInterceptorOn);
-				} else {
-					glColor4fv(cmdColors.rangeInterceptorOff);
-				}
-				glSurfaceCircle(unit->pos, w->weaponDef->coverageRange, 40);
-			}
 			// draw sensor and jammer ranges
 			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 				const float3& p = unit->pos;
@@ -3640,6 +3630,25 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
 				DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
 				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+			}
+			// draw interceptor range
+			const WeaponDef* wd = NULL;
+			const CWeapon* w;
+			if (enemyUnit) {
+				wd = unitdef->stockpileWeaponDef;
+			} else {
+				w = unit->stockpileWeapon;
+				if (w != NULL) {
+					wd = w->weaponDef;
+				}
+			}
+			if ((wd != NULL) && wd->interceptor) {
+				if (enemyUnit || w->numStockpiled) {
+					glColor4fv(cmdColors.rangeInterceptorOn);
+				} else {
+					glColor4fv(cmdColors.rangeInterceptorOff);
+				}
+				glSurfaceCircle(unit->pos, wd->coverageRange, 40);
 			}
 		}
 	}

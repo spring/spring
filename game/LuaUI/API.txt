@@ -79,6 +79,7 @@
   GetDirList()
 
   GetFPS()
+  GetGameSpeed()
   GetGameSeconds()
   GetLastUpdateSeconds()
 
@@ -504,6 +505,8 @@ GetDirList(string "dir", string "pattern", string "options") ->
 
 GetFPS()         -> number fps
 
+GetGameSpeed()   -> number userSpeed, number internalSpeed, boolean paused
+
 GetGameSeconds() -> number seconds
 
 GetLastUpdateSeconds() -> number of seconds since the last update
@@ -683,7 +686,8 @@ GetUnitStates(number unitID) ->
 
 GetUnitStockpile(number unitID) ->
   nil | number currentStockpile,
-        number queuedStockpile
+        number queuedStockpile,
+        number buildPercent
 
 GetUnitPosition(number unitID) ->
   nil | number x,

@@ -45,6 +45,8 @@ extern "C" {
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -82,6 +84,7 @@ static int SetConfigString(lua_State* L);
 static int SetUnitDefIcon(lua_State* L);
 
 static int GetFPS(lua_State* L);
+static int GetGameSpeed(lua_State* L);
 static int GetGameSeconds(lua_State* L);
 static int GetLastUpdateSeconds(lua_State* L);
 
@@ -373,6 +376,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(SelectUnitMap);
 	REGISTER_LUA_CFUNC(SelectUnitArray);
 	REGISTER_LUA_CFUNC(GetFPS);
+	REGISTER_LUA_CFUNC(GetGameSpeed);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
 	REGISTER_LUA_CFUNC(GetActiveCommand);
@@ -2256,6 +2260,20 @@ static int GetFPS(lua_State* L)
 }
 
 
+static int GetGameSpeed(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		lua_pushstring(L, "GetGameSpeed() takes no arguments");
+		lua_error(L);
+	}
+	lua_pushnumber(L, gs->userSpeedFactor);
+	lua_pushnumber(L, gs->speedFactor);
+	lua_pushboolean(L, gs->paused);
+	return 3;
+}
+
+
 static int GetGameSeconds(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -3454,15 +3472,28 @@ static int GetUnitStates(lua_State* L)
 	lua_pushstring(L, "trajectory");
 	lua_pushboolean(L, unit->useHighTrajectory);
 	lua_rawset(L, -3);
-/*
-	// FIXME -- finish these
-	lua_pushstring(L, "autorepairlevel");
-	lua_pushnumber(L, unit->);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "loopbackattack");
-	lua_pushnumber(L, unit->);
-	lua_rawset(L, -3);
-*/
+
+	const CMoveType* mt = unit->moveType;
+  if (mt) {
+  	const CTAAirMoveType* taAirMove = dynamic_cast<const CTAAirMoveType*>(mt);
+  	if (taAirMove) {
+			lua_pushstring(L, "autorepairlevel");
+			lua_pushnumber(L, taAirMove->repairBelowHealth);
+			lua_rawset(L, -3);
+		}
+		else {
+			const CAirMoveType* airMove = dynamic_cast<const CAirMoveType*>(mt);
+			if (airMove) {
+				lua_pushstring(L, "loopbackattack");
+				lua_pushboolean(L, airMove->loopbackAttack);
+				lua_rawset(L, -3);
+				lua_pushstring(L, "autorepairlevel");
+				lua_pushnumber(L, airMove->repairBelowHealth);
+				lua_rawset(L, -3);
+			}
+		}
+	}
+	
 	return 1;
 }
 
@@ -3478,7 +3509,8 @@ static int GetUnitStockpile(lua_State* L)
 	}
 	lua_pushnumber(L, unit->stockpileWeapon->numStockpiled);
 	lua_pushnumber(L, unit->stockpileWeapon->numStockpileQued);
-	return 2;
+	lua_pushnumber(L, unit->stockpileWeapon->buildPercent);
+	return 3;
 }
 
 
@@ -3556,16 +3588,14 @@ static int GetUnitHealth(lua_State* L)
 		lua_pushnumber(L, unit->health);
 		lua_pushnumber(L, unit->maxHealth);
 		lua_pushnumber(L, unit->paralyzeDamage);
-		lua_pushnumber(L, unit->captureProgress);
-		lua_pushnumber(L, unit->buildProgress);
 	} else {
-		const float scale = (ud->health / ud->decoyDef->health);
+		const float scale = (ud->decoyDef->health / ud->health);
 		lua_pushnumber(L, scale * unit->health);
 		lua_pushnumber(L, scale * unit->maxHealth);
 		lua_pushnumber(L, scale * unit->paralyzeDamage);
-		lua_pushnumber(L, scale * unit->captureProgress);
-		lua_pushnumber(L, scale * unit->buildProgress);
 	}
+	lua_pushnumber(L, unit->captureProgress);
+	lua_pushnumber(L, unit->buildProgress);
 	return 5;
 }
 

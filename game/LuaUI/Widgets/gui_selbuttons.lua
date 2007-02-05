@@ -61,6 +61,7 @@ local unitTypes = 0
 local countsTable = {}
 local activePress = false
 local mouseIcon = -1
+local currentDef = nil
 
 local iconSizeX = math.floor(100)
 local iconSizeY = math.floor(iconSizeX * 0.75)
@@ -78,6 +79,7 @@ function widget:DrawScreen()
   if (unitTypes <= 0) then
     countsTable = {}
     activePress = false
+    currentDef  = nil
     return
   end
   
@@ -86,24 +88,26 @@ function widget:DrawScreen()
   -- unit model rendering uses the depth-buffer
   gl.Clear(GL_DEPTH_BUFFER_BIT)
 
+  local x,y,lb,mb,rb = Spring.GetMouseState()
+  local mouseIcon = MouseOverIcon(x, y)
+
   -- draw the buildpics
   unitCounts.n = nil  
-  icon = 0
+  local icon = 0
   for udid,count in pairs(unitCounts) do
     DrawUnitDefIcon(udid, icon, count)
+    if (icon == mouseIcon) then
+      currentDef = UnitDefs[udid]
+    end
     icon = icon + 1
   end
 
   -- draw the highlights
-  if (not widgetHandler:InTweakMode()) then
-    x,y,lb,mb,rb = Spring.GetMouseState()
-    icon = MouseOverIcon(x, y)
-    if (icon >= 0) then
-      if (lb or mb or rb) then
-        DrawIconQuad(icon, { 1, 0, 0, 0.333 })  --  red highlight
-      else
-        DrawIconQuad(icon, { 0, 0, 1, 0.333 })  --  blue highlight
-      end
+  if (not widgetHandler:InTweakMode() and (mouseIcon >= 0)) then
+    if (lb or mb or rb) then
+      DrawIconQuad(mouseIcon, { 1, 0, 0, 0.333 })  --  red highlight
+    else
+      DrawIconQuad(mouseIcon, { 0, 0, 1, 0.333 })  --  blue highlight
     end
   end
 end
@@ -416,6 +420,26 @@ function MouseOverIcon(x, y)
     icon = (unitTypes - 1)
   end
   return icon
+end
+
+
+-------------------------------------------------------------------------------
+
+function widget:IsAbove(x, y)
+  local icon = MouseOverIcon(x, y)
+  if (icon < 0) then
+    return false
+  end
+  return true
+end
+
+
+function widget:GetTooltip(x, y)
+  local ud = currentDef
+  if (not ud) then
+    return ''
+  end
+  return ud.humanName .. ' ' .. ud.tooltip
 end
 
 

@@ -268,19 +268,13 @@ START_TIME_PROFILE;
 	if(ud->tidalGenerator>0)
 		unit->energyTickMake += ud->tidalGenerator*readmap->tidalStrength;
 
-
-//	if(!ud->weapons.empty())
-//		unit->mainDamageType=unit->weapons.front()->damageType;
-
-	//unit->model=unitModelLoader->GetModel(ud->model.modelname,side);
-	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->canfly?0.5f:1,side); 	//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side);
 	unit->SetRadius(unit->model->radius);
 
 	if(ud->floater)
 		unit->pos.y = max(-ud->waterline,ground->GetHeight2(unit->pos.x,unit->pos.z));
 	else
 		unit->pos.y=ground->GetHeight2(unit->pos.x,unit->pos.z);
-	//unit->pos.y=ground->GetHeight(unit->pos.x,unit->pos.z);
 
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);

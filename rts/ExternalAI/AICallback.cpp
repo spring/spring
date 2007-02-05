@@ -250,9 +250,21 @@ int CAICallback::GetUnitAiHint(int unitid)
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->aihint;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->aihint;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unit->aihint;
+				} else {
+					return decoyDef->aihint;
+				}
+			}
 		}
 	}
 	return 0;
@@ -286,9 +298,22 @@ float CAICallback::GetUnitHealth(int unitid)			//the units current health
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->health;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->health;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unit->health;
+				} else {
+					const float scale = (decoyDef->health / unitDef->health);
+					return (unit->health * scale);
+				}
+			}
 		}
 	}
 	return 0;
@@ -298,9 +323,22 @@ float CAICallback::GetUnitMaxHealth(int unitid)		//the units max health
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->maxHealth;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->maxHealth;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unit->maxHealth;
+				} else {
+					const float scale = (decoyDef->health / unitDef->health);
+					return (unit->maxHealth * scale);
+				}
+			}
 		}
 	}
 	return 0;
@@ -310,9 +348,21 @@ float CAICallback::GetUnitSpeed(int unitid)				//the units max speed
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->unitDef->speed;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->unitDef->speed;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unitDef->speed;
+				} else {
+					return decoyDef->speed;
+				}
+			}
 		}
 	}
 	return 0;
@@ -322,9 +372,22 @@ float CAICallback::GetUnitPower(int unitid)				//sort of the measure of the unit
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->power;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->power;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unit->power;
+				} else {
+					const float scale = (decoyDef->power / unitDef->power);
+					return (unit->power * scale);
+				}
+			}
 		}
 	}
 	return 0;
@@ -346,9 +409,21 @@ float CAICallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the
 {
 	verify ();
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			return unit->maxRange;
+		CUnit* unit = uh->units[unitid];
+		if (unit) {
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
+				return unit->maxRange;
+			}
+			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
+				const UnitDef* unitDef = unit->unitDef;
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (!decoyDef) {
+					return unit->maxRange;
+				} else {
+					return decoyDef->maxWeaponRange;
+				}
+			}
 		}
 	}
 	return 0;
@@ -359,23 +434,22 @@ const UnitDef* CAICallback::GetUnitDef(int unitid)
 	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit = uh->units[unitid];
-		if (unit == NULL) {
-			return NULL;
-		}
-		const UnitDef* unitDef = unit->unitDef;
-		const int allyTeam = gs->AllyTeam(team);
-		if (gs->Ally(unit->allyteam, allyTeam)) {
-			return unitDef;
-		}
-		const int losStatus = unit->losStatus[allyTeam];
-		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-		if (((losStatus & LOS_INLOS) != 0) ||
-		    ((losStatus & prevMask) == prevMask)) {
-			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+		if (unit) {
+			const UnitDef* unitDef = unit->unitDef;
+			const int allyTeam = gs->AllyTeam(team);
+			if (gs->Ally(unit->allyteam, allyTeam)) {
 				return unitDef;
-			} else {				
-				return decoyDef;
+			}
+			const int losStatus = unit->losStatus[allyTeam];
+			const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+			if (((losStatus & LOS_INLOS) != 0) ||
+					((losStatus & prevMask) == prevMask)) {
+				const UnitDef* decoyDef = unitDef->decoyDef;
+				if (decoyDef == NULL) {
+					return unitDef;
+				} else {				
+					return decoyDef;
+				}
 			}
 		}
 	}
@@ -1080,14 +1154,14 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5f:1,0);
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->collisionSphereScale,0);
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->canfly?0.5f:1,0);
+	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->collisionSphereScale,0);
 	return mdl->height;
 }
 

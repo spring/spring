@@ -103,6 +103,7 @@ struct UnitDef
 	int armorType;
 
 	UnitModelDef model;
+	float collisionSphereScale;
 
 	struct UnitDefWeapon {
 		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat,float fuelUse)
@@ -127,6 +128,7 @@ struct UnitDef
 	std::vector<UnitDefWeapon> weapons;
 	WeaponDef* shieldWeaponDef;
 	WeaponDef* stockpileWeaponDef;
+	float maxWeaponRange;
 
 	std::map<int,std::string> buildOptions;
 
