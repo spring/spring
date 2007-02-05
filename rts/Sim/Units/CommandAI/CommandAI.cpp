@@ -579,11 +579,28 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 	}
 
 	//avoid weaponless units moving to 0 distance when given attack order
-	if(c.id==CMD_ATTACK && owner->weapons.empty() && owner->unitDef->canKamikaze==false){
-		Command c2;
-		c2.id=CMD_STOP;
-		commandQue.push_back(c2);
-		return;
+	if(c.id==CMD_ATTACK){
+		if(owner->weapons.empty() && owner->unitDef->canKamikaze==false){
+			Command c2;
+			c2.id=CMD_STOP;
+			commandQue.push_back(c2);
+			return;
+		} else if(c.params.size() == 1 && uh->units[(int) c.params[0]] != NULL
+				&& uh->units[(int) c.params[0]]->allyteam == owner->allyteam) {
+			for(std::vector<CWeapon*>::iterator i = owner->weapons.begin();
+					i != owner->weapons.end(); i++){
+				if((*i)->weaponDef->canAttackGround){
+					float3 temp = uh->units[(int) c.params[0]]->pos;
+					Command c1;
+					c1.id = CMD_ATTACK;
+					c1.params.push_back(temp.x);
+					c1.params.push_back(temp.y);
+					c1.params.push_back(temp.z);
+					commandQue.push_back(c1);
+					return;
+				}
+			}
+		}
 	}
 
 	commandQue.push_back(c);
@@ -616,8 +633,9 @@ std::deque<Command>::iterator CCommandAI::GetCancelQueued(const Command &c,
 		ci--; //iterate from the end and dont check the current order
 		const Command& t = *ci;
 
-		if (((c.id == t.id) || ((c.id < 0) && (t.id < 0))) &&
-		    (t.params.size() == c.params.size())) {
+		if (((c.id == t.id) || ((c.id < 0) && (t.id < 0))
+				|| (t.id == CMD_FIGHT && c.id == CMD_ATTACK && t.params.size() == 1))
+				&& (t.params.size() == c.params.size())) {
 			if (c.params.size() == 1) {
 			  // assume the param is a unit of feature id
 				if ((t.params[0] == c.params[0]) &&

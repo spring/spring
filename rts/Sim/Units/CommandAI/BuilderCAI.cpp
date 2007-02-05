@@ -597,17 +597,20 @@ void CBuilderCAI::ExecuteFight(Command &c)
 		// condition, but is actually updated correctly if you click somewhere
 		// outside the area close to the line (for a new command).
 		commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-		if ((owner->pos - commandPos1).SqLength2D()>(96*96)) {
+		if ((owner->pos - commandPos1).SqLength2D() > (96 * 96)) {
 			commandPos1 = owner->pos;
 		}
 	}
 	float3 pos(c.params[0],c.params[1],c.params[2]);
 	if(!inCommand){
 		inCommand = true;
-		commandPos2=pos;
+		commandPos2 = pos;
 	}
-	if(!(pos==goalPos)){
-		SetGoal(pos,owner->pos);
+	if(c.params.size() >= 6){
+		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+	}
+	if(pos!=goalPos){
+		SetGoal(pos, owner->pos);
 	}
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPosOnLine,300*owner->moveState+fac->buildDistance-8,c.options,true)){

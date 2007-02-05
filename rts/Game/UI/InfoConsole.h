@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <boost/thread/recursive_mutex.hpp>
-#include <SDL/SDL_types.h>
+#include <SDL_types.h>
 #include "float3.h"
 #include "LogOutput.h"
 
