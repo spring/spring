@@ -757,7 +757,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 		totalParams += commands[c].params.size();
 	}
 
-	int msgLen = 
+	int msgLen = 0;
 	msgLen += (1 + 2 + 1); // msg type, msg size, player ID
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
