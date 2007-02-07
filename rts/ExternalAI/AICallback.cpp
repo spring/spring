@@ -259,7 +259,7 @@ int CAICallback::GetUnitAiHint(int unitid)
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unit->aihint;
 				} else {
 					return decoyDef->aihint;
@@ -307,7 +307,7 @@ float CAICallback::GetUnitHealth(int unitid)			//the units current health
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unit->health;
 				} else {
 					const float scale = (decoyDef->health / unitDef->health);
@@ -332,7 +332,7 @@ float CAICallback::GetUnitMaxHealth(int unitid)		//the units max health
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unit->maxHealth;
 				} else {
 					const float scale = (decoyDef->health / unitDef->health);
@@ -357,7 +357,7 @@ float CAICallback::GetUnitSpeed(int unitid)				//the units max speed
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unitDef->speed;
 				} else {
 					return decoyDef->speed;
@@ -381,7 +381,7 @@ float CAICallback::GetUnitPower(int unitid)				//sort of the measure of the unit
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unit->power;
 				} else {
 					const float scale = (decoyDef->power / unitDef->power);
@@ -418,7 +418,7 @@ float CAICallback::GetUnitMaxRange(int unitid)		//the furthest any weapon of the
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (!decoyDef) {
+				if (decoyDef == NULL) {
 					return unit->maxRange;
 				} else {
 					return decoyDef->maxWeaponRange;
@@ -1166,23 +1166,35 @@ float CAICallback::GetUnitDefHeight(int def)
 }
 
 
-bool CAICallback::GetProperty(int id, int property, void *data)
+bool CAICallback::GetProperty(int unitid, int property, void *data)
 {
 	verify ();
-	if (CHECK_UNITID(id)) {
-		CUnit *unit = uh->units[id];
-		if (!(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))) { 
+	if (CHECK_UNITID(unitid)) {
+		CUnit* unit = uh->units[unitid];
+		const int allyTeam = gs->AllyTeam(team);
+		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) { 
 			return false;  //return if the unit doesn't exist or cant be seen
 		}
 
 		switch (property) {
-		case AIVAL_UNITDEF:{
-				(*(const UnitDef**)data) = unit->unitDef;
+			case AIVAL_UNITDEF: {
+				if (gs->Ally(unit->allyteam, allyTeam)) {
+					(*(const UnitDef**)data) = unit->unitDef;
+				} else {
+					const UnitDef* unitDef = unit->unitDef;
+					const UnitDef* decoyDef = unitDef->decoyDef;
+					if (decoyDef == NULL) {
+						(*(const UnitDef**)data) = unitDef;
+					} else {
+						(*(const UnitDef**)data) = decoyDef;
+					}
+				}
 				return true;
 			}
-		case AIVAL_CURRENT_FUEL:
-			(*(float*)data) = unit->currentFuel;
-			return true;
+			case AIVAL_CURRENT_FUEL: {
+				(*(float*)data) = unit->currentFuel;
+				return true;
+			}
 		}
 	}
 	return false;
