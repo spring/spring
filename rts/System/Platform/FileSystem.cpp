@@ -302,7 +302,10 @@ std::string FileSystem::GetFilename(const std::string& path) const
 std::string FileSystem::GetBasename(const std::string& path) const
 {
 	std::string fn = GetFilename(path);
-	return fn.substr(0, fn.find_last_of('.'));
+	size_t dot = fn.find_last_of('.');
+	if (dot != std::string::npos)
+		return fn.substr(0, dot);
+	return fn;
 }
 
 /**

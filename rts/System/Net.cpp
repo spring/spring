@@ -73,23 +73,23 @@ CNet::CNet()
 	Uint16 wVersionRequested;
 #ifdef _WIN32
 	WSADATA wsaData;
-	int err; 
+	int err;
 
-	wVersionRequested = MAKEWORD( 2, 2 ); 
+	wVersionRequested = MAKEWORD( 2, 2 );
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
 		handleerror(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		return;
-	} 
+	}
 	/* Confirm that the WinSock DLL supports 2.2.*/
 	/* Note that if the DLL supports versions greater    */
 	/* than 2.2 in addition to 2.2, it will still return */
 	/* 2.2 in wVersion since that is the version we      */
-	/* requested.                                        */ 
+	/* requested.                                        */
 	if ( LOBYTE( wsaData.wVersion ) != 2 ||
         HIBYTE( wsaData.wVersion ) != 2 ) {
 		handleerror(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
 		WSACleanup( );
-		return; 
+		return;
 	}
 #endif
 	connected=false;
@@ -225,7 +225,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 			exit(0);
 			return -1;
 		}
-		saOther.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);	
+		saOther.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);
 	}
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
@@ -458,9 +458,9 @@ int CNet::ResolveConnection(sockaddr_in* from)
 		if(connections[a].active){
 			if(
 #ifdef _WIN32
-			    connections[a].addr.sin_addr.S_un.S_addr==addr 
+			    connections[a].addr.sin_addr.S_un.S_addr==addr
 #else
-			    connections[a].addr.sin_addr.s_addr==addr 
+			    connections[a].addr.sin_addr.s_addr==addr
 #endif
 			    && connections[a].addr.sin_port==from->sin_port){
 				return a;
@@ -476,7 +476,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 	if(wantedNumber){
 		if(wantedNumber<0 || wantedNumber>=MAX_PLAYERS){
 			logOutput.Print("Warning attempt to connect to errenous connection number");
-			wantedNumber=0;		
+			wantedNumber=0;
 		}
 		if(connections[wantedNumber].active){
 			logOutput.Print("Warning attempt to connect to already active connection number");

@@ -24,7 +24,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 	ifs->Seek(header->tilesPtr);
 
 	tileSize = header->tilesize;
-	
+
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader,ifs);
 
@@ -33,6 +33,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 	int curTile=0;
 
 	for(int a=0;a<tileHeader.numTileFiles;++a){
+		PrintLoadMsg("Loading tile file");
+
 		int size;
 		ifs->Read(&size,4);
 		size = swabdword(size);
@@ -55,6 +57,9 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 			curTile+=size;
 			continue;
 		}
+
+		PrintLoadMsg("Reading tiles");
+
 		TileFileHeader tfh;
 		READ_TILEFILEHEADER(tfh,tileFile);
 
@@ -70,11 +75,13 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 			curTile++;
 		}
 	}
-	
+
+	PrintLoadMsg("Reading tile map");
+
 	int count = (header->mapx*header->mapy)/16;
 
 	ifs->Read(tileMap, count*sizeof(int));
-	
+
 	for (int i = 0; i < count; i++) {
 		tileMap[i] = swabdword(tileMap[i]);
 	}

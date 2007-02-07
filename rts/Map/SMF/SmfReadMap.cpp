@@ -132,16 +132,14 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 		offset += size;
 	}
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP-1 );
-	
+
 	delete[] buf;
 
 	PrintLoadMsg("Creating ground shading");
 
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-//	unsigned char* tempMem=SAFE_NEW unsigned char[1024*1024*4];
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-//	delete [] tempMem;
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -252,7 +250,7 @@ void CSmfReadMap::DrawMinimap ()
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	if(groundDrawer->DrawExtraTex()){
@@ -291,7 +289,7 @@ void CSmfReadMap::DrawMinimap ()
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE2_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }

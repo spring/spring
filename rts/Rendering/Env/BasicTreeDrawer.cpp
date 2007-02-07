@@ -19,8 +19,6 @@
 
 CBasicTreeDrawer::CBasicTreeDrawer()
 {
-	PrintLoadMsg("Loading tree texture");
-
 	lastListClean=0;
 
 	TdfParser resources("gamedata/resources.tdf");
@@ -31,7 +29,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		throw content_error("Could not load tree texture from " + fn);
 	TexImage.ReverseYAxis();
 	//unsigned char gran[1024][512][4];
-	unsigned char (*gran)[512][4]=SAFE_NEW unsigned char[1024][512][4]; 
+	unsigned char (*gran)[512][4]=SAFE_NEW unsigned char[1024][512][4];
 	if (TexImage.xsize>1){
 		for(int y=0;y<256;y++){
 			for(int x=0;x<256;x++){
@@ -197,7 +195,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 	dif.z=camera->pos.z-(y*SQUARE_SIZE*TREE_SQUARE_SIZE + SQUARE_SIZE*TREE_SQUARE_SIZE/2);
 	float dist=dif.Length();
 	dif/=dist;
-	
+
 	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2 && dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance)){//far trees
 		tss->lastSeenFar=gs->frameNum;
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
@@ -241,13 +239,13 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 			glColor4f(1,1,1,trans);
 			glAlphaFunc(GL_GREATER,(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE*2));
 		} else {
-			glColor4f(1,1,1,1);			
+			glColor4f(1,1,1,1);
 			glDisable(GL_BLEND);
 			glAlphaFunc(GL_GREATER,0.5f);
 		}
 		glCallList(tss->farDisplist);
 	}
-	
+
 	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//midle distance trees
 		tss->lastSeen=gs->frameNum;
 		if(!tss->displist){
@@ -303,7 +301,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 			va->DrawArrayT(GL_QUADS);
 			glEndList();
 		}
-		glColor4f(1,1,1,1);			
+		glColor4f(1,1,1,1);
 		glDisable(GL_BLEND);
 		glAlphaFunc(GL_GREATER,0.5f);
 		glCallList(tss->displist);
@@ -380,7 +378,7 @@ void CBasicTreeDrawer::CreateTreeTex(unsigned int& texnum, unsigned char *data, 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	int mipnum=0;
 	glTexImage2D(GL_TEXTURE_2D,mipnum,GL_RGBA8 ,xsize, ysize,0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	while(xsize!=1 || ysize!=1){		
+	while(xsize!=1 || ysize!=1){
 		mipnum++;
 		if(xsize!=1)
 			xsize/=2;
