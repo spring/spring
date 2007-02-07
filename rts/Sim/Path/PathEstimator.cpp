@@ -139,7 +139,6 @@ moveMathOptions(mmOpt)
 			char calcMsg[10000];
 			sprintf(calcMsg,"Calculating estimate path costs \"%i\" %i/%i",BLOCK_SIZE,(*mi)->pathType,moveinfo->moveData.size());
 			PrintLoadMsg(calcMsg);
-			if(net) net->Update();	//prevent timeout 
 			//Calculate
 			for(z = 0; z < nbrOfBlocksZ; z++) {
 				for(x = 0; x < nbrOfBlocksX; x++) {
@@ -523,7 +522,7 @@ and possibly add it to the open-blocks-queue.
 */
 void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &peDef, OpenBlock& parentOpenBlock, unsigned int direction) {
 	testedBlocks++;
-	
+
 	//Initial calculations of the new block.
 	int2 block;
 	block.x = parentOpenBlock.block.x + directionVector[direction].x;
@@ -580,7 +579,7 @@ void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &p
 	ob->cost = cost;
 	ob->currentCost = currentCost;
 	openBlocks.push(ob);
-	
+
 	//Mark the block as open, and it's parent.
 	blockState[blocknr].cost = cost;
 	blockState[blocknr].options |= (direction | PATHOPT_OPEN);
@@ -644,7 +643,7 @@ Trying to read offset and vertices data from file.
 Return false if failed.
 TODO: Read-error-check.
 */
-bool CPathEstimator::ReadFile(string name) 
+bool CPathEstimator::ReadFile(string name)
 {
 	unsigned int hash=Hash();
 	char hashString[50];
@@ -681,7 +680,7 @@ bool CPathEstimator::ReadFile(string name)
 
 		//Read vertices data.
 		file.ReadFile(fh, vertex, nbrOfVertices * sizeof(float));
-		
+
 		//File read successful.
 		return true;
 	} else {
@@ -710,7 +709,7 @@ void CPathEstimator::WriteFile(string name) {
 
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
-		
+
 		//Write hash.
 		unsigned int hash = Hash();
 		zipWriteInFileInZip(file, (void*)&hash, 4);

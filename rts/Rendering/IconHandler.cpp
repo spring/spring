@@ -18,9 +18,11 @@ CIconHandler* iconHandler;
 
 CIconHandler::CIconHandler()
 {
+	PrintLoadMsg("Parsing unit icons");
+
 	standardTextureGenerated = false;
-	
-	LoadTDFicons("usericons.tdf"); 
+
+	LoadTDFicons("usericons.tdf");
 	LoadTDFicons("gamedata/icontypes.tdf");
 
 	// If the default icon doesn't exist we'll have to create one
@@ -34,7 +36,6 @@ CIconHandler::CIconHandler()
 bool CIconHandler::LoadTDFicons(const std::string& filename)
 {
 	try {
-		PrintLoadMsg("Parsing unit icons");
 		TdfParser tdfparser(filename);
 		std::vector<std::string> iconList = tdfparser.GetSectionList("icontypes");
 		CBitmap bitmap;

@@ -12,7 +12,8 @@
 #include "Platform/errorhandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
-#include <SDL_video.h>
+#include <SDL.h>
+#include "Net.h"
 #include "mmgr.h"
 
 #include "IFramebuffer.h"
@@ -48,12 +49,12 @@ void LoadExtensions()
 		handleerror(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
 		exit(0);
 	}
-	
+
 	vertexArray1=SAFE_NEW CVertexArray;
 	vertexArray2=SAFE_NEW CVertexArray;
 
 	std::string s= (char*)glGetString(GL_EXTENSIONS);
-	for (unsigned int i=0; i<s.length(); i++) 
+	for (unsigned int i=0; i<s.length(); i++)
 		if (s[i]==' ') s[i]='\n';
 
 	std::ofstream ofs("ext.txt");
@@ -107,11 +108,28 @@ void UnloadStartPicture()
 
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
+	static char prevText[100];
+	static unsigned startTicks;
+
 	PUSH_CODE_MODE;
+
+	// Stuff that needs to be done regularly while loading.
+	// Totally unrelated to the task the name of this function implies.
+	ENTER_MIXED;
+
+	unsigned ticks = SDL_GetTicks();
+	if (prevText[0])
+		logOutput.Print("Loading step `%s' took %g seconds", prevText, (ticks - startTicks) / 1000.0f);
+	strncpy(prevText, text, sizeof(prevText));
+	prevText[sizeof(prevText) - 1] = 0;
+	startTicks = ticks;
+
+	good_fpu_control_registers(text);
+
+	net->Update();	//prevent timing out during load
+
+	// Draw loading screen & print load msg.
 	ENTER_UNSYNCED;
-	// this is just a practical place to check this, as this function is
-	// called on regular intervals during loading.
-	assert(good_fpu_control_registers(text));
 
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,7 +163,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 }
 
 /**
- * True if the program in DATADIR/shaders/filename is 
+ * True if the program in DATADIR/shaders/filename is
  * loadable and can run inside our graphics server.
  *
  * @param target glProgramStringARB target: GL_FRAGMENT_PROGRAM_ARB GL_VERTEX_PROGRAM_ARB
@@ -194,8 +212,8 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 }
 
 /**
- * Presumes the last GL operation was to load a vertex or 
- * fragment program. 
+ * Presumes the last GL operation was to load a vertex or
+ * fragment program.
  *
  * If it was invalid, display an error
  * message about what and where the problem in the program
@@ -255,7 +273,7 @@ unsigned int LoadVertexProgram(const char* filename)
 
 unsigned int LoadFragmentProgram(const char* filename)
 {
-	
+
 	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
 }
 

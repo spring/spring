@@ -226,7 +226,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	tooltip=SAFE_NEW CTooltipConsole();
 
 	ENTER_MIXED;
-	if(!server) net->Update();	//prevent timing out during load
+
 	helper=SAFE_NEW CGameHelper(this);
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 	ENTER_SYNCED;
@@ -242,9 +242,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	wind.LoadWind();
 	moveinfo=SAFE_NEW CMoveInfo();
 	groundDecals=SAFE_NEW CGroundDecalHandler();
-
-	ENTER_MIXED;
-	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_UNSYNCED;
 #ifndef NEW_GUI
@@ -282,22 +279,17 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	mapDamage=IMapDamage::GetMapDamage();
 	loshandler=SAFE_NEW CLosHandler();
 	radarhandler=SAFE_NEW CRadarHandler(false);
-	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_MIXED;
 	uh=SAFE_NEW CUnitHandler();
 	iconHandler=SAFE_NEW CIconHandler();
 	unitDrawer=SAFE_NEW CUnitDrawer();
 	fartextureHandler = SAFE_NEW CFartextureHandler();
-	if(!server) net->Update();	//prevent timing out during load
 	modelParser = SAFE_NEW C3DModelParser();
 
  	ENTER_SYNCED;
- 	if(!server) net->Update();	//prevent timing out during load
  	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
- 	if(!server) net->Update();	//prevent timing out during load
  	pathManager = SAFE_NEW CPathManager();
- 	if(!server) net->Update();	//prevent timing out during load
 
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
@@ -307,7 +299,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	keyBindings=SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 #endif
-	if(!server) net->Update();	//prevent timing out during load
 
 	water=CBaseWater::GetWater();
 	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
@@ -396,7 +387,7 @@ CGame::~CGame()
 
 	delete guihandler;
 	guihandler = NULL;
-	
+
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
@@ -494,7 +485,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	// Get the list of possible key actions
 	CKeySet ks(k, false);
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
-	
+
 	if (userWriting){
 
 		// convert to the appropriate prefix if we receive a chat switch action
@@ -651,7 +642,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 
 	const string& cmd = action.command;
-	
+
 	// process the action
 	if (cmd == "select") {
 		selectionKeys->DoSelection(action.extra);
@@ -960,7 +951,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			bih.biHeight=(gu->viewSizeY/4)*4;
 			bih.biPlanes=1;
 			bih.biBitCount=24;
-			bih.biSizeImage=bih.biWidth*bih.biHeight*3; 
+			bih.biSizeImage=bih.biWidth*bih.biHeight*3;
 			bih.biCompression=BI_RGB;
 
 
@@ -1705,7 +1696,7 @@ bool CGame::Draw()
 
 		const float xScale = 0.020f;
 		const float yScale = 0.028f;
-		
+
 		glColor4f(1,1,1,1);
 		glTranslatef(0.26f,0.73f,0.0f);
 		glScalef(xScale, yScale, 1.0f);
@@ -1719,7 +1710,7 @@ bool CGame::Draw()
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, tempstring.c_str());
 		}
-		
+
 		glLoadIdentity();
 	}
 
@@ -2413,7 +2404,7 @@ bool CGame::ClientReadNet()
 
 // FIXME -- hackish
 #define UNPACK(type)  *((type*)ptr); ptr = ptr + sizeof(type);
-			
+
 			// parse the unit list
 			vector<int> unitIDs;
 			const int unitCount = UNPACK(short);
@@ -3011,7 +3002,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 		if (end != start) {
 			gs->cheatEnabled = (num != 0);
 		} else {
-			gs->cheatEnabled = !gs->cheatEnabled; 
+			gs->cheatEnabled = !gs->cheatEnabled;
 		}
 		if (gs->cheatEnabled) {
 			logOutput.Print("Cheating!");
@@ -3330,9 +3321,9 @@ static void SelectCycle(const string& command)
 {
 	static set<int> unitIDs;
 	static int lastID = -1;
-		
+
 	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	
+
 	if (command == "restore") {
 		selectedUnits.ClearSelected();
 		set<int>::const_iterator it;
@@ -3344,7 +3335,7 @@ static void SelectCycle(const string& command)
 		}
 		return;
 	}
-	
+
 	if (selUnits.size() >= 2) {
 		// assign the cycle units
 		unitIDs.clear();
@@ -3357,7 +3348,7 @@ static void SelectCycle(const string& command)
 		selectedUnits.AddUnit(uh->units[lastID]);
 		return;
 	}
-	
+
 	// clean the list
 	set<int> tmpSet;
 	set<int>::const_iterator it;
