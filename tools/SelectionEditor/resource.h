@@ -57,6 +57,8 @@
 #define IDC_RADIO8                      1047
 #define IDC_EDIT8                       1048
 #define IDC_CHECK23                     1049
+#define IDC_CHECK30                     1050
+#define IDC_CHECK31                     1051
 
 // Next default values for new objects
 // 
