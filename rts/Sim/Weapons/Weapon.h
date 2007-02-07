@@ -30,6 +30,9 @@ public:
 	void DependentDied(CObject* o);
 
 	virtual bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
+	bool TryTarget(CUnit* unit, bool userTarget);
+	bool TryTargetRotate(CUnit* unit, bool userTarget);
+	bool TryTargetRotate(float3 pos, bool userTarget);
 	virtual void SlowUpdate();
 	virtual void Update();
 
