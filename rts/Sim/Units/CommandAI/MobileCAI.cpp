@@ -314,14 +314,15 @@ void CMobileCAI::ExecuteFight(Command &c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	if(c.params.size() == 1) {
-		if(orderTarget && !owner->AttackUnit(orderTarget, false)) {
+		if(orderTarget && owner->weapons.size() > 0
+				&& !owner->weapons.front()->AttackUnit(orderTarget, false)) {
 			CUnit* newTarget = helper->GetClosestEnemyUnit(
 				owner->pos, owner->maxRange, owner->allyteam);
-			if(owner->AttackUnit(newTarget, false)) {
+			if(owner->weapons.front()->AttackUnit(newTarget, false)) {
 				c.params[0] = newTarget->id;
 				inCommand = false;
 			} else {
-				owner->AttackUnit(orderTarget, false);
+				owner->weapons.front()->AttackUnit(orderTarget, false);
 			}
 		}
 		ExecuteAttack(c);
@@ -533,7 +534,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
 	if (orderTarget) {
-		bool b1 = owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
+		//bool b1 = owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
 		bool b2 = false;
 		bool b3 = false;
 
@@ -541,14 +542,15 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
 			CWeapon* w = owner->weapons.front();
-			b2 = w->AttackUnit(orderTarget, c.id == CMD_DGUN);
+			b2 = w->TryTargetRotate(orderTarget, c.id == CMD_DGUN);
 			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
 		}
 		float3 diff = owner->pos - orderTarget->pos;
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
-		if (b1 && b2) {
+		if (b2) {
 			StopMove();
+			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
 			owner->moveType->KeepPointingTo(orderTarget,
 				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
 		}
@@ -587,7 +589,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	else {
 		float3 pos(c.params[0], c.params[1], c.params[2]);
 
-		bool b1 = owner->AttackGround(pos, c.id == CMD_DGUN);
+		//bool b1 = owner->AttackGround(pos, c.id == CMD_DGUN);
 		bool b2 = false;
 		bool b3 = false;
 		bool b4 = (owner->pos - pos).SqLength2D() < 1024;
@@ -596,15 +598,16 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if we have at least one weapon then check if
 			// we can hit position with our first (meanest) one
 			CWeapon* w = owner->weapons.front();
-			b2 = w->AttackGround(pos, c.id == CMD_DGUN);
+			b2 = w->TryTargetRotate(pos, c.id == CMD_DGUN);
 			b3 = (owner->pos - pos).Length() < (w->range - (w->relWeaponPos).Length());
 		}
 		float3 diff = owner->pos - pos;
-
+		logOutput << "b2 :" << (b2 ? "true" : "false") << gs->frameNum << "\n";
 		// if w->AttackGround() returned true then we are already
 		// in range with our biggest weapon so stop moving
-		if (b1 && b2 && b3) {
+		if (b2 && b3) {
 			StopMove();
+			owner->AttackGround(pos, c.id == CMD_DGUN);
 			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 		}
 

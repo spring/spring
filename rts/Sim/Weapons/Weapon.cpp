@@ -363,19 +363,21 @@ bool CWeapon::AttackGround(float3 pos,bool userTarget)
 	return true;
 }
 
-bool CWeapon::AttackUnit(CUnit *unit,bool userTarget)
+bool CWeapon::AttackUnit(CUnit *unit, bool userTarget)
 {
 	if((!userTarget && weaponDef->noAutoTarget))
 		return false;
 	if(weaponDef->interceptor)
 		return false;
 
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
+	weaponPos= owner->pos + owner->frontdir * relWeaponPos.z
+		+ owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
+	if(weaponPos.y < ground->GetHeight2(weaponPos.x, weaponPos.z))
+		weaponPos = owner->pos + UpVector * 10;
+	//hope that we are underground because we are a popup weapon and will come above ground later
 
 	if(!unit){
-		if(targetType!=Target_Unit)			//make the unit be more likely to keep the current target if user start to move it
+		if(targetType!=Target_Unit)	//make the unit be more likely to keep the current target if user start to move it
 			targetType=Target_None;
 		haveUserTarget=false;
 		return false;
@@ -417,7 +419,6 @@ void CWeapon::SlowUpdate()
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
-
 	std::vector<int> args;
 	args.push_back(0);
 	if(useWeaponPosForAim){
@@ -547,6 +548,71 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 			return false;
 	}
 	return true;
+}
+
+bool CWeapon::TryTarget(CUnit* unit, bool userTarget){
+	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
+	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
+	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
+	if(tempTargetPos.y < appHeight){
+		tempTargetPos.y=appHeight;
+	}
+	return TryTarget(tempTargetPos,userTarget,unit);
+}
+
+bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
+	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
+	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
+	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
+	if(tempTargetPos.y < appHeight){
+		tempTargetPos.y=appHeight;
+	}
+	float3 tempfrontdir(owner->frontdir);
+	float3 temprightdir(owner->rightdir);
+	float tempHeadding = owner->heading;
+	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
+	short enemyHeadding = GetHeadingFromVector(
+		tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
+	owner->heading = enemyHeadding - weaponHeadding;
+	owner->frontdir = GetVectorFromHeading(owner->heading);
+	owner->rightdir = owner->frontdir.cross(owner->updir);
+	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	bool val = TryTarget(tempTargetPos,userTarget,unit);
+	owner->frontdir = tempfrontdir;
+	owner->rightdir = temprightdir;
+	owner->heading = tempHeadding;
+	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	return val;
+}
+
+bool CWeapon::TryTargetRotate(float3 pos, bool userTarget){
+	if((!userTarget && weaponDef->noAutoTarget)){
+		return false;
+	}
+	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff
+			|| !weaponDef->canAttackGround){
+		return false;
+	}
+
+	if(!weaponDef->waterweapon && pos.y<1){
+		pos.y=1;
+	}
+	float3 tempfrontdir(owner->frontdir);
+	float3 temprightdir(owner->rightdir);
+	short tempHeadding = owner->heading;
+	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
+	short enemyHeadding = GetHeadingFromVector(
+		pos.x - weaponPos.x, pos.z - weaponPos.z);
+	owner->heading = enemyHeadding - weaponHeadding;
+	owner->frontdir = GetVectorFromHeading(owner->heading);
+	owner->rightdir = owner->frontdir.cross(owner->updir);
+	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	bool val = TryTarget(pos, userTarget, 0);
+	owner->frontdir = tempfrontdir;
+	owner->rightdir = temprightdir;
+	owner->heading = tempHeadding;
+	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	return val;
 }
 
 void CWeapon::Init(void)
