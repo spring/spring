@@ -193,15 +193,15 @@ BEGIN
     CONTROL         "",IDC_CHECK13,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
                     113,16,8
     CONTROL         "Weapon range >",IDC_CHECK14,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,36,113,69,8
+                    WS_TABSTOP,35,113,69,8
     CONTROL         "",IDC_CHECK15,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
                     127,16,8
     CONTROL         "Absolute health >",IDC_CHECK16,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,36,127,70,8
+                    WS_TABSTOP,35,127,70,8
     CONTROL         "",IDC_CHECK17,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
                     137,16,8
     CONTROL         "Relative health >",IDC_CHECK18,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,36,137,72,8
+                    WS_TABSTOP,35,137,72,8
     CONTROL         "",IDC_CHECK19,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
                     148,16,8
     CONTROL         "Type exist in previous selection",IDC_CHECK20,"Button",
@@ -241,6 +241,10 @@ BEGIN
     EDITTEXT        IDC_EDIT8,273,113,26,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Clear prev selection",IDC_CHECK23,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,216,62,79,10
+    CONTROL         "",IDC_CHECK30,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
+                    201,16,8
+    CONTROL         "In hotkey group",IDC_CHECK31,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,35,201,79,8
 END
 
 

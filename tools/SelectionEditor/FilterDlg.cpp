@@ -138,6 +138,12 @@ void CFilterDlg::OnBnClickedOk()
 		((CEdit*)GetDlgItem(IDC_EDIT7))->GetLine(0,buf);
 		datastore.curString+=buf;
 	}
+
+	if(((CButton*)GetDlgItem(IDC_CHECK30))->GetCheck())
+		datastore.curString+="_InHotkeyGroup";
+	if(((CButton*)GetDlgItem(IDC_CHECK31))->GetCheck())
+		datastore.curString+="_Not_InHotkeyGroup";
+
 	datastore.curString+="+";
 
 	if(((CButton*)GetDlgItem(IDC_CHECK23))->GetCheck()){

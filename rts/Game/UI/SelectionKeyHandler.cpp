@@ -430,6 +430,20 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 					selection.erase(prev);
 				}
 			}
+		} else if(s=="InHotkeyGroup"){
+			list<CUnit*>::iterator ui=selection.begin();
+			while(ui!=selection.end()){
+				bool filterTrue=false;
+				if((*ui)->group){
+					filterTrue=true;
+				}
+				if(filterTrue ^ _not){
+					++ui;
+				} else {
+					list<CUnit*>::iterator prev=ui++;
+					selection.erase(prev);
+				}
+			}
 		} else if(s=="Radar"){
 			list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
