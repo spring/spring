@@ -57,7 +57,7 @@ public:
 
 	virtual void DrawStats();
 	void ChangeLos(int l,int airlos);
-	virtual void DoDamage(const DamageArray& damages,CUnit* attacker,const float3& impulse);
+	virtual void DoDamage(const DamageArray& damages,CUnit* attacker,const float3& impulse, int weaponId = -1);
 	virtual void Kill(float3& impulse);
 	bool AddBuildPower(float amount,CUnit* builder);		//negative amount=reclaim, return= true -> build power was succesfully applied
 	virtual void FinishedBuilding(void);
