@@ -517,6 +517,9 @@ void CProjectileHandler::CheckUnitCol()
 					p->Collision(*ui);
 					break;
 				}
+				float diflength = dif.Length();
+				float closesqlength = closeVect.SqLength();
+				assert(! ((!(closesqlength < totalRadius*totalRadius)) && (diflength<totalRadius)));
 			}
 
 			//if(!(p->collisionFlags&COLLISION_NOFEATURE))

@@ -7,6 +7,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
 #include "mmgr.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));
 
@@ -33,7 +34,7 @@ void CMeleeWeapon::Update()
 void CMeleeWeapon::Fire(void)
 {
 	if(targetType==Target_Unit){
-		targetUnit->DoDamage(damages,owner,ZeroVector);
+		targetUnit->DoDamage(damages,owner,ZeroVector,weaponDef->id);
 		if(fireSoundId)
 			sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	}

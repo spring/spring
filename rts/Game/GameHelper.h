@@ -40,7 +40,7 @@ public:
 	float TraceRay(const float3& start,const float3& dir,float length,float power,CUnit* owner, CUnit*& hit);
 	float GuiTraceRay(const float3& start,const float3& dir,float length, CUnit*& hit,float sizeMod,bool useRadar,CUnit* exclude=0);
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length,CFeature*& feature);
-	void Explosion(float3 pos,const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner, CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir);
+	void Explosion(float3 pos,const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner, CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir, int weaponId);
 	float TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam);
 	void BuggerOff(float3 pos, float radius,CUnit* exclude=0);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
@@ -62,15 +62,17 @@ protected:
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 #endif
-		WaitingDamage(int attacker,int target,const DamageArray& damage,const float3& impulse)
+		WaitingDamage(int attacker,int target,const DamageArray& damage,const float3& impulse, const int weaponId)
 			:	attacker(attacker),
 				target(target),
 				damage(damage),
-				impulse(impulse)
+				impulse(impulse),
+				weaponId(weaponId)
 		{}
 
 		int target;
 		int attacker;
+		int weaponId;
 		DamageArray damage;
 		float3 impulse;
 	};

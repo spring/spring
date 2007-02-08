@@ -176,6 +176,8 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	scriptIndex[COBFN_MoveRate2] = getFunctionId("MoveRate2");
 	scriptIndex[COBFN_MoveRate3] = getFunctionId("MoveRate3");
 	scriptIndex[COBFN_SetSFXOccupy] = getFunctionId("setSFXoccupy");
+	scriptIndex[COBFN_HitByWeaponId] = getFunctionId("HitByWeaponId");
+
 
 	// Also add the weapon aiming stuff
 	for (int i = 0; i < COB_MaxWeapons; ++i) {

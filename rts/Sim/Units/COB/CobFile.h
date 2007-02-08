@@ -34,7 +34,8 @@ const int COBFN_MoveRate1 = 11;
 const int COBFN_MoveRate2 = 12;
 const int COBFN_MoveRate3 = 13;
 const int COBFN_SetSFXOccupy = 14;
-const int COBFN_Last = 15;					//Make sure to update this, so the array will be sized properly
+const int COBFN_HitByWeaponId = 15;
+const int COBFN_Last = 16;					//Make sure to update this, so the array will be sized properly
 
 // These are special (they need space for MaxWeapons of each)
 const int COB_MaxWeapons = 16;

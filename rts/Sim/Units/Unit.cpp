@@ -476,7 +476,7 @@ void CUnit::SlowUpdate()
 
 
 	if(uh->waterDamage && (physicalState==CSolidObject::Floating || (physicalState==CSolidObject::OnGround && pos.y<=-3 && readmap->mipHeightmap[1][int((pos.z/(SQUARE_SIZE*2))*gs->hmapx+(pos.x/(SQUARE_SIZE*2)))]<-1))){
-		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector);
+		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector, -1);
 	}
 
 	if(unitDef->canKamikaze){
@@ -549,7 +549,7 @@ void CUnit::SlowUpdate()
 	UpdateTerrainType();
 }
 
-void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse)
+void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
 	if(isDead)
 		return;
@@ -577,12 +577,20 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float3 hitDir = impulse;
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
-	std::vector<int> hitAngles;
+	std::vector<int> cobargs;
 	
-	hitAngles.push_back((int)(500 * hitDir.z));
-	hitAngles.push_back((int)(500 * hitDir.x));
+	cobargs.push_back((int)(500 * hitDir.z));
+	cobargs.push_back((int)(500 * hitDir.x));
 
-	cob->Call(COBFN_HitByWeapon, hitAngles);	
+	if(cob->FunctionExist(COBFN_HitByWeaponId))
+	{
+		//cobargs.push_back(
+		cob->Call(COBFN_HitByWeaponId, cobargs);
+	}
+	else
+	{
+		cob->Call(COBFN_HitByWeapon, cobargs);
+	}
 
 	damage*=curArmorMultiple;
 
@@ -653,7 +661,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 void CUnit::Kill(float3& impulse) {
 	DamageArray da;
-	DoDamage(da*(health/da[armorType]), 0, impulse);
+	DoDamage(da*(health/da[armorType]), 0, impulse, -1);
 }
 
 
@@ -1280,7 +1288,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		if(!exp.empty()){
 			WeaponDef* wd=weaponDefHandler->GetWeapon(exp);
 			if(wd){
-				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectiveness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0, ZeroVector);
+				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectiveness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0, ZeroVector, wd->id);
 
 				// Play explosion sound
 				CWeaponDefHandler::LoadSound(wd->soundhit);

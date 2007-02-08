@@ -15,6 +15,7 @@
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "myMath.h"
 #include "mmgr.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL));
 
@@ -85,7 +86,7 @@ void CRifle::Fire(void)
 	CUnit* hit;
 	float length=helper->TraceRay(weaponPos,dir,range,damages[0],owner,hit);
 	if(hit){
-		hit->DoDamage(damages,owner,ZeroVector);
+		hit->DoDamage(damages,owner,ZeroVector, weaponDef->id);
 		SAFE_NEW CHeatCloudProjectile(weaponPos+dir*length,hit->speed*0.9f,30,1,owner);
 	}
 	SAFE_NEW CTracerProjectile(weaponPos,dir*projectileSpeed,length,owner);

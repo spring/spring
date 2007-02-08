@@ -96,6 +96,7 @@ public:
 	bool HasScriptFunction(int id);
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
+	bool FunctionExist(int id);
 };
 
 #endif // __COB_INSTANCE_H__

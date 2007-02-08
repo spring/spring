@@ -635,7 +635,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			{
 				WeaponDef *weaponDef = unit->weapons[type-4096]->weaponDef;
 				sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
-				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0));
+				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0), weaponDef->id);
 
 			}
 			break;
@@ -1149,4 +1149,11 @@ void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, i
 	//logOutput.Print("Turnx %d:%d cur %d got %d %d dist %d", piece, axis, cur, destination, speed, dist);
 
 	Turn(piece, axis, speed, destination, true);
+}
+
+bool CCobInstance::FunctionExist(int id)
+{
+	if(script.scriptIndex[id]==-1)
+		return false;
+	return true;
 }

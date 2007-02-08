@@ -59,7 +59,7 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit,const float3 &impactDir)
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit,const float3 &impactDir, int weaponId)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
@@ -116,9 +116,9 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
 
 		if(dist2<explosionSpeed*4){	//damage directly
-			(*ui)->DoDamage(damageDone,owner,addedImpulse);
+			(*ui)->DoDamage(damageDone,owner,addedImpulse, weaponId);
 		}else {	//damage later
-			WaitingDamage* wd=SAFE_NEW WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse);
+			WaitingDamage* wd=SAFE_NEW WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse, weaponId);
 			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed)-3)&127].push_front(wd);
 		}
 	}
@@ -677,7 +677,7 @@ void CGameHelper::Update(void)
 		WaitingDamage* w=wd->back();
 		wd->pop_back();
 		if(uh->units[w->target])
-			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse);
+			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse,w->weaponId);
 		delete w;
 	}
 }

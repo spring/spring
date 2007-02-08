@@ -189,7 +189,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	}
 	float	intensity=1-(curLength)/(range*2);
 	if(curLength<maxLength)
-		helper->Explosion(hitPos, weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir);
+		helper->Explosion(hitPos, weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir, weaponDef->id);
 
 	if(targetUnit)
 		lastFireFrame = gs->frameNum;
