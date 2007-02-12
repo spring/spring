@@ -75,6 +75,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	//bool smokeTrail;
 	//std::string modelName;
 
+	sunparser->GetDef(weaponDefs[id].tdfId, "0", weaponname + "\\id");
 	sunparser->GetDef(weaponDefs[id].avoidFriendly, "1", weaponname + "\\AvoidFriendly");
 	weaponDefs[id].collisionFlags=0;
 	bool collideFriendly, collideFeature;

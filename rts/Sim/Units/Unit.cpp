@@ -574,6 +574,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		bonusShieldSaved=0;
 		damage*=1.4f-adir.dot(bonusShieldDir)*0.5f;
 	}
+
+	damage*=curArmorMultiple;
+
 	float3 hitDir = impulse;
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
@@ -584,15 +587,19 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	if(cob->FunctionExist(COBFN_HitByWeaponId))
 	{
-		//cobargs.push_back(
-		cob->Call(COBFN_HitByWeaponId, cobargs);
+		if(weaponId!=-1)
+			cobargs.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
+		else
+			cobargs.push_back(-1);
+
+		cobargs.push_back((int)(100 * damage));
+		int sdmgMul = cob->Call(COBFN_HitByWeaponId, cobargs);
+		damage = damage * sdmgMul*0.01f;
 	}
 	else
 	{
 		cob->Call(COBFN_HitByWeapon, cobargs);
 	}
-
-	damage*=curArmorMultiple;
 
 	restTime=0;
 

@@ -78,6 +78,7 @@ struct WeaponDef
 	float supplycost;
 
 	int id;
+	int tdfId;	//the id= tag in the tdf
 
 	bool turret;
 	bool onlyForward;
