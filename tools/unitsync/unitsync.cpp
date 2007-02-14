@@ -5,6 +5,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "Game/GameVersion.h"
 #include "Map/SMF/mapfile.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
@@ -63,9 +64,14 @@ BOOL __stdcall DllMain(HINSTANCE hInst,
 }
 #endif
 
+DLL_EXPORT const char* __stdcall GetVersion()
+{
+	return VERSION_STRING;
+}
+
 DLL_EXPORT void __stdcall Message(const char* p_szMessage)
 {
-   MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
+	MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
 }
 
 DLL_EXPORT void __stdcall UnInit()
@@ -199,14 +205,6 @@ DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
 //////////////////////////
 //////////////////////////
 
-DLL_EXPORT int __stdcall InitArchiveScanner()
-{
-	// The functionality of this function is now provided by the Init() function
-	// once no lobby uses it anymore it can be removed.
-	// (there wasn't really a point in having them separate anyway, at least I don't see it)
-	return 1;
-}
-
 DLL_EXPORT void __stdcall AddArchive(const char* name)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before AddArchive.");
@@ -302,7 +300,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	}
 
 	// Retrieve the map header as well
-	if (extension == "smf") 
+	if (extension == "smf")
 	{
 		MapHeader mh;
 		string origName = name;
@@ -325,7 +323,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	{
 		int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
 		int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
-			
+
 		outInfo->width = w * SQUARE_SIZE;
 		outInfo->height = h * SQUARE_SIZE;
 	}
@@ -450,7 +448,7 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 		return imgbuf;
 	}
 
-	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize) 
+	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize)
 		bm = bm.CreateRescaled (1024 >> miplevel, 1024 >> miplevel);
 
 	unsigned short *dst = (unsigned short*)imgbuf;
@@ -474,17 +472,17 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 static void* GetMinimapSMF(string mapName, int miplevel)
 {
 	// Calculate stuff
-	
+
 	int mipsize = 1024;
 	int offset = 0;
-	
+
 	for ( int i = 0; i < miplevel; i++ )
 	{
 		int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
 		offset += size;
 		mipsize >>= 1;
 	}
-	
+
 	int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
 	int numblocks = size/8;
 
@@ -493,7 +491,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	char* buffer = (char*)malloc(size);
 	bool done = false;
 	if (in.FileExists()) {
-	
+
 		MapHeader mh;
 		in.Read(&mh, sizeof(mh));
 		in.Seek(mh.minimapPtr + offset);
@@ -524,13 +522,13 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	unsigned short* colors = (unsigned short*)ret;
 
 	unsigned char* temp = (unsigned char*)buffer;
-	
+
 	for ( int i = 0; i < numblocks; i++ )
 	{
 		unsigned short color0 = (*(unsigned short*)&temp[0]);
 		unsigned short color1 = (*(unsigned short*)&temp[2]);
 		unsigned int bits = (*(unsigned int*)&temp[4]);
-		
+
 		for ( int a = 0; a < 4; a++ )
 		{
 			for ( int b = 0; b < 4; b++ )
@@ -539,7 +537,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 				int y = 4*(i / ((mipsize+3)/4))+a;
 				bits >>= 2;
 				unsigned char code = bits & 0x3;
-				
+
 				if ( color0 > color1 )
 				{
 					if ( code == 0 )
@@ -555,7 +553,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 						colors[y*mipsize+x] = PACKRGB((2*RED_RGB565(color0)+RED_RGB565(color1))/3, (2*GREEN_RGB565(color0)+GREEN_RGB565(color1))/3, (2*BLUE_RGB565(color0)+BLUE_RGB565(color1))/3);
 					}
 					else
-					{	
+					{
 						colors[y*mipsize+x] = PACKRGB((2*RED_RGB565(color1)+RED_RGB565(color0))/3, (2*GREEN_RGB565(color1)+GREEN_RGB565(color0))/3, (2*BLUE_RGB565(color1)+BLUE_RGB565(color0))/3);
 					}
 				}
@@ -574,7 +572,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 						colors[y*mipsize+x] = PACKRGB((RED_RGB565(color0)+RED_RGB565(color1))/2, (GREEN_RGB565(color0)+GREEN_RGB565(color1))/2, (BLUE_RGB565(color0)+BLUE_RGB565(color1))/2);
 					}
 					else
-					{	
+					{
 						colors[y*mipsize+x] = 0;
 					}
 				}
@@ -611,7 +609,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	}
 
 	void *ret = 0;
-	if (extension == "smf") 
+	if (extension == "smf")
 		ret = GetMinimapSMF(mapName, miplevel);
 	else if (extension == "sm3")
 		ret = GetMinimapSM3(mapName, miplevel);
@@ -835,7 +833,7 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to FindFilesArchive.");
 	ASSERT(nameBuf && size, "Don't pass a NULL pointer to FindFilesArchive.");
 	CArchiveBase* a = openArchives[archive];
-	
+
 	string name;
 	int s;
 
@@ -885,7 +883,7 @@ char strBuf[STRBUF_SIZE];
 const char *GetStr(string str)
 {
 	//static char strBuf[STRBUF_SIZE];
-	
+
 	if (str.length() + 1 > STRBUF_SIZE) {
 		sprintf(strBuf, "Increase STRBUF_SIZE (needs %d bytes)", str.length() + 1);
 	}
