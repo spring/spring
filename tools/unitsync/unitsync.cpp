@@ -64,7 +64,7 @@ BOOL __stdcall DllMain(HINSTANCE hInst,
 }
 #endif
 
-DLL_EXPORT const char* __stdcall GetVersion()
+DLL_EXPORT const char* __stdcall GetSpringVersion()
 {
 	return VERSION_STRING;
 }

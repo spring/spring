@@ -11,7 +11,7 @@
 
 
 
-DLL_EXPORT const char* __stdcall GetVersion();
+DLL_EXPORT const char* __stdcall GetSpringVersion();
 DLL_EXPORT void __stdcall Message(const char* p_szMessage);
 DLL_EXPORT int __stdcall Init(bool isServer, int id);
 DLL_EXPORT void __stdcall UnInit();
@@ -63,11 +63,11 @@ DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle);
 
 
 
-static PyObject *unitsync_GetVersion(PyObject *self, PyObject *args)
+static PyObject *unitsync_GetSpringVersion(PyObject *self, PyObject *args)
 {
 	if (!PyArg_ParseTuple(args, ""))
 		return NULL;
-	return Py_BuildValue("s", GetVersion());
+	return Py_BuildValue("s", GetSpringVersion());
 }
 
 static PyObject *unitsync_Message(PyObject *self, PyObject *args)
@@ -584,7 +584,7 @@ static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
 static PyMethodDef unitsyncMethods[] = {
 #define PY(name)         { # name , unitsync_ ## name , METH_VARARGS , NULL }
 #define PYDOC(name, doc) { # name , unitsync_ ## name , METH_VARARGS , doc  }
-	PY( GetVersion ),
+	PY( GetSpringVersion ),
 	PY( Message ),
 	PY( Init ),
 	PY( UnInit ),
