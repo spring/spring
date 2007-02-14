@@ -122,8 +122,8 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		if (mapDefParser.SectionExist("map\\featuretypes")) {
 			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
 			for (int a=0;a<numTypes;a++) {
-				char loc[40];
-				SNPRINTF(loc, 16, "map\\featuretypes\\type%d", a);
+				char loc[100];
+				SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
 				featureTypes.push_back (SAFE_NEW std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
 			}
 		}
