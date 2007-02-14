@@ -11,6 +11,7 @@
 
 
 
+DLL_EXPORT const char* __stdcall GetVersion();
 DLL_EXPORT void __stdcall Message(const char* p_szMessage);
 DLL_EXPORT int __stdcall Init(bool isServer, int id);
 DLL_EXPORT void __stdcall UnInit();
@@ -26,7 +27,6 @@ DLL_EXPORT const char * __stdcall GetUnitName(int unit);
 DLL_EXPORT const char * __stdcall GetFullUnitName(int unit);
 DLL_EXPORT int __stdcall IsUnitDisabled(int unit);
 DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId);
-DLL_EXPORT int __stdcall InitArchiveScanner();
 DLL_EXPORT void __stdcall AddArchive(const char* name);
 DLL_EXPORT void __stdcall AddAllArchives(const char* root);
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
@@ -62,6 +62,13 @@ DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle);
 
 
+
+static PyObject *unitsync_GetVersion(PyObject *self, PyObject *args)
+{
+	if (!PyArg_ParseTuple(args, ""))
+		return NULL;
+	return Py_BuildValue("s", GetVersion());
+}
 
 static PyObject *unitsync_Message(PyObject *self, PyObject *args)
 {
@@ -186,13 +193,6 @@ static PyObject *unitsync_IsUnitDisabledByClient(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", IsUnitDisabledByClient(unit, clientId));
 }
 
-static PyObject *unitsync_InitArchiveScanner(PyObject *self, PyObject *args)
-{
-	if (!PyArg_ParseTuple(args, ""))
-		return NULL;
-	return Py_BuildValue("i", InitArchiveScanner());
-}
-
 static PyObject *unitsync_AddArchive(PyObject *self, PyObject *args)
 {
 	const char* name;
@@ -264,7 +264,7 @@ static PyObject *unitsync_GetMapInfo(PyObject *self, PyObject *args)
 						 "height",          out.height,
 						 "posCount",        out.posCount,
 						 "author",			out.author,
-						 "positions",	
+						 "positions",
 						 out.positions[0].x,  out.positions[0].z,
 						 out.positions[1].x,  out.positions[1].z,
 						 out.positions[2].x,  out.positions[2].z,
@@ -584,6 +584,7 @@ static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
 static PyMethodDef unitsyncMethods[] = {
 #define PY(name)         { # name , unitsync_ ## name , METH_VARARGS , NULL }
 #define PYDOC(name, doc) { # name , unitsync_ ## name , METH_VARARGS , doc  }
+	PY( GetVersion ),
 	PY( Message ),
 	PY( Init ),
 	PY( UnInit ),
@@ -599,7 +600,6 @@ static PyMethodDef unitsyncMethods[] = {
 	PY( GetFullUnitName ),
 	PY( IsUnitDisabled ),
 	PY( IsUnitDisabledByClient ),
-	PY( InitArchiveScanner ),
 	PY( AddArchive ),
 	PY( AddAllArchives ),
 	PY( GetArchiveChecksum ),
