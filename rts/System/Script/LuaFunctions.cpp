@@ -31,7 +31,7 @@ using namespace luabind;
 
 extern std::string stupidGlobalMapname;
 
-namespace luafunctions 
+namespace luafunctions
 {
 
 	// This should use net stuff instead of duplicating code here
@@ -45,12 +45,12 @@ namespace luafunctions
     {
         globalAI->CreateGlobalAI( teamnumber, dllname.c_str() );
     }
-    
+
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)
 	{
 		if (!u->held)
 			return;
-	
+
 		u->held->commandAI->GiveCommand(*c);
 	}
 
@@ -78,7 +78,7 @@ namespace luafunctions
 		CUnit* x = u->held;
 		if (x->transporter)
 			return SAFE_NEW CObject_pointer<CUnit>(x->transporter);
-		else 
+		else
 			return NULL;
 	}
 
@@ -99,14 +99,14 @@ namespace luafunctions
 		int count = 1;
 		for (vector<CUnit*>::iterator i = x.begin(); i != x.end(); ++i)
 			o[count++] = SAFE_NEW CObject_pointer<CUnit>(*i);
-		
+
 		return o;
 	}
 
 	object GetFeaturesAt(lua_State* L, const float3& pos, float radius)
 	{
 		vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
-	
+
 		object o = newtable(L);
 
 		int count = 1;
@@ -125,6 +125,8 @@ namespace luafunctions
 	}
 
 	// This doesnt work, not sure why; Spring crashes
+	// It crashes because UnitDef doesn't inherit CObject
+	// even with boost::shared_ptr I can't get it to work though... -- Tobi
 	//CObject_pointer<UnitDef>* GetUnitDefById( int id )
 	//{
 	//	UnitDef *def = unitDefHandler->GetUnitByID (id);
