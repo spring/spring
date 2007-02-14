@@ -25,9 +25,9 @@ public:
 	virtual void DependentDied(CObject* o) { held = NULL; }
 };
 
-namespace luafunctions 
+namespace luafunctions
 {
-    void CreateGlobalAI( int teamnumber, std::string dllname );
+	void CreateGlobalAI( int teamnumber, std::string dllname);
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);
