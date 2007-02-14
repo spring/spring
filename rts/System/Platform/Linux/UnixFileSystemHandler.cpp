@@ -136,7 +136,7 @@ void UnixFileSystemHandler::DeterminePermissions(int start_at)
  * and change to the spring data directory
  *
  * The data directory to chdir to is determined by the following, in this
- * order (first items override lower items): 
+ * order (first items override lower items):
  *
  * - 'SpringData=/path/to/data' declaration in '~/.springrc'. (colon separated list)
  * - 'SPRING_DATADIR' environment variable. (colon separated list, like PATH)
@@ -314,7 +314,7 @@ std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir
 		return matches;
 	}
 
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		if (d->readable) {
 			FindFilesSingleDir(matches, d->path + dir, pattern, flags);
 		}
