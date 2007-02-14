@@ -31,7 +31,7 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(owner),
 	CR_MEMBER(range),
-	CR_MEMBER(heightMod),	
+	CR_MEMBER(heightMod),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
 	CR_MEMBER(salvoLeft),
@@ -57,7 +57,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(weaponPos),
 	CR_MEMBER(lastRequest),
-	CR_MEMBER(damages),	
+	CR_MEMBER(damages),
 	CR_MEMBER(relWeaponPos),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(lastTargetRetry),
@@ -71,7 +71,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(numStockpileQued),
 	CR_MEMBER(interceptTarget),
 	CR_MEMBER(salvoError),
-	CR_ENUM_MEMBER(targetType),	
+	CR_ENUM_MEMBER(targetType),
 	CR_MEMBER(sprayangle),
 	CR_MEMBER(useWeaponPosForAim),
 	CR_MEMBER(errorVector),
@@ -84,7 +84,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(avoidFriendly),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(fuelUsage)));
-	
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -235,13 +235,13 @@ void CWeapon::Update()
 		}
 	}
 
-	if(salvoLeft==0 
+	if(salvoLeft==0
 #ifdef DIRECT_CONTROL_ALLOWED
 	&& (!owner->directControl || owner->directControl->mouse1 || owner->directControl->mouse2)
 #endif
 	&& targetType!=Target_None
-	&& angleGood 
-	&& subClassReady 
+	&& angleGood
+	&& subClassReady
 	&& reloadStatus<=gs->frameNum
 	&& (!weaponDef->stockpile || numStockpiled)
 	&& (weaponDef->waterweapon || weaponPos.y>0)
@@ -278,7 +278,7 @@ void CWeapon::Update()
 				owner->lastMuzzleFlameSize=muzzleFlareSize;
 				owner->lastMuzzleFlameDir=wantedDir;
 				owner->cob->Call(COBFN_FirePrimary+weaponNum);
-			} 
+			}
 		} else {
 			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
 				// update the energy and metal required counts
@@ -294,7 +294,7 @@ void CWeapon::Update()
 		salvoLeft--;
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
-		
+
 		// add to the commandShotCount if this is the last salvo,
 		// and it is being directed towards the current target
 		// (helps when deciding if a queued ground attack order has been completed)
@@ -303,7 +303,7 @@ void CWeapon::Update()
 				((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
 			owner->commandShotCount++;
 		}
-		
+
 		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
@@ -324,12 +324,12 @@ void CWeapon::Update()
 		std::vector<int> rockAngles;
 		rockAngles.push_back((int)(500 * rockDir.z));
 		rockAngles.push_back((int)(500 * rockDir.x));
-		owner->cob->Call(COBFN_RockUnit,  rockAngles);		
+		owner->cob->Call(COBFN_RockUnit,  rockAngles);
 
 		owner->commandAI->WeaponFired(this);
 
 		if(salvoLeft==0){
-			owner->cob->Call(COBFN_EndBurst+weaponNum);		
+			owner->cob->Call(COBFN_EndBurst+weaponNum);
 		}
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
@@ -542,7 +542,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(maxMainDirAngleDif>-0.999f){
 		dif.Normalize();
 		float3 modMainDir=owner->frontdir*mainDir.z+owner->rightdir*mainDir.x+owner->updir*mainDir.y;
-		
+
 //		geometricObjects->AddLine(weaponPos,weaponPos+modMainDir*50,3,0,16);
 		if(modMainDir.dot(dif)<maxMainDirAngleDif)
 			return false;
@@ -569,7 +569,7 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
 	}
 	float3 tempfrontdir(owner->frontdir);
 	float3 temprightdir(owner->rightdir);
-	float tempHeadding = owner->heading;
+	short tempHeadding = owner->heading;
 	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
 	short enemyHeadding = GetHeadingFromVector(
 		tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);

@@ -102,7 +102,7 @@ CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 		pi.name = script.pieceNames[i];
 		pi.updated = false;
 		pi.visible = true;
-		
+
 		pieces.push_back(pi);
 	}
 
@@ -226,11 +226,11 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 	t->CommitAnims(30);
 
 	//Make sure this is run even if the call terminates instantly
-	if (cb) 
+	if (cb)
 		t->SetCallback(cb, p1, p2);
 
 	if (res == -1) {
-		//Retrieve parameter values from stack		
+		//Retrieve parameter values from stack
 		for (unsigned int i = 0; i < args.size(); ++i) {
 			args[i] = t->GetStackVal(i);
 		}
@@ -299,7 +299,7 @@ int CCobInstance::DoSpin(int &cur, int dest, int &speed, int accel, int divisor)
 	if (speed != dest) {
 		speed += accel * 30 / divisor;		//TA obviously defines accelerations in speed/frame (at 30 fps)
 		if (accel > 0) {
-			if (speed > dest)		
+			if (speed > dest)
 				speed = dest;		//We are accelerating, make sure we dont go past desired speed
 		}
 		else {
@@ -340,7 +340,7 @@ void CCobInstance::UnblockAll(struct AnimInfo * anim)
 
 //Called by the engine when we are registered as animating. If we return -1 it means that
 //there is no longer anything animating
-int CCobInstance::Tick(int deltaTime) 
+int CCobInstance::Tick(int deltaTime)
 {
 	int done;
 	list<struct AnimInfo *>::iterator it = anims.begin();
@@ -348,7 +348,7 @@ int CCobInstance::Tick(int deltaTime)
 
 	while (it != anims.end()) {
 		//Advance it, so we can erase cur safely
-		cur = it++;		
+		cur = it++;
 
 		done = false;
 		pieces[(*cur)->piece].updated = true;
@@ -374,13 +374,13 @@ int CCobInstance::Tick(int deltaTime)
 
 	}
 
-	if (anims.size() == 0) 
+	if (anims.size() == 0)
 		return -1;
 	else
 		return 0;
 }
 
-//Optimize this? 
+//Optimize this?
 //Returns anims list
 struct CCobInstance::AnimInfo *CCobInstance::FindAnim(AnimType type, int piece, int axis)
 {
@@ -463,7 +463,7 @@ void CCobInstance::Spin(int piece, int axis, int speed, int accel)
 
 	//If we are already spinning, we may have to decelerate to the new speed
 	if (ai) {
-		ai->dest = speed;		
+		ai->dest = speed;
 		if (accel > 0) {
 			if (ai->speed > ai->dest)
 				ai->accel = -accel;
@@ -479,7 +479,7 @@ void CCobInstance::Spin(int piece, int axis, int speed, int accel)
 	else {
 		//No accel means we start at desired speed instantly
 		if (accel == 0)
-			AddAnim(ASpin, piece, axis, speed, speed, accel);			
+			AddAnim(ASpin, piece, axis, speed, speed, accel);
 		else
 			AddAnim(ASpin, piece, axis, 0, speed, accel);
 	}
@@ -518,7 +518,7 @@ void CCobInstance::MoveNow(int piece, int axis, int destination)
 void CCobInstance::TurnNow(int piece, int axis, int destination)
 {
 	pieces[piece].rot[axis] = destination;
-	pieces[piece].updated = true;	
+	pieces[piece].updated = true;
 	//logOutput.Print("moving %s on axis %d to %d", script.pieceNames[piece].c_str(), axis, destination);
 }
 
@@ -557,12 +557,12 @@ void CCobInstance::EmitSfx(int type, int piece)
 	float fadeupTime=4;
 
 	//Hovers need special care
-	if (unit->unitDef->canhover) {		
+	if (unit->unitDef->canhover) {
 		fadeupTime=8;
 		alpha = 0.15f+gu->usRandFloat()*0.2f;
 		alphaFalloff = 0.008f;
 	}
-	
+
 	//Make sure wakes are only emitted on water
 	if ((type >= 2) && (type <= 5)) {
 		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0){
@@ -626,7 +626,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 				unit->weapons[type-2048]->weaponPos = pos;
 
 				unit->weapons[type-2048]->Fire();
-				
+
 				unit->weapons[type-2048]->targetPos = targetPos;
 				unit->weapons[type-2048]->weaponPos = weaponPos;
 
@@ -684,7 +684,7 @@ int CCobInstance::AddTurnListener(int piece, int axis, CCobThread *listener)
 		ai->listeners.push_back(listener);
 		return 1;
 	}
-	else 
+	else
 		return 0;
 }
 
@@ -696,8 +696,8 @@ int CCobInstance::AddMoveListener(int piece, int axis, CCobThread *listener)
 		ai->listeners.push_back(listener);
 		return 1;
 	}
-	else 
-		return 0;	
+	else
+		return 0;
 }
 
 void CCobInstance::Signal(int signal)
@@ -730,7 +730,7 @@ void CCobInstance::Explode(int piece, int flags)
 	CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	//If this is true, no stuff should fly off
-	if (flags & 32) 
+	if (flags & 32)
 		return;
 
 	//This means that we are going to do a full fledged piece exlosion!
@@ -757,13 +757,13 @@ void CCobInstance::Explode(int piece, int flags)
 	speed+=baseSpeed;
 	if(speed.Length()>12)
 		speed=speed.Normalize()*12;
-	
+
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
 	LocalS3DO * pieceData = &( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
 	if (flags & 1) {		//Shatter
 		ENTER_MIXED;
-		
+
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
 //		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
 
@@ -781,21 +781,21 @@ void CCobInstance::Explode(int piece, int flags)
 		SS3O* cookedPiece = pieceData->originals3o;
 		if (cookedPiece){
 			/* S3O */
-		
+
 			if (cookedPiece->primitiveType == 0){
 				/* GL_TRIANGLES */
-				
+
 				for (int i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 3){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
-					
+
 					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
-					
+
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
 					verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
 					verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 2]];
-	
+
 					ph->AddFlyingPiece(unit->model->textureType,
 						unit->team,
 						pos, speed+gu->usRandVector()*2, verts);
@@ -805,32 +805,32 @@ void CCobInstance::Explode(int piece, int flags)
 				for (int i = 2; i < cookedPiece->vertexDrawOrder.size(); i++){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
-					
+
 					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
-					
+
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 2]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
 					verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
 					verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 0]];
-	
+
 					ph->AddFlyingPiece(unit->model->textureType,
 						unit->team,
 						pos, speed+gu->usRandVector()*2, verts);
 				}
 			} else if (cookedPiece->primitiveType == 2){
 				/* GL_QUADS */
-				
+
 				for (int i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 4){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
-					
+
 					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
-					
+
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
 					verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 2]];
 					verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 3]];
-	
+
 					ph->AddFlyingPiece(unit->model->textureType,
 						unit->team,
 						pos, speed+gu->usRandVector()*2, verts);
@@ -918,7 +918,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * SCALE);}
 	case UNIT_XZ: {
-		if (p1 == 0)	
+		if (p1 == 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
@@ -970,7 +970,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 	default:
 		logOutput.Print("CobError: Unknown get constant %d", val);
-	case VETERAN_LEVEL: 
+	case VETERAN_LEVEL:
 		return (int)(100*unit->experience);
 	case CURRENT_SPEED:
 		if (unit->moveType)
@@ -1083,7 +1083,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	default:
 		logOutput.Print("CobError: Unknown set constant %d", val);
-	case VETERAN_LEVEL: 
+	case VETERAN_LEVEL:
 		unit->experience=param*0.01f;
 		break;
 	case MAX_SPEED:
@@ -1102,7 +1102,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 #endif
 }
 
-bool CCobInstance::HasScriptFunction(int id) 
+bool CCobInstance::HasScriptFunction(int id)
 {
 	return (script.scriptIndex[id] >= 0);
 }
