@@ -16,7 +16,6 @@ EXPORTS
 	IsUnitDisabledByClient		@12
 	GetFullUnitName				@13
 	
-	InitArchiveScanner			@20
 	AddArchive					@21
 	AddAllArchives				@22
 	GetArchiveChecksum			@23
@@ -55,3 +54,5 @@ EXPORTS
 	FileSizeVFS					@73
 	InitFindVFS					@74
 	FindFilesVFS				@75
+
+	GetSpringVersion			@76
