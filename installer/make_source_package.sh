@@ -63,13 +63,14 @@ include=" \
  $dir/tools/RtsSettings/ \
  $dir/tools/SelectionEditor/ \
  $dir/tools/unitsync/ \
- $dir/TASClient \
- $dir/TASServer \
- $dir/UnityLobby"
+ $dir/TASServer/"
 
 # On linux, win32 executables are useless.
+# TASClient is windows only.
 linux_exclude="$dir/installer/pkzip.exe $dir/TASClient/brcc32.exe"
+linux_include="$dir/UnityLobby"
 windows_exclude=""
+windows_include="$dir/TASClient/"
 
 # Update/create SVN checkout.
 if [ -d "$svndir" ]; then
@@ -90,7 +91,7 @@ cd lf
 /usr/bin/svn export "../$svndir" "$dir" --native-eol LF || exit 1
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 echo '-> CREATING .TAR.BZ2 ARCHIVE'
-tar cfj "../$tbz" $include
+tar cfj "../$tbz" $include $linux_include
 echo '-> CREATING .TAR.GZ ARCHIVE'
 tar cfz "../$tgz" $include
 cd ..
@@ -104,7 +105,7 @@ cd crlf
 /usr/bin/svn export "../$svndir" "$dir" --native-eol CRLF || exit 1
 [ -n "$windows_exclude" ] && rm -rf $windows_exclude
 [ -x /usr/bin/zip ] && echo '-> CREATING .ZIP ARCHIVE' && \
-	/usr/bin/zip -q -r -u -9 "../$zip" $include
+	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
 [ -x /usr/bin/7z ] && echo '-> CREATING .7Z ARCHIVE' && \
 	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
 cd ..
