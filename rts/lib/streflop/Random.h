@@ -174,19 +174,19 @@ template<> a_type Random12<false, false, a_type>(RandomState& state); \
 template<> a_type Random<a_type>(RandomState& state); \
 template<> inline a_type Random<true, true, a_type>(a_type min, a_type max, RandomState& state) { \
     a_type range = max - min;\
-    return Random12<true,true,a_type>() * range - range + min;\
+    return Random12<true,true,a_type>(DefaultRandomState) * range - range + min;\
 } \
 template<> inline a_type Random<true, false, a_type>(a_type min, a_type max, RandomState& state) { \
     a_type range = max - min;\
-    return Random12<true,false,a_type>() * range - range + min;\
+    return Random12<true,false,a_type>(DefaultRandomState) * range - range + min;\
 } \
 template<> inline a_type Random<false, true, a_type>(a_type min, a_type max, RandomState& state) { \
     a_type range = max - min;\
-    return Random12<false,true,a_type>() * range - range + min;\
+    return Random12<false,true,a_type>(DefaultRandomState) * range - range + min;\
 } \
 template<> inline a_type Random<false, false, a_type>(a_type min, a_type max, RandomState& state) { \
     a_type range = max - min;\
-    return Random12<false,false,a_type>() * range - range + min;\
+    return Random12<false,false,a_type>(DefaultRandomState) * range - range + min;\
 }
 
 
