@@ -25,7 +25,7 @@
 #include "LogOutput.h"
 #include "Game/GameSetup.h"
 #include "Game/CameraController.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "Platform/BaseCmd.h"
@@ -67,7 +67,7 @@ static const char *win_lpCmdLine=0;
 
 /**
  * @brief current active controller
- * 
+ *
  * Pointer to the currently active controller
  * (could be a PreGame, could be a Game, etc)
  */
@@ -75,7 +75,7 @@ CGameController* activeController=0;
 
 /**
  * @brief global quit
- * 
+ *
  * Global boolean indicating whether the user
  * wants to quit
  */
@@ -83,35 +83,35 @@ bool globalQuit = false;
 
 /**
  * @brief keys
- * 
+ *
  * Array of possible keys, and which are being pressed
  */
 Uint8 *keys;
 
 /**
  * @brief fullscreen
- * 
+ *
  * Whether or not the game is running in fullscreen
  */
 bool fullscreen;
 
 /**
  * @brief xres default
- * 
+ *
  * Defines the default X resolution as 1024
  */
 #define XRES_DEFAULT 1024
 
 /**
  * @brief yres default
- * 
+ *
  * Defines the default Y resolution as 768
  */
 #define YRES_DEFAULT 768
 
 /**
  * @brief Spring App
- * 
+ *
  * Main Spring application class launched by main()
  */
 class SpringApp
@@ -139,49 +139,49 @@ protected:
 
 	/**
 	 * @brief command line
-	 * 
+	 *
 	 * Pointer to instance of commandline parser
 	 */
 	BaseCmd *cmdline;
 
 	/**
 	 * @brief demofile
-	 * 
+	 *
 	 * Name of a demofile
 	 */
 	string demofile;
 
 	/**
 	 * @brief startscript
-	 * 
+	 *
 	 * Name of a start script
 	 */
 	string startscript;
 
 	/**
 	 * @brief screen width
-	 * 
+	 *
 	 * Game screen width
 	 */
 	int screenWidth;
 
 	/**
 	 * @brief screen height
-	 * 
+	 *
 	 * Game screen height
 	 */
 	int screenHeight;
 
 	/**
 	 * @brief FSAA
-	 * 
+	 *
 	 * Level of fullscreen anti-aliasing
 	 */
 	bool FSAA;
 
 	/**
 	 * @brief vertical sync
-	 * 
+	 *
 	 * Synchronize buffer swaps with the screen refresh rate.
 	 * A value < 0 leaves the vsync mechanism at the system
 	 * default, and higher values specify the interval between
@@ -221,7 +221,7 @@ SpringApp::~SpringApp()
  * @brief crash callback
  * @return whether callback was successful
  * @param crState current state
- * 
+ *
  * Callback function executed when
  * game crashes (win32 only)
  */
@@ -311,7 +311,7 @@ bool SpringApp::Initialize ()
 	SDL_EnableUNICODE(1);
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
-	
+
 	keys = SAFE_NEW Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
@@ -337,7 +337,7 @@ bool SpringApp::Initialize ()
 /**
  * @brief multisample test
  * @return whether the multisampling test was successful
- * 
+ *
  * Tests if a user has requested FSAA, if it's a valid
  * FSAA mode, and if it's supported by the current GL context
  */
@@ -360,12 +360,12 @@ static bool MultisampleTest(void)
 /**
  * @brief multisample verify
  * @return whether verification passed
- * 
+ *
  * Tests whether FSAA was actually enabled
  */
 static bool MultisampleVerify(void)
 {
-	GLint buffers, samples; 
+	GLint buffers, samples;
 	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);
 	if (buffers && samples) {
@@ -378,14 +378,14 @@ static bool MultisampleVerify(void)
 /**
  * @return whether window initialization succeeded
  * @param title char* string with window title
- * 
+ *
  * Initializes the game window
  */
 bool SpringApp::InitWindow (const char* title)
 {
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
-	// the crash reporter should be catching the errors 
+	// the crash reporter should be catching the errors
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
@@ -405,7 +405,7 @@ bool SpringApp::InitWindow (const char* title)
 
 /**
  * @return whether setting the video mode was successful
- * 
+ *
  * Sets SDL video mode options/settings
  */
 bool SpringApp::SetSDLVideoMode ()
@@ -549,7 +549,7 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
 	return true;
-}		
+}
 #else
 bool SpringApp::GetDisplayGeometry()
 {
@@ -561,7 +561,7 @@ bool SpringApp::GetDisplayGeometry()
 
 	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
 	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
-	
+
 	RECT rect;
 	if (!GetClientRect(info.window, &rect)) {
 		return false;
@@ -577,7 +577,7 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 	gu->winPosX = rect.left;
 	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
-	
+
 	return true;
 }
 #endif // _WIN32
@@ -593,7 +593,7 @@ void SpringApp::SetupViewportGeometry()
 		gu->winPosX = 0;
 		gu->winPosY = 0;
 	}
-		
+
 	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
 	if (gu->dualScreenMode) {
 		gu->dualScreenMiniMapOnLeft =
@@ -619,9 +619,9 @@ void SpringApp::SetupViewportGeometry()
 			gu->viewPosY = 0;
 		}
 	}
-	
+
 	// NOTE:  gu->viewPosY is not currently used
-	
+
 	gu->aspectRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
 }
 
@@ -632,11 +632,11 @@ void SpringApp::SetupViewportGeometry()
 void SpringApp::InitOpenGL ()
 {
 	SetupViewportGeometry();
-	
+
 	glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 
 	gluPerspective(45.0f, (GLfloat)gu->viewSizeX / (GLfloat)gu->viewSizeY, 2.8f, MAX_VIEW_RANGE);
-	
+
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
@@ -646,7 +646,7 @@ void SpringApp::InitOpenGL ()
 
 /**
  * @return whether commandline parsing was successful
- * 
+ *
  * Parse command line arguments
  */
 bool SpringApp::ParseCmdLine()
@@ -738,13 +738,13 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 	if (!command.empty()) {
 		int idx = command.rfind("sdf");
-		if (idx == command.size()-3) 
+		if (idx == command.size()-3)
 			demofile = command;
 		else startscript = command;
 	}
 #else
 	for (int i = 1; i < argc; i++)
-		if (argv[i][0] != '-')	
+		if (argv[i][0] != '-')
 		{
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
@@ -796,7 +796,7 @@ void SpringApp::CreateGameSetup ()
 
 /**
  * @return return code of activecontroller draw function
- * 
+ *
  * Draw function repeatedly called, it calls all the
  * other draw functions
  */
@@ -824,7 +824,7 @@ int SpringApp::Update ()
 			}
 		}
 	}
-#endif  
+#endif
 
 	SDL_GL_SwapBuffers();
 
@@ -918,7 +918,7 @@ int SpringApp::Run (int argc, char *argv[])
 				}
 				case SDL_KEYDOWN: {
 					int i = event.key.keysym.sym;
-					
+
 					const bool isRepeat = !!keys[i];
 
 					UpdateSDLKeys ();
@@ -931,7 +931,7 @@ int SpringApp::Run (int argc, char *argv[])
 						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
 						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
 						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
-						
+
 						if (keyBindings) {
 							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
 							if (fakeMetaKey >= 0) {
@@ -942,7 +942,7 @@ int SpringApp::Run (int argc, char *argv[])
 						activeController->KeyPressed(i,isRepeat);
 
 #ifndef NEW_GUI
-						if (activeController->userWriting){ 
+						if (activeController->userWriting){
 							// use unicode for printed characters
 							i = event.key.keysym.unicode;
 							if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE))
@@ -984,9 +984,9 @@ int SpringApp::Run (int argc, char *argv[])
 				}
 			}
 		}
-		if (globalQuit) 
+		if (globalQuit)
 			break;
-	
+
 		if (!Update())
 			break;
 	}
@@ -1023,7 +1023,7 @@ void SpringApp::Shutdown()
 #endif
 }
 
-// On msvc main() is declared as a non-throwing function. 
+// On msvc main() is declared as a non-throwing function.
 // Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
 int Run(int argc, char *argv[])
 {

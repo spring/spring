@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "InMapDraw.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Game/UI/MouseHandler.h"
@@ -315,21 +315,17 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 
 void CInMapDraw::ErasePos(float3 pos)
 {
-	net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
-			NETMSG_MAPDRAW, 8 /*message size*/, gu->myPlayerNum, NET_ERASE, (short)pos.x, (short)pos.z);
+	net->SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z);
 }
 
 void CInMapDraw::CreatePoint(float3 pos, std::string label)
 {
-	net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
-			NETMSG_MAPDRAW, gu->myPlayerNum, NET_POINT, (short)pos.x, (short)pos.z, label);
+	net->SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label);
 }
 
 void CInMapDraw::AddLine(float3 pos, float3 pos2)
 {
-	net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
-			NETMSG_MAPDRAW, 12 /*message size*/, gu->myPlayerNum, NET_LINE,
-			(short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
+	net->SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
 }
 
 

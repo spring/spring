@@ -7,7 +7,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Game/Team.h"
 #include "mmgr.h"
 
@@ -116,7 +116,7 @@ int CAICheats::GetUnitTeam(int unitid)
 	if(unit){
 		return unit->team;
 	}
-	return 0;	
+	return 0;
 }
 
 int CAICheats::GetUnitAllyTeam(int unitid)
@@ -125,7 +125,7 @@ int CAICheats::GetUnitAllyTeam(int unitid)
 	if(unit){
 		return unit->allyteam;
 	}
-	return 0;	
+	return 0;
 }
 
 float CAICheats::GetUnitHealth(int unitid)			//the units current health
@@ -226,7 +226,7 @@ bool CAICheats::IsUnitParalyzed(int unitid){
 		return unit->stunned;
 	}
 	return 0;
-} 
+}
 
 bool CAICheats::GetProperty(int id, int property, void *data)
 {

@@ -22,7 +22,7 @@
 #endif
 #include "Platform/FileSystem.h"
 #include <SDL_timer.h>
-#include "Net.h"
+#include "NetProtocol.h" // this is bad, CNet should be independent of higher level layers
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -51,9 +51,6 @@ typedef struct in_addr* LPIN_ADDR;
 // Mutex to prevent a race condition between client and server in
 // CNet::SendData and CNet::GetData. (for local connections only)
 static boost::mutex netMutex;
-
-CNet* net=0;
-CNet* serverNet=0;
 
 static bool IsFakeError()
 {
@@ -264,6 +261,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	InitNewConn(&saOther,false,0);
 	if(!localConnect){
+		// FIXME cant use this here...
 		SendData<unsigned char, unsigned char>(
 				NETMSG_ATTEMPTCONNECT, gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 		FlushNet();
@@ -515,6 +513,7 @@ int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
 
 		// Send over data that's already known to other clients.
 		// Don't send it if host has not yet decided.
+		// FIXME should be in higher layer
 		if (!scriptName.empty())
 			SendSTLData<std::string>(NETMSG_SCRIPT, scriptName);
 		if (!mapName.empty())

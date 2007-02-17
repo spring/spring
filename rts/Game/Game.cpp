@@ -52,7 +52,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "Net.h"
+#include "NetProtocol.h"
 //#include "PhysicsEngine.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
@@ -338,7 +338,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
 	//sending your playername to the server indicates that you are finished loading
-	net->SendSTLData<unsigned char, std::string>(NETMSG_PLAYERNAME, gu->myPlayerNum, p->playerName);
+	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
 	lastModGameTimeMeasure = SDL_GetTicks();
 	lastframe = SDL_GetTicks();
@@ -890,8 +890,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (net->playbackDemo) {
 			gs->paused = newPause;
 		} else {
-			net->SendData<unsigned char, unsigned char>(
-					NETMSG_PAUSE, gu->myPlayerNum, newPause);
+			net->SendPause(gu->myPlayerNum, newPause);
 			lastframe = SDL_GetTicks(); // this required here?
 		}
 	}
@@ -1044,7 +1043,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			speed+=0.5f;
 		}
 		if (!net->playbackDemo) {
-			net->SendData<float>(NETMSG_USER_SPEED, speed);
+			net->SendUserSpeed(speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -1062,7 +1061,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			speed-=0.5f;
 		}
 		if (!net->playbackDemo) {
-			net->SendData<float>(NETMSG_USER_SPEED, speed);
+			net->SendUserSpeed(speed);
 		} else {
 			gs->speedFactor=speed;
 			gs->userSpeedFactor=speed;
@@ -1076,7 +1075,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->SendData<unsigned char>(NETMSG_DIRECT_CONTROL, gu->myPlayerNum);
+		net->SendDirectControl(gu->myPlayerNum);
 	}
 #endif
 
@@ -1893,8 +1892,7 @@ void CGame::SimFrame()
 			oldHeading=hp.x;
 			oldPitch=hp.y;
 			oldStatus=status;
-			net->SendData<unsigned char, unsigned char, short int, short int>(
-					NETMSG_DC_UPDATE, gu->myPlayerNum, status, hp.x, hp.y);
+			net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
 		}
 	}
 #endif
@@ -2062,7 +2060,6 @@ bool CGame::ClientReadNet()
 			case NETMSG_USER_SPEED:
 			case NETMSG_CPU_USAGE:
 			case NETMSG_SYNCREQUEST:
-			case NETMSG_SYNCERROR:
 				i2+=5;
 				break;
 			case NETMSG_HELLO:
@@ -2174,8 +2171,7 @@ bool CGame::ClientReadNet()
 			logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-			net->SendData<unsigned char, CPlayer::Statistics>(
-					NETMSG_PLAYERSTAT, gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
+			net->SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
 			lastLength=1;
 			ENTER_SYNCED;
 			break;
@@ -2314,11 +2310,10 @@ bool CGame::ClientReadNet()
 		case NETMSG_NEWFRAME:
 			if(!gameServer)
 				timeLeft-=1;
-			net->SendData<int>(NETMSG_NEWFRAME, gs->frameNum);
+			net->SendNewFrame(gs->frameNum);
 			SimFrame();
 #ifdef SYNCCHECK
-			net->SendData<unsigned char, int, unsigned>(NETMSG_SYNCRESPONSE,
-					gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+			net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 			CSyncChecker::NewFrame();
 #endif
 			if(gameServer && serverNet && serverNet->playbackDemo)	//server doesnt update framenums automatically while playing demo
@@ -2443,22 +2438,14 @@ bool CGame::ClientReadNet()
 			if(frame!=gs->frameNum){
 				logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 			}
-
-			net->SendData<float>(NETMSG_CPU_USAGE,
 #ifdef PROFILE_TIME
-					profiler.profile["Sim time"].percent);
+			net->SendCPUUsage(profiler.profile["Sim time"].percent);
 #else
-					0.30f);
+			net->SendCPUUsage(0.30f);
 #endif
 			lastLength=5;
 			ENTER_SYNCED;
 			break;}
-
-		case NETMSG_SYNCERROR:
-			// TODO unused msg
-			logOutput.Print("Sync error");
-			lastLength=5;
-			break;
 
 		case NETMSG_SHARE:{
 			int player=inbuf[inbufpos+1];
@@ -2983,7 +2970,7 @@ void CGame::SendNetChat(const std::string& message)
 	if (msg.size() > 128) {
 		msg.resize(128); // safety
 	}
-	net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, msg);
+	net->SendChat(gu->myPlayerNum, msg);
 	if (net->playbackDemo) {
 		HandleChatMsg(msg, gu->myPlayerNum);
 	}

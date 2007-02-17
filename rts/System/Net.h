@@ -37,6 +37,7 @@ CInMapDraw::NET_* command. messageSize is always the size of the entire message
 including `command' and `messageSize'.
 */
 
+// FIXME: should be in NetProtocol.h but the layers arent properly decoupled yet.. (CNet still uses some of these directly)
 enum NETMSG {
 	NETMSG_HELLO            = 1,  //
 	NETMSG_QUIT             = 2,  //
@@ -52,7 +53,7 @@ enum NETMSG {
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
 	                              // short unitIDCount;  unitIDCount X short(unitID)
-	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params } 
+	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
@@ -72,10 +73,8 @@ enum NETMSG {
 	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
 	NETMSG_SYNCREQUEST      = 32, // int frameNum;
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
-	NETMSG_SYNCERROR        = 34, // (NEVER SENT)
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
-	NETMSG_EXECHECKSUM      = 37, // uint checksum = 0;
 	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
 	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left*/;
 	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
@@ -102,41 +101,45 @@ template<> struct is_string<std::string> {
 	enum { TrailingNull = 1 };
 };
 
+/** Low level network connection (basically a fast TCP-like layer on top of UDP)
+With also demo file writing and some other stuff hacked in. */
 class CNet
 {
-  private:
-    struct AssembleBuffer 
-    {
-      boost::scoped_array<unsigned char> message_buffer;
-      size_t index;
-      AssembleBuffer( NETMSG msg, size_t buffer_size )
-        : message_buffer( SAFE_NEW unsigned char[buffer_size] ), index(1)
-        { message_buffer[0] = msg; }
+private:
 
-      template<typename T>
-      AssembleBuffer& add_scalar( T const& obj) 
-      {
-        * reinterpret_cast<T*>( message_buffer.get() + index) = obj;
-        index += sizeof(T);
-        return *this;
-      }
+	struct AssembleBuffer
+	{
+		boost::scoped_array<unsigned char> message_buffer;
+		size_t index;
+		AssembleBuffer( NETMSG msg, size_t buffer_size )
+			: message_buffer( SAFE_NEW unsigned char[buffer_size] ), index(1)
+		{ message_buffer[0] = msg; }
 
-      template<typename T>
-      AssembleBuffer& add_sequence( T const& obj) 
-      {
-        typedef typename T::value_type value_type;
-        value_type * pos = reinterpret_cast<value_type*>( message_buffer.get() + index);
-        std::copy( obj.begin(), obj.end(), pos );
-        index += sizeof(value_type)*obj.size() + is_string<T>::TrailingNull;
-        if( is_string<T>::TrailingNull ) {
-          pos += obj.size();
-          *pos = typename T::value_type(0);
-        }
-        return *this;
-      }
-      unsigned char * get() const { return message_buffer.get(); };
-    };
-public:
+		template<typename T>
+		AssembleBuffer& add_scalar( T const& obj)
+		{
+			* reinterpret_cast<T*>( message_buffer.get() + index) = obj;
+			index += sizeof(T);
+			return *this;
+		}
+
+		template<typename T>
+		AssembleBuffer& add_sequence( T const& obj)
+		{
+			typedef typename T::value_type value_type;
+			value_type * pos = reinterpret_cast<value_type*>( message_buffer.get() + index);
+			std::copy( obj.begin(), obj.end(), pos );
+			index += sizeof(value_type)*obj.size() + is_string<T>::TrailingNull;
+			if( is_string<T>::TrailingNull ) {
+				pos += obj.size();
+				*pos = typename T::value_type(0);
+			}
+			return *this;
+		}
+		unsigned char * get() const { return message_buffer.get(); };
+	};
+
+protected:
 
 	/** Send a net message without any parameters. */
 	int SendData(NETMSG msg) {
@@ -236,9 +239,9 @@ public:
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
-    size_type size =  1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		size_type size =  1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
 		AssembleBuffer buf( msg, size );
-    buf.add_scalar(size).add_sequence(s );
+		buf.add_scalar(size).add_sequence(s );
 
 		return SendData(buf.get(), size);
 	}
@@ -250,10 +253,10 @@ public:
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
-    size_type size =  1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-    AssembleBuffer buf( msg, size );
+		size_type size =  1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		AssembleBuffer buf( msg, size );
 
-    buf.add_scalar(size).add_scalar(a).add_sequence(s);
+		buf.add_scalar(size).add_scalar(a).add_sequence(s);
 
 		return SendData(buf.get(), size);
 	}
@@ -279,37 +282,37 @@ public:
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
-    size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-    AssembleBuffer buf( msg, size );
+		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		AssembleBuffer buf( msg, size );
 
-    buf.add_scalar(size)
-      .add_scalar(a)
-      .add_scalar(b)
-      .add_scalar(c)
-      .add_sequence(s);
+		buf.add_scalar(size)
+		.add_scalar(a)
+		.add_scalar(b)
+		.add_scalar(c)
+		.add_sequence(s);
 
-    return SendData(buf.get(), size);
+		return SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename T>
 	int SendSTLData(NETMSG msg, A a, B b, C c, D d, const T& s) {
-    typedef typename T::value_type value_type;
+		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
+		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
 
-    size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
+		AssembleBuffer buf( msg, size );
+		buf.add_scalar(size)
+		.add_scalar(a)
+		.add_scalar(b)
+		.add_scalar(c)
+		.add_scalar(d)
+		.add_sequence(s);
 
-    AssembleBuffer buf( msg, size );
-    buf.add_scalar(size)
-      .add_scalar(a)
-      .add_scalar(b)
-      .add_scalar(c)
-      .add_scalar(d)
-      .add_sequence(s);
-
-    return SendData(buf.get(), size);
+		return SendData(buf.get(), size);
 	}
 
+public:
 	CNet();
 	void StopListening();
 	int GetData(unsigned char* buf,int length,int conNum);
@@ -318,7 +321,7 @@ public:
 	int InitClient(const char* server,int portnum,int sourceport,bool localConnect=false);
 	int InitServer(int portnum);
 	void Update(void);
-	virtual ~CNet();
+	~CNet();
 
 	bool connected;
 	bool inInitialConnect;
@@ -374,11 +377,12 @@ public:
 	int InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber);
 	int ResolveConnection(sockaddr_in* from);
 
-	void ProcessRawPacket(unsigned char* data, int length, int conn);	
+	void ProcessRawPacket(unsigned char* data, int length, int conn);
 	void FlushNet(void);
 	void FlushConnection(int conn);
 	void SendRawPacket(int conn, unsigned char* data, int length, int packetNum);
 
+	// FIXME demo stuff should be in another layer?
 	void CreateDemoFile();
 	void SaveToDemo(unsigned char* buf,int length);
 	bool FindDemoFile(const char* name);
@@ -403,6 +407,7 @@ public:
 
 private:
 
+	//FIXME : should be in CNetProtocol
 	// init-data.  These are send over when a new connection is initialized.
 	std::string scriptName;
 	unsigned mapChecksum;
@@ -410,8 +415,5 @@ private:
 	unsigned modChecksum;
 	std::string modName;
 };
-
-extern CNet* serverNet;
-extern CNet* net;
 
 #endif /* NET_H */

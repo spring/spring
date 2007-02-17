@@ -9,7 +9,7 @@
 #include "SelectedUnitsAI.h"
 #include "SelectedUnits.h"
 #include "LogOutput.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "GlobalStuff.h"
 #include "Player.h"
 #include "WaitCommandsAI.h"
@@ -47,7 +47,7 @@ void CSelectedUnitsAI::AddUnit(int unit)
 {
 	myUnits.insert(unit);
 	unitsChanged=true;
-	return true;				
+	return true;
 }
 
 
@@ -185,7 +185,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 
 		// use the vector from the middle of group to new pos as forward dir
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
-		float3 frontdir = pos - centerCoor; 
+		float3 frontdir = pos - centerCoor;
 		frontdir.y = 0.0f;
 		frontdir.Normalize();
 		const float3 sideDir = frontdir.cross(UpVector);
@@ -329,13 +329,13 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 
 	float3 nextPos(0.0f, 0.0f, 0.0f);//it's in "front" coordinates (rotated to real, moved by rightPos)
 
-	if(centerPos.distance(rightPos)<selectedUnits.netSelected[player].size()+33){	//Strange line! treat this as a standard move if the front isnt long enough 
+	if(centerPos.distance(rightPos)<selectedUnits.netSelected[player].size()+33){	//Strange line! treat this as a standard move if the front isnt long enough
 		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
 			CUnit* unit=uh->units[*ui];
 			if(unit){
 				unit->commandAI->GiveCommand(*c);
 			}
-		}		
+		}
 		return;
 	}
 
@@ -360,8 +360,8 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	std::multimap<float,int> orderedUnits;
 	CreateUnitOrder(orderedUnits,player);
 
-	for(multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){	
-		nextPos = MoveToPos(oi->second, nextPos, sd, c->options);	
+	for(multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){
+		nextPos = MoveToPos(oi->second, nextPos, sd, c->options);
 	}
 }
 
@@ -494,7 +494,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 
 	// sort the targets
 	vector<DistInfo> distVec;
-	int t;	
+	int t;
 	for (t = 0; t < targetsCount; t++) {
 		DistInfo di;
 		di.unitID = targets[t];
