@@ -1,7 +1,7 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
 #include "GlobalAICallback.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "GlobalAI.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -221,8 +221,7 @@ int CAICallback::GiveOrder(int unitid, Command* c)
 	if (unit->team != team)
 		return -1;
 
-	net->SendSTLData<unsigned char, short, int, unsigned char, std::vector<float> >(
-			NETMSG_AICOMMAND, gu->myPlayerNum, unitid, c->id, c->options, c->params);
+	net->SendAICommand(gu->myPlayerNum, unitid, c->id, c->options, c->params);
 	return 0;
 }
 
@@ -279,7 +278,7 @@ int CAICallback::GetUnitTeam(int unitid)
 			return unit->team;
 		}
 	}
-	return 0;	
+	return 0;
 }
 
 int CAICallback::GetUnitAllyTeam(int unitid)
@@ -291,7 +290,7 @@ int CAICallback::GetUnitAllyTeam(int unitid)
 			return unit->allyteam;
 		}
 	}
-	return 0;	
+	return 0;
 }
 
 float CAICallback::GetUnitHealth(int unitid)			//the units current health
@@ -447,7 +446,7 @@ const UnitDef* CAICallback::GetUnitDef(int unitid)
 				const UnitDef* decoyDef = unitDef->decoyDef;
 				if (decoyDef == NULL) {
 					return unitDef;
-				} else {				
+				} else {
 					return decoyDef;
 				}
 			}
@@ -504,7 +503,7 @@ bool CAICallback::IsUnitParalyzed(int unitid){
 		}
 	}
 	return 0;
-} 
+}
 
 int CAICallback::InitPath(float3 start,float3 end,int pathType)
 {
@@ -863,12 +862,12 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 					}
 				}
 			}
-			if(good) 
+			if(good)
 				return bi.pos;
 		}
 	}
 
-	return float3(-1.0f,0.0f,0.0f);	
+	return float3(-1.0f,0.0f,0.0f);
 }
 
 
@@ -884,7 +883,7 @@ float CAICallback::GetMetalIncome()
 
 float CAICallback::GetMetalUsage()
 {
-	return gs->Team(team)->prevMetalExpense;	
+	return gs->Team(team)->prevMetalExpense;
 }
 
 float CAICallback::GetMetalStorage()
@@ -904,7 +903,7 @@ float CAICallback::GetEnergyIncome()
 
 float CAICallback::GetEnergyUsage()
 {
-	return gs->Team(team)->prevEnergyExpense;	
+	return gs->Team(team)->prevEnergyExpense;
 }
 
 float CAICallback::GetEnergyStorage()
@@ -965,7 +964,7 @@ int CAICallback::GetFeatures (int *features, int max)
 
 			features [i++] = f->id;
 
-			if (i == max) 
+			if (i == max)
 				break;
 		}
 	}
@@ -978,7 +977,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 	vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
 	int allyteam = gs->AllyTeam(team);
 	int n = 0;
-	
+
 	for (int a=0;a<ft.size();a++)
 	{
 		CFeature *f = ft[a];
@@ -1003,7 +1002,7 @@ FeatureDef* CAICallback::GetFeatureDef (int feature)
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->def;
 	}
-	
+
 	return 0;
 }
 
@@ -1119,20 +1118,17 @@ int CAICallback::HandleCommand (int commandId, void *data)
 	case AIHCQuerySubVersionId:
 		return 1; // current version of Handle Command interface
 	case AIHCAddMapPointId:
-		net->SendSTLData<unsigned char, unsigned char, short, short, std::string>(
-			NETMSG_MAPDRAW, team, CInMapDraw::NET_POINT,
+		net->SendMapDrawPoint(team,
 			(short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z,
 			std::string(((AIHCAddMapPoint *)data)->label));
 		return 1;
 	case AIHCAddMapLineId:
-		net->SendData<unsigned char, unsigned char, unsigned char, short, short, short, short>(
-			NETMSG_MAPDRAW, 12 /*message size*/, team, CInMapDraw::NET_LINE,
+		net->SendMapDrawLine(team,
 			(short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z,
 			(short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z);
 		return 1;
 	case AIHCRemoveMapPointId:
-		net->SendData<unsigned char, unsigned char, unsigned char, short, short>(
-			NETMSG_MAPDRAW, 8 /*message size*/, team, CInMapDraw::NET_ERASE,
+		net->SendMapErase(team,
 			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
 		return 1;
 	}
@@ -1172,7 +1168,7 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit = uh->units[unitid];
 		const int allyTeam = gs->AllyTeam(team);
-		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) { 
+		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
 			return false;  //return if the unit doesn't exist or cant be seen
 		}
 
@@ -1268,7 +1264,7 @@ int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 	return a;
 }
 
-int CAICallback::GetMapLines(LineMarker *lm, int maxLines) 
+int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 {
 	int a=0;
 	verify ();

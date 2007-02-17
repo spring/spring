@@ -10,7 +10,7 @@
 #include <SDL_keysym.h>
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -162,7 +162,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.hotkey="Shift+q";
 		groupCommands.push_back(c);
 	}
-	
+
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
 	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
@@ -188,7 +188,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			commands.push_back(*ci);
 		}
 	}
-	
+
 	// load the second set  (all those that have not already been included)
 	for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
@@ -213,7 +213,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			commands.push_back(*ci);
 		}
 	}
-	
+
 	AvailableCommandsStruct ac;
 	ac.commandPage=commandPage;
 	ac.commands=commands;
@@ -262,7 +262,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 			for(set<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 				if(!(*ui)->group)
 					(*ui)->SetGroup(group);
-			}	
+			}
 			SelectGroup(group->id);
 		}
 		return;
@@ -429,9 +429,9 @@ void CSelectedUnits::Draw()
 		}
 	}
 	glEnd();
-	
+
 	// highlight queued build sites if we are about to build something
-	// (or old-style, whenever the shift key is being held down)	
+	// (or old-style, whenever the shift key is being held down)
 	if (!selectedUnits.empty() &&
 	    ((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
 	     ((guihandler->inCommand >= 0) &&
@@ -442,9 +442,9 @@ void CSelectedUnits::Draw()
 			if ((*bi)->owner->team == gu->myTeam) {
 				(*bi)->DrawQuedBuildingSquares();
 			}
-		}  
+		}
 	}
-	
+
 	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
@@ -534,7 +534,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 		if ( newDef->canReclaim && !oldDef->canReclaim) { return true;  }
 		if (!newDef->canReclaim &&  oldDef->canReclaim) { return false; }
 	}
-	
+
 	return (newDef->speed > oldDef->speed); // CMD_MOVE?
 }
 
@@ -542,7 +542,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
 {
 	// NOTE: the unitDef->aihint value is being ignored
-	
+
 	if ((selectedGroup != -1) && grouphandler->groups[selectedGroup]->ai) {
 		return grouphandler->groups[selectedGroup]->GetDefaultCmd(unit, feature);
 	}
@@ -573,7 +573,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
 			}
 		}
 	}
-	
+
 	return (leaderUnit->commandAI->GetDefaultCmd(unit, feature));
 }
 
@@ -583,7 +583,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
 void CSelectedUnits::AiOrder(int unitid, Command &c)
 {
 	if(uh->units[unitid]!=0)
-		uh->units[unitid]->commandAI->GiveCommand(c);	
+		uh->units[unitid]->commandAI->GiveCommand(c);
 }
 
 
@@ -604,7 +604,7 @@ void CSelectedUnits::DrawCommands()
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
 	lineDrawer.SetupLineStipple();
-                     
+
 	glEnable(GL_BLEND);
 	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
 	            (GLenum)cmdColors.QueuedBlendDst());
@@ -687,7 +687,7 @@ std::string CSelectedUnits::GetTooltip(void)
 	       (exp / num), cost, (range / num),
 	       metalMake,  metalUse,
 	       energyMake, energyUse);
-	
+
   if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
   	CUnit* unit = *selectedUnits.begin();
     SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
@@ -719,7 +719,7 @@ void CSelectedUnits::SendSelection(void)
 	std::vector<short>::iterator i = selectedUnitIDs.begin();
 	std::set<CUnit*>::const_iterator ui = selectedUnits.begin();
 	for(; ui != selectedUnits.end(); ++i, ++ui) *i = (*ui)->id;
-	net->SendSTLData<unsigned char, std::vector<short> >(NETMSG_SELECT, gu->myPlayerNum, selectedUnitIDs);
+	net->SendSelect(gu->myPlayerNum, selectedUnitIDs);
 	selectionChanged=false;
 }
 
@@ -729,8 +729,7 @@ void CSelectedUnits::SendCommand(Command& c)
 	if(selectionChanged){		//send new selection
 		SendSelection();
 	}
-	net->SendSTLData<unsigned char, int, unsigned char, std::vector<float> >(
-			NETMSG_COMMAND, gu->myPlayerNum, c.id, c.options, c.params);
+	net->SendCommand(gu->myPlayerNum, c.id, c.options, c.params);
 }
 
 
@@ -742,7 +741,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 	if (gu->spectating) {
 		return; // don't waste bandwidth
 	}
-	
+
 	int u, c;
 	unsigned char buf[8192];
 	const int unitIDCount  = (int)unitIDs.size();
@@ -763,7 +762,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
 	msgLen += commandCount * (4 + 1 + 2); // id, options, params size
-	msgLen += totalParams * 4; 
+	msgLen += totalParams * 4;
 	if (msgLen > sizeof(buf)) {
 		logOutput.Print("Discarded oversized NETMSG_AICOMMANDS packet: %i\n",
 		                msgLen);
@@ -796,6 +795,6 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 	}
 
 	net->SendData(buf, msgLen);
-	
+
 	return;
 }

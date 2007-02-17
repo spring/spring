@@ -8,7 +8,7 @@
 #include "CrashHandler.h"
 #include "Game/GameVersion.h"
 #include "LogOutput.h"
-#include "Net.h"
+#include "NetProtocol.h"
 
 namespace CrashHandler {
 
@@ -126,7 +126,7 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
 
 	// Record exception info.
-	PRINT("Exception: %s (0x%08x)\n", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode); 
+	PRINT("Exception: %s (0x%08x)\n", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
 	PRINT("Exception Address: 0x%08x\n", e->ExceptionRecord->ExceptionAddress);
 
 	// Record list of loaded DLLs.

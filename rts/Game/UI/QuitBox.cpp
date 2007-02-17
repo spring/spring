@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/glFont.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Game/SelectedUnits.h"
 #include "InfoConsole.h"
 #include "Sim/Units/Unit.h"
@@ -224,8 +224,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			//make sure the units are stopped and that the selection is transmitted
 			c.id=CMD_STOP;
 			selectedUnits.GiveCommand(c,false);
-			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-				NETMSG_SHARE, gu->myPlayerNum, shareTeam, true,
+			net->SendShare(gu->myPlayerNum, shareTeam, true,
 				gs->Team(gu->myTeam)->metal, gs->Team(gu->myTeam)->energy);
 			selectedUnits.ClearSelected();
 			// inform other users of the giving away of units
@@ -233,7 +232,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			sprintf(givenAwayMsg,"%s gave everything to %s.",
 				gs->players[gu->myPlayerNum]->playerName.c_str(),
 				gs->players[gs->Team(shareTeam)->leader]->playerName.c_str());
-			net->SendSTLData<unsigned char, std::string>(NETMSG_CHAT, gu->myPlayerNum, givenAwayMsg);
+			net->SendChat(gu->myPlayerNum, givenAwayMsg);
 		}
 		// resign, so self-d all units
 		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox)) {

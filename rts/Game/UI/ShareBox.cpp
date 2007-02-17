@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/glFont.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Game/SelectedUnits.h"
 
 int CShareBox::lastShareTeam=0;
@@ -255,8 +255,7 @@ void CShareBox::MouseRelease(int x,int y,int button)
 			c.id=CMD_STOP;
 			selectedUnits.GiveCommand(c,false);		//make sure the units are stopped and that the selection is transmitted
 		}
-		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-				NETMSG_SHARE, gu->myPlayerNum, shareTeam, shareUnits,
+		net->SendShare(gu->myPlayerNum, shareTeam, shareUnits,
 				metalShare*gs->Team(gu->myTeam)->metal, energyShare*gs->Team(gu->myTeam)->energy);
 		if(shareUnits)
 			selectedUnits.ClearSelected();

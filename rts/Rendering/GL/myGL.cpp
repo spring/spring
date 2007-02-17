@@ -13,7 +13,7 @@
 #include "LogOutput.h"
 #include "FPUCheck.h"
 #include <SDL.h>
-#include "Net.h"
+#include "NetProtocol.h"
 #include "mmgr.h"
 
 #include "IFramebuffer.h"

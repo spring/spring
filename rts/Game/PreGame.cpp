@@ -11,7 +11,7 @@
 #include "StartScripts/ScriptHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "UI/InfoConsole.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "GameSetup.h"
 #include "command.h"
 #include "Team.h"
@@ -46,7 +46,7 @@ CPreGame::CPreGame(bool server, const string& demo):
 	infoConsole = SAFE_NEW CInfoConsole;
 
 	pregame = this; // prevent crashes if Select* is called from ctor
-	net = SAFE_NEW CNet;
+	net = SAFE_NEW CNetProtocol();
 
 	if (server) {
 		good_fpu_control_registers("before CGameServer creation");
@@ -172,7 +172,7 @@ bool CPreGame::Draw()
 	} else {
 		PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 	}
-	
+
 	infoConsole->Draw();
 
 	if(userWriting){
@@ -183,7 +183,7 @@ bool CPreGame::Draw()
 		tempstring+=userInput;
 		font->glPrintRaw(tempstring.c_str());
 		glLoadIdentity();
-	}	
+	}
 
 	if(showList)
 		showList->Draw();
@@ -356,7 +356,7 @@ void CPreGame::UpdateClientNet()
 			inbufpos += inbuf[inbufpos+1];
 
 		case NETMSG_MAPDRAW:
-			inbufpos += inbuf[inbufpos+1];	
+			inbufpos += inbuf[inbufpos+1];
 			break;
 
 		case NETMSG_SYSTEMMSG:
@@ -364,7 +364,7 @@ void CPreGame::UpdateClientNet()
 			int player=inbuf[inbufpos+2];
 			string s=(char*)(&inbuf[inbufpos+3]);
 			logOutput.Print(s);
-			inbufpos += inbuf[inbufpos+1];	
+			inbufpos += inbuf[inbufpos+1];
 			break;}
 
 		case NETMSG_STARTPOS:{
@@ -492,7 +492,7 @@ void CPreGame::ShowModList()
 	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		modMap[it->name] = it->description;
 	}
-	
+
 	list->AddItem("Random mod", "Random mod"); // always first
 	std::map<std::string, std::string>::iterator mit;
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {

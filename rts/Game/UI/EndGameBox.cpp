@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/glFont.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -203,7 +203,7 @@ void CEndGameBox::Draw()
 
 	if(dispMode==0){
 		float xpos=0.01f;
-	
+
 		string headers[]={"Name","MC/m","MP/m","KP/m","Cmds/m","ACS"};
 
 		for(int a=0;a<6;++a){
@@ -223,18 +223,18 @@ void CEndGameBox::Draw()
 			sprintf(values[3],"%i",(int)(gs->players[a]->currentStats->keyPresses*60/game->totalGameTime));
 			sprintf(values[4],"%i",(int)(gs->players[a]->currentStats->numCommands*60/game->totalGameTime));
 			sprintf(values[5],"%i",(int)
-				( gs->players[a]->currentStats->numCommands != 0 ) ? 
+				( gs->players[a]->currentStats->numCommands != 0 ) ?
 				( gs->players[a]->currentStats->unitCommands/gs->players[a]->currentStats->numCommands) :
 				( 0 ));
-			
+
 			float xpos=0.01f;
 			for(int a=0;a<6;++a){
 				font->glPrintAt(box.x1+xpos,box.y1+ypos,0.8f,values[a]);
 				xpos+=0.1f;
 			}
-				
+
 			ypos-=0.02f;
-		}		
+		}
 	} else {
 		if(stats.empty())
 			FillTeamStats();
@@ -265,7 +265,7 @@ void CEndGameBox::Draw()
 			va->AddVertex0(float3(box.x1+0.12f, box.y1+0.55f-sel*0.02f , 0));
 
 			va->DrawArray0(GL_QUADS);
-			glEnable(GL_TEXTURE_2D);		
+			glEnable(GL_TEXTURE_2D);
 			glColor4f(1,1,1,0.8f);
 		}
 		float ypos=0.55f;
@@ -362,16 +362,16 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Energy used"));
 	stats.push_back(Stat("Metal produced"));
 	stats.push_back(Stat("Energy produced"));
-	
+
 	stats.push_back(Stat("Metal excess"));
 	stats.push_back(Stat("Energy excess"));
-	
+
 	stats.push_back(Stat("Metal received"));
 	stats.push_back(Stat("Energy received"));
-	
+
 	stats.push_back(Stat("Metal sent"));
 	stats.push_back(Stat("Energy sent"));
-	
+
 	stats.push_back(Stat("Metal stored"));
 	stats.push_back(Stat("Energy stored"));
 
@@ -380,42 +380,42 @@ void CEndGameBox::FillTeamStats()
 
 	stats.push_back(Stat("Units produced"));
 	stats.push_back(Stat("Units died"));
-	
+
 	stats.push_back(Stat("Units received"));
 	stats.push_back(Stat("Units sent"));
 	stats.push_back(Stat("Units captured"));
 	stats.push_back(Stat("Units stolen"));
-	
+
 	stats.push_back(Stat("Damage Dealt"));
 	stats.push_back(Stat("Damage Received"));
-	
+
 	for(int team=0; team<gs->activeTeams; team++){
 		for(std::list<CTeam::Statistics>::iterator si=gs->Team(team)->statHistory.begin(); si!=gs->Team(team)->statHistory.end(); si++){
-			stats[0].AddStat(team,0);				
+			stats[0].AddStat(team,0);
 
 			stats[1].AddStat(team, si->metalUsed);
 			stats[2].AddStat(team, si->energyUsed);
 			stats[3].AddStat(team, si->metalProduced);
 			stats[4].AddStat(team, si->energyProduced);
-			
+
 			stats[5].AddStat(team, si->metalExcess);
 			stats[6].AddStat(team, si->energyExcess);
-			
+
 			stats[7].AddStat(team, si->metalReceived);
 			stats[8].AddStat(team, si->energyReceived);
-			
+
 			stats[9].AddStat(team, si->metalSent);
 			stats[10].AddStat(team, si->energySent);
 
 			stats[11].AddStat(team, si->metalProduced+si->metalReceived - (si->metalUsed+si->metalSent+si->metalExcess) );
 			stats[12].AddStat(team, si->energyProduced+si->energyReceived - (si->energyUsed+si->energySent+si->energyExcess) );
-			
+
 			stats[13].AddStat(team, si->unitsProduced+si->unitsReceived+si->unitsCaptured - (si->unitsDied+si->unitsSent+si->unitsOutCaptured) );
 			stats[14].AddStat(team, si->unitsKilled);
 
 			stats[15].AddStat(team, si->unitsProduced);
 			stats[16].AddStat(team, si->unitsDied);
-			
+
 			stats[17].AddStat(team, si->unitsReceived);
 			stats[18].AddStat(team, si->unitsSent);
 			stats[19].AddStat(team, si->unitsCaptured);
@@ -424,5 +424,5 @@ void CEndGameBox::FillTeamStats()
 			stats[21].AddStat(team, si->damageDealt);
 			stats[22].AddStat(team, si->damageReceived);
 		}
-	}	
+	}
 }

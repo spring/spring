@@ -4,7 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Team.h"
 #include "Rendering/glFont.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "mmgr.h"
 
 
@@ -58,7 +58,7 @@ void CResourceBar::Draw(void)
 	if (disabled) {
 		return;
 	}
-	
+
 	const float mx=MouseX(mouse->lastx);
 	const float my=MouseY(mouse->lasty);
 
@@ -94,7 +94,7 @@ void CResourceBar::Draw(void)
 	x2 = metalbarx2;
 	y2 = metaly+.020f;
 	x = (1.0f * myTeam->metal / myTeam->metalStorage) * metalbarlen;
-	
+
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
 	font->glPrintAt(metalx, metaly + 0.005f, 0.7f, "");
@@ -116,7 +116,7 @@ void CResourceBar::Draw(void)
 	glVertex2f(x1+x, y2);
 	glVertex2f(x1+x, y1);
 	glEnd();
-	
+
 	x = myTeam->metalShare*metalbarlen;
 	glColor4f(0.9f,0.2f,0.2f,0.7f);
 	glBegin(GL_QUADS);
@@ -128,7 +128,7 @@ void CResourceBar::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
-	
+
 	font->glPrintAt(metalx - 0.004f, metaly + 0.005f, 0.7f, "Metal");
 
 	font->glPrintAt(metalbarx2 - 0.01f, metaly, 0.5f, "%s",
@@ -163,7 +163,7 @@ void CResourceBar::Draw(void)
 	x2 = energybarx2;
 	y2 = energyy + 0.020f;
 	x = (1.0f * myTeam->energy / myTeam->energyStorage) * energybarlen;
-	
+
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
 	font->glPrintAt(energyx, energyy + 0.005f, 0.7f, "");
@@ -197,7 +197,7 @@ void CResourceBar::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,0.4f,0.8f);
-	
+
 	font->glPrintAt(energyx - 0.018f, energyy + 0.005f, 0.7f, "Energy");
 
 	glColor4f(1,1,1,0.8f);
@@ -227,7 +227,7 @@ bool CResourceBar::IsAbove(int x, int y)
 	if (disabled) {
 		return false;
 	}
-	
+
 	const float mx=MouseX(x);
 	const float my=MouseY(y);
 	if(InBox(mx,my,box))
@@ -259,7 +259,7 @@ bool CResourceBar::MousePress(int x, int y, int button)
 	if (disabled) {
 		return false;
 	}
-	
+
 	const float mx=MouseX(x);
 	const float my=MouseY(y);
 
@@ -269,14 +269,12 @@ bool CResourceBar::MousePress(int x, int y, int button)
 			if(InBox(mx,my,box+metalBox)){
 				moveBox=false;
 				float metalShare=max(0.f,min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
-				net->SendData<unsigned char, float, float>(
-						NETMSG_SETSHARE, gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
+				net->SendSetShare(gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 			}
 			if(InBox(mx,my,box+energyBox)){
 				moveBox=false;
 				float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
-				net->SendData<unsigned char, float, float>(
-						NETMSG_SETSHARE, gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
+				net->SendSetShare(gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
 			}
 		}
 		return true;
@@ -290,7 +288,7 @@ void CResourceBar::MouseMove(int x, int y, int dx,int dy, int button)
 	if (disabled) {
 		return;
 	}
-	
+
 	if(moveBox){
 		box.x1+=float(dx)/gu->viewSizeX;
 		box.x2+=float(dx)/gu->viewSizeX;

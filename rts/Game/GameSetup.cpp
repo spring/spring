@@ -6,7 +6,7 @@
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "LogOutput.h"
-#include "Net.h"
+#include "NetProtocol.h"
 #include "Player.h"
 #include "TdfParser.h"
 #include "Team.h"
@@ -45,7 +45,7 @@ CGameSetup::~CGameSetup()
 
 bool CGameSetup::Init(std::string setupFile)
 {
-	setupFileName = setupFile; 
+	setupFileName = setupFile;
 	if(setupFile.empty())
 		return false;
 	CFileHandler fh(setupFile);

@@ -56,7 +56,7 @@ extern "C" {
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
-#include "System/Net.h"
+#include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
@@ -626,7 +626,7 @@ static bool AddConsoleLines(lua_State* L)
 		}
 		lua_pushstring(L, rl.text.c_str());
 		lua_pushnumber(L, rl.priority);
-		
+
 		// call the function
 		const int error = lua_pcall(L, 2, 0, 0);
 		if (error != 0) {
@@ -655,7 +655,7 @@ bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 	lastUpdateSeconds = 0.001f * (newTime - lastUpdateTime);
 	lastUpdateTime = newTime;
 
-	// add new lines from the console buffer	
+	// add new lines from the console buffer
 	AddConsoleLines(L);
 
 	lua_getglobal(L, "UpdateLayout");
@@ -2453,7 +2453,7 @@ static int GetConsoleBuffer(lua_State* L)
 	if (ic == NULL) {
 		return true;
 	}
-	
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
 		lua_pushstring(L, "Incorrect arguments to GetConsoleBuffer([count])");
@@ -3140,7 +3140,7 @@ static int GetTeamUnitsCounts(lua_State* L)
 		}
 
 		lua_newtable(L);
-		int count = 0;		
+		int count = 0;
 		for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
 			lua_pushnumber(L, mit->first->id);
 			lua_pushnumber(L, mit->second);
@@ -3493,7 +3493,7 @@ static int GetUnitStates(lua_State* L)
 			}
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -3530,7 +3530,7 @@ static int GetUnitDefID(lua_State* L)
 			return 0;
 		}
 		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
-	} 
+	}
 	return 1;
 }
 
@@ -3641,7 +3641,7 @@ static int GetUnitRadius(lua_State* L)
 			return 0;
 		}
 		lua_pushnumber(L, unit->radius);
-	} 
+	}
 	return 1;
 }
 
@@ -3757,7 +3757,7 @@ static CFeature* ParseFeature(lua_State* L, const char* caller)
 		return NULL;
 	}
 	if ((f->allyteam < 0) || (f->allyteam == gu->myAllyTeam) ||
-	    loshandler->InLos(f->pos, gu->myAllyTeam) || gu->spectatingFullView) {	
+	    loshandler->InLos(f->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 		return f;
 	}
 	return NULL;
@@ -4704,8 +4704,7 @@ static int GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	ParseCommand(L, cmd, args);
 
-	net->SendSTLData<unsigned char, short, int, unsigned char, std::vector<float> >(
-  	NETMSG_AICOMMAND, gu->myPlayerNum, unitID, cmd.id, cmd.options, cmd.params);
+	net->SendAICommand(gu->myPlayerNum, unitID, cmd.id, cmd.options, cmd.params);
 
 	lua_pushboolean(L, true);
 
@@ -4775,7 +4774,7 @@ static int GiveOrderToUnitMap(lua_State* L)
 	vector<int> unitIDs;
 	ParseUnitMap(L, 1, unitIDs);
 	const int count = (int)unitIDs.size();
-	
+
 	if (count <= 0) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -4786,7 +4785,7 @@ static int GiveOrderToUnitMap(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	
+
 	vector<Command> commands;
 	commands.push_back(cmd);
 	selectedUnits.SendCommandsToUnits(unitIDs, commands);
@@ -4814,7 +4813,7 @@ static int GiveOrderToUnitArray(lua_State* L)
 	vector<int> unitIDs;
 	ParseUnitArray(L, 1, unitIDs);
 	const int count = (int)unitIDs.size();
-	
+
 	if (count <= 0) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -4825,7 +4824,7 @@ static int GiveOrderToUnitArray(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	
+
 	vector<Command> commands;
 	commands.push_back(cmd);
 	selectedUnits.SendCommandsToUnits(unitIDs, commands);
@@ -4930,16 +4929,16 @@ static int GiveOrderArrayToUnitMap(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitMap(L, 1, unitIDs);
-	
+
 	// commands
 	vector<Command> commands;
 	ParseCommandArray(L, 2, commands);
-	
+
 	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	
+
 	selectedUnits.SendCommandsToUnits(unitIDs, commands);
 
 	lua_pushboolean(L, true);
@@ -4963,16 +4962,16 @@ static int GiveOrderArrayToUnitArray(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitArray(L, 1, unitIDs);
-	
+
 	// commands
 	vector<Command> commands;
 	ParseCommandArray(L, 2, commands);
-	
+
 	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	
+
 	selectedUnits.SendCommandsToUnits(unitIDs, commands);
 
 	lua_pushboolean(L, true);
@@ -5029,7 +5028,7 @@ static int GetGroundInfo(lua_State* L)
 	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
 
 	const float metal = readmap->metalMap->getMetalAmount(ix, iz);
-	
+
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
 	const int typeIndex = readmap->typemap[index];
@@ -5120,7 +5119,7 @@ static int SetShareLevel(lua_State* L)
 	if (gu->spectating || (gs->frameNum <= 0)) {
 		return 0;
 	}
-	
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
 		lua_pushstring(L, "Incorrect arguments to SetShareLevel(\"type\", level");
@@ -5131,12 +5130,10 @@ static int SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, (float)lua_tonumber(L, 2)));
 
 	if (shareType == "metal") {
-		net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
-			gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare);
+		net->SendSetShare(gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare);
 	}
 	else if (shareType == "energy") {
-		net->SendData<unsigned char, float, float>(NETMSG_SETSHARE,
-			gu->myTeam, gs->Team(gu->myTeam)->metalShare, shareLevel);
+		net->SendSetShare(gu->myTeam, gs->Team(gu->myTeam)->metalShare, shareLevel);
 	}
 	else {
 		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -5150,7 +5147,7 @@ static int ShareResources(lua_State* L)
 	if (gu->spectating || (gs->frameNum <= 0)) {
 		return 0;
 	}
-	
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||
 	    ((args >= 3) && !lua_isnumber(L, 3))) {
@@ -5171,19 +5168,16 @@ static int ShareResources(lua_State* L)
 		Command c;
 		c.id = CMD_STOP;
 		selectedUnits.GiveCommand(c, false);
-		net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-			NETMSG_SHARE, gu->myPlayerNum, teamID, 1, 0.0f, 0.0f);
+		net->SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f);
 		selectedUnits.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = (float)lua_tonumber(L, 3);
 		if (type == "metal") {
-			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-				NETMSG_SHARE, gu->myPlayerNum, teamID, 0, amount, 0.0f);
+			net->SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f);
 		}
 		else if (type == "energy") {
-			net->SendData<unsigned char, unsigned char, unsigned char, float, float>(
-				NETMSG_SHARE, gu->myPlayerNum, teamID, 0, 0.0f, amount);
+			net->SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount);
 		}
 	}
 	return 0;
