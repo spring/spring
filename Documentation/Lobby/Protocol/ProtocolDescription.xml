@@ -107,6 +107,11 @@
         command regardless of the method handler implementation. This means that the response to any command
         will always contain message ID if you specifed it with the original command.</li>
     <li>PING command no longer supports 'key' argument since it is not needed anymore (use message ID instead)</li>
+    <li>Lobby programs should now acquire Spring version via unitsync.dll and not by running spring.exe, although
+        both ways are legal.</li>
+    <li>LOGIN command now accepts additional parameter 'userID', which is optional. See LOGIN command description
+        for more info.</li>
+    <li>Added ACQUIREUSERID and USERID commands. See documentation bellow for further details.</li>
   </ul>
   
   </p>
@@ -273,6 +278,14 @@
         he should send "*" instead.
         </Argument>
         <Argument Name="lobby name and version" Optional="no" Sentence="yes" />
+        <Argument Name="userID" Optional="yes" Sentence="yes">
+        This is a unique user identification number provided by the client-side software.
+        It should be an unsigned integer encoded in hexadecimal form (see examples).
+        Note that this parameter is optional - by default it is not used/set. Server will
+        send a <clink name="ACQUIREUSERID"/> command to tell the client that he must provide a user ID,
+        if needed. However, if client-side lobby program was using user ID before, it
+        should send it along with LOGIN command.
+        </Argument>
       </Arguments>
       <Description>
       Sent by client when he is trying to log on the server. Server may respond with
@@ -288,6 +301,7 @@
       <Examples>
         <Example>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 192.168.1.100 TASClient 0.30</Example>
         <Example>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30</Example>
+        <Example>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30	FA23BB4A</Example>
       </Examples>
     </Command>
 
@@ -1734,6 +1748,60 @@
       (also see comments for SCRIPTSTART command).
       </Description>
     </Command>
+    
+    <Command Name="TESTLOGIN" Source="client">
+      <Arguments>
+        <Argument Name="username" Optional="no" Sentence="no" />
+        <Argument Name="password" Optional="no" Sentence="no" />
+      </Arguments>
+      <Description>
+      Used to test if username and password are valid. Currently this command is restricted
+      to users with admin access only. It is meant to be used with some external server process
+      to identify user via web login form and create a session cookie based on that (will be used
+      for web interface to the server).
+      </Description>
+      <Response>
+      Server will respond with either <clink name="TESTLOGINACCEPT" /> or <clink name="TESTLOGINDENY" /> 
+      command.
+      </Response>
+    </Command>
+    
+    <Command Name="TESTLOGINACCEPT" Source="server">
+      <Description>
+      Used as a response to a <clink name="TESTLOGIN" /> command in case username/password pair is not valid. 
+      Use message ID to bind response to a request.
+      </Description>
+    </Command>    
+
+    <Command Name="TESTLOGINDENY" Source="server">
+      <Description>
+      Used as a response to a <clink name="TESTLOGIN" /> command in case username/password pair is valid. 
+      Use message ID to bind response to a request.
+      </Description>
+    </Command>    
+
+    <Command Name="ACQUIREUSERID" Source="server">
+      <Description>
+      When client receives this command, he should immediately respond with a <clink name="USERID"/> command.
+      If client doesn't have a user ID associated yet, he should generate some random ID (unsigned 32 bit integer)
+      and save it permanently as his user ID. He will then provide this user ID each time he logs on to the server
+      via <clink name="LOGIN"/> command.
+      </Description>
+    </Command>    
+
+    <Command Name="USERID" Source="client">
+      <Arguments>
+        <Argument Name="userID" Optional="no" Sentence="no">
+        Must be an unsigned 32 bit integer, in a hexadecimal form.
+        </Argument>
+      </Arguments>
+      <Description>
+      Sent as a response to a <clink name="ACQUIREUSERID"/> command.
+      </Description>
+      <Examples>
+        <Example>USERID FA23BB4A</Example>
+      </Examples>
+    </Command>    
 
   </CommandList>
 

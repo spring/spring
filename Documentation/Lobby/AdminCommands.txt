@@ -126,3 +126,13 @@ setlatestspringversion <latestSpringVersion>
   Spring web site and ask them to download the latest Spring version.
 reloadupdateproperties
   will reload "update properties" from the file (updates.xml, for example)
+setbotmode username mode
+  will set username's bot mode to 'mode', where 'mode' must be 0 or 1.
+getregistrationdate username
+  will retrieve user's registration date
+setlatestspringversion version
+  will update latest spring version info
+reloadupdateproperties
+  will reload updates.xml file from the disk
+getuserid username
+  will retrieve last userID of user <username>
