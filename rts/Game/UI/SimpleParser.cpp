@@ -33,8 +33,7 @@ string SimpleParser::GetLine(CFileHandler& fh)
 	char a;
 	string s = "";
 	while (true) {
-		a = fh.Peek();
-		if (a == EOF)  { break; }
+		if (fh.Peek() == EOF)  { break; }
 		fh.Read(&a, 1);
 		if (a == '\n') { break; }
 		if (a != '\r') { s += a; }
@@ -105,7 +104,7 @@ vector<string> SimpleParser::Tokenize(const string& line, int minWords)
 			break;
 		}
 	}
-	
+
 	return words;
 }
 
