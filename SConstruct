@@ -206,10 +206,13 @@ env.Alias('test', None)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	if sys.platform != 'win32':
 		if env.GetOption('clean'):
-			os.system("rm -f game/base/springcontent.sdz")
-			os.system("rm -f game/base/spring/bitmaps.sdz")
+			if os.system("rm -f game/base/springcontent.sdz"):
+				env.Exit(1)
+			if os.system("rm -f game/base/spring/bitmaps.sdz"):
+				env.Exit(1)
 		else:
-			os.system("installer/make_gamedata_arch.sh")
+			if os.system("installer/make_gamedata_arch.sh"):
+				env.Exit(1)
 
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
 Alias('install', inst)
