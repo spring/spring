@@ -93,6 +93,7 @@ int CNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar o
 
 int CNetProtocol::SendAICommands(uchar myPlayerNum, short unitIDCount, ...)
 {
+	return 0;
 	//FIXME: needs special care; sits in CSelectedUnits::SendCommandsToUnits().
 }
 

@@ -602,7 +602,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b3 = (owner->pos - pos).Length() < (w->range - (w->relWeaponPos).Length());
 		}
 		float3 diff = owner->pos - pos;
-		logOutput << "b2 :" << (b2 ? "true" : "false") << gs->frameNum << "\n";
+		//logOutput << "b2 :" << (b2 ? "true" : "false") << gs->frameNum << "\n";
 		// if w->AttackGround() returned true then we are already
 		// in range with our biggest weapon so stop moving
 		if (b2 && b3) {
