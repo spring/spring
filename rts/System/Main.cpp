@@ -439,9 +439,11 @@ bool SpringApp::SetSDLVideoMode ()
 		return false;
 	}
 
+#ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+#endif
 
 	if (FSAA) {
  		FSAA = MultisampleVerify();
@@ -1036,8 +1038,10 @@ int Run(int argc, char *argv[])
 	}
 #endif
 
+#ifdef STREFLOP_H
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+#endif
 	good_fpu_control_registers("::Run");
 
 // It's nice to be able to disable catching when you're debugging

@@ -16,9 +16,11 @@ class CMyMath
 public:
 	CMyMath()
 	{
+#ifdef STREFLOP_H
 		// This must be put here too because it's executed before the streflop_init in main().
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
+#endif
 
 		for(int a=0;a<1024;++a){
 			float ang=(a-512)*2*PI/1024;
@@ -33,12 +35,14 @@ public:
 			checksum *= 33;
 			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].y;
 		}
+#ifdef STREFLOP_H
 // 		fprintf(stderr, "headingToVectorTable checksum: %08x\n", checksum);
 		assert(checksum == 0x617a9968);
 
 		// release mode check
 		if (checksum != 0x617a9968)
 			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);
+#endif
 	}
 };
 

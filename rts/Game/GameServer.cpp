@@ -66,10 +66,12 @@ CGameServer::CGameServer()
 	fakeDesync = false;
 #endif
 
+#ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word
 	// maybe the threading, or something in CNet::InitServer() ??
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+#endif
 }
 
 CGameServer::~CGameServer()
