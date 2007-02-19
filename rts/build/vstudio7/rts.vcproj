@@ -1750,6 +1750,12 @@
 				RelativePath="..\..\System\Net.h">
 			</File>
 			<File
+				RelativePath="..\..\System\NetProtocol.cpp">
+			</File>
+			<File
+				RelativePath="..\..\System\NetProtocol.h">
+			</File>
+			<File
 				RelativePath="..\..\System\nommgr.h">
 			</File>
 			<File

@@ -52,6 +52,10 @@ void CMissileLauncher::Fire(void)
 			dir.Normalize();
 		}
 	}
+
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
+	dir.Normalize();
+
 	float3 startSpeed=dir*weaponDef->startvelocity;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
 		startSpeed+=owner->speed;
