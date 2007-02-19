@@ -42,9 +42,11 @@ CSound* CSound::GetSoundSystem()
 		sound = SAFE_NEW CNullSound;
 	}
 
+#ifdef STREFLOP_H
 	// Something in DirectSoundCreate (sound drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+#endif
 
 	return sound;
 }
