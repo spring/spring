@@ -474,6 +474,9 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CUnit*>::iterator ui;
 		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+			if (!(*ui)->blocking)
+				continue;
+
 			float totRad=radius+(*ui)->radius;
 			if((*ui)->tempNum!=tempNum && (pos-(*ui)->midPos).SqLength()<totRad*totRad){
 				(*ui)->tempNum=tempNum;
@@ -483,6 +486,9 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 
 		list<CFeature*>::iterator fi;
 		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
+			if (!(*ui)->blocking)
+				continue;
+
 			float totRad=radius+(*fi)->radius;
 			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
 				(*fi)->tempNum=tempNum;
