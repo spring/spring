@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "MobileCAI.h"
+#include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
@@ -14,6 +15,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "myMath.h"
@@ -38,6 +40,15 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 {
 	lastUserGoal=owner->pos;
 	CommandDescription c;
+
+	c.id=CMD_LOAD_ONTO;
+	c.action="loadonto";
+	c.type=CMDTYPE_ICON_UNIT;
+	c.name="Load units";
+	c.hotkey="";
+	c.tooltip="Sets the unit to load itself onto a transport";
+	c.onlyKey = true;
+	possibleCommands.push_back(c);
 
 	if (owner->unitDef->canmove) {
 		c.id=CMD_MOVE;
@@ -242,15 +253,13 @@ void CMobileCAI::Execute()
 {
 	Command& c=commandQue.front();
 	switch(c.id){
-		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c); return; }
-		case CMD_MOVE:                 { ExecuteMove(c);              return; }
-		case CMD_PATROL:               { ExecutePatrol(c);            return; }
-		case CMD_FIGHT:                { ExecuteFight(c);             return; }
-		case CMD_GUARD:                { ExecuteGuard(c);             return; }
-		default:{
-			CCommandAI::SlowUpdate();
-			return;
-		}
+		case CMD_SET_WANTED_MAX_SPEED:	{ ExecuteSetWantedMaxSpeed(c);	return; }
+		case CMD_MOVE:					{ ExecuteMove(c);				return; }
+		case CMD_PATROL:				{ ExecutePatrol(c);				return; }
+		case CMD_FIGHT:					{ ExecuteFight(c);				return; }
+		case CMD_GUARD:					{ ExecuteGuard(c);				return; }
+		case CMD_LOAD_ONTO:				{ ExecuteLoadUnits(c);			return; }
+		default:						{ CCommandAI::SlowUpdate();		return;	}
 	}
 }
 
@@ -273,13 +282,43 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 */
 void CMobileCAI::ExecuteMove(Command &c)
 {
-	float3 pos(c.params[0], c.params[1], c.params[2]);
-	if(!(pos == goalPos)){
+	float3 pos = float3(c.params[0], c.params[1], c.params[2]);
+	if(pos != goalPos){
 		SetGoal(pos, owner->pos);
 	}
 	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
 			owner->moveType->progressState == CMoveType::Failed){
 		FinishCommand();
+	}
+	return;
+}
+
+void CMobileCAI::ExecuteLoadUnits(Command &c){
+	if(!inCommand){
+		inCommand ^= true;
+		CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int)c.params[0]]);
+		if(!tran){
+			FinishCommand();
+			return;
+		}
+		Command newCommand;
+		newCommand.id = CMD_LOAD_UNITS;
+		newCommand.params.push_back(owner->id);
+		newCommand.options = INTERNAL_ORDER | SHIFT_KEY;
+		tran->commandAI->GiveCommand(newCommand);
+	}
+	if(owner->transporter) {
+		FinishCommand();
+		return;
+	}
+	float3 pos = uh->units[(int)c.params[0]]->pos;
+	if((pos - goalPos).SqLength2D() > cancelDistance){
+		SetGoal(pos, owner->pos);
+	}
+	if((owner->pos - goalPos).SqLength2D() < cancelDistance){
+		StopMove();
+	}
+	if(owner->moveType->progressState == CMoveType::Failed){
 	}
 	return;
 }
@@ -645,7 +684,10 @@ int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 				return CMD_ATTACK;
 			}
 		} else {
-			if (owner->unitDef->canGuard) {
+			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
+			if(tran && tran->CanTransport(owner)) {
+				return CMD_LOAD_ONTO;
+			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
 			}
 		}
@@ -679,6 +721,11 @@ void CMobileCAI::DrawCommands(void)
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		bool draw=false;
 		switch(ci->id){
+			case CMD_LOAD_ONTO:{
+				CUnit* unit = uh->units[int(ci->params[0])];
+				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
+				break;
+			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);

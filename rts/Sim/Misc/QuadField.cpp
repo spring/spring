@@ -486,7 +486,7 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 
 		list<CFeature*>::iterator fi;
 		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
-			if (!(*ui)->blocking)
+			if (!(*fi)->blocking)
 				continue;
 
 			float totRad=radius+(*fi)->radius;

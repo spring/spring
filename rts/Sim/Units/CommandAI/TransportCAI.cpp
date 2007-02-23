@@ -84,12 +84,36 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			FinishCommand();
 			return;
 		}
+		CUnit* unit=uh->units[(int)c.params[0]];
+		if(c.options & INTERNAL_ORDER) {
+			if(unit->commandAI->commandQue.size() == 0 && !LoadStillValid(unit)){
+				FinishCommand();
+				return;
+			} else {
+				Command currentUnitCommand = unit->commandAI->commandQue[0];
+				if(currentUnitCommand.id == CMD_LOAD_ONTO
+					&& currentUnitCommand.params.size() == 1
+					&& int(currentUnitCommand.params[0]) == owner->id)
+				{
+					if((unit->moveType->progressState == CMoveType::Failed)
+						&& (owner->moveType->progressState == CMoveType::Failed))
+					{
+						unit->commandAI->FinishCommand();
+						FinishCommand();
+						return;
+					}
+				} else if(!LoadStillValid(unit))
+				{
+					FinishCommand();
+					return;
+				}
+			}
+		}
 		if(inCommand){
 			if(!owner->cob->busy)
 				FinishCommand();
 			return;
 		}
-		CUnit* unit=uh->units[(int)c.params[0]];
 		if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
 			toBeTransportedUnitId=unit->id;
 			unit->toBeTransported=true;
@@ -456,4 +480,14 @@ void CTransportCAI::FinishCommand(void)
 		toBeTransportedUnitId=-1;
 	}
 	CMobileCAI::FinishCommand();
+}
+
+bool CTransportCAI::LoadStillValid(CUnit* unit){
+	if(commandQue.size() < 2){
+		return false;
+	}
+	Command cmd = commandQue[1];
+	return !(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4
+		&& unit->pos.distance2D(
+		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > cmd.params[3]*2);
 }
