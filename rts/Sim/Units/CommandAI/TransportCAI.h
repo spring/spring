@@ -18,6 +18,7 @@ public:
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void DrawCommands(void);
 	void FinishCommand(void);
+	bool LoadStillValid(CUnit* unit);
 
 	virtual void ExecuteUnloadUnit(Command &c);
 	virtual void ExecuteUnloadUnits(Command &c);

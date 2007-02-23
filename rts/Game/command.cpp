@@ -45,6 +45,7 @@ commandBindings[] = {
 	{ CMD_SELFD,                 "selfd",              "Ctrl+d"     },
 	{ CMD_SET_WANTED_MAX_SPEED,  "setwantedmaxspeed",  ""           },
 	{ CMD_LOAD_UNITS,            "loadunits",          "l"          },
+	{ CMD_LOAD_ONTO,			 "loadonto",		   ""			},
 	{ CMD_UNLOAD_UNITS,          "unloadunits",        "u"          },
 	{ CMD_UNLOAD_UNIT,           "unloadunit",         "Ctrl+u"     },
 	{ CMD_ONOFF,                 "onoff",              "x"          },

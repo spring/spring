@@ -33,6 +33,7 @@ public:
 	virtual void ExecutePatrol(Command &c);
 	virtual void ExecuteMove(Command &c);
 	virtual void ExecuteSetWantedMaxSpeed(Command &c);
+	virtual void ExecuteLoadUnits(Command &c);
 
 	float3 goalPos;
 	float3 lastUserGoal;
