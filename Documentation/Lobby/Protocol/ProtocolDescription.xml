@@ -9,7 +9,7 @@
   <Intro>
   <p>
   <i>NOTE: This document is available in a HTML form at the following address: 
-  <url>http://spring.clan-sy.com:8202/protocol/ProtocolDescription.xml</url></i>
+  <url>http://spring.clan-sy.com:8202/lobby/protocol/ProtocolDescription.xml</url></i>
   </p>
   <p>
   This is a simple text protocol in a "human readable form". I decided for text protocol since
@@ -908,6 +908,7 @@
 
     <Command Name="BATTLEOPENED" Source="server">
       <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no" />
         <Argument Name="type" Optional="no" Sentence="no">
         Can be 0 or 1 (0 = normal battle, 1 = battle replay)
         </Argument>
