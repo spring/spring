@@ -112,6 +112,7 @@
     <li>LOGIN command now accepts additional parameter 'userID', which is optional. See LOGIN command description
         for more info.</li>
     <li>Added ACQUIREUSERID and USERID commands. See documentation bellow for further details.</li>
+    <li>Added 'url' parameter to SERVERMSGBOX command.</li>
   </ul>
   
   </p>
@@ -488,6 +489,10 @@
     <Command Name="SERVERMSGBOX" Source="server">
       <Arguments>
         <Argument Name="message" Optional="no" Sentence="yes" />
+        <Argument Name="url" Optional="yes" Sentence="yes">
+        If specified, lobby client should ask user if he wants this url to be opened in a browser window.
+        Lobby client should then (once user clicks OK) launch the default browser and open this url in it.
+        </Argument>
       </Arguments>
       <Description>
       This is a message sent by the server that should open in a message box dialog window (and not
