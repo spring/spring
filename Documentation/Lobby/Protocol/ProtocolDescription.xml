@@ -1064,7 +1064,7 @@
       </Description>
     </Command>
 
-    <Command Name="UPDATEBATTLEINFO" Source="server">
+    <Command Name="UPDATEBATTLEINFO" Source="client">
       <Arguments>
         <Argument Name="SpectatorCount" Optional="no" Sentence="no"/>
         <Argument Name="locked" Optional="no" Sentence="no">
