@@ -27,6 +27,8 @@ root="/home/buildbot/spring_slave"
 
 # Libs/includes needed for crosscompilation
 7z x -y "$root/mingwlibs.exe" || exit 1
+find mingwlibs -type f -exec chmod 644 '{}' \;
+find mingwlibs -type d -exec chmod 755 '{}' \;
 # Files needed for installer building
 #tar xzfv "$root/extracontent.tar.gz" || exit 1
 
