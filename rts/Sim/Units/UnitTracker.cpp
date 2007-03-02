@@ -266,7 +266,7 @@ void CUnitTracker::SetCam()
 				break;
 			}
 			default: {
-				pos = u->midPos;
+				pos = u->midPos + (u->speed * gu->timeOffset);
 				break;
 			}
 		}
