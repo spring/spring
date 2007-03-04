@@ -86,6 +86,7 @@ class CUnit;
 #define CLOAKED					76
 #define WANT_CLOAK				77
 #define GROUND_WATER_HEIGHT		78 // get land height, negative if below water
+#define UPRIGHT				79
 
 CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 : script(script)
@@ -1004,6 +1005,8 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return !!unit->isCloaked;
 	case WANT_CLOAK:
 		return !!unit->wantCloak;
+	case UPRIGHT:
+		return !!unit->upright;
 	}
 #endif
 
@@ -1097,6 +1100,9 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	case WANT_CLOAK:
 		unit->wantCloak = !!param;
+		break;
+	case UPRIGHT:
+		unit->upright = !!param;
 		break;
 	}
 #endif

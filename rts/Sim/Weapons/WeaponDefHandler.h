@@ -36,6 +36,7 @@ struct WeaponDef
 
 	std::string name;
 	std::string type;
+	std::string description;
 
 	/*std::string sfiresound;
 	std::string ssoundhit;
