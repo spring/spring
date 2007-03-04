@@ -38,8 +38,8 @@ CWeaponProjectile::CWeaponProjectile()
 	interceptTarget=0;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget) : 
-	CProjectile(pos,speed,owner),
+CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced) : 
+	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
 	target(target),
 	targetPos(targetPos),

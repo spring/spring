@@ -11,7 +11,7 @@
 #include "ProjectileHandler.h"
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
-:	CProjectile(pos,speed,owner),
+:	CProjectile(pos,speed,owner, true),
 	activateFrame(activateFrame),	
 	deathFrame(activateFrame+owner->unitDef->flareTime),
 	numSub(0),

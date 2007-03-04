@@ -25,7 +25,7 @@ CR_REG_METADATA(CWakeProjectile,(
 //////////////////////////////////////////////////////////////////////
 
 CWakeProjectile::CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner, float alpha,float alphaFalloff,float fadeupTime)
-: CProjectile(pos,speed,owner),
+: CProjectile(pos,speed,owner, false),
 	alpha(0),
 	alphaAdd(alpha/fadeupTime),
 	alphaAddTime((int)fadeupTime),

@@ -577,7 +577,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 
 		for (int c=0;c<psi->count;c++)
 		{
-			CProjectile *projectile = (CProjectile*)psi->projectileClass->CreateInstance ();
+			CExpGenSpawnable *projectile = (CExpGenSpawnable*)psi->projectileClass->CreateInstance ();
 
 			ExecuteExplosionCode (&psi->code[0], damage, (char*)projectile, c, dir);
 			projectile->Init(pos, owner);
@@ -602,7 +602,7 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 
 	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci)
 	{
-		if (!(*ci)->IsSubclassOf (CProjectile::StaticClass()) || (*ci) == CProjectile::StaticClass())
+		if (!(*ci)->IsSubclassOf (CExpGenSpawnable::StaticClass()) || (*ci) == CExpGenSpawnable::StaticClass())
 			continue;
 
 		creg::Class *klass = *ci;

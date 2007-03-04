@@ -14,7 +14,7 @@ class CWeaponProjectile : public CProjectile
 	CR_DECLARE(CWeaponProjectile);
 public:
 	CWeaponProjectile();
-	CWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
+	CWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced);
 	virtual ~CWeaponProjectile();
 
 	virtual void Collision();

@@ -20,7 +20,7 @@ CR_REG_METADATA(CShieldPartProjectile,(
 	));
 
 CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float sphereSize,float3 color,float alpha,AtlasedTexture *texture,CUnit* owner)
-: CProjectile(centerPos,ZeroVector,owner),
+: CProjectile(centerPos,ZeroVector,owner, false),
 	centerPos(centerPos),
 	sphereSize(sphereSize),
 	baseAlpha(alpha),

@@ -3,10 +3,21 @@
 
 #include "Sim/Misc/DamageArray.h"
 #include "TdfParser.h"
+#include "Sim/Objects/WorldObject.h"
 #include <map>
 
 class CUnit;
 class CExplosionGenerator;
+
+class CExpGenSpawnable : public CWorldObject
+{
+public:
+	//CR_DECLARE(CExpGenSpawnable);
+	CExpGenSpawnable() : CWorldObject(){};
+	CExpGenSpawnable(const float3& pos) : CWorldObject(pos){};
+	virtual ~CExpGenSpawnable(){};
+	virtual void Init(const float3& pos, CUnit *owner)=0;
+};
 
 class ClassAliasList 
 {

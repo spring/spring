@@ -30,7 +30,7 @@ CR_REG_METADATA(CDirtProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float ttl,const float size,const float expansion,float slowdown,CUnit* owner,const float3& color)
-: CProjectile(pos,speed,owner),
+: CProjectile(pos,speed,owner, false),
 	alpha(255),
 	size(size),
 	sizeExpansion(expansion),
@@ -50,6 +50,7 @@ CDirtProjectile::CDirtProjectile() :
 	alphaFalloff(10.0f)
 {
 	checkCol=false;
+	synced=false;
 	texture = &ph->randdotstex;
 }
 

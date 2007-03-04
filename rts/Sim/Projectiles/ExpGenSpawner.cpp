@@ -14,10 +14,12 @@ CR_REG_METADATA(CExpGenSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-CExpGenSpawner::CExpGenSpawner(void) : damage(0)
+CExpGenSpawner::CExpGenSpawner(void) :
+	damage(0)
 {
 	checkCol=false;
 	deleteMe=false;
+	synced=false;
 }
 
 CExpGenSpawner::~CExpGenSpawner(void)

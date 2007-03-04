@@ -22,10 +22,11 @@ CR_REG_METADATA(CExploSpikeProjectile,
 
 CExploSpikeProjectile::CExploSpikeProjectile()
 {
+	synced=false;
 }
 
 CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner)
-:	CProjectile(pos,speed,owner),
+:	CProjectile(pos,speed,owner, false),
 	length(length),
 	width(width),
 	alpha(alpha),

@@ -27,6 +27,7 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame(void)
 	deleteMe=false;
 	checkCol=false;
 	useAirLos=true;
+	synced = false;
 }
 
 CBitmapMuzzleFlame::~CBitmapMuzzleFlame(void)
