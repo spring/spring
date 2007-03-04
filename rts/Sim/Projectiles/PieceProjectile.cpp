@@ -53,7 +53,7 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 }
 
 CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO * piece, int flags,CUnit* owner,float radius)
-: CProjectile(pos,speed,owner),
+: CProjectile(pos,speed,owner, true),
   flags(flags),
   dispList(piece->displist),
 	drawTrail(true),

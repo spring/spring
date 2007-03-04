@@ -13,7 +13,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CProjectile, CWorldObject, );
+CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
 CR_REG_METADATA(CProjectile,
 (
@@ -49,15 +49,16 @@ void CProjectile::Init (const float3& explosionPos, CUnit *owner)
 		AddDeathDependence(owner);
 }
 
-CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner)
-:	CWorldObject(pos),
+CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner, bool synced)
+:	CExpGenSpawnable(pos),
 	owner(owner),
 	speed(speed),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
 	s3domodel(0),
-	collisionFlags(0)
+	collisionFlags(0),
+	synced(synced)
 {
 	SetRadius(1.7f);
 	ph->AddProjectile(this);

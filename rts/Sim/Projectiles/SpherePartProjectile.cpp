@@ -25,7 +25,7 @@ CR_REG_METADATA(CSpherePartProjectile,(
 	));
 
 CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color)
-: CProjectile(centerPos,ZeroVector,owner),
+: CProjectile(centerPos,ZeroVector,owner, false),
 	centerPos(centerPos),
 	expansionSpeed(expansionSpeed),
 	sphereSize(expansionSpeed),

@@ -38,6 +38,7 @@ CSimpleParticleSystem::CSimpleParticleSystem(void)
 	deleteMe=false;
 	checkCol=false;
 	useAirLos=true;
+	synced=false;
 	particles=0;
 	emitMul = float3(1,1,1);
 }

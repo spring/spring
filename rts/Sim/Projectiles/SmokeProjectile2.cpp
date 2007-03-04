@@ -37,6 +37,7 @@ CSmokeProjectile2::CSmokeProjectile2()
 {
 	textureNum = 0;
 	checkCol=false;
+	synced=false;
 }
 
 void CSmokeProjectile2::Init(const float3& pos, CUnit *owner)
@@ -55,7 +56,7 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit *owner)
 }
 
 CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
-: CProjectile(pos,speed,owner),
+: CProjectile(pos,speed,owner, false),
 	wantedPos(wantedPos),
 	color(color),
 	age(0),

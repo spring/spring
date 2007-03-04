@@ -36,7 +36,7 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	
 
 CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize)
-: CProjectile(pos,speed,owner),
+: CProjectile(pos,speed,owner, true),
 	ttl(emitTtl),
 	emitPos(pos),
 	emitRadius(emitRadius),

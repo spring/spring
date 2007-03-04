@@ -29,10 +29,11 @@ CGfxProjectile::CGfxProjectile()
 	creationTime=lifeTime=0;
 	color[0]=color[1]=color[2]=color[3]=255;
 	checkCol=false;
+	synced=false;
 }
 
 CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color)
-: CProjectile(pos,speed,0),
+: CProjectile(pos,speed,0, false),
 	lifeTime(lifeTime),
 	creationTime(gs->frameNum)
 {

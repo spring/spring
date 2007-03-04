@@ -11,7 +11,7 @@ class CFace;
 class CEdge;
 class CBuilding;
 
-#include "Sim/Objects/WorldObject.h"
+#include "ExplosionGenerator.h"
 class CUnit;
 class CFeature;
 class CVertexArray;
@@ -20,7 +20,7 @@ struct S3DOModel;
 #define COLLISION_NOFRIENDLY		1
 #define COLLISION_NOFEATURE			2
 
-class CProjectile : public CWorldObject
+class CProjectile : public CExpGenSpawnable
 {
 public:
 	CR_DECLARE(CProjectile);
@@ -31,7 +31,7 @@ public:
 
 	virtual void Draw();
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos,const float3& speed,CUnit* owner);
+	CProjectile(const float3& pos,const float3& speed,CUnit* owner, bool synced);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
@@ -40,6 +40,7 @@ public:
 	void DependentDied(CObject* o);
 	virtual void Init(const float3& pos, CUnit *owner);
 	
+	bool synced;
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;

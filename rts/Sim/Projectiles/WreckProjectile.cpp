@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////
 
 CWreckProjectile::CWreckProjectile(float3 pos,float3 speed,float temperature,CUnit* owner)
-: CProjectile(pos,speed,owner)
+: CProjectile(pos,speed,owner, true)
 {
 	checkCol=false;
 	drawRadius=2;

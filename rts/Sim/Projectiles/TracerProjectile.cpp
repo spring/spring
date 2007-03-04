@@ -24,7 +24,7 @@ CR_REG_METADATA(CTracerProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed,const float range,CUnit* owner)
-: CProjectile(pos,speed,owner)
+: CProjectile(pos,speed,owner, false)
 {
 	SetRadius(1);
 	speedf=this->speed.Length();

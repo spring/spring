@@ -19,7 +19,7 @@ CR_REG_METADATA(CLightingProjectile,(
 	));
 
 CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, WeaponDef *weaponDef,int ttl,CWeapon* weap)
-:	CWeaponProjectile(pos,ZeroVector, owner, 0, ZeroVector, weaponDef,0), //CProjectile(pos,ZeroVector,owner),
+:	CWeaponProjectile(pos,ZeroVector, owner, 0, ZeroVector, weaponDef,0, true), //CProjectile(pos,ZeroVector,owner),
 	ttl(ttl),
 	color(color),
 	endPos(end),
