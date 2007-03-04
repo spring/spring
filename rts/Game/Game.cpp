@@ -123,6 +123,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #endif
 
 #include "mmgr.h"
@@ -2838,7 +2839,7 @@ void CGame::DrawDirectControlHud(void)
 	glEnable(GL_TEXTURE_2D);
 
 	glPushMatrix();
-	glTranslatef(0.25f, 0.12f, 0);
+	glTranslatef(0.02f, 0.65f, 0);
 	glScalef(0.03f,0.03f,0.03f);
 	glColor4d(0.2f,0.8f,0.2f,0.8f);
 	font->glPrint("Health %.0f",unit->health);
@@ -2846,7 +2847,7 @@ void CGame::DrawDirectControlHud(void)
 
 	if(gs->players[gu->myPlayerNum]->myControl.mouse2){
 		glPushMatrix();
-		glTranslatef(0.02f,0.34f,0);
+		glTranslatef(0.02f,0.7f,0);
 		glScalef(0.03f,0.03f,0.03f);
 		glColor4d(0.2f,0.8f,0.2f,0.8f);
 		font->glPrint("Free fire mode");
@@ -2854,18 +2855,21 @@ void CGame::DrawDirectControlHud(void)
 	}
 	for(int a=0;a<unit->weapons.size();++a){
 		glPushMatrix();
-		glTranslatef(0.02f,0.3f-a*0.04f,0);
+		glTranslatef(0.02f,0.32f-a*0.04f,0);
 		glScalef(0.0225f,0.03f,0.03f);
 		CWeapon* w=unit->weapons[a];
-		if(w->reloadStatus>gs->frameNum){
-			glColor4d(0.8f,0.2f,0.2f,0.8f);
-			font->glPrint("Weapon %i: Reloading",a+1);
-		} else if(!w->angleGood){
-			glColor4d(0.6f,0.6f,0.2f,0.8f);
-			font->glPrint("Weapon %i: Aiming",a+1);
-		} else {
-			glColor4d(0.2f,0.8f,0.2f,0.8f);
-			font->glPrint("Weapon %i: Ready",a+1);
+		WeaponDef* wd=w->weaponDef;
+		if(!wd->isShield){
+			if(w->reloadStatus>gs->frameNum){
+				glColor4d(0.8f,0.2f,0.2f,0.8f);
+				font->glPrint("%s: Reloading",wd->description.c_str());
+			} else if(!w->angleGood){
+				glColor4d(0.6f,0.6f,0.2f,0.8f);
+				font->glPrint("%s: Aiming",wd->description.c_str());
+			} else {
+				glColor4d(0.2f,0.8f,0.2f,0.8f);
+				font->glPrint("%s: Ready",wd->description.c_str());
+			}
 		}
 		glPopMatrix();
 	}
