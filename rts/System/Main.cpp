@@ -1095,6 +1095,7 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
+	setbuf(stdout, NULL); // unbuffered
 	win_lpCmdLine = lpCmdLine;
 	return Run (__argc, __argv);
 }
