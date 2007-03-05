@@ -146,6 +146,9 @@ CBaseGroundDrawer *CSm3ReadMap::GetGroundDrawer ()
 void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 {
 	// heightmap is [width+1][height+1]
+	x1-=2; x2+=2;
+	y1-=2; y2+=2;
+
 	if (x1<0) x1=0;
 	if (x1>width) x1=width;
 	if (x2<0) x2=0;
