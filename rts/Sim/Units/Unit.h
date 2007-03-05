@@ -10,7 +10,6 @@
 #include <vector>
 #include <string>
 #include <deque>
-//#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Sim/Misc/DamageArray.h"
 #include "GlobalStuff.h"
 #include "UnitDef.h"

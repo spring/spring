@@ -29,7 +29,6 @@
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
-//#include "Rendering/UnitModels/Unit3DLoader.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/Feature.h"

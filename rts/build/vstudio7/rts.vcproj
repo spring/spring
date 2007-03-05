@@ -414,6 +414,12 @@
 				RelativePath="..\..\Game\PlayerRoster.cpp">
 			</File>
 			<File
+				RelativePath="..\..\Game\PlayerRoster.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRoster.h">
+			</File>
+			<File
 				RelativePath="..\..\Game\PlayerRoster.h">
 			</File>
 			<File
@@ -739,12 +745,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\UnitModels\s3oParser.h">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.h">
 				</File>
 				<File
 					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.cpp">
@@ -2399,6 +2399,12 @@
 					RelativePath="..\..\System\Platform\Clipboard.cpp">
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\Clipboard.cpp">
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Clipboard.h">
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\Clipboard.h">
 				</File>
 				<File
@@ -2430,9 +2436,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\errorhandler.h">
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\filefunctions.h">
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\FileSystem.cpp">
@@ -4427,6 +4430,12 @@
 						</File>
 						<File
 							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl">
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainSimpleCopyFS.glsl">
+						</File>
+						<File
+							RelativePath="..\..\..\game\shaders\terrainSimpleCopyVS.glsl">
 						</File>
 						<File
 							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl">
@@ -6717,18 +6726,6 @@
 				</File>
 			</Filter>
 		</Filter>
-		<File
-			RelativePath="..\..\System\Platform\Clipboard.cpp">
-		</File>
-		<File
-			RelativePath="..\..\System\Platform\Clipboard.h">
-		</File>
-		<File
-			RelativePath="..\..\Game\PlayerRoster.cpp">
-		</File>
-		<File
-			RelativePath="..\..\Game\PlayerRoster.h">
-		</File>
 		<File
 			RelativePath=".\resource.h">
 		</File>
