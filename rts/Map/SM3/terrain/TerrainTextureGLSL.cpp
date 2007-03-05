@@ -176,7 +176,6 @@ public:
 	IFramebuffer* framebuffer;
 };
 
-// TODO: Clean this up, this is messy stuff
 struct ShaderBuilder
 {
 	RenderSetup *renderSetup;
