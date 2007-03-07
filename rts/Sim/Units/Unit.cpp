@@ -592,8 +592,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			cobargs.push_back(-1);
 
 		cobargs.push_back((int)(100 * damage));
-		int sdmgMul = cob->Call(COBFN_HitByWeaponId, cobargs);
-		damage = damage * sdmgMul*0.01f;
+		weaponHitMod = 1.0f;
+		cob->Call(COBFN_HitByWeaponId, cobargs, hitByWeaponIdCallback, this, NULL);
+		damage = damage * weaponHitMod;//weaponHitMod gets set in callback function
 	}
 	else
 	{
@@ -1478,6 +1479,11 @@ void CUnit::DrawS3O(void)
 {
 	unitDrawer->SetS3OTeamColour(team);
 	Draw();
+}
+
+void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
+{
+	((CUnit*)p1)->weaponHitMod = retCode*0.01f;
 }
 
 // Member bindings
