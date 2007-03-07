@@ -265,6 +265,8 @@ public:
 
 	float maxSpeed;  //max speed of the unit
 
+	float weaponHitMod; //percentage of weapondamage to use when hit by weapon (set by script callbak
+
 protected:
 	void ExperienceChange();
 public:
@@ -274,6 +276,7 @@ public:
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
 	virtual void DrawS3O(void);
+	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2); 
 };
 
 #endif /* UNIT_H */
