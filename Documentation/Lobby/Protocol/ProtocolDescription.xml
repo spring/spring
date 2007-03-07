@@ -959,7 +959,7 @@
     <Command Name="JOINBATTLE" Source="client">
       <Arguments>
         <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
-        <Argument Name="parameter" Optional="yes" Sentence="no"/>
+        <Argument Name="password" Optional="yes" Sentence="no"/>
       </Arguments>
       <Description>
       Sent by a client trying to join a battle. Password is an optional parameter.
@@ -968,6 +968,7 @@
 
     <Command Name="JOINBATTLE" Source="server">
       <Arguments>
+        <Argument Name="BATTLE_ID" Optional="no" Sentence="no"/>
         <Argument Name="startingmetal" Optional="no" Sentence="no"/>
         <Argument Name="startingenergy" Optional="no" Sentence="no"/>
         <Argument Name="maxunits" Optional="no" Sentence="no"/>
