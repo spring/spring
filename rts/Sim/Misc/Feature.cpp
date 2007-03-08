@@ -95,10 +95,15 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 
 	if(def->drawType==DRAWTYPE_3DO){
 		if(def->model==0){
-			def->model=modelParser->Load3DO(def->modelname.c_str());
+			if(!def->useCSOffset) {
+				def->model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale);
+			} else {
+				def->model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,1,
+								def->collisionSphereOffset);
+			}
 			height=def->model->height;
 			def->radius=def->model->radius;
-			SetRadius(def->radius);
+			SetRadius(def->radius);			
 		}
 		midPos=pos+def->model->relMidPos;
 	} else if(def->drawType==DRAWTYPE_TREE){

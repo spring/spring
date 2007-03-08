@@ -28,6 +28,15 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side)
 		return unit3doparser->Load3DO(name,scale,side);
 }
 
+S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side,const float3& offsets)
+{
+	StringToLowerInPlace(name);
+	if(name.find(".s3o")!=string::npos)
+		return units3oparser->Load3DO(name,scale,side);
+	else
+		return unit3doparser->Load3DO(name,scale,side,offsets);
+}
+
 LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
 {
 	if(model->rootobject3do)
