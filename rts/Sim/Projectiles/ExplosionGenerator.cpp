@@ -454,6 +454,17 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			Uint16 ofs = offset;
 			code.append ((char*)&ofs, (char*)&ofs + 2);
 		}
+		else if(type->GetName()=="GroundFXTexture*")
+		{
+			string::size_type end = script.find(';', 0);
+			std::string texname = script.substr(0, end);
+			void* tex = ph->groundFXAtlas->GetTexturePtr(texname);
+			code += OP_LOADP;
+			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
+			code += OP_STOREP;
+			Uint16 ofs = offset;
+			code.append ((char*)&ofs, (char*)&ofs + 2);
+		}
 		else if(type->GetName()=="CColorMap*")
 		{
 			string::size_type end = script.find(';', 0);

@@ -19,6 +19,12 @@ public:
 	int ixstart,iystart;
 };
 
+struct GroundFXTexture : public AtlasedTexture //same as AtlasedTexture but diferent name so the explosiongenerator can diferentiate between diferent altases
+{
+public:
+	CR_DECLARE_STRUCT(AtlasedTexture);
+};
+
 class CTextureAtlas
 {
 public:

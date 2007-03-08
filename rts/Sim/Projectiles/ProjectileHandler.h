@@ -65,7 +65,9 @@ public:
 
 	int numPerlinProjectiles;
 
-	CTextureAtlas *textureAtlas;
+	CTextureAtlas *textureAtlas;  //texture atlas for projectiles
+	CTextureAtlas *groundFXAtlas; //texture atlas for ground fx
+
 	//texturcoordinates for projectiles
 	AtlasedTexture flaretex;
 	AtlasedTexture explotex;
@@ -116,7 +118,6 @@ private:
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
-	CTextureAtlas *groundFXAtlas;
 };
 extern CProjectileHandler* ph;
 
