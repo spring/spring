@@ -497,10 +497,15 @@ void CUnit::SlowUpdate()
 		//aircraft does not want this
 		if (moveType->useHeading) {
 			frontdir=GetVectorFromHeading(heading);
-			if(upright || !unitDef->canmove){
+			if(transporter && transporter->unitDef->holdSteady) {
+				updir = transporter->updir;
+				rightdir=frontdir.cross(updir);
+				rightdir.Normalize();
+				frontdir=updir.cross(rightdir);
+			} else if(upright || !unitDef->canmove){
 				updir=UpVector;
 				rightdir=frontdir.cross(updir);
-			} else {
+			} else  {
 				updir=ground->GetNormal(pos.x,pos.z);
 				rightdir=frontdir.cross(updir);
 				rightdir.Normalize();
@@ -681,7 +686,18 @@ void CUnit::Draw()
 		//aircraft or skidding ground unit
 		CMatrix44f transMatrix(interPos,-rightdir,updir,frontdir);
 
-		glMultMatrixf(&transMatrix[0]);		
+		glMultMatrixf(&transMatrix[0]);
+	} else if (transporter && transporter->unitDef->holdSteady){
+		
+		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
+		float3 upDir=updir;
+		float3 rightDir=frontDir.cross(upDir);
+		rightDir.Normalize();
+		frontDir=upDir.cross(rightDir);
+
+		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
+
+		glMultMatrixf(&transMatrix[0]);
 	} else if(upright || !unitDef->canmove){
 		glTranslatef3(interPos);
 		if(heading!=0)
