@@ -20,6 +20,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(castShadow),
 	CR_MEMBER(owner),
+	CR_MEMBER(synced),
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
 	CR_MEMBER(speed)

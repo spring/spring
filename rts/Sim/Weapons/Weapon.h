@@ -120,7 +120,8 @@ public:
 	float3 mainDir;								//main aim dir of weapon
 	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
 
-	bool avoidFriendly;		//if true tried to avoid firendly units when fireing
+	bool avoidFriendly;		//if true tried to avoid friendly Units when aiming.
+	bool avoidFeature;      		//if true try to avoid Features while aiming.
 	unsigned int collisionFlags;
 
 	float fuelUsage;
