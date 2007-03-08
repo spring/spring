@@ -205,6 +205,7 @@ struct UnitDef
 	int transportSize;
 	bool isAirBase;
 	float transportMass;
+	bool holdSteady;
 
 	bool canCloak;							//if the unit can cloak
 	bool startCloaked;					//if the units want to start out cloaked
