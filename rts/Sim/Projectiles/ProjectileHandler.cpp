@@ -522,8 +522,8 @@ void CProjectileHandler::CheckUnitCol()
 				assert(! ((!(closesqlength < totalRadius*totalRadius)) && (diflength<totalRadius)));
 			}
 
-			//if(!(p->collisionFlags&COLLISION_NOFEATURE))
-			//{
+			if(!(p->collisionFlags&COLLISION_NOFEATURE))
+			{
 				for(CFeature** fi=tempFeatures;fi!=endFeature;++fi){
 					if(!(*fi)->blocking)
 						continue;
@@ -548,7 +548,7 @@ void CProjectileHandler::CheckUnitCol()
 						break;
 					}
 				}
-			 //}
+			 }
 		}
 	}	
 }

@@ -61,7 +61,7 @@ bool CLightingCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	if(g>0 && g<length*0.9f)
 		return false;
 
-	if(helper->LineFeatureCol(weaponPos,dir,length))
+	if(avoidFeature && helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
 	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))

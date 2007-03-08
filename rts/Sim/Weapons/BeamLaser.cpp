@@ -96,7 +96,7 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 		if(g>0 && g<length*0.9f)
 			return false;
 	}
-	if(helper->LineFeatureCol(weaponPos,dir,length))
+	if(avoidFeature && helper->LineFeatureCol(weaponPos,dir,length))
 		return false;
 
 	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
@@ -109,7 +109,7 @@ void CBeamLaser::Init(void)
 	salvoDelay=0;
 	salvoSize=(int)(weaponDef->beamtime*30);
 	if (salvoSize <= 0) salvoSize = 1;
-	damageMul = 1.0f/(float)salvoSize;		//multiply damage with this on each shot so the toal damage done is correct
+	damageMul = 1.0f/(float)salvoSize;		//multiply damage with this on each shot so the total damage done is correct
 
 	CWeapon::Init();
 
@@ -119,7 +119,7 @@ void CBeamLaser::Init(void)
 void CBeamLaser::Fire(void)
 {
 	float3 dir;
-	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
+	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype can't align itself properly, change back when that is fixed
 		dir=owner->frontdir;
 	} else {
 		if(salvoLeft==salvoSize-1){

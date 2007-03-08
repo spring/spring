@@ -61,7 +61,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].name = weaponname;
 
 	bool lineofsight;
-	bool balistic;
+	bool ballistic;
 	//bool twophase;
 	bool beamweapon;
 	//bool guided;
@@ -78,6 +78,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].tdfId, "0", weaponname + "\\id");
 	weaponDefs[id].description = sunparser->SGetValueDef("Weapon", weaponname + "\\name");
 	sunparser->GetDef(weaponDefs[id].avoidFriendly, "1", weaponname + "\\AvoidFriendly");
+	sunparser->GetDef(weaponDefs[id].avoidFeature, "1", weaponname + "\\AvoidFeature");
 	weaponDefs[id].collisionFlags=0;
 	bool collideFriendly, collideFeature;
 	sunparser->GetDef(collideFriendly, "1", weaponname + "\\CollideFriendly");
@@ -89,7 +90,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 	sunparser->GetDef(weaponDefs[id].dropped, "0", weaponname + "\\dropped");
 	sunparser->GetDef(lineofsight, "0", weaponname + "\\lineofsight");
-	sunparser->GetDef(balistic, "0", weaponname + "\\balistic");
+	sunparser->GetDef(ballistic, "0", weaponname + "\\ballistic");
 	sunparser->GetDef(weaponDefs[id].twophase, "0", weaponname + "\\twophase");
 	sunparser->GetDef(beamweapon, "0", weaponname + "\\beamweapon");
 	sunparser->GetDef(weaponDefs[id].guided, "0", weaponname + "\\guidance");
@@ -128,7 +129,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	//	weaponDefs[id].visuals.hasmodel = true;
 
 	weaponDefs[id].gravityAffected = false;
-	if(weaponDefs[id].dropped || balistic)
+	if(weaponDefs[id].dropped || ballistic)
 		weaponDefs[id].gravityAffected = true;
 
 	if(weaponDefs[id].dropped)	{

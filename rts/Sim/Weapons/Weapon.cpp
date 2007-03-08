@@ -82,6 +82,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(avoidFriendly),
+	CR_MEMBER(avoidFeature),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(fuelUsage)));
 
@@ -147,6 +148,7 @@ CWeapon::CWeapon(CUnit* owner)
 	maxMainDirAngleDif(-1),
 	hasCloseTarget(false),
 	avoidFriendly(true),
+	avoidFeature(true),
 	collisionFlags(0),
 	fuelUsage(0)
 {
