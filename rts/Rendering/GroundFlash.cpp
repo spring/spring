@@ -6,8 +6,51 @@
 #include "GL/VertexArray.h"
 #include "LogOutput.h"
 #include "mmgr.h"
+#include "Rendering/Textures/ColorMap.h"
+
+CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
+
+CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, );
+
+CR_REG_METADATA(CStandardGroundFlash,
+(
+ 	CR_MEMBER_BEGINFLAG(CM_Config),
+ 		CR_MEMBER(flashSize),
+		CR_MEMBER(circleAlpha),
+		CR_MEMBER(flashAlpha),
+		CR_MEMBER(circleGrowth),
+		CR_MEMBER(color),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
+CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
+
+CR_REG_METADATA(CSimpleGroundFlash,
+(
+ 	CR_MEMBER_BEGINFLAG(CM_Config),
+ 		CR_MEMBER(size),
+		CR_MEMBER(sizeGrowth),
+		CR_MEMBER(ttl),
+		CR_MEMBER(colorMap),
+		CR_MEMBER(texture),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
 
 CVertexArray* CGroundFlash::va=0;
+
+CGroundFlash::CGroundFlash(const float3& p)
+{
+	pos=p;
+	alwaysVisible=false;
+}
+
+CGroundFlash::CGroundFlash()
+{
+}
+
+CStandardGroundFlash::CStandardGroundFlash()
+{
+}
 
 CStandardGroundFlash::CStandardGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
 	: CGroundFlash(pos),
@@ -117,7 +160,7 @@ void CStandardGroundFlash::Draw()
 	}
 }
 
-CSimpleGroundFlash::CSimpleGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col)
+CSeismicGroundFlash::CSeismicGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col)
 	: CGroundFlash(pos),
 	sizeGrowth(sizeGrowth),
 	size(size),
@@ -162,11 +205,11 @@ CSimpleGroundFlash::CSimpleGroundFlash(float3 pos, AtlasedTexture texture, int t
 	ph->AddGroundFlash(this);
 }
 
-CSimpleGroundFlash::~CSimpleGroundFlash()
+CSeismicGroundFlash::~CSeismicGroundFlash()
 {
 }
 
-void CSimpleGroundFlash::Draw()
+void CSeismicGroundFlash::Draw()
 {
 	color[3] = ttl<fade ? int(((ttl)/(float)(fade))*255) : 255;
 
@@ -181,9 +224,78 @@ void CSimpleGroundFlash::Draw()
 	va->AddVertexTC(p4,texture.xstart,texture.yend,color);
 }
 
-bool CSimpleGroundFlash::Update()
+bool CSeismicGroundFlash::Update()
 {
 	size+=sizeGrowth;
 	return --ttl>0;
 }
 
+CSimpleGroundFlash::CSimpleGroundFlash()
+{
+}
+
+CSimpleGroundFlash::~CSimpleGroundFlash()
+{
+}
+
+void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit *owner)
+{
+	pos += explosionPos;
+
+	float flashsize = size+sizeGrowth*ttl;
+
+	float3 fw = camera->forward*-1000.0f;
+	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
+	float3 p1(pos.x+flashsize,0,pos.z);
+	p1.y=ground->GetApproximateHeight(p1.x,p1.z);
+	p1 += fw;
+	float3 p2(pos.x-flashsize,0,pos.z);
+	p2.y=ground->GetApproximateHeight(p2.x,p2.z);
+	p2 += fw;
+	float3 p3(pos.x,0,pos.z+flashsize);
+	p3.y=ground->GetApproximateHeight(p3.x,p3.z);
+	p3 += fw;
+	float3 p4(pos.x,0,pos.z-flashsize);
+	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
+	p4 += fw;
+	float3 n1((p3-p1).cross(p4-p1));
+	n1.Normalize();
+	float3 n2((p4-p2).cross(p3-p2));
+	n2.Normalize();
+
+	//pos += fw;
+
+	float3 normal=n1+n2;
+	normal.Normalize();
+	side1=normal.cross(float3(1,0,0));
+	side1.Normalize();
+	side2=side1.cross(normal);
+	ph->AddGroundFlash(this);
+
+	age=0.0f;
+	agerate = 1/(float)ttl;
+}
+
+void CSimpleGroundFlash::Draw()
+{
+	unsigned char color[4];
+	colorMap->GetColor(color, age);
+
+	float3 p1=pos+(-side1-side2)*size;
+	float3 p2=pos+( side1-side2)*size;
+	float3 p3=pos+( side1+side2)*size;
+	float3 p4=pos+(-side1+side2)*size;
+
+	va->AddVertexTC(p1,texture->xstart,texture->ystart,color);
+	va->AddVertexTC(p2,texture->xend,texture->ystart,color);
+	va->AddVertexTC(p3,texture->xend,texture->yend,color);
+	va->AddVertexTC(p4,texture->xstart,texture->yend,color);
+}
+
+bool CSimpleGroundFlash::Update()
+{
+	age += agerate;
+	size+=sizeGrowth;
+
+	return age<1;
+}

@@ -37,6 +37,7 @@
 	ExplosionSphere=CSpherePartSpawner;
 	ExplosionSpike=CExploSpikeProjectile;
 	SimpleParticleSpawner=CSphereParticleSpawner;
+	SimpleGroundFlash=CSimpleGroundFlash;
 }
 [generators]
 {

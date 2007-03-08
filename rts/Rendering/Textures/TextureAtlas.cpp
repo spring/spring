@@ -7,6 +7,7 @@
 #include <GL/glu.h>
 
 CR_BIND(AtlasedTexture, );
+CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 
 bool CTextureAtlas::debug;
 
