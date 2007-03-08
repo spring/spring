@@ -94,6 +94,7 @@ public:
 	C3DOParser();
 	virtual ~C3DOParser();
 	S3DOModel* Load3DO(string name,float scale=1,int side=1);
+	S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
 	
 private:

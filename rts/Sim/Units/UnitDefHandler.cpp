@@ -653,6 +653,16 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	const char* defScale = ud.canfly ? "0.5" : "1";
 	ud.collisionSphereScale = atof(tdfparser.SGetValueDef(defScale, "UNITINFO\\CollisionSphereScale").c_str());
 
+	float3 cso = ZeroVector;
+	const char* strCSOffset = tdfparser.SGetValueDef("default", "UNITINFO\\CollisionSphereOffset").c_str();
+	if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) { 
+		ud.useCSOffset = true;
+		ud.collisionSphereOffset = cso;
+	}
+	else {
+		ud.useCSOffset = false;
+	}
+
 	ud.seismicRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\seismicDistance").c_str());
 	ud.seismicSignature=atoi(tdfparser.SGetValueDef("-1", "UNITINFO\\seismicSignature").c_str());
 	if(ud.seismicSignature==-1)

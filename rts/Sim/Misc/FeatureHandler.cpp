@@ -511,6 +511,16 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 			fd->modelname=string("objects3d/")+fd->modelname;
 		}
 		fd->radius=0;
+		fd->collisionSphereScale=atof(wreckParser.SGetValueDef("1",name+"\\collisionspherescale").c_str());
+		float3 cso = ZeroVector;
+		const char* strCSOffset = wreckParser.SGetValueDef("default",name+"\\CollisionSphereOffset").c_str();
+		if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) { 
+			fd->useCSOffset = true;
+			fd->collisionSphereOffset = cso;
+		}
+		else {
+			fd->useCSOffset = false;
+		}
 		fd->xsize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintX").c_str())*2;		//our res is double TAs
 		fd->ysize=atoi(wreckParser.SGetValueDef("1",name+"\\FootprintZ").c_str())*2;
 		const string massStr = wreckParser.SGetValueDef("", name + "\\mass");

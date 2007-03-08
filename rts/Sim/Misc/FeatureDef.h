@@ -28,6 +28,9 @@ struct FeatureDef
 
 	float radius;
 	float mass;            //used to see if the object can be overrun
+	float collisionSphereScale;
+	float3 collisionSphereOffset;
+	bool useCSOffset;
 
 	bool upright;
 	int drawType;

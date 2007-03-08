@@ -268,7 +268,12 @@ START_TIME_PROFILE;
 	if(ud->tidalGenerator>0)
 		unit->energyTickMake += ud->tidalGenerator*readmap->tidalStrength;
 
-	unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side);
+	if (ud->useCSOffset) {
+		unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side, ud->collisionSphereOffset);
+	}
+	else {
+		unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side);
+	};
 	unit->SetRadius(unit->model->radius);
 
 	if(ud->floater)

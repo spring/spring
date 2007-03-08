@@ -248,6 +248,17 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	return model;
 }
 
+S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& offsets)
+{
+	S3DOModel *model = C3DOParser::Load3DO(name, scale, team);
+	model->rootobject3do->relMidPos.x=offsets.x;
+	model->rootobject3do->relMidPos.y=offsets.y;
+	model->rootobject3do->relMidPos.z=offsets.z;
+	model->relMidPos = model->rootobject3do->relMidPos;
+
+	return model;
+}
+
 void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
 {
 	curOffset=o->OffsetToVertexArray;

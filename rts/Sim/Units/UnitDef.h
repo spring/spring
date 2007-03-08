@@ -104,6 +104,8 @@ struct UnitDef
 
 	UnitModelDef model;
 	float collisionSphereScale;
+	float3 collisionSphereOffset;
+	bool useCSOffset;
 
 	struct UnitDefWeapon {
 		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat,float fuelUse)
