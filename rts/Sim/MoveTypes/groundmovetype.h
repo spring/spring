@@ -120,7 +120,7 @@ protected:
 	bool CheckColH(int x, int y1, int y2, float xmove, int squareTestX);
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
-	static std::vector<int2> lineTable[11][11];
+	static std::vector<int2> (*lineTable)[11];
 	
 	float3 mainHeadingPos;
 	bool useMainHeading;
@@ -128,6 +128,7 @@ protected:
 
 public:
 	static void CreateLineTable(void);
+	static void DeleteLineTable(void);
 	void TestNewTerrainSquare(void);
 	bool CheckGoalFeasability(void);
 	virtual void LeaveTransport(void);

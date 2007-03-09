@@ -701,7 +701,7 @@ void CPathEstimator::WriteFile(string name) {
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find('.') + 1) + hashString + "." + name + ".zip";
+	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location

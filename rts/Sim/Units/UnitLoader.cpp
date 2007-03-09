@@ -61,6 +61,7 @@ CUnitLoader::CUnitLoader()
 
 CUnitLoader::~CUnitLoader()
 {
+	CGroundMoveType::DeleteLineTable();
 }
 
 CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool build, int facing)

@@ -86,24 +86,20 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 		}
 		CUnit* unit=uh->units[(int)c.params[0]];
 		if(c.options & INTERNAL_ORDER) {
-			if(unit->commandAI->commandQue.size() == 0 && !LoadStillValid(unit)){
-				FinishCommand();
-				return;
+			if(unit->commandAI->commandQue.empty()){
+				if(!LoadStillValid(unit)){
+					FinishCommand();
+					return;
+				}
 			} else {
-				Command currentUnitCommand = unit->commandAI->commandQue[0];
-				if(currentUnitCommand.id == CMD_LOAD_ONTO
-					&& currentUnitCommand.params.size() == 1
-					&& int(currentUnitCommand.params[0]) == owner->id)
-				{
-					if((unit->moveType->progressState == CMoveType::Failed)
-						&& (owner->moveType->progressState == CMoveType::Failed))
-					{
+				Command & currentUnitCommand = unit->commandAI->commandQue[0];
+				if(currentUnitCommand.id == CMD_LOAD_ONTO && currentUnitCommand.params.size() == 1 && int(currentUnitCommand.params[0]) == owner->id){
+					if((unit->moveType->progressState == CMoveType::Failed) && (owner->moveType->progressState == CMoveType::Failed)){
 						unit->commandAI->FinishCommand();
 						FinishCommand();
 						return;
 					}
-				} else if(!LoadStillValid(unit))
-				{
+				} else if(!LoadStillValid(unit)) {
 					FinishCommand();
 					return;
 				}

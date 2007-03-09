@@ -107,7 +107,7 @@ const float MAX_OFF_PATH_FACTOR = 20;				//How far away from a waypoint a unit c
 const float MINIMUM_SPEED = 0.01f;					//Minimum speed a unit may move in.
 
 static const bool DEBUG_CONTROLLER=false;
-std::vector<int2> CGroundMoveType::lineTable[11][11];
+std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -1286,6 +1286,8 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 //creates the tables used to see if we should advance to next pathfinding waypoint
 void CGroundMoveType::CreateLineTable(void)
 {
+	lineTable = new std::vector<int2>[11][11];
+
 	for(int yt=0;yt<11;++yt){
 		for(int xt=0;xt<11;++xt){
 			float3 start(0.5f,0,0.5f);
@@ -1341,6 +1343,12 @@ void CGroundMoveType::CreateLineTable(void)
 			}
 		}
 	}
+}
+
+void CGroundMoveType::DeleteLineTable(void)
+{
+	delete [] lineTable;
+	lineTable = 0;
 }
 
 void CGroundMoveType::TestNewTerrainSquare(void)
