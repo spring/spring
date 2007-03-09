@@ -109,6 +109,8 @@ CPreGame::CPreGame(bool server, const string& demo):
 
 CPreGame::~CPreGame()
 {
+	delete infoConsole;
+	infoConsole = 0;
 }
 
 int CPreGame::KeyPressed(unsigned short k,bool isRepeat)

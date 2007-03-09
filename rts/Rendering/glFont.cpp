@@ -207,7 +207,7 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 		}
 		glTexImage2D(GL_TEXTURE_2D, 
-			0, GL_RGBA, 
+			0, 2, 
 			texsize, texsize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, tex);
 		
 		charWidths[ch - charstart] = g->advance_x / 2 / texsize;		

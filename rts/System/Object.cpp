@@ -12,7 +12,7 @@ CR_REG_METADATA(CObject, (
 	CR_MEMBER(listening),
 	CR_MEMBER(listeners)));
 
-CObject* CObject::syncedObjects;
+CObject* CObject::syncedObjects = 0;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

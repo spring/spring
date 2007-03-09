@@ -335,14 +335,14 @@ public:
 	}
 
 	/**
-	 * @brief distance2D between float3s (only x and y)
+	 * @brief distance2D between float3s (only x and z)
 	 * @param f float3 to compare against
 	 * @return 2D distance between float3s
 	 * 
 	 * Calculates the distance between this float3
 	 * and another float3 2-dimensionally (that is,
-	 * only using the x and y components).  Sums the
-	 * differences in the x and y components, square
+	 * only using the x and z components).  Sums the
+	 * differences in the x and z components, square
 	 * root for pythagorean theorem
 	 */
 	inline float distance2D(const float3 &f) const{
