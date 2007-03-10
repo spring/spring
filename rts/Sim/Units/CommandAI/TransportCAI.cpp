@@ -15,6 +15,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/ModInfo.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "mmgr.h"
 
@@ -193,7 +194,8 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c)
 	float3 pos(c.params[0],c.params[1],c.params[2]);
 	float radius=c.params[3];
 	float3 found;
-	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius,found);
+	CUnit* unitToUnload=((CTransportUnit*)owner)->transported.front().unit;
+	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),unitToUnload->radius,found,unitToUnload);
 	if(canUnload){
 		Command c2;
 		c2.id=CMD_UNLOAD_UNIT;
@@ -269,7 +271,14 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	// don't transport cloaked enemies
 	if (unit->isCloaked && !gs->AlliedTeams(unit->team, owner->team))
 		return false;
-	if(unit->unitDef->canhover || unit->unitDef->floater || unit->unitDef->canfly)
+	if(unit->unitDef->canhover && (modInfo->transportHover==0))
+ 		return false;
+	if(unit->unitDef->floater && (modInfo->transportShip==0))
+		return false;
+	if(unit->unitDef->canfly && (modInfo->transportAir==0))
+		return false;
+	// if not a hover, not a floater and not a flier, then it's probably ground unit
+	if(!unit->unitDef->canhover && !unit->unitDef->floater && !unit->unitDef->canfly && (modInfo->transportGround==0))
 		return false;
 	if(unit->xsize > owner->unitDef->transportSize*2)
 		return false;
@@ -281,7 +290,7 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	return true;
 }
 
-bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found)
+bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload)
 {
 //	std::vector<CUnit*> units=qf->GetUnitsExact(center,radius);
 	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
@@ -294,9 +303,13 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 			float3 pos=center+delta*radius;
 			pos.y=ground->GetHeight(pos.x,pos.z);
 
-			if(ground->GetApproximateHeight(pos.x,pos.z)<-5)
+			float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
+			if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
+ 				continue;
+			if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
 				continue;
-			if(ground->GetSlope(pos.x,pos.z)>0.05f)
+			//Don't unload anything on slopes
+			if(ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 				continue;
 			if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
 				continue;
@@ -311,9 +324,13 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 				continue;
 			rx=sqrt(rx);
 			for(float x=max(0.0f,center.x-rx);x<min(float(gs->mapx*SQUARE_SIZE),center.x+rx);x+=SQUARE_SIZE){
-				if(ground->GetApproximateHeight(x,y)<-5)
+				float unloadPosHeight=ground->GetApproximateHeight(x,y);
+				if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
+ 					continue;
+				if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
 					continue;
-				if(ground->GetSlope(x,y)>0.05f)
+				//Don't unload anything on slopes
+				if(ground->GetSlope(x,y) > unitToUnload->unitDef->movedata->maxSlope)
 					continue;
 				float3 pos(x,ground->GetApproximateHeight(x,y),y);
 				if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
