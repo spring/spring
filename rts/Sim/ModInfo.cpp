@@ -5,6 +5,7 @@
 #include "TdfParser.h"
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/ArchiveScanner.h"
+#include "LogOutput.h"
 
 CModInfo* modInfo = 0;
 
@@ -39,6 +40,27 @@ CModInfo::CModInfo(const char* modname)
 	}
 	catch(content_error) // If the modrules.tdf isnt found
 	{
+		// We already set the defaults so we should be able to ignore this
+		// Other optional mod rules MUST set their defaults...
+	}
+	//Get the transportability options for the mod
+	transportGround = 1;
+	transportHover = 0;
+	transportShip = 0;
+	transportAir = 0;
+	// See if the mod overrides the defaults:
+	try
+	{
+		TdfParser transportOptions("gamedata/modrules.tdf");
+		transportGround = atoi(transportOptions.SGetValueDef("1", "TRANSPORTABILITY\\TransportGround").c_str());
+		transportHover = atoi(transportOptions.SGetValueDef("0", "TRANSPORTABILITY\\TransportHover").c_str());
+		transportShip = atoi(transportOptions.SGetValueDef("0", "TRANSPORTABILITY\\TransportShip").c_str());
+		transportAir = atoi(transportOptions.SGetValueDef("0", "TRANSPORTABILITY\\TransportAir").c_str());
+		logOutput << "TransportHover: " << transportHover << "\n";
+	}
+	catch(content_error) // If the modrules.tdf isnt found
+	{
+		logOutput << "Content error:" << "\n";
 		// We already set the defaults so we should be able to ignore this
 		// Other optional mod rules MUST set their defaults...
 	}

@@ -6,6 +6,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/SelectedUnits.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
@@ -35,10 +36,12 @@ void CTransportUnit::Update()
 		ti->unit->pos=pos;
 		ti->unit->midPos=ti->unit->pos+ti->unit->frontdir*ti->unit->relMidPos.z + ti->unit->updir*ti->unit->relMidPos.y + ti->unit->rightdir*ti->unit->relMidPos.x;		
 		if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType)){
-			ti->unit->heading=heading;
-			ti->unit->frontdir=frontdir;
-			ti->unit->rightdir=rightdir;
-			ti->unit->updir=updir;
+			if(unitDef->holdSteady){
+				ti->unit->heading=heading;
+				ti->unit->updir=updir;
+				ti->unit->frontdir=frontdir;
+				ti->unit->rightdir=rightdir;
+			}
 		}
 	}
 }

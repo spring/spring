@@ -13,7 +13,7 @@ public:
 	void ScriptReady(void);
 
 	bool CanTransport(CUnit* unit);
-	bool FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found);
+	bool FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void DrawCommands(void);

@@ -137,7 +137,7 @@ void CLogOutput::Print(int priority, const std::string& text)
 }
 
 
-CLogOutput& CLogOutput::operator<< (int i)
+CLogOutput& CLogOutput::operator<< (const int i)
 {
 	char t[50];
 	sprintf(t,"%d ",i);
@@ -147,13 +147,18 @@ CLogOutput& CLogOutput::operator<< (int i)
 }
 
 
-CLogOutput& CLogOutput::operator<< (float f)
+CLogOutput& CLogOutput::operator<< (const float f)
 {
 	char t[50];
 	sprintf(t,"%f ",f);
 	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
 	tempstr += t;
 	return *this;
+}
+
+CLogOutput& CLogOutput::operator<< (const float3 f)
+{
+	return *this << f.x << " " << f.y << " " << f.z;
 }
 
 CLogOutput& CLogOutput::operator<< (const char* c)

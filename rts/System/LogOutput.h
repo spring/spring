@@ -34,9 +34,10 @@ public:
 	void Print(const std::string& text);
 	void Print(int priority, const std::string& text);
 
-	CLogOutput& operator<<(int i);
-	CLogOutput& operator<<(float f);
+	CLogOutput& operator<<(const int i);
+	CLogOutput& operator<<(const float f);
 	CLogOutput& operator<<(const char* c);
+	CLogOutput& operator<<(const float3 f);
 
 	void SetLastMsgPos(float3 pos);
 
