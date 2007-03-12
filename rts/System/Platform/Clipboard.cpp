@@ -30,8 +30,7 @@ std::string CClipboard::GetContents() const
 		int count = 0;
 		char* msg = XFetchBytes(display, &count);
 		if ((msg != NULL) && (count > 0)) {
-			msg[count - 1] = 0; // terminate
-			contents = (char*)msg;
+			contents.append((char*)msg, count);
 		}
 		XFree(msg);
 		sdlinfo.info.x11.unlock_func();
