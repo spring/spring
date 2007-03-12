@@ -207,8 +207,8 @@ int CNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x
 
 int CNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
 {
-  return SendSTLData<uchar, uchar, short, short, std::string>(
-                     NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
+	return SendSTLData<uchar, uchar, short, short, std::string>(
+	                   NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
 }
 
 //  NETMSG_SYNCREQUEST      = 32, // int frameNum;
