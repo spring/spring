@@ -195,18 +195,20 @@ int CNetProtocol::SendGameOver()
 
 int CNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
 {
-	return SendData<uchar, uchar, uchar, short, short>(NETMSG_MAPDRAW, 8, myPlayerNum, CInMapDraw::NET_ERASE, x, z);
+	return SendData<uchar, uchar, uchar, short, short>(
+	                NETMSG_MAPDRAW, 8, myPlayerNum, CInMapDraw::NET_ERASE, x, z);
 }
 
 int CNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2)
 {
 	return SendData<uchar, uchar, uchar, short, short, short, short>(
-			NETMSG_MAPDRAW, 12, myPlayerNum, CInMapDraw::NET_LINE, x1, z1, x2, z2);
+	                NETMSG_MAPDRAW, 12, myPlayerNum, CInMapDraw::NET_LINE, x1, z1, x2, z2);
 }
 
 int CNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
 {
-	return SendSTLData<uchar, short, short, std::string> (NETMSG_MAPDRAW, myPlayerNum, x, z, label);
+  return SendSTLData<uchar, uchar, short, short, std::string>(
+                     NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
 }
 
 //  NETMSG_SYNCREQUEST      = 32, // int frameNum;
