@@ -1,6 +1,6 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 
 Classes for serialization of registrated class instances
 */
@@ -17,8 +17,12 @@ Classes for serialization of registrated class instances
 using namespace std;
 using namespace creg;
 
-#define swabdword(d) (d)
-#define swabword(d) (d)
+#ifndef swabdword
+	#define swabdword(d) (d)
+#endif
+#ifndef swabword
+	#define swabword(d) (d)
+#endif
 
 #define CREG_PACKAGE_FILE_ID "CRPK"
 
@@ -33,7 +37,7 @@ struct PackageHeader
 	int objTableOffset;
 	int numObjects;
 	int objClassRefOffset; // a class ref is: zero-term class string + checksum DWORD
-	int numObjClassRefs; 
+	int numObjClassRefs;
 	unsigned int metadataChecksum;
 
 	void SwapBytes ()
@@ -209,7 +213,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 
 			classRefs.push_back (pRef);
 			oi->second.classIndex = pRef->index;
-		} else 
+		} else
 			oi->second.classIndex = cr->second.index;
 	}
 
@@ -252,7 +256,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	ph.SwapBytes ();
 	stream->write ((const char *)&ph, sizeof(PackageHeader));
 
-	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size()); 
+	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size());
 
 	objects.clear();
 	ptrToID.clear();
@@ -298,7 +302,7 @@ void CInputStreamSerializer::SerializeObjectPtr (void **ptr, creg::Class *cls)
 			ufp.ptrAddr = ptr;
 			unfixedPointers.push_back (ufp);
 		}
-	} else 
+	} else
 		*ptr = NULL;
 }
 
@@ -335,7 +339,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	stream = s;
 	s->read((char *)&ph, sizeof(PackageHeader));
 
-	if (memcmp (ph.magic, CREG_PACKAGE_FILE_ID, 4)) 
+	if (memcmp (ph.magic, CREG_PACKAGE_FILE_ID, 4))
 		throw std::runtime_error ("Incorrect object package file ID");
 
 	// Load references
@@ -349,7 +353,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		checksum = swabdword(checksum); // ignored for now
 		creg::Class *class_ = System::GetClass (className);
 
-		if (!class_) 
+		if (!class_)
 			throw std::runtime_error ("Package file contains reference to unknown class " + className);
 
 		classRefs[a] = class_;
@@ -357,7 +361,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 
 	// Calculate metadata checksum and compare with stored checksum
 	unsigned int checksum = 0;
-	for (uint a=0;a<classRefs.size();a++) 
+	for (uint a=0;a<classRefs.size();a++)
 		classRefs[a]->CalculateChecksum (checksum);
 	if (checksum != ph.metadataChecksum)
 		throw std::runtime_error ("Metadata checksum error: Package file was saved with a different version");
@@ -403,7 +407,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	for (uint a=0;a<callbacks.size();a++) {
 		callbacks[a].cb (callbacks[a].userdata);
 	}
-	
+
 	// Run post load functions on all objects
 	for (uint a=0;a<objects.size();a++) {
 		StoredObject& o = objects[a];
