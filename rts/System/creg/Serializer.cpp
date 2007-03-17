@@ -17,6 +17,9 @@ Classes for serialization of registrated class instances
 using namespace std;
 using namespace creg;
 
+#define swabdword(d) (d)
+#define swabword(d) (d)
+
 #define CREG_PACKAGE_FILE_ID "CRPK"
 
 // File format structures
@@ -54,14 +57,14 @@ struct PackageObject
 	}
 };
 
-static int test_size[sizeof(PackageObject)==3 ? 1 : -1];
+COMPILE_TIME_ASSERT(sizeof(PackageObject) == 3, test_size);
 
 #pragma pack(pop)
 
 static string ReadZStr(std::istream& f)
 {
 	std::string s;
-	char c,i=0;
+	char c;
 	while(!f.eof ()) {
 		f >> c;
 		if (!c) break;
@@ -213,7 +216,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	// Write the class references
 	ph.numObjClassRefs = classRefs.size();
 	ph.objClassRefOffset = (int)stream->tellp();
-	for (int a=0;a<classRefs.size();a++) {
+	for (uint a=0;a<classRefs.size();a++) {
 		WriteZStr (*stream, classRefs[a]->class_->name);
 		// write a checksum (unused atm)
 		int checksum = swabdword(0);
@@ -223,7 +226,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	// Write object info
 	ph.objTableOffset = (int)stream->tellp();
 	ph.numObjects = objects.size();
-	for (int a=0;a<objects.size();a++)
+	for (uint a=0;a<objects.size();a++)
 	{
 		ObjectID *o = objects[a];
 		PackageObject d;
@@ -237,7 +240,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 
 	// Calculate a checksum for metadata verification
 	ph.metadataChecksum = 0;
-	for (int a=0;a<classRefs.size();a++)
+	for (uint a=0;a<classRefs.size();a++)
 	{
 		Class *c = classRefs[a]->class_;
 		c->CalculateChecksum (ph.metadataChecksum);
@@ -315,6 +318,15 @@ void CInputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *c
 	cls->SerializeInstance (this, inst);
 }
 
+void CInputStreamSerializer::AddPostLoadCallback(void (*cb)(void*), void *ud)
+{
+	PostLoadCallback plcb;
+
+	plcb.cb = cb;
+	plcb.userdata = ud;
+
+	callbacks.push_back (plcb);
+}
 
 void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Class *& rootCls)
 {
@@ -334,8 +346,8 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		string className = ReadZStr (*s);
 		int checksum;
 		s->read ((char*)&checksum, sizeof(int));
-		checksum = swabdword(checksum);
-		creg::Class *class_ = ClassBinder::GetClass (className);
+		checksum = swabdword(checksum); // ignored for now
+		creg::Class *class_ = System::GetClass (className);
 
 		if (!class_) 
 			throw std::runtime_error ("Package file contains reference to unknown class " + className);
@@ -345,7 +357,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 
 	// Calculate metadata checksum and compare with stored checksum
 	unsigned int checksum = 0;
-	for (int a=0;a<classRefs.size();a++) 
+	for (uint a=0;a<classRefs.size();a++) 
 		classRefs[a]->CalculateChecksum (checksum);
 	if (checksum != ph.metadataChecksum)
 		throw std::runtime_error ("Metadata checksum error: Package file was saved with a different version");
@@ -373,7 +385,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 
 	// Read the object data using serialization
 	s->seekg (ph.objDataOffset);
-	for (int a=0;a<objects.size();a++)
+	for (uint a=0;a<objects.size();a++)
 	{
 		if (!objects[a].isEmbedded) {
 			creg::Class *cls = classRefs[objects[a].classRef];
@@ -382,13 +394,18 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	}
 
 	// Fix pointers to embedded objects
-	for (int a=0;a<unfixedPointers.size();a++) {
+	for (uint a=0;a<unfixedPointers.size();a++) {
 		void *p = objects [unfixedPointers[a].objID].obj;
 		*unfixedPointers[a].ptrAddr = p;
 	}
+
+	// Run all registered post load callbacks
+	for (uint a=0;a<callbacks.size();a++) {
+		callbacks[a].cb (callbacks[a].userdata);
+	}
 	
 	// Run post load functions on all objects
-	for (int a=0;a<objects.size();a++) {
+	for (uint a=0;a<objects.size();a++) {
 		StoredObject& o = objects[a];
 		Class *c = classRefs[objects[a].classRef];
 

@@ -59,10 +59,9 @@ public:
 	ObjectPointerType() { objectClass = T::StaticClass(); }
 	void Serialize (ISerializer *s, void *instance) {
 		void **ptr = (void**)instance;
-		if (s->IsWriting()) {
-			T *obj = *ptr ? (T*)*ptr : 0;
+		if (s->IsWriting())
 			s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
-		} else s->SerializeObjectPtr (ptr, objectClass);
+		else s->SerializeObjectPtr (ptr, objectClass);
 	}
 	std::string GetName() { return objectClass->name + "*"; }
 	Class* objectClass;

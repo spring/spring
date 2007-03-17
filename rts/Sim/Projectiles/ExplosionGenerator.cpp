@@ -49,7 +49,7 @@ creg::Class* ClassAliasList::GetClass (const std::string& name)
 
 		n = i->second;
 	}
-	creg::Class *cls = creg::ClassBinder::GetClass (n);
+	creg::Class *cls = creg::System::GetClass (n);
 	if (!cls) 
 		throw content_error("Unknown class: " + name);
 	return cls;
@@ -604,7 +604,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
-	const vector<creg::Class*>& classes = creg::ClassBinder::GetClasses();
+	const vector<creg::Class*>& classes = creg::System::GetClasses();
 	std::ofstream fs("projectiles.txt");
 	CExplosionGeneratorHandler egh;
 

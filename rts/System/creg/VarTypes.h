@@ -24,16 +24,6 @@ namespace creg
 		BasicTypeID id;
 	};
 
-	class StringType : public IType
-	{
-	public:
-		StringType() {}
-		~StringType() {}
-		void Serialize (ISerializer *s, void *instance);
-		std::string GetName();
-	};
-
-
 	class ObjectInstanceType : public IType
 	{
 	public:
@@ -43,6 +33,12 @@ namespace creg
 		std::string GetName();
 
 		Class* objectClass;
+	};
+	
+	class StringType : public DynamicArrayType<std::string>
+	{
+	public:
+		std::string GetName();
 	};
 
 };
