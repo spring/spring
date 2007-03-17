@@ -174,10 +174,6 @@ namespace creg {
 		IType *elemType;
 		
 		DynamicArrayType (IType *elemType) : elemType(elemType) {}
-		DynamicArrayType () {
-			DeduceType<ElemT> et;
-			elemType = et.Get();
-		}
 		~DynamicArrayType () { if (elemType) delete elemType; }
 
 		void Serialize (ISerializer *s, void *inst) {
