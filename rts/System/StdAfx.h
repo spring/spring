@@ -44,6 +44,14 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#error Unsupported compiler
 #endif
 
+
+/*
+ * Compile time assertion
+ */
+#define COMPILE_TIME_ASSERT(condition, message) \
+	typedef int _compile_time_assertion_failed__ ## message [(condition) ? 1 : -1]
+
+
 // This reduces compile-time with precompiled headers on msvc
 // It increases compile-time with precompiled headers on gcc
 #ifdef _MSC_VER

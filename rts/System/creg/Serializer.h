@@ -7,20 +7,6 @@
 #include <map>
 #include <vector>
 
-#ifdef __GNUG__
-// This is needed as gnu doesn't offer specialization for other pointer types other that char*
-// (look in ext/hash_fun.h for the types supported out of the box)
-namespace __gnu_cxx
-{
-
-  template<> struct hash<void*>
-  {
-    size_t operator()(const void* __s) const
-    { return (size_t)(__s); }
-  };
-}
-#endif
-
 namespace creg {
 	/**
 	 * Output stream serializer
@@ -73,6 +59,9 @@ namespace creg {
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
+
+		/** Empty function, only applies to loading */
+		void AddPostLoadCallback (void (*cb)(void *d), void *d) {}
 	};
 
 	/** Input stream serializer
@@ -99,6 +88,13 @@ namespace creg {
 		};
 		std::vector <StoredObject> objects;
 
+		struct PostLoadCallback
+		{
+			void (*cb)(void *d);
+			void *userdata;
+		};
+		std::vector <PostLoadCallback> callbacks;
+
 	public:
 		CInputStreamSerializer ();
 		~CInputStreamSerializer ();
@@ -114,6 +110,9 @@ namespace creg {
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
+
+		/** @see ISerializer::AddPostLoadCallback */
+		void AddPostLoadCallback (void (*cb)(void *userdata), void *userdata);
 
 		/** Load a package that is saved by CInputStreamSerializer
 		 * @param s the input stream to read from

@@ -929,14 +929,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\Unit3DLoader.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.cpp"
 					>
 				</File>
@@ -2174,6 +2166,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\NetProtocol.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\NetProtocol.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\Object.cpp"
 				>
 			</File>
@@ -2231,14 +2231,6 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Syncify.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\SyncTracer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\SyncTracer.h"
 				>
 			</File>
 			<File
@@ -2986,7 +2978,7 @@
 				Name="creg"
 				>
 				<File
-					RelativePath="..\..\System\creg\ClassBinding.cpp"
+					RelativePath="..\..\System\creg\creg.cpp"
 					>
 				</File>
 				<File

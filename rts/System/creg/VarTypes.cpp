@@ -76,8 +76,7 @@ std::string StringType::GetName()
 
 IType* IType::CreateStringType ()
 {
-	DeduceType<char> charType;
-	return SAFE_NEW DynamicArrayType<string> (charType.Get());
+	return new StringType();
 }
 
 void ObjectInstanceType::Serialize (ISerializer *s, void *inst)

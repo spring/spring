@@ -23,6 +23,9 @@ namespace creg
 		 * The big difference with SerializeObjectPtr, is that the caller of this function
 		 * controls the allocation of the object instead of the creg serializer itself */
 		virtual void SerializeObjectInstance (void *inst, Class *objectClass) = 0;
+
+		// Add a callback that will be called after all serialization is done
+		virtual void AddPostLoadCallback (void (*cb)(void *userdata), void *userdata) = 0;
 	};
 
 }

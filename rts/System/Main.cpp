@@ -213,7 +213,7 @@ SpringApp::~SpringApp()
 	if (cmdline) delete cmdline;
 	if (keys) delete[] keys;
 
-	creg::ClassBinder::FreeClasses ();
+	creg::System::FreeClasses ();
 }
 
 #ifdef _MSC_VER
@@ -258,7 +258,7 @@ bool SpringApp::Initialize ()
 	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
 
 	// Initialize class system
-	creg::ClassBinder::InitializeClasses ();
+	creg::System::InitializeClasses ();
 
 	// Initialize crash reporting
 #ifdef _MSC_VER

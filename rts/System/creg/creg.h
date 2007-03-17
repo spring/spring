@@ -18,6 +18,8 @@ namespace creg {
 	class Class;
 	class ClassBinder;
 
+	typedef unsigned int uint;
+
 	// Fundamental/basic types
 	enum BasicTypeID
 	{
@@ -72,6 +74,45 @@ namespace creg {
 		CM_Config = 2,  // Exposed in config
 	};
 
+/**
+ * Stores class bindings such as constructor/destructor
+ */
+	class ClassBinder
+	{
+	public:
+		ClassBinder (const char *className, unsigned int cf, ClassBinder* base, IMemberRegistrator **mreg, int instanceSize, void (*constructorProc)(void *instance), void (*destructorProc)(void *instance));
+
+		Class *class_;
+		ClassBinder *base;
+		ClassFlags flags;
+		IMemberRegistrator **memberRegistrator;
+		const char *name;
+		int size; // size of an instance in bytes
+		void (*constructor)(void *instance); 
+		void (*destructor)(void *instance); // needed for classes without virtual destructor (classes/structs declared with CR_DECLARE_STRUCT)
+
+		ClassBinder* nextBinder;
+	};
+
+	class System
+	{
+	public:
+		/// Return the global list of classes
+		static std::vector<Class*> GetClasses() { return classes; }
+		/// Initialization of creg, collects all the classes and initializes metadata
+		static void InitializeClasses ();
+		/// Shutdown of creg
+		static void FreeClasses ();
+		/// Find a class by name
+		static Class* GetClass(const std::string& name);
+		
+		static void AddClassBinder(ClassBinder* cb);
+
+	protected:
+		static ClassBinder *binderList;
+		static std::vector<Class*> classes;
+	};
+
 	/** Represents a C++ class or struct, declared with CR_DECLARE/CR_DECLARE_STRUCT */
 	class Class
 	{
@@ -103,7 +144,12 @@ namespace creg {
 		void BeginFlag (ClassMemberFlag flag);
 		void EndFlag (ClassMemberFlag flag);
 
+		bool IsAbstract() { return (binder->flags & CF_Abstract) != 0; }
+
+		std::vector<Class*> GetImplementations(); // get all concrete classes that implement this class
+
 		std::vector <Member*> members;
+		std::vector <Class*> derivedClasses; // all classes that derive from this class
 		ClassBinder* binder;
 		std::string name;
 		Class *base;
@@ -128,6 +174,10 @@ namespace creg {
 		IType *elemType;
 		
 		DynamicArrayType (IType *elemType) : elemType(elemType) {}
+		DynamicArrayType () {
+			DeduceType<ElemT> et;
+			elemType = et.Get();
+		}
 		~DynamicArrayType () { if (elemType) delete elemType; }
 
 		void Serialize (ISerializer *s, void *inst) {
@@ -176,40 +226,6 @@ namespace creg {
 	};
 
 #include "TypeDeduction.h"
-
-/**
- * Stores class bindings such as constructor/destructor
- */
-	class ClassBinder
-	{
-	public:
-		ClassBinder (const char *className, unsigned int cf, ClassBinder* base, IMemberRegistrator **mreg, int instanceSize, void (*constructorProc)(void *instance), void (*destructorProc)(void *instance));
-
-		Class *class_;
-		ClassBinder *base;
-		ClassFlags flags;
-		IMemberRegistrator **memberRegistrator;
-		const char *name;
-		int size; // size of an instance in bytes
-		void (*constructor)(void *instance); 
-		void (*destructor)(void *instance); // needed for classes without virtual destructor (classes/structs declared with CR_DECLARE_STRUCT)
-
-		/// Return the global list of classes
-		static const std::vector<Class*>& GetClasses() { return classes; }
-		/// Initialization of creg, collects all the classes and initializes metadata
-		static void InitializeClasses ();
-		/// Shutdown of creg
-		static void FreeClasses ();
-		/// Find a class by name
-		static Class* GetClass(const std::string& name);
-
-	protected:
-		ClassBinder* nextBinder;
-
-		static ClassBinder *binderList;
-		static std::vector<Class*> classes;
-	};
-
 
 /** @def CR_DECLARE
  * Add the definitions for creg binding to the class
@@ -394,7 +410,7 @@ namespace creg {
  * @param SerializeFunc the serialize method, should be a member function of the class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&)) &Type::SerializeFunc)
+	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&))&Type::SerializeFunc)
 
 /** @def CR_POSTLOAD 
  * Registers a custom post-loading method for the class/struct
