@@ -18,14 +18,14 @@
 
 /**
  * @brief global synced
- * 
+ *
  * Global instance of CGlobalSyncedStuff
  */
 CGlobalSyncedStuff* gs;
 
 /**
  * @brief global unsynced
- * 
+ *
  * Global instance of CGlobalUnsyncedStuff
  */
 CGlobalUnsyncedStuff* gu;
@@ -47,7 +47,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	cheatEnabled=false;
 	tempNum=2;
 	gameMode=0;
-	
+
 	sunVector=float3(0,0,1);
 	sunVector4[0]=0;
 	sunVector4[1]=0;
@@ -95,7 +95,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 
 /**
  * @return synced random integer
- * 
+ *
  * returns a synced random integer
  */
 int CGlobalSyncedStuff::randInt()
@@ -106,7 +106,7 @@ int CGlobalSyncedStuff::randInt()
 
 /**
  * @return synced random float
- * 
+ *
  * returns a synced random float
  */
 float CGlobalSyncedStuff::randFloat()
@@ -117,7 +117,7 @@ float CGlobalSyncedStuff::randFloat()
 
 /**
  * @return synced random vector
- * 
+ *
  * returns a synced random vector
  */
 float3 CGlobalSyncedStuff::randVector()
@@ -157,7 +157,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	viewRange=MAX_VIEW_RANGE;
 	timeOffset=0;
 	drawFog=true;
-	team_nanospray=false;
+	teamNanospray=false;
 	autoQuit=false;
 	quitTime=0;
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -174,7 +174,7 @@ CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
 
 /**
  * @return unsynced random integer
- * 
+ *
  * Returns an unsynced random integer
  */
 int CGlobalUnsyncedStuff::usRandInt()
@@ -185,7 +185,7 @@ int CGlobalUnsyncedStuff::usRandInt()
 
 /**
  * @return unsynced random float
- * 
+ *
  * returns an unsynced random float
  */
 float CGlobalUnsyncedStuff::usRandFloat()
@@ -196,7 +196,7 @@ float CGlobalUnsyncedStuff::usRandFloat()
 
 /**
  * @return unsynced random vector
- * 
+ *
  * returns an unsynced random vector
  */
 float3 CGlobalUnsyncedStuff::usRandVector()
