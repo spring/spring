@@ -228,6 +228,7 @@ namespace terrain {
 		int heightmapW;
 		int blendmapLOD; // lod level from which blendmaps are generated
 		bool useBumpMaps;
+		float optimizeEpsilon; // epsilon value used for texturing optimization, read from map
 		DetailBumpmap detailBumpmap;
 
 		// nearby shader, possibly tangent space bumpmapping

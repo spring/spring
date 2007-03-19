@@ -66,7 +66,7 @@ namespace terrain {
 		AlphaImage* CreateMipmap ();
 		void Blit (AlphaImage *dst, int x,int y,int dstx, int dsty, int w ,int h);
 		bool Save (const char *fn);
-		AreaTestResult TestArea (int xstart,int ystart,int xend,int yend);
+		AreaTestResult TestArea (int xstart,int ystart,int xend,int yend, float epsilon);
 
 		int w,h;
 		float *data;

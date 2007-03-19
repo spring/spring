@@ -193,6 +193,9 @@ namespace terrain {
 		shaderDef.Parse(*tdf, cfg->useBumpMaps);
 		shaderDef.useShadowMapping = cfg->useShadowMaps;
 
+		optimizeEpsilon = atof(tdf->SGetValueDef ("0.04", basepath + "LayerOptimizeConst").c_str());
+		if (optimizeEpsilon < 0.0f) optimizeEpsilon = 0.0f;
+
 		// Load textures
 		map<string, BaseTexture*> nametbl;
 
@@ -363,7 +366,7 @@ namespace terrain {
 
 			// Calculate "constants" representing the blendmap in the area that the node covers
 			blendMaps[a]->curAreaResult = mipmaps[mipIndex]->TestArea ((node->qmPos.x * QUAD_W)/d, 
-				(node->qmPos.y * QUAD_W)/d, ((node->qmPos.x+1)*QUAD_W)/d, ((node->qmPos.y+1)*QUAD_W)/d);
+				(node->qmPos.y * QUAD_W)/d, ((node->qmPos.x+1)*QUAD_W)/d, ((node->qmPos.y+1)*QUAD_W)/d, optimizeEpsilon);
 		}
 
 		uint key = CalcBlendmapSortKey ();
