@@ -310,7 +310,7 @@ namespace terrain {
 		return true;
 	}
 
-	AlphaImage::AreaTestResult AlphaImage::TestArea (int xstart,int ystart,int xend,int yend)
+	AlphaImage::AreaTestResult AlphaImage::TestArea (int xstart,int ystart,int xend,int yend,float epsilon)
 	{
 		bool allOne = true;
 		bool allZero = true;
@@ -319,8 +319,8 @@ namespace terrain {
 			for (int x=xstart;x<xend;x++)
 			{
 				float v = at (x,y);
-				if (v > AREA_TEST_RANGE) allZero=false;
-				if (v < 1.0f - AREA_TEST_RANGE) allOne=false;
+				if (v > epsilon) allZero=false;
+				if (v < 1.0f - epsilon) allOne=false;
 			}
 
 		if (allOne) return AREA_ONE;
