@@ -529,6 +529,7 @@ namespace terrain {
 	{
 		currentRenderSetup = 0;
 		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		shaderHandler->EndTexturing ();
 	}

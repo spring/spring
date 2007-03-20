@@ -829,6 +829,12 @@
 					RelativePath="..\..\Rendering\Env\GrassDrawer.h">
 				</File>
 				<File
+					RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.h">
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Env\RefractWater.cpp">
 				</File>
 				<File
@@ -1115,12 +1121,6 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\CommandAI\FactoryCAI.h">
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.cpp">
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.h">
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\CommandAI\MobileCAI.cpp">
@@ -2619,7 +2619,7 @@
 				Name="creg"
 				Filter="">
 				<File
-					RelativePath="..\..\System\creg\ClassBinding.cpp">
+					RelativePath="..\..\System\creg\creg.cpp">
 				</File>
 				<File
 					RelativePath="..\..\System\creg\creg.h">

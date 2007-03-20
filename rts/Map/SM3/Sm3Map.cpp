@@ -87,12 +87,13 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		}
 
 		int numStages=atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
-		int maxStages=configHandler.GetInt("SM3MaxTextureStages", 10);
+/*		int maxStages=configHandler.GetInt("SM3MaxTextureStages", 10);
 		if (numStages > maxStages) {
 			renderer->config.cacheTextures = true; 
 			renderer->config.cacheTextureSize = 256;
+		//	renderer->config.detailMod 
 		}
-		
+*/
 		Sm3LoadCB loadcb;
 		terrain::LightingInfo lightInfo;
 		lightInfo.ambient = ambientColor;
