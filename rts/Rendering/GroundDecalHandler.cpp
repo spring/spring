@@ -99,6 +99,7 @@ void CGroundDecalHandler::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER,0.01f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -116,14 +117,15 @@ void CGroundDecalHandler::Draw(void)
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
 		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_INTERPOLATE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	if(shadowHandler && shadowHandler->drawShadows){
 		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
@@ -137,6 +139,9 @@ void CGroundDecalHandler::Draw(void)
 		float3 ac=readmap->ambientColor*(210.0f/255.0f);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
+		glMatrixMode(GL_MATRIX0_ARB);
+		glLoadMatrixf(shadowHandler->shadowMatrix.m);
+		glMatrixMode(GL_MODELVIEW);
 	}
 
 	for(std::vector<BuildingDecalType*>::iterator bdi=buildingDecalTypes.begin();bdi!=buildingDecalTypes.end();++bdi){
