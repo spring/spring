@@ -151,8 +151,7 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	GetCurrentDirectory(sizeof(dir) - 1, dir);
 	SNPRINTF(msg, sizeof(msg),
 		"Spring has crashed.\n\n"
-		"To be able to fix this bug, please file a bug report at\n"
-		"http://taspring.clan-sy.com/mantis and attach the file\n"
+		"A stacktrace has been written to:\n"
 		"%s\\infolog.txt", dir);
 	MessageBox(NULL, msg, "Spring: Unhandled exception", 0);
 }
