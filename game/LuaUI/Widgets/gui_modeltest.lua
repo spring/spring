@@ -60,8 +60,8 @@ local model, scale, fixYZ = "styleTank.lua", 1640,   false
 local model, scale, fixYZ = "chillbox.lua",  1,      true
 local model, scale, fixYZ = "atlantis.lua",  1,      true
 local model, scale, fixYZ = "s4.lua",        100,    false
-local model, scale, fixYZ = "colors.lua",    100,    false
 local model, scale, fixYZ = "s4.luac",       100,    false
+local model, scale, fixYZ = "colors.lua",    100,    false
 
 
 local msx = Game.mapX * 512.0
