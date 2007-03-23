@@ -117,7 +117,7 @@ CDxSound::~CDxSound()
 
 
 void CDxSound::PlayStream(const std::string& path, float volume,
-                          const float3* pos, bool loop
+                          const float3* pos, bool loop)
 {
 }
 
