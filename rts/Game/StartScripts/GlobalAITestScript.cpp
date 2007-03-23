@@ -53,8 +53,8 @@ void CGlobalAITestScript::Update(void)
 		p2.GetDef(x1,"1200","MAP\\TEAM1\\StartPosX");
 		p2.GetDef(z1,"1200","MAP\\TEAM1\\StartPosZ");
 
-		unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false);
-		unitLoader.LoadUnit(s1,float3(x1,80,z1),1,false);
+		unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false,0,NULL);
+		unitLoader.LoadUnit(s1,float3(x1,80,z1),1,false,0,NULL);
 		break;}
 	default:
 		break;

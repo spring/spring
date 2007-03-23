@@ -7,6 +7,7 @@
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -293,7 +294,7 @@ void CGroupAI::FindNewJob(int unit)
 	UnitInfo* info=myUnits[unit];
 
 	bool isFactory=info->moveSpeed==0;
-	const deque<Command>* curCommands=aicb->GetCurrentUnitCommands(unit);
+	const CCommandQueue* curCommands=aicb->GetCurrentUnitCommands(unit);
 
 	if(!isFactory && info->lastGivenOrder && !curCommands->empty()){
 		if(info->lastGivenOrder>0 && curCommands->front().id!=CMD_GUARD){

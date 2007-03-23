@@ -25,6 +25,8 @@ public:
 	bool AddBuildPower(float amount, CUnit* builder);								//negative amount=reclaim,return=true->reclaimed
 	void DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse);
 	void Kill(float3& impulse);
+	void ForcedMove(const float3& newPos);
+	void ForcedSpin(const float3& newDir);
 	virtual bool Update(void);
 	void StartFire(void);
 	float RemainingResource(float res) const;

@@ -1,11 +1,12 @@
 #include "StdAfx.h"
 #include "CameraController.h"
 #include "Camera.h"
-#include "Map/Ground.h"
-#include "LogOutput.h"
-#include "UI/MouseHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "Game/Game.h"
 #include "Game/UI/MiniMap.h"
+#include "Map/Ground.h"
+#include "Platform/ConfigHandler.h"
+#include "UI/MouseHandler.h"
+#include "LogOutput.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 
@@ -17,10 +18,18 @@ extern Uint8 *keys;
 #define DEFAULT_MOUSE_SCALE "0.003"
 #endif
 
-CCameraController::CCameraController(void)
+
+static float GetConfigFloat(const string& name, const string& def)
 {
-	mouseScale = atof(configHandler.GetString("FPSMouseScale", DEFAULT_MOUSE_SCALE).c_str());
+	return (float)atof(configHandler.GetString(name, def).c_str());
+}
+
+
+CCameraController::CCameraController(int _num) : num(_num)
+{
+	mouseScale = GetConfigFloat("FPSMouseScale", DEFAULT_MOUSE_SCALE);
 	scrollSpeed=1;
+	fov = 45.0f;
 	enabled=true;
 }
 
@@ -28,16 +37,21 @@ CCameraController::~CCameraController(void)
 {
 }
 
-/////////////////////
-//FPS Controller
-/////////////////////
+/******************************************************************************/
+/******************************************************************************/
+//
+//  FPS Controller
+//
+//
 
-CFPSController::CFPSController()
-: pos(2000,70,1800),
-	oldHeight(300)
+CFPSController::CFPSController(int num)
+: CCameraController(num),
+  pos(2000,70,1800),
+  oldHeight(300)
 {
-	scrollSpeed=configHandler.GetInt("FPSScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.GetInt("FPSEnabled",1);
+	scrollSpeed = configHandler.GetInt("FPSScrollSpeed", 10) * 0.1f;
+	enabled = !!configHandler.GetInt("FPSEnabled", 1);
+	fov = GetConfigFloat("FPSFOV", "45.0");
 }
 
 void CFPSController::KeyMove(float3 move)
@@ -64,41 +78,46 @@ void CFPSController::ScreenEdgeMove(float3 move)
 
 void CFPSController::MouseWheelMove(float move)
 {
-	pos+=camera->up*move;
+	pos += camera->up * move;
 }
 
 float3 CFPSController::GetPos()
 {
-	if(pos.x<0.01f)
-		pos.x=0.01f;
-	if(pos.z<0.01f)
-		pos.z=0.01f;
-	if(pos.x>(gs->mapx)*SQUARE_SIZE-0.01f)
-		pos.x=(gs->mapx)*SQUARE_SIZE-0.01f;
-	if(pos.z>(gs->mapy)*SQUARE_SIZE-0.01f)
-		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
-	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
-		pos.y=ground->GetHeight(pos.x,pos.z)+5;
-	if(pos.y>9000)
-		pos.y=9000;
+	const float margin = 0.01f;
+	const float xMin = margin;
+	const float zMin = margin;
+	const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
+	const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
 
-	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
+	pos.x = max(xMin, min(xMax, pos.x));
+	pos.z = max(zMin, min(zMax, pos.z));
+
+	if (!gu->directControl) {
+		const float gndHeight = ground->GetHeight(pos.x, pos.z);
+		const float yMin = gndHeight + 5.0f;
+		const float yMax = 9000.0f;
+		pos.y = max(yMin, min(yMax, pos.y));
+		oldHeight = pos.y - gndHeight;
+	}
+
 	return pos;
 }
 
 float3 CFPSController::GetDir()
 {
-	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
-	dir.y=(float)(sin(camera->rot.x));
-	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
+	dir.x = (float)(cos(camera->rot.x) * sin(camera->rot.y));
+	dir.z = (float)(cos(camera->rot.x) * cos(camera->rot.y));
+	dir.y = (float)(sin(camera->rot.x));
 	dir.Normalize();
 	return dir;
 }
 
 void CFPSController::SetPos(float3 newPos)
 {
-	pos=newPos;
-	pos.y=ground->GetHeight(pos.x,pos.z)+oldHeight;
+	pos = newPos;
+	if (!gu->directControl) {
+		pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
+	}
 }
 
 float3 CFPSController::SwitchFrom()
@@ -115,23 +134,23 @@ void CFPSController::SwitchTo(bool showText)
 std::vector<float> CFPSController::GetState() const
 {
 	std::vector<float> fv;
-	fv.push_back(1.0f);
-	fv.push_back(pos.x);
-	fv.push_back(pos.y);
-	fv.push_back(pos.z);
-	fv.push_back(dir.x);
-	fv.push_back(dir.y);
-	fv.push_back(dir.z);
-	fv.push_back(oldHeight);
-	fv.push_back(camera->rot.x);
-	fv.push_back(camera->rot.y);
-	fv.push_back(camera->rot.z);
+	fv.push_back(/*  0 */ (float)num);
+	fv.push_back(/*  1 */ pos.x);
+	fv.push_back(/*  2 */ pos.y);
+	fv.push_back(/*  3 */ pos.z);
+	fv.push_back(/*  4 */ dir.x);
+	fv.push_back(/*  5 */ dir.y);
+	fv.push_back(/*  6 */ dir.z);
+	fv.push_back(/*  7 */ camera->rot.x);
+	fv.push_back(/*  8 */ camera->rot.y);
+	fv.push_back(/*  9 */ camera->rot.z);
+	fv.push_back(/* 10 */ oldHeight);
 	return fv;
 }
 
 bool CFPSController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 11) || (fv[0] != 1.0f)) {
+	if ((fv.size() != 11) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -140,28 +159,32 @@ bool CFPSController::SetState(const std::vector<float>& fv)
 	dir.x = fv[4];
 	dir.y = fv[5];
 	dir.z = fv[6];
-	oldHeight = fv[7];
-	camera->rot.x = fv[8];
-	camera->rot.y = fv[9];
-	camera->rot.z = fv[10];
+	camera->rot.x = fv[7];
+	camera->rot.y = fv[8];
+	camera->rot.z = fv[9];
+	oldHeight = fv[10];
 	return true;
 }
 
 
-/////////////////////
-//Overhead Controller
-/////////////////////
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Overhead Controller
+//
 
-COverheadController::COverheadController()
-: pos(2000,70,1800),
-	height(500),zscale(0.5f),
-	oldAltHeight(500),
-	maxHeight(10000),
-	changeAltHeight(true)
+COverheadController::COverheadController(int num)
+: CCameraController(num),
+  pos(2000,70,1800),
+  height(500),zscale(0.5f),
+  oldAltHeight(500),
+  maxHeight(10000),
+  changeAltHeight(true)
 {
-	scrollSpeed=configHandler.GetInt("OverheadScrollSpeed",10)*0.1f;
-	tiltSpeed=atof(configHandler.GetString("OverheadTiltSpeed","1").c_str());
-	enabled=!!configHandler.GetInt("OverheadEnabled",1);
+	scrollSpeed = configHandler.GetInt("OverheadScrollSpeed",10)*0.1f;
+	tiltSpeed = GetConfigFloat("OverheadTiltSpeed","1");
+	enabled = !!configHandler.GetInt("OverheadEnabled",1);
+	fov = GetConfigFloat("OverheadFOV", "45.0");
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -276,27 +299,27 @@ float3 COverheadController::SwitchFrom()
 void COverheadController::SwitchTo(bool showText)
 {
 	if(showText)
-		logOutput.Print("Switching to overhead (TA) style camera");
+		logOutput.Print("Switching to Overhead (TA) style camera");
 }
 
 std::vector<float> COverheadController::GetState() const
 {
 	std::vector<float> fv;
-	fv.push_back(2.0f);
-	fv.push_back(pos.x);
-	fv.push_back(pos.y);
-	fv.push_back(pos.z);
-	fv.push_back(dir.x);
-	fv.push_back(dir.y);
-	fv.push_back(dir.z);
-	fv.push_back(height);
-	fv.push_back(zscale);
+	fv.push_back(/* 0 */ (float)num);
+	fv.push_back(/* 1 */ pos.x);
+	fv.push_back(/* 2 */ pos.y);
+	fv.push_back(/* 3 */ pos.z);
+	fv.push_back(/* 4 */ dir.x);
+	fv.push_back(/* 5 */ dir.y);
+	fv.push_back(/* 6 */ dir.z);
+	fv.push_back(/* 7 */ height);
+	fv.push_back(/* 8 */ zscale);
 	return fv;
 }
 
 bool COverheadController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 9) || (fv[0] != 2.0f)) {
+	if ((fv.size() != 9) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -311,15 +334,19 @@ bool COverheadController::SetState(const std::vector<float>& fv)
 }
 
 
-/////////////////////
-//Total war Controller
-/////////////////////
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Total war Controller
+//
 
-CTWController::CTWController()
-: pos(2000,70,1800)
+CTWController::CTWController(int num)
+: CCameraController(num),
+  pos(2000,70,1800)
 {
-	scrollSpeed=configHandler.GetInt("TWScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.GetInt("TWEnabled",1);
+	scrollSpeed = configHandler.GetInt("TWScrollSpeed",10) * 0.1f;
+	enabled = !!configHandler.GetInt("TWEnabled",1);
+	fov = GetConfigFloat("TWFOV", "45.0");
 }
 
 void CTWController::KeyMove(float3 move)
@@ -420,19 +447,19 @@ void CTWController::SwitchTo(bool showText)
 std::vector<float> CTWController::GetState() const
 {
 	std::vector<float> fv;
-	fv.push_back(3.0f);
-	fv.push_back(pos.x);
-	fv.push_back(pos.y);
-	fv.push_back(pos.z);
-	fv.push_back(camera->rot.x);
-	fv.push_back(camera->rot.y);
-	fv.push_back(camera->rot.z);
+	fv.push_back(/* 0 */ (float)num);
+	fv.push_back(/* 1 */ pos.x);
+	fv.push_back(/* 2 */ pos.y);
+	fv.push_back(/* 3 */ pos.z);
+	fv.push_back(/* 4 */ camera->rot.x);
+	fv.push_back(/* 5 */ camera->rot.y);
+	fv.push_back(/* 6 */ camera->rot.z);
 	return fv;
 }
 
 bool CTWController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 7) || (fv[0] != 3.0f)) {
+	if ((fv.size() != 7) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -445,17 +472,21 @@ bool CTWController::SetState(const std::vector<float>& fv)
 }
 
 
-/////////////////////
-//Rotating Overhead Controller
-/////////////////////
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Rotating Overhead Controller
+//
 
-CRotOverheadController::CRotOverheadController()
-: pos(2000,70,1800),
-	oldHeight(500)
+CRotOverheadController::CRotOverheadController(int num)
+: CCameraController(num),
+  pos(2000,70,1800),
+  oldHeight(500)
 {
-	mouseScale = atof(configHandler.GetString("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE).c_str());
-	scrollSpeed=configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
+	mouseScale = GetConfigFloat("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE);
+	scrollSpeed = configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
+	fov = GetConfigFloat("RotOverheadFOV", "45.0");
 }
 
 void CRotOverheadController::KeyMove(float3 move)
@@ -538,29 +569,29 @@ float3 CRotOverheadController::SwitchFrom()
 void CRotOverheadController::SwitchTo(bool showText)
 {
 	if(showText)
-		logOutput.Print("Switching to rotatable overhead camera");
+		logOutput.Print("Switching to Rotatable overhead camera");
 }
 
 std::vector<float> CRotOverheadController::GetState() const
 {
 	std::vector<float> fv;
-	fv.push_back(4.0f);
-	fv.push_back(pos.x);
-	fv.push_back(pos.y);
-	fv.push_back(pos.z);
-	fv.push_back(dir.x);
-	fv.push_back(dir.y);
-	fv.push_back(dir.z);
-	fv.push_back(oldHeight);
-	fv.push_back(camera->rot.x);
-	fv.push_back(camera->rot.y);
-	fv.push_back(camera->rot.z);
+	fv.push_back(/*  0 */ (float)num);
+	fv.push_back(/*  1 */ pos.x);
+	fv.push_back(/*  2 */ pos.y);
+	fv.push_back(/*  3 */ pos.z);
+	fv.push_back(/*  4 */ dir.x);
+	fv.push_back(/*  5 */ dir.y);
+	fv.push_back(/*  6 */ dir.z);
+	fv.push_back(/*  7 */ camera->rot.x);
+	fv.push_back(/*  8 */ camera->rot.y);
+	fv.push_back(/*  9 */ camera->rot.z);
+	fv.push_back(/* 10 */ oldHeight);
 	return fv;
 }
 
 bool CRotOverheadController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 11) || (fv[0] != 4.0f)) {
+	if ((fv.size() != 11) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -569,20 +600,24 @@ bool CRotOverheadController::SetState(const std::vector<float>& fv)
 	dir.x = fv[4];
 	dir.y = fv[5];
 	dir.z = fv[6];
-	oldHeight = fv[7];
-	camera->rot.x = fv[8];
-	camera->rot.y = fv[9];
-	camera->rot.z = fv[10];
+	camera->rot.x = fv[7];
+	camera->rot.y = fv[8];
+	camera->rot.z = fv[9];
+	oldHeight = fv[10];
 	return true;
 }
 
 
-/////////////////////
-//Overview Controller
-/////////////////////
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Overview Controller
+//
 
-COverviewController::COverviewController()
+COverviewController::COverviewController(int num)
+: CCameraController(num)
 {
+	enabled = false;
 }
 
 void COverviewController::KeyMove(float3 move)
@@ -603,15 +638,18 @@ void COverviewController::MouseWheelMove(float move)
 
 float3 COverviewController::GetPos()
 {
-	float height=10*max(gs->mapx*gu->viewSizeY/gu->viewSizeX,gs->mapy);		//map not created when constructor run
-
-	pos=float3(gs->mapx*4,ground->GetHeight(gs->mapx*4,gs->mapy*4)+height,gs->mapy*4);
+	// map not created when constructor run
+	pos.x = gs->mapx * 4.0f;
+	pos.z = gs->mapy * 4.0f;
+	const float aspect = (gu->viewSizeX / gu->viewSizeY);
+	const float height = max(pos.x / aspect, pos.z);
+	pos.y = ground->GetHeight(pos.x, pos.z) + (2.5f * height);
 	return pos;
 }
 
 float3 COverviewController::GetDir()
 {
-	return float3(0,-1,-0.001f).Normalize();
+	return float3(0.0f, -1.0f, -0.001f).Normalize();
 }
 
 void COverviewController::SetPos(float3 newPos)
@@ -641,16 +679,16 @@ void COverviewController::SwitchTo(bool showText)
 std::vector<float> COverviewController::GetState() const
 {
 	std::vector<float> fv;
-	fv.push_back(5.0f);
-	fv.push_back(pos.x);
-	fv.push_back(pos.y);
-	fv.push_back(pos.z);
+	fv.push_back(/* 0 */ (float)num);
+	fv.push_back(/* 1 */ pos.x);
+	fv.push_back(/* 2 */ pos.y);
+	fv.push_back(/* 3 */ pos.z);
 	return fv;
 }
 
 bool COverviewController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 4) || (fv[0] != 5.0f)) {
+	if ((fv.size() != 4) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -660,3 +698,386 @@ bool COverviewController::SetState(const std::vector<float>& fv)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Free Controller
+//
+//  TODO: - separate speed variable for tracking state
+//        - smooth ransitions between tracking states and units
+//        - improve controls
+//        - rename it?  ;-)
+//
+
+CFreeController::CFreeController(int num)
+: CCameraController(num),
+  pos(0.0f, 100.0f, 0.0f),
+  dir(0.0f, 0.0f, 0.0f),
+  vel(0.0f, 0.0f, 0.0f),
+  avel(0.0f, 0.0f, 0.0f),
+  prevVel(0.0f, 0.0f, 0.0f),
+  prevAvel(0.0f, 0.0f, 0.0f),
+  gndLock(false)
+{
+	enabled     = !!configHandler.GetInt("CamFreeEnabled", 0);
+	invertAlt   = !!configHandler.GetInt("CamFreeInvertAlt", 0);
+	goForward   = !!configHandler.GetInt("CamFreeGoForward", 0);
+	fov         = GetConfigFloat("CamFreeFOV", "45.0");
+	scrollSpeed = GetConfigFloat("CamFreeScrollSpeed", "500.0");
+	gravity     = GetConfigFloat("CamFreeGravity",    "-500.0");
+	gndOffset   = GetConfigFloat("CamFreeGroundOffset", "16.0");
+	tiltSpeed   = GetConfigFloat("CamFreeTiltSpeed", "150.0");
+	tiltSpeed   = tiltSpeed * (PI / 180.0);
+	autoTilt    = GetConfigFloat("CamFreeAutoTilt",  "150.0");
+	autoTilt    = autoTilt * (PI / 180.0);
+	velTime     = GetConfigFloat("CamFreeVelTime", "1.5");
+	velTime     = max(0.1f, velTime);
+	avelTime    = GetConfigFloat("CamFreeAngVelTime", "1.0");
+	avelTime    = max(0.1f, avelTime);
+}
+
+
+void CFreeController::SetTrackingInfo(const float3& target, float radius)
+{
+	tracking = true;
+	trackPos = target;
+	trackRadius = radius;;
+
+	// lock the view direction to the target
+	const float3 diff = (trackPos - pos);
+	const float rads = atan2(diff.x, diff.z);
+	float radDiff = -fmod(camera->rot.y - rads, 2.0 * PI);
+	if (radDiff < -PI) {
+		radDiff += (2.0 * PI);
+	} else if (radDiff > PI) {
+		radDiff -= (2.0 * PI);
+	}
+	camera->rot.y = rads;
+
+	const float len2D = diff.Length2D();
+	if (fabs(len2D) <= 0.001f) {
+		camera->rot.x = 0.0f;
+	} else {
+		camera->rot.x = atan2((trackPos.y - pos.y), len2D);
+	}
+
+	camera->UpdateForward();
+
+	return;
+}
+
+
+void CFreeController::Update()
+{
+	// safeties
+	velTime  = max(0.1f,  velTime);
+	avelTime = max(0.1f, avelTime);
+
+	// save some old state
+	const float ctrlVelY = vel.y;
+	const float3 prevPos = pos;
+
+	// setup the time fractions
+	const float ft = gu->lastFrameTime;
+	const float nt = (ft / velTime); // next time factor
+	const float pt = (1.0f - nt);    // prev time factor
+	const float ant = (ft / avelTime); // next time factor
+	const float apt = (1.0f - ant);    // prev time factor
+
+	// adjustment to match the ground slope
+	float autoTiltVel = 0.0f;
+	if (gndLock && (autoTilt > 0.0f)) {
+		const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
+			float3 hDir;
+			hDir.y = 0.0f;
+			hDir.x = (float)sin(camera->rot.y);
+			hDir.z = (float)cos(camera->rot.y);
+			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z);
+			const float dot = gndNormal.dot(hDir);
+			const float gndRotX = (float)acos(dot) - (PI * 0.5f);
+			const float rotXdiff = (gndRotX - camera->rot.x);
+			autoTiltVel = (autoTilt * rotXdiff);
+		}
+	}
+
+	// convert control velocity into position velocity
+	if (!tracking) {
+		if (goForward) {
+			const float3 tmpVel((camera->forward * vel.x) +
+													(UpVector        * vel.y) +
+													(camera->right   * vel.z));
+			vel = tmpVel;
+		}
+		else {
+			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
+			forwardNoY.Normalize();
+			const float3 tmpVel((forwardNoY    * vel.x) +
+													(UpVector      * vel.y) +
+													(camera->right * vel.z));
+			vel = tmpVel;
+		}
+	}
+
+	// smooth the velocities
+	vel  =  (vel * nt)  +  (prevVel * pt);
+	avel = (avel * ant) + (prevAvel * apt);
+
+	// no smoothing for gravity (still isn't right)
+	if (gndLock) {
+		vel.y += (gravity * ft);
+	}
+
+	// set the new position/rotation
+	if (!tracking) {
+		pos           += (vel         * ft);
+		camera->rot   += (avel        * ft);
+		camera->rot.x += (autoTiltVel * ft); // note that this is not smoothed
+	}
+	else {
+		// speed along the tracking direction varies with distance
+		const float3 diff = (pos - trackPos);
+		const float dist = max(0.1f, diff.Length2D());
+		const float nomDist = 512.0f;
+		float speedScale = (dist / nomDist);
+		speedScale = max(0.25f, min(16.0f, speedScale));
+		const float delta = -vel.x * (ft * speedScale);
+		const float newDist = max(trackRadius, (dist + delta));
+		const float scale = (newDist / dist);
+		pos.x = trackPos.x + (scale * diff.x);
+		pos.z = trackPos.z + (scale * diff.z);
+		pos.y += (vel.y * ft);
+			
+		// convert the angular velocity into its positional change
+		const float3 diff2 = (pos - trackPos);
+		const float deltaRad = (avel.y * ft);
+		const float cos_val = cos(deltaRad);
+		const float sin_val = sin(deltaRad);
+		pos.x = trackPos.x + ((cos_val * diff2.x) + (sin_val * diff2.z));
+		pos.z = trackPos.z + ((cos_val * diff2.z) - (sin_val * diff2.x));
+	}
+
+	// setup ground lock	
+	const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+	if (keys[SDLK_LSHIFT]) {
+		if (ctrlVelY > 0.0f) {
+			gndLock = false;
+		} else if ((gndOffset >= 0.0f) && (ctrlVelY < 0.0f) &&
+		           (pos.y < (gndHeight + gndOffset))) {
+			gndLock = true;
+		}
+	}
+
+	// positional clamps
+	if (gndOffset < 0.0f) {
+		pos.y = (gndHeight - gndOffset);
+		vel.y = 0.0f;
+	}
+	else if (gndLock && (gravity >= 0.0f)) {
+		pos.y = (gndHeight + gndOffset);
+		vel.y = 0.0f;
+	}
+	else if (gndOffset > 0.0f) {
+		const float minHeight = (gndHeight + gndOffset);
+		if (pos.y < minHeight) {
+			pos.y = minHeight;
+			if (gndLock) {
+				vel.y = min(fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
+			} else {
+				vel.y = 0.0f;
+			}
+		}
+	}
+
+	// angular clamps
+	const float xRotLimit = (PI * 0.4999f);
+	if (camera->rot.x > xRotLimit) {
+		camera->rot.x = xRotLimit;
+		avel.x = 0.0f;
+	}
+	else if (camera->rot.x < -xRotLimit) {
+		camera->rot.x = -xRotLimit;
+		avel.x = 0.0f;
+	}
+	camera->rot.y = fmod(camera->rot.y, PI * 2.0);
+
+	// setup for the next loop
+	prevVel = vel;
+	prevAvel = avel;
+	vel = ZeroVector;
+	avel = ZeroVector;
+
+	tracking = false;
+}
+
+
+void CFreeController::KeyMove(float3 move)
+{
+	const float qy = (move.y == 0.0f) ? 0.0f : (move.y > 0.0f ? 1.0f : -1.0f);	
+	const float qx = (move.x == 0.0f) ? 0.0f : (move.x > 0.0f ? 1.0f : -1.0f);	
+
+	const float speed  = keys[SDLK_LMETA] ? 4.0f * scrollSpeed : scrollSpeed;
+	const float aspeed = keys[SDLK_LMETA] ? 2.0f * tiltSpeed   : tiltSpeed;
+
+	if (keys[SDLK_LCTRL]) {
+		avel.x += (aspeed * -qy); // tilt
+	}
+	else if (keys[SDLK_LSHIFT]) {
+		vel.y += (speed * -qy); // up/down
+	}
+	else {
+		vel.x += (speed * qy); // forwards/backwards
+	}
+
+	if (tracking) {
+		avel.y += (aspeed * qx); // turntable rotation
+	}
+	else if (!keys[SDLK_LALT] == invertAlt) {
+		vel.z += (speed * qx); // left/right
+	}
+	else {
+		avel.y += (aspeed * -qx); // spin
+	}
+
+	return;
+}
+
+
+void CFreeController::MouseMove(float3 move)
+{
+	Uint8 prevAlt   = keys[SDLK_LALT];
+	Uint8 prevCtrl  = keys[SDLK_LCTRL];
+	Uint8 prevShift = keys[SDLK_LSHIFT];
+	keys[SDLK_LSHIFT] = 0;
+	keys[SDLK_LCTRL] = 1; // tilt
+	keys[SDLK_LALT] = invertAlt ? 1 : 0;
+	KeyMove(move);
+	keys[SDLK_LALT] = prevAlt;
+	keys[SDLK_LCTRL] = prevCtrl;
+	keys[SDLK_LSHIFT] = prevShift;
+}
+
+
+void CFreeController::ScreenEdgeMove(float3 move)
+{
+	Uint8 prevAlt   = keys[SDLK_LALT];
+	Uint8 prevCtrl  = keys[SDLK_LCTRL];
+	Uint8 prevShift = keys[SDLK_LSHIFT];
+	keys[SDLK_LCTRL] = keys[SDLK_LSHIFT] = 0;
+	keys[SDLK_LALT] = invertAlt ? 1 : 0;
+	KeyMove(move);
+	keys[SDLK_LALT] = prevAlt;
+	keys[SDLK_LCTRL] = prevCtrl;
+	keys[SDLK_LSHIFT] = prevShift;
+}
+
+
+void CFreeController::MouseWheelMove(float move)
+{
+	Uint8 prevCtrl  = keys[SDLK_LCTRL];
+	Uint8 prevShift = keys[SDLK_LSHIFT];
+	keys[SDLK_LCTRL] = 0;
+	keys[SDLK_LSHIFT] = 1;
+	const float3 m(0.0f, move, 0.0f);
+	KeyMove(m);
+	keys[SDLK_LCTRL] = prevCtrl;
+	keys[SDLK_LSHIFT] = prevShift;
+}
+
+
+void CFreeController::SetPos(float3 newPos)
+{
+	pos = newPos;
+}
+
+
+float3 CFreeController::GetPos()
+{
+	return pos;
+}
+
+
+float3 CFreeController::GetDir()
+{
+	dir.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
+	dir.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
+	dir.y = (float)(sin(camera->rot.x));
+	dir.Normalize();
+	return dir;
+}
+
+
+float3 CFreeController::SwitchFrom()
+{
+	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
+	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
+	return float3(x, ground->GetHeight(x, z) + 5.0f, z);
+}
+
+
+void CFreeController::SwitchTo(bool showText)
+{
+	if (showText) {
+		logOutput.Print("Switching to Free style camera");
+	}
+}
+
+
+std::vector<float> CFreeController::GetState() const
+{
+	std::vector<float> fv;
+	fv.push_back(/*  0 */ (float)num);
+	fv.push_back(/*  1 */ pos.x);
+	fv.push_back(/*  2 */ pos.y);
+	fv.push_back(/*  3 */ pos.z);
+	fv.push_back(/*  4 */ dir.x);
+	fv.push_back(/*  5 */ dir.y);
+	fv.push_back(/*  6 */ dir.z);
+	fv.push_back(/*  7 */ camera->rot.x);
+	fv.push_back(/*  8 */ camera->rot.y);
+	fv.push_back(/*  9 */ camera->rot.z);
+
+	fv.push_back(/* 10 */ fov);
+	fv.push_back(/* 11 */ gndOffset);
+	fv.push_back(/* 12 */ gravity);
+	fv.push_back(/* 13 */ scrollSpeed);
+	fv.push_back(/* 14 */ tiltSpeed);
+	fv.push_back(/* 15 */ velTime);
+	fv.push_back(/* 16 */ avelTime);
+	fv.push_back(/* 17 */ autoTilt);
+	fv.push_back(/* 18 */ goForward ? 1.0f : -1.0f);
+	fv.push_back(/* 19 */ invertAlt ? 1.0f : -1.0f);
+	fv.push_back(/* 20 */ gndLock   ? 1.0f : -1.0f);
+	return fv;
+}
+
+
+bool CFreeController::SetState(const std::vector<float>& fv)
+{
+	if ((fv.size() != 21) || (fv[0] != (float)num)) {
+		return false;
+	}
+	pos.x = fv[1];
+	pos.y = fv[2];
+	pos.z = fv[3];
+	dir.x = fv[4];
+	dir.y = fv[5];
+	dir.z = fv[6];
+	camera->rot.x = fv[7];
+	camera->rot.y = fv[8];
+	camera->rot.z = fv[9];
+
+	fov         =  fv[10];
+	gndOffset   =  fv[11];
+	gravity     =  fv[12];
+	scrollSpeed =  fv[13];
+	tiltSpeed   =  fv[14];
+	velTime     =  fv[15];
+	avelTime    =  fv[16];
+	autoTilt    =  fv[17];
+	goForward   = (fv[18] > 0.0f);
+	invertAlt   = (fv[19] > 0.0f);
+	gndLock     = (fv[20] > 0.0f);
+
+	return true;
+}

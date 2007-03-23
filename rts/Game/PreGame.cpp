@@ -63,8 +63,9 @@ CPreGame::CPreGame(bool server, const string& demo):
 
 	if(!gameSetup){
 		for(int a=0;a<gs->activeTeams;a++){
-			for(int b=0;b<4;++b)
+			for(int b=0;b<4;++b){
 				gs->Team(a)->color[b]=palette.teamColor[a][b];
+			}
 		}
 	}
 
@@ -92,12 +93,14 @@ CPreGame::CPreGame(bool server, const string& demo):
 		} else {
 			if (demo != "") {
 				userInput = demo;
+				writingPos = userInput.length();
 				state = WAIT_ON_ADDRESS;
 				userWriting = false;
 				saveAddress = false;
 			}
 			else {
 				userInput=configHandler.GetString("address","");
+				writingPos = userInput.length();
 				userPrompt = "Enter server address: ";
 				state = WAIT_ON_ADDRESS;
 				userWriting = true;
@@ -131,13 +134,35 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 		keys[k] = true;
 		if (k == SDLK_v && keys[SDLK_LCTRL]){
 			CClipboard clipboard;
-			userInput += clipboard.GetContents();
+			const string text = clipboard.GetContents();
+			userInput.insert(writingPos, text);
+			writingPos += text.length();
 			return 0;
 		}
-		if(k == SDLK_BACKSPACE){ //backspace
-			if(userInput.size()!=0)
-				userInput.erase(userInput.size()-1,1);
+		if(k == SDLK_BACKSPACE){
+			if (!userInput.empty() && (writingPos > 0)) {
+				userInput.erase(writingPos - 1, 1);
+				writingPos--;
+			}
 			return 0;
+		}
+		if(k == SDLK_DELETE){
+			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
+				userInput.erase(writingPos, 1);
+			}
+			return 0;
+		}
+		else if(k==SDLK_LEFT) {
+			writingPos = max(0, min((int)userInput.length(), writingPos - 1));
+		}
+		else if(k==SDLK_RIGHT) {
+			writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+		}
+		else if(k==SDLK_HOME) {
+			writingPos = 0;
+		}
+		else if(k==SDLK_END) {
+			writingPos = (int)userInput.length();
 		}
 		if(k == SDLK_RETURN){
 			userWriting=false;
@@ -178,11 +203,31 @@ bool CPreGame::Draw()
 	infoConsole->Draw();
 
 	if(userWriting){
-		glColor4f(1,1,1,1);
-		glTranslatef(0.1f,0.75f,0.0f);
-		glScalef(0.03f,0.04f,0.1f);
-		std::string tempstring=userPrompt;
-		tempstring+=userInput;
+		const std::string tempstring = userPrompt + userInput;
+
+		const float xStart = 0.10f;
+		const float yStart = 0.75f;
+
+		const float xScale = 0.03f;
+		const float yScale = 0.04f;
+
+		// draw the caret
+		const int caretPos = userPrompt.length() + writingPos;
+		const string caretStr = tempstring.substr(0, caretPos);
+		const float caretWidth = font->CalcTextWidth(caretStr.c_str());
+		char c = userInput[writingPos];
+		if (c == 0) { c = ' '; }
+		const float cw = xScale * font->CalcCharWidth(c);
+		const float csx = xStart + (xScale * caretWidth);
+		glDisable(GL_TEXTURE_2D);
+		const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
+		glColor4f(f, f, f, 0.75f);
+		glRectf(csx, yStart, csx + cw, yStart + yScale);
+		glEnable(GL_TEXTURE_2D);
+
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glTranslatef(xStart, yStart, 0.0f);
+		glScalef(xScale, yScale, 1.0f);
 		font->glPrintRaw(tempstring.c_str());
 		glLoadIdentity();
 	}

@@ -62,6 +62,7 @@ CFeature::CFeature()
 	physicalState = OnGround;
 }
 
+
 CFeature::~CFeature(void)
 {
 	if(blocking){
@@ -77,7 +78,9 @@ CFeature::~CFeature(void)
 	}
 }
 
-void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,int facing, int allyteam,std::string fromUnit)
+
+void CFeature::Initialize (const float3& pos, FeatureDef* def, short int heading,
+                           int facing, int allyteam, std::string fromUnit)
 {
 	this->def=def;
 	createdFromUnit=fromUnit;
@@ -131,6 +134,7 @@ void CFeature::Initialize (const float3& pos,FeatureDef* def,short int heading,i
 		treeDrawer->AddTree(def->modelType,pos,1);
 }
 
+
 void CFeature::CalculateTransform ()
 {
 	float3 frontDir=GetVectorFromHeading(heading);
@@ -146,6 +150,7 @@ void CFeature::CalculateTransform ()
 
 	transMatrix = CMatrix44f (pos,-rightDir,upDir,frontDir);
 }
+
 
 bool CFeature::AddBuildPower(float amount, CUnit* builder)
 {
@@ -250,6 +255,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 	return false;
 }
 
+
 void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse)
 {
 	residualImpulse=impulse;
@@ -267,10 +273,12 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	}
 }
 
+
 void CFeature::Kill(float3& impulse) {
 	DamageArray damage;
 	DoDamage(damage*(health+1), 0, impulse);
 }
+
 
 void CFeature::DependentDied(CObject *o)
 {
@@ -280,11 +288,63 @@ void CFeature::DependentDied(CObject *o)
 	CSolidObject::DependentDied(o);
 }
 
+
+void CFeature::ForcedMove(const float3& newPos)
+{
+	featureHandler->UpdateDrawQuad(this, newPos);
+
+	// remove from managers
+	qf->RemoveFeature(this);
+	if (def->drawType == DRAWTYPE_TREE) {
+		treeDrawer->DeleteTree(pos);
+	}
+	UnBlock();
+
+	pos = newPos;
+
+	// setup finalHeight
+	if (def->floating) {
+		finalHeight = ground->GetHeight(pos.x,pos.z);
+	} else {
+		finalHeight = ground->GetHeight2(pos.x,pos.z);
+	}
+	//finalHeight = pos.y;
+
+	// setup midPos
+	if (def->drawType == DRAWTYPE_3DO) {
+		midPos = pos + def->model->relMidPos;
+	} else if (def->drawType == DRAWTYPE_TREE){
+		midPos = pos + (UpVector * def->radius);
+	} else {
+		midPos = pos;
+	}
+
+	// insert into managers
+	qf->AddFeature(this);
+	if (def->drawType == DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+	}
+	Block();
+}
+
+
+void CFeature::ForcedSpin(const float3& newDir)
+{
+	heading = GetHeadingFromVector(newDir.x, newDir.z);
+	CalculateTransform();
+	if (def->drawType == DRAWTYPE_TREE) {
+		treeDrawer->DeleteTree(pos);
+		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+	}	
+}
+
+
 bool CFeature::Update(void)
 {
 	bool retValue=false;
 
 	if(pos.y>finalHeight){
+		const float3 oldPos = pos;
 		if(pos.y>0){	//fall faster when above water
 			pos.y-=0.8f;
 			midPos.y-=0.8f;
@@ -295,6 +355,10 @@ bool CFeature::Update(void)
 			transMatrix[13]-=0.4f;
 		}
 //		logOutput.Print("feature sinking");
+		if (def->drawType == DRAWTYPE_TREE) {
+			treeDrawer->DeleteTree(oldPos);
+			treeDrawer->AddTree(def->modelType, pos, 1.0f);
+		}
 		retValue=true;
 	}
 	if(emitSmokeTime!=0){
@@ -361,6 +425,7 @@ bool CFeature::Update(void)
 	return retValue;
 }
 
+
 void CFeature::StartFire(void)
 {
 	if(fireTime || !def->burnable)
@@ -372,6 +437,7 @@ void CFeature::StartFire(void)
 	myFire=SAFE_NEW CFireProjectile(midPos,UpVector,0,300,radius*0.8f,70,20);
 }
 
+
 void CFeature::DrawS3O()
 {
 	glPushMatrix();
@@ -380,10 +446,12 @@ void CFeature::DrawS3O()
 	glPopMatrix();
 }
 
+
 int CFeature::ChunkNumber(float f)
 {
 	return (int) ceil(f * modInfo->reclaimMethod);	
 }
+
 
 float CFeature::RemainingResource(float res) const
 {
@@ -401,10 +469,13 @@ float CFeature::RemainingResource(float res) const
 	return chunkSize * chunksLeft;
 }
 
+
 float CFeature::RemainingMetal() const
 {
 	return RemainingResource(def->metal);
 }
+
+
 float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);

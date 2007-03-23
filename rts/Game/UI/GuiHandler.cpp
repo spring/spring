@@ -13,7 +13,6 @@
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "LuaUI.h"
-#include "LuaState.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "OutlineFont.h"
@@ -29,6 +28,7 @@
 #include "Rendering/GL/glList.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -73,7 +73,6 @@ CGuiHandler::CGuiHandler()
   buildSpacing(0),
   buildFacing(0),
   actionOffset(0),
-  luaUI(NULL),
   luaUIClick(false),
   gatherMode(false)
 {
@@ -101,7 +100,8 @@ CGuiHandler::CGuiHandler()
 
 CGuiHandler::~CGuiHandler()
 {
-	delete luaUI;
+	CLuaUI::FreeHandler();
+
 	delete[] icons;
 
 	std::map<std::string, unsigned int>::iterator it;
@@ -109,92 +109,6 @@ CGuiHandler::~CGuiHandler()
 		const GLuint texID = it->second;
 		glDeleteTextures (1, &texID);
 	}
-}
-
-
-void CGuiHandler::UnitCreated(CUnit* unit)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitCreated(unit);
-	}
-}
-
-
-void CGuiHandler::UnitFinished(CUnit* unit)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitFinished(unit);
-	}
-}
-
-
-void CGuiHandler::UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitFromFactory(unit, factory, userOrders);
-	}
-}
-
-
-void CGuiHandler::UnitDestroyed(CUnit* victim, CUnit* attacker)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitDestroyed(victim, attacker);
-	}
-}
-
-
-void CGuiHandler::UnitTaken(CUnit* unit, int newTeam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitTaken(unit, newTeam);
-	}
-}
-
-
-void CGuiHandler::UnitGiven(CUnit* unit, int oldTeam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitGiven(unit, oldTeam);
-	}
-}
-
-
-void CGuiHandler::UnitEnteredRadar(CUnit* unit, int allyteam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitEnteredRadar(unit, allyteam);
-	}
-}
-
-
-void CGuiHandler::UnitEnteredLos(CUnit* unit, int allyteam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitEnteredLos(unit, allyteam);
-	}
-}
-
-
-void CGuiHandler::UnitLeftRadar(CUnit* unit, int allyteam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitLeftRadar(unit, allyteam);
-	}
-}
-
-
-void CGuiHandler::UnitLeftLos(CUnit* unit, int allyteam)
-{
-	if (luaUI != NULL) {
-		luaUI->UnitLeftLos(unit, allyteam);
-	}
-}
-
-
-void CGuiHandler::GroupChanged(int groupID)
-{
-	changedGroups.insert(groupID);
 }
 
 
@@ -544,10 +458,14 @@ int CGuiHandler::FindInCommandPage()
 
 
 void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
-                                  bool samePage)
+                                  bool defaultCommand, bool samePage)
 {
 	for (int a = 0; a < commands.size(); ++a) {
 		if (commands[a].id == cmdDesc.id) {
+			if (defaultCommand) {
+				defaultCmdMemory = a;
+				return;
+			}
 			inCommand = a;
 			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
 				UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
@@ -571,17 +489,25 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
+	const bool defCmd =
+		(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
+		 (defaultCmdMemory >= 0) && (inCommand < 0) &&
+		 ((mouse->activeReceiver == this) || (minimap->ProxyMode())));
+	
+	const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
+
 	// copy the current command state
-	const bool validInCommand = (inCommand >= 0) && (inCommand < commands.size());
+	const bool validInCommand = (activeCmd >= 0) && (activeCmd < commands.size());
 	CommandDescription cmdDesc;
 	if (validInCommand) {
-		cmdDesc = commands[inCommand];
+		cmdDesc = commands[activeCmd];
 	}
 	const bool samePage = validInCommand && (activePage == FindInCommandPage());
 	useSelectionPage = useSelectionPage && !samePage;
 
 	// reset some of our state
 	inCommand = -1;
+	defaultCmdMemory = -1;
 	commands.clear();
 	forceLayoutUpdate = false;
 
@@ -589,19 +515,18 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	if (firstLayout) {
 		firstLayout = false;
 		if (!!configHandler.GetInt("LuaUI", 0)) {
-			luaUI = CLuaUI::GetHandler(luaUiFile);
+			CLuaUI::LoadHandler();
 		}
 	}
 	if ((luaUI != NULL) && luaUI->HasLayoutButtons()) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {
-				RevertToCmdDesc(cmdDesc, samePage);
+				RevertToCmdDesc(cmdDesc, defCmd, samePage);
 			}
 			return; // we're done here
 		}
 		else {
-			delete luaUI;
-			luaUI = NULL;
+			CLuaUI::FreeHandler();
 			LoadConfig("ctrlpanel.txt");
 		}
 	}
@@ -709,7 +634,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	// try to setup the old command state
 	// (inCommand, activePage, showingMetal)
 	if (validInCommand) {
-		RevertToCmdDesc(cmdDesc, samePage);
+		RevertToCmdDesc(cmdDesc, defCmd, samePage);
 	} else if (useSelectionPage) {
 		activePage = min(maxPage, ac.commandPage);
 	}
@@ -1023,7 +948,6 @@ void CGuiHandler::Update()
 	}
 
 	if (commandsChanged) {
-		defaultCmdMemory = -1;
 		SetShowingMetal(false);
 		LayoutIcons(true);
 		fadein = 100;
@@ -1205,8 +1129,6 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 		}
 	}
 
-//	logOutput << x << " " << y << " " << mouse->lastx << " " << mouse->lasty << "\n";
-
 	if ((button == SDL_BUTTON_RIGHT) && (iconCmd == -1)) {
 		// right click -> set the default cmd
 		inCommand = defaultCmdMemory;
@@ -1214,103 +1136,12 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 	}
 
 	if ((iconCmd >= 0) && (iconCmd < commands.size())) {
-		SetShowingMetal(false);
-		lastKeySet.Reset();
-
-		switch(commands[iconCmd].type){
-			case CMDTYPE_ICON:{
-				Command c;
-				c.id = commands[iconCmd].id;
-				if (c.id != CMD_STOP) {
-					CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
-					if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
-						c.options = c.options ^ SHIFT_KEY;
-					}
-				}
-				GiveCommand(c);
-				inCommand=-1;
-				break;}
-			case CMDTYPE_ICON_MODE:{
-				int newMode = atoi(commands[iconCmd].params[0].c_str())+1;
-				if (newMode>commands[iconCmd].params.size()-2) {
-					newMode = 0;
-				}
-
-				// not really required
-				char t[10];
-				SNPRINTF(t, 10, "%d", newMode);
-				commands[iconCmd].params[0]=t;
-
-				Command c;
-				c.id=commands[iconCmd].id;
-				c.params.push_back(newMode);
-				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
-				GiveCommand(c);
-				inCommand=-1;
-				forceLayoutUpdate = true;
-				break;}
-			case CMDTYPE_NUMBER:
-			case CMDTYPE_ICON_MAP:
-			case CMDTYPE_ICON_AREA:
-			case CMDTYPE_ICON_UNIT:
-			case CMDTYPE_ICON_UNIT_OR_MAP:
-			case CMDTYPE_ICON_FRONT:
-			case CMDTYPE_ICON_UNIT_OR_AREA:
-			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
-			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
-				inCommand=iconCmd;
-				break;
-
-			case CMDTYPE_ICON_BUILDING:{
-				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[iconCmd].id);
-				SetShowingMetal(ud->extractsMetal > 0);
-				inCommand=iconCmd;
-				break;}
-
-			case CMDTYPE_COMBO_BOX:
-				if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
-					inCommand=iconCmd;
-					CommandDescription& cd=commands[iconCmd];
-					list=SAFE_NEW CglList(cd.name.c_str(),MenuSelection);
-					list->cancelPlace = 0;
-					list->tooltip = "Choose the AI you want to assign to this group.\n"
-							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
-							"assigned.";
-					for(vector<string>::iterator pi=++cd.params.begin();pi!=cd.params.end();++pi)
-						list->AddItem(pi->c_str(),"");
-					list->place=atoi(cd.params[0].c_str());
-					return;
-				}
-				inCommand=-1;
-				break;
-			case CMDTYPE_NEXT:
-				{
-					++activePage;
-					if(activePage>maxPage)
-						activePage=0;
-				}
-				selectedUnits.SetCommandPage(activePage);
-				inCommand=-1;
-				break;
-
-			case CMDTYPE_PREV:
-				{
-					--activePage;
-					if(activePage<0)
-						activePage=maxPage;
-				}
-				selectedUnits.SetCommandPage(activePage);
-				inCommand=-1;
-				break;
-
-			case CMDTYPE_CUSTOM:
-				const bool rmb = (button == SDL_BUTTON_LEFT)? false : true;
-				RunCustomCommands(commands[iconCmd].params, rmb);
-				break;
-		}
+		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
+		SetActiveCommand(iconCmd, rmb);
 		return;
 	}
 
+	// not over a button, try to execute a command
 	Command c = GetCommand(x, y, button, false);
 
 	// if cmd_stop is returned it indicates that no good command could be found
@@ -1320,6 +1151,162 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 	}
 
 	FinishCommand(button);
+}
+
+
+bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
+{
+	if (cmdIndex >= (int)commands.size()) {
+		return false;
+	}
+	else if (cmdIndex < 0) {
+		// cancel the current command
+		inCommand = -1;
+		defaultCmdMemory = -1;
+		needShift = false;
+		activeMousePress = false;
+		SetShowingMetal(false);
+		return true;
+	}
+	CommandDescription& cd = commands[cmdIndex];
+
+	lastKeySet.Reset();
+
+	switch (cd.type) {
+		case CMDTYPE_ICON: {
+			Command c;
+			c.id = cd.id;
+			if (c.id != CMD_STOP) {
+				CreateOptions(c, rmb);
+				if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
+					c.options = c.options ^ SHIFT_KEY;
+				}
+			}
+			GiveCommand(c);
+			break;
+		}
+		case CMDTYPE_ICON_MODE: {
+			int newMode = atoi(cd.params[0].c_str()) + 1;
+			if (newMode > cd.params.size()-2) {
+				newMode = 0;
+			}
+
+			// not really required
+			char t[10];
+			SNPRINTF(t, 10, "%d", newMode);
+			cd.params[0] = t;
+
+			Command c;
+			c.id = cd.id;
+			c.params.push_back(newMode);
+			CreateOptions(c, rmb);
+			GiveCommand(c);
+			forceLayoutUpdate = true;
+			break;
+		}
+		case CMDTYPE_NUMBER:
+		case CMDTYPE_ICON_MAP:
+		case CMDTYPE_ICON_AREA:
+		case CMDTYPE_ICON_UNIT:
+		case CMDTYPE_ICON_UNIT_OR_MAP:
+		case CMDTYPE_ICON_FRONT:
+		case CMDTYPE_ICON_UNIT_OR_AREA:
+		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
+		case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
+			inCommand = cmdIndex;
+			SetShowingMetal(false);
+			activeMousePress = false;
+			break;
+		}
+		case CMDTYPE_ICON_BUILDING: {
+			UnitDef* ud = unitDefHandler->GetUnitByID(-cd.id);
+			inCommand = cmdIndex;
+			SetShowingMetal(ud->extractsMetal > 0);
+			activeMousePress = false;
+			break;
+		}
+		case CMDTYPE_COMBO_BOX: {
+			if (GetInputReceivers().empty() ||
+			    dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
+				inCommand = cmdIndex;
+				SetShowingMetal(false);
+				list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
+				list->cancelPlace = 0;
+				list->tooltip =
+					"Choose the AI you want to assign to this group.\n"
+					"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
+					"assigned.";
+				vector<string>::const_iterator pi;
+				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+					list->AddItem(pi->c_str(),"");
+				}
+				list->place=atoi(cd.params[0].c_str());
+			} else {
+				inCommand = -1;
+				SetShowingMetal(false);
+			}
+			activeMousePress = false;
+			break;
+		}
+		case CMDTYPE_NEXT: {
+			++activePage;
+			if (activePage > maxPage) {
+				activePage = 0;
+			}
+			selectedUnits.SetCommandPage(activePage);
+			break;
+		}
+		case CMDTYPE_PREV: {
+			--activePage;
+			if (activePage < 0) {
+				activePage=maxPage;
+			}
+			selectedUnits.SetCommandPage(activePage);
+			break;
+		}
+		case CMDTYPE_CUSTOM: {
+			RunCustomCommands(cd.params, rmb);
+			break;
+		}
+	}
+
+	return true;
+}
+
+
+bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
+                                   bool lmb, bool rmb,
+                                   bool alt, bool ctrl, bool meta, bool shift)
+{
+	// use the button value instead of rmb
+	const bool effectiveRMB = (button == SDL_BUTTON_LEFT) ? false : true;
+
+	// setup the mouse and key states
+	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
+	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
+	const Uint8 prevAlt   = keys[SDLK_LALT];
+	const Uint8 prevCtrl  = keys[SDLK_LCTRL];
+	const Uint8 prevMeta  = keys[SDLK_LMETA];
+	const Uint8 prevShift = keys[SDLK_LSHIFT];
+
+	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
+	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
+	keys[SDLK_LALT]   = alt;
+	keys[SDLK_LCTRL]  = ctrl;
+	keys[SDLK_LMETA]  = meta;
+	keys[SDLK_LSHIFT] = shift;
+
+	const bool retval = SetActiveCommand(cmdIndex, effectiveRMB);
+
+	// revert the mouse and key states
+	keys[SDLK_LSHIFT] = prevShift;
+	keys[SDLK_LMETA]  = prevMeta;
+	keys[SDLK_LCTRL]  = prevCtrl;
+	keys[SDLK_LALT]   = prevAlt;
+	mouse->buttons[SDL_BUTTON_RIGHT].pressed = prevRMB;
+	mouse->buttons[SDL_BUTTON_LEFT].pressed  = prevLMB;
+
+	return retval;
 }
 
 
@@ -1348,6 +1335,8 @@ int CGuiHandler::IconAtPos(int x, int y)
 	return -1;
 }
 
+
+/******************************************************************************/
 
 enum ModState {
 	DontCare, Required, Forbidden
@@ -1482,7 +1471,7 @@ bool CGuiHandler::AboveGui(int x, int y)
 }
 
 
-void CGuiHandler::CreateOptions(Command& c,bool rmb)
+void CGuiHandler::CreateOptions(Command& c, bool rmb)
 {
 	c.options = 0;
 	if (rmb) {
@@ -1656,20 +1645,17 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 void CGuiHandler::RunLayoutCommand(const string& command)
 {
 	if (command.find("reload") == 0) {
-		if (command == "reload fresh") {
-			LUASTATE.Reload(); // setup a new lua state
-		}
 		if (luaUI == NULL) {
 			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
-			luaUI = CLuaUI::GetHandler(luaUiFile);
+			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
 				LoadConfig("ctrlpanel.txt");
 				logOutput.Print("Loading failed\n");
 			}
 		} else {
 			logOutput.Print("Reloading: \"%s\"\n", luaUiFile);
-			delete luaUI;
-			luaUI = CLuaUI::GetHandler(luaUiFile);
+			CLuaUI::FreeHandler();
+			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
 				LoadConfig("ctrlpanel.txt");
 				logOutput.Print("Reloading failed\n");
@@ -1678,10 +1664,9 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 	}
 	else if (command == "disable") {
 		if (luaUI != NULL) {
-			delete luaUI;
-			luaUI = NULL;
+			CLuaUI::FreeHandler();
 			LoadConfig("ctrlpanel.txt");
-			logOutput.Print("Disabled layout handler\n");
+			logOutput.Print("Disabled LuaUI\n");
 		}
 	}
 	else {
@@ -1811,207 +1796,216 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 	}
 
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
-
 		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
 		const CKeyBindings::Action& action = al[actionIndex];
-
-		if (ProcessLocalActions(action)) {
+		if (SetActiveCommand(action, ks, actionIndex)) {
 			return true;
-		}
-
-		// See if we have a positional icon command
-		int iconCmd = -1;
-		if (!action.extra.empty() && (action.command == "iconpos")) {
-			const int iconSlot = ParseIconSlot(action.extra);
-			iconCmd = GetIconPosCommand(iconSlot);
-		}
-
-		for (int a = 0; a < commands.size(); ++a) {
-
-			if ((a != iconCmd) && (commands[a].action != action.command)) {
-				continue; // not a match
-			}
-
-			const int cmdType = commands[a].type;
-
-			// set the activePage
-			if (!commands[a].onlyKey &&
-			    (((cmdType == CMDTYPE_ICON) &&
-			       ((commands[a].id < 0) ||
-			        (commands[a].id == CMD_STOCKPILE))) ||
-			     (cmdType == CMDTYPE_ICON_MODE) ||
-			     (cmdType == CMDTYPE_ICON_BUILDING))) {
-				for (int ii = 0; ii < iconsCount; ii++) {
-					if (icons[ii].commandsID == a) {
-						activePage = min(maxPage, (ii / iconsPerPage));
-						selectedUnits.SetCommandPage(activePage);
-					}
-				}
-			}
-
-			switch (cmdType) {
-				case CMDTYPE_ICON:{
-					Command c;
-					c.options = 0;
-					c.id = commands[a].id;
-					if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
-						if (action.extra == "+5") {
-							c.options = SHIFT_KEY;
-						} else if (action.extra == "+20") {
-							c.options = CONTROL_KEY;
-						} else if (action.extra == "+100") {
-							c.options = SHIFT_KEY | CONTROL_KEY;
-						} else if (action.extra == "-1") {
-							c.options = RIGHT_MOUSE_KEY;
-						} else if (action.extra == "-5") {
-							c.options = RIGHT_MOUSE_KEY | SHIFT_KEY;
-						} else if (action.extra == "-20") {
-							c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
-						} else if (action.extra == "-100") {
-							c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
-						}
-					}
-					else if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
-						if (action.extra == "queued") {
-							c.options = SHIFT_KEY;
-						}
-					}
-					GiveCommand(c);
-					break;
-				}
-				case CMDTYPE_ICON_MODE: {
-					int newMode;
-
-					if (!action.extra.empty() && (iconCmd < 0)) {
-						newMode = atoi(action.extra.c_str());
-					} else {
-						newMode = atoi(commands[a].params[0].c_str()) + 1;
-					}
-
-					if ((newMode < 0) || (newMode > (commands[a].params.size() - 2))) {
-						newMode = 0;
-					}
-
-					// not really required
-					char t[10];
-					SNPRINTF(t, 10, "%d", newMode);
-					commands[a].params[0] = t;
-
-					Command c;
-					c.options = 0;
-					c.id = commands[a].id;
-					c.params.push_back(newMode);
-					GiveCommand(c);
-					forceLayoutUpdate = true;
-					break;
-				}
-				case CMDTYPE_NUMBER:{
-					if (!action.extra.empty()) {
-						const CommandDescription& cd = commands[a];
-						float value = atof(action.extra.c_str());
-						float minV = 0.0f;
-						float maxV = 100.0f;
-						if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
-						if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
-						value = max(min(value, maxV), minV);
-						Command c;
-						c.options = 0;
-						if (action.extra.find("queued") != string::npos) {
-							c.options = SHIFT_KEY;
-						}
-						c.id = cd.id;
-						c.params.push_back(value);
-						GiveCommand(c);
-						break;
-					}
-					else {
-						// fall through
-					}
-				}
-				case CMDTYPE_ICON_MAP:
-				case CMDTYPE_ICON_AREA:
-				case CMDTYPE_ICON_UNIT:
-				case CMDTYPE_ICON_UNIT_OR_MAP:
-				case CMDTYPE_ICON_FRONT:
-				case CMDTYPE_ICON_UNIT_OR_AREA:
-				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
-				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
-					SetShowingMetal(false);
-					actionOffset = actionIndex;
-					lastKeySet = ks;
-					inCommand=a;
-					break;
-				}
-				case CMDTYPE_ICON_BUILDING: {
-					UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
-					SetShowingMetal(ud->extractsMetal > 0);
-					actionOffset = actionIndex;
-					lastKeySet = ks;
-					inCommand=a;
-					break;
-				}
-				case CMDTYPE_COMBO_BOX:
-				if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
-					CommandDescription& cd = commands[a];
-					vector<string>::iterator pi;
-					// check for an action bound to a specific entry
-					if (!action.extra.empty() && (iconCmd < 0)) {
-						int p = 0;
-						for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-							if (action.extra == *pi) {
-								Command c;
-								c.options = 0;
-								c.id = cd.id;
-								c.params.push_back(p);
-								GiveCommand(c);
-								return true;
-							}
-							p++;
-						}
-					}
-					inCommand = a;
-					list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
-					list->cancelPlace = 0;
-					list->tooltip = "Choose the AI you want to assign to this group.\n"
-							"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
-							"assigned.";
-					for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-						list->AddItem(pi->c_str(), "");
-					}
-					list->place = atoi(cd.params[0].c_str());
-					lastKeySet.Reset();
-					SetShowingMetal(false);
-					break;
-				}
-				case CMDTYPE_NEXT: {
-					++activePage;
-					if(activePage > maxPage)
-						activePage=0;
-					selectedUnits.SetCommandPage(activePage);
-					break;
-				}
-				case CMDTYPE_PREV:{
-					--activePage;
-					if(activePage<0)
-						activePage = maxPage;
-					selectedUnits.SetCommandPage(activePage);
-					break;
-				}
-				case CMDTYPE_CUSTOM: {
-					RunCustomCommands(commands[a].params, false);
-					break;
-				}
-				default:{
-					lastKeySet.Reset();
-					SetShowingMetal(false);
-					inCommand = a;
-				}
-			}
-			return true; // we used the command
 		}
 	}
 
 	return false;
+}
+
+
+bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
+                                   const CKeySet& ks, int actionIndex)
+{
+	if (ProcessLocalActions(action)) {
+		return true;
+	}
+
+	// See if we have a positional icon command
+	int iconCmd = -1;
+	if (!action.extra.empty() && (action.command == "iconpos")) {
+		const int iconSlot = ParseIconSlot(action.extra);
+		iconCmd = GetIconPosCommand(iconSlot);
+	}
+
+	for (int a = 0; a < commands.size(); ++a) {
+
+		if ((a != iconCmd) && (commands[a].action != action.command)) {
+			continue; // not a match
+		}
+
+		const int cmdType = commands[a].type;
+
+		// set the activePage
+		if (!commands[a].onlyKey &&
+				(((cmdType == CMDTYPE_ICON) &&
+					 ((commands[a].id < 0) ||
+						(commands[a].id == CMD_STOCKPILE))) ||
+				 (cmdType == CMDTYPE_ICON_MODE) ||
+				 (cmdType == CMDTYPE_ICON_BUILDING))) {
+			for (int ii = 0; ii < iconsCount; ii++) {
+				if (icons[ii].commandsID == a) {
+					activePage = min(maxPage, (ii / iconsPerPage));
+					selectedUnits.SetCommandPage(activePage);
+				}
+			}
+		}
+
+		switch (cmdType) {
+			case CMDTYPE_ICON:{
+				Command c;
+				c.options = 0;
+				c.id = commands[a].id;
+				if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
+					if (action.extra == "+5") {
+						c.options = SHIFT_KEY;
+					} else if (action.extra == "+20") {
+						c.options = CONTROL_KEY;
+					} else if (action.extra == "+100") {
+						c.options = SHIFT_KEY | CONTROL_KEY;
+					} else if (action.extra == "-1") {
+						c.options = RIGHT_MOUSE_KEY;
+					} else if (action.extra == "-5") {
+						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY;
+					} else if (action.extra == "-20") {
+						c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
+					} else if (action.extra == "-100") {
+						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
+					}
+				}
+				else if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
+					if (action.extra.find("queued") != string::npos) {
+						c.options |= SHIFT_KEY;
+					}
+				}
+				GiveCommand(c);
+				break;
+			}
+			case CMDTYPE_ICON_MODE: {
+				int newMode;
+
+				if (!action.extra.empty() && (iconCmd < 0)) {
+					newMode = atoi(action.extra.c_str());
+				} else {
+					newMode = atoi(commands[a].params[0].c_str()) + 1;
+				}
+
+				if ((newMode < 0) || (newMode > (commands[a].params.size() - 2))) {
+					newMode = 0;
+				}
+
+				// not really required
+				char t[10];
+				SNPRINTF(t, 10, "%d", newMode);
+				commands[a].params[0] = t;
+
+				Command c;
+				c.options = 0;
+				c.id = commands[a].id;
+				c.params.push_back(newMode);
+				GiveCommand(c);
+				forceLayoutUpdate = true;
+				break;
+			}
+			case CMDTYPE_NUMBER:{
+				if (!action.extra.empty()) {
+					const CommandDescription& cd = commands[a];
+					float value = atof(action.extra.c_str());
+					float minV = 0.0f;
+					float maxV = 100.0f;
+					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
+					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
+					value = max(min(value, maxV), minV);
+					Command c;
+					c.options = 0;
+					if (action.extra.find("queued") != string::npos) {
+						c.options = SHIFT_KEY;
+					}
+					c.id = cd.id;
+					c.params.push_back(value);
+					GiveCommand(c);
+					break;
+				}
+				else {
+					// fall through
+				}
+			}
+			case CMDTYPE_ICON_MAP:
+			case CMDTYPE_ICON_AREA:
+			case CMDTYPE_ICON_UNIT:
+			case CMDTYPE_ICON_UNIT_OR_MAP:
+			case CMDTYPE_ICON_FRONT:
+			case CMDTYPE_ICON_UNIT_OR_AREA:
+			case CMDTYPE_ICON_UNIT_OR_RECTANGLE:
+			case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA: {
+				SetShowingMetal(false);
+				actionOffset = actionIndex;
+				lastKeySet = ks;
+				inCommand = a;
+				break;
+			}
+			case CMDTYPE_ICON_BUILDING: {
+				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
+				SetShowingMetal(ud->extractsMetal > 0);
+				actionOffset = actionIndex;
+				lastKeySet = ks;
+				inCommand = a;
+				break;
+			}
+			case CMDTYPE_COMBO_BOX:
+			if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
+				CommandDescription& cd = commands[a];
+				vector<string>::iterator pi;
+				// check for an action bound to a specific entry
+				if (!action.extra.empty() && (iconCmd < 0)) {
+					int p = 0;
+					for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+						if (action.extra == *pi) {
+							Command c;
+							c.options = 0;
+							c.id = cd.id;
+							c.params.push_back(p);
+							GiveCommand(c);
+							return true;
+						}
+						p++;
+					}
+				}
+				inCommand = a;
+				list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
+				list->cancelPlace = 0;
+				list->tooltip = "Choose the AI you want to assign to this group.\n"
+						"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
+						"assigned.";
+				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+					list->AddItem(pi->c_str(), "");
+				}
+				list->place = atoi(cd.params[0].c_str());
+				lastKeySet.Reset();
+				SetShowingMetal(false);
+				break;
+			}
+			case CMDTYPE_NEXT: {
+				++activePage;
+				if(activePage > maxPage)
+					activePage=0;
+				selectedUnits.SetCommandPage(activePage);
+				break;
+			}
+			case CMDTYPE_PREV:{
+				--activePage;
+				if(activePage<0)
+					activePage = maxPage;
+				selectedUnits.SetCommandPage(activePage);
+				break;
+			}
+			case CMDTYPE_CUSTOM: {
+				RunCustomCommands(commands[a].params, false);
+				break;
+			}
+			default:{
+				lastKeySet.Reset();
+				SetShowingMetal(false);
+				inCommand = a;
+			}
+		}
+		return true; // we used the command
+	}
+
+	return false;	// couldn't find a match
 }
 
 
@@ -2615,105 +2609,6 @@ void CGuiHandler::Draw()
 }
 
 
-bool CGuiHandler::BindNamedTexture(const std::string& texName)
-{
-	if (texName.empty()) {
-		return false;
-	}
-
-	std::map<std::string, unsigned int>::iterator it = textureMap.find(texName);
-	if (it != textureMap.end()) {
-		const GLuint texID = it->second;
-		if (texID == 0) {
-			glBindTexture(GL_TEXTURE_2D, 0);
-			return false;
-		} else {
-			glBindTexture(GL_TEXTURE_2D, it->second);
-			return true;
-		}
-	}
-
-	// strip off the qualifiers
-	string filename = texName;
-	bool border = false;
-	bool clamped = false;
-	bool nearest = false;
-	if (filename[0] == ':') {
-		int p;
-		for (p = 1; p < (int)filename.size(); p++) {
-			const char ch = filename[p];
-			if (ch == ':')      { break; }
-			else if (ch == 'b') { border = true;  }
-			else if (ch == 'c') { clamped = true; }
-			else if (ch == 'n') { nearest = true; }
-		}
-		if (p < (int)filename.size()) {
-			filename = filename.substr(p + 1);
-		} else {
-			filename.clear();
-		}
-	}
-
-	// get the image
-	CBitmap bitmap;
-	if (!bitmap.Load(filename)) {
-		textureMap[texName] = 0;
-		glBindTexture(GL_TEXTURE_2D, 0);
-		return false;
-	}
-
-	// make the texture
-	GLuint texID;
-	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-	if (clamped) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
-	if (nearest) {
-		if (border) {
-			GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
-		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		if (GLEW_ARB_texture_non_power_of_two) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-			             bitmap.xsize, bitmap.ysize, border ? 1 : 0,
-			             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		} else {
-			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-			                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		}
-	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-											GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-	}
-
-	textureMap[texName] = texID;
-
-	return true;
-}
-
-
-bool CGuiHandler::FreeNamedTexture(const std::string& texName)
-{
-	if (texName.empty()) {
-		return false;
-	}
-	std::map<std::string, unsigned int>::iterator it = textureMap.find(texName);
-	if (it != textureMap.end()) {
-		const GLuint texID = it->second;
-		glDeleteTextures(1, &texID);
-		textureMap.erase(it);
-		return true;
-	}
-	return false;
-}
-
-
 static string StripColorCodes(const string& text)
 {
 	std::string nocolor;
@@ -2799,7 +2694,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 
 	// plain texture
 	if (texName[0] != '#') {
-		if (BindNamedTexture(texName)) {
+		if (CNamedTextures::Bind(texName)) {
 			const Box& b = icon.visual;
 			glEnable(GL_TEXTURE_2D);
 			glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
@@ -2860,7 +2755,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 	tv.y1 = iv.y1 - (yIconSize * yscale);
 	tv.y2 = iv.y2 + (yIconSize * yscale);
 
-	if (!BindNamedTexture(endPtr)) {
+	if (!CNamedTextures::Bind(endPtr)) {
 		return DrawUnitBuildIcon(icon, unitDefID);
 	}
 	else {
@@ -3416,6 +3311,85 @@ static inline void DrawSensorRange(int radius,
 }
 
 
+static inline GLuint GetConeList()
+{
+	static GLuint list = 0; // FIXME: put in the class
+	if (list != 0) {
+		return list;
+	}
+	list = glGenLists(1);
+	glNewList(list, GL_COMPILE); {
+		glBegin(GL_TRIANGLE_FAN);
+		const int divs = 64;
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		for (int i = 0; i <= divs; i++) {
+			const float rad = (PI * 2.0) * (float)i / (float)divs;
+			glVertex3f(1.0f, sin(rad), cos(rad));
+		}
+		glEnd();
+	}
+	glEndList();
+	return list;
+}
+
+
+static void DrawWeaponCone(const float3& pos,
+                           float len, float hrads, float heading, float pitch)
+{
+	glPushMatrix();
+
+	const float xlen = len * cos(hrads);
+	const float yzlen = len * sin(hrads);
+	glTranslatef(pos.x, pos.y, pos.z);
+	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
+	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);
+	glScalef(xlen, yzlen, yzlen);
+
+	glEnable(GL_CULL_FACE);
+
+	glCullFace(GL_FRONT);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
+	glCallList(GetConeList());
+
+	glCullFace(GL_BACK);
+	glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
+	glCallList(GetConeList());
+
+	glDisable(GL_CULL_FACE);
+
+	glPopMatrix();
+}
+
+
+static inline void DrawWeaponArc(const CUnit* unit)
+{
+	const CWeapon* w = unit->weapons.front();
+	float3 dir;
+	if (w->onlyForward) {
+		dir = unit->frontdir;
+	} else {
+		dir = w->wantedDir;
+	}
+
+	// copied from Weapon.cpp
+	const float3 interPos = unit->pos + (unit->speed * gu->timeOffset);
+	float3 pos = interPos +
+	             (unit->frontdir * w->relWeaponPos.z) + 
+	             (unit->updir    * w->relWeaponPos.y) + 
+	             (unit->rightdir * w->relWeaponPos.x);
+	if (pos.y < ground->GetHeight2(pos.x, pos.z)) {
+		// hope that we are underground because we are a
+		// popup weapon and will come above ground later
+		pos = interPos + (UpVector * 10.0f);
+	}
+
+	const float hrads   = acos(w->maxAngleDif);
+	const float heading = atan2(-dir.z, dir.x);
+	const float pitch   = asin(dir.y);
+	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
+}
+
+
 void CGuiHandler::DrawMapStuff(int onMinimap)
 {
 	if (!onMinimap) {
@@ -3784,6 +3758,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
 				                  unit->weapons.front()->heightMod, 40);
+				if (!onMinimap && gs->cheatEnabled) {
+					DrawWeaponArc(unit);
+				}
 			}
 		}
 	}

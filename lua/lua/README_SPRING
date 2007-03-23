@@ -1,0 +1,7 @@
+
+This is the Lua-5.0.3 source, with the following modifications:
+
+1. Changed the math functions to use streflop
+
+2. Added the lua_pushhstring() and lua_calchash() calls
+

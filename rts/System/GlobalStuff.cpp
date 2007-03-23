@@ -45,9 +45,15 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	userSpeedFactor=1;
 	paused=false;
 	cheatEnabled=false;
+	noHelperAIs=false;
+	editDefsEnabled=false;
 	tempNum=2;
 	gameMode=0;
-
+	useLuaGaia=true;
+	gaiaTeamID=-1;
+	gaiaAllyTeamID=-1;
+	useLuaRules=true;
+	
 	sunVector=float3(0,0,1);
 	sunVector4[0]=0;
 	sunVector4[1]=0;

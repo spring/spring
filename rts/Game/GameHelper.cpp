@@ -522,7 +522,7 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 	return closeUnit;
 }
 
-void CGameHelper::GetEnemyUnits(float3 &pos, float radius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyteam, vector<int> &found)
 {
 	float sqRadius=radius*radius;
 	vector<int> quads=qf->GetQuads(pos,radius);

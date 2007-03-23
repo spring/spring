@@ -34,62 +34,54 @@
 
 #endif
 
-#ifdef _CONSOLE
-/*
-class CUnit {
-public:
-};
-*/
-class CUnit;
-
-#endif
 
 // Indices for set/get value
-#define ACTIVATION			1	// set or get
-#define STANDINGMOVEORDERS	2	// set or get
-#define STANDINGFIREORDERS	3	// set or get
-#define HEALTH				4	// get (0-100%)
-#define INBUILDSTANCE		5	// set or get
-#define BUSY				6	// set or get (used by misc. special case missions like transport ships)
-#define PIECE_XZ			7	// get
-#define PIECE_Y				8	// get
-#define UNIT_XZ				9	// get
-#define	UNIT_Y				10	// get
-#define UNIT_HEIGHT			11	// get
-#define XZ_ATAN				12	// get atan of packed x,z coords
-#define XZ_HYPOT			13	// get hypot of packed x,z coords
-#define ATAN				14	// get ordinary two-parameter atan
-#define HYPOT				15	// get ordinary two-parameter hypot
-#define GROUND_HEIGHT		16	// get land height, 0 if below water
-#define BUILD_PERCENT_LEFT	17	// get 0 = unit is built and ready, 1-100 = How much is left to build
-#define YARD_OPEN			18	// set or get (change which plots we occupy when building opens and closes)
-#define BUGGER_OFF			19	// set or get (ask other units to clear the area)
-#define ARMORED				20	// set or get
+// * NOTE: [ LUA0 - LUA9 ] are defined in CobThread.cpp
+#define ACTIVATION           1  // set or get
+#define STANDINGMOVEORDERS   2  // set or get
+#define STANDINGFIREORDERS   3  // set or get
+#define HEALTH               4  // get (0-100%)
+#define INBUILDSTANCE        5  // set or get
+#define BUSY                 6  // set or get (used by misc. special case missions like transport ships)
+#define PIECE_XZ             7  // get
+#define PIECE_Y              8  // get
+#define UNIT_XZ              9  // get
+#define UNIT_Y              10  // get
+#define UNIT_HEIGHT         11  // get
+#define XZ_ATAN             12  // get atan of packed x,z coords
+#define XZ_HYPOT            13  // get hypot of packed x,z coords
+#define ATAN                14  // get ordinary two-parameter atan
+#define HYPOT               15  // get ordinary two-parameter hypot
+#define GROUND_HEIGHT       16  // get land height, 0 if below water
+#define BUILD_PERCENT_LEFT  17  // get 0 = unit is built and ready, 1-100 = How much is left to build
+#define YARD_OPEN           18  // set or get (change which plots we occupy when building opens and closes)
+#define BUGGER_OFF          19  // set or get (ask other units to clear the area)
+#define ARMORED             20  // set or get
 
-/*#define WEAPON_AIM_ABORTED	21
-#define WEAPON_READY		22
-#define WEAPON_LAUNCH_NOW	23
-#define FINISHED_DYING		26
-#define ORIENTATION			27*/
-#define IN_WATER   28
-#define CURRENT_SPEED  29
-//#define MAGIC_DEATH   31
-#define VETERAN_LEVEL  32
-#define ON_ROAD    34
+/*#define WEAPON_AIM_ABORTED  21
+#define WEAPON_READY        22
+#define WEAPON_LAUNCH_NOW   23
+#define FINISHED_DYING      26
+#define ORIENTATION         27*/
+#define IN_WATER            28
+#define CURRENT_SPEED       29
+//#define MAGIC_DEATH         31
+#define VETERAN_LEVEL       32
+#define ON_ROAD             34
 
-#define MAX_ID					70
-#define MY_ID					71
-#define UNIT_TEAM				72
-#define UNIT_BUILD_PERCENT_LEFT	73
-#define UNIT_ALLIED				74
-#define MAX_SPEED					75
-#define CLOAKED					76
-#define WANT_CLOAK				77
-#define GROUND_WATER_HEIGHT		78 // get land height, negative if below water
-#define UPRIGHT				79
+#define MAX_ID                   70
+#define MY_ID                    71
+#define UNIT_TEAM                72
+#define UNIT_BUILD_PERCENT_LEFT  73
+#define UNIT_ALLIED              74
+#define MAX_SPEED                75
+#define CLOAKED                  76
+#define WANT_CLOAK               77
+#define GROUND_WATER_HEIGHT      78 // get land height, negative if below water
+#define UPRIGHT                  79
 
-CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
-: script(script)
+CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
+: script(_script)
 {
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
@@ -107,7 +99,7 @@ CCobInstance::CCobInstance(CCobFile &script, CUnit *unit)
 		pieces.push_back(pi);
 	}
 
-	this->unit = unit;
+	unit = _unit;
 //	int mo = unit->pos.x;
 
 	yardOpen = false;
@@ -211,6 +203,26 @@ int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1
 	return RealCall(fn, args, cb, p1, p2);
 }
 
+
+int CCobInstance::RawCall(int fn, vector<int> &args)
+{
+	return RawCall(fn, args, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+{
+	if ((fn < 0) || (fn >= script.scriptNames.size())) {
+		if (cb) {
+			// in case the function doesnt exist the callback should still be called
+			(*cb)(0, p1, p2);
+		}
+		return -1;
+	}
+	return RealCall(fn, args, cb, p1, p2);
+}
+
+
 //Returns 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
 //it will continue to run. Otherwise it will be killed. Returns 1 in this case.
 int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
@@ -243,6 +255,7 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 		return 1;
 	}
 }
+
 
 //Updates cur, returns 1 if destination was reached, 0 otherwise
 int CCobInstance::MoveToward(int &cur, int dest, int speed)
@@ -873,10 +886,6 @@ void CCobInstance::ShowFlare(int piece)
 #endif
 }
 
-#define UNPACKX(xz) ((signed short)((Uint32)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((Uint32)(xz) & 0xffff))
-#define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-#define SCALE 65536
 
 int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
@@ -917,7 +926,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_y");
 		float3 relPos = unit->localmodel->GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return (int)(pos.y * SCALE);}
+		return (int)(pos.y * COBSCALE);}
 	case UNIT_XZ: {
 		if (p1 == 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
@@ -929,32 +938,32 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UNIT_Y: {
 		//logOutput.Print("Unit-y %d", p1);
 		if (p1 == 0)
-			return (int)(unit->pos.y * SCALE);
+			return (int)(unit->pos.y * COBSCALE);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return 0;
 		else
-			return (int)(u->pos.y * SCALE);}
+			return (int)(u->pos.y * COBSCALE);}
 	case UNIT_HEIGHT:{
 		if (p1 == 0)
-			return (int)(unit->radius * SCALE);
+			return (int)(unit->radius * COBSCALE);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return 0;
 		else
-			return (int)(u->radius * SCALE);}
+			return (int)(u->radius * COBSCALE);}
 	case XZ_ATAN:
 		return (int)(TAANG2RAD*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return (int)(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * SCALE);
+		return (int)(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
 	case ATAN:
 		return (int)(TAANG2RAD*atan2((float)p1, (float)p2));
 	case HYPOT:
 		return (int)hypot((float)p1, (float)p2);
 	case GROUND_HEIGHT:
-		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
+		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
-		return (int)(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * SCALE);
+		return (int)(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case BUILD_PERCENT_LEFT:
 		return (int)((1 - unit->buildProgress) * 100);
 	case YARD_OPEN:
@@ -969,13 +978,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 1;
 		else
 			return 0;
-	default:
-		logOutput.Print("CobError: Unknown get constant %d", val);
 	case VETERAN_LEVEL:
 		return (int)(100*unit->experience);
 	case CURRENT_SPEED:
 		if (unit->moveType)
-			return (int)(unit->speed.Length()*SCALE);
+			return (int)(unit->speed.Length()*COBSCALE);
 		return 0;
 	case ON_ROAD:
 		return 0;
@@ -998,7 +1005,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;}
 	case MAX_SPEED:
 		if(unit->moveType){
-			return int(unit->moveType->maxSpeed*SCALE);
+			return int(unit->moveType->maxSpeed*COBSCALE);
 		}
 		break;
 	case CLOAKED:
@@ -1007,6 +1014,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return !!unit->wantCloak;
 	case UPRIGHT:
 		return !!unit->upright;
+	default:
+		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
+		                val, p1, p2, p3, p4);
 	}
 #endif
 
@@ -1091,8 +1101,8 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	case MAX_SPEED:
 		if(unit->moveType && param > 0){
-			unit->moveType->SetMaxSpeed(param/(float)SCALE);
-			unit->maxSpeed = param/(float)SCALE;
+			unit->moveType->SetMaxSpeed(param/(float)COBSCALE);
+			unit->maxSpeed = param/(float)COBSCALE;
 		}
 		break;
 	case CLOAKED:
@@ -1157,9 +1167,16 @@ void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, i
 	Turn(piece, axis, speed, destination, true);
 }
 
+
 bool CCobInstance::FunctionExist(int id)
 {
 	if(script.scriptIndex[id]==-1)
 		return false;
 	return true;
+}
+
+
+int CCobInstance::GetFunctionId(const string& funcName) const
+{
+	return script.getFunctionId(funcName);
 }

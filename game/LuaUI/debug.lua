@@ -61,7 +61,7 @@ function PrintCommandQueue(uid)
     msg = ''
     count = 0
     for i,cmd in pairs(queue) do
-      if (cmd ~= CMD_SET_WANTED_MAX_SPEED) then
+      if (cmd ~= CMD.SET_WANTED_MAX_SPEED) then
         name = CommandNames[cmd]
         if (name ~= nil) then
           count = count + 1

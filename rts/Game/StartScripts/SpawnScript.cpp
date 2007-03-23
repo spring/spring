@@ -45,7 +45,7 @@ void CSpawnScript::Update()
 		// Set the TEAM0 startpos as spawnpos if we're supposed to be
 		// autonomous, load the commander for the player if not.
 		if (autonomous) spawnPos.push_back(float3(x0,80,z0));
-		else unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false);
+		else unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false,0,NULL);
 
 		p2.GetDef(x0,"1000","MAP\\TEAM1\\StartPosX");
 		p2.GetDef(z0,"1000","MAP\\TEAM1\\StartPosZ");
@@ -75,7 +75,7 @@ void CSpawnScript::Update()
 			// Ignore unit if it really doesn't fit.
 			// (within 18 tries, 200*1.05f^18 < 500 < 200*1.05f^19)
 			if (dist < 500) {
-				CUnit* u = unitLoader.LoadUnit(curSpawn->name, pos, team, false);
+				CUnit* u = unitLoader.LoadUnit(curSpawn->name, pos, team, false, 0, NULL);
 
 				Unit unit;
 				unit.id=u->id;

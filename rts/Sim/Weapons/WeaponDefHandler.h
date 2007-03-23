@@ -124,7 +124,7 @@ struct WeaponDef
 	float wobble;						//how much the missile will wobble around its course
 	float trajectoryHeight;			//how high trajectory missiles will try to fly in
 
-	struct
+	struct Visuals
 	{
 		float3 color;
 		float3 color2;
@@ -144,7 +144,8 @@ struct WeaponDef
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
-	}visuals;
+	};
+	Visuals visuals;
 
 	bool largeBeamLaser;
 

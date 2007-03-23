@@ -46,7 +46,7 @@ public:
 
 	int GiveOrder(int unitid,Command* c);
 	const vector<CommandDescription>* GetUnitCommands(int unitid);
-	const deque<Command>* GetCurrentUnitCommands(int unitid);
+	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
 	int GetUnitAiHint(int unitid);				//integer telling something about the units main function, not implemented yet
 	int GetUnitTeam(int unitid);

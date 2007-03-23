@@ -4,11 +4,20 @@
 #include <string>
 #include <vector>
 #include <list>
+#include "SDL_types.h"
 
 #define TAANG2RAD 10430.219207445624753419256949178f
 #define RAD2TAANG 9.587526207370107576104371709781e-5f
 
 #include "Object.h"
+
+
+#define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
+#define UNPACKX(xz) ((signed short)((Uint32)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((Uint32)(xz) & 0xffff))
+
+#define COBSCALE 65536
+
 
 class CCobThread;
 class CCobFile;
@@ -30,7 +39,7 @@ struct PieceInfo {
 class CCobInstance : public CObject
 {
 protected:
-	CCobFile &script;
+	CCobFile& script;
 	enum AnimType {ATurn, ASpin, AMove};
 	struct AnimInfo {
 		AnimType type;
@@ -53,9 +62,13 @@ public:
 	list<CCobThread *> threads;
 	vector<struct PieceInfo> pieces;	
 	bool smoothAnim;
+	const CCobFile* GetScriptAddr() const { return &script; }
+	
 public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	~CCobInstance(void);
+	inline       CUnit* GetUnit()       { return unit; }
+	inline const CUnit* GetUnit() const { return unit; }
 	void InitVars();
 	int Call(const string &fname);
 	int Call(const string &fname, int p1);
@@ -67,6 +80,8 @@ public:
 	int Call(int id, int p1);
 	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RawCall(int fn, vector<int> &args);
+	int RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int Tick(int deltaTime);
 	int MoveToward(int &cur, int dest, int speed);
@@ -93,10 +108,11 @@ public:
 	void Explode(int piece, int flags);
 	void PlayUnitSound(int snr, int attr);
 	void ShowFlare(int piece);
-	bool HasScriptFunction(int id);
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
+	bool HasScriptFunction(int id);
 	bool FunctionExist(int id);
+	int GetFunctionId(const string& funcName) const;
 };
 
 #endif // __COB_INSTANCE_H__

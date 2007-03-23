@@ -213,7 +213,7 @@ void CWeapon::Update()
 			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*(32768/PI));
 			std::vector<int> args;
-			args.push_back(short(heading-owner->heading));
+			args.push_back(short(heading - owner->heading));
 			args.push_back(pitch);
 			owner->cob->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
 		}
@@ -300,7 +300,7 @@ void CWeapon::Update()
 		// add to the commandShotCount if this is the last salvo,
 		// and it is being directed towards the current target
 		// (helps when deciding if a queued ground attack order has been completed)
-		if ((salvoLeft == 0) &&
+		if ((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
 		    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
 				((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
 			owner->commandShotCount++;

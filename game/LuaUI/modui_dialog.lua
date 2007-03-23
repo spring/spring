@@ -35,11 +35,8 @@ setmetatable(LT, { __index = _G})
 local function IncludeFile(filename, t)
   local chunk, err = loadfile(LUAUI_DIRNAME .. filename)
   if (chunk == nil) then
-    Spring.SendCommands({
-      'echo Failed to load: ' .. filename .. '(' .. err .. ')',
-      'luaui disable'
-    })
-    LayoutButtons = function () return 'disabled' end
+    KillScript('Failed to load ' .. filename .. ' (' .. err .. ')')
+    return
   else
     if (t ~= nil) then
 	    setfenv(chunk, t)
@@ -52,9 +49,6 @@ IncludeFile('Headers/colors.h.lua', LT);
 IncludeFile('Headers/opengl.h.lua', LT);
 IncludeFile('Headers/keysym.h.lua', LT);
 IncludeFile('savetable.lua', LT);
-
-
-local Echo = function(msg) Spring.SendCommands({"echo " .. msg}) end
 
 
 --------------------------------------------------------------------------------
@@ -177,19 +171,16 @@ local function LoadUserLuaUI()
 
   local file, err = io.open(USER_FILENAME, 'r')
   if (file == nil) then
+    -- die quietly
     LayoutButtons = function () return 'disabled' end
-    return
   else
     file:close()
   end
 
   local chunk, err = loadfile(USER_FILENAME)
   if (chunk == nil) then
-    Spring.SendCommands({
-      'echo Failed to load: ' .. USER_FILENAME .. ' (' .. err .. ')',
-      'luaui disable'
-    })
-    LayoutButtons = function () return 'disabled' end
+    KillScript('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
+    return
   else
     chunk()
   end
@@ -204,21 +195,21 @@ local function LoadModLuaUI()
 
   local modText = Spring.LoadTextVFS(MOD_FILENAME)
   if (modText == nil) then
-    Echo('Failed to load ' .. MOD_FILENAME)
+    Spring.Echo('Failed to load ' .. MOD_FILENAME)
     LoadUserLuaUI()
     return
   end
 
   local chunk, err = loadstring(modText)
   if (chunk == nil) then
-    Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+    Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
     LoadUserLuaUI()
     return
   else
     LUAUI_DIRNAME = nil
     local success, err = pcall(chunk)
     if (not success) then
-      Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+      Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
       LoadUserLuaUI()
     end
   end
@@ -323,7 +314,7 @@ end
 function KeyPress(key)
   local ks = LT.KEYSYMS
   if (key == ks.ESCAPE) then   -- No
-    Echo("Not using Mod's LuaUI")
+    Spring.Echo("Not using Mod's LuaUI")
     LoadUserLuaUI()
     return true
   end

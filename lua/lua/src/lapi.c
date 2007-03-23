@@ -402,6 +402,16 @@ LUA_API void lua_pushnumber (lua_State *L, lua_Number n) {
 }
 
 
+LUA_API void lua_pushhstring (lua_State *L,
+                              unsigned int hash, const char *s, size_t len) {
+  lua_lock(L);
+  luaC_checkGC(L);
+  setsvalue2s(L->top, luaS_newhstr(L, hash, s, len));
+  api_incr_top(L);
+  lua_unlock(L);
+}
+
+
 LUA_API void lua_pushlstring (lua_State *L, const char *s, size_t len) {
   lua_lock(L);
   luaC_checkGC(L);
@@ -416,6 +426,11 @@ LUA_API void lua_pushstring (lua_State *L, const char *s) {
     lua_pushnil(L);
   else
     lua_pushlstring(L, s, strlen(s));
+}
+
+
+LUA_API unsigned int lua_calchash (const char *s, int len) {
+  return luaS_calchash(s, len);
 }
 
 

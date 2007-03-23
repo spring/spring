@@ -22,9 +22,8 @@ class CMiniMap : public CInputReceiver {
 		void MouseRelease(int x, int y, int button);
 		void MoveView(int x, int y);
 		bool IsAbove(int x, int y);
-		void Draw();
 		std::string GetTooltip(int x, int y);
-
+		void Draw();
 		void DrawForReal();
 		
 		void ConfigCommand(const std::string& command);
@@ -33,6 +32,7 @@ class CMiniMap : public CInputReceiver {
 		CUnit* GetSelectUnit(const float3& pos) const;
 		
 		void UpdateGeometry();
+		void SetGeometry(int px, int py, int sx, int sy);
 
 		void AddNotification(float3 pos, float3 color, float alpha);
 
@@ -42,6 +42,12 @@ class CMiniMap : public CInputReceiver {
 
 		void SetMinimized(bool state) { minimized = state; }
 		bool GetMinimized() const { return minimized; }
+
+		inline int GetSizeX() const { return width; }
+		inline int GetSizeY() const { return height; }
+
+		void SetSlaveMode(bool value);
+		bool GetSlaveMode() const { return slaveDrawMode; }
 		
 	protected:
 		void ParseGeometry(const std::string& geostr);

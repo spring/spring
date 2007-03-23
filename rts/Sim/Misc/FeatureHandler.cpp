@@ -1,27 +1,29 @@
 #include "StdAfx.h"
 #include "FeatureHandler.h"
 #include "Feature.h"
-#include "FileSystem/FileHandler.h"
-#include "TdfParser.h"
-#include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
-#include <GL/glu.h>
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Map/Ground.h"
-#include "Game/Camera.h"
 #include "QuadField.h"
-#include "Sim/Units/UnitHandler.h"
+#include "FileSystem/FileHandler.h"
+#include "Game/Camera.h"
 #include "LoadSaveInterface.h"
-#include "TimeProfiler.h"
+#include "LogOutput.h"
 #include "LosHandler.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaRules.h"
+#include "Map/Ground.h"
 #include "myMath.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/FartextureHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/Env/BaseWater.h"
-#include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/BaseWater.h"
+#include "Rendering/FartextureHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Units/UnitHandler.h"
+#include "System/TdfParser.h"
+#include "System/TimeProfiler.h"
 #include "mmgr.h"
+#include <GL/glu.h> // after myGL.h
 
 CR_BIND(FeatureDef, );
 
@@ -29,6 +31,7 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(myName),
 		CR_MEMBER(description),
 		CR_MEMBER(metal),
+		CR_MEMBER(id),
 		CR_MEMBER(energy),
 		CR_MEMBER(maxHealth),
 		CR_MEMBER(radius),
@@ -92,6 +95,21 @@ CFeatureHandler::~CFeatureHandler()
 	delete[] drawQuads;
 }
 
+
+void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
+{
+	std::map<std::string,FeatureDef*>::const_iterator it = featureDefs.find(name);
+	
+	if (it != featureDefs.end()) {	
+		featureDefsVector[it->second->id] = fd;
+	} else {
+		fd->id = featureDefsVector.size();
+		featureDefsVector.push_back(fd);
+	}
+	featureDefs[name] = fd;
+}
+
+
 CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int allyteam, bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
@@ -105,6 +123,9 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	if(iter>1){
 		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,allyteam,emitSmoke,"");
 	} else {
+		if (luaRules && !luaRules->AllowFeatureCreation(fd, allyteam, pos)) {
+			return NULL;
+		}
 		if(!fd->modelname.empty()){
 			CFeature* f=SAFE_NEW CFeature;
 			f->Initialize (pos,fd,(short int)rot,facing,allyteam,fromUnit);
@@ -115,6 +136,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	}
 	return 0;
 }
+
 
 void CFeatureHandler::Draw()
 {
@@ -142,6 +164,7 @@ void CFeatureHandler::Draw()
 	va->DrawArrayTN(GL_QUADS);
 }
 
+
 void CFeatureHandler::DrawShadowPass()
 {
 	ASSERT_UNSYNCED_MODE;
@@ -156,24 +179,26 @@ void CFeatureHandler::DrawShadowPass()
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
+
 void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
 START_TIME_PROFILE
-	while(!toBeRemoved.empty()){
-		CFeature* feature=features[toBeRemoved.back()];
+	while (!toBeRemoved.empty()) {
+		CFeature* feature = features[toBeRemoved.back()];
 		toBeRemoved.pop_back();
-		if(feature){
+		if (feature) {
 			freeIDs.push_back(feature->id);
-			features[feature->id]=0;
+			features[feature->id] = 0;
 
-			if(feature->drawQuad>=0){
-				DrawQuad* dq=&drawQuads[feature->drawQuad];
+			if (feature->drawQuad >= 0) {
+				DrawQuad* dq = &drawQuads[feature->drawQuad];
 				dq->features.erase(feature);
 			}
 
-			if(feature->inUpdateQue)
+			if (feature->inUpdateQue) {
 				updateFeatures.erase(feature->id);
+			}
 
 			delete feature;
 		}
@@ -181,11 +206,11 @@ START_TIME_PROFILE
 
 	SPRING_HASH_SET<int>::iterator fi=updateFeatures.begin();
 	while(fi!= updateFeatures.end()){
-		CFeature* feature=features[*fi];
+		CFeature* feature = features[*fi];
 		
-		bool remove=!feature->Update();
-		if(remove){
-			feature->inUpdateQue=false;
+		const bool remove = !feature->Update();
+		if (remove) {
+			feature->inUpdateQue = false;
 			updateFeatures.erase(fi++);
 		} else {
 			++fi;
@@ -193,6 +218,7 @@ START_TIME_PROFILE
 	}
 END_TIME_PROFILE("Feature::Update");
 }
+
 
 void CFeatureHandler::LoadWreckFeatures()
 {
@@ -206,6 +232,7 @@ void CFeatureHandler::LoadWreckFeatures()
 		wreckParser.LoadFile(*fi);	
 	}
 }
+
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
@@ -222,28 +249,53 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	SetFeatureUpdateable(feature);
 
 	if(feature->def->drawType==DRAWTYPE_3DO){
-		int quad=int(feature->pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(feature->pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
+		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
+		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		DrawQuad* dq=&drawQuads[quad];
 		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
+	
+	luaCallIns.FeatureCreated(feature);
 
 	return ret;
 }
+
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(feature->id);
+
+	luaCallIns.FeatureDestroyed(feature);
 }
+
+
+void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
+{
+	const int oldDrawQuad = feature->drawQuad;
+	if (oldDrawQuad >= 0) { 
+		const int newDrawQuad =
+			int(newPos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
+			int(newPos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
+		if (oldDrawQuad != newDrawQuad) {
+			DrawQuad* oldDQ = &drawQuads[oldDrawQuad];
+			oldDQ->features.erase(feature);
+			DrawQuad* newDQ = &drawQuads[newDrawQuad];
+			newDQ->features.insert(feature);
+			feature->drawQuad = newDrawQuad;
+		}
+	}
+}
+
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
 	int numType = readmap->GetNumFeatureTypes ();
 
-	for(int a=0;a<numType;++a){
-		string name=readmap->GetFeatureType (a);
-		if(name.find("TreeType")!=string::npos){
+	for (int a = 0; a < numType; ++a) {
+		const string name = StringToLower(readmap->GetFeatureType(a));
+		if (name.find("treetype") != string::npos) {
 			FeatureDef* fd=SAFE_NEW FeatureDef;
 			fd->blocking=1;
 			fd->burnable=true;
@@ -260,8 +312,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->myName=name;
 			fd->description="Tree";
 			fd->mass=20;
-			featureDefs[name]=fd;
-		} else if(name.find("GeoVent")!=string::npos){
+			AddFeatureDef(name, fd);
+		} else if (name.find("geovent") != string::npos) {
 			FeatureDef* fd=SAFE_NEW FeatureDef;
 			fd->blocking=0;
 			fd->burnable=0;
@@ -278,8 +330,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->ysize=0;
 			fd->myName=name;
 			fd->mass=100000;
-			featureDefs[name]=fd;
-		} else if(wreckParser.SectionExist(name)){
+			AddFeatureDef(name, fd);
+		} else if (wreckParser.SectionExist(name)) {
 			GetFeatureDef(name);
 		} else {
 			logOutput.Print("Unknown feature type %s",name.c_str());
@@ -292,8 +344,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		readmap->GetFeatureInfo (mfi);
 
 		for(int a=0;a<numFeatures;++a){
-			string name=readmap->GetFeatureType (mfi[a].featureType);
-			
+			string name = StringToLower(readmap->GetFeatureType (mfi[a].featureType));
 			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
 			
 			if (def == featureDefs.end()){
@@ -301,12 +352,15 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				continue;
 			}
 
-			float ypos = ground->GetHeight2(mfi[a].pos.x,mfi[a].pos.z);
-			(SAFE_NEW CFeature)->Initialize (float3(mfi[a].pos.x, ypos,mfi[a].pos.z),featureDefs[name],(short int)mfi[a].rotation,0,-1,"");
+			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
+			(SAFE_NEW CFeature)->Initialize (float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
+			                                 featureDefs[name], (short int)mfi[a].rotation,
+			                                 0, -1, "");
 		}
 		delete[] mfi;
 	}
 }
+
 
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
@@ -317,26 +371,30 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 	feature->inUpdateQue=true;	
 }
 
+
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
 	ASSERT_SYNCED_MODE;
-	vector<int> quads=qf->GetQuadsRectangle(float3(x1*SQUARE_SIZE,0,y1*SQUARE_SIZE),float3(x2*SQUARE_SIZE,0,y2*SQUARE_SIZE));
+	vector<int> quads=qf->GetQuadsRectangle(float3(x1*SQUARE_SIZE,0,y1*SQUARE_SIZE),
+	                                        float3(x2*SQUARE_SIZE,0,y2*SQUARE_SIZE));
 //	logOutput.Print("Checking feature pos %i",quads.size());
 
 	for(vector<int>::iterator qi=quads.begin();qi!=quads.end();++qi){
 		list<CFeature*>::iterator fi;
-		for(fi=qf->baseQuads[*qi].features.begin();fi!=qf->baseQuads[*qi].features.end();++fi){
-			if((*fi)->pos.y>ground->GetHeight((*fi)->pos.x,(*fi)->pos.z)){
-//				logOutput.Print("Updating feature pos %f %f %i",(*fi)->pos.y,ground->GetHeight((*fi)->pos.x,(*fi)->pos.z),(*fi)->id);
-				SetFeatureUpdateable(*fi);
+		list<CFeature*>& features = qf->baseQuads[*qi].features;
+		for(fi = features.begin(); fi != features.end(); ++fi) {
+			CFeature* feature = *fi;
+			float3& fpos = feature->pos;
+			if (fpos.y > ground->GetHeight(fpos.x, fpos.z)) {
+				SetFeatureUpdateable(feature);
 			
-				if((*fi)->def->floating){
-					(*fi)->finalHeight=ground->GetHeight((*fi)->pos.x,(*fi)->pos.z);
+				if (feature->def->floating){
+					feature->finalHeight = ground->GetHeight(fpos.x, fpos.z);
 				} else {
-					(*fi)->finalHeight=ground->GetHeight2((*fi)->pos.x,(*fi)->pos.z);
+					feature->finalHeight = ground->GetHeight2(fpos.x, fpos.z);
 				}
 
-				(*fi)->CalculateTransform ();
+				feature->CalculateTransform ();
 			}
 		}
 	}
@@ -385,6 +443,7 @@ void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
 	overrideId=-1;
 }
 
+
 struct CFeatureDrawer : CReadMap::IQuadDrawer
 {
 	void DrawQuad (int x,int y);
@@ -396,6 +455,7 @@ struct CFeatureDrawer : CReadMap::IQuadDrawer
 	float unitDrawDist;
 	std::vector<CFeature*>* farFeatures;
 };
+
 
 void CFeatureDrawer::DrawQuad (int x,int y)
 {
@@ -440,6 +500,7 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 	}
 }
 
+
 void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures)
 {
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
@@ -461,7 +522,8 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	readmap->GridVisibility (camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
 
-void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)
+
+void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 {
 	float3 interPos=feature->pos+UpVector*feature->def->model->height*0.5f;
 	int snurr=-feature->heading+GetHeadingFromVector(camera->pos.x-feature->pos.x,camera->pos.z-feature->pos.z)+(0xffff>>4);
@@ -479,13 +541,15 @@ void CFeatureHandler::DrawFar(CFeature* feature,CVertexArray* va)
 	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
 }
 
-FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
+
+FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 {
+	const string name = StringToLower(mixedCase);
 	std::map<std::string,FeatureDef*>::iterator fi=featureDefs.find(name);
 
-	if(fi==featureDefs.end()){
-		if(!wreckParser.SectionExist(name)){
-			logOutput.Print("Couldnt find wreckage info %s",name.c_str());
+	if (fi == featureDefs.end()) {
+		if (!wreckParser.SectionExist(name)) {
+			logOutput.Print("Couldnt find wreckage info %s", name.c_str());
 			return 0;
 		}
 		FeatureDef* fd=SAFE_NEW FeatureDef;
@@ -495,7 +559,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 			fd->destructable ? "1" : "0",name+"\\reclaimable").c_str());
 		fd->burnable=!!atoi(wreckParser.SGetValueDef("0",name+"\\flammable").c_str());
 		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
-		if(fd->floating && !fd->blocking){
+		if (fd->floating && !fd->blocking) {
 			fd->floating=false;
 		}
 
@@ -534,11 +598,20 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string name)
 		 
 		fd->description=wreckParser.SGetValueDef("",name+"\\description");
 
-		fd->myName=name;
-		featureDefs[name]=fd;
+		fd->myName = name;
 
-		fi=featureDefs.find(name);
+		AddFeatureDef(name, fd);
+
+		fi = featureDefs.find(name);
 	}
 	return fi->second;
 }
 
+
+FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
+{
+	if ((id < 0) || (id >= (int) featureDefsVector.size())) {
+		return NULL;
+	}
+	return featureDefsVector[id];
+}

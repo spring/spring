@@ -1,0 +1,16 @@
+
+- Better reentrancy handling
+- Add shaders / multitex  (and userdata handle for gl states?)
+- UserData for units, unit sets, dlists, textures, sounds, etc...
+- GetNearestUnit(pos, limit)
+- GetNearestTeamUnit(pos, team, limit)
+- GetNearestAllyUnit(pos, allyteam, limit)
+- GetNearestEnemyUnit(pos, allyteam, limit)
+- Add UnitDefTracker and use it
+- GetUnitSelfDTime()
+- Fix WarpMouse()
+- OGG
+- Resync helpers
+- Script config data  (from script.txt or .springrc)
+
+

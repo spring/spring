@@ -17,6 +17,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -49,6 +50,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.tooltip="Sets the unit to load itself onto a transport";
 	c.onlyKey = true;
 	possibleCommands.push_back(c);
+	c.onlyKey = false;
 
 	if (owner->unitDef->canmove) {
 		c.id=CMD_MOVE;
@@ -118,7 +120,7 @@ CMobileCAI::~CMobileCAI()
 
 }
 
-void CMobileCAI::GiveCommand(const Command &c)
+void CMobileCAI::GiveCommandReal(const Command &c)
 {
 	if (!AllowedCommand(c))
 		return;
@@ -232,7 +234,7 @@ void CMobileCAI::SlowUpdate()
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
 	// to the current command  (and ignore them when it's their turn
 	if (commandQue.size() >= 2 && !slowGuard) {
-		deque<Command>::iterator it = commandQue.begin();
+		CCommandQueue::iterator it = commandQue.begin();
 		it++;
 		const Command& c = *it;
 		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
@@ -251,15 +253,18 @@ void CMobileCAI::SlowUpdate()
 */
 void CMobileCAI::Execute()
 {
-	Command& c=commandQue.front();
-	switch(c.id){
-		case CMD_SET_WANTED_MAX_SPEED:	{ ExecuteSetWantedMaxSpeed(c);	return; }
-		case CMD_MOVE:					{ ExecuteMove(c);				return; }
-		case CMD_PATROL:				{ ExecutePatrol(c);				return; }
-		case CMD_FIGHT:					{ ExecuteFight(c);				return; }
-		case CMD_GUARD:					{ ExecuteGuard(c);				return; }
-		case CMD_LOAD_ONTO:				{ ExecuteLoadUnits(c);			return; }
-		default:						{ CCommandAI::SlowUpdate();		return;	}
+	Command& c = commandQue.front();
+	switch (c.id) {
+		case CMD_SET_WANTED_MAX_SPEED:	{ ExecuteSetWantedMaxSpeed(c); return; }
+		case CMD_MOVE:      { ExecuteMove(c);	     return; }
+		case CMD_PATROL:    { ExecutePatrol(c);		 return; }
+		case CMD_FIGHT:     { ExecuteFight(c);		 return; }
+		case CMD_GUARD:     { ExecuteGuard(c);		 return; }
+		case CMD_LOAD_ONTO: { ExecuteLoadUnits(c); return; }
+		default: {
+		  CCommandAI::SlowUpdate();
+		  return;
+		}
 	}
 }
 
@@ -272,7 +277,7 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 			(commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
 		commandQue.push_back(commandQue.front());
 	}
-	commandQue.pop_front();
+	FinishCommand();
 	SlowUpdate();
 	return;
 }
@@ -305,7 +310,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c){
 		newCommand.id = CMD_LOAD_UNITS;
 		newCommand.params.push_back(owner->id);
 		newCommand.options = INTERNAL_ORDER | SHIFT_KEY;
-		tran->commandAI->GiveCommand(newCommand);
+		tran->commandAI->GiveCommandReal(newCommand);
 	}
 	if(owner->transporter) {
 		FinishCommand();
@@ -523,9 +528,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 	}
 
-
 	// check if we are in direct command of attacker
 	if (!inCommand) {
+		// don't start counting until the owner->AttackGround() order is given
+		owner->commandShotCount = -1;
+
 		if (c.params.size() == 1) {
 			int unitID = int(c.params[0]);
 
@@ -554,7 +561,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	}
 	else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
 		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
-		if ((commandQue.size() != 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+		if ((commandQue.size() > 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
 			StopMove();
 			FinishCommand();
 			return;
@@ -578,9 +585,14 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		bool b3 = false;
 
 		if (owner->weapons.size() > 0) {
+			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
+				StopMove();
+				FinishCommand();
+				return;
+			}
+			CWeapon* w = owner->weapons.front();
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
-			CWeapon* w = owner->weapons.front();
 			b2 = w->TryTargetRotate(orderTarget, c.id == CMD_DGUN);
 			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
 		}
@@ -626,35 +638,28 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// user is attacking ground
 	else {
-		float3 pos(c.params[0], c.params[1], c.params[2]);
-
-		//bool b1 = owner->AttackGround(pos, c.id == CMD_DGUN);
-		bool b2 = false;
-		bool b3 = false;
-		bool b4 = (owner->pos - pos).SqLength2D() < 1024;
+		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 diff = owner->pos - pos;
 
 		if (owner->weapons.size() > 0) {
 			// if we have at least one weapon then check if
 			// we can hit position with our first (meanest) one
 			CWeapon* w = owner->weapons.front();
-			b2 = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-			b3 = (owner->pos - pos).Length() < (w->range - (w->relWeaponPos).Length());
+			const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
+			const bool inRange = diff.Length() < (w->range - (w->relWeaponPos).Length());
+			if (inAngle && inRange) {
+				// if w->AttackGround() returned true then we are already
+				// in range with our biggest weapon so stop moving
+				StopMove();
+				owner->AttackGround(pos, c.id == CMD_DGUN);
+				owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+			}
 		}
-		float3 diff = owner->pos - pos;
-		//logOutput << "b2 :" << (b2 ? "true" : "false") << gs->frameNum << "\n";
-		// if w->AttackGround() returned true then we are already
-		// in range with our biggest weapon so stop moving
-		if (b2 && b3) {
-			StopMove();
-			owner->AttackGround(pos, c.id == CMD_DGUN);
-			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
-		}
-
-		// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus
-		// first weapon length OR squared length of 2D vector from our pos. to attack pos. less
-		// than 1024) then we are close enough, but something is in the way. Move a little closer
-		// or further away, and to the side (arbitrary direction).
-		else if (b3 || b4) {
+		else if (diff.SqLength2D() < 1024) {
+			// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus
+			// first weapon length OR squared length of 2D vector from our pos. to attack pos. less
+			// than 1024) then we are close enough, but something is in the way. Move a little closer
+			// or further away, and to the side (arbitrary direction).
 			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
 			float sin = moveDir ? 3.0/5 : -3.0/5;
 			float cos = 4.0/5;
@@ -717,15 +722,10 @@ void CMobileCAI::DrawCommands(void)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		bool draw=false;
 		switch(ci->id){
-			case CMD_LOAD_ONTO:{
-				CUnit* unit = uh->units[int(ci->params[0])];
-				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
-				break;
-			}
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
@@ -767,6 +767,11 @@ void CMobileCAI::DrawCommands(void)
 				}
 				break;
 			}
+			case CMD_LOAD_ONTO:{
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
+				break;
+			}
 			case CMD_WAIT:{
 				DrawWaitIcon(*ci);
 				break;
@@ -798,7 +803,7 @@ void CMobileCAI::NonMoving(void)
 			length=0.1f;
 			dif = float3(0.1f, 0.0f, 0.0f);
 		}
-		if(length<buggerOffRadius){
+		if ((length < buggerOffRadius) && (owner->prevMoveType == NULL)) {
 			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
 			Command c;
 			c.id = CMD_MOVE;
@@ -853,8 +858,10 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
-	lastIdleCheck=gs->frameNum;
-	if((owner->pos-lastUserGoal).SqLength2D()>10000 && !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)){
+	lastIdleCheck = gs->frameNum;
+	if (((owner->pos - lastUserGoal).SqLength2D() > 10000.0f) &&
+	    !owner->haveTarget && (owner->prevMoveType == NULL) &&
+	    !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 		Command c;
 		c.id=CMD_MOVE;
 		c.options=0;		//note that this is not internal order so that we dont keep generating new orders if we cant get to that pos

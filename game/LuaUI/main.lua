@@ -15,6 +15,8 @@ Spring.SendCommands({"ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt"})
 
 dofile(LUAUI_DIRNAME .. "utils.lua")
 
+include("callins.lua") -- define all call-ins, in case they are required
+
 include("colors.h.lua")
 include("opengl.h.lua")
 include("spring.h.lua")
@@ -58,11 +60,6 @@ local gl = Spring.Draw  --  easier to use
 --
 --  A few helper functions
 --
-
-function Echo(msg)
-  Spring.SendCommands({'echo ' .. msg})
-end
-
 
 function Say(msg)
   Spring.SendCommands({'say ' .. msg})
@@ -210,8 +207,8 @@ function KeyPress(key, mods, isRepeat)
   return widgetHandler:KeyPress(key, mods, isRepeat)
 end
 
-function KeyRelease(key)
-  return widgetHandler:KeyRelease(key)
+function KeyRelease(key, mods)
+  return widgetHandler:KeyRelease(key, mods)
 end
 
 function MouseMove(x, y, dx, dy, button)
@@ -244,8 +241,8 @@ end
 
 
 --
--- The unit call-Ins are handled differently
--- (see LuaUI/widgets.lua / UpdateCallIns())
+-- The unit (and some of the Draw) call-Ins are handled
+-- differently (see LuaUI/widgets.lua / UpdateCallIns())
 --
 
 

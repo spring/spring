@@ -11,6 +11,7 @@
 #include "COB/CobFile.h"
 #include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
+#include "CommandAI/FactoryCAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "Game/Camera.h"
@@ -18,7 +19,6 @@
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
-#include "Game/UI/GuiHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
@@ -27,9 +27,12 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GroundFlash.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaRules.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
@@ -39,6 +42,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Projectiles/FlareProjectile.h"
 #include "Sim/Projectiles/MissileProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -96,7 +100,7 @@ CUnit::CUnit ()
 	lastAttack(-200),
 	userTarget(0),
 	userAttackGround(false),
-	commandShotCount(0),
+	commandShotCount(-1),
 	lastLosUpdate(0),
 	fireState(2),
 	moveState(0),
@@ -169,8 +173,11 @@ CUnit::CUnit ()
 	deathScriptFinished(false),
 	dontUseWeapons(false),
 	currentFuel(0),
+	noSelect(false),
+	noMinimap(false),
 	isIcon(false),
-	iconRadius(0)
+	iconRadius(0),
+	prevMoveType(NULL)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -212,6 +219,7 @@ CUnit::~CUnit()
 
 	delete commandAI;
 	delete moveType;
+	delete prevMoveType; // must be deleted before moveType
 
 	if(group)
 		group->RemoveUnit(this);
@@ -257,6 +265,69 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	tracefile << "New unit: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
+}
+
+
+void CUnit::ForcedMove(const float3& newPos)
+{
+	// hack to make mines not block ground
+	const bool blocking = !unitDef->canKamikaze || (unitDef->type != "Building");
+	if (blocking) {
+		UnBlock();
+	}
+
+	CBuilding* building = dynamic_cast<CBuilding*>(this);
+	if (building && unitDef->useBuildingGroundDecal) {
+		groundDecals->RemoveBuilding(building, NULL);
+	}
+
+	pos = newPos;
+	midPos = pos + (frontdir * relMidPos.z) +
+	               (updir    * relMidPos.y) +
+	               (rightdir * relMidPos.x);
+
+	if (building && unitDef->useBuildingGroundDecal) {
+		groundDecals->AddBuilding(building);
+	}
+	
+	if (blocking) {
+		Block();
+	}
+
+	qf->MovedUnit(this);
+	loshandler->MoveUnit(this, false);
+	if (hasRadarCapacity) {
+		radarhandler->MoveUnit(this);
+	}
+}
+
+
+void CUnit::ForcedSpin(const float3& newDir)
+{
+	frontdir = newDir; 
+	heading = GetHeadingFromVector(newDir.x, newDir.z);
+	ForcedMove(pos); // lazy, don't need to update the quadfield, etc...
+}
+
+
+void CUnit::EnableScriptMoveType()
+{
+	if (prevMoveType != NULL) {
+		return; // already enabled
+	}
+	prevMoveType = moveType;
+	moveType = SAFE_NEW CScriptMoveType(this);
+}
+
+
+void CUnit::DisableScriptMoveType()
+{
+	if (prevMoveType == NULL) {
+		return; // not enabled
+	}
+	delete moveType;
+	moveType = prevMoveType;
+	prevMoveType = NULL;
 }
 
 
@@ -307,50 +378,53 @@ void CUnit::SlowUpdate()
 		nextPosErrorUpdate=16;
 	}
 
-	for(int a=0;a<gs->activeAllyTeams;++a){
-		if(losStatus[a] & LOS_INTEAM){
-		} else if(loshandler->InLos(this,a)){
-			if(!(losStatus[a]&LOS_INLOS)){
+	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+		if (losStatus[a] & LOS_INTEAM) {
+			continue; // allied, no need to update
+		}
+		else if (loshandler->InLos(this, a)) {
+			if (!(losStatus[a] & LOS_INLOS)) {
 				int prevLosStatus = losStatus[a];	
 			
-				if(beingBuilt){
-					losStatus[a]|=(LOS_INLOS | LOS_INRADAR);
+				if (beingBuilt) {
+					losStatus[a] |= (LOS_INLOS | LOS_INRADAR);
 				} else {
-					losStatus[a]|=(LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);	
+					losStatus[a] |= (LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
 				}
 
 				if(!(prevLosStatus&LOS_INRADAR)){
-					globalAI->UnitEnteredRadar(this,a);
-					if (guihandler) { guihandler->UnitEnteredRadar(this, a); }
+					luaCallIns.UnitEnteredRadar(this, a);
+					globalAI->UnitEnteredRadar(this, a);
 				}
-				globalAI->UnitEnteredLos(this,a);
-				if (guihandler) { guihandler->UnitEnteredLos(this, a); }
+				luaCallIns.UnitEnteredLos(this, a);
+				globalAI->UnitEnteredLos(this, a);
 			}
-		} else if(radarhandler->InRadar(this,a)){
-			if((losStatus[a] & LOS_INLOS)){
-				globalAI->UnitLeftLos(this,a);
-				if (guihandler) { guihandler->UnitLeftLos(this, a); }
-				losStatus[a]&= ~LOS_INLOS;
-			} else if(!(losStatus[a] & LOS_INRADAR)){
-				losStatus[a]|= LOS_INRADAR;
-				globalAI->UnitEnteredRadar(this,a);
-				if (guihandler) { guihandler->UnitEnteredRadar(this, a); }
+		} else if (radarhandler->InRadar(this, a)) {
+			if ((losStatus[a] & LOS_INLOS)) {
+				luaCallIns.UnitLeftLos(this, a);
+				globalAI->UnitLeftLos(this, a);
+				losStatus[a] &= ~LOS_INLOS;
+			} else if (!(losStatus[a] & LOS_INRADAR)) {
+				losStatus[a] |= LOS_INRADAR;
+				luaCallIns.UnitEnteredRadar(this, a);
+				globalAI->UnitEnteredRadar(this, a);
 			}
 		} else {
-			if((losStatus[a]&LOS_INRADAR)){
-				if((losStatus[a]&LOS_INLOS)){
-					globalAI->UnitLeftLos(this,a);
-					globalAI->UnitLeftRadar(this,a);
-					if (guihandler) { guihandler->UnitLeftLos(this, a); }
-					if (guihandler) { guihandler->UnitLeftRadar(this, a); }
-				}else{
-					globalAI->UnitLeftRadar(this,a);
-					if (guihandler) { guihandler->UnitLeftRadar(this, a); }
+			if ((losStatus[a] & LOS_INRADAR)) {
+				if ((losStatus[a] & LOS_INLOS)) {
+					luaCallIns.UnitLeftLos(this, a);
+					luaCallIns.UnitLeftRadar(this, a);
+					globalAI->UnitLeftLos(this, a);
+					globalAI->UnitLeftRadar(this, a);
+				} else {
+					luaCallIns.UnitLeftRadar(this, a);
+					globalAI->UnitLeftRadar(this, a);
 				}
-				losStatus[a]&= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
+				losStatus[a] &= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
 			}
 		}
 	}
+
 	if(paralyzeDamage>0){
 		paralyzeDamage-=maxHealth*(16.f/30.f/40.f);
 		if(paralyzeDamage<0)
@@ -494,7 +568,7 @@ void CUnit::SlowUpdate()
 		haveTarget=false;
 		haveUserTarget=false;
 
-		//aircraft does not want this
+		// aircraft and ScriptMoveType do not want this
 		if (moveType->useHeading) {
 			frontdir=GetVectorFromHeading(heading);
 			if(transporter && transporter->unitDef->holdSteady) {
@@ -529,23 +603,30 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(moveType->progressState == CMoveType::Active)
-	{
-		if(seismicSignature)
-		{
+	if (moveType->progressState == CMoveType::Active) {
+		if (seismicSignature) {
 			float rx = gs->randFloat();
 			float rz = gs->randFloat();
 
-			if(!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&  radarhandler->InSeismicDistance(this, gu->myAllyTeam))
-				SAFE_NEW CSeismicGroundFlash(pos + float3(radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rx),0,radarhandler->radarErrorSize[gu->myAllyTeam]*(0.5f-rz)), ph->seismictex, 30, 15, 0, seismicSignature, 1, float3(0.8f,0.0f,0.0f));
+			const float* errorScale = radarhandler->radarErrorSize;
+			if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
+			    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
+				const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
+				                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
-			for(int a=0;a<gs->activeAllyTeams;++a){
-                if(radarhandler->InSeismicDistance(this, a))
-				{
-					globalAI->SeismicPing(a, this, pos + float3(radarhandler->radarErrorSize[a]*(0.5f-rx),0,radarhandler->radarErrorSize[a]*(0.5f-rz)), seismicSignature);
+				SAFE_NEW CSeismicGroundFlash(pos + err, 
+                                     ph->seismictex, 30, 15, 0, seismicSignature, 1,
+                                     float3(0.8f,0.0f,0.0f));
+			}
+			for (int a=0; a<gs->activeAllyTeams; ++a) {
+				if (radarhandler->InSeismicDistance(this, a)) {
+					const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
+					                 errorScale[a] * (0.5f - rz));
+					const float3 pingPos = (pos + err);
+					luaCallIns.UnitSeismicPing(this, a, pingPos, seismicSignature);
+					globalAI->SeismicPing(a, this, pingPos, seismicSignature);
 				}
 			}
-
 		}
 	}
 
@@ -653,7 +734,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		ENTER_SYNCED;
 	}
 
-	globalAI->UnitDamaged(this,attacker,damage);
+	luaCallIns.UnitDamaged(this, attacker, damage);
+	globalAI->UnitDamaged(this, attacker, damage);
 
 	if(health<=0){
 		KillUnit(false,false,attacker);
@@ -680,14 +762,16 @@ void CUnit::Kill(float3& impulse) {
 void CUnit::Draw()
 {
 	glPushMatrix();
-	float3 interPos=pos+speed*gu->timeOffset;
-	
-	if (physicalState == Flying && unitDef->canmove) {
-		//aircraft or skidding ground unit
-		CMatrix44f transMatrix(interPos,-rightdir,updir,frontdir);
 
+	const float3 interPos = pos + (speed * gu->timeOffset);
+
+	if ((prevMoveType != NULL) || // means a ScriptMoveType is active
+	    (physicalState == Flying && unitDef->canmove)) {
+		// aircraft, skidding ground unit, or active ScriptMoveType
+		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
 		glMultMatrixf(&transMatrix[0]);
-	} else if (transporter && transporter->unitDef->holdSteady){
+	}
+	else if (transporter && transporter->unitDef->holdSteady){
 		
 		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
 		float3 upDir=updir;
@@ -698,11 +782,13 @@ void CUnit::Draw()
 		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
 
 		glMultMatrixf(&transMatrix[0]);
-	} else if(upright || !unitDef->canmove){
+	}
+	else if(upright || !unitDef->canmove){
 		glTranslatef3(interPos);
 		if(heading!=0)
 			glRotatef(heading*(180.0f/32768.0f),0,1,0);
-	} else {
+	}
+	else {
 		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
 		float3 upDir=ground->GetSmoothNormal(pos.x,pos.z);
 		float3 rightDir=frontDir.cross(upDir);
@@ -714,10 +800,11 @@ void CUnit::Draw()
 		glMultMatrixf(&transMatrix[0]);
 	}
 
-	if(beingBuilt && unitDef->showNanoFrame){
-		if(shadowHandler->inShadowPass){
-			if(buildProgress>0.66f)
+	if (beingBuilt && unitDef->showNanoFrame) {
+		if (shadowHandler->inShadowPass) {
+			if (buildProgress>0.66f) {
 				localmodel->Draw();
+			}
 		} else {
 			float height=model->height;
 			float start=model->miny;
@@ -772,6 +859,7 @@ void CUnit::Draw()
 	} else {
 		localmodel->Draw();
 	}
+
 	if(gu->drawdebug){
 		glPushMatrix();
 		glTranslatef3(frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x);
@@ -786,80 +874,88 @@ void CUnit::Draw()
 
 void CUnit::DrawStats()
 {
-	if(gu->myAllyTeam!=allyteam && !gu->spectatingFullView && unitDef->hideDamage){
+	if ((gu->myAllyTeam != allyteam) &&
+	    !gu->spectatingFullView && unitDef->hideDamage) {
 		return;
 	}
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	interPos.y+=model->height+5;
+	float3 interPos = pos + (speed * gu->timeOffset);
+	interPos.y += model->height + 5.0f;
 
 	glBegin(GL_QUADS);
 
-	float hpp = max(0.0f, health/maxHealth);
-	float end=(0.5f-(hpp))*10;
+	const float3& camUp    = camera->up;
+	const float3& camRight = camera->right;
 
-	//black background for healthbar
-	glColor3f(0.0f,0.0f,0.0f);
-	glVertexf3(interPos+(camera->up*6-camera->right*end));
-	glVertexf3(interPos+(camera->up*6+camera->right*5));
-	glVertexf3(interPos+(camera->up*4+camera->right*5));
-	glVertexf3(interPos+(camera->up*4-camera->right*end));
+	const float hpp = max(0.0f, health / maxHealth);
+	const float end = (0.5f - hpp) * 10.0f;
 
-	if(stunned){
-		glColor3f(0,0,1.0f);
+	// black background for healthbar
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glVertexf3(interPos + (camUp * 6.0f) - (camRight * end));
+	glVertexf3(interPos + (camUp * 6.0f) + (camRight * 5.0f));
+	glVertexf3(interPos + (camUp * 4.0f) + (camRight * 5.0f));
+	glVertexf3(interPos + (camUp * 4.0f) - (camRight * end));
+
+	if (stunned) {
+		glColor3f(0.0f, 0.0f, 1.0f);
 	} else {
-		if(hpp>0.5f)
-			glColor3f(1.0f-((hpp-0.5f)*2.0f),1.0f,0.0f);
-		else
-			glColor3f(1.0f,hpp*2.0f,0.0f);
+		if (hpp > 0.5f) {
+			glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
+		} else {
+			glColor3f(1.0f, hpp * 2.0f, 0.0f);
+		}
 	}
-	//healthbar
-	glVertexf3(interPos+(camera->up*6-camera->right*5));
-	glVertexf3(interPos+(camera->up*6-camera->right*end));
-	glVertexf3(interPos+(camera->up*4-camera->right*end));
-	glVertexf3(interPos+(camera->up*4-camera->right*5));
+	// healthbar
+	glVertexf3(interPos + (camUp * 6.0f) - (camRight * 5.0f));
+	glVertexf3(interPos + (camUp * 6.0f) - (camRight * end));
+	glVertexf3(interPos + (camUp * 4.0f) - (camRight * end));
+	glVertexf3(interPos + (camUp * 4.0f) - (camRight * 5.0f));
 
-	if(gu->myTeam!=team && !gu->spectatingFullView){
+	if ((gu->myTeam != team) && !gu->spectatingFullView) {
 		glEnd();
 		return;
 	}
-	glColor3f(1,1,1);
-	end=(limExperience*0.8f)*10;
-	glVertexf3(interPos+(-camera->up*2+camera->right*6));
-	glVertexf3(interPos+(-camera->up*2+camera->right*8));
-	glVertexf3(interPos+(camera->up*(end-2)+camera->right*8));
-	glVertexf3(interPos+(camera->up*(end-2)+camera->right*6));
+
+	// experience bar
+	glColor3f(1.0f, 1.0f, 1.0f);
+	const float hEnd = (limExperience * 0.8f) * 10.0f;
+	glVertexf3(interPos + (-camUp * 2.0f)         + (camRight * 6.0f));
+	glVertexf3(interPos + (-camUp * 2.0f)         + (camRight * 8.0f));
+	glVertexf3(interPos + (camUp * (hEnd - 2.0f)) + (camRight * 8.0f));
+	glVertexf3(interPos + (camUp * (hEnd - 2.0f)) + (camRight * 6.0f));
 	glEnd();
 
-	if(group){
+	if (group) {
 		glPushMatrix();
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
-		glTranslatef3(interPos-camera->right*10);
-		glScalef(10,10,10);
-		font->glWorldPrint("%d",group->id);
+		glTranslatef3(interPos - (camRight * 10.0f));
+		glScalef(10.0f, 10.0f, 10.0f);
+		font->glWorldPrint("%d", group->id);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_BLEND);
 		glPopMatrix();
 	}
-	if(beingBuilt){
-		glColor3f(1,0,0);
-		float end=(buildProgress*0.8f)*10;
+
+	if (beingBuilt) {
+		glColor3f(1.0f, 0.0f, 0.0f);
+		const float end = (buildProgress * 0.8f) * 10.0f;
 		glBegin(GL_QUADS);
-		glVertexf3(interPos-camera->up*2-camera->right*6);
-		glVertexf3(interPos-camera->up*2-camera->right*8);
-		glVertexf3(interPos+camera->up*(end-2)-camera->right*8);
-		glVertexf3(interPos+camera->up*(end-2)-camera->right*6);
+		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 6.0f));
+		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 8.0f));
+		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 8.0f));
+		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 6.0f));
 		glEnd();
 	}
-	if(stockpileWeapon){
-		glColor3f(1,0,0);
-		float end=(stockpileWeapon->buildPercent*0.8f)*10;
+	else if (stockpileWeapon) {
+		glColor3f(1.0f, 0.0f, 0.0f);
+		const float end = (stockpileWeapon->buildPercent * 0.8f) * 10.0f;
 		glBegin(GL_QUADS);
-		glVertexf3(interPos-camera->up*2-camera->right*6);
-		glVertexf3(interPos-camera->up*2-camera->right*8);
-		glVertexf3(interPos+camera->up*(end-2)-camera->right*8);
-		glVertexf3(interPos+camera->up*(end-2)-camera->right*6);
+		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 6.0f));
+		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 8.0f));
+		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 8.0f));
+		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 6.0f));
 		glEnd();
 	}
 }
@@ -886,6 +982,7 @@ void CUnit::ChangeLos(int l,int airlos)
 	loshandler->MoveUnit(this,false);
 }
 
+
 bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
 	// do not allow unit count violations due to team swapping
@@ -893,14 +990,24 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	if (uh->unitsType[newteam][unitDef->id] >= unitDef->maxThisUnit) {
 		return false;
 	}
-	
+
+	const bool capture = (type == ChangeGiven);	
+	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
+		return false;
+	}		
+
 	const int oldteam = team;
 
-	globalAI->UnitTaken(this, oldteam);
-	if (guihandler) {
-		guihandler->UnitTaken(this, newteam);
-	}
+	selectedUnits.RemoveUnit(this);
 	
+	luaCallIns.UnitTaken(this, newteam);
+	globalAI->UnitTaken(this, oldteam);
+	
+	// reset states and clear the queues
+	if (!gs->AlliedTeams(oldteam, newteam)) {	
+		ChangeTeamReset();
+	}
+
 	if (uh->unitsType[oldteam][unitDef->id] > 0) {
 		uh->unitsType[oldteam][unitDef->id]--;
 	} else {
@@ -913,19 +1020,21 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	loshandler->FreeInstance(los);
 	los = 0;
 	losStatus[allyteam] = 0;
-	if(hasRadarCapacity)
+	if (hasRadarCapacity) {
 		radarhandler->RemoveUnit(this);
+	}
 
-	if(unitDef->isAirBase){
+	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
 	}
 
 	// Sharing commander in com ends game kills you.
 	// Note that this will kill the com too.
-	if (unitDef->isCommander)
+	if (unitDef->isCommander) {
 		gs->Team(oldteam)->CommanderDied(this);
+	}
 
-	if(type==ChangeGiven){
+	if (type == ChangeGiven) {
 		gs->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
 		gs->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
 	} else {
@@ -933,7 +1042,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		gs->Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
 	}
 
-	if(!beingBuilt){
+	if (!beingBuilt) {
 		gs->Team(oldteam)->metalStorage  -= unitDef->metalStorage;
 		gs->Team(oldteam)->energyStorage -= unitDef->energyStorage;
 
@@ -941,16 +1050,15 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		gs->Team(newteam)->energyStorage += unitDef->energyStorage;
 	}
 
-	commandAI->commandQue.clear();
-
 	team = newteam;
 	allyteam = gs->AllyTeam(newteam);
 
 	loshandler->MoveUnit(this,false);
 	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 	qf->MovedUnit(this);
-	if(hasRadarCapacity)
+	if (hasRadarCapacity) {
 		radarhandler->MoveUnit(this);
+	}
 
 	//model=unitModelLoader->GetModel(model->name,newteam);
 	if (unitDef->useCSOffset) {
@@ -966,26 +1074,82 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	delete localmodel;
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
 
-	if(unitDef->isAirBase){
+	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	if((type == ChangeGiven) && (unitDef->energyUpkeep > 25)){
-		//deactivate to prevent the old give metal maker trick
-		Command c;
-		c.id = CMD_ONOFF;
-
-		c.params.push_back(0);
-		commandAI->GiveCommand(c);
-	}
-
+	luaCallIns.UnitGiven(this, oldteam);
 	globalAI->UnitGiven(this, oldteam);
-	if (guihandler) {
-		guihandler->UnitGiven(this, oldteam);
-	}
 	
 	return true;
 }
+
+
+void CUnit::ChangeTeamReset()
+{
+	Command c;
+
+	// clear the commands (newUnitCommands for factories)
+	c.id = CMD_STOP;
+	commandAI->GiveCommand(c);
+
+	// clear the build commands for factories
+	CFactoryCAI* facAI = dynamic_cast<CFactoryCAI*>(commandAI);
+	if (facAI) {
+		c.options = RIGHT_MOUSE_KEY; // clear option
+		CCommandQueue& buildCommands = facAI->commandQue;
+		CCommandQueue::iterator it;
+		std::vector<Command> clearCommands;
+		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
+			c.id = it->id;
+			clearCommands.push_back(c);
+		}
+		for (int i = 0; i < (int)clearCommands.size(); i++) {
+			facAI->GiveCommand(clearCommands[i]);
+		}
+	}
+
+	// deactivate to prevent the old give metal maker trick
+	c.id = CMD_ONOFF;
+	c.params.push_back(0); // always off
+	commandAI->GiveCommand(c);
+	c.params.clear();
+	// reset repeat state
+	c.id = CMD_REPEAT;
+	c.params.push_back(0);
+	commandAI->GiveCommand(c);
+	c.params.clear();
+	// reset cloak state
+	if (unitDef->canCloak) {
+		c.id = CMD_CLOAK;
+		c.params.push_back(0); // always off
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
+	// reset move state
+	if (unitDef->canmove || unitDef->builder) {
+		c.id = CMD_MOVE_STATE;
+		c.params.push_back(1);
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
+	// reset fire state
+	if (!unitDef->noAutoFire &&
+	    (!unitDef->weapons.empty() || (unitDef->type == "Factory"))) {
+		c.id = CMD_FIRE_STATE;
+		c.params.push_back(2);
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
+	// reset trajectory state
+	if (unitDef->highTrajectoryType > 1) {
+		c.id = CMD_TRAJECTORY;
+		c.params.push_back(0);
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
+}
+
 
 bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 {
@@ -1068,7 +1232,7 @@ void CUnit::SetUserTarget(CUnit* target)
 }
 
 
-void CUnit::Init(void)
+void CUnit::Init(const CUnit* builder)
 {
 	relMidPos=model->relMidPos;
 	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
@@ -1097,10 +1261,8 @@ void CUnit::Init(void)
 
 	UpdateTerrainType();
 
-	globalAI->UnitCreated(this);
-	if (guihandler) {
-		guihandler->UnitCreated(this);
-	}
+	luaCallIns.UnitCreated(this, builder);
+	globalAI->UnitCreated(this); // FIXME -- add builder?
 }
 
 void CUnit::UpdateTerrainType()
@@ -1265,10 +1427,8 @@ void CUnit::FinishedBuilding(void)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
+	luaCallIns.UnitFinished(this);
 	globalAI->UnitFinished(this);
-	if (guihandler) {
-		guihandler->UnitFinished(this);
-	}
 
 	if(unitDef->isFeature){
 		UnBlock();
@@ -1301,10 +1461,8 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 	}
 	isDead=true;
 
-	globalAI->UnitDestroyed(this,attacker);
-	if (guihandler) {
-		guihandler->UnitDestroyed(this, attacker);
-	}
+	luaCallIns.UnitDestroyed(this, attacker);
+	globalAI->UnitDestroyed(this, attacker);
 
 	blockHeightChanges=false;
 	if(unitDef->isCommander)
@@ -1524,6 +1682,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(upright),
 				CR_MEMBER(relMidPos),
 				CR_MEMBER(power),
+				CR_MEMBER(noSelect),
+				CR_MEMBER(noMinimap),
 
 				CR_MEMBER(maxHealth),
 				CR_MEMBER(health),
@@ -1584,6 +1744,7 @@ CR_REG_METADATA(CUnit, (
 
 //				CR_MEMBER(commandAI),
 				CR_MEMBER(moveType),
+				CR_MEMBER(prevMoveType),
 //				CR_MEMBER(group),
 
 				CR_MEMBER(metalUse),

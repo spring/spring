@@ -17,7 +17,6 @@ using namespace std;
 
 class CUnit;
 class CFileHandler;
-class CKeyAutoBinder;
 
 
 class CKeyBindings
@@ -96,8 +95,6 @@ class CKeyBindings
 		int debug;
 		int fakeMetaKey;
 		bool userCommand;
-
-		CKeyAutoBinder* autoBinder;
 };
 
 

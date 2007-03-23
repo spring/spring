@@ -19,14 +19,21 @@ public:
 
 	CFactoryCAI(CUnit* owner);
 	~CFactoryCAI(void);
+
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
-	void GiveCommand(const Command& c);
-	void DrawCommands(void);
-	void UpdateIconName(int id,BuildOption& bo);
+
+	void GiveCommandReal(const Command& c);
+
+	void InsertBuildCommand(CCommandQueue::iterator& it, const Command& c);
+	void RemoveBuildCommand(CCommandQueue::iterator& it);
+
 	void ExecuteStop(Command &c);
 
-	std::deque<Command> newUnitCommands;
+	void DrawCommands(void);
+	void UpdateIconName(int id,BuildOption& bo);
+
+	CCommandQueue newUnitCommands;
 
 	map<int,BuildOption> buildOptions;
 

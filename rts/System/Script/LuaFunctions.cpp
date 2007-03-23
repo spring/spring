@@ -4,27 +4,28 @@
 
 #include "StdAfx.h"
 #include "LuaFunctions.h"
-#include "Game/StartScripts/Script.h"
+#include "GlobalStuff.h"
 #include "float3.h"
 #include "LogOutput.h"
-#include "GlobalStuff.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Units/UnitLoader.h"
 #include "TdfParser.h"
-#include "Game/command.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Misc/QuadField.h"
-#include "Game/Game.h"
-#include "Game/UI/EndGameBox.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Map/ReadMap.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Misc/FeatureHandler.h"
-#include "Sim/Misc/Feature.h"
-#include "Sim/Misc/FeatureDef.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "Game/command.h"
+#include "Game/Game.h"
+#include "Game/SelectedUnits.h"
+#include "Game/StartScripts/Script.h"
+#include "Game/UI/EndGameBox.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Map/ReadMap.h"
+#include "Sim/Misc/FeatureDef.h"
+#include "Sim/Misc/Feature.h"
+#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 
 using namespace std;
 using namespace luabind;
@@ -39,6 +40,7 @@ namespace luafunctions
 	{
 		SAFE_NEW CEndGameBox();
 		game->gameOver = true;
+		luaCallIns.GameOver();
 	}
 
     void CreateGlobalAI( int teamnumber, std::string dllname )
@@ -61,7 +63,7 @@ namespace luafunctions
 
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(string name, float3 pos, int team, bool buil)
 	{
-		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil);
+		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil, 0, NULL);
 		return SAFE_NEW CObject_pointer<CUnit>(x);
 	}
 

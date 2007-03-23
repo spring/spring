@@ -16,6 +16,7 @@
 #include "ExternalAI/IAICallback.h"
 #include "ExternalAI/aibase.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "GlobalStuff.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

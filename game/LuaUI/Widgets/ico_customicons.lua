@@ -69,6 +69,8 @@ function widget:Initialize()
         ud.origIconType = ud.iconType
       end
 
+      ud.weaponCount = table.getn(ud.weapons)
+
       if (ud.isCommander) then
         -- commanders
         table.insert(commanderUnitDefs, udid) -- save for animation

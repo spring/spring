@@ -6,6 +6,8 @@
 #include <string>
 #include <map>
 
+#include "Lua/LuaHashString.h"
+
 //0 = none
 //1 = script calls
 //2 = show every instruction
@@ -55,6 +57,7 @@ public:
 	vector<int> scriptIndex;
 	vector<int> sounds;
 	map<string, int> scriptMap;
+	vector<LuaHashString> luaScripts;
 	int* code;
 	int numStaticVars;
 	string name;

@@ -33,9 +33,9 @@ local function SetupUnit(unitID)
   -- set immobile builders (nanotowers) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
   local x, y, z = Spring.GetUnitPosition(unitID)
-  Spring.GiveOrderToUnit(unitID, CMD_STOP, {}, {})
-  Spring.GiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
-  Spring.GiveOrderToUnit(unitID, CMD_PATROL, { x + 25, y, z - 25 }, {})
+  Spring.GiveOrderToUnit(unitID, CMD.STOP, {}, {})
+  Spring.GiveOrderToUnit(unitID, CMD.MOVE_STATE, { 2 }, {})
+  Spring.GiveOrderToUnit(unitID, CMD.PATROL, { x + 25, y, z - 25 }, {})
 end
 
 

@@ -17,11 +17,6 @@ end
 UtilsGuard = true
 
 
-function Echo(msg)
-  Spring.SendCommands({'echo ' .. msg})
-end
-
-
 function Say(msg)
   Spring.SendCommands({'say ' .. msg})
 end
@@ -37,16 +32,19 @@ end
 --  returns:  basename, dirname
 --
 
-function Basename(path)
-  return string.gsub(path, "(.*[\\/])(.*)", "%2") or path,
-         string.gsub(path, "(.*[\\/])(.*)", "%1")
+function Basename(fullpath)
+  local _,_,base = string.find(fullpath, "([^\\/:]*)$")
+  local _,_,path = string.find(fullpath, "(.*[\\/:])[^\\/:]*$")
+  if (path == nil) then path = "" end
+  return base, path
 end
+
 
 --------------------------------------------------------------------------------
 
 
 function include(filename, envTable)
-  if (string.find(filename, 'h.lua')) then
+  if (string.find(filename, '.h.lua', 1, true)) then
     filename = 'Headers/' .. filename
   end
   local chunk, err = loadfile(LUAUI_DIRNAME .. filename)

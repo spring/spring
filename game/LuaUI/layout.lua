@@ -76,7 +76,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
   local iconList = {}
   
 
-  if (commands[0].id < 0) then
+  if (commands[1].id < 0) then
     menuName = GreenStr .. 'Build Orders'
   else
     menuName = RedStr .. 'Commands'
@@ -84,8 +84,8 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
 
   local ipp = (xIcons * yIcons)   -- iconsPerPage
 
-  local prevCmd = cmdCount - 2
-  local nextCmd = cmdCount - 1
+  local prevCmd = cmdCount - 1
+  local nextCmd = cmdCount - 0
   local prevPos = ipp - xIcons
   local nextPos = ipp - 1
   if (prevCmd >= 0) then reTextureCmds[prevCmd] = FrameTexture end
@@ -95,16 +95,16 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
   local pageNumPos = (prevPos + nextPos) / 2
   if (xIcons > 2) then
     local color
-    if (commands[0].id < 0) then color = GreenStr else color = RedStr end
+    if (commands[1].id < 0) then color = GreenStr else color = RedStr end
     local pageNum = '' .. (activePage + 1) .. ''
     PageNumCmd.name = color .. '   ' .. pageNum .. '   '
     customCmds = { PageNumCmd }
-    pageNumCmd = cmdCount
+    pageNumCmd = cmdCount + 1
   end
 
   local pos = 0;
 
-  for cmdSlot = 0, (cmdCount - 3) do
+  for cmdSlot = 1, (cmdCount - 2) do
 
     -- skip the last row
     local firstSpecial = (xIcons * (yIcons - 1))
@@ -139,7 +139,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
       iconList[pos] = cmdSlot
       pos = pos + 1
 
-      if (cmd.id ~= CMD_STOCKPILE) then
+      if (cmd.id ~= CMD.STOCKPILE) then
         if (cmd.id >= 0) then
           -- add a frame texture
           reTextureCmds[cmdSlot] = FrameTexture

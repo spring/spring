@@ -6,39 +6,45 @@
  * everything else
  */
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GLContext.h"
-#include <GL/glu.h>			// Header File For The GLu32 Library
-#include <time.h>
-#include <string>
 #include <algorithm>
-#include "Game/PreGame.h"
-#include "Game/Game.h"
+#include <string>
+#include <time.h>
 #include <float.h>
-#include "Rendering/glFont.h"
-#include "Rendering/Textures/TAPalette.h"
-#include "Game/UI/MouseHandler.h"
-#include "Game/UI/KeyBindings.h"
-#include "MouseInput.h"
-#include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
+#include "bitops.h"
+#include "FPUCheck.h"
 #include "LogOutput.h"
-#include "Game/GameSetup.h"
-#include "Game/CameraController.h"
+#include "MouseInput.h"
 #include "NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
-#include "Platform/BaseCmd.h"
+#include "Game/CameraController.h"
+#include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
-#include "Platform/errorhandler.h"
+#include "Game/PreGame.h"
 #include "Game/StartScripts/ScriptHandler.h"
+#include "Game/Team.h"
+#include "Game/UI/KeyBindings.h"
+#include "Game/UI/MouseHandler.h"
+#include "Lua/LuaOpenGL.h"
+#include "Platform/BaseCmd.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/errorhandler.h"
+#include "Platform/FileSystem.h"
+#include "Rendering/GLContext.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/NamedTextures.h"
+#include "Rendering/Textures/TAPalette.h"
 #include "creg/creg.h"
-#include "bitops.h"
-#include "FPUCheck.h"
-#include <SDL.h>
+#include "mmgr.h"
+
+#include <GL/glu.h>  // Header File For The GLu32 Library
+                     // Must come after Rendering/GL/myGL.h for GLEW
+
+#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPress
 #include <SDL_main.h>
 #include <SDL_syswm.h>
-#include "mmgr.h"
 
 #ifdef WIN32
 	#ifdef __MINGW32__
@@ -324,6 +330,12 @@ bool SpringApp::Initialize ()
 	LoadExtensions();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
+
+	// Initialize named texture handler
+	CNamedTextures::Init();
+
+	// Initialize Lua GL
+	LuaOpenGL::Init();
 
 	// Initialize ScriptHandler / LUA
 	CScriptHandler::Instance().StartLua();
@@ -765,24 +777,46 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 void SpringApp::CreateGameSetup ()
 {
 	ENTER_SYNCED;
+
 	if (!startscript.empty()) {
-		gameSetup=SAFE_NEW CGameSetup();
-		if(!gameSetup->Init(startscript)){
+		gameSetup = SAFE_NEW CGameSetup();
+		if (!gameSetup->Init(startscript)) {
 			delete gameSetup;
-			gameSetup=0;
+			gameSetup = 0;
+		}
+	}
+
+	if (!gameSetup) {
+		gs->noHelperAIs   = !!configHandler.GetInt("NoHelperAIs", 0);
+		gs->useLuaRules = !!configHandler.GetInt("LuaRules", 1);
+		gs->useLuaGaia   = !!configHandler.GetInt("LuaGaia", 1);
+		if (gs->useLuaGaia) {
+			gs->gaiaTeamID = gs->activeTeams;
+			gs->gaiaAllyTeamID = gs->activeAllyTeams;
+			gs->activeTeams++;
+			gs->activeAllyTeams++;
+			CTeam* team = gs->Team(gs->gaiaTeamID);
+			team->color[0] = 255;
+			team->color[1] = 255;
+			team->color[2] = 255;
+			team->color[3] = 255;
+			team->gaia = true;
 		}
 	}
 
 	ENTER_MIXED;
 
 	bool server = true;
-	if (!demofile.empty())
+
+	if (!demofile.empty()) {
 		server = false;
-	else if(gameSetup) {
-		server=gameSetup->myPlayer-gameSetup->numDemoPlayers == 0;
 	}
-	else
-		server=!cmdline->result("client") || cmdline->result("server");
+	else if (gameSetup) {
+		server = ((gameSetup->myPlayer - gameSetup->numDemoPlayers) == 0);
+	}
+	else {
+		server = !cmdline->result("client") || cmdline->result("server");
+	}
 
 #ifdef SYNCDEBUG
 	// initialize sync debugger as soon as we know whether we will be server
@@ -795,6 +829,7 @@ void SpringApp::CreateGameSetup ()
 		pregame = SAFE_NEW CPreGame(server, "");
 	}
 }
+
 
 /**
  * @return return code of activecontroller draw function
@@ -810,9 +845,12 @@ int SpringApp::Update ()
 	mouseInput->Update ();
 
 	int ret = 1;
-	if(activeController) {
-		if(activeController->Update()==0) ret = 0;
-		else ret = activeController->Draw();
+	if (activeController) {
+		if (activeController->Update() == 0) {
+			ret = 0;
+		} else {
+			ret = activeController->Draw();
+		}
 	}
 
 #ifndef WIN32
@@ -941,21 +979,26 @@ int SpringApp::Run (int argc, char *argv[])
 							}
 						}
 
-						activeController->KeyPressed(i,isRepeat);
+						activeController->KeyPressed(i, isRepeat);
 
-#ifndef NEW_GUI
 						if (activeController->userWriting){
 							// use unicode for printed characters
 							i = event.key.keysym.unicode;
-							if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE))
-								if (activeController->ignoreNextChar ||
-								    activeController->ignoreChar == char(i)) {
-									activeController->ignoreNextChar = false;
+							if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE)) {
+								CGameController* ac = activeController;
+								if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
+									ac->ignoreNextChar = false;
 								} else {
-									activeController->userInput += char(i);
+									if (i < SDLK_DELETE) {
+										const int len = (int)ac->userInput.length();
+										ac->writingPos = max(0, min(len, ac->writingPos));
+										char str[2] = { char(i), 0 };
+										ac->userInput.insert(ac->writingPos, str);
+										ac->writingPos++;
+									}
 								}
+							}
 						}
-#endif
 					}
 					break;
 				}
@@ -1011,6 +1054,7 @@ void SpringApp::Shutdown()
 	if (gameSetup)
 		delete gameSetup;
 	delete font;
+	CNamedTextures::Kill();
 	GLContext::Free();
 	ConfigHandler::Deallocate();
 	UnloadExtensions();

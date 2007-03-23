@@ -62,22 +62,14 @@ class CGuiHandler : public CInputReceiver {
  		bool GetGatherMode() const { return gatherMode; }
  		void SetGatherMode(bool value) { gatherMode = value; }
  		
-		bool BindNamedTexture(const std::string& texName);
-		bool FreeNamedTexture(const std::string& texName);
-		
-		void UnitCreated(CUnit* unit);
-		void UnitFinished(CUnit* unit);
-		void UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders);
-		void UnitDestroyed(CUnit* victim, CUnit* attacker);
-		void UnitTaken(CUnit* unit, int newTeam);
-		void UnitGiven(CUnit* unit, int oldTeam);
-		void UnitEnteredRadar(CUnit* unit, int allyteam);   
-		void UnitEnteredLos(CUnit* unit, int allyteam);             
-		void UnitLeftRadar(CUnit* unit, int allyteam);
-		void UnitLeftLos(CUnit* unit, int allyteam);
-		void GroupChanged(int groupID);
-
 		int  GetDefaultCommand(int x, int y) const;
+
+		bool SetActiveCommand(int cmdIndex, bool rmb);
+		bool SetActiveCommand(int cmdIndex,
+		                      int button, bool lmb, bool rmb,
+		                      bool alt, bool ctrl, bool meta, bool shift);
+		bool SetActiveCommand(const CKeyBindings::Action& action,
+		                      const CKeySet& ks, int actionIndex);
 		
 	public:
 		vector<CommandDescription> commands;
@@ -98,7 +90,8 @@ class CGuiHandler : public CInputReceiver {
  		void ConvertCommands(vector<CommandDescription>&);
 
 		int  FindInCommandPage();
-		void RevertToCmdDesc(const CommandDescription& cmdDesc, bool samePage);
+		void RevertToCmdDesc(const CommandDescription& cmdDesc,
+		                     bool defaultCommand, bool samePage);
 
 		void CreateOptions(Command& c,bool rmb);
 		void FinishCommand(int button);
@@ -166,7 +159,6 @@ class CGuiHandler : public CInputReceiver {
 		int actionOffset;
 		CKeySet lastKeySet;
 
-		CLuaUI* luaUI;
 		bool luaUIClick;		
 
 		std::string menuName;

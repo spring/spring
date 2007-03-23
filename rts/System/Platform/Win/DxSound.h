@@ -27,16 +27,19 @@ public:
 	CDxSound();
 	virtual ~CDxSound();
 	void Update();
-	unsigned int GetWaveId(const string& path);
+	unsigned int GetWaveId(const string& path, bool hardFail);
 	void PlaySample(int id,float volume=1);
 	void PlaySample(int id,const float3& p,float volume=1);
+	void PlayStream(const std::string& path, float volume = 1.0f,
+	                const float3* pos = NULL, bool loop = false);
 	void SetVolume (float v);
 
 private:
 	int maxSounds;
-
 	float curThreshhold;
 	float wantedSounds;
+	bool hardFail;
+
 protected:
 	int GetBuf(int id,float volume);
 	int InitFile(const string& name);

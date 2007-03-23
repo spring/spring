@@ -30,6 +30,7 @@ CIconHandler::CIconHandler()
 	if (icons.find("default") == icons.end()) {
 		icons["default"] = SAFE_NEW CIcon(*GetStandardTexture(), 1, 1, false);
 	}
+	
 }
 
 
@@ -81,10 +82,14 @@ bool CIconHandler::LoadTDFicons(const std::string& filename)
 
 CIconHandler::~CIconHandler()
 {
+	std::map<std::string, CIcon*>::iterator it;
+	for (it = icons.begin(); it != icons.end(); ++it) {
+		delete it->second;
+	}
 }
 
 
-CIcon * CIconHandler::GetIcon(const std::string& iconName)
+CIcon* CIconHandler::GetIcon(const std::string& iconName)
 {
 	std::map<std::string, CIcon*>::const_iterator it=icons.find(iconName);
 	if(it==icons.end()){
@@ -106,7 +111,7 @@ float CIconHandler::GetDistance(const std::string& iconName)
 }
 
 
-unsigned int *CIconHandler::GetStandardTexture()
+unsigned int* CIconHandler::GetStandardTexture()
 {
 	if(!standardTextureGenerated){
 		unsigned char si[128*128*4];

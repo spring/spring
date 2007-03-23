@@ -47,7 +47,7 @@ CBuilding::~CBuilding()
 		groundDecals->RemoveBuilding(this,mygb);
 }
 
-void CBuilding::Init(void)
+void CBuilding::Init(const CUnit* builder)
 {
 	mass=100000;
 	physicalState = OnGround;
@@ -55,7 +55,7 @@ void CBuilding::Init(void)
 	if(unitDef->useBuildingGroundDecal){
 		groundDecals->AddBuilding(this);
 	}
-	CUnit::Init();
+	CUnit::Init(builder);
 }
 
 void CBuilding::UnitInit (UnitDef* def, int team, const float3& position)

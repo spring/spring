@@ -10,7 +10,6 @@
 #include "LogOutput.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
-#include "Game/UI/GuiHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -213,7 +212,8 @@ void CBuilder::Update()
 				}
 				if(curResurrect->resurrectProgress>1){		//resurrect finished
 					curResurrect->UnBlock();
-					CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit,curResurrect->pos,team,false,curResurrect->buildFacing);
+					CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit, curResurrect->pos, team,
+					                             false, curResurrect->buildFacing, this);
 					u->health*=0.05f;
 					lastResurrected=u->id;
 					curResurrect->resurrectProgress=0;
@@ -395,10 +395,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	if(feature)
 		return false;
 
-	if(buildInfo.def->floater || mapDamage->disabled || !buildInfo.def->levelGround)
-	{
-		/* Skip the terraforming job. */
-		terraformLeft=0;
+	const UnitDef* unitDef = buildInfo.def;
+	if (mapDamage->disabled || !unitDef->levelGround || unitDef->floater ||
+	    (unitDef->canmove && (unitDef->speed > 0.0f))) {
+		// skip the terraforming job.
+		terraformLeft = 0;
 	}
 	else {
 		CalculateBuildTerraformCost(buildInfo);
@@ -414,7 +415,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	nextBuildType=buildInfo.def->name;
 	nextBuildPos=buildInfo.pos;
 
-	CUnit* b=unitLoader.LoadUnit(nextBuildType,nextBuildPos,team,true, buildInfo.buildFacing);
+	CUnit* b=unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
+	                             true, buildInfo.buildFacing, this);
 	AddDeathDependence(b);
 	curBuild=b;
 	if (mapDamage->disabled && !(curBuild->floatOnWater)) {

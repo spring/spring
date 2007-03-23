@@ -106,6 +106,55 @@ static bool CheckError(const char* msg)
 }
 
 
+// FIXME -- implement OGG Vorbis streaming
+void COpenALSound::PlayStream(const std::string& path, float volume,
+                              const float3* pos, bool loop)
+{
+	if (volume <= 0.0f) {
+		return;
+	}
+
+	ALuint source;
+	alGenSources(1, &source);
+
+	// it seems OpenAL running on Windows is giving problems when too many
+	// sources are allocated at a time, in which case it still generates errors.
+	if (alGetError () != AL_NO_ERROR) {
+		return;
+	}
+//	if (!CheckError("error generating OpenAL sound source"))
+//		return;
+
+	if (Sources[cur]) {
+		// The Linux port of OpenAL generates an "Illegal call" error
+		// if we delete a playing source, so we must stop it first. -- tvo
+		alSourceStop(Sources[cur]);
+		alDeleteSources(1,&Sources[cur]);
+	}
+	Sources[cur++] = source;
+	if (cur == maxSounds) {
+		cur = 0;
+	}
+
+	alSourcei(source, AL_BUFFER, 0); // FIXME id);
+	alSourcef(source, AL_PITCH, 1.0f);
+	alSourcef(source, AL_GAIN, volume);
+	
+	const bool relative = true; // FIXME
+
+	float3 p(0.0f, 0.0f, 0.0f);;
+	if (pos != NULL) {
+		p = (*pos) * posScale;
+	}	
+	alSource3f(source, AL_POSITION, p.x,  p.y,  p.z);
+	alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+	alSourcei(source, AL_LOOPING, false);
+	alSourcei(source, AL_SOURCE_RELATIVE, pos == NULL);
+	alSourcePlay(source);
+	CheckError("COpenALSound::PlaySample");
+}
+
+
 void COpenALSound::SetVolume (float v)
 {
 	globalVolume = v;
@@ -220,12 +269,14 @@ struct WAVHeader
 #pragma pack(pop)
 
 
-static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
+bool COpenALSound::ReadWAV(const char *name, Uint8 *buf, int size, ALuint albuffer)
 {
 	WAVHeader *header = (WAVHeader *)buf;
 
 	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7)) {
-		handleerror(0, "ReadWAV: invalid header.", name, 0);
+		if (hardFail) {
+			handleerror(0, "ReadWAV: invalid header.", name, 0);
+		}
 		return false;
 	}
 
@@ -245,7 +296,9 @@ static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		handleerror(0,"ReadWAV: invalid format tag.", name, 0);
+		if (hardFail) {
+			handleerror(0,"ReadWAV: invalid format tag.", name, 0);
+		}
 		return false;
 	}
 
@@ -254,7 +307,9 @@ static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
-			handleerror(0,"ReadWAV: invalid number of bits per sample (mono).",name,0);
+			if (hardFail) {
+				handleerror(0,"ReadWAV: invalid number of bits per sample (mono).",name,0);
+			}
 			return false;
 		}
 	}
@@ -262,12 +317,16 @@ static bool ReadWAV (const char *name, Uint8 *buf, int size, ALuint albuffer)
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
-			handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name,0);
+			if (hardFail) {
+				handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name,0);
+			}
 			return false;
 		}
 	}
 	else {
-		handleerror(0,"ReadWAV (%s): invalid number of channels.", name,0);
+		if (hardFail) {
+			handleerror(0,"ReadWAV (%s): invalid number of channels.", name,0);
+		}
 		return false;
 	}
 
@@ -288,7 +347,9 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 		buf = SAFE_NEW Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
 	} else {
-		handleerror(0, "Couldnt open wav file",path.c_str(),0);
+		if (hardFail) {
+			handleerror(0, "Couldnt open wav file",path.c_str(),0);
+		}
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
@@ -303,12 +364,13 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 }
 
 
-ALuint COpenALSound::GetWaveId(const string& path)
+ALuint COpenALSound::GetWaveId(const string& path, bool _hardFail)
 {
 	map<string, ALuint>::const_iterator it = soundMap.find(path);
 	if (it != soundMap.end()) {
 		return it->second;
 	}
+	hardFail = _hardFail;
 	const ALuint buffer = LoadALBuffer(path);
 	soundMap[path] = buffer;
 	return buffer;

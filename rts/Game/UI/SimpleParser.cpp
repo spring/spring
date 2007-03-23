@@ -32,8 +32,7 @@ string SimpleParser::GetLine(CFileHandler& fh)
 	lineNumber++;
 	char a;
 	string s = "";
-	while (true) {
-		if (fh.Peek() == EOF)  { break; }
+	while (!fh.Eof()) {
 		fh.Read(&a, 1);
 		if (a == '\n') { break; }
 		if (a != '\r') { s += a; }

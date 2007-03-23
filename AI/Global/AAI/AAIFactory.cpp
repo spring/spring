@@ -89,7 +89,7 @@ void AAIFactory::Update()
 // returns true if factory is busy
 bool AAIFactory::isBusy(int factory)
 {
-	const deque<Command> *commands = ai->cb->GetCurrentUnitCommands(factory);
+	const CCommandQueue *commands = ai->cb->GetCurrentUnitCommands(factory);
 
 	if(commands->empty())
 		return false;

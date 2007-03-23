@@ -7,6 +7,7 @@
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 #define CMD_DUMMY			170
 
@@ -55,7 +56,7 @@ void CGroupAI::CommandFinished(int unit,int type)
 {
 	if(type != CMD_STOP && type != CMD_MOVE)
 	{
-		const deque<Command>* commandQue = aicb->GetCurrentUnitCommands(unit);
+		const CCommandQueue* commandQue = aicb->GetCurrentUnitCommands(unit);
 		if (commandQue->empty() ||
 		    ((commandQue->size() == 1) &&
 		     (commandQue->front().id == CMD_SET_WANTED_MAX_SPEED))) {

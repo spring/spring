@@ -7,6 +7,7 @@
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 #define CMD_SET_AREA	 	150
 #define CMD_START			160

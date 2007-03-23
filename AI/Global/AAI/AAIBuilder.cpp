@@ -88,7 +88,7 @@ void AAIBuilder::Update()
 		// if building has not yet begun, check if something unexpected happened (buildsite blocked)
 		else
 		{
-			const deque<Command> *commands = cb->GetCurrentUnitCommands(unit_id);
+			const CCommandQueue *commands = cb->GetCurrentUnitCommands(unit_id);
 
 			if(commands->empty())
 			{

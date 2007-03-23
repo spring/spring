@@ -186,7 +186,7 @@ void CCobEngine::ShowScriptError(const string& msg)
 		logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
 }
 
-CCobFile &CCobEngine::GetCobFile(string name)
+CCobFile& CCobEngine::GetCobFile(const string& name)
 {
 	//Already known?
 	map<string, CCobFile *>::iterator i;
@@ -205,3 +205,26 @@ CCobFile &CCobEngine::GetCobFile(string name)
 	return *cf;
 }
 
+
+CCobFile& CCobEngine::ReloadCobFile(const string& name)
+{
+	map<string, CCobFile *>::iterator it = cobFiles.find(name);
+	if (it == cobFiles.end()) {
+		return GetCobFile(name);
+	}
+
+	delete it->second;
+	cobFiles.erase(it);
+
+	return GetCobFile(name);
+}
+
+
+const CCobFile* CCobEngine::GetScriptAddr(const string& name) const
+{
+	map<string, CCobFile *>::const_iterator it = cobFiles.find(name);
+	if (it != cobFiles.end()) {
+		return it->second;
+	}
+	return NULL;
+}

@@ -38,7 +38,7 @@ local widgetsList = {}
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 
-local fontSize = 15
+local fontSize = 12
 local fontSpace = 5
 local yStep = fontSize + fontSpace
 

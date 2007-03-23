@@ -377,9 +377,9 @@ float CglFont::CalcCharWidth (char c)
 {
 	const unsigned int ch = (unsigned int)c;
 	if ((c >= charstart) && (c <= charend)) {
-		return 0.03f + (charWidths[ch - charstart] / 32.0f);
+		return 0.02f + (charWidths[ch - charstart] / 32.0f);
 	}
-	return 0.03f + (charWidths[0] / 32.0f);
+	return 0.02f + (charWidths[0] / 32.0f);
 }
 
 float CglFont::CalcTextWidth(const char *text)
@@ -393,7 +393,7 @@ float CglFont::CalcTextWidth(const char *text)
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
 			const float charpart = (charWidths[c - charstart]) / 32.0f;
-			w += charpart+0.03f;
+			w += charpart + 0.02f;
 		}
 	}
 	return w;

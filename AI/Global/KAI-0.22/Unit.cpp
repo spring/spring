@@ -396,7 +396,7 @@ Command* CUNIT::MakePosCommand(int id,float3* pos, float radius){
 	fourParamsCommand.params[2] = pos->z;
 	fourParamsCommand.params[3] = radius;
 	/*
-	const deque<Command>* Mycommands = ai->cb->GetCurrentUnitCommands(myid);	
+	const CCommandQueue* Mycommands = ai->cb->GetCurrentUnitCommands(myid);	
 	if(Mycommands->size()){
 		if(Mycommands->back().id == id 
 		&& Mycommands->back().params[0] == pos.x 
@@ -443,7 +443,7 @@ Command* CUNIT::MakePosCommand(int id,float3* pos){
 	threeParamsCommand.params[1] = pos->y;
 	threeParamsCommand.params[2] = pos->z;
 	/*
-	const deque<Command>* Mycommands = ai->cb->GetCurrentUnitCommands(myid);	
+	const CCommandQueue* Mycommands = ai->cb->GetCurrentUnitCommands(myid);	
 	if(Mycommands->size()){
 		if(Mycommands->back().id == id 
 		&& Mycommands->back().params[0] == pos.x 
@@ -476,7 +476,7 @@ Command* CUNIT::MakeIntCommand(int id,int number,int maxnum){
 	oneParamsCommand.options = 0;
 	oneParamsCommand.params[0] = number;
 	/*
-	const deque<Command>* Mycommands = ai->cb->GetCurrentUnitCommands(myid);
+	const CCommandQueue* Mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(Mycommands->size()){
 		if(Mycommands->back().id == id 
 		&& Mycommands->back().params[0] == number){
@@ -505,7 +505,7 @@ Command* CUNIT::MakeIntCommand(int id,int number){
 	oneParamsCommand.options = 0;
 	oneParamsCommand.params[0] = number;
 	/*
-	const deque<Command>* Mycommands = ai->cb->GetCurrentUnitCommands(myid);
+	const CCommandQueue* Mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(Mycommands->size()){
 		if(Mycommands->back().id == id 
 		&& Mycommands->back().params[0] == number){
@@ -526,7 +526,7 @@ Command* CUNIT::MakeIntCommand(int id,int number){
 //---------|Target-based Abilities|--------//
 bool CUNIT::Attack(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(myid);
+	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(!mycommands->empty())
 	{
 		const Command* c = &mycommands->front();
@@ -636,7 +636,7 @@ bool CUNIT::MoveShift(float3 pos){
 
 bool CUNIT::MoveTwice(const float3* pos1, const float3* pos2){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(myid);
+	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(mycommands->empty())
 	{
 		Move(*pos1);

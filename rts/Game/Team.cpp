@@ -7,6 +7,8 @@
 #include "Team.h"
 #include "LogOutput.h"
 #include "Player.h"
+#include "Game/UI/LuaUI.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
@@ -18,6 +20,7 @@
 
 CTeam::CTeam()
 : active(false),
+	gaia(false),
 	metal(200000),
 	energy(900000),
 	metalPull(0),     prevMetalPull(0),
@@ -213,7 +216,7 @@ void CTeam::SlowUpdate()
 	CUnit::ChangeTeam(), hence it'd cause a random amount of the shared units
 	to be killed if the commander is among them. Also, ".take" would kill all
 	units once it transfered the commander. */
-	if(gs->gameMode==1 && numCommanders<=0){
+	if(gs->gameMode==1 && numCommanders<=0 && !gaia){
 		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 			if((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
 				(*ui)->KillUnit(true,false,0);
@@ -256,10 +259,11 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 		break;
 	}
 
-	if(units.empty()){
+	if(units.empty() && !gaia){
 // 		logOutput.Print("Team%i(%s) is no more",teamNum,gs->players[leader]->playerName.c_str());
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
 		isDead=true;
+		luaCallIns.TeamDied(teamNum);
 		for(int a=0;a<MAX_PLAYERS;++a){
 			if(gs->players[a]->active && gs->players[a]->team==teamNum){
 				gs->players[a]->spectator=true;
@@ -267,6 +271,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 					gu->spectating = true;
 					gu->spectatingFullView = gu->spectating;
 					gu->spectatingFullSelect = false;
+					CLuaUI::UpdateTeams();
 				}
 			}
 		} 

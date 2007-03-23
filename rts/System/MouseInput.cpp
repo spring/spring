@@ -84,6 +84,7 @@ public:
 	}
 	void SetPos(int2 pos)
 	{
+		mousepos = pos;
 		if (fullscreen)
 			SetCursorPos (pos.x, pos.y);
 		else
@@ -148,33 +149,40 @@ public:
 
 	void SetPos(int2 pos)
 	{
-		SDL_WarpMouse (pos.x,pos.y);
+		mousepos = pos;
+		SDL_WarpMouse(pos.x, pos.y);
 	}
 
 	void HandleSDLMouseEvent (SDL_Event& event)
 	{
-		switch(event.type) {
-		case SDL_MOUSEMOTION:
-			mousepos = int2(event.motion.x,event.motion.y);
-			if(mouse)
-				mouse->MouseMove(mousepos.x,mousepos.y);
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			mousepos = int2(event.button.x,event.button.y);
-			if (mouse) {
-				if (event.button.button == SDL_BUTTON_WHEELUP)
-					mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
-				else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-					mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
-				else
-					mouse->MousePress(event.button.x,event.button.y,event.button.button);
+		switch (event.type) {
+			case SDL_MOUSEMOTION: {
+				mousepos = int2(event.motion.x, event.motion.y);
+				if (mouse) {
+					mouse->MouseMove(mousepos.x, mousepos.y);
+				}
+				break;
 			}
-			break;
-		case SDL_MOUSEBUTTONUP:
-			mousepos = int2(event.button.x,event.button.y);
-			if (mouse)
-				mouse->MouseRelease(event.button.x,event.button.y,event.button.button);
-			break;
+			case SDL_MOUSEBUTTONDOWN: {
+				mousepos = int2(event.button.x, event.button.y);
+				if (mouse) {
+					if (event.button.button == SDL_BUTTON_WHEELUP) {
+						mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
+					} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
+						mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
+					} else {
+						mouse->MousePress(event.button.x, event.button.y, event.button.button);
+					}
+				}
+				break;
+			}
+			case SDL_MOUSEBUTTONUP: {
+				mousepos = int2(event.button.x, event.button.y);
+				if (mouse) {
+					mouse->MouseRelease(event.button.x, event.button.y, event.button.button);
+				}
+				break;
+			}
 		}
 	}
 };

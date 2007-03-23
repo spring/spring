@@ -44,9 +44,9 @@ public:
 	bool useHeading;		//probably should move the code in cunit that reads this into the movementclasses
 
 	enum ProgressState {
-		Done,
-		Active,
-		Failed
+		Done   = 0,
+		Active = 1,
+		Failed = 2
 	};
 	ProgressState progressState;
 };

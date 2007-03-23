@@ -57,8 +57,6 @@ CTransportCAI::~CTransportCAI(void)
 	}
 }
 
-#define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-
 void CTransportCAI::SlowUpdate(void)
 {
 	if(commandQue.empty()){
@@ -395,7 +393,7 @@ void CTransportCAI::DrawCommands(void)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
 			case CMD_MOVE:{

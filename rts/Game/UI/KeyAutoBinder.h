@@ -11,11 +11,13 @@
 #include <set>
 using namespace std;
 
+#include "Lua/LuaHandle.h"
+
 
 struct UnitDef;
 struct lua_State;
 
-class CKeyAutoBinder {
+class CKeyAutoBinder : CLuaHandle {
 
 	public:
 		CKeyAutoBinder();

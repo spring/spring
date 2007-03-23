@@ -16,6 +16,7 @@
 #include "Game/GameHelper.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -443,6 +444,7 @@ void CDynWater::DrawReflection(CGame* game)
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
+	luaCallIns.DrawWorldReflection();
 
 	sky->DrawSun();
 
@@ -491,6 +493,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	featureHandler->Draw();
 	drawReflection=false;
 	ph->Draw(false,true);
+	luaCallIns.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
 	drawRefraction=false;

@@ -30,17 +30,13 @@ end
 include("spring.h.lua")
 
 
-function widget:TextCommand(command)
-  if (command ~= 'circle') then
-    return false
-  else
-    CircleUnits()
-	end
-	return true
+function widget:Initialize()
+  widgetHandler:AddAction("circle", CircleUnits)
 end
         
 
 function CircleUnits()
+  print("CIRCLE")
   local units = Spring.GetSelectedUnits()
   table.sort(units)
   local count = units.n
@@ -83,12 +79,12 @@ function CircleUnits()
     local uz = z - radius0 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
     Spring.SelectUnitArray({uid})
-    Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {})
+    Spring.GiveOrder(CMD.MOVE, {ux, uy, uz}, {})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
   Spring.SelectUnitArray(selUnits)
-  Spring.GiveOrder(CMD_GATHERWAIT, {}, {})
+  Spring.GiveOrder(CMD.GATHERWAIT, {}, {})
 
   local arcdist = 0
   for t,uid in ipairs(units) do
@@ -100,12 +96,14 @@ function CircleUnits()
     local uz = z - radius1 * math.cos(rads)  
     local uy = Spring.GetGroundHeight(ux, uz)
     Spring.SelectUnitArray({uid})
-    Spring.GiveOrder(CMD_MOVE, {ux, uy, uz}, {"shift"})
+    Spring.GiveOrder(CMD.MOVE, {ux, uy, uz}, {"shift"})
     arcdist = arcdist + (0.5 * radii[uid])
   end
 
   Spring.SelectUnitArray(selUnits)
 
   -- helps to avoid last minute pushing
-  --Spring.GiveOrder(CMD_WAIT, {}, {"shift"})
+  --Spring.GiveOrder(CMD.WAIT, {}, {"shift"})
+
+  return true
 end

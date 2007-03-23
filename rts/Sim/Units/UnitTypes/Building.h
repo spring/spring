@@ -17,7 +17,7 @@ public:
 	CBuilding();
 	virtual ~CBuilding();
 
-	void Init(void);
+	void Init(const CUnit* builder);
 	void UnitInit (UnitDef* def, int team, const float3& position);
 
 	BuildingGroundDecal* buildingDecal;

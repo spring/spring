@@ -25,6 +25,7 @@ public:
 	void ToggleOverviewCamera(void);
 	void HideMouse();
 	void ShowMouse();
+	void WarpMouse(int x, int y);
 	void Draw();
 	void MouseRelease(int x,int y,int button);
 	void MousePress(int x,int y,int button);
@@ -80,6 +81,8 @@ public:
 	CCameraController* currentCamController;
 	std::vector<CCameraController*> camControllers;
 	int currentCamControllerNum;
+	int preControlCamNum;
+	int preOverviewCamNum;
 	CCameraController* overviewController;
 	struct ViewData {
 		bool operator==(const ViewData& vd) const {
@@ -88,6 +91,7 @@ public:
 		int mode;
 		std::vector<float> state;
 	};
+	bool LoadViewData(const ViewData& vd);
 	ViewData tmpView;
 	std::map<std::string, ViewData> views;
 
@@ -107,6 +111,7 @@ public:
 	/* Stores if the mouse was locked or not before going into direct control,
 	   so we can restore it when we return to normal. */
 	bool wasLocked;
+	int wasUsingCamNum;
 #endif
 };
 

@@ -116,6 +116,12 @@ CDxSound::~CDxSound()
 }
 
 
+void CDxSound::PlayStream(const std::string& path, float volume,
+                          const float3* pos, bool loop
+{
+}
+
+
 int CDxSound::InitFile(const string& name)
 {
 	if(m_pDS==0) {
@@ -123,7 +129,7 @@ int CDxSound::InitFile(const string& name)
 	}
 
 	// Create the sound buffer object from the wave file data
-	if( !CreateStaticBuffer(name.c_str()) )
+	if(!CreateStaticBuffer(name.c_str()) )
 	{   
 		logOutput << "no such sound: " << name.c_str() << "\n";
 		return -1;
@@ -139,16 +145,17 @@ int CDxSound::InitFile(const string& name)
 	return buffers.size()-1;
 }
 
-unsigned int CDxSound::GetWaveId(const string &name)
+unsigned int CDxSound::GetWaveId(const string &name, bool _hardFail)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	map<string,int>::iterator si;
-	if((si=waveid.find(name))==waveid.end()){
+	map<string,int>::iterator si = waveid.find(name);
+	if (si == waveid.end()) {
+		hardFail = _hardFail;
 		InitFile(name);
-		si=waveid.find(name);
+		si = waveid.find(name);
 	}
-	int ret=(si!=waveid.end())?si->second:0;
+	int ret = (si != waveid.end()) ? si->second : 0;
 	POP_CODE_MODE;
 	return ret;
 }
@@ -305,7 +312,9 @@ bool CDxSound::ReadWAV (const char *name, Uint8 *buf, int fileSize, Uint8 **soun
 	WAVHeader *header = (WAVHeader *)buf;
 
 	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7)) {
-		handleerror(0, "ReadWAV: invalid header.", name, 0);
+		if (hardFail) {
+			handleerror(0, "ReadWAV: invalid header.", name, 0);
+		}
 		return false;
 	}
 
@@ -325,7 +334,9 @@ bool CDxSound::ReadWAV (const char *name, Uint8 *buf, int fileSize, Uint8 **soun
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		handleerror(0,"ReadWAV: invalid format tag.", name, 0);
+		if (hardFail) {
+			handleerror(0,"ReadWAV: invalid format tag.", name, 0);
+		}
 		return false;
 	}
 

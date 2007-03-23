@@ -1,9 +1,10 @@
 #ifndef __COB_THREAD_H__
 #define __COB_THREAD_H__
 
+#include <vector>
 #include "Object.h"
 #include "CobInstance.h"
-#include <vector>
+#include "Lua/LuaCob.h"
 #include "LogOutput.h"
 
 class CCobFile;
@@ -13,6 +14,9 @@ using namespace std;
 
 class CCobThread : public CObject
 {
+protected:
+	void LuaCall();
+
 protected:
 	CCobFile &script;
 	CCobInstance *owner;
@@ -24,6 +28,8 @@ protected:
 
 	int paramCount;
 	int retCode;
+
+	int luaArgs[MAX_LUA_COB_ARGS];
 
 	struct callInfo {
 		int functionId;

@@ -15,6 +15,22 @@ public:
 	void MoveUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
+	inline bool InRadar(const float3& pos, int allyteam){
+		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
+		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
+		const int square = max(0, min(ysize - 1, gz)) * xsize +
+		                   max(0, min(xsize - 1, gx));
+		if (pos.y < -0.5f) {
+			return (sonarMaps[allyteam][square] && !commonSonarJammerMap[square]);
+		}
+		else if (pos.y > +0.5f) {
+			return (airRadarMaps[allyteam][square] && !commonJammerMap[square]);
+		}
+		else {
+			return (radarMaps[allyteam][square] && !commonJammerMap[square]);
+		}
+	}
+
 	inline bool InRadar(const CUnit* unit,int allyteam){
 		if(unit->stealth)
 			return false;

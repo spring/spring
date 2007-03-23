@@ -363,14 +363,16 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 	int yardypos=int(pos.z+4)/SQUARE_SIZE;
 	CSolidObject* s;
 	if(s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)){
-		if(dynamic_cast<CFeature*>(s))
-			feature=(CFeature*)s;
-		else if(!dynamic_cast<CUnit*>(s) || (((CUnit*)s)->losStatus[allyteam] & LOS_INLOS))
-		{
-			if(s->immobile)
+		if (dynamic_cast<CFeature*>(s)) {
+			feature = (CFeature*)s;
+		}
+		else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
+		         (((CUnit*)s)->losStatus[allyteam] & LOS_INLOS)) {
+			if (s->immobile) {
 				return 0;
-			else
-				ret=1;
+			} else {
+				ret = 1;
+			}
 		}
 	}
 	int square=ground->GetSquare(pos);
@@ -590,7 +592,7 @@ bool CUnitHandler::CanCloseYard(CUnit* unit)
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
 	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
-	std::deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for(; ui != this->activeUnits.end(); ui++){
 		if((*ui)->team == gu->myTeam){
 			ci = (*ui)->commandAI->commandQue.begin();

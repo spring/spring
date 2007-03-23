@@ -47,7 +47,7 @@ local function SetMetalMakers(state)
   Spring.SelectUnitMap(metalMakers)
   
   local numState = currentState and 1 or 0
-  Spring.GiveOrder( CMD_ONOFF, { numState }, {} )
+  Spring.GiveOrder( CMD.ONOFF, { numState }, {} )
   
   Spring.SelectUnitArray(selUnits)
 end

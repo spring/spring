@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "BuilderCAI.h"
+#include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
@@ -14,6 +15,7 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Lua/LuaRules.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -24,6 +26,7 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/Factory.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "mmgr.h"
 
@@ -175,7 +178,10 @@ void CBuilderCAI::SlowUpdate()
 				if ((dist < (fac->buildDistance * 0.6f + radius)) ||
 				    (!owner->unitDef->canmove && (dist <= (fac->buildDistance+radius-8.0f)))) {
 					StopMove();
-					if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
+					if(luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
+						FinishCommand();
+					}
+					else if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
 						ENTER_MIXED;
 						if(owner->team == gu->myTeam){
 							logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
@@ -677,8 +683,13 @@ int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			if ((pointed->health < pointed->maxHealth) && ((pointed->beingBuilt && owner->unitDef->canAssist) || (!pointed->beingBuilt && owner->unitDef->canRepair))) {
+			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
+			if ((pointed->health < pointed->maxHealth) &&
+			           ((pointed->beingBuilt && owner->unitDef->canAssist) ||
+			            (!pointed->beingBuilt && owner->unitDef->canRepair))) {
 				return CMD_REPAIR;
+			} else if (tran && tran->CanTransport(owner)) {
+				return CMD_LOAD_ONTO;
 			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
 			}
@@ -708,7 +719,7 @@ void CBuilderCAI::DrawCommands(void)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch(ci->id) {
 			case CMD_MOVE: {
@@ -807,6 +818,11 @@ void CBuilderCAI::DrawCommands(void)
 				}
 				break;
 			}
+			case CMD_LOAD_ONTO:{
+				const CUnit* unit = uh->units[int(ci->params[0])];
+				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
+				break;
+			}
 			case CMD_WAIT:{
 				DrawWaitIcon(*ci);
 				break;
@@ -845,7 +861,7 @@ void CBuilderCAI::DrawCommands(void)
 }
 
 
-void CBuilderCAI::GiveCommand(const Command& c)
+void CBuilderCAI::GiveCommandReal(const Command& c)
 {
 	if (!AllowedCommand(c))
 		return;
@@ -891,20 +907,20 @@ void CBuilderCAI::GiveCommand(const Command& c)
 					c2.id = CMD_REPAIR;
 					c2.params.push_back(u->id);
 					c2.options = c.options | INTERNAL_ORDER;
-					CMobileCAI::GiveCommand(c2);
-					CMobileCAI::GiveCommand(c);
+					CMobileCAI::GiveCommandReal(c2);
+					CMobileCAI::GiveCommandReal(c);
 				}
 			}
 			return;
 		}
 	}
-	CMobileCAI::GiveCommand(c);
+	CMobileCAI::GiveCommandReal(c);
 }
 
 
 void CBuilderCAI::DrawQuedBuildingSquares(void)
 {
-	deque<Command>::const_iterator ci;
+	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->id) != buildOptions.end()) {
 			BuildInfo bi(*ci);

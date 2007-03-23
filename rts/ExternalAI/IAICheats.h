@@ -36,7 +36,7 @@ public:
 	virtual bool IsUnitActivated (int unitid)=0; 
 	virtual bool UnitBeingBuilt (int unitid)=0;			//returns true if the unit is currently being built
 	virtual bool GetUnitResourceInfo (int unitid, UnitResourceInfo* resourceInfo)=0;
-	virtual const deque<Command>* GetCurrentUnitCommands(int unitid)=0;
+	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid)=0;
 	
 	virtual int GetBuildingFacing(int unitid)=0;		//returns building facing (0-3)
 	virtual bool IsUnitCloaked(int unitid)=0;

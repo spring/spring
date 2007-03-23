@@ -38,14 +38,17 @@ struct UnitDef
 	std::string name;
 	std::string humanName;
 	std::string filename;
-	int id;											//unique id for this type of unit
+	int id;                 //unique id for this type of unit
 	unsigned int unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
+	int imageSizeX;
+	int imageSizeY;
 	std::string buildpicname;
 	
 	UnitDef* decoyDef;
 
 	int aihint;
 	int techLevel;
+	std::string gaia;
 
 	float metalUpkeep;
 	float energyUpkeep;

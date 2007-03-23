@@ -164,3 +164,15 @@ int CFileHandler::GetPos()
 		return hpiOffset;
 }
 
+
+bool CFileHandler::LoadString(std::string& data)
+{
+	if (!FileExists()) {
+		return false;
+	}
+	char* buf = SAFE_NEW char[filesize];
+	Read(buf, filesize);
+	data.append(buf, filesize);
+	delete[] buf;
+	return true;	
+}
