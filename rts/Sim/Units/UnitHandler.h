@@ -42,7 +42,7 @@ public:
 	int  ShowUnitBuildSquare(const BuildInfo& buildInfo);	//test if a unit can be built at specified position and show on the ground where it's to rough
 	int  ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv);
 	int  TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam); //test a single mapsquare for build possibility
-
+	
 	//return true if a unit of type unitID can be build, false otherwise
 	bool CanBuildUnit(const UnitDef* unitdef, int team);
 

@@ -247,7 +247,7 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
     gl.Color(0,0,0,1)
   end
 
-  gl.UnitDef(unitDefID, Spring.GetMyTeamID())
+  gl.UnitShape(unitDefID, Spring.GetMyTeamID())
 
   if (scribe) then
 --    gl.LineWidth(0.1)

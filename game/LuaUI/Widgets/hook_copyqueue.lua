@@ -32,12 +32,12 @@ include("spring.h.lua")
 
 function widget:CommandNotify(id, params, options)
   -- GUARD + CTRL = copy command queue
-  if ((id == CMD_GUARD) and options.ctrl) then
+  if ((id == CMD.GUARD) and options.ctrl) then
     local targetID = params[1];
     local queue = Spring.GetCommandQueue(targetID);
     if (queue ~= nil) then  --  might not be an ally
       if (not options.shift) then
-        Spring.GiveOrder( CMD_STOP, {}, {} )
+        Spring.GiveOrder( CMD.STOP, {}, {} )
       end
       local first = next(queue, nil)
       for k,v in ipairs(queue) do  --  in order

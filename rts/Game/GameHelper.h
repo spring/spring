@@ -30,7 +30,7 @@ public:
 	virtual ~CGameHelper();
 	bool TestCone(const float3& from,const float3& dir,float length,float spread,int allyteam,CUnit* owner);
 	bool TestTrajectoryCone(const float3 &from, const float3 &flatdir,float length, float linear, float quadratic, float spread, float baseSize, int allyteam,CUnit* owner);
-	void GetEnemyUnits(float3& pos,float radius,int searchAllyteam,std::vector<int>& found);
+	void GetEnemyUnits(const float3& pos,float radius,int searchAllyteam,std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos,float radius);
 	CUnit* GetClosestEnemyUnit(const float3& pos,float radius,int searchAllyteam);
 	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos,float radius,int searchAllyteam);

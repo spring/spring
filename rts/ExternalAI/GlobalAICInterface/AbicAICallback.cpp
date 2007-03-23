@@ -7,6 +7,7 @@
 
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 //extern ::IAICallback* aicallback;
 
@@ -22,10 +23,10 @@
 //addmappoint
 //getmappoints
 
-// for reference, here is the definition of GetCurrentUnitCommands(): virtual const deque<Command>* GetCurrentUnitCommands(int unitid);
+// for reference, here is the definition of GetCurrentUnitCommands(): virtual const CCommandQueue* GetCurrentUnitCommands(int unitid);
 AICALLBACK_API int IAICallback_GetCurrentUnitCommandsCount( const IAICallback *self, int unitid )
 {
-    const deque<Command>*commands = ( (IAICallback *)self)->GetCurrentUnitCommands( unitid );
+    const CCommandQueue*commands = ( (IAICallback *)self)->GetCurrentUnitCommands( unitid );
     return commands->size();
 }
 

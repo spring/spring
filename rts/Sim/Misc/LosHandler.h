@@ -58,6 +58,8 @@ public:
 	inline bool InLos(const CUnit* unit, int allyteam){
 		if(unit->isCloaked)
 			return false;
+		if(unit->alwaysVisible)
+			return true;
 		if(unit->useAirLos){
 			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(unit->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(unit->pos.x*invAirDiv)))))];
 		} else {

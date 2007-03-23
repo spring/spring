@@ -8,19 +8,26 @@
 #include <vector>
 #include <AL/al.h>
 #include <AL/alc.h>
+#include "SDL_types.h"
 
 using namespace std;
 class COpenALSound : public CSound
 {
 public:
-	ALuint GetWaveId(const string& path);
+	ALuint GetWaveId(const string& path, bool hardFail);
 	void Update();
 	void PlaySample(int id, float volume);
 	void PlaySample(int id,const float3& p,float volume);
+	void PlayStream(const std::string& path, float volume = 1.0f,
+	                const float3* pos = NULL, bool loop = false);
 	void SetVolume(float v);
 
 	COpenALSound();
 	virtual ~COpenALSound();
+
+private:
+	bool ReadWAV(const char *name, Uint8 *buf, int size, ALuint albuffer);
+
 private:
 	ALuint LoadALBuffer(const string& path);
 	void PlaySample(int id, const float3 &p, float volume, bool relative);
@@ -28,6 +35,7 @@ private:
 	int maxSounds;
 	int cur;
 	float globalVolume;
+	bool hardFail;
 
 	void UpdateListener();
 	void Enqueue(ALuint src);

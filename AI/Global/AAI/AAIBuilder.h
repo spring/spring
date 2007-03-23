@@ -67,7 +67,7 @@ public:
 	// current task (idle, building, assisting)
 	UnitTask task;
 
-	const deque<Command> *commands;
+	const CCommandQueue *commands;
 
 	IAICallback *cb;
 	AAI *ai;

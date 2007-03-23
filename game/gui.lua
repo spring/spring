@@ -16,6 +16,14 @@ LUAUI_VERSION = "LuaUI v0.2"
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+if (gl) then
+  Spring.Draw = gl  --  backwards compatibility, 0.74b3 did not have 'gl'
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 LUAUI_DIRNAME   = 'LuaUI/'
 do
   -- use a versionned directory name if it exists
@@ -40,38 +48,12 @@ MOD_FILENAME    = MODUI_DIRNAME .. 'main.lua'
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
---
---  Spring 0.74b3 doesn't handle missing sound files gracefully.
---  We make sure that the sound file exists, and hope that it is
---  a valid sound file
---
 
-do
-  local origFunc = Spring.PlaySoundFile
-  Spring.PlaySoundFile = function(filename, ...)
-    local f = io.open(filename)
-    if (f) then
-      f:close()
-      origFunc(filename, unpack(arg))
-    end
-  end
-end
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-function Echo(msg)
-  Spring.SendCommands({'echo ' .. msg})
-end
-
-function CleanNameSpace()
+local function CleanNameSpace()
 	MOD_FILENAME    = nil
 	USER_FILENAME   = nil
 	PERM_FILENAME   = nil
 	CHOOSE_FILENAME = nil
-	Echo            = nil
-  CleanNameSpace  = nil
 end
 
 
@@ -79,6 +61,7 @@ end
 --
 -- clear the call-ins
 --
+
 
 Shutdown         = nil
 LayoutButtons    = nil
@@ -96,12 +79,16 @@ IsAbove          = nil
 GetTooltip       = nil
 AddConsoleLine   = nil
 GroupChanged     = nil
+GameOver         = nil
+TeamDied         = nil
 UnitCreated      = nil
 UnitFinished     = nil
 UnitFromFactory  = nil
 UnitDestroyed    = nil
 UnitTaken        = nil
 UnitGiven        = nil
+UnitIdle         = nil
+UnitSeismicPing  = nil
 UnitEnteredRadar = nil
 UnitEnteredLos   = nil
 UnitLeftRadar    = nil
@@ -147,7 +134,7 @@ if (loadFromMod == nil) then
   -- setup the mod selection UI
   local chunk, err = loadfile(CHOOSE_FILENAME)
   if (chunk == nil) then
-    Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+    Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
   else
   	CleanNameSpace()
     chunk()
@@ -157,7 +144,7 @@ elseif (loadFromMod) then
   -- load the mod's UI
   local chunk, err = loadstring(modText)
   if (chunk == nil) then
-    Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+    Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
   else
     CleanNameSpace()
     chunk()
@@ -174,8 +161,7 @@ end
 do
   local chunk, err = loadfile(USER_FILENAME)
   if (chunk == nil) then
-    Echo('Failed to load ' .. USER_FILENAME .. ': (' .. err .. ')')
-    LayoutIcons = function () return 'disabled' end
+    KillScript('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
   else
     CleanNameSpace()
     chunk()

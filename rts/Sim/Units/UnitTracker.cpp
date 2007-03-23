@@ -5,10 +5,10 @@
 #include "Game/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
-#include "LogOutput.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 
@@ -254,7 +254,7 @@ void CUnitTracker::SetCam()
 	}
 
 	// non-FPS camera modes  (immediate positional tracking)
-	if(mouse->currentCamController!=mouse->camControllers[0]){
+	if (mouse->currentCamController != mouse->camControllers[0]) {
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
@@ -270,7 +270,13 @@ void CUnitTracker::SetCam()
 				break;
 			}
 		}
-		mouse->currentCamController->SetPos(pos);
+		CCameraController* currentCam = mouse->currentCamController;
+		CFreeController* freeCam = dynamic_cast<CFreeController*>(currentCam);
+		if (freeCam) {
+			freeCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
+		} else {
+			mouse->currentCamController->SetPos(pos);
+		}
 		return;
 	}
 

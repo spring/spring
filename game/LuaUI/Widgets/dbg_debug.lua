@@ -201,6 +201,12 @@ function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
 
+function widget:UnitIdle(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitIdle) '..unitID..' '..unitDefID..' '..unitTeam)
+  return
+end
+
+
 function widget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   print('DEBUG (UnitTaken) '
         ..unitID..' '..unitDefID..' '..unitTeam..' '..newTeam)

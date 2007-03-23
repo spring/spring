@@ -29,12 +29,9 @@ end
 -- Low level LUA access
 --
 
-function widget:TextCommand(command)
-  if (string.find(command, 'doline ') ~= 1) then
-    return false
-  end
-  local cmd = string.sub(command, 8)
-  local chunk, err = loadstring(cmd, 'doline')
+local function RunCmd(cmd, optLine)
+  print(optLine)
+  local chunk, err = loadstring(optLine, 'run')
   if (chunk == nil) then
     print('doline error: '..err)
   else
@@ -44,6 +41,32 @@ function widget:TextCommand(command)
     end
   end
   return true
+end
+
+
+local function EchoCmd(cmd, optLine)
+  local chunk, err = loadstring("return " .. optLine, 'echo')
+  if (chunk == nil) then
+    print('doline error: '..err)
+  else
+    local success, err = pcall(chunk)
+    if (success) then
+      Spring.Echo( chunk() )
+    end
+  end
+  return true
+end
+
+
+function widget:Initialize()
+  widgetHandler:AddAction("doline",  RunCmd)  -- backwards compatible
+  widgetHandler:AddAction("run",     RunCmd)
+  widgetHandler:AddAction("echolua", EchoCmd, nil)
+  widgetHandler:AddAction("echo",    EchoCmd, nil, "t") -- text only
+
+  -- NOTE: that last entry is text only so that we do not
+  --       override the default "/echo" Spring command when
+  --       it is bound to a keyset.
 end
 
 

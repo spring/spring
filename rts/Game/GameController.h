@@ -14,7 +14,8 @@ public:
 	virtual int KeyReleased(unsigned short k);
 	virtual void ResizeEvent() { return; }
 
-	bool userWriting;						//true if user is writing
+	bool userWriting; // true if user is writing
+	int  writingPos;  // current writing position
 	bool ignoreNextChar;
 	char ignoreChar;
 	std::basic_string<char> userInput;

@@ -220,12 +220,11 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 		for (ui = quadUnits.begin(); ui != quadUnits.end(); ++ui) {
 			CUnit* unit = *ui;
 			const float3& pos = unit->midPos;
-			if ((pos.x > mins.x) && (pos.x < maxs.x) &&
+			if ((unit->tempNum != tempNum) &&
+			    (pos.x > mins.x) && (pos.x < maxs.x) &&
 			    (pos.z > mins.z) && (pos.z < maxs.z)) {
-				if(unit->tempNum!=tempNum){
-					unit->tempNum = tempNum;
-					units.push_back(unit);
-				}
+				unit->tempNum = tempNum;
+				units.push_back(unit);
 			}
 		}
 	}
@@ -451,6 +450,34 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
 				(*fi)->tempNum=tempNum;
 				features.push_back(*fi);
+			}
+		}
+	}
+
+	return features;
+}
+
+vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
+                                               const float3& maxs)
+{
+	vector<CFeature*> features;
+
+	vector<int> quads = GetQuadsRectangle(mins, maxs);
+	
+	int tempNum = gs->tempNum++;
+
+	vector<int>::iterator qi;
+	for(qi = quads.begin(); qi != quads.end(); ++qi) {
+		list<CFeature*>& quadFeatures = baseQuads[*qi].features;
+		list<CFeature*>::iterator fi;
+		for (fi = quadFeatures.begin(); fi != quadFeatures.end(); ++fi) {
+			CFeature* feature = *fi;
+			const float3& pos = feature->midPos;
+			if ((feature->tempNum != tempNum) &&
+				  (pos.x > mins.x) && (pos.x < maxs.x) &&
+					(pos.z > mins.z) && (pos.z < maxs.z)) {
+				feature->tempNum = tempNum;
+				features.push_back(feature);
 			}
 		}
 	}

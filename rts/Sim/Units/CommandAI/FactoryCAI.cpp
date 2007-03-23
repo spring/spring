@@ -11,6 +11,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Lua/LuaRules.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -23,6 +24,9 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	building(false),
 	lastRestrictedWarning(0)
 {
+	commandQue.SetQueueType(CCommandQueue::BuildQueueType);
+	newUnitCommands.SetQueueType(CCommandQueue::NewUnitQueueType);
+
 	CommandDescription c;
 
 	// can't check for canmove here because it should be possible to assign rallypoint
@@ -96,7 +100,7 @@ CFactoryCAI::~CFactoryCAI()
 }
 
 
-void CFactoryCAI::GiveCommand(const Command& c)
+void CFactoryCAI::GiveCommandReal(const Command& c)
 {
 	// move is always allowed for factories (passed to units it produces)
 	if ((c.id == CMD_SET_WANTED_MAX_SPEED) ||
@@ -109,6 +113,7 @@ void CFactoryCAI::GiveCommand(const Command& c)
 	// not a build order so queue it to built units
 	if (boi == buildOptions.end()) {
 		if ((nonQueingCommands.find(c.id) != nonQueingCommands.end()) ||
+		    (c.id == CMD_INSERT) || (c.id == CMD_REMOVE) ||
 		    (!(c.options & SHIFT_KEY) && ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)))) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
@@ -212,6 +217,44 @@ void CFactoryCAI::GiveCommand(const Command& c)
 	}
 }
 
+
+void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
+                                     const Command& newCmd)
+{
+	map<int, BuildOption>::iterator boi = buildOptions.find(newCmd.id);
+	if (boi != buildOptions.end()) {
+		boi->second.numQued++;
+		UpdateIconName(newCmd.id, boi->second);
+	}
+	if (!commandQue.empty() && (it == commandQue.begin())) {
+		// ExecuteStop(), without the pop_front()
+		CFactory* fac = (CFactory*)owner;
+		building = false;
+		fac->StopBuild();
+	}
+	commandQue.insert(it, newCmd);
+}
+
+
+void CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
+{
+	Command& cmd = *it;
+	map<int, BuildOption>::iterator boi = buildOptions.find(cmd.id);
+	if (boi != buildOptions.end()) {
+		boi->second.numQued--;
+		UpdateIconName(cmd.id, boi->second);
+	}
+	if (!commandQue.empty() && (it == commandQue.begin())) {
+		ExecuteStop(cmd);
+		return;
+	}
+	if (cmd.id < 0) {
+		cmd.id = CMD_STOP;
+		cmd.tag = 0;
+	}
+}
+
+
 void CFactoryCAI::SlowUpdate()
 {
 	if (commandQue.empty() || owner->beingBuilt) {
@@ -238,7 +281,14 @@ void CFactoryCAI::SlowUpdate()
 				}
 			} else {
 				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
-				if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
+				if(luaRules && !luaRules->AllowUnitCreation(def, owner, NULL)) {
+					if(!repeatOrders){
+						boi->second.numQued--;
+					}
+					UpdateIconName(c.id,boi->second);
+					FinishCommand();
+				}
+				else if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
 					if(!repeatOrders){
 						boi->second.numQued--;
 						ENTER_MIXED;
@@ -328,7 +378,7 @@ void CFactoryCAI::DrawCommands(void)
 		DrawWaitIcon(commandQue.front());
 	}
 
-	deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
 		switch(ci->id){
 			case CMD_MOVE:{

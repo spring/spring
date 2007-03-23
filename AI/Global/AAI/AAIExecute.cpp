@@ -97,7 +97,7 @@ void AAIExecute::stopUnit(int unit)
 // returns true if unit is busy
 bool AAIExecute::IsBusy(int unit)
 {
-	const deque<Command> *commands = cb->GetCurrentUnitCommands(unit);
+	const CCommandQueue *commands = cb->GetCurrentUnitCommands(unit);
 
 	if(commands->empty())
 		return false;

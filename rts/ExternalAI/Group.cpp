@@ -5,11 +5,11 @@
 #include "StdAfx.h"
 #include "Group.h"
 #include "IGroupAI.h"
-#include "Sim/Units/Unit.h"
 #include "GroupAiCallback.h"
 #include "GroupHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/GuiHandler.h"
+#include "Game/UI/LuaUI.h"
+#include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
@@ -48,8 +48,8 @@ CGroup::~CGroup()
 
 bool CGroup::AddUnit(CUnit *unit)
 {
-	if (guihandler) {
-		guihandler->GroupChanged(id);
+	if (luaUI) {
+		luaUI->GroupChanged(id);
 	}
 	units.insert(unit);
 	if(ai)
@@ -69,8 +69,8 @@ bool CGroup::AddUnit(CUnit *unit)
 
 void CGroup::RemoveUnit(CUnit *unit)
 {
-	if (guihandler) {
-		guihandler->GroupChanged(id);
+	if (luaUI) {
+		luaUI->GroupChanged(id);
 	}
 	if(ai)
 		ai->RemoveUnit(unit->id);
@@ -79,8 +79,8 @@ void CGroup::RemoveUnit(CUnit *unit)
 
 void CGroup::SetNewAI(AIKey aiKey)
 {
-	if (guihandler) {
-		guihandler->GroupChanged(id);
+	if (luaUI) {
+		luaUI->GroupChanged(id);
 	}
 	if(ai) {
 		ReleaseAI(currentAiKey.aiNumber,ai);
@@ -252,8 +252,8 @@ void CGroup::CommandFinished(int unit,int type)
 
 void CGroup::ClearUnits(void)
 {
-	if (guihandler) {
-		guihandler->GroupChanged(id);
+	if (luaUI) {
+		luaUI->GroupChanged(id);
 	}
 	while(!units.empty()){	
 		(*units.begin())->SetGroup(0);

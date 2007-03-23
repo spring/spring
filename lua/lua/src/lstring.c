@@ -69,14 +69,49 @@ static TString *newlstr (lua_State *L, const char *str, size_t l, lu_hash h) {
 }
 
 
+static inline lu_hash calchash(const char* str, size_t len)
+{
+  lu_hash h = (lu_hash)len;  /* seed */
+  size_t step = (len>>5) + 1;  /* if string is too long, don't hash all its chars */
+  size_t l1;
+  for (l1 = len; l1 >= step; l1 -= step) {  /* compute hash */
+    h = h ^ ((h<<5) + (h>>2) + (unsigned char)(str[l1 - 1]));
+  }
+  return h;
+}
+
+
+lu_hash luaS_calchash(const char* str, size_t len)
+{
+  return calchash(str, len);
+}
+
+
 TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
+  GCObject *o;
+  lu_hash h = calchash(str, l);
+  for (o = G(L)->strt.hash[lmod(h, G(L)->strt.size)];
+       o != NULL;
+       o = o->gch.next) {
+    TString *ts = gcotots(o);
+    if (ts->tsv.len == l && (memcmp(str, getstr(ts), l) == 0))
+      return ts;
+  }
+  return newlstr(L, str, l, h);  /* not found */
+}
+
+
+TString *luaS_newhstr (lua_State *L,
+                       unsigned int hash, const char *str, size_t l) {
   GCObject *o;
   lu_hash h = (lu_hash)l;  /* seed */
   size_t step = (l>>5)+1;  /* if string is too long, don't hash all its chars */
   size_t l1;
   for (l1=l; l1>=step; l1-=step)  /* compute hash */
     h = h ^ ((h<<5)+(h>>2)+(unsigned char)(str[l1-1]));
-  for (o = G(L)->strt.hash[lmod(h, G(L)->strt.size)];
+    
+    
+  for (o = G(L)->strt.hash[lmod(hash, G(L)->strt.size)];
        o != NULL;
        o = o->gch.next) {
     TString *ts = gcotots(o);

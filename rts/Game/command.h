@@ -12,6 +12,8 @@ using namespace std;
 
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
+#define CMD_INSERT                 1
+#define CMD_REMOVE                 2
 #define CMD_WAIT                   5
 #define CMD_TIMEWAIT               6
 #define CMD_DEATHWAIT              7
@@ -35,7 +37,7 @@ using namespace std;
 #define CMD_SELFD                 65
 #define CMD_SET_WANTED_MAX_SPEED  70
 #define CMD_LOAD_UNITS            75
-#define CMD_LOAD_ONTO			  76
+#define CMD_LOAD_ONTO             76
 #define CMD_UNLOAD_UNITS          80
 #define CMD_UNLOAD_UNIT           81
 #define CMD_ONOFF                 85
@@ -88,10 +90,11 @@ using namespace std;
 
 struct Command {
 	Command()
-	: timeOut(INT_MAX), options(0) {};
+	: timeOut(INT_MAX), options(0), tag(0) {};
 	int id;
 	vector<float> params;
 	unsigned char options;
+	unsigned int tag;
 	int timeOut;  // remove this command after this frame
 	              // can only be set locally, not sent over net
 	              // (used for temporary orders)

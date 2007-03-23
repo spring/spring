@@ -1,161 +1,235 @@
 #ifndef __CAMERA_CONTROLLER_H__
 #define __CAMERA_CONTROLLER_H__
 
+#include <string>
 #include <vector>
 
-class CCameraController
-{
-public:
-	CCameraController(void);
-	virtual ~CCameraController(void);
+class CCameraController {
+	public:
+		CCameraController(int num);
+		virtual ~CCameraController(void);
 
-	virtual void KeyMove(float3 move)=0;
-	virtual void MouseMove(float3 move)=0;
-	virtual void ScreenEdgeMove(float3 move)=0;
-	virtual void MouseWheelMove(float move)=0;
+		virtual const std::string GetName() const = 0;
 
-	virtual float3 GetPos()=0;
-	virtual float3 GetDir()=0;
+		virtual void KeyMove(float3 move)=0;
+		virtual void MouseMove(float3 move)=0;
+		virtual void ScreenEdgeMove(float3 move)=0;
+		virtual void MouseWheelMove(float move)=0;
 
-	virtual void SetPos(float3 newPos)=0;
-	virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
-	virtual void SwitchTo(bool showText=true)=0;
-	
-	virtual std::vector<float> GetState() const = 0;
-	virtual bool SetState(const std::vector<float>& fv) = 0;
-	
-	float mouseScale;
-	float scrollSpeed;
-	bool enabled;
+		virtual void Update() {}
+
+		virtual float3 GetPos()=0;
+		virtual float3 GetDir()=0;
+
+		virtual float GetFOV() { return fov; }
+
+		virtual void SetPos(float3 newPos)=0;
+		virtual bool DisableTrackerByKey() { return true; }
+
+		virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
+		virtual void SwitchTo(bool showText=true)=0;
+		
+		virtual std::vector<float> GetState() const = 0;
+		virtual bool SetState(const std::vector<float>& fv) = 0;
+		
+		const int num;
+		float fov;
+		float mouseScale;
+		float scrollSpeed;
+		bool enabled;
 };
 
-class CFPSController : public CCameraController
-{
-public:
-	CFPSController();
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+class CFPSController : public CCameraController {
+	public:
+		CFPSController(int num);
 
-	float3 GetPos();
-	float3 GetDir();
+		const std::string GetName() const { return "fps"; }
 
-	void SetPos(float3 newPos);
-	float3 SwitchFrom();
-	void SwitchTo(bool showText);
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
 
-	std::vector<float> GetState() const;
-	bool SetState(const std::vector<float>& fv);
+		float3 GetPos();
+		float3 GetDir();
 
-	float3 pos;
-	float oldHeight;
+		void SetPos(float3 newPos);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
 
-	float3 dir;
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float3 pos;
+		float oldHeight;
+
+		float3 dir;
 };
 
-class COverheadController : public CCameraController
-{
-public:
-	COverheadController();
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+class COverheadController : public CCameraController {
+	public:
+		COverheadController(int num);
 
-	float3 GetPos();
-	float3 GetDir();
+		const std::string GetName() const { return "ta"; }
 
-	void SetPos(float3 newPos);
-	float3 SwitchFrom();
-	void SwitchTo(bool showText);
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
 
-	std::vector<float> GetState() const;
-	bool SetState(const std::vector<float>& fv);
+		float3 GetPos();
+		float3 GetDir();
 
-	float zscale;
-	float3 pos;
-	float3 dir;
-	float height;
-	float oldAltHeight;
-	bool changeAltHeight;
-	float maxHeight;
-	float tiltSpeed;
+		void SetPos(float3 newPos);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
+
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float zscale;
+		float3 pos;
+		float3 dir;
+		float height;
+		float oldAltHeight;
+		bool changeAltHeight;
+		float maxHeight;
+		float tiltSpeed;
 };
 
-class CTWController : public CCameraController
-{
-public:
-	CTWController();
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+class CTWController : public CCameraController {
+	public:
+		CTWController(int num);
 
-	float3 GetPos();
-	float3 GetDir();
+		const std::string GetName() const { return "tw"; }
 
-	void SetPos(float3 newPos);
-	float3 SwitchFrom();
-	void SwitchTo(bool showText);
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
 
-	std::vector<float> GetState() const;
-	bool SetState(const std::vector<float>& fv);
+		float3 GetPos();
+		float3 GetDir();
 
-	float3 pos;
+		void SetPos(float3 newPos);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
+
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float3 pos;
 };
 
-class CRotOverheadController : public CCameraController
-{
-public:
-	CRotOverheadController();
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+class CRotOverheadController : public CCameraController {
+	public:
+		CRotOverheadController(int num);
 
-	float3 GetPos();
-	float3 GetDir();
+		const std::string GetName() const { return "rot"; }
 
-	void SetPos(float3 newPos);
-	float3 SwitchFrom();
-	void SwitchTo(bool showText);
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
 
-	std::vector<float> GetState() const;
-	bool SetState(const std::vector<float>& fv);
+		float3 GetPos();
+		float3 GetDir();
 
-	float3 pos;
-	float oldHeight;
+		void SetPos(float3 newPos);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
 
-	float3 dir;
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float3 pos;
+		float oldHeight;
+
+		float3 dir;
 };
 
-class COverviewController : public CCameraController
-{
-public:
-	COverviewController();
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+class COverviewController : public CCameraController {
+	public:
+		COverviewController(int num);
 
-	float3 GetPos();
-	float3 GetDir();
+		const std::string GetName() const { return "ov"; }
 
-	void SetPos(float3 newPos);
-	float3 SwitchFrom();
-	void SwitchTo(bool showText);
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
 
-	std::vector<float> GetState() const;
-	bool SetState(const std::vector<float>& fv);
+		float3 GetPos();
+		float3 GetDir();
 
-	float3 pos;
-	bool minimizeMinimap;
+		void SetPos(float3 newPos);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
+
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float3 pos;
+		bool minimizeMinimap;
 };
+
+
+class CFreeController : public CCameraController {
+	public:
+		CFreeController(int num);
+
+		const std::string GetName() const { return "free"; }
+
+		void Move(const float3& move, bool tilt, bool strafe, bool upDown);
+
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
+
+		bool DisableTrackerByKey() { return false; }
+
+		void Update();
+
+		float3 GetPos();
+		float3 GetDir();
+
+		void SetPos(float3 newPos);
+		void SetTrackingInfo(const float3& pos, float radius);
+		float3 SwitchFrom();
+		void SwitchTo(bool showText);
+
+		std::vector<float> GetState() const;
+		bool SetState(const std::vector<float>& fv);
+
+		float3 pos;
+		float3 dir;
+		float3 vel;      // velocity
+		float3 avel;     // angular velocity
+		float3 prevVel;  // previous velocity
+		float3 prevAvel; // previous angular velocity
+
+		bool tracking;
+		float3 trackPos;
+		float trackRadius;
+		bool gndLock;
+
+		float tiltSpeed; // time it takes to max
+		float velTime;   // time it takes to max
+		float avelTime;  // time it takes to max
+		float gndOffset; // 0:   disabled
+		                 // <0:  locked to -gndOffset
+		                 // >0:  allow ground locking and gravity
+		float gravity;   // >=0: disabled
+		float autoTilt;  // <=0: disabled
+		bool invertAlt;
+		bool goForward;
+};
+
 
 #endif // __CAMERA_CONTROLLER_H__

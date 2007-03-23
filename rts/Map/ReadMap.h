@@ -61,6 +61,7 @@ public:
 	void ParseSettings(TdfParser& resources);
 
 	std::string mapName;
+	std::string mapHumanName;
 
 	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
 	float* orgheightmap;

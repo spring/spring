@@ -6,46 +6,48 @@
 #include "StdAfx.h"
 #include "UnitLoader.h"
 #include "Unit.h"
-#include "LogOutput.h"
-#include "Sim/Weapons/Cannon.h"
-#include "Sim/Weapons/bombdropper.h"
-#include "Sim/Weapons/FlameThrower.h"
-#include "Sim/Weapons/Rifle.h"
-#include "Map/Ground.h"
-#include "UnitTypes/Factory.h"
-#include "UnitTypes/Builder.h"
-#include "Sim/Weapons/MeleeWeapon.h"
-#include "Sound.h"
 #include "UnitDefHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "UnitTypes/Builder.h"
+#include "UnitTypes/ExtractorBuilding.h"
+#include "UnitTypes/Factory.h"
+#include "UnitTypes/TransportUnit.h"
 #include "COB/CobEngine.h"
-#include "COB/CobInstance.h"
 #include "COB/CobFile.h"
-#include "CommandAI/CommandAI.h"
-#include "CommandAI/BuilderCAI.h"
-#include "CommandAI/FactoryCAI.h"
+#include "COB/CobInstance.h"
 #include "CommandAI/AirCAI.h"
+#include "CommandAI/BuilderCAI.h"
+#include "CommandAI/CommandAI.h"
+#include "CommandAI/FactoryCAI.h"
 #include "CommandAI/MobileCAI.h"
-#include "Sim/Weapons/MissileLauncher.h"
-#include "Sim/Weapons/TorpedoLauncher.h"
-#include "Sim/Weapons/LaserCannon.h"
-#include "Sim/Weapons/EmgCannon.h"
-#include "Sim/Weapons/StarburstLauncher.h"
-#include "Sim/Weapons/LightingCannon.h"
+#include "CommandAI/TransportCAI.h"
+#include "Game/GameHelper.h"
+#include "Map/Ground.h"
+#include "Map/MapDamage.h"
+#include "Platform/errorhandler.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/groundmovetype.h"
-#include "UnitTypes/ExtractorBuilding.h"
-#include "Sim/Weapons/NoWeapon.h"
-#include "UnitTypes/TransportUnit.h"
-#include "CommandAI/TransportCAI.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Weapons/DGunWeapon.h"
-#include "TimeProfiler.h"
-#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/BeamLaser.h"
+#include "Sim/Weapons/bombdropper.h"
+#include "Sim/Weapons/Cannon.h"
+#include "Sim/Weapons/DGunWeapon.h"
+#include "Sim/Weapons/EmgCannon.h"
+#include "Sim/Weapons/FlameThrower.h"
+#include "Sim/Weapons/LaserCannon.h"
+#include "Sim/Weapons/LightingCannon.h"
+#include "Sim/Weapons/MeleeWeapon.h"
+#include "Sim/Weapons/MissileLauncher.h"
+#include "Sim/Weapons/NoWeapon.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
+#include "Sim/Weapons/Rifle.h"
+#include "Sim/Weapons/StarburstLauncher.h"
+#include "Sim/Weapons/TorpedoLauncher.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sound.h"
 #include "myMath.h"
-#include "Platform/errorhandler.h"
+#include "LogOutput.h"
+#include "TimeProfiler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -64,7 +66,8 @@ CUnitLoader::~CUnitLoader()
 	CGroundMoveType::DeleteLineTable();
 }
 
-CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side, bool build, int facing)
+CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
+                             bool build, int facing, const CUnit* builder)
 {
 	CUnit* unit;
 START_TIME_PROFILE;
@@ -310,7 +313,8 @@ START_TIME_PROFILE;
 	unit->frontdir=GetVectorFromHeading(unit->heading);
 	unit->updir=UpVector;
 	unit->rightdir=unit->frontdir.cross(unit->updir);
-	unit->Init();
+
+	unit->Init(builder);
 
 	unit->yardMap = ud->yardmaps[facing];
 
@@ -459,3 +463,26 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 
 	return weapon;
 }
+
+
+void CUnitLoader::FlattenGround(const CUnit* unit)
+{
+	const UnitDef* unitDef = unit->unitDef;
+	if (!mapDamage->disabled && unitDef->levelGround && !unitDef->floater &&
+	    !(unitDef->canmove && (unitDef->speed > 0.0f))) {
+		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
+		bi.pos = helper->Pos2BuildPos(bi);
+		const float hss = 0.5f * SQUARE_SIZE;
+		const int tx1 = (int)max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
+		const int tz1 = (int)max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
+		const int tx2 = min(gs->mapx, tx1 + bi.GetXSize());
+		const int tz2 = min(gs->mapy, tz1 + bi.GetYSize());
+		for(int z = tz1; z <= tz2; z++){
+			for(int x = tx1; x <= tx2; x++){
+				readmap->GetHeightmap()[z * (gs->mapx + 1) + x] = bi.pos.y;
+			}
+		}
+		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
+	}
+}
+

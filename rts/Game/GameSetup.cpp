@@ -83,6 +83,9 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(hostport,"0","GAME\\HostPort");
 	file.GetDef(maxUnits,"500","GAME\\MaxUnits");
 	file.GetDef(gs->gameMode,"0","GAME\\GameMode");
+	file.GetDef(gs->noHelperAIs,"0","GAME\\NoHelperAIs");
+	file.GetDef(gs->useLuaGaia,"0","GAME\\LuaGaia");
+	file.GetDef(gs->useLuaRules,"0","GAME\\LuaRules");
 	file.GetDef(sourceport,"0","GAME\\SourcePort");
 	file.GetDef(limitDgun,"0","GAME\\LimitDgun");
 	file.GetDef(diminishingMMs,"0","GAME\\DiminishingMMs");
@@ -111,6 +114,14 @@ bool CGameSetup::Init(char* buf, int size)
 	file.GetDef(numPlayers,"2","GAME\\NumPlayers");
 	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
 	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
+	
+	// gaia adjustments
+	if (gs->useLuaGaia) {
+		gs->gaiaTeamID = gs->activeTeams;
+		gs->gaiaAllyTeamID = gs->activeAllyTeams;
+		gs->activeTeams++;
+		gs->activeAllyTeams++;
+	}
 
 	file.GetDef(startPosType,"0","GAME\\StartPosType");
 	if(startPosType==2){
@@ -166,8 +177,9 @@ bool CGameSetup::Init(char* buf, int size)
 		colorNum%=palette.NumTeamColors();
 		float3 defaultCol(palette.teamColor[colorNum][0]/255.0f,palette.teamColor[colorNum][1]/255.0f,palette.teamColor[colorNum][2]/255.0f);
 		float3 color=file.GetFloat3(defaultCol,s+"rgbcolor");
-		for(int b=0;b<3;++b)
+		for(int b=0;b<3;++b){
 			gs->Team(a)->color[b]=int(color[b]*255);
+		}
 		gs->Team(a)->color[3]=255;
 
  		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
@@ -243,6 +255,20 @@ bool CGameSetup::Init(char* buf, int size)
 
 		restrictedUnits[resName] = resLimit;
 	}
+
+	// setup the gaia team
+	if (gs->useLuaGaia) {
+		CTeam* team = gs->Team(gs->gaiaTeamID);
+		team->color[0] = 255;
+		team->color[1] = 255;
+		team->color[2] = 255;
+		team->color[3] = 255;
+		team->gaia = true;
+		readyTeams[gs->gaiaTeamID] = true;
+	}
+
+	assert(gs->activeTeams <= MAX_TEAMS);
+	assert(gs->activeAllyTeams <= MAX_TEAMS);
 
 	return true;
 }

@@ -9,12 +9,28 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+using namespace std;
+
 extern "C" {
 	#include "lua.h"
 	#include "lualib.h"
 	#include "lauxlib.h"
 }
-#include "LuaState.h"
+
+#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaUtils.h"
+#include "Lua/LuaConstGL.h"
+#include "Lua/LuaConstCMD.h"
+#include "Lua/LuaConstCMDTYPE.h"
+#include "Lua/LuaConstGame.h"
+#include "Lua/LuaConstSpring.h"
+#include "Lua/LuaSyncedRead.h"
+#include "Lua/LuaUnsyncedCtrl.h"
+#include "Lua/LuaUnsyncedRead.h"
+#include "Lua/LuaFeatureDefs.h"
+#include "Lua/LuaUnitDefs.h"
+#include "Lua/LuaWeaponDefs.h"
+#include "Lua/LuaOpenGL.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
@@ -23,8 +39,8 @@ extern "C" {
 #include "Game/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
-#include "Game/SelectedUnits.h"
 #include "Game/PlayerRoster.h"
+#include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -34,325 +50,175 @@ extern "C" {
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
-#include "Map/Ground.h"
-#include "Map/MapDamage.h"
-#include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/UnitModels/3DModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/Feature.h"
-#include "Sim/Misc/FeatureHandler.h"
-#include "Sim/Misc/QuadField.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
-#include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
-#include "System/Sound.h"
 
 extern Uint8 *keys;
 extern GLfloat LightDiffuseLand[];
 extern GLfloat LightAmbientLand[];
 
 
-/******************************************************************************/
+CLuaUI* luaUI = NULL;
 
-// LUA C functions  (placed in the "Spring" table)
 
-static int LoadTextVFS(lua_State* L);
-static int GetDirListVFS(lua_State* L);
-static int GetDirList(lua_State* L);
-
-static int GetConfigInt(lua_State* L);
-static int SetConfigInt(lua_State* L);
-static int GetConfigString(lua_State* L);
-static int SetConfigString(lua_State* L);
-
-static int SetUnitDefIcon(lua_State* L);
-
-static int GetFPS(lua_State* L);
-static int GetGameSpeed(lua_State* L);
-static int GetGameSeconds(lua_State* L);
-static int GetLastUpdateSeconds(lua_State* L);
-
-static int GetActiveCommand(lua_State* L);
-static int GetDefaultCommand(lua_State* L);
-
-static int GetMouseState(lua_State* L);
-static int GetMouseCursor(lua_State* L);
-static int SetMouseCursor(lua_State* L);
-
-static int GetKeyState(lua_State* L);
-static int GetModKeyState(lua_State* L);
-static int GetPressedKeys(lua_State* L);
-
-static int GetConsoleBuffer(lua_State* L);
-static int GetCurrentTooltip(lua_State* L);
-
-static int GetKeyCode(lua_State* L);
-static int GetKeySymbol(lua_State* L);
-static int GetKeyBindings(lua_State* L);
-static int GetActionHotKeys(lua_State* L);
-
-static int SendCommands(lua_State* L);
-static int GiveOrder(lua_State* L);
-static int GiveOrderToUnit(lua_State* L);
-static int GiveOrderToUnitMap(lua_State* L);
-static int GiveOrderToUnitArray(lua_State* L);
-static int GiveOrderArrayToUnitMap(lua_State* L);
-static int GiveOrderArrayToUnitArray(lua_State* L);
-
-static int SelectUnitMap(lua_State* L);
-static int SelectUnitArray(lua_State* L);
-
-static int GetGroupList(lua_State* L);
-static int GetSelectedGroup(lua_State* L);
-static int GetGroupAIName(lua_State* L);
-static int GetGroupAIList(lua_State* L);
-
-static int GetSelectedUnits(lua_State* L);
-static int GetSelectedUnitsSorted(lua_State* L);
-static int GetSelectedUnitsCounts(lua_State* L);
-static int GetGroupUnits(lua_State* L);
-static int GetGroupUnitsSorted(lua_State* L);
-static int GetGroupUnitsCounts(lua_State* L);
-static int GetTeamUnits(lua_State* L);
-static int GetTeamUnitsSorted(lua_State* L);
-static int GetTeamUnitsCounts(lua_State* L);
-
-static int GetUnitsInRectangle(lua_State* L);
-static int GetUnitsInBox(lua_State* L);
-static int GetUnitsInPlanes(lua_State* L);
-static int GetUnitsInCylinder(lua_State* L);
-static int IsUnitInView(lua_State* L);
-
-static int GetUnitDefID(lua_State* L);
-static int GetUnitTeam(lua_State* L);
-static int GetUnitAllyTeam(lua_State* L);
-static int GetUnitGroup(lua_State* L);
-static int GetUnitHealth(lua_State* L);
-static int GetUnitResources(lua_State* L);
-static int GetUnitExperience(lua_State* L);
-static int GetUnitStates(lua_State* L);
-static int GetUnitStockpile(lua_State* L);
-static int GetUnitRadius(lua_State* L);
-static int GetUnitPosition(lua_State* L);
-static int GetUnitHeading(lua_State* L);
-static int GetUnitBuildFacing(lua_State* L);
-static int IsUnitAllied(lua_State* L);
-
-static int GetUnitDefDimensions(lua_State* L);
-
-static int GetFeatureInfo(lua_State* L);
-static int GetFeaturePosition(lua_State* L);
-static int GetFeatureResources(lua_State* L);
-
-static int GetCommandQueue(lua_State* L);
-static int GetFullBuildQueue(lua_State* L);
-static int GetRealBuildQueue(lua_State* L);
-
-static int GetMyAllyTeamID(lua_State* L);
-static int GetMyTeamID(lua_State* L);
-static int GetMyPlayerID(lua_State* L);
-
-static int GetAllyTeamList(lua_State* L);
-static int GetTeamList(lua_State* L);
-static int GetPlayerList(lua_State* L);
-static int GetPlayerRoster(lua_State* L);
-
-static int GetTeamInfo(lua_State* L);
-static int GetTeamResources(lua_State* L);
-static int GetTeamUnitStats(lua_State* L);
-static int SetShareLevel(lua_State* L);
-static int ShareResources(lua_State* L);
-
-static int GetPlayerInfo(lua_State* L);
-
-static int AreTeamsAllied(lua_State* L);
-static int ArePlayersAllied(lua_State* L);
-
-static int GetCameraState(lua_State* L);
-static int SetCameraState(lua_State* L);
-static int GetCameraPos(lua_State* L);
-static int GetCameraVectors(lua_State* L);
-static int WorldToScreenCoords(lua_State* L);
-static int TraceScreenRay(lua_State* L);
-
-static int GetGroundHeight(lua_State* L);
-static int GetGroundNormal(lua_State* L);
-static int GetGroundInfo(lua_State* L);
-static int TestBuildOrder(lua_State* L);
-static int Pos2BuildPos(lua_State* L);
-
-static int PlaySoundFile(lua_State* L);
-
-static int AddWorldIcon(lua_State* L);
-static int AddWorldText(lua_State* L);
-static int AddWorldUnit(lua_State* L);
-
-static int MarkerAddPoint(lua_State* L);
-static int MarkerAddLine(lua_State* L);
-static int MarkerErasePosition(lua_State* L);
-
-static int DrawScreenGeometry(lua_State* L);
-static int DrawResetState(lua_State* L);
-static int DrawResetMatrices(lua_State* L);
-static int DrawClear(lua_State* L);
-
-static int DrawLighting(lua_State* L);
-static int DrawShadeModel(lua_State* L);
-static int DrawScissor(lua_State* L);
-static int DrawDepthMask(lua_State* L);
-static int DrawDepthTest(lua_State* L);
-static int DrawCulling(lua_State* L);
-static int DrawLogicOp(lua_State* L);
-static int DrawBlending(lua_State* L);
-static int DrawAlphaTest(lua_State* L);
-static int DrawLineStipple(lua_State* L);
-static int DrawPolygonMode(lua_State* L);
-static int DrawPolygonOffset(lua_State* L);
-
-static int DrawTexture(lua_State* L);
-static int DrawMaterial(lua_State* L);
-static int DrawColor(lua_State* L);
-
-static int DrawLineWidth(lua_State* L);
-static int DrawPointSize(lua_State* L);
-
-static int DrawFreeTexture(lua_State* L);
-
-static int DrawShape(lua_State* L);
-static int DrawUnitDef(lua_State* L);
-static int DrawText(lua_State* L);
-static int DrawGetTextWidth(lua_State* L);
-
-static int DrawMatrixMode(lua_State* L);
-static int DrawLoadIdentity(lua_State* L);
-static int DrawTranslate(lua_State* L);
-static int DrawScale(lua_State* L);
-static int DrawRotate(lua_State* L);
-static int DrawPushMatrix(lua_State* L);
-static int DrawPopMatrix(lua_State* L);
-
-static int DrawListCreate(lua_State* L);
-static int DrawListRun(lua_State* L);
-static int DrawListDelete(lua_State* L);
+const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 
 /******************************************************************************/
-
-// Miscellaneous Local Routines
-
-static void ResetGLState();
-static int ParseFloatArray(lua_State* L, float* array, int size);
-
-
 /******************************************************************************/
 
-// Local Variables
 
-static bool drawingEnabled = false;
-static bool drawWorldMode = false;
-
-static float screenWidth = 0.36f;
-static float screenDistance = 0.60f;
-
-static vector<unsigned int> displayLists;
-
-static float textHeight = 0.001f;
-
-static float lastUpdateSeconds = 0.0f;
-static Uint32 lastUpdateTime = 0;
-
-
-/******************************************************************************/
-
-CLuaUI* CLuaUI::GetHandler(const string& filename)
+void CLuaUI::LoadHandler()
 {
-	CLuaUI* layout = new CLuaUI();
-
-	const string code = layout->LoadFile(filename);
-	if (code.empty()) {
-		delete layout;
-		return NULL;
+	if (luaUI) {
+		return;
 	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		delete layout;
-		return NULL;
+	
+	SAFE_NEW CLuaUI();
+	
+	if (luaUI->L == NULL) {
+		delete luaUI;
 	}
+}
 
-	if (!layout->LoadCFunctions(L)) {
-		delete layout;
-		return NULL;
-	}
 
-	if (!layout->LoadCode(L, code, filename)) {
-		delete layout;
-		return NULL;
-	}
-
-	return layout;
+void CLuaUI::FreeHandler()
+{
+	delete luaUI;
 }
 
 
 /******************************************************************************/
 
-CLuaUI::CLuaUI()
-{
-	lastUpdateTime = SDL_GetTicks();
+Uint32 CLuaUI::lastUpdateTime = SDL_GetTicks();
+float  CLuaUI::lastUpdateSeconds = 0.0f;
 
-	// calculate the text height that we'll use to
-	// provide a consistent display when rendering text
- 	// (note the missing characters)
-	textHeight = font->CalcTextHeight("abcdef hi klmno  rstuvwx z"
-	                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-																    "0123456789");
-	textHeight = max(1.0e-6f, textHeight);  // safety for dividing
+
+CLuaUI::CLuaUI()
+: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, NULL)
+{
+	luaUI = this;
+	
+	if (L == NULL) {
+		return;
+	}
+
+	UpdateTeams();
+
+	lastUpdateTime = SDL_GetTicks();
+	lastUpdateSeconds = 0.0f;
+
+	const string code = LoadFile("gui.lua");
+	if (code.empty()) {
+		KillLua();
+		return;
+	}
+
+	// load the standard libraries
+	luaopen_base(L);
+	luaopen_io(L);
+	luaopen_math(L);
+	luaopen_table(L);
+	luaopen_string(L);
+	luaopen_debug(L);
+
+	lua_pushcfunction(L, KillActiveHandle);
+	lua_setglobal(L, "KillScript");
+
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+
+	// load the spring libraries
+	if (!LoadCFunctions(L)                                                 ||
+	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
+	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
+	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
+	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
+	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
+	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
+	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
+	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
+		KillLua();
+		return;
+	}
+
+	lua_settop(L, 0);
+
+	if (!LoadCode(L, code, "gui.lua")) {
+		KillLua();
+		return;
+	}
+	
+	// register for call-ins
+	luaCallIns.AddHandle(this);
 }
 
 
 CLuaUI::~CLuaUI()
 {
-	Shutdown();
-	for (int i = 0; i < (int)displayLists.size(); i++) {
-		glDeleteLists(displayLists[i], 1);
-	}
-	displayLists.clear();
+	luaUI = NULL;
 }
 
 
-string CLuaUI::LoadFile(const string& filename)
+void CLuaUI::KillLua()
 {
-	string code;
-
-	CFileHandler fh(filename);
-
-	if (fh.FileExists()) {
-		while (fh.Peek() != EOF) {
-			int c;
-			fh.Read(&c, 1);
-			code += (char)c;
-		}
+	if (L != NULL) {
+		lua_close(L);
+		L = NULL;
 	}
-
-	return code;
 }
 
+
+bool CLuaUI::HasCallIn(const string& callInName)
+{
+	if (L == NULL) {
+		return false;
+	}
+
+	// never allow these calls,
+	// use DrawWorldItems and DrawScreenItems instead
+	if ((callInName == "DrawWorld") ||
+	    (callInName == "DrawScreen")) {
+		return false;
+	}
+
+	lua_getglobal(L, callInName.c_str());
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	lua_pop(L, 1);
+	return true;
+}
+
+
+void CLuaUI::UpdateTeams()
+{
+	if (luaUI) {
+		luaUI->fullCtrl = false;
+		luaUI->fullRead = gu->spectatingFullView;
+		luaUI->ctrlTeam = gu->spectating ? NoAccessTeam : gu->myTeam;
+		luaUI->readTeam = luaUI->fullRead ? AllAccessTeam : gu->myTeam;
+		luaUI->readAllyTeam = luaUI->fullRead ? AllAccessTeam : gu->myAllyTeam;
+		luaUI->selectTeam = gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam;
+	}
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 bool CLuaUI::LoadCFunctions(lua_State* L)
 {
@@ -366,6 +232,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(LoadTextVFS);
 	REGISTER_LUA_CFUNC(GetDirListVFS);
 	REGISTER_LUA_CFUNC(GetDirList);
+
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
@@ -373,154 +240,63 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
-	REGISTER_LUA_CFUNC(SelectUnitMap);
-	REGISTER_LUA_CFUNC(SelectUnitArray);
+
 	REGISTER_LUA_CFUNC(GetFPS);
-	REGISTER_LUA_CFUNC(GetGameSpeed);
-	REGISTER_LUA_CFUNC(GetGameSeconds);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
+
+	REGISTER_LUA_CFUNC(SetActiveCommand);
 	REGISTER_LUA_CFUNC(GetActiveCommand);
 	REGISTER_LUA_CFUNC(GetDefaultCommand);
+	REGISTER_LUA_CFUNC(GetActiveCmdDescs);
+	REGISTER_LUA_CFUNC(GetActiveCmdDesc);
+	REGISTER_LUA_CFUNC(GetCmdDescIndex);
+
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
+	REGISTER_LUA_CFUNC(WarpMouse);
+
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
-	REGISTER_LUA_CFUNC(GetConsoleBuffer);
-	REGISTER_LUA_CFUNC(GetCurrentTooltip);
+
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
 	REGISTER_LUA_CFUNC(GetKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
+
+	REGISTER_LUA_CFUNC(GetConsoleBuffer);
+	REGISTER_LUA_CFUNC(GetCurrentTooltip);
+
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
 	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
+
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
+
+	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
+	REGISTER_LUA_CFUNC(GetMyTeamID);
+	REGISTER_LUA_CFUNC(GetMyPlayerID);
+
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
 	REGISTER_LUA_CFUNC(GetGroupAIName);
 	REGISTER_LUA_CFUNC(GetGroupAIList);
-	REGISTER_LUA_CFUNC(GetSelectedUnits);
-	REGISTER_LUA_CFUNC(GetSelectedUnitsSorted);
-	REGISTER_LUA_CFUNC(GetSelectedUnitsCounts);
+
+	REGISTER_LUA_CFUNC(GetUnitGroup);
+	REGISTER_LUA_CFUNC(SetUnitGroup);
+
 	REGISTER_LUA_CFUNC(GetGroupUnits);
 	REGISTER_LUA_CFUNC(GetGroupUnitsSorted);
 	REGISTER_LUA_CFUNC(GetGroupUnitsCounts);
-	REGISTER_LUA_CFUNC(GetTeamUnits);
-	REGISTER_LUA_CFUNC(GetTeamUnitsSorted);
-	REGISTER_LUA_CFUNC(GetTeamUnitsCounts);
-	REGISTER_LUA_CFUNC(GetUnitsInRectangle);
-	REGISTER_LUA_CFUNC(GetUnitsInBox);
-	REGISTER_LUA_CFUNC(GetUnitsInPlanes);
-	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
-	REGISTER_LUA_CFUNC(IsUnitInView);
-	REGISTER_LUA_CFUNC(GetUnitDefID);
-	REGISTER_LUA_CFUNC(GetUnitTeam);
-	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
-	REGISTER_LUA_CFUNC(GetUnitGroup);
-	REGISTER_LUA_CFUNC(GetUnitHealth);
-	REGISTER_LUA_CFUNC(GetUnitResources);
-	REGISTER_LUA_CFUNC(GetUnitExperience);
-	REGISTER_LUA_CFUNC(GetUnitStates);
-	REGISTER_LUA_CFUNC(GetUnitStockpile);
-	REGISTER_LUA_CFUNC(GetUnitRadius);
-	REGISTER_LUA_CFUNC(GetUnitPosition);
-	REGISTER_LUA_CFUNC(GetUnitHeading);
-	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
-	REGISTER_LUA_CFUNC(IsUnitAllied);
-	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
-	REGISTER_LUA_CFUNC(GetFeatureInfo);
-	REGISTER_LUA_CFUNC(GetFeaturePosition);
-	REGISTER_LUA_CFUNC(GetFeatureResources);
-	REGISTER_LUA_CFUNC(GetCommandQueue);
-	REGISTER_LUA_CFUNC(GetFullBuildQueue);
-	REGISTER_LUA_CFUNC(GetRealBuildQueue);
-	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
-	REGISTER_LUA_CFUNC(GetMyTeamID);
-	REGISTER_LUA_CFUNC(GetMyPlayerID);
-	REGISTER_LUA_CFUNC(GetAllyTeamList);
-	REGISTER_LUA_CFUNC(GetTeamList);
-	REGISTER_LUA_CFUNC(GetPlayerList);
-	REGISTER_LUA_CFUNC(GetPlayerRoster);
-	REGISTER_LUA_CFUNC(GetTeamInfo);
-	REGISTER_LUA_CFUNC(GetTeamResources);
-	REGISTER_LUA_CFUNC(GetTeamUnitStats);
+
 	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(ShareResources);
-	REGISTER_LUA_CFUNC(GetPlayerInfo);
-	REGISTER_LUA_CFUNC(AreTeamsAllied);
-	REGISTER_LUA_CFUNC(ArePlayersAllied);
-	REGISTER_LUA_CFUNC(GetCameraState);
-	REGISTER_LUA_CFUNC(SetCameraState);
-	REGISTER_LUA_CFUNC(GetCameraPos);
-	REGISTER_LUA_CFUNC(GetCameraVectors);
-	REGISTER_LUA_CFUNC(WorldToScreenCoords);
-	REGISTER_LUA_CFUNC(TraceScreenRay);
-	REGISTER_LUA_CFUNC(GetGroundHeight);
-	REGISTER_LUA_CFUNC(GetGroundNormal);
-	REGISTER_LUA_CFUNC(GetGroundInfo);
-	REGISTER_LUA_CFUNC(TestBuildOrder);
-	REGISTER_LUA_CFUNC(Pos2BuildPos);
-	REGISTER_LUA_CFUNC(AddWorldIcon);
-	REGISTER_LUA_CFUNC(AddWorldText);
-	REGISTER_LUA_CFUNC(AddWorldUnit);
+
 	REGISTER_LUA_CFUNC(MarkerAddPoint);
 	REGISTER_LUA_CFUNC(MarkerAddLine);
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
-	REGISTER_LUA_CFUNC(PlaySoundFile);
-
-#define REGISTER_LUA_DRAW_CFUNC(x) \
-	lua_pushstring(L, #x);           \
-	lua_pushcfunction(L, Draw ## x); \
-	lua_rawset(L, -3)
-
-	lua_pushstring(L, "Draw");
-	lua_newtable(L);
-	REGISTER_LUA_DRAW_CFUNC(ScreenGeometry);
-	REGISTER_LUA_DRAW_CFUNC(ResetState);
-	REGISTER_LUA_DRAW_CFUNC(ResetMatrices);
-	REGISTER_LUA_DRAW_CFUNC(Clear);
-	REGISTER_LUA_DRAW_CFUNC(Lighting);
-	REGISTER_LUA_DRAW_CFUNC(ShadeModel);
-	REGISTER_LUA_DRAW_CFUNC(Scissor);
-	REGISTER_LUA_DRAW_CFUNC(DepthMask);
-	REGISTER_LUA_DRAW_CFUNC(DepthTest);
-	REGISTER_LUA_DRAW_CFUNC(Culling);
-	REGISTER_LUA_DRAW_CFUNC(LogicOp);
-	REGISTER_LUA_DRAW_CFUNC(Blending);
-	REGISTER_LUA_DRAW_CFUNC(AlphaTest);
-	REGISTER_LUA_DRAW_CFUNC(LineStipple);
-	REGISTER_LUA_DRAW_CFUNC(PolygonMode);
-	REGISTER_LUA_DRAW_CFUNC(PolygonOffset);
-
-	REGISTER_LUA_DRAW_CFUNC(Texture);
-	REGISTER_LUA_DRAW_CFUNC(Material);
-	REGISTER_LUA_DRAW_CFUNC(Color);
-
-	REGISTER_LUA_DRAW_CFUNC(LineWidth);
-	REGISTER_LUA_DRAW_CFUNC(PointSize);
-
-	REGISTER_LUA_DRAW_CFUNC(FreeTexture);
-
-	REGISTER_LUA_DRAW_CFUNC(Shape);
-	REGISTER_LUA_DRAW_CFUNC(UnitDef);
-	REGISTER_LUA_DRAW_CFUNC(Text);
-	REGISTER_LUA_DRAW_CFUNC(GetTextWidth);
-
-	REGISTER_LUA_DRAW_CFUNC(ListCreate);
-	REGISTER_LUA_DRAW_CFUNC(ListRun);
-	REGISTER_LUA_DRAW_CFUNC(ListDelete);
-
-	REGISTER_LUA_DRAW_CFUNC(MatrixMode);
-	REGISTER_LUA_DRAW_CFUNC(LoadIdentity);
-	REGISTER_LUA_DRAW_CFUNC(Translate);
-	REGISTER_LUA_DRAW_CFUNC(Scale);
-	REGISTER_LUA_DRAW_CFUNC(Rotate);
-	REGISTER_LUA_DRAW_CFUNC(PushMatrix);
-	REGISTER_LUA_DRAW_CFUNC(PopMatrix);
-	lua_rawset(L, -3); // add the Draw table
 
 	lua_setglobal(L, "Spring");
 
@@ -528,10 +304,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 }
 
 
-bool CLuaUI::LoadCode(lua_State* L,
-                                  const string& code, const string& debug)
+bool CLuaUI::LoadCode(lua_State* L, const string& code, const string& debug)
 {
-  lua_pop(L, lua_gettop(L));
+  lua_settop(L, 0);
 
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
@@ -540,7 +315,12 @@ bool CLuaUI::LoadCode(lua_State* L,
 		lua_pop(L, 1);
 		return false;
 	}
+
+	CLuaHandle* orig = activeHandle;
+	SetActiveHandle();
 	error = lua_pcall(L, 0, 0, 0);
+	SetActiveHandle(orig);
+
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n", error, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
@@ -556,56 +336,36 @@ bool CLuaUI::LoadCode(lua_State* L,
 
 void CLuaUI::Shutdown()
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "Shutdown");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("Shutdown");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return;
 	}
 
-	const int error = lua_pcall(L, 0, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_Shutdown", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return;
-	}
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
 	return;
 }
 
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "ConfigureLayout");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("ConfigureLayout");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
 	lua_pushstring(L, command.c_str());
-	const int error = lua_pcall(L, 1, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_ConfigureLayout", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-	return true;
+
+	// call the routine
+	return RunCallIn(cmdStr, 1, 0);
 }
 
 
-static bool AddConsoleLines(lua_State* L)
+bool CLuaUI::AddConsoleLines(lua_State* L)
 {
 	CInfoConsole* ic = game->infoConsole;
 	if (ic == NULL) {
@@ -619,24 +379,22 @@ static bool AddConsoleLines(lua_State* L)
 	for (int i = 0; i < count; i++) {
 		const CInfoConsole::RawLine& rl = lines[i];
 
-		lua_getglobal(L, "AddConsoleLine");
-		if (!lua_isfunction(L, -1)) {
-			lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
+		static const LuaHashString cmdStr("AddConsoleLine");
+		if (!cmdStr.GetGlobalFunc(L)) {
+			lua_settop(L, 0);
 			return true; // the call is not defined
 		}
+
 		lua_pushstring(L, rl.text.c_str());
 		lua_pushnumber(L, rl.priority);
 
 		// call the function
-		const int error = lua_pcall(L, 2, 0, 0);
-		if (error != 0) {
-			logOutput.Print("error = %i, %s, %s\n", error,
-											"Call_AddConsoleLine", lua_tostring(L, -1));
-			lua_pop(L, lua_gettop(L));
+		if (!RunCallIn(cmdStr, 2, 0)) {
 			return false;
 		}
 
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 	}
 	return true;
 }
@@ -644,11 +402,15 @@ static bool AddConsoleLines(lua_State* L)
 
 bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
+	if (killMe) {
+		string msg = name;
+		if (!killMsg.empty()) {
+			msg += ": " + killMsg;
+		}
+		logOutput.Print("Disabled %s\n", msg.c_str());
+		delete this;
+		return true; // force the update
 	}
-	lua_pop(L, lua_gettop(L));
 
 	// update the timer
 	const Uint32 newTime = SDL_GetTicks();
@@ -658,10 +420,11 @@ bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 	// add new lines from the console buffer
 	AddConsoleLines(L);
 
-	lua_getglobal(L, "UpdateLayout");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return false; // the call is not defined
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("UpdateLayout");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false;
 	}
 
 	lua_pushboolean(L, commandsChanged);
@@ -670,34 +433,29 @@ bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
 	lua_pushboolean(L, keys[SDLK_LCTRL]);
 	lua_pushboolean(L, keys[SDLK_LMETA]);
 	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	const int error = lua_pcall(L, 6, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UpdateLayout", lua_tostring(L, -1));
-		lua_pop(L, 1);
+
+	if (!RunCallIn(cmdStr, 6, 1)) {
 		return false;
 	}
-	if (!lua_isboolean(L, -1)) {
+
+	if (!lua_isboolean(L, 1)) {
 		logOutput.Print("UpdateLayout() expects a boolean return value\n");
 		return false;
 	}
-	const bool forceLayout = !!lua_toboolean(L, -1);
-	lua_pop(L, 1);
+
+	const bool forceLayout = !!lua_toboolean(L, 1);
+	lua_settop(L, 0);
+
 	return forceLayout;
 }
 
 
 bool CLuaUI::CommandNotify(const Command& cmd)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "CommandNotify");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("CommandNotify");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
 
@@ -714,359 +472,42 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 
 	// push the options table
 	lua_newtable(L);
-	lua_pushstring(L, "alt");
-	lua_pushboolean(L, cmd.options & ALT_KEY);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "ctrl");
-	lua_pushboolean(L, cmd.options & CONTROL_KEY);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "shift");
-	lua_pushboolean(L, cmd.options & SHIFT_KEY);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "right");
-	lua_pushboolean(L, cmd.options & RIGHT_MOUSE_KEY);
-	lua_rawset(L, -3);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",   cmd.options & ALT_KEY);
+	HSTR_PUSH_BOOL(L, "ctrl",  cmd.options & CONTROL_KEY);
+	HSTR_PUSH_BOOL(L, "shift", cmd.options & SHIFT_KEY);
+	HSTR_PUSH_BOOL(L, "right", cmd.options & RIGHT_MOUSE_KEY);
 
 	// call the function
-	const int error = lua_pcall(L, 3, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_CommandNotify", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 3, 1)) {
 		return false;
 	}
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if ((args != 1) || !lua_isboolean(L, 1)) {
 		logOutput.Print("CommandNotify() bad return value (%i)\n", args);
 		lua_pop(L, args);
 		return false;
 	}
 
-	return !!lua_toboolean(L, -1);
-}
-
-
-static inline const UnitDef* EffectiveUnitDef(CUnit* unit)
-{
-	const UnitDef* ud = unit->unitDef;
-	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
-		return ud;
-	} else if (ud->decoyDef) {
-		return ud->decoyDef;
-	} else {
-		return ud;
-	}
-}
-
-
-bool CLuaUI::UnitCreated(CUnit* unit)
-{
-	if (unit->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitCreated");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	const int error = lua_pcall(L, 3, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitCreated", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitFinished(CUnit* unit)
-{
-	if (unit->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitFinished");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	const int error = lua_pcall(L, 3, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitFinished", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitFromFactory(CUnit* unit, CUnit* factory, bool userOrders)
-{
-	if (unit->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitFromFactory");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, factory->id);
-	lua_pushnumber(L, factory->unitDef->id);
-	lua_pushboolean(L, userOrders);
-
-	// call the routine
-	const int error = lua_pcall(L, 6, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitFromFactory", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitDestroyed(CUnit* victim, CUnit* attacker)
-{
-	if (victim->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitDestroyed");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, victim->id);
-	lua_pushnumber(L, victim->unitDef->id);
-	lua_pushnumber(L, victim->team);
-
-	// call the routine
-	const int error = lua_pcall(L, 3, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitDestroyed", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitTaken(CUnit* unit, int newTeam)
-{
-	if (unit->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitTaken");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, newTeam);
-
-	// call the routine
-	const int error = lua_pcall(L, 4, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitTaken", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitGiven(CUnit* unit, int oldTeam)
-{
-	if (unit->allyteam != gu->myAllyTeam) {
-		return false;
-	}
-
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "UnitGiven");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, oldTeam);
-
-	// call the routine
-	const int error = lua_pcall(L, 4, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_UnitGiven", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-static bool UnitCallIn(const char* callInName, CUnit* unit, bool unitdef)
-{
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, callInName);
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	if (unitdef) {
-		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
-	}
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	const int error = lua_pcall(L, unitdef ? 3 : 2, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                callInName, lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
-}
-
-
-bool CLuaUI::UnitEnteredRadar(CUnit* unit, int allyteam)
-{
-	if (gu->myAllyTeam != allyteam) {
-		return false;
-	}
-	return UnitCallIn(__FUNCTION__, unit, false);
-}
-
-
-bool CLuaUI::UnitEnteredLos(CUnit* unit, int allyteam)
-{
-	if (gu->myAllyTeam != allyteam) {
-		return false;
-	}
-	return UnitCallIn(__FUNCTION__, unit, true);
-}
-
-
-bool CLuaUI::UnitLeftRadar(CUnit* unit, int allyteam)
-{
-	if (gu->myAllyTeam != allyteam) {
-		return false;
-	}
-	return UnitCallIn(__FUNCTION__, unit, false);
-}
-
-
-bool CLuaUI::UnitLeftLos(CUnit* unit, int allyteam)
-{
-	if (gu->myAllyTeam != allyteam) {
-		return false;
-	}
-	return UnitCallIn(__FUNCTION__, unit, true);
+	return !!lua_toboolean(L, 1);
 }
 
 
 bool CLuaUI::GroupChanged(int groupID)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "GroupChanged");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return true; // the call is not defined
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("GroupChanged");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false; // the call is not defined
 	}
 
 	lua_pushnumber(L, groupID);
 
 	// call the routine
-	const int error = lua_pcall(L, 1, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_GroupChanged", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 1, 0)) {
 		return false;
 	}
 
@@ -1076,287 +517,44 @@ bool CLuaUI::GroupChanged(int groupID)
 
 /******************************************************************************/
 
-static void ClearMatrixStack()
-{
-	int i;
-	GLenum err;
-	for (i = 0; i < 12345; i++) {
-		err = glGetError();
-		if (err == GL_NONE) {
-			break;
-		}
-	}
-	for (i = 0; i < 64; i++) {
-		glPopMatrix();
-		err = glGetError();
-		if (err != GL_NONE) {
-			break; // we're looking for GL_STACK_UNDERFLOW
-		}
-	}
-}
-
-
-static void ResetGLMaterial()
-{
-	const float ambient[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	const float diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	const float black[4]   = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-}
-
-
-static void ResetWorldMatrices()
-{
-	// reset the matrices
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
-		glLoadMatrixd(camera->projection);
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
-		glLoadMatrixd(camera->modelview);
-	}
-}
-
-
 bool CLuaUI::DrawWorldItems()
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "DrawWorldItems");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("DrawWorldItems");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
-	drawingEnabled = true;
-	drawWorldMode = true;
-
-	// push the current GL state
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
-	             GL_POLYGON_BIT | GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT |
-	             GL_LINE_BIT | GL_POINT_BIT);
-
-	// setup a known state
-	ResetGLState();
-	ResetGLMaterial();
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
-	glEnable(GL_LIGHT1);
-
-	glEnable(GL_NORMALIZE);
+	LuaOpenGL::EnableDrawWorld();
 
 	// call the routine
-	bool retval = true;
-	const int error = lua_pcall(L, 0, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_DrawWorldItems", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		retval = false;
-	}
+	bool retval = RunCallIn(cmdStr, 0, 0);
 
-	glDisable(GL_NORMALIZE);
-
-	glDisable(GL_LIGHT1);
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-
-	// reset the matrices
-	ResetWorldMatrices();
-
-	// pop the GL state
-	glPopAttrib();
-
-	drawWorldMode = false;
-	drawingEnabled = false;
+	LuaOpenGL::DisableDrawWorld();
 
 	return retval;
 }
 
 
-static void SetupScreenTransform()
-{
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	const float dist   = screenDistance;         // eye-to-screen (meters)
-	const float width  = screenWidth;            // screen width (meters)
-	const float vppx   = float(gu->winPosX + gu->viewPosX); // view pixel pos x
-	const float vppy   = float(gu->winPosY + gu->viewPosY); // view pixel pos y
-	const float vpsx   = float(gu->viewSizeX);   // view pixel size x
-	const float vpsy   = float(gu->viewSizeY);   // view pixel size y
-	const float spsx   = float(gu->screenSizeX); // screen pixel size x
-	const float spsy   = float(gu->screenSizeY); // screen pixel size x
-	const float halfSX = 0.5f * spsx;            // half screen pixel size x
-	const float halfSY = 0.5f * spsy;            // half screen pixel size y
-
-	const float zplane = dist * (spsx / width);
-	const float znear  = zplane * 0.5;
-	const float zfar   = zplane * 2.0;
-	const float factor = (znear / zplane);
-	const float left   = (vppx - halfSX) * factor;
-	const float bottom = (vppy - halfSY) * factor;
-	const float right  = ((vppx + vpsx) - halfSX) * factor;
-	const float top    = ((vppy + vpsy) - halfSY) * factor;
-	glFrustum(left, right, bottom, top, znear, zfar);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	// translate so that (0,0,0) is on the zplane,
-	// on the window's bottom left corner
-	const float distAdj = (zplane / znear);
-	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
-}
-
-
-static void SetupScreenLighting()
-{
-	// back light
-	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
-	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	const float backLightDiff[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	const float backLightSpec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, backLightPos);
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  backLightAmbt);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  backLightDiff);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, backLightSpec);
-
-	// sun light -- needs the camera transformation
-	glPushMatrix();
-	glLoadMatrixd(camera->modelview);
-	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
-
-	const float sunFactor = 1.0f;
-	const float sf = sunFactor;
-	const float* la = LightAmbientLand;
-	const float* ld = LightDiffuseLand;
-
-	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
-	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
-	const float sunLightSpec[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
-	glLightfv(GL_LIGHT1, GL_AMBIENT,  sunLightAmbt);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE,  sunLightDiff);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLightSpec);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-	glPopMatrix();
-
-	// Enable the GL lights
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-}
-
-
-static void RevertScreenLighting()
-{
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-	glDisable(GL_LIGHT1);
-	glDisable(GL_LIGHT0);
-}
-
-
-static void ResetScreenMatrices()
-{
-	// reset the matrices
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	SetupScreenTransform();
-}
-
-
 bool CLuaUI::DrawScreenItems()
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "DrawScreenItems");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("DrawScreenItems");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
-	drawingEnabled = true;
-
-	// push the current GL state
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT |
-	             GL_POLYGON_BIT | GL_LIGHTING_BIT | GL_COLOR_BUFFER_BIT |
-	             GL_LINE_BIT | GL_POINT_BIT);
-
-	// setup a known state
-	ResetGLState();
-	ResetGLMaterial();
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	// setup the screen transformation
-	SetupScreenTransform();
-	SetupScreenLighting();
-
-	glEnable(GL_NORMALIZE);
+	LuaOpenGL::EnableDrawScreen();
 
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
 	// call the routine
-	bool retval = true;
-	const int error = lua_pcall(L, 2, 0, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_DrawScreenItems", lua_tostring(L, -1));
-		lua_pop(L, 1);
-		retval = false;
-	}
+	bool retval = RunCallIn(cmdStr, 2, 0);
 
-	glDisable(GL_NORMALIZE);
-
-	// revert the screen transform
-	RevertScreenLighting();
-
-	// reset the matrices  (to the pre-LuaUI transform)
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
-		glLoadIdentity();
-		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
-		glLoadIdentity();
-	}
-
-	// pop the GL state
-	glPopAttrib();
-
-	drawingEnabled = false;
+	LuaOpenGL::DisableDrawScreen();
 
 	return retval;
 }
@@ -1366,33 +564,20 @@ bool CLuaUI::DrawScreenItems()
 
 bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "KeyPress");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("KeyPress");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	lua_pushstring(L, "alt");
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "ctrl");
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "meta");
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "shift");
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	lua_rawset(L, -3);
+	HSTR_PUSH_BOOL(L, "alt",   keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", keys[SDLK_LSHIFT]);
 
 	lua_pushboolean(L, isRepeat);
 
@@ -1400,17 +585,13 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 	lua_pushstring(L, ks.GetString(true).c_str());
 
 	// call the function
-	const int error = lua_pcall(L, 4, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_KeyPress", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 4, 1)) {
 		return false;
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
 	}
 
 	return false;
@@ -1419,49 +600,32 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 
 bool CLuaUI::KeyRelease(unsigned short key)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "KeyRelease");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("KeyRelease");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	lua_pushstring(L, "alt");
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "ctrl");
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "meta");
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "shift");
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-	lua_rawset(L, -3);
+	HSTR_PUSH_BOOL(L, "alt",   keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", keys[SDLK_LSHIFT]);
 
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());
 
 	// call the function
-	const int error = lua_pcall(L, 3, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_KeyRelease", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 3, 1)) {
 		return false;
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
 	}
 
 	return false;
@@ -1470,15 +634,10 @@ bool CLuaUI::KeyRelease(unsigned short key)
 
 bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "MouseMove");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("MouseMove");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -1489,11 +648,7 @@ bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	const int error = lua_pcall(L, 5, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_MouseMove", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 5, 1)) {
 		return false;
 	}
 
@@ -1508,15 +663,10 @@ bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CLuaUI::MousePress(int x, int y, int button)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "MousePress");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("MousePress");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -1525,17 +675,13 @@ bool CLuaUI::MousePress(int x, int y, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	const int error = lua_pcall(L, 3, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_MousePress", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 3, 1)) {
 		return false;
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
 	}
 
 	return false;
@@ -1544,15 +690,10 @@ bool CLuaUI::MousePress(int x, int y, int button)
 
 int CLuaUI::MouseRelease(int x, int y, int button)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "MouseRelease");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("MouseRelease");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -1561,17 +702,13 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 	lua_pushnumber(L, button);
 
 	// call the function
-	const int error = lua_pcall(L, 3, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_MouseRelease", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 3, 1)) {
 		return false;
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isnumber(L, -1)) {
-		return (int)lua_tonumber(L, -1);
+	if ((args == 1) && lua_isnumber(L, 1)) {
+		return (int)lua_tonumber(L, 1);
 	}
 
 	return -1;
@@ -1580,15 +717,10 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 
 bool CLuaUI::IsAbove(int x, int y)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "IsAbove");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("IsAbove");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
 
@@ -1596,17 +728,13 @@ bool CLuaUI::IsAbove(int x, int y)
 	lua_pushnumber(L, gu->viewSizeY - y - 1);
 
 	// call the function
-	const int error = lua_pcall(L, 2, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_IsAbove", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 2, 1)) {
 		return false;
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
 	}
 
 	return false;
@@ -1615,15 +743,10 @@ bool CLuaUI::IsAbove(int x, int y)
 
 string CLuaUI::GetTooltip(int x, int y)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return "";
-	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "GetTooltip");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("GetTooltip");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return ""; // the call is not defined
 	}
 
@@ -1631,11 +754,7 @@ string CLuaUI::GetTooltip(int x, int y)
 	lua_pushnumber(L, gu->viewSizeY - y - 1);
 
 	// call the function
-	const int error = lua_pcall(L, 2, 1, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_GetTooltip", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 2, 1)) {
 		return "";
 	}
 
@@ -1650,18 +769,13 @@ string CLuaUI::GetTooltip(int x, int y)
 
 bool CLuaUI::HasLayoutButtons()
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("LayoutButtons");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false; // the call is not defined
 	}
-	lua_pop(L, lua_gettop(L));
-
-	lua_getglobal(L, "LayoutButtons");
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, lua_gettop(L));
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
 	return true;
 }
 
@@ -1678,12 +792,6 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
                            map<int, int>& buttonList,
                            string& menuName)
 {
-	lua_State* L = LUASTATE.GetL();
-	if (L == NULL) {
-		return false;
-	}
-	lua_pop(L, lua_gettop(L));
-
 	customCmds.clear();
 	removeCmds.clear();
 	reTextureCmds.clear();
@@ -1693,10 +801,10 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	lua_getglobal(L, "LayoutButtons");
-	if (!lua_isfunction(L, -1)) {
-		logOutput.Print("Error: missing LayoutButtons() lua function\n");
-		lua_pop(L, lua_gettop(L));
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("LayoutButtons");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
 		return false;
 	}
 
@@ -1705,16 +813,12 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	lua_pushnumber(L, cmds.size());
 
 	if (!BuildCmdDescTable(L, cmds)) {
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	// call the function
-	const int error = lua_pcall(L, 4, LUA_MULTRET, 0);
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error,
-		                "Call_LayoutButtons", lua_tostring(L, -1));
-		lua_pop(L, 1);
+	if (!RunCallIn(cmdStr, 4, LUA_MULTRET)) {
 		return false;
 	}
 
@@ -1748,49 +852,49 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 	if (!GetLuaIntList(L, 4, removeCmds)) {
 		logOutput.Print("LayoutButtons() bad removeCommands table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaCmdDescList(L, 5, customCmds)) {
 		logOutput.Print("LayoutButtons() bad customCommands table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaIntList(L, 6, onlyTextureCmds)) {
 		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 7, reTextureCmds)) {
 		logOutput.Print("LayoutButtons() bad reTexture table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 8, reNamedCmds)) {
 		logOutput.Print("LayoutButtons() bad reNamed table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 9, reTooltipCmds)) {
 		logOutput.Print("LayoutButtons() bad reTooltip table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaReParamsList(L, 10, reParamsCmds)) {
 		logOutput.Print("LayoutButtons() bad reParams table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
 	if (!GetLuaIntMap(L, 11, buttonList)) {
 		logOutput.Print("LayoutButtons() bad buttonList table\n");
-		lua_pop(L, lua_gettop(L));
+		lua_settop(L, 0);
 		return false;
 	}
 
@@ -1803,39 +907,27 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 {
 	lua_newtable(L);
 
-	for (int i = 0; i < (int)cmds.size(); i++) {
+	const int cmdDescCount = (int)cmds.size();
+	for (int i = 0; i < cmdDescCount; i++) {
+		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
+		lua_newtable(L); {
+			HSTR_PUSH_NUMBER(L, "id",     cmds[i].id);
+			HSTR_PUSH_NUMBER(L, "type",   cmds[i].type);
+			HSTR_PUSH_STRING(L, "action", cmds[i].action.c_str());
+			HSTR_PUSH_BOOL(L,   "hidden", cmds[i].onlyKey);
 
-		lua_pushnumber(L, i);
-		lua_newtable(L);
-
-		lua_pushstring(L, "id");
-		lua_pushnumber(L, cmds[i].id);
-		lua_rawset(L, -3);
-
-		lua_pushstring(L, "type");
-		lua_pushnumber(L, cmds[i].type);
-		lua_rawset(L, -3);
-
-		lua_pushstring(L, "action");
-		lua_pushstring(L, cmds[i].action.c_str());
-		lua_rawset(L, -3);
-
-		lua_pushstring(L, "hidden");
-		lua_pushboolean(L, cmds[i].onlyKey ? 1 : 0);
-		lua_rawset(L, -3);
-
-		lua_pushstring(L, "params");
-		lua_newtable(L);
-		for (int p = 0; p < cmds[i].params.size(); p++) {
-			lua_pushnumber(L, p + 1);
-			lua_pushstring(L, cmds[i].params[p].c_str());
+			HSTR_PUSH(L, "params");
+			lua_newtable(L);
+			for (int p = 0; p < cmds[i].params.size(); p++) {
+				lua_pushnumber(L, p + 1);
+				lua_pushstring(L, cmds[i].params[p].c_str());
+				lua_rawset(L, -3);
+			}
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
-
-		lua_rawset(L, -3);
 	}
-
+	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
 	return true;
 }
 
@@ -1846,15 +938,14 @@ bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
 	if (!lua_istable(L, table)) {
 		return false;
 	}
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
+			lua_pop(L, 2);
 			return false;
 		}
 		const int key = (int)lua_tonumber(L, -2);
-		const int value = (int)lua_tonumber(L, -1);
+		const int value = (int)lua_tonumber(L, -1) - CMD_INDEX_OFFSET;
 		intMap[key] = value;
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 
 	return true;
@@ -1867,14 +958,13 @@ bool CLuaUI::GetLuaIntList(lua_State* L, int index, vector<int>& intList)
 	if (!lua_istable(L, table)) {
 		return false;
 	}
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1)) { // the value  (key is at -2)
+			lua_pop(L, 2);
 			return false;
 		}
-		const int value = (int)lua_tonumber(L, -1);
+		const int value = (int)lua_tonumber(L, -1) - CMD_INDEX_OFFSET;
 		intList.push_back(value);
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 
 	return true;
@@ -1889,16 +979,15 @@ bool CLuaUI::GetLuaReStringList(lua_State* L, int index,
 		return false;
 	}
 
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -2) || !lua_isstring(L, -1)) {
+			lua_pop(L, 2);
 			return false;
 		}
 		ReStringPair rp;
-		rp.cmdIndex = (int)lua_tonumber(L, -2);
+		rp.cmdIndex = (int)lua_tonumber(L, -2) - CMD_INDEX_OFFSET;
 		rp.texture = lua_tostring(L, -1);
 		reStringList.push_back(rp);
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 
 	return true;
@@ -1913,27 +1002,24 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 		return false;
 	}
 
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -2) || !lua_istable(L, -1)) {
+			lua_pop(L, 2);
 			return false;
 		}
 		ReParamsPair paramsPair;
-		paramsPair.cmdIndex = (int)lua_tonumber(L, -2);
+		paramsPair.cmdIndex = (int)lua_tonumber(L, -2) - CMD_INDEX_OFFSET;
 		const int paramTable = lua_gettop(L);
-		lua_pushnil(L);
-		while (lua_next(L, paramTable) != 0) {
+		for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
 			if (!lua_isnumber(L, -2) || !lua_isstring(L, -1)) {
+				lua_pop(L, 4);
 				return false;
 			}
 			const int paramIndex = (int)lua_tonumber(L, -2);
 			const string paramValue = lua_tostring(L, -1);
 			paramsPair.params[paramIndex] = paramValue;
-			lua_pop(L, 1); // pop the value, leave the key for the next iteration
 		}
 		reParamsCmds.push_back(paramsPair);
-
-		lua_pop(L, 1); // pop the value, leave the key for the next iteration
 	}
 
 	return true;
@@ -1947,17 +1033,15 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 	if (!lua_istable(L, table)) {
 		return false;
 	}
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
-		if (!lua_istable(L, -1)) {
-			return false;
-		}
+	int paramIndex = 1;
+	for (lua_rawgeti(L, table, paramIndex);
+	     lua_istable(L, -1);
+	     lua_pop(L, 1), paramIndex++, lua_rawgeti(L, table, paramIndex)) {
 		CommandDescription cd;
 		cd.id   = CMD_INTERNAL;
 		cd.type = CMDTYPE_CUSTOM;
 		const int cmdDescTable = lua_gettop(L);
-		lua_pushnil(L);
-		while (lua_next(L, cmdDescTable) != 0) {
+		for (lua_pushnil(L); lua_next(L, cmdDescTable) != 0; lua_pop(L, 1)) {
 			if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
 				const string key = StringToLower(lua_tostring(L, -2));
 				const string value = lua_tostring(L, -1);
@@ -2010,14 +1094,85 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 			else {
 				logOutput.Print("GetLuaCmdDescList() bad entry\n");
 			}
-			lua_pop(L, 1); // pop the value
 		}
-		lua_pop(L, 1); // pop the value
-
 		cmdDescs.push_back(cd);
 	}
 
+	if (!lua_isnil(L, -1)) {
+		logOutput.Print("GetLuaCmdDescList() entry %i is not a table\n", paramIndex);
+		lua_pop(L, 1);
+		return false;
+	}
+	lua_pop(L, 1);
+
 	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		} else {
+			return NULL;
+		}
+	}
+	const int unitID = (int)lua_tonumber(L, index);
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		luaL_error(L, "Bad unitID in %s() %i\n", caller, unitID);
+	}
+	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		luaL_error(L, "Bad unitID pointer in %s() %i\n", caller, unitID);
+	}
+	return unit;
+}
+
+
+static inline CUnit* ParseReadUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+	if (unit == NULL) {
+		return NULL;
+	}
+	static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+	if (readAllyTeam < 0) {
+		return (readAllyTeam == CLuaHandle::AllAccessTeam) ? unit : NULL;
+	}
+	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+		return NULL;
+	}
+	return unit;
+}
+
+
+static inline CUnit* ParseCtrlUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+	if (unit == NULL) {
+		return NULL;
+	}
+	const int ctrlTeam = CLuaHandle::GetActiveHandle()->GetCtrlTeam();
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CLuaHandle::AllAccessTeam) ? unit : NULL;
+	}
+	if (ctrlTeam != unit->team) {
+		return NULL;
+	}
+	return unit;
+}
+
+
+static inline void CheckNoArgs(lua_State* L, const char* funcName)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "%s() takes no arguments", funcName);
+	}
 }
 
 
@@ -2027,13 +1182,12 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 // Lua Callbacks
 //
 
-static int LoadTextVFS(lua_State* L)
+int CLuaUI::LoadTextVFS(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) ||
 	    ((args >= 2) && !lua_isstring(L, 2))) {
-		lua_pushstring(L, "Incorrect arguments to LoadTextVFS()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
 	}
 
 	CFileHandler::VFSmode vfsMode = CFileHandler::AnyFS;
@@ -2064,12 +1218,11 @@ static int LoadTextVFS(lua_State* L)
 }
 
 
-static int GetDirListVFS(lua_State* L)
+int CLuaUI::GetDirListVFS(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetDirListVFS(\"dir\")");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetDirListVFS(\"dir\")");
 	}
 	const string dir = lua_tostring(L, 1);
 	vector<string> filenames = hpiHandler->GetFilesInDir(dir);
@@ -2088,15 +1241,14 @@ static int GetDirListVFS(lua_State* L)
 }
 
 
-static int GetDirList(lua_State* L)
+int CLuaUI::GetDirList(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) ||
 	    ((args >= 2) && !lua_isstring(L, 2)) ||
 	    ((args >= 3) && !lua_isstring(L, 3))) {
-		lua_pushstring(L, "Incorrect arguments to "
-			"GetDirList(\"dir\" [,\"pattern\" [,\"opts\"]])");
-		lua_error(L);
+		luaL_error(L,
+			"Incorrect arguments to GetDirList(\"dir\" [,\"pattern\" [,\"opts\"]])");
 	}
 
 	// keep searches within the Spring directory
@@ -2104,9 +1256,7 @@ static int GetDirList(lua_State* L)
 	if ((dir[0] == '/') || (dir[0] == '\\') ||
 	    (strstr(dir.c_str(), "..") != NULL) ||
 	    ((dir.size() > 0) && (dir[1] == ':'))) {
-		const string errmsg = "Invalid GetDirList() access: " + dir;
-		lua_pushstring(L, errmsg.c_str());
-		lua_error(L);
+		luaL_error(L, "Invalid GetDirList() access: %s", dir.c_str());
 	}
 
 	string pat = "*";
@@ -2144,85 +1294,14 @@ static int GetDirList(lua_State* L)
 }
 
 
-static int SelectUnitArray(lua_State* L)
+int CLuaUI::SendCommands(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1) ||
-	    ((args >= 2) && !lua_isboolean(L, 2))) {
-		lua_pushstring(L, "Incorrect arguments to SelectUnitArray()");
-		lua_error(L);
-	}
-
-	// clear the current units, unless the append flag is present
-	if ((args < 2) || !lua_toboolean(L, 2)) {
-		selectedUnits.ClearSelected();
-	}
-
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) { // avoid 'n'
-			const int unitID = (int)lua_tonumber(L, -1); // the value
-			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-				continue; // bad index
-			}
-			CUnit* unit = uh->units[unitID];
-			if (unit == NULL) {
-				continue; // bad pointer
-			}
-			if ((unit->team != gu->myTeam) && !gu->spectatingFullSelect) {
-				continue; // not mine to select
-			}
-			selectedUnits.AddUnit(unit);
-		}
-	}
-	return 0;
-}
-
-
-static int SelectUnitMap(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1) ||
-	    ((args >= 2) && !lua_isboolean(L, 2))) {
-		lua_pushstring(L, "Incorrect arguments to SelectUnitMap()");
-		lua_error(L);
-	}
-
-	// clear the current units, unless the append flag is present
-	if ((args < 2) || !lua_toboolean(L, 2)) {
-		selectedUnits.ClearSelected();
-	}
-
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {
-			const int unitID = (int)lua_tonumber(L, -2); // the key
-			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-				continue; // bad index
-			}
-			CUnit* unit = uh->units[unitID];
-			if (unit == NULL) {
-				continue; // bad pointer
-			}
-			if ((unit->team != gu->myTeam) && !gu->spectatingFullSelect) {
-				continue; // not mine to select
-			}
-			selectedUnits.AddUnit(unit);
-		}
-	}
-	return 0;
-}
-
-
-static int SendCommands(lua_State* L)
-{
-	if (guihandler == NULL) {
+	if ((guihandler == NULL) || gs->noHelperAIs) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_istable(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to SendCommands()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to SendCommands()");
 	}
 	vector<string> cmds;
 	const int table = lua_gettop(L);
@@ -2237,20 +1316,14 @@ static int SendCommands(lua_State* L)
 		}
 		lua_pop(L, 1);
 	}
-	if (guihandler != NULL) {
-		guihandler->RunCustomCommands(cmds, false);
-	}
+	guihandler->RunCustomCommands(cmds, false);
 	return 0;
 }
 
 
-static int GetFPS(lua_State* L)
+int CLuaUI::GetFPS(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetFPS() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	if (game) {
 		lua_pushnumber(L, game->fps);
 	} else {
@@ -2260,98 +1333,225 @@ static int GetFPS(lua_State* L)
 }
 
 
-static int GetGameSpeed(lua_State* L)
+int CLuaUI::GetLastUpdateSeconds(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetGameSpeed() takes no arguments");
-		lua_error(L);
-	}
-	lua_pushnumber(L, gs->userSpeedFactor);
-	lua_pushnumber(L, gs->speedFactor);
-	lua_pushboolean(L, gs->paused);
-	return 3;
-}
-
-
-static int GetGameSeconds(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetGameSeconds() takes no arguments");
-		lua_error(L);
-	}
-	const float seconds = ((float)gs->frameNum / 30.0f);
-	lua_pushnumber(L, seconds);
-	return 1;
-}
-
-
-static int GetLastUpdateSeconds(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetLastUpdateSeconds() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, lastUpdateSeconds);
 	return 1;
 }
 
+/******************************************************************************/
 
-static int GetActiveCommand(lua_State* L)
+static int SetActiveCommandByIndex(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetActiveCommand() takes no arguments");
-		lua_error(L);
+	const int cmdIndex = (int)lua_tonumber(L, 1) - CMD_INDEX_OFFSET;
+	int button = 1; // LMB
+	if ((args >= 2) && lua_isnumber(L, 2)) {
+		button = (int)lua_tonumber(L, 2);
 	}
-	if (guihandler != NULL) {
-		const int inCommand = guihandler->inCommand;
-		lua_pushnumber(L, inCommand);
-		if ((inCommand < 0) && (inCommand >= guihandler->commands.size())) {
+
+	if (args <= 2) {
+		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
+		const bool success = guihandler->SetActiveCommand(cmdIndex, rmb);
+		lua_pushboolean(L, success);
+		return 1;
+	}
+
+	// cmdIndex, button, lmb, rmb, alt, ctrl, meta, shift
+	if ((args < 8) ||
+	    !lua_isboolean(L, 3) || !lua_isboolean(L, 4) || !lua_isboolean(L, 5) ||
+	    !lua_isboolean(L, 6) || !lua_isboolean(L, 7) || !lua_isboolean(L, 8)) {
+		lua_pushstring(L, "Incorrect arguments to SetActiveCommand()");
+	}
+	const bool lmb   = lua_toboolean(L, 3);
+	const bool rmb   = lua_toboolean(L, 4);
+	const bool alt   = lua_toboolean(L, 5);
+	const bool ctrl  = lua_toboolean(L, 6);
+	const bool meta  = lua_toboolean(L, 7);
+	const bool shift = lua_toboolean(L, 8);
+
+	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb,
+	                                                  alt, ctrl, meta, shift);
+	lua_pushboolean(L, success);
+	return 1;
+}
+
+
+static int SetActiveCommandByAction(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	const string text = lua_tostring(L, 1);
+	const CKeyBindings::Action action(text);
+	CKeySet ks;
+	if (args >= 2) {
+		const string ksText = lua_tostring(L, 2);
+		ks.Parse(ksText);
+	}
+	const bool success = guihandler->SetActiveCommand(action, ks, 0);
+	lua_pushboolean(L, success);
+	return 1;
+}
+
+
+int CLuaUI::SetActiveCommand(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if (args < 1) {
+		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
+	}
+	if (lua_isnumber(L, 1)) {
+		return SetActiveCommandByIndex(L);
+	}
+	if (lua_isstring(L, 1)) {
+		return SetActiveCommandByAction(L);
+	}
+	luaL_error(L, "Incorrect arguments to SetActiveCommand()");
+	return 0;
+}
+
+
+int CLuaUI::GetActiveCommand(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+
+	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const int cmdDescCount = (int)cmdDescs.size();
+
+	const int inCommand = guihandler->inCommand;
+	lua_pushnumber(L, inCommand + CMD_INDEX_OFFSET);
+	if ((inCommand < 0) || (inCommand >= cmdDescCount)) {
+		return 1;
+	}
+	lua_pushnumber(L, cmdDescs[inCommand].id);
+	lua_pushnumber(L, cmdDescs[inCommand].type);
+	lua_pushstring(L, cmdDescs[inCommand].name.c_str());
+	return 4;
+}
+
+
+int CLuaUI::GetDefaultCommand(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+
+	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const int cmdDescCount = (int)cmdDescs.size();
+
+	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
+	lua_pushnumber(L, defCmd + CMD_INDEX_OFFSET);
+	if ((defCmd < 0) || (defCmd >= cmdDescCount)) {
+		return 1;
+	}
+	lua_pushnumber(L, cmdDescs[defCmd].id);
+	lua_pushnumber(L, cmdDescs[defCmd].type);
+	lua_pushstring(L, cmdDescs[defCmd].name.c_str());
+	return 4;
+}
+
+
+// FIXME: duplicated in LuaSyncedRead.cpp
+static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
+{
+	lua_newtable(L);
+
+	HSTR_PUSH_NUMBER(L, "id",          cd.id);
+	HSTR_PUSH_NUMBER(L, "type",        cd.type);
+	HSTR_PUSH_STRING(L, "name",        cd.name);
+	HSTR_PUSH_STRING(L, "action",      cd.action);
+	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
+	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
+	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
+	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
+	HSTR_PUSH_BOOL(L,   "hidden",      cd.onlyKey);
+	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
+
+	HSTR_PUSH(L, "params");
+	lua_newtable(L);
+	const int pCount = (int)cd.params.size();
+	for (int p = 0; p < pCount; p++) {
+		lua_pushnumber(L, p + 1);
+		lua_pushstring(L, cd.params[p].c_str());
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", pCount);
+	lua_rawset(L, -3);
+}
+
+
+int CLuaUI::GetActiveCmdDescs(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+	lua_newtable(L);
+	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const int cmdDescCount = (int)cmdDescs.size();
+	for (int i = 0; i < cmdDescCount; i++) {
+		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
+		PushCommandDesc(L, cmdDescs[i]);
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
+	return 1;
+}
+
+
+int CLuaUI::GetActiveCmdDesc(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GetActiveCmdDesc()");
+	}
+	const int cmdIndex = (int)lua_tonumber(L, 1) - CMD_INDEX_OFFSET;
+
+	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const int cmdDescCount = (int)cmdDescs.size();
+	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
+		return 0;
+	}
+	PushCommandDesc(L, cmdDescs[cmdIndex]);
+	return 1;
+}
+
+
+int CLuaUI::GetCmdDescIndex(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+	const int cmdId = (int)lua_tonumber(L, 1);
+	
+	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const int cmdDescCount = (int)cmdDescs.size();
+	for (int i = 0; i < cmdDescCount; i++) {
+		if (cmdId == cmdDescs[i].id) {
+			lua_pushnumber(L, i + CMD_INDEX_OFFSET);
 			return 1;
-		} else {
-			lua_pushnumber(L, guihandler->commands[inCommand].id);
-			lua_pushnumber(L, guihandler->commands[inCommand].type);
-			lua_pushstring(L, guihandler->commands[inCommand].name.c_str());
-			return 4;
 		}
 	}
 	return 0;
 }
 
 
-static int GetDefaultCommand(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetDefaultCommand() takes no arguments");
-		lua_error(L);
-	}
-	if (guihandler != NULL) {
-		const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
-		lua_pushnumber(L, defCmd);
-		if ((defCmd < 0) && (defCmd >= guihandler->commands.size())) {
-			return 1;
-		} else {
-			lua_pushnumber(L, guihandler->commands[defCmd].id);
-			lua_pushnumber(L, guihandler->commands[defCmd].type);
-			lua_pushstring(L, guihandler->commands[defCmd].name.c_str());
-			return 4;
-		}
-	}
-	return 0;
-}
+/******************************************************************************/
 
-
-static int GetMouseState(lua_State* L)
+int CLuaUI::GetMouseState(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMouseState() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, mouse->lastx - gu->viewPosX);
 	lua_pushnumber(L, gu->viewSizeY - mouse->lasty - 1);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
@@ -2361,27 +1561,35 @@ static int GetMouseState(lua_State* L)
 }
 
 
-static int GetMouseCursor(lua_State* L)
+int CLuaUI::WarpMouse(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMouseCursor() takes no arguments");
-		lua_error(L);
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to WarpMouse()");
 	}
+	const int x = (int)lua_tonumber(L, 1);
+	const int y = gu->viewSizeY - (int)lua_tonumber(L, 2) - 1;
+	mouse->WarpMouse(x, y);
+	return 0;
+}
+
+
+int CLuaUI::GetMouseCursor(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushstring(L, mouse->cursorText.c_str());
 	lua_pushnumber(L, mouse->cursorScale);
 	return 2;
 }
 
 
-static int SetMouseCursor(lua_State* L)
+int CLuaUI::SetMouseCursor(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) ||
 	    ((args >= 2) && !lua_isnumber(L, 2))) {
-		lua_pushstring(L,
+		luaL_error(L,
 			"Incorrect arguments to SetMouseCursor(\"name\", [scale])");
-		lua_error(L);
 	}
 	mouse->cursorText = lua_tostring(L, 1);
 	if (args >= 2) {
@@ -2391,12 +1599,13 @@ static int SetMouseCursor(lua_State* L)
 }
 
 
-static int GetKeyState(lua_State* L)
+/******************************************************************************/
+
+int CLuaUI::GetKeyState(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetKeyState(keycode)");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetKeyState(keycode)");
 	}
 	const int key = (int)lua_tonumber(L, 1);
 	if ((key < 0) || (key >= SDLK_LAST)) {
@@ -2408,13 +1617,9 @@ static int GetKeyState(lua_State* L)
 }
 
 
-static int GetModKeyState(lua_State* L)
+int CLuaUI::GetModKeyState(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetModKeyState() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, keys[SDLK_LALT]);
 	lua_pushboolean(L, keys[SDLK_LCTRL]);
 	lua_pushboolean(L, keys[SDLK_LMETA]);
@@ -2423,13 +1628,9 @@ static int GetModKeyState(lua_State* L)
 }
 
 
-static int GetPressedKeys(lua_State* L)
+int CLuaUI::GetPressedKeys(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetPressedKeys() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
 	for (int i = 0; i < SDLK_LAST; i++) {
@@ -2447,7 +1648,7 @@ static int GetPressedKeys(lua_State* L)
 }
 
 
-static int GetConsoleBuffer(lua_State* L)
+int CLuaUI::GetConsoleBuffer(lua_State* L)
 {
 	CInfoConsole* ic = game->infoConsole;
 	if (ic == NULL) {
@@ -2456,8 +1657,7 @@ static int GetConsoleBuffer(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		lua_pushstring(L, "Incorrect arguments to GetConsoleBuffer([count])");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetConsoleBuffer([count])");
 	}
 
 	deque<CInfoConsole::RawLine> lines;
@@ -2496,25 +1696,20 @@ static int GetConsoleBuffer(lua_State* L)
 }
 
 
-static int GetCurrentTooltip(lua_State* L)
+int CLuaUI::GetCurrentTooltip(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetCurrentTooltip() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	const string tooltip = mouse->GetCurrentTooltip();
 	lua_pushstring(L, tooltip.c_str());
 	return 1;
 }
 
 
-static int GetKeyCode(lua_State* L)
+int CLuaUI::GetKeyCode(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetKeyCode(\"keysym\")");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetKeyCode(\"keysym\")");
 	}
 	const string keysym = lua_tostring(L, 1);
 	lua_pushnumber(L, keyCodes->GetCode(keysym));
@@ -2522,12 +1717,11 @@ static int GetKeyCode(lua_State* L)
 }
 
 
-static int GetKeySymbol(lua_State* L)
+int CLuaUI::GetKeySymbol(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetKeySymbol(keycode)");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetKeySymbol(keycode)");
 	}
 	const int keycode = (int)lua_tonumber(L, 1);
 	lua_pushstring(L, keyCodes->GetName(keycode).c_str());
@@ -2536,12 +1730,11 @@ static int GetKeySymbol(lua_State* L)
 }
 
 
-static int GetKeyBindings(lua_State* L)
+int CLuaUI::GetKeyBindings(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetKeyBindings(\"keyset\")");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetKeyBindings(\"keyset\")");
 	}
 	const string keysetStr = lua_tostring(L, 1);
 	CKeySet ks;
@@ -2566,12 +1759,11 @@ static int GetKeyBindings(lua_State* L)
 }
 
 
-static int GetActionHotKeys(lua_State* L)
+int CLuaUI::GetActionHotKeys(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetActionHotKeys(\"command\")");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetActionHotKeys(\"command\")");
 	}
 	const string command = lua_tostring(L, 1);
 	const CKeyBindings::HotkeyList&	hotkeys = keyBindings->GetHotkeys(command);
@@ -2589,13 +1781,12 @@ static int GetActionHotKeys(lua_State* L)
 }
 
 
-static int GetConfigInt(lua_State* L)
+int CLuaUI::GetConfigInt(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || (args > 2) || !lua_isstring(L, 1) ||
 	    ((args == 2) && !lua_isnumber(L, 2))) {
-		lua_pushstring(L, "Incorrect arguments to GetConfigInt()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetConfigInt()");
 	}
 	const string name = lua_tostring(L, 1);
 	int def = 0;
@@ -2608,12 +1799,11 @@ static int GetConfigInt(lua_State* L)
 }
 
 
-static int SetConfigInt(lua_State* L)
+int CLuaUI::SetConfigInt(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetConfigInt()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to SetConfigInt()");
 	}
 	const string name = lua_tostring(L, 1);
 	const int value = (int)lua_tonumber(L, 2);
@@ -2622,13 +1812,12 @@ static int SetConfigInt(lua_State* L)
 }
 
 
-static int GetConfigString(lua_State* L)
+int CLuaUI::GetConfigString(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || (args > 2) || !lua_isstring(L, 1) ||
 	    ((args == 2) && !lua_isstring(L, 2))) {
-		lua_pushstring(L, "Incorrect arguments to GetConfigString()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetConfigString()");
 	}
 	const string name = lua_tostring(L, 1);
 	string def;
@@ -2641,12 +1830,11 @@ static int GetConfigString(lua_State* L)
 }
 
 
-static int SetConfigString(lua_State* L)
+int CLuaUI::SetConfigString(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetConfigString()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to SetConfigString()");
 	}
 	const string name = lua_tostring(L, 1);
 	const string value = lua_tostring(L, 2);
@@ -2657,13 +1845,12 @@ static int SetConfigString(lua_State* L)
 
 /******************************************************************************/
 
-static int SetUnitDefIcon(lua_State* L)
+int CLuaUI::SetUnitDefIcon(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		lua_pushstring(L,
+		luaL_error(L,
 			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
-		lua_error(L);
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
 	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
@@ -2696,13 +1883,9 @@ static int SetUnitDefIcon(lua_State* L)
 
 /******************************************************************************/
 
-static int GetGroupList(lua_State* L)
+int CLuaUI::GetGroupList(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetGroupList() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandler == NULL) {
 		return 0;
 	}
@@ -2724,25 +1907,17 @@ static int GetGroupList(lua_State* L)
 }
 
 
-static int GetSelectedGroup(lua_State* L)
+int CLuaUI::GetSelectedGroup(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetSelectedGroup() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, selectedUnits.selectedGroup);
 	return 1;
 }
 
 
-static int GetGroupAIList(lua_State* L)
+int CLuaUI::GetGroupAIList(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetGroupAIList() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	const map<AIKey, string>& availableAI = grouphandler->availableAI;
 	map<AIKey, string>::const_iterator it;
@@ -2760,12 +1935,11 @@ static int GetGroupAIList(lua_State* L)
 }
 
 
-static int GetGroupAIName(lua_State* L)
+int CLuaUI::GetGroupAIName(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroupAIName(groupID)");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to GetGroupAIName(groupID)");
 	}
 
 	const int groupID = (int)lua_tonumber(L, 1);
@@ -2791,39 +1965,143 @@ static int GetGroupAIName(lua_State* L)
 }
 
 
-/******************************************************************************/
-
-enum UnitExtraParam {
-	UnitDefId,
-	UnitGroupId,
-	UnitTeamId
-};
-
-
-static void PackUnitsUnsorted(lua_State* L, const set<CUnit*>& unitSet)
+int CLuaUI::GetUnitGroup(lua_State* L)
 {
-	lua_newtable(L);
-	int count = 0;
-	set<CUnit*>::const_iterator uit;
-	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, (*uit)->id);
-		lua_rawset(L, -3);
+	CUnit* unit = ParseRawUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
+	if ((unit->team == gu->myTeam) && (unit->group)) {
+		lua_pushnumber(L, unit->group->id);
+		return 1;
+	}
+	return 0;
 }
 
 
-static void PackUnitsCounts(lua_State* L, const set<CUnit*>& unitSet)
+int CLuaUI::SetUnitGroup(lua_State* L)
 {
+	CUnit* unit = ParseRawUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L);
+	if ((args < 1) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitGroup()");
+	}
+	const int groupID = (int)lua_tonumber(L, 2);
+
+	if (groupID == -1) {
+		unit->SetGroup(NULL);
+		return 0;
+	}
+
+	const vector<CGroup*>& groups = grouphandler->groups;
+	if ((groupID < 0) || (groupID >= (int)groups.size())) {
+		return 0;
+	}
+
+	CGroup* group = groups[groupID];
+	if (group != NULL) {
+		unit->SetGroup(group);
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::GetGroupUnits(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GetGroupUnits(groupID)");
+	}
+	const int groupID = (int)lua_tonumber(L, 1);
+	const vector<CGroup*>& groups = grouphandler->groups;
+	if ((groupID < 0) || (groupID >= groups.size()) ||
+	    (groups[groupID] == NULL)) {
+		return 0; // nils
+	}
+
+	lua_newtable(L);
+	int count = 0;
+	const set<CUnit*>& groupUnits = groups[groupID]->units;
+	set<CUnit*>::const_iterator it;
+	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, (*it)->id);
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", count);
+
+	return 1;
+}
+
+
+int CLuaUI::GetGroupUnitsSorted(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GetGroupUnitsSorted(groupID)");
+	}
+	const int groupID = (int)lua_tonumber(L, 1);
+	const vector<CGroup*>& groups = grouphandler->groups;
+	if ((groupID < 0) || (groupID >= groups.size()) ||
+	    (groups[groupID] == NULL)) {
+		return 0; // nils
+	}
+
+	map<int, vector<CUnit*> > unitDefMap;
+	const set<CUnit*>& groupUnits = groups[groupID]->units;
+	set<CUnit*>::const_iterator it;
+	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
+		CUnit* unit = *it;
+		unitDefMap[unit->unitDef->id].push_back(unit);
+	}
+
+	lua_newtable(L);
+	map<int, vector<CUnit*> >::const_iterator mit;
+	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
+		lua_pushnumber(L, mit->first); // push the UnitDef index
+		lua_newtable(L); {
+			const vector<CUnit*>& v = mit->second;
+			for (int i = 0; i < (int)v.size(); i++) {
+				CUnit* unit = v[i];
+				lua_pushnumber(L, i + 1);
+				lua_pushnumber(L, unit->id);
+				lua_rawset(L, -3);
+			}
+			HSTR_PUSH_NUMBER(L, "n", v.size());
+		}
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
+
+	return 1;
+}
+
+
+int CLuaUI::GetGroupUnitsCounts(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "Incorrect arguments to GetGroupUnitsCounts(groupID)");
+	}
+	const int groupID = (int)lua_tonumber(L, 1);
+	const vector<CGroup*>& groups = grouphandler->groups;
+	if ((groupID < 0) || (groupID >= groups.size()) ||
+	    (groups[groupID] == NULL)) {
+		return 0; // nils
+	}
+
 	map<int, int> countMap;
-	set<CUnit*>::const_iterator uit;
-	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
-		CUnit* unit = *uit;
-		const int udID = EffectiveUnitDef(unit)->id;
+	const set<CUnit*>& groupUnits = groups[groupID]->units;
+	set<CUnit*>::const_iterator it;
+	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
+		CUnit* unit = *it;
+		const int udID = unit->unitDef->id;
 		map<int, int>::iterator mit = countMap.find(udID);
 		if (mit == countMap.end()) {
 			countMap[udID] = 1;
@@ -2839,517 +2117,8 @@ static void PackUnitsCounts(lua_State* L, const set<CUnit*>& unitSet)
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, countMap.size());
-	lua_rawset(L, -3);
-}
+	HSTR_PUSH_NUMBER(L, "n", countMap.size());
 
-
-static void PackUnitsSorted(lua_State* L, const set<CUnit*>& unitSet)
-{
-	map<int, vector<CUnit*> > unitDefMap;
-	set<CUnit*>::const_iterator uit;
-	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
-		CUnit* unit = *uit;
-		unitDefMap[EffectiveUnitDef(unit)->id].push_back(unit);
-	}
-
-	lua_newtable(L);
-	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
-		lua_pushnumber(L, mit->first); // push the UnitDef index
-		lua_newtable(L); {
-			const vector<CUnit*>& v = mit->second;
-			for (int i = 0; i < (int)v.size(); i++) {
-				CUnit* unit = v[i];
-				lua_pushnumber(L, i + 1);
-				lua_pushnumber(L, unit->id);
-				lua_rawset(L, -3);
-			}
-			lua_pushliteral(L, "n");
-			lua_pushnumber(L, v.size());
-			lua_rawset(L, -3);
-		}
-		lua_rawset(L, -3);
-	}
-	lua_pushliteral(L, "n");
-	lua_pushnumber(L, unitDefMap.size());
-	lua_rawset(L, -3);
-}
-
-
-static int GetSelectedUnits(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetSelectedUnits() takes no arguments");
-		lua_error(L);
-	}
-	PackUnitsUnsorted(L, selectedUnits.selectedUnits);
-	return 1;
-}
-
-
-static int GetSelectedUnitsSorted(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetSelectedUnitsSorted() takes no arguments");
-		lua_error(L);
-	}
-	PackUnitsSorted(L, selectedUnits.selectedUnits);
-	return 1;
-}
-
-
-static int GetSelectedUnitsCounts(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetSelectedUnitsCounts() takes no arguments");
-		lua_error(L);
-	}
-	PackUnitsCounts(L, selectedUnits.selectedUnits);
-	return 1;
-}
-
-
-static int GetGroupUnits(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroupUnits(groupID)");
-		lua_error(L);
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
-		return 0; // nils
-	}
-	PackUnitsUnsorted(L, groups[groupID]->units);
-	return 1;
-}
-
-
-static int GetGroupUnitsSorted(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroupUnitsSorted(groupID)");
-		lua_error(L);
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
-		return 0; // nils
-	}
-	PackUnitsSorted(L, groups[groupID]->units);
-	return 1;
-}
-
-
-static int GetGroupUnitsCounts(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetGroupUnitsCounts() takes no arguments");
-		lua_error(L);
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
-		return 0; // nils
-	}
-	PackUnitsCounts(L, groups[groupID]->units);
-	return 1;
-}
-
-
-static int GetTeamUnits(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamUnits(teamID)");
-		lua_error(L);
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if (team == NULL) {
-		return 0;
-	}
-
-	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
-		PackUnitsUnsorted(L, team->units);
-	}
-	else {
-		lua_newtable(L);
-		int count = 0;
-		set<CUnit*>::const_iterator uit;
-		for (uit = team->units.begin(); uit != team->units.end(); ++uit) {
-			CUnit* unit = *uit;
-			const int losMask = (LOS_INLOS | LOS_INRADAR);
-			const int losStatus = unit->losStatus[gu->myAllyTeam];
-			if ((losStatus & losMask) == 0) {
-				continue; // can't see this unit
-			}
-			count++;
-			lua_pushnumber(L, count);
-			lua_pushnumber(L, unit->id);
-			lua_rawset(L, -3);
-		}
-		lua_pushstring(L, "n");
-		lua_pushnumber(L, count);
-		lua_rawset(L, -3);
-	}
-	return 1;
-}
-
-
-static int GetTeamUnitsSorted(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamUnitsSorted(teamID)");
-		lua_error(L);
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if (team == NULL) {
-		return 0;
-	}
-
-	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
-		PackUnitsSorted(L, team->units);
-	}
-	else {
-		map<int, vector<CUnit*> > unitDefMap;
-		set<CUnit*>::const_iterator uit;
-		for (uit = team->units.begin(); uit != team->units.end(); ++uit) {
-			CUnit* unit = *uit;
-			const int losMask = (LOS_INLOS | LOS_INRADAR);
-			const int losStatus = unit->losStatus[gu->myAllyTeam];
-			if ((losStatus & losMask) == 0) {
-				continue; // can't see this unit
-			}
-			const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-			if (((losStatus & LOS_INLOS) == 0) &&
-			    ((losStatus & prevMask) != prevMask)) {
-				unitDefMap[-1].push_back(unit);
-				continue; // don't know this unit's unitdef
-			}
-			unitDefMap[EffectiveUnitDef(unit)->id].push_back(unit);
-		}
-
-		lua_newtable(L);
-		map<int, vector<CUnit*> >::const_iterator mit;
-		for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
-			if (mit->first == -1) {
-				lua_pushstring(L, "unknown"); // push the UnitDef index
-			} else {
-				lua_pushnumber(L, mit->first); // push the UnitDef index
-			}
-			lua_newtable(L); {
-				const vector<CUnit*>& v = mit->second;
-				for (int i = 0; i < (int)v.size(); i++) {
-					CUnit* unit = v[i];
-					lua_pushnumber(L, i + 1);
-					lua_pushnumber(L, unit->id);
-					lua_rawset(L, -3);
-				}
-				lua_pushliteral(L, "n");
-				lua_pushnumber(L, v.size());
-				lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-		}
-		lua_pushliteral(L, "n");
-		lua_pushnumber(L, unitDefMap.size());
-		lua_rawset(L, -3);
-	}
-	return 1;
-}
-
-
-static int GetTeamUnitsCounts(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamUnitsCounts(teamID)");
-		lua_error(L);
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if (team == NULL) {
-		return 0;
-	}
-
-	if (gs->AlliedTeams(gu->myTeam, teamID) || gu->spectatingFullView) {
-		lua_newtable(L);
-		int count = 0;
-		for (int udID = 0; udID < (unitDefHandler->numUnits + 1); udID++) {
-			const int unitCount = uh->unitsType[teamID][udID];
-			if (unitCount > 0) {
-				lua_pushnumber(L, udID);
-				lua_pushnumber(L, unitCount);
-				lua_rawset(L, -3);
-				count++;
-			}
-		}
-		lua_pushstring(L, "n");
-		lua_pushnumber(L, count);
-		lua_rawset(L, -3);
-	}
-	else {
-		// check LOS and decoys for enemy team counts
-		int unknownCount = 0;
-		map<const UnitDef*, int> unitDefCounts;
-		map<const UnitDef*, int>::iterator mit;
-		const set<CUnit*> teamUnits = team->units;
-		set<CUnit*>::const_iterator sit;
-		for (sit = teamUnits.begin(); sit != teamUnits.end(); ++sit) {
-			CUnit* unit = *sit;
-			const int losStatus = unit->losStatus[gu->myAllyTeam];
-			if ((losStatus & (LOS_INLOS | LOS_INRADAR)) == 0) {
-				continue;
-			}
-			const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-			if (((losStatus & LOS_INLOS) == 0) &&
-			    ((losStatus & prevMask) != prevMask)) {
-				unknownCount++;
-				continue;
-			}
-			const UnitDef* ud = EffectiveUnitDef(unit);
-			mit = unitDefCounts.find(ud);
-			if (mit != unitDefCounts.end()) {
-				mit->second += 1;
-			} else {
-				unitDefCounts[ud] = 1;
-			}
-		}
-
-		lua_newtable(L);
-		int count = 0;
-		for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
-			lua_pushnumber(L, mit->first->id);
-			lua_pushnumber(L, mit->second);
-			lua_rawset(L, -3);
-			count++;
-		}
-		if (unknownCount > 0) {
-			lua_pushstring(L, "unknown");
-			lua_pushnumber(L, unknownCount);
-			lua_rawset(L, -3);
-			count++;
-		}
-		lua_pushstring(L, "n");
-		lua_pushnumber(L, count);
-		lua_rawset(L, -3);
-	}
-
-	return 1;
-}
-
-
-/******************************************************************************/
-
-static int GetUnitsInRectangle(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L,
-			"Incorrect arguments to GetUnitsInRectangle(xmin,zmin, xmax,zmax");
-		lua_error(L);
-	}
-	const float xmin = (float)lua_tonumber(L, 1);
-	const float zmin = (float)lua_tonumber(L, 2);
-	const float xmax = (float)lua_tonumber(L, 3);
-	const float zmax = (float)lua_tonumber(L, 4);
-
-	const float3 mins(xmin, 0.0f, zmin);
-	const float3 maxs(xmax, 0.0f, zmax);
-
-	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
-	const int rectUnitCount = (int)rectUnits.size();
-
-	lua_newtable(L);
-	int count = 0;
-	for (int i = 0; i < rectUnitCount; i++) {
-		const CUnit* unit = rectUnits[i];
-		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-			continue;
-		}
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, unit->id);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
-static int GetUnitsInBox(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 6) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
-	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		lua_pushstring(L,
-			"Incorrect arguments to GetUnitsInBox(xmin,ymin,zmin, xmax,ymax,zmax");
-		lua_error(L);
-	}
-	const float xmin = (float)lua_tonumber(L, 1);
-	const float ymin = (float)lua_tonumber(L, 2);
-	const float zmin = (float)lua_tonumber(L, 3);
-	const float xmax = (float)lua_tonumber(L, 4);
-	const float ymax = (float)lua_tonumber(L, 5);
-	const float zmax = (float)lua_tonumber(L, 6);
-
-	const float3 mins(xmin, 0.0f, zmin);
-	const float3 maxs(xmax, 0.0f, zmax);
-
-	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
-	const int rectUnitCount = (int)rectUnits.size();
-
-	lua_newtable(L);
-	int count = 0;
-	for (int i = 0; i < rectUnitCount; i++) {
-		const CUnit* unit = rectUnits[i];
-		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-			continue;
-		}
-		const float y = unit->midPos.y;
-		if ((y < ymin) || (y > ymax)) {
-			continue;
-		}
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, unit->id);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
-static int GetUnitsInCylinder(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to GetUnitsInCylinder(x,z,r)");
-		lua_error(L);
-	}
-	const float x = (float)lua_tonumber(L, 1);
-	const float z = (float)lua_tonumber(L, 2);
-	const float radius = (float)lua_tonumber(L, 3);
-	const float radSqr = (radius * radius);
-
-	const float3 pos(x, 0.0f, z);
-	const float3 mins(x - radius, 0.0f, z - radius);
-	const float3 maxs(x + radius, 0.0f, z + radius);
-
-	vector<CUnit*> rectUnits = qf->GetUnitsExact(mins, maxs);
-	const int rectUnitCount = (int)rectUnits.size();
-
-	lua_newtable(L);
-	int count = 0;
-	for (int i = 0; i < rectUnitCount; i++) {
-		const CUnit* unit = rectUnits[i];
-		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-			continue;
-		}
-		const float3& p = unit->midPos;
-		const float dx = (p.x - x);
-		const float dz = (p.z - z);
-		const float dist = ((dx * dx) + (dz * dz));
-		if (dist > radSqr) {
-			continue;
-		}
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, unit->id);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
-struct Plane {
-	float x, y, z, d;  // ax + by + cz + d = 0
-};
-
-static int GetUnitsInPlanes(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetUnitsInPlanes()");
-		lua_error(L);
-	}
-
-	vector<Plane> planes;
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_istable(L, -1)) {
-			float values[4];
-			const int v = ParseFloatArray(L, values, 4);
-			if (v == 4) {
-				Plane plane = { values[0], values[1], values[2], values[3] };
-				planes.push_back(plane);
-			}
-		}
-	}
-
-	lua_newtable(L);
-	int count = 0;
-	const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-	set<CUnit*>::const_iterator it;
-	for (it = teamUnits.begin(); it != teamUnits.end(); ++it) {
-		const CUnit* unit = (*it);
-		if ((unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-			continue;
-		}
-		const float3& pos = unit->midPos;
-		int i;
-		for (i = 0; i < (int)planes.size(); i++) {
-			const Plane& p = planes[i];
-			const float dist = (pos.x * p.x) + (pos.y * p.y) + (pos.z * p.z) + p.d;
-			if ((dist - unit->radius) > 0.0f) {
-				break; // outside
-			}
-		}
-		if (i != (int)planes.size()) {
-			continue;
-		}
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, unit->id);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
 	return 1;
 }
 
@@ -3357,1265 +2126,83 @@ static int GetUnitsInPlanes(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static CUnit* ParseUnit(lua_State* L, const char* caller)
+int CLuaUI::GetMyPlayerID(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		char buf[256];
-		SNPRINTF(buf, sizeof(buf), "Incorrect arguments to %s(unitID)", caller);
-		lua_pushstring(L, buf);
-		lua_error(L);
-	}
-	const int unitID = (int)lua_tonumber(L, -1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		return NULL;
-	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	const int losMask = (LOS_INLOS | LOS_INRADAR);
-	if (((unit->losStatus[gu->myAllyTeam] & losMask) == 0) &&
-	    !gu->spectatingFullView) {
-		return NULL;
-	}
-	return unit;
-}
-
-
-static CUnit* ParseUnitInLos(lua_State* L, const char* caller)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		char buf[256];
-		SNPRINTF(buf, sizeof(buf), "Incorrect arguments to %s(unitID)", caller);
-		lua_pushstring(L, buf);
-		lua_error(L);
-	}
-	const int unitID = (int)lua_tonumber(L, -1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		return NULL;
-	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	const int losMask = LOS_INLOS;
-	if (((unit->losStatus[gu->myAllyTeam] & losMask) == 0) &&
-	    !gu->spectatingFullView) {
-		return NULL;
-	}
-	return unit;
-}
-
-
-static CUnit* ParseAlliedUnit(lua_State* L, const char* caller)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		char buf[256];
-		SNPRINTF(buf, sizeof(buf), "Incorrect arguments to %s(unitID)", caller);
-		lua_pushstring(L, buf);
-		lua_error(L);
-	}
-	const int unitID = (int)lua_tonumber(L, -1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		return NULL;
-	}
-	CUnit* unit = uh->units[unitID];
-	if ((unit == NULL) || (unit->allyteam != gu->myAllyTeam)) {
-		return NULL;
-	}
-	return unit;
-}
-
-
-/******************************************************************************/
-
-static int IsUnitInView(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (camera->InView(unit->midPos, unit->radius)) {
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
-	}
-	return 1;
-}
-
-
-static int GetUnitStates(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_newtable(L);
-	lua_pushstring(L, "firestate");
-	lua_pushnumber(L, unit->fireState);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "movestate");
-	lua_pushnumber(L, unit->moveState);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "repeating");
-	lua_pushboolean(L, unit->commandAI->repeatOrders);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "cloak");
-	lua_pushboolean(L, unit->wantCloak);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "active");
-	lua_pushboolean(L, unit->activated);
-	lua_rawset(L, -3);
-	lua_pushstring(L, "trajectory");
-	lua_pushboolean(L, unit->useHighTrajectory);
-	lua_rawset(L, -3);
-
-	const CMoveType* mt = unit->moveType;
-  if (mt) {
-  	const CTAAirMoveType* taAirMove = dynamic_cast<const CTAAirMoveType*>(mt);
-  	if (taAirMove) {
-			lua_pushstring(L, "autorepairlevel");
-			lua_pushnumber(L, taAirMove->repairBelowHealth);
-			lua_rawset(L, -3);
-		}
-		else {
-			const CAirMoveType* airMove = dynamic_cast<const CAirMoveType*>(mt);
-			if (airMove) {
-				lua_pushstring(L, "loopbackattack");
-				lua_pushboolean(L, airMove->loopbackAttack);
-				lua_rawset(L, -3);
-				lua_pushstring(L, "autorepairlevel");
-				lua_pushnumber(L, airMove->repairBelowHealth);
-				lua_rawset(L, -3);
-			}
-		}
-	}
-
-	return 1;
-}
-
-
-static int GetUnitStockpile(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (unit->stockpileWeapon == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->stockpileWeapon->numStockpiled);
-	lua_pushnumber(L, unit->stockpileWeapon->numStockpileQued);
-	lua_pushnumber(L, unit->stockpileWeapon->buildPercent);
-	return 3;
-}
-
-
-static int GetUnitDefID(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
-		lua_pushnumber(L, unit->unitDef->id);
-	} else {
-		const int losStatus = unit->losStatus[gu->myAllyTeam];
-		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-		if (((losStatus & LOS_INLOS) == 0) &&
-				((losStatus & prevMask) != prevMask)) {
-			return 0;
-		}
-		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
-	}
-	return 1;
-}
-
-
-static int GetUnitTeam(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->team);
-	return 1;
-}
-
-
-static int GetUnitAllyTeam(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->allyteam);
-	return 1;
-}
-
-
-static int GetUnitGroup(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (unit->team != gu->myTeam) {
-		return 0;
-	}
-	const int groupID = (unit->group == NULL) ? -1 : unit->group->id;
-	lua_pushnumber(L, groupID);
-	return 1;
-}
-
-
-static int GetUnitHealth(lua_State* L)
-{
-	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	const UnitDef* ud = unit->unitDef;
-	const bool enemyUnit = (unit->allyteam != gu->myAllyTeam) &&
-	                       !gu->spectatingFullView;
-	if (ud->hideDamage && enemyUnit) {
-		return 0;
-	}
-	if (!enemyUnit || (ud->decoyDef == NULL)) {
-		lua_pushnumber(L, unit->health);
-		lua_pushnumber(L, unit->maxHealth);
-		lua_pushnumber(L, unit->paralyzeDamage);
-	} else {
-		const float scale = (ud->decoyDef->health / ud->health);
-		lua_pushnumber(L, scale * unit->health);
-		lua_pushnumber(L, scale * unit->maxHealth);
-		lua_pushnumber(L, scale * unit->paralyzeDamage);
-	}
-	lua_pushnumber(L, unit->captureProgress);
-	lua_pushnumber(L, unit->buildProgress);
-	return 5;
-}
-
-
-static int GetUnitResources(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->metalMake);
-	lua_pushnumber(L, unit->metalUse);
-	lua_pushnumber(L, unit->energyMake);
-	lua_pushnumber(L, unit->energyUse);
-	return 4;
-}
-
-
-static int GetUnitExperience(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->experience);
-	return 1;
-}
-
-
-static int GetUnitRadius(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView) {
-		lua_pushnumber(L, unit->radius);
-	} else {
-		const int losStatus = unit->losStatus[gu->myAllyTeam];
-		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-		if (((losStatus & LOS_INLOS) == 0) &&
-				((losStatus & prevMask) != prevMask)) {
-			return 0;
-		}
-		lua_pushnumber(L, unit->radius);
-	}
-	return 1;
-}
-
-
-static int GetUnitPosition(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	float3 pos;
-	if (gu->spectatingFullView) {
-		pos = unit->midPos;
-	} else {
-		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-	}
-	lua_pushnumber(L, pos[0]);
-	lua_pushnumber(L, pos[1]);
-	lua_pushnumber(L, pos[2]);
-	return 3;
-}
-
-
-static int GetUnitHeading(lua_State* L)
-{
-	// FIXME: prevlos for immobiles?
-	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->frontdir[0]);
-	lua_pushnumber(L, unit->frontdir[1]);
-	lua_pushnumber(L, unit->frontdir[2]);
-	return 3;
-}
-
-
-static int GetUnitBuildFacing(lua_State* L)
-{
-	// FIXME: prevlos for immobiles?
-	CUnit* unit = ParseUnitInLos(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->buildFacing);
-	return 1;
-}
-
-
-static int IsUnitAllied(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->allyteam == gu->myAllyTeam);
-	return 1;
-}
-
-
-static int GetUnitDefDimensions(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetUnitDefDimensions()");
-		lua_error(L);
-	}
-	const int unitDefID = (int)lua_tonumber(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
-		return 0;
-	}
-	const S3DOModel* model;
-	model = modelParser->Load3DO(ud->model.modelpath, 1.0f, gu->myTeam);
-	if (model == NULL) {
-		return 0;
-	}
-	const S3DOModel& m = *model;
-	const float3& mid = model->relMidPos;
-	lua_newtable(L);
-	lua_pushstring(L, "height"); lua_pushnumber(L, m.height); lua_rawset(L, -3);
-	lua_pushstring(L, "radius"); lua_pushnumber(L, m.radius); lua_rawset(L, -3);
-	lua_pushstring(L, "midx");   lua_pushnumber(L, mid.x);    lua_rawset(L, -3);
-	lua_pushstring(L, "minx");   lua_pushnumber(L, m.minx);   lua_rawset(L, -3);
-	lua_pushstring(L, "maxx");   lua_pushnumber(L, m.maxx);   lua_rawset(L, -3);
-	lua_pushstring(L, "midy");   lua_pushnumber(L, mid.y);    lua_rawset(L, -3);
-	lua_pushstring(L, "miny");   lua_pushnumber(L, m.miny);   lua_rawset(L, -3);
-	lua_pushstring(L, "maxy");   lua_pushnumber(L, m.maxy);   lua_rawset(L, -3);
-	lua_pushstring(L, "midz");   lua_pushnumber(L, mid.z);    lua_rawset(L, -3);
-	lua_pushstring(L, "minz");   lua_pushnumber(L, m.minz);   lua_rawset(L, -3);
-	lua_pushstring(L, "maxz");   lua_pushnumber(L, m.maxz);   lua_rawset(L, -3);
-	return 1;
-}
-
-
-/******************************************************************************/
-
-static CFeature* ParseFeature(lua_State* L, const char* caller)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		char buf[256];
-		SNPRINTF(buf, sizeof(buf), "Incorrect arguments to %s(unitID)", caller);
-		lua_pushstring(L, buf);
-		lua_error(L);
-	}
-	const int featureID = (int)lua_tonumber(L, 1);
-	if ((featureID < 0) || (featureID >= MAX_FEATURES)) {
-		return NULL;
-	}
-	CFeature* f = featureHandler->features[featureID];
-	if (f == NULL) {
-		return NULL;
-	}
-	if ((f->allyteam < 0) || (f->allyteam == gu->myAllyTeam) ||
-	    loshandler->InLos(f->pos, gu->myAllyTeam) || gu->spectatingFullView) {
-		return f;
-	}
-	return NULL;
-}
-
-
-static int GetFeatureInfo(lua_State* L)
-{
-	CFeature* f = ParseFeature(L, __FUNCTION__);
-	if (f == NULL) {
-		return 0;
-	}
-	lua_pushstring(L, f->def->myName.c_str());
-	lua_pushstring(L, f->def->description.c_str());
-	lua_pushnumber(L, f->def->radius);
-	lua_pushnumber(L, f->def->mass);
-	lua_pushnumber(L, f->def->xsize);
-	lua_pushnumber(L, f->def->ysize);
-	lua_pushboolean(L, f->def->destructable);
-	lua_pushboolean(L, f->def->reclaimable);
-	lua_pushboolean(L, f->def->blocking);
-	lua_pushboolean(L, f->def->burnable);
-	lua_pushboolean(L, f->def->floating);
-	lua_pushboolean(L, f->def->geoThermal);
-	return 12;
-}
-
-
-static int GetFeaturePosition(lua_State* L)
-{
-	CFeature* f = ParseFeature(L, __FUNCTION__);
-	if (f == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, f->midPos[0]);
-	lua_pushnumber(L, f->midPos[1]);
-	lua_pushnumber(L, f->midPos[2]);
-	return 3;
-}
-
-
-static int GetFeatureResources(lua_State* L)
-{
-	CFeature* f = ParseFeature(L, __FUNCTION__);
-	if (f == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, f->RemainingMetal());
-	lua_pushnumber(L, f->RemainingEnergy());
-	return 2;
-}
-
-
-/******************************************************************************/
-
-static int PackCommandQueue(lua_State* L, const deque<Command>& q, int count)
-{
-	lua_newtable(L);
-
-	int i = 0;
-	deque<Command>::const_iterator it;
-	for (it = q.begin(); it != q.end(); it++) {
-		if (i >= count) {
-			break;
-		}
-
-		const Command& cmd = *it;
-
-		i++;
-		lua_pushnumber(L, i);
-
-		lua_newtable(L);
-
-		lua_pushstring(L, "id");
-		lua_pushnumber(L, cmd.id);
-		lua_rawset(L, -3); // command id
-
-		lua_pushstring(L, "params");
-		lua_newtable(L);
-		for (int p = 0; p < cmd.params.size(); p++) {
-			lua_pushnumber(L, p + 1);
-			lua_pushnumber(L, cmd.params[p]);
-			lua_rawset(L, -3);
-		}
-		lua_rawset(L, -3); // params table
-
-		lua_pushstring(L, "options");
-		lua_newtable(L);
-		lua_pushstring(L, "alt");
-		lua_pushboolean(L, cmd.options & ALT_KEY);
-		lua_rawset(L, -3);
-		lua_pushstring(L, "ctrl");
-		lua_pushboolean(L, cmd.options & CONTROL_KEY);
-		lua_rawset(L, -3);
-		lua_pushstring(L, "shift");
-		lua_pushboolean(L, cmd.options & SHIFT_KEY);
-		lua_rawset(L, -3);
-		lua_pushstring(L, "right");
-		lua_pushboolean(L, cmd.options & RIGHT_MOUSE_KEY);
-		lua_rawset(L, -3);
-		lua_pushstring(L, "internal");
-		lua_pushboolean(L, cmd.options & INTERNAL_ORDER);
-		lua_rawset(L, -3);
-		lua_rawset(L, -3); // options table
-
-		lua_rawset(L, -3); // push into the return table
-	}
-
-	lua_pushliteral(L, "n");
-	lua_pushnumber(L, i);
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
-static int GetCommandQueue(lua_State* L)
-{
-	CUnit* unit = ParseAlliedUnit(L, __FUNCTION__);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args >= 2) && !lua_isnumber(L, 2)) {
-		lua_pushstring(L,
-			"Incorrect arguments to GetCommandQueue(unitID [, count])");
-		lua_error(L);
-	}
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
-		return 0;
-	}
-
-	// send the new unit commands for factories, otherwise the normal commands
-	const deque<Command>* queue;
-	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
-	if (factoryCAI == NULL) {
-		queue = &commandAI->commandQue;
-	} else {
-		queue = &factoryCAI->newUnitCommands;
-	}
-
-	// get the desired number of commands to return
-	int count = -1;
-	if (args > 1) {
- 		count = (int)lua_tonumber(L, 2);
-	}
-	if (count < 0) {
-		count = (int)queue->size();
-	}
-
-	PackCommandQueue(L, *queue, count);
-
-	return 1;
-}
-
-
-static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
-{
-	CUnit* unit = ParseAlliedUnit(L, caller);
-	if (unit == NULL) {
-		return 0;
-	}
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == NULL) {
-		return 0;
-	}
-	const deque<Command>& commandQue = commandAI->commandQue;
-
-	lua_newtable(L);
-
-	int entry = 0;
-	int currentType = -1;
-	int currentCount = 0;
-	deque<Command>::const_iterator it;
-	for (it = commandQue.begin(); it != commandQue.end(); it++) {
-		if (it->id < 0) { // a build command
-			const int unitDefID = -(it->id);
-
-			if (canBuild) {
-				// skip build orders that this unit can not start
-				const UnitDef* order_ud = unitDefHandler->GetUnitByID(unitDefID);
-				const UnitDef* builder_ud = unit->unitDef;
-				if ((order_ud == NULL) || (builder_ud == NULL)) {
-					continue; // something is wrong, bail
-				}
-				const string& orderName = StringToLower(order_ud->name);
-				const std::map<int, std::string>& bOpts = builder_ud->buildOptions;
-				std::map<int, std::string>::const_iterator it;
-				for (it = bOpts.begin(); it != bOpts.end(); ++it) {
-					if (it->second == orderName) {
-						break;
-					}
-				}
-				if (it == bOpts.end()) {
-					continue; // didn't find a matching entry
-				}
-			}
-
-			if (currentType == unitDefID) {
-				currentCount++;
-			} else if (currentType == -1) {
-				currentType = unitDefID;
-				currentCount = 1;
-			} else {
-				entry++;
-				lua_pushnumber(L, entry);
-				lua_newtable(L);
-				lua_pushnumber(L, currentType);
-				lua_pushnumber(L, currentCount);
-				lua_rawset(L, -3);
-				lua_rawset(L, -3);
-				currentType = unitDefID;
-				currentCount = 1;
-			}
-		}
-	}
-
-	if (currentCount > 0) {
-		entry++;
-		lua_pushnumber(L, entry);
-		lua_newtable(L);
-		lua_pushnumber(L, currentType);
-		lua_pushnumber(L, currentCount);
-		lua_rawset(L, -3);
-		lua_rawset(L, -3);
-	}
-
-	lua_pushnumber(L, entry);
-
-	return 2;
-}
-
-
-static int GetFullBuildQueue(lua_State* L)
-{
-	return PackBuildQueue(L, false, __FUNCTION__);
-}
-
-
-static int GetRealBuildQueue(lua_State* L)
-{
-	return PackBuildQueue(L, true, __FUNCTION__);
-}
-
-
-/******************************************************************************/
-
-static int GetMyPlayerID(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMyPlayerID() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, gu->myPlayerNum);
 	return 1;
 }
 
 
-static int GetMyTeamID(lua_State* L)
+int CLuaUI::GetMyTeamID(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMyTeamID() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, gu->myTeam);
 	return 1;
 }
 
 
-static int GetMyAllyTeamID(lua_State* L)
+int CLuaUI::GetMyAllyTeamID(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetMyAllyTeamID() takes no arguments");
-		lua_error(L);
-	}
+	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, gu->myAllyTeam);
 	return 1;
 }
 
 
 /******************************************************************************/
-
-static int GetAllyTeamList(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetAllyTeamList() takes no arguments");
-		lua_error(L);
-	}
-
-	lua_newtable(L);
-	int count = 0;
-	for (int at = 0; at < gs->activeAllyTeams; at++) {
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushnumber(L, at);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
-static int GetTeamList(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamList([allyTeamID])");
-		lua_error(L);
-	}
-
-	int allyTeamID = -1;
-	if (args == 1) {
-		allyTeamID = (int)lua_tonumber(L, 1);
-		if ((allyTeamID < 0) || (allyTeamID >= gs->activeAllyTeams)) {
-			return 0;
-		}
-	}
-
-	lua_newtable(L);
-	int count = 0;
-	for (int t = 0; t < gs->activeTeams; t++) {
-		if (gs->Team(t) == NULL) {
-			continue;
-		}
-		if ((allyTeamID < 0) || (allyTeamID == gs->AllyTeam(t))) {
-			count++;
-			lua_pushnumber(L, count);
-			lua_pushnumber(L, t);
-			lua_rawset(L, -3);
-		}
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
-static int GetPlayerList(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		lua_pushstring(L, "Incorrect arguments to GetPlayerList([teamID])");
-		lua_error(L);
-	}
-
-	int teamID = -1;
-	if (args == 1) {
-		teamID = (int)lua_tonumber(L, 1);
-		if ((teamID < 0) || (teamID >= MAX_TEAMS) || (gs->Team(teamID) == NULL)) {
-			return 0;
-		}
-	}
-
-	lua_newtable(L);
-	int count = 0;
-	for (int p = 0; p < gs->activePlayers; p++) {
-		const CPlayer* player = gs->players[p];
-		if (player == NULL) {
-			continue;
-		}
-		if ((teamID < 0) || (player->team == teamID)) {
-			count++;
-			lua_pushnumber(L, count);
-			lua_pushnumber(L, p);
-			lua_rawset(L, -3);
-		}
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
 /******************************************************************************/
 
-static void AddPlayerToRoster(lua_State* L, int playerID)
+static void ParseCommandOptions(lua_State* L, const char* caller,
+                                int index, Command& cmd)
 {
-	const CPlayer* p = gs->players[playerID];
-	int index = 1;
-	lua_newtable(L);
-	lua_pushnumber(L, index); index++;
-	lua_pushstring(L, p->playerName.c_str());
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushnumber(L, playerID);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushnumber(L, p->team);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushnumber(L, gs->AllyTeam(p->team));
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushboolean(L, p->spectator);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushnumber(L, p->cpuUsage);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, index); index++;
-	lua_pushnumber(L, p->ping);
-	lua_rawset(L, -3);
-}
-
-
-static int GetPlayerRoster(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		lua_pushstring(L, "Incorrect arguments to GetPlayerRoster([type])");
-		lua_error(L);
+	if (lua_isnumber(L, index)) {
+		cmd.options = (unsigned char)lua_tonumber(L, index);
 	}
-
-	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
-
-	if (args == 1) {
-		const int type = (int)lua_tonumber(L, 1);
-		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
-	}
-
-	int count;
-	const int* players = playerRoster.GetIndices(&count);
-
-	playerRoster.SetSortTypeByCode(oldSort); // revert
-
-	lua_newtable(L);
-	for (int i = 0; i < count; i++) {
-		lua_pushnumber(L, i + 1);
-		AddPlayerToRoster(L, players[i]);
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
-/******************************************************************************/
-
-static int GetTeamInfo(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamInfo(teamID)");
-		lua_error(L);
-	}
-	const int teamID = (int)lua_tonumber(L, -1);
-	lua_pop(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if (team == NULL) {
-		return 0;
-	}
-
-	bool isAiTeam = false;
-	if ((globalAI != NULL) && (globalAI->ais[teamID] != NULL)) {
-		isAiTeam = true;
-	}
-
-	lua_pushnumber(L, team->teamNum);
-	lua_pushnumber(L, team->leader);
-	lua_pushboolean(L, team->active);
-	lua_pushboolean(L, team->isDead);
-	lua_pushboolean(L, isAiTeam);
-	lua_pushstring(L, team->side.c_str());
-	lua_pushnumber(L, (float)team->color[0] / 255.0f);
-	lua_pushnumber(L, (float)team->color[1] / 255.0f);
-	lua_pushnumber(L, (float)team->color[2] / 255.0f);
-	lua_pushnumber(L, (float)team->color[3] / 255.0f);
-
-	return 10;
-}
-
-
-static int GetTeamResources(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamResources(teamID, \"type\")");
-		lua_error(L);
-	}
-
-	const int teamID = (int)lua_tonumber(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if ((team == NULL) || !gs->AlliedTeams(gu->myTeam, teamID)) {
-		return 0;
-	}
-	const string type = lua_tostring(L, 2);
-
-	if (type == "metal") {
-		lua_pushnumber(L, team->metal);
-		lua_pushnumber(L, team->metalStorage);
-		lua_pushnumber(L, team->prevMetalPull);
-		lua_pushnumber(L, team->prevMetalIncome);
-		lua_pushnumber(L, team->prevMetalExpense);
-		lua_pushnumber(L, team->metalShare);
-		lua_pushnumber(L, team->metalSent);
-		lua_pushnumber(L, team->metalReceived);
-		return 8;
-	}
-
-	if (type == "energy") {
-		lua_pushnumber(L, team->energy);
-		lua_pushnumber(L, team->energyStorage);
-		lua_pushnumber(L, team->prevEnergyPull);
-		lua_pushnumber(L, team->prevEnergyIncome);
-		lua_pushnumber(L, team->prevEnergyExpense);
-		lua_pushnumber(L, team->energyShare);
-		lua_pushnumber(L, team->energySent);
-		lua_pushnumber(L, team->energyReceived);
-		return 8;
-	}
-
-	return 0;
-}
-
-
-static int GetTeamUnitStats(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to GetTeamUnitStats(teamID)");
-		lua_error(L);
-	}
-
-	const int teamID = (int)lua_tonumber(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-	const CTeam* team = gs->Team(teamID);
-	if (team == NULL) {
-		return 0;
-	}
-
-	lua_pushnumber(L, team->currentStats.unitsKilled);
-	lua_pushnumber(L, team->currentStats.unitsDied);
-	lua_pushnumber(L, team->currentStats.unitsCaptured);
-	lua_pushnumber(L, team->currentStats.unitsOutCaptured);
-	lua_pushnumber(L, team->currentStats.unitsReceived);
-	lua_pushnumber(L, team->currentStats.unitsSent);
-
-	return 6;
-}
-
-
-static int GetPlayerInfo(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, -1)) {
-		lua_pushstring(L, "Incorrect arguments to GetPlayerInfo(playerID)");
-		lua_error(L);
-	}
-
-	const int playerID = (int)lua_tonumber(L, -1);
-	lua_pop(L, 1);
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
-		return 0;
-	}
-
-	const CPlayer* player = gs->players[playerID];
-	if (player == NULL) {
-		return 0;
-	}
-
-	lua_pushstring(L, player->playerName.c_str());
-	lua_pushboolean(L, player->active);
-	lua_pushboolean(L, player->spectator);
-	lua_pushnumber(L, player->team);
-	lua_pushnumber(L, gs->AllyTeam(player->team));
-	lua_pushnumber(L, player->ping);
-	lua_pushnumber(L, player->cpuUsage);
-
-	return 7;
-}
-
-
-static int AreTeamsAllied(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
-		lua_pushstring(L, "Incorrect arguments to AreTeamsAllied(team1, team2)");
-		lua_error(L);
-	}
-	const int team1 = (int)lua_tonumber(L, -1);
-	const int team2 = (int)lua_tonumber(L, -2);
-	if ((team1 < 0) || (team1 >= MAX_TEAMS) ||
-	    (team2 < 0) || (team2 >= MAX_TEAMS)) {
-		return 0;
-	}
-	lua_pushboolean(L, gs->AlliedTeams(team1, team2));
-	return 1;
-}
-
-
-static int ArePlayersAllied(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
-		lua_pushstring(L, "Incorrect arguments to ArePlayersAllied(p1, p2)");
-		lua_error(L);
-	}
-	const int player1 = (int)lua_tonumber(L, -1);
-	const int player2 = (int)lua_tonumber(L, -2);
-	if ((player1 < 0) || (player1 >= MAX_PLAYERS) ||
-	    (player2 < 0) || (player2 >= MAX_PLAYERS)) {
-		return 0;
-	}
-	const CPlayer* p1 = gs->players[player1];
-	const CPlayer* p2 = gs->players[player2];
-	if ((p1 == NULL) || (p2 == NULL)) {
-		return 0;
-	}
-	lua_pushboolean(L, gs->AlliedTeams(p1->team, p2->team));
-	return 1;
-}
-
-
-static int GetCameraState(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetCameraState() takes no arguments");
-		lua_error(L);
-	}
-
-	const bool overview =
-		(mouse->currentCamController == mouse->overviewController);
-
-	lua_newtable(L);
-
-	lua_pushstring(L, "mode");
-	lua_pushnumber(L, overview ? -100 : mouse->currentCamControllerNum);
-	lua_rawset(L, -3);
-
-	vector<float> camState = mouse->currentCamController->GetState();
-	for (int i = 0; i < (int)camState.size(); i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushnumber(L, camState[i]);
-		lua_rawset(L, -3);
-	}
-
-	return 1;
-}
-
-
-static int SetCameraState(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_istable(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetCameraState(table, camTime)");
-		lua_error(L);
-	}
-
-	const float camTime = (float)lua_tonumber(L, 2);
-	lua_pop(L, 1);
-
-	lua_pushstring(L, "mode");
-	lua_gettable(L, -2);
-	if (lua_isnumber(L, -1)) {
-		const int camNum = (int)lua_tonumber(L, -1);
-		if ((camNum == -100) ||
-		    ((camNum >= 0) && (camNum < mouse->camControllers.size()) &&
-		     mouse->camControllers[camNum]->enabled)) {
-			const int oldNum = mouse->currentCamControllerNum;
-			const float3 dummy = mouse->currentCamController->SwitchFrom();
-			if (camNum >= 0) {
-				mouse->currentCamControllerNum = camNum;
-				mouse->currentCamController = mouse->camControllers[camNum];
-			} else {
-				mouse->currentCamController = mouse->overviewController;
+	else if (lua_istable(L, index)) {
+		const int optionTable = index;
+		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
+			if (lua_isnumber(L, -2)) { // avoid 'n'
+				if (!lua_isstring(L, -1)) {
+					luaL_error(L, "%s(): bad option table entry", caller);
+				}
+				const string value = lua_tostring(L, -1);
+				if (value == "right") {
+					cmd.options |= RIGHT_MOUSE_KEY;
+				} else if (value == "alt") {
+					cmd.options |= ALT_KEY;
+				} else if (value == "ctrl") {
+					cmd.options |= CONTROL_KEY;
+				} else if (value == "shift") {
+					cmd.options |= SHIFT_KEY;
+				}
 			}
-			const bool showMode = (oldNum != camNum) && (camNum != -100);
-			mouse->currentCamController->SwitchTo(showMode);
-			mouse->CameraTransition(camTime);
 		}
 	}
-	lua_pop(L, 1);
-
-	vector<float> camState;
-	int index = 1;
-	while (true) {
-		lua_pushnumber(L, index);
-		lua_gettable(L, -2);
-		if (!lua_isnumber(L, -1)) {
-			lua_pop(L, 1);
-			break;
-		}
-		else {
-			camState.push_back((float)lua_tonumber(L, -1));
-			lua_pop(L, 1);
-			index++;
-		}
+	else {
+		luaL_error(L, "%s(): bad options", caller);
 	}
-
-	lua_pushboolean(L, mouse->currentCamController->SetState(camState));
-
-	return 1;
 }
 
 
-static int GetCameraPos(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetCameraPos() takes no arguments");
-		lua_error(L);
-	}
-	lua_pushnumber(L, camera->pos.x);
-	lua_pushnumber(L, camera->pos.y);
-	lua_pushnumber(L, camera->pos.z);
-	return 3;
-}
-
-
-static int GetCameraVectors(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "GetCameraVectors() takes no arguments");
-		lua_error(L);
-	}
-
-	const CCamera* cam = camera;
-
-#define PACK_CAMERA_VECTOR(n) \
-	lua_pushstring(L, #n);      \
-	lua_newtable(L);            \
-	lua_pushnumber(L, 1); lua_pushnumber(L, cam-> n .x); lua_rawset(L, -3); \
-	lua_pushnumber(L, 2); lua_pushnumber(L, cam-> n .y); lua_rawset(L, -3); \
-	lua_pushnumber(L, 3); lua_pushnumber(L, cam-> n .z); lua_rawset(L, -3); \
-	lua_rawset(L, -3)
-
-	lua_newtable(L);
-	PACK_CAMERA_VECTOR(forward);
-	PACK_CAMERA_VECTOR(up);
-	PACK_CAMERA_VECTOR(right);
-	PACK_CAMERA_VECTOR(top);
-	PACK_CAMERA_VECTOR(bottom);
-	PACK_CAMERA_VECTOR(leftside);
-	PACK_CAMERA_VECTOR(rightside);
-
-	return 1;
-}
-
-
-static int WorldToScreenCoords(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to WorldToScreenCoords(x,y,z)");
-		lua_error(L);
-	}
-	const float3 worldPos(lua_tonumber(L, 1),
-	                      lua_tonumber(L, 2),
-	                      lua_tonumber(L, 3));
-	const float3 winPos = camera->CalcWindowCoordinates(worldPos);
-	lua_pushnumber(L, winPos.x);
-	lua_pushnumber(L, winPos.y);
-	lua_pushnumber(L, winPos.z);
-	return 3;
-}
-
-
-static int TraceScreenRay(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    ((args >= 3) && !lua_isboolean(L, 3))) {
-		lua_pushstring(L, "Incorrect arguments to TraceScreenRay()");
-		lua_error(L);
-	}
-
-	// window coordinates
-	const int wx = (int)lua_tonumber(L, 1) - gu->viewPosX;
-	const int wy = gu->viewSizeY - 1 - (int)lua_tonumber(L, 2);
-	if ((wx < gu->viewPosX) || (wx >= (gu->viewSizeX + gu->viewPosX)) ||
-	    (wy < gu->viewPosY) || (wy >= (gu->viewSizeY + gu->viewPosY))) {
-		return 0;
-	}
-
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
-	const float range = gu->viewRange * 1.4f;
-	const float3& pos = camera->pos;
-	const float3 dir = camera->CalcPixelDir(wx, wy);
-
-	const bool onlyCoords = ((args >= 3) && lua_toboolean(L, 3));
-
-	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
-	const float fdist = helper->GuiTraceRayFeature(pos, dir, range,feature);
-
-	const float badRange = (range - 300.0f);
-	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
-		return 0;
-	}
-
-	if (!onlyCoords) {
-		if (udist > fdist) {
-			unit = NULL;
-		}
-
-		if (unit != NULL) {
-			lua_pushstring(L, "unit");
-			lua_pushnumber(L, unit->id);
-			return 2;
-		}
-
-		if (feature != NULL) {
-			lua_pushstring(L, "feature");
-			lua_pushnumber(L, feature->id);
-			return 2;
-		}
-	}
-
-	const float3 groundPos = pos + (dir * udist);
-	lua_pushstring(L, "ground");
-	lua_newtable(L);
-	lua_pushnumber(L, 1); lua_pushnumber(L, groundPos.x); lua_rawset(L, -3);
-	lua_pushnumber(L, 2); lua_pushnumber(L, groundPos.y); lua_rawset(L, -3);
-	lua_pushnumber(L, 3); lua_pushnumber(L, groundPos.z); lua_rawset(L, -3);
-
-	return 2;
-}
-
-
-/******************************************************************************/
-
-static bool ParseCommand(lua_State* L, Command& cmd, const int top)
+static void ParseCommand(lua_State* L, const char* caller,
+                         int idIndex, Command& cmd)
 {
 	// cmdID
-	cmd.id = (int)lua_tonumber(L, top - 2);
+	if (!lua_isnumber(L, idIndex)) {
+		luaL_error(L, "%s(): bad command ID", caller);
+	}
+	cmd.id = (int)lua_tonumber(L, idIndex);
 
 	// params
-	const int paramTable = (top - 1);
+	const int paramTable = (idIndex + 1);
+	if (!lua_istable(L, paramTable)) {
+		luaL_error(L, "%s(): bad param table", caller);
+	}
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
 		if (lua_isnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
-				lua_pushstring(L, "Error parsing command parameters");
-				lua_error(L);
+				luaL_error(L, "%s(): bad param table entry", caller);
 			}
 			const float value = (float)lua_tonumber(L, -1);
 			cmd.params.push_back(value);
@@ -4623,224 +2210,19 @@ static bool ParseCommand(lua_State* L, Command& cmd, const int top)
 	}
 
 	// options
-	const int optionTable = top;
-	for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
-			if (!lua_isstring(L, -1)) {
-				lua_pushstring(L, "Error parsing command options");
-				lua_error(L);
-			}
-			const string value = lua_tostring(L, -1);
-			if (value == "right") {
-				cmd.options |= RIGHT_MOUSE_KEY;
-			} else if (value == "alt") {
-				cmd.options |= ALT_KEY;
-			} else if (value == "ctrl") {
-				cmd.options |= CONTROL_KEY;
-			} else if (value == "shift") {
-				cmd.options |= SHIFT_KEY;
-			}
-		}
-	}
+	ParseCommandOptions(L, caller, (idIndex + 2), cmd);
 
-	// FIXME -- do some sanity checking
-
-	return true;
+	// NOTE: should do some sanity checking?
 }
 
 
-static int GiveOrder(lua_State* L)
-{
-	if (gu->spectating) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) || !lua_isnumber(L, 1) ||
-	    !lua_istable(L, 2) || !lua_istable(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrder()");
-		lua_error(L);
-	}
-
-	Command cmd;
-	ParseCommand(L, cmd, args);
-
-	selectedUnits.GiveCommand(cmd);
-
-	lua_pushboolean(L, true);
-
-	return 1;
-}
-
-
-static int GiveOrderToUnit(lua_State* L)
-{
-	if (gu->spectating || (gs->frameNum <= 0)) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_istable(L, 3) || !lua_istable(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrderToUnit()");
-		lua_error(L);
-	}
-
-	// unitID
-	const int unitID = (int)lua_tonumber(L, 1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		lua_pushstring(L, "Invalid unitID given to GiveOrderToUnit()");
-		lua_error(L);
-	}
-	CUnit* unit = uh->units[unitID];
-	if ((unit == NULL) || (unit->team != gu->myTeam)) {
-		lua_pushstring(L, "Invalid unitID given to GiveOrderToUnit()");
-		lua_error(L);
-	}
-
-	Command cmd;
-	ParseCommand(L, cmd, args);
-
-	net->SendAICommand(gu->myPlayerNum, unitID, cmd.id, cmd.options, cmd.params);
-
-	lua_pushboolean(L, true);
-
-	return 1;
-}
-
-
-static bool ParseUnitMap(lua_State* L, int table, vector<int>& unitIDs)
-{
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {
-			const int unitID = (int)lua_tonumber(L, -2); // the key
-			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-				continue; // bad index
-			}
-			CUnit* unit = uh->units[unitID];
-			if (unit == NULL) {
-				continue; // bad pointer
-			}
-			if (unit->team != gu->myTeam) {
-				continue; // not mine to order
-			}
-			unitIDs.push_back(unitID);
-		}
-	}
-	return true;
-}
-
-
-static bool ParseUnitArray(lua_State* L, int table, vector<int>& unitIDs)
-{
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) { // avoid 'n'
-			const int unitID = (int)lua_tonumber(L, -1); // the value
-			if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-				continue; // bad index
-			}
-			CUnit* unit = uh->units[unitID];
-			if (unit == NULL) {
-				continue; // bad pointer
-			}
-			if (unit->team != gu->myTeam) {
-				continue; // not mine to order
-			}
-			unitIDs.push_back(unitID);
-		}
-	}
-	return true;
-}
-
-
-static int GiveOrderToUnitMap(lua_State* L)
-{
-	if (gu->spectating || (gs->frameNum <= 0)) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) || !lua_istable(L, 1) ||
-	    !lua_isnumber(L, 2) || !lua_istable(L, 3) || !lua_istable(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrderToUnitMap()");
-		lua_error(L);
-	}
-
-	// unitIDs
-	vector<int> unitIDs;
-	ParseUnitMap(L, 1, unitIDs);
-	const int count = (int)unitIDs.size();
-
-	if (count <= 0) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	Command cmd;
-	if (!ParseCommand(L, cmd, args)) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
-
-	lua_pushboolean(L, true);
-	return 1;
-}
-
-
-static int GiveOrderToUnitArray(lua_State* L)
-{
-	if (gu->spectating || (gs->frameNum <= 0)) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) || !lua_istable(L, 1) ||
-	    !lua_isnumber(L, 2) || !lua_istable(L, 3) || !lua_istable(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrderToUnitArray()");
-		lua_error(L);
-	}
-
-	// unitIDs
-	vector<int> unitIDs;
-	ParseUnitArray(L, 1, unitIDs);
-	const int count = (int)unitIDs.size();
-
-	if (count <= 0) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	Command cmd;
-	if (!ParseCommand(L, cmd, args)) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
-
-	lua_pushboolean(L, true);
-	return 1;
-}
-
-
-static bool ParseCommandTable(lua_State* L, int table, Command& cmd)
+static void ParseCommandTable(lua_State* L, const char* caller,
+                              int table, Command& cmd)
 {
 	// cmdID
 	lua_rawgeti(L, table, 1);
 	if (!lua_isnumber(L, -1)) {
-		lua_pop(L, 1);
-		return false;
+		luaL_error(L, "%s(): bad command ID", caller);
 	}
 	cmd.id = (int)lua_tonumber(L, -1);
 	lua_pop(L, 1);
@@ -4848,15 +2230,13 @@ static bool ParseCommandTable(lua_State* L, int table, Command& cmd)
 	// params
 	lua_rawgeti(L, table, 2);
 	if (!lua_istable(L, -1)) {
-		lua_pop(L, 1);
-		return false;
+		luaL_error(L, "%s(): bad param table", caller);
 	}
 	const int paramTable = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
 		if (lua_isnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
-				lua_pushstring(L, "Error parsing command parameters");
-				lua_error(L);
+				luaL_error(L, "%s(): bad param table entry", caller);
 			}
 			const float value = (float)lua_tonumber(L, -1);
 			cmd.params.push_back(value);
@@ -4866,73 +2246,181 @@ static bool ParseCommandTable(lua_State* L, int table, Command& cmd)
 
 	// options
 	lua_rawgeti(L, table, 3);
-	if (!lua_istable(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
-	const int optionTable = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
-			if (!lua_isstring(L, -1)) {
-				lua_pushstring(L, "Error parsing command options");
-				lua_error(L);
-			}
-			const string value = lua_tostring(L, -1);
-			if (value == "right") {
-				cmd.options |= RIGHT_MOUSE_KEY;
-			} else if (value == "alt") {
-				cmd.options |= ALT_KEY;
-			} else if (value == "ctrl") {
-				cmd.options |= CONTROL_KEY;
-			} else if (value == "shift") {
-				cmd.options |= SHIFT_KEY;
-			}
-		}
-	}
+	ParseCommandOptions(L, caller, lua_gettop(L), cmd);
 	lua_pop(L, 1);
 
-	// FIXME -- do some sanity checking
-
-	return true;
+	// NOTE: should do some sanity checking?
 }
 
-static bool ParseCommandArray(lua_State* L, int table,
-                             vector<Command>& commands)
+
+static void ParseCommandArray(lua_State* L, const char* caller,
+                              int table, vector<Command>& commands)
 {
-	const int commandsTable = 2;
+	if (!lua_istable(L, table)) {
+		luaL_error(L, "%s(): error parsing command array", caller);
+	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_istable(L, -1)) {
 			continue;
 		}
 		Command cmd;
-		if (ParseCommandTable(L, lua_gettop(L), cmd)) {
-			commands.push_back(cmd);
+		ParseCommandTable(L, caller, lua_gettop(L), cmd);
+		commands.push_back(cmd);
+	}
+}
+
+
+static void ParseUnitMap(lua_State* L, const char* caller,
+                         int table, vector<int>& unitIDs)
+{
+	if (!lua_istable(L, table)) {
+		luaL_error(L, "%s(): error parsing unit map", caller);
+	}
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2)) {
+			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -2); // the key
+			if (unit != NULL) {
+				unitIDs.push_back(unit->id);
+			}
 		}
 	}
-	return true;
 }
 
 
-static int GiveOrderArrayToUnitMap(lua_State* L)
+static void ParseUnitArray(lua_State* L, const char* caller,
+                           int table, vector<int>& unitIDs)
 {
-	if (gu->spectating || (gs->frameNum <= 0)) {
+	if (!lua_istable(L, table)) {
+		luaL_error(L, "%s(): error parsing unit array", caller);
+	}
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
+			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -1); // the value
+			if (unit != NULL) {
+				unitIDs.push_back(unit->id);
+			}
+		}
+	}
+	return;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::GiveOrder(lua_State* L)
+{
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_istable(L, 1) || !lua_istable(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrderArrayToUnitMap()");
-		lua_error(L);
+	Command cmd;
+	ParseCommand(L, __FUNCTION__, 1, cmd);
+
+	selectedUnits.GiveCommand(cmd);
+
+	lua_pushboolean(L, true);
+
+	return 1;
+}
+
+
+int CLuaUI::GiveOrderToUnit(lua_State* L)
+{
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	Command cmd;
+	ParseCommand(L, __FUNCTION__, 2, cmd);
+
+	net->SendAICommand(gu->myPlayerNum,
+	                   unit->id, cmd.id, cmd.options, cmd.params);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
+int CLuaUI::GiveOrderToUnitMap(lua_State* L)
+{
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+		lua_pushboolean(L, false);
+		return 1;
 	}
 
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitMap(L, 1, unitIDs);
+	ParseUnitMap(L, __FUNCTION__, 1, unitIDs);
+	const int count = (int)unitIDs.size();
+
+	if (count <= 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	Command cmd;
+	ParseCommand(L, __FUNCTION__, 2, cmd);
+
+	vector<Command> commands;
+	commands.push_back(cmd);
+	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
+int CLuaUI::GiveOrderToUnitArray(lua_State* L)
+{
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// unitIDs
+	vector<int> unitIDs;
+	ParseUnitArray(L, __FUNCTION__, 1, unitIDs);
+	const int count = (int)unitIDs.size();
+
+	if (count <= 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	Command cmd;
+	ParseCommand(L, __FUNCTION__, 2, cmd);
+
+	vector<Command> commands;
+	commands.push_back(cmd);
+	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
+int CLuaUI::GiveOrderArrayToUnitMap(lua_State* L)
+{
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// unitIDs
+	vector<int> unitIDs;
+	ParseUnitMap(L, __FUNCTION__, 1, unitIDs);
 
 	// commands
 	vector<Command> commands;
-	ParseCommandArray(L, 2, commands);
+	ParseCommandArray(L, __FUNCTION__, 2, commands);
 
 	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
 		lua_pushboolean(L, false);
@@ -4946,26 +2434,20 @@ static int GiveOrderArrayToUnitMap(lua_State* L)
 }
 
 
-static int GiveOrderArrayToUnitArray(lua_State* L)
+int CLuaUI::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (gu->spectating || (gs->frameNum <= 0)) {
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_istable(L, 1) || !lua_istable(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GiveOrderArrayToUnitArray()");
-		lua_error(L);
-	}
-
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitArray(L, 1, unitIDs);
+	ParseUnitArray(L, __FUNCTION__, 1, unitIDs);
 
 	// commands
 	vector<Command> commands;
-	ParseCommandArray(L, 2, commands);
+	ParseCommandArray(L, __FUNCTION__, 2, commands);
 
 	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
 		lua_pushboolean(L, false);
@@ -4981,140 +2463,7 @@ static int GiveOrderArrayToUnitArray(lua_State* L)
 
 /******************************************************************************/
 
-static int GetGroundHeight(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroundHeight(x, z)");
-		lua_error(L);
-	}
-	const float x = lua_tonumber(L, 1);
-	const float y = lua_tonumber(L, 2);
-	// GetHeight2() does not clamp the value to (>= 0)
-	lua_pushnumber(L, ground->GetHeight2(x, y));
-	return 1;
-}
-
-
-static int GetGroundNormal(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroundNormal(x, z)");
-		lua_error(L);
-	}
-	const float x = lua_tonumber(L, 1);
-	const float y = lua_tonumber(L, 2);
-	const float3 normal = ground->GetSmoothNormal(x, y);
-	lua_pushnumber(L, normal.x);
-	lua_pushnumber(L, normal.y);
-	lua_pushnumber(L, normal.z);
-	return 3;
-}
-
-
-static int GetGroundInfo(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to GetGroundInfo(x, z)");
-		lua_error(L);
-	}
-
-	const float x = lua_tonumber(L, 1);
-	const float z = lua_tonumber(L, 2);
-
-	const int ix = (int)(max(0.0f, min(float3::maxxpos, x)) / 16.0f);
-	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
-
-	const float metal = readmap->metalMap->getMetalAmount(ix, iz);
-
-	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
-	const int typeIndex = readmap->typemap[index];
-	const CReadMap::TerrainType& tt = readmap->terrainTypes[typeIndex];
-
-	lua_pushstring(L, tt.name.c_str());
-	lua_pushnumber(L, metal);
-	lua_pushnumber(L, tt.hardness * mapDamage->mapHardness);
-	lua_pushnumber(L, tt.tankSpeed);
-	lua_pushnumber(L, tt.kbotSpeed);
-	lua_pushnumber(L, tt.hoverSpeed);
-	lua_pushnumber(L, tt.shipSpeed);
-	return 7;
-}
-
-
-static int TestBuildOrder(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 5) || !lua_isnumber(L, 1) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
-	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
-		lua_pushstring(L,
-			"Incorrect arguments to TestBuildOrder(unitDefID, x, y, z, facing");
-		lua_error(L);
-	}
-	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
-		lua_pushboolean(L, 0);
-		return 1;
-	}
-	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
-	if (unitDef == NULL) {
-		lua_pushboolean(L, 0);
-		return 1;
-	}
-
-	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
-	const int facing = (int)lua_tonumber(L, 5);
-
-	BuildInfo bi;
-	bi.buildFacing = facing;
-	bi.def = unitDef;
-	bi.pos = pos;
-	bi.pos = helper->Pos2BuildPos(bi);
-	CFeature* feature;
-	if(!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam)) {
-		lua_pushboolean(L, 0);
-	} else {
-		lua_pushboolean(L, 1);
-	}
-	return 1;
-}
-
-
-static int Pos2BuildPos(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) || !lua_isnumber(L, 1) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L,
-			"Incorrect arguments to Pos2BuildPos(unitDefID, x, y, z)");
-		lua_error(L);
-	}
-	const int unitDefID = (int)lua_tonumber(L, 1);
-	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
-		return 0;
-	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
-
-	const float3 buildPos = helper->Pos2BuildPos(pos, ud);
-
-	lua_pushnumber(L, buildPos.x);
-	lua_pushnumber(L, buildPos.y);
-	lua_pushnumber(L, buildPos.z);
-
-	return 3;
-}
-
-
-/******************************************************************************/
-
-static int SetShareLevel(lua_State* L)
+int CLuaUI::SetShareLevel(lua_State* L)
 {
 	if (gu->spectating || (gs->frameNum <= 0)) {
 		return 0;
@@ -5122,8 +2471,7 @@ static int SetShareLevel(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to SetShareLevel(\"type\", level");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to SetShareLevel(\"type\", level");
 	}
 
 	const string shareType = lua_tostring(L, 1);
@@ -5142,7 +2490,7 @@ static int SetShareLevel(lua_State* L)
 }
 
 
-static int ShareResources(lua_State* L)
+int CLuaUI::ShareResources(lua_State* L)
 {
 	if (gu->spectating || (gs->frameNum <= 0)) {
 		return 0;
@@ -5151,8 +2499,7 @@ static int ShareResources(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||
 	    ((args >= 3) && !lua_isnumber(L, 3))) {
-		lua_pushstring(L, "Incorrect arguments to ShareResources()");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to ShareResources()");
 	}
 	const int teamID = (int)lua_tonumber(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
@@ -5185,94 +2532,9 @@ static int ShareResources(lua_State* L)
 
 
 /******************************************************************************/
-
-static int PlaySoundFile(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to PlaySoundFile(soundname [,volume])");
-		lua_error(L);
-	}
-	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = sound->GetWaveId(soundFile);
-	if (soundID > 0) {
-		float volume = 1.0f;
-		if (args >= 2) {
-			volume = (float)lua_tonumber(L, 2);
-		}
-		sound->PlaySample(soundID, volume);
-		lua_pushboolean(L, 1);
-	} else {
-		lua_pushboolean(L, 0);
-	}
-	return 1;
-}
-
-
 /******************************************************************************/
 
-static int AddWorldIcon(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to AddWorldIcon(id, x, y, z");
-		lua_error(L);
-	}
-	const int cmdID = (int)lua_tonumber(L, 1);
-	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
-	cursorIcons.AddIcon(cmdID, pos);
-	return 0;
-}
-
-
-static int AddWorldText(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to AddWorldIcon(text, x, y, z");
-		lua_error(L);
-	}
-	const string text = lua_tostring(L, 1);
-	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
-	cursorIcons.AddIconText(text, pos);
-	return 0;
-}
-
-
-static int AddWorldUnit(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 6) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		lua_pushstring(L,
-			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
-		lua_error(L);
-	}
-	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
-		return 0;
-	}
-	const float3 pos(lua_tonumber(L, 2), lua_tonumber(L, 3), lua_tonumber(L, 4));
-	const int team = (int)lua_tonumber(L, 5);
-	if ((team < 0) || (team >= gs->activeTeams)) {
-		return 0;
-	}
-	const int facing = (int)lua_tonumber(L, 6);
-	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static int MarkerAddPoint(lua_State* L)
+int CLuaUI::MarkerAddPoint(lua_State* L)
 {
 	if (inMapDrawer == NULL) {
 		return 0;
@@ -5281,14 +2543,11 @@ static int MarkerAddPoint(lua_State* L)
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
 	    ((args >= 4) && !lua_isstring(L, 4))) {
-		lua_pushstring(L,
-			"Incorrect arguments to MarkerAddPoint(x, y, z[, text])");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text])");
 	}
-	float3 pos;
-	pos.x = (float)lua_tonumber(L, 1);
-	pos.y = (float)lua_tonumber(L, 2);
-	pos.z = (float)lua_tonumber(L, 3);
+	const float3 pos((float)lua_tonumber(L, 1),
+	                 (float)lua_tonumber(L, 2),
+	                 (float)lua_tonumber(L, 3));
 	string text = "";
 	if (args >= 4) {
 	  text = lua_tostring(L, 4);
@@ -5300,7 +2559,7 @@ static int MarkerAddPoint(lua_State* L)
 }
 
 
-static int MarkerAddLine(lua_State* L)
+int CLuaUI::MarkerAddLine(lua_State* L)
 {
 	if (inMapDrawer == NULL) {
 		return 0;
@@ -5310,18 +2569,15 @@ static int MarkerAddLine(lua_State* L)
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		lua_pushstring(L,
+		luaL_error(L,
 			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2)");
-		lua_error(L);
 	}
-	float3 pos1;
-	pos1.x = (float)lua_tonumber(L, 1);
-	pos1.y = (float)lua_tonumber(L, 2);
-	pos1.z = (float)lua_tonumber(L, 3);
-	float3 pos2;
-	pos2.x = (float)lua_tonumber(L, 4);
-	pos2.y = (float)lua_tonumber(L, 5);
-	pos2.z = (float)lua_tonumber(L, 6);
+	const float3 pos1((float)lua_tonumber(L, 1),
+	                  (float)lua_tonumber(L, 2),
+	                  (float)lua_tonumber(L, 3));
+	const float3 pos2((float)lua_tonumber(L, 4),
+	                  (float)lua_tonumber(L, 5),
+	                  (float)lua_tonumber(L, 6));
 
 	inMapDrawer->AddLine(pos1, pos2);
 
@@ -5329,7 +2585,7 @@ static int MarkerAddLine(lua_State* L)
 }
 
 
-static int MarkerErasePosition(lua_State* L)
+int CLuaUI::MarkerErasePosition(lua_State* L)
 {
 	if (inMapDrawer == NULL) {
 		return 0;
@@ -5337,14 +2593,11 @@ static int MarkerErasePosition(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 3) ||
 	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L,
-			"Incorrect arguments to MarkerDeletePositionl(x, y, z)");
-		lua_error(L);
+		luaL_error(L, "Incorrect arguments to MarkerDeletePositionl(x, y, z)");
 	}
-	float3 pos;
-	pos.x = (float)lua_tonumber(L, 1);
-	pos.y = (float)lua_tonumber(L, 2);
-	pos.z = (float)lua_tonumber(L, 3);
+	const float3 pos((float)lua_tonumber(L, 1),
+	                 (float)lua_tonumber(L, 2),
+	                 (float)lua_tonumber(L, 3));
 
 	inMapDrawer->ErasePos(pos);
 
@@ -5353,1222 +2606,4 @@ static int MarkerErasePosition(lua_State* L)
 
 
 /******************************************************************************/
-
-static int DrawText(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L,
-			"Incorrect arguments to "
-			"DrawText(msg, x, y [,size] [,\"options\"]");
-		lua_error(L);
-	}
-	const string text = lua_tostring(L, 1);
-	const float x     = lua_tonumber(L, 2);
-	const float y     = lua_tonumber(L, 3);
-
-	float size = 12.0f;
-	bool right = false;
-	bool center = false;
-	bool outline = false;
-	bool colorCodes = true;
-	bool lightOut;
-
-	if ((args >= 4) && lua_isnumber(L, 4)) {
-		size = lua_tonumber(L, 4);
-	}
-	if ((args >= 5) && lua_isstring(L, 5)) {
-	  const char* c = lua_tostring(L, 5);
-	  while (*c != 0) {
-	  	switch (*c) {
-	  	  case 'c': { center = true;                    break; }
-	  	  case 'r': { right = true;                     break; }
-			  case 'n': { colorCodes = false;               break; }
-			  case 'o': { outline = true; lightOut = false; break; }
-			  case 'O': { outline = true; lightOut = true;  break; }
-			}
-	  	c++;
-		}
-	}
-
-	const float yScale = size / textHeight;
-	const float xScale = yScale;
-	float xj = x; // justified x position
-	if (right) {
-		xj -= xScale * font->CalcTextWidth(text.c_str());
-	} else if (center) {
-		xj -= xScale * font->CalcTextWidth(text.c_str()) * 0.5f;
-	}
-	glPushMatrix();
-	glTranslatef(xj, y, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	if (!outline) {
-		if (colorCodes) {
-			font->glPrintColor("%s", text.c_str());
-		} else {
-			font->glPrint("%s", text.c_str());
-		}
-	} else {
-		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
-		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
-		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		const float xPixel = 1.0f / xScale;
-		const float yPixel = 1.0f / yScale;
-		if (lightOut) {
-			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, lightOutline);
-		} else {
-			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, darkOutline);
-		}
-		if (colorCodes) {
-			font->glPrintColor("%s", text.c_str());
-		} else {
-			font->glPrint("%s", text.c_str());
-		}
-	}
-	glPopMatrix();
-
-	return 0;
-}
-
-
-static int DrawGetTextWidth(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawGetTextWidth(\"text\")");
-		lua_error(L);
-	}
-	const string text = lua_tostring(L, 1);
-	const float width = font->CalcTextWidth(text.c_str()) / textHeight;
-	lua_pushnumber(L, width);
-	return 1;
-}
-
-
-/******************************************************************************/
-
-static int DrawUnitDef(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to DrawUnitDef(unitDefID, team)");
-		lua_error(L);
-	}
-	const int unitDefID = (int)lua_tonumber(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
-		return 0;
-	}
-	const int teamID = (int)lua_tonumber(L, 2);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
-
-	unitDrawer->DrawUnitDef(ud, teamID);
-
-	return 0;
-}
-
-
-/******************************************************************************/
-
-struct VertexData {
-	float vert[3];
-	float norm[3];
-	float txcd[2];
-	float color[4];
-	bool hasVert;
-	bool hasNorm;
-	bool hasTxcd;
-	bool hasColor;
-};
-
-
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	int index = 0;
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -1)) {
-			logOutput.Print("LUA: error parsing numeric array\n");
-			lua_pop(L, 2); // pop the value and the key
-			return -1;
-		}
-		if (index < size) {
-			array[index] = (float)lua_tonumber(L, -1);
-			index++;
-		}
-	}
-	return index;
-}
-
-
-static bool ParseVertexData(lua_State* L, VertexData& vd)
-{
-	if (!lua_istable(L, -1)) {
-		return false;
-	}
-
-	vd.hasVert = vd.hasNorm = vd.hasTxcd = vd.hasColor = false;
-
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_istable(L, -1) || !lua_isstring(L, -2)) {
-			logOutput.Print("DrawShape: bad vertex data row\n");
-			lua_pop(L, 2); // pop the value and key
-			return false;
-		}
-
-		const string key = lua_tostring(L, -2);
-
-		if ((key == "v") || (key == "vertex")) {
-			vd.vert[0] = 0.0f; vd.vert[1] = 0.0f; vd.vert[2] = 0.0f;
-			if (ParseFloatArray(L, vd.vert, 3) >= 2) {
-				vd.hasVert = true;
-			} else {
-				logOutput.Print("DrawShape: bad vertex array\n");
-				lua_pop(L, 2); // pop the value and key
-				return false;
-			}
-		}
-		else if ((key == "n") || (key == "normal")) {
-			vd.norm[0] = 0.0f; vd.norm[1] = 1.0f; vd.norm[2] = 0.0f;
-			if (ParseFloatArray(L, vd.norm, 3) == 3) {
-				vd.hasNorm = true;
-			} else {
-				logOutput.Print("DrawShape: bad normal array\n");
-				lua_pop(L, 2); // pop the value and key
-				return false;
-			}
-		}
-		else if ((key == "t") || (key == "texcoord")) {
-			vd.txcd[0] = 0.0f; vd.txcd[1] = 0.0f;
-			if (ParseFloatArray(L, vd.txcd, 2) == 2) {
-				vd.hasTxcd = true;
-			} else {
-				logOutput.Print("DrawShape: bad texcoord array\n");
-				lua_pop(L, 2); // pop the value and key
-				return false;
-			}
-		}
-		else if ((key == "c") || (key == "color")) {
-			vd.color[0] = 1.0f; vd.color[1] = 1.0f;
-			vd.color[2] = 1.0f; vd.color[3] = 1.0f;
-			if (ParseFloatArray(L, vd.color, 4) >= 0) {
-				vd.hasColor = true;
-			} else {
-				logOutput.Print("DrawShape: bad color array\n");
-				lua_pop(L, 2); // pop the value and key
-				return false;
-			}
-		}
-	}
-
-	return vd.hasVert;
-}
-
-
-static int DrawShape(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_istable(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to DrawShape(type, elements[])");
-		lua_error(L);
-	}
-
-	const GLuint type = (GLuint)lua_tonumber(L, 1);
-	switch (type) {
-		case GL_POINTS:
-		case GL_LINES:
-		case GL_LINE_STRIP:
-		case GL_LINE_LOOP:
-		case GL_TRIANGLES:
-		case GL_TRIANGLE_STRIP:
-		case GL_TRIANGLE_FAN:
-		case GL_QUADS:
-		case GL_QUAD_STRIP:
-		case GL_POLYGON:{
-			glBegin(type);
-			break;
-		}
-		default: { return 0; }
-	}
-
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		VertexData vd;
-		if (!ParseVertexData(L, vd)) {
-			logOutput.Print("DrawShape: bad vertex data\n");
-			break;
-		}
-		if (vd.hasColor) { glColor4fv(vd.color);   }
-		if (vd.hasTxcd)  { glTexCoord2fv(vd.txcd); }
-		if (vd.hasNorm)  { glNormal3fv(vd.norm);   }
-		if (vd.hasVert)  { glVertex3fv(vd.vert);   } // always last
-	}
-
-	glEnd();
-
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static int DrawColor(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1) {
-		lua_pushstring(L, "Incorrect arguments to DrawColor()");
-		lua_error(L);
-	}
-
-	float color[4];
-
-	if (args == 1) {
-		if (!lua_istable(L, 1)) {
-			lua_pushstring(L, "Incorrect arguments to DrawColor()");
-			lua_error(L);
-		}
-		const int count = ParseFloatArray(L, color, 4);
-		if (count < 3) {
-			lua_pushstring(L, "Incorrect arguments to DrawColor()");
-			lua_error(L);
-		}
-		if (count == 3) {
-			color[3] = 1.0f;
-		}
-	}
-	else if (args >= 3) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-			lua_pushstring(L, "Incorrect arguments to DrawColor()");
-			lua_error(L);
-		}
-		color[0] = (GLfloat)lua_tonumber(L, 1);
-		color[1] = (GLfloat)lua_tonumber(L, 2);
-		color[2] = (GLfloat)lua_tonumber(L, 3);
-		if (args < 4) {
-			color[3] = 1.0f;
-		} else {
-			if (!lua_isnumber(L, 4)) {
-				lua_pushstring(L, "Incorrect arguments to DrawColor()");
-				lua_error(L);
-			}
-			color[3] = (GLfloat)lua_tonumber(L, 4);
-		}
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawColor()");
-		lua_error(L);
-	}
-
-	glColor4fv(color);
-
-	return 0;
-}
-
-
-static int DrawMaterial(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawMaterial(table)");
-		lua_error(L);
-	}
-
-	float color[4];
-
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) { // the key
-			logOutput.Print("DrawMaterial: bad state type\n");
-			break;
-		}
-		const string key = lua_tostring(L, -2);
-
-		if (key == "shininess") {
-			if (lua_isnumber(L, -1)) {
-				const GLfloat specExp = (GLfloat)lua_tonumber(L, -1);
-				glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, specExp);
-			}
-			continue;
-		}
-
-		const int count = ParseFloatArray(L, color, 4);
-		if (count == 3) {
-			color[3] = 1.0f;
-		}
-
-		if (key == "ambidiff") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-			}
-		}
-		else if (key == "ambient") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
-			}
-		}
-		else if (key == "diffuse") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
-			}
-		}
-		else if (key == "specular") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
-			}
-		}
-		else if (key == "emission") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-			}
-		}
-		else {
-			logOutput.Print("DrawMaterial: unknown material type: %s\n", key.c_str());
-		}
-	}
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static int DrawScreenGeometry(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawScreenProperties(width, dist)");
-		lua_error(L);
-	}
-	screenWidth = lua_tonumber(L, 1);
-	screenDistance = lua_tonumber(L, 2);
-
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static void ResetGLState()
-{
-	glDisable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glDisable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-
-	glDisable(GL_LIGHTING);
-
-	glShadeModel(GL_SMOOTH);
-
-	glDisable(GL_COLOR_LOGIC_OP);
-	glLogicOp(GL_INVERT);
-
-	glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
-	glDisable(GL_SCISSOR_TEST);
-
-	glDisable(GL_TEXTURE_2D);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_POLYGON_OFFSET_LINE);
-	glDisable(GL_POLYGON_OFFSET_POINT);
-
-	glDisable(GL_LINE_STIPPLE);
-
-	glLineWidth(1.0f);
-	glPointSize(1.0f);
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	ResetGLMaterial();
-}
-
-
-static int DrawResetState(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "DrawResetState takes no arguments");
-		lua_error(L);
-	}
-
-	ResetGLState();
-
-	return 0;
-}
-
-
-static int DrawResetMatrices(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "DrawResetMatrices takes no arguments");
-		lua_error(L);
-	}
-
-	if (drawWorldMode) {
-		ResetWorldMatrices();
-	} else {
-		ResetScreenMatrices();
-	}
-
-	return 0;
-}
-
-
-static int DrawLighting(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawLighting()");
-		lua_error(L);
-	}
-	if (lua_toboolean(L, 1)) {
-		glEnable(GL_LIGHTING);
-	} else {
-		glDisable(GL_LIGHTING);
-	}
-	return 0;
-}
-
-
-static int DrawShadeModel(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawShadeModel()");
-		lua_error(L);
-	}
-
-	glShadeModel((GLenum)lua_tonumber(L, 1));
-
-	return 0;
-}
-
-
-static int DrawScissor(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			lua_pushstring(L, "Incorrect arguments to DrawScissor()");
-			lua_error(L);
-		}
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_SCISSOR_TEST);
-		} else {
-			glDisable(GL_SCISSOR_TEST);
-		}
-	}
-	else if (args == 4) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-		    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-			lua_pushstring(L, "Incorrect arguments to DrawScissor()");
-			lua_error(L);
-		}
-		glEnable(GL_SCISSOR_TEST);
-		const GLint   x =   (GLint)lua_tonumber(L, 1);
-		const GLint   y =   (GLint)lua_tonumber(L, 2);
-		const GLsizei w = (GLsizei)lua_tonumber(L, 3);
-		const GLsizei h = (GLsizei)lua_tonumber(L, 4);
-		glScissor(x + gu->viewPosX, y + gu->viewPosY, w, h);
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawScissor()");
-		lua_error(L);
-	}
-
-	return 0;
-}
-
-
-static int DrawDepthMask(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isboolean(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawDepthMask()");
-		lua_error(L);
-	}
-	if (lua_toboolean(L, 1)) {
-		glDepthMask(GL_TRUE);
-	} else {
-		glDepthMask(GL_FALSE);
-	}
-	return 0;
-}
-
-
-static int DrawDepthTest(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
-		lua_pushstring(L, "Incorrect arguments to DrawDepthTest()");
-		lua_error(L);
-	}
-
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_DEPTH_TEST);
-		} else {
-			glDisable(GL_DEPTH_TEST);
-		}
-	}
-	else if (lua_isnumber(L, 1)) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc((GLenum)lua_tonumber(L, 1));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawDepthTest()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawCulling(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
-		lua_pushstring(L, "Incorrect arguments to DrawCulling()");
-		lua_error(L);
-	}
-
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_CULL_FACE);
-		} else {
-			glDisable(GL_CULL_FACE);
-		}
-	}
-	else if (lua_isnumber(L, 1)) {
-		glEnable(GL_CULL_FACE);
-		glCullFace((GLenum)lua_tonumber(L, 1));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawCulling()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawLogicOp(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
-		lua_pushstring(L, "Incorrect arguments to DrawLogicOp()");
-		lua_error(L);
-	}
-
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_COLOR_LOGIC_OP);
-		} else {
-			glDisable(GL_COLOR_LOGIC_OP);
-		}
-	}
-	else if (lua_isnumber(L, 1)) {
-		glEnable(GL_COLOR_LOGIC_OP);
-		glLogicOp((GLenum)lua_tonumber(L, 1));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawLogicOp()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawBlending(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			lua_pushstring(L, "Incorrect arguments to DrawBlending()");
-			lua_error(L);
-		}
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_BLEND);
-		} else {
-			glDisable(GL_BLEND);
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			lua_pushstring(L, "Incorrect arguments to DrawBlending()");
-			lua_error(L);
-		}
-		glEnable(GL_BLEND);
-		glBlendFunc((GLenum)lua_tonumber(L, 1), (GLenum)lua_tonumber(L, 2));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawBlending()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawAlphaTest(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
-			lua_error(L);
-		}
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_ALPHA_TEST);
-		} else {
-			glDisable(GL_ALPHA_TEST);
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
-			lua_error(L);
-		}
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc((GLenum)lua_tonumber(L, 1), (GLfloat)lua_tonumber(L, 2));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawAlphaTest()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawPolygonMode(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		lua_pushstring(L, "Incorrect arguments to DrawPolygonMode()");
-		lua_error(L);
-	}
-	const GLenum face = (GLenum)lua_tonumber(L, 1);
-	const GLenum mode = (GLenum)lua_tonumber(L, 2);
-	glPolygonMode(face, mode);
-	return 0;
-}
-
-
-static int DrawPolygonOffset(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
-			lua_error(L);
-		}
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glEnable(GL_POLYGON_OFFSET_LINE);
-			glEnable(GL_POLYGON_OFFSET_POINT);
-		} else {
-			glDisable(GL_POLYGON_OFFSET_FILL);
-			glDisable(GL_POLYGON_OFFSET_LINE);
-			glDisable(GL_POLYGON_OFFSET_POINT);
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
-			lua_error(L);
-		}
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glEnable(GL_POLYGON_OFFSET_LINE);
-		glEnable(GL_POLYGON_OFFSET_POINT);
-		glPolygonOffset((GLfloat)lua_tonumber(L, 1), (GLfloat)lua_tonumber(L, 2));
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawPolygonOffset()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawLineStipple(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 1) {
-		if (lua_isstring(L, 1)) { // we're ignoring the string value
-			const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
-			if ((stipPat != 0x0000) && (stipPat != 0xffff)) {
-				glEnable(GL_LINE_STIPPLE);
-				lineDrawer.SetupLineStipple();
-			} else {
-				glDisable(GL_LINE_STIPPLE);
-			}
-		}
-		else if (lua_isboolean(L, 1)) {
-			if (lua_toboolean(L, 1)) {
-				glEnable(GL_LINE_STIPPLE);
-			} else {
-				glDisable(GL_LINE_STIPPLE);
-			}
-		}
-		else {
-			lua_pushstring(L, "Incorrect arguments to DrawLineStipple()");
-			lua_error(L);
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			lua_pushstring(L, "Incorrect arguments to DrawLineStipple()");
-			lua_error(L);
-		}
-		GLint factor     =    (GLint)lua_tonumber(L, 1);
-		GLushort pattern = (GLushort)lua_tonumber(L, 2);
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(factor, pattern);
-	}
-	else {
-		lua_pushstring(L, "Incorrect arguments to DrawLineStipple()");
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-static int DrawLineWidth(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawLineWidth()");
-		lua_error(L);
-	}
-	glLineWidth((float)lua_tonumber(L, 1));
-	return 0;
-}
-
-
-static int DrawPointSize(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawPointSize()");
-		lua_error(L);
-	}
-	glPointSize((float)lua_tonumber(L, 1));
-	return 0;
-}
-
-
-static int DrawTexture(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
-		lua_pushstring(L, "Incorrect arguments to DrawTexture()");
-		lua_error(L);
-	}
-
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_TEXTURE_2D);
-		} else {
-			glDisable(GL_TEXTURE_2D);
-		}
-		lua_pushboolean(L, 1);
-		return 1;
-	}
-
-	if (!lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawTexture()");
-		lua_error(L);
-	}
-
-	const string texture = lua_tostring(L, 1);
-	if (texture.empty()) {
-		glDisable(GL_TEXTURE_2D); // equivalent to 'false'
-		lua_pushboolean(L, 1);
-		return 1;
-	}
-	else if (texture[0] != '#') {
-		if ((guihandler == NULL) || !guihandler->BindNamedTexture(texture)) {
-			lua_pushboolean(L, 0);
-			return 1;
-		}
-		glEnable(GL_TEXTURE_2D);
-	}
-	else {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = texture.c_str() + 1; // skip the '#'
-		int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-		// UnitDefHandler's array size is (numUnits + 1)
-		if (endPtr != startPtr) {
-			UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-			if (ud != NULL) {
-				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
-				glEnable(GL_TEXTURE_2D);
-			} else {
-				lua_pushboolean(L, 0);
-				return 1;
-			}
-		} else {
-			lua_pushboolean(L, 0);
-			return 1;
-		}
-	}
-	lua_pushboolean(L, 1);
-	return 1;
-}
-
-
-static int DrawFreeTexture(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawFreeTexture()");
-		lua_error(L);
-	}
-	const string texture = lua_tostring(L, 1);
-	if ((guihandler == NULL) || !guihandler->FreeNamedTexture(texture)) {
-		lua_pushboolean(L, 0);
-	} else {
-		lua_pushboolean(L, 1);
-	}
-	return 1;
-}
-
-
-static int DrawClear(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawClear()");
-		lua_error(L);
-	}
-
-	const GLbitfield bits = (GLbitfield)lua_tonumber(L, 1);
-	if (args == 5) {
-		if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
-		    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
-			lua_pushstring(L, "Incorrect arguments to DrawClear()");
-			lua_error(L);
-		}
-		if (bits == GL_COLOR_BUFFER_BIT) {
-			glClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
-			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
-		}
-		else if (bits == GL_ACCUM_BUFFER_BIT) {
-			glClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
-			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 2)) {
-			lua_pushstring(L, "Incorrect arguments to DrawClear()");
-			lua_error(L);
-		}
-		if (bits == GL_DEPTH_BUFFER_BIT) {
-			glClearDepth((GLfloat)lua_tonumber(L, 2));
-		}
-		else if (bits == GL_STENCIL_BUFFER_BIT) {
-			glClearStencil((GLint)lua_tonumber(L, 2));
-		}
-	}
-
-	glClear(bits);
-
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static int DrawTranslate(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to DrawTranslate(x, y, z)");
-		lua_error(L);
-	}
-	const float x = (float)lua_tonumber(L, 1);
-	const float y = (float)lua_tonumber(L, 2);
-	const float z = (float)lua_tonumber(L, 3);
-	glTranslatef(x, y, z);
-	return 0;
-}
-
-
-static int DrawScale(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		lua_pushstring(L, "Incorrect arguments to DrawScale(x, y, z)");
-		lua_error(L);
-	}
-	const float x = (float)lua_tonumber(L, 1);
-	const float y = (float)lua_tonumber(L, 2);
-	const float z = (float)lua_tonumber(L, 3);
-	glScalef(x, y, z);
-	return 0;
-}
-
-
-static int DrawRotate(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 4) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		lua_pushstring(L, "Incorrect arguments to DrawRotate(r, x, y, z)");
-		lua_error(L);
-	}
-	const float r = (float)lua_tonumber(L, 1);
-	const float x = (float)lua_tonumber(L, 2);
-	const float y = (float)lua_tonumber(L, 3);
-	const float z = (float)lua_tonumber(L, 4);
-	glRotatef(r, x, y, z);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static int DrawMatrixMode(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L, "Incorrect arguments to DrawMatrixMode");
-		lua_error(L);
-	}
-	glMatrixMode((GLenum)lua_tonumber(L, 1));
-	return 0;
-}
-
-
-static int DrawLoadIdentity(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "DrawLoadIdentity takes no arguments");
-		lua_error(L);
-	}
-	glLoadIdentity();
-	return 0;
-}
-
-
-static int DrawPushMatrix(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "DrawPushMatrix takes no arguments");
-		lua_error(L);
-	}
-
-	glPushMatrix();
-
-	return 0;
-}
-
-
-static int DrawPopMatrix(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		lua_pushstring(L, "DrawPopMatrix takes no arguments");
-		lua_error(L);
-	}
-
-	glPopMatrix();
-
-	return 0;
-}
-
-/******************************************************************************/
-
-static int DrawListCreate(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isfunction(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawListCreate(func [, arg1, arg2, etc ...])");
-		lua_error(L);
-	}
-
-	// generate the list id
-	const GLuint list = glGenLists(1);
-	if (list == 0) {
-		lua_pushnumber(L, 0);
-		return 1;
-	}
-
-	// save the current state
-	const bool origDrawingEnabled = drawingEnabled;
-	drawingEnabled = true;
-
-	// build the list with the specified lua call/args
-	glNewList(list, GL_COMPILE);
-	const int error = lua_pcall(L, (args - 1), 0, 0);
-	glEndList();
-
-	if (error != 0) {
-		glDeleteLists(list, 1);
-		lua_pushnumber(L, 0);
-		logOutput.Print("DrawListCreate: error = %s\n", lua_tostring(L, -1));
-	} else {
-		displayLists.push_back(list);
-		lua_pushnumber(L, displayLists.size());
-	}
-
-	// restore the state
-	drawingEnabled = origDrawingEnabled;
-
-	return 1;
-}
-
-
-static int DrawListRun(lua_State* L)
-{
-	if (!drawingEnabled) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawListRun(list)");
-		lua_error(L);
-	}
-	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
-	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
-		glCallList(displayLists[listIndex - 1]);
-	}
-	return 0;
-}
-
-
-static int DrawListDelete(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		lua_pushstring(L,
-			"Incorrect arguments to DrawListDelete(list)");
-		lua_error(L);
-	}
-	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
-	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
-		glDeleteLists(displayLists[listIndex - 1], 1);
-		displayLists[listIndex - 1] = 0;
-	}
-	return 0;
-}
-
-
 /******************************************************************************/

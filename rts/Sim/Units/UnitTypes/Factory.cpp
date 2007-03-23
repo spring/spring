@@ -5,29 +5,29 @@
 
 #include "Factory.h"
 #include "Game/Team.h"
-#include "Sim/Units/UnitLoader.h"
-#include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
-#include "Game/GameHelper.h"
 #include "Game/Camera.h"
+#include "Game/GameHelper.h"
+#include "Game/Team.h"
 #include "Game/WaitCommandsAI.h"
-#include "Game/UI/GuiHandler.h"
+#include "Map/Ground.h"
+#include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Projectiles/GfxProjectile.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Sim/Projectiles/GfxProjectile.h"
+#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sync/SyncTracer.h"
+#include "Sound.h"
+#include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sync/SyncTracer.h"
-#include "Map/ReadMap.h"
-#include "Sound.h"
-#include "Sim/Misc/QuadField.h"
-#include "Map/Ground.h"
-#include "Sim/Units/CommandAI/MobileCAI.h"
-#include "Game/Team.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
@@ -93,7 +93,8 @@ void CFactory::Update()
 		}
 		if(canBuild){
 			quedBuild=false;
-			CUnit* b=unitLoader.LoadUnit(nextBuild,buildPos+float3(0.01f,0.01f,0.01f),team,true,buildFacing);
+			CUnit* b=unitLoader.LoadUnit(nextBuild, buildPos+float3(0.01f,0.01f,0.01f),team,
+			                             true, buildFacing, this);
 			AddDeathDependence(b);
 			curBuild=b;
 
@@ -106,7 +107,10 @@ void CFactory::Update()
 		}
 	}
 
-	if(curBuild && !beingBuilt){
+	const CCommandQueue& queue = commandAI->commandQue;
+
+	if (curBuild && !beingBuilt &&
+	    (queue.empty() || (queue.front().id != CMD_WAIT))) {
 		lastBuild=gs->frameNum;
 
 		int buildPiece = GetBuildPiece();
@@ -158,15 +162,14 @@ void CFactory::Update()
 					if(((CFactoryCAI*)commandAI)->newUnitCommands.empty()){
 						SendToEmptySpot(curBuild);
 					} else {
-						for(std::deque<Command>::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci){
+						for(CCommandQueue::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci){
 							curBuild->commandAI->GiveCommand(*ci);
 						}
 					}
 					waitCommandsAI.AddLocalUnit(curBuild, this);
 				}
-				if (guihandler) {
-					guihandler->UnitFromFactory(curBuild, this, userOrders);
-				}
+				luaCallIns.UnitFromFactory(curBuild, this, userOrders);
+				
 				StopBuild();
 			}
 		}

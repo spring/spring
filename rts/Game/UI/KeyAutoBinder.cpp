@@ -12,11 +12,13 @@ extern "C" {
 	#include "lualib.h"
 	#include "lauxlib.h"
 }
-#include "LuaState.h"
 #include "KeyBindings.h"
 #include "SimpleParser.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
+#include "Lua/LuaConstGame.h"
+#include "Lua/LuaUnitDefs.h"
+#include "Lua/LuaWeaponDefs.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -55,8 +57,30 @@ static const string endlStr = "\r\n";
 /******************************************************************************/
 
 CKeyAutoBinder::CKeyAutoBinder()
+: CLuaHandle("KeyAutoBinder", 1234, false, NULL)
 {
+	if (L == NULL) {
+		return;
+	}
+
 	LoadCompareFunc();
+
+	// load the standard libraries
+	luaopen_base(L);
+	luaopen_io(L);
+	luaopen_math(L);
+	luaopen_table(L);
+	luaopen_string(L);
+	luaopen_debug(L);
+
+	// load the spring libraries
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	if (!AddEntriesToTable(L, "Game",       LuaConstGame::PushEntries)  ||
+	    !AddEntriesToTable(L, "UnitDefs",   LuaUnitDefs::PushEntries)   ||
+	    !AddEntriesToTable(L, "WeaponDefs", LuaWeaponDefs::PushEntries)) {
+		logOutput.Print("KeyAutoBinder: error loading lua libraries\n");
+	}
+  lua_settop(L, 0);
 }
 
 
@@ -67,11 +91,11 @@ CKeyAutoBinder::~CKeyAutoBinder()
 
 bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 {
-	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
 		return false;
 	}
-	lua_pop(L, lua_gettop(L));
+
+	lua_settop(L, 0);
 
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
@@ -144,11 +168,11 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
                                    const vector<string>& sortCriteria,
                                    const vector<string>& chords)
 {
-	lua_State* L = LUASTATE.GetL();
 	if (L == NULL) {
 		return false;
 	}
-	lua_pop(L, lua_gettop(L));
+	
+	lua_settop(L, 0);
 
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);
@@ -231,8 +255,7 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 		const char* start = c;
 		while ((c[0] != 0) && (isalnum(c[0]) || (c[0] == '_'))) { c++; }
 		string word(start, c - start);
-		const set<string>& unitDefParams = LUASTATE.GetUnitDefParams();
-		if (unitDefParams.find(word) != unitDefParams.end()) {
+		if (LuaUnitDefs::IsDefaultParam(word)) {
 			result += prefix + "." + word;
 		} else if ((word == "custom") && (c[0] == '.')) {
 			result += prefix;

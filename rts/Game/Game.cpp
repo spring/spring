@@ -42,6 +42,7 @@
 #include "winerror.h"
 #endif
 #include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
@@ -69,6 +70,11 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaCob.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
+#include "Lua/LuaOpenGL.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
@@ -92,7 +98,8 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
-#include "Sound.h"
+#include "System/Sound.h"
+#include "System/Platform/NullSound.h"
 #include "Platform/Clipboard.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -102,6 +109,7 @@
 #include "UI/InfoConsole.h"
 #include "UI/KeyBindings.h"
 #include "UI/KeyCodes.h"
+#include "UI/LuaUI.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
 #include "UI/OutlineFont.h"
@@ -143,8 +151,6 @@ extern string stupidGlobalMapname;
 CGame* game = 0;
 
 
-static void SelectUnits(const string& line);    // FIXME -- move into class
-static void SelectCycle(const string& command); // FIXME -- move into class
 
 
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
@@ -158,7 +164,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	consumeSpeed=1;
 	leastQue=0;
 	que=0;
-	timeLeft=0;
+	timeLeft=0.0f;
 
 	oldframenum=0;
 	if(server)
@@ -182,6 +188,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	bOneStep=false;
 	creatingVideo=false;
 
+	skipping=0;
 	playing=false;
 	allReady=false;
 	hideInterface=false;
@@ -191,6 +198,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
 
+	const string inputTextGeo = configHandler.GetString("InputTextGeo", "");
+	ParseInputTextGeometry("default");
+	ParseInputTextGeometry(inputTextGeo);
+
 	gamePausable=true;
 	noSpectatorChat=false;
 
@@ -199,6 +210,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	chatting=false;
 	userInput="";
+	writingPos = 0;
 	userPrompt="";
 
 	consoleHistory = SAFE_NEW CConsoleHistory;
@@ -245,10 +257,9 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	groundDecals=SAFE_NEW CGroundDecalHandler();
 
 	ENTER_UNSYNCED;
-#ifndef NEW_GUI
+
 	guihandler=SAFE_NEW CGuiHandler();
 	minimap=SAFE_NEW CMiniMap();
-#endif
 
 	ENTER_MIXED;
 	ph=SAFE_NEW CProjectileHandler();
@@ -294,16 +305,23 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
-#ifndef NEW_GUI
+
 	resourceBar=SAFE_NEW CResourceBar();
 	keyCodes=SAFE_NEW CKeyCodes();
 	keyBindings=SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
-#endif
 
 	water=CBaseWater::GetWater();
 	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
 	globalAI=SAFE_NEW CGlobalAIHandler();
+
+	CLuaCob::LoadHandler();
+	if (gs->useLuaRules) {
+		CLuaRules::LoadHandler();
+	}
+	if (gs->useLuaGaia) {
+		CLuaGaia::LoadHandler();
+	}
 
 	ENTER_MIXED;
 	if(!shadowHandler->drawShadows){
@@ -401,6 +419,11 @@ CGame::~CGame()
 	tracefile << "End game\n";
 #endif
 
+	CLuaCob::FreeHandler();
+	CLuaGaia::FreeHandler();
+	CLuaRules::FreeHandler();
+	LuaOpenGL::Free();
+
 	delete gameServer;         gameServer         = NULL;
 
 	globalAI->PreDestroy ();
@@ -463,9 +486,9 @@ void CGame::ResizeEvent()
 //called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
-	if(!gameOver && !isRepeat)
+	if (!gameOver && !isRepeat) {
 		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
-	//	logOutput.Print("%i",(int)k);
+	}
 
 	if (!hotBinding.empty()) {
 		if (k == 27) {
@@ -495,6 +518,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			if (action.command == "chatswitchall") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 					userInput = userInput.substr(2);
+					writingPos = max(0, writingPos - 2);
 				}
 				userInputPrefix = "";
 				return 0;
@@ -504,6 +528,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput[0] = 'a';
 				} else {
 					userInput = "a:" + userInput;
+					writingPos += 2;
 				}
 				userInputPrefix = "a:";
 				return 0;
@@ -513,28 +538,82 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput[0] = 's';
 				} else {
 					userInput = "s:" + userInput;
+					writingPos += 2;
 				}
 				userInputPrefix = "s:";
 				return 0;
 			}
 			else if (action.command == "pastetext") {
 				if (!action.extra.empty()) {
-					userInput += action.extra;
+					userInput.insert(writingPos, action.extra);
+					writingPos += action.extra.length();
 				} else {
 					CClipboard clipboard;
-					userInput += clipboard.GetContents();
+					const string text = clipboard.GetContents();
+					userInput.insert(writingPos, text);
+					writingPos += text.length();
 				}
 				return 0;
 			}
 		}
 
-		if(k==8){ //backspace
-			if(userInput.size()!=0){
-				userInput.erase(userInput.size()-1,1);
+		if (k == SDLK_BACKSPACE) {
+			if (!userInput.empty() && (writingPos > 0)) {
+				userInput.erase(writingPos - 1, 1);
+				writingPos--;
 			}
 		}
-		else if(k==SDLK_RETURN){
+		else if (k == SDLK_DELETE) {
+			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
+				userInput.erase(writingPos, 1);
+			}
+		}
+		else if (k == SDLK_LEFT) {
+			if (keys[SDLK_LALT]) {
+				// home
+				writingPos = 0;
+			}
+			else if (keys[SDLK_LCTRL]) {
+				// prev word
+				const char* s = userInput.c_str();
+				int p = writingPos;
+				while ((p > 0) && !isalnum(s[p - 1])) { p--; }
+				while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
+				writingPos = p;
+			}
+			else {
+				// prev character
+				writingPos = max(0, min((int)userInput.length(), writingPos - 1));
+			}
+		}
+		else if (k == SDLK_RIGHT) {
+			if (keys[SDLK_LALT]) {
+				// end
+				writingPos = (int)userInput.length();
+			}
+			else if (keys[SDLK_LCTRL]) {
+				// next word
+				const int len = (int)userInput.length();
+				const char* s = userInput.c_str();
+				int p = writingPos;
+				while ((p < len) && !isalnum(s[p])) { p++; }
+				while ((p < len) &&  isalnum(s[p])) { p++; }
+				writingPos = p;
+			}
+			else {
+				// next character
+				writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+			}
+		}
+		else if (k == SDLK_HOME) {
+			writingPos = 0;
+		}
+		else if (k == SDLK_END) {
+			writingPos = (int)userInput.length();
+		}
+		else if (k == SDLK_RETURN){
 			userWriting=false;
+			writingPos = 0;
 			keys[k] = false;		//prevent game start when server chats
 			if (chatting) {
 				string command;
@@ -548,6 +627,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					const string actionLine = command.substr(1); // strip the '/' or '.'
 					chatting = false;
 					userInput = "";
+					writingPos = 0;
 					logOutput.Print(command);
 					CKeySet ks(k, false);
 					CKeyBindings::Action fakeAction(actionLine);
@@ -555,7 +635,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				}
 			}
 		}
-		else if(k==27 && (chatting || inMapDrawer->wantLabel)){ // escape
+		else if ((k == 27) && (chatting || inMapDrawer->wantLabel)){ // escape
 			if (chatting) {
 				consoleHistory->AddLine(userInput);
 			}
@@ -563,15 +643,22 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			chatting=false;
 			inMapDrawer->wantLabel=false;
 			userInput="";
+			writingPos = 0;
 		}
-		else if(k==SDLK_UP && chatting) {
+		else if ((k == SDLK_UP) && chatting) {
 			userInput = consoleHistory->PrevLine(userInput);
+			writingPos = (int)userInput.length();
 		}
-		else if(k==SDLK_DOWN && chatting) {
+		else if ((k == SDLK_DOWN) && chatting) {
 			userInput = consoleHistory->NextLine(userInput);
+			writingPos = (int)userInput.length();
 		}
-		else if(k==SDLK_TAB) {
-			vector<string> partials = wordCompletion->Complete(userInput);
+		else if (k == SDLK_TAB) {
+			string head = userInput.substr(0, writingPos);
+			string tail = userInput.substr(writingPos);
+			vector<string> partials = wordCompletion->Complete(head);
+			userInput = head + tail;
+			writingPos = (int)head.length();
 			if (!partials.empty()) {
 				string msg;
 				for (int i = 0; i < partials.size(); i++) {
@@ -744,6 +831,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "viewrot") {
 		mouse->SetCameraMode(3);
 	}
+	else if (cmd == "viewfree") {
+		mouse->SetCameraMode(4);
+	}
 	else if (cmd == "viewsave") {
 		mouse->SaveView(action.extra);
 	}
@@ -760,6 +850,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 			pos /= (float)selUnits.size();
 			mouse->currentCamController->SetPos(pos);
+			mouse->CameraTransition(0.6f);
 		}
 	}
 	else if (cmd == "moveforward") {
@@ -786,14 +877,15 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
-	else if ((cmd == "specteam") && (gu->spectating)) {
+	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
 		if ((team >= 0) && (team < gs->activeTeams)) {
 			gu->myTeam = team;
 			gu->myAllyTeam = gs->AllyTeam(team);
 		}
+		CLuaUI::UpdateTeams();
 	}
-	else if ((cmd == "specfullview") && (gu->spectating)) {
+	else if ((cmd == "specfullview") && gu->spectating) {
 		if (!action.extra.empty()) {
 			const int mode = atoi(action.extra.c_str());
 			gu->spectatingFullView   = (mode >= 1);
@@ -802,6 +894,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gu->spectatingFullView = !gu->spectatingFullView;
 			gu->spectatingFullSelect = false;
 		}
+		CLuaUI::UpdateTeams();
 	}
 	else if (cmd == "group") {
 		const char* c = action.extra.c_str();
@@ -856,6 +949,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		userWriting = true;
 		userPrompt = "Say: ";
 		userInput = userInputPrefix;
+		writingPos = (int)userInput.length();
 		chatting = true;
 		if (ks.Key()!=SDLK_RETURN) {
 			ignoreNextChar = true;
@@ -896,14 +990,19 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "singlestep") {
-		bOneStep=true;
+		bOneStep = true;
 	}
 	else if (cmd == "debug") {
-		gu->drawdebug=!gu->drawdebug;
+		gu->drawdebug = !gu->drawdebug;
 	}
 	else if (cmd == "nosound") {
-		soundEnabled=!soundEnabled;
+		soundEnabled = !soundEnabled;
 		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
+		if (soundEnabled) {
+			logOutput.Print("Sound enabled");
+		} else {
+			logOutput.Print("Sound disabled");
+		}
 	}
 	else if (cmd == "volume") {
 		char* endPtr;
@@ -1259,13 +1358,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		cmdColors.LoadConfig(name);
 		logOutput.Print("Reloaded cmdcolors with: " + name);
 	}
-#ifndef NEW_GUI
 	else if (cmd == "ctrlpanel") {
 		const string name = action.extra.empty() ? "ctrlpanel.txt" : action.extra;
 		guihandler->ReloadConfig(name);
 		logOutput.Print("Reloaded ctrlpanel with: " + name);
 	}
-#endif
 	else if (cmd == "font") {
 		CglFont* newFont = NULL;
 		try {
@@ -1281,9 +1378,14 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			font = newFont;
 			logOutput.Print("Loaded font: %s\n", action.extra.c_str());
 			configHandler.SetString("FontFile", action.extra);
+			LuaOpenGL::CalcFontHeight();
 		}
 	}
 	else if (cmd == "aiselect") {
+		if (gs->noHelperAIs) {
+			logOutput.Print("GroupAI and LuaUI control is disabled");
+			return true;
+		}
 		map<AIKey, string>::iterator aai;
 		map<AIKey, string> suitedAis =
 			grouphandler->GetSuitedAis(selectedUnits.selectedUnits);
@@ -1297,6 +1399,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				selectedUnits.GiveCommand(cmd);
 				break;
 			}
+		}
+	}
+	else if (cmd == "safegl") {
+		if (action.extra.empty()) {
+			LuaOpenGL::SetSafeMode(!LuaOpenGL::GetSafeMode());
+		} else {
+			LuaOpenGL::SetSafeMode(atoi(action.extra.c_str()));
 		}
 	}
 	else if (cmd == "resbar") {
@@ -1350,6 +1459,30 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			} else {
 				guihandler->SetGatherMode(!!atoi(action.extra.c_str()));
 			}
+		}
+	}
+	else if (cmd == "pastetext") {
+		if (userWriting){
+			if (!action.extra.empty()) {
+				userInput.insert(writingPos, action.extra);
+				writingPos += action.extra.length();
+			} else {
+				CClipboard clipboard;
+				const string text = clipboard.GetContents();
+				userInput.insert(writingPos, text);
+				writingPos += text.length();
+			}
+			return 0;
+		}
+	}
+	else if (cmd == "buffertext") {
+		if (!action.extra.empty()) {
+			consoleHistory->AddLine(action.extra);
+		}
+	}
+	else if (cmd == "inputtextgeo") {
+		if (!action.extra.empty()) {
+			ParseInputTextGeometry(action.extra);
 		}
 	}
 	else {
@@ -1429,30 +1562,35 @@ bool CGame::Update()
 
 	Uint64 timeNow;
 	timeNow = SDL_GetTicks();
-	Uint64 difTime;
-	difTime=timeNow-lastModGameTimeMeasure;
-	float dif=float(difTime)/1000.f;
-	if(!gs->paused)
-		gu->modGameTime+=dif*gs->speedFactor;
-	gu->gameTime+=dif;
-	if(playing && !gameOver)
-		totalGameTime+=dif;
-	lastModGameTimeMeasure=timeNow;
 
-	if (gameServer && gu->autoQuit && gu->gameTime > gu->quitTime) {
+	const Uint64 difTime = (timeNow - lastModGameTimeMeasure);
+	const float dif = skipping ? 0.010f : (float)difTime * 0.001f;
+
+	if (!gs->paused) {
+		gu->modGameTime += dif * gs->speedFactor;
+	}
+	gu->gameTime += dif;
+	if (playing && !gameOver) {
+		totalGameTime += dif;
+	}
+	lastModGameTimeMeasure = timeNow;
+
+	if (gameServer && gu->autoQuit && (gu->gameTime > gu->quitTime)) {
 		logOutput.Print("Automatical quit enforced from commandline");
 		return false;
 	}
 
 	time(&fpstimer);
-	if 	(difftime(fpstimer,starttime)!=0){		//do once every second
+
+	if (difftime(fpstimer, starttime) != 0) {		//do once every second
 		fps=thisFps;
 		thisFps=0;
 
 		consumeSpeed=((float)(GAME_SPEED+leastQue-2));
 		leastQue=10000;
-		if(!gameServer)
-			timeLeft=0;
+		if (!gameServer) {
+			timeLeft = 0.0f;
+		}
 
 		starttime=fpstimer;
 		oldframenum=gs->frameNum;
@@ -1499,9 +1637,11 @@ bool CGame::Update()
 		}
 	}
 
-	if(gameServer && serverNet->waitOnCon && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)){
-		chatting=false;
-		userWriting=false;
+	if (gameServer && serverNet->waitOnCon && allReady &&
+	    (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)) {
+		chatting = false;
+		userWriting = false;
+		writingPos = 0;
 		gameServer->StartGame();
 	}
 
@@ -1589,6 +1729,8 @@ bool CGame::Draw()
 	ph->Draw(false);
 	sky->DrawSun();
 
+	luaCallIns.DrawWorld();
+
 	lineDrawer.UpdateLineStipple();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
@@ -1598,11 +1740,34 @@ bool CGame::Draw()
 
 	mouse->Draw();
 
-#ifndef NEW_GUI
 	guihandler->DrawMapStuff(0);
-#endif
 
 	inMapDrawer->Draw();
+
+	if (camera->pos.y < 0.0f) {
+		const float3& cpos = camera->pos;
+		const float vr = gu->viewRange * 0.5f;
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
+		glBegin(GL_QUADS);
+		glVertex3f(cpos.x - vr, 0.0f, cpos.z - vr);
+		glVertex3f(cpos.x - vr, 0.0f, cpos.z + vr);
+		glVertex3f(cpos.x + vr, 0.0f, cpos.z + vr);
+		glVertex3f(cpos.x + vr, 0.0f, cpos.z - vr);
+		glEnd();
+		glBegin(GL_QUAD_STRIP);
+		glVertex3f(cpos.x - vr, 0.0f, cpos.z - vr);
+		glVertex3f(cpos.x - vr,  -vr, cpos.z - vr);
+		glVertex3f(cpos.x - vr, 0.0f, cpos.z + vr);
+		glVertex3f(cpos.x - vr,  -vr, cpos.z + vr);
+		glVertex3f(cpos.x + vr, 0.0f, cpos.z + vr);
+		glVertex3f(cpos.x + vr,  -vr, cpos.z + vr);
+		glVertex3f(cpos.x + vr, 0.0f, cpos.z - vr);
+		glVertex3f(cpos.x + vr,  -vr, cpos.z - vr);
+		glVertex3f(cpos.x - vr, 0.0f, cpos.z - vr);
+		glVertex3f(cpos.x - vr,  -vr, cpos.z - vr);
+		glEnd();
+	}
 
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
@@ -1620,6 +1785,13 @@ bool CGame::Draw()
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLoadIdentity();
+
+	if (camera->pos.y < 0.0f) {
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
+		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+	luaCallIns.DrawScreen();
 
 	if(mouse->locked){
 		glColor4f(1,1,1,0.5f);
@@ -1644,7 +1816,6 @@ bool CGame::Draw()
 	if(!hideInterface)
 		infoConsole->Draw();
 
-#ifndef NEW_GUI
 	if(!hideInterface) {
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty()){
@@ -1659,7 +1830,6 @@ bool CGame::Draw()
 	} else {
 		guihandler->Update();
 	}
-#endif
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -1691,27 +1861,8 @@ bool CGame::Draw()
 		}
 	}
 
-	if(userWriting){
-		const string tempstring = userPrompt + userInput;
-
-		const float xScale = 0.020f;
-		const float yScale = 0.028f;
-
-		glColor4f(1,1,1,1);
-		glTranslatef(0.26f,0.73f,0.0f);
-		glScalef(xScale, yScale, 1.0f);
-
-		if (!outlineFont.IsEnabled()) {
-			font->glPrintRaw(tempstring.c_str());
-		}
-		else {
-			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			outlineFont.print(xPixel, yPixel, white, tempstring.c_str());
-		}
-
-		glLoadIdentity();
+	if (userWriting) {
+		DrawInputText();
 	}
 
 	if (!hotBinding.empty()) {
@@ -1810,7 +1961,7 @@ bool CGame::Draw()
 	Uint64 start;
 	start = SDL_GetTicks();
 	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
-	lastMoveUpdate=start;
+	lastMoveUpdate = start;
 
 #ifndef NO_AVI
 	if(creatingVideo){
@@ -1829,6 +1980,72 @@ bool CGame::Draw()
 	return true;
 }
 
+
+void CGame::ParseInputTextGeometry(const string& geo)
+{
+	if (geo == "default") { // safety
+		ParseInputTextGeometry("0.26 0.73 0.02 0.028");
+		return;
+	}
+	float px, py, sx, sy;
+	if (sscanf(geo.c_str(), "%f %f %f %f", &px, &py, &sx, &sy) == 4) {
+		inputTextPosX  = px;
+		inputTextPosY  = py;
+		inputTextSizeX = sx;
+		inputTextSizeY = sy;
+		configHandler.SetString("InputTextGeo", geo);
+	}
+}
+
+
+void CGame::DrawInputText()
+{
+	const string tempstring = userPrompt + userInput;
+
+	// draw the caret
+	const int caretPos = userPrompt.length() + writingPos;
+	const string caretStr = tempstring.substr(0, caretPos);
+	const float caretWidth = font->CalcTextWidth(caretStr.c_str());
+	char c = userInput[writingPos];
+	if (c == 0) { c = ' '; }
+	const float cw = inputTextSizeX * font->CalcCharWidth(c);
+	const float csx = inputTextPosX + (inputTextSizeX * caretWidth);
+	glDisable(GL_TEXTURE_2D);
+	const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
+	glColor4f(f, f, f, 0.75f);
+	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + inputTextSizeY);
+	glEnable(GL_TEXTURE_2D);
+
+	// setup the color
+	const float defColor[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const float allyColor[4] = { 0.5f, 1.0f, 0.5f, 1.0f };
+	const float specColor[4] = { 1.0f, 1.0f, 0.5f, 1.0f };
+	const float* textColor = defColor;
+	if (userInput.length() < 2) {
+		textColor = defColor;
+	} else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+		textColor = allyColor;
+	} else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+		textColor = specColor;
+	} else {
+		textColor = defColor;
+	}
+
+	// draw the text
+	glTranslatef(inputTextPosX, inputTextPosY, 0.0f);
+	glScalef(inputTextSizeX, inputTextSizeY, 1.0f);
+	if (!outlineFont.IsEnabled()) {
+		glColor4fv(textColor);
+		font->glPrintRaw(tempstring.c_str());
+	} else {
+		const float xPixel  = 1.0f / (inputTextSizeX * (float)gu->viewSizeX);
+		const float yPixel  = 1.0f / (inputTextSizeY * (float)gu->viewSizeY);
+		outlineFont.print(xPixel, yPixel, textColor, tempstring.c_str());
+	}
+	glLoadIdentity();
+}
+
+
 void CGame::StartPlaying()
 {
 	playing=true;
@@ -1838,7 +2055,9 @@ void CGame::StartPlaying()
 	gu->myTeam=gs->players[gu->myPlayerNum]->team;
 	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
 	grouphandler->team=gu->myTeam;
+	CLuaUI::UpdateTeams();
 	ENTER_SYNCED;
+
 }
 
 void CGame::SimFrame()
@@ -1862,41 +2081,53 @@ void CGame::SimFrame()
 #endif
 
 	script->Update();
+
+	if (luaCob)   { luaCob->GameFrame(gs->frameNum); }
+	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
+	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
+
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;
-	waitCommandsAI.Update();
-	infoConsole->Update();
-	geometricObjects->Update();
-	if(!(gs->frameNum & 7))
-		sound->Update();
-	sound->NewFrame();
-	treeDrawer->Update();
-	globalAI->Update();
-	grouphandler->Update();
-#ifdef PROFILE_TIME
-	profiler.Update();
-#endif
-	unitDrawer->Update();
-#ifdef DIRECT_CONTROL_ALLOWED
-	if(gu->directControl){
-		unsigned char status=0;
-		if(camMove[0]) status|=1;
-		if(camMove[1]) status|=2;
-		if(camMove[2]) status|=4;
-		if(camMove[3]) status|=8;
-		if(mouse->buttons[SDL_BUTTON_LEFT].pressed) status|=16;
-		if(mouse->buttons[SDL_BUTTON_RIGHT].pressed) status|=32;
-		shortint2 hp=GetHAndPFromVector(camera->forward);
 
-		if(hp.x!=oldHeading || hp.y!=oldPitch || oldStatus!=status){
-			oldHeading=hp.x;
-			oldPitch=hp.y;
-			oldStatus=status;
-			net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
-		}
-	}
+	if (!skipping) {
+		infoConsole->Update();
+		waitCommandsAI.Update();
+		geometricObjects->Update();
+		if(!(gs->frameNum & 7))
+			sound->Update();
+		sound->NewFrame();
+		treeDrawer->Update();
+		globalAI->Update();
+		grouphandler->Update();
+
+#ifdef PROFILE_TIME
+		profiler.Update();
 #endif
+
+		unitDrawer->Update();
+
+#ifdef DIRECT_CONTROL_ALLOWED
+		if(gu->directControl){
+			unsigned char status=0;
+			if(camMove[0]) status|=1;
+			if(camMove[1]) status|=2;
+			if(camMove[2]) status|=4;
+			if(camMove[3]) status|=8;
+			if(mouse->buttons[SDL_BUTTON_LEFT].pressed) status|=16;
+			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed) status|=32;
+			shortint2 hp=GetHAndPFromVector(camera->forward);
+
+			if(hp.x!=oldHeading || hp.y!=oldPitch || oldStatus!=status){
+				oldHeading=hp.x;
+				oldPitch=hp.y;
+				oldStatus=status;
+				net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
+			}
+		}
+#endif
+	}
+
 	ENTER_SYNCED;
 START_TIME_PROFILE
 
@@ -1916,9 +2147,10 @@ END_TIME_PROFILE("Collisions");
 	wind.Update();
 	loshandler->Update();
 
-	if(!(gs->frameNum&31)){
-		for(int a=0;a<gs->activeTeams;++a)
+	if (!(gs->frameNum & 31)) {
+		for (int a = 0; a < gs->activeTeams; ++a) {
 			gs->Team(a)->SlowUpdate();
+		}
 	}
 //	CPathFinder::Instance()->Update();
 
@@ -1982,7 +2214,9 @@ END_TIME_PROFILE("Sim time")
 #endif
 
 	ENTER_UNSYNCED;
-	water->Update();
+	if (!skipping) {
+		water->Update();
+	}
 	ENTER_SYNCED;
 
 #ifdef DEBUG
@@ -2000,7 +2234,7 @@ bool CGame::ClientReadNet()
 	}*/
 
 	if(inbufpos>inbuflength)
-		logOutput.Print("To much data read");
+		logOutput.Print("Too much data read");
 	if(inbufpos==inbuflength){
 		inbufpos=0;
 		inbuflength=0;
@@ -2021,9 +2255,13 @@ bool CGame::ClientReadNet()
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
 
-		if(timeLeft>1)
-			timeLeft--;
+		if (timeLeft > 1.0f) {
+			timeLeft = timeLeft - 1.0f;
+		}
 		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.f);
+		if (skipping) {
+			timeLeft = 0.01f;
+		}
 		lastframe=currentFrame;
 
 		que=0;
@@ -2106,11 +2344,13 @@ bool CGame::ClientReadNet()
 		if(que<leastQue)
 			leastQue=que;
 	}
+
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 	while((inbufpos<inbuflength) && ((timeLeft>0) || gameServer/* || net->onlyLocal*/)){
 		thisMsg=inbuf[inbufpos];
 		int lastLength=0;
+
 		switch (inbuf[inbufpos]){
 		case NETMSG_ATTEMPTCONNECT:
 			lastLength=3;
@@ -2157,6 +2397,7 @@ bool CGame::ClientReadNet()
 		case NETMSG_GAMEOVER:
 			ENTER_MIXED;
 			gameOver=true;
+			luaCallIns.GameOver();
 			if (gu->autoQuit) {
 				logOutput.Print("Automatical quit enforced from commandline");
 				globalQuit = true;
@@ -2192,7 +2433,8 @@ bool CGame::ClientReadNet()
 			int player=inbuf[inbufpos+1];
 			if(player>=MAX_PLAYERS || player<0){
 				logOutput.Print("Got invalid player num %i in pause msg",player);
-			} else {
+			}
+			else if (!skipping) {
 				gs->paused=!!inbuf[inbufpos+2];
 				if(gs->paused){
 					logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
@@ -2278,7 +2520,7 @@ bool CGame::ClientReadNet()
 				logOutput.Print("Got invalid player num %i in chat msg",player);
 			} else {
 				string s=(char*)(&inbuf[inbufpos+3]);
-				HandleChatMsg(s,player);
+				HandleChatMsg(s, player, false);
 			}
 			lastLength=inbuf[inbufpos+1];
 			break;}
@@ -2422,7 +2664,6 @@ bool CGame::ClientReadNet()
 				}
 				commands.push_back(cmd);
 			}
-			printf("\n");
 			// apply the commands
 			for (c = 0; c < commandCount; c++) {
 				for (u = 0; u < unitCount; u++) {
@@ -2526,16 +2767,16 @@ bool CGame::ClientReadNet()
 						ENTER_UNSYNCED;
 						if(player==gu->myPlayerNum){
 							gu->directControl=unit;
-							/* currentCamControllerNum isn't touched; it's used to
-							   switch back to the old camera. */
-							mouse->currentCamController=mouse->camControllers[0];	//set fps mode
-							mouse->CameraTransition(1.0f);
-							((CFPSController*)mouse->camControllers[0])->pos=unit->midPos;
 							mouse->wasLocked = mouse->locked;
 							if(!mouse->locked){
-								mouse->locked=true;
+								mouse->locked = true;
 								mouse->HideMouse();
 							}
+							mouse->preControlCamNum = mouse->currentCamControllerNum;
+							mouse->currentCamControllerNum = 0;
+							mouse->currentCamController = mouse->camControllers[0];	//set fps mode
+							mouse->CameraTransition(1.0f);
+							((CFPSController*)mouse->camControllers[0])->pos = unit->midPos;
 							selectedUnits.ClearSelected();
 						}
 						ENTER_SYNCED;
@@ -2601,6 +2842,9 @@ bool CGame::ClientReadNet()
 
 void CGame::UpdateUI()
 {
+	if (skipping) {
+		return;
+	}
 	ASSERT_UNSYNCED_MODE;
 	//move camera if arrow keys pressed
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -2627,29 +2871,35 @@ void CGame::UpdateUI()
 		}
 		float3 movement(0,0,0);
 
-		if (camMove[0]){
-			movement.y+=gu->lastFrameTime;
+		bool disableTracker = false;
+		if (camMove[0]) {
+			movement.y += gu->lastFrameTime;
+			disableTracker = true;
+		}
+		if (camMove[1]) {
+			movement.y -= gu->lastFrameTime;
+			disableTracker = true;
+		}
+		if (camMove[3]) {
+			movement.x += gu->lastFrameTime;
+			disableTracker = true;
+		}
+		if (camMove[2]) {
+			movement.x -= gu->lastFrameTime;
+			disableTracker = true;
+		}
+
+		CCameraController* camCtrl = mouse->currentCamController;
+		if (disableTracker && camCtrl->DisableTrackerByKey()) {
 			unitTracker.Disable();
 		}
-		if (camMove[1]){
-			movement.y-=gu->lastFrameTime;
-			unitTracker.Disable();
-		}
-		if (camMove[3]){
-			movement.x+=gu->lastFrameTime;
-			unitTracker.Disable();
-		}
-		if (camMove[2]){
-			movement.x-=gu->lastFrameTime;
-			unitTracker.Disable();
-		}
-		movement.z=cameraSpeed;
-		mouse->currentCamController->KeyMove(movement);
+		movement.z = cameraSpeed;
+		camCtrl->KeyMove(movement);
 
 		movement=float3(0,0,0);
 
-    if (fullscreen || windowedEdgeMove) {
-		int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
+		if (fullscreen || windowedEdgeMove) {
+			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
 				unitTracker.Disable();
@@ -2676,23 +2926,27 @@ void CGame::UpdateUI()
 			mouse->currentCamController->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
 	}
 
+	mouse->currentCamController->Update();
+
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);
 		SendNetChat(userInput);
 		chatting=false;
 		userInput="";
+		writingPos = 0;
 	}
-#ifndef NEW_GUI
+
 	if(inMapDrawer->wantLabel && !userWriting){
 		if(userInput.size()>200){	//avoid troubles with to long lines
 			userInput=userInput.substr(0,200);
+			writingPos = (int)userInput.length();
 		}
 		inMapDrawer->CreatePoint(inMapDrawer->waitingPoint,userInput);
 		inMapDrawer->wantLabel=false;
 		userInput="";
+		writingPos = 0;
 		ignoreChar=0;
 	}
-#endif
 }
 
 
@@ -2976,33 +3230,43 @@ void CGame::SendNetChat(const std::string& message)
 	}
 	net->SendChat(gu->myPlayerNum, msg);
 	if (net->playbackDemo) {
-		HandleChatMsg(msg, gu->myPlayerNum);
+		HandleChatMsg(msg, gu->myPlayerNum, true);
 	}
 }
 
 
-void CGame::HandleChatMsg(std::string s,int player)
+static void SetBoolArg(bool& value, const std::string& str, const char* cmd)
 {
+	char* end;
+	const char* start = str.c_str() + strlen(cmd);
+	const int num = strtol(start, &end, 10);
+	if (end != start) {
+		value = (num != 0);
+	} else {
+		value = !value;
+	}
+}
+
+
+void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
+{
+	// Player chat messages
+	if (!noSpectatorChat || !gs->players[player]->spectator || !gu->spectating) {
+		LogNetMsg(s, player);
+	}
+
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 
 	if(s.find(".cheat")==0 && player==0){
-		char* end;
-		const char* start = s.c_str() + strlen(".cheat");
-		const int num = strtol(start, &end, 10);
-		if (end != start) {
-			gs->cheatEnabled = (num != 0);
-		} else {
-			gs->cheatEnabled = !gs->cheatEnabled;
-		}
+		SetBoolArg(gs->cheatEnabled, s, ".cheat");
 		if (gs->cheatEnabled) {
 			logOutput.Print("Cheating!");
 		} else {
 			logOutput.Print("No more cheating");
 		}
 	}
-
-	if(s.find(".nocost")==0 && player==0 && gs->cheatEnabled){
+	else if(s.find(".nocost")==0 && player==0 && gs->cheatEnabled){
 		for(int i=0; i<unitDefHandler->numUnits; i++)
 		{
 			unitDefHandler->unitDefs[i].metalCost = 1;
@@ -3014,22 +3278,18 @@ void CGame::HandleChatMsg(std::string s,int player)
 		unitDefHandler->noCost=true;
 		logOutput.Print("Cheating!");
 	}
-
-	if (s.find(".crash") == 0 && gs->cheatEnabled) {
+	else if (s.find(".crash") == 0 && gs->cheatEnabled) {
 		int *a=0;
 		*a=0;
 	}
-
-	if (s.find(".exception") == 0 && gs->cheatEnabled) {
+	else if (s.find(".exception") == 0 && gs->cheatEnabled) {
 		throw std::runtime_error("Exception test");
 	}
-
-	if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
+	else if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
 		float a = 0;
 		logOutput.Print("Result: %f", 1.0f/a);
 	}
-
-	if (s.find(".resync") == 0 && gs->cheatEnabled) {
+	else if (s.find(".resync") == 0 && gs->cheatEnabled) {
 		CObject* o = CObject::GetSyncedObjects();
 		for (; o; o = o->GetNext()) {
 			creg::Class* c = o->GetClass();
@@ -3039,8 +3299,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			}
 		}
 	}
-
-	if (s.find(".desync") == 0 && gs->cheatEnabled) {
+	else if (s.find(".desync") == 0 && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (player == gu->myPlayerNum) {
@@ -3057,47 +3316,48 @@ void CGame::HandleChatMsg(std::string s,int player)
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
 #ifdef SYNCDEBUG
-	if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
+	else if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
 		gameServer->fakeDesync = true;
 		logOutput.Print("Fake desyncing.");
 	}
-	if (s.find(".reset") == 0 && gs->cheatEnabled) {
+	else if (s.find(".reset") == 0 && gs->cheatEnabled) {
 		CSyncDebugger::GetInstance()->Reset();
 		logOutput.Print("Resetting sync debugger.");
 	}
 #endif
-
-	if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
+	else if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
 		gs->players[player]->spectator=true;
 		if(player==gu->myPlayerNum){
 			gu->spectating = true;
 			gu->spectatingFullView = gu->spectating;
 			gu->spectatingFullSelect = false;
+			CLuaUI::UpdateTeams();
 		}
 	}
-	if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
+	else if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if(team>=0 && team<gs->activeTeams){
 			gs->players[player]->team=team;
 			gs->players[player]->spectator=false;
 			if(player==gu->myPlayerNum){
+				selectedUnits.ClearSelected();
 				gu->spectating = false;
 				gu->spectatingFullView = gu->spectating;
 				gu->spectatingFullSelect = false;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 				grouphandler->team = gu->myTeam;
+				CLuaUI::UpdateTeams();
 			}
 		}
 	}
-	if(s.find(".atm")==0 && gs->cheatEnabled){
+	else if(s.find(".atm")==0 && gs->cheatEnabled){
 		int team=gs->players[player]->team;
 		gs->Team(team)->AddMetal(1000);
 		gs->Team(team)->AddEnergy(1000);
 	}
 
-	if(s.find(".give")==0 && gs->cheatEnabled){
-
+	else if(s.find(".give")==0 && gs->cheatEnabled){
 		int team=gs->players[player]->team;
 		int p1 = s.rfind(" @"), p2 = s.find(",", p1+1), p3 = s.find(",", p2+1);
 		if (p1 == string::npos || p2 == string::npos || p3 == string::npos)
@@ -3110,7 +3370,11 @@ void CGame::HandleChatMsg(std::string s,int player)
 
 			for(int a=1;a<=unitDefHandler->numUnits;++a){
 				float3 pos2=float3(pos.x + (a%squareSize-squareSize/2) * 10*SQUARE_SIZE, pos.y, pos.z + (a/squareSize-squareSize/2) * 10*SQUARE_SIZE);
-				unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,pos2,team,false);
+				const CUnit* unit =
+					unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,pos2,team,false,0,NULL);
+				if (unit) {
+					unitLoader.FlattenGround(unit);
+				}
 			}
 		} else if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
 			string unitName=s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
@@ -3136,8 +3400,12 @@ void CGame::HandleChatMsg(std::string s,int player)
 				minpos.z-=((squareSize-1)*zsize*SQUARE_SIZE)/2;
 				for(int z=0;z<squareSize;++z){
 					for(int x=0;x<squareSize && total>0;++x){
-						unitLoader.LoadUnit(unitName,float3(minpos.x + x * xsize*SQUARE_SIZE, minpos.y,
-						                                    minpos.z + z * zsize*SQUARE_SIZE), team, createNano);
+						const float3 upos(minpos.x + x * xsize * SQUARE_SIZE, minpos.y,
+						                  minpos.z + z * zsize * SQUARE_SIZE);
+						const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, createNano, 0, NULL);
+						if (unit) {
+							unitLoader.FlattenGround(unit);
+						}
 						--total;
 					}
 				}
@@ -3147,8 +3415,7 @@ void CGame::HandleChatMsg(std::string s,int player)
 			}
 		}
 	}
-
-	if(s.find(".take")==0){
+	else if(s.find(".take")==0 && (!gu->spectating || gs->cheatEnabled)){
 		int sendTeam=gs->players[player]->team;
 		for(int a=0;a<gs->activeTeams;++a){
 			if(gs->AlliedTeams(a,sendTeam)){
@@ -3167,68 +3434,179 @@ void CGame::HandleChatMsg(std::string s,int player)
 			}
 		}
 	}
-
-	if (player == 0 && gameServer && serverNet) {
-		if (s.find(".kickbynum") == 0) {
-			if (s.length() >= 11) {
-				int a = atoi(s.substr(11, string::npos).c_str());
-				if (a != 0 && gs->players[a]->active) {
-					unsigned char c=NETMSG_QUIT;
-					serverNet->SendData(&c,1,a);
-					serverNet->FlushConnection(a);
-					//this will rather ungracefully close the connection from our side
-					serverNet->connections[a].readyData[0]=NETMSG_QUIT;
-					//so if the above was lost in packetlos etc it will never be resent
-					serverNet->connections[a].readyLength=1;
-				}
+	else if ((s.find(".kickbynum") == 0) && (player == 0) && gameServer && serverNet) {
+		if (s.length() >= 11) {
+			int a = atoi(s.substr(11, string::npos).c_str());
+			if (a != 0 && gs->players[a]->active) {
+				unsigned char c=NETMSG_QUIT;
+				serverNet->SendData(&c,1,a);
+				serverNet->FlushConnection(a);
+				//this will rather ungracefully close the connection from our side
+				serverNet->connections[a].readyData[0]=NETMSG_QUIT;
+				//so if the above was lost in packetlos etc it will never be resent
+				serverNet->connections[a].readyLength=1;
 			}
 		}
-		else if (s.find(".kick") == 0){
-			if (s.length() >= 6) {
-				string name=s.substr(6,string::npos);
-				if (!name.empty()){
-					StringToLowerInPlace(name);
-					for (int a=1;a<gs->activePlayers;++a){
-						if (gs->players[a]->active){
-							string p = StringToLower(gs->players[a]->playerName);
-							if (p.find(name)==0){               //can kick on substrings of name
-								unsigned char c=NETMSG_QUIT;
-								serverNet->SendData(&c,1,a);
-								serverNet->FlushConnection(a);
-								//this will rather ungracefully close the connection from our side
-								serverNet->connections[a].readyData[0]=NETMSG_QUIT;
-								//so if the above was lost in packetlos etc it will never be resent
-								serverNet->connections[a].readyLength=1;
-							}
+	}
+	else if ((s.find(".kick") == 0) && (player == 0) && gameServer && serverNet) {
+		if (s.length() >= 6) {
+			string name=s.substr(6,string::npos);
+			if (!name.empty()){
+				StringToLowerInPlace(name);
+				for (int a=1;a<gs->activePlayers;++a){
+					if (gs->players[a]->active){
+						string p = StringToLower(gs->players[a]->playerName);
+						if (p.find(name)==0){               //can kick on substrings of name
+							unsigned char c=NETMSG_QUIT;
+							serverNet->SendData(&c,1,a);
+							serverNet->FlushConnection(a);
+							//this will rather ungracefully close the connection from our side
+							serverNet->connections[a].readyData[0]=NETMSG_QUIT;
+							//so if the above was lost in packetlos etc it will never be resent
+							serverNet->connections[a].readyLength=1;
 						}
 					}
 				}
 			}
 		}
 	}
-
-	if (player == 0) {
-		if (s.find(".nospectatorchat")==0) {
-			noSpectatorChat=!noSpectatorChat;
-			logOutput.Print("No spectator chat %i",noSpectatorChat);
+	else if ((s.find(".nospectatorchat") == 0) && (player == 0)) {
+		SetBoolArg(noSpectatorChat, s, ".nospectatorchat");
+		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can" : "can not");
+	}
+	else if ((s.find(".nopause") == 0) && (player == 0)) {
+		SetBoolArg(gamePausable, s, ".nopause");
+	}
+	else if ((s.find(".nohelp") == 0) && (player == 0)) {
+		SetBoolArg(gs->noHelperAIs, s, ".nohelp");
+		selectedUnits.PossibleCommandChange(NULL);
+		if (gs->noHelperAIs) {
+			// remove any current GroupAIs
+			set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+			set<CUnit*>::iterator it;
+      for(it = teamUnits.begin(); it != teamUnits.end(); ++it) {
+      	CUnit* unit = *it;
+				if (unit->group && (unit->group->id > 9)) {
+					unit->SetGroup(NULL);
+				}
+			}
 		}
-		if (s.find(".nopause")==0) {
-			gamePausable=!gamePausable;
-		}
-		if (s.find(".setmaxspeed")==0) {
-			maxUserSpeed=atof(s.substr(12).c_str());
-			if(gs->userSpeedFactor>maxUserSpeed)
-				gs->userSpeedFactor=maxUserSpeed;
-		}
-		if (s.find(".setminspeed")==0) {
-			minUserSpeed=atof(s.substr(12).c_str());
-			if(gs->userSpeedFactor<minUserSpeed)
-				gs->userSpeedFactor=minUserSpeed;
+		logOutput.Print("GroupAI and LuaUI control is %s",
+		                gs->noHelperAIs ? "disabled" : "enabled");
+	}
+	else if ((s.find(".setmaxspeed") == 0) && (player == 0)) {
+		maxUserSpeed = atof(s.substr(12).c_str());
+		if (gs->userSpeedFactor > maxUserSpeed) {
+			gs->userSpeedFactor = maxUserSpeed;
 		}
 	}
+	else if ((s.find(".setminspeed") == 0) && (player == 0)) {
+		minUserSpeed = atof(s.substr(12).c_str());
+		if (gs->userSpeedFactor < minUserSpeed) {
+			gs->userSpeedFactor = minUserSpeed;
+		}
+	}
+	else if (s.find(".skip") == 0) {
+		if (!demoPlayer && ((player != 0) || !gs->cheatEnabled)) {
+			logOutput.Print(".skip only works in replay, and when cheating\n");
+		} else {
+			Skip(s, demoPlayer);
+		}
+	}
+	else if ((s.find(".reloadcob") == 0) && gs->cheatEnabled && (player == 0)) {
+		ReloadCOB(s, player);
+	}
+	else if ((s.find(".devlua") == 0) && (player == 0) && gs->cheatEnabled) {
+		bool devMode = CLuaHandle::GetDevMode();
+		SetBoolArg(devMode, s, ".devlua");
+		CLuaHandle::SetDevMode(devMode);
+		if (devMode) {
+			logOutput.Print("Lua devmode enabled, this can cause desyncs");
+		} else {
+			logOutput.Print("Lua devmode disabled");
+		}
+	}
+	else if (s.find(".editdefs")==0 && player==0 && gs->cheatEnabled){
+		SetBoolArg(gs->editDefsEnabled, s, ".editdefs");
+		if (gs->editDefsEnabled) {
+			logOutput.Print("Definition Editing!");
+		} else {
+			logOutput.Print("No definition Editing");
+		}
+	}
+	else if ((s.find(".luarules") == 0) && (player == 0) && (gs->frameNum > 1)) {
+		if (gs->useLuaRules) {
+			if (s.find(" reload", 9) == 9) {
+				CLuaRules::FreeHandler();
+				CLuaRules::LoadHandler();
+				if (luaRules) {
+					logOutput.Print("LuaRules reloaded\n");
+				} else {
+					logOutput.Print("LuaRules reload failed\n");
+				}
+			}
+			else if (s.find(" disable", 9) == 9) {
+				CLuaRules::FreeHandler();
+				logOutput.Print("LuaRules disabled\n");
+			}
+			else if (luaRules) {
+				luaRules->GotChatMsg(s, player);
+			}
+			else {
+				logOutput.Print("LuaRules is not enabled\n");
+			}
+		}
+	}
+	else if ((s.find(".luagaia") == 0) && (player == 0) && (gs->frameNum > 1)) {
+		if (gs->useLuaGaia) {
+			if (s.find(" reload", 8) == 8) {
+				CLuaGaia::FreeHandler();
+				CLuaGaia::LoadHandler();
+				if (luaGaia) {
+					logOutput.Print("LuaGaia reloaded\n");
+				} else {
+					logOutput.Print("LuaGaia reload failed\n");
+				}
+			}
+			else if (s.find(" disable", 8) == 8) {
+				CLuaGaia::FreeHandler();
+				logOutput.Print("LuaGaia disabled\n");
+			}
+			else if (luaGaia) {
+				luaGaia->GotChatMsg(s, player);
+			}
+			else {
+				logOutput.Print("LuaGaia is not enabled\n");
+			}
+		}
+	}
+	else if ((s.find(".luacob") == 0) && (player == 0) && (gs->frameNum > 1)) {
+		if (s.find(" reload", 7) == 7) {
+			CLuaCob::FreeHandler();
+			CLuaCob::LoadHandler();
+			if (luaCob) {
+				logOutput.Print("LuaCob reloaded\n");
+			} else {
+				logOutput.Print("LuaCob reload failed\n");
+			}
+		}
+		else if (s.find(" disable", 7) == 7) {
+			CLuaCob::FreeHandler();
+			logOutput.Print("LuaCob disabled\n");
+		}
+		else if (luaCob) {
+			luaCob->GotChatMsg(s, player);
+		}
+		else {
+			logOutput.Print("LuaCob is not enabled\n");
+		}
+	}
+}
 
-	if(noSpectatorChat && gs->players[player]->spectator && !gu->spectating)
-		return;
+
+void CGame::LogNetMsg(const string& msg, int player)
+{
+	string s = msg;
 
 	if((s[0]=='a' || s[0]=='A') && s[1]==':'){
 		if(player==gu->myPlayerNum)
@@ -3268,7 +3646,143 @@ void CGame::HandleChatMsg(std::string s,int player)
 	}
 }
 
-static void SelectUnits(const string& line)
+
+void CGame::Skip(const std::string& msg, bool demoPlayer)
+{
+	if ((skipping < 0) || (skipping > 2)) {
+		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
+		skipping = 0;
+	}
+	const string timeStr = msg.substr(6);
+	const int startFrame = gs->frameNum;
+	int endFrame;
+
+	// parse the skip time
+	if (timeStr[0] == 'f') {        // skip to frame
+		endFrame = atoi(timeStr.c_str() + 1);
+	} else if (timeStr[0] == '+') { // relative time
+		endFrame = startFrame + (GAME_SPEED * atoi(timeStr.c_str() + 1));
+	} else {                        // absolute time
+		endFrame = GAME_SPEED * atoi(timeStr.c_str());
+	}
+	
+	if (endFrame <= startFrame) {
+		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
+		return;
+	}
+	if (gs->paused) {
+		logOutput.Print("Can not skip while paused\n");
+		return;
+	}
+	
+	const int totalFrames = endFrame - startFrame;
+	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
+
+	CSound* tmpSound = sound;
+	sound = SAFE_NEW CNullSound;
+
+	skipping++;
+	{
+		const float oldSpeed     = gs->speedFactor;
+		const float oldUserSpeed = gs->userSpeedFactor;
+		const float speed = 1.0f;
+		gs->speedFactor     = speed;
+		gs->userSpeedFactor = speed;
+
+		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
+
+		while (endFrame > gs->frameNum) {
+			if (demoPlayer) {
+				Update();
+			} else {
+				SimFrame();
+				if (gameServer) {
+					gameServer->serverframenum = gs->frameNum;
+				}
+			}
+			// draw something so that users don't file bug reports
+			const Uint32 gfxTime = SDL_GetTicks();
+			if ((gfxTime - gfxLastTime) > 100) { // 10fps
+				gfxLastTime = gfxTime;
+
+				const int framesLeft = (endFrame - gs->frameNum);
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glColor3f(0.5f, 1.0f, 0.5f);
+				font->glPrintCentered(0.5f, 0.55f, 2.5f,
+					"Skipping %.1f game seconds", seconds);
+				glColor3f(1.0f, 1.0f, 1.0f);
+				font->glPrintCentered(0.5f, 0.45f, 2.0f,
+					"(%i frames left)", framesLeft);
+
+				const float ff = (float)framesLeft / (float)totalFrames;
+				glDisable(GL_TEXTURE_2D);
+				const float b = 0.004f; // border
+				const float yn = 0.35f;
+				const float yp = 0.38f;
+				glColor3f(0.2f, 0.2f, 1.0f);
+				glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
+				glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
+				glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
+				
+				SDL_GL_SwapBuffers();
+			}
+		}
+
+		if (!demoPlayer) {
+			gu->gameTime    += seconds;
+			gu->modGameTime += seconds;
+		}
+
+		gs->speedFactor     = oldSpeed;
+		gs->userSpeedFactor = oldUserSpeed;
+	}
+	skipping--;
+
+	delete sound;
+	sound = tmpSound;
+	
+	logOutput.Print("Skipped %.1f seconds\n", seconds);
+}
+
+
+void CGame::ReloadCOB(const string& msg, int player)
+{
+	if (!gs->cheatEnabled) {
+		logOutput.Print("reloadcob can only be used if cheating is enabled");
+		return;
+	}
+	const string unitName = msg.substr(11);
+	if (unitName.empty()) {
+		logOutput.Print("Missing unit name");
+		return;
+	}
+	const string name = "scripts/" + unitName + ".cob";
+	const CCobFile* oldScript = GCobEngine.GetScriptAddr(name);
+	if (oldScript == NULL) {
+		logOutput.Print("Unknown cob script: %s", name.c_str());
+		return;
+	}
+	CCobFile* newScript = &GCobEngine.ReloadCobFile(name);
+	int count = 0;
+	for (int i = 0; i < MAX_UNITS; i++) {
+		CUnit* unit = uh->units[i];
+		if (unit != NULL) {
+			if (unit->cob->GetScriptAddr() == oldScript) {
+				count++;
+				delete unit->cob;
+				unit->cob = SAFE_NEW CCobInstance(*newScript, unit);
+				delete unit->localmodel;
+				unit->localmodel =
+					modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+			}
+		}
+	}
+	logOutput.Print("Update cob script for %i units", count);
+}
+
+
+void CGame::SelectUnits(const string& line)
 {
 	vector<string> args = SimpleParser::Tokenize(line, 0);
 	for (int i = 0; i < (int)args.size(); i++) {
@@ -3308,7 +3822,7 @@ static void SelectUnits(const string& line)
 }
 
 
-static void SelectCycle(const string& command)
+void CGame::SelectCycle(const string& command)
 {
 	static set<int> unitIDs;
 	static int lastID = -1;

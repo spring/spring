@@ -6,6 +6,7 @@
 #include <vector>
 #include <deque>
 #include <set>
+#include "CommandQueue.h"
 
 class CUnit;
 class CFeature;
@@ -20,9 +21,10 @@ public:
 	virtual ~CCommandAI(void);
 
 	void DependentDied(CObject* o);
+	void GiveCommand(const Command& c); // feeds into GiveCommandReal()
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
-	virtual void GiveCommand(const Command& c);
+	virtual void GiveCommandReal(const Command& c);
 	virtual vector<CommandDescription>& GetPossibleCommands();
 	virtual void DrawCommands(void);
 	virtual void FinishCommand(void);
@@ -34,16 +36,22 @@ public:
 	virtual void StopMove() { return; }
 	virtual bool HasMoreMoveCommands();
 
-	int CancelCommands(const Command &c, std::deque<Command>& queue,
+	int CancelCommands(const Command &c, CCommandQueue& queue,
 	                   bool& first);
-	std::deque<Command>::iterator GetCancelQueued(const Command &c,
-	                                              std::deque<Command>& queue);
+	CCommandQueue::iterator GetCancelQueued(const Command &c,
+	                                              CCommandQueue& queue);
 	std::vector<Command> GetOverlapQueued(const Command &c);
 	std::vector<Command> GetOverlapQueued(const Command &c,
-	                                      std::deque<Command>& queue);
+	                                      CCommandQueue& queue);
 	virtual void ExecuteAttack(Command &c);
 	virtual void ExecuteDGun(Command &c);
 	virtual void ExecuteStop(Command &c);
+
+	void SetCommandDescParam0(const Command& c);
+	bool ExecuteStateCommand(const Command& c);
+	
+	void ExecuteInsert(const Command& c);
+	void ExecuteRemove(const Command& c);
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
@@ -51,7 +59,7 @@ public:
 	CWeapon* stockpileWeapon;
 
 	vector<CommandDescription> possibleCommands;
-	deque<Command> commandQue;
+	CCommandQueue commandQue;
 	set<int> nonQueingCommands;			//commands that wont go into the command que (and therefore not reseting it if given without shift
 	int lastUserCommand;
 	int selfDCountdown;
@@ -71,7 +79,9 @@ protected:
 	bool isTrackable(const CUnit* unit) const;
 	bool isAttackCapable() const;
 	bool AllowedCommand(const Command &c);
+	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c);
+	void GiveWaitCommand(const Command& c);
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);
 	void DrawWaitIcon(const Command& cmd) const;

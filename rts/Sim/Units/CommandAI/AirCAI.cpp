@@ -1,19 +1,21 @@
 #include "StdAfx.h"
 #include "AirCAI.h"
 #include "LineDrawer.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Map/Ground.h"
-#include "Sim/Units/UnitHandler.h"
 #include "ExternalAI/Group.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
-#include "LogOutput.h"
+#include "Map/Ground.h"
+#include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Units/UnitDef.h"
-#include "myMath.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
 #include "mmgr.h"
 
 CAirCAI::CAirCAI(CUnit* owner)
@@ -113,7 +115,7 @@ CAirCAI::~CAirCAI(void)
 {
 }
 
-void CAirCAI::GiveCommand(const Command &c)
+void CAirCAI::GiveCommandReal(const Command &c)
 {
 	if (c.id != CMD_MOVE && !AllowedCommand(c))
 		return;
@@ -515,10 +517,17 @@ void CAirCAI::ExecuteAttack(Command &c)
 			FinishCommand();
 			return;
 		}
-		if(orderTarget && orderTarget->unitDef->canfly && orderTarget->crashing){
-			owner->SetUserTarget(0);
-			FinishCommand();
-			return;
+		if (orderTarget) {
+			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
+				owner->SetUserTarget(0);
+				FinishCommand();
+				return;
+			}
+			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
+				owner->SetUserTarget(0);
+				FinishCommand();
+				return;
+			}
 		}
 		if(orderTarget){
 //				myPlane->goalPos=orderTarget->pos;
@@ -528,6 +537,7 @@ void CAirCAI::ExecuteAttack(Command &c)
 		}
 	} else {
 		targetAge=0;
+		owner->commandShotCount = -1;
 		if(c.params.size() == 1){
 			if(uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner){
 				orderTarget = uh->units[int(c.params[0])];
@@ -541,7 +551,7 @@ void CAirCAI::ExecuteAttack(Command &c)
 		} else {
 			float3 pos(c.params[0],c.params[1],c.params[2]);
 			owner->AttackGround(pos,false);
-			inCommand=true;
+			inCommand = true;
 		}
 	}
 	return;
@@ -555,8 +565,8 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 		targetDied = false;
 		inCommand = false;
 	}
-	float3 pos(c.params[0], c.params[1], c.params[2]);
-	float radius = c.params[3];
+	const float3 pos(c.params[0], c.params[1], c.params[2]);
+	const float radius = c.params[3];
 	if(inCommand){
 		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
@@ -565,12 +575,21 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 			DeleteDeathDependence(orderTarget);
 			orderTarget = 0;
 		}
-		if ((c.params.size() == 4) && (owner->commandShotCount > 0)
-				&& (commandQue.size() > 1)) {
-			owner->AttackUnit(0, true); 
-			FinishCommand();
+		if (owner->commandShotCount > 0) {
+			if ((c.params.size() == 4) && (commandQue.size() > 1)) {
+				owner->AttackUnit(0, true); 
+				FinishCommand();
+			}
+			else if (owner->userAttackGround) {
+				// reset the attack position after each run
+				float3 attackPos = pos + (gs->randVector() * radius);
+				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
+				owner->AttackGround(attackPos, false);
+				owner->commandShotCount = 0;
+			}
 		}
 	} else {
+		owner->commandShotCount = -1;
 		if(myPlane->aircraftState != CAirMoveType::AIRCRAFT_LANDED){
 			inCommand = true;
 			std::vector<int> eu;
@@ -645,7 +664,7 @@ void CAirCAI::DrawCommands(void)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	deque<Command>::iterator ci;
+	CCommandQueue::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
 		switch(ci->id){
 			case CMD_MOVE:{

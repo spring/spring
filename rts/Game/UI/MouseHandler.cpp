@@ -32,6 +32,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTracker.h"
 #include "Sound.h"
 #include "mmgr.h"
 #include <SDL_types.h>
@@ -55,7 +56,9 @@ CMouseHandler::CMouseHandler()
 : locked(false),
 	activeReceiver(0),
 	cameraTime(0.0f),
-	cameraTimeLeft(0.0f)
+	cameraTimeLeft(0.0f),
+	preControlCamNum(0),
+	preOverviewCamNum(0)
 {
 	lastx=300;
 	lasty=200;
@@ -130,20 +133,24 @@ CMouseHandler::CMouseHandler()
   doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	//fps camera must always be the first one in the list
-	camControllers.push_back(SAFE_NEW CFPSController);
-	camControllers.push_back(SAFE_NEW COverheadController);
-	camControllers.push_back(SAFE_NEW CTWController);
-	camControllers.push_back(SAFE_NEW CRotOverheadController);
+	std::vector<CCameraController*>& camCtrls = camControllers;
+	camCtrls.push_back(SAFE_NEW CFPSController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW COverheadController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW CTWController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW CRotOverheadController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW CFreeController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW COverviewController(camControllers.size()));
 
-	overviewController=SAFE_NEW COverviewController();
-	int mode=configHandler.GetInt("CamMode",1);
-	currentCamController=camControllers[mode];
-	currentCamControllerNum=mode;
+	int mode = configHandler.GetInt("CamMode", 1);
+	mode = max(0, min(mode, (int)camControllers.size() - 1));
+	currentCamControllerNum = mode;
+	currentCamController = camControllers[currentCamControllerNum];
 
-	cameraTimeFactor   = atof(configHandler.GetString("CamTimeFactor", "1.0").c_str());
-	cameraTimeFactor   = max(0.0f, cameraTimeFactor);
-	cameraTimeExponent = atof(configHandler.GetString("CamTimeExponent", "4.0").c_str());
-	cameraTimeExponent = max(0.1f, cameraTimeExponent);
+	const double z = 0.0; // casting problems...
+	cameraTimeFactor =
+		max(z, atof(configHandler.GetString("CamTimeFactor", "1.0").c_str()));
+	cameraTimeExponent =
+		max(z, atof(configHandler.GetString("CamTimeExponent", "4.0").c_str()));
 }
 
 CMouseHandler::~CMouseHandler()
@@ -171,32 +178,32 @@ void CMouseHandler::MouseMove(int x, int y)
 		return;
 	}
 
-	int dx=x-lastx;
-	int dy=y-lasty;
+	const int dx = x - lastx;
+	const int dy = y - lasty;
 	lastx = x;  
 	lasty = y;  
 
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 
-	buttons[SDL_BUTTON_LEFT].movement+=abs(dx)+abs(dy);
-	buttons[SDL_BUTTON_RIGHT].movement+=abs(dx)+abs(dy);
+	buttons[SDL_BUTTON_LEFT].movement += abs(dx) + abs(dy);
+	buttons[SDL_BUTTON_RIGHT].movement += abs(dx) + abs(dy);
 
-	if(!game->gameOver)
+	if (!game->gameOver) {
 		gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
+	}
 
 	if(activeReceiver){
-		activeReceiver->MouseMove(x,y,dx,dy,activeButton);
+		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
 	}
 
-#ifndef NEW_GUI
 	if(inMapDrawer && inMapDrawer->keyPressed){
-		inMapDrawer->MouseMove(x,y,dx,dy,activeButton);
+		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
 	}
-#endif
 
 	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL)) {
 		const float cameraSpeed = 1.0f;
 		currentCamController->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
+		unitTracker.Disable();
 		return;
 	} 
 }
@@ -257,7 +264,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-#ifndef NEW_GUI
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
@@ -272,8 +278,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 			activeReceiver = guihandler; // for default (rmb) commands
 		}
 	}
-#endif
-
 }
 
 
@@ -298,13 +302,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;		
 	}
 
-#ifndef NEW_GUI
 	if(activeReceiver){
 		activeReceiver->MouseRelease(x,y,button);
 		activeReceiver=0;
 		return;
 	}
-#endif
+
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(gu->directControl){
 		return;
@@ -461,12 +464,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 void CMouseHandler::Draw()
 {
-	dir=hide ? camera->forward : camera->CalcPixelDir(lastx,lasty);
-	if(activeReceiver)
+	dir = hide ? camera->forward : camera->CalcPixelDir(lastx, lasty);
+	if (activeReceiver) {
 		return;
+	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(gu->directControl){
+	if (gu->directControl) {
 		return;
 	}
 #endif
@@ -534,12 +538,22 @@ void CMouseHandler::ShowMouse()
 
 void CMouseHandler::HideMouse()
 {
-	if(!hide){
+	if (!hide) {
 		lastx = gu->viewSizeX/2;  
 		lasty = gu->viewSizeY/2;  
-	    SDL_ShowCursor(SDL_DISABLE);
-		mouseInput->SetPos (int2(lastx,lasty));
-		hide=true;
+    SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetPos(int2(lastx, lasty));
+		hide = true;
+	}
+}
+
+
+void CMouseHandler::WarpMouse(int x, int y)
+{
+	if (!locked) {
+		lastx = x;
+		lasty = y;
+		mouseInput->SetPos(int2(x, y));
 	}
 }
 
@@ -604,20 +618,24 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
-	if (!hide)
+	if (!hide) {
 		return;
+	}
 
-	int dx = lastx-gu->viewSizeX/2;
-	int dy = lasty-gu->viewSizeY/2;
-	lastx = gu->viewSizeX/2; lasty = gu->viewSizeY/2;
+	int dx = lastx - gu->viewSizeX / 2;
+	int dy = lasty - gu->viewSizeY / 2;
+	lastx = gu->viewSizeX / 2;
+	lasty = gu->viewSizeY / 2;
 
 	float3 move;
-	move.x=dx;
-	move.y=dy;
-	move.z=invertMouse? -1 : 1;
+	move.x = dx;
+	move.y = dy;
+	move.z = invertMouse? -1.0f : 1.0f;
 	currentCamController->MouseMove(move);
 	
-	mouseInput->SetPos (int2(lastx,lasty));
+	if (gu->active) {
+		mouseInput->SetPos(int2(lastx, lasty));
+	}
 }
 
 
@@ -628,14 +646,15 @@ void CMouseHandler::UpdateCam()
 	camera->up.x = 0.0f;
 	camera->up.y = 1.0f;
 	camera->up.z = 0.0f;
-	camera->fov = 45.0f;
 
+	const float  wantedCamFOV = currentCamController->GetFOV();
 	const float3 wantedCamPos = currentCamController->GetPos();
 	const float3 wantedCamDir = currentCamController->GetDir();
 
 	if (cameraTimeLeft <= 0.0f) {
 		camera->pos = wantedCamPos;
 		camera->forward = wantedCamDir;
+		camera->fov = wantedCamFOV;
 	}
 	else {
 		const float currTime = cameraTimeLeft;
@@ -644,14 +663,16 @@ void CMouseHandler::UpdateCam()
 		const float exp = cameraTimeExponent;
 		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
 
+		const float  deltaFOV = wantedCamFOV - camera->fov;
 		const float3 deltaPos = wantedCamPos - camera->pos;
 		const float3 deltaDir = wantedCamDir - camera->forward;
+		camera->fov     += deltaFOV * ratio;
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();
 	}
 	
-	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx,lasty));
+	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx, lasty));
 }
 
 
@@ -659,17 +680,17 @@ void CMouseHandler::SetCameraMode(int mode)
 {
 	if ((mode < 0)
 	 || (mode >= camControllers.size())
-	 || (mode == currentCamControllerNum)
-	 || (!camControllers[currentCamControllerNum]->enabled)) {
+	 || (mode == currentCamControllerNum)) {
 		return;
 	}
 
-	currentCamControllerNum = mode;
 	CameraTransition(1.0f);
 
-	CCameraController* oldc = currentCamController;
+	CCameraController* oldCamCtrl = currentCamController;
+
+	currentCamControllerNum = mode;
 	currentCamController = camControllers[currentCamControllerNum];
-	currentCamController->SetPos(oldc->SwitchFrom());
+	currentCamController->SetPos(oldCamCtrl->SwitchFrom());
 	currentCamController->SwitchTo();
 }
 
@@ -695,19 +716,25 @@ void CMouseHandler::ToggleState(bool shift)
 	} else {
 		CameraTransition(1.0f);
 
-		CCameraController* oldc=currentCamController;
+		CCameraController* oldCamCtrl = currentCamController;
 		currentCamControllerNum++;
-		if(currentCamControllerNum>=camControllers.size())
-			currentCamControllerNum=0;
-		int a=0;
-		while(a<4 && !camControllers[currentCamControllerNum]->enabled){
+		if (currentCamControllerNum >= camControllers.size()) {
+			currentCamControllerNum = 0;
+		}
+
+		int a = 0;
+		const int maxTries = camControllers.size() - 1;
+		while ((a < maxTries) &&
+		       !camControllers[currentCamControllerNum]->enabled) {
 			currentCamControllerNum++;
-			if(currentCamControllerNum>=camControllers.size())
-				currentCamControllerNum=0;
+			if (currentCamControllerNum >= camControllers.size()) {
+				currentCamControllerNum = 0;
+			}
 			a++;
 		}
-		currentCamController=camControllers[currentCamControllerNum];
-		currentCamController->SetPos(oldc->SwitchFrom());
+
+		currentCamController = camControllers[currentCamControllerNum];
+		currentCamController->SetPos(oldCamCtrl->SwitchFrom());
 		currentCamController->SwitchTo();
 	}
 }
@@ -715,14 +742,19 @@ void CMouseHandler::ToggleState(bool shift)
 
 void CMouseHandler::ToggleOverviewCamera(void)
 {
-	if(currentCamController==overviewController){
-		float3 pos=overviewController->SwitchFrom();
-		currentCamController=camControllers[currentCamControllerNum];
+	const int ovCamNum = (int)camControllers.size() - 1;
+	CCameraController* ovCamCtrl = camControllers[ovCamNum];
+	if (currentCamController == ovCamCtrl) {
+		const float3 pos = ovCamCtrl->SwitchFrom();
+		currentCamControllerNum = preOverviewCamNum;
+		currentCamController = camControllers[currentCamControllerNum];
 		currentCamController->SwitchTo(false);
 		currentCamController->SetPos(pos);
 	} else {
-		currentCamController=overviewController;
-		overviewController->SwitchTo(false);
+		preOverviewCamNum = currentCamControllerNum;
+		currentCamControllerNum = ovCamNum;
+		currentCamController = camControllers[currentCamControllerNum];
+		currentCamController->SwitchTo(false);
 	}
 	CameraTransition(1.0f);
 }
@@ -736,11 +768,7 @@ void CMouseHandler::SaveView(const std::string& name)
 		return;
 	}
 	ViewData vd;
-	if (currentCamController == overviewController) {
-		vd.mode = -1;
-	} else {
-		vd.mode = currentCamControllerNum;
-	}
+	vd.mode = currentCamControllerNum;
 	vd.state = currentCamController->GetState();
 	views[name] = vd;
 	logOutput.Print("Saved view: " + name);
@@ -761,12 +789,8 @@ bool CMouseHandler::LoadView(const std::string& name)
 	const ViewData& saved = it->second;
 
 	ViewData current;
+	current.mode = currentCamControllerNum;
 	current.state = currentCamController->GetState();
-	if (currentCamController == overviewController) {
-		current.mode = -1;
-	} else {
-		current.mode = currentCamControllerNum;
-	}
 	
 	for (it = views.begin(); it != views.end(); ++it) {
 		if (it->second == current) {
@@ -783,27 +807,30 @@ bool CMouseHandler::LoadView(const std::string& name)
 	} else {
 		effective = saved;
 	}
-	
-	if (effective.state.size() <= 0) {
+
+	return LoadViewData(effective);	
+}
+
+
+bool CMouseHandler::LoadViewData(const ViewData& vd)
+{
+	if (vd.state.size() <= 0) {
 		return false;
 	}
+
+	int currentMode = currentCamControllerNum;
 	
-	if ((effective.mode == -1) ||
-			((effective.mode >= 0) && (effective.mode < camControllers.size()) &&
-			 camControllers[effective.mode]->enabled)) {
+	if ((vd.mode == -1) ||
+			((vd.mode >= 0) && (vd.mode < camControllers.size()))) {
 		const float3 dummy = currentCamController->SwitchFrom();
-		if (effective.mode >= 0) {
-			currentCamControllerNum = effective.mode;
-			currentCamController = camControllers[effective.mode];
-		} else {
-			currentCamController = overviewController;
-		}
-		const bool showMode = (current.mode != effective.mode);
+		currentCamControllerNum = vd.mode;
+		currentCamController = camControllers[currentCamControllerNum];
+		const bool showMode = (currentMode != vd.mode);
 		currentCamController->SwitchTo(showMode);
 		CameraTransition(1.0f);
 	}
 	
-	return currentCamController->SetState(effective.state);;
+	return currentCamController->SetState(vd.state);
 }
 
 

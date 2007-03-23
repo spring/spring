@@ -3,7 +3,7 @@
 //  Spring Control Panel Configuration
 //
 
-outlinefont       1
+outlinefont          1
 // dropShadows       1
 // useOptionLEDs     1
 textureAlpha       1.0
@@ -29,9 +29,9 @@ nextPageSlot   j2
 xIconSize      0.0585
 yIconSize      0.0585
 
-textBorder     0.003
-iconBorder     0.000
-frameBorder    0.000
+textBorder     0.0035
+iconBorder     0.0000
+frameBorder    0.0000
 
 xPos           0.000
 yPos           0.147

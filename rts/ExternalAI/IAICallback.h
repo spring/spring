@@ -9,6 +9,7 @@
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
+class CCommandQueue;
 // GetProperty() constants
                             // Data buffer will be filled with this:
 #define AIVAL_UNITDEF		1  // const UnitDef*
@@ -110,7 +111,7 @@ public:
 	virtual int GiveOrder(int unitid,Command* c) = 0;
 
 	virtual const vector<CommandDescription>* GetUnitCommands(int unitid) = 0;
-	virtual const deque<Command>* GetCurrentUnitCommands(int unitid) = 0;
+	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid) = 0;
 
 	virtual int GetUnitAiHint(int unitid) = 0;				//integer telling something about the units main function, not implemented yet
 	virtual int GetUnitTeam(int unitid) = 0;

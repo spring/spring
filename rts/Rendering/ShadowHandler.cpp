@@ -11,6 +11,7 @@
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
 #include "Sim/Misc/FeatureHandler.h"
+#include "Lua/LuaCallInHandler.h"
 #include "GL/IFramebuffer.h"
 
 CShadowHandler* shadowHandler=0;
@@ -139,6 +140,7 @@ void CShadowHandler::DrawShadowPasses(void)
 	featureHandler->DrawShadowPass();
 	readmap->GetGroundDrawer()->DrawShadowPass();
 	treeDrawer->DrawShadowPass();
+	luaCallIns.DrawWorldShadow();
 
 	inShadowPass=false;
 }

@@ -45,7 +45,9 @@ public:
 	void Tick(int deltaTime);
 	void SetCurThread(CCobThread *cur);
 	void ShowScriptError(const string& msg);
-	CCobFile &GetCobFile(string name);
+	CCobFile& GetCobFile(const string& name);
+	CCobFile& ReloadCobFile(const string& name);
+	const CCobFile* GetScriptAddr(const string& name) const;
 };
 
 extern CCobEngine GCobEngine;

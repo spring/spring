@@ -68,16 +68,23 @@ void CWordCompletion::Reset()
 	
 	// remote commands
 	words[".atm"] = sl;
-	words[".cheat"] = sl;
-	words[".cmd "] = sl;
+	words[".cheat "] = sl;
+	words[".devlua "] = sl;
+	words[".editdefs "] = sl;
 	words[".give "] = sl;
 	words[".kick "] = sl;
 	words[".kickbynum "] = sl;
+	words[".luacob "] = sl;
+	words[".luagaia "] = sl;
+	words[".luarules "] = sl;
 	words[".nocost"] = sl;
-	words[".nopause"] = sl;
-	words[".nospectatorchat"] = sl;
+	words[".nohelp "] = sl;
+	words[".nopause "] = sl;
+	words[".nospectatorchat "] = sl;
+	words[".reloadcob "] = sl;
 	words[".setmaxspeed "] = sl;
 	words[".setminspeed "] = sl;
+	words[".skip +"] = sl;
 	words[".spectator"] = sl;
 	words[".take"] = sl;
 	words[".team "] = sl;

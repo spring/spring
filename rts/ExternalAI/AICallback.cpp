@@ -235,7 +235,7 @@ const vector<CommandDescription>* CAICallback::GetUnitCommands(int unitid)
 	return 0;
 }
 
-const deque<Command>* CAICallback::GetCurrentUnitCommands(int unitid)
+const CCommandQueue* CAICallback::GetCurrentUnitCommands(int unitid)
 {
 	if (CHECK_UNITID(unitid)) {
 		CUnit *unit = uh->units[unitid];

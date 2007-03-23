@@ -82,6 +82,8 @@ CUnitDefHandler::CUnitDefHandler(void)
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
 		unitDefs[id].unitimage = 0;
+		unitDefs[id].imageSizeX = -1;
+		unitDefs[id].imageSizeY = -1;
 		unitDefs[id].techLevel = -1;
 		unitDefs[id].decoyDef = NULL;
 		unitID[unitname] = id;
@@ -241,6 +243,8 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.name = tdfparser.SGetValueMSG("UNITINFO\\UnitName");
 	ud.humanName = tdfparser.SGetValueMSG("UNITINFO\\name");
+	
+	ud.gaia = tdfparser.SGetValueDef("", "UNITINFO\\gaia");
 	
 	tdfparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
 	tdfparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
@@ -823,42 +827,38 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 
 unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 {
-	if(unitdef->unitimage!=0) return unitdef->unitimage;
-	if(unitdef->buildpicname.empty())
-	{
+	if (unitdef->unitimage != 0) {
+		return unitdef->unitimage;
+	}
+
+	CBitmap bitmap;
+	if (!unitdef->buildpicname.empty()) {
+		bitmap.Load("unitpics/" + unitdef->buildpicname);
+	}
+	else {
 		//try pcx first and then bmp if no pcx exist
 		CFileHandler bfile("unitpics/" + unitdef->name + ".pcx");
-		if(bfile.FileExists())
-		{
-			CBitmap bitmap;
+		if (bfile.FileExists()) {
 			bitmap.Load("unitpics/" + unitdef->name + ".pcx");
-			unitdef->unitimage = bitmap.CreateTexture(false);
 		}
-		else
-		{
+		else {
 			CFileHandler bfile("unitpics/" + unitdef->name + ".bmp");
-			if(bfile.FileExists()){
-				CBitmap bitmap;
+			if (bfile.FileExists()){
 				bitmap.Load("unitpics/" + unitdef->name + ".bmp");
-				unitdef->unitimage = bitmap.CreateTexture(false);
 			} else {
-				CBitmap bitmap;
-				bitmap.Alloc(1,1);
-				unitdef->unitimage = bitmap.CreateTexture(false);
+				bitmap.Alloc(1, 1); // last resort
 			}
 		}
+	}
 
-	}
-	else
-	{
-		CBitmap bitmap;
-		bitmap.Load("unitpics/" + unitdef->buildpicname);
-		unsigned int id = bitmap.CreateTexture(false);
-		PUSH_CODE_MODE;
-		ENTER_SYNCED;
-		unitdef->unitimage = id;
-		POP_CODE_MODE;
-	}
+	const unsigned int texID = bitmap.CreateTexture(false);
+	PUSH_CODE_MODE;
+	ENTER_SYNCED;
+	unitdef->unitimage  = texID;
+	unitdef->imageSizeX = bitmap.xsize;
+	unitdef->imageSizeY = bitmap.ysize;
+	POP_CODE_MODE;
+
 	return unitdef->unitimage;
 }
 

@@ -10,6 +10,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Game/GameVersion.h"
+#include "Game/UI/LuaUI.h"
 #include "Platform/errorhandler.h"
 #include "Platform/Win/win32.h"
 #ifdef _WIN32
@@ -193,6 +194,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		gu->spectating = true;
 		gu->spectatingFullView = gu->spectating;
 		gu->spectatingFullSelect = false;
+		CLuaUI::UpdateTeams();
 		return 1;
 	} else {
 		if(!gameSetup || !gameSetup->hostDemo)
@@ -663,7 +665,7 @@ void CNet::CreateDemoFile()
 		// (because both springs are writing to the same file)
 		char buf[500] = "demos/XXXXXX";
 #ifndef _WIN32
-		mktemp(buf);
+		mkstemp(buf);
 #else
 		_mktemp(buf);
 #endif

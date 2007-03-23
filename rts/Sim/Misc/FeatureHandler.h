@@ -36,8 +36,12 @@ public:
 	void LoadWreckFeatures();
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
+	void UpdateDrawQuad(CFeature* feature, const float3& newPos);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
+	void AddFeatureDef(const std::string& name, FeatureDef* feature);
+	FeatureDef* GetFeatureDef(const std::string name);
+	FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
@@ -48,7 +52,8 @@ public:
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
 
 	TdfParser wreckParser;
-	std::map<std::string,FeatureDef*> featureDefs;
+	std::map<std::string, FeatureDef*> featureDefs;
+	std::vector<FeatureDef*> featureDefsVector;
 
 //	std::set<CFeature*> featureSet;
 	CFeature* features[MAX_FEATURES];
@@ -62,14 +67,13 @@ public:
 	};
 	
 	DrawQuad* drawQuads;
-
+	
 	int drawQuadsX;
 	int drawQuadsY;
 	int numQuads;
 
 	int overrideId;		//used when loading from savefile
 	void DrawFar(CFeature* feature,CVertexArray* va);
-	FeatureDef* GetFeatureDef(const std::string name);
 };
 
 extern CFeatureHandler* featureHandler;

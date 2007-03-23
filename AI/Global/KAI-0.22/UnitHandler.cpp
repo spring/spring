@@ -91,7 +91,7 @@ void CUnitHandler::IdleUnitUpdate()
 				//L("VerifyOrder");
 				assert((*i)->def == ai->cb->GetUnitDef((*i)->builderID) );
 				bool ans = VerifyOrder(*i);
-				const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
+				const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
 				const Command *c;
 				if(mycommands->size() > 0)
 					c = &mycommands->front();
@@ -153,7 +153,7 @@ void CUnitHandler::IdleUnitUpdate()
 			/*
 				L("VerifyOrder");
 				bool ans = VerifyOrder(*i);
-				const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
+				const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
 				Command c;
 				if(mycommands->size() > 0)
 					c = mycommands->front();
@@ -277,7 +277,7 @@ void CUnitHandler::IdleUnitAdd(int unit)
 	L("IdleUnitAdd: " << unit);
 	int category = ai->ut->GetCategory(unit);
 	if(category != -1){
-		const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(unit);
+		const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(unit);
 		if(mycommands->empty()){
 		
 			if(category == CAT_BUILDER)
@@ -328,7 +328,7 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker)
 	
 	// TODO: All of it!!!!!!!!!!!!!!
 	// Now take a look, and see what its doing:
-	const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 	bool commandFound = false;
 	if(!mycommands->empty())
 	{
@@ -416,7 +416,7 @@ Use this only if the unit dont have any orders at the moment
 void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError)
 {
 	bool hit = false;
-	const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 	L("ClearOrder, mycommands: " << mycommands->size());
 	assert(mycommands->empty() || !reportError);
 	if(builderTracker->buildTaskId != 0)
@@ -519,7 +519,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 	
 	// TODO: All of it!!!!!!!!!!!!!!
 	// Now take a look, and see what its doing:
-	const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 	if(!mycommands->empty())
 	{
 		// It have orders
@@ -795,7 +795,7 @@ void CUnitHandler::BuildTaskCreate(int id)
 				{
 					BuilderTracker* builderTracker = *i;
 					// Now take a look, and see what its doing:
-					const deque<Command>* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+					const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 					if(mycommands->size() > 0)
 					{
 						// It have orders

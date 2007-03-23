@@ -7,6 +7,7 @@
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 #define CMD_CHANGE_MODE 	160
 #define CMD_AREA_UPGRADE 	165
@@ -420,7 +421,7 @@ void CGroupAI::DrawCommands()
 	if(mode==manual && callback->IsSelected())
 	{
 		float3 pos1, pos2;
-		deque<Command>::const_iterator ci;
+		CCommandQueue::const_iterator ci;
 
 		aicb->LineDrawerStartPath(aicb->GetUnitPos(mohoBuilderId), drawColorPath);
 		for(ci=commandQue.begin();ci!=commandQue.end();++ci)

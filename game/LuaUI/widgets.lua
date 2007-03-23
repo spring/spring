@@ -56,6 +56,7 @@ Spring.SendCommands({
 --
 
 widgetHandler = {
+
   widgets = {},
 
   configData = {},
@@ -66,6 +67,10 @@ widgetHandler = {
   knownChanged = true,
 
   commands = {},
+
+  actionHandler = include("actions.lua"),
+  
+  WG = {}, -- shared table for widgets
 
   mouseOwner = nil,
   ownedButton = 0,
@@ -80,18 +85,26 @@ widgetHandler = {
 
 
 -- these call-ins are set to 'nil' if not used
-
+-- they are setup in UpdateCallIns()
 local flexCallIns = {
+  'GameOver',
+  'TeamDied',
   'UnitCreated',
   'UnitFinished',
   'UnitFromFactory',
   'UnitDestroyed',
+  'UnitIdle',
   'UnitTaken',
   'UnitGiven',
   'UnitEnteredRadar',
   'UnitEnteredLos',
   'UnitLeftRadar',
   'UnitLeftLos',
+  'UnitSeismicPing',
+  'DrawWorldShadow',
+  'DrawWorldReflection',
+  'DrawWorldRefraction',
+  'DrawInMiniMap'
 }
 
 local callInLists = {
@@ -289,10 +302,10 @@ function widgetHandler:LoadWidget(filename)
   local basename = Basename(filename)
   local chunk, err = loadfile(filename)
   if (chunk == nil) then
-    print('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
-
+  
   local widget = widgetHandler:NewWidget()
 
   -- special access for the widget selector
@@ -303,7 +316,7 @@ function widgetHandler:LoadWidget(filename)
   setfenv(chunk, widget)
   local success, err = pcall(chunk)
   if (not success) then
-    print('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
 
@@ -315,7 +328,7 @@ function widgetHandler:LoadWidget(filename)
 
   err = self:ValidateWidget(widget)
   if (err) then
-    print('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
 
@@ -370,12 +383,14 @@ function widgetHandler:NewWidget()
   for k,v in pairs(System) do
     widget[k] = v
   end
-  widget.widget = widget
+  widget.WG = self.WG    -- the shared table
+  widget.widget = widget -- easy self referencing
+
   -- wrapped calls (closures)
   widget.widgetHandler = {}
   local wh = widget.widgetHandler
   local self = self
-  widget.include  = function (f) include(f, widget) end
+  widget.include  = function (f) return include(f, widget) end
   wh.ForceLayout  = function (_) self:ForceLayout() end
   wh.RaiseWidget  = function (_) self:RaiseWidget(widget) end
   wh.LowerWidget  = function (_) self:LowerWidget(widget) end
@@ -389,6 +404,12 @@ function widgetHandler:NewWidget()
     if (self.mouseOwner == widget) then
       self.mouseOwner = nil
     end
+  end
+  wh.AddAction    = function (_, cmd, func, data, types)
+    return self.actionHandler:AddAction(widget, cmd, func, data, types)
+  end
+  wh.RemoveAction = function (_, cmd, types)
+    return self.actionHandler:RemoveAction(widget, cmd, types)
   end
   wh.ConfigLayoutHandler = function(_, d) self:ConfigLayoutHandler(d) end
   return widget
@@ -488,6 +509,7 @@ function widgetHandler:RemoveWidget(widget)
     end
   end
   Remove(self.widgets, widget)
+  self.actionHandler:RemoveWidgetActions(widget)
   for _,listname in callInLists do
     Remove(self[listname..'List'], widget)
   end
@@ -503,10 +525,8 @@ function widgetHandler:UpdateCallIns()
       _G[name] = function(...)
         return selffunc(self, unpack(arg))
       end
---      print('UpdateCallIns() using '..name)
     else
       _G[name] = nil
---      print('UpdateCallIns()  nil  '..name)
     end
   end
 end
@@ -515,7 +535,7 @@ end
 function widgetHandler:EnableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Echo("EnableWidget(), could not find widget: " .. tostring(name))
+    Spring.Echo("EnableWidget(), could not find widget: " .. tostring(name))
     return
   end
   if (not ki.active) then
@@ -535,7 +555,7 @@ end
 function widgetHandler:DisableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Echo("DisableWidget(), could not find widget: " .. tostring(name))
+    Spring.Echo("DisableWidget(), could not find widget: " .. tostring(name))
     return
   end
   if (ki.active) then
@@ -552,7 +572,7 @@ end
 function widgetHandler:ToggleWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Echo("ToggleWidget(), could not find widget: " .. tostring(name))
+    Spring.Echo("ToggleWidget(), could not find widget: " .. tostring(name))
     return
   end
   if (ki.active) then
@@ -709,7 +729,7 @@ end
 function widgetHandler:ConfigureLayout(command)
   if (command == 'tweakgui') then
     self.tweakMode = true
-    Echo("LuaUI TweakMode: ON")
+    Spring.Echo("LuaUI TweakMode: ON")
     return true
   elseif (command == 'reconf') then
     self:SendConfigData()
@@ -732,6 +752,10 @@ function widgetHandler:ConfigureLayout(command)
     return true
   elseif (string.find(command, 'disablewidget') == 1) then
     self:DisableWidget(string.sub(command, 15))
+    return true
+  end
+
+  if (self.actionHandler:TextAction(command)) then
     return true
   end
 
@@ -836,6 +860,9 @@ end
 --
 
 function widgetHandler:KeyPress(key, mods, isRepeat)
+  if (self.actionHandler:KeyAction(true, key, mods, isRepeat)) then
+    return true
+  end
 
   if (self.tweakMode) then
     local mo = self.mouseOwner
@@ -854,12 +881,16 @@ end
 
 
 function widgetHandler:KeyRelease(key, mods)
+  if (self.actionHandler:KeyAction(false, key, mods, false)) then
+    return true
+  end
+
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
       mo:TweakKeyRelease(key, mods)
     elseif (key == KEYSYMS.ESCAPE) then
-      Echo("LuaUI TweakMode: OFF")
+      Spring.Echo("LuaUI TweakMode: OFF")
       self.tweakMode = false
     end
     return true
@@ -990,6 +1021,27 @@ end
 
 --------------------------------------------------------------------------------
 --
+--  Game call-ins
+--
+
+function widgetHandler:GameOver()
+  for _,w in ipairs(self.GameOverList) do
+    w:GameOver()
+  end
+  return
+end
+
+
+function widgetHandler:TeamDied()
+  for _,w in ipairs(self.TeamDiedList) do
+    w:TeamDied()
+  end
+  return
+end
+
+
+--------------------------------------------------------------------------------
+--
 --  Unit call-ins
 --
 
@@ -1022,6 +1074,14 @@ end
 function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitDestroyedList) do
     w:UnitDestroyed(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitIdleList) do
+    w:UnitIdle(unitID, unitDefID, unitTeam)
   end
   return
 end
@@ -1070,6 +1130,46 @@ end
 function widgetHandler:UnitLeftLos(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitLeftLosList) do
     w:UnitLeftLos(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitSeismicPing(x, y, z, strength)
+  for _,w in ipairs(self.UnitSeismicList) do
+    w:UnitSeismicPing(x, y, z, strength)
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorldShadow()
+  for _,w in ipairs(self.DrawWorldShadowList) do
+    w:DrawWorldShadow()
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorldReflection()
+  for _,w in ipairs(self.DrawWorldReflectionList) do
+    w:DrawWorldReflection()
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorldRefraction()
+  for _,w in ipairs(self.DrawWorldRefractionList) do
+    w:DrawWorldRefraction()
+  end
+  return
+end
+
+
+function widgetHandler:DrawInMiniMap(xSize, ySize)
+  for _,w in ipairs(self.DrawInMiniMapList) do
+    w:DrawInMiniMap(xSize, ySize)
   end
   return
 end

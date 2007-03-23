@@ -53,7 +53,7 @@ void CAICheats::GiveMeEnergy(float amount)
 int CAICheats::CreateUnit(const char* name,float3 pos)
 {
 	if(net->onlyLocal) {
-		CUnit* u=unitLoader.LoadUnit(name,pos,ai->team,false);
+		CUnit* u=unitLoader.LoadUnit(name,pos,ai->team,false,0,NULL);
 		if(u)
 			return u->id;
 	}
@@ -195,7 +195,7 @@ bool CAICheats::GetUnitResourceInfo (int unitid, UnitResourceInfo *i)
 	return false;
 }
 
-const deque<Command>* CAICheats::GetCurrentUnitCommands(int unitid)
+const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitid)
 {
 	CUnit *unit = uh->units[unitid];
 	if (unit){

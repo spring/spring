@@ -30,29 +30,19 @@ end
 local savedQueue = {}
 
 
-function widget:TextCommand(command)
-  if (command == "savequeue") then
-    SaveQueue()
-    return true
-  elseif (command == "loadqueue") then
-    LoadQueue()
-    return true
-  end
-  return false
-end   
-
-
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-function SaveQueue()
+local function SaveQueue()
   local uTable = Spring.GetSelectedUnits()
   for _,uid in ipairs(uTable) do
     savedQueue[uid] = Spring.GetCommandQueue(uid)
   end
+  return true
 end
 
 
-function LoadQueue()
+local function LoadQueue()
   local selUnits = Spring.GetSelectedUnits()
   for _,uid in ipairs(selUnits) do
     local queue = savedQueue[uid]
@@ -69,7 +59,17 @@ function LoadQueue()
       end
     end
   end
+  return true
 end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+function widget:Initialize()
+  widgetHandler:AddAction("savequeue", SaveQueue)
+  widgetHandler:AddAction("loadqueue", LoadQueue)
+end   
 
 
 --------------------------------------------------------------------------------

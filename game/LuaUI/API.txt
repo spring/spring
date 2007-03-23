@@ -5,12 +5,17 @@
 --  * LuaUI (Spring 0.74b3) is based on Lua 5.0
 --
 --  * All of the standard lua libraries are available
---    (base, io, math, string, table, debug)
+--    (os, io, math, string, table, coroutine, debug)
 --
 --  * The Game[], UnitDefs[], and WeaponDefs[] tables are available.
 --    These tables can be printed into the infolog.txt by adding
 --    "keydebug 2" in the uikeys.txt file. There are example tables at
 --    the end of this file.
+--
+--  * The CMD[] and CMDTYPE[] tables contain bidirectional maps of the
+--    known commands type and their names
+--
+--  * The GL[] table contains a mapping of OpenGL names to constants
 --
 --  * Screen origin is left-bottom (0, 0)
 --    (this is used for both mouse and screen drawing coordinates)
@@ -36,8 +41,12 @@
 
   CommandNotify()
 
-  DrawWorldItems()
   DrawScreenItems()
+  DrawWorldItems()
+  DrawWorldShadows() FIXME
+  DrawWorldReflection() FIXME
+  DrawWorldRefraction() FIXME
+  DrawMinimap() FIXME
 
   KeyPress()
   KeyRelease()
@@ -48,20 +57,30 @@
   IsAbove()
   GetTooltip()
 
+  GroupChanged()
+
+  AddConsoleLine()
+
+
+  GameOver()   FIXME
+  TeamDied()   FIXME
+
   UnitCreated()
   UnitFinished()
   UnitFromFactory()
   UnitDestroyed()
   UnitTaken()
   UnitGiven()
+  UnitIdle()     FIXME
+  UnitDamaged()  FIXME
   UnitEnteredRadar()
   UnitEnteredLos()
   UnitLeftRadar()
   UnitLeftLos()
+  UnitSeismicPing() FIXME
 
-  GroupChanged()
-
-  AddConsoleLine()
+  FeatureCreated() FIXME
+  FeatureDestroyed() FIXME
 
 
 --------------------------------------------------------------------------------
@@ -70,9 +89,11 @@
 --  CALL-OUTS
 --
 --  Call-outs are the functions which may be used from within the LUA code.
---  They are all placed in the Spring[] table  (ex: use Spring.LoadTextVFS()
---  or Spring.Draw.Text())
+--  They are all placed in the Spring[] table  (ex: use Spring.LoadTextVFS()),
+--  except for the OpenGL related call (which are placed in the gl[] table).
 --
+
+  KillScript()  FIXME  (not in Spring)
 
   LoadTextVFS()
   GetDirListVFS()
@@ -80,10 +101,20 @@
 
   GetFPS()
   GetGameSpeed()
+  GetGameFrame()      FIXME
   GetGameSeconds()
   GetLastUpdateSeconds()
 
+	IsCheatingEnabled() FIXME
+  GetGaiaTeamID()     FIXME
+  GetRulesInfoMap()   FIXME
+
+  SetActiveCommand()  FIXME
   GetActiveCommand()
+  GetDefaultCommand() FIXME
+  GetActiveCmdDescs() FIXME
+  GetActiveCmdDesc()  FIXME
+  GetCmdDescIndex()   FIXME
 
   GetMouseState()
   GetMouseCursor()
@@ -127,6 +158,8 @@
   GetUnitsInCylinder()
   GetUnitsInPlanes()
 
+  GetFeaturesInRectangle()
+
   GetUnitDefID()
   GetUnitTeam()
   GetUnitAllyTeam()
@@ -138,16 +171,28 @@
   GetUnitPosition()
   GetUnitHeading()
   GetUnitBuildFacing()
-  IsUnitInView()
-  IsUnitAllied()
 
   GetFeatureInfo()
   GetFeaturePosition()
   GetFeatureResources()
 
+  GetUnitCommands()    FIXME
+  GetFactoryCounts()   FIXME
+  GetFactoryCommands() FIXME
+
   GetCommandQueue()
   GetFullBuildQueue()
   GetRealBuildQueue()
+
+  GetUnitCmdDescs() FIXME
+
+  GetUnitRulesParam() FIXME
+  GetUnitRulesParams() FIXME
+
+  GetUnitLosState FIXME
+
+  IsUnitInView()
+  IsUnitAllied()
 
   GetMyAllyTeamID()
   GetMyTeamID()
@@ -171,12 +216,14 @@
 
   GetCameraState()
   SetCameraState()
+  SetCameraTarget()
   GetCameraPos()
   GetCameraVectors()
   WorldToScreenCoords()
   TraceScreenRay()
 
   SendCommands()
+
   GiveOrder()
   GiveOrderToUnit()
   GiveOrderToUnitMap()
@@ -189,6 +236,9 @@
 
   GetGroundHeight()
   GetGroundNormal()
+  GetGroundInfo()  FIXME
+  GetGroundExtremes()  FIXME
+
   TestBuildOrder()
   Pos2BuildPos()
 
@@ -202,45 +252,47 @@
   MarkerAddLine()     
   MarkerErasePosition()
 
-  Draw.ScreenGeometry()
-  Draw.ResetState()
-  Draw.ResetMatrices()
-  Draw.Clear()
+  gl.ScreenGeometry()
+  gl.ResetState()
+  gl.ResetMatrices()
+  gl.Clear()
 
-  Draw.Lighting()
-  Draw.ShadeModel()
+  gl.Lighting()
+  gl.ShadeModel()
 
-  Draw.Scissor()
-  Draw.DepthMask()
-  Draw.DepthTest()
-  Draw.Culling()
-  Draw.LogicOp()
-  Draw.Blending()
-  Draw.AlphaTest()
-  Draw.LineStipple()
-  Draw.PolygonOffset()
-  Draw.PolygonMode()
-  Draw.Texture()
-  Draw.Material()
-  Draw.Color()
+  gl.Scissor()
+  gl.ColorMask()
+  gl.DepthMask()
+  gl.DepthTest()
+  gl.Culling()
+  gl.LogicOp()
+  gl.Blending()
+  gl.AlphaTest()
+  gl.LineStipple()
+  gl.PolygonOffset()
+  gl.PolygonMode()
+  gl.Texture()
+  gl.Material()
+  gl.Color()
 
-  Draw.FreeTexture()
+  gl.FreeTexture()
 
-  Draw.Shape()
-  Draw.UnitDef()
-  Draw.Text()
-  Draw.GetTextWidth()
+  gl.Shape()
+  gl.Rect()    FIXME
+  gl.UnitDef()
+  gl.Text()
+  gl.GetTextWidth()
 
-  Draw.Translate()
-  Draw.Scale()
-  Draw.Rotate()
+  gl.Translate()
+  gl.Scale()
+  gl.Rotate()
 
-  Draw.PushMatrix()
-  Draw.PopMatrix()
+  gl.PushMatrix()
+  gl.PopMatrix()
 
-  Draw.ListCreate()
-  Draw.ListRun()
-  Draw.ListDelete()
+  gl.ListCreate()
+  gl.ListRun()
+  gl.ListDelete()
 
 
 --------------------------------------------------------------------------------
@@ -261,14 +313,14 @@ Shutdown() -> nil
 --
 LayoutButtons(number xButtons, number yButtons, number cmdCount,
               commands = {  --  the list of commands currently available
-                [0] = { id = number,
+                [1] = { id = number,
                         type = number,
                         action = string,
                         hidden = boolean,
                         params = { string "param1", string "param2", etc...}
                       },
-                [1] = { ... },
                 [2] = { ... },
+                [3] = { ... },
                 etc...
               }) ->
   string menuName,
@@ -590,11 +642,28 @@ GetGroupAIList() ->
   }
 
 
+--------------------------------------------------------------------------------
+--
+--  Unit data call-outs
+--
+--    MyTeam Unit      : owned by player's team
+--    Allied Unit      : only reports for allied units
+--    InLos Unit       : only reports for units in los range
+--    Visible Unit     : reports on all visible units (in los or radar range)
+--    TypeVisible Unit : reports on all units for which the unit type is known,
+--                       (in los range or in radar range with prior los)
+--
+--  NOTE: if /specfullview is greater then 0, all units are considered allies
+--
+
+-- MyTeam Units
 GetSelectedUnits() -> unitTable = { [1] = number unitID, etc... }
 
+-- MyTeam Units
 GetSelectedUnitsCounts() ->
   countTable = { [number unitDefID] = number count, etc... }
 
+-- MyTeam Units
 GetSelectedUnitsSorted() ->
   unitDefTable = {
     [number unitDefID] = { [1] = [number unitID], etc...},
@@ -602,11 +671,14 @@ GetSelectedUnitsSorted() ->
   }
 
 
+-- MyTeam Units
 GetGroupUnits(groupID) -> nil | unitTable = { [1] = number unitID, etc... }
 
+-- MyTeam Units
 GetGroupUnitsCounts(groupID) ->
   nil | countTable = { [number unitDefID] = count, etc... }
 
+-- MyTeam Units
 GetGroupUnitsSorted(groupID) -> nil |
   unitDefTable = {
     [number unitDefID] = { [1] = [number unitID], etc... },
@@ -614,12 +686,14 @@ GetGroupUnitsSorted(groupID) -> nil |
   }
 
 
+-- Visible Units
 GetTeamUnits(teamID) -> nil | unitTable = { [1] = number unitID, etc... }
 
+-- Visible Units
 GetTeamUnitsCounts(teamID) ->
   nil | countTable = { [number unitDefID] = count, etc... }
 
-
+-- Visible Units
 GetTeamUnitsSorted(teamID) -> nil |
   unitDefTable = {
     [number unitDefID] = { [1] = [number unitID], etc... },
@@ -627,12 +701,15 @@ GetTeamUnitsSorted(teamID) -> nil |
   }
 
 
+-- Visible Units
 GetUnitsInRectangle(number xmin, number zmin, number xmax, number zmax) ->
   unitTable = { [1] = number unitID, etc... }
 
+-- Visible Units
 GetUnitsInCylinder(number x, number z, number radius) ->
   unitTable = { [1] = number unitID, etc... }
 
+-- Visible Units
 GetUnitsInPlanes(planes = {
     [1] = { number nx, number ny, number nz, number d },
     etc...
@@ -649,18 +726,23 @@ GetUnitsInPlanes(planes = {
 --
 
 
+-- TypeVisible Units
 GetUnitDefID(number unitID) ->
   nil | number unitDefID
 
+-- Visible Units
 GetUnitTeam(number unitID) ->
   nil | number teamID
 
+-- Visible Units
 GetUnitAllyTeam(number unitID) ->
   nil | number allyTeamID
 
+-- MyTeam Units
 GetUnitGroup(number unitID) ->
   nil | number groupID  --  (-1 for no group)
 
+-- InLos Units
 GetUnitHealth(number unitID) ->
   nil | number health,
         number maxHealth,
@@ -668,12 +750,14 @@ GetUnitHealth(number unitID) ->
         number captureProgress,
         number buildProgress
 
+-- Allied Units
 GetUnitResources(number unitID) ->
   nil | number metalMake,
         number metalUse,
         number energyMake,
         number energyUse
 
+-- Allied Units
 GetUnitStates(number unitID) ->
   nil | states = {
           firestate  = number,
@@ -684,31 +768,38 @@ GetUnitStates(number unitID) ->
           trajectory = boolean
         }
 
+-- Allied Units
 GetUnitStockpile(number unitID) ->
   nil | number currentStockpile,
         number queuedStockpile,
         number buildPercent
 
+-- Visible Units (with error offset for enemy units not in los)
 GetUnitPosition(number unitID) ->
   nil | number x,
         number y,
         number z
 
+-- InLos Units
 GetUnitHeading(number unitID) ->
   nil | number x,
         number y,
         number z
 
+-- InLos Units
 GetUnitBuildFacing(number unitID) ->
   nil | number buildFacing
 
+-- Visible Units
 IsUnitInView(number unitID) ->
   nil | boolean inview
 
+-- Visible Units
 IsUnitAllied(number unitID) ->
   nil | boolean allied
 
 
+-- Visible Features
 GetFeatureInfo(number featureID) ->
   nil | string name,
         string description,
@@ -723,12 +814,15 @@ GetFeatureInfo(number featureID) ->
         boolean floating,
         boolean geoThermal
 
+-- Visible Features
 GetFeaturePosition(number featureID) -> nil | number x, number y, number z
 
+-- Allied Features
 GetFeatureResources(number featureID) ->
   nil | number metalLeft, number energyLeft
 
 
+-- Allied Units
 GetCommandQueue(number unitID [, number maxCommands]) ->
   nil | commands = {
     [1] = {
@@ -745,16 +839,20 @@ GetCommandQueue(number unitID [, number maxCommands]) ->
           etc...
         }
 
+-- Allied Units
 GetFullBuildQueue(number unitID) ->
   nil | buildOrders = {
           [1] = { [number unitDefID] = number count },  etc...
         }
 
+-- Allied Units
 GetRealBuildQueue(number unitID) ->
   nil | buildOrders = {
           [1] = { [number unitDefID] = number count },  etc...
         }
 
+
+--------------------------------------------------------------------------------
 
 GetMyAllyTeamID() -> number allyTeamID
 
@@ -848,7 +946,7 @@ ArePlayersAllied(number playerID1, number playerID2) -> nil | boolean allied
 
 GetCameraState() -> table[] camstate  (opaque handle)
 
-SetCameraState(table[] camstate) -> nil
+SetCameraState(table[] camstate, number camTime) -> nil
 
 GetCameraPos() -> number x, number y, number z
 
@@ -936,7 +1034,9 @@ Pos2BuildPos(number unitDefID, number x, number y, number z) ->
         number z
 
 
-PlaySoundFile(string "filename"[, number volume]) -> nil  -- 1.0 = maxVolume
+PlaySoundFile(string "filename"
+              [, number volume
+              [, number x, number y, number z]]) -> nil  -- 1.0 = maxVolume
 
 
 AddWorldIcon(number cmdID, number x, number y, number z) -> nil
@@ -956,11 +1056,11 @@ MarkerAddLine(number x1, number y1, number z1,
 MarkerErasePosition(number x, number y, number z) -> nil
 
 
-----------------------
---  Draw sub-table  --
-----------------------
+--------------------------------------------------------------------------------
 --
---  The calls in the Spring.Draw table are based on OpenGL functions.
+--  gl[] table
+--
+--  The calls in the gl[] table are based on OpenGL functions.
 --  You may wish to read the documentation for the following OpenGL
 --  functions to better understand them:
 --    * glBegin()
@@ -980,13 +1080,14 @@ MarkerErasePosition(number x, number y, number z) -> nil
 --    * glDeleteLists()
 --
 
-Draw.ScreenGeometry(number width, number dist) -> nil
+gl.ScreenGeometry(number width, number dist) -> nil
 
 
-Draw.ResetState() -> nil
+gl.ResetState() -> nil
 -- ShadeModel = GL_SMOOTH
 -- Scissor    = false
 -- Texture    = false
+-- ColorMask  = true, true, true, true
 -- DepthMask  = false
 -- DepthTest  = false  (GL_LEQUAL)
 -- Culling    = false  (GL_BACK)
@@ -995,13 +1096,13 @@ Draw.ResetState() -> nil
 -- Blending   = GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
 
 
-Draw.ResetMatrices() -> nil
+gl.ResetMatrices() -> nil
 -- Resets GL_TEXTURE matrix stack
 -- Resets GL_MODELVIEW matrix stack
 -- Resets GL_PROJECTION matrix stack
 
 
-Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
+gl.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
 -- bits:
 --   GL_COLOR_BUFFER_BIT    (4 values)
 --   GL_ACCUM_BUFFER_BIT    (4 values)
@@ -1009,22 +1110,24 @@ Draw.Clear(number bits[, number v1[, number v2, number v3, number v4]]) -> nil
 --   GL_STENCIL_BUFFER_BIT  (1 value)
 
 
-Draw.ShadeModel(number mode) -> nil
-Draw.Scissor      (boolean enable | number x, number y, number w, number h) -> nil
-Draw.Lighting     (boolean enable) -> nil
-Draw.DepthMask    (boolean enable) -> nil
-Draw.DepthTest    (boolean enable | number func) -> nil
-Draw.Culling      (boolean enable | number face) -> nil
-Draw.LogicOp      (boolean enable | number func) -> nil
-Draw.AlphaTest    (boolean enable | number func, number threshold) -> nil
-Draw.Blending     (boolean enable | number srcmode, number dstmode) -> nil
-Draw.LineStipple  (boolean enable | string "" | number f, number pattern) -> nil
-Draw.PolygonOffset(boolean enable | number factor, number units) -> nil
-Draw.PolygonMode  (number face, number mode) -> nil
+gl.ShadeModel(number mode) -> nil
+gl.Scissor      (boolean enable | number x, number y, number w, number h) -> nil
+gl.Lighting     (boolean enable) -> nil
+gl.ColorMask    (boolean enable/red
+                 [, boolean green, boolean blue, boolean alpha]) -> nil
+gl.DepthMask    (boolean enable) -> nil
+gl.DepthTest    (boolean enable | number func) -> nil
+gl.Culling      (boolean enable | number face) -> nil
+gl.LogicOp      (boolean enable | number func) -> nil
+gl.AlphaTest    (boolean enable | number func, number threshold) -> nil
+gl.Blending     (boolean enable | number srcmode, number dstmode) -> nil
+gl.LineStipple  (boolean enable | string "" | number f, number pattern) -> nil
+gl.PolygonOffset(boolean enable | number factor, number units) -> nil
+gl.PolygonMode  (number face, number mode) -> nil
 
-Draw.Texture(boolean enable | string "filename") -> boolean success
+gl.Texture(boolean enable | string "filename") -> boolean success
 
-Draw.Material({
+gl.Material({
     ambient   = {number r, number g, number b[, number a]},
     diffuse   = {number r, number g, number b[, number a]},
     ambidiff  = {number r, number g, number b[, number a]},
@@ -1033,12 +1136,12 @@ Draw.Material({
     shininess = number specularExponent
   }) -> nil
 
-Draw.Color({ number r, number g, number b[, number a] } |
+gl.Color({ number r, number g, number b[, number a] } |
              number r, number g, number b[, number a]) -> nil
 
-Draw.FreeTexture(string "texname") -> boolean success
+gl.FreeTexture(string "texname") -> boolean success
 
-Draw.Shape(
+gl.Shape(
   number GLtype,
   elements = {
     [1] = { v | vertex   = { number x, number y, number z },           -- required
@@ -1050,7 +1153,7 @@ Draw.Shape(
   }
 ) -> nil
 
-Draw.UnitDef(number unitDefID, number teamID) -> nil
+gl.UnitDef(number unitDefID, number teamID) -> nil
 
 -- the text option characters are:
 --
@@ -1058,26 +1161,26 @@ Draw.UnitDef(number unitDefID, number teamID) -> nil
 --   "O" - outline with white
 --   "r" - right justify
 --   "c" - center justify
---   "n" - ignore embedded color codes  (enables Draw.Color() for text)
+--   "n" - ignore embedded color codes  (enables gl.Color() for text)
 --
-Draw.Text(string "text", number x, number y, number size, string "options") -> nil
-Draw.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
+gl.Text(string "text", number x, number y, number size, string "options") -> nil
+gl.GetTextWidth(string "text") -> number width  --  in pixels, with a font size of 1.0
 
 
-Draw.MatrixMode(number mode) -> nil
+gl.MatrixMode(number mode) -> nil
 
-Draw.PushMatrix()   -> nil
-Draw.PopMatrix()    -> nil
-Draw.LoadIdentity() -> nil
+gl.PushMatrix()   -> nil
+gl.PopMatrix()    -> nil
+gl.LoadIdentity() -> nil
 
-Draw.Translate(number x, number y, number z)            -> nil
-Draw.Scale(number x, number y, number z)                -> nil
-Draw.Rotate(number angle, number x, number y, number z) -> nil
+gl.Translate(number x, number y, number z)            -> nil
+gl.Scale(number x, number y, number z)                -> nil
+gl.Rotate(number angle, number x, number y, number z) -> nil
 
 
-Draw.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
-Draw.ListRun(number listID)    -> nil
-Draw.ListDelete(number listID) -> nil
+gl.ListCreate(function [,arg1 [,arg2...]]) -> number listID  -- 0 is an invalid list
+gl.ListRun(number listID)    -> nil
+gl.ListDelete(number listID) -> nil
 
 
 --------------------------------------------------------------------------------

@@ -54,9 +54,14 @@ public:
 	unsigned int fps;
 	unsigned int thisFps;
 
-	time_t   fpstimer,starttime;
+	time_t fpstimer, starttime;
 	Uint64 lastUpdate;
 	Uint64 lastMoveUpdate;
+
+	Uint64 lastModGameTimeMeasure;
+
+	Uint64 lastframe;
+	float totalGameTime;			//time in seconds, stops at game end
 
 	unsigned char inbuf[40000*2];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE*2
 	int inbufpos;								//where in the input buffer we are
@@ -73,6 +78,7 @@ public:
 	float consumeSpeed;
 	int chatSound;
 
+	int skipping;
 	bool playing;
 	bool allReady;
 	bool chatting;
@@ -83,11 +89,6 @@ public:
 	bool windowedEdgeMove;
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
-
-	Uint64 lastModGameTimeMeasure;
-
-	Uint64 lastframe;
-	float totalGameTime;			//time in seconds, stops at game end
 
 	float maxUserSpeed;
 	float minUserSpeed;
@@ -114,13 +115,29 @@ public:
 	unsigned char oldStatus;
 #endif
 	
-	void HandleChatMsg(std::string msg,int player);
+	void HandleChatMsg(std::string msg, int player, bool demoPlayer);
 	
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 protected:
 	void SendNetChat(const string& message);
+
+	void DrawInputText();
+	void ParseInputTextGeometry(const string& geo);
+
+	void SelectUnits(const string& line);
+	void SelectCycle(const string& command);
+
+	void LogNetMsg(const string& msg, int player);
+	void ReloadCOB(const string& msg, int player);
+	void Skip(const string& msg, bool demoPlayer);
+
+protected:
 	std::string hotBinding;
+	float inputTextPosX;
+	float inputTextPosY;
+	float inputTextSizeX;
+	float inputTextSizeY;
 };
 
 

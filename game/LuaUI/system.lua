@@ -23,10 +23,15 @@ if (System == nil) then
     --
     --  Custom Spring tables
     --
-    Game = Game,
     Spring = Spring,
-    gl = Spring.Draw,
+    Game = Game,
+    gl = gl,
+    GL = GL,
+    CMD = CMD,
+    CMDTYPE = CMDTYPE,
+    
     UnitDefs = UnitDefs,
+    FeatureDefs = FeatureDefs,
     WeaponDefs = WeaponDefs,
 
     --

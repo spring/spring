@@ -14,18 +14,19 @@
 #ifdef _WIN32
 #include <process.h>
 #endif
-#include "FileSystem/FileHandler.h"
-#include "SMF/SmfReadMap.h"
-#include "SM3/Sm3Map.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
-#include "LogOutput.h"
+#include "MapDamage.h"
 #include "MetalMap.h"
 #include "Sim/Path/PathManager.h"
-#include "LoadSaveInterface.h"
-#include "MapDamage.h"
-#include "Platform/errorhandler.h"
-#include "TdfParser.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/Unit.h"
+#include "SM3/Sm3Map.h"
+#include "SMF/SmfReadMap.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
+#include "System/TdfParser.h"
 #include <string>
 #include "mmgr.h"
 
@@ -305,6 +306,8 @@ extern GLfloat FogLand[];
 
 void CReadMap::ParseSettings(TdfParser& resources)
 {	
+	mapHumanName = mapDefParser.SGetValueDef(mapName, "MAP\\Description");
+
 	gs->sunVector=mapDefParser.GetFloat3(float3(0,1,2),"MAP\\LIGHT\\SunDir");
 	gs->sunVector.Normalize();
 	gs->sunVector4[0]=gs->sunVector[0];

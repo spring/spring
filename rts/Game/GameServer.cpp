@@ -155,7 +155,7 @@ void CGameServer::CheckSync()
 	// Make it clear this build isn't suitable for release.
 	if (!syncErrorFrame || (serverframenum - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
 		syncErrorFrame = serverframenum;
-		SendSystemMsg("Warning: Sync checking disabled!");
+//FIXME -- annoying as hell when you're using stdout		SendSystemMsg("Warning: Sync checking disabled!");
 	}
 #endif
 }
@@ -398,9 +398,12 @@ bool CGameServer::ServerReadNet()
 			case NETMSG_AICOMMAND:
 				if(inbuf[inbufpos+3]!=a){
 					SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				} else {
-					if(!serverNet->playbackDemo)
-						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
+				}
+				else if (gs->noHelperAIs) {
+					SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
+				}
+				else if(!serverNet->playbackDemo) {
+					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
 				}
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
@@ -408,9 +411,12 @@ bool CGameServer::ServerReadNet()
 			case NETMSG_AICOMMANDS:
 				if(inbuf[inbufpos+3]!=a){
 					SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				} else {
-					if(!serverNet->playbackDemo)
-						serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
+				}
+				else if (gs->noHelperAIs) {
+					SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
+				}
+				else if(!serverNet->playbackDemo) {
+					serverNet->SendData(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
 				}
 				lastLength=*((short int*)&inbuf[inbufpos+1]);
 				break;
@@ -559,7 +565,7 @@ void CGameServer::CheckForGameEnd()
 		active[a]=false;
 
 	for(int a=0;a<gs->activeTeams;++a)
-		if(!gs->Team(a)->isDead)
+		if(!gs->Team(a)->isDead && !gs->Team(a)->gaia)
 			active[gs->AllyTeam(a)]=true;
 
 	int numActive=0;

@@ -1,0 +1,20 @@
+newmtl sides
+Ns 100.000
+d 0.75
+illum 0
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd mesh.png
+
+newmtl bottom
+Ns 100.000
+d 0.75
+illum 2
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd players.png
+

@@ -36,6 +36,7 @@ public:
 	vector<int> GetQuads(float3 pos,float radius);
 	vector<int> GetQuadsRectangle(const float3& pos,const float3& pos2);
 	vector<CFeature*> GetFeaturesExact(const float3& pos,float radius);
+	vector<CFeature*> GetFeaturesExact(const float3& mins, const float3& maxs);
 	vector<CSolidObject*> GetSolidsExact(const float3& pos,float radius);
 
 

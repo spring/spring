@@ -149,8 +149,15 @@ static void GetDecoyResources(const CUnit* unit,
 	if (ud->tidalGenerator > 0.0f) {
 		eMake += (ud->tidalGenerator * readmap->tidalStrength);
 	}
+
+	bool active;
+	if (rd->onoffable && ud->onoffable) {
+		active = unit->activated;
+	} else {
+		active = ud->activateWhenBuilt;
+	}
 	
-	if (ud->activateWhenBuilt) {
+	if (active) {
 		if (ud->isMetalMaker) {
 			mMake += (ud->makesMetal * uh->metalMakerEfficiency);
 		} else {
@@ -294,7 +301,7 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 	const std::string metalColor  = (remainingMetal  > 0) ? GREEN : RED;
 	const std::string energyColor = (remainingEnergy > 0) ? GREEN : RED;
 	
-	char tmp[500];
+	char tmp[512];
 	sprintf(tmp,"\n" BLUE "Metal: %s%.0f  " BLUE "Energy: %s%.0f",
 	        metalColor.c_str(),  remainingMetal,
           energyColor.c_str(), remainingEnergy);
@@ -307,7 +314,7 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 
 std::string CTooltipConsole::MakeGroundString(const float3& pos)
 {
-	char tmp[500];
+	char tmp[512];
 	CReadMap::TerrainType* tt = &readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
 	string ttype = tt->name;
 	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\n"

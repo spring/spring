@@ -65,7 +65,8 @@ void CPlayer::StopControllingUnit()
 		gu->directControl=0;
 
 		/* Switch back to the camera we were using before. */
-		mouse->currentCamController=mouse->camControllers[mouse->currentCamControllerNum];
+		mouse->currentCamController = mouse->camControllers[mouse->preControlCamNum];
+		mouse->currentCamControllerNum = mouse->preControlCamNum;
 		mouse->currentCamController->SetPos(camera->pos);
 		mouse->CameraTransition(1.0f);
 		

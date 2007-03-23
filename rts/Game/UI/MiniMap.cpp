@@ -34,12 +34,14 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/glExtra.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTracker.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -273,6 +275,32 @@ void CMiniMap::SetMaximizedGeometry()
 
 /******************************************************************************/
 
+void CMiniMap::SetSlaveMode(bool newMode)
+{
+	if (newMode) {
+		proxyMode   = false;
+		selecting   = false;
+		maxspect    = false;
+		maximized   = false;
+		minimized   = false;
+		mouseLook   = false;
+		mouseMove   = false;
+		mouseResize = false;
+	}
+	static int oldButtonSize = 16;
+	if (newMode != slaveDrawMode) {
+		if (newMode) {
+			oldButtonSize = buttonSize;
+			buttonSize = 0;
+		} else {
+			buttonSize = oldButtonSize;
+		}
+	}
+	slaveDrawMode = newMode;
+	UpdateGeometry();
+}
+
+
 void CMiniMap::ConfigCommand(const std::string& line)
 {
   const vector<string> words = SimpleParser::Tokenize(line, 1);
@@ -281,42 +309,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	}
 	const string command = StringToLower(words[0]);
 
-	if (command == "draw") {
-		glMatrixMode(GL_PROJECTION); glPushMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPushMatrix();
-		DrawForReal();
-		glMatrixMode(GL_PROJECTION); glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
-	}
-	else if (command == "slavemode") {
-		const bool oldMode = slaveDrawMode;
-		if (words.size() >= 2) {
-			slaveDrawMode = !!atoi(words[1].c_str());
-		} else {
-			slaveDrawMode = !slaveDrawMode;
-		}
-		if (slaveDrawMode) {
-			proxyMode = false;
-			selecting = false;
-			maxspect = false;
-			maximized = false;
-			minimized = false;
-			mouseLook = false;
-			mouseMove = false;
-			mouseResize = false;
-		}
-		static int oldButtonSize = 16;
-		if (slaveDrawMode != oldMode) {
-			if (slaveDrawMode) {
-				oldButtonSize = buttonSize;
-				buttonSize = 0;
-			} else {
-				buttonSize = oldButtonSize;
-			}
-		}
-		UpdateGeometry();
-	}
-	else if (command == "fullproxy") {
+	if (command == "fullproxy") {
 		if (words.size() >= 2) {
 			fullProxy = !!atoi(words[1].c_str());
 		} else {
@@ -535,6 +528,16 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 }
 
 
+void CMiniMap::SetGeometry(int px, int py, int sx, int sy)
+{
+	xpos = px;
+	ypos = py;
+	width = sx;
+	height = sy;
+	UpdateGeometry();
+}
+
+
 void CMiniMap::UpdateGeometry()
 {
 	// keep the same distance to the top
@@ -551,7 +554,7 @@ void CMiniMap::UpdateGeometry()
 	else {
 		width = max(1, min(width, gu->viewSizeX));
 		height = max(1, min(height, gu->viewSizeY));
-		ypos = max(buttonSize, ypos);
+		ypos = max(slaveDrawMode ? 0 : buttonSize, ypos);
 		ypos = min(gu->viewSizeY - height, ypos);
 		xpos = max(0, min(gu->viewSizeX - width, xpos));
 	}
@@ -631,6 +634,7 @@ void CMiniMap::MoveView(int x, int y)
 	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
 	clickPos.z = (float(y - (gu->viewSizeY - ypos - height))) / height * gs->mapy * 8;
 	mouse->currentCamController->SetPos(clickPos);
+	unitTracker.Disable();
 }
 
 
@@ -953,8 +957,10 @@ void CMiniMap::DrawForReal()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (minimized && !slaveDrawMode) {
-		DrawMinimizedButton();
+	if (minimized) {
+		if (!slaveDrawMode) {
+			DrawMinimizedButton();
+		}
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
 		return;
@@ -1112,7 +1118,11 @@ void CMiniMap::DrawForReal()
 	
 	DrawNotes();
 
-	glLoadIdentity(); // reset the modelview
+	// allow the LUA scripts to draw into the minimap
+	luaCallIns.DrawInMiniMap();
+		
+	// reset the modelview
+	glLoadIdentity();
 
 	if (!slaveDrawMode) {
 		DrawButtons();
@@ -1129,7 +1139,7 @@ void CMiniMap::DrawForReal()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glLineWidth(1.0f);
 	}
-		
+
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
 	cursorIcons.Enable(true);
@@ -1332,7 +1342,12 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 
 void CMiniMap::DrawUnit(CUnit* unit)
 {
-	if ((unit->lastDamage > (gs->frameNum - 90)) && (gs->frameNum & 8)) {
+	// blink for damages within the past 3 game seconds
+	if ((unit->lastDamage > (gs->frameNum - 3 * GAME_SPEED)) && (gs->frameNum & 8)) {
+		return;
+	}
+
+	if (unit->noMinimap) {
 		return;
 	}
 

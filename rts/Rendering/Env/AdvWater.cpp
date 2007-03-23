@@ -15,6 +15,8 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
+#include "Lua/LuaCallInHandler.h"
+
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -340,6 +342,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
+	luaCallIns.DrawWorldReflection();
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);

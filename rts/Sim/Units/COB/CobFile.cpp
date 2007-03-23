@@ -104,8 +104,13 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		
 		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
 		ofs = swabdword(ofs);
-		string s = &cobdata[ofs];
+		const string s = &cobdata[ofs];
 		scriptNames.push_back(s);
+		if (s.find("lua_") == 0) {
+			luaScripts.push_back(LuaHashString(s.substr(4)));
+		} else {
+			luaScripts.push_back(LuaHashString(""));
+		}
 
 		ofs = *(int *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
 		ofs = swabdword(ofs);
@@ -227,4 +232,3 @@ int CCobFile::getFunctionId(const string &name)
 
 	return -1;
 }
-

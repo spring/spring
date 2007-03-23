@@ -19,6 +19,7 @@ class float3;
 class CUnit;
 class CObject;
 struct Command;
+class CCommandQueue;
 
 
 class CWaitCommandsAI {
@@ -41,7 +42,7 @@ class CWaitCommandsAI {
 		// search a new unit's queue and add it to its wait commands
 		void AddLocalUnit(CUnit* unit, const CUnit* builder);
 
-		void ClearUnitQueue(CUnit* unit, const deque<Command>& queue);
+		void ClearUnitQueue(CUnit* unit, const CCommandQueue& queue);
 		void RemoveWaitCommand(CUnit* unit, const Command& cmd);
 		
 		void AddIcon(const Command& cmd, const float3& pos) const;

@@ -109,59 +109,65 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	}
 
 	vector<CommandDescription> groupCommands;
-	if(foundGroup!=-2){			//create a new group
-		CommandDescription c;
-		c.id=CMD_AISELECT;
-		c.action="aiselect";
-		c.type=CMDTYPE_COMBO_BOX;
-		c.name="Select AI";
-		c.tooltip="Create a new group using the selected units and with the ai selected";
-		c.hotkey="Ctrl+q";
+	if (!gs->noHelperAIs) {
+		//create a new group
+		if (foundGroup != -2) {
+			CommandDescription c;
+			c.id=CMD_AISELECT;
+			c.action="aiselect";
+			c.type=CMDTYPE_COMBO_BOX;
+			c.name="Select AI";
+			c.tooltip="Create a new group using the selected units and with the ai selected";
+			c.hotkey="Ctrl+q";
 
-		c.params.push_back("0");
-		c.params.push_back("None");
-		map<AIKey,string>::iterator aai;
-		map<AIKey,string> suitedAis = grouphandler->GetSuitedAis(selectedUnits);
-		for(aai=suitedAis.begin();aai!=suitedAis.end();++aai){
-			c.params.push_back((aai->second).c_str());
+			c.params.push_back("0");
+			c.params.push_back("None");
+			map<AIKey,string>::iterator aai;
+			map<AIKey,string> suitedAis = grouphandler->GetSuitedAis(selectedUnits);
+			for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
+				c.params.push_back((aai->second).c_str());
+			}
+			groupCommands.push_back(c);
 		}
-		groupCommands.push_back(c);
-	}
 
-	if(foundGroup<0 && foundGroup2>=0){			//add the selected units to a previous group (that at least one unit is also selected from)
-		CommandDescription c;
-		c.id=CMD_GROUPADD;
-		c.action="groupadd";
-		c.type=CMDTYPE_ICON;
-		c.name="Add to group";
-		c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
-		c.hotkey="q";
-		groupCommands.push_back(c);
-	}
+		// add the selected units to a previous group (that at least one unit is also selected from)
+		if ((foundGroup < 0) && (foundGroup2 >= 0)) {
+			CommandDescription c;
+			c.id=CMD_GROUPADD;
+			c.action="groupadd";
+			c.type=CMDTYPE_ICON;
+			c.name="Add to group";
+			c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
+			c.hotkey="q";
+			groupCommands.push_back(c);
+		}
 
-	if(foundGroup>=0){				//select the group to which the units belong
-		CommandDescription c;
+		// select the group to which the units belong
+		if (foundGroup >= 0) {
+			CommandDescription c;
 
-		c.id=CMD_GROUPSELECT;
-		c.action="groupselect";
-		c.type=CMDTYPE_ICON;
-		c.name="Select group";
-		c.tooltip="Select the group that these units belong to";
-		c.hotkey="q";
-		groupCommands.push_back(c);
-	}
+			c.id=CMD_GROUPSELECT;
+			c.action="groupselect";
+			c.type=CMDTYPE_ICON;
+			c.name="Select group";
+			c.tooltip="Select the group that these units belong to";
+			c.hotkey="q";
+			groupCommands.push_back(c);
+		}
 
-	if(foundGroup2!=-2){				//remove all selected units from any groups they belong to
-		CommandDescription c;
+		// remove all selected units from any groups they belong to
+		if (foundGroup2 != -2) {
+			CommandDescription c;
 
-		c.id=CMD_GROUPCLEAR;
-		c.action="groupclear";
-		c.type=CMDTYPE_ICON;
-		c.name="Clear group";
-		c.tooltip="Removes the units from any group they belong to";
-		c.hotkey="Shift+q";
-		groupCommands.push_back(c);
-	}
+			c.id=CMD_GROUPCLEAR;
+			c.action="groupclear";
+			c.type=CMDTYPE_ICON;
+			c.name="Clear group";
+			c.tooltip="Removes the units from any group they belong to";
+			c.hotkey="Shift+q";
+			groupCommands.push_back(c);
+		}
+	} // end if (!gs->noHelperAIs)
 
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
@@ -182,7 +188,8 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			}
 		}
 	}
-	if (!buildIconsFirst) {
+
+	if (!buildIconsFirst && !gs->noHelperAIs) {
 		vector<CommandDescription>::iterator ci;
 		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
 			commands.push_back(*ci);
@@ -207,7 +214,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			}
 		}
 	}
-	if (buildIconsFirst) {
+	if (buildIconsFirst && !gs->noHelperAIs) {
 		vector<CommandDescription>::iterator ci;
 		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
 			commands.push_back(*ci);
@@ -268,6 +275,10 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 	else if (c.id == CMD_AISELECT) {
+		if (gs->noHelperAIs) {
+			logOutput.Print("GroupAI and LuaUI control is disabled");
+			return;
+		}
 		if(c.params[0]!=0){
 			map<AIKey,string>::iterator aai;
 			int a=0;
@@ -326,6 +337,10 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
 	if (unit->transporter != NULL && !unit->transporter->unitDef->isfireplatform) {
+		return;
+	}
+	
+	if (unit->noSelect) {
 		return;
 	}
 

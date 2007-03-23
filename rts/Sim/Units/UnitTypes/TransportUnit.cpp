@@ -136,7 +136,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->Block();
 			loshandler->MoveUnit(unit,false);
 			unit->moveType->LeaveTransport();
-			const deque<Command>& queue = unit->commandAI->commandQue;
+			const CCommandQueue& queue = unit->commandAI->commandQue;
 			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
 				Command c;
 				c.id=CMD_STOP;

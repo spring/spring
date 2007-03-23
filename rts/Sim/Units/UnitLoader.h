@@ -16,9 +16,12 @@ struct GuiSound;
 class CUnitLoader  
 {
 public:
-	CUnit* LoadUnit(const string& name,float3 pos, int side, bool build=true, int facing=0);
 	CUnitLoader();
 	virtual ~CUnitLoader();
+
+	CUnit* LoadUnit(const string& name,float3 pos, int side,
+	                bool build, int facing, const CUnit* builder /* can be NULL */);
+	void FlattenGround(const CUnit* unit);
 
 protected:
 	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);

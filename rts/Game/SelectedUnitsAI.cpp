@@ -596,8 +596,8 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 
 float3 CSelectedUnitsAI::LastQueuePosition(CUnit* unit)
 {
-	const std::deque<Command>& queue = unit->commandAI->commandQue;
-	std::deque<Command>::const_reverse_iterator it;
+	const CCommandQueue& queue = unit->commandAI->commandQue;
+	CCommandQueue::const_reverse_iterator it;
 	for (it = queue.rbegin(); it != queue.rend(); ++it) {
 		const Command& cmd = *it;
 		if (cmd.params.size() >= 3) {

@@ -11,6 +11,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -156,8 +157,8 @@ void CWaitCommandsAI::AddLocalUnit(CUnit* unit, const CUnit* builder)
 		return;
 	}
 
-	const deque<Command>& dq = unit->commandAI->commandQue;
-	deque<Command>::const_iterator qit;
+	const CCommandQueue& dq = unit->commandAI->commandQue;
+	CCommandQueue::const_iterator qit;
 	for (qit = dq.begin(); qit != dq.end(); ++qit) {
 		const Command& cmd = *qit;
 		if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
@@ -216,12 +217,12 @@ void CWaitCommandsAI::RemoveWaitCommand(CUnit* unit, const Command& cmd)
 }
 
 
-void CWaitCommandsAI::ClearUnitQueue(CUnit* unit, const deque<Command>& queue)
+void CWaitCommandsAI::ClearUnitQueue(CUnit* unit, const CCommandQueue& queue)
 {
 	if ((unit->team != gu->myTeam) || waitMap.empty()) {
 		return;
 	}
-	deque<Command>::const_iterator qit;
+	CCommandQueue::const_iterator qit;
 	for (qit = queue.begin(); qit != queue.end(); ++qit) {
 		const Command& cmd = *qit;
 		if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2)) {
@@ -353,7 +354,7 @@ CWaitCommandsAI::Wait::~Wait()
 CWaitCommandsAI::Wait::WaitState
 	CWaitCommandsAI::Wait::GetWaitState(const CUnit* unit) const
 {
-	const deque<Command>& dq = unit->commandAI->commandQue;
+	const CCommandQueue& dq = unit->commandAI->commandQue;
 	if (dq.empty()) {
 		return Missing;
 	}
@@ -364,7 +365,7 @@ CWaitCommandsAI::Wait::WaitState
 		return Active;
 	}
 
-	deque<Command>::const_iterator it = dq.begin();
+	CCommandQueue::const_iterator it = dq.begin();
 	it++;
 	for ( ; it != dq.end(); ++it) {
 		const Command& qcmd = *it;
@@ -380,7 +381,7 @@ CWaitCommandsAI::Wait::WaitState
 
 bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit) const
 {
-	const deque<Command>& dq = unit->commandAI->commandQue;
+	const CCommandQueue& dq = unit->commandAI->commandQue;
 	if (dq.empty()) {
 		return false;
 	}

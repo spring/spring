@@ -40,16 +40,18 @@ local oldGeo = Spring.GetConfigString("MiniMapGeometry", "2 2 200 200")
 
 
 function widget:Initialize()
+  gl.SlaveMiniMap(true)  
   Spring.SendCommands({
-    "minimap slavemode 1",
+--    "minimap slavemode 1",
     string.format("minimap geometry %i %i %i %i", minx, miny, xsize, ysize)
   })
 end
 
 
 function widget:Shutdown()
+  gl.SlaveMiniMap(false)  
   Spring.SendCommands({
-    "minimap slavemode 0",
+--    "minimap slavemode 0",
     "minimap geometry " .. oldGeo
   })
 end
@@ -64,11 +66,13 @@ end
 
 function widget:DrawScreen()
   if (widgetHandler:InTweakMode()) then
-    Spring.SendCommands({ "minimap min 1", "minimap draw" })
+    Spring.SendCommands({ "minimap min 1" })
   else
-    Spring.SendCommands({ "minimap min 0", "minimap draw" })
+    Spring.SendCommands({ "minimap min 0" })
   end
+  gl.DrawMiniMap()  
   gl.ResetState()
+  gl.ResetMatrices()
   
   local xn = minx - 0.5
   local xp = maxx + 0.5
