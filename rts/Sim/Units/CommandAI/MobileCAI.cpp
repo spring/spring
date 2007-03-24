@@ -795,6 +795,9 @@ void CMobileCAI::BuggerOff(float3 pos, float radius)
 
 void CMobileCAI::NonMoving(void)
 {
+	if (owner->usingScriptMoveType) {
+		return;
+	}
 	if(lastBuggerOffTime>gs->frameNum-200){
 		float3 dif=owner->pos-buggerOffPos;
 		dif.y=0;
@@ -803,7 +806,7 @@ void CMobileCAI::NonMoving(void)
 			length=0.1f;
 			dif = float3(0.1f, 0.0f, 0.0f);
 		}
-		if ((length < buggerOffRadius) && (owner->prevMoveType == NULL)) {
+		if (length < buggerOffRadius) {
 			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
 			Command c;
 			c.id = CMD_MOVE;
@@ -858,10 +861,12 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
+	if (owner->usingScriptMoveType) {
+		return;
+	}
 	lastIdleCheck = gs->frameNum;
 	if (((owner->pos - lastUserGoal).SqLength2D() > 10000.0f) &&
-	    !owner->haveTarget && (owner->prevMoveType == NULL) &&
-	    !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+	    !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 		Command c;
 		c.id=CMD_MOVE;
 		c.options=0;		//note that this is not internal order so that we dont keep generating new orders if we cant get to that pos

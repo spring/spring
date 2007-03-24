@@ -31,12 +31,14 @@ class LuaSyncedMoveCtrl {
 		static int SetProgressState(lua_State* L);
 
 		static int SetExtrapolate(lua_State* L);
+		static int SetRelativeVelocity(lua_State* L);
 
 		static int SetPhysics(lua_State* L);
 		static int SetPosition(lua_State* L);
 		static int SetVelocity(lua_State* L);
 		static int SetRotation(lua_State* L);
 		static int SetRotationOffset(lua_State* L);
+		static int SetRotationVelocity(lua_State* L);
 		static int SetHeading(lua_State* L);
 
 		static int SetTrackSlope(lua_State* L);

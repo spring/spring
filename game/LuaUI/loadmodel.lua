@@ -226,6 +226,7 @@ local function DrawObject(obj, mats, v, t, n, c, noMaterials, noDepthMask)
     local glVertex   = gl.Vertex
     local glNormal   = gl.Normal
     local glTexCoord = gl.TexCoord
+    local glColor    = gl.Color
 
     for fi,face in ipairs(faces) do
 

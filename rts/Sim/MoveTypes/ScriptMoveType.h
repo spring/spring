@@ -19,7 +19,9 @@ class CScriptMoveType : public CMoveType
 		void SetPhysics(const float3& pos, const float3& vel, const float3& rot);
 		void SetPosition(const float3& pos);
 		void SetVelocity(const float3& vel);
+		void SetRelativeVelocity(const float3& rvel);
 		void SetRotation(const float3& rot);
+		void SetRotationVelocity(const float3& rvel);
 		void SetRotationOffset(const float3& rotOff);
 		void SetHeading(short heading);
 		
@@ -39,13 +41,22 @@ class CScriptMoveType : public CMoveType
 		void LeaveTransport(void) {};
 
 	protected:
-		void SetMidPos();
+		void CalcMidPos();
+		void CalcDirections();
 		void TrackSlope();
 
 	public:
 		int tag;
 
 		bool extrapolate;
+
+		float3 vel;     // velocity
+		float3 relVel;  // relative velocity (to current direction)
+		bool useRelVel;
+
+		float3 rot;    // angular position
+		float3 rotVel; // angular velocity
+		bool useRotVel;
 
 		bool trackSlope;
 		bool trackGround;
@@ -66,7 +77,7 @@ class CScriptMoveType : public CMoveType
 		bool isBuilding;
 		bool isBlocking;
 
-		float3 rotationOffset;		
+		float3 rotOffset;		
 
 		int lastTrackUpdate;
 		float3 oldPos;
