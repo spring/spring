@@ -184,7 +184,9 @@ public:
 	bool stealth;
 
 	CMoveType* moveType;
-	CMoveType* prevMoveType; // assigned when a ScriptMoveType is active
+	CMoveType* prevMoveType;
+	bool usingScriptMoveType;
+
 	CCommandAI* commandAI;
 	CGroup* group; // if the unit is part of an group (hotkey group)
 

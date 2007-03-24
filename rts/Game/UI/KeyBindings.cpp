@@ -151,10 +151,11 @@ defaultBindings[] = {
 
 	{ "Any+t", "track" },
 
-	{ "Ctrl+f1", "viewfps" },
-	{ "Ctrl+f2", "viewta"  },
-	{ "Ctrl+f3", "viewtw"  },
-	{ "Ctrl+f4", "viewrot" },
+	{ "Ctrl+f1", "viewfps"  },
+	{ "Ctrl+f2", "viewta"   },
+	{ "Ctrl+f3", "viewtw"   },
+	{ "Ctrl+f4", "viewrot"  },
+	{ "Ctrl+f5", "viewfree" },
 
 	{ "Any+f1",  "showElevation"  },
 	{ "Any+f2",  "ShowPathMap"    },

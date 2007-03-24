@@ -177,7 +177,8 @@ CUnit::CUnit ()
 	noMinimap(false),
 	isIcon(false),
 	iconRadius(0),
-	prevMoveType(NULL)
+	prevMoveType(NULL),
+	usingScriptMoveType(false)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -219,7 +220,7 @@ CUnit::~CUnit()
 
 	delete commandAI;
 	delete moveType;
-	delete prevMoveType; // must be deleted before moveType
+	delete prevMoveType;
 
 	if(group)
 		group->RemoveUnit(this);
@@ -312,22 +313,24 @@ void CUnit::ForcedSpin(const float3& newDir)
 
 void CUnit::EnableScriptMoveType()
 {
-	if (prevMoveType != NULL) {
-		return; // already enabled
+	if (usingScriptMoveType) {
+		return;
 	}
 	prevMoveType = moveType;
 	moveType = SAFE_NEW CScriptMoveType(this);
+	usingScriptMoveType = true;
 }
 
 
 void CUnit::DisableScriptMoveType()
 {
-	if (prevMoveType == NULL) {
-		return; // not enabled
+	if (!usingScriptMoveType) {
+		return;
 	}
 	delete moveType;
 	moveType = prevMoveType;
 	prevMoveType = NULL;
+	usingScriptMoveType = false;
 }
 
 
@@ -765,7 +768,7 @@ void CUnit::Draw()
 
 	const float3 interPos = pos + (speed * gu->timeOffset);
 
-	if ((prevMoveType != NULL) || // means a ScriptMoveType is active
+	if (usingScriptMoveType ||
 	    (physicalState == Flying && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
@@ -1745,6 +1748,7 @@ CR_REG_METADATA(CUnit, (
 //				CR_MEMBER(commandAI),
 				CR_MEMBER(moveType),
 				CR_MEMBER(prevMoveType),
+				CR_MEMBER(usingScriptMoveType),
 //				CR_MEMBER(group),
 
 				CR_MEMBER(metalUse),

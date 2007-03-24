@@ -45,12 +45,15 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(Enable);
 	REGISTER_LUA_CFUNC(Disable);
 
-	REGISTER_LUA_CFUNC(SetExtrapolate);
 	REGISTER_LUA_CFUNC(SetProgressState);
+
+	REGISTER_LUA_CFUNC(SetExtrapolate);
 
 	REGISTER_LUA_CFUNC(SetPosition);
 	REGISTER_LUA_CFUNC(SetVelocity);
+	REGISTER_LUA_CFUNC(SetRelativeVelocity);
 	REGISTER_LUA_CFUNC(SetRotation);
+	REGISTER_LUA_CFUNC(SetRotationVelocity);
 	REGISTER_LUA_CFUNC(SetRotationOffset);
 	REGISTER_LUA_CFUNC(SetHeading);
 
@@ -122,7 +125,7 @@ static inline CUnit* ParseControlledUnit(lua_State* L,
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (unit->prevMoveType == NULL) {
+	if (!unit->usingScriptMoveType) {
 		return NULL;
 	}
 	return unit;
@@ -136,8 +139,8 @@ static inline CScriptMoveType* ParseMoveType(lua_State* L,
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (unit->prevMoveType == NULL) {
-		return NULL; // not using a scriptMoveType
+	if (!unit->usingScriptMoveType) {
+		return NULL;
 	}
 	return (CScriptMoveType*)unit->moveType;
 }
@@ -152,7 +155,7 @@ int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, unit->prevMoveType != NULL);
+	lua_pushboolean(L, unit->usingScriptMoveType);
 	return 1;
 }
 
@@ -203,6 +206,7 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 }
 
 
+/******************************************************************************/
 /******************************************************************************/
 
 int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
@@ -258,6 +262,8 @@ int LuaSyncedMoveCtrl::SetExtrapolate(lua_State* L)
 	return 0;
 }
 
+
+/******************************************************************************/
 
 int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 {
@@ -324,6 +330,25 @@ int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 }
 
 
+int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 4) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		luaL_error(L, "Incorrect arguments to SetVelocity()");
+	}
+	const float3 relVel((float)lua_tonumber(L, 2),
+	                    (float)lua_tonumber(L, 3),
+	                    (float)lua_tonumber(L, 4));
+	moveType->SetRelativeVelocity(relVel);
+	return 0;
+}
+
+
 int LuaSyncedMoveCtrl::SetRotation(lua_State* L)
 {
 	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
@@ -358,6 +383,25 @@ int LuaSyncedMoveCtrl::SetRotationOffset(lua_State* L)
 	                    (float)lua_tonumber(L, 3),
 	                    (float)lua_tonumber(L, 4));
 	moveType->SetRotationOffset(rotOff);
+	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 4) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		luaL_error(L, "Incorrect arguments to SetRotationVelocity()");
+	}
+	const float3 rotVel((float)lua_tonumber(L, 2),
+	                    (float)lua_tonumber(L, 3),
+	                    (float)lua_tonumber(L, 4));
+	moveType->SetRotationVelocity(rotVel);
 	return 0;
 }
 

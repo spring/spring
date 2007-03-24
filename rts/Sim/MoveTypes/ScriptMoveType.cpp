@@ -19,12 +19,19 @@ CR_BIND_DERIVED(CScriptMoveType, CMoveType, (NULL));
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
+	CR_MEMBER(vel),
+	CR_MEMBER(relVel),
+	CR_MEMBER(useRelVel),
+	CR_MEMBER(rot),
+	CR_MEMBER(rotVel),
+	CR_MEMBER(useRotVel),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(hasDecal),
 	CR_MEMBER(isBuilding),
 	CR_MEMBER(isBlocking),
 	CR_MEMBER(gravityFactor),
 	CR_MEMBER(windFactor),
+	CR_MEMBER(trackSlope),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(mins),
@@ -32,7 +39,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
-	CR_MEMBER(rotationOffset),
+	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),
 	CR_MEMBER(oldSlowUpdatePos)
@@ -43,18 +50,25 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
 : CMoveType(owner),
 	tag(0),
   extrapolate(true),
+  vel(0.0f, 0.0f, 0.0f),
+  relVel(0.0f, 0.0f, 0.0f),
+  useRelVel(false),
+  rot(0.0f, 0.0f, 0.0f),
+  rotVel(0.0f, 0.0f, 0.0f),
+  rotOffset(0.0f, 0.0f, 0.0f),
+  useRotVel(false),
   hasDecal(false),
   isBuilding(false),
   gravityFactor(0.0f),
   windFactor(0.0f),
+  trackSlope(false),
   trackGround(false),
   groundOffset(0.0f),
   shotStop(false),
   slopeStop(false),
   collideStop(false),
-  mins(-1.0e9, -1.0e9, -1.0e9),
-  maxs(+1.0e9, +1.0e9, +1.0e9),
-  rotationOffset(0.0f, 0.0f, 0.0f),
+  mins(-1.0e9f, -1.0e9f, -1.0e9f),
+  maxs(+1.0e9f, +1.0e9f, +1.0e9f),
   lastTrackUpdate(0),
 	oldPos(owner->pos),
 	oldSlowUpdatePos(oldPos)
@@ -72,7 +86,7 @@ CScriptMoveType::~CScriptMoveType(void)
 }
 
 
-inline void CScriptMoveType::SetMidPos()
+inline void CScriptMoveType::CalcMidPos()
 {
 	const float3& pos = owner->pos;
 	const float3& pr = owner->relMidPos;
@@ -80,6 +94,29 @@ inline void CScriptMoveType::SetMidPos()
 	const float3& du = owner->updir;
 	const float3& dr = owner->rightdir;
 	owner->midPos = pos + (df * pr.z) + (du * pr.y) + (dr * pr.x);
+}
+
+
+inline void CScriptMoveType::CalcDirections()
+{
+	CMatrix44f matrix;
+	matrix.Translate(-rotOffset); // this doesn't work, Rotate is not a full rotate
+	matrix.RotateY(-rot.y);
+	matrix.RotateX(-rot.x);
+	matrix.RotateZ(-rot.z);
+	matrix.Translate(rotOffset);
+	owner->rightdir.x = -matrix[ 0];
+	owner->rightdir.y = -matrix[ 1];
+	owner->rightdir.z = -matrix[ 2];
+	owner->updir.x    =  matrix[ 4];
+	owner->updir.y    =  matrix[ 5];
+	owner->updir.z    =  matrix[ 6];
+	owner->frontdir.x =  matrix[ 8];
+	owner->frontdir.y =  matrix[ 9];
+	owner->frontdir.z =  matrix[10];
+
+	const shortint2 HandP = GetHAndPFromVector(owner->frontdir);
+	owner->heading = HandP.x;
 }
 
 
@@ -112,37 +149,47 @@ void CScriptMoveType::SlowUpdate()
 
 void CScriptMoveType::Update()
 {
-	float3& pos = owner->pos;
-	float3& vel = owner->speed;
+	if (useRotVel) {
+		rot += rotVel;
+		CalcDirections();
+	}
 
 	if (extrapolate) {
-		vel.y += gs->gravity * gravityFactor;
-		pos += (wind.curWind * windFactor);
-		pos += vel;
+		owner->speed = vel;
+		if (useRelVel) {
+			const float3 rVel = (owner->frontdir *  relVel.z) +
+			                    (owner->updir    *  relVel.y) +
+			                    (owner->rightdir * -relVel.x); // x is left
+			owner->speed += rVel;
+		}
+		owner->speed.y += gs->gravity * gravityFactor;
+		owner->speed   += (wind.curWind * windFactor);
+		owner->pos     += owner->speed;
 	}
 
 	if (trackGround) {
-		pos.y = ground->GetHeight2(pos.x, pos.z) + groundOffset;
-		vel.y = 0.0f;
+		owner->pos.y   = ground->GetHeight2(owner->pos.x, owner->pos.z) +
+		                 groundOffset;
+		owner->speed.y = 0.0f;
 	}
 
 	// positional clamps
-	pos.x = max(mins.x, min(maxs.x, pos.x));
-	pos.y = max(mins.y, min(maxs.y, pos.y));
-	pos.z = max(mins.z, min(maxs.z, pos.z));
-//	pos.CheckInBounds();
+	owner->pos.x = max(mins.x, min(maxs.x, owner->pos.x));
+	owner->pos.y = max(mins.y, min(maxs.y, owner->pos.y));
+	owner->pos.z = max(mins.z, min(maxs.z, owner->pos.z));
+//	owner->pos.CheckInBounds();
 
 	if (trackSlope) {
 		TrackSlope();
 	}
 
-	SetMidPos();
+	CalcMidPos();
 
 	// don't need the rest if the pos hasn't changed
-	if (oldPos == pos) {
+	if (oldPos == owner->pos) {
 		return;
 	}
-	oldPos = pos;
+	oldPos = owner->pos;
 
 	if (isBlocking) {
 		owner->UnBlock();
@@ -176,39 +223,39 @@ void CScriptMoveType::SetPosition(const float3& pos)
 }
 
 
-void CScriptMoveType::SetVelocity(const float3& vel)
+void CScriptMoveType::SetVelocity(const float3& _vel)
 {
-	owner->speed = vel;
+	vel = _vel;
 	return;
 }
 
 
-void CScriptMoveType::SetRotation(const float3& rot)
+void CScriptMoveType::SetRelativeVelocity(const float3& _relVel)
 {
-	CMatrix44f matrix;
-	matrix.Translate(rotationOffset); // this doesn't work, Rotate is not a full rotate
-	matrix.RotateY(rot.y);
-	matrix.RotateX(rot.x);
-	matrix.RotateZ(rot.z);
-	matrix.Translate(-rotationOffset);
-	owner->rightdir.x = matrix[ 0];
-	owner->rightdir.y = matrix[ 1];
-	owner->rightdir.z = matrix[ 2];
-	owner->updir.x    = matrix[ 4];
-	owner->updir.y    = matrix[ 5];
-	owner->updir.z    = matrix[ 6];
-	owner->frontdir.x = matrix[ 8];
-	owner->frontdir.y = matrix[ 9];
-	owner->frontdir.z = matrix[10];
+	relVel = _relVel;
+	useRelVel = ((relVel.x != 0.0f) || (relVel.y != 0.0f) || (relVel.z != 0.0f));
+	return;
+}
 
-	const shortint2 HandP = GetHAndPFromVector(owner->frontdir);
-	owner->heading = HandP.x;
+
+void CScriptMoveType::SetRotation(const float3& _rot)
+{
+	rot = _rot;
+	CalcDirections();
+}
+
+
+void CScriptMoveType::SetRotationVelocity(const float3& rvel)
+{
+	rotVel = rvel;
+	useRotVel = ((rotVel.x != 0.0f) || (rotVel.y != 0.0f) || (rotVel.z != 0.0f));
+	return;
 }
 
 
 void CScriptMoveType::SetRotationOffset(const float3& rotOff)
 {
-	rotationOffset = rotOff;
+	rotOffset = rotOff;
 }
 
 
