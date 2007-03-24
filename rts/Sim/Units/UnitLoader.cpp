@@ -458,6 +458,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 
 	weapon->fuelUsage = udw->fuelUsage;
 	weapon->avoidFriendly = weapondef->avoidFriendly;
+	weapon->avoidFeature = weapondef->avoidFeature;
 	weapon->collisionFlags = weapondef->collisionFlags;
 	weapon->Init();
 
