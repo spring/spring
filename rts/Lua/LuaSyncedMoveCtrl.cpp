@@ -193,7 +193,11 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, moveType->tag);
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetTag()");
+	}
+	moveType->tag = (int)lua_tonumber(L, 2);
 	return 0;
 }
 
