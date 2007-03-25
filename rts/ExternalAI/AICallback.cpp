@@ -707,7 +707,7 @@ const unsigned char* CAICallback::GetMetalMap()
 
 float CAICallback::GetElevation(float x,float z)
 {
-	return ground->GetHeight(x,z);
+	return ground->GetHeight2(x,z);
 }
 
 void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
