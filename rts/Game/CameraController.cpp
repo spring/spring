@@ -746,7 +746,8 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	// lock the view direction to the target
 	const float3 diff = (trackPos - pos);
 	const float rads = atan2(diff.x, diff.z);
-	float radDiff = -fmod(camera->rot.y - rads, 2.0 * PI);
+	float radDiff = -fmod(camera->rot.y - rads, 2.0f * PI);
+	
 	if (radDiff < -PI) {
 		radDiff += (2.0 * PI);
 	} else if (radDiff > PI) {
@@ -899,7 +900,7 @@ void CFreeController::Update()
 		camera->rot.x = -xRotLimit;
 		avel.x = 0.0f;
 	}
-	camera->rot.y = fmod(camera->rot.y, PI * 2.0);
+	camera->rot.y = fmod(camera->rot.y, PI * 2.0f);
 
 	// setup for the next loop
 	prevVel = vel;

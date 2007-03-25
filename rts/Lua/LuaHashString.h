@@ -26,6 +26,7 @@ struct LuaHashString {
 		LuaHashString& operator=(const LuaHashString& hs) {
 			str = hs.str;
 			hash = hs.hash;
+			return (*this);
 		}
 		
 		inline unsigned int GetHash() const { return hash; }
