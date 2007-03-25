@@ -528,12 +528,6 @@
 					RelativePath="..\..\Game\Ui\KeySet.h">
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\LuaState.cpp">
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\LuaState.h">
-				</File>
-				<File
 					RelativePath="..\..\Game\Ui\LuaUI.cpp">
 				</File>
 				<File
@@ -937,6 +931,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\ColorMap.h">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\NamedTextures.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\NamedTextures.h">
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\nv_dds.cpp">
@@ -1570,6 +1570,12 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\MoveTypes\MoveType.h">
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\ScriptMoveType.cpp">
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\ScriptMoveType.h">
 				</File>
 				<File
 					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.cpp">
@@ -3245,7 +3251,142 @@
 						RelativePath="..\..\..\lua\lua\include\lua.h">
 					</File>
 					<File
+						RelativePath="..\..\Lua\LuaCallInHandler.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaCallInHandler.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaCob.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaCob.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstCMD.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstCMD.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstCMDTYPE.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstCMDTYPE.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstGame.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstGame.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstGL.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstGL.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstSpring.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaConstSpring.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaDefs.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaFeatureDefs.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaFeatureDefs.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaGaia.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaGaia.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaHandle.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaHandle.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaHandleSynced.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaHandleSynced.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaHashString.h">
+					</File>
+					<File
 						RelativePath="..\..\..\lua\lua\include\lualib.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaOpenGL.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaOpenGL.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaRules.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaRules.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedCtrl.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedCtrl.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedMoveCtrl.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedMoveCtrl.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedRead.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedRead.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedTable.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaSyncedTable.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnitDefs.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnitDefs.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnsyncedCtrl.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnsyncedCtrl.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnsyncedRead.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnsyncedRead.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUtils.h">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaWeaponDefs.cpp">
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaWeaponDefs.h">
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lundump.c">
@@ -3306,33 +3447,6 @@
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lvm.h">
-					</File>
-					<File
-						RelativePath="..\..\..\lua\lua\src\lzio.c">
-						<FileConfiguration
-							Name="Debug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="No debug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release with error catching|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Syncdebug|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\..\lua\lua\src\lzio.h">
@@ -3531,6 +3645,33 @@
 						</File>
 						<File
 							RelativePath="..\..\..\lua\lua\src\lib\ltablib.c">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="No debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release with error catching|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Syncdebug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"/>
+							</FileConfiguration>
+						</File>
+						<File
+							RelativePath="..\..\..\lua\lua\src\lzio.c">
 							<FileConfiguration
 								Name="Debug|Win32">
 								<Tool

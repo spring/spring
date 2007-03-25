@@ -543,6 +543,8 @@ static bool InitParamMap()
 	ADD_BOOL("sweepFire", wd.sweepFire);
 
 	ADD_BOOL("canAttackGround", wd.canAttackGround);
+
+	return true;
 }
 
 

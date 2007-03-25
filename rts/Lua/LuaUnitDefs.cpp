@@ -848,6 +848,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
 //	std::vector<CExplosionGenerator*>  sfxExplGens;  //list of explosiongenerators for use in scripts
+
+	return true;
 }
 
 
