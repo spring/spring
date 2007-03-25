@@ -45,6 +45,9 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(Enable);
 	REGISTER_LUA_CFUNC(Disable);
 
+	REGISTER_LUA_CFUNC(SetTag);
+	REGISTER_LUA_CFUNC(GetTag);
+
 	REGISTER_LUA_CFUNC(SetProgressState);
 
 	REGISTER_LUA_CFUNC(SetExtrapolate);
@@ -184,17 +187,6 @@ int LuaSyncedMoveCtrl::Disable(lua_State* L)
 
 /******************************************************************************/
 
-int LuaSyncedMoveCtrl::GetTag(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
-	if (moveType == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, moveType->tag);
-	return 1;
-}
-
-
 int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 {
 	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
@@ -203,6 +195,17 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 	}
 	lua_pushnumber(L, moveType->tag);
 	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::GetTag(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, moveType->tag);
+	return 1;
 }
 
 
