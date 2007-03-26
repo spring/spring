@@ -1645,6 +1645,11 @@ bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
 void CGuiHandler::RunLayoutCommand(const string& command)
 {
 	if (command.find("reload") == 0) {
+		if (CLuaHandle::GetActiveHandle() != NULL) {
+			// NOTE: causes a SEGV through RunCallIn()
+			logOutput.Print("Can not reload from within LuaUI, yet");
+			return;
+		}
 		if (luaUI == NULL) {
 			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
 			CLuaUI::LoadHandler();
@@ -1663,6 +1668,11 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 		}
 	}
 	else if (command == "disable") {
+		if (CLuaHandle::GetActiveHandle() != NULL) {
+			// NOTE: might cause a SEGV through RunCallIn()
+			logOutput.Print("Can not disable from within LuaUI, yet");
+			return;
+		}
 		if (luaUI != NULL) {
 			CLuaUI::FreeHandler();
 			LoadConfig("ctrlpanel.txt");

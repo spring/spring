@@ -162,7 +162,7 @@ void CScriptMoveType::Update()
 			                    (owner->rightdir * -relVel.x); // x is left
 			owner->speed += rVel;
 		}
-		owner->speed.y += gs->gravity * gravityFactor;
+		vel.y          += gs->gravity * gravityFactor;
 		owner->speed   += (wind.curWind * windFactor);
 		owner->pos     += owner->speed;
 	}

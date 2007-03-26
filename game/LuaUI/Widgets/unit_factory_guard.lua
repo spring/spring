@@ -45,9 +45,6 @@ local function ClearGroup(unitID, factID)
 end
 
 
-local OrderUnit = Spring.GiveOrderToUnit
-
-
 local function GuardFactory(unitID, unitDefID, factID, factDefID)
   -- is this a factory?
   local fd = UnitDefs[factDefID]
@@ -98,6 +95,8 @@ local function GuardFactory(unitID, unitDefID, factID, factDefID)
     rx, rz =  0,  dist
   end
   
+  local OrderUnit = Spring.GiveOrderToUnit
+
   OrderUnit(unitID, CMD.MOVE,  { x + dx, y, z + dz }, { "" })
   OrderUnit(unitID, CMD.MOVE,  { x + rx, y, z + rz }, { "shift" })
   OrderUnit(unitID, CMD.GUARD, { factID },            { "shift" })

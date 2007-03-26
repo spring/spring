@@ -127,6 +127,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
+	CLuaHandle* origHandle = activeHandle;
 	SetActiveHandle();
 
 	const bool haveSynced = SetupSynced(syncedCode, syncedFile);
@@ -146,6 +147,8 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 
 	// register for call-ins
 	luaCallIns.AddHandle(this);
+
+	SetActiveHandle(origHandle);
 }
 
 
