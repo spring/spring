@@ -449,7 +449,6 @@ static bool InitParamMap()
 	// name of feature that this turn into when killed (not reclaimed)
 	ADD_STRING("deathFeature", fd.deathFeature);
 
-	// return something
 	return true;
 }
 

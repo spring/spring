@@ -708,7 +708,7 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 
 	const int args = lua_gettop(L);
 	if ((args == 1) && lua_isnumber(L, 1)) {
-		return (int)lua_tonumber(L, 1);
+		return ((int)lua_tonumber(L, 1) - 1);
 	}
 
 	return -1;
