@@ -20,7 +20,7 @@
 .setmaxspeed <number>
 .setminspeed <number>
 .skip <[+|f]seconds>  -- requires .cheat if not in a replay
-.take                 -- requires .cheat to when used by spectators
+.take                 -- requires .cheat when used by spectators
 
 -- lua scripts
 .luacob   < "reload" | "disable" | <custom command> >

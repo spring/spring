@@ -1344,6 +1344,9 @@ int CLuaUI::GetLastUpdateSeconds(lua_State* L)
 
 static int SetActiveCommandByIndex(lua_State* L)
 {
+	if (guihandler == NULL) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	const int cmdIndex = (int)lua_tonumber(L, 1) - CMD_INDEX_OFFSET;
 	int button = 1; // LMB
@@ -1380,6 +1383,9 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 static int SetActiveCommandByAction(lua_State* L)
 {
+	if (guihandler == NULL) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	const string text = lua_tostring(L, 1);
 	const CKeyBindings::Action action(text);

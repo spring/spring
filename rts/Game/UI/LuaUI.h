@@ -29,6 +29,8 @@ class CLuaUI : public CLuaHandle {
 
 		static void UpdateTeams();
 
+		static void Reload();
+
 	public: // structs
 		struct ReStringPair {
 			int cmdIndex;
@@ -111,7 +113,6 @@ class CLuaUI : public CLuaHandle {
 	protected:
 		static Uint32 lastUpdateTime;
 		static float  lastUpdateSeconds;
-
 
 	private: // call-outs
 		static int LoadTextVFS(lua_State* L);
