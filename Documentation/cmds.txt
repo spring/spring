@@ -1,0 +1,299 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  REMOTE COMMANDS
+--
+--  If you wish to bind these commands to a key,
+--  you have to use the 'say' command to send them.
+--  
+--    ex:  bind  Meta+4  say .team 4
+--
+--
+
+-- the following can only be set by the host player
+.cheat [0|1]
+.kick      <player_name>
+.kickbynum <player_number>
+.nohelp  [0|1]
+.nopause [0|1]
+.nospectatorchat [0|1]
+.setmaxspeed <number>
+.setminspeed <number>
+.skip <[+|f]seconds>  -- requires .cheat if not in a replay
+.take                 -- requires .cheat to when used by spectators
+
+-- lua scripts
+.luacob   < "reload" | "disable" | <custom command> >
+.luagaia  < "reload" | "disable" | <custom command> >
+.luarules < "reload" | "disable" | <custom command> >
+.devlua   [0|1]  -- requires .cheat, allows loading non-archived scripts
+.editdefs [0|1]  -- requires .cheat,
+                 -- allows writing to UnitDefs, FeatureDefs, and WeaponDefs
+
+-- the following require .cheat
+.team <number>
+.spectator
+.nocost
+.reloadcob <unit_name>
+.give <[count] unit_name> | "all"
+
+-- debugging
+.desync
+.divbyzero
+.exception
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  LOCAL COMMANDS
+--
+--  These commands can be bound to keysets, or sent on the
+--  text input line by adding a slash prefix.
+--
+--    ex:  /water 3
+--
+--
+
+select <select_string>
+
+selectunits ["clear"] [+unitID] [-unitID] ...
+
+selectcycle ["restore"]
+
+deselect
+
+clock [0|1]
+info  [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+
+quit
+quitwarn
+pause
+
+shadows [<0|1> [mapsize]]
+water   [0|1|2|3]
+
+say  <message>
+echo <message>
+
+drawinmap
+drawlabel
+
+mouse1
+mouse2
+mouse3
+mouse4
+mouse5
+
+mousestate
+
+viewfps
+viewta
+viewtw
+viewrot
+viewsave view_name
+viewload view_name
+viewselection
+
+specteam <int>
+
+group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]
+
+group0
+group1
+group2
+group3
+group4
+group5
+group6
+group7
+group8
+group9
+
+chat
+chatall
+chatally
+chatspec
+chatswitchall
+chatswitchally
+chatswitchspec
+
+lastmsgpos
+
+track
+trackoff
+trackmode [0|1|2]
+
+gameinfo
+gameinfoclose
+
+volume <float>  -- 0.0 to 1.0
+
+toggleoverview
+showhealthbars
+singlestep
+debug
+nosound
+savegame
+createvideo
+updatefov
+drawtrees
+dynamicsky
+
+hideinterface
+increaseviewradius
+decreaseviewradius
+moretrees
+lesstrees
+moreclouds
+lessclouds
+speedup
+slowdown
+controlunit
+showshadowmap
+showstandard
+showelevation
+showmetalmap
+showpathmap
+toggleradarandjammer
+yardmap4
+
+togglelos
+sharedialog
+
+incguiopacity
+decguiopacity
+
+screenshot ["png"]
+
+grabinput
+
+bind
+unbind
+unbindall
+unbindkeyset
+unbindaction
+fakemeta
+
+keydebug
+keyload
+keyreload
+keysave
+keyprint
+keysyms
+keycodes
+
+cmdcolors [filename]
+ctrlpanel [filename]
+font      <filename>
+
+gathermode [0|1]
+
+moveforward
+moveback
+moveleft
+moveright
+moveup
+movedown
+movefast
+moveslow
+
+minimap <"fullproxy">    [0|1]
+minimap <"icons">        [0|1]
+minimap <"drawcommands"> [0|1]
+minimap <"simplecolors"> [0|1]
+minimap <"min" | "minimize"> [0|1]
+minimap <"max" | "maximize"> [0|1]
+minimap <"maxspect"> [0|1]
+minimap <"unitexp"> <float>
+minimap <"unitsize"> <float>
+minimap <"geo" | "geometry"> px py sx sy
+minimap <"slavemode"> [0|1]
+minimap <"draw">
+
+tooltip [0|1]
+resbar  [0|1]
+console [0|1]
+
+luaui < "reload" | "disable" | <custom command> >
+safegl [0|1]
+
+pastetext  <text>  -- inserts the text into the text input  (ex: ctrl+v)
+buffertext <text>  -- inserts the text into the console history
+
+techlevels
+
+maxparticles <number>
+
+aiselect [ai_name]  -- ai_name required if used as a slash command
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  BIND-ONLY COMMANDS
+--
+--  Only avaible for binding  (can NOT be used as /slash commands)
+--
+--
+
+-- Only work when issuing build orders
+
+buildspacing <"inc" | "dec">
+buildfacing  <"inc" | "dec" | "north" | "south" | "east" | "west">
+
+
+-- Special orders
+
+buildiconsfirst
+firstmenu
+
+invqueuekey [0|1]
+
+hotbind
+hotunbind
+
+
+-- For Debugging
+
+showcommands
+
+
+-- Unit Commands
+
+dgun
+stop
+move
+attack
+areaattack
+fight
+patrol
+guard
+capture
+repair
+reclaim
+restore
+resurrect
+loadunits
+unloadunits
+
+cloak          [0|1]
+onoff          [0|1]
+repeat         [0|1]
+trajectory     [0|1]
+loopbackattack [0|1]
+
+firestate       [0|1|2]
+movestate       [0|1|2]
+autorepairlevel [0|1|2]
+
+selfd               ["queued"]
+wait                ["queued"]
+timewait  [seconds] ["queued"]
+deathwait           ["queued"]
+squadwait   [count] ["queued"]
+gatherwait          ["queued"]
+
+stockpile            ["+5" | "+20" | "+100" | "-1" | "-5" | "-20" | "-100"] 
+buildunit_<unitname> ["+5" | "+20" | "+100" | "-1" | "-5" | "-20" | "-100"]
+
