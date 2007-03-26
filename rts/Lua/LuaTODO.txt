@@ -7,7 +7,6 @@
 - GetNearestAllyUnit(pos, allyteam, limit)
 - GetNearestEnemyUnit(pos, allyteam, limit)
 - Add UnitDefTracker and use it
-- GetUnitSelfDTime()
 - Fix WarpMouse()
 - OGG
 - Resync helpers
