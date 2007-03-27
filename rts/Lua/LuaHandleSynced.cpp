@@ -132,16 +132,19 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 
 	const bool haveSynced = SetupSynced(syncedCode, syncedFile);
 	if (L == NULL) {
+		SetActiveHandle(origHandle);
 		return;
 	}
 
 	const bool haveUnsynced = SetupUnsynced(unsyncedCode, unsyncedFile);
 	if (L == NULL) {
+		SetActiveHandle(origHandle);
 		return;
 	}
 
 	if (!haveSynced && !haveUnsynced) {
 		KillLua();
+		SetActiveHandle(origHandle);
 		return;
 	}
 

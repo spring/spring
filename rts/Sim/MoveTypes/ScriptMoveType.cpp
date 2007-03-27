@@ -154,8 +154,8 @@ void CScriptMoveType::Update()
 		CalcDirections();
 	}
 
+	owner->speed = vel;
 	if (extrapolate) {
-		owner->speed = vel;
 		if (useRelVel) {
 			const float3 rVel = (owner->frontdir *  relVel.z) +
 			                    (owner->updir    *  relVel.y) +
