@@ -188,6 +188,9 @@ void CGroundDecalHandler::Draw(void)
 	if(shadowHandler && shadowHandler->drawShadows){
 		glDisable( GL_FRAGMENT_PROGRAM_ARB );
 		glDisable( GL_VERTEX_PROGRAM_ARB );
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
 	glPolygonOffset(-10,-20);
