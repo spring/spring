@@ -162,21 +162,22 @@ void CScriptMoveType::Update()
 			                    (owner->rightdir * -relVel.x); // x is left
 			owner->speed += rVel;
 		}
-		vel.y          += gs->gravity * gravityFactor;
-		owner->speed   += (wind.curWind * windFactor);
-		owner->pos     += owner->speed;
+		vel.y        += gs->gravity * gravityFactor;
+		owner->speed += (wind.curWind * windFactor);
+		owner->pos   += owner->speed;
 	}
 
 	if (trackGround) {
-		owner->pos.y   = ground->GetHeight2(owner->pos.x, owner->pos.z) +
-		                 groundOffset;
-		owner->speed.y = 0.0f;
+		const float gndMin =
+			ground->GetHeight2(owner->pos.x, owner->pos.z) + groundOffset;
+		if (owner->pos.y <= gndMin) {
+			owner->pos.y = gndMin;
+			owner->speed.y = 0.0f;
+		}
 	}
 
 	// positional clamps
-	owner->pos.x = max(mins.x, min(maxs.x, owner->pos.x));
-	owner->pos.y = max(mins.y, min(maxs.y, owner->pos.y));
-	owner->pos.z = max(mins.z, min(maxs.z, owner->pos.z));
+	CheckLimits();
 //	owner->pos.CheckInBounds();
 
 	if (trackSlope) {
@@ -203,6 +204,35 @@ void CScriptMoveType::Update()
 		groundDecals->UnitMoved(owner);
 	}
 };
+
+
+void CScriptMoveType::CheckLimits()
+{
+	if (owner->pos.x < mins.x) {
+		owner->pos.x = mins.x;
+		owner->speed.x = 0.0f;
+	}
+	if (owner->pos.x > maxs.x) {
+		owner->pos.x = maxs.x;
+		owner->speed.x = 0.0f;
+	}
+	if (owner->pos.y < mins.y) {
+		owner->pos.y = mins.y;
+		owner->speed.y = 0.0f;
+	}
+	if (owner->pos.y > maxs.y) {
+		owner->pos.y = maxs.y;
+		owner->speed.y = 0.0f;
+	}
+	if (owner->pos.z < mins.z) {
+		owner->pos.z = mins.z;
+		owner->speed.z = 0.0f;
+	}
+	if (owner->pos.z > maxs.z) {
+		owner->pos.z = maxs.z;
+		owner->speed.z = 0.0f;
+	}
+}
 
 
 void CScriptMoveType::SetPhysics(const float3& pos,
@@ -273,7 +303,7 @@ void CScriptMoveType::SetHeading(short heading)
 void CScriptMoveType::TrackSlope()
 {
 	owner->frontdir = GetVectorFromHeading(owner->heading);
-	owner->updir = ground->GetNormal(owner->pos.x, owner->pos.z);
+	owner->updir = ground->GetSmoothNormal(owner->pos.x, owner->pos.z);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	owner->rightdir.Normalize();
 	owner->frontdir = owner->updir.cross(owner->rightdir);

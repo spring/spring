@@ -44,6 +44,7 @@ class CScriptMoveType : public CMoveType
 		void CalcMidPos();
 		void CalcDirections();
 		void TrackSlope();
+		void CheckLimits();
 
 	public:
 		int tag;
