@@ -20,12 +20,17 @@
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
 
+
+	// TODO: How are class statics incorporated into creg?
+float CExtractorBuilding::maxExtractionRange = 0.0f;
+
+
 /*
 Constructor
 */
 CExtractorBuilding::CExtractorBuilding() :
-	extractionRange(0),
-	extractionDepth(0)
+	extractionRange(0.0f),
+	extractionDepth(0.0f)
 {
 }
 
@@ -33,55 +38,72 @@ CExtractorBuilding::CExtractorBuilding() :
 /*
 Destructor
 */
-CExtractorBuilding::~CExtractorBuilding() {
-	//Leaving back the extraction-area.
+CExtractorBuilding::~CExtractorBuilding()
+{
+	ResetExtraction();
+}
+
+
+/*
+Resets the metalMap database
+Notifies the neighbours
+*/
+void CExtractorBuilding::ResetExtraction()
+{
+	// Leaving back the extraction-area.
 	for(std::list<MetalSquareOfControl*>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
 		readmap->metalMap->removeExtraction((*si)->x, (*si)->z, (*si)->extractionDepth);
 		delete *si;
 	}
-	//Tells the neighboors to take it over.
-	for(std::list<CExtractorBuilding*>::iterator ei = neighboors.begin(); ei != neighboors.end(); ++ei) {
+	metalAreaOfControl.clear();
+
+	// Tells the neighbours to take it over.
+	for(std::list<CExtractorBuilding*>::iterator ei = neighbours.begin(); ei != neighbours.end(); ++ei) {
 		(*ei)->RemoveNeighboor(this);
 		(*ei)->ReCalculateMetalExtraction();
 	}
+	neighbours.clear();
 }
 
 
 /*
 Sets the range of extraction for this extractor.
-With this knowlege also finding intersected neighboors.
+With this knowlege also finding intersected neighbours.
 */
-void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
+void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
+{
 	extractionRange = range;
 	extractionDepth = depth;
 
-	//Finding neighboors
-	std::vector<CUnit*> cu=qf->GetUnits(pos,extractionRange*2);
+	//Finding neighbours
+	std::vector<CUnit*> cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
+	maxExtractionRange = max(extractionRange, maxExtractionRange);
 
 	for(std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		if(typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {
 			CExtractorBuilding *eb = (CExtractorBuilding*)*ui;
 			if(eb->pos.distance2D(this->pos) < (eb->extractionRange + this->extractionRange)) {
-				neighboors.push_back(eb);
+				neighbours.push_back(eb);
 				eb->AddNeighboor(this);
 			}
 		}
 	}
-	int nbr = neighboors.size();
+	int nbr = neighbours.size();
 //	logOutput << "Neighboors found: " << nbr << "\n";		//Debug
 
 	//Calculating area of control and metalExtract.
 	//TODO: Improve this method.
 	metalExtract = 0;
-	int xBegin = max(0,(int)((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int xEnd = min(gs->mapx/2-1,(int)((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zBegin = max(0,(int)((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zEnd = min(gs->mapy/2-1,(int)((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
-	for(int x = xBegin; x <= xEnd; x++)
+	int xBegin = max(0,           (int)((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int xEnd   = min(gs->mapx/2-1,(int)((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zBegin = max(0,           (int)((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zEnd   = min(gs->mapy/2-1,(int)((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	for(int x = xBegin; x <= xEnd; x++) {
 		for(int z = zBegin; z <= zEnd; z++) {	//Going thru the whole (x,z)-square...
-			float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y, (z + 0.5f) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
-			float sqrCenterDistance = msqrPos.distance2D(this->pos);
-			if(sqrCenterDistance < extractionRange) {	//... and add whose within the circle.
+			const float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y,
+			                     (z + 0.5f) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
+			const float sqrCenterDistance = msqrPos.distance2D(this->pos);
+			if (sqrCenterDistance < extractionRange) {	//... and add whose within the circle.
 				MetalSquareOfControl *msqr = SAFE_NEW MetalSquareOfControl;
 				msqr->x = x;
 				msqr->z = z;
@@ -90,8 +112,16 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 				metalExtract += msqr->extractionDepth * readmap->metalMap->getMetalAmount(msqr->x, msqr->z);
 			}
 		}
+	}
 	nbr = metalAreaOfControl.size();
+
 //	logOutput << "MetalSquares of control: " << nbr << "\n";	//Debug
+
+	// Set the COB animation speed
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract * 100.0f));
+	if (activated) {
+		cob->Call("Go");
+	}
 }
 
 
@@ -99,13 +129,14 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth) {
 Adds a neighboor.
 Most likely called from a newly built neighboor.
 */
-void CExtractorBuilding::AddNeighboor(CExtractorBuilding *neighboor) {
+void CExtractorBuilding::AddNeighboor(CExtractorBuilding *neighboor)
+{
 	if(neighboor != this){
-		for(std::list<CExtractorBuilding*>::iterator ei = neighboors.begin(); ei != neighboors.end(); ++ei) {
+		for(std::list<CExtractorBuilding*>::iterator ei = neighbours.begin(); ei != neighbours.end(); ++ei) {
 			if((*ei)==neighboor)
 				return;
 		}
-		neighboors.push_back(neighboor);
+		neighbours.push_back(neighboor);
 	}
 }
 
@@ -114,8 +145,9 @@ void CExtractorBuilding::AddNeighboor(CExtractorBuilding *neighboor) {
 Removes a neighboor.
 Most likely called from a dying neighboor.
 */
-void CExtractorBuilding::RemoveNeighboor(CExtractorBuilding* neighboor) {
-	neighboors.remove(neighboor);
+void CExtractorBuilding::RemoveNeighboor(CExtractorBuilding* neighboor)
+{
+	neighbours.remove(neighboor);
 }
 
 
@@ -123,7 +155,8 @@ void CExtractorBuilding::RemoveNeighboor(CExtractorBuilding* neighboor) {
 Recalculate metalExtract.
 Most likely called by a dying neighboor.
 */
-void CExtractorBuilding::ReCalculateMetalExtraction() {
+void CExtractorBuilding::ReCalculateMetalExtraction()
+{
 	metalExtract = 0;
 	for(std::list<MetalSquareOfControl*>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
 		MetalSquareOfControl *msqr = *si;
@@ -135,22 +168,23 @@ void CExtractorBuilding::ReCalculateMetalExtraction() {
 
 	//Sets the new rotation-speed.
 	cob->Call(COBFN_SetSpeed, (int)(metalExtract*100.0f));
-	cob->Call("Go");
-
+	if (activated) {
+		cob->Call("Go");
+	}
 }
 
 
 /*
 Finds the amount of metal to extract and sets the rotationspeed when the extractor are built.
 */
-void CExtractorBuilding::FinishedBuilding() {
+void CExtractorBuilding::FinishedBuilding()
+{
 	SetExtractionRangeAndDepth(unitDef->extractRange, unitDef->extractsMetal);
 
 #ifdef TRACE_SYNC
-		tracefile << "Metal extractor finished: ";
-		tracefile << metalExtract << " ";
+	tracefile << "Metal extractor finished: ";
+	tracefile << metalExtract << " ";
 #endif
 
-	cob->Call(COBFN_SetSpeed, (int)(metalExtract*100.0f));
 	CBuilding::FinishedBuilding();
 }
