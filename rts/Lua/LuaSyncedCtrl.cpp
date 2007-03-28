@@ -1023,7 +1023,7 @@ int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 		return 0;
 	}
 	CExtractorBuilding* mex = dynamic_cast<CExtractorBuilding*>(unit);
-	if (unit == NULL) {
+	if (mex == NULL) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
