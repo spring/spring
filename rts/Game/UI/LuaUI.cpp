@@ -156,7 +156,7 @@ CLuaUI::CLuaUI()
 
 	lua_settop(L, 0);
 
-	if (!LoadCode(L, code, "gui.lua")) {
+	if (!LoadCode(code, "gui.lua")) {
 		KillLua();
 		return;
 	}
@@ -299,33 +299,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
 
 	lua_setglobal(L, "Spring");
-
-	return true;
-}
-
-
-bool CLuaUI::LoadCode(lua_State* L, const string& code, const string& debug)
-{
-  lua_settop(L, 0);
-
-	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error, debug.c_str(), lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	CLuaHandle* orig = activeHandle;
-	SetActiveHandle();
-	error = lua_pcall(L, 0, 0, 0);
-	SetActiveHandle(orig);
-
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n", error, debug.c_str(), lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
 
 	return true;
 }

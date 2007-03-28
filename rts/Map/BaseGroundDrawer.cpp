@@ -249,8 +249,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]) {
 							float extractDepth = extractDepthMap[y*gs->hmapx+x];
 							infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
-						} else
+						} else {
 							infoTexMem[a*4]=0;
+						}
 						infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
 						infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
 					}

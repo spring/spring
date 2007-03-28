@@ -90,8 +90,6 @@ class CLuaUI : public CLuaHandle {
 
 		bool LoadCFunctions(lua_State* L);
 		
-		bool LoadCode(lua_State* L, const string& code, const string& debug);
-
 		bool AddConsoleLines(lua_State* L);
 		
 		bool BuildCmdDescTable(lua_State* L,

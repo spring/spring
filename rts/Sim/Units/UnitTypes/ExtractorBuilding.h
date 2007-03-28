@@ -10,10 +10,14 @@ public:
 	CExtractorBuilding();
 	virtual ~CExtractorBuilding();
 
+	void ResetExtraction();
 	void SetExtractionRangeAndDepth(float range, float depth);
 	void ReCalculateMetalExtraction();
 	void AddNeighboor(CExtractorBuilding* neighboor);
 	void RemoveNeighboor(CExtractorBuilding* neighboor);
+
+	float GetExtractionRange() const { return extractionRange; }
+	float GetExtractionDepth() const { return extractionDepth; }
 
 	virtual void FinishedBuilding();
 
@@ -26,7 +30,9 @@ protected:
 
 	float extractionRange, extractionDepth;
 	std::list<MetalSquareOfControl*> metalAreaOfControl;
-	std::list<CExtractorBuilding*> neighboors;
+	std::list<CExtractorBuilding*> neighbours;
+
+	static float maxExtractionRange;
 };
 
 #endif // __EXTRACTOR_BUILDING_H__

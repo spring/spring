@@ -48,6 +48,7 @@ extern "C" {
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/UnitTypes/ExtractorBuilding.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
@@ -134,6 +135,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -1010,6 +1012,31 @@ int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
 	}
 	unit->alwaysVisible = lua_toboolean(L, 2);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CExtractorBuilding* mex = dynamic_cast<CExtractorBuilding*>(unit);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitMetalExtraction()");
+	}
+	const float depth = (float)lua_tonumber(L, 2);
+	float range = mex->GetExtractionRange();
+	if ((args >= 3) && lua_isnumber(L, 3)) {
+		range = (float)lua_tonumber(L, 3);
+	}
+	mex->ResetExtraction();
+	mex->SetExtractionRangeAndDepth(range, depth);
 	return 0;
 }
 

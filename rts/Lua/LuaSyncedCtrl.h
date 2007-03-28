@@ -66,6 +66,7 @@ class LuaSyncedCtrl {
 		static int SetUnitNoSelect(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitAlwaysVisible(lua_State* L);
+		static int SetUnitMetalExtraction(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
