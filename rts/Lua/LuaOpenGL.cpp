@@ -158,6 +158,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ListRun);
 	REGISTER_LUA_CFUNC(ListDelete);
 
+	REGISTER_LUA_CFUNC(ClipPlane);
+
 	REGISTER_LUA_CFUNC(MatrixMode);
 	REGISTER_LUA_CFUNC(LoadIdentity);
 	REGISTER_LUA_CFUNC(LoadMatrix);
@@ -228,6 +230,9 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_POLYGON_OFFSET_POINT);
 
 	glDisable(GL_LINE_STIPPLE);
+
+	glDisable(GL_CLIP_PLANE4);
+	glDisable(GL_CLIP_PLANE5);
 
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
@@ -2078,6 +2083,46 @@ int LuaOpenGL::Rotate(lua_State* L)
 	const float y = (float)lua_tonumber(L, 3);
 	const float z = (float)lua_tonumber(L, 4);
 	glRotatef(r, x, y, z);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaOpenGL::ClipPlane(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.ClipPlane");
+	}
+	const int plane = (int)lua_tonumber(L, 1);
+	if ((plane < 1) || (plane > 2)) {
+		luaL_error(L, "gl.ClipPlane: bad plane number (use 1 or 2)");
+	}
+	// use GL_CLIP_PLANE4 and GL_CLIP_PLANE5 for LuaOpenGL  (6 are guaranteed)
+	const GLenum gl_plane = GL_CLIP_PLANE4 + plane - 1;
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			glEnable(gl_plane);
+		} else {
+			glDisable(gl_plane);
+		}
+		return 0;
+	}
+	if ((args < 5) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
+	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
+		luaL_error(L, "Incorrect arguments to gl.ClipPlane");
+	}
+	GLdouble equation[4];
+	equation[0] = (double)lua_tonumber(L, 2);
+	equation[1] = (double)lua_tonumber(L, 3);
+	equation[2] = (double)lua_tonumber(L, 4);
+	equation[3] = (double)lua_tonumber(L, 5);
+	glClipPlane(gl_plane, equation); 
+	glEnable(gl_plane);
 	return 0;
 }
 
