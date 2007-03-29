@@ -145,6 +145,8 @@ class LuaOpenGL {
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 
+		static int ClipPlane(lua_State* L);
+
 		static int MatrixMode(lua_State* L);
 		static int LoadIdentity(lua_State* L);
 		static int LoadMatrix(lua_State* L);

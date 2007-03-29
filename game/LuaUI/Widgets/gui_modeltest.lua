@@ -35,6 +35,7 @@ include("opengl.h.lua")
 local LoadModel = include("loadmodel.lua")
 
 
+local clip    = (1 > 0)
 local merged  = (1 > 0)
 local rotate  = (1 > 0)
 local revolve = (-1 > 0)
@@ -195,7 +196,6 @@ end
 
 
 function Draw(useMat, mode)
---  print("DrawWorld")
   if (useDepthTest) then
     gl.DepthTest(true)
   end
@@ -203,27 +203,46 @@ function Draw(useMat, mode)
   gl.PushMatrix()
   gl.Translate(px, py, pz)
   gl.PolygonMode(GL.FRONT_AND_BACK, mode)
+
+  if (clip) then
+    local hourTime = widgetHandler:GetHourTimer()
+    local rate = 2
+    local dist = msx * (0.5 - (math.mod(hourTime, rate) / rate))
+    gl.ClipPlane(1,  1, 0, 0, dist)
+    gl.ClipPlane(2, -1, 0, 0, -dist + (msx * 0.2))
+  end
+
   for i,dl in ipairs(displayLists) do
     gl.PushMatrix()
-      if (rotate or revolve) then
-        gl.Rotate(radians * 180 / math.pi, 0, 1, 0)
-      end
-      if (revolve) then
-        gl.Rotate(-30, 1, 0, 0)
-      end
-      if (fixYZ) then
-        gl.Rotate(-90, 1, 0, 0)
-      end
-      gl.Scale(scale, scale, scale)
-      if (useMat) then
-        dl.Draw()
-      else
-        dl.DrawNoMat()
-      end
+
+    if (rotate or revolve) then
+      gl.Rotate(radians * 180 / math.pi, 0, 1, 0)
+    end
+    if (revolve) then
+      gl.Rotate(-30, 1, 0, 0)
+    end
+    if (fixYZ) then
+      gl.Rotate(-90, 1, 0, 0)
+    end
+    gl.Scale(scale, scale, scale)
+
+    if (useMat) then
+      dl.Draw()
+    else
+      dl.DrawNoMat()
+    end
+
     gl.PopMatrix()
   end
+
   gl.PolygonMode(GL.FRONT_AND_BACK, mode)
   gl.PopMatrix()
+
+  if (clip) then
+    gl.ClipPlane(1, false)
+    gl.ClipPlane(2, false)
+  end
+
   gl.ResetState()
 end
 

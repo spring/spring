@@ -41,8 +41,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
+	LuaPushNamedNumber(L, "gameMode",      gs->gameMode);
 
-	LuaPushNamedBool(L,   "commEnds",         !!gs->gameMode);
+	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode == 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 
