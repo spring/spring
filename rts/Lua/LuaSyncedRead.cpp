@@ -133,6 +133,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
 
+	REGISTER_LUA_CFUNC(GetAllUnits);
 	REGISTER_LUA_CFUNC(GetTeamUnits);
 	REGISTER_LUA_CFUNC(GetTeamUnitsSorted);
 	REGISTER_LUA_CFUNC(GetTeamUnitsCounts);
@@ -1042,7 +1043,27 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 //  Grouped Unit Queries
 //
 
-int LuaSyncedRead::GetTeamUnits(lua_State* L) // 
+int LuaSyncedRead::GetAllUnits(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (!fullRead) {
+		return 0;
+	}
+	lua_newtable(L);
+	int count = 0;
+	std::list<CUnit*>::const_iterator uit;
+	for (uit = uh->activeUnits.begin(); uit != uh->activeUnits.end(); ++uit) {
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, (*uit)->id);
+		lua_rawset(L, -3);
+	}
+	hs_n.PushNumber(L, count);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetTeamUnits(lua_State* L)
 {
 	if (readAllyTeam == CLuaHandle::NoAccessTeam) {
 		return 0;

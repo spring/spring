@@ -26,18 +26,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- setup the UnitDefs canStockpile parameter
-function widget:Initialize()
-  for _,ud in pairs(UnitDefs) do
-    for _,wt in ipairs(ud.weapons) do
-      local wd = WeaponDefs[wt.weaponDef]
-      if (wd and wd.stockpile) then
-        ud.canStockpile = true
-      end
-    end
-  end
-end
-
 
 function widget:UnitCreated(unitID, unitDefID, unitTeam)
   local ud = UnitDefs[unitDefID]

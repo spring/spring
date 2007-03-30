@@ -206,10 +206,10 @@ function Draw(useMat, mode)
 
   if (clip) then
     local hourTime = widgetHandler:GetHourTimer()
-    local rate = 2
+    local rate = 4
     local dist = msx * (0.5 - (math.mod(hourTime, rate) / rate))
     gl.ClipPlane(1,  1, 0, 0, dist)
-    gl.ClipPlane(2, -1, 0, 0, -dist + (msx * 0.2))
+    gl.ClipPlane(2, -1, 0, 0, -dist + (msx * 0.1))
   end
 
   for i,dl in ipairs(displayLists) do

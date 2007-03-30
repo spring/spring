@@ -470,7 +470,7 @@ static bool InitParamMap()
 
 	ADD_BOOL("turret", wd.turret);
 	ADD_BOOL("onlyForward", wd.onlyForward);
-	ADD_BOOL("waterweapon", wd.waterweapon);
+	ADD_BOOL("waterWeapon", wd.waterweapon);
 	ADD_BOOL("tracks", wd.tracks);
 	ADD_BOOL("dropped", wd.dropped);
 	ADD_BOOL("paralyzer", wd.paralyzer);
