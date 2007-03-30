@@ -15,7 +15,8 @@ Spring.SendCommands({"ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt"})
 
 dofile(LUAUI_DIRNAME .. "utils.lua")
 
-include("callins.lua") -- define all call-ins, in case they are required
+include("callins.lua")  -- define all call-ins, in case they are required
+include("unitdefs.lua") -- process some custom UnitDefs parameters
 
 include("colors.h.lua")
 include("opengl.h.lua")
@@ -77,43 +78,6 @@ activePage = 0
 forceLayout = true
 
 
--- FIXME
-function ptuc(teamID)
-  local tuc = Spring.GetTeamUnitsCounts(teamID)
-  tuc.n = nil
-  if (tuc.unknown) then
-    print('Unknown = ' .. tuc.unknown)
-    tuc.unknown = nil
-  end
-  
-  for udid,count in pairs(tuc) do
-    print(UnitDefs[udid].name .. ' = ' .. count)
-  end
-end
-
-
--- FIXME
-function ptus(teamID)
-  local tus = Spring.GetTeamUnitsSorted(teamID)
-  for udid,utable in pairs(tus) do
-    if (udid ~= 'n') then
-      local msg = ''
-      if (udid == 'unknown') then
-        msg = 'unknown'
-      else
-        msg = UnitDefs[udid].name
-      end
-      msg = msg .. '(' .. utable.n .. ')'
-      for _,uid in ipairs(utable) do
-        msg = msg .. ' ' .. uid
-      end
-      print(msg)
-    end
-  end
-end
-
-
-
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
 
   local needUpdate = forceLayout
@@ -126,40 +90,6 @@ function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
 
   widgetHandler:Update()
 
-
-if (false) then  -- FIXME
-    local mx, my = Spring.GetMouseState()
-    local type,data = Spring.TraceScreenRay(mx, my)
-    if (type == 'unit') then
-      local udid = Spring.GetUnitDefID(data)
-      Spring.SendCommands({'echo unit('..data..') '..udid..' '..UnitDefs[udid].name})
-    end
-end
-
-
-
-if (false) then   -- FIXME
-  if (Spring.GetGameSeconds() > 0) then
-    local mx, my = Spring.GetMouseState()
-    local type,pos = Spring.TraceScreenRay(mx, my)
-    local id = pos
-    if (type == 'ground') then
-      print('ground', pos[1], pos[2], pos[3])
-      print('ground', pos[1], Spring.GetGroundHeight(pos[1], pos[3]), pos[3])
-      print('normal', Spring.GetGroundNormal(pos[1], pos[3]))
-      local n,m,h,ts,ks,hs,ss = Spring.GetGroundInfo(pos[1], pos[3])
-      print(n,m,h,ts,ks,hs,ss)
-    elseif (type == 'unit') then
-      print('unit('..id..')', Spring.GetUnitPosition(id))
-    elseif (type == 'feature') then
-      local x,y,z = Spring.GetFeaturePosition(id)
-      print('feature('..id..')', x,y,z,
-                                 Spring.GetFeatureResources(id))
-      print('  ', Spring.GetFeatureInfo(id))
-    end    
-  end
-end
-  
   return needUpdate
 end
 
@@ -241,7 +171,7 @@ end
 
 
 --
--- The unit (and some of the Draw) call-Ins are handled
+-- The unit (and some of the Draw) call-ins are handled
 -- differently (see LuaUI/widgets.lua / UpdateCallIns())
 --
 
