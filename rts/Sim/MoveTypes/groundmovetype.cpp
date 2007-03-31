@@ -184,9 +184,9 @@ void CGroundMoveType::Update()
 	if(owner->transporter) {
 		return;
 	}
-	if((ground->GetSlope(owner->pos.x, owner->pos.z) >
-		owner->unitDef->movedata->maxSlope)
-		&& (!floatOnWater || ground->GetHeight(owner->pos.x, owner->pos.z) > 0))
+	if((ground->GetSlope(owner->midPos.x, owner->midPos.z) >
+		owner->unitDef->movedata->maxSlope*1.1f)
+		&& (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
 	{
 		skidding = true;
 	}
@@ -622,7 +622,9 @@ void CGroundMoveType::UpdateSkid(void)
 			skidRotSpeed*=0.5f+gs->randFloat();
 			midPos.y=wh+owner->relMidPos.y-speed.y*0.8f;
 			float impactSpeed=-speed.dot(ground->GetNormal(midPos.x,midPos.z));
-			if(impactSpeed>1){
+			if(impactSpeed > owner->unitDef->minCollisionSpeed
+				&& owner->unitDef->minCollisionSpeed >= 0)
+			{
 				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
 					0, ZeroVector);
 			}
@@ -632,9 +634,9 @@ void CGroundMoveType::UpdateSkid(void)
 		float speedReduction=0.35f;
 //		if(owner->unitDef->movedata->moveType==MoveData::Hover_Move)
 //			speedReduction=0.1f;
-		bool onSlope = (ground->GetSlope(pos.x,pos.z)
+		bool onSlope = (ground->GetSlope(midPos.x,midPos.z)
 			> owner->unitDef->movedata->maxSlope)
-			&& (!floatOnWater || ground->GetHeight(pos.x, pos.z) > 0);
+			&& (!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0);
 		if(speedf<speedReduction && !onSlope)
 		{		//stop skidding
 			currentSpeed=0;
@@ -651,7 +653,7 @@ void CGroundMoveType::UpdateSkid(void)
 		{
 			if (onSlope)
 			{
-				float3 dir = ground->GetNormal(pos.x, pos.z);
+				float3 dir = ground->GetNormal(midPos.x, midPos.z);
 				float3 normalForce = dir*dir.dot(UpVector*gs->gravity);
 				float3 newForce = UpVector*gs->gravity - normalForce;
 				speed+=newForce;
@@ -717,39 +719,59 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			float3 dif=midPos-u->midPos;
 			dif/=dist;
 			if(u->mass==100000 || !u->mobility){
-				midPos-=dif*(dist-totRad);
-				pos=midPos-owner->frontdir*owner->relMidPos.z
-					- owner->updir*owner->relMidPos.y
-					- owner->rightdir*owner->relMidPos.x;
 				float impactSpeed=-owner->speed.dot(dif);
-				owner->speed += dif*(impactSpeed*1.8f);
-				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
-						0,ZeroVector);
-				u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,0,ZeroVector);
+				if(impactSpeed > 0) {
+					midPos += dif*impactSpeed;
+					pos=midPos-owner->frontdir*owner->relMidPos.z
+						- owner->updir*owner->relMidPos.y
+						- owner->rightdir*owner->relMidPos.x;
+					owner->speed += dif*(impactSpeed*1.8f);
+					if(impactSpeed > owner->unitDef->minCollisionSpeed
+						&& owner->unitDef->minCollisionSpeed >= 0)
+					{
+						owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+								0,ZeroVector);
+					}
+					if(impactSpeed > u->unitDef->minCollisionSpeed
+						&& u->unitDef->minCollisionSpeed >= 0)
+					{
+						u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,0,ZeroVector);
+					}
+				}
 			} else {
 				float part=owner->mass/(owner->mass+u->mass);
-				float impactSpeed=(u->speed-owner->speed).dot(dif);
-
-				midPos -= dif * (dist - totRad) * (1 - part);
-				pos = midPos - owner->frontdir*owner->relMidPos.z
-					- owner->updir*owner->relMidPos.y
-					- owner->rightdir*owner->relMidPos.x;
-				owner->speed+=dif*(impactSpeed*(1-part)*2);
-				u->midPos+=dif*(dist-totRad)*(part);
-				u->pos = u->midPos - u->frontdir * u->relMidPos.z
-					- u->updir*u->relMidPos.y - u->rightdir*u->relMidPos.x;
-				u->speed-=dif*(impactSpeed*part*2);
-				if(CGroundMoveType* mt
-					= dynamic_cast<CGroundMoveType*>(u->moveType))
-				{
-					mt->skidding = true;
+				float impactSpeed=(u->speed - owner->speed).dot(dif);
+				if(impactSpeed > 0) {
+					midPos += dif * (impactSpeed * (1 - part) * 2);
+					pos = midPos - owner->frontdir*owner->relMidPos.z
+						- owner->updir*owner->relMidPos.y
+						- owner->rightdir*owner->relMidPos.x;
+					owner->speed += dif*(impactSpeed*(1-part)*2);
+					u->midPos-=dif*(impactSpeed*part * 2);
+					u->pos = u->midPos - u->frontdir * u->relMidPos.z
+						- u->updir*u->relMidPos.y - u->rightdir*u->relMidPos.x;
+					u->speed -= dif*(impactSpeed*part*2);
+					if(CGroundMoveType* mt
+						= dynamic_cast<CGroundMoveType*>(u->moveType))
+					{
+						mt->skidding = true;
+					}
+					if(impactSpeed > owner->unitDef->minCollisionSpeed
+						&& owner->unitDef->minCollisionSpeed >= 0)
+					{
+						owner->DoDamage(
+							DamageArray()*impactSpeed*owner->mass*0.2f*(1-part),
+							0,dif*impactSpeed*(owner->mass*(1-part)));
+					}
+					if(impactSpeed > u->unitDef->minCollisionSpeed
+						&& u->unitDef->minCollisionSpeed >= 0)
+					{
+						u->DoDamage(
+							DamageArray()*impactSpeed*owner->mass*0.2f*part,
+							0, dif*-impactSpeed*(u->mass*part));
+					}
+					owner->speed*=0.9f;
 				}
-
-				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f*
-						(1-part), 0, dif*impactSpeed*(owner->mass*(1-part)));
-				owner->speed*=0.9f;
-				u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f*part,
-					0, dif*-impactSpeed*(u->mass*part));
 			}
 		}
 	}
@@ -766,16 +788,22 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
 			dif/=dist;
-			midPos-=dif*(dist-totRad);
-			pos = midPos - owner->frontdir*owner->relMidPos.z
-				- owner->updir*owner->relMidPos.y
-				- owner->rightdir*owner->relMidPos.x;
 			float impactSpeed=-owner->speed.dot(dif);
-			owner->speed+=dif*(impactSpeed*1.8f);
-			owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
-				0, ZeroVector);
-			u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
-				0, -dif*impactSpeed);
+			if(impactSpeed > 0){
+				midPos+=dif*(impactSpeed);
+				pos = midPos - owner->frontdir*owner->relMidPos.z
+					- owner->updir*owner->relMidPos.y
+					- owner->rightdir*owner->relMidPos.x;
+				owner->speed+=dif*(impactSpeed*1.8f);
+				if(impactSpeed > owner->unitDef->minCollisionSpeed
+					&& owner->unitDef->minCollisionSpeed >= 0)
+				{
+					owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+						0, ZeroVector);
+				}
+				u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+					0, -dif*impactSpeed);
+			}
 		}
 	}
 }
@@ -1244,7 +1272,7 @@ void CGroundMoveType::CheckCollision(void)
 		}
 		while(haveCollided && retest < 2);
 
-		owner->UnBlock();
+		//owner->UnBlock();
 		owner->Block();
 	}
 	return;
@@ -1297,7 +1325,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 {
 	for(int x=x1;x<=x2;++x){
 		CSolidObject* c=readmap->groundBlockingObjectMap[y*gs->mapx+x];
-		if(c!=0){
+		if(c){
 			if(readmap->groundBlockingObjectMap[squareTestY*gs->mapx+x]!=0 && readmap->groundBlockingObjectMap[squareTestY*gs->mapx+x]!=owner){
 				continue;
 			}
