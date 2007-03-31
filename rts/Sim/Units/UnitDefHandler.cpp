@@ -319,6 +319,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.maxSlope = cos(ud.maxSlope*(PI/180));
 	tdfparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
 	tdfparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");
+	tdfparser.GetDef(ud.minCollisionSpeed, "1.0", "UNITINFO\\MinCollisionSPeed");
 
 	std::string value;
 	ud.floater = tdfparser.SGetValue(value, "UNITINFO\\Waterline");
