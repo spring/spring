@@ -1,0 +1,33 @@
+
+The files in this directory were copied from the BZFlag project.
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  Original BZFlag data/fonts/README
+--
+
+The fonts in this directory were converted from true type fonts using
+BZFlag's TextTool.  TextTool is available in BZFlag's tools/ directory
+of the source distribution.
+
+Please contact one of the BZFlag developers if there are any questions
+or concerns regarding existing fonts, the addition of new fonts, or
+modifications.  All fonts have been modified or converted, and some
+significantly edited to work effectively within BZFlag.
+
+Any fonts being added must be freely redistributable to be considered
+for inclusion.  Original TTFs may be found at the following locations:
+
+Bigelow & Holmes Luxi Mono
+http://cvsweb.xfree86.org/cvsweb/xc/fonts/scaled/TTF/
+
+Toga Sans and Toga Serif
+http://www.binara.com/toga/
+
+Bitstream Vera Mono
+http://ftp.gnome.org/pub/GNOME/sources/ttf-bitstream-vera/
+
+ProFont
+http://www.tobias-jung.de/seekingprofont/
+
