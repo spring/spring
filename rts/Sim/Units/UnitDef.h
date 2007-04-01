@@ -96,6 +96,7 @@ struct UnitDef
 	float mass;
 	
 	float minCollisionSpeed;
+	float slideTolerance;
 	float maxSlope;
 	float maxHeightDif;									//maximum terraform height this building allows
 	float minWaterDepth;
