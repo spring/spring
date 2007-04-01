@@ -26,6 +26,7 @@ extern "C" {
 }
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
@@ -2255,10 +2256,11 @@ int LuaOpenGL::ListCreate(lua_State* L)
 		logOutput.Print("gl.ListCreate: error(%i) = %s\n",
 		                error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
-	} else {
-		vector<unsigned int>& displayLists = CLuaHandle::GetActiveDisplayLists();
-		displayLists.push_back(list);
-		lua_pushnumber(L, displayLists.size());
+	}
+	else {
+		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+		const unsigned int index = displayLists.NewDList(list);
+		lua_pushnumber(L, index);
 	}
 
 	// restore the state
@@ -2276,10 +2278,11 @@ int LuaOpenGL::ListRun(lua_State* L)
 	if ((args < 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.ListRun(list)");
 	}
-	vector<unsigned int>& displayLists = CLuaHandle::GetActiveDisplayLists();
 	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
-	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
-		glCallList(displayLists[listIndex - 1]);
+	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+	const unsigned int dlist = displayLists.GetDList(listIndex);
+	if (dlist != 0) {
+		glCallList(dlist);
 	}
 	return 0;
 }
@@ -2291,11 +2294,12 @@ int LuaOpenGL::ListDelete(lua_State* L)
 	if ((args < 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.ListDelete(list)");
 	}
-	vector<unsigned int>& displayLists = CLuaHandle::GetActiveDisplayLists();
 	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
-	if ((listIndex > 0) && (listIndex <= displayLists.size())) {
-		glDeleteLists(displayLists[listIndex - 1], 1);
-		displayLists[listIndex - 1] = 0;
+	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+	const unsigned int dlist = displayLists.GetDList(listIndex);
+	displayLists.FreeDList(listIndex);
+	if (dlist != 0) {
+		glDeleteLists(dlist, 1);
 	}
 	return 0;
 }

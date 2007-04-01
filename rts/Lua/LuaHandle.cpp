@@ -57,10 +57,9 @@ CLuaHandle::~CLuaHandle()
 	}
 
 	// free the display lists
-	for (int i = 0; i < (int)displayLists.size(); i++) {
-		glDeleteLists(displayLists[i], 1);
+	for (int i = 0; i < (int)displayLists.GetCount(); i++) {
+		glDeleteLists(displayLists.GetDList(i), 1);
 	}
-	displayLists.clear();
 	
 	if (this == activeHandle) {
 		activeHandle = NULL;
