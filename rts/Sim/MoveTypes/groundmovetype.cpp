@@ -184,8 +184,7 @@ void CGroundMoveType::Update()
 	if(owner->transporter) {
 		return;
 	}
-	if((ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-		owner->unitDef->movedata->maxSlope*1.1f)
+	if(OnSlope()
 		&& (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
 	{
 		skidding = true;
@@ -619,8 +618,8 @@ void CGroundMoveType::UpdateSkid(void)
 
 		if(wh>midPos.y-owner->relMidPos.y){
 			flying=false;
-			skidRotSpeed*=0.5f+gs->randFloat();
-			midPos.y=wh+owner->relMidPos.y-speed.y*0.8f;
+			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;//*=0.5f+gs->randFloat();
+			midPos.y=wh+owner->relMidPos.y-speed.y*0.5f;
 			float impactSpeed=-speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if(impactSpeed > owner->unitDef->minCollisionSpeed
 				&& owner->unitDef->minCollisionSpeed >= 0)
@@ -634,8 +633,10 @@ void CGroundMoveType::UpdateSkid(void)
 		float speedReduction=0.35f;
 //		if(owner->unitDef->movedata->moveType==MoveData::Hover_Move)
 //			speedReduction=0.1f;
-		bool onSlope = (ground->GetSlope(midPos.x,midPos.z)
-			> owner->unitDef->movedata->maxSlope)
+		// does not use OnSlope() because then it could stop on an invalid path
+		// location, and be teleported back.
+		bool onSlope = (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
+			owner->unitDef->movedata->maxSlope)
 			&& (!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0);
 		if(speedf<speedReduction && !onSlope)
 		{		//stop skidding
@@ -658,7 +659,7 @@ void CGroundMoveType::UpdateSkid(void)
 				float3 newForce = UpVector*gs->gravity - normalForce;
 				speed+=newForce;
 				speedf = speed.Length();
-				speed *= .9;
+				speed *= 1 - (.1*dir.y);
 			} else 
 			{
 				speed*=(speedf-speedReduction)/speedf;
@@ -1673,4 +1674,10 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	if(requestedSpeed == maxSpeed*2)
 		requestedSpeed = speed*2;	//why the *2 everywhere?
 	maxSpeed=speed;
+}
+
+bool CGroundMoveType::OnSlope(){
+	return owner->unitDef->slideTolerance >= 1
+		&& (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
+		owner->unitDef->movedata->maxSlope*owner->unitDef->slideTolerance);
 }

@@ -31,6 +31,8 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
+	bool OnSlope(void);
+	
 	float baseTurnRate;
 	float turnRate;
 	float accRate;
