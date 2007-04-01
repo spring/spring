@@ -1,0 +1,860 @@
+NumChars: 95
+TextureWidth: 512
+TextureHeight: 128
+TextZStep: 18
+
+Char: " "
+InitialDist: 0
+Width: 1
+Whitespace: 9
+StartX: 0
+EndX: 1
+StartY: 0
+EndY: 18
+
+Char: "!"
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 18
+EndX: 20
+StartY: 0
+EndY: 18
+
+Char: """
+InitialDist: 2
+Width: 6
+Whitespace: 2
+StartX: 36
+EndX: 42
+StartY: 0
+EndY: 18
+
+Char: "#"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 54
+EndX: 63
+StartY: 0
+EndY: 18
+
+Char: "$"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 72
+EndX: 79
+StartY: 0
+EndY: 18
+
+Char: "%"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 90
+EndX: 99
+StartY: 0
+EndY: 18
+
+Char: "&"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 108
+EndX: 117
+StartY: 0
+EndY: 18
+
+Char: "'"
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 126
+EndX: 128
+StartY: 0
+EndY: 18
+
+Char: "("
+InitialDist: 3
+Width: 5
+Whitespace: 2
+StartX: 144
+EndX: 149
+StartY: 0
+EndY: 18
+
+Char: ")"
+InitialDist: 2
+Width: 5
+Whitespace: 3
+StartX: 162
+EndX: 167
+StartY: 0
+EndY: 18
+
+Char: "*"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 180
+EndX: 187
+StartY: 0
+EndY: 18
+
+Char: "+"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 198
+EndX: 206
+StartY: 0
+EndY: 18
+
+Char: ","
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 216
+EndX: 218
+StartY: 0
+EndY: 18
+
+Char: "-"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 234
+EndX: 241
+StartY: 0
+EndY: 18
+
+Char: "."
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 252
+EndX: 254
+StartY: 0
+EndY: 18
+
+Char: "/"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 270
+EndX: 278
+StartY: 0
+EndY: 18
+
+Char: "0"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 288
+EndX: 296
+StartY: 0
+EndY: 18
+
+Char: "1"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 306
+EndX: 314
+StartY: 0
+EndY: 18
+
+Char: "2"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 324
+EndX: 332
+StartY: 0
+EndY: 18
+
+Char: "3"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 342
+EndX: 349
+StartY: 0
+EndY: 18
+
+Char: "4"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 360
+EndX: 368
+StartY: 0
+EndY: 18
+
+Char: "5"
+InitialDist: 2
+Width: 6
+Whitespace: 2
+StartX: 378
+EndX: 384
+StartY: 0
+EndY: 18
+
+Char: "6"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 396
+EndX: 404
+StartY: 0
+EndY: 18
+
+Char: "7"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 414
+EndX: 421
+StartY: 0
+EndY: 18
+
+Char: "8"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 432
+EndX: 440
+StartY: 0
+EndY: 18
+
+Char: "9"
+InitialDist: 0
+Width: 8
+Whitespace: 2
+StartX: 450
+EndX: 458
+StartY: 0
+EndY: 18
+
+Char: ":"
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 468
+EndX: 470
+StartY: 0
+EndY: 18
+
+Char: ";"
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 486
+EndX: 488
+StartY: 0
+EndY: 18
+
+Char: "<"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 0
+EndX: 8
+StartY: 18
+EndY: 36
+
+Char: "="
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 18
+EndX: 26
+StartY: 18
+EndY: 36
+
+Char: ">"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 36
+EndX: 44
+StartY: 18
+EndY: 36
+
+Char: "?"
+InitialDist: 2
+Width: 6
+Whitespace: 2
+StartX: 54
+EndX: 60
+StartY: 18
+EndY: 36
+
+Char: "@"
+InitialDist: -1
+Width: 10
+Whitespace: 1
+StartX: 72
+EndX: 82
+StartY: 18
+EndY: 36
+
+Char: "A"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 90
+EndX: 99
+StartY: 18
+EndY: 36
+
+Char: "B"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 108
+EndX: 116
+StartY: 18
+EndY: 36
+
+Char: "C"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 126
+EndX: 134
+StartY: 18
+EndY: 36
+
+Char: "D"
+InitialDist: 1
+Width: 9
+Whitespace: 0
+StartX: 144
+EndX: 153
+StartY: 18
+EndY: 36
+
+Char: "E"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 162
+EndX: 170
+StartY: 18
+EndY: 36
+
+Char: "F"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 180
+EndX: 188
+StartY: 18
+EndY: 36
+
+Char: "G"
+InitialDist: 0
+Width: 8
+Whitespace: 2
+StartX: 198
+EndX: 206
+StartY: 18
+EndY: 36
+
+Char: "H"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 216
+EndX: 225
+StartY: 18
+EndY: 36
+
+Char: "I"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 234
+EndX: 242
+StartY: 18
+EndY: 36
+
+Char: "J"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 252
+EndX: 260
+StartY: 18
+EndY: 36
+
+Char: "K"
+InitialDist: 1
+Width: 9
+Whitespace: 0
+StartX: 270
+EndX: 279
+StartY: 18
+EndY: 36
+
+Char: "L"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 288
+EndX: 296
+StartY: 18
+EndY: 36
+
+Char: "M"
+InitialDist: 0
+Width: 10
+Whitespace: 0
+StartX: 306
+EndX: 316
+StartY: 18
+EndY: 36
+
+Char: "N"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 324
+EndX: 333
+StartY: 18
+EndY: 36
+
+Char: "O"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 342
+EndX: 351
+StartY: 18
+EndY: 36
+
+Char: "P"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 360
+EndX: 369
+StartY: 18
+EndY: 36
+
+Char: "Q"
+InitialDist: 0
+Width: 10
+Whitespace: 0
+StartX: 378
+EndX: 388
+StartY: 18
+EndY: 36
+
+Char: "R"
+InitialDist: 1
+Width: 9
+Whitespace: 0
+StartX: 396
+EndX: 405
+StartY: 18
+EndY: 36
+
+Char: "S"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 414
+EndX: 422
+StartY: 18
+EndY: 36
+
+Char: "T"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 432
+EndX: 441
+StartY: 18
+EndY: 36
+
+Char: "U"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 450
+EndX: 459
+StartY: 18
+EndY: 36
+
+Char: "V"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 468
+EndX: 477
+StartY: 18
+EndY: 36
+
+Char: "W"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 486
+EndX: 495
+StartY: 18
+EndY: 36
+
+Char: "X"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 0
+EndX: 9
+StartY: 36
+EndY: 54
+
+Char: "Y"
+InitialDist: 0
+Width: 10
+Whitespace: 0
+StartX: 18
+EndX: 28
+StartY: 36
+EndY: 54
+
+Char: "Z"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 36
+EndX: 43
+StartY: 36
+EndY: 54
+
+Char: "["
+InitialDist: 3
+Width: 5
+Whitespace: 2
+StartX: 54
+EndX: 59
+StartY: 36
+EndY: 54
+
+Char: "\"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 72
+EndX: 80
+StartY: 36
+EndY: 54
+
+Char: "]"
+InitialDist: 2
+Width: 5
+Whitespace: 3
+StartX: 90
+EndX: 95
+StartY: 36
+EndY: 54
+
+Char: "^"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 108
+EndX: 115
+StartY: 36
+EndY: 54
+
+Char: "_"
+InitialDist: 0
+Width: 10
+Whitespace: 0
+StartX: 126
+EndX: 136
+StartY: 36
+EndY: 54
+
+Char: "`"
+InitialDist: 3
+Width: 4
+Whitespace: 3
+StartX: 144
+EndX: 148
+StartY: 36
+EndY: 54
+
+Char: "a"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 162
+EndX: 170
+StartY: 36
+EndY: 54
+
+Char: "b"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 180
+EndX: 189
+StartY: 36
+EndY: 54
+
+Char: "c"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 198
+EndX: 205
+StartY: 36
+EndY: 54
+
+Char: "d"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 216
+EndX: 225
+StartY: 36
+EndY: 54
+
+Char: "e"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 234
+EndX: 241
+StartY: 36
+EndY: 54
+
+Char: "f"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 252
+EndX: 260
+StartY: 36
+EndY: 54
+
+Char: "g"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 270
+EndX: 278
+StartY: 36
+EndY: 54
+
+Char: "h"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 288
+EndX: 296
+StartY: 36
+EndY: 54
+
+Char: "i"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 306
+EndX: 314
+StartY: 36
+EndY: 54
+
+Char: "j"
+InitialDist: 1
+Width: 6
+Whitespace: 3
+StartX: 324
+EndX: 330
+StartY: 36
+EndY: 54
+
+Char: "k"
+InitialDist: 1
+Width: 9
+Whitespace: 0
+StartX: 342
+EndX: 351
+StartY: 36
+EndY: 54
+
+Char: "l"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 360
+EndX: 368
+StartY: 36
+EndY: 54
+
+Char: "m"
+InitialDist: 0
+Width: 10
+Whitespace: 0
+StartX: 378
+EndX: 388
+StartY: 36
+EndY: 54
+
+Char: "n"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 396
+EndX: 404
+StartY: 36
+EndY: 54
+
+Char: "o"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 414
+EndX: 422
+StartY: 36
+EndY: 54
+
+Char: "p"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 432
+EndX: 441
+StartY: 36
+EndY: 54
+
+Char: "q"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 450
+EndX: 459
+StartY: 36
+EndY: 54
+
+Char: "r"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 468
+EndX: 476
+StartY: 36
+EndY: 54
+
+Char: "s"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 486
+EndX: 494
+StartY: 36
+EndY: 54
+
+Char: "t"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 0
+EndX: 7
+StartY: 54
+EndY: 72
+
+Char: "u"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 18
+EndX: 26
+StartY: 54
+EndY: 72
+
+Char: "v"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 36
+EndX: 45
+StartY: 54
+EndY: 72
+
+Char: "w"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 54
+EndX: 63
+StartY: 54
+EndY: 72
+
+Char: "x"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 72
+EndX: 81
+StartY: 54
+EndY: 72
+
+Char: "y"
+InitialDist: 0
+Width: 9
+Whitespace: 1
+StartX: 90
+EndX: 99
+StartY: 54
+EndY: 72
+
+Char: "z"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 108
+EndX: 116
+StartY: 54
+EndY: 72
+
+Char: "{"
+InitialDist: 1
+Width: 7
+Whitespace: 2
+StartX: 126
+EndX: 133
+StartY: 54
+EndY: 72
+
+Char: "|"
+InitialDist: 4
+Width: 2
+Whitespace: 4
+StartX: 144
+EndX: 146
+StartY: 54
+EndY: 72
+
+Char: "}"
+InitialDist: 2
+Width: 6
+Whitespace: 2
+StartX: 162
+EndX: 168
+StartY: 54
+EndY: 72
+
+Char: "~"
+InitialDist: 1
+Width: 8
+Whitespace: 1
+StartX: 180
+EndX: 188
+StartY: 54
+EndY: 72
+
