@@ -24,17 +24,17 @@ for _,ud in pairs(UnitDefs) do
   -- set the cost value  (same as shown in the tooltip)
   ud.cost = ud.metalCost + (ud.energyCost / 60.0)
 
-  -- add the custom parameters
+  -- add the custom weapons based parameters
   ud.hasShield      = false
-  ud.canStockpile   = false
   ud.canParalyze    = false
+  ud.canStockpile   = false
   ud.canAttackWater = false
   for _,wt in ipairs(ud.weapons) do
     local wd = WeaponDefs[wt.weaponDef]
     if (wd) then
       if (wd.isShield)    then ud.hasShield      = true end
-      if (wd.stockpile)   then ud.canStockpile   = true end
       if (wd.paralyzer)   then ud.canParalyze    = true end
+      if (wd.stockpile)   then ud.canStockpile   = true end
       if (wd.waterWeapon) then ud.canAttackWater = true end
     end
   end

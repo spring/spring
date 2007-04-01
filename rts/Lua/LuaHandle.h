@@ -11,6 +11,8 @@
 using std::string;
 using std::vector;
 
+#include "LuaDisplayLists.h"
+
 
 #define LUA_HANDLE_ORDER_MOD  0
 #define LUA_HANDLE_ORDER_COB  1
@@ -64,8 +66,8 @@ class CLuaHandle {
 
 		bool WantsToDie()      const { return killMe; }
 
-		const LuaCobCallback  GetCallback()     { return cobCallback; }
-		vector<unsigned int>& GetDisplayLists() { return displayLists; }
+		const LuaCobCallback  GetCallback() { return cobCallback; }
+		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 		virtual string LoadFile(const string& filename) const;
 
@@ -142,7 +144,7 @@ class CLuaHandle {
 
 		LuaCobCallback cobCallback;
 
-		vector<unsigned int> displayLists;
+		CLuaDisplayLists displayLists;
 		
 		struct CobCallbackData {
 			CobCallbackData(int rc, int uid, float fd)
@@ -178,7 +180,7 @@ class CLuaHandle {
 		static const LuaCobCallback GetActiveCallback() {
 			return activeHandle->cobCallback;
 		}
-		static vector<unsigned int>& GetActiveDisplayLists() {
+		static CLuaDisplayLists& GetActiveDisplayLists() {
 			return activeHandle->displayLists;
 		}
 
