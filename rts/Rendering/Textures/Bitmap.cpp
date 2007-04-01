@@ -33,6 +33,7 @@ struct InitializeOpenIL {
 } static initOpenIL;
 #endif
 
+
 CBitmap::CBitmap()
   : xsize(0), ysize(0)
 {
@@ -41,11 +42,13 @@ CBitmap::CBitmap()
 	type = BitmapTypeStandardRGBA;
 }
 
+
 CBitmap::~CBitmap()
 {
 	delete[] mem;
 	delete ddsimage;
 }
+
 
 CBitmap::CBitmap(const CBitmap& old)
 {
@@ -62,6 +65,7 @@ CBitmap::CBitmap(const CBitmap& old)
 	memcpy(mem,old.mem,size);
 }
 
+
 CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
   : xsize(xsize), ysize(ysize)
 {
@@ -70,6 +74,7 @@ CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 	mem=SAFE_NEW unsigned char[xsize*ysize*4];
 	memcpy(mem,data,xsize*ysize*4);
 }
+
 
 CBitmap& CBitmap::operator=(const CBitmap& bm)
 {
@@ -87,6 +92,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 	return *this;
 }
 
+
 void CBitmap::Alloc (int w,int h)
 {
 	bool noAlpha = true;
@@ -98,6 +104,7 @@ void CBitmap::Alloc (int w,int h)
 	mem=SAFE_NEW unsigned char[w*h*4];
 	memset(mem, 0, w*h*4);
 }
+
 
 bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 {
@@ -194,16 +201,17 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	ilDeleteImages(1, &ImageName); 
 #endif
 
-	if(noAlpha){
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-			mem[(y*xsize+x)*4+3]=defaultAlpha;
+	if (noAlpha){
+		for (int y=0; y<ysize; ++y) {
+			for (int x=0; x<xsize; ++x) {
+				mem[((y*xsize+x) * 4) + 3] = defaultAlpha;
 			}
 		}
 	}
 
 	return true;
 }
+
 
 bool CBitmap::LoadGrayscale (const string& filename)
 {
@@ -290,6 +298,7 @@ void CBitmap::Save(string const& filename)
 #endif // I'll add a quicktime exporter for mac soonish...Krysole
 }
 
+
 #ifndef BITMAP_NO_OPENGL
 
 unsigned int CBitmap::CreateTexture(bool mipmaps)
@@ -345,6 +354,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	return texture;
 }
 
+
 unsigned int CBitmap::CreateDDSTexture()
 {
 	GLuint texobj;
@@ -393,6 +403,7 @@ unsigned int CBitmap::CreateDDSTexture()
 
 #endif // !BITMAP_NO_OPENGL
 
+
 void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char blue)
 {
 	float3 aCol;
@@ -427,6 +438,7 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 	}
 }
 
+
 // Depreciated (Only used by GUI which will be replaced by CEGUI anyway)
 void CBitmap::SetTransparent( unsigned char red, unsigned char green, unsigned char blue )
 {
@@ -445,6 +457,7 @@ void CBitmap::SetTransparent( unsigned char red, unsigned char green, unsigned c
 		}
 	}
 }
+
 
 void CBitmap::Renormalize(float3 newCol)
 {
@@ -491,6 +504,7 @@ void CBitmap::Renormalize(float3 newCol)
 	}
 }
 
+
 // Unused
 CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 {
@@ -512,6 +526,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 
 	return bm;
 }
+
 
 CBitmap CBitmap::CreateMipmapLevel(void)
 {
@@ -543,6 +558,7 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	return bm;
 
 }
+
 
 CBitmap CBitmap::CreateRescaled(int newx, int newy)
 {
@@ -590,7 +606,47 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 	return bm;
 }
 
-void CBitmap::ReverseYAxis(void)
+
+void CBitmap::InvertColors()
+{
+	if (type != BitmapTypeStandardRGBA) {
+		return;
+	}
+	for(int y = 0; y < ysize; ++y) {
+		for(int x = 0; x < xsize; ++x) {
+			const int base = ((y * xsize) + x) * 4;
+			mem[base + 0] = 0xFF - mem[base + 0];
+			mem[base + 1] = 0xFF - mem[base + 1];
+			mem[base + 2] = 0xFF - mem[base + 2];
+			// do not invert alpha
+		}
+	}
+}
+
+
+void CBitmap::GrayScale()
+{
+	if (type != BitmapTypeStandardRGBA) {
+		return;
+	}
+	for(int y = 0; y < ysize; ++y) {
+		for(int x = 0; x < xsize; ++x) {
+			const int base = ((y * xsize) + x) * 4;
+			const float illum = 
+				mem[base + 0] * 0.299f +
+				mem[base + 1] * 0.587f +
+				mem[base + 2] * 0.114f;
+			const unsigned int  ival = (unsigned int)(illum * (256.0f / 255.0f));
+			const unsigned char cval = (ival <= 0xFF) ? ival : 0xFF;
+			mem[base + 0] = cval;
+			mem[base + 1] = cval;
+			mem[base + 2] = cval;
+		}
+	}
+}
+
+
+void CBitmap::ReverseYAxis()
 {
 	unsigned char* buf=SAFE_NEW unsigned char[xsize*ysize*4];
 
@@ -605,6 +661,7 @@ void CBitmap::ReverseYAxis(void)
 	delete[] mem;
 	mem=buf;
 }
+
 
 #if defined(__APPLE__)
 
@@ -649,6 +706,7 @@ Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	return dataRef;
 }
 		
+
 unsigned char *CBitmap::LoadTextureData(const std::string &filename, 
 	unsigned char *data, unsigned int sizeData, int &xsize, 
 	int &ysize, bool &hasAlpha)

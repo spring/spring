@@ -51,17 +51,22 @@ bool CNamedTextures::Bind(const string& texName)
 
 	// strip off the qualifiers
 	string filename = texName;
-	bool border = false;
+	bool border  = false;
 	bool clamped = false;
 	bool nearest = false;
+	bool invert  = false;
+	bool greyed  = false;
+
 	if (filename[0] == ':') {
 		int p;
 		for (p = 1; p < (int)filename.size(); p++) {
 			const char ch = filename[p];
 			if (ch == ':')      { break; }
-			else if (ch == 'b') { border = true;  }
-			else if (ch == 'c') { clamped = true; }
 			else if (ch == 'n') { nearest = true; }
+			else if (ch == 'i') { invert  = true; }
+			else if (ch == 'g') { greyed  = true; }
+			else if (ch == 'c') { clamped = true; }
+			else if (ch == 'b') { border  = true; }
 		}
 		if (p < (int)filename.size()) {
 			filename = filename.substr(p + 1);
@@ -78,7 +83,13 @@ bool CNamedTextures::Bind(const string& texName)
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return false;
 	}
-	
+
+	if (invert) {
+		bitmap.InvertColors();
+	}
+	if (greyed) {
+		bitmap.GrayScale();
+	}
 
 	// make the texture
 	GLuint texID;

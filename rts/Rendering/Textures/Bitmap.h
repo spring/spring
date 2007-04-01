@@ -54,7 +54,9 @@ public:
 
 public:
 	CBitmap CreateRescaled(int newx, int newy);
-	void ReverseYAxis(void);
+	void ReverseYAxis();
+	void InvertColors();
+	void GrayScale();
 	
 	// Mac Specific (QuickTime Graphics Importer)
 #if defined(__APPLE__)

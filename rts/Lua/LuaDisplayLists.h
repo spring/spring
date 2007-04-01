@@ -1,11 +1,13 @@
 #ifndef LUA_DISPLAY_LISTS_H
 #define LUA_DISPLAY_LISTS_H
-// LuaDisplayLists.h: interface for the LuaDisplayLists class.
+// LuaDisplayLists.h: interface for the CLuaDisplayLists class.
 //
 //////////////////////////////////////////////////////////////////////
 
+
 #include <vector>
 using std::vector;
+
 
 class CLuaDisplayLists {
 	public:
