@@ -40,7 +40,7 @@ local function LoadFontSpecs(fontName)
   local f = io.open(filename, "r")
   if (not f) then
     print("failed to open: " .. filename)
-    return 1
+    return nil
   end
 
   local fontSpecs = {}
@@ -225,7 +225,17 @@ local function LoadFont(fontName)
     return nil  -- already loaded
   end
 
-  local fontSpecs = LoadFontSpecs(fontName)
+  local baseName = fontName
+  local _,_,options,bn = string.find(fontName, "(:.-:)(.*)")
+  if (options) then
+    baseName = bn
+  else
+    options = ""
+  end
+
+  print("BASENAME: " .. baseName)
+
+  local fontSpecs = LoadFontSpecs(baseName)
   if (not fontSpecs) then
     return nil  -- bad specs
   end
@@ -237,13 +247,13 @@ local function LoadFont(fontName)
 
   local font = {}
   font.name  = fontName
-  font.size  = 12.0  -- FIXME
+  font.base  = baseName
+  font.opts  = options
   font.specs = fontSpecs
   font.lists = fontLists
   font.cache = {}
-  font.image = fontDir .. fontName .. ".png"
-  font.image = ':ngi:' .. fontDir .. fontName .. ".png"  --  :n: for no filtering
---  font.image = ':n:' .. fontDir .. fontName .. ".png"  --  :n: for no filtering
+  font.image = options .. fontDir .. baseName .. ".png"
+  font.size  = 12.0  -- FIXME
 
   return font
 end
