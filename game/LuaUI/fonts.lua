@@ -16,11 +16,15 @@ if (fontHandler ~= nil) then
 end
 
 
+local DefaultFontName = "ProFont_12"
+
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 local fonts = {}
-local activeFont = nil
+local activeFont  = nil
+local defaultFont = nil
 
 local fontDir = LUAUI_DIRNAME .. "Fonts/"
 
@@ -105,7 +109,8 @@ local function LoadFontSpecs(fontName)
   print('fontSpecs.textureHeight ', fontSpecs.textureHeight)
   print('fontSpecs.zStep         ', fontSpecs.zStep)
   for _,c in pairs(fontSpecs.chars) do
-    print('  char: ' .. c.char .. ' ' .. string.char(c.char))
+    c.totalWidth = c.initDist + c.width + c.whitespace
+--    print('  char: ' .. c.char .. ' ' .. string.char(c.char))
   end
 
   f:close()
@@ -177,6 +182,20 @@ end
 --------------------------------------------------------------------------------
 
 local function CalcTextWidth(text)
+  local specs = activeFont.specs
+  local w = 0
+  for i = 1, string.len(text) do
+    local c = string.byte(text, i)
+    local glyphInfo = specs.chars[c]
+    if (not glyphInfo) then
+      glyphInfo = specs.chars[32]
+    end
+    if (glyphInfo) then
+      w = w + glyphInfo.totalWidth
+--      w = w + glyphInfo.initDist + glyphInfo.width + glyphInfo.whitespace
+    end
+  end
+  return w
 end
 
 
@@ -202,10 +221,14 @@ end
 
 
 local function DrawNoCache(text, x, y, size, opts)
-  gl.PushMatrix()
-  gl.Translate(x, y, 0)
-  RawDraw(text)
-  gl.PopMatrix()
+  if (not x) then
+    RawDraw(text)
+  else
+    gl.PushMatrix()
+    gl.Translate(x, y, 0)
+    RawDraw(text)
+    gl.PopMatrix()
+  end
 end
 
 
@@ -218,10 +241,14 @@ local function Draw(text, x, y, size, opts)
   else
     cacheTextData[2] = timeStamp  --  refresh the timeStamp
   end
-  gl.PushMatrix()
-  gl.Translate(x, y, 0)
-  gl.ListRun(cacheTextData[1])
-  gl.PopMatrix()
+  if (not x) then
+    gl.ListRun(cacheTextData[1])
+  else
+    gl.PushMatrix()
+    gl.Translate(x, y, 0)
+    gl.ListRun(cacheTextData[1])
+    gl.PopMatrix()
+  end
 end
 
 
@@ -284,6 +311,11 @@ local function SetFont(fontName)
     fonts[fontName] = font
     return
   end
+end
+
+
+local function SetDefaultFont()
+  activeFont = defaultFont
 end
 
 
@@ -352,16 +384,24 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+SetFont(DefaultFontName)
+defaultFont = activeFont
+
+
 local FH = {}
 
-FH.Update    = Update
-FH.SetFont   = SetFont
+FH.Update = Update
+
+FH.SetFont        = SetFont
+FH.SetDefaultFont = SetDefaultFont
+
 FH.FreeFont  = FreeFont
 FH.FreeFonts = FreeFonts
 FH.FreeCache = FreeCache
 
-FH.Draw           = Draw
-FH.DrawNoCache    = DrawNoCache
+FH.Draw        = Draw
+FH.DrawNoCache = DrawNoCache
+
 FH.CalcTextWidth  = CalcTextWidth
 FH.CalcTextHeight = CalcTextHeight
 
