@@ -715,6 +715,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("useHitSphereOffset", ud.useCSOffset);
 
 	ADD_FLOAT("minCollisionSpeed", ud.minCollisionSpeed);
+	ADD_FLOAT("slideTolerance",    ud.slideTolerance);
 
 	ADD_FLOAT("maxWeaponRange", ud.maxWeaponRange);
 

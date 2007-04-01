@@ -15,9 +15,6 @@ if (fontHandler ~= nil) then
   return fontHandler
 end
 
-local fontHandler = {}
-fontHandler.fonts = {}
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -29,6 +26,14 @@ local fontDir = LUAUI_DIRNAME .. "Fonts/"
 
 local timeStamp  = 0
 local lastUpdate = 0
+
+local debug = true
+local origPrint = print
+local print = function(...)
+  if (debug) then
+    origPrint(unpack(arg))
+  end
+end
 
 
 --------------------------------------------------------------------------------
@@ -100,7 +105,7 @@ local function LoadFontSpecs(fontName)
   print('fontSpecs.textureHeight ', fontSpecs.textureHeight)
   print('fontSpecs.zStep         ', fontSpecs.zStep)
   for _,c in pairs(fontSpecs.chars) do
---    print('  char: ' .. c.char .. ' ' .. string.char(c.char))
+    print('  char: ' .. c.char .. ' ' .. string.char(c.char))
   end
 
   f:close()
@@ -146,7 +151,7 @@ local function MakeOutlineDisplayLists(fontSpecs)
     local list = gl.ListCreate(function ()
       gl.Translate(gi.initDist, 0, 0)
 
-      gl.Color(0, 0, 0, 0.8)
+      gl.Color(0, 0, 0, 0.75)
       local o = 2
       gl.TexRect( o,  o, w, h, txn, tyn, txp, typ)
       gl.TexRect(-o,  o, w, h, txn, tyn, txp, typ)
@@ -162,6 +167,7 @@ local function MakeOutlineDisplayLists(fontSpecs)
 
       gl.Translate(gi.width + gi.whitespace, 0, 0)
     end)
+
     lists[gi.char] = list
   end
   return lists
@@ -209,6 +215,8 @@ local function Draw(text, x, y, size, opts)
     local textList = gl.ListCreate(function() RawDraw(text) end)
     cacheTextData = { textList, timeStamp }
     activeFont.cache[text] = cacheTextData
+  else
+    cacheTextData[2] = timeStamp  --  refresh the timeStamp
   end
   gl.PushMatrix()
   gl.Translate(x, y, 0)
@@ -221,7 +229,7 @@ end
 --------------------------------------------------------------------------------
 
 local function LoadFont(fontName)
-  if (fontHandler.fonts[fontName]) then
+  if (fonts[fontName]) then
     return nil  -- already loaded
   end
 
@@ -233,14 +241,17 @@ local function LoadFont(fontName)
     options = ""
   end
 
-  print("BASENAME: " .. baseName)
-
   local fontSpecs = LoadFontSpecs(baseName)
   if (not fontSpecs) then
     return nil  -- bad specs
   end
 
-  local fontLists = MakeDisplayLists(fontSpecs)
+  local fontLists
+  if (string.find(options, "o")) then
+    fontLists = MakeOutlineDisplayLists(fontSpecs)
+  else
+    fontLists = MakeDisplayLists(fontSpecs)
+  end
   if (not fontLists) then
     return nil  -- bad display lists
   end
@@ -268,6 +279,7 @@ local function SetFont(fontName)
 
   font = LoadFont(fontName)
   if (font) then
+    print("Loaded font: " .. fontName)
     activeFont = font
     fonts[fontName] = font
     return
@@ -320,12 +332,13 @@ local function Update(time)
   end
 
   local killTime = (time - 30)
-  for _,font in pairs(fonts) do
+  for fontName, font in pairs(fonts) do
     local killList = {}
     for text,data in pairs(font.cache) do
       if (data[2] < killTime) then
-        gl.ListFree(data[1])
+        gl.ListDelete(data[1])
         table.insert(killList, text)
+        print(fontName .. " removed string list(" .. data[1] .. ") " .. text)
       end
     end
     for _,text in ipairs(killList) do
@@ -339,20 +352,22 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-fontHandler.Update    = Update
-fontHandler.SetFont   = SetFont
-fontHandler.FreeFont  = FreeFont
-fontHandler.FreeFonts = FreeFonts
-fontHandler.FreeCache = FreeCache
+local FH = {}
 
-fontHandler.Draw           = Draw
-fontHandler.DrawNoCache    = DrawNoCache
-fontHandler.CalcTextWidth  = CalcTextWidth
-fontHandler.CalcTextHeight = CalcTextHeight
+FH.Update    = Update
+FH.SetFont   = SetFont
+FH.FreeFont  = FreeFont
+FH.FreeFonts = FreeFonts
+FH.FreeCache = FreeCache
 
-fontHandler = fontHandler  -- make it global
+FH.Draw           = Draw
+FH.DrawNoCache    = DrawNoCache
+FH.CalcTextWidth  = CalcTextWidth
+FH.CalcTextHeight = CalcTextHeight
 
-return fontHandler
+fontHandler = FH  -- make it global
+
+return FH
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

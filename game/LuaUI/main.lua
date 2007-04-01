@@ -23,6 +23,7 @@ include("opengl.h.lua")
 include("spring.h.lua")
 
 include("debug.lua");
+include("fonts.lua");
 include("layout.lua"); -- contains a simple LayoutButtons()
 include("widgets.lua");
 
@@ -79,6 +80,8 @@ forceLayout = true
 
 
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
+
+  fontHandler.Update(Spring.GetGameSeconds())
 
   local needUpdate = forceLayout
   forceLayout = false
