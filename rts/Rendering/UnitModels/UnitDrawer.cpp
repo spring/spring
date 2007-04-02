@@ -1065,6 +1065,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		/* S3O */
 		SetupForS3ODrawing();
 		texturehandler->SetS3oTexture(unit->model->textureType);
+		SetS3OTeamColour(unit->team);
 		unit->Draw();
 		CleanUpS3ODrawing();
 	}
