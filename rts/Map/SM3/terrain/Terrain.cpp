@@ -81,7 +81,7 @@ namespace terrain {
 	}
 
 //-----------------------------------------------------------------------
-// Quad map - stores a 2D map of the quad nodes, 
+// Quad map - stores a 2D map of the quad nodes,
 //            for quick access of nabours
 //-----------------------------------------------------------------------
 
@@ -125,7 +125,7 @@ namespace terrain {
 	TQuad::~TQuad ()
 	{
 		if (!isLeaf()) {
-			for (int a=0;a<4;a++) 
+			for (int a=0;a<4;a++)
 				delete childs[a];
 		}
 
@@ -371,7 +371,7 @@ namespace terrain {
 		QuadMap *qm = qmaps[q->depth];
 		TQuad *nb = qm->At (q->qmPos.x+xOfs, q->qmPos.y+yOfs);
 
-		// Check the state of the nabour parent (q is already the parent), 
+		// Check the state of the nabour parent (q is already the parent),
 		if (nb->drawState == TQuad::NoDraw) {
 			// a parent of the node is either culled or drawn itself
 			ForceQueue (nb);
@@ -391,7 +391,7 @@ namespace terrain {
 		if (q->drawState==TQuad::Parent) {
 			for(int a=0;a<4;a++)
 				UpdateLodFix(q->childs [a]);
-		} 
+		}
 		else if (q->parent) {
 			// find the nabours, and make sure at least them or their parents are drawn
 			TQuad *parent = q->parent;
@@ -417,7 +417,7 @@ namespace terrain {
 			updatequads.push_back (q);
 
 			// update max lod value
-			if (q->maxLodValue < lod) 
+			if (q->maxLodValue < lod)
 				q->maxLodValue = lod;
 		} else {
 			q->drawState=TQuad::Culled;
@@ -446,7 +446,7 @@ namespace terrain {
 				TQuad *q = rc->quads [n].quad;
 
 				q->maxLodValue = 0.0f;
-				if (q->renderData)  
+				if (q->renderData)
 					q->renderData->used = true;
 			}
 		}
@@ -499,7 +499,7 @@ namespace terrain {
 			culled.clear();
 
 			// clear the list of queued quads
-			for (int a=0;a<updatequads.size();a++) 
+			for (int a=0;a<updatequads.size();a++)
 				updatequads[a]->drawState = TQuad::NoDraw;
 			updatequads.clear ();
 		}
@@ -527,7 +527,7 @@ namespace terrain {
 		}
 
 		if (logUpdates) {
-			if (nodeUpdateCount) d_trace ("NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d\n", 
+			if (nodeUpdateCount) d_trace ("NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d\n",
 				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->renderDataAllocates);
 		}
 		curRC = 0;
@@ -641,11 +641,11 @@ namespace terrain {
 			glDisable (GL_TEXTURE_GEN_T);
 		}
 		else  // no texture caching, so use the texturing system directly
-		{  
+		{
 			int numPasses=texturing->NumPasses();
 
 			glEnable(GL_DEPTH_TEST);
-			
+
 			if (fill) texturing->BeginTexturing();
 
 			if (!fill) numPasses=1;
@@ -656,7 +656,7 @@ namespace terrain {
 				if (fill)
 					texturing->BeginPass(pass);
 
-				for (int a=0;a<activeRC->quads.size();a++) 
+				for (int a=0;a<activeRC->quads.size();a++)
 				{
 					TQuad *q = activeRC->quads[a].quad;
 
@@ -678,7 +678,7 @@ namespace terrain {
 			glDisable (GL_BLEND);
 			glDepthMask (GL_TRUE);
 
-			if (fill) 
+			if (fill)
 				texturing->EndTexturing ();
 		}
 
@@ -690,7 +690,7 @@ namespace terrain {
 
 	void Terrain::CalcRenderStats (RenderStats& stats, RenderContext *ctx)
 	{
-		if (!ctx) 
+		if (!ctx)
 			ctx = activeRC;
 
 		stats.cacheTextureSize = 0;
@@ -712,12 +712,12 @@ namespace terrain {
 	{
 		const float s=16.0f;
 		if (debugQuad) {
-			fr->printf (0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f", 
+			fr->printf (0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f",
 				debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod (activeRC->cam->pos));
 		}
 		RenderStats stats;
 		CalcRenderStats(stats);
-		fr->printf (0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d", 
+		fr->printf (0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d",
 			activeRC->quads.size(), stats.tris, VertexBuffer::TotalSize()/1024, stats.renderDataSize/1024, config.detailMod, stats.cacheTextureSize);
 		fr->printf (0, 60, s, "NodeUpdateCount: %d, RenderDataAlloc: %d, #RenderData: %d",
 			nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->QuadRenderDataCount ());
@@ -843,9 +843,9 @@ namespace terrain {
 			fill=!fill;
 			return;
 		}
-		if (event == "t_detail_inc") 
+		if (event == "t_detail_inc")
 			config.detailMod *= 1.2f;
-		if (event == "t_detail_dec") 
+		if (event == "t_detail_dec")
 			config.detailMod /= 1.2f;
 		if (event == "t_debugquad") {
 			if (debugQuad)
@@ -854,7 +854,7 @@ namespace terrain {
 				debugQuad=FindQuad(quadtree, activeRC->cam->pos);
 			return;
 		}
-//		if (key == 'l') 
+//		if (key == 'l')
 //			logUpdates=!logUpdates;
 		texturing->DebugEvent (event);
 	}
@@ -881,7 +881,7 @@ namespace terrain {
 		// load heightmap
 		string heightmapName;
 		tdf.GetDef(heightmapName, string(), basepath + "Heightmap");
-		if (heightmapName.empty ()) 
+		if (heightmapName.empty ())
 			throw content_error("No heightmap given");
 
 		if (cb) cb->PrintMsg ("loading heightmap (%s)...", heightmapName.c_str());
@@ -889,7 +889,7 @@ namespace terrain {
 		if (extension == "raw") heightmap = LoadHeightmapFromRAW (heightmapName, cb);
 		else heightmap = LoadHeightmapFromImage (heightmapName,cb);
 
-		if (!heightmap) 
+		if (!heightmap)
 			throw content_error("Failed to load heightmap " + heightmapName);
 
 		d_trace("heightmap size: %dx%d\n", heightmap->w, heightmap->h);
@@ -1021,7 +1021,7 @@ namespace terrain {
 		} else {
 			uchar *buf=SAFE_NEW uchar[len], *p=buf;
 			fh.Read(buf,len);
-			for (w=w*w-1;w>=0;w--) 
+			for (w=w*w-1;w>=0;w--)
 				hm->data[w]=*(p++)/255.0f;
 			delete[] buf;
 		}
@@ -1033,12 +1033,15 @@ namespace terrain {
 	{
 		const char *hmfile = heightmapFile.c_str();
 		CFileHandler fh(heightmapFile);
+		if (!fh.FileExists())
+			throw content_error(heightmapFile + " does not exist");
 
 		ILuint ilheightmap;
 		ilGenImages (1, &ilheightmap);
 		ilBindImage (ilheightmap);
 
 		int len=fh.FileSize();
+		assert(len >= 0);
 
 		char *buffer=SAFE_NEW char[len];
 		fh.Read(buffer, len);
@@ -1057,7 +1060,7 @@ namespace terrain {
 		// does it have the correct size? 129,257,513
 		int testw = 1;
 		while (testw < hmWidth) {
-			if (testw + 1 == hmWidth) 
+			if (testw + 1 == hmWidth)
 				break;
 			testw <<= 1;
 		}
@@ -1091,7 +1094,7 @@ namespace terrain {
 	{
 		return Vector3 (heightmap->w, 0.0f, heightmap->h) * SquareSize;
 	}
-	
+
 	int Terrain::GetHeightmapWidth ()
 	{
 		return heightmap->w;
@@ -1126,8 +1129,8 @@ namespace terrain {
 		if (sx + w > heightmap->w) w = heightmap->w - sx;
 		if (sy + h > heightmap->h) h = heightmap->h - sy;
 
-		for (int y=sy;y<sy+h;y++) 
-			for (int x=sx;x<sx+w;x++) 
+		for (int y=sy;y<sy+h;y++)
+			for (int x=sx;x<sx+w;x++)
 				*(dest++) = heightmap->HeightAt (x,y);
 	}
 
