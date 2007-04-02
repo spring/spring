@@ -11,6 +11,7 @@
 #include "LogOutput.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/ModInfo.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
@@ -29,6 +30,7 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(reclaimLeft),
 				CR_MEMBER(id),
 				CR_MEMBER(allyteam),
+				CR_MEMBER(team),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(lastReclaim),
 				CR_MEMBER(def),
@@ -56,7 +58,8 @@ CFeature::CFeature()
 	health(0),
 	id(0),
 	finalHeight(0),
-	solidOnTop(0)
+	solidOnTop(0),
+	model(NULL)
 {
 	immobile=true;
 	physicalState = OnGround;
@@ -80,12 +83,18 @@ CFeature::~CFeature(void)
 
 
 void CFeature::Initialize (const float3& pos, FeatureDef* def, short int heading,
-                           int facing, int allyteam, std::string fromUnit)
+                           int facing, int team, std::string fromUnit)
 {
 	this->def=def;
 	createdFromUnit=fromUnit;
 	this->pos=pos;
-	this->allyteam=allyteam;
+	if (team == -1) {
+		this->allyteam=team;
+		this->team=0;
+	} else {
+		this->allyteam=gs->AllyTeam(team);
+		this->team=team;
+	}
 	this->pos.CheckInBounds();
 	this->heading=heading;
 	health=def->maxHealth;
@@ -97,18 +106,15 @@ void CFeature::Initialize (const float3& pos, FeatureDef* def, short int heading
 	buildFacing=facing;
 
 	if(def->drawType==DRAWTYPE_3DO){
-		if(def->model==0){
-			if(!def->useCSOffset) {
-				def->model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale);
-			} else {
-				def->model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,1,
-								def->collisionSphereOffset);
-			}
-			height=def->model->height;
-			def->radius=def->model->radius;
-			SetRadius(def->radius);			
+		if(!def->useCSOffset) {
+			model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,team);
+		} else {
+			model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,team, def->collisionSphereOffset);
 		}
-		midPos=pos+def->model->relMidPos;
+		height=model->height;
+		def->radius=model->radius;
+		SetRadius(def->radius);			
+		midPos=pos+model->relMidPos;
 	} else if(def->drawType==DRAWTYPE_TREE){
 		midPos=pos+UpVector*def->radius;
 		height = 2*def->radius;
@@ -261,7 +267,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	residualImpulse=impulse;
 	health-=damages[0];
 	if(health<=0 && def->destructable){
-		featureHandler->CreateWreckage(pos,def->deathFeature,heading,buildFacing, 1,-1,false,"");
++		featureHandler->CreateWreckage(pos,def->deathFeature,heading,buildFacing, 1,team,false,"");
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges=false;
 
@@ -312,7 +318,7 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// setup midPos
 	if (def->drawType == DRAWTYPE_3DO) {
-		midPos = pos + def->model->relMidPos;
+		midPos = pos + model->relMidPos;
 	} else if (def->drawType == DRAWTYPE_TREE){
 		midPos = pos + (UpVector * def->radius);
 	} else {
@@ -442,7 +448,10 @@ void CFeature::DrawS3O()
 {
 	glPushMatrix();
 	glMultMatrixf(transMatrix.m);
-	def->model->DrawStatic();
+	if (model->textureType) {
+		unitDrawer->SetS3OTeamColour(team);
+	}
+	model->DrawStatic();
 	glPopMatrix();
 }
 

@@ -110,7 +110,7 @@ void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 }
 
 
-CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int allyteam, bool emitSmoke,std::string fromUnit)
+CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int team, bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
 	if(name.empty())
@@ -121,14 +121,14 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		return 0;
 
 	if(iter>1){
-		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,allyteam,emitSmoke,"");
+		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,team,emitSmoke,"");
 	} else {
-		if (luaRules && !luaRules->AllowFeatureCreation(fd, allyteam, pos)) {
+		if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos)) {
 			return NULL;
 		}
 		if(!fd->modelname.empty()){
 			CFeature* f=SAFE_NEW CFeature;
-			f->Initialize (pos,fd,(short int)rot,facing,allyteam,fromUnit);
+			f->Initialize (pos,fd,(short int)rot,facing,team,fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 			return f;
@@ -487,10 +487,10 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 			float sqDist=(f->pos-camera->pos).SqLength2D();
 			float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){
-				if(!def->model->textureType || shadowHandler->inShadowPass){
+				if(!f->model->textureType || shadowHandler->inShadowPass){
 					f->DrawS3O ();
 				} else {
-					unitDrawer->QueS3ODraw(f,def->model->textureType);
+					unitDrawer->QueS3ODraw(f,f->model->textureType);
 				}
 			} else {
 				if(farFeatures)
@@ -525,15 +525,15 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 
 void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 {
-	float3 interPos=feature->pos+UpVector*feature->def->model->height*0.5f;
+	float3 interPos=feature->pos+UpVector*feature->model->height*0.5f;
 	int snurr=-feature->heading+GetHeadingFromVector(camera->pos.x-feature->pos.x,camera->pos.z-feature->pos.z)+(0xffff>>4);
 	if(snurr<0)
 		snurr+=0xffff;
 	if(snurr>0xffff)
 		snurr-=0xffff;
 	snurr=snurr>>13;
-	float tx=(feature->def->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
-	float ty=(feature->def->model->farTextureNum/8)*(1.0f/64.0f);
+	float tx=(feature->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
+	float ty=(feature->model->farTextureNum/8)*(1.0f/64.0f);
 	float offset=0;
 	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)+camera->right*feature->radius,tx,ty,unitDrawer->camNorm);
 	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
@@ -569,7 +569,6 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		fd->energy=atof(wreckParser.SGetValueDef("0",name+"\\energy").c_str());
 		fd->maxHealth=atof(wreckParser.SGetValueDef("0",name+"\\damage").c_str());
 		fd->metal=atof(wreckParser.SGetValueDef("0",name+"\\metal").c_str());
-		fd->model=0;
 		fd->modelname=wreckParser.SGetValueDef("",name+"\\object");
 		if(!fd->modelname.empty()){
 			fd->modelname=string("objects3d/")+fd->modelname;

@@ -14,7 +14,7 @@ struct FeatureDef
 
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), radius(0), mass(0),
-		upright(false), drawType(0), model(NULL), modelType(0),
+		upright(false), drawType(0), modelType(0),
 		destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), geoThermal(false),
 		xsize(0), ysize(0) {}
@@ -36,7 +36,6 @@ struct FeatureDef
 
 	bool upright;
 	int drawType;
-	S3DOModel* model;      //used by 3do obects
 	std::string modelname; //used by 3do obects
 	int modelType;         //used by tree etc
 

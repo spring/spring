@@ -2,6 +2,7 @@
 #define __FEATURE_H__
 
 #include "Sim/Objects/SolidObject.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Matrix44f.h"
 #include <vector>
 #include <list>
@@ -38,6 +39,7 @@ public:
 	void DependentDied(CObject *o);
 
 	CUnit* lastBuilder;
+	S3DOModel* model;      //used by 3do obects
 
 	std::string createdFromUnit;
 	// This flag is used to stop a potential exploit involving tripping a unit back and forth
@@ -51,6 +53,7 @@ public:
 	float reclaimLeft;
 	int id;
 	int allyteam;
+	int team;
 
 	int tempNum;
 	int lastReclaim;
