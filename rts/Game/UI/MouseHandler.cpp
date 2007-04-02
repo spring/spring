@@ -69,7 +69,7 @@ CMouseHandler::CMouseHandler()
 		buttons[a].lastRelease=-20;
 		buttons[a].movement=0;
 	}
-	
+
 	cursorScale = 1.0f;
 
 	cursorFileMap["cursornormal"] = // must always be loaded
@@ -97,7 +97,7 @@ CMouseHandler::CMouseHandler()
 	LoadCursorFile("cursorrevive",     CMouseCursor::Center);
 	LoadCursorFile("cursorselfd",      CMouseCursor::Center);
 	LoadCursorFile("cursortime",       CMouseCursor::Center);
-	LoadCursorFile("cursorunload",     CMouseCursor::Center);	
+	LoadCursorFile("cursorunload",     CMouseCursor::Center);
 	LoadCursorFile("cursorwait",       CMouseCursor::Center);
 
 	AttachCursorCommand("",             "cursornormal");
@@ -130,7 +130,7 @@ CMouseHandler::CMouseHandler()
 	soundMultiselID = sound->GetWaveId("sounds/button9.wav");
 
 	invertMouse=!!configHandler.GetInt("InvertMouse",1);
-  doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
+	doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	//fps camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
@@ -180,8 +180,8 @@ void CMouseHandler::MouseMove(int x, int y)
 
 	const int dx = x - lastx;
 	const int dy = y - lasty;
-	lastx = x;  
-	lasty = y;  
+	lastx = x;
+	lasty = y;
 
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
 
@@ -205,7 +205,7 @@ void CMouseHandler::MouseMove(int x, int y)
 		currentCamController->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		unitTracker.Disable();
 		return;
-	} 
+	}
 }
 
 
@@ -214,7 +214,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (button > NUM_BUTTONS) return;
 
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
-	
+
 	if(!game->gameOver)
 		gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
 
@@ -286,7 +286,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (button > NUM_BUTTONS) return;
 
 	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
-	
+
 
 	buttons[button].pressed=false;
 
@@ -299,7 +299,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f)) {
 			ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
 		}
-		return;		
+		return;
 	}
 
 	if(activeReceiver){
@@ -521,8 +521,8 @@ void CMouseHandler::Draw()
 		glVertexf3(camera->pos+dir1U*30+dir2S*30+camera->forward*30);
 		glEnd();
 		glLineWidth(1.0f);
-		
-		
+
+
 		glPopAttrib();
 	}
 }
@@ -539,8 +539,8 @@ void CMouseHandler::ShowMouse()
 void CMouseHandler::HideMouse()
 {
 	if (!hide) {
-		lastx = gu->viewSizeX/2;  
-		lasty = gu->viewSizeY/2;  
+		lastx = gu->viewSizeX/2;
+		lasty = gu->viewSizeY/2;
     SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetPos(int2(lastx, lasty));
 		hide = true;
@@ -632,7 +632,7 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	move.y = dy;
 	move.z = invertMouse? -1.0f : 1.0f;
 	currentCamController->MouseMove(move);
-	
+
 	if (gu->active) {
 		mouseInput->SetPos(int2(lastx, lasty));
 	}
@@ -671,7 +671,7 @@ void CMouseHandler::UpdateCam()
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();
 	}
-	
+
 	dir = (hide ? camera->forward : camera->CalcPixelDir(lastx, lasty));
 }
 
@@ -781,7 +781,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 	if (name.empty()) {
 		return false;
 	}
-	
+
 	std::map<std::string, ViewData>::const_iterator it = views.find(name);
 	if (it == views.end()) {
 		return false;
@@ -791,7 +791,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 	ViewData current;
 	current.mode = currentCamControllerNum;
 	current.state = currentCamController->GetState();
-	
+
 	for (it = views.begin(); it != views.end(); ++it) {
 		if (it->second == current) {
 			break;
@@ -800,7 +800,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 	if (it == views.end()) {
 		tmpView = current;
 	}
-	
+
 	ViewData effective;
 	if (saved == current) {
 		effective = tmpView;
@@ -808,7 +808,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 		effective = saved;
 	}
 
-	return LoadViewData(effective);	
+	return LoadViewData(effective);
 }
 
 
@@ -819,7 +819,7 @@ bool CMouseHandler::LoadViewData(const ViewData& vd)
 	}
 
 	int currentMode = currentCamControllerNum;
-	
+
 	if ((vd.mode == -1) ||
 			((vd.mode >= 0) && (vd.mode < camControllers.size()))) {
 		const float3 dummy = currentCamController->SwitchFrom();
@@ -829,7 +829,7 @@ bool CMouseHandler::LoadViewData(const ViewData& vd)
 		currentCamController->SwitchTo(showMode);
 		CameraTransition(1.0f);
 	}
-	
+
 	return currentCamController->SetState(vd.state);
 }
 
@@ -852,7 +852,7 @@ void CMouseHandler::DrawCursor(void)
 	if (guihandler) {
 		guihandler->DrawCentroidCursor();
 	}
-	
+
 	if (hide || (cursorText == "none")) {
 		return;
 	}
@@ -864,7 +864,7 @@ void CMouseHandler::DrawCursor(void)
 	} else {
 		mc = cursorFileMap["cursornormal"];
 	}
-	
+
 	if (mc == NULL) {
 		return;
 	}
