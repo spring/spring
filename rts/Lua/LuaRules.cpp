@@ -284,7 +284,7 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 
 
 bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
-                                     int allyTeamID, const float3& pos)
+                                     int teamID, const float3& pos)
 {
 	if (!haveAllowFeatureCreation) {
 		return true; // the call is not defined
@@ -299,7 +299,7 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	}
 
 	lua_pushnumber(L, featureDef->id);
-	lua_pushnumber(L, allyTeamID);
+	lua_pushnumber(L, teamID);
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
