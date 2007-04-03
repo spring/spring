@@ -160,6 +160,8 @@ class LuaOpenGL {
 		static int ListCreate(lua_State* L);
 		static int ListRun(lua_State* L);
 		static int ListDelete(lua_State* L);
+
+		static int MakeFont(lua_State* L);
 };
 
 
