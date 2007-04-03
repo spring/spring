@@ -15,6 +15,14 @@ clean:
 
 fresh:	clean all
 
+test:	$(EXEC)
+	./$(EXEC) -d 1 -f test -o 2 -h 20 ../../game/Vera.ttf
+	$(MAKE) copy
+	
+copy:
+	cp test.png ../../game/LuaUI/Fonts/test.png            
+	cp test.fmt ../../game/LuaUI/Fonts/test.fmt     
+
 ftSRC = ../../rts/Rendering/FontTexture.cpp
 ftOBJ = ../../build/rts/Rendering/FontTexture.o
 
