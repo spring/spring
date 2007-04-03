@@ -12,6 +12,7 @@
 #include <QuickTime/QuickTimeComponents.h>
 #else
 #include <IL/il.h>
+#include <IL/ilu.h>
 #endif
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -26,6 +27,7 @@
 struct InitializeOpenIL {
 	InitializeOpenIL() {
 		ilInit();
+		iluInit();
 	}
 	~InitializeOpenIL() {
 		ilShutDown();

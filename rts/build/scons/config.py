@@ -222,6 +222,9 @@ def check_headers(env, conf):
 	if not conf.CheckCHeader('IL/il.h'):
 		print ' Cannot find DevIL image library header'
 		env.Exit(1)
+	if not conf.CheckCHeader('IL/ilu.h'):
+		print ' Cannot find DevILU image utility library header'
+		env.Exit(1)
 
 
 def check_libraries(env, conf):
@@ -266,6 +269,10 @@ def check_libraries(env, conf):
 	# second check for Windows.
 	if not conf.CheckLib('IL') and not conf.CheckLib('devil') and not conf.CheckLib('DevIL'):
 		print "You need the DevIL image library for this program"
+		env.Exit(1)
+
+	if not conf.CheckLib('ILU') and not conf.CheckLib('devilu') and not conf.CheckLib('DevILU'):
+		print "You need the DevILU image utility library for this program"
 		env.Exit(1)
 
 	if env['platform'] == 'windows':
