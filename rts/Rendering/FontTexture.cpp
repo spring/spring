@@ -426,6 +426,13 @@ Glyph::Glyph(FT_Face& face, int _num) : num(_num), valid(false)
     return;
   }
   FT_GlyphSlot glyph = face->glyph;
+/*
+  error = FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL);
+  if (error) {
+    printf("FT_Render_Glyph(%i '%c') error: %i\n", num, num, error);
+    return;
+  }
+*/
 
   xsize = glyph->bitmap.width;
   ysize = glyph->bitmap.rows;
@@ -454,6 +461,7 @@ Glyph::Glyph(FT_Face& face, int _num) : num(_num), valid(false)
   ilGenImages(1, &img);
   if (img == 0) {
     printf("ERROR: ilGenImages() == 0\n");
+    return;
   }
   ilBindImage(img);
 

@@ -46,7 +46,7 @@ local caching = true
 local timeStamp  = 0
 local lastUpdate = 0
 
-local debug = true
+local debug = false
 local origPrint = print
 local print = function(...)
   if (debug) then
@@ -68,7 +68,7 @@ local function LoadFontSpecs(fontName)
   print('fontSpecs.srcFile  = ' .. fontSpecs.srcFile)
   print('fontSpecs.family   = ' .. fontSpecs.family)
   print('fontSpecs.style    = ' .. fontSpecs.style)
-  print('fontSpecs.height   = ' .. fontSpecs.height)
+  print('fontSpecs.size     = ' .. fontSpecs.height)
   print('fontSpecs.yStep    = ' .. fontSpecs.yStep)
   print('fontSpecs.xTexSize = ' .. fontSpecs.xTexSize)
   print('fontSpecs.yTexSize = ' .. fontSpecs.yTexSize)
@@ -203,8 +203,7 @@ local function RawColorDraw(text)
 end
 
 
-local function DrawNoCache(text, x, y, size, opts)
---local function Draw(text, x, y, size, opts) -- FIXME
+local function DrawNoCache(text, x, y)
   if (not x) then
     RawDraw(text)
   else
@@ -212,14 +211,15 @@ local function DrawNoCache(text, x, y, size, opts)
     gl.Translate(x, y, 0)
     gl.Texture(activeFont.image)
     RawColorDraw(text)
+    gl.Texture(false)
     gl.PopMatrix()
   end
 end
 
 
-local function Draw(text, x, y, size, opts) -- FIXME
+local function Draw(text, x, y)
   if (not caching) then
-    DrawNoCache(text, x, y, size, opts)
+    DrawNoCache(text, x, y)
     return
   end
 
@@ -227,7 +227,8 @@ local function Draw(text, x, y, size, opts) -- FIXME
   if (not cacheTextData) then
     local textList = gl.ListCreate(function()
       gl.Texture(activeFont.image)
-      RawColorDraw(text)  -- FIXME?
+      RawColorDraw(text)
+      gl.Texture(false)
     end)
     cacheTextData = { textList, timeStamp }
     activeFont.cache[text] = cacheTextData
@@ -308,7 +309,6 @@ local function LoadFont(fontName)
   font.lists = fontLists
   font.cache = {}
   font.image = options .. baseName .. ".png"
-  font.size  = 12.0  -- FIXME
 
   return font
 end
@@ -413,7 +413,9 @@ FH.Update = Update
 FH.SetFont        = SetFont
 FH.SetDefaultFont = SetDefaultFont
 
-FH.GetActiveFont  = function() return activeFont.name end
+FH.GetFontName  = function() return activeFont.name end
+FH.GetFontSize  = function() return activeFont.specs.height end
+FH.GetFontYStep = function() return activeFont.specs.yStep  end
 
 FH.FreeFont  = FreeFont
 FH.FreeFonts = FreeFonts
@@ -428,7 +430,6 @@ FH.StripColors = StripColorCodes
 FH.CalcTextWidth  = CalcTextWidth
 FH.CalcTextHeight = CalcTextHeight
 
-FH.GetYStep     = function() return activeFont.specs.yStep end
 
 FH.CacheState   = function() return caching  end
 FH.EnableCache  = function() caching = true  end
