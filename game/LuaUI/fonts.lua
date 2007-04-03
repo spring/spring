@@ -59,85 +59,18 @@ end
 --------------------------------------------------------------------------------
 
 local function LoadFontSpecs(fontName)
-  local filename = fontName .. ".fmt"
-
-  local f = io.open(filename, "r")
-  if (not f) then
-    print("failed to open: " .. filename)
+  local chunk = loadfile(fontName .. ".lua")
+  if (not chunk) then
     return nil
   end
-
-  local fontSpecs = {}
-  fontSpecs.chars = {}
-  fontSpecs.name = filename
-  fontSpecs.xTexSize = -1
-  fontSpecs.yTexSize = -1
-
-  local currChar
-  for line in f:lines() do
-    if ((strlen(line) > 0) and (strsub(line, 1, 1) ~= '#')) then
-      local words = {}
-      for w in strgfind(line, "[^%s]+") do
-        table.insert(words, w)
-      end
-      local cmd = words[1]
-      table.remove(words, 1, 1)
-      p1 = words[1]
-      p2 = words[2]
-      p3 = words[3]
-      p4 = words[4]
-
-      if (cmd == 'yStep:') then
-        fontSpecs.yStep = tonumber(p1)
-      elseif (cmd == 'height:') then
-        fontSpecs.height = tonumber(p1)
-      elseif (cmd == 'xTexSize:') then
-        fontSpecs.xTexSize = tonumber(p1)
-      elseif (cmd == 'yTexSize:') then
-        fontSpecs.yTexSize = tonumber(p1)
-      elseif (cmd == 'glyph:') then
-        local c = tonumber(p1)
-        if (currChar) then
-          fontSpecs.chars[currChar.char] = currChar
-        end
-        currChar = { char = c }
-      elseif (cmd == 'advance:') then
-        currChar.adv = tonumber(p1)
-      elseif (cmd == 'offsets:') then
-        currChar.oxn = tonumber(p1)
-        currChar.oyn = tonumber(p2)
-        currChar.oxp = tonumber(p3)
-        currChar.oyp = tonumber(p4)
-      elseif (cmd == 'texcoords:') then
-        currChar.txn = tonumber(p1)
-        currChar.tyn = tonumber(p2)
-        currChar.txp = tonumber(p3)
-        currChar.typ = tonumber(p4)
-      else
-        print("Unknown font character parameter: " .. line)
-      end
-    end
-  end
-
-  if (currChar) then
-    fontSpecs.chars[currChar.char] = currChar
-  end
+  local fontSpecs = chunk()
+  fontSpecs.name = fontName
 
   print('fontSpecs.name     ', fontSpecs.name)
   print('fontSpecs.yStep    ', fontSpecs.yStep)
   print('fontSpecs.height   ', fontSpecs.height)
   print('fontSpecs.xTexSize ', fontSpecs.xTexSize)
   print('fontSpecs.yTexSize ', fontSpecs.yTexSize)
---[[
-  for _,c in pairs(fontSpecs.chars) do
-    print("glyph = " .. c.char .. " '" .. strchar(c.char) .. "'")
-    print("  advance   " .. c.adv)
-    print("  offsets   " .. c.oxn .." "..c.oyn.." "..c.oxp.." "..c.oyp)
-    print("  texcoords " .. c.txn .." "..c.tyn.." "..c.txp.." "..c.typ)
-  end
---]]
-
-  f:close()
 
   return fontSpecs
 end
@@ -150,14 +83,14 @@ local function MakeDisplayLists(fontSpecs)
   local lists = {}
   local xs = fontSpecs.xTexSize
   local ys = fontSpecs.yTexSize
-  for _,gi in pairs(fontSpecs.chars) do
+  for _,gi in pairs(fontSpecs.glyphs) do
     local list = gl.ListCreate(function ()
       gl.TexRect(gi.oxn, gi.oyn, gi.oxp, gi.oyp,
                  gi.txn / xs, 1.0 - (gi.tyn / ys),
                  gi.txp / xs, 1.0 - (gi.typ / ys))
       gl.Translate(gi.adv, 0, 0)
     end)
-    lists[gi.char] = list
+    lists[gi.num] = list
   end
   return lists
 end
@@ -168,7 +101,7 @@ local function MakeOutlineDisplayLists(fontSpecs)
   local tw = fontSpecs.xTexSize
   local th = fontSpecs.yTexSize
 
-  for _,gi in pairs(fontSpecs.chars) do
+  for _,gi in pairs(fontSpecs.glyphs) do
     local w = gi.xmax - gi.xmin
     local h = gi.ymax - gi.ymin
     local txn = gi.xmin / tw
@@ -196,7 +129,7 @@ local function MakeOutlineDisplayLists(fontSpecs)
       gl.Translate(gi.width + gi.whitespace, 0, 0)
     end)
 
-    lists[gi.char] = list
+    lists[gi.num] = list
   end
   return lists
 end
@@ -209,9 +142,9 @@ local function CalcTextWidth(text)
   local w = 0
   for i = 1, strlen(text) do
     local c = strbyte(text, i)
-    local glyphInfo = specs.chars[c]
+    local glyphInfo = specs.glyphs[c]
     if (not glyphInfo) then
-      glyphInfo = specs.chars[32]
+      glyphInfo = specs.glyphs[32]
     end
     if (glyphInfo) then
       w = w + glyphInfo.adv

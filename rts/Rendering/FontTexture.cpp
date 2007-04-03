@@ -259,7 +259,7 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   string specsName;
   if (!outputFileName.empty()) {
     imageName = outputFileName + ".png";
-    specsName = outputFileName + ".fmt";
+    specsName = outputFileName + ".lua";
   }
   else {
     string basename = filename;
@@ -275,7 +275,7 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
     char outlineText[64];
     sprintf(outlineText, "_%i", outline);
     imageName = basename + heightText + ".png";
-    specsName = basename + heightText + ".fmt";
+    specsName = basename + heightText + ".lua";
   }
 
   printf("Processing %s @ %i\n", filename.c_str(), fontHeight);
@@ -341,21 +341,20 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
     }
   }
 
-  fprintf(specFile, "#\n");
-  fprintf(specFile, "#  Source file: %s\n", filename.c_str());
-  fprintf(specFile, "#  Source size: %i\n", fontHeight);
-  fprintf(specFile, "#  Font family: %s\n", face->family_name);
-  fprintf(specFile, "#  Font  style: %s\n", face->style_name);
-  fprintf(specFile, "#\n");
   fprintf(specFile, "\n");
-  fprintf(specFile, "yStep:    %i\n", yStep);
-  fprintf(specFile, "height:   %i\n", fontHeight);
-  fprintf(specFile, "xTexSize: %i\n", xTexSize);
-  fprintf(specFile, "yTexSize: %i\n", yTexSize);
+  fprintf(specFile, "local fontSpecs = {\n");
+  fprintf(specFile, "  srcFile  = [[%s]],\n", filename.c_str());
+  fprintf(specFile, "  family   = [[%s]],\n", face->family_name);
+  fprintf(specFile, "  style    = [[%s]],\n", face->style_name);
+  fprintf(specFile, "  fontHeight = %i,\n", fontHeight);
+  fprintf(specFile, "  yStep    = %i,\n", yStep);
+  fprintf(specFile, "  height   = %i,\n", fontHeight);
+  fprintf(specFile, "  xTexSize = %i,\n", xTexSize);
+  fprintf(specFile, "  yTexSize = %i,\n", yTexSize);
+  fprintf(specFile, "}\n");
   fprintf(specFile, "\n");
-  fprintf(specFile, "#\n");
-  fprintf(specFile, "#  Coordinates format: -x -y +x +y\n");
-  fprintf(specFile, "#\n");
+  fprintf(specFile, "local glyphs = {}\n");
+  fprintf(specFile, "\n");
 
   ILuint img;
   ilGenImages(1, &img);
@@ -395,6 +394,12 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
       ycell++;
     }
   }
+
+  fprintf(specFile, "\n");
+  fprintf(specFile, "fontSpecs.glyphs = glyphs\n");
+  fprintf(specFile, "\n");
+  fprintf(specFile, "return fontSpecs\n");
+  fprintf(specFile, "\n");
 
   fclose(specFile);
   printf("Saved: %s\n", specsName.c_str());
@@ -492,12 +497,14 @@ Glyph::~Glyph()
 
 bool Glyph::SaveSpecs(FILE* f)
 {
-  fprintf(f, "\n");
-  fprintf(f, "#%c#\n", num);
-  fprintf(f, "glyph:     %4i\n", num);
-  fprintf(f, "advance:   %4i\n", advance);
-  fprintf(f, "offsets:   %4i %4i %4i %4i\n", oxn, oyn, oxp, oyp);
-  fprintf(f, "texcoords: %4i %4i %4i %4i\n", txn, tyn, txp, typ);
+  fprintf(f, "glyphs[%i] = { --'%c'--\n", num, num);
+  fprintf(f, "  num = %i,\n", num);
+  fprintf(f, "  adv = %i,\n", advance);
+  fprintf(f, "  oxn = %4i, oyn = %4i, oxp = %4i, oyp = %4i,\n",
+             oxn, oyn, oxp, oyp);
+  fprintf(f, "  txn = %4i, tyn = %4i, txp = %4i, typ = %4i,\n",
+             txn, tyn, txp, typ);
+  fprintf(f, "}\n");
   return true;
 }
 
