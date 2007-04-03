@@ -15,7 +15,7 @@ ftOBJ = ../../build/rts/Rendering/FontTexture.o
 all:	$(EXEC) GNUmakefile
 
 clean:
-	rm -f *~ *.o $(EXEC) *.png *.fmt
+	rm -f *~ *.o $(EXEC) *.png *.lua
 
 fresh:	clean all
 	rm -f $(ftOBJ)
@@ -26,7 +26,7 @@ test:	$(EXEC)
 	
 copy:
 	cp test.png ../../game/LuaUI/Fonts/test.png            
-	cp test.fmt ../../game/LuaUI/Fonts/test.fmt     
+	cp test.lua ../../game/LuaUI/Fonts/test.lua     
 
 
 fontTexture: 	main.o ../../build/rts/Rendering/FontTexture.o
