@@ -64,13 +64,14 @@ local function LoadFontSpecs(fontName)
     return nil
   end
   local fontSpecs = chunk()
-  fontSpecs.name = fontName
 
-  print('fontSpecs.name     ', fontSpecs.name)
-  print('fontSpecs.yStep    ', fontSpecs.yStep)
-  print('fontSpecs.height   ', fontSpecs.height)
-  print('fontSpecs.xTexSize ', fontSpecs.xTexSize)
-  print('fontSpecs.yTexSize ', fontSpecs.yTexSize)
+  print('fontSpecs.srcFile  = ' .. fontSpecs.srcFile)
+  print('fontSpecs.family   = ' .. fontSpecs.family)
+  print('fontSpecs.style    = ' .. fontSpecs.style)
+  print('fontSpecs.height   = ' .. fontSpecs.height)
+  print('fontSpecs.yStep    = ' .. fontSpecs.yStep)
+  print('fontSpecs.xTexSize = ' .. fontSpecs.xTexSize)
+  print('fontSpecs.yTexSize = ' .. fontSpecs.yTexSize)
 
   return fontSpecs
 end
@@ -411,6 +412,8 @@ FH.Update = Update
 
 FH.SetFont        = SetFont
 FH.SetDefaultFont = SetDefaultFont
+
+FH.GetActiveFont  = function() return activeFont.name end
 
 FH.FreeFont  = FreeFont
 FH.FreeFonts = FreeFonts
