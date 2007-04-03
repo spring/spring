@@ -54,7 +54,7 @@
  * @brief max teams
  *
  * Defines the maximum number of teams
- * as 17 (team 16 is the GAIA team)
+ * as 17 (16 real teams, and an extra slot for the GAIA team)
  */
 #define MAX_TEAMS 17
 
