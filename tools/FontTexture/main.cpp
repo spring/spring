@@ -32,12 +32,16 @@ int main(int /* argc */, char** argv)
   if (!ParseArgs(argv)) {
     printf("\n");
     printf("Usage: %s [options] <fontfile>\n", argv[0]);
-    printf("       -h <height>  : font height in pixels (scaled fonts)\n");
-    printf("       -o <outline> : outline width in pixels\n");
-    printf("       -O           : use separate outlines\n");
-    printf("       -f <outName> : set the output base name\n");
-    printf("       -w <width>   : set the texture width\n");
-    printf("       -d <debug>   : set the debug level\n");
+    printf("       -h <height>   : font height in pixels (scaled fonts)\n");
+    printf("       -o <outline>  : outline width in pixels\n");
+    printf("       -O            : use separate outlines\n");
+    printf("       -f <outName>  : set the output base name\n");
+    printf("       -w <width>    : set the texture width\n");
+    printf("       -sc <minChar> : set first character\n");
+    printf("       -ec <maxChar> : set last  character\n");
+    printf("       -p <padding>  : set the glyph padding\n");
+    printf("       -s <stuffing> : set the glyph stuffing\n");
+    printf("       -d <debug>    : set the debug level\n");
     printf("\n");
     return 1;
   }
@@ -100,6 +104,16 @@ static bool ParseArgs(char** argv)
     else if (strcmp (opt, "ec") == 0) {
       if (argv[1] == NULL) { return false; } // missing parameter
       FontTexture::SetMaxChar(atoi(argv[1]));
+      argv++;
+    }
+    else if (strcmp (opt, "p") == 0) {
+      if (argv[1] == NULL) { return false; } // missing parameter
+      FontTexture::SetPadding(atoi(argv[1]));
+      argv++;
+    }
+    else if (strcmp (opt, "s") == 0) {
+      if (argv[1] == NULL) { return false; } // missing parameter
+      FontTexture::SetStuffing(atoi(argv[1]));
       argv++;
     }
     else if (strcmp (opt, "d") == 0) {
