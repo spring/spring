@@ -19,6 +19,11 @@ clean:
 
 fresh:	clean all
 	rm -f $(ftOBJ)
+	$(MAKE) clean
+	$(MAKE) all
+
+strip:	$(EXEC)
+	strip $(EXEC)
 
 test:	$(EXEC)
 	./$(EXEC) -d 1 -f test -o 2 -h 20 ../../game/Vera.ttf
@@ -29,10 +34,9 @@ copy:
 	cp test.lua ../../game/LuaUI/Fonts/test.lua     
 
 
-fontTexture: 	main.o ../../build/rts/Rendering/FontTexture.o
+$(EXEC):	main.o $(ftOBJ)
 	g++ $(CPPFLAGS) $(FT_CFLAGS) -g -o $(EXEC) main.o $(ftOBJ) $(FT_LIBS) $(LIBS)
 
-$(EXEC):	main.o $(ftOBJ)
 
 $(ftOBJ):	$(ftSRC)
 	g++ $(CPPFLAGS) -c $< -o $(ftOBJ)
