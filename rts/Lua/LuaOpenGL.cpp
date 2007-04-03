@@ -31,6 +31,7 @@ extern "C" {
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/glFont.h"
+#include "Rendering/FontTexture.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -170,6 +171,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Rotate);
 	REGISTER_LUA_CFUNC(PushMatrix);
 	REGISTER_LUA_CFUNC(PopMatrix);
+
+	REGISTER_LUA_CFUNC(MakeFont);
 
 	return true;
 }
@@ -2301,6 +2304,52 @@ int LuaOpenGL::ListDelete(lua_State* L)
 	if (dlist != 0) {
 		glDeleteLists(dlist, 1);
 	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaOpenGL::MakeFont(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.MakeFont()");
+	}
+	FontTexture::Reset();
+	FontTexture::SetInFileName(lua_tostring(L, 1));
+	if ((args >= 2) && lua_istable(L, 2)) {
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2)) {
+				const string key = lua_tostring(L, -2);
+				if (lua_isstring(L, -1)) {
+					if ((key == "outName") && lua_isstring(L, -1)) {
+						FontTexture::SetOutBaseName(lua_tostring(L, -1));
+					}
+				}
+				else if (lua_isnumber(L, -1)) {
+					const unsigned int value = (unsigned int)lua_tonumber(L, -1);
+					if (key == "height") {
+						FontTexture::SetFontHeight(value);
+					} else if (key == "texWidth") {
+						FontTexture::SetTextureWidth(value);
+					} else if (key == "minChar") {
+						FontTexture::SetMinChar(value);
+					} else if (key == "maxChar") {
+						FontTexture::SetMaxChar(value);
+					} else if (key == "outlineMode") {
+						FontTexture::SetOutlineMode(value);
+					} else if (key == "outlineRadius") {
+						FontTexture::SetOutlineRadius(value);
+					} else if (key == "debug") {
+						FontTexture::SetDebugLevel(value);
+					}
+				}
+			}
+		}
+	}
+	FontTexture::Execute();
 	return 0;
 }
 
