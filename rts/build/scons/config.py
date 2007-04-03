@@ -174,152 +174,121 @@ def check_python(env, conf):
 	guess_include_path(env, conf, 'Python', 'python2.4')
 
 
-def check_headers(env, conf):
-	print "\nChecking header files"
-
-	if not conf.CheckCHeader('zlib.h'):
-		print "Zlib headers are required for this program"
-		env.Exit(1)
-	if not conf.CheckCHeader('ft2build.h'):
-		print "Freetype2 headers are required for this program"
-		env.Exit(1)
-	# second check for FreeBSD.
-	if not conf.CheckCHeader('SDL/SDL.h') and not conf.CheckCHeader('SDL11/SDL.h'):
-		print 'LibSDL headers are required for this program'
-		env.Exit(1)
-	if env['platform'] == 'windows':
-		# Somehow this fails when including dsound.h even if it's there.
-		# Possibly it needs other files included before it (windows.h?)
-		#if not conf.CheckCHeader('dsound.h'):
-		#	print 'DirectSound header is required for this program'
-		#	env.Exit(1)
-		pass
+def check_java(env, conf):
+	print "Checking for Java...",
+	if env.has_key('javapath') and env['javapath']:
+		env.AppendUnique(CPPPATH = env['javapath'])
+		env.AppendUnique(CPPPATH = os.path.join(env['javapath'], "linux"))
+		return
+	possible_dirs = []
+	for root in ["/usr/local/lib/jvm", "/usr/lib/jvm"]:
+		if os.path.exists(root) and os.path.isdir(root):
+			dirs = os.listdir(root)
+			for dir in dirs:
+				testdir = os.path.join(root, dir, "include")
+				if dir[0] != '.' and os.path.exists(os.path.join(testdir, "jni.h")):
+					possible_dirs += [testdir]
+	if len(possible_dirs) == 0:
+		print "not found"
+		# FIXME TEST ON MINGW (ie make consistent with mingwlibs)
+		guess_include_path(env, conf, 'Java', 'java')
 	else:
-		if not conf.CheckCHeader('AL/al.h'):
-			print 'OpenAL headers are required for this program'
-			env.Exit(1)
-	if not conf.CheckCHeader('GL/gl.h'):
-		print 'OpenGL headers are required for this program'
-		env.Exit(1)
-	if not conf.CheckCHeader('GL/glu.h'):
-		print 'OpenGL utility (glu) headers are required for this program'
-		env.Exit(1)
-	if not conf.CheckCHeader('GL/glew.h'):
-		print ' Cannot find GLEW http://glew.sourceforge.net'
-		env.Exit(1)
-	if not conf.CheckCXXHeader('boost/cstdint.hpp'):
-		print ' Boost library must be installed'
-		env.Exit(1)
-	if not conf.CheckCXXHeader('boost/thread.hpp'):
-		print ' Cannot find Boost threading headers'
-		env.Exit(1)
-	if not conf.CheckCXXHeader('boost/regex.hpp'):
-		print ' Cannot find Boost regex header'
-		env.Exit(1)
-	if not conf.CheckCXXHeader('boost/spirit.hpp'):
-		print ' Cannot find Boost Spirit header'
-		env.Exit(1)
-	if not conf.CheckCHeader('IL/il.h'):
-		print ' Cannot find DevIL image library header'
-		env.Exit(1)
-	if not conf.CheckCHeader('IL/ilu.h'):
-		print ' Cannot find DevILU image utility library header'
-		env.Exit(1)
+		possible_dirs.sort()
+		print possible_dirs[-1]
+		env.AppendUnique(CPPPATH = possible_dirs[-1])
+		env.AppendUnique(CPPPATH = os.path.join(possible_dirs[-1], "linux"))
 
 
-def check_libraries(env, conf):
-	print "\nChecking libraries"
+class Dependency:
+	def __init__(self, libraries, headers):
+		self.libraries = libraries
+		self.headers = headers
+
+	def __lt__(self, other):
+		return (self.libraries + self.headers) < (other.libraries + other.headers)
+
+	def CheckLibraries(self, conf):
+		if len(self.libraries) != 0:
+			succes = False
+			for l in self.libraries:
+				succes = conf.CheckLib(l)
+				if succes: break
+			if not succes:
+				print "Could not find one of these libraries: " + str(self.libraries)
+				return False
+		return True
+
+	def CheckHeaders(self, conf):
+		if len(self.headers) != 0:
+			succes = False
+			for h in self.headers:
+				succes = conf.CheckCXXHeader(h)
+				if succes: break
+			if not succes:
+				print "Could not find one of these headers: " + str(self.headers)
+				return False
+		return True
+
+
+def CheckHeadersAndLibraries(env, conf):
+	print "\nChecking headers and libraries"
+
+	boost_common = Dependency([], ['boost/cstdint.hpp'])
+	boost_thread = Dependency(['boost_thread'], ['boost/thread.hpp'])
+	boost_regex  = Dependency(['boost_regex'],   ['boost/regex.hpp'])
 
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
 
-	if not conf.CheckLib('GL') and not conf.CheckLib('opengl32'):
-		print "You need an OpenGL development library for this program"
-		env.Exit(1)
-	if not conf.CheckLib('GLU') and not conf.CheckLib('glu32'):
-		print "You need the OpenGL Utility (GLU) library for this program"
-		env.Exit(1)
-	if not conf.CheckLib("z"):
-		print "Zlib is required for this program"
-		env.Exit(1)
-	if not conf.CheckLib("freetype"):
-		print "Freetype2 is required for this program"
-		env.Exit(1)
+	for boost in (boost_thread, boost_regex):
+		l = boost.libraries[0]
+		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
+		else:   boost.libraries = [l+'-mt', l]
 
-	# second check for Windows.
-	if not conf.CheckLib('python2.4') and not conf.CheckLib('python24'):
-		print 'python is required for this program'
-		env.Exit(1)
+	d = [boost_common, boost_thread, boost_regex]
 
-	# second check for Windows.
-	if not (conf.CheckLib('GLEW') or conf.CheckLib('glew32')):
-		print "You need GLEW to compile this program"
-		env.Exit(1)
-
-	def check_boost_library(lib, hdr):
-		l = 'boost_' + lib
-		if not ((gcc and conf.CheckLib(l+'-gcc-mt')) or conf.CheckLib(l+'-mt') or
-				(gcc and conf.CheckLib(l+'-gcc'))    or conf.CheckLib(l)):
-			print "You need the Boost " + lib + " library for this program"
-			env.Exit(1)
-
-	check_boost_library('thread', 'boost/thread.hpp')
-	check_boost_library('regex', 'boost/regex.hpp')
-
-	# second check for Windows.
-	if not conf.CheckLib('IL') and not conf.CheckLib('devil') and not conf.CheckLib('DevIL'):
-		print "You need the DevIL image library for this program"
-		env.Exit(1)
-
-	if not conf.CheckLib('ILU') and not conf.CheckLib('devilu') and not conf.CheckLib('DevILU'):
-		print "You need the DevILU image utility library for this program"
-		env.Exit(1)
-
+	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
+	d += [Dependency(['GLU', 'glu32'],   ['GL/glu.h'])]
+	d += [Dependency(['GLEW', 'glew32'], ['GL/glew.h'])]
+	d += [Dependency(['z'],              ['zlib.h'])]
+	d += [Dependency(['freetype'],       ['ft2build.h'])]
+	d += [Dependency(['IL', 'devil', 'DevIL'],    ['IL/il.h'])]
+	d += [Dependency(['ILU', 'devilu', 'DevILU'], ['IL/ilu.h'])]	
+	
 	if env['platform'] == 'windows':
-		if not conf.CheckLib('imagehlp'):
-			print "On windows you need the imagehlp library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('dsound'):
-			print "On windows you need the dsound library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('gdi32'):
-			print "On windows you need the gdi32 library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('winmm'):
-			print "On windows you need the winmm library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('wsock32'):
-			print "On windows you need the wsock32 library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('ole32'):
-			print "On windows you need the ole32 library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('mingw32'):
-			print "On windows you need the mingw32 library for this program"
-			env.Exit(1)
-		if not conf.CheckLib('SDLmain'):
-			print "On windows you need the SDLmain library for this program"
-			env.Exit(1)
+		d += [Dependency(['imagehlp'], [])]
+		# Somehow adding dsound.h always fails even if the file's there.
+		# Possibly it needs other files included before it (windows.h?)
+		d += [Dependency(['dsound'],   [])]
+		d += [Dependency(['gdi32'],    [])]
+		d += [Dependency(['winmm'],    [])]
+		d += [Dependency(['wsock32'],  [])]
+		d += [Dependency(['ole32'],    [])]
+		d += [Dependency(['mingw32'],  [])]
+		d += [Dependency(['SDLmain'],  [])]
 	else:
-		# second check was for Windows.
-		if not conf.CheckLib('openal'):   #and not conf.CheckLib('openal32'):
-			print 'OpenAL is required for this program'
-			env.Exit(1)
+		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
-	# second check for FreeBSD.
-	if not conf.CheckLib('SDL') and not conf.CheckLib('SDL-1.1'):
-		print 'LibSDL is required for this program'
-		env.Exit(1)
+	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
 
 	if env['use_tcmalloc']:
-		if not conf.CheckLib('tcmalloc'):
-			print "tcmalloc from goog-perftools requested but not available"
-			print "falling back to standard malloc"
-			env['use_tcmalloc'] = False
+		d += [Dependency(['tcmalloc'], [])]
+
+	d.sort()
+	all_succes = True
+
+	for c in d:
+		if not c.CheckHeaders(conf) or not c.CheckLibraries(conf):
+			all_succes = False
+
+	if not all_succes:
+		print "Not all tests finished succesfully.  You are probably missing one of the"
+		print "build dependencies.  See config.log for details."
+		env.Exit(1)
 
 
 def configure(env, conf_dir):
-	print "\nChecking configure scripts"
+	print "\nConfiguring spring"
 	conf = env.Configure(conf_dir = conf_dir)
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
@@ -327,7 +296,8 @@ def configure(env, conf_dir):
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
 	check_python(env, conf)
-	check_headers(env, conf)
-	check_libraries(env, conf)
+	#check_java(env, conf)
+	CheckHeadersAndLibraries(env, conf)
 	env = conf.Finish()
 	print "\nEverything seems OK.  Run `scons' now to build."
+
