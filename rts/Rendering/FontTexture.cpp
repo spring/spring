@@ -443,10 +443,11 @@ Glyph::Glyph(FT_Face& face, int _num) : num(_num), valid(false)
         px[0] = 0xFF;
         px[1] = 0xFF;
         px[2] = 0xFF;
+        const u32 bufIndex = x + ((ysize - y - 1) * xsize);
         if (glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
-          px[3] = face->glyph->bitmap.buffer[((ysize - y - 1) * xsize) + x] ? 0xFF : 0x00;
+          px[3] = face->glyph->bitmap.buffer[bufIndex] ? 0xFF : 0x00;
         } else {
-          px[3] = face->glyph->bitmap.buffer[((ysize - y - 1) * xsize) + x];
+          px[3] = face->glyph->bitmap.buffer[bufIndex];
         }
       }
     }

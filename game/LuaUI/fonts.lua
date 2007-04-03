@@ -16,8 +16,22 @@ if (fontHandler ~= nil) then
 end
 
 
-local DefaultFontName = "ProFont_12"
-local DefaultFontName = "test"
+local DefaultFontName = LUAUI_DIRNAME .. "Fonts/ProFont_12"
+local DefaultFontName = LUAUI_DIRNAME .. "Fonts/test"
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  Local speedups
+--
+
+local strlen   = string.len
+local strsub   = string.sub
+local strbyte  = string.byte
+local strchar  = string.char
+local strfind  = string.find
+local strgfind = string.gfind
 
 
 --------------------------------------------------------------------------------
@@ -27,7 +41,7 @@ local fonts = {}
 local activeFont  = nil
 local defaultFont = nil
 
-local fontDir = LUAUI_DIRNAME .. "Fonts/"
+local caching = true
 
 local timeStamp  = 0
 local lastUpdate = 0
@@ -45,7 +59,7 @@ end
 --------------------------------------------------------------------------------
 
 local function LoadFontSpecs(fontName)
-  local filename = fontDir .. fontName .. ".fmt"
+  local filename = fontName .. ".fmt"
 
   local f = io.open(filename, "r")
   if (not f) then
@@ -61,9 +75,9 @@ local function LoadFontSpecs(fontName)
 
   local currChar
   for line in f:lines() do
-    if ((string.len(line) > 0) and (string.sub(line, 1, 1) ~= '#')) then
+    if ((strlen(line) > 0) and (strsub(line, 1, 1) ~= '#')) then
       local words = {}
-      for w in string.gfind(line, "[^%s]+") do
+      for w in strgfind(line, "[^%s]+") do
         table.insert(words, w)
       end
       local cmd = words[1]
@@ -116,7 +130,7 @@ local function LoadFontSpecs(fontName)
   print('fontSpecs.yTexSize ', fontSpecs.yTexSize)
 --[[
   for _,c in pairs(fontSpecs.chars) do
-    print("glyph = " .. c.char .. " '" .. string.char(c.char) .. "'")
+    print("glyph = " .. c.char .. " '" .. strchar(c.char) .. "'")
     print("  advance   " .. c.adv)
     print("  offsets   " .. c.oxn .." "..c.oyn.." "..c.oxp.." "..c.oyp)
     print("  texcoords " .. c.txn .." "..c.tyn.." "..c.txp.." "..c.typ)
@@ -193,8 +207,8 @@ end
 local function CalcTextWidth(text)
   local specs = activeFont.specs
   local w = 0
-  for i = 1, string.len(text) do
-    local c = string.byte(text, i)
+  for i = 1, strlen(text) do
+    local c = strbyte(text, i)
     local glyphInfo = specs.chars[c]
     if (not glyphInfo) then
       glyphInfo = specs.chars[32]
@@ -208,6 +222,20 @@ end
 
 
 local function CalcTextHeight(text)
+  return height
+end
+
+
+--------------------------------------------------------------------------------
+
+local function StripColorCodes(text)
+  local stripped = ""
+  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
+    if (strlen(txt) > 0) then
+      stripped = stripped .. txt
+    end
+  end
+  return stripped
 end
 
 
@@ -215,14 +243,27 @@ end
 
 local function RawDraw(text)
   local lists = activeFont.lists
-  gl.Texture(activeFont.image)
-  for i = 1, string.len(text) do
-    local c = string.byte(text, i)
+  for i = 1, strlen(text) do
+    local c = strbyte(text, i)
     local list = lists[c]
     if (list) then
       gl.ListRun(list)
     else
-      gl.ListRun(lists[string.byte(" ", 1)])
+      gl.ListRun(lists[strbyte(" ", 1)])
+    end
+  end
+end
+
+
+local function RawColorDraw(text)
+  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
+    if (strlen(txt) > 0) then
+      RawDraw(txt)
+    end
+    if (strlen(color) == 4) then
+      gl.Color(strbyte(color, 2) / 255,
+               strbyte(color, 3) / 255,
+               strbyte(color, 4) / 255)
     end
   end
 end
@@ -235,21 +276,31 @@ local function DrawNoCache(text, x, y, size, opts)
   else
     gl.PushMatrix()
     gl.Translate(x, y, 0)
-    RawDraw(text)
+    gl.Texture(activeFont.image)
+    RawColorDraw(text)
     gl.PopMatrix()
   end
 end
 
 
 local function Draw(text, x, y, size, opts) -- FIXME
+  if (not caching) then
+    DrawNoCache(text, x, y, size, opts)
+    return
+  end
+
   local cacheTextData = activeFont.cache[text]
   if (not cacheTextData) then
-    local textList = gl.ListCreate(function() RawDraw(text) end)
+    local textList = gl.ListCreate(function()
+      gl.Texture(activeFont.image)
+      RawColorDraw(text)  -- FIXME?
+    end)
     cacheTextData = { textList, timeStamp }
     activeFont.cache[text] = cacheTextData
   else
     cacheTextData[2] = timeStamp  --  refresh the timeStamp
   end
+
   if (not x) then
     gl.ListRun(cacheTextData[1])
   else
@@ -264,13 +315,36 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local function DrawRight(text, x, y)
+  local stripped = StripColorCodes(text)
+  local width = CalcTextWidth(stripped)  -- use cached widths?
+  gl.PushMatrix()
+  gl.Translate(-width, 0, 0)
+  Draw(text, x, y)
+  gl.PopMatrix()
+end
+
+
+local function DrawCentered(text, x, y)
+  local stripped = StripColorCodes(text)
+  local width = CalcTextWidth(stripped)  -- use cached widths?
+  gl.PushMatrix()
+  gl.Translate(-width * 0.5, 0, 0)
+  Draw(text, x, y)
+  gl.PopMatrix()
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local function LoadFont(fontName)
   if (fonts[fontName]) then
     return nil  -- already loaded
   end
 
   local baseName = fontName
-  local _,_,options,bn = string.find(fontName, "(:.-:)(.*)")
+  local _,_,options,bn = strfind(fontName, "(:.-:)(.*)")
   if (options) then
     baseName = bn
   else
@@ -283,7 +357,7 @@ local function LoadFont(fontName)
   end
 
   local fontLists
-  if (string.find(options, "o")) then
+  if (strfind(options, "o")) then
     fontLists = MakeOutlineDisplayLists(fontSpecs)
   else
     fontLists = MakeDisplayLists(fontSpecs)
@@ -299,7 +373,7 @@ local function LoadFont(fontName)
   font.specs = fontSpecs
   font.lists = fontLists
   font.cache = {}
-  font.image = options .. fontDir .. baseName .. ".png"
+  font.image = options .. baseName .. ".png"
   font.size  = 12.0  -- FIXME
 
   return font
@@ -328,6 +402,7 @@ local function SetDefaultFont()
 end
 
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 local function FreeCache(fontName)
@@ -408,11 +483,20 @@ FH.FreeFont  = FreeFont
 FH.FreeFonts = FreeFonts
 FH.FreeCache = FreeCache
 
-FH.Draw        = Draw
-FH.DrawNoCache = DrawNoCache
+FH.Draw         = Draw
+FH.DrawRight    = DrawRight
+FH.DrawCentered = DrawCentered
+
+FH.StripColors = StripColorCodes
 
 FH.CalcTextWidth  = CalcTextWidth
 FH.CalcTextHeight = CalcTextHeight
+
+FH.GetYStep     = function() return activeFont.specs.yStep end
+
+FH.CacheState   = function() return caching  end
+FH.EnableCache  = function() caching = true  end
+FH.DisableCache = function() caching = false end
 
 fontHandler = FH  -- make it global
 
