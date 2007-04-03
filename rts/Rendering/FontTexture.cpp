@@ -54,7 +54,8 @@ static u32 yTexSize = 1;
 static u32 minChar = 32;
 static u32 maxChar = 255;
 
-static const u32 padding = 1;
+static u32 padding  = 1;
+static u32 stuffing = 0;
 
 static vector<class Glyph*> glyphs;
 
@@ -84,8 +85,8 @@ class Glyph {
     u32 xsize;
     u32 ysize;
     u8* pixels;
-    u32 oxn, oyn, oxp, oyp; // offsets
-    u32 txn, tyn, txp, typ; // texcoords
+    s32 oxn, oyn, oxp, oyp; // offsets
+    s32 txn, tyn, txp, typ; // texcoords
     u32 advance;
     bool valid;
 };
@@ -150,6 +151,20 @@ bool FontTexture::SetOutlineRadius(unsigned int radius)
 }
 
 
+bool FontTexture::SetPadding(unsigned int _padding)
+{
+  padding = _padding;
+  return true;
+}
+
+
+bool FontTexture::SetStuffing(unsigned int _stuffing)
+{
+  stuffing = _stuffing;
+  return true;
+}
+
+
 bool FontTexture::SetDebugLevel(unsigned int _debugLevel)
 {
   debugLevel = _debugLevel;
@@ -168,6 +183,8 @@ void FontTexture::Reset()
   maxChar = 255;
   outline = 1;
   outlineMode = 0;
+  padding = 1;
+  stuffing = 0;
   debugLevel = 0;
 }
 
@@ -290,8 +307,8 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
     }
   }
 
-  const u32 xskip = maxPixelXsize + (2 * padding);
-  const u32 yskip = maxPixelYsize + (2 * padding);
+  const u32 xskip = maxPixelXsize + (2 * (padding + stuffing));
+  const u32 yskip = maxPixelYsize + (2 * (padding + stuffing));
   const u32 xdivs = (xTexSize / xskip);
   const u32 ydivs = ((maxChar - minChar + 1) / xdivs) + 1;
 
@@ -355,8 +372,8 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   u32 ycell = 0;
   for (int g = 0; g < (int)glyphs.size(); g++) {
     Glyph* glyph = glyphs[g];
-    const u32 txOffset = (xcell * xskip) + padding;
-    const u32 tyOffset = (ycell * yskip) + padding;
+    const u32 txOffset = (xcell * xskip) + (padding + stuffing);
+    const u32 tyOffset = (ycell * yskip) + (padding + stuffing);
     ilSetPixels(
       txOffset, tyOffset, 0,
       glyph->xsize, glyph->ysize, 1,
@@ -418,16 +435,16 @@ Glyph::Glyph(FT_Face& face, int _num) : num(_num), valid(false)
   advance = glyph->advance.x / 64;
 
   // offsets
-  oxn = face->glyph->bitmap_left;
-  oyp = face->glyph->bitmap_top;
-  oxp = oxn + xsize;
-  oyn = oyp - ysize;
+  oxn = face->glyph->bitmap_left - stuffing;
+  oyp = face->glyph->bitmap_top  + stuffing;
+  oxp = oxn + xsize + (2 * stuffing);
+  oyn = oyp - ysize - (2 * stuffing);
 
   // texture coordinates
-  txn = 0;
-  tyn = 0;
-  txp = xsize;
-  typ = ysize;
+  txn = -stuffing;
+  tyn = -stuffing;
+  txp = xsize + stuffing;
+  typ = ysize + stuffing;
 
   ilGenImages(1, &img);
   if (img == 0) {

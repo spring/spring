@@ -28,6 +28,8 @@ namespace FontTexture
   bool SetMaxChar       (unsigned int maxChar);
   bool SetOutlineMode   (unsigned int mode);
   bool SetOutlineRadius (unsigned int radius);
+  bool SetPadding       (unsigned int padding);
+  bool SetStuffing      (unsigned int stuffing);
   bool SetDebugLevel    (unsigned int debugLevel);
 };
 
