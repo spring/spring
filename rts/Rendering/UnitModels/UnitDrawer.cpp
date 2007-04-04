@@ -134,6 +134,12 @@ CUnitDrawer::~CUnitDrawer(void)
 		delete *gbi;
 		gbi=ghostBuildings.erase(gbi);
 	}
+	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildingsS3O.begin();gbi!=ghostBuildingsS3O.end();){
+		if((*gbi)->decal)
+			(*gbi)->decal->gbOwner=0;
+		delete *gbi;
+		gbi=ghostBuildingsS3O.erase(gbi);
+	}
 }
 
 void CUnitDrawer::Update(void)
@@ -155,6 +161,7 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	vector<CUnit*> drawFar;
 	vector<CUnit*> drawStat;
 	drawCloaked.clear();
+	drawCloakedS3O.clear();
 	glFogfv(GL_FOG_COLOR,FogLand);
 
 	vector<CUnit*> drawIcon;
@@ -201,11 +208,15 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 					if(sqDist>farLength){
 						drawFar.push_back(*usi);
 					} else {
-						if((*usi)->isCloaked){
-							drawCloaked.push_back(*usi);
-						} else {
-							if((*usi)->model->textureType){
+						if((*usi)->model->textureType){ // s3o
+							if((*usi)->isCloaked){
+								drawCloakedS3O.push_back(*usi);
+							} else {
 								QueS3ODraw(*usi,(*usi)->model->textureType);
+							}
+						} else { // 3do
+							if((*usi)->isCloaked){
+								drawCloaked.push_back(*usi);
 							} else {
 								(*usi)->Draw();
 							}
@@ -224,7 +235,10 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 					float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
 					float realIconLength=iconLength*iconDistMult*iconDistMult;
 					if(sqDist<realIconLength){
-						drawCloaked.push_back(*usi);
+						if ((*usi)->model->textureType)
+							drawCloakedS3O.push_back(*usi);
+						else
+							drawCloaked.push_back(*usi);
 						(*usi)->isIcon = false;
 					}
 				}
@@ -399,19 +413,28 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 
 void CUnitDrawer::SetupForGhostDrawing ()
 {
-	texturehandler->SetTATexture();
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_PREVIOUS);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-	glDepthMask(0);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	
+	texturehandler->SetTATexture();
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+}
+
+void CUnitDrawer::SetupForGhostDrawingS3O ()
+{
+	SetupBasicS3OTexture0();
+	SetupBasicS3OTexture1();
+	// use the alpha given by glColor for the outgoing alpha.
+	// (might need to change this if we ever have transparent bits on units?)
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
 void CUnitDrawer::CleanUpGhostDrawing ()
@@ -420,6 +443,17 @@ void CUnitDrawer::CleanUpGhostDrawing ()
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
 	glDisable(GL_ALPHA_TEST);
+
+	// clean up s3o drawing stuff
+	// reset texture1 state
+	CleanupBasicS3OTexture1();
+
+	// also reset the alpha generation
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+
+	// reset texture0 state
+	CleanupBasicS3OTexture0();
 }
 
 void CUnitDrawer::DrawCloakedUnits(void)
@@ -433,7 +467,6 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glAlphaFunc(GL_GREATER,0.1f);
 	glEnable(GL_ALPHA_TEST);
 	glColor4f(1,1,1,0.3f);
-	texturehandler->SetTATexture();
 	glDepthMask(0);
 
 	//ok these isnt really cloaked but the effect is the same
@@ -442,7 +475,8 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
 			glRotatef(ti->second.rotation*180/PI,0,1,0);
-			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
+			S3DOModel* model = modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team);
+			model->DrawStatic();
 			glPopMatrix();
 		}
 		if(ti->second.drawBorder){
@@ -468,41 +502,68 @@ void CUnitDrawer::DrawCloakedUnits(void)
 		}
 	}
 
-	for(vector<CUnit*>::iterator ui=drawCloaked.begin();ui!=drawCloaked.end();++ui){
-		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
-			glColor4f(1,1,1,0.4f);
-			(*ui)->Draw();
-		} else {
-			if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
-				glColor4f(0.9f,0.9f,0.9f,0.5f);
-			else
-				glColor4f(0.6f,0.6f,0.6f,0.4f);
-			glPushMatrix();
-			glTranslatef3((*ui)->pos);
-			(*ui)->model->DrawStatic();
-			glPopMatrix();
+	std::vector<CUnit*> dC;
+	std::list<GhostBuilding*> gB;
+	
+	for(int i=0;i<2;++i) {
+		if(!i) { // 3dos
+			dC=drawCloaked;
+			gB=ghostBuildings;
+		} else { // s3os
+			dC=drawCloakedS3O;
+			gB=ghostBuildingsS3O;
+			SetupForGhostDrawingS3O();
+			glColor4f(1,1,1,0.3f);
 		}
-	}
-	//go through the dead but still ghosted buildings
-	glColor4f(0.6f,0.6f,0.6f,0.4f);
-	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
-		if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
-			if((*gbi)->decal)
-				(*gbi)->decal->gbOwner=0;
-			delete *gbi;
-			gbi=ghostBuildings.erase(gbi);
-		} else {
-			if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
+		// cloaked units and living ghosted buildings
+		for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
+			if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
+				if(i) {
+					SetBasicS3OTeamColour((*ui)->team);
+					texturehandler->SetS3oTexture((*ui)->model->textureType);
+				}
+				(*ui)->Draw();
+			} else {
+				if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
+					glColor4f(0.9f,0.9f,0.9f,0.5f);
+				else
+					glColor4f(0.6f,0.6f,0.6f,0.4f);
 				glPushMatrix();
-				glTranslatef3((*gbi)->pos);
-				glRotatef((*gbi)->facing*90,0,1,0);
-				(*gbi)->model->DrawStatic();
+				glTranslatef3((*ui)->pos);
+				if(i) {
+					SetBasicS3OTeamColour((*ui)->team);
+					texturehandler->SetS3oTexture((*ui)->model->textureType);
+				}
+				(*ui)->model->DrawStatic();
 				glPopMatrix();
 			}
-			++gbi;
+		}
+
+		//go through the dead but still ghosted buildings
+		glColor4f(0.6f,0.6f,0.6f,0.4f);
+		for(std::list<GhostBuilding*>::iterator gbi=gB.begin();gbi!=gB.end();){
+			if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
+				if((*gbi)->decal)
+					(*gbi)->decal->gbOwner=0;
+				delete *gbi;
+				gbi=ghostBuildings.erase(gbi);
+			} else {
+				if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
+					glPushMatrix();
+					glTranslatef3((*gbi)->pos);
+					glRotatef((*gbi)->facing*90,0,1,0);
+					if(i) {
+						SetBasicS3OTeamColour((*gbi)->team);
+						texturehandler->SetS3oTexture((*gbi)->model->textureType);
+					}
+					(*gbi)->model->DrawStatic();
+					glPopMatrix();
+				}
+				++gbi;
+			}
 		}
 	}
-
+	
 	// reset gl states
 	CleanUpGhostDrawing ();
 }
@@ -1088,7 +1149,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 
 	if (model->textureType == 0){
 		/* 3DO */
-		SetupForGhostDrawing();
+		SetupForGhostDrawing();//(model, side);
 		glPushMatrix();
 		glTranslatef3(pos);
 		glRotatef(facing*90.0f,0,1,0);
