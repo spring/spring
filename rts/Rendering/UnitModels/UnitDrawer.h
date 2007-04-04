@@ -32,10 +32,12 @@ public:
 	void CleanUpS3ODrawing(void);
 	void CleanUpGhostDrawing();
 	void SetupForGhostDrawing();
+	void SetupForGhostDrawingS3O();//S3DOModel *model, int team);
 
 	inline void DrawFar(CUnit* unit);
 
 	std::vector<CUnit*> drawCloaked;
+	std::vector<CUnit*> drawCloakedS3O;
 	CVertexArray* va;
 	bool advShading;
 
@@ -77,8 +79,10 @@ public:
 		float3 pos;
 		S3DOModel* model;
 		int facing;
+		int team;
 	};
 	std::list<GhostBuilding*> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
+	std::list<GhostBuilding*> ghostBuildingsS3O;
 
 	bool showHealthBars;
 

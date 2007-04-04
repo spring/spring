@@ -9,6 +9,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"
@@ -38,7 +39,11 @@ CBuilding::~CBuilding()
 			gb->model=model;
 			gb->decal=buildingDecal;
 			gb->facing=buildFacing;
-			unitDrawer->ghostBuildings.push_back(gb);
+			gb->team=team;
+			if(model->textureType) //S3O
+				unitDrawer->ghostBuildingsS3O.push_back(gb);
+			else // 3DO
+				unitDrawer->ghostBuildings.push_back(gb);
 			mygb=gb;
 		}
 	}
