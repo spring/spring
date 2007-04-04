@@ -9,6 +9,7 @@
 #include "Game/GameHelper.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Matrix44f.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
@@ -71,7 +72,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 
 	SetRadius(0.0f);
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,owner->team);
 		if(model){
 			SetRadius(model->radius);
 		}
@@ -372,4 +373,10 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 		return 2;
 	}
 	return 0;
+}
+
+void CMissileProjectile::DrawS3O(void)
+{
+	unitDrawer->SetS3OTeamColour(owner->team);
+	DrawUnitPart();
 }

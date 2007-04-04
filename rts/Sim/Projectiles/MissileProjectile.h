@@ -20,6 +20,7 @@ public:
 	void Update(void);
 	void Draw(void);
 	void DrawUnitPart(void);
+	void DrawS3O(void);
 	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	float3 dir;

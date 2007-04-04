@@ -7,6 +7,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/GameHelper.h"
 #include "LaserProjectile.h"
 #include "FireBallProjectile.h"
@@ -58,7 +59,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 		interceptHandler.AddShieldInterceptableProjectile(this);
 
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,0);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,owner->team);
 		if(model){
 			s3domodel=model;
 			if(s3domodel->rootobject3do)
@@ -214,4 +215,10 @@ void CWeaponProjectile::DependentDied(CObject* o)
 		target=0;
 
 	CProjectile::DependentDied(o);
+}
+
+void CWeaponProjectile::DrawS3O(void)
+{
+	unitDrawer->SetS3OTeamColour(owner->team);
+	DrawUnitPart();
 }
