@@ -393,7 +393,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
 	ud.isfireplatform=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isfireplatform").c_str());
 	ud.isAirBase=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
-	ud.loadingRadius=220;
+	ud.loadingRadius=!!atoi(tdfparser.SGetValueDef("220", "UNITINFO\\loadingradius").c_str());
 	tdfparser.GetDef(ud.transportMass, "100000", "UNITINFO\\TransportMass");
 	tdfparser.GetDef(ud.holdSteady, "1", "UNITINFO\\HoldSteady");
 
