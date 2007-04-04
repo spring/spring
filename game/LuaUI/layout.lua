@@ -24,6 +24,9 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+include("colors.h.lua")
+
+
 -- for DefaultHandler
 local FrameTexture   = "bitmaps/icons/frame_slate_128x96.png"
 local PageNumTexture = "bitmaps/circularthingy.tga"
@@ -165,7 +168,7 @@ end
 
 function ConfigLayoutHandler(data)
   if (type(data) == 'function') then
-    layoutButtonFunc = data
+    LayoutButtons = data
   elseif (type(data) == 'boolean') then
     if (data) then
       LayoutButtons = DefaultHandler
