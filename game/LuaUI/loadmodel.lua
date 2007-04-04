@@ -230,7 +230,6 @@ local function DrawObject(obj, mats, v, t, n, c, noMaterials, noDepthMask)
 
     for fi,face in ipairs(faces) do
 
----[[
       glBeginEnd(GL.TRIANGLE_FAN, function()
         for _,elem in ipairs(face) do
           local vi, ti, ni, ci = elem[1], elem[2], elem[3], elem[4]
@@ -240,27 +239,7 @@ local function DrawObject(obj, mats, v, t, n, c, noMaterials, noDepthMask)
           if (vi and (vi > 0)) then glVertex   (v[vi]) end
         end
       end)
---]]
---[[
-      glBeginEnd(GL.TRIANGLE_FAN, function()
-        for _,elem in ipairs(face) do
-          local vi, ti, ni, ci = elem[1], elem[2], elem[3], elem[4]
-          if (ci and (ci > 0)) then
-            local cd = c[ci];  glColor(cd[1], cd[2], cd[3], cd[4])
-          end
-          if (ni and (ni > 0)) then
-            local nd = n[ni];  glNormal(nd[1], nd[2], nd[3])
-          end
-          if (ti and (ti > 0)) then
-            local td = t[ti];  glTexCoord(td[1], td[2])
-          end
-          if (vi > 0) then
-            local vd = v[vi];  glVertex(vd[1], vd[2], vd[3])
-          end
-        end
-      end)
---]]
-      
+
       if (debug > 1) then
         print("SHAPE: " .. obj.name .. " || " .. matname .. " || face:" .. fi)
         for k1,v1 in ipairs(faceTbl) do

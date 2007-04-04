@@ -26,10 +26,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-
-include("spring.h.lua")
-
-
 function widget:Initialize()
   widgetHandler:AddAction("circle", CircleUnits)
 end

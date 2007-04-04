@@ -27,7 +27,6 @@ end
 --------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
 include("tweakmode.lua")
 
 
@@ -41,7 +40,10 @@ local yposf  = 0.032
 local ypos   = yposf * vsy
 local sizef  = 0.015
 local size   = sizef * vsy
+local font   = "LuaUI/Fonts/FreeSansBold_14"
 local format = "orn"
+
+local fh = (font ~= nil)
 
 
 --------------------------------------------------------------------------------
@@ -52,7 +54,14 @@ local format = "orn"
 
 function widget:DrawScreen()
   gl.Color(color)
-  gl.Text(Spring.GetFPS(), xpos, ypos, size, format)
+  if (fh) then
+    fh = fontHandler.SetFont(font)
+    fontHandler.DisableCache()
+    fontHandler.DrawRight(Spring.GetFPS(), xpos, ypos)
+    fontHandler.EnableCache()
+  else
+    gl.Text(Spring.GetFPS(), xpos, ypos, size, format)
+  end
 end
 
 
@@ -102,7 +111,8 @@ end
 function widget:GetConfigData()
   local tbl = {
     color  = color,
-    format = format
+    format = format,
+    font   = font
   }
   StoreGeoPair(tbl, 'xposf', xposf, 'xpos', xpos)
   StoreGeoPair(tbl, 'yposf', yposf, 'ypos', ypos)
@@ -125,6 +135,10 @@ end
 function widget:SetConfigData(data)
   color  = data.color  or color
   format = data.format or format
+  font   = data.font   or font
+  if (font) then
+    fh = fontHandler.SetFont(font)
+  end
   xposf, xpos = LoadGeoPair(data, 'xposf', 'xpos', xpos)
   yposf, ypos = LoadGeoPair(data, 'yposf', 'ypos', ypos)
   sizef, size = LoadGeoPair(data, 'sizef', 'size', size)

@@ -26,9 +26,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-include("spring.h.lua")
-
-
 local function SetupUnit(unitID)
   -- set immobile builders (nanotowers) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)

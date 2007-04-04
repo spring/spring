@@ -27,7 +27,6 @@ end
 --------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
 
 local xsize = 300
 local ysize = 300
@@ -80,7 +79,7 @@ function widget:DrawScreen()
   local yp = vsy - (maxy + 0.5)
 
   gl.Color(1, 1, 1)
-  gl.Shape(GL_LINE_LOOP, {
+  gl.Shape(GL.LINE_LOOP, {
     { v = { xn, yn } }, { v = { xp, yn } },
     { v = { xp, yp } }, { v = { xn, yp } }
   })
@@ -90,7 +89,7 @@ function widget:DrawScreen()
   yn = yn + 1
   yp = yp - 1
   gl.Color(0, 0, 0)
-  gl.Shape(GL_LINE_LOOP, {
+  gl.Shape(GL.LINE_LOOP, {
     { v = { xn, yn } }, { v = { xp, yn } },
     { v = { xp, yp } }, { v = { xn, yp } }
   })

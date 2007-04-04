@@ -26,12 +26,14 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-include("opengl.h.lua")
 include("colors.h.lua")
 
+local floor = math.floor
+
+
+local font = "LuaUI/Fonts/FreeSansBold_30"
 
 local vsx, vsy = widgetHandler:GetViewSizes()
-
 function widget:ViewResize(viewSizeX, viewSizeY)
   vsx = viewSizeX
   vsy = viewSizeY
@@ -50,8 +52,19 @@ function widget:DrawScreen()
     else
       colorStr = YellowStr
     end
-    gl.Text(colorStr .. "Commander Ends Game!!!",
-            (vsx * 0.5), (vsy * 0.5) - 50, 24, "oc")
+
+    local msg = colorStr .. "Commander Ends Game!!!"
+    gl.PushMatrix()
+    gl.Translate((vsx * 0.5), (vsy * 0.5) - 50, 0)
+    gl.Scale(1.5, 1.5, 1)
+    gl.Rotate(30 * math.sin(math.pi * 0.5 * timer), 0, 0, 1)
+    if (font) then
+      fontHandler.SetFont(font)
+      fontHandler.DrawCentered(msg)
+    else
+      gl.Text(msg, 0, 0, 24, "oc")
+    end
+    gl.PopMatrix()
   end
 end
 

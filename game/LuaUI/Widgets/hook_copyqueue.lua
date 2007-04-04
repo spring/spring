@@ -26,10 +26,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-
-include("spring.h.lua")
-
-
 function widget:CommandNotify(id, params, options)
   -- GUARD + CTRL = copy command queue
   if ((id == CMD.GUARD) and options.ctrl) then

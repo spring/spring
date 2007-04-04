@@ -11,6 +11,16 @@ GAME TABLES:
 - added the 'collisionSphereScale' parameter to UnitDefs[] tables
 
 
+HEADER FILES:
+
+- replaced "spring.h.lua" file with built-in constants table
+  CMD_<name>     -> CMD.<name>
+  CMDTYPE_<name> -> CMDTYPE.<name>
+
+- replaced "opengl.h.lua" file with built-in constants table
+  GL_<name> -> GL.<name>
+
+
 CALL-INS:
 
 - changed LayoutButtons() to use 1:N indexing for command descriptions

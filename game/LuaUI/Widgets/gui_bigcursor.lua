@@ -27,8 +27,6 @@ end
 -------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
-include("spring.h.lua")
 
 
 centerGap = 20
@@ -103,7 +101,7 @@ function widget:DrawScreen()
   
   local gap = centerGap
 
-  gl.Shape(GL_LINES, {
+  gl.Shape(GL.LINES, {
     { v = { mx, my - gap }, c = cc }, { v = { mx,   0 }, c = ec },
     { v = { mx, my + gap }, c = cc }, { v = { mx, vsy }, c = ec },
     { v = { mx - gap, my }, c = cc }, { v = {  0,  my }, c = ec },

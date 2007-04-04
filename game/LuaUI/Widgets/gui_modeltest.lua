@@ -29,9 +29,6 @@ end
 --  Headers and top-level variables
 --
 
-include("opengl.h.lua")
-
-
 local LoadModel = include("loadmodel.lua")
 
 
@@ -94,9 +91,8 @@ local function LoadNewModel(name)
   FreeModel()
 
   local t1 = Spring.GetTimer()
-  local objs, mats, 
-        verts, txcds, norms, colors,
-        exts = LoadModel("Models/" .. name)
+  local objs, mats, verts, txcds, norms, colors, exts
+        = LoadModel("Models/" .. name)
 
   if (merged) then
     objs = { objs.Merge(objs) }

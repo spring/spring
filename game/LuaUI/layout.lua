@@ -58,31 +58,35 @@ end
 
 --------------------------------------------------------------------------------
 
+local function CustomCammndsHandler(xIcons, yIcons, cmdCount, commands)
+end
+
+
 local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
 
   widgetHandler.commands   = commands
   widgetHandler.commands.n = cmdCount
   widgetHandler:CommandsChanged()
-  
+
+  -- FIXME: custom commands  
   if (cmdCount <= 0) then
     return "", xIcons, yIcons, {}, {}, {}, {}, {}, {}, {}, {}
   end
   
   local menuName = ''
   local removeCmds = {}
-  local customCmds = {}
+  local customCmds = widgetHandler.customCommands
   local onlyTextureCmds = {}
   local reTextureCmds = {}
   local reNamedCmds = {}
   local reTooltipCmds = {}
   local reParamsCmds = {}
   local iconList = {}
-  
 
-  if (commands[1].id < 0) then
-    menuName = GreenStr .. 'Build Orders'
+  if (commands[1].id >= 0) then
+    menuName = RedStr   .. 'Commands'
   else
-    menuName = RedStr .. 'Commands'
+    menuName = GreenStr .. 'Build Orders'
   end
 
   local ipp = (xIcons * yIcons)   -- iconsPerPage
@@ -101,23 +105,22 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
     if (commands[1].id < 0) then color = GreenStr else color = RedStr end
     local pageNum = '' .. (activePage + 1) .. ''
     PageNumCmd.name = color .. '   ' .. pageNum .. '   '
-    customCmds = { PageNumCmd }
+    table.insert(customCmds, PageNumCmd)
     pageNumCmd = cmdCount + 1
   end
 
   local pos = 0;
+  local firstSpecial = (xIcons * (yIcons - 1))
 
   for cmdSlot = 1, (cmdCount - 2) do
 
-    -- skip the last row
-    local firstSpecial = (xIcons * (yIcons - 1))
+    -- fill the last row with special icons
     while (math.mod(pos, ipp) >= firstSpecial) do
       pos = pos + 1
     end
+    local onLastRow = (math.abs(math.mod(pos, ipp)) < 0.1)
 
-    local modVal = math.mod(pos, ipp)
-
-    if (math.abs(modVal) < 0.1) then
+    if (onLastRow) then
       local pageStart = math.floor(ipp * math.floor(pos / ipp))
       if (pageStart > 0) then
         iconList[prevPos + pageStart] = prevCmd
@@ -135,6 +138,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
       end
     end
 
+    -- add the command icons to iconList
     local cmd = commands[cmdSlot]
 
     if ((cmd ~= nil) and (cmd.hidden == false)) then
