@@ -22,7 +22,6 @@ include("keysym.h.lua")
 include("utils.lua")
 include("system.lua")
 include("savetable.lua")
-include("opengl.h.lua")
 
 
 local gl = Spring.Draw
@@ -67,6 +66,8 @@ widgetHandler = {
   knownChanged = true,
 
   commands = {},
+  customCommands = {},
+  inCommandsChanged = false,
 
   actionHandler = include("actions.lua"),
   
@@ -403,6 +404,13 @@ function widgetHandler:NewWidget()
   wh.DisownMouse  = function (_)
     if (self.mouseOwner == widget) then
       self.mouseOwner = nil
+    end
+  end
+  wh.AddLayoutCommand = function (_, cmd)
+    if (self.inCommandsChanged) then
+      table.insert(self.customCommands, cmd)
+    else
+      Spring.Echo("AddLayoutCommand() can only be used in CommandsChanged()")
     end
   end
   wh.AddAction    = function (_, cmd, func, data, types)
@@ -795,9 +803,12 @@ end
 
 
 function widgetHandler:CommandsChanged()
+  self.inCommandsChanged = true
+  self.customCommands = {}
   for _,w in ipairs(self.CommandsChangedList) do
     w:CommandsChanged()
   end
+  self.inCommandsChanged = false
   return
 end
 

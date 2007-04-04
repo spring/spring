@@ -17,6 +17,9 @@ end
 UtilsGuard = true
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function Say(msg)
   Spring.SendCommands({'say ' .. msg})
 end
@@ -41,7 +44,7 @@ end
 
 
 --------------------------------------------------------------------------------
-
+--------------------------------------------------------------------------------
 
 function include(filename, envTable)
   if (string.find(filename, '.h.lua', 1, true)) then
@@ -74,4 +77,60 @@ function includeVFS(filename, envTable)
 end
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+local function LoadText(filename, text, envTable)
+  local chunk, err = loadstring(text, filename)
+  if (chunk == nil) then
+    return false, "could not compile file: " .. filename
+  end
+  setfenv(chunk, envTable and envTable or getfenv())
+  return true, chunk()
+end
+
+
+function LoadFileRawOnly(filename, envTable)
+  local text = Spring.LoadTextVFS(filename, "raw")
+  if (not text) then
+    return false, "could not find file: " .. filename
+  end
+  return LoadText(filename, text, envTable)
+end
+
+
+function LoadFileZipOnly(filename, envTable)
+  local text = Spring.LoadTextVFS(filename, "archive")
+  if (not text) then
+    return false, "could not find file: " .. filename
+  end
+  return LoadText(filename, text, envTable)
+end
+
+
+function LoadFileRawFirst(filename, envTable)
+  local text = Spring.LoadTextVFS(filename, "raw")
+  if (not text) then
+    text = Spring.LoadTextVFS(filename, "archive")
+    if (not text) then
+      return false, "could not find file: " .. filename
+    end
+  end
+  return LoadText(filename, text, envTable)
+end
+
+
+function LoadFileZipFirst(filename, envTable)
+  local text = Spring.LoadTextVFS(filename, "archive")
+  if (not text) then
+    text = Spring.LoadTextVFS(filename, "raw")
+    if (not text) then
+      return false, "could not find file: " .. filename
+    end
+  end
+  return LoadText(filename, text, envTable)
+end
+
+
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

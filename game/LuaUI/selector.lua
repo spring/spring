@@ -27,20 +27,57 @@ end
 -------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
 include("keysym.h.lua")
+include("fonts.lua")
+
+
+local floor = math.floor
 
 
 widgetHandler.knownChanged = true
-
 
 local widgetsList = {}
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 
-local fontSize = 12
+local fontSize = 11
 local fontSpace = 5
 local yStep = fontSize + fontSpace
+
+local fh = (1 > 0)
+--[[
+local entryFont  = "LuaUI/Fonts/arial_14"
+local headerFont = "LuaUI/Fonts/arial_20"
+local entryFont  = "LuaUI/Fonts/dustismo_14"
+local headerFont = "LuaUI/Fonts/dustismo_18"
+local entryFont  = "LuaUI/Fonts/courbd_14"
+local headerFont = "LuaUI/Fonts/courbd_18"
+local entryFont  = "LuaUI/Fonts/times_14"
+local headerFont = "LuaUI/Fonts/times_18"
+local entryFont  = "LuaUI/Fonts/trebucbd_14"
+local headerFont = "LuaUI/Fonts/trebucbd_18"
+local entryFont  = "LuaUI/Fonts/monofont_14"
+local headerFont = "LuaUI/Fonts/monofont_18"
+local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
+local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
+--]]
+local entryFont  = "LuaUI/Fonts/FreeSansBold_14"
+local headerFont = "LuaUI/Fonts/FreeSansBold_18"
+
+if (1 > 0) then
+  entryFont  = ":n:" .. entryFont
+  headerFont = ":n:" .. headerFont
+end
+
+if (fh) then
+  fh = fontHandler.SetFont(headerFont) and fontHandler.SetFont(entryFont)
+end
+if (fh) then
+  fontSize  = fontHandler.GetFontSize()
+  yStep     = fontHandler.GetFontYStep()
+  fontSpace = yStep - fontSize
+end
+
 
 local maxWidth = 0.01
 local borderx = yStep * 0.75
@@ -60,12 +97,12 @@ local function UpdateGeometry()
   midy  = vsy * 0.5
 
   local halfWidth = maxWidth * fontSize * 0.5
-  minx = math.floor(midx - halfWidth - borderx)
-  maxx = math.floor(midx + halfWidth + borderx)
+  minx = floor(midx - halfWidth - borderx)
+  maxx = floor(midx + halfWidth + borderx)
 
   local ySize = yStep * table.getn(widgetsList)
-  miny = math.floor(midy - (0.5 * ySize) - bordery)
-  maxy = math.floor(midy + (0.5 * ySize) + bordery)
+  miny = floor(midy - (0.5 * ySize) - bordery)
+  maxy = floor(midy + (0.5 * ySize) + bordery)
 end
 UpdateGeometry()
 
@@ -85,11 +122,14 @@ local function UpdateList()
       table.insert(widgetsList, { name, data })
       -- look for the maxWidth
       local width = gl.GetTextWidth(name)
+      local width = fontHandler.GetTextWidth(name)
       if (width > maxWidth) then
         maxWidth = width
       end
     end
   end
+  
+  maxWidth = maxWidth / fontSize
 
   local myCount = table.getn(widgetsList)
   if (widgetHandler.knownCount ~= (myCount + 1)) then
@@ -129,13 +169,22 @@ function widget:DrawScreen()
   UpdateList()
 
   -- draw the header  
-  gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
+  if (fh) then
+--    fontHandler.DisableCache()
+    gl.Color(1, 1, 1)
+    fontHandler.SetFont(headerFont)
+    fontHandler.DrawCentered("Widget Selector", floor(midx), floor(maxy + 7))
+    fontHandler.SetFont(entryFont)
+  else
+    gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
+  end
+
 
   -- draw the box
   gl.Color(0.3, 0.3, 0.3, 1.0)
   gl.Texture("bitmaps/detailtex.bmp")
   local ts = (2.0 / 512)  --  texture scale 
-  gl.Shape(GL_QUADS, {
+  gl.Shape(GL.QUADS, {
     { v = { minx, miny }, t = { minx * ts, miny * ts } },
     { v = { maxx, miny }, t = { maxx * ts, miny * ts } },
     { v = { maxx, maxy }, t = { maxx * ts, maxy * ts } },
@@ -166,7 +215,13 @@ function widget:DrawScreen()
     else
       color = (data.active and '\255\064\224\064') or '\255\224\064\064'
     end
-    gl.Text(color..name, midx, posy, fontSize, "c")
+
+    if (fh) then
+      fontHandler.DrawCentered(color..name, floor(midx), floor(posy + 2))
+    else
+      gl.Text(color..name, midx, posy, fontSize, "c")
+    end
+
     posy = posy - yStep
   end
 
@@ -188,7 +243,7 @@ function widget:DrawScreen()
     local yn = pointedY - 0.5
     local yp = yn + yStep + 1
     gl.Blending(false)
-    gl.Shape(GL_LINE_LOOP, {
+    gl.Shape(GL.LINE_LOOP, {
       { v = { xn, yn } }, { v = { xp, yn } },
       { v = { xp, yp } }, { v = { xn, yp } }
     })
@@ -196,12 +251,12 @@ function widget:DrawScreen()
     xp = maxx
     yn = yn + 0.5
     yp = yp - 0.5
-    gl.Blending(GL_SRC_ALPHA, GL_ONE)
-    gl.Shape(GL_QUADS, {
+    gl.Blending(GL.SRC_ALPHA, GL.ONE)
+    gl.Shape(GL.QUADS, {
       { v = { xn, yn } }, { v = { xp, yn } },
       { v = { xp, yp } }, { v = { xn, yp } }
     })
-    gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
   end
 
   -- outline the box
@@ -210,7 +265,7 @@ function widget:DrawScreen()
   xp = maxx + 0.5
   yp = maxy + 0.5
   gl.Color(1, 1, 1)
-  gl.Shape(GL_LINE_LOOP, {
+  gl.Shape(GL.LINE_LOOP, {
     { v = { xn, yn } }, { v = { xp, yn } },
     { v = { xp, yp } }, { v = { xn, yp } }
   })
@@ -219,11 +274,14 @@ function widget:DrawScreen()
   xp = xp + 1
   yp = yp + 1
   gl.Color(0, 0, 0)
-  gl.Shape(GL_LINE_LOOP, {
+  gl.Shape(GL.LINE_LOOP, {
     { v = { xn, yn } }, { v = { xp, yn } },
     { v = { xp, yp } }, { v = { xn, yp } }
   })
 
+  if (fh) then
+    fontHandler.EnableCache()
+  end
 end
 
 
@@ -280,7 +338,7 @@ function widget:AboveLabel(x, y)
   local count = table.getn(widgetsList)
   if (count < 1) then return nil end
   
-  local i = math.floor(1 + ((maxy - bordery) - y) / yStep)
+  local i = floor(1 + ((maxy - bordery) - y) / yStep)
   if     (i < 1)     then i = 1
   elseif (i > count) then i = count end
   

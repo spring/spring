@@ -26,9 +26,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-include("spring.h.lua")
-
-
 local function ClearGroup(unitID, factID)
   -- clear the unit's group if it's the same as the factory's
   local unitGroup = Spring.GetUnitGroup(unitID)

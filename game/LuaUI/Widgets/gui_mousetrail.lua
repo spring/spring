@@ -29,9 +29,6 @@ end
 -- Useless mouse trails
 --
 
-include("opengl.h.lua")
-
-
 local gl = gl  --  use a local copy for faster access
 
 local lifeTime = 1.0
@@ -79,7 +76,7 @@ function widget:DrawScreen()
   -- draw the lines
   gl.LineStipple(2, 4095)
   gl.LineWidth(2.0)
-  gl.Shape(GL_LINE_STRIP, elements)
+  gl.Shape(GL.LINE_STRIP, elements)
   gl.LineWidth(1.0)
   gl.LineStipple(false)
 end

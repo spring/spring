@@ -11,8 +11,6 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-include("spring.h.lua")
-
 
 function PrintInCommand()
   cmdIndex, cmdId, cmdType, name = Spring.GetActiveCommand()

@@ -41,7 +41,6 @@ end
 -------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 
@@ -86,7 +85,7 @@ function widget:DrawScreen()
   SetupDimensions(unitTypes)
 
   -- unit model rendering uses the depth-buffer
-  gl.Clear(GL_DEPTH_BUFFER_BIT)
+  gl.Clear(GL.DEPTH_BUFFER_BIT)
 
   local x,y,lb,mb,rb = Spring.GetMouseState()
   local mouseIcon = MouseOverIcon(x, y)
@@ -168,7 +167,7 @@ end
 local function SetupModelDrawing()
   gl.DepthTest(true) 
   gl.DepthMask(true)
-  gl.Culling(GL_FRONT)
+  gl.Culling(GL.FRONT)
   gl.Lighting(true)
   gl.Blending(false)
   gl.Material({
@@ -220,7 +219,7 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
 --  gl.Color(0.3, 0.3, 0.3, 1.0)
 --  gl.Texture('#'..unitDefID)
   SetupBackgroundColor(ud)
-  gl.Shape(GL_QUADS, {
+  gl.Shape(GL.QUADS, {
     { v = { xmin + 1, ymin + 1 }, t = { 0, 1 } },
     { v = { xmax - 0, ymin + 1 }, t = { 1, 1 } },
     { v = { xmax - 0, ymax - 0 }, t = { 1, 0 } },
@@ -255,9 +254,9 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
     gl.DepthMask(false)
     gl.Color(1,1,1,1)
     gl.PolygonOffset(-4, -4)
-    gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+    gl.PolygonMode(GL.FRONT_AND_BACK, GL.LINE)
     gl.UnitDef(unitDefID, Spring.GetMyTeamID())
-    gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+    gl.PolygonMode(GL.FRONT_AND_BACK, GL.FILL)
     gl.PolygonOffset(false)
 --    gl.LineWidth(1.0)
   end
@@ -272,7 +271,7 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
 
   -- draw the border  (note the half pixel shift for drawing lines)
   gl.Color(1, 1, 1)
-  gl.Shape(GL_LINE_LOOP, {
+  gl.Shape(GL.LINE_LOOP, {
     { v = { xmin + 0.5, ymin + 0.5 }, t = { 0, 1 } },
     { v = { xmax + 0.5, ymin + 0.5 }, t = { 1, 1 } },
     { v = { xmax + 0.5, ymax + 0.5 }, t = { 1, 0 } },
@@ -287,14 +286,14 @@ function DrawIconQuad(iconPos, color)
   local ymin = rectMinY
   local ymax = rectMaxY
   gl.Color(color)
-  gl.Blending(GL_SRC_ALPHA, GL_ONE)
-  gl.Shape(GL_QUADS, {
+  gl.Blending(GL.SRC_ALPHA, GL.ONE)
+  gl.Shape(GL.QUADS, {
     { v = { xmin, ymin } },
     { v = { xmax, ymin } },
     { v = { xmax, ymax } },
     { v = { xmin, ymax } },
   })
-  gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
 end
 
 

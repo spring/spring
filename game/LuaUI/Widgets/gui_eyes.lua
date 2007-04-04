@@ -29,7 +29,6 @@ end
 -- Useless xeyes clone
 --
 
-include("opengl.h.lua")
 include("colors.h.lua")
 
 
@@ -80,8 +79,8 @@ local function MakeCircleList(type)
   end
   gl.Shape(type, elements)
 end
-local circleLineList = gl.ListCreate(MakeCircleList, GL_LINE_LOOP)
-local circlePolyList = gl.ListCreate(MakeCircleList, GL_TRIANGLE_FAN)
+local circleLineList = gl.ListCreate(MakeCircleList, GL.LINE_LOOP)
+local circlePolyList = gl.ListCreate(MakeCircleList, GL.TRIANGLE_FAN)
 
 
 function widget:GetConfigData(data)
@@ -113,8 +112,8 @@ function widget:SetConfigData(data)
 
   gl.ListDelete(circleLineList)
   gl.ListDelete(circlePolyList)
-  circleLineList = gl.ListCreate(MakeCircleList, GL_LINE_LOOP)
-  circlePolyList = gl.ListCreate(MakeCircleList, GL_TRIANGLE_FAN)
+  circleLineList = gl.ListCreate(MakeCircleList, GL.LINE_LOOP)
+  circlePolyList = gl.ListCreate(MakeCircleList, GL.TRIANGLE_FAN)
 end
 
 
@@ -247,17 +246,17 @@ local function DrawEye(e)
   gl.Texture("bitmaps/graphpaper.bmp")
 --  gl.Texture("bitmaps/grassa.bmp")
   local timer = widgetHandler:GetHourTimer()
-  gl.MatrixMode(GL_TEXTURE)
+  gl.MatrixMode(GL.TEXTURE)
   gl.PushMatrix()
   gl.Rotate(math.mod(e.td * timer * 60, 360), 0.0, 0.0, 1.0)
-  gl.MatrixMode(GL_MODELVIEW)
+  gl.MatrixMode(GL.MODELVIEW)
   DrawLists(e.x, e.y, e.sx * 0.5, e.sy * 0.5, {
     { circlePolyList, color}, { circleLineList, black }
   })
   gl.Texture(false)
-  gl.MatrixMode(GL_TEXTURE)
+  gl.MatrixMode(GL.TEXTURE)
   gl.PopMatrix()
-  gl.MatrixMode(GL_MODELVIEW)
+  gl.MatrixMode(GL.MODELVIEW)
 
   -- pupil
   DrawLists(e.px, e.py, 0.5 * (e.sx * e.ps), 0.5 * (e.sy * e.ps),
@@ -274,16 +273,16 @@ end
   
 
 local function TweakDrawEye(e)
-  gl.Blending(GL_SRC_ALPHA, GL_ONE)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE)
   gl.Color(1.0, 1.0, 1.0, 0.125)
-  gl.Shape(GL_QUADS, {
+  gl.Shape(GL.QUADS, {
     { v = { e.x - e.sx * 0.5, e.y - e.sy * 0.5 } },
     { v = { e.x + e.sx * 0.5, e.y - e.sy * 0.5 } },
     { v = { e.x + e.sx * 0.5, e.y + e.sy * 0.5 } },
     { v = { e.x - e.sx * 0.5, e.y + e.sy * 0.5 } }
   })
   gl.Color(1, 1, 1)
-  gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
 end
 
 

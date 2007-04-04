@@ -26,6 +26,7 @@ local DefaultFontName = LUAUI_DIRNAME .. "Fonts/test"
 --  Local speedups
 --
 
+local floor    = math.floor
 local strlen   = string.len
 local strsub   = string.sub
 local strbyte  = string.byte
@@ -46,7 +47,7 @@ local caching = true
 local timeStamp  = 0
 local lastUpdate = 0
 
-local debug = false
+local debug = true
 local origPrint = print
 local print = function(...)
   if (debug) then
@@ -138,7 +139,20 @@ end
 
 --------------------------------------------------------------------------------
 
-local function CalcTextWidth(text)
+local function StripColorCodes(text)
+  local stripped = ""
+  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
+    if (strlen(txt) > 0) then
+      stripped = stripped .. txt
+    end
+  end
+  return stripped
+end
+
+
+--------------------------------------------------------------------------------
+
+local function RawGetTextWidth(text)
   local specs = activeFont.specs
   local w = 0
   for i = 1, strlen(text) do
@@ -155,21 +169,22 @@ local function CalcTextWidth(text)
 end
 
 
-local function CalcTextHeight(text)
-  return height
+local function GetTextWidth(text)
+  -- return the cached value if available
+  local cacheTextData = activeFont.cache[text]
+  if (cacheTextData) then
+    local width = cacheTextData[3]
+    if (width) then
+      return width
+    end
+  end
+  local stripped = StripColorCodes(text)
+  return RawGetTextWidth(stripped)
 end
 
 
---------------------------------------------------------------------------------
-
-local function StripColorCodes(text)
-  local stripped = ""
-  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
-    if (strlen(txt) > 0) then
-      stripped = stripped .. txt
-    end
-  end
-  return stripped
+local function CalcTextHeight(text)
+  return activeFont.specs.height
 end
 
 
@@ -230,6 +245,7 @@ local function Draw(text, x, y)
       RawColorDraw(text)
       gl.Texture(false)
     end)
+--    print("newlist: " .. text) -- FIXME    -- speed test the 'not caching' to the end...
     cacheTextData = { textList, timeStamp }
     activeFont.cache[text] = cacheTextData
   else
@@ -251,8 +267,7 @@ end
 --------------------------------------------------------------------------------
 
 local function DrawRight(text, x, y)
-  local stripped = StripColorCodes(text)
-  local width = CalcTextWidth(stripped)  -- use cached widths?
+  local width = GetTextWidth(text)
   gl.PushMatrix()
   gl.Translate(-width, 0, 0)
   Draw(text, x, y)
@@ -261,10 +276,10 @@ end
 
 
 local function DrawCentered(text, x, y)
-  local stripped = StripColorCodes(text)
-  local width = CalcTextWidth(stripped)  -- use cached widths?
+  local width = GetTextWidth(text)
+  local halfWidth = floor(width * 0.5) -- keep pixel alignment
   gl.PushMatrix()
-  gl.Translate(-width * 0.5, 0, 0)
+  gl.Translate(-halfWidth, 0, 0)
   Draw(text, x, y)
   gl.PopMatrix()
 end
@@ -291,6 +306,13 @@ local function LoadFont(fontName)
     return nil  -- bad specs
   end
 
+  -- FIXME: add a FileExistsVFS() call?
+  local texFile = Spring.LoadTextVFS(baseName .. ".png")
+  if (not texFile) then
+    return nil  -- texture
+  end
+  texFile = nil
+
   local fontLists
   if (strfind(options, "o")) then
     fontLists = MakeOutlineDisplayLists(fontSpecs)
@@ -310,6 +332,8 @@ local function LoadFont(fontName)
   font.cache = {}
   font.image = options .. baseName .. ".png"
 
+  fonts[fontName] = font
+
   return font
 end
 
@@ -318,16 +342,17 @@ local function SetFont(fontName)
   local font = fonts[fontName]
   if (font) then
     activeFont = font
-    return
+    return true
   end
 
   font = LoadFont(fontName)
   if (font) then
-    print("Loaded font: " .. fontName)
     activeFont = font
-    fonts[fontName] = font
-    return
+    print("Loaded font: " .. fontName)
+    return true
   end
+  
+  return false
 end
 
 
@@ -340,7 +365,7 @@ end
 --------------------------------------------------------------------------------
 
 local function FreeCache(fontName)
-  local font = fonts[fontName]
+  local font = (fontName == nil) and activeFont or fonts[fontName]
   if (not font) then
     return
   end
@@ -351,7 +376,7 @@ end
 
 
 local function FreeFont(fontName)
-  local font = fonts[fontName]
+  local font = (fontName == nil) and activeFont or fonts[fontName]
   if (not font) then
     return
   end
@@ -375,13 +400,15 @@ local function FreeFonts()
 end
 
 
-local function Update(time)
-  timeStamp = time
-  if (timeStamp < (lastUpdate + 3)) then
-    return  -- only update every 3 seconds
+local function Update()
+  timeStamp = timeStamp + Spring.GetLastUpdateSeconds()
+  if (timeStamp < (lastUpdate + 1.0)) then
+    return  -- only update every 1.0 seconds
   end
 
-  local killTime = (time - 30)
+--  print("fontHandler.Update("..timeStamp..")")
+
+  local killTime = (timeStamp - 3.0)
   for fontName, font in pairs(fonts) do
     local killList = {}
     for text,data in pairs(font.cache) do
@@ -395,6 +422,7 @@ local function Update(time)
       font.cache[text] = nil
     end
   end
+
   lastUpdate = timeStamp
 end
 
@@ -413,7 +441,7 @@ FH.Update = Update
 FH.SetFont        = SetFont
 FH.SetDefaultFont = SetDefaultFont
 
-FH.GetFontName  = function() return activeFont.name end
+FH.GetFontName  = function() return activeFont.name         end
 FH.GetFontSize  = function() return activeFont.specs.height end
 FH.GetFontYStep = function() return activeFont.specs.yStep  end
 
@@ -427,7 +455,7 @@ FH.DrawCentered = DrawCentered
 
 FH.StripColors = StripColorCodes
 
-FH.CalcTextWidth  = CalcTextWidth
+FH.GetTextWidth  = GetTextWidth
 FH.CalcTextHeight = CalcTextHeight
 
 

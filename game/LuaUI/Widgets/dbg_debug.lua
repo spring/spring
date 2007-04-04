@@ -30,7 +30,6 @@ end
 --
 
 include("debug.lua")
-include("spring.h.lua")
 
 
 --  one-shots

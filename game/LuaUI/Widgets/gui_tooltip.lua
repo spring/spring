@@ -27,13 +27,35 @@ end
 --------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("opengl.h.lua")
 
 
 local fontSize = 12
 local ySpace   = 4
 local yStep    = fontSize + ySpace
+local gap      = 4
 
+local fh = (1 > 0)
+local fontName  = "LuaUI/Fonts/FreeSansBold_14"
+if (fh) then
+  fh = fontHandler.SetFont(fontName)
+end
+if (fh) then
+  fontSize  = fontHandler.GetFontSize()
+  yStep     = fontHandler.GetFontYStep() + 2
+end
+
+
+--------------------------------------------------------------------------------
+
+local vsx, vsy = widgetHandler:GetViewSizes()
+
+function widget:ViewResize(viewSizeX, viewSizeY)
+  vsx = viewSizeX
+  vsy = viewSizeY
+end
+
+
+--------------------------------------------------------------------------------
 
 function widget:Initialize()
   Spring.SendCommands({"tooltip 0"})
@@ -45,15 +67,13 @@ function widget:Shutdown()
 end
 
 
-local vsx, vsy = widgetHandler:GetViewSizes()
-
-function widget:ViewResize(viewSizeX, viewSizeY)
-  vsx = viewSizeX
-  vsy = viewSizeY
-end
-
+--------------------------------------------------------------------------------
 
 function widget:DrawScreen()
+  if (fh) then
+    fh = fontHandler.SetFont(fontName)
+    gl.Color(1, 1, 1)
+  end
   local white = "\255\255\255\255"
   local bland = "\255\211\219\255"
   local mSub, eSub
@@ -65,15 +85,33 @@ function widget:DrawScreen()
   tooptip =       string.gsub(tooltip, "a", "b")
   local unitTip = ((mSub + eSub) == 2)
   local i = 0
+
+  local disableCache = (fh and string.find(tooltip, "^Pos"))
+  if (disableCache) then
+    fontHandler.DisableCache()  -- ground tooltips change too much for caching
+  end
+
   for line in string.gfind(tooltip, "([^\n]*)\n?") do
-    if (unitTip) then
-      if (i == 0) then
-        line = "\255\255\128\255" .. line
-      else
-        line = "\255\200\200\200" .. line
-      end
-    end  
-    gl.Text(line, ySpace * 2, ySpace + (4 - i) * yStep, fontSize, "o")
+    if (unitTip and (i == 0)) then
+      line = "\255\255\128\255" .. line
+    else
+      line = "\255\255\255\255" .. line
+    end
+    
+    if (fh) then
+      fontHandler.Draw(line, gap, gap + (4 - i) * yStep)
+    else
+      gl.Text(line, gap, gap + (4 - i) * yStep, fontSize, "o")
+    end
+
     i = i + 1
   end
+
+  if (disableCache) then
+    fontHandler.EnableCache()
+  end
 end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

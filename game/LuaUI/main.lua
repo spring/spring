@@ -18,13 +18,9 @@ dofile(LUAUI_DIRNAME .. "utils.lua")
 include("callins.lua")  -- define all call-ins, in case they are required
 include("unitdefs.lua") -- process some custom UnitDefs parameters
 
-include("colors.h.lua")
-include("opengl.h.lua")
-include("spring.h.lua")
-
 include("debug.lua");
 include("fonts.lua");
-include("layout.lua"); -- contains a simple LayoutButtons()
+include("layout.lua");  -- contains a simple LayoutButtons()
 include("widgets.lua");
 
 include("savetable.lua")
@@ -81,7 +77,7 @@ forceLayout = true
 
 function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
 
-  fontHandler.Update(Spring.GetGameSeconds())
+  fontHandler.Update()
 
   local needUpdate = forceLayout
   forceLayout = false
