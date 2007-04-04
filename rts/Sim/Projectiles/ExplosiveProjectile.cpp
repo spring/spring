@@ -8,6 +8,7 @@
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
@@ -27,12 +28,14 @@ CR_REG_METADATA(CExplosiveProjectile, (
 CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner, WeaponDef *weaponDef, int ttl,float areaOfEffect)
 : CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,0, true),
 	ttl(ttl),
-	areaOfEffect(areaOfEffect)
+	areaOfEffect(areaOfEffect),
+	curTime(0)
 {
 	useAirLos=true;
 
 	SetRadius(weaponDef->collisionSize);
 	drawRadius=weaponDef->size;
+	invttl=1.0f/ttl;
 
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";
@@ -57,6 +60,9 @@ void CExplosiveProjectile::Update()
 		if(TraveledRange())
 			CProjectile::Collision();
 	}
+	curTime+=invttl;
+	if(curTime>1)
+		curTime=1;
 }
 
 void CExplosiveProjectile::Collision()
@@ -87,15 +93,23 @@ void CExplosiveProjectile::Draw(void)
 
 	inArray=true;
 	unsigned char col[4];
-
+	if(weaponDef->visuals.colorMap) {
+		weaponDef->visuals.colorMap->GetColor(col, curTime);
+	} else {
+		col[0]=int(weaponDef->visuals.color.x*255);
+		col[1]=int(weaponDef->visuals.color.y*255);
+		col[2]=int(weaponDef->visuals.color.z*255);
+		col[3]=int(weaponDef->intensity*255);
+	}
+	
 	float3 dir=speed;
 	dir.Normalize();
 
 	for(int a=0;a<5;++a){
-		col[0]=int((5-a)*0.2f*weaponDef->visuals.color.x*255);
-		col[1]=int((5-a)*0.2f*weaponDef->visuals.color.y*255);
-		col[2]=int((5-a)*0.2f*weaponDef->visuals.color.z*255);
-		col[3]=int((5-a)*0.2f*weaponDef->intensity*255);
+		col[0]=int((5-a)*0.2f*col[0]);
+		col[1]=int((5-a)*0.2f*col[1]);
+		col[2]=int((5-a)*0.2f*col[2]);
+		col[3]=int((5-a)*0.2f*col[3]);
 		float3 interPos=pos+speed*gu->timeOffset-dir*drawRadius*0.6f*a;
 		va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
 		va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);

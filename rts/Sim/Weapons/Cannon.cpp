@@ -168,7 +168,7 @@ void CCannon::Fire(void)
 	tracefile << "Cannon fire: ";
 	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
-	int ttl=10000;
+	int ttl=maxPredict;
 	if(selfExplode)
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
 	SAFE_NEW CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,weaponDef, ttl,areaOfEffect);

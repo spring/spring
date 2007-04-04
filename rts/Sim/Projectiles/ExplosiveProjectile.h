@@ -22,6 +22,8 @@ public:
 
 	int ttl;
 	float areaOfEffect;
+	float invttl;
+	float curTime;
 };
 
 #endif // __EXPLOSIVE_PROJECTILE_H__
