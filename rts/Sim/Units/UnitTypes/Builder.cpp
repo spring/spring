@@ -215,6 +215,7 @@ void CBuilder::Update()
 					CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit, curResurrect->pos, team,
 					                             false, curResurrect->buildFacing, this);
 					u->health*=0.05f;
+					u->lineage = this->lineage;
 					lastResurrected=u->id;
 					curResurrect->resurrectProgress=0;
 					featureHandler->DeleteFeature(curResurrect);
@@ -230,12 +231,18 @@ void CBuilder::Update()
 			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
 			if(curCapture->captureProgress > 1.0f){
 				if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
+					// capture failed
 					ENTER_MIXED;
 					if (team == gu->myTeam) {
 						logOutput.Print("%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
 						logOutput.SetLastMsgPos(pos);
 					}
 					ENTER_SYNCED;
+				} else {
+					// capture succesful
+					int oldLineage = curCapture->lineage;
+					curCapture->lineage = this->lineage;
+					gs->Team(oldLineage)->LeftLineage(curCapture);
 				}
 				curCapture->captureProgress=0.5f;	//make units somewhat easier to capture back after first capture
 				StopBuild(true);
@@ -250,7 +257,7 @@ void CBuilder::Update()
 void CBuilder::SlowUpdate(void)
 {
 	if(terraforming){
-		mapDamage->RecalcArea(tx1,tx2,tz1,tz2);		
+		mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
 	}
 	CUnit::SlowUpdate();
 }
@@ -341,7 +348,7 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	for(int z=tz1; z<=tz2; z++){
 		for(int x=tx1; x<=tx2; x++){
 			float delta=readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x];
-			tcost+=fabs(delta);			
+			tcost+=fabs(delta);
 		}
 	}
 	terraformLeft=tcost;
@@ -417,6 +424,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 
 	CUnit* b=unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
 	                             true, buildInfo.buildFacing, this);
+	b->lineage = this->lineage;
 	AddDeathDependence(b);
 	curBuild=b;
 	if (mapDamage->disabled && !(curBuild->floatOnWater)) {
@@ -424,7 +432,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 		 * When the building is completed, it'll 'pop'
 		 * into the correct height for the (un-flattened)
 		 * terrain it's on.
-		 * 
+		 *
 		 * To prevent this visual artifact, put the building
 		 * at the 'right' height to begin with.
 		 *
@@ -463,10 +471,10 @@ void CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 			} else {
 				cost=max(3.f,readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x]-delta*0.5f);
 			}
-			tcost+=fabs(delta)*cost;			
+			tcost+=fabs(delta)*cost;
 		}
 	}
-	
+
 	terraformLeft=tcost;
 }
 

@@ -248,6 +248,7 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	pos = position;
 	team = Team;
 	allyteam = gs->AllyTeam(Team);
+	lineage = Team;
 	unitDef = def;
 
 	localmodel=NULL;
@@ -1472,6 +1473,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 	blockHeightChanges=false;
 	if(unitDef->isCommander)
 		gs->Team(team)->CommanderDied(this);
+	gs->Team(this->lineage)->LeftLineage(this);
 
 	if(!reclaimed && !beingBuilt){
 		string exp;
