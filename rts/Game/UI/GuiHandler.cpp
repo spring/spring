@@ -2411,6 +2411,31 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 }
 
 
+
+static bool WouldCancelAnyQueued(const BuildInfo& b) {
+	Command c;
+	b.FillCmd(c);
+	std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
+		if((*ui)->commandAI->WillCancelQueued(c))
+			return true;
+	}
+	return false;
+}
+
+static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, float xstep, float zstep, int n, int facing, bool nocancel, std::vector<BuildInfo>& ret)
+{
+	for(int i=0;i<n;++i){
+		BuildInfo bi(startInfo.def,float3(x,0,z),(startInfo.buildFacing+facing)%4);
+		bi.pos=helper->Pos2BuildPos(bi);
+		if (!nocancel || !WouldCancelAnyQueued(bi)){
+			ret.push_back(bi);
+		}
+		x+=xstep;
+		z+=zstep;
+	}
+}
+
 // Assuming both builds have the same unitdef
 std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo)
 {
@@ -2440,150 +2465,71 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	}
 
 	if(other.def && GetQueueKeystate() && keys[SDLK_LCTRL]){		//circle build around building
-		Command c;
+		int oxsize=other.GetXSize()*SQUARE_SIZE;
+		int oysize=other.GetYSize()*SQUARE_SIZE;
+		int xsize=startInfo.GetXSize()*SQUARE_SIZE;
+		int ysize=startInfo.GetYSize()*SQUARE_SIZE;
 
-		start=end=helper->Pos2BuildPos(other);
-		start.x-=(other.GetXSize()/2)*SQUARE_SIZE;
-		start.z-=(other.GetYSize()/2)*SQUARE_SIZE;
-		end.x+=(other.GetXSize()/2)*SQUARE_SIZE;
-		end.z+=(other.GetYSize()/2)*SQUARE_SIZE;
+		start =end=helper->Pos2BuildPos(other);
+		start.x-=oxsize/2;
+		start.z-=oysize/2;
+		end.x+=oxsize/2;
+		end.z+=oysize/2;
 
-		float3 pos=start;
-		int xsize=startInfo.GetXSize();
-		int ysize=startInfo.GetYSize();
-		for(;pos.x<=end.x;pos.x+=xsize*SQUARE_SIZE){
-			BuildInfo bi(startInfo.def,pos,startInfo.buildFacing);
-			bi.pos.x+=(xsize/2)*SQUARE_SIZE;
-			bi.pos.z-=(ysize/2)*SQUARE_SIZE;
-			bi.pos=helper->Pos2BuildPos(bi);
-			bi.FillCmd(c);
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c))
-					cancel = true;
-			}
-			if(!cancel)
-				ret.push_back(bi);
-		}
-		pos=end;
-		pos.x=start.x;
-		for(;pos.z>=start.z;pos.z-=ysize*SQUARE_SIZE){
-			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+1)%4);
-			bi.pos.x-=(xsize/2)*SQUARE_SIZE;
-			bi.pos.z-=(ysize/2)*SQUARE_SIZE;
-			bi.pos=helper->Pos2BuildPos(bi);
-			bi.FillCmd(c);
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui){
-				if((*ui)->commandAI->WillCancelQueued(c))
-					cancel = true;
-			}
-			if(!cancel)
-				ret.push_back(bi);
-		}
-		pos=end;
-		for(;pos.x>=start.x;pos.x-=xsize*SQUARE_SIZE) {
-			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+2)%4);
-			bi.pos.x-=(xsize/2)*SQUARE_SIZE;
-			bi.pos.z+=(ysize/2)*SQUARE_SIZE;
-			bi.pos=helper->Pos2BuildPos(bi);
-			bi.FillCmd(c);
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
-			{
-				if((*ui)->commandAI->WillCancelQueued(c))
-					cancel = true;
-			}
-			if(!cancel)
-				ret.push_back(bi);
-		}
-		pos=start;
-		pos.x=end.x;
-		for(;pos.z<=end.z;pos.z+=ysize*SQUARE_SIZE){
-			BuildInfo bi(startInfo.def,pos,(startInfo.buildFacing+3)%4);
-			bi.pos.x+=(xsize/2)*SQUARE_SIZE;
-			bi.pos.z+=(ysize/2)*SQUARE_SIZE;
-			bi.pos=helper->Pos2BuildPos(bi);
-			bi.FillCmd(c);
-			bool cancel = false;
-			std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-			for(;ui != selectedUnits.selectedUnits.end() && !cancel; ++ui)
-			{
-				if((*ui)->commandAI->WillCancelQueued(c))
-					cancel = true;
-			}
-			if(!cancel)
-				ret.push_back(bi);
-		}
-	} else if(keys[SDLK_LALT]){			//build a rectangle
-		float xsize=startInfo.GetXSize()*8+buildSpacing*16;
-		int xnum=(int)((fabs(end.x-start.x)+xsize*1.4f)/xsize);
-		int xstep=(int)xsize;
-		if(start.x>end.x)
-			xstep*=-1;
+		int nvert=1+oxsize/xsize;
+		int nhori=1+oysize/xsize;
 
-		float zsize=startInfo.GetYSize()*8+buildSpacing*16;
-		int znum=(int)((fabs(end.z-start.z)+zsize*1.4f)/zsize);
-		int zstep=(int)zsize;
-		if(start.z>end.z)
-			zstep*=-1;
+		FillRowOfBuildPos(startInfo, end.x  +ysize/2, start.z+xsize/2,      0, +xsize, nhori, 3, true, ret);
+		FillRowOfBuildPos(startInfo, end.x  -xsize/2, end.z  +ysize/2, -xsize,      0, nvert, 2, true, ret);
+		FillRowOfBuildPos(startInfo, start.x-ysize/2, end.z  -xsize/2,      0, -xsize, nhori, 1, true, ret);
+		FillRowOfBuildPos(startInfo, start.x+xsize/2, start.z-ysize/2, +xsize,      0, nvert, 0, true, ret);
 
-		int zn=0;
-		for(float z=start.z;zn<znum;++zn){
-			int xn=0;
-			for(float x=start.x;xn<xnum;++xn){
-				if(!keys[SDLK_LCTRL] || zn==0 || xn==0 || zn==znum-1 || xn==xnum-1){
-					BuildInfo bi = startInfo;
-					bi.pos = float3(x,0,z);
-					bi.pos=helper->Pos2BuildPos(bi);
-					ret.push_back(bi);
+	} else { // rectangle or line
+		float3 delta = end - start;
+
+		float xsize=SQUARE_SIZE*(startInfo.GetXSize()+buildSpacing*2);
+		int xnum=(int)((fabs(delta.x)+xsize*1.4f)/xsize);
+		float xstep=(int)((0<delta.x) ? xsize : -xsize);
+
+		float zsize=SQUARE_SIZE*(startInfo.GetYSize()+buildSpacing*2);
+		int znum=(int)((fabs(delta.z)+zsize*1.4f)/zsize);
+		float zstep=(int)((0<delta.z) ? zsize : -zsize);
+
+		if(keys[SDLK_LALT]){ // build a rectangle
+			if(keys[SDLK_LCTRL]){ // hollow rectangle
+				if(1<xnum&&1<znum){
+					FillRowOfBuildPos(startInfo, start.x               , start.z+zstep         ,      0,  zstep, znum-1, 0, false, ret); // go "down" on the "left" side
+					FillRowOfBuildPos(startInfo, start.x+xstep         , start.z+(znum-1)*zstep,  xstep,      0, xnum-1, 0, false, ret); // go "right" on the "bottom" side
+					FillRowOfBuildPos(startInfo, start.x+(xnum-1)*xstep, start.z+(znum-2)*zstep,      0, -zstep, znum-1, 0, false, ret); // go "up" on the "right" side
+					FillRowOfBuildPos(startInfo, start.x+(xnum-2)*xstep, start.z               , -xstep,      0, xnum-1, 0, false, ret); // go "left" on the "top" side
+				} else if(1==xnum){
+					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, ret);
+				} else if(1==znum){
+					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, ret);
 				}
-				x+=xstep;
+			} else { // filled rectangle
+				int zn=0;
+				for(float z=start.z;zn<znum;++zn){
+					if(zn&1){
+						FillRowOfBuildPos(startInfo, start.x+(xnum-1)*xstep, z, -xstep, 0, xnum, 0, false, ret); // every odd line "right" to "left"
+					} else {
+						FillRowOfBuildPos(startInfo, start.x               , z, xstep, 0, xnum, 0, false, ret); // every even line "left" to "right"
+					}
+					z+=zstep;
+				}
 			}
-			z+=zstep;
-		}
-	} else {			//build a line
-		BuildInfo bi=startInfo;
-		if (fabs(start.x - end.x) > fabs(start.z - end.z)) {
-			float step=startInfo.GetXSize()*8+buildSpacing*16;
-			float3 dir=end-start;
-			if(dir.x==0){
-				bi.pos = start;
-				ret.push_back(bi);
-				return ret;
+		} else { // build a line
+			bool x_dominates_z = fabs(delta.x) > fabs(delta.z);
+			if (x_dominates_z){
+				zstep = keys[SDLK_LCTRL] ? 0 : xstep * delta.z/(delta.x ? delta.x : 1);
+			} else {
+				xstep = keys[SDLK_LCTRL] ? 0 : zstep * delta.x/(delta.z ? delta.z : 1);
 			}
-			dir/=fabs(dir.x);
-			if(keys[SDLK_LCTRL])
-				dir.z=0;
-			for(float3 p=start;fabs(p.x-start.x)<fabs(end.x-start.x)+step*0.4f;p+=dir*step) {
-				bi.pos=p;
-				bi.pos=helper->Pos2BuildPos(bi);
-				ret.push_back(bi);
-			}
-		} else {
-			float step=startInfo.GetYSize()*8+buildSpacing*16;
-			float3 dir=end-start;
-			if(dir.z==0){
-				bi.pos=start;
-				ret.push_back(bi);
-				return ret;
-			}
-			dir/=fabs(dir.z);
-			if(keys[SDLK_LCTRL])
-				dir.x=0;
-			for(float3 p=start;fabs(p.z-start.z)<fabs(end.z-start.z)+step*0.4f;p+=dir*step) {
-				bi.pos=p;
-				bi.pos=helper->Pos2BuildPos(bi);
-				ret.push_back(bi);
-			}
+			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, x_dominates_z ? xnum : znum, 0, false, ret);
 		}
 	}
 	return ret;
 }
-
 
 /******************************************************************************/
 /******************************************************************************/
