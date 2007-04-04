@@ -821,18 +821,18 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 				}
 			}
 			else if (c.params.size() >= 3) {
-				// assume this means that the first 3 makes a position
-				float3 cp(c.params[0], c.params[1], c.params[2]);
-				float3 tp(t.params[0], t.params[1], t.params[2]);
 				if (c.id < 0) {
-					UnitDef* cu = unitDefHandler->GetUnitByID(-c.id);
-					UnitDef* tu = unitDefHandler->GetUnitByID(-t.id);
-					if (cu && tu
-					    && fabs(cp.x - tp.x) * 2 <= max(cu->xsize, tu->xsize) * SQUARE_SIZE
-					    && fabs(cp.z - tp.z) * 2 <= max(cu->ysize, tu->ysize) * SQUARE_SIZE) {
+					BuildInfo bc(c);
+					BuildInfo bt(t);
+					if (bc.def && bt.def
+					    && fabs(bc.pos.x - bt.pos.x) * 2 <= max(bc.GetXSize(), bt.GetXSize()) * SQUARE_SIZE
+					    && fabs(bc.pos.z - bt.pos.z) * 2 <= max(bc.GetYSize(), bt.GetYSize()) * SQUARE_SIZE) {
 						return ci;
 					}
 				} else {
+					// assume this means that the first 3 makes a position
+					float3 cp(c.params[0], c.params[1], c.params[2]);
+					float3 tp(t.params[0], t.params[1], t.params[2]);
 					if ((cp - tp).SqLength2D() < (17.0f * 17.0f)) {
 						return ci;
 					}
