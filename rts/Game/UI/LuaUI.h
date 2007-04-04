@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -46,9 +48,9 @@ class CLuaUI : public CLuaHandle {
 		bool HasCallIn(const string& callInName);
 
 		void Shutdown();
-		
+
 		bool HasLayoutButtons();
-		
+
 		bool LayoutButtons(int& xButtons, int& yButtons,
 		                   const vector<CommandDescription>& cmds,
 		                   vector<int>& removeCmds,
@@ -62,11 +64,11 @@ class CLuaUI : public CLuaHandle {
 		                   string& menuName);
 
 		bool ConfigCommand(const string& command);
-		
+
 		bool UpdateLayout(bool commandsChanged, int activePage);
-		
+
 		bool CommandNotify(const Command& cmd);
-		
+
 		bool DrawWorldItems();
 		bool DrawScreenItems();
 
@@ -77,11 +79,11 @@ class CLuaUI : public CLuaHandle {
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
-		
+
 		bool AddConsoleLine(const string& line, int priority);
-		
+
 		bool GroupChanged(int groupID);
-		
+
 	protected:
 		CLuaUI();
 		~CLuaUI();
@@ -89,9 +91,9 @@ class CLuaUI : public CLuaHandle {
 		void KillLua();
 
 		bool LoadCFunctions(lua_State* L);
-		
+
 		bool AddConsoleLines(lua_State* L);
-		
+
 		bool BuildCmdDescTable(lua_State* L,
 		                       const vector<CommandDescription>& cmds);
 
@@ -143,7 +145,7 @@ class CLuaUI : public CLuaHandle {
 		static int GetActiveCmdDescs(lua_State* L);
 		static int GetActiveCmdDesc(lua_State* L);
 		static int GetCmdDescIndex(lua_State* L);
-		
+
 		static int GetConsoleBuffer(lua_State* L);
 		static int GetCurrentTooltip(lua_State* L);
 

@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -22,12 +24,12 @@ class CKeyAutoBinder : CLuaHandle {
 	public:
 		CKeyAutoBinder();
 		~CKeyAutoBinder();
-		
+
 		bool BindBuildType(const string& keystr,
 		                   const vector<string>& requirements,
 		                   const vector<string>& sortCriteria,
 		                   const vector<string>& chords);
-		
+
 	private:
 		bool LoadCode(const string& code, const string& debug);
 		bool LoadCompareFunc();
@@ -37,7 +39,7 @@ class CKeyAutoBinder : CLuaHandle {
 		string ConvertBooleanSymbols(const string& text) const;
 		bool HasRequirements(lua_State* L, int unitDefID);
 		bool IsBetter(lua_State* L, int thisDefID, int thatDefID);
-		
+
 	private:
 		class UnitDefHolder {
 			public:

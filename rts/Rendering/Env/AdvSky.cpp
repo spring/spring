@@ -2,7 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4258)
+#endif
 
 #include "StdAfx.h"
 #include "AdvSky.h"
@@ -18,8 +20,8 @@
 #include "Matrix44f.h"
 #include "mmgr.h"
 
-extern GLfloat FogBlack[]; 
-extern GLfloat FogLand[]; 
+extern GLfloat FogBlack[];
+extern GLfloat FogLand[];
 
 #define Y_PART 10.0
 #define X_PART 10.0
@@ -33,7 +35,7 @@ extern GLfloat FogLand[];
 using namespace std;
 
 CAdvSky::CAdvSky()
-{	
+{
 	PrintLoadMsg("Creating sky");
 	domeheight=cos(PI/16)*1.01f;
 	domeWidth=sin(2*PI/32)*400*1.7f;
@@ -106,31 +108,31 @@ CAdvSky::CAdvSky()
 		for(int x=0;x<X_PART;x++){
 			glBegin(GL_TRIANGLE_STRIP);
 			float3 c=GetCoord(x,y);
-			
+
 			glMultiTexCoord2fARB(GL_TEXTURE0_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE3_ARB,c.x,c.z);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x,y+1);
-			
+
 			glMultiTexCoord2fARB(GL_TEXTURE0_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE3_ARB,c.x,c.z);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x+1,y);
-			
+
 			glMultiTexCoord2fARB(GL_TEXTURE0_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE3_ARB,c.x,c.z);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x+1,y+1);
-			
+
 			glMultiTexCoord2fARB(GL_TEXTURE0_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x*0.025f,c.z*0.025f);
@@ -201,14 +203,14 @@ void CAdvSky::Draw()
 		glDisable(GL_FOG);
 	}
 
-	glMatrixMode(GL_TEXTURE);	
+	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
 		glPopMatrix();
 	  glActiveTextureARB(GL_TEXTURE3_ARB);
 		glPopMatrix();
 	  glActiveTextureARB(GL_TEXTURE0_ARB);
 	glMatrixMode(GL_MODELVIEW);
-	
+
 	glPopMatrix();
 
 	glEnable(GL_DEPTH_TEST);
@@ -265,7 +267,7 @@ void CAdvSky::CreateClouds()
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE, size, size,0,GL_LUMINANCE, GL_UNSIGNED_BYTE, randDetailMatrix);
 	}
-	
+
 	for(int y=0;y<512;y++){
 		for(int x=0;x<512;x++){
 			float3 dir=GetDirFromTexCoord(x/512.0f,y/512.0f);
@@ -415,7 +417,7 @@ START_TIME_PROFILE
 					for(int x2=0;x2<((CLOUD_SIZE/4)>>a)-1;++x2){
 						if(x+x2<CLOUD_SIZE)
 							rawClouds[y+y2][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
-						else 
+						else
 							rawClouds[y+y2][x+x2-CLOUD_SIZE]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
 					}
 				}
@@ -430,7 +432,7 @@ START_TIME_PROFILE
 					for(int x2=0;x2<((CLOUD_SIZE/4)>>a)-1;++x2){
 						if(y+y2<CLOUD_SIZE)
 							rawClouds[y+y2][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
-						else 
+						else
 							rawClouds[y+y2-CLOUD_SIZE][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
 					}
 				}
@@ -577,7 +579,7 @@ void CAdvSky::DrawSun()
 	glPushMatrix();
 	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
 	glMultMatrixf(m.m);
-	
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
 	unsigned char buf[128];
@@ -759,7 +761,7 @@ void CAdvSky::CreateDetailTex(void)
 	glViewport(0,0,256,256);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();		
+	glLoadIdentity();
 	glOrtho(0,1,0,1,-1,1);
 	glMatrixMode(GL_MODELVIEW);
 	glDisable(GL_FOG);
@@ -807,10 +809,10 @@ void CAdvSky::CreateDetailTex(void)
 		va->AddVertexT(UpVector,0,tSize);
 
 		float ifade=(3*fade*fade-2*fade*fade*fade);
-		
+
 		glBindTexture(GL_TEXTURE_2D, detailTextures[a+6]);
 		glColor4f(c,c,c,1-ifade);
-		va->DrawArrayT(GL_QUADS);		
+		va->DrawArrayT(GL_QUADS);
 		glBindTexture(GL_TEXTURE_2D, detailTextures[a]);
 		glColor4f(c,c,c,ifade);
 		va->DrawArrayT(GL_QUADS);
@@ -851,7 +853,7 @@ float CAdvSky::GetTexCoordFromDir(float3 dir)
 {
 	float tp=0.5f;
 	float step=0.25f;
-	
+
 	for(int a=0;a<10;++a){
 		float tx=0.5f+tp;
 		float3 d=GetDirFromTexCoord(tx,0.5f);

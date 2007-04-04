@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 struct lua_State;
@@ -43,7 +45,7 @@ class LuaUnsyncedRead {
 		static int GetCameraVectors(lua_State* L);
 		static int WorldToScreenCoords(lua_State* L);
 		static int TraceScreenRay(lua_State* L);
-		
+
 		static int GetTimer(lua_State* L);
 		static int DiffTimers(lua_State* L);
 };

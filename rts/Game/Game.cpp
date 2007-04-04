@@ -2,7 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 
@@ -3665,7 +3667,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 	} else {                        // absolute time
 		endFrame = GAME_SPEED * atoi(timeStr.c_str());
 	}
-	
+
 	if (endFrame <= startFrame) {
 		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
 		return;
@@ -3674,7 +3676,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 		logOutput.Print("Can not skip while paused\n");
 		return;
 	}
-	
+
 	const int totalFrames = endFrame - startFrame;
 	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
 
@@ -3724,7 +3726,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 				glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
 				glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
 				glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
-				
+
 				SDL_GL_SwapBuffers();
 			}
 		}
@@ -3741,7 +3743,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 
 	delete sound;
 	sound = tmpSound;
-	
+
 	logOutput.Print("Skipped %.1f seconds\n", seconds);
 }
 

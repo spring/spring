@@ -1,7 +1,9 @@
 // Ground.cpp: implementation of the CGround class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 #include "Ground.h"
@@ -110,28 +112,28 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		}
 	} else if(floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)){
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));	
+			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
 			if(ret>=0){
 				return ret+savedLength;
 			}
 			keepgoing=fabs(zp-from.z)<fabs(dz);
 			if(dz>0)
 				zp+=SQUARE_SIZE;
-			else 
+			else
 				zp-=SQUARE_SIZE;
 		}
 		// if you hit this the collision detection hit an infinite loop
 		assert(!keepgoing);
 	} else if(floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE)){
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));	
+			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
 			if(ret>=0){
 				return ret+savedLength;
 			}
 			keepgoing=fabs(xp-from.x)<fabs(dx);
 			if(dx>0)
 				xp+=SQUARE_SIZE;
-			else 
+			else
 				xp-=SQUARE_SIZE;
 		}
 		// if you hit this the collision detection hit an infinite loop
@@ -392,6 +394,6 @@ float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, fl
 		}
 //		geometricObjects->AddLine(pos,oldpos,3,0,16);
 //		oldpos=pos;
-	}	
+	}
 	return -1;
 }

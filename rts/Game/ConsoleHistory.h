@@ -4,14 +4,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <list>
 
 using namespace std;
 
-class CConsoleHistory 
+class CConsoleHistory
 {
 public:
 	CConsoleHistory();
@@ -20,7 +22,7 @@ public:
 	bool AddLine(const string& msg);
 	string NextLine(const string& current);
 	string PrevLine(const string& current);
-	
+
 protected:
 	bool AddLineRaw(const string& msg);
 

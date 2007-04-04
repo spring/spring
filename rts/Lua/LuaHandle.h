@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -75,7 +77,7 @@ class CLuaHandle {
 		const string name;
 		const int order;
 		const bool userMode;
-		
+
 	public: // call-ins
 		virtual bool HasCallIn(const string& callInName) { return false; }
 
@@ -109,7 +111,7 @@ class CLuaHandle {
 		void DrawWorldRefraction();
 		void DrawScreen();
 		void DrawInMiniMap();
-		
+
 	protected:
 		CLuaHandle(const string& name, int order,
 		           bool userMode, LuaCobCallback callback);
@@ -117,7 +119,7 @@ class CLuaHandle {
 
 		void SetActiveHandle();
 		void SetActiveHandle(CLuaHandle*);
-		
+
 		bool AddBasicCalls();
 		bool LoadCode(const string& code, const string& debug);
 		bool AddEntriesToTable(lua_State* L, const char* name,
@@ -129,7 +131,7 @@ class CLuaHandle {
 
 	protected:
 		lua_State* L;
-		
+
 		bool killMe;
 		string killMsg;
 
@@ -145,7 +147,7 @@ class CLuaHandle {
 		LuaCobCallback cobCallback;
 
 		CLuaDisplayLists displayLists;
-		
+
 		struct CobCallbackData {
 			CobCallbackData(int rc, int uid, float fd)
 			: retCode(rc), unitID(uid), floatData(fd) {}
@@ -154,7 +156,7 @@ class CLuaHandle {
 			float floatData;
 		};
 		vector<CobCallbackData> cobCallbackEntries;
-		
+
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);
 		static int CallOutGetSynced(lua_State* L);
@@ -164,7 +166,7 @@ class CLuaHandle {
 		static int CallOutGetReadTeam(lua_State* L);
 		static int CallOutGetReadAllyTeam(lua_State* L);
 		static int CallOutGetSelectTeam(lua_State* L);
-		
+
 	public: // static
 		static const CLuaHandle* GetActiveHandle() { return activeHandle; }
 
@@ -186,7 +188,7 @@ class CLuaHandle {
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
-		
+
 
 	protected: // static
 		static CLuaHandle* activeHandle;

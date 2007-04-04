@@ -7,7 +7,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -24,10 +26,10 @@ class CLuaCallInHandler
 	public:
 		CLuaCallInHandler();
 		~CLuaCallInHandler();
-		
+
 		void AddHandle(CLuaHandle* lh);
 		void RemoveHandle(CLuaHandle* lh);
-		
+
 	public:
 		void GameOver();
 		void TeamDied(int teamID);
@@ -90,10 +92,10 @@ class CLuaCallInHandler
 		CallInList listUnitEnteredLos;
 		CallInList listUnitLeftRadar;
 		CallInList listUnitLeftLos;
-		
+
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
-		
+
 		CallInList listDrawWorld;
 		CallInList listDrawWorldShadow;
 		CallInList listDrawWorldReflection;

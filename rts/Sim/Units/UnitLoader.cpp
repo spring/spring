@@ -1,7 +1,9 @@
 // UnitLoader.cpp: implementation of the CUnitLoader class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 #include "UnitLoader.h"
@@ -153,7 +155,7 @@ START_TIME_PROFILE;
 
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
-		
+
 	if(ud->noAutoFire)
 		unit->fireState=0;
 
@@ -192,7 +194,7 @@ START_TIME_PROFILE;
 		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
 		mt->turnRate=ud->turnRate;
 		mt->baseTurnRate=ud->turnRate;
-		if (!mt->accRate) 
+		if (!mt->accRate)
 			logOutput << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		mt->moveType=ud->moveType;
 		mt->accRate=ud->maxAcc;
@@ -241,7 +243,7 @@ START_TIME_PROFILE;
 		}
 		else {
 			CAirMoveType *mt = SAFE_NEW CAirMoveType(unit);
-		
+
 			if(type=="Fighter")
 				mt->isFighter=true;
 
@@ -290,7 +292,7 @@ START_TIME_PROFILE;
 
 	for(unsigned int i=0; i< ud->weapons.size(); i++)
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def,unit,&ud->weapons[i]));
-	
+
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;
 	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
@@ -351,7 +353,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=SAFE_NEW CMissileLauncher(owner);
 	} else if(weapondef->type=="TorpedoLauncher"){
-		if(owner->unitDef->canfly){	
+		if(owner->unitDef->canfly){
 			weapon=SAFE_NEW CBombDropper(owner,true);
 			if(weapondef->tracks)
 				((CBombDropper*)weapon)->tracking=weapondef->turnrate;

@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <time.h>
 #include <map>
@@ -38,13 +40,13 @@ class CWaitCommandsAI {
 
 		// acknowledge a command received from the network
 		void AcknowledgeCommand(const Command& cmd);
-		
+
 		// search a new unit's queue and add it to its wait commands
 		void AddLocalUnit(CUnit* unit, const CUnit* builder);
 
 		void ClearUnitQueue(CUnit* unit, const CCommandQueue& queue);
 		void RemoveWaitCommand(CUnit* unit, const Command& cmd);
-		
+
 		void AddIcon(const Command& cmd, const float3& pos) const;
 
 	private:
@@ -59,7 +61,7 @@ class CWaitCommandsAI {
 		typedef map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;
 		WaitMap unackedMap;
-		
+
 	private:
 		// Wait Base Class
 		class Wait : public CObject {
@@ -101,7 +103,7 @@ class CWaitCommandsAI {
 				static const string noText;
 		};
 
-		// TimeWait				
+		// TimeWait
 		class TimeWait : public Wait {
 			public:
 				static TimeWait* New(const Command& cmd, CUnit* unit);
@@ -146,7 +148,7 @@ class CWaitCommandsAI {
 				mutable vector<float3> unitPos; // FIXME -- laziness
 		};
 
-		// SquadWait				
+		// SquadWait
 		class SquadWait : public Wait {
 			public:
 				static SquadWait* New(const Command& cmd);

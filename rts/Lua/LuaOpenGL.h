@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 #include <string>
@@ -38,7 +40,7 @@ class LuaOpenGL {
 
 		static bool GetSafeMode() { return safeMode; }
 		static void SetSafeMode(bool value) { safeMode = value; }
-		
+
 		static void EnableCommon(DrawMode);
 		static void ResetCommon(DrawMode);
 		static void DisableCommon(DrawMode);

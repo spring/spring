@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4291)
+#endif
 
 class CProjectileHandler;
 class CFace;
@@ -39,7 +41,7 @@ public:
 	virtual void Update();
 	void DependentDied(CObject* o);
 	virtual void Init(const float3& pos, CUnit *owner);
-	
+
 	bool synced;
 	bool checkCol;
 	bool deleteMe;

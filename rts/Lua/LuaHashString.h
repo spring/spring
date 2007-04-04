@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 using std::string;
@@ -22,13 +24,13 @@ struct LuaHashString {
 
 		LuaHashString(const LuaHashString& hs)
 		: str(hs.str), hash(hs.hash) {}
-		
+
 		LuaHashString& operator=(const LuaHashString& hs) {
 			str = hs.str;
 			hash = hs.hash;
 			return (*this);
 		}
-		
+
 		inline unsigned int GetHash() const { return hash; }
 		inline const string& GetString() const { return str; }
 

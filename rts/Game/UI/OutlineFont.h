@@ -4,20 +4,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 class COutlineFont {
 	public:
 		COutlineFont();
 		~COutlineFont();
-		
+
 		void print(float xPixelSize, float yPixelSize,
 		           const float color[4], const char* text) const;
-		           
+
 		void Enable(bool value) { enabled = value; }
 		bool IsEnabled() const { return enabled; }
-		
+
 	private:
 		bool enabled;
 };

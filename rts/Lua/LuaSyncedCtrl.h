@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 struct lua_State;
@@ -18,7 +20,7 @@ class LuaSyncedCtrl {
 		static bool GetAllowGameChanges();
 
 		static void CheckAllowGameChanges(lua_State* L);
-		
+
 	private:
 		static bool allowGameChanges;
 		static bool inCreateUnit;
@@ -42,7 +44,7 @@ class LuaSyncedCtrl {
 		static int CallCOBScript(lua_State* L);
 		static int CallCOBScriptCB(lua_State* L);
 		static int GetCOBScriptID(lua_State* L);
-		
+
 		static int GiveOrderToUnit(lua_State* L);
 		static int GiveOrderToUnitMap(lua_State* L);
 		static int GiveOrderToUnitArray(lua_State* L);

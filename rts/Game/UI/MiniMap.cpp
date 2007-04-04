@@ -2,7 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 #include "MiniMap.h"
@@ -90,9 +92,9 @@ CMiniMap::CMiniMap()
 	}
 
 	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
-	
+
 	buttonSize = configHandler.GetInt("MiniMapButtonSize", 16);
-	
+
 	unitBaseSize =
 		atof(configHandler.GetString("MiniMapUnitSize", "2.5").c_str());
 	unitBaseSize = max(0.0f, unitBaseSize);
@@ -104,9 +106,9 @@ CMiniMap::CMiniMap()
 		atof(configHandler.GetString("MiniMapCursorScale", "-0.5").c_str());
 
 	useIcons = !!configHandler.GetInt("MiniMapIcons", 1);
-	
+
 	drawCommands = max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
-	
+
 	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
@@ -123,7 +125,7 @@ CMiniMap::CMiniMap()
 	enemyColor[3] = (unsigned char)(1.0f * 255);
 
 	UpdateGeometry();
-	
+
 	circleLists = glGenLists(circleListsCount);
 	for (int cl = 0; cl < circleListsCount; cl++) {
 		glNewList(circleLists + cl, GL_COMPILE);
@@ -339,7 +341,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	else if (command == "drawcommands") {
 		if (words.size() >= 2) {
 			drawCommands = max(0, atoi(words[1].c_str()));
-			
+
 		} else {
 			drawCommands = (drawCommands > 0) ? 0 : 1;
 		}
@@ -387,7 +389,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 
 /******************************************************************************/
-    
+
 bool CMiniMap::MousePress(int x, int y, int button)
 {
 	if (minimized) {
@@ -401,11 +403,11 @@ bool CMiniMap::MousePress(int x, int y, int button)
 
 	const bool inMap = mapBox.Inside(x, y);
 	const bool inButtons = buttonBox.Inside(x, y);
-	
+
 	if (!inMap && !inButtons) {
 		return false;
 	}
-	
+
 	if (button == SDL_BUTTON_LEFT) {
 		if (inMap && (guihandler->inCommand >= 0)) {
 			proxyMode = true;
@@ -444,7 +446,7 @@ bool CMiniMap::MousePress(int x, int y, int button)
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -484,7 +486,7 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		UpdateGeometry();
 		return;
 	}
-	
+
 	if (mouseLook && mapBox.Inside(x, y)) {
 			MoveView(x,y);
 		return;
@@ -501,13 +503,13 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 		proxyMode = false;
 		return;
 	}
-	
+
 	if (proxyMode) {
 		ProxyMouseRelease(x, y, button);
 		proxyMode = false;
 		return;
 	}
-	
+
 	if (selecting) {
 		SelectUnits(x, y);
 		selecting = false;
@@ -561,7 +563,7 @@ void CMiniMap::UpdateGeometry()
 	lastWindowSizeX = gu->viewSizeX;
 	lastWindowSizeY = gu->viewSizeY;
 
-	// setup the unit scaling	
+	// setup the unit scaling
 	const float w = float(width);
 	const float h = float(height);
 	const float mapx = float(gs->mapx * SQUARE_SIZE);
@@ -654,7 +656,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float xmax = max(oldPos.x, newPos.x);
 		const float zmin = min(oldPos.z, newPos.z);
 		const float zmax = max(oldPos.z, newPos.z);
-		
+
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
 
@@ -700,7 +702,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		// Single unit
 		const float size = unitSelectRadius;
 		const float3 pos = GetMapPosition(x, y);
-		
+
 		CUnit* unit;
 		if (gu->spectatingFullSelect) {
 			unit = helper->GetClosestUnit(pos, size);
@@ -710,7 +712,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
-		
+
 		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
 				if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
@@ -798,7 +800,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
 	bp.camPos = mapPos;
 	bp.dir = float3(0.0f, -1.0f, 0.0f);
-	
+
 	guihandler->MousePress(x, y, -button);
 }
 
@@ -824,7 +826,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 	camera->forward = mouse->dir;
 
 	guihandler->MouseRelease(x, y, -button);
-	
+
 	mouse->dir = tmpMouseDir;
 	*camera = c;
 }
@@ -880,7 +882,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	if (!buildTip.empty()) {
 		return buildTip;
 	}
-	
+
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
 		return CTooltipConsole::MakeUnitString(unit);
@@ -924,7 +926,7 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
 	glScalef(radius, 1.0f, radius);
-	
+
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
 	const int lod = (int)(0.25 * log2(1.0f + (xPixels * yPixels)));
@@ -953,7 +955,7 @@ void CMiniMap::DrawForReal()
 {
 	setSurfaceCircleFunc(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
-	
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -965,7 +967,7 @@ void CMiniMap::DrawForReal()
 		setSurfaceCircleFunc(NULL);
 		return;
 	}
-	
+
 	glViewport(xpos, ypos, width, height);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -983,13 +985,13 @@ void CMiniMap::DrawForReal()
 	// move some of the transform to the GPU
 	glTranslatef(0.0f, +1.0f, 0.0f);
 	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0);
-	
+
 	// draw the units
 	list<CUnit*>::iterator ui;
 	for(ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();ui++){
 		DrawUnit(*ui);
 	}
-	
+
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
@@ -1059,12 +1061,12 @@ void CMiniMap::DrawForReal()
 	  glDisable(GL_DEPTH_TEST);
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	
+
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0) {
 		guihandler->DrawMapStuff(drawCommands);
 	}
-	
+
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
 	set<CUnit*>& selUnits = selectedUnits.selectedUnits;
@@ -1115,12 +1117,12 @@ void CMiniMap::DrawForReal()
 		glLineWidth(1.0f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	
+
 	DrawNotes();
 
 	// allow the LUA scripts to draw into the minimap
 	luaCallIns.DrawInMiniMap();
-		
+
 	// reset the modelview
 	glLoadIdentity();
 
@@ -1213,7 +1215,7 @@ void CMiniMap::DrawButtons()
 {
 	const int x = mouse->lastx;
 	const int y = mouse->lasty;
-	
+
 	// update the showButtons state
 	if (!showButtons) {
 		if (mapBox.Inside(x, y) && (buttonSize > 0) && !gu->dualScreenMode) {
@@ -1317,7 +1319,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
-	
+
 	if (useIcons) {
 		if ((unit->allyteam == gu->myAllyTeam) ||
 				(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
@@ -1335,7 +1337,7 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 	if (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR) {
 		return iconHandler->GetIcon("default");
 	}
-	
+
 	return NULL;
 }
 
@@ -1383,7 +1385,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 	iconScale *= icon->size;
 	const float sizeX = (iconScale * unitSizeX);
 	const float sizeY = (iconScale * unitSizeY);
-	
+
 	glBindTexture(GL_TEXTURE_2D, icon->texture);
 	glBegin(GL_QUADS);
 		glTexCoord2f(1.0f, 1.0f); glVertex2f(pos.x + sizeX, pos.z + sizeY);
@@ -1400,7 +1402,7 @@ void CMiniMap::DrawUnitHighlight(CUnit* unit)
 	glAlphaFunc(GL_GREATER, 0.1f);
 	glEnable(GL_COLOR_LOGIC_OP);
 	glLogicOp(GL_COPY_INVERTED);
-	
+
 	const float origX = unitSizeX;
 	const float origY = unitSizeY;
 	unitSizeX *= 2.0f;
@@ -1413,7 +1415,7 @@ void CMiniMap::DrawUnitHighlight(CUnit* unit)
 
 	unitSizeX = origX;
 	unitSizeY = origY;
-	
+
 	DrawUnit(unit);
 
 	return;

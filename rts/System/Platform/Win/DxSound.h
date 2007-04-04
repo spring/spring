@@ -3,7 +3,9 @@
 
 #include "Sound.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #ifndef _WINSOCKAPI_
 	#define _WINSOCKAPI_

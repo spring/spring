@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 using std::string;
@@ -21,13 +23,13 @@ class CLuaHandleSynced : public CLuaHandle
 	public:
 		bool SetupSynced(const string& code, const string& filename);
 		bool SetupUnsynced(const string& code, const string& filename);
-		
+
 		bool Initialize(const string& syncData);
 		string GetSyncData();
 
 	public: // call-ins
 		bool HasCallIn(const string& callInName);
-	
+
 		void GameFrame(int frameNumber);
 		bool GotChatMsg(const string& msg, int playerID);
 		void RecvFromSynced(int args); // not an engine call-in
@@ -54,7 +56,7 @@ class CLuaHandleSynced : public CLuaHandle
 		bool SyncifyRandomFuncs();
 		bool CopyRealRandomFuncs();
 		bool LightCopyTable(int dstIndex, int srcIndex);
-		
+
 	protected:
 		static CLuaHandleSynced* GetActiveHandle() {
 			return dynamic_cast<CLuaHandleSynced*>(activeHandle);

@@ -1,7 +1,9 @@
 // Sky.cpp: implementation of the CBasicSky class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifdef _MSC_VER
 #pragma warning(disable:4258)
+#endif
 
 #include "StdAfx.h"
 #include "BasicSky.h"
@@ -22,8 +24,8 @@
 #include <assert.h>
 
 //////////////////////////////////////////////////////////////////////
-extern GLfloat FogBlack[]; 
-extern GLfloat FogLand[]; 
+extern GLfloat FogBlack[];
+extern GLfloat FogLand[];
 
 #define Y_PART 10.0
 #define X_PART 10.0
@@ -34,7 +36,7 @@ extern GLfloat FogLand[];
 using namespace std;
 
 CBasicSky::CBasicSky()
-{	
+{
 	PrintLoadMsg("Creating sky");
 	domeheight=cos(PI/16)*1.01f;
 	domeWidth=sin(2*PI/32)*400*1.7f;
@@ -90,32 +92,32 @@ CBasicSky::CBasicSky()
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, skyTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	for(y=0;y<Y_PART;y++){
 		for(int x=0;x<X_PART;x++){
 			glBegin(GL_TRIANGLE_STRIP);
 			float3 c=GetCoord(x,y);
-			
+
 //			glTexCoord2f(c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x,y+1);
-			
+
 //			glTexCoord2f(c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x+1,y);
-			
+
 //			glTexCoord2f(c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glVertex3f(c.x,c.y,c.z);
-			
+
 			c=GetCoord(x+1,y+1);
-			
+
 //			glTexCoord2f(c.x*0.025f,c.z*0.025f);
 			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			glVertex3f(c.x,c.y,c.z);
@@ -174,33 +176,33 @@ CBasicSky::CBasicSky()
 
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-	
+
 		for(y=0;y<Y_PART;y++){
 			for(int x=0;x<X_PART;x++){
 				glBegin(GL_TRIANGLE_STRIP);
 				float3 c=GetCoord(x,y);
-				
+
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 //				glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
-				
+
 				c=GetCoord(x,y+1);
-				
+
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 	//			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
-				
+
 				c=GetCoord(x+1,y);
-				
+
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 		//		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
-				
+
 				c=GetCoord(x+1,y+1);
-				
+
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
 			//	glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
@@ -263,7 +265,7 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_TEXTURE);						// Select The Projection Matrix
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-	
+
 	glPopMatrix();
 
 	glEnable(GL_DEPTH_TEST);
@@ -310,7 +312,7 @@ void CBasicSky::CreateClouds()
 
 	static unsigned char skytex[512][512][4];//=SAFE_NEW unsigned char[512][512][4];
 	static unsigned char skytex2[256][256][4];
-	
+
 	for(y=0;y<512;y++){
 		for(int x=0;x<512;x++){
 			float3 dir=GetDirFromTexCoord(x/512.0f,y/512.0f);
@@ -425,7 +427,7 @@ START_TIME_PROFILE
 			for(int x=0;x<(CLOUD_SIZE/4)>>a;++x){
 				float xdist=fabs((float)1+x-((CLOUD_SIZE/8)>>a))/((CLOUD_SIZE/8)>>a);
 				xdist=3*xdist*xdist-2*xdist*xdist*xdist;
-				
+
 				float contrib=(1-xdist)*(1-ydist);
 				kernel[y*CLOUD_SIZE/4+x]=(int)( contrib*((4<<CLOUD_DETAIL)>>a));
 			}
@@ -452,7 +454,7 @@ START_TIME_PROFILE
 				for(int x2=0;x2<((CLOUD_SIZE/4)>>a)-1;++x2){
 					if(x+x2<CLOUD_SIZE)
 						rawClouds[y+y2][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
-					else 
+					else
 						rawClouds[y+y2][x+x2-CLOUD_SIZE]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
 				}
 			}
@@ -467,7 +469,7 @@ START_TIME_PROFILE
 				for(int x2=0;x2<((CLOUD_SIZE/4)>>a)-1;++x2){
 					if(y+y2<CLOUD_SIZE)
 						rawClouds[y+y2][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
-					else 
+					else
 						rawClouds[y+y2-CLOUD_SIZE][x+x2]+=blend*kernel[y2*CLOUD_SIZE/4+x2];
 				}
 			}
@@ -561,10 +563,10 @@ START_TIME_PROFILE
 //	delete[] rawClouds;
 /*
 	for(int a=0;a<CLOUD_SIZE;++a){
-		cloudThickness[((int(48+camera->pos.z*CLOUD_SIZE*0.000025f)%256)*CLOUD_SIZE+a)*4+3]=0;		
+		cloudThickness[((int(48+camera->pos.z*CLOUD_SIZE*0.000025f)%256)*CLOUD_SIZE+a)*4+3]=0;
 	}
 	for(int a=0;a<CLOUD_SIZE;++a){
-		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;		
+		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
 	}
 /**/
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
@@ -794,7 +796,7 @@ float CBasicSky::GetTexCoordFromDir(float3 dir)
 {
 	float tp=0.5f;
 	float step=0.25f;
-	
+
 	for(int a=0;a<10;++a){
 		float tx=0.5f+tp;
 		float3 d=GetDirFromTexCoord(tx,0.5f);

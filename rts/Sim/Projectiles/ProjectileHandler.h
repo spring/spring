@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 class CProjectileHandler;
 class CProjectile;
@@ -25,7 +27,7 @@ typedef std::list<CProjectile*> Projectile_List;
 class CGroundFlash;
 class IFramebuffer;
 
-class CProjectileHandler  
+class CProjectileHandler
 {
 public:
 	CProjectileHandler();
@@ -47,7 +49,7 @@ public:
 	void DrawShadowPass(void);
 	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts);
-	
+
 	struct projdist{
 		float dist;
 		CProjectile* proj;
@@ -97,7 +99,7 @@ private:
 
 		S3DOPrimitive* prim;
 		S3DO* object;
-		
+
 		SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
 
 		float3 pos;
@@ -110,8 +112,8 @@ private:
 	typedef std::list<FlyingPiece*> FlyingPiece_List;
 	std::list<FlyingPiece_List*> flyingPieces;
 	FlyingPiece_List * flying3doPieces;
-	// flyings3oPieces[textureType][team] 
-	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces; 
+	// flyings3oPieces[textureType][team]
+	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces;
 
 	unsigned int perlinTex[8];
 	float perlinBlend[4];

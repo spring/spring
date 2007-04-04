@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <vector>
 #include <map>
@@ -30,7 +32,7 @@ class CGuiHandler : public CInputReceiver {
 		void Draw();
 		void DrawMapStuff(int minimapLevel);
 		void DrawCentroidCursor();
-		
+
 		bool AboveGui(int x,int y);
 		bool KeyPressed(unsigned short key, bool isRepeat);
 		bool KeyReleased(unsigned short key);
@@ -48,20 +50,20 @@ class CGuiHandler : public CInputReceiver {
 		                                   // start.def has to be end.def
 
 		bool ReloadConfig(const string& filename);
-		
+
 		int GetMaxPage()    const { return maxPage; }
 		int GetActivePage() const { return activePage; }
-		
+
 		void RunLayoutCommand(const string& command);
 		void RunCustomCommands(const vector<string>& cmds, bool rmb);
 
  		bool GetInvertQueueKey() const { return invertQueueKey; }
  		void SetInvertQueueKey(bool value) { invertQueueKey = value; }
  		bool GetQueueKeystate() const;
- 		
+
  		bool GetGatherMode() const { return gatherMode; }
  		void SetGatherMode(bool value) { gatherMode = value; }
- 		
+
 		int  GetDefaultCommand(int x, int y) const;
 
 		bool SetActiveCommand(int cmdIndex, bool rmb);
@@ -70,7 +72,7 @@ class CGuiHandler : public CInputReceiver {
 		                      bool alt, bool ctrl, bool meta, bool shift);
 		bool SetActiveCommand(const CKeyBindings::Action& action,
 		                      const CKeySet& ks, int actionIndex);
-		
+
 	public:
 		vector<CommandDescription> commands;
 		int inCommand;
@@ -82,7 +84,7 @@ class CGuiHandler : public CInputReceiver {
 
 		void MenuChoice(string s);
 		static void MenuSelection(std::string s);
-		
+
 		void LayoutIcons(bool useSelectionPage);
 		bool LayoutCustomIcons(bool useSelectionPage);
 		void ResizeIconArray(unsigned int size);
@@ -97,7 +99,7 @@ class CGuiHandler : public CInputReceiver {
 		void FinishCommand(int button);
 		void SetShowingMetal(bool show);
 		float GetNumberInput(const CommandDescription& cmdDesc) const;
-		
+
 		struct IconInfo;
 
 		void DrawButtons();
@@ -141,7 +143,7 @@ class CGuiHandler : public CInputReceiver {
 		bool ProcessBuildActions(const CKeyBindings::Action& action);
 		int  GetIconPosCommand(int slot) const;
 		int  ParseIconSlot(const std::string& text) const;
-		
+
 	private:
 		bool firstLayout;
 		bool needShift;
@@ -155,11 +157,11 @@ class CGuiHandler : public CInputReceiver {
 		int defaultCmdMemory;
 		int fadein;
 		CglList* list;
-		
+
 		int actionOffset;
 		CKeySet lastKeySet;
 
-		bool luaUIClick;		
+		bool luaUIClick;
 
 		std::string menuName;
 		int xIcons, yIcons;
@@ -191,7 +193,7 @@ class CGuiHandler : public CInputReceiver {
 		int iconsPerPage;
 		float xIconStep, yIconStep;
 		float xBpos, yBpos; // center of the buildIconsFirst indicator
-		
+
 		struct Box {
 			GLfloat x1;
 			GLfloat y1;
@@ -199,7 +201,7 @@ class CGuiHandler : public CInputReceiver {
 			GLfloat y2;
 		};
 		Box buttonBox;
-		
+
 		struct IconInfo {
 			int commandsID; // index into commands list (or -1)
 			Box visual;
@@ -209,11 +211,11 @@ class CGuiHandler : public CInputReceiver {
 		int iconsSize;
 		int iconsCount;
 		int activeIcons;
-		
+
 		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
-		
-		std::set<int> changedGroups;		
-		
+
+		std::set<int> changedGroups;
+
 		static const char* luaUiFile;
 };
 
