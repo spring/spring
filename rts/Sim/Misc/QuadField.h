@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <set>
 #include <vector>
@@ -19,7 +21,7 @@ using namespace std;
 
 #define QUAD_SIZE 256
 
-class CQuadField  
+class CQuadField
 {
 public:
 	CR_DECLARE(CQuadField)
@@ -49,7 +51,7 @@ public:
 		CR_DECLARE_STRUCT(Quad);
 		float startx;
 		float starty;
-		list<CUnit*> units;		
+		list<CUnit*> units;
 		list<CUnit*> teamUnits[MAX_TEAMS];
 		list<CFeature*> features;
 	};

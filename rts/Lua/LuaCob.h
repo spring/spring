@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -27,10 +29,10 @@ class CLuaCob : public CLuaHandleSynced
 	public:
 		static void LoadHandler();
 		static void FreeHandler();
-		
+
 		void CallFunction(const LuaHashString& funcName, const CUnit* unit,
 		                  int& argsCount, int args[MAX_LUA_COB_ARGS]);
-		
+
 	protected:
 		bool AddSyncedCode();
 		bool AddUnsyncedCode() { return true; }

@@ -5,7 +5,9 @@
 // of AIKey uniquely identifies a particular AI.
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 

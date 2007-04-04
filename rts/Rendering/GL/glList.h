@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "Game/UI/InputReceiver.h"
 #include <string>
@@ -56,7 +58,7 @@ private:
 	// used to save default to configHandler
 	int id;
 
-	// for filtering 
+	// for filtering
 	std::string query;
 	std::vector<std::string>* filteredItems;
 	std::vector<std::string> temp1;

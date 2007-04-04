@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <map>
@@ -16,7 +18,7 @@
 #include "Script/LuaBinder.h"
 #endif
 
-class CScriptHandler  
+class CScriptHandler
 {
 public:
 	static void SelectScript(std::string s);
@@ -34,7 +36,7 @@ private:
 	std::list<CLuaBinder*> lua_binders;
 #endif
 	std::map<std::string,CScript*> scripts; ///< Maps script names to CScript pointers.
-	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler 
+	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler
 	ListSelectCallback callback;
 	CScriptHandler();
 	CScriptHandler(CScriptHandler const&);

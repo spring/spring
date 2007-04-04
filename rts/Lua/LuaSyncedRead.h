@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 struct lua_State;
@@ -25,7 +27,7 @@ class LuaSyncedRead {
 
 		static int GetGaiaTeamID(lua_State* L);
 		static int GetRulesInfoMap(lua_State* L);
-		
+
 		static int GetGameSpeed(lua_State* L);
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
@@ -52,7 +54,7 @@ class LuaSyncedRead {
 		static int GetTeamUnitStats(lua_State* L);
 		static int GetTeamRulesParam(lua_State* L);
 		static int GetTeamRulesParams(lua_State* L);
-				
+
 		static int AreTeamsAllied(lua_State* L);
 		static int ArePlayersAllied(lua_State* L);
 

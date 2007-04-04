@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 
 #include <map>
@@ -44,7 +46,7 @@ class CCommandColors {
 
 		float        UnitBoxLineWidth()  const { return unitBoxLineWidth;  }
 
-		// the colors		
+		// the colors
 		const float* unitBox;
 		const float* mouseBox;
 		// for command queue rendering

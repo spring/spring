@@ -1,7 +1,9 @@
 // GameHelper.cpp: implementation of the CGameHelperHelper class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 #include "GameHelper.h"
@@ -89,7 +91,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if(ignoreOwner && (*ui)==owner)
 				continue;
-		// dist = max(distance from center of unit to center of explosion, unit->radius+0.1) 
+		// dist = max(distance from center of unit to center of explosion, unit->radius+0.1)
 		float3 dif=(*ui)->midPos-pos;
 		float dist=dif.Length();
 		if(dist<(*ui)->radius+0.1f)
@@ -162,7 +164,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
-	
+
 //	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)
 		length=groundLength;
@@ -225,11 +227,11 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit *&hit,float sizeMod,bool useRadar,CUnit* exclude)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
-	
+
 //	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength+200 && groundLength>0)
 		length=groundLength+200;	//need to add some cause we take the backside of the unit sphere;
-	
+
 	vector<int> quads=qf->GetQuadsOnRay(start,dir,length);
 
 //	float minLength=length;
@@ -263,7 +265,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 					closeLength=length;
 				float3 closeVect=dif-dir*closeLength;
 				float rad = ((*ui)->isIcon) ? (*ui)->iconRadius : (*ui)->radius;
-				
+
 				//The argument to sqrt became negative (3.5f*10^-7) for some reason... so tempstoring the value
 				float tmp = rad * rad - closeVect.SqLength();
 				if(tmp > 0 && length>closeLength+sqrt(tmp)){
@@ -281,11 +283,11 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
-	
+
 //	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)
 		length=groundLength;
-	
+
 	vector<int> quads=qf->GetQuadsOnRay(start,dir,length);
 
 //	float minLength=length;
@@ -359,7 +361,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 						targPos=(*ui)->midPos;
 					} else if(((*ui)->losStatus[attacker->allyteam] & LOS_INRADAR)){
 						targPos=(*ui)->midPos+(*ui)->posErrorVector*radarhandler->radarErrorSize[attacker->allyteam];
-						value*=10;		
+						value*=10;
 					} else {
 						continue;
 					}

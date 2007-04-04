@@ -2,7 +2,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "StdAfx.h"
 #include "Unit.h"
@@ -290,7 +292,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	if (building && unitDef->useBuildingGroundDecal) {
 		groundDecals->AddBuilding(building);
 	}
-	
+
 	if (blocking) {
 		Block();
 	}
@@ -305,7 +307,7 @@ void CUnit::ForcedMove(const float3& newPos)
 
 void CUnit::ForcedSpin(const float3& newDir)
 {
-	frontdir = newDir; 
+	frontdir = newDir;
 	heading = GetHeadingFromVector(newDir.x, newDir.z);
 	ForcedMove(pos); // lazy, don't need to update the quadfield, etc...
 }
@@ -387,8 +389,8 @@ void CUnit::SlowUpdate()
 		}
 		else if (loshandler->InLos(this, a)) {
 			if (!(losStatus[a] & LOS_INLOS)) {
-				int prevLosStatus = losStatus[a];	
-			
+				int prevLosStatus = losStatus[a];
+
 				if (beingBuilt) {
 					losStatus[a] |= (LOS_INLOS | LOS_INRADAR);
 				} else {
@@ -514,7 +516,7 @@ void CUnit::SlowUpdate()
 	}
 	AddEnergy(energyTickMake*0.5f);
 
-	if(health<maxHealth) 
+	if(health<maxHealth)
 	{
 		health += unitDef->autoHeal;
 
@@ -597,7 +599,7 @@ void CUnit::SlowUpdate()
 					w->AttackUnit(userTarget,true);
 				else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
 					w->AttackGround(userAttackPos,true);
-				
+
 				w->SlowUpdate();
 
 				if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
@@ -617,7 +619,7 @@ void CUnit::SlowUpdate()
 				const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
 				                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
-				SAFE_NEW CSeismicGroundFlash(pos + err, 
+				SAFE_NEW CSeismicGroundFlash(pos + err,
                                      ph->seismictex, 30, 15, 0, seismicSignature, 1,
                                      float3(0.8f,0.0f,0.0f));
 			}
@@ -669,7 +671,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	hitDir.y = 0;
 	hitDir = -hitDir.Normalize();
 	std::vector<int> cobargs;
-	
+
 	cobargs.push_back((int)(500 * hitDir.z));
 	cobargs.push_back((int)(500 * hitDir.x));
 
@@ -729,7 +731,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
 			}
 			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander?1:0.5f);	//todo: make compatible with new gui
-			
+
 			uh->lastDamageWarning=gs->frameNum;
 			if(unitDef->isCommander)
 				uh->lastCmdDamageWarning=gs->frameNum;
@@ -775,7 +777,7 @@ void CUnit::Draw()
 		glMultMatrixf(&transMatrix[0]);
 	}
 	else if (transporter && transporter->unitDef->holdSteady){
-		
+
 		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
 		float3 upDir=updir;
 		float3 rightDir=frontDir.cross(upDir);
@@ -824,7 +826,7 @@ void CUnit::Draw()
 			glColorf3(fc*col);
 
 			unitDrawer->UnitDrawingTexturesOff(model);
-			
+
 			double plane[4]={0,-1,0,start+height*buildProgress*3};
 			glClipPlane(GL_CLIP_PLANE0 ,plane);
 			double plane2[4]={0,1,0,-start-height*(buildProgress*10-9)};
@@ -844,7 +846,7 @@ void CUnit::Draw()
 			}
 			glDisable(GL_CLIP_PLANE1);
 			unitDrawer->UnitDrawingTexturesOn(model);
-			
+
 			if(buildProgress>0.66f){
 				double plane[4]={0,-1,0,start+height*(buildProgress*3-2)};
 				glClipPlane(GL_CLIP_PLANE0 ,plane);
@@ -969,7 +971,7 @@ void CUnit::ExperienceChange()
 	limExperience=1-(1/(experience+1));
 
 	power=unitDef->power*(1+limExperience);
-	reloadSpeed=(1+limExperience*0.4f);	
+	reloadSpeed=(1+limExperience*0.4f);
 
 	float oldMaxHealth=maxHealth;
 	maxHealth=unitDef->health*(1+limExperience*0.7f);
@@ -994,20 +996,20 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		return false;
 	}
 
-	const bool capture = (type == ChangeGiven);	
+	const bool capture = (type == ChangeGiven);
 	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
 		return false;
-	}		
+	}
 
 	const int oldteam = team;
 
 	selectedUnits.RemoveUnit(this);
-	
+
 	luaCallIns.UnitTaken(this, newteam);
 	globalAI->UnitTaken(this, oldteam);
-	
+
 	// reset states and clear the queues
-	if (!gs->AlliedTeams(oldteam, newteam)) {	
+	if (!gs->AlliedTeams(oldteam, newteam)) {
 		ChangeTeamReset();
 	}
 
@@ -1083,7 +1085,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	luaCallIns.UnitGiven(this, oldteam);
 	globalAI->UnitGiven(this, oldteam);
-	
+
 	return true;
 }
 
@@ -1246,13 +1248,13 @@ void CUnit::Init(const CUnit* builder)
 	//All ships starts on water, all other on ground.
 	//TODO: Improve this. There might be cases when this is not correct.
 	if(unitDef->movedata && unitDef->movedata->moveType==MoveData::Hover_Move){
-		physicalState = Hovering;		
+		physicalState = Hovering;
 	} else if(floatOnWater) {
 		physicalState = Floating;
 	} else {
 		physicalState = OnGround;
 	}
-	
+
 	//All units are set as ground-blocking.
 	blocking = true;
 
@@ -1279,7 +1281,7 @@ void CUnit::UpdateTerrainType()
 void CUnit::CalculateTerrainType()
 {
 	//Optimization: there's only about one unit that actually needs this information
-	if (!cob->HasScriptFunction(COBFN_SetSFXOccupy)) 
+	if (!cob->HasScriptFunction(COBFN_SetSFXOccupy))
 		return;
 
 	if (transporter) {
@@ -1293,7 +1295,7 @@ void CUnit::CalculateTerrainType()
 	if (height < -5) {
 		if (upright)
 			curTerrainType = 2;
-		else 
+		else
 			curTerrainType = 1;
 	}
 	//Shore
@@ -1331,7 +1333,7 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 	if(amount>0){	//build/repair
 		if(!beingBuilt && health>=maxHealth)
 			return false;
-		
+
 		lastNanoAdd=gs->frameNum;
 		float part=amount/buildTime;
 
@@ -1393,7 +1395,7 @@ void CUnit::FinishedBuilding(void)
 {
 	beingBuilt=false;
 	buildProgress=1;
-	
+
 	if(!(mass==100000 && immobile))
 		mass=unitDef->mass;		//set this now so that the unit is harder to move during build
 
@@ -1494,7 +1496,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 					sound->PlaySample(wd->soundhit.id, pos, wd->soundhit.volume);
 				}
 
-				//logOutput.Print("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id); 
+				//logOutput.Print("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id);
 			}
 		}
 		if(selfDestruct)

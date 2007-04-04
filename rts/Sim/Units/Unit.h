@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include "Sim/Objects/SolidObject.h"
 #include <map>
@@ -42,7 +44,7 @@ using namespace std;
 #define LOS_CONTRADAR 8		//the unit has continously been in radar since it was last inlos by the allyteam
 #define LOS_INTEAM 16			//the unit is part of this allyteam
 
-class CUnit : public CSolidObject  
+class CUnit : public CSolidObject
 {
 public:
 	CR_DECLARE(CUnit)
@@ -104,7 +106,7 @@ public:
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
 
 	int id;
-	int team;								
+	int team;
 	int allyteam;
 	int aihint;							//tells the unit main function to the ai
 
@@ -161,9 +163,9 @@ public:
 	std::vector<int> quads;			//quads the unit is part of
 	LosInstance* los;						//which squares the unit can currently observe
 
-	int tempNum;								//used to see if something has operated on the unit before 
+	int tempNum;								//used to see if something has operated on the unit before
 	int lastSlowUpdate;
-	
+
 	int mapSquare;
 
 	int controlRadius;
@@ -260,7 +262,7 @@ public:
 	bool isCloaked;							//true if the unit is currently cloaked (has enough energy etc)
 
 	int lastTerrainType;
-	int curTerrainType;					// Used for calling setSFXoccupy which TA scripts want 
+	int curTerrainType;					// Used for calling setSFXoccupy which TA scripts want
 
 	int selfDCountdown;
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -294,7 +296,7 @@ public:
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
 	virtual void DrawS3O(void);
-	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2); 
+	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
 };
 
 #endif /* UNIT_H */

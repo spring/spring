@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <map>
@@ -62,7 +64,7 @@ class CKeySet {
 
 	protected:
 		bool ParseModifier(string& s, const string& token, const string& abbr);
-		
+
 	protected:
 		int key;
 		unsigned char modifiers;

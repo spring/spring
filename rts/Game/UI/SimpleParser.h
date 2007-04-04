@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -23,10 +25,10 @@ namespace SimpleParser {
 
 	// returns next line (without newlines)
 	string GetLine(CFileHandler& fh);
-	
+
 	// returns next non-blank line (without newlines or comments)
 	string GetCleanLine(CFileHandler& fh);
-	
+
 	// splits a string based on white space
 	vector<string> Tokenize(const string& line, int minWords = 0);
 };

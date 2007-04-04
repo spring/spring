@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 using std::string;
@@ -29,12 +31,12 @@ class CLuaRules : public CLuaHandleSynced
 	public:
 		static void LoadHandler();
 		static void FreeHandler();
-		
+
 		static const vector<float>&    GetGameParams();
 		static const map<string, int>& GetGameParamsMap();
 
 		const map<string, string>& GetInfoMap() const { return infoMap; }
-		
+
 	public: // call-ins
 		bool AllowCommand(const CUnit* unit, const Command& cmd);
 		bool AllowUnitCreation(const UnitDef* unitDef,
@@ -42,7 +44,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID,
 		                          const float3& pos);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
-		
+
 	private:
 		CLuaRules();
 		~CLuaRules();

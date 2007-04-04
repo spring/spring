@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <stdio.h>
 #include <string>
@@ -49,7 +51,7 @@ class CKeyBindings
 
 		int GetDebug() const { return debug; }
 
-	public:		
+	public:
 		static const char NamedKeySetChar = '&';
 
 	protected:
@@ -89,7 +91,7 @@ class CKeyBindings
 		};
 		vector<BuildTypeBinding> typeBindings;
 
-		// commands that use both Up and Down key presses		
+		// commands that use both Up and Down key presses
 		set<string> statefulCommands;
 
 		int debug;

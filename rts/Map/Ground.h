@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 class CGround;
 
@@ -16,7 +18,7 @@ class CProjectileHandler;
 class CProjectile;
 
 using namespace std;
-class CGround  
+class CGround
 {
 public:
 	CGround();

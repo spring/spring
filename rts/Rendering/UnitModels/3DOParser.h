@@ -4,7 +4,9 @@
 #ifndef SPRING_3DOPARSER_H
 #define SPRING_3DOPARSER_H
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <vector>
 #include <string>
@@ -50,7 +52,7 @@ struct S3DO {
 	~S3DO();
 };
 
-class C3DOParser  
+class C3DOParser
 {
 	typedef struct _3DObject
 	{
@@ -85,7 +87,7 @@ class C3DOParser
 		int OffsetToTextureName;
 		int Unknown_1;
 		int Unknown_2;
-		int Unknown_3;    
+		int Unknown_3;
 	} _Primitive;
 
 	typedef std::vector<float3> vertex_vector;
@@ -96,7 +98,7 @@ public:
 	S3DOModel* Load3DO(string name,float scale=1,int side=1);
 	S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
-	
+
 private:
 	void FindCenter(S3DO* object);
 	float FindRadius(S3DO* object,float3 offset);
@@ -114,7 +116,7 @@ private:
 	void DrawSub(S3DO* o);
 	string GetLine(CFileHandler& fh);
 	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum);
-	
+
 	map<string,S3DOModel*> units;
 	set<string> teamtex;
 

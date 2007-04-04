@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <vector>
 #include <list>
@@ -130,7 +132,7 @@ private:
 
 		int x;
 		int y;
-		
+
 		int operator < (const CPoint &a) const
 		{
 			if(x!=a.x)

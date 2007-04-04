@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <map>
 #include <string>
@@ -16,7 +18,7 @@ class CGroup;
 
 using namespace std;
 
-class CGroupHandler  
+class CGroupHandler
 {
 public:
 	CGroupHandler(int team);

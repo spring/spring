@@ -22,7 +22,9 @@
 	#define END_TIME_PROFILE(name) ;
 #endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #ifdef PROFILE_TIME
 

@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 
@@ -20,7 +22,7 @@ class PlayerRoster {
 		};
 
 		PlayerRoster();
-		
+
 		const int* GetIndices(int* count);
 
 		bool SetSortTypeByName(const std::string& type);

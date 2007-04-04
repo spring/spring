@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <string>
 #include <vector>
@@ -16,7 +18,7 @@ class CCity;
 
 using namespace std;
 
-class CTeam  
+class CTeam
 {
 public:
 	CTeam();
@@ -70,12 +72,12 @@ public:
 	float energyIncome,  prevEnergyIncome;
 	float energyExpense, prevEnergyExpense;
 	float energyUpkeep,  prevEnergyUpkeep;
-	
+
 	float metalStorage, energyStorage;
 
 	float metalShare, energyShare;
 	float delayedMetalShare, delayedEnergyShare; //excess that might be shared next SlowUpdate
-	
+
 	float metalSent;
 	float metalReceived;
 	float energySent;

@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _MSC_VER
 #pragma warning(disable:4786)
+#endif
 
 #include <stdio.h>
 #include <string>
@@ -22,22 +24,22 @@ class CKeyCodes {
 
 		string GetName(int code) const;
 		string GetDefaultName(int code) const;
-		
+
 		bool AddKeySymbol(const string& name, int code);
-		
+
 		bool IsModifier(int code) const;
-		
+
 		void PrintNameToCode() const;
 		void PrintCodeToName() const;
-		
+
 		void SaveUserKeySymbols(FILE* file) const;
-		
+
 	public:
 		static bool IsValidLabel(const string& label);
 
 	protected:
 		void AddPair(const string& name, int code);
-		
+
 	protected:
 		map<string, int> nameToCode;
 		map<int, string> codeToName;
