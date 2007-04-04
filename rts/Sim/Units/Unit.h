@@ -108,6 +108,9 @@ public:
 	int id;
 	int team;
 	int allyteam;
+	int lineage;    // the unit's origin lies in this team
+	// (e.g. it was created by a factory that was created by a builder from a factory built by a com of this team,
+	//  it doesn't matter at all to which team the com/builder/factories were shared. Only capturing can break the chain.)
 	int aihint;							//tells the unit main function to the ai
 
 	SyncedFloat3 frontdir;				//the forward direction of the unit

@@ -283,3 +283,13 @@ void CTeam::CommanderDied(CUnit* commander)
 	assert(commander->unitDef->isCommander);
 	--numCommanders;
 }
+
+void CTeam::LeftLineage(CUnit* unit)
+{
+	if (gs->gameMode == 2 && unit->id == this->lineageRoot) {
+		for(list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+			if ((*ui)->lineage == this->teamNum)
+				(*ui)->KillUnit(true, false, 0);
+		}
+	}
+}

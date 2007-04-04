@@ -53,6 +53,7 @@ public:
 	bool gaia;
 	unsigned char color[4];
 	int leader;
+	int lineageRoot;
 
 	float handicap;
 	std::string side;
@@ -107,6 +108,7 @@ public:
 	int numCommanders;		//number of units with commander tag in team, if it reaches zero with cmd ends the team dies
 	std::list<Statistics> statHistory;
 	void CommanderDied(CUnit* commander);
+	void LeftLineage(CUnit* unit);
 
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters

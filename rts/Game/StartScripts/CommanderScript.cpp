@@ -6,6 +6,7 @@
 #include <cctype>
 #include "Game/Team.h"
 #include "Game/GameSetup.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Map/ReadMap.h"
@@ -28,7 +29,7 @@ void CCommanderScript::Update(void)
 	case 0:
 		if(gameSetup){
 			TdfParser p("gamedata/SIDEDATA.TDF");
-			for(int a=0;a<gs->activeTeams;++a){		
+			for(int a=0;a<gs->activeTeams;++a){
 				if(!gameSetup->aiDlls[a].empty()){
 					if (gu->myPlayerNum == gs->Team (a)->leader)
 						globalAI->CreateGlobalAI(a,gameSetup->aiDlls[a].c_str());
@@ -41,12 +42,13 @@ void CCommanderScript::Update(void)
 						string sideName = StringToLower(p.SGetValueDef("arm",string(sideText)+"\\name"));
 						if(sideName==gs->Team(a)->side){		//ok found the right side
 							string cmdType=p.SGetValueDef("armcom",string(sideText)+"\\commander");
-							
+
 							UnitDef* ud= unitDefHandler->GetUnitByName(cmdType);
 							ud->metalStorage=gs->Team(a)->metalStorage;			//make sure the cmd has the right amount of storage
 							ud->energyStorage=gs->Team(a)->energyStorage;
 
-							unitLoader.LoadUnit(cmdType,gs->Team(a)->startPos,a,false,0,NULL);
+							CUnit* u = unitLoader.LoadUnit(cmdType,gs->Team(a)->startPos,a,false,0,NULL);
+							gs->Team(a)->lineageRoot = u->id;
 							break;
 						}
 					}
@@ -61,7 +63,7 @@ void CCommanderScript::Update(void)
 
 			TdfParser p2;
 			CReadMap::OpenTDF (stupidGlobalMapname, p2);
-            
+
 			float x0,x1,z0,z1;
 			p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
 			p2.GetDef(z0,"1000","MAP\\TEAM0\\StartPosZ");
