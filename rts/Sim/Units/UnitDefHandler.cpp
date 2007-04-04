@@ -59,7 +59,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	unitDefs = SAFE_NEW UnitDef[numUnits + 1];
 
 	unsigned int id = 1;  // Start at unit id 1
-	
+
 	for(unsigned int a = 0; a < tafiles.size(); ++a)
 	{
 		// Determine the name (in lowercase) first
@@ -91,20 +91,20 @@ CUnitDefHandler::CUnitDefHandler(void)
 			unitDefs[id].yardmaps[ym] = 0;
 		}
 
-		// parse the TDF data (but don't load buildpics, etc...)		
+		// parse the TDF data (but don't load buildpics, etc...)
 		ParseUnit(unitDefs[id].filename, id);
 
 		// Increase index for next unit
 		id++;
 	}
 
-	// set the real number of unitdefs	
+	// set the real number of unitdefs
 	numUnits = (id - 1);
-	
+
 	FindTABuildOpt();
 
 	ProcessDecoys();
-	
+
 	AssignTechLevels();
 }
 
@@ -155,7 +155,7 @@ void CUnitDefHandler::FindTABuildOpt()
 	std::vector<std::string> sides = tdfparser.GetSectionList("");
 	for (unsigned int i=0; i<sides.size(); i++){
 		const std::string& section = sides[i];
-		if ((section.find("side") == 0) && 
+		if ((section.find("side") == 0) &&
 		    (section.find_first_not_of("0123456789", 4) == std::string::npos)) {
 			string commUnit = tdfparser.SGetValueDef("", section + "\\COMMANDER");
 			StringToLowerInPlace(commUnit);
@@ -167,7 +167,7 @@ void CUnitDefHandler::FindTABuildOpt()
 			}
 		}
 	}
-	
+
 	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
 	for(unsigned int i=0; i<sideunits.size(); i++)
 	{
@@ -243,9 +243,9 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.name = tdfparser.SGetValueMSG("UNITINFO\\UnitName");
 	ud.humanName = tdfparser.SGetValueMSG("UNITINFO\\name");
-	
+
 	ud.gaia = tdfparser.SGetValueDef("", "UNITINFO\\gaia");
-	
+
 	tdfparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
 	tdfparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
 	tdfparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
@@ -310,7 +310,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.canReclaim,x,"UNITINFO\\canreclaim");
 	tdfparser.GetDef(ud.canBuild,x,"UNITINFO\\canbuild");
 	tdfparser.GetDef(ud.canAssist,x,"UNITINFO\\canassist");
-	
+
 	tdfparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
 	tdfparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
 
@@ -393,7 +393,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.transportCapacity, "0", "UNITINFO\\transportcapacity");
 	ud.isfireplatform=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isfireplatform").c_str());
 	ud.isAirBase=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\isAirBase").c_str());
-	ud.loadingRadius=!!atoi(tdfparser.SGetValueDef("220", "UNITINFO\\loadingradius").c_str());
+	ud.loadingRadius=atof(tdfparser.SGetValueDef("220", "UNITINFO\\loadingradius").c_str());
 	tdfparser.GetDef(ud.transportMass, "100000", "UNITINFO\\TransportMass");
 	tdfparser.GetDef(ud.holdSteady, "1", "UNITINFO\\HoldSteady");
 
@@ -460,7 +460,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON",weaponDefHandler->GetWeapon("NOWEAPON"),0,float3(0,0,1),-1,0,0,0));
 			}
 		}
-		
+
 		string badTarget;
 		tdfparser.GetDef(badTarget, "", std::string("UNITINFO\\") + "badTargetCategory"+c);
 		unsigned int btc=CCategoryHandler::Instance()->GetCategories(badTarget);
@@ -661,7 +661,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	float3 cso = ZeroVector;
 	const char* strCSOffset = tdfparser.SGetValueDef("default", "UNITINFO\\CollisionSphereOffset").c_str();
-	if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) { 
+	if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) {
 		ud.useCSOffset = true;
 		ud.collisionSphereOffset = cso;
 	}
@@ -675,7 +675,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	{
 		if(!ud.floater && !ud.canhover && !ud.canfly)
 			ud.seismicSignature = sqrt(ud.mass/(float)100);
-		else 
+		else
 			ud.seismicSignature = 0;
 	}
 
@@ -911,7 +911,7 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 	multimap<int, string> entries;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitID.begin(); uit != unitID.end(); uit++) {
-		const string& unitName = uit->first;			
+		const string& unitName = uit->first;
 		const UnitDef* ud = GetUnitByName(unitName);
 		if (ud) {
 			char buf[256];
