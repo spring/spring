@@ -3359,64 +3359,100 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		gs->Team(team)->AddEnergy(1000);
 	}
 
-	else if(s.find(".give")==0 && gs->cheatEnabled){
-		int team=gs->players[player]->team;
-		int p1 = s.rfind(" @"), p2 = s.find(",", p1+1), p3 = s.find(",", p2+1);
+	else if (s.find(".give") == 0 && gs->cheatEnabled) {
+		int team = gs->players[player]->team;
+		int p1 = s.rfind(" @"), p2 = s.find(",", p1 + 1), p3 = s.find(",", p2 + 1);
+
 		if (p1 == string::npos || p2 == string::npos || p3 == string::npos)
 			logOutput.Print("Someone is spoofing invalid .give messages!");
-		float3 pos(atof(&s.c_str()[p1+2]), atof(&s.c_str()[p2+1]), atof(&s.c_str()[p3+1]));
+
+		float3 pos(atof(&s.c_str()[p1 + 2]), atof(&s.c_str()[p2 + 1]), atof(&s.c_str()[p3 + 1]));
 		s = s.substr(0, p1);
 
-		if(s.find(" all")!=string::npos){
-			int squareSize=(int)ceil(sqrt((float)unitDefHandler->numUnits));
+		if (s.find(" all") != string::npos) {
+			// player entered ".give all"
+			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnits));
+			int currentNumUnits = gs->Team(team)->units.size();
+			int numRequestedUnits = unitDefHandler->numUnits;
 
-			for(int a=1;a<=unitDefHandler->numUnits;++a){
-				float3 pos2=float3(pos.x + (a%squareSize-squareSize/2) * 10*SQUARE_SIZE, pos.y, pos.z + (a/squareSize-squareSize/2) * 10*SQUARE_SIZE);
-				const CUnit* unit =
-					unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,pos2,team,false,0,NULL);
+			// make sure team unit-limit not exceeded
+			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits)
+				numRequestedUnits = uh->maxUnits - currentNumUnits;
+
+			for (int a = 1; a <= numRequestedUnits; ++a) {
+				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+				float3 pos2 = float3(posx, pos.y, posz);
+				const CUnit* unit = unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name, pos2, team, false, 0, NULL);
+
 				if (unit) {
 					unitLoader.FlattenGround(unit);
 				}
 			}
-		} else if (((s.rfind(" "))!=string::npos) && ((s.length() - s.rfind(" ") -1)>0)){
-			string unitName=s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
-			string tempUnitName=s.substr(s.find(" "),s.rfind(" ")+1 - s.find(" "));
-			if(tempUnitName.find_first_not_of(" ")!=string::npos)
-				tempUnitName=tempUnitName.substr(tempUnitName.find_first_not_of(" "),tempUnitName.find_last_not_of(" ") +1 - tempUnitName.find_first_not_of(" "));
-			bool createNano=(tempUnitName.find("nano")!=string::npos);
+		} else if (((s.rfind(" ")) != string::npos) && ((s.length() - s.rfind(" ") - 1) > 0)) {
+			// player entered ".give <unitname>" or ".give <amount> <unitname>"
+			string unitName = s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
+			string tempUnitName = s.substr(s.find(" "), s.rfind(" ") + 1 - s.find(" "));
+			int i = tempUnitName.find_first_not_of(" ");
 
-			int numUnits=1;
-			if(tempUnitName.find_first_of("0123456789")!=string::npos){
-				tempUnitName=tempUnitName.substr(tempUnitName.find_first_of("0123456789"),tempUnitName.find_last_of("0123456789") +1 -tempUnitName.find_first_of("0123456789"));
-				numUnits = atoi(tempUnitName.c_str());
+			if (i != string::npos) {
+				tempUnitName = tempUnitName.substr(i, tempUnitName.find_last_not_of(" ") + 1 - i);
 			}
 
-			UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
-			if (unitDef != NULL) {
-				int xsize=unitDef->xsize;
-				int zsize=unitDef->ysize;
-				int total=numUnits;
-				int squareSize=(int)ceil(sqrt((float)numUnits));
-				float3 minpos=pos;
-				minpos.x-=((squareSize-1)*xsize*SQUARE_SIZE)/2;
-				minpos.z-=((squareSize-1)*zsize*SQUARE_SIZE)/2;
-				for(int z=0;z<squareSize;++z){
-					for(int x=0;x<squareSize && total>0;++x){
-						const float3 upos(minpos.x + x * xsize * SQUARE_SIZE, minpos.y,
-						                  minpos.z + z * zsize * SQUARE_SIZE);
-						const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, createNano, 0, NULL);
-						if (unit) {
-							unitLoader.FlattenGround(unit);
-						}
-						--total;
-					}
+			bool createNano = (tempUnitName.find("nano") != string::npos);
+			int numRequestedUnits = 1;
+			int currentNumUnits = gs->Team(team)->units.size();
+
+			if (currentNumUnits < uh->maxUnits) {
+				int j = tempUnitName.find_first_of("0123456789");
+
+				if (j != string::npos) {
+					tempUnitName = tempUnitName.substr(j, tempUnitName.find_last_of("0123456789") + 1 - j);
+					numRequestedUnits = atoi(tempUnitName.c_str());
+
+					// make sure team unit-limit not exceeded
+					if ((currentNumUnits + numRequestedUnits) > uh->maxUnits)
+						numRequestedUnits = uh->maxUnits - currentNumUnits;
 				}
-				logOutput.Print("Giving %i %s to team %i", numUnits, unitName.c_str(),team);
-			} else {
-				logOutput.Print(unitName+" is not a valid unitname");
+
+				UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+
+				if (unitDef != NULL) {
+					int xsize = unitDef->xsize;
+					int zsize = unitDef->ysize;
+					int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+					int total = numRequestedUnits;
+
+					float3 minpos = pos;
+					minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
+					minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
+
+					for (int z = 0; z < squareSize; ++z) {
+						for (int x = 0; x < squareSize && total > 0; ++x) {
+							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
+							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
+							const float3 upos(minposx, minpos.y, minposz);
+							const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, createNano, 0, NULL);
+
+							if (unit) {
+								unitLoader.FlattenGround(unit);
+							}
+							--total;
+						}
+					}
+
+					logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
+				}
+				else {
+					logOutput.Print(unitName + " is not a valid unitname");
+				}
+			}
+			else {
+				logOutput.Print("Unable to give any more units to team %i", team);
 			}
 		}
 	}
+
 	else if(s.find(".take")==0 && (!gu->spectating || gs->cheatEnabled)){
 		int sendTeam=gs->players[player]->team;
 		for(int a=0;a<gs->activeTeams;++a){
