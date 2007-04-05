@@ -58,43 +58,6 @@ end
 
 
 --------------------------------------------------------------------------------
---
--- clear the call-ins
---
-
-
-Shutdown         = nil
-LayoutButtons    = nil
-UpdateLayout     = nil
-ConfigureLayout  = nil
-CommandNotify    = nil
-DrawWorldItems   = nil
-DrawScreenItems  = nil
-KeyPress         = nil
-KeyRelease       = nil
-MouseMove        = nil
-MousePress       = nil
-MouseRelease     = nil
-IsAbove          = nil
-GetTooltip       = nil
-AddConsoleLine   = nil
-GroupChanged     = nil
-GameOver         = nil
-TeamDied         = nil
-UnitCreated      = nil
-UnitFinished     = nil
-UnitFromFactory  = nil
-UnitDestroyed    = nil
-UnitTaken        = nil
-UnitGiven        = nil
-UnitIdle         = nil
-UnitSeismicPing  = nil
-UnitEnteredRadar = nil
-UnitEnteredLos   = nil
-UnitLeftRadar    = nil
-UnitLeftLos      = nil
-
-
 --------------------------------------------------------------------------------
 --
 -- get the mod's GUI permission state
@@ -153,6 +116,7 @@ elseif (loadFromMod) then
 end
 
 
+-------------------------------------------------------------------------------- 
 -------------------------------------------------------------------------------- 
 --
 -- load the user's UI

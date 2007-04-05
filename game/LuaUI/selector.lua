@@ -63,6 +63,7 @@ local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
 --]]
 local entryFont  = "LuaUI/Fonts/FreeSansBold_14"
 local headerFont = "LuaUI/Fonts/FreeSansBold_18"
+--local headerFont = "LuaUI/Fonts/FreeSerifBold_24"
 
 if (1 > 0) then
   entryFont  = ":n:" .. entryFont
