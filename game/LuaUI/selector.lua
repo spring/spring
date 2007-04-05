@@ -218,7 +218,7 @@ function widget:DrawScreen()
       end
     else
       color = (active  and '\255\064\224\064') or
-              (enabled and '\255\224\244\064') or '\255\224\064\064'
+              (enabled and '\255\200\200\064') or '\255\224\064\064'
     end
 
     if (fh) then
