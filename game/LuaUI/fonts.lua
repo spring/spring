@@ -16,8 +16,7 @@ if (fontHandler ~= nil) then
 end
 
 
-local DefaultFontName = LUAUI_DIRNAME .. "Fonts/ProFont_12"
-local DefaultFontName = LUAUI_DIRNAME .. "Fonts/test"
+local DefaultFontName = LUAUI_DIRNAME .. "Fonts/FreeMonoBold_12"
 
 
 --------------------------------------------------------------------------------
