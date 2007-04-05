@@ -5,7 +5,7 @@
 //  file:     FontTexture.cpp
 //  author:   Dave Rodgers  (aka: trepan)
 //  date:     Apr 01, 2007
-//  license:  GPLv2
+//  license:  GNU GPL, v2 or later
 //  desc:     creates a font texture atlas and spec file (optionally outlined)
 // 
 /*******************************************************************************/
@@ -405,6 +405,11 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   printf("Saved: %s\n", specsName.c_str());
 
   ilEnable(IL_FILE_OVERWRITE);
+	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
+	ilSetInteger(IL_PNG_INTERLACE, 0);
+	ilSetString(IL_PNG_TITLE_STRING, imageName.c_str());
+	ilSetString(IL_PNG_AUTHNAME_STRING, "FontTexture");
+	ilSetString(IL_PNG_DESCRIPTION_STRING, (outline > 0) ? "outlined" : "plain");
   ilSaveImage((char*)imageName.c_str());
   ilDisable(IL_FILE_OVERWRITE);
   printf("Saved: %s\n", imageName.c_str());
@@ -555,7 +560,7 @@ bool Glyph::Outline(u32 radius)
   for (u32 i = 0; i < (xSizeTmp * ySizeTmp); i++) {
     const u32 index = (i * 4) + 3;
     const u32 alpha = tmpPixels[index];
-    tmpPixels[index] = (u8)min((u32)0xFF, 3 * alpha / 2);
+    tmpPixels[index] = (u8)min((u32)0xFF, 2 * alpha);
   }
 
   // overlay the original white text
