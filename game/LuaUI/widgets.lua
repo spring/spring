@@ -544,7 +544,7 @@ function widgetHandler:EnableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
     Spring.Echo("EnableWidget(), could not find widget: " .. tostring(name))
-    return
+    return false
   end
   if (not ki.active) then
     print('Loading:  '..ki.filename)
@@ -553,10 +553,11 @@ function widgetHandler:EnableWidget(name)
       self.orderList[name] = 1
     end
     local w = self:LoadWidget(ki.filename)
-    if (not w) then return -1 end
+    if (not w) then return false end
     self:InsertWidget(w)
     self:SaveOrderList()
   end
+  return true
 end
 
 
@@ -564,16 +565,17 @@ function widgetHandler:DisableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
     Spring.Echo("DisableWidget(), could not find widget: " .. tostring(name))
-    return
+    return false
   end
   if (ki.active) then
     local w = self:FindWidget(name)
-    if (not w) then return -1 end
+    if (not w) then return false end
     print('Removed:  '..ki.filename)
     self:RemoveWidget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
     self:SaveOrderList()
   end
+  return true
 end
 
 
@@ -584,10 +586,15 @@ function widgetHandler:ToggleWidget(name)
     return
   end
   if (ki.active) then
-    self:DisableWidget(name)
+    return self:DisableWidget(name)
+  elseif (self.orderList[name] <= 0) then
+    return self:EnableWidget(name)
   else
-    self:EnableWidget(name)
+    -- the widget is not active, but enabled; disable it
+    self.orderList[name] = 0
+    self:SaveOrderList()
   end
+  return true
 end
 
 
