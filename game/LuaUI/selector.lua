@@ -58,11 +58,11 @@ local entryFont  = "LuaUI/Fonts/trebucbd_14"
 local headerFont = "LuaUI/Fonts/trebucbd_18"
 local entryFont  = "LuaUI/Fonts/monofont_14"
 local headerFont = "LuaUI/Fonts/monofont_18"
+local entryFont  = "LuaUI/Fonts/FreeSansBold_12"
+local headerFont = "LuaUI/Fonts/FreeSansBold_16"
+--]]
 local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
 local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
---]]
-local entryFont  = "LuaUI/Fonts/FreeSansBold_14"
-local headerFont = "LuaUI/Fonts/FreeSansBold_18"
 --local headerFont = "LuaUI/Fonts/FreeSerifBold_24"
 
 if (1 > 0) then

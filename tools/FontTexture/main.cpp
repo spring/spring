@@ -32,16 +32,17 @@ int main(int /* argc */, char** argv)
   if (!ParseArgs(argv)) {
     printf("\n");
     printf("Usage: %s [options] <fontfile>\n", argv[0]);
-    printf("       -h <height>   : font height in pixels (scaled fonts)\n");
-    printf("       -o <outline>  : outline width in pixels\n");
-    printf("       -O            : use separate outlines\n");
-    printf("       -f <outName>  : set the output base name\n");
-    printf("       -w <width>    : set the texture width\n");
-    printf("       -sc <minChar> : set first character\n");
-    printf("       -ec <maxChar> : set last  character\n");
-    printf("       -p <padding>  : set the glyph padding\n");
-    printf("       -s <stuffing> : set the glyph stuffing\n");
-    printf("       -d <debug>    : set the debug level\n");
+    printf("       -h  <height>   : font height in pixels (scaled fonts)\n");
+    printf("       -O             : use separate outlines\n");
+    printf("       -o  <outline>  : outline radius in pixels\n");
+    printf("       -ow <weight>   : outline weight (100 nominal)\n");
+    printf("       -f  <outName>  : set the output base name\n");
+    printf("       -w  <width>    : set the texture width\n");
+    printf("       -sc <minChar>  : set first character\n");
+    printf("       -ec <maxChar>  : set last  character\n");
+    printf("       -p  <padding>  : set the glyph padding\n");
+    printf("       -s  <stuffing> : set the glyph stuffing\n");
+    printf("       -d  <debug>    : set the debug level\n");
     printf("\n");
     return 1;
   }
@@ -78,13 +79,18 @@ static bool ParseArgs(char** argv)
       FontTexture::SetFontHeight(atoi(argv[1]));
       argv++;
     }
+    else if (strcmp (opt, "O") == 0) {
+      FontTexture::SetOutlineMode(1);
+    }
     else if (strcmp (opt, "o") == 0) {
       if (argv[1] == NULL) { return false; } // missing parameter
       FontTexture::SetOutlineRadius(atoi(argv[1]));
       argv++;
     }
-    else if (strcmp (opt, "O") == 0) {
-      FontTexture::SetOutlineMode(1);
+    else if (strcmp (opt, "ow") == 0) {
+      if (argv[1] == NULL) { return false; } // missing parameter
+      FontTexture::SetOutlineWeight(atoi(argv[1]));
+      argv++;
     }
     else if (strcmp (opt, "f") == 0) {
       if (argv[1] == NULL) { return false; } // missing parameter

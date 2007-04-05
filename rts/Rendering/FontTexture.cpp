@@ -44,8 +44,9 @@ static string inputFile = "";
 static string outputFileName = "";
 
 static u32 height = 16;
-static u32 outline = 1;
 static u32 outlineMode = 0;
+static u32 outlineRadius = 1;
+static u32 outlineWeight = 100;
 static u32 debugLevel = 0;
 
 static u32 xTexSize = 512;
@@ -146,7 +147,14 @@ bool FontTexture::SetOutlineMode(unsigned int mode)
 
 bool FontTexture::SetOutlineRadius(unsigned int radius)
 {
-  outline = radius;
+  outlineRadius = radius;
+  return true;
+}
+
+
+bool FontTexture::SetOutlineWeight(unsigned int weight)
+{
+  outlineWeight = weight;
   return true;
 }
 
@@ -181,8 +189,9 @@ void FontTexture::Reset()
   height = 16;
   minChar = 32;
   maxChar = 255;
-  outline = 1;
-  outlineMode = 0;
+  outlineMode   = 0;
+  outlineRadius = 1;
+  outlineWeight = 100;
   padding = 1;
   stuffing = 0;
   debugLevel = 0;
@@ -196,10 +205,11 @@ bool FontTexture::Execute()
   }
 
   if (debugLevel >= 1) {
-    printf("fontfile    = %s\n", inputFile.c_str());
-    printf("height      = %i\n", height);
-    printf("outline     = %i\n", outline);
-    printf("outlineMode = %i\n", outlineMode);
+    printf("fontfile      = %s\n", inputFile.c_str());
+    printf("height        = %i\n", height);
+    printf("outlineMode   = %i\n", outlineMode);
+    printf("outlineRadius = %i\n", outlineRadius);
+    printf("outlineWeight = %i\n", outlineWeight);
   }
 
   int error;
@@ -273,7 +283,7 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
     char heightText[64];
     sprintf(heightText, "_%i", fontHeight);
     char outlineText[64];
-    sprintf(outlineText, "_%i", outline);
+    sprintf(outlineText, "_%i", outlineRadius);
     imageName = basename + heightText + ".png";
     specsName = basename + heightText + ".lua";
   }
@@ -293,8 +303,8 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
     }
     glyphs.push_back(glyph);
 
-    if (outline > 0) {
-      glyph->Outline(outline);
+    if (outlineRadius> 0) {
+      glyph->Outline(outlineRadius);
     }
     if (debugLevel >= 2) {
       PrintGlyphInfo(face->glyph, g);
@@ -409,7 +419,8 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
 	ilSetInteger(IL_PNG_INTERLACE, 0);
 	ilSetString(IL_PNG_TITLE_STRING, imageName.c_str());
 	ilSetString(IL_PNG_AUTHNAME_STRING, "FontTexture");
-	ilSetString(IL_PNG_DESCRIPTION_STRING, (outline > 0) ? "outlined" : "plain");
+	ilSetString(IL_PNG_DESCRIPTION_STRING,
+	            (outlineRadius> 0) ? "outlined" : "plain");
   ilSaveImage((char*)imageName.c_str());
   ilDisable(IL_FILE_OVERWRITE);
   printf("Saved: %s\n", imageName.c_str());
@@ -560,7 +571,7 @@ bool Glyph::Outline(u32 radius)
   for (u32 i = 0; i < (xSizeTmp * ySizeTmp); i++) {
     const u32 index = (i * 4) + 3;
     const u32 alpha = tmpPixels[index];
-    tmpPixels[index] = (u8)min((u32)0xFF, 2 * alpha);
+    tmpPixels[index] = (u8)min((u32)0xFF, (3 * outlineWeight * alpha) / 100);
   }
 
   // overlay the original white text
