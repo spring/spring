@@ -204,16 +204,21 @@ function widget:DrawScreen()
     local data = namedata[2]
     local color = ''
     local pointed = (pointedName == name)
+    local order = widgetHandler.orderList[name]
+    local enabled = order and (order > 0)
+    local active = data.active
     if (pointed) then
       pointedY = posy
       pointedEnabled = data.active
       if (lmb or mmb or rmb) then
         color = WhiteStr
       else
-        color = (data.active and '\255\128\255\128') or '\255\255\128\128'
+        color = (active  and '\255\128\255\128') or
+                (enabled and '\255\255\255\128') or '\255\255\128\128'
       end
     else
-      color = (data.active and '\255\064\224\064') or '\255\224\064\064'
+      color = (active  and '\255\064\224\064') or
+              (enabled and '\255\224\244\064') or '\255\224\064\064'
     end
 
     if (fh) then
