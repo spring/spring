@@ -2342,6 +2342,8 @@ int LuaOpenGL::MakeFont(lua_State* L)
 						FontTexture::SetOutlineMode(value);
 					} else if (key == "outlineRadius") {
 						FontTexture::SetOutlineRadius(value);
+					} else if (key == "outlineWeight") {
+						FontTexture::SetOutlineWeight(value);
 					} else if (key == "padding") {
 						FontTexture::SetPadding(value);
 					} else if (key == "stuffing") {
