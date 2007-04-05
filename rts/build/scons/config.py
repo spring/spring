@@ -55,8 +55,9 @@ def guess_include_path(env, conf, name, subdir):
 	print "  Guessing", name, "include path...",
 	if env['platform'] == 'windows':
 		path = [os.path.join(os.path.join('mingwlibs', 'include'), subdir)]
-		if os.environ.has_key('MINGDIR'):
-			path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
+		# Everything lives in mingwlibs anyway...
+		#if os.environ.has_key('MINGDIR'):
+		#	path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
 	elif env['platform'] == 'darwin':
 		path = [os.path.join('/opt/local/include', subdir)]
 	else:
@@ -72,11 +73,11 @@ def check_freetype2(env, conf):
 	""" I changed the order of the freetype-config and pkg-config checks
 	because the latter returns a garbage freetype version on (at least) my system --tvo """
 
-	print "  Checking for freetype-config...",
 	# put this here for crosscompiling
 	if env['platform'] == 'windows':
 		guess_include_path(env, conf, 'Freetype2', 'freetype2')
 		return
+	print "  Checking for freetype-config...",
 	freetypecfg = env.WhereIs("freetype-config")
 	if freetypecfg:
 		print freetypecfg
@@ -124,11 +125,11 @@ def check_freetype2(env, conf):
 
 def check_sdl(env, conf):
 	print "Checking for SDL..."
-	print "  Checking for sdl-config...",
 	# put this here for crosscompiling
 	if env['platform'] == 'windows':
 		guess_include_path(env, conf, 'SDL', 'SDL')
 		return
+	print "  Checking for sdl-config...",
 	sdlcfg = env.WhereIs("sdl-config")
 	if not sdlcfg: # for FreeBSD
 		sdlcfg = env.WhereIs("sdl11-config")
@@ -154,11 +155,11 @@ def check_sdl(env, conf):
 
 def check_openal(env, conf):
 	print "Checking for OpenAL..."
-	print "  Checking for openal-config...",
 	# put this here for crosscompiling
 	if env['platform'] == 'windows':
 		guess_include_path(env, conf, 'OpenAL', 'AL')
 		return
+	print "  Checking for openal-config...",
 	openalcfg = env.WhereIs("openal-config")
 	if openalcfg:
 		print openalcfg
@@ -169,6 +170,10 @@ def check_openal(env, conf):
 
 
 def check_python(env, conf):
+	#if env['platform'] != 'windows':
+	#	print "Checking for Python 2.5...",
+	#	print ""
+	#	guess_include_path(env, conf, 'Python', 'python2.5')
 	print "Checking for Python 2.4...",
 	print ""
 	guess_include_path(env, conf, 'Python', 'python2.4')
@@ -179,6 +184,9 @@ def check_java(env, conf):
 	if env.has_key('javapath') and env['javapath']:
 		env.AppendUnique(CPPPATH = env['javapath'])
 		env.AppendUnique(CPPPATH = os.path.join(env['javapath'], "linux"))
+		return
+	if env['platform'] == 'windows':
+		guess_include_path(env, conf, 'Java', 'java')
 		return
 	possible_dirs = []
 	for root in ["/usr/local/lib/jvm", "/usr/lib/jvm"]:
@@ -270,6 +278,7 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
+	d += [Dependency(['python24'], ['Python.h'])]
 
 	if env['use_tcmalloc']:
 		d += [Dependency(['tcmalloc'], [])]
