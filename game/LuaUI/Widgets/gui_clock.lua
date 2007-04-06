@@ -29,6 +29,9 @@ end
 include("colors.h.lua")
 
 
+local floor = math.floor
+
+
 local vsx, vsy = widgetHandler:GetViewSizes()
 
 -- the 'f' suffixes are fractions  (and can be nil)
@@ -96,7 +99,7 @@ function widget:DrawScreen()
   if (fh) then
     fh = fontHandler.UseFont(font)
     fontHandler.DisableCache()
-    fontHandler.DrawRight(GetTimeString(), xpos, ypos)
+    fontHandler.DrawRight(GetTimeString(), floor(xpos), floor(ypos))
     fontHandler.EnableCache()
   else
     gl.Text(GetTimeString(), xpos, ypos, size, format)
