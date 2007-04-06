@@ -1231,12 +1231,12 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	const float value = float(lua_tonumber(L, 3)) / 32.0f;
 
 	if (type == "metal") {
-		unit->UseMetal(value);
+		lua_pushboolean(L, unit->UseMetal(value));
 	}
 	else if (type == "energy") {
-		unit->UseEnergy(value);
+		lua_pushboolean(L, unit->UseEnergy(value));
 	}
-	return 0;
+	return 1;
 }
 
 
