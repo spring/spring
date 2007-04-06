@@ -16,10 +16,10 @@
 --
 --  ConfigLayoutHandler(data) is defined at the end of this file.
 --
---    data =  true:  use DefaultHandler
---    data = false:  use DummyHandler
---    data =  func:  use the provided function
---    data =   nil:  use Spring's default control panel
+--    data ==  true:  use DefaultHandler
+--    data == false:  use DummyHandler
+--    data ==  func:  use the provided function
+--    data ==   nil:  use Spring's default control panel
 --
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -31,10 +31,12 @@ include("colors.h.lua")
 local FrameTexture   = "bitmaps/icons/frame_slate_128x96.png"
 local PageNumTexture = "bitmaps/circularthingy.tga"
 
+
 if (false) then  --  disable textured buttons?
   FrameTexture   = ""
   PageNumTexture = ""
 end
+
 
 local PageNumCmd = {
   name     = "1",

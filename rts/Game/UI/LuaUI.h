@@ -116,6 +116,7 @@ class CLuaUI : public CLuaHandle {
 
 	private: // call-outs
 		static int LoadTextVFS(lua_State* L);
+		static int FileExistsVFS(lua_State* L);
 		static int GetDirListVFS(lua_State* L);
 		static int GetDirList(lua_State* L);
 

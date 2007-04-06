@@ -60,11 +60,11 @@ Call-out libraries
   LuaOpenGL.cpp        -- OpenGL interface
   LuaSyncedCtrl.cpp    -- Synchronized control
   LuaSyncedInfo.cpp    -- Synchronized   information
+  LuaUnsyncedCtrl.cpp  -- Unsynchronized control
   LuaUnsyncedInfo.cpp  -- Unsynchronized information
   LuaUnitDefs.cpp      -- UnitDefs table
+  LuaFeatureDefs.cpp   -- FeatureDefs table
   LuaWeaponDefs.cpp    -- WeaponDefs table
-  LuaUiCtrl.cpp        -- User interface control
-  LuaUiInfo.cpp        -- User interface info
 
 
 Utilities
