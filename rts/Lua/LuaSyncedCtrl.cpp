@@ -117,6 +117,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
+	REGISTER_LUA_CFUNC(SetTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
@@ -547,12 +548,47 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	const float value = float(lua_tonumber(L, 3)) / 32.0f;
 
 	if (type == "metal") {
+		team->metalPull += value;
 		lua_pushboolean(L, team->UseMetal(value));
 		return 1;
 	}
 	else if (type == "energy") {
+		team->energyPull += value;
 		lua_pushboolean(L, team->UseEnergy(value));
 		return 1;
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetTeamResource(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to SetTeamResource()");
+	}
+	const int teamID = (int)lua_tonumber(L, 1);
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return 0;
+	}
+	if (!CanControlTeam(teamID)) {
+		return 0;
+	}
+	CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	
+	const string type = lua_tostring(L, 2);
+	
+	const float value = max(0.0f, (float)lua_tonumber(L, 3));
+
+	if (type == "metal") {
+		team->metal = min(team->metalStorage, value);
+	}
+	else if (type == "energy") {
+		team->energy = min(team->energyStorage, value);
 	}
 	return 0;
 }
