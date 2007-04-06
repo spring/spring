@@ -38,7 +38,8 @@ class LuaSyncedCtrl {
 		static int SendMessageToAllyTeam(lua_State* L);
 		static int SendMessageToSpectators(lua_State* L);
 
-		static int SetTeamResources(lua_State* L);
+		static int AddTeamResource(lua_State* L);
+		static int UseTeamResource(lua_State* L);
 		static int SetTeamShareLevel(lua_State* L);
 
 		static int CallCOBScript(lua_State* L);
@@ -74,6 +75,9 @@ class LuaSyncedCtrl {
 		static int SetUnitPosition(lua_State* L);
 		static int SetUnitRotation(lua_State* L);
 		static int SetUnitVelocity(lua_State* L);
+
+		static int AddUnitResource(lua_State* L);
+		static int UseUnitResource(lua_State* L);
 
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);

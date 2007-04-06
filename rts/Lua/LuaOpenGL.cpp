@@ -174,7 +174,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PopMatrix);
 
 	REGISTER_LUA_CFUNC(MakeFont);
-	REGISTER_LUA_CFUNC(SetVSync);
 
 	return true;
 }
@@ -2361,21 +2360,6 @@ int LuaOpenGL::MakeFont(lua_State* L)
 		}
 	}
 	FontTexture::Execute();
-	return 0;
-}
-
-
-int LuaOpenGL::SetVSync(lua_State* L)
-{
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.SetVSync()");
-	}
-	const int frames = (int)lua_tonumber(L, 1);
-	VSync.SetFrames(frames);
 	return 0;
 }
 
