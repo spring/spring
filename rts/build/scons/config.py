@@ -260,8 +260,8 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['GLEW', 'glew32'], ['GL/glew.h'])]
 	d += [Dependency(['z'],              ['zlib.h'])]
 	d += [Dependency(['freetype'],       ['ft2build.h'])]
-	d += [Dependency(['IL', 'devil', 'DevIL'],    ['IL/il.h'])]
-	d += [Dependency(['ILU', 'devilu', 'DevILU'], ['IL/ilu.h'])]	
+	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
+	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
 	
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]
