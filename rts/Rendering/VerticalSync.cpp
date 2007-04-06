@@ -3,14 +3,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef WIN32
+#include "Platform/Win/win32.h"
+#else
+#include <GL/glxew.h> // for glXWaitVideoSyncSGI()
+#endif
 #include "VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
-#ifndef WIN32
-#include <GL/glxew.h> // for glXWaitVideoSyncSGI()
-#endif
 
 
 CVerticalSync VSync;
