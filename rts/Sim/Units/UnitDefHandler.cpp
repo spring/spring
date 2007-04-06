@@ -827,6 +827,17 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 }
 
 
+static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
+{
+	CFileHandler bfile(filename);
+	if (bfile.FileExists()) {
+		bitmap.Load(filename);
+		return true;
+	}
+	return false;
+}
+
+
 unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 {
 	if (unitdef->unitimage != 0) {
@@ -838,18 +849,11 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 		bitmap.Load("unitpics/" + unitdef->buildpicname);
 	}
 	else {
-		//try pcx first and then bmp if no pcx exist
-		CFileHandler bfile("unitpics/" + unitdef->name + ".pcx");
-		if (bfile.FileExists()) {
-			bitmap.Load("unitpics/" + unitdef->name + ".pcx");
-		}
-		else {
-			CFileHandler bfile("unitpics/" + unitdef->name + ".bmp");
-			if (bfile.FileExists()){
-				bitmap.Load("unitpics/" + unitdef->name + ".bmp");
-			} else {
-				bitmap.Alloc(1, 1); // last resort
-			}
+		if (!LoadBuildPic("unitpics/" + unitdef->name + ".dds", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
+			bitmap.Alloc(1, 1); // last resort
 		}
 	}
 

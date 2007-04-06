@@ -30,6 +30,9 @@ include("colors.h.lua")
 include("tweakmode.lua")
 
 
+local floor = math.floor
+
+
 local vsx, vsy = widgetHandler:GetViewSizes()
 
 -- the 'f' suffixes are fractions  (and can be nil)
@@ -57,7 +60,7 @@ function widget:DrawScreen()
   if (fh) then
     fh = fontHandler.UseFont(font)
     fontHandler.DisableCache()
-    fontHandler.DrawRight(Spring.GetFPS(), xpos, ypos)
+    fontHandler.DrawRight(Spring.GetFPS(), floor(xpos), floor(ypos))
     fontHandler.EnableCache()
   else
     gl.Text(Spring.GetFPS(), xpos, ypos, size, format)
