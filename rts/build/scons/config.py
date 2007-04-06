@@ -278,7 +278,7 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
-	d += [Dependency(['python24'], ['Python.h'])]
+	d += [Dependency(['python2.4', 'python24'], ['Python.h'])]
 
 	if env['use_tcmalloc']:
 		d += [Dependency(['tcmalloc'], [])]
