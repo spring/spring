@@ -115,7 +115,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendMessageToAllyTeam);
 	REGISTER_LUA_CFUNC(SendMessageToSpectators);
 
-	REGISTER_LUA_CFUNC(SetTeamResources);
+	REGISTER_LUA_CFUNC(AddTeamResource);
+	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
@@ -140,6 +141,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
+
+	REGISTER_LUA_CFUNC(AddUnitResource);
+	REGISTER_LUA_CFUNC(UseUnitResource);
 
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -486,12 +490,12 @@ int LuaSyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaSyncedCtrl::SetTeamResources(lua_State* L)
+int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetTeamResources()");
+		luaL_error(L, "Incorrect arguments to AddTeamResource()");
 	}
 	const int teamID = (int)lua_tonumber(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
@@ -507,22 +511,48 @@ int LuaSyncedCtrl::SetTeamResources(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = (float)lua_tonumber(L, 3);
-
-	bool relative = false;
-	if ((args >= 4) && lua_isboolean(L, 4)) {
-		relative = lua_toboolean(L, 4);
-	}
+	const float value = float(lua_tonumber(L, 3)) / 32.0f;
 
 	if (type == "metal") {
-		team->metal = value + (relative ? team->metal : 0.0f);
-		team->metal = max(0.0f, min(team->metalStorage, team->metal));
+		team->AddMetal(value);
 	}
 	else if (type == "energy") {
-		team->energy = value + (relative ? team->energy : 0.0f);
-		team->energy = max(0.0f, min(team->energyStorage, team->energy));
+		team->AddEnergy(value);
 	}
 	return 0;
+}
+
+
+int LuaSyncedCtrl::UseTeamResource(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to UseTeamResource()");
+	}
+	const int teamID = (int)lua_tonumber(L, 1);
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return 0;
+	}
+	if (!CanControlTeam(teamID)) {
+		return 0;
+	}
+	CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	
+	const string type = lua_tostring(L, 2);
+	
+	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+
+	if (type == "metal") {
+		lua_pushboolean(L, team->UseMetal(value));
+	}
+	else if (type == "energy") {
+		lua_pushboolean(L, team->UseEnergy(value));
+	}
+	return 1;
 }
 
 
@@ -1152,6 +1182,60 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	           (float)lua_tonumber(L, 3),
 	           (float)lua_tonumber(L, 4));
 	unit->speed = dir;
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaSyncedCtrl::AddUnitResource(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to AddUnitResource()");
+	}
+	
+	const string type = lua_tostring(L, 2);
+	
+	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+
+	if (type == "metal") {
+		unit->AddMetal(value);
+	}
+	else if (type == "energy") {
+		unit->AddEnergy(value);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::UseUnitResource(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to UseUnitResource()");
+	}
+	
+	const string type = lua_tostring(L, 2);
+	
+	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+
+	if (type == "metal") {
+		unit->UseMetal(value);
+	}
+	else if (type == "energy") {
+		unit->UseEnergy(value);
+	}
 	return 0;
 }
 
