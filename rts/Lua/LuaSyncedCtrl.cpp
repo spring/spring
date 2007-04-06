@@ -548,11 +548,13 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 
 	if (type == "metal") {
 		lua_pushboolean(L, team->UseMetal(value));
+		return 1;
 	}
 	else if (type == "energy") {
 		lua_pushboolean(L, team->UseEnergy(value));
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 
@@ -1232,11 +1234,13 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 
 	if (type == "metal") {
 		lua_pushboolean(L, unit->UseMetal(value));
+		return 1;
 	}
 	else if (type == "energy") {
 		lua_pushboolean(L, unit->UseEnergy(value));
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 
