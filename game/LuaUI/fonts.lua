@@ -15,8 +15,8 @@ if (fontHandler ~= nil) then
   return fontHandler
 end
 
-
-local DefaultFontName = LUAUI_DIRNAME .. "Fonts/FreeMonoBold_12"
+-- ":n:" sets it to nearest texture filtering
+local DefaultFontName = ":n:" .. LUAUI_DIRNAME .. "Fonts/FreeMonoBold_12"
 
 
 --------------------------------------------------------------------------------
@@ -337,7 +337,7 @@ local function LoadFont(fontName)
 end
 
 
-local function SetFont(fontName)
+local function UseFont(fontName)
   local font = fonts[fontName]
   if (font) then
     activeFont = font
@@ -355,8 +355,17 @@ local function SetFont(fontName)
 end
 
 
-local function SetDefaultFont()
+local function UseDefaultFont()
   activeFont = defaultFont
+end
+
+
+local function SetDefaultFont(name)
+  local tmpFont = activeFont
+  if (UseFont(name)) then
+    DefaultFontName = name
+  end
+  activeFont = tmpFont
 end
 
 
@@ -429,7 +438,7 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-SetFont(DefaultFontName)
+UseFont(DefaultFontName)
 defaultFont = activeFont
 
 
@@ -437,16 +446,14 @@ local FH = {}
 
 FH.Update = Update
 
-FH.SetFont        = SetFont
+FH.UseFont        = UseFont
+FH.UseDefaultFont = UseDefaultFont
 FH.SetDefaultFont = SetDefaultFont
 
 FH.GetFontName  = function() return activeFont.name         end
 FH.GetFontSize  = function() return activeFont.specs.height end
 FH.GetFontYStep = function() return activeFont.specs.yStep  end
-
-FH.FreeFont  = FreeFont
-FH.FreeFonts = FreeFonts
-FH.FreeCache = FreeCache
+FH.GetTextWidth = GetTextWidth
 
 FH.Draw         = Draw
 FH.DrawRight    = DrawRight
@@ -454,9 +461,9 @@ FH.DrawCentered = DrawCentered
 
 FH.StripColors = StripColorCodes
 
-FH.GetTextWidth  = GetTextWidth
-FH.CalcTextHeight = CalcTextHeight
-
+FH.FreeFont  = FreeFont
+FH.FreeFonts = FreeFonts
+FH.FreeCache = FreeCache
 
 FH.CacheState   = function() return caching  end
 FH.EnableCache  = function() caching = true  end

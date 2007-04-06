@@ -39,6 +39,11 @@ local xformList = 0
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
+  -- only show at the beginning
+  if (Spring.GetGameFrame() > 1) then
+    widgetHandler:RemoveWidget()
+    return
+  end
   -- flip and scale  (using x & y for gl.Rect())
   xformList = gl.ListCreate(function()
     gl.LoadIdentity()

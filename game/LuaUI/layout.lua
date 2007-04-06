@@ -86,7 +86,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
     menuName = GreenStr .. 'Build Orders'
   end
 
-  local ipp = (xIcons * yIcons)   -- iconsPerPage
+  local ipp = (xIcons * yIcons)  -- iconsPerPage
 
   local prevCmd = cmdCount - 1
   local nextCmd = cmdCount - 0
@@ -111,7 +111,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
 
   for cmdSlot = 1, (cmdCount - 2) do
 
-    -- fill the last row with special icons
+    -- fill the last row with special buttons
     while (math.mod(pos, ipp) >= firstSpecial) do
       pos = pos + 1
     end

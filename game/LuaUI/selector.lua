@@ -58,11 +58,12 @@ local entryFont  = "LuaUI/Fonts/trebucbd_14"
 local headerFont = "LuaUI/Fonts/trebucbd_18"
 local entryFont  = "LuaUI/Fonts/monofont_14"
 local headerFont = "LuaUI/Fonts/monofont_18"
+--]]
 local entryFont  = "LuaUI/Fonts/FreeSansBold_12"
 local headerFont = "LuaUI/Fonts/FreeSansBold_16"
---]]
 local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
 local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
+
 --local headerFont = "LuaUI/Fonts/FreeSerifBold_24"
 
 if (1 > 0) then
@@ -70,8 +71,12 @@ if (1 > 0) then
   headerFont = ":n:" .. headerFont
 end
 
+fontHandler.UseDefaultFont()
+local entryFont = fontHandler.GetFontName()
+
 if (fh) then
-  fh = fontHandler.SetFont(headerFont) and fontHandler.SetFont(entryFont)
+  fh = fontHandler.UseFont(headerFont) and
+       fontHandler.UseFont(entryFont)
 end
 if (fh) then
   fontSize  = fontHandler.GetFontSize()
@@ -173,9 +178,9 @@ function widget:DrawScreen()
   if (fh) then
 --    fontHandler.DisableCache()
     gl.Color(1, 1, 1)
-    fontHandler.SetFont(headerFont)
+    fontHandler.UseFont(headerFont)
     fontHandler.DrawCentered("Widget Selector", floor(midx), floor(maxy + 7))
-    fontHandler.SetFont(entryFont)
+    fontHandler.UseFont(entryFont)
   else
     gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
   end
@@ -366,15 +371,19 @@ function widget:GetTooltip(x, y)
   UpdateList()  
   local namedata = self:AboveLabel(x, y)
   if (not namedata) then
-    return '\255\200\255\200'..'Widget Selector\n'..
-           '\255\255\200\200'..'RMB: raise widget\n'..
-           '\255\200\200\255'..'MMB: lower widget'
+    return '\255\200\255\200'..'Widget Selector\n'    ..
+           '\255\255\255\200'..'LMB: toggle widget\n' ..
+           '\255\255\200\200'..'MMB: lower  widget\n' ..
+           '\255\200\200\255'..'RMB: raise  widget'
   end
 
   local n = namedata[1]
   local d = namedata[2]
+
+  local order = widgetHandler.orderList[n]
+  local enabled = order and (order > 0)
   
-  local tt = (d.active and GreenStr) or RedStr
+  local tt = (d.active and GreenStr) or (enabled  and YellowStr) or RedStr
   tt = tt..n..'\n'
   tt = d.desc   and tt..WhiteStr..d.desc..'\n' or tt
   tt = d.author and tt..BlueStr..'Author:  '..CyanStr..d.author..'\n' or tt

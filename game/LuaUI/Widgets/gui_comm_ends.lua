@@ -59,7 +59,7 @@ function widget:DrawScreen()
     gl.Scale(1.5, 1.5, 1)
     gl.Rotate(30 * math.sin(math.pi * 0.5 * timer), 0, 0, 1)
     if (font) then
-      fontHandler.SetFont(font)
+      fontHandler.UseFont(font)
       fontHandler.DrawCentered(msg)
     else
       gl.Text(msg, 0, 0, 24, "oc")
