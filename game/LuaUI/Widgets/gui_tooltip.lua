@@ -37,7 +37,7 @@ local gap      = 4
 local fh = (1 > 0)
 local fontName  = "LuaUI/Fonts/FreeSansBold_14"
 if (fh) then
-  fh = fontHandler.SetFont(fontName)
+  fh = fontHandler.UseFont(fontName)
 end
 if (fh) then
   fontSize  = fontHandler.GetFontSize()
@@ -71,7 +71,7 @@ end
 
 function widget:DrawScreen()
   if (fh) then
-    fh = fontHandler.SetFont(fontName)
+    fh = fontHandler.UseFont(fontName)
     gl.Color(1, 1, 1)
   end
   local white = "\255\255\255\255"
@@ -81,7 +81,7 @@ function widget:DrawScreen()
   tooltip, mSub = string.gsub(tooltip, bland.."Me",   "\255\1\255\255Me")
   tooltip, eSub = string.gsub(tooltip, bland.."En", "  \255\255\255\1En")
   tooltip = string.gsub(tooltip,
-                        "Hotkeys:", "\255\255\128\128Hotkeys:\255\128\128\255")
+                        "Hotkeys:", "\255\255\128\128Hotkeys:\255\128\192\255")
   tooptip =       string.gsub(tooltip, "a", "b")
   local unitTip = ((mSub + eSub) == 2)
   local i = 0

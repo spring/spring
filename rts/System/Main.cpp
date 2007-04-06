@@ -33,6 +33,7 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/glFont.h"
+#include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TAPalette.h"
@@ -58,10 +59,6 @@
 	#include <direct.h>
 #endif // WIN32
 #include "Sim/Projectiles/ExplosionGenerator.h"
-
-#ifndef WIN32
-#include <GL/glxew.h> // for glXWaitVideoSyncSGI()
-#endif
 
 
 #ifdef WIN32
@@ -139,7 +136,6 @@ protected:
 	void Shutdown (); 				//!< Shuts down application
 	int Update (); 					//!< Run simulation and draw
 	void UpdateSDLKeys (); 				//!< Update SDL key array
-	void SetVSync ();				//!< Enable or disable VSync based on the "VSync" config option
 	bool GetDisplayGeometry();
 	void SetupViewportGeometry();
 
@@ -184,16 +180,6 @@ protected:
 	 * Level of fullscreen anti-aliasing
 	 */
 	bool FSAA;
-
-	/**
-	 * @brief vertical sync
-	 *
-	 * Synchronize buffer swaps with the screen refresh rate.
-	 * A value < 0 leaves the vsync mechanism at the system
-	 * default, and higher values specify the interval between
-	 * synced frames.
-	 */
-	int vsyncFrames;
 
 	int2 prevMousePos;
 };
@@ -486,8 +472,6 @@ bool SpringApp::SetSDLVideoMode ()
 		glHint(GL_POINT_SMOOTH_HINT, hint);
 	}
 
-	SetVSync();
-
 	// there must be a way to see if this is necessary, compare old/new context pointers?
 	if (!!configHandler.GetInt("FixAltTab", 0)) {
 		// free GL resources
@@ -502,32 +486,9 @@ bool SpringApp::SetSDLVideoMode ()
 	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 
+	VSync.Init();
+
 	return true;
-}
-
-/**
- * Set VSync based on the "VSync" config option
- * Uses WGL_EXT_swap_control or GLX_SGI_video_sync
- */
-void SpringApp::SetVSync ()
-{
-	vsyncFrames = configHandler.GetInt("VSync", -1); // default to noop
-
-#ifdef WIN32
-	// VSync enabled is the default for OpenGL drivers
-	if (vsyncFrames < 0) {
-		return;
-	}
-
-	// WGL_EXT_swap_control is the only WGL extension exposed in glGetString(GL_EXTENSIONS)
-	if (strstr( (const char*)glGetString(GL_EXTENSIONS), "WGL_EXT_swap_control")) {
-		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
-		PFNWGLSWAPINTERVALEXTPROC SwapIntervalProc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		if (SwapIntervalProc) {
-			SwapIntervalProc(vsyncFrames);
-		}
-	}
-#endif
 }
 
 
@@ -853,19 +814,7 @@ int SpringApp::Update ()
 		}
 	}
 
-#ifndef WIN32
-	if (vsyncFrames > 0) {
-		if (!GLXEW_SGI_video_sync) {
-			vsyncFrames = 0; // disable
-	} else {
-			GLuint frameCount;
-			if (glXGetVideoSyncSGI(&frameCount) == 0) {
-				glXWaitVideoSyncSGI(vsyncFrames, frameCount % vsyncFrames, &frameCount);
-			}
-		}
-	}
-#endif
-
+	VSync.Delay();
 	SDL_GL_SwapBuffers();
 
 	if (FSAA)

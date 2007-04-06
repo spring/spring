@@ -33,6 +33,7 @@ extern "C" {
 #include "Rendering/glFont.h"
 #include "Rendering/FontTexture.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -173,6 +174,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PopMatrix);
 
 	REGISTER_LUA_CFUNC(MakeFont);
+	REGISTER_LUA_CFUNC(SetVSync);
 
 	return true;
 }
@@ -2312,6 +2314,9 @@ int LuaOpenGL::ListDelete(lua_State* L)
 
 int LuaOpenGL::MakeFont(lua_State* L)
 {
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.MakeFont()");
@@ -2356,6 +2361,21 @@ int LuaOpenGL::MakeFont(lua_State* L)
 		}
 	}
 	FontTexture::Execute();
+	return 0;
+}
+
+
+int LuaOpenGL::SetVSync(lua_State* L)
+{
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.SetVSync()");
+	}
+	const int frames = (int)lua_tonumber(L, 1);
+	VSync.SetFrames(frames);
 	return 0;
 }
 

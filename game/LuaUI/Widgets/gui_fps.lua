@@ -55,7 +55,7 @@ local fh = (font ~= nil)
 function widget:DrawScreen()
   gl.Color(color)
   if (fh) then
-    fh = fontHandler.SetFont(font)
+    fh = fontHandler.UseFont(font)
     fontHandler.DisableCache()
     fontHandler.DrawRight(Spring.GetFPS(), xpos, ypos)
     fontHandler.EnableCache()
@@ -137,7 +137,7 @@ function widget:SetConfigData(data)
   format = data.format or format
   font   = data.font   or font
   if (font) then
-    fh = fontHandler.SetFont(font)
+    fh = fontHandler.UseFont(font)
   end
   xposf, xpos = LoadGeoPair(data, 'xposf', 'xpos', xpos)
   yposf, ypos = LoadGeoPair(data, 'yposf', 'ypos', ypos)

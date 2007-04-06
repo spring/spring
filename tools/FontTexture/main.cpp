@@ -33,8 +33,8 @@ int main(int /* argc */, char** argv)
     printf("\n");
     printf("Usage: %s [options] <fontfile>\n", argv[0]);
     printf("       -h  <height>   : font height in pixels (scaled fonts)\n");
-    printf("       -O             : use separate outlines\n");
-    printf("       -o  <outline>  : outline radius in pixels\n");
+    printf("       -os            : use separate outlines\n");
+    printf("       -or <radius>   : outline radius in pixels\n");
     printf("       -ow <weight>   : outline weight (100 nominal)\n");
     printf("       -f  <outName>  : set the output base name\n");
     printf("       -w  <width>    : set the texture width\n");
@@ -79,10 +79,10 @@ static bool ParseArgs(char** argv)
       FontTexture::SetFontHeight(atoi(argv[1]));
       argv++;
     }
-    else if (strcmp (opt, "O") == 0) {
+    else if (strcmp (opt, "os") == 0) {
       FontTexture::SetOutlineMode(1);
     }
-    else if (strcmp (opt, "o") == 0) {
+    else if (strcmp (opt, "or") == 0) {
       if (argv[1] == NULL) { return false; } // missing parameter
       FontTexture::SetOutlineRadius(atoi(argv[1]));
       argv++;

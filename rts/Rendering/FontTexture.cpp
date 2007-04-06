@@ -43,20 +43,22 @@ typedef unsigned int   u32;
 static string inputFile = "";
 static string outputFileName = "";
 
+static u32 minChar = 32;
+static u32 maxChar = 255;
+
 static u32 height = 16;
-static u32 outlineMode = 0;
-static u32 outlineRadius = 1;
-static u32 outlineWeight = 100;
-static u32 debugLevel = 0;
 
 static u32 xTexSize = 512;
 static u32 yTexSize = 1;
 
-static u32 minChar = 32;
-static u32 maxChar = 255;
-
 static u32 padding  = 1;
 static u32 stuffing = 0;
+
+static u32 outlineMode = 0;
+static u32 outlineRadius = 1;
+static u32 outlineWeight = 100;
+
+static u32 debugLevel = 0;
 
 static vector<class Glyph*> glyphs;
 
@@ -184,16 +186,16 @@ void FontTexture::Reset()
 {
   inputFile = "";
   outputFileName = "";
-  xTexSize = 512;
-  yTexSize = 1;
-  height = 16;
   minChar = 32;
   maxChar = 255;
+  height = 16;
+  xTexSize = 512;
+  yTexSize = 1;
+  padding = 1;
+  stuffing = 0;
   outlineMode   = 0;
   outlineRadius = 1;
   outlineWeight = 100;
-  padding = 1;
-  stuffing = 0;
   debugLevel = 0;
 }
 
@@ -356,11 +358,12 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   fprintf(specFile, "  srcFile  = [[%s]],\n", filename.c_str());
   fprintf(specFile, "  family   = [[%s]],\n", face->family_name);
   fprintf(specFile, "  style    = [[%s]],\n", face->style_name);
-  fprintf(specFile, "  fontHeight = %i,\n", fontHeight);
   fprintf(specFile, "  yStep    = %i,\n", yStep);
   fprintf(specFile, "  height   = %i,\n", fontHeight);
   fprintf(specFile, "  xTexSize = %i,\n", xTexSize);
   fprintf(specFile, "  yTexSize = %i,\n", yTexSize);
+  fprintf(specFile, "  outlineRadius = %i,\n", outlineRadius);
+  fprintf(specFile, "  outlineWeight = %i,\n", outlineWeight);
   fprintf(specFile, "}\n");
   fprintf(specFile, "\n");
   fprintf(specFile, "local glyphs = {}\n");
@@ -585,8 +588,10 @@ bool Glyph::Outline(u32 radius)
       tmpPx[0] = oldPx[3];
       tmpPx[1] = oldPx[3];
       tmpPx[2] = oldPx[3];
-      //tmpPx[3] = (tmpPx[3] > oldPx[3]) ? tmpPx[3] : oldPx[3];
-      tmpPx[3] = (u8)min((u32)0xFF, (u32)tmpPx[3] + (u32)oldPx[3]);
+      const u32 a1 = (u32)oldPx[3];
+      const u32 a2 = (u32)tmpPx[3];   
+      const u32 alpha = a1 + a2 - ((a1 * a2) / 255);
+      tmpPx[3] = (u8)min((u32)0xFF, alpha);
     }
   }
 

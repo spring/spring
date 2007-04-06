@@ -69,6 +69,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -1401,6 +1402,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				selectedUnits.GiveCommand(cmd);
 				break;
 			}
+		}
+	}
+	else if (cmd == "vsync") {
+		if (action.extra.empty()) {
+			VSync.SetFrames((VSync.GetFrames() <= 0) ? 1 : 0);
+		} else {
+			VSync.SetFrames(atoi(action.extra.c_str()));
 		}
 	}
 	else if (cmd == "safegl") {
