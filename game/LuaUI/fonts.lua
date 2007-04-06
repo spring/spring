@@ -244,8 +244,7 @@ local function Draw(text, x, y)
       RawColorDraw(text)
       gl.Texture(false)
     end)
---    print("newlist: " .. text) -- FIXME    -- speed test the 'not caching' to the end...
-    cacheTextData = { textList, timeStamp }
+    cacheTextData = { textList, timeStamp }  -- param [3] is the width
     activeFont.cache[text] = cacheTextData
   else
     cacheTextData[2] = timeStamp  --  refresh the timeStamp
@@ -305,12 +304,9 @@ local function LoadFont(fontName)
     return nil  -- bad specs
   end
 
-  -- FIXME: add a FileExistsVFS() call?
-  local texFile = Spring.LoadTextVFS(baseName .. ".png")
-  if (not texFile) then
-    return nil  -- texture
+  if (not Spring.FileExistsVFS(baseName .. ".png")) then
+    return nil  -- missing texture
   end
-  texFile = nil
 
   local fontLists
   if (strfind(options, "o")) then
@@ -413,8 +409,6 @@ local function Update()
   if (timeStamp < (lastUpdate + 1.0)) then
     return  -- only update every 1.0 seconds
   end
-
---  print("fontHandler.Update("..timeStamp..")")
 
   local killTime = (timeStamp - 3.0)
   for fontName, font in pairs(fonts) do

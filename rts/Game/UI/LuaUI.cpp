@@ -230,6 +230,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(LoadTextVFS);
+	REGISTER_LUA_CFUNC(FileExistsVFS);
 	REGISTER_LUA_CFUNC(GetDirListVFS);
 	REGISTER_LUA_CFUNC(GetDirList);
 
@@ -1187,6 +1188,31 @@ int CLuaUI::LoadTextVFS(lua_State* L)
 	}
 	lua_pushstring(L, buf.c_str());
 
+	return 1;
+}
+
+
+int CLuaUI::FileExistsVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isstring(L, 2))) {
+		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
+	}
+
+	CFileHandler::VFSmode vfsMode = CFileHandler::AnyFS;
+	if (args >= 2) {
+		const string& vfsModeStr = lua_tostring(L, 2);
+		if (vfsModeStr == "raw") {
+			vfsMode = CFileHandler::OnlyRawFS;
+		} else if (vfsModeStr == "archive") {
+			vfsMode = CFileHandler::OnlyArchiveFS;
+		}
+	}
+
+	const string& filename = lua_tostring(L, 1);
+	CFileHandler fh(filename, vfsMode);
+	lua_pushboolean(L, fh.FileExists());
 	return 1;
 }
 
