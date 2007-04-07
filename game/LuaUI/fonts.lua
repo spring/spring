@@ -62,6 +62,9 @@ end
 local function LoadFontSpecs(fontName)
   local specFile = fontName .. ".lua"
   local text = Spring.LoadTextVFS(specFile)
+  if (not text) then
+    return nil
+  end
   local chunk = loadstring(text, specFile)
   if (not chunk) then
     return nil
