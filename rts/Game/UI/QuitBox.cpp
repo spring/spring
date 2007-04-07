@@ -135,19 +135,32 @@ void CQuitBox::Draw(void)
 
 	for(int team=0;team<gs->activeTeams-1;++team){
 		int actualTeam=team;
-		if(team>=gu->myTeam)
+		if (team >= gu->myTeam) {
 			actualTeam++;
+		}
 
-		if(shareTeam==actualTeam)
+		if (shareTeam == actualTeam) {
 			glColor4f(1,1,1,0.8f);
-		else
-			glColor4f(1,1,1,guiAlpha);
-		string ally,dead;
-		if(gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam)))
+		} else {
+			glColor4f(1,1,1,0.4f);
+		}
+
+		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+
+		string ally, dead;
+		if (actualTeam == gs->gaiaTeamID) {
+			teamName = "Gaia";
+		}
+		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
 			ally="(Ally)";
-		if(gs->Team(actualTeam)->isDead)
+		}
+		if(gs->Team(actualTeam)->isDead) {
 			dead="(Dead)";
-		font->glPrintAt(box.x1+teamBox.x1+0.002f,box.y1+teamBox.y2-0.025f-team*0.025f,0.7f,"Team%i (%s)%s%s",actualTeam,gs->players[gs->Team(actualTeam)->leader]->playerName.c_str(),ally.c_str(),dead.c_str());
+		}
+		font->glPrintAt(box.x1 + teamBox.x1 + 0.002f,
+		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f, 0.7f,
+		                "Team%i (%s)%s%s", actualTeam,
+		                teamName.c_str(), ally.c_str(), dead.c_str());
 	}
 }
 
