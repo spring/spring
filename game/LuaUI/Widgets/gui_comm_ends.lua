@@ -32,6 +32,7 @@ local floor = math.floor
 
 
 local font = "LuaUI/Fonts/FreeSansBold_30"
+local fh = fontHandler.UseFont(font)
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 function widget:ViewResize(viewSizeX, viewSizeY)
@@ -58,8 +59,8 @@ function widget:DrawScreen()
     gl.Translate((vsx * 0.5), (vsy * 0.5) - 50, 0)
     gl.Scale(1.5, 1.5, 1)
     gl.Rotate(30 * math.sin(math.pi * 0.5 * timer), 0, 0, 1)
-    if (font) then
-      fontHandler.UseFont(font)
+    if (fh) then
+      fh = fontHandler.UseFont(font)
       fontHandler.DrawCentered(msg)
     else
       gl.Text(msg, 0, 0, 24, "oc")
