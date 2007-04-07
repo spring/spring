@@ -228,19 +228,19 @@ function widget:TweakDrawScreen()
   
   -- ??? add an indicator for xside/yside
   
-  gl.Blending(GL_SRC_ALPHA, GL_ONE)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE)
   gl.Color(0.8, 0.8, 1.0, 0.25)
-  gl.Shape(GL_QUADS, {
+  gl.Shape(GL.QUADS, {
     { v = { xmin, ymin } }, { v = { xmax, ymin } }, 
     { v = { xmax, ymax } }, { v = { xmin, ymax } }
   })
   gl.Color(0.0, 0.0, 1.0, 0.5)
-  gl.Shape(GL_QUADS, {
+  gl.Shape(GL.QUADS, {
     { v = { xmin + 3, ymin + 3} }, { v = { xmax - 3, ymin + 3 } }, 
     { v = { xmax - 3, ymax - 3} }, { v = { xmin + 3, ymax - 3 } }
   })
   gl.Color(1.0, 1.0, 1.0)
-  gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
 end
 
 
