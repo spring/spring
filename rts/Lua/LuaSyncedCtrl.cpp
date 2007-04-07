@@ -512,7 +512,7 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
 
 	if (type == "metal") {
 		team->AddMetal(value);
@@ -1240,7 +1240,7 @@ int LuaSyncedCtrl::AddUnitResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
 
 	if (type == "metal") {
 		unit->AddMetal(value);

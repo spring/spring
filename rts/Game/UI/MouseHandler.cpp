@@ -22,6 +22,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Platform/ConfigHandler.h"
+#include "Platform/errorhandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/InMapDraw.h"
@@ -72,58 +73,7 @@ CMouseHandler::CMouseHandler()
 
 	cursorScale = 1.0f;
 
-	cursorFileMap["cursornormal"] = // must always be loaded
-		CMouseCursor::New("cursornormal", CMouseCursor::TopLeft);
-
-	LoadCursorFile("cursornormal",     CMouseCursor::TopLeft);
-	LoadCursorFile("cursorareaattack", CMouseCursor::Center);
-	LoadCursorFile("cursorattack",     CMouseCursor::Center);
-	LoadCursorFile("cursorbuildbad",   CMouseCursor::Center);
-	LoadCursorFile("cursorbuildgood",  CMouseCursor::Center);
-	LoadCursorFile("cursorcapture",    CMouseCursor::Center);
-	LoadCursorFile("cursorcentroid",   CMouseCursor::Center);
-	LoadCursorFile("cursordefend",     CMouseCursor::Center);
-	LoadCursorFile("cursordgun",       CMouseCursor::Center);
-	LoadCursorFile("cursordwatch",     CMouseCursor::Center);
-	LoadCursorFile("cursorfight",      CMouseCursor::Center);
-	LoadCursorFile("cursorgather",     CMouseCursor::Center);
-	LoadCursorFile("cursormove",       CMouseCursor::Center);
-	LoadCursorFile("cursornumber",     CMouseCursor::Center);
-	LoadCursorFile("cursorpatrol",     CMouseCursor::Center);
-	LoadCursorFile("cursorpickup",     CMouseCursor::Center);
-	LoadCursorFile("cursorreclamate",  CMouseCursor::Center);
-	LoadCursorFile("cursorrepair",     CMouseCursor::Center);
-	LoadCursorFile("cursorrestore",    CMouseCursor::Center);
-	LoadCursorFile("cursorrevive",     CMouseCursor::Center);
-	LoadCursorFile("cursorselfd",      CMouseCursor::Center);
-	LoadCursorFile("cursortime",       CMouseCursor::Center);
-	LoadCursorFile("cursorunload",     CMouseCursor::Center);
-	LoadCursorFile("cursorwait",       CMouseCursor::Center);
-
-	AttachCursorCommand("",             "cursornormal");
-	AttachCursorCommand("Area attack",  "cursorareaattack", "cursorattack");
-	AttachCursorCommand("Attack",       "cursorattack");
-	AttachCursorCommand("BuildBad",     "cursorbuildbad");
-	AttachCursorCommand("BuildGood",    "cursorbuildgood");
-	AttachCursorCommand("Capture",      "cursorcapture");
-	AttachCursorCommand("Centroid",     "cursorcentroid");
-	AttachCursorCommand("DeathWait",    "cursordwatch",     "cursorwait");
-	AttachCursorCommand("DGun",         "cursordgun",       "cursorattack");
-	AttachCursorCommand("Fight",        "cursorfight",      "cursorattack");
-	AttachCursorCommand("GatherWait",   "cursorgather",     "cursorwait");
-	AttachCursorCommand("Guard",        "cursordefend");
-	AttachCursorCommand("Load units",   "cursorpickup");
-	AttachCursorCommand("Move",         "cursormove");
-	AttachCursorCommand("Patrol",       "cursorpatrol");
-	AttachCursorCommand("Reclaim",      "cursorreclamate");
-	AttachCursorCommand("Repair",       "cursorrepair");
-	AttachCursorCommand("Resurrect",    "cursorrevive",     "cursorrepair");
-	AttachCursorCommand("Restore",      "cursorrestore",    "cursorrepair");
-	AttachCursorCommand("SelfD",        "cursorselfd");
-	AttachCursorCommand("SquadWait",    "cursornumber",     "cursorwait");
-	AttachCursorCommand("TimeWait",     "cursortime",       "cursorwait");
-	AttachCursorCommand("Unload units", "cursorunload");
-	AttachCursorCommand("Wait",         "cursorwait");
+	LoadCursors();
 
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -164,6 +114,52 @@ CMouseHandler::~CMouseHandler()
 	while(!camControllers.empty()){
 		delete camControllers.back();
 		camControllers.pop_back();
+	}
+}
+
+
+void CMouseHandler::LoadCursors()
+{
+	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
+	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
+
+	AddMouseCursor("",             "cursornormal",     mTopLeft, false);
+	AddMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
+	AddMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
+	AddMouseCursor("Attack",       "cursorattack",     mCenter,  false);
+	AddMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
+	AddMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
+	AddMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
+	AddMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
+	AddMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
+	AddMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
+	AddMouseCursor("DGun",         "cursordgun",       mCenter,  false);
+	AddMouseCursor("DGun",         "cursorattack",     mCenter,  false); // backup
+	AddMouseCursor("Fight",        "cursorfight",      mCenter,  false);
+	AddMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
+	AddMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
+	AddMouseCursor("GatherWait",   "cursorwait",       mCenter,  false); // backup
+	AddMouseCursor("Guard",        "cursordefend",     mCenter,  false);
+	AddMouseCursor("Load units",   "cursorpickup",     mCenter,  false);
+	AddMouseCursor("Move",         "cursormove",       mCenter,  false);
+	AddMouseCursor("Patrol",       "cursorpatrol",     mCenter,  false);
+	AddMouseCursor("Reclaim",      "cursorreclamate",  mCenter,  false);
+	AddMouseCursor("Repair",       "cursorrepair",     mCenter,  false);
+	AddMouseCursor("Resurrect",    "cursorrevive",     mCenter,  false);
+	AddMouseCursor("Resurrect",    "cursorrepair",     mCenter,  false); // backup
+	AddMouseCursor("Restore",      "cursorrestore",    mCenter,  false);
+	AddMouseCursor("Restore",      "cursorrepair",     mCenter,  false); // backup
+	AddMouseCursor("SelfD",        "cursorselfd",      mCenter,  false);
+	AddMouseCursor("SquadWait",    "cursornumber",     mCenter,  false);
+	AddMouseCursor("SquadWait",    "cursorwait",       mCenter,  false); // backup
+	AddMouseCursor("TimeWait",     "cursortime",       mCenter,  false);
+	AddMouseCursor("TimeWait",     "cursorwait",       mCenter,  false); // backup
+	AddMouseCursor("Unload units", "cursorunload",     mCenter,  false);
+	AddMouseCursor("Wait",         "cursorwait",       mCenter,  false);
+
+	// the default cursor must exist
+	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
+		handleerror(0, "Missing default cursor", "cursornormal", 0);
 	}
 }
 
@@ -891,46 +887,33 @@ void CMouseHandler::DrawCursor(void)
 }
 
 
-void CMouseHandler::LoadCursorFile(const std::string& filename,
-                                   CMouseCursor::HotSpot hotspot)
+bool CMouseHandler::AddMouseCursor(const std::string& name,
+	                                 const std::string& filename,
+	                                 CMouseCursor::HotSpot hotSpot,
+																	 bool overwrite)
 {
-	if (cursorFileMap.find(filename) == cursorFileMap.end()) {
-		cursorFileMap[filename] = CMouseCursor::New(filename, hotspot);
+	if (!overwrite && // can overwrite cursor name, but not their sources
+	    (cursorCommandMap.find(name) != cursorCommandMap.end())) {
+		return true; // already exists
 	}
-}
 
-
-void CMouseHandler::AttachCursorCommand(const std::string& commandName,
-                                        const std::string& filename)
-{
-	std::map<std::string, CMouseCursor*>::iterator it;
-	it = cursorFileMap.find(filename);
-	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
-		cursorCommandMap[commandName] = it->second;
-		return;
+	CMouseCursor* cursor = NULL;
+	std::map<std::string, CMouseCursor*>::iterator fileIt;
+	fileIt = cursorFileMap.find(filename);
+	if (fileIt != cursorFileMap.end()) {
+		cursor = fileIt->second;
+	} else {
+		cursor = CMouseCursor::New(filename, hotSpot);
+		if (cursor == NULL) {
+			return false; // invalid cursor
+		}
+		cursorFileMap[filename] = cursor;
 	}
-	logOutput.Print("No cursor available for command: %s",
-	                commandName.c_str());
-}
 
-
-void CMouseHandler::AttachCursorCommand(const std::string& commandName,
-                                        const std::string& filename1,
-                                        const std::string& filename2)
-{
-	std::map<std::string, CMouseCursor*>::iterator it;
-	it = cursorFileMap.find(filename1);
-	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
-		cursorCommandMap[commandName] = it->second;
-		return;
-	}
-	it = cursorFileMap.find(filename2);
-	if ((it != cursorFileMap.end()) && (it->second != NULL)) {
-		cursorCommandMap[commandName] = it->second;
-		return;
-	}
-	logOutput.Print("No cursor available for command: %s",
-	                commandName.c_str());
+	// assign the new cursor
+	cursorCommandMap[name] = cursor;
+	
+	return true;
 }
 
 

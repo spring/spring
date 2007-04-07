@@ -97,13 +97,14 @@ public:
 
 	int soundMultiselID;
 
+	bool AddMouseCursor(const std::string& cmdname,
+	                    const std::string& filename,
+	                    CMouseCursor::HotSpot hotSpot,
+	                    bool overwrite);
+
 protected:
-	void LoadCursorFile(const std::string& filename, CMouseCursor::HotSpot);
-	void AttachCursorCommand(const std::string& commandName,
-	                         const std::string& filename);
-	void AttachCursorCommand(const std::string& commandName,
-	                         const std::string& filename1,
-	                         const std::string& filename2);
+	void LoadCursors();
+
 public:
 	void EmptyMsgQueUpdate(void);
 

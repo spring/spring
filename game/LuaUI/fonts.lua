@@ -42,11 +42,12 @@ local activeFont  = nil
 local defaultFont = nil
 
 local caching = true
+local useFloor = true
 
 local timeStamp  = 0
 local lastUpdate = 0
 
-local debug = true
+local debug = false
 local origPrint = print
 local print = function(...)
   if (debug) then
@@ -256,7 +257,11 @@ local function Draw(text, x, y)
     gl.ListRun(cacheTextData[1])
   else
     gl.PushMatrix()
-    gl.Translate(x, y, 0)
+    if (useFloor) then
+      gl.Translate(floor(x), floor(y), 0)
+    else
+      gl.Translate(x, y, 0)
+    end
     gl.ListRun(cacheTextData[1])
     gl.PopMatrix()
   end
@@ -277,7 +282,12 @@ end
 
 local function DrawCentered(text, x, y)
   local width = GetTextWidth(text)
-  local halfWidth = floor(width * 0.5) -- keep pixel alignment
+  local halfWidth
+  if (useFloor) then
+    halfWidth = floor(width * 0.5)
+  else
+    halfWidth = width * 0.5
+  end
   gl.PushMatrix()
   gl.Translate(-halfWidth, 0, 0)
   Draw(text, x, y)
