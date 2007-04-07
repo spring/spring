@@ -72,6 +72,9 @@ pause
 
 shadows [<0|1> [mapsize]]
 water   [0|1|2|3]
+vsync   [-1|0|1|2|...]  --  -1 will use default setting in windows,
+                        --  numbers higher then 1 will result in
+                        --  rendering every N frames.
 
 say  <message>
 echo <message>
