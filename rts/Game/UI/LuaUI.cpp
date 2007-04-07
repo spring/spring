@@ -1620,7 +1620,7 @@ int CLuaUI::AddMouseCursor(lua_State* L)
 
 	bool overwrite = true;
 	if ((args >= 3) && lua_isboolean(L, 3)) {
-		overwrite = !lua_toboolean(L, 3); // the arg is noOverWrite
+		overwrite = lua_toboolean(L, 3);
 	}
 
 	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;

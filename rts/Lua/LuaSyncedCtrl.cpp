@@ -545,7 +545,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
 
 	if (type == "metal") {
 		team->metalPull += value;
@@ -1266,7 +1266,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = float(lua_tonumber(L, 3)) / 32.0f;
+	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
 
 	if (type == "metal") {
 		lua_pushboolean(L, unit->UseMetal(value));
