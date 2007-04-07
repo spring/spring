@@ -863,7 +863,7 @@ function widgetHandler:DrawScreenItems()
   if (self.tweakMode) then
     gl.Color(0, 0, 0, 0.5)
     local sx, sy = self.xViewSize, self.yViewSize
-    gl.Shape(GL_QUADS, {
+    gl.Shape(GL.QUADS, {
       {v = {  0,  0 }}, {v = { sx,  0 }}, {v = { sx, sy }}, {v = {  0, sy }}
     })
     gl.Color(1, 1, 1)
