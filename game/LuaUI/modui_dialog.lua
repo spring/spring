@@ -128,7 +128,7 @@ end
 
 
 local function DrawButton(b)
-  gl.Shape(LT.GL_QUADS, {
+  gl.Shape(LT.GL.QUADS, {
     { v = { b.minX, b.minY } },
     { v = { b.maxX, b.minY } },
     { v = { b.maxX, b.maxY } },
@@ -138,7 +138,7 @@ end
 
 
 local function DrawBorder(b)
-  gl.Shape(LT.GL_LINE_LOOP, {
+  gl.Shape(LT.GL.LINE_LOOP, {
     { v = { b.minX - 0.5, b.minY - 0.5 } },
     { v = { b.maxX + 0.5, b.minY - 0.5 } },
     { v = { b.maxX + 0.5, b.maxY + 0.5 } },
@@ -255,7 +255,7 @@ function DrawScreenItems(viewSizeX, viewSizeY)
   
   gl.Color(0.1, 0.1, 0.1, 0.7)
 --  gl.Color(0, 0, 0)
-  gl.Shape(LT.GL_QUADS, {
+  gl.Shape(LT.GL.QUADS, {
     { v = {   0,   0 } }, { v = { vsx,   0 } },
     { v = { vsx, vsy } }, { v = {   0, vsy } }
   })
@@ -299,14 +299,14 @@ function DrawScreenItems(viewSizeX, viewSizeY)
   
   -- draw highlight
   if (overButton) then
-    gl.Blending(LT.GL_SRC_ALPHA, LT.GL_ONE)
+    gl.Blending(LT.GL.SRC_ALPHA, LT.GL.ONE)
     if (lmb) then
       gl.Color(1, 0, 0, 0.5)
     else 
       gl.Color(0, 0, 1, 0.5)
     end
     DrawButton(overButton)
-    gl.Blending(LT.GL_SRC_ALPHA, LT.GL_ONE_MINUS_SRC_ALPHA)
+    gl.Blending(LT.GL.SRC_ALPHA, LT.GL.ONE_MINUS_SRC_ALPHA)
   end
 end
 
