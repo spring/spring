@@ -675,6 +675,12 @@
 				RelativePath="..\..\Rendering\FartextureHandler.h">
 			</File>
 			<File
+				RelativePath="..\..\Rendering\FontTexture.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\FontTexture.h">
+			</File>
+			<File
 				RelativePath="..\..\Rendering\GLContext.cpp">
 			</File>
 			<File
@@ -715,6 +721,12 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\ShadowHandler.h">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\VerticalSync.cpp">
+			</File>
+			<File
+				RelativePath="..\..\Rendering\VerticalSync.h">
 			</File>
 			<Filter
 				Name="Unit Models"
