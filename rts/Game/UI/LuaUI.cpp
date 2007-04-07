@@ -51,6 +51,7 @@ extern "C" {
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/InMapDraw.h"
+#include "Rendering/FontTexture.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -255,7 +256,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
+	REGISTER_LUA_CFUNC(AddMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
+
 
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
@@ -274,6 +277,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
 
+	REGISTER_LUA_CFUNC(MakeFont);
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 
 	REGISTER_LUA_CFUNC(GetMyAllyTeamID);
@@ -1604,6 +1608,38 @@ int CLuaUI::SetMouseCursor(lua_State* L)
 }
 
 
+int CLuaUI::AddMouseCursor(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to AddMouseCursor()");
+	}
+
+	const string cursorName = lua_tostring(L, 1);
+	const string fileName   = lua_tostring(L, 2);
+
+	bool overwrite = true;
+	if ((args >= 3) && lua_isboolean(L, 3)) {
+		overwrite = !lua_toboolean(L, 3); // the arg is noOverWrite
+	}
+
+	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
+	if ((args >= 4) && lua_isboolean(L, 4)) {
+		if (lua_toboolean(L, 4)) {
+			hotSpot = CMouseCursor::TopLeft;
+		}
+	}
+
+	if (mouse->AddMouseCursor(cursorName, fileName, hotSpot, overwrite)) {
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	return 1;
+}
+
+
+/******************************************************************************/
 /******************************************************************************/
 
 int CLuaUI::GetKeyState(lua_State* L)
@@ -1844,6 +1880,61 @@ int CLuaUI::SetConfigString(lua_State* L)
 	const string name = lua_tostring(L, 1);
 	const string value = lua_tostring(L, 2);
 	configHandler.SetString(name, value);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::MakeFont(lua_State* L)
+{
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.MakeFont()");
+	}
+	FontTexture::Reset();
+	FontTexture::SetInFileName(lua_tostring(L, 1));
+	if ((args >= 2) && lua_istable(L, 2)) {
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2)) {
+				const string key = lua_tostring(L, -2);
+				if (lua_isstring(L, -1)) {
+					if ((key == "outName") && lua_isstring(L, -1)) {
+						FontTexture::SetOutBaseName(lua_tostring(L, -1));
+					}
+				}
+				else if (lua_isnumber(L, -1)) {
+					const unsigned int value = (unsigned int)lua_tonumber(L, -1);
+					if (key == "height") {
+						FontTexture::SetFontHeight(value);
+					} else if (key == "texWidth") {
+						FontTexture::SetTextureWidth(value);
+					} else if (key == "minChar") {
+						FontTexture::SetMinChar(value);
+					} else if (key == "maxChar") {
+						FontTexture::SetMaxChar(value);
+					} else if (key == "outlineMode") {
+						FontTexture::SetOutlineMode(value);
+					} else if (key == "outlineRadius") {
+						FontTexture::SetOutlineRadius(value);
+					} else if (key == "outlineWeight") {
+						FontTexture::SetOutlineWeight(value);
+					} else if (key == "padding") {
+						FontTexture::SetPadding(value);
+					} else if (key == "stuffing") {
+						FontTexture::SetStuffing(value);
+					} else if (key == "debug") {
+						FontTexture::SetDebugLevel(value);
+					}
+				}
+			}
+		}
+	}
+	FontTexture::Execute();
 	return 0;
 }
 
@@ -2609,6 +2700,8 @@ int CLuaUI::MarkerErasePosition(lua_State* L)
 	return 0;
 }
 
+
+/******************************************************************************/
 
 /******************************************************************************/
 /******************************************************************************/

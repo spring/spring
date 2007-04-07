@@ -125,6 +125,7 @@ class CLuaUI : public CLuaHandle {
 		static int GetConfigString(lua_State* L);
 		static int SetConfigString(lua_State* L);
 
+		static int MakeFont(lua_State* L);
 		static int SetUnitDefIcon(lua_State* L);
 
 		static int GetFPS(lua_State* L);
@@ -135,6 +136,8 @@ class CLuaUI : public CLuaHandle {
 
 		static int SetMouseCursor(lua_State* L);
 		static int GetMouseCursor(lua_State* L);
+		static int AddMouseCursor(lua_State* L);
+
 
 		static int GetKeyState(lua_State* L);
 		static int GetModKeyState(lua_State* L);

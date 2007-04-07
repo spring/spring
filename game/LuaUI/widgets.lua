@@ -301,7 +301,12 @@ end
 
 function widgetHandler:LoadWidget(filename)
   local basename = Basename(filename)
-  local chunk, err = loadfile(filename)
+  local text = Spring.LoadTextVFS(filename)
+  if (text == nil) then
+    Spring.Echo('Failed to load: ' .. basename)
+    return nil
+  end
+  local chunk, err = loadstring(text, filename)
   if (chunk == nil) then
     Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
