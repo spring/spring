@@ -213,9 +213,9 @@ void CFactory::StopBuild()
 	if(curBuild){
 		if(curBuild->beingBuilt){
 			AddMetal(curBuild->metalCost*curBuild->buildProgress);
-			uh->DeleteUnit(curBuild);
 		}
 		DeleteDeathDependence(curBuild);
+		curBuild->KillUnit(false, true, NULL);
 	}
 	curBuild=0;
 	quedBuild=false;
