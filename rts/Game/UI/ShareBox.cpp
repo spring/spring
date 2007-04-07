@@ -176,16 +176,18 @@ void CShareBox::Draw(void)
 		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
 		
 		string ally, dead;
-		if (actualTeam == gs->gaiaTeamID) {
-			teamName = "Gaia";
-		}
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
-			ally = "(Ally)";
+			ally = " <Ally>";
+		} else {
+			ally = " <Enemy>";
 		}
 		if (gs->Team(actualTeam)->isDead) {
-			dead = "(Dead)";
+			dead = " <Dead>";
 		}
-		
+		if (actualTeam == gs->gaiaTeamID) {
+			teamName = "Gaia";
+			ally   = " <Gaia>";
+		}
 		font->glPrintAt(box.x1 + teamBox.x1 + 0.002f,
 		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f,
 		                0.7f, "Team%i (%s)%s%s", actualTeam,
