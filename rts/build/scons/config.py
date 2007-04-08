@@ -306,7 +306,7 @@ def configure(env, conf_dir):
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
 	check_python(env, conf)
-	#check_java(env, conf)
+	check_java(env, conf)
 	CheckHeadersAndLibraries(env, conf)
 	env = conf.Finish()
 	print "\nEverything seems OK.  Run `scons' now to build."
