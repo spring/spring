@@ -16,13 +16,9 @@ class LuaSyncedCtrl {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		static void SetAllowGameChanges(bool value);
-		static bool GetAllowGameChanges();
-
 		static void CheckAllowGameChanges(lua_State* L);
 
 	private:
-		static bool allowGameChanges;
 		static bool inCreateUnit;
 		static bool inDestroyUnit;
 		static bool inTransferUnit;

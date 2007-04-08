@@ -27,6 +27,8 @@ class CLuaHandleSynced : public CLuaHandle
 		bool Initialize(const string& syncData);
 		string GetSyncData();
 
+		bool GetAllowChanges() const { return allowChanges; }
+
 	public: // call-ins
 		bool HasCallIn(const string& callInName);
 
@@ -63,8 +65,10 @@ class CLuaHandleSynced : public CLuaHandle
 		}
 
 	protected:
-		bool teamsLocked; // disables CallAsTeam()
 		const string messagePrefix;
+		bool allowChanges;
+		bool allowUnsafeChanges;
+		bool teamsLocked; // disables CallAsTeam()
 
 	private:
 		void KillLua();
@@ -81,6 +85,8 @@ class CLuaHandleSynced : public CLuaHandle
 		static int CallAsTeam(lua_State* L);
 
 		static int UpdateCallIn(lua_State* L);
+
+		static int AllowUnsafeChanges(lua_State* L);
 };
 
 
