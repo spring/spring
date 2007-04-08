@@ -234,6 +234,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(FileExistsVFS);
 	REGISTER_LUA_CFUNC(GetDirListVFS);
 	REGISTER_LUA_CFUNC(GetDirList);
+	REGISTER_LUA_CFUNC(CreateDir);
 
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
@@ -1297,6 +1298,49 @@ int CLuaUI::GetDirList(lua_State* L)
 }
 
 
+int CLuaUI::CreateDir(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to CreateDir()");
+	}
+
+	// keep directories within the Spring directory
+	const string dir = lua_tostring(L, 1);
+	if ((dir[0] == '/') || (dir[0] == '\\') ||
+	    (strstr(dir.c_str(), "..") != NULL) ||
+	    ((dir.size() > 0) && (dir[1] == ':'))) {
+		luaL_error(L, "Invalid GetDirList() access: %s", dir.c_str());
+	}
+
+	const bool success = filesystem.CreateDirectory(dir);
+	lua_pushboolean(L, success);
+	return 1;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::GetFPS(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (game) {
+		lua_pushnumber(L, game->fps);
+	} else {
+		lua_pushnumber(L, 0);
+	}
+	return 1;
+}
+
+
+int CLuaUI::GetLastUpdateSeconds(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, lastUpdateSeconds);
+	return 1;
+}
+
+
 int CLuaUI::SendCommands(lua_State* L)
 {
 	if ((guihandler == NULL) || gs->noHelperAIs) {
@@ -1323,25 +1367,6 @@ int CLuaUI::SendCommands(lua_State* L)
 	return 0;
 }
 
-
-int CLuaUI::GetFPS(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	if (game) {
-		lua_pushnumber(L, game->fps);
-	} else {
-		lua_pushnumber(L, 0);
-	}
-	return 1;
-}
-
-
-int CLuaUI::GetLastUpdateSeconds(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, lastUpdateSeconds);
-	return 1;
-}
 
 /******************************************************************************/
 

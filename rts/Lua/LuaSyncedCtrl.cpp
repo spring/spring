@@ -661,7 +661,7 @@ static inline void ParseCobArgs(lua_State* L,
 
 int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 {
-	CheckAllowGameChanges(L);
+//FIXME?	CheckAllowGameChanges(L);
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || // unitID
@@ -707,7 +707,7 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 
 int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 {
-	CheckAllowGameChanges(L);
+//FIXME?	CheckAllowGameChanges(L);
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 4) ||
 	    !lua_isnumber(L, 1) || // unitID

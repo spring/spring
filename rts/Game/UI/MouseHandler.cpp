@@ -892,9 +892,8 @@ bool CMouseHandler::AddMouseCursor(const std::string& name,
 	                                 CMouseCursor::HotSpot hotSpot,
 																	 bool overwrite)
 {
-	if (!overwrite && // can overwrite cursor name, but not their sources
-	    (cursorCommandMap.find(name) != cursorCommandMap.end())) {
-		return true; // already exists
+	if (!overwrite && (cursorCommandMap.find(name) != cursorCommandMap.end())) {
+		return true; // already assigned
 	}
 
 	CMouseCursor* cursor = NULL;

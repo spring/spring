@@ -142,9 +142,11 @@ void CLuaCob::CobCallback(int retCode, void* p1, void* p2)
 void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
                            int& argsCount, int args[MAX_LUA_COB_ARGS])
 {
-	static bool inCall = false;
-	if (inCall) {
-		args[0] = 0; // failure, not reentrant -- FIXME?
+	static int callDepth = 0;
+	if (callDepth >= 16) {
+		logOutput.Print("CLuaCob::CallFunction() call overflow: %s\n",
+		                name.GetString().c_str());
+		args[0] = 0; // failure
 		return;
 	}
 
@@ -166,14 +168,14 @@ void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
 	}
 
 	// call the routine
-	inCall = true;
+	callDepth++;
 	const int* oldArgs = currentArgs;
 	currentArgs = args;
 
 	const bool error = !RunCallIn(name, 3 + argsCount, LUA_MULTRET);
 
 	currentArgs = oldArgs;
-	inCall = false;
+	callDepth--;
 
 	// bail on error
 	if (error) {
