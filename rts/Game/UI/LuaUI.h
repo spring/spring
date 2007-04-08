@@ -119,6 +119,7 @@ class CLuaUI : public CLuaHandle {
 		static int FileExistsVFS(lua_State* L);
 		static int GetDirListVFS(lua_State* L);
 		static int GetDirList(lua_State* L);
+		static int CreateDir(lua_State* L);
 
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
@@ -137,7 +138,6 @@ class CLuaUI : public CLuaHandle {
 		static int SetMouseCursor(lua_State* L);
 		static int GetMouseCursor(lua_State* L);
 		static int AddMouseCursor(lua_State* L);
-
 
 		static int GetKeyState(lua_State* L);
 		static int GetModKeyState(lua_State* L);

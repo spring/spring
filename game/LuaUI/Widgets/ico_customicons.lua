@@ -123,7 +123,7 @@ function widget:Initialize()
           Spring.SetUnitDefIcon(udid, "x.user")
         end
       else
-        -- fixme: allow unknowns to use mod icons?
+        -- FIXME: allow unknowns to use mod icons?
         Spring.SetUnitDefIcon(udid, "default")
       end
     end

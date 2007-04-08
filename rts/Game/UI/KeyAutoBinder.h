@@ -19,8 +19,8 @@ using namespace std;
 struct UnitDef;
 struct lua_State;
 
-class CKeyAutoBinder : CLuaHandle {
-
+class CKeyAutoBinder : public CLuaHandle
+{
 	public:
 		CKeyAutoBinder();
 		~CKeyAutoBinder();

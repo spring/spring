@@ -362,10 +362,6 @@ void CGroundMoveType::SlowUpdate()
 	}
 
 	owner->pos.CheckInBounds();		//just kindly move it into the map again instead of deleteing
-/*	if(owner->pos.z<0 || owner->pos.z>(gs->mapy+1)*SQUARE_SIZE || owner->pos.x<0 || owner->pos.x>(gs->mapx+1)*SQUARE_SIZE){
-		logOutput.Print("Deleting unit due to bad coord %i %f %f %f %s",owner->id,owner->pos.x,owner->pos.y,owner->pos.z,owner->unitDef->humanName.c_str());
-		uh->DeleteUnit(owner);
-	}*/
 
 	float wh;		//need the following if the ground change height when unit stand still
 	if(floatOnWater){
