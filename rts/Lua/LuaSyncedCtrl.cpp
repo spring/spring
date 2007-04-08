@@ -15,7 +15,7 @@ extern "C" {
 }
 
 #include "LuaCob.h" // for MAX_LUA_COB_ARGS
-#include "LuaHandle.h"
+#include "LuaHandleSynced.h"
 #include "LuaHashString.h"
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
@@ -58,17 +58,7 @@ using namespace std;
 
 /******************************************************************************/
 /******************************************************************************/
-//
-// Protect the core simulation code from reentrant errors by
-// limiting when game state changing commands can be executed.
-// (it would be nicer to queue them... later)
-//
-// - Sound IDs?        (lightuserdata?)
-// - DisplayList IDs?  (lightuserdata?)
-// - Texture IDs       (lightuserdata?)
-//
 
-bool LuaSyncedCtrl::allowGameChanges = false;
 bool LuaSyncedCtrl::inCreateUnit = false;
 bool LuaSyncedCtrl::inDestroyUnit = false;
 bool LuaSyncedCtrl::inTransferUnit = false;
@@ -77,23 +67,17 @@ bool LuaSyncedCtrl::inDestroyFeature = false;
 bool LuaSyncedCtrl::inGiveOrder = false;
 
 
-void LuaSyncedCtrl::SetAllowGameChanges(bool value)
-{
-	allowGameChanges = value;
-}
-
-
-bool LuaSyncedCtrl::GetAllowGameChanges()
-{
-	return allowGameChanges;
-}
-
-
 /******************************************************************************/
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	if (!allowGameChanges) {
+	const CLuaHandleSynced* lhs =
+		dynamic_cast<const CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
+
+	if (lhs == NULL) {
+		luaL_error(L, "Internal lua error, unsynced script using synced calls");
+	}
+	if (!lhs->GetAllowChanges()) {
 		luaL_error(L, "Unsafe attempt to change game state");
 	}
 }

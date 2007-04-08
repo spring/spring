@@ -50,6 +50,8 @@ CLuaHandleSynced::CLuaHandleSynced(const string& name, int order,
                                    const string& msgPrefix)
 : messagePrefix(msgPrefix),
   CLuaHandle(name, order, false, callback),
+  allowChanges(false),
+  allowUnsafeChanges(false),
   teamsLocked(false)
 {
 }
@@ -172,6 +174,8 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	LuaPushNamedCFunc(L, "include",    Include);
 	LuaPushNamedCFunc(L, "loadstring", LoadString);
 	LuaPushNamedCFunc(L, "CallAsTeam", CallAsTeam);
+
+	LuaPushNamedCFunc(L, "AllowUnsafeChanges", AllowUnsafeChanges);
 
 	LuaPushNamedNumber(L, "COBSCALE", COBSCALE);
 	
@@ -633,14 +637,13 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 		return;
 	}
 
-	LuaSyncedCtrl::SetAllowGameChanges(true);
 
 	lua_pushnumber(L, frameNumber); // 6 day roll-over
 	
 	// call the routine
+	allowChanges = true;
 	RunCallIn(cmdStr, 1, 0);
-
-	LuaSyncedCtrl::SetAllowGameChanges(false);
+	allowChanges = allowUnsafeChanges;
 
 	return;
 }
@@ -662,15 +665,13 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 		return true; // the call is not defined
 	}
 
-	LuaSyncedCtrl::SetAllowGameChanges(true);
-
 	lua_pushstring(L, text.c_str());
 	lua_pushnumber(L, playerID);
 
 	// call the routine
+	allowChanges = true;
 	RunCallIn(cmdStr, 2, 0);
-
-	LuaSyncedCtrl::SetAllowGameChanges(false);
+	allowChanges = allowUnsafeChanges;
 
 	return true;
 }
@@ -687,13 +688,11 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	}
 	lua_insert(L, 1); // place the function
 
-	const bool prevAllowGameChanges = LuaSyncedCtrl::GetAllowGameChanges();
-	LuaSyncedCtrl::SetAllowGameChanges(false);
-
 	// call the routine
+	const bool prevAllowChanges = allowChanges;
+	allowChanges = false;
 	RunCallIn(cmdStr, args, 0);
-
-	LuaSyncedCtrl::SetAllowGameChanges(prevAllowGameChanges);
+	allowChanges = prevAllowChanges;
 
 	return;
 }
@@ -983,6 +982,21 @@ int CLuaHandleSynced::UpdateCallIn(lua_State* L)
 	lhs->SetupUnsyncedFunction(funcName.c_str());
 	return 0;
 }	
+
+
+int CLuaHandleSynced::AllowUnsafeChanges(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to AllowUnsafeChanges()");
+	}
+	const string magic = lua_tostring(L, 1);
+	const bool value = (magic == "USE AT YOUR OWN PERIL");	
+	CLuaHandleSynced* lhs = GetActiveHandle();
+	lhs->allowChanges = value;
+	lhs->allowUnsafeChanges = value;
+	return 0;
+}
 
 
 /******************************************************************************/
