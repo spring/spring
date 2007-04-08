@@ -25,7 +25,6 @@ DLL_EXPORT const char * __stdcall GetUnitName(int unit);
 DLL_EXPORT const char * __stdcall GetFullUnitName(int unit);
 DLL_EXPORT int __stdcall IsUnitDisabled(int unit);
 DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId);
-DLL_EXPORT int __stdcall InitArchiveScanner();
 DLL_EXPORT void __stdcall AddArchive(const char* name);
 DLL_EXPORT void __stdcall AddAllArchives(const char* root);
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
@@ -223,16 +222,6 @@ extern "C" {
 	JNIEXPORT jint JNICALL Java_aflobby_JUnitSync_IsUnitDisabledByClient
 		(JNIEnv *env, jclass myobject, jint unit, jint clientId){
 			return IsUnitDisabledByClient(unit,clientId);
-		}
-
-	/*
-	* Class:     aflobby_JUnitSync
-	* Method:    InitArchiveScanner
-	* Signature: ()I
-	*/
-	JNIEXPORT jint JNICALL Java_aflobby_JUnitSync_InitArchiveScanner
-		(JNIEnv *env, jclass myobject){
-			return InitArchiveScanner();
 		}
 
 	/*
