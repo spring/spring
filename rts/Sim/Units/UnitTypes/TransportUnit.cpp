@@ -2,7 +2,7 @@
 #include "TransportUnit.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/MoveTypes/GroundMoveType.h"
+#include "Sim/MoveTypes/groundmovetype.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/LosHandler.h"
