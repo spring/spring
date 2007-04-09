@@ -790,13 +790,16 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("buildangle", ud.buildangle);
 
-	ADD_FLOAT("loadingRadius",   ud.loadingRadius);
+	// transport stuff
 	ADD_INT("transportCapacity", ud.transportCapacity);
 	ADD_INT("transportSize",     ud.transportSize);
+	ADD_FLOAT("transportMass",   ud.transportMass);
+	ADD_FLOAT("loadingRadius",   ud.loadingRadius);
 	ADD_BOOL("isAirBase",        ud.isAirBase);
 	ADD_BOOL("isFirePlatform",   ud.isfireplatform);
-	ADD_FLOAT("transportMass",   ud.transportMass);
-
+	ADD_BOOL("holdSteady",       ud.holdSteady);
+	ADD_BOOL("releaseHeld",      ud.releaseHeld);
+	
 	ADD_BOOL("startCloaked",     ud.startCloaked);
 	ADD_FLOAT("cloakCost",       ud.cloakCost);
 	ADD_FLOAT("cloakCostMoving", ud.cloakCostMoving);
