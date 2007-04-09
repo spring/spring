@@ -163,7 +163,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
