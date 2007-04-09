@@ -114,16 +114,27 @@ for f in unitsync_extra_files:
 if env['platform'] == 'windows':
 	for f in ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
 		unitsync_files += [os.path.join(uenv['builddir'], f)]
+	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
 	ufshcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
 	unitsync_files += [os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'), ufshcpp]
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
 
-unitsync = uenv.SharedLibrary('UnityLobby/client/unitsync', unitsync_files)
 Alias('unitsync', unitsync)
+inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)
+Alias('install', inst)
+Alias('install-unitsync', inst)
+
+# Strip the DLL if rts.py said so.
+if env['strip']:
+	env.AddPostAction(unitsync, Action([['strip','$TARGET']]))
 
 # Somehow unitsync fails to build with mingw:
 #  "build\tools\unitsync\pybind.o(.text+0x129d): In function `initunitsync':
 #   pybind.cpp:663: undefined reference to `_imp__Py_InitModule4TraceRefs'"
+# Figured this out: this means we're attempting to build unitsync with debugging
+# enabled against a python version with debugging disabled.
 if env['platform'] != 'windows':
 	Default(unitsync)
 
