@@ -109,6 +109,14 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 	return 1;
 }
 
+/* Deprecated function, DO NOT USE! Temporarily readded to make buildbot'
+generated unitsync.dll work with TASClient.exe from Spring 0.74b3.
+FIXME: Should be removed just after 0.75 release! */
+DLL_EXPORT int __stdcall InitArchiveScanner(void)
+{
+	return 1;
+}
+
 DLL_EXPORT int __stdcall ProcessUnits(void)
 {
 	return syncer->ProcessUnits();
