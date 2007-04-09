@@ -134,6 +134,9 @@ public:
 	void TestNewTerrainSquare(void);
 	bool CheckGoalFeasability(void);
 	virtual void LeaveTransport(void);
+	
+	void StartSkidding(void);
+	void StartFlying(void);
 };
 
 

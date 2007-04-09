@@ -2,6 +2,7 @@
 #include "TransportUnit.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/LosHandler.h"
@@ -65,9 +66,23 @@ void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		ti->unit->transporter=0;
 		ti->unit->DeleteDeathDependence(this);
-		if(!selfDestruct)
-			ti->unit->DoDamage(DamageArray()*1000000,0,ZeroVector);	//dont want it to leave a corpse
-		ti->unit->KillUnit(selfDestruct,reclaimed,attacker);
+		if(!unitDef->releaseHeld)
+		{
+			if(!selfDestruct)
+			{
+				ti->unit->DoDamage(DamageArray()*1000000,0,ZeroVector);	//dont want it to leave a corpse
+			}
+			ti->unit->KillUnit(selfDestruct,reclaimed,attacker);
+		} else
+		{
+			ti->unit->stunned = false;
+			if(CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(ti->unit->moveType))
+			{
+				mt->StartSkidding();
+				mt->StartFlying();
+			}
+			ti->unit->speed = speed;
+		}
 	}
 	CUnit::KillUnit(selfDestruct,reclaimed,attacker);
 }
