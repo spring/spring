@@ -299,13 +299,13 @@ void CMobileCAI::ExecuteMove(Command &c)
 }
 
 void CMobileCAI::ExecuteLoadUnits(Command &c){
+	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int)c.params[0]]);
+	if(!tran){
+		FinishCommand();
+		return;
+	}
 	if(!inCommand){
 		inCommand ^= true;
-		CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int)c.params[0]]);
-		if(!tran){
-			FinishCommand();
-			return;
-		}
 		Command newCommand;
 		newCommand.id = CMD_LOAD_UNITS;
 		newCommand.params.push_back(owner->id);

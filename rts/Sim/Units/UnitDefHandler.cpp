@@ -396,13 +396,14 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.loadingRadius=atof(tdfparser.SGetValueDef("220", "UNITINFO\\loadingradius").c_str());
 	tdfparser.GetDef(ud.transportMass, "100000", "UNITINFO\\TransportMass");
 	tdfparser.GetDef(ud.holdSteady, "1", "UNITINFO\\HoldSteady");
+	tdfparser.GetDef(ud.releaseHeld, "0", "UNITINFO\\ReleaseHeld");
 
 	tdfparser.GetDef(ud.wingDrag, "0.07", "UNITINFO\\WingDrag");				//drag caused by wings
 	tdfparser.GetDef(ud.wingAngle, "0.08", "UNITINFO\\WingAngle");			//angle between front and the wing plane
 	tdfparser.GetDef(ud.drag, "0.005", "UNITINFO\\Drag");								//how fast the aircraft loses speed (see also below)
 	tdfparser.GetDef(ud.frontToSpeed, "0.1", "UNITINFO\\frontToSpeed");	//fudge factor for lining up speed and front of plane
 	tdfparser.GetDef(ud.speedToFront, "0.07", "UNITINFO\\speedToFront");//fudge factor for lining up speed and front of plane
-	tdfparser.GetDef(ud.myGravity, "0.4", "UNITINFO\\myGravity");				//planes are slower than real airplanes so lower gravity to compensate
+	tdfparser.GetDef(ud.myGravity, "0.4", "UNITINFO\\myGravity");	 			//planes are slower than real airplanes so lower gravity to compensate
 
 	tdfparser.GetDef(ud.maxBank, "0.8", "UNITINFO\\maxBank");						//max roll
 	tdfparser.GetDef(ud.maxPitch, "0.45", "UNITINFO\\maxPitch");				//max pitch this plane tries to keep

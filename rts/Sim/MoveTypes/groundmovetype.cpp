@@ -1677,3 +1677,11 @@ bool CGroundMoveType::OnSlope(){
 		&& (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
 		owner->unitDef->movedata->maxSlope*owner->unitDef->slideTolerance);
 }
+
+void CGroundMoveType::StartSkidding(){
+	skidding = true;
+}
+
+void CGroundMoveType::StartFlying() {
+	flying = true;
+}
