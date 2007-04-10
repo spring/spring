@@ -20,11 +20,16 @@
 
 using namespace std;
 
-static CVertexArray* vertexArray1=0;
-static CVertexArray* vertexArray2=0;
-static CVertexArray* currentVertexArray=0;
 
-static unsigned int startupTexture=0;
+static CVertexArray* vertexArray1 = 0;
+static CVertexArray* vertexArray2 = 0;
+static CVertexArray* currentVertexArray = 0;
+
+static unsigned int startupTexture = 0;
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
@@ -35,6 +40,9 @@ CVertexArray* GetVertexArray()
 	}
 	return currentVertexArray;
 }
+
+
+/******************************************************************************/
 
 void LoadExtensions()
 {
@@ -70,41 +78,70 @@ void UnloadExtensions()
 
 }
 
-void LoadStartPicture()
-{
-	vector<string> bmps=CFileHandler::FindFiles("bitmaps/loadpictures/", "*.bmp");
-	vector<string> jpgs=CFileHandler::FindFiles("bitmaps/loadpictures/", "*.jpg");
 
-	int num=bmps.size()+jpgs.size();
-	if(num==0)
-		return;
-	int selected = gu->usRandInt() % num;
+/******************************************************************************/
+
+static string SelectPicture(const std::string& dir, const std::string& prefix)
+{
+	vector<string> bmps = CFileHandler::FindFiles(dir, prefix + "*.bmp");
+	vector<string> jpgs = CFileHandler::FindFiles(dir, prefix + "*.jpg");
+
+	const int num = bmps.size() + jpgs.size();
+	if (num == 0) {
+		return "";
+	}
+	const int selected = gu->usRandInt() % num;
 
 	string name;
-	if(selected<bmps.size())
-		name=bmps[selected];
-	else
-		name=jpgs[selected-bmps.size()];
+	if (selected < bmps.size()) {
+		name = bmps[selected];
+	} else {
+		name = jpgs[selected - bmps.size()];
+	}
+
+	return name;
+}
+
+
+void LoadStartPicture(const std::string& sidePref)
+{
+	const string picDir = "bitmaps/loadpictures/";
+
+	string name = "";
+	if (!sidePref.empty()) {
+		name = SelectPicture(picDir, sidePref + "_");
+	}
+	if (name.empty()) {
+		name = SelectPicture(picDir, "");
+	}
+	if (name.empty()) {
+		return; // no valid pictures
+	}
 
 	CBitmap bm;
-	if (!bm.Load(name))
+	if (!bm.Load(name)) {
 		throw content_error("Could not load startpicture from file " + name);
+	}
 
 	/* HACK Really big load pictures made a GLU choke. */
-	if (bm.xsize > gu->viewSizeX || bm.ysize > gu->viewSizeY)
-	{
+	if ((bm.xsize > gu->viewSizeX) || (bm.ysize > gu->viewSizeY)) {
 		bm = bm.CreateRescaled(gu->viewSizeX, gu->viewSizeY);
 	}
 
-	startupTexture=bm.CreateTexture(false);
+	startupTexture = bm.CreateTexture(false);
 }
+
 
 void UnloadStartPicture()
 {
-	if(startupTexture)
-		glDeleteTextures(1,&startupTexture);
-	startupTexture=0;
+	if (startupTexture) {
+		glDeleteTextures(1, &startupTexture);
+	}
+	startupTexture = 0;
 }
+
+
+/******************************************************************************/
 
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
@@ -162,6 +199,8 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	POP_CODE_MODE;
 }
 
+
+/******************************************************************************/
 /**
  * True if the program in DATADIR/shaders/filename is
  * loadable and can run inside our graphics server.
@@ -169,6 +208,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
  * @param target glProgramStringARB target: GL_FRAGMENT_PROGRAM_ARB GL_VERTEX_PROGRAM_ARB
  * @param filename Name of the file under shaders with the program in it.
  */
+
 bool ProgramStringIsNative(GLenum target, const char* filename)
 {
 	unsigned int tempProg;
@@ -211,6 +251,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 		return false;
 }
 
+
 /**
  * Presumes the last GL operation was to load a vertex or
  * fragment program.
@@ -238,6 +279,7 @@ static void CheckParseErrors(const char * program_type, const char * filename)
 		errPos,program_type,filename);
 	throw content_error(c);
 }
+
 
 static unsigned int LoadProgram(GLenum target, const char* filename, const char * program_type)
 {
@@ -285,6 +327,9 @@ void glSafeDeleteProgram(GLuint program)
 	glDeleteProgramsARB(1, &program);
 }
 
+
+/******************************************************************************/
+
 void glClearErrors()
 {
 	int safety = 0;
@@ -293,5 +338,12 @@ void glClearErrors()
 	}
 }
 
+
+/******************************************************************************/
+
 IFramebuffer::~IFramebuffer() {
 }
+
+
+/******************************************************************************/
+/******************************************************************************/

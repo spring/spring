@@ -3,6 +3,7 @@
 
 #define GLEW_STATIC
 
+#include <string>
 #include <GL/glew.h>
 #include "float3.h"
 
@@ -26,7 +27,7 @@ inline void glTranslatef3(const float3 &v)
 	glTranslatef(v.x,v.y,v.z);
 }
 
-void LoadStartPicture();
+void LoadStartPicture(const std::string& sidePref);
 void PrintLoadMsg(const char* text, bool swapbuffers = true);
 void UnloadStartPicture();
 bool ProgramStringIsNative(GLenum target, const char* filename);
