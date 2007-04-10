@@ -796,11 +796,11 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const int facing = ParseFacing(L, __FUNCTION__, 5);
 		
 	int team = CtrlTeam();
-	if (args >= 6) {
+	if ((args >= 6) && lua_isnumber(L, 6)) {
 		team = (int)lua_tonumber(L, 6);
 	}
-	if (team < 0) {
-		luaL_error(L, "CreateUnit(): AllAccessTeam must specify a unit team");
+	if ((team < 0) || (team >= MAX_TEAMS)) {
+		luaL_error(L, "CreateUnit(): bad team number: %i", team);
 	}
 
 	if (!FullCtrl() && (CtrlTeam() != team)) {
@@ -1290,15 +1290,23 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		heading = (int)lua_tonumber(L, 5);
 	}
 		
-	int allyTeam = CtrlAllyTeam();
-	if (allyTeam < 0) {
-		allyTeam = -1; // default to global for AllAccessTeam
+	int team = CtrlTeam();
+	if (team < 0) {
+		team = -1; // default to global for AllAccessTeam
 	}
+
 	if ((args >= 6) && lua_isnumber(L, 6)) {
-		allyTeam = (int)lua_tonumber(L, 6);
+		team = (int)lua_tonumber(L, 6);
+		if (team < -1) {
+			team = -1;
+		} else if (team >= MAX_TEAMS) {
+			return 0;
+		}
 	}
+
+	const int allyTeam = (team < 0) ? -1 : gs->AllyTeam(team);
 	if (!CanControlFeatureAllyTeam(allyTeam)) {
-		luaL_error(L, "CreateFeature() bad team permission %i", allyTeam);
+		luaL_error(L, "CreateFeature() bad team permission %i", team);
 	}
 
 	if (inCreateFeature) {
@@ -1308,7 +1316,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = SAFE_NEW CFeature();
-	feature->Initialize(pos, featureDef, heading, 0, allyTeam, "");
+	feature->Initialize(pos, featureDef, heading, 0, team, "");
 	featureHandler->AddFeature(feature);
 	inCreateFeature = false;
 
@@ -1349,11 +1357,11 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to TransferFeature()");
 	}
-	const int allyTeam = (int)lua_tonumber(L, 2);
-	if ((allyTeam < -1) || (allyTeam > MAX_TEAMS)) {
+	const int team = (int)lua_tonumber(L, 2);
+	if (team >= MAX_TEAMS) {
 		return 0;
 	}
-	feature->allyteam = allyTeam;
+	feature->ChangeTeam(team);
 	return 0;
 }
 

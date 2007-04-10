@@ -25,11 +25,11 @@ local keyWords = {
  "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true",
  "until", "while"
 }
-
 local keyWordSet = {}
 for _,w in ipairs(keyWords) do
   keyWordSet[w] = true
 end
+keyWords = nil  -- don't need the array anymore
 
 
 --------------------------------------------------------------------------------

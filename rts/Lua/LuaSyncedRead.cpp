@@ -152,6 +152,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
+	REGISTER_LUA_CFUNC(GetUnitLineage);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
@@ -184,6 +185,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetFeatureList);
 	REGISTER_LUA_CFUNC(GetFeatureDefID);
+	REGISTER_LUA_CFUNC(GetFeatureTeam);
 	REGISTER_LUA_CFUNC(GetFeatureAllyTeam);
 	REGISTER_LUA_CFUNC(GetFeatureHealth);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
@@ -2006,6 +2008,25 @@ int LuaSyncedRead::GetUnitAllyTeam(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitLineage(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->lineage);
+	if (IsEnemyUnit(unit)) {
+		return 1;
+	}
+	const CTeam* team = gs->Team(unit->team);
+	if (team == NULL) {
+		return 1;
+	}
+	lua_pushboolean(L, team->lineageRoot == unit->id);
+	return 2;
+}
+
+
 int LuaSyncedRead::GetUnitHealth(lua_State* L)
 {
 	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
@@ -2767,6 +2788,17 @@ int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, feature->def->id);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetFeatureTeam(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, feature->team);
 	return 1;
 }
 

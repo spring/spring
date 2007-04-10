@@ -77,6 +77,7 @@ class LuaSyncedRead {
 		static int GetUnitDefID(lua_State* L);
 		static int GetUnitTeam(lua_State* L);
 		static int GetUnitAllyTeam(lua_State* L);
+		static int GetUnitLineage(lua_State* L);
 		static int GetUnitHealth(lua_State* L);
 		static int GetUnitResources(lua_State* L);
 		static int GetUnitExperience(lua_State* L);
@@ -112,6 +113,7 @@ class LuaSyncedRead {
 
 		static int GetFeatureList(lua_State* L);
 		static int GetFeatureDefID(lua_State* L);
+		static int GetFeatureTeam(lua_State* L);
 		static int GetFeatureAllyTeam(lua_State* L);
 		static int GetFeatureHealth(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
