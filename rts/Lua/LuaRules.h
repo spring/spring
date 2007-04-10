@@ -45,6 +45,8 @@ class CLuaRules : public CLuaHandleSynced
 		                          const float3& pos);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 
+		bool CommandFallback(const CUnit* unit, const Command& cmd);
+
 	private:
 		CLuaRules();
 		~CLuaRules();
@@ -80,6 +82,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowUnitCreation;
 		bool haveAllowUnitTransfer;
 		bool haveAllowFeatureCreation;
+		bool haveCommandFallback;
 
 		map<string, string> infoMap;
 

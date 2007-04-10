@@ -562,8 +562,10 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 	}
 
 	commandQue.push_back(c);
-	if(commandQue.size()==1 && !owner->beingBuilt)
+
+	if (commandQue.size()==1 && !owner->beingBuilt) {
 		SlowUpdate();
+	}
 }
 
 
@@ -1026,7 +1028,7 @@ void CCommandAI::SlowUpdate()
 		return;
 	}
 
-	Command& c=commandQue.front();
+	Command& c = commandQue.front();
 
 	switch(c.id){
 		case CMD_WAIT:{
@@ -1054,7 +1056,13 @@ void CCommandAI::SlowUpdate()
 			return;
     }
 	}
-	ExecuteStateCommand(c);
+	if (ExecuteStateCommand(c)) {
+		FinishCommand();
+		return;
+	}
+	if (luaRules && !luaRules->CommandFallback(owner, c)) {
+		return; // luaRules wants the command to stay at the front
+	}
 	FinishCommand();
 }
 
