@@ -2798,7 +2798,11 @@ int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, feature->team);
+	if (feature->allyteam < 0) {
+		lua_pushnumber(L, -1);
+	} else {
+		lua_pushnumber(L, feature->team);
+	}
 	return 1;
 }
 
