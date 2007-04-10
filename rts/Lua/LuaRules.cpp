@@ -371,7 +371,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	const int args = lua_gettop(L);
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
-										cmdStr.GetString().c_str(), args);
+		                cmdStr.GetString().c_str(), args);
 		lua_settop(L, 0);
 		return true;
 	}
