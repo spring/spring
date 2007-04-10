@@ -81,37 +81,32 @@ void UnloadExtensions()
 
 /******************************************************************************/
 
+static void AppendStringVec(vector<string>& dst, const vector<string>& src)
+{
+	for (int i = 0; i < (int)src.size(); i++) {
+		dst.push_back(src[i]);
+	}
+}
+
+
 static string SelectPicture(const std::string& dir, const std::string& prefix)
 {
-	vector<string> bmps = CFileHandler::FindFiles(dir, prefix + "*.bmp");
-	vector<string> jpgs = CFileHandler::FindFiles(dir, prefix + "*.jpg");
+	vector<string> pics;
+
+	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*.bmp"));
+	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*.jpg"));
 
 	// add 'allside_' pictures if we have a prefix
 	if (!prefix.empty()) {
-		vector<string> allBmps = CFileHandler::FindFiles(dir, "allside_*.bmp");
-		for (int i = 0; i < (int)allBmps.size(); i++) {
-			bmps.push_back(allBmps[i]);
-		}
-		vector<string> allJpgs = CFileHandler::FindFiles(dir, "allside_*.jpg");
-		for (int i = 0; i < (int)allJpgs.size(); i++) {
-			jpgs.push_back(allJpgs[i]);
-		}
+		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*.bmp"));
+		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*.jpg"));
 	}
 
-	const int num = bmps.size() + jpgs.size();
-	if (num == 0) {
+	if (pics.empty()) {
 		return "";
 	}
-	const int selected = gu->usRandInt() % num;
 
-	string name;
-	if (selected < bmps.size()) {
-		name = bmps[selected];
-	} else {
-		name = jpgs[selected - bmps.size()];
-	}
-
-	return name;
+	return pics[gu->usRandInt() % pics.size()];
 }
 
 
