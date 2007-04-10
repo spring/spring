@@ -92,6 +92,7 @@ CLuaRules::CLuaRules()
 	haveAllowUnitCreation    = HasCallIn("AllowUnitCreation");
 	haveAllowUnitTransfer    = HasCallIn("AllowUnitTransfer");
 	haveAllowFeatureCreation = HasCallIn("AllowFeatureCreation");
+	haveCommandFallback      = HasCallIn("CommandFallback");
 }
 
 
@@ -314,6 +315,63 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
+bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
+{
+	if (!haveCommandFallback) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("CommandFallback");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	// push the unit info
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// push the command id
+	lua_pushnumber(L, cmd.id);
+
+	// push the params list
+	lua_newtable(L);
+	for (int p = 0; p < (int)cmd.params.size(); p++) {
+		lua_pushnumber(L, p + 1);
+		lua_pushnumber(L, cmd.params[p]);
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", cmd.params.size());
+
+	// push the options table
+	lua_newtable(L);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",   (cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  (cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", (cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", (cmd.options & RIGHT_MOUSE_KEY));
+
+	// call the function  
+	if (!RunCallIn(cmdStr, 6, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+										cmdStr.GetString().c_str(), args);
 		lua_settop(L, 0);
 		return true;
 	}
