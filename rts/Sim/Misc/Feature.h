@@ -37,6 +37,7 @@ public:
 	void DrawS3O();
 	void CalculateTransform();
 	void DependentDied(CObject *o);
+	void ChangeTeam(int newTeam);
 
 	CUnit* lastBuilder;
 	S3DOModel* model;      //used by 3do obects

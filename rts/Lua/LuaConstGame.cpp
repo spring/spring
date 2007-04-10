@@ -59,8 +59,15 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedBool(L,   "mapWaterVoid",  readmap->voidWater);
 	LuaPushNamedBool(L,   "mapWaterPlane", readmap->hasWaterPlane);
 
-	LuaPushNamedString(L, "modName",       modInfo->name);
-	LuaPushNamedString(L, "modHumanName",  modInfo->humanName);
+	LuaPushNamedString(L, "modName",         modInfo->name);
+	LuaPushNamedString(L, "modHumanName",    modInfo->humanName);
+	LuaPushNamedBool(L,   "allowTeamColors", modInfo->allowTeamColors);
+	LuaPushNamedNumber(L, "multiReclaim",    modInfo->multiReclaim);
+	LuaPushNamedNumber(L, "reclaimMethod",   modInfo->reclaimMethod);
+	LuaPushNamedNumber(L, "transportAir",    modInfo->transportAir);
+	LuaPushNamedNumber(L, "transportShip",   modInfo->transportShip);
+	LuaPushNamedNumber(L, "transportHover",  modInfo->transportHover);
+	LuaPushNamedNumber(L, "transportGround", modInfo->transportGround);
 
 	const vector<string> cats =
 		CCategoryHandler::Instance()->GetCategoryNames(~0);

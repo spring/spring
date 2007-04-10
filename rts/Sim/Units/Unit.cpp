@@ -1066,17 +1066,16 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		radarhandler->MoveUnit(this);
 	}
 
-	//model=unitModelLoader->GetModel(model->name,newteam);
 	if (unitDef->useCSOffset) {
 		model = modelParser->Load3DO(model->name.c_str(),
-				unitDef->collisionSphereScale,newteam,
+				unitDef->collisionSphereScale, newteam,
 				unitDef->collisionSphereOffset);
 	}
 	else {
 		model = modelParser->Load3DO(model->name.c_str(),
-				unitDef->collisionSphereScale,newteam);
+				unitDef->collisionSphereScale, newteam);
 	}
-//	model = modelParser->Load3DO(model->name.c_str(), 1, newteam);
+
 	delete localmodel;
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
 

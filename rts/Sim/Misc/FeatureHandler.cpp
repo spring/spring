@@ -121,14 +121,14 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		return 0;
 
 	if(iter>1){
-		return CreateWreckage(pos,fd->deathFeature,rot,facing, iter-1,team,emitSmoke,"");
+		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, emitSmoke, "");
 	} else {
 		if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos)) {
 			return NULL;
 		}
 		if(!fd->modelname.empty()){
 			CFeature* f=SAFE_NEW CFeature;
-			f->Initialize (pos,fd,(short int)rot,facing,team,fromUnit);
+			f->Initialize (pos, fd, (short int)rot, facing, team, fromUnit);
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 			return f;

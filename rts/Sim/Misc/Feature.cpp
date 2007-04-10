@@ -49,6 +49,7 @@ CFeature::CFeature()
 	fireTime(0),
 	myFire(0),
 	drawQuad(-1),
+	team(0),
 	allyteam(0),
 	tempNum(0),
 	emitSmokeTime(0),
@@ -82,66 +83,96 @@ CFeature::~CFeature(void)
 }
 
 
-void CFeature::Initialize (const float3& pos, FeatureDef* def, short int heading,
-                           int facing, int team, std::string fromUnit)
+void CFeature::ChangeTeam(int newTeam)
 {
-	this->def=def;
-	createdFromUnit=fromUnit;
-	this->pos=pos;
-	if (team == -1) {
-		this->allyteam=team;
-		this->team=0;
+	if (newTeam < 0) {
+		team = 0; // NOTE: this should probably be -1, would need work
+		allyteam = -1;
 	} else {
-		this->allyteam=gs->AllyTeam(team);
-		this->team=team;
+		team = newTeam;
+		allyteam = gs->AllyTeam(newTeam);
 	}
-	this->pos.CheckInBounds();
-	this->heading=heading;
-	health=def->maxHealth;
-	SetRadius(def->radius);
-	blocking=def->blocking;
-	xsize=def->xsize;
-	ysize=def->ysize;
-	mass=def->mass;
-	buildFacing=facing;
-
-	if(def->drawType==DRAWTYPE_3DO){
-		if(!def->useCSOffset) {
-			model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,team);
+	
+	if (def->drawType == DRAWTYPE_3DO){
+		if (!def->useCSOffset) {
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team);
 		} else {
-			model=modelParser->Load3DO(def->modelname.c_str(),def->collisionSphereScale,team, def->collisionSphereOffset);
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team,
+			                             def->collisionSphereOffset);
 		}
-		height=model->height;
-		def->radius=model->radius;
-		SetRadius(def->radius);			
-		midPos=pos+model->relMidPos;
-	} else if(def->drawType==DRAWTYPE_TREE){
-		midPos=pos+UpVector*def->radius;
-		height = 2*def->radius;
-	} else {
-		midPos=pos;
 	}
-	id=featureHandler->AddFeature(this);
+}
+
+
+void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _heading,
+                          int facing, int _team, std::string fromUnit)
+{
+	pos = _pos;
+	def = _def;
+	heading = _heading;
+	buildFacing = facing;
+	team = _team;
+	createdFromUnit = fromUnit;
+
+	ChangeTeam(team);
+
+	pos.CheckInBounds();
+
+	health   = def->maxHealth;
+	blocking = def->blocking;
+	xsize    = def->xsize;
+	ysize    = def->ysize;
+	mass     = def->mass;
+	SetRadius(def->radius);
+
+	if (def->drawType == DRAWTYPE_3DO) {
+		if (!def->useCSOffset) {
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team);
+		} else {
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team,
+			                             def->collisionSphereOffset);
+		}
+		height = model->height;
+		def->radius = model->radius;
+		SetRadius(def->radius);			
+		midPos = pos + model->relMidPos;
+	}
+	else if (def->drawType == DRAWTYPE_TREE){
+		midPos = pos + (UpVector * def->radius);
+		height = 2 * def->radius;
+	}
+	else {
+		midPos = pos;
+	}
+
+	id = featureHandler->AddFeature(this);
+
 	qf->AddFeature(this);
 
 	CalculateTransform ();
 //	this->pos.y=ground->GetHeight(pos.x,pos.z);
 
-	if(blocking){
+	if (blocking) {
 		Block();
 	}
-	if(def->floating){
-		finalHeight=ground->GetHeight(pos.x,pos.z);
+
+	if (def->floating) {
+		finalHeight = ground->GetHeight(pos.x, pos.z);
 	} else {
-		finalHeight=ground->GetHeight2(pos.x,pos.z);
+		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
 
-	if(def->drawType==DRAWTYPE_TREE)
-		treeDrawer->AddTree(def->modelType,pos,1);
+	if (def->drawType == DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->modelType, pos, 1);
+	}
 }
 
 
-void CFeature::CalculateTransform ()
+void CFeature::CalculateTransform()
 {
 	float3 frontDir=GetVectorFromHeading(heading);
 	float3 upDir;
@@ -267,7 +298,8 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	residualImpulse=impulse;
 	health-=damages[0];
 	if(health<=0 && def->destructable){
-+		featureHandler->CreateWreckage(pos,def->deathFeature,heading,buildFacing, 1,team,false,"");
+		featureHandler->CreateWreckage(pos, def->deathFeature, heading,
+		                               buildFacing, 1, team, false, "");
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges=false;
 
