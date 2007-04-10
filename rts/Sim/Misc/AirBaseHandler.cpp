@@ -36,30 +36,28 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
-	AirBase* ab=SAFE_NEW AirBase;
-	ab->unit=base;
+	AirBase* ab = SAFE_NEW AirBase;
+	ab->unit = base;
 
+	const int maxPadsPerBase = 16;
 	std::vector<int> args;
-	args.push_back(0);
-	args.push_back(0);
+	for (int i = 0; i < maxPadsPerBase; i++) {
+		args.push_back(-1);
+	}
 
-	base->cob->Call("QueryLandingPad",args);
+	base->cob->Call("QueryLandingPad", args);
 
-	LandingPad* pad=SAFE_NEW LandingPad;
-	
-	pad->unit=base;
-	pad->piece=args[0];
-	pad->base=ab;
-
-	ab->pads.push_back(pad);
-	ab->freePads.push_back(pad);
-
-	if(args[0]!=args[1]){	//if we get two different pieces we assume the unit has two pads, not sure what is the correct way
+	// FIXME: use a set to avoid multiple bases per piece?
+	for (int p = 0; p < (int)args.size(); p++) {
+		const int piece = args[p];
+		if (piece == -1) {
+			continue;
+		}
 		LandingPad* pad=SAFE_NEW LandingPad;
 		
-		pad->unit=base;
-		pad->piece=args[1];
-		pad->base=ab;
+		pad->unit = base;
+		pad->piece = piece;
+		pad->base = ab;
 
 		ab->pads.push_back(pad);
 		ab->freePads.push_back(pad);
