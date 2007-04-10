@@ -339,7 +339,9 @@ bool CPreGame::Update()
 			// always load springcontent.sdz
 			hpiHandler->AddArchive("base/springcontent.sdz", false);
 
-			LoadStartPicture();
+			const int teamID = gs->players[gu->myPlayerNum]->team;
+			const CTeam* team = gs->Team(teamID);
+			LoadStartPicture(team->side);
 
 			game = SAFE_NEW CGame(server, mapName, modName, infoConsole);
 
