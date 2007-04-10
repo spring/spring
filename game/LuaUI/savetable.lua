@@ -19,25 +19,33 @@ local indentString = '\t'
 
 local savedTables = {}
 
+-- setup a lua keyword map
+local keyWords = {
+ "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
+ "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true",
+ "until", "while"
+}
+
+local keyWordSet = {}
+for _,w in ipairs(keyWords) do
+  keyWordSet[w] = true
+end
+
+
+--------------------------------------------------------------------------------
+
 local function encloseStr(s)
   return string.format('%q', s)
 end
 
+
 local function encloseKey(s)
-  local wrap = string.find(s, '[^%w]')
+  local wrap = not (string.find(s, '^%a[_%a%d]*$'))
   if (not wrap) then
     if (string.len(s) <= 0) then wrap = true end
   end
   if (not wrap) then
-    local keywords = {
-      ['and'] = true, ['break'] = true, ['do'] = true, ['else'] = true,
-      ['elseif'] = true, ['end'] = true, ['false'] = true, ['for'] = true,
-      ['function'] = true, ['if'] = true, ['in'] = true, ['local'] = true,
-      ['nil'] = true, ['not'] = true, ['or'] = true, ['repeat'] = true,
-      ['return'] = true, ['then'] = true, ['true'] = true, ['until'] = true,
-      ['while'] = true
-    }
-    if (keywords[s]) then wrap = true end
+    if (keyWordSet[s]) then wrap = true end
   end
     
   if (wrap) then
@@ -65,10 +73,13 @@ local valueTypes = {
 local function CompareKeys(kv1, kv2)
   local k1, v1 = kv1[1], kv1[2]
   local k2, v2 = kv2[1], kv2[2]
+
+  local ktype1 = type(k1)
+  local ktype2 = type(k2)
   if (ktype1 ~= ktype2) then
-    return (ktype1 < ktype2)
+    return (ktype1 > ktype2)
   end
----[[
+
   local vtype1 = type(v1)
   local vtype2 = type(v2)
   if ((vtype1 == 'table') and (vtype2 ~= 'table')) then
@@ -77,7 +88,7 @@ local function CompareKeys(kv1, kv2)
   if ((vtype1 ~= 'table') and (vtype2 == 'table')) then
     return true
   end
---]]
+
   return (k1 < k2)
 end
 
