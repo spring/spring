@@ -195,7 +195,7 @@ int CGlobalAI::HandleEvent(int msg, const void* data) {
 				UnitFinished(cte -> unit);
 				ai -> MyUnits[cte -> unit] -> Stop();
 			}
-		}
+		} break;
 		case AI_EVENT_UNITCAPTURED: {
 			const ChangeTeamEvent* cte = (const ChangeTeamEvent*) data;
 
@@ -203,7 +203,7 @@ int CGlobalAI::HandleEvent(int msg, const void* data) {
 				// lost a unit
 				UnitDestroyed(cte -> unit, 0);
 			}
-		}
+		} break;
 	}
 
 	return 0;
