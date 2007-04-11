@@ -183,11 +183,32 @@ void CGlobalAI::GotChatMsg(const char* msg, int player) {
 	player = player;
 }
 
+
 int CGlobalAI::HandleEvent(int msg, const void* data) {
-	msg = msg;
-	data = data;
+	switch (msg) {
+		case AI_EVENT_UNITGIVEN: {
+			const ChangeTeamEvent* cte = (const ChangeTeamEvent*) data;
+
+			if ((cte -> newteam) == (ai -> cb -> GetMyTeam())) {
+				// got a unit
+				UnitCreated(cte -> unit);
+				UnitFinished(cte -> unit);
+				ai -> MyUnits[cte -> unit] -> Stop();
+			}
+		}
+		case AI_EVENT_UNITCAPTURED: {
+			const ChangeTeamEvent* cte = (const ChangeTeamEvent*) data;
+
+			if ((cte -> oldteam) == (ai -> cb -> GetMyTeam())) {
+				// lost a unit
+				UnitDestroyed(cte -> unit, 0);
+			}
+		}
+	}
+
 	return 0;
 }
+
 
 
 
