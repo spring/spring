@@ -483,6 +483,10 @@ void CGame::ResizeEvent()
 	if (minimap != NULL) {
 		minimap->UpdateGeometry();
 	}
+
+	// Fix water renderer, they depend on screen resolution...
+	delete water;
+	water = CBaseWater::GetWater();
 }
 
 
