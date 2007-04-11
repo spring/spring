@@ -3,7 +3,7 @@
 
 
 CUnitHandler::CUnitHandler(AIClasses* ai) {
-	this -> ai=ai;
+	this -> ai = ai;
 	IdleUnits.resize(LASTCATEGORY);
 	BuildTasks.resize(LASTCATEGORY);
 	TaskPlans.resize(LASTCATEGORY);
@@ -47,53 +47,49 @@ void CUnitHandler::IdleUnitUpdate() {
 //	std::cout << "CUnitHandler::IdleUnitUpdate()" << std::endl;
 
 	list<integer2> limboremoveunits;
-	for(list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++){
-		if(i -> y > 0){
+	for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
+		if (i -> y > 0) {
 			i -> y = i -> y - 1;
 		}
-		else{
-			//L("adding unit to idle units: " << i -> x);
-			if(ai -> cb -> GetUnitDef(i -> x) == NULL)
-			{
-				//L(" Removeing dead unit... ");
+		else {
+			// L("adding unit to idle units: " << i -> x);
+			if (ai -> cb -> GetUnitDef(i -> x) == NULL) {
+				// L(" Removeing dead unit... ");
 				
 			}
 			else
 				IdleUnits[ai -> ut -> GetCategory(i -> x)] -> push_back(i -> x);
-			if(ai -> ut -> GetCategory(i -> x) == CAT_BUILDER)
-			{
-				//GetBuilderTracker(i -> x) -> idleStartFrame = -1; // Its ok now, stop the force idle  (hack)
+			if (ai -> ut -> GetCategory(i -> x) == CAT_BUILDER) {
+				// it' ok now, stop the force idle (hack)
+				// GetBuilderTracker(i -> x) -> idleStartFrame = -1;
 			}
-			
-				
+
 			limboremoveunits.push_back(*i);
 		}
 	}
-	if(limboremoveunits.size()){
-		for(list<integer2>::iterator i = limboremoveunits.begin(); i != limboremoveunits.end(); i++){
+	if (limboremoveunits.size()) {
+		for (list<integer2>::iterator i = limboremoveunits.begin(); i != limboremoveunits.end(); i++) {
 			Limbo.remove(*i);
 		}
 	}
-	// Make shure that all the builders are in action:   (hack ?)
-	if(ai -> cb -> GetCurrentFrame() % 15 == 0)
-		for(list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++){
-			
-			// The new test:
-			if((*i) -> idleStartFrame != -2) // The brand new builders must be filtered still
-			{
-				//L("VerifyOrder");
+	// make sure that all the builders are in action (hack?)
+	if (ai -> cb -> GetCurrentFrame() % 15 == 0)
+		for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+			// the new test
+			if ((*i) -> idleStartFrame != -2) {
+				// the brand new builders must be filtered still
+				// L("VerifyOrder");
 				bool ans = VerifyOrder(*i);
 				const CCommandQueue* mycommands = ai -> cb -> GetCurrentUnitCommands((*i) -> builderID);
 				Command c;
-				if(mycommands -> size() > 0)
+
+				if (mycommands -> size() > 0)
 					c = mycommands -> front();
-				
-				// Two sec delay is ok
-				if(( (*i) -> commandOrderPushFrame + LAG_ACCEPTANCE) < ai -> cb -> GetCurrentFrame())
-				{
-					//assert(ans);
-					if(!ans)
-					{
+
+				// two sec delay is ok
+				if (( (*i) -> commandOrderPushFrame + LAG_ACCEPTANCE) < ai -> cb -> GetCurrentFrame()) {
+					// assert(ans);
+					if (!ans) {
 						char text[512];
 						float3 pos = ai -> cb -> GetUnitPos((*i) -> builderID);
 						sprintf(text, "builder %i VerifyOrder failed ", (*i) -> builderID);
@@ -101,70 +97,15 @@ void CUnitHandler::IdleUnitUpdate() {
 						amp.label = text;
 						amp.pos = pos;
 						////ai -> cb -> HandleCommand(&amp);
-						
+
 						ClearOrder(*i, false);
-						if(!mycommands -> empty())
+						if (!mycommands -> empty())
 							DecodeOrder(*i, true);
-						else // Its idle
+						else // it's idle
 							IdleUnitAdd((*i) -> builderID);
-							
 					}
 				}
 			}
-			
-			/*
-			if((*i) -> buildTaskId == 0 && (*i) -> taskPlanId == 0 && (*i) -> factoryId == 0 && (*i) -> customOrderId == 0 && (*i) -> idleStartFrame != -2)
-			{
-				// Its without tasks and not in the idle list
-				if((*i) -> idleStartFrame == -1)
-				{
-					(*i) -> idleStartFrame = ai -> cb -> GetCurrentFrame();
-				}
-				else
-				{
-					if(((*i) -> idleStartFrame + 90) < ai -> cb -> GetCurrentFrame())
-					{
-						//L("Idle unit command force: " << (*i) -> builderID);
-						char text[512];
-						float3 pos = ai -> cb -> GetUnitPos((*i) -> builderID);
-						sprintf(text, "builder %i without tasks and not in the idle list (idle forced)", (*i) -> builderID);
-						AIHCAddMapPoint amp;
-						amp.label = text;
-						amp.pos = pos;
-						////ai -> cb -> HandleCommand(&amp);
-						IdleUnitAdd((*i) -> builderID);
-						(*i) -> idleStartFrame =  ai -> cb -> GetCurrentFrame(); // Just to cut down on the spam, if its not idle
-					}
-				}
-			} else if((*i) -> idleStartFrame != -2) // This will only be ok if idleStartFrame is changed to -1 on unit UnitFinished
-			{
-			*/
-			/*
-				//L("VerifyOrder");
-				bool ans = VerifyOrder(*i);
-				const CCommandQueue* mycommands = ai -> cb -> GetCurrentUnitCommands((*i) -> builderID);
-				Command c;
-				if(mycommands -> size() > 0)
-					c = mycommands -> front();
-				
-				// Two sec delay is ok
-				if(( (*i) -> commandOrderPushFrame + 30 * 2) < ai -> cb -> GetCurrentFrame())
-				{
-					//assert(ans);
-					if(!ans)
-					{
-						char text[512];
-						float3 pos = ai -> cb -> GetUnitPos((*i) -> builderID);
-						sprintf(text, "builder %i VerifyOrder failed ", (*i) -> builderID);
-						AIHCAddMapPoint amp;
-						amp.label = text;
-						amp.pos = pos;
-						////ai -> cb -> HandleCommand(&amp);
-					}
-				}
-				* /
-			}
-			*/
 		}
 }
 
@@ -172,21 +113,21 @@ void CUnitHandler::UnitMoveFailed(int unit) {
 	unit = unit;
 }
 
-void CUnitHandler::UnitCreated(int unit)
-{
+void CUnitHandler::UnitCreated(int unit) {
 	int category = ai -> ut -> GetCategory(unit);
 	const UnitDef* newUnitDef = ai -> cb -> GetUnitDef(unit);
-	if(category != -1){
-		//L("Unit " << unit << " created, ID : " << newUnitDef -> id << " Cat: " << category);
+
+	if (category != -1) {
+		// L("Unit " << unit << " created, ID : " << newUnitDef -> id << " Cat: " << category);
 		AllUnitsByCat[category] -> push_back(unit);
 		AllUnitsByType[newUnitDef -> id] -> push_back(unit);
-		////L("push sucessful");
-		if(category == CAT_FACTORY){
+		// L("push sucessful");
+		if (category == CAT_FACTORY) {
 			FactoryAdd(unit);
 		}
 		BuildTaskCreate(unit);	
-		if(category == CAT_BUILDER){
-			// Add the new builder
+		if (category == CAT_BUILDER) {
+			// add the new builder
 			BuilderTracker* builderTracker = new BuilderTracker;
 			builderTracker -> builderID = unit;
 			builderTracker -> buildTaskId = 0;
@@ -199,98 +140,89 @@ void CUnitHandler::UnitCreated(int unit)
 			builderTracker -> idleStartFrame = -2; // Wait for the first idle call, as this unit might be under construction
 			BuilderTrackers.push_back(builderTracker);
 		}
-		
-		if(category == CAT_MMAKER){
+
+		if (category == CAT_MMAKER) {
 			MMakerAdd(unit);
 		}
-
 	}
 }
 
-void CUnitHandler::UnitDestroyed(int unit)
-{
+void CUnitHandler::UnitDestroyed(int unit) {
 	int category = ai -> ut -> GetCategory(unit);
 	const UnitDef* unitDef = ai -> cb -> GetUnitDef(unit);
-	if(category != -1){
+
+	if (category != -1) {
 		AllUnitsByType[unitDef -> id] -> remove(unit);
 		AllUnitsByCat[category] -> remove(unit);
 		IdleUnitRemove(unit);
 		BuildTaskRemove(unit);
-		if(category == CAT_DEFENCE){
+
+		if (category == CAT_DEFENCE) {
 			ai -> dm -> RemoveDefense(ai -> cb -> GetUnitPos(unit),unitDef);
 		}
-		if(category == CAT_MMAKER){
+		if (category == CAT_MMAKER) {
 			MMakerRemove(unit);
 		}
-		if(category == CAT_FACTORY)
-		{
+		if (category == CAT_FACTORY) {
 			FactoryRemove(unit);
 		}
-		
-		if(category == CAT_BUILDER)
-		{
-			// Remove the builder
-			for(list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++){
-				if((*i) -> builderID == unit)
-				{
-					if((*i) -> buildTaskId)
+
+		if (category == CAT_BUILDER) {
+			// remove the builder
+			for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+				if ((*i) -> builderID == unit) {
+					if ((*i) -> buildTaskId)
 						BuildTaskRemove(*i);
-					if((*i) -> taskPlanId)
+					if ((*i) -> taskPlanId)
 						TaskPlanRemove(*i);
-					if((*i) -> factoryId)
+					if ((*i) -> factoryId)
 						FactoryBuilderRemove(*i);
+
 					BuilderTracker* builderTracker = *i;
 					BuilderTrackers.erase(i);
 					delete builderTracker; // Test this
 					break;
 				}
 			}
-			
 		}
 	}
 }
 
-void CUnitHandler::IdleUnitAdd(int unit)
-{	
-	//L("IdleUnitAdd: " << unit);
+void CUnitHandler::IdleUnitAdd(int unit) {
+	// L("IdleUnitAdd: " << unit);
 	int category = ai -> ut -> GetCategory(unit);
-	if(category != -1){
+	if (category != -1) {
 		const CCommandQueue* mycommands = ai -> cb -> GetCurrentUnitCommands(unit);
-		if(mycommands -> empty()){
-		
-			if(category == CAT_BUILDER)
-			{
+
+		if (mycommands -> empty()) {
+			if (category == CAT_BUILDER) {
 				BuilderTracker* builderTracker = GetBuilderTracker(unit);
-				//L("it was a builder");
-				
-				// Add clear here
+				// L("it was a builder");
+				// add clear here
 				ClearOrder(builderTracker, true);
-				
-				if(builderTracker -> idleStartFrame == -2)
-				{
-					// It was in the idle list allready ?
+
+				if (builderTracker -> idleStartFrame == -2) {
+					// it was in the idle list already?
 					IdleUnitRemove(builderTracker -> builderID);
 				}
-				builderTracker -> idleStartFrame = -2; // Its in the idle list now
-				if(builderTracker -> commandOrderPushFrame == -2) // Make shure that if the unit was just built it will have some time to leave the factory
-				{
-					builderTracker -> commandOrderPushFrame = ai -> cb -> GetCurrentFrame() + 30*3;
+
+				builderTracker -> idleStartFrame = -2; // it's in the idle list now
+
+				if (builderTracker -> commandOrderPushFrame == -2) {
+					// make sure that if the unit was just built it will have some time to leave the factory
+					builderTracker -> commandOrderPushFrame = ai -> cb -> GetCurrentFrame() + 30 * 3;
 				}
-				//else if(builderTracker -> commandOrderPushFrame == -)
-				//	builderTracker -> commandOrderPushFrame = ;
 			}
 
-			integer2 myunit(unit,LIMBOTIME);
-			//L("Adding unit : " << myunit.x << " To Limbo " << myunit.y);
+			integer2 myunit(unit, LIMBOTIME);
+			// L("Adding unit : " << myunit.x << " To Limbo " << myunit.y);
 			Limbo.remove(myunit);
-			//IdleUnitRemove(unit);  // This might be a better idea, but its over the edge (possible assertion)
+			// IdleUnitRemove(unit);  // This might be a better idea, but it's over the edge (possible assertion)
 			Limbo.push_back(myunit);
 		}
-		else
-		{
-			// The unit have orders still
-			if(category == CAT_BUILDER)
-			{
+		else {
+			// the unit has orders still
+			if (category == CAT_BUILDER) {
 				BuilderTracker* builderTracker = GetBuilderTracker(unit);
 				assert(false);
 				DecodeOrder(builderTracker, true);
@@ -299,92 +231,77 @@ void CUnitHandler::IdleUnitAdd(int unit)
 	}
 }
 
-bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker)
-{
-	
-	// If its without orders then try to find the lost command
-	
-	// TODO: All of it!!!!!!!!!!!!!!
-	// Now take a look, and see what its doing:
+bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
+	// if it's without orders then try to find the lost command (TODO)
+	// now take a look, and see what it's doing
 	const CCommandQueue* mycommands = ai -> cb -> GetCurrentUnitCommands(builderTracker -> builderID);
 	bool commandFound = false;
-	if(mycommands -> size() > 0)
-	{
-		// It have orders
+	if (mycommands -> size() > 0) {
+		// it has orders
 		const Command* c = &mycommands -> front();
-		if(mycommands -> size() == 2)//&& (c -> id == CMD_MOVE || c -> id == CMD_RECLAIM))  
-		{
-			// Hmm, it might have a reclame order, or terrain change order
-			// Take command nr. 2
-			// Infact, take command nr. 2 anyway...
-			
+
+		if (mycommands -> size() == 2) {
+			// it might have a reclaim order, or terrain change order
+			// take command nr. 2
 			c = &mycommands -> back();
 		}
-		
-		////L("idle builder: " << builderTracker -> builderID);
-		////L("c.id: " << c.id);
-		////L("c.params[0]: " <<  c.params[0]);
+
+		// L("idle builder: " << builderTracker -> builderID);
+		// L("c.id: " << c.id);
+		// L("c.params[0]: " <<  c.params[0]);
 		bool hit = false;
-		if(builderTracker -> buildTaskId != 0)
-		{
+		if (builderTracker -> buildTaskId != 0) {
 			hit = true;
-			// Test that this builder is on repair on this unit:
+			// test that this builder is on repair on this unit
 			BuildTask* buildTask = GetBuildTask(builderTracker -> buildTaskId);
-			if(c -> id == CMD_REPAIR && c -> params[0] == builderTracker -> buildTaskId
+			if (c -> id == CMD_REPAIR && c -> params[0] == builderTracker -> buildTaskId
 				|| (c -> id == -buildTask -> def -> id && c -> params[0] == buildTask -> pos.x && c -> params[2] == buildTask -> pos.z))
-				commandFound = true; // Its ok
+				commandFound = true;
 			else
 				return false;
 
 		}
-		if(builderTracker -> taskPlanId != 0)
-		{
+		if (builderTracker -> taskPlanId != 0) {
 			assert(!hit);
 			hit = true;
 			TaskPlan* taskPlan = GetTaskPlan(builderTracker -> taskPlanId);
 			
-			if(c -> id == -taskPlan -> def -> id && c -> params[0] == taskPlan -> pos.x && c -> params[2] == taskPlan -> pos.z)
-				commandFound = true; // Its ok
-			else
-				return false;
-			
-		}
-		if(builderTracker -> factoryId != 0)
-		{
-			assert(!hit);
-			hit = true;
-			if(c -> id == CMD_GUARD && c -> params[0] == builderTracker -> factoryId)
-				commandFound = true; // Its ok
+			if (c -> id == -taskPlan -> def -> id && c -> params[0] == taskPlan -> pos.x && c -> params[2] == taskPlan -> pos.z)
+				commandFound = true;
 			else
 				return false;
 		}
-		if(builderTracker -> customOrderId != 0)
-		{
+		if (builderTracker -> factoryId != 0) {
 			assert(!hit);
 			hit = true;
-			// The CMD_MOVE is for human control stuff, CMD_REPAIR is for repairs of just made stuff
-			// CMD_GUARD.... ?
-			if(c -> id == CMD_RECLAIM || c -> id == CMD_MOVE || c -> id == CMD_REPAIR) 
-				commandFound = true; // Its ok
+			if (c -> id == CMD_GUARD && c -> params[0] == builderTracker -> factoryId)
+				commandFound = true;
 			else
-			{
-				//assert(false);
+				return false;
+		}
+		if (builderTracker -> customOrderId != 0) {
+			assert(!hit);
+			hit = true;
+			// CMD_MOVE is for human control stuff, CMD_REPAIR is for repairs of just made stuff
+			// CMD_GUARD... ?
+			if (c -> id == CMD_RECLAIM || c -> id == CMD_MOVE || c -> id == CMD_REPAIR)
+				commandFound = true;
+			else {
+				// assert(false);
 				return false;
 			}
 		}
-		if(hit && commandFound)
-		{
-			// Its on the right job
+		if (hit && commandFound) {
+			// it's on the right job
 			return true;
 		}
 	}
-	else
-	{
-		if(builderTracker -> idleStartFrame == -2)
-		{
+	else  {
+		if (builderTracker -> idleStartFrame == -2) {
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -1317,12 +1234,12 @@ void CUnitHandler::FactoryBuilderRemove(BuilderTracker* builderTracker) {
 	list<Factory>::iterator killfactory;
 
 	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
-		if(builderTracker -> factoryId == i -> id)
-		{
+		if (builderTracker -> factoryId == i -> id) {
 			i -> supportbuilders.remove(builderTracker -> builderID);
 			i -> supportBuilderTrackers.remove(builderTracker);
 			builderTracker -> factoryId = 0;
-			builderTracker -> commandOrderPushFrame = ai -> cb -> GetCurrentFrame(); // Give it time to change command
+			// give it time to change command
+			builderTracker -> commandOrderPushFrame = ai -> cb -> GetCurrentFrame();
 		}
 	}
 }
@@ -1338,4 +1255,3 @@ void CUnitHandler::BuilderReclaimOrder(int builderId, float3 pos) {
 	builderTracker -> customOrderId = taskPlanCounter++;
 	
 }
-
