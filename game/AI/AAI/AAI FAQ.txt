@@ -56,9 +56,8 @@ A: 	This means that AAI has not been set up properly and will not work. This may
 
 Q: 	How do i add support for other mods?
 
-A: 	At first you have to figure out the internal names (e.g. ARMCOM) of the starting units of all sides 
-	and create a cfg file in the cfg-subfolder. The filename is the name of the mod-file, replace its 
-	ending with ".cfg". In case you are not sure about the filename try to run AAI with that mod. It will fail 
+A: 	At first you have to figure out the internal names (e.g. ARMCOM) of the starting units of all sides (they can 
+	be found in the mod archive in sidedata.tdf) and create a cfg file in the cfg-subfolder. The filename is the name of the mod-file, 	replace its ending with ".cfg". In case you are not sure about the filename try to run AAI with that mod. It will fail 
 	to load and print the desired cfg filename in its logfile (look at /aai/log/).
 
 	You will have to specify the number of different sides, their names and starting units. All other statements

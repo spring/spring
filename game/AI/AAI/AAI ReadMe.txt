@@ -52,23 +52,22 @@ Mod Support:	AAI must know the internal names of the starting units of the diffe
 		See example.cfg for more information.
 		
 		By default, AAI has cfg files to support the following mods:
-		- XTA 0.66
-		- XTA Pimped Edition V7
+		- XTA
 		- TA:WD 5.65
-		- AA 2.21 Standard
-		- AA 2.21 Forge
+		- AA 2.23 Standard
+		- AA 2.23 Forge
+		- Balanced AA
 		- OTA Shiny 5.5
 		- OTA Classic 5.5
 		- BoTA 1.3
 		- KuroTA 0.47
 		- Star Wars 1.0
 		- TLL 1.04
-		- FF 1.18 		
+		- FF 1.19		
 		- Gundam Annihilation 
 		- Expand & Exterminate 0.163
 		- Spring 1944
 		- TA Battle Fleet
-
 
 
 		
@@ -81,15 +80,14 @@ Mod Support:	AAI must know the internal names of the starting units of the diffe
 Known bugs/	- AAI sometimes suffers from a bug in the pathfinding (units sometimes get stuck when close 
 Limitations:	  to buildings/objects)
 
-		- Game crashes when ai units get captured
-
 		- AAI does not use nukes, antinukes, emp missiles
 
 
 
 Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
+		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions 
 
-		- TA Spring devs for creating the best open source rts game i know
+		- TA Spring devs for creating the best open source rts game I know
 
 		- Jelmer 'Zaphod' Cnossen for some functions and a lot of helpful discussions
 
@@ -98,32 +96,64 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- AccidUK for debugging and some coding suggestions
 
 		- Tournesol and Firenu for helping me getting debugging to work
-
-		- Yuritch for testing and providing me with improved mod config file 
 		
 		- All other testers who are not listed here
 		
 		- All other people who gave some feedback 
 
-
-AAI 0.7?	- Fixed some more possible crash bugs 
-
+		- Brandon Potter for his TBT 12 cfg file
 
 
 
-AAI 0.76	- Fixed the most common crashbugs in release mode
 
-		- Added basic attack behaviour for air only mods
+
+AAI v0.80	- Improved/tweaked/fixed attack behaviour, AAI will try to withdraw when facing much stronger enemy forces
+
+		- Added attack behaviour for air only mods
+
+		- Added support for different reading/writing paths (only important for linux users)
+
+		- Completly redesigned factory/builder management to support mobile factories and other stuff in the future
+		  (EE hub system is NOT supported though)
+
+		- Extended mod learning about usage of different unit categories with respect to elapsed game time	
+
+		- Reduced unit categories: LAND/SEA/HOVER/AIR_BUILDER are now in the same category 
+					   GROUND/SEA_FACTORY are now in the same category
+		  (slight performace increase and nicer code)
+
+		- Improved mex spot selection (to prevent unnecessary long ways for builders), AAI will now also build better 
+		  extractors (e.g. moho mines) outside the base (according to safety)
+
+		- Improved placement of stationary defences and tweaked selection of them a bit
+
+		- Cleaned up buildtables, removed some old stuff, mod learning filesize decreased
+
+		- Decreased map-learning filesize by removing stationary artillery learning and some other unnecessary stuff
+		  (map-leraning version changed)
+
+		- AAI no longer crashes when one of its units get captured
+
+		- AAI now builds air bases/refuel pads (thx to yuritch for finding the bug)
+
+		- Fixed various issues/bugs that could cause stalling / prevent AAI from building further factories, builders 
+
+		- Fixed a few bugs that could cause erroneus behaviour on water maps as well as a submarine related bug
+	
+		- Fixed lots of crash bugs
+
+		- Fixed a possible memory leak in AAIBuildTable
+
+		- Increased mod learning file version 
 
 
 
 AAI v0.75	- Completly redone attack system: AAI will now attack more elaborately 
 		  (attackers move on if are cleared, bombers returning to base when target destroyed, attack groups now 
 		  retreat under several circumstances, combat groups are guarded by aa units - however it still tends 
-		  to send in streams of attackers - will be adressed in one of the next versions ) Please not that at the 
+		  to send in streams of attackers - will be adressed in one of the next versions ) Please note that at the 
 		  moment the new attack system does not work with air only mods such as FF at all. AAI will build a base 
 		  as well as combat units and react to the actions of the player but it will not attack in a proper way
-
 		
 		- Added MAX_ATTACKS statement to mod.cfg which determines the max number of independent attack waves at
 		  the same time (set to 4 by default)
@@ -389,3 +419,4 @@ AAI v0.10: 	(internal version)
 
 
 
+ 
