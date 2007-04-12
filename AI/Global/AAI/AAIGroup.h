@@ -21,6 +21,9 @@ public:
 
 	void AttackSector(AAISector *dest, float importance);
 
+	// defend unit vs enemy (0; zerovector if enemy unknown)
+	void Defend(int unit, float3 enemy_pos, int importance);
+
 	// retreat combat groups to pos
 	void Retreat(float3 pos);
 
@@ -53,6 +56,7 @@ public:
 	GroupTask task;
 
 	UnitCategory category;
+	int combat_category;
 
 	UnitType group_type;
 

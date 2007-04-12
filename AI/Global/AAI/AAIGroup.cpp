@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIGroup.h"
 #include "AAI.h"
@@ -21,6 +21,7 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 	attack = 0;
 
 	category = bt->units_static[def->id].category;
+	combat_category = bt->GetIDOfAssaultCategory(category);
 
 	// get type of group
 	group_type = unit_type;
@@ -69,7 +70,7 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 
 	target_sector = 0;
 
-	rally_point = ai->execute->GetRallyPoint(category);
+	rally_point = ai->execute->GetRallyPoint(category, 1, 1, 10);
 
 	// get speed group (if necessary)
 	if(cfg->AIR_ONLY_MOD)
@@ -109,7 +110,7 @@ AAIGroup::~AAIGroup(void)
 bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
 {
 	// check the type match && current size
-	if(type == group_type && units.size() < maxSize && !attack)
+	if(type == group_type && units.size() < maxSize && !attack && (task == GROUP_IDLE || task == GROUP_RETREATING))
 	{
 		// check if speed group is matching
 		if(cfg->AIR_ONLY_MOD)
@@ -133,17 +134,12 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
 		// send unit to rally point of the group
 		if(rally_point.x > 0)
 		{
-			float3 pos = rally_point;
-
-			pos.x += ai->map->xSectorSize * ((float(rand()%5))/20.0);
-			pos.z += ai->map->ySectorSize * ((float(rand()%5))/20.0);
-			
 			Command c;
 			c.id = CMD_MOVE;
 			c.params.resize(3);
-			c.params[0] = pos.x;
-			c.params[1] = pos.y;
-			c.params[2] = pos.z;
+			c.params[0] = rally_point.x;
+			c.params[1] = rally_point.y;
+			c.params[2] = rally_point.z;
 
 			if(category != AIR_ASSAULT)
 				c.options |= SHIFT_KEY;
@@ -172,7 +168,7 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 				if(group_type == ASSAULT_UNIT)
 				{
 					// todo: improve criteria
-					if(size < 3)
+					if(size < 2)
 						attack->RemoveGroup(this);	
 				}
 				else if(group_type == ANTI_AIR_UNIT)
@@ -181,6 +177,10 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 						attack->RemoveGroup(this);
 				}
 			}	
+
+			// check if attacking still sensible
+			if(attack)
+				ai->am->CheckAttack(attack);
 
 			if(attacker)
 			{
@@ -329,9 +329,37 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 	task = GROUP_ATTACKING;			
 }
 
+void AAIGroup::Defend(int unit, float3 enemy_pos, int importance)
+{
+	Command cmd;
+
+	if(enemy_pos.x > 0)
+	{
+		cmd.id = CMD_FIGHT;
+		cmd.params.push_back(enemy_pos.x);
+		cmd.params.push_back(enemy_pos.y);
+		cmd.params.push_back(enemy_pos.z);
+
+		GiveOrder(&cmd, importance, DEFENDING);
+
+		target_sector = ai->map->GetSectorOfPos(enemy_pos);
+	}
+	else
+	{
+		cmd.id = CMD_GUARD;
+		cmd.params.push_back(unit);
+			
+		GiveOrder(&cmd, importance, GUARDING);
+
+		target_sector = ai->map->GetSectorOfPos(cb->GetUnitPos(unit));
+	}
+
+	task = GROUP_DEFENDING;
+}
+
 void AAIGroup::Retreat(float3 pos)
 {
-	this->task = GROUP_IDLE;
+	this->task = GROUP_RETREATING;
 
 	Command c;
 	c.id = CMD_MOVE;
@@ -340,6 +368,9 @@ void AAIGroup::Retreat(float3 pos)
 	c.params.push_back(pos.z);
 
 	GiveOrder(&c, 105, MOVING);
+
+	// set new dest sector
+	target_sector = ai->map->GetSectorOfPos(pos);
 }
 
 int AAIGroup::GetRandomUnit()
@@ -352,39 +383,44 @@ int AAIGroup::GetRandomUnit()
 
 bool AAIGroup::SufficientAttackPower()
 {
-	// TODO: improve selection, take combat eff. of units into account
-	if(ai->activeUnits[0] + ai->activeUnits[1] + ai->activeUnits[2] + ai->activeUnits[3] + ai->activeUnits[4] < 10)
+	/*if(units.size() >= maxSize)
+		return true;
+	else if(units.size() > 0)
 	{
-		if(units.size() >= maxSize / 2.0f && units.size() >= 3)
+		// group not full, check combat eff. of units
+		float avg_combat_power = 0;
+
+		for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+			avg_combat_power += bt->units_static[unit->y].efficiency[5];
+
+		avg_combat_power /= units.size();
+
+		if(units.size() > maxSize/2.0f && avg_combat_power > bt->avg_eff[bt->GetIDOfAssaultCategory(category)][5])
+			return true;
+		else if(units.size() >= maxSize/3.0f &&  avg_combat_power > 1.5 * bt->avg_eff[bt->GetIDOfAssaultCategory(category)][5])
+			return true;
+	}
+	
+	return false;*/
+
+	if(group_type == ASSAULT_UNIT)
+	{
+		if(size > maxSize/3)
 			return true;
 	}
 	else
 	{
-		if(units.size() >= maxSize && units.size() >= 3)
+		if(size > maxSize/2)
 			return true;
 	}
-	
+
 	return false;
 }
 
 void AAIGroup::UnitIdle(int unit)
 {
-	if(attack)
-	{
-		// combat groups 
-		if(group_type == ASSAULT_UNIT)
-		{
-			ai->am->GetNextDest(attack);
-			return;
-		}
-		// unit the aa groups was guarding has been killed
-		else if(group_type == ANTI_AIR_UNIT)
-		{
-			return;
-		}
-	}
-
-	if(category == AIR_ASSAULT && task != GROUP_IDLE)
+	// special behaviour of aircraft in not air only mods
+	if(category == AIR_ASSAULT && task != GROUP_IDLE && !cfg->AIR_ONLY_MOD)
 	{
 		Command c;
 		c.id = CMD_MOVE;
@@ -395,5 +431,62 @@ void AAIGroup::UnitIdle(int unit)
 		GiveOrder(&c, 100, MOVING);
 
 		task = GROUP_IDLE;
+	}
+	// behaviour of all other categories
+	else if(attack)
+	{
+		//check if idle unit is in target sector
+		float3 pos = cb->GetUnitPos(unit);
+
+		AAISector *temp = ai->map->GetSectorOfPos(pos);
+
+		if(temp == target_sector || !target_sector)
+		{
+			// combat groups 
+			if(group_type == ASSAULT_UNIT && attack->dest->enemy_structures <= 0)
+			{
+				ai->am->GetNextDest(attack);
+				return;
+			}
+			// unit the aa groups was guarding has been killed
+			else if(group_type == ANTI_AIR_UNIT)
+			{
+				if(!attack->combat_groups.empty())
+				{
+					int unit = (*attack->combat_groups.begin())->GetRandomUnit();
+
+					if(unit >= 0)
+					{
+						Command c;
+						c.id = CMD_GUARD;
+						c.params.push_back(unit);
+
+						GiveOrder(&c, 110, GUARDING);
+					}
+				}
+				else
+					attack->StopAttack();
+			}
+		}
+	}
+	else if(task == GROUP_RETREATING)
+	{
+		//check if retreating units is in target sector
+		float3 pos = cb->GetUnitPos(unit);
+
+		AAISector *temp = ai->map->GetSectorOfPos(pos);
+
+		if(temp == target_sector || !target_sector)
+			task = GROUP_IDLE;
+	}
+	else if(task == GROUP_DEFENDING)
+	{
+		//check if retreating units is in target sector
+		float3 pos = cb->GetUnitPos(unit);
+
+		AAISector *temp = ai->map->GetSectorOfPos(pos);
+
+		if(temp == target_sector || !target_sector)
+			task = GROUP_IDLE;
 	}
 }

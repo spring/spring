@@ -2,7 +2,6 @@
 
 #include "aidef.h"
 class AAI;
-class AAIBuilder;
 
 class AAIBuildTask
 {
@@ -12,7 +11,7 @@ public:
 
 	void BuilderDestroyed();
 
-	void BuildingDestroyed();
+	void BuildtaskFailed();
 
 	AAI* ai;
 

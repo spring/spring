@@ -21,6 +21,12 @@ public:
 	void Pos2BuildMapPos(float3 *pos, const UnitDef* def);
 	void BuildMapPos2Pos(float3 *pos, const UnitDef* def);
 	void Pos2FinalBuildPos(float3 *pos, const UnitDef *def);
+
+	// true if x/y are a valid sector
+	bool ValidSector(int x, int y);
+
+	// returns sector (0 if out of sector map)
+	AAISector* GetSectorOfPos(float3 pos);
 	
 	// returns buildsites for normal and defence buildings
 	float3 GetHighestBuildsite(const UnitDef *def, int xStart, int xEnd, int yStart, int yEnd);
@@ -48,8 +54,6 @@ public:
 	void UpdateSectors();
 
 	void UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, const UnitDef *killed_def, int killed);
-
-	void UpdateArty(int attacker);
 
 	char* GetMapTypeTextString(int mapType);
 	char* GetMapTypeString(int mapType);
@@ -108,6 +112,9 @@ public:
 						// 4 water
 						// 5 occupied water
 	char *blockmap;		// number of buildings which ordered a cell to blocked
+
+	list<UnitCategory> map_categories;
+	list<int> map_categories_id;
 
 	// temp for scouting
 	float *units_spotted;

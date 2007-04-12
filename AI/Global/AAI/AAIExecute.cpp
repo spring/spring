@@ -1,13 +1,14 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIExecute.h"
+#include "AAIBuildTable.h"
 
 // all the static vars
 float AAIExecute::current = 0.5;
@@ -27,7 +28,6 @@ AAIExecute::AAIExecute(AAI *ai, AAIBrain *brain)
 
 	buildques = 0;
 	factory_table = 0;
-	numOfFactories = 0;
 	unitProductionRate = 1;
 
 	futureRequestedMetal = 0;
@@ -42,7 +42,10 @@ AAIExecute::AAIExecute(AAI *ai, AAIBrain *brain)
 	averageEnergySurplus = 0;
 	disabledMMakers = 0;
 
-	for(int i = 0; i <= METAL_MAKER+1; ++i)
+	next_defence = 0;
+	def_category = UNKNOWN;
+
+	for(int i = 0; i <= METAL_MAKER; ++i)
 		urgency[i] = 0;
 
 	for(int i = 0; i < 8; i++)
@@ -97,7 +100,7 @@ void AAIExecute::stopUnit(int unit)
 // returns true if unit is busy
 bool AAIExecute::IsBusy(int unit)
 {
-	const CCommandQueue *commands = cb->GetCurrentUnitCommands(unit);
+	const CCommandQueue* commands = cb->GetCurrentUnitCommands(unit);
 
 	if(commands->empty())
 		return false;
@@ -162,14 +165,10 @@ void AAIExecute::UpdateRecon()
 			{
 				scout = bt->GetScout(ai->side, speed, los,  brain->Affordable(), AIR_SCOUT, 5, false);
 				
-				if(scout)
-				{
+				if(scout && bt->units_dynamic[scout].requested <= 0)
 					bt->BuildFactoryFor(scout);
-
-					// wait until factory has been finished if one scout of that type has already been requested
-					if(bt->units_dynamic[scout].requested > 0)
-						scout = 0;
-				}
+				else 
+					scout = 0;
 			}
 		}
 		else
@@ -188,14 +187,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los,  brain->Affordable(), AIR_SCOUT, 5, false);
 						
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 				else
@@ -206,14 +201,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, false);
 						
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 			}
@@ -233,14 +224,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(),  SEA_SCOUT, HOVER_SCOUT, 5, false);
 					
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 				else
@@ -251,14 +238,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, false);
 						
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 			}
@@ -274,14 +257,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), AIR_SCOUT, 5, false);
 						
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 				else
@@ -292,14 +271,10 @@ void AAIExecute::UpdateRecon()
 					{
 						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), SEA_SCOUT, HOVER_SCOUT, 5, false);
 						
-						if(scout)
-						{
+						if(scout && bt->units_dynamic[scout].requested <= 0)
 							bt->BuildFactoryFor(scout);
-
-							// wait until factory has been finished if one scout of that type has already been requested
-							if(bt->units_dynamic[scout].requested > 0)
-								scout = 0;
-						}
+						else 
+							scout = 0;
 					}
 				}
 			}
@@ -379,9 +354,8 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 			return pos;
 	}
 
-
 	// look in any of the base sectors
-	for(list<AAISector*>::iterator s = brain->sectors[0].begin(); s != brain->sectors[0].end(); s++)
+	for(list<AAISector*>::iterator s = brain->sectors[0].begin(); s != brain->sectors[0].end(); ++s)
 	{	
 		pos = (*s)->GetBuildsite(building);
 
@@ -390,72 +364,115 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 			return pos;
 	}
 
-	// no construction site found 
-	//if(!brain->ExpandBase(LAND_SECTOR))
-	//	fprintf(ai->file, "PROBLEM: Couldnt find buildsite for %s", bt->unitList[building-1]->humanName.c_str());
-
 	pos.x = pos.y = pos.z = 0;
 	return pos;
 }
 
-AAIMetalSpot* AAIExecute::FindBaseMetalSpot(float3 builder_pos)
+float3 AAIExecute::GetUnitBuildsite(int builder, int unit)
 {
-	AAIMetalSpot *spot = 0;
+	float3 builder_pos = cb->GetUnitPos(builder);
+	float3 pos = ZeroVector, best_pos = ZeroVector;
+	float min_dist = 1000000, dist;
 
-	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); sector++)
-	{
-		spot = (*sector)->GetFreeMetalSpot(builder_pos);
+	for(list<AAISector*>::iterator s = brain->sectors[1].begin(); s != brain->sectors[1].end(); ++s)
+	{	
+		bool water = false;
 
-		if(spot)
+		if(bt->IsSea(unit))
+			water = true;
+
+		pos = (*s)->GetBuildsite(unit, water);
+
+		if(pos.x)
 		{
-			//cb->SendTextMsg("Base spot found",0);
-			break;
+			dist = sqrt( pow(pos.x - best_pos.x ,2.0f) + pow(pos.z - best_pos.z, 2.0f) );
+
+			if(dist < min_dist)
+			{
+				min_dist = dist;
+				best_pos = pos;
+			}
 		}
 	}
 
-	return spot;
+	return best_pos;
 }
 
-AAIMetalSpot* AAIExecute::FindExternalMetalSpot(int land_mex, int water_mex)
+AAIMetalSpot* AAIExecute::FindMetalSpot(bool land, bool water)
 {
-	AAIMetalSpot *spot, *best_spot = 0;
+	// prevent crashes on smaller maps 
+	int max_distance = min(cfg->MAX_MEX_DISTANCE, brain->max_distance);
+
+	for(int sector_dist = 0; sector_dist < max_distance; ++sector_dist)
+	{
+		for(list<AAISector*>::iterator sector = brain->sectors[sector_dist].begin();sector != brain->sectors[sector_dist].end(); sector++)
+		{
+			if((*sector)->freeMetalSpots && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && (*sector)->threat <= 0)
+			{
+				for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
+				{
+					if(!(*spot)->occupied)	
+					{
+						if( (land && (*spot)->pos.y >= 0) ||(water && (*spot)->pos.y < 0) )
+							return *spot;
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+AAIMetalSpot* AAIExecute::FindMetalSpotClosestToBuilder(int land_mex, int water_mex)
+{
+	AAIMetalSpot *best_spot = 0;
 	float shortest_dist = 1000000.0f, dist;
 	float3 builder_pos;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 
 	// prevent crashes on smaller maps 
 	int max_distance = min(cfg->MAX_MEX_DISTANCE, brain->max_distance);
 
+	// dont search for too long if possible spot already found
+	int min_spot_dist = -1;
+
 	// look for free spots in all sectors within max range
-	for(int sector_dist = 1; sector_dist < max_distance; ++sector_dist)
+	for(int sector_dist = 0; sector_dist < max_distance; ++sector_dist)
 	{
+		// skip search if spot already found 
+		if(min_spot_dist >= 0 && sector_dist - min_spot_dist > 2)
+			return best_spot;
+
 		for(list<AAISector*>::iterator sector = brain->sectors[sector_dist].begin();sector != brain->sectors[sector_dist].end(); sector++)
 		{
-			if((*sector)->freeMetalSpots && (*sector)->enemy_structures < 30 &&
-				((*sector)->lost_units[GROUND_BUILDER-COMMANDER] + (*sector)->lost_units[AIR_BUILDER-COMMANDER]) < 2.5)
+			if((*sector)->freeMetalSpots && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && (*sector)->threat <= 0)
 			{
-				spot = (*sector)->GetFreeMetalSpot();
-				
-				if(spot)
-				{	
-					if(spot->pos.y > 0)
-						builder = ut->FindClosestBuilder(land_mex, spot->pos, true, 10);
-					else
-						builder = ut->FindClosestBuilder(water_mex, spot->pos, true, 10);
-
-					if(builder)
+				for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
+				{
+					if(!(*spot)->occupied)	
 					{
-						// get distance to pos
-						builder_pos = cb->GetUnitPos(builder->unit_id);
+						if((*spot)->pos.y > 0)
+							builder = ut->FindClosestBuilder(land_mex, (*spot)->pos, true, 10);
+						else
+							builder = ut->FindClosestBuilder(water_mex, (*spot)->pos, true, 10);
 
-						dist = sqrt( pow((spot->pos.x - builder_pos.x), 2) + pow((spot->pos.z - builder_pos.z),2) ) / bt->unitList[builder->def_id-1]->speed;
-
-						if(dist < shortest_dist)
+						if(builder)
 						{
-							best_spot = spot;
-							shortest_dist = dist;
-						}	
-					}
+							// get distance to pos
+							builder_pos = cb->GetUnitPos(builder->unit_id);
+
+							dist = sqrt( pow(((*spot)->pos.x - builder_pos.x), 2) + pow(((*spot)->pos.z - builder_pos.z),2) ) / bt->unitList[builder->def_id-1]->speed;
+
+							if(dist < shortest_dist)
+							{
+								best_spot = *spot;
+								shortest_dist = dist;
+
+								min_spot_dist = sector_dist;
+							}	
+						}
+					}	
 				}
 			}
 		}
@@ -463,6 +480,7 @@ AAIMetalSpot* AAIExecute::FindExternalMetalSpot(int land_mex, int water_mex)
 
 	return best_spot;
 }
+
 
 float AAIExecute::GetTotalGroundPower()
 {
@@ -500,6 +518,8 @@ list<int>* AAIExecute::GetBuildqueOfFactory(int def_id)
 
 bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 {
+	urgent = false;
+
 	UnitCategory category = bt->units_static[def_id].category;
 
 	if(category == UNKNOWN)
@@ -511,7 +531,7 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 
 	for(list<int>::iterator fac = bt->units_static[def_id].builtByList.begin(); fac != bt->units_static[def_id].builtByList.end(); ++fac)
 	{
-		if(bt->units_dynamic[*fac].active + bt->units_dynamic[*fac].requested > 0)
+		if(bt->units_dynamic[*fac].active > 0)
 		{
 			temp = GetBuildqueOfFactory(*fac);
 
@@ -519,7 +539,7 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 			{
 				my_rating = (1 + 2 * (float) bt->units_dynamic[*fac].active) / (temp->size() + 3);
 
-				if(map->mapType == WATER_MAP && bt->units_static[*fac].category == GROUND_FACTORY)
+				if(map->mapType == WATER_MAP && !bt->CanPlacedWater(*fac))
 					my_rating /= 10.0;
 			}
 			else 
@@ -538,33 +558,14 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 	// determine position
 	if(buildque)
 	{
-		if(bt->IsBuilder(category))
+		if(bt->IsBuilder(def_id))
 		{	
-			// 
-			if(bt->units_dynamic[def_id].active + bt->units_dynamic[def_id].requested > 2)
-			{
-				buildque->insert(buildque->end(), number, def_id);
+			// insert after the last builder
+			for(list<int>::iterator unit = buildque->begin(); unit != buildque->end();  ++unit)
+			{	
+				buildque->insert(buildque->begin(), number, def_id);
+				return true;
 			}
-			else
-			{
-				// insert at beginning
-				if(buildque->empty())
-				{
-					buildque->insert(buildque->begin(), number, def_id);
-				}
-
-				// insert after the last builder
-				for(list<int>::iterator unit = buildque->begin(); unit != buildque->end();  ++unit)
-				{
-					if(!bt->IsBuilder(bt->units_static[*unit].category))
-					{
-						buildque->insert(unit, number, def_id);
-						return true;
-					}
-				}
-			}
-
-			return false;
 		}
 		else if(bt->IsScout(category))
 		{
@@ -575,23 +576,23 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 			}
 			else
 			{
-				// insert after the last builder
+				/*// insert after the last builder
 				for(list<int>::iterator unit = buildque->begin(); unit != buildque->end();  ++unit)
 				{
-					if(!bt->IsBuilder(bt->units_static[*unit].category))
+					if(!bt->IsBuilder(*unit))
 					{
 						buildque->insert(unit, number, def_id);
 						return true;
 					}
-				}
+				}*/
+				buildque->insert(buildque->begin(), number, def_id);
+				return true;
 			}
 		}
 		else if(buildque->size() < cfg->MAX_BUILDQUE_SIZE)
 		{
 			if(urgent)
-			{
 				buildque->insert(buildque->begin(), number, def_id);
-			}
 			else
 				buildque->insert(buildque->end(), number, def_id);
 
@@ -600,94 +601,103 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 			return true;
 		}
 	}
-	else
-	{
-		if(bt->IsBuilder(category))
-		{
-			//cb->SendTextMsg("No buildque",0);
-			return false;
-		}
-
-		fprintf(ai->file, "Could not find builque for %s\n", bt->unitList[def_id-1]->humanName.c_str());
-	}
+	//else
+	//	fprintf(ai->file, "Could not find builque for %s\n", bt->unitList[def_id-1]->humanName.c_str());
 
 	return false;
 }
 
 void AAIExecute::InitBuildques()
 {
-	// set up buildques for different types of factories
-	numOfFactories = bt->units_of_category[GROUND_FACTORY][ai->side-1].size() + bt->units_of_category[SEA_FACTORY][ai->side-1].size();
+	// determine number of factories first
+	numOfFactories = 0;
+	
+	// stationary factories
+	for(list<int>::iterator cons = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); cons != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++cons)
+	{
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+			++numOfFactories;
+	}
+	// and look for all mobile factories
+	for(list<int>::iterator cons = bt->units_of_category[MOBILE_CONSTRUCTOR][ai->side-1].begin(); cons != bt->units_of_category[MOBILE_CONSTRUCTOR][ai->side-1].end(); ++cons)
+	{
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+			++numOfFactories;
+	}
+	// and add com
+	for(list<int>::iterator cons = bt->units_of_category[COMMANDER][ai->side-1].begin(); cons != bt->units_of_category[COMMANDER][ai->side-1].end(); ++cons)
+	{
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+			++numOfFactories;
+	}
+
 	buildques = new list<int>[numOfFactories];
 
 	// set up factory buildque identification
 	factory_table = new int[numOfFactories];
 	
 	int i = 0;
-	for(list<int>::iterator factory = bt->units_of_category[GROUND_FACTORY][ai->side-1].begin(); factory != bt->units_of_category[GROUND_FACTORY][ai->side-1].end(); ++factory)
+
+	for(list<int>::iterator cons = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); cons != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++cons)
 	{
-		factory_table[i] = *factory;
-		++i;
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+		{
+			factory_table[i] = *cons;
+			++i;
+		}
 	}
-	for(list<int>::iterator factory = bt->units_of_category[SEA_FACTORY][ai->side-1].begin(); factory != bt->units_of_category[SEA_FACTORY][ai->side-1].end(); ++factory)
+
+	for(list<int>::iterator cons = bt->units_of_category[MOBILE_CONSTRUCTOR][ai->side-1].begin(); cons != bt->units_of_category[MOBILE_CONSTRUCTOR][ai->side-1].end(); ++cons)
 	{
-		factory_table[i] = *factory;
-		++i;
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+		{
+			factory_table[i] = *cons;
+			++i;
+		}
+	}
+
+	for(list<int>::iterator cons = bt->units_of_category[COMMANDER][ai->side-1].begin(); cons != bt->units_of_category[COMMANDER][ai->side-1].end(); ++cons)
+	{
+		if(bt->units_static[*cons].unit_type & UNIT_TYPE_FACTORY)
+		{
+			factory_table[i] = *cons;
+			++i;
+		}
 	}
 }
 
-float3 AAIExecute::GetRallyPoint(UnitCategory category)
+float3 AAIExecute::GetRallyPoint(UnitCategory category, int min_dist, int max_dist, int random)
 {
 	AAISector* best_sector = 0;
 	float best_rating = 0, my_rating;
-	
-	int start = 1;
 
-	if(brain->sectors[0].size() <= 2)
-		start = 3;
-	else if(brain->sectors[0].size() <= 4)
-		start = 2;
+	int combat_cat = bt->GetIDOfAssaultCategory(category);
 
-	float learned = 70000.0 / (cb->GetCurrentFrame() + 35000) + 1;
-	float current = 2.5 - learned;
+	bool land = true; 
+	bool water = true;
+
+	if(!cfg->AIR_ONLY_MOD)
+	{
+		if(category == GROUND_ASSAULT)
+			water = false;
+		else if(category == SEA_ASSAULT || category == SUBMARINE_ASSAULT)
+			land = false;
+	}	
 
 	// check neighbouring sectors
-	//for(int i = 1; i < 2; i++)
-	//{
-		for(list<AAISector*>::iterator sector = brain->sectors[start].begin(); sector != brain->sectors[start].end(); sector++)
+	for(int i = min_dist; i <= max_dist; i++)
+	{
+		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
 		{
-			// get most dangerous sector with flat terrain
-			if(category == GROUND_ASSAULT)		
-			{
-				my_rating = 1 + (current * (*sector)->combats[0][0] + learned * (*sector)->combats[1][0]); 
-				my_rating *= ((*sector)->GetMapBorderDist()+0.5) * (*sector)->flat_ratio / (2.0*(*sector)->water_ratio+0.2);
-			}
-			// get safest sector
-			else if(category == AIR_ASSAULT)
-			{
-				my_rating = (((*sector)->flat_ratio - (*sector)->water_ratio) * 4 + 0.2) / (1 + (*sector)->lost_units[AIR_ASSAULT-COMMANDER]);
-			}
-			else if(category == HOVER_ASSAULT)
-			{
-				my_rating = pow((*sector)->flat_ratio, 2) * (*sector)->GetMapBorderDist();
+			my_rating = 24.0f / ((*sector)->mobile_combat_power[combat_cat] + 4.0f) + 2 * (*sector)->GetMapBorderDist();
+			
+			if(land)
+				my_rating += 8 * pow((*sector)->flat_ratio, 2.0f);
 
-				if(map->mapType == LAND_MAP)
-					my_rating *= (current * ((*sector)->combats[0][2] + (*sector)->combats[0][0]) + learned * ((*sector)->combats[1][2] + (*sector)->combats[1][0]));
-				else if(map->mapType == LAND_WATER_MAP)
-					my_rating *= (current * ((*sector)->combats[0][2] + (*sector)->combats[0][0] + (*sector)->combats[0][3]) + learned * ((*sector)->combats[1][2] + (*sector)->combats[1][0] + (*sector)->combats[1][3]));
-				else
-					my_rating *= (current * ((*sector)->combats[0][2] + (*sector)->combats[0][3]) + learned * ((*sector)->combats[1][2] + (*sector)->combats[1][3]));
-			}
-			// get sector with most water
-			else if(category == SEA_ASSAULT)
-			{
-				my_rating = (current * (*sector)->combats[0][3] + learned * (*sector)->combats[1][3]); 
-				my_rating *= (2 * (*sector)->GetMapBorderDist()+0.5) * (*sector)->water_ratio;
-			}
-			else 
-				my_rating = 0;
+			if(water)
+				my_rating += 8 * pow((*sector)->water_ratio, 2.0f);	
 
-			my_rating *= (2 + rand()%5);
+			my_rating += 0.25 * (rand()%random);
 
 			if(my_rating > best_rating)
 			{
@@ -695,7 +705,7 @@ float3 AAIExecute::GetRallyPoint(UnitCategory category)
 				best_sector = *sector;
 			}
 		}
-	//}
+	}
 
 	if(best_sector)
 		return best_sector->GetCenter();
@@ -703,183 +713,246 @@ float3 AAIExecute::GetRallyPoint(UnitCategory category)
 		return ZeroVector;	
 }
 
+float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, float3 pos, int min_dist, int max_dist)
+{
+	AAISector* best_sector = 0;
+	float best_rating = 0, my_rating;
+	float3 center;
+
+	int combat_cat = bt->GetIDOfAssaultCategory(category);
+
+	bool land = true; 
+	bool water = true;
+
+	if(!cfg->AIR_ONLY_MOD)
+	{
+		if(category == GROUND_ASSAULT)
+			water = false;
+		else if(category == SEA_ASSAULT || category == SUBMARINE_ASSAULT)
+			land = false;
+	}	
+
+	// check neighbouring sectors
+	for(int i = min_dist; i <= max_dist; i++)
+	{
+		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
+		{
+			my_rating = 24.0f / ((*sector)->mobile_combat_power[combat_cat] + 4.0f);
+			
+			if(land)
+				my_rating += 8 * pow((*sector)->flat_ratio, 2.0f);
+
+			if(water)
+				my_rating += 8 * pow((*sector)->water_ratio, 2.0f);
+
+			center = (*sector)->GetCenter();
+
+			my_rating /= sqrt( sqrt( pow( pos.x - center.x , 2.0f) + pow( pos.z - center.z , 2.0f) ) );
+
+			if(my_rating > best_rating)
+			{
+				best_rating = my_rating;
+				best_sector = *sector;
+			}
+		}
+	}
+
+	if(best_sector)
+		return best_sector->GetCenter();
+	else
+		return ZeroVector;		
+}
+
+
 // ****************************************************************************************************
 // all building functions
 // ****************************************************************************************************
 
 bool AAIExecute::BuildExtractor()
 {
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] == 0 && ai->activeUnits[EXTRACTOR] >= 2)
+	if(ai->activeFactories < 1 && ai->activeUnits[EXTRACTOR] >= 2)
 		return true;
 
-	AAIBuilder *builder; 
-	AAIMetalSpot *spot;
+	AAIConstructor *builder; 
+	AAIMetalSpot *spot = 0;
 	float3 pos;
-	int mex;
-	bool external = false;
+	int land_mex;
+	int water_mex;
 	bool water;
 
-	float cost = brain->Affordable();
-	float efficiency = 10.0 / (cost + 1);
+	float cost = 0.25f + brain->Affordable() / 6.0f;
+	float efficiency = 6.0 / (cost + 0.75f);
 
 	// check if metal map
 	if(ai->map->metalMap)
 	{
 		// get id of an extractor and look for suitable builder
-		mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
+		land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
 
-		if(mex && !bt->units_dynamic[mex].builderAvailable)
+		if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
 		{
-			bt->BuildBuilderFor(mex);
-			mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
+			bt->BuildBuilderFor(land_mex);
+			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
 		}
 
-		builder = ut->FindBuilder(mex, true, 10);
+		builder = ut->FindBuilder(land_mex, true, 10);
 
 		if(builder)
 		{
-			pos = GetBuildsite(builder->unit_id, mex, EXTRACTOR);
+			pos = GetBuildsite(builder->unit_id, land_mex, EXTRACTOR);
 
 			if(pos.x != 0)
 			{
-				builder->GiveBuildOrder(mex, pos, false);
+				builder->GiveConstructionOrder(land_mex, pos, false);
 			}
 			return true;
 		}
 		else
 		{
-			bt->CheckAddBuilder(mex);
+			bt->AddBuilder(land_mex);
 			return false;
 		}
 	}
 	else // normal map
 	{
-		// try to build mex within base
-		if(brain->freeBaseSpots)
+		// different behaviour dependent on number of builders (to save time in late game)
+		if(ut->constructors.size() < 5)
 		{
-			spot = FindBaseMetalSpot(pos);
+			// get id of an extractor and look for suitable builder
+			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
+
+			if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
+			{
+				bt->BuildBuilderFor(land_mex);
+
+				land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
+			}
+
+			water_mex = bt->GetMex(ai->side, cost, efficiency, false, true, false);
+
+			if(water_mex && bt->units_dynamic[water_mex].buildersAvailable <= 0)
+			{
+				bt->BuildBuilderFor(water_mex);
+				
+				water_mex = bt->GetMex(ai->side, cost, efficiency, false, true, true);
+			}
+
+			// stop searching for spot if no builders available atm
+			builder = ut->FindClosestBuilder(land_mex, brain->base_center, true, 10);
+
+			if(!builder)	
+				builder = ut->FindClosestBuilder(water_mex, brain->base_center, true, 10);
+		
+			if(!builder)
+			{
+				if(map->mapType == WATER_MAP && !cfg->AIR_ONLY_MOD)
+					bt->AddBuilder(water_mex);
+				else
+					bt->AddBuilder(land_mex);
+				
+				return false;
+			}
+
+			// find metal spot with lowest distance to available builders
+			spot = FindMetalSpotClosestToBuilder(land_mex, water_mex);
+	
+			if(spot)
+			{	
+				// check if land or sea spot
+				if(cb->GetElevation(spot->pos.x, spot->pos.z) < 0)
+				{
+					water = true;
+
+					// build the water mex instead of land mex
+					land_mex = water_mex;	
+				}
+				else
+					water = false;
+		
+		
+				// look for suitable builder
+				int x = spot->pos.x/map->xSectorSize;
+				int y = spot->pos.z/map->ySectorSize;
+
+				// only allow commander if spot is close to own base
+				if(map->sector[x][y].distance_to_base <= 0 || (brain->sectors[0].size() < 3 && map->sector[x][y].distance_to_base <= 1) )
+					builder = ut->FindClosestBuilder(land_mex, spot->pos, true, 10);
+				else
+					builder = ut->FindClosestBuilder(land_mex, spot->pos, false, 10);
+		
+				if(builder)
+				{
+					builder->GiveConstructionOrder(land_mex, spot->pos, water);
+					spot->occupied = true;
+				}
+			}	
+			// request metal makers if no spot found
+			else if(ai->activeUnits[METAL_MAKER] < cfg->MAX_METAL_MAKERS && urgency[METAL_MAKER] <= GetMetalUrgency() / 2.0f)
+				urgency[METAL_MAKER] = GetMetalUrgency() / 2.0f;
+		}
+		else
+		{
+			bool land = true, water = true;
+
+			// get next free metal spot
+			AAIMetalSpot *spot = FindMetalSpot(land, water);
 
 			if(spot)
 			{
-				int type = map->buildmap[(int) spot->pos.x/8 + (int)(spot->pos.z/8 )* map->xMapSize];
-				// check if land or sea spot
-				if(type == 5 || type == 4)
-					water = true;
+				int x = spot->pos.x/map->xSectorSize;
+				int y = spot->pos.z/map->ySectorSize;
+
+				if(cb->GetElevation(spot->pos.x, spot->pos.z) > 0) 
+					water = false;	
 				else
-					water = false;
+					water = true;
+				
+				// choose mex dependend on safety
+				bool armed = false;
 
-				// get id of an extractor and look for suitable builder
-				mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
+				if(map->sector[x][y].lost_units[EXTRACTOR] > 0.01f || map->sector[x][y].distance_to_base > 2)
+				{
+					cost = 6.0f;
+					armed = true;
+					efficiency = 1.0f;
+				}
 
-				if(mex && !bt->units_dynamic[mex].builderAvailable)
+				int mex = bt->GetMex(ai->side, cost, efficiency, armed, water, false);
+
+				if(mex && bt->units_dynamic[mex].buildersAvailable <= 0)
 				{
 					bt->BuildBuilderFor(mex);
-					mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
+
+					mex = bt->GetMex(ai->side, cost, efficiency, armed, water, true);
 				}
 
 				if(mex)
 				{
-					builder = ut->FindClosestBuilder(mex, spot->pos, true, 10);
+					if(map->sector[x][y].distance_to_base <= 0 || (brain->sectors[0].size() < 3 && map->sector[x][y].distance_to_base <= 1) )
+						builder = ut->FindClosestBuilder(mex, brain->base_center, true, 10);
+					else
+						builder = ut->FindClosestBuilder(mex, brain->base_center, false, 10);
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(mex, spot->pos, water);
+						builder->GiveConstructionOrder(mex, spot->pos, water);
 						spot->occupied = true;
 					}
-					else
-					{
-						bt->CheckAddBuilder(mex);
-						return false;
-					}
-				}
-			}
-			// no free spots in the base anymore
-			else
-			{
-				brain->freeBaseSpots = false;
-					
-				if(brain->expandable && brain->sectors[0].size() <= 3)
-				{
-					brain->ExpandBase(LAND_SECTOR);
-					//fprintf(ai->file, "Base expanded by BuildExtractor()\n");
-				}
-
-				external = false;
-			}
-		}
-		else // try to build extern metalspot
-			external = true;
-
-		if(external)
-		{
-			// get id of an extractor and look for suitable builder
-			mex = bt->GetMex(ai->side, 8, 1, true, false, false);
-
-			if(mex && !bt->units_dynamic[mex].builderAvailable)
-			{
-				bt->BuildBuilderFor(mex);
-				mex = bt->GetMex(ai->side, 8, 1, true, false, true);
-			}
-
-			int water_mex = bt->GetMex(ai->side, 8, 1, true, true, false);
-
-			if(water_mex && !bt->units_dynamic[water_mex].builderAvailable)
-			{
-				bt->BuildBuilderFor(water_mex);
-				water_mex = bt->GetMex(ai->side, 8, 1, true, true, true);
-			}
-
-			// look for empty metal spot
-			spot = FindExternalMetalSpot(mex, water_mex);
-			
-			if(spot)
-			{
-				// check if land or sea spot
-				int type = map->buildmap[(int) spot->pos.x/8 + (int)(spot->pos.z/8 )* map->xMapSize];
-	
-				if(type == 5 || type == 4)
-				{
-					water = true;
-					mex = water_mex;
-				}
-				else
-					water = false;
-
-				// look for suitable builder
-				if(brain->sectors[0].size() > 2)
-				{
-					int x = spot->pos.x/map->xSectorSize;
-					int y = spot->pos.z/map->ySectorSize;
-
-					// only allow commander if spot is close to own base
-					if(map->sector[x][y].distance_to_base <= 1)
-						builder = ut->FindClosestBuilder(mex, spot->pos, true, 10);
-					else
-						builder = ut->FindClosestBuilder(mex, spot->pos, false, 10);
-				}
-				else
-					builder = ut->FindClosestBuilder(mex, spot->pos, true, 10);
-				
-
-				if(builder)
-				{
-					builder->GiveBuildOrder(mex, spot->pos, water);
-					spot->occupied = true;
-				}
-				else
-				{
-					bt->CheckAddBuilder(mex);
-					return false;
 				}
 			}
 			else
-			{
-				if(ai->activeUnits[METAL_MAKER] < cfg->MAX_METAL_MAKERS && urgency[METAL_MAKER] <= 0.6)
-					urgency[METAL_MAKER] = 0.4;
+			{	
+				// check mex upgrade
+				if(ai->futureUnits[EXTRACTOR] < 1)
+					CheckMexUpgrade();
+
+				// request metal makers if no spot found
+				if(ai->activeUnits[METAL_MAKER] < cfg->MAX_METAL_MAKERS && urgency[METAL_MAKER] <= GetMetalUrgency() / 2.0f)
+					urgency[METAL_MAKER] = GetMetalUrgency() / 2.0f;
 			}
 		}
 	}
-	
+
 	return true;
 }
 
@@ -898,13 +971,13 @@ bool AAIExecute::BuildPowerPlant()
 	if(ai->futureUnits[POWER_PLANT] >= 2)
 		return true;
 
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < 1 && ai->activeUnits[POWER_PLANT] >= 2)
+	if(ai->activeFactories < 1 && ai->activeUnits[POWER_PLANT] >= 2)
 		return true;
 
 	int ground_plant = 0;
 	int water_plant = 0;
 	
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
 
 	float current_energy = cb->GetEnergyIncome();
@@ -915,17 +988,17 @@ bool AAIExecute::BuildPowerPlant()
 	float energy = cb->GetEnergyIncome()+1;
 
 	// check if already one power_plant under cosntruction and energy short 
-	if(ai->futureUnits[POWER_PLANT] > 0 && ai->activeUnits[POWER_PLANT] > 8 && averageEnergySurplus < 200)
+	if(ai->futureUnits[POWER_PLANT] > 0 && ai->activeUnits[POWER_PLANT] > 9 && averageEnergySurplus < 100)
 	{
-		urgency = 0.5 + GetEnergyUrgency();
-		max_power = 0.5;
-		eff = 1 + brain->Affordable();
+		urgency = 0.4f + GetEnergyUrgency();
+		max_power = 0.5f;
+		eff = 2.2f - brain->Affordable() / 4.0f;
 	}
 	else
 	{
-		max_power = 0.5 + pow((float) ai->activeUnits[POWER_PLANT], 0.8f);
-		eff = 0.5 + 1.5f / (brain->Affordable() + 0.5f);
-		urgency = 0.5 + GetEnergyUrgency();
+		max_power = 0.5f + pow((float) ai->activeUnits[POWER_PLANT], 0.8f);
+		eff = 0.5 + 1.0f / (brain->Affordable() + 0.5f);
+		urgency = 0.5f + GetEnergyUrgency();
 	}
 
 	// sort sectors according to threat level
@@ -938,17 +1011,21 @@ bool AAIExecute::BuildPowerPlant()
 	// get water and ground plant
 	ground_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, false, false, false);
 	// currently aai cannot build this building
-	if(ground_plant && !bt->units_dynamic[ground_plant].builderAvailable)
+	if(ground_plant && bt->units_dynamic[ground_plant].buildersAvailable <= 0)
 	{
-		bt->CheckAddBuilder(ground_plant);
+		if( bt->units_dynamic[water_plant].buildersRequested <= 0)
+			bt->AddBuilder(ground_plant);
+
 		ground_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, false, false, true);
 	}
 
 	water_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, true, false, false);
 	// currently aai cannot build this building
-	if(water_plant && !bt->units_dynamic[water_plant].builderAvailable)
+	if(water_plant && bt->units_dynamic[water_plant].buildersAvailable <= 0)
 	{
-		bt->CheckAddBuilder(water_plant);
+		if( bt->units_dynamic[water_plant].buildersRequested <= 0)
+			bt->AddBuilder(water_plant);
+
 		water_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, true, false, true);
 	}
 
@@ -972,7 +1049,7 @@ bool AAIExecute::BuildPowerPlant()
 
 		if(checkGround && ground_plant)
 		{
-			if(ut->builders.size() > 1 || ai->activeUnits[POWER_PLANT] >= 2)
+			if(ut->constructors.size() > 1 || ai->activeUnits[POWER_PLANT] >= 2)
 				pos = (*sector)->GetBuildsite(ground_plant, false);
 			else 
 			{
@@ -996,25 +1073,25 @@ bool AAIExecute::BuildPowerPlant()
 				if(builder)
 				{
 					futureAvailableEnergy += bt->units_static[ground_plant].efficiency[0];
-					builder->GiveBuildOrder(ground_plant, pos, false);
+					builder->GiveConstructionOrder(ground_plant, pos, false);
 					return true;
 				}
 				else
 				{
-					bt->CheckAddBuilder(ground_plant);
+					bt->AddBuilder(ground_plant);
 					return false;
 				}
 			}
 			else
 			{
 				brain->ExpandBase(LAND_SECTOR);
-				//fprintf(ai->file, "Base expanded by BuildPowerPlant()\n");
+				fprintf(ai->file, "Base expanded by BuildPowerPlant()\n");
 			}
 		}
 
 		if(checkWater && water_plant)
 		{
-			if(ut->builders.size() > 1 || ai->activeUnits[POWER_PLANT] >= 2)
+			if(ut->constructors.size() > 1 || ai->activeUnits[POWER_PLANT] >= 2)
 				pos = (*sector)->GetBuildsite(water_plant, true);
 			else 
 			{
@@ -1038,12 +1115,12 @@ bool AAIExecute::BuildPowerPlant()
 				if(builder)
 				{
 					futureAvailableEnergy += bt->units_static[water_plant].efficiency[0];
-					builder->GiveBuildOrder(water_plant, pos, true);
+					builder->GiveConstructionOrder(water_plant, pos, true);
 					return true;
 				}
 				else
 				{
-					bt->CheckAddBuilder(water_plant);
+					bt->AddBuilder(water_plant);
 					return false;
 				}
 			}
@@ -1057,15 +1134,25 @@ bool AAIExecute::BuildPowerPlant()
 
 bool AAIExecute::BuildMetalMaker()
 {
+	if(ai->activeFactories < 1 && ai->activeUnits[EXTRACTOR] >= 2)
+		return true;
+
 	if(ai->futureUnits[METAL_MAKER] > 0 || disabledMMakers >= 1)
 		return true;
 
 	bool checkWater, checkGround;
 	int maker;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
 	// urgency < 4
-	float urgency = 16.0 / (ai->activeUnits[METAL_MAKER]+ai->futureUnits[METAL_MAKER]+4);
+	
+	float urgency = GetMetalUrgency() / 2.0f;
+	
+	float cost = 0.25f + brain->Affordable() / 2.0f;
+
+	float efficiency = 0.25f + ai->activeUnits[METAL_MAKER] / 4.0f ;
+	float metal = efficiency;
+
 
 	// sort sectors according to threat level
 	learned = 70000.0 / (cb->GetCurrentFrame() + 35000) + 1;
@@ -1093,13 +1180,15 @@ bool AAIExecute::BuildMetalMaker()
 
 		if(checkGround)
 		{
-			maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, false, false); 
+			maker = bt->GetMetalMaker(ai->side, cost,  efficiency, metal, urgency, false, false); 
 	
 			// currently aai cannot build this building
-			if(maker && !bt->units_dynamic[maker].builderAvailable)
+			if(maker && bt->units_dynamic[maker].buildersAvailable <= 0)
 			{
-				bt->CheckAddBuilder(maker);
-				maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, false, true);
+				if(bt->units_dynamic[maker].buildersRequested <= 0)
+					bt->BuildBuilderFor(maker);
+				
+				maker = bt->GetMetalMaker(ai->side, cost, efficiency, metal, urgency, false, true);
 			}
 
 			if(maker)
@@ -1113,27 +1202,33 @@ bool AAIExecute::BuildMetalMaker()
 					if(builder)
 					{
 						futureRequestedEnergy += bt->unitList[maker-1]->energyUpkeep;
-						builder->GiveBuildOrder(maker, pos, false);
+						builder->GiveConstructionOrder(maker, pos, false);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(maker);
+						bt->AddBuilder(maker);
 						return false;
 					}
+				}
+				else
+				{
+					brain->ExpandBase(LAND_SECTOR);	
+					fprintf(ai->file, "Base expanded by BuildMetalMaker()\n");
 				}
 			}
 		}
 
 		if(checkWater)
 		{
-			//cb->SendTextMsg("water maker",0);
 			maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, true, false); 
 	
 			// currently aai cannot build this building
-			if(maker && !bt->units_dynamic[maker].builderAvailable)
+			if(maker && bt->units_dynamic[maker].buildersAvailable <= 0)
 			{
-				bt->BuildBuilderFor(maker);
+				if(bt->units_dynamic[maker].buildersRequested <= 0)
+					bt->BuildBuilderFor(maker);
+				
 				maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, true, true);
 			}
 
@@ -1148,14 +1243,19 @@ bool AAIExecute::BuildMetalMaker()
 					if(builder)
 					{
 						futureRequestedEnergy += bt->unitList[maker-1]->energyUpkeep;
-						builder->GiveBuildOrder(maker, pos, true);
+						builder->GiveConstructionOrder(maker, pos, true);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(maker);
+						bt->AddBuilder(maker);
 						return false;
 					}
+				}
+				else
+				{
+					brain->ExpandBase(WATER_SECTOR);
+					fprintf(ai->file, "Base expanded by BuildMetalMaker()\n");
 				}
 			}
 		}
@@ -1169,12 +1269,12 @@ bool AAIExecute::BuildStorage()
 	if(ai->futureUnits[STORAGE] > 0 || ai->activeUnits[STORAGE] >= cfg->MAX_STORAGE)
 		return true;
 
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < 2)
+	if(ai->activeFactories < 2)
 		return true;
 
 	int storage = 0;
 	bool checkWater, checkGround;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
 
 	float metal = 4 / (cb->GetMetalStorage() + futureStoredMetal - cb->GetMetal() + 1);
@@ -1205,7 +1305,7 @@ bool AAIExecute::BuildStorage()
 		{		
 			storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, false, false); 
 	
-			if(storage && !bt->units_dynamic[storage].builderAvailable)
+			if(storage && bt->units_dynamic[storage].buildersAvailable <= 0 && bt->units_dynamic[storage].buildersRequested <= 0)
 			{
 				bt->BuildBuilderFor(storage);
 				storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, false, true); 
@@ -1221,19 +1321,19 @@ bool AAIExecute::BuildStorage()
 	
 					if(builder)
 					{
-						builder->GiveBuildOrder(storage, pos, false);
+						builder->GiveConstructionOrder(storage, pos, false);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(storage);
+						bt->AddBuilder(storage);
 						return false;
 					}
 				}
 				else
 				{
 					brain->ExpandBase(LAND_SECTOR);
-					//fprintf(ai->file, "Base expanded by BuildStorage()\n");
+					fprintf(ai->file, "Base expanded by BuildStorage()\n");
 				}
 			}
 		}
@@ -1242,7 +1342,7 @@ bool AAIExecute::BuildStorage()
 		{
 			storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, true, false); 
 	
-			if(storage && !bt->units_dynamic[storage].builderAvailable)
+			if(storage && bt->units_dynamic[storage].buildersAvailable <= 0 && bt->units_dynamic[storage].buildersRequested <= 0)
 			{
 				bt->BuildBuilderFor(storage);
 				storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, true, true); 
@@ -1258,17 +1358,20 @@ bool AAIExecute::BuildStorage()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(storage, pos, true);
+						builder->GiveConstructionOrder(storage, pos, true);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(storage);
+						bt->AddBuilder(storage);
 						return false;
 					}
 				}
 				else
+				{
 					brain->ExpandBase(WATER_SECTOR);
+					fprintf(ai->file, "Base expanded by BuildStorage()\n");
+				}
 			}
 		}
 	}
@@ -1283,10 +1386,8 @@ bool AAIExecute::BuildAirBase()
 
 	int airbase = 0;
 	bool checkWater, checkGround;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
-
-	cb->SendTextMsg("building airbase", 0);
 
 	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); sector++)
 	{
@@ -1311,18 +1412,16 @@ bool AAIExecute::BuildAirBase()
 
 			airbase = bt->GetAirBase(ai->side, brain->Affordable(), false, false); 
 	
-			if(airbase && !bt->units_dynamic[airbase].builderAvailable)
+			if(airbase && bt->units_dynamic[airbase].buildersAvailable <= 0)
 			{
-				bt->BuildBuilderFor(airbase);
+				if(bt->units_dynamic[airbase].buildersRequested <= 0)
+					bt->BuildBuilderFor(airbase);
+
 				airbase = bt->GetAirBase(ai->side, brain->Affordable(), false, true);
 			}
 
-			cb->SendTextMsg("ground airbase", 0);
-
 			if(airbase)
 			{
-				cb->SendTextMsg(bt->unitList[airbase-1]->humanName.c_str(), 0);
-
 				pos = (*sector)->GetBuildsite(airbase, false);
 
 				if(pos.x > 0)
@@ -1331,19 +1430,19 @@ bool AAIExecute::BuildAirBase()
 	
 					if(builder)
 					{
-						builder->GiveBuildOrder(airbase, pos, false);
+						builder->GiveConstructionOrder(airbase, pos, false);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(airbase);
+						bt->AddBuilder(airbase);
 						return false;
 					}
 				}
 				else
 				{
 					brain->ExpandBase(LAND_SECTOR);
-					//fprintf(ai->file, "Base expanded by BuildAirBase()\n");
+					fprintf(ai->file, "Base expanded by BuildAirBase()\n");
 				}
 			}
 		}
@@ -1352,9 +1451,11 @@ bool AAIExecute::BuildAirBase()
 		{
 			airbase = bt->GetAirBase(ai->side, brain->Affordable(), true, false); 
 	
-			if(airbase && !bt->units_dynamic[airbase].builderAvailable)
+			if(airbase && bt->units_dynamic[airbase].buildersAvailable <= 0 )
 			{
-				bt->BuildBuilderFor(airbase);
+				if(bt->units_dynamic[airbase].buildersRequested <= 0)
+					bt->BuildBuilderFor(airbase);
+
 				airbase = bt->GetAirBase(ai->side, brain->Affordable(), true, true);  
 			}
 
@@ -1368,12 +1469,12 @@ bool AAIExecute::BuildAirBase()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(airbase, pos, true);
+						builder->GiveConstructionOrder(airbase, pos, true);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(airbase);
+						bt->AddBuilder(airbase);
 						return false;
 					}
 				}
@@ -1388,108 +1489,32 @@ bool AAIExecute::BuildAirBase()
 
 bool AAIExecute::BuildDefences()
 {
-	if(ai->futureUnits[STATIONARY_DEF] > 3)
+	if(ai->futureUnits[STATIONARY_DEF] > 2 || next_defence <= 0)
 		return true;
 
-	AAISector *dest = 0;
-	BuildOrderStatus status;
-
-	learned = 70000.0 / (cb->GetCurrentFrame() + 35000) + 1;
-	current = 2.5 - learned;
-
-	//
-	if(cfg->AIR_ONLY_MOD)
+	if(BuildStationaryDefenceVS(def_category, next_defence) != BUILDORDER_NOBUILDER)
 	{
-		brain->sectors[0].sort(defend_vs_ground);
-
-		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		{
-			status = BuildStationaryDefenceVS(GROUND_ASSAULT, *sector);
-
-			if(!(status == BUILDORDER_NOBUILDPOS))
-				break;
-		}
-	
-		brain->sectors[0].sort(defend_vs_air);
-
-		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		{
-			status = BuildStationaryDefenceVS(AIR_ASSAULT, *sector);
-
-			if(!(status == BUILDORDER_NOBUILDPOS))
-				break;
-		}	
-
-	
-		brain->sectors[0].sort(defend_vs_hover);
-
-		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		{
-			status = BuildStationaryDefenceVS(HOVER_ASSAULT, *sector);
-
-			if(!(status == BUILDORDER_NOBUILDPOS))
-				break;
-		}	
+		// construction started
+		next_defence = 0;
+		
+		return true;
 	}
 	else
-	{
-		// check for ground defence
-		if(map->mapType == LAND_MAP || map->mapType == LAND_WATER_MAP)
-		{
-			brain->sectors[0].sort(defend_vs_ground);
-
-			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-			{
-				status = BuildStationaryDefenceVS(GROUND_ASSAULT, *sector);
-
-				if(!(status == BUILDORDER_NOBUILDPOS))
-					break;
-			}
-		}
-
-		brain->sectors[0].sort(defend_vs_air);
-
-		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		{
-			// prevent aai from blocking recently added sectors with  aa defences befor something else has been built
-			if((*sector)->unitsOfType[GROUND_FACTORY] > 0 || (*sector)->unitsOfType[POWER_PLANT] > 0)
-			{
-				status = BuildStationaryDefenceVS(AIR_ASSAULT, *sector);
-
-				if(!(status == BUILDORDER_NOBUILDPOS))
-					break;
-			}
-		}	
-
-		if(map->mapType == WATER_MAP || map->mapType == LAND_WATER_MAP)
-		{
-			brain->sectors[0].sort(defend_vs_sea);
-
-			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-			{
-				status = BuildStationaryDefenceVS(SEA_ASSAULT, *sector);
-
-				if(!(status == BUILDORDER_NOBUILDPOS))
-					break;
-			}	
-		}
-	}
-
-	return true;
+		return false;
 }
 
 BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAISector *dest)
 {
 	// dont build too many defences 
-	if(dest->defences.size() > 7 && dest->GetThreatBy(category, learned, current) / (2 * dest->GetDefencePowerVs(category)+ 2) < cfg->MIN_SECTOR_THREAT)
+	if(dest->defences.size() > 6 && dest->GetThreatBy(category, learned, current) / (dest->GetDefencePowerVs(category) + 1.0f) < cfg->MIN_SECTOR_THREAT)
 		return BUILDORDER_NOBUILDPOS;
 
-	float gr_eff = 0, air_eff = 0, hover_eff = 0, sea_eff = 0, submarine_eff = 0;
-
+	double gr_eff = 0, air_eff = 0, hover_eff = 0, sea_eff = 0, submarine_eff = 0;
+	
 	bool checkWater, checkGround;
 	int building;
 	float3 pos;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 
 	if(dest->water_ratio < 0.15)
 	{
@@ -1507,15 +1532,23 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		checkGround = false;
 	}
 
-	float urgency = 25.0 / (2 * dest->defences.size() + dest->GetDefencePowerVs(category) + 3.0) + 0.3;
-	float power = 0.5 + 1.0f / urgency;
-	float eff = 0.5 + brain->Affordable()/2.0f;
-	float range = 0.5;
+	double urgency = 0.25 + 10.0 / (2.0 * dest->defences.size() + dest->GetDefencePowerVs(category) + 1.0);
+	double power = 0.5 + 2.0 / urgency;
+	double eff = 0.5 + brain->Affordable()/6.0;
+	double range = 0.5;
+	double cost = 0.5 + brain->Affordable()/6.0;
 
-	if(dest->defences.size() >= ((float)cfg->MAX_DEFENCES )/3.0f)
+	if(dest->defences.size() > 3)
 	{
-		if(rand()%3 == 1)
+		int t = rand()%4;
+
+		if(t == 1)
 			range = 3;
+		else if(t == 2)
+			range = 1.5;
+
+		if(t == 3)
+			power += 1.5;
 	}
 
 	if(category == GROUND_ASSAULT)
@@ -1544,12 +1577,12 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		if(rand()%cfg->LEARN_RATE == 1 && dest->defences.size() >= 3)
 			building = bt->GetRandomDefence(ai->side, category);
 		else
-			building = bt->GetDefenceBuilding(ai->side, eff, power, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff,  urgency, range, 5, false, false);
+			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, range, 8, false, false);
 
-		if(building && !bt->units_dynamic[building].builderAvailable)
+		if(building && bt->units_dynamic[building].buildersAvailable <= 0 && bt->units_dynamic[building].buildersRequested <= 0)
 		{
 			bt->BuildBuilderFor(building);
-			building = bt->GetDefenceBuilding(ai->side, eff, power, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, range, 5, false, true);
+			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, range, 8, false, true);
 		}
 				
 		if(building)
@@ -1562,12 +1595,12 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 
 				if(builder)
 				{
-					builder->GiveBuildOrder(building, pos, false);
+					builder->GiveConstructionOrder(building, pos, false);
 					return BUILDORDER_SUCCESFUL;
 				}
 				else
 				{
-					bt->CheckAddBuilder(building);	
+					bt->AddBuilder(building);	
 					return BUILDORDER_NOBUILDER;
 				}
 			}
@@ -1581,12 +1614,12 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		if(rand()%cfg->LEARN_RATE == 1 && dest->defences.size() >= 3)
 			building = bt->GetRandomDefence(ai->side, category);
 		else
-			building = bt->GetDefenceBuilding(ai->side, eff, power, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1, 5, true, false);
+			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1, 8, true, false);
 
-		if(building && !bt->units_dynamic[building].builderAvailable)
+		if(building && bt->units_dynamic[building].buildersAvailable <= 0 && bt->units_dynamic[building].buildersRequested <= 0)
 		{
 			bt->BuildBuilderFor(building);
-			building = bt->GetDefenceBuilding(ai->side, eff, power, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1,  5, true, true);
+			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1,  8, true, true);
 		}
 
 		if(building)
@@ -1599,12 +1632,12 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 
 				if(builder)
 				{
-					builder->GiveBuildOrder(building, pos, true);
+					builder->GiveConstructionOrder(building, pos, true);
 					return BUILDORDER_SUCCESFUL;
 				}
 				else
 				{
-					bt->CheckAddBuilder(building);
+					bt->AddBuilder(building);
 					return BUILDORDER_NOBUILDER;
 				}
 			}
@@ -1621,7 +1654,7 @@ bool AAIExecute::BuildArty()
 	if(ai->futureUnits[STATIONARY_ARTY])
 		return true;
 
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
 	int arty = 0;
 	bool checkWater, checkGround;
@@ -1652,9 +1685,11 @@ bool AAIExecute::BuildArty()
 		
 			if(arty)
 			{
-				if(!bt->units_dynamic[arty].builderAvailable)
+				if(bt->units_dynamic[arty].buildersAvailable <= 0)
 				{
-					bt->BuildBuilderFor(arty);
+					if(bt->units_dynamic[arty].buildersRequested <= 0)
+						bt->BuildBuilderFor(arty);
+					
 					return true;
 				}
 
@@ -1666,12 +1701,12 @@ bool AAIExecute::BuildArty()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(arty, pos, false);
+						builder->GiveConstructionOrder(arty, pos, false);
 						return true;
 					}
-					else
+					else 
 					{
-						bt->CheckAddBuilder(arty);
+						bt->AddBuilder(arty);
 						return false;
 					}
 				}
@@ -1684,9 +1719,11 @@ bool AAIExecute::BuildArty()
 		
 			if(arty)
 			{
-				if(!bt->units_dynamic[arty].builderAvailable)
+				if(bt->units_dynamic[arty].buildersAvailable <= 0)
 				{
-					bt->BuildBuilderFor(arty);
+					if(bt->units_dynamic[arty].buildersRequested <= 0)
+						bt->BuildBuilderFor(arty);
+
 					return true;
 				}
 
@@ -1698,12 +1735,12 @@ bool AAIExecute::BuildArty()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(arty, pos, true);
+						builder->GiveConstructionOrder(arty, pos, true);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(arty);
+						bt->AddBuilder(arty);
 						return false;
 					}
 				}
@@ -1716,118 +1753,107 @@ bool AAIExecute::BuildArty()
 
 bool AAIExecute::BuildFactory()
 {
-	if(ai->futureUnits[GROUND_FACTORY] + ai->futureUnits[SEA_FACTORY] > 0)
+	if(ai->futureUnits[STATIONARY_CONSTRUCTOR] > 0)
 		return true;
 
-	AAIBuilder *builder = 0, *temp_builder;
-	float3 pos;
+	AAIConstructor *builder = 0, *temp_builder;
+	float3 pos = ZeroVector;
 	float best_rating = 0, my_rating;
 	int building = 0;
 	
-
-	if( !(map->mapType == 4 && ai->activeUnits[SEA_FACTORY] == 0 && !bt->units_of_category[SEA_FACTORY][ai->side-1].empty()) )
+	// go through list of factories, build cheapest requested factory first
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++fac)
 	{
-		// go through list of factories, build cheapest requested factory first
-		for(list<int>::iterator fac = bt->units_of_category[GROUND_FACTORY][ai->side-1].begin(); fac != bt->units_of_category[GROUND_FACTORY][ai->side-1].end(); ++fac)
+		if(bt->units_dynamic[*fac].requested > 0)	
 		{
-			if(bt->units_static[*fac].efficiency[4] >= 2)
-			{	
+			my_rating = bt->GetFactoryRating(*fac) / pow( (float) (1 + bt->units_dynamic[*fac].active), 2.0f);
+			my_rating *= (1 + sqrt(2.0 + (float) GetBuildqueOfFactory(*fac)->size())); 
+
+			if(ai->activeFactories < 1)
+				my_rating /= bt->units_static[*fac].cost;
+
+			// skip factories that could not be built 
+			if(bt->units_static[*fac].efficiency[4] > 2)
+			{
+				my_rating = 0;
 				bt->units_static[*fac].efficiency[4] = 0;
 			}
-			else if(bt->units_dynamic[*fac].requested - bt->units_dynamic[*fac].active > 0)	
+
+			if(my_rating > best_rating)
 			{
-				my_rating = bt->GetFactoryRating(*fac) / pow( (float) 1 + bt->units_dynamic[*fac].active, 2.0f);
-
-				if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < 1)
-					my_rating /= bt->units_static[*fac].cost;
-
-				if(my_rating > best_rating)
-				{
-					// only check building if a suitable builder is available
-					temp_builder = ut->FindBuilder(*fac, true, 10);
+				// only check building if a suitable builder is available
+				temp_builder = ut->FindBuilder(*fac, true, 10);
 					
-					if(temp_builder)
-					{
-						best_rating = my_rating;
-						builder = temp_builder;
-						building = *fac;
-					}
-				}
+				if(temp_builder)
+				{
+					best_rating = my_rating;
+					builder = temp_builder;
+					building = *fac;
+				}	
 			}
 		}
 	}
-
-	// check sea factories if water map
-	if(map->mapType > 2)
-	{
-		for(list<int>::iterator fac = bt->units_of_category[SEA_FACTORY][ai->side-1].begin(); fac != bt->units_of_category[SEA_FACTORY][ai->side-1].end(); ++fac)
-		{
-			if(bt->units_static[*fac].efficiency[4] >= 2)
-			{	
-				bt->units_static[*fac].efficiency[4] = 0;
-			}
-			else if(bt->units_dynamic[*fac].requested - bt->units_dynamic[*fac].active > 0)	
-			{
-				my_rating = bt->GetFactoryRating(*fac);
-
-				if(my_rating > best_rating)
-				{
-					// only check building if a suitable builder is available
-					temp_builder = ut->FindBuilder(*fac, true, 10);
-					
-					if(temp_builder)
-					{
-						best_rating = my_rating;
-						builder = temp_builder;
-						building = *fac;
-					}
-				}
-			}
-		}
-	}
-
 
 	if(building)
 	{
 		bool water;
-		
-		// sort sectors 
-		
-		if(bt->units_static[building].category == GROUND_FACTORY)
+
+		// land  
+		if(bt->CanPlacedLand(building))
 		{
-			if(ai->activeUnits[GROUND_FACTORY] > 0)
-				brain->sectors[0].sort(suitable_for_ground_factory);
-			
 			water = false;
-		}
-		else
-		{
-			if(ai->activeUnits[SEA_FACTORY] > 0)
-				brain->sectors[0].sort(suitable_for_sea_factory);
-				
-			water = true;
-		}
-		
-		// find buildpos
-		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		{
-			pos = (*sector)->GetRandomBuildsite(building, 20, water);
 
-			if(pos.x > 0)
-				break;
-		}
+			brain->sectors[0].sort(suitable_for_ground_factory);
 
-		if(pos.x == 0)
-		{
+			// find buildpos
 			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 			{
-				pos = (*sector)->GetBuildsite(building, water);
+				pos = (*sector)->GetRandomBuildsite(building, 20, false);
 
 				if(pos.x > 0)
 					break;
 			}
-		}
 
+			if(pos.x == 0)
+			{
+				for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
+				{
+					pos = (*sector)->GetBuildsite(building, false);
+	
+					if(pos.x > 0)
+						break;
+				}
+			}
+		}
+		
+		// try to build on water if land has not been possible
+		if(pos.x == 0 && bt->CanPlacedWater(building))
+		{
+			water = true;
+
+			brain->sectors[0].sort(suitable_for_sea_factory);
+
+
+			// find buildpos
+			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
+			{
+				pos = (*sector)->GetRandomBuildsite(building, 20, true);
+
+				if(pos.x > 0)
+					break;
+			}
+
+			if(pos.x == 0)
+			{
+				for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
+				{
+					pos = (*sector)->GetBuildsite(building, true);
+	
+					if(pos.x > 0)
+						break;
+				}
+			}
+		}
 			
 		if(pos.x > 0)
 		{
@@ -1836,15 +1862,15 @@ bool AAIExecute::BuildFactory()
 			if(builder)
 			{
 				// give build order
-				builder->GiveBuildOrder(building, pos, water);
-					
-				// add average ressoruce usage
+				builder->GiveConstructionOrder(building, pos, water);
+		
+				// add average ressource usage
 				futureRequestedMetal += bt->units_static[building].efficiency[0];
 				futureRequestedEnergy += bt->units_static[building].efficiency[1];
 			}
 			else
 			{
-				if(bt->units_dynamic[building].builderRequested == 0)
+				if(bt->units_dynamic[building].buildersRequested <= 0 && bt->units_dynamic[building].buildersAvailable <= 0)
 					bt->BuildBuilderFor(building);
 					
 				return false;
@@ -1852,30 +1878,33 @@ bool AAIExecute::BuildFactory()
 		}
 		else
 		{
+			bool expanded = false;
+
 			// no suitable buildsite found
-			if(bt->units_static[building].category == GROUND_FACTORY)
+			if(bt->CanPlacedLand(building))
 			{
-				brain->ExpandBase(LAND_SECTOR);
-				//fprintf(ai->file, "Base expanded by BuildFactory()\n");
+				expanded = brain->ExpandBase(LAND_SECTOR);
+				fprintf(ai->file, "Base expanded by BuildFactory()\n");
 			}
-			else
+			
+			if(!expanded && bt->CanPlacedWater(building))
 			{
 				brain->ExpandBase(WATER_SECTOR);
-				//fprintf(ai->file, "Base expanded by BuildFactory()\n");
+				fprintf(ai->file, "Base expanded by BuildFactory()\n");
 			}
 
 			// could not build due to lack of suitable buildpos
 			++bt->units_static[building].efficiency[4];
 
-			return false;
+			return true;
 		}
 	}
 
 	return true;
 }
 
-void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float range, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent)
-{
+void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent)
+{ 
 	int unit = 0;
 
 	if(category == GROUND_ASSAULT)
@@ -1885,12 +1914,12 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 			unit = bt->GetRandomUnit(bt->units_of_category[GROUND_ASSAULT][ai->side-1]);
 		else
 		{
-			unit = bt->GetGroundAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 15, false);
+			unit = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, false);
 
-			if(unit && !bt->units_dynamic[unit].builderAvailable)
+			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
 			{
 				bt->BuildFactoryFor(unit);
-				unit = bt->GetGroundAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 15, true);
+				unit = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, true);
 			}
 		}
 	}
@@ -1900,12 +1929,12 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 			unit = bt->GetRandomUnit(bt->units_of_category[AIR_ASSAULT][ai->side-1]);
 		else
 		{
-			unit = bt->GetAirAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 9, false);
+			unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && !bt->units_dynamic[unit].builderAvailable)
+			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
 			{
 				bt->BuildFactoryFor(unit);
-				unit = bt->GetAirAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 9, true);
+				unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
 			}
 		}
 	}
@@ -1915,12 +1944,12 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 			unit = bt->GetRandomUnit(bt->units_of_category[HOVER_ASSAULT][ai->side-1]);
 		else
 		{
-			unit = bt->GetHoverAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 9, false);
+			unit = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && !bt->units_dynamic[unit].builderAvailable)
+			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
 			{
 				bt->BuildFactoryFor(unit);
-				unit = bt->GetHoverAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, speed, range, cost, 9, true);
+				unit = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
 			}
 		}
 	}
@@ -1930,12 +1959,12 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 			unit = bt->GetRandomUnit(bt->units_of_category[SEA_ASSAULT][ai->side-1]);
 		else
 		{
-			unit = bt->GetSeaAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, speed, range, cost, 9, false);
+			unit = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && !bt->units_dynamic[unit].builderAvailable)
+			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
 			{
 				bt->BuildFactoryFor(unit);
-				unit = bt->GetSeaAssault(ai->side, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, speed, range, cost, 9, false);
+				unit = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 			}
 		}
 	}
@@ -1945,12 +1974,12 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 			unit = bt->GetRandomUnit(bt->units_of_category[SUBMARINE_ASSAULT][ai->side-1]);
 		else
 		{
-			unit = bt->GetSubmarineAssault(ai->side, sea_eff, submarine_eff, stat_eff, speed, range, cost, 9, false);
+			unit = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && !bt->units_dynamic[unit].builderAvailable)
+			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
 			{
 				bt->BuildFactoryFor(unit);
-				unit = bt->GetSubmarineAssault(ai->side, sea_eff, submarine_eff, stat_eff, speed, range, cost, 9, false);
+				unit = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 			}
 		}
 	}
@@ -1958,16 +1987,23 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 
 	if(unit)
 	{
-		//cb->SendTextMsg(bt->unitList[unit-1]->humanName.c_str(), 0);
-
-		if(bt->units_dynamic[unit].builderAvailable)
+		if(bt->units_dynamic[unit].buildersAvailable > 0)
 		{	
 			if(bt->units_static[unit].cost < cfg->MAX_COST_LIGHT_ASSAULT * bt->max_cost[category][ai->side-1])
-				AddUnitToBuildque(unit, 3, urgent);
+			{
+				if(AddUnitToBuildque(unit, 3, urgent))
+					bt->units_dynamic[unit].requested += 3;
+			}
 			else if(bt->units_static[unit].cost < cfg->MAX_COST_MEDIUM_ASSAULT * bt->max_cost[category][ai->side-1])
-				AddUnitToBuildque(unit, 2, urgent);
+			{
+				if(AddUnitToBuildque(unit, 2, urgent))
+					bt->units_dynamic[unit].requested += 2;
+			}
 			else
-				AddUnitToBuildque(unit, 1, urgent);	
+			{
+				if(AddUnitToBuildque(unit, 1, urgent))
+					bt->units_dynamic[unit].requested += 1;
+			}
 		}
 		else
 			bt->BuildFactoryFor(unit);
@@ -1980,10 +2016,12 @@ bool AAIExecute::BuildRecon()
 		return true;
 
 	int radar = 0;
-	AAIBuilder *builder;
+	AAIConstructor *builder;
 	float3 pos;
 	bool checkWater, checkGround;
 
+	float cost = brain->Affordable();
+	float range = 10.0 / (cost + 1);
 	
 	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 	{
@@ -2011,12 +2049,12 @@ bool AAIExecute::BuildRecon()
 		if(checkGround)
 		{
 			// find radar
-			radar = bt->GetRadar(ai->side, brain->Affordable(), 0.5, false, false);
+			radar = bt->GetRadar(ai->side, cost, range, false, false);
 
-			if(radar && !bt->units_dynamic[radar].builderAvailable)
+			if(radar && bt->units_dynamic[radar].buildersAvailable <= 0 && bt->units_dynamic[radar].buildersRequested <= 0)
 			{
 				bt->BuildBuilderFor(radar);
-				radar = bt->GetRadar(ai->side, brain->Affordable(), 0.5, false, true);
+				radar = bt->GetRadar(ai->side, cost, range, false, true);
 			}
 		
 			if(radar)
@@ -2029,12 +2067,12 @@ bool AAIExecute::BuildRecon()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(radar, pos, false);
+						builder->GiveConstructionOrder(radar, pos, false);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(radar);
+						bt->AddBuilder(radar);
 						return false;
 					}
 				}
@@ -2044,12 +2082,12 @@ bool AAIExecute::BuildRecon()
 		if(checkWater)
 		{
 			// find radar
-			radar = bt->GetRadar(ai->side, brain->Affordable(), 0.5, true, false);
+			radar = bt->GetRadar(ai->side, cost, range, true, false);
 
-			if(radar && !bt->units_dynamic[radar].builderAvailable)
+			if(radar && bt->units_dynamic[radar].buildersAvailable <= 0 && bt->units_dynamic[radar].buildersRequested <= 0)
 			{
 				bt->BuildBuilderFor(radar);
-				radar = bt->GetRadar(ai->side, brain->Affordable(), 0.5, true, true);
+				radar = bt->GetRadar(ai->side, cost, range, true, true);
 			}
 		
 			if(radar)
@@ -2062,12 +2100,12 @@ bool AAIExecute::BuildRecon()
 
 					if(builder)
 					{
-						builder->GiveBuildOrder(radar, pos, true);
+						builder->GiveConstructionOrder(radar, pos, true);
 						return true;
 					}
 					else
 					{
-						bt->CheckAddBuilder(radar);
+						bt->AddBuilder(radar);
 						return false;
 					}
 				}
@@ -2082,18 +2120,22 @@ bool AAIExecute::BuildJammer()
 {
 	int jammer = 0;
 
-	// find radar
-	jammer = bt->GetJammer(ai->side, brain->Affordable(), 0.5, false, false);
+	float cost = brain->Affordable();
+	float range = 10.0 / (cost + 1);
 
-	if(jammer && !bt->units_dynamic[jammer].builderAvailable)
+	jammer = bt->GetJammer(ai->side, cost, range, false, false);
+
+	if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0)
 	{
-		bt->BuildBuilderFor(jammer);
-		jammer = bt->GetJammer(ai->side, brain->Affordable(), 0.5, false, true);
+		if(bt->units_dynamic[jammer].buildersRequested <= 0)
+			bt->BuildBuilderFor(jammer);
+
+		jammer = bt->GetJammer(ai->side, cost, range, false, true);
 	}
 	
 	if(jammer)
 	{
-		AAIBuilder *builder = ut->FindBuilder(jammer, true, 10);
+		AAIConstructor *builder = ut->FindBuilder(jammer, true, 10);
 
 		if(builder)
 		{
@@ -2102,8 +2144,7 @@ bool AAIExecute::BuildJammer()
 			
 			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); sector++)
 			{
-				
-				if(!(*sector)->unitsOfType[STATIONARY_JAMMER] && ((*sector)->unitsOfType[GROUND_FACTORY] > 0 || (*sector)->unitsOfType[POWER_PLANT] > 0) )
+				if((*sector)->unitsOfType[STATIONARY_JAMMER] == 0 && ((*sector)->unitsOfType[STATIONARY_CONSTRUCTOR] > 0 || (*sector)->unitsOfType[POWER_PLANT] > 0) )
 					my_rating = (*sector)->GetOverallThreat(1, 1);
 				else 
 					my_rating = 0;
@@ -2122,15 +2163,15 @@ bool AAIExecute::BuildJammer()
 
 				if(pos.x > 0)
 				{
-					builder->GiveBuildOrder(jammer, pos, false);
+					builder->GiveConstructionOrder(jammer, pos, false);
 					futureRequestedEnergy += (bt->unitList[jammer-1]->energyUpkeep - bt->unitList[jammer-1]->energyMake);
-					return true;
 				}
 			}
 		}
 		else
 			return false;
 	}
+
 	return true;
 }
 
@@ -2146,7 +2187,7 @@ void AAIExecute::DefendMex(int mex, int def_id)
 	{
 		AAISector *sector = &map->sector[x][y];
 
-		if(sector->distance_to_base > 0 && sector->distance_to_base <= cfg->MAX_MEX_DEFENCE_DISTANCE && sector->allied_structures < 600)
+		if(sector->distance_to_base > 0 && sector->distance_to_base <= cfg->MAX_MEX_DEFENCE_DISTANCE && sector->allied_structures < 500)
 		{
 			int defence = 0;
 			bool water;
@@ -2155,14 +2196,23 @@ void AAIExecute::DefendMex(int mex, int def_id)
 			if(bt->unitList[def_id-1]->minWaterDepth > 0)
 			{
 				water = true;
-				defence = bt->GetDefenceBuilding(ai->side, 3, 0.5, 0, 0, 0, 1.5, 0.5, 6, 0.1, 1, true, true); 
+
+				if(cfg->AIR_ONLY_MOD)
+					defence = bt->GetDefenceBuilding(ai->side, 2, 1, 1, 1, 0.5, 0, 0, 0, 4, 0.1, 1, true, true);
+				else
+					defence = bt->GetDefenceBuilding(ai->side, 2, 1, 1, 0, 0, 0, 1.5, 0.5, 4, 0.1, 1, true, true); 
 			}
 			else 
 			{
-				if(map->mapType == AIR_MAP)
-					defence = bt->GetDefenceBuilding(ai->side, 3, 0.5, 0, 2, 0, 0, 0, 6, 0.1, 1, false, true); 
+				if(cfg->AIR_ONLY_MOD)
+					defence = bt->GetDefenceBuilding(ai->side, 2, 1, 1, 1, 0.5, 0, 0, 0, 4, 0.1, 1, false, true);
 				else
-					defence = bt->GetDefenceBuilding(ai->side, 3, 0.5, 1.5, 0.5, 0, 0, 0, 6, 0.1, 3, false, true); 
+				{
+					if(map->mapType == AIR_MAP)
+						defence = bt->GetDefenceBuilding(ai->side, 2, 1, 1, 0, 2, 0, 0, 0, 4, 0.1, 1, false, true); 
+					else
+						defence = bt->GetDefenceBuilding(ai->side, 2, 1, 1, 1.5, 0.5, 0, 0, 0, 4, 0.1, 3, false, true); 
+				}
 				
 				water = false;
 			}
@@ -2194,10 +2244,15 @@ void AAIExecute::DefendMex(int mex, int def_id)
 
 				if(pos.x > 0)
 				{
-					AAIBuilder *builder = ut->FindClosestBuilder(defence, pos, false, 10);
+					AAIConstructor *builder;
+
+					if(brain->sectors[0].size() > 2)
+						builder = ut->FindClosestBuilder(defence, pos, false, 10);
+					else
+						builder = ut->FindClosestBuilder(defence, pos, true, 10);
 
 					if(builder)
-						builder->GiveBuildOrder(defence, pos, water);	
+						builder->GiveConstructionOrder(defence, pos, water);	
 				}
 			}
 		}
@@ -2223,8 +2278,8 @@ void AAIExecute::UpdateRessources()
 		averageEnergySurplus += energySurplus[i];
 	}
 
-	averageEnergySurplus /= 8;
-	averageMetalSurplus /= 8;
+	averageEnergySurplus /= 8.0f;
+	averageMetalSurplus /= 8.0f;
 
 	// increase counter
 	counter = (++counter)%8;
@@ -2247,44 +2302,31 @@ void AAIExecute::CheckStationaryArty()
 		urgency[STATIONARY_ARTY] = temp;
 }
 
-void AAIExecute::CheckUnits()
-{
-	/*float temp;
-	
-	if(cfg->AIR_ONLY_MOD)
-		temp = 48.0 / (ai->activeUnits[AIR_ASSAULT]+ai->futureUnits[AIR_ASSAULT] + 16);
-	else
-		temp = 48.0 / (ai->activeUnits[GROUND_ASSAULT]+ai->futureUnits[GROUND_ASSAULT] + 16);
-
-	if(temp < urgency[METAL_MAKER+1])
-		urgency[METAL_MAKER+1] = temp;*/
-}
-
 void AAIExecute::CheckBuildques()
 {
 	int req_units = 0;
-	int active_factories = 0;
-
+	int active_factory_types = 0;
+	
 	for(int i = 0; i < numOfFactories; ++i)
 	{
 		// sum up builque lengths of active factory types
-		if(bt->units_dynamic[factory_table[i]].active)
+		if(bt->units_dynamic[factory_table[i]].active > 0)
 		{
 			req_units += buildques[i].size();
-			++active_factories;
+			++active_factory_types;
 		}
 	}
 
-	if(active_factories > 0)
+	if(active_factory_types > 0)
 	{
-		if( (float)req_units / (float)active_factories < cfg->MAX_BUILDQUE_SIZE / 5.0 )
+		if( (float)req_units / (float)active_factory_types < (float)cfg->MAX_BUILDQUE_SIZE / 2.5f )
 		{
 			if(unitProductionRate < 70)
 				++unitProductionRate;
 
 			fprintf(ai->file, "Increasing unit production rate to %i\n", unitProductionRate);
 		}
-		else if( (float)req_units / (float)active_factories > cfg->MAX_BUILDQUE_SIZE / 2.0 )
+		else if( (float)req_units / (float)active_factory_types > (float)cfg->MAX_BUILDQUE_SIZE / 1.5f )
 		{
 			if(unitProductionRate > 1)
 			{
@@ -2297,25 +2339,72 @@ void AAIExecute::CheckBuildques()
 
 void AAIExecute::CheckDefences()
 {
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < cfg->MIN_FACTORIES_FOR_DEFENCES)
+	if(ai->activeFactories < cfg->MIN_FACTORIES_FOR_DEFENCES || ai->futureUnits[STATIONARY_DEF] > 2)
 		return;
 
-	float defences = 1;
+	int t = brain->GetGamePeriod();
 
-	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
-		defences += (*sector)->defences.size();
+	int max_dist = 0;
 
-	// stop building further defences if maximum has been reached
-	if(defences < brain->sectors[0].size() * cfg->MAX_DEFENCES)
-	{ 
-		float urgency = 2.0 / (defences / brain->sectors[0].size()) + 0.1;
-		
-		if(urgency > this->urgency[STATIONARY_DEF])
-			this->urgency[STATIONARY_DEF] = urgency;
+	if(brain->sectors[0].size() > 3) 
+		max_dist = 1;
+
+	double rating, highest_rating = 0;
+
+	AAISector *first = 0, *second = 0;
+	UnitCategory cat1, cat2;
+
+	for(int dist = 0; dist <= max_dist; ++dist)
+	{
+		for(list<AAISector*>::iterator sector = brain->sectors[dist].begin(); sector != brain->sectors[dist].end(); ++sector)
+		{
+			// stop building further defences if maximum has been reached
+			if((*sector)->defences.size() < cfg->MAX_DEFENCES)
+			{
+				for(list<int>::iterator cat = map->map_categories_id.begin(); cat!= map->map_categories_id.end(); ++cat)
+				{
+					if(!(*sector)->interior || *cat == 1)
+					{
+						rating = (0.2f + bt->attacked_by_category[1][*cat][t]) * sqrt((*sector)->allied_structures + 10.0f) * (*sector)->GetThreatByID(*cat, learned, current) / (*sector)->GetDefencePowerVsID(*cat);
+						
+						if(rating > highest_rating)
+						{
+							// dont block empty sectors with too much aa
+							if(bt->GetAssaultCategoryOfID(*cat) != AIR_ASSAULT || ((*sector)->unitsOfType[POWER_PLANT] > 0 || (*sector)->unitsOfType[STATIONARY_CONSTRUCTOR] > 0 ) )
+							{
+								second = first;
+								cat2 = cat1;
+
+								first = *sector;
+								cat1 = bt->GetAssaultCategoryOfID(*cat);
+
+								highest_rating = rating;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
+
+	if(first)
+	{
+		// if no builder available retry later
+		if(BuildStationaryDefenceVS(cat1, first) == BUILDORDER_NOBUILDER)
+		{
+			float temp = 0.5 + 6.0 / ( (float) first->defences.size() + 1.0f); 
+
+			if(urgency[STATIONARY_DEF] < temp)
+				urgency[STATIONARY_DEF] = temp;
+
+			next_defence = first;
+			def_category = cat1;
+		}
+	}
+	
+	if(second)
+		BuildStationaryDefenceVS(cat2, second);
 }
-
-
 
 void AAIExecute::CheckRessources()
 {
@@ -2334,7 +2423,7 @@ void AAIExecute::CheckRessources()
 
 	// build storages if needed
 	if(ai->activeUnits[STORAGE] + ai->futureUnits[STORAGE] < cfg->MAX_STORAGE 
-		&& ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] >= cfg->MIN_FACTORIES_FOR_STORAGE)
+		&& ai->activeFactories >= cfg->MIN_FACTORIES_FOR_STORAGE)
 	{
 		float temp = max(GetMetalStorageUrgency(), GetEnergyStorageUrgency());
 		
@@ -2368,7 +2457,7 @@ void AAIExecute::CheckRessources()
 			}
 		}
 	}
-	// try to enbale some metal makers
+	// try to enable some metal makers
 	else if(averageEnergySurplus > cfg->MIN_METAL_MAKER_ENERGY && disabledMMakers > 0)
 	{
 		for(set<int>::iterator maker = ut->metal_makers.begin(); maker != ut->metal_makers.end(); maker++)
@@ -2407,20 +2496,30 @@ void AAIExecute::CheckRessources()
 
 void AAIExecute::CheckMexUpgrade()
 {
-	if(brain->freeBaseSpots)
-		return;
-
-	//cb->SendTextMsg("upgrading mex",0);
-
-	float cost = brain->Affordable();
-	float eff = 10.0 / (cost + 1);
+	float cost = 0.25f + brain->Affordable() / 6.0f;
+	float eff = 6.0 / (cost + 0.75f);
 
 	const UnitDef *my_def; 
 	const UnitDef *land_def = 0;
 	const UnitDef *water_def = 0; 
 
-	int land_mex = bt->GetMex(ai->side, cost, eff, false, false, true);
-	int water_mex = bt->GetMex(ai->side, cost, eff, false, true, true);
+	int land_mex = bt->GetMex(ai->side, cost, eff, false, false, false);
+
+	if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
+	{
+		bt->BuildBuilderFor(land_mex);
+
+		land_mex = bt->GetMex(ai->side, cost, eff, false, false, true);
+	}
+
+	int water_mex = bt->GetMex(ai->side, cost, eff, false, true, false);
+
+	if(water_mex && bt->units_dynamic[water_mex].buildersAvailable <= 0)
+	{
+		bt->BuildBuilderFor(water_mex);
+
+		water_mex = bt->GetMex(ai->side, cost, eff, false, true, true);
+	}
 
 	if(land_mex)
 		land_def = bt->unitList[land_mex-1];
@@ -2429,50 +2528,44 @@ void AAIExecute::CheckMexUpgrade()
 		water_def = bt->unitList[water_mex-1];	
 
 	// check extractor upgrades
-	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
+	for(int dist = 0; dist < 2; ++dist)
 	{
-		for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
+		for(list<AAISector*>::iterator sector = brain->sectors[dist].begin(); sector != brain->sectors[dist].end(); ++sector)
 		{
-			if((*spot)->extractor_def > 0 && (*spot)->extractor > -1 && (*spot)->extractor < cfg->MAX_UNITS)
+			for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
 			{
-				my_def = bt->unitList[(*spot)->extractor_def-1];
-
-				if(my_def->minWaterDepth <= 0 && land_def)	// land mex
+				// quit when finding empty spots
+				if(!(*spot)->occupied && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER] < 1)
+					return;
+				
+				if((*spot)->extractor_def > 0 && (*spot)->extractor > -1 && (*spot)->extractor < cfg->MAX_UNITS)
 				{
-					if(land_def->extractsMetal - my_def->extractsMetal > 0.0001)
+					my_def = bt->unitList[(*spot)->extractor_def-1];
+
+					if(my_def->minWaterDepth <= 0 && land_def)	// land mex
 					{
-						// better mex found, clear buildpos
-						//Command c;
-						//c.id = CMD_SELFD;
-
-						//cb->GiveOrder((*spot)->extractor, &c);
-						//return;
-						AAIBuilder *builder = ut->FindAssistBuilder((*spot)->pos, 10, false, false);
-
-						if(builder)
+						if(land_def->extractsMetal - my_def->extractsMetal > 0.0001)
 						{
-							builder->GiveReclaimOrder((*spot)->extractor);
-							return;
+							AAIConstructor *builder = ut->FindClosestAssister((*spot)->pos, 10, true, false, false);
+
+							if(builder)
+							{
+								builder->GiveReclaimOrder((*spot)->extractor);
+								return;
+							}
 						}
 					}
-				}
-				else	// water mex
-				{
-					if(water_def && water_def->extractsMetal - my_def->extractsMetal > 0.0001)
+					else	// water mex
 					{
-						// better mex found, clear buildpos
-						/*Command c;
-						c.id = CMD_SELFD;
-
-						cb->GiveOrder((*spot)->extractor, &c);
-						return;*/
-
-						AAIBuilder *builder = ut->FindAssistBuilder((*spot)->pos, 10, true, bt->unitList[(*spot)->extractor_def-1]->floater);
-
-						if(builder)
+						if(water_def && water_def->extractsMetal - my_def->extractsMetal > 0.0001)
 						{
-							builder->GiveReclaimOrder((*spot)->extractor);
-							return;
+							AAIConstructor *builder = ut->FindClosestAssister((*spot)->pos, 10, true, true, bt->unitList[(*spot)->extractor_def-1]->floater);
+
+							if(builder)
+							{
+								builder->GiveReclaimOrder((*spot)->extractor);
+								return;
+							}
 						}
 					}
 				}
@@ -2517,7 +2610,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(land_def && my_def->radarRadius < land_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIBuilder *builder = ut->FindAssistBuilder(cb->GetUnitPos(*recon), 10, false, false);
+						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, false, false);
 
 						if(builder)
 						{
@@ -2531,7 +2624,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(water_def && my_def->radarRadius < water_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIBuilder *builder = ut->FindAssistBuilder(cb->GetUnitPos(*recon), 10, true, my_def->floater);
+						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, true, my_def->floater);
 
 						if(builder)
 						{
@@ -2578,7 +2671,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(land_def && my_def->jammerRadius < land_def->jammerRadius)
 				{
 					// better jammer found, clear buildpos
-					AAIBuilder *builder = ut->FindAssistBuilder(cb->GetUnitPos(*jammer), 10, false, false);
+					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, false, false);
 
 					if(builder)
 					{
@@ -2592,7 +2685,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(water_def && my_def->jammerRadius < water_def->jammerRadius)
 				{
 					// better radar found, clear buildpos
-					AAIBuilder *builder = ut->FindAssistBuilder(cb->GetUnitPos(*jammer), 10, true, my_def->floater);
+					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, true, my_def->floater);
 				
 					if(builder)
 					{
@@ -2612,7 +2705,7 @@ float AAIExecute::GetEnergyUrgency()
 		surplus = 0;
 
 	if(ai->activeUnits[POWER_PLANT] > 0)
-		return 18.0 / pow( surplus / cfg->METAL_ENERGY_RATIO + 2.0f, 2.0f);
+		return 16.0 / pow( surplus / cfg->METAL_ENERGY_RATIO + 2.0f, 2.0f);
 	else
 		return 6.0;
 }
@@ -2622,12 +2715,12 @@ float AAIExecute::GetMetalUrgency()
 	if(ai->activeUnits[EXTRACTOR] > 0)
 		return 20.0 / pow(averageMetalSurplus + 2.0f, 2.0f);
 	else
-		return 5.5;
+		return 6.0;
 }
 
 float AAIExecute::GetEnergyStorageUrgency()
 {
-	if(averageEnergySurplus / cfg->METAL_ENERGY_RATIO > 3)
+	if(averageEnergySurplus / cfg->METAL_ENERGY_RATIO > 4.0f)
 		return 0.2;
 	else
 		return 0;
@@ -2643,51 +2736,32 @@ float AAIExecute::GetMetalStorageUrgency()
 
 void AAIExecute::CheckFactories()
 {
-	if(ai->futureUnits[GROUND_FACTORY] + ai->futureUnits[SEA_FACTORY] > 0)
+	if(ai->futureUnits[STATIONARY_CONSTRUCTOR] > 0)
 		return;
 
-	int activeFactories = ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] + ai->futureUnits[GROUND_FACTORY] + ai->futureUnits[SEA_FACTORY];
-
-	if(urgency[GROUND_FACTORY] == 0)
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++fac)
 	{
-		for(list<int>::iterator fac = bt->units_of_category[GROUND_FACTORY][ai->side-1].begin(); fac != bt->units_of_category[GROUND_FACTORY][ai->side-1].end(); ++fac)
+		if(bt->units_dynamic[*fac].requested > 0)
 		{
-			if(bt->units_dynamic[*fac].requested - bt->units_dynamic[*fac].active > 0)
-			{
-				float urgency;
+			// at least one requested factory has not been built yet
+			float urgency;
 
-				if(activeFactories == 0)
-					urgency = 3;
-				if(activeFactories == 1)
-					urgency = 0.8;
-				else
-					urgency = 0.35;
+			if(ai->activeFactories > 0)
+				urgency = 0.75;
+			else
+				urgency = 3;
 
-				if(this->urgency[GROUND_FACTORY] < urgency)
-					this->urgency[GROUND_FACTORY] = urgency;
-			}
-		}
-	}
+			if(this->urgency[STATIONARY_CONSTRUCTOR] < urgency)
+				this->urgency[STATIONARY_CONSTRUCTOR] = urgency;
 
-	// add sea factories
-	if(ai->map->mapType > 1 && urgency[SEA_FACTORY] == 0)
-	{
-		for(list<int>::iterator fac = bt->units_of_category[SEA_FACTORY][ai->side-1].begin(); fac != bt->units_of_category[SEA_FACTORY][ai->side-1].end(); ++fac)
-		{
-			if(bt->units_dynamic[*fac].requested - bt->units_dynamic[*fac].active > 0)
-			{
-				if(activeFactories > 1)
-					urgency[SEA_FACTORY] = 0.5;
-				else
-					urgency[SEA_FACTORY] = 2.5;
-			}
+			return;
 		}
 	}
 }
 
 void AAIExecute::CheckRecon()
 {
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < cfg->MIN_FACTORIES_FOR_RADAR_JAMMER
+	if(ai->activeFactories < cfg->MIN_FACTORIES_FOR_RADAR_JAMMER
 		|| ai->activeUnits[STATIONARY_RECON] >= brain->sectors[0].size())
 		return;
 
@@ -2709,7 +2783,7 @@ void AAIExecute::CheckAirBase()
 
 void AAIExecute::CheckJammer()
 {
-	if(ai->activeUnits[GROUND_FACTORY] + ai->activeUnits[SEA_FACTORY] < 2 || ai->activeUnits[STATIONARY_JAMMER] > brain->sectors[0].size())
+	if(ai->activeFactories < 2 || ai->activeUnits[STATIONARY_JAMMER] > brain->sectors[0].size())
 	{
 		this->urgency[STATIONARY_JAMMER] = 0;
 	}
@@ -2725,12 +2799,12 @@ void AAIExecute::CheckJammer()
 void AAIExecute::CheckConstruction()
 {	
 	UnitCategory category = UNKNOWN; 
-	float highest_urgency = 0.5;
+	float highest_urgency = 0.3;
 	bool construction_started = false;
 
 	//fprintf(ai->file, "\n");
 	// get category with highest urgency
-	for(int i = 1; i <= METAL_MAKER+1; i++)
+	for(int i = 1; i <= METAL_MAKER; ++i)
 	{
 		//fprintf(ai->file, "%-20s: %f\n", bt->GetCategoryString2((UnitCategory)i), urgency[i]);
 		if(urgency[i] > highest_urgency)
@@ -2739,7 +2813,8 @@ void AAIExecute::CheckConstruction()
 			category = (UnitCategory)i;
 		}
 	}
-	//fprintf(ai->file, "Chosen: %s\n", bt->GetCategoryString2(category));
+	
+	//cb->SendTextMsg( bt->GetCategoryString2(category), 0);
 
 	if(category == POWER_PLANT)
 	{
@@ -2751,7 +2826,7 @@ void AAIExecute::CheckConstruction()
 		if(BuildExtractor())
 			construction_started = true;
 	}
-	else if(category == GROUND_FACTORY || category == SEA_FACTORY)
+	else if(category == STATIONARY_CONSTRUCTOR)
 	{
 		if(BuildFactory())
 			construction_started = true;
@@ -2786,49 +2861,55 @@ void AAIExecute::CheckConstruction()
 		if(BuildMetalMaker())	
 			construction_started = true;
 	}
+	else if(category == AIR_BASE)
+	{
+		if(BuildAirBase())	
+			construction_started = true;
+	}
 	else 
 	{
 		construction_started = true;
 	}
 
 	if(construction_started)
-	{
 		urgency[category] = 0;
 
-		//cb->SendTextMsg(bt->GetCategoryString2(category), 0);
-
-		for(int i = 1; i <= METAL_MAKER+1; ++i)
-			urgency[i] *= 1.035;
+	for(int i = 1; i <= METAL_MAKER; ++i)
+	{
+		urgency[i] *= 1.035;
+		
+		if(urgency[i] > 18)
+			urgency[i] -= 2;
 	}
 }
 
 bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importance)
 {
-	AAIBuilder *builder, *assistant;
+	AAIConstructor *builder, *assistant;
 
 	for(list<AAIBuildTask*>::iterator task = ai->build_tasks.begin(); task != ai->build_tasks.end(); ++task)
 	{
 		if((*task)->builder_id >= 0)
-			builder = ut->units[(*task)->builder_id].builder;
+			builder = ut->units[(*task)->builder_id].cons;
 		else
 			builder = 0;
 
-		if(builder && builder->building_category == category && builder->assistants.size() < cfg->MAX_ASSISTANTS)
+		if(builder && builder->construction_category == category && builder->assistants.size() < cfg->MAX_ASSISTANTS)
 		{
-			if(bt->unitList[builder->building_def_id-1]->minWaterDepth > 0)
+			if(bt->unitList[builder->construction_def_id-1]->minWaterDepth > 0)
 			{
-				if(bt->unitList[builder->building_def_id-1]->floater)
-					assistant = ut->FindAssistBuilder(builder->build_pos, 5, true, true);
+				if(bt->unitList[builder->construction_def_id-1]->floater)
+					assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, true);
 				else
-					assistant = ut->FindAssistBuilder(builder->build_pos, 5, true, false);
+					assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, false);
 			}
 			else
-				assistant = ut->FindAssistBuilder(builder->build_pos, 5, false, false);
+				assistant = ut->FindClosestAssister(builder->build_pos, 5, true, false, false);
 
 			if(assistant)
 			{
 				builder->assistants.insert(assistant->unit_id);
-				assistant->AssistConstruction(builder->unit_id, (*task)->unit_id, importance);
+				assistant->AssistConstruction(builder->unit_id, (*task)->unit_id);
 				return true;
 			}
 		}
@@ -2840,9 +2921,7 @@ bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importa
 bool AAIExecute::least_dangerous(AAISector *left, AAISector *right)
 {
 	if(cfg->AIR_ONLY_MOD || left->map->mapType == AIR_MAP)
-	
 		return (left->GetThreatBy(AIR_ASSAULT, learned, current) < right->GetThreatBy(AIR_ASSAULT, learned, current));  
-	
 	else
 	{
 		if(left->map->mapType == LAND_MAP)
@@ -2865,9 +2944,7 @@ bool AAIExecute::least_dangerous(AAISector *left, AAISector *right)
 bool AAIExecute::suitable_for_power_plant(AAISector *left, AAISector *right)
 {
 	if(cfg->AIR_ONLY_MOD || left->map->mapType == AIR_MAP)
-	
 		return (left->GetThreatBy(AIR_ASSAULT, learned, current) * left->GetMapBorderDist()  < right->GetThreatBy(AIR_ASSAULT, learned, current) * right->GetMapBorderDist());  
-	
 	else
 	{
 		if(left->map->mapType == LAND_MAP)
@@ -2901,7 +2978,7 @@ bool AAIExecute::suitable_for_sea_factory(AAISector *left, AAISector *right)
 
 bool AAIExecute::suitable_for_arty(AAISector *left, AAISector *right)
 {
-	return (left->arty_efficiency[0] > right->arty_efficiency[0]);
+	return ( left->GetMapBorderDist() > right->GetMapBorderDist() );
 }
 
 bool AAIExecute::defend_vs_ground(AAISector *left, AAISector *right)
@@ -2936,6 +3013,10 @@ void AAIExecute::ConstructionFinished()
 
 void AAIExecute::ConstructionFailed(int unit_id, float3 build_pos, int def_id)
 {
+	//char c[80];
+	//sprintf(c, "Construction of %s failed", bt->unitList[def_id-1]->humanName.c_str());
+	//cb->SendTextMsg(c, 0);
+
 	const UnitDef *def = bt->unitList[def_id-1];
 	UnitCategory category = bt->units_static[def_id].category;
 
@@ -2952,6 +3033,9 @@ void AAIExecute::ConstructionFailed(int unit_id, float3 build_pos, int def_id)
 	{
 		--map->sector[x][y].unitsOfType[category];
 		map->sector[x][y].own_structures -= bt->units_static[def->id].cost;
+
+		if(map->sector[x][y].own_structures < 0)
+			map->sector[x][y].own_structures = 0;
 	}
 	
 	// free metalspot if mex was odered to be built
@@ -2962,6 +3046,9 @@ void AAIExecute::ConstructionFailed(int unit_id, float3 build_pos, int def_id)
 	else if(category == POWER_PLANT)
 	{
 		futureAvailableEnergy -= bt->units_static[def_id].efficiency[0];
+
+		if(futureAvailableEnergy < 0)
+			futureAvailableEnergy = 0;
 	}
 	else if(category == STORAGE)
 	{
@@ -2971,14 +3058,23 @@ void AAIExecute::ConstructionFailed(int unit_id, float3 build_pos, int def_id)
 	else if(category == METAL_MAKER)
 	{
 		futureRequestedEnergy -= bt->unitList[def->id-1]->energyUpkeep;
+
+		if(futureRequestedEnergy < 0)
+			futureRequestedEnergy = 0;
 	}
 	else if(category == STATIONARY_JAMMER)
 	{
 		futureRequestedEnergy -= bt->units_static[def->id].efficiency[0];
+
+		if(futureRequestedEnergy < 0)
+			futureRequestedEnergy = 0;
 	}
 	else if(category == STATIONARY_RECON)
 	{
 		futureRequestedEnergy -= bt->units_static[def->id].efficiency[0];
+
+		if(futureRequestedEnergy < 0)
+			futureRequestedEnergy = 0;
 	}
 	else if(category == STATIONARY_DEF)
 	{
@@ -2987,31 +3083,34 @@ void AAIExecute::ConstructionFailed(int unit_id, float3 build_pos, int def_id)
 	}
 	
 	// clear buildmap
-	if(category == GROUND_FACTORY)
+	if(category == STATIONARY_CONSTRUCTOR)
 	{
+		bool water = false;
+		int value = 0;
+
+		if(!bt->CanPlacedLand(def_id))
+		{
+			water = true;
+			value = 4;
+		}
+
+		--ai->futureFactories;
+
+		for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
+			bt->units_dynamic[*unit].buildersRequested -= 1;
+
 		// remove future ressource demand now factory has been finished
 		futureRequestedMetal -= bt->units_static[def->id].efficiency[0];
 		futureRequestedEnergy -= bt->units_static[def->id].efficiency[1];
 
 		// update buildmap of sector
 		map->Pos2BuildMapPos(&build_pos, def);
-		map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, false);
+		map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, water);
 		
-		map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, 0);
-		map->BlockCells(build_pos.x, build_pos.z - 8, def->xsize, 8, false, false);
-		map->BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, false);
-		map->BlockCells(build_pos.x, build_pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
-	}
-	else if(category == SEA_FACTORY)
-	{
-		// update buildmap of sector
-		map->Pos2BuildMapPos(&build_pos, def);
-		map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, true);
-
-		map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, 4);
-		map->BlockCells(build_pos.x, build_pos.z - 8, def->xsize, 8, false, true);
-		map->BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, true);
-		map->BlockCells(build_pos.x, build_pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
+		map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, value);
+		map->BlockCells(build_pos.x, build_pos.z - 8, def->xsize, 8, false, water);
+		map->BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, water);
+		map->BlockCells(build_pos.x, build_pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, water);
 	}
 	else // normal building
 	{
@@ -3035,46 +3134,29 @@ void AAIExecute::AddStartFactory()
 	float best_rating = 0, my_rating;
 	int best_factory = 0;
 
-	for(list<int>::iterator i = bt->units_of_category[GROUND_FACTORY][ai->side-1].begin(); i != bt->units_of_category[GROUND_FACTORY][ai->side-1].end(); i++)
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++fac)
 	{
-		if(bt->units_dynamic[*i].builderAvailable)
+		if(bt->units_dynamic[*fac].buildersAvailable > 0)
 		{
-			my_rating = bt->GetFactoryRating(*i);
+			my_rating = bt->GetFactoryRating(*fac);
+			my_rating *= (1 - (bt->units_static[*fac].cost / bt->max_cost[STATIONARY_CONSTRUCTOR][ai->side-1]));
 
 			if(my_rating > best_rating)
 			{
 				best_rating = my_rating;
-				best_factory = *i;
-			}
-		}
-	}
-
-	// add sea factories
-	if(ai->map->mapType > 1)
-	{
-		for(list<int>::iterator i = bt->units_of_category[SEA_FACTORY][ai->side-1].begin(); i != bt->units_of_category[SEA_FACTORY][ai->side-1].end(); i++)
-		{
-			if(bt->units_dynamic[*i].builderAvailable)
-			{
-				my_rating = bt->GetFactoryRating(*i);
-
-				if(my_rating > best_rating)
-				{
-					best_rating = my_rating;
-					best_factory = *i;
-				}
+				best_factory = *fac;
 			}
 		}
 	}
 
 	if(best_factory)
 	{
-		++bt->units_dynamic[best_factory].requested;
+		bt->units_dynamic[best_factory].requested += 1;
 
 		fprintf(ai->file, "%s requested\n", bt->unitList[best_factory-1]->humanName.c_str());
 
-		for(list<int>::iterator j = bt->units_static[best_factory].canBuildList.begin(); j != bt->units_static[best_factory].canBuildList.end(); j++)
-			bt->units_dynamic[*j].builderRequested = true;
+		for(list<int>::iterator j = bt->units_static[best_factory].canBuildList.begin(); j != bt->units_static[best_factory].canBuildList.end(); ++j)
+			bt->units_dynamic[*j].buildersRequested += 1;
 	}
 }
 
@@ -3115,33 +3197,14 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 
 	float3 pos = cb->GetUnitPos(unit);
 
-	int x = pos.x/map->xSectorSize;
-	int y = pos.z/map->ySectorSize;
+	AAISector *sector = map->GetSectorOfPos(pos);
 
-	if(x < 0 || y < 0 || x >= map->xSectors || y >= map->ySectors)
+	// unit/building located in invalid sector
+	if(!sector)
 		return;
-
 
 	AAIGroup *support = 0;
 
-	bool enemy;
-
-	// if enemy attacker is known, units will attack enemy instead of guarding damaged unit
-	if(enemy_pos.x > 0)
-		enemy = true;
-	else
-		enemy = false;
-
-	Command guard_unit;
-	guard_unit.id = CMD_GUARD;
-	guard_unit.params.push_back(unit);
-
-	Command attack_enemy;
-	attack_enemy.id = CMD_FIGHT;
-	attack_enemy.params.push_back(enemy_pos.x);
-	attack_enemy.params.push_back(enemy_pos.y);
-	attack_enemy.params.push_back(enemy_pos.z);
-	
 	// anti air mods have special behaviour
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -3154,21 +3217,14 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 			support = GetClosestGroupOfCategory(GROUND_ASSAULT, ASSAULT_UNIT, pos, 100);
 
 		if(support)
-		{
-			if(enemy)
-				support->GiveOrder(&attack_enemy, importance, DEFENDING);
-			else
-				support->GiveOrder(&guard_unit, importance, GUARDING);
-
-			support->task = GROUP_DEFENDING;
-		}
+			support->Defend(unit, enemy_pos, importance);
 	}
 	// normal mods
 	else  
 	{
 		bool land, water;
 
-		if(map->sector[x][y].water_ratio > 0.6)
+		if(sector->water_ratio > 0.6)
 		{
 			land = false;
 			water = true;
@@ -3179,7 +3235,7 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 			water = false;
 		}
 
-		// find possible defenders dependent of category of attacker
+		// find possible defenders depending on category of attacker
 
 		// anti air 
 		if(category == AIR_ASSAULT)
@@ -3211,8 +3267,11 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 
 			if(support)
 			{
-				support->GiveOrder(&guard_unit, importance, GUARDING);	
-				support->task = GROUP_DEFENDING;
+				// dont defend units too far away from own base
+				if(sector->distance_to_base > 3 && support->category != AIR_ASSAULT)
+					return;
+	
+				support->Defend(unit, ZeroVector, importance);
 			}
 		}
 		// ground unit attacked
@@ -3241,12 +3300,11 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 
 			if(support)
 			{
-				if(enemy)
-					support->GiveOrder(&attack_enemy, importance, DEFENDING);
-				else
-					support->GiveOrder(&guard_unit, importance, GUARDING);
+				// dont defend units too far away from own base
+				if(sector->distance_to_base > 3 && support->category != AIR_ASSAULT)
+					return;
 
-				support->task = GROUP_DEFENDING;
+				support->Defend(unit, enemy_pos, importance);
 			}
 		}
 		// water unit attacked
@@ -3275,12 +3333,11 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 
 			if(support)
 			{
-				if(enemy)
-					support->GiveOrder(&attack_enemy, importance, DEFENDING);
-				else
-					support->GiveOrder(&guard_unit, importance, GUARDING);
+				// dont defend units too far away from own base
+				if(sector->distance_to_base > 3 && support->category != AIR_ASSAULT)
+					return;
 
-				support->task = GROUP_DEFENDING;
+				support->Defend(unit, enemy_pos, importance);
 			}
 		}	
 	}

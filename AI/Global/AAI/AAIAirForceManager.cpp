@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIAirForceManager.h"
 
@@ -48,8 +48,8 @@ void AAIAirForceManager::CheckTarget(int unit, const UnitDef *def)
 		// check if unit is within the map
 		if(x >= 0 && x < map->xSectors && y >= 0 && y < map->ySectors)
 		{
-			// check for anti air defences
-			if(map->sector[x][y].lost_units[AIR_ASSAULT] > 3)
+			// check for anti air defences if low on units
+			if(map->sector[x][y].lost_units[AIR_ASSAULT] >= cfg->MAX_AIR_GROUP_SIZE && ai->group_list[AIR_ASSAULT].size() < 5)
 				return;
 	
 			AAIGroup *group;
@@ -63,19 +63,13 @@ void AAIAirForceManager::CheckTarget(int unit, const UnitDef *def)
 				max_groups = 2;
 			else
 				max_groups = 1;
-			
 
 			for(int i = 0; i < max_groups; ++i)
 			{
 				if(category == AIR_ASSAULT)
 					group = GetAirGroup(100.0, ANTI_AIR_UNIT);
 				else if(category <= METAL_MAKER)
-				{
 					group = GetAirGroup(100.0, BOMBER_UNIT);
-
-					if(!group)
-						group = GetAirGroup(100.0, ASSAULT_UNIT);
-				}
 				else
 					group = GetAirGroup(100.0, ASSAULT_UNIT);
 
