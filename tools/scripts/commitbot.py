@@ -23,12 +23,29 @@ class SvnLook:
 	svnlook = "/usr/local/bin/svnlook"
 
 	def __init__(self, repos_path, revision):
+
 		self.repos_path = repos_path
 		self.revision = revision
+
 		self.author = self.look('author')[0]
 		self.changed = self.look('changed')
 		self.date = self.look('date')[0]
 		self.log = self.look('log')
+
+		self.added = []
+		for line in self.changed:
+			if line[0] == 'A':
+				self.added += [line[4:]]
+
+		self.deleted = []
+		for line in self.changed:
+			if line[0] == 'D':
+				self.deleted += [line[4:]]
+
+		self.modified = []
+		for line in self.changed:
+			if line[0] == 'U':
+				self.modified += [line[4:]]
 
 
 	def look(self, command):
@@ -36,11 +53,33 @@ class SvnLook:
 
 
 	def summary(self):
-		msg = ["r%i | %s | %s" % (self.revision, self.author, self.date), "Changed paths:"]
-		for line in self.changed:
-			msg += ["    " + line]
-		for line in self.log:
-			msg += [line]
+
+                #msg = ["r%i | %s | %s" % (self.revision, self.author, self.date)]
+		msg = ["/me ====> %s committed revision %d <====" % (self.author, self.revision)]
+		indent = "    "
+
+		if len(self.added) > 0:
+			msg += ["/me Added:"]
+			for line in self.added:
+				msg += [indent + line]
+
+		if len(self.deleted) > 0:
+			msg += ["/me Deleted:"]
+			for line in self.deleted:
+				msg += [indent + line]
+
+		if len(self.modified) > 0:
+			msg += ["/me Modified:"]
+			for line in self.modified:
+				msg += [indent + line]
+
+		if len(self.log) > 0:
+			msg += ["/me Log:"]
+			for line in self.log:
+				msg += [indent + line]
+
+		msg += [indent + "."]
+
 		return msg
 
 
@@ -51,7 +90,7 @@ class TasServer:
 	server_port = 8200
 
 	username = "CommitBot"
-	password = ""          # set this to base64 encoded md5 hash of password
+	password = "" # set this to base64 encoded md5 hash of password
 
 	channels = ["commits"]
 
@@ -66,8 +105,12 @@ class TasServer:
 
 
 	def send(self, msg):
+		command = "SAY";
+		if msg[:4] == "/me ":
+			command = "SAYEX"
+			msg = msg[4:]
 		for channel in self.channels:
-			self.socket.send("SAY %s %s\n" % (channel, msg))
+			self.socket.send("%s %s %s\n" % (command, channel, msg))
 		time.sleep(0.1) #prevent ban for spamming
 
 
