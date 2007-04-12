@@ -1,15 +1,15 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIBuildTask.h"
 #include "AAI.h"
-#include "AAIBuilder.h"
+#include "AAIConstructor.h"
 
 AAIBuildTask::AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 pos, int tick)
 {
@@ -32,13 +32,25 @@ void AAIBuildTask::BuilderDestroyed()
 {
 	builder_id = -1;
 
+	// com only allowed if buildpos is inside the base
+	bool commander = false;
+	
+	int x = build_pos.x / ai->map->xSectorSize;
+	int y = build_pos.z / ai->map->ySectorSize;
+
+	if(x >= 0 && y >= 0 && x < ai->map->xSectors && y < ai->map->ySectors)
+	{
+		if(ai->map->sector[x][y].distance_to_base == 0)
+			commander = true;
+	}
+	
 	// look for new builder 
-	AAIBuilder *new_builder;
+	AAIConstructor *new_builder;
 
 	if(ai->bt->unitList[def_id-1]->minWaterDepth <= 0)
-		new_builder = ai->ut->FindAssistBuilder(build_pos, 10, false, false);
+		new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, false, false);
 	else
-		new_builder = ai->ut->FindAssistBuilder(build_pos, 10, false, ai->bt->unitList[def_id-1]->floater);
+		new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, false, ai->bt->unitList[def_id-1]->floater);
 
 	if(new_builder)
 	{
@@ -47,17 +59,12 @@ void AAIBuildTask::BuilderDestroyed()
 	}
 }
 
-void AAIBuildTask::BuildingDestroyed()
+void AAIBuildTask::BuildtaskFailed()
 {
 	// cleanup buildmap etc.
 	ai->execute->ConstructionFailed(unit_id, build_pos, def_id);
 	
 	// tell builder to stop construction (and release assisters) (if still alive)
-	if(builder_id >= 0)
-	{
-		AAIBuilder *builder = ai->ut->units[builder_id].builder;
-
-		if(builder)
-			builder->BuildingFinished();
-	}
+	if(builder_id >= 0 && ai->ut->units[builder_id].cons)
+		ai->ut->units[builder_id].cons->ConstructionFinished();	
 }

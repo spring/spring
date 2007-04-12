@@ -60,13 +60,18 @@ public:
 
 	// returns the defence power vs a certain unit category, -1 if failed
 	float GetDefencePowerVs(UnitCategory category);
+	float GetDefencePowerVsID(int combat_cat_id);
 
 	// returns threatzo the sector by a certain category
 	float GetThreatBy(UnitCategory category, float learned, float current);
+	float GetThreatByID(int combat_cat_id, float learned, float current);
 	float GetOverallThreat(float learned, float current);
 
 	// returns threat by the sector to categories
 	float GetThreatTo(float ground, float air, float hover, float sea, float submarine);
+
+	// returns combat power of units in that and neighbouring sectors vs combat cat
+	float GetAreaCombatPowerVs(int combat_category, float neighbour_importance);
 
 	// updates threat map
 	void UpdateThreatValues(UnitCategory unit, UnitCategory attacker);
@@ -91,30 +96,33 @@ public:
 	list<AAIDefence> defences;
 
 	// units in the sector
-	int enemyUnitsOfType[(int)SEA_BUILDER+1];
-	int unitsOfType[(int)SEA_BUILDER+1];
+	int enemyUnitsOfType[(int)MOBILE_CONSTRUCTOR+1];
+	int unitsOfType[(int)MOBILE_CONSTRUCTOR+1];
 
 	// how many times the sector was not scouted 
 	float last_scout;
 	
-	// 0 is current importance, 1 is learned importance
-	float importance[2];
-	float *attacked_by[2]; // 0 ground, 1 air, 2 sea
+	// importance of teh sector
+	float importance_this_game;
+	float importance_learned;
+	
+	// how many times ai has been attacked by a certain assault category in this sector
+	vector<float> attacked_by_this_game; 
+	vector<float> attacked_by_learned; 
 
-	// how many battles took place in that sector
-	float *combats[2];
+	// how many battles took place in that sector (of each assault category)
+	vector<float> combats_this_game;
+	vector<float> combats_learned;
 
 	// how many units of certain type recently lost in that sector
-	float *lost_units;
+	vector<float> lost_units;
 
-	float *threat_against; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
-
+	// stores combat power of all stationary defs/combat unit vs different categories
+	vector<float> stat_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
+	vector<float> mobile_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 building
 
 	// combat.eff of all enemy units in this sector (0 if safe sector)
 	float threat;
-
-	// how efficiently stationary arty worked when placed in that sector
-	float arty_efficiency[2];
 
 	// water and flat terrain ratio
 	float flat_ratio;

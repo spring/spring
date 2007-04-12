@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 
 #include "AAISector.h"
 #include "AAI.h"
@@ -26,14 +26,6 @@ AAISector::AAISector()
 	enemy_structures = 0;
 	own_structures = 0;
 	allied_structures = 0;
-
-	// set pointers to zero and wait for init later
-	lost_units = 0;
-	attacked_by[0] = 0;
-	attacked_by[1] = 0;
-	combats[0] = 0;
-	combats[1] = 0;
-	threat_against = 0;
 	threat = 0;
 	
 	for(int i = 0; i < 4; i++)
@@ -42,7 +34,7 @@ AAISector::AAISector()
 		defCoverage[i].defence = 0;
 	}
 
-	for(int i = 0; i <= (int)SEA_BUILDER; i++)
+	for(int i = 0; i <= (int)MOBILE_CONSTRUCTOR; i++)
 	{
 		enemyUnitsOfType[i] = 0;
 		unitsOfType[i] = 0;
@@ -52,24 +44,17 @@ AAISector::AAISector()
 AAISector::~AAISector(void)
 {	
 	defences.clear();
-
-	if(attacked_by)
-	{
-		delete [] attacked_by[0];
-		delete [] attacked_by[1];
-	}
-
-	if(combats)
-	{
-		delete [] combats[0];
-		delete [] combats[1];
-	}
 	
-	if(threat_against)
-		delete [] threat_against;
+	attacked_by_this_game.clear(); 
+	attacked_by_learned.clear(); 
 
-	if(lost_units)
-		delete [] lost_units;
+	stat_combat_power.clear(); 
+	mobile_combat_power.clear(); 
+
+	combats_learned.clear();
+	combats_this_game.clear();
+
+	lost_units.clear();
 }
 
 void AAISector::SetAI(AAI *ai)
@@ -77,33 +62,21 @@ void AAISector::SetAI(AAI *ai)
 	this->ai = ai;
 	this->ut = ai->ut;
 
-	// now we can allocate memory 
-	int categories = ai->bt->assault_categories.size(), i;
-	
-	for(i = 0; i < 2; i++)
-	{	
-		importance[i] = 1 + (rand()%5)/20.0;;
-		
-		attacked_by[i] = new float[categories];
-		combats[i] = new float[categories];
+	// init all kind of stuff
+	int categories = ai->bt->assault_categories.size();
 
-		for(int k = 0; k < categories; k++)
-		{
-			attacked_by[i][k] = 1;
-			combats[i][k] = 1;
-		}
-	}
+	combats_learned.resize(categories, 0);
+	combats_this_game.resize(categories, 0);
 
-	lost_units = new float[SEA_BUILDER-COMMANDER];
+	importance_this_game = 1.0f + (rand()%5)/20.0f;
 
-	for(i = 0; i < SEA_BUILDER-COMMANDER; i++)
-		lost_units[i] = 1;
+	attacked_by_this_game.resize(categories, 0);
+	attacked_by_learned.resize(categories, 0);
 
-	threat_against = new float[categories];
+	lost_units.resize(MOBILE_CONSTRUCTOR-COMMANDER, 0);
 
-	for(i = 0; i < categories; i++)
-		threat_against[i] = 0;
-
+	stat_combat_power.resize(categories, 0);
+	mobile_combat_power.resize(categories+1, 0);
 }
 
 void AAISector::SetGridLocation(int x, int y)
@@ -148,10 +121,10 @@ void AAISector::SetBase(bool base)
 		}
 
 		// increase importance
-		++importance[0];
+		++importance_this_game;
 
-		if(importance[0] > cfg->MAX_SECTOR_IMPORTANCE)
-			importance[0] = cfg->MAX_SECTOR_IMPORTANCE;
+		if(importance_this_game > cfg->MAX_SECTOR_IMPORTANCE)
+			importance_this_game = cfg->MAX_SECTOR_IMPORTANCE;
 	}
 }
 
@@ -160,7 +133,7 @@ void AAISector::Update()
 	// decrease values (so the ai "forgets" values from time to time)...
 	//ground_threat *= 0.995;
 	//air_threat *= 0.995;
-	for(int i = 0; i < SEA_BUILDER-COMMANDER; ++i)
+	for(int i = 0; i < MOBILE_CONSTRUCTOR-COMMANDER; ++i)
 		lost_units[i] *= 0.92;
 }
 
@@ -278,12 +251,6 @@ float3 AAISector::GetCenter()
 
 float3 AAISector::GetBuildsite(int building, bool water)
 {
-	if(building < 1)
-	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetBuildsite()\n", building);
-		return ZeroVector;
-	}
-
 	int xStart, xEnd, yStart, yEnd;
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
@@ -299,29 +266,26 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, bool 
 	list<Direction> directions;
 	list<AAISector*> neighbours;
 
-	// get possible directions (only if not already interior sector)
-	//if(!interior)
-	if(true)
-	{	
-		// filter out frontiers to other base sectors
-		if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 500)
-			directions.push_back(WEST);
+	// get possible directions 
 	
-		if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 500)
-			directions.push_back(EAST);
-
-		if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 500)
-			directions.push_back(NORTH);
+	// filter out frontiers to other base sectors
+	if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 300)
+		directions.push_back(WEST);
 	
-		if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 500)
-			directions.push_back(SOUTH);
-	}
+	if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 300)
+		directions.push_back(EAST);
 
+	if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 300)
+		directions.push_back(NORTH);
+	
+	if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 300)
+		directions.push_back(SOUTH);
+	
 	// determine weakest direction
 	Direction weakest_dir = NO_DIRECTION;
 	
 	// build anti air defence in the center of the sector
-	if(category == AIR_ASSAULT)
+	if(category == AIR_ASSAULT || distance_to_base > 0)
 	{
 		weakest_dir = CENTER;
 	}
@@ -375,42 +339,42 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, bool 
 
 		if(weakest_dir == CENTER)
 		{
-			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0;
-			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0; 
+			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
+			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f; 
 
-			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0;
-			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0; 
+			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f;
+			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f; 
 		}
 		else if(weakest_dir == WEST)
 		{
 			xStart = x * map->xSectorSizeMap;
-			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0;
+			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
 
 			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0; 
+			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f; 
 		}
 		else if(weakest_dir == EAST)
 		{
-			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0;
+			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f;
 			xEnd = (x+1) * map->xSectorSizeMap;
 
-			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0;
+			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f;
 			yEnd = (y+1) * map->ySectorSizeMap; 
 		}
 		else if(weakest_dir == NORTH)
 		{
-			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0;
+			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
 			xEnd = (x+1) * map->xSectorSizeMap;
 
 			yStart = y * map->ySectorSizeMap;
-			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0; 
+			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f; 
 		}
 		else if(weakest_dir == SOUTH)
 		{
 			xStart = x * map->xSectorSizeMap ;
-			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0;
+			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f;
 
-			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0;
+			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f;
 			yEnd = (y+1) * map->ySectorSizeMap; 
 		}
 
@@ -531,13 +495,21 @@ void AAISector::SectorMapPos2Pos(float3 *pos, const UnitDef *def)
 
 float AAISector::GetDefencePowerVs(UnitCategory category)
 {
-	float power = 1;
+	float power = 0.5;
 
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); i++)
-	{	
+	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)	
 		power += ai->bt->GetEfficiencyAgainst(i->def_id, category);
-	}
+	
+	return power;
+}
 
+float AAISector::GetDefencePowerVsID(int combat_cat_id)
+{
+	float power = 0.5;
+
+	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)	
+		power +=  ai->bt->units_static[i->def_id].efficiency[combat_cat_id];
+	
 	return power;
 }
 
@@ -576,20 +548,27 @@ UnitCategory AAISector::GetWeakestCategory()
 float AAISector::GetThreatBy(UnitCategory category, float learned, float current)
 {
 	if(category == GROUND_ASSAULT)
-		return 1 + 2 * (learned * attacked_by[1][0] + current * attacked_by[0][0] ) / (learned + current);
+		return 1.0f + (learned * attacked_by_learned[0] + current * attacked_by_this_game[0] ) / (learned + current);
 	if(category == AIR_ASSAULT)
-		return 1 + 2 * (learned * attacked_by[1][1] + current * attacked_by[0][1] ) / (learned + current);
+		return 1.0f + (learned * attacked_by_learned[1] + current * attacked_by_this_game[1] ) / (learned + current);
 	if(category == HOVER_ASSAULT)
-		return 1 + 2 * (learned * attacked_by[1][2] + current * attacked_by[0][2] ) / (learned + current);
+		return 1.0f + (learned * attacked_by_learned[2] + current * attacked_by_this_game[2] ) / (learned + current);
 	if(category == SEA_ASSAULT)
-		return 1 + 2 * (learned * attacked_by[1][3] + current * attacked_by[0][3] ) / (learned + current);
+		return 1.0f + (learned * attacked_by_learned[3] + current * attacked_by_this_game[3] ) / (learned + current);
+	if(category == SUBMARINE_ASSAULT)
+		return 1.0f + (learned * attacked_by_learned[4] + current * attacked_by_this_game[4] ) / (learned + current);
 	else
 		return -1;
 }
 
+float AAISector::GetThreatByID(int combat_cat_id, float learned, float current)
+{
+	return 1.0f + (learned * attacked_by_learned[combat_cat_id] + current * attacked_by_this_game[combat_cat_id] ) / (learned + current);
+}
+
 float AAISector::GetThreatTo(float ground, float air, float hover, float sea, float submarine)
 {
-	return (ground * threat_against[0] + air * threat_against[1] + hover * threat_against[2] + sea * threat_against[3] + submarine * threat_against[4]);
+	return (ground * stat_combat_power[0] + air * stat_combat_power[1] + hover * stat_combat_power[2] + sea * stat_combat_power[3] + submarine * stat_combat_power[4]);
 }
 
 float AAISector::GetLostUnits(float ground, float air, float hover, float sea, float submarine)
@@ -601,12 +580,8 @@ float AAISector::GetLostUnits(float ground, float air, float hover, float sea, f
 
 float AAISector::GetOverallThreat(float learned, float current)
 {
-	/*float result = 0;
-	for(list<UnitCategory>::iterator i = ai->bt->assault_categories.begin(); i != ai->bt->assault_categories.end(); i++)
-	{
-	}*/
-	return (learned * (attacked_by[1][0] + attacked_by[1][1] + attacked_by[1][2])
-		+ current *	(attacked_by[0][0] + attacked_by[0][1] +attacked_by[0][2])) 
+	return (learned * (attacked_by_learned[0] + attacked_by_learned[1] + attacked_by_learned[2] + attacked_by_learned[3])
+		+ current *	(attacked_by_this_game[0] + attacked_by_this_game[1] + attacked_by_this_game[2] + attacked_by_this_game[3])) 
 		/(learned + current);
 }
 
@@ -708,28 +683,52 @@ void AAISector::UpdateThreatValues(UnitCategory unit, UnitCategory attacker)
 		else
 			change = 1;
 
-
 		// determine type of attacker
 		if(attacker == AIR_ASSAULT)
-			attacked_by[0][1] += change;
+			attacked_by_this_game[1] += change;
 		else if(attacker == GROUND_ASSAULT)
-			attacked_by[0][0] += change;
+			attacked_by_this_game[0] += change;
 		else if(attacker == HOVER_ASSAULT)
-			attacked_by[0][2] += change;
+			attacked_by_this_game[2] += change;
 		else if(attacker == SEA_ASSAULT)
-			attacked_by[0][3] += change;
+			attacked_by_this_game[3] += change;
+		else if(attacker == SUBMARINE_ASSAULT)
+			attacked_by_this_game[4] += change;
 	}
 	else // unit was lost
 	{
 		if(attacker == AIR_ASSAULT)
-			++combats[0][1];
+			++combats_this_game[1];
 		else if(attacker == GROUND_ASSAULT)
-			++combats[0][0];
+			++combats_this_game[0];
 		else if(attacker == HOVER_ASSAULT)
-			++combats[0][2];
+			++combats_this_game[2];
 		else if(attacker == SEA_ASSAULT)
-			++combats[0][3];
+			++combats_this_game[3];
+		else if(attacker == SUBMARINE_ASSAULT)
+			++combats_this_game[4];
 
 		++lost_units[unit-COMMANDER];
 	}
+}
+
+
+float AAISector::GetAreaCombatPowerVs(int combat_category, float neighbour_importance)
+{
+	float result = mobile_combat_power[combat_category];
+
+	// take neighbouring sectors into account (if possible)
+	if(x > 0)
+		result += neighbour_importance * ai->map->sector[x-1][y].mobile_combat_power[combat_category];
+
+	if(x < map->xSectors-1)
+		result += neighbour_importance * ai->map->sector[x+1][y].mobile_combat_power[combat_category];
+
+	if(y > 0)
+		result += neighbour_importance * ai->map->sector[x][y-1].mobile_combat_power[combat_category];
+
+	if(y < map->ySectors-1)
+		result += neighbour_importance * ai->map->sector[x][y+1].mobile_combat_power[combat_category];
+
+	return result;
 }

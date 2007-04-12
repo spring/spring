@@ -11,11 +11,14 @@ public:
 	AAIUnitTable(AAI *ai, AAIBuildTable *bt);
 	~AAIUnitTable(void);
 
-	bool AddUnit(int unit_id, int def_id, AAIGroup *group = 0, AAIBuilder *builder = 0, AAIFactory *factory = 0);
+	bool AddUnit(int unit_id, int def_id, AAIGroup *group = 0, AAIConstructor *cons = 0);
 	void RemoveUnit(int unit_id);
 
-	void AddBuilder(int unit_id, int def_id);
-	void RemoveBuilder(int unit_id, int def_id);
+	void AddConstructor(int unit_id, int def_id);
+	void RemoveConstructor(int unit_id, int def_id);
+
+	void AddCommander(int unit_id, int def_id);
+	void RemoveCommander(int unit_id, int def_id);
 
 	void AddExtractor(int unit_id);
 	void RemoveExtractor(int unit_id);
@@ -35,15 +38,9 @@ public:
 	void AddStationaryArty(int unit_id, int def_id);
 	void RemoveStationaryArty(int unit_id);
 
-	void AddFactory(int unit_id, int def_id);
-	void RemoveFactory(int unit_id);
-
-	void AddCommander(int unit_id, const UnitDef *def);
-	void RemoveCommander(int unit_id);
-
-	AAIBuilder* FindBuilder(int building, bool commander, int importance);
-	AAIBuilder* FindClosestBuilder(int building, float3 pos, bool commander, int importance);
-	AAIBuilder* FindAssistBuilder(float3 pos, int importance, bool water = false, bool floater = false);
+	AAIConstructor* FindBuilder(int building, bool commander, int importance);
+	AAIConstructor* FindClosestBuilder(int building, float3 pos, bool commander, int importance);
+	AAIConstructor* FindClosestAssister(float3 pos, int importance, bool commander, bool water, bool floater);
 
 	void EnemyKilled(int unit);
 
@@ -53,6 +50,8 @@ public:
 
 	bool IsUnitCommander(int unit_id);
 	bool IsDefCommander(int def_id);
+
+	bool IsBuilder(int unit_id);
 
 	AAI *ai;
 	AAIBuildTable *bt;
@@ -64,8 +63,7 @@ public:
 	// commanders id
 	int cmdr;
 
-	set<int> builders;
-	set<int> factories;
+	set<int> constructors;
 	set<int> metal_makers;
 	set<int> jammers; 
 	set<int> recon;

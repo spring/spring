@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "aidef.h"
 #include "Platform/Win/win32.h"
@@ -38,3 +38,7 @@ DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 	ais.erase(i);
 	delete (AAI*)i;
 }
+
+DLL_EXPORT int IsCInterface(void) {
+       return 0;
+} 

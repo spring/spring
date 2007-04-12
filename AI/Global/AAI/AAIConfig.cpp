@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIConfig.h"
 #include "AAI.h"
@@ -29,14 +29,14 @@ AAIConfig::AAIConfig(void)
 	MAX_NAVAL_GROUP_SIZE = 4;
 	MAX_ARTY_GROUP_SIZE = 4;
 	MIN_EFFICIENCY = 0.001;
-	MAX_BUILDERS = 40;
+	MAX_BUILDERS = 50;
 	MAX_BUILDERS_PER_TYPE = 5;
 	MAX_FACTORIES_PER_TYPE = 3;
-	MAX_BUILDQUE_SIZE = 16;
+	MAX_BUILDQUE_SIZE = 12;
 	MAX_ASSISTANTS = 4;
 	MIN_ASSISTANCE_BUILDTIME = 15;
 	MIN_ASSISTANCE_BUILDSPEED = 20;
-	MAX_BASE_SIZE = 9;
+	MAX_BASE_SIZE = 10;
 	SCOUT_SPEED = 95.0;
 	GROUND_ARTY_RANGE = 1000.0;
 	SEA_ARTY_RANGE = 1300.0;
@@ -49,11 +49,11 @@ AAIConfig::AAIConfig(void)
 	MIN_AIR_ATTACK_COST = 150;
 	MAX_AIR_TARGETS = 20;
 	AIRCRAFT_RATE = 6;
-	HIGH_RANGE_UNITS_RATE = 5;
+	HIGH_RANGE_UNITS_RATE = 4;
 	FAST_UNITS_RATE = 5;
 	METAL_ENERGY_RATIO = 25;
 	MAX_DEFENCES = 12;
-	MIN_SECTOR_THREAT = 9;
+	MIN_SECTOR_THREAT = 6;
 	MAX_STAT_ARTY = 3;
 	MAX_STORAGE = 6;
 	MAX_AIR_BASE = 1;
@@ -68,7 +68,7 @@ AAIConfig::AAIConfig(void)
 	MIN_AIR_SUPPORT_EFFICIENCY = 2.5;
 	UNIT_SPEED_SUBGROUPS = 3;
 	MIN_SUBMARINE_WATERLINE = 15;
-	MAX_ATTACKS = 5;
+	MAX_ATTACKS = 4;
 
 	MAX_COST_LIGHT_ASSAULT = 0.025;
 	MAX_COST_MEDIUM_ASSAULT = 0.13;
@@ -79,14 +79,14 @@ AAIConfig::AAIConfig(void)
 	HEAVY_ASSAULT_RATIO = 25;
 	SUPER_HEAVY_ASSAULT_RATIO = 5;
 	
-	LEARN_SPEED = 0.15;
+	LEARN_SPEED = 0.2;
 	LEARN_RATE = 5;
 	CONSTRUCTION_TIMEOUT = 1500;
 	CLIFF_SLOPE = 0.085;
 	SCOUT_UPDATE_FREQUENCY = 127;
 	WATER_MAP_RATIO = 0.8;
 	LAND_WATER_MAP_RATIO = 0.3;
-
+	
 	initialized = false;
 }
 
@@ -111,7 +111,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 	strcat(buffer, MOD_CFG_PATH);
 	strcat(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
 
 	FILE *file = fopen(filename, "r");
 	char keyword[50];
@@ -448,9 +449,6 @@ void AAIConfig::LoadConfig(AAI *ai)
 				fscanf(file, "%i", &ival);
 				MAX_ATTACKS = ival;
 			}
-			else if (keyword[0] == 0) {
-				// empty string (happens just before EOF on crosscompiled MinGW builds)
-			}
 			else
 			{
 				error = true;
@@ -483,7 +481,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
 
 	file = fopen(filename, "r");
 

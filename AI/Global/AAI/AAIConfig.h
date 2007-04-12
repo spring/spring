@@ -15,7 +15,7 @@ public:
 	void LoadConfig(AAI *ai);
 
 	bool initialized;
-
+ 
 	// constants (will be loaded in aaiconfig)
 
 	// mod specific

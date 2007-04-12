@@ -3,8 +3,6 @@
 #include "AAI.h"
 #include "aidef.h"
 #include "AAIGroup.h"
-#include "AAIBuilder.h"
-
 
 class AAI;
 class AAIBuildTable;
@@ -61,12 +59,11 @@ public:
 	void CheckBuildques();
 	void CheckDefences();
 	void CheckStationaryArty();
-	void CheckUnits();
 
 	// builds all kind of buildings
 	bool BuildFactory();
 	bool BuildDefences();
-	void BuildUnit(UnitCategory category, float speed, float cost, float range, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent);
+	void BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent);
 	bool BuildRecon();
 	bool BuildJammer();
 	bool BuildExtractor();
@@ -108,12 +105,14 @@ public:
 	// 
 	AAIGroup* GetClosestGroupOfCategory(UnitCategory category, UnitType type, float3 pos, int importance); 
 
-	float3 GetRallyPoint(UnitCategory category);
+	float3 GetRallyPoint(UnitCategory category, int min_dist, int max_dist, int random);
+	float3 GetRallyPointCloseTo(UnitCategory category, float3 pos, int min_dist, int max_dist);
 
-	AAIMetalSpot* FindBaseMetalSpot(float3 builder_pos);
-	AAIMetalSpot* FindExternalMetalSpot(int land_mex, int water_mex);
+	AAIMetalSpot* FindMetalSpotClosestToBuilder(int land_mex, int water_mex);
+	AAIMetalSpot* FindMetalSpot(bool land, bool water);
 
 	float3 GetBuildsite(int builder, int building, UnitCategory category);
+	float3 GetUnitBuildsite(int builder, int unit);
 
 	void InitBuildques();
 	
@@ -137,7 +136,10 @@ public:
 	
 	// buildques for the factories
 	list<int> *buildques;
+
+	// number of factories (both mobile and sationary)
 	int numOfFactories;
+
 	int unitProductionRate;			
 
 	// ressource management
@@ -159,7 +161,11 @@ public:
 	float energySurplus[8];
 
 	// urgency of construction of building of the different categories
-	float urgency[METAL_MAKER+2];
+	float urgency[METAL_MAKER+1];
+
+	// sector where next def vs category needs to be built (0 if none)
+	AAISector *next_defence;
+	UnitCategory def_category;
 
 private:
 	AAI *ai;

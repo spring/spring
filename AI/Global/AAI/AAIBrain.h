@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 
 #pragma once
@@ -52,7 +52,12 @@ public:
 	void UpdateAttackedByValues();
 	void AttackedBy(int combat_category_id);
 
+	// recalculates def capabilities of all units
 	void UpdateDefenceCapabilities();
+
+	// adds/subtracts def. cap. for a single unit
+	void AddDefenceCapabilities(int def_id, UnitCategory category);
+	void SubtractDefenceCapabilities(int def_id, UnitCategory category);
 
 	// returns true if sufficient ressources to build unit are availbale
 	bool RessourcesForConstr(int unit, int workertime = 175);
@@ -72,13 +77,14 @@ public:
 	// returns how much ressources can be spent for unit construction atm 
 	float Affordable();
 
-	void DefendBuilding(int building, const UnitDef *def, int attacker);
-
 	void DefendCommander(int attacker);
 
 	void BuildUnits();
 
 	void BuildUnitOfCategory(UnitCategory category, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent);
+	
+	// returns game period
+	int GetGamePeriod();
 
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
 	list<AAISector*> *sectors; 

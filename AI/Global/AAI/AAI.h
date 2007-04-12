@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 
 #pragma once
@@ -15,14 +15,13 @@
 #include "AAIExecute.h"
 #include "AAISector.h"
 #include "AAIBuildTable.h"
-#include "AAIFactory.h"
 #include "AAIGroup.h"
-#include "AAIBuilder.h"
 #include "AAIBuildTask.h"
 #include "AAIUnitTable.h"
 #include "AAIMap.h"
 #include "AAIAirForceManager.h"
 #include "AAIAttackManager.h"
+#include "AAIConstructor.h"
 #include <math.h>
 
 using namespace std;
@@ -52,7 +51,6 @@ public:
 
 	void GotChatMsg(const char* msg,int player);	//called when someone writes a chat msg
 
-	
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy, int attacker);
 
@@ -68,19 +66,18 @@ public:
 	// side 1= arm, 2 = core, 0 = neutral
 	int side;
 
+	int aai_instance;
+
 	// units, buildings etc.
 	list<int> scouts;
-	
-	// wishlists for the different categories
-	list<int> unit_wishlist;
-	list<int> scout_wishlist;
-	list<int> air_wishlist;
 
 	// number of active/under construction units of all different types
-	int activeUnits[(int)SEA_BUILDER+1];
-	int futureUnits[(int)SEA_BUILDER+1];
+	int activeUnits[(int)MOBILE_CONSTRUCTOR+1];
+	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
 
 	int activeScouts, futureScouts;
+	int activeBuilders, futureBuilders;
+	int activeFactories, futureFactories;
 
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;

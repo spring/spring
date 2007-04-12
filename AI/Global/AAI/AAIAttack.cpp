@@ -1,11 +1,11 @@
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // AAI
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
 // 
 // Released under GPL license: see LICENSE.html for more information.
-//-------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 #include "AAIAttack.h"
 #include "AAI.h"
@@ -35,52 +35,77 @@ AAIAttack::~AAIAttack(void)
 
 bool AAIAttack::Failed()
 {
-	if(combat_groups.empty()) 
-		return true;
-	else
-		return false;
+	if(!combat_groups.empty())
+	{	
+		// check if still enough power to attack target sector
+		if(ai->am->SufficientAttackPowerVS(dest, &combat_groups, 1.3))
+		{
+			// check if sufficient power to combat enemy units
+			float3 pos = (*combat_groups.begin())->GetGroupPos();
+			AAISector *sector = ai->map->GetSectorOfPos(pos);
+
+			if(sector && ai->am->SufficientCombatPowerAt(sector, &combat_groups, 2))
+				return false;
+		}		
+	}
+	
+	return true;
 }
 
 void AAIAttack::StopAttack()
 {
 	float3 pos;
-
-	// retreat groups
-	for(set<AAIGroup*>::iterator group = combat_groups.begin(); group != combat_groups.end(); ++group)
-	{
-		pos = (*group)->rally_point;
-			
-		(*group)->Retreat(pos);
+	AAISector *sector; 
 	
+	for(set<AAIGroup*>::iterator group = combat_groups.begin(); group != combat_groups.end(); ++group)
+	{	
+		// get rally point somewhere between current pos an base
+		sector = ai->map->GetSectorOfPos((*group)->GetGroupPos());
+
+		if(sector)
+		{
+			int max_dist = sector->distance_to_base/2;
+			int min_dist = max_dist - 1;
+
+			if(min_dist < 1) 
+				min_dist = 1;
+		
+			pos = ai->execute->GetRallyPointCloseTo((*group)->category, ((*group)->GetGroupPos() + ai->brain->base_center) / 2.0f, min_dist, max_dist);
+
+			if(pos.x > 0)
+				(*group)->rally_point = pos;	
+		}
+		
+		(*group)->Retreat((*group)->rally_point);
 		(*group)->attack = 0;
 	}
 
 	for(set<AAIGroup*>::iterator group = aa_groups.begin(); group != aa_groups.end(); ++group)
 	{
-		pos = (*group)->rally_point;
+		// get rally point somewhere between current pos an base
+		sector = ai->map->GetSectorOfPos((*group)->GetGroupPos());
 
-		(*group)->Retreat(pos);
-	
+		if(sector)
+		{
+			int max_dist = sector->distance_to_base/2;
+			int min_dist = max_dist - 1;
+
+			if(min_dist < 1) 
+				min_dist = 1;
+		
+			pos = ai->execute->GetRallyPointCloseTo((*group)->category, ((*group)->GetGroupPos() + ai->brain->base_center) / 2.0f, min_dist, max_dist);
+
+			if(pos.x > 0)
+				(*group)->rally_point = pos;	
+		}
+
+		(*group)->Retreat((*group)->rally_point);
 		(*group)->attack = 0;
 	}
 
 	for(set<AAIGroup*>::iterator group = arty_groups.begin(); group != arty_groups.end(); ++group)
 	{
-		if((*group)->move_type == GROUND)
-			pos = ai->execute->GetSafePos(true, false);
-		else if((*group)->move_type == SEA)
-			pos = ai->execute->GetSafePos(false, true);
-		else if((*group)->move_type == HOVER)
-			pos = ai->execute->GetSafePos(true, true);
-		else
-			pos = ai->execute->GetSafePos(true, false);
-
-		if(pos.x > 0) 
-			(*group)->Retreat(pos);
-		else
-			(*group)->task = GROUP_IDLE;
-		
-		(*group)->attack = 0;
+		// todo
 	}
 
 	combat_groups.clear();
@@ -91,13 +116,12 @@ void AAIAttack::StopAttack()
 void AAIAttack::AttackSector(AAISector *sector, AttackType type)
 {
 	int unit;
-
-	dest = sector;
-	this->type = type;
 	float importance = 110;
+	
+	dest = sector;
+	this->type = type;	
 
 	lastAttack = ai->cb->GetCurrentFrame();
-
 
 	for(set<AAIGroup*>::iterator group = combat_groups.begin(); group != combat_groups.end(); ++group)
 	{
@@ -105,21 +129,20 @@ void AAIAttack::AttackSector(AAISector *sector, AttackType type)
 	}
 
 	// order aa groups to guard combat units
-	for(set<AAIGroup*>::iterator group = aa_groups.begin(); group != aa_groups.end(); ++group)
+	if(!combat_groups.empty())
 	{
-		unit = -1;
-
-		if(!combat_groups.empty())
+		for(set<AAIGroup*>::iterator group = aa_groups.begin(); group != aa_groups.end(); ++group)
+		{	
 			unit = (*combat_groups.begin())->GetRandomUnit();
 
-		if(unit >= 0)
-		{
-			Command c;
-			c.id = CMD_GUARD;
+			if(unit >= 0)
+			{
+				Command c;
+				c.id = CMD_GUARD;
+				c.params.push_back(unit);
 
-			c.params.push_back(unit);
-
-			(*group)->GiveOrder(&c, 110, GUARDING);
+				(*group)->GiveOrder(&c, 110, GUARDING);
+			}
 		}
 	}
 
@@ -146,7 +169,6 @@ void AAIAttack::AddGroup(AAIGroup *group)
 		arty_groups.insert(group);
 		group->attack = this;
 	} 
-
 }
 
 void AAIAttack::RemoveGroup(AAIGroup *group)
@@ -166,4 +188,6 @@ void AAIAttack::RemoveGroup(AAIGroup *group)
 		group->attack = 0;
 		arty_groups.erase(group);
 	}
+
+	ai->am->CheckAttack(this);
 }
