@@ -49,8 +49,8 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 
 	drawRadius=60;
 	alwaysVisible=true;
-	texx = ph->circularthingytex.xstart + (ph->circularthingytex.xend-ph->circularthingytex.xstart)*0.5f;
-	texy = ph->circularthingytex.ystart + (ph->circularthingytex.yend-ph->circularthingytex.ystart)*0.5f;
+	texx = ph->sphereparttex.xstart + (ph->sphereparttex.xend-ph->sphereparttex.xstart)*0.5f;
+	texy = ph->sphereparttex.ystart + (ph->sphereparttex.yend-ph->sphereparttex.ystart)*0.5f;
 }
 
 CSpherePartProjectile::~CSpherePartProjectile(void)

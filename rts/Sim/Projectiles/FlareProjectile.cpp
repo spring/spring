@@ -91,9 +91,9 @@ void CFlareProjectile::Draw(void)
 		float3 interPos=subPos[a]+subSpeed[a]*gu->timeOffset;
 		float rad=5;
 
-		va->AddVertexTC(interPos-camera->right*rad-camera->up*rad,ph->flaretex.xstart,ph->flaretex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*rad-camera->up*rad,ph->flaretex.xend,ph->flaretex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*rad+camera->up*rad,ph->flaretex.xend,ph->flaretex.yend,col);
-		va->AddVertexTC(interPos-camera->right*rad+camera->up*rad,ph->flaretex.xstart,ph->flaretex.yend,col);
+		va->AddVertexTC(interPos-camera->right*rad-camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.ystart,col);
+		va->AddVertexTC(interPos+camera->right*rad-camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.ystart,col);
+		va->AddVertexTC(interPos+camera->right*rad+camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.yend,col);
+		va->AddVertexTC(interPos-camera->right*rad+camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.yend,col);
 	}
 }

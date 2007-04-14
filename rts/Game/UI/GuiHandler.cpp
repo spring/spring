@@ -3002,6 +3002,16 @@ void CGuiHandler::DrawButtons()
 			}
 		}
 
+		// darken disabled commands
+		if (cmdDesc.disabled) {
+			glDisable(GL_TEXTURE_2D);
+			glBlendFunc(GL_DST_COLOR, GL_ZERO);
+			glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
+			const Box& vb = icon.visual;
+			glRectf(vb.x1, vb.y1, vb.x2, vb.y2);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
 		// highlight outline
 		if (highlight) {
 			if (icon.commandsID == inCommand) {
