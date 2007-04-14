@@ -2026,8 +2026,9 @@ static bool ParseCommandDescription(lua_State* L, int table,
 		    ParseNamedString(L, key, "tooltip",     cd.tooltip)    ||
 		    ParseNamedString(L, key, "texture",     cd.iconname)   ||
 		    ParseNamedString(L, key, "cursor",      cd.mouseicon)  ||
-		    ParseNamedBool(L,   key, "showUnique",  cd.showUnique) ||
 		    ParseNamedBool(L,   key, "hidden",      cd.onlyKey)    ||
+		    ParseNamedBool(L,   key, "disabled",    cd.disabled)   ||
+		    ParseNamedBool(L,   key, "showUnique",  cd.showUnique) ||
 		    ParseNamedBool(L,   key, "onlyTexture", cd.onlyTexture)) {
 			continue; // successfully parsed a parameter
 		}

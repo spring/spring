@@ -60,12 +60,10 @@ void CGeoSquareProjectile::Draw(void)
 	float3 dir2(dif2.cross(v2));
 	dir2.Normalize();
 
-	/* FIXME this shouldn't use circularthingytex,
-	it could look fugly if mods override it (through resources.tdf) */
 
-	float u = (ph->circularthingytex.xstart + ph->circularthingytex.xend) / 2;
-	float v0 = ph->circularthingytex.ystart;
-	float v1 = ph->circularthingytex.yend;
+	float u = (ph->geosquaretex.xstart + ph->geosquaretex.xend) / 2;
+	float v0 = ph->geosquaretex.ystart;
+	float v1 = ph->geosquaretex.yend;
 
 	if(w2!=0){
 		va->AddVertexTC(p1-dir1*w1,u,v1,col);

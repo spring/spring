@@ -92,7 +92,6 @@ CProjectileHandler::CProjectileHandler()
 	explotex = textureAtlas->GetTexture("explo");
 	explofadetex = textureAtlas->GetTexture("explofade");
 	heatcloudtex = textureAtlas->GetTexture("heatcloud");
-	circularthingytex = textureAtlas->GetTexture("circularthingy");
 	laserendtex = textureAtlas->GetTexture("laserend");
 	laserfallofftex = textureAtlas->GetTexture("laserfalloff");
 	randdotstex = textureAtlas->GetTexture("randdots");
@@ -107,8 +106,118 @@ CProjectileHandler::CProjectileHandler()
 		sprintf(num, "%02i", i);
 		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
 	}
+	
+	//The following section allows the modmaker to define projectile textures in alternative to some of those above.
+	if (textureAtlas->TextureExists("sbtrailtexture")) {
+		sbtrailtex = textureAtlas->GetTexture("sbtrailtexture");
+	} else {
+		sbtrailtex = textureAtlas->GetTexture("smoketrail");
+	}
+	
+	if (textureAtlas->TextureExists("missiletrailtexture")) {
+		missiletrailtex = textureAtlas->GetTexture("missiletrailtexture");
+	} else {
+		missiletrailtex = textureAtlas->GetTexture("smoketrail");
+	}
+	
+	if (textureAtlas->TextureExists("muzzleflametexture")) {
+		muzzleflametex = textureAtlas->GetTexture("muzzleflametexture");
+	} else {
+		muzzleflametex = textureAtlas->GetTexture("explo");
+	}
+		
+	if (textureAtlas->TextureExists("repulsetexture")) {
+		repulsetex = textureAtlas->GetTexture("repulsetexture");
+	} else {
+		repulsetex = textureAtlas->GetTexture("explo");
+	}
+	
+	if (textureAtlas->TextureExists("fireballflaretexture")) {
+		fireballflaretex = textureAtlas->GetTexture("fireballflaretexture");
+	} else {
+		fireballflaretex = textureAtlas->GetTexture("flare");
+	}
+	
+	if (textureAtlas->TextureExists("flareprojectiletexture")) {
+		flareprojectiletex = textureAtlas->GetTexture("flareprojectiletexture");
+	} else {
+		flareprojectiletex = textureAtlas->GetTexture("flare");
+	}
+	
+	if (textureAtlas->TextureExists("sbflaretexture")) {
+		sbflaretex = textureAtlas->GetTexture("sbflaretexture");
+	} else {
+		sbflaretex = textureAtlas->GetTexture("flare");
+	}
 
-
+	if (textureAtlas->TextureExists("missileflaretexture")) {
+		missileflaretex = textureAtlas->GetTexture("missileflaretexture");
+	} else {
+		missileflaretex = textureAtlas->GetTexture("flare");
+	}
+	
+		if (textureAtlas->TextureExists("beamlaserflaretexture")) {
+		beamlaserflaretex = textureAtlas->GetTexture("beamlaserflaretexture");
+	} else {
+		beamlaserflaretex = textureAtlas->GetTexture("flare");
+	}
+	
+	if (textureAtlas->TextureExists("bubbletexture")) {
+		bubbletex = textureAtlas->GetTexture("bubbletexture");
+	} else {
+		bubbletex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("geosquaretexture")) {
+		geosquaretex = textureAtlas->GetTexture("geosquaretexture");
+	} else {
+		geosquaretex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("gfxtexture")) {
+		gfxtex = textureAtlas->GetTexture("gfxtexture");
+	} else {
+		gfxtex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("projectiletexture")) {
+		projectiletex = textureAtlas->GetTexture("projectiletexture");
+	} else {
+		projectiletex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("repulsegfxtexture")) {
+		repulsegfxtex = textureAtlas->GetTexture("repulsegfxtexture");
+	} else {
+		repulsegfxtex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("sphereparttexture")) {
+		sphereparttex = textureAtlas->GetTexture("sphereparttexture");
+	} else {
+		sphereparttex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("torpedotexture")) {
+		torpedotex = textureAtlas->GetTexture("torpedotexture");
+	} else {
+		torpedotex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("wrecktexture")) {
+		wrecktex = textureAtlas->GetTexture("wrecktexture");
+	} else {
+		wrecktex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	if (textureAtlas->TextureExists("weapondeftexture")) {
+		weapondeftex = textureAtlas->GetTexture("weapondeftexture");
+	} else {
+		weapondeftex = textureAtlas->GetTexture("circularthingy");
+	}
+	
+	
+	
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
 	ptex = resources.GetAllValues("resources\\graphics\\groundfx");

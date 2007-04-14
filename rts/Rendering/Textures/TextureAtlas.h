@@ -56,6 +56,9 @@ public:
 
 	//return a Texture struct of the specified texture
 	AtlasedTexture GetTexture(std::string name);
+	
+	//return a boolean true if the texture exists within the "textures" map and false if it does not. 
+	bool TextureExists(const std::string& name);
 
 	//return a pointer to a Texture struct of the specified texture, this pointer points to the actuall Texture struct stored, do not delete or modify
 	AtlasedTexture* GetTexturePtr(std::string name);

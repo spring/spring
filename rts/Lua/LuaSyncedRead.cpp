@@ -2689,8 +2689,9 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
 	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
 	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
-	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
 	HSTR_PUSH_BOOL(L,   "hidden",      cd.onlyKey);
+	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
+	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
 	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
 
 	HSTR_PUSH(L, "params");

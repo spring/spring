@@ -335,3 +335,8 @@ AtlasedTexture* CTextureAtlas::GetTexturePtr(std::string name)
 {
 	return &textures[StringToLower(name)];
 }
+
+bool CTextureAtlas::TextureExists(const std::string& name)
+{
+	return textures.find(name) != textures.end();
+}

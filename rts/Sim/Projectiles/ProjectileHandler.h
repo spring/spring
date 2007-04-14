@@ -72,10 +72,28 @@ public:
 
 	//texturcoordinates for projectiles
 	AtlasedTexture flaretex;
+	AtlasedTexture fireballflaretex; //dgun texture
+	AtlasedTexture flareprojectiletex;
+	AtlasedTexture sbtrailtex;  //first section of starburst missile trail texture
+	AtlasedTexture missiletrailtex;
+	AtlasedTexture muzzleflametex; //first section of missile trail texture
+	AtlasedTexture repulsetex;  //texture of impact on repulsor
+	AtlasedTexture sbflaretex; //starburst  missile flare texture
+	AtlasedTexture missileflaretex;
+	AtlasedTexture beamlaserflaretex;
 	AtlasedTexture explotex;
 	AtlasedTexture explofadetex;
 	AtlasedTexture heatcloudtex;
 	AtlasedTexture circularthingytex;
+	AtlasedTexture bubbletex;  //torpedo trail texture
+	AtlasedTexture geosquaretex;
+	AtlasedTexture gfxtex; //nanospray texture
+	AtlasedTexture projectiletex;
+	AtlasedTexture repulsegfxtex;
+	AtlasedTexture sphereparttex;
+	AtlasedTexture torpedotex;
+	AtlasedTexture wrecktex; //smoking explosion part
+	AtlasedTexture weapondeftex; //plasma texture
 	AtlasedTexture laserendtex;
 	AtlasedTexture laserfallofftex;
 	AtlasedTexture randdotstex;

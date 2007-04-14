@@ -95,10 +95,10 @@ void CMuzzleFlame::Draw(void)
 			col[2]=(unsigned char)(ifade*255);
 			col[3]=(unsigned char)(1);
 
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->explotex.xstart,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->explotex.xend ,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->explotex.xend ,ph->explotex.yend ,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->explotex.xstart,ph->explotex.yend ,col);
+			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.ystart,col);
+			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.yend ,col);
+			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.yend ,col);
 		}
 	}
 }

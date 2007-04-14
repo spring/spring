@@ -103,7 +103,11 @@ struct Command {
 
 struct CommandDescription {
 
-	CommandDescription() : showUnique(false), onlyKey(false), onlyTexture(false) {}
+	CommandDescription()
+	: showUnique(false),
+	  onlyKey(false),
+	  onlyTexture(false),
+	  disabled(false) {}
 
 	bool SetupCommandDefaults(int id);
 
@@ -123,6 +127,7 @@ struct CommandDescription {
 	bool showUnique;   // command only applies to single units
 	bool onlyKey;      // if true dont show a button for the command
 	bool onlyTexture;  // do not draw the name if the texture is available
+	bool disabled;
 	
 	vector<string> params;
 };

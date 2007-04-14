@@ -890,10 +890,11 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
 		lua_newtable(L); {
-			HSTR_PUSH_NUMBER(L, "id",     cmds[i].id);
-			HSTR_PUSH_NUMBER(L, "type",   cmds[i].type);
-			HSTR_PUSH_STRING(L, "action", cmds[i].action.c_str());
-			HSTR_PUSH_BOOL(L,   "hidden", cmds[i].onlyKey);
+			HSTR_PUSH_NUMBER(L, "id",       cmds[i].id);
+			HSTR_PUSH_NUMBER(L, "type",     cmds[i].type);
+			HSTR_PUSH_STRING(L, "action",   cmds[i].action.c_str());
+			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].onlyKey);
+			HSTR_PUSH_BOOL(L,   "disabled", cmds[i].disabled);
 
 			HSTR_PUSH(L, "params");
 			lua_newtable(L);
@@ -1504,8 +1505,9 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
 	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
 	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
-	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
 	HSTR_PUSH_BOOL(L,   "hidden",      cd.onlyKey);
+	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
+	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
 	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
 
 	HSTR_PUSH(L, "params");
