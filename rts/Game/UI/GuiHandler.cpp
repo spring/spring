@@ -1168,7 +1168,11 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 		SetShowingMetal(false);
 		return true;
 	}
+
 	CommandDescription& cd = commands[cmdIndex];
+	if (cd.disabled) {
+		return false;
+	}
 
 	lastKeySet.Reset();
 
@@ -1835,6 +1839,10 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 
 		if ((a != iconCmd) && (commands[a].action != action.command)) {
 			continue; // not a match
+		}
+
+		if (commands[a].disabled) {
+			continue; // can not use this command
 		}
 
 		const int cmdType = commands[a].type;
