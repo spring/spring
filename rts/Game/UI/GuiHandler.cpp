@@ -1837,21 +1837,23 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 
 	for (int a = 0; a < commands.size(); ++a) {
 
-		if ((a != iconCmd) && (commands[a].action != action.command)) {
+		CommandDescription& cmdDesc = commands[a];
+
+		if ((a != iconCmd) && (cmdDesc.action != action.command)) {
 			continue; // not a match
 		}
 
-		if (commands[a].disabled) {
+		if (cmdDesc.disabled) {
 			continue; // can not use this command
 		}
 
-		const int cmdType = commands[a].type;
+		const int cmdType = cmdDesc.type;
 
 		// set the activePage
-		if (!commands[a].onlyKey &&
+		if (!cmdDesc.onlyKey &&
 				(((cmdType == CMDTYPE_ICON) &&
-					 ((commands[a].id < 0) ||
-						(commands[a].id == CMD_STOCKPILE))) ||
+					 ((cmdDesc.id < 0) ||
+						(cmdDesc.id == CMD_STOCKPILE))) ||
 				 (cmdType == CMDTYPE_ICON_MODE) ||
 				 (cmdType == CMDTYPE_ICON_BUILDING))) {
 			for (int ii = 0; ii < iconsCount; ii++) {
@@ -1866,7 +1868,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 			case CMDTYPE_ICON:{
 				Command c;
 				c.options = 0;
-				c.id = commands[a].id;
+				c.id = cmdDesc.id;
 				if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
 					if (action.extra == "+5") {
 						c.options = SHIFT_KEY;
@@ -1898,21 +1900,21 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 				if (!action.extra.empty() && (iconCmd < 0)) {
 					newMode = atoi(action.extra.c_str());
 				} else {
-					newMode = atoi(commands[a].params[0].c_str()) + 1;
+					newMode = atoi(cmdDesc.params[0].c_str()) + 1;
 				}
 
-				if ((newMode < 0) || (newMode > (commands[a].params.size() - 2))) {
+				if ((newMode < 0) || (newMode > (cmdDesc.params.size() - 2))) {
 					newMode = 0;
 				}
 
 				// not really required
 				char t[10];
 				SNPRINTF(t, 10, "%d", newMode);
-				commands[a].params[0] = t;
+				cmdDesc.params[0] = t;
 
 				Command c;
 				c.options = 0;
-				c.id = commands[a].id;
+				c.id = cmdDesc.id;
 				c.params.push_back(newMode);
 				GiveCommand(c);
 				forceLayoutUpdate = true;
@@ -1920,7 +1922,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 			}
 			case CMDTYPE_NUMBER:{
 				if (!action.extra.empty()) {
-					const CommandDescription& cd = commands[a];
+					const CommandDescription& cd = cmdDesc;
 					float value = atof(action.extra.c_str());
 					float minV = 0.0f;
 					float maxV = 100.0f;
@@ -1956,7 +1958,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 				break;
 			}
 			case CMDTYPE_ICON_BUILDING: {
-				UnitDef* ud=unitDefHandler->GetUnitByID(-commands[a].id);
+				UnitDef* ud=unitDefHandler->GetUnitByID(-cmdDesc.id);
 				SetShowingMetal(ud->extractsMetal > 0);
 				actionOffset = actionIndex;
 				lastKeySet = ks;
@@ -1965,7 +1967,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 			}
 			case CMDTYPE_COMBO_BOX:
 			if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
-				CommandDescription& cd = commands[a];
+				CommandDescription& cd = cmdDesc;
 				vector<string>::iterator pi;
 				// check for an action bound to a specific entry
 				if (!action.extra.empty() && (iconCmd < 0)) {
@@ -2011,7 +2013,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 				break;
 			}
 			case CMDTYPE_CUSTOM: {
-				RunCustomCommands(commands[a].params, false);
+				RunCustomCommands(cmdDesc.params, false);
 				break;
 			}
 			default:{
