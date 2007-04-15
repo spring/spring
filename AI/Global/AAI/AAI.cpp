@@ -416,8 +416,6 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		--futureUnits[category];
 		--bt->units_dynamic[def->id].requested;
 
-		
-
 		// unfinished building
 		if(!def->canfly && !def->movedata)
 		{

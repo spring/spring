@@ -27,6 +27,7 @@ AAISector::AAISector()
 	own_structures = 0;
 	allied_structures = 0;
 	threat = 0;
+	failed_defences = 0;
 	
 	for(int i = 0; i < 4; i++)
 	{

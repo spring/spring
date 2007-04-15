@@ -446,7 +446,7 @@ AAIMetalSpot* AAIExecute::FindMetalSpotClosestToBuilder(int land_mex, int water_
 
 		for(list<AAISector*>::iterator sector = brain->sectors[sector_dist].begin();sector != brain->sectors[sector_dist].end(); sector++)
 		{
-			if((*sector)->freeMetalSpots && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && (*sector)->threat <= 0)
+			if((*sector)->freeMetalSpots && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 0.5 && (*sector)->threat <= 0)
 			{
 				for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
 				{
@@ -915,6 +915,10 @@ bool AAIExecute::BuildExtractor()
 					cost = 6.0f;
 					armed = true;
 					efficiency = 1.0f;
+
+					// check mex upgrade
+					if(ai->futureUnits[EXTRACTOR] < 2)
+						CheckMexUpgrade();
 				}
 
 				int mex = bt->GetMex(ai->side, cost, efficiency, armed, water, false);
@@ -943,7 +947,7 @@ bool AAIExecute::BuildExtractor()
 			else
 			{	
 				// check mex upgrade
-				if(ai->futureUnits[EXTRACTOR] < 1)
+				if(ai->futureUnits[EXTRACTOR] < 2)
 					CheckMexUpgrade();
 
 				// request metal makers if no spot found
@@ -1492,15 +1496,17 @@ bool AAIExecute::BuildDefences()
 	if(ai->futureUnits[STATIONARY_DEF] > 2 || next_defence <= 0)
 		return true;
 
-	if(BuildStationaryDefenceVS(def_category, next_defence) != BUILDORDER_NOBUILDER)
-	{
-		// construction started
-		next_defence = 0;
-		
-		return true;
-	}
-	else
+	BuildOrderStatus status = BuildStationaryDefenceVS(def_category, next_defence);
+
+	if(status == BUILDORDER_NOBUILDER)
 		return false;
+	else if(status == BUILDORDER_NOBUILDPOS)
+		++next_defence->failed_defences;
+		
+	 
+	next_defence = 0;
+	
+	return true;
 }
 
 BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAISector *dest)
@@ -2361,24 +2367,31 @@ void AAIExecute::CheckDefences()
 			// stop building further defences if maximum has been reached
 			if((*sector)->defences.size() < cfg->MAX_DEFENCES)
 			{
-				for(list<int>::iterator cat = map->map_categories_id.begin(); cat!= map->map_categories_id.end(); ++cat)
+				if((*sector)->failed_defences > 1)
 				{
-					if(!(*sector)->interior || *cat == 1)
+					(*sector)->failed_defences = 0;
+				}
+				else
+				{
+					for(list<int>::iterator cat = map->map_categories_id.begin(); cat!= map->map_categories_id.end(); ++cat)
 					{
-						rating = (0.2f + bt->attacked_by_category[1][*cat][t]) * sqrt((*sector)->allied_structures + 10.0f) * (*sector)->GetThreatByID(*cat, learned, current) / (*sector)->GetDefencePowerVsID(*cat);
-						
-						if(rating > highest_rating)
+						if(!(*sector)->interior || *cat == 1)
 						{
-							// dont block empty sectors with too much aa
-							if(bt->GetAssaultCategoryOfID(*cat) != AIR_ASSAULT || ((*sector)->unitsOfType[POWER_PLANT] > 0 || (*sector)->unitsOfType[STATIONARY_CONSTRUCTOR] > 0 ) )
+							rating = (0.2f + bt->attacked_by_category[1][*cat][t]) * sqrt((*sector)->allied_structures + 10.0f) * (*sector)->GetThreatByID(*cat, learned, current) / (*sector)->GetDefencePowerVsID(*cat);
+						
+							if(rating > highest_rating)
 							{
-								second = first;
-								cat2 = cat1;
+								// dont block empty sectors with too much aa
+								if(bt->GetAssaultCategoryOfID(*cat) != AIR_ASSAULT || ((*sector)->unitsOfType[POWER_PLANT] > 0 || (*sector)->unitsOfType[STATIONARY_CONSTRUCTOR] > 0 ) )
+								{
+									second = first;
+									cat2 = cat1;
 
-								first = *sector;
-								cat1 = bt->GetAssaultCategoryOfID(*cat);
+									first = *sector;
+									cat1 = bt->GetAssaultCategoryOfID(*cat);
 
-								highest_rating = rating;
+									highest_rating = rating;
+								}
 							}
 						}
 					}
@@ -2390,7 +2403,9 @@ void AAIExecute::CheckDefences()
 	if(first)
 	{
 		// if no builder available retry later
-		if(BuildStationaryDefenceVS(cat1, first) == BUILDORDER_NOBUILDER)
+		BuildOrderStatus status = BuildStationaryDefenceVS(cat1, first);
+
+		if(status == BUILDORDER_NOBUILDER)
 		{
 			float temp = 0.5 + 6.0 / ( (float) first->defences.size() + 1.0f); 
 
@@ -2399,6 +2414,10 @@ void AAIExecute::CheckDefences()
 
 			next_defence = first;
 			def_category = cat1;
+		}
+		else if(status == BUILDORDER_NOBUILDPOS)
+		{
+			++first->failed_defences;
 		}
 	}
 	
@@ -2503,6 +2522,9 @@ void AAIExecute::CheckMexUpgrade()
 	const UnitDef *land_def = 0;
 	const UnitDef *water_def = 0; 
 
+	float gain, highest_gain = 0;
+	AAIMetalSpot *best_spot = 0;
+
 	int land_mex = bt->GetMex(ai->side, cost, eff, false, false, false);
 
 	if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
@@ -2544,33 +2566,40 @@ void AAIExecute::CheckMexUpgrade()
 
 					if(my_def->minWaterDepth <= 0 && land_def)	// land mex
 					{
-						if(land_def->extractsMetal - my_def->extractsMetal > 0.0001)
+						gain = land_def->extractsMetal - my_def->extractsMetal;
+						
+						if(gain > 0.0001 && gain > highest_gain)
 						{
-							AAIConstructor *builder = ut->FindClosestAssister((*spot)->pos, 10, true, false, false);
-
-							if(builder)
-							{
-								builder->GiveReclaimOrder((*spot)->extractor);
-								return;
-							}
+							highest_gain = gain;
+							best_spot = *spot;	
 						}
 					}
 					else	// water mex
 					{
-						if(water_def && water_def->extractsMetal - my_def->extractsMetal > 0.0001)
-						{
-							AAIConstructor *builder = ut->FindClosestAssister((*spot)->pos, 10, true, true, bt->unitList[(*spot)->extractor_def-1]->floater);
+						gain = water_def->extractsMetal - my_def->extractsMetal;
 
-							if(builder)
-							{
-								builder->GiveReclaimOrder((*spot)->extractor);
-								return;
-							}
+						if(gain > 0.0001 && gain > highest_gain)
+						{
+							highest_gain = gain;
+							best_spot = *spot;	
 						}
 					}
 				}
 			}
 		}
+	}
+
+	if(best_spot)
+	{
+		AAIConstructor *builder; 
+
+		if(bt->unitList[best_spot->extractor_def-1]->minWaterDepth > 0)
+			builder = ut->FindClosestAssister(best_spot->pos, 10, true, true, bt->unitList[best_spot->extractor_def-1]->floater);
+		else
+			builder = ut->FindClosestAssister(best_spot->pos, 10, true, false, false);
+
+		if(builder)
+			builder->GiveReclaimOrder(best_spot->extractor);
 	}
 }
 

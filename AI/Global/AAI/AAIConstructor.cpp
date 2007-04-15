@@ -530,6 +530,13 @@ void AAIConstructor::Killed()
 			{
 				ai->bt->units_dynamic[construction_def_id].requested -= 1; 
 				ai->futureUnits[construction_category] -= 1;
+
+				// killed on the way to the buildsite 
+				int x = build_pos.x / ai->map->xSectorSize;
+				int y = build_pos.z / ai->map->ySectorSize;
+
+				if(ai->map->sector[x][y].distance_to_base > 0)
+					ai->map->sector[x][y].lost_units[MOBILE_CONSTRUCTOR-COMMANDER] += 1;
 	
 				// clear up buildmap etc.
 				ai->execute->ConstructionFailed(-1, build_pos, construction_def_id);
