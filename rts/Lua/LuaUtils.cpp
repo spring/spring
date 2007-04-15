@@ -13,8 +13,14 @@ extern "C" {
 	#include "lauxlib.h"
 }
 
+
+static int depth;
+static int maxDepth = 64;
+
+
 /******************************************************************************/
 /******************************************************************************/
+
 
 static bool CopyPushData(lua_State* dst, lua_State* src, int index);
 static bool CopyPushTable(lua_State* dst, lua_State* src, int index);
@@ -44,6 +50,11 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index)
 
 static bool CopyPushTable(lua_State* dst, lua_State* src, int index)
 {
+	if (depth > maxDepth) {
+		return false;
+	}
+
+	depth++;
 	lua_newtable(dst);
 	const int table = (index >= 0) ? index : (lua_gettop(src) - index + 1);
 	for (lua_pushnil(src); lua_next(src, table) != 0; lua_pop(src, 1)) {
@@ -51,6 +62,8 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index)
 		CopyPushData(dst, src, -1); // copy the value
 		lua_rawset(dst, -3);
 	}
+	depth--;
+
 	return true;
 }
 
@@ -61,6 +74,8 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 	if (srcTop < count) {
 		return 0;
 	}
+
+	depth = 0;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
