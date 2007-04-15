@@ -79,7 +79,7 @@ static int PushCallHandler(lua_State* L, CLuaHandle** addr, const string& name)
 		lua_pushstring(L, "can't touch this");
 		lua_rawset(L, -3);
 	}
-	lua_setmetatable(L, -2);
+	lua_setmetatable(L, -2); // set the userdata's metatable
 	lua_rawset(L, -3);
 	return 0;
 }
