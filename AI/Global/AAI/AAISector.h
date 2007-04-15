@@ -94,6 +94,7 @@ public:
 	float allied_structures;
 
 	list<AAIDefence> defences;
+	int failed_defences; // how many times aai tried to build defences and couldnt find possible constrcutionsite
 
 	// units in the sector
 	int enemyUnitsOfType[(int)MOBILE_CONSTRUCTOR+1];

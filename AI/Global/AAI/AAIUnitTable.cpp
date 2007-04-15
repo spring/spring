@@ -142,7 +142,7 @@ void AAIUnitTable::RemoveConstructor(int unit_id, int def_id)
 	if(units[unit_id].cons->factory)
 		--ai->activeFactories;
 	
-	// decrease number of availablebuilders for all buildoptions of the builder
+	// decrease number of available builders for all buildoptions of the builder
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
 		bt->units_dynamic[*unit].buildersAvailable -= 1;
 
