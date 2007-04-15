@@ -131,6 +131,10 @@ class LuaSyncedRead {
 		static int Pos2BuildPos(lua_State* L);
 
 		static int GetPositionLosState(lua_State* L);
+
+		static int LoadTextVFS(lua_State* L);
+		static int FileExistsVFS(lua_State* L);
+		static int GetDirListVFS(lua_State* L);
 };
 
 

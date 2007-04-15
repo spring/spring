@@ -52,6 +52,7 @@ extern "C" {
 #include "System/LogOutput.h"
 #include "System/TdfParser.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
 
 using namespace std;
@@ -202,6 +203,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(GetPositionLosState);
+
+	REGISTER_LUA_CFUNC(LoadTextVFS);
+	REGISTER_LUA_CFUNC(FileExistsVFS);
+	REGISTER_LUA_CFUNC(GetDirListVFS);
 
 	return true;
 }
@@ -3193,6 +3198,71 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	lua_pushboolean(L, radar);
 
 	return 3;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedRead::LoadTextVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
+	}
+
+	const string& filename = lua_tostring(L, 1);
+	CFileHandler fh(filename, CFileHandler::OnlyArchiveFS);
+	if (!fh.FileExists()) {
+		return 0;
+	}
+
+	string buf;
+	while (fh.Peek() != EOF) {
+		int c;
+		fh.Read(&c, 1);
+		buf += (char)c;
+	}
+	lua_pushstring(L, buf.c_str());
+
+	return 1;
+}
+
+
+int LuaSyncedRead::FileExistsVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to FileExistsVFS()");
+	}
+
+	const string& filename = lua_tostring(L, 1);
+	CFileHandler fh(filename, CFileHandler::OnlyArchiveFS);
+	lua_pushboolean(L, fh.FileExists());
+	return 1;
+}
+
+
+int LuaSyncedRead::GetDirListVFS(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GetDirListVFS(\"dir\")");
+	}
+	const string dir = lua_tostring(L, 1);
+	vector<string> filenames = hpiHandler->GetFilesInDir(dir);
+
+	lua_newtable(L);
+	for (int i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, filenames[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, filenames.size());
+	lua_rawset(L, -3);
+
+	return 1;
 }
 
 

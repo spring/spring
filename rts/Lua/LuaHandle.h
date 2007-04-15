@@ -113,7 +113,10 @@ class CLuaHandle {
 		void DrawInMiniMap();
 
 	public: // custom call-in
-		virtual int UnsyncedXCall(lua_State* srcState, const string& funcName) = 0;
+		virtual bool HasUnsyncedXCall(const string& funcName) { return false; }
+		virtual int UnsyncedXCall(lua_State* srcState, const string& funcName) {
+			return 0;
+		}
 
 	protected:
 		CLuaHandle(const string& name, int order,

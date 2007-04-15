@@ -85,6 +85,7 @@ class CLuaUI : public CLuaHandle {
 		bool GroupChanged(int groupID);
 
 	public: // custom call-in
+		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 
 	protected:
@@ -118,17 +119,12 @@ class CLuaUI : public CLuaHandle {
 		static float  lastUpdateSeconds;
 
 	private: // call-outs
-		static int LoadTextVFS(lua_State* L);
-		static int FileExistsVFS(lua_State* L);
-		static int GetDirListVFS(lua_State* L);
-		static int GetDirList(lua_State* L);
-		static int CreateDir(lua_State* L);
-
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
 		static int GetConfigString(lua_State* L);
 		static int SetConfigString(lua_State* L);
 
+		static int CreateDir(lua_State* L);
 		static int MakeFont(lua_State* L);
 		static int SetUnitDefIcon(lua_State* L);
 

@@ -706,6 +706,24 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 // Custom Call-in
 //
 
+bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
+{
+	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	lua_pushstring(L, funcName.c_str()); // push the function name
+	lua_rawget(L, -2);                   // get the function
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 2);
+		return false;
+	}
+	lua_pop(L, 2);
+	return true;	
+}
+
+
 int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	const bool diffStates = (srcState != L);
