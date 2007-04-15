@@ -67,7 +67,7 @@ static int CallIndex(lua_State* L)
 }
 
 
-static int PushLuaHandle(lua_State* L, CLuaHandle** addr, const string& name)
+static int PushCallHandler(lua_State* L, CLuaHandle** addr, const string& name)
 {
 	lua_pushstring(L, name.c_str());
 	CLuaHandle*** ptr = (CLuaHandle***) lua_newuserdata(L, sizeof(CLuaHandle**));
@@ -76,6 +76,9 @@ static int PushLuaHandle(lua_State* L, CLuaHandle** addr, const string& name)
 		lua_pushstring(L, "__index");
 		lua_pushlightuserdata(L, addr);
 		lua_pushcclosure(L, CallIndex, 1);
+		lua_rawset(L, -3);
+		lua_pushstring(L, "__metatable");
+		lua_pushstring(L, "can't touch this");
 		lua_rawset(L, -3);
 	}
 	lua_setmetatable(L, -2);
@@ -86,10 +89,10 @@ static int PushLuaHandle(lua_State* L, CLuaHandle** addr, const string& name)
 
 bool LuaUnsyncedCall::PushEntries(lua_State* L)
 {
-	PushLuaHandle(L, (CLuaHandle**) &luaCob,   "LuaCob");
-	PushLuaHandle(L, (CLuaHandle**) &luaGaia,  "LuaGaia");
-	PushLuaHandle(L, (CLuaHandle**) &luaRules, "LuaRules");
-	PushLuaHandle(L, (CLuaHandle**) &luaUI,    "LuaUI");
+	PushCallHandler(L, (CLuaHandle**) &luaCob,   "LuaCob");
+	PushCallHandler(L, (CLuaHandle**) &luaGaia,  "LuaGaia");
+	PushCallHandler(L, (CLuaHandle**) &luaRules, "LuaRules");
+	PushCallHandler(L, (CLuaHandle**) &luaUI,    "LuaUI");
 	return true;
 }
 
