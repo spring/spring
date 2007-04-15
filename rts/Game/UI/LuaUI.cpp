@@ -25,6 +25,7 @@ extern "C" {
 #include "Lua/LuaConstGame.h"
 #include "Lua/LuaConstSpring.h"
 #include "Lua/LuaSyncedRead.h"
+#include "Lua/LuaUnsyncedCall.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUnsyncedRead.h"
 #include "Lua/LuaFeatureDefs.h"
@@ -143,6 +144,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
@@ -1086,6 +1088,42 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 	lua_pop(L, 1);
 
 	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+// Custom Call-in
+//
+
+int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
+{
+	const bool diffStates = (srcState != L);
+	const int argCount = lua_gettop(srcState);
+
+	const LuaHashString cmdStr(funcName);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return 0;
+	}
+	lua_insert(L, 1); // move the function to the beginning
+
+	if (diffStates) {
+		LuaUtils::CopyData(L, srcState, argCount);
+	}
+
+	// call the function
+	if (!RunCallIn(cmdStr, argCount, 1)) {
+		return 0;
+	}
+
+	const int retCount = lua_gettop(L);
+	if ((retCount > 0) && diffStates) {
+		lua_settop(srcState, 0);
+		LuaUtils::CopyData(srcState, L, retCount);
+	}
+
+	return retCount;
 }
 
 

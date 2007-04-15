@@ -21,6 +21,9 @@ extern "C" {
 
 class LuaUtils {
 	public:
+		static int CopyData(lua_State* dst, lua_State* src, int count);
+
+		// not implemented...		
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);
 		static int ParseFloatArray(lua_State* L, int tableIndex,

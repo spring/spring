@@ -36,6 +36,9 @@ class CLuaHandleSynced : public CLuaHandle
 		bool GotChatMsg(const string& msg, int playerID);
 		void RecvFromSynced(int args); // not an engine call-in
 
+	public: // custom call-in
+		int UnsyncedXCall(lua_State* srcState, const string& funcName);
+
 	protected:
 		CLuaHandleSynced(const string& name, int order,
 		                 LuaCobCallback callback,

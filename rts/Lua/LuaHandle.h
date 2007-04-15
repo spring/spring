@@ -112,6 +112,9 @@ class CLuaHandle {
 		void DrawScreen();
 		void DrawInMiniMap();
 
+	public: // custom call-in
+		virtual int UnsyncedXCall(lua_State* srcState, const string& funcName) = 0;
+
 	protected:
 		CLuaHandle(const string& name, int order,
 		           bool userMode, LuaCobCallback callback);

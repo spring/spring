@@ -22,6 +22,7 @@ extern "C" {
 #include "LuaConstSpring.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
+#include "LuaUnsyncedCall.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaUnsyncedRead.h"
 #include "LuaFeatureDefs.h"
@@ -185,6 +186,7 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
@@ -696,6 +698,53 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 
 	return;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+// Custom Call-in
+//
+
+int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
+{
+	const bool diffStates = (srcState != L);
+	const int argCount = lua_gettop(srcState);
+	const LuaHashString cmdStr(funcName);
+
+	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
+	if (!lua_istable(L, -1)) {
+		lua_settop(L, 0);
+		return 0;
+	}
+	cmdStr.Push(L);             // push the function name
+	lua_rawget(L, -2);          // get the function
+	if (!lua_isfunction(L, -1)) {
+		lua_settop(L, 0);
+		return 0;
+	}
+	lua_insert(L, 1); // move the function to the beginning
+	lua_pop(L, 1);    // pop the UNSYNCED table
+
+	if (diffStates) {
+		LuaUtils::CopyData(L, srcState, argCount);
+	}
+
+	// call the function
+	if (!RunCallIn(cmdStr, argCount, 1)) {
+		return 0;
+	}
+
+	const int retCount = lua_gettop(L);
+	if ((retCount > 0) && diffStates) {
+		lua_settop(srcState, 0);
+		LuaUtils::CopyData(srcState, L, retCount);
+	}
+
+	return retCount;
+}
+
+
 
 
 /******************************************************************************/
