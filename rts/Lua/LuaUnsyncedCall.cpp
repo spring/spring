@@ -28,7 +28,7 @@ extern "C" {
 /******************************************************************************/
 /******************************************************************************/
 
-static int HandleCall(lua_State* L)
+static int HandleXCall(lua_State* L)
 {
 	const int addrIndex = lua_upvalueindex(1);
 	const int nameIndex = lua_upvalueindex(2);
@@ -49,7 +49,7 @@ static int HandleCall(lua_State* L)
 }
 
 
-static int CallIndex(lua_State* L)
+static int IndexHook(lua_State* L)
 {
 	CLuaHandle** addr = (CLuaHandle**) lua_touserdata(L, lua_upvalueindex(1));
 	if (*addr == NULL) {
@@ -60,7 +60,16 @@ static int CallIndex(lua_State* L)
 	}
 	lua_pushlightuserdata(L, addr);
 	lua_pushstring(L, lua_tostring(L, 2));
-	lua_pushcclosure(L, HandleCall, 2);	
+	lua_pushcclosure(L, HandleXCall, 2);	
+	return 1;
+}
+
+
+static int CallHook(lua_State* L)
+{
+	CLuaHandle** addr = (CLuaHandle**) lua_touserdata(L, lua_upvalueindex(1));
+	// is the handle currently active
+	lua_pushboolean(L, (*addr != NULL));
 	return 1;
 }
 
@@ -73,7 +82,11 @@ static int PushCallHandler(lua_State* L, CLuaHandle** addr, const string& name)
 	lua_newtable(L); {
 		lua_pushstring(L, "__index");
 		lua_pushlightuserdata(L, addr);
-		lua_pushcclosure(L, CallIndex, 1);
+		lua_pushcclosure(L, IndexHook, 1);
+		lua_rawset(L, -3);
+		lua_pushstring(L, "__call");
+		lua_pushlightuserdata(L, addr);
+		lua_pushcclosure(L, CallHook, 1);
 		lua_rawset(L, -3);
 		lua_pushstring(L, "__metatable");
 		lua_pushstring(L, "can't touch this");
