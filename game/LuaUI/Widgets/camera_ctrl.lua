@@ -81,14 +81,15 @@ local function GetCamereTable()
     ct.fov         = 11
     ct.gndOffset   = 12
     ct.gravity     = 13
-    ct.scrollSpeed = 14
-    ct.tiltSpeed   = 15
-    ct.velTime     = 16
-    ct.avelTime    = 17
-    ct.autoTilt    = 18
-    ct.goForward   = 19
-    ct.invertAlt   = 20
-    ct.gndLock     = 21
+    ct.slide       = 14
+    ct.scrollSpeed = 15
+    ct.tiltSpeed   = 16
+    ct.velTime     = 17
+    ct.avelTime    = 18
+    ct.autoTilt    = 19
+    ct.goForward   = 20
+    ct.invertAlt   = 21
+    ct.gndLock     = 22
   end
   return ct, cs
 end

@@ -475,11 +475,10 @@ static int PushRulesParams(lua_State* L, const char* caller,
 }
 
 
-static int GetRulesParam(lua_State* L, const char* caller, int offset,
+static int GetRulesParam(lua_State* L, const char* caller, int index,
                          const vector<float>& params,
                          const map<string, int>& paramsMap)
 {
-	const int index = offset + 1;
 	int pIndex = -1;
 
 	if (lua_isnumber(L, index)) {
@@ -646,7 +645,7 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 	const vector<float>& params       = lr->GetGameParams();
 	const map<string, int>& paramsMap = lr->GetGameParamsMap();
 
-	return GetRulesParam(L, __FUNCTION__, 0, params, paramsMap);
+	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap);
 }
 
 
@@ -965,7 +964,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	const vector<float>& params       = team->modParams;
 	const map<string, int>& paramsMap = team->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap);
+	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap);
 }
 
 
@@ -2677,7 +2676,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	const vector<float>& params       = unit->modParams;
 	const map<string, int>& paramsMap = unit->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap);
+	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap);
 }
 
 
