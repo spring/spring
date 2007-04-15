@@ -84,6 +84,9 @@ class CLuaUI : public CLuaHandle {
 
 		bool GroupChanged(int groupID);
 
+	public: // custom call-in
+		int UnsyncedXCall(lua_State* srcState, const string& funcName);
+
 	protected:
 		CLuaUI();
 		~CLuaUI();

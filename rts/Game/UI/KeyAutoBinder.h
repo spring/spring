@@ -30,6 +30,8 @@ class CKeyAutoBinder : public CLuaHandle
 		                   const vector<string>& sortCriteria,
 		                   const vector<string>& chords);
 
+		int UnsyncedXCall(lua_State* srcState, const string& funcName) { return 0; }
+
 	private:
 		bool LoadCode(const string& code, const string& debug);
 		bool LoadCompareFunc();
