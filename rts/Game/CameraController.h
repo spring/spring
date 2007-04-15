@@ -222,11 +222,14 @@ class CFreeController : public CCameraController {
 		float tiltSpeed; // time it takes to max
 		float velTime;   // time it takes to max
 		float avelTime;  // time it takes to max
+
 		float gndOffset; // 0:   disabled
 		                 // <0:  locked to -gndOffset
 		                 // >0:  allow ground locking and gravity
 		float gravity;   // >=0: disabled
 		float autoTilt;  // <=0: disabled
+		float slide;     // <=0; disabled
+
 		bool invertAlt;
 		bool goForward;
 };

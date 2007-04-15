@@ -60,6 +60,7 @@ Call-out libraries
   LuaOpenGL.cpp        -- OpenGL interface
   LuaSyncedCtrl.cpp    -- Synchronized control
   LuaSyncedInfo.cpp    -- Synchronized   information
+  LuaUnsyncedCall.cpp  -- Unsynchronized inter-script calls
   LuaUnsyncedCtrl.cpp  -- Unsynchronized control
   LuaUnsyncedInfo.cpp  -- Unsynchronized information
   LuaUnitDefs.cpp      -- UnitDefs table

@@ -719,21 +719,22 @@ CFreeController::CFreeController(int num)
   prevAvel(0.0f, 0.0f, 0.0f),
   gndLock(false)
 {
-	enabled     = !!configHandler.GetInt("CamFreeEnabled", 0);
-	invertAlt   = !!configHandler.GetInt("CamFreeInvertAlt", 0);
-	goForward   = !!configHandler.GetInt("CamFreeGoForward", 0);
-	fov         = GetConfigFloat("CamFreeFOV", "45.0");
-	scrollSpeed = GetConfigFloat("CamFreeScrollSpeed", "500.0");
-	gravity     = GetConfigFloat("CamFreeGravity",    "-500.0");
-	gndOffset   = GetConfigFloat("CamFreeGroundOffset", "16.0");
-	tiltSpeed   = GetConfigFloat("CamFreeTiltSpeed", "150.0");
-	tiltSpeed   = tiltSpeed * (PI / 180.0);
-	autoTilt    = GetConfigFloat("CamFreeAutoTilt",  "150.0");
-	autoTilt    = autoTilt * (PI / 180.0);
-	velTime     = GetConfigFloat("CamFreeVelTime", "1.5");
-	velTime     = max(0.1f, velTime);
-	avelTime    = GetConfigFloat("CamFreeAngVelTime", "1.0");
-	avelTime    = max(0.1f, avelTime);
+	enabled      = !!configHandler.GetInt("CamFreeEnabled", 0);
+	invertAlt    = !!configHandler.GetInt("CamFreeInvertAlt", 0);
+	goForward    = !!configHandler.GetInt("CamFreeGoForward", 0);
+	fov          = GetConfigFloat("CamFreeFOV",           "45.0");
+	scrollSpeed  = GetConfigFloat("CamFreeScrollSpeed",  "500.0");
+	gravity      = GetConfigFloat("CamFreeGravity",     "-500.0");
+	slide        = GetConfigFloat("CamFreeSlide",          "1.0");
+	gndOffset    = GetConfigFloat("CamFreeGroundOffset",  "16.0");
+	tiltSpeed    = GetConfigFloat("CamFreeTiltSpeed",    "150.0");
+	tiltSpeed    = tiltSpeed * (PI / 180.0);
+	autoTilt     = GetConfigFloat("CamFreeAutoTilt",     "150.0");
+	autoTilt     = autoTilt * (PI / 180.0);
+	velTime      = GetConfigFloat("CamFreeVelTime",        "1.5");
+	velTime      = max(0.1f, velTime);
+	avelTime     = GetConfigFloat("CamFreeAngVelTime",     "1.0");
+	avelTime     = max(0.1f, avelTime);
 }
 
 
@@ -826,7 +827,18 @@ void CFreeController::Update()
 
 	// no smoothing for gravity (still isn't right)
 	if (gndLock) {
-		vel.y += (gravity * ft);
+		const float dGrav = (gravity * ft);
+		vel.y += dGrav;
+		if (slide > 0.0f) {
+			const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+			if (pos.y < (gndHeight + gndOffset + 1.0f)) {
+				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z);
+				const float dotVal = gndNormal.y;
+				const float scale = (dotVal * slide * -dGrav);
+				vel.x += (gndNormal.x * scale);
+				vel.z += (gndNormal.z * scale);
+			}
+		}
 	}
 
 	// set the new position/rotation
@@ -1041,21 +1053,22 @@ std::vector<float> CFreeController::GetState() const
 	fv.push_back(/* 10 */ fov);
 	fv.push_back(/* 11 */ gndOffset);
 	fv.push_back(/* 12 */ gravity);
-	fv.push_back(/* 13 */ scrollSpeed);
-	fv.push_back(/* 14 */ tiltSpeed);
-	fv.push_back(/* 15 */ velTime);
-	fv.push_back(/* 16 */ avelTime);
-	fv.push_back(/* 17 */ autoTilt);
-	fv.push_back(/* 18 */ goForward ? 1.0f : -1.0f);
-	fv.push_back(/* 19 */ invertAlt ? 1.0f : -1.0f);
-	fv.push_back(/* 20 */ gndLock   ? 1.0f : -1.0f);
+	fv.push_back(/* 13 */ slide);
+	fv.push_back(/* 14 */ scrollSpeed);
+	fv.push_back(/* 15 */ tiltSpeed);
+	fv.push_back(/* 16 */ velTime);
+	fv.push_back(/* 17 */ avelTime);
+	fv.push_back(/* 18 */ autoTilt);
+	fv.push_back(/* 19 */ goForward ? 1.0f : -1.0f);
+	fv.push_back(/* 20 */ invertAlt ? 1.0f : -1.0f);
+	fv.push_back(/* 21 */ gndLock   ? 1.0f : -1.0f);
 	return fv;
 }
 
 
 bool CFreeController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 21) || (fv[0] != (float)num)) {
+	if ((fv.size() != 22) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -1071,14 +1084,15 @@ bool CFreeController::SetState(const std::vector<float>& fv)
 	fov         =  fv[10];
 	gndOffset   =  fv[11];
 	gravity     =  fv[12];
-	scrollSpeed =  fv[13];
-	tiltSpeed   =  fv[14];
-	velTime     =  fv[15];
-	avelTime    =  fv[16];
-	autoTilt    =  fv[17];
-	goForward   = (fv[18] > 0.0f);
-	invertAlt   = (fv[19] > 0.0f);
-	gndLock     = (fv[20] > 0.0f);
+	slide       =  fv[13];
+	scrollSpeed =  fv[14];
+	tiltSpeed   =  fv[15];
+	velTime     =  fv[16];
+	avelTime    =  fv[17];
+	autoTilt    =  fv[18];
+	goForward   = (fv[19] > 0.0f);
+	invertAlt   = (fv[20] > 0.0f);
+	gndLock     = (fv[21] > 0.0f);
 
 	return true;
 }
