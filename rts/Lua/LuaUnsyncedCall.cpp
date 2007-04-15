@@ -45,8 +45,6 @@ static int HandleCall(lua_State* L)
 
 	const char* funcName = lua_tostring(L, nameIndex);
 
-	printf("HandleCall(%s) %s\n", lh->GetName().c_str(), funcName);
-
 	return lh->UnsyncedXCall(L, funcName);
 }
 
