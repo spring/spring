@@ -112,6 +112,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DestroyFeature);
 	REGISTER_LUA_CFUNC(TransferFeature);
 
+	REGISTER_LUA_CFUNC(SetUnitCosts);
 	REGISTER_LUA_CFUNC(SetUnitTooltip);
 	REGISTER_LUA_CFUNC(SetUnitHealth);
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
@@ -146,6 +147,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
 	
+
 	REGISTER_LUA_CFUNC(LevelHeightMap);
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
 	REGISTER_LUA_CFUNC(RevertHeightMap);
@@ -904,6 +906,35 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_istable(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitCosts");
+	}
+	const int table = 2;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_isstring(L, -2) || !lua_isnumber(L, -1)) {
+			continue;
+		}
+		const string key = lua_tostring(L, -2);
+		const float value = lua_tonumber(L, -1);
+		if (key == "buildTime") {
+			unit->buildTime  = max(1.0f, value);
+		} else if (key == "metalCost") {
+			unit->metalCost  = max(1.0f, value);
+		} else if (key == "energyCost") {
+			unit->energyCost = max(1.0f, value);
+		}
+	}
+	return 0;
+}
+
 
 int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 {

@@ -52,9 +52,6 @@ static int HandleXCall(lua_State* L)
 static int IndexHook(lua_State* L)
 {
 	CLuaHandle** addr = (CLuaHandle**) lua_touserdata(L, lua_upvalueindex(1));
-	if (*addr == NULL) {
-		return 0; // handle is not currently active
-	}
 	if (!lua_isstring(L, 2)) {
 		return 0; // missing string name for function
 	}
@@ -68,9 +65,23 @@ static int IndexHook(lua_State* L)
 static int CallHook(lua_State* L)
 {
 	CLuaHandle** addr = (CLuaHandle**) lua_touserdata(L, lua_upvalueindex(1));
-	// is the handle currently active
-	lua_pushboolean(L, (*addr != NULL));
-	return 1;
+	const int args = lua_gettop(L); // arg 1 is the table
+	if (args <= 1) {
+		// is the handle currently active?
+		lua_pushboolean(L, (*addr != NULL));
+		return 1;
+	}
+	else if ((args >= 2) && lua_isstring(L, 2)) {
+		// see if the specified function exists
+		const string funcName = lua_tostring(L, 2);
+		CLuaHandle* lh = *addr;
+		if (lh == NULL) {
+			return 0; // not running
+		}
+		lua_pushboolean(L, lh->HasUnsyncedXCall(funcName));
+		return 1;
+	}
+	return 0;
 }
 
 

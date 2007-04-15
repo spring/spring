@@ -232,12 +232,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
-	REGISTER_LUA_CFUNC(LoadTextVFS);
-	REGISTER_LUA_CFUNC(FileExistsVFS);
-	REGISTER_LUA_CFUNC(GetDirListVFS);
-	REGISTER_LUA_CFUNC(GetDirList);
-	REGISTER_LUA_CFUNC(CreateDir);
-
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
@@ -262,7 +256,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(AddMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
 
-
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
@@ -280,6 +273,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
 
+	REGISTER_LUA_CFUNC(CreateDir);
 	REGISTER_LUA_CFUNC(MakeFont);
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 
@@ -1097,6 +1091,18 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 // Custom Call-in
 //
 
+bool CLuaUI::HasUnsyncedXCall(const string& funcName)
+{
+	lua_getglobal(L, funcName.c_str());
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	lua_pop(L, 1);
+	return true;
+}
+
+
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	const bool diffStates = (srcState != L);
@@ -1199,143 +1205,6 @@ static inline void CheckNoArgs(lua_State* L, const char* funcName)
 //
 // Lua Callbacks
 //
-
-int CLuaUI::LoadTextVFS(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2))) {
-		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
-	}
-
-	CFileHandler::VFSmode vfsMode = CFileHandler::AnyFS;
-	if (args >= 2) {
-		const string& vfsModeStr = lua_tostring(L, 2);
-		if (vfsModeStr == "raw") {
-			vfsMode = CFileHandler::OnlyRawFS;
-		} else if (vfsModeStr == "archive") {
-			vfsMode = CFileHandler::OnlyArchiveFS;
-		}
-	}
-
-	const string& filename = lua_tostring(L, 1);
-	CFileHandler fh(filename, vfsMode);
-	if (!fh.FileExists()) {
-		return 0;
-	}
-
-	string buf;
-	while (fh.Peek() != EOF) {
-		int c;
-		fh.Read(&c, 1);
-		buf += (char)c;
-	}
-	lua_pushstring(L, buf.c_str());
-
-	return 1;
-}
-
-
-int CLuaUI::FileExistsVFS(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2))) {
-		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
-	}
-
-	CFileHandler::VFSmode vfsMode = CFileHandler::AnyFS;
-	if (args >= 2) {
-		const string& vfsModeStr = lua_tostring(L, 2);
-		if (vfsModeStr == "raw") {
-			vfsMode = CFileHandler::OnlyRawFS;
-		} else if (vfsModeStr == "archive") {
-			vfsMode = CFileHandler::OnlyArchiveFS;
-		}
-	}
-
-	const string& filename = lua_tostring(L, 1);
-	CFileHandler fh(filename, vfsMode);
-	lua_pushboolean(L, fh.FileExists());
-	return 1;
-}
-
-
-int CLuaUI::GetDirListVFS(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetDirListVFS(\"dir\")");
-	}
-	const string dir = lua_tostring(L, 1);
-	vector<string> filenames = hpiHandler->GetFilesInDir(dir);
-
-	lua_newtable(L);
-	for (int i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushstring(L, filenames[i].c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, filenames.size());
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
-
-int CLuaUI::GetDirList(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2)) ||
-	    ((args >= 3) && !lua_isstring(L, 3))) {
-		luaL_error(L,
-			"Incorrect arguments to GetDirList(\"dir\" [,\"pattern\" [,\"opts\"]])");
-	}
-
-	// keep searches within the Spring directory
-	const string dir = lua_tostring(L, 1);
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    (strstr(dir.c_str(), "..") != NULL) ||
-	    ((dir.size() > 0) && (dir[1] == ':'))) {
-		luaL_error(L, "Invalid GetDirList() access: %s", dir.c_str());
-	}
-
-	string pat = "*";
-	if (args >= 2) {
-		pat = lua_tostring(L, 2);
-		if (pat.empty()) {
-			pat = "*"; // FindFiles() croaks on empty strings
-		}
-	}
-
-	int opts = 0;
-	if (args >= 3) {
-		const string optstr = lua_tostring(L, 3);
-		if (strstr(optstr.c_str(), "r") != NULL) {
-			opts |= FileSystem::RECURSE;
-		}
-		if (strstr(optstr.c_str(), "d") != NULL) {
-			opts |= FileSystem::INCLUDE_DIRS;
-		}
-	}
-
-	vector<string> filenames = filesystem.FindFiles(dir, pat, opts);
-
-	lua_newtable(L);
-	for (int i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushstring(L, filenames[i].c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, filenames.size());
-	lua_rawset(L, -3);
-
-	return 1;
-}
-
 
 int CLuaUI::CreateDir(lua_State* L)
 {

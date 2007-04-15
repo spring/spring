@@ -15,7 +15,7 @@ extern "C" {
 
 
 static int depth;
-static int maxDepth = 64;
+static int maxDepth = 256;
 
 
 /******************************************************************************/
