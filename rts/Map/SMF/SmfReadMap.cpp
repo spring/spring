@@ -472,8 +472,10 @@ void CSmfReadMap::ConfigureAnisotropy()
 		anisotropy = 0.0f;
 		return;
 	}
+	
+	const char* SMFTexAniso = "SMFTexAniso";
 
-	anisotropy = atof(configHandler.GetString("SmfTexAniso", "0.0").c_str());
+	anisotropy = atof(configHandler.GetString(SMFTexAniso, "0.0").c_str());
 
 	if (anisotropy < 1.0f) {
 		anisotropy = 0.0f; // disabled
@@ -484,7 +486,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 			anisotropy = maxAniso;
 			char buf[64];
 			SNPRINTF(buf, sizeof(buf), "%f", anisotropy);
-			configHandler.SetString("SmfTexAniso", buf);
+			configHandler.SetString(SMFTexAniso, buf);
 		}
 	}
 }
