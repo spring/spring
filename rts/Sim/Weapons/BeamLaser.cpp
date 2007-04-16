@@ -11,13 +11,13 @@
 #include "Sim/Projectiles/BeamLaserProjectile.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "mmgr.h"
 #include "Sim/Projectiles/LargeBeamLaserProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Matrix44f.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Game/Team.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 

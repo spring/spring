@@ -31,8 +31,8 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Rendering/Env/BaseWater.h"
-#include "mmgr.h"
 #include "Game/GameSetup.h"
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

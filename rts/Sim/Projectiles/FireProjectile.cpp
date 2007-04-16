@@ -8,8 +8,8 @@
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "creg/STL_List.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );
@@ -24,7 +24,7 @@ CR_REG_METADATA(CFireProjectile,(
 	CR_MEMBER(subParticles2),
 	CR_MEMBER(subParticles)
 	));
-	
+
 CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(pos),
 	CR_MEMBER(posDif),
@@ -33,7 +33,7 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(rotSpeed),
 	CR_MEMBER(smokeType)
 	));
-	
+
 
 CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize)
 : CProjectile(pos,speed,owner, true),

@@ -7,12 +7,12 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/Ground.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
 
-CR_REG_METADATA(CDirtProjectile, 
+CR_REG_METADATA(CDirtProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(alpha),

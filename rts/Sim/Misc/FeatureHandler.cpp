@@ -22,8 +22,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/TdfParser.h"
 #include "System/TimeProfiler.h"
-#include "mmgr.h"
 #include <GL/glu.h> // after myGL.h
+#include "mmgr.h"
 
 CR_BIND(FeatureDef, );
 
@@ -99,8 +99,8 @@ CFeatureHandler::~CFeatureHandler()
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 {
 	std::map<std::string,FeatureDef*>::const_iterator it = featureDefs.find(name);
-	
-	if (it != featureDefs.end()) {	
+
+	if (it != featureDefs.end()) {
 		featureDefsVector[it->second->id] = fd;
 	} else {
 		fd->id = featureDefsVector.size();
@@ -207,7 +207,7 @@ START_TIME_PROFILE
 	SPRING_HASH_SET<int>::iterator fi=updateFeatures.begin();
 	while(fi!= updateFeatures.end()){
 		CFeature* feature = features[*fi];
-		
+
 		const bool remove = !feature->Update();
 		if (remove) {
 			feature->inUpdateQue = false;
@@ -226,10 +226,10 @@ void CFeatureHandler::LoadWreckFeatures()
 	std::vector<string> files2=CFileHandler::FindFiles("features/All Worlds/", "*.tdf");
 
 	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
-		wreckParser.LoadFile(*fi);	
+		wreckParser.LoadFile(*fi);
 	}
 	for(vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
-		wreckParser.LoadFile(*fi);	
+		wreckParser.LoadFile(*fi);
 	}
 }
 
@@ -255,7 +255,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
-	
+
 	luaCallIns.FeatureCreated(feature);
 
 	return ret;
@@ -274,7 +274,7 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
 {
 	const int oldDrawQuad = feature->drawQuad;
-	if (oldDrawQuad >= 0) { 
+	if (oldDrawQuad >= 0) {
 		const int newDrawQuad =
 			int(newPos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
 			int(newPos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
@@ -346,7 +346,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		for(int a=0;a<numFeatures;++a){
 			string name = StringToLower(readmap->GetFeatureType (mfi[a].featureType));
 			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
-			
+
 			if (def == featureDefs.end()){
 				logOutput.Print("Unknown feature named '%s'", name.c_str());
 				continue;
@@ -368,7 +368,7 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 		return;
 
 	updateFeatures.insert(feature->id);
-	feature->inUpdateQue=true;	
+	feature->inUpdateQue=true;
 }
 
 
@@ -387,7 +387,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 			float3& fpos = feature->pos;
 			if (fpos.y > ground->GetHeight(fpos.x, fpos.z)) {
 				SetFeatureUpdateable(feature);
-			
+
 				if (feature->def->floating){
 					feature->finalHeight = ground->GetHeight(fpos.x, fpos.z);
 				} else {
@@ -577,7 +577,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		fd->collisionSphereScale=atof(wreckParser.SGetValueDef("1",name+"\\collisionspherescale").c_str());
 		float3 cso = ZeroVector;
 		const char* strCSOffset = wreckParser.SGetValueDef("default",name+"\\CollisionSphereOffset").c_str();
-		if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) { 
+		if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) {
 			fd->useCSOffset = true;
 			fd->collisionSphereOffset = cso;
 		}
@@ -594,7 +594,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 			fd->mass = (float)atof(massStr.c_str());
 		}
 		fd->mass = max(0.001f, fd->mass);
-		 
+
 		fd->description=wreckParser.SGetValueDef("",name+"\\description");
 
 		fd->myName = name;

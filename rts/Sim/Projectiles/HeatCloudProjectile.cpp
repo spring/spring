@@ -7,12 +7,12 @@
 #include "Game/Camera.h"
 #include "Sync/SyncTracer.h"
 #include "Rendering/GL/VertexArray.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
 
-CR_REG_METADATA(CHeatCloudProjectile, 
+CR_REG_METADATA(CHeatCloudProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(heat),

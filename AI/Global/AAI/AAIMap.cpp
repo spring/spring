@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -25,13 +25,13 @@ AAIMap::AAIMap(AAI *ai)
 	xSectors = ySectors = 0;
 
 	initialized = false;
-	
+
 	blockmap = 0;
 	buildmap = 0;
 	mapType = LAND_MAP;
 
 	unitsInLos = new int[cfg->MAX_UNITS];
-	
+
 	// set all values to 0 (to be able to detect num. of enemies in los later
 	for(int i = 0; i < cfg->MAX_UNITS; i++)
 		unitsInLos[i] = 0;
@@ -62,20 +62,20 @@ AAIMap::~AAIMap(void)
 	strcat(filename, cb->GetModName());
 	ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 
 	FILE *save_file = fopen(buffer, "w+");
 
 	fprintf(save_file, "%s \n",MAP_FILE_VERSION);
-	
+
 	// save map type
 	fprintf(save_file, "%s \n", GetMapTypeString(mapType));
-	
+
 	// save units map_usefulness
 	float sum;
 
 	for(int i = 0; i < cfg->SIDES; ++i)
-	{	
+	{
 		// rebalance map_usefulness
 		if(mapType == LAND_MAP)
 		{
@@ -100,7 +100,7 @@ AAIMap::~AAIMap(void)
 		}
 
 		// save
-		for(int j = 0; j < bt->assault_categories.size(); ++j)		
+		for(int j = 0; j < bt->assault_categories.size(); ++j)
 			fprintf(save_file, "%f ", map_usefulness[j][i]);
 	}
 
@@ -127,15 +127,15 @@ AAIMap::~AAIMap(void)
 	{
 		for(int i = 0; i < xSectors; i++)
 			delete [] sector[i];
-		
+
 		delete [] sector;
 	}
 
 	// clean up buildmap
-	if(buildmap)	
+	if(buildmap)
 		delete [] buildmap;
 
-	if(blockmap)	
+	if(blockmap)
 		delete [] blockmap;
 
 	for(int i = 0; i < bt->assault_categories.size(); ++i)
@@ -156,11 +156,11 @@ void AAIMap::Init()
 
 	// calculate effective sector size
 	xSectorSizeMap = floor( ((float) xMapSize) / ((float) xSectors) );
-	ySectorSizeMap = floor( ((float) yMapSize) / ((float) ySectors) ); 
+	ySectorSizeMap = floor( ((float) yMapSize) / ((float) ySectors) );
 
 	xSectorSize = 8 * xSectorSizeMap;
 	ySectorSize = 8 * ySectorSizeMap;
-	
+
 	// create field of sectors
 	sector = new AAISector*[xSectors];
 
@@ -191,7 +191,7 @@ void AAIMap::Init()
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file;
 
@@ -212,10 +212,10 @@ void AAIMap::Init()
 			// load if its a metal map
 			fscanf(file, "%i ", &temp);
 			metalMap = (bool)temp;
-			
+
 			// load buildmap first
 			fread(buildmap, sizeof(char), xMapSize*yMapSize, file);
-			
+
 			AAIMetalSpot spot;
 			int spots;
 			fscanf(file, "%i ", &spots);
@@ -226,7 +226,7 @@ void AAIMap::Init()
 				fscanf(file, "%f %f %f %f ", &(spot.pos.x), &(spot.pos.y), &(spot.pos.z), &(spot.amount));
 				spot.occupied = false;
 				metal_spots.push_back(spot);
-			}	
+			}
 
 			fprintf(ai->file, "Map cache file succesfully loaded\n");
 
@@ -250,8 +250,8 @@ void AAIMap::Init()
 		strcat(buffer, MAP_CACHE_PATH);
 		strcat(buffer, cb->GetMapName());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
-		
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename); 
+
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 		// save data
 		file = fopen(filename, "w+");
@@ -263,13 +263,13 @@ void AAIMap::Init()
 
 		// save buildmap
 		fwrite(buildmap, sizeof(char), xMapSize*yMapSize, file);
-	
+
 		// save mex spots
 		fprintf(file, " %i \n", metal_spots.size());
 
 		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); spot++)
 			fprintf(file, "%f %f %f %f \n", spot->pos.x, spot->pos.y, spot->pos.z, spot->amount);
-		
+
 
 		fclose(file);
 
@@ -283,7 +283,7 @@ void AAIMap::Init()
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	if(file = fopen(filename, "r"))
 	{
@@ -309,7 +309,7 @@ void AAIMap::Init()
 			sprintf(buffer, "%s detected", GetMapTypeTextString(mapType));
 			fprintf(ai->file, "\nLoading map type:\n");
 			fprintf(ai->file, buffer);
-			fprintf(ai->file, "\n\n");	
+			fprintf(ai->file, "\n\n");
 
 			if(bt->aai_instances == 1)
 				ai->cb->SendTextMsg(buffer, 0);
@@ -321,7 +321,7 @@ void AAIMap::Init()
 	}
 	else
 		loaded = false;
-	
+
 	if(!loaded)
 	{
 		float water_ratio = 0;
@@ -343,7 +343,7 @@ void AAIMap::Init()
 			this->mapType = LAND_WATER_MAP;
 		else
 			this->mapType = LAND_MAP;
-		
+
 
 		// logging
 		sprintf(buffer, "%s detected", GetMapTypeTextString(this->mapType));
@@ -358,7 +358,7 @@ void AAIMap::Init()
 		strcat(buffer, cb->GetMapName());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename); 
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 		file = fopen(filename, "w+");
 		fprintf(file, "%s\n", GetMapTypeString(this->mapType));
@@ -371,15 +371,15 @@ void AAIMap::Init()
 	{
 		k = i->pos.x/xSectorSize;
 		l = i->pos.z/ySectorSize;
-		
+
 		if(k < xSectors && l < ySectors)
 			sector[k][l].AddMetalSpot(&(*i));
 	}
 
-	// read data from learning file  
+	// read data from learning file
 	ReadMapLearnFile(true);
 
-	// determine important unit categories on this map 
+	// determine important unit categories on this map
 	if(cfg->AIR_ONLY_MOD)
 	{
 		map_categories.push_back(GROUND_ASSAULT);
@@ -440,7 +440,7 @@ void AAIMap::Init()
 
 
 	initialized = true;
-	
+
 	// for log file
 	fprintf(ai->file, "Map: %s\n",cb->GetMapName());
 	fprintf(ai->file, "Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
@@ -481,16 +481,16 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
-	// open learning files 
+	// open learning files
 	FILE *load_file = fopen(filename, "r");
 
 	// check if correct map file version
 	if(load_file)
 	{
 		fscanf(load_file, "%s", buffer);
-	
+
 		// file version out of date
 		if(strcmp(buffer, MAP_FILE_VERSION))
 		{
@@ -516,7 +516,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				{
 					// load units map_usefulness
 					for(int i = 0; i < cfg->SIDES; ++i)
-					{	
+					{
 						for(int j = 0; j < bt->assault_categories.size(); ++j)
 							fscanf(load_file, "%f ", &map_usefulness[j][i]);
 					}
@@ -524,10 +524,10 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				else
 				{
 					// pseudo-load to make sure to be at the right spot in the file
-					float dummy; 
+					float dummy;
 
 					for(int i = 0; i < cfg->SIDES; ++i)
-					{	
+					{
 						for(int j = 0; j < bt->assault_categories.size(); ++j)
 							fscanf(load_file, "%f ", &dummy);
 					}
@@ -541,7 +541,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 		for(int i = 0; i < cfg->SIDES; ++i)
 		{
 			for(int j = 0; j < bt->assault_categories.size(); ++j)
-				map_usefulness[j][i] = bt->mod_usefulness[j][i][mapType];	
+				map_usefulness[j][i] = bt->mod_usefulness[j][i][mapType];
 		}
 	}
 
@@ -564,13 +564,13 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			{
 				// load sector data
 				fscanf(load_file, "%f %f %f %f ", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
-				
+
 				// load combat data
 				for(int cat = 0; cat < bt->assault_categories.size(); cat++)
 					fscanf(load_file, "%f %f ", &sector[i][j].attacked_by_learned[cat], &sector[i][j].combats_learned[cat]);
 
 				if(sector[i][j].importance_learned <= 1)
-					sector[i][j].importance_learned += (rand()%5)/20.0;	
+					sector[i][j].importance_learned += (rand()%5)/20.0;
 			}
 			else
 			{
@@ -609,14 +609,14 @@ void AAIMap::Learn()
 			sector = &this->sector[x][y];
 
 			sector->importance_this_game = 0.93f * (sector->importance_this_game + 3.0f * sector->importance_learned)/4.0f;
-			
+
 			if(sector->importance_this_game < 1)
 				sector->importance_this_game = 1;
 
 			for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
 			{
 				sector->attacked_by_this_game[cat] = 0.90f * (sector->attacked_by_this_game[cat] + 3.0f * sector->attacked_by_learned[cat])/4.0f;
-			
+
 				sector->combats_this_game[cat] = 0.90f * (sector->combats_this_game[cat] + 3.0f * sector->combats_learned[cat])/4.0f;
 			}
 		}
@@ -699,20 +699,20 @@ float3 AAIMap::GetBuildSiteInRect(const UnitDef *def, int xStart, int xEnd, int 
 				if(bt->IsFactory(def->id))
 					yPos += 8;
 
-				pos.x = xPos; 
+				pos.x = xPos;
 				pos.z = yPos;
 
 				// buildmap allows construction, now check if otherwise blocked
 				BuildMapPos2Pos(&pos, def);
 				Pos2FinalBuildPos(&pos, def);
-				
+
 				if(ai->cb->CanBuildAt(def, pos))
 				{
 					int x = pos.x/xSectorSize;
 					int y = pos.z/ySectorSize;
 
 					if(x < xSectors && x  >= 0 && y < ySectors && y >= 0)
-						return pos;	
+						return pos;
 				}
 			}
 		}
@@ -742,7 +742,7 @@ float3 AAIMap::GetHighestBuildsite(const UnitDef *def, int xStart, int xEnd, int
 				// buildmap allows construction, now check if otherwise blocked
 				BuildMapPos2Pos(&pos, def);
 				Pos2FinalBuildPos(&pos, def);
-				
+
 				if(ai->cb->CanBuildAt(def, pos))
 				{
 					x = pos.x/xSectorSize;
@@ -778,10 +778,10 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 	// check rect
 	while(!vStop || !hStop)
 	{
-		
+
 		pos.z = vCenter - vIterator;
 		pos.x = hCenter - hIterator;
-	
+
 		if(!vStop)
 		{
 			while(pos.x < hCenter+hIterator)
@@ -789,8 +789,8 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 				// check if buildmap allows construction
 				if(CanBuildAt(pos.x, pos.z, xSize, ySize, water))
 				{
-					temp_pos.x = pos.x; 
-					temp_pos.y = 0;  
+					temp_pos.x = pos.x;
+					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
 					if(bt->IsFactory(def->id))
@@ -799,7 +799,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
-				
+
 					if(ai->cb->CanBuildAt(def, temp_pos))
 					{
 						int	x = temp_pos.x/xSectorSize;
@@ -812,8 +812,8 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 				}
 				else if(CanBuildAt(pos.x, pos.z + 2 * vIterator, xSize, ySize, water))
 				{
-					temp_pos.x = pos.x; 
-					temp_pos.y = 0;  
+					temp_pos.x = pos.x;
+					temp_pos.y = 0;
 					temp_pos.z = pos.z + 2 * vIterator;
 
 					if(bt->IsFactory(def->id))
@@ -822,7 +822,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
-				
+
 					if(ai->cb->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
@@ -830,7 +830,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 
 						if(x < xSectors && x  >= 0 && y < ySectors && y >= 0)
 							return temp_pos;
-					}	
+					}
 				}
 
 				pos.x += 2;
@@ -849,8 +849,8 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 				// check if buildmap allows construction
 				if(CanBuildAt(pos.x, pos.z, xSize, ySize, water))
 				{
-					temp_pos.x = pos.x; 
-					temp_pos.y = 0;  
+					temp_pos.x = pos.x;
+					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
 					if(bt->IsFactory(def->id))
@@ -859,7 +859,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
-				
+
 					if(ai->cb->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
@@ -871,8 +871,8 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 				}
 				else if(CanBuildAt(pos.x + 2 * hIterator, pos.z, xSize, ySize, water))
 				{
-					temp_pos.x = pos.x + 2 * hIterator; 
-					temp_pos.y = 0;  
+					temp_pos.x = pos.x + 2 * hIterator;
+					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
 					if(bt->IsFactory(def->id))
@@ -881,7 +881,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
-				
+
 					if(ai->cb->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
@@ -895,7 +895,7 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 				pos.z += 2;
 			}
 		}
-		
+
 		vIterator += 2;
 
 		if(vCenter - vIterator < yStart || vCenter + vIterator > yEnd)
@@ -918,8 +918,8 @@ float3 AAIMap::GetRandomBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 
 		// get random pos within rectangle
 		if(xEnd - xStart - xSize < 1)
-			pos.x = xStart; 
-		else 
+			pos.x = xStart;
+		else
 			pos.x = xStart + rand()%(xEnd - xStart - xSize);
 
 		if(yEnd - yStart - ySize < 1)
@@ -930,20 +930,20 @@ float3 AAIMap::GetRandomBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 		// check if buildmap allows construction
 		if(CanBuildAt(pos.x, pos.z, xSize, ySize, water))
 		{
-			if(bt->IsFactory(def->id))		 
+			if(bt->IsFactory(def->id))
 				pos.z += 8;
 
 			// buildmap allows construction, now check if otherwise blocked
 			BuildMapPos2Pos(&pos, def);
 			Pos2FinalBuildPos(&pos, def);
 
-			if(ai->cb->CanBuildAt(def, pos))	
+			if(ai->cb->CanBuildAt(def, pos))
 			{
 				int x = pos.x/xSectorSize;
 				int y = pos.z/ySectorSize;
 
 				if(x < xSectors && x  >= 0 && y < ySectors && y >= 0)
-					return pos;	
+					return pos;
 			}
 		}
 	}
@@ -960,16 +960,16 @@ float3 AAIMap::GetClosestBuildsite(const UnitDef *def, float3 pos, int max_dista
 	int yStart = pos.z - max_distance;
 	int yEnd = pos.z + max_distance;
 
-	if(xStart < 0) 
+	if(xStart < 0)
 		xStart = 0;
 
-	if(xEnd >= xSectors * xSectorSizeMap) 
+	if(xEnd >= xSectors * xSectorSizeMap)
 		xEnd = xSectors * xSectorSizeMap - 1;
 
-	if(yStart < 0) 
+	if(yStart < 0)
 		yStart = 0;
 
-	if(yEnd >= ySectors * ySectorSizeMap) 
+	if(yEnd >= ySectors * ySectorSizeMap)
 		yEnd = ySectors * ySectorSizeMap - 1;
 
 	return GetCenterBuildsite(def, xStart, xEnd, yStart, yEnd, water);
@@ -990,7 +990,7 @@ bool AAIMap::CanBuildAt(int xPos, int yPos, int xSize, int ySize, bool water)
 				else if(water && buildmap[x+y*xMapSize] != 4)
 					return false;
 			}
-		}	
+		}
 		return true;
 	}
 	else
@@ -1005,11 +1005,11 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 
 	if(water)
 		building = 5;
-	else 
+	else
 		building = 1;
 
 	// check horizontal space
-	if(xPos+xSize+cfg->MAX_XROW <= xMapSize && xPos - cfg->MAX_XROW >= 0) 
+	if(xPos+xSize+cfg->MAX_XROW <= xMapSize && xPos - cfg->MAX_XROW >= 0)
 	{
 		for(int y = yPos; y < yPos + ySize; y++)
 		{
@@ -1018,7 +1018,7 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 				fprintf(ai->file, "ERROR: y = %i index out of range when checking horizontal rows", y);
 				return;
 			}
-		
+
 			// check to the right
 			insert_space = true;
 			for(int x = xPos+xSize; x < xPos+xSize+cfg->MAX_XROW; x++)
@@ -1073,14 +1073,14 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 							BlockCells(cell-cfg->X_SPACE, yPos - cfg->Y_SPACE, cfg->X_SPACE, cfg->Y_SPACE, add, water);
 					if(y == yPos + ySize - 1)
 							BlockCells(cell-cfg->X_SPACE, yPos + ySize, cfg->X_SPACE, cfg->Y_SPACE, add, water);
-					
+
 				}
 			}
 		}
 	}
 
 	// check vertical space
-	if(yPos+ySize+cfg->MAX_YROW <= yMapSize && yPos - cfg->MAX_YROW >= 0) 
+	if(yPos+ySize+cfg->MAX_YROW <= yMapSize && yPos - cfg->MAX_YROW >= 0)
 	{
 		for(int x = xPos; x < xPos + xSize; x++)
 		{
@@ -1089,7 +1089,7 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 				fprintf(ai->file, "ERROR: x = %i index out of range when checking vertical rows", x);
 				return;
 			}
-		
+
 			// check downwards
 			insert_space = true;
 			for(int y = yPos+ySize; y < yPos+ySize+cfg->MAX_YROW; y++)
@@ -1131,7 +1131,7 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 					if(x == xPos + xSize - 1)
 						BlockCells(xPos + xSize, cell, cfg->X_SPACE, cfg->Y_SPACE, add, water);
 				}
-				
+
 				// upwards
 				cell = GetNextY(0, x, yPos-1, building);
 
@@ -1161,7 +1161,7 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 
 	if(water)
 		empty = 4;
-	else 
+	else
 		empty = 0;
 
 	if(block)	// block cells
@@ -1172,13 +1172,13 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 			{
 				cell = x + xMapSize*y;
 
-				// if no building ordered that cell to be blocked, update buildmap 
+				// if no building ordered that cell to be blocked, update buildmap
 				// (only if space is not already occupied by a building)
 				if(!(blockmap[cell]++))
 				{
 					if(buildmap[cell] == empty)
 					{
-						buildmap[cell] = 2; 
+						buildmap[cell] = 2;
 
 						/*// debug
 						if(x%2 == 0 && y%2 == 0)
@@ -1200,7 +1200,7 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 			for(int y = yPos; y < yPos + height; y++)
 			{
 				cell = x + xMapSize*y;
-				
+
 				if(blockmap[cell])
 				{
 					// if cell is not blocked anymore, update buildmap
@@ -1208,7 +1208,7 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 					{
 						if(buildmap[cell] == 2)
 						{
-							buildmap[cell] = empty; 
+							buildmap[cell] = empty;
 
 							// debug
 							/*if(x%2 == 0 && y%2 == 0)
@@ -1389,7 +1389,7 @@ void AAIMap::DetectWater()
 // algorithm more or less by krogothe
 // thx very much
 void AAIMap::SearchMetalSpots()
-{	
+{
 	const UnitDef* def = bt->unitList[bt->GetBiggestMex()-1];
 
 	metalMap = false;
@@ -1403,7 +1403,7 @@ void AAIMap::SearchMetalSpots()
 
 	AAIMetalSpot temp;
 	float3 pos;
-	
+
 	int MinMetalForSpot = 30; // from 0-255, the minimum percentage of metal a spot needs to have
 							//from the maximum to be saved. Prevents crappier spots in between taken spaces.
 							//They are still perfectly valid and will generate metal mind you!
@@ -1415,9 +1415,9 @@ void AAIMap::SearchMetalSpots()
 	unsigned char XtractorRadius = cb->GetExtractorRadius()/ 16.0;
 	unsigned char DoubleRadius = cb->GetExtractorRadius() / 8.0;
 	int SquareRadius = (cb->GetExtractorRadius() / 16.0) * (cb->GetExtractorRadius() / 16.0); //used to speed up loops so no recalculation needed
-	int DoubleSquareRadius = (cb->GetExtractorRadius() / 8.0) * (cb->GetExtractorRadius() / 8.0); // same as above 
+	int DoubleSquareRadius = (cb->GetExtractorRadius() / 8.0) * (cb->GetExtractorRadius() / 8.0); // same as above
 	int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
-	unsigned char* MexArrayA = new unsigned char [TotalCells];	
+	unsigned char* MexArrayA = new unsigned char [TotalCells];
 	unsigned char* MexArrayB = new unsigned char [TotalCells];
 	int* TempAverage = new int [TotalCells];
 
@@ -1443,10 +1443,10 @@ void AAIMap::SearchMetalSpots()
 				if (myx >= 0 && myx < MetalMapWidth)
 				{
 					for (int myy = y - XtractorRadius; myy != y + XtractorRadius; myy++)
-					{ 
+					{
 						if (myy >= 0 && myy < MetalMapHeight && ((x - myx)*(x - myx) + (y - myy)*(y - myy)) <= SquareRadius)
 						{
-							TotalMetal += MexArrayA[myy * MetalMapWidth + myx]; //get the metal from all pixels around the extractor radius 
+							TotalMetal += MexArrayA[myy * MetalMapWidth + myx]; //get the metal from all pixels around the extractor radius
 						}
 					}
 				}
@@ -1461,9 +1461,9 @@ void AAIMap::SearchMetalSpots()
 		MexArrayB[i] = TempAverage[i] * 255 / MaxMetal;  //scale the metal so any map will have values 0-255, no matter how much metal it has
 	}
 
-	
+
 	for (int a = 0; a != MaxSpots; a++)
-	{	
+	{
 		if(!Stopme)
 			TempMetal = 0; //reset tempmetal so it can find new spots
 		for (int i = 0; i != TotalCells; i=i+2)
@@ -1474,7 +1474,7 @@ void AAIMap::SearchMetalSpots()
 				coordx = i%MetalMapWidth;
 				coordy = i/MetalMapWidth;
 			}
-		}		
+		}
 		if (TempMetal < MinMetalForSpot)
 			Stopme = 1; // if the spots get too crappy it will stop running the loops to speed it all up
 
@@ -1483,9 +1483,9 @@ void AAIMap::SearchMetalSpots()
 			pos.x = coordx * 2 * SQUARE_SIZE;
 			pos.z = coordy * 2 * SQUARE_SIZE;
 			pos.y = cb->GetElevation(pos.x, pos.z);
-			
+
 			Pos2FinalBuildPos(&pos, def);
-		
+
 			temp.amount = TempMetal * cb->GetMaxMetal() * MaxMetal / 255.0;
 			temp.occupied = false;
 			temp.pos = pos;
@@ -1493,12 +1493,12 @@ void AAIMap::SearchMetalSpots()
 			//if(cb->CanBuildAt(def, pos))
 			//{
 				Pos2BuildMapPos(&pos, def);
-				
+
 				if(pos.z >= 2 && pos.x >= 2 && pos.x < xMapSize-2 && pos.z < yMapSize-2)
 				{
 					if(CanBuildAt(pos.x, pos.z, def->xsize, def->ysize))
 					{
-						metal_spots.push_back(temp);			
+						metal_spots.push_back(temp);
 						SpotsFound++;
 
 						if(pos.y >= 0)
@@ -1508,7 +1508,7 @@ void AAIMap::SearchMetalSpots()
 					}
 				}
 			//}
-				
+
 			for (int myx = coordx - XtractorRadius; myx != coordx + XtractorRadius; myx++)
 			{
 				if (myx >= 0 && myx < MetalMapWidth)
@@ -1539,7 +1539,7 @@ void AAIMap::SearchMetalSpots()
 								if (myx >= 0 && myx < MetalMapWidth)
 								{
 									for (int myy = y - XtractorRadius; myy != y + XtractorRadius; myy++)
-									{ 
+									{
 										if (myy >= 0 && myy < MetalMapHeight && ((x - myx)*(x - myx) + (y - myy)*(y - myy)) <= SquareRadius)
 										{
 											TotalMetal += MexArrayA[myy * MetalMapWidth + myx]; //recalculate nearby spots to account for deleted metal from chosen spot
@@ -1547,7 +1547,7 @@ void AAIMap::SearchMetalSpots()
 									}
 								}
 							}
-							MexArrayB[y * MetalMapWidth + x] = TotalMetal * 255 / MaxMetal;; //set that spots metal amount 
+							MexArrayB[y * MetalMapWidth + x] = TotalMetal * 255 / MaxMetal;; //set that spots metal amount
 						}
 					}
 				}
@@ -1571,7 +1571,7 @@ void AAIMap::SearchMetalSpots()
 			cb->DrawUnit("ARMMEX", spot->pos, 0.0f, 200000, cb->GetMyAllyTeam(), false, true);
 		}*/
 	}
-	
+
 
 	delete [] MexArrayA;
 	delete [] MexArrayB;
@@ -1606,7 +1606,7 @@ void AAIMap::UpdateRecon()
 			for(int i = 0; i < bt->combat_categories; ++i)
 			{
 				this->sector[x][y].mobile_combat_power[i] *= 0.98;
-			
+
 				if(this->sector[x][y].mobile_combat_power[i] < 0.5)
 					this->sector[x][y].mobile_combat_power[i] = 0;
 			}
@@ -1620,22 +1620,22 @@ void AAIMap::UpdateRecon()
 	// first update all sectors with friendly units
 	cb->GetFriendlyUnits(unitsInLos);
 
-	// go through the list 
+	// go through the list
 	for(int i = 0; i < cfg->MAX_UNITS; ++i)
 	{
 		// if 0 end of array reached
 		if(unitsInLos[i])
 		{
 			pos = cb->GetUnitPos(unitsInLos[i]);
-			
+
 			if(pos.x != 0)
 			{
 				// calculate in which sector unit is located
 				x = pos.x/xSectorSize;
 				y = pos.z/ySectorSize;
-				
+
 				if(x >= 0 && y >= 0 && x < xSectors && y < ySectors)
-				{	
+				{
 					sector = &this->sector[x][y];
 
 					// we have a unit in that sector, reset values if not already done
@@ -1672,13 +1672,13 @@ void AAIMap::UpdateRecon()
 			unitsInLos[i] = 0;
 		}
 		else 	// end of array reached
-			break;	
+			break;
 	}
 
 	// get all enemies in los
 	cb->GetEnemyUnits(unitsInLos);
 
-	// go through the list 
+	// go through the list
 	for(int i = 0; i < cfg->MAX_UNITS; ++i)
 	{
 		// if 0 end of array reached
@@ -1690,7 +1690,7 @@ void AAIMap::UpdateRecon()
 			sector = GetSectorOfPos(pos);
 
 			if(sector)
-			{	
+			{
 				if(unitsInSector[sector->x + sector->y*ySectors])
 				{
 					def = cb->GetUnitDef(unitsInLos[i]);
@@ -1707,7 +1707,7 @@ void AAIMap::UpdateRecon()
 
 						// count combat power of combat units
 						for(int i = 0; i < bt->combat_categories; ++i)
-							sector->mobile_combat_power[i] += bt->units_static[def->id].efficiency[i];	
+							sector->mobile_combat_power[i] += bt->units_static[def->id].efficiency[i];
 					}
 					else	// building or scout etc.
 					{
@@ -1734,7 +1734,7 @@ void AAIMap::UpdateRecon()
 			unitsInLos[i] = 0;
 		}
 		else 	// end of arry reached
-			break;	
+			break;
 	}
 
 	ai->brain->UpdateMaxCombatUnitsSpotted(units_spotted);
@@ -1759,22 +1759,22 @@ void AAIMap::UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, con
 	UnitTypeStatic *killer_type = &bt->units_static[killer_def->id];
 	UnitTypeStatic *killed_type = &bt->units_static[killed_def->id];
 
-	float change =  killed_type->cost / killer_type->cost;	
-	
+	float change =  killed_type->cost / killer_type->cost;
+
 	change /= 4;
 
 	if(change > 4)
 		change = 4;
 	else if(change < 0.2)
 		change = 0.2;
-	
+
 	if(killer < 5)
 	{
 		bt->mod_usefulness[killer][killer_type->side-1][mapType] += change;
 		map_usefulness[killer][killer_type->side-1] += change;
 	}
-	
-	if(killed < 5)	
+
+	if(killed < 5)
 	{
 		map_usefulness[killed][killed_type->side-1] -= change;
 		bt->mod_usefulness[killed][killed_type->side-1][mapType] -= change;

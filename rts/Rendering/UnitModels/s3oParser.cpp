@@ -1,14 +1,14 @@
 // s3oParser.cpp: implementation of the Cs3oParser class.
 //
 //////////////////////////////////////////////////////////////////////
-//#include "StdAfx.h"
 #include "StdAfx.h"
-#include "s3oParser.h"
-#include <fstream>
-#include "Rendering/GL/myGL.h"
 #include <algorithm>
-#include <locale>
 #include <cctype>
+#include <fstream>
+#include <locale>
+#include <stdexcept>
+#include "s3oParser.h"
+#include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "s3o.h"
 #include "Rendering/FartextureHandler.h"
@@ -16,7 +16,6 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
-#include <stdexcept>
 #include "mmgr.h"
 
 void SS3O::DrawStatic()
@@ -81,7 +80,7 @@ S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
-	
+
 	S3DOModel *model = SAFE_NEW S3DOModel;
 	model->numobjects=0;
 	SS3O* object=LoadPiece(fileBuf,header.rootPiece,model);
@@ -148,7 +147,7 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 	lmodel->pieces[*piecenum].originals3o = model;
 	lmodel->pieces[*piecenum].original3do = 0;
 
-	lmodel->pieces[*piecenum].anim = NULL;	
+	lmodel->pieces[*piecenum].anim = NULL;
 	unsigned int cur;
 
 	//Map this piecename to an index in the script's pieceinfo
@@ -228,7 +227,7 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 			piece->vertexDrawOrder.push_back(num);
 
 			num=*(int*)&buf[vertexTablePointer];
-			piece->vertexDrawOrder.push_back(num);				
+			piece->vertexDrawOrder.push_back(num);
 		}
 	}
 	int childPointer=fp->childs;
@@ -279,7 +278,7 @@ void CS3OParser::FindMinMax(SS3O *object)
 
 void CS3OParser::DrawSub(SS3O* o)
 {
-	if (o->vertexDrawOrder.empty()) 
+	if (o->vertexDrawOrder.empty())
 		return;
 
 	glVertexPointer(3,GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].pos.x);
@@ -288,7 +287,7 @@ void CS3OParser::DrawSub(SS3O* o)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
-	
+
 	switch(o->primitiveType){
 	case 0:
 		glDrawElements(GL_TRIANGLES,o->vertexDrawOrder.size(),GL_UNSIGNED_INT,&o->vertexDrawOrder[0]);
@@ -301,7 +300,7 @@ void CS3OParser::DrawSub(SS3O* o)
 		break;
 	}
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);						
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 
 }

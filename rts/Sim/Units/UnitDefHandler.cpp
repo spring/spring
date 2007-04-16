@@ -20,9 +20,9 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Team.h"
-#include "mmgr.h"
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "mmgr.h"
 
 CR_BIND(UnitDef, );
 

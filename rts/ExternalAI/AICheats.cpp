@@ -1,6 +1,6 @@
 #include "StdAfx.h"
-#include "AICheats.h"
 #include <vector>
+#include "AICheats.h"
 #include "GlobalAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

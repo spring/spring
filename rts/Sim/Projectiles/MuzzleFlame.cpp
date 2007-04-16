@@ -3,8 +3,8 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),0));
 
@@ -18,7 +18,7 @@ CR_REG_METADATA(CMuzzleFlame,(
 	));
 
 void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
-{	
+{
 	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }
 

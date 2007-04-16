@@ -4,8 +4,8 @@
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "creg/STL_Deque.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,float3(0,0,0),NULL));
 CR_BIND(CFireBallProjectile::Spark, );
@@ -13,7 +13,7 @@ CR_BIND(CFireBallProjectile::Spark, );
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_MEMBER(sparks)
 	));
-	
+
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),
@@ -80,7 +80,7 @@ void CFireBallProjectile::Update()
 		if(weaponDef->gravityAffected)
 			speed.y+=gs->gravity;
 
-		//göra om till ttl sedan kanske
+		//gï¿½ra om till ttl sedan kanske
 		if(weaponDef->noExplode)
 		{
 			if(TraveledRange())

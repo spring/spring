@@ -1,5 +1,7 @@
 #include "StdAfx.h"
+#include <fstream>
 #include <stdexcept>
+#include <SDL_types.h>
 #include "ExplosionGenerator.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
@@ -17,10 +19,8 @@
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "creg/VarTypes.h"
-#include <SDL_types.h>
-#include <fstream>
-#include "mmgr.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "mmgr.h"
 
 using namespace std;
 
@@ -44,13 +44,13 @@ creg::Class* ClassAliasList::GetClass (const std::string& name)
 	std::string n = name;
 	for (;;) {
 		map<string,string>::iterator i = aliases.find(n);
-		if (i == aliases.end()) 
+		if (i == aliases.end())
 			break;
 
 		n = i->second;
 	}
 	creg::Class *cls = creg::System::GetClass (n);
-	if (!cls) 
+	if (!cls)
 		throw content_error("Unknown class: " + name);
 	return cls;
 }
@@ -89,11 +89,11 @@ CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator (const std::strin
 {
 	std::string klass;
 	std::string::size_type seppos = tag.find(':');
-	if (seppos == std::string::npos)  
+	if (seppos == std::string::npos)
 		klass = tag;
 	else
 		klass = tag.substr(0, seppos);
-	
+
 	creg::Class *cls = generatorClasses.GetClass (klass);
 	if (!cls->IsSubclassOf (CExplosionGenerator::StaticClass()))
 		throw content_error(klass + " is not a subclass of CExplosionGenerator");
@@ -258,7 +258,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 	}
 
 	if(radius>40 && damage>12){
-		CSpherePartProjectile::CreateSphere(pos,min(0.7f,damage*0.02f),5+(int)(sqrt(damage)*0.7f),(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.5f,owner);	
+		CSpherePartProjectile::CreateSphere(pos,min(0.7f,damage*0.02f),5+(int)(sqrt(damage)*0.7f),(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.5f,owner);
 	}
 	POP_CODE_MODE;
 }
@@ -362,20 +362,20 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 }
 
 void CCustomExplosionGenerator::ParseExplosionCode(
-	CCustomExplosionGenerator::ProjectileSpawnInfo *psi, 
+	CCustomExplosionGenerator::ProjectileSpawnInfo *psi,
 	int offset, creg::IType *type, const std::string& script, std::string& code)
 {
 
 	string::size_type end = script.find(';', 0);
 	std::string vastr = script.substr(0, end);
 
-	
+
 	if(vastr == "dir") //first see if we can match any keywords
 	{
 		//if the user uses a keyword assume he knows that it is put on the right datatype for now
 		code += OP_DIR;
 		Uint16 ofs = offset;
-		code.append ((char*)&ofs, (char*)&ofs + 2);          
+		code.append ((char*)&ofs, (char*)&ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type)) {
 		creg::BasicType *bt = (creg::BasicType*)type;
@@ -393,7 +393,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			char c;
 			do { c = script[p++]; } while(c == ' ');
 			if (c=='i')	opcode = OP_INDEX;
-			else if (c=='r') opcode = OP_RAND; 
+			else if (c=='r') opcode = OP_RAND;
 			else if (c=='d') opcode = OP_DAMAGE;
 			else if (isdigit(c)||c=='.'||c=='-') { opcode = OP_ADD; p--; }
 			else throw content_error ("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
@@ -494,7 +494,7 @@ void CCustomExplosionGenerator::Load (CExplosionGeneratorHandler *h, const std::
 {
 	TdfParser& parser = h->GetParser ();
 
-	if (!parser.SectionExist (tag)) 
+	if (!parser.SectionExist (tag))
 		throw content_error ("Explosion info for " + tag + " not found.");
 
 	vector<string> spawns = parser.GetSectionList (tag);
@@ -621,7 +621,7 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 		for (;klass;klass=klass->base) {
 			for (unsigned int a=0;a<klass->members.size();a++)
 			{
-				if (klass->members[a]->flags & creg::CM_Config) 
+				if (klass->members[a]->flags & creg::CM_Config)
 					fs << "\t" << klass->members[a]->name << ": " << klass->members[a]->type->GetName() << "\n";
 			}
 		}

@@ -3,9 +3,9 @@
 #include "Sim/Units/Unit.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL));
 

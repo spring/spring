@@ -27,10 +27,10 @@
 #include "Sound.h"
 #include "SDL_types.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "mmgr.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "mmgr.h"
 
 #endif
 

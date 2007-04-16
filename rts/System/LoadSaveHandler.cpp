@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <fstream>
 #include "LoadSaveHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Map/ReadMap.h"
@@ -13,7 +14,6 @@
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
 #include "creg/Serializer.h"
-#include <fstream>
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -44,7 +44,7 @@ static void SerializeString(creg::ISerializer& s, std::string& str)
 	unsigned short size = (unsigned short)str.length();
 	s.Serialize(&size,2);
 
-	if (!s.IsWriting()) 
+	if (!s.IsWriting())
 		str.resize(size);
 
 	s.Serialize(&str[0], size);
@@ -52,11 +52,11 @@ static void SerializeString(creg::ISerializer& s, std::string& str)
 
 static void WriteString(std::ostream& s, std::string& str)
 {
-	for (int a=0;a<str.length();a++) 
+	for (int a=0;a<str.length();a++)
 		s << str[a];
 	s << (char)0;
 }
- 
+
 static void ReadString(std::istream& s, std::string& str)
 {
 	char c;
@@ -96,7 +96,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 	CGameStateCollector *gsc = new CGameStateCollector();
 
 	creg::COutputStreamSerializer os;
-	os.SavePackage(&ofs, gsc, gsc->GetClass()); 
+	os.SavePackage(&ofs, gsc, gsc->GetClass());
 }
 
 //this just loads the mapname and some other early stuff

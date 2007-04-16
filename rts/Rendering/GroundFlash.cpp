@@ -5,8 +5,8 @@
 #include "Game/Camera.h"
 #include "GL/VertexArray.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 

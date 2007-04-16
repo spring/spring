@@ -1,15 +1,15 @@
 /* Author: Tobi Vollebregt */
 
 #include "StdAfx.h"
+#include <algorithm>
+#include <assert.h>
+#include <locale>
+#include <cctype>
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "Messages.h"
 #include "TdfParser.h"
 #include "mmgr.h"
-#include <algorithm>
-#include <assert.h>
-#include <locale>
-#include <cctype>
 
 CMessages::CMessages(): loaded(false) {}
 
@@ -23,7 +23,7 @@ CMessages* CMessages::GetInstance()
 /** Load the messages from gamedata/messages.tdf into memory. */
 void CMessages::Load()
 {
-	try {	
+	try {
 		TdfParser tdfparser("gamedata/messages.tdf");
 		// Grab a list of messages.  Each message is one section.
 		std::vector<std::string> section_list = tdfparser.GetSectionList("messages");

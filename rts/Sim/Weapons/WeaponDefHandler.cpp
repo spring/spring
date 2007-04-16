@@ -1,22 +1,22 @@
-#include <stdexcept>
 #include "StdAfx.h"
+#include <algorithm>
+#include <cctype>
+#include <iostream>
+#include <stdexcept>
 #include "WeaponDefHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "TdfParser.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "LogOutput.h"
-#include <algorithm>
-#include <cctype>
 #include "Sound.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "mmgr.h"
-#include <iostream>
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "mmgr.h"
 
 using namespace std;
 
@@ -36,9 +36,9 @@ CWeaponDefHandler::CWeaponDefHandler()
 		try {
 			tasunparser.LoadFile(tafiles[i]);
 		}catch( TdfParser::parse_error const& e) {
-			std::cout << "Exception:"  << e.what() << std::endl; 
+			std::cout << "Exception:"  << e.what() << std::endl;
 		} catch(...) {
-			std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl; 
+			std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl;
 		}
 	}
 
@@ -103,7 +103,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].visuals.modelName, "", weaponname + "\\model");
 	sunparser->GetDef(weaponDefs[id].visuals.smokeTrail, "0", weaponname + "\\smoketrail");
 	sunparser->GetDef(weaponDefs[id].noSelfDamage, "0", weaponname + "\\NoSelfDamage");
-	
+
 	sunparser->GetDef(weaponDefs[id].waterweapon, "0", weaponname + "\\waterweapon");
 	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
 	sunparser->GetDef(weaponDefs[id].noExplode, "0", weaponname + "\\NoExplode");
@@ -342,7 +342,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 			weaponDefs[id].reload=5;
 		} else {
 			weaponDefs[id].salvodelay=min(0.4f,weaponDefs[id].reload);
-			weaponDefs[id].salvosize=2;			
+			weaponDefs[id].salvosize=2;
 		}
 	}
 //	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
@@ -353,7 +353,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
 	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
 	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
-	
+
 	weaponDefs[id].visuals.colorMap = 0;
 	std::string colormap;
 	colormap = sunparser->SGetValueDef("", weaponname + "\\colormap");
@@ -403,7 +403,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	} else if(weaponDefs[id].type=="LaserCannon"){
 		//CLaserProjectile
 		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
-		weaponDefs[id].visuals.texture2 = &ph->laserendtex;	
+		weaponDefs[id].visuals.texture2 = &ph->laserendtex;
 		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
 	} else if(weaponDefs[id].type=="BeamLaser"){
 		if(weaponDefs[id].largeBeamLaser)

@@ -3,10 +3,10 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL,0));
 
