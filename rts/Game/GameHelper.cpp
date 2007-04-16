@@ -598,7 +598,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 	return false;
 }
 
-float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length,CFeature*& feature)
+float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
 {
 	float nearHit=length;
 	vector<int> quads=qf->GetQuadsOnRay(start,dir,length);
@@ -607,16 +607,21 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		list<CFeature*>::iterator ui;
 		for(ui=qf->baseQuads[*qi].features.begin();ui!=qf->baseQuads[*qi].features.end();++ui){
-			float3 dif=(*ui)->midPos-start;
+			CFeature* f = *ui;
+			if ((f->allyteam >= 0) && !gu->spectatingFullView &&
+					!loshandler->InLos(f->pos, gu->myAllyTeam)) {
+				continue;
+			}
+			float3 dif = f->midPos-start;
 			float closeLength=dif.dot(dir);
 			if(closeLength<0)
 				continue;
 			if(closeLength>nearHit)
 				continue;
 			float3 closeVect=dif-dir*closeLength;
-			if(closeVect.SqLength() < (*ui)->sqRadius){
-				nearHit=closeLength;
-				feature=*ui;
+			if(closeVect.SqLength() < f->sqRadius){
+				nearHit = closeLength;
+				feature = f;
 			}
 		}
 	}
