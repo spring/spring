@@ -47,6 +47,8 @@ protected:
 	char *tiles;
 	int tileMapXSize;
 	int tileMapYSize;
+
+	float anisotropy;
 };
 
 #endif // __BF_GROUND_TEXTURES_H__

@@ -106,7 +106,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap *rm)
 CBFGroundTextures::~CBFGroundTextures(void)
 {
 	delete[] squares;
-
 	delete[] tileMap;
 	delete[] tiles;
 }
@@ -114,9 +113,9 @@ CBFGroundTextures::~CBFGroundTextures(void)
 
 void CBFGroundTextures::SetTexture(int x, int y)
 {
-	GroundSquare* square=&squares[y*numBigTexX+x];
-	glBindTexture(GL_TEXTURE_2D,square->texture);
-	square->lastUsed=gs->frameNum;
+	GroundSquare* square = &squares[y*numBigTexX+x];
+	glBindTexture(GL_TEXTURE_2D, square->texture);
+	square->lastUsed = gs->frameNum;
 }
 
 void CBFGroundTextures::DrawUpdate(void)
@@ -216,6 +215,9 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	if (map->anisotropy != 0.0f) {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
+	}
 	glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size*size/2, buf);
 
 	delete[] buf;

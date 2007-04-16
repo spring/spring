@@ -36,10 +36,14 @@ public:
 	MapHeader header;
 	CFileHandler *ifs;
 
+	float anisotropy;
+
 	unsigned char waterHeightColors[1024*4];
 protected:
 	void ReadGrassMap (void *data);
 	void ReadFeatureInfo ();
+
+	void ConfigureAnisotropy();
 
 	unsigned int shadowTex;
 	unsigned int minimapTex;
