@@ -1348,7 +1348,6 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	inCreateFeature = true;
 	CFeature* feature = SAFE_NEW CFeature();
 	feature->Initialize(pos, featureDef, heading, 0, team, "");
-	featureHandler->AddFeature(feature);
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);

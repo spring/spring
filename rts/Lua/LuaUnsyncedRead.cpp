@@ -473,8 +473,11 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 	const bool onlyCoords = ((args >= 3) && lua_toboolean(L, 3));
 
+// FIXME	const int origAllyTeam = gu->myAllyTeam;
+//	gu->myAllyTeam = readAllyTeam;
 	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
-	const float fdist = helper->GuiTraceRayFeature(pos, dir, range,feature);
+	const float fdist = helper->GuiTraceRayFeature(pos, dir, range, feature);
+//	gu->myAllyTeam = origAllyTeam;
 
 	const float badRange = (range - 300.0f);
 	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {

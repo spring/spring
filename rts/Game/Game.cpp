@@ -3456,7 +3456,33 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
 				}
 				else {
-					logOutput.Print(unitName + " is not a valid unitname");
+					FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
+					if (featureDef) {
+						int xsize = featureDef->xsize;
+						int zsize = featureDef->ysize;
+						int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+						int total = numRequestedUnits;
+
+						float3 minpos = pos;
+						minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
+						minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
+
+						for (int z = 0; z < squareSize; ++z) {
+							for (int x = 0; x < squareSize && total > 0; ++x) {
+								float minposx = minpos.x + x * xsize * SQUARE_SIZE;
+								float minposz = minpos.z + z * zsize * SQUARE_SIZE;
+								const float3 upos(minposx, minpos.y, minposz);
+								CFeature* feature = SAFE_NEW CFeature();
+								feature->Initialize(upos, featureDef, 0, 0, team, "");
+								--total;
+							}
+						}
+
+						logOutput.Print("Giving %i %s (feature) to team %i", numRequestedUnits, unitName.c_str(), team);
+					}
+					else {
+						logOutput.Print(unitName + " is not a valid unitname");
+					}
 				}
 			}
 			else {
