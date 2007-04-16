@@ -84,12 +84,12 @@ CMouseHandler::CMouseHandler()
 
 	//fps camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
-	camCtrls.push_back(SAFE_NEW CFPSController(camControllers.size()));
-	camCtrls.push_back(SAFE_NEW COverheadController(camControllers.size()));
-	camCtrls.push_back(SAFE_NEW CTWController(camControllers.size()));
-	camCtrls.push_back(SAFE_NEW CRotOverheadController(camControllers.size()));
-	camCtrls.push_back(SAFE_NEW CFreeController(camControllers.size()));
-	camCtrls.push_back(SAFE_NEW COverviewController(camControllers.size()));
+	camCtrls.push_back(SAFE_NEW CFPSController         (camCtrls.size())); // 0
+	camCtrls.push_back(SAFE_NEW COverheadController    (camCtrls.size())); // 1
+	camCtrls.push_back(SAFE_NEW CTWController          (camCtrls.size())); // 2
+	camCtrls.push_back(SAFE_NEW CRotOverheadController (camCtrls.size())); // 3
+	camCtrls.push_back(SAFE_NEW CFreeController        (camCtrls.size())); // 4
+	camCtrls.push_back(SAFE_NEW COverviewController    (camCtrls.size())); // 5
 
 	int mode = configHandler.GetInt("CamMode", 1);
 	mode = max(0, min(mode, (int)camControllers.size() - 1));

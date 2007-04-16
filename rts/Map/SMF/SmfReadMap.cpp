@@ -30,6 +30,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 {
 	PrintLoadMsg("Opening map file");
 
+	ConfigureAnisotropy();
+
 	string smdfile = string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
 	mapDefParser.LoadFile(smdfile);
 	TdfParser resources("gamedata/resources.tdf");
@@ -109,6 +111,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	if (anisotropy != 0.0f) {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+	}
 
 	PrintLoadMsg("Creating overhead texture");
 
@@ -145,6 +150,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	if (anisotropy != 0.0f) {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+	}
 
 	HeightmapUpdated(0, gs->mapx, 0, gs->mapy);
 
@@ -455,4 +463,28 @@ void CSmfReadMap::ReadFeatureInfo()
 		}
 	}
 	featureFileOffset = ifs->GetPos();
+}
+
+
+void CSmfReadMap::ConfigureAnisotropy()
+{
+	if (!GLEW_EXT_texture_filter_anisotropic) {
+		anisotropy = 0.0f;
+		return;
+	}
+
+	anisotropy = atof(configHandler.GetString("SmfTexAniso", "0.0").c_str());
+
+	if (anisotropy < 1.0f) {
+		anisotropy = 0.0f; // disabled
+	} else {
+		GLfloat maxAniso;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+		if (anisotropy > maxAniso) {
+			anisotropy = maxAniso;
+			char buf[64];
+			SNPRINTF(buf, sizeof(buf), "%f", anisotropy);
+			configHandler.SetString("SmfTexAniso", buf);
+		}
+	}
 }

@@ -725,7 +725,7 @@ CFreeController::CFreeController(int num)
 	fov          = GetConfigFloat("CamFreeFOV",           "45.0");
 	scrollSpeed  = GetConfigFloat("CamFreeScrollSpeed",  "500.0");
 	gravity      = GetConfigFloat("CamFreeGravity",     "-500.0");
-	slide        = GetConfigFloat("CamFreeSlide",          "1.0");
+	slide        = GetConfigFloat("CamFreeSlide",          "0.5");
 	gndOffset    = GetConfigFloat("CamFreeGroundOffset",  "16.0");
 	tiltSpeed    = GetConfigFloat("CamFreeTiltSpeed",    "150.0");
 	tiltSpeed    = tiltSpeed * (PI / 180.0);
