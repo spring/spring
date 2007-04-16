@@ -124,6 +124,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetAllyTeamList);
 
 	REGISTER_LUA_CFUNC(GetPlayerInfo);
+	REGISTER_LUA_CFUNC(GetPlayerControlledUnit);
 
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
@@ -1001,6 +1002,42 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->cpuUsage);
 
 	return 7;
+}
+
+
+int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
+{
+#ifndef DIRECT_CONTROL_ALLOWED
+	return 0;
+#else
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GetPlayerControlledUnit(playerID)");
+	}
+
+	const int playerID = (int)lua_tonumber(L, 1);
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		return 0;
+	}
+
+	const CPlayer* player = gs->players[playerID];
+	if (player == NULL) {
+		return 0;
+	}
+
+	CUnit* unit = player->playerControlledUnit;
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if ((readAllyTeam == CLuaHandle::NoAccessTeam) ||
+	    ((readAllyTeam >= 0) && !gs->Ally(unit->allyteam, readAllyTeam))) {
+		return 0;
+	}
+
+	lua_pushnumber(L, unit->id);
+	return 1;
+#endif
 }
 
 
