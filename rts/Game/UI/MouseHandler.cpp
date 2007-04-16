@@ -3,6 +3,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <SDL_types.h>
+#include <SDL_mouse.h>
+#include <SDL_keysym.h>
+#include <SDL_events.h>
 #include "MouseHandler.h"
 #include "CommandColors.h"
 #include "InfoConsole.h"
@@ -36,10 +40,6 @@
 #include "Sim/Units/UnitTracker.h"
 #include "Sound.h"
 #include "mmgr.h"
-#include <SDL_types.h>
-#include <SDL_mouse.h>
-#include <SDL_keysym.h>
-#include <SDL_events.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -911,7 +911,7 @@ bool CMouseHandler::AddMouseCursor(const std::string& name,
 
 	// assign the new cursor
 	cursorCommandMap[name] = cursor;
-	
+
 	return true;
 }
 

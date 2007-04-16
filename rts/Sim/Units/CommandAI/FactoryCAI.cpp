@@ -16,8 +16,8 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "mmgr.h"
 #include "LogOutput.h"
+#include "mmgr.h"
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),
@@ -166,7 +166,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c)
 	}
 
 	BuildOption &bo=boi->second;
-	
+
 	int numItems=1;
 	if(c.options& SHIFT_KEY)
 		numItems*=5;
@@ -428,7 +428,7 @@ void CFactoryCAI::DrawCommands(void)
 				break;
 			}
 		}
-		
+
 		if ((ci->id < 0) && (ci->params.size() >= 3)) {
 			BuildInfo bi;
 			bi.def = unitDefHandler->GetUnitByID(-(ci->id));
@@ -447,7 +447,7 @@ void CFactoryCAI::DrawCommands(void)
 				glColor4fv(cmdColors.rangeExtract);
 				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 				lineDrawer.Restart();
-			}				
+			}
 		}
 	}
 	lineDrawer.FinishPath();

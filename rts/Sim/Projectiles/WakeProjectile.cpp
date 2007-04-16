@@ -3,9 +3,9 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/Wind.h"
-#include "mmgr.h"
 #include "Rendering/Env/BaseWater.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,NULL,0,0,0));
 

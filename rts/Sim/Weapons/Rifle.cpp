@@ -14,8 +14,8 @@
 #include "LogOutput.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
 #include "myMath.h"
-#include "mmgr.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL));
 

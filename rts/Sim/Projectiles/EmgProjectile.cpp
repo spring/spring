@@ -3,13 +3,13 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
 
-CR_REG_METADATA(CEmgProjectile,(        
+CR_REG_METADATA(CEmgProjectile,(
     CR_MEMBER(ttl),
     CR_MEMBER(intensity),
     CR_MEMBER(color)

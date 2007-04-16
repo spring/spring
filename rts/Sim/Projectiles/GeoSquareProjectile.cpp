@@ -2,8 +2,8 @@
 #include "GeoSquareProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),0,0));
 

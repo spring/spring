@@ -6,9 +6,9 @@
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
-#include "mmgr.h"
 #include "ExternalAI/GlobalAICInterface/AbicProxy.h"
 #include "LogOutput.h"
+#include "mmgr.h"
 
 
 CGlobalAI::CGlobalAI(int team, const char* dll): team(team), cheatevents(false)
@@ -40,14 +40,14 @@ CGlobalAI::CGlobalAI(int team, const char* dll): team(team), cheatevents(false)
 		// presents C++ interface
 		logOutput << dll <<  " has C++ interface\n";
 		IsCInterface = false;
-	
+
 		GetGlobalAiVersion = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
 
 		if (GetGlobalAiVersion == 0) {
 			handleerror(NULL, dll, "Incorrect Global AI dll", MBF_OK|MBF_EXCL);
 			return;
 		}
-		
+
 		int i = GetGlobalAiVersion();
 
 		if (i != GLOBAL_AI_INTERFACE_VERSION) {

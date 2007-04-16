@@ -7,8 +7,8 @@
 #include "Sim/Projectiles/LightingProjectile.h"
 #include "Map/Ground.h"
 #include "WeaponDefHandler.h"
-#include "mmgr.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CLightingCannon, CWeapon, (NULL));
 
@@ -29,7 +29,7 @@ void CLightingCannon::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		if(!onlyForward){		
+		if(!onlyForward){
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
 		}

@@ -6,12 +6,12 @@
 #include "GfxProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
 
-CR_REG_METADATA(CGfxProjectile, 
+CR_REG_METADATA(CGfxProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(creationTime),

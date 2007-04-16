@@ -1,16 +1,16 @@
 /* Author: Teake Nutma */
 
 #include "StdAfx.h"
+#include <algorithm>
+#include <assert.h>
+#include <locale>
+#include <cctype>
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "IconHandler.h"
 #include "TdfParser.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "mmgr.h"
-#include <algorithm>
-#include <assert.h>
-#include <locale>
-#include <cctype>
 
 
 CIconHandler* iconHandler;
@@ -30,7 +30,7 @@ CIconHandler::CIconHandler()
 	if (icons.find("default") == icons.end()) {
 		icons["default"] = SAFE_NEW CIcon(*GetStandardTexture(), 1, 1, false);
 	}
-	
+
 }
 
 

@@ -2,12 +2,12 @@
 #include "ExploSpikeProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
 
-CR_REG_METADATA(CExploSpikeProjectile, 
+CR_REG_METADATA(CExploSpikeProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(length),

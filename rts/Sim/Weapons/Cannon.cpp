@@ -16,8 +16,8 @@
 #include "myMath.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "WeaponDefHandler.h"
-#include "mmgr.h"
 #include "Rendering/Env/BaseWater.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
 
@@ -63,7 +63,7 @@ void CCannon::Update()
 				predict=maxPredict;
 			if(predict<minPredict)
 				predict=minPredict;
-			
+
 			float3 dif=targetPos-weaponPos;
 			float k1=dif.SqLength2D();
 			float h=projectileSpeed*predict;

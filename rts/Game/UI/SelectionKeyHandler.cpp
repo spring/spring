@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include <fstream>
-#include "SDL_keysym.h"
-#include "SDL_types.h"
+#include <SDL_keysym.h>
+#include <SDL_types.h>
 #include "SelectionKeyHandler.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
@@ -492,7 +492,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		ReadDelimiter(selectString);
 		s=ReadToken(selectString);
 	}
-		
+
 	if(s=="SelectAll"){
 		for(list<CUnit*>::iterator ui=selection.begin();ui!=selection.end();++ui)
 			selectedUnits.AddUnit(*ui);
@@ -512,7 +512,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		if(mouse->currentCamController!=mouse->camControllers[0]){
 			mouse->currentCamController->SetPos(sel->pos);
 		} else {	//fps camera
-			
+
 			if(camera->rot.x>-1)
 				camera->rot.x=-1;
 

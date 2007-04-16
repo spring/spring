@@ -3,8 +3,8 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "mmgr.h"
 
 using namespace std;
 

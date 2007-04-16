@@ -11,8 +11,8 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,0,0));
 
@@ -49,7 +49,7 @@ CExplosiveProjectile::~CExplosiveProjectile()
 }
 
 void CExplosiveProjectile::Update()
-{	
+{
 	pos+=speed;
 	speed.y+=gs->gravity;
 
@@ -101,7 +101,7 @@ void CExplosiveProjectile::Draw(void)
 		col[2]=int(weaponDef->visuals.color.z*255);
 		col[3]=int(weaponDef->intensity*255);
 	}
-	
+
 	float3 dir=speed;
 	dir.Normalize();
 

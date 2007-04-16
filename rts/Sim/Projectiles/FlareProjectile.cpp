@@ -7,12 +7,12 @@
 #include "Game/Camera.h"
 #include "MissileProjectile.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner, true),
-	activateFrame(activateFrame),	
+	activateFrame(activateFrame),
 	deathFrame(activateFrame+owner->unitDef->flareTime),
 	numSub(0),
 	lastSub(0)

@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include "ScriptHandler.h"
 #include "Game/Game.h"
-#include "mmgr.h"
 #include "FileSystem/FileHandler.h"
 #include "LoadScript.h"
 #include "CommanderScript.h"
@@ -19,6 +18,7 @@
 #ifndef NO_LUA
 #include "System/Platform/errorhandler.h"
 #endif
+#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -43,7 +43,7 @@ void CScriptHandler::LoadScripts() {
 	const char *path = "AI/Bot-libs/";
 	std::vector<std::string> f = CFileHandler::FindFiles(path, std::string("*.") + SharedLib::GetLibExtension());
 
-	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) 
+	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi)
 		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*fi));
 
 	f = CFileHandler::FindFiles("", "*.ssf");
@@ -59,7 +59,7 @@ void CScriptHandler::StartLua()
 	std::vector<string> files = CFileHandler::FindFiles("startscripts/", "*.lua");
 	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
 		CLuaBinder* lua = SAFE_NEW CLuaBinder();
-		if (!lua->LoadScript(*i)) 
+		if (!lua->LoadScript(*i))
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
 		lua_binders.push_back(lua);
 	}

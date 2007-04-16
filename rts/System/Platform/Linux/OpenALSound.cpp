@@ -13,9 +13,8 @@
 #include "Platform/errorhandler.h"
 #include "SDL_types.h"
 #include "Platform/byteorder.h"
-#include "mmgr.h"
-
 #include "OpenALSound.h"
+#include "mmgr.h"
 
 
 COpenALSound::COpenALSound()
@@ -26,7 +25,7 @@ COpenALSound::COpenALSound()
 	if (maxSounds <= 0) {
 		throw content_error("Internal error, (maxSounds <= 0) in COpenALSound");
 	}
-	
+
 	globalVolume = 1.0f;
 
 	cur = 0;
@@ -43,7 +42,7 @@ COpenALSound::COpenALSound()
 			throw content_error("Could not create OpenAL audio context");
 		}
 	}
-	
+
 	// Generate sound sources
 	Sources = SAFE_NEW ALuint[maxSounds];
 	for (int a=0;a<maxSounds;a++) {
@@ -139,13 +138,13 @@ void COpenALSound::PlayStream(const std::string& path, float volume,
 	alSourcei(source, AL_BUFFER, 0); // FIXME id);
 	alSourcef(source, AL_PITCH, 1.0f);
 	alSourcef(source, AL_GAIN, volume);
-	
+
 	const bool relative = true; // FIXME
 
 	float3 p(0.0f, 0.0f, 0.0f);;
 	if (pos != NULL) {
 		p = (*pos) * posScale;
-	}	
+	}
 	alSource3f(source, AL_POSITION, p.x,  p.y,  p.z);
 	alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	alSourcei(source, AL_LOOPING, false);

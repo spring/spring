@@ -17,15 +17,15 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
 #include <algorithm>
-#include <locale>
 #include <cctype>
+#include <locale>
+#include <stdexcept>
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-#include <stdexcept>
 #include "mmgr.h"
 
 using namespace std;
@@ -186,7 +186,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 		delete [] fileBuf;
 		throw content_error("Failed to read file "+name);
 	}
-	
+
 	S3DOModel *model = SAFE_NEW S3DOModel;
 	S3DO* object=SAFE_NEW S3DO;
 	model->rootobject3do=object;
@@ -204,7 +204,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	object->name = StringToLower(GetText(root.OffsetToObjectName));
 
 	std::vector<float3> vertexes;
-	
+
 	GetVertexes(&root,object);
 	GetPrimitives(object,root.OffsetToPrimitiveArray,root.NumberOfPrimitives,&vertexes,root.SelectionPrimitive,color);
 	CalcNormals(object);
@@ -296,7 +296,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 
 		curOffset=p.OffsetToVertexIndexArray;
 		Uint16 w;
-		
+
 		list<int> orderVert;
 		for(int b=0;b<sp.numVertex;b++){
 			SimStreamRead(&w,2);
@@ -368,7 +368,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 			obj->isEmpty=false;
 		}
 		curOffset=p.OffsetToVertexIndexArray;
-		
+
 		for(int b=0;b<sp.numVertex;b++){
 			SimStreamRead(&w,2);
 			w = swabword(w);
@@ -405,7 +405,7 @@ std::string C3DOParser::GetText(int pos)
 		s+=c;
 //		ifs->read(&c,1);
 		SimStreamRead(&c,1);
-	}	
+	}
 	return s;
 }
 
@@ -457,7 +457,7 @@ void C3DOParser::DrawSub(S3DO* o)
 	va->Initialize();
 	va2->Initialize();
 	std::vector<S3DOPrimitive>::iterator ps;
-	
+
 	for(ps=o->prims.begin();ps!=o->prims.end();ps++){
 		CTextureHandler::UnitTexture* tex=ps->texture;
 		if(ps->numVertex==4){
@@ -622,7 +622,7 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 	lmodel->pieces[*piecenum].original3do = model;
 	lmodel->pieces[*piecenum].originals3o = 0;
 
-	lmodel->pieces[*piecenum].anim = NULL;	
+	lmodel->pieces[*piecenum].anim = NULL;
 	unsigned int cur;
 
 	//Map this piecename to an index in the script's pieceinfo

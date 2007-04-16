@@ -15,8 +15,8 @@
 #include "Sync/SyncTracer.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 static const float Smoke_Time=60;
 
@@ -41,7 +41,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(wobbleTime),
 	CR_MEMBER(wobbleDif),
 	CR_MEMBER(extraHeight),
-	CR_MEMBER(extraHeightDecay),	
+	CR_MEMBER(extraHeightDecay),
 	CR_MEMBER(extraHeightTime)
 	));
 
@@ -144,7 +144,7 @@ void CMissileProjectile::Update(void)
 			curSpeed+=weaponDef->weaponacceleration;
 
 		float3 targSpeed(0,0,0);
-		if(weaponDef->tracks && (decoyTarget || target)){	
+		if(weaponDef->tracks && (decoyTarget || target)){
 			if(decoyTarget){
 				targPos=decoyTarget->pos;
 				targSpeed=decoyTarget->speed;

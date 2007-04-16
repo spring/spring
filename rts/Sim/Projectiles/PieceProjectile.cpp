@@ -18,8 +18,8 @@
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Matrix44f.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 static const float Smoke_Time=40;
 
@@ -45,7 +45,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
-{	
+{
 	s.Serialize(numCallback, sizeof(int));
 	for(int i=0;i<8;i++) {
 		s.Serialize(oldInfos[i],sizeof(CPieceProjectile::OldInfo));
@@ -67,7 +67,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 		/* If we're an S3O unit, this is where ProjectileHandler
 		   fetches our texture from. */
 		s3domodel=owner->model;
-		/* If we're part of an S3O unit, save this so we can 
+		/* If we're part of an S3O unit, save this so we can
 		   draw with the right teamcolour. */
 		team=owner->team;
 	}
@@ -76,13 +76,13 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 
 	/* //if (piece->texturetype == 0) {
 	   Great. LocalPiece doesn't carry the texture name.
-	   
+
 	   HACK TODO PieceProjectile shouldn't need to know about
-	   different model formats; push it into Rendering/UnitModels. 
-	   
+	   different model formats; push it into Rendering/UnitModels.
+
 	   If this needs to change, also modify Sim/Units/COB/CobInstance.cpp::Explosion.
-	   
-	   Nothing else wants to draw just one part without PieceInfo, so this 
+
+	   Nothing else wants to draw just one part without PieceInfo, so this
 	   polymorphism can stay put for the moment.
 	   */
 	if (piece->original3do != NULL){
@@ -178,7 +178,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 }
 
 bool CPieceProjectile::HasVertices(void)
-{	
+{
 	if (piece3do != NULL) {
 		/* 3DO */
 		return !piece3do->vertices.empty();
@@ -193,7 +193,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 {
 	float3 pos;
 
-	if (piece3do != NULL) { 
+	if (piece3do != NULL) {
 		/* 3DO */
 		int vertexNum=(int) (gu->usRandFloat()*0.99f*piece3do->vertices.size());
 		pos=piece3do->vertices[vertexNum].pos;
@@ -203,7 +203,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 		int vertexNum=(int) (gu->usRandFloat()*0.99f*pieces3o->vertexDrawOrder.size());
 		pos=pieces3o->vertices[pieces3o->vertexDrawOrder[vertexNum]].pos;
 	}
-	
+
 	return pos;
 }
 

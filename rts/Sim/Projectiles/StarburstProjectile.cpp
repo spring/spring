@@ -12,8 +12,8 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Matrix44f.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 static const float Smoke_Time=70;
 
@@ -380,7 +380,7 @@ void CStarburstProjectile::DrawUnitPart(void)
 	transMatrix[12]=interPos.x;
 	transMatrix[13]=interPos.y;
 	transMatrix[14]=interPos.z;
-	glMultMatrixf(&transMatrix[0]);		
+	glMultMatrixf(&transMatrix[0]);
 
 	glCallList(modelDispList);
 	glPopMatrix();

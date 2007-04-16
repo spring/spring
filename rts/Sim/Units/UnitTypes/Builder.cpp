@@ -3,6 +3,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <assert.h>
+#include <algorithm>
 #include "Builder.h"
 #include "Building.h"
 #include "myMath.h"
@@ -22,8 +24,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "mmgr.h"
-#include <assert.h>
-#include <algorithm>
 using namespace std;
 
 CR_BIND_DERIVED(CBuilder, CUnit, );

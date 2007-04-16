@@ -1,11 +1,11 @@
 #include "StdAfx.h"
+#include <algorithm>
 #include "SpherePartProjectile.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include <algorithm>
-using namespace std;
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
+using namespace std;
 
 CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (float3(0,0,0),0,0,0.0,0.0,0,NULL,float3(0,0,0)));
 
@@ -113,7 +113,7 @@ CSpherePartSpawner::~CSpherePartSpawner()
 
 CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, );
 
-CR_REG_METADATA(CSpherePartSpawner, 
+CR_REG_METADATA(CSpherePartSpawner,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(alpha),

@@ -8,12 +8,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/Wind.h"
-#include "mmgr.h"
 #include "ProjectileHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
 
-CR_REG_METADATA(CSmokeProjectile, 
+CR_REG_METADATA(CSmokeProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(color),
