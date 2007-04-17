@@ -81,9 +81,8 @@ CFeature::~CFeature(void)
 		myFire=0;
 	}
 
-	std::set<CGeoThermSmokeProjectile*>::iterator it;
-	for (it = geoPuffs.begin(); it != geoPuffs.end(); ++it) {
-		(*it)->geo = NULL;
+	if (def->geoThermal) {
+		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
 }
 
@@ -328,11 +327,6 @@ void CFeature::DependentDied(CObject *o)
 	if (o == solidOnTop)
 		solidOnTop = 0;
 
-	CGeoThermSmokeProjectile* puff = (CGeoThermSmokeProjectile*) o;
-	if (geoPuffs.find(puff) != geoPuffs.end()) {
-		geoPuffs.erase(puff);
-	}
-
 	CSolidObject::DependentDied(o);
 }
 
@@ -461,13 +455,10 @@ bool CFeature::Update(void)
 				float3 speed=gu->usRandVector()*0.5f;
 				speed.y+=2.0f;
 
-				CGeoThermSmokeProjectile* puff =
-					SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector()*10 +
-				                                    float3(pos.x, pos.y-10, pos.z),
-				                                    speed, int(50+gu->usRandFloat()*7),
-				                                    this);
-				geoPuffs.insert(puff);
-				AddDeathDependence(puff);
+				SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector() * 10 +
+				                                  float3(pos.x, pos.y-10, pos.z),
+				                                  speed, int(50+gu->usRandFloat()*7),
+				                                  this);
 			}
 		}
 

@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "GeoThermSmokeProjectile.h"
+#include "ProjectileHandler.h"
 #include "Sim/Misc/Feature.h"
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl, CFeature* geo)
@@ -35,3 +36,18 @@ void CGeoThermSmokeProjectile::Update()
 
 	CSmokeProjectile::Update();
 }
+
+
+void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
+{
+	Projectile_List& pList = ph->ps;
+	Projectile_List::iterator it;
+	for (it = pList.begin(); it != pList.end(); ++it) {
+		CGeoThermSmokeProjectile* geoPuff =
+			dynamic_cast<CGeoThermSmokeProjectile*>(*it);
+		if (geoPuff) {
+			geoPuff->geo = NULL;
+		}
+	}
+}
+
