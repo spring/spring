@@ -8,7 +8,7 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos,const float
 
 void CGeoThermSmokeProjectile::Update()
 {
-	if (geo->solidOnTop)
+	if (geo && geo->solidOnTop)
 	{
 		CSolidObject *o = geo->solidOnTop;
 
