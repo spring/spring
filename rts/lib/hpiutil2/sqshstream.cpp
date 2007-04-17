@@ -20,9 +20,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "sqshstream.h"
 #include <iostream>
+#include <stdlib.h>
 #include <zlib.h>
+#include "sqshstream.h"
 
 /**
  * Constructor
@@ -203,7 +204,7 @@ boost::uint32_t hpiutil::sqshstream::decompresszlib(boost::uint8_t *src, boost::
 	zs.data_type = Z_BINARY;
 	zs.adler = 0;
 	zs.reserved = 0;
-	
+
 	if (inflateInit(&zs) != Z_OK) {
 		std::cerr << "Inflate initialization failed" << std::endl;
 		return 0;

@@ -33,9 +33,9 @@ extern "C" {
 
 CLuaCob* luaCob = NULL;
 
-static char* LuaCobDir              = "LuaCob";
-static char* LuaCobSyncedFilename   = "LuaCob/main.lua";
-static char* LuaCobUnsyncedFilename = "LuaCob/draw.lua";
+static const char* LuaCobDir              = "LuaCob";
+static const char* LuaCobSyncedFilename   = "LuaCob/main.lua";
+static const char* LuaCobUnsyncedFilename = "LuaCob/draw.lua";
 
 const int* CLuaCob::currentArgs = NULL;
 
@@ -48,9 +48,9 @@ void CLuaCob::LoadHandler()
 	if (luaCob) {
 		return;
 	}
-	
+
 	SAFE_NEW CLuaCob();
-	
+
 	if (luaCob->L == NULL) {
 		delete luaCob;
 	}
@@ -70,7 +70,7 @@ CLuaCob::CLuaCob()
 : CLuaHandleSynced("LuaCob", LUA_HANDLE_ORDER_COB, CobCallback, ".luacob ")
 {
 	luaCob = this;
-	
+
 	if (L == NULL) {
 		return;
 	}
@@ -212,7 +212,7 @@ void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
 	args[0] = 1; // success
 	return;
 }
-		
+
 
 /******************************************************************************/
 /******************************************************************************/

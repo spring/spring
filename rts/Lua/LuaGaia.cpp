@@ -32,9 +32,9 @@ extern "C" {
 
 CLuaGaia* luaGaia = NULL;
 
-static char* LuaGaiaDir              = "LuaGaia";
-static char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
-static char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
+static const char* LuaGaiaDir              = "LuaGaia";
+static const char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
+static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
 
 /******************************************************************************/
@@ -45,9 +45,9 @@ void CLuaGaia::LoadHandler()
 	if (luaGaia) {
 		return;
 	}
-	
+
 	SAFE_NEW CLuaGaia();
-	
+
 	if (luaGaia->L == NULL) {
 		delete luaGaia;
 	}

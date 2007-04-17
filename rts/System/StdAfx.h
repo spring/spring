@@ -13,7 +13,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 */
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
 		#pragma warning(disable: 4996) // hide warnings about deprecated functions
-		#define SNPRINTF sprintf_s 
+		#define SNPRINTF sprintf_s
 		#define VSNPRINTF vsprintf_s
 	#else              // Visual Studio 2003
 		#define SNPRINTF _snprintf
@@ -21,7 +21,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#endif
 	#define STRCASECMP stricmp
 #else
-	// assuming GCC 
+	// assuming GCC
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf
 	#define STRCASECMP strcasecmp
@@ -56,7 +56,6 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 // It increases compile-time with precompiled headers on gcc
 #ifdef _MSC_VER
 #include <vector>
-#include <algorithm>
 #include <map>
 #include <set>
 #endif
@@ -67,6 +66,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include "Sync/SyncedFloat3.h"
 #include "GlobalStuff.h"
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 #include <string>
@@ -79,8 +79,8 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
  */
 class content_error : public std::runtime_error
 {
-public: 
-	content_error(const std::string& msg) : 
+public:
+	content_error(const std::string& msg) :
 	  std::runtime_error(msg) {}
 };
 
