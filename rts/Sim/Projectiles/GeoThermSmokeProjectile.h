@@ -11,6 +11,9 @@ public:
 	CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl,CFeature *geo);
 	void Update();
 	CFeature *geo;
+
+public:
+	static void GeoThermDestroyed(const CFeature* geo);
 };
 
 #endif

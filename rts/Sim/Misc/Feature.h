@@ -6,14 +6,12 @@
 #include "Matrix44f.h"
 #include <vector>
 #include <list>
-#include <set>
 #include <string>
 
 struct FeatureDef;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
-class CGeoThermSmokeProjectile;
 
 class CFeature :
 	public CSolidObject
@@ -74,8 +72,6 @@ public:
 	CFireProjectile* myFire;
 	int fireTime;
 	int emitSmokeTime;
-
-	std::set<CGeoThermSmokeProjectile*> geoPuffs;
 
 	CSolidObject *solidOnTop; // the solid object that is on top of the geothermal
 
