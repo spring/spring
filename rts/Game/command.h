@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <limits.h> // for INT_MAX
 
 using namespace std;
 
@@ -128,7 +129,7 @@ struct CommandDescription {
 	bool onlyKey;      // if true dont show a button for the command
 	bool onlyTexture;  // do not draw the name if the texture is available
 	bool disabled;
-	
+
 	vector<string> params;
 };
 

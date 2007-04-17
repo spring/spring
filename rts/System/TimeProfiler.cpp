@@ -149,7 +149,7 @@ void CTimeProfiler::StartTimer()
 	startTimes[startTimeNum++]=(starttime);
 }
 
-void CTimeProfiler::EndTimer(char* name)
+void CTimeProfiler::EndTimer(const char* name)
 {
 	if(startTimeNum==0)
 		return;

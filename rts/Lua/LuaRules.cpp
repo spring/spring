@@ -35,9 +35,9 @@ extern "C" {
 
 CLuaRules* luaRules = NULL;
 
-static char* LuaRulesDir              = "LuaRules";
-static char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
-static char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
+static const char* LuaRulesDir              = "LuaRules";
+static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
+static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
 
 vector<float>    CLuaRules::gameParams;
@@ -52,9 +52,9 @@ void CLuaRules::LoadHandler()
 	if (luaRules) {
 		return;
 	}
-	
+
 	SAFE_NEW CLuaRules();
-	
+
 	if (luaRules->L == NULL) {
 		delete luaRules;
 	}
@@ -74,7 +74,7 @@ CLuaRules::CLuaRules()
 : CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_MOD, CobCallback, ".luarules ")
 {
 	luaRules = this;
-	
+
 	if (L == NULL) {
 		return;
 	}
@@ -85,7 +85,7 @@ CLuaRules::CLuaRules()
 	readTeam = AllAccessTeam;
 	readAllyTeam = AllAccessTeam;
 	selectTeam = AllAccessTeam;
-	
+
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename);
 
 	haveAllowCommand         = HasCallIn("AllowCommand");
@@ -226,7 +226,7 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 		lua_pushnumber(L, pos->y);
 		lua_pushnumber(L, pos->z);
 	}
-	
+
 	// call the function
 	if (!RunCallIn(cmdStr, pos ? 6 : 4, 1)) {
 		return true;
@@ -362,7 +362,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	HSTR_PUSH_BOOL(L, "shift", (cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", (cmd.options & RIGHT_MOUSE_KEY));
 
-	// call the function  
+	// call the function
 	if (!RunCallIn(cmdStr, 6, 1)) {
 		return true;
 	}
@@ -404,7 +404,7 @@ int CLuaRules::SetRulesInfoMap(lua_State* L)
 		}
 	}
 	lua_pushnumber(L, infoMap.size());
-	return 2;	
+	return 2;
 }
 
 
@@ -443,12 +443,12 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 	return;
 }
 
-	
+
 void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 		                              vector<float>& params,
 		                              map<string, int>& paramsMap)
 {
-	const int table = offset + 1;	
+	const int table = offset + 1;
 	if (!lua_istable(L, table)) {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
@@ -493,7 +493,7 @@ int CLuaRules::SetGameRulesParam(lua_State* L)
 	return 0;
 }
 
-	
+
 int CLuaRules::CreateGameRulesParams(lua_State* L)
 {
 	CLuaRules* lr = (CLuaRules*)activeHandle;
@@ -539,7 +539,7 @@ int CLuaRules::SetTeamRulesParam(lua_State* L)
 	return 0;
 }
 
-	
+
 int CLuaRules::CreateTeamRulesParams(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
@@ -588,7 +588,7 @@ int CLuaRules::SetUnitRulesParam(lua_State* L)
 	return 0;
 }
 
-	
+
 int CLuaRules::CreateUnitRulesParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);

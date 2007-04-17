@@ -74,7 +74,7 @@ namespace nv_dds
     {
         unsigned char alpha0;
         unsigned char alpha1;
-        
+
         unsigned char row[6];
     };
 
@@ -106,7 +106,7 @@ namespace nv_dds
         unsigned int dwReserved2[3];
     };
 
-    typedef enum TextureType
+    enum TextureType
     {
         TextureNone,
         TextureFlat,    // 1D, 2D, and rectangle textures
@@ -139,7 +139,7 @@ namespace nv_dds
             unsigned int m_depth;
             unsigned int m_size;
 
-            unsigned char *m_pixels;   
+            unsigned char *m_pixels;
     };
 
     class CTexture : public CSurface
@@ -157,11 +157,11 @@ namespace nv_dds
             void clear();
 
             inline const CSurface &get_mipmap(unsigned int index) const
-            { 
+            {
                 assert(!m_mipmaps.empty());
                 assert(index < m_mipmaps.size());
-                
-                return m_mipmaps[index]; 
+
+                return m_mipmaps[index];
             }
 
             inline void add_mipmap(const CSurface &mipmap)
@@ -173,11 +173,11 @@ namespace nv_dds
 
         protected:
             inline CSurface &get_mipmap(unsigned int index)
-            { 
+            {
                 assert(!m_mipmaps.empty());
                 assert(index < m_mipmaps.size());
 
-                return m_mipmaps[index]; 
+                return m_mipmaps[index];
             }
 
         private:
@@ -193,8 +193,8 @@ namespace nv_dds
             void create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage);
             void create_texture3D(unsigned int format, unsigned int components, const CTexture &baseImage);
             void create_textureCubemap(unsigned int format, unsigned int components,
-                                       const CTexture &positiveX, const CTexture &negativeX, 
-                                       const CTexture &positiveY, const CTexture &negativeY, 
+                                       const CTexture &positiveX, const CTexture &negativeX,
+                                       const CTexture &positiveY, const CTexture &negativeY,
                                        const CTexture &positiveZ, const CTexture &negativeZ);
 
             void clear();
@@ -208,35 +208,35 @@ namespace nv_dds
             bool upload_textureCubemap();
 
             inline operator unsigned char*()
-            { 
-                assert(m_valid);
-                assert(!m_images.empty());
-                
-                return m_images[0]; 
-            }
-
-            inline unsigned int get_width() 
             {
                 assert(m_valid);
                 assert(!m_images.empty());
-                
-                return m_images[0].get_width(); 
+
+                return m_images[0];
+            }
+
+            inline unsigned int get_width()
+            {
+                assert(m_valid);
+                assert(!m_images.empty());
+
+                return m_images[0].get_width();
             }
 
             inline unsigned int get_height()
             {
                 assert(m_valid);
                 assert(!m_images.empty());
-                
-                return m_images[0].get_height(); 
+
+                return m_images[0].get_height();
             }
 
             inline unsigned int get_depth()
             {
                 assert(m_valid);
                 assert(!m_images.empty());
-                
-                return m_images[0].get_depth(); 
+
+                return m_images[0].get_depth();
             }
 
             inline unsigned int get_size()
@@ -247,21 +247,21 @@ namespace nv_dds
                 return m_images[0].get_size();
             }
 
-            inline unsigned int get_num_mipmaps() 
-            { 
+            inline unsigned int get_num_mipmaps()
+            {
                 assert(m_valid);
                 assert(!m_images.empty());
 
-                return m_images[0].get_num_mipmaps(); 
+                return m_images[0].get_num_mipmaps();
             }
 
             inline const CSurface &get_mipmap(unsigned int index) const
-            { 
+            {
                 assert(m_valid);
                 assert(!m_images.empty());
                 assert(index < m_images[0].get_num_mipmaps());
 
-                return m_images[0].get_mipmap(index); 
+                return m_images[0].get_mipmap(index);
             }
 
             inline const CTexture &get_cubemap_face(unsigned int face) const
@@ -279,16 +279,16 @@ namespace nv_dds
             inline unsigned int get_format() { return m_format; }
             inline TextureType get_type() { return m_type; }
 
-            inline bool is_compressed() 
-            { 
-                if ((m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) || 
+            inline bool is_compressed()
+            {
+                if ((m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
                     (m_format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
                     (m_format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT))
-                    return true; 
+                    return true;
                 else
                     return false;
             }
-            
+
             inline bool is_cubemap() { return (m_type == TextureCubemap); }
             inline bool is_volume() { return (m_type == Texture3D); }
             inline bool is_valid() { return m_valid; }
@@ -299,10 +299,10 @@ namespace nv_dds
 
                 int dwordLineSize = get_dword_aligned_linesize(get_width(), m_components*8);
                 int curLineSize = get_width() * m_components;
-                
+
                 return (dwordLineSize == curLineSize);
             }
-            
+
         private:
             unsigned int clamp_size(unsigned int size);
             unsigned int size_dxtc(unsigned int width, unsigned int height);
@@ -325,7 +325,7 @@ namespace nv_dds
             void flip_dxt5_alpha(DXT5AlphaBlock *block);
 
             void write_texture(const CTexture &texture, FILE *fp);
-            
+
             unsigned int m_format;
             unsigned int m_components;
             TextureType m_type;

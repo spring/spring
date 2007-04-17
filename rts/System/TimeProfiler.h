@@ -49,7 +49,7 @@ class CTimeProfiler : public CInputReceiver
 	};
 public:
 	void StartTimer();
-	void EndTimer(char* name);
+	void EndTimer(const char* name);
 
 	void AddTime(string name,Sint64 time);
 	void Update();
