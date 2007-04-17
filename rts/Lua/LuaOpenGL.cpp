@@ -35,8 +35,10 @@ extern "C" {
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "System/LogOutput.h"
 
@@ -151,6 +153,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TexCoord);
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
+	REGISTER_LUA_CFUNC(Unit);
 	REGISTER_LUA_CFUNC(UnitShape);
 	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(GetTextWidth);
@@ -895,6 +898,42 @@ int LuaOpenGL::GetTextWidth(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaOpenGL::Unit(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.Unit(unitID)");
+	}
+	
+	const int unitID = (int)lua_tonumber(L, 1);
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		return 0;
+	}
+	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
+	const int readAllyTeam = lh->GetReadAllyTeam();
+	if (readAllyTeam < 0) {
+		if (readAllyTeam == CLuaHandle::NoAccessTeam) {
+			return 0;
+		}
+	} else {
+		if (!gs->Ally(readAllyTeam, unit->allyteam) &&
+		    !(unit->losStatus[readAllyTeam] & LOS_INLOS)) {
+			return 0;
+		}
+	}
+
+	unitDrawer->DrawIndividual(unit);
+
+	return 0;
+}
+
 
 int LuaOpenGL::UnitShape(lua_State* L)
 {
