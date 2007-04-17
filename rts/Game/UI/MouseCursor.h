@@ -51,6 +51,8 @@ class CMouseCursor {
 		void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
 
 	protected:	
+		HotSpot hotSpot;
+
 		vector<ImageData> images;
 		vector<FrameData> frames;
 

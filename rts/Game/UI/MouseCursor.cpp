@@ -29,6 +29,8 @@ CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 //Would be nice if these were read from a gaf-file instead.
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 {
+	hotSpot = hs;
+
 	if (!BuildFromSpecFile(name)) {
 		BuildFromFileNames(name, 123456);
 	}
@@ -52,7 +54,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 		ymaxsize = max(frame.image.yOrigSize, ymaxsize); 
 	}
 
-	if (hs == TopLeft) {	
+	if (hotSpot == TopLeft) {	
 		xofs = 0; 
 		yofs = 0;
 	} else {
@@ -109,6 +111,18 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 					FrameData frame(image, length);
 					frames.push_back(frame);
 				}
+			}
+		}
+		else if ((command == "hotspot") && (words.size() >= 1)) {
+			if (words[1] == "topleft") {
+				hotSpot = TopLeft;
+			}
+			else if (words[1] == "center") {
+				hotSpot = Center;
+			}
+			else {
+				logOutput.Print("%s: unknown hotspot  (%s)\n",
+												specFile.c_str(), words[1].c_str());
 			}
 		}
 		else if ((command == "lastframe") && (words.size() >= 1)) {
