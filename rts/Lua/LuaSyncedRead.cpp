@@ -170,6 +170,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
+	REGISTER_LUA_CFUNC(GetUnitWeaponState);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
 
@@ -2261,6 +2262,30 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 	}
 	hs_n.PushNumber(L, count);
 	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to GetUnitWeaponState()");
+	}
+	const int weaponNum = (int)lua_tonumber(L, 2);
+	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+		return 0;
+	}
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	lua_pushboolean(L, weapon->angleGood);
+	lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
+	lua_pushnumber(L, weapon->reloadStatus);
+	lua_pushnumber(L, weapon->salvoLeft);
+	lua_pushnumber(L, weapon->numStockpiled);
+	return 5;
 }
 
 

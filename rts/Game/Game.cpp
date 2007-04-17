@@ -185,6 +185,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	fps=0;
 	thisFps=0;
 	totalGameTime=0;
+	drawFpsHUD = true;
 
 	debugging=false;
 
@@ -1449,6 +1450,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
+	else if (cmd == "fpshud") {
+		if (action.extra.empty()) {
+			drawFpsHUD = !drawFpsHUD;
+		} else {
+			drawFpsHUD = !atoi(action.extra.c_str());
+		}
+	}
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
@@ -1821,8 +1829,9 @@ bool CGame::Draw()
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(gu->directControl)
+	if(gu->directControl){
 		DrawDirectControlHud();
+	}
 #endif
 
 	glEnable(GL_TEXTURE_2D);
@@ -3046,101 +3055,104 @@ void CGame::DrawDirectControlHud(void)
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_TEXTURE_2D);
 
-	glPushMatrix();
-	glTranslatef(0.1f,0.5f,0);
-	glScalef(0.25f, 0.25f * gu->aspectRatio, 0.25f);
+	if (drawFpsHUD) {
 
-	if(unit->moveType->useHeading){
 		glPushMatrix();
-		glRotatef(unit->heading*180.0f/32768+180,0,0,1);
+		glTranslatef(0.1f,0.5f,0);
+		glScalef(0.25f, 0.25f * gu->aspectRatio, 0.25f);
 
-		glColor4d(0.3f,0.9f,0.3f,0.4f);
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex2d(-0.2f,-0.3f);
-		glVertex2d(-0.2f,0.3f);
-		glVertex2d(0,0.4f);
-		glVertex2d(0.2f,0.3f);
-		glVertex2d(0.2f,-0.3f);
-		glVertex2d(-0.2f,-0.3f);
-		glEnd();
+		if(unit->moveType->useHeading){
+			glPushMatrix();
+			glRotatef(unit->heading*180.0f/32768+180,0,0,1);
+
+			glColor4d(0.3f,0.9f,0.3f,0.4f);
+			glBegin(GL_TRIANGLE_FAN);
+			glVertex2d(-0.2f,-0.3f);
+			glVertex2d(-0.2f,0.3f);
+			glVertex2d(0,0.4f);
+			glVertex2d(0.2f,0.3f);
+			glVertex2d(0.2f,-0.3f);
+			glVertex2d(-0.2f,-0.3f);
+			glEnd();
+			glPopMatrix();
+		}
+
+		glEnable(GL_DEPTH_TEST);
+		glPushMatrix();
+		if(unit->moveType->useHeading){
+			float scale=0.4f/unit->radius;
+			glScalef(scale,scale,scale);
+			glRotatef(90,1,0,0);
+		} else {
+			float scale=0.2f/unit->radius;
+			glScalef(scale,scale,-scale);
+			CMatrix44f m(ZeroVector,float3(camera->right.x,camera->up.x,camera->forward.x),float3(camera->right.y,camera->up.y,camera->forward.y),float3(camera->right.z,camera->up.z,camera->forward.z));
+			glMultMatrixf(m.m);
+		}
+		glTranslatef3(-unit->pos - (unit->speed * gu->timeOffset));
+		glDisable(GL_BLEND);
+		unitDrawer->DrawIndividual(unit); // draw the unit
 		glPopMatrix();
-	}
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
 
-	glEnable(GL_DEPTH_TEST);
-	glPushMatrix();
-	if(unit->moveType->useHeading){
-		float scale=0.4f/unit->radius;
-		glScalef(scale,scale,scale);
-		glRotatef(90,1,0,0);
-	} else {
-		float scale=0.2f/unit->radius;
-		glScalef(scale,scale,-scale);
-		CMatrix44f m(ZeroVector,float3(camera->right.x,camera->up.x,camera->forward.x),float3(camera->right.y,camera->up.y,camera->forward.y),float3(camera->right.z,camera->up.z,camera->forward.z));
-		glMultMatrixf(m.m);
-	}
-	glTranslatef3(-unit->pos-unit->speed*gu->timeOffset);
-	glDisable(GL_BLEND);
-	unitDrawer->DrawIndividual(unit); // draw the unit
-	glPopMatrix();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
+		if(unit->moveType->useHeading){
+			glPushMatrix();
+			glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0f/32768+180,0,0,1);
+			glScalef(0.4f,0.4f,0.3f);
 
-	if(unit->moveType->useHeading){
-		glPushMatrix();
-		glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0f/32768+180,0,0,1);
-		glScalef(0.4f,0.4f,0.3f);
-
-		glColor4d(0.4f,0.4f,1.0f,0.6f);
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex2d(-0.2f,-0.3f);
-		glVertex2d(-0.2f,0.3f);
-		glVertex2d(0,0.5f);
-		glVertex2d(0.2f,0.3f);
-		glVertex2d(0.2f,-0.3f);
-		glVertex2d(-0.2f,-0.3f);
-		glEnd();
-		glPopMatrix();
-	}
-	glPopMatrix();
-
-	glEnable(GL_TEXTURE_2D);
-
-	glPushMatrix();
-	glTranslatef(0.02f, 0.65f, 0);
-	glScalef(0.03f,0.03f,0.03f);
-	glColor4d(0.2f,0.8f,0.2f,0.8f);
-	font->glPrint("Health %.0f",unit->health);
-	glPopMatrix();
-
-	if(gs->players[gu->myPlayerNum]->myControl.mouse2){
-		glPushMatrix();
-		glTranslatef(0.02f,0.7f,0);
-		glScalef(0.03f,0.03f,0.03f);
-		glColor4d(0.2f,0.8f,0.2f,0.8f);
-		font->glPrint("Free fire mode");
-		glPopMatrix();
-	}
-	for(int a=0;a<unit->weapons.size();++a){
-		glPushMatrix();
-		glTranslatef(0.02f,0.32f-a*0.04f,0);
-		glScalef(0.0225f,0.03f,0.03f);
-		CWeapon* w=unit->weapons[a];
-		WeaponDef* wd=w->weaponDef;
-		if(!wd->isShield){
-			if(w->reloadStatus>gs->frameNum){
-				glColor4d(0.8f,0.2f,0.2f,0.8f);
-				font->glPrint("%s: Reloading",wd->description.c_str());
-			} else if(!w->angleGood){
-				glColor4d(0.6f,0.6f,0.2f,0.8f);
-				font->glPrint("%s: Aiming",wd->description.c_str());
-			} else {
-				glColor4d(0.2f,0.8f,0.2f,0.8f);
-				font->glPrint("%s: Ready",wd->description.c_str());
-			}
+			glColor4d(0.4f,0.4f,1.0f,0.6f);
+			glBegin(GL_TRIANGLE_FAN);
+			glVertex2d(-0.2f,-0.3f);
+			glVertex2d(-0.2f,0.3f);
+			glVertex2d(0,0.5f);
+			glVertex2d(0.2f,0.3f);
+			glVertex2d(0.2f,-0.3f);
+			glVertex2d(-0.2f,-0.3f);
+			glEnd();
+			glPopMatrix();
 		}
 		glPopMatrix();
-	}
+
+		glEnable(GL_TEXTURE_2D);
+
+		glPushMatrix();
+		glTranslatef(0.02f, 0.65f, 0);
+		glScalef(0.03f,0.03f,0.03f);
+		glColor4d(0.2f,0.8f,0.2f,0.8f);
+		font->glPrint("Health %.0f",unit->health);
+		glPopMatrix();
+
+		if(gs->players[gu->myPlayerNum]->myControl.mouse2){
+			glPushMatrix();
+			glTranslatef(0.02f,0.7f,0);
+			glScalef(0.03f,0.03f,0.03f);
+			glColor4d(0.2f,0.8f,0.2f,0.8f);
+			font->glPrint("Free fire mode");
+			glPopMatrix();
+		}
+		for(int a=0;a<unit->weapons.size();++a){
+			glPushMatrix();
+			glTranslatef(0.02f,0.32f-a*0.04f,0);
+			glScalef(0.0225f,0.03f,0.03f);
+			CWeapon* w=unit->weapons[a];
+			WeaponDef* wd=w->weaponDef;
+			if(!wd->isShield){
+				if(w->reloadStatus>gs->frameNum){
+					glColor4d(0.8f,0.2f,0.2f,0.8f);
+					font->glPrint("%s: Reloading",wd->description.c_str());
+				} else if(!w->angleGood){
+					glColor4d(0.6f,0.6f,0.2f,0.8f);
+					font->glPrint("%s: Aiming",wd->description.c_str());
+				} else {
+					glColor4d(0.2f,0.8f,0.2f,0.8f);
+					font->glPrint("%s: Ready",wd->description.c_str());
+				}
+			}
+			glPopMatrix();
+		}
+	} // end IF drawFpsHUD
 
 	glDisable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);

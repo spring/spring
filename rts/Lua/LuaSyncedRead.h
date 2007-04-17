@@ -94,6 +94,7 @@ class LuaSyncedRead {
 		static int GetUnitIsBuilding(lua_State* L);
 		static int GetUnitTransporter(lua_State* L);
 		static int GetUnitIsTransporting(lua_State* L);
+		static int GetUnitWeaponState(lua_State* L);
 
 		static int GetUnitCommands(lua_State* L);
 		static int GetFactoryCounts(lua_State* L);

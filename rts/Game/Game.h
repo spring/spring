@@ -89,6 +89,7 @@ public:
 	bool windowedEdgeMove;
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
+	bool drawFpsHUD;
 
 	float maxUserSpeed;
 	float minUserSpeed;

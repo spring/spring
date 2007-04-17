@@ -961,11 +961,25 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitHealth()");
 	}
-	unit->health = unit->maxHealth, (float)lua_tonumber(L, 2);
 
-	if (unit->health > unit->maxHealth) {
-		unit->health = unit->maxHealth;
+	float health = (float)lua_tonumber(L, 2);
+	health = min(unit->maxHealth, health);
+	unit->health = health;
+
+	if ((args >= 3) && lua_isnumber(L, 3)) {
+		float paralyze = (float)lua_tonumber(L, 3);
+		paralyze = max(0.0f,  paralyze);
+		unit->paralyzeDamage = paralyze;
+		if (paralyze >= unit->health) {
+			unit->stunned = true;
+		}
 	}
+
+	if ((args >= 4) && lua_isnumber(L, 4)) {
+		float capture = (float)lua_tonumber(L, 4);
+		unit->captureProgress = capture;
+	}
+
 	return 0;
 }
 
