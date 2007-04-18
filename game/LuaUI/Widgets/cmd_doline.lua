@@ -47,7 +47,7 @@ end
 local function EchoCmd(cmd, optLine)
   local chunk, err = loadstring("return " .. optLine, 'echo')
   if (chunk == nil) then
-    print('doline error: '..err)
+    print('doline error: ' .. err)
   else
     Spring.Echo(pcall(chunk))
   end

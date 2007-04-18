@@ -3976,11 +3976,6 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 
 
 /******************************************************************************/
-
-typedef void (*DrawShapeFunc)(const void* data);
-static void DrawVolume(DrawShapeFunc drawShapeFunc, const void* data);
-
-
 /******************************************************************************/
 
 struct BoxData {
@@ -4062,11 +4057,11 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 	if (!invColorSelect) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-		DrawVolume(DrawBoxShape, &boxData);
+		glDrawVolume(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
 		glLogicOp(GL_INVERT);
-		DrawVolume(DrawBoxShape, &boxData);
+		glDrawVolume(DrawBoxShape, &boxData);
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
 
@@ -4229,7 +4224,7 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glColor4f(color[0], color[1], color[2], 0.25f);
 
-	DrawVolume(DrawCylinderShape, &cylData);
+	glDrawVolume(DrawCylinderShape, &cylData);
 
 	// draw the center line
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -4247,59 +4242,4 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 
 
 /******************************************************************************/
-
-static void DrawVolume(DrawShapeFunc drawShapeFunc, const void* data)
-{
-	glDepthMask(GL_FALSE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_DEPTH_CLAMP_NV);
-
-	glEnable(GL_STENCIL_TEST);
-
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-	// using zfail method to avoid doing the inside check
-	if (GLEW_EXT_stencil_two_side && GL_EXT_stencil_wrap) {
-		glDisable(GL_CULL_FACE);
-		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-		glActiveStencilFaceEXT(GL_BACK);
-		glStencilMask(~0);
-		glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-		glStencilFunc(GL_ALWAYS, 0, ~0);
-		glActiveStencilFaceEXT(GL_FRONT);
-		glStencilMask(~0);
-		glStencilOp(GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-    glStencilFunc(GL_ALWAYS, 0, ~0);
-		drawShapeFunc(data); // draw
-		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-	} else {
-		glEnable(GL_CULL_FACE);
-		glStencilMask(~0);
-		glStencilFunc(GL_ALWAYS, 0, ~0);
-		glCullFace(GL_FRONT);
-		glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
-		drawShapeFunc(data); // draw
-		glCullFace(GL_BACK);
-		glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
-		drawShapeFunc(data); // draw
-		glDisable(GL_CULL_FACE);
-	}
-
-	glDisable(GL_DEPTH_TEST);
-
-	glStencilFunc(GL_NOTEQUAL, 0, ~0);
-	glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
-
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	drawShapeFunc(data);   // draw
-
-	glDisable(GL_DEPTH_CLAMP_NV);
-
-	glDisable(GL_STENCIL_TEST);
-
-	glEnable(GL_DEPTH_TEST);
-}
-
-
 /******************************************************************************/
