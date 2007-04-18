@@ -799,6 +799,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("isFirePlatform",   ud.isfireplatform);
 	ADD_BOOL("holdSteady",       ud.holdSteady);
 	ADD_BOOL("releaseHeld",      ud.releaseHeld);
+	ADD_BOOL("transportByEnemy", ud.transportByEnemy);
 	
 	ADD_BOOL("startCloaked",     ud.startCloaked);
 	ADD_FLOAT("cloakCost",       ud.cloakCost);

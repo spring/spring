@@ -98,8 +98,13 @@ void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 
 bool CTransportUnit::CanTransport (CUnit *unit)
 {
-	if (unit->transporter)
+	if (unit->transporter) {
 		return false;
+	}
+
+	if (!unit->unitDef->transportByEnemy && !gs->AlliedTeams(unit->team, team)) {
+		return false;
+	}
 
 	CTransportUnit* u=this;
 	while (u) {

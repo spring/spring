@@ -397,6 +397,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.transportMass, "100000", "UNITINFO\\TransportMass");
 	tdfparser.GetDef(ud.holdSteady, "1", "UNITINFO\\HoldSteady");
 	tdfparser.GetDef(ud.releaseHeld, "0", "UNITINFO\\ReleaseHeld");
+	ud.transportByEnemy=!!atoi(tdfparser.SGetValueDef("1", "UNITINFO\\transportByEnemy").c_str());
 
 	tdfparser.GetDef(ud.wingDrag, "0.07", "UNITINFO\\WingDrag");				//drag caused by wings
 	tdfparser.GetDef(ud.wingAngle, "0.08", "UNITINFO\\WingAngle");			//angle between front and the wing plane

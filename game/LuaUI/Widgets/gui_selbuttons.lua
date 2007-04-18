@@ -42,8 +42,9 @@ end
 
 include("colors.h.lua")
 
-local vsx, vsy = widgetHandler:GetViewSizes()
+local useCulling = false  -- s3o do not draw properly using culling
 
+local vsx, vsy = widgetHandler:GetViewSizes()
 function widget:ViewResize(viewSizeX, viewSizeY)
   vsx = viewSizeX
   vsy = viewSizeY
@@ -167,7 +168,7 @@ end
 local function SetupModelDrawing()
   gl.DepthTest(true) 
   gl.DepthMask(true)
-  gl.Culling(GL.FRONT)
+  if (useCulling) then gl.Culling(GL.FRONT) end
   gl.Lighting(true)
   gl.Blending(false)
   gl.Material({
@@ -183,7 +184,7 @@ end
 local function RevertModelDrawing()
   gl.Blending(true)
   gl.Lighting(false)
-  gl.Culling(false)
+  if (useCulling) then gl.Culling(false) end
   gl.DepthMask(false)
   gl.DepthTest(false)
 end
@@ -242,7 +243,7 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   local scribe = false
   if (scribe) then
     gl.Lighting(false)
-    gl.Culling(false)
+    if (useCulling) then gl.Culling(false) end
     gl.Color(0,0,0,1)
   end
 

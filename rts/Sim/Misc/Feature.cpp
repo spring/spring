@@ -346,11 +346,10 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// setup finalHeight
 	if (def->floating) {
-		finalHeight = ground->GetHeight(pos.x,pos.z);
+		finalHeight = ground->GetHeight(pos.x, pos.z);
 	} else {
-		finalHeight = ground->GetHeight2(pos.x,pos.z);
+		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
-	//finalHeight = pos.y;
 
 	// setup midPos
 	if (def->drawType == DRAWTYPE_3DO) {

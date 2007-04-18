@@ -19,4 +19,7 @@ extern void glBallisticCircle(const float3& center, float radius, float slope,
 
 extern void setSurfaceCircleFunc(SurfaceCircleFunc func);
 
+typedef void (*DrawVolumeFunc)(const void* data);
+extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
+
 #endif

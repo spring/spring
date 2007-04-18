@@ -214,6 +214,7 @@ struct UnitDef
 	float transportMass;
 	bool holdSteady;
 	bool releaseHeld;
+	bool transportByEnemy;
 
 	bool canCloak;							//if the unit can cloak
 	bool startCloaked;					//if the units want to start out cloaked

@@ -239,10 +239,20 @@ end
 function widgetHandler:Initialize()
   self:LoadOrderList()
   self:LoadConfigData()
+
+  local unsortedWidgets = {}
   
   local widgetFiles = Spring.GetDirList(WIDGET_DIRNAME, "*.lua")
   table.sort(widgetFiles)
 
+  -- stuff the widgets into unsortedWidgets
+  for k,wf in ipairs(widgetFiles) do
+    local widget = self:LoadWidget(wf)
+    if (widget) then
+      table.insert(unsortedWidgets, widget)
+    end
+  end
+  
   -- add mod widgets
 --[[
   if (Spring.GetConfigInt("LuaUI", 1) > 1) then
@@ -256,16 +266,7 @@ function widgetHandler:Initialize()
   end
 --]]
   
-  local unsortedWidgets = {}
 
-  -- stuff the widgets into unsortedWidgets
-  for k,wf in ipairs(widgetFiles) do
-    local widget = self:LoadWidget(wf)
-    if (widget) then
-      table.insert(unsortedWidgets, widget)
-    end
-  end
-  
   -- sort the widgets  
   table.sort(unsortedWidgets, function(w1, w2)
     local l1 = w1.whInfo.layer
