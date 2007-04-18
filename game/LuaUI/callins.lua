@@ -52,6 +52,8 @@ OneShot("UnitEnteredRadar")
 OneShot("UnitEnteredLos")
 OneShot("UnitLeftRadar")
 OneShot("UnitLeftLos")
+OneShot("UnitLoaded")
+OneShot("UnitUnloaded")
 
 OneShot("FeatureCreated")
 OneShot("FeatureDestroyed")

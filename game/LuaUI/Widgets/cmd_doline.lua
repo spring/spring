@@ -33,12 +33,12 @@ local function RunCmd(cmd, optLine)
   print(optLine)
   local chunk, err = loadstring(optLine, 'run')
   if (chunk == nil) then
-    print('doline error: '..err)
+    print('doline error: ' .. err)
   else
     local success, err = pcall(chunk)
     if (not success) then
-      Spring.SendCommands({"echo "..err})
-    end
+      Spring.SendCommands({"echo " .. err})
+    end	
   end
   return true
 end
@@ -49,10 +49,7 @@ local function EchoCmd(cmd, optLine)
   if (chunk == nil) then
     print('doline error: '..err)
   else
-    local success, err = pcall(chunk)
-    if (success) then
-      Spring.Echo( chunk() )
-    end
+    Spring.Echo(pcall(chunk))
   end
   return true
 end
