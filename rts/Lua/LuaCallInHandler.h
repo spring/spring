@@ -54,6 +54,9 @@ class CLuaCallInHandler
 		void UnitLeftRadar(const CUnit* unit, int allyTeam);
 		void UnitLeftLos(const CUnit* unit, int allyTeam);
 
+		void UnitLoaded(const CUnit* unit, const CUnit* transport);
+		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
@@ -92,6 +95,9 @@ class CLuaCallInHandler
 		CallInList listUnitEnteredLos;
 		CallInList listUnitLeftRadar;
 		CallInList listUnitLeftLos;
+
+		CallInList listUnitLoaded;
+		CallInList listUnitUnloaded;
 
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
@@ -232,6 +238,38 @@ inline void  CLuaCallInHandler::UnitSeismicPing(const CUnit* unit,
 		CLuaHandle* lh = listUnitSeismicPing[i];
 		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == allyTeam)) {
 			lh->UnitSeismicPing(unit, allyTeam, pos, strength);
+		}
+	}
+}
+
+
+inline void CLuaCallInHandler::UnitLoaded(const CUnit* unit,
+                                          const CUnit* transport)
+{
+	const int count = listUnitLoaded.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listUnitLoaded[i];
+		const int lhAllyTeam = lh->GetReadAllyTeam();
+		if (lh->GetFullRead() ||
+		    (lhAllyTeam == unit->allyteam) ||
+		    (lhAllyTeam == transport->allyteam)) {
+			lh->UnitLoaded(unit, transport);
+		}
+	}
+}
+
+
+inline void CLuaCallInHandler::UnitUnloaded(const CUnit* unit,
+                                            const CUnit* transport)
+{
+	const int count = listUnitUnloaded.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listUnitUnloaded[i];
+		const int lhAllyTeam = lh->GetReadAllyTeam();
+		if (lh->GetFullRead() ||
+		    (lhAllyTeam == unit->allyteam) ||
+		    (lhAllyTeam == transport->allyteam)) {
+			lh->UnitUnloaded(unit, transport);
 		}
 	}
 }

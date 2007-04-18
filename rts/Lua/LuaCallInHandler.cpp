@@ -60,6 +60,9 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(UnitLeftRadar);
 	ADDHANDLE(UnitLeftLos);
 
+	ADDHANDLE(UnitLoaded);
+	ADDHANDLE(UnitUnloaded);
+
 	ADDHANDLE(FeatureCreated);
 	ADDHANDLE(FeatureDestroyed);
 
@@ -95,6 +98,9 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listUnitEnteredLos, lh);
 	ListRemove(listUnitLeftRadar, lh);
 	ListRemove(listUnitLeftLos, lh);
+
+	ListRemove(listUnitLoaded, lh);
+	ListRemove(listUnitUnloaded, lh);
 
 	ListRemove(listFeatureCreated, lh);
 	ListRemove(listFeatureDestroyed, lh);

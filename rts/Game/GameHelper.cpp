@@ -226,57 +226,72 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 
 float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit *&hit,float sizeMod,bool useRadar,CUnit* exclude)
 {
-	float groundLength=ground->LineGroundCol(start,start+dir*length);
+	const float groundLength = ground->LineGroundCol(start, start + dir * length);
 
 //	logOutput.Print("gl %f",groundLength);
-	if(length>groundLength+200 && groundLength>0)
-		length=groundLength+200;	//need to add some cause we take the backside of the unit sphere;
+	if ((length > (groundLength + 200.0f)) && (groundLength > 0.0f)) {
+		//need to add some cause we take the backside of the unit sphere;
+		length = groundLength + 200.0f;
+	}
 
-	vector<int> quads=qf->GetQuadsOnRay(start,dir,length);
+//	float minLength = length;
+	hit = 0;
 
-//	float minLength=length;
-	hit=0;
-
+	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
+
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		list<CUnit*>::iterator ui;
-		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)==exclude)
+		for (ui = qf->baseQuads[*qi].units.begin(); ui != qf->baseQuads[*qi].units.end(); ++ui) {
+			CUnit* unit = *ui;
+			if (unit == exclude) {
 				continue;
-			if((*ui)->allyteam==gu->myAllyTeam || ((*ui)->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) || (useRadar && radarhandler->InRadar(*ui,gu->myAllyTeam)) || gu->spectatingFullView){
+			}
+
+			if((unit->allyteam == gu->myAllyTeam) ||
+			   (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
+			   (useRadar && radarhandler->InRadar(*ui, gu->myAllyTeam)) ||
+				 gu->spectatingFullView){
 				float3 pos;
 
-				if (gu->spectatingFullView)
-					pos = (*ui)->midPos;
-				else
+				if (gu->spectatingFullView) {
+					pos = unit->midPos;
+				} else {
 					pos = GetUnitErrorPos(*ui,gu->myAllyTeam);
-
-				if((*ui)->isIcon)
-				{
-					float h=ground->GetHeight(pos.x,pos.z);
-					if(pos.y<h+(*ui)->iconRadius)
-						pos.y=h+(*ui)->iconRadius;
 				}
-				float3 dif=pos-start;
-				float closeLength=dif.dot(dir);
-				if(closeLength<0)
-					continue;
-				if(closeLength>length)
-					closeLength=length;
-				float3 closeVect=dif-dir*closeLength;
-				float rad = ((*ui)->isIcon) ? (*ui)->iconRadius : (*ui)->radius;
 
-				//The argument to sqrt became negative (3.5f*10^-7) for some reason... so tempstoring the value
-				float tmp = rad * rad - closeVect.SqLength();
-				if(tmp > 0 && length>closeLength+sqrt(tmp)){
-					length=closeLength+sqrt(tmp);		//note that we take the length to the backside of the units, this is so you can select stuff inside factories
-					hit=*ui;
+				if (unit->isIcon) {
+					const float h = ground->GetHeight(pos.x, pos.z);
+					if (pos.y < (h + unit->iconRadius)) {
+						pos.y = h + unit->iconRadius;
+					}
+				}
+				const float3 dif = pos - start;
+				float closeLength = dif.dot(dir);
+				if (closeLength < 0.0f) {
+					continue;
+				}
+				if (closeLength > length) {
+					closeLength = length;
+				}
+				float3 closeVect = dif - dir * closeLength;
+				const float rad = (unit->isIcon) ? unit->iconRadius : unit->radius;
+
+				// The argument to sqrt became negative (3.5f*10^-7) for some reason...
+				// so tempstoring the value
+				const float tmp = rad * rad - closeVect.SqLength();
+				if ((tmp > 0.0f) && (length > (closeLength + sqrt(tmp)))){
+					//note that we take the length to the backside of the units,
+					// this is so you can select stuff inside factories
+					length = closeLength + sqrt(tmp);
+					hit = unit;
 				}
 			}
 		}
 	}
-	if(!hit)
-		length-=200;		//fix length from the previous fudge
+	if (!hit) {
+		length -= 200.0f; //fix length from the previous fudge
+	}
 	return length;
 }
 

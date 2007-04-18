@@ -102,6 +102,9 @@ class CLuaHandle {
 		void UnitLeftRadar(const CUnit* unit, int allyTeam);
 		void UnitLeftLos(const CUnit* unit, int allyTeam);
 
+		void UnitLoaded(const CUnit* unit, const CUnit* transport);
+		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 

@@ -212,43 +212,73 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c)
 
 void CTransportCAI::ExecuteUnloadUnit(Command &c)
 {
-	if(inCommand){
-		if(!owner->cob->busy)
+	CTransportUnit* transport = (CTransportUnit*)owner;
+	if (inCommand) {
+		if (!owner->cob->busy) {
 	//			if(scriptReady)
 			FinishCommand();
-	} else {
-		if(((CTransportUnit*)owner)->transported.empty()){
+		}
+	}
+	else {
+		const std::list<CTransportUnit::TransportedUnit>& transList =
+		  transport->transported;
+
+		if (transList.empty()) {
 			FinishCommand();
 			return;
 		}
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		if(goalPos.distance2D(pos)>20){
-			SetGoal(pos,owner->pos);
+
+		float3 pos(c.params[0], c.params[1], c.params[2]);
+		if(goalPos.distance2D(pos) > 20){
+			SetGoal(pos, owner->pos);
 		}
-		if(pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
-			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
-				pos.y=ground->GetHeight(pos.x,pos.z);
-				CUnit* unit=((CTransportUnit*)owner)->transported.front().unit;
-				float3 wantedPos=pos+UpVector*unit->model->height;
-				SetGoal(wantedPos,owner->pos);
+
+		CUnit* unit = NULL;
+		if (c.params.size() < 4) {
+			unit = transList.front().unit;
+		}
+		else {
+			const int unitID = (int)c.params[3];
+			std::list<CTransportUnit::TransportedUnit>::const_iterator it;
+			for (it = transList.begin(); it != transList.end(); ++it) {
+				CUnit* carried = it->unit;
+				if (unitID == carried->id) {
+					unit = carried;
+					break;
+				}
+			}
+			if (unit == NULL) {
+				FinishCommand();
+				return;
+			}
+		}
+
+		if (pos.distance2D(owner->pos) < (owner->unitDef->loadingRadius * 0.9f)) {
+			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+			if (am != NULL) {
+				// handle air transports differently
+				pos.y = ground->GetHeight(pos.x, pos.z);
+				const float3 wantedPos = pos + UpVector * unit->model->height;
+				SetGoal(wantedPos, owner->pos);
 				am->SetWantedAltitude(unit->model->height);
-				am->maxDrift=1;
-				if(owner->pos.distance(wantedPos)<8 && owner->updir.dot(UpVector)>0.99f){
-					am->dontLand=false;
+				am->maxDrift = 1;
+				if ((owner->pos.distance(wantedPos) < 8) &&
+				    (owner->updir.dot(UpVector) > 0.99f)) {
+					am->dontLand = false;
 					owner->cob->Call("EndTransport");
-					((CTransportUnit*)owner)->DetachUnit(unit);
-					float3 fix = owner->pos+owner->frontdir*20;
-					SetGoal(fix,owner->pos);		//move the transport away slightly
+					transport->DetachUnit(unit);
+					const float3 fix = owner->pos + owner->frontdir * 20;
+					SetGoal(fix, owner->pos);		//move the transport away slightly
 					FinishCommand();
 				}
 			} else {
-				inCommand=true;
-				scriptReady=false;
+				inCommand = true;
+				scriptReady = false;
 				StopMove();
 				std::vector<int> args;
-				args.push_back(((CTransportUnit*)owner)->transported.front().unit->id);
+				args.push_back(transList.front().unit->id);
 				args.push_back(PACKXZ(pos.x, pos.z));
-				owner->cob->Call("TransportDrop",args,ScriptCallback,this,0);
+				owner->cob->Call("TransportDrop", args, ScriptCallback, this, 0);
 			}
 		}
 	}
@@ -257,7 +287,7 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 
 void CTransportCAI::ScriptReady(void)
 {
-	scriptReady=true;
+	scriptReady = true; // NOTE: does not seem to be used
 }
 
 bool CTransportCAI::CanTransport(CUnit* unit)

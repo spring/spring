@@ -1117,6 +1117,8 @@ void CUnitDrawer::DrawQuedS3O(void)
  */
 void CUnitDrawer::DrawIndividual(CUnit * unit)
 {
+	const bool origDebug = gu->drawdebug;
+	gu->drawdebug = false;
 	if (unit->model->textureType == 0){
 		/* 3DO */
 		SetupForUnitDrawing();
@@ -1130,7 +1132,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		unit->Draw();
 		CleanUpS3ODrawing();
 	}
-
+	gu->drawdebug = origDebug;
 }
 
 /**

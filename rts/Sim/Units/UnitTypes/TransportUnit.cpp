@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "TransportUnit.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/groundmovetype.h"
@@ -10,17 +11,21 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 
+
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
+
 
 CTransportUnit::CTransportUnit()
 :	transportCapacityUsed(0),
-	transportMassUsed(0)
+  transportMassUsed(0)
 {
 }
+
 
 CTransportUnit::~CTransportUnit()
 {
 }
+
 
 void CTransportUnit::Update()
 {
@@ -47,6 +52,7 @@ void CTransportUnit::Update()
 	}
 }
 
+
 void CTransportUnit::DependentDied(CObject* o)
 {
 	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
@@ -61,31 +67,34 @@ void CTransportUnit::DependentDied(CObject* o)
 	CUnit::DependentDied(o);
 }
 
+
 void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 {
-	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		ti->unit->transporter=0;
+	list<TransportedUnit>::iterator ti;
+	for (ti = transported.begin(); ti != transported.end(); ++ti) {
+		ti->unit->transporter = 0;
 		ti->unit->DeleteDeathDependence(this);
-		if(!unitDef->releaseHeld)
-		{
-			if(!selfDestruct)
-			{
+		if (!unitDef->releaseHeld) {
+			if (!selfDestruct) {
 				ti->unit->DoDamage(DamageArray()*1000000,0,ZeroVector);	//dont want it to leave a corpse
 			}
 			ti->unit->KillUnit(selfDestruct,reclaimed,attacker);
-		} else
-		{
+		}
+		else {
 			ti->unit->stunned = false;
-			if(CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(ti->unit->moveType))
-			{
+			if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(ti->unit->moveType)) {
 				mt->StartSkidding();
 				mt->StartFlying();
 			}
 			ti->unit->speed = speed;
+
+			luaCallIns.UnitUnloaded(ti->unit, this);
 		}
 	}
+
 	CUnit::KillUnit(selfDestruct,reclaimed,attacker);
 }
+
 
 bool CTransportUnit::CanTransport (CUnit *unit)
 {
@@ -111,7 +120,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	AddDeathDependence(unit);
 	unit->AddDeathDependence (this);
-    unit->transporter = this;
+	unit->transporter = this;
 	unit->toBeTransported=false;
 	if (!unitDef->isfireplatform) {
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
@@ -120,8 +129,9 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
 	unit->los=0;
-	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
+	if (CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType)) {
 		unit->moveType->useHeading=false;	
+	}
 	TransportedUnit tu;
 	tu.unit=unit;
 	tu.piece=piece;
@@ -133,23 +143,28 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->CalculateTerrainType();
 	unit->UpdateTerrainType();
+
+	luaCallIns.UnitLoaded(unit, this);
 }
 
 void CTransportUnit::DetachUnit(CUnit* unit)
 {
-	if(unit->transporter != this)
+	if (unit->transporter != this) {
 		return;
+	}
 
-	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		if(ti->unit==unit){
+	list<TransportedUnit>::iterator ti;
+	for (ti = transported.begin(); ti != transported.end(); ++ti) {
+		if (ti->unit == unit) {
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
-			unit->transporter=0;
-			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
-				unit->moveType->useHeading=true;
-			unit->stunned=false; // de-stun in case it isfireplatform=0
+			unit->transporter = 0;
+			if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(moveType)) {
+				unit->moveType->useHeading = true;
+			}
+			unit->stunned = false; // de-stun in case it isfireplatform=0
 			unit->Block();
-			loshandler->MoveUnit(unit,false);
+			loshandler->MoveUnit(unit, false);
 			unit->moveType->LeaveTransport();
 			const CCommandQueue& queue = unit->commandAI->commandQue;
 			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
@@ -157,12 +172,14 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 				c.id=CMD_STOP;
 				unit->commandAI->GiveCommand(c);
 			}
-			transportCapacityUsed-=ti->size;
-			transportMassUsed-=ti->mass;
+			transportCapacityUsed -= ti->size;
+			transportMassUsed -= ti->mass;
 			transported.erase(ti);
 
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
+
+			luaCallIns.UnitUnloaded(unit, this);
 
 			break;
 		}

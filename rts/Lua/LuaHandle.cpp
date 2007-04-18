@@ -467,6 +467,50 @@ void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 
 /******************************************************************************/
 
+void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("UnitLoaded");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, transport->id);
+	lua_pushnumber(L, transport->team);
+
+	// call the routine
+	RunCallIn(cmdStr, 5, 0);
+	return;
+}
+
+
+void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("UnitUnloaded");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, transport->id);
+	lua_pushnumber(L, transport->team);
+
+	// call the routine
+	RunCallIn(cmdStr, 5, 0);
+	return;
+}
+
+
+/******************************************************************************/
+
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
 	lua_settop(L, 0);
