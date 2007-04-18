@@ -4,6 +4,7 @@
 
 #include "Include.h"
 
+#undef CALLBACK
 #define CALLBACK				(this -> gAICallback)
 #define DGUN_MIN_HEALTH_RATIO	0.25
 #define DGUN_MIN_ENERGY_LEVEL	380
