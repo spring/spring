@@ -289,7 +289,7 @@ void CBuilderCAI::ExecuteRepair(Command &c)
 			}
 		}
 		if (unit && (unit->health < unit->maxHealth) &&
-		    ((unit != owner) || unit->unitDef->canSelfRepair) &&
+		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
 		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
 		    UpdateTargetLostTimer((int)c.params[0])) {
 			if (unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8) {
@@ -381,7 +381,8 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			} else {
 				fac->StopBuild();
 			}
-			if (b->curBuild && b->unitDef->canBeAssisted &&
+			if (b->curBuild &&
+			    (!b->curBuild->soloBuilder || (b->curBuild->soloBuilder == owner)) &&
 			    (( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 			     (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
@@ -396,7 +397,8 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			}
 		}
 		if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
-			if (f->curBuild && f->unitDef->canBeAssisted &&
+			if (f->curBuild &&
+			    (!f->curBuild->soloBuilder || (f->curBuild->soloBuilder == owner)) &&
 			    (( f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 			     (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
@@ -1012,11 +1014,12 @@ void CBuilderCAI::FinishCommand(void)
 bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned char options, bool attackEnemy)
 {
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
-	int myAllyteam=owner->allyteam;
+	int myAllyteam = owner->allyteam;
 	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (gs->Ally(owner->allyteam, unit->allyteam) &&
-		    unit->health<unit->maxHealth && (unit != owner)) {
+		    (unit->health < unit->maxHealth) &&
+		    ((unit != owner) || owner->unitDef->canSelfRepair)) {
 			// dont lock-on to units outside of our reach (for immobile builders)
 			if (!owner->unitDef->canmove) {
 				const CBuilder* builder = (CBuilder*)owner;

@@ -124,16 +124,17 @@ void CFactory::Update()
 		curBuild->heading = (h + buildFacing*16*1024) & 65535;
 
 		float3 buildPos = curBuild->pos = CalcBuildPos(buildPiece);
-		if(curBuild->floatOnWater)
+		if (curBuild->floatOnWater) {
 			curBuild->pos.y=ground->GetHeight(buildPos.x,buildPos.z)-curBuild->unitDef->waterline;
+		}
 		curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
 
-		if(curBuild->AddBuildPower(buildSpeed,this)){
+		if (curBuild->AddBuildPower(buildSpeed,this)) {
 			std::vector<int> args;
 			args.push_back(0);
 			cob->Call("QueryNanoPiece",args);
 
-			if(unitDef->showNanoSpray){
+			if (unitDef->showNanoSpray) {
 				float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
 				float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
 
@@ -148,45 +149,53 @@ void CFactory::Update()
 				}
 				SAFE_NEW CGfxProjectile(weaponPos,dif,(int)l,color);
 			}
-		} else {
-			if(!curBuild->beingBuilt){
-				if(group && curBuild->group==0)
-					curBuild->SetGroup(group);
-				Command c;
-				c.id=CMD_MOVE_STATE;
-				c.options=0;
-				c.params.push_back(moveState);
-				curBuild->commandAI->GiveCommand(c);
-				c.params.clear();
-				c.id=CMD_FIRE_STATE;
-				c.params.push_back(fireState);
-				curBuild->commandAI->GiveCommand(c);
-				bool userOrders = true;
-				if(curBuild->commandAI->commandQue.empty() || (dynamic_cast<CMobileCAI*>(curBuild->commandAI) && ((CMobileCAI*)curBuild->commandAI)->unimportantMove)){
-					userOrders = false;
-					if(((CFactoryCAI*)commandAI)->newUnitCommands.empty()){
-						SendToEmptySpot(curBuild);
-					} else {
-						for(CCommandQueue::iterator ci=((CFactoryCAI*)commandAI)->newUnitCommands.begin();ci!=((CFactoryCAI*)commandAI)->newUnitCommands.end();++ci){
-							curBuild->commandAI->GiveCommand(*ci);
-						}
-					}
-					waitCommandsAI.AddLocalUnit(curBuild, this);
-				}
-				luaCallIns.UnitFromFactory(curBuild, this, userOrders);
-				
-				StopBuild();
+		}
+
+		if (!curBuild->beingBuilt) {
+			if (group && curBuild->group == 0) {
+				curBuild->SetGroup(group);
 			}
+			Command c;
+			c.id=CMD_MOVE_STATE;
+			c.options=0;
+			c.params.push_back(moveState);
+			curBuild->commandAI->GiveCommand(c);
+			c.params.clear();
+			c.id=CMD_FIRE_STATE;
+			c.params.push_back(fireState);
+			curBuild->commandAI->GiveCommand(c);
+			bool userOrders = true;
+			if (curBuild->commandAI->commandQue.empty() ||
+					(dynamic_cast<CMobileCAI*>(curBuild->commandAI) &&
+					 ((CMobileCAI*)curBuild->commandAI)->unimportantMove)) {
+				userOrders = false;
+				const CFactoryCAI* facAI = (CFactoryCAI*) commandAI;
+				const CCommandQueue& newUnitCmds = facAI->newUnitCommands;
+				if (newUnitCmds.empty()) {
+					SendToEmptySpot(curBuild);
+				} else {
+					CCommandQueue::const_iterator ci;
+					for (ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
+						curBuild->commandAI->GiveCommand(*ci);
+					}
+				}
+				waitCommandsAI.AddLocalUnit(curBuild, this);
+			}
+			luaCallIns.UnitFromFactory(curBuild, this, userOrders);
+			
+			StopBuild();
 		}
 	}
 
-	if(lastBuild+200 < gs->frameNum && !quedBuild && opening && uh->CanCloseYard(this)){
+	if ((lastBuild+200 < gs->frameNum) &&
+	    !quedBuild && opening && uh->CanCloseYard(this)) {
 		readmap->CloseBlockingYard(this);
 		opening=false;
 		cob->Call(COBFN_Deactivate);
 	}
 	CBuilding::Update();
 }
+
 
 void CFactory::StartBuild(string type)
 {
