@@ -193,11 +193,11 @@ void CBuilderCAI::SlowUpdate()
 					else if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){ //max unitlimit reached
 						buildRetries++;
 						owner->moveType->KeepPointingTo(build.pos, fac->buildDistance*0.7f+radius, false);
-						if(fac->StartBuild(build) || buildRetries>20){
+						if (fac->StartBuild(build) || (buildRetries > 20)) {
 							building=true;
 						} else {
 							ENTER_MIXED;
-							if(owner->team==gu->myTeam && !(buildRetries&7)){
+							if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
 								logOutput.Print("%s: Build pos blocked",owner->unitDef->humanName.c_str());
 								logOutput.SetLastMsgPos(owner->pos);
 							}
@@ -207,8 +207,8 @@ void CBuilderCAI::SlowUpdate()
 						}
 					}
 				} else {
-					if(owner->moveType->progressState==CMoveType::Failed){
-						if(++buildRetries>5){
+					if (owner->moveType->progressState == CMoveType::Failed) {
+						if (++buildRetries > 5) {
 							StopMove();
 							FinishCommand();
 						}
@@ -227,7 +227,7 @@ void CBuilderCAI::SlowUpdate()
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
 			uh->TestUnitBuildSquare(bi,f,owner->allyteam);
-			if(f){
+			if (f) {
 				if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
 					// FIXME user shouldn't be able to queue buildings on top of features
 					// in the first place (in this case).
@@ -288,8 +288,11 @@ void CBuilderCAI::ExecuteRepair(Command &c)
 				return;
 			}
 		}
-		if(unit && unit->health<unit->maxHealth && unit!=owner && UpdateTargetLostTimer((int)c.params[0])){
-			if(unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8){
+		if (unit && (unit->health < unit->maxHealth) &&
+		    ((unit != owner) || unit->unitDef->canSelfRepair) &&
+		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
+		    UpdateTargetLostTimer((int)c.params[0])) {
+			if (unit->pos.distance2D(fac->pos)<fac->buildDistance+unit->radius-8) {
 				StopMove();
 				fac->SetRepairTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
@@ -302,15 +305,15 @@ void CBuilderCAI::ExecuteRepair(Command &c)
 			StopMove();
 			FinishCommand();
 		}
-	} else {			//repair area
+	} else { //repair area
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
-		if(FindRepairTargetAndRepair(pos,radius,c.options,false)){
+		if (FindRepairTargetAndRepair(pos, radius, c.options, false)) {
 			inCommand=false;
 			SlowUpdate();
 			return;
 		}
-		if(!(c.options & ALT_KEY)){
+		if (!(c.options & ALT_KEY)) {
 			FinishCommand();
 		}
 	}
@@ -378,9 +381,9 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			} else {
 				fac->StopBuild();
 			}
-			if (b->curBuild &&
-					(( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
-					(!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			if (b->curBuild && b->unitDef->canBeAssisted &&
+			    (( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+			     (!b->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
@@ -393,9 +396,9 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			}
 		}
 		if(CFactory* f=dynamic_cast<CFactory*>(guarded)){
-			if (f->curBuild &&
-					((f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
-					(!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
+			if (f->curBuild && f->unitDef->canBeAssisted &&
+			    (( f->curBuild->beingBuilt && owner->unitDef->canAssist) ||
+			     (!f->curBuild->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
 				Command nc;
 				nc.id=CMD_REPAIR;
@@ -424,9 +427,10 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 			//				logOutput.Print("should point with type 3?");
 			owner->moveType->KeepPointingTo(guarded->pos,
 				fac->buildDistance*0.9f+guarded->radius, false);
-			if(guarded->health<guarded->maxHealth
-					&& ((guarded->beingBuilt && owner->unitDef->canAssist)
-					|| (!guarded->beingBuilt && owner->unitDef->canRepair))) {
+			if ((guarded->health < guarded->maxHealth) &&
+			    (!guarded->soloBuilder || (guarded->soloBuilder == owner)) &&
+			    (( guarded->beingBuilt && owner->unitDef->canAssist) ||
+			     (!guarded->beingBuilt && owner->unitDef->canRepair))) {
 				StopSlowGuard();
 
 				Command nc;
@@ -619,7 +623,8 @@ void CBuilderCAI::ExecuteFight(Command &c)
 		SetGoal(pos, owner->pos);
 	}
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-	if((owner->unitDef->canRepair || owner->unitDef->canAssist) && FindRepairTargetAndRepair(curPosOnLine,300*owner->moveState+fac->buildDistance-8,c.options,true)){
+	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) &&
+	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8,c.options,true)){
 		CUnit* target=uh->units[(int)commandQue.front().params[0]];
 		tempOrder=true;
 		inCommand=false;
@@ -685,8 +690,9 @@ int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 		} else {
 			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
 			if ((pointed->health < pointed->maxHealth) &&
-			           ((pointed->beingBuilt && owner->unitDef->canAssist) ||
-			            (!pointed->beingBuilt && owner->unitDef->canRepair))) {
+			    (!pointed->soloBuilder || (pointed->soloBuilder == owner)) &&
+			    (( pointed->beingBuilt && owner->unitDef->canAssist) ||
+			     (!pointed->beingBuilt && owner->unitDef->canRepair))) {
 				return CMD_REPAIR;
 			} else if (tran && tran->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
@@ -902,7 +908,9 @@ void CBuilderCAI::GiveCommandReal(const Command& c)
 				CSolidObject* s;
 				CUnit* u;
 				if((s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
-				   (u=dynamic_cast<CUnit*>(s)) && u->beingBuilt && u->buildProgress == 0.0f) {
+				   (u=dynamic_cast<CUnit*>(s)) &&
+				   u->beingBuilt && (u->buildProgress == 0.0f) &&
+				   (!u->soloBuilder || (u->soloBuilder == owner))) {
 					Command c2;
 					c2.id = CMD_REPAIR;
 					c2.params.push_back(u->id);
@@ -1005,9 +1013,10 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 {
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	int myAllyteam=owner->allyteam;
-	for(std::vector<CUnit*>::iterator ui=cu.begin();ui!=cu.end();++ui){
+	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
-		if(gs->Ally(owner->allyteam,unit->allyteam) && unit->health<unit->maxHealth && unit!=owner){
+		if (gs->Ally(owner->allyteam, unit->allyteam) &&
+		    unit->health<unit->maxHealth && (unit != owner)) {
 			// dont lock-on to units outside of our reach (for immobile builders)
 			if (!owner->unitDef->canmove) {
 				const CBuilder* builder = (CBuilder*)owner;
@@ -1018,11 +1027,16 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 				}
 			}
 			// dont help factories produce units unless set on roam
-			if(unit->mobility && unit->beingBuilt && owner->moveState<2)
+			if (unit->mobility && unit->beingBuilt && owner->moveState<2) {
 				continue;
-			if (!(unit->beingBuilt && owner->unitDef->canAssist) &&
-			    !(!unit->beingBuilt && owner->unitDef->canRepair))
+			}
+			if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
+			    !(!unit->beingBuilt && owner->unitDef->canRepair)) {
 				continue;
+			}
+			if (unit->soloBuilder && (unit->soloBuilder != owner)) {
+				continue;
+			}
 			Command nc;
 			if(attackEnemy){
 				PushOrUpdateReturnFight();

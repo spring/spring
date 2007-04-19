@@ -303,13 +303,17 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 	string x = "0";
-	if(ud.builder) x = "1";
+	if (ud.builder) {
+		x = "1";
+	}
+	tdfparser.GetDef(ud.canRestore, x, "UNITINFO\\canrestore");
+	tdfparser.GetDef(ud.canRepair,  x, "UNITINFO\\canrepair");
+	tdfparser.GetDef(ud.canReclaim, x, "UNITINFO\\canreclaim");
+	tdfparser.GetDef(ud.canBuild,   x, "UNITINFO\\canbuild");
+	tdfparser.GetDef(ud.canAssist,  x, "UNITINFO\\canassist");
 
-	tdfparser.GetDef(ud.canRestore,x,"UNITINFO\\canrestore");
-	tdfparser.GetDef(ud.canRepair,x,"UNITINFO\\canrepair");
-	tdfparser.GetDef(ud.canReclaim,x,"UNITINFO\\canreclaim");
-	tdfparser.GetDef(ud.canBuild,x,"UNITINFO\\canbuild");
-	tdfparser.GetDef(ud.canAssist,x,"UNITINFO\\canassist");
+	tdfparser.GetDef(ud.canBeAssisted, "1", "UNITINFO\\canBeAssisted");
+	tdfparser.GetDef(ud.canSelfRepair, "0", "UNITINFO\\canSelfRepair");
 
 	tdfparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
 	tdfparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
