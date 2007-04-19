@@ -161,6 +161,7 @@ struct UnitDef
 	bool builder;
 	bool activateWhenBuilt;
 	bool onoffable;
+	bool fullHealthFactory;
 
 	bool reclaimable;
 	bool canRestore;

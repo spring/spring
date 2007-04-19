@@ -751,6 +751,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",        ud.canCapture);
 	ADD_BOOL("canResurrect",      ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack", ud.canLoopbackAttack);
+	ADD_BOOL("fullHealthFactory", ud.fullHealthFactory);
 
 	//aircraft stuff
 	ADD_FLOAT("wingDrag",     ud.wingDrag);

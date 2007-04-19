@@ -314,6 +314,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	tdfparser.GetDef(ud.canBeAssisted, "1", "UNITINFO\\canBeAssisted");
 	tdfparser.GetDef(ud.canSelfRepair, "0", "UNITINFO\\canSelfRepair");
+	tdfparser.GetDef(ud.fullHealthFactory, "1", "UNITINFO\\fullHealthFactory");
 
 	tdfparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
 	tdfparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
