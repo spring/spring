@@ -34,6 +34,7 @@ public:
 
 	bool active;
 	std::string playerName;
+	std::string countryCode;
 
 	bool spectator;
 	int team;

@@ -1001,6 +1001,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, gs->AllyTeam(player->team));
 	lua_pushnumber(L, player->ping);
 	lua_pushnumber(L, player->cpuUsage);
+	lua_pushstring(L, player->countryCode.c_str());
 
 	return 7;
 }

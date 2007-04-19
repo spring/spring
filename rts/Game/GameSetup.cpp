@@ -155,6 +155,7 @@ bool CGameSetup::Init(char* buf, int size)
 		gs->players[a]->team=atoi(file.SGetValueDef("0",s+"team").c_str());
 		gs->players[a]->spectator=!!atoi(file.SGetValueDef("0",s+"spectator").c_str());
 		gs->players[a]->playerName=file.SGetValueDef("0",s+"name");
+		gs->players[a]->countryCode=file.SGetValueDef("0",s+"countryCode");
 
 		int fromDemo;
 		file.GetDef(fromDemo,"0",s+"IsFromDemo");
