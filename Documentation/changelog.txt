@@ -2,6 +2,17 @@ TASpring change log
 
 0.next
 
+- Added string  FBI tag Gaia
+- Added string  FBI tag DecoyFor
+- Added boolean FBI tag CanBeAssisted
+- Added boolean FBI tag CanSelfRepair
+- Added boolean FBI tag TransportByEnemy
+- Added boolean FBI tag HoldSteady
+- Added boolean FBI tag ReleaseHeld
+- Added float   FBI tag SlideTolerance
+- Added float   FBI tag MinCollisionSpeed
+- Added vector  FBI tag CollsionSphereOffset
+
 - Added boolean FBI tag AirStrafe.  Only effective if HoverAttack=1.
   If AirStrafe=1, gunships and construction aircraft will strafe in a circle around the target.
   If AirStrafe=0, they will not strafe, they will sit stationary in the air firing their weapons.
