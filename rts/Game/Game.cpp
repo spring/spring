@@ -630,9 +630,10 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				} else {
 					command = userInput;
 				}
-				if (command[0] == '/') {
+				if ((command[0] == '/') && (command[1] != '/')) {
+					// execute an action
 					consoleHistory->AddLine(command);
-					const string actionLine = command.substr(1); // strip the '/' or '.'
+					const string actionLine = command.substr(1); // strip the '/'
 					chatting = false;
 					userInput = "";
 					writingPos = 0;
@@ -2953,6 +2954,16 @@ void CGame::UpdateUI()
 
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);
+		string msg = userInput;
+		string pfx = "";
+		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+			pfx = userInput.substr(0, 2);
+			msg = userInput.substr(2);
+		}
+		if ((msg[0] == '/') && (msg[1] == '/')) {
+			msg = msg.substr(1);
+		}
+		userInput = pfx + msg;
 		SendNetChat(userInput);
 		chatting=false;
 		userInput="";
@@ -3692,45 +3703,59 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 }
 
 
-void CGame::LogNetMsg(const string& msg, int player)
+void CGame::LogNetMsg(const string& msg, int playerID)
 {
 	string s = msg;
 
-	if((s[0]=='a' || s[0]=='A') && s[1]==':'){
-		if(player==gu->myPlayerNum)
-			userInputPrefix="a:";
+	CPlayer* player = gs->players[playerID];
+	const bool myMsg = (playerID == gu->myPlayerNum);
 
-		if(((gs->Ally(gs->AllyTeam(gs->players[inbuf[inbufpos+2]]->team),gu->myAllyTeam) && !gs->players[player]->spectator) || gu->spectating) && s.substr(2,255).length() > 0) {
-			if(gs->players[player]->spectator)
-				s="["+gs->players[player]->playerName+"] Allies: "+s.substr(2,255);
-			else
-				s="<"+gs->players[player]->playerName+"> Allies: "+s.substr(2,255);
-			logOutput.Print(s);
-			sound->PlaySample(chatSound,5);
-		}
-	} else if((s[0]=='s' || s[0]=='S') && s[1]==':'){
-		if(player==gu->myPlayerNum)
-			userInputPrefix="s:";
+	bool allyMsg = false;
+	bool specMsg = false;
+	userInputPrefix = "";
 
-		if((gu->spectating || gu->myPlayerNum == player) && s.substr(2,255).length() > 0) {
-			if(gs->players[player]->spectator)
-				s="["+gs->players[player]->playerName+"] Spectators: "+s.substr(2,255);
-			else
-				s="<"+gs->players[player]->playerName+"> Spectators: "+s.substr(2,255);
-			logOutput.Print(s);
-			sound->PlaySample(chatSound,5);
+	if ((s.length() >= 2) && (s[1] == ':')) {
+		const char lower = tolower(s[0]);
+		if (lower == 'a') {
+			allyMsg = true;
+			s = s.substr(2);
+			userInputPrefix = "a:";
 		}
+		else if (lower == 's') {
+			specMsg = true;
+			s = s.substr(2);
+			userInputPrefix = "s:";
+		}
+	}
+
+	string label;
+	if (player->spectator) {
+		label = "[" + player->playerName + "] ";
 	} else {
-		if(player==gu->myPlayerNum)
-			userInputPrefix="";
+		label = "<" + player->playerName + "> ";
+	}
 
-		if(gs->players[player]->spectator)
-			s="["+gs->players[player]->playerName+"] "+s;
-		else
-			s="<"+gs->players[player]->playerName+"> "+s;
+	s.substr(0, 255);
 
-		logOutput.Print(s);
-		sound->PlaySample(chatSound,5);
+	if (!s.empty()) {
+		if (allyMsg) {
+			const int msgAllyTeam = gs->AllyTeam(player->team);
+			const bool allied = gs->Ally(msgAllyTeam, gu->myAllyTeam);
+			if ((allied && !player->spectator) || gu->spectating) {
+				logOutput.Print(label + "Allies: " + s);
+				sound->PlaySample(chatSound, 5);
+			}
+		}
+		else if (specMsg) {
+			if (gu->spectating || myMsg) {
+				logOutput.Print(label + "Spectators: " + s);
+				sound->PlaySample(chatSound, 5);
+			}
+		}
+		else {
+			logOutput.Print(label + s);
+			sound->PlaySample(chatSound, 5);
+		}
 	}
 }
 
