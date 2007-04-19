@@ -958,29 +958,44 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
+	if (args < 2) {
 		luaL_error(L, "Incorrect arguments to SetUnitHealth()");
 	}
 
-	float health = (float)lua_tonumber(L, 2);
-	health = min(unit->maxHealth, health);
-	unit->health = health;
-	if (unit->beingBuilt && (unit->health >= unit->maxHealth)) {
-		unit->FinishedBuilding();
+	if (lua_isnumber(L, 2)) {
+		float health = (float)lua_tonumber(L, 2);
+		health = min(unit->maxHealth, health);
+		unit->health = health;
 	}
-
-	if ((args >= 3) && lua_isnumber(L, 3)) {
-		float paralyze = (float)lua_tonumber(L, 3);
-		paralyze = max(0.0f,  paralyze);
-		unit->paralyzeDamage = paralyze;
-		if (paralyze >= unit->health) {
-			unit->stunned = true;
+	else if (lua_istable(L, 2)) {
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+				const string key = lua_tostring(L, -2);
+				const float value = (float)lua_tonumber(L, -1);
+				if (key == "health") {
+					unit->health = min(unit->maxHealth, value);
+				}
+				else if (key == "capture") {
+					unit->captureProgress = value;
+				}
+				else if (key == "paralyze") {
+					unit->paralyzeDamage = max(0.0f, value);
+					if (unit->paralyzeDamage >= unit->health) {
+						unit->stunned = true;
+					}
+				}
+				else if (key == "build") {
+					unit->buildProgress = value;
+					if (unit->beingBuilt && (value >= 1.0f)) {
+						unit->FinishedBuilding();
+					}
+				}
+			}
 		}
 	}
-
-	if ((args >= 4) && lua_isnumber(L, 4)) {
-		float capture = (float)lua_tonumber(L, 4);
-		unit->captureProgress = capture;
+	else {
+		luaL_error(L, "Incorrect arguments to SetUnitHealth()");
 	}
 
 	return 0;
