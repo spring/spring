@@ -965,6 +965,9 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 	float health = (float)lua_tonumber(L, 2);
 	health = min(unit->maxHealth, health);
 	unit->health = health;
+	if (unit->beingBuilt && (unit->health >= unit->maxHealth)) {
+		unit->FinishedBuilding();
+	}
 
 	if ((args >= 3) && lua_isnumber(L, 3)) {
 		float paralyze = (float)lua_tonumber(L, 3);

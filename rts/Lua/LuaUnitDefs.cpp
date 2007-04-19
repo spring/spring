@@ -737,6 +737,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCloak",          ud.canCloak);
 	ADD_BOOL("canRestore",        ud.canRestore);
 	ADD_BOOL("canRepair",         ud.canRepair);
+	ADD_BOOL("canSelfRepair",     ud.canSelfRepair);
 	ADD_BOOL("canReclaim",        ud.canReclaim);
 	ADD_BOOL("noAutoFire",        ud.noAutoFire);
 	ADD_BOOL("canAttack",         ud.canAttack);
@@ -745,6 +746,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canGuard",          ud.canGuard);
 	ADD_BOOL("canBuild",          ud.canBuild);
 	ADD_BOOL("canAssist",         ud.canAssist);
+	ADD_BOOL("canBeAssisted",     ud.canBeAssisted);
 	ADD_BOOL("canRepeat",         ud.canRepeat);
 	ADD_BOOL("canCapture",        ud.canCapture);
 	ADD_BOOL("canResurrect",      ud.canResurrect);

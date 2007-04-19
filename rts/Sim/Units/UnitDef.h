@@ -165,6 +165,7 @@ struct UnitDef
 	bool reclaimable;
 	bool canRestore;
 	bool canRepair;
+	bool canSelfRepair;
 	bool canReclaim;
 	bool noAutoFire;
 	bool canAttack;
@@ -173,6 +174,7 @@ struct UnitDef
 	bool canGuard;
 	bool canBuild;
 	bool canAssist;
+	bool canBeAssisted;
 	bool canRepeat;
 
 	//aircraft stuff

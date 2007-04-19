@@ -165,8 +165,8 @@ void CBuilder::Update()
 				StopBuild();
 			}
 		}
-	} else if(helpTerraform && inBuildStance){
-		if(helpTerraform->terraforming){
+	} else if (helpTerraform && inBuildStance) {
+		if (helpTerraform->terraforming) {
 			helpTerraform->terraformHelp+=buildSpeed;
 			CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
 		} else {
@@ -174,19 +174,23 @@ void CBuilder::Update()
 			helpTerraform=0;
 			StopBuild(true);
 		}
-	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius){
-		if(inBuildStance){
-			isCloaked=false;
-			curCloakTimeout=gs->frameNum+cloakTimeout;
-			if(curBuild->AddBuildPower(buildSpeed,this)){
-				CreateNanoParticle(curBuild->midPos,curBuild->radius*0.5f,false);
-			} else {
-				if(!curBuild->beingBuilt && curBuild->health>=curBuild->maxHealth){
-					StopBuild();
-				}
-			}
+	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius) {
+		if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
+			StopBuild();
 		} else {
-			curBuild->AddBuildPower(0.001f,this); //prevent building timing out
+			if (inBuildStance) {
+				isCloaked = false;
+				curCloakTimeout = gs->frameNum + cloakTimeout;
+				if (curBuild->AddBuildPower(buildSpeed, this)) {
+					CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
+				} else {
+					if (!curBuild->beingBuilt && (curBuild->health >= curBuild->maxHealth)) {
+						StopBuild();
+					}
+				}
+			} else {
+				curBuild->AddBuildPower(0.001f, this); //prevent building timing out
+			}
 		}
 	} else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		isCloaked=false;
@@ -212,8 +216,12 @@ void CBuilder::Update()
 				}
 				if(curResurrect->resurrectProgress>1){		//resurrect finished
 					curResurrect->UnBlock();
-					CUnit* u=unitLoader.LoadUnit(curResurrect->createdFromUnit, curResurrect->pos, team,
-					                             false, curResurrect->buildFacing, this);
+					CUnit* u = unitLoader.LoadUnit(curResurrect->createdFromUnit, curResurrect->pos,
+					                               team, false, curResurrect->buildFacing, this);
+					if (!this->unitDef->canBeAssisted) {
+						u->soloBuilder = this;
+						u->AddDeathDependence(this);
+					}
 					u->health*=0.05f;
 					u->lineage = this->lineage;
 					lastResurrected=u->id;
@@ -422,8 +430,12 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	nextBuildType=buildInfo.def->name;
 	nextBuildPos=buildInfo.pos;
 
-	CUnit* b=unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
-	                             true, buildInfo.buildFacing, this);
+	CUnit* b = unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
+	                               true, buildInfo.buildFacing, this);
+	if (!this->unitDef->canBeAssisted) {
+		b->soloBuilder = this;
+		b->AddDeathDependence(this);
+	}
 	b->lineage = this->lineage;
 	AddDeathDependence(b);
 	curBuild=b;

@@ -131,6 +131,7 @@ public:
 	float limExperience;		//goes ->1 as experience go -> infinite
 	float logExperience;		//logharitm of experience
 
+	CUnit* soloBuilder;
 	bool beingBuilt;
 	int lastNanoAdd;					//if we arent built on for a while start decaying
 	CTransportUnit *transporter;		//transport that the unit is currently in

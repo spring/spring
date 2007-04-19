@@ -79,6 +79,7 @@ CUnit::CUnit ()
 	logExperience(0),
 	limExperience(0),
 	armorType(0),
+	soloBuilder(NULL),
 	beingBuilt(true),
 	allyteam(0),
 	restTime(0),
@@ -1208,14 +1209,10 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	if(o==transporter)
-		transporter=0;
-	if(o==lastAttacker){
-//		logOutput.Print("Last attacker died %i %i",lastAttacker->id,id);
-		lastAttacker=0;
-	}
-	if(o==userTarget)
-		userTarget=0;
+	if (o == userTarget)   { userTarget   = NULL; }
+	if (o == soloBuilder)  { soloBuilder  = NULL; }
+	if (o == transporter)  { transporter  = NULL; }
+	if (o == lastAttacker) { lastAttacker = NULL; }
 
 	incomingMissiles.remove((CMissileProjectile*)o);
 
@@ -1393,55 +1390,59 @@ bool CUnit::AddBuildPower(float amount,CUnit* builder)
 
 void CUnit::FinishedBuilding(void)
 {
-	beingBuilt=false;
-	buildProgress=1;
+	beingBuilt = false;
+	buildProgress = 1.0f;
 
-	if(!(mass==100000 && immobile))
-		mass=unitDef->mass;		//set this now so that the unit is harder to move during build
+	if (soloBuilder) {
+		DeleteDeathDependence(soloBuilder);
+		soloBuilder = NULL;
+	}
+
+	if (!(immobile && (mass == 100000))) {
+		mass = unitDef->mass;		//set this now so that the unit is harder to move during build
+	}
 
 	ChangeLos(realLosRadius,realAirLosRadius);
 
-	if(unitDef->startCloaked)
-		wantCloak=true;
+	if (unitDef->startCloaked) {
+		wantCloak = true;
+	}
 
-	if(unitDef->windGenerator>0)
-	{
-		if(wind.curStrength > unitDef->windGenerator)
-		{
-			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
-		}
-		else
-		{
-			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength*3000.0f));
+	if (unitDef->windGenerator>0) {
+		if (wind.curStrength > unitDef->windGenerator) {
+			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+		} else {
+			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength       * 3000.0f));
 		}
 		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
 	}
 
-	if(unitDef->activateWhenBuilt)
-	{
+	if (unitDef->activateWhenBuilt) {
 		Activate();
 	}
 
-	gs->Team(team)->metalStorage+=unitDef->metalStorage;
-	gs->Team(team)->energyStorage+=unitDef->energyStorage;
+	gs->Team(team)->metalStorage  += unitDef->metalStorage;
+	gs->Team(team)->energyStorage += unitDef->energyStorage;
 
 	//Sets the frontdir in sync with heading.
 	frontdir = GetVectorFromHeading(heading) + float3(0,frontdir.y,0);
 
-	if(unitDef->isAirBase){
+	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
 	}
 
 	luaCallIns.UnitFinished(this);
 	globalAI->UnitFinished(this);
 
-	if(unitDef->isFeature){
+	if (unitDef->isFeature) {
 		UnBlock();
-		CFeature* f=featureHandler->CreateWreckage(pos,wreckName, heading, buildFacing, 0,team,false,"");
-		if(f){
-			f->blockHeightChanges=true;
+		CFeature* f =
+			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
+			                               0, team, false, "");
+		if (f) {
+			f->blockHeightChanges = true;
 		}
-		KillUnit(false,true,0);
+		KillUnit(false, true, 0);
 	}
 }
 
@@ -1698,6 +1699,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(experience),
 				CR_MEMBER(limExperience),
 				CR_MEMBER(logExperience),
+				CR_MEMBER(soloBuilder),
 				CR_MEMBER(beingBuilt),
 				CR_MEMBER(lastNanoAdd),
 				CR_MEMBER(transporter),
