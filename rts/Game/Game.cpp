@@ -3633,9 +3633,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			logOutput.Print("No definition Editing");
 		}
 	}
-	else if ((s.find(".luarules") == 0) && (player == 0) && (gs->frameNum > 1)) {
+	else if ((s.find(".luarules") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaRules) {
-			if (s.find(" reload", 9) == 9) {
+			if ((player == 0) && (s.find(" reload", 9) == 9)) {
 				CLuaRules::FreeHandler();
 				CLuaRules::LoadHandler();
 				if (luaRules) {
@@ -3644,7 +3644,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					logOutput.Print("LuaRules reload failed\n");
 				}
 			}
-			else if (s.find(" disable", 9) == 9) {
+			else if ((player == 0) && (s.find(" disable", 9) == 9)) {
 				CLuaRules::FreeHandler();
 				logOutput.Print("LuaRules disabled\n");
 			}
@@ -3656,9 +3656,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if ((s.find(".luagaia") == 0) && (player == 0) && (gs->frameNum > 1)) {
+	else if ((s.find(".luagaia") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaGaia) {
-			if (s.find(" reload", 8) == 8) {
+			if ((player == 0) && (s.find(" reload", 8) == 8)) {
 				CLuaGaia::FreeHandler();
 				CLuaGaia::LoadHandler();
 				if (luaGaia) {
@@ -3667,7 +3667,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					logOutput.Print("LuaGaia reload failed\n");
 				}
 			}
-			else if (s.find(" disable", 8) == 8) {
+			else if ((player == 0) && (s.find(" disable", 8) == 8)) {
 				CLuaGaia::FreeHandler();
 				logOutput.Print("LuaGaia disabled\n");
 			}
@@ -3679,8 +3679,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if ((s.find(".luacob") == 0) && (player == 0) && (gs->frameNum > 1)) {
-		if (s.find(" reload", 7) == 7) {
+	else if ((s.find(".luacob") == 0) && (gs->frameNum > 1)) {
+		if ((player == 0) && (s.find(" reload", 7) == 7)) {
 			CLuaCob::FreeHandler();
 			CLuaCob::LoadHandler();
 			if (luaCob) {
@@ -3689,7 +3689,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				logOutput.Print("LuaCob reload failed\n");
 			}
 		}
-		else if (s.find(" disable", 7) == 7) {
+		else if ((player == 0) && (s.find(" disable", 7) == 7)) {
 			CLuaCob::FreeHandler();
 			logOutput.Print("LuaCob disabled\n");
 		}
