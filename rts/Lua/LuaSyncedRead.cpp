@@ -1003,7 +1003,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushstring(L, player->countryCode.c_str());
 
-	return 7;
+	return 8;
 }
 
 
