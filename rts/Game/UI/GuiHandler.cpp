@@ -88,7 +88,6 @@ CGuiHandler::CGuiHandler()
 
 	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
 
-
 	useStencil = false;
 	if (GLEW_NV_depth_clamp && !!configHandler.GetInt("StencilBufferBits", 1)) {
 		GLint stencilBits;
