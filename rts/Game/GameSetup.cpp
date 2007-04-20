@@ -152,10 +152,10 @@ bool CGameSetup::Init(char* buf, int size)
 		sprintf(section,"GAME\\PLAYER%i\\",a);
 		string s(section);
 
-		gs->players[a]->team=atoi(file.SGetValueDef("0",s+"team").c_str());
-		gs->players[a]->spectator=!!atoi(file.SGetValueDef("0",s+"spectator").c_str());
-		gs->players[a]->playerName=file.SGetValueDef("0",s+"name");
-		gs->players[a]->countryCode=file.SGetValueDef("0",s+"countryCode");
+		gs->players[a]->team=atoi(file.SGetValueDef("0", s + "team").c_str());
+		gs->players[a]->spectator=!!atoi(file.SGetValueDef("0", s + "spectator").c_str());
+		gs->players[a]->playerName=file.SGetValueDef("0", s + "name");
+		gs->players[a]->countryCode=file.SGetValueDef("", s + "countryCode");
 
 		int fromDemo;
 		file.GetDef(fromDemo,"0",s+"IsFromDemo");
