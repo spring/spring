@@ -1167,7 +1167,7 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitBuildSpeed()");
 	}
-	const float buildSpeed = max(0.0f, (float)lua_tonumber(L, 2));
+	const float buildSpeed = max(0.0f, (float)lua_tonumber(L, 2)) / 32.0f;
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
 	if (factory) {
 		factory->buildSpeed = buildSpeed;
