@@ -726,7 +726,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("reclaimSpeed",   ud.reclaimSpeed);
 	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
-	ADD_FLOAT("terraformSpeed", ud.captureSpeed);
+	ADD_FLOAT("terraformSpeed", ud.terraformSpeed);
 
 	ADD_BOOL("canSubmerge", ud.canSubmerge);
 	ADD_BOOL("canFly",      ud.canfly);
