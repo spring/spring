@@ -155,6 +155,7 @@ struct WeaponDef
 	bool exteriorShield;		//only affect stuff coming from outside shield radius
 	bool visibleShield;			//if the shield should be graphically shown
 	bool visibleShieldRepulse;	//if a small graphic should be shown at each repulse
+	int  visibleShieldHitFrames; //number of frames to draw the shield after it has been hit
 	float shieldEnergyUse;	//energy use per shot or per second depending on projectile
 	float shieldRadius;			//size of shielded area
 	float shieldForce;			//shield acceleration on plasma stuff

@@ -272,6 +272,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].exteriorShield, "0", weaponname + "\\exteriorshield");
 	sunparser->GetDef(weaponDefs[id].visibleShield, "0", weaponname + "\\visibleshield");
 	sunparser->GetDef(weaponDefs[id].visibleShieldRepulse, "0", weaponname + "\\visibleshieldrepulse");
+	sunparser->GetDef(weaponDefs[id].visibleShieldHitFrames, "0", weaponname + "\\visibleShieldHitFrames");
 	sunparser->GetDef(weaponDefs[id].shieldEnergyUse, "0", weaponname + "\\shieldenergyuse");
 	sunparser->GetDef(weaponDefs[id].shieldForce, "0", weaponname + "\\shieldforce");
 	sunparser->GetDef(weaponDefs[id].shieldRadius, "0", weaponname + "\\shieldradius");

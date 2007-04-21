@@ -32,6 +32,8 @@ public:
 	float radius;
 	float sqRadius;
 
+	int hitFrames;
+
 	bool isEnabled;
 	bool startShowingShield;
 };
