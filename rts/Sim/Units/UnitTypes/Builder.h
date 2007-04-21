@@ -33,13 +33,13 @@ public:
 	void StartRestore(float3 centerPos, float radius);
 	void SetBuildStanceToward(float3 pos);
 
-	float buildSpeed;
 	float buildDistance;
-
-	float repairMult;
-	float reclaimMult;
-	float resurrectMult;
-	float captureMult;
+	float buildSpeed;
+	float repairSpeed;
+	float reclaimSpeed;
+	float resurrectSpeed;
+	float captureSpeed;
+	float terraformSpeed;
 
 	CFeature* curResurrect;
 	int lastResurrected;

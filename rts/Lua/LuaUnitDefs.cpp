@@ -722,10 +722,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("buildSpeed",    ud.buildSpeed);
 	ADD_FLOAT("buildDistance", ud.buildDistance);
 
-	ADD_FLOAT("repairMult",    ud.repairMult);
-	ADD_FLOAT("reclaimMult",   ud.reclaimMult);
-	ADD_FLOAT("resurrectMult", ud.resurrectMult);
-	ADD_FLOAT("captureMult",   ud.captureMult);
+	ADD_FLOAT("repairSpeed",    ud.repairSpeed);
+	ADD_FLOAT("reclaimSpeed",   ud.reclaimSpeed);
+	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
+	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
+	ADD_FLOAT("terraformSpeed", ud.captureSpeed);
 
 	ADD_BOOL("canSubmerge", ud.canSubmerge);
 	ADD_BOOL("canFly",      ud.canfly);

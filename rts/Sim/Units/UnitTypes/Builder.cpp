@@ -31,12 +31,13 @@ using namespace std;
 CR_BIND_DERIVED(CBuilder, CUnit, );
 
 CR_REG_METADATA(CBuilder, (
-				CR_MEMBER(buildSpeed),
 				CR_MEMBER(buildDistance),
-				CR_MEMBER(repairMult),
-				CR_MEMBER(reclaimMult),
-				CR_MEMBER(resurrectMult),
-				CR_MEMBER(captureMult),
+				CR_MEMBER(buildSpeed),
+				CR_MEMBER(repairSpeed),
+				CR_MEMBER(reclaimSpeed),
+				CR_MEMBER(resurrectSpeed),
+				CR_MEMBER(captureSpeed),
+				CR_MEMBER(terraformSpeed),
 				CR_MEMBER(curResurrect),
 				CR_MEMBER(lastResurrected),
 				CR_MEMBER(curBuild),
@@ -58,29 +59,30 @@ CR_REG_METADATA(CBuilder, (
 //////////////////////////////////////////////////////////////////////
 
 CBuilder::CBuilder()
-:	buildSpeed(100),
-	buildDistance(16),
-	repairMult(0),
-	reclaimMult(0),
-	resurrectMult(0),
-	captureMult(0),
-	curBuild(0),
-	curReclaim(0),
-	terraforming(false),
-	terraformLeft(0),
-	terraformType(Terraform_Building),
-	tx1(0),
-	tx2(0),
-	tz1(0),
-	tz2(0),
-	terraformCenter(0,0,0),
-	terraformRadius(0),
-	nextBuildPos(0,0,0),
-	terraformHelp(0),
-	helpTerraform(0),
-	curResurrect(0),
-	lastResurrected(0),
-	curCapture(0)
+:	buildDistance(16),
+  buildSpeed(100),
+  repairSpeed(100),
+  reclaimSpeed(100),
+  resurrectSpeed(100),
+  captureSpeed(100),
+  terraformSpeed(100),
+  curBuild(0),
+  curReclaim(0),
+  terraforming(false),
+  terraformLeft(0),
+  terraformType(Terraform_Building),
+  tx1(0),
+  tx2(0),
+  tz1(0),
+  tz2(0),
+  terraformCenter(0,0,0),
+  terraformRadius(0),
+  nextBuildPos(0,0,0),
+  terraformHelp(0),
+  helpTerraform(0),
+  curResurrect(0),
+  lastResurrected(0),
+  curCapture(0)
 {
 }
 
@@ -92,12 +94,15 @@ CBuilder::~CBuilder()
 
 void CBuilder::UnitInit(UnitDef* def, int team, const float3& position)
 {
-	buildSpeed    = def->buildSpeed / 32.0f;
-	buildDistance = def->buildDistance;
-	repairMult    = def->repairMult;
-	reclaimMult   = def->reclaimMult;
-	resurrectMult = def->resurrectMult;
-	captureMult   = def->captureMult;
+	buildDistance  = def->buildDistance;
+
+	const float scale = (1.0f / 32.0f);
+	buildSpeed     = scale * def->buildSpeed;
+	repairSpeed    = scale * def->repairSpeed;
+	reclaimSpeed   = scale * def->reclaimSpeed;
+	resurrectSpeed = scale * def->resurrectSpeed;
+	captureSpeed   = scale * def->captureSpeed;
+	terraformSpeed = scale * def->terraformSpeed;
 
 	CUnit::UnitInit (def, team, position);
 }
@@ -111,11 +116,11 @@ void CBuilder::Update()
 
 	if(terraforming && inBuildStance){
 		if(terraformLeft>0){
-			float* heightmap=readmap->GetHeightmap();
+			float* heightmap = readmap->GetHeightmap();
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
-			float terraformSpeed=(buildSpeed+terraformHelp)/terraformLeft;
-			terraformLeft-=(buildSpeed+terraformHelp);
-			terraformHelp=0;
+			float terraformSpeed = (terraformSpeed + terraformHelp) / terraformLeft;
+			terraformLeft -= (terraformSpeed + terraformHelp);
+			terraformHelp = 0;
 			if(terraformSpeed>1)
 				terraformSpeed=1;
 			switch(terraformType){
@@ -186,7 +191,7 @@ void CBuilder::Update()
 	}
 	else if (helpTerraform && inBuildStance) {
 		if (helpTerraform->terraforming) {
-			helpTerraform->terraformHelp+=buildSpeed;
+			helpTerraform->terraformHelp += terraformSpeed;
 			CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
 		} else {
 			DeleteDeathDependence(helpTerraform);
@@ -206,9 +211,9 @@ void CBuilder::Update()
 
   			float adjBuildSpeed; // adjusted build speed
   			if (curBuild->buildProgress < 1.0f) {
-  				adjBuildSpeed = buildSpeed;              // new build
+  				adjBuildSpeed = buildSpeed;  // new build
   			} else {
-  				adjBuildSpeed = buildSpeed * repairMult; // repair
+  				adjBuildSpeed = repairSpeed; // repair
 				}
 
 				if (curBuild->AddBuildPower(adjBuildSpeed, this)) {
@@ -224,7 +229,7 @@ void CBuilder::Update()
 	else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		isCloaked=false;
 		curCloakTimeout=gs->frameNum+cloakTimeout;
-		if(curReclaim->AddBuildPower(-buildSpeed*reclaimMult,this)){
+		if(curReclaim->AddBuildPower(-reclaimSpeed, this)){
 			CreateNanoParticle(curReclaim->midPos,curReclaim->radius*0.7f,true);
 		}
 	}
@@ -235,13 +240,13 @@ void CBuilder::Update()
 			{
 				// This corpse has been reclaimed a little, need to restore the resources
 				// before we can let the player resurrect it.
-				curResurrect->AddBuildPower(buildSpeed*repairMult,this);
+				curResurrect->AddBuildPower(repairSpeed, this);
 			}
 			else
 			{
 				// Corpse has been restored, begin resurrection
-				if(UseEnergy(ud->energyCost*buildSpeed*resurrectMult/ud->buildTime*0.5f)){
-					curResurrect->resurrectProgress+=buildSpeed*resurrectMult/ud->buildTime;
+				if(UseEnergy(ud->energyCost*resurrectSpeed/ud->buildTime*0.5f)){
+					curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
 					CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
 				}
 				if(curResurrect->resurrectProgress>1){		//resurrect finished
@@ -266,7 +271,7 @@ void CBuilder::Update()
 	}
 	else if(curCapture && curCapture->pos.distance2D(pos)<buildDistance+curCapture->radius && inBuildStance){
 		if(curCapture->team!=team){
-			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/(buildSpeed*captureMult)*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
+			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
 			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
 			if(curCapture->captureProgress > 1.0f){
 				if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {

@@ -1167,7 +1167,8 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitBuildSpeed()");
 	}
-	const float buildSpeed = max(0.0f, (float)lua_tonumber(L, 2)) / 32.0f;
+	const float buildScale = (1.0f / 32.0f);
+	const float buildSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 2));
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
 	if (factory) {
 		factory->buildSpeed = buildSpeed;
@@ -1179,20 +1180,19 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	}
 	builder->buildSpeed = buildSpeed;
 	if ((args >= 3) && lua_isnumber(L, 3)) {
-		const float repairMult = max(0.0f, (float)lua_tonumber(L, 3));
-		builder->repairMult = repairMult;
+		builder->repairSpeed    = buildScale * max(0.0f, (float)lua_tonumber(L, 3));
 	}
 	if ((args >= 4) && lua_isnumber(L, 4)) {
-		const float reclaimMult = max(0.0f, (float)lua_tonumber(L, 4));
-		builder->reclaimMult = reclaimMult;
+		builder->reclaimSpeed   = buildScale * max(0.0f, (float)lua_tonumber(L, 4));
 	}
 	if ((args >= 5) && lua_isnumber(L, 5)) {
-		const float resurrectMult = max(0.0f, (float)lua_tonumber(L, 5));
-		builder->resurrectMult = resurrectMult;
+		builder->resurrectSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 5));
 	}
 	if ((args >= 6) && lua_isnumber(L, 6)) {
-		const float captureMult = max(0.0f, (float)lua_tonumber(L, 6));
-		builder->captureMult = captureMult;
+		builder->captureSpeed   = buildScale * max(0.0f, (float)lua_tonumber(L, 6));
+	}
+	if ((args >= 7) && lua_isnumber(L, 7)) {
+		builder->terraformSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 7));
 	}
 	return 0;
 }
