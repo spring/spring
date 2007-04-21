@@ -94,6 +94,11 @@ struct UnitDef
 	float buildSpeed;
 	float buildDistance;
 	float mass;
+
+	float reclaimMult;
+	float repairMult;
+	float captureMult;
+	float resurrectMult;
 	
 	float minCollisionSpeed;
 	float slideTolerance;

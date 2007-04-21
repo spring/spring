@@ -36,6 +36,11 @@ public:
 	float buildSpeed;
 	float buildDistance;
 
+	float repairMult;
+	float reclaimMult;
+	float resurrectMult;
+	float captureMult;
+
 	CFeature* curResurrect;
 	int lastResurrected;
 	CUnit* curBuild;

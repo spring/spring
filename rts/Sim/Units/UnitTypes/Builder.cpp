@@ -31,6 +31,10 @@ CR_BIND_DERIVED(CBuilder, CUnit, );
 CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(buildSpeed),
 				CR_MEMBER(buildDistance),
+				CR_MEMBER(repairMult),
+				CR_MEMBER(reclaimMult),
+				CR_MEMBER(resurrectMult),
+				CR_MEMBER(captureMult),
 				CR_MEMBER(curResurrect),
 				CR_MEMBER(lastResurrected),
 				CR_MEMBER(curBuild),
@@ -54,6 +58,10 @@ CR_REG_METADATA(CBuilder, (
 CBuilder::CBuilder()
 :	buildSpeed(100),
 	buildDistance(16),
+	repairMult(0),
+	reclaimMult(0),
+	resurrectMult(0),
+	captureMult(0),
 	curBuild(0),
 	curReclaim(0),
 	terraforming(false),
@@ -74,22 +82,30 @@ CBuilder::CBuilder()
 {
 }
 
+
 CBuilder::~CBuilder()
 {
 }
 
+
 void CBuilder::UnitInit(UnitDef* def, int team, const float3& position)
 {
-	buildSpeed=def->buildSpeed/32.0f;
-	buildDistance=def->buildDistance;
+	buildSpeed    = def->buildSpeed / 32.0f;
+	buildDistance = def->buildDistance;
+	repairMult    = def->repairMult;
+	reclaimMult   = def->reclaimMult;
+	resurrectMult = def->resurrectMult;
+	captureMult   = def->captureMult;
 
 	CUnit::UnitInit (def, team, position);
 }
 
+
 void CBuilder::Update()
 {
-	if(beingBuilt)
+	if (beingBuilt) {
 		return;
+	}
 
 	if(terraforming && inBuildStance){
 		if(terraformLeft>0){
@@ -165,7 +181,8 @@ void CBuilder::Update()
 				StopBuild();
 			}
 		}
-	} else if (helpTerraform && inBuildStance) {
+	}
+	else if (helpTerraform && inBuildStance) {
 		if (helpTerraform->terraforming) {
 			helpTerraform->terraformHelp+=buildSpeed;
 			CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
@@ -174,44 +191,55 @@ void CBuilder::Update()
 			helpTerraform=0;
 			StopBuild(true);
 		}
-	} else if(curBuild && curBuild->pos.distance2D(pos)<buildDistance+curBuild->radius) {
+	}
+	else if (curBuild && curBuild->pos.distance2D(pos) < buildDistance + curBuild->radius) {
 		if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
 			StopBuild();
 		} else {
-			if (inBuildStance) {
-				isCloaked = false;
-				curCloakTimeout = gs->frameNum + cloakTimeout;
-				if (curBuild->AddBuildPower(buildSpeed, this)) {
+			if (!inBuildStance) {
+				curBuild->AddBuildPower(0.001f, this); //prevent building timing out
+			} else {
+  			isCloaked = false;
+  			curCloakTimeout = gs->frameNum + cloakTimeout;
+
+  			float adjBuildSpeed; // adjusted build speed
+  			if (curBuild->buildProgress < 1.0f) {
+  				adjBuildSpeed = buildSpeed;              // new build
+  			} else {
+  				adjBuildSpeed = buildSpeed * repairMult; // repair
+				}
+
+				if (curBuild->AddBuildPower(adjBuildSpeed, this)) {
 					CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 				} else {
-					if (!curBuild->beingBuilt && (curBuild->health >= curBuild->maxHealth)) {
+					if(!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
 						StopBuild();
 					}
 				}
-			} else {
-				curBuild->AddBuildPower(0.001f, this); //prevent building timing out
 			}
 		}
-	} else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
+	}
+	else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		isCloaked=false;
 		curCloakTimeout=gs->frameNum+cloakTimeout;
-		if(curReclaim->AddBuildPower(-buildSpeed,this)){
+		if(curReclaim->AddBuildPower(-buildSpeed*reclaimMult,this)){
 			CreateNanoParticle(curReclaim->midPos,curReclaim->radius*0.7f,true);
 		}
-	} else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
+	}
+	else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
 		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
 			if( modInfo->reclaimMethod != 1 && curResurrect->reclaimLeft < 1)
 			{
 				// This corpse has been reclaimed a little, need to restore the resources
 				// before we can let the player resurrect it.
-				curResurrect->AddBuildPower(buildSpeed,this);
+				curResurrect->AddBuildPower(buildSpeed*repairMult,this);
 			}
 			else
 			{
 				// Corpse has been restored, begin resurrection
-				if(UseEnergy(ud->energyCost*buildSpeed/ud->buildTime*0.5f)){
-					curResurrect->resurrectProgress+=buildSpeed/ud->buildTime;
+				if(UseEnergy(ud->energyCost*buildSpeed*resurrectMult/ud->buildTime*0.5f)){
+					curResurrect->resurrectProgress+=buildSpeed*resurrectMult/ud->buildTime;
 					CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
 				}
 				if(curResurrect->resurrectProgress>1){		//resurrect finished
@@ -233,9 +261,10 @@ void CBuilder::Update()
 		} else {
 			StopBuild(true);
 		}
-	} else if(curCapture && curCapture->pos.distance2D(pos)<buildDistance+curCapture->radius && inBuildStance){
+	}
+	else if(curCapture && curCapture->pos.distance2D(pos)<buildDistance+curCapture->radius && inBuildStance){
 		if(curCapture->team!=team){
-			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/buildSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
+			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/(buildSpeed*captureMult)*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
 			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
 			if(curCapture->captureProgress > 1.0f){
 				if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
@@ -262,6 +291,7 @@ void CBuilder::Update()
 	CUnit::Update();
 }
 
+
 void CBuilder::SlowUpdate(void)
 {
 	if(terraforming){
@@ -269,6 +299,7 @@ void CBuilder::SlowUpdate(void)
 	}
 	CUnit::SlowUpdate();
 }
+
 
 void CBuilder::SetRepairTarget(CUnit* target)
 {
@@ -308,6 +339,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	SetBuildStanceToward(target->pos);
 }
 
+
 void CBuilder::SetResurrectTarget(CFeature* target)
 {
 	if(curResurrect==target || target->createdFromUnit=="")
@@ -322,6 +354,7 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 	SetBuildStanceToward(target->pos);
 }
 
+
 void CBuilder::SetCaptureTarget(CUnit* target)
 {
 	if(target==curCapture)
@@ -335,6 +368,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 
 	SetBuildStanceToward(target->pos);
 }
+
 
 void CBuilder::StartRestore(float3 centerPos, float radius)
 {
@@ -364,6 +398,7 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	SetBuildStanceToward(centerPos);
 }
 
+
 void CBuilder::StopBuild(bool callScript)
 {
 	if(curBuild)
@@ -387,6 +422,7 @@ void CBuilder::StopBuild(bool callScript)
 	ReleaseTempHoldFire();
 //	logOutput.Print("stop build");
 }
+
 
 bool CBuilder::StartBuild(BuildInfo& buildInfo)
 {
@@ -463,6 +499,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	return true;
 }
 
+
 void CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 {
 	float3& buildPos=buildInfo.pos;
@@ -489,6 +526,7 @@ void CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 
 	terraformLeft=tcost;
 }
+
 
 void CBuilder::DependentDied(CObject *o)
 {
@@ -529,6 +567,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 		sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
 }
 
+
 void CBuilder::HelpTerraform(CBuilder* unit)
 {
 	if(helpTerraform==unit)
@@ -541,6 +580,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 	SetBuildStanceToward(unit->terraformCenter);
 }
+
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
