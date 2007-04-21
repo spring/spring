@@ -60,6 +60,10 @@ void CShieldPartProjectile::Update(void)
 
 void CShieldPartProjectile::Draw(void)
 {
+	if (baseAlpha <= 0.0f) {
+		return;
+	}
+
 	inArray=true;
 	unsigned char col[4];
 
