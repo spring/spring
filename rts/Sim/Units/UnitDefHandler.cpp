@@ -341,13 +341,19 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1f;
 	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
 
-	ud.buildSpeed    = atof(tdfparser.SGetValueDef("0.0",  "UNITINFO\\WorkerTime").c_str());
-	ud.repairMult    = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\RepairMult").c_str());
-	ud.reclaimMult   = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\ReclaimMult").c_str());
-	ud.resurrectMult = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\ResurrectMult").c_str());
-	ud.captureMult   = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\CaptureMult").c_str());
-	ud.buildDistance = atof(tdfparser.SGetValueDef("64.0", "UNITINFO\\BuildDistance").c_str());
+	ud.buildDistance = atof(tdfparser.SGetValueDef("128.0", "UNITINFO\\BuildDistance").c_str());
 	ud.buildDistance = std::max(128.0f, ud.buildDistance);
+	ud.buildSpeed = atof(tdfparser.SGetValueDef("0.0", "UNITINFO\\WorkerTime").c_str());
+	const string repairStr    = tdfparser.SGetValueDef("", "UNITINFO\\RepairSpeed");
+	const string reclaimStr   = tdfparser.SGetValueDef("", "UNITINFO\\ReclaimSpeed");
+	const string resurrectStr = tdfparser.SGetValueDef("", "UNITINFO\\ResurrectSpeed");
+	const string captureStr   = tdfparser.SGetValueDef("", "UNITINFO\\CaptureSpeed");
+	const string terraformStr = tdfparser.SGetValueDef("", "UNITINFO\\TerraformSpeed");
+	ud.repairSpeed    = repairStr.empty()    ? ud.buildSpeed : atof(repairStr.c_str());
+	ud.reclaimSpeed   = reclaimStr.empty()   ? ud.buildSpeed : atof(reclaimStr.c_str());
+	ud.resurrectSpeed = resurrectStr.empty() ? ud.buildSpeed : atof(resurrectStr.c_str());
+	ud.captureSpeed   = captureStr.empty()   ? ud.buildSpeed : atof(captureStr.c_str());
+	ud.terraformSpeed = terraformStr.empty() ? ud.buildSpeed : atof(terraformStr.c_str());
 
 	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1.0", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);

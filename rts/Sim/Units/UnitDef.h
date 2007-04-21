@@ -91,15 +91,16 @@ struct UnitDef
 	float seismicSignature;
 	bool stealth;
 
-	float buildSpeed;
 	float buildDistance;
+	float buildSpeed;
+	float reclaimSpeed;
+	float repairSpeed;
+	float resurrectSpeed;
+	float captureSpeed;
+	float terraformSpeed;
+
 	float mass;
 
-	float reclaimMult;
-	float repairMult;
-	float captureMult;
-	float resurrectMult;
-	
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxSlope;
