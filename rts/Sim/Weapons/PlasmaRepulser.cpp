@@ -44,7 +44,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	radius(0),
 	sqRadius(0),
 	curPower(0),
-	lastPower(0),
+	lastPower(-1),
 	hitFrames(0),
 	isEnabled(true),
 	wasEnabled(false),
