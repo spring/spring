@@ -203,8 +203,17 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		print "Succes building streflop!"
 
 # Use this to avoid an error message 'how to make target test ?'
-# This can be replaced for unit testing code at any time (in other branch for example).
 env.Alias('test', None)
+
+# Simple unit testing framework. In all 'Test' subdirectories, if a file 'test'
+# exists, it is run. This test script should then compile the test(s) and run them.
+if 'test' in sys.argv and env['platform'] != 'windows':
+	for dir in filelist.list_directories(env, 'rts'):
+		if dir.endswith('/Test'):
+			test = os.path.join(dir, 'test')
+			if os.path.isfile(test):
+				os.system(test)
+
 
 # Build gamedata zip archives
 
