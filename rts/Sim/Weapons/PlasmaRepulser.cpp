@@ -23,27 +23,32 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
 	CR_MEMBER(curPower),
+	CR_MEMBER(hitFrames),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
 	CR_MEMBER(visibleShieldParts)
 	));
 
-static void ShieldScriptCallback(int retCode,void* p1,void* p2)
+
+static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	((CPlasmaRepulser*)p1)->isEnabled=!!retCode;
+	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
 }
+
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 : CWeapon(owner),
 	radius(0),
 	sqRadius(0),
 	curPower(0),
+	hitFrames(0),
 	isEnabled(true),
 	startShowingShield(true)
 {
 	interceptHandler.AddPlasmaRepulser(this);
 }
+
 
 CPlasmaRepulser::~CPlasmaRepulser(void)
 {
@@ -53,6 +58,7 @@ CPlasmaRepulser::~CPlasmaRepulser(void)
 		(*si)->deleteMe=true;
 	}
 }
+
 
 void CPlasmaRepulser::Init(void)
 {
@@ -64,70 +70,116 @@ void CPlasmaRepulser::Init(void)
 
 	CWeapon::Init();
 }
+
+
 void CPlasmaRepulser::Update(void)
 {
-	if(startShowingShield)
-	{
-		startShowingShield=false;
-		if(weaponDef->visibleShield){
-			for(int y=0;y<16;y+=4){
-				for(int x=0;x<32;x+=4){
-					visibleShieldParts.push_back(SAFE_NEW CShieldPartProjectile(owner->pos,x,y,radius,weaponDef->shieldBadColor,weaponDef->shieldAlpha,weaponDef->visuals.texture1, owner));
+	const int defHitFrames = weaponDef->visibleShieldHitFrames;
+	const bool couldBeVisible = (weaponDef->visibleShield || (defHitFrames > 0));
+
+	if (startShowingShield) {
+		startShowingShield = false;
+		if (couldBeVisible) {
+			// 32 parts
+			for (int y = 0; y < 16; y += 4) {
+				for (int x = 0; x < 32; x += 4) {
+					visibleShieldParts.push_back(
+						SAFE_NEW CShieldPartProjectile(owner->pos, x, y, radius,
+						                               weaponDef->shieldBadColor,
+						                               weaponDef->shieldAlpha,
+						                               weaponDef->visuals.texture1, owner)
+					);
 				}
 			}
 		}
 	}
 
-	if(curPower<weaponDef->shieldPower && isEnabled){
-		if(owner->UseEnergy(weaponDef->shieldPowerRegenEnergy*(1.0f/30)))
-			curPower+=weaponDef->shieldPowerRegen*(1.0f/30);
+	if (isEnabled && (curPower < weaponDef->shieldPower)) {
+		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / 30.0f))) {
+			curPower += weaponDef->shieldPowerRegen*(1.0f / 30.0f);
+		}
 	}
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z) 
+	                       + (owner->updir    * relWeaponPos.y)
+	                       + (owner->rightdir * relWeaponPos.x);
 
-	if(weaponDef->visibleShield){
-		float colorMix=min(1.f,curPower/(max(1.f,weaponDef->shieldPower)));
-		float3 color=weaponDef->shieldGoodColor*colorMix+weaponDef->shieldBadColor*(1-colorMix);
-		for(std::list<CShieldPartProjectile*>::iterator si=visibleShieldParts.begin();si!=visibleShieldParts.end();++si){
-			(*si)->centerPos=weaponPos;
-			(*si)->color=color;
-			if(isEnabled)
-				(*si)->baseAlpha=weaponDef->shieldAlpha;
-			else
-				(*si)->baseAlpha=0;
+	if (couldBeVisible) {
+		float drawAlpha = 0.0f;
+		if (weaponDef->visibleShield) {
+			drawAlpha += 1.0f;
+		}
+		const int oldFrames = hitFrames;
+		if (hitFrames > 0) {
+			drawAlpha += float(hitFrames) / float(defHitFrames);
+			hitFrames--;
+		}
+		drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
+
+		const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
+		const float3 color = (weaponDef->shieldGoodColor * colorMix) +
+												 (weaponDef->shieldBadColor * (1.0f - colorMix));
+		std::list<CShieldPartProjectile*>::iterator si;
+		for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
+			(*si)->centerPos = weaponPos;
+			(*si)->color = color;
+			if (isEnabled) {
+				(*si)->baseAlpha = drawAlpha;
+			} else {
+				(*si)->baseAlpha = 0.0f;
+			}
 		}
 	}
 
-	if(isEnabled){
-		for(std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi){
-			float3 dif=(*pi)->pos-owner->pos;
-			if((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]){
-				if(gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
-					if(weaponDef->shieldRepulser){	//bounce the projectile
-						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
-						if(type==0){
+	if (isEnabled) {
+		for (std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi) {
+			const float3 dif = (*pi)->pos-owner->pos;
+			if ((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]) {
+				if (gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
+					if (weaponDef->shieldRepulser) {
+					  // bounce the projectile
+						const int type = (*pi)->ShieldRepulse(this, weaponPos,
+						                                      weaponDef->shieldForce,
+						                                      weaponDef->shieldMaxSpeed);
+						if (type == 0) {
 							continue;
-						} else if (type==1){
-							owner->UseEnergy(weaponDef->shieldEnergyUse);
-							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->weaponDef->damages[0];
-						} else {
-							owner->UseEnergy(weaponDef->shieldEnergyUse/30.0f);
-							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->weaponDef->damages[0]/30.0f;
 						}
-						if(weaponDef->visibleShieldRepulse){
-							if(hasGfx.find(*pi)==hasGfx.end()){
-								hasGfx.insert(*pi);
-								float colorMix=min(1.f,curPower/(max(1.f,weaponDef->shieldPower)));
-								float3 color=weaponDef->shieldGoodColor*colorMix+weaponDef->shieldBadColor*(1-colorMix);
-								SAFE_NEW CRepulseGfx(owner,*pi,radius,color);
+						else if (type == 1) {
+							owner->UseEnergy(weaponDef->shieldEnergyUse);
+							if (weaponDef->shieldPower != 0) {
+								curPower -= (*pi)->weaponDef->damages[0];
 							}
 						}
-					} else {						//kill the projectile
-						if(owner->UseEnergy(weaponDef->shieldEnergyUse)){
-							if(weaponDef->shieldPower != 0)
-								curPower-=(*pi)->weaponDef->damages[0];
+						else {
+							owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
+							if (weaponDef->shieldPower != 0) {
+								curPower -= (*pi)->weaponDef->damages[0] / 30.0f;
+							}
+						}
+
+						if (weaponDef->visibleShieldRepulse) {
+							if (hasGfx.find(*pi) == hasGfx.end()) {
+								hasGfx.insert(*pi);
+								const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
+								const float3 color = (weaponDef->shieldGoodColor * colorMix) +
+								                     (weaponDef->shieldBadColor * (1.0f - colorMix));
+								SAFE_NEW CRepulseGfx(owner, *pi, radius, color);
+							}
+						}
+
+						if (defHitFrames > 0) {
+							hitFrames = defHitFrames;
+						}
+					}
+					else {
+					  // kill the projectile
+						if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
+							if (weaponDef->shieldPower != 0) {
+								curPower -= (*pi)->weaponDef->damages[0];
+							}
 							(*pi)->Collision(owner);
+							if (defHitFrames > 0) {
+								hitFrames = defHitFrames;
+							}
 						}
 					}
 				} else {
@@ -151,19 +203,22 @@ void CPlasmaRepulser::Update(void)
 	}
 }
 
+
 void CPlasmaRepulser::SlowUpdate(void)
 {
 	std::vector<int> args;
 	args.push_back(0);
 	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-
+	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
+	                       + (owner->updir    * relWeaponPos.y)
+	                       + (owner->rightdir * relWeaponPos.x);
 	std::vector<int> args2;
 	args2.push_back(0);
 	args2.push_back(0);
 	owner->cob->Call(COBFN_AimPrimary+weaponNum,args2,ShieldScriptCallback,this,0);
 }
+
 
 void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 {
@@ -192,6 +247,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 		AddDeathDependence(p);
 	}
 }
+
 
 float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir)
 {
@@ -228,12 +284,14 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	return -1;
 }
 
+
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
 	incoming.remove((CWeaponProjectile*)o);
 	hasGfx.erase((CWeaponProjectile*)o);
 	CWeapon::DependentDied(o);
 }
+
 
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter)
 {

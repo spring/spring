@@ -517,6 +517,7 @@ static bool InitParamMap()
 	ADD_BOOL("exteriorShield", wd.exteriorShield);
 	ADD_BOOL("visibleShield", wd.visibleShield);
 	ADD_BOOL("visibleShieldRepulse", wd.visibleShieldRepulse);
+	ADD_INT( "visibleShieldHitFrames", wd.visibleShieldHitFrames);
 	ADD_FLOAT("shieldEnergyUse", wd.shieldEnergyUse);
 	ADD_FLOAT("shieldRadius", wd.shieldRadius);
 	ADD_FLOAT("shieldForce", wd.shieldForce);
