@@ -511,27 +511,27 @@ static bool InitParamMap()
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 
-	ADD_BOOL("isShield", wd.isShield);
-	ADD_BOOL("shieldRepulser", wd.shieldRepulser);
-	ADD_BOOL("smartShield", wd.smartShield);
-	ADD_BOOL("exteriorShield", wd.exteriorShield);
-	ADD_BOOL("visibleShield", wd.visibleShield);
-	ADD_BOOL("visibleShieldRepulse", wd.visibleShieldRepulse);
-	ADD_INT( "visibleShieldHitFrames", wd.visibleShieldHitFrames);
-	ADD_FLOAT("shieldEnergyUse", wd.shieldEnergyUse);
-	ADD_FLOAT("shieldRadius", wd.shieldRadius);
-	ADD_FLOAT("shieldForce", wd.shieldForce);
-	ADD_FLOAT("shieldMaxSpeed", wd.shieldMaxSpeed);
-	ADD_FLOAT("shieldPower", wd.shieldPower);
-	ADD_FLOAT("shieldPowerRegen", wd.shieldPowerRegen);
+	ADD_BOOL("isShield",                wd.isShield);
+	ADD_BOOL("shieldRepulser",          wd.shieldRepulser);
+	ADD_BOOL("smartShield",             wd.smartShield);
+	ADD_BOOL("exteriorShield",          wd.exteriorShield);
+	ADD_BOOL("visibleShield",           wd.visibleShield);
+	ADD_BOOL("visibleShieldRepulse",    wd.visibleShieldRepulse);
+	ADD_INT( "visibleShieldHitFrames",  wd.visibleShieldHitFrames);
+	ADD_FLOAT("shieldEnergyUse",        wd.shieldEnergyUse);
+	ADD_FLOAT("shieldRadius",           wd.shieldRadius);
+	ADD_FLOAT("shieldForce",            wd.shieldForce);
+	ADD_FLOAT("shieldMaxSpeed",         wd.shieldMaxSpeed);
+	ADD_FLOAT("shieldPower",            wd.shieldPower);
+	ADD_FLOAT("shieldPowerRegen",       wd.shieldPowerRegen);
 	ADD_FLOAT("shieldPowerRegenEnergy", wd.shieldPowerRegenEnergy);
-	ADD_FLOAT("shieldGoodColorR", wd.shieldGoodColor.x); // CUSTOM
-	ADD_FLOAT("shieldGoodColorG", wd.shieldGoodColor.y); // CUSTOM
-	ADD_FLOAT("shieldGoodColorB", wd.shieldGoodColor.z); // CUSTOM
-	ADD_FLOAT("shieldBadColorR", wd.shieldBadColor.x); // CUSTOM
-	ADD_FLOAT("shieldBadColorG", wd.shieldBadColor.y); // CUSTOM
-	ADD_FLOAT("shieldBadColorB", wd.shieldBadColor.z); // CUSTOM
-	ADD_FLOAT("shieldAlpha", wd.shieldAlpha);
+	ADD_FLOAT("shieldGoodColorR",       wd.shieldGoodColor.x);
+	ADD_FLOAT("shieldGoodColorG",       wd.shieldGoodColor.y);
+	ADD_FLOAT("shieldGoodColorB",       wd.shieldGoodColor.z);
+	ADD_FLOAT("shieldBadColorR",        wd.shieldBadColor.x);
+	ADD_FLOAT("shieldBadColorG",        wd.shieldBadColor.y);
+	ADD_FLOAT("shieldBadColorB",        wd.shieldBadColor.z);
+	ADD_FLOAT("shieldAlpha",            wd.shieldAlpha);
 
 	// FIXME: these 2 are bit fields
 	ADD_INT("shieldInterceptType",  wd.shieldInterceptType);

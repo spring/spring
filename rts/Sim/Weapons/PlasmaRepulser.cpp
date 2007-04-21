@@ -25,6 +25,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(curPower),
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(isEnabled),
+	CR_MEMBER(wasEnabled),
 	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
 	CR_MEMBER(visibleShieldParts)
@@ -44,6 +45,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	curPower(0),
 	hitFrames(0),
 	isEnabled(true),
+	wasEnabled(false),
 	startShowingShield(true)
 {
 	interceptHandler.AddPlasmaRepulser(this);
@@ -105,27 +107,30 @@ void CPlasmaRepulser::Update(void)
 
 	if (couldBeVisible) {
 		float drawAlpha = 0.0f;
-		if (weaponDef->visibleShield) {
-			drawAlpha += 1.0f;
-		}
 		const int oldFrames = hitFrames;
 		if (hitFrames > 0) {
 			drawAlpha += float(hitFrames) / float(defHitFrames);
 			hitFrames--;
 		}
-		drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
 
-		const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
-		const float3 color = (weaponDef->shieldGoodColor * colorMix) +
-												 (weaponDef->shieldBadColor * (1.0f - colorMix));
-		std::list<CShieldPartProjectile*>::iterator si;
-		for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
-			(*si)->centerPos = weaponPos;
-			(*si)->color = color;
-			if (isEnabled) {
-				(*si)->baseAlpha = drawAlpha;
-			} else {
-				(*si)->baseAlpha = 0.0f;
+		if ((isEnabled != wasEnabled) || (hitFrames != oldFrames)) {
+			if (weaponDef->visibleShield) {
+				drawAlpha += 1.0f;
+			}
+			drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
+
+			const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
+			const float3 color = (weaponDef->shieldGoodColor * colorMix) +
+													 (weaponDef->shieldBadColor * (1.0f - colorMix));
+			std::list<CShieldPartProjectile*>::iterator si;
+			for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
+				(*si)->centerPos = weaponPos;
+				(*si)->color = color;
+				if (isEnabled) {
+					(*si)->baseAlpha = drawAlpha;
+				} else {
+					(*si)->baseAlpha = 0.0f;
+				}
 			}
 		}
 	}
@@ -201,6 +206,8 @@ void CPlasmaRepulser::Update(void)
 			}
 		}
 	}
+
+	wasEnabled = isEnabled;
 }
 
 
@@ -216,33 +223,37 @@ void CPlasmaRepulser::SlowUpdate(void)
 	std::vector<int> args2;
 	args2.push_back(0);
 	args2.push_back(0);
-	owner->cob->Call(COBFN_AimPrimary+weaponNum,args2,ShieldScriptCallback,this,0);
+	owner->cob->Call(COBFN_AimPrimary + weaponNum, args2, ShieldScriptCallback, this, 0);
 }
 
 
 void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 {
-	if(weaponDef->smartShield && gs->AlliedTeams(p->owner->team,owner->team))
+	if (weaponDef->smartShield && gs->AlliedTeams(p->owner->team, owner->team)) {
 		return;
+	}
 
 	float3 dir;
-	if(p->targetPos!=ZeroVector)
-		dir=p->targetPos-p->pos;	//assume that it will travel roughly in the direction of the targetpos if it have one
-	else
-		dir=p->speed;				//otherwise assume speed will hold constant
-	dir.y=0;
+	if (p->targetPos!=ZeroVector) {
+		dir = p->targetPos-p->pos; // assume that it will travel roughly in the direction of the targetpos if it have one
+	} else {
+		dir = p->speed;            // otherwise assume speed will hold constant
+	}
+	dir.y = 0;
 	dir.Normalize();
-	float3 dif=owner->pos-p->pos;
+	float3 dif = owner->pos-p->pos;
 
-	if(weaponDef->exteriorShield && dif.SqLength() < sqRadius)
+	if (weaponDef->exteriorShield && (dif.SqLength() < sqRadius)) {
 		return;
+	}
 
 	float closeLength=dif.dot(dir);
-	if(closeLength<0)
-		closeLength=0;
+	if (closeLength < 0) {
+		closeLength = 0;
+	}
 	float3 closeVect=dif-dir*closeLength;
 
-	if(closeVect.Length2D()<radius*1.5f+400){
+	if (closeVect.Length2D() < (radius * 1.5f + 400)) {
 		incoming.push_back(p);
 		AddDeathDependence(p);
 	}
@@ -251,34 +262,37 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 
 float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir)
 {
-	if(!isEnabled)
+	if (!isEnabled) {
 		return -1;
-
-	if(emitter->damages[0] > curPower)
+	}
+	if (emitter->damages[0] > curPower) {
 		return -1;
-
-	if(weaponDef->smartShield && gs->AlliedTeams(emitter->owner->team,owner->team))
+	}
+	if (weaponDef->smartShield && gs->AlliedTeams(emitter->owner->team,owner->team)) {
 		return -1;
+	}
 
-	float3 dif=weaponPos-start;
+	const float3 dif = weaponPos - start;
 
-	if(weaponDef->exteriorShield && dif.SqLength() < sqRadius)
+	if (weaponDef->exteriorShield && dif.SqLength() < sqRadius) {
 		return -1;
+	}
 
-	float closeLength=dif.dot(dir);
+	const float closeLength = dif.dot(dir);
 
-	if(closeLength<0)
+	if (closeLength < 0) {
 		return -1;
+	}
 
-	float3 closeVect=dif-dir*closeLength;
+	const float3 closeVect = dif-dir*closeLength;
 
-	float tmp = sqRadius - closeVect.SqLength();
-	if(tmp > 0 && length > closeLength-sqrt(tmp)){
-		float colLength=closeLength-sqrt(tmp);
-		float3 colPoint=start+dir*colLength;
-		float3 normal=colPoint-weaponPos;
+	const float tmp = sqRadius - closeVect.SqLength();
+	if ((tmp > 0) && (length > (closeLength - sqrt(tmp)))) {
+		float colLength = closeLength - sqrt(tmp);
+		float3 colPoint = start + dir * colLength;
+		float3 normal = colPoint - weaponPos;
 		normal.Normalize();
-		newDir=dir-normal*normal.dot(dir)*2;
+		newDir = dir-normal*normal.dot(dir) * 2;
 		return colLength;
 	}
 	return -1;
@@ -295,8 +309,8 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter)
 {
-	if(weaponDef->shieldPower > 0)
-		curPower-=emitter->damages[0];
-
+	if (weaponDef->shieldPower > 0) {
+		curPower -= emitter->damages[0];
+	}
 	return weaponDef->shieldRepulser;
 }

@@ -35,6 +35,7 @@ public:
 	int hitFrames;
 
 	bool isEnabled;
+	bool wasEnabled;
 	bool startShowingShield;
 };
 
