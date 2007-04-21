@@ -340,10 +340,16 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str());
 	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1f;
 	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
-	ud.buildSpeed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\WorkerTime").c_str());
-	ud.buildDistance=atof(tdfparser.SGetValueDef("64", "UNITINFO\\Builddistance").c_str());
-	ud.buildDistance=std::max(128.f,ud.buildDistance);
-	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1", "UNITINFO\\DamageModifier").c_str());
+
+	ud.buildSpeed    = atof(tdfparser.SGetValueDef("0.0",  "UNITINFO\\WorkerTime").c_str());
+	ud.repairMult    = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\RepairMult").c_str());
+	ud.reclaimMult   = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\ReclaimMult").c_str());
+	ud.resurrectMult = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\ResurrectMult").c_str());
+	ud.captureMult   = atof(tdfparser.SGetValueDef("1.0",  "UNITINFO\\CaptureMult").c_str());
+	ud.buildDistance = atof(tdfparser.SGetValueDef("64.0", "UNITINFO\\BuildDistance").c_str());
+	ud.buildDistance = std::max(128.0f, ud.buildDistance);
+
+	ud.armoredMultiple=atof(tdfparser.SGetValueDef("1.0", "UNITINFO\\DamageModifier").c_str());
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	logOutput.Print("unit %s has armor %i",ud.name.c_str(),ud.armorType);
 

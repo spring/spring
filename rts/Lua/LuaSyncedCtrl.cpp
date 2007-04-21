@@ -123,6 +123,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
+	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -1152,6 +1153,47 @@ int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 	}
 	mex->ResetExtraction();
 	mex->SetExtractionRangeAndDepth(range, depth);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitBuildSpeed()");
+	}
+	const float buildSpeed = max(0.0f, (float)lua_tonumber(L, 2));
+	CFactory* factory = dynamic_cast<CFactory*>(unit);
+	if (factory) {
+		factory->buildSpeed = buildSpeed;
+		return 0;
+	}
+	CBuilder* builder = dynamic_cast<CBuilder*>(unit);
+	if (!builder) {
+		return 0;
+	}
+	builder->buildSpeed = buildSpeed;
+	if ((args >= 3) && lua_isnumber(L, 3)) {
+		const float repairMult = max(0.0f, (float)lua_tonumber(L, 3));
+		builder->repairMult = repairMult;
+	}
+	if ((args >= 4) && lua_isnumber(L, 4)) {
+		const float reclaimMult = max(0.0f, (float)lua_tonumber(L, 4));
+		builder->reclaimMult = reclaimMult;
+	}
+	if ((args >= 5) && lua_isnumber(L, 5)) {
+		const float resurrectMult = max(0.0f, (float)lua_tonumber(L, 5));
+		builder->resurrectMult = resurrectMult;
+	}
+	if ((args >= 6) && lua_isnumber(L, 6)) {
+		const float captureMult = max(0.0f, (float)lua_tonumber(L, 6));
+		builder->captureMult = captureMult;
+	}
 	return 0;
 }
 
