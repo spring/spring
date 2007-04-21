@@ -117,18 +117,20 @@ void CFactory::Update()
 
 	if (curBuild && !beingBuilt &&
 	    (queue.empty() || (queue.front().id != CMD_WAIT))) {
-		lastBuild=gs->frameNum;
+		lastBuild = gs->frameNum;
 
-		int buildPiece = GetBuildPiece();
-		CMatrix44f mat=localmodel->GetPieceMatrix(buildPiece);
-		int h=GetHeadingFromVector(mat[2],mat[10]);
-		curBuild->heading = (h + buildFacing*16*1024) & 65535;
+		const int buildPiece = GetBuildPiece();
+		CMatrix44f mat = localmodel->GetPieceMatrix(buildPiece);
+		const int h = GetHeadingFromVector(mat[2], mat[10]);
+		curBuild->heading = (h + (buildFacing * 16 * 1024)) & 65535;
 
-		float3 buildPos = curBuild->pos = CalcBuildPos(buildPiece);
+		const float3 buildPos = CalcBuildPos(buildPiece);
+		curBuild->pos = buildPos;
 		if (curBuild->floatOnWater) {
-			curBuild->pos.y=ground->GetHeight(buildPos.x,buildPos.z)-curBuild->unitDef->waterline;
+			curBuild->pos.y  = ground->GetHeight(buildPos.x, buildPos.z);
+			curBuild->pos.y -= curBuild->unitDef->waterline;
 		}
-		curBuild->midPos=curBuild->pos+UpVector*curBuild->relMidPos.y;
+		curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
 
 		if (curBuild->AddBuildPower(buildSpeed,this)) {
 			std::vector<int> args;
@@ -136,19 +138,22 @@ void CFactory::Update()
 			cob->Call("QueryNanoPiece",args);
 
 			if (unitDef->showNanoSpray) {
-				float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
-				float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
-
-				float3 dif=curBuild->midPos-weaponPos;
-				float l=dif.Length();
-				dif/=l;
-				dif+=gs->randVector()*0.15f;
-				float3 color= unitDef->nanoColor;
-				if(gu->teamNanospray){
-					unsigned char* tcol=gs->Team(team)->color;
-					color = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
+				const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+				const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
+				                             + (updir    * relWeaponFirePos.y)
+				                             + (rightdir * relWeaponFirePos.x);
+				float3 dif = (curBuild->midPos - weaponPos);
+				const float l = dif.Length();
+				dif /= l;
+				dif += gs->randVector() * 0.15f;
+				float3 color = unitDef->nanoColor;
+				if (gu->teamNanospray) {
+					unsigned char* tcol = gs->Team(team)->color;
+					color = float3(tcol[0] * (1.0f / 255.0f),
+					               tcol[1] * (1.0f / 255.0f),
+					               tcol[2] * (1.0f / 255.0f));
 				}
-				SAFE_NEW CGfxProjectile(weaponPos,dif,(int)l,color);
+				SAFE_NEW CGfxProjectile(weaponPos, dif, (int)l, color);
 			}
 		}
 
@@ -158,15 +163,19 @@ void CFactory::Update()
 			if (group && curBuild->group == 0) {
 				curBuild->SetGroup(group);
 			}
+
 			Command c;
-			c.id=CMD_MOVE_STATE;
-			c.options=0;
+			c.options = 0;
+
+			c.id = CMD_MOVE_STATE;
 			c.params.push_back(moveState);
 			curBuild->commandAI->GiveCommand(c);
 			c.params.clear();
-			c.id=CMD_FIRE_STATE;
+
+			c.id = CMD_FIRE_STATE;
 			c.params.push_back(fireState);
 			curBuild->commandAI->GiveCommand(c);
+
 			bool userOrders = true;
 			if (curBuild->commandAI->commandQue.empty() ||
 					(dynamic_cast<CMobileCAI*>(curBuild->commandAI) &&
@@ -190,10 +199,10 @@ void CFactory::Update()
 		}
 	}
 
-	if ((lastBuild+200 < gs->frameNum) &&
+	if (((lastBuild + 200) < gs->frameNum) &&
 	    !quedBuild && opening && uh->CanCloseYard(this)) {
 		readmap->CloseBlockingYard(this);
-		opening=false;
+		opening = false;
 		cob->Call(COBFN_Deactivate);
 	}
 	CBuilding::Update();
