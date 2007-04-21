@@ -118,11 +118,12 @@ void CBuilder::Update()
 		if(terraformLeft>0){
 			float* heightmap = readmap->GetHeightmap();
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
-			float terraformSpeed = (terraformSpeed + terraformHelp) / terraformLeft;
+			float terraformScale = (terraformSpeed + terraformHelp) / terraformLeft;
 			terraformLeft -= (terraformSpeed + terraformHelp);
 			terraformHelp = 0;
-			if(terraformSpeed>1)
-				terraformSpeed=1;
+			if (terraformScale > 1.0f) {
+				terraformScale = 1.0f;
+			}
 			switch(terraformType){
 			case Terraform_Building:
 				if(curBuild)
@@ -130,7 +131,7 @@ void CBuilder::Update()
 				for(int z=tz1; z<=tz2; z++){
 					for(int x=tx1; x<=tx2; x++){
 						float ch=heightmap[z*(gs->mapx+1)+x];
-						heightmap[z*(gs->mapx+1)+x]+=(nextBuildPos.y-ch)*terraformSpeed;
+						heightmap[z*(gs->mapx+1)+x] += (nextBuildPos.y-ch) * terraformScale;
 					}
 				}
 				break;
@@ -139,7 +140,7 @@ void CBuilder::Update()
 					for(int x=tx1; x<=tx2; x++){
 						float ch=heightmap[z*(gs->mapx+1)+x];
 						float oh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-						heightmap[z*(gs->mapx+1)+x]+=(oh-ch)*terraformSpeed;
+						heightmap[z*(gs->mapx+1)+x] += (oh-ch) * terraformScale;
 					}
 				}
 				break;
@@ -150,13 +151,13 @@ void CBuilder::Update()
 						float ch3=heightmap[z*(gs->mapx+1)+tx1];
 						float ch=heightmap[z*(gs->mapx+1)+tx1-x];
 						float ch2=heightmap[z*(gs->mapx+1)+tx1-3];
-						heightmap[z*(gs->mapx+1)+tx1-x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
+						heightmap[z*(gs->mapx+1)+tx1-x] += ((ch3*(3-x)+ch2*x)/3-ch) * terraformScale;
 					}
 					if(tx2+3<gs->mapx){
 						float ch3=heightmap[z*(gs->mapx+1)+tx2];
 						float ch=heightmap[z*(gs->mapx+1)+tx2+x];
 						float ch2=heightmap[z*(gs->mapx+1)+tx2+3];
-						heightmap[z*(gs->mapx+1)+tx2+x]+=((ch3*(3-x)+ch2*x)/3-ch)*terraformSpeed;
+						heightmap[z*(gs->mapx+1)+tx2+x] += ((ch3*(3-x)+ch2*x)/3-ch) * terraformScale;
 					}
 				}
 			}
@@ -166,13 +167,13 @@ void CBuilder::Update()
 						float ch3=heightmap[(tz1)*(gs->mapx+1)+x];
 						float ch=heightmap[(tz1-z)*(gs->mapx+1)+x];
 						float ch2=heightmap[(tz1-3)*(gs->mapx+1)+x];
-						heightmap[(tz1-z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
+						heightmap[(tz1-z)*(gs->mapx+1)+x] += ((ch3*(3-z)+ch2*z)/3-ch) * terraformScale;
 					}
 					if(tz2+3<gs->mapy){
 						float ch3=heightmap[(tz2)*(gs->mapx+1)+x];
 						float ch=heightmap[(tz2+z)*(gs->mapx+1)+x];
 						float ch2=heightmap[(tz2+3)*(gs->mapx+1)+x];
-						heightmap[(tz2+z)*(gs->mapx+1)+x]+=((ch3*(3-z)+ch2*z)/3-ch)*terraformSpeed;
+						heightmap[(tz2+z)*(gs->mapx+1)+x] += ((ch3*(3-z)+ch2*z)/3-ch) * terraformScale;
 					}
 				}
 			}
