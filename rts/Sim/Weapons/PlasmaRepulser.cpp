@@ -23,6 +23,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
 	CR_MEMBER(curPower),
+	CR_MEMBER(lastPower),
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(wasEnabled),
@@ -43,6 +44,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	radius(0),
 	sqRadius(0),
 	curPower(0),
+	lastPower(0),
 	hitFrames(0),
 	isEnabled(true),
 	wasEnabled(false),
@@ -98,7 +100,7 @@ void CPlasmaRepulser::Update(void)
 
 	if (isEnabled && (curPower < weaponDef->shieldPower)) {
 		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / 30.0f))) {
-			curPower += weaponDef->shieldPowerRegen*(1.0f / 30.0f);
+			curPower += weaponDef->shieldPowerRegen * (1.0f / 30.0f);
 		}
 	}
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z) 
@@ -113,7 +115,9 @@ void CPlasmaRepulser::Update(void)
 			hitFrames--;
 		}
 
-		if ((isEnabled != wasEnabled) || (hitFrames != oldFrames)) {
+		if ((isEnabled != wasEnabled) ||
+		    (hitFrames != oldFrames)  ||
+		    (curPower  != lastPower)) {
 			if (weaponDef->visibleShield) {
 				drawAlpha += 1.0f;
 			}
@@ -207,6 +211,7 @@ void CPlasmaRepulser::Update(void)
 		}
 	}
 
+	lastPower = curPower;
 	wasEnabled = isEnabled;
 }
 

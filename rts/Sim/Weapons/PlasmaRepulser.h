@@ -28,6 +28,7 @@ public:
 	void SlowUpdate(void);
 
 	float curPower;
+	float lastPower;
 
 	float radius;
 	float sqRadius;
