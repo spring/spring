@@ -88,17 +88,17 @@ CProjectileHandler::CProjectileHandler()
 	if (!textureAtlas->Finalize())
 		logOutput.Print("Could not finalize projectile texture atlas. Use less/smaller textures.");
 
-	flaretex = textureAtlas->GetTexture("flare");
-	explotex = textureAtlas->GetTexture("explo");
-	explofadetex = textureAtlas->GetTexture("explofade");
-	heatcloudtex = textureAtlas->GetTexture("heatcloud");
-	laserendtex = textureAtlas->GetTexture("laserend");
+	flaretex        = textureAtlas->GetTexture("flare");
+	explotex        = textureAtlas->GetTexture("explo");
+	explofadetex    = textureAtlas->GetTexture("explofade");
+	heatcloudtex    = textureAtlas->GetTexture("heatcloud");
+	laserendtex     = textureAtlas->GetTexture("laserend");
 	laserfallofftex = textureAtlas->GetTexture("laserfalloff");
-	randdotstex = textureAtlas->GetTexture("randdots");
-	smoketrailtex = textureAtlas->GetTexture("smoketrail");
-	waketex = textureAtlas->GetTexture("wake");
-	perlintex = textureAtlas->GetTexture("perlintex");
-	flametex = textureAtlas->GetTexture("flame");
+	randdotstex     = textureAtlas->GetTexture("randdots");
+	smoketrailtex   = textureAtlas->GetTexture("smoketrail");
+	waketex         = textureAtlas->GetTexture("wake");
+	perlintex       = textureAtlas->GetTexture("perlintex");
+	flametex        = textureAtlas->GetTexture("flame");
 
 	for(int i=0; i<12; i++)
 	{
