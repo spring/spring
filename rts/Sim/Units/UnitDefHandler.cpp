@@ -382,6 +382,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		ud.canCloak=false;
 	ud.startCloaked=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\init_cloaked").c_str());
 	ud.decloakDistance=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\mincloakdistance").c_str());
+	ud.decloakOnFire=!!atoi(tdfparser.SGetValueDef("1", "UNITINFO\\decloakOnFire").c_str());
 
 	ud.highTrajectoryType=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HighTrajectory").c_str());
 
