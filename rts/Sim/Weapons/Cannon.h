@@ -24,6 +24,7 @@ public:
 	bool highTrajectory;
 	bool selfExplode;
 	void SlowUpdate(void);
+	float3 GetWantedDir(const float3& diff);
 };
 
 #endif // __CANNON_H__

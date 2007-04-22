@@ -646,8 +646,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// we can hit position with our first (meanest) one
 			CWeapon* w = owner->weapons.front();
 			const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-			const bool inRange = diff.Length() < (w->range - (w->relWeaponPos).Length());
-			if (inAngle && inRange) {
+//			const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
+			if (inAngle) {
 				// if w->AttackGround() returned true then we are already
 				// in range with our biggest weapon so stop moving
 				StopMove();
