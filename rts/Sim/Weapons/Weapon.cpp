@@ -198,8 +198,9 @@ void CWeapon::Update()
 			targetPos.y=1;
 	}
 
-	if(weaponDef->interceptor)
+	if(weaponDef->interceptor) {
 		CheckIntercept();
+	}
 	if(targetType!=Target_None){
 		if(onlyForward){
 			float3 goaldir=targetPos-owner->pos;
@@ -291,7 +292,6 @@ void CWeapon::Update()
 			}
 		}
 	}
-
 	if(salvoLeft && nextSalvo<=gs->frameNum){
 		salvoLeft--;
 		nextSalvo=gs->frameNum+salvoDelay;

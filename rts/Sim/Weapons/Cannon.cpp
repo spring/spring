@@ -57,42 +57,12 @@ CCannon::~CCannon()
 void CCannon::Update()
 {
 	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		if(highTrajectory){
-			if(predict>maxPredict)
-				predict=maxPredict;
-			if(predict<minPredict)
-				predict=minPredict;
-
-			float3 dif=targetPos-weaponPos;
-			float k1=dif.SqLength2D();
-			float h=projectileSpeed*predict;
-			h=h*h;
-
-			float k2=h-k1;
-			if(k2>0){
-				k2=sqrt(k2);
-				k2+=weaponPos.y-targetPos.y;
-				k2/=-gs->gravity*0.5f;
-				if(k2>0)							//why is this needed really (i no longer understand my equations :) )
-					predict=sqrt(k2);
-			}
-			wantedDir=targetPos-float3(0,5,0)-weaponPos;
-			wantedDir.y-=predict*predict*gs->gravity*0.5f;
-			wantedDir.Normalize();
-		} else {
-			float3 dif=targetPos-weaponPos;
-			dif.y-=predict*predict*gs->gravity*0.5f;
-			if (projectileSpeed == 0)
-				predict = maxPredict;
-			else {
-				predict=dif.Length()/projectileSpeed;
-				if(predict>maxPredict)
-					predict=maxPredict;
-			}
-			wantedDir=dif;
-			wantedDir.Normalize();
-		}
+		weaponPos=owner->pos + owner->frontdir*relWeaponPos.z
+				 + owner->updir*relWeaponPos.y + owner->rightdir*relWeaponPos.x;
+		float3 diff = targetPos-weaponPos;
+		wantedDir = GetWantedDir(diff);
+		float speed2D = wantedDir.Length2D() * projectileSpeed;
+		predict = ((speed2D == 0) ? 1 : (diff.Length2D()/speed2D));
 	} else {
 		predict=0;
 	}
@@ -103,44 +73,61 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 {
 
 	if(!CWeapon::TryTarget(pos,userTarget,unit))
+	{
 		return false;
+	}
 
-	if(unit){
+	if(unit)
+	{
 		if(unit->isUnderWater)
+		{
 			return false;
+		}
 	} else {
 		if(pos.y<0)
+		{
 			return false;
+		}
 	}
 
 	if (projectileSpeed == 0)
+	{
 		return true;
-	float3 dif(pos-weaponPos);
+	}
+	float3 dif(pos-weaponPos);/*
 	float predictTime=dif.Length()/projectileSpeed;
 	if(predictTime==0)
 		return true;
 	if(highTrajectory)
 		predictTime=(minPredict+maxPredict)*0.5f;
 	dif.y-=predictTime*predictTime*gs->gravity*0.5f;
-	float length=dif.Length();
+	float length=dif.Length();*/
 
-	float3 dir(dif/length);
+	float3 dir(GetWantedDir(dif));
 
 	float3 flatdir(dif.x,0,dif.z);
 	float flatlength=flatdir.Length();
-	if(flatlength==0)
+	if(flatlength==0) {
 		return true;
+	}
 	flatdir/=flatlength;
 
-	float gc=ground->TrajectoryGroundCol(weaponPos,flatdir,flatlength-10,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5f);
-	if(gc>0)
+	float gc=ground->TrajectoryGroundCol(weaponPos, flatdir, flatlength-10,
+			dir.y , gs->gravity / (projectileSpeed * projectileSpeed) * 0.5f);
+	if(gc>0) {
 		return false;
+	}
 
 /*	gc=ground->LineGroundCol(wpos+dir*(length*0.5f),pos,false);
 	if(gc>0 && gc<length*0.40f)
 		return false;
 */
-	if(avoidFriendly && helper->TestTrajectoryCone(weaponPos,flatdir,flatlength-30,dif.y/flatlength,gs->gravity/(projectileSpeed*projectileSpeed)*0.5f,(accuracy+sprayangle)*0.6f*(1-owner->limExperience*0.9f)*0.9f,3,owner->allyteam,owner)){
+	if(avoidFriendly && helper->TestTrajectoryCone(weaponPos, flatdir,
+		flatlength-30, dir.y, gs->gravity /
+		(projectileSpeed * projectileSpeed) * 0.5f,
+		(accuracy+sprayangle) * 0.6f * (1-owner->limExperience * 0.9f) * 0.9f,
+		3, owner->allyteam, owner))
+	{
 		return false;
 	}
 /*	if(helper->TestCone(weaponPos,dir,length*0.5f,(accuracy+sprayangle)*1.2f*(1-owner->limExperience*0.9f)*0.9f,owner->allyteam,owner)){
@@ -158,19 +145,23 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 void CCannon::Fire(void)
 {
-	float3 dir=targetPos-weaponPos;
-
-	dir.y-=predict*predict*gs->gravity*0.5f;
-	dir.Normalize();
+	float3 diff = targetPos-weaponPos;
+	float3 dir=GetWantedDir(diff);
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
 #ifdef TRACE_SYNC
 	tracefile << "Cannon fire: ";
 	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
-	int ttl=int(maxPredict);
-	if(selfExplode)
+	int ttl = 0;
+	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
+	int predict = ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gs->gravity)
+			: sqrt(diff.SqLength2D() / sqSpeed2D));
+	if(selfExplode) {
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
+	} else {
+		ttl=predict*2;
+	}
 	SAFE_NEW CExplosiveProjectile(weaponPos,dir*projectileSpeed,owner,weaponDef, ttl,areaOfEffect);
 	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,owner->speed,owner, NULL, float3(0,0,0), weaponDef);
 
@@ -206,4 +197,42 @@ bool CCannon::AttackGround(float3 pos,bool userTarget)
 #endif
 
 	return CWeapon::AttackGround(pos,userTarget);
+}
+
+float3 CCannon::GetWantedDir(const float3& diff)
+{
+	float Dsq = diff.SqLength();
+	float DFsq = diff.SqLength2D();
+	float g = gs->gravity;
+	float v = projectileSpeed;
+	float dy = diff.y;
+	float dxz = sqrt(DFsq);
+	float Vxz;
+	float Vy;
+	if(Dsq == 0) {
+		Vxz = 0;
+		Vy = highTrajectory ? v : -v;
+	} else {
+		float root1 = v*v*v*v + 2*v*v*g*dy-g*g*DFsq;
+		if(root1 >= 0) {
+			float root2 = 2*DFsq*Dsq*(v*v + g*dy + (highTrajectory ? -1 : 1)
+				* sqrt(root1));
+			if(root2 >= 0) {
+				Vxz = sqrt(root2)/(2*Dsq);
+				Vy = (dxz == 0 || Vxz == 0) ? v : (Vxz*dy/dxz - dxz*g/(2*Vxz));
+			} else {
+				Vxz = 0;
+				Vy = v;
+			}
+		} else {
+			Vxz = 0;
+			Vy = v;
+		}
+	}
+	float3 dir(diff.x, 0, diff.z);
+	dir.Normalize();
+	dir *= Vxz;
+	dir.y = Vy;
+	dir.Normalize();
+	return dir;
 }
