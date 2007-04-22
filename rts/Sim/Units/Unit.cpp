@@ -1406,6 +1406,7 @@ void CUnit::FinishedBuilding(void)
 
 	if (unitDef->startCloaked) {
 		wantCloak = true;
+		isCloaked=true;
 	}
 
 	if (unitDef->windGenerator>0) {
