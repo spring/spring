@@ -87,7 +87,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "MY_UNITS",    MyUnits);
 	LuaPushNamedNumber(L, "ALLY_UNITS",  AllyUnits);
 	LuaPushNamedNumber(L, "ENEMY_UNITS", EnemyUnits);
-
+	        
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
@@ -108,8 +108,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGameFrame);
 	REGISTER_LUA_CFUNC(GetGameSeconds);
 
-	REGISTER_LUA_CFUNC(GetGameRulesParam);
-	REGISTER_LUA_CFUNC(GetGameRulesParams);
+	REGISTER_LUA_CFUNC(GetGameRulesParam);  
+	REGISTER_LUA_CFUNC(GetGameRulesParams);  
 
 	REGISTER_LUA_CFUNC(GetWind);
 
@@ -129,8 +129,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetTeamUnitStats);
-	REGISTER_LUA_CFUNC(GetTeamRulesParam);
-	REGISTER_LUA_CFUNC(GetTeamRulesParams);
+	REGISTER_LUA_CFUNC(GetTeamRulesParam);  
+	REGISTER_LUA_CFUNC(GetTeamRulesParams);  
 
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
@@ -183,8 +183,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
 
 	REGISTER_LUA_CFUNC(GetUnitCmdDescs);
-	REGISTER_LUA_CFUNC(GetUnitRulesParam);
-	REGISTER_LUA_CFUNC(GetUnitRulesParams);
+	REGISTER_LUA_CFUNC(GetUnitRulesParam);  
+	REGISTER_LUA_CFUNC(GetUnitRulesParams);  
 
 	REGISTER_LUA_CFUNC(GetFeatureList);
 	REGISTER_LUA_CFUNC(GetFeatureDefID);
@@ -515,7 +515,7 @@ int LuaSyncedRead::IsCheatingEnabled(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, gs->cheatEnabled);
-	return 1;
+	return 1;	
 }
 
 
@@ -523,7 +523,7 @@ int LuaSyncedRead::IsEditDefsEnabled(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, gs->editDefsEnabled);
-	return 1;
+	return 1;	
 }
 
 
@@ -534,7 +534,7 @@ int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, !gs->noHelperAIs);
-	return 1;
+	return 1;	
 }
 
 
@@ -542,7 +542,7 @@ int LuaSyncedRead::IsGameOver(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushboolean(L, game->gameOver);
-	return 1;
+	return 1;	
 }
 
 
@@ -665,8 +665,8 @@ int LuaSyncedRead::GetHeadingFromVector(lua_State* L)
 	lua_pushnumber(L, heading);
 	return 1;
 }
-
-
+		
+		
 int LuaSyncedRead::GetVectorFromHeading(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -1181,7 +1181,7 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 	map<int, vector<CUnit*> > unitDefMap;
 	const set<CUnit*>& units = team->units;
 	set<CUnit*>::const_iterator uit;
-
+	
 	// tally for allies
 	if (IsAlliedTeam(teamID)) {
 		for (uit = units.begin(); uit != units.end(); ++uit) {
@@ -1278,7 +1278,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 			if (!IsUnitTyped(unit)) {
 				unknownCount++;
 			} else {
-				const UnitDef* ud = EffectiveUnitDef(unit);
+				const UnitDef* ud = EffectiveUnitDef(unit);	
 				map<const UnitDef*, int>::iterator mit = unitDefCounts.find(ud);
 				if (mit == unitDefCounts.end()) {
 					unitDefCounts[ud] = 1;
@@ -1561,7 +1561,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 	const int allegiance = ParseAllegiance(L, __FUNCTION__, 5);
 
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
-
+	
 	vector<CUnit*>::const_iterator it;
 	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
 
@@ -1588,7 +1588,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, RECTANGLE_TEST);
 	}
-
+	
 	hs_n.PushNumber(L, count);
 
 	return 1;
@@ -1621,7 +1621,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 	if ((y < ymin) || (y > ymax)) { \
 		continue;                     \
 	}
-
+	
 	vector<CUnit*>::const_iterator it;
 	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
 
@@ -1680,7 +1680,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	if (dist > radSqr) {                        \
 		continue;                                 \
 	}                                           \
-
+	
 	vector<CUnit*>::const_iterator it;
 	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
 
@@ -1707,9 +1707,9 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, CYLINDER_TEST);
 	}
-
+	
 	hs_n.PushNumber(L, count);
-
+	
 	return 1;
 }
 
@@ -1744,7 +1744,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	if (dist > radSqr) {                        \
 		continue;                                 \
 	}                                           \
-
+	
 	vector<CUnit*>::const_iterator it;
 	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
 
@@ -1771,9 +1771,9 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, SPHERE_TEST);
 	}
-
+	
 	hs_n.PushNumber(L, count);
-
+	
 	return 1;
 }
 
@@ -1817,7 +1817,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 			}
 		}
 	}
-
+	
 	int startTeam, endTeam;
 
 	const int allegiance = ParseAllegiance(L, __FUNCTION__, 2);
@@ -1844,7 +1844,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	int count = 0;
 
 	const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
-
+	
 	for (int team = startTeam; team <= endTeam; team++) {
 		const set<CUnit*>& units = gs->Team(team)->units;
 		set<CUnit*>::const_iterator it;
@@ -1908,7 +1908,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 
 	vector<CFeature*> rectFeatures = qf->GetFeaturesExact(mins, maxs);
 	const int rectFeatureCount = (int)rectFeatures.size();
-
+	
 	lua_newtable(L);
 	int count = 0;
 	if (readAllyTeam < 0) {
@@ -1975,7 +1975,7 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 			}
 		}
 	}
-
+	
 	return 1;
 }
 
@@ -2577,7 +2577,7 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 	}
 
 	const bool noCmds = (args < 3) ? true : !lua_toboolean(L, 3);
-
+	
 	PackFactoryCounts(L, commandQue, count, noCmds);
 
 	return 1;
@@ -2898,7 +2898,7 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 	return 3;
 }
 
-
+	
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -3000,7 +3000,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
 
 	const float metal = readmap->metalMap->getMetalAmount(ix, iz);
-
+	
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
 	const int typeIndex = readmap->typemap[index];
@@ -3051,7 +3051,7 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	tz1 = (int)max(0 , min(gs->mapy - 1, (int)(fz1 / SQUARE_SIZE)));
 	tz2 = (int)max(0 , min(gs->mapy - 1, (int)(fz2 / SQUARE_SIZE)));
 
-	return;
+	return;	
 }
 
 
@@ -3063,7 +3063,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 	int tx1, tx2, tz1, tz2;
 	ParseMapCoords(L, __FUNCTION__, tx1, tz1, tx2, tz2);
-
+	
 	for(int z = tz1; z <= tz2; z++){
 		for(int x = tx1; x <= tx2; x++){
 			const CSolidObject* s = readmap->GroundBlocked((z * gs->mapx) + x);
@@ -3123,7 +3123,7 @@ static int ParseFacing(lua_State* L, const char* caller, int index)
 		if (dir == "n") { return 2; }
 		if (dir == "w") { return 3; }
 		luaL_error(L, "%s(): bad facing string", caller);
-	}
+	}	
 	luaL_error(L, "%s(): bad facing parameter", caller);
 	return 0;
 }

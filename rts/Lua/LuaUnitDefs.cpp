@@ -103,7 +103,7 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 				HSTR_PUSH(L, "__index");
 				lua_pushlightuserdata(L, (void*)ud);
 				lua_pushcclosure(L, UnitDefIndex, 1);
-				lua_rawset(L, -3); // closure
+				lua_rawset(L, -3); // closure 
 
 				HSTR_PUSH(L, "__newindex");
 				lua_pushlightuserdata(L, (void*)ud);
@@ -147,7 +147,7 @@ bool LuaUnitDefs::IsDefaultParam(const std::string& word)
 
 static int UnitDefIndex(lua_State* L)
 {
-	// not a default value
+	// not a default value	
 	if (!lua_isstring(L, 2)) {
 		lua_rawget(L, 1);
 		return 1;
@@ -156,7 +156,7 @@ static int UnitDefIndex(lua_State* L)
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
 
-	// not a default value
+	// not a default value	
 	if (paramMap.find(name) == paramMap.end()) {
 	  lua_rawget(L, 1);
 	  return 1;
@@ -208,7 +208,7 @@ static int UnitDefNewIndex(lua_State* L)
 
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
-
+	
 	// not a default value, set it
 	if (paramMap.find(name) == paramMap.end()) {
 		lua_rawset(L, 1);
@@ -254,7 +254,7 @@ static int UnitDefNewIndex(lua_State* L)
 			luaL_error(L, "ERROR_TYPE in UnitDefs __newindex");
 		}
 	}
-
+	
 	return 0;
 }
 
@@ -303,7 +303,7 @@ static int Next(lua_State* L)
 			}
 			// start the user parameters,
 			// remove the internal key and push a nil
-			lua_settop(L, 1);
+			lua_settop(L, 1); 
 			lua_pushnil(L);
 		}
 	}
@@ -458,10 +458,10 @@ static void PushGuiSound(lua_State* L,
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "name",   sound.name);
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		HSTR_PUSH_NUMBER(L, "id",   sound.id);
+		HSTR_PUSH_NUMBER(L, "id",   sound.id); 
 	}
 	HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-	lua_rawset(L, -3);
+	lua_rawset(L, -3);  
 }
 
 
@@ -511,7 +511,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 	}
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
-
+	
 	const int Ship_Move   = MoveData::Ship_Move;
 	const int Hover_Move  = MoveData::Hover_Move;
 	const int Ground_Move = MoveData::Ground_Move;
@@ -520,7 +520,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 		case Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
 		case Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
 		case Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		default:          { HSTR_PUSH_STRING(L, "type", "error");  break; }
+		default:          { HSTR_PUSH_STRING(L, "type", "error");  break; } 
 	}
 
 	switch (md->moveFamily) {
@@ -563,7 +563,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 		lua_pushboolean(L, type == #name);                  \
 		return 1;                                           \
 	}
-
+		
 TYPE_STRING_FUNC(Bomber);
 TYPE_STRING_FUNC(Builder);
 TYPE_STRING_FUNC(Building);
@@ -580,13 +580,13 @@ TYPE_STRING_FUNC(MetalExtractor);
 
 static bool InitParamMap()
 {
-	paramMap["next"]  = DataElement(READONLY_TYPE);
-	paramMap["pairs"] = DataElement(READONLY_TYPE);
+	paramMap["next"]  = DataElement(READONLY_TYPE); 
+	paramMap["pairs"] = DataElement(READONLY_TYPE); 
 
 	// dummy UnitDef for address lookups
 	const UnitDef ud;
 	const char* start = ADDRESS(ud);
-
+	
 //	ADD_BOOL(valid, ud.valid);
 
 // ADD_INT("weaponCount", weaponCount); // CUSTOM
@@ -595,12 +595,12 @@ ADD_FLOAT("maxRange",       maxRange);       // CUSTOM
 ADD_BOOL("hasShield",       hasShield);      // CUSTOM
 ADD_BOOL("canParalyze",     canParalyze);    // CUSTOM
 ADD_BOOL("canStockpile",    canStockpile);   // CUSTOM
-ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
+ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM 
 */
 // ADD_INT("buildOptionsCount", ud.buildOptions.size(")); // CUSTOM
-
+  
 	ADD_FUNCTION("totalEnergyOut", ud, TotalEnergyOut);
-
+	
 	ADD_FUNCTION("modCategories",      ud.categoryString,  CategorySetFromString);
 	ADD_FUNCTION("springCategories",   ud.category,        CategorySetFromBits);
 	ADD_FUNCTION("noChaseCategories",  ud.noChaseCategory, CategorySetFromBits);
@@ -793,7 +793,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 //	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
 //	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
-
+	
 	ADD_INT("xsize", ud.xsize);
 	ADD_INT("ysize", ud.ysize);
 
@@ -814,7 +814,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("cloakCost",       ud.cloakCost);
 	ADD_FLOAT("cloakCostMoving", ud.cloakCostMoving);
 	ADD_FLOAT("decloakDistance", ud.decloakDistance);
-	ADD_BOOL("decloakOnFire",    ud.decloakOnFire);
 
 	ADD_BOOL("canKamikaze",   ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
