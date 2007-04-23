@@ -3338,6 +3338,10 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
+	return; // FIXME: disabled
+	if (unit->weapons.empty()) {
+		return;
+	}
 	const CWeapon* w = unit->weapons.front();
 	float3 dir;
 	if (w->onlyForward) {
