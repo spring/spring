@@ -196,9 +196,9 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 	if env.GetOption('clean'):
 		cmd += " clean"
 	status = os.system("make " + cmd)
-	if status:
+	if status != 0:
 		print "Failed building streflop!"
-		env.Exit(status)
+		env.Exit(1)
 	else:
 		print "Succes building streflop!"
 
