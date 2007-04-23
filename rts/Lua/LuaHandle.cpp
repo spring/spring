@@ -174,6 +174,21 @@ bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 
 /******************************************************************************/
 
+void CLuaHandle::Shutdown()
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("Shutdown");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return; // the call is not defined
+	}
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+	return;
+}
+
+
 void CLuaHandle::GameOver()
 {
 	lua_settop(L, 0);

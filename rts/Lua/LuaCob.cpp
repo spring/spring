@@ -83,12 +83,14 @@ CLuaCob::CLuaCob()
 	selectTeam = AllAccessTeam;
 
 	Init(LuaCobSyncedFilename, LuaCobUnsyncedFilename);
-
 }
 
 
 CLuaCob::~CLuaCob()
 {
+	if (L != NULL) {
+		Shutdown();
+	}
 	luaCob = NULL;
 }
 

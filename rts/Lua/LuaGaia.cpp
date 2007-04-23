@@ -87,6 +87,9 @@ CLuaGaia::CLuaGaia()
 
 CLuaGaia::~CLuaGaia()
 {
+	if (L != NULL) {
+		Shutdown();
+	}
 	luaGaia = NULL;
 }
 
