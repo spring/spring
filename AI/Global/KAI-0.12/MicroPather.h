@@ -28,6 +28,14 @@
  * Take care when you use it!
  *
  * This notice may not be removed or altered from any source
+ *
+ * As of 12 march, 2007, the following applies instead of the above notice:
+ * (Tournesol gave permission to change it per e-mail)
+ *
+ * "All parts of the code in this file that are made by 'Tournesol' are
+ * released under GPL licence."
+ *
+ * --Tobi Vollebregt
  */
 
 
