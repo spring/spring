@@ -98,6 +98,9 @@ CLuaRules::CLuaRules()
 
 CLuaRules::~CLuaRules()
 {
+	if (L != NULL) {
+		Shutdown();
+	}
 	luaRules = NULL;
 }
 

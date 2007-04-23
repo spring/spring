@@ -171,6 +171,9 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
+	if (L != NULL) {
+		Shutdown();
+	}
 	luaUI = NULL;
 }
 
