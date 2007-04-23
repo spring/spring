@@ -23,7 +23,7 @@ if [ -z "`which zip`" ]; then
 fi
 
 # Extract files
-root="/home/buildbot/spring_slave"
+root="/var/lib/buildbot/spring_slave"
 
 # Libs/includes needed for crosscompilation
 7z x -y "$root/mingwlibs.exe" || exit 1
