@@ -878,6 +878,38 @@ function widgetHandler:DrawScreenItems()
 end
 
 
+function widgetHandler:DrawWorldShadow()
+  for _,w in ipairs(self.DrawWorldShadowList) do
+    w:DrawWorldShadow()
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorldReflection()
+  for _,w in ipairs(self.DrawWorldReflectionList) do
+    w:DrawWorldReflection()
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorldRefraction()
+  for _,w in ipairs(self.DrawWorldRefractionList) do
+    w:DrawWorldRefraction()
+  end
+  return
+end
+
+
+function widgetHandler:DrawInMiniMap(xSize, ySize)
+  for _,w in ipairs(self.DrawInMiniMapList) do
+    w:DrawInMiniMap(xSize, ySize)
+  end
+  return
+end
+
+
 --------------------------------------------------------------------------------
 --
 --  Keyboard call-ins
@@ -1160,40 +1192,8 @@ end
 
 
 function widgetHandler:UnitSeismicPing(x, y, z, strength)
-  for _,w in ipairs(self.UnitSeismicList) do
+  for _,w in ipairs(self.UnitSeismicPingList) do
     w:UnitSeismicPing(x, y, z, strength)
-  end
-  return
-end
-
-
-function widgetHandler:DrawWorldShadow()
-  for _,w in ipairs(self.DrawWorldShadowList) do
-    w:DrawWorldShadow()
-  end
-  return
-end
-
-
-function widgetHandler:DrawWorldReflection()
-  for _,w in ipairs(self.DrawWorldReflectionList) do
-    w:DrawWorldReflection()
-  end
-  return
-end
-
-
-function widgetHandler:DrawWorldRefraction()
-  for _,w in ipairs(self.DrawWorldRefractionList) do
-    w:DrawWorldRefraction()
-  end
-  return
-end
-
-
-function widgetHandler:DrawInMiniMap(xSize, ySize)
-  for _,w in ipairs(self.DrawInMiniMapList) do
-    w:DrawInMiniMap(xSize, ySize)
   end
   return
 end
