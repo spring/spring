@@ -1,14 +1,13 @@
 #!/bin/sh
+#
 # Author: Tobi Vollebregt
 #
 # Hook called just after svn checkout/update in buildbot crosscompile build.
-# Gets passed one argument: a revision number.
+# May get one argument: a revision number. If so, it updates GameVersion.h
+# to this revision number.
 #
 
-if [ "$#" != "1" ]; then
-	echo "Usage: $0 <revision>"
-	exit 1
-fi
+set -e
 
 # 7z installed?
 if [ -z "`which 7z`" ]; then
@@ -26,14 +25,14 @@ fi
 root="/var/lib/buildbot/spring_slave"
 
 # Libs/includes needed for crosscompilation
-7z x -y "$root/mingwlibs.exe" || exit 1
+7z x -y "$root/mingwlibs.exe"
 find mingwlibs -type f -exec chmod 644 '{}' \;
 find mingwlibs -type d -exec chmod 755 '{}' \;
 # Files needed for installer building
-#tar xzfv "$root/extracontent.tar.gz" || exit 1
+#tar xzfv "$root/extracontent.tar.gz"
 
 # Update version
-if [ "$#" != "0" ]; then
+if [ "$#" != "0" ] && [ -n "$1" ]; then
 	echo "updating GameVersion.h to revision $1"
 	sed -i "/VERSION_STRING/s,\"[^\"]*\",\"r$1\",g" rts/Game/GameVersion.h || exit 1
 fi
