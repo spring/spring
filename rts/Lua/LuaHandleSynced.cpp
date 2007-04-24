@@ -226,6 +226,10 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 
 	AddBasicCalls(); // into UNSYNCED
 
+	lua_pushstring(L, "_G");
+	unsyncedStr.GetRegistry(L);
+	lua_rawset(L, -3);
+
 	LuaPushNamedCFunc(L, "include",      Include);
 	LuaPushNamedCFunc(L, "loadstring",   LoadString);
 	LuaPushNamedCFunc(L, "CallAsTeam",   CallAsTeam);
