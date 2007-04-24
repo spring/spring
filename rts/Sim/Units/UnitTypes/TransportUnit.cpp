@@ -81,7 +81,7 @@ void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 			ti->unit->KillUnit(selfDestruct,reclaimed,attacker);
 		}
 		else {
-			ti->unit->stunned = false;
+			ti->unit->stunned = (ti->unit->paralyzeDamage > ti->unit->health);
 			if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(ti->unit->moveType)) {
 				mt->StartSkidding();
 				mt->StartFlying();
@@ -167,7 +167,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(moveType)) {
 				unit->moveType->useHeading = true;
 			}
-			unit->stunned = false; // de-stun in case it isfireplatform=0
+			unit->stunned = (unit->paralyzeDamage > unit->health);
 			unit->Block();
 			loshandler->MoveUnit(unit, false);
 			unit->moveType->LeaveTransport();
