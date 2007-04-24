@@ -3273,8 +3273,12 @@ int LuaSyncedRead::LoadTextVFS(lua_State* L)
 		luaL_error(L, "Incorrect arguments to LoadTextVFS()");
 	}
 
+	CFileHandler::VFSmode vfsMode = CFileHandler::OnlyArchiveFS;
+	if (CLuaHandle::GetDevMode()) {
+		vfsMode = CFileHandler::AnyFS;
+	}
 	const string& filename = lua_tostring(L, 1);
-	CFileHandler fh(filename, CFileHandler::OnlyArchiveFS);
+	CFileHandler fh(filename, vfsMode);
 	if (!fh.FileExists()) {
 		return 0;
 	}
@@ -3298,8 +3302,12 @@ int LuaSyncedRead::FileExistsVFS(lua_State* L)
 		luaL_error(L, "Incorrect arguments to FileExistsVFS()");
 	}
 
+	CFileHandler::VFSmode vfsMode = CFileHandler::OnlyArchiveFS;
+	if (CLuaHandle::GetDevMode()) {
+		vfsMode = CFileHandler::AnyFS;
+	}
 	const string& filename = lua_tostring(L, 1);
-	CFileHandler fh(filename, CFileHandler::OnlyArchiveFS);
+	CFileHandler fh(filename, vfsMode);
 	lua_pushboolean(L, fh.FileExists());
 	return 1;
 }
@@ -3313,6 +3321,13 @@ int LuaSyncedRead::GetDirListVFS(lua_State* L)
 	}
 	const string dir = lua_tostring(L, 1);
 	vector<string> filenames = hpiHandler->GetFilesInDir(dir);
+
+	if (CLuaHandle::GetDevMode()) {
+		vector<string> rawnames = filesystem.FindFiles(dir, "*", 0 /* opts */);
+		for (int r = 0; r < (int)rawnames.size(); r++) {
+			filenames.push_back(rawnames[r]);
+		}
+	}
 
 	lua_newtable(L);
 	for (int i = 0; i < filenames.size(); i++) {

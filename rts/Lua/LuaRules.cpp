@@ -379,6 +379,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		return true;
 	}
 
+  // return 'true' to remove the command
 	return !!lua_toboolean(L, -1);
 }
 
