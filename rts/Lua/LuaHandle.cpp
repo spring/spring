@@ -690,14 +690,29 @@ void CLuaHandle::DrawInMiniMap()
 
 bool CLuaHandle::AddBasicCalls()
 {
-	HSTR_PUSH_CFUNC(L, "GetSynced",       CallOutGetSynced);
-	HSTR_PUSH_CFUNC(L, "GetFullCtrl",     CallOutGetFullCtrl);
-	HSTR_PUSH_CFUNC(L, "GetFullRead",     CallOutGetFullRead);
-	HSTR_PUSH_CFUNC(L, "GetCtrlTeam",     CallOutGetCtrlTeam);
-	HSTR_PUSH_CFUNC(L, "GetReadTeam",     CallOutGetReadTeam);
-	HSTR_PUSH_CFUNC(L, "GetReadAllyTeam", CallOutGetReadAllyTeam);
-	HSTR_PUSH_CFUNC(L, "GetSelectTeam",   CallOutGetSelectTeam);
+	HSTR_PUSH(L, "Script");
+	lua_newtable(L); {
+		HSTR_PUSH_CFUNC(L, "GetName",         CallOutGetName);
+		HSTR_PUSH_CFUNC(L, "GetSynced",       CallOutGetSynced);
+		HSTR_PUSH_CFUNC(L, "GetFullCtrl",     CallOutGetFullCtrl);
+		HSTR_PUSH_CFUNC(L, "GetFullRead",     CallOutGetFullRead);
+		HSTR_PUSH_CFUNC(L, "GetCtrlTeam",     CallOutGetCtrlTeam);
+		HSTR_PUSH_CFUNC(L, "GetReadTeam",     CallOutGetReadTeam);
+		HSTR_PUSH_CFUNC(L, "GetReadAllyTeam", CallOutGetReadAllyTeam);
+		HSTR_PUSH_CFUNC(L, "GetSelectTeam",   CallOutGetSelectTeam);
+		// special team constants
+		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  NoAccessTeam);	
+		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", AllAccessTeam);	
+	}
+	lua_rawset(L, -3);
 	return true;	
+}
+
+
+int CLuaHandle::CallOutGetName(lua_State* L)
+{
+	lua_pushstring(L, activeHandle->name.c_str());
+	return 1;
 }
 
 

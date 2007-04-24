@@ -23,7 +23,6 @@ extern "C" {
 #include "Lua/LuaConstCMD.h"
 #include "Lua/LuaConstCMDTYPE.h"
 #include "Lua/LuaConstGame.h"
-#include "Lua/LuaConstSpring.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCall.h"
 #include "Lua/LuaUnsyncedCtrl.h"
@@ -138,6 +137,8 @@ CLuaUI::CLuaUI()
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
+	AddBasicCalls(); // into Global
+
 	// load the spring libraries
 	if (!LoadCFunctions(L)                                                 ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
@@ -147,7 +148,6 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
