@@ -998,7 +998,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		return false;
 	}
 
-	const bool capture = (type == ChangeGiven);
+	const bool capture = (type == ChangeCaptured);
 	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
 		return false;
 	}
