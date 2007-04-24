@@ -19,7 +19,6 @@ extern "C" {
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
 #include "LuaConstGame.h"
-#include "LuaConstSpring.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
 #include "LuaUnsyncedCall.h"
@@ -188,7 +187,6 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
@@ -241,7 +239,6 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaConstSpring::PushEntries)  ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||

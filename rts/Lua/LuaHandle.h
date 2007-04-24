@@ -170,6 +170,7 @@ class CLuaHandle {
 
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);
+		static int CallOutGetName(lua_State* L);
 		static int CallOutGetSynced(lua_State* L);
 		static int CallOutGetFullCtrl(lua_State* L);
 		static int CallOutGetFullRead(lua_State* L);
