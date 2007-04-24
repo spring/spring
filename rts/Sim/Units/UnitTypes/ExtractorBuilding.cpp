@@ -6,6 +6,7 @@
 
 
 #include "StdAfx.h"
+#include <typeinfo>
 #include "ExtractorBuilding.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
