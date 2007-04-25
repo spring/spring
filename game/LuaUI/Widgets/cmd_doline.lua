@@ -37,7 +37,7 @@ local function RunCmd(cmd, optLine)
   else
     local success, err = pcall(chunk)
     if (not success) then
-      Spring.SendCommands({"echo " .. err})
+      Spring.Echo(err)
     end	
   end
   return true
@@ -49,7 +49,14 @@ local function EchoCmd(cmd, optLine)
   if (chunk == nil) then
     print('doline error: ' .. err)
   else
-    Spring.Echo(pcall(chunk))
+    local results = { pcall(chunk) }
+    local success = results[1]
+    if (not success) then
+      Spring.Echo(results[2])
+    else
+      table.remove(results, 1)
+      Spring.Echo(unpack(results))
+    end
   end
   return true
 end

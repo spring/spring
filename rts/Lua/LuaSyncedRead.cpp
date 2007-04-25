@@ -149,6 +149,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitsInSphere);
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
 
+	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
+	REGISTER_LUA_CFUNC(GetUnitNearestEnemy);
+
 	REGISTER_LUA_CFUNC(GetFeaturesInRectangle);
 
 	REGISTER_LUA_CFUNC(GetUnitDefID);
@@ -1885,6 +1888,50 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	hs_n.PushNumber(L, count);
 
 	return 1;
+}
+
+
+/******************************************************************************/
+
+int LuaSyncedRead::GetUnitNearestAlly(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	float range = 1.0e9f;
+	const int args = lua_gettop(L); // number of arguments
+	if ((args >= 2) && lua_isnumber(L, 2)) {
+		range = (float)lua_tonumber(L, 2);
+	}
+	CUnit* target =
+		helper->GetClosestFriendlyUnit(unit->pos, range, unit->allyteam);
+	if (target) {
+		lua_pushnumber(L, target->id);
+		return 1;
+	}
+	return 0;
+}
+
+
+int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	float range = 1.0e9f;
+	const int args = lua_gettop(L); // number of arguments
+	if ((args >= 2) && lua_isnumber(L, 2)) {
+		range = (float)lua_tonumber(L, 2);
+	}
+	CUnit* target =
+		helper->GetClosestEnemyUnit(unit->pos, range, unit->allyteam);
+	if (target) {
+		lua_pushnumber(L, target->id);
+		return 1;
+	}
+	return 0;
 }
 
 
