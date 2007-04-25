@@ -373,6 +373,24 @@ void CUnit::Update()
 	}
 }
 
+
+void CUnit::UpdateResources()
+{
+	metalMake  = metalMakeI  + metalMakeold;
+	metalUse   = metalUseI   + metalUseold;
+	energyMake = energyMakeI + energyMakeold;
+	energyUse  = energyUseI  + energyUseold;
+
+	metalMakeold  = metalMakeI;
+	metalUseold   = metalUseI;
+	energyMakeold = energyMakeI;
+	energyUseold  = energyUseI;
+
+	metalMakeI = metalUseI = energyMakeI = energyUseI = 0;
+}
+
+
+
 void CUnit::SlowUpdate()
 {
 	--nextPosErrorUpdate;
@@ -432,19 +450,23 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(paralyzeDamage>0){
-		paralyzeDamage-=maxHealth*(16.f/30.f/40.f);
-		if(paralyzeDamage<0)
-			paralyzeDamage=0;
-		if(paralyzeDamage<health)
-			stunned=false;
+	if (paralyzeDamage > 0) {
+		paralyzeDamage -= maxHealth * (16.0f / 30.0f / 40.0f);
+		if (paralyzeDamage < 0) {
+			paralyzeDamage = 0;
+		}
+		if (paralyzeDamage < health) {
+			stunned = false;
+		}
 	}
-	if(stunned){
-		isCloaked=false;
+
+	if (stunned) {
+		isCloaked = false;
+		UpdateResources();
 		return;
 	}
 
-	if(selfDCountdown && !stunned){
+	if (selfDCountdown && !stunned) {
 		selfDCountdown--;
 		if(selfDCountdown<=1){
 			if(!beingBuilt)
@@ -477,16 +499,7 @@ void CUnit::SlowUpdate()
 	commandAI->SlowUpdate();
 	moveType->SlowUpdate();
 
-	metalMake = metalMakeI + metalMakeold;
-	metalUse = metalUseI+ metalUseold;
-	energyMake = energyMakeI + energyMakeold;
-	energyUse = energyUseI + energyUseold;
-	metalMakeold = metalMakeI;
-	metalUseold = metalUseI;
-	energyMakeold = energyMakeI;
-	energyUseold = energyUseI;
-
-	metalMakeI=metalUseI=energyMakeI=energyUseI=0;
+	UpdateResources();
 
 	AddMetal(unitDef->metalMake*0.5f);
 	if(activated)
@@ -1325,45 +1338,51 @@ bool CUnit::SetGroup(CGroup* newGroup)
 	return true;
 }
 
-bool CUnit::AddBuildPower(float amount,CUnit* builder)
+bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
-	if(amount>0){	//build/repair
-		if(!beingBuilt && health>=maxHealth)
+	if (amount > 0.0f) { //  build / repair
+		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
+		}
 
-		lastNanoAdd=gs->frameNum;
-		float part=amount/buildTime;
+		lastNanoAdd = gs->frameNum;
+		const float part = amount / buildTime;
 
-		if(beingBuilt){
-			float metalUse=metalCost*part;
-			float energyUse=energyCost*part;
-			if (gs->Team(builder->team)->metal >= metalUse && gs->Team(builder->team)->energy >= energyUse) {
+		if (beingBuilt) {
+			const float metalUse  = (metalCost  * part);
+			const float energyUse = (energyCost * part);
+			if ((gs->Team(builder->team)->metal  >= metalUse) &&
+			    (gs->Team(builder->team)->energy >= energyUse)) {
 				builder->UseMetal(metalUse);
 				builder->UseEnergy(energyUse);
-				health+=maxHealth*part;
-				buildProgress+=part;
-				if(buildProgress>=1){
-					if(health>maxHealth)
-						health=maxHealth;
+				health += (maxHealth * part);
+				buildProgress += part;
+				if (buildProgress >= 1.0f) {
+					if (health > maxHealth) {
+						health = maxHealth;
+					}
 					FinishedBuilding();
 				}
 				return true;
 			} else {
 				// update the energy and metal required counts
+				gs->Team(builder->team)->metalPull  += metalUse;
 				gs->Team(builder->team)->energyPull += energyUse;
-				gs->Team(builder->team)->metalPull += metalUse;
 			}
 			return false;
-		} else {
-			if(health<maxHealth){
-				health+=maxHealth*part;
-				if(health>maxHealth)
-					health=maxHealth;
+		}
+		else {
+			if (health < maxHealth) {
+				health += maxHealth * part;
+				if (health > maxHealth) {
+					health = maxHealth;
+				}
 				return true;
 			}
 			return false;
 		}
-	} else {	//reclaim
+	}
+	else { // reclaim
 		if(isDead)
 			return false;
 		restTime=0;

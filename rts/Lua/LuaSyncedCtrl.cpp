@@ -101,6 +101,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
+	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 
@@ -499,12 +500,12 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
+	const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
-	if (type == "metal") {
+	if ((type == "m") || (type == "metal")) {
 		team->AddMetal(value);
 	}
-	else if (type == "energy") {
+	else if ((type == "e") || (type == "energy")) {
 		team->AddEnergy(value);
 	}
 	return 0;
@@ -514,8 +515,7 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+	if ((args < 2) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to UseTeamResource()");
 	}
 	const int teamID = (int)lua_tonumber(L, 1);
@@ -529,19 +529,47 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	
-	const string type = lua_tostring(L, 2);
-	
-	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
 
-	if (type == "metal") {
-		team->metalPull += value;
-		lua_pushboolean(L, team->UseMetal(value));
-		return 1;
+	if (lua_isstring(L, 2)) {
+		const string type = lua_tostring(L, 2);
+		
+		const float value = max(0.0f, float(lua_tonumber(L, 3)));
+
+		if ((type == "m") || (type == "metal")) {
+			team->metalPull += value;
+			lua_pushboolean(L, team->UseMetal(value));
+			return 1;
+		}
+		else if ((type == "e") || (type == "energy")) {
+			team->energyPull += value;
+			lua_pushboolean(L, team->UseEnergy(value));
+			return 1;
+		}
 	}
-	else if (type == "energy") {
-		team->energyPull += value;
-		lua_pushboolean(L, team->UseEnergy(value));
+	else if (lua_istable(L, 2)) {
+		float metal  = 0.0f;
+		float energy = 0.0f;
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+				const string key = lua_tostring(L, -2);
+				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				if ((key == "m") || (key == "metal")) {
+					metal = value;
+				} else if ((key == "e") || (key == "energy")) {
+					energy = value;
+				}
+			}
+		}
+		team->metalPull  += metal;
+		team->energyPull += energy;
+		if ((team->metal >= metal) && (team->energy >= energy)) {
+			team->UseMetal(metal);
+			team->UseEnergy(energy);
+			lua_pushboolean(L, true);
+		} else {
+			lua_pushboolean(L, false);
+		}
 		return 1;
 	}
 	return 0;
@@ -571,10 +599,10 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	
 	const float value = max(0.0f, (float)lua_tonumber(L, 3));
 
-	if (type == "metal") {
+	if ((type == "m") || (type == "metal")) {
 		team->metal = min(team->metalStorage, value);
 	}
-	else if (type == "energy") {
+	else if ((type == "e") || (type == "energy")) {
 		team->energy = min(team->energyStorage, value);
 	}
 	return 0;
@@ -604,10 +632,10 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	
 	const float value = (float)lua_tonumber(L, 3);
 
-	if (type == "metal") {
+	if ((type == "m") || (type == "metal")) {
 		team->metalShare = max(0.0f, min(1.0f, value));
 	}
-	else if (type == "energy") {
+	else if ((type == "e") || (type == "energy")) {
 		team->energyShare = max(0.0f, min(1.0f, value));
 	}
 	return 0;
@@ -984,6 +1012,8 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 					unit->paralyzeDamage = max(0.0f, value);
 					if (unit->paralyzeDamage >= unit->health) {
 						unit->stunned = true;
+					} else if (value < 0.0f) {
+						unit->stunned = false;
 					}
 				}
 				else if (key == "build") {
@@ -1329,12 +1359,12 @@ int LuaSyncedCtrl::AddUnitResource(lua_State* L)
 	
 	const string type = lua_tostring(L, 2);
 	
-	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
+	const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
-	if (type == "metal") {
+	if ((type == "m") || (type == "metal")) {
 		unit->AddMetal(value);
 	}
-	else if (type == "energy") {
+	else if ((type == "e") || (type == "energy")) {
 		unit->AddEnergy(value);
 	}
 	return 0;
@@ -1349,20 +1379,47 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
+	if (args < 2) {
 		luaL_error(L, "Incorrect arguments to UseUnitResource()");
 	}
 	
-	const string type = lua_tostring(L, 2);
-	
-	const float value = max(0.0f, float(lua_tonumber(L, 3)) / 32.0f);
+	if (lua_isstring(L, 2)) {
+		const string type = lua_tostring(L, 2);
+		const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
-	if (type == "metal") {
-		lua_pushboolean(L, unit->UseMetal(value));
+		if ((type == "m") || (type == "metal")) {
+			lua_pushboolean(L, unit->UseMetal(value));
+		}
+		else if ((type == "e") || (type == "energy")) {
+			lua_pushboolean(L, unit->UseEnergy(value));
+		}
 		return 1;
 	}
-	else if (type == "energy") {
-		lua_pushboolean(L, unit->UseEnergy(value));
+	else if (lua_istable(L, 2)) {
+		float metal  = 0.0f;
+		float energy = 0.0f;
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+				const string key = lua_tostring(L, -2);
+				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				if ((key == "m") || (key == "metal")) {
+					metal = value;
+				} else if ((key == "e") || (key == "energy")) {
+					energy = value;
+				}
+			}
+		}
+		CTeam* team = gs->Team(unit->team);
+		if ((team->metal >= metal) && (team->energy >= energy)) {
+			unit->UseMetal(metal);
+			unit->UseEnergy(energy);
+			lua_pushboolean(L, true);
+		} else {
+			team->metalPull  += metal;
+			team->energyPull += energy;
+			lua_pushboolean(L, false);
+		}
 		return 1;
 	}
 	return 0;

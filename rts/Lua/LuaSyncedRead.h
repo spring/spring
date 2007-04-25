@@ -73,6 +73,9 @@ class LuaSyncedRead {
 		static int GetUnitsInSphere(lua_State* L);
 		static int GetUnitsInCylinder(lua_State* L);
 
+		static int GetUnitNearestAlly(lua_State* L);
+		static int GetUnitNearestEnemy(lua_State* L);
+
 		static int GetFeaturesInRectangle(lua_State* L);
 
 		static int GetUnitDefID(lua_State* L);

@@ -184,6 +184,9 @@ function widgetHandler:LoadOrderList()
     local tmp = {}
     setfenv(chunk, tmp)
     self.orderList = chunk()
+    if (not self.orderList) then
+      self.orderList = {} -- safety
+    end
   end
 end
 
@@ -208,6 +211,9 @@ function widgetHandler:LoadConfigData()
     local tmp = {}
     setfenv(chunk, tmp)
     self.configData = chunk()
+    if (not self.configData) then
+      self.configData = {} -- safety
+    end
   end
 end
 

@@ -292,6 +292,7 @@ public:
 
 protected:
 	void ChangeTeamReset();
+	void UpdateResources();
 
 public:
 	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker);
