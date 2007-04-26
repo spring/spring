@@ -1,0 +1,481 @@
+#include "StdAfx.h"
+// LuaVFS.cpp: implementation of the LuaVFS class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include "LuaVFS.h"
+#include <set>
+#include <list>
+#include <cctype>
+#include <boost/regex.hpp>
+using namespace std;
+
+extern "C" {
+	#include "lua.h"
+	#include "lualib.h"
+	#include "lauxlib.h"
+}
+
+#include "LuaHandle.h"
+#include "LuaHashString.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/Platform/FileSystem.h"
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool LuaVFS::PushSynced(lua_State* L)
+{
+	HSTR_PUSH_CFUNC(L, "Include",    SyncInclude);
+	HSTR_PUSH_CFUNC(L, "LoadFile",   SyncLoadFile);
+	HSTR_PUSH_CFUNC(L, "FileExists", SyncFileExists);
+	HSTR_PUSH_CFUNC(L, "DirList",    SyncDirList);
+
+	HSTR_PUSH_NUMBER(L, "RAW_ONLY",  RAW_ONLY);
+	HSTR_PUSH_NUMBER(L, "ZIP_ONLY",  ZIP_ONLY);
+	HSTR_PUSH_NUMBER(L, "RAW_FIRST", RAW_FIRST);
+	HSTR_PUSH_NUMBER(L, "ZIP_FIRST", ZIP_FIRST);
+
+	return true;
+}
+
+
+bool LuaVFS::PushUnsynced(lua_State* L)
+{
+	HSTR_PUSH_CFUNC(L, "Include",    UnsyncInclude);
+	HSTR_PUSH_CFUNC(L, "LoadFile",   UnsyncLoadFile);
+	HSTR_PUSH_CFUNC(L, "FileExists", UnsyncFileExists);
+	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
+
+	HSTR_PUSH_NUMBER(L, "RAW_ONLY",  RAW_ONLY);
+	HSTR_PUSH_NUMBER(L, "ZIP_ONLY",  ZIP_ONLY);
+	HSTR_PUSH_NUMBER(L, "RAW_FIRST", RAW_FIRST);
+	HSTR_PUSH_NUMBER(L, "ZIP_FIRST", ZIP_FIRST);
+
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+LuaVFS::AccessMode LuaVFS::GetMode(lua_State* L, int index, bool synced)
+{
+	const int args = lua_gettop(L);
+	if (index < 0) {
+		index = (args - index + 1);
+	}
+	if ((index < 1) || (index > args)) {
+		if (synced && !CLuaHandle::GetDevMode()) {
+			return ZIP_ONLY;
+		}
+		return RAW_FIRST;
+	}
+
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "Bad VFS access mode");
+	}
+	const AccessMode mode = (AccessMode)lua_tonumber(L, index);
+	if ((mode < 0) || (mode > LAST_MODE)) {
+		luaL_error(L, "Bad VFS access mode");
+	}
+
+	if (synced && !CLuaHandle::GetDevMode()) {
+		return ZIP_ONLY;
+	}
+	return mode;
+}
+
+
+/******************************************************************************/
+
+static void PushCurrentFunc(lua_State* L, const char* caller)
+{
+	// get the current function
+	lua_Debug ar;
+	if (lua_getstack(L, 1, &ar) == 0) {
+		luaL_error(L, "%s() lua_getstack() error", caller);
+	}
+	if (lua_getinfo(L, "f", &ar) == 0) {
+		luaL_error(L, "%s() lua_getinfo() error", caller);
+	}
+	if (!lua_isfunction(L, -1)) {
+		luaL_error(L, "%s() invalid current function", caller);
+	}
+}
+
+
+static void PushFunctionEnv(lua_State* L, const char* caller, int funcIndex)
+{
+	lua_getfenv(L, funcIndex);
+	lua_pushliteral(L, "__fenv");
+	lua_rawget(L, -2);
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1); // there is no fenv proxy
+	} else {
+		lua_remove(L, -2); // remove the orig table, leave the proxy
+	}
+
+	if (!lua_istable(L, -1)) {
+		luaL_error(L, "%s() invalid fenv", caller);
+	}
+}
+
+
+static void PushCurrentFuncEnv(lua_State* L, const char* caller)
+{
+	PushCurrentFunc(L, caller);
+	PushFunctionEnv(L, caller, -1);
+	lua_remove(L, -2); // remove the function
+}
+
+
+/******************************************************************************/
+
+static bool TestLoadFile(const string& filename, string& data,
+                         CFileHandler::VFSmode vfsMode)
+{
+	CFileHandler fh(filename, vfsMode);
+	if (!fh.FileExists()) {
+		return false;
+	}
+	data.clear();
+	if (!fh.LoadString(data)) {
+		return false;
+	}
+	return true;
+}
+
+
+static bool LoadFileWithMode(const string& filename, string& data,
+                             LuaVFS::AccessMode mode)
+{
+	switch (mode) {
+		case LuaVFS::RAW_ONLY: {
+			if (TestLoadFile(filename, data, CFileHandler::OnlyRawFS)) {
+				return true;
+			}
+			return false;
+		}
+		case LuaVFS::ZIP_ONLY: {
+			if (TestLoadFile(filename, data, CFileHandler::OnlyArchiveFS)) {
+				return true;
+			}
+			return false;
+		}
+		case LuaVFS::RAW_FIRST: {
+			if (TestLoadFile(filename, data, CFileHandler::OnlyRawFS)) {
+				return true;
+			}
+			if (TestLoadFile(filename, data, CFileHandler::OnlyArchiveFS)) {
+				return true;
+			}
+			return false;
+		}
+		case LuaVFS::ZIP_FIRST: {
+			if (TestLoadFile(filename, data, CFileHandler::OnlyArchiveFS)) {
+				return true;
+			}
+			if (TestLoadFile(filename, data, CFileHandler::OnlyRawFS)) {
+				return true;
+			}
+			return false;
+		}
+	}
+	return false; // bad mode
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaVFS::Include(lua_State* L, bool synced)
+{
+	const int args = lua_gettop(L);
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_istable(L, 2) && !lua_isnil(L, 2))) {
+		luaL_error(L, "Incorrect arguments to include()");
+	}
+
+	const AccessMode mode = GetMode(L, 3, synced);
+	
+	const string filename = lua_tostring(L, 1);
+
+	string code;
+	if (!LoadFileWithMode(filename, code, mode)) {
+		return 0;
+	}
+
+	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n",
+		                error, filename.c_str(), lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	// set the chunk's fenv to the current fenv, or a user table
+	if ((args >= 2) && lua_istable(L, 2)) {
+		lua_pushvalue(L, 2); // user fenv
+	} else {
+		PushCurrentFuncEnv(L, __FUNCTION__);
+	}
+
+	// set the include fenv to the current function's fenv
+	if (lua_setfenv(L, -2) == 0) {
+		luaL_error(L, "include(): error with setfenv");
+	}
+
+	const int paramTop = lua_gettop(L) - 1;	
+
+	error = lua_pcall(L, 0, LUA_MULTRET, 0);
+
+
+	if (error != 0) {
+		logOutput.Print("error = %i, %s, %s\n",
+		                error, filename.c_str(), lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	return lua_gettop(L) - paramTop;
+}
+
+
+int LuaVFS::SyncInclude(lua_State* L)
+{
+	return Include(L, true);
+}
+
+
+int LuaVFS::UnsyncInclude(lua_State* L)
+{
+	return Include(L, false);
+}
+
+
+/******************************************************************************/
+
+int LuaVFS::LoadFile(lua_State* L, bool synced)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to LoadFile()");
+	}
+
+	const string filename = lua_tostring(L, 1);
+
+	const AccessMode mode = GetMode(L, 2, synced);
+
+	string data;
+	if (LoadFileWithMode(filename, data, mode)) {
+		lua_pushlstring(L, data.c_str(), data.size());
+		return 1;
+	}
+	return 0;
+}
+
+
+int LuaVFS::SyncLoadFile(lua_State* L)
+{
+	return LoadFile(L, true);
+}
+
+
+int LuaVFS::UnsyncLoadFile(lua_State* L)
+{
+	return LoadFile(L, false);
+}
+
+
+/******************************************************************************/
+
+int LuaVFS::FileExists(lua_State* L, bool synced)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to FileExists()");
+	}
+
+	const string filename = lua_tostring(L, 1);
+
+	const AccessMode mode = GetMode(L, 2, synced);
+
+	switch (mode) {
+		case LuaVFS::RAW_ONLY: {
+			CFileHandler fh(filename, CFileHandler::OnlyRawFS);
+			lua_pushboolean(L, fh.FileExists());
+			return 1;
+		}
+		case LuaVFS::ZIP_ONLY: {
+			CFileHandler fh(filename, CFileHandler::OnlyArchiveFS);
+			lua_pushboolean(L, fh.FileExists());
+			return 1;
+		}
+		case LuaVFS::RAW_FIRST: {
+			CFileHandler fhr(filename, CFileHandler::OnlyRawFS);
+			if (fhr.FileExists()) {
+				lua_pushboolean(L, true);
+				return 1;
+			}
+			CFileHandler fhz(filename, CFileHandler::OnlyArchiveFS);
+			lua_pushboolean(L, fhz.FileExists());
+			return 1;
+		}
+		case LuaVFS::ZIP_FIRST: {
+			CFileHandler fhz(filename, CFileHandler::OnlyArchiveFS);
+			if (fhz.FileExists()) {
+				lua_pushboolean(L, true);
+				return 1;
+			}
+			CFileHandler fhr(filename, CFileHandler::OnlyRawFS);
+			lua_pushboolean(L, fhr.FileExists());
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+int LuaVFS::SyncFileExists(lua_State* L)
+{
+	return FileExists(L, true);
+}
+
+
+int LuaVFS::UnsyncFileExists(lua_State* L)
+{
+	return FileExists(L, false);
+}
+
+
+/******************************************************************************/
+
+static void AppendRawDirList(const string& dir, const string& pattern,
+                             int options, vector<string>& filenames)
+{
+	// keep searches within the Spring directory
+	if ((dir[0] == '/') || (dir[0] == '\\') ||
+	    (strstr(dir.c_str(), "..") != NULL) ||
+	    ((dir.size() > 0) && (dir[1] == ':'))) {
+		return; // invalid access
+	}
+
+	vector<string> files = filesystem.FindFiles(dir, pattern, options);
+	for (int f = 0; f < (int)files.size(); f++) {
+		filenames.push_back(files[f]);
+	}
+}
+
+
+static void AppendZipDirList(const string& dir, const string& pattern,
+                             vector<string>& filenames)
+{
+	string prefix = dir;
+	if (dir.find_last_of("\\/") != (dir.size() - 1)) {
+		prefix += '/';
+	}
+	boost::regex regex(filesystem.glob_to_regex(pattern),boost::regex::icase);
+	vector<string> files = hpiHandler->GetFilesInDir(dir);
+	vector<string>::iterator fi;
+	for (fi = files.begin(); fi != files.end(); ++fi) {
+		if (boost::regex_match(*fi, regex)) {
+			filenames.push_back(prefix + *fi);
+		}
+	}  
+}
+
+
+static void FillDirList(const string& dir, const string& pattern,
+                        int options, vector<string>& filenames,
+                        LuaVFS::AccessMode mode)
+{
+	filenames.clear();
+	switch (mode) {
+		case LuaVFS::RAW_ONLY: {
+			AppendRawDirList(dir, pattern, options, filenames);
+			return;
+		}
+		case LuaVFS::ZIP_ONLY: {
+			AppendZipDirList(dir, pattern, filenames);
+			return;
+		}
+		case LuaVFS::RAW_FIRST: {
+			AppendRawDirList(dir, pattern, options, filenames);
+			AppendZipDirList(dir, pattern,          filenames);
+			return;
+		}
+		case LuaVFS::ZIP_FIRST: {
+			AppendZipDirList(dir, pattern,          filenames);
+			AppendRawDirList(dir, pattern, options, filenames);
+			return;
+		}
+	}
+}
+
+
+int LuaVFS::DirList(lua_State* L, bool synced)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isstring(L, 2)) ||
+	    ((args >= 4) && !lua_isstring(L, 4))) {
+		luaL_error(L, "Incorrect arguments to DirList()");
+	}
+
+	const string dir = lua_tostring(L, 1);
+
+	const AccessMode mode = GetMode(L, 3, synced);
+
+	string pattern = "*";
+	if (args >= 2) {
+		pattern = lua_tostring(L, 2);
+		if (pattern.empty()) {
+			pattern = "*"; // FindFiles() croaks on empty strings
+		}
+	}
+
+	int options = 0;
+	if (args >= 4) {
+		const string optstr = lua_tostring(L, 4);
+		if (strstr(optstr.c_str(), "r") != NULL) {
+			options |= FileSystem::RECURSE;
+		}
+		if (strstr(optstr.c_str(), "d") != NULL) {
+			options |= FileSystem::INCLUDE_DIRS;
+		}
+	}
+
+	vector<string> filenames;
+	FillDirList(dir, pattern, options, filenames, mode);
+
+	lua_newtable(L);
+	for (int i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, filenames[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, filenames.size());
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+
+int LuaVFS::SyncDirList(lua_State* L)
+{
+	return DirList(L, true);
+}
+
+
+int LuaVFS::UnsyncDirList(lua_State* L)
+{
+	return DirList(L, false);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
