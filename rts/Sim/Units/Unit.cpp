@@ -176,6 +176,7 @@ CUnit::CUnit ()
 	deathScriptFinished(false),
 	dontUseWeapons(false),
 	currentFuel(0),
+	noDraw(false),
 	noSelect(false),
 	noMinimap(false),
 	isIcon(false),
@@ -1708,6 +1709,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(upright),
 				CR_MEMBER(relMidPos),
 				CR_MEMBER(power),
+				CR_MEMBER(noDraw),
 				CR_MEMBER(noSelect),
 				CR_MEMBER(noMinimap),
 

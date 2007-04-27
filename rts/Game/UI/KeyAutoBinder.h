@@ -31,6 +31,7 @@ class CKeyAutoBinder : public CLuaHandle
 		                   const vector<string>& chords);
 
 	private:
+		string LoadFile(const string& filename) const;
 		bool LoadCode(const string& code, const string& debug);
 		bool LoadCompareFunc();
 		string MakeRequirementCall(const vector<string>& requirements);

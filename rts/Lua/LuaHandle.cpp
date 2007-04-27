@@ -141,17 +141,6 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 }
 
 
-string CLuaHandle::LoadFile(const string& filename) const
-{
-	CFileHandler f(filename);
-	string code;
-	if (!f.LoadString(code)) {
-		code.clear();
-	}
-	return code;
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 

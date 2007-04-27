@@ -94,6 +94,8 @@ class CLuaUI : public CLuaHandle {
 
 		void KillLua();
 
+		string LoadFile(const string& filename) const;
+
 		bool LoadCFunctions(lua_State* L);
 
 		bool AddConsoleLines(lua_State* L);

@@ -120,6 +120,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitStealth);
+	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
@@ -1102,6 +1103,21 @@ int LuaSyncedCtrl::SetUnitStealth(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetUnitStealth()");
 	}
 	unit->stealth = lua_toboolean(L, 2);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitNoDraw(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitNoSelect()");
+	}
+	unit->noDraw = lua_toboolean(L, 2);
 	return 0;
 }
 

@@ -280,6 +280,7 @@ public:
 
 	float currentFuel;
 
+	bool noDraw;
 	bool noSelect;
 	bool noMinimap;
 

@@ -197,7 +197,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	const int args = lua_gettop(L);
 	if ((args < 1) || !lua_isstring(L, 1) ||
 	    ((args >= 2) && !lua_istable(L, 2) && !lua_isnil(L, 2))) {
-		luaL_error(L, "Incorrect arguments to include()");
+		luaL_error(L, "Incorrect arguments to Include()");
 	}
 
 	const AccessMode mode = GetMode(L, 3, synced);
@@ -206,13 +206,19 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	string code;
 	if (!LoadFileWithMode(filename, code, mode)) {
-		return 0;
+		char buf[1024];
+		SNPRINTF(buf, sizeof(buf),
+		         "Include() could not load '%s'\n", filename.c_str());
+		lua_pushstring(L, buf);
+ 		lua_error(L);
 	}
 
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, filename.c_str(), lua_tostring(L, -1));
+		char buf[1024];
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
+		         error, filename.c_str(), lua_tostring(L, -1));
+		lua_pushstring(L, buf);
 		lua_error(L);
 	}
 
@@ -225,7 +231,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	// set the include fenv to the current function's fenv
 	if (lua_setfenv(L, -2) == 0) {
-		luaL_error(L, "include(): error with setfenv");
+		luaL_error(L, "Include(): error with setfenv");
 	}
 
 	const int paramTop = lua_gettop(L) - 1;	
@@ -234,8 +240,10 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, filename.c_str(), lua_tostring(L, -1));
+		char buf[1024];
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
+		         error, filename.c_str(), lua_tostring(L, -1));
+		lua_pushstring(L, buf);
 		lua_error(L);
 	}
 
@@ -358,7 +366,7 @@ static void AppendRawDirList(const string& dir, const string& pattern,
 	// keep searches within the Spring directory
 	if ((dir[0] == '/') || (dir[0] == '\\') ||
 	    (strstr(dir.c_str(), "..") != NULL) ||
-	    ((dir.size() > 0) && (dir[1] == ':'))) {
+	    ((dir.size() >= 2) && (dir[1] == ':'))) {
 		return; // invalid access
 	}
 
@@ -376,7 +384,7 @@ static void AppendZipDirList(const string& dir, const string& pattern,
 	if (dir.find_last_of("\\/") != (dir.size() - 1)) {
 		prefix += '/';
 	}
-	boost::regex regex(filesystem.glob_to_regex(pattern),boost::regex::icase);
+	boost::regex regex(filesystem.glob_to_regex(pattern), boost::regex::icase);
 	vector<string> files = hpiHandler->GetFilesInDir(dir);
 	vector<string>::iterator fi;
 	for (fi = files.begin(); fi != files.end(); ++fi) {

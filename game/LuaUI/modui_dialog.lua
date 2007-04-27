@@ -33,15 +33,10 @@ local LT = {}  --  local table
 setmetatable(LT, { __index = _G})
 
 local function IncludeFile(filename, t)
-  local chunk, err = loadfile(LUAUI_DIRNAME .. filename)
-  if (chunk == nil) then
+  local success, err = pcall(VFS.Include, LUAUI_DIRNAME .. filename, t)
+  if (not success) then
     KillScript('Failed to load ' .. filename .. ' (' .. err .. ')')
     return
-  else
-    if (t ~= nil) then
-	    setfenv(chunk, t)
-	  end
-    chunk()
   end
 end
 
@@ -190,10 +185,11 @@ end
 local function LoadModLuaUI()
   RevertHiding()
   ClearLocalTables()
-    
+
+
   local MOD_FILENAME = 'ModUI/main.lua'
 
-  local modText = Spring.LoadTextVFS(MOD_FILENAME)
+  local modText = VFS.LoadFile(MOD_FILENAME, VFS.ZIP_ONLY)
   if (modText == nil) then
     Spring.Echo('Failed to load ' .. MOD_FILENAME)
     LoadUserLuaUI()
@@ -207,9 +203,11 @@ local function LoadModLuaUI()
     return
   else
     LUAUI_DIRNAME = nil
+    VFS.DEF_MODE = VFS.ZIP_FIRST
     local success, err = pcall(chunk)
     if (not success) then
       Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+      VFS.DEF_MODE = VFS.RAW_FIRST
       LoadUserLuaUI()
     end
   end

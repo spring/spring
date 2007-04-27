@@ -246,33 +246,30 @@ function widgetHandler:Initialize()
   self:LoadOrderList()
   self:LoadConfigData()
 
+  -- create the "LuaUI/Config" directory
+  Spring.CreateDir('LuaUI')
+  Spring.CreateDir('LuaUI/Config')
+
   local unsortedWidgets = {}
   
-  local widgetFiles = Spring.GetDirList(WIDGET_DIRNAME, "*.lua")
-  table.sort(widgetFiles)
-
-  -- stuff the widgets into unsortedWidgets
+  -- stuff the raw widgets into unsortedWidgets
+  local widgetFiles = VFS.DirList(WIDGET_DIRNAME, "*.lua", VFS.RAW_ONLY)
   for k,wf in ipairs(widgetFiles) do
-    local widget = self:LoadWidget(wf)
+    local widget = self:LoadWidget(wf, false)
+    if (widget) then
+      table.insert(unsortedWidgets, widget)
+    end
+  end
+
+  -- stuff the zip widgets into unsortedWidgets
+  local widgetFiles = VFS.DirList(WIDGET_DIRNAME, "*.lua", VFS.ZIP_ONLY)
+  for k,wf in ipairs(widgetFiles) do
+    local widget = self:LoadWidget(wf, true)
     if (widget) then
       table.insert(unsortedWidgets, widget)
     end
   end
   
-  -- add mod widgets
---[[
-  if (Spring.GetConfigInt("LuaUI", 1) > 1) then
-    local modWidgetFiles = Spring.GetDirListVFS(MOD_WIDGET_DIRNAME)
-    table.sort(modWidgetFiles)
-    for _,fn in ipairs(modWidgetFiles) do
-      if (string.find(fn, ".lua", -4, true)) then
-        table.insert(widgetFiles, fn)
-      end
-    end
-  end
---]]
-  
-
   -- sort the widgets  
   table.sort(unsortedWidgets, function(w1, w2)
     local l1 = w1.whInfo.layer
@@ -306,9 +303,9 @@ function widgetHandler:Initialize()
 end
 
 
-function widgetHandler:LoadWidget(filename)
+function widgetHandler:LoadWidget(filename, fromZip)
   local basename = Basename(filename)
-  local text = Spring.LoadTextVFS(filename)
+  local text = VFS.LoadFile(filename)
   if (text == nil) then
     Spring.Echo('Failed to load: ' .. basename)
     return nil
@@ -358,6 +355,7 @@ function widgetHandler:LoadWidget(filename)
     knownInfo.author   = widget.whInfo.author
     knownInfo.basename = widget.whInfo.basename
     knownInfo.filename = widget.whInfo.filename
+    knownInfo.fromZip  = fromZip
     self.knownWidgets[name] = knownInfo
     self.knownCount = self.knownCount + 1
     self.knownChanged = true
@@ -446,12 +444,12 @@ function widgetHandler:FinalizeWidget(widget, filename, basename)
     wi.layer = 0
   else
     local info = widget:GetInfo()
-    wi.name      = info.name    or basename
-    wi.layer     = info.layer   or 0
-    wi.desc      = info.desc    or ""
-    wi.author    = info.author  or ""
-    wi.license   = info.license or ""
-    wi.enabled   = info.enabled or false
+    wi.name    = info.name    or basename
+    wi.layer   = info.layer   or 0
+    wi.desc    = info.desc    or ""
+    wi.author  = info.author  or ""
+    wi.license = info.license or ""
+    wi.enabled = info.enabled or false
   end
 
   widget.whInfo = {}  --  a proxy table

@@ -46,6 +46,9 @@ MODUI_DIRNAME   = 'ModUI/'  --  should version this too, exceptions?
 MOD_FILENAME    = MODUI_DIRNAME .. 'main.lua'
 
 
+VFS.DEF_MODE = VFS.RAW_FIRST
+
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -84,28 +87,35 @@ end
 
 --------------------------------------------------------------------------------
 
-local modText
+local text
+
 
 if (loadFromMod ~= false) then
-  modText = Spring.LoadTextVFS(MOD_FILENAME)
-  if (modText == nil) then
+  text = VFS.LoadFile(MOD_FILENAME, VFS.ZIP_ONLY)
+  if (text == nil) then
     loadFromMod = false
   end
 end
 
+
 if (loadFromMod == nil) then
   -- setup the mod selection UI
-  local chunk, err = loadfile(CHOOSE_FILENAME)
-  if (chunk == nil) then
-    Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
+  text = VFS.LoadFile(CHOOSE_FILENAME)
+  if (text == nil) then
+    Spring.Echo('Failed to load ' .. CHOOSE_FILENAME .. ': (' .. err .. ')')
   else
-  	CleanNameSpace()
-    chunk()
-    return
+    local chunk, err = loadstring(text)
+    if (chunk == nil) then
+      Spring.Echo('Failed to load ' .. CHOOSE_FILENAME .. ': (' .. err .. ')')
+    else
+      CleanNameSpace()
+      chunk()
+      return
+    end
   end
 elseif (loadFromMod) then
   -- load the mod's UI
-  local chunk, err = loadstring(modText)
+  local chunk, err = loadstring(text)
   if (chunk == nil) then
     Spring.Echo('Failed to load ' .. MOD_FILENAME .. ': (' .. err .. ')')
   else
@@ -123,7 +133,11 @@ end
 --
 
 do
-  local chunk, err = loadfile(USER_FILENAME)
+  text = VFS.LoadFile(USER_FILENAME)
+  if (text == nil) then
+    KillScript('Failed to load ' .. USER_FILENAME)
+  end
+  local chunk, err = loadstring(text)
   if (chunk == nil) then
     KillScript('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
   else

@@ -21,6 +21,7 @@ extern "C" {
 #include "LuaConstGame.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
+#include "LuaSyncedTable.h"
 #include "LuaUnsyncedCall.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaUnsyncedRead.h"
@@ -28,7 +29,7 @@ extern "C" {
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
-#include "LuaSyncedTable.h"
+#include "LuaVFS.h"
 
 #include "Game/command.h"
 #include "Sim/Units/Unit.h"
@@ -171,7 +172,6 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	LuaPushNamedCFunc(L, "KillScript",     KillActiveHandle);
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
 
-	LuaPushNamedCFunc(L, "include",    Include);
 	LuaPushNamedCFunc(L, "loadstring", LoadString);
 	LuaPushNamedCFunc(L, "CallAsTeam", CallAsTeam);
 
@@ -180,7 +180,8 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	LuaPushNamedNumber(L, "COBSCALE", COBSCALE);
 	
 	// load our libraries
-	if (!AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
+	if (!AddEntriesToTable(L, "VFS",         LuaVFS::PushSynced)           ||
+	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
@@ -230,13 +231,13 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	unsyncedStr.GetRegistry(L);
 	lua_rawset(L, -3);
 
-	LuaPushNamedCFunc(L, "include",      Include);
 	LuaPushNamedCFunc(L, "loadstring",   LoadString);
 	LuaPushNamedCFunc(L, "CallAsTeam",   CallAsTeam);
 	LuaPushNamedCFunc(L, "UpdateCallIn", UpdateCallIn);
 
 	// load our libraries
 	if (!LuaSyncedTable::PushEntries(L)                                    ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -861,59 +862,6 @@ int CLuaHandleSynced::LoadString(lua_State* L)
 		luaL_error(L, "loadstring(): error with setfenv");
 	}
 	return 1;
-}
-
-
-int CLuaHandleSynced::Include(lua_State* L)
-{
-	const int args = lua_gettop(L);
-	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_istable(L, 2))) {
-		luaL_error(L, "Incorrect arguments to include()");
-	}
-	
-	const string& filename = lua_tostring(L, 1);
-
-	int error;
-	const CLuaHandle* lh = GetActiveHandle();
-	const string debug = lh->name + ":include()";
-
-	const string code = lh->LoadFile(filename);
-	if (code.empty()) {
-		return 0;
-	}
-
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, filename.c_str(), lua_tostring(L, -1));
-		lua_error(L);
-	}
-
-	// set the chunk's fenv to the current fenv, or a user table
-	if (args >= 2) {
-		lua_pushvalue(L, 2); // user fenv
-	} else {
-		PushCurrentFuncEnv(L, __FUNCTION__);
-	}
-
-	// set the include fenv to the current function's fenv
-	if (lua_setfenv(L, -2) == 0) {
-		luaL_error(L, "include(): error with setfenv");
-	}
-
-	const int paramTop = lua_gettop(L) - 1;	
-
-	error = lua_pcall(L, 0, LUA_MULTRET, 0);
-
-
-	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, filename.c_str(), lua_tostring(L, -1));
-		lua_error(L);
-	}
-
-	return lua_gettop(L) - paramTop;
 }
 
 

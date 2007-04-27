@@ -81,7 +81,6 @@ class CLuaHandleSynced : public CLuaHandle
 	private: // call-outs
 		static int SyncedRandom(lua_State* L);
 
-		static int Include(lua_State* L);
 		static int LoadString(lua_State* L);
 
 		static int SendToUnsynced(lua_State* L);

@@ -66,6 +66,35 @@ public:
 	bool IsUnitParalyzed(int unitid);
 	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
 
+	// LuaScript state
+	bool IsLuaUIEnabled();
+	bool IsLuaCobEnabled();
+	bool IsLuaGaiaEnabled();
+	bool IsLuaRulesEnabled();
+
+	// LuaRules info  (return false if the information is not available)
+	bool GetGameRulesParam(            int param,         float& value);
+	bool GetGameRulesParam(            const char* param, float& value);
+	bool GetTeamRulesParam(int teamID, int param,         float& value);
+	bool GetTeamRulesParam(int teamID, const char* param, float& value);
+	bool GetUnitRulesParam(int unitID, int param,         float& value);
+	bool GetUnitRulesParam(int unitID, const char* param, float& value);
+
+	// Lua Script unsynced calls
+	enum LuaCallState {
+		LUACALL_SUCCESS     = 0,
+		LUACALL_NOT_RUNNING = 1,
+		LUACALL_UNDEFINED   = 2,
+		LUACALL_ERROR       = 3
+	};
+	//
+	// The 'args' array must be at least:  max(inArgs, outArgs) 
+	//
+	LuaCallState CallLuaUI(const char* name, int inArgs, int& outArgs, float* args); 
+	LuaCallState CallLuaCob(const char* name, int inArgs, int& outArgs, float* args); 
+	LuaCallState CallLuaGaia(const char* name, int inArgs, int& outArgs, float* args); 
+	LuaCallState CallLuaRules(const char* name, int inArgs, int& outArgs, float* args); 
+
 	const UnitDef* GetUnitDef(const char* unitName);
 
 	int InitPath(float3 start,float3 end,int pathType);
