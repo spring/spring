@@ -94,7 +94,7 @@ string CKeyAutoBinder::LoadFile(const string& filename) const
 	CFileHandler f(filename, CFileHandler::OnlyRawFS);
 
 	string code;
-	if (!f.LoadString(code)) {
+	if (!f.LoadStringData(code)) {
 		code.clear();
 	}
 	return code;

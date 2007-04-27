@@ -172,7 +172,7 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	LuaPushNamedCFunc(L, "KillScript",     KillActiveHandle);
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
 
-	LuaPushNamedCFunc(L, "loadstring", LoadString);
+	LuaPushNamedCFunc(L, "loadstring", LoadStringData);
 	LuaPushNamedCFunc(L, "CallAsTeam", CallAsTeam);
 
 	LuaPushNamedCFunc(L, "AllowUnsafeChanges", AllowUnsafeChanges);
@@ -231,7 +231,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	unsyncedStr.GetRegistry(L);
 	lua_rawset(L, -3);
 
-	LuaPushNamedCFunc(L, "loadstring",   LoadString);
+	LuaPushNamedCFunc(L, "loadstring",   LoadStringData);
 	LuaPushNamedCFunc(L, "CallAsTeam",   CallAsTeam);
 	LuaPushNamedCFunc(L, "UpdateCallIn", UpdateCallIn);
 
@@ -504,7 +504,7 @@ string CLuaHandleSynced::LoadFile(const string& filename) const
 	}
 	CFileHandler f(filename, vfsMode);
 	string code;
-	if (!f.LoadString(code)) {
+	if (!f.LoadStringData(code)) {
 		code.clear();
 	}
 	return code;
@@ -845,7 +845,7 @@ int CLuaHandleSynced::SyncedRandom(lua_State* L)
 }
 
 
-int CLuaHandleSynced::LoadString(lua_State* L)
+int CLuaHandleSynced::LoadStringData(lua_State* L)
 {
 	size_t len;
 	const char *str    = luaL_checklstring(L, 1, &len);

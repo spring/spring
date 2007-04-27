@@ -64,8 +64,6 @@ extern "C" {
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
 
-#undef LoadStringA
-
 extern Uint8 *keys;
 extern GLfloat LightDiffuseLand[];
 extern GLfloat LightAmbientLand[];
@@ -196,7 +194,7 @@ string CLuaUI::LoadFile(const string& filename) const
 	CFileHandler f(filename, CFileHandler::OnlyRawFS);
 
 	string code;
-	if (!f.LoadString(code)) {
+	if (!f.LoadStringData(code)) {
 		code.clear();
 	}
 	return code;

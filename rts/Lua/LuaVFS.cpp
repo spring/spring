@@ -143,7 +143,7 @@ static bool TestLoadFile(const string& filename, string& data,
 		return false;
 	}
 	data.clear();
-	if (!fh.LoadString(data)) {
+	if (!fh.LoadStringData(data)) {
 		return false;
 	}
 	return true;

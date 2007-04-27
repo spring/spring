@@ -25,7 +25,7 @@ public:
 	int FileSize();
 	int GetPos();
 	
-	bool LoadString(std::string& data);
+	bool LoadStringData(std::string& data);
 
 	static std::vector<std::string> FindFiles(const std::string& path, const std::string& pattern);
 private:

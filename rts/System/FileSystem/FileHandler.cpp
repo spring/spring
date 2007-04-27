@@ -165,7 +165,7 @@ int CFileHandler::GetPos()
 }
 
 
-bool CFileHandler::LoadString(std::string& data)
+bool CFileHandler::LoadStringData(std::string& data)
 {
 	if (!FileExists()) {
 		return false;
