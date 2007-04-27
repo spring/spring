@@ -64,6 +64,8 @@ extern "C" {
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
 
+#undef LoadStringA
+
 extern Uint8 *keys;
 extern GLfloat LightDiffuseLand[];
 extern GLfloat LightAmbientLand[];
