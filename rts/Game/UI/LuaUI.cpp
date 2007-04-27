@@ -31,6 +31,7 @@ extern "C" {
 #include "Lua/LuaUnitDefs.h"
 #include "Lua/LuaWeaponDefs.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaVFS.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
@@ -141,6 +142,7 @@ CLuaUI::CLuaUI()
 
 	// load the spring libraries
 	if (!LoadCFunctions(L)                                                 ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -184,6 +186,18 @@ void CLuaUI::KillLua()
 		lua_close(L);
 		L = NULL;
 	}
+}
+
+
+string CLuaUI::LoadFile(const string& filename) const
+{
+	CFileHandler f(filename, CFileHandler::OnlyRawFS);
+
+	string code;
+	if (!f.LoadString(code)) {
+		code.clear();
+	}
+	return code;
 }
 
 
@@ -1221,7 +1235,7 @@ int CLuaUI::CreateDir(lua_State* L)
 	if ((dir[0] == '/') || (dir[0] == '\\') ||
 	    (strstr(dir.c_str(), "..") != NULL) ||
 	    ((dir.size() > 0) && (dir[1] == ':'))) {
-		luaL_error(L, "Invalid GetDirList() access: %s", dir.c_str());
+		luaL_error(L, "Invalid CreateDir() access: %s", dir.c_str());
 	}
 
 	const bool success = filesystem.CreateDirectory(dir);

@@ -866,7 +866,7 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
 	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySample(sid, unit->pos, attr);
+	sound->PlaySample(sid, unit->pos, attr); // FIXME:  (float)attr / 100.0f ?
 }
 
 void CCobInstance::ShowFlare(int piece)

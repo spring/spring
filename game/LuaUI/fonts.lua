@@ -61,8 +61,8 @@ end
 
 local function LoadFontSpecs(fontName)
   local specFile = fontName .. ".lua"
-  local text = Spring.LoadTextVFS(specFile)
-  if (not text) then
+  local text = VFS.LoadFile(specFile)
+  if (text == nil) then
     return nil
   end
   local chunk = loadstring(text, specFile)
@@ -319,7 +319,7 @@ local function LoadFont(fontName)
     return nil  -- bad specs
   end
 
-  if (not Spring.FileExistsVFS(baseName .. ".png")) then
+  if (not VFS.FileExists(baseName .. ".png")) then
     return nil  -- missing texture
   end
 

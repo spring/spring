@@ -178,6 +178,9 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 		if((*usi)==excludeUnit)
 			continue;
 #endif
+		if ((*usi)->noDraw) {
+			continue;
+		}
 		if(camera->InView((*usi)->midPos,(*usi)->radius+30)){
 			if(gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView){
 				if(drawReflection){

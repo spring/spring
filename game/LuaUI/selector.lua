@@ -227,10 +227,18 @@ function widget:DrawScreen()
               (enabled and '\255\200\200\064') or '\255\224\064\064'
     end
 
-    if (fh) then
-      fontHandler.DrawCentered(color..name, floor(midx), floor(posy + 2))
+    local tmpName
+    if (data.fromZip) then
+      -- FIXME: extra chars not counted in text length
+      tmpName = WhiteStr .. '*' .. color .. name .. WhiteStr .. '*'
     else
-      gl.Text(color..name, midx, posy, fontSize, "c")
+      tmpName = color .. name
+    end
+
+    if (fh) then
+      fontHandler.DrawCentered(color..tmpName, floor(midx), floor(posy + 2))
+    else
+      gl.Text(color..tmpName, midx, posy, fontSize, "c")
     end
 
     posy = posy - yStep
@@ -388,6 +396,9 @@ function widget:GetTooltip(x, y)
   tt = d.desc   and tt..WhiteStr..d.desc..'\n' or tt
   tt = d.author and tt..BlueStr..'Author:  '..CyanStr..d.author..'\n' or tt
   tt = tt..MagentaStr..d.basename
+  if (d.fromZip) then
+    tt = tt..RedStr..' (mod widget)'
+  end
   return tt
 end
 

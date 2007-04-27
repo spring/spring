@@ -89,6 +89,18 @@ CKeyAutoBinder::~CKeyAutoBinder()
 }
 
 
+string CKeyAutoBinder::LoadFile(const string& filename) const
+{
+	CFileHandler f(filename, CFileHandler::OnlyRawFS);
+
+	string code;
+	if (!f.LoadString(code)) {
+		code.clear();
+	}
+	return code;
+}
+
+
 bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 {
 	if (L == NULL) {

@@ -71,7 +71,7 @@ class CLuaHandle {
 		const LuaCobCallback  GetCallback() { return cobCallback; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
-		virtual string LoadFile(const string& filename) const;
+		virtual string LoadFile(const string& filename) const = 0;
 
 	public:
 		const string name;
