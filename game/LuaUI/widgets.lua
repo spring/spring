@@ -247,7 +247,6 @@ function widgetHandler:Initialize()
   self:LoadConfigData()
 
   -- create the "LuaUI/Config" directory
-  Spring.CreateDir('LuaUI')
   Spring.CreateDir('LuaUI/Config')
 
   local unsortedWidgets = {}
