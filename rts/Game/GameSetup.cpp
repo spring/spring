@@ -79,23 +79,28 @@ bool CGameSetup::Init(char* buf, int size)
 	mapname=file.SGetValueDef("","GAME\\mapname");
 	scriptName=file.SGetValueDef("Commanders","GAME\\scriptname");
 	baseMod=archiveScanner->ModArchiveToModName(file.SGetValueDef(MOD_FILE,"GAME\\Gametype"));
-	file.GetDef(hostip,"0","GAME\\HostIP");
-	file.GetDef(hostport,"0","GAME\\HostPort");
-	file.GetDef(maxUnits,"500","GAME\\MaxUnits");
-	file.GetDef(gs->gameMode,"0","GAME\\GameMode");
-	file.GetDef(gs->noHelperAIs,"0","GAME\\NoHelperAIs");
-	file.GetDef(gs->useLuaGaia,"0","GAME\\LuaGaia");
-	file.GetDef(gs->useLuaRules,"0","GAME\\LuaRules");
-	file.GetDef(sourceport,"0","GAME\\SourcePort");
-	file.GetDef(limitDgun,"0","GAME\\LimitDgun");
-	file.GetDef(diminishingMMs,"0","GAME\\DiminishingMMs");
-	file.GetDef(disableMapDamage,"0","GAME\\DisableMapDamage");
-	demoName=file.SGetValueDef("","GAME\\Demofile");
-	if(!demoName.empty())
-		hostDemo=true;
+	file.GetDef(hostip,          "0",   "GAME\\HostIP");
+	file.GetDef(hostport,        "0",   "GAME\\HostPort");
+	file.GetDef(maxUnits,        "500", "GAME\\MaxUnits");
+	file.GetDef(gs->gameMode,    "0",   "GAME\\GameMode");
+	file.GetDef(gs->noHelperAIs, "0",   "GAME\\NoHelperAIs");
+	file.GetDef(sourceport,      "0",   "GAME\\SourcePort");
+	file.GetDef(limitDgun,       "0",   "GAME\\LimitDgun");
+	file.GetDef(diminishingMMs,  "0",   "GAME\\DiminishingMMs");
+	file.GetDef(disableMapDamage,"0",   "GAME\\DisableMapDamage");
+
+	const string luaGaiaStr  = file.SGetValueDef("GAME\\LuaGaia",  "1");
+	const string luaRulesStr = file.SGetValueDef("GAME\\LuaRules", "1");
+	gs->useLuaGaia  = (luaGaiaStr  != "0");
+	gs->useLuaRules = (luaRulesStr != "0");
+
+	demoName = file.SGetValueDef("","GAME\\Demofile");
+	if (!demoName.empty()) {
+		hostDemo = true;
+	}
 	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
 
-	file.GetDef(maxSpeed, "3", "GAME\\MaxSpeed");
+	file.GetDef(maxSpeed, "3.0", "GAME\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
 
 	// Determine if the map is inside an archive, and possibly map needed archives
