@@ -34,6 +34,12 @@ local MOD_WIDGET_DIRNAME = MODUI_DIRNAME .. 'Widgets/'
 local SELECTOR_BASENAME = 'selector.lua'
 
 
+local SAFEWRAP = 1
+-- 0: disabled
+-- 1: enabled, but can be overriden by widget.GetInfo().unsafe
+-- 2: always enabled
+
+
 --------------------------------------------------------------------------------
 
 -- install bindings for TweakMode and the Widget Selector
@@ -174,6 +180,7 @@ local function ripairs(t)
 end
 
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 function widgetHandler:LoadOrderList()
@@ -475,10 +482,50 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local function SafeWrap(func)
+  local wh = widgetHandler
+  return function(w, ...)
+    local r = { pcall(func, w, unpack(arg)) }
+    if (r[1]) then
+      table.remove(r, 1)
+      return unpack(r)
+    else
+      local name = w.whInfo.name
+      widgetHandler:RemoveWidget(w)
+      Spring.Echo(r[2])
+      Spring.Echo('Removed widget: ' .. name)
+      return nil
+    end
+  end
+end
+
+
+local function SafeWrapWidget(widget)
+  if (SAFEWRAP <= 0) then
+    return
+  elseif (SAFEWRAP == 1) then
+    if (widget.GetInfo and widget.GetInfo().unsafe) then
+      Spring.Echo('LuaUI: loaded unsafe widget: ' .. widget.whInfo.name)
+      return
+    end
+  end
+
+  for _,ciName in callInLists do
+    if (widget[ciName]) then
+      widget[ciName] = SafeWrap(widget[ciName])
+    end
+    if (widget.Initialize) then
+      widget.Initialize = SafeWrap(widget.Initialize)
+    end
+  end
+end
+
+
 function widgetHandler:InsertWidget(widget)
   if (widget == nil) then
     return
   end
+
   local function Insert(t, f, w)
     if (f) then
       local layer = w.whInfo.layer
@@ -494,11 +541,15 @@ function widgetHandler:InsertWidget(widget)
       table.insert(t, index, w)
     end
   end
+
+  SafeWrapWidget(widget)
+
   Insert(self.widgets, true, widget)
   for _,listname in callInLists do
     Insert(self[listname..'List'], widget[listname], widget)
   end
   self:UpdateCallIns()
+
   if (widget.Initialize) then
     widget:Initialize()
   end
@@ -509,6 +560,7 @@ function widgetHandler:RemoveWidget(widget)
   if (widget == nil) then
     return
   end
+
   local name = widget.whInfo.name
   if (widget.GetConfigData) then
     self.configData[name] = widget:GetConfigData()
@@ -525,6 +577,7 @@ function widgetHandler:RemoveWidget(widget)
       end
     end
   end
+
   Remove(self.widgets, widget)
   self.actionHandler:RemoveWidgetActions(widget)
   for _,listname in callInLists do
@@ -1091,9 +1144,9 @@ function widgetHandler:GameOver()
 end
 
 
-function widgetHandler:TeamDied()
+function widgetHandler:TeamDied(teamID)
   for _,w in ipairs(self.TeamDiedList) do
-    w:TeamDied()
+    w:TeamDied(teamID)
   end
   return
 end

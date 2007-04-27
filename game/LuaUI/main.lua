@@ -17,13 +17,12 @@ VFS.Include(LUAUI_DIRNAME .. 'utils.lua', utilFile)
 
 include("callins.lua")  -- define all call-ins, in case they are required
 include("unitdefs.lua") -- process some custom UnitDefs parameters
-
-include("debug.lua");
-include("fonts.lua");
-include("layout.lua");  -- contains a simple LayoutButtons()
-include("widgets.lua");
-
 include("savetable.lua")
+
+include("debug.lua")
+include("fonts.lua")
+include("layout.lua")   -- contains a simple LayoutButtons()
+include("widgets.lua")  -- the widget handler
 
 
 --------------------------------------------------------------------------------
