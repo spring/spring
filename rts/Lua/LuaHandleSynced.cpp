@@ -19,6 +19,7 @@ extern "C" {
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
 #include "LuaConstGame.h"
+#include "LuaSyncedCall.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
 #include "LuaSyncedTable.h"
@@ -184,9 +185,9 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	    !AddEntriesToTable(L, "Spring",      LuaSyncedCall::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
@@ -242,6 +243,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
@@ -708,6 +710,24 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 // Custom Call-in
 //
 
+bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
+{
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	lua_pushstring(L, funcName.c_str()); // push the function name
+	lua_rawget(L, -2);                   // get the function
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 2);
+		return false;
+	}
+	lua_pop(L, 2);
+	return true;	
+}
+
+
 bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 {
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
@@ -723,6 +743,45 @@ bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 	}
 	lua_pop(L, 2);
 	return true;	
+}
+
+
+int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
+{
+	const bool diffStates = (srcState != L);
+	const int argCount = lua_gettop(srcState);
+	const LuaHashString cmdStr(funcName);
+
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	if (!lua_istable(L, -1)) {
+		lua_settop(L, 0);
+		return 0;
+	}
+	cmdStr.Push(L);             // push the function name
+	lua_rawget(L, -2);          // get the function
+	if (!lua_isfunction(L, -1)) {
+		lua_settop(L, 0);
+		return 0;
+	}
+	lua_insert(L, 1); // move the function to the beginning
+	lua_pop(L, 1);    // pop the GLOBAL table
+
+	if (diffStates) {
+		LuaUtils::CopyData(L, srcState, argCount);
+	}
+
+	// call the function
+	if (!RunCallIn(cmdStr, argCount, 1)) {
+		return 0;
+	}
+
+	const int retCount = lua_gettop(L);
+	if ((retCount > 0) && diffStates) {
+		lua_settop(srcState, 0);
+		LuaUtils::CopyData(srcState, L, retCount);
+	}
+
+	return retCount;
 }
 
 
@@ -763,8 +822,6 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 	return retCount;
 }
-
-
 
 
 /******************************************************************************/
