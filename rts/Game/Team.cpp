@@ -206,8 +206,9 @@ void CTeam::SlowUpdate()
 		energy = energyStorage;
 	}
 
-	if(lastStatSave+480<gs->frameNum){		//save every 16th second
-		lastStatSave+=480;
+	const int statsFrames = (statsPeriod * GAME_SPEED);
+	if ((lastStatSave + statsFrames) < gs->frameNum) {
+		lastStatSave += statsFrames;
 		statHistory.push_back(currentStats);
 	}
 

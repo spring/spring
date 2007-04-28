@@ -103,6 +103,7 @@ public:
 		int unitsKilled;	//how many enemy units have been killed by this teams units
 	};
 	Statistics currentStats;
+	static const int statsPeriod = 15; // every 15th second
 
 	int lastStatSave;
 	int numCommanders;		//number of units with commander tag in team, if it reaches zero with cmd ends the team dies
