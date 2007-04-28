@@ -130,8 +130,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetTeamUnitStats);
-	REGISTER_LUA_CFUNC(GetTeamRulesParam);  
-	REGISTER_LUA_CFUNC(GetTeamRulesParams);  
+	REGISTER_LUA_CFUNC(GetTeamRulesParam);
+	REGISTER_LUA_CFUNC(GetTeamRulesParams);
+	REGISTER_LUA_CFUNC(GetTeamStatsHistory);
 
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
@@ -967,14 +968,81 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID)) {
-		return 0;
-	}
-
 	const vector<float>& params       = team->modParams;
 	const map<string, int>& paramsMap = team->modParamsMap;
 
 	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap);
+}
+
+
+int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
+{
+	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	if (team == NULL) {
+		return 0;
+	}
+	const int teamID = team->teamNum;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L);
+	if (args == 1) {
+		lua_pushnumber(L, team->statHistory.size());
+		return 1;
+	}
+
+	const list<CTeam::Statistics>& teamStats = team->statHistory;
+	std::list<CTeam::Statistics>::const_iterator it = teamStats.begin();
+	const int statCount = teamStats.size();
+
+	int start = 0;
+	if ((args >= 2) && lua_isnumber(L, 2)) {
+		start = (int)lua_tonumber(L, 2) - 1;
+		start = max(0, min(statCount - 1, start));
+	}
+
+	int end = start;
+	if ((args >= 3) && lua_isnumber(L, 3)) {
+		end = (int)lua_tonumber(L, 3) - 1;
+		end = max(0, min(statCount - 1, end));
+	}
+
+	std::advance(it, start);
+
+	lua_newtable(L);
+	int count = 0;
+	for (int i = start; i <= end; ++i, ++it) {
+		const CTeam::Statistics& stats = *it;
+		count++;
+		lua_pushnumber(L, count);
+		lua_newtable(L); {
+			HSTR_PUSH_NUMBER(L, "frame",            (start + 1) * 480);
+			HSTR_PUSH_NUMBER(L, "metalUsed",        stats.metalUsed);
+			HSTR_PUSH_NUMBER(L, "metalProduced",    stats.metalProduced);
+			HSTR_PUSH_NUMBER(L, "metalExcess",      stats.metalExcess);
+			HSTR_PUSH_NUMBER(L, "metalReceived",    stats.metalReceived);
+			HSTR_PUSH_NUMBER(L, "metalSent",        stats.metalSent);
+			HSTR_PUSH_NUMBER(L, "energyUsed",       stats.energyUsed);
+			HSTR_PUSH_NUMBER(L, "energyProduced",   stats.energyProduced);
+			HSTR_PUSH_NUMBER(L, "energyExcess",     stats.energyExcess);
+			HSTR_PUSH_NUMBER(L, "energyReceived",   stats.energyReceived);
+			HSTR_PUSH_NUMBER(L, "energySent",       stats.energySent);
+			HSTR_PUSH_NUMBER(L, "damageDealt",      stats.damageDealt);
+			HSTR_PUSH_NUMBER(L, "damageReceived",   stats.damageReceived);
+			HSTR_PUSH_NUMBER(L, "unitsProduced",    stats.unitsProduced);
+			HSTR_PUSH_NUMBER(L, "unitsDied",        stats.unitsDied);
+			HSTR_PUSH_NUMBER(L, "unitsReceived",    stats.unitsReceived);
+			HSTR_PUSH_NUMBER(L, "unitsSent",        stats.unitsSent);
+			HSTR_PUSH_NUMBER(L, "unitsCaptured",    stats.unitsCaptured);
+			HSTR_PUSH_NUMBER(L, "unitsOutCaptured", stats.unitsOutCaptured);
+			HSTR_PUSH_NUMBER(L, "unitsKilled",      stats.unitsKilled);
+		}
+		lua_rawset(L, -3);
+	}
+	hs_n.PushNumber(L, count);
+	return 1;
 }
 
 
