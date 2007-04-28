@@ -207,9 +207,10 @@ bool CLuaUI::HasCallIn(const string& callInName)
 		return false;
 	}
 
-	// never allow these calls,
-	// use DrawWorldItems and DrawScreenItems instead
-	if ((callInName == "DrawWorld") ||
+	// never allow these calls;
+	// use UpdateLayout, DrawWorldItems, and DrawScreenItems instead
+	if ((callInName == "Update")    ||
+	    (callInName == "DrawWorld") ||
 	    (callInName == "DrawScreen")) {
 		return false;
 	}

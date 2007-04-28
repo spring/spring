@@ -41,6 +41,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 #define ADDHANDLE(name) \
   if (lh->HasCallIn(#name)) { ListInsert(list ## name, lh); }
   
+	ADDHANDLE(Update);
+
 	ADDHANDLE(GameOver);
 	ADDHANDLE(TeamDied);
 
@@ -78,6 +80,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 {
 	ListRemove(handles, lh);
+
+	ListRemove(listUpdate, lh);
 
 	ListRemove(listGameOver, lh);
 	ListRemove(listTeamDied, lh);
@@ -149,6 +153,16 @@ void CLuaCallInHandler::ListRemove(CallInList& ciList, CLuaHandle* lh)
 
 /******************************************************************************/
 /******************************************************************************/
+
+void CLuaCallInHandler::Update()
+{
+    const int count = listUpdate.size();
+    for (int i = 0; i < count; i++) {
+      CLuaHandle* lh = listUpdate[i];
+      lh->Update();
+    }
+}
+
 
 void CLuaCallInHandler::GameOver()
 {

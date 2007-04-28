@@ -1675,6 +1675,8 @@ bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
 
+	luaCallIns.Update();
+
 	if (!gu->active) {
 		// update LuaUI
 		guihandler->Update();
