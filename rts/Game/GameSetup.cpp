@@ -13,6 +13,8 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/glFont.h"
@@ -93,6 +95,8 @@ bool CGameSetup::Init(char* buf, int size)
 	const string luaRulesStr = file.SGetValueDef("GAME\\LuaRules", "1");
 	gs->useLuaGaia  = (luaGaiaStr  != "0");
 	gs->useLuaRules = (luaRulesStr != "0");
+	CLuaGaia::SetConfigString(luaGaiaStr);
+	CLuaRules::SetConfigString(luaRulesStr);
 
 	demoName = file.SGetValueDef("","GAME\\Demofile");
 	if (!demoName.empty()) {

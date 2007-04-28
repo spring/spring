@@ -32,6 +32,9 @@ class CLuaRules : public CLuaHandleSynced
 		static void LoadHandler();
 		static void FreeHandler();
 
+		static void SetConfigString(const string& cfg) { configString = cfg; }
+		static const string& GetConfigString() { return configString; }
+
 		static const vector<float>&    GetGameParams();
 		static const map<string, int>& GetGameParamsMap();
 
@@ -63,6 +66,8 @@ class CLuaRules : public CLuaHandleSynced
 		                              map<string, int>& paramsMap);
 
 	protected: // call-outs
+		static int GetConfigString(lua_State* L);
+
 		static int SetRulesInfoMap(lua_State* L);
 
 		static int SetUnitRulesParam(lua_State* L);
@@ -87,6 +92,7 @@ class CLuaRules : public CLuaHandleSynced
 		map<string, string> infoMap;
 
 	private:
+		static string configString;
 		static vector<float>    gameParams;
 		static map<string, int> gameParamsMap;
 };
