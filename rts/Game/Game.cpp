@@ -1451,6 +1451,13 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
+	else if (cmd == "endgraph") {
+		if (action.extra.empty()) {
+			CEndGameBox::disabled = !CEndGameBox::disabled;
+		} else {
+			CEndGameBox::disabled = !atoi(action.extra.c_str());
+		}
+	}
 	else if (cmd == "fpshud") {
 		if (action.extra.empty()) {
 			drawFpsHUD = !drawFpsHUD;
