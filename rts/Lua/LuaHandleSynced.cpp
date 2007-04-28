@@ -307,6 +307,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	}
 
 	if (!SetupUnsyncedFunction("RecvFromSynced")      ||
+	    !SetupUnsyncedFunction("Update")              ||
 	    !SetupUnsyncedFunction("DrawWorld")           ||
 	    !SetupUnsyncedFunction("DrawWorldShadow")     ||
 	    !SetupUnsyncedFunction("DrawWorldReflection") ||
@@ -520,7 +521,8 @@ bool CLuaHandleSynced::HasCallIn(const string& callInName)
 	}
 
 	int tableIndex;
-	if (callInName.find("Draw") != 0) {
+	if ((callInName != "Update") &&
+	    (callInName.find("Draw") != 0)) {
 		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
 	} else {
 		tableIndex = LUA_REGISTRYINDEX; // unsynced call-ins in REGISTRY
@@ -1043,7 +1045,9 @@ int CLuaHandleSynced::UpdateCallIn(lua_State* L)
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 	const string funcName = lua_tostring(L, 1);
-	if ((funcName != "DrawWorld")           &&
+	if ((funcName != "RecvFromSynced")      &&
+	    (funcName != "Update")              &&
+	    (funcName != "DrawWorld")           &&
 	    (funcName != "DrawWorldShadow")     &&
 	    (funcName != "DrawWorldReflection") &&
 	    (funcName != "DrawWorldRefraction") &&

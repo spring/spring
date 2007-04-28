@@ -31,6 +31,8 @@ class CLuaCallInHandler
 		void RemoveHandle(CLuaHandle* lh);
 
 	public:
+		void Update();
+
 		void GameOver();
 		void TeamDied(int teamID);
 
@@ -76,6 +78,8 @@ class CLuaCallInHandler
 
 	private:
 		CallInList handles;
+
+		CallInList listUpdate;
 
 		CallInList listGameOver;
 		CallInList listTeamDied;

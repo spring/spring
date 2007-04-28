@@ -565,6 +565,22 @@ inline bool CLuaHandle::LoadDrawCallIn(const LuaHashString& hs)
 }
 
 
+void CLuaHandle::Update()
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("Update");
+	if (!LoadDrawCallIn(cmdStr)) {
+		lua_settop(L, 0);
+		return;
+	}
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+
+	return;
+}
+
+
 void CLuaHandle::DrawWorld()
 {
 	lua_settop(L, 0);

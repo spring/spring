@@ -81,6 +81,8 @@ class CLuaHandle {
 	public: // call-ins
 		virtual bool HasCallIn(const string& callInName) { return false; }
 
+		void Update();
+
 		void Shutdown();
 
 		void GameOver();
