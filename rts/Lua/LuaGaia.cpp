@@ -106,6 +106,16 @@ bool CLuaGaia::AddSyncedCode()
 }
 
 
+bool CLuaGaia::AddUnsyncedCode()
+{
+	lua_getglobal(L, "Script");
+	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
+	lua_pop(L, 1);
+
+	return true;
+}
+
+
 /******************************************************************************/
 
 void CLuaGaia::CobCallback(int retCode, void* p1, void* p2)
