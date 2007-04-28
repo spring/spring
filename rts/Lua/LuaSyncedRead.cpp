@@ -1011,7 +1011,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 
 	std::advance(it, start);
 
-	const int statsFrames = (statsPeriod * GAME_SPEED);
+	const int statsFrames = (CTeam::statsPeriod * GAME_SPEED);
 
 	lua_newtable(L);
 	int count = 0;
