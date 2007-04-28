@@ -25,7 +25,7 @@ class CLuaGaia : public CLuaHandleSynced
 
 	protected:
 		bool AddSyncedCode();
-		bool AddUnsyncedCode() { return true; }
+		bool AddUnsyncedCode();
 
 	private:
 		CLuaGaia();

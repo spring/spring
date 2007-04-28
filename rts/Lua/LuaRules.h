@@ -56,7 +56,7 @@ class CLuaRules : public CLuaHandleSynced
 
 	protected:
 		bool AddSyncedCode();
-		bool AddUnsyncedCode() { return true; }
+		bool AddUnsyncedCode();
 
 		static void SetRulesParam(lua_State* L, const char* caller, int offset,
 		                          vector<float>& params,

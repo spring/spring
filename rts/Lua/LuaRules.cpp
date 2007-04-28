@@ -126,6 +126,16 @@ bool CLuaRules::AddSyncedCode()
 }
 
 
+bool CLuaRules::AddUnsyncedCode()
+{
+	lua_getglobal(L, "Script");
+	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
+	lua_pop(L, 1);
+
+	return true;
+}
+
+
 /******************************************************************************/
 
 void CLuaRules::CobCallback(int retCode, void* p1, void* p2)
