@@ -32,6 +32,8 @@ extern "C" {
 
 CLuaGaia* luaGaia = NULL;
 
+string CLuaGaia::configString;
+
 static const char* LuaGaiaDir              = "LuaGaia";
 static const char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
 static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
@@ -94,6 +96,16 @@ CLuaGaia::~CLuaGaia()
 }
 
 
+bool CLuaGaia::AddSyncedCode()
+{
+	lua_getglobal(L, "Script");
+	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
+	lua_pop(L, 1);
+
+	return true;
+}
+
+
 /******************************************************************************/
 
 void CLuaGaia::CobCallback(int retCode, void* p1, void* p2)
@@ -102,6 +114,15 @@ void CLuaGaia::CobCallback(int retCode, void* p1, void* p2)
 		CobCallbackData cbd(retCode, *((int*)&p1), *((float*)&p2));
 		luaGaia->cobCallbackEntries.push_back(cbd);
 	}
+}
+
+
+/******************************************************************************/
+
+int CLuaGaia::GetConfigString(lua_State* L)
+{
+	lua_pushlstring(L, configString.c_str(), configString.size());
+	return 1;
 }
 
 

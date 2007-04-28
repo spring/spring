@@ -26,6 +26,8 @@
 #include "Game/Team.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
 #include "Platform/ConfigHandler.h"
@@ -753,6 +755,8 @@ void SpringApp::CreateGameSetup ()
 		const string luaRulesStr = configHandler.GetString("LuaRules", "1");
 		gs->useLuaGaia  = (luaGaiaStr  != "0");
 		gs->useLuaRules = (luaRulesStr != "0");
+		CLuaGaia::SetConfigString(luaGaiaStr);
+		CLuaRules::SetConfigString(luaRulesStr);
 		if (gs->useLuaGaia) {
 			gs->gaiaTeamID = gs->activeTeams;
 			gs->gaiaAllyTeamID = gs->activeAllyTeams;

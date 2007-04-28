@@ -20,16 +20,25 @@ class CLuaGaia : public CLuaHandleSynced
 		static void LoadHandler();
 		static void FreeHandler();
 
+		static void SetConfigString(const string& cfg) { configString = cfg; }
+		static const string& GetConfigString() { return configString; }
+
 	protected:
-		bool AddSyncedCode() { return true; }
+		bool AddSyncedCode();
 		bool AddUnsyncedCode() { return true; }
 
 	private:
 		CLuaGaia();
 		~CLuaGaia();
 
+	private: // call-outs
+		static int GetConfigString(lua_State* L);
+
 	private:
 		static void CobCallback(int retCode, void* p1, void* p2);
+
+	private:
+		static string configString;
 };
 
 

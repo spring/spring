@@ -35,10 +35,11 @@ extern "C" {
 
 CLuaRules* luaRules = NULL;
 
+string CLuaRules::configString;
+
 static const char* LuaRulesDir              = "LuaRules";
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
-
 
 vector<float>    CLuaRules::gameParams;
 map<string, int> CLuaRules::gameParamsMap;
@@ -107,6 +108,10 @@ CLuaRules::~CLuaRules()
 
 bool CLuaRules::AddSyncedCode()
 {
+	lua_getglobal(L, "Script");
+	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
+	lua_pop(L, 1);
+
 	lua_getglobal(L, "Spring");
 	LuaPushNamedCFunc(L, "SetRulesInfoMap",       SetRulesInfoMap);
 	LuaPushNamedCFunc(L, "SetUnitRulesParam",     SetUnitRulesParam);
@@ -116,6 +121,7 @@ bool CLuaRules::AddSyncedCode()
 	LuaPushNamedCFunc(L, "CreateTeamRulesParams", CreateTeamRulesParams);
 	LuaPushNamedCFunc(L, "CreateGameRulesParams", CreateGameRulesParams);
 	lua_pop(L, 1);
+
 	return true;
 }
 
@@ -601,6 +607,15 @@ int CLuaRules::CreateUnitRulesParams(lua_State* L)
 	}
 	CreateRulesParams(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
 	return 0;
+}
+
+
+/******************************************************************************/
+
+int CLuaRules::GetConfigString(lua_State* L)
+{
+	lua_pushlstring(L, configString.c_str(), configString.size());
+	return 1;
 }
 
 

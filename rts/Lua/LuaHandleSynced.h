@@ -21,9 +21,6 @@ struct lua_State;
 class CLuaHandleSynced : public CLuaHandle
 {
 	public:
-		bool SetupSynced(const string& code, const string& filename);
-		bool SetupUnsynced(const string& code, const string& filename);
-
 		bool Initialize(const string& syncData);
 		string GetSyncData();
 
@@ -49,6 +46,8 @@ class CLuaHandleSynced : public CLuaHandle
 		virtual ~CLuaHandleSynced();
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile);
+		bool SetupSynced(const string& code, const string& filename);
+		bool SetupUnsynced(const string& code, const string& filename);
 
 		// hooks to add code during initialization
 		virtual bool AddSyncedCode() = 0;
