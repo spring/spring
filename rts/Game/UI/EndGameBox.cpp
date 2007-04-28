@@ -12,7 +12,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
 
+
 extern bool globalQuit;
+
 
 static string FloatToSmallString(float num,float mul=1){
 	char c[50];
@@ -30,6 +32,10 @@ static string FloatToSmallString(float num,float mul=1){
 	}
 	return c;
 };
+
+
+bool CEndGameBox::disabled = false;
+
 
 CEndGameBox::CEndGameBox(void)
 {
@@ -75,6 +81,10 @@ CEndGameBox::~CEndGameBox(void)
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
+	if (disabled) {
+		return false;
+	}
+
 	float mx=MouseX(x);
 	float my=MouseY(y);
 	if(InBox(mx,my,box)){
@@ -96,6 +106,10 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
+	if (disabled) {
+		return;
+	}
+
 	float mx=MouseX(x);
 	float my=MouseY(y);
 	if(moveBox){
@@ -108,6 +122,10 @@ void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
+	if (disabled) {
+		return;
+	}
+
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
@@ -142,6 +160,10 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
+	if (disabled) {
+		return false;
+	}
+
 	float mx=MouseX(x);
 	float my=MouseY(y);
 	if(InBox(mx,my,box))
@@ -151,6 +173,10 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
+	if (disabled) {
+		return;
+	}
+
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);
 
@@ -340,8 +366,12 @@ void CEndGameBox::Draw()
 	}
 }
 
-std::string CEndGameBox::GetTooltip(int x,int y)
+std::string CEndGameBox::GetTooltip(int x, int y)
 {
+	if (disabled) {
+		return "";
+	}
+
 	float mx=MouseX(x);
 
 	if(dispMode==0){
