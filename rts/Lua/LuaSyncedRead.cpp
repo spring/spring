@@ -1011,16 +1011,17 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 
 	std::advance(it, start);
 
+	const int statsFrames = (statsPeriod * GAME_SPEED);
+
 	lua_newtable(L);
 	int count = 0;
 	if (statCount > 0) {
 		for (int i = start; i <= end; ++i, ++it) {
-			if (it == 
 			const CTeam::Statistics& stats = *it;
 			count++;
 			lua_pushnumber(L, count);
 			lua_newtable(L); {
-				HSTR_PUSH_NUMBER(L, "frame",            (start + 1) * 480);
+				HSTR_PUSH_NUMBER(L, "frame",            (start + 1) * statsFrames);
 				HSTR_PUSH_NUMBER(L, "metalUsed",        stats.metalUsed);
 				HSTR_PUSH_NUMBER(L, "metalProduced",    stats.metalProduced);
 				HSTR_PUSH_NUMBER(L, "metalExcess",      stats.metalExcess);
