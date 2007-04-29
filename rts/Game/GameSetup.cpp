@@ -273,6 +273,7 @@ bool CGameSetup::Init(char* buf, int size)
 		team->color[3] = 255;
 		team->gaia = true;
 		readyTeams[gs->gaiaTeamID] = true;
+		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 	}
 
 	assert(gs->activeTeams <= MAX_TEAMS);
