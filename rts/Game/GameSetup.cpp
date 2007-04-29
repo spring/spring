@@ -93,10 +93,8 @@ bool CGameSetup::Init(char* buf, int size)
 
 	const string luaGaiaStr  = file.SGetValueDef("GAME\\LuaGaia",  "1");
 	const string luaRulesStr = file.SGetValueDef("GAME\\LuaRules", "1");
-	gs->useLuaGaia  = (luaGaiaStr  != "0");
-	gs->useLuaRules = (luaRulesStr != "0");
-	CLuaGaia::SetConfigString(luaGaiaStr);
-	CLuaRules::SetConfigString(luaRulesStr);
+	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
 
 	demoName = file.SGetValueDef("","GAME\\Demofile");
 	if (!demoName.empty()) {

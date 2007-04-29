@@ -20,7 +20,7 @@ class CLuaGaia : public CLuaHandleSynced
 		static void LoadHandler();
 		static void FreeHandler();
 
-		static void SetConfigString(const string& cfg) { configString = cfg; }
+		static bool SetConfigString(const string& cfg);
 		static const string& GetConfigString() { return configString; }
 
 	protected:

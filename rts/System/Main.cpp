@@ -753,10 +753,8 @@ void SpringApp::CreateGameSetup ()
 		gs->noHelperAIs = !!configHandler.GetInt("NoHelperAIs", 0);
 		const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
 		const string luaRulesStr = configHandler.GetString("LuaRules", "1");
-		gs->useLuaGaia  = (luaGaiaStr  != "0");
-		gs->useLuaRules = (luaRulesStr != "0");
-		CLuaGaia::SetConfigString(luaGaiaStr);
-		CLuaRules::SetConfigString(luaRulesStr);
+		gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+		gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
 		if (gs->useLuaGaia) {
 			gs->gaiaTeamID = gs->activeTeams;
 			gs->gaiaAllyTeamID = gs->activeAllyTeams;

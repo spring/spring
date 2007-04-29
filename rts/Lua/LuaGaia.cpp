@@ -62,6 +62,16 @@ void CLuaGaia::FreeHandler()
 }
 
 
+bool CLuaGaia::SetConfigString(const string& cfg)
+{
+	configString = cfg;
+	if ((cfg == "0") || (cfg == "disabled")) {
+		return false;
+	}
+	return true;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
