@@ -766,6 +766,7 @@ void SpringApp::CreateGameSetup ()
 			team->color[2] = 255;
 			team->color[3] = 255;
 			team->gaia = true;
+			gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 		}
 	}
 

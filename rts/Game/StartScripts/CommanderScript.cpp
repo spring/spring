@@ -91,10 +91,10 @@ void CCommanderScript::Update(void)
 		CReadMap::OpenTDF(stupidGlobalMapname, p2);
 
 		float x0, x1, z0, z1;
-		p2.GetDef(x0, "1000","MAP\\TEAM0\\StartPosX");
-		p2.GetDef(z0, "1000","MAP\\TEAM0\\StartPosZ");
-		p2.GetDef(x1, "1200","MAP\\TEAM1\\StartPosX");
-		p2.GetDef(z1, "1200","MAP\\TEAM1\\StartPosZ");
+		p2.GetDef(x0, "1000", "MAP\\TEAM0\\StartPosX");
+		p2.GetDef(z0, "1000", "MAP\\TEAM0\\StartPosZ");
+		p2.GetDef(x1, "1200", "MAP\\TEAM1\\StartPosX");
+		p2.GetDef(z1, "1200", "MAP\\TEAM1\\StartPosZ");
 
 		unitLoader.LoadUnit(s0, float3(x0, 80.0f, z0), 0, false, 0, NULL);
 		unitLoader.LoadUnit(s1, float3(x1, 80.0f, z1), 1, false, 0, NULL);
