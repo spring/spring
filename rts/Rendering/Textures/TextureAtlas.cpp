@@ -326,12 +326,12 @@ void CTextureAtlas::BindTexture()
 	glBindTexture(GL_TEXTURE_2D, gltex);
 }
 
-AtlasedTexture CTextureAtlas::GetTexture(std::string name)
+AtlasedTexture CTextureAtlas::GetTexture(const std::string& name)
 {
 	return textures[StringToLower(name)];
 }
 
-AtlasedTexture* CTextureAtlas::GetTexturePtr(std::string name)
+AtlasedTexture* CTextureAtlas::GetTexturePtr(const std::string& name)
 {
 	return &textures[StringToLower(name)];
 }
@@ -340,3 +340,14 @@ bool CTextureAtlas::TextureExists(const std::string& name)
 {
 	return textures.find(StringToLower(name)) != textures.end();
 }
+
+AtlasedTexture CTextureAtlas::GetTextureWithBackup(const std::string& name,
+                                                   const std::string& backupName)
+{
+	if (textures.find(StringToLower(name)) != textures.end()) {
+		return textures[StringToLower(name)];
+	} else {
+		return textures[StringToLower(backupName)];
+	}
+}
+

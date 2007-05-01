@@ -88,42 +88,64 @@ void CExplosiveProjectile::Collision(CUnit *unit)
 
 void CExplosiveProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (s3domodel) { //dont draw if a 3d model has been defined for us
 		return;
-
-	inArray=true;
-	unsigned char col[4];
-	if(weaponDef->visuals.colorMap) {
-		weaponDef->visuals.colorMap->GetColor(col, curTime);
-	} else {
-		col[0]=int(weaponDef->visuals.color.x*255);
-		col[1]=int(weaponDef->visuals.color.y*255);
-		col[2]=int(weaponDef->visuals.color.z*255);
-		col[3]=int(weaponDef->intensity*255);
 	}
 
-	float3 dir=speed;
+	inArray = true;
+	unsigned char col[4];
+	if (weaponDef->visuals.colorMap) {
+		weaponDef->visuals.colorMap->GetColor(col, curTime);
+	} else {
+		col[0] = int(weaponDef->visuals.color.x * 255);
+		col[1] = int(weaponDef->visuals.color.y * 255);
+		col[2] = int(weaponDef->visuals.color.z * 255);
+		col[3] = int(weaponDef->intensity * 255);
+	}
+
+	float3 dir = speed;
 	dir.Normalize();
 
-	for(int a=0;a<5;++a){
-		col[0]=int((5-a)*0.2f*col[0]);
-		col[1]=int((5-a)*0.2f*col[1]);
-		col[2]=int((5-a)*0.2f*col[2]);
-		col[3]=int((5-a)*0.2f*col[3]);
-		float3 interPos=pos+speed*gu->timeOffset-dir*drawRadius*0.6f*a;
-		va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+	const float alphaDecay = weaponDef->visuals.alphaDecay;
+	const float sizeDecay  = weaponDef->visuals.sizeDecay;
+	const float separation = weaponDef->visuals.separation;
+	const bool  noGap      = weaponDef->visuals.noGap;
+	const int   stages     = weaponDef->visuals.stages;
+	const float invStages  = 1.0f / (float)stages;
+
+	for (int a = 0; a < stages; ++a) {
+		const float aDecay = (stages - (a * alphaDecay)) * invStages;
+		col[0] = int(aDecay * col[0]);
+		col[1] = int(aDecay * col[1]);
+		col[2] = int(aDecay * col[2]);
+		col[3] = int(aDecay * col[3]);
+
+		const float  size  = drawRadius * (1.0f - (a * sizeDecay));
+		const float3 up    = camera->up    * size;
+		const float3 right = camera->right * size;
+
+		float3 interPos = pos + (speed * gu->timeOffset);
+		if (noGap) {
+			interPos -= (dir * separation * size * 0.6f * a);
+		} else {
+			interPos -= (dir * separation * drawRadius * 0.6f * a);
+		}
+
+		const AtlasedTexture* tex = weaponDef->visuals.texture1;
+
+		va->AddVertexTC(interPos - right - up, tex->xstart, tex->ystart, col);
+		va->AddVertexTC(interPos + right - up, tex->xend,   tex->ystart, col);
+		va->AddVertexTC(interPos + right + up, tex->xend,   tex->yend,   col);
+		va->AddVertexTC(interPos - right + up, tex->xstart, tex->yend,   col);
 	}
 }
 
 int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 dir=pos-shieldPos;
+	float3 dir = pos - shieldPos;
 	dir.Normalize();
-	if(dir.dot(speed)<shieldMaxSpeed){
-		speed+=dir*shieldForce;
+	if (dir.dot(speed) < shieldMaxSpeed) {
+		speed += dir * shieldForce;
 		return 2;
 	}
 	return 0;
