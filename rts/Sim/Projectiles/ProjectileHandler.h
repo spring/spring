@@ -72,28 +72,28 @@ public:
 
 	//texturcoordinates for projectiles
 	AtlasedTexture flaretex;
-	AtlasedTexture fireballflaretex; //dgun texture
-	AtlasedTexture flareprojectiletex;
-	AtlasedTexture sbtrailtex;  //first section of starburst missile trail texture
-	AtlasedTexture missiletrailtex;
-	AtlasedTexture muzzleflametex; //first section of missile trail texture
-	AtlasedTexture repulsetex;  //texture of impact on repulsor
-	AtlasedTexture sbflaretex; //starburst  missile flare texture
-	AtlasedTexture missileflaretex;
-	AtlasedTexture beamlaserflaretex;
+	AtlasedTexture dguntex;            // dgun texture
+	AtlasedTexture flareprojectiletex; // texture used by flares that trick missiles
+	AtlasedTexture sbtrailtex;         // default first section of starburst missile trail texture
+	AtlasedTexture missiletrailtex;    // default first section of missile trail texture
+	AtlasedTexture muzzleflametex;     // default muzzle flame texture
+	AtlasedTexture repulsetex;         // texture of impact on repulsor
+	AtlasedTexture sbflaretex;         // default starburst  missile flare texture
+	AtlasedTexture missileflaretex;    // default missile flare texture
+	AtlasedTexture beamlaserflaretex;  // default beam laser flare texture
 	AtlasedTexture explotex;
 	AtlasedTexture explofadetex;
 	AtlasedTexture heatcloudtex;
 	AtlasedTexture circularthingytex;
-	AtlasedTexture bubbletex;  //torpedo trail texture
-	AtlasedTexture geosquaretex;
-	AtlasedTexture gfxtex; //nanospray texture
-	AtlasedTexture projectiletex;
-	AtlasedTexture repulsegfxtex;
-	AtlasedTexture sphereparttex;
-	AtlasedTexture torpedotex;
-	AtlasedTexture wrecktex; //smoking explosion part
-	AtlasedTexture weapondeftex; //plasma texture
+	AtlasedTexture bubbletex;          // torpedo trail texture
+	AtlasedTexture geosquaretex;       // unknown use
+	AtlasedTexture gfxtex;             // nanospray texture
+	AtlasedTexture projectiletex;      // appears to be unused
+	AtlasedTexture repulsegfxtex;      // used by repulsor
+	AtlasedTexture sphereparttex;      // sphere explosion texture
+	AtlasedTexture torpedotex;         // appears in-game as a 1 texel texture
+	AtlasedTexture wrecktex;           // smoking explosion part texture
+	AtlasedTexture plasmatex;          // default plasma texture
 	AtlasedTexture laserendtex;
 	AtlasedTexture laserfallofftex;
 	AtlasedTexture randdotstex;

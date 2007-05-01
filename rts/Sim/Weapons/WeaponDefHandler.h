@@ -144,6 +144,12 @@ struct WeaponDef
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
+		
+		int stages;
+		float alphaDecay;
+		float sizeDecay;
+		float separation;
+		bool noGap;
 	};
 	Visuals visuals;
 

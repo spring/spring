@@ -63,10 +63,10 @@ void CFireBallProjectile::Draw()
 		col[0]=(maxCol-i)*25;
 		col[1]=(maxCol-i)*15;
 		col[2]=(maxCol-i)*10;
-		va->AddVertexTC(interPos-camera->right*size-camera->up*size,ph->fireballflaretex.xstart ,ph->fireballflaretex.ystart ,col);
-		va->AddVertexTC(interPos+camera->right*size-camera->up*size,ph->fireballflaretex.xend ,ph->fireballflaretex.ystart ,col);
-		va->AddVertexTC(interPos+camera->right*size+camera->up*size,ph->fireballflaretex.xend ,ph->fireballflaretex.yend ,col);
-		va->AddVertexTC(interPos-camera->right*size+camera->up*size,ph->fireballflaretex.xstart ,ph->fireballflaretex.yend ,col);
+		va->AddVertexTC(interPos-camera->right*size-camera->up*size,ph->dguntex.xstart ,ph->dguntex.ystart ,col);
+		va->AddVertexTC(interPos+camera->right*size-camera->up*size,ph->dguntex.xend ,ph->dguntex.ystart ,col);
+		va->AddVertexTC(interPos+camera->right*size+camera->up*size,ph->dguntex.xend ,ph->dguntex.yend ,col);
+		va->AddVertexTC(interPos-camera->right*size+camera->up*size,ph->dguntex.xstart ,ph->dguntex.yend ,col);
 		interPos = interPos-speed*0.5f;
 	}
 }
@@ -124,4 +124,5 @@ void CFireBallProjectile::Collision()
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }
+
 
