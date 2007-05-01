@@ -574,7 +574,6 @@ TYPE_STRING_FUNC(GroundUnit);
 TYPE_STRING_FUNC(MetalExtractor);
 
 
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -800,22 +799,23 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("buildangle", ud.buildangle);
 
 	// transport stuff
-	ADD_INT("transportCapacity", ud.transportCapacity);
-	ADD_INT("transportSize",     ud.transportSize);
-	ADD_FLOAT("transportMass",   ud.transportMass);
-	ADD_FLOAT("loadingRadius",   ud.loadingRadius);
-	ADD_BOOL("isAirBase",        ud.isAirBase);
-	ADD_BOOL("isFirePlatform",   ud.isfireplatform);
-	ADD_BOOL("holdSteady",       ud.holdSteady);
-	ADD_BOOL("releaseHeld",      ud.releaseHeld);
-	ADD_BOOL("transportByEnemy", ud.transportByEnemy);
+	ADD_INT(  "transportCapacity", ud.transportCapacity);
+	ADD_INT(  "transportSize",     ud.transportSize);
+	ADD_FLOAT("transportMass",     ud.transportMass);
+	ADD_FLOAT("loadingRadius",     ud.loadingRadius);
+	ADD_BOOL( "isAirBase",         ud.isAirBase);
+	ADD_BOOL( "isFirePlatform",    ud.isfireplatform);
+	ADD_BOOL( "holdSteady",        ud.holdSteady);
+	ADD_BOOL( "releaseHeld",       ud.releaseHeld);
+	ADD_BOOL( "transportByEnemy",  ud.transportByEnemy);
 	
-	ADD_BOOL("startCloaked",     ud.startCloaked);
+	ADD_BOOL( "startCloaked",    ud.startCloaked);
 	ADD_FLOAT("cloakCost",       ud.cloakCost);
 	ADD_FLOAT("cloakCostMoving", ud.cloakCostMoving);
 	ADD_FLOAT("decloakDistance", ud.decloakDistance);
+	ADD_BOOL( "decloakOnFire",   ud.decloakOnFire);
 
-	ADD_BOOL("canKamikaze",   ud.canKamikaze);
+	ADD_BOOL( "canKamikaze",   ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
 
 	ADD_BOOL("targfac",        ud.targfac);
@@ -830,31 +830,31 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("highTrajectoryType", ud.highTrajectoryType);
 
-	ADD_INT("trackType",       ud.trackType);
-	ADD_BOOL("leaveTracks",    ud.leaveTracks);
+	ADD_BOOL( "leaveTracks",   ud.leaveTracks);
+	ADD_INT(  "trackType",     ud.trackType);
 	ADD_FLOAT("trackWidth",    ud.trackWidth);
 	ADD_FLOAT("trackOffset",   ud.trackOffset);
 	ADD_FLOAT("trackStrength", ud.trackStrength);
 	ADD_FLOAT("trackStretch",  ud.trackStretch);
 
-	ADD_BOOL("canDropFlare",      ud.canDropFlare);
+	ADD_BOOL( "canDropFlare",     ud.canDropFlare);
 	ADD_FLOAT("flareReloadTime",  ud.flareReloadTime);
 	ADD_FLOAT("flareEfficieny",   ud.flareEfficieny);
 	ADD_FLOAT("flareDelay",       ud.flareDelay);
 	ADD_FLOAT("flareDropVectorX", ud.flareDropVector.x);
 	ADD_FLOAT("flareDropVectorY", ud.flareDropVector.y);
 	ADD_FLOAT("flareDropVectorZ", ud.flareDropVector.z);
-	ADD_INT("flareTime",          ud.flareTime);
-	ADD_INT("flareSalvoSize",     ud.flareSalvoSize);
-	ADD_INT("flareSalvoDelay",    ud.flareSalvoDelay);
+	ADD_INT(  "flareTime",        ud.flareTime);
+	ADD_INT(  "flareSalvoSize",   ud.flareSalvoSize);
+	ADD_INT(  "flareSalvoDelay",  ud.flareSalvoDelay);
 
 	ADD_BOOL("smoothAnim", ud.smoothAnim);
 	ADD_BOOL("levelGround", ud.levelGround);
 
-	ADD_BOOL("useBuildingGroundDecal",   ud.useBuildingGroundDecal);
-	ADD_INT("buildingDecalType",         ud.buildingDecalType);
-	ADD_INT("buildingDecalSizeX",        ud.buildingDecalSizeX);
-	ADD_INT("buildingDecalSizeY",        ud.buildingDecalSizeY);
+	ADD_BOOL( "useBuildingGroundDecal",  ud.useBuildingGroundDecal);
+	ADD_INT(  "buildingDecalType",       ud.buildingDecalType);
+	ADD_INT(  "buildingDecalSizeX",      ud.buildingDecalSizeX);
+	ADD_INT(  "buildingDecalSizeY",      ud.buildingDecalSizeY);
 	ADD_FLOAT("buildingDecalDecaySpeed", ud.buildingDecalDecaySpeed);
 
 	ADD_BOOL("showNanoFrame", ud.showNanoFrame);

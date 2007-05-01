@@ -230,6 +230,7 @@ struct UnitDef
 	float cloakCost;						//energy cost per second to stay cloaked when stationary
 	float cloakCostMoving;			//energy cost per second when moving
 	float decloakDistance;			//if enemy unit come within this range decloaking is forced
+	bool decloakOnFire;					//should the unit decloak upon firing
 
 	bool canKamikaze;						//self destruct if enemy come to close
 	float kamikazeDist;
