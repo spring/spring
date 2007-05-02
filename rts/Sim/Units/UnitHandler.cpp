@@ -447,15 +447,11 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 			CFeature* feature=0;
 			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature,gu->myAllyTeam);
 			if(tbs){
-				UnitDef* ud;
-				float3 cPos;
 				std::vector<Command>::const_iterator ci = cv.begin();
 				for(;ci != cv.end() && tbs; ci++){
-					ud = unitDefHandler->GetUnitByID(-ci->id);
-					cPos.x = ci->params[0];
-					cPos.z = ci->params[2];
-					if(max(cPos.x-x-SQUARE_SIZE,x-cPos.x)*2 < ud->xsize*SQUARE_SIZE
-						&& max(cPos.z-z-SQUARE_SIZE,z-cPos.z)*2 < ud->ysize*SQUARE_SIZE){
+					BuildInfo bc(*ci);
+					if(max(bc.pos.x-x-SQUARE_SIZE,x-bc.pos.x)*2 < bc.GetXSize()*SQUARE_SIZE
+						&& max(bc.pos.z-z-SQUARE_SIZE,z-bc.pos.z)*2 < bc.GetYSize()*SQUARE_SIZE){
 						tbs=0;
 					}
 				}
