@@ -177,13 +177,13 @@ int2 CSolidObject::GetMapPos()
 
 	if(p.x<0)
 		p.x=0;
-	if(p.x>gs->mapx-xsize-1)
-		p.x=gs->mapx-xsize-1;
+	if(p.x>gs->mapx-xsize)
+		p.x=gs->mapx-xsize;
 
 	if(p.y<0)
 		p.y=0;
-	if(p.y>gs->mapy-ysize-1)
-		p.y=gs->mapy-ysize-1;
+	if(p.y>gs->mapy-ysize)
+		p.y=gs->mapy-ysize;
 
 	return p;
 }
