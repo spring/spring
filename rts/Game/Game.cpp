@@ -3644,18 +3644,30 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	}
 	else if ((s.find(".luarules") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaRules) {
-			if ((player == 0) && (s.find(" reload", 9) == 9)) {
-				CLuaRules::FreeHandler();
-				CLuaRules::LoadHandler();
-				if (luaRules) {
-					logOutput.Print("LuaRules reloaded\n");
+			if (s.find(" reload", 9) == 9) {
+				if (player != 0) {
+					logOutput.Print("Only the host player can reload synced scripts\n");
+				} else if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to reload synced scripts\n");
 				} else {
-					logOutput.Print("LuaRules reload failed\n");
+					CLuaRules::FreeHandler();
+					CLuaRules::LoadHandler();
+					if (luaRules) {
+						logOutput.Print("LuaRules reloaded\n");
+					} else {
+						logOutput.Print("LuaRules reload failed\n");
+					}
 				}
 			}
-			else if ((player == 0) && (s.find(" disable", 9) == 9)) {
-				CLuaRules::FreeHandler();
-				logOutput.Print("LuaRules disabled\n");
+			else if (s.find(" disable", 9) == 9) {
+				if (player != 0) {
+					logOutput.Print("Only the host player can disable synced scripts\n");
+				} else if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to disable synced scripts\n");
+				} else {
+					CLuaRules::FreeHandler();
+					logOutput.Print("LuaRules disabled\n");
+				}
 			}
 			else if (luaRules) {
 				luaRules->GotChatMsg(s, player);
@@ -3667,18 +3679,30 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	}
 	else if ((s.find(".luagaia") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaGaia) {
-			if ((player == 0) && (s.find(" reload", 8) == 8)) {
-				CLuaGaia::FreeHandler();
-				CLuaGaia::LoadHandler();
-				if (luaGaia) {
-					logOutput.Print("LuaGaia reloaded\n");
+			if (s.find(" reload", 8) == 8) {
+				if (player != 0) {
+					logOutput.Print("Only the host player can reload synced scripts\n");
+				} else if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to reload synced scripts\n");
 				} else {
-					logOutput.Print("LuaGaia reload failed\n");
+					CLuaGaia::FreeHandler();
+					CLuaGaia::LoadHandler();
+					if (luaGaia) {
+						logOutput.Print("LuaGaia reloaded\n");
+					} else {
+						logOutput.Print("LuaGaia reload failed\n");
+					}
 				}
 			}
-			else if ((player == 0) && (s.find(" disable", 8) == 8)) {
-				CLuaGaia::FreeHandler();
-				logOutput.Print("LuaGaia disabled\n");
+			else if (s.find(" disable", 8) == 8) {
+				if (player != 0) {
+					logOutput.Print("Only the host player can disable synced scripts\n");
+				} else if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to disable synced scripts\n");
+				} else {
+					CLuaGaia::FreeHandler();
+					logOutput.Print("LuaGaia disabled\n");
+				}
 			}
 			else if (luaGaia) {
 				luaGaia->GotChatMsg(s, player);
@@ -3689,18 +3713,30 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 	}
 	else if ((s.find(".luacob") == 0) && (gs->frameNum > 1)) {
-		if ((player == 0) && (s.find(" reload", 7) == 7)) {
-			CLuaCob::FreeHandler();
-			CLuaCob::LoadHandler();
-			if (luaCob) {
-				logOutput.Print("LuaCob reloaded\n");
+		if (s.find(" reload", 7) == 7) {
+			if (player != 0) {
+				logOutput.Print("Only the host player can reload synced scripts\n");
+			} else if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to reload synced scripts\n");
 			} else {
-				logOutput.Print("LuaCob reload failed\n");
+				CLuaCob::FreeHandler();
+				CLuaCob::LoadHandler();
+				if (luaCob) {
+					logOutput.Print("LuaCob reloaded\n");
+				} else {
+					logOutput.Print("LuaCob reload failed\n");
+				}
 			}
 		}
-		else if ((player == 0) && (s.find(" disable", 7) == 7)) {
-			CLuaCob::FreeHandler();
-			logOutput.Print("LuaCob disabled\n");
+		else if (s.find(" disable", 7) == 7) {
+			if (player != 0) {
+				logOutput.Print("Only the host player can disable synced scripts\n");
+			} else if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to disable synced scripts\n");
+			} else {
+				CLuaCob::FreeHandler();
+				logOutput.Print("LuaCob disabled\n");
+			}
 		}
 		else if (luaCob) {
 			luaCob->GotChatMsg(s, player);
