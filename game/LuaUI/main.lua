@@ -47,8 +47,6 @@ end
 
 --------------------------------------------------------------------------------
 
-widgetHandler:Initialize()
-
 local gl = Spring.Draw  --  easier to use
 
 

@@ -110,6 +110,7 @@ class LuaSyncedRead {
 		static int GetRealBuildQueue(lua_State* L);
 
 		static int GetUnitCmdDescs(lua_State* L);
+		static int FindUnitCmdDesc(lua_State* L);
 
 		static int GetUnitRulesParam(lua_State* L);
 		static int GetUnitRulesParams(lua_State* L);

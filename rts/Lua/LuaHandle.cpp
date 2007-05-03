@@ -697,6 +697,7 @@ bool CLuaHandle::AddBasicCalls()
 {
 	HSTR_PUSH(L, "Script");
 	lua_newtable(L); {
+		HSTR_PUSH_CFUNC(L, "Kill",            KillActiveHandle);
 		HSTR_PUSH_CFUNC(L, "GetName",         CallOutGetName);
 		HSTR_PUSH_CFUNC(L, "GetSynced",       CallOutGetSynced);
 		HSTR_PUSH_CFUNC(L, "GetFullCtrl",     CallOutGetFullCtrl);

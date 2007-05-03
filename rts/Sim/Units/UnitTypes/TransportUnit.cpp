@@ -108,10 +108,12 @@ bool CTransportUnit::CanTransport (CUnit *unit)
 
 	CTransportUnit* u=this;
 	while (u) {
-		if (u == unit) 
+		if (u == unit) {
 			return false;
+		}
 		u = u->transporter;
 	}
+
 	return true;
 }
 

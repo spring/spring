@@ -133,9 +133,6 @@ CLuaUI::CLuaUI()
 	luaopen_string(L);
 	luaopen_debug(L);
 
-	lua_pushcfunction(L, KillActiveHandle);
-	lua_setglobal(L, "KillScript");
-
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
 	AddBasicCalls(); // into Global
@@ -146,8 +143,8 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||

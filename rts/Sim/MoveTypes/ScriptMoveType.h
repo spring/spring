@@ -24,6 +24,7 @@ class CScriptMoveType : public CMoveType
 		void SetRotationVelocity(const float3& rvel);
 		void SetRotationOffset(const float3& rotOff);
 		void SetHeading(short heading);
+		void SetNoBlocking(bool state);
 		
 	public: // null'ed virtuals  (FIXME -- redirect to the real MoveType?)
 		void StartMoving(float3 pos, float goalRadius) {};
@@ -68,6 +69,8 @@ class CScriptMoveType : public CMoveType
 
 		float3 mins;
 		float3 maxs;
+
+		bool noBlocking;
 
 		bool shotStop;
 		bool slopeStop;

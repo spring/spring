@@ -188,6 +188,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetRealBuildQueue);
 
 	REGISTER_LUA_CFUNC(GetUnitCmdDescs);
+	REGISTER_LUA_CFUNC(FindUnitCmdDesc);
+
 	REGISTER_LUA_CFUNC(GetUnitRulesParam);  
 	REGISTER_LUA_CFUNC(GetUnitRulesParams);  
 
@@ -863,8 +865,9 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushnumber(L, (float)team->color[1] / 255.0f);
 	lua_pushnumber(L, (float)team->color[2] / 255.0f);
 	lua_pushnumber(L, (float)team->color[3] / 255.0f);
+	lua_pushnumber(L, gs->AllyTeam(team->teamNum));
 
-	return 10;
+	return 11;
 }
 
 
@@ -2916,6 +2919,29 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
 
 	return 1;
+}
+
+
+int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to FindUnitCmdDesc()");
+	}
+	const int cmdID = (int)lua_tonumber(L, 2);
+	
+	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	for (int i = 0; i < (int)cmdDescs.size(); i++) {
+		if (cmdDescs[i].id == cmdID) {
+			lua_pushnumber(L, i + 1);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 

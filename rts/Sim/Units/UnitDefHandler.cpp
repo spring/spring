@@ -246,22 +246,22 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.gaia = tdfparser.SGetValueDef("", "UNITINFO\\gaia");
 
-	tdfparser.GetDef(ud.extractsMetal, "0", "UNITINFO\\ExtractsMetal");
-	tdfparser.GetDef(ud.windGenerator, "0", "UNITINFO\\WindGenerator");
+	tdfparser.GetDef(ud.extractsMetal,  "0", "UNITINFO\\ExtractsMetal");
+	tdfparser.GetDef(ud.windGenerator,  "0", "UNITINFO\\WindGenerator");
 	tdfparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
 
-	ud.health=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxDamage").c_str());
-	ud.metalUpkeep=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalUse").c_str());
-	ud.energyUpkeep=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyUse").c_str());
-	ud.metalMake=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalMake").c_str());
-	ud.makesMetal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MakesMetal").c_str());
-	ud.energyMake=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyMake").c_str());
-	ud.metalStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
-	ud.energyStorage=atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
+	ud.health        = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxDamage").c_str());
+	ud.metalUpkeep   = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalUse").c_str());
+	ud.energyUpkeep  = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyUse").c_str());
+	ud.metalMake     = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalMake").c_str());
+	ud.makesMetal    = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MakesMetal").c_str());
+	ud.energyMake    = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyMake").c_str());
+	ud.metalStorage  = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
+	ud.energyStorage = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
 
-	ud.autoHeal=atof(tdfparser.SGetValueDef("0", "UNITINFO\\AutoHeal").c_str())*(16.0f/30.0f);
-	ud.idleAutoHeal=atof(tdfparser.SGetValueDef("10", "UNITINFO\\IdleAutoHeal").c_str())*(16.0f/30.0f);
-	ud.idleTime=atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
+	ud.autoHeal     = atof(tdfparser.SGetValueDef("0",   "UNITINFO\\AutoHeal").c_str())*(16.0f/30.0f);
+	ud.idleAutoHeal = atof(tdfparser.SGetValueDef("10",  "UNITINFO\\IdleAutoHeal").c_str())*(16.0f/30.0f);
+	ud.idleTime     = atoi(tdfparser.SGetValueDef("600", "UNITINFO\\IdleTime").c_str());
 
 	ud.buildangle=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\buildangle").c_str());
 
@@ -291,15 +291,15 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.moveType=0;
 
 	tdfparser.GetDef(ud.canSubmerge, "0", "UNITINFO\\canSubmerge");
-	tdfparser.GetDef(ud.canfly, "0", "UNITINFO\\canfly");
-	tdfparser.GetDef(ud.canmove, "0", "UNITINFO\\canmove");
+	tdfparser.GetDef(ud.canfly,      "0", "UNITINFO\\canfly");
+	tdfparser.GetDef(ud.canmove,     "0", "UNITINFO\\canmove");
 	tdfparser.GetDef(ud.reclaimable, "1", "UNITINFO\\reclaimable");
-	tdfparser.GetDef(ud.noAutoFire,"0","UNITINFO\\noautofire");
-	tdfparser.GetDef(ud.canAttack,"1","UNITINFO\\canattack");
-	tdfparser.GetDef(ud.canFight,"1","UNITINFO\\canfight");
-	tdfparser.GetDef(ud.canPatrol,"1","UNITINFO\\canpatrol");
-	tdfparser.GetDef(ud.canGuard,"1","UNITINFO\\canguard");
-	tdfparser.GetDef(ud.canRepeat,"1","UNITINFO\\canrepeat");
+	tdfparser.GetDef(ud.noAutoFire,  "0", "UNITINFO\\noautofire");
+	tdfparser.GetDef(ud.canAttack,   "1", "UNITINFO\\canattack");
+	tdfparser.GetDef(ud.canFight,    "1", "UNITINFO\\canfight");
+	tdfparser.GetDef(ud.canPatrol,   "1", "UNITINFO\\canpatrol");
+	tdfparser.GetDef(ud.canGuard,    "1", "UNITINFO\\canguard");
+	tdfparser.GetDef(ud.canRepeat,   "1", "UNITINFO\\canrepeat");
 
 	tdfparser.GetDef(ud.builder, "0", "UNITINFO\\Builder");
 	string x = "0";
@@ -316,7 +316,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.canSelfRepair, "0", "UNITINFO\\canSelfRepair");
 	tdfparser.GetDef(ud.fullHealthFactory, "0", "UNITINFO\\fullHealthFactory");
 
-	tdfparser.GetDef(ud.upright, "0", "UNITINFO\\Upright");
+	tdfparser.GetDef(ud.upright,   "0", "UNITINFO\\Upright");
 	tdfparser.GetDef(ud.onoffable, "0", "UNITINFO\\onoffable");
 
 	tdfparser.GetDef(ud.maxSlope, "0", "UNITINFO\\MaxSlope");
@@ -336,10 +336,10 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	tdfparser.GetDef(ud.selfDCountdown, "5", "UNITINFO\\selfdestructcountdown");
 
-	ud.speed=atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxVelocity").c_str())*30;
-	ud.maxAcc=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str());
-	ud.maxDec=atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1f;
-	ud.turnRate=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TurnRate").c_str());
+	ud.speed    = atof(tdfparser.SGetValueDef("0",   "UNITINFO\\MaxVelocity").c_str())*30;
+	ud.maxAcc   = atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\acceleration").c_str());
+	ud.maxDec   = atof(tdfparser.SGetValueDef("0.5", "UNITINFO\\BrakeRate").c_str())*0.1f;
+	ud.turnRate = atof(tdfparser.SGetValueDef("0",   "UNITINFO\\TurnRate").c_str());
 
 	ud.buildDistance = atof(tdfparser.SGetValueDef("128.0", "UNITINFO\\BuildDistance").c_str());
 	ud.buildDistance = std::max(128.0f, ud.buildDistance);
@@ -359,18 +359,18 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	logOutput.Print("unit %s has armor %i",ud.name.c_str(),ud.armorType);
 
-	ud.radarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
-	ud.sonarRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
-	ud.jammerRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistanceJam").c_str());
-	ud.sonarJamRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistanceJam").c_str());
-	ud.stealth=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
-	ud.targfac=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
-	ud.isFeature=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
-	ud.canResurrect=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canResurrect").c_str());
-	ud.canCapture=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
-	ud.hideDamage=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
-	ud.isCommander=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
-	ud.showPlayerName=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\showplayername").c_str());
+	ud.radarRadius    =   atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistance").c_str());
+	ud.sonarRadius    =   atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistance").c_str());
+	ud.jammerRadius   =   atoi(tdfparser.SGetValueDef("0", "UNITINFO\\RadarDistanceJam").c_str());
+	ud.sonarJamRadius =   atoi(tdfparser.SGetValueDef("0", "UNITINFO\\SonarDistanceJam").c_str());
+	ud.stealth        = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\Stealth").c_str());
+	ud.targfac        = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\istargetingupgrade").c_str());
+	ud.isFeature      = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\IsFeature").c_str());
+	ud.canResurrect   = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canResurrect").c_str());
+	ud.canCapture     = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
+	ud.hideDamage     = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
+	ud.isCommander    = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
+	ud.showPlayerName = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\showplayername").c_str());
 
 	ud.cloakCost=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCost").c_str());
 	ud.cloakCostMoving=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCostMoving").c_str());
@@ -646,13 +646,14 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			ud.yardmaps[u] = 0;
 	}
 
-	ud.leaveTracks=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\LeaveTracks").c_str());
-	ud.trackWidth=atof(tdfparser.SGetValueDef("32", "UNITINFO\\TrackWidth").c_str());
-	ud.trackOffset=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TrackOffset").c_str());
-	ud.trackStrength=atof(tdfparser.SGetValueDef("0", "UNITINFO\\TrackStrength").c_str());
-	ud.trackStretch=atof(tdfparser.SGetValueDef("1", "UNITINFO\\TrackStretch").c_str());
-	if(ud.leaveTracks && groundDecals)
+	ud.leaveTracks   = !!atoi(tdfparser.SGetValueDef("0",  "UNITINFO\\LeaveTracks").c_str());
+	ud.trackWidth    =   atof(tdfparser.SGetValueDef("32", "UNITINFO\\TrackWidth").c_str());
+	ud.trackOffset   =   atof(tdfparser.SGetValueDef("0",  "UNITINFO\\TrackOffset").c_str());
+	ud.trackStrength =   atof(tdfparser.SGetValueDef("0",  "UNITINFO\\TrackStrength").c_str());
+	ud.trackStretch  =   atof(tdfparser.SGetValueDef("1",  "UNITINFO\\TrackStretch").c_str());
+	if (ud.leaveTracks && groundDecals) {
 		ud.trackType=groundDecals->GetTrackType(tdfparser.SGetValueDef("StdTank", "UNITINFO\\TrackType"));
+	}
 
 	ud.useBuildingGroundDecal=!!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\UseBuildingGroundDecal").c_str());
 	ud.buildingDecalSizeX=atoi(tdfparser.SGetValueDef("4", "UNITINFO\\BuildingGroundDecalSizeX").c_str());
@@ -691,31 +692,32 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 	ud.seismicRadius=atoi(tdfparser.SGetValueDef("0", "UNITINFO\\seismicDistance").c_str());
 	ud.seismicSignature=atoi(tdfparser.SGetValueDef("-1", "UNITINFO\\seismicSignature").c_str());
-	if(ud.seismicSignature==-1)
-	{
+	if (ud.seismicSignature==-1) {
 		if(!ud.floater && !ud.canhover && !ud.canfly)
 			ud.seismicSignature = sqrt(ud.mass/(float)100);
 		else
 			ud.seismicSignature = 0;
 	}
 
-	if(tdfparser.SectionExist("UNITINFO\\SFXTypes"))
-	{
+	if (tdfparser.SectionExist("UNITINFO\\SFXTypes")) {
 		int num=0;
-		while(num!=-1)
-		{
+		while (num!=-1) {
 			char cnum[16];
 			SNPRINTF(cnum, sizeof(cnum), "%i", num);
 			std::string expsfx = tdfparser.SGetValueDef("", "UNITINFO\\SFXTypes\\explosiongenerator" + std::string(cnum));
-			if(expsfx!="")
-			{
+			if (expsfx!="") {
 				ud.sfxExplGens.push_back(explGenHandler->LoadGenerator(expsfx));
 				num++;
 			}
-			else
+			else {
 				num=-1;
+			}
 		}
 
+	}
+
+	if (tdfparser.SectionExist("UNITINFO\\CustomParams")) {
+		ud.customParams = tdfparser.GetAllValues("UNITINFO\\CustomParams");
 	}
 
 	LoadSound(tdfparser, ud.sounds.ok, "ok1");

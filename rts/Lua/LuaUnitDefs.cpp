@@ -71,6 +71,7 @@ static int UnitDefMetatable(lua_State* L);
 // special access functions
 static int UnitDefToID(lua_State* L, const void* data);
 static int WeaponDefToID(lua_State* L, const void* data);
+static int CustomParamsTable(lua_State* L, const void* data);
 static int BuildOptions(lua_State* L, const void* data);
 static int SoundsTable(lua_State* L, const void* data);
 static int WeaponsTable(lua_State* L, const void* data);
@@ -366,6 +367,20 @@ static int SafeIconType(lua_State* L, const void* data)
 }
 
 
+static int CustomParamsTable(lua_State* L, const void* data)
+{
+	const map<string, string>& params = *((const map<string, string>*)data);
+	lua_newtable(L);
+	map<string, string>::const_iterator it;
+	for (it = params.begin(); it != params.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
+
 static int BuildOptions(lua_State* L, const void* data)
 {
 	const map<int, string>& buildOptions = *((const map<int, string>*)data);
@@ -604,6 +619,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("springCategories",   ud.category,        CategorySetFromBits);
 	ADD_FUNCTION("noChaseCategories",  ud.noChaseCategory, CategorySetFromBits);
 
+	ADD_FUNCTION("customParams",       ud.customParams,       CustomParamsTable);
 	ADD_FUNCTION("buildOptions",       ud.buildOptions,       BuildOptions);
 	ADD_FUNCTION("decoyDef",           ud.decoyDef,           UnitDefToID);
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);

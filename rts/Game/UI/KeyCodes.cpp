@@ -27,7 +27,9 @@ string CKeyCodes::GetName(int code) const
 {
 	map<int, string>::const_iterator it = codeToName.find(code);
 	if (it == codeToName.end()) {
-		return "";
+		char buf[64];
+		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
+		return buf;
 	}
 	return it->second;
 }
@@ -37,7 +39,9 @@ string CKeyCodes::GetDefaultName(int code) const
 {
 	map<int, string>::const_iterator it = defaultCodeToName.find(code);
 	if (it == defaultCodeToName.end()) {
-		return "";
+		char buf[64];
+		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
+		return buf;
 	}
 	return it->second;
 }
