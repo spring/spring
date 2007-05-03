@@ -170,7 +170,6 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	AddBasicCalls(); // into Global
 
 	// add the custom file loader
-	LuaPushNamedCFunc(L, "KillScript",     KillActiveHandle);
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
 
 	LuaPushNamedCFunc(L, "loadstring", LoadStringData);
@@ -185,7 +184,7 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
-	    !AddEntriesToTable(L, "Spring",      LuaSyncedCall::PushEntries)   ||
+	    !AddEntriesToTable(L, "Script",      LuaSyncedCall::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
@@ -228,6 +227,14 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 
 	AddBasicCalls(); // into UNSYNCED
 
+	// remove Script.Kill()
+	lua_pushstring(L, "Script");
+	lua_rawget(L, -2);
+	lua_pushstring(L, "Kill");
+	lua_pushnil(L);
+	lua_rawset(L, -3);
+	lua_pop(L, 1);
+
 	lua_pushstring(L, "_G");
 	unsyncedStr.GetRegistry(L);
 	lua_rawset(L, -3);
@@ -242,8 +249,8 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||

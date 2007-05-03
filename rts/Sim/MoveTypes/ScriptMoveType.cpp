@@ -36,6 +36,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
+	CR_MEMBER(noBlocking),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
@@ -64,6 +65,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   trackSlope(false),
   trackGround(false),
   groundOffset(0.0f),
+  noBlocking(false),
   shotStop(false),
   slopeStop(false),
   collideStop(false),
@@ -76,13 +78,16 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
 	useHeading = false; // use the transformation matrix instead of heading
 
 	const UnitDef* unitDef = owner->unitDef;
-	isBuilding = unitDef->type == "Building";
-	isBlocking = !unitDef->canKamikaze || isBuilding;
+	isBuilding = (unitDef->type == "Building");
+	isBlocking = (!unitDef->canKamikaze || !isBuilding);
 }
 
 
 CScriptMoveType::~CScriptMoveType(void)
 {
+	if (isBlocking && noBlocking) {
+		owner->Block();
+	}
 }
 
 
@@ -122,8 +127,7 @@ inline void CScriptMoveType::CalcDirections()
 
 void CScriptMoveType::SlowUpdate()
 {
-	float3& pos = owner->pos;
-	float3& vel = owner->speed;
+	const float3& pos = owner->pos;
 
 	// make sure the unit is in the map
 //	pos.CheckInBounds();
@@ -192,7 +196,7 @@ void CScriptMoveType::Update()
 	}
 	oldPos = owner->pos;
 
-	if (isBlocking) {
+	if (isBlocking && !noBlocking) {
 		owner->UnBlock();
 		owner->Block();
 	}
@@ -300,6 +304,17 @@ void CScriptMoveType::SetHeading(short heading)
 }
 
 
+void CScriptMoveType::SetNoBlocking(bool state)
+{
+	noBlocking = state;
+	if (noBlocking) {
+		owner->UnBlock();
+	} else {
+		if (isBlocking) {
+			owner->Block();
+		}
+	}
+}
 void CScriptMoveType::TrackSlope()
 {
 	owner->frontdir = GetVectorFromHeading(owner->heading);
@@ -308,4 +323,5 @@ void CScriptMoveType::TrackSlope()
 	owner->rightdir.Normalize();
 	owner->frontdir = owner->updir.cross(owner->rightdir);
 }
+
 

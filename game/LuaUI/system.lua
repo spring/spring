@@ -24,6 +24,7 @@ if (System == nil) then
     --
     --  Custom Spring tables
     --
+    VFS = VFS,
     Script = Script,
     Spring = Spring,
     Game = Game,

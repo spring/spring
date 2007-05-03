@@ -2963,9 +2963,13 @@ void CGuiHandler::DrawButtons()
 				DrawHilightQuad(icon);
 			}
 
-			// build count text
-			if ((cmdDesc.id < 0) && !cmdDesc.params.empty()) {
-				DrawSWtext(icon, cmdDesc.params[0]);
+			// build count text (NOTE the weird bracing)
+			if (cmdDesc.id < 0) {
+				const int psize = (int)cmdDesc.params.size();
+				if (psize > 0) { DrawSWtext(icon, cmdDesc.params[0]);
+					if (psize > 1) { DrawNEtext(icon, cmdDesc.params[1]);
+						if (psize > 2) { DrawNWtext(icon, cmdDesc.params[2]);
+							if (psize > 3) { DrawSEtext(icon, cmdDesc.params[3]); } } } }
 			}
 
 			// draw arrows, or a frame for text

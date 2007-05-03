@@ -135,11 +135,11 @@ end
 do
   text = VFS.LoadFile(USER_FILENAME)
   if (text == nil) then
-    KillScript('Failed to load ' .. USER_FILENAME)
+    Script.Kill('Failed to load ' .. USER_FILENAME)
   end
   local chunk, err = loadstring(text)
   if (chunk == nil) then
-    KillScript('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
+    Script.Kill('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
   else
     CleanNameSpace()
     chunk()

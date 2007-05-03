@@ -65,12 +65,6 @@ string CKeySet::GetString(bool useDefaultKeysym) const
 		name = keyCodes->GetName(key);
 	}
 	
-	if (name.empty()) {
-		char buf[16];
-		SNPRINTF(buf, 16, "0x%03X", key);
-		name = buf;
-	}
-	
 	string modstr;
 #ifndef DISALLOW_RELEASE_BINDINGS
 	if (modifiers & KS_RELEASE) { modstr += "Up+"; }

@@ -445,7 +445,7 @@ static bool InitParamMap()
 	ADD_STRING("description", wd.description);
 
 	ADD_FLOAT("range", wd.range);
-	ADD_FLOAT("heightmod", wd.heightmod);
+	ADD_FLOAT("heightMod", wd.heightmod);
 	ADD_FLOAT("accuracy", wd.accuracy);
 	ADD_FLOAT("sprayAngle", wd.sprayangle);
 	ADD_FLOAT("movingAccuracy", wd.movingAccuracy);

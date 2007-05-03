@@ -35,7 +35,7 @@ setmetatable(LT, { __index = _G})
 local function IncludeFile(filename, t)
   local success, err = pcall(VFS.Include, LUAUI_DIRNAME .. filename, t)
   if (not success) then
-    KillScript('Failed to load ' .. filename .. ' (' .. err .. ')')
+    Script.Kill('Failed to load ' .. filename .. ' (' .. err .. ')')
     return
   end
 end
@@ -174,7 +174,7 @@ local function LoadUserLuaUI()
 
   local chunk, err = loadfile(USER_FILENAME)
   if (chunk == nil) then
-    KillScript('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
+    Script.Kill('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
     return
   else
     chunk()
