@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
 #include "Game/Team.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
@@ -161,11 +162,14 @@ void CGameInfo::Draw()
 		values.push_back(gameSetup->demoName);
 	}
 	
-	labels.push_back("Commander Ends:");
-	values.push_back(gs->gameMode > 0 ? true : false);
+	labels.push_back("Game Version:");
+	values.push_back(VERSION_STRING);
 
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
+
+	labels.push_back("Commander Ends:");
+	values.push_back(gs->gameMode > 0 ? true : false);
 
 	labels.push_back("Gravity:");
 	values.push_back(-(gs->gravity * GAME_SPEED * GAME_SPEED));
