@@ -717,6 +717,9 @@ CFreeController::CFreeController(int num)
   avel(0.0f, 0.0f, 0.0f),
   prevVel(0.0f, 0.0f, 0.0f),
   prevAvel(0.0f, 0.0f, 0.0f),
+  tracking(false),
+  trackPos(0.0f, 0.0f, 0.0f),
+  trackRadius(0.0f),
   gndLock(false)
 {
 	enabled      = !!configHandler.GetInt("CamFreeEnabled", 0);
