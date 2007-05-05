@@ -33,6 +33,8 @@ extern "C" {
 #include "LuaVFS.h"
 
 #include "Game/command.h"
+#include "Game/Game.h"
+#include "Game/WordCompletion.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -168,6 +170,11 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
 	AddBasicCalls(); // into Global
+
+	lua_pushstring(L, "Script");
+	lua_rawget(L, -2);
+	LuaPushNamedCFunc(L, "AddActionFallback", AddSyncedActionFallback);
+	lua_pop(L, 1);
 
 	// add the custom file loader
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
@@ -549,6 +556,10 @@ bool CLuaHandleSynced::HasCallIn(const string& callInName)
 
 
 /******************************************************************************/
+/******************************************************************************/
+//
+//  Call-ins
+//
 
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
@@ -664,14 +675,23 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 }
 
 
+bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
+{
+	string cmd = msg;
+	const string::size_type pos = cmd.find_first_of(" \t");
+	if (pos != string::npos) {
+		cmd.resize(pos);
+	}
+	if (textCommands.find(cmd) == textCommands.end()) {
+		return false;
+	}
+	GotChatMsg(msg.substr(1), playerID); // strip the '.'
+	return true;
+}
+
+
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
-	// is the message for this script?
-	if (msg.find(messagePrefix) != 0) {
-		return true;
-	}
-	string text = msg.substr(messagePrefix.size());
-	
 	lua_settop(L, 0);
 
 	static const LuaHashString cmdStr("GotChatMsg");
@@ -680,7 +700,7 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 		return true; // the call is not defined
 	}
 
-	lua_pushstring(L, text.c_str());
+	lua_pushstring(L, msg.c_str());
 	lua_pushnumber(L, playerID);
 
 	// call the routine
@@ -923,7 +943,11 @@ int CLuaHandleSynced::LoadStringData(lua_State* L)
 		return 2; // nil, then the error message
 	}
 	// set the chunk's fenv to the current fenv
-	PushCurrentFuncEnv(L, __FUNCTION__);
+	if (lua_istable(L, 3)) {
+		lua_pushvalue(L, 3);
+	} else {
+		PushCurrentFuncEnv(L, __FUNCTION__);
+	}
 	if (lua_setfenv(L, -2) == 0) {
 		luaL_error(L, "loadstring(): error with setfenv");
 	}
@@ -1080,6 +1104,34 @@ int CLuaHandleSynced::AllowUnsafeChanges(lua_State* L)
 	lhs->allowChanges = value;
 	lhs->allowUnsafeChanges = value;
 	return 0;
+}
+
+
+int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if ((args != 2) || !lua_isstring(L, 1) ||  !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to AddSyncedActionFallback()");
+	}
+	string cmdRaw  = lua_tostring(L, 1);
+	cmdRaw = "." + cmdRaw;
+
+	string cmd = cmdRaw;
+	const string::size_type pos = cmdRaw.find_first_of(" \t");
+	if (pos != string::npos) {
+		cmd.resize(pos);
+	}
+
+	if (cmd.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CLuaHandleSynced* lhs = GetActiveHandle();
+	lhs->textCommands[cmd] = lua_tostring(L, 2);
+	game->wordCompletion->AddWord(cmdRaw, true, false, false);
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 

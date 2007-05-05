@@ -99,11 +99,13 @@ CLuaRules::CLuaRules()
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename);
 
-	haveAllowCommand         = HasCallIn("AllowCommand");
-	haveAllowUnitCreation    = HasCallIn("AllowUnitCreation");
-	haveAllowUnitTransfer    = HasCallIn("AllowUnitTransfer");
-	haveAllowFeatureCreation = HasCallIn("AllowFeatureCreation");
-	haveCommandFallback      = HasCallIn("CommandFallback");
+	haveAllowCommand          = HasCallIn("AllowCommand");
+	haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
+	haveAllowUnitTransfer     = HasCallIn("AllowUnitTransfer");
+	haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
+	haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
+	haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
+	haveCommandFallback       = HasCallIn("CommandFallback");
 }
 
 
@@ -336,6 +338,80 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 
 	// call the function
 	if (!RunCallIn(cmdStr, 5, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
+bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
+{
+	if (!haveAllowResourceLevel) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("AllowResourceLevel");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, teamID);
+	lua_pushstring(L, type.c_str());
+	lua_pushnumber(L, level);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 3, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
+bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
+                                      const string& type, float amount)
+{
+	if (!haveAllowResourceTransfer) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("AllowResourceTransfer");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, oldTeam);
+	lua_pushnumber(L, newTeam);
+	lua_pushstring(L, type.c_str());
+	lua_pushnumber(L, amount);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 4, 1)) {
 		return true;
 	}
 

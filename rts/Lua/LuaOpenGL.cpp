@@ -31,6 +31,7 @@ extern "C" {
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/glFont.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -155,6 +156,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TexRect);
 	REGISTER_LUA_CFUNC(Unit);
 	REGISTER_LUA_CFUNC(UnitShape);
+	REGISTER_LUA_CFUNC(DrawListAtUnit);
+	REGISTER_LUA_CFUNC(DrawFuncAtUnit);
 	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(GetTextWidth);
 
@@ -959,6 +962,126 @@ int LuaOpenGL::UnitShape(lua_State* L)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
+static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+
+
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		} else {
+			return NULL;
+		}
+	}
+	const int unitID = (int)lua_tonumber(L, index);
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+	}
+	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		return NULL;
+	}
+	if (readAllyTeam < 0) {
+		if (!fullRead) {
+			return NULL;
+		}
+	} else {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+			return NULL;
+		}
+	}
+	if (!camera->InView(unit->midPos, unit->radius)) {
+		return NULL;
+	}
+	const float sqDist = (unit->pos - camera->pos).SqLength();
+	//const float farLength = unit->sqRadius * unitDrawDist * unitDrawDist;
+	//if (sqDist >= farLength) {
+	//	return NULL;
+	//}
+	const float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);  
+	const float realIconLength =
+		unitDrawer->iconLength * (iconDistMult * iconDistMult);  
+	if (sqDist >= realIconLength) {
+		return NULL;
+	}
+	
+	return unit;
+}
+
+
+int LuaOpenGL::DrawListAtUnit(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	// is visible to current read team
+	// is not an icon
+	// 
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if (!lua_isnumber(L, 2)) {
+		luaL_error(L, "Bad listID parameter in DrawListAtUnit()\n");
+		return 0;
+	}
+	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 2);
+	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+	const unsigned int dlist = displayLists.GetDList(listIndex);
+	if (dlist == 0) {
+		return 0;
+	}
+
+	bool midPos = true;
+	if (lua_isboolean(L, 3)) {
+		midPos = lua_toboolean(L, 3);
+	}
+	float3 pos;
+	if (midPos) {
+		pos = unit->midPos + (unit->speed * gu->timeOffset);
+	} else {
+		pos = unit->pos + (unit->speed * gu->timeOffset);
+	}
+
+	const float3 scale(luaL_optnumber(L, 4, 1.0f),
+	                   luaL_optnumber(L, 5, 1.0f),
+	                   luaL_optnumber(L, 6, 1.0f));
+	const float degrees = luaL_optnumber(L, 7, 0.0f);
+	const float3 rot(luaL_optnumber(L,  8, 0.0f),
+	                 luaL_optnumber(L,  9, 1.0f),
+	                 luaL_optnumber(L, 10, 0.0f));
+
+	glPushMatrix();
+	glTranslatef(pos.x, pos.y, pos.z);
+	glRotatef(degrees, rot.x, rot.y, rot.z);
+	glScalef(scale.x, scale.y, scale.z);
+	glCallList(dlist);
+	glPopMatrix();
+
+	return 0;
+}
+
+
+int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
+{
+	// FIXME: finish it
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	return 0;
+}
+
+
+/******************************************************************************/
 /******************************************************************************/
 
 struct VertexData {

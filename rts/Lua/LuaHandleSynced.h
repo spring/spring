@@ -8,7 +8,9 @@
 #pragma warning(disable:4786)
 #endif
 
+#include <map>
 #include <string>
+using std::map;
 using std::string;
 
 
@@ -32,6 +34,8 @@ class CLuaHandleSynced : public CLuaHandle
 		void GameFrame(int frameNumber);
 		bool GotChatMsg(const string& msg, int playerID);
 		void RecvFromSynced(int args); // not an engine call-in
+
+		bool SyncedActionFallback(const string& line, int playerID);
 
 	public: // custom call-in
 		bool HasSyncedXCall(const string& funcName);
@@ -74,6 +78,7 @@ class CLuaHandleSynced : public CLuaHandle
 		bool allowChanges;
 		bool allowUnsafeChanges;
 		bool teamsLocked; // disables CallAsTeam()
+		map<string, string> textCommands; // name, help
 
 	private:
 		void KillLua();
@@ -91,6 +96,8 @@ class CLuaHandleSynced : public CLuaHandle
 		static int UpdateCallIn(lua_State* L);
 
 		static int AllowUnsafeChanges(lua_State* L);
+
+		static int AddSyncedActionFallback(lua_State* L);
 };
 
 

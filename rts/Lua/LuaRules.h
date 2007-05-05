@@ -47,7 +47,9 @@ class CLuaRules : public CLuaHandleSynced
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID,
 		                          const float3& pos);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
-
+		bool AllowResourceLevel(int teamID, const string& type, float level);
+		bool AllowResourceTransfer(int oldTeam, int newTeam,
+		                           const string& type, float amount);
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
 
 	private:
@@ -87,6 +89,8 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowUnitCreation;
 		bool haveAllowUnitTransfer;
 		bool haveAllowFeatureCreation;
+		bool haveAllowResourceLevel;
+		bool haveAllowResourceTransfer;
 		bool haveCommandFallback;
 
 		map<string, string> infoMap;

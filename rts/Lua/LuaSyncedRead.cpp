@@ -161,6 +161,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
 	REGISTER_LUA_CFUNC(GetUnitLineage);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
+	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
@@ -2224,6 +2225,19 @@ int LuaSyncedRead::GetUnitHealth(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitIsStunned(lua_State* L)
+{
+	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->stunned || unit->beingBuilt);
+	lua_pushboolean(L, unit->stunned);
+	lua_pushboolean(L, unit->beingBuilt);
+	return 3;
+}
+
+
 int LuaSyncedRead::GetUnitResources(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -2410,9 +2424,9 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	lua_pushboolean(L, weapon->angleGood);
 	lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
-	lua_pushnumber(L, weapon->reloadStatus);
-	lua_pushnumber(L, weapon->salvoLeft);
-	lua_pushnumber(L, weapon->numStockpiled);
+	lua_pushnumber(L,  weapon->reloadStatus);
+	lua_pushnumber(L,  weapon->salvoLeft);
+	lua_pushnumber(L,  weapon->numStockpiled);
 	return 5;
 }
 

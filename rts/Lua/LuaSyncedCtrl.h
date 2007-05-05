@@ -63,6 +63,7 @@ class LuaSyncedCtrl {
 		static int SetUnitMaxHealth(lua_State* L);
 		static int SetUnitStockpile(lua_State* L);
 		static int SetUnitExperience(lua_State* L);
+		static int SetUnitCloak(lua_State* L);
 		static int SetUnitStealth(lua_State* L);
 		static int SetUnitNoDraw(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
