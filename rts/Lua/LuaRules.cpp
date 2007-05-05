@@ -102,6 +102,7 @@ CLuaRules::CLuaRules()
 	haveAllowCommand          = HasCallIn("AllowCommand");
 	haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
 	haveAllowUnitTransfer     = HasCallIn("AllowUnitTransfer");
+	haveAllowUnitBuildStep    = HasCallIn("AllowUnitBuildStep");
 	haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
 	haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
 	haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
@@ -296,6 +297,45 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, newTeam);
 	lua_pushboolean(L, capture);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 5, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
+bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
+                                   const CUnit* unit, float part)
+{
+	if (!haveAllowUnitBuildStep) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("AllowUnitBuildStep");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, builder->id);
+	lua_pushnumber(L, builder->team);
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, part);
 
 	// call the function
 	if (!RunCallIn(cmdStr, 5, 1)) {

@@ -1353,7 +1353,8 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			const float metalUse  = (metalCost  * part);
 			const float energyUse = (energyCost * part);
 			if ((gs->Team(builder->team)->metal  >= metalUse) &&
-			    (gs->Team(builder->team)->energy >= energyUse)) {
+			    (gs->Team(builder->team)->energy >= energyUse) &&
+			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
 				builder->UseMetal(metalUse);
 				builder->UseEnergy(energyUse);
 				health += (maxHealth * part);

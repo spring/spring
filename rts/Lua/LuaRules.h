@@ -47,6 +47,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID,
 		                          const float3& pos);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
+		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
 		bool AllowResourceLevel(int teamID, const string& type, float level);
 		bool AllowResourceTransfer(int oldTeam, int newTeam,
 		                           const string& type, float amount);
@@ -88,6 +89,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowCommand;
 		bool haveAllowUnitCreation;
 		bool haveAllowUnitTransfer;
+		bool haveAllowUnitBuildStep;
 		bool haveAllowFeatureCreation;
 		bool haveAllowResourceLevel;
 		bool haveAllowResourceTransfer;
