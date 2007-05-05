@@ -2735,15 +2735,19 @@ bool CGame::ClientReadNet()
  			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->Team(team1)->metal);
  			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->Team(team1)->energy);
 
-			if (!luaRules ||
-			    luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
-				gs->Team(team1)->metal -= metalShare;
-				gs->Team(team2)->metal += metalShare;
+			if (metalShare != 0.0f) {
+				if (!luaRules ||
+						luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
+					gs->Team(team1)->metal -= metalShare;
+					gs->Team(team2)->metal += metalShare;
+				}
 			}
-			if (!luaRules ||
-			    luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
-				gs->Team(team1)->energy -= energyShare;
-				gs->Team(team2)->energy += energyShare;
+			if (energyShare != 0.0f) {
+				if (!luaRules ||
+						luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
+					gs->Team(team1)->energy -= energyShare;
+					gs->Team(team2)->energy += energyShare;
+				}
 			}
 
 			if(shareUnits){
