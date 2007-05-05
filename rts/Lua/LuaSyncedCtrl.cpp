@@ -119,6 +119,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
+	REGISTER_LUA_CFUNC(SetUnitCloak);
 	REGISTER_LUA_CFUNC(SetUnitStealth);
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
@@ -1088,6 +1089,21 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	}
 	unit->experience = max(0.0f, (float)lua_tonumber(L, 2));
 	unit->ExperienceChange();
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
+	}
+	unit->isCloaked = lua_toboolean(L, 2);
 	return 0;
 }
 

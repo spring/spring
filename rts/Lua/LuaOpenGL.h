@@ -145,6 +145,8 @@ class LuaOpenGL {
 		static int TexRect(lua_State* L);
 		static int UnitShape(lua_State* L);
 		static int Unit(lua_State* L);
+		static int DrawListAtUnit(lua_State* L);
+		static int DrawFuncAtUnit(lua_State* L);
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 

@@ -216,10 +216,15 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const float3 interPos = unit->pos + (unit->speed * gu->timeOffset);
-	lua_pushnumber(L, interPos.x);
-	lua_pushnumber(L, interPos.y);
-	lua_pushnumber(L, interPos.z);
+	float3 pos;
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
+		pos = unit->midPos + (unit->speed * gu->timeOffset);
+	} else {
+		pos = unit->pos + (unit->speed * gu->timeOffset);
+	}
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
 	return 3;	
 }
 

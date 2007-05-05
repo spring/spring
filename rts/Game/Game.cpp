@@ -2735,10 +2735,16 @@ bool CGame::ClientReadNet()
  			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->Team(team1)->metal);
  			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->Team(team1)->energy);
 
-			gs->Team(team1)->metal-=metalShare;
-			gs->Team(team2)->metal+=metalShare;
-			gs->Team(team1)->energy-=energyShare;
-			gs->Team(team2)->energy+=energyShare;
+			if (!luaRules ||
+			    luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
+				gs->Team(team1)->metal -= metalShare;
+				gs->Team(team2)->metal += metalShare;
+			}
+			if (!luaRules ||
+			    luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
+				gs->Team(team1)->energy -= energyShare;
+				gs->Team(team2)->energy += energyShare;
+			}
 
 			if(shareUnits){
 				for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
@@ -2759,8 +2765,12 @@ bool CGame::ClientReadNet()
 				float metalShare=*(float*)&inbuf[inbufpos+2];
 				float energyShare=*(float*)&inbuf[inbufpos+6];
 
-				gs->Team(team)->metalShare=metalShare;
-				gs->Team(team)->energyShare=energyShare;
+				if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
+					gs->Team(team)->metalShare  = metalShare;
+				}
+				if (!luaRules || luaRules->AllowResourceLevel(team, "e", energyShare)) {
+					gs->Team(team)->energyShare = energyShare;
+				}
 			}
 			lastLength=10;
 			break;}
@@ -3644,7 +3654,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	}
 	else if ((s.find(".luarules") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaRules) {
-			if (s.find(" reload", 9) == 9) {
+			if (s == ".luarules reload") {
 				if (player != 0) {
 					logOutput.Print("Only the host player can reload synced scripts\n");
 				} else if (!gs->cheatEnabled) {
@@ -3659,7 +3669,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					}
 				}
 			}
-			else if (s.find(" disable", 9) == 9) {
+			else if (s == ".luarules disable") {
 				if (player != 0) {
 					logOutput.Print("Only the host player can disable synced scripts\n");
 				} else if (!gs->cheatEnabled) {
@@ -3670,7 +3680,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				}
 			}
 			else if (luaRules) {
-				luaRules->GotChatMsg(s, player);
+				luaRules->GotChatMsg(s.substr(strlen(".luarules")), player);
 			}
 			else {
 				logOutput.Print("LuaRules is not enabled\n");
@@ -3679,7 +3689,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	}
 	else if ((s.find(".luagaia") == 0) && (gs->frameNum > 1)) {
 		if (gs->useLuaGaia) {
-			if (s.find(" reload", 8) == 8) {
+			if (s == ".luagaia reload") {
 				if (player != 0) {
 					logOutput.Print("Only the host player can reload synced scripts\n");
 				} else if (!gs->cheatEnabled) {
@@ -3694,7 +3704,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					}
 				}
 			}
-			else if (s.find(" disable", 8) == 8) {
+			else if (s == ".luagaia disable") {
 				if (player != 0) {
 					logOutput.Print("Only the host player can disable synced scripts\n");
 				} else if (!gs->cheatEnabled) {
@@ -3705,7 +3715,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				}
 			}
 			else if (luaGaia) {
-				luaGaia->GotChatMsg(s, player);
+				luaGaia->GotChatMsg(s.substr(strlen(".luagaia")), player);
 			}
 			else {
 				logOutput.Print("LuaGaia is not enabled\n");
@@ -3713,7 +3723,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 	}
 	else if ((s.find(".luacob") == 0) && (gs->frameNum > 1)) {
-		if (s.find(" reload", 7) == 7) {
+		if (s ==  ".luacob reload") {
 			if (player != 0) {
 				logOutput.Print("Only the host player can reload synced scripts\n");
 			} else if (!gs->cheatEnabled) {
@@ -3728,7 +3738,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				}
 			}
 		}
-		else if (s.find(" disable", 7) == 7) {
+		else if (s == ".luacob disable") {
 			if (player != 0) {
 				logOutput.Print("Only the host player can disable synced scripts\n");
 			} else if (!gs->cheatEnabled) {
@@ -3739,11 +3749,16 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 		else if (luaCob) {
-			luaCob->GotChatMsg(s, player);
+			luaCob->GotChatMsg(s.substr(strlen(".luacob")), player);
 		}
 		else {
 			logOutput.Print("LuaCob is not enabled\n");
 		}
+	}
+	else if ((s[0] == '.') && (gs->frameNum > 1)) {
+		if (luaRules && luaRules->SyncedActionFallback(s, player)) { return; }
+		if (luaGaia  && luaGaia->SyncedActionFallback(s, player))  { return; }
+		if (luaCob   && luaCob->SyncedActionFallback(s, player))   { return; }
 	}
 }
 
