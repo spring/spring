@@ -26,10 +26,23 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+include("colors.h.lua")
+
+
 local cylDivs = 64
 local cylList = 0
 
 local blink = (-1 > 0)
+
+local showName = (-1 > 0)
+
+local vsx, vsy = widgetHandler:GetViewSizes()
+if (showName) then
+  function widget:ViewResize(viewSizeX, viewSizeY)
+    vsx = viewSizeX
+    vsy = viewSizeY
+  end
+end
 
 
 --------------------------------------------------------------------------------
@@ -96,9 +109,6 @@ end
 
 local function HilightUnit(unitID)
 
-  local px, py, pz = Spring.GetUnitViewPosition(unitID)
-  if (px == nil) then return end
-
   gl.DepthTest(true)
   gl.Color(1, 0, 0, 0.25)
 
@@ -161,6 +171,43 @@ function widget:DrawWorld()
     HilightUnit(data)
   elseif (type == 'feature') then
     HilightFeature(data)
+  end
+end
+              
+
+if (showName) then
+  function widget:DrawScreen()
+    if (blink and (math.mod(widgetHandler:GetHourTimer(), 0.1) > 0.05)) then
+      return
+    end
+
+    local mx, my = Spring.GetMouseState()
+    local type, data = Spring.TraceScreenRay(mx, my)
+
+    local str = ''
+
+    if (type == 'unit') then
+      local udid = Spring.GetUnitDefID(data)
+      if (udid == nil) then return end
+      local ud = UnitDefs[udid]
+      if (ud == nil) then return end
+      str = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
+    elseif (type == 'feature') then
+      local fdid = Spring.GetFeatureDefID(data)
+      if (fdid == nil) then return end
+      local fd = FeatureDefs[fdid]
+      if (fd == nil) then return end
+      str = '\255\255\128\255' .. fd.tooltip
+    end
+
+    local f = 14
+    local g = 10
+    local l = f * gl.GetTextWidth(str)
+    if ((mx + l + g) < vsx) then
+      gl.Text(str, mx + g, my + g, f, 'o')
+    else
+      gl.Text(str, mx - g, my + g, f, 'or')
+    end
   end
 end
               

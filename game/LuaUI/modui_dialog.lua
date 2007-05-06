@@ -41,7 +41,6 @@ local function IncludeFile(filename, t)
 end
 
 IncludeFile('Headers/colors.h.lua', LT);
-IncludeFile('Headers/opengl.h.lua', LT);
 IncludeFile('Headers/keysym.h.lua', LT);
 IncludeFile('savetable.lua', LT);
 
@@ -162,20 +161,21 @@ local function LoadUserLuaUI()
   RevertHiding()
   ClearLocalTables()
 
-  USER_FILENAME   = LUAUI_DIRNAME .. 'main.lua'
+  USER_FILENAME = LUAUI_DIRNAME .. 'main.lua'
 
-  local file, err = io.open(USER_FILENAME, 'r')
-  if (file == nil) then
+  if (not VFS.FileExists(USER_FILENAME)) then
     -- die quietly
     LayoutButtons = function () return 'disabled' end
-  else
-    file:close()
+    return
   end
 
-  local chunk, err = loadfile(USER_FILENAME)
+  text = VFS.LoadFile(USER_FILENAME)
+  if (text == nil) then
+    Script.Kill('Failed to load ' .. USER_FILENAME)
+  end
+  local chunk, err = loadstring(text)
   if (chunk == nil) then
     Script.Kill('Failed to load ' .. USER_FILENAME .. ' (' .. err .. ')')
-    return
   else
     chunk()
   end
@@ -215,6 +215,7 @@ end
 
 
 local function SaveModPerm(state)
+  Spring.CreateDir(LUAUI_DIRNAME..'Config')
   local perms
   local filename = LUAUI_DIRNAME..'Config/modui_list.lua'
   local chunk, err = loadfile(filename)
@@ -263,7 +264,7 @@ function DrawScreenItems(viewSizeX, viewSizeY)
   DrawButton(frame)
 
   -- draw frame border
-  timer = math.mod(timer + Spring.GetUpdateFrameSeconds(), 60.0)
+  timer = math.mod(timer + Spring.GetLastUpdateSeconds(), 60.0)
   local blink = math.abs(0.5 - math.mod(timer * 1.5, 1.0)) * 2.0
   gl.LineWidth(3.0)
   gl.Color(0.3 + (blink * 0.7), 0, 0)
