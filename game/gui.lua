@@ -29,9 +29,7 @@ do
   -- use a versionned directory name if it exists
   local sansslash = string.sub(LUAUI_DIRNAME, 1, -2)
   local versiondir = sansslash .. '-' .. Game.version .. '/'
-  local f = io.open(versiondir  .. 'main.lua')
-  if (f) then
-    f:close()
+  if (VFS.FileExists(versiondir  .. 'main.lua', VFS.RAW_ONLY)) then
     LUAUI_DIRNAME = versiondir
   end
 end
@@ -100,7 +98,7 @@ end
 
 if (loadFromMod == nil) then
   -- setup the mod selection UI
-  text = VFS.LoadFile(CHOOSE_FILENAME)
+  text = VFS.LoadFile(CHOOSE_FILENAME, VFS.RAW_ONLY)
   if (text == nil) then
     Spring.Echo('Failed to load ' .. CHOOSE_FILENAME .. ': (' .. err .. ')')
   else
@@ -133,7 +131,7 @@ end
 --
 
 do
-  text = VFS.LoadFile(USER_FILENAME)
+  text = VFS.LoadFile(USER_FILENAME, VFS.RAW_ONLY)
   if (text == nil) then
     Script.Kill('Failed to load ' .. USER_FILENAME)
   end
