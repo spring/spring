@@ -78,7 +78,10 @@
 #define CLOAKED                  76
 #define WANT_CLOAK               77
 #define GROUND_WATER_HEIGHT      78 // get land height, negative if below water
-#define UPRIGHT                  79
+#define UPRIGHT                  79 // set or get
+#define	POW                      80 // get
+#define PRINT                    81 // get, so multiple args can be passed
+#define HEADING                  82 // get
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script)
@@ -1014,6 +1017,13 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return !!unit->wantCloak;
 	case UPRIGHT:
 		return !!unit->upright;
+	case POW:
+		return int(pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
+	case PRINT:
+		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
+		break;
+	case HEADING:
+		return unit->heading;
 	default:
 		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
 		                val, p1, p2, p3, p4);
