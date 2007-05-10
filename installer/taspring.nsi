@@ -2,7 +2,6 @@
 
 ; Compiler-defines to generate different types of installers
 ;   SP_UPDATE - Only include changed files and no maps
-;   SP_PATCH - Creates a very small patching file (typically from just latest version)
 
 ; Use the 7zip-like compressor
 SetCompressor lzma
@@ -27,10 +26,8 @@ SetCompressor lzma
 ; Licensepage
 !insertmacro MUI_PAGE_LICENSE "gpl.txt"
 
-!ifndef SP_PATCH
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
-!endif
 
 ; Directory page
 !insertmacro MUI_PAGE_DIRECTORY
@@ -38,7 +35,7 @@ SetCompressor lzma
 !insertmacro MUI_PAGE_INSTFILES
 
 ; Finish page
-!ifndef SP_PATCH
+!ifndef SP_UPDATE
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
 !define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed on your computer. It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
@@ -71,11 +68,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 !ifdef SP_UPDATE
 !define SP_OUTSUFFIX1 "_update"
 !else
-!ifdef SP_PATCH
-!define SP_OUTSUFFIX1 "_patch"
-!else
 !define SP_OUTSUFFIX1 ""
-!endif
 !endif
 
 !ifdef NO_TOTALA
@@ -91,8 +84,6 @@ ShowInstDetails show
 ShowUnInstDetails show
 
 !include fileassoc.nsh
-
-!ifndef SP_PATCH
 
 ; Used to make sure that the desktop icon to the battleroom cannot be installed without the battleroom itself
 Function .onSelChange
@@ -147,44 +138,7 @@ Function .onInit
 
 FunctionEnd
 
-Function CheckMaps
-  FindFirst $0 $1 "$INSTDIR\maps\*.sm2"
-  StrCmp $1 "" done
-
-  MessageBox MB_ICONQUESTION|MB_YESNOCANCEL "The installer has detected old maps in the destination folder. This version of Spring uses a new and better, but incompatible, map format. This means that the old maps can no longer be used, and must be removed to prevent conflicts. Would you like to delete the current contents of your maps folder? If you answer no, the contents will be copied to a new folder called 'oldmaps' to prevent conflicts. You can then delete them manually later. Press cancel to abort the installation." IDYES delete IDNO rename
-    Abort "Installation aborted"
-    Goto done
-  delete:
-    Delete "$INSTDIR\maps\*.*"
-    Goto done
-  rename:
-    CreateDirectory "$INSTDIR\oldmaps"
-    CopyFiles "$INSTDIR\maps\*.*" "$INSTDIR\oldmaps"
-    Delete "$INSTDIR\maps\*.*"
-    Goto done
-  done:
-FunctionEnd
-
-; Deletes spawn.txt if it is from an original installation
-Function UpdateSpawn
-  ClearErrors
-  FileOpen $0 "$INSTDIR\spawn.txt" r
-  IfErrors done
-  FileSeek $0 0 END $1
-  IntCmp $1 260 Eq Less Eq
-  
-Less:
-  FileClose $0
-  Delete "$INSTDIR\spawn.txt"
-  Goto done
-Eq:
-  FileClose $0
-  Goto done
-
-Done:
-FunctionEnd
-
-; Only allow installation if spring.exe is from version 0.67bx
+; Only allow installation if spring.exe is from version 0.74
 Function CheckVersion
   ClearErrors
   FileOpen $0 "$INSTDIR\spring.exe" r
@@ -205,9 +159,10 @@ Function CheckVersion
 ;  IntCmp $1 2707456 Done	      ; 0.70b3
   IntCmp $1 5438464 Done              ; 0.74b1
   IntCmp $1 5487104 Done              ; 0.74b2
+  IntCmp $1 5478912 Done              ; 0.74b3
 Fail:
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.74b1 or 0.74b2. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.74b1 or 0.74b2 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.74. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
+  Abort "Unable to upgrade, version 0.74b1, 0.74b2 or 0.74b3 not found.."
   Goto done
 
 Done:
@@ -221,8 +176,6 @@ Section "Main application (req)" SEC_MAIN
 !ifdef SP_UPDATE
   Call CheckVersion
 !endif
-  Call CheckMaps
-  Call UpdateSpawn
 
   !define INSTALL
   !include "sections\main.nsh"
@@ -231,13 +184,11 @@ Section "Main application (req)" SEC_MAIN
 SectionEnd
 
 
-!ifndef NIGHTLY_BUILD
 Section "Multiplayer battleroom" SEC_BATTLEROOM
   !define INSTALL
   !include "sections\battleroom.nsh"
   !undef INSTALL
 SectionEnd
-!endif
 
 
 !ifndef SP_UPDATE
@@ -254,13 +205,11 @@ Section "Start menu shortcuts" SEC_START
   !undef INSTALL
 SectionEnd
 
-!ifndef NIGHTLY_BUILD
 Section /o "Desktop shortcut" SEC_DESKTOP
   SetOutPath "$INSTDIR"
 
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
-!endif
 
 ;!ifndef SP_UPDATE
 SectionGroup "AI opponent plugins (Bots)"
@@ -279,57 +228,6 @@ SectionGroupEnd
 ;!endif
 
 !include "sections\sectiondesc.nsh"
-
-!else ; SP_PATCH
-
-; Only allow installation if spring.exe is from version 0.70b1
-Function CheckVersion
-  ClearErrors
-  FileOpen $0 "$INSTDIR\tasclient.exe" r
-  IfErrors done
-  FileSeek $0 0 END $1
-;  IntCmp $1 3035136 Done             ; 0.67b1 &0.67b2
-;  IntCmp $1 2277888 Done             ; 0.67b2 (tasclient 0.19)
-  IntCmp $1 2640896 Done              ; 0.70b1 (tasclient 0.20)
-
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to patch a full installation of TA Spring 0.70b1. Your current folder does not contain a tasclient.exe from this version, so the installation will be aborted.. Please download the full or updating installer instead and try again."
-  Abort "Unable to upgrade, version 0.70b1 not found.."
-  Goto done
-
-Done:
-  FileClose $0
-
-FunctionEnd
-
-!include "VPatchLib.nsh"
-
-Section -Patch
-  SetOutPath "$INSTDIR"
-  Call CheckVersion
-  
-  !insertmacro VPatchFile "tasclient070b2.pat" "$INSTDIR\TASClient.exe" "$TEMP\TASClient.tmp"
-  IfErrors PatchError
-  !insertmacro VPatchFile "spring070b2.pat" "$INSTDIR\spring.exe" "$TEMP\spring.tmp"
-  IfErrors PatchError
-  !insertmacro VPatchFile "unitsync070b2.pat" "$INSTDIR\unitsync.dll" "$TEMP\unitsync.tmp"
-  IfErrors PatchError
-  !insertmacro VPatchFile "sdl070b2.pat" "$INSTDIR\sdl.dll" "$TEMP\sdl.tmp"
-  IfErrors PatchError
-
-;  !insertmacro VPatchFile "unitsync067b2.pat" "$INSTDIR\unitsync.dll" "$TEMP\unitsync.tmp"
-;  IfErrors PatchError
-
-  Goto Done
-
-PatchError:
-  MessageBox MB_ICONSTOP|MB_OK "The patching process could not be completed. Please download the full or updating installer instead and install one of them instead."
-  Abort "Error encountered during patching.."
-  
-Done:
-
-SectionEnd
-
-!endif ; SP_PATCH
 
 Section -Documentation
   !define INSTALL
