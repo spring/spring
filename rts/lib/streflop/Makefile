@@ -41,15 +41,14 @@ SoftFloatWrapperExtended.o: SoftFloatWrapper.cpp SoftFloatWrapper.h Makefile FPU
 streflop.a: Math.o Random.o ${USE_SOFT_BINARY}
 	$(MAKE) -C libm
 	@rm -f streflop.a
+# just link twice, there are too much issues in attempting a platform independent copy...
+# (or rather, detecting the platform)
 ifeq (i586-mingw32msvc-gcc,$(findstring i586-mingw32msvc-gcc,$(CC)))
 	i586-mingw32msvc-ar rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
+	i586-mingw32msvc-ar rs libstreflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
 else
 	ar rs streflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
-endif
-ifdef MINGDIR
-	@copy streflop.a libstreflop.a
-else
-	@ln -fs streflop.a libstreflop.a
+	ar rs libstreflop.a $(LIBM_OBJECTS) Math.o Random.o ${USE_SOFT_BINARY}
 endif
 
 arithmeticTest$(EXE_SUFFIX): arithmeticTest.cpp streflop.a
