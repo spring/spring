@@ -28,6 +28,7 @@ namespace CSharpAI
     // port of float3 class from TASpring project
     // This should really be an interface in fact probably
     // because adding extra shit here, like operators, is annoying....
+    [Serializable]
     public class Float3
     {
         public double x = 0;

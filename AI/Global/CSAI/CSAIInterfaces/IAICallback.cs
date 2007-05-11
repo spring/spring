@@ -46,10 +46,11 @@ namespace CSharpAI
     {
         void SendTextMsg( string text, int priority);        
         
-        IUnitDef[] GetUnitDefList();
+        //IUnitDef[] GetUnitDefList(); // use GetUnitDefByTypeId instead
+        IUnitDef GetUnitDefByTypeId( int unittypeid );
         IUnitDef GetUnitDef( int unitid );
         
-        void AddMapPoint( Float3 pos, string label );
+        //void AddMapPoint( Float3 pos, string label );
         
         Float3 GetUnitPos( int unitid );
         Float3 ClosestBuildSite( IUnitDef unittobuilddef, Float3 targetpos, double searchRadius, int minDistance );    
@@ -60,7 +61,7 @@ namespace CSharpAI
         int CreateGroup(string dll, int aiNumber);							//creates a group and return the id it was given, return -1 on failure (dll didnt exist etc)
         void EraseGroup(int groupid);											//erases a specified group
         //const std::vector<CommandDescription>* GetGroupCommands(int unitid);	//the commands that this unit can understand, other commands will be ignored
-        int GiveGroupOrder(int unitid, Command c);
+        //int GiveGroupOrder(int unitid, Command c);
         
         string GetModName ();
         string GetMapName ();
@@ -74,7 +75,7 @@ namespace CSharpAI
         int[] GetFriendlyUnits();	
         int[] GetEnemyUnitsInRadarAndLos();	
         
-        MapPoint[] GetMapPoints();
+        //MapPoint[] GetMapPoints();
         
         int CreateLineFigure(Float3 pos1,Float3 pos2,double width,bool arrow,int lifetime,int group);
         void SetFigureColor(int group,double red,double green,double blue,double alpha);
