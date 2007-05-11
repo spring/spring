@@ -5,7 +5,6 @@
 AICALLBACK_API const char * UnitDef_get_name( const UnitDef *self );
 AICALLBACK_API const char * UnitDef_get_humanName( const UnitDef *self );
 AICALLBACK_API const char * UnitDef_get_filename( const UnitDef *self );
-AICALLBACK_API bool UnitDef_get_loaded( const UnitDef *self );
 AICALLBACK_API int UnitDef_get_id( const UnitDef *self );
 AICALLBACK_API const char * UnitDef_get_buildpicname( const UnitDef *self );
 AICALLBACK_API int UnitDef_get_aihint( const UnitDef *self );
