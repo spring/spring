@@ -8,9 +8,9 @@ rem - TASpring sourcecode (taspring website )
 rem - Framework.Net
 
 rem modify the following four paths for your environment:
-set SPRINGSOURCE=..\..\..\..
-set SPRINGAPPLICATION=..\..\..\..\game
-set FRAMEWORKDOTNET=c:\windows\microsoft.net\framework\v2.0.50727
+set SPRINGSOURCE=J:\taspring\spring_0.74b3_src\spring_0.74b3
+set SPRINGAPPLICATION=j:\taspring\release
+set FRAMEWORKDOTNET=%windir%\microsoft.net\framework\v2.0.50727
 
 set PATH=%PATH%;%FRAMEWORKDOTNET%
 
