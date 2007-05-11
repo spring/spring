@@ -125,7 +125,7 @@ System::Object *DynLoad( System::String *assemblyfilename, System::String *pdbfi
 
 CSharpAI::IGlobalAI *LoadCSAI()
 {
-    System::String *configfilename = Assembly::GetCallingAssembly()->CodeBase->Replace( ".dll", ".xml" );
+    System::String *configfilename = Assembly::GetCallingAssembly()->CodeBase->ToLower()->Replace( ".dll", ".xml" );
     WriteLine( String::Concat( "configfile: [", configfilename, "]" ) );
     XmlDocument *configdom = new XmlDocument();
     configdom->Load( configfilename );
