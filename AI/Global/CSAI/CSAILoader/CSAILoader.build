@@ -2,15 +2,6 @@
 <project name="CSAILoader" default="deploy" basedir=".">
    <description>CSAILoader</description>
    
-   <property name="taspring.applicationdirectory" value="h:\bin\games\taspring\application\taspring" />
-   <property name="taspring.sourcecodedirectory" value="h:\bin\games\taspring\taspring_0.73b1_src\taspring_0.73b1" />
-   
-   <property name="platformsdk.include" value="h:\bin\microsoft platform sdk for windows xp sp2\include" />
-   <property name="platformsdk.lib" value="h:\bin\microsoft platform sdk for windows xp sp2\lib" />
-
-
-   <property name="nant.settings.currentframework" value="net-1.1" />
-   
    <uptodate property="csailoaderobjsources.unchanged">
         <sourcefiles>
             <include name="CSAIProxy.h" />
@@ -48,6 +39,7 @@
              <include name="${taspring.sourcecodedirectory}/rts" />          
              <include name="${taspring.sourcecodedirectory}/rts/system" />          
              <include name="${platformsdk.include}" />          
+             <include name="../AbicWrappers" />          
           </includedirs>
           <forcedusingfiles>
              <include name="../CSAIInterfaces/CSAIInterfaces.dll"/>
@@ -64,6 +56,7 @@
              <include name="${taspring.sourcecodedirectory}/rts" />          
              <include name="${taspring.sourcecodedirectory}/rts/system" />          
              <include name="${platformsdk.include}" />          
+             <include name="../AbicWrappers" />          
           </includedirs>
           <forcedusingfiles>
              <include name="../CSAIInterfaces/CSAIInterfaces.dll"/>
@@ -90,5 +83,20 @@
               <include name="CSAILoader.xml" />
           </fileset>
       </copy>
+   </target>
+
+   <target name="clean" >
+      <delete>
+  	<fileset basedir="${taspring.applicationdirectory}">
+              <include name="CSAILoader.dll" />
+              <include name="CSAILoader.xml" />
+	</fileset>          
+      </delete>
+      <delete>
+  	<fileset basedir=".">
+           <include name="CSAILoader.dll" />
+           <include name="*.obj" />
+	</fileset>          
+      </delete>
    </target>
 </project>
