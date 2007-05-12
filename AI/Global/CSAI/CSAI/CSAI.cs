@@ -30,15 +30,21 @@ using System.Globalization;
 namespace CSharpAI
 {
     // main AI class, that drives everything else
+    //
+    // This contains proof of concept for C# AI
+    //
+    // The AI writes some information to our screen, and to a logfile in the same directory as spring.exe, 
+    // asks the commander to build a solar collector,
+    // then asks commander to move to topleft of screen
+    // Note: commander must be ARM for this to work
     public class CSAI : IGlobalAI
     {
         // make these available for public access to other classes, though we can get them directly through GetInstance too
         public IAICallback aicallback;
         public LogFile logfile;
         public Metal metal;
-        public CSAIUserInteraction csaiuserinteraction;
             
-        public const string AIVersion = "0.0010";
+        public const string AIVersion = "0.0009";
         public string CacheDirectoryPath = Path.Combine( Path.Combine( "AI", "CSAI" ), "cache" );
         
         public delegate void UnitCreatedHandler( int deployedunitid, IUnitDef unitdef );
@@ -100,8 +106,6 @@ namespace CSharpAI
                 this.Team = team;
                 logfile = LogFile.GetInstance().Init( team );
                 logfile.WriteLine( "C# AI started v" + AIVersion+ ", team " + team + " ref " + reference + " map " + aicallback.GetMapName() + " mod " + aicallback.GetModName() );
-
-                csaiuserinteraction = CSAIUserInteraction.GetInstance();
                 
                 if( File.Exists( "AI/CSAI/debug.flg" ) ) // if this file exists, activate debug mode; saves manually changing this for releases
                 {
@@ -124,13 +128,11 @@ namespace CSharpAI
                 BuildTable.GetInstance();
                 UnitController.GetInstance();
                 EnemyController.GetInstance();
-                FriendlyUnitPositionObserver.GetInstance();
                 
                 EnergyController.GetInstance();
 
                 MovementMaps.GetInstance();
                 BuildMap.GetInstance();
-                LosMap.GetInstance();
                                 
                 //FactoryController.GetInstance();
                 //RadarController.GetInstance();
@@ -151,8 +153,8 @@ namespace CSharpAI
                 
                 if( aicallback.GetModName().ToLower().IndexOf( "aass" ) == 0 || aicallback.GetModName().ToLower().IndexOf( "xtape" ) == 0 )
                 {
-                    SendTextMsg( "C# AI initialized v" + AIVersion + ", team " + team );
-                    SendTextMsg( "Please say '.csai help' for available commands" );
+                    aicallback.SendTextMsg( "C# AI initialized v" + AIVersion + ", team " + team, 0 );
+                    aicallback.SendTextMsg( "Please say '.csai help' for available commands", 0 );
                     
                     PlayStyleManager.GetInstance().ListPlayStyles();
                     
@@ -160,7 +162,7 @@ namespace CSharpAI
                 }
                 else
                 {
-                    SendTextMsg( "Warning: CSAI needs AA2.23  or XTA7 to run correctly at this time" );
+                    aicallback.SendTextMsg( "Warning: CSAI needs AA2.23  or XTA7 to run correctly at this time", 0 );
                     logfile.WriteLine( "*********************************************************" );
                     logfile.WriteLine( "*********************************************************" );
                     logfile.WriteLine( "****                                                                                           ****" );
@@ -173,12 +175,13 @@ namespace CSharpAI
            catch( Exception e )
            {
                logfile.WriteLine( "Exception: " + e.ToString() );
-               SendTextMsg( "Exception: " + e.ToString() );
+               aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
            }
         }
         
         public void Shutdown()
         {
+        	logfile.WriteLine("Shutting down.");
             logfile.Shutdown();
         }
         
@@ -206,7 +209,7 @@ namespace CSharpAI
            catch( Exception e )
            {
                logfile.WriteLine( "Exception: " + e.ToString() );
-               SendTextMsg("Exception: " + e.ToString());
+               aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
            }
         }
         
@@ -222,7 +225,7 @@ namespace CSharpAI
            catch( Exception e )
            {
                logfile.WriteLine( "Exception: " + e.ToString() );
-               SendTextMsg("Exception: " + e.ToString());
+               aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
            }
         }
         
@@ -238,7 +241,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }        
         
@@ -254,7 +257,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
         
@@ -270,7 +273,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }       
         
@@ -282,16 +285,11 @@ namespace CSharpAI
                 {
                     UnitMoveFailedEvent( unit );
                 }
-                if( DebugOn )
-                {
-                    aicallback.DrawUnit( "ARMRAD", aicallback.GetUnitPos( unit ), 0.0f, 500, aicallback.GetMyAllyTeam(), true, true);
-                }
-                // note to self: add add map ponits to interface
             }
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }       
     
@@ -307,7 +305,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
         
@@ -323,7 +321,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
     
@@ -333,15 +331,13 @@ namespace CSharpAI
             {
                 if( EnemyEnterRadarEvent != null )
                 {
-                    aicallback.SendTextMsg("enemy entered radar: " + enemy, 0 );
-                    logfile.WriteLine("enemy entered radar: " + enemy);
                     EnemyEnterRadarEvent( enemy );
                 }
             }
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
         
@@ -357,7 +353,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
             
@@ -377,7 +373,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }
             
@@ -385,8 +381,6 @@ namespace CSharpAI
         {
             try
             {
-                csaiuserinteraction.controlpanel.textboxlogarea.Text += 
-                    player.ToString() + ": " + msg;
                 if( msg.ToLower().IndexOf( ".csai" ) == 0 )
                 {
                     if( msg.ToLower().Substring( 5, 1 ) == "*" || msg.ToLower().Substring( 5, 1 ) == " " || msg.ToLower().Substring( 5, 1 ) == Team.ToString() )
@@ -413,7 +407,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }       
     
@@ -435,7 +429,7 @@ namespace CSharpAI
             catch( Exception e )
             {
                 logfile.WriteLine( "Exception: " + e.ToString() );
-                SendTextMsg("Exception: " + e.ToString());
+                aicallback.SendTextMsg( "Exception: " + e.ToString(), 0 );
             }
         }    
         
@@ -460,12 +454,6 @@ namespace CSharpAI
                 logfile.WriteLine("CSAI unregistering voicecommand " + commandstring );
                 VoiceCommands.Remove( commandstring );
             }
-        }
-
-        public void SendTextMsg(string text )
-        {
-            aicallback.SendTextMsg(text, 0);
-            csaiuserinteraction.controlpanel.textboxlogarea.Text += text + "\n\r";
         }
     }
 }

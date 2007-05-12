@@ -40,8 +40,6 @@ namespace CSharpAI
             
         // signal to requester that we granted its request
         void WeAreBuildingYouA( IUnitDef unitwearebuilding );
-
-        void UnitFinished(int deployedid, IUnitDef unitwearebuilding );
             
         // your request got destroyed; new what-to-build negotations round
         void YourRequestWasDestroyedDuringBuilding_Sorry( IUnitDef unitwearebuilding );

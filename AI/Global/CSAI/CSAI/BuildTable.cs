@@ -25,66 +25,44 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace CSharpAI
 {
-    public class UnitDefArrayList : ArrayList
-    {
-        public UnitDefArrayList( IUnitDef[] array )
-        {
-            if( array != null )
-            {
-                foreach( IUnitDef value in array )
-                {
-                    base.Add( value );
-                }
-            }
-        }
-        public UnitDefArrayList() : base()
-        {
-        }
-        public new virtual IUnitDef this[ int index ]{get{return (IUnitDef)base[ index ];}set{base[ index ] = value;}}
-        public class UnitDefEnumerator{
-            IEnumerator enumerator;
-            public UnitDefEnumerator( IEnumerator enumerator ){this.enumerator = enumerator;}
-            public IUnitDef Current{get{return (IUnitDef)enumerator.Current;}}
-            public void MoveNext(){enumerator.MoveNext();}
-            public void Reset(){enumerator.Reset();}
-        }
-        public new UnitDefEnumerator GetEnumerator()
-        {
-            return new UnitDefEnumerator( base.GetEnumerator() );
-        }
-        public new IUnitDef[] ToArray()
-        {
-            return (IUnitDef[])base.ToArray( typeof( IUnitDef ) );
-        }
-        public override string ToString()
-        {
-            string result = "";
-            for( int i = 0; i < base.Count; i++ )
-            {
-                result += ( base[i] as IUnitDef ).humanName + ",";
-            }
-            return result;
-        }
-    }
-    
     public class BuildTable
     {
         static BuildTable instance = new BuildTable();
         public static BuildTable GetInstance(){ return instance; } // Singleton pattern
 
+        public const string ArmCommander = "arm_commander";
+        public const string ArmMex = "arm_metal_extractor";
+        public const string ArmConstructionVehicle = "arm_construction_vehicle";
+        public const string ArmVehicleFactory = "arm_vehicle_plant";
+        public const string ArmSolar = "arm_solar_collector";
+        public const string ArmL1Tank= "arm_stumpy";
+        public const string ArmL1AntiAir = "arm_samson";
+        public const string ArmL1Radar = "arm_radar_tower";
+        public const string ArmMoho = "arm_moho_mine";
+        public const string ArmGroundScout = "arm_jeffy";
+        
+        public const string PlacementUnit = "core_krogoth_gantry";
+
+        public static List<string> Tanks = new List<string>(new string[]{
+                                                           	ArmL1Tank, ArmL1AntiAir
+                                                           });
+                                                           	//string[]UnitsWeLike = new string[]{ "armsam", "armstump", "armrock", "armjeth", "armkam", "armanac", "armsfig", "armmh", "armah",
+        //    "armbull", "armmart" };
+
         //int numOfUnitTypes = 0;
         public IUnitDef[] availableunittypes;
-        public UnitDefArrayList MetalExtractors = new UnitDefArrayList();
-        public UnitDefArrayList EnergyProducers = new UnitDefArrayList();
-        public UnitDefArrayList Factories = new UnitDefArrayList();
-        public UnitDefArrayList Constructors = new UnitDefArrayList();
-        public UnitDefArrayList GroundAttack = new UnitDefArrayList();
-        public UnitDefArrayList AirAttack = new UnitDefArrayList();
+        public List<IUnitDef> MetalExtractors = new List<IUnitDef>();
+        public List<IUnitDef> EnergyProducers = new List<IUnitDef>();
+        public List<IUnitDef> Factories = new List<IUnitDef>();
+        public List<IUnitDef> Constructors = new List<IUnitDef>();
+        public List<IUnitDef> GroundAttack = new List<IUnitDef>();
+        public List<IUnitDef> AirAttack = new List<IUnitDef>();
             
-        public Hashtable UnitDefByName = new Hashtable();
+        public Dictionary<string,IUnitDef> UnitDefByName = new Dictionary<string,IUnitDef>();
 
         CSAI CSAI;
         IAICallback aicallback;
@@ -99,8 +77,15 @@ namespace CSharpAI
             
             modname = aicallback.GetModName();
             
-            logfile.WriteLine( "calling GetUnitDefList... " );
-            availableunittypes = aicallback.GetUnitDefList();
+            int numunitdefs = aicallback.GetNumUnitDefs();
+            logfile.WriteLine( "calling GetUnitDefList, for " + numunitdefs + " units ... " );
+            //availableunittypes = aicallback.GetUnitDefList();
+            availableunittypes = new IUnitDef[numunitdefs + 1];
+            for (int i = 1; i <= numunitdefs; i++)
+            {
+                availableunittypes[i] = aicallback.GetUnitDefByTypeId(i);
+                logfile.WriteLine( i + " " + availableunittypes[i].name + " " + availableunittypes[i].humanName );
+            }
             logfile.WriteLine( "... done" );
             
             if( !LoadCache( modname ) )
@@ -117,47 +102,50 @@ namespace CSharpAI
             
             foreach( IUnitDef unitdef in availableunittypes )
             {
-                string logline = unitdef.id + " " + unitdef.name + " " + unitdef.humanName + " size: " + unitdef.xsize + "," + unitdef.ysize;
-                IMoveData movedata = unitdef.movedata;
-                if( movedata != null )
-                {
-                    logline += " maxSlope: " + movedata.maxSlope + " depth " + movedata.depth + " slopeMod " + movedata.slopeMod +
-                    " depthMod: " + movedata.depthMod + " movefamily: " + movedata.moveFamily;
-                }
-                logfile.WriteLine(  logline );
-                    
-                if( unitdef.extractsMetal > 0 )
-                {
-                    MetalExtractors.Add( unitdef );
-                }
-                if( unitdef.energyMake > 0 || unitdef.windGenerator > 0 || unitdef.tidalGenerator > 0 )
-                {
-                    EnergyProducers.Add( unitdef );
-                }
-                if( unitdef.builder && unitdef.speed >= 1 )
-                {
-                    Constructors.Add( unitdef );
-                }
-                if( unitdef.builder && unitdef.speed < 1 )
-                {
-                    Factories.Add( unitdef );
-                }
-                if( unitdef.canAttack && unitdef.canmove && unitdef.minWaterDepth < 0 )
-                {
-                    GroundAttack.Add( unitdef );
-                }
-                if( unitdef.canAttack && unitdef.canmove && unitdef.canfly )
-                {
-                    AirAttack.Add( unitdef );
-                }
-                if( !UnitDefByName.Contains( unitdef.name.ToLower() ) )
-                {
-                    UnitDefByName.Add( unitdef.name.ToLower(), unitdef );
-                }
-                else
-                {
-                    logfile.WriteLine( "Warning: duplicate name: " + unitdef.name.ToLower() );
-                }
+            	if( unitdef != null )
+            	{
+	                string logline = unitdef.id + " " + unitdef.name + " " + unitdef.humanName + " size: " + unitdef.xsize + "," + unitdef.ysize;
+	                IMoveData movedata = unitdef.movedata;
+	                if( movedata != null )
+	                {
+	                    logline += " maxSlope: " + movedata.maxSlope + " depth " + movedata.depth + " slopeMod " + movedata.slopeMod +
+	                    " depthMod: " + movedata.depthMod + " movefamily: " + movedata.moveFamily;
+	                }
+	                logfile.WriteLine(  logline );
+	                    
+	                if( unitdef.extractsMetal > 0 )
+	                {
+	                    MetalExtractors.Add( unitdef );
+	                }
+	                if( unitdef.energyMake > 0 || unitdef.windGenerator > 0 || unitdef.tidalGenerator > 0 )
+	                {
+	                    EnergyProducers.Add( unitdef );
+	                }
+	                if( unitdef.builder && unitdef.speed >= 1 )
+	                {
+	                    Constructors.Add( unitdef );
+	                }
+	                if( unitdef.builder && unitdef.speed < 1 )
+	                {
+	                    Factories.Add( unitdef );
+	                }
+	                if( unitdef.canAttack && unitdef.canmove && unitdef.minWaterDepth < 0 )
+	                {
+	                    GroundAttack.Add( unitdef );
+	                }
+	                if( unitdef.canAttack && unitdef.canmove && unitdef.canfly )
+	                {
+	                    AirAttack.Add( unitdef );
+	                }
+	                if( !UnitDefByName.ContainsKey( unitdef.name.ToLower() ) )
+	                {
+	                    UnitDefByName.Add( unitdef.name.ToLower(), unitdef );
+	                }
+	                else
+	                {
+	                    logfile.WriteLine( "Warning: duplicate name: " + unitdef.name.ToLower() );
+	                }
+            	}
             }
             logfile.WriteLine( "=======================================================" );
             logfile.WriteLine( "Metal Extractors" );
@@ -175,14 +163,15 @@ namespace CSharpAI
             logfile.WriteLine( "Factories" );
             logfile.WriteLine( Factories.ToString() );
             
-            IUnitDef constuctionvehicle =  UnitDefByName[ "armcv" ] as IUnitDef;
-            BuildOption[] buildoptions = constuctionvehicle.buildOptions;
-            string buildoptionsstring = "Constructionvehicle build options: ";
-            foreach( BuildOption buildoption in buildoptions )
-            {
-                buildoptionsstring += "( " + buildoption.TablePosition.ToString() + ", " + buildoption.UnitTypeName + " ) ";
-            }
-            logfile.WriteLine( buildoptionsstring );
+            IUnitDef constuctionvehicle =  UnitDefByName[ BuildTable.ArmConstructionVehicle ] as IUnitDef;
+            //int 
+            //BuildOption[] buildoptions = constuctionvehicle.GetNumBuildOptions;
+            //string buildoptionsstring = "Constructionvehicle build options: ";
+            //foreach( BuildOption buildoption in buildoptions )
+            //{
+                //buildoptionsstring += "( " + buildoption.TablePosition.ToString() + ", " + buildoption.UnitTypeName + " ) ";
+            //}
+            //logfile.WriteLine( buildoptionsstring );
         }
         
         void SaveCache( string modname )

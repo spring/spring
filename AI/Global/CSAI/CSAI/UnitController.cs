@@ -33,11 +33,9 @@ namespace CSharpAI
     // Note to self: do we really need this class???
     public class UnitController
     {
-        public delegate void ExistingUnitHandler(int deployedid, IUnitDef unitdef);
-        public delegate void UnitAddedHandler(int deployedid, IUnitDef unitdef);
+        public delegate void UnitAddedHandler( int deployedid, IUnitDef unitdef );
         public delegate void UnitRemovedHandler( int deployedid );
-
-        public event ExistingUnitHandler ExistingUnitEvent;
+        
         public event UnitAddedHandler UnitAddedEvent;
         public event UnitRemovedHandler UnitRemovedEvent;
         
@@ -49,8 +47,7 @@ namespace CSharpAI
         LogFile logfile;
         UnitDefHelp unitdefhelp;
         
-        //public Hashtable UnitDefByDeployedId = new Hashtable();
-        public UnitDefHashtable UnitDefByDeployedId = new UnitDefHashtable();
+        public Hashtable UnitDefByDeployedId = new Hashtable();
         
         // do we need this???  handled by specific controllers???
         //IntArrayList commanders = new IntArrayList();
@@ -88,10 +85,6 @@ namespace CSharpAI
                 IUnitDef unitdef = aicallback.GetUnitDef( friendlyunit );
                 logfile.WriteLine("friendly unit existing: " + friendlyunit + " " + unitdef.name + " " + unitdef.humanName );
                 AddUnit( friendlyunit );
-                if (ExistingUnitEvent != null)
-                {
-                    ExistingUnitEvent(friendlyunit, unitdef);
-                }
             }
         }
         
