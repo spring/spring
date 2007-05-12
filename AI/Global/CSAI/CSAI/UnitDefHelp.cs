@@ -29,23 +29,14 @@ namespace CSharpAI
             return false;
         }
         
-        public bool IsBoat( IUnitDef unitdef )
-        {
-            if( IsMobile( unitdef ) && unitdef.minWaterDepth > 0 )
-            {
-                return true;
-            }
-            return false;
-        }
-        
         public bool IsConstructor( IUnitDef unitdef )
         {
-            if(unitdef.buildOptions.GetUpperBound(0) + 1 == 0) return false;
+            if(unitdef.GetNumBuildOptions() == 0) return false;
             return( unitdef.builder && IsMobile( unitdef ) );
         }
         
         public bool IsFactory(IUnitDef ud){
-            if(ud.buildOptions.GetUpperBound(0) + 1 == 0) return false;
+            if (ud.GetNumBuildOptions() == 0) return false;
             if(ud.type.ToLower() == "factory" ) return true;
             return ud.builder && !IsMobile(ud);
         }

@@ -9,12 +9,16 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CSAI</RootNamespace>
     <AssemblyName>CSAI</AssemblyName>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>Full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>o:\taspring\release\ai\csai</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,10 +31,20 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CSAIInterfaces, Version=0.0.0.0, Culture=neutral">
+    <Reference Include="CSAIInterfaces">
+      <HintPath>..\CSAIInterfaces\CSAIInterfaces.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\game\CSAIInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -44,35 +58,25 @@
     <Compile Include="basictypes\CustomCollections.cs" />
     <Compile Include="basictypes\Float3Helper.cs" />
     <Compile Include="basictypes\UnitDefHashtable.cs" />
-    <Compile Include="commanders\BuildWar.cs" />
     <Compile Include="BuildTable.cs" />
     <Compile Include="BuildTree.cs" />
-    <Compile Include="commanders\Level2BuildEconomy.cs" />
-    <Compile Include="squadcontrollers\Builder.cs" />
-    <Compile Include="squadcontrollers\CommanderController.cs" />
-    <Compile Include="squadcontrollers\ConstructorController.cs" />
+    <Compile Include="CommanderController.cs" />
+    <Compile Include="ConstructorController.cs" />
     <Compile Include="CSAI.cs" />
-    <Compile Include="CSAIUserInteraction.cs" />
     <Compile Include="EnemyController.cs" />
-    <Compile Include="squadcontrollers\EnemySelector.cs" />
+    <Compile Include="EnemySelector.cs" />
     <Compile Include="EnergyController.cs" />
     <Compile Include="Factory.cs" />
-    <Compile Include="squadcontrollers\FactoryController.cs" />
-    <Compile Include="FriendlyUnitPositions.cs" />
+    <Compile Include="FactoryController.cs" />
     <Compile Include="IController.cs" />
     <Compile Include="IFactory.cs" />
     <Compile Include="IFactoryController.cs" />
     <Compile Include="IRadarController.cs" />
     <Compile Include="IStrategy.cs" />
-    <Compile Include="IUnitOrder.cs" />
     <Compile Include="IUnitRequester.cs" />
-    <Compile Include="Ownership.cs" />
-    <Compile Include="win32\User32.cs" />
-    <Compile Include="utils\LogFile.cs" />
+    <Compile Include="LogFile.cs" />
     <Compile Include="mapping\BuildMap.cs" />
     <Compile Include="mapping\BuildPlanner.cs" />
-    <Compile Include="mapping\EnemyMap.cs" />
-    <Compile Include="mapping\LosMap.cs" />
     <Compile Include="mapping\Metal.cs" />
     <Compile Include="mapping\MovementMaps.cs" />
     <Compile Include="mapping\SlopeMap.cs" />
@@ -84,7 +88,6 @@
     <Compile Include="packcoordinators\MoveToPackCoordinator.cs" />
     <Compile Include="packcoordinators\PackCoordinatorSelector.cs" />
     <Compile Include="packcoordinators\SpreadSearchPackCoordinator.cs" />
-    <Compile Include="packcoordinators\SpreadSearchPackCoordinatorWithSearchGrid.cs" />
     <Compile Include="playstyles\DefendOnlyPlayStyle.cs" />
     <Compile Include="playstyles\IPlayStyle.cs" />
     <Compile Include="playstyles\LoadPlayStyles.cs" />
@@ -92,39 +95,23 @@
     <Compile Include="playstyles\PlayStyleManager.cs" />
     <Compile Include="playstyles\RaiderPlayStyle.cs" />
     <Compile Include="playstyles\TankRushPlayStyle.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="squadcontrollers\RadarController.cs" />
-    <Compile Include="squadcontrollers\ScoutControllerRaider.cs" />
-    <Compile Include="squadcontrollers\ScoutControllerRandomSearch.cs" />
-    <Compile Include="commanders\LoadStrategies.cs" />
-    <Compile Include="commanders\Level1TankRush.cs" />
+    <Compile Include="RadarController.cs" />
+    <Compile Include="ScoutControllerRaider.cs" />
+    <Compile Include="ScoutControllerRandomSearch.cs" />
+    <Compile Include="strategies\LoadStrategies.cs" />
+    <Compile Include="strategies\TankRush.cs" />
     <Compile Include="StrategyController.cs" />
-    <Compile Include="squadcontrollers\TankController.cs" />
-    <Compile Include="ControlPanel.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ControlPanel.Designer.cs">
-      <DependentUpon>ControlPanel.cs</DependentUpon>
-    </Compile>
+    <Compile Include="TankController.cs" />
     <Compile Include="testing\RunTests.cs" />
     <Compile Include="testing\TestDrawing.cs" />
     <Compile Include="testing\TestMaps.cs" />
     <Compile Include="UnitController.cs" />
     <Compile Include="UnitDefHelp.cs" />
-    <Compile Include="utils\DrawingUtils.cs" />
     <Compile Include="XmlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ControlPanel.resx">
-      <SubType>Designer</SubType>
-      <DependentUpon>ControlPanel.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="tankrush.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="DefendOnlyPlayStyle\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -135,8 +122,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy /y $(TargetDir)$(TargetName).dll H:\bin\games\taspring\Application\TASpring\AI\CSAI\CSAI.dll
-copy /y $(TargetDir)$(TargetName).pdb h:\bin\games\taspring\application\taspring\AI\CSAI\CSAI.pdb
+    <PostBuildEvent>copy /y %24%28TargetDir%29%24%28TargetName%29.dll o:\taspring\Release\AI\CSAI\CSAI.dll
+ &amp; copy /y %24%28TargetDir%29%24%28TargetName%29.pdb o:\taspring\Release\AI\CSAI\CSAI.pdb
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

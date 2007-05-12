@@ -31,6 +31,5 @@ namespace CSharpAI
     public interface IFactoryController
     {
         void RegisterRequester( IUnitRequester requester );
-        void UnitCreated( IUnitOrder order, int deployedid);
     }
 }

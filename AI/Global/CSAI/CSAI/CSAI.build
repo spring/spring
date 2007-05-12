@@ -2,11 +2,6 @@
 <project name="CSAI" default="deploy" basedir=".">
    <description>CSAIInterfaces</description>
 
-   <property name="taspring.applicationdirectory" value="h:\bin\games\taspring\application\taspring" />
-
-
-   <property name="nant.settings.currentframework" value="net-1.1" />
-   
    <target name="clean" description="remove all generated files">
       <delete file="CSAI.dll" failonerror="false" />
       <delete file="CSAI.pdb" failonerror="false" />
@@ -21,7 +16,6 @@
              <include name="CommanderController.cs" />
              <include name="XmlHelper.cs" />
              <include name="UnitController.cs" />
-             <include name="FriendlyUnitPositionObserver.cs" />
              <include name="EnergyController.cs" />
              <include name="MetalController.cs" />
              <include name="EnemyController.cs" />
@@ -30,14 +24,11 @@
              <include name="IFactory.cs" />
              <include name="IUnitRequester.cs" />
 
-             <include name="utils/drawingutils.cs" />
-
              <include name="mapping/MovementMaps.cs" />
              <include name="mapping/BuildMap.cs" />
              <include name="mapping/Metal.cs" />
              <include name="mapping/SlopeMap.cs" />
              <include name="mapping/BuildPlanner.cs" />
-             <include name="mapping/LosMap.cs" />
              
              <include name="playstyles/IPlayStyle.cs" />
              <include name="playstyles/PlayStyle.cs" />
@@ -70,7 +61,6 @@
              <include name="packcoordinators/MoveToPackCoordinator.cs" />
              <include name="packcoordinators/GuardPackCoordinator.cs" />
              <include name="packcoordinators/SpreadSearchPackCoordinator.cs" />
-             <include name="packcoordinators/SpreadSearchPackCoordinatorWithSearchGrid.cs" />
              
              <include name="basictypes/CustomCollections.cs" />
              <include name="basictypes/ArrayIndexer.cs" />
@@ -83,7 +73,7 @@
              <include name="testing/TestDrawing.cs" />
           </sources>
           <references>
-             <include name="../CSAIInterfaces/CSAIInterfaces.dll"/>
+             <include name="../../../../rts/ExternalAI/GlobalAIInterfaces/GlobalAIInterfaces.dll"/>
           </references>
       </csc>
    </target>

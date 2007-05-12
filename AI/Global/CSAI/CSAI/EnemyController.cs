@@ -33,11 +33,9 @@ namespace CSharpAI
     public class EnemyController
     {
         public delegate void NewEnemyAddedHandler( int enemyid, IUnitDef unitdef );
-        public delegate void NewStaticEnemyAddedHandler( int enemyid, Float3 pos, IUnitDef unitdef );
         public delegate void EnemyRemovedHandler( int enemyid );
             
         public event NewEnemyAddedHandler NewEnemyAddedEvent;
-        public event NewStaticEnemyAddedHandler NewStaticEnemyAddedEvent;
         public event EnemyRemovedHandler EnemyRemovedEvent;
         
         public Hashtable EnemyUnitDefByDeployedId = new Hashtable();
@@ -109,14 +107,14 @@ namespace CSharpAI
             foreach( DictionaryEntry de in EnemyStaticPosByDeployedId )
             {
                 Float3 pos = de.Value as Float3;
-                aicallback.DrawUnit("ARMAMD", pos, 0.0f, 50, aicallback.GetMyAllyTeam(), true, true);
+                aicallback.DrawUnit(BuildTable.ArmGroundScout, pos, 0.0f, 50, aicallback.GetMyAllyTeam(), true, true);
             }
             foreach( DictionaryEntry de in EnemyUnitDefByDeployedId )
             {
                 int enemyid = (int)de.Key;
                 //IUnitDef unit = de.Value as Float3;
                 Float3 pos = aicallback.GetUnitPos( enemyid );
-                aicallback.DrawUnit("ARMSAM", pos, 0.0f, 50, aicallback.GetMyAllyTeam(), true, true);
+                aicallback.DrawUnit(BuildTable.ArmL1AntiAir, pos, 0.0f, 50, aicallback.GetMyAllyTeam(), true, true);
             }
           //  logfile.WriteLine( "Number enemies: " + EnemyUnitDefByDeployedId.Count );
         }
@@ -131,7 +129,29 @@ namespace CSharpAI
                 AddEnemy( enemyid );
             }
         }
-
+        /*
+        public int GetNearestEnemy( Float3 pos )
+        {
+            double mindistancesquared = 100000000000;
+            int closestenemy = 0;
+            foreach( DictionaryEntry de in EnemyUnitDefByDeployedId )
+            {
+                int enemyid = (int)de.Key;
+                IUnitDef unitdef = de.Value as IUnitDef;
+                Float3 enemypos = aicallback.GetUnitPos( enemyid );
+                logfile.WriteLine( "GetNearestEnemy, checking id " + enemyid + " pos " + enemypos.ToString() );
+                double thisdistancesquared = Float3Helper.GetSquaredDistance( enemypos, pos );
+                //logfile.WriteLine( " thisdistancesquared: " + thisdistancesquared );
+                if( thisdistancesquared < mindistancesquared )
+                {
+                    logfile.WriteLine( "GetNearestEnemy, candidate: " + enemyid + " distancesquared: " + thisdistancesquared );
+                    mindistancesquared = thisdistancesquared;
+                    closestenemy = enemyid;
+                }
+            }
+            return closestenemy;
+        }
+        */
         public void EnemyEnterRadar( int enemyid )
         {
             AddEnemy( enemyid );
@@ -179,12 +199,7 @@ namespace CSharpAI
                 {
                     if( !EnemyStaticPosByDeployedId.Contains( enemyid ) )
                     {
-                        Float3 thispos = aicallback.GetUnitPos( enemyid );
-                        EnemyStaticPosByDeployedId.Add( enemyid, thispos );
-                        if( NewStaticEnemyAddedEvent != null )
-                        {
-                            NewStaticEnemyAddedEvent( enemyid, thispos, unitdef );
-                        }
+                        EnemyStaticPosByDeployedId.Add( enemyid, aicallback.GetUnitPos( enemyid ) );
                     }
                 }
             }
