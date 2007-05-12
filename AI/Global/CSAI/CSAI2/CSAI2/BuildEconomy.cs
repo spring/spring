@@ -22,10 +22,10 @@ namespace CSharpAI
             //workflow.AddBuildUnitWeighting(0.2, 0.4, "armmex");
             //workflow.AddBuildUnitWeighting(0.2, 0.6, "armsolar");
 
-            workflow.AddEnergyUnit("armsolar");
+            workflow.AddEnergyUnit("arm_solar_collector");
             //workflow.AddEnergyUnit("armmfus");
 
-            workflow.AddMetalUnit("armmex");
+            workflow.AddMetalUnit("arm_metal_extractor");
 
             workflow.BuildUnit(2.0, "armvp", 1);
 

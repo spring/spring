@@ -9,7 +9,7 @@ namespace CSharpAI
         static CommanderList instance = new CommanderList();
         public static CommanderList GetInstance() { return instance; }
 
-        List<string> commandernames = new List<string>(new string[] { "armcom", "corcom" });
+        List<string> commandernames = new List<string>(new string[] { "arm_commander", "core_commander" });
 
         public Dictionary<int, IUnitDef> defbyid = new Dictionary<int, IUnitDef>();
 
