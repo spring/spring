@@ -41,6 +41,9 @@ class CLuaRules : public CLuaHandleSynced
 		const map<string, string>& GetInfoMap() const { return infoMap; }
 
 	public: // call-ins
+		bool SyncedUpdateCallIn(const string& name);
+		bool UnsyncedUpdateCallIn(const string& name);
+
 		bool AllowCommand(const CUnit* unit, const Command& cmd);
 		bool AllowUnitCreation(const UnitDef* unitDef,
 		                       const CUnit* builder, const float3* pos);

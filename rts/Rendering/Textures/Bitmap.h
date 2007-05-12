@@ -57,6 +57,7 @@ public:
 	void ReverseYAxis();
 	void InvertColors();
 	void GrayScale();
+	void Tint(const float tint[3]);
 	
 	// Mac Specific (QuickTime Graphics Importer)
 #if defined(__APPLE__)

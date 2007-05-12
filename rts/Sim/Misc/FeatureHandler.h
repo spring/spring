@@ -60,6 +60,7 @@ public:
 //	std::set<CFeature*> featureSet;
 	CFeature* features[MAX_FEATURES];
 	std::deque<int> freeIDs;
+	std::set<CFeature*> activeFeatures;
 
 	std::list<int> toBeRemoved;
 	SPRING_HASH_SET<int> updateFeatures;

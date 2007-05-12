@@ -59,7 +59,6 @@ CUnitLoader unitLoader;
 
 CUnitLoader::CUnitLoader()
 {
-
 	CGroundMoveType::CreateLineTable();
 }
 

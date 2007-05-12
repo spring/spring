@@ -207,8 +207,10 @@ void CBuilder::Update()
 			if (!inBuildStance) {
 				curBuild->AddBuildPower(0.001f, this); //prevent building timing out
 			} else {
-  			isCloaked = false;
-  			curCloakTimeout = gs->frameNum + cloakTimeout;
+				if (scriptCloak <= 2) {
+  				isCloaked = false;
+	  			curCloakTimeout = gs->frameNum + cloakTimeout;
+				}
 
   			float adjBuildSpeed; // adjusted build speed
   			if (curBuild->buildProgress < 1.0f) {
@@ -228,8 +230,10 @@ void CBuilder::Update()
 		}
 	}
 	else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
-		isCloaked=false;
-		curCloakTimeout=gs->frameNum+cloakTimeout;
+		if (scriptCloak <= 2) {
+			isCloaked=false;
+			curCloakTimeout=gs->frameNum+cloakTimeout;
+		}
 		if(curReclaim->AddBuildPower(-reclaimSpeed, this)){
 			CreateNanoParticle(curReclaim->midPos,curReclaim->radius*0.7f,true);
 		}

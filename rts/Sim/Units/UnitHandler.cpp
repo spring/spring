@@ -91,6 +91,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(metalMakerIncome),
 	CR_MEMBER(metalMakerEfficiency),
 	CR_MEMBER(toBeRemoved),
+	CR_MEMBER(morphUnitToFeature),
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 	));
@@ -113,10 +114,10 @@ CUnitHandler::CUnitHandler(bool serializing)
 	metalMakerIncome(0),
 	metalMakerEfficiency(1),
 	diminishingMetalMakers(false),
-	limitDgun(false)
+	limitDgun(false),
+	morphUnitToFeature(true)
 {
 	//unitModelLoader=SAFE_NEW CUnit3DLoader;
-
 	for(int a=1;a<MAX_UNITS;a++){
 		freeIDs.push_back(a);
 		units[a]=0;

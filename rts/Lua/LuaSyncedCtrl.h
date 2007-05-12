@@ -71,6 +71,7 @@ class LuaSyncedCtrl {
 		static int SetUnitAlwaysVisible(lua_State* L);
 		static int SetUnitMetalExtraction(lua_State* L);
 		static int SetUnitBuildSpeed(lua_State* L);
+		static int SetUnitBlocking(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
@@ -79,6 +80,8 @@ class LuaSyncedCtrl {
 
 		static int AddUnitResource(lua_State* L);
 		static int UseUnitResource(lua_State* L);
+
+		static int RemoveBuildingDecal(lua_State* L);
 
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
@@ -94,6 +97,9 @@ class LuaSyncedCtrl {
 		static int EditUnitCmdDesc(lua_State* L);
 		static int InsertUnitCmdDesc(lua_State* L);
 		static int RemoveUnitCmdDesc(lua_State* L);
+
+		static int SetNoPause(lua_State* L);
+		static int SetUnitToFeature(lua_State* L);
 };
 
 

@@ -33,6 +33,7 @@ extern "C" {
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -131,6 +132,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DepthTest);
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
+	REGISTER_LUA_CFUNC(Fog);
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(LineStipple);
@@ -154,16 +156,14 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TexCoord);
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
+	REGISTER_LUA_CFUNC(Text);
+	REGISTER_LUA_CFUNC(GetTextWidth);
+
 	REGISTER_LUA_CFUNC(Unit);
 	REGISTER_LUA_CFUNC(UnitShape);
 	REGISTER_LUA_CFUNC(DrawListAtUnit);
 	REGISTER_LUA_CFUNC(DrawFuncAtUnit);
-	REGISTER_LUA_CFUNC(Text);
-	REGISTER_LUA_CFUNC(GetTextWidth);
-
-	REGISTER_LUA_CFUNC(ListCreate);
-	REGISTER_LUA_CFUNC(ListRun);
-	REGISTER_LUA_CFUNC(ListDelete);
+	REGISTER_LUA_CFUNC(DrawGroundCircle);
 
 	REGISTER_LUA_CFUNC(ClipPlane);
 
@@ -176,6 +176,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Rotate);
 	REGISTER_LUA_CFUNC(PushMatrix);
 	REGISTER_LUA_CFUNC(PopMatrix);
+
+	REGISTER_LUA_CFUNC(ListCreate);
+	REGISTER_LUA_CFUNC(ListRun);
+	REGISTER_LUA_CFUNC(ListDelete);
 
 	return true;
 }
@@ -223,6 +227,8 @@ void LuaOpenGL::ResetGLState()
 
 	glDisable(GL_COLOR_LOGIC_OP);
 	glLogicOp(GL_INVERT);
+
+	//FIXME -- depends on the mode       glDisable(GL_FOG);
 
 	glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -901,6 +907,7 @@ int LuaOpenGL::GetTextWidth(lua_State* L)
 
 
 /******************************************************************************/
+/******************************************************************************/
 
 int LuaOpenGL::Unit(lua_State* L)
 {
@@ -1077,6 +1084,31 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 		return 0;
 	}
 
+	return 0;
+}
+
+
+int LuaOpenGL::DrawGroundCircle(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 5) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
+	    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
+		luaL_error(L, "Incorrect arguments to gl.DrawGroundCircle()");
+	}
+	const float3 pos((float)lua_tonumber(L, 1),
+	                 (float)lua_tonumber(L, 2),
+	                 (float)lua_tonumber(L, 3));
+	const float r  = (float)lua_tonumber(L, 4);
+	const int divs =   (int)lua_tonumber(L, 5);
+
+	if ((args >= 6) && lua_isnumber(L, 6)) {
+		const float slope = (float)lua_tonumber(L, 6);
+		glBallisticCircle(pos, r, slope, divs);
+	} else {
+		glSurfaceCircle(pos, r, divs);
+	}
 	return 0;
 }
 
@@ -1860,6 +1892,24 @@ int LuaOpenGL::LogicOp(lua_State* L)
 }
 
 
+int LuaOpenGL::Fog(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.Fog()");
+	}
+
+	if (lua_toboolean(L, 1)) {
+		glEnable(GL_FOG);
+	} else {
+		glDisable(GL_FOG);
+	}
+	return 0;
+}
+
+
 int LuaOpenGL::Blending(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -1995,12 +2045,20 @@ int LuaOpenGL::LineStipple(lua_State* L)
 			luaL_error(L, "Incorrect arguments to gl.LineStipple()");
 		}
 	}
-	else if (args == 2) {
+	else if (args >= 2) {
 		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
 			luaL_error(L, "Incorrect arguments to gl.LineStipple()");
 		}
 		GLint factor     =    (GLint)lua_tonumber(L, 1);
 		GLushort pattern = (GLushort)lua_tonumber(L, 2);
+		if ((args >= 3) && lua_isnumber(L, 3)) {
+			int shift = (int)lua_tonumber(L, 3);
+			while (shift < 0) { shift += 16; }
+			shift = (shift % 16);
+			unsigned int pat = pattern & 0xFFFF;
+			pat = pat | (pat << 16);
+			pattern = pat >> shift;
+		}
 		glEnable(GL_LINE_STIPPLE);
 		glLineStipple(factor, pattern);
 	}

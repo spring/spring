@@ -18,6 +18,9 @@ local function OneShot(name)
   end
 end
 
+local function OneShot(name)  -- FIXME
+end
+
 OneShot("Shutdown")
 OneShot("LayoutButtons")
 OneShot("UpdateLayout")

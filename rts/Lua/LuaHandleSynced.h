@@ -29,7 +29,9 @@ class CLuaHandleSynced : public CLuaHandle
 		bool GetAllowChanges() const { return allowChanges; }
 
 	public: // call-ins
-		bool HasCallIn(const string& callInName);
+		bool HasCallIn(const string& name);
+		virtual bool SyncedUpdateCallIn(const string& name);
+		virtual bool UnsyncedUpdateCallIn(const string& name);
 
 		void GameFrame(int frameNumber);
 		bool GotChatMsg(const string& msg, int playerID);
@@ -93,11 +95,10 @@ class CLuaHandleSynced : public CLuaHandle
 
 		static int CallAsTeam(lua_State* L);
 
-		static int UpdateCallIn(lua_State* L);
-
 		static int AllowUnsafeChanges(lua_State* L);
 
 		static int AddSyncedActionFallback(lua_State* L);
+		static int RemoveSyncedActionFallback(lua_State* L);
 };
 
 

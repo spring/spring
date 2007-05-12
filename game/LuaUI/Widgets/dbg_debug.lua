@@ -200,12 +200,6 @@ function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
 
-function widget:UnitIdle(unitID, unitDefID, unitTeam)
-  print('DEBUG (UnitIdle) '..unitID..' '..unitDefID..' '..unitTeam)
-  return
-end
-
-
 function widget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   print('DEBUG (UnitTaken) '
         ..unitID..' '..unitDefID..' '..unitTeam..' '..newTeam)
@@ -216,6 +210,37 @@ end
 function widget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   print('DEBUG (UnitGiven) '
         ..unitID..' '..unitDefID..' '..unitTeam..' '..oldTeam)
+  return
+end
+
+
+function widget:UnitIdle(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitIdle) '..unitID..' '..unitDefID..' '..unitTeam)
+  return
+end
+
+
+function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage)
+  print('DEBUG (UnitDamaged) '
+        ..unitID..' '..unitDefID..' '..unitTeam..' '..damage)
+  return
+end
+
+
+function widget:UnitLoaded(unitID, unitDefID, unitTeam,
+                           transportID, transportTeam)
+  print('DEBUG (UnitLoaded) '
+        ..unitID..' '..unitDefID..' '..unitTeam..' '
+        ..transportID..' '..transportTeam)
+  return
+end
+
+
+function widget:UnitUnloaded(unitID, unitDefID, unitTeam,
+                           transportID, transportTeam)
+  print('DEBUG (UnitUnloaded) '
+        ..unitID..' '..unitDefID..' '..unitTeam..' '
+        ..transportID..' '..transportTeam)
   return
 end
 

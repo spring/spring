@@ -190,6 +190,7 @@ START_TIME_PROFILE
 		if (feature) {
 			freeIDs.push_back(feature->id);
 			features[feature->id] = 0;
+			activeFeatures.erase(feature);
 
 			if (feature->drawQuad >= 0) {
 				DrawQuad* dq = &drawQuads[feature->drawQuad];
@@ -247,6 +248,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[ret]=feature;
 	feature->id=ret;
 	SetFeatureUpdateable(feature);
+	activeFeatures.insert(feature);
 
 	if(feature->def->drawType==DRAWTYPE_3DO){
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
@@ -255,7 +257,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
-
+	
 	luaCallIns.FeatureCreated(feature);
 
 	return ret;

@@ -29,6 +29,8 @@ extern "C" {
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/MouseHandler.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -61,7 +63,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(IsSphereInView);
+	REGISTER_LUA_CFUNC(IsUnitAllied);
 	REGISTER_LUA_CFUNC(IsUnitInView);
+	REGISTER_LUA_CFUNC(IsUnitVisible);
 	REGISTER_LUA_CFUNC(IsUnitSelected);
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
 
@@ -82,6 +86,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCameraVectors);
 	REGISTER_LUA_CFUNC(WorldToScreenCoords);
 	REGISTER_LUA_CFUNC(TraceScreenRay);
+
+	REGISTER_LUA_CFUNC(GetMapDrawMode);
 
 	REGISTER_LUA_CFUNC(GetTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
@@ -187,6 +193,21 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 }
 
 
+int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (readAllyTeam < 0) {
+		lua_pushboolean(L, fullRead);
+	} else {
+		lua_pushboolean(L, (unit->allyteam == readAllyTeam));
+	}
+	return 1;	
+}
+
+
 int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -194,6 +215,32 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
+	return 1;	
+}
+
+
+int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (readAllyTeam < 0) {
+		if (!fullRead) {
+			lua_pushboolean(L, false);
+		} else {
+			lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
+		}
+	}
+	else {
+		if (unit->isCloaked) { 
+			lua_pushboolean(L, false);
+		} else if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+			lua_pushboolean(L, false);
+		} else { // FIXME -- iconMode?
+			lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
+		}
+	}
 	return 1;	
 }
 
@@ -563,6 +610,24 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 	lua_pushnumber(L, count);
 	lua_rawset(L, -3);
 
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	switch (gd->drawMode) {
+		case CBaseGroundDrawer::drawNormal: { HSTR_PUSH(L, "normal"); break; }
+		case CBaseGroundDrawer::drawHeight: { HSTR_PUSH(L, "height"); break; }
+		case CBaseGroundDrawer::drawMetal:  { HSTR_PUSH(L, "metal");  break; }
+		case CBaseGroundDrawer::drawPath:   { HSTR_PUSH(L, "path");   break; }
+		case CBaseGroundDrawer::drawLos:    { HSTR_PUSH(L, "los");    break; }
+	}
 	return 1;
 }
 

@@ -28,7 +28,6 @@ public:
 	void SlowUpdate(void);
 
 	float curPower;
-	float lastPower;
 
 	float radius;
 	float sqRadius;
@@ -36,7 +35,7 @@ public:
 	int hitFrames;
 
 	bool isEnabled;
-	bool wasEnabled;
+	bool wasDrawn;
 	bool startShowingShield;
 };
 

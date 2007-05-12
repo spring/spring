@@ -79,7 +79,9 @@ class CLuaHandle {
 		const bool userMode;
 
 	public: // call-ins
-		virtual bool HasCallIn(const string& callInName) { return false; }
+		virtual bool HasCallIn(const string& name) { return false; }
+		virtual bool SyncedUpdateCallIn(const string& name) { return false; }
+		virtual bool UnsyncedUpdateCallIn(const string& name) { return false; }
 
 		void Update();
 
@@ -184,6 +186,10 @@ class CLuaHandle {
 		static int CallOutGetReadTeam(lua_State* L);
 		static int CallOutGetReadAllyTeam(lua_State* L);
 		static int CallOutGetSelectTeam(lua_State* L);
+		static int CallOutGetGlobal(lua_State* L);
+		static int CallOutGetRegistry(lua_State* L);
+		static int CallOutSyncedUpdateCallIn(lua_State* L);
+		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
 
 	public: // static
 		static const CLuaHandle* GetActiveHandle() { return activeHandle; }

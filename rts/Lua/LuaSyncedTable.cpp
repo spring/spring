@@ -3,6 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+//  FIXME: it'd probably be faster overall to have a Script.NewSyncTable()
+//         available to the synced side, that checks data assignments in a
+//         __newindex call. This could be used in conjunction with the
+//         current setup to avoid table creation in WrapTable().
+
+
 #include "LuaSyncedTable.h"
 
 extern "C" {

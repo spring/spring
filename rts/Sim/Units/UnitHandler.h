@@ -82,6 +82,8 @@ public:
 	bool diminishingMetalMakers;
 	float metalMakerIncome;
 	float metalMakerEfficiency;
+
+	bool morphUnitToFeature;
 };
 
 extern CUnitHandler* uh;

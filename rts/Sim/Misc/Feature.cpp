@@ -371,12 +371,24 @@ void CFeature::ForcedMove(const float3& newPos)
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
+/*
 	heading = GetHeadingFromVector(newDir.x, newDir.z);
 	CalculateTransform();
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 		treeDrawer->AddTree(def->modelType, pos, 1.0f);
 	}	
+*/
+	
+	CMatrix44f tmp;
+	tmp.RotateZ(newDir.z);
+	tmp.RotateX(newDir.x);
+	tmp.RotateY(newDir.y);
+	tmp.Translate(pos);
+	transMatrix = tmp;
+
+//	const float clamped = fmod(newDir.y, PI * 2.0);
+//	heading = (short int)(clamped * 65536);
 }
 
 

@@ -9,6 +9,7 @@
 #include "LuaCallInHandler.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
+#include "LuaBoolOps.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -574,8 +575,12 @@ void CLuaHandle::Update()
 		return;
 	}
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -590,8 +595,12 @@ void CLuaHandle::DrawWorld()
 		return;
 	}
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -606,8 +615,12 @@ void CLuaHandle::DrawWorldShadow()
 		return;
 	}
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -622,8 +635,12 @@ void CLuaHandle::DrawWorldReflection()
 		return;
 	}
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -638,8 +655,12 @@ void CLuaHandle::DrawWorldRefraction()
 		return;
 	}
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -657,8 +678,12 @@ void CLuaHandle::DrawScreen()
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 2, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -684,8 +709,12 @@ void CLuaHandle::DrawInMiniMap()
 	lua_pushnumber(L, xSize);
 	lua_pushnumber(L, ySize);
 
+	synced = false;
+
 	// call the routine
 	RunCallIn(cmdStr, 2, 0);
+
+	synced = !userMode;
 
 	return;
 }
@@ -706,11 +735,18 @@ bool CLuaHandle::AddBasicCalls()
 		HSTR_PUSH_CFUNC(L, "GetReadTeam",     CallOutGetReadTeam);
 		HSTR_PUSH_CFUNC(L, "GetReadAllyTeam", CallOutGetReadAllyTeam);
 		HSTR_PUSH_CFUNC(L, "GetSelectTeam",   CallOutGetSelectTeam);
+		HSTR_PUSH_CFUNC(L, "GetGlobal",       CallOutGetGlobal);
+		HSTR_PUSH_CFUNC(L, "GetRegistry",     CallOutGetRegistry);
 		// special team constants
 		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  NoAccessTeam);	
 		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", AllAccessTeam);	
 	}
 	lua_rawset(L, -3);
+
+	// boolean operations
+	lua_getglobal(L, "math");
+	LuaBoolOps::PushEntries(L);
+	lua_pop(L, 1);
 	return true;	
 }
 
@@ -768,6 +804,50 @@ int CLuaHandle::CallOutGetSelectTeam(lua_State* L)
 {
 	lua_pushnumber(L, activeHandle->selectTeam);
 	return 1;
+}
+
+
+int CLuaHandle::CallOutGetGlobal(lua_State* L)
+{
+	if (devMode) {
+		lua_pushvalue(L, LUA_GLOBALSINDEX);
+		return 1;
+	}
+	return 0;
+}
+
+
+int CLuaHandle::CallOutGetRegistry(lua_State* L)
+{
+	if (devMode) {
+		lua_pushvalue(L, LUA_REGISTRYINDEX);
+		return 1;
+	}
+	return 0;
+}
+
+
+int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
+	}
+	const string name = lua_tostring(L, 1);
+	activeHandle->SyncedUpdateCallIn(name);
+	return 0;
+}
+
+
+int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
+	}
+	const string name = lua_tostring(L, 1);
+	activeHandle->UnsyncedUpdateCallIn(name);
+	return 0;
 }
 
 

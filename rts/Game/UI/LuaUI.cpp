@@ -137,6 +137,11 @@ CLuaUI::CLuaUI()
 
 	AddBasicCalls(); // into Global
 
+	lua_pushstring(L, "Script");
+	lua_rawget(L, -2);
+	LuaPushNamedCFunc(L, "UpdateCallIn", CallOutUnsyncedUpdateCallIn);
+	lua_pop(L, 1);
+
 	// load the spring libraries
 	if (!LoadCFunctions(L)                                                 ||
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
@@ -198,7 +203,7 @@ string CLuaUI::LoadFile(const string& filename) const
 }
 
 
-bool CLuaUI::HasCallIn(const string& callInName)
+bool CLuaUI::HasCallIn(const string& name)
 {
 	if (L == NULL) {
 		return false;
@@ -206,13 +211,13 @@ bool CLuaUI::HasCallIn(const string& callInName)
 
 	// never allow these calls;
 	// use UpdateLayout, DrawWorldItems, and DrawScreenItems instead
-	if ((callInName == "Update")    ||
-	    (callInName == "DrawWorld") ||
-	    (callInName == "DrawScreen")) {
+	if ((name == "Update")    ||
+	    (name == "DrawWorld") ||
+	    (name == "DrawScreen")) {
 		return false;
 	}
 
-	lua_getglobal(L, callInName.c_str());
+	lua_getglobal(L, name.c_str());
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, 1);
 		return false;
@@ -220,6 +225,22 @@ bool CLuaUI::HasCallIn(const string& callInName)
 	lua_pop(L, 1);
 	return true;
 }
+
+
+bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
+{
+	if ((name == "Update")    ||
+	    (name == "DrawWorld") ||
+	    (name == "DrawScreen")) {
+		return false;
+	}
+	if (HasCallIn(name)) {
+		luaCallIns.InsertCallIn(this, name);
+	} else {
+		luaCallIns.RemoveCallIn(this, name);
+	}
+	return true;
+}	
 
 
 void CLuaUI::UpdateTeams()
@@ -1109,12 +1130,9 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 {
 	lua_getglobal(L, funcName.c_str());
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 1);
-		return false;
-	}
+	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 1);
-	return true;
+	return haveFunc;
 }
 
 
@@ -1122,26 +1140,38 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	const bool diffStates = (srcState != L);
 	const int argCount = lua_gettop(srcState);
+	const int top = lua_gettop(L);
 
 	const LuaHashString cmdStr(funcName);
 	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_pop(L, 1);
 		return 0;
 	}
-	lua_insert(L, 1); // move the function to the beginning
 
-	if (diffStates) {
+	int retCount;
+	if (!diffStates) {
+		lua_insert(L, 1); // move the function to the beginning
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			lua_settop(L, top);
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
+	}
+	else {
 		LuaUtils::CopyData(L, srcState, argCount);
-	}
 
-	// call the function
-	if (!RunCallIn(cmdStr, argCount, 1)) {
-		return 0;
-	}
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
 
-	const int retCount = lua_gettop(L);
-	if ((retCount > 0) && diffStates) {
 		lua_settop(srcState, 0);
-		LuaUtils::CopyData(srcState, L, retCount);
+		if (retCount > 0) {
+			LuaUtils::CopyData(srcState, L, retCount);
+		}
+		lua_settop(L, top);
 	}
 
 	return retCount;

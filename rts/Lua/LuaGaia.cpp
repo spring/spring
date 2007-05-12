@@ -118,7 +118,10 @@ bool CLuaGaia::AddSyncedCode()
 
 bool CLuaGaia::AddUnsyncedCode()
 {
-	lua_getglobal(L, "Script");
+	lua_pushstring(L, "UNSYNCED");
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushstring(L, "Script");
+	lua_rawget(L, -2);
 	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
 	lua_pop(L, 1);
 

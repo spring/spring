@@ -28,6 +28,7 @@ extern "C" {
 #include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/LosHandler.h"
@@ -127,6 +128,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
+	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -134,6 +136,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddUnitResource);
 	REGISTER_LUA_CFUNC(UseUnitResource);
+
+	REGISTER_LUA_CFUNC(RemoveBuildingDecal);
 
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -159,6 +163,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
 	REGISTER_LUA_CFUNC(InsertUnitCmdDesc);
 	REGISTER_LUA_CFUNC(RemoveUnitCmdDesc);
+
+	REGISTER_LUA_CFUNC(SetNoPause);
+	REGISTER_LUA_CFUNC(SetUnitToFeature);
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
 		return false;
@@ -1046,6 +1053,9 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetUnitMaxHealth()");
 	}
 	unit->maxHealth = (float)lua_tonumber(L, 2);
+	if (unit->maxHealth <= 0.0f) {
+		unit->maxHealth = 1.0f;
+	}
 
 	if (unit->health > unit->maxHealth) {
 		unit->health = unit->maxHealth;
@@ -1100,10 +1110,16 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (args < 2) {
 		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
 	}
-	unit->isCloaked = lua_toboolean(L, 2);
+	if (lua_isboolean(L, 2)) {
+		unit->scriptCloak = lua_toboolean(L, 2) ? 1 : 0;
+	} else if (lua_isnumber(L, 2)) {
+		unit->scriptCloak = (int)lua_tonumber(L, 2);
+	} else {
+		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
+	}
 	return 0;
 }
 
@@ -1255,6 +1271,25 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	}
 	if ((args >= 7) && lua_isnumber(L, 7)) {
 		builder->terraformSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 7));
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
+	}
+	if (lua_toboolean(L, 2)) {
+		unit->Block();
+	} else {
+		unit->UnBlock();
 	}
 	return 0;
 }
@@ -1458,6 +1493,35 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CBuilding* building = dynamic_cast<CBuilding*>(unit);
+	if (building && building->buildingDecal) {
+		std::vector<CGroundDecalHandler::BuildingDecalType*>& types =
+			groundDecals->buildingDecalTypes;
+		std::vector<CGroundDecalHandler::BuildingDecalType*>::iterator bdt;
+		for (bdt = types.begin(); bdt != types.end(); ++bdt) {
+			std::set<BuildingGroundDecal*>& decals = (*bdt)->buildingDecals;
+			std::set<BuildingGroundDecal*>::iterator bgd;
+			for (bgd = decals.begin(); bgd != decals.end(); ++bgd) {
+				BuildingGroundDecal* decal = *bgd;
+				if (decal == building->buildingDecal) {
+					delete decal;
+					decals.erase(bgd);
+					building->buildingDecal = NULL;
+					return 0;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+
 /******************************************************************************/
 
 int LuaSyncedCtrl::CreateFeature(lua_State* L)
@@ -1622,7 +1686,7 @@ int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 	           (float)lua_tonumber(L, 3),
 	           (float)lua_tonumber(L, 4));
 	dir.Normalize();
-	feature->ForcedMove(dir);
+	feature->ForcedSpin(dir);
 	return 0;
 }
 
@@ -2032,6 +2096,9 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 
 int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 {
+	if (mapDamage->disabled) {
+		return 0;
+	}
 	float height;
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
@@ -2050,6 +2117,9 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 {
+	if (mapDamage->disabled) {
+		return 0;
+	}
 	float height;
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
@@ -2068,6 +2138,9 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 {
+	if (mapDamage->disabled) {
+		return 0;
+	}
 	float origFactor;
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
@@ -2092,6 +2165,37 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 		}
 	}
 	mapDamage->RecalcArea(x1, x2, z1, z2);
+	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::SetNoPause(lua_State* L)
+{
+	if (!FullCtrl()) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetNoPause()");
+	}
+	game->gamePausable = !lua_toboolean(L, 1);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
+{
+	if (!FullCtrl()) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
+	}
+	uh->morphUnitToFeature = lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -2274,8 +2378,8 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 		return 0; // not LuaGaia, or LuaCob in a script
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_istable(L, 3)) {
+	if (((args == 2) && !lua_istable(L, 2)) ||
+	    ((args >= 3) && (!lua_isnumber(L, 2) || !lua_istable(L, 3)))) {
 		luaL_error(L, "Incorrect arguments to InsertUnitCmdDesc");
 	}
 
@@ -2284,14 +2388,22 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 		return 0;
 	}
 	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	
+	int table = 2;
+	if (args >= 3) {
+		table = 3;
+	}
 
-	const int cmdDescID = (int)lua_tonumber(L, 2) - 1;
-	if (cmdDescID < 0) {
-		return 0;
+	int cmdDescID = (int)cmdDescs.size();
+	if (args >= 3) {
+		cmdDescID = (int)lua_tonumber(L, 2) - 1;
+		if (cmdDescID < 0) {
+			cmdDescID = 0;
+		}
 	}
 	
 	CommandDescription cd;
-	ParseCommandDescription(L, 3, cd);
+	ParseCommandDescription(L, table, cd);
 
 	if (cmdDescID >= (int)cmdDescs.size()) {
 		cmdDescs.push_back(cd);
@@ -2313,7 +2425,7 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 		return 0; // not LuaGaia, or LuaCob in a script
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+	if ((args < 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to RemoveUnitCmdDesc");
 	}
 
@@ -2323,7 +2435,11 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	}
 	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
-	const int cmdDescID = (int)lua_tonumber(L, 2) - 1;
+	int cmdDescID = (int)cmdDescs.size() - 1;
+	if ((args >= 2) && lua_isnumber(L, 2)) {
+		cmdDescID = (int)lua_tonumber(L, 2) - 1;
+	}
+
 	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
 		return 0;
 	}

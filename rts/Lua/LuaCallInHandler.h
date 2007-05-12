@@ -13,8 +13,10 @@
 
 #include <string>
 #include <vector>
+#include <map>
 using std::string;
 using std::vector;
+using std::map;
 
 #include "LuaHandle.h"
 #include "Sim/Units/Unit.h"
@@ -30,9 +32,14 @@ class CLuaCallInHandler
 		void AddHandle(CLuaHandle* lh);
 		void RemoveHandle(CLuaHandle* lh);
 
-	public:
-		void Update();
+		bool ManagedCallIn(const string& ciName);
+		bool UnsyncedCallIn(const string& ciName);
 
+		bool InsertCallIn(CLuaHandle* lh, const string& ciName);
+		bool RemoveCallIn(CLuaHandle* lh, const string& ciName);
+
+	public:
+		// Synced
 		void GameOver();
 		void TeamDied(int teamID);
 
@@ -62,6 +69,9 @@ class CLuaCallInHandler
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
+		// Unsynced
+		void Update();
+
 		void DrawWorld();
 		void DrawWorldShadow();
 		void DrawWorldReflection();
@@ -77,9 +87,9 @@ class CLuaCallInHandler
 		void ListRemove(CallInList& ciList, CLuaHandle* lh);
 
 	private:
-		CallInList handles;
+		map<string, CallInList*> callInMap;
 
-		CallInList listUpdate;
+		CallInList handles;
 
 		CallInList listGameOver;
 		CallInList listTeamDied;
@@ -105,6 +115,8 @@ class CLuaCallInHandler
 
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
+
+		CallInList listUpdate;
 
 		CallInList listDrawWorld;
 		CallInList listDrawWorldShadow;
