@@ -10,6 +10,7 @@
 #include "Unit.h"
 #include "UnitDef.h"
 #include "UnitHandler.h"
+#include "UnitLoader.h"
 #include "COB/CobFile.h"
 #include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
@@ -139,6 +140,7 @@ CUnit::CUnit ()
 	curCloakTimeout(gs->frameNum),
 	isCloaked(false),
 	wantCloak(false),
+	scriptCloak(0),
 	stockpileWeapon(0),
 	haveDGunRequest(false),
 	jammerRadius(0),
@@ -462,7 +464,11 @@ void CUnit::SlowUpdate()
 	}
 
 	if (stunned) {
-		isCloaked = false;
+		if (!isDead && (scriptCloak >= 4)) {
+			isCloaked = true;
+		} else {
+			isCloaked = false;
+		}
 		UpdateResources();
 		return;
 	}
@@ -547,25 +553,34 @@ void CUnit::SlowUpdate()
 	bonusShieldSaved+=0.05f;
 	residualImpulse*=0.6f;
 
-	if(wantCloak){
-		if(helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->decloakDistance,allyteam)){
-			curCloakTimeout=gs->frameNum+cloakTimeout;
-			isCloaked=false;
+	if (scriptCloak >= 3) {
+		isCloaked = true;
+	}
+	else if (wantCloak || (scriptCloak >= 1)) {
+		if (helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->decloakDistance, allyteam)) {
+			curCloakTimeout = gs->frameNum+cloakTimeout;
+			isCloaked = false;
 		}
-		if(isCloaked || gs->frameNum>=curCloakTimeout){
-			float cloakCost=unitDef->cloakCost;
-			if(speed.SqLength()>0.2f)
-				cloakCost=unitDef->cloakCostMoving;
-			if(UseEnergy(cloakCost * 0.5f)){
-				isCloaked=true;
-			} else {
-				isCloaked=false;
+		if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
+			if (scriptCloak >= 2) {
+				isCloaked = true;
+			}
+			else {
+				float cloakCost = unitDef->cloakCost;
+				if (speed.SqLength() > 0.2f) {
+					cloakCost = unitDef->cloakCostMoving;
+				}
+				if (UseEnergy(cloakCost * 0.5f)) {
+					isCloaked = true;
+				} else {
+					isCloaked = false;
+				}
 			}
 		} else {
-			isCloaked=false;
+			isCloaked = false;
 		}
 	} else {
-		isCloaked=false;
+		isCloaked = false;
 	}
 
 
@@ -1456,7 +1471,7 @@ void CUnit::FinishedBuilding(void)
 	luaCallIns.UnitFinished(this);
 	globalAI->UnitFinished(this);
 
-	if (unitDef->isFeature) {
+	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
 		CFeature* f =
 			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
@@ -1839,6 +1854,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(hasUWWeapons),
 
 				CR_MEMBER(wantCloak),
+				CR_MEMBER(scriptCloak),
 				CR_MEMBER(cloakTimeout),
 				CR_MEMBER(curCloakTimeout),
 				CR_MEMBER(isCloaked),

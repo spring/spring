@@ -314,9 +314,9 @@ void CWeapon::Update()
 
 //		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
-		if (owner->unitDef->decloakOnFire) {
-			owner->isCloaked=false;
-			owner->curCloakTimeout=gs->frameNum+owner->cloakTimeout;
+		if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
+			owner->isCloaked = false;
+			owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 		}
 
 		Fire();

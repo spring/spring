@@ -120,6 +120,7 @@ class LuaOpenGL {
 		static int DepthTest(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
+		static int Fog(lua_State* L);
 		static int Blending(lua_State* L);
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
@@ -143,12 +144,14 @@ class LuaOpenGL {
 		static int TexCoord(lua_State* L);
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
-		static int UnitShape(lua_State* L);
-		static int Unit(lua_State* L);
-		static int DrawListAtUnit(lua_State* L);
-		static int DrawFuncAtUnit(lua_State* L);
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
+
+		static int Unit(lua_State* L);
+		static int UnitShape(lua_State* L);
+		static int DrawListAtUnit(lua_State* L);
+		static int DrawFuncAtUnit(lua_State* L);
+		static int DrawGroundCircle(lua_State* L);
 
 		static int ClipPlane(lua_State* L);
 

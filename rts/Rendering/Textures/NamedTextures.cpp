@@ -56,6 +56,8 @@ bool CNamedTextures::Bind(const string& texName)
 	bool nearest = false;
 	bool invert  = false;
 	bool greyed  = false;
+	bool tint    = false;
+	float tintColor[3];
 
 	if (filename[0] == ':') {
 		int p;
@@ -67,6 +69,24 @@ bool CNamedTextures::Bind(const string& texName)
 			else if (ch == 'g') { greyed  = true; }
 			else if (ch == 'c') { clamped = true; }
 			else if (ch == 'b') { border  = true; }
+			else if (ch == 't') {
+				const char* cstr = filename.c_str() + p + 1;
+				const char* start = cstr;
+				char* endptr;
+				tintColor[0] = (float)strtod(start, &endptr);
+				if ((start != endptr) && (*endptr == ',')) {
+					start = endptr + 1;
+					tintColor[1] = (float)strtod(start, &endptr);
+					if ((start != endptr) && (*endptr == ',')) {
+						start = endptr + 1;
+						tintColor[2] = (float)strtod(start, &endptr);
+						if (start != endptr) {
+							tint = true;
+							p += (endptr - cstr);
+						}
+					}
+				}
+			}
 		}
 		if (p < (int)filename.size()) {
 			filename = filename.substr(p + 1);
@@ -89,6 +109,9 @@ bool CNamedTextures::Bind(const string& texName)
 	}
 	if (greyed) {
 		bitmap.GrayScale();
+	}
+	if (tint) {
+		bitmap.Tint(tintColor);
 	}
 
 	// make the texture

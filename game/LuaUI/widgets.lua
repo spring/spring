@@ -100,14 +100,17 @@ local flexCallIns = {
   'UnitFinished',
   'UnitFromFactory',
   'UnitDestroyed',
-  'UnitIdle',
   'UnitTaken',
   'UnitGiven',
+  'UnitIdle',
+  'UnitDamaged',
   'UnitEnteredRadar',
   'UnitEnteredLos',
   'UnitLeftRadar',
   'UnitLeftLos',
   'UnitSeismicPing',
+  'UnitLoaded',
+  'UnitUnloaded',
   'DrawWorldShadow',
   'DrawWorldReflection',
   'DrawWorldRefraction',
@@ -422,6 +425,21 @@ function widgetHandler:NewWidget()
       self.mouseOwner = nil
     end
   end
+
+  wh.UpdateCallIn = function (_, name)
+    self:UpdateWidgetCallIn(name, widget)
+  end
+  wh.RemoveCallIn = function (_, name)
+    self:RemoveWidgetCallIn(name, widget)
+  end
+
+  wh.AddAction    = function (_, cmd, func, data, types)
+    return self.actionHandler:AddAction(widget, cmd, func, data, types)
+  end
+  wh.RemoveAction = function (_, cmd, types)
+    return self.actionHandler:RemoveAction(widget, cmd, types)
+  end
+
   wh.AddLayoutCommand = function (_, cmd)
     if (self.inCommandsChanged) then
       table.insert(self.customCommands, cmd)
@@ -429,13 +447,9 @@ function widgetHandler:NewWidget()
       Spring.Echo("AddLayoutCommand() can only be used in CommandsChanged()")
     end
   end
-  wh.AddAction    = function (_, cmd, func, data, types)
-    return self.actionHandler:AddAction(widget, cmd, func, data, types)
-  end
-  wh.RemoveAction = function (_, cmd, types)
-    return self.actionHandler:RemoveAction(widget, cmd, types)
-  end
+
   wh.ConfigLayoutHandler = function(_, d) self:ConfigLayoutHandler(d) end
+
   return widget
 end
 
@@ -521,32 +535,48 @@ local function SafeWrapWidget(widget)
 end
 
 
+--------------------------------------------------------------------------------
+
+local function ArrayInsert(t, f, w)
+  if (f) then
+    local layer = w.whInfo.layer
+    local index = 1
+    for i,v in ipairs(t) do
+      if (v == w) then
+        return -- already in the table
+      end
+      if (layer >= v.whInfo.layer) then
+        index = i + 1
+      end
+    end
+    table.insert(t, index, w)
+  end
+end
+
+
+local function ArrayRemove(t, w)
+  for k,v in ipairs(t) do
+    if (v == w) then
+      table.remove(t, k)
+      -- break
+    end
+  end
+end
+
+
 function widgetHandler:InsertWidget(widget)
   if (widget == nil) then
     return
   end
 
-  local function Insert(t, f, w)
-    if (f) then
-      local layer = w.whInfo.layer
-      local index = 1
-      for i,v in ipairs(t) do
-        if (v == w) then
-          return -- already in the table
-        end
-        if (layer >= v.whInfo.layer) then
-          index = i + 1
-        end
-      end
-      table.insert(t, index, w)
-    end
-  end
-
   SafeWrapWidget(widget)
 
-  Insert(self.widgets, true, widget)
+  ArrayInsert(self.widgets, true, widget)
   for _,listname in callInLists do
-    Insert(self[listname..'List'], widget[listname], widget)
+    local func = widget[listname]
+    if (type(func) == 'function') then
+      ArrayInsert(self[listname..'List'], func, widget)
+    end
   end
   self:UpdateCallIns()
 
@@ -569,38 +599,71 @@ function widgetHandler:RemoveWidget(widget)
   if (widget.Shutdown) then
     widget:Shutdown()
   end
-  local function Remove(t, w)
-    for k,v in ipairs(t) do
-      if (v == w) then
-        table.remove(t, k)
-        -- break
-      end
-    end
-  end
 
-  Remove(self.widgets, widget)
+  ArrayRemove(self.widgets, widget)
   self.actionHandler:RemoveWidgetActions(widget)
   for _,listname in callInLists do
-    Remove(self[listname..'List'], widget)
+    ArrayRemove(self[listname..'List'], widget)
   end
   self:UpdateCallIns()
 end
 
 
-function widgetHandler:UpdateCallIns()
-  for _,name in ipairs(flexCallIns) do
-    local listName = name .. 'List'
-    if (table.getn(self[listName]) > 0) then
-      local selffunc = self[name]
-      _G[name] = function(...)
-        return selffunc(self, unpack(arg))
-      end
-    else
-      _G[name] = nil
+--------------------------------------------------------------------------------
+
+function widgetHandler:UpdateCallIn(name)
+  local listName = name .. 'List'
+  if ((table.getn(self[listName]) > 0) or
+      ((name == 'GotChatMsg')     and actionHandler.HaveChatAction()) or
+      ((name == 'RecvFromSynced') and actionHandler.HaveSyncAction())) then
+    local selffunc = self[name]
+    _G[name] = function(...)
+      return selffunc(self, unpack(arg))
     end
+  else
+    _G[name] = nil
+  end
+  Script.UpdateCallIn(name)
+end
+
+
+function widgetHandler:UpdateWidgetCallIn(name, w)
+  local listName = name .. 'List'
+  local ciList = self[listName]
+  if (ciList) then
+    local func = w[name]
+    if (type(func) == 'function') then
+      ArrayInsert(ciList, func, w)
+    else
+      ArrayRemove(ciList, w)
+    end
+    self:UpdateCallIn(name)
+  else
+    print('UpdateWidgetCallIn: bad name: ' .. name)
   end
 end
 
+
+function widgetHandler:RemoveWidgetCallIn(name, w)
+  local listName = name .. 'List'
+  local ciList = self[listName]
+  if (ciList) then
+    ArrayRemove(ciList, w)
+    self:UpdateCallIn(name)
+  else
+    print('RemoveWidgetCallIn: bad name: ' .. name)
+  end
+end
+
+
+function widgetHandler:UpdateCallIns()
+  for _,name in ipairs(callInLists) do
+    self:UpdateCallIn(name)
+  end
+end
+
+
+--------------------------------------------------------------------------------
 
 function widgetHandler:EnableWidget(name)
   local ki = self.knownWidgets[name]
@@ -1191,14 +1254,6 @@ function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
-  for _,w in ipairs(self.UnitIdleList) do
-    w:UnitIdle(unitID, unitDefID, unitTeam)
-  end
-  return
-end
-
-
 function widgetHandler:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   for _,w in ipairs(self.UnitTakenList) do
     w:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
@@ -1210,6 +1265,22 @@ end
 function widgetHandler:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
   for _,w in ipairs(self.UnitGivenList) do
     w:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitIdleList) do
+    w:UnitIdle(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam, damage)
+  for _,w in ipairs(self.UnitDamagedList) do
+    w:UnitDamaged(unitID, unitDefID, unitTeam, damage)
   end
   return
 end
@@ -1250,6 +1321,26 @@ end
 function widgetHandler:UnitSeismicPing(x, y, z, strength)
   for _,w in ipairs(self.UnitSeismicPingList) do
     w:UnitSeismicPing(x, y, z, strength)
+  end
+  return
+end
+
+
+function widgetHandler:UnitLoaded(unitID, unitDefID, unitTeam,
+                                  transportID, transportTeam)
+  for _,w in ipairs(self.UnitLoadedList) do
+    w:UnitLoaded(unitID, unitDefID, unitTeam,
+                 transportID, transportTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitUnloaded(unitID, unitDefID, unitTeam,
+                                    transportID, transportTeam)
+  for _,w in ipairs(self.UnitUnloadedList) do
+    w:UnitUnloaded(unitID, unitDefID, unitTeam,
+                   transportID, transportTeam)
   end
   return
 end

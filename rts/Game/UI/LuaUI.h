@@ -45,7 +45,8 @@ class CLuaUI : public CLuaHandle {
 		};
 
 	public: // call-ins
-		bool HasCallIn(const string& callInName);
+		bool HasCallIn(const string& name);
+		bool UnsyncedUpdateCallIn(const string& name);
 
 		void Shutdown();
 

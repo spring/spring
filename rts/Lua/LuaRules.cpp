@@ -141,7 +141,10 @@ bool CLuaRules::AddSyncedCode()
 
 bool CLuaRules::AddUnsyncedCode()
 {
-	lua_getglobal(L, "Script");
+	lua_pushstring(L, "UNSYNCED");
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushstring(L, "Script");
+	lua_rawget(L, -2);
 	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
 	lua_pop(L, 1);
 
@@ -177,6 +180,37 @@ const map<string, int>& CLuaRules::GetGameParamsMap()
 //
 // LuaRules Call-Ins
 //
+
+bool CLuaRules::SyncedUpdateCallIn(const string& name)
+{
+	if (name == "AllowCommand") {
+		haveAllowCommand          = HasCallIn("AllowCommand");
+	} else if (name == "AllowUnitCreation") {
+		haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
+	} else if (name == "AllowUnitTransfer") {
+		haveAllowUnitTransfer     = HasCallIn("AllowUnitTransfer");
+	} else if (name == "AllowUnitBuildStep") {
+		haveAllowUnitBuildStep    = HasCallIn("AllowUnitBuildStep");
+	} else if (name == "AllowFeatureCreation") {
+		haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
+	} else if (name == "AllowResourceLevel") {
+		haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
+	} else if (name == "AllowResourceTransfer") {
+		haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
+	} else if (name == "CommandFallback") {
+		haveCommandFallback       = HasCallIn("CommandFallback");
+	} else {
+		return CLuaHandleSynced::SyncedUpdateCallIn(name);
+	}
+	return true;
+}
+
+
+bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
+{
+	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
+}
+
 
 bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
 {

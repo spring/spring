@@ -261,6 +261,7 @@ public:
 	bool hasUWWeapons;					//true if the unit has weapons that can fire at underwater targets
 
 	bool wantCloak;							//true if the unit currently wants to be cloaked
+	int scriptCloak;						//true if a script currently wants the unit to be cloaked
 	int cloakTimeout;						//the minimum time between decloaking and cloaking again
 	int curCloakTimeout;				//the earliest frame the unit can cloak again
 	bool isCloaked;							//true if the unit is currently cloaked (has enough energy etc)

@@ -24,7 +24,9 @@ class LuaUnsyncedRead {
 
 		static int GetFrameTimeOffset(lua_State* L);
 		static int IsSphereInView(lua_State* L);
+		static int IsUnitAllied(lua_State* L);
 		static int IsUnitInView(lua_State* L);
+		static int IsUnitVisible(lua_State* L);
 		static int IsUnitSelected(lua_State* L);
 		static int GetUnitViewPosition(lua_State* L);
 
@@ -45,6 +47,8 @@ class LuaUnsyncedRead {
 		static int GetCameraVectors(lua_State* L);
 		static int WorldToScreenCoords(lua_State* L);
 		static int TraceScreenRay(lua_State* L);
+
+		static int GetMapDrawMode(lua_State* L);
 
 		static int GetTimer(lua_State* L);
 		static int DiffTimers(lua_State* L);

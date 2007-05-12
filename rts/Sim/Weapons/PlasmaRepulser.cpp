@@ -23,10 +23,9 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
 	CR_MEMBER(curPower),
-	CR_MEMBER(lastPower),
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(isEnabled),
-	CR_MEMBER(wasEnabled),
+	CR_MEMBER(wasDrawn),
 	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
 	CR_MEMBER(visibleShieldParts)
@@ -44,10 +43,9 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	radius(0),
 	sqRadius(0),
 	curPower(0),
-	lastPower(-1),
 	hitFrames(0),
 	isEnabled(true),
-	wasEnabled(false),
+	wasDrawn(true),
 	startShowingShield(true)
 {
 	interceptHandler.AddPlasmaRepulser(this);
@@ -114,29 +112,29 @@ void CPlasmaRepulser::Update(void)
 			drawAlpha += float(hitFrames) / float(defHitFrames);
 			hitFrames--;
 		}
+		if (weaponDef->visibleShield) {
+			drawAlpha += 1.0f;
+		}
+		drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
+		const bool drawMe = (drawAlpha > 0.0f);
 
-		if ((isEnabled != wasEnabled) ||
-		    (hitFrames != oldFrames)  ||
-		    (curPower  != lastPower)) {
-			if (weaponDef->visibleShield) {
-				drawAlpha += 1.0f;
-			}
-			drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
-
+		if (drawMe || wasDrawn) {
 			const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
 			const float3 color = (weaponDef->shieldGoodColor * colorMix) +
 													 (weaponDef->shieldBadColor * (1.0f - colorMix));
 			std::list<CShieldPartProjectile*>::iterator si;
 			for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
-				(*si)->centerPos = weaponPos;
-				(*si)->color = color;
+				CShieldPartProjectile* part = *si;
+				part->centerPos = weaponPos;
+				part->color = color;
 				if (isEnabled) {
-					(*si)->baseAlpha = drawAlpha;
+					part->baseAlpha = drawAlpha;
 				} else {
-					(*si)->baseAlpha = 0.0f;
+					part->baseAlpha = 0.0f;
 				}
 			}
 		}
+		wasDrawn = drawMe;
 	}
 
 	if (isEnabled) {
@@ -210,9 +208,6 @@ void CPlasmaRepulser::Update(void)
 			}
 		}
 	}
-
-	lastPower = curPower;
-	wasEnabled = isEnabled;
 }
 
 

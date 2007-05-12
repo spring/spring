@@ -82,7 +82,7 @@ void CFactory::Update()
 		return;
 	}
 
-	if(quedBuild && inBuildStance){
+	if(quedBuild && inBuildStance && !stunned){
 		float3 buildPos = CalcBuildPos();
 
 		bool canBuild=true;

@@ -96,6 +96,7 @@ class LuaSyncedRead {
 		static int GetUnitBasePosition(lua_State* L);
 		static int GetUnitDirection(lua_State* L);
 		static int GetUnitHeading(lua_State* L);
+		static int GetUnitVelocity(lua_State* L);
 		static int GetUnitBuildFacing(lua_State* L);
 		static int GetUnitIsBuilding(lua_State* L);
 		static int GetUnitTransporter(lua_State* L);
@@ -116,11 +117,13 @@ class LuaSyncedRead {
 		static int GetUnitRulesParam(lua_State* L);
 		static int GetUnitRulesParams(lua_State* L);
 
+		static int GetUnitLosState(lua_State* L);
+		static int GetUnitSeparation(lua_State* L);
 		static int GetUnitDefDimensions(lua_State* L);
 
-		static int GetUnitLosState(lua_State* L);
-
+		static int GetAllFeatures(lua_State* L);
 		static int GetFeatureList(lua_State* L);
+
 		static int GetFeatureDefID(lua_State* L);
 		static int GetFeatureTeam(lua_State* L);
 		static int GetFeatureAllyTeam(lua_State* L);

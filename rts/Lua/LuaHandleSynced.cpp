@@ -136,17 +136,23 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	CLuaHandle* origHandle = activeHandle;
 	SetActiveHandle();
 
+	synced = true;
+
 	const bool haveSynced = SetupSynced(syncedCode, syncedFile);
 	if (L == NULL) {
 		SetActiveHandle(origHandle);
 		return;
 	}
 
+	synced = false;
+
 	const bool haveUnsynced = SetupUnsynced(unsyncedCode, unsyncedFile);
 	if (L == NULL) {
 		SetActiveHandle(origHandle);
 		return;
 	}
+
+	synced = true;
 
 	if (!haveSynced && !haveUnsynced) {
 		KillLua();
@@ -173,7 +179,9 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 
 	lua_pushstring(L, "Script");
 	lua_rawget(L, -2);
-	LuaPushNamedCFunc(L, "AddActionFallback", AddSyncedActionFallback);
+	LuaPushNamedCFunc(L, "AddActionFallback",    AddSyncedActionFallback);
+	LuaPushNamedCFunc(L, "RemoveActionFallback", RemoveSyncedActionFallback);
+	LuaPushNamedCFunc(L, "UpdateCallIn",         CallOutSyncedUpdateCallIn);
 	lua_pop(L, 1);
 
 	// add the custom file loader
@@ -240,6 +248,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	lua_pushstring(L, "Kill");
 	lua_pushnil(L);
 	lua_rawset(L, -3);
+	LuaPushNamedCFunc(L, "UpdateCallIn", CallOutUnsyncedUpdateCallIn);
 	lua_pop(L, 1);
 
 	lua_pushstring(L, "_G");
@@ -248,7 +257,6 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 
 	LuaPushNamedCFunc(L, "loadstring",   LoadStringData);
 	LuaPushNamedCFunc(L, "CallAsTeam",   CallAsTeam);
-	LuaPushNamedCFunc(L, "UpdateCallIn", UpdateCallIn);
 
 	// load our libraries
 	if (!LuaSyncedTable::PushEntries(L)                                    ||
@@ -528,15 +536,15 @@ string CLuaHandleSynced::LoadFile(const string& filename) const
 }
 
 
-bool CLuaHandleSynced::HasCallIn(const string& callInName)
+bool CLuaHandleSynced::HasCallIn(const string& name)
 {
 	if (L == NULL) {
 		return false;
 	}
 
 	int tableIndex;
-	if ((callInName != "Update") &&
-	    (callInName.find("Draw") != 0)) {
+	if ((name != "RecvFromSynced") &&
+	    !luaCallIns.UnsyncedCallIn(name)) {
 		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
 	} else {
 		tableIndex = LUA_REGISTRYINDEX; // unsynced call-ins in REGISTRY
@@ -544,7 +552,7 @@ bool CLuaHandleSynced::HasCallIn(const string& callInName)
 
 	bool haveFunc = true;
 	lua_settop(L, 0);
-	lua_pushstring(L, callInName.c_str());
+	lua_pushstring(L, name.c_str());
 	lua_gettable(L, tableIndex);
 	if (!lua_isfunction(L, -1)) {
 		haveFunc = false;
@@ -553,6 +561,39 @@ bool CLuaHandleSynced::HasCallIn(const string& callInName)
 
 	return haveFunc;
 }
+
+
+bool CLuaHandleSynced::SyncedUpdateCallIn(const string& name)
+{
+	if ((name == "RecvFromSynced") ||
+		  luaCallIns.UnsyncedCallIn(name)) {
+		  return false;
+	}
+	if (HasCallIn(name)) {
+		luaCallIns.InsertCallIn(this, name);
+	} else {
+		luaCallIns.RemoveCallIn(this, name);
+	}
+	return true;
+}	
+
+
+bool CLuaHandleSynced::UnsyncedUpdateCallIn(const string& name)
+{
+	if ((name != "RecvFromSynced") &&
+	    !luaCallIns.UnsyncedCallIn(name)) {
+		  return false;
+	}
+	if (name != "RecvFromSynced") {
+		if (HasCallIn(name)) {
+			luaCallIns.InsertCallIn(this, name);
+		} else {
+			luaCallIns.RemoveCallIn(this, name);
+		}
+	}
+	SetupUnsyncedFunction(name.c_str());
+	return true;
+}	
 
 
 /******************************************************************************/
@@ -726,7 +767,9 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	// call the routine
 	const bool prevAllowChanges = allowChanges;
 	allowChanges = false;
+	synced = false;
 	RunCallIn(cmdStr, args, 0);
+	synced = true;
 	allowChanges = prevAllowChanges;
 
 	return;
@@ -748,12 +791,9 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 	}
 	lua_pushstring(L, funcName.c_str()); // push the function name
 	lua_rawget(L, -2);                   // get the function
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 2);
-		return false;
-	}
+	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 2);
-	return true;	
+	return haveFunc;
 }
 
 
@@ -766,12 +806,9 @@ bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 	}
 	lua_pushstring(L, funcName.c_str()); // push the function name
 	lua_rawget(L, -2);                   // get the function
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 2);
-		return false;
-	}
+	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 2);
-	return true;	
+	return haveFunc;
 }
 
 
@@ -779,37 +816,47 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 {
 	const bool diffStates = (srcState != L);
 	const int argCount = lua_gettop(srcState);
-	const LuaHashString cmdStr(funcName);
+	const int top = lua_gettop(L);
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	if (!lua_istable(L, -1)) {
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return 0;
 	}
-	cmdStr.Push(L);             // push the function name
-	lua_rawget(L, -2);          // get the function
+
+	const LuaHashString cmdStr(funcName);
+	cmdStr.Push(L);    // push the function name
+	lua_rawget(L, -2); // get the function
 	if (!lua_isfunction(L, -1)) {
-		lua_settop(L, 0);
+		lua_pop(L, 2);
 		return 0;
 	}
-	lua_insert(L, 1); // move the function to the beginning
-	lua_pop(L, 1);    // pop the GLOBAL table
+	lua_remove(L, -2);
 
-	if (diffStates) {
+	int retCount;
+	if (!diffStates) {
+		lua_insert(L, 1); // move the function to the beginning
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			lua_settop(L, top);
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
+	}
+	else {
 		LuaUtils::CopyData(L, srcState, argCount);
-	}
 
-	// call the function
-	if (!RunCallIn(cmdStr, argCount, 1)) {
-		return 0;
-	}
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
 
-	const int retCount = lua_gettop(L);
-	if ((retCount > 0) && diffStates) {
 		lua_settop(srcState, 0);
-		LuaUtils::CopyData(srcState, L, retCount);
+		if (retCount > 0) {
+			LuaUtils::CopyData(srcState, L, retCount);
+		}
 	}
-
 	return retCount;
 }
 
@@ -818,35 +865,46 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	const bool diffStates = (srcState != L);
 	const int argCount = lua_gettop(srcState);
-	const LuaHashString cmdStr(funcName);
+	const int top = lua_gettop(L);
 
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	if (!lua_istable(L, -1)) {
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return 0;
 	}
-	cmdStr.Push(L);             // push the function name
-	lua_rawget(L, -2);          // get the function
+
+	const LuaHashString cmdStr(funcName);
+	cmdStr.Push(L);    // push the function name
+	lua_rawget(L, -2); // get the function
 	if (!lua_isfunction(L, -1)) {
-		lua_settop(L, 0);
+		lua_pop(L, 2);
 		return 0;
 	}
-	lua_insert(L, 1); // move the function to the beginning
-	lua_pop(L, 1);    // pop the UNSYNCED table
+	lua_remove(L, -2); 
 
-	if (diffStates) {
+	int retCount;
+	if (!diffStates) {
+		lua_insert(L, 1); // move the function to the beginning
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			lua_settop(L, top);
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
+	}
+	else {
 		LuaUtils::CopyData(L, srcState, argCount);
-	}
 
-	// call the function
-	if (!RunCallIn(cmdStr, argCount, 1)) {
-		return 0;
-	}
+		// call the function
+		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			return 0;
+		}
+		retCount = lua_gettop(L) - top;
 
-	const int retCount = lua_gettop(L);
-	if ((retCount > 0) && diffStates) {
 		lua_settop(srcState, 0);
-		LuaUtils::CopyData(srcState, L, retCount);
+		if (retCount > 0) {
+			LuaUtils::CopyData(srcState, L, retCount);
+		}
 	}
 
 	return retCount;
@@ -1069,29 +1127,6 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 }
 
 
-int CLuaHandleSynced::UpdateCallIn(lua_State* L)
-{
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
-	}
-	const string funcName = lua_tostring(L, 1);
-	if ((funcName != "RecvFromSynced")      &&
-	    (funcName != "Update")              &&
-	    (funcName != "DrawWorld")           &&
-	    (funcName != "DrawWorldShadow")     &&
-	    (funcName != "DrawWorldReflection") &&
-	    (funcName != "DrawWorldRefraction") &&
-	    (funcName != "DrawScreen")          &&
-	    (funcName != "DrawInMiniMap")) {
-		luaL_error(L, "UpdateCallIn() can not change %s()", funcName.c_str());
-	}
-	CLuaHandleSynced* lhs = GetActiveHandle();
-	lhs->SetupUnsyncedFunction(funcName.c_str());
-	return 0;
-}	
-
-
 int CLuaHandleSynced::AllowUnsafeChanges(lua_State* L)
 {
 	const int args = lua_gettop(L);
@@ -1111,7 +1146,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	if ((args != 2) || !lua_isstring(L, 1) ||  !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to AddSyncedActionFallback()");
+		luaL_error(L, "Incorrect arguments to AddActionFallback()");
 	}
 	string cmdRaw  = lua_tostring(L, 1);
 	cmdRaw = "." + cmdRaw;
@@ -1130,6 +1165,41 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 	CLuaHandleSynced* lhs = GetActiveHandle();
 	lhs->textCommands[cmd] = lua_tostring(L, 2);
 	game->wordCompletion->AddWord(cmdRaw, true, false, false);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
+int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to RemoveActionFallback()");
+	}
+	string cmdRaw  = lua_tostring(L, 1);
+	cmdRaw = "." + cmdRaw;
+
+	string cmd = cmdRaw;
+	const string::size_type pos = cmdRaw.find_first_of(" \t");
+	if (pos != string::npos) {
+		cmd.resize(pos);
+	}
+
+	if (cmd.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CLuaHandleSynced* lhs = GetActiveHandle();
+	
+	map<string, string>::iterator it = lhs->textCommands.find(cmd);
+	if (it != lhs->textCommands.end()) {
+		lhs->textCommands.erase(it);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	// FIXME -- word completion
 	lua_pushboolean(L, true);
 	return 1;
 }

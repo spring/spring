@@ -23,6 +23,38 @@ CLuaCallInHandler luaCallIns;
 
 CLuaCallInHandler::CLuaCallInHandler()
 {
+	callInMap["GameOver"]            = &listGameOver;
+	callInMap["TeamDied"]            = &listTeamDied;
+
+	callInMap["UnitCreated"]         = &listUnitCreated;
+	callInMap["UnitFinished"]        = &listUnitFinished;
+	callInMap["UnitFromFactory"]     = &listUnitFromFactory;
+	callInMap["UnitDestroyed"]       = &listUnitDestroyed;
+	callInMap["UnitTaken"]           = &listUnitTaken;
+	callInMap["UnitGiven"]           = &listUnitGiven;
+
+	callInMap["UnitIdle"]            = &listUnitIdle;
+	callInMap["UnitDamaged"]         = &listUnitDamaged;
+	callInMap["UnitSeismicPing"]     = &listUnitSeismicPing;
+	callInMap["UnitEnteredRadar"]    = &listUnitEnteredRadar;
+	callInMap["UnitEnteredLos"]      = &listUnitEnteredLos;
+	callInMap["UnitLeftRadar"]       = &listUnitLeftRadar;
+	callInMap["UnitLeftLos"]         = &listUnitLeftLos;
+
+	callInMap["UnitLoaded"]          = &listUnitLoaded;
+	callInMap["UnitUnloaded"]        = &listUnitUnloaded;
+
+	callInMap["FeatureCreated"]      = &listFeatureCreated;
+	callInMap["FeatureDestroyed"]    = &listFeatureDestroyed;
+
+	callInMap["Update"]              = &listUpdate;
+
+	callInMap["DrawWorld"]           = &listDrawWorld;
+	callInMap["DrawWorldShadow"]     = &listDrawWorldShadow;
+	callInMap["DrawWorldReflection"] = &listDrawWorldReflection;
+	callInMap["DrawWorldRefraction"] = &listDrawWorldRefraction;
+	callInMap["DrawScreen"]          = &listDrawScreen;
+	callInMap["DrawInMiniMap"]       = &listDrawInMiniMap;
 }
 
 
@@ -41,8 +73,6 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 #define ADDHANDLE(name) \
   if (lh->HasCallIn(#name)) { ListInsert(list ## name, lh); }
   
-	ADDHANDLE(Update);
-
 	ADDHANDLE(GameOver);
 	ADDHANDLE(TeamDied);
 
@@ -68,6 +98,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(FeatureCreated);
 	ADDHANDLE(FeatureDestroyed);
 
+	ADDHANDLE(Update);
+
 	ADDHANDLE(DrawWorld);
 	ADDHANDLE(DrawWorldShadow);
 	ADDHANDLE(DrawWorldReflection);
@@ -80,8 +112,6 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 {
 	ListRemove(handles, lh);
-
-	ListRemove(listUpdate, lh);
 
 	ListRemove(listGameOver, lh);
 	ListRemove(listTeamDied, lh);
@@ -109,12 +139,60 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listFeatureCreated, lh);
 	ListRemove(listFeatureDestroyed, lh);
 
+	ListRemove(listUpdate, lh);
+
 	ListRemove(listDrawWorld, lh);
 	ListRemove(listDrawWorldShadow, lh);
 	ListRemove(listDrawWorldReflection, lh);
 	ListRemove(listDrawWorldRefraction, lh);
 	ListRemove(listDrawScreen, lh);
 	ListRemove(listDrawInMiniMap, lh);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool CLuaCallInHandler::ManagedCallIn(const string& ciName)
+{
+	return (callInMap.find(ciName) != callInMap.end());
+}
+
+
+bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
+{
+	if ((ciName == "Update")              ||
+	    (ciName == "DrawWorld")           ||
+	    (ciName == "DrawWorldShadow")     ||
+	    (ciName == "DrawWorldReflection") ||
+	    (ciName == "DrawWorldRefraction") ||
+	    (ciName == "DrawScreen")          ||
+	    (ciName == "DrawInMiniMap")) {
+		return true;
+	}
+	return false;
+}
+
+
+bool CLuaCallInHandler::InsertCallIn(CLuaHandle* lh, const string& ciName)
+{
+	map<string, CallInList*>::iterator it = callInMap.find(ciName);
+	if (it == callInMap.end()) {
+		return false;
+	}
+	ListInsert(*(it->second), lh);
+	return true;
+}
+
+
+bool CLuaCallInHandler::RemoveCallIn(CLuaHandle* lh, const string& ciName)
+{
+	map<string, CallInList*>::iterator it = callInMap.find(ciName);
+	if (it == callInMap.end()) {
+		return false;
+	}
+	ListRemove(*(it->second), lh);
+	return true;
 }
 
 
@@ -154,37 +232,38 @@ void CLuaCallInHandler::ListRemove(CallInList& ciList, CLuaHandle* lh)
 /******************************************************************************/
 /******************************************************************************/
 
-void CLuaCallInHandler::Update()
-{
-    const int count = listUpdate.size();
-    for (int i = 0; i < count; i++) {
-      CLuaHandle* lh = listUpdate[i];
-      lh->Update();
-    }
-}
-
-
 void CLuaCallInHandler::GameOver()
 {
-    const int count = listGameOver.size();
-    for (int i = 0; i < count; i++) {
-      CLuaHandle* lh = listGameOver[i];
-      lh->GameOver();
-    }
+	const int count = listGameOver.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listGameOver[i];
+		lh->GameOver();
+	}
 }
 
 
 void CLuaCallInHandler::TeamDied(int teamID)
 {
-    const int count = listTeamDied.size();
-    for (int i = 0; i < count; i++) {
-      CLuaHandle* lh = listTeamDied[i];
-      lh->TeamDied(teamID);
-    }
+	const int count = listTeamDied.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listTeamDied[i];
+		lh->TeamDied(teamID);
+	}
 }
 
 
 /******************************************************************************/
+/******************************************************************************/
+
+void CLuaCallInHandler::Update()
+{
+	const int count = listUpdate.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listUpdate[i];
+		lh->Update();
+	}
+}
+
 
 #define DRAW_CALLIN(name)                         \
   void CLuaCallInHandler:: Draw ## name ()        \

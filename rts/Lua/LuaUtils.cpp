@@ -51,6 +51,7 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index)
 static bool CopyPushTable(lua_State* dst, lua_State* src, int index)
 {
 	if (depth > maxDepth) {
+		lua_pushnil(dst); // unhandled type
 		return false;
 	}
 

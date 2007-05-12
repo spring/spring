@@ -635,14 +635,39 @@ void CBitmap::GrayScale()
 		for(int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
 			const float illum = 
-				mem[base + 0] * 0.299f +
-				mem[base + 1] * 0.587f +
-				mem[base + 2] * 0.114f;
+				(mem[base + 0] * 0.299f) +
+				(mem[base + 1] * 0.587f) +
+				(mem[base + 2] * 0.114f);
 			const unsigned int  ival = (unsigned int)(illum * (256.0f / 255.0f));
 			const unsigned char cval = (ival <= 0xFF) ? ival : 0xFF;
 			mem[base + 0] = cval;
 			mem[base + 1] = cval;
 			mem[base + 2] = cval;
+		}
+	}
+}
+
+
+static ILubyte TintByte(ILubyte value, float tint)
+{
+	float f = (float)value;
+	f = std::max(0.0f, std::min(255.0f, f * tint));
+	return (ILubyte)f;
+}
+
+
+void CBitmap::Tint(const float tint[3])
+{
+	if (type != BitmapTypeStandardRGBA) {
+		return;
+	}
+	for (int y = 0; y < ysize; y++) {
+		for (int x = 0; x < xsize; x++) {
+			const int base = ((y * xsize) + x) * 4;
+			mem[base + 0] = TintByte(mem[base + 0], tint[0]);
+			mem[base + 1] = TintByte(mem[base + 1], tint[1]);
+			mem[base + 2] = TintByte(mem[base + 2], tint[2]);
+			// don't touch the alpha channel
 		}
 	}
 }
