@@ -311,9 +311,9 @@ namespace CSharpAI
                     }
                     else
                     {
-                        if (unitcontroller.UnitDefsByName.ContainsKey("armcom" ))
+                        if (unitcontroller.UnitDefsByName.ContainsKey("arm_commander" ))
                         {
-                            guardpackcoordinator.SetTarget(unitcontroller.UnitDefsByName["armcom"][0].id);
+                            guardpackcoordinator.SetTarget(unitcontroller.UnitDefsByName["arm_commander"][0].id);
                             packcoordinatorselector.ActivatePackCoordinator(guardpackcoordinator);
                         }
                     }
@@ -321,9 +321,9 @@ namespace CSharpAI
             }
             else
             {
-                if (unitcontroller.UnitDefsByName.ContainsKey("armcom"))
+                if (unitcontroller.UnitDefsByName.ContainsKey("arm_commander"))
                 {
-                    guardpackcoordinator.SetTarget(unitcontroller.UnitDefsByName["armcom"][0].id);
+                    guardpackcoordinator.SetTarget(unitcontroller.UnitDefsByName["arm_commander"][0].id);
                     packcoordinatorselector.ActivatePackCoordinator(guardpackcoordinator);
                 }
             }

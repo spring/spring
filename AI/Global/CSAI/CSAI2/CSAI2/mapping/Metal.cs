@@ -216,7 +216,7 @@ namespace CSharpAI
                 {
                     MetalSpot metalspot = metalspotobject as MetalSpot;
                     logfile.WriteLine("drawing spot at " + metalspot.Pos );
-                    aicallback.DrawUnit("ARMMEX", metalspot.Pos, 0.0f, 500, aicallback.GetMyAllyTeam(), true, true);
+                    aicallback.DrawUnit("arm_metal_extractor", metalspot.Pos, 0.0f, 500, aicallback.GetMyAllyTeam(), true, true);
                 }
                 foreach( object metalspotobject in MetalSpotsUsed )
                 {

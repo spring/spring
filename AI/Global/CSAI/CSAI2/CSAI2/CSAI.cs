@@ -38,7 +38,7 @@ namespace CSharpAI
         public LogFile logfile;
             
         public const string AIVersion = "0.0011";
-        public string AIDirectoryPath = "AI/CSAI2";
+        public string AIDirectoryPath = "AI/CSAI";
         public string CacheDirectoryPath
         {
             get
@@ -118,6 +118,7 @@ namespace CSharpAI
                 }
                 
                 InitCache();
+
                 /*
                 IUnitDef unitdef = aicallback.GetUnitDefByTypeId(34);
                 aicallback.SendTextMsg(unitdef.name,0);

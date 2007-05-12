@@ -50,21 +50,9 @@ namespace CSharpAI
             int slopemapheight = mapheight / 2;
             
             int squaresize = MovementMaps.SQUARE_SIZE; // jsut to save typing...
-            
-            logfile.WriteLine( "Getting heightmap, this could take a while... " );
-            
-            double[,]HeightMap = new double[ mapwidth + 1, mapheight + 1 ];
-            
-            //double[]heightmap = aicallback.GetHeightMap();  // cant use heightmap, it is centre heightmap, we need cornermap
 
-
-            for( int x = 0; x < mapwidth + 1; x++ )
-            {
-                for( int y = 0; y < mapheight + 1; y++ )
-                {
-                    HeightMap[ x, y ] = aicallback.GetElevation( x * squaresize, y * squaresize );
-                }
-            }
+            double[,] heightmap = HeightMap.GetInstance().GetHeightMap();
+            logfile.WriteLine( "Getting heightmap, this could take a while... " );            
 
             // ArrayIndexer heightmapindexer = new ArrayIndexer( mapwidth + 1, mapheight + 1 );
             logfile.WriteLine("calculating slopes..." );
@@ -75,15 +63,15 @@ namespace CSharpAI
             {
                 for(int x = 2; x < mapwidth - 2; x+= 2)
                 {
-                    AdvancedFloat3 e1 = new AdvancedFloat3( -squaresize*4, HeightMap[ x - 1, y - 1 ] - HeightMap[ x + 3, y - 1 ] , 0 );
-                    AdvancedFloat3 e2 = new AdvancedFloat3( 0, HeightMap[ x - 1, y - 1 ] - HeightMap[ x - 1, y + 3 ], -squaresize * 4 );
+                    AdvancedFloat3 e1 = new AdvancedFloat3(-squaresize * 4, heightmap[x - 1, y - 1] - heightmap[x + 3, y - 1], 0);
+                    AdvancedFloat3 e2 = new AdvancedFloat3(0, heightmap[x - 1, y - 1] - heightmap[x - 1, y + 3], -squaresize * 4);
         
                     AdvancedFloat3 n=e2.Cross( e1 );
         
                     n.Normalize();
 
-                    e1 = new AdvancedFloat3( squaresize * 4, HeightMap[ x + 3, y + 3 ] - HeightMap[ x - 1, y + 3 ], 0 );
-                    e2 = new AdvancedFloat3( 0, HeightMap[ x + 3, y + 3 ] - HeightMap[ x + 3, y - 1 ], squaresize * 4 );
+                    e1 = new AdvancedFloat3(squaresize * 4, heightmap[x + 3, y + 3] - heightmap[x - 1, y + 3], 0);
+                    e2 = new AdvancedFloat3(0, heightmap[x + 3, y + 3] - heightmap[x + 3, y - 1], squaresize * 4);
         
                     AdvancedFloat3 n2 = e2.Cross(e1);
                     n2.Normalize();

@@ -60,9 +60,9 @@ namespace CSharpAI
             Level1ConstructorList.GetInstance();
             Level1FactoryList.GetInstance();
 
-            tankcontroller = new TankController(TankList.GetInstance().defbyid, BuildTable.GetInstance().UnitDefByName["armstump"]);
+            tankcontroller = new TankController(TankList.GetInstance().defbyid, BuildTable.GetInstance().UnitDefByName["arm_stumpy"]);
             tankcontroller.Activate();
-            helicoptercontroller = new TankController(HelicopterList.GetInstance().defbyid, BuildTable.GetInstance().UnitDefByName["armbrawl"]);
+            helicoptercontroller = new TankController(HelicopterList.GetInstance().defbyid, BuildTable.GetInstance().UnitDefByName["arm_brawler"]);
             helicoptercontroller.Activate();
             scoutcontroller = new ScoutControllerRaider();
             scoutcontroller.Activate();
@@ -71,6 +71,8 @@ namespace CSharpAI
             EnemyController.GetInstance().LoadExistingUnits();
 
             CheckIdleUnits();
+
+            //HeightMapPersistence.GetInstance();
 
             //BuildSolarCell(CommanderList.GetInstance().defbyid.Keys.GetEnumerator().Current);
 
@@ -248,7 +250,7 @@ namespace CSharpAI
             if( possibleorders.Count == 0 )
             {
                 if ( Level1ConstructorList.GetInstance().defbyid.Count < 1 &&
-                   !UnitController.GetInstance().UnitDefsByName.ContainsKey("armcom") )
+                   !UnitController.GetInstance().UnitDefsByName.ContainsKey("arm_commander") )
                 {
                     if (BuildConstructionVehicle(deployedunitid, unitdef))
                     {
@@ -293,7 +295,7 @@ namespace CSharpAI
                 return;
             }
             Order ordertodo = possibleorders[random.Next(0, possibleorders.Count)];
-            if (ordertodo.unitname == "armmex")
+            if (ordertodo.unitname == "arm_metal_extractor")
             {
                 BuildMex(deployedunitid);
                 if (AssistingConstructors.ContainsKey(deployedunitid))
@@ -357,13 +359,13 @@ namespace CSharpAI
         bool BuildConstructionVehicle( int constructorid, IUnitDef constructordef)
         {
             IUnitDef deftobuild = null;
-            if( BuildTree.GetInstance().CanBuild( constructordef.name.ToLower(), "armcv" ) )
+            if( BuildTree.GetInstance().CanBuild( constructordef.name.ToLower(), "arm_construction_vehicle" ) )
             {
-                deftobuild = BuildTable.GetInstance().UnitDefByName["armcv"];
+                deftobuild = BuildTable.GetInstance().UnitDefByName["arm_construction_vehicle"];
             }
-            else if (BuildTree.GetInstance().CanBuild(constructordef.name.ToLower(), "armacv"))
+            else if (BuildTree.GetInstance().CanBuild(constructordef.name.ToLower(), "arm_construction_vehicle"))
             {
-                deftobuild = BuildTable.GetInstance().UnitDefByName["armacv"];
+                deftobuild = BuildTable.GetInstance().UnitDefByName["arm_construction_vehicle"];
             }
             else
             {
@@ -425,7 +427,7 @@ namespace CSharpAI
             {
                 return false;
             }
-            IUnitDef unitdef = BuildTable.GetInstance().UnitDefByName["armmex"];
+            IUnitDef unitdef = BuildTable.GetInstance().UnitDefByName["arm_metal_extractor"];
             Float3 buildsite = Metal.GetInstance().GetNearestMetalSpot(aicallback.GetUnitPos(constructorid));
             buildsite = aicallback.ClosestBuildSite(unitdef, buildsite, 100, 0);
             if (!ActiveConstructors.Contains(constructorid))
@@ -444,7 +446,7 @@ namespace CSharpAI
             {
                 return false;
             }
-            IUnitDef unitdef = BuildTable.GetInstance().UnitDefByName["armsolar"];
+            IUnitDef unitdef = BuildTable.GetInstance().UnitDefByName["arm_solar_collector"];
             Float3 buildsite = BuildPlanner.GetInstance().ClosestBuildSite(unitdef,
                 aicallback.GetUnitPos(constructorid),
                 3000, 2);
