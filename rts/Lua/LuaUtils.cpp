@@ -14,7 +14,7 @@ extern "C" {
 }
 
 
-static int depth;
+static int depth = 0;
 static int maxDepth = 256;
 
 
@@ -24,6 +24,16 @@ static int maxDepth = 256;
 
 static bool CopyPushData(lua_State* dst, lua_State* src, int index);
 static bool CopyPushTable(lua_State* dst, lua_State* src, int index);
+
+
+static inline int PosLuaIndex(lua_State* src, int index)
+{
+	if (index > 0) {
+		return index;
+	} else {
+		return (lua_gettop(src) + index + 1);
+	}
+}
 
 
 static bool CopyPushData(lua_State* dst, lua_State* src, int index)
@@ -51,13 +61,13 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index)
 static bool CopyPushTable(lua_State* dst, lua_State* src, int index)
 {
 	if (depth > maxDepth) {
-		lua_pushnil(dst); // unhandled type
+		lua_pushnil(dst); // push something
 		return false;
 	}
 
 	depth++;
 	lua_newtable(dst);
-	const int table = (index >= 0) ? index : (lua_gettop(src) - index + 1);
+	const int table = PosLuaIndex(src, index);
 	for (lua_pushnil(src); lua_next(src, table) != 0; lua_pop(src, 1)) {
 		CopyPushData(dst, src, -2); // copy the key
 		CopyPushData(dst, src, -1); // copy the value
