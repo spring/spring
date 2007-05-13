@@ -1105,7 +1105,7 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 
 	if ((args >= 6) && lua_isnumber(L, 6)) {
 		const float slope = (float)lua_tonumber(L, 6);
-		glBallisticCircle(pos, r, slope, divs);
+		glBallisticCircle(pos, r, NULL, divs);
 	} else {
 		glSurfaceCircle(pos, r, divs);
 	}

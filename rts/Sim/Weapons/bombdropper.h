@@ -13,7 +13,6 @@ public:
 	void Update();
 	CBombDropper(CUnit* owner, bool useTorps);
 	virtual ~CBombDropper();
-
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	void Fire(void);
 	void Init(void);

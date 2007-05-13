@@ -11,6 +11,7 @@
 class CUnit;
 class CWeaponProjectile;
 struct WeaponDef;
+class UnitDefWeapon;
 
 enum TargetType {
 	Target_None,
@@ -35,6 +36,7 @@ public:
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	virtual void SlowUpdate();
 	virtual void Update();
+	virtual float GetRange2D(float yDiff);
 
 	void HoldFire();
 	bool AttackUnit(CUnit* unit,bool userTarget);

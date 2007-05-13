@@ -188,8 +188,13 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		dir=newDir;
 	}
 	float	intensity=1-(curLength)/(range*2);
-	if(curLength<maxLength)
-		helper->Explosion(hitPos, weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir, weaponDef->id);
+	if(curLength<maxLength) {
+		// Dynamic Damage
+		DamageArray dynDamages;
+		if (weaponDef->dynDamageExp > 0)
+			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponPos, curPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+		helper->Explosion(hitPos, weaponDef->dynDamageExp>0?dynDamages*(intensity*damageMul):weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir, weaponDef->id);
+	}
 
 	if(targetUnit)
 		lastFireFrame = gs->frameNum;

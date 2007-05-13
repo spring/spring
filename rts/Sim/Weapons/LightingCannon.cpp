@@ -90,7 +90,13 @@ void CLightingCannon::Fire(void)
 
 //	if(u)
 //		u->DoDamage(damages,owner,ZeroVector);
-	helper->Explosion(weaponPos+dir*r,damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
+
+	// Dynamic Damage
+	DamageArray dynDamages;
+	if (weaponDef->dynDamageExp > 0)
+		dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponPos, targetPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+
+	helper->Explosion(weaponPos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
 
 	SAFE_NEW CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,weaponDef,10,this);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

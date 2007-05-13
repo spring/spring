@@ -2,6 +2,8 @@
 #include "glExtra.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
+#include "Sim/Weapons/Weapon.h"
+#include "LogOutput.h"
 
 
 /*
@@ -37,21 +39,43 @@ void setSurfaceCircleFunc(SurfaceCircleFunc func)
 /*
  *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
  */
-void glBallisticCircle(const float3& center, float radius, float slope,
-                       unsigned int resolution)
+void glBallisticCircle(const float3& center, const float radius, CWeapon* weapon,
+                       unsigned int resolution, float slope)
 {
 	glBegin(GL_LINE_LOOP);
 	for (int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
+		float rad = radius;
 		float3 pos;
-		pos.x = center.x + (sin(radians) * radius);
-		pos.z = center.z + (cos(radians) * radius);
+		float sinR = sin(radians);
+		float cosR = cos(radians);
+		pos.x = center.x + (sinR * rad);
+		pos.z = center.z + (cosR * rad);
 		pos.y = ground->GetHeight(pos.x, pos.z);
-
-		const float heightDiff = (pos.y - center.y);
-		const float adjRadius = radius - (heightDiff * slope);		
-		pos.x = center.x + (sin(radians) * adjRadius);
-		pos.z = center.z + (cos(radians) * adjRadius);
+		float heightDiff = (pos.y - center.y)/2;
+		rad -= heightDiff * slope;
+		float adjRadius = weapon ? weapon->GetRange2D(heightDiff) : rad;
+		float adjustment = rad/2;
+		float ydiff = 0;
+		int j;
+		for(j = 0; j < 50 && fabs(adjRadius - rad) + ydiff > .01*rad; j++){
+			if(adjRadius > rad) {
+				rad += adjustment;
+				j--;
+			} else {
+				rad -= adjustment;
+				adjustment /= 2;
+			}
+			pos.x = center.x + (sinR * rad);
+			pos.z = center.z + (cosR * rad);
+			float newY = ground->GetHeight(pos.x, pos.z);
+			ydiff = fabs(pos.y - newY);
+			pos.y = newY;
+			heightDiff = (pos.y - center.y);
+			adjRadius = weapon->GetRange2D(heightDiff);
+		}
+		pos.x = center.x + (sinR * adjRadius);
+		pos.z = center.z + (cosR * adjRadius);
 		pos.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
 		glVertexf3(pos);
 	}

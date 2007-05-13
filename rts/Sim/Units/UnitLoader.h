@@ -23,8 +23,8 @@ public:
 	                bool build, int facing, const CUnit* builder /* can be NULL */);
 	void FlattenGround(const CUnit* unit);
 
-protected:
 	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);
+protected:
 	void LoadSound(GuiSound &sound);
 };
 

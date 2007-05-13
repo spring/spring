@@ -3549,7 +3549,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (unitdef->maxWeaponRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unitdef->maxWeaponRange,
-				                  unitdef->weapons[0].def->heightmod, 40);
+				                  unit->weapons[0], 40);
 			}
 			// draw decloak distance
 			if (unitdef->decloakDistance > 0) {
@@ -3636,7 +3636,6 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		float dist = ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 		if (dist > 0) {
 			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
-
 			if (unitdef) {
 				// get the build information
 				float3 pos = camera->pos+mouse->dir*dist;
@@ -3658,7 +3657,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					if (unitdef->weapons.size() > 0) {
 						glColor4fv(cmdColors.rangeAttack);
 						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
-						                  unitdef->weapons[0].def->heightmod, 40);
+						                  NULL, 40, unitdef->weapons[0].def->heightmod);
 					}
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
@@ -3740,7 +3739,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
-				                  unit->weapons.front()->heightMod, 40);
+				                  unit->weapons.front(), 40);
 				if (!onMinimap && gs->cheatEnabled) {
 					DrawWeaponArc(unit);
 				}
