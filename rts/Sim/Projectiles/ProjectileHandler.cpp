@@ -566,7 +566,7 @@ void CProjectileHandler::CheckUnitCol()
 						break;
 					}
 				}
-			 }
+			}
 		}
 	}	
 }

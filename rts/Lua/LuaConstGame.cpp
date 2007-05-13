@@ -23,6 +23,7 @@ extern "C" {
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitDef.h" // MAX_UNITS
+#include "System/FileSystem/ArchiveScanner.h"
 
 
 /******************************************************************************/
@@ -43,13 +44,13 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 	LuaPushNamedNumber(L, "gameMode",      gs->gameMode);
 
-	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode == 1));
+	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 
 	LuaPushNamedString(L, "mapName",       readmap->mapName);
 	LuaPushNamedString(L, "mapHumanName",  readmap->mapHumanName);
-	LuaPushNamedNumber(L, "mapX",          readmap->width / 64);
+	LuaPushNamedNumber(L, "mapX",          readmap->width  / 64);
 	LuaPushNamedNumber(L, "mapY",          readmap->height / 64);
 	LuaPushNamedNumber(L, "gravity",       gravity);
 	LuaPushNamedNumber(L, "tidal",         readmap->tidalStrength);
@@ -68,6 +69,14 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "transportShip",   modInfo->transportShip);
 	LuaPushNamedNumber(L, "transportHover",  modInfo->transportHover);
 	LuaPushNamedNumber(L, "transportGround", modInfo->transportGround);
+
+	char buf[64];
+	SNPRINTF(buf, sizeof(buf), "0x%08X",
+	         archiveScanner->GetMapChecksum(readmap->mapName));
+	LuaPushNamedString(L, "mapChecksum", buf);
+	SNPRINTF(buf, sizeof(buf), "0x%08X",
+	         archiveScanner->GetModChecksum(modInfo->name));
+	LuaPushNamedString(L, "modChecksum", buf);
 
 	const vector<string> cats =
 		CCategoryHandler::Instance()->GetCategoryNames(~0);
