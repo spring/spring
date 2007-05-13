@@ -539,8 +539,8 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 	float3 dif=pos-weaponPos;
 
-	float r=range+(owner->pos.y-pos.y)*heightMod;
-	if(dif.SqLength2D()>r*r)
+	float r=GetRange2D(owner->pos.y-pos.y);
+	if(dif.SqLength2D()>=r*r)
 		return false;
 
 	if(maxMainDirAngleDif>-0.999f){
@@ -663,5 +663,14 @@ void CWeapon::CheckIntercept(void)
 		targetPos=(*pi)->pos;
 
 		break;
+	}
+}
+
+float CWeapon::GetRange2D(float yDiff){
+	float root1 = range*range - yDiff*yDiff;
+	if(root1 < 0){
+		return 0;
+	} else {
+		return sqrt(root1);
 	}
 }

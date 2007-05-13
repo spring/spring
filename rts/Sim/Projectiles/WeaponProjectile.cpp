@@ -100,7 +100,13 @@ void CWeaponProjectile::Collision()
 	{
 		float3 impactDir = speed;
 		impactDir.Normalize();
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir, weaponDef->id);
+
+		// Dynamic Damage
+		DamageArray dynDamages;
+		if (weaponDef->dynDamageExp > 0)
+			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+		
+		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir, weaponDef->id);
 	}
 		
 	if(weaponDef->soundhit.id)
@@ -130,7 +136,13 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	{
 		float3 impactDir = speed;
 		impactDir.Normalize();
-		helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir, weaponDef->id);
+
+		// Dynamic Damage
+		DamageArray dynDamages;
+		if (weaponDef->dynDamageExp > 0)
+			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+			
+		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir, weaponDef->id);
 	}
 
 	if(weaponDef->soundhit.id)

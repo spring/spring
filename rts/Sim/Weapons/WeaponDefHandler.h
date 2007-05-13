@@ -185,6 +185,11 @@ struct WeaponDef
 	bool sweepFire;
 
 	bool canAttackGround;
+
+	float dynDamageExp;
+	float dynDamageMin;
+	float dynDamageRange;
+	bool dynDamageInverted;
 };
 
 class CExplosionGeneratorHandler;
@@ -202,6 +207,8 @@ public:
 	WeaponDef *GetWeapon(const std::string weaponname);
 
 	static void LoadSound(GuiSound &gsound);
+
+	DamageArray DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted);
 
 protected:
 	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);

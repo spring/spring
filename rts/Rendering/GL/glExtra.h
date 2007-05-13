@@ -9,13 +9,15 @@
  *  Note: Uses the current color.
  */
  
+ class CWeapon;
+ 
 typedef void (*SurfaceCircleFunc)(const float3& center, float radius,
                                   unsigned int resolution);
 
 extern SurfaceCircleFunc glSurfaceCircle;
 
-extern void glBallisticCircle(const float3& center, float radius, float slope,
-                              unsigned int resolution);
+extern void glBallisticCircle(const float3& center, float radius, CWeapon* weapon,
+                              unsigned int resolution, float slope = 0.0f);
 
 extern void setSurfaceCircleFunc(SurfaceCircleFunc func);
 

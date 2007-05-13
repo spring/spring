@@ -94,16 +94,13 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	{
 		return true;
 	}
-	float3 dif(pos-weaponPos);/*
-	float predictTime=dif.Length()/projectileSpeed;
-	if(predictTime==0)
-		return true;
-	if(highTrajectory)
-		predictTime=(minPredict+maxPredict)*0.5f;
-	dif.y-=predictTime*predictTime*gs->gravity*0.5f;
-	float length=dif.Length();*/
+	float3 dif(pos-weaponPos);
 
 	float3 dir(GetWantedDir(dif));
+	
+	if(dir.SqLength() == 0){
+		return false;
+	}
 
 	float3 flatdir(dif.x,0,dif.z);
 	float flatlength=flatdir.Length();
@@ -222,11 +219,11 @@ float3 CCannon::GetWantedDir(const float3& diff)
 				Vy = (dxz == 0 || Vxz == 0) ? v : (Vxz*dy/dxz - dxz*g/(2*Vxz));
 			} else {
 				Vxz = 0;
-				Vy = v;
+				Vy = 0;
 			}
 		} else {
 			Vxz = 0;
-			Vy = v;
+			Vy = 0;
 		}
 	}
 	float3 dir(diff.x, 0, diff.z);
@@ -235,4 +232,13 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	dir.y = Vy;
 	dir.Normalize();
 	return dir;
+}
+
+float CCannon::GetRange2D(float yDiff){
+	float root1 = 1 + 2*gs->gravity*yDiff/(projectileSpeed*projectileSpeed);
+	if(root1 < 0){
+		return 0;
+	} else {
+		return range * sqrt(root1);
+	}
 }

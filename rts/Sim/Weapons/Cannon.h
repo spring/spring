@@ -18,6 +18,7 @@ public:
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	void Update();
 	virtual bool AttackGround(float3 pos,bool userTarget);
+	float GetRange2D(float yDiff);
 
 	float maxPredict;
 	float minPredict;
