@@ -886,19 +886,25 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	if (!diffStates) {
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
+		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			synced = true;
 			lua_settop(L, top);
 			return 0;
 		}
+		synced = true;
 		retCount = lua_gettop(L) - top;
 	}
 	else {
 		LuaUtils::CopyData(L, srcState, argCount);
 
 		// call the function
+		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+			synced = true;
 			return 0;
 		}
+		synced = true;
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0);
