@@ -108,45 +108,43 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 	StringToLowerInPlace(dir);
 	filesystem.ForwardSlashes(dir);
 
+	map<string, FileData>::const_iterator filesStart = files.begin();
+	map<string, FileData>::const_iterator filesEnd   = files.end();
+
 	// Non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
-		if (dir[dir.length() - 1] != '/')
+		string::size_type dirLast = (dir.length() - 1);
+		if (dir[dirLast] != '/') {
 			dir += "/";
+			dirLast++;
+		}
+		// limit the iterator range
+		string dirEnd = dir;
+		dirEnd[dirLast] = dirEnd[dirLast] + 1;
+		filesStart = files.lower_bound(dir);
+		filesEnd   = files.upper_bound(dirEnd);
 	}
-
-	// Possible optimization: find the start iterator by inserting the dir and see where it ends up
-	bool foundMatch = false;
-	//This breaks VC8, specificaly boost iterator assertions
-	//for (map<string, FileData>::iterator i = files.begin(); i != files.end(); ++i) {
 	
-	map<string, FileData>::iterator filesStart = files.begin();
-	map<string, FileData>::iterator filesEnd = files.end();
-	while (filesStart != filesEnd)
-		{
+	while (filesStart != filesEnd) {
 		//This breaks VC8, specificaly boost iterator assertions
 		//if (equal(dir.begin(), dir.end(), i->first.begin())) {
-		int thisLength = filesStart->first.length();
-		string path = filesystem.GetDirectory(filesStart->first);
-		// Test to see if this file startwith the dir path
-		if (dir.compare(path) == 0)
-			{
+
+		const string path = filesystem.GetDirectory(filesStart->first);
+
+		// Test to see if this file start with the dir path
+		if (path.compare(0, dir.length(), dir) == 0) {
 
 			// Strip pathname
-			string name = filesStart->first.substr(dir.length());
+			const string name = filesStart->first.substr(dir.length());
 
 			// Do not return files in subfolders
-			if (name.find('\\') == string::npos && name.find('/') == string::npos)
+			if ((name.find('/') == string::npos) &&
+			    (name.find('\\') == string::npos)) {
 				ret.push_back(name);
-
-			foundMatch = true;
 			}
-		else {
-			// If we have had a match previously but this one isn't a match, there will be no more matches
-			if (foundMatch)
-				break;
-			}
-		filesStart++;
 		}
+		filesStart++;
+	}
 
 	return ret;
 }
