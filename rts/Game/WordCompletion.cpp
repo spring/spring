@@ -1,6 +1,11 @@
 // WordCompletion.cpp: implementation of the CWordCompletion class.
 //
 //////////////////////////////////////////////////////////////////////
+//
+//  TODO: replace 'WordProperties' with regex/glob expressions
+//        ex: '.give [0-9]* armcom'
+//
+
 
 #include "StdAfx.h"
 #include "WordCompletion.h"
@@ -142,8 +147,8 @@ vector<string> CWordCompletion::Complete(string& msg) const
 		if (cmp < 0) continue;
 		if (cmp > 0) break;
 		if ((!it->second.startOfLine || startOfLine) &&
-		    (!it->second.unitName || unitName) &&
-		    (!it->second.minimap || minimap)) {
+		    (!it->second.unitName    || unitName)    &&
+		    (!it->second.minimap     || minimap)) {
 			partials.push_back(it->first);
 		}
 	}

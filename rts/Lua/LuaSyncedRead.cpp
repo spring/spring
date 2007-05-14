@@ -1077,7 +1077,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	}
 
 	// no player names for synchronized scripts
-	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
 		lua_pushstring(L, player->playerName.c_str());
 	} else {
 		HSTR_PUSH(L, "SYNCED_NONAME");
