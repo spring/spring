@@ -325,7 +325,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.minWaterDepth, "-10e6", "UNITINFO\\MinWaterDepth");
 	tdfparser.GetDef(ud.maxWaterDepth, "10e6", "UNITINFO\\MaxWaterDepth");
 	tdfparser.GetDef(ud.minCollisionSpeed, "1.0", "UNITINFO\\MinCollisionSpeed");
-	tdfparser.GetDef(ud.slideTolerance, "2.0", "UNITINFO\\SlideTolerance");
+	tdfparser.GetDef(ud.slideTolerance, "0.0", "UNITINFO\\SlideTolerance"); // disabled
 
 	std::string value;
 	ud.floater = tdfparser.SGetValue(value, "UNITINFO\\Waterline");
