@@ -768,7 +768,9 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	const bool prevAllowChanges = allowChanges;
 	allowChanges = false;
 	synced = false;
+
 	RunCallIn(cmdStr, args, 0);
+
 	synced = true;
 	allowChanges = prevAllowChanges;
 
@@ -882,17 +884,18 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	}
 	lua_remove(L, -2); 
 
+	const bool prevSynced = synced;
+
 	int retCount;
 	if (!diffStates) {
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
 		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			synced = true;
+			synced = prevSynced;
 			lua_settop(L, top);
 			return 0;
 		}
-		synced = true;
 		retCount = lua_gettop(L) - top;
 	}
 	else {
@@ -901,10 +904,9 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		// call the function
 		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			synced = true;
+			synced = prevSynced;
 			return 0;
 		}
-		synced = true;
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0);
@@ -912,6 +914,8 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 			LuaUtils::CopyData(srcState, L, retCount);
 		}
 	}
+
+	synced = prevSynced;
 
 	return retCount;
 }

@@ -154,10 +154,10 @@ extern string stupidGlobalMapname;
 CGame* game = 0;
 
 
-
-
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
 {
+	game = this;
+
 	infoConsole = ic;
 
 	script = NULL;
