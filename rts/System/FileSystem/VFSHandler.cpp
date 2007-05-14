@@ -126,9 +126,6 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 	}
 	
 	while (filesStart != filesEnd) {
-		//This breaks VC8, specificaly boost iterator assertions
-		//if (equal(dir.begin(), dir.end(), i->first.begin())) {
-
 		const string path = filesystem.GetDirectory(filesStart->first);
 
 		// Test to see if this file start with the dir path
