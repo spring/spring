@@ -26,9 +26,10 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local  ON_LIMIT = 0.7
-local OFF_LIMIT = 0.3
-
+local  ON_METAL_LIMIT  = 0.8
+local OFF_METAL_LIMIT  = 0.9
+local  ON_ENERGY_LIMIT = 0.7
+local OFF_ENERGY_LIMIT = 0.3
 local metalMakers = {}
 
 local currentState = true
@@ -67,13 +68,19 @@ end
 
 
 function widget:Update(deltaTime)
-  local now, max = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy")
-  local frac = (now / max)
+  local mNow, mMax = Spring.GetTeamResources(Spring.GetMyTeamID(), "metal")
+  local eNow, eMax = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy")
+  local mFrac = (mNow / mMax)
+  local eFrac = (eNow / eMax)
   
-  if (currentState and (frac < OFF_LIMIT)) then
-    SetMetalMakers(false)
-  elseif (not currentState and (frac > ON_LIMIT)) then
-    SetMetalMakers(true)
+  if (currentState) then
+    if ((eFrac < OFF_ENERGY_LIMIT) or (mFrac > OFF_METAL_LIMIT)) then
+      SetMetalMakers(false)
+    end
+  else 
+    if ((eFrac > ON_ENERGY_LIMIT) and (mFrac < ON_METAL_LIMIT)) then
+      SetMetalMakers(true)
+    end
   end
 end
 
