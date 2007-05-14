@@ -117,6 +117,7 @@ local function HilightUnit(unitID)
   gl.LogicOp(GL.SET)
   SetUnitColorMask(unitID)
   gl.Unit(unitID)
+  gl.Blending(true)
   gl.ColorMask(true, true, true, true)
   gl.LogicOp(false)
 
