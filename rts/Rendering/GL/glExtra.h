@@ -16,7 +16,8 @@ typedef void (*SurfaceCircleFunc)(const float3& center, float radius,
 
 extern SurfaceCircleFunc glSurfaceCircle;
 
-extern void glBallisticCircle(const float3& center, float radius, CWeapon* weapon,
+extern void glBallisticCircle(const float3& center, float radius,
+                              const CWeapon* weapon,
                               unsigned int resolution, float slope = 0.0f);
 
 extern void setSurfaceCircleFunc(SurfaceCircleFunc func);

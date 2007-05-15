@@ -65,6 +65,7 @@ bool CStarburstLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit
 	return true;
 }
 
-float CStarburstLauncher::GetRange2D(float yDiff){
+float CStarburstLauncher::GetRange2D(float yDiff) const
+{
 	return range+yDiff*heightMod;
 }

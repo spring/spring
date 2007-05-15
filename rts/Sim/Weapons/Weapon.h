@@ -36,7 +36,7 @@ public:
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	virtual void SlowUpdate();
 	virtual void Update();
-	virtual float GetRange2D(float yDiff);
+	virtual float GetRange2D(float yDiff) const;
 
 	void HoldFire();
 	bool AttackUnit(CUnit* unit,bool userTarget);
