@@ -39,7 +39,8 @@ void setSurfaceCircleFunc(SurfaceCircleFunc func)
 /*
  *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
  */
-void glBallisticCircle(const float3& center, const float radius, CWeapon* weapon,
+void glBallisticCircle(const float3& center, const float radius,
+                       const CWeapon* weapon,
                        unsigned int resolution, float slope)
 {
 	glBegin(GL_LINE_LOOP);
@@ -61,7 +62,6 @@ void glBallisticCircle(const float3& center, const float radius, CWeapon* weapon
 		for(j = 0; j < 50 && fabs(adjRadius - rad) + ydiff > .01*rad; j++){
 			if(adjRadius > rad) {
 				rad += adjustment;
-				j--;
 			} else {
 				rad -= adjustment;
 				adjustment /= 2;

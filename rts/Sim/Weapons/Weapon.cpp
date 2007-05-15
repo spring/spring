@@ -666,7 +666,8 @@ void CWeapon::CheckIntercept(void)
 	}
 }
 
-float CWeapon::GetRange2D(float yDiff){
+float CWeapon::GetRange2D(float yDiff) const
+{
 	float root1 = range*range - yDiff*yDiff;
 	if(root1 < 0){
 		return 0;

@@ -234,7 +234,8 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	return dir;
 }
 
-float CCannon::GetRange2D(float yDiff){
+float CCannon::GetRange2D(float yDiff) const
+{
 	float root1 = 1 + 2*gs->gravity*yDiff/(projectileSpeed*projectileSpeed);
 	if(root1 < 0){
 		return 0;
