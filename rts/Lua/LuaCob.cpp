@@ -115,7 +115,7 @@ int CLuaCob::UnpackCobArg(lua_State* L)
 	if (currentArgs == NULL) {
 		luaL_error(L, "Error in UnpackCobArg(), no current args");
 	}
-	const int arg = (int)lua_tonumber(L, 1);
+	const int arg = (int)lua_tonumber(L, 1) - 1;
 	if ((arg < 0) || (arg >= MAX_LUA_COB_ARGS)) {
 		luaL_error(L, "Error in UnpackCobArg(), bad index");
 	}
