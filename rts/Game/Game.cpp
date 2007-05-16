@@ -1753,10 +1753,10 @@ bool CGame::Draw()
 	//transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	if(!readmap->voidWater && !water->drawSolid)
-		water->Draw();
 	if(treeDrawer->drawTrees)
 		treeDrawer->DrawGrass();
+	if(!readmap->voidWater && !water->drawSolid)
+		water->Draw();
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 	sky->DrawSun();
