@@ -7,7 +7,7 @@
 
 #include "BaseWater.h"
 
-class CBasicWater : public CBaseWater  
+class CBasicWater : public CBaseWater
 {
 public:
 	void Draw();
@@ -17,6 +17,8 @@ public:
 
 	unsigned int texture;
 	unsigned int displist;
+	int textureWidth;
+	int textureHeight;
 };
 
 #endif // __BASIC_WATER_H__
