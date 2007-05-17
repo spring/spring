@@ -294,12 +294,12 @@ end
 
 
 function Debug()
-  for i,v in UnitDefs do
+  for i,v in pairs(UnitDefs) do
     if (v ~= nil) then
       print(i ..' '.. v.name)
     end
   end
-  for i,v in WeaponDefs do
+  for i,v in pairs(WeaponDefs) do
     if (v ~= nil) then
       print(i ..' '.. v.name)
     end

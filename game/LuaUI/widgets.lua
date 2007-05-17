@@ -203,7 +203,7 @@ end
 
 function widgetHandler:SaveOrderList()
   -- update the current order
-  for i,w in (self.widgets) do
+  for i,w in ipairs(self.widgets) do
     self.orderList[w.whInfo.name] = i
   end
   table.save(self.orderList, ORDER_FILENAME,
@@ -524,7 +524,7 @@ local function SafeWrapWidget(widget)
     end
   end
 
-  for _,ciName in callInLists do
+  for _,ciName in ipairs(callInLists) do
     if (widget[ciName]) then
       widget[ciName] = SafeWrap(widget[ciName])
     end
@@ -572,7 +572,7 @@ function widgetHandler:InsertWidget(widget)
   SafeWrapWidget(widget)
 
   ArrayInsert(self.widgets, true, widget)
-  for _,listname in callInLists do
+  for _,listname in ipairs(callInLists) do
     local func = widget[listname]
     if (type(func) == 'function') then
       ArrayInsert(self[listname..'List'], func, widget)
@@ -602,7 +602,7 @@ function widgetHandler:RemoveWidget(widget)
 
   ArrayRemove(self.widgets, widget)
   self.actionHandler:RemoveWidgetActions(widget)
-  for _,listname in callInLists do
+  for _,listname in ipairs(callInLists) do
     ArrayRemove(self[listname..'List'], widget)
   end
   self:UpdateCallIns()
@@ -760,7 +760,7 @@ function widgetHandler:RaiseWidget(widget)
     end
   end
   Raise(self.widgets, true, widget)
-  for _,listname in callInLists do
+  for _,listname in ipairs(callInLists) do
     Raise(self[listname..'List'], widget[listname], widget)
   end
 end
@@ -792,7 +792,7 @@ function widgetHandler:LowerWidget(widget)
     end
   end
   Lower(self.widgets, true, widget)
-  for _,listname in callInLists do
+  for _,listname in ipairs(callInLists) do
     Lower(self[listname..'List'], widget[listname], widget)
   end
 end
