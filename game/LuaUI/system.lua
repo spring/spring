@@ -69,12 +69,14 @@ if (System == nil) then
     gcinfo         = gcinfo,
 
     unpack         = unpack,
+    select         = select,
 
     dofile         = dofile,
     loadfile       = loadfile,
     loadlib        = loadlib,
     loadstring     = loadstring,
     require        = require,
+
     
     getmetatable   = getmetatable,
     setmetatable   = setmetatable,
