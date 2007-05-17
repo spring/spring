@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
+#include <string.h>
 #include "Sound.h"
 #include "Platform/byteorder.h"
 #include "mmgr.h"
