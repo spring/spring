@@ -4,6 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include <fstream>
+#include <memory>
 #ifndef _WIN32
 #include <stdlib.h>
 #include <sys/stat.h>
