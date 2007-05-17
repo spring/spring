@@ -1,0 +1,128 @@
+diff -urwNpx '*.o' src-orig/lapi.c src/lapi.c
+--- src-orig/lapi.c	2007-02-12 20:58:39.000000000 -0500
++++ src/lapi.c	2007-02-12 21:05:09.000000000 -0500
+@@ -447,6 +447,16 @@ LUA_API void lua_pushlstring (lua_State 
+ }
+ 
+ 
++LUA_API void lua_pushhstring (lua_State *L,
++                              lua_Hash h, const char *s, size_t len) {
++  lua_lock(L);
++  luaC_checkGC(L);
++  setsvalue2s(L, L->top, luaS_newhstr(L, h, s, len));
++  api_incr_top(L);
++  lua_unlock(L);
++}
++
++
+ LUA_API void lua_pushstring (lua_State *L, const char *s) {
+   if (s == NULL)
+     lua_pushnil(L);
+Binary files src-orig/liblua.a and src/liblua.a differ
+diff -urwNpx '*.o' src-orig/lobject.h src/lobject.h
+--- src-orig/lobject.h	2007-02-12 20:58:39.000000000 -0500
++++ src/lobject.h	2007-02-12 21:10:30.000000000 -0500
+@@ -201,7 +201,7 @@ typedef union TString {
+   struct {
+     CommonHeader;
+     lu_byte reserved;
+-    unsigned int hash;
++    lua_Hash hash;
+     size_t len;
+   } tsv;
+ } TString;
+diff -urwNpx '*.o' src-orig/lstring.c src/lstring.c
+--- src-orig/lstring.c	2007-02-12 20:58:39.000000000 -0500
++++ src/lstring.c	2007-02-12 22:26:46.000000000 -0500
+@@ -72,13 +72,41 @@ static TString *newlstr (lua_State *L, c
+ }
+ 
+ 
+-TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
+-  GCObject *o;
+-  unsigned int h = cast(unsigned int, l);  /* seed */
++static inline lua_Hash calchash(const char *str, size_t l) {
++  lua_Hash h = cast(unsigned int, l);  /* seed */
+   size_t step = (l>>5)+1;  /* if string is too long, don't hash all its chars */
+   size_t l1;
+-  for (l1=l; l1>=step; l1-=step)  /* compute hash */
++  for (l1=l; l1>=step; l1-=step) {  /* compute hash */
+     h = h ^ ((h<<5)+(h>>2)+cast(unsigned char, str[l1-1]));
++  }
++  return h;
++}
++
++
++LUA_API lua_Hash lua_calchash(const char *str, size_t l) {
++  return calchash(str, l);
++}
++
++
++TString *luaS_newhstr (lua_State *L, lua_Hash h, const char *str, size_t l) {
++  GCObject *o;
++  for (o = G(L)->strt.hash[lmod(h, G(L)->strt.size)];
++       o != NULL;
++       o = o->gch.next) {
++    TString *ts = rawgco2ts(o);
++    if (ts->tsv.len == l && (memcmp(str, getstr(ts), l) == 0)) {
++      /* string may be dead */
++      if (isdead(G(L), o)) changewhite(o);
++      return ts;
++    }
++  }
++  return newlstr(L, str, l, h);  /* not found */
++}
++
++
++TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
++  GCObject *o;
++  const lua_Hash h = calchash(str, l);
+   for (o = G(L)->strt.hash[lmod(h, G(L)->strt.size)];
+        o != NULL;
+        o = o->gch.next) {
+diff -urwNpx '*.o' src-orig/lstring.h src/lstring.h
+--- src-orig/lstring.h	2007-02-12 20:58:39.000000000 -0500
++++ src/lstring.h	2007-02-12 21:06:14.000000000 -0500
+@@ -26,6 +26,8 @@
+ LUAI_FUNC void luaS_resize (lua_State *L, int newsize);
+ LUAI_FUNC Udata *luaS_newudata (lua_State *L, size_t s, Table *e);
+ LUAI_FUNC TString *luaS_newlstr (lua_State *L, const char *str, size_t l);
++LUAI_FUNC TString *luaS_newhstr (lua_State *L,
++                                 lua_Hash h, const char *str, size_t l);
+ 
+ 
+ #endif
+Binary files src-orig/lua and src/lua differ
+Binary files src-orig/luac and src/luac differ
+diff -urwNpx '*.o' src-orig/lua.h src/lua.h
+--- src-orig/lua.h	2007-02-12 20:58:39.000000000 -0500
++++ src/lua.h	2007-02-12 21:15:36.000000000 -0500
+@@ -103,6 +103,10 @@ typedef LUA_NUMBER lua_Number;
+ typedef LUA_INTEGER lua_Integer;
+ 
+ 
++/* type for string hashes */
++typedef unsigned int lua_Hash;
++
++
+ 
+ /*
+ ** state manipulation
+@@ -165,6 +169,8 @@ LUA_API void  (lua_pushstring) (lua_Stat
+ LUA_API const char *(lua_pushvfstring) (lua_State *L, const char *fmt,
+                                                       va_list argp);
+ LUA_API const char *(lua_pushfstring) (lua_State *L, const char *fmt, ...);
++LUA_API void  (lua_pushhstring) (lua_State *L,
++                                 lua_Hash h, const char *s, size_t l);
+ LUA_API void  (lua_pushcclosure) (lua_State *L, lua_CFunction fn, int n);
+ LUA_API void  (lua_pushboolean) (lua_State *L, int b);
+ LUA_API void  (lua_pushlightuserdata) (lua_State *L, void *p);
+@@ -243,6 +249,8 @@ LUA_API void  (lua_concat) (lua_State *L
+ LUA_API lua_Alloc (lua_getallocf) (lua_State *L, void **ud);
+ LUA_API void lua_setallocf (lua_State *L, lua_Alloc f, void *ud);
+ 
++/* for lua_pushhstring() */
++LUA_API lua_Hash (lua_calchash) (const char *s, size_t l);
+ 
+ 
+ /* 
