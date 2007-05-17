@@ -1,35 +1,29 @@
 
-lua-5.1.2 source code modifications:
+Lua-5.1.2 source code modifications:
 
-1. Applied the pushhstring patch
+  1. Applied the pushhstring patch
 
-2. Moved the following headers from src/ into include/:
-   - lua.h
-   - lualib.h
-   - lauxlib.h
-   - luaconf.h
+  2. Moved the following headers from src/ into include/:
+     - lua.h
+     - lualib.h
+     - lauxlib.h
+     - luaconf.h
 
-3. Made the following adjustments in luaconf.h:
+  3. Made the following adjustments in luaconf.h:
 
-   //SPRING#undef LUA_COMPAT_GETN
-   #define LUA_COMPAT_GETN
+     //SPRING#undef LUA_COMPAT_GETN
+     #define LUA_COMPAT_GETN
 
-   //SPRING#define LUA_NUMBER_DOUBLE
-   //SPRING#define LUA_NUMBER  double
-   #undef LUA_NUMBER_DOUBLE
-   #define LUA_NUMBER  float                                               
+     //SPRING#define LUA_NUMBER_DOUBLE
+     //SPRING#define LUA_NUMBER  double
+     #undef LUA_NUMBER_DOUBLE
+     #define LUA_NUMBER  float                                               
 
-   //SPRING#define LUAI_UACNUMBER  double
-   #define LUAI_UACNUMBER  float
+  4. Added src/streflop_gateway.cpp and modified lmathlib.c
 
-4. Added src/streflop_gateway.cpp and modified lmathlib.c
-
-
-5. GZIP'ed the following files:
-   doc/*
-   etc/*
-   test/*
-   src/lua.c
-   src/luac.c
-
-   
+  5. GZIP'ed the following files:
+     doc/*
+     etc/*
+     test/*
+     src/lua.c
+     src/luac.c
