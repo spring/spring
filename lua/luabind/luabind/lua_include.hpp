@@ -26,6 +26,7 @@
 extern "C"
 {
 	#include "lua.h"
+	#include "lauxlib.h"  // for LUA_NOREF and LUA_REFNIL
 }
 
 #endif
