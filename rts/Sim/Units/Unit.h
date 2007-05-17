@@ -44,6 +44,20 @@ using namespace std;
 #define LOS_CONTRADAR 8		//the unit has continously been in radar since it was last inlos by the allyteam
 #define LOS_INTEAM 16			//the unit is part of this allyteam
 
+
+enum ScriptCloakBits {
+	// always set to 0 if not enabled
+	SCRIPT_CLOAK_ENABLED          = (1 << 0),
+	SCRIPT_CLOAK_IGNORE_ENERGY    = (1 << 1),
+	SCRIPT_CLOAK_IGNORE_STUNNED   = (1 << 2),
+	SCRIPT_CLOAK_IGNORE_PROXIMITY = (1 << 3),
+	SCRIPT_CLOAK_IGNORE_BUILDING  = (1 << 4),
+	SCRIPT_CLOAK_IGNORE_RECLAIM   = (1 << 5),
+	SCRIPT_CLOAK_IGNORE_CAPTURING = (1 << 6),
+	SCRIPT_CLOAK_IGNORE_TERRAFORM = (1 << 7)
+};
+
+
 class CUnit : public CSolidObject
 {
 public:

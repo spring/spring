@@ -30,23 +30,28 @@ CTransportUnit::~CTransportUnit()
 void CTransportUnit::Update()
 {
 	CUnit::Update();
-	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
+	list<TransportedUnit>::iterator ti;
+	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		float3 relPos;
-		if(ti->piece>=0){
-			relPos=localmodel->GetPiecePos(max(0,ti->piece));
+		if (ti->piece >= 0) {
+			relPos = localmodel->GetPiecePos(max(0, ti->piece));
 		} else {
-			relPos=float3(0,-1000,0);
+			relPos = float3(0.0f, -1000.0f, 0.0f);
 		}
-		float3 pos = this->pos + frontdir * relPos.z + updir * relPos.y + rightdir * relPos.x;
+		float3 pos = this->pos + (frontdir * relPos.z) +
+		                         (updir    * relPos.y) +
+		                         (rightdir * relPos.x);
 //		pos.y-=ti->unit->radius;
-		ti->unit->pos=pos;
-		ti->unit->midPos=ti->unit->pos+ti->unit->frontdir*ti->unit->relMidPos.z + ti->unit->updir*ti->unit->relMidPos.y + ti->unit->rightdir*ti->unit->relMidPos.x;		
-		if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType)){
-			if(unitDef->holdSteady){
-				ti->unit->heading=heading;
-				ti->unit->updir=updir;
-				ti->unit->frontdir=frontdir;
-				ti->unit->rightdir=rightdir;
+		ti->unit->pos = pos;
+		ti->unit->midPos = ti->unit->pos + (ti->unit->frontdir * ti->unit->relMidPos.z) +
+		                                   (ti->unit->updir    * ti->unit->relMidPos.y) +
+		                                   (ti->unit->rightdir * ti->unit->relMidPos.x);
+		if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(moveType)) {
+			if (unitDef->holdSteady) {
+				ti->unit->heading  = heading;
+				ti->unit->updir    = updir;
+				ti->unit->frontdir = frontdir;
+				ti->unit->rightdir = rightdir;
 			}
 		}
 	}

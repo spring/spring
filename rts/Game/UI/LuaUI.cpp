@@ -64,6 +64,16 @@ extern "C" {
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
 
+
+#if (LUA_VERSION_NUM < 500)
+#  define LUA_OPEN_LIB(L, lib) lib(L)
+#else
+#  define LUA_OPEN_LIB(L, lib) \
+     lua_pushcfunction((L), lib); \
+     lua_pcall((L), 0, 0, 0); 
+#endif
+
+
 extern Uint8 *keys;
 extern GLfloat LightDiffuseLand[];
 extern GLfloat LightAmbientLand[];
@@ -126,12 +136,12 @@ CLuaUI::CLuaUI()
 	}
 
 	// load the standard libraries
-	luaopen_base(L);
-	luaopen_io(L);
-	luaopen_math(L);
-	luaopen_table(L);
-	luaopen_string(L);
-	luaopen_debug(L);
+	LUA_OPEN_LIB(L, luaopen_base);
+	LUA_OPEN_LIB(L, luaopen_io);
+	LUA_OPEN_LIB(L, luaopen_math);
+	LUA_OPEN_LIB(L, luaopen_table);
+	LUA_OPEN_LIB(L, luaopen_string);
+	LUA_OPEN_LIB(L, luaopen_debug);
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 

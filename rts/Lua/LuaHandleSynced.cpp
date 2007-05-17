@@ -46,6 +46,15 @@ extern "C" {
 static const LuaHashString unsyncedStr("UNSYNCED");
 
 
+#if (LUA_VERSION_NUM < 500)
+#  define LUA_OPEN_LIB(L, lib) lib(L)
+#else
+#  define LUA_OPEN_LIB(L, lib) \
+     lua_pushcfunction((L), lib); \
+     lua_pcall((L), 0, 0, 0); 
+#endif
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -106,10 +115,10 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 	
 	// load the standard libraries
-	luaopen_base(L);
-	luaopen_math(L);
-	luaopen_table(L);
-	luaopen_string(L);
+	LUA_OPEN_LIB(L, luaopen_base);
+	LUA_OPEN_LIB(L, luaopen_math);
+	LUA_OPEN_LIB(L, luaopen_table);
+	LUA_OPEN_LIB(L, luaopen_string);
 
 	// delete some dangerous functions
 	lua_pushnil(L); lua_setglobal(L, "dofile");
