@@ -270,7 +270,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
  * @param program_type Only substituted in the message.
  * @param filename Only substituted in the message.
  */
-static void CheckParseErrors(const char * program_type, const char * filename)
+static void CheckParseErrors(const char * program_type, const char * filename, const char* program)
 {
 	if ( glGetError() != GL_INVALID_OPERATION )
 		return;
@@ -282,8 +282,8 @@ static void CheckParseErrors(const char * program_type, const char * filename)
 	// errors and warnings string.
 	const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
 	char c[512];
-	SNPRINTF(c,512,"Error at position %d when loading %s program file %s",
-		errPos,program_type,filename);
+	SNPRINTF(c,512,"Error at position %d near \"%.30s\" when loading %s program file %s",
+		errPos, program+errPos, program_type, filename);
 	throw content_error(c);
 }
 
@@ -310,7 +310,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 
 	glProgramStringARB( target,GL_PROGRAM_FORMAT_ASCII_ARB,VPFile.FileSize(), VPbuf );
 
-	CheckParseErrors(program_type, filename);
+	CheckParseErrors(program_type, filename, VPbuf);
 	delete[] VPbuf;
 	return ret;
 }

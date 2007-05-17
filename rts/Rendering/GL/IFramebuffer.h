@@ -17,8 +17,8 @@ class IFramebuffer
 {
 public:
 	virtual ~IFramebuffer();
-    
-	virtual void checkFBOStatus(void) = 0;
+
+	virtual bool checkFBOStatus(void) = 0;
 	virtual void attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype) = 0;
 	virtual void select(void) = 0;
 	virtual void deselect(void) = 0;

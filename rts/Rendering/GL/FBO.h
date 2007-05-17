@@ -34,7 +34,7 @@ public:
 	/**
 	 * @brief check FBO status
 	 */
-	void checkFBOStatus(void);
+	bool checkFBOStatus(void);
 
 	/**
 	 * @brief attach texture

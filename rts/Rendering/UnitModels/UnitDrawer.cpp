@@ -418,7 +418,7 @@ void CUnitDrawer::SetupForGhostDrawing ()
 {
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
-	
+
 	texturehandler->SetTATexture();
 	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
@@ -507,7 +507,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 
 	std::vector<CUnit*> dC;
 	std::list<GhostBuilding*> gB;
-	
+
 	for(int i=0;i<2;++i) {
 		if(!i) { // 3dos
 			dC=drawCloaked;
@@ -566,13 +566,16 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			}
 		}
 	}
-	
+
 	// reset gl states
 	CleanUpGhostDrawing ();
 }
 
 void CUnitDrawer::SetupForUnitDrawing(void)
 {
+	if (shadowHandler->inShadowPass)
+		return;
+
 	if(advShading && !water->drawReflection){		//standard doesnt seem to support vertex program+clipplanes at once
 
 		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitVP);
@@ -647,6 +650,9 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 void CUnitDrawer::CleanUpUnitDrawing(void)
 {
+	if (shadowHandler->inShadowPass)
+		return;
+
 	if(advShading && !water->drawReflection){
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 		glDisable( GL_FRAGMENT_PROGRAM_ARB );
@@ -738,6 +744,23 @@ void CUnitDrawer::SetupBasicS3OTexture1(void)
 
 void CUnitDrawer::SetupForS3ODrawing(void)
 {
+	//glDisable(GL_ALPHA_TEST);
+	//glDisable(GL_BLEND);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+
+	// When rendering shadows, we just want to take extraColor.alpha (tex2) into account,
+	// so textures with masked texels create correct shadows.
+	if (shadowHandler->inShadowPass)
+	{
+		// Instead of enabling GL_TEXTURE1_ARB i have modified CTextureHandler.SetS3oTexture()
+		// to set texture 0 if shadowHandler->inShadowPass is true.
+		glEnable(GL_TEXTURE_2D);
+		glAlphaFunc(GL_GREATER, 0.5f);
+		glEnable(GL_ALPHA_TEST);
+		return;
+	}
+
 	if (advShading && !water->drawReflection) { //standard doesnt seem to support vertex program+clipplanes at once
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitS3oVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
@@ -814,15 +837,19 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
-
-	//glDisable(GL_ALPHA_TEST);
-	//glDisable(GL_BLEND);
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
 }
 
 void CUnitDrawer::CleanUpS3ODrawing(void)
 {
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+
+	if (shadowHandler->inShadowPass) {
+		glDisable(GL_TEXTURE_2D);
+		return;
+	}
+
 	if(advShading && !water->drawReflection){
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 		glDisable( GL_FRAGMENT_PROGRAM_ARB );
@@ -854,13 +881,9 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT1);
 
-
 		CleanupBasicS3OTexture1();
 		CleanupBasicS3OTexture0();
 	}
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 }
 
 void CUnitDrawer::CleanupBasicS3OTexture1(void)
@@ -1225,7 +1248,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
-		
+
 	if (model->textureType == 0) {
 		// 3DO model
 		texturehandler->SetTATexture();
@@ -1266,6 +1289,6 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 		// reset texture0 state
 		CleanupBasicS3OTexture0();
 	}
-	
+
 	glPopAttrib ();
 }

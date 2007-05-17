@@ -24,5 +24,9 @@ DP4 opos.x, temp, mat[0];
 DP4 opos.y, temp, mat[1];
 DP4 opos.z, temp, mat[2];
 DP4 opos.w, temp, mat[3];
+
+#need texture coord for alpha testing (to shadow masked texels correctly)
+MOV result.texcoord[0], vertex.texcoord[0];
+
 END
 

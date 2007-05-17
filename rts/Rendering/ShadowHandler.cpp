@@ -13,6 +13,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Lua/LuaCallInHandler.h"
 #include "GL/IFramebuffer.h"
+#include "mmgr.h"
 
 CShadowHandler* shadowHandler=0;
 
@@ -23,18 +24,18 @@ bool CShadowHandler::canUseShadows = false;
 bool CShadowHandler::useFPShadows  = true;  // FIXME -- this was being forced to true
 bool CShadowHandler::firstInstance = true;
 
-      
+
 CShadowHandler::CShadowHandler(void): fb(0)
 {
 	const bool tmpFirstInstance = firstInstance;
 	firstInstance = false;
-	
+
 	drawShadows   = false;
 	inShadowPass  = false;
 	showShadowMap = false;
 	firstDraw     = true;
 	shadowTexture = 0;
-	
+
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
 	}
@@ -43,12 +44,12 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	if (configValue < 0) {
 		return;
 	}
-	
+
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",DEFAULT_SHADOWMAPSIZE);
 
 	if (tmpFirstInstance) {
 		if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
-			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");		
+			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");
 			return;
 		}
 
@@ -103,23 +104,37 @@ CShadowHandler::CShadowHandler(void): fb(0)
 
 bool CShadowHandler::InitDepthTarget()
 {
-	fb = instantiate_fb(shadowMapSize, shadowMapSize, FBO_NEED_DEPTH_TEXTURE);
-	if (!(fb && fb->valid()))
+	// this can be enabled for debugging
+	// it turns the shadow render buffer in a buffer with color
+	bool useColorTexture = false;
+
+	fb = instantiate_fb(shadowMapSize, shadowMapSize,
+			(useColorTexture ? FBO_NEED_COLOR | FBO_NEED_DEPTH : FBO_NEED_DEPTH_TEXTURE));
+	if (!(fb && fb->valid())) {
+		logOutput.Print("framebuffer not valid!");
 		return false;
+	}
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, shadowMapSize, shadowMapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	if (useColorTexture) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	fb->select();
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
+	int buffer = useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
+	glDrawBuffer(buffer);
+	glReadBuffer(buffer);
+	if (useColorTexture)
+		fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+	else
+		fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
 	fb->checkFBOStatus();
 	return true;
 }
@@ -127,7 +142,7 @@ bool CShadowHandler::InitDepthTarget()
 CShadowHandler::~CShadowHandler(void)
 {
 	if(drawShadows)
-		glDeleteTextures(1,&shadowTexture);
+		glDeleteTextures(1, &shadowTexture);
 	delete fb;
 }
 
@@ -166,19 +181,22 @@ void CShadowHandler::CreateShadows(void)
 	glDisable(GL_TEXTURE_2D);
 
 	glShadeModel(GL_FLAT);
-	glColorMask(0, 0, 0, 0);
+	glColor4f(1, 1, 1, 1);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
 	glViewport(0,0,shadowMapSize,shadowMapSize);
 
+	//glClearColor(0, 0, 0, 0);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	firstDraw=false;
 
-	glMatrixMode(GL_PROJECTION);					
-	glLoadIdentity();									
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	glOrtho(0,1,0,1,0,-1);
 
-	glMatrixMode(GL_MODELVIEW);	
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	float3 sundir=gs->sunVector;
@@ -234,7 +252,7 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[14]-=0.00001f;
 
 	glShadeModel(GL_SMOOTH);
-	glColorMask(1, 1, 1, 1);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	fb->deselect();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
@@ -246,6 +264,7 @@ void CShadowHandler::DrawShadowTex(void)
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glColor3f(1,1,1);
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,shadowTexture);
 
@@ -317,7 +336,7 @@ void CShadowHandler::CalcMinMaxView(void)
 				p[2]=float3(fli->base+fli->dir*fli->minz,readmap->maxheight+200,fli->minz);
 				p[3]=float3(fli->base+fli->dir*fli->maxz,readmap->maxheight+200,fli->maxz);
 				p[4]=float3(camera->pos.x,0,camera->pos.z);
-				
+
 				for(int a=0;a<5;++a){
 					float xd=(p[a]-centerPos).dot(cross1);
 					float yd=(p[a]-centerPos).dot(cross2);
@@ -352,7 +371,7 @@ void CShadowHandler::CalcMinMaxView(void)
 void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 {
 	fline temp;
-	
+
 	float3 b=UpVector.cross(side);		//get vector for collision between frustum and horizontal plane
 	if(fabs(b.z)<0.0001f)
 		b.z=0.00011f;
@@ -370,7 +389,7 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 				colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
 		}else
 			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-		
+
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		temp.left=-1;
 		if(b.z>0)
@@ -379,7 +398,7 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 			temp.left*=-1;
 		temp.maxz=gs->mapy*SQUARE_SIZE+500;
 		temp.minz=-500;
-		left.push_back(temp);			
-	}	
+		left.push_back(temp);
+	}
 }
 
