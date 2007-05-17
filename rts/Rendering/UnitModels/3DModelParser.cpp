@@ -23,7 +23,7 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side)
 {
 	StringToLowerInPlace(name);
 	if(name.find(".s3o")!=string::npos)
-		return units3oparser->Load3DO(name,scale,side);
+		return units3oparser->LoadS3O(name,scale,side);
 	else
 		return unit3doparser->Load3DO(name,scale,side);
 }
@@ -32,7 +32,7 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side,const float3
 {
 	StringToLowerInPlace(name);
 	if(name.find(".s3o")!=string::npos)
-		return units3oparser->Load3DO(name,scale,side);
+		return units3oparser->LoadS3O(name,scale,side);
 	else
 		return unit3doparser->Load3DO(name,scale,side,offsets);
 }

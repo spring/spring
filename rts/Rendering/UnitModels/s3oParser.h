@@ -32,13 +32,13 @@ struct SS3O {
 	~SS3O();
 };
 
-class CS3OParser  
+class CS3OParser
 {
 public:
 	CS3OParser();
 	virtual ~CS3OParser();
 
-	S3DOModel* Load3DO(string name,float scale=1,int side=1);
+	S3DOModel* LoadS3O(string name,float scale=1,int side=1);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
 
 private:
