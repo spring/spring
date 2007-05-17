@@ -628,20 +628,21 @@ void SpringApp::InitOpenGL ()
  */
 bool SpringApp::ParseCmdLine()
 {
-	cmdline->addoption('f',"fullscreen",OPTPARM_NONE,"","Run in fullscreen mode");
-	cmdline->addoption('w',"window",OPTPARM_NONE,"","Run in windowed mode");
-	cmdline->addoption('m',"minimise", OPTPARM_NONE, "", "Start minimised");
-	cmdline->addoption('s',"server",OPTPARM_NONE,"","Run as a server");
-	cmdline->addoption('c',"client",OPTPARM_NONE,"","Run as a client");
-	cmdline->addoption('p',"projectiledump", OPTPARM_NONE, "", "Dump projectile class info in projectiles.txt");
-	cmdline->addoption('t',"textureatlas", OPTPARM_NONE, "", "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->addoption('q',"quit", OPTPARM_INT, "T", "Quit immediately on game over or after T seconds");
+	cmdline->addoption('f', "fullscreen",     OPTPARM_NONE,   "",  "Run in fullscreen mode");
+	cmdline->addoption('w', "window",         OPTPARM_NONE,   "",  "Run in windowed mode");
+	cmdline->addoption('m', "minimise",       OPTPARM_NONE,   "",  "Start minimised");
+	cmdline->addoption('s', "server",         OPTPARM_NONE,   "",  "Run as a server");
+	cmdline->addoption('c', "client",         OPTPARM_NONE,   "",  "Run as a client");
+	cmdline->addoption('p', "projectiledump", OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
+	cmdline->addoption('t', "textureatlas",   OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->addoption('q', "quit",           OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
+	cmdline->addoption('n', "name",           OPTPARM_STRING, "",  "Set your player name");
 	cmdline->parse();
 
 #ifdef _DEBUG
 	fullscreen = false;
 #else
-	fullscreen = configHandler.GetInt("Fullscreen",1)!=0;
+	fullscreen = configHandler.GetInt("Fullscreen", 1) != 0;
 #endif
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -657,13 +658,20 @@ bool SpringApp::ParseCmdLine()
 	}
 
 	// flags
-	if (cmdline->result("window"))
+	if (cmdline->result("window")) {
 		fullscreen = false;
-	else if (cmdline->result("fullscreen"))
+	} else if (cmdline->result("fullscreen")) {
 		fullscreen = true;
+	}
 
-	if (cmdline->result("textureatlas"))
+	if (cmdline->result("textureatlas")) {
 		CTextureAtlas::debug = true;
+	}
+
+	string name;
+	if (cmdline->result("name", name)) {
+		configHandler.SetString("name", name);
+	}
 
 	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);

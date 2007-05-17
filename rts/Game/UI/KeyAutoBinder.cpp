@@ -30,6 +30,16 @@ extern "C" {
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 
+
+#if (LUA_VERSION_NUM < 500)
+#  define LUA_OPEN_LIB(L, lib) lib(L)
+#else
+#  define LUA_OPEN_LIB(L, lib) \
+     lua_pushcfunction((L), lib); \
+     lua_pcall((L), 0, 0, 0); 
+#endif
+
+
 static string IntToString(int value);
 static string BoolToString(bool value);
 static string FloatToString(float value);
@@ -66,12 +76,12 @@ CKeyAutoBinder::CKeyAutoBinder()
 	LoadCompareFunc();
 
 	// load the standard libraries
-	luaopen_base(L);
-	luaopen_io(L);
-	luaopen_math(L);
-	luaopen_table(L);
-	luaopen_string(L);
-	luaopen_debug(L);
+	LUA_OPEN_LIB(L, luaopen_base);
+	LUA_OPEN_LIB(L, luaopen_io);
+	LUA_OPEN_LIB(L, luaopen_math);
+	LUA_OPEN_LIB(L, luaopen_table);
+	LUA_OPEN_LIB(L, luaopen_string);
+	LUA_OPEN_LIB(L, luaopen_debug);
 
 	// load the spring libraries
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
