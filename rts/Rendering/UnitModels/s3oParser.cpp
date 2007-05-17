@@ -56,7 +56,7 @@ void CS3OParser::DeleteSS3O(SS3O* o)
 	delete o;
 }
 
-S3DOModel* CS3OParser::Load3DO(string name,float scale,int side)
+S3DOModel* CS3OParser::LoadS3O(string name,float scale,int side)
 {
 	if(name.find(".")==string::npos)
 		name+=".s3o";
