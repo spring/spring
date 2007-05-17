@@ -97,7 +97,7 @@ bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	float3 dif(pos-weaponPos);
 
 	float3 dir(GetWantedDir(dif));
-	
+
 	if(dir.SqLength() == 0){
 		return false;
 	}
@@ -152,7 +152,7 @@ void CCannon::Fire(void)
 #endif
 	int ttl = 0;
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
-	int predict = ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gs->gravity)
+	int predict = (int)ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gs->gravity)
 			: sqrt(diff.SqLength2D() / sqSpeed2D));
 	if(selfExplode) {
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);

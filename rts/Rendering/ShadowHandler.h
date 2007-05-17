@@ -19,7 +19,7 @@ public:
 
 	static bool canUseShadows;
 	static bool useFPShadows;
-	
+
 	bool drawShadows;
 	bool inShadowPass;
 	bool showShadowMap;

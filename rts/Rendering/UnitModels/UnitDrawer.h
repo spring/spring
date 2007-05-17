@@ -20,7 +20,7 @@ class CUnitDrawer
 public:
 	CUnitDrawer(void);
 	~CUnitDrawer(void);
-	
+
 	void Update(void);
 	void Draw(bool drawReflection,bool drawRefraction=false);
 
@@ -41,13 +41,13 @@ public:
 	CVertexArray* va;
 	bool advShading;
 
-	unsigned int unitVP;
-	unsigned int unitFP;
-	unsigned int unitShadowFP;
-	unsigned int unitS3oVP;
-	unsigned int unitS3oFP;
-	unsigned int unitShadowS3oFP;
-	unsigned int unitShadowGenVP;
+	unsigned int unitVP;             // vertex program for 3DO
+	unsigned int unitFP;             // fragment program for 3DO, shadows disabled
+	unsigned int unitShadowFP;       // fragment program for 3DO, shadows enabled
+	unsigned int unitS3oVP;          // vertex program for S3O
+	unsigned int unitS3oFP;          // fragment program for S3O, shadows disabled
+	unsigned int unitShadowS3oFP;    // fragment program for S3O, shadows enabled
+	unsigned int unitShadowGenVP;    // vertex program for shadow pass (both 3DO and S3O)
 	unsigned int boxtex;
 	unsigned int specularTex;
 

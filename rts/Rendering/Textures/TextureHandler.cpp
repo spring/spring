@@ -16,6 +16,7 @@
 #include "Platform/ConfigHandler.h"
 #include <set>
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/ShadowHandler.h"
 #include "Platform/errorhandler.h"
 #include "Game/Team.h"
 #include "mmgr.h"
@@ -80,7 +81,7 @@ CTextureHandler::CTextureHandler()
 		if(teamTexes.find(s2)==teamTexes.end()){
 			TexFile* tex=SAFE_NEW TexFile;
 			tex->tex.Load(s,30);
-			tex->name=s2;	
+			tex->name=s2;
 			texfiles[numfiles++]=tex;
 			totalSize+=tex->tex.xsize*tex->tex.ysize;
 		} else {
@@ -127,7 +128,7 @@ CTextureHandler::CTextureHandler()
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
 
-	unsigned char* tex=SAFE_NEW unsigned char[bigTexX*bigTexY*4];    
+	unsigned char* tex=SAFE_NEW unsigned char[bigTexX*bigTexY*4];
 	for(int a=0;a<bigTexX*bigTexY*4;++a){
 		tex[a]=128;
 	}
@@ -200,7 +201,7 @@ CTextureHandler::CTextureHandler()
 		unittex->xend=(foundx+curtex->xsize-0.5f)/(float)bigTexX;
 		unittex->yend=(foundy+curtex->ysize-0.5f)/(float)bigTexY;
 		textures[texfiles[a]->name]=unittex;
-		
+
 		curx+=curtex->xsize;
 		delete texfiles[a];
 
@@ -311,12 +312,15 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 
 void CTextureHandler::SetS3oTexture(int num)
 {
-	int tex=s3oTextures[num].tex1;
-	glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
-	if(unitDrawer->advShading){
-		glActiveTextureARB(GL_TEXTURE1_ARB);
+	if (shadowHandler->inShadowPass) {
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+	} else {
+		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
+		if(unitDrawer->advShading){
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		}
 	}
 }
 
@@ -350,7 +354,7 @@ TexFile* CTextureHandler::CreateTeamTex(string name, string name2,int team)
 			bm->mem[a*4+0]=(unsigned char)(min(255,int(teamCol[0]*lum*1.5f)));
 			bm->mem[a*4+1]=(unsigned char)(min(255,int(teamCol[1]*lum*1.5f)));
 			bm->mem[a*4+2]=(unsigned char)(min(255,int(teamCol[2]*lum*1.5f)));
-		}	
+		}
 	}
 	return tex;
 }

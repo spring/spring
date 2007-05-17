@@ -144,9 +144,7 @@ void CFeatureHandler::Draw()
 	vector<CFeature*> drawFar;
 
 	unitDrawer->SetupForUnitDrawing();
-
 	DrawRaw(0, &drawFar);
-
 	unitDrawer->CleanUpUnitDrawing();
 
 	unitDrawer->DrawQuedS3O();
@@ -173,7 +171,11 @@ void CFeatureHandler::DrawShadowPass()
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	DrawRaw(1, 0);
+	unitDrawer->SetupForUnitDrawing();
+	DrawRaw(1, NULL);
+	unitDrawer->CleanUpUnitDrawing();
+
+	unitDrawer->DrawQuedS3O();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable( GL_VERTEX_PROGRAM_ARB );
@@ -257,7 +259,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
-	
+
 	luaCallIns.FeatureCreated(feature);
 
 	return ret;
@@ -489,7 +491,7 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 			float sqDist=(f->pos-camera->pos).SqLength2D();
 			float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
 			if(sqDist<farLength){
-				if(!f->model->textureType || shadowHandler->inShadowPass){
+				if(!f->model->textureType) {
 					f->DrawS3O ();
 				} else {
 					unitDrawer->QueS3ODraw(f,f->model->textureType);
