@@ -23,6 +23,8 @@ Lua-5.1.2 source code modifications:
 
   5. Moved the *.c files to *.cpp for C++ compilation
 
+  6. Swapped <math.h> includes with "float3.h" includes  (for streflop) 
+
   6. GZIP'ed the following files:
      doc/*
      etc/*
