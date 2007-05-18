@@ -9,11 +9,7 @@
 #include <cctype>
 using namespace std;
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaHandle.h"
 #include "Game/UI/LuaUI.h"

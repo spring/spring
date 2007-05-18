@@ -19,11 +19,9 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+
+#include "LuaInclude.h"
+
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaDisplayLists.h"

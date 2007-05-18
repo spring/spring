@@ -18,7 +18,8 @@
 ** Hence even when the load factor reaches 100%, performance remains good.
 */
 
-#include <math.h>
+//SPRING#include <math.h>
+#include "float3.h"
 #include <string.h>
 
 #define ltable_c

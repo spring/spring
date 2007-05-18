@@ -12,11 +12,7 @@
 #include <map>
 #include <cctype>
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaDefs.h"
 #include "LuaHandle.h"

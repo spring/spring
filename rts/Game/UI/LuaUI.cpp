@@ -11,11 +11,7 @@
 #include <SDL_timer.h>
 using namespace std;
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaUtils.h"

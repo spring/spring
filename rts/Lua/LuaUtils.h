@@ -15,9 +15,7 @@ using std::vector;
 
 #include "LuaHashString.h"
 
-extern "C" {
-	#include "lua.h"
-}
+#include "LuaInclude.h"
 
 class LuaUtils {
 	public:

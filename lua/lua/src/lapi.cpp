@@ -6,7 +6,8 @@
 
 
 #include <assert.h>
-#include <math.h>
+//SPRING#include <math.h>
+#include "float3.h"
 #include <stdarg.h>
 #include <string.h>
 
