@@ -180,10 +180,24 @@ static int math_max (lua_State *L) {
 }
 
 
+static int lua_streflop_random_seed = 0;
+
+
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
-  lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
+
+  // SPRING
+  // respect the original lua code that uses rand,
+  // and rand is auto-seeded always with the same value
+  if (lua_streflop_random_seed == 0) {
+    lua_streflop_random_seed = 1;
+    streflop::RandomInit(1);
+  }
+
+  lua_Number r =
+    streflop::Random<true, false, lua_Number>(lua_Number(0.0), lua_Number(1.0));
+
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
       lua_pushnumber(L, r);  /* Number between 0 and 1 */
@@ -209,7 +223,7 @@ static int math_random (lua_State *L) {
 
 
 static int math_randomseed (lua_State *L) {
-  /* srand(luaL_checkint(L, 1)); */
+  /* SPRING srand(luaL_checkint(L, 1)); */
   streflop::RandomInit(luaL_checkint(L, 1));
   return 0;
 }
@@ -248,10 +262,6 @@ static const luaL_Reg mathlib[] = {
 };
 
 
-#ifndef HUGE_VAL
-#define HUGE_VAL 1.0e38
-#endif // FIXME
-
 /*
 ** Open math library
 */
@@ -259,7 +269,7 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
-  lua_pushnumber(L, HUGE_VAL);
+  lua_pushnumber(L, streflop::SimplePositiveInfinity);
   lua_setfield(L, -2, "huge");
 #if defined(LUA_COMPAT_MOD)
   lua_getfield(L, -1, "fmod");
