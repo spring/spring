@@ -8,11 +8,7 @@
 #include <list>
 #include <cctype>
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaCob.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"

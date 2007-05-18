@@ -5,11 +5,7 @@
 
 #include "LuaConstGL.h"
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaUtils.h"
 #include "Rendering/GL/myGL.h"

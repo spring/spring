@@ -11,11 +11,7 @@
 
 #include "LuaSyncedTable.h"
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaHashString.h"
 #include "LuaUtils.h"

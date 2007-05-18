@@ -5,11 +5,7 @@
 
 #include "LuaCallInHandler.h"
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
 
 #include "LuaHandle.h"
 #include "LuaOpenGL.h"

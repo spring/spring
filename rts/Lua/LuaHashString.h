@@ -12,9 +12,7 @@
 using std::string;
 
 
-extern "C" {
-	#include "lua.h"
-}
+#include "LuaInclude.h"
 
 
 struct LuaHashString {

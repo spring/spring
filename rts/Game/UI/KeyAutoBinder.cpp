@@ -7,11 +7,8 @@
 
 #include <cctype>
 
-extern "C" {
-	#include "lua.h"
-	#include "lualib.h"
-	#include "lauxlib.h"
-}
+#include "LuaInclude.h"
+
 #include "KeyBindings.h"
 #include "SimpleParser.h"
 #include "Game/GameSetup.h"
