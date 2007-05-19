@@ -72,7 +72,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 
 	SetRadius(0.0f);
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,owner->team);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
 		if(model){
 			SetRadius(model->radius);
 		}
@@ -377,6 +377,6 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 
 void CMissileProjectile::DrawS3O(void)
 {
-	unitDrawer->SetS3OTeamColour(owner->team);
+	unitDrawer->SetS3OTeamColour(colorTeam);
 	DrawUnitPart();
 }

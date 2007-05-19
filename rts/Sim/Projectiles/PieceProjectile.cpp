@@ -41,7 +41,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(age),
-	CR_MEMBER(team)
+	CR_MEMBER(colorTeam)
 	));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
@@ -69,7 +69,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 		s3domodel=owner->model;
 		/* If we're part of an S3O unit, save this so we can
 		   draw with the right teamcolour. */
-		team=owner->team;
+		colorTeam=owner->team;
 	}
 
 	/* Don't store piece; owner may be a dying unit, so piece could be freed. */
@@ -353,7 +353,7 @@ void CPieceProjectile::DrawUnitPart(void)
 void CPieceProjectile::DrawS3O(void)
 {
 	/* TODO Hmm, S3O nuclear missile... might want to copy this into WeaponProjectile? */
-	unitDrawer->SetS3OTeamColour(team);
+	unitDrawer->SetS3OTeamColour(colorTeam);
 	DrawUnitPart();
 }
 

@@ -39,8 +39,9 @@ class CPieceProjectile : public CProjectile
 		float size;
 	};
 	OldInfo* oldInfos[8];
+
+	int colorTeam;
 	
-	int team;
 public:
 	CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO* piece, int flags,CUnit* owner,float radius);
 	virtual ~CPieceProjectile(void);

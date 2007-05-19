@@ -26,7 +26,8 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
 	CR_MEMBER(ttl),
-	CR_MEMBER(modelDispList)
+	CR_MEMBER(modelDispList),
+	CR_MEMBER(colorTeam)
 	));
 
 CWeaponProjectile::CWeaponProjectile()
@@ -35,6 +36,7 @@ CWeaponProjectile::CWeaponProjectile()
 	weaponDef=0;
 	target=0;
 	ttl=0;
+	colorTeam=0;
 	modelDispList=0;
 	interceptTarget=0;
 }
@@ -48,18 +50,25 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 	targeted(false),
 	interceptTarget(interceptTarget)
 {
-	if(target)
+	if (owner) {
+		colorTeam = owner->team;
+	}
+
+	if(target) {
 		AddDeathDependence(target);
+	}
 
 	if(interceptTarget){
 		interceptTarget->targeted=true;
 		AddDeathDependence(interceptTarget);
 	}
-	if(weaponDef->interceptedByShieldType)
+
+	if(weaponDef->interceptedByShieldType) {
 		interceptHandler.AddShieldInterceptableProjectile(this);
+	}
 
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,owner->team);
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
 		if(model){
 			s3domodel=model;
 			if(s3domodel->rootobject3do)
@@ -231,6 +240,6 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 void CWeaponProjectile::DrawS3O(void)
 {
-	unitDrawer->SetS3OTeamColour(owner->team);
+	unitDrawer->SetS3OTeamColour(colorTeam);
 	DrawUnitPart();
 }
