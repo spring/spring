@@ -34,6 +34,7 @@ public:
 protected:
 	float3 startpos;
 	int ttl;
+	int colorTeam;
 	unsigned int modelDispList;
 
 	bool TraveledRange();
