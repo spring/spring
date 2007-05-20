@@ -88,7 +88,7 @@ def generate(env):
 		('platform',          'Set to linux, freebsd or windows', None),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
-		('synccheck',         'Set to yes to enable sync checker & resyncer', False),
+		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('cpppath',           'Set path to extra header files', []),
@@ -260,7 +260,7 @@ def generate(env):
 
 		# Must come before the '-fvisibility=hidden' code.
 		bool_opt('syncdebug', False)
-		bool_opt('synccheck', False)
+		bool_opt('synccheck', True)
 		if env['syncdebug'] and env['synccheck']:
 			print "syncdebug and synccheck are mutually exclusive. Please choose one."
 			env.Exit(1)
