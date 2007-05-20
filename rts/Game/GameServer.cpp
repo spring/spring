@@ -155,7 +155,7 @@ void CGameServer::CheckSync()
 	// Make it clear this build isn't suitable for release.
 	if (!syncErrorFrame || (serverframenum - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
 		syncErrorFrame = serverframenum;
-//FIXME -- annoying as hell when you're using stdout		SendSystemMsg("Warning: Sync checking disabled!");
+		SendSystemMsg("Warning: Sync checking disabled!");
 	}
 #endif
 }
