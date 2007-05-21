@@ -586,6 +586,7 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetCollideStop()");
 	}
 	moveType->collideStop = lua_toboolean(L, 2);
+	return 0;
 }
 
 

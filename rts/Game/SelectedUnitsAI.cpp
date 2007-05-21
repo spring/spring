@@ -164,11 +164,11 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	//
 
 	if ((c.id == CMD_MOVE) && (c.params.size() == 6)) {
-		CalculateGroupData(player, (c.options & SHIFT_KEY));
+		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		MakeFrontMove(&c, player);
 
-		const bool groupSpeed = (c.options & CONTROL_KEY);
+		const bool groupSpeed = !!(c.options & CONTROL_KEY);
 		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
 			if(unit){
@@ -181,7 +181,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		}
 	}
 	else if ((c.id == CMD_MOVE) && (c.options & ALT_KEY)) {
-		CalculateGroupData(player, (c.options & SHIFT_KEY));
+		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
@@ -200,7 +200,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 
 		MakeFrontMove(&c, player);
 
-		const bool groupSpeed = (c.options & CONTROL_KEY);
+		const bool groupSpeed = !!(c.options & CONTROL_KEY);
 		for(ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
 			if(unit){
@@ -214,7 +214,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	}
 	else if ((c.options & CONTROL_KEY) &&
 	         ((c.id == CMD_MOVE) || (c.id == CMD_PATROL) || (c.id == CMD_FIGHT))) {
-		CalculateGroupData(player, (c.options & SHIFT_KEY));
+		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
 		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
@@ -470,7 +470,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		return;
 	}
 
-	const bool queueing = (cmd.options & SHIFT_KEY);
+	const bool queueing = !!(cmd.options & SHIFT_KEY);
 
 	// get the group center
 	float3 midPos(0.0f, 0.0f, 0.0f);

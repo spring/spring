@@ -242,10 +242,10 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
 	// push the options table
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   (cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  (cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", (cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", (cmd.options & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
 	// call the function
 	if (!RunCallIn(cmdStr, 6, 1)) {
@@ -532,10 +532,10 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	// push the options table
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   (cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  (cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", (cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", (cmd.options & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
 	// call the function
 	if (!RunCallIn(cmdStr, 6, 1)) {

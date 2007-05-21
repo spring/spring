@@ -37,7 +37,7 @@ void CMessages::Load()
 	} catch (const TdfParser::parse_error& e) {
 		// Show parse errors in the infolog.
 		logOutput.Print("%s:%d: %s", e.get_filename().c_str(), e.get_line(), e.what());
-	} catch (const content_error& e) {
+	} catch (const content_error&) {
 		// Ignore non-existant file.
 	}
 	loaded = true;

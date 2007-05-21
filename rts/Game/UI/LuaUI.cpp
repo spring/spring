@@ -490,10 +490,10 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 	// push the options table
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   cmd.options & ALT_KEY);
-	HSTR_PUSH_BOOL(L, "ctrl",  cmd.options & CONTROL_KEY);
-	HSTR_PUSH_BOOL(L, "shift", cmd.options & SHIFT_KEY);
-	HSTR_PUSH_BOOL(L, "right", cmd.options & RIGHT_MOUSE_KEY);
+	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
 	// call the function
 	if (!RunCallIn(cmdStr, 3, 1)) {
@@ -591,10 +591,10 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	HSTR_PUSH_BOOL(L, "alt",   keys[SDLK_LALT]);
-	HSTR_PUSH_BOOL(L, "ctrl",  keys[SDLK_LCTRL]);
-	HSTR_PUSH_BOOL(L, "meta",  keys[SDLK_LMETA]);
-	HSTR_PUSH_BOOL(L, "shift", keys[SDLK_LSHIFT]);
+	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
 
 	lua_pushboolean(L, isRepeat);
 
@@ -627,10 +627,10 @@ bool CLuaUI::KeyRelease(unsigned short key)
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	HSTR_PUSH_BOOL(L, "alt",   keys[SDLK_LALT]);
-	HSTR_PUSH_BOOL(L, "ctrl",  keys[SDLK_LCTRL]);
-	HSTR_PUSH_BOOL(L, "meta",  keys[SDLK_LMETA]);
-	HSTR_PUSH_BOOL(L, "shift", keys[SDLK_LSHIFT]);
+	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
 
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());

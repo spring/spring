@@ -245,10 +245,11 @@ bool CAICheats::GetProperty(int id, int property, void *data)
 
 bool CAICheats::GetValue(int id, void *data)
 {
-	switch (id) {
+	/*switch (id) {
 		default:
 			return false;
-	}
+	}*/
+	return false;
 }
 
 int CAICheats::HandleCommand (int commandId, void *data)

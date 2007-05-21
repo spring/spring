@@ -1421,7 +1421,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (action.extra.empty()) {
 			LuaOpenGL::SetSafeMode(!LuaOpenGL::GetSafeMode());
 		} else {
-			LuaOpenGL::SetSafeMode(atoi(action.extra.c_str()));
+			LuaOpenGL::SetSafeMode(!!atoi(action.extra.c_str()));
 		}
 	}
 	else if (cmd == "resbar") {
@@ -1701,7 +1701,6 @@ bool CGame::Draw()
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
-	int a;
 	std::string tempstring;
 
 	ph->UpdateTextures();

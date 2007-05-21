@@ -472,8 +472,8 @@ Glyph::Glyph(FT_Face& face, int _num) : num(_num), valid(false)
   oyn = oyp - ysize - (2 * stuffing);
 
   // texture coordinates
-  txn = -stuffing;
-  tyn = -stuffing;
+  txn = -(s32)stuffing;
+  tyn = -(s32)stuffing;
   txp = xsize + stuffing;
   typ = ysize + stuffing;
 

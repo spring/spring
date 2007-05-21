@@ -25,7 +25,7 @@ CModInfo::CModInfo(const char* modname)
 	}
 	if(allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		gu->teamNanospray = configHandler.GetInt ("TeamNanoSpray", 0);
+		gu->teamNanospray = !!configHandler.GetInt ("TeamNanoSpray", 0);
 	}
 
 	// Get the reclaim options for the mod

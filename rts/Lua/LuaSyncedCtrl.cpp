@@ -268,7 +268,6 @@ static inline CFeature* ParseFeature(lua_State* L,
                                      const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		char buf[256];
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = (int)lua_tonumber(L, index);
