@@ -32,3 +32,5 @@ Lua-5.1.2 source code modifications:
      src/lua.c
      src/luac.c
 
+  7. Changed the return type of lua_toboolean from int to bool to prevent
+     compiler performance warnings on Visual Studio 2005.
