@@ -902,8 +902,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		break;
 	case STANDINGMOVEORDERS:
+		return unit->moveState;
 		break;
 	case STANDINGFIREORDERS:
+		return unit->fireState;
 		break;
 	case HEALTH:
 		return (int) ((unit->health/unit->maxHealth)*100.0f);
@@ -1045,8 +1047,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 			unit->Activate();
 		break;
 	case STANDINGMOVEORDERS:
+		if (param >= 0 && param <= 2) unit->moveState = param;
 		break;
 	case STANDINGFIREORDERS:
+		if (param >= 0 && param <= 2) unit->fireState = param;
 		break;
 	case HEALTH:
 		break;
