@@ -878,7 +878,7 @@ void CFreeController::Update()
 	if (keys[SDLK_LSHIFT]) {
 		if (ctrlVelY > 0.0f) {
 			gndLock = false;
-		} else if ((gndOffset >= 0.0f) && (ctrlVelY < 0.0f) &&
+		} else if ((gndOffset > 0.0f) && (ctrlVelY < 0.0f) &&
 		           (pos.y < (gndHeight + gndOffset))) {
 			gndLock = true;
 		}
