@@ -641,14 +641,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\UI\LuaState.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\UI\LuaState.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\UI\LuaUI.cpp"
 					>
 				</File>
@@ -5138,16 +5130,8 @@
 					Name="src"
 					>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lapi.c"
+						RelativePath="..\..\..\lua\lua\src\lapi.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5162,16 +5146,54 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lcode.c"
+						RelativePath="..\..\..\lua\lua\src\lauxlib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\lbaselib.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\lcode.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5186,16 +5208,31 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ldebug.c"
+						RelativePath="..\..\..\lua\lua\src\ldblib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\ldebug.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5210,16 +5247,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ldo.c"
+						RelativePath="..\..\..\lua\lua\src\ldo.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5234,16 +5263,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ldump.c"
+						RelativePath="..\..\..\lua\lua\src\ldump.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5254,16 +5275,8 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lfunc.c"
+						RelativePath="..\..\..\lua\lua\src\lfunc.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5278,16 +5291,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lgc.c"
+						RelativePath="..\..\..\lua\lua\src\lgc.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5302,16 +5307,43 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\llex.c"
+						RelativePath="..\..\..\lua\lua\src\linit.cpp"
 						>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\liolib.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\llex.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5330,16 +5362,31 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lmem.c"
+						RelativePath="..\..\..\lua\lua\src\lmathlib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\lmem.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5354,16 +5401,31 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lobject.c"
+						RelativePath="..\..\..\lua\lua\src\loadlib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\lobject.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5378,16 +5440,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lopcodes.c"
+						RelativePath="..\..\..\lua\lua\src\lopcodes.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5402,16 +5456,20 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lparser.c"
+						RelativePath="..\..\..\lua\lua\src\loslib.cpp"
 						>
 						<FileConfiguration
-							Name="Debug|Win32"
+							Name="Release|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\lparser.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5426,16 +5484,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lstate.c"
+						RelativePath="..\..\..\lua\lua\src\lstate.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5450,16 +5500,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lstring.c"
+						RelativePath="..\..\..\lua\lua\src\lstring.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5474,16 +5516,31 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ltable.c"
+						RelativePath="..\..\..\lua\lua\src\lstrlib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\..\lua\lua\src\ltable.cpp"
+						>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5498,14 +5555,15 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ltests.c"
+						RelativePath="..\..\..\lua\lua\src\ltablib.cpp"
 						>
 						<FileConfiguration
 							Name="Debug|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
 						<FileConfiguration
@@ -5514,20 +5572,14 @@
 							<Tool
 								Name="VCCLCompilerTool"
 								UsePrecompiledHeader="0"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 							/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\ltm.c"
+						RelativePath="..\..\..\lua\lua\src\ltm.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5542,16 +5594,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lundump.c"
+						RelativePath="..\..\..\lua\lua\src\lundump.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5566,16 +5610,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lvm.c"
+						RelativePath="..\..\..\lua\lua\src\lvm.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5590,16 +5626,8 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\..\lua\lua\src\lzio.c"
+						RelativePath="..\..\..\lua\lua\src\lzio.cpp"
 						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
 							>
@@ -5613,190 +5641,18 @@
 						RelativePath="..\..\..\lua\lua\src\lzio.h"
 						>
 					</File>
-					<Filter
-						Name="lib"
+					<File
+						RelativePath="..\..\..\lua\lua\src\print.cpp"
 						>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\lauxlib.c"
+						<FileConfiguration
+							Name="Release|Win32"
 							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\lbaselib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\ldblib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\liolib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\lmathlib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\loadlib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\lstrlib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\ltablib.c"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-						<File
-							RelativePath="..\..\..\lua\lua\src\lib\streflop_gateway.cpp"
-							>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									UsePrecompiledHeader="0"
-								/>
-							</FileConfiguration>
-						</File>
-					</Filter>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+					</File>
 				</Filter>
 				<Filter
 					Name="include"
