@@ -252,6 +252,7 @@ bool SpringApp::Initialize ()
 	creg::System::InitializeClasses ();
 
 	// Initialize crash reporting
+#ifdef _WIN32
 #ifdef _CRASHRPT_H_
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
 	if (!GetInstance())
@@ -261,6 +262,7 @@ bool SpringApp::Initialize ()
 	}
 #else
 	CrashHandler::Install();
+#endif
 #endif
 
 	FileSystemHandler::Initialize(true);
