@@ -1427,10 +1427,10 @@ void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
 		if (ParseCustomCmdMods(copy, inMods, outMods)) {
 			if (CheckCustomCmdMods(rmb, inMods)) {
-				const bool tmpAlt   = keys[SDLK_LALT];
-				const bool tmpCtrl  = keys[SDLK_LCTRL];
-				const bool tmpMeta  = keys[SDLK_LMETA];
-				const bool tmpShift = keys[SDLK_LSHIFT];
+				const bool tmpAlt   = !!keys[SDLK_LALT];
+				const bool tmpCtrl  = !!keys[SDLK_LCTRL];
+				const bool tmpMeta  = !!keys[SDLK_LMETA];
+				const bool tmpShift = !!keys[SDLK_LSHIFT];
 				if (outMods.alt   == Required)  { keys[SDLK_LALT]   = 1; }
 				if (outMods.alt   == Forbidden) { keys[SDLK_LALT]   = 0; }
 				if (outMods.ctrl  == Required)  { keys[SDLK_LCTRL]  = 1; }
@@ -3427,7 +3427,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						if (cmdDesc.params.size() > 1) {
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 						}
-						DrawFront(button, maxSize, sizeDiv, onMinimap);
+						DrawFront(button, maxSize, sizeDiv, !!onMinimap);
 					}
 					break;
 				}
@@ -3733,7 +3733,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (unit == pointedAt) {
 				continue;
 			}
-			if ((onMinimap == 1) && (unit->unitDef->speed > 0.0f)) {
+			if (onMinimap && (unit->unitDef->speed > 0.0f)) {
 				continue;
 			}
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){

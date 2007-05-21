@@ -50,12 +50,9 @@
 #include <SDL_syswm.h>
 
 #ifdef WIN32
-	#ifdef __MINGW32__
-		#include "Platform/Win/CrashHandler.h"
-	#else
-		#include "CrashRpt.h"
-		#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
-	#endif
+	#include "Platform/Win/CrashHandler.h"
+	//#include "CrashRpt.h"
+	//#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
 	#include "Platform/Win/win32.h"
 	#include <winreg.h>
 	#include <direct.h>
@@ -210,7 +207,7 @@ SpringApp::~SpringApp()
 	creg::System::FreeClasses ();
 }
 
-#ifdef _MSC_VER
+#ifdef _CRASHRPT_H_
 /**
  * @brief crash callback
  * @return whether callback was successful
@@ -255,17 +252,16 @@ bool SpringApp::Initialize ()
 	creg::System::InitializeClasses ();
 
 	// Initialize crash reporting
-#ifdef _MSC_VER
+#ifdef _CRASHRPT_H_
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
 	if (!GetInstance())
 	{
 		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
 		return false;
 	}
-#endif // _MSC_VER
-#ifdef __MINGW32__
+#else
 	CrashHandler::Install();
-#endif // __MINGW32__
+#endif
 
 	FileSystemHandler::Initialize(true);
 

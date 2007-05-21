@@ -180,7 +180,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 								try {
 									TdfParser p( reinterpret_cast<char*>(buf), fsize );
 									ai.modData = GetModData(&p, "mod");
-								} catch (const TdfParser::parse_error& e) {
+								} catch (const TdfParser::parse_error&) {
 									// Silently ignore mods with parse errors
 								}
 								free(buf);

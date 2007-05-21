@@ -1045,7 +1045,7 @@ namespace terrain {
 
 		char *buffer=SAFE_NEW char[len];
 		fh.Read(buffer, len);
-        bool success = ilLoadL(IL_TYPE_UNKNOWN, buffer, len);
+        bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, len);
 		delete [] buffer;
 
 		if (!success) {

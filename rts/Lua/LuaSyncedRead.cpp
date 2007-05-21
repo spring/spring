@@ -264,7 +264,7 @@ static inline bool IsUnitVisible(const CUnit* unit)
 	if (readAllyTeam < 0) {
 		return fullRead;
 	}
-	return (unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR));
+	return !!(unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR));
 }
 
 
@@ -3055,7 +3055,6 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isnumber(L, index)) {
-		char buf[256];
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = (int)lua_tonumber(L, index);

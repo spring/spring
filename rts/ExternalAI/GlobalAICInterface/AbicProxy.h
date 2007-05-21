@@ -103,7 +103,7 @@ private:
 
     void *ai; // pointer to object returned by ai, which we pass as first parameter to each function call
 
-	typedef void *(* INITAI)( struct IAICallback *aicallback, int team );
+	typedef void *(* INITAI)( class IAICallback *aicallback, int team );
 	typedef void (* UNITCREATED )(void *ai, int unit);									//called when a new unit is created on ai team
 	typedef void (* UNITFINISHED )(void *ai, int unit);								//called when an unit has finished building
 	typedef void (* UNITDESTROYED )(void *ai, int unit,int attacker);								//called when a unit is destroyed

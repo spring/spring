@@ -93,7 +93,7 @@ TexEnvStage::TexEnvStage ()
 
 TexEnvSetupHandler::TexEnvSetupHandler()
 {
-	hasDot3 = GLEW_ARB_texture_env_dot3;
+	hasDot3 = !!GLEW_ARB_texture_env_dot3;
 
 	// Create white texture
 	glGenTextures (1, &whiteTexture);

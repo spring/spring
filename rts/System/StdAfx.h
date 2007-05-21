@@ -6,7 +6,7 @@
 #endif
 
 #ifdef _MSC_VER
-	#pragma warning (disable: 4530 4305 4244)
+	#pragma warning (disable: 4018 4244 4305 4530)
 /*
 Microsoft Visual C++ 7.1: MSC_VER = 1310
 Microsoft Visual C++ 7.0: MSC_VER = 1300

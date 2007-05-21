@@ -154,6 +154,7 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 		"A stacktrace has been written to:\n"
 		"%s\\infolog.txt", dir);
 	MessageBox(NULL, msg, "Spring: Unhandled exception", 0);
+	return 0;
 }
 
 /** Install crash handler. */

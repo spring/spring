@@ -376,7 +376,7 @@ namespace terrain {
 		if (components==1) fmt = IL_LUMINANCE;
 		ilTexImage(w,h,1,components,fmt,type,data);
 		filesystem.Remove(fn);
-		bool r=ilSaveImage((ILstring)fn);
+		bool r=!!ilSaveImage((ILstring)fn);
 		ilDeleteImages(1,&out);
 #endif
 	}

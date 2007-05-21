@@ -518,7 +518,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 	if (button == SDL_BUTTON_LEFT) {
 		if (showButtons && maximizeBox.Inside(x, y)) {
-			ToggleMaximized(keys[SDLK_LSHIFT]);
+			ToggleMaximized(!!keys[SDLK_LSHIFT]);
 			return;
 		}
 
@@ -1064,7 +1064,7 @@ void CMiniMap::DrawForReal()
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0) {
-		guihandler->DrawMapStuff(drawCommands);
+		guihandler->DrawMapStuff(!!drawCommands);
 	}
 
 	// draw unit ranges

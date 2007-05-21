@@ -74,7 +74,7 @@ LuaVFS::AccessMode LuaVFS::GetMode(lua_State* L, int index, bool synced)
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "Bad VFS access mode");
 	}
-	const AccessMode mode = (AccessMode)lua_tonumber(L, index);
+	const AccessMode mode = (AccessMode)(int)lua_tonumber(L, index);
 	if ((mode < 0) || (mode > LAST_MODE)) {
 		luaL_error(L, "Bad VFS access mode");
 	}
