@@ -19,5 +19,11 @@
   Delete "$INSTDIR\lobby\sidepics\arm.bmp"
   Delete "$INSTDIR\lobby\sidepics\core.bmp"
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
+  RmDir "$INSTDIR\lobby\cache\maps"
+  RmDir "$INSTDIR\lobby\cache\online"
+  RmDir "$INSTDIR\lobby\cache"
+  RmDir "$INSTDIR\lobby\logs"
+  RmDir "$INSTDIR\lobby\var"
+  RmDir "$INSTDIR\lobby"
 
 !endif ; !INSTALL

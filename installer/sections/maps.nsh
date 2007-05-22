@@ -10,5 +10,5 @@
   Delete "$INSTDIR\maps\FloodedDesert.*"
   Delete "$INSTDIR\maps\Mars.*"
   RmDir "$INSTDIR\maps\paths"
-  RMDir "$INSTDIR\maps"
+  RmDir "$INSTDIR\maps"
 !endif

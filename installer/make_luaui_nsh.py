@@ -79,6 +79,9 @@ print('')
 for d in dirs:
   for f in dirs[d]:
     print('  Delete "$INSTDIR\\' + osName(d) + osName(f) + '"')
+  print('  RmDir "$INSTDIR\\' + osName(d) + '"')
+print('')
+print('  RmDir "$INSTDIR\\LuaUI"')
 print('')
 
 print('!endif')

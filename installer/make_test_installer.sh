@@ -15,9 +15,13 @@ while [ ! -d installer ]; do
         cd ..
 done
 
-# TODO: code to d/l & extract extra files for installer
+# Got a revision argument?
 
-# Follows a slightly modified copy of make_test_installer.bat:
+if [ -z "$1" ]; then
+	echo "Usage: $0 revision-number"
+fi
+
+# A slightly modified copy of make_test_installer.bat follows:
 
 echo This will create the various installers for a TA Spring release
 echo .
@@ -27,17 +31,11 @@ echo Also remember to update the version string in GameVersion.h so that
 echo the correct .pdb can be identified!
 echo .
 
-if [ "$#" != "0" ]; then
-	echo Creating nightly installer of revision $1
-	defines="-DNIGHTLY_BUILD -DREVISION=$1"
-else
-	echo Creating test installer
-	defines="-DTEST_BUILD"
-fi
+echo Creating test installer
+makensis /V3 /DTEST_BUILD /DREVISION=$1 installer/taspring.nsi || exit 1
 
-echo .
-makensis -V3 -DNO_TOTALA -DMINGW $defines installer/taspring.nsi || exit 1
+echo Creating updating test installer
+makensis /V3 /DSP_UPDATE /DTEST_BUILD /DREVISION=$1 installer/taspring.nsi || exit 1
 
-echo .
 echo All done.. 
 echo If this is a public release, make sure to save this and tag CVS etc..
