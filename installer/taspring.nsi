@@ -71,13 +71,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 !define SP_OUTSUFFIX1 ""
 !endif
 
-!ifdef NO_TOTALA
-!define SP_OUTSUFFIX2 "_gpl"
-!else
-!define SP_OUTSUFFIX2 ""
-!endif
-
-OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}${SP_OUTSUFFIX2}.exe"
+OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
@@ -171,12 +165,11 @@ Done:
 FunctionEnd
 
 Section "Main application (req)" SEC_MAIN
-  SetOutPath "$INSTDIR"
-
 !ifdef SP_UPDATE
+!ifndef TEST_BUILD
   Call CheckVersion
 !endif
-
+!endif
   !define INSTALL
   !include "sections\main.nsh"
   !include "sections\luaui.nsh"
@@ -207,7 +200,6 @@ SectionEnd
 
 Section /o "Desktop shortcut" SEC_DESKTOP
   SetOutPath "$INSTDIR"
-
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
 

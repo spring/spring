@@ -16,26 +16,10 @@
 
   File "..\game\Luxi.ttf"
   File "..\game\SelectionEditor.exe"
-  File "..\game\settingstemplate.xml"
+  ;File "..\game\settingstemplate.xml"
 
   ; DLLs
-  ; File "..\game\zlib.dll"
-  Delete "$INSTDIR\zlib.dll"
-  ; File "..\game\7zxa.dll"
-  Delete "$INSTDIR\7zxa.dll"
-!ifdef MINGW
   File "..\mingwlibs\dll\*.dll"
-!else
-  File "..\game\zlibwapi.dll"
-  File "..\game\crashrpt.dll"
-  File "..\game\dbghelp.dll"
-  File "..\game\msvcp71.dll"
-  Delete "$INSTDIR\eaxac3.dll"
-  Delete "$INSTDIR\freetype6.dll"
-  Delete "$INSTDIR\glew32.dll"
-  Delete "$INSTDIR\openal32.dll"
-  Delete "$INSTDIR\zlib1.dll"
-!endif
 
   File "..\game\PALETTE.PAL"
   
@@ -70,8 +54,8 @@
 
 !ifndef SP_UPDATE
 
+; Default content
   SetOverWrite on
-  ; XTA
   SetOutPath "$INSTDIR\base"
 
 !ifndef NO_TOTALA
@@ -84,13 +68,10 @@
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
 
+; Default mod
+!ifndef NO_TOTALA
   SetOutPath "$INSTDIR\mods"
-
-; TODO: use MOD define?
-!ifdef NO_TOTALA
-  File "..\game\mods\NanoBlobs064.sdz"
-!else
-  File "..\game\mods\xtape.sd7"
+  File "..\game\mods\XTAPE.sd7"
 !endif
 
 !endif ; SP_UPDATE
@@ -106,8 +87,6 @@
   ; Main files
   Delete "$INSTDIR\spring.exe"
   Delete "$INSTDIR\spring.def"
-  Delete "$INSTDIR\bagge.fnt"
-  Delete "$INSTDIR\hpiutil.dll"
   Delete "$INSTDIR\luxi.ttf"
   Delete "$INSTDIR\PALETTE.PAL"
   Delete "$INSTDIR\SelectionEditor.exe"
@@ -117,23 +96,20 @@
   Delete "$INSTDIR\ctrlpanel.txt"
   Delete "$INSTDIR\settings.exe"
   Delete "$INSTDIR\settingstemplate.xml"
-  Delete "$INSTDIR\zlibwapi.dll"
-  Delete "$INSTDIR\crashrpt.dll"
-  Delete "$INSTDIR\dbghelp.dll"
-  Delete "$INSTDIR\DevIL.dll"
-  Delete "$INSTDIR\SDL.dll"
-  Delete "$INSTDIR\MSVCP71.dll"
-  Delete "$INSTDIR\MSVCR71.dll"
 
-  ; extra DLLs for mingw build
-  Delete "$INSTDIR\eaxac3.dll"
+  ; DLLs
+  Delete "$INSTDIR\DevIL.dll"
   Delete "$INSTDIR\freetype6.dll"
   Delete "$INSTDIR\glew32.dll"
-  Delete "$INSTDIR\openal32.dll"
+  Delete "$INSTDIR\ILU.dll"
+  Delete "$INSTDIR\ILUT.dll"
+  Delete "$INSTDIR\python24.dll"
+  Delete "$INSTDIR\python25.dll"
+  Delete "$INSTDIR\SDL.dll"
+  Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\zlib1.dll"
 
-  Delete "$INSTDIR\tower.sdu"
-  Delete "$INSTDIR\palette.pal"
+  Delete "$INSTDIR\PALETTE.PAL"
 
   ; Shaders
   Delete "$INSTDIR\shaders\*.fp"
@@ -153,26 +129,19 @@
   Delete "$INSTDIR\AI\Helper-libs\MexUpgraderAI.dll"
   Delete "$INSTDIR\AI\Helper-libs\EconomyAI.dll"
   Delete "$INSTDIR\AI\Helper-libs\ReportIdleAI.dll"
-  RMDir "$INSTDIR\AI\Helper-libs"
-  RMDir "$INSTDIR\AI"
+  RmDir "$INSTDIR\AI\Helper-libs"
+  RmDir "$INSTDIR\AI"
 
   ; Startscript
   Delete "$INSTDIR\startscripts\aistartscripttest.lua"
-  Delete "$INSTDIR\startscripts\testscript.lua"
   Delete "$INSTDIR\startscripts\cmdrscript.lua"
   Delete "$INSTDIR\startscripts\missionhelper.lua"
   Delete "$INSTDIR\startscripts\missiontest.lua"
+  Delete "$INSTDIR\startscripts\ordertroops.lua"
+  Delete "$INSTDIR\startscripts\testscript.lua"
   RmDir "$INSTDIR\startscripts"
 
-  ; Maps
-  Delete "$INSTDIR\maps\paths\SmallDivide.*"
-  Delete "$INSTDIR\maps\paths\Mars.*"
-  Delete "$INSTDIR\maps\SmallDivide.*"
-  Delete "$INSTDIR\maps\Mars.*"
-  RmDir "$INSTDIR\maps\paths"
-  RmDir "$INSTDIR\maps"
-
-  ; XTA + content
+  ; base content
 !ifndef NO_TOTALA
   Delete "$INSTDIR\base\tatextures_v062.sdz"
   Delete "$INSTDIR\base\tacontent_v2.sdz"
@@ -184,10 +153,11 @@
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
 
-; TODO: use mods variable?
-  Delete "$INSTDIR\mods\xtape.sd7"
-  Delete "$INSTDIR\mods\NanoBlobs064.sdz"
+  ; default mod
+!ifndef NO_TOTALA
+  Delete "$INSTDIR\mods\XTAPE.sd7"
   RmDir "$INSTDIR\mods"
+!endif
 
   ; Generated stuff from the installer
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
@@ -197,4 +167,6 @@
   Delete "$INSTDIR\ArchiveCacheV4.txt"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
+  Delete "$INSTDIR\demos\test.sdf"
+  RmDir "$INSTDIR\demos"
 !endif

@@ -1,6 +1,7 @@
-
 @echo off
-echo This will build the springcontent.sdz and bitmaps.sdz needed to run spring
+echo This will build game\base\springcontent.sdz and
+echo game\base\spring\bitmaps.sdz needed to run spring
+
 echo Creating bitmaps.sdz
 del /Q ..\..\base\spring\bitmaps.sdz
 cd bitmaps
