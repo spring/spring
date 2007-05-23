@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <string.h>
 #include "ArchiveBuffered.h"
 #include "mmgr.h"
 

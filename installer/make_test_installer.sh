@@ -18,7 +18,9 @@ done
 # Got a revision argument?
 
 if [ -z "$1" ]; then
-	echo "Usage: $0 revision-number"
+	REVISION=`svnversion | grep -o -E '[0-9]+'`
+else
+	REVISION=$1
 fi
 
 # A slightly modified copy of make_test_installer.bat follows:
@@ -32,10 +34,10 @@ echo the correct .pdb can be identified!
 echo .
 
 echo Creating test installer
-makensis /V3 /DTEST_BUILD /DREVISION=$1 installer/taspring.nsi || exit 1
+makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi || exit 1
 
 echo Creating updating test installer
-makensis /V3 /DSP_UPDATE /DTEST_BUILD /DREVISION=$1 installer/taspring.nsi || exit 1
+makensis -V3 -DSP_UPDATE -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi || exit 1
 
 echo All done.. 
 echo If this is a public release, make sure to save this and tag CVS etc..
