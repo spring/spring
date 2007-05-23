@@ -1,8 +1,9 @@
 
 #include "StdAfx.h"
 #include "LogOutput.h"
-#include <fstream>
 #include <cstdarg>
+#include <fstream>
+#include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
 
 
