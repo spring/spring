@@ -221,20 +221,19 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+	const float radius = luaL_optnumber(L, 2, unit->radius);
 	if (readAllyTeam < 0) {
 		if (!fullRead) {
 			lua_pushboolean(L, false);
 		} else {
-			lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
+			lua_pushboolean(L, camera->InView(unit->midPos, radius));
 		}
 	}
 	else {
-		if (unit->isCloaked) { 
-			lua_pushboolean(L, false);
-		} else if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
 			lua_pushboolean(L, false);
 		} else { // FIXME -- iconMode?
-			lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
+			lua_pushboolean(L, camera->InView(unit->midPos, radius));
 		}
 	}
 	return 1;	
@@ -573,7 +572,9 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	PUSH_ROSTER_ENTRY(number, gs->AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(number, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
-	PUSH_ROSTER_ENTRY(number, p->ping);
+	const float pingScale = (GAME_SPEED * gs->speedFactor);
+	const float pingSecs = float(p->ping - 1) / pingScale;
+	PUSH_ROSTER_ENTRY(number, pingSecs);
 }
 
 

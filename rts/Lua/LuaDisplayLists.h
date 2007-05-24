@@ -8,12 +8,22 @@
 #include <vector>
 using std::vector;
 
+#include "Rendering/GL/myGL.h"
+
 
 class CLuaDisplayLists {
 	public:
 		CLuaDisplayLists()
 		{
 			active.push_back(0);
+		}
+		
+		~CLuaDisplayLists()
+		{
+			// free the display lists
+			for (int i = 0; i < (int)active.size(); i++) {
+				glDeleteLists(active[i], 1);
+			}
 		}
 
 		void Clear()
@@ -25,7 +35,7 @@ class CLuaDisplayLists {
 
 		unsigned int GetCount() const { return active.size(); }
 		
-		unsigned int GetDList(unsigned int index)
+		GLuint GetDList(unsigned int index)
 		{
 			if ((index <= 0) || (index >= active.size())) {
 				return 0;
@@ -33,7 +43,7 @@ class CLuaDisplayLists {
 			return active[index];
 		}
 
-		unsigned int NewDList(unsigned int dlist)
+		unsigned int NewDList(GLuint dlist)
 		{
 			if (dlist == 0) {
 				return 0;
@@ -60,7 +70,7 @@ class CLuaDisplayLists {
 		}
 
 	private:
-		vector<unsigned int> active;
+		vector<GLuint> active;
 		vector<unsigned int> unused; // references slots in active
 };
 

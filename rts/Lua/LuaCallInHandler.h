@@ -73,6 +73,7 @@ class CLuaCallInHandler
 		void Update();
 
 		void DrawWorld();
+		void DrawWorldPreUnit();
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
@@ -119,6 +120,7 @@ class CLuaCallInHandler
 		CallInList listUpdate;
 
 		CallInList listDrawWorld;
+		CallInList listDrawWorldPreUnit;
 		CallInList listDrawWorldShadow;
 		CallInList listDrawWorldReflection;
 		CallInList listDrawWorldRefraction;

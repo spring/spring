@@ -418,44 +418,49 @@ void CSelectedUnits::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
 
-	glColor4fv(cmdColors.unitBox);
+	if (cmdColors.unitBox[3] > 0.0f) {
+		glColor4fv(cmdColors.unitBox);
 
-	glBegin(GL_QUADS);
-	set<CUnit*>::iterator ui;
-	if(selectedGroup!=-1){
-		for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
-			if((*ui)->isIcon)
-				continue;
-			float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
-			glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
-			glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
-			glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
-			glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
+		glBegin(GL_QUADS);
+		set<CUnit*>::iterator ui;
+		if(selectedGroup!=-1){
+			for(ui=grouphandler->groups[selectedGroup]->units.begin();ui!=grouphandler->groups[selectedGroup]->units.end();++ui){
+				if((*ui)->isIcon)
+					continue;
+				float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
+				glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
+				glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
+				glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
+				glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
+			}
+		} else {
+			for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+				if((*ui)->isIcon)
+					continue;
+				float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
+				glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
+				glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
+				glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
+				glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
+			}
 		}
-	} else {
-		for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-			if((*ui)->isIcon)
-				continue;
-			float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
-			glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
-			glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
-			glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
-			glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
-		}
+		glEnd();
 	}
-	glEnd();
 
 	// highlight queued build sites if we are about to build something
 	// (or old-style, whenever the shift key is being held down)
-	if (!selectedUnits.empty() &&
-	    ((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
-	     ((guihandler->inCommand >= 0) &&
-	      (guihandler->inCommand < guihandler->commands.size()) &&
-	      (guihandler->commands[guihandler->inCommand].id < 0)))) {
-		set<CBuilderCAI*>::const_iterator bi;
-		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
-			if ((*bi)->owner->team == gu->myTeam) {
-				(*bi)->DrawQuedBuildingSquares();
+	if (cmdColors.buildBox[3] > 0.0f) {
+		glColor4fv(cmdColors.buildBox);
+		if (!selectedUnits.empty() &&
+				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
+				 ((guihandler->inCommand >= 0) &&
+					(guihandler->inCommand < guihandler->commands.size()) &&
+					(guihandler->commands[guihandler->inCommand].id < 0)))) {
+			set<CBuilderCAI*>::const_iterator bi;
+			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
+				if ((*bi)->owner->team == gu->myTeam) {
+					(*bi)->DrawQuedBuildingSquares();
+				}
 			}
 		}
 	}

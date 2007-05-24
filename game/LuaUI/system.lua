@@ -47,6 +47,7 @@ if (System == nil) then
     debug = debug,
     table = table,
     string = string,
+    packange = package,
     coroutine = coroutine,
     
     --  

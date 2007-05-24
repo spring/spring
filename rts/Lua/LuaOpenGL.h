@@ -49,6 +49,10 @@ class LuaOpenGL {
 		static void ResetDrawWorld();
 		static void DisableDrawWorld();
 
+		static void EnableDrawWorldPreUnit();
+		static void ResetDrawWorldPreUnit();
+		static void DisableDrawWorldPreUnit();
+
 		static void EnableDrawWorldShadow();
 		static void ResetDrawWorldShadow();
 		static void DisableDrawWorldShadow();
@@ -102,6 +106,8 @@ class LuaOpenGL {
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
 
 	private:
+		static int HasExtension(lua_State* L);
+	
 		static int ConfigScreen(lua_State* L);
 
 		static int DrawMiniMap(lua_State* L);
@@ -127,21 +133,32 @@ class LuaOpenGL {
 		static int PolygonMode(lua_State* L);
 		static int PolygonOffset(lua_State* L);
 
-		static int Texture(lua_State* L);
 		static int Material(lua_State* L);
 		static int Color(lua_State* L);
 
 		static int LineWidth(lua_State* L);
 		static int PointSize(lua_State* L);
+		static int PointSprite(lua_State* L);
+		static int PointParameter(lua_State* L);
 
-		static int FreeTexture(lua_State* L);
+		static int Texture(lua_State* L);
+		static int CreateTexture(lua_State* L);
+		static int DeleteTexture(lua_State* L);
+		static int DeleteTextureFBO(lua_State* L);
 		static int TextureInfo(lua_State* L);
+		static int CopyToTexture(lua_State* L);
+		static int RenderToTexture(lua_State* L);
+		static int GenerateMipmap(lua_State* L);
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
+		static int MultiTexCoord(lua_State* L);
+		static int SecondaryColor(lua_State* L);
+		static int FogCoord(lua_State* L);
+		
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 		static int Text(lua_State* L);
@@ -162,12 +179,14 @@ class LuaOpenGL {
 		static int Translate(lua_State* L);
 		static int Scale(lua_State* L);
 		static int Rotate(lua_State* L);
+		static int Ortho(lua_State* L);
+		static int Frustum(lua_State* L);
 		static int PushMatrix(lua_State* L);
 		static int PopMatrix(lua_State* L);
 
-		static int ListCreate(lua_State* L);
-		static int ListRun(lua_State* L);
-		static int ListDelete(lua_State* L);
+		static int CreateList(lua_State* L);
+		static int CallList(lua_State* L);
+		static int DeleteList(lua_State* L);
 };
 
 

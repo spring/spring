@@ -10,9 +10,13 @@
 
 #include <string>
 #include <vector>
+#include <set>
 using std::string;
 using std::vector;
+using std::set;
 
+#include "LuaShaders.h"
+#include "LuaTextures.h"
 #include "LuaDisplayLists.h"
 
 
@@ -69,6 +73,9 @@ class CLuaHandle {
 		bool WantsToDie()      const { return killMe; }
 
 		const LuaCobCallback  GetCallback() { return cobCallback; }
+
+		CLuaShaders& GetShaders() { return shaders; }
+		CLuaTextures& GetTextures() { return textures; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 		virtual string LoadFile(const string& filename) const = 0;
@@ -115,6 +122,7 @@ class CLuaHandle {
 		void FeatureDestroyed(const CFeature* feature);
 
 		void DrawWorld();
+		void DrawWorldPreUnit();
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
@@ -165,6 +173,8 @@ class CLuaHandle {
 
 		LuaCobCallback cobCallback;
 
+		CLuaShaders shaders;
+		CLuaTextures textures;
 		CLuaDisplayLists displayLists;
 
 		struct CobCallbackData {
@@ -205,6 +215,12 @@ class CLuaHandle {
 		static const int&  GetActiveReadAllyTeam() { return activeReadAllyTeam; }
 		static const LuaCobCallback GetActiveCallback() {
 			return activeHandle->cobCallback;
+		}
+		static CLuaShaders& GetActiveShaders() {
+			return activeHandle->shaders;
+		}
+		static CLuaTextures& GetActiveTextures() {
+			return activeHandle->textures;
 		}
 		static CLuaDisplayLists& GetActiveDisplayLists() {
 			return activeHandle->displayLists;

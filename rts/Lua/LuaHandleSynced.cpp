@@ -115,6 +115,10 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	LUA_OPEN_LIB(L, luaopen_math);
 	LUA_OPEN_LIB(L, luaopen_table);
 	LUA_OPEN_LIB(L, luaopen_string);
+	//LUA_OPEN_LIB(L, luaopen_io);
+	//LUA_OPEN_LIB(L, luaopen_os);
+	//LUA_OPEN_LIB(L, luaopen_package);
+	//LUA_OPEN_LIB(L, luaopen_debug);
 
 	// delete some dangerous functions
 	lua_pushnil(L); lua_setglobal(L, "dofile");
@@ -336,6 +340,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	if (!SetupUnsyncedFunction("RecvFromSynced")      ||
 	    !SetupUnsyncedFunction("Update")              ||
 	    !SetupUnsyncedFunction("DrawWorld")           ||
+	    !SetupUnsyncedFunction("DrawWorldPreUnit")    ||
 	    !SetupUnsyncedFunction("DrawWorldShadow")     ||
 	    !SetupUnsyncedFunction("DrawWorldReflection") ||
 	    !SetupUnsyncedFunction("DrawWorldRefraction") ||

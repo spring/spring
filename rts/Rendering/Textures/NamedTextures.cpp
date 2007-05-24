@@ -54,6 +54,7 @@ bool CNamedTextures::Bind(const string& texName)
 	bool border  = false;
 	bool clamped = false;
 	bool nearest = false;
+	bool linear  = false;
 	bool invert  = false;
 	bool greyed  = false;
 	bool tint    = false;
@@ -65,6 +66,7 @@ bool CNamedTextures::Bind(const string& texName)
 			const char ch = filename[p];
 			if (ch == ':')      { break; }
 			else if (ch == 'n') { nearest = true; }
+			else if (ch == 'l') { linear  = true; }
 			else if (ch == 'i') { invert  = true; }
 			else if (ch == 'g') { greyed  = true; }
 			else if (ch == 'c') { clamped = true; }
@@ -139,7 +141,11 @@ bool CNamedTextures::Bind(const string& texName)
 		}
 	} else {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		if (linear) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		}
 		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
 											GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 	}

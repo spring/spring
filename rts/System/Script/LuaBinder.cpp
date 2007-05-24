@@ -166,10 +166,13 @@ CLuaBinder::CLuaBinder(void)
 
 	// Setup the lua global environment
 	luaopen_base(luaState);
+	//luaopen_package(luaState);
 	//luaopen_io(luaState);
+	//luaopen_os(luaState);
 	luaopen_string(luaState);
 	luaopen_table(luaState);
 	luaopen_math(luaState);
+	//luaopen_debug(luaState);
 
 	// Define the useful spring classes to lua
 	module(luaState)

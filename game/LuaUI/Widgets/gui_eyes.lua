@@ -79,8 +79,8 @@ local function MakeCircleList(type)
   end
   gl.Shape(type, elements)
 end
-local circleLineList = gl.ListCreate(MakeCircleList, GL.LINE_LOOP)
-local circlePolyList = gl.ListCreate(MakeCircleList, GL.TRIANGLE_FAN)
+local circleLineList = gl.CreateList(MakeCircleList, GL.LINE_LOOP)
+local circlePolyList = gl.CreateList(MakeCircleList, GL.TRIANGLE_FAN)
 
 
 function widget:GetConfigData(data)
@@ -110,18 +110,18 @@ function widget:SetConfigData(data)
   black[4]  = alpha
   UpdateGeometry(widgetHandler:GetViewSizes())
 
-  gl.ListDelete(circleLineList)
-  gl.ListDelete(circlePolyList)
-  circleLineList = gl.ListCreate(MakeCircleList, GL.LINE_LOOP)
-  circlePolyList = gl.ListCreate(MakeCircleList, GL.TRIANGLE_FAN)
+  gl.DeleteList(circleLineList)
+  gl.DeleteList(circlePolyList)
+  circleLineList = gl.CreateList(MakeCircleList, GL.LINE_LOOP)
+  circlePolyList = gl.CreateList(MakeCircleList, GL.TRIANGLE_FAN)
 end
 
 
 --------------------------------------------------------------------------------
 
 function widget:Shutdown()
-  gl.ListDelete(circleLineList)
-  gl.ListDelete(circlePolyList)
+  gl.DeleteList(circleLineList)
+  gl.DeleteList(circlePolyList)
 end
 
 
@@ -225,7 +225,7 @@ local function DrawLists(px, py, sx, sy, t)
   gl.Scale(sx, sy, 1)
   for k,v in pairs(t) do
     gl.Color(v[2])
-    gl.ListRun(v[1])
+    gl.CallList(v[1])
   end
   gl.PopMatrix()
 end

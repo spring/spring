@@ -111,11 +111,16 @@ local flexCallIns = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'DrawWorldPreUnit',
   'DrawWorldShadow',
   'DrawWorldReflection',
   'DrawWorldRefraction',
   'DrawInMiniMap'
 }
+local flexCallInMap = {}
+for _,ci in ipairs(flexCallIns) do
+  flexCallInMap[ci] = true
+end
 
 local callInLists = {
   'Shutdown',
@@ -614,8 +619,10 @@ end
 function widgetHandler:UpdateCallIn(name)
   local listName = name .. 'List'
   if ((table.getn(self[listName]) > 0) or
+      (not flexCallInMap[name]) or
       ((name == 'GotChatMsg')     and actionHandler.HaveChatAction()) or
       ((name == 'RecvFromSynced') and actionHandler.HaveSyncAction())) then
+    -- always assign these call-ins
     local selffunc = self[name]
     _G[name] = function(...)
       return selffunc(self, unpack(arg))
@@ -997,8 +1004,16 @@ function widgetHandler:DrawScreenItems()
 end
 
 
+function widgetHandler:DrawWorldPreUnit()
+  for _,w in ripairs(self.DrawWorldPreUnitList) do
+    w:DrawWorldPreUnit()
+  end
+  return
+end
+
+
 function widgetHandler:DrawWorldShadow()
-  for _,w in ipairs(self.DrawWorldShadowList) do
+  for _,w in ripairs(self.DrawWorldShadowList) do
     w:DrawWorldShadow()
   end
   return
@@ -1006,7 +1021,7 @@ end
 
 
 function widgetHandler:DrawWorldReflection()
-  for _,w in ipairs(self.DrawWorldReflectionList) do
+  for _,w in ripairs(self.DrawWorldReflectionList) do
     w:DrawWorldReflection()
   end
   return
@@ -1014,7 +1029,7 @@ end
 
 
 function widgetHandler:DrawWorldRefraction()
-  for _,w in ipairs(self.DrawWorldRefractionList) do
+  for _,w in ripairs(self.DrawWorldRefractionList) do
     w:DrawWorldRefraction()
   end
   return
@@ -1022,7 +1037,7 @@ end
 
 
 function widgetHandler:DrawInMiniMap(xSize, ySize)
-  for _,w in ipairs(self.DrawInMiniMapList) do
+  for _,w in ripairs(self.DrawInMiniMapList) do
     w:DrawInMiniMap(xSize, ySize)
   end
   return
@@ -1035,10 +1050,6 @@ end
 --
 
 function widgetHandler:KeyPress(key, mods, isRepeat)
-  if (self.actionHandler:KeyAction(true, key, mods, isRepeat)) then
-    return true
-  end
-
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
@@ -1046,6 +1057,11 @@ function widgetHandler:KeyPress(key, mods, isRepeat)
     end
     return true
   end
+
+  if (self.actionHandler:KeyAction(true, key, mods, isRepeat)) then
+    return true
+  end
+
   for _,w in ipairs(self.KeyPressList) do
     if (w:KeyPress(key, mods, isRepeat)) then
       return true
@@ -1056,10 +1072,6 @@ end
 
 
 function widgetHandler:KeyRelease(key, mods)
-  if (self.actionHandler:KeyAction(false, key, mods, false)) then
-    return true
-  end
-
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
@@ -1070,6 +1082,11 @@ function widgetHandler:KeyRelease(key, mods)
     end
     return true
   end
+
+  if (self.actionHandler:KeyAction(false, key, mods, false)) then
+    return true
+  end
+
   for _,w in ipairs(self.KeyReleaseList) do
     if (w:KeyRelease(key, mods)) then
       return true

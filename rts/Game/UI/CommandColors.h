@@ -48,6 +48,7 @@ class CCommandColors {
 
 		// the colors
 		const float* unitBox;
+		const float* buildBox;
 		const float* mouseBox;
 		// for command queue rendering
 		const float* start;
@@ -122,6 +123,7 @@ class CCommandColors {
 			rangeInterceptorOn_index,
 			rangeInterceptorOff_index,
 			unitBox_index,
+			buildBox_index,
 			mouseBox_index,
 			ColorCount
 		};

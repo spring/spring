@@ -49,12 +49,12 @@ end
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
-  cylList = gl.ListCreate(DrawCylinder, cylDivs)
+  cylList = gl.CreateList(DrawCylinder, cylDivs)
 end
 
 
 function widget:Shutdown()
-  gl.ListDelete(cylList)
+  gl.DeleteList(cylList)
 end
 
 
@@ -108,21 +108,15 @@ end
 
 
 local function HilightUnit(unitID)
-
   gl.DepthTest(true)
   gl.Color(1, 0, 0, 0.25)
-
-  gl.PushMatrix()
 
   gl.LogicOp(GL.SET)
   SetUnitColorMask(unitID)
   gl.Unit(unitID)
-  gl.Blending(true)
   gl.ColorMask(true, true, true, true)
   gl.LogicOp(false)
 
-  gl.PopMatrix()
-  
   gl.DepthTest(false)
 end
 
@@ -147,10 +141,10 @@ local function HilightFeature(featureID)
   gl.LogicOp(GL.INVERT)
 
   gl.Culling(GL.FRONT)
-  gl.ListRun(cylList)
+  gl.CallList(cylList)
 
   gl.Culling(GL.BACK)
-  gl.ListRun(cylList)
+  gl.CallList(cylList)
 
   gl.LogicOp(false)
   gl.Culling(false)
@@ -158,6 +152,10 @@ local function HilightFeature(featureID)
 
   gl.PopMatrix()
 end
+
+
+local GetMyPlayerID           = Spring.GetMyPlayerID
+local GetPlayerControlledUnit = Spring.GetPlayerControlledUnit
 
 
 function widget:DrawWorld()
@@ -168,10 +166,13 @@ function widget:DrawWorld()
   local mx, my = Spring.GetMouseState()
   local type, data = Spring.TraceScreenRay(mx, my)
 
-  if (type == 'unit') then
-    HilightUnit(data)
-  elseif (type == 'feature') then
+  if (type == 'feature') then
     HilightFeature(data)
+  elseif (type == 'unit') then
+    local unitID = GetPlayerControlledUnit(GetMyPlayerID())
+    if (data ~= unitID) then
+      HilightUnit(data)
+    end
   end
 end
               
