@@ -2504,6 +2504,8 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 						tex.wrap_t = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "wrap_r") {
 						tex.wrap_r = (GLenum)lua_tonumber(L, -1);
+					} else if (key == "format") {
+						tex.format = (GLenum)lua_tonumber(L, -1);
 					}
 				}
 				else if (lua_isboolean(L, -1)) {
