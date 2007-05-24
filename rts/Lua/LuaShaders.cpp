@@ -326,7 +326,7 @@ int CLuaShaders::UseShader(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int progID = luaL_checknumber(L, 1);
+	const int progID = (int)luaL_checknumber(L, 1);
 	if (progID == 0) {
 		glUseProgram(0);
 		lua_pushboolean(L, true);

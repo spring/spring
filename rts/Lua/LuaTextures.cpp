@@ -34,8 +34,6 @@ CLuaTextures::~CLuaTextures()
 
 string CLuaTextures::Create(const Texture& tex)
 {	
-	assert(tex.target == GL_TEXTURE_2D);
-
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 
@@ -43,10 +41,18 @@ string CLuaTextures::Create(const Texture& tex)
 	glGenTextures(1, &texID);
 	glBindTexture(tex.target, texID);
 
+	GLenum dataFormat = GL_RGBA;
+	if ((tex.format == GL_DEPTH_COMPONENT) ||
+	    (tex.format == GL_DEPTH_COMPONENT16) ||
+	    (tex.format == GL_DEPTH_COMPONENT24) ||
+	    (tex.format == GL_DEPTH_COMPONENT32)) {
+		dataFormat = GL_DEPTH_COMPONENT;
+	}
+
 	glClearErrors();
 	glTexImage2D(tex.target, 0, tex.format,
 	             tex.xsize, tex.ysize, tex.border,
-	             GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	             dataFormat, GL_UNSIGNED_BYTE, NULL);
 	const GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
