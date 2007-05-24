@@ -501,7 +501,7 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function SafeWrap(func)
+local function SafeWrap(func, funcName)
   local wh = widgetHandler
   return function(w, ...)
     local r = { pcall(func, w, unpack(arg)) }
@@ -509,9 +509,13 @@ local function SafeWrap(func)
       table.remove(r, 1)
       return unpack(r)
     else
+      if (funcName ~= 'Shutdown') then
+        widgetHandler:RemoveWidget(w)
+      else
+        Spring.Echo('Error in Shutdown()')
+      end
       local name = w.whInfo.name
-      widgetHandler:RemoveWidget(w)
-      Spring.Echo(r[2])
+      Spring.Echo(r[2]) -- print the error
       Spring.Echo('Removed widget: ' .. name)
       return nil
     end
@@ -531,10 +535,10 @@ local function SafeWrapWidget(widget)
 
   for _,ciName in ipairs(callInLists) do
     if (widget[ciName]) then
-      widget[ciName] = SafeWrap(widget[ciName])
+      widget[ciName] = SafeWrap(widget[ciName], ciName)
     end
     if (widget.Initialize) then
-      widget.Initialize = SafeWrap(widget.Initialize)
+      widget.Initialize = SafeWrap(widget.Initialize, 'Initialize')
     end
   end
 end

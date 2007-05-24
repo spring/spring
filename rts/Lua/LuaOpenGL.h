@@ -183,6 +183,7 @@ class LuaOpenGL {
 		static int Frustum(lua_State* L);
 		static int PushMatrix(lua_State* L);
 		static int PopMatrix(lua_State* L);
+		static int GetMatrixData(lua_State* L);
 
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);

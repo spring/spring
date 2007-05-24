@@ -201,7 +201,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Frustum);
 	REGISTER_LUA_CFUNC(PushMatrix);
 	REGISTER_LUA_CFUNC(PopMatrix);
-
+	REGISTER_LUA_CFUNC(GetMatrixData);
+    
 	REGISTER_LUA_CFUNC(CreateList);
 	REGISTER_LUA_CFUNC(CallList);
 	REGISTER_LUA_CFUNC(DeleteList);
@@ -2494,7 +2495,11 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 			if (lua_isstring(L, -2)) {
 				const string key = lua_tostring(L, -2);
 				if (lua_isnumber(L, -1)) {
-					if (key == "min_filter") {
+					if (key == "target") {
+						tex.target = (GLenum)lua_tonumber(L, -1);
+					} else if (key == "format") {
+						tex.format = (GLint)lua_tonumber(L, -1);
+					} else if (key == "min_filter") {
 						tex.min_filter = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "mag_filter") {
 						tex.mag_filter = (GLenum)lua_tonumber(L, -1);
@@ -2504,8 +2509,6 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 						tex.wrap_t = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "wrap_r") {
 						tex.wrap_r = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "format") {
-						tex.format = (GLenum)lua_tonumber(L, -1);
 					}
 				}
 				else if (lua_isboolean(L, -1)) {
@@ -2633,7 +2636,10 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 	const GLint    y =   (GLint)luaL_checknumber(L, 5);
 	const GLsizei  w = (GLsizei)luaL_checknumber(L, 6);
 	const GLsizei  h = (GLsizei)luaL_checknumber(L, 7);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, xoff, yoff, x, y, w, h);
+	const GLenum target = (GLenum)luaL_optnumber(L, 8, GL_TEXTURE_2D);
+	const GLenum level  = (GLenum)luaL_optnumber(L, 9, 0);
+
+	glCopyTexSubImage2D(target, level, xoff, yoff, x, y, w, h);
 
 	return 0;
 }
@@ -2958,6 +2964,38 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 
 	return 0;
 }
+
+
+int LuaOpenGL::GetMatrixData(lua_State* L)
+{
+	const GLenum type = (GLenum)luaL_checknumber(L, 1);
+	GLenum pname;
+	switch (type) {
+		case GL_PROJECTION: { pname = GL_PROJECTION_MATRIX; break; }
+		case GL_MODELVIEW:  { pname = GL_MODELVIEW_MATRIX;  break; }
+		case GL_TEXTURE:    { pname = GL_TEXTURE_MATRIX;    break; }
+		default: {
+			return 0;
+		}
+	}
+	GLfloat matrix[16];
+	glGetFloatv(pname, matrix);
+
+	if (lua_isnumber(L, 2)) {
+		const int index = (int)lua_tonumber(L, 2);
+		if ((index < 0) || (index >= 16)) {
+			return 0;
+		}
+		lua_pushnumber(L, matrix[index]);
+		return 1;
+	}
+		
+	for (int i = 0; i < 16; i++) {
+		lua_pushnumber(L, matrix[i]);
+	}
+	return 16;
+}
+
 
 /******************************************************************************/
 
