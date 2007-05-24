@@ -1,0 +1,210 @@
+#include "StdAfx.h"
+// LuaTextures.cpp: implementation of the CLuaTextures class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include "LuaTextures.h"
+
+#include "Rendering/GL/myGL.h"
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+CLuaTextures::CLuaTextures()
+{
+	lastCode = 0;
+}
+
+
+CLuaTextures::~CLuaTextures()
+{
+	map<string, Texture>::iterator it;
+	for (it = textures.begin(); it != textures.end(); ++it) {
+		const Texture& tex = it->second;
+		glDeleteTextures(1, &tex.id);
+		if (GLEW_EXT_framebuffer_object) {
+			glDeleteFramebuffersEXT(1, &tex.fbo);
+			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+		}
+	}
+	textures.clear();
+}
+
+
+string CLuaTextures::Create(const Texture& tex)
+{	
+	assert(tex.target == GL_TEXTURE_2D);
+	assert(tex.format == GL_RGBA8);
+
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(tex.target, texID);
+
+	glClearErrors();
+	glTexImage2D(tex.target, 0, tex.format,
+	             tex.xsize, tex.ysize, tex.border,
+	             GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	const GLenum err = glGetError();
+	if (err != GL_NO_ERROR) {
+		glDeleteTextures(1, &texID);
+		glBindTexture(GL_TEXTURE_2D, currentBinding);
+		return string("");
+	}
+
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, tex.wrap_t);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
+	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
+
+	glBindTexture(GL_TEXTURE_2D, currentBinding);
+
+	GLuint fbo = 0;
+	GLuint fboDepth = 0;
+
+	if (tex.fbo != 0) {
+		if (!GLEW_EXT_framebuffer_object) {
+			glDeleteTextures(1, &texID);
+			return string("");
+		}
+		GLint currentFBO;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
+
+		glGenFramebuffersEXT(1, &fbo);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+
+		if (tex.fboDepth != 0) {
+			glGenRenderbuffersEXT(1, &fboDepth);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, fboDepth);
+			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24,
+			                         tex.xsize, tex.ysize);
+			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+			                             GL_RENDERBUFFER_EXT, fboDepth);
+		}
+
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+		                          GL_TEXTURE_2D, texID, 0);
+
+		const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+		if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+			glDeleteTextures(1, &texID);
+			glDeleteFramebuffersEXT(1, &fbo);
+			glDeleteRenderbuffersEXT(1, &fboDepth);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+			return string("");
+		}
+
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+	}
+
+	lastCode++;
+	char buf[64];
+	SNPRINTF(buf, sizeof(buf), "%c%i", prefix, lastCode);
+	Texture newTex = tex;
+	newTex.id = texID;
+	newTex.name = buf;
+	newTex.fbo = fbo;
+	newTex.fboDepth = fboDepth;
+	textures[newTex.name] = newTex;
+
+	return newTex.name;
+}
+
+
+bool CLuaTextures::Bind(const string& name) const
+{	
+	map<string, Texture>::const_iterator it = textures.find(name);
+	if (it != textures.end()) {
+		const Texture& tex = it->second;
+		glBindTexture(tex.target, tex.id);
+		return true;
+	}
+	return false;
+}
+
+
+bool CLuaTextures::Free(const string& name)
+{
+	map<string, Texture>::iterator it = textures.find(name);
+	if (it != textures.end()) {
+		const Texture& tex = it->second;
+		glDeleteTextures(1, &tex.id);
+		if (GLEW_EXT_framebuffer_object) {
+			glDeleteFramebuffersEXT(1, &tex.fbo);
+			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+		}
+		textures.erase(it);
+		return true;
+	}
+	return false;
+}
+
+
+bool CLuaTextures::FreeFBO(const string& name)
+{
+	if (!GLEW_EXT_framebuffer_object) {
+		return false;
+	}
+	map<string, Texture>::iterator it = textures.find(name);
+	if (it == textures.end()) {
+		return false;
+	}
+	Texture& tex = it->second;
+	glDeleteFramebuffersEXT(1, &tex.fbo);
+	glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+	tex.fbo = 0;
+	tex.fboDepth = 0;
+	return true;
+}
+
+
+void CLuaTextures::FreeAll()
+{
+	map<string, Texture>::iterator it;
+	for (it = textures.begin(); it != textures.end(); ++it) {
+		const Texture& tex = it->second;
+		glDeleteTextures(1, &tex.id);
+		if (GLEW_EXT_framebuffer_object) {
+			glDeleteFramebuffersEXT(1, &tex.fbo);
+			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+		}
+	}
+	textures.clear();
+}
+
+
+bool CLuaTextures::GenerateMipmap(const string& name)
+{
+	if (!glGenerateMipmapEXT) {
+		return false;
+	}
+	map<string, Texture>::const_iterator it = textures.find(name);
+	if (it == textures.end()) {
+		return false;
+	}
+	const Texture& tex = it->second;
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+	glBindTexture(GL_TEXTURE_2D, tex.id);
+	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, currentBinding);
+	return true;
+}
+
+
+const CLuaTextures::Texture* CLuaTextures::GetInfo(const string& name) const
+{
+	map<string, Texture>::const_iterator it = textures.find(name);
+	if (it != textures.end()) {
+		return &(it->second);
+	}
+	return NULL;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/

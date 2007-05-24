@@ -53,11 +53,6 @@ CLuaHandle::~CLuaHandle()
 		L = NULL;
 	}
 
-	// free the display lists
-	for (int i = 0; i < (int)displayLists.GetCount(); i++) {
-		glDeleteLists(displayLists.GetDList(i), 1);
-	}
-	
 	if (this == activeHandle) {
 		activeHandle = NULL;
 	}
@@ -586,6 +581,26 @@ void CLuaHandle::DrawWorld()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorld");
+	if (!LoadDrawCallIn(cmdStr)) {
+		lua_settop(L, 0);
+		return;
+	}
+
+	synced = false;
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
+
+	return;
+}
+
+
+void CLuaHandle::DrawWorldPreUnit()
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("DrawWorldPreUnit");
 	if (!LoadDrawCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;

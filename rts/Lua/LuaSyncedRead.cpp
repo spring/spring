@@ -1082,7 +1082,9 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushboolean(L, player->spectator);
 	lua_pushnumber(L, player->team);
 	lua_pushnumber(L, gs->AllyTeam(player->team));
-	lua_pushnumber(L, player->ping);
+	const float pingScale = (GAME_SPEED * gs->speedFactor);
+	const float pingSecs = float(player->ping - 1) / pingScale;
+	lua_pushnumber(L, pingSecs);
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushstring(L, player->countryCode.c_str());
 
@@ -3287,7 +3289,8 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	lua_pushnumber(L, tt.kbotSpeed);
 	lua_pushnumber(L, tt.hoverSpeed);
 	lua_pushnumber(L, tt.shipSpeed);
-	return 7;
+	lua_pushboolean(L, !!tt.receiveTracks);
+	return 8;
 }
 
 

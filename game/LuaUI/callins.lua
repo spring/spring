@@ -62,6 +62,7 @@ OneShot("FeatureCreated")
 OneShot("FeatureDestroyed")
 
 OneShot("DrawWorld")
+OneShot("DrawWorldPreUnit")
 OneShot("DrawWorldShadow")
 OneShot("DrawWorldReflection")
 OneShot("DrawWorldRefraction")

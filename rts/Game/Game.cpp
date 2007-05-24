@@ -1744,6 +1744,7 @@ bool CGame::Draw()
 	if(!readmap->voidWater && water->drawSolid)
  		water->Draw();
 
+	luaCallIns.DrawWorldPreUnit();
 	selectedUnits.Draw();
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
@@ -1775,6 +1776,7 @@ bool CGame::Draw()
 
 	inMapDrawer->Draw();
 
+	// underwater overlay
 	if (camera->pos.y < 0.0f) {
 		const float3& cpos = camera->pos;
 		const float vr = gu->viewRange * 0.5f;
@@ -1809,19 +1811,22 @@ bool CGame::Draw()
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
 
-	if(shadowHandler->drawShadows && shadowHandler->showShadowMap)
+	if (shadowHandler->drawShadows && shadowHandler->showShadowMap) {
 		shadowHandler->DrawShadowTex();
+	}
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLoadIdentity();
 
+	// underwater overlay, part 2
 	if (camera->pos.y < 0.0f) {
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
 		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 	}
+
 	luaCallIns.DrawScreen();
 
 	if(mouse->locked){

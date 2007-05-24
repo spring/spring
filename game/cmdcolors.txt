@@ -5,6 +5,8 @@
 
 unitBoxLineWidth  1.49
 unitBox           0.0  1.0  0.0  1.0
+buildBox          0.0  1.0  0.0  1.0
+buildBoxesOnShift 1
 
 
 ////////////////////////////////////////////////////////////////
@@ -29,7 +31,6 @@ mouseBoxBlendDst   one_minus_src_alpha
 //
 
 alwaysDrawQueue   0
-buildBoxesOnShift 1
 
 useQueueIcons     1
 queueIconAlpha    0.5   

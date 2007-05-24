@@ -119,16 +119,16 @@ local function LoadNewModel(name)
   -- make the display lists
   local t1 = Spring.GetTimer()
   for i,obj in ipairs(objs) do
-    local listNoMat  = gl.ListCreate(obj.Draw, true, useDepthMask)
-    local listUseMat = gl.ListCreate(obj.Draw, false, useDepthMask)
+    local listNoMat  = gl.CreateList(obj.Draw, true, useDepthMask)
+    local listUseMat = gl.CreateList(obj.Draw, false, useDepthMask)
     print("ListIDs = " .. listUseMat .. " " .. listNoMat)
     local tbl = {}
     tbl.name = obj.name
-    tbl.Draw      = function() gl.ListRun(listUseMat) end
-    tbl.DrawNoMat = function() gl.ListRun(listNoMat) end
+    tbl.Draw      = function() gl.CallList(listUseMat) end
+    tbl.DrawNoMat = function() gl.CallList(listNoMat) end
     tbl.Free = function()
-      gl.ListDelete(listNoMat)
-      gl.ListDelete(listUseMat)
+      gl.DeleteList(listNoMat)
+      gl.DeleteList(listUseMat)
     end
     displayLists[i] = tbl
   end

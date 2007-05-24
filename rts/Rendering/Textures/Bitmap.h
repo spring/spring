@@ -22,7 +22,7 @@ public:
 
 	virtual ~CBitmap();
 
-	void Alloc(int w,int y);
+	void Alloc(int w,int h);
 	bool Load(string const& filename, unsigned char defaultAlpha=255);
 	bool LoadGrayscale(string const& filename);
 	void Save(string const& filename);

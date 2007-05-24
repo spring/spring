@@ -91,7 +91,7 @@ local function MakeDisplayLists(fontSpecs)
   local xs = fontSpecs.xTexSize
   local ys = fontSpecs.yTexSize
   for _,gi in pairs(fontSpecs.glyphs) do
-    local list = gl.ListCreate(function ()
+    local list = gl.CreateList(function ()
       gl.TexRect(gi.oxn, gi.oyn, gi.oxp, gi.oyp,
                  gi.txn / xs, 1.0 - (gi.tyn / ys),
                  gi.txp / xs, 1.0 - (gi.typ / ys))
@@ -116,7 +116,7 @@ local function MakeOutlineDisplayLists(fontSpecs)
     local txp = gi.xmax / tw
     local typ = gi.ymin / th
     
-    local list = gl.ListCreate(function ()
+    local list = gl.CreateList(function ()
       gl.Translate(gi.initDist, 0, 0)
 
       gl.Color(0, 0, 0, 0.75)
@@ -201,9 +201,9 @@ local function RawDraw(text)
     local c = strbyte(text, i)
     local list = lists[c]
     if (list) then
-      gl.ListRun(list)
+      gl.CallList(list)
     else
-      gl.ListRun(lists[strbyte(" ", 1)])
+      gl.CallList(lists[strbyte(" ", 1)])
     end
   end
 end
@@ -245,7 +245,7 @@ local function Draw(text, x, y)
 
   local cacheTextData = activeFont.cache[text]
   if (not cacheTextData) then
-    local textList = gl.ListCreate(function()
+    local textList = gl.CreateList(function()
       gl.Texture(activeFont.image)
       RawColorDraw(text)
       gl.Texture(false)
@@ -257,7 +257,7 @@ local function Draw(text, x, y)
   end
 
   if (not x) then
-    gl.ListRun(cacheTextData[1])
+    gl.CallList(cacheTextData[1])
   else
     gl.PushMatrix()
     if (useFloor) then
@@ -265,7 +265,7 @@ local function Draw(text, x, y)
     else
       gl.Translate(x, y, 0)
     end
-    gl.ListRun(cacheTextData[1])
+    gl.CallList(cacheTextData[1])
     gl.PopMatrix()
   end
 end
@@ -389,7 +389,7 @@ local function FreeCache(fontName)
     return
   end
   for text,data in pairs(font.cache) do
-    gl.ListDelete(data[1])
+    gl.DeleteList(data[1])
   end
 end
 
@@ -401,12 +401,12 @@ local function FreeFont(fontName)
   end
 
   for _,list in pairs(font.lists) do
-    gl.ListDelete(list)
+    gl.DeleteList(list)
   end
   for text,data in pairs(font.cache) do
-    gl.ListDelete(data[1])
+    gl.DeleteList(data[1])
   end
-  gl.FreeTexture(font.image)
+  gl.DeleteTexture(font.image)
 
   fonts[font.name] = nil
 end
@@ -430,7 +430,7 @@ local function Update()
     local killList = {}
     for text,data in pairs(font.cache) do
       if (data[2] < killTime) then
-        gl.ListDelete(data[1])
+        gl.DeleteList(data[1])
         table.insert(killList, text)
         print(fontName .. " removed string list(" .. data[1] .. ") " .. text)
       end

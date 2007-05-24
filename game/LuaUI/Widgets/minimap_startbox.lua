@@ -45,7 +45,7 @@ function widget:Initialize()
     return
   end
   -- flip and scale  (using x & y for gl.Rect())
-  xformList = gl.ListCreate(function()
+  xformList = gl.CreateList(function()
     gl.LoadIdentity()
     gl.Translate(0, 1, 0)
     gl.Scale(1 / msx, -1 / msz, 1)
@@ -54,7 +54,7 @@ end
 
 
 function widget:Shutdown()
-  gl.ListDelete(xformList)
+  gl.DeleteList(xformList)
 end
 
 
@@ -68,7 +68,7 @@ function widget:DrawInMiniMap(sx, sz)
   end
 
   gl.PushMatrix()
-  gl.ListRun(xformList)
+  gl.CallList(xformList)
 
   gl.LineWidth(1.49)
 

@@ -46,6 +46,7 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["Update"]              = &listUpdate;
 
 	callInMap["DrawWorld"]           = &listDrawWorld;
+	callInMap["DrawWorldPreUnit"]    = &listDrawWorldPreUnit;
 	callInMap["DrawWorldShadow"]     = &listDrawWorldShadow;
 	callInMap["DrawWorldReflection"] = &listDrawWorldReflection;
 	callInMap["DrawWorldRefraction"] = &listDrawWorldRefraction;
@@ -97,6 +98,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(Update);
 
 	ADDHANDLE(DrawWorld);
+	ADDHANDLE(DrawWorldPreUnit);
 	ADDHANDLE(DrawWorldShadow);
 	ADDHANDLE(DrawWorldReflection);
 	ADDHANDLE(DrawWorldRefraction);
@@ -138,6 +140,7 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listUpdate, lh);
 
 	ListRemove(listDrawWorld, lh);
+	ListRemove(listDrawWorldPreUnit, lh);
 	ListRemove(listDrawWorldShadow, lh);
 	ListRemove(listDrawWorldReflection, lh);
 	ListRemove(listDrawWorldRefraction, lh);
@@ -159,6 +162,7 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 {
 	if ((ciName == "Update")              ||
 	    (ciName == "DrawWorld")           ||
+	    (ciName == "DrawWorldPreUnit")    ||
 	    (ciName == "DrawWorldShadow")     ||
 	    (ciName == "DrawWorldReflection") ||
 	    (ciName == "DrawWorldRefraction") ||
@@ -282,6 +286,7 @@ void CLuaCallInHandler::Update()
   }
 
 DRAW_CALLIN(World)
+DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
