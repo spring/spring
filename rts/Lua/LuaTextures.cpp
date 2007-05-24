@@ -35,7 +35,6 @@ CLuaTextures::~CLuaTextures()
 string CLuaTextures::Create(const Texture& tex)
 {	
 	assert(tex.target == GL_TEXTURE_2D);
-	assert(tex.format == GL_RGBA8);
 
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);

@@ -63,6 +63,11 @@ CALL-OUTS:
 
 - added GetGameSpeed() call-out
 
+- renamed gl.ListRun     to gl.CallList
+- renamed gl.ListCreate  to gl.CreateList
+- renamed gl.ListDelete  to gl.DeleteList
+- renamed gl.FreeTexture to gl.DeleteTexture
+
 - renamed SelectUnitsByKeys()   to SelectUnitMap()
 - renamed SelectUnitsByValues() to SelectUnitArray()
 
