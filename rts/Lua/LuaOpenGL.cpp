@@ -2537,6 +2537,9 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 
 int LuaOpenGL::DeleteTexture(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isstring(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.DeleteTexture()");
@@ -2554,6 +2557,9 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 
 int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
 	const string texture = luaL_checkstring(L, 1);
 	CLuaTextures& textures = CLuaHandle::GetActiveTextures();
 	lua_pushboolean(L, textures.FreeFBO(texture));
@@ -3062,6 +3068,9 @@ int LuaOpenGL::CallList(lua_State* L)
 
 int LuaOpenGL::DeleteList(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.DeleteList(list)");

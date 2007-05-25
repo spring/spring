@@ -31,9 +31,6 @@
 
 - COB test gadget
 
-- Shader reversions for reflection and refraction
-  (shadows probably don't require it)
-
 - GL_TEXTURE_ENV_MODE control for multitex (for non shaders, worth the bother?)
 
 

@@ -167,6 +167,163 @@ int CLuaShaders::GetShaderLog(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static int ParseIntArray(lua_State* L, int* array, int size)
+{
+	if (!lua_istable(L, -1)) {
+		return -1;
+	}
+	const int table = lua_gettop(L);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = (int)lua_tonumber(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+
+
+static int ParseFloatArray(lua_State* L, float* array, int size)
+{
+	if (!lua_istable(L, -1)) {
+		return -1;
+	}
+	const int table = lua_gettop(L);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = (float)lua_tonumber(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+
+
+static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
+{
+	lua_pushstring(L, "uniform");
+	lua_gettable(L, index);
+	if (lua_istable(L, -1)) {
+		const int table = lua_gettop(L);
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2)) {
+				const string name = lua_tostring(L, -2);
+				const GLint loc = glGetUniformLocation(progName, name.c_str());
+				if (loc >= 0) {
+					if (lua_isnumber(L, -1)) {
+						const float value = (float)lua_tonumber(L, -1);
+						glUniform1f(loc, value);
+					}
+					else if (lua_istable(L, -1)) {
+						float a[4];
+						const int count = ParseFloatArray(L, a, 4);
+						switch (count) {
+							case 1: { glUniform1f(loc, a[0]);                   break; }
+							case 2: { glUniform2f(loc, a[0], a[1]);             break; }
+							case 3: { glUniform3f(loc, a[0], a[1], a[2]);       break; }
+							case 4: { glUniform4f(loc, a[0], a[1], a[2], a[3]); break; }
+						}
+					}
+				}
+			}				
+		}
+	}
+	lua_pop(L, 1);
+	return true;
+}
+
+
+static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
+{
+	lua_pushstring(L, "uniformInt");
+	lua_gettable(L, index);
+	if (lua_istable(L, -1)) {
+		const int table = lua_gettop(L);
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2)) {
+				const string name = lua_tostring(L, -2);
+				const GLint loc = glGetUniformLocation(progName, name.c_str());
+				if (loc >= 0) {
+					if (lua_isnumber(L, -1)) {
+						const int value = (int)lua_tonumber(L, -1);
+						glUniform1i(loc, value);
+					}
+					else if (lua_istable(L, -1)) {
+						int a[4];
+						const int count = ParseIntArray(L, a, 4);
+						switch (count) {
+							case 1: { glUniform1i(loc, a[0]);                   break; }
+							case 2: { glUniform2i(loc, a[0], a[1]);             break; }
+							case 3: { glUniform3i(loc, a[0], a[1], a[2]);       break; }
+							case 4: { glUniform4i(loc, a[0], a[1], a[2], a[3]); break; }
+						}
+					}
+				}
+			}				
+		}
+	}
+	lua_pop(L, 1);
+	return true;
+}
+
+
+static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
+{
+	lua_pushstring(L, "uniformMatrix");
+	lua_gettable(L, index);
+	if (lua_istable(L, -1)) {
+		const int table = lua_gettop(L);
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isstring(L, -2)) {
+				const string name = lua_tostring(L, -2);
+				const GLint loc = glGetUniformLocation(progName, name.c_str());
+				if (loc >= 0) {
+					if (lua_istable(L, -1)) {
+						float a[16];
+						const int count = ParseFloatArray(L, a, 16);
+						switch (count) {
+							case (2 * 2): { glUniformMatrix2fv(loc, 1, GL_FALSE, a); break; }
+							case (3 * 3): { glUniformMatrix3fv(loc, 1, GL_FALSE, a); break; }
+							case (4 * 4): { glUniformMatrix4fv(loc, 1, GL_FALSE, a); break; }
+						}
+					}
+				}
+			}				
+		}
+	}
+	lua_pop(L, 1);
+	return true;
+}
+
+
+static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
+{
+	GLint currentProgram;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+
+	glUseProgram(progName);
+
+	const bool success = ParseUniformTable(L, index, progName)    &&
+	                     ParseUniformIntTable(L, index, progName) &&
+	                     ParseUniformMatrixTable(L, index, progName);
+
+	glUseProgram(currentProgram);
+
+	return success;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 static GLuint CompileObject(const vector<string>& sources, GLenum type,
                             bool& success)
 {
@@ -307,6 +464,11 @@ int CLuaShaders::CreateShader(lua_State* L)
 		return 0;
 	}
 
+	// Allows setting up uniforms when drawing is disabled
+	// (much more convenient for sampler uniforms, and static
+	//  configuration values)
+	ParseUniformSetupTables(L, 1, prog);
+
 	const unsigned int progID = shaders.AddProgram(p);
 	lua_pushnumber(L, progID);
 	return 1;
@@ -315,6 +477,9 @@ int CLuaShaders::CreateShader(lua_State* L)
 
 int CLuaShaders::DeleteShader(lua_State* L)
 {
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
 	const int progID = (int)luaL_checknumber(L, 1);
 	CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	shaders.RemoveProgram(progID);
@@ -435,6 +600,8 @@ int CLuaShaders::GetUniformLocation(lua_State* L)
 	return 1;
 }
 
+
+/******************************************************************************/
 
 /******************************************************************************/
 
