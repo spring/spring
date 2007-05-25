@@ -207,6 +207,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(CallList);
 	REGISTER_LUA_CFUNC(DeleteList);
 
+	REGISTER_LUA_CFUNC(GetShadowMapParams);
+
 	CLuaShaders::PushEntries(L);
 
 	return true;
@@ -3083,6 +3085,21 @@ int LuaOpenGL::DeleteList(lua_State* L)
 		glDeleteLists(dlist, 1);
 	}
 	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaOpenGL::GetShadowMapParams(lua_State* L)
+{
+	if (!shadowHandler) {
+		return 0;
+	}
+	lua_pushnumber(L, shadowHandler->xmid);
+	lua_pushnumber(L, shadowHandler->ymid);
+	lua_pushnumber(L, shadowHandler->p17);
+	lua_pushnumber(L, shadowHandler->p18);
+	return 4;
 }
 
 

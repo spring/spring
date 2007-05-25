@@ -30,6 +30,7 @@ public:
 
 	float x1,x2,y1,y2;
 	float xmid,ymid;
+	float p17, p18;
 
 	CMatrix44f shadowMatrix;
 	void DrawShadowTex(void);

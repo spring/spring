@@ -188,6 +188,8 @@ class LuaOpenGL {
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);
 		static int DeleteList(lua_State* L);
+
+		static int GetShadowMapParams(lua_State* L);
 };
 
 
