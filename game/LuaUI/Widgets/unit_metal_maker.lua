@@ -39,15 +39,8 @@ local currentState = true
 
 local function SetMetalMakers(state)
   currentState = state
-
-  local selUnits = Spring.GetSelectedUnits()
-
-  Spring.SelectUnitMap(metalMakers)
-  
   local numState = currentState and 1 or 0
-  Spring.GiveOrder( CMD.ONOFF, { numState }, {} )
-  
-  Spring.SelectUnitArray(selUnits)
+  Spring.GiveOrderToUnitMap(metalMakers, CMD.ONOFF, { numState }, {} )
 end
 
 
