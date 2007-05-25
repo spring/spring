@@ -233,8 +233,7 @@ void CShadowHandler::CreateShadows(void)
 	glLoadMatrixf(shadowMatrix.m);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,16, xmid,ymid,0,0);	//these registers should not be overwritten by anything
 
-	float p17,p18;
-	GetShadowMapSizeFactors(p17,p18);
+	GetShadowMapSizeFactors(p17, p18);
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,17, p17,p17,0.0f,0.0f);	//these registers should not be overwritten by anything
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,18, p18,p18,0.0f,0.0f);	//these registers should not be overwritten by anything
