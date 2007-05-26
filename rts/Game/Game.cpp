@@ -1744,8 +1744,8 @@ bool CGame::Draw()
 	if(!readmap->voidWater && water->drawSolid)
  		water->Draw();
 
-	luaCallIns.DrawWorldPreUnit();
 	selectedUnits.Draw();
+	luaCallIns.DrawWorldPreUnit();
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
 	if(gu->drawdebug && gs->cheatEnabled)
