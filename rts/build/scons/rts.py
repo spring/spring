@@ -106,6 +106,7 @@ def generate(env):
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
+		('dc_allowed',        'Specifies whether FPS mode (Direct Control) is allowed in game', True),
 		('cachedir',          'Cache directory (see scons manual)', None))
 
 	#internal options
@@ -309,6 +310,7 @@ def generate(env):
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
+		bool_opt('dc_allowed', True)
 		string_opt('prefix', '/usr/local')
 		string_opt('installprefix', '$prefix')
 		string_opt('datadir', 'share/games/spring')
@@ -318,7 +320,7 @@ def generate(env):
 
 		# Make a list of preprocessor defines.
 		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])
-		spring_defines = ['DIRECT_CONTROL_ALLOWED']
+		spring_defines = []
 
 		# Add define specifying type of floating point math to use.
 		if env['fpmath']:
@@ -338,6 +340,7 @@ def generate(env):
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
 		if env['disable_avi']      : spring_defines += ['NO_AVI']
 		if env['use_mmgr']         : spring_defines += ['USE_MMGR']
+		if env['dc_allowed']       : spring_defines += ['DIRECT_CONTROL_ALLOWED']
 
 		env['spring_defines'] = spring_defines
 
