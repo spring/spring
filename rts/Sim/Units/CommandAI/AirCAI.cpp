@@ -124,19 +124,20 @@ void CAirCAI::GiveCommandReal(const Command &c)
 	  return;
 	}
 	
-	if(c.id == CMD_AUTOREPAIRLEVEL){
-		if(c.params.empty())
+	if (c.id == CMD_AUTOREPAIRLEVEL) {
+		if (c.params.empty()) {
 			return;
+		}
+		CAirMoveType* airMT;
+		if (owner->usingScriptMoveType) {
+			airMT = (CAirMoveType*)owner->prevMoveType;
+		} else {
+			airMT = (CAirMoveType*)owner->moveType;
+		}
 		switch((int)c.params[0]){
-		case 0:
-			((CAirMoveType*)owner->moveType)->repairBelowHealth=0;
-			break;
-		case 1:
-			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.3f;
-			break;
-		case 2:
-			((CAirMoveType*)owner->moveType)->repairBelowHealth=0.5f;
-			break;
+			case 0: { airMT->repairBelowHealth = 0.0f; break; }
+			case 1: { airMT->repairBelowHealth = 0.3f; break; }
+			case 2: { airMT->repairBelowHealth = 0.5f; break; }
 		}
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){
@@ -150,16 +151,20 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
-	if(c.id == CMD_LOOPBACKATTACK){
-		if(c.params.empty())
+
+	if (c.id == CMD_LOOPBACKATTACK) {
+		if (c.params.empty()) {
 			return;
+		}
+		CAirMoveType* airMT;
+		if (owner->usingScriptMoveType) {
+			airMT = (CAirMoveType*)owner->prevMoveType;
+		} else {
+			airMT = (CAirMoveType*)owner->moveType;
+		}
 		switch((int)c.params[0]){
-		case 0:
-			((CAirMoveType*)owner->moveType)->loopbackAttack = false;
-			break;
-		case 1:
-			((CAirMoveType*)owner->moveType)->loopbackAttack = true;
-			break;
+			case 0: { airMT->loopbackAttack = false; break; }
+			case 1: { airMT->loopbackAttack = true;  break; }
 		}
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){
@@ -173,11 +178,13 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
+
 	if(!(c.options & SHIFT_KEY)
 			&& nonQueingCommands.find(c.id) == nonQueingCommands.end()){
 		activeCommand=0;
 		tempOrder=false;
 	}
+
 	if(c.id == CMD_AREA_ATTACK && c.params.size() < 4){
 		Command c2 = c;
 		c2.id = CMD_ATTACK;
@@ -190,11 +197,15 @@ void CAirCAI::GiveCommandReal(const Command &c)
 
 void CAirCAI::SlowUpdate()
 {
-	if(!commandQue.empty() && commandQue.front().timeOut < gs->frameNum){
+	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		FinishCommand();
 		return;
 	}
 
+	if (owner->usingScriptMoveType) {
+		return; // avoid the invalid (CAirMoveType*) cast
+	}
+	
 	CAirMoveType* myPlane=(CAirMoveType*) owner->moveType;
 
 	if(owner->unitDef->maxFuel > 0){
