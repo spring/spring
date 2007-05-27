@@ -87,6 +87,7 @@ def generate(env):
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
+		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
 		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
 		('optimize',          'Enable processor optimizations during compilation', 1),
@@ -227,9 +228,13 @@ def generate(env):
 			# MinGW gdb chokes on the dwarf debugging format produced by '-ggdb',
 			# so use the more generic '-g' instead.
 			if env['platform'] == 'windows' or env['syncdebug']:
-				env.AppendUnique(CCFLAGS=['-g'], CPPDEFINES=['DEBUG', '_DEBUG'])
+				env.AppendUnique(CCFLAGS=['-g'])
 			else:
-				env.AppendUnique(CCFLAGS=['-ggdb'+level], CPPDEFINES=['DEBUG', '_DEBUG'])
+				env.AppendUnique(CCFLAGS=['-ggdb'+level])
+			if not args.has_key('debugdefines') or not args['debugdefines']:
+				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG'])
+			else:
+				env.AppendUnique(CPPDEFINES=['NDEBUG'])
 		else:
 			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
