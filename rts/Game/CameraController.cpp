@@ -92,7 +92,10 @@ float3 CFPSController::GetPos()
 	pos.x = max(xMin, min(xMax, pos.x));
 	pos.z = max(zMin, min(zMax, pos.z));
 
-	if (!gu->directControl) {
+#ifdef DIRECT_CONTROL_ALLOWED
+	if (!gu->directControl)
+#endif
+	{
 		const float gndHeight = ground->GetHeight(pos.x, pos.z);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
@@ -115,7 +118,11 @@ float3 CFPSController::GetDir()
 void CFPSController::SetPos(float3 newPos)
 {
 	pos = newPos;
-	if (!gu->directControl) {
+
+#ifdef DIRECT_CONTROL_ALLOWED
+	if (!gu->directControl)
+#endif
+	{
 		pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
 	}
 }
