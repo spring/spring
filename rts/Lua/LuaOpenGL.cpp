@@ -283,12 +283,12 @@ void LuaOpenGL::ResetGLState()
 	if (GLEW_ARB_point_sprite) {
 		glDisable(GL_POINT_SPRITE);
 	}
-	if (GLEW_ARB_point_parameters) {
+	if (GLEW_ARB_point_parameters && glPointParameterfvARB && glPointParameterfARB) {
 		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
-		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-		glPointParameterf(GL_POINT_SIZE_MIN, 0.0f);
-		glPointParameterf(GL_POINT_SIZE_MAX, 1.0e9f); // FIXME?
-		glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
+		glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION, atten);
+		glPointParameterfARB(GL_POINT_SIZE_MIN, 0.0f);
+		glPointParameterfARB(GL_POINT_SIZE_MAX, 1.0e9f); // FIXME?
+		glPointParameterfARB(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
