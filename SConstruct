@@ -29,16 +29,20 @@ import filelist
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
 	env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons'])
-	# resource builder (the default one of mingw gcc 4.1.1 crashes because of a popen bug in msvcrt.dll)
-	rcbld = Builder(action = 'windres --use-temp-file -i $SOURCE -o $TARGET', suffix = '.o', src_suffix = '.rc')
-	env.Append(BUILDERS = {'RES': rcbld})
 else:
 	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
 spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon
-if sys.platform == 'win32':
+if env['platform'] == 'windows':
+	# resource builder (the default one of mingw gcc 4.1.1 crashes because of a popen bug in msvcrt.dll)
+	if sys.platform == 'win32':
+		rcbld = Builder(action = 'windres --use-temp-file -i $SOURCE -o $TARGET', suffix = '.o', src_suffix = '.rc')
+	else:
+		# dirty hack assuming on all non-win32 systems windres is called i586-mingw32msvc-windres..
+		rcbld = Builder(action = 'i586-mingw32msvc-windres --use-temp-file -i $SOURCE -o $TARGET', suffix = '.o', src_suffix = '.rc')
+	env.Append(BUILDERS = {'RES': rcbld})
 	spring_files += env.RES(env['builddir'] + '/rts/build/scons/icon.rc', CPPPATH=[])
 
 # calculate datadir locations
