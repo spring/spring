@@ -19,6 +19,7 @@
   ;File "..\game\settingstemplate.xml"
 
   ; DLLs
+  File "..\game\MSVCR71.dll"
   File "..\mingwlibs\dll\*.dll"
 
   File "..\game\PALETTE.PAL"
@@ -76,9 +77,6 @@
 
 !endif ; SP_UPDATE
 
-  ; Stuff to always clean up (from old versions etc)
-  Delete "$INSTDIR\test.sdf"
-
   !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
   !insertmacro UPDATEFILEASSOC
 
@@ -107,6 +105,7 @@
   Delete "$INSTDIR\python25.dll"
   Delete "$INSTDIR\SDL.dll"
   Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\zlib1.dll"
 
   Delete "$INSTDIR\PALETTE.PAL"
