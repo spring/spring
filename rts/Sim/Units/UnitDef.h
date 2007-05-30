@@ -30,7 +30,7 @@ struct GuiSound
 			case 0: { return -1; } break;
 			case 1: { return 0; } break;
 			default: {
-				return rand() % id.size();
+				return rand() % ids.size();
 			} break;
 		}
 	}
