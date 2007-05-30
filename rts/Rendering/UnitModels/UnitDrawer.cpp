@@ -505,70 +505,67 @@ void CUnitDrawer::DrawCloakedUnits(void)
 		}
 	}
 
-	std::vector<CUnit*> dC;
-	std::list<GhostBuilding*> gB;
+	// 3dos
+	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, 0);
 
-	for(int i=0;i<2;++i) {
-		if(!i) { // 3dos
-			dC=drawCloaked;
-			gB=ghostBuildings;
-		} else { // s3os
-			dC=drawCloakedS3O;
-			gB=ghostBuildingsS3O;
-			SetupForGhostDrawingS3O();
-			glColor4f(1,1,1,0.3f);
-		}
-		// cloaked units and living ghosted buildings
-		for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
-			if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
-				if(i) {
-					SetBasicS3OTeamColour((*ui)->team);
-					texturehandler->SetS3oTexture((*ui)->model->textureType);
-				}
-				(*ui)->Draw();
-			} else {
-				if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
-					glColor4f(0.9f,0.9f,0.9f,0.5f);
-				else
-					glColor4f(0.6f,0.6f,0.6f,0.4f);
-				glPushMatrix();
-				glTranslatef3((*ui)->pos);
-				if(i) {
-					SetBasicS3OTeamColour((*ui)->team);
-					texturehandler->SetS3oTexture((*ui)->model->textureType);
-				}
-				(*ui)->model->DrawStatic();
-				glPopMatrix();
-			}
-		}
+	// s3os
+	SetupForGhostDrawingS3O();
+	glColor4f(1,1,1,0.3f);
+	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, 1);
 
-		//go through the dead but still ghosted buildings
-		glColor4f(0.6f,0.6f,0.6f,0.4f);
-		for(std::list<GhostBuilding*>::iterator gbi=gB.begin();gbi!=gB.end();){
-			if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
-				if((*gbi)->decal)
-					(*gbi)->decal->gbOwner=0;
-				delete *gbi;
-				gbi=ghostBuildings.erase(gbi);
-			} else {
-				if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
-					glPushMatrix();
-					glTranslatef3((*gbi)->pos);
-					glRotatef((*gbi)->facing*90,0,1,0);
-					if(i) {
-						SetBasicS3OTeamColour((*gbi)->team);
-						texturehandler->SetS3oTexture((*gbi)->model->textureType);
-					}
-					(*gbi)->model->DrawStatic();
-					glPopMatrix();
-				}
-				++gbi;
+	// reset gl states
+	CleanUpGhostDrawing();
+}
+
+void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, int is_s3o)
+{
+	// cloaked units and living ghosted buildings
+	for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
+		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
+			if (is_s3o) {
+				SetBasicS3OTeamColour((*ui)->team);
+				texturehandler->SetS3oTexture((*ui)->model->textureType);
 			}
+			(*ui)->Draw();
+		} else {
+			if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
+				glColor4f(0.9f,0.9f,0.9f,0.5f);
+			else
+				glColor4f(0.6f,0.6f,0.6f,0.4f);
+			glPushMatrix();
+			glTranslatef3((*ui)->pos);
+			if (is_s3o) {
+				SetBasicS3OTeamColour((*ui)->team);
+				texturehandler->SetS3oTexture((*ui)->model->textureType);
+			}
+			(*ui)->model->DrawStatic();
+			glPopMatrix();
 		}
 	}
 
-	// reset gl states
-	CleanUpGhostDrawing ();
+	//go through the dead but still ghosted buildings
+	glColor4f(0.6f,0.6f,0.6f,0.4f);
+	for(std::list<GhostBuilding*>::iterator gbi=gB.begin();gbi!=gB.end();){
+		if(loshandler->InLos((*gbi)->pos,gu->myAllyTeam)){
+			if((*gbi)->decal)
+				(*gbi)->decal->gbOwner=0;
+			delete *gbi;
+			gbi=gB.erase(gbi);
+		} else {
+			if(camera->InView((*gbi)->pos,(*gbi)->model->radius*2)){
+				glPushMatrix();
+				glTranslatef3((*gbi)->pos);
+				glRotatef((*gbi)->facing*90,0,1,0);
+				if (is_s3o) {
+					SetBasicS3OTeamColour((*gbi)->team);
+					texturehandler->SetS3oTexture((*gbi)->model->textureType);
+				}
+				(*gbi)->model->DrawStatic();
+				glPopMatrix();
+			}
+			++gbi;
+		}
+	}
 }
 
 void CUnitDrawer::SetupForUnitDrawing(void)
