@@ -99,6 +99,7 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
             section(self.section) 
             | gather_junk_line  // if this rule gets hit then section did not consume everything,
          ) 
+        >> end_p
         ;
 
       gather_junk_line = 
@@ -144,4 +145,5 @@ struct tdf_grammar : public boost::spirit::grammar<tdf_grammar> {
 };
 
 #endif
+
 
