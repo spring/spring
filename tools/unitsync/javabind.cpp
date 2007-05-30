@@ -25,6 +25,7 @@
 #pragma visibility(default)
 #endif
 
+DLL_EXPORT const char* __stdcall GetSpringVersion();
 DLL_EXPORT void __stdcall Message(const char* p_szMessage);
 DLL_EXPORT int __stdcall Init(bool isServer, int id);
 DLL_EXPORT void __stdcall UnInit();
@@ -83,6 +84,17 @@ DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+	/*
+	* Class:     aflobby_CUnitSyncJNIBindings
+	* Method:    GetSpringVersion
+	* Signature: ()Ljava/lang/String;
+	*/
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetSpringVersion
+		(JNIEnv *env, jclass myobject){
+			return env->NewStringUTF(GetSpringVersion());
+		}
+
 	/*
 	* Class:     aflobby_CUnitSyncJNIBindings
 	* Method:    Message
