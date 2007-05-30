@@ -173,6 +173,10 @@ private:
   std::string filename;
 
 	std::vector<std::string> GetLocationVector(std::string const& location);
+
+
+	void parse_buffer( char const* buf, std::size_t size);
+
 public:
 	float3 GetFloat3(float3 def, std::string const& location);
 };

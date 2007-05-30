@@ -174,16 +174,16 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 							if (fh) {
 								int fsize = ar->FileSize(fh);
 
-								void* buf = malloc(fsize);
+								char* buf = SAFE_NEW char[fsize];
 								ar->ReadFile(fh, buf, fsize);
 								ar->CloseFile(fh);
 								try {
-									TdfParser p( reinterpret_cast<char*>(buf), fsize );
+									TdfParser p( buf, fsize );
 									ai.modData = GetModData(&p, "mod");
 								} catch (const TdfParser::parse_error&) {
 									// Silently ignore mods with parse errors
 								}
-								free(buf);
+								delete [] buf;
 							}
 
 						}

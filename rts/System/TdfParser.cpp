@@ -95,40 +95,28 @@ TdfParser::TdfParser() {
 void TdfParser::print( std::ostream & out ) const {
   root_section.print( out );
 }
-TdfParser::TdfParser(std::string const& filename) 
-{
-  LoadFile( filename );
-}
-void TdfParser::LoadFile(std::string const& filename)
-{
-  this->filename = filename;
-	CFileHandler file(filename);
-	if(!file.FileExists())
-    throw content_error( ("file " + filename + " not found").c_str() );
 
-	int size = file.FileSize();
-  boost::scoped_array<char> filebuf( SAFE_NEW char[size+2] );
 
-	file.Read( filebuf.get(), file.FileSize());
-  filebuf[size] = '\0'; //append newline at end to avoid parsing error at eof
+void TdfParser::parse_buffer( char const* buf, std::size_t size){
 
   std::list<std::string> junk_data;
   tdf_grammar grammar( &root_section, &junk_data );
   boost::spirit::parse_info<char const*> info;
   std::string message; 
-  boost::spirit::position_iterator2<char const*> error_it( filebuf.get(), filebuf.get() + size, filename );
+  typedef boost::spirit::position_iterator2<char const*> iterator_t;
+  iterator_t error_it( buf, buf + size );
 
   try {
    info = boost::spirit::parse( 
-      filebuf.get()
-      , filebuf.get() + size
+      buf
+      , buf + size
       , grammar
       , space_p 
       |  comment_p("/*", "*/")           // rule for C-comments
       |  comment_p("//")
       ); 
   }
-  catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
+  catch( boost::spirit::parser_error<tdf_grammar::Errors, char const*> & e ) { // thrown by assertion parsers in tdf_grammar
 
     switch(e.descriptor) {
       case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
@@ -137,7 +125,13 @@ void TdfParser::LoadFile(std::string const& filename)
       case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
     };
 
-    for( int i = 0, end = e.where -filebuf.get(); i != end; ++i,++error_it );
+    std::ptrdiff_t target_pos = e.where - buf;
+    for( int i = 1; i < target_pos; ++i) {
+      ++error_it;
+      if(error_it != (iterator_t(buf + i, buf + size))){
+        ++i;
+      }
+    }
   }
 
   for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); 
@@ -153,7 +147,13 @@ void TdfParser::LoadFile(std::string const& filename)
 
   // a different error might have happened:
   if(!info.full)  {
-    for( int i = 0, end = info.stop -filebuf.get(); i != end; ++i,++error_it );
+    std::ptrdiff_t target_pos = info.stop - buf;
+    for( int i = 1; i < target_pos; ++i) {
+      ++error_it;
+      if(error_it != (iterator_t(buf + i, buf + size))){
+        ++i;
+      }
+    }
 
     throw parse_error( error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
   }
@@ -163,58 +163,32 @@ void TdfParser::LoadFile(std::string const& filename)
 TdfParser::TdfParser( char const* buf, std::size_t size) {
   LoadBuffer( buf, size );
 }
-void TdfParser::LoadBuffer( char const* buf, std::size_t size)
-{
+
+void TdfParser::LoadBuffer( char const* buf, std::size_t size){
+
   this->filename = "buffer";
-  std::list<std::string> junk_data;
-  tdf_grammar grammar( &root_section, &junk_data );
-
-  std::string message; 
-
-  boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
-
-  boost::spirit::parse_info<char const*> info;
-  try {
-    info = parse( 
-      buf
-      , buf + size
-      , grammar
-      , space_p 
-      |  comment_p("/*", "*/")           // rule for C-comments
-      |  comment_p("//")
-      ) ; 
-  } 
-  catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
-
-    switch(e.descriptor) {
-      case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
-      case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
-      case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
-      case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
-    };
+  parse_buffer( buf, size );
+}
 
 
-    for( size_t  i = 0;i != size;  ++i,++error_it );
+void TdfParser::LoadFile(std::string const& filename){
 
-  }
+  this->filename = filename;
+  CFileHandler file(filename);
+  if(!file.FileExists())
+    throw content_error( ("file " + filename + " not found").c_str() );
 
+  int size = file.FileSize();
+  boost::scoped_array<char> filebuf( SAFE_NEW char[size] );
 
-  for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); 
-      it !=e ; ++it ){
-    std::string temp = boost::trim_copy( *it );
-    if( ! temp.empty( ) ) {
-      ::logOutput.Print( "Junk in "+ filename +  " :" + temp );
-    }
-  }
+  file.Read( filebuf.get(), file.FileSize());
 
-  if(!message.empty())
-    throw parse_error( message, error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
-  if(!info.full)
-  {
-    boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
-    for( size_t i = 0; i != size; ++i,++error_it );
-    throw parse_error( error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
-  }
+  parse_buffer(filebuf.get(), size);
+}
+
+TdfParser::TdfParser(std::string const& filename) {
+
+  LoadFile(filename);
 }
 
 //find value, display messagebox if no such value found
@@ -408,8 +382,8 @@ std::vector<std::string> TdfParser::GetLocationVector(std::string const& locatio
 {
   std::string lowerd = StringToLower(location);
 	std::vector<std::string> loclist;
-	int start = 0;
-	int next = 0;
+	std::string::size_type start = 0;
+	std::string::size_type next = 0;
 
 	while((next = lowerd.find_first_of("\\", start)) != std::string::npos)
 	{
