@@ -23,7 +23,7 @@ CResourceBar::CResourceBar(void) : disabled(false)
 	metalBox.x2 = (box.x2 - box.x1) / 2.0f - 0.03f;
 	metalBox.y2 = 0.024f;
 
-	energyBox.x1 = 0.45f;
+	energyBox.x1 = 0.48f;
 	energyBox.y1 = 0.01f;
 	energyBox.x2 = box.x2 - 0.03f - box.x1;
 	energyBox.y2 = 0.024f;
