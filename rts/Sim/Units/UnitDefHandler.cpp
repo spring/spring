@@ -716,37 +716,64 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 		ud.customParams = tdfparser.GetAllValues("UNITINFO\\CustomParams");
 	}
 
-	LoadSound(tdfparser, ud.sounds.ok, "ok1");
-	LoadSound(tdfparser, ud.sounds.select, "select1");
-	LoadSound(tdfparser, ud.sounds.arrived, "arrived1");
-	LoadSound(tdfparser, ud.sounds.build, "build");
-	LoadSound(tdfparser, ud.sounds.activate, "activate");
-	LoadSound(tdfparser, ud.sounds.deactivate, "deactivate");
-	LoadSound(tdfparser, ud.sounds.cant, "cant");
-	LoadSound(tdfparser, ud.sounds.underattack, "underattack");
+	LoadSounds(tdfparser, ud.sounds.ok, "ok", 8);					// eg. "ok1", "ok2", ...
+	LoadSounds(tdfparser, ud.sounds.select, "select", 8);			// eg. "select1", "select2", ...
+	LoadSounds(tdfparser, ud.sounds.arrived, "arrived", 8);			// eg. "arrived1", "arrived2", ...
+	LoadSounds(tdfparser, ud.sounds.build, "build", 1);
+	LoadSounds(tdfparser, ud.sounds.activate, "activate", 1);
+	LoadSounds(tdfparser, ud.sounds.deactivate, "deactivate", 1);
+	LoadSounds(tdfparser, ud.sounds.cant, "cant", 1);
+	LoadSounds(tdfparser, ud.sounds.underattack, "underattack", 1);
 }
 
 
-void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound &gsound, std::string sunname)
+
+void CUnitDefHandler::LoadSounds(TdfParser &tdfparser, GuiSound& gsound, std::string soundName, int numSounds)
 {
-	soundcategory.GetDef(gsound.name, "", tdfparser.SGetValueDef("", "UNITINFO\\SoundCategory")+"\\"+sunname);
-	if(gsound.name.compare("")==0)
-		gsound.id = 0;
-	else
-	{
-		const string soundFile = "sounds/" + gsound.name + ".wav";
+	if (numSounds > 1) {
+		for (int i = 1; i <= numSounds; i++) {
+			// soundnames are 1-based (eg. "ok1", "ok2", ...)
+			// if more than one is available, so start at 1
+			LoadSound(tdfparser, gsound, soundName, i);
+		}
+	} else {
+		LoadSound(tdfparser, gsound, soundName, 0);
+	}
+}
+
+void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound& gsound, std::string soundCatName, int soundNum)
+{
+	if (soundNum > 0) {
+		// soundNum of 0 means this sound has no
+		// alternates (ie. no number suffix)
+		char buf[8];
+		sprintf(buf, "%d", soundNum);
+		soundCatName += buf;
+	}
+
+	string soundName = "";
+
+	// extract the sound's actual name sans extension (eg. "kbarmsel")
+	soundcategory.GetDef(soundName, "", tdfparser.SGetValueDef("", "UNITINFO\\SoundCategory") + "\\" + soundCatName);
+
+	if (soundName.compare("") != 0) {
+		const string soundFile = "sounds/" + soundName + ".wav";
 		CFileHandler file(soundFile);
-		if(file.FileExists()) {
+
+		if (file.FileExists()) {
+			// we have a valid soundfile: store name, ID, and default volume
 			PUSH_CODE_MODE;
 			ENTER_UNSYNCED;
 			int id = sound->GetWaveId(soundFile);
 			POP_CODE_MODE;
-			gsound.id = id;
-		} else
-			gsound.id = 0;
+
+			gsound.names.push_back(soundName);
+			gsound.ids.push_back(id);
+			gsound.volumes.push_back(5.0f);
+		}
 	}
-	gsound.volume = 5.0f;
 }
+
 
 
 void CUnitDefHandler::ParseUnit(std::string file, int id)

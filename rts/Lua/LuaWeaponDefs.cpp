@@ -397,15 +397,17 @@ static int CategorySetFromString(lua_State* L, const void* data)
 }
 
 
+
 static int GuiSoundTable(lua_State* L, const void* data)
 {
-	const GuiSound& sound = *((const GuiSound*)data);
+	const GuiSound& sound = *((const GuiSound*) data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "name",   sound.name);
+
+	HSTR_PUSH_STRING(L, "name", ((GuiSound&) sound).getName(0));
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		HSTR_PUSH_NUMBER(L, "id",   sound.id);
+		HSTR_PUSH_NUMBER(L, "id", ((GuiSound&) sound).getID(0));
 	}
-	HSTR_PUSH_NUMBER(L, "volume", sound.volume);
+	HSTR_PUSH_NUMBER(L, "volume", ((GuiSound&) sound).getVolume(0));
 	return 1;
 }
 

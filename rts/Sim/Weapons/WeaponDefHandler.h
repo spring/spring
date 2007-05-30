@@ -38,12 +38,6 @@ struct WeaponDef
 	std::string type;
 	std::string description;
 
-	/*std::string sfiresound;
-	std::string ssoundhit;
-	int firesoundId;
-	int soundhitId;
-	float firesoundVolume;
-	float soundhitVolume;*/
 	GuiSound firesound;
 	GuiSound soundhit;
 
@@ -192,7 +186,9 @@ struct WeaponDef
 	bool dynDamageInverted;
 };
 
+
 class CExplosionGeneratorHandler;
+
 
 class CWeaponDefHandler
 {
@@ -204,9 +200,9 @@ public:
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
-	WeaponDef *GetWeapon(const std::string weaponname);
+	WeaponDef* GetWeapon(const std::string weaponname);
 
-	static void LoadSound(GuiSound &gsound);
+	void LoadSound(TdfParser*, GuiSound&, int, std::string);
 
 	DamageArray DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted);
 
@@ -214,6 +210,7 @@ protected:
 	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
 	float3 hs2rgb(float h, float s);
 };
+
 
 extern CWeaponDefHandler* weaponDefHandler;
 

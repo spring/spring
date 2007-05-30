@@ -629,7 +629,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 				dir.Normalize();
 				unit->unitDef->sfxExplGens[type-1024]->Explosion(pos, 1, 1, unit, 0, 0, dir);
 			}
-			else if(type&2048)  //make a weapon fire from the piece
+			else if (type&2048)  //make a weapon fire from the piece
 			{
 				//this is very hackish and probably has a lot of side effects, but might be usefull for something
 				//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
@@ -648,12 +648,18 @@ void CCobInstance::EmitSfx(int type, int piece)
 				unit->weapons[type-2048]->weaponPos = weaponPos;
 
 			}
-			else if(type&4096)  //detonate weapon from piece
-			{
-				WeaponDef *weaponDef = unit->weapons[type-4096]->weaponDef;
-				sound->PlaySample(weaponDef->soundhit.id,unit,weaponDef->soundhit.volume);
-				helper->Explosion(pos,weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,unit, true, 1.0f, false,weaponDef->explosionGenerator,NULL,float3(0,0,0), weaponDef->id);
+			else if (type & 4096) {
+				// detonate weapon from piece
+				WeaponDef* weaponDef = unit->weapons[type - 4096]->weaponDef;
+				if (weaponDef->soundhit.getID(0) > 0) {
+					sound->PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
+				}
 
+				helper->Explosion(
+					pos, weaponDef->damages, weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
+					weaponDef->explosionSpeed, unit, true, 1.0f, false, weaponDef->explosionGenerator,
+					NULL, float3(0, 0, 0), weaponDef->id
+				);
 			}
 			break;
 	}

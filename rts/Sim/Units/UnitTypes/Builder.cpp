@@ -573,10 +573,14 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 
 	std::vector<int> args;
 	args.push_back(short(h-heading));
-	cob->Call("StartBuilding",args);
+	cob->Call("StartBuilding", args);
 
-	if(unitDef->sounds.build.id)
-		sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
+	int soundIdx = unitDef->sounds.build.getRandomIdx();
+	if (soundIdx >= 0) {
+		sound->PlaySample(
+			unitDef->sounds.build.getID(soundIdx), pos,
+			unitDef->sounds.build.getVolume(soundIdx));
+	}
 }
 
 

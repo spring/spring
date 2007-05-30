@@ -758,10 +758,17 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		    && (team == gu->myTeam) && !camera->InView(midPos,radius+50) && !gu->spectatingFullView) {
 			logOutput.Print("%s is being attacked",unitDef->humanName.c_str());
 			logOutput.SetLastMsgPos(pos);
-			if (unitDef->isCommander || uh->lastDamageWarning+150<gs->frameNum) {
-				sound->PlaySample(unitDef->sounds.underattack.id,unitDef->isCommander?4:2);
+
+			if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
+				int soundIdx = unitDef->sounds.underattack.getRandomIdx();
+				if (soundIdx >= 0) {
+					sound->PlaySample(
+						unitDef->sounds.underattack.getID(soundIdx),
+						unitDef->isCommander? 4: 2);
+				}
 			}
-			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander?1:0.5f);	//todo: make compatible with new gui
+
+			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander? 1: 0.5f);	//todo: make compatible with new gui
 
 			uh->lastDamageWarning=gs->frameNum;
 			if(unitDef->isCommander)
@@ -1512,42 +1519,42 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 		gs->Team(team)->CommanderDied(this);
 	gs->Team(this->lineage)->LeftLineage(this);
 
-	if(!reclaimed && !beingBuilt){
+	if (!reclaimed && !beingBuilt) {
 		string exp;
-		if(selfDestruct)
-			exp=unitDef->selfDExplosion;
+		if (selfDestruct)
+			exp = unitDef->selfDExplosion;
 		else
-			exp=unitDef->deathExplosion;
+			exp = unitDef->deathExplosion;
 
-		if(!exp.empty()){
-			WeaponDef* wd=weaponDefHandler->GetWeapon(exp);
-			if(wd){
-				helper->Explosion(midPos,wd->damages,wd->areaOfEffect,wd->edgeEffectiveness,wd->explosionSpeed,this,true,wd->damages[0]>500?1:2,false,wd->explosionGenerator,0, ZeroVector, wd->id);
+		if (!exp.empty()) {
+			WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+			if (wd) {
+				helper->Explosion(
+					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
+					wd->explosionSpeed, this, true, wd->damages[0] > 500? 1: 2,
+					false, wd->explosionGenerator, 0, ZeroVector, wd->id
+				);
 
-				// Play explosion sound
-				CWeaponDefHandler::LoadSound(wd->soundhit);
-				if (wd->soundhit.id) {
-
-					// HACK loading code doesn't set sane defaults for explosion sounds, so we do it here
-					if (wd->soundhit.volume == -1)
-						wd->soundhit.volume = 5.0f;
-
-					sound->PlaySample(wd->soundhit.id, pos, wd->soundhit.volume);
+				// play explosion sound
+				if (wd->soundhit.getID(0) > 0) {
+					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
+					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
+					float volume = wd->soundhit.getVolume(0);
+					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1)? 5.0f: volume);
 				}
-
-				//logOutput.Print("Should play %s (%d)", wd->soundhit.name.c_str(), wd->soundhit.id);
 			}
 		}
-		if(selfDestruct)
-			recentDamage+=maxHealth*2;
+
+		if (selfDestruct)
+			recentDamage += maxHealth * 2;
 
 		vector<int> args;
-		args.push_back((int)(recentDamage/maxHealth*100));
+		args.push_back((int) (recentDamage / maxHealth * 100));
 		args.push_back(0);
 		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
 		UnBlock();
-		delayedWreckLevel=args[1];
+		delayedWreckLevel = args[1];
 //		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
 	} else {
 		deathScriptFinished=true;
@@ -1615,38 +1622,46 @@ void CUnit::Activate()
 	//if(unitDef->tidalGenerator>0)
 	//	cob->Call(COBFN_SetSpeed, (int)(readmap->tidalStrength*3000.0f*unitDef->tidalGenerator));
 
-	if(activated)
+	if (activated)
 		return;
-	activated = true;
 
+	activated = true;
 	cob->Call(COBFN_Activate);
 
-	if(unitDef->targfac){
-		radarhandler->radarErrorSize[allyteam]/=radarhandler->targFacEffect;
+	if (unitDef->targfac){
+		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
 	}
-	if(hasRadarCapacity)
+	if (hasRadarCapacity)
 		radarhandler->MoveUnit(this);
 
-	if(unitDef->sounds.activate.id)
-		sound->PlayUnitActivate(unitDef->sounds.activate.id, this, unitDef->sounds.activate.volume);
+	int soundIdx = unitDef->sounds.activate.getRandomIdx();
+	if (soundIdx >= 0) {
+		sound->PlayUnitActivate(
+			unitDef->sounds.activate.getID(soundIdx), this,
+			unitDef->sounds.activate.getVolume(soundIdx));
+	}
 }
 
 void CUnit::Deactivate()
 {
-	if(!activated)
+	if (!activated)
 		return;
-	activated = false;
 
+	activated = false;
 	cob->Call(COBFN_Deactivate);
 
-	if(unitDef->targfac){
-		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
+	if (unitDef->targfac){
+		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
 	}
-	if(hasRadarCapacity)
+	if (hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
 
-	if(unitDef->sounds.deactivate.id)
-		sound->PlayUnitActivate(unitDef->sounds.deactivate.id, this, unitDef->sounds.deactivate.volume);
+	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
+	if (soundIdx >= 0) {
+		sound->PlayUnitActivate(
+			unitDef->sounds.deactivate.getID(soundIdx), this,
+			unitDef->sounds.deactivate.getVolume(soundIdx));
+	}
 }
 
 void CUnit::PushWind(float x, float z, float strength)
@@ -1870,4 +1885,5 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(incomingMissiles),
 				CR_MEMBER(lastFlareDrop))
 				);
+
 

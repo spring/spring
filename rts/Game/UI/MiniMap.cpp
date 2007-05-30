@@ -692,9 +692,11 @@ void CMiniMap::SelectUnits(int x, int y) const
 			sound->PlaySample(mouse->soundMultiselID);
 		}
 		else if (addedunits == 1) {
-			if (unit->unitDef->sounds.select.id) {
-				sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit,
-														 unit->unitDef->sounds.select.volume);
+			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			if (soundIdx >= 0) {
+				sound->PlayUnitReply(
+					unit->unitDef->sounds.select.getID(soundIdx), unit,
+					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
 		}
 	}
@@ -747,9 +749,11 @@ void CMiniMap::SelectUnits(int x, int y) const
 			}
 			bp.lastRelease = gu->gameTime;
 
-			if (unit->unitDef->sounds.select.id) {
-				sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit,
-														 unit->unitDef->sounds.select.volume);
+			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			if (soundIdx >= 0) {
+				sound->PlayUnitReply(
+					unit->unitDef->sounds.select.getID(soundIdx), unit,
+					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
 		}
 	}

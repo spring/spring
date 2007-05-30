@@ -324,10 +324,15 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
-	if(!selectedUnits.empty()){
+	if (!selectedUnits.empty()) {
 		set<CUnit*>::iterator ui = selectedUnits.begin();
-		if((*ui)->unitDef->sounds.ok.id)
-			sound->PlayUnitReply((*ui)->unitDef->sounds.ok.id, (*ui), (*ui)->unitDef->sounds.ok.volume, true);
+
+		int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
+		if (soundIdx >= 0) {
+			sound->PlayUnitReply(
+				(*ui)->unitDef->sounds.ok.getID(soundIdx), (*ui),
+				(*ui)->unitDef->sounds.ok.getVolume(soundIdx), true);
+		}
 	}
 }
 
