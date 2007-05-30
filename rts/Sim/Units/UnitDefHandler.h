@@ -52,7 +52,8 @@ protected:
 
 	void AssignTechLevel(UnitDef& ud, int level);
 	
-	void LoadSound(TdfParser &sunparser, GuiSound &gsound, std::string sunname);
+	void LoadSounds(TdfParser&, GuiSound&, std::string, int);
+	void LoadSound(TdfParser&, GuiSound&, std::string, int);
 
 public:
 //	void CreateBlockingLevels(UnitDef *def,std::string yardmap);

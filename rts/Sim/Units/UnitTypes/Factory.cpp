@@ -105,11 +105,14 @@ void CFactory::Update()
 
 			cob->Call("StartBuilding");
 
-			if (unitDef->sounds.build.id) {
-				sound->PlaySample(unitDef->sounds.build.id, pos, unitDef->sounds.build.volume);
+			int soundIdx = unitDef->sounds.build.getRandomIdx();
+			if (soundIdx >= 0) {
+				sound->PlaySample(
+					unitDef->sounds.build.getID(soundIdx), pos,
+					unitDef->sounds.build.getVolume(0));
 			}
 		} else {
-			helper->BuggerOff(buildPos-float3(0.01f,0,0.02f),radius+8);
+			helper->BuggerOff(buildPos - float3(0.01f, 0, 0.02f), radius + 8);
 		}
 	}
 

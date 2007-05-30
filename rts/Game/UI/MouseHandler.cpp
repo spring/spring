@@ -405,10 +405,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 					}
 				}
 			}
-			if(addedunits==1)
-			{
-				if(unit->unitDef->sounds.select.id)
-					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit, unit->unitDef->sounds.select.volume);
+			if (addedunits == 1) {
+				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+				if (soundIdx >= 0) {
+					sound->PlayUnitReply(
+						unit->unitDef->sounds.select.getID(soundIdx), unit,
+						unit->unitDef->sounds.select.getVolume(soundIdx));
+				}
 			}
 			else if(addedunits) //more than one unit selected
 				sound->PlaySample(soundMultiselID);
@@ -452,9 +455,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				}
 				buttons[button].lastRelease=gu->gameTime;
 
-				if(unit->unitDef->sounds.select.id)
-					sound->PlayUnitReply(unit->unitDef->sounds.select.id, unit,
-					                     unit->unitDef->sounds.select.volume);
+				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+				if (soundIdx >= 0) {
+					sound->PlayUnitReply(
+						unit->unitDef->sounds.select.getID(soundIdx), unit,
+						unit->unitDef->sounds.select.getVolume(soundIdx));
+				}
 			}
 		}
 	}

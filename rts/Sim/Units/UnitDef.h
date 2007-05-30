@@ -12,14 +12,60 @@ struct MoveData;
 struct WeaponDef;
 class CExplosionGenerator;
 
-const int MAX_UNITS=5000;
+const int MAX_UNITS = 5000;
+
 
 struct GuiSound
 {
-	std::string name;
-	int id;
-	float volume;
+	// note: vector sizes are always equal
+	// (vector of triples would be better)
+	std::vector<std::string> names;
+	std::vector<int> ids;
+	std::vector<float> volumes;
+
+	// return a random sound index if more than one sound was loaded
+	// (used for unit acknowledgements, could be called for weapons too)
+	int getRandomIdx(void) {
+		switch (ids.size()) {
+			case 0: { return -1; } break;
+			case 1: { return 0; } break;
+			default: {
+				return rand() % id.size();
+			} break;
+		}
+	}
+
+	// get a (loaded) sound's name for index <idx>
+	std::string getName(int idx) {
+		return (idx >= 0 && idx < names.size())? names[idx]: "";
+	}
+	// get a (loaded) sound's ID for index <idx>
+	int getID(int idx) {
+		return (idx >= 0 && idx < ids.size())? ids[idx]: 0;
+	}
+	// get a (loaded) sound's volume for index <idx>
+	float getVolume(int idx) {
+		return (idx >= 0 && idx < volumes.size())? volumes[idx]: 0.0f;
+	}
+
+	// set a (loaded) sound's name for index <idx>
+	void setName(int idx, std::string name) {
+		if (idx >= 0 && idx < names.size())
+			names[idx] = name;
+	}
+	// set a (loaded) sound's ID for index <idx>
+	void setID(int idx, int ID) {
+		if (idx >= 0 && idx < ids.size())
+			ids[idx] = ID;
+	}
+	// set a (loaded) sound's volume for index <idx>
+	void setVolume(int idx, float volume) {
+		if (idx >= 0 && idx < volumes.size())
+			volumes[idx] = volume;
+	}
 };
+
+
 
 struct UnitModelDef
 {

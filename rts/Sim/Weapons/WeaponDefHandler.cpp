@@ -56,7 +56,10 @@ CWeaponDefHandler::~CWeaponDefHandler()
 	delete[] weaponDefs;
 }
 
-void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id)
+
+
+
+void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponname, int id)
 {
 	weaponDefs[id].name = weaponname;
 
@@ -185,18 +188,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 
 //	logOutput.Print("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
 
-	sunparser->GetDef(weaponDefs[id].firesound.name, "", weaponname + "\\soundstart");
-	sunparser->GetDef(weaponDefs[id].soundhit.name, "", weaponname + "\\soundhit");
-	sunparser->GetDef(weaponDefs[id].firesound.volume, "-1", weaponname + "\\soundstartvolume");
-	sunparser->GetDef(weaponDefs[id].soundhit.volume, "-1", weaponname + "\\soundhitvolume");
 
-	/*if(weaponDefs[id].firesound.name.find(".wav") == -1)
-		weaponDefs[id].firesound.name = weaponDefs[id].firesound.name + ".wav";
-	if(weaponDefs[id].soundhit.name.find(".wav") == -1)
-		weaponDefs[id].soundhit.name = weaponDefs[id].soundhit.name + ".wav";*/
-
-	//weaponDefs[id].firesoundVolume = 5.0f;
-	//weaponDefs[id].soundhitVolume = 5.0f;
 
 	weaponDefs[id].range = atof(sunparser->SGetValueDef("10", weaponname + "\\range").c_str());
 	float accuracy,sprayangle,movingAccuracy;
@@ -476,32 +468,55 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser *sunparser, std::string weaponna
 	weaponDefs[id].dynDamageExp = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageExp").c_str());
 	weaponDefs[id].dynDamageMin = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageMin").c_str());
 	weaponDefs[id].dynDamageRange = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageRange").c_str());
+
+
+	LoadSound(sunparser, weaponDefs[id].firesound, id, "firesound");
+	LoadSound(sunparser, weaponDefs[id].soundhit, id, "soundhit");
 }
 
-void CWeaponDefHandler::LoadSound(GuiSound &gsound)
+
+
+void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSound& gsound, int id, string soundCat)
 {
-	// gsound.volume = 5.0f;
-	if (gsound.name.compare("") == 0) {
-		gsound.id = 0;
-		return;
+	string name = "";
+	float volume = -1;
+
+	if (soundCat == "firesound") {
+		sunparser->GetDef(name, "", weaponDefs[id].name + "\\soundstart");
+		sunparser->GetDef(volume, "-1", weaponDefs[id].name + "\\soundstartvolume");
+	} else if (soundCat == "soundhit") {
+		sunparser->GetDef(name, "", weaponDefs[id].name + "\\soundhit");
+		sunparser->GetDef(volume, "-1", weaponDefs[id].name + "\\soundhitvolume");
 	}
 
-	if (gsound.name.find(".wav") == -1) {
-		gsound.name = gsound.name + ".wav";
-	}
+	if (name != "") {
+		// only push data if we extracted a valid name
+		gsound.names.push_back(name);
+		gsound.ids.push_back(0);
+		gsound.volumes.push_back(volume);
 
-	const string soundPath = "sounds/" + gsound.name;
-	CFileHandler sfile(soundPath);
-	if (!sfile.FileExists()) {
-		gsound.id = 0;
-		return;
+		if (name.find(".wav") == -1) {
+			// .wav extension missing, add it
+			gsound.setName(0, name + ".wav");
+		}
+
+		const string soundPath = "sounds/" + gsound.getName(0);
+		CFileHandler sfile(soundPath);
+
+		if (!sfile.FileExists()) {
+			// name refers to non-existent file, return
+			return;
+		}
+
+		PUSH_CODE_MODE;
+		ENTER_UNSYNCED;
+		int id = sound->GetWaveId(soundPath);
+		POP_CODE_MODE;
+
+		gsound.setID(0, id);
 	}
-	PUSH_CODE_MODE;
-	ENTER_UNSYNCED;
-	int id = sound->GetWaveId(soundPath);
-	POP_CODE_MODE;
-	gsound.id = id;
 }
+
 
 
 WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)

@@ -117,15 +117,15 @@ void CWeaponProjectile::Collision()
 		
 		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir, weaponDef->id);
 	}
-		
-	if(weaponDef->soundhit.id)
-		sound->PlaySample(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
 
-	if(!weaponDef->noExplode)
+	if (weaponDef->soundhit.getID(0) > 0) {
+		sound->PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
+	}
+
+	if (!weaponDef->noExplode)
 		CProjectile::Collision();
-	else
-	{
-		if(TraveledRange())
+	else {
+		if (TraveledRange())
 			CProjectile::Collision();
 	}
 
@@ -141,8 +141,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
-	if(!weaponDef->noExplode || gs->frameNum&1)
-	{
+	if (!weaponDef->noExplode || gs->frameNum & 1) {
 		float3 impactDir = speed;
 		impactDir.Normalize();
 
@@ -154,14 +153,14 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir, weaponDef->id);
 	}
 
-	if(weaponDef->soundhit.id)
-		sound->PlaySample(weaponDef->soundhit.id,this,weaponDef->soundhit.volume);
+	if (weaponDef->soundhit.getID(0) > 0) {
+		sound->PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
+	}
 
 	if(!weaponDef->noExplode)
 		CProjectile::Collision(unit);
-	else
-	{
-		if(TraveledRange())
+	else {
+		if (TraveledRange())
 			CProjectile::Collision();
 	}
 }

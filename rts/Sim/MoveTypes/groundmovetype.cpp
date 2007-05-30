@@ -428,10 +428,14 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	StartEngine();
 
 	ENTER_UNSYNCED;
-	if(owner->team == gu->myTeam){
-		//Play "activate" sound.
-		if(owner->unitDef->sounds.activate.id)
-			sound->PlayUnitActivate(owner->unitDef->sounds.activate.id, owner, owner->unitDef->sounds.activate.volume);
+	if (owner->team == gu->myTeam) {
+		// Play "activate" sound.
+		int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
+		if (soundIdx >= 0) {
+			sound->PlayUnitActivate(
+				owner->unitDef->sounds.activate.getID(soundIdx), owner,
+				owner->unitDef->sounds.activate.getVolume(soundIdx));
+		}
 	}
 	ENTER_SYNCED;
 }
@@ -1178,11 +1182,15 @@ void CGroundMoveType::Arrived()
 
 		StopEngine();
 
-		//Play "arrived" sound.
+		// Play "arrived" sound.
 		ENTER_UNSYNCED;
-		if(owner->team == gu->myTeam){
-			if(owner->unitDef->sounds.arrived.id)
-				sound->PlayUnitReply(owner->unitDef->sounds.arrived.id, owner, owner->unitDef->sounds.arrived.volume);
+		if (owner->team == gu->myTeam) {
+			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
+			if (soundIdx >= 0) {
+				sound->PlayUnitReply(
+					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
+					owner->unitDef->sounds.arrived.getVolume(soundIdx));
+			}
 		}
 		ENTER_SYNCED;
 
@@ -1214,12 +1222,16 @@ void CGroundMoveType::Fail()
 
 	//Sends a message to user.
 	ENTER_UNSYNCED;
-	if(owner->team == gu->myTeam){
-		//Playing "can't" sound.
-		if(owner->unitDef->sounds.cant.id)
-			sound->PlayUnitReply(owner->unitDef->sounds.cant.id, owner, owner->unitDef->sounds.cant.volume);
+	if (owner->team == gu->myTeam) {
+		// Playing "can't" sound.
+		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
+		if (soundIdx >= 0) {
+			sound->PlayUnitReply(
+				owner->unitDef->sounds.cant.getID(soundIdx), owner,
+				owner->unitDef->sounds.cant.getVolume(soundIdx));
+		}
 
-		if(owner->pos.distance(goal)>goalRadius+150){
+		if (owner->pos.distance(goal) > goalRadius + 150) {
 			logOutput << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
 			logOutput.SetLastMsgPos(owner->pos);
 		}
