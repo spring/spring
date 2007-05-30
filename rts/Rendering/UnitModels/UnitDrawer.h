@@ -118,7 +118,7 @@ private:
 	void CleanupBasicS3OTexture1(void);
 	void CleanupBasicS3OTexture0(void);
 	void DrawIcon(CUnit * unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, int is_s3o);
+	void DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o);
 };
 
 extern CUnitDrawer* unitDrawer;

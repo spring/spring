@@ -506,18 +506,18 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	}
 
 	// 3dos
-	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, 0);
+	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
 
 	// s3os
 	SetupForGhostDrawingS3O();
 	glColor4f(1,1,1,0.3f);
-	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, 1);
+	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, false);
 
 	// reset gl states
 	CleanUpGhostDrawing();
 }
 
-void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, int is_s3o)
+void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o)
 {
 	// cloaked units and living ghosted buildings
 	for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
