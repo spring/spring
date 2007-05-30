@@ -534,6 +534,9 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(unit && !(onlyTargetCategory&unit->category))
 		return false;
 
+	if(unit && (unit->isDead || unit->crashing))
+		return false;
+
 	if(weaponDef->stockpile && !numStockpiled)
 		return false;
 
