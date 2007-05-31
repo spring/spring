@@ -6737,6 +6737,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Lua\LuaShaders.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaShaders.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lua\LuaSyncedCall.cpp"
 				>
 			</File>
@@ -6774,6 +6782,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaSyncedTable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaTextures.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaTextures.h"
 				>
 			</File>
 			<File
