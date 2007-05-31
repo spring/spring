@@ -490,30 +490,27 @@ void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSound& gsound, int id
 	}
 
 	if (name != "") {
-		// only push data if we extracted a valid name
-		gsound.names.push_back(name);
-		gsound.ids.push_back(0);
-		gsound.volumes.push_back(volume);
-
 		if (name.find(".wav") == -1) {
-			// .wav extension missing, add it
-			gsound.setName(0, name + ".wav");
+	 		// .wav extension missing, add it
+			name += ".wav";
 		}
 
-		const string soundPath = "sounds/" + gsound.getName(0);
+		const string soundPath = "sounds/" + name;
 		CFileHandler sfile(soundPath);
 
-		if (!sfile.FileExists()) {
-			// name refers to non-existent file, return
-			return;
+		if (sfile.FileExists()) {
+			// only push data if we extracted a valid name
+			gsound.names.push_back(name);
+			gsound.ids.push_back(0);
+			gsound.volumes.push_back(volume);
+
+			PUSH_CODE_MODE;
+			ENTER_UNSYNCED;
+			int id = sound->GetWaveId(soundPath);
+			POP_CODE_MODE;
+
+			gsound.setID(0, id);
 		}
-
-		PUSH_CODE_MODE;
-		ENTER_UNSYNCED;
-		int id = sound->GetWaveId(soundPath);
-		POP_CODE_MODE;
-
-		gsound.setID(0, id);
 	}
 }
 
