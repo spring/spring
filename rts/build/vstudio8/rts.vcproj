@@ -3147,6 +3147,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\SyncChecker.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncChecker.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\SyncDebugger.cpp"
 					>
 				</File>
@@ -3168,6 +3176,22 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\SyncedPrimitiveIO.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\Syncify.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\Syncify.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncTracer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncTracer.h"
 					>
 				</File>
 				<File
