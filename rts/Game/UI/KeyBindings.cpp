@@ -149,7 +149,8 @@ defaultBindings[] = {
 	{  "Ctrl+q", "aiselect"    },
 	{ "Shift+q", "groupclear"  },
 
-	{ "Any+t", "track" },
+	{  "Ctrl+t", "trackmode" },
+	{   "Any+t", "track" },
 
 	{ "Ctrl+f1", "viewfps"  },
 	{ "Ctrl+f2", "viewta"   },

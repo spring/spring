@@ -101,14 +101,16 @@ void CUnitTracker::Track()
 		}
 		if (trackGroup.find(trackUnit) == trackGroup.end()) {
 			trackUnit = *trackGroup.begin();
+			enabled = true;
 		} else if (enabled) {
 			if (trackMode != TrackSingle) {
 				trackMode = TrackSingle;
 				logOutput.Print("TrackMode: %s", modeNames[TrackSingle]);
 			}
 			NextUnit();
+		} else {
+			enabled = true;
 		}
-		enabled = true;
 	}
 }
 
@@ -169,6 +171,7 @@ void CUnitTracker::NextUnit()
 		it++;
 		if (it == trackGroup.end()) {
 			trackUnit = *trackGroup.begin();
+			Disable();
 		} else {
 			trackUnit = *it;
 		}
