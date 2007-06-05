@@ -187,6 +187,7 @@
 //  bind              Any+h  sharedialog
 //
 //  bind              Any+c  controlunit
+//  bind             Ctrl+t  trackmode
 //  bind              Any+t  track
 //
 //  bind              Any+`  drawinmap
