@@ -53,6 +53,7 @@ public:
 	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
 #endif
 	int syncErrorFrame;
+	int syncWarningFrame;
 };
 
 extern CGameServer* gameServer;

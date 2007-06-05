@@ -13,7 +13,7 @@
 #include <SDL_timer.h>
 
 #define SYNCCHECK_TIMEOUT 300 //frames
-#define SYNCCHECK_MSG_TIMEOUT 500  // used to prevent msg spam
+#define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
 
 CGameServer* gameServer=0;
 
@@ -29,6 +29,7 @@ static Uint32 GameServerThreadProc(void* lpParameter)
 CGameServer::CGameServer()
 {
 	syncErrorFrame=0;
+	syncWarningFrame=0;
 	lastPlayerInfo = 0;
 	makeMemDump=true;
 	serverframenum=0;
@@ -82,12 +83,25 @@ CGameServer::~CGameServer()
 	serverNet=0;
 }
 
+static std::string GetPlayerNames(const std::vector<int>& indices)
+{
+	std::string players;
+	std::vector<int>::const_iterator p = indices.begin();
+	for (; p != indices.end(); ++p) {
+		if (!players.empty())
+			players += ", ";
+		players += gs->players[*p]->playerName;
+	}
+	return players;
+}
+
 void CGameServer::CheckSync()
 {
 #ifdef SYNCCHECK
 	// Check sync
 	std::deque<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
+		std::vector<int> noSyncResponse;
 		//maps incorrect checksum to players with that checksum
 		std::map<unsigned, std::vector<int> > desyncGroups;
 		bool bComplete = true;
@@ -101,7 +115,7 @@ void CGameServer::CheckSync()
 				if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
 					bComplete = false;
 				else
-					logOutput.Print("No sync response from %s for frame %d", gs->players[a]->playerName.c_str(), *f);
+					noSyncResponse.push_back(a);
 			} else {
 				if (!bGotCorrectChecksum) {
 					bGotCorrectChecksum = true;
@@ -112,10 +126,19 @@ void CGameServer::CheckSync()
 			}
 		}
 
+		if (!noSyncResponse.empty()) {
+			if (!syncWarningFrame || (*f - syncWarningFrame > SYNCCHECK_MSG_TIMEOUT)) {
+				syncWarningFrame = *f;
+
+				std::string players = GetPlayerNames(noSyncResponse);
+				logOutput.Print("No response from %s for frame %d", players.c_str(), *f);
+			}
+		}
+
 		// If anything's in it, we have a desync.
 		// TODO take care of !bComplete case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
-		if (bComplete && !desyncGroups.empty()) {
+		if ( /*bComplete && */ !desyncGroups.empty()) {
 			if (!syncErrorFrame || (*f - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
 				syncErrorFrame = *f;
 
@@ -127,13 +150,7 @@ void CGameServer::CheckSync()
 				// the resync checksum request packets to multiple clients in the same group.
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
-					std::string players;
-					std::vector<int>::const_iterator p = g->second.begin();
-					for (; p != g->second.end(); ++p) {
-						if (!players.empty())
-							players += ", ";
-						players += gs->players[*p]->playerName;
-					}
+					std::string players = GetPlayerNames(g->second);
 					SendSystemMsg("Sync error for %s in frame %d (0x%X)", players.c_str(), *f, g->first ^ correctChecksum);
 				}
 			}
