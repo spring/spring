@@ -45,6 +45,7 @@ CTeam::CTeam()
 	startPos(100,100,100),
 	handicap(1),
 	leader(0),
+	lineageRoot(-1),
 	isDead(false),
 	lastStatSave(0),
 	numCommanders(0)
@@ -146,7 +147,7 @@ void CTeam::SlowUpdate()
 	energyIncome = 0;
 	energyExpense = 0;
 	energyUpkeep = 0;
-	
+
 	metalSent = 0;
 	energySent = 0;
 	metalReceived = 0;
@@ -275,7 +276,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 					CLuaUI::UpdateTeams();
 				}
 			}
-		} 
+		}
 	}
 }
 
