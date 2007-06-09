@@ -22,7 +22,7 @@
 
 // JNIEXPORT doesn't define default visibility
 #ifdef __GNUC__
-#pragma visibility(default)
+#pragma GCC visibility push(default)
 #endif
 
 DLL_EXPORT const char* __stdcall GetSpringVersion();
