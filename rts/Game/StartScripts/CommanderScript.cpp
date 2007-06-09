@@ -51,6 +51,11 @@ void CCommanderScript::Update(void)
 
 		// setup the teams
 		for (int a = 0; a < gs->activeTeams; ++a) {
+
+			// don't spawn a commander for the gaia team
+			if (gs->useLuaGaia && a == gs->gaiaTeamID)
+				continue;
+
 			CTeam* team = gs->Team(a);
 
 			// create a GlobalAI if required
@@ -58,7 +63,7 @@ void CCommanderScript::Update(void)
 			    (gu->myPlayerNum == team->leader)) {
 				globalAI->CreateGlobalAI(a, gameSetup->aiDlls[a].c_str());
 			}
-			
+
 			std::map<string, string>::const_iterator it = sideMap.find(team->side);
 
 			if (it != sideMap.end()) {
