@@ -132,7 +132,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 		maxUnits=gameSetup->maxUnits;
 	if(maxUnits>MAX_UNITS/gs->activeTeams-5)
 		maxUnits=MAX_UNITS/gs->activeTeams-5;
-	
+
 	if(gameSetup){
 		if(gameSetup->limitDgun){
 			limitDgun=true;
@@ -203,8 +203,8 @@ START_TIME_PROFILE;
 		CUnit* delUnit=toBeRemoved.back();
 		toBeRemoved.pop_back();
 
-		int delTeam;
-		int delType;
+		int delTeam = 0;
+		int delType = 0;
 		list<CUnit*>::iterator usi;
 		for(usi=activeUnits.begin();usi!=activeUnits.end();++usi){
 			if(*usi==delUnit){
@@ -289,7 +289,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	if (x1 > gs->mapx) x1 = gs->mapx;
 	if (x2 < 0) x2 = 0;
 	if (z1 > gs->mapy) z1 = gs->mapy;
-	if (z2 < 0) z2 = 0; 
+	if (z2 < 0) z2 = 0;
 
 	for(int x=x1; x<=x2; x++){
 		for(int z=z1; z<=z2; z++){
@@ -333,7 +333,7 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 	if(buildInfo.def->needGeo){
 		canBuild=0;
 		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
-		
+
 		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
 			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<ysize*4-4){
 				canBuild=2;
@@ -363,7 +363,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 	int yardxpos=int(pos.x+4)/SQUARE_SIZE;
 	int yardypos=int(pos.z+4)/SQUARE_SIZE;
 	CSolidObject* s;
-	if(s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)){
+	if ((s = readmap->GroundBlocked(yardypos*gs->mapx+yardxpos))) {
 		if (dynamic_cast<CFeature*>(s)) {
 			feature = (CFeature*)s;
 		}
@@ -376,7 +376,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 			}
 		}
 	}
-	int square=ground->GetSquare(pos);
 
 	if(!unitdef->floater)
 	{
@@ -444,7 +443,6 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	for(int x=x1; x<x2; x+=SQUARE_SIZE){
 		for(int z=z1; z<z2; z+=SQUARE_SIZE){
 
-			int square=ground->GetSquare(float3(x,pos.y,z));
 			CFeature* feature=0;
 			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature,gu->myAllyTeam);
 			if(tbs){

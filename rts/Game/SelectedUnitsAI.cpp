@@ -355,8 +355,6 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	if(numColumns==0)
 		numColumns=1;
 
-	int positionsUsed=0;
-
 	std::multimap<float,int> orderedUnits;
 	CreateUnitOrder(orderedUnits,player);
 

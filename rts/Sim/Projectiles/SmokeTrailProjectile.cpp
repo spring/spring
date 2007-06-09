@@ -119,8 +119,6 @@ void CSmokeTrailProjectile::Draw()
 		col2[2]=(unsigned char) (color*alpha);
 		col2[3]=(unsigned char)alpha;
 
-		float xmod=0;
-		float ymod=0.25f;
 		float size=1+(age*(1.0f/lifeTime))*orgSize;
 		float size2=1+((age+8)*(1.0f/lifeTime))*orgSize;
 

@@ -197,7 +197,6 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 
 	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL)) {
-		const float cameraSpeed = 1.0f;
 		currentCamController->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		unitTracker.Disable();
 		return;
@@ -381,7 +380,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				norm4=-camera->right;
 
 			set<CUnit*>::iterator ui;
-			CUnit* unit;
+			CUnit* unit = NULL;
 			int addedunits=0;
 			int team, lastTeam;
 			if (gu->spectatingFullSelect) {
@@ -417,7 +416,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				sound->PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
-			float dist=helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
+			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
 			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){

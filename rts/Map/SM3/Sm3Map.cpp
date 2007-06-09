@@ -43,7 +43,7 @@ CSm3ReadMap::~CSm3ReadMap()
 
 struct Sm3LoadCB : terrain::ILoadCallback
 {
-	void Write(const char *msg) { logOutput.Print (msg); }
+	void Write(const char *msg) { logOutput.Print ("%s", msg); }
 };
 
 void CSm3ReadMap::Initialize (const char *mapname)
@@ -55,7 +55,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
 		renderer = SAFE_NEW terrain::Terrain;
-		
+
 		renderer->config.cacheTextures=false;
 
 		renderer->config.forceFallbackTexturing = !!configHandler.GetInt("SM3ForceFallbackTex", 0);
@@ -63,7 +63,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
 			renderer->config.useBumpMaps = true;
 			renderer->config.anisotropicFiltering = 0.0f;
-		} 
+		}
 
 		renderer->config.useStaticShadow = false;
 
@@ -82,16 +82,16 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		string minimap = mapDefParser.SGetValueDef(string(),"map\\minimap");
 		if (!minimap.empty()) {
 			CBitmap bmp;
-			if(bmp.Load(minimap)) 
+			if(bmp.Load(minimap))
 				minimapTexture=bmp.CreateTexture(true);
 		}
 
-		int numStages=atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
-/*		int maxStages=configHandler.GetInt("SM3MaxTextureStages", 10);
+/*		int numStages=atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
+		int maxStages=configHandler.GetInt("SM3MaxTextureStages", 10);
 		if (numStages > maxStages) {
-			renderer->config.cacheTextures = true; 
+			renderer->config.cacheTextures = true;
 			renderer->config.cacheTextureSize = 256;
-		//	renderer->config.detailMod 
+		//	renderer->config.detailMod
 		}
 */
 		Sm3LoadCB loadcb;
@@ -173,7 +173,7 @@ void CSm3ReadMap::Update() {}
 void CSm3ReadMap::Explosion(float x,float y,float strength) {}
 void CSm3ReadMap::ExplosionUpdate(int x1,int x2,int y1,int y2) {}
 unsigned int CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height
-void CSm3ReadMap::DrawMinimap () 
+void CSm3ReadMap::DrawMinimap ()
 {
 	if (!minimapTexture)
 		return;
@@ -219,7 +219,7 @@ void CSm3ReadMap::DrawMinimap ()
 	glEnd();
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -228,17 +228,17 @@ void CSm3ReadMap::DrawMinimap ()
 }
 
 // Feature creation
-int CSm3ReadMap::GetNumFeatures () 
+int CSm3ReadMap::GetNumFeatures ()
 {
 	return (int)numFeatures;
 }
 
-int CSm3ReadMap::GetNumFeatureTypes () 
+int CSm3ReadMap::GetNumFeatureTypes ()
 {
 	return featureTypes.size();
 }
 
-void CSm3ReadMap::GetFeatureInfo (MapFeatureInfo* f) 
+void CSm3ReadMap::GetFeatureInfo (MapFeatureInfo* f)
 {
 	std::copy(featureInfo,featureInfo+numFeatures,f);
 }
@@ -254,13 +254,13 @@ void CSm3ReadMap::LoadFeatureData()
 	std::string fd = mapDefParser.SGetValueDef(std::string(),"map\\featuredata");
 	if (!fd.empty()) {
 		CFileHandler fh(fd);
-		if (!fh.FileExists()) 
+		if (!fh.FileExists())
 			throw content_error("Failed to open feature data file: " + fd);
 
 		unsigned char version;
 		fh.Read(&version, 1);
 
-		if (version > 0) 
+		if (version > 0)
 			throw content_error("Map feature data has incorrect version, you are probably using an outdated spring version.");
 
 		unsigned int nf;
@@ -309,8 +309,8 @@ CSm3ReadMap::InfoMap::~InfoMap () {
 // Some map types:
 //   "metal"  -  metalmap
 //   "grass"  -  grassmap
-unsigned char *CSm3ReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bm) 
-{ 
+unsigned char *CSm3ReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bm)
+{
 	std::string map;
 	if (!mapDefParser.SGetValue(map, "MAP\\INFOMAPS\\" + name))
 		return 0;

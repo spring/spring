@@ -321,8 +321,8 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload)
 {
 //	std::vector<CUnit*> units=qf->GetUnitsExact(center,radius);
-	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
-		for(int a=0;a<100;++a){
+	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) { //handle air transports differently
+		for (int a=0;a<100;++a) {
 			float3 delta(1,0,1);
 			while(delta.SqLength2D()>1){
 				delta.x=(gs->randFloat()-0.5f)*2;
@@ -344,7 +344,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 			found=pos;
 			return true;
 		}
-	} else {		
+	} else {
 		for(float y=max(0.0f,center.z-radius);y<min(float(gs->mapx*SQUARE_SIZE),center.z+radius);y+=SQUARE_SIZE){
 			float dy=y-center.z;
 			float rx=radius*radius-dy*dy;

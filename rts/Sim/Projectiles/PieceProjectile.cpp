@@ -301,8 +301,6 @@ void CPieceProjectile::Draw()
 			col2[2]=(unsigned char) (color*alpha);
 			col2[3]=(unsigned char) (alpha);
 
-			float xmod=0;
-			float ymod=0.25f;
 			float size=(1);
 			float size2=1+(age2*(1/Smoke_Time))*14;
 
@@ -318,7 +316,7 @@ void CPieceProjectile::Draw()
 
 			int numParts=age&7;
 			for(int a=0;a<numParts;++a){
-				float a1=1-float(a)/Smoke_Time;
+				//float a1=1-float(a)/Smoke_Time;
 				float alpha=255;
 				col[0]=(unsigned char) (color*alpha);
 				col[1]=(unsigned char) (color*alpha);

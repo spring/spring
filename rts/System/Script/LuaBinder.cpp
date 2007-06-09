@@ -57,11 +57,11 @@ struct CScript_wrapper : CScript, wrap_base
 };
 
 template<class T>
-T* get_pointer(CObject_pointer<T>& p) 
+T* get_pointer(CObject_pointer<T>& p)
 {
 	if (!p.held)
 		logOutput.Print("Lua warning: using invalid unit reference");
-	return p.held; 
+	return p.held;
 }
 
 template<class A>
@@ -140,16 +140,16 @@ namespace luafunctions {
 			s = lua_tostring(L, -1);  /* get result */
 			if (s == NULL)
 				return luaL_error(L, "`tostring' must return a string to `print'");
-    
+
 			if (i > 1)
 				tmp += " ";
 			tmp += string(s);
-			//if (i>1) fputs("\t", stdout);    
+			//if (i>1) fputs("\t", stdout);
 			//fputs(s, stdout);
 			lua_pop(L, 1);  /* pop result */
 		}
 
-		logOutput.Print(tmp.c_str());
+		logOutput.Print(tmp);
 
 		return 0;
 	}
@@ -197,7 +197,7 @@ CLuaBinder::CLuaBinder(void)
 			.def("__tostring", &FloatToString),
 
 		class_<CWorldObject>("WorldObject")
-			.def_readonly("pos", &CWorldObject::pos), 
+			.def_readonly("pos", &CWorldObject::pos),
 
 		class_<CUnit, bases<CWorldObject>, CObject_pointer<CUnit> >("Unit")
 			.enum_("constants")
@@ -211,7 +211,7 @@ CLuaBinder::CLuaBinder(void)
 			.def_readonly("definition", &CUnit::unitDef)
 			.def("__tostring", &UnitToString)
 			.def_readonly("team", &CUnit::team)
-			.def("GiveCommand", &UnitGiveCommand) 
+			.def("GiveCommand", &UnitGiveCommand)
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
 
@@ -261,7 +261,7 @@ CLuaBinder::CLuaBinder(void)
 			.def_readwrite("options", &Command::options)
 			.def("AddParam", &CommandAddParam),
 
-		// Access to spring's various global handlers are grouped into 
+		// Access to spring's various global handlers are grouped into
 		// relevant lua namespaces to present a nice(r) interface than just exporting
 		// all the handlers directly
 		namespace_("units")
@@ -278,7 +278,7 @@ CLuaBinder::CLuaBinder(void)
 			def("GetNumUnitDefs", &luafunctions::GetNumUnitDefs )
 		//	def("GetUnitDefById", &luafunctions::GetUnitDefById )
 		],
-        
+
         namespace_("AIs")
         [
             def("CreateGlobalAI", &luafunctions::CreateGlobalAI )
@@ -297,7 +297,7 @@ CLuaBinder::CLuaBinder(void)
 		],
 
 		def("EndGame", &EndGame),
-		
+
 		// File access should probably be limited to the virtual filesystem. Disabled for now
 		def("dofile", &DisabledFunction),
 		def("loadfile", &DisabledFunction),
@@ -309,7 +309,7 @@ CLuaBinder::CLuaBinder(void)
 		[
 			def("random", &DisabledFunction)
 		]
-	]; 
+	];
 
 	// Define global objects
 	globals(luaState)[(const char*)"gs"] = gs;

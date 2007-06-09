@@ -192,6 +192,9 @@ bool CPreGame::Draw()
 			case WAIT_ON_MOD:
 				PrintLoadMsg("Waiting on mod", false);
 				break;
+			case UNKNOWN:
+			case WAIT_ON_ADDRESS:
+			case ALL_READY:
 			default:
 				PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 				break;
@@ -312,7 +315,7 @@ bool CPreGame::Update()
 			state = ALL_READY;
 			// fall through
 
-		case ALL_READY:
+		case ALL_READY: {
 			ENTER_MIXED;
 
 			// Map all required archives depending on selected mod(s)
@@ -351,6 +354,10 @@ bool CPreGame::Update()
 			pregame=0;
 			delete this;
 			return true;
+		}
+		default:
+			assert(false);
+			break;
 	}
 
 	if(!server && state != WAIT_ON_ADDRESS){
@@ -410,7 +417,7 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_SYSTEMMSG:
 		case NETMSG_CHAT:{
-			int player=inbuf[inbufpos+2];
+			//int player=inbuf[inbufpos+2];
 			string s=(char*)(&inbuf[inbufpos+3]);
 			logOutput.Print(s);
 			inbufpos += inbuf[inbufpos+1];

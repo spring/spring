@@ -184,7 +184,6 @@ void CUnitDefHandler::FindTABuildOpt()
 			const std::map<std::string, std::string>& buildoptlist = tdfparser.GetAllValues("CANBUILD\\" + sideunits[i]);
 			for(it=buildoptlist.begin(); it!=buildoptlist.end(); it++)
 			{
-				UnitDef *buildopt=0;
 				std::string opt = StringToLower(it->second);
 
 				if(unitID.find(opt)!= unitID.end()){
@@ -212,7 +211,6 @@ void CUnitDefHandler::FindTABuildOpt()
 
 			if(builder)
 			{
-				UnitDef *buildopt=NULL;
 				string un2 = StringToLower(dparser.SGetValueDef("", sectionlist[j] + "\\UNITNAME"));
 
 				if(unitID.find(un2)!= unitID.end()){

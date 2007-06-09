@@ -232,6 +232,24 @@ def generate(env):
 				env.AppendUnique(CCFLAGS=['-g'])
 			else:
 				env.AppendUnique(CCFLAGS=['-ggdb'+level])
+			# We can't enable -Wall because that silently enables an order of
+			# initialization warning for initializers in constructors that
+			# can not be disabled. (and it takes days to fix them all in code)
+			env.AppendUnique(CCFLAGS=[
+				'-Wchar-subscripts',
+				'-Wformat=2',
+				'-Winit-self',
+				'-Wimplicit',
+				'-Wmissing-braces',
+				'-Wparentheses',
+				'-Wsequence-point',
+				'-Wreturn-type',
+				'-Wswitch',
+				'-Wtrigraphs',
+				'-Wunused',
+				'-Wuninitialized',
+				'-Wunknown-pragmas'
+			])
 			if not args.has_key('debugdefines') or not args['debugdefines']:
 				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG'])
 			else:

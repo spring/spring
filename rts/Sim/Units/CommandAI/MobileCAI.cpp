@@ -187,7 +187,7 @@ void CMobileCAI::SlowUpdate()
 					SetGoal(landingPos,owner->pos);
 				} else {
 					if(myPlane->aircraftState == CTAAirMoveType::AIRCRAFT_FLYING)
-						myPlane->SetState(CTAAirMoveType::AIRCRAFT_LANDING);	
+						myPlane->SetState(CTAAirMoveType::AIRCRAFT_LANDING);
 				}
 				return;
 			}
@@ -229,8 +229,6 @@ void CMobileCAI::SlowUpdate()
 		}
 	}
 
-	const float3& curPos=owner->pos;
-	
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
 	// to the current command  (and ignore them when it's their turn
 	if (commandQue.size() >= 2 && !slowGuard) {
@@ -474,7 +472,7 @@ void CMobileCAI::ExecuteGuard(Command &c)
 				StartSlowGuard(guarded->maxSpeed);
 				if((goal-owner->pos).SqLength2D() < 1800){
 					StopMove();
-					NonMoving(); 
+					NonMoving();
 				}
 			} else {
 				StopSlowGuard();
@@ -724,7 +722,6 @@ void CMobileCAI::DrawCommands(void)
 
 	CCommandQueue::iterator ci;
 	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		bool draw=false;
 		switch(ci->id){
 			case CMD_MOVE:{
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);

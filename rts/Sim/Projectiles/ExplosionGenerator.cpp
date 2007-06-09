@@ -162,10 +162,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 			moveLength=camLength-2;
 		float3 npos=pos+camVect*moveLength;
 
-		CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
-
-		//p->Update();
-		//p->maxheat=p->heat;
+		SAFE_NEW CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
 	}
 	if(ph->particleSaturation<1){		//turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage=damage;
@@ -190,7 +187,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 				float3 speed((0.5f-gu->usRandFloat())*1.5f,1.7f+gu->usRandFloat()*1.6f,(0.5f-gu->usRandFloat())*1.5f);
 				speed*=0.7f+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.6f),pos.y-2.0f-damage*0.2f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.6f));
-				CDirtProjectile* dp=SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
+				SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
 			}
 		}
 		if(!airExplosion && !uwExplosion && waterExplosion){
@@ -200,7 +197,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float ra
 				float3 speed((0.5f-gu->usRandFloat())*0.2f,a*0.1f+gu->usRandFloat()*0.8f,(0.5f-gu->usRandFloat())*0.2f);
 				speed*=0.7f+min((float)30,damage)/30;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.2f),pos.y-2.0f-sqrt(damage)*2.0f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.2f));
-				CDirtProjectile* dp=SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*2.0f,0.3f,0.99f,owner,color);
+				SAFE_NEW CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*2.0f,0.3f,0.99f,owner,color);
 			}
 		}
 		if(damage>=20 && !uwExplosion && !airExplosion){
@@ -357,6 +354,9 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 			code += 2;
 			*(float3*)(instance + offset) = dir;
 			}
+		default:
+			assert(false);
+			break;
 		}
 	}
 }
@@ -410,6 +410,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			case creg::crBool: code.push_back (OP_STOREI); break;
 			case creg::crFloat: code.push_back (OP_STOREF); break;
 			case creg::crUChar: code.push_back (OP_STOREC); break;
+			default:
+				throw content_error ("Explosion script variable is of unsupported type. "
+					"Contact the Spring team to fix this.");
+					break;
 		}
 		Uint16 ofs = offset;
 		code.append ((char*)&ofs, (char*)&ofs + 2);

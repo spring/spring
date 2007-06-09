@@ -477,9 +477,6 @@ void* BGet::bget(bufsize requested_size)
 	struct bfhead *best;
 #endif
 	void *buf;
-#ifdef BECtl
-	int compactseq = 0;
-#endif
 
 	assert(size >= 0);
 

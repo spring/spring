@@ -239,8 +239,10 @@ bool CAICheats::GetProperty(int id, int property, void *data)
 			}
 			break;
 		}
+		default:
+			return false;
 	}
-	return false;
+	return false; // never reached
 }
 
 bool CAICheats::GetValue(int id, void *data)
@@ -258,8 +260,9 @@ int CAICheats::HandleCommand (int commandId, void *data)
 	{
 		case AIHCQuerySubVersionId:
 			return 1; // current version of Handle Command interface
+		default:
+			return 0;
 	}
-	return 0;
 }
 
 IMPLEMENT_PURE_VIRTUAL(IAICheats::~IAICheats())

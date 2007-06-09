@@ -113,15 +113,21 @@ void FBO::attachTexture(GLuint tex, const unsigned int textype, FramebufferAttac
 {
 	GLenum glattachtype;
 
-	select();
-	if (attachtype == FBO_ATTACH_DEPTH) {
-		assert (requires & FBO_NEED_DEPTH_TEXTURE);
-		glattachtype = GL_DEPTH_ATTACHMENT_EXT;
-	} else if (attachtype == FBO_ATTACH_COLOR) {
-		assert (requires & FBO_NEED_COLOR);
-		glattachtype = GL_COLOR_ATTACHMENT0_EXT;
+	switch (attachtype)
+	{
+		case FBO_ATTACH_DEPTH:
+			assert (requires & FBO_NEED_DEPTH_TEXTURE);
+			glattachtype = GL_DEPTH_ATTACHMENT_EXT;
+			break;
+		case FBO_ATTACH_COLOR:
+			assert (requires & FBO_NEED_COLOR);
+			glattachtype = GL_COLOR_ATTACHMENT0_EXT;
+			break;
+		default:
+			assert(false);
+			break;
 	}
-
+	select();
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, glattachtype, textype, tex, 0);
 	deselect();
 }

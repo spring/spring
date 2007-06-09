@@ -171,7 +171,7 @@ namespace terrain {
 	int TQuad::GetVertexSize ()
 	{
 		// compile-time assert
-		int vector_should_be_12_bytes [(sizeof(Vector3) == 12) ? 1 : -1]={0};
+		typedef int vector_should_be_12_bytes [(sizeof(Vector3) == 12) ? 1 : -1];
 		int vertexSize = 12;
 
 		uint vda = textureSetup->vertexDataReq;
@@ -456,7 +456,7 @@ namespace terrain {
 			RenderContext *rc = curRC = contexts[ctx];
 
 			// Update the frustum based on the camera, to cull away TQuad nodes
-			Camera *camera = rc->cam;
+			//Camera *camera = rc->cam;
 		//	frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
 			//assert (camera->pos.x == 0.0f || frustum.IsPointVisible (camera->pos + camera->front * 20)==Frustum::Inside);
 

@@ -150,12 +150,12 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
-	
+
 
 	REGISTER_LUA_CFUNC(LevelHeightMap);
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
 	REGISTER_LUA_CFUNC(RevertHeightMap);
-	
+
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
 	REGISTER_LUA_CFUNC(InsertUnitCmdDesc);
 	REGISTER_LUA_CFUNC(RemoveUnitCmdDesc);
@@ -298,7 +298,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	CTeam* team = gs->Team(teamID);
 	if (team == NULL) {
 		return NULL;
-	}	
+	}
 	return team;
 }
 
@@ -367,7 +367,7 @@ static int ParseFacing(lua_State* L, const char* caller, int index)
 		if (dir == "n") { return 2; }
 		if (dir == "w") { return 3; }
 		luaL_error(L, "%s(): bad facing string", caller);
-	}	
+	}
 	luaL_error(L, "%s(): bad facing parameter", caller);
 	return 0;
 }
@@ -400,10 +400,10 @@ static string ParseMessage(lua_State* L, const string& msg)
 	if ((player == NULL) || !player->active || player->playerName.empty()) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
-	
+
 	const string head = msg.substr(0, start);
 	const string tail = msg.substr(endPtr - msg.c_str() + 1);
-	
+
 	return head + player->playerName + ParseMessage(L, tail);
 }
 
@@ -501,9 +501,9 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	
+
 	const string type = lua_tostring(L, 2);
-	
+
 	const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
 	if ((type == "m") || (type == "metal")) {
@@ -536,7 +536,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
-		
+
 		const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
 		if ((type == "m") || (type == "metal")) {
@@ -598,9 +598,9 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	
+
 	const string type = lua_tostring(L, 2);
-	
+
 	const float value = max(0.0f, (float)lua_tonumber(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
@@ -633,7 +633,7 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	}
 
 	const string type = lua_tostring(L, 2);
-	
+
 	const float value = (float)lua_tonumber(L, 3);
 
 	if ((type == "m") || (type == "metal")) {
@@ -695,7 +695,7 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	if (unit->cob == NULL) {
 		return 0;
 	}
-	
+
 	// collect the arguments
 	vector<int> cobArgs;
 	ParseCobArgs(L, 4, args, cobArgs);
@@ -713,6 +713,7 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScript()");
+		retval = 0;
 	}
 
 	lua_settop(L, 0);
@@ -767,6 +768,7 @@ int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScriptCB()");
+		retval = 0;
 	}
 
 	lua_settop(L, 0);
@@ -795,12 +797,12 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 
 	const string funcName = lua_tostring(L, 2);
 
-	const int funcID = unit->cob->GetFunctionId(funcName);	
+	const int funcID = unit->cob->GetFunctionId(funcName);
 	if (funcID >= 0) {
 		lua_pushnumber(L, funcID);
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -814,7 +816,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 5) ||
 	    !lua_isstring(L, 1) || // name, pos, facing[, team]
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || 
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !(lua_isnumber(L, 5) || lua_isstring(L, 5))) {
 		luaL_error(L, "Incorrect arguments to CreateUnit()");
 	}
@@ -824,12 +826,12 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	if (unitDef == NULL) {
 		luaL_error(L, "CreateUnit() bad unit name: %s", defName.c_str());
 	}
-	
+
 	const float3 pos((float)lua_tonumber(L, 2),
 	                 (float)lua_tonumber(L, 3),
 	                 (float)lua_tonumber(L, 4));
 	const int facing = ParseFacing(L, __FUNCTION__, 5);
-		
+
 	int team = CtrlTeam();
 	if ((args >= 6) && lua_isnumber(L, 6)) {
 		team = (int)lua_tonumber(L, 6);
@@ -846,13 +848,13 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	if (inCreateUnit) {
 		luaL_error(L, "CreateUnit() recursion is not permitted");
 	}
-		
+
 	// name, pos, team, build, facing
 	inCreateUnit = true;
 	// FIXME -- allow specifying builder unit?
 	CUnit* unit = unitLoader.LoadUnit(defName, pos, team, false, facing, NULL);
 	inCreateUnit = false;
-	
+
 	if (unit) {
 		unitLoader.FlattenGround(unit);
 		lua_pushnumber(L, unit->id);
@@ -1073,9 +1075,9 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 	if (w == NULL) {
 		return 0;
 	}
-	
+
 	w->numStockpiled = max(0, (int)lua_tonumber(L, 2));
-	
+
 	unit->commandAI->UpdateStockpileIcon();
 
 	return 0;
@@ -1322,7 +1324,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	unit->frontdir.x = matrix[ 8];
 	unit->frontdir.y = matrix[ 9];
 	unit->frontdir.z = matrix[10];
-	
+
 	const shortint2 HandP = GetHAndPFromVector(unit->frontdir);
 	unit->heading = HandP.x;
 
@@ -1377,7 +1379,7 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	unit->frontdir.x = matrix[ 8];
 	unit->frontdir.y = matrix[ 9];
 	unit->frontdir.z = matrix[10];
-	
+
 	const shortint2 HandP = GetHAndPFromVector(unit->frontdir);
 	unit->heading = HandP.x;
 
@@ -1418,9 +1420,9 @@ int LuaSyncedCtrl::AddUnitResource(lua_State* L)
 	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
 		luaL_error(L, "Incorrect arguments to AddUnitResource()");
 	}
-	
+
 	const string type = lua_tostring(L, 2);
-	
+
 	const float value = max(0.0f, float(lua_tonumber(L, 3)));
 
 	if ((type == "m") || (type == "metal")) {
@@ -1444,7 +1446,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	if (args < 2) {
 		luaL_error(L, "Incorrect arguments to UseUnitResource()");
 	}
-	
+
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
 		const float value = max(0.0f, float(lua_tonumber(L, 3)));
@@ -1542,7 +1544,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	if ((args >= 5) && lua_isnumber(L, 5)) {
 		heading = (int)lua_tonumber(L, 5);
 	}
-		
+
 	int team = CtrlTeam();
 	if (team < 0) {
 		team = -1; // default to global for AllAccessTeam
@@ -1810,7 +1812,6 @@ static void ParseCommandTable(lua_State* L, const char* caller,
 static void ParseCommandArray(lua_State* L, const char* caller,
                               int table, vector<Command>& commands)
 {
-	const int commandsTable = 2;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_istable(L, -1)) {
 			continue;
@@ -1898,7 +1899,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	vector<CUnit*> units;
 	ParseUnitMap(L, __FUNCTION__, 1, units);
 	const int unitCount = (int)units.size();
-	
+
 	if (unitCount <= 0) {
 		lua_pushnumber(L, 0);
 		return 1;
@@ -1935,7 +1936,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	vector<CUnit*> units;
 	ParseUnitArray(L, __FUNCTION__, 1, units);
 	const int unitCount = (int)units.size();
-	
+
 	if (unitCount <= 0) {
 		lua_pushnumber(L, 0);
 		return 1;
@@ -1948,7 +1949,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");
 	}
 	inGiveOrder = true;
-	
+
 	int count = 0;
 	for (int i = 0; i < unitCount; i++) {
 		CUnit* unit = units[i];
@@ -1973,22 +1974,22 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 	vector<CUnit*> units;
 	ParseUnitMap(L, __FUNCTION__, 1, units);
 	const int unitCount = (int)units.size();
-	
+
 	// commands
 	vector<Command> commands;
 	ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
-	
+
 	if ((unitCount <= 0) || (commandCount <= 0)) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
-	
+
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderArrayToUnitMap() recursion is not permitted");
 	}
 	inGiveOrder = true;
-	
+
 	int count = 0;
 	for (int u = 0; u < unitCount; u++) {
 		CUnit* unit = units[u];
@@ -2014,12 +2015,12 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<CUnit*> units;
 	ParseUnitArray(L, __FUNCTION__, 1, units);
 	const int unitCount = (int)units.size();
-	
+
 	// commands
 	vector<Command> commands;
 	ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
-	
+
 	if ((unitCount <= 0) || (commandCount <= 0)) {
 		lua_pushnumber(L, 0);
 		return 1;
@@ -2029,7 +2030,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 		luaL_error(L, "GiveOrderArrayToUnitArray() recursion is not permitted");
 	}
 	inGiveOrder = true;
-	
+
 	int count = 0;
 	for (int u = 0; u < unitCount; u++) {
 		CUnit* unit = units[u];
@@ -2053,7 +2054,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 static void ParseMapParams(lua_State* L, const char* caller, float& factor,
                            int& x1, int& z1, int& x2, int& z2)
 {
-	float fx1, fz1, fx2, fz2;
+	float fx1 = 0, fz1 = 0, fx2 = 0, fz2 = 0;
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 3) {
@@ -2085,7 +2086,7 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 	z1 = (int)max(0 , min(gs->mapy, (int)(fz1 / SQUARE_SIZE)));
 	z2 = (int)max(0 , min(gs->mapy, (int)(fz2 / SQUARE_SIZE)));
 
-	return;	
+	return;
 }
 
 
@@ -2097,7 +2098,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 	float height;
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
-	
+
 	float* heightMap = readmap->GetHeightmap();
 	for(int z = z1; z <= z2; z++){
 		for(int x = x1; x <= x2; x++){
@@ -2332,7 +2333,7 @@ static bool ParseCommandDescription(lua_State* L, int table,
 		const int paramTable = lua_gettop(L);
 		ParseStringVector(L, paramTable, cd.params);
 	}
-	
+
 	return true;
 }
 
@@ -2358,7 +2359,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
 		return 0;
 	}
-	
+
 	ParseCommandDescription(L, 3, cmdDescs[cmdDescID]);
 
 	selectedUnits.PossibleCommandChange(unit);
@@ -2383,7 +2384,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 		return 0;
 	}
 	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
-	
+
 	int table = 2;
 	if (args >= 3) {
 		table = 3;
@@ -2396,7 +2397,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 			cmdDescID = 0;
 		}
 	}
-	
+
 	CommandDescription cd;
 	ParseCommandDescription(L, table, cd);
 
@@ -2438,13 +2439,13 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
 		return 0;
 	}
-	
+
 	vector<CommandDescription>::iterator it = cmdDescs.begin();
 	advance(it, cmdDescID);
 	cmdDescs.erase(it);
-	
+
 	selectedUnits.PossibleCommandChange(unit);
-	
+
 	return 0;
 }
 

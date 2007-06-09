@@ -1297,8 +1297,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "grabinput") {
 		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 		switch (mode) {
-			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
+			default: // make compiler happy
 			case SDL_GRAB_OFF: mode = SDL_GRAB_ON; break;
+			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
 		}
 		SDL_WM_GrabInput(mode);
 	}
@@ -1963,17 +1964,10 @@ bool CGame::Draw()
 				color[3] = (float)bColor[3] / 255.0f;
 				prefix = gu->myAllyTeam == gs->AllyTeam(p->team) ? "A|" : "E|";
 			}
-			const char format1[] = " %i:%s %s %3.0f%% Ping:%d ms";
-			const char format2[] = "-%i:%s %s %3.0f%% Ping:%d ms";
-			const char* format;
-			if (gu->spectating && !p->spectator && (gu->myTeam == p->team)) {
-				format = format2;
-			} else {
-				format = format1;
-			}
-			SNPRINTF(buf, sizeof(buf), format,
-							 p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
-							 (int)(((p->ping-1) * 1000) / (30 * gs->speedFactor)));
+			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
+						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+						p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
+						(int)(((p->ping-1) * 1000) / (30 * gs->speedFactor)));
 			glTranslatef(0.76f, 0.01f + (0.02f * (count - a - 1)), 1.0f);
 			glScalef(xScale, yScale, 1.0f);
 			glColor4fv(color);

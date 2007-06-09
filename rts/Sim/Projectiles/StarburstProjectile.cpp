@@ -110,7 +110,7 @@ void CStarburstProjectile::Collision()
 	float h=ground->GetHeight2(pos.x,pos.z);
 	if(h>pos.y)
 		pos+=speed*(h-pos.y)/speed.y;
-	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+	SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
 	oldSmokeDir=dir;
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
@@ -119,7 +119,7 @@ void CStarburstProjectile::Collision()
 
 void CStarburstProjectile::Collision(CUnit *unit)
 {
-	CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+	SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
 	oldSmokeDir=dir;
 //	unit->DoDamage(damages,owner);
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
@@ -256,8 +256,6 @@ void CStarburstProjectile::Draw(void)
 		col2[2]=(unsigned char) (color*alpha);
 		col2[3]=(unsigned char)alpha;
 
-		float xmod=0;
-		float ymod=0.25f;
 		float size=1;
 		float size2=(1+age2*(1/Smoke_Time)*7);
 
@@ -272,7 +270,7 @@ void CStarburstProjectile::Draw(void)
 		float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
 		for(int a=0;a<numParts;++a){
-			float a1=1-float(a)/Smoke_Time;
+			//float a1=1-float(a)/Smoke_Time;
 			col[0]=(unsigned char) (color*255);
 			col[1]=(unsigned char) (color*255);
 			col[2]=(unsigned char) (color*255);

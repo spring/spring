@@ -382,8 +382,6 @@ START_TIME_PROFILE
 
 		int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
 		for(int a=0;a<CLOUD_DETAIL;a++){
-			int expLevel=1<<a;
-
 			for(int y=0;y<(CLOUD_SIZE/4)>>a;++y){
 				float ydist=fabs((float)1+y-((CLOUD_SIZE/8)>>a))/((CLOUD_SIZE/8)>>a);
 				ydist=3*ydist*ydist-2*ydist*ydist*ydist;
@@ -440,7 +438,6 @@ START_TIME_PROFILE
 			}
 		}
 
-		int max=0;
 		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++){
 			cloudThickness2[a]=alphaTransform[rawClouds[0][a]>>7];
 		}

@@ -35,7 +35,7 @@ public:
 	static CColorMap* Load12f(float r1,float g1,float b1,float a1,float r2,float g2,float b2,float a2,float r3,float g3,float b3,float a3);
 
 	//color - buffer with room for 4 bytes
-	//pos - value between 0 and 1, returns pointer to color 
+	//pos - value between 0 and 1, returns pointer to color
 	unsigned char* GetColor(unsigned char *color, float pos);
 
 	static void DeleteColormaps();

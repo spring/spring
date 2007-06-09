@@ -32,7 +32,7 @@
 // #include "tinyxml.h"
 
 //#include "AICallbackProxy.h"
-#include "Platform/SharedLib.h" 
+#include "Platform/SharedLib.h"
 
 // ABI compatibility layer converts Spring's GlobalAI C++ interface to C-interface
 // Actions:
@@ -50,11 +50,10 @@ namespace std{
 
 // For last ditch debugging of Abic Layer.
 // THis should probably be migrated to use Spring's internal debug log
-void WriteLine( char *message )
+void WriteLine( const char *message )
 {
     FILE *file = fopen("out.log", "a+" );
-    fprintf( file, message );
-    fprintf( file, "\n" );
+    fprintf( file, "%s\n", message );
     fclose( file );
 }
 
@@ -74,34 +73,34 @@ void AbicProxy::InitAI( const char *DllFilename, IGlobalAICallback* callback, in
 	globalaicallback = callback;
     //logOutput.Print("getting callback...");
 	aicallback = globalaicallback->GetAICallback();
-    
+
     // string DllFilename = GetDllFilename();
-    
+
     lib = SharedLib::Instantiate( DllFilename );
-    
+
 	_InitAI =  (INITAI)lib->FindAddress("InitAI");
-    
+
     _UnitCreated = (UNITCREATED)lib->FindAddress("UnitCreated");
     _UnitFinished =  (UNITFINISHED)lib->FindAddress("UnitFinished");
     _UnitDestroyed =  (UNITDESTROYED)lib->FindAddress("UnitDestroyed");
     _UnitIdle =  (UNITIDLE)lib->FindAddress("UnitIdle");
     _UnitDamaged =  (UNITDAMAGED)lib->FindAddress("UnitDamaged");
     _UnitMoveFailed =  (UNITMOVEFAILED)lib->FindAddress("UnitMoveFailed");
-    
+
     _EnemyEnterLOS =  (ENEMYENTERLOS)lib->FindAddress("EnemyEnterLOS");
     _EnemyLeaveLOS =  (ENEMYLEAVELOS)lib->FindAddress("EnemyLeaveLOS");
     _EnemyEnterRadar =  (ENEMYENTERRADAR)lib->FindAddress("EnemyEnterRadar");
     _EnemyLeaveRadar =  (ENEMYLEAVERADAR)lib->FindAddress("EnemyLeaveRadar");
     _EnemyDamaged =  (ENEMYDAMAGED)lib->FindAddress("EnemyDamaged");
     _EnemyDestroyed =  (ENEMYDESTROYED)lib->FindAddress("EnemyDestroyed");
-        
+
     _GotChatMsg =  (GOTCHATMSG)lib->FindAddress("GotChatMsg");
 
     _Update =  (UPDATE)lib->FindAddress("Update");
 
     // call initai in loaded dll
     ai = _InitAI( aicallback, team );
-    
+
     //logOutput.Print("ai initialized");
 }
 

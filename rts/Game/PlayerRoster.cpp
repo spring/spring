@@ -35,6 +35,7 @@ void PlayerRoster::SetCompareFunc()
 		case PlayerName: { compareFunc = ComparePlayerNames; break; }
 		case PlayerCPU:  { compareFunc = ComparePlayerCPUs;  break; }
 		case PlayerPing: { compareFunc = ComparePlayerPings; break; }
+		case Disabled:   { compareFunc = CompareAllies;      break; }
 		default:         { compareFunc = CompareAllies;      break; }
 	}
 }
@@ -84,13 +85,15 @@ bool PlayerRoster::SetSortTypeByCode(SortType type)
 const char* PlayerRoster::GetSortName()
 {
 	switch (compareType) {
-		case Allies:     { return "Allies"; }
-		case TeamID:     { return "TeamID";   }
-		case PlayerName: { return "Name";     }
-		case PlayerCPU:  { return "CPU Usage"; }
-		case PlayerPing: { return "Ping";     }
+		case Allies:     return "Allies";
+		case TeamID:     return "TeamID";
+		case PlayerName: return "Name";
+		case PlayerCPU:  return "CPU Usage";
+		case PlayerPing: return "Ping";
+		case Disabled:   return "Disabled";
+		default: assert(false); break;
 	}
-	return "Disabled";
+	return NULL;
 }
 
 
@@ -109,7 +112,7 @@ const int* PlayerRoster::GetIndices(int* count)
 	}
 
 	qsort(players, gs->activePlayers, sizeof(int), compareFunc);
-	
+
 	if (count != NULL) {
 		// set the count
 		int& c = *count;
@@ -133,11 +136,11 @@ static inline int CompareBasics(const CPlayer* aP, const CPlayer* bP)
 	if ((aP != NULL) && (bP == NULL)) { return -1; }
 	if ((aP == NULL) && (bP != NULL)) { return +1; }
 	if ((aP == NULL) && (bP == NULL)) { return  0; }
-	
+
 	// active players first
 	if ( aP->active && !bP->active) { return -1; }
 	if (!aP->active &&  bP->active) { return +1; }
-	
+
 	return 0;
 }
 
@@ -150,11 +153,11 @@ static int CompareAllies(const void* a, const void* b)
 	const int bID = *((const int*)b);
 	const CPlayer* aP = gs->players[aID];
 	const CPlayer* bP = gs->players[bID];
-	
+
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
 		return basic;
-	}	
+	}
 
 	// non-spectators first
 	if (!aP->spectator &&  bP->spectator) { return -1; }
@@ -171,18 +174,18 @@ static int CompareAllies(const void* a, const void* b)
 	const int myTeam = gu->myTeam;
 	if ((aTeam == myTeam) && (bTeam != myTeam)) { return -1; }
 	if ((aTeam != myTeam) && (bTeam == myTeam)) { return +1; }
-	
+
 	// my allies first
 	const int aAlly = gs->AllyTeam(aTeam);
 	const int bAlly = gs->AllyTeam(bTeam);
 	const int myATeam = gu->myAllyTeam;
 	if ((aAlly == myATeam) && (bAlly != myATeam)) { return -1; }
 	if ((aAlly != myATeam) && (bAlly == myATeam)) { return +1; }
-	
+
 	// sort by ally team
 	if (aAlly < bAlly) { return -1; }
 	if (aAlly > bAlly) { return +1; }
-	
+
 	// sort by team
 	if (aTeam < bTeam) { return -1; }
 	if (aTeam > bTeam) { return +1; }
@@ -207,7 +210,7 @@ static int CompareTeamIDs(const void* a, const void* b)
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
 		return basic;
-	}	
+	}
 
 	// sort by team id
 	if (aP->team < bP->team) { return -1; }
@@ -233,7 +236,7 @@ static int ComparePlayerNames(const void* a, const void* b)
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
 		return basic;
-	}	
+	}
 
 	// sort by player name
 	const string aName = StringToLower(aP->playerName);
@@ -276,7 +279,7 @@ static int ComparePlayerPings(const void* a, const void* b)
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
 		return basic;
-	}	
+	}
 
 	// sort by player pings
 	if (aP->ping < bP->ping) { return -1; }

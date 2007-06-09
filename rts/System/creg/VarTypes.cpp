@@ -1,6 +1,6 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 */
 #include "StdAfx.h"
 #include "VarTypes.h"
@@ -103,12 +103,13 @@ IType* IType::CreateEnumeratedType (size_t size)
 		case 1: return SAFE_NEW BasicType (crUChar);
 		case 2: return SAFE_NEW BasicType (crUShort);
 		case 4: return SAFE_NEW BasicType (crUInt);
+		default: assert(false); break;
 	}
 	return 0;
 }
 
 string StaticArrayBaseType::GetName()
-{ 
+{
 	char sstr[16];
 	SNPRINTF(sstr,16,"%d", size);
 	return elemType->GetName() + "[" + std::string(sstr) + "]";

@@ -1,6 +1,6 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 */
 
 #ifndef jc_CR_HEADER
@@ -88,7 +88,7 @@ namespace creg {
 		IMemberRegistrator **memberRegistrator;
 		const char *name;
 		int size; // size of an instance in bytes
-		void (*constructor)(void *instance); 
+		void (*constructor)(void *instance);
 		void (*destructor)(void *instance); // needed for classes without virtual destructor (classes/structs declared with CR_DECLARE_STRUCT)
 
 		ClassBinder* nextBinder;
@@ -105,7 +105,7 @@ namespace creg {
 		static void FreeClasses ();
 		/// Find a class by name
 		static Class* GetClass(const std::string& name);
-		
+
 		static void AddClassBinder(ClassBinder* cb);
 
 	protected:
@@ -163,7 +163,7 @@ namespace creg {
 // Container Type templates
 // -------------------------------------------------------------------
 
-	// vector,deque container 
+	// vector,deque container
 	template<typename T>
 	class DynamicArrayType : public IType
 	{
@@ -172,7 +172,7 @@ namespace creg {
 		typedef typename T::value_type ElemT;
 
 		IType *elemType;
-		
+
 		DynamicArrayType (IType *elemType) : elemType(elemType) {}
 		~DynamicArrayType () { if (elemType) delete elemType; }
 
@@ -200,10 +200,10 @@ namespace creg {
 		IType *elemType;
 		int size, elemSize;
 
-		StaticArrayBaseType(IType *et, int Size, int ElemSize) : 
+		StaticArrayBaseType(IType *et, int Size, int ElemSize) :
 			elemType(et), size(Size), elemSize(ElemSize) {}
 		~StaticArrayBaseType() { if (elemType) delete elemType; }
-		
+
 		std::string GetName();
 	};
 
@@ -237,7 +237,7 @@ namespace creg {
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
 /** @def CR_DECLARE_STRUCT
- * Use this to declare a structure 
+ * Use this to declare a structure
  * this should be put in the class definition, instead of CR_DECLARE
  * For creg, the only difference between a class and a structure is having a vtable or not
  */
@@ -260,7 +260,7 @@ namespace creg {
 
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
- * Should be used in the source file 
+ * Should be used in the source file
  * @param TCls class to bind
  * @param TBase base class of TCls
  */
@@ -273,7 +273,7 @@ namespace creg {
 
 /** @def CR_BIND_DERIVED_SUB
  * Bind a derived class inside another class to creg
- * Should be used in the source file 
+ * Should be used in the source file
  * @param TSuper class that contains the class to register
  * @param TCls subclass to bind
  * @param TBase base class of TCls
@@ -339,6 +339,7 @@ namespace creg {
 	}												\
 	void RegisterMembers(creg::Class* class_) {		\
 		TClass* null=(Type*)0;						\
+		(void)null; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
 	} static TClass##mreg;
 
@@ -376,7 +377,7 @@ namespace creg {
 #define CR_MEMBER(Member) \
 	class_->AddMember ( #Member, creg::GetType (null->Member), (unsigned int)(((char*)&null->Member)-((char*)0)))
 
-/** @def CR_ENUM_MEMBER 
+/** @def CR_ENUM_MEMBER
  * Registers a class/struct member variable with an enumerated type */
 #define CR_ENUM_MEMBER(Member) \
 	class_->AddMember ( #Member, creg::IType::CreateEnumeratedType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)))
@@ -400,7 +401,7 @@ namespace creg {
  * Registers a custom serialization method for the class/struct
  * this function will be called when an instance is serialized.
  * There can only be one serialize method per class/struct.
- * On serialization, the registered members will be serialized first, 
+ * On serialization, the registered members will be serialized first,
  * and then this function will be called if specified
  *
  * @param SerializeFunc the serialize method, should be a member function of the class
@@ -408,9 +409,9 @@ namespace creg {
 #define CR_SERIALIZER(SerializeFunc) \
 	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&))&Type::SerializeFunc)
 
-/** @def CR_POSTLOAD 
+/** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
- * this function will be called during package loading when all serialization is finished 
+ * this function will be called during package loading when all serialization is finished
  * There can only be one postload method per class/struct */
 #define CR_POSTLOAD(PostLoadFunc) \
 	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)

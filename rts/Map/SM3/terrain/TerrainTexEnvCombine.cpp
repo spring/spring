@@ -73,7 +73,7 @@ string NodeTexEnvSetup::GetDebugDesc ()
 
 void NodeTexEnvSetup::GetTextureUnits(BaseTexture *tex, int& imageUnit,int& coordUnit)
 {
-	for (int a=0;a<stages.size();a++) 
+	for (int a=0;a<stages.size();a++)
 		if (stages[a].source == TexEnvStage::TextureSrc && stages[a].srcTexture == tex) {
 			imageUnit = coordUnit = a;
 			break;
@@ -124,14 +124,14 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	int maxTextureUnits = MaxTextureUnits();
 	unsigned int c = 0;
 
-	NodeTexEnvSetup *setup;
-	IShaderSetup *ts = setup = curSetup = SAFE_NEW NodeTexEnvSetup;
+	NodeTexEnvSetup *setup = curSetup = SAFE_NEW NodeTexEnvSetup;
+
 	renderSetup->passes.push_back(RenderPass());
 	renderSetup->passes.back().shaderSetup = setup;
 	renderSetup->passes.back().depthWrite = true;
-    
+
 	// Handle the first stages with texture units
-	while (c < maxTextureUnits && c < shaderDef->stages.size()) 
+	while (c < maxTextureUnits && c < shaderDef->stages.size())
 	{
 		ShaderDef::Stage& st = shaderDef->stages[c];
 
@@ -159,14 +159,14 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 				break;
 		}
 
-		if (!c) 
+		if (!c)
 			ts.operation = TexEnvStage::Replace;
 
 		c++;
 	}
 
 	// Switch to multipass when the stages couldn't all be handled with multitexturing
-	while (c < shaderDef->stages.size()) 
+	while (c < shaderDef->stages.size())
 	{
 		ShaderDef::Stage& st = shaderDef->stages[c];
 
@@ -181,7 +181,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 			interp.operation = TexEnvStage::Replace;
 			interp.source = TexEnvStage::TextureSrc;
 			interp.srcTexture = shaderDef->stages[c+1].source;
-            
+
 			setup->stages.push_back (TexEnvStage());
 			TexEnvStage& a = setup->stages.back();
 			a.operation = TexEnvStage::InsertAlpha;
@@ -211,7 +211,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 	if (!shaderDef->hasLighting)
 	{
 		// multiply with color: this is either done through an extra texture stage, or with another pass
-		if (c < maxTextureUnits) 
+		if (c < maxTextureUnits)
 		{
 			// extra stage
 			setup->stages.push_back (TexEnvStage());
@@ -230,7 +230,7 @@ void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* rend
 			setup->stages.back().source = TexEnvStage::ColorSrc;
 			setup->stages.back().operation = TexEnvStage::Replace;
 		}
-	}	
+	}
 }
 
 void TexEnvSetupHandler::BeginPass (const vector<Blendmap*>& blendMaps, const vector<TiledTexture*>& textures, int pass)

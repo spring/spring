@@ -25,13 +25,13 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(oldpos),
 	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
-	
+
 	CR_MEMBER(reservedLandingPos),
 	CR_MEMBER(circlingPos),
 	CR_MEMBER(goalDistance),
 	CR_MEMBER(waitCounter),
 	CR_MEMBER(wantToStop),
-	
+
 	CR_MEMBER(wantedHeading),
 
 	CR_MEMBER(wantedSpeed),
@@ -145,9 +145,9 @@ void CTAAirMoveType::SetState(AircraftState newState)
 
 	//Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StartMoving);	
+		owner->cob->Call(COBFN_StartMoving);
 	if (newState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StopMoving);	
+		owner->cob->Call(COBFN_StopMoving);
 
 	if(newState == AIRCRAFT_LANDED)
 		owner->dontUseWeapons=true;
@@ -155,7 +155,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 		owner->dontUseWeapons=false;
 
 	aircraftState = newState;
-	
+
 	//Do animations
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
@@ -167,7 +167,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 //			if (ownerActivated) {
 				owner->Deactivate();
 //				ownerActivated = false;
-//				owner->cob->Call(COBFN_Deactivate);	
+//				owner->cob->Call(COBFN_Deactivate);
 //			}
 			break;
 		case AIRCRAFT_HOVERING:
@@ -181,7 +181,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 			reservedLandingPos.x=-1;
 //			if (!ownerActivated) {
 //				ownerActivated = true;
-//				owner->cob->Call(COBFN_Activate);	
+//				owner->cob->Call(COBFN_Activate);
 //			}
 			break;
 	}
@@ -218,6 +218,8 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 		case AIRCRAFT_HOVERING:
 			SetState(AIRCRAFT_FLYING);
 			break;
+		case AIRCRAFT_CRASHING:
+			break;
 	}
 
 	//logOutput.Print("Moving to %f %f %f", pos.x, pos.y, pos.z);
@@ -238,7 +240,7 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 	forceHeading=false;
 	wantedHeight=orgWantedHeight;
 	//close in a little to avoid the command ai to override the pos constantly
-	distance -= 15;	
+	distance -= 15;
 
 //	logOutput.Print("point order");
 
@@ -260,7 +262,7 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 	else
 		flyState = FLY_CIRCLING;
 
-//	logOutput.Print("Starting circling");	
+//	logOutput.Print("Starting circling");
 }
 
 void CTAAirMoveType::ExecuteStop()
@@ -275,12 +277,16 @@ void CTAAirMoveType::ExecuteStop()
 		case AIRCRAFT_FLYING:
 			if (owner->unitDef->DontLand())
 				SetState(AIRCRAFT_HOVERING);
-			else 
+			else
 				SetState(AIRCRAFT_LANDING);
 			break;
 		case AIRCRAFT_LANDING:
 			break;
 		case AIRCRAFT_LANDED:
+			break;
+		case AIRCRAFT_CRASHING:
+			break;
+		case AIRCRAFT_HOVERING:
 			break;
 	}
 }
@@ -363,7 +369,6 @@ void CTAAirMoveType::UpdateFlying()
 
 	//Direction to where we would like to be
 	float3 dir = goalPos - pos;
-	bool arrived = false;
 	owner->restTime=0;
 
 	//are we there yet?
@@ -441,9 +446,9 @@ void CTAAirMoveType::UpdateFlying()
 					float3 newPos;
 					bool found = FindLandingSpot(pos, newPos);
 					if (found) {
-						SetState(AIRCRAFT_FLYING);		
+						SetState(AIRCRAFT_FLYING);
 						logOutput.Print("Found a landingspot when cruising around");
-						goalPos = newPos;			
+						goalPos = newPos;
 						return;
 					}
 				}
@@ -468,7 +473,7 @@ void CTAAirMoveType::UpdateFlying()
 		}
 	}
 	//no, so go there!
-	
+
 	dir.y = 0;
 	float realMax = maxSpeed;
 	float dist=dir.Length2D();
@@ -579,7 +584,7 @@ void CTAAirMoveType::UpdateHeading()
 		heading += deltaHeading > (short int)turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
 	} else {
 		heading += deltaHeading > (short int)(-turnRate) ? deltaHeading : (short int)(-turnRate);  //max(-turnRate, deltaHeading);
-	}	
+	}
 }
 
 void CTAAirMoveType::UpdateBanking(bool noBanking)
@@ -612,7 +617,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
 		currentBank -= min(0.03f, currentBank - wantedBank);
-	else 
+	else
 		currentBank += min(0.03f, wantedBank - currentBank);
 
 	//Calculate a suitable upvector
@@ -766,7 +771,7 @@ void CTAAirMoveType::Update()
 			UpdateAirPhysics();
 			wantedHeading=GetHeadingFromVector(flatForward.x,flatForward.z);
 
-		} else 
+		} else
 #endif
 		{
 
@@ -800,7 +805,7 @@ void CTAAirMoveType::Update()
 				} else {
 					if(aircraftState!=AIRCRAFT_LANDED)
 						SetState(AIRCRAFT_LANDED);
-					
+
 					owner->pos=pos;
 
 					owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
@@ -833,6 +838,8 @@ void CTAAirMoveType::Update()
 				case AIRCRAFT_HOVERING:
 					UpdateHovering();
 					break;
+				case AIRCRAFT_CRASHING:
+					break;
 			}
 		}
 	}
@@ -861,7 +868,7 @@ void CTAAirMoveType::Update()
 					dif/=dist;
 					if((*ui)->mass>=100000 || (*ui)->immobile){
 						pos-=dif*(dist-totRad);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;	
+						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;
 						owner->speed*=0.99f;
 //						float damage=((*ui)->speed-owner->speed).SqLength();		//dont think they should take damage when they dont try to avoid it
 //						owner->DoDamage(DamageArray()*damage,0,ZeroVector);
@@ -869,7 +876,7 @@ void CTAAirMoveType::Update()
 					} else {
 						float part=owner->mass/(owner->mass+(*ui)->mass);
 						pos-=dif*(dist-totRad)*(1-part);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;	
+						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;
 						CUnit* u=(CUnit*)(*ui);
 						u->pos+=dif*(dist-totRad)*(part);
 						u->midPos=u->pos+u->frontdir*u->relMidPos.z + u->updir*u->relMidPos.y + u->rightdir*u->relMidPos.x;
@@ -960,7 +967,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 				return false;
 			}
 		}
-	}	
+	}
 	return true;
 }
 

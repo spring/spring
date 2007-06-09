@@ -191,7 +191,7 @@ namespace terrain {
 		}
 	}
 
-	static void BlendmapFilter(AlphaImage *img) 
+	static void BlendmapFilter(AlphaImage *img)
 	{
 		float *nd = SAFE_NEW float[img->w*img->h];
 
@@ -376,7 +376,7 @@ namespace terrain {
 		if (components==1) fmt = IL_LUMINANCE;
 		ilTexImage(w,h,1,components,fmt,type,data);
 		filesystem.Remove(fn);
-		bool r=!!ilSaveImage((ILstring)fn);
+		ilSaveImage((ILstring)fn);
 		ilDeleteImages(1,&out);
 #endif
 	}

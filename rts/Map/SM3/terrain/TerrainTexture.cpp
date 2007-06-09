@@ -62,12 +62,12 @@ namespace terrain {
 
 	void RenderSetup::DebugOutput()
 	{
-		for (int a=0;a<passes.size();a++) 
+		for (int a=0;a<passes.size();a++)
 		{
 			const char *str=0;
 			RenderPass& p = passes[a];
 
-			if (p.operation == Pass_Mul) 
+			if (p.operation == Pass_Mul)
 				str="Pass_Mul";
 			if (p.operation == Pass_Add)
 				str="Pass_Add";
@@ -134,22 +134,22 @@ namespace terrain {
 	struct TerrainTexture::GenerateInfo
 	{
 		deque<AlphaImage*>* bmMipmaps;
-		vector<int> testlod; // the level 
+		vector<int> testlod; // the level
 
 		// set of texture node setup objects, sorted by blend sort key
 		map<uint, RenderSetupCollection*> nodesetup;
 	};
 
 	BaseTexture* TerrainTexture::LoadImageSource(
-		const std::string& name, 
-		const std::string& basepath, 
+		const std::string& name,
+		const std::string& basepath,
 		Heightmap *heightmap, ILoadCallback *cb,
 		Config* cfg, bool isBumpmap)
 	{
 		BaseTexture *btex = 0;
 		if (!!atoi(tdfParser->SGetValueDef("0", basepath + name + "\\Blendmap").c_str()))
 		{
-			if (isBumpmap) 
+			if (isBumpmap)
 				throw content_error(name + " should be a bumpmap, not a blendmap.");
 
 			Blendmap *bm = SAFE_NEW Blendmap;
@@ -205,7 +205,7 @@ namespace terrain {
 		{
 			ShaderDef::Stage* st = &shaderDef.stages [a];
 			// Already loaded?
-			if (nametbl.find (st->sourceName) == nametbl.end()) 
+			if (nametbl.find (st->sourceName) == nametbl.end())
 				nametbl[st->sourceName] = LoadImageSource(st->sourceName, basepath, heightmap, cb, cfg);
 			st->source = nametbl[st->sourceName];
 
@@ -227,7 +227,7 @@ namespace terrain {
 				// Already loaded?
 				if (nametbl.find (name) == nametbl.end()) {
 					// load a bumpmap unless it's an alpha operation
-					st->source = LoadImageSource(st->sourceName, basepath, 
+					st->source = LoadImageSource(st->sourceName, basepath,
 						heightmap, cb, cfg, st->operation != ShaderDef::Alpha);
 					if (!st->source) {
 						if (!flatBumpmap) {
@@ -271,9 +271,9 @@ namespace terrain {
 		}
 
 		if (cb) cb->PrintMsg ("  loading blendmaps into OpenGL...");
-		
+
 		// Convert to textures
-		for (int a=0;a<blendMaps.size();a++) 
+		for (int a=0;a<blendMaps.size();a++)
 		{
 			AlphaImage *bm = bmMipmaps[a].back();
 
@@ -302,7 +302,7 @@ namespace terrain {
 		}
 
 		// Create texture application object
-		if (!cfg->forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader && 
+		if (!cfg->forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader &&
 			GLEW_ARB_shader_objects && GLEW_ARB_shading_language_100) {
 			shaderHandler = SAFE_NEW GLSLShaderHandler;
 		} else {
@@ -344,7 +344,7 @@ namespace terrain {
 			for (deque<AlphaImage*>::iterator i=bmMipmaps[a].begin();i!=bmMipmaps[a].end();++i)
 				delete *i;
 		}
-	    
+
 		delete[] bmMipmaps;
 
 		if (cfg->useShadowMaps)
@@ -358,14 +358,14 @@ namespace terrain {
 			deque <AlphaImage*>& mipmaps = gi->bmMipmaps[a];
 			int mipIndex = node->depth + gi->testlod[a];
 
-			if (mipIndex >= mipmaps.size ()) 
+			if (mipIndex >= mipmaps.size ())
 				mipIndex = mipmaps.size () - 1;
 
 			// scaling divisor, needed because the blendmap maybe lower res than the corresponding part of heightmap
 			int d = ( (1<<node->depth) * QUAD_W ) / mipmaps[mipIndex]->w;
 
 			// Calculate "constants" representing the blendmap in the area that the node covers
-			blendMaps[a]->curAreaResult = mipmaps[mipIndex]->TestArea ((node->qmPos.x * QUAD_W)/d, 
+			blendMaps[a]->curAreaResult = mipmaps[mipIndex]->TestArea ((node->qmPos.x * QUAD_W)/d,
 				(node->qmPos.y * QUAD_W)/d, ((node->qmPos.x+1)*QUAD_W)/d, ((node->qmPos.y+1)*QUAD_W)/d, optimizeEpsilon);
 		}
 
@@ -400,7 +400,7 @@ namespace terrain {
 		node->textureSetup = gi->nodesetup[key];
 
 		if (!node->isLeaf()) {
-			for (int a=0;a<4;a++) 
+			for (int a=0;a<4;a++)
 				CreateTexProg (node->childs[a], gi);
 		}
 
@@ -475,7 +475,7 @@ namespace terrain {
 			glActiveTextureARB(GL_TEXTURE0_ARB+coordUnit);
 			detailBumpmap.SetupTexGen ();
 			glActiveTextureARB(GL_TEXTURE0_ARB);
-		} 
+		}
 		return r;
 	}
 
@@ -536,7 +536,7 @@ namespace terrain {
 	void TerrainTexture::BeginTexturing()
 	{/*
 		static bool z_last=false, x_last;
-		if(keys[SDLK_z] && !z_last) 
+		if(keys[SDLK_z] && !z_last)
 			DebugEvent("t_prev_shader");
 		if(keys[SDLK_x] && !x_last)
 			DebugEvent("t_next_shader");
@@ -601,11 +601,11 @@ namespace terrain {
 			string path = "map\\terrain\\";
 			char num[10];
 			SNPRINTF(num, 10, "%d", a);
-			
+
 			string ts = path + stagename + num + "\\";
 
 			string opstr = tdf.SGetValueDef("mul", ts + "operation");
-			struct { StageOp op; const char *str; } tbl[] = 
+			struct { StageOp op; const char *str; } tbl[] =
 			{
 				{ Mul, "mul" },
 				{ Add, "add" },
@@ -613,7 +613,7 @@ namespace terrain {
 				{ Blend, "blend" },
 				{ Mul, 0 },
 			};
-	
+
 			StageOp operation = Mul;
 			for (int i = 0; tbl[i].str; i++)
 			{
@@ -654,7 +654,7 @@ namespace terrain {
 			// generate the bumpmap stages from the texture stages?
 			if (autoBumpMap)
 			{
-				for (uint a=0;a<stages.size();a++) 
+				for (uint a=0;a<stages.size();a++)
 				{
 					Stage& st = stages[a];
 					if (a && st.operation != Alpha && st.operation != Blend)
@@ -667,7 +667,7 @@ namespace terrain {
 					bmst.sourceName = st.sourceName;
 				}
 			}
-			else { 
+			else {
 				// otherwise load them from the bmstage list
 				numStages = atoi(tdf.SGetValueDef("0", path + "NumBumpmapStages").c_str());
 				LoadStages(numStages, "bmstage", tdf, normalMapStages);
@@ -689,7 +689,7 @@ namespace terrain {
 		AlphaImage::AreaTestResult atr = AlphaImage::AREA_ONE;
 
 		// create an optimized shader definition based on replacing the blendmap with a constant
-		for (int a=0;a<src.size();a++) 
+		for (int a=0;a<src.size();a++)
 		{
 			Stage &st = src[a];
 			if (a == 0) atr = AlphaImage::AREA_MIXED;

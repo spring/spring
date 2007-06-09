@@ -68,8 +68,8 @@ CNet::CNet()
 	Uint64 t;
 	t = SDL_GetTicks();
 	curTime=float(t)/1000.f;
-	Uint16 wVersionRequested;
 #ifdef _WIN32
+	Uint16 wVersionRequested;
 	WSADATA wsaData;
 	int err;
 
@@ -369,7 +369,6 @@ void CNet::Update(void)
 			}
 		}
 		inInitialConnect=false;
-		int packetNum=(*(int*)inbuf);
 		ProcessRawPacket(inbuf,r,conn);
 	}
 
@@ -608,7 +607,7 @@ static string MakeDemoStartScript(char *startScript, int ssLen)
 	script.insert (script.begin(), startScript, startScript + last + 1);
 	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n";
 	script += "\tDateTime=" + string(buff) + ";\n";
-	sprintf(buff, "%u", currtime);
+	sprintf(buff, "%u", (unsigned)currtime);
 	script += "\tUnixTime=" + string(buff) + ";\n}\n";
 	return script;
 }

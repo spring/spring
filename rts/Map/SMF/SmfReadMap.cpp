@@ -311,7 +311,6 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 	int drawSquare=int(maxdist/(SQUARE_SIZE*quadSize))+1;
 
 	int drawQuadsX = header.mapx / quadSize;
-	int drawQuadsY = header.mapy / quadSize;
 
 	int sy=cy-drawSquare;
 	if(sy<0)
@@ -472,7 +471,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 		anisotropy = 0.0f;
 		return;
 	}
-	
+
 	const char* SMFTexAniso = "SMFTexAniso";
 
 	anisotropy = atof(configHandler.GetString(SMFTexAniso, "0.0").c_str());

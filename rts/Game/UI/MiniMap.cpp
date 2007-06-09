@@ -631,7 +631,6 @@ void CMiniMap::MoveView(int x, int y)
 	if (dist > 0) {
 		dif = dir * dist;
 	}
-	float camHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 	float3 clickPos;
 	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
 	clickPos.z = (float(y - (gu->viewSizeY - ypos - height))) / height * gs->mapy * 8;
@@ -660,7 +659,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		set<CUnit*>::iterator ui;
 		set<CUnit*>& selection = selectedUnits.selectedUnits;
 
-		CUnit* unit;
+		CUnit* unit = NULL;
 		int addedunits = 0;
 
 		int team, lastTeam;

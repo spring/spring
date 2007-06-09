@@ -103,7 +103,7 @@ hpiutil::hpientry_ptr hpiutil::hpifile::dirinfo(std::string const &parentname, s
 		newparent = parentname+PATHSEPARATOR+dirname;
 	file->seek(offset);
 	boost::uint32_t entries = file->readint();
-	boost::uint32_t unknown = file->readint();
+	file->readint(); // unknown dword
 	for (int i = 0; i < entries; i++) {
 		boost::uint32_t nameoffset = file->readint();
 		boost::uint32_t infooffset = file->readint();
