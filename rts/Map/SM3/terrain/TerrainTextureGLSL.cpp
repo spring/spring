@@ -137,13 +137,13 @@ static int closest_pot(int i)
 class BufferTexture : public BaseTexture
 {
 public:
-	BufferTexture() 
-	{ 
+	BufferTexture()
+	{
 	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
 	// nVidia: Use RECT,  ati: use POT
 		width = gu->viewSizeX;
 		height = gu->viewSizeY;
-		if (GLEW_ARB_texture_rectangle) 
+		if (GLEW_ARB_texture_rectangle)
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		else {
 			target = GL_TEXTURE_2D;
@@ -151,7 +151,7 @@ public:
 			height = closest_pot(height);
 		}
 
-		framebuffer = instantiate_fb(width, height, FBO_NEED_COLOR | FBO_NEED_DEPTH); 
+		framebuffer = instantiate_fb(width, height, FBO_NEED_COLOR | FBO_NEED_DEPTH);
 		name = "_buffer";
 
 		glGenTextures(1, &id);
@@ -164,7 +164,7 @@ public:
 
 		assert (framebuffer->valid());
 	}
-	~BufferTexture() 
+	~BufferTexture()
 	{
 		delete framebuffer;
 		// texture is deleted by ~BaseTexture
@@ -192,7 +192,7 @@ struct ShaderBuilder
 	bool ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
 	void Build(ShaderDef* shaderDef);
 	void AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex);
-	
+
 	enum ShadingMethod
 	{
 		SM_DiffuseSP, // lit diffuse single pass
@@ -200,7 +200,7 @@ struct ShaderBuilder
 		SM_DiffuseBumpmapMP, // diffuse pass + bumpmap pass
 		SM_Impossible  // massive failure
 	};
-	
+
 	ShadingMethod shadingMethod;
 
 	ShadingMethod CalculateShadingMethod(ShaderDef *sd) const;
@@ -213,7 +213,7 @@ struct ShaderBuilder
 		bool Fits(TexReq maxrq) {
 			return coords <= maxrq.coords && units <= maxrq.units;
 		}
-		TexReq operator+(const TexReq& rq) { 
+		TexReq operator+(const TexReq& rq) {
 			TexReq r;
 			r.coords = coords+rq.coords;
 			r.units = units+rq.units;
@@ -237,7 +237,7 @@ ShaderBuilder::ShadingMethod ShaderBuilder::CalculateShadingMethod(ShaderDef *sd
 
 	TexReq special;
 
-	if (sd->useShadowMapping) 
+	if (sd->useShadowMapping)
 	{
 		// add shadow buffer + shadow texture coord
 		special.coords ++;
@@ -252,7 +252,7 @@ ShaderBuilder::ShadingMethod ShaderBuilder::CalculateShadingMethod(ShaderDef *sd
 			return SM_Impossible;
 	}
 
-	special.coords += 2; // lightdir + tsEyeDir or lightdir + wsEyeDir 
+	special.coords += 2; // lightdir + tsEyeDir or lightdir + wsEyeDir
 
 	TexReq total = special + bumpmapRQ + diffuseRQ;
 
@@ -261,7 +261,7 @@ ShaderBuilder::ShadingMethod ShaderBuilder::CalculateShadingMethod(ShaderDef *sd
 		return SM_DiffuseBumpmapSP;
 
 	// for multipass, one extra texture read is required for the diffuse input
-	special.units ++; 
+	special.units ++;
 
 	// is multipass possible?
 	if (diffuseRQ.Fits (hwmax) && (bumpmapRQ + special).Fits (hwmax))
@@ -281,16 +281,16 @@ ShaderBuilder::TexReq ShaderBuilder::CalcStagesTexReq (const vector<ShaderDef::S
 		BaseTexture *texture = stage.source;
 		TextureUsage tmpUsage;
 
-		int tu = usage.AddTextureRead (-1, texture);
-		int tc = usage.AddTextureCoordRead (-1, texture);
+		usage.AddTextureRead (-1, texture);
+		usage.AddTextureCoordRead (-1, texture);
 
 		if(stage.operation == ShaderDef::Alpha) {
 			// next operation is blend (alpha is autoinserted before blend)
 			assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
 			const ShaderDef::Stage& blendStage = stages[index+1];
 
-			int blendTU = usage.AddTextureRead(-1, blendStage.source);
-			int blendTC = usage.AddTextureCoordRead(-1, blendStage.source);
+			usage.AddTextureRead(-1, blendStage.source);
+			usage.AddTextureCoordRead(-1, blendStage.source);
 
 			index++;
 		}
@@ -365,7 +365,7 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	}
 
 	// have bumpmapping?
-	if (shadingMethod != SM_DiffuseSP && 
+	if (shadingMethod != SM_DiffuseSP &&
 		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex==0))
 	{
 		nodeShader->tsmAttrib = glGetAttribLocationARB(nodeShader->program,"TangentSpaceMatrix");
@@ -404,7 +404,7 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 
 void ShaderBuilder::AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex)
 {
-	bool bumpmapping = (shadingMethod != SM_DiffuseSP && 
+	bool bumpmapping = (shadingMethod != SM_DiffuseSP &&
 		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex==0));
 
 	if (bumpmapping)
@@ -417,7 +417,7 @@ void ShaderBuilder::AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex)
 		}
 	}
 
-	if (ShadowMapping()) 
+	if (ShadowMapping())
 		shader.texts.push_back ("#define UseShadowMapping\n");
 
 	shader.AddFile("shaders/terrainCommon.glsl");
@@ -482,7 +482,6 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader *ns, uint passIndex, Shader
 	std::string tcgen = "void CalculateTexCoords() {\n";
 	for (int a=0;a<ns->texCoordGen.size();a++)
 	{
-		BaseTexture* tex = ns->texCoordGen[a];
 		char buf[160];
 		sprintf (buf, "gl_TexCoord[%d].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[%d]), dot(gl_Vertex,gl_ObjectPlaneT[%d]));\n", a, a, a);
 		tcgen += buf;
@@ -660,7 +659,7 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 	glUseProgramObjectARB(program);
 	for (int a=0;a<texUnits.size();a++) {
 		glActiveTextureARB( GL_TEXTURE0_ARB+a);
-		
+
 		GLenum target;
 		if (texUnits[a]->IsRect()) target = GL_TEXTURE_RECTANGLE_ARB;
 		else target = GL_TEXTURE_2D;
@@ -782,7 +781,7 @@ bool GLSLShaderHandler::SetupShader (IShaderSetup *ps, NodeSetupParams& params)
 void GLSLShaderHandler::EndBuild()
 {
 	bool multipass = false;
-	for (int a=0;a<renderSetups.size();a++) 
+	for (int a=0;a<renderSetups.size();a++)
 		if (renderSetups[a]->passes.size()>1) {
 			multipass = true;
 			break;
@@ -793,13 +792,13 @@ void GLSLShaderHandler::EndBuild()
 
 	scShader = new SimpleCopyShader(buffer);
 
-	// make sure all rendersetups have 2 passes 
+	// make sure all rendersetups have 2 passes
 	for (int a=0;a<renderSetups.size();a++)
 	{
 		if (renderSetups[a]->passes.size()==2)
 			continue;
 
-		// add a simple pass to add 
+		// add a simple pass to add
 		renderSetups[a]->passes.push_back (RenderPass());
 		RenderPass& pass = renderSetups[a]->passes.back();
 		pass.depthWrite = true;

@@ -262,7 +262,6 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 	}
 
 	if(units.empty() && !gaia){
-// 		logOutput.Print("Team%i(%s) is no more",teamNum,gs->players[leader]->playerName.c_str());
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
 		isDead=true;
 		luaCallIns.TeamDied(teamNum);

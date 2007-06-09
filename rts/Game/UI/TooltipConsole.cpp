@@ -63,13 +63,13 @@ void CTooltipConsole::Draw(void)
 	if (disabled) {
 		return;
 	}
-	
+
 	const std::string s = mouse->GetCurrentTooltip();
 
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	if (!outFont) {
 		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
 		glRectf(x, y, (x + w), (y + h));
@@ -79,7 +79,7 @@ void CTooltipConsole::Draw(void)
 	const float xScale = (yScale / gu->aspectRatio) * 1.2f;
 	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
 	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-	
+
 	glTranslatef(x + 0.01f, y + 0.08f, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
@@ -89,7 +89,6 @@ void CTooltipConsole::Draw(void)
 	unsigned int p = 0;
 	while (p < s.size()) {
 		std::string s2;
-		int pos = 0;
 		for (int a = 0; a < 420; ++a) {
 			s2 += s[p];
 			if ((s[p++] == '\n') || (p >= s.size())) {
@@ -115,10 +114,10 @@ bool CTooltipConsole::IsAbove(int x,int y)
 	if (disabled) {
 		return false;
 	}
-	
+
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
-	
+
 	return ((mx > (x + 0.01f)) && (mx < (x + w)) &&
 	        (my > (y + 0.01f)) && (my < (y + h)));
 }
@@ -143,7 +142,7 @@ static void GetDecoyResources(const CUnit* unit,
 	if (ud == NULL) {
 		return;
 	}
-	
+
 	mMake += ud->metalMake;
 	eMake += ud->energyMake;
 	if (ud->tidalGenerator > 0.0f) {
@@ -156,7 +155,7 @@ static void GetDecoyResources(const CUnit* unit,
 	} else {
 		active = ud->activateWhenBuilt;
 	}
-	
+
 	if (active) {
 		if (ud->isMetalMaker) {
 			mMake += (ud->makesMetal * uh->metalMakerEfficiency);
@@ -169,7 +168,7 @@ static void GetDecoyResources(const CUnit* unit,
 			}
 		}
 		mUse += ud->metalUpkeep;
-		
+
 		if (ud->windGenerator > 0.0f) {
 			if (wind.curStrength > ud->windGenerator) {
 				eMake += ud->windGenerator;
@@ -185,7 +184,7 @@ static void GetDecoyResources(const CUnit* unit,
 std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 {
 	std::string s;
-	
+
 	const bool enemyUnit = (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
 	                       !gu->spectatingFullView;
 
@@ -193,7 +192,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : NULL;
 	const UnitDef* effectiveDef =
 		!enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
-	
+
 	// don't show the tooltip if it's a radar dot
 	if (enemyUnit && !loshandler->InLos(unit, gu->myAllyTeam)) {
 		return "Enemy unit";
@@ -235,7 +234,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 			// get the adjusted resource stats
 			float metalMake, energyMake, metalUse, energyUse;
 			GetDecoyResources(unit, metalMake, metalUse, energyMake, energyUse);
-			
+
 			s += MakeUnitStatsString(
 						 unit->health * healthScale, unit->maxHealth * healthScale,
 						 unit->currentFuel * fuelScale, decoyDef->maxFuel,
@@ -250,7 +249,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		SNPRINTF(buf, 32, DARKBLUE "  [TechLevel %i]", unit->unitDef->techLevel);
 		s += buf;
 	}
-	
+
 	return s;
 }
 
@@ -288,7 +287,7 @@ std::string CTooltipConsole::MakeUnitStatsString(
 std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 {
 	std::string s;
-	
+
 	if (feature->def->description == "") {
 		s = "Feature";
 	} else {
@@ -300,7 +299,7 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 
 	const std::string metalColor  = (remainingMetal  > 0) ? GREEN : RED;
 	const std::string energyColor = (remainingEnergy > 0) ? GREEN : RED;
-	
+
 	char tmp[512];
 	sprintf(tmp,"\n" BLUE "Metal: %s%.0f  " BLUE "Energy: %s%.0f",
 	        metalColor.c_str(),  remainingMetal,

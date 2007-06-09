@@ -21,7 +21,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
-extern GLfloat FogLand[]; 
+extern GLfloat FogLand[];
 
 #define W_SIZE 5
 #define WF_SIZE 5120
@@ -141,7 +141,7 @@ CDynWater::CDynWater(void)
 
 	for(int y=0;y<1024;++y){
 		for(int x=0;x<1024;++x){
-			float dist=(x-500)*(x-500)+(y-450)*(y-450);
+			//float dist=(x-500)*(x-500)+(y-450)*(y-450);
 			temp[(y*1024+x)*4+0]=0;//max(0.0f,15-sqrt(dist));//sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
 			temp[(y*1024+x)*4+1]=0;
 			temp[(y*1024+x)*4+2]=0;
@@ -156,7 +156,6 @@ CDynWater::CDynWater(void)
 
 	for(int y=0;y<1024;++y){
 		for(int x=0;x<1024;++x){
-			float dist=(x-500)*(x-500)+(y-450)*(y-450);
 			temp[(y*1024+x)*4+0]=0;
 			temp[(y*1024+x)*4+1]=1;
 			temp[(y*1024+x)*4+2]=0;
@@ -369,7 +368,6 @@ void CDynWater::UpdateWater(CGame* game)
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(1);
 
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
 	DrawRefraction(game);
 	DrawReflection(game);
 }
@@ -763,7 +761,7 @@ void CDynWater::AddFrustumRestraint(float3 side)
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
 
-		if(side.y>0)								
+		if(side.y>0)
 			colpoint=cam2->pos-c*((cam2->pos.y-(-10))/c.y);
 		else
 			colpoint=cam2->pos-c*((cam2->pos.y-(10))/c.y);
@@ -771,11 +769,11 @@ void CDynWater::AddFrustumRestraint(float3 side)
 
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		if(b.z>0){
-			left.push_back(temp);			
+			left.push_back(temp);
 		}else{
 			right.push_back(temp);
 		}
-	}	
+	}
 }
 
 void CDynWater::UpdateCamRestraints(void)
@@ -802,7 +800,7 @@ void CDynWater::UpdateCamRestraints(void)
 		float3 c=b.cross(camHorizontal);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
 
-		if(side.y>0)								
+		if(side.y>0)
 			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*(cam2->pos.y/c.y);
 		else
 			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*((cam2->pos.y-255/3.5f)/c.y);
@@ -810,7 +808,7 @@ void CDynWater::UpdateCamRestraints(void)
 
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		if(b.z>0){
-			left.push_back(temp);			
+			left.push_back(temp);
 		}else{
 			right.push_back(temp);
 		}
@@ -884,7 +882,7 @@ void CDynWater::DrawWaterSurface(void)
 			}
 
 			for(int x=xs;x<xe;x+=lod){
-				if((lod==1) || 
+				if((lod==1) ||
 					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
 					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrain
 						if(!inStrip){
@@ -897,70 +895,70 @@ void CDynWater::DrawWaterSurface(void)
 					} else {  //inre begr�sning mot f�eg�nde lod
 						if((x>=(cx)+viewRadius*hlod)){
 							if(inStrip){
-								va->EndStrip();	
+								va->EndStrip();
 								inStrip=false;
 							}
-							DrawVertexA(x,y);                                            
+							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod);
 							DrawVertexA(x+hlod,y);
 							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x,y+hlod);
 							DrawVertexA(x,y+lod);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x+hlod,y+lod);
 							DrawVertexA(x+lod,y+lod);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x+lod,y);
 							DrawVertexA(x+hlod,y);
-							va->EndStrip();	
-						}     
+							va->EndStrip();
+						}
 						else if((x<=(cx)-viewRadius*hlod)){
 							if(inStrip){
-								va->EndStrip();	
+								va->EndStrip();
 								inStrip=false;
 							}
 							DrawVertexA(x+lod,y+hlod);
 							DrawVertexA(x+lod,y);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x+hlod,y);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x+lod,y+lod);
 							DrawVertexA(x+lod,y+hlod);
 							DrawVertexA(x+hlod,y+lod);
 							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x+hlod,y);
 							DrawVertexA(x,y);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x,y+lod);
 							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();	
-						} 
+							va->EndStrip();
+						}
 						else if((y>=(cy)+viewRadius*hlod)){
 							if(inStrip){
-								va->EndStrip();	
+								va->EndStrip();
 								inStrip=false;
 							}
-							DrawVertexA(x,y);                                            
+							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod);
 							DrawVertexA(x+hlod,y);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x+lod,y);
 							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x,y+hlod);
 							DrawVertexA(x,y+lod);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x+lod,y+lod);
 							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();	
+							va->EndStrip();
 						}
 						else if((y<=(cy)-viewRadius*hlod)){
 							if(inStrip){
-								va->EndStrip();	
+								va->EndStrip();
 								inStrip=false;
 							}
 							DrawVertexA(x,y+hlod);
@@ -969,18 +967,18 @@ void CDynWater::DrawWaterSurface(void)
 							DrawVertexA(x+hlod,y+lod);
 							DrawVertexA(x+lod,y+hlod);
 							DrawVertexA(x+lod,y+lod);
-							va->EndStrip();	
+							va->EndStrip();
 							DrawVertexA(x+lod,y+hlod);
 							DrawVertexA(x+lod,y);
 							DrawVertexA(x+hlod,y+hlod);
 							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod);
-							va->EndStrip();	
+							va->EndStrip();
 						}
 					}
 			}
 			if(inStrip){
-				va->EndStrip();	
+				va->EndStrip();
 				inStrip=false;
 			}
 		}
@@ -1107,7 +1105,6 @@ void CDynWater::AddShipWakes()
 				va->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
 			}
 		} else if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
-			float speedf=unit->speed.Length2D();
 			float3 pos=unit->pos;
 			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
 				continue;

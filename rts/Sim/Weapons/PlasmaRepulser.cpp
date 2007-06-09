@@ -101,13 +101,12 @@ void CPlasmaRepulser::Update(void)
 			curPower += weaponDef->shieldPowerRegen * (1.0f / 30.0f);
 		}
 	}
-	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z) 
+	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);
 
 	if (couldBeVisible) {
 		float drawAlpha = 0.0f;
-		const int oldFrames = hitFrames;
 		if (hitFrames > 0) {
 			drawAlpha += float(hitFrames) / float(defHitFrames);
 			hitFrames--;
@@ -193,7 +192,7 @@ void CPlasmaRepulser::Update(void)
 					// Calculate the amount of energy we wanted to pull
 					/*
 					Domipheus: TODO Commented out for now, ShieldRepulse has side effects, design needs altering.
-					
+
 					if(weaponDef->shieldRepulser) {	//bounce the projectile
 						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
 						if (type==1){

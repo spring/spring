@@ -294,6 +294,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				break;
 			}
+			case drawNormal:
+				break;
 		} // switch (drawMode)
 	} // if (updateTextureState < 50)
 

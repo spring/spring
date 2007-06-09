@@ -97,8 +97,6 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 
 void CBitmap::Alloc (int w,int h)
 {
-	bool noAlpha = true;
-	
 	delete[] mem;
 	xsize=w;
 	ysize=h;
@@ -134,14 +132,14 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 
 #if defined(__APPLE__) // Use QuickTime to load images on Mac
 
-	mem = LoadTextureData(filename, buffer, file.FileSize(), 
+	mem = LoadTextureData(filename, buffer, file.FileSize(),
 		xsize, ysize, noAlpha);
-	
+
 	// Chagne the *hasAlpha* used in LoadTextureData to *noAlpha*
 	noAlpha = !noAlpha;
-	
+
 	delete[] buffer;
-	
+
 	if (!mem) {
 		xsize = 1;
 		ysize = 1;
@@ -152,7 +150,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[3] = 255; // Non Transparent
 		return;
 	}
-	
+
 	// Because most of the algorithms that work on our texture are not generalized yet
 	// We have to convert the image into the same format (RGBA instead of ARGB[ppc] or BGRA[x86]).
 	// We then use the same OpenGL calls since they don't chagne between (windows or x86/ppc)
@@ -166,12 +164,12 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[base + 2] = mem[base + 3]; // B
 		mem[base + 3] = temp; // A
 	}
-	
+
 
 #else // Use DevIL to load images on windows/linux/...
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
-	
+
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
@@ -200,7 +198,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
 	memcpy(mem, ilGetData(), xsize * ysize * 4);
 
-	ilDeleteImages(1, &ImageName); 
+	ilDeleteImages(1, &ImageName);
 #endif
 
 	if (noAlpha){
@@ -254,7 +252,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	mem = SAFE_NEW unsigned char[xsize * ysize];
 #endif
 
-	ilDeleteImages(1, &ImageName); 
+	ilDeleteImages(1, &ImageName);
 	return true;
 }
 
@@ -313,7 +311,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	if(mem==NULL)
 		return 0;
 
-	// jcnossen: Some drivers return "2.0" as a version string, 
+	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
 	if ((xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)) && !GLEW_ARB_texture_non_power_of_two)
@@ -325,7 +323,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 
 	unsigned int texture;
 
-	glGenTextures(1, &texture);			
+	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -373,29 +371,29 @@ unsigned int CBitmap::CreateDDSTexture()
 	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texobj);
-		if(!ddsimage->upload_texture2D())
-		{
-		glDeleteTextures(1, &texobj);
-		texobj = 0;
+		if(!ddsimage->upload_texture2D()) {
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
 		}
 		break;
 	case nv_dds::Texture3D:
 		glEnable(GL_TEXTURE_3D);
 		glBindTexture(GL_TEXTURE_3D, texobj);
-		if(!ddsimage->upload_texture3D())
-		{
-		glDeleteTextures(1, &texobj);
-		texobj = 0;
+		if(!ddsimage->upload_texture3D()) {
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
 		}
 		break;
 	case nv_dds::TextureCubemap:
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
-		if(!ddsimage->upload_textureCubemap())
-		{
-		glDeleteTextures(1, &texobj);
-		texobj = 0;
+		if(!ddsimage->upload_textureCubemap()) {
+			glDeleteTextures(1, &texobj);
+			texobj = 0;
 		}
+		break;
+	default:
+		assert(false);
 		break;
 	}
 
@@ -603,7 +601,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 			bm.mem[(y*bm.xsize+x)*4+1]=g/((ex-sx)*(ey-sy));
 			bm.mem[(y*bm.xsize+x)*4+2]=b/((ex-sx)*(ey-sy));
 			bm.mem[(y*bm.xsize+x)*4+3]=a/((ex-sx)*(ey-sy));
-		}	
+		}
 	}
 	return bm;
 }
@@ -634,7 +632,7 @@ void CBitmap::GrayScale()
 	for(int y = 0; y < ysize; ++y) {
 		for(int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
-			const float illum = 
+			const float illum =
 				(mem[base + 0] * 0.299f) +
 				(mem[base + 1] * 0.587f) +
 				(mem[base + 2] * 0.114f);
@@ -692,7 +690,7 @@ void CBitmap::ReverseYAxis()
 
 #if defined(__APPLE__)
 
-Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size, 
+Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	const std::string &filename)
 {
 	// Load Data Reference
@@ -701,41 +699,41 @@ Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	PointerDataRefRecord ptrDataRefRec;
 	ComponentInstance dataRefHandler;
 	unsigned char pstr[255];
-	
+
 	ptrDataRefRec.data = data;
 	ptrDataRefRec.dataLength = size;
-	
+
 	/*err = */PtrToHand(&ptrDataRefRec, &dataRef, sizeof(PointerDataRefRecord));
-	
+
 	// Open a Data Handler for the Data Reference
-	/*err = */OpenADataHandler(dataRef, PointerDataHandlerSubType, NULL, 
+	/*err = */OpenADataHandler(dataRef, PointerDataHandlerSubType, NULL,
 		(OSType)0, NULL, kDataHCanRead, &dataRefHandler);
-	
+
 	// Convert From CString in filename to a PascalString in pstr
 	if (filename.length() > 255) {
 		CopyCStringToPascal(filename.c_str(), pstr);
 		//hmm...not good, pascal string limit is 255!
 		//do some error handling maybe?!
 	}
-	
+
 	// Add filename extension
 	/*err = */PtrToHand(pstr, &fileNameHandle, filename.length() + 1);
-	/*err = */DataHSetDataRefExtension(dataRefHandler, fileNameHandle, 
+	/*err = */DataHSetDataRefExtension(dataRefHandler, fileNameHandle,
 		kDataRefExtensionFileName);
 	DisposeHandle(fileNameHandle);
-	
+
 	// Release old handler which does not have the extensions
 	DisposeHandle(dataRef);
-	
+
 	// Grab the SAFE_NEW version of the data ref from the data handler
 	/*err = */ DataHGetDataRef(dataRefHandler, &dataRef);
-	
+
 	return dataRef;
 }
-		
 
-unsigned char *CBitmap::LoadTextureData(const std::string &filename, 
-	unsigned char *data, unsigned int sizeData, int &xsize, 
+
+unsigned char *CBitmap::LoadTextureData(const std::string &filename,
+	unsigned char *data, unsigned int sizeData, int &xsize,
 	int &ysize, bool &hasAlpha)
 {
 	unsigned char *imageData = 0;
@@ -748,26 +746,26 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 	CGrafPtr origPort;
 	ImageDescriptionHandle desc;
 	int depth;
-	
+
 	// Data Handle for file data ( & load data from file )
 	Handle dataRef = GetPtrDataRef(data, sizeData, filename);
-	
+
 	// GraphicsImporter - Get Importer for our filetype
 	GetGraphicsImporterForDataRef(dataRef, 'ptr ', &gicomp);
-	
+
 	// GWorld - Get Texture Info
 	if (noErr != GraphicsImportGetNaturalBounds(gicomp, &rectImage)) {
 		return 0;
 	}
 	xsize = (unsigned int)(rectImage.right - rectImage.left);
 	ysize = (unsigned int)(rectImage.bottom - rectImage.top);
-	
+
 	// ImageDescription - Get Image Description
 	if (noErr != GraphicsImportGetImageDescription(gicomp, &desc)) {
 		CloseComponent(gicomp);
 		return 0;
 	}
-	
+
 	// ImageDescription - Get Bit Depth
 	HLock(reinterpret_cast<char **>(desc));
 	if (depth == 32) { // Only if it returns 32 does the image have an alpha chanel!
@@ -775,16 +773,16 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 	} else {
 		hasAlpha = false;
 	}
-	
+
 	// GWorld - Pixel Format stuff
 	pixelFormat = k32ARGBPixelFormat; // Make sure its forced...NOTE: i'm pretty sure this cannot be RGBA!
-	
+
 	// GWorld - Row stride
 	rowStride = xsize * 4; // (width * depth_bpp / 8)
-	
+
 	// GWorld - Allocate output buffer
 	imageData = SAFE_NEW unsigned char[rowStride * ysize];
-	
+
 	// GWorld - Actually Create IT!
 	QTNewGWorldFromPtr(&gworld, pixelFormat, &rectImage, 0, 0, 0, imageData, rowStride);
 	if (!gworld) {
@@ -793,10 +791,10 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 		DisposeHandle(reinterpret_cast<char **>(desc));
 		return 0;
 	}
-	
+
 	// Save old Graphics Device and Graphics Port to reset to later
 	GetGWorld (&origPort, &origDevice);
-	
+
 	// GraphicsImporter - Set Destination GWorld (our buffer)
 	if (noErr != GraphicsImportSetGWorld(gicomp, gworld, 0)) {
 		DisposeGWorld(gworld);
@@ -805,7 +803,7 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 		DisposeHandle(reinterpret_cast<char **>(desc));
 		return 0;
 	}
-	
+
 	// GraphicsImporter - Set Quality Level
 	if (noErr != GraphicsImportSetQuality(gicomp, codecLosslessQuality)) {
 		DisposeGWorld(gworld);
@@ -814,7 +812,7 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 		DisposeHandle(reinterpret_cast<char **>(desc));
 		return 0;
 	}
-	
+
 	// Lock pixels so that we can draw to our memory texture
 	if (!GetGWorldPixMap(gworld) || !LockPixels(GetGWorldPixMap(gworld))) {
 		DisposeGWorld(gworld);
@@ -823,17 +821,17 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 		DisposeHandle(reinterpret_cast<char **>(desc));
 		return 0;
 	}
-	
+
 	//*** Draw GWorld into our Memory Texture!
 	GraphicsImportDraw(gicomp);
-	
+
 	// Clean up
 	UnlockPixels(GetGWorldPixMap(gworld));
 	SetGWorld(origPort, origDevice); // set graphics port to offscreen (we don't need it now)
 	DisposeGWorld(gworld);
 	CloseComponent(gicomp);
 	DisposeHandle(reinterpret_cast<char **>(desc));
-	
+
 	return imageData;
 
 }

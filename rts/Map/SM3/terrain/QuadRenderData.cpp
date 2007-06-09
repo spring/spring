@@ -28,7 +28,7 @@
 */
 
 #include "StdAfx.h"
-#include <GL/glew.h> 
+#include <GL/glew.h>
 
 #include "TerrainBase.h"
 #include "TerrainNode.h"
@@ -38,8 +38,8 @@ namespace terrain {
 	using namespace std;
 
 	QuadRenderData::QuadRenderData()
-	{ 
-		quad=0; 
+	{
+		quad=0;
 		used=false;
 		vertexSize=0;
 
@@ -127,11 +127,11 @@ namespace terrain {
 
 			// rect vs rect collision:
 			if (q->sqPos.x + q->width >= sx && q->sqPos.y + q->width >= sy &&
-				q->sqPos.x <= sx + w && q->sqPos.y <= sy + h) 
+				q->sqPos.x <= sx + w && q->sqPos.y <= sy + h)
 			{
 				assert (q->renderData==qrd[a]);
 				Free(q->renderData);
-			} 
+			}
 		}
 	}
 
@@ -230,12 +230,12 @@ namespace terrain {
 		// calculate dimensions
 		const int scale = 1 << (level - q->depth);
 		int w = QUAD_W * scale + 1, h = w;
-		const int startx = q->hmPos.x * scale, ex = startx + w;
+		const int startx = q->hmPos.x * scale;
 
 		// use power-of-two texture sizes if required
 		int texw=1;
 		//if (GLEW_ARB_texture_non_power_of_two) texw = w;
-		//else 
+		//else
 		while (texw < w) texw*=2;
 
 		// if not yet created, create a texture for it
@@ -245,7 +245,7 @@ namespace terrain {
 			texture = rd->normalMap;
 			glBindTexture (GL_TEXTURE_2D, texture);
 		} else {
-			if (rd->normalMap) 
+			if (rd->normalMap)
 				glDeleteTextures(1,&rd->normalMap);
 
 			glGenTextures (1, &texture);

@@ -1131,8 +1131,9 @@ int CAICallback::HandleCommand (int commandId, void *data)
 		net->SendMapErase(team,
 			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
 		return 1;
+	default:
+		return 0;
 	}
-	return 0;
 }
 
 int CAICallback::GetNumUnitDefs ()
@@ -1191,6 +1192,8 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 				(*(float*)data) = unit->currentFuel;
 				return true;
 			}
+			default:
+				return false;
 		}
 	}
 	return false;

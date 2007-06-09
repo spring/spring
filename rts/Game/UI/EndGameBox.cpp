@@ -110,8 +110,6 @@ void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
 		return;
 	}
 
-	float mx=MouseX(x);
-	float my=MouseY(y);
 	if(moveBox){
 		box.x1+=MouseMoveX(dx);
 		box.x2+=MouseMoveX(dx);

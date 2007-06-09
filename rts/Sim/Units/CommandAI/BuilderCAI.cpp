@@ -462,7 +462,6 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 void CBuilderCAI::ExecuteReclaim(Command &c)
 {
 	assert(owner->unitDef->canReclaim);
-	CBuilder* fac=(CBuilder*)owner;
 	if(c.params.size()==1){
 		int id=(int) c.params[0];
 		if(id>=MAX_UNITS){		//reclaim feature
@@ -627,7 +626,6 @@ void CBuilderCAI::ExecuteFight(Command &c)
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) &&
 	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8,c.options,true)){
-		CUnit* target=uh->units[(int)commandQue.front().params[0]];
 		tempOrder=true;
 		inCommand=false;
 		if(lastPC1!=gs->frameNum){	//avoid infinite loops
@@ -861,7 +859,7 @@ void CBuilderCAI::DrawCommands(void)
 					glColor4fv(cmdColors.rangeExtract);
 					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 					lineDrawer.Restart();
-				}				
+				}
 			}
 		}
 	}
@@ -873,7 +871,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c)
 {
 	if (!AllowedCommand(c))
 		return;
-		
+
 	if ((c.id == CMD_GUARD) &&
 	    (c.params.size() == 1) && ((int)c.params[0] == owner->id)) {
 		return;
@@ -1014,7 +1012,6 @@ void CBuilderCAI::FinishCommand(void)
 bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned char options, bool attackEnemy)
 {
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
-	int myAllyteam = owner->allyteam;
 	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (gs->Ally(owner->allyteam, unit->allyteam) &&

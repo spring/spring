@@ -185,7 +185,6 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	char* buf=SAFE_NEW char[size*size/2];
 
 	int tilepitch = 64/(1<<level);
-	int bufpitch = tilepitch*32;
 
 	int numblocks = 8/(1<<level);
 

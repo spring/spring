@@ -180,9 +180,10 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 
 	// Insert the first object that will provide references to everything
 	ObjectID obj;
-	obj.class_ = rootObjClass;
-	obj.isEmbedded = false;
 	obj.id = 0;
+	obj.classIndex = 0;
+	obj.isEmbedded = false;
+	obj.class_ = rootObjClass;
 	ptrToID[rootObj] = obj;
 	pendingObjects.push_back (ptrToID.find(rootObj));
 	objects.push_back (&ptrToID[rootObj]);

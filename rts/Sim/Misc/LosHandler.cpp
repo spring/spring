@@ -112,7 +112,7 @@ CLosHandler::CLosHandler()
 	for(int a=0;a<gs->activeAllyTeams;++a){
 		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
 		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
-		
+
 		for(int b=0;b<losSizeX*losSizeY;++b){
 			losMap[a][b]=0;
 		}
@@ -120,9 +120,9 @@ CLosHandler::CLosHandler()
 			airLosMap[a][b]=0;
 		}
 	}
-	
+
 	for(int a=1;a<=MAX_LOS_TABLE;++a)
-		OutputTable(a);	
+		OutputTable(a);
 
 	for(int a=0;a<256;++a)
 		terrainHeight[a]=-15;
@@ -399,10 +399,9 @@ void CLosHandler::OutputTable(int Table)
   char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
   memset(PaintTable, 0 , (Radius+1)*Radius);
   CPoint P;
-  int Lines = 0;
-	
+
   int x, y, r2;
-	
+
   P.x = 0;
   P.y = Radius;
   Points.push_front(P);
@@ -410,7 +409,7 @@ void CLosHandler::OutputTable(int Table)
   for(float i=Radius; i>=1; i-=0.5f)
 	{
     r2 = (int)(i * i);
-		
+
     y = (int)i;
     x = 1;
     y = (int) (sqrt((float)r2 - 1) + 0.5f);
@@ -429,7 +428,7 @@ void CLosHandler::OutputTable(int Table)
         P.y = x;
         Points.push_back(P);
 			}
-			
+
       x += 1;
       y = (int) (sqrt((float)r2 - x*x) + 0.5f);
 		}
@@ -443,11 +442,11 @@ void CLosHandler::OutputTable(int Table)
 			}
 		}
 	}
-	
-	
-	
+
+
+
   Points.sort();
-	
+
   int Line = 1;
   int Size = Points.size();
   for(int j=0; j<Size; j++)
@@ -456,22 +455,22 @@ void CLosHandler::OutputTable(int Table)
     Points.pop_back();
     Line++;
 	}
-	
-	
+
+
 	lostables.push_back(lostable);
 
-  delete[] PaintTable;	
+  delete[] PaintTable;
 }
 
 CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
-{	
+{
 	LosLine losline;
 
 	int x0 = 0;
 	int y0 = 0;
 	int dx = x;
 	int dy = y;
-	
+
 	if (abs(dx) > abs(dy)) {          // slope <1
 		float m = (float) dy / (float) dx;      // compute slope
 		float b = y0 - m*x0;
@@ -490,17 +489,17 @@ CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
 				losline.push_back(CPoint(Round(m*y0 + b),y0));
 			}
 		}
-	return losline;				
+	return losline;
 }
 
 void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 {
-	
+
 	int x0 = 0;
 	int y0 = 0;
 	int dx = x;
 	int dy = y;
-	
+
 	if (abs(dx) > abs(dy)) {          // slope <1
 		float m = (float) dy / (float) dx;      // compute slope
 		float b = y0 - m*x0;
@@ -519,8 +518,8 @@ void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 				PaintTable[Round(m*y0 + b)+y0*Size] = 1;
 			}
 		}
-		
-		
+
+
 }
 
 int CLosHandler::Round(float Num)
@@ -529,7 +528,7 @@ int CLosHandler::Round(float Num)
     return (int)Num;
   else
     return (int)Num+1;
-	
+
 }
 
 void CLosHandler::FreeInstance(LosInstance* instance)
@@ -583,7 +582,7 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 		std::vector<int>::iterator lsi;
 		for(lsi=instance->losSquares.begin();lsi!=instance->losSquares.end();++lsi){
 			++losMap[instance->allyteam][*lsi];
-		}		
+		}
 		LosAddAir(instance);
 	}
 	instance->refCount++;

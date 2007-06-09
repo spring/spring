@@ -21,26 +21,26 @@ using boost::spirit::space_p;
 using boost::spirit::comment_p;
 using boost::spirit::parse_info;
 
-TdfParser::parse_error::parse_error( std::size_t l, std::size_t c, std::string const& f) throw() 
-  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +".") 
+TdfParser::parse_error::parse_error( std::size_t l, std::size_t c, std::string const& f) throw()
+  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +".")
   , line(l)
   , column(c)
   , filename(f)
 {}
 
 TdfParser::parse_error::parse_error( std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f) throw()
-  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
+  : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error)
   , line(l)
   , column(c)
-  , filename(f) 
+  , filename(f)
 {}
 
-TdfParser::parse_error::parse_error( std::string const& message, std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f) 
+TdfParser::parse_error::parse_error( std::string const& message, std::string const& line_of_error, std::size_t l, std::size_t c, std::string const& f)
   throw()
-  : content_error( "Parse error '" + message + "' in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error) 
+  : content_error( "Parse error '" + message + "' in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +" near\n"+ line_of_error)
   , line(l)
   , column(c)
-  , filename(f) 
+  , filename(f)
 {}
 
 TdfParser::parse_error::~parse_error() throw() {}
@@ -62,8 +62,8 @@ void TdfParser::TdfSection::print( std::ostream & out )  const{
 TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection( std::string const& name )
 {
   std::string lowerd_name = StringToLower(name);
-  std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name); 
-  if( it != sections.end() ) 
+  std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name);
+  if( it != sections.end() )
     return it->second;
   else {
     TdfSection* ret = SAFE_NEW TdfSection;
@@ -86,7 +86,7 @@ TdfParser::~TdfParser()
 
 TdfParser::TdfSection::~TdfSection()
 {
-  for( std::map<std::string,TdfSection*>::iterator it = sections.begin(), e=sections.end(); it != e; ++it ) 
+  for( std::map<std::string,TdfSection*>::iterator it = sections.begin(), e=sections.end(); it != e; ++it )
     delete it->second;
 }
 
@@ -102,19 +102,19 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
   std::list<std::string> junk_data;
   tdf_grammar grammar( &root_section, &junk_data );
   boost::spirit::parse_info<char const*> info;
-  std::string message; 
+  std::string message;
   typedef boost::spirit::position_iterator2<char const*> iterator_t;
   iterator_t error_it( buf, buf + size );
 
   try {
-   info = boost::spirit::parse( 
+   info = boost::spirit::parse(
       buf
       , buf + size
       , grammar
-      , space_p 
+      , space_p
       |  comment_p("/*", "*/")           // rule for C-comments
       |  comment_p("//")
-      ); 
+      );
   }
   catch( boost::spirit::parser_error<tdf_grammar::Errors, char const*> & e ) { // thrown by assertion parsers in tdf_grammar
 
@@ -123,6 +123,7 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
       case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
       case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
       case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
+      default: message = "unknown boost::spirit::parser_error exception"; break;
     };
 
     std::ptrdiff_t target_pos = e.where - buf;
@@ -134,7 +135,7 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
     }
   }
 
-  for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); 
+  for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end();
       it !=e ; ++it ){
     std::string temp = boost::trim_copy( *it );
     if( ! temp.empty( ) ) {
@@ -302,7 +303,7 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 	static std::map<std::string, std::string> emptymap;
 	std::string lowerd = StringToLower(location);
 	std::string searchpath; //for errormessages
-	std::vector<std::string> loclist = GetLocationVector(lowerd);	
+	std::vector<std::string> loclist = GetLocationVector(lowerd);
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
 	{
 //		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
@@ -347,7 +348,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;
         		searchpath += '\\';
-		}       
+		}
 	}
 	std::map<std::string,TdfSection*>::iterator it;
 	for(it=sectionsptr->begin(); it!=sectionsptr->end(); it++)
@@ -361,7 +362,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 bool TdfParser::SectionExist(std::string const& location)
 {
   std::string lowerd = StringToLower(location);
-	std::vector<std::string> loclist = GetLocationVector(lowerd);		
+	std::vector<std::string> loclist = GetLocationVector(lowerd);
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
 	{
 		return false;
@@ -431,7 +432,7 @@ int main(int argc, char **argv) {
   try{
     while( --argc ) {
       std::cout << "Parsing : " <<  argv[argc] << " ... ";
-      TdfParser p( argv[argc] ); 
+      TdfParser p( argv[argc] );
       p.print( std::cout );
       std::cout <<" Ok." << std::endl;
     }

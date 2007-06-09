@@ -48,7 +48,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 		invHardness[a]=1.0f/readmap->terrainTypes[a].hardness;
 
 	mapHardness=atof(readmap->mapDefParser.SGetValueDef("100","MAP\\MapHardness").c_str());
-	
+
 	disabled = false;
 }
 
@@ -109,7 +109,6 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){		//calculate how much to offset the buildings in the explosion radius with (while still keeping the ground under them flat
 		if((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap){
 			CUnit* unit=*ui;
-			float3& upos=(*ui)->pos;
 
 			float totalDif=0;
 			for(int z=unit->mapPos.y; z<unit->mapPos.y+unit->ysize; z++){
@@ -157,7 +156,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			readmap->centerheightmap[y*gs->mapx+x]=height*0.25f;
 		}
 	}
-	
+
 	/*int hy2=min(gs->hmapy-1,y2/2);
 	int hx2=min(gs->hmapx-1,x2/2);
 	for(int y=y1/2;y<=hy2;y++)
@@ -195,7 +194,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 
 			e1=float3( SQUARE_SIZE,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y+1)*(gs->mapx+1)+x],0);
 			e2=float3( 0,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
-			
+
 			n=e2.cross(e1);
 			n.Normalize();
 
@@ -215,7 +214,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 
 			e1=float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
 			e2=float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
-			
+
 			float3 n2=e2.cross(e1);
 			n2.Normalize();
 
@@ -290,9 +289,6 @@ START_TIME_PROFILE;
 		readmap->ExplosionUpdate(e->x1,e->x2,e->y1,e->y2);
 		if(e->ttl==0){
 			float3 pos=e->pos;
-			float strength=e->strength;
-			float ds=2.5f*sqrt(strength);
-			float dd=strength/ds*8;
 			RecalcArea(x1-2,x2+2,y1-2,y2+2);
 	/*		for(int y=y1>>3;y<=y2>>3;++y){
 				for(int x=x1>>3;x<=x2>>3;++x){

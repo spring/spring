@@ -77,7 +77,7 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 
 	int minx=max(((int)(pos.x-radius))/QUAD_SIZE,0);
 	int miny=max(((int)(pos.z-radius))/QUAD_SIZE,0);
-	
+
 	if(maxy<miny || maxx<minx)
 		return ret;
 
@@ -101,11 +101,10 @@ void CQuadField::GetQuads(float3 pos,float radius, int*& dst)
 
 	int minx=max(((int)(pos.x-radius))/QUAD_SIZE,0);
 	int miny=max(((int)(pos.z-radius))/QUAD_SIZE,0);
-	
+
 	if(maxy<miny || maxx<minx)
 		return;
 
-	int* org = dst;
 	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
 	for(int y=miny;y<=maxy;++y)
 		for(int x=minx;x<=maxx;++x)
@@ -122,7 +121,6 @@ void CQuadField::MovedUnit(CUnit *unit)
 	vector<int> newQuads=GetQuads(unit->pos,unit->radius);
 
 	if(newQuads.size()==unit->quads.size()){
-		bool same=true;
 		vector<int>::iterator qi1,qi2;
 		qi1=unit->quads.begin();
 		for(qi2=newQuads.begin();qi2!=newQuads.end();++qi2){
@@ -162,7 +160,7 @@ vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 
 	int* endQuad=tempQuads;
 	GetQuads(pos,radius,endQuad);
-	
+
 	int tempNum=gs->tempNum++;
 
 	for(int* a=tempQuads;a!=endQuad;++a){
@@ -188,7 +186,7 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 
 	int* endQuad=tempQuads;
 	GetQuads(pos,radius,endQuad);
-	
+
 	int tempNum=gs->tempNum++;
 
 	for(int* a=tempQuads;a!=endQuad;++a){
@@ -210,7 +208,7 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 	vector<CUnit*> units;
 
 	vector<int> quads = GetQuadsRectangle(mins, maxs);
-	
+
 	int tempNum = gs->tempNum++;
 
 	vector<int>::iterator qi;
@@ -360,7 +358,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 			} else {
 				zn=(floor(zp*invQuadSize)*QUAD_SIZE-zp)/dz;
 			}
-			
+
 			if(xn<zn){
 				xp+=(xn+0.0001f)*dx;
 				zp+=(xn+0.0001f)*dz;
@@ -439,7 +437,7 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 	}*/
 
 	vector<int> quads=GetQuads(pos,radius);
-	
+
 	int tempNum=gs->tempNum++;
 
 	vector<int>::iterator qi;
@@ -463,7 +461,7 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
 	vector<CFeature*> features;
 
 	vector<int> quads = GetQuadsRectangle(mins, maxs);
-	
+
 	int tempNum = gs->tempNum++;
 
 	vector<int>::iterator qi;
@@ -494,7 +492,7 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 	}*/
 
 	vector<int> quads=GetQuads(pos,radius);
-	
+
 	int tempNum=gs->tempNum++;
 
 	vector<int>::iterator qi;
@@ -536,7 +534,7 @@ vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
 
 	int minx=max(0,min(((int)(pos.x))/QUAD_SIZE,numQuadsX-1));
 	int miny=max(0,min(((int)(pos.z))/QUAD_SIZE,numQuadsZ-1));
-	
+
 	if(maxy<miny || maxx<minx)
 		return ret;
 

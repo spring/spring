@@ -123,7 +123,7 @@ void CAirCAI::GiveCommandReal(const Command &c)
 	if (c.id == CMD_SET_WANTED_MAX_SPEED) {
 	  return;
 	}
-	
+
 	if (c.id == CMD_AUTOREPAIRLEVEL) {
 		if (c.params.empty()) {
 			return;
@@ -205,7 +205,7 @@ void CAirCAI::SlowUpdate()
 	if (owner->usingScriptMoveType) {
 		return; // avoid the invalid (CAirMoveType*) cast
 	}
-	
+
 	CAirMoveType* myPlane=(CAirMoveType*) owner->moveType;
 
 	if(owner->unitDef->maxFuel > 0){
@@ -236,7 +236,7 @@ void CAirCAI::SlowUpdate()
 					myPlane->goalPos = landingPos;
 				} else {
 					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-						myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);	
+						myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 				}
 				return;
 			}
@@ -256,12 +256,12 @@ void CAirCAI::SlowUpdate()
 							myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
 						}
 						return;
-					}		
+					}
 				}
 			}
 		}
 	}
-	
+
 	if(commandQue.empty()){
 		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING
 				&& !owner->unitDef->DontLand()){
@@ -495,7 +495,6 @@ void CAirCAI::ExecuteFight(Command &c)
 void CAirCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
-	CAirMoveType* myPlane = (CAirMoveType*) owner->moveType;
 	targetAge++;
 	if(tempOrder && owner->moveState == 1){		//limit how far away we fly
 		if(orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500){
@@ -524,7 +523,7 @@ void CAirCAI::ExecuteAttack(Command &c)
 			return;
 		}
 		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-			owner->AttackUnit(0,true); 
+			owner->AttackUnit(0,true);
 			FinishCommand();
 			return;
 		}
@@ -588,7 +587,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 		}
 		if (owner->commandShotCount > 0) {
 			if ((c.params.size() == 4) && (commandQue.size() > 1)) {
-				owner->AttackUnit(0, true); 
+				owner->AttackUnit(0, true);
 				FinishCommand();
 			}
 			else if (owner->userAttackGround) {
@@ -670,7 +669,7 @@ int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 void CAirCAI::DrawCommands(void)
 {
 	lineDrawer.StartPath(owner->pos, cmdColors.start);
-	
+
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}

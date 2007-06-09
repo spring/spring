@@ -21,7 +21,7 @@ struct FeatureDef
 
 	std::string myName;
 	std::string description;
-	
+
 	int id;
 
 	float metal;

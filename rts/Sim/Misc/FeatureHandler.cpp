@@ -507,9 +507,6 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 
 void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures)
 {
-	int cx=(int)(camera->pos.x/(SQUARE_SIZE*DRAW_QUAD_SIZE));
-	int cy=(int)(camera->pos.z/(SQUARE_SIZE*DRAW_QUAD_SIZE));
-
 	float featureDist=3000;
 	if(!extraSize)
 		featureDist=6000;		//farfeatures wont be drawn for shadowpass anyway

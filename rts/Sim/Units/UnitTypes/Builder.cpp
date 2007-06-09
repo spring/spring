@@ -515,7 +515,6 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 void CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 {
 	float3& buildPos=buildInfo.pos;
-	const UnitDef *unitdef=buildInfo.def;
 	tx1 = (int)max((float)0,(buildPos.x-(buildInfo.GetXSize()*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	tx2 = min(gs->mapx,tx1+buildInfo.GetXSize());
 	tz1 = (int)max((float)0,(buildPos.z-(buildInfo.GetYSize()*0.5f*SQUARE_SIZE))/SQUARE_SIZE);

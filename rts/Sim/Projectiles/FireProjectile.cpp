@@ -182,8 +182,6 @@ void CFireProjectile::Draw(void)
 		col2[1]=(unsigned char)(c*0.6f);
 		col2[2]=(unsigned char)(c*0.6f);
 		col2[3]=c;
-		float xmod=0.125f+(float(int(pi->smokeType%6)))/16;
-		float ymod=(int(pi->smokeType/6))/16.0f;
 
 		va->AddVertexTC(interPos-dir1-dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].ystart,col2);
 		va->AddVertexTC(interPos+dir1-dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].ystart,col2);

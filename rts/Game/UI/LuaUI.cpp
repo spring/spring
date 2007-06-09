@@ -66,7 +66,7 @@ using namespace std;
 #else
 #  define LUA_OPEN_LIB(L, lib) \
      lua_pushcfunction((L), lib); \
-     lua_pcall((L), 0, 0, 0); 
+     lua_pcall((L), 0, 0, 0);
 #endif
 
 
@@ -90,9 +90,9 @@ void CLuaUI::LoadHandler()
 	if (luaUI) {
 		return;
 	}
-	
+
 	SAFE_NEW CLuaUI();
-	
+
 	if (luaUI->L == NULL) {
 		delete luaUI;
 	}
@@ -115,7 +115,7 @@ CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, NULL)
 {
 	luaUI = this;
-	
+
 	if (L == NULL) {
 		return;
 	}
@@ -175,7 +175,7 @@ CLuaUI::CLuaUI()
 		KillLua();
 		return;
 	}
-	
+
 	// register for call-ins
 	luaCallIns.AddHandle(this);
 }
@@ -248,7 +248,7 @@ bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 		luaCallIns.RemoveCallIn(this, name);
 	}
 	return true;
-}	
+}
 
 
 void CLuaUI::UpdateTeams()
@@ -1530,7 +1530,7 @@ int CLuaUI::GetCmdDescIndex(lua_State* L)
 	}
 	CheckNoArgs(L, __FUNCTION__);
 	const int cmdId = (int)lua_tonumber(L, 1);
-	
+
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	for (int i = 0; i < cmdDescCount; i++) {
@@ -1689,7 +1689,7 @@ int CLuaUI::GetConsoleBuffer(lua_State* L)
 	}
 
 	deque<CInfoConsole::RawLine> lines;
-	const int newLines = ic->GetRawLines(lines);
+	ic->GetRawLines(lines);
 	const int lineCount = (int)lines.size();
 
 	int start = 0;

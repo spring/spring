@@ -96,7 +96,7 @@ void CFeature::ChangeTeam(int newTeam)
 		team = newTeam;
 		allyteam = gs->AllyTeam(newTeam);
 	}
-	
+
 	if (def->drawType == DRAWTYPE_3DO){
 		if (!def->useCSOffset) {
 			model = modelParser->Load3DO(def->modelname.c_str(),
@@ -142,7 +142,7 @@ void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _headi
 		}
 		height = model->height;
 		def->radius = model->radius;
-		SetRadius(def->radius);			
+		SetRadius(def->radius);
 		midPos = pos + model->relMidPos;
 	}
 	else if (def->drawType == DRAWTYPE_TREE){
@@ -198,7 +198,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 	float oldReclaimLeft = reclaimLeft;
 	float fractionReclaimed;
 	if(amount>0){
-		
+
 		// Check they are trying to repair a feature that can be resurrected
 		if(createdFromUnit == "")
 			return false;
@@ -207,7 +207,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		// This is reclaim-option independant - repairing features should always
 		// be like other repairing - gradual and multi-unit
 		// Lots of this code is stolen from unit->AddBuildPower
-		
+
 		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
 
 		if (reclaimLeft >= 1)
@@ -242,16 +242,16 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		// Reclaiming
 		if(reclaimLeft <= 0)	// avoid multisuck when reclaim has already completed during this frame
 			return false;
-		
+
 		if(isRepairingBeforeResurrect && modInfo->reclaimMethod > 1) // don't let them exploit chunk reclaim
 			return false;
-		
+
 		if(modInfo->multiReclaim == 0 && lastReclaim == gs->frameNum) // make sure several units cant reclaim at once on a single feature
 			return true;
-		
+
 		float part=(100-amount)*0.02f/max(10.0f,(def->metal+def->energy));
 		reclaimLeft-=part;
-		
+
 		// Stop the last bit giving too much resource
 		if(reclaimLeft < 0) reclaimLeft = 0;
 
@@ -377,9 +377,9 @@ void CFeature::ForcedSpin(const float3& newDir)
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 		treeDrawer->AddTree(def->modelType, pos, 1.0f);
-	}	
+	}
 */
-	
+
 	CMatrix44f tmp;
 	tmp.RotateZ(newDir.z);
 	tmp.RotateX(newDir.x);
@@ -436,12 +436,12 @@ bool CFeature::Update(void)
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
 
-		if ((gs->frameNum+id % 5) % 5 == 0) 
+		if ((gs->frameNum+id % 5) % 5 == 0)
 		{
 			// Find the unit closest to the geothermal
 			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
-			float bestDist2;
-			CSolidObject *so=0;
+			float bestDist2 = 0;
+			CSolidObject *so = NULL;
 			for (vector<CSolidObject*>::iterator oi=objs.begin();oi!=objs.end();++oi) {
 				float dist2 = ((*oi)->pos-pos).SqLength();
 				if (!so || dist2 < bestDist2)  {
@@ -451,7 +451,7 @@ bool CFeature::Update(void)
 			}
 
 			if (so!=solidOnTop) {
-				if (solidOnTop) 
+				if (solidOnTop)
 					DeleteDeathDependence(solidOnTop);
 				if (so)
 					AddDeathDependence(so);
@@ -508,7 +508,7 @@ void CFeature::DrawS3O()
 
 int CFeature::ChunkNumber(float f)
 {
-	return (int) ceil(f * modInfo->reclaimMethod);	
+	return (int) ceil(f * modInfo->reclaimMethod);
 }
 
 

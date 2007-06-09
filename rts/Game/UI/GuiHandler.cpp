@@ -492,7 +492,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 		(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
 		 (defaultCmdMemory >= 0) && (inCommand < 0) &&
 		 ((mouse->activeReceiver == this) || (minimap->ProxyMode())));
-	
+
 	const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
 
 	// copy the current command state
@@ -1271,6 +1271,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			RunCustomCommands(cd.params, rmb);
 			break;
 		}
+		default:
+			break;
 	}
 
 	return true;
@@ -2066,6 +2068,8 @@ void CGuiHandler::MenuChoice(string s)
 				}
 				break;
 			}
+			default:
+				break;
 		}
 	}
 }
@@ -2247,7 +2251,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			Command c;
 
 			c.id=commands[tempInCommand].id;
-			float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+			helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 			if (!unit){
 				return defaultRet;
 			}
@@ -2368,7 +2372,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit=0;
-				CFeature* feature=0;
 
 				float dist2=helper->GuiTraceRay(
 					camera->pos, mouse->dir, gu->viewRange*1.4f, unit, 20, true);
@@ -2457,7 +2460,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	if(GetQueueKeystate() && keys[SDLK_LCTRL])
 	{
 		CUnit* unit=0;
-		float dist2=helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
+		helper->GuiTraceRay(camera->pos,mouse->dir,gu->viewRange*1.4f,unit,20,true);
 		if(unit){
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
@@ -3159,7 +3162,7 @@ void CGuiHandler::DrawNumberInput()
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 			const float mouseX = (float)mouse->lastx / (float)gu->viewSizeX;
 			const float slideX = min(max(mouseX, 0.25f), 0.75f);
-			const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->viewSizeY;
+			//const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->viewSizeY;
 			glColor4f(1.0f, 1.0f, 0.0f, 0.8f);
 			glRectf(0.235f, 0.45f, 0.25f, 0.55f);
 			glRectf(0.75f, 0.45f, 0.765f, 0.55f);
@@ -3234,8 +3237,6 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 	const float xs = xIconSize / float(1 + (pCount * 2));
 	const float ys = yIconSize * 0.125f;
 	const float x1 = icon.visual.x1;
-	const float y1 = icon.visual.y1;
-	const float x2 = icon.visual.x2;
 	const float y2 = icon.visual.y2;
 	const float yp = 1.0f / float(gu->viewSizeY);
 
@@ -3357,8 +3358,8 @@ static inline void DrawWeaponArc(const CUnit* unit)
 	// copied from Weapon.cpp
 	const float3 interPos = unit->pos + (unit->speed * gu->timeOffset);
 	float3 pos = interPos +
-	             (unit->frontdir * w->relWeaponPos.z) + 
-	             (unit->updir    * w->relWeaponPos.y) + 
+	             (unit->frontdir * w->relWeaponPos.z) +
+	             (unit->updir    * w->relWeaponPos.y) +
 	             (unit->rightdir * w->relWeaponPos.x);
 	if (pos.y < ground->GetHeight2(pos.x, pos.z)) {
 		// hope that we are underground because we are a
@@ -3544,7 +3545,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (enemyUnit && unitdef->decoyDef) {
 				unitdef = unitdef->decoyDef;
 			}
-			
+
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
 				glColor4fv(cmdColors.rangeAttack);
@@ -3590,7 +3591,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			}
 			// draw interceptor range
 			const WeaponDef* wd = NULL;
-			const CWeapon* w;
+			const CWeapon* w = NULL;
 			if (enemyUnit) {
 				wd = unitdef->stockpileWeaponDef;
 			} else {

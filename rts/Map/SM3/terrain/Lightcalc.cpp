@@ -81,7 +81,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 
 	Heightmap *hm;
 	int w;
-	
+
 	for(;;) {
 		hm = orghm->GetLevel(-level);
 		w=hm->w-1;
@@ -91,15 +91,15 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 
 		if (w > maxw) level ++;
 		else break;
-	} 
+	}
 
 	shadowLevelDif=0;
 	Heightmap *shadowhm = orghm->GetLevel(-(level+shadowLevelDif));
 	int shadowScale=1<<shadowLevelDif;
 	int shadowW=shadowhm->w-1;
 	assert (w/shadowW == shadowScale);
-	float org2c = w/float(orghm->w-1);
-	float c2org = (float)(orghm->w-1)/w;
+	//float org2c = w/float(orghm->w-1);
+	//float c2org = (float)(orghm->w-1)/w;
 
 	float *centerhm = SAFE_NEW float[w*w];
 	Vector3 *shading = SAFE_NEW Vector3[w*w];
@@ -110,8 +110,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 		}
 
 	uchar *lightMap = SAFE_NEW uchar[shadowW*shadowW];
-	int lightIndex = 0;
-	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l) 
+	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l)
 	{
 		float lightx;
 		float lighty;
@@ -123,7 +122,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 			lightx = (int)(l->position.x / shadowhm->squareSize);
 			lighty = (int)(l->position.z / shadowhm->squareSize);
 		}
-		CalculateShadows(lightMap, shadowW, lightx, lighty, 
+		CalculateShadows(lightMap, shadowW, lightx, lighty,
 			l->position.y, centerhm, w, shadowScale, l->directional);
 
 		for (int y=0;y<w;y++)
@@ -144,7 +143,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 
 				wp.Normalize();
 				float dot = wp.dot(normv);
-				if(dot < 0.0f) dot = 0.0f; 
+				if(dot < 0.0f) dot = 0.0f;
 				if(dot > 1.0f) dot = 1.0f;
 				dot *= lightMap[(y*shadowW+x)/shadowScale]*(1.0f/255.0f);
 				shading[y*w+x] += l->color * dot;
@@ -159,7 +158,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	uchar *shadingTexData=SAFE_NEW uchar[w*w*4], *td = shadingTexData;
+	uchar *shadingTexData=SAFE_NEW uchar[w*w*4];
 	for(int y=0;y<w;y++) {
 		for (int x=0;x<w;x++) {
 			shadingTexData[(y*w+x)*4+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);
@@ -215,7 +214,7 @@ void Lightmap::CalculateShadows (uchar *dst, int dstw, float lightX,float lightY
 				if (x==lightX && y==lightY)
 					continue;
 			}
-					
+
 			float len = sqrtf(dx*dx+dy*dy);
 			const float step = 5.0f;
 			float invLength2d = step/len;
@@ -242,7 +241,7 @@ void Lightmap::CalculateShadows (uchar *dst, int dstw, float lightX,float lightY
 			}
 		}
 	}
-	
+
 	BlurGrayscaleImage(dstw, dstw, dst);
 
 	char sm_fn[64];

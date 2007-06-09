@@ -101,9 +101,9 @@ defaultBindings[] = {
 	{ "Any+7", "group7" },
 	{ "Any+8", "group8" },
 	{ "Any+9", "group9" },
-	
+
 	{ "Any+c", "controlunit" },
-	
+
 	{       "[", "buildfacing inc"  },
 	{ "Shift+[", "buildfacing inc"  },
 	{       "]", "buildfacing dec"  },
@@ -173,7 +173,7 @@ defaultBindings[] = {
 
 	// NOTE: Up bindings are currently converted to press bindings
 	//       (see KeySet.cpp / DISALLOW_RELEASE_BINDINGS)
-	
+
 	{    "Any+`",    "drawinmap"  },
 	{ "Up+Any+`",    "drawinmap"  },
 	{    "Any+\\",   "drawinmap"  },
@@ -300,15 +300,15 @@ const CKeyBindings::ActionList&
 		         ks.GetString(false).c_str(), ks.Key());
 		if (alPtr == &empty) {
 			strncat(buf, "  EMPTY", sizeof(buf));
-			logOutput.Print(buf);
+			logOutput.Print("%s", buf);
 		}
-		else {	
-			logOutput.Print(buf);
+		else {
+			logOutput.Print("%s", buf);
 			const ActionList& al = *alPtr;
 			for (int i = 0; i < (int)al.size(); ++i) {
 				SNPRINTF(buf, sizeof(buf), "  %s  \"%s\"",
 				         al[i].command.c_str(), al[i].rawline.c_str());
-				logOutput.Print(buf);
+				logOutput.Print("%s", buf);
 			}
 		}
 	}
@@ -345,7 +345,7 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 		logOutput.Print("Bind: empty action: %s\n", line.c_str());
 		return false;
 	}
-	
+
 	// Try to be safe, force AnyMod mode for stateful commands
 	if (statefulCommands.find(action.command) != statefulCommands.end()) {
 		ks.SetAnyBit();
@@ -377,7 +377,7 @@ bool CKeyBindings::Bind(const string& keystr, const string& line)
 			}
 		}
 	}
-		
+
 	return true;
 }
 
@@ -543,7 +543,7 @@ bool CKeyBindings::Command(const string& line)
 		return false;
 	}
 	const string command = StringToLower(words[0]);
-	
+
 	if (command == "keydebug") {
 		if (words.size() == 1) {
 			debug = (debug <= 0) ? 1 : 0;
@@ -582,7 +582,7 @@ bool CKeyBindings::Command(const string& line)
 	else {
 		return false;
 	}
-	
+
 	if (userCommand) {
 		Sanitize();
 	}
@@ -595,13 +595,13 @@ bool CKeyBindings::Load(const string& filename)
 {
 //	inComment = false;
 	CFileHandler ifs(filename);
-	
+
 	SimpleParser::Init();
-	
+
 	userCommand = false; // temporarily disable Sanitize() calls
-	
+
 	LoadDefaults();
-	
+
 	while (true) {
 		const string line = SimpleParser::GetCleanLine(ifs);
 		if (line.empty()) {
@@ -611,9 +611,9 @@ bool CKeyBindings::Load(const string& filename)
 			ParseTypeBind(ifs, line);
 		}
 	}
-	
+
 	Sanitize();
-	
+
 	userCommand = true; // re-enable Sanitize() calls
 
 	return true;
@@ -727,7 +727,7 @@ bool CKeyBindings::Save(const string& filename) const
 	const bool success = FileSave(out);
 
 	fclose(out);
-	
+
 	return success;
 }
 
@@ -737,7 +737,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 	if (out == NULL) {
 		return false;
 	}
-	
+
 	// clear the defaults
 	fprintf(out, "\n");
 	fprintf(out, "unbindall          // clear the defaults\n");
@@ -746,13 +746,13 @@ bool CKeyBindings::FileSave(FILE* out) const
 
 	// save the user defined key symbols
 	keyCodes->SaveUserKeySymbols(out);
-	
+
 	// save the fake meta key (if it has been defined)
 	if (fakeMetaKey >= 0) {
 		fprintf(out, "fakemeta  %s\n\n", keyCodes->GetName(fakeMetaKey).c_str());
 	}
 
-	// save the named keysets	
+	// save the named keysets
 	NamedKeySetMap::const_iterator ks_it;
 	for (ks_it = namedKeySets.begin(); ks_it != namedKeySets.end(); ++ks_it) {
 		fprintf(out, "keyset  %-15s  %s\n",
@@ -761,7 +761,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 	if (!namedKeySets.empty()) {
 		fprintf(out, "\n");
 	}
-	
+
 	// save the bindings
 	KeyMap::const_iterator it;
 	for (it = bindings.begin(); it != bindings.end(); ++it) {
@@ -777,11 +777,11 @@ bool CKeyBindings::FileSave(FILE* out) const
 				}
 			}
 			if (comment.empty()) {
-				fprintf(out, "bind %18s  %s\n", 
+				fprintf(out, "bind %18s  %s\n",
 				        action.boundWith.c_str(),
 				        action.rawline.c_str());
 			} else {
-				fprintf(out, "bind %18s  %-20s%s\n", 
+				fprintf(out, "bind %18s  %-20s%s\n",
 				        action.boundWith.c_str(),
 				        action.rawline.c_str(), comment.c_str());
 			}

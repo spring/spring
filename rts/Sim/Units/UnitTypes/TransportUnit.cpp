@@ -46,7 +46,7 @@ void CTransportUnit::Update()
 		ti->unit->midPos = ti->unit->pos + (ti->unit->frontdir * ti->unit->relMidPos.z) +
 		                                   (ti->unit->updir    * ti->unit->relMidPos.y) +
 		                                   (ti->unit->rightdir * ti->unit->relMidPos.x);
-		if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(moveType)) {
+		if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 			if (unitDef->holdSteady) {
 				ti->unit->heading  = heading;
 				ti->unit->updir    = updir;
@@ -141,8 +141,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
 	unit->los=0;
-	if (CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType)) {
-		unit->moveType->useHeading=false;	
+	if (dynamic_cast<CTAAirMoveType*>(moveType)) {
+		unit->moveType->useHeading=false;
 	}
 	TransportedUnit tu;
 	tu.unit=unit;
@@ -171,7 +171,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
 			unit->transporter = 0;
-			if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(moveType)) {
+			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 				unit->moveType->useHeading = true;
 			}
 			unit->stunned = (unit->paralyzeDamage > unit->health);

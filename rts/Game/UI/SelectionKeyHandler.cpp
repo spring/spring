@@ -502,10 +502,13 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		if(++selectNumber>=selection.size())
 			selectNumber=0;
 
-		CUnit* sel;
+		CUnit* sel = NULL;
 		int a=0;
 		for(list<CUnit*>::iterator ui=selection.begin();ui!=selection.end() && a<=selectNumber;++ui,++a)
 			sel=*ui;
+
+		if (sel == NULL)
+			return;
 
 		selectedUnits.AddUnit(sel);
 		mouse->CameraTransition(0.8f);
@@ -567,6 +570,5 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		selectNumber+=num;
 	} else {
 		logOutput.Print("Unknown token in conclusion %s",s.c_str());
-		return;
 	}
 }

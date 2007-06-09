@@ -533,7 +533,7 @@ bool CGameServer::ServerReadNet()
 		if(inbufpos!=inbuflength){
 			char txt[200];
 			sprintf(txt,"Wrong packet length got %d from %d instead of %d",inbufpos,a,inbuflength);
-			logOutput.Print(txt);
+			logOutput.Print("%s", txt);
 			handleerror(0,txt,"Server network error",0);
 		}
 	}

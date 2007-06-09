@@ -104,8 +104,6 @@ int CArchiveDir::FindFiles(int cur, string* name, int* size)
 		return 0;
 	}
 
-	std::vector<std::string>::iterator& it = GetSearchHandle(cur);
-
 	*name = *searchHandles[cur];
 	*size = filesystem.GetFilesize(archiveName + *name);
 

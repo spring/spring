@@ -747,8 +747,8 @@ void CPathEstimator::Draw(void)
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1,1,0);
-	float blue=BLOCK_SIZE==32?1:0;
-/*	glBegin(GL_LINES);
+/*	float blue=BLOCK_SIZE==32?1:0;
+	glBegin(GL_LINES);
 	for(int z = 0; z < nbrOfBlocksZ; z++) {
 		for(int x = 0; x < nbrOfBlocksX; x++) {
 			int blocknr = z * nbrOfBlocksX + x;

@@ -136,7 +136,7 @@ CTextureHandler::CTextureHandler()
 	int cury=0;
 	int maxy=0;
 	int curx=0;
-	int foundx,foundy;
+	int foundx = 0, foundy = 0;
 	std::list<int2> nextSub;
 	std::list<int2> thisSub;
 	for(int a=0;a<numfiles;++a){

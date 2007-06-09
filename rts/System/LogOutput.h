@@ -1,12 +1,12 @@
 /*
-LogOutput - global object to write log info to. 
+LogOutput - global object to write log info to.
  Game UI elements that display log can subscribe to it to receive the log messages.
 */
 
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
 
-// format string error checking 
+// format string error checking
 #ifdef __GNUC__
 #define FORMATSTRING(n) __attribute__((format(printf, n, n + 1)))
 #else
@@ -41,15 +41,15 @@ public:
 
 	void SetLastMsgPos(float3 pos);
 
-	// In case the InfoConsole and other in game subscribers 
+	// In case the InfoConsole and other in game subscribers
 	// should not be used anymore (SDL shutdown)
-	void RemoveAllSubscribers(); 
-	// Close the output file, so the crash reporter can copy it  
-	void End(); 
+	void RemoveAllSubscribers();
+	// Close the output file, so the crash reporter can copy it
+	void End();
 
 	void AddSubscriber(ILogSubscriber *ls);
 	void RemoveSubscriber(ILogSubscriber *ls);
-	
+
 	void SetMirrorToStdout(bool);
 
 protected:

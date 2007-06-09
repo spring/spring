@@ -27,7 +27,7 @@ CAdvTreeGenerator* treeGen;
 CAdvTreeGenerator::CAdvTreeGenerator()
 {
 	PrintLoadMsg("Generating trees");
-	unsigned char(* tree)[2048][4]=SAFE_NEW unsigned char[256][2048][4]; 
+	unsigned char(* tree)[2048][4]=SAFE_NEW unsigned char[256][2048][4];
 	memset(tree[0][0],128,256*2048*4);
 
 	TdfParser resources("gamedata/resources.tdf");
@@ -149,7 +149,7 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 		glSafeDeleteProgram( treeShadowVP );
 		glSafeDeleteProgram( treeFarShadowVP );
 		if(shadowHandler->useFPShadows){
-			glSafeDeleteProgram( treeFPShadow );		
+			glSafeDeleteProgram( treeFPShadow );
 		}
 	}
 }
@@ -177,7 +177,7 @@ void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 {
 	float3 orto1(1,0,0);
 	float3 orto2(0,0,1);
-	
+
 	DrawTrunk(ZeroVector,float3(0,height,0),orto1,orto2,width);
 
 	float baseAngle=fRand(2*PI);
@@ -219,8 +219,7 @@ void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, 
 
 	if(depth==0)
 		return;
-	
-	float baseRot=fRand(2*PI);
+
 	float dirDif=fRand(0.8f)+1.0f;
 	int numTrunks=(int)length*5/MAX_TREE_HEIGHT;
 	for(int a=0;a<numTrunks;a++){
@@ -261,7 +260,7 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 		va->AddVertexTN(pos,0.126f+tex+flipTex,0.02f,float3(0.09f*MAX_TREE_HEIGHT,0.09f*MAX_TREE_HEIGHT,col));
 	}
 	float3 pos=start+dir*length*1.03f;
-	
+
 	float tex=float(int(rand()*3/RAND_MAX))*0.125f;
 	float flipTex=float(int(rand()*2/RAND_MAX))*0.123f;
 
@@ -277,8 +276,8 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 
 void CAdvTreeGenerator::CreateFarTex()
 {
-	unsigned char* data=SAFE_NEW unsigned char[512*512*4]; 
-	unsigned char* data2=SAFE_NEW unsigned char[512*512*4]; 
+	unsigned char* data=SAFE_NEW unsigned char[512*512*4];
+	unsigned char* data2=SAFE_NEW unsigned char[512*512*4];
 	for(int y=0;y<512;++y){
 		for(int x=0;x<512;++x){
 				data[((y)*512+x)*4+0]=60;
@@ -306,7 +305,7 @@ void CAdvTreeGenerator::CreateFarTex()
 	glAlphaFunc(GL_GREATER,0.5f);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1);			
+	glColor4f(1,1,1,1);
 	glViewport(0,0,64,64);
 	glAlphaFunc(GL_GREATER,0.5f);
 	glEnable(GL_ALPHA_TEST);
@@ -349,7 +348,7 @@ void CAdvTreeGenerator::CreateFarTex()
 	}
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_ALPHA_TEST);
-	
+
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -385,7 +384,7 @@ void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glCallList(displist);
-	
+
 	glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 
 	for(int y=0;y<64;++y){
@@ -399,7 +398,7 @@ void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned 
 				mem[((y+dy)*512+x+dx)*4+0]=buf[(y*64+x)*4];
 				mem[((y+dy)*512+x+dx)*4+1]=buf[(y*64+x)*4+1];
 				mem[((y+dy)*512+x+dx)*4+2]=buf[(y*64+x)*4+2];
-				mem[((y+dy)*512+x+dx)*4+3]=255;	
+				mem[((y+dy)*512+x+dx)*4+3]=255;
 			}
 		}
 	}
@@ -579,14 +578,14 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1);			
+	glColor4f(1,1,1,1);
 	glViewport(0,0,256,256);
 	glAlphaFunc(GL_GREATER,0.5f);
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_DEPTH_TEST);
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	CreateGranTexBranch(ZeroVector,float3(0.93f,0.93f,0));
 
 	unsigned char* buf=SAFE_NEW unsigned char[256*256*4];
@@ -607,7 +606,7 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 			}
 		}
 	}
-	
+
 	delete[] buf;
 	glEnable(GL_DEPTH_TEST);
 	glPopMatrix();
@@ -712,7 +711,6 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	float3 orto2=dir.cross(orto1);
 
 	float tex=float(int(rand()*3.0f/(float)RAND_MAX))*0.125f;
-	float flipTex=float(int(rand()*2.0f/(float)RAND_MAX))*0.123f;
 	float baseCol=0.4f+dir.dot(flatSun)*0.3f+fRand(0.1f);
 
 	float col1=baseCol+fRand(0.2f);
@@ -764,7 +762,7 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1);			
+	glColor4f(1,1,1,1);
 
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -774,7 +772,7 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 	for(int a=0;a<84;++a){
 		float xp=0.9f-fRand(1.8f);
 		float yp=0.9f-fRand(1.8f);
-		
+
 		float rot=fRand(360);
 
 		float rCol=0.7f+fRand(0.3f);
@@ -788,17 +786,17 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 		glRotatef(rot,0,0,1);
 		glRotatef(fRand(360),1,0,0);
 		glRotatef(fRand(360),0,1,0);
-		
+
 		glBegin(GL_QUADS);
 			glTexCoord2f(0,0); glVertex3f(-0.1f,-0.2f,0);
 			glTexCoord2f(0,1); glVertex3f(-0.1f,0.2f,0);
 			glTexCoord2f(1,1); glVertex3f(0.1f,0.2f,0);
 			glTexCoord2f(1,0); glVertex3f(0.1f,-0.2f,0);
 		glEnd();
-		
+
 		glPopMatrix();
 	}
-		
+
 	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf2);
 
 //	CBitmap bm(buf2,256,256);

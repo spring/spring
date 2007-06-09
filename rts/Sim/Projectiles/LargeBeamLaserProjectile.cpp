@@ -102,7 +102,6 @@ void CLargeBeamLaserProjectile::Draw(void)
 	float3 pos1=startPos;
 	float3 pos2=endPos;
 
-	float length = (endPos-startPos).Length();
 	float starttex=(gu->modGameTime)*scrollspeed;
 	starttex = 1-(starttex - (int)starttex);
 

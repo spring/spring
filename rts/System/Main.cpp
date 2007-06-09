@@ -987,6 +987,8 @@ int SpringApp::Run (int argc, char *argv[])
 					}
 					break;
 				}
+				default:
+					break;
 			}
 		}
 		if (globalQuit)

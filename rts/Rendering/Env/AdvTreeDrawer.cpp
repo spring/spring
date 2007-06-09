@@ -646,7 +646,6 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 void CAdvTreeDrawer::DrawShadowPass(void)
 {
 	float treeDistance=oldTreeDistance;
-	int treeSquare=int(treeDistance*2)+1;
 
 	int activeFarTex=camera->forward.z<0 ? treeGen->farTex[0] : treeGen->farTex[1];
 

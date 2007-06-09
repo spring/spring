@@ -38,7 +38,7 @@ hpiutil::sqshstream::sqshstream(substream &ss)
 		std::cerr << "Invalid SQSH header signature: 0x" << std::hex << magic << std::endl;
 		return;
 	}
-	boost::uint8_t unknown = stream->read();
+	stream->read(); // unknown data
 	compress = stream->read();
 	encrypt = stream->read();
 	compressedsize = readint();

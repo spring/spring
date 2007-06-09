@@ -59,9 +59,6 @@ void CResourceBar::Draw(void)
 		return;
 	}
 
-	const float mx=MouseX(mouse->lastx);
-	const float my=MouseY(mouse->lasty);
-
 	const CTeam* myTeam = gs->Team(gu->myTeam);
 
 	GLfloat x1,y1,x2,y2,x;
@@ -239,7 +236,6 @@ bool CResourceBar::IsAbove(int x, int y)
 std::string CResourceBar::GetTooltip(int x, int y)
 {
 	const float mx=MouseX(x);
-	const float my=MouseY(y);
 
 	if (mx < (box.x1 + 0.36f)) {
 		return "Shows your stored metal as well as\n"

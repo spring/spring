@@ -750,7 +750,7 @@ void CCobInstance::Explode(int piece, int flags)
 #endif
 
 	//Do an explosion at the location first
-	CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+	SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	//If this is true, no stuff should fly off
 	if (flags & 32)
