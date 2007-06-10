@@ -965,7 +965,6 @@ void CCommandAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 	if(inCommand){
-		owner->commandShotCount = -1;
 		if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
 			FinishCommand();
 			return;
@@ -980,6 +979,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 		}
 	}
 	else {
+		owner->commandShotCount = -1;
 		if(c.params.size()==1){
 			if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
 				owner->AttackUnit(uh->units[int(c.params[0])], c.id==CMD_DGUN);
