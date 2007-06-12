@@ -447,7 +447,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature, allyteam);
 	if(canBuild<2){
 		CUnit* u=helper->GetClosestFriendlyUnit(buildInfo.pos,5,allyteam);
-		if(u && u->unitDef==buildInfo.def){
+		if(u && u->unitDef==buildInfo.def && unitDef->canAssist){
 			curBuild=u;
 			AddDeathDependence(u);
 			SetBuildStanceToward(buildInfo.pos);
