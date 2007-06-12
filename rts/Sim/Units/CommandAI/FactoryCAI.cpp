@@ -255,6 +255,25 @@ void CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 }
 
 
+void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOption)
+{
+	if(!repeatOrders) {
+		buildOption.numQued--;
+		ENTER_MIXED;
+		if (owner->team == gu->myTeam) {
+			if(lastRestrictedWarning+100<gs->frameNum) {
+				logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+				logOutput.SetLastMsgPos(owner->pos);
+				lastRestrictedWarning = gs->frameNum;
+			}
+		}
+		ENTER_SYNCED;
+	}
+	UpdateIconName(c.id, buildOption);
+	FinishCommand();
+}
+
+
 void CFactoryCAI::SlowUpdate()
 {
 	if (commandQue.empty() || owner->beingBuilt) {
@@ -269,6 +288,7 @@ void CFactoryCAI::SlowUpdate()
 		oldSize=commandQue.size();
 		map<int,BuildOption>::iterator boi;
 		if((boi=buildOptions.find(c.id))!=buildOptions.end()){
+			const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
 			if(building){
 				if(!fac->curBuild && !fac->quedBuild){
 					building=false;
@@ -278,6 +298,14 @@ void CFactoryCAI::SlowUpdate()
 						boi->second.numQued--;
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
+				}
+				// This can only be true if two factories started building
+				// the restricted unit in the same simulation frame
+				else if(uh->unitsType[owner->team][def->id]>def->maxThisUnit){ //unit restricted?
+					CFactory* fac=(CFactory*)owner;
+					building = false;
+					fac->StopBuild();
+					CancelRestrictedUnit(c, boi->second);
 				}
 			} else {
 				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
@@ -289,20 +317,7 @@ void CFactoryCAI::SlowUpdate()
 					FinishCommand();
 				}
 				else if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
-					if(!repeatOrders){
-						boi->second.numQued--;
-						ENTER_MIXED;
-						if (owner->team == gu->myTeam) {
-							if(lastRestrictedWarning+100<gs->frameNum){
-								logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
-								logOutput.SetLastMsgPos(owner->pos);
-								lastRestrictedWarning = gs->frameNum;
-							}
-						}
-						ENTER_SYNCED;
-					}
-					UpdateIconName(c.id,boi->second);
-					FinishCommand();
+					CancelRestrictedUnit(c, boi->second);
 				}
 				else if(uh->maxUnits>gs->Team(owner->team)->units.size()){  //max unitlimit reached?
 					fac->StartBuild(boi->second.fullName);

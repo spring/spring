@@ -40,6 +40,10 @@ public:
 	bool building;
 
 	int lastRestrictedWarning;
+
+private:
+
+	void CancelRestrictedUnit(const Command& c, BuildOption& buildOption);
 };
 
 #endif // __FACTORY_AI_H__
