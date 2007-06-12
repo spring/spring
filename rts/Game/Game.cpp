@@ -396,6 +396,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	if(serverNet && serverNet->playbackDemo)
 		serverNet->StartDemoServer();
+
+	lastCpuUsageTime = gu->gameTime + 10;
 }
 
 
@@ -2282,6 +2284,14 @@ bool CGame::ClientReadNet()
 	}
 	inbuflength+=a;
 
+	// quick hack until better netcode is in place
+#ifdef PROFILE_TIME
+	if (gu->gameTime - lastCpuUsageTime >= 1) {
+		lastCpuUsageTime = gu->gameTime;
+		net->SendCPUUsage(profiler.profile["Sim time"].percent);
+	}
+#endif
+
 	if(!gameServer/* && !net->onlyLocal*/){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
@@ -2590,6 +2600,7 @@ bool CGame::ClientReadNet()
 			net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 			CSyncChecker::NewFrame();
 #endif
+
 			if(gameServer && serverNet && serverNet->playbackDemo)	//server doesnt update framenums automatically while playing demo
 				gameServer->serverframenum=gs->frameNum;
 
