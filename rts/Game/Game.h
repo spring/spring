@@ -139,6 +139,7 @@ protected:
 	float inputTextPosY;
 	float inputTextSizeX;
 	float inputTextSizeY;
+	float lastCpuUsageTime;
 };
 
 
