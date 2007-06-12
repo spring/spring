@@ -444,7 +444,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	buildInfo.pos=helper->Pos2BuildPos(buildInfo);
 
 	CFeature* feature;
-	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature, allyteam);
+	// Pass -1 as allyteam to behave like we have maphack.
+	// This is needed to prevent building on top of cloaked stuff.
+	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature, -1);
 	if(canBuild<2){
 		CUnit* u=helper->GetClosestFriendlyUnit(buildInfo.pos,5,allyteam);
 		if(u && u->unitDef==buildInfo.def && unitDef->canAssist){
