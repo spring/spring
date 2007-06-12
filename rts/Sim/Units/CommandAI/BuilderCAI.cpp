@@ -50,10 +50,10 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		possibleCommands.push_back(c);
 	} else if(owner->unitDef->canAssist){
 		c.id=CMD_REPAIR;
-		c.action="assist (r)";
+		c.action="assist";
 		c.hotkey="r";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name="Assist (r)";
+		c.name="Assist";
 		c.tooltip="Assist: Help build something";
 		possibleCommands.push_back(c);
 	}
@@ -140,6 +140,18 @@ float CBuilderCAI::GetUnitRadius(const UnitDef* ud, int cmdId)
 }
 
 
+void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
+{
+	ENTER_MIXED;
+	if (owner->team == gu->myTeam) {
+		logOutput.Print("%s: Build failed, unit type limit reached", owner->unitDef->humanName.c_str());
+		logOutput.SetLastMsgPos(owner->pos);
+	}
+	ENTER_SYNCED;
+	FinishCommand();
+}
+
+
 void CBuilderCAI::SlowUpdate()
 {
 	if(commandQue.empty()){
@@ -172,6 +184,14 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();				//cancel the effect of KeepPointingTo
 					FinishCommand();
 				}
+				// This can only be true if two builders started building
+				// the restricted unit in the same simulation frame
+				else if(uh->unitsType[owner->team][build.def->id]>build.def->maxThisUnit){ //unit restricted
+					CBuilder* fac=(CBuilder*)owner;
+					building=false;
+					fac->StopBuild();
+					CancelRestrictedUnit(boi->second);
+				}
 			} else {
 				build.Parse(c);
 				const float dist = build.pos.distance2D(fac->pos);
@@ -182,13 +202,7 @@ void CBuilderCAI::SlowUpdate()
 						FinishCommand();
 					}
 					else if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
-						ENTER_MIXED;
-						if(owner->team == gu->myTeam){
-							logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
-							logOutput.SetLastMsgPos(owner->pos);
-						}
-						ENTER_SYNCED;
-						FinishCommand();
+						CancelRestrictedUnit(boi->second);
 					}
 					else if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){ //max unitlimit reached
 						buildRetries++;

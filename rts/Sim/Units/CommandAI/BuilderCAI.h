@@ -49,6 +49,10 @@ public:
 
 	int lastPC1; //helps avoid infinite loops
 	int lastPC2;
+
+private:
+
+	void CancelRestrictedUnit(const std::string& buildOption);
 };
 
 #endif // __BUILDER_CAI_H__
