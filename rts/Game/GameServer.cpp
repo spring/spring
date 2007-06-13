@@ -28,6 +28,7 @@ static Uint32 GameServerThreadProc(void* lpParameter)
 
 CGameServer::CGameServer()
 {
+	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	lastPlayerInfo = 0;
@@ -447,9 +448,11 @@ bool CGameServer::ServerReadNet()
 						int frameNum = *(int*)&inbuf[inbufpos+2];
 						if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 							syncResponse[a][frameNum] = *(unsigned*)&inbuf[inbufpos+6];
-						else
-							logOutput.Print("Delayed sync respone from %s for frame %d (current %d)",
+						else if (serverframenum > delayedSyncResponseFrame) {
+							delayedSyncResponseFrame = serverframenum;
+							logOutput.Print("Delayed respone from %s for frame %d (current %d)",
 											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
+						}
 					}
 				}
 #endif
