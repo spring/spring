@@ -54,6 +54,7 @@ public:
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
+	int delayedSyncResponseFrame;
 };
 
 extern CGameServer* gameServer;
