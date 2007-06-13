@@ -511,7 +511,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	// s3os
 	SetupForGhostDrawingS3O();
 	glColor4f(1,1,1,0.3f);
-	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, false);
+	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, true);
 
 	// reset gl states
 	CleanUpGhostDrawing();
