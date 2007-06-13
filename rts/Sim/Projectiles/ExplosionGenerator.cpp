@@ -353,7 +353,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 			Uint16 offset = *(Uint16*)code;
 			code += 2;
 			*(float3*)(instance + offset) = dir;
-			}
+			break;}
 		default:
 			assert(false);
 			break;
