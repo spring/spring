@@ -31,6 +31,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
+#include "Sim/Misc/RadarHandler.h"
 
 #endif
 
@@ -82,6 +83,18 @@
 #define	POW                      80 // get
 #define PRINT                    81 // get, so multiple args can be passed
 #define HEADING                  82 // get
+#define TARGET_ID				 83 // get
+#define LAST_ATTACKER_ID		 84 // get
+#define LOS_RADIUS				 85 // set or get
+#define AIR_LOS_RADIUS			 86 // set or get
+#define RADAR_RADIUS			 87 // set or get
+#define JAMMER_RADIUS			 88 // set or get
+#define SONAR_RADIUS			 89 // set or get
+#define SONAR_JAM_RADIUS		 90 // set or get
+#define SEISMIC_RADIUS			 91 // set or get
+#define DO_SEISMIC_PING			 92 // get
+#define CURRENT_FUEL			 93 // set or get
+#define TRANSPORT_ID			 94 // get
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script)
@@ -1030,8 +1043,52 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case PRINT:
 		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
-	case HEADING:
-		return unit->heading;
+	case HEADING: {
+		if (p1 == 0)
+			return unit->heading;
+		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		if (u == NULL)
+			return -1;
+		else
+			return u->heading;}
+	case TARGET_ID:
+		if (unit->weapons[p1-1]) {
+			CWeapon* weapon = unit->weapons[p1-1];
+			TargetType tType = weapon->targetType;
+			if (tType == Target_Unit)
+				return unit->weapons[p1 - 1]->targetUnit->id;
+			else if (tType == Target_None)
+				return -1;
+			else if (tType == Target_Pos)
+				return -2;
+			else // Target_Intercept
+				return -3;
+		}
+		return -4; // weapon does not exist
+	case LAST_ATTACKER_ID:
+		return unit->lastAttacker?unit->lastAttacker->id:-1;
+	case LOS_RADIUS:
+		return unit->realLosRadius;
+	case AIR_LOS_RADIUS:
+		return unit->realAirLosRadius;
+	case RADAR_RADIUS:
+		return unit->radarRadius;
+	case JAMMER_RADIUS:
+		return unit->jammerRadius;
+	case SONAR_RADIUS:
+		return unit->sonarRadius;
+	case SONAR_JAM_RADIUS:
+		return unit->sonarJamRadius;
+	case SEISMIC_RADIUS:
+		return unit->seismicRadius;
+	case DO_SEISMIC_PING:
+		if (p1 == 0) p1 = unit->seismicSignature;
+		unit->DoSeismicPing(p1);
+		break;
+	case CURRENT_FUEL:
+		return unit->currentFuel * COBSCALE;
+	case TRANSPORT_ID:
+		return unit->transporter?unit->transporter->id:-1;
 	default:
 		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
 		                val, p1, p2, p3, p4);
@@ -1133,6 +1190,45 @@ void CCobInstance::SetUnitVal(int val, int param)
 		break;
 	case UPRIGHT:
 		unit->upright = !!param;
+		break;
+	case HEADING:
+		unit->heading = param % COBSCALE;
+		break;
+	case LOS_RADIUS:
+		unit->ChangeLos(param, unit->realAirLosRadius);
+		unit->realLosRadius = param;
+		break;
+	case AIR_LOS_RADIUS:
+		unit->ChangeLos(unit->realLosRadius, param);
+		unit->realAirLosRadius = param;
+		break;
+	case RADAR_RADIUS:
+		radarhandler->RemoveUnit(unit);
+		unit->radarRadius = param;
+		radarhandler->MoveUnit(unit);
+		break;
+	case JAMMER_RADIUS:
+		radarhandler->RemoveUnit(unit);
+		unit->jammerRadius = param;
+		radarhandler->MoveUnit(unit);
+		break;
+	case SONAR_RADIUS:
+		radarhandler->RemoveUnit(unit);
+		unit->sonarRadius = param;
+		radarhandler->MoveUnit(unit);
+		break;
+	case SONAR_JAM_RADIUS:
+		radarhandler->RemoveUnit(unit);
+		unit->sonarJamRadius = param;
+		radarhandler->MoveUnit(unit);
+		break;
+	case SEISMIC_RADIUS:
+		radarhandler->RemoveUnit(unit);
+		unit->seismicRadius = param;
+		radarhandler->MoveUnit(unit);
+		break;
+	case CURRENT_FUEL:
+		unit->currentFuel = param / (float) COBSCALE;
 		break;
 	}
 #endif
