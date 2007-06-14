@@ -104,7 +104,8 @@ public:
 	void PushWind(float x, float z, float strength);		//push the new wind to the script
 
 	void ExperienceChange();
-
+	void DoSeismicPing(int pingSize);
+	
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 

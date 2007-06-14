@@ -641,28 +641,7 @@ void CUnit::SlowUpdate()
 
 	if (moveType->progressState == CMoveType::Active) {
 		if (seismicSignature) {
-			float rx = gs->randFloat();
-			float rz = gs->randFloat();
-
-			const float* errorScale = radarhandler->radarErrorSize;
-			if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-			    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
-				const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
-				                 errorScale[gu->myAllyTeam] * (0.5f - rz));
-
-				SAFE_NEW CSeismicGroundFlash(pos + err,
-                                     ph->seismictex, 30, 15, 0, seismicSignature, 1,
-                                     float3(0.8f,0.0f,0.0f));
-			}
-			for (int a=0; a<gs->activeAllyTeams; ++a) {
-				if (radarhandler->InSeismicDistance(this, a)) {
-					const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
-					                 errorScale[a] * (0.5f - rz));
-					const float3 pingPos = (pos + err);
-					luaCallIns.UnitSeismicPing(this, a, pingPos, seismicSignature);
-					globalAI->SeismicPing(a, this, pingPos, seismicSignature);
-				}
-			}
+			DoSeismicPing(seismicSignature);
 		}
 	}
 
@@ -1014,6 +993,32 @@ void CUnit::ExperienceChange()
 	float oldMaxHealth=maxHealth;
 	maxHealth=unitDef->health*(1+limExperience*0.7f);
 	health+=(maxHealth-oldMaxHealth)*(health/oldMaxHealth);
+}
+
+void CUnit::DoSeismicPing(int pingSize)
+{
+	float rx = gs->randFloat();
+	float rz = gs->randFloat();
+
+	const float* errorScale = radarhandler->radarErrorSize;
+	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
+	    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
+		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
+		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
+
+		SAFE_NEW CSeismicGroundFlash(pos + err,
+                                     ph->seismictex, 30, 15, 0, pingSize, 1,
+                                     float3(0.8f,0.0f,0.0f));
+	}
+	for (int a=0; a<gs->activeAllyTeams; ++a) {
+		if (radarhandler->InSeismicDistance(this, a)) {
+			const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
+							 errorScale[a] * (0.5f - rz));
+			const float3 pingPos = (pos + err);
+			luaCallIns.UnitSeismicPing(this, a, pingPos, pingSize);
+			globalAI->SeismicPing(a, this, pingPos, pingSize);
+		}
+	}
 }
 
 void CUnit::ChangeLos(int l,int airlos)
