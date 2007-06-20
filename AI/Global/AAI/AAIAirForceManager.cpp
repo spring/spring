@@ -21,7 +21,8 @@ AAIAirForceManager::AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *
 	this->cb = cb;
 	this->map = ai->map;
 
-	targets = new AAIAirTarget[cfg->MAX_AIR_TARGETS];
+//	targets = new AAIAirTarget[cfg->MAX_AIR_TARGETS];
+	targets.resize(cfg->MAX_AIR_TARGETS);
 
 	for(int i = 0; i < cfg->MAX_AIR_TARGETS; i++)
 		targets[i].category = UNKNOWN;
@@ -31,7 +32,7 @@ AAIAirForceManager::AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *
 
 AAIAirForceManager::~AAIAirForceManager(void)
 {
-	delete [] targets;
+//	delete [] targets;
 }
 
 void AAIAirForceManager::CheckTarget(int unit, const UnitDef *def)

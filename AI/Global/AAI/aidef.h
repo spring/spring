@@ -141,7 +141,7 @@ struct UnitTypeStatic
 	int side;				// 0 if side has not been set 
 	list<int> canBuildList;
 	list<int> builtByList;
-	float *efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
+	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
 							// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
 	float range;
 	float cost;

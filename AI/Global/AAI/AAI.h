@@ -90,7 +90,7 @@ public:
 	AAIAirForceManager *af;		// coordinates the airforce
 	AAIAttackManager *am;		// coordinates combat forces
 
-	list<AAIGroup*> *group_list;  // unit groups
+	vector<list<AAIGroup*> > group_list;  // unit groups
 
 	bool initialized;
 

@@ -16,7 +16,8 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 	this->bt = bt;
 	this->cb = ai->cb;
 
-	units = new AAIUnit[cfg->MAX_UNITS];
+//	units = new AAIUnit[cfg->MAX_UNITS];
+	units.resize(cfg->MAX_UNITS);
 
 	// fill buildtable 
 	for(int i = 0; i < cfg->MAX_UNITS; i++)
@@ -39,7 +40,7 @@ AAIUnitTable::~AAIUnitTable(void)
 		delete units[*cons].cons;
 	}
 
-	delete [] units;
+//	delete [] units;
 }
 
 
