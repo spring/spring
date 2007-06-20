@@ -16,24 +16,45 @@ using namespace creg;
 void BasicType::Serialize (ISerializer *s, void *inst)
 {
 	switch (id) {
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedSint://FIXME
+	case crSyncedUint:
+#endif
 	case crInt:
 	case crUInt:
 		s->Serialize (inst, 4);
 		break;
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedSshort://FIXME
+	case crSyncedUshort:
+#endif
 	case crShort:
 	case crUShort:
 		s->Serialize (inst, 2);
 		break;
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedSchar://FIXME
+	case crSyncedUchar:
+#endif
 	case crChar:
 	case crUChar:
 		s->Serialize (inst, 1);
 		break;
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedFloat://FIXME
+#endif
 	case crFloat:
 		s->Serialize (inst, 4);
 		break;
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedDouble://FIXME
+#endif
 	case crDouble:
 		s->Serialize (inst, 8);
 		break;
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+	case crSyncedBool://FIXME
+#endif
 	case crBool:{
 		// I'm not sure if bool is the same size on all compilers.. so it's stored as a byte
 		if (s->IsWriting ())  {
