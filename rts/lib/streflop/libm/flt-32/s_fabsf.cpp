@@ -22,7 +22,7 @@ static char rcsid[] = "$NetBSD: s_fabsf.c,v 1.4f 1995/05/10 20:47:15 jtc Exp $";
  * fabsf(x) returns the absolute value of x.
  */
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 namespace streflop_libm {

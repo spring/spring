@@ -61,7 +61,7 @@ namespace streflop {
 #include "FPUSettings.h"
 
 // Now that types are defined, include the Math.h file for the prototypes
-#include "Math.h"
+#include "SMath.h"
 
 // And now that math functions are defined, include the random numbers
 #include "Random.h"

@@ -24,7 +24,7 @@ static char rcsid[] = "$NetBSD: e_fmodf.c,v 1.4f 1995/05/10 20:45:10 jtc Exp $";
  * Method: shift and subtract
  */
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 namespace streflop_libm {

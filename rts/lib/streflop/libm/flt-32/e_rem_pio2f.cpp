@@ -24,7 +24,7 @@ static char rcsid[] = "$NetBSD: e_rem_pio2f.c,v 1.5f 1995/05/10 20:46:03 jtc Exp
  * use __kernel_rem_pio2f()
  */
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 /*
