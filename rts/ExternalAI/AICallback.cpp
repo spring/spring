@@ -88,7 +88,7 @@ bool CAICallback::PosInCamera(float3 pos, float radius)
 void CAICallback::verify()
 {
 	CGlobalAI *gai = globalAI->ais [team];
-	if (gai && (((group && group->handler != gai->gh && group->handler != grouphandler) || gai->team != team))) {
+	if (gai && (((group && group->handler != /*gai->gh*/grouphandlers[gai->team] /*&& group->handler != grouphandler*/) || gai->team != team))) {
 		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
 		exit (-1);
 	}
@@ -687,17 +687,17 @@ const float* CAICallback::GetSlopeMap()
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return loshandler->losMap[gs->AllyTeam(team)];
+	return &loshandler->losMap[gs->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetRadarMap()
 {
-	return radarhandler->radarMaps[gs->AllyTeam(team)];
+	return &radarhandler->radarMaps[gs->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetJammerMap()
 {
-	return radarhandler->jammerMaps[gs->AllyTeam(team)];
+	return &radarhandler->jammerMaps[gs->AllyTeam(team)].front();
 }
 
 const unsigned char* CAICallback::GetMetalMap()
@@ -1227,7 +1227,7 @@ int CAICallback::GetSelectedUnits(int *units)
 	verify ();
 	int a=0;
 	if (gu->myAllyTeam == gs->AllyTeam(team)) {
-		for(set<CUnit*>::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
+		for(list<CUnit*>::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
 			units[a++]=(*ui)->id;
 	}
 	return a;
@@ -1303,6 +1303,11 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 		return false;
 	}
 	return uh->CanBuildUnit(ud, team);
+}
+
+const float3 *CAICallback::GetStartPos()
+{
+	return &gs->Team(team)->startPos;
 }
 
 IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())

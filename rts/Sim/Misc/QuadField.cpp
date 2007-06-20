@@ -14,7 +14,11 @@
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
-				CR_MEMBER(numQuadsX), CR_MEMBER(numQuadsZ), CR_SERIALIZER(creg_Serialize)));
+				CR_MEMBER(numQuadsX),
+				CR_MEMBER(numQuadsZ),
+//				CR_MEMBER(baseQuads),
+				CR_SERIALIZER(creg_Serialize)
+				));
 
 void CQuadField::creg_Serialize(creg::ISerializer& s)
 {
@@ -45,7 +49,7 @@ CQuadField::CQuadField()
 	numQuadsX=gs->mapx*SQUARE_SIZE/QUAD_SIZE;
 	numQuadsZ=gs->mapy*SQUARE_SIZE/QUAD_SIZE;
 
-	baseQuads=SAFE_NEW Quad[numQuadsX*numQuadsZ];
+	baseQuads.resize(numQuadsX*numQuadsZ);
 
 	for(int y=0;y<numQuadsZ;++y){
 		for(int x=0;x<numQuadsX;++x){
@@ -55,16 +59,13 @@ CQuadField::CQuadField()
 	}
 
 	tempQuads = new int[1000];
-	tempUnitsArray = new (CUnit(*[MAX_UNITS]));
-	tempFeaturesArray = new (CFeature(*[MAX_UNITS]));
+//	tempUnitsArray.resize(MAX_UNITS);
+//	tempFeaturesArray.resize(MAX_UNITS);
 }
 
 CQuadField::~CQuadField()
 {
-	delete[] baseQuads;
 	delete[] tempQuads;
-	delete[] tempUnitsArray;
-	delete[] tempFeaturesArray;
 }
 
 vector<int> CQuadField::GetQuads(float3 pos,float radius)

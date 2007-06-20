@@ -1219,8 +1219,8 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	const set<CUnit*>& units = team->units;
-	set<CUnit*>::const_iterator uit;
+	const list<CUnit*>& units = team->units;
+	list<CUnit*>::const_iterator uit;
 
 	// raw push for allies
 	if (IsAlliedTeam(teamID)) {
@@ -1272,8 +1272,8 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 	const int teamID = team->teamNum;
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const set<CUnit*>& units = team->units;
-	set<CUnit*>::const_iterator uit;
+	const list<CUnit*>& units = team->units;
+	list<CUnit*>::const_iterator uit;
 
 	// tally for allies
 	if (IsAlliedTeam(teamID)) {
@@ -1362,8 +1362,8 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 
 	// tally the counts for enemies
 	map<const UnitDef*, int> unitDefCounts;
-	const set<CUnit*>& unitSet = team->units;
-	set<CUnit*>::const_iterator uit;
+	const list<CUnit*>& unitSet = team->units;
+	list<CUnit*>::const_iterator uit;
 	int unknownCount = 0;
 	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
 		const CUnit* unit = *uit;
@@ -1453,8 +1453,8 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 		if (unitCount <= 0) {
 			continue; // don't bother
 		}
-		const set<CUnit*>& units = team->units;
-		set<CUnit*>::const_iterator uit;
+		const list<CUnit*>& units = team->units;
+		list<CUnit*>::const_iterator uit;
 
 		if (IsAlliedTeam(teamID)) {
 			for (uit = units.begin(); uit != units.end(); ++uit) {
@@ -1516,8 +1516,8 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	// loop through the units for enemies
 	int count = 0;
-	const set<CUnit*>& units = team->units;
-	set<CUnit*>::const_iterator uit;
+	const list<CUnit*>& units = team->units;
+	list<CUnit*>::const_iterator uit;
 	for (uit = units.begin(); uit != units.end(); ++uit) {
 		const CUnit* unit = *uit;
 		if (IsUnitTyped(unit) && (EffectiveUnitDef(unit) == unitDef)) {
@@ -1555,8 +1555,8 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 
 	// loop through the units for enemies
 	int count = 0;
-	const set<CUnit*>& units = team->units;
-	set<CUnit*>::const_iterator uit;
+	const list<CUnit*>& units = team->units;
+	list<CUnit*>::const_iterator uit;
 	for (uit = units.begin(); uit != units.end(); ++uit) {
 		const CUnit* unit = *uit;
 		if (IsUnitVisible(unit)) {
@@ -1939,8 +1939,8 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
 
 	for (int team = startTeam; team <= endTeam; team++) {
-		const set<CUnit*>& units = gs->Team(team)->units;
-		set<CUnit*>::const_iterator it;
+		const list<CUnit*>& units = gs->Team(team)->units;
+		list<CUnit*>::const_iterator it;
 
 		if (allegiance >= 0) {
 			if (allegiance == team) {
@@ -3076,8 +3076,8 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const set<CFeature*>& activeFeatures = featureHandler->activeFeatures;
-	set<CFeature*>::const_iterator fit;
+	const list<CFeature*>& activeFeatures = featureHandler->activeFeatures;
+	list<CFeature*>::const_iterator fit;
 	if (fullRead) {
 		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
 			count++;

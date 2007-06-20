@@ -102,6 +102,8 @@ public:
 	bool UseEnergy(float energy);
 	void AddEnergy(float energy);
 	void PushWind(float x, float z, float strength);		//push the new wind to the script
+	void SetMetalStorage(float newStorage);
+	void SetEnergyStorage(float newStorage);
 
 	void ExperienceChange();
 	void DoSeismicPing(int pingSize);
@@ -116,6 +118,7 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 
 	UnitDef *unitDef;
+	std::string unitDefName;
 
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
@@ -233,6 +236,9 @@ public:
 	float energyCost;
 	float buildTime;
 
+	float metalStorage;
+	float energyStorage;
+
 	CUnit* lastAttacker;				//last attacker
 	int lastAttack;							//last frame unit was attacked by other unit
 	int lastDamage;							//last frame the unit was damaged
@@ -319,6 +325,7 @@ public:
 	void ReleaseTempHoldFire(void);
 	virtual void DrawS3O(void);
 	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
+	void PostLoad();
 };
 
 #endif /* UNIT_H */

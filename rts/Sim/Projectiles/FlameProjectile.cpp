@@ -30,9 +30,11 @@ CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const
 	curTime(0)
 {
 	invttl=1.0f/ttl;
-	SetRadius(weaponDef->size*weaponDef->collisionSize);
-	drawRadius=weaponDef->size;
-	physLife = 1.0f/weaponDef->duration;
+	if (weaponDef) {
+		SetRadius(weaponDef->size*weaponDef->collisionSize);
+		drawRadius=weaponDef->size;
+		physLife = 1.0f/weaponDef->duration;
+	}
 }
 
 CFlameProjectile::~CFlameProjectile(void)

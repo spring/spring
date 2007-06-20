@@ -46,7 +46,7 @@ void CScriptHandler::LoadScripts() {
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi)
 		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*fi));
 
-	f = CFileHandler::FindFiles("", "*.ssf");
+	f = CFileHandler::FindFiles("Saves/", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
 	}
@@ -104,6 +104,7 @@ void CScriptHandler::SelectScript(std::string s)
 {
 	CScriptHandler::Instance().chosenName = s;
 	CScriptHandler::Instance().chosenScript = CScriptHandler::Instance().scripts[s];
+	CScriptHandler::Instance().chosenScript->ScriptSelected();
 	if (CScriptHandler::Instance().callback)
 		CScriptHandler::Instance().callback(s);
 }

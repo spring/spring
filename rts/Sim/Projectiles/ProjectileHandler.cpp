@@ -27,14 +27,25 @@
 #include <algorithm>
 #include "Rendering/GL/IFramebuffer.h"
 #include "mmgr.h"
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+#include "creg/STL_List.h"
 
 CProjectileHandler* ph;
 using namespace std;
 extern GLfloat FogBlack[]; 
 extern GLfloat FogLand[]; 
+
+CR_BIND(CProjectileHandler,);
+
+CR_REG_METADATA(CProjectileHandler,(
+				//CR_MEMBER(ps),
+				CR_MEMBER(groundFlashes),
+				CR_SERIALIZER(Serialize),
+				CR_POSTLOAD(PostLoad)
+				));
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
 
 CProjectileHandler::CProjectileHandler()
 {
@@ -222,6 +233,30 @@ CProjectileHandler::~CProjectileHandler()
 	delete groundFXAtlas;
 }
 
+void CProjectileHandler::Serialize(creg::ISerializer *s)
+{
+	if (s->IsWriting ()) {
+		int size = (int)ps.size();
+		s->Serialize (&size,sizeof(int));
+		for (Projectile_List::iterator it = ps.begin(); it!=ps.end(); ++it) {
+			void **ptr = (void**)&*it;
+			s->SerializeObjectPtr(ptr,(*it)->GetClass());
+		}
+	} else {
+		int size;
+		s->Serialize (&size, sizeof(int));
+		ps.resize (size);
+		for (Projectile_List::iterator it = ps.begin(); it!=ps.end(); ++it) {
+			void **ptr = (void**)&*it;
+			s->SerializeObjectPtr(ptr,0/*FIXME*/);
+		}
+	}
+}
+
+void CProjectileHandler::PostLoad()
+{
+
+}
 
 void CProjectileHandler::SetMaxParticles(int value)
 {

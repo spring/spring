@@ -17,10 +17,26 @@
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sync/SyncTracer.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
 
+CR_REG_METADATA(CExtractorBuilding, (
+				CR_MEMBER(extractionRange),
+				CR_MEMBER(extractionDepth),
+				CR_MEMBER(metalAreaOfControl),
+				CR_MEMBER(neighbours),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(CExtractorBuilding::MetalSquareOfControl, );
+
+CR_REG_METADATA_SUB(CExtractorBuilding,MetalSquareOfControl, (
+					CR_MEMBER(x),
+					CR_MEMBER(z),
+					CR_MEMBER(extractionDepth)
+					));
 
 	// TODO: How are class statics incorporated into creg?
 float CExtractorBuilding::maxExtractionRange = 0.0f;
@@ -44,6 +60,13 @@ CExtractorBuilding::~CExtractorBuilding()
 	ResetExtraction();
 }
 
+/*
+CReg PostLoad
+*/
+void CExtractorBuilding::PostLoad()
+{
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract *5 * 100.0f));
+}
 
 /*
 Resets the metalMap database
@@ -119,7 +142,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 //	logOutput << "MetalSquares of control: " << nbr << "\n";	//Debug
 
 	// Set the COB animation speed
-	cob->Call(COBFN_SetSpeed, (int)(metalExtract * 100.0f));
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract *5 * 100.0f));
 	if (activated) {
 		cob->Call("Go");
 	}
@@ -168,7 +191,7 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 	}
 
 	//Sets the new rotation-speed.
-	cob->Call(COBFN_SetSpeed, (int)(metalExtract*100.0f));
+	cob->Call(COBFN_SetSpeed, (int)(metalExtract*5*100.0f));
 	if (activated) {
 		cob->Call("Go");
 	}

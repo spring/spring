@@ -28,6 +28,7 @@ public:
 	static CWeaponProjectile *CreateWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef);
 	bool targeted;				//if we are a nuke and a anti is on the way
 	WeaponDef *weaponDef;
+	std::string weaponDefName;
 	CUnit *target;
 	float3 targetPos;
 	//DamageArray damages;
@@ -41,6 +42,7 @@ protected:
 	CWeaponProjectile* interceptTarget;
 public:
 	void DependentDied(CObject* o);
+	void PostLoad();
 };
 
 

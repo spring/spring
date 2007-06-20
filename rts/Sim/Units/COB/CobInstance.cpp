@@ -1082,11 +1082,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case SEISMIC_RADIUS:
 		return unit->seismicRadius;
 	case DO_SEISMIC_PING:
-		if (p1 == 0) p1 = unit->seismicSignature;
+		if (p1 == 0) p1 = (int)unit->seismicSignature;
 		unit->DoSeismicPing(p1);
 		break;
 	case CURRENT_FUEL:
-		return unit->currentFuel * COBSCALE;
+		return (int)(unit->currentFuel * COBSCALE);
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
 	default:

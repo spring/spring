@@ -12,6 +12,30 @@
 #endif
 #include "mmgr.h"
 
+CR_BIND(CPlayer,);
+
+CR_REG_METADATA(CPlayer, (
+				CR_MEMBER(active),
+				CR_MEMBER(playerName),
+				CR_MEMBER(countryCode),
+				CR_MEMBER(spectator),
+				CR_MEMBER(team),
+//				CR_MEMBER(readyToStart),
+//				CR_MEMBER(cpuUsage),
+//				CR_MEMBER(ping),
+				CR_MEMBER(currentStats)
+				));
+
+CR_BIND(CPlayer::Statistics,);
+
+CR_REG_METADATA_SUB(CPlayer, Statistics, (
+					CR_MEMBER(mousePixels),
+					CR_MEMBER(mouseClicks),
+					CR_MEMBER(keyPresses),
+					CR_MEMBER(numCommands),
+					CR_MEMBER(unitCommands)
+					));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

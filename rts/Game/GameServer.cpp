@@ -228,6 +228,9 @@ bool CGameServer::Update()
 		// Send out new frame messages.
 		unsigned currentTick = SDL_GetTicks();
 		float timeElapsed=((float)(currentTick - lastTick))/1000.f;
+		if (timeElapsed>0.2) {
+			timeElapsed=0.2;
+		}
 		if(gameEndDetected)
 			gameEndTime+=timeElapsed;
 //		logOutput.Print("float value is %f",timeElapsed);

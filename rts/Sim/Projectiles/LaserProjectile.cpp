@@ -37,9 +37,9 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 	dir.Normalize();
 	speedf=speed.Length();
 
-	SetRadius(weaponDef->collisionSize);
+	if (weaponDef) SetRadius(weaponDef->collisionSize);
 	drawRadius=length;
-	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	if (weaponDef)midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";

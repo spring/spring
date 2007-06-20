@@ -38,8 +38,10 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,cons
 	checkCol=false;
 	useAirLos=true;
 
-	this->beamtex = *weaponDef->visuals.texture1;
-	this->side = *weaponDef->visuals.texture3;
+	if (weaponDef) {
+		this->beamtex = *weaponDef->visuals.texture1;
+		this->side = *weaponDef->visuals.texture3;
+	}
 
 	SetRadius(pos.distance(endPos));
 
@@ -61,12 +63,14 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,cons
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;*/
 
-	thickness = weaponDef->thickness;
-	corethickness = weaponDef->corethickness;
-	flaresize = weaponDef->laserflaresize;
-	tilelength = weaponDef->visuals.tilelength;
-	scrollspeed = weaponDef->visuals.scrollspeed;
-	pulseSpeed = weaponDef->visuals.pulseSpeed;
+	if (weaponDef) {
+		thickness = weaponDef->thickness;
+		corethickness = weaponDef->corethickness;
+		flaresize = weaponDef->laserflaresize;
+		tilelength = weaponDef->visuals.tilelength;
+		scrollspeed = weaponDef->visuals.scrollspeed;
+		pulseSpeed = weaponDef->visuals.pulseSpeed;
+	}
 
 	//tilelength = 200;
 	//scrollspeed = 5;

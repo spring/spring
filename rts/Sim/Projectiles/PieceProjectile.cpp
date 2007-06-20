@@ -37,7 +37,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(spinPos),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
-	CR_MEMBER(target),
+//	CR_MEMBER(target),
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(age),
@@ -55,7 +55,7 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO * piece, int flags,CUnit* owner,float radius)
 : CProjectile(pos,speed,owner, true),
   flags(flags),
-  dispList(piece->displist),
+  dispList(piece?piece->displist:0),
 	drawTrail(true),
 	oldSmoke(pos),
 	curCallback(0),
@@ -85,12 +85,17 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 	   Nothing else wants to draw just one part without PieceInfo, so this
 	   polymorphism can stay put for the moment.
 	   */
-	if (piece->original3do != NULL){
-		piece3do = piece->original3do;
-		pieces3o = NULL;
-	} else if (piece->originals3o != NULL){
+	if (piece) {
+		if (piece->original3do != NULL){
+			piece3do = piece->original3do;
+			pieces3o = NULL;
+		} else if (piece->originals3o != NULL){
+			piece3do = NULL;
+			pieces3o = piece->originals3o;
+		}
+	} else {
 		piece3do = NULL;
-		pieces3o = piece->originals3o;
+		pieces3o = NULL;
 	}
 
 	castShadow=true;
@@ -179,6 +184,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 bool CPieceProjectile::HasVertices(void)
 {
+	if (!piece3do && !pieces3o) return false;
 	if (piece3do != NULL) {
 		/* 3DO */
 		return !piece3do->vertices.empty();
@@ -191,6 +197,7 @@ bool CPieceProjectile::HasVertices(void)
 
 float3 CPieceProjectile::RandomVertexPos(void)
 {
+	if (!piece3do && !pieces3o) return float3(0,0,0);
 	float3 pos;
 
 	if (piece3do != NULL) {

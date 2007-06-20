@@ -146,8 +146,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
 		  // team units
-			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 				selection.push_back(*ui);
 			}
 		} else {
@@ -160,8 +160,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	} else if(s=="Visible"){
 		if (!gu->spectatingFullSelect) {
 		  // team units in viewport
-			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if(camera->InView((*ui)->midPos,(*ui)->radius)){
 					selection.push_back(*ui);
 				}
@@ -184,8 +184,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
-			set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if(mp.distance((*ui)->pos)<maxDist){
 					selection.push_back(*ui);
 				}
@@ -200,8 +200,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		}
 	} else if(s=="PrevSelection"){
-		set<CUnit*>* su=&selectedUnits.selectedUnits;
-		for(set<CUnit*>::iterator ui=su->begin();ui!=su->end();++ui){
+		list<CUnit*>* su=&selectedUnits.selectedUnits;
+		for(list<CUnit*>::iterator ui=su->begin();ui!=su->end();++ui){
 			selection.push_back(*ui);
 		}
 	} else {
@@ -367,8 +367,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		} else if(s=="InPrevSel"){
 			set<int> prevTypes;
-			set<CUnit*>* tu=&selectedUnits.selectedUnits;
-			for(set<CUnit*>::iterator si=tu->begin();si!=tu->end();++si){
+			list<CUnit*>* tu=&selectedUnits.selectedUnits;
+			for(list<CUnit*>::iterator si=tu->begin();si!=tu->end();++si){
 				prevTypes.insert((*si)->aihint);
 			}
 			list<CUnit*>::iterator ui=selection.begin();

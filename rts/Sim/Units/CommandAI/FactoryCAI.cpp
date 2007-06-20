@@ -18,6 +18,31 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
 #include "mmgr.h"
+#include "creg/STL_Map.h"
+
+CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
+
+CR_REG_METADATA(CFactoryCAI , (
+				CR_MEMBER(newUnitCommands),
+				CR_MEMBER(buildOptions),
+				CR_MEMBER(building),
+				CR_MEMBER(lastRestrictedWarning),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(CFactoryCAI::BuildOption, );
+
+CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
+				CR_MEMBER(name),
+				CR_MEMBER(fullName),
+				CR_MEMBER(numQued)
+				));
+
+CFactoryCAI::CFactoryCAI()
+: CCommandAI(),
+	building(false),
+	lastRestrictedWarning(0)
+{}
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),
@@ -94,11 +119,13 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	}
 }
 
-
 CFactoryCAI::~CFactoryCAI()
 {
 }
 
+void CFactoryCAI::PostLoad()
+{
+}
 
 void CFactoryCAI::GiveCommandReal(const Command& c)
 {

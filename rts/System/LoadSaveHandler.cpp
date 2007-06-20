@@ -15,6 +15,11 @@
 #include "Platform/FileSystem.h"
 #include "creg/Serializer.h"
 #include "mmgr.h"
+#include "Game/Game.h"
+#include "ExternalAI/GroupHandler.h"
+#include "ExternalAI/GlobalAIHandler.h"
+#include "Game/Team.h"
+#include "LogOutput.h"
 
 extern std::string stupidGlobalMapname;
 
@@ -62,41 +67,75 @@ static void ReadString(std::istream& s, std::string& str)
 	char c;
 	do {
 		s >> c;
-		str += c;
+		if (c) str += c;
 	} while (c != 0);
 }
 
 void CGameStateCollector::Serialize(creg::ISerializer& s)
 {
 	// GetClass() works because readmap and uh both have to exist already
+	s.SerializeObjectInstance(gs, gs->GetClass());
+	s.SerializeObjectInstance(gu, gu->GetClass());
+	s.SerializeObjectInstance(game, game->GetClass());
 	s.SerializeObjectInstance(readmap, readmap->GetClass());
 	s.SerializeObjectInstance(qf, qf->GetClass());
-	// s.SerializeObjectInstance(fh,
+	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s.SerializeObjectInstance(loshandler, loshandler->GetClass());
 	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s.SerializeObjectInstance(categoryHandler, categoryHandler->GetClass());
 	s.SerializeObjectInstance(uh, uh->GetClass());
+	s.SerializeObjectInstance(ph, ph->GetClass());
+	std::map<std::string, int> unitRestrictions;
+	for (int a=0;a<MAX_TEAMS;a++)
+		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
+	s.SerializeObjectInstance(globalAI, globalAI->GetClass());
+//	s.Serialize()
+}
+
+void PrintSize(char *txt,int size)
+{
+	if (size>1024*1024*1024) logOutput.Print("%s %.1f GB",txt,size/(1024.0f*1024*1024)); else
+	if (size>     1024*1024) logOutput.Print("%s %.1f MB",txt,size/(1024.0f*1024     )); else
+	if (size>          1024) logOutput.Print("%s %.1f KB",txt,size/(1024.0f          )); else
+	logOutput.Print("%s %u B",txt,size);
 }
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
-
+	LoadStartPicture(gs->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
-	if (ofs.bad() || !ofs.is_open()) {
-		handleerror(0,"Couldnt save game to file",file.c_str(),0);
-		return;
+	try {
+		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
+		if (ofs.bad() || !ofs.is_open()) {
+			handleerror(0,"Couldnt save game to file",file.c_str(),0);
+			return;
+		}
+
+		WriteString(ofs, modName);
+		WriteString(ofs, mapName);
+
+		CGameStateCollector *gsc = new CGameStateCollector();
+
+		creg::COutputStreamSerializer os;
+		os.SavePackage(&ofs, gsc, gsc->GetClass());
+		PrintSize("Game",ofs.tellp());
+		int aistart = ofs.tellp();
+		for (int a=0;a<MAX_TEAMS;a++)
+			grouphandlers[a]->Save(&ofs);
+		globalAI->Save(&ofs);
+		PrintSize("AIs",((int)ofs.tellp())-aistart);
+	} catch (content_error &e) {
+		logOutput.Print("Save faild(content error): %s",e.what());
+	} catch (std::exception &e) {
+		logOutput.Print("Save faild: %s",e.what());
+	} catch (char* &e) {
+		logOutput.Print("Save faild: %s",e);
+	} catch (...) {
+		logOutput.Print("Save faild(unknwon error)");
 	}
-
-	WriteString(ofs, modName);
-	WriteString(ofs, mapName);
-
-	CGameStateCollector *gsc = new CGameStateCollector();
-
-	creg::COutputStreamSerializer os;
-	os.SavePackage(&ofs, gsc, gsc->GetClass());
+	UnloadStartPicture();
 }
 
 //this just loads the mapname and some other early stuff
@@ -111,6 +150,8 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 //this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
+	LoadStartPicture(gs->Team(gu->myTeam)->side);
+	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;
 	creg::Class* gsccls = 0;
@@ -120,5 +161,10 @@ void CLoadSaveHandler::LoadGame()
 
 	CGameStateCollector *gsc = (CGameStateCollector *)pGSC;
 	delete gsc; // only job of gsc is to collect gamestate data
+	for (int a=0;a<MAX_TEAMS;a++)
+		grouphandlers[a]->Load(ifs);
+	globalAI->Load(ifs);
 	delete ifs;
+	gs->paused = true;
+	UnloadStartPicture();
 }

@@ -379,7 +379,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			else
 				norm4=-camera->right;
 
-			set<CUnit*>::iterator ui;
+			list<CUnit*>::iterator ui;
 			CUnit* unit = NULL;
 			int addedunits=0;
 			int team, lastTeam;
@@ -394,7 +394,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				for(ui=gs->Team(team)->units.begin();ui!=gs->Team(team)->units.end();++ui){
 					float3 vec=(*ui)->midPos-camera->pos;
 					if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-						if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui)!=selectedUnits.selectedUnits.end()){
+						std::list<CUnit*>::iterator i;
+						for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
+							if (*i==*ui) {
+								break;
+							}
+						if(keys[SDLK_LCTRL] && i!=selectedUnits.selectedUnits.end()){
 							selectedUnits.RemoveUnit(*ui);
 						} else {
 							selectedUnits.AddUnit(*ui);
@@ -419,7 +424,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
 			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
-					if(keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit)!=selectedUnits.selectedUnits.end()){
+					std::list<CUnit*>::iterator i;
+					for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
+						if (*i==unit) {
+							break;
+						}
+					if(keys[SDLK_LCTRL] && i!=selectedUnits.selectedUnits.end()){
 						selectedUnits.RemoveUnit(unit);
 					} else {
 						selectedUnits.AddUnit(unit);
@@ -441,8 +451,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 							lastTeam = gu->myTeam;
 						}
 						for (; team <= lastTeam; team++) {
-							set<CUnit*>::iterator ui;
-							set<CUnit*>& teamUnits = gs->Team(team)->units;
+							list<CUnit*>::iterator ui;
+							list<CUnit*>& teamUnits = gs->Team(team)->units;
 							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 								if (((*ui)->aihint == unit->aihint) &&
 										(camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {

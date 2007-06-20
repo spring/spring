@@ -9,7 +9,13 @@
 #endif
 
 #include "creg/creg.h"
-#include "creg/STL_Set.h"
+
+#define ListErase(type,_where,what) \
+	for (std::list<type>::iterator i=_where.begin();i!=_where.end();i++)\
+		if (*i==what) {\
+			_where.erase(i);\
+			break;\
+		}
 
 class CObject
 {
@@ -20,6 +26,8 @@ public:
 
 	CObject(EObjectType synced = OT_Unknown);
 	virtual ~CObject();
+	void Serialize(creg::ISerializer *s);
+	void PostLoad();
 
 	static CObject* GetSyncedObjects() { return syncedObjects; }
 	CObject* GetNext()     const { return next; }
@@ -33,7 +41,7 @@ public:
 private:
 	static CObject* syncedObjects;
 	CObject *prev, *next;
-	std::multiset<CObject*> listeners,listening;
+	std::list<CObject*> listeners,listening;
 };
 
 #endif /* OBJECT_H */

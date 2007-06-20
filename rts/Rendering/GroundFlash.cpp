@@ -23,6 +23,21 @@ CR_REG_METADATA(CStandardGroundFlash,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
+CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (float3(0,0,0),AtlasedTexture(),1,0,1,1,1,float3(0,0,0)));
+
+CR_REG_METADATA(CSeismicGroundFlash,(
+				CR_MEMBER(side1),
+				CR_MEMBER(side2),
+
+				CR_MEMBER(texture),
+				CR_MEMBER(sizeGrowth),
+				CR_MEMBER(size),
+				CR_MEMBER(alpha),
+				CR_MEMBER(fade),
+				CR_MEMBER(ttl),
+				CR_MEMBER(color)
+				));
+
 CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
 
 CR_REG_METADATA(CSimpleGroundFlash,
@@ -61,8 +76,8 @@ CStandardGroundFlash::CStandardGroundFlash(float3 pos,float circleAlpha,float fl
 	circleSize(circleSpeed),
 	flashAge(0),
 	ttl((int)ttl),
-	circleAlphaDec(circleAlpha/ttl),
-	flashAgeSpeed(1.0f/ttl)
+	circleAlphaDec(ttl?circleAlpha/ttl:0),
+	flashAgeSpeed(ttl?1.0f/ttl:0)
 {
 	for (int a=0;a<3;a++)
 		color[a] = (unsigned char)(col[a]*255.0f);
@@ -105,7 +120,7 @@ bool CStandardGroundFlash::Update()
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
 	flashAge+=flashAgeSpeed;
-	return --ttl>0;
+	return ttl?(--ttl>0):true;
 }
 
 void CStandardGroundFlash::Draw()
@@ -273,7 +288,7 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit *owner)
 	ph->AddGroundFlash(this);
 
 	age=0.0f;
-	agerate = 1/(float)ttl;
+	agerate = ttl?1/(float)ttl:0;
 }
 
 void CSimpleGroundFlash::Draw()

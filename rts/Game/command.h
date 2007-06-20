@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <limits.h> // for INT_MAX
+#include "creg/creg.h"
 
 using namespace std;
 
@@ -90,6 +91,7 @@ using namespace std;
 
 
 struct Command {
+	CR_DECLARE_STRUCT(Command);
 	Command()
 	: timeOut(INT_MAX), options(0), tag(0) {};
 	int id;
@@ -103,7 +105,7 @@ struct Command {
 
 
 struct CommandDescription {
-
+	CR_DECLARE_STRUCT(CommandDescription)
 	CommandDescription()
 	: showUnique(false),
 	  onlyKey(false),

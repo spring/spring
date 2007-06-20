@@ -165,8 +165,9 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	// to render the screen background each frame.
 	if (strcmp(prevText, text)) {
 		unsigned ticks = SDL_GetTicks();
-		if (prevText[0])
-			logOutput.Print("Loading step `%s' took %g seconds", prevText, (ticks - startTicks) / 1000.0f);
+//		if (prevText[0])
+//			logOutput.Print("Loading step `%s' took %g seconds", prevText, (ticks - startTicks) / 1000.0f);
+		logOutput.Print("%s",text);
 		strncpy(prevText, text, sizeof(prevText));
 		prevText[sizeof(prevText) - 1] = 0;
 		startTicks = ticks;

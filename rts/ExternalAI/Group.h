@@ -22,9 +22,12 @@ using namespace std;
 class CGroup : public CObject  
 {
 public:
+	CR_DECLARE(CGroup);
 	void CommandFinished(int unit,int type);
 	CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler);
 	virtual ~CGroup();
+	void Serialize(creg::ISerializer *s);
+	void PostLoad();
 
 	void Update();
 	void DrawCommands();
@@ -39,7 +42,7 @@ public:
 
 	int id;
 
-	set<CUnit*> units;
+	list<CUnit*> units;
 
 	vector<CommandDescription> myCommands;
 	SharedLib *lib;

@@ -51,7 +51,9 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(terraformCenter),
 				CR_MEMBER(terraformRadius),
 				CR_MEMBER(nextBuildType),
-				CR_MEMBER(nextBuildPos)));
+				CR_MEMBER(nextBuildPos),
+				CR_POSTLOAD(PostLoad)
+				));
 
 
 //////////////////////////////////////////////////////////////////////
@@ -89,6 +91,16 @@ CBuilder::CBuilder()
 
 CBuilder::~CBuilder()
 {
+}
+
+void CBuilder::PostLoad()
+{
+	if (curResurrect) SetBuildStanceToward(curResurrect->pos);
+	if (curBuild) SetBuildStanceToward(curBuild->pos);
+	if (curCapture) SetBuildStanceToward(curCapture->pos);
+	if (curReclaim) SetBuildStanceToward(curReclaim->pos);
+	if (terraforming) SetBuildStanceToward(terraformCenter);
+	if (helpTerraform) SetBuildStanceToward(helpTerraform->terraformCenter);
 }
 
 

@@ -121,7 +121,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 //	maxSpeed(0.2f),
 	wantedSpeed(0),
 	moveType(0),
-	oldPos(owner->pos),
+	oldPos(owner?owner->pos:float3(0,0,0)),
 	oldSlowUpdatePos(oldPos),
 	flatFrontDir(1,0,0),
 	deltaSpeed(0),
@@ -163,8 +163,13 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	mainHeadingPos(0,0,0),
 	useMainHeading(false)
 {
-	moveSquareX=(int)owner->pos.x/(SQUARE_SIZE*2);
-	moveSquareY=(int)owner->pos.z/(SQUARE_SIZE*2);
+	if (owner){
+		moveSquareX=(int)owner->pos.x/(SQUARE_SIZE*2);
+		moveSquareY=(int)owner->pos.z/(SQUARE_SIZE*2);
+	} else {
+		moveSquareX = 0;
+		moveSquareY = 0;
+	}
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -921,7 +926,12 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						&& (object->mobility || Distance2D(owner, object) >= 0)) {
 							//Avoid collision by turning the heading to left or right.
 							//Using the one who need most adjustment.
-							if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner)!=selectedUnits.selectedUnits.end())
+							std::list<CUnit*>::iterator i;
+							for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
+								if (*i==owner) {
+									break;
+								}
+							if(DEBUG_CONTROLLER && i!=selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos+UpVector*20,object->pos+UpVector*20,3,1,4);
 							if(objectDistToAvoidDirCenter > 0) {
 								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
@@ -943,7 +953,12 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			//Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0,1,0)) * (avoidRight - avoidLeft));
-			if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner)!=selectedUnits.selectedUnits.end()){
+			std::list<CUnit*>::iterator i;
+			for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
+				if (*i==owner) {
+					break;
+				}
+			if(DEBUG_CONTROLLER && i!=selectedUnits.selectedUnits.end()){
 				int a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+avoidanceVec*40,7,1,4);
 				geometricObjects->SetColor(a,1,0.3f,0.3f,0.6f);
 

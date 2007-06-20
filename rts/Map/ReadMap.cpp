@@ -38,7 +38,10 @@ using namespace std;
 CReadMap* readmap=0;
 
 CR_BIND_INTERFACE(CReadMap)
-CR_REG_METADATA(CReadMap, (CR_SERIALIZER(Serialize)))
+CR_REG_METADATA(CReadMap, (
+				CR_MEMBER(groundBlockingObjectMap),
+				CR_SERIALIZER(Serialize)
+				));
 
 void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 {
@@ -117,8 +120,8 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		throw content_error("Bad/no terrain type map.");
 	if (typemap) rm->FreeInfoMap ("type", typemap);
 
-	rm->groundBlockingObjectMap = SAFE_NEW CSolidObject*[gs->mapSquares];
-	memset(rm->groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
+	rm->groundBlockingObjectMap.resize(gs->mapSquares,0);
+//	memset(rm->groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
 
 	return rm;
 }
@@ -130,7 +133,7 @@ CReadMap::CReadMap() :
 		facenormals(NULL),
 		typemap(NULL),
 		heightLinePal(NULL),
-		groundBlockingObjectMap(NULL),
+//		groundBlockingObjectMap(NULL),
 		metalMap(NULL)
 {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
@@ -148,7 +151,7 @@ CReadMap::~CReadMap()
 		delete[] mipHeightmap[i];
 
 	delete[] orgheightmap;
-	delete[] groundBlockingObjectMap;
+//	delete[] groundBlockingObjectMap;
 	delete[] heightLinePal;
 }
 
@@ -163,6 +166,7 @@ void CReadMap::Serialize(creg::ISerializer& s)
 
 void CReadMap::Initialize()
 {
+	PrintLoadMsg("Loading Map");
 	float* heightmap = GetHeightmap();
 
 	orgheightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
@@ -229,7 +233,7 @@ void CReadMap::CalcHeightfieldData()
 		mapChecksum^=*(unsigned int*)&heightmap[y];
 	}
 
-	PrintLoadMsg("Creating surface normals");
+//	PrintLoadMsg("Creating surface normals");
 
 	for(int y=0;y<(gs->mapy);y++){
 		for(int x=0;x<(gs->mapx);x++){

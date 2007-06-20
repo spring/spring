@@ -13,6 +13,30 @@
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "mmgr.h"
+#include "creg/STL_List.h"
+
+AIKey defaultKey(std::string("default"),0);
+
+CR_BIND_DERIVED(CGroup,CObject,(defaultKey,0,NULL))
+
+CR_REG_METADATA(CGroup, (
+				CR_MEMBER(id),
+				CR_MEMBER(units),
+				CR_MEMBER(myCommands),
+				CR_MEMBER(lastCommandPage),
+				CR_MEMBER(currentAiNum),
+				CR_MEMBER(currentAiKey),
+				CR_MEMBER(handler),
+				CR_SERIALIZER(Serialize),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(AIKey,)
+
+CR_REG_METADATA(AIKey, (
+				CR_MEMBER(dllName),
+				CR_MEMBER(aiNumber)
+				));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -26,11 +50,11 @@ CGroup::CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler)
 	handler(grouphandler),
 	lib(0)
 {
-	callback=SAFE_NEW CGroupAICallback(this);
+	if (grouphandler) callback=SAFE_NEW CGroupAICallback(this); else callback=0;
 	SetNewAI(aiKey);
 
 	int a=0;
-	for(map<AIKey,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && aiKey!=aai->first;++aai){
+	if (grouphandler) for(map<AIKey,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && aiKey!=aai->first;++aai){
 		a++;
 	}
 	currentAiNum=a;
@@ -46,12 +70,82 @@ CGroup::~CGroup()
 	delete callback;
 }
 
+void CGroup::Serialize(creg::ISerializer *s)
+{
+}
+
+void CGroup::PostLoad()
+{
+	callback=SAFE_NEW CGroupAICallback(this);
+	int a=0;
+	for(map<AIKey,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && currentAiKey!=aai->first;++aai){
+		a++;
+	}
+	currentAiNum=a;
+/*
+	if(ai) {
+		ReleaseAI(currentAiKey.aiNumber,ai);
+		ai = 0;
+	}
+*/
+	if(lib) {
+		delete lib;
+		lib = 0;
+	}
+
+	if(currentAiKey.dllName=="default"){
+		return;
+	}
+
+	lib = SharedLib::Instantiate(currentAiKey.dllName);
+	if (lib==0) 
+		handleerror(NULL,currentAiKey.dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
+	
+	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
+	if (GetGroupAiVersion==0)
+		handleerror(NULL,currentAiKey.dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
+	
+	int i=GetGroupAiVersion();
+
+	if (i!=AI_INTERFACE_VERSION)
+		handleerror(NULL,currentAiKey.dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
+	
+	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
+	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
+	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
+
+	typedef bool (* ISLOADSUPPORTED)(unsigned aiNumber);
+	ISLOADSUPPORTED IsLoadSupported;
+	IsLoadSupported = (ISLOADSUPPORTED)lib->FindAddress("IsLoadSupported");
+
+	ai=GetNewAI(currentAiKey.aiNumber);
+	if (IsLoadSupported&&IsLoadSupported(currentAiKey.aiNumber)) {
+		return;
+	}
+	ai->InitAi(callback);
+	
+	list<CUnit*> unitBackup=units;
+
+	for(list<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
+	{
+		if(IsUnitSuited(currentAiKey.aiNumber,(*ui)->unitDef))
+		{
+			if(ai->AddUnit((*ui)->id))
+			{
+				continue;
+			}
+		}
+		ListErase(CUnit*,units,*ui);
+		(*ui)->group=0;
+	}
+}
+
 bool CGroup::AddUnit(CUnit *unit)
 {
 	if (luaUI) {
 		luaUI->GroupChanged(id);
 	}
-	units.insert(unit);
+	units.insert(units.end(),unit);
 	if(ai)
 	{
 		if(IsUnitSuited(currentAiKey.aiNumber,unit->unitDef))
@@ -61,7 +155,7 @@ bool CGroup::AddUnit(CUnit *unit)
 				return true;
 			}
 		}
-		units.erase(unit);
+		ListErase(CUnit*,units,unit);
 		return false;
 	}
 	return true;
@@ -74,7 +168,7 @@ void CGroup::RemoveUnit(CUnit *unit)
 	}
 	if(ai)
 		ai->RemoveUnit(unit->id);
-	units.erase(unit);
+	ListErase(CUnit*,units,unit);
 }
 
 void CGroup::SetNewAI(AIKey aiKey)
@@ -91,6 +185,7 @@ void CGroup::SetNewAI(AIKey aiKey)
 		lib = 0;
 	}
 
+	currentAiKey=aiKey;
 	if(aiKey.dllName=="default"){
 		return;
 	}
@@ -112,13 +207,12 @@ void CGroup::SetNewAI(AIKey aiKey)
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 
-	currentAiKey=aiKey;
 	ai=GetNewAI(currentAiKey.aiNumber);
 	ai->InitAi(callback);
 	
-	set<CUnit*> unitBackup=units;
+	list<CUnit*> unitBackup=units;
 
-	for(set<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
+	for(list<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
 	{
 		if(IsUnitSuited(currentAiKey.aiNumber,(*ui)->unitDef))
 		{
@@ -127,14 +221,14 @@ void CGroup::SetNewAI(AIKey aiKey)
 				continue;
 			}
 		}
-		units.erase(*ui);
+		ListErase(CUnit*,units,(*ui));
 		(*ui)->group=0;
 	}
 }
 
 void CGroup::Update()
 {
-	if(units.empty() && id>=10 && handler==grouphandler){		//last check is a hack so globalai groups dont get erased
+	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam){		//last check is a hack so globalai groups dont get erased
 		handler->RemoveGroup(this);
 		return;
 	}
@@ -144,7 +238,7 @@ void CGroup::Update()
 
 void CGroup::DrawCommands()
 {
-	if(units.empty() && id>=10 && handler==grouphandler){		//last check is a hack so globalai groups dont get erased
+	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam){		//last check is a hack so globalai groups dont get erased
 		handler->RemoveGroup(this);
 		return;
 	}

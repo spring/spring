@@ -153,6 +153,44 @@ extern string stupidGlobalMapname;
 
 CGame* game = 0;
 
+CR_BIND(CGame,(false,std::string(""),std::string(""),NULL));
+
+CR_REG_METADATA(CGame,(
+	CR_MEMBER(que),
+	CR_MEMBER(oldframenum),
+//	CR_MEMBER(fps),
+//	CR_MEMBER(thisFps),
+
+//	CR_MEMBER(lastUpdate),
+//	CR_MEMBER(lastMoveUpdate),
+//	CR_MEMBER(lastModGameTimeMeasure),
+//	CR_MEMBER(lastframe),
+
+	CR_MEMBER(totalGameTime),
+	CR_MEMBER(leastQue),
+
+	CR_MEMBER(userInputPrefix),
+
+	CR_MEMBER(lastTick),
+	CR_MEMBER(timeLeft),
+	CR_MEMBER(consumeSpeed),
+	CR_MEMBER(chatSound),
+
+	CR_MEMBER(hideInterface),
+	CR_MEMBER(showClock),
+	CR_MEMBER(noSpectatorChat),
+	CR_MEMBER(drawFpsHUD),
+
+	CR_MEMBER(maxUserSpeed),
+	CR_MEMBER(minUserSpeed),
+	CR_MEMBER(gamePausable),
+
+	CR_MEMBER(soundEnabled),
+	CR_MEMBER(gameSoundVolume),
+
+//	CR_MEMBER(script),
+	CR_POSTLOAD(PostLoad)
+				));
 
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
 {
@@ -316,7 +354,9 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater();
-	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
+	for(int a=0;a<MAX_TEAMS;a++) 
+		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
+//	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
 	globalAI=SAFE_NEW CGlobalAIHandler();
 
 	CLuaCob::LoadHandler();
@@ -430,20 +470,23 @@ CGame::~CGame()
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
 
-	delete gameServer;         gameServer         = NULL;
+	if (gameServer)delete gameServer;gameServer         = NULL;
 
 	globalAI->PreDestroy ();
+	delete globalAI;           globalAI           = NULL;
+//	delete grouphandler;       grouphandler       = NULL;
+	for(int a=0;a<MAX_TEAMS;a++) {
+		delete grouphandlers[a];grouphandlers[a]   = NULL;}
+
 	delete water;              water              = NULL;
 	delete sky;                sky                = NULL;
-
 	delete resourceBar;        resourceBar        = NULL;
+
 	delete uh;                 uh                 = NULL;
 	delete unitDrawer;         unitDrawer         = NULL;
 	delete featureHandler;     featureHandler     = NULL;
 	delete geometricObjects;   geometricObjects   = NULL;
 	delete ph;                 ph                 = NULL;
-	delete globalAI;           globalAI           = NULL;
-	delete grouphandler;       grouphandler       = NULL;
 	delete minimap;            minimap            = NULL;
 	delete pathManager;        pathManager        = NULL;
 	delete groundDecals;       groundDecals       = NULL;
@@ -480,6 +523,19 @@ CGame::~CGame()
 	CColorMap::DeleteColormaps();
 }
 
+void CGame::PostLoad()
+{
+	if (gameServer) {
+		gameServer -> lastTick        = lastTick      ;
+		gameServer -> timeLeft        = timeLeft      ;
+		gameServer -> serverframenum  = gs->frameNum  ;
+		gameServer -> gameEndDetected = gameOver      ;
+		gameServer -> gameEndTime     = 0             ;
+//		gameServer -> syncErrorFrame  = ;
+//		gameServer ->       =       ;
+//		gameServer ->       =       ;
+	}
+}
 
 void CGame::ResizeEvent()
 {
@@ -852,10 +908,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->LoadView(action.extra);
 	}
 	else if (cmd == "viewselection") {
-		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
 			float3 pos(0.0f, 0.0f, 0.0f);
-			set<CUnit*>::const_iterator it;
+			list<CUnit*>::const_iterator it;
 			for (it = selUnits.begin(); it != selUnits.end(); it++) {
 				pos += (*it)->midPos;
 			}
@@ -913,38 +969,38 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if ((t >= '0') && (t <= '9')) {
 			const int team = (t - '0');
 			do { c++; } while ((c[0] != 0) && isspace(c[0]));
-			grouphandler->GroupCommand(team, c);
+			grouphandlers[gu->myTeam]->GroupCommand(team, c);
 		}
 	}
 	else if (cmd == "group0") {
-		grouphandler->GroupCommand(0);
+		grouphandlers[gu->myTeam]->GroupCommand(0);
 	}
 	else if (cmd == "group1") {
-		grouphandler->GroupCommand(1);
+		grouphandlers[gu->myTeam]->GroupCommand(1);
 	}
 	else if (cmd == "group2") {
-		grouphandler->GroupCommand(2);
+		grouphandlers[gu->myTeam]->GroupCommand(2);
 	}
 	else if (cmd == "group3") {
-		grouphandler->GroupCommand(3);
+		grouphandlers[gu->myTeam]->GroupCommand(3);
 	}
 	else if (cmd == "group4") {
-		grouphandler->GroupCommand(4);
+		grouphandlers[gu->myTeam]->GroupCommand(4);
 	}
 	else if (cmd == "group5") {
-		grouphandler->GroupCommand(5);
+		grouphandlers[gu->myTeam]->GroupCommand(5);
 	}
 	else if (cmd == "group6") {
-		grouphandler->GroupCommand(6);
+		grouphandlers[gu->myTeam]->GroupCommand(6);
 	}
 	else if (cmd == "group7") {
-		grouphandler->GroupCommand(7);
+		grouphandlers[gu->myTeam]->GroupCommand(7);
 	}
 	else if (cmd == "group8") {
-		grouphandler->GroupCommand(8);
+		grouphandlers[gu->myTeam]->GroupCommand(8);
 	}
 	else if (cmd == "group9") {
-		grouphandler->GroupCommand(9);
+		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
 		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
@@ -1026,10 +1082,12 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "savegame"){
-		CLoadSaveHandler ls;
-		ls.mapName = stupidGlobalMapname;
-		ls.modName = modInfo->name;
-		ls.SaveGame("Test.ssf");
+		if (filesystem.CreateDirectory("Saves")) {
+			CLoadSaveHandler ls;
+			ls.mapName = stupidGlobalMapname;
+			ls.modName = modInfo->name;
+			ls.SaveGame("Saves/QuickSave.ssf");
+		}
 	}
 
 #ifndef NO_AVI
@@ -1203,7 +1261,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		gd->ToggleRadarAndJammer();
 	}
 	else if (cmd == "showmetalmap") {
-		gd->SetMetalTexture(readmap->metalMap->metalMap,readmap->metalMap->extractionMap,readmap->metalMap->metalPal,false);
+		gd->SetMetalTexture(readmap->metalMap->metalMap,&readmap->metalMap->extractionMap.front(),readmap->metalMap->metalPal,false);
 	}
 	else if (cmd == "showpathmap") {
 		gd->SetPathMapTexture();
@@ -1400,7 +1458,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		map<AIKey, string>::iterator aai;
 		map<AIKey, string> suitedAis =
-			grouphandler->GetSuitedAis(selectedUnits.selectedUnits);
+			grouphandlers[gu->myTeam]->GetSuitedAis(selectedUnits.selectedUnits);
 		int i = 0;
 		for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
 			i++;
@@ -1681,65 +1739,10 @@ bool CGame::Update()
 	return true;
 }
 
-bool CGame::Draw()
+bool CGame::DrawWorld()
 {
-	ASSERT_UNSYNCED_MODE;
-
-	luaCallIns.Update();
-
-	if (!gu->active) {
-		// update LuaUI
-		guihandler->Update();
-		SDL_Delay(10); // milliseconds
-		return true;
-	}
-
-//	logOutput << mouse->lastx << "\n";
-	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
-		Uint64 startDraw;
-		startDraw = SDL_GetTicks();
-		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
-		                 * (GAME_SPEED * gs->speedFactor);
-	} else  {
-		gu->timeOffset=0;
-		lastUpdate = SDL_GetTicks();
-	}
-	std::string tempstring;
-
-	ph->UpdateTextures();
-
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
-
-	sky->Update();
-//	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glDisable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
-
-	//set camera
-	mouse->UpdateCam();
-	mouse->UpdateCursors();
-
-	if(unitTracker.Enabled())
-		unitTracker.SetCam();
-
-	if(playing && (hideInterface || script->wantCameraControl))
-		script->SetCamera();
-
+START_TIME_PROFILE
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	gd->Update(); // let it update before shadows have to be drawn
-
-	if(shadowHandler->drawShadows)
-		shadowHandler->CreateShadows();
-	if (unitDrawer->advShading)
-		unitDrawer->UpdateReflectTex();
-
-	camera->Update(false);
-
-	water->UpdateWater(this);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
 	sky->Draw();
 	gd->UpdateExtraTexture();
@@ -1829,6 +1832,95 @@ bool CGame::Draw()
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
 		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 	}
+END_TIME_PROFILE("Draw world");
+	return true;
+}
+
+bool CGame::Draw()
+{
+	ASSERT_UNSYNCED_MODE;
+
+	luaCallIns.Update();
+
+	if (!gu->active) {
+		// update LuaUI
+		guihandler->Update();
+		SDL_Delay(10); // milliseconds
+		return true;
+	}
+
+//	logOutput << mouse->lastx << "\n";
+	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
+		Uint64 startDraw;
+		startDraw = SDL_GetTicks();
+		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
+		                 * (GAME_SPEED * gs->speedFactor);
+	} else  {
+		gu->timeOffset=0;
+		lastUpdate = SDL_GetTicks();
+	}
+	std::string tempstring;
+
+	ph->UpdateTextures();
+
+	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
+
+START_TIME_PROFILE
+	sky->Update();
+END_TIME_PROFILE("Sky");
+//	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+
+	//set camera
+	mouse->UpdateCam();
+	mouse->UpdateCursors();
+
+	if(unitTracker.Enabled())
+		unitTracker.SetCam();
+
+	if(playing && (hideInterface || script->wantCameraControl))
+		script->SetCamera();
+
+START_TIME_PROFILE
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	gd->Update(); // let it update before shadows have to be drawn
+END_TIME_PROFILE("Ground");
+
+START_TIME_PROFILE
+	if(shadowHandler->drawShadows)
+		shadowHandler->CreateShadows();
+	if (unitDrawer->advShading)
+		unitDrawer->UpdateReflectTex();
+END_TIME_PROFILE("Shadows/Reflect");
+
+	camera->Update(false);
+
+START_TIME_PROFILE
+	water->UpdateWater(this);
+END_TIME_PROFILE("Water");
+	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+
+	if (hideInterface || !minimap->GetMaximized() || minimap->GetMinimized())
+		DrawWorld();
+	else {
+		glLoadIdentity();
+		glDisable(GL_DEPTH_TEST);
+
+		//reset fov
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluOrtho2D(0,1,0,1);
+		glMatrixMode(GL_MODELVIEW);
+
+		glEnable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST );
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glLoadIdentity();
+	}
 
 	luaCallIns.DrawScreen();
 
@@ -1854,19 +1946,24 @@ bool CGame::Draw()
 	glEnable(GL_TEXTURE_2D);
 
 	if(!hideInterface)
+		minimap->Draw();
+
+	if(!hideInterface)
 		infoConsole->Draw();
 
 	if(!hideInterface) {
+START_TIME_PROFILE
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty()){
 			std::deque<CInputReceiver*>::iterator ri;
 			for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
-				if (*ri)
+				if ((*ri)&&(*ri!=minimap))
 					(*ri)->Draw();
 			}
 			if (*ri)
 				(*ri)->Draw();
 		}
+END_TIME_PROFILE("Interface draw");
 	} else {
 		guihandler->Update();
 	}
@@ -2087,7 +2184,7 @@ void CGame::StartPlaying()
 	ENTER_MIXED;
 	gu->myTeam=gs->players[gu->myPlayerNum]->team;
 	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
-	grouphandler->team=gu->myTeam;
+//	grouphandler->team=gu->myTeam;
 	CLuaUI::UpdateTeams();
 	ENTER_SYNCED;
 
@@ -2132,7 +2229,8 @@ void CGame::SimFrame()
 		sound->NewFrame();
 		treeDrawer->Update();
 		globalAI->Update();
-		grouphandler->Update();
+		for(int a=0;a<MAX_TEAMS;a++) 
+			grouphandlers[a]->Update();
 
 #ifdef PROFILE_TIME
 		profiler.Update();
@@ -3415,7 +3513,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				gu->spectatingFullSelect = false;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
-				grouphandler->team = gu->myTeam;
+//				grouphandler->team = gu->myTeam;
 				CLuaUI::UpdateTeams();
 			}
 		}
@@ -3613,8 +3711,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		selectedUnits.PossibleCommandChange(NULL);
 		if (gs->noHelperAIs) {
 			// remove any current GroupAIs
-			set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-			set<CUnit*>::iterator it;
+			list<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+			list<CUnit*>::iterator it;
       for(it = teamUnits.begin(); it != teamUnits.end(); ++it) {
       	CUnit* unit = *it;
 				if (unit->group && (unit->group->id > 9)) {
@@ -3766,6 +3864,22 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 		else {
 			logOutput.Print("LuaCob is not enabled\n");
+		}
+	}
+	else if (s.find(".save ") == 0) {//.save [-y ]<savename>
+		if (filesystem.CreateDirectory("Saves")) {
+			bool saveoverride = s.find(" -y ") == 0;
+			std::string savename(s.c_str()+(6+(saveoverride?3:0)));
+			savename="Saves/"+savename+".ssf";
+			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
+				logOutput.Print("Saving game to %s\n",savename.c_str());
+				CLoadSaveHandler ls;
+				ls.mapName = stupidGlobalMapname;
+				ls.modName = modInfo->name;
+				ls.SaveGame(savename);
+			} else {
+				logOutput.Print("File %s allready exists(use .save -y to override)\n",savename.c_str());
+			}
 		}
 	}
 	else if ((s[0] == '.') && (gs->frameNum > 1)) {
@@ -3991,8 +4105,12 @@ void CGame::SelectUnits(const string& line)
 				continue; // bad pointer
 			}
 			if (!gu->spectatingFullSelect) {
-				const set<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-				if (teamUnits.find(unit) == teamUnits.end()) {
+				const list<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
+				std::list<CUnit*>::const_iterator i;
+				for (i = teamUnits.begin(); i != teamUnits.end(); i++) {
+					if (*i==unit) break;
+				}
+				if (i == teamUnits.end()) {
 					continue; // not mine to select
 				}
 			}
@@ -4013,7 +4131,7 @@ void CGame::SelectCycle(const string& command)
 	static set<int> unitIDs;
 	static int lastID = -1;
 
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
 
 	if (command == "restore") {
 		selectedUnits.ClearSelected();
@@ -4030,7 +4148,7 @@ void CGame::SelectCycle(const string& command)
 	if (selUnits.size() >= 2) {
 		// assign the cycle units
 		unitIDs.clear();
-		set<CUnit*>::const_iterator it;
+		list<CUnit*>::const_iterator it;
 		for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 			unitIDs.insert((*it)->id);
 		}

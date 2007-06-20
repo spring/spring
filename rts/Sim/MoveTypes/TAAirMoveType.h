@@ -7,7 +7,7 @@
 class CTAAirMoveType :
 	public CMoveType
 {
-	CR_DECLARE(CMoveType);
+	CR_DECLARE(CTAAirMoveType);
 public:
 	enum AircraftState{
 		AIRCRAFT_LANDED,

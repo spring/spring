@@ -26,8 +26,56 @@
 #include "LogOutput.h"
 #include "myMath.h"
 #include "mmgr.h"
+#include "creg/STL_Set.h"
+#include "creg/STL_Deque.h"
 
 #define TARGET_LOST_TIMER 120	// in calls to SlowUpdate() (approx. once every second)
+
+CR_BIND(CCommandQueue, );
+
+CR_REG_METADATA(CCommandQueue, (
+				CR_MEMBER(queue),
+				CR_MEMBER(tagCounter),
+				CR_ENUM_MEMBER(queueType)
+				));
+CR_BIND_DERIVED(CCommandAI, CObject, );
+
+CR_REG_METADATA(CCommandAI, (
+				CR_MEMBER(stockpileWeapon),
+
+				CR_MEMBER(possibleCommands),
+				CR_MEMBER(commandQue),
+				CR_MEMBER(nonQueingCommands),
+				CR_MEMBER(lastUserCommand),
+				CR_MEMBER(selfDCountdown),
+				CR_MEMBER(lastFinishCommand),
+
+				CR_MEMBER(owner),
+
+				CR_MEMBER(orderTarget),
+				CR_MEMBER(targetDied),
+				CR_MEMBER(inCommand),
+				CR_MEMBER(selected),
+				CR_MEMBER(repeatOrders),
+				CR_MEMBER(lastSelectedCommandPage),
+				CR_MEMBER(unimportantMove),
+				CR_MEMBER(targetLostTimer)
+				));
+
+CCommandAI::CCommandAI()
+:	lastUserCommand(-1000),
+	orderTarget(0),
+	targetDied(false),
+	inCommand(false),
+	selected(false),
+	owner(owner),
+	stockpileWeapon(0),
+	lastSelectedCommandPage(0),
+	repeatOrders(false),
+	lastFinishCommand(0),
+	unimportantMove(false),
+	targetLostTimer(TARGET_LOST_TIMER)
+{}
 
 CCommandAI::CCommandAI(CUnit* owner)
 :	lastUserCommand(-1000),
@@ -259,6 +307,9 @@ CCommandAI::~CCommandAI()
 	}
 }
 
+void CCommandAI::PostLoad()
+{
+}
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 {

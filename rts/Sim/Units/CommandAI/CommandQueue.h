@@ -19,6 +19,7 @@ class CCommandQueue {
 		BuildQueueType
 	};
 
+	CR_DECLARE(CCommandQueue);
 	public:
 		inline QueueType GetType() const { return queueType; }
 

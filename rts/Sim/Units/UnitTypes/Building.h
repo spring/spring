@@ -16,6 +16,7 @@ public:
 
 	CBuilding();
 	virtual ~CBuilding();
+	void PostLoad();
 
 	void Init(const CUnit* builder);
 	void UnitInit (UnitDef* def, int team, const float3& position);

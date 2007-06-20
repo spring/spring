@@ -81,7 +81,7 @@ inline void CBFGroundDrawer::DrawVertexA(int x,int y,float height)
 
 inline void CBFGroundDrawer::EndStrip()
 {
-	va->EndStrip();	
+	va->EndStrip();
 }
 
 void CBFGroundDrawer::DrawGroundVertexArray()
@@ -109,9 +109,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	textures->DrawUpdate();
 
 	int x,y;
-	int mapx=gs->mapx+1;
-	int hmapx=mapx>>1;
-	int mapy=gs->mapy+1;
 
 	int neededLod=int(gu->viewRange/8/viewRadius*2);
 	UpdateCamRestraints();
@@ -233,7 +230,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 					}
 
 					for(x=xs;x<xe;x+=lod){
-						if((lod==1) || 
+						if((lod==1) ||
 							(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
 							(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terr�g
 								if(!inStrip){
@@ -254,7 +251,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 										EndStrip();
 										inStrip=false;
 									}
-									DrawVertexA(x,y);                                            
+									DrawVertexA(x,y);
 									DrawVertexA(x,y+hlod,h1);
 									DrawVertexA(x+hlod,y,h2);
 									DrawVertexA(x+hlod,y+hlod,h3);
@@ -270,7 +267,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 									DrawVertexA(x+lod,y);
 									DrawVertexA(x+hlod,y,h2);
 									EndStrip();
-								}     
+								}
 								if((x<=(cx)-viewRadius*hlod)){
 									float h1=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamxpart);
 									float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(1-oldcamxpart);
@@ -296,8 +293,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 									DrawVertexA(x+hlod,y+hlod,h3);
 									DrawVertexA(x,y+lod);
 									DrawVertexA(x+hlod,y+lod,h4);
-									EndStrip();        
-								} 
+									EndStrip();
+								}
 								if((y>=(cy)+viewRadius*hlod)){
 									float h1=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y)*heightDataX+x+hlod]*(oldcamypart);
 									float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(oldcamypart);
@@ -308,7 +305,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 										EndStrip();
 										inStrip=false;
 									}
-									DrawVertexA(x,y);                                            
+									DrawVertexA(x,y);
 									DrawVertexA(x,y+hlod,h2);
 									DrawVertexA(x+hlod,y,h1);
 									DrawVertexA(x+hlod,y+hlod,h3);
@@ -320,7 +317,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 									DrawVertexA(x+hlod,y+hlod,h3);
 									DrawVertexA(x+lod,y+lod);
 									DrawVertexA(x+lod,y+hlod,h4);
-									EndStrip();        
+									EndStrip();
 								}
 								if((y<=(cy)-viewRadius*hlod)){
 									float h1=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamypart);
@@ -344,7 +341,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 									DrawVertexA(x+hlod,y+hlod,h3);
 									DrawVertexA(x,y);
 									DrawVertexA(x,y+hlod,h2);
-									EndStrip();        
+									EndStrip();
 								}
 							}
 					}
@@ -494,8 +491,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glDisable(GL_TEXTURE_2D);
 		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
 		glBegin(GL_QUADS);//water color edge of map <0
-		float xsize=gs->mapx*SQUARE_SIZE;
-		float ysize=gs->mapy*SQUARE_SIZE;
 		if(!drawWaterReflection){
 			float xsize=gs->mapx*SQUARE_SIZE/4;
 			float ysize=gs->mapy*SQUARE_SIZE/4;
@@ -549,7 +544,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		  glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 	}
-	
+
 	glDisable(GL_ALPHA_TEST);
 
 	glDisable(GL_TEXTURE_2D);
@@ -611,7 +606,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 			int xs=xstart;
 			int xe=xend;
 				for(x=xs;x<xe;x+=lod){
-				if((lod==1) || 
+				if((lod==1) ||
 					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
 					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terr�g
 						if(!inStrip){
@@ -632,7 +627,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 								EndStrip();
 								inStrip=false;
 							}
-							DrawVertexA(x,y);                                            
+							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod,h1);
 							DrawVertexA(x+hlod,y,h2);
 							DrawVertexA(x+hlod,y+hlod,h3);
@@ -648,7 +643,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 							DrawVertexA(x+lod,y);
 							DrawVertexA(x+hlod,y,h2);
 							EndStrip();
-						}     
+						}
 						if((x<=(cx)-viewRadius*hlod)){
 							float h1=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamxpart);
 							float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(1-oldcamxpart);
@@ -674,8 +669,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 							DrawVertexA(x+hlod,y+hlod,h3);
 							DrawVertexA(x,y+lod);
 							DrawVertexA(x+hlod,y+lod,h4);
-							EndStrip();        
-						} 
+							EndStrip();
+						}
 						if((y>=(cy)+viewRadius*hlod)){
 							float h1=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y)*heightDataX+x+hlod]*(oldcamypart);
 							float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(oldcamypart);
@@ -686,7 +681,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 								EndStrip();
 								inStrip=false;
 							}
-							DrawVertexA(x,y);                                            
+							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod,h2);
 							DrawVertexA(x+hlod,y,h1);
 							DrawVertexA(x+hlod,y+hlod,h3);
@@ -698,7 +693,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 							DrawVertexA(x+hlod,y+hlod,h3);
 							DrawVertexA(x+lod,y+lod);
 							DrawVertexA(x+lod,y+hlod,h4);
-							EndStrip();        
+							EndStrip();
 						}
 						if((y<=(cy)-viewRadius*hlod)){
 							float h1=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamypart);
@@ -722,7 +717,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 							DrawVertexA(x+hlod,y+hlod,h3);
 							DrawVertexA(x,y);
 							DrawVertexA(x,y+hlod,h2);
-							EndStrip();        
+							EndStrip();
 						}
 					}
 			}
@@ -836,7 +831,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture ());
 		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
@@ -912,7 +907,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture ());
 		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		if(map->detailTex) {
@@ -983,7 +978,7 @@ void CBFGroundDrawer::AddFrustumRestraint(float3 side)
 {
 	fline temp;
 	float3 up(0,1,0);
-	
+
 	float3 b=up.cross(side);		//get vector for collision between frustum and horizontal plane
 	if(fabs(b.z)<0.0001f)
 		b.z=0.0001f;
@@ -991,20 +986,20 @@ void CBFGroundDrawer::AddFrustumRestraint(float3 side)
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
-		
-		if(side.y>0)								
+
+		if(side.y>0)
 			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->minheight-100))/c.y);
 		else
 			colpoint=cam2->pos-c*((cam2->pos.y-(readmap->maxheight+30))/c.y);
-		
-		
+
+
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		if(b.z>0){
-			left.push_back(temp);			
+			left.push_back(temp);
 		}else{
 			right.push_back(temp);
 		}
-	}	
+	}
 }
 
 void CBFGroundDrawer::UpdateCamRestraints(void)
@@ -1030,16 +1025,16 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(camHorizontal);			//get vector from camera to collision line
 		float3 colpoint;				//a point on the collision line
-		
-		if(side.y>0)								
+
+		if(side.y>0)
 			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*(cam2->pos.y/c.y);
 		else
 			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*((cam2->pos.y-255/3.5f)/c.y);
-		
-		
+
+
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
 		if(b.z>0){
-			left.push_back(temp);			
+			left.push_back(temp);
 		}else{
 			right.push_back(temp);
 		}

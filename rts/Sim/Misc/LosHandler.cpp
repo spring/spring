@@ -22,11 +22,13 @@ CR_BIND(CLosHandler::DelayedInstance, );
 CR_BIND(CLosHandler::CPoint, );
 
 CR_REG_METADATA(LosInstance,(
-		CR_MEMBER(losSquares),
+//		CR_MEMBER(losSquares),
 		CR_MEMBER(losSize),
 		CR_MEMBER(airLosSize),
 		CR_MEMBER(refCount),
 		CR_MEMBER(allyteam),
+		CR_MEMBER(baseX),
+		CR_MEMBER(baseY),
 		CR_MEMBER(baseSquare),
 		CR_MEMBER(baseAirSquare),
 		CR_MEMBER(hashNum),
@@ -36,10 +38,21 @@ CR_REG_METADATA(LosInstance,(
 void CLosHandler::creg_Serialize(creg::ISerializer& s)
 {
 	// NOTE This could be tricky if gs is serialized after losHandler.
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
-		s.Serialize(losMap[a], losSizeX*losSizeY*2);
-		s.Serialize(airLosMap[a], airSizeX*airSizeY*2);
-	}
+//	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+//		s.Serialize(losMap[a], losSizeX*losSizeY*2);
+//		s.Serialize(airLosMap[a], airSizeX*airSizeY*2);
+//	}
+}
+
+void CLosHandler::PostLoad()
+{
+	for(int a=0;a<2309;++a)
+		for(std::list<LosInstance*>::iterator li=instanceHash[a].begin();li!=instanceHash[a].end();++li){
+			if((*li)->baseX-(*li)->losSize<0 || (*li)->baseX+(*li)->losSize>=losSizeX || (*li)->baseY-(*li)->losSize<0 || (*li)->baseY+(*li)->losSize>=losSizeY)
+				SafeLosAdd(*li,(*li)->baseX,(*li)->baseY);
+			else
+				LosAdd(*li);
+		}
 }
 
 CR_REG_METADATA(CLosHandler,(
@@ -55,9 +68,11 @@ CR_REG_METADATA(CLosHandler,(
 		CR_MEMBER(instanceHash),
 		CR_MEMBER(toBeDeleted),
 		CR_MEMBER(delayQue),
-		CR_MEMBER(Points),
+//		CR_MEMBER(Points),
 		CR_MEMBER(terrainHeight),
-		CR_MEMBER(lostables)));
+//		CR_MEMBER(lostables)
+		CR_POSTLOAD(PostLoad)
+		));
 
 CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
 		CR_MEMBER(instance),
@@ -110,15 +125,10 @@ CLosHandler::CLosHandler()
 	invAirDiv = 1/((float)SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
-		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
-		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
-
-		for(int b=0;b<losSizeX*losSizeY;++b){
-			losMap[a][b]=0;
-		}
-		for(int b=0;b<airSizeX*airSizeY;++b){
-			airLosMap[a][b]=0;
-		}
+//		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
+		losMap[a].resize(losSizeX*losSizeY*2,0);
+//		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
+		airLosMap[a].resize(losSizeX*losSizeY*2,0);
 	}
 
 	for(int a=1;a<=MAX_LOS_TABLE;++a)
@@ -143,10 +153,10 @@ CLosHandler::CLosHandler()
 
 CLosHandler::~CLosHandler()
 {
-	for(int a=0;a<gs->activeAllyTeams;++a){
-		myDelete(losMap[a]);
-		myDelete(airLosMap[a]);
-	}
+//	for(int a=0;a<gs->activeAllyTeams;++a){
+//		myDelete(losMap[a]);
+//		myDelete(airLosMap[a]);
+//	}
 
 	std::list<LosInstance*>::iterator li;
 	for(int a=0;a<2309;++a){
@@ -175,6 +185,8 @@ START_TIME_PROFILE;
 	int xmap=(int)(losPos.x*invLosDiv);
 	int ymap=(int)(losPos.z*invLosDiv);
 	int baseSquare=max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
+	int baseX=max(0,min(losSizeX-1,xmap));
+	int baseY=max(0,min(losSizeY-1,(ymap)));
 
 	LosInstance* instance;
 	if(redoCurrent){
@@ -185,6 +197,8 @@ START_TIME_PROFILE;
 		instance=unit->los;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
+		instance->baseX=baseX;
+		instance->baseY=baseY;
 		instance->baseSquare=baseSquare;	//this could be a problem if several units are sharing the same instance
 		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
 		instance->baseAirSquare=baseAirSquare;
@@ -205,7 +219,7 @@ START_TIME_PROFILE;
 			}
 		}
 		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
-		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius,allyteam,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
+		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius,allyteam,baseX,baseY,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}

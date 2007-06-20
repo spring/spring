@@ -130,7 +130,7 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	loopbackAttack(false)
 {
 	turnRadius=150;
-	owner->mapSquare+=1;						//to force los recalculation
+	if (owner)owner->mapSquare+=1;						//to force los recalculation
 
 	//From Aircraft::Init
 	maxRudder*=0.99f+gs->randFloat()*0.02f;

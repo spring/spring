@@ -21,8 +21,10 @@ using namespace std;
 class CGroupHandler
 {
 public:
+	CR_DECLARE(CGroupHandler);
 	CGroupHandler(int team);
 	virtual ~CGroupHandler();
+	void PostLoad();
 
 	void Update();
 	void DrawCommands();
@@ -30,11 +32,13 @@ public:
 	void GroupCommand(int num, const string& cmd);
 	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);
+	void Load(std::istream *s);
+	void Save(std::ostream *s);
 
 	vector<CGroup*> groups;
 	map<AIKey,string> availableAI;
 
-	map<AIKey,string> GetSuitedAis(set<CUnit*> units);
+	map<AIKey,string> GetSuitedAis(list<CUnit*> units);
 	map<AIKey,string> lastSuitedAis;
 
 	int team;
@@ -48,6 +52,7 @@ private:
 	AIKey defaultKey;
 };
 
-extern CGroupHandler* grouphandler;
+//extern CGroupHandler* grouphandler;
+extern CGroupHandler* grouphandlers[MAX_TEAMS];
 
 #endif /* GROUPHANDLER_H */

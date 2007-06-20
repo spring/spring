@@ -8,6 +8,7 @@ const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;	//Each square on metalmap i
 class CMetalMap
 {
 public:
+	CR_DECLARE(CMetalMap);
 	CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale);
 	virtual ~CMetalMap(void);
 
@@ -18,7 +19,7 @@ public:
 
 	unsigned char *metalMap;
 	unsigned char metalPal[768];
-	float *extractionMap;
+	std::vector<float> extractionMap;
 	float metalscale;
 protected:
 	int sizex;

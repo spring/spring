@@ -12,7 +12,7 @@ Classes for serialization of registrated class instances
 #include <assert.h>
 #include <stdexcept>
 #include <map>
-#include "LogOutput.h"
+//#include "LogOutput.h"
 
 using namespace std;
 using namespace creg;
@@ -97,26 +97,35 @@ bool COutputStreamSerializer::IsWriting ()
 	return true;
 }
 
+COutputStreamSerializer::ObjectRef* COutputStreamSerializer::FindObjectRef(void *inst, creg::Class *objClass, bool isEmbedded)
+{
+	std::vector<ObjectRef*> *refs = &(ptrToId[inst]);
+	for (std::vector<ObjectRef*>::iterator i=refs->begin();i!=refs->end();i++) {
+		if ((*i)->isThisObject(inst,objClass,isEmbedded))
+			return *i;
+	}
+	return 0;
+}
+
 void COutputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *objClass)
 {
 	// register the object, and mark it as embedded if a pointer was already referencing it
-	ObjIDmap::iterator i = ptrToID.find (inst);
-	ObjectID *obj = 0;
-	if (i != ptrToID.end()) {
-		obj = &i->second;
-
-		// embedded objects can have the same address as their parents
-		if (objClass != obj->class_)
-			obj = 0;
+	ObjectRef *obj = FindObjectRef(inst,objClass,true);
+	if (!obj) {
+		obj = &*objects.insert(objects.end(),ObjectRef(inst,objects.size (),true,objClass));
+		ptrToId[inst].push_back(obj);
+	} else if (obj->isEmbedded) 
+		throw content_error("Reserialization of embedded object");
+	else {
+		std::vector<ObjectRef*>::iterator pos;
+		for (pos=pendingObjects.begin();pos!=pendingObjects.end() && (*pos)!=obj;pos++) ;
+		if (pos==pendingObjects.end())
+			throw content_error("Object pointer was serialized");
+		else {
+			pendingObjects.erase(pos);
+		}
 	}
-
-	if (!obj)
-	{
-		obj = &ptrToID[inst];
-		obj->id = objects.size ();
-		obj->class_ = objClass;
-		objects.push_back (obj);
-	}
+	obj->class_ = objClass;
 	obj->isEmbedded = true;
 
 //	printf ("writepos of %s (%d): %d\n", objClass->name.c_str(), obj->id,(int)stream->tellp());
@@ -134,17 +143,14 @@ void COutputStreamSerializer::SerializeObjectPtr (void **ptr, creg::Class *objCl
 	if (*ptr) {
 		// valid pointer, write a one and the object ID
 		int id;
-		ObjIDmap::iterator i = ptrToID.find (*ptr);
-		if (i == ptrToID.end()) {
-			std::pair<ObjIDmap::iterator, bool> r = ptrToID.insert (std::pair<void*, ObjectID>(*ptr, ObjectID()));
-			ObjectID& obj = r.first->second;
-			obj.class_ = objClass;
-			obj.isEmbedded = false;
-			id = obj.id = objects.size();
-			objects.push_back (&obj);
-			pendingObjects.push_back (r.first);
+		ObjectRef *obj = FindObjectRef(*ptr,objClass,false);
+		if (!obj) {
+			obj = &*objects.insert(objects.end(),ObjectRef(*ptr,objects.size (),false,objClass));
+			ptrToId[*ptr].push_back(obj);
+			id = obj->id;
+			pendingObjects.push_back (obj);
 		} else
-			id = i->second.id;
+			id = obj->id;
 
 		*stream << (char)1;
 		id = swabdword(id);
@@ -179,44 +185,50 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	ph.objDataOffset = (int)stream->tellp();
 
 	// Insert the first object that will provide references to everything
-	ObjectID obj;
-	obj.id = 0;
-	obj.classIndex = 0;
-	obj.isEmbedded = false;
-	obj.class_ = rootObjClass;
-	ptrToID[rootObj] = obj;
-	pendingObjects.push_back (ptrToID.find(rootObj));
-	objects.push_back (&ptrToID[rootObj]);
+	ObjectRef *obj = &*objects.insert(objects.end(),ObjectRef(rootObj,objects.size(),false,rootObjClass));
+	ptrToId[rootObj].push_back(obj);
+	pendingObjects.push_back (obj);
 
+	map<creg::Class *,int> classSizes;
 	// Save until all the referenced objects have been stored
 	while (!pendingObjects.empty ())
 	{
-		vector <ObjIDmap::iterator> po = pendingObjects;
+		std::vector <ObjectRef*> po = pendingObjects;
 		pendingObjects.clear ();
 
-		for (vector<ObjIDmap::iterator>::iterator i=po.begin();i!=po.end();++i)
+		for (std::vector <ObjectRef*> ::iterator i=po.begin();i!=po.end();++i)
 		{
-			ObjectID& obj = (*i)->second;
-			obj.class_->SerializeInstance (this, (*i)->first);
+			ObjectRef* obj = *i;
+			unsigned objstart = stream->tellp();
+			obj->class_->SerializeInstance (this, obj->ptr);
+			unsigned objend = stream->tellp();
+			int sz = objend-objstart;
+			classSizes[obj->class_]+=sz;
 		}
 	}
 
 	// Collect a set of all used classes
 	map<creg::Class *,ClassRef> classMap;
 	vector <ClassRef*> classRefs;
-	for (ObjIDmap::iterator oi = ptrToID.begin(); oi != ptrToID.end(); ++oi) {
+	map<int,int> classObjects;
+	for (std::list <ObjectRef>::iterator i=objects.begin();i!=objects.end();i++) {
 		//printf ("Obj: %s\n", oi->second.class_->name.c_str());
-		map<creg::Class*,ClassRef>::iterator cr = classMap.find (oi->second.class_);
+		map<creg::Class*,ClassRef>::iterator cr = classMap.find (i->class_);
 		if (cr == classMap.end()) {
-			ClassRef *pRef = &classMap[oi->second.class_];
+			ClassRef *pRef = &classMap[i->class_];
 			pRef->index = classRefs.size();
-			pRef->class_ = oi->second.class_;
+			pRef->class_ = i->class_;
 
 			classRefs.push_back (pRef);
-			oi->second.classIndex = pRef->index;
+			i->classIndex = pRef->index;
 		} else
-			oi->second.classIndex = cr->second.index;
+			i->classIndex = cr->second.index;
+		classObjects[i->classIndex]++;
 	}
+
+//	for (map<int,int>::iterator i=classObjects.begin();i!=classObjects.end();i++) {
+//		logOutput.Print("%20s %10u %10u",classRefs[i->first]->class_->name.c_str(),i->second,classSizes[classRefs[i->first]->class_]);
+//	}
 
 	// Write the class references
 	ph.numObjClassRefs = classRefs.size();
@@ -231,13 +243,11 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	// Write object info
 	ph.objTableOffset = (int)stream->tellp();
 	ph.numObjects = objects.size();
-	for (uint a=0;a<objects.size();a++)
-	{
-		ObjectID *o = objects[a];
+	for (std::list <ObjectRef>::iterator i=objects.begin();i!=objects.end();i++) {
 		PackageObject d;
 
-		d.classRefIndex = o->classIndex;
-		d.isEmbedded = o->isEmbedded ? 1 : 0;
+		d.classRefIndex = i->classIndex;
+		d.isEmbedded = i->isEmbedded ? 1 : 0;
 
 		d.SwapBytes ();
 		stream->write ((char*)&d, sizeof(PackageObject));
@@ -250,17 +260,20 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 		Class *c = classRefs[a]->class_;
 		c->CalculateChecksum (ph.metadataChecksum);
 	}
-	printf("Checksum: %d\n", ph.metadataChecksum);
+//	printf("Checksum: %d\n", ph.metadataChecksum);
 
+	int endOffset = stream->tellp();
 	stream->seekp (startOffset);
 	memcpy(ph.magic, CREG_PACKAGE_FILE_ID, 4);
 	ph.SwapBytes ();
 	stream->write ((const char *)&ph, sizeof(PackageHeader));
 
-	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size());
+//	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size());
 
+	stream->seekp (endOffset);
+	ptrToId.clear();
+	pendingObjects.clear();
 	objects.clear();
-	ptrToID.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -386,6 +399,8 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		objects [a].classRef = d.classRefIndex;
 	}
 
+	int endOffset = s->tellg();
+
 //	printf ("Loading %d objects (at %d)\n", objects.size(), (int)stream->tellg());
 
 	// Read the object data using serialization
@@ -413,17 +428,28 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 	for (uint a=0;a<objects.size();a++) {
 		StoredObject& o = objects[a];
 		Class *c = classRefs[objects[a].classRef];
-
+		std::vector<Class*> hierarchy;
+		for (Class *c2=c;c2;c2=c2->base)
+			hierarchy.insert(hierarchy.end(),c2);
+		for (std::vector<Class*>::reverse_iterator i=hierarchy.rbegin();i!=hierarchy.rend();i++) {
+			if ((*i)->postLoadProc) {
+				_DummyStruct *ds = (_DummyStruct*)o.obj;
+				(ds->*(*i)->postLoadProc)();
+			}
+		}
+/*		
 		if (c->postLoadProc) {
 			_DummyStruct *ds = (_DummyStruct*)o.obj;
 			(ds->*c->postLoadProc)();
 		}
+*/
 	}
 
 	// The first object is the root object
 	root = objects[0].obj;
 	rootCls = classRefs[objects[0].classRef];
 
+	s->seekg (endOffset);
 	unfixedPointers.clear();
 	objects.clear();
 }

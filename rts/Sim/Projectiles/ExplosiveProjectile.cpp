@@ -33,8 +33,10 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed
 {
 	useAirLos=true;
 
-	SetRadius(weaponDef->collisionSize);
-	drawRadius=weaponDef->size;
+	if (weaponDef) {
+		SetRadius(weaponDef->collisionSize);
+		drawRadius=weaponDef->size;
+	}
 	invttl=1.0f/ttl;
 
 #ifdef TRACE_SYNC

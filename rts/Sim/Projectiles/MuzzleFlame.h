@@ -22,7 +22,8 @@ public:
 	int numFlame;
 	int numSmoke;
 
-	float3* randSmokeDir;
+//	float3* randSmokeDir;
+	std::vector<float3> randSmokeDir;
 };
 
 

@@ -8,6 +8,7 @@ class CFlareProjectile :
 	public CProjectile
 {
 public:
+	CR_DECLARE(CFlareProjectile);
 	CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame);
 	~CFlareProjectile();
 	void Update(void);

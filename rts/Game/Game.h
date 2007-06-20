@@ -32,13 +32,16 @@ class CInfoConsole;
 class CGame : public CGameController
 {
 public:
+	CR_DECLARE(CGame);			//Don't use CGame pointer in CR_MEMBER()!!!
 	void UpdateUI();
 	bool ClientReadNet();
+	void PostLoad();
 
 	bool debugging;
 	int que;
 	void SimFrame();
 	void StartPlaying();
+	bool DrawWorld();
 	bool Draw();
 	bool Update();
 	int KeyReleased(unsigned short k);

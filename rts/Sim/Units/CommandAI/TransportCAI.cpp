@@ -24,6 +24,22 @@ static void ScriptCallback(int retCode,void* p1,void* p2)
 	((CTransportCAI*)p1)->ScriptReady();
 }
 
+CR_BIND_DERIVED(CTransportCAI,CMobileCAI , );
+
+CR_REG_METADATA(CTransportCAI, (
+				CR_MEMBER(toBeTransportedUnitId),
+				CR_MEMBER(scriptReady),
+				CR_MEMBER(lastCall)
+				));
+
+CTransportCAI::CTransportCAI()
+: CMobileCAI(),
+	lastCall(0),
+	scriptReady(false),
+	toBeTransportedUnitId(-1)
+{}
+
+
 CTransportCAI::CTransportCAI(CUnit* owner)
 : CMobileCAI(owner),
 	lastCall(0),

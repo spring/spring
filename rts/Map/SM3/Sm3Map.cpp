@@ -22,6 +22,9 @@
 
 CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
 
+//CR_REG_METADATA(CSmfReadMap, (
+//				))
+
 CSm3ReadMap::CSm3ReadMap()
 {
 	groundDrawer=0;

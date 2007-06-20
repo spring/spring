@@ -72,14 +72,19 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   mins(-1.0e9f, -1.0e9f, -1.0e9f),
   maxs(+1.0e9f, +1.0e9f, +1.0e9f),
   lastTrackUpdate(0),
-	oldPos(owner->pos),
+	oldPos(owner?owner->pos:float3(0,0,0)),
 	oldSlowUpdatePos(oldPos)
 {
 	useHeading = false; // use the transformation matrix instead of heading
 
-	const UnitDef* unitDef = owner->unitDef;
-	isBuilding = (unitDef->type == "Building");
-	isBlocking = (!unitDef->canKamikaze || !isBuilding);
+	if (owner) {
+		const UnitDef* unitDef = owner->unitDef;
+		isBuilding = (unitDef->type == "Building");
+		isBlocking = (!unitDef->canKamikaze || !isBuilding);
+	} else {
+		isBuilding = false;
+		isBlocking = false;
+	}
 }
 
 

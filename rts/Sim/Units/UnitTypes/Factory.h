@@ -17,6 +17,7 @@ public:
 
 	CFactory();
 	virtual ~CFactory();
+	void PostLoad();
 	void StopBuild();
 	void StartBuild(string type);
 	void Update();

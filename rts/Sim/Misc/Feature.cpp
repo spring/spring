@@ -23,6 +23,8 @@
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
+				//CR_MEMBER(lastBuilder),
+				//CR_MEMBER(model),
 				CR_MEMBER(createdFromUnit),
 				CR_MEMBER(isRepairingBeforeResurrect),
 				CR_MEMBER(resurrectProgress),
@@ -33,14 +35,17 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(team),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(lastReclaim),
-				CR_MEMBER(def),
+//				CR_MEMBER(def),
+				CR_MEMBER(defName),
 				CR_MEMBER(transMatrix),
 				CR_MEMBER(inUpdateQue),
 				CR_MEMBER(drawQuad),
 				CR_MEMBER(finalHeight),
 				CR_MEMBER(myFire),
 				CR_MEMBER(fireTime),
-				CR_MEMBER(emitSmokeTime)));
+				CR_MEMBER(emitSmokeTime),
+				CR_POSTLOAD(PostLoad)
+				));
 
 CFeature::CFeature()
 :	def(0),
@@ -61,6 +66,7 @@ CFeature::CFeature()
 	finalHeight(0),
 	solidOnTop(0),
 	model(NULL)
+//	lastBuilder(0)
 {
 	immobile=true;
 	physicalState = OnGround;
@@ -86,6 +92,38 @@ CFeature::~CFeature(void)
 	}
 }
 
+void CFeature::PostLoad()
+{
+	def = featureHandler->GetFeatureDef(defName);
+	if (def->drawType == DRAWTYPE_3DO) {
+		if (!def->useCSOffset) {
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team);
+		} else {
+			model = modelParser->Load3DO(def->modelname.c_str(),
+			                             def->collisionSphereScale, team,
+			                             def->collisionSphereOffset);
+		}
+		height = model->height;
+		def->radius = model->radius;
+		SetRadius(def->radius);			
+		midPos = pos + model->relMidPos;
+	}
+	else if (def->drawType == DRAWTYPE_TREE){
+		midPos = pos + (UpVector * def->radius);
+		height = 2 * def->radius;
+	}
+	else {
+		midPos = pos;
+	}
+	if (blocking) {
+		Block();
+	}
+
+	if (def->drawType == DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->modelType, pos, 1);
+	}
+}
 
 void CFeature::ChangeTeam(int newTeam)
 {
@@ -115,6 +153,7 @@ void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _headi
 {
 	pos = _pos;
 	def = _def;
+	defName = def->myName;
 	heading = _heading;
 	buildFacing = facing;
 	team = _team;
@@ -326,6 +365,9 @@ void CFeature::DependentDied(CObject *o)
 {
 	if (o == solidOnTop)
 		solidOnTop = 0;
+
+//	if (o == lastBuilder)
+//		lastBuilder=0;
 
 	CSolidObject::DependentDied(o);
 }

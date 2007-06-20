@@ -29,6 +29,8 @@ struct DirectControlStruct{
 class CPlayer  
 {
 public:
+	CR_DECLARE(CPlayer);
+	CR_DECLARE_SUB(Statistics);
 	CPlayer();
 	virtual ~CPlayer();
 
@@ -44,6 +46,7 @@ public:
 	int ping;
 
 	struct Statistics{
+		CR_DECLARE_STRUCT(Statistics);
 		int mousePixels;			//how many pixels the mouse has traversed in total
 		int mouseClicks;
 		int keyPresses;

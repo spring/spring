@@ -55,6 +55,7 @@ CQuitBox::CQuitBox(void)
 	shareTeam=0;
 	// if we have alive allies left, set the shareteam to an undead ally.
 	for(int team=0;team<gs->activeTeams;++team){
+		if (gs->Team(team)->gaia) continue;
 		if(team!=gu->myTeam && !gs->Team(team)->isDead)
 		{
 			if(shareTeam==gu->myTeam || gs->Team(shareTeam)->isDead)
@@ -138,6 +139,7 @@ void CQuitBox::Draw(void)
 		if (team >= gu->myTeam) {
 			actualTeam++;
 		}
+		if (gs->Team(actualTeam)->gaia) continue;
 
 		if (shareTeam == actualTeam) {
 			glColor4f(1,1,1,0.8f);
@@ -228,10 +230,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
-		set<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+		list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
 		//select all units
 		selectedUnits.ClearSelected();
-		for(set<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+		for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
 			selectedUnits.AddUnit(*ui);
 		}
 		Command c;

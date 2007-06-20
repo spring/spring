@@ -30,8 +30,11 @@ class IFramebuffer;
 class CProjectileHandler
 {
 public:
+	CR_DECLARE(CProjectileHandler);
 	CProjectileHandler();
 	virtual ~CProjectileHandler();
+	void Serialize(creg::ISerializer *s);
+	void PostLoad();
 
 	void CheckUnitCol();
 	void LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile);

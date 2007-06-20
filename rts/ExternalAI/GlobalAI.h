@@ -12,8 +12,13 @@ class CGlobalAI :
 	public CObject
 {
 public:
+	CR_DECLARE(CGlobalAI);
 	CGlobalAI(int team, const char* dll);
 	~CGlobalAI(void);
+	void Serialize(creg::ISerializer *s);
+	void PostLoad();
+	void Load(std::istream *s);
+	void Save(std::ostream *s);
 
 	void Update(void);
 	void PreDestroy (); // called just before all the units are destroyed
@@ -25,9 +30,10 @@ public:
 
 	IGlobalAI* ai;
 	CGlobalAICallback* callback;
-	CGroupHandler* gh;
+//	CGroupHandler* gh;
 
 	SharedLib *lib;
+	std::string dllName;
 
 	typedef bool (* ISCINTERFACE)();
 	typedef int (* GETGLOBALAIVERSION)();

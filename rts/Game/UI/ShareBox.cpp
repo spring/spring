@@ -166,6 +166,7 @@ void CShareBox::Draw(void)
 		if (team >= gu->myTeam) {
 			actualTeam++;
 		}
+		if (gs->Team(actualTeam)->gaia) continue;
 
 		if (shareTeam == actualTeam) {
 			glColor4f(1,1,1,0.8f);

@@ -19,6 +19,10 @@
 
 CR_BIND_DERIVED(CBuilding, CUnit, );
 
+CR_REG_METADATA(CBuilding, (
+				CR_POSTLOAD(PostLoad)
+				));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -61,6 +65,13 @@ void CBuilding::Init(const CUnit* builder)
 		groundDecals->AddBuilding(this);
 	}
 	CUnit::Init(builder);
+}
+
+void CBuilding::PostLoad()
+{
+	if(unitDef->useBuildingGroundDecal){
+		groundDecals->AddBuilding(this);
+	}
 }
 
 void CBuilding::UnitInit (UnitDef* def, int team, const float3& position)

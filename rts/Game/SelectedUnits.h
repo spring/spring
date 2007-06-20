@@ -46,7 +46,7 @@ public:
 	void ToggleBuildIconsFirst();
 	bool BuildIconsFirst() const { return buildIconsFirst; }
 
-	set<CUnit*> selectedUnits;
+	list<CUnit*> selectedUnits;
 
 	bool selectionChanged;
 	bool possibleCommandsChanged;

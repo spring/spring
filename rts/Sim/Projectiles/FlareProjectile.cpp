@@ -10,14 +10,27 @@
 #include "ProjectileHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CFlareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
+
+CR_REG_METADATA(CFlareProjectile,(
+				CR_MEMBER(activateFrame),
+				CR_MEMBER(deathFrame),
+
+				CR_MEMBER(numSub),
+				CR_MEMBER(lastSub),
+				CR_MEMBER(subPos),
+				CR_MEMBER(subSpeed),
+				CR_MEMBER(alphaFalloff)
+				));
+
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner, true),
 	activateFrame(activateFrame),
-	deathFrame(activateFrame+owner->unitDef->flareTime),
+	deathFrame(activateFrame+owner?owner->unitDef->flareTime:1),
 	numSub(0),
 	lastSub(0)
 {
-	alphaFalloff=1.0f/owner->unitDef->flareTime;
+	alphaFalloff=owner?1.0f/owner->unitDef->flareTime:1.0;
 	checkCol=false;
 	useAirLos=true;
 	SetRadius(45);

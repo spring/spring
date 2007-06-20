@@ -14,7 +14,9 @@ public:
 	void Update(void);
 	std::string GetMapName(void);
 	std::string GetModName(void);
+	void ScriptSelected();
 
+	bool started;
 	CLoadSaveHandler loader;
 	std::string file;
 };

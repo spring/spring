@@ -17,14 +17,16 @@ CR_REG_METADATA(CRepulseGfx,(
 	));
 
 CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color)
-: CProjectile(repulsed->pos,repulsed->speed,owner, false),
+: CProjectile(repulsed?repulsed->pos:float3(0,0,0),repulsed?repulsed->speed:float3(0,0,0),owner, false),
 	repulsed(repulsed),
 	age(0),
 	sqMaxDist(maxDist*maxDist+100),
 	color(color)
 {
-	AddDeathDependence(owner);
-	AddDeathDependence(repulsed);
+	if (owner)
+		AddDeathDependence(owner);
+	if (repulsed)
+		AddDeathDependence(repulsed);
 
 	checkCol=false;
 	useAirLos=true;

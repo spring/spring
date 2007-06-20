@@ -103,8 +103,8 @@ void CSpawnScript::Update()
 				// This guarantees the script doesn't desync in multiplayer games.
 				int num = gs->randInt() % gs->Team(1 - curUnit->team)->units.size();
 				std::set<int> unitids;
-				std::set<CUnit*>* tu = &gs->Team(1 - curUnit->team)->units;
-				for (std::set<CUnit*>::iterator u = tu->begin(); u != tu->end(); ++u)
+				std::list<CUnit*>* tu = &gs->Team(1 - curUnit->team)->units;
+				for (std::list<CUnit*>::iterator u = tu->begin(); u != tu->end(); ++u)
 					unitids.insert((*u)->id);
 				std::set<int>::iterator ui = unitids.begin();
 				for(int a=0;a<num;++a)
