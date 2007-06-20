@@ -18,7 +18,7 @@
 static char rcsid[] = "$NetBSD: s_ldexpf.c,v 1.3f 1995/05/10 20:47:42 jtc Exp $";
 #endif
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 #include "../streflop_libm_bridge.h"
 

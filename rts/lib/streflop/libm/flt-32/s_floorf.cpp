@@ -27,7 +27,7 @@ static char rcsid[] = "$NetBSD: s_floorf.c,v 1.4f 1995/05/10 20:47:22 jtc Exp $"
  *	Inexact flag raised if x not equal to floorf(x).
  */
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 namespace streflop_libm {

@@ -18,7 +18,7 @@
 static char rcsid[] = "$NetBSD: s_frexpf.c,v 1.5f 1995/05/10 20:47:26 jtc Exp $";
 #endif
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 namespace streflop_libm {

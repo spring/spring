@@ -18,7 +18,7 @@
 static char rcsid[] = "$NetBSD: s_expm1f.c,v 1.5f 1995/05/10 20:47:11 jtc Exp $";
 #endif
 
-#include "math.h"
+#include "SMath.h"
 #include "math_private.h"
 
 static const Simple huge = 1.0e+30f;
