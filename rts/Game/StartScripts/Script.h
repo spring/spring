@@ -16,6 +16,7 @@ public:
 	CScript(const std::string& name);
 	virtual ~CScript();
 
+	virtual void ScriptSelected();
 	virtual std::string GetMapName();
 	virtual std::string GetModName();
 

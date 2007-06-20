@@ -12,6 +12,14 @@
 
 CGlobalAIHandler* globalAI=0;
 
+CR_BIND_DERIVED(CGlobalAIHandler,CObject,)
+
+CR_REG_METADATA(CGlobalAIHandler, (
+				CR_MEMBER(ais),
+				CR_MEMBER(hasAI)
+//				CR_MEMBER(memBuffers)
+				));
+
 bool CGlobalAIHandler::CatchException()
 {
 	static bool init=false;
@@ -30,20 +38,27 @@ bool CGlobalAIHandler::CatchException()
 			AIException(e.what());		\
 		else throw;						\
 	}									\
+	catch (const char *s) {	\
+		if (CatchException ())			\
+			AIException(s);				\
+		else throw;						\
+	}									\
 	catch (...) {						\
 		if (CatchException ())			\
 			AIException(0);				\
 		else throw;						\
 	}
 
-static void AIException(const char *what)
+void AIException(const char *what)
 {
-	static char msg[512];
+//	static char msg[512];
 	if(what) {
-		SNPRINTF(msg, sizeof(msg), "An exception occured in the global ai dll: \'%s\',\n please contact the author of the AI.",	what);
-		handleerror(0,msg, "Exception in global AI",0);
+//		SNPRINTF(msg, sizeof(msg), "An exception occured in the global ai dll: \'%s\',\n please contact the author of the AI.",	what);
+//		handleerror(0,msg, "Exception in global AI",0);
+		logOutput.Print("Global ai exception:\'%s\'",what);
 	} else
-		handleerror(0,"An unhandled exception occured in the global ai dll, please contact the author of the ai.","Error in global ai",0);
+//		handleerror(0,"An unhandled exception occured in the global ai dll, please contact the author of the ai.","Error in global ai",0);
+		logOutput.Print("Global ai exception");
 	exit(-1);
 }
 
@@ -65,6 +80,28 @@ CGlobalAIHandler::~CGlobalAIHandler(void)
 			delete mi->second.mem;
 		}
 	}
+}
+
+void CGlobalAIHandler::PostLoad()
+{
+}
+
+void CGlobalAIHandler::Load(std::istream *s)
+{
+	try {
+		for(int a=0;a<gs->activeTeams;++a)
+			if(ais[a])
+				ais[a]->Load(s);
+	} HANDLE_EXCEPTION;
+}
+
+void CGlobalAIHandler::Save(std::ostream *s)
+{
+	try {
+		for(int a=0;a<gs->activeTeams;++a)
+			if(ais[a])
+				ais[a]->Save(s);
+	} HANDLE_EXCEPTION;
 }
 
 void CGlobalAIHandler::Update(void)

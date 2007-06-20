@@ -21,7 +21,7 @@ public:
 	void Init(void);
 
 	std::list<CWeaponProjectile*> incoming;
-	std::set<CWeaponProjectile*> hasGfx;
+	std::list<CWeaponProjectile*> hasGfx;
 	std::list<CShieldPartProjectile*> visibleShieldParts;
 
 	void DependentDied(CObject* o);

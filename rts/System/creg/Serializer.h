@@ -6,6 +6,7 @@
 #include SPRING_HASH_MAP_H
 #include <map>
 #include <vector>
+#include <list>
 
 namespace creg {
 	/**
@@ -16,26 +17,63 @@ namespace creg {
 	class COutputStreamSerializer : public ISerializer
 	{
 	protected:
-		struct ObjectID {
+		struct ObjectRef {
+			ObjectRef() {
+				ptr = 0;
+				id=0;
+				classIndex=0;
+				isEmbedded=false;
+				class_=0;
+			}
+			ObjectRef(void *ptr,int id,bool isEmbedded,creg::Class *class_) {
+				this->ptr = ptr;
+				this->id=id;
+				classIndex=0;
+				this->isEmbedded=isEmbedded;
+				this->class_=class_;
+			}
+			ObjectRef(const ObjectRef&src) {
+				ptr=src.ptr;
+				id=src.id;
+				classIndex=src.classIndex;
+				isEmbedded=src.isEmbedded;
+				class_=src.class_;
+			}
+			void *ptr;
 			int id, classIndex;
 			bool isEmbedded;
 			creg::Class *class_;
+			bool isThisObject(void *objPtr,creg::Class *objClass,bool objEmbedded) const
+			{
+				if (ptr!=objPtr) return false;
+				if (class_==objClass) return true;
+				if (isEmbedded&&objEmbedded) return false;
+				if (!objEmbedded) {
+					for (creg::Class *base=class_->base;base;base=base->base)
+						if (base==objClass) return true;
+				} 
+				if (!isEmbedded) {
+					for (creg::Class *base=objClass->base;base;base=base->base)
+						if (base==class_) return true;
+				}
+				return false;
+			}
 		};
 
 		// Temporary class reference
 		struct ClassRef;
 
-		typedef std::map<void*, ObjectID> ObjIDmap;
-		ObjIDmap ptrToID; // maps pointers to object IDs that can be serialized
 		std::ostream *stream;
-
-		std::vector <ObjectID*> objects;
-		std::vector <ObjIDmap::iterator> pendingObjects; // these objects still have to be saved
+		std::map <void*,std::vector<ObjectRef*> > ptrToId;
+		std::list <ObjectRef> objects;
+		std::vector <ObjectRef*> pendingObjects; // these objects still have to be saved
 
 		// Serialize all class names
 		void WriteObjectInfo ();
 		// Helper for instance/ptr saving
 		void WriteObjectRef (void *inst, creg::Class *cls, bool embedded);
+
+		ObjectRef* FindObjectRef(void *inst, creg::Class *objClass, bool isEmbedded);
 
 	public:
 		COutputStreamSerializer ();

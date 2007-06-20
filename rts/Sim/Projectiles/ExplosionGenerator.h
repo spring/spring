@@ -12,7 +12,7 @@ class CExplosionGenerator;
 class CExpGenSpawnable : public CWorldObject
 {
 public:
-	//CR_DECLARE(CExpGenSpawnable);
+	CR_DECLARE(CExpGenSpawnable);
 	CExpGenSpawnable() : CWorldObject(){};
 	CExpGenSpawnable(const float3& pos) : CWorldObject(pos){};
 	virtual ~CExpGenSpawnable(){};

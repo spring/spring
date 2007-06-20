@@ -28,7 +28,7 @@ class CPieceProjectile : public CProjectile
 	float spinPos;
 
 	float3 oldSmoke,oldSmokeDir;
-	CUnit* target;
+//	CUnit* target;
 	bool drawTrail;
 	CSmokeTrailProjectile* curCallback;
 	int* numCallback;

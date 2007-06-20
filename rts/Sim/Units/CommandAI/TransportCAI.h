@@ -7,7 +7,9 @@ class CTransportCAI :
 	public CMobileCAI
 {
 public:
+	CR_DECLARE(CTransportCAI);
 	CTransportCAI(CUnit* owner);
+	CTransportCAI();
 	~CTransportCAI(void);
 	void SlowUpdate(void);
 	void ScriptReady(void);

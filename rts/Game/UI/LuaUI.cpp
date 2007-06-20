@@ -1969,12 +1969,12 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 int CLuaUI::GetGroupList(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	if (grouphandler == NULL) {
+	if (grouphandlers[gu->myTeam] == NULL) {
 		return 0;
 	}
 	lua_newtable(L);
 	int count = 0;
-	const vector<CGroup*>& groups = grouphandler->groups;
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	vector<CGroup*>::const_iterator git;
 	for (git = groups.begin(); git != groups.end(); ++git) {
 		const CGroup* group = *git;
@@ -2002,7 +2002,7 @@ int CLuaUI::GetGroupAIList(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
-	const map<AIKey, string>& availableAI = grouphandler->availableAI;
+	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
 	map<AIKey, string>::const_iterator it;
 	int count = 0;
 	for (it = availableAI.begin(); it != availableAI.end(); ++it) {
@@ -2026,18 +2026,18 @@ int CLuaUI::GetGroupAIName(lua_State* L)
 	}
 
 	const int groupID = (int)lua_tonumber(L, 1);
-	if ((groupID < 0) || (groupID >= (int)grouphandler->groups.size())) {
+	if ((groupID < 0) || (groupID >= (int)grouphandlers[gu->myTeam]->groups.size())) {
 		return 0; // bad group
 	}
 
-	const CGroup* group = grouphandler->groups[groupID];
+	const CGroup* group = grouphandlers[gu->myTeam]->groups[groupID];
 	if (group->ai == NULL) {
 		lua_pushstring(L, "");
 		return 1;
 	}
 
 	const AIKey& aikey = group->currentAiKey;
-	const map<AIKey, string>& availableAI = grouphandler->availableAI;
+	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
 	map<AIKey, string>::const_iterator fit = availableAI.find(aikey);
 	if (fit == availableAI.end()) {
 		lua_pushstring(L, ""); // should not happen?
@@ -2079,7 +2079,7 @@ int CLuaUI::SetUnitGroup(lua_State* L)
 		return 0;
 	}
 
-	const vector<CGroup*>& groups = grouphandler->groups;
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= (int)groups.size())) {
 		return 0;
 	}
@@ -2101,7 +2101,7 @@ int CLuaUI::GetGroupUnits(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetGroupUnits(groupID)");
 	}
 	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
@@ -2109,8 +2109,8 @@ int CLuaUI::GetGroupUnits(lua_State* L)
 
 	lua_newtable(L);
 	int count = 0;
-	const set<CUnit*>& groupUnits = groups[groupID]->units;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& groupUnits = groups[groupID]->units;
+	list<CUnit*>::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		count++;
 		lua_pushnumber(L, count);
@@ -2130,15 +2130,15 @@ int CLuaUI::GetGroupUnitsSorted(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetGroupUnitsSorted(groupID)");
 	}
 	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const set<CUnit*>& groupUnits = groups[groupID]->units;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& groupUnits = groups[groupID]->units;
+	list<CUnit*>::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		CUnit* unit = *it;
 		unitDefMap[unit->unitDef->id].push_back(unit);
@@ -2173,15 +2173,15 @@ int CLuaUI::GetGroupUnitsCounts(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetGroupUnitsCounts(groupID)");
 	}
 	const int groupID = (int)lua_tonumber(L, 1);
-	const vector<CGroup*>& groups = grouphandler->groups;
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
 
 	map<int, int> countMap;
-	const set<CUnit*>& groupUnits = groups[groupID]->units;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& groupUnits = groups[groupID]->units;
+	list<CUnit*>::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		CUnit* unit = *it;
 		const int udID = unit->unitDef->id;

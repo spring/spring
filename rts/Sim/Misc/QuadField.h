@@ -59,12 +59,12 @@ public:
 	CQuadField();
 	virtual ~CQuadField();
 
-	Quad* baseQuads;
+	vector<Quad> baseQuads;
 	int numQuadsX;
 	int numQuadsZ;
 
-	CUnit** tempUnitsArray;
-	CFeature** tempFeaturesArray;
+	vector<CUnit*> tempUnitsArray;//unused
+	vector<CFeature*> tempFeaturesArray;//unused
 private:
 	int* tempQuads;
 

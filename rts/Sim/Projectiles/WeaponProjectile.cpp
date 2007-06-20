@@ -17,17 +17,21 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
 
+#include "Sim/Weapons/WeaponDefHandler.h"
+
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(targeted),
-	CR_MEMBER(weaponDef),
+//	CR_MEMBER(weaponDef),
+	CR_MEMBER(weaponDefName),
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(modelDispList),
-	CR_MEMBER(colorTeam)
+	CR_MEMBER(colorTeam),
+	CR_POSTLOAD(PostLoad)
 	));
 
 CWeaponProjectile::CWeaponProjectile()
@@ -44,11 +48,13 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced) : 
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
+	weaponDefName(weaponDef?weaponDef->name:std::string("")),
 	target(target),
 	targetPos(targetPos),
 	startpos(pos),
 	targeted(false),
-	interceptTarget(interceptTarget)
+	interceptTarget(interceptTarget),
+	colorTeam(0)
 {
 	if (owner) {
 		colorTeam = owner->team;
@@ -62,23 +68,23 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit
 		interceptTarget->targeted=true;
 		AddDeathDependence(interceptTarget);
 	}
-
-	if(weaponDef->interceptedByShieldType) {
-		interceptHandler.AddShieldInterceptableProjectile(this);
-	}
-
-	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
-		if(model){
-			s3domodel=model;
-			if(s3domodel->rootobject3do)
-				modelDispList= model->rootobject3do->displist;
-			else
-				modelDispList= model->rootobjects3o->displist;
+	if (weaponDef) {
+		if(weaponDef->interceptedByShieldType) {
+			interceptHandler.AddShieldInterceptableProjectile(this);
 		}
-	}
 
-	collisionFlags = weaponDef->collisionFlags;
+		if(!weaponDef->visuals.modelName.empty()){
+			S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
+			if(model){
+				s3domodel=model;
+				if(s3domodel->rootobject3do)
+					modelDispList= model->rootobject3do->displist;
+				else
+					modelDispList= model->rootobjects3o->displist;
+			}
+		}
+		collisionFlags = weaponDef->collisionFlags;
+	}
 }
 
 CWeaponProjectile::~CWeaponProjectile(void)
@@ -241,4 +247,24 @@ void CWeaponProjectile::DrawS3O(void)
 {
 	unitDrawer->SetS3OTeamColour(colorTeam);
 	DrawUnitPart();
+}
+
+void CWeaponProjectile::PostLoad()
+{
+	weaponDef = weaponDefHandler->GetWeapon(weaponDefName);
+
+//	if(weaponDef->interceptedByShieldType)
+//		interceptHandler.AddShieldInterceptableProjectile(this);
+
+	if(!weaponDef->visuals.modelName.empty()){
+		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
+		if(model){
+			s3domodel=model;
+			if(s3domodel->rootobject3do)
+				modelDispList= model->rootobject3do->displist;
+			else
+				modelDispList= model->rootobjects3o->displist;
+		}
+	}
+//	collisionFlags = weaponDef->collisionFlags;
 }

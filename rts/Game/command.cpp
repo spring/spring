@@ -11,6 +11,36 @@
 
 #include "Platform/errorhandler.h"
 
+CR_BIND(Command, );
+
+CR_REG_METADATA(Command, (
+				CR_MEMBER(id),
+				CR_MEMBER(params),
+				CR_MEMBER(options),
+				CR_MEMBER(tag),
+				CR_MEMBER(timeOut)
+				));
+
+CR_BIND(CommandDescription, );
+
+CR_REG_METADATA(CommandDescription, (
+				CR_MEMBER(id),
+				CR_MEMBER(type),
+				CR_MEMBER(action),
+				CR_MEMBER(hotkey),
+				CR_MEMBER(name),
+				CR_MEMBER(iconname),
+				CR_MEMBER(mouseicon),
+				CR_MEMBER(tooltip),
+
+				CR_MEMBER(showUnique),
+				CR_MEMBER(onlyKey),
+				CR_MEMBER(onlyTexture),
+				CR_MEMBER(disabled),
+
+				CR_MEMBER(params)
+				));
+
 using namespace std;
 
 //cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])

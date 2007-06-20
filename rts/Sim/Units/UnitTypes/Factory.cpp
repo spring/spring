@@ -32,6 +32,16 @@
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
 
+CR_REG_METADATA(CFactory, (
+				CR_MEMBER(buildSpeed),
+				CR_MEMBER(quedBuild),
+				CR_MEMBER(nextBuild),
+				CR_MEMBER(curBuild),
+				CR_MEMBER(opening),
+				CR_MEMBER(lastBuild),
+				CR_POSTLOAD(PostLoad)
+				));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -50,6 +60,17 @@ CFactory::~CFactory()
 	if(curBuild){
 		curBuild->KillUnit(false,true,0);
 		curBuild=0;
+	}
+}
+
+void CFactory::PostLoad()
+{
+	if(opening){
+		cob->Call(COBFN_Activate);
+		readmap->OpenBlockingYard(this, yardMap);
+	}
+	if (curBuild) {
+		cob->Call("StartBuilding");
 	}
 }
 

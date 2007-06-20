@@ -186,6 +186,7 @@ public:
 	                          float* args, int argSize, int inArgs, int& outArgs);
 	LuaCallState CallLuaRules(const char* name,
 	                          char* data, int dataSize, int inSize, int& outSize);
+	virtual const float3 *GetStartPos();
 };
 
 #endif /* AICALLBACK_H */

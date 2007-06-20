@@ -29,6 +29,34 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "mmgr.h"
+#include "creg/STL_Map.h"
+
+CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
+
+CR_REG_METADATA(CBuilderCAI , (
+				CR_MEMBER(buildOptions),
+				CR_MEMBER(building),
+//				CR_MEMBER(build),
+
+				CR_MEMBER(cachedRadiusId),
+				CR_MEMBER(cachedRadius),
+
+				CR_MEMBER(buildRetries),
+
+				CR_MEMBER(lastPC1),
+				CR_MEMBER(lastPC2),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CBuilderCAI::CBuilderCAI()
+: CMobileCAI(),
+	building(false),
+	cachedRadius(0),
+	cachedRadiusId(0),
+	buildRetries(0),
+	lastPC1(-1),
+	lastPC2(-1)
+{}
 
 CBuilderCAI::CBuilderCAI(CUnit* owner)
 : CMobileCAI(owner),
@@ -125,6 +153,18 @@ CBuilderCAI::~CBuilderCAI()
 	uh->RemoveBuilderCAI(this);
 }
 
+void CBuilderCAI::PostLoad()
+{
+	if (!commandQue.empty()) {
+		Command& c=commandQue.front();
+		float3 curPos=owner->pos;
+
+		map<int,string>::iterator boi;
+		if((boi=buildOptions.find(c.id))!=buildOptions.end()){
+			build.Parse(c);
+		}
+	}
+}
 
 float CBuilderCAI::GetUnitRadius(const UnitDef* ud, int cmdId)
 {

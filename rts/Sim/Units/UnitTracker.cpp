@@ -83,7 +83,7 @@ void CUnitTracker::SetMode(int m)
 
 void CUnitTracker::Track()
 {
-	set<CUnit*>& units = selectedUnits.selectedUnits;
+	list<CUnit*>& units = selectedUnits.selectedUnits;
 	
 	CleanTrackGroup();
 	
@@ -118,8 +118,8 @@ void CUnitTracker::Track()
 void CUnitTracker::MakeTrackGroup()
 {
 	trackGroup.clear();
-	set<CUnit*>& units = selectedUnits.selectedUnits;
-	set<CUnit*>::const_iterator it;
+	list<CUnit*>& units = selectedUnits.selectedUnits;
+	list<CUnit*>::const_iterator it;
 	for (it = units.begin(); it != units.end(); ++it) {
 		trackGroup.insert((*it)->id);
 	}

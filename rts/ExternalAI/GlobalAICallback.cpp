@@ -9,7 +9,7 @@
 CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
 : ai(ai),
 	cheats(0), 
-	scb(ai->team, ai->gh)
+	scb(ai->team, grouphandlers[ai->team]/*ai->gh*/)
 {
 }
 

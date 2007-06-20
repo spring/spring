@@ -35,7 +35,8 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& 
 
 	SetRadius(pos.distance(endPos));
 
-	midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	if (weaponDef) midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	else midtexx=0;
 	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
 	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
 	corecolstart[2]=(unsigned char)(color2.z*startAlpha);

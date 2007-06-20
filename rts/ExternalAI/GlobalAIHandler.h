@@ -15,10 +15,13 @@ class CGlobalAIHandler :
 	public CObject
 {
 public:
+	CR_DECLARE(CGlobalAIHandler);
+//	CR_DECLARE_SUB(AIMemBuffer);
 	static bool CatchException();
 
 	CGlobalAIHandler(void);
 	~CGlobalAIHandler(void);
+	void PostLoad();
 
 	void Update(void);
 	void PreDestroy ();
@@ -39,10 +42,13 @@ public:
 	void UnitGiven(CUnit* unit, int oldteam);
 	void WeaponFired(CUnit* unit,WeaponDef* def);
 	void PlayerCommandGiven(std::vector<int>& selectedunits,Command& c,int player);
+	void Load(std::istream *s);
+	void Save(std::ostream *s);
 	CGlobalAI* ais[MAX_TEAMS];
 	bool hasAI;
 
 	struct AIMemBuffer{
+//		CR_DECLARE_STRUCT(AIMemBuffer);
 		char* mem;
 		int usage;
 	};

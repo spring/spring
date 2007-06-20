@@ -12,7 +12,84 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Map.h"
+#include "creg/STL_Set.h"
 #include "mmgr.h"
+
+CR_BIND(CTeam,);
+
+CR_REG_METADATA(CTeam, (
+				CR_MEMBER(teamNum),
+				CR_MEMBER(active),
+				CR_MEMBER(isDead),
+				CR_MEMBER(gaia),
+				CR_MEMBER(color),
+				CR_MEMBER(leader),
+				CR_MEMBER(lineageRoot),
+				CR_MEMBER(handicap),
+				CR_MEMBER(side),
+				CR_MEMBER(units),
+				CR_MEMBER(startPos),
+				CR_MEMBER(metal),
+				CR_MEMBER(energy),
+				CR_MEMBER(metalPull),
+				CR_MEMBER(prevMetalPull),
+				CR_MEMBER(metalIncome),
+				CR_MEMBER(prevMetalIncome),
+				CR_MEMBER(metalExpense),
+				CR_MEMBER(prevMetalExpense),
+				CR_MEMBER(metalUpkeep),
+				CR_MEMBER(prevMetalUpkeep),
+				CR_MEMBER(energyPull),
+				CR_MEMBER(prevEnergyPull),
+				CR_MEMBER(energyIncome),
+				CR_MEMBER(prevEnergyIncome),
+				CR_MEMBER(energyExpense),
+				CR_MEMBER(prevEnergyExpense),
+				CR_MEMBER(energyUpkeep),
+				CR_MEMBER(prevEnergyUpkeep),
+				CR_MEMBER(metalStorage),
+				CR_MEMBER(energyStorage),
+				CR_MEMBER(metalShare),
+				CR_MEMBER(energyShare),
+				CR_MEMBER(delayedMetalShare),
+				CR_MEMBER(delayedEnergyShare),
+				CR_MEMBER(metalSent),
+				CR_MEMBER(metalReceived),
+				CR_MEMBER(energySent),
+				CR_MEMBER(energyReceived),
+				CR_MEMBER(currentStats),
+				CR_MEMBER(lastStatSave),
+				CR_MEMBER(numCommanders),
+				CR_MEMBER(statHistory),
+				CR_MEMBER(modParams),
+				CR_MEMBER(modParamsMap)
+				));
+
+CR_BIND(CTeam::Statistics,);
+
+CR_REG_METADATA_SUB(CTeam, Statistics, (
+					CR_MEMBER(metalUsed),
+					CR_MEMBER(energyUsed),
+					CR_MEMBER(metalProduced),
+					CR_MEMBER(energyProduced),
+					CR_MEMBER(metalExcess),
+					CR_MEMBER(energyExcess),
+					CR_MEMBER(metalReceived),
+					CR_MEMBER(energyReceived),
+					CR_MEMBER(metalSent),
+					CR_MEMBER(energySent),
+					CR_MEMBER(damageDealt),
+					CR_MEMBER(damageReceived),
+					CR_MEMBER(unitsProduced),
+					CR_MEMBER(unitsDied),
+					CR_MEMBER(unitsReceived),
+					CR_MEMBER(unitsSent),
+					CR_MEMBER(unitsCaptured),
+					CR_MEMBER(unitsOutCaptured),
+					CR_MEMBER(unitsKilled)
+					));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -230,7 +307,7 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit,AddType type)
 {
-	units.insert(unit);
+	units.insert(units.end(),unit);
 	switch(type){
 	case AddBuilt:
 		currentStats.unitsProduced++;
@@ -248,7 +325,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 
 void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 {
-	units.erase(unit);
+	ListErase(CUnit*,units,unit);
 	switch(type){
 	case RemoveDied:
 		currentStats.unitsDied++;

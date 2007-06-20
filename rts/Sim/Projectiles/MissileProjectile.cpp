@@ -61,7 +61,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	wobbleTime(1),
 	wobbleDir(0,0,0),
 	wobbleDif(0,0,0),
-	isWobbling(weaponDef->wobble>0),
+	isWobbling(weaponDef?weaponDef->wobble>0:false),
 	extraHeightTime(0)
 {
 	curSpeed=speed.Length();
@@ -71,7 +71,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 		AddDeathDependence(target);
 
 	SetRadius(0.0f);
-	if(!weaponDef->visuals.modelName.empty()){
+	if((weaponDef)&&(!weaponDef->visuals.modelName.empty())){
 		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
 		if(model){
 			SetRadius(model->radius);
@@ -92,7 +92,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUn
 	if(target)
 		target->IncomingMissile(this);
 
-	if(weaponDef->trajectoryHeight>0){
+	if((weaponDef)&&(weaponDef->trajectoryHeight>0)){
 		float dist=pos.distance(targPos);
 		extraHeight=dist*weaponDef->trajectoryHeight;
 		if(dist<maxSpeed)

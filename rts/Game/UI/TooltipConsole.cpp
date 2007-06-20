@@ -205,7 +205,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		if (!decoyDef) {
 			s = unit->tooltip;
 		} else {
-			s = decoyDef->humanName + " " + decoyDef->tooltip;
+			s = decoyDef->humanName + " - " + decoyDef->tooltip;
 		}
 	}
 

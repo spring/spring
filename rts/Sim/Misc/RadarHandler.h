@@ -23,7 +23,7 @@ public:
 		if (pos.y < -0.5f) {
 			return (sonarMaps[allyteam][square] && !commonSonarJammerMap[square]);
 		}
-		else if (pos.y > +0.5f) {
+		else if (!circularRadar && pos.y > +0.5f) {
 			return (airRadarMaps[allyteam][square] && !commonJammerMap[square]);
 		}
 		else {
@@ -38,7 +38,7 @@ public:
 		if(unit->isUnderWater){
 			return (!!sonarMaps[allyteam][square]) && !commonSonarJammerMap[square];
 		}
-		if(unit->useAirLos){
+		if(!circularRadar && unit->useAirLos){
 			return airRadarMaps[allyteam][square] && !commonJammerMap[square];
 		} else {
 			return (radarMaps[allyteam][square] || (unit->pos.y<=1 && sonarMaps[allyteam][square])) && !commonJammerMap[square];
@@ -52,13 +52,13 @@ public:
 
 	bool circularRadar;
 
-	unsigned short* radarMaps[MAX_TEAMS];
-	unsigned short* airRadarMaps[MAX_TEAMS];
-	unsigned short* sonarMaps[MAX_TEAMS];
-	unsigned short* jammerMaps[MAX_TEAMS];
-	unsigned short* seismicMaps[MAX_TEAMS];
-	unsigned short* commonJammerMap;
-	unsigned short* commonSonarJammerMap;
+	std::vector<unsigned short> radarMaps[MAX_TEAMS];
+	std::vector<unsigned short> airRadarMaps[MAX_TEAMS];
+	std::vector<unsigned short> sonarMaps[MAX_TEAMS];
+	std::vector<unsigned short> jammerMaps[MAX_TEAMS];
+	std::vector<unsigned short> seismicMaps[MAX_TEAMS];
+	std::vector<unsigned short> commonJammerMap;
+	std::vector<unsigned short> commonSonarJammerMap;
 	float radarErrorSize[MAX_TEAMS];
 	float baseRadarErrorSize;
 
@@ -68,7 +68,7 @@ public:
 	float targFacEffect;
 
 protected:
-	void AddMapArea(int2 pos, int radius, unsigned short* map, int amount);
+	void AddMapArea(int2 pos, int radius, std::vector<unsigned short>& map, int amount);
 
 	void SafeLosRadarAdd(CUnit* unit);
 

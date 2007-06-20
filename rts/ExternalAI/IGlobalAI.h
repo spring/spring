@@ -8,7 +8,7 @@
 class IGlobalAICallback;
 struct WeaponDef;
 
-#define GLOBAL_AI_INTERFACE_VERSION (18 + AI_INTERFACE_GENERATED_VERSION)
+#define GLOBAL_AI_INTERFACE_VERSION (19 + AI_INTERFACE_GENERATED_VERSION)
 
 #define AI_EVENT_UNITGIVEN 1    // Both use ChangeTeamEvent for data
 #define AI_EVENT_UNITCAPTURED 2
@@ -62,6 +62,9 @@ public:
 
 	//called every frame
 	virtual void Update()=0;
+
+	virtual void Load(IGlobalAICallback* callback,std::istream *s){};	//load ai from file
+	virtual void Save(std::ostream *s){};							//save ai to file
 
 	DECLARE_PURE_VIRTUAL(~IGlobalAI())
 };

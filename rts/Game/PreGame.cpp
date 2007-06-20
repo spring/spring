@@ -295,6 +295,8 @@ bool CPreGame::Update()
 			mapName = CScriptHandler::Instance().chosenScript->GetMapName();
 			if (mapName == "")
 				ShowMapList();
+			else
+				SelectMap(mapName);
 			state = WAIT_ON_MAP;
 			// fall through
 
@@ -305,6 +307,8 @@ bool CPreGame::Update()
 			modName = CScriptHandler::Instance().chosenScript->GetModName();
 			if (modName == "")
 				ShowModList();
+			else
+				SelectMod(modName);
 			state = WAIT_ON_MOD;
 			// fall through
 

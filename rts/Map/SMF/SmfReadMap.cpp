@@ -20,6 +20,9 @@ using namespace std;
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 
+//CR_REG_METADATA(CSmfReadMap, (
+//				))
+
 CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer ()
 {
 	return groundDrawer;

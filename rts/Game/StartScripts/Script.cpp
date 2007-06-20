@@ -37,6 +37,11 @@ void CScript::GotChatMsg(const std::string& msg, int player)
 {
 }
 
+void CScript::ScriptSelected()
+{
+}
+
+
 std::string CScript::GetMapName()
 {
 	return "";

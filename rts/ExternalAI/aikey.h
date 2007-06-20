@@ -13,8 +13,14 @@
 
 struct AIKey
 {
+	CR_DECLARE_STRUCT(AIKey);
 	std::string dllName;
 	unsigned aiNumber;
+
+	AIKey(){}
+	AIKey(std::string DllName,unsigned AiNumber)
+	: dllName(DllName), aiNumber(AiNumber)
+	{}
 
 	bool operator<(const AIKey&that) const
 	{

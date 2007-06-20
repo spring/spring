@@ -5,6 +5,11 @@
 #include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
+CR_BIND(CMetalMap,(0,0,0,0.0));
+
+CR_REG_METADATA(CMetalMap,(
+				CR_MEMBER(extractionMap)
+				));
 
 /*
 Constructor
@@ -18,11 +23,12 @@ CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
 	this->metalscale = metalscale;
 	
 	//Creating an empty map over extraction.
-	extractionMap = SAFE_NEW float[sizex * sizez];
-	int i;
-	for(i = 0; i < (sizex * sizez); i++) {
-		extractionMap[i] = 0.0f;
-	}
+//	extractionMap = SAFE_NEW float[sizex * sizez];
+	extractionMap.resize(sizex * sizez,0.0);
+//	int i;
+//	for(i = 0; i < (sizex * sizez); i++) {
+//		extractionMap[i] = 0.0f;
+//	}
 	
 	int whichPalette = configHandler.GetInt("MetalMapPalette", 0);
 
@@ -54,7 +60,7 @@ Free the memory used by maps.
 CMetalMap::~CMetalMap(void)
 {
 	delete[] metalMap;
-	delete[] extractionMap;
+//	delete[] extractionMap;
 }
 
 

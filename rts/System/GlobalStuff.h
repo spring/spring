@@ -146,6 +146,7 @@ class CPlayer;
 class CGlobalSyncedStuff
 {
 public:
+	CR_DECLARE(CGlobalSyncedStuff);
 	CGlobalSyncedStuff(); 		//!< Constructor
 	virtual ~CGlobalSyncedStuff(); 	//!< Destructor
 
@@ -453,6 +454,7 @@ protected:
 class CGlobalUnsyncedStuff
 {
 public:
+	CR_DECLARE(CGlobalUnsyncedStuff);
 	CGlobalUnsyncedStuff(); 		//!< Constructor
 	virtual ~CGlobalUnsyncedStuff(); 	//!< Destructor
 

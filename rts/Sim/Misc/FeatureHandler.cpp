@@ -24,6 +24,9 @@
 #include "System/TimeProfiler.h"
 #include <GL/glu.h> // after myGL.h
 #include "mmgr.h"
+#include "creg/STL_Deque.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Set.h"
 
 CR_BIND(FeatureDef, );
 
@@ -48,11 +51,43 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(geoThermal),
 		CR_MEMBER(deathFeature),
 		CR_MEMBER(xsize),
-		CR_MEMBER(ysize)));
-
+		CR_MEMBER(ysize)
+		));
 
 using namespace std;
 CFeatureHandler* featureHandler=0;
+
+CR_BIND_DERIVED(CFeatureHandler,CObject, );
+
+CR_REG_METADATA(CFeatureHandler, (
+//	CR_MEMBER(wreckParser),
+//	CR_MEMBER(featureDefs),
+//	CR_MEMBER(featureDefsVector),
+
+//	CR_MEMBER(features),
+//	CR_MEMBER(freeIDs),
+//	CR_MEMBER(activeFeatures),
+
+	CR_MEMBER(toBeRemoved),
+	CR_MEMBER(updateFeatures),
+
+//	CR_MEMBER(drawQuads),
+	
+//	CR_MEMBER(drawQuadsX),
+//	CR_MEMBER(drawQuadsY),
+//	CR_MEMBER(numQuads),
+
+//	CR_MEMBER(overrideId),
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+		));
+
+CR_BIND(CFeatureHandler::DrawQuad, );
+
+CR_REG_METADATA_SUB(CFeatureHandler,DrawQuad,(
+	CR_MEMBER(features)
+	));
+
 
 CFeatureHandler::CFeatureHandler()
 :	overrideId(-1)
@@ -67,7 +102,7 @@ CFeatureHandler::CFeatureHandler()
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
 	numQuads=drawQuadsX*drawQuadsY;
-	drawQuads=SAFE_NEW DrawQuad[numQuads];
+	drawQuads.resize(numQuads);
 
 	LoadWreckFeatures();
 
@@ -92,9 +127,51 @@ CFeatureHandler::~CFeatureHandler()
 		featureDefs.erase(fi);
 	}
 	delete treeDrawer;
-	delete[] drawQuads;
+//	delete[] drawQuads;
 }
 
+void CFeatureHandler::Serialize(creg::ISerializer *s)
+{
+	if (s->IsWriting()) {
+		for(int a=0;a<MAX_FEATURES;++a){
+			int skip;
+			for (skip=0;a<MAX_FEATURES && !features[a];a++,skip++);
+			bool hasskip = (bool) skip;
+			s->Serialize(&hasskip,sizeof(hasskip));
+			if (hasskip)
+				s->Serialize(&skip,sizeof(skip));
+			if (a>=MAX_FEATURES) break;
+			s->SerializeObjectPtr((void**)&(features[a]),features[a]->GetClass());
+		}
+	} else {
+		for(int a=0;a<MAX_FEATURES;++a){
+			bool hasskip = false;
+			int skip = 0;
+			s->Serialize(&hasskip,sizeof(hasskip));
+			if (hasskip)
+				s->Serialize(&skip,sizeof(skip));
+			a+=skip;
+			if (a>=MAX_FEATURES) break;
+			s->SerializeObjectPtr((void**)&(features[a]),0/*FIXME*/);
+		}
+	}
+}
+
+void CFeatureHandler::PostLoad()
+{
+	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
+	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
+	numQuads=drawQuadsX*drawQuadsY;
+	drawQuads.clear();
+	drawQuads.resize(numQuads);
+	freeIDs.clear();
+	activeFeatures.clear();
+	for(int a=0;a<MAX_FEATURES;++a) if (features[a]){
+		activeFeatures.insert(activeFeatures.end(),features[a]);
+		if (features[a]->drawQuad >= 0)
+			drawQuads[features[a]->drawQuad].features.insert(drawQuads[features[a]->drawQuad].features.end(),features[a]);
+	} else freeIDs.push_back(a);
+}
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 {
@@ -181,7 +258,6 @@ void CFeatureHandler::DrawShadowPass()
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
-
 void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
@@ -192,11 +268,11 @@ START_TIME_PROFILE
 		if (feature) {
 			freeIDs.push_back(feature->id);
 			features[feature->id] = 0;
-			activeFeatures.erase(feature);
+			ListErase(CFeature*,activeFeatures,feature);
 
 			if (feature->drawQuad >= 0) {
 				DrawQuad* dq = &drawQuads[feature->drawQuad];
-				dq->features.erase(feature);
+				ListErase(CFeature*,dq->features,feature);
 			}
 
 			if (feature->inUpdateQue) {
@@ -250,13 +326,13 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[ret]=feature;
 	feature->id=ret;
 	SetFeatureUpdateable(feature);
-	activeFeatures.insert(feature);
+	activeFeatures.insert(activeFeatures.end(),feature);
 
 	if(feature->def->drawType==DRAWTYPE_3DO){
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
 		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		DrawQuad* dq=&drawQuads[quad];
-		dq->features.insert(feature);
+		dq->features.insert(dq->features.begin(),feature);
 		feature->drawQuad=quad;
 	}
 
@@ -284,9 +360,9 @@ void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
 			int(newPos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		if (oldDrawQuad != newDrawQuad) {
 			DrawQuad* oldDQ = &drawQuads[oldDrawQuad];
-			oldDQ->features.erase(feature);
+			ListErase(CFeature*,oldDQ->features,feature);
 			DrawQuad* newDQ = &drawQuads[newDrawQuad];
-			newDQ->features.insert(feature);
+			newDQ->features.insert(newDQ->features.begin(),feature);
 			feature->drawQuad = newDrawQuad;
 		}
 	}
@@ -453,7 +529,8 @@ struct CFeatureDrawer : CReadMap::IQuadDrawer
 	void DrawQuad (int x,int y);
 
 	CFeatureHandler *fh;
-	CFeatureHandler::DrawQuad *drawQuads;
+//	CFeatureHandler::DrawQuad *drawQuads;
+	std::vector<CFeatureHandler::DrawQuad> *drawQuads;
 	int drawQuadsX;
 	bool drawReflection, drawRefraction;
 	float unitDrawDist;
@@ -463,9 +540,9 @@ struct CFeatureDrawer : CReadMap::IQuadDrawer
 
 void CFeatureDrawer::DrawQuad (int x,int y)
 {
-	CFeatureHandler::DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
+	CFeatureHandler::DrawQuad* dq=&(*drawQuads)[y*drawQuadsX+x];
 
-	for(set<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
+	for(list<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
 		CFeature* f=(*fi);
 		FeatureDef* def=f->def;
 
@@ -512,7 +589,7 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 		featureDist=6000;		//farfeatures wont be drawn for shadowpass anyway
 
 	CFeatureDrawer drawer;
-	drawer.drawQuads = drawQuads;
+	drawer.drawQuads = &drawQuads;
 	drawer.fh = this;
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection=water->drawReflection;
@@ -577,8 +654,8 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		fd->radius=0;
 		fd->collisionSphereScale=atof(wreckParser.SGetValueDef("1",name+"\\collisionspherescale").c_str());
 		float3 cso = ZeroVector;
-		const char* strCSOffset = wreckParser.SGetValueDef("default",name+"\\CollisionSphereOffset").c_str();
-		if (sscanf(strCSOffset, "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) {
+		std::string strCSOffset = wreckParser.SGetValueDef("0.0 0.0 0.0",name+"\\CollisionSphereOffset").c_str();
+		if (sscanf(strCSOffset.c_str(), "%f %f %f", &cso.x, &cso.y, &cso.z) == 3) {
 			fd->useCSOffset = true;
 			fd->collisionSphereOffset = cso;
 		}

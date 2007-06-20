@@ -9,11 +9,27 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Game/SelectedUnits.h"
 #include "LogOutput.h"
+#include "creg/STL_List.h"
 #include "mmgr.h"
 
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
+CR_REG_METADATA(CTransportUnit, (
+				CR_MEMBER(transported),
+				CR_MEMBER(transportCapacityUsed),
+				CR_MEMBER(transportMassUsed),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(CTransportUnit::TransportedUnit,);
+
+CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
+					CR_MEMBER(unit),
+					CR_MEMBER(piece),
+					CR_MEMBER(size),
+					CR_MEMBER(mass)
+					));
 
 CTransportUnit::CTransportUnit()
 :	transportCapacityUsed(0),
@@ -26,6 +42,9 @@ CTransportUnit::~CTransportUnit()
 {
 }
 
+void CTransportUnit::PostLoad()
+{
+}
 
 void CTransportUnit::Update()
 {

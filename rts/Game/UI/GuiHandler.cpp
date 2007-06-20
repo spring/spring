@@ -45,6 +45,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
+#include <list>
 
 extern Uint8 *keys;
 
@@ -910,7 +911,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 		if (autoShowMetal) {
 			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
 				CMetalMap* mm = readmap->metalMap;
-				gd->SetMetalTexture(mm->metalMap, mm->extractionMap, mm->metalPal, false);
+				gd->SetMetalTexture(mm->metalMap, &mm->extractionMap.front(), mm->metalPal, false);
 				showingMetal = true;
 			}
 		}
@@ -2427,7 +2428,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 static bool WouldCancelAnyQueued(const BuildInfo& b) {
 	Command c;
 	b.FillCmd(c);
-	std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+	std::list<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
 			return true;
@@ -3616,7 +3617,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 
 		// draw build distance for all immobile builders during build commands
-		set<CBuilderCAI*>::const_iterator bi;
+		std::list<CBuilderCAI*>::const_iterator bi;
 		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
 			const CUnit* unit = (*bi)->owner;
 			if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
@@ -3699,7 +3700,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
-						std::set<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+						std::list<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
 						for (; ui != selectedUnits.selectedUnits.end(); ui++) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
@@ -3729,7 +3730,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
-		for(std::set<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
+		for(std::list<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
 			CUnit* unit = *si;
 			if (unit == pointedAt) {
 				continue;
@@ -3817,7 +3818,7 @@ void CGuiHandler::DrawMiniMapMarker()
 
 void CGuiHandler::DrawCentroidCursor()
 {
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	const std::list<CUnit*>& selUnits = selectedUnits.selectedUnits;
 	if (selUnits.size() < 2) {
 		return;
 	}
@@ -3851,7 +3852,7 @@ void CGuiHandler::DrawCentroidCursor()
 	}
 
 	float3 pos(0.0f, 0.0f, 0.0f);
-	set<CUnit*>::const_iterator it;
+	std::list<CUnit*>::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		pos += (*it)->midPos;
 	}

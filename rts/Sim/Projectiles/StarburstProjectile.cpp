@@ -64,7 +64,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	areaOfEffect(areaOfEffect)
 {
 	this->uptime=uptime;
-	ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
+	ttl=(int)min(3000.f,uptime+(weaponDef?weaponDef->range:0)/maxSpeed+100);
 
 	maxGoodDif=cos(tracking*0.6f);
 	curSpeed=speed.Length();

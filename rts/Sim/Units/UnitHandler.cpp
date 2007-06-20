@@ -31,6 +31,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Deque.h"
+#include "creg/STL_Set.h"
 #include "mmgr.h"
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
@@ -92,6 +93,9 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(metalMakerEfficiency),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
+	CR_MEMBER(toBeRemoved),
+	CR_MEMBER(builderCAIs),
+	CR_MEMBER(unitsType),
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 	));
@@ -148,8 +152,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 		for(int i=0; i<MAX_TEAMS; i++)
 		{
-			unitsType[i] = SAFE_NEW unsigned int[unitDefHandler->numUnits+1]; //unit ids start at 1
-			memset(unitsType[i], 0, (unitDefHandler->numUnits+1) *  sizeof(int));
+			unitsType[i].resize(unitDefHandler->numUnits+1,0);
 		}
 	}
 }
@@ -163,10 +166,6 @@ CUnitHandler::~CUnitHandler()
 
 	delete airBaseHandler;
 
-	for(int i=0; i<MAX_TEAMS; i++)
-	{
-		delete[] unitsType[i];
-	}
 }
 
 int CUnitHandler::AddUnit(CUnit *unit)
@@ -180,8 +179,8 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	activeUnits.insert(ui,unit);		//randomize this to make the order in slowupdate random (good if one build say many buildings at once and then many mobile ones etc)
 
 	int id;
-	id=freeIDs.back();
-	freeIDs.pop_back();
+	id=freeIDs.front();
+	freeIDs.pop_front();
 
 	units[id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
@@ -213,7 +212,7 @@ START_TIME_PROFILE;
 				}
 				activeUnits.erase(usi);
 				units[delUnit->id]=0;
-				freeIDs.push_front(delUnit->id);
+				freeIDs.push_back(delUnit->id);
 				gs->Team(delUnit->team)->RemoveUnit(delUnit,CTeam::RemoveDied);
 				delTeam = delUnit->team;
 				delType = delUnit->unitDef->id;
@@ -522,12 +521,12 @@ void CUnitHandler::PushNewWind(float x, float z, float strength)
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
-	builderCAIs.insert(b);
+	builderCAIs.insert(builderCAIs.end(),b);
 }
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
-	builderCAIs.erase(b);
+	ListErase(CBuilderCAI*,builderCAIs,b);
 }
 
 void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)

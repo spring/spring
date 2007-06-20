@@ -10,7 +10,9 @@ class CAirCAI :
 	public CMobileCAI
 {
 public:
+	CR_DECLARE(CAirCAI);
 	CAirCAI(CUnit* owner);
+	CAirCAI();
 	~CAirCAI(void);
 
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);

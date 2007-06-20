@@ -20,12 +20,6 @@ AICALLBACK_API const char * UnitDef_get_filename( const UnitDef *self )
 }
 
 
-AICALLBACK_API bool UnitDef_get_valid( const UnitDef *self )
-{
-   return ( ( UnitDef *) self)->valid;
-}
-
-
 AICALLBACK_API int UnitDef_get_id( const UnitDef *self )
 {
    return ( ( UnitDef *) self)->id;

@@ -38,8 +38,9 @@ public:
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
+	void PostLoad();
 
-	CUnit* lastBuilder;
+//	CUnit* lastBuilder;
 	S3DOModel* model;      //used by 3do obects
 
 	std::string createdFromUnit;
@@ -60,6 +61,7 @@ public:
 	int lastReclaim;
 
 	FeatureDef* def;
+	std::string defName;
 
 	CMatrix44f transMatrix;
 //	float3 residualImpulse;	//impulse energy that havent been acted on

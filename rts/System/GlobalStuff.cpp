@@ -30,6 +30,52 @@ CGlobalSyncedStuff* gs;
  */
 CGlobalUnsyncedStuff* gu;
 
+CR_BIND(CGlobalSyncedStuff,);
+
+CR_REG_METADATA(CGlobalSyncedStuff, (
+				CR_MEMBER(randSeed),
+				CR_MEMBER(frameNum),
+				CR_MEMBER(speedFactor),
+				CR_MEMBER(userSpeedFactor),
+				CR_MEMBER(paused),
+				CR_MEMBER(tempNum),
+				CR_MEMBER(cheatEnabled),
+				CR_MEMBER(noHelperAIs),
+				CR_MEMBER(editDefsEnabled),
+				CR_MEMBER(useLuaRules),
+				CR_MEMBER(useLuaGaia),
+				CR_MEMBER(gaiaTeamID),
+				CR_MEMBER(gaiaAllyTeamID),
+				CR_MEMBER(gameMode),
+				CR_MEMBER(players),
+				CR_MEMBER(activeTeams),
+				CR_MEMBER(activeAllyTeams),
+				CR_MEMBER(activePlayers),
+				CR_MEMBER(allies),
+				CR_MEMBER(team2allyteam),
+				CR_MEMBER(teams)
+				));
+
+CR_BIND(CGlobalUnsyncedStuff,);
+
+CR_REG_METADATA(CGlobalUnsyncedStuff, (
+				CR_MEMBER(usRandSeed),
+				CR_MEMBER(modGameTime),
+				CR_MEMBER(gameTime),
+				CR_MEMBER(lastFrameTime),
+				CR_MEMBER(myPlayerNum),
+				CR_MEMBER(myTeam),
+				CR_MEMBER(myAllyTeam),
+				CR_MEMBER(spectating),
+				CR_MEMBER(spectatingFullView),
+				CR_MEMBER(spectatingFullSelect),
+				CR_MEMBER(viewRange),
+				CR_MEMBER(timeOffset),
+				CR_MEMBER(drawFog),
+				CR_MEMBER(autoQuit),
+				CR_MEMBER(quitTime)
+				));
+
 /**
  * Initializes variables in CGlobalSyncedStuff
  */

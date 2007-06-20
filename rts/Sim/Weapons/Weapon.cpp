@@ -65,7 +65,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incoming),
-	CR_MEMBER(weaponDef),
+//	CR_MEMBER(weaponDef),
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -84,7 +84,9 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(avoidFriendly),
 	CR_MEMBER(avoidFeature),
 	CR_MEMBER(collisionFlags),
-	CR_MEMBER(fuelUsage)));
+	CR_MEMBER(fuelUsage),
+	CR_MEMBER(weaponNum)
+	));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

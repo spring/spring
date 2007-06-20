@@ -19,12 +19,22 @@
 #include "SDL_keysym.h"
 #include "mmgr.h"
 
+//CGroupHandler* grouphandler;
+CGroupHandler* grouphandlers[MAX_TEAMS];
+extern Uint8 *keys;
+
+CR_BIND(CGroupHandler, (0))
+
+CR_REG_METADATA(CGroupHandler, (
+				CR_MEMBER(groups),
+				CR_MEMBER(team),
+				CR_MEMBER(freeGroups),
+				CR_MEMBER(firstUnusedGroup)
+				));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-CGroupHandler* grouphandler;
-extern Uint8 *keys;
 
 CGroupHandler::CGroupHandler(int team)
 : firstUnusedGroup(10),
@@ -44,6 +54,26 @@ CGroupHandler::~CGroupHandler()
 {
 	for(int a=0;a<firstUnusedGroup;++a)
 		delete groups[a];
+}
+
+void CGroupHandler::PostLoad()
+{
+}
+
+void CGroupHandler::Load(std::istream *s)
+{
+	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
+		if((*ai)&&((*ai)->ai)) {
+			(*ai)->ai->Load((IGroupAICallback*)(*ai)->callback,s);
+		}
+}
+
+void CGroupHandler::Save(std::ostream *s)
+{
+	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
+		if((*ai)&&((*ai)->ai)) {
+			(*ai)->ai->Save(s);
+		}
 }
 
 void CGroupHandler::Update()
@@ -126,15 +156,15 @@ void CGroupHandler::GroupCommand(int num)
 		if (!keys[SDLK_LSHIFT]) {
 			groups[num]->ClearUnits();
 		}
-		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		set<CUnit*>::const_iterator ui;
+		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		list<CUnit*>::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
 	}
 	else if (keys[SDLK_LSHIFT])  {
 		// do not select the group, just add its members to the current selection
-		std::set<CUnit*>::const_iterator gi;
+		std::list<CUnit*>::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.AddUnit(*gi);
 		}
@@ -142,10 +172,14 @@ void CGroupHandler::GroupCommand(int num)
 	}
 	else if (keys[SDLK_LALT] || keys[SDLK_LMETA])  {
 		// do not select the group, just toggle its members with the current selection
-		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		std::set<CUnit*>::const_iterator gi;
+		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		std::list<CUnit*>::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			if (selUnits.find(*gi) == selUnits.end()) {
+			std::list<CUnit*>::const_iterator i;
+			for (i = selUnits.begin(); i != selUnits.end(); i++) {
+				if (*i==*gi) break;
+			}
+			if (i == selUnits.end()) {
 				selectedUnits.AddUnit(*gi);
 			} else {
 				selectedUnits.RemoveUnit(*gi);
@@ -156,7 +190,7 @@ void CGroupHandler::GroupCommand(int num)
 	
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
-		for(std::set<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+		for(std::list<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
@@ -172,15 +206,15 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 		if (cmd == "set") {
 			groups[num]->ClearUnits();
 		}
-		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		set<CUnit*>::const_iterator ui;
+		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		list<CUnit*>::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
 	}
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
-		std::set<CUnit*>::const_iterator gi;
+		std::list<CUnit*>::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.AddUnit(*gi);
 		}
@@ -188,7 +222,7 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
-		std::set<CUnit*>::const_iterator gi;
+		std::list<CUnit*>::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.RemoveUnit(*gi);
 		}
@@ -196,10 +230,14 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
-		const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		std::set<CUnit*>::const_iterator gi;
+		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		std::list<CUnit*>::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			if (selUnits.find(*gi) == selUnits.end()) {
+			std::list<CUnit*>::const_iterator i;
+			for (i = selUnits.begin(); i != selUnits.end(); i++) {
+				if (*i==*gi) break;
+			}
+			if (i == selUnits.end()) {
 				selectedUnits.AddUnit(*gi);
 			} else {
 				selectedUnits.RemoveUnit(*gi);
@@ -210,7 +248,7 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 	
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
-		for(std::set<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+		for(std::list<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
@@ -261,7 +299,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	delete group;
 }
 
-map<AIKey,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
+map<AIKey,string> CGroupHandler::GetSuitedAis(list<CUnit*> units)
 {
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	ISUNITSUITED IsUnitSuited;
@@ -277,7 +315,7 @@ map<AIKey,string> CGroupHandler::GetSuitedAis(set<CUnit*> units)
 		lib = SharedLib::Instantiate(aiKey.dllName);
 		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 		bool suited = false;
-		set<CUnit*>::iterator ui;
+		list<CUnit*>::iterator ui;
 		for(ui=units.begin();ui!=units.end();++ui)
 		{
 			const UnitDef* ud = (*ui)->unitDef;

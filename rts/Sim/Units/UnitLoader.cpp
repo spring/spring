@@ -74,8 +74,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 START_TIME_PROFILE;
 
 	UnitDef* ud= unitDefHandler->GetUnitByName(name);
-	if(!ud)
+	if(!ud) {
+		END_TIME_PROFILE("Unit loader");
 		throw content_error("Couldn't find unittype " +  name);
+	}
 
 	string type = ud->type;
 
@@ -133,7 +135,7 @@ START_TIME_PROFILE;
 	unit->energyCost=ud->energyCost;
 	unit->buildTime=ud->buildTime;
 	unit->aihint=ud->aihint;
-	unit->tooltip=ud->humanName + " " + ud->tooltip;
+	unit->tooltip=ud->humanName + " - " + ud->tooltip;
 	unit->armoredMultiple=max(0.0001f,ud->armoredMultiple);		//armored multiple of 0 will crash spring
 	unit->wreckName=ud->wreckName;
 	unit->realLosRadius=(int) (ud->losRadius);

@@ -163,8 +163,13 @@ void CPlasmaRepulser::Update(void)
 						}
 
 						if (weaponDef->visibleShieldRepulse) {
-							if (hasGfx.find(*pi) == hasGfx.end()) {
-								hasGfx.insert(*pi);
+							std::list<CWeaponProjectile*>::iterator i;
+							for (i=hasGfx.begin();i!=hasGfx.end();i++)
+								if (*i==*pi) {
+									break;
+								}
+							if (i == hasGfx.end()) {
+								hasGfx.insert(hasGfx.end(),*pi);
 								const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
 								const float3 color = (weaponDef->shieldGoodColor * colorMix) +
 								                     (weaponDef->shieldBadColor * (1.0f - colorMix));
@@ -301,7 +306,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
 	incoming.remove((CWeaponProjectile*)o);
-	hasGfx.erase((CWeaponProjectile*)o);
+	ListErase(CWeaponProjectile*,hasGfx,(CWeaponProjectile*)o);
 	CWeapon::DependentDied(o);
 }
 

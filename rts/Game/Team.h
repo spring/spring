@@ -21,6 +21,8 @@ using namespace std;
 class CTeam
 {
 public:
+	CR_DECLARE(CTeam);
+	CR_DECLARE_SUB(Statistics);
 	CTeam();
 	virtual ~CTeam();
 	void SlowUpdate();
@@ -58,7 +60,7 @@ public:
 	float handicap;
 	std::string side;
 
-	set<CUnit*> units;
+	list<CUnit*> units;
 	float3 startPos;
 
 	SyncedFloat metal;
@@ -86,6 +88,7 @@ public:
 
 
 	struct Statistics {
+		CR_DECLARE_STRUCT(Statistics);
 		float metalUsed,     energyUsed;
 		float metalProduced, energyProduced;
 		float metalExcess,   energyExcess;

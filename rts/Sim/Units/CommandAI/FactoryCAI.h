@@ -11,14 +11,19 @@ class CFactoryCAI :
 	public CCommandAI
 {
 public:
+	CR_DECLARE(CFactoryCAI);
+	CR_DECLARE_SUB(BuildOption);
 	struct BuildOption {
+		CR_DECLARE_STRUCT(BuildOption)
 		string name;
 		string fullName;
 		int numQued;
 	};
 
 	CFactoryCAI(CUnit* owner);
+	CFactoryCAI();
 	~CFactoryCAI(void);
+	void PostLoad();
 
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();

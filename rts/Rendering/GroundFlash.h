@@ -56,6 +56,7 @@ public:
 class CSeismicGroundFlash : public CGroundFlash
 {
 public:
+	CR_DECLARE(CSeismicGroundFlash);
 	~CSeismicGroundFlash();
 	CSeismicGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col);
 	void Draw();

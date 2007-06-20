@@ -6,6 +6,7 @@
 #include "aibase.h"
 #include "float3.h"
 #include "Game/command.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
@@ -252,6 +253,7 @@ public:
 
 	virtual const WeaponDef* GetWeapon(const char* weaponname) = 0;
 
+	virtual const float3 *GetStartPos() = 0;
 	DECLARE_PURE_VIRTUAL(~IAICallback())
 };
 

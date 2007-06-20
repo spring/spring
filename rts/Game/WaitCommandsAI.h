@@ -56,7 +56,23 @@ class CWaitCommandsAI {
 
 	private:
 		typedef int KeyType;
-		typedef set<CUnit*> UnitSet;
+		typedef list<CUnit*> UnitSet;
+		static inline UnitSet::iterator UnitSetFind(UnitSet &list,const CUnit*what)
+		{
+			UnitSet::iterator i;
+			for (i = list.begin(); i != list.end(); i++) {
+				if (*i==what) break;
+			}
+			return i;
+		}
+		static inline UnitSet::const_iterator UnitSetFind(const UnitSet &list,const CUnit*what)
+		{
+			UnitSet::const_iterator i;
+			for (i = list.begin(); i != list.end(); i++) {
+				if (*i==what) break;
+			}
+			return i;
+		}
 
 		typedef map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;

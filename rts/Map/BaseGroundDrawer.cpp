@@ -172,10 +172,10 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 	if(drawMode == drawNormal)
 		return true;
 
-	unsigned short* myLos=loshandler->losMap[gu->myAllyTeam];
-	unsigned short* myAirLos=loshandler->airLosMap[gu->myAllyTeam];
-	unsigned short* myRadar=radarhandler->radarMaps[gu->myAllyTeam];
-	unsigned short* myJammer=radarhandler->jammerMaps[gu->myAllyTeam];
+	unsigned short* myLos=&loshandler->losMap[gu->myAllyTeam].front();
+	unsigned short* myAirLos=&loshandler->airLosMap[gu->myAllyTeam].front();
+	unsigned short* myRadar=&radarhandler->radarMaps[gu->myAllyTeam].front();
+	unsigned short* myJammer=&radarhandler->jammerMaps[gu->myAllyTeam].front();
 	if(updateTextureState<50){
 		int starty;
 		int endy;

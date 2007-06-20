@@ -51,6 +51,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/BeamLaser.h"
 #include "System/myMath.h"
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
@@ -62,6 +63,15 @@
 #include "Game/GameSetup.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
+
+#include "COB/CobEngine.h"
+#include "CommandAI/AirCAI.h"
+#include "CommandAI/BuilderCAI.h"
+#include "CommandAI/CommandAI.h"
+#include "CommandAI/FactoryCAI.h"
+#include "CommandAI/MobileCAI.h"
+#include "CommandAI/TransportCAI.h"
+#include "UnitDefHandler.h"
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 
@@ -163,6 +173,8 @@ CUnit::CUnit ()
 	energyMakeold(0),
 	energyTickMake(0),
 	metalExtract(0),
+	metalStorage(0),
+	energyStorage(0),
 	lastTerrainType(-1),
 	curTerrainType(0),
 	relMidPos(0,0,0),
@@ -219,10 +231,10 @@ CUnit::~CUnit()
 		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
 	}
 
-	if(!beingBuilt){
-		gs->Team(team)->metalStorage-=unitDef->metalStorage;
-		gs->Team(team)->energyStorage-=unitDef->energyStorage;
-	}
+//	if(!beingBuilt){
+	SetMetalStorage(0);
+	SetEnergyStorage(0);
+//	}
 
 	delete commandAI;
 	delete moveType;
@@ -247,6 +259,20 @@ CUnit::~CUnit()
 	delete localmodel;
 }
 
+void CUnit::SetMetalStorage(float newStorage)
+{
+	gs->Team(team)->metalStorage-=metalStorage;
+	metalStorage = newStorage;
+	gs->Team(team)->metalStorage+=metalStorage;
+}
+
+void CUnit::SetEnergyStorage(float newStorage)
+{
+	gs->Team(team)->energyStorage-=energyStorage;
+	energyStorage = newStorage;
+	gs->Team(team)->energyStorage+=energyStorage;
+}
+
 void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 {
 	pos = position;
@@ -254,6 +280,7 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	allyteam = gs->AllyTeam(Team);
 	lineage = Team;
 	unitDef = def;
+	unitDefName = unitDef->name;
 
 	localmodel=NULL;
 	SetRadius(1.2f);
@@ -641,7 +668,7 @@ void CUnit::SlowUpdate()
 
 	if (moveType->progressState == CMoveType::Active) {
 		if (seismicSignature) {
-			DoSeismicPing(seismicSignature);
+			DoSeismicPing((int)seismicSignature);
 		}
 	}
 
@@ -1091,11 +1118,11 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	if (!beingBuilt) {
-		gs->Team(oldteam)->metalStorage  -= unitDef->metalStorage;
-		gs->Team(oldteam)->energyStorage -= unitDef->energyStorage;
+		gs->Team(oldteam)->metalStorage  -= metalStorage;
+		gs->Team(oldteam)->energyStorage -= energyStorage;
 
-		gs->Team(newteam)->metalStorage  += unitDef->metalStorage;
-		gs->Team(newteam)->energyStorage += unitDef->energyStorage;
+		gs->Team(newteam)->metalStorage  += metalStorage;
+		gs->Team(newteam)->energyStorage += energyStorage;
 	}
 
 	team = newteam;
@@ -1469,9 +1496,8 @@ void CUnit::FinishedBuilding(void)
 	if (unitDef->activateWhenBuilt) {
 		Activate();
 	}
-
-	gs->Team(team)->metalStorage  += unitDef->metalStorage;
-	gs->Team(team)->energyStorage += unitDef->energyStorage;
+	SetMetalStorage(unitDef->metalStorage);
+	SetEnergyStorage(unitDef->energyStorage);
 
 	//Sets the frontdir in sync with heading.
 	frontdir = GetVectorFromHeading(heading) + float3(0,frontdir.y,0);
@@ -1733,12 +1759,89 @@ void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
 	((CUnit*)p1)->weaponHitMod = retCode*0.01f;
 }
 
+void CUnit::PostLoad()
+{
+	//HACK:Initializing after load
+	unitDef = unitDefHandler->GetUnitByName(unitDefName);
+/*	if(unitDef->type=="GroundUnit"){
+		SAFE_NEW CMobileCAI(this);
+	} else if(unitDef->type=="Transport"){
+		SAFE_NEW CTransportCAI(this);
+	} else if(unitDef->type=="Factory"){
+		SAFE_NEW CFactoryCAI(this);
+	} else if(unitDef->type=="Builder"){
+		SAFE_NEW CBuilderCAI(this);
+	} else if(unitDef->type=="Bomber"){
+		if (unitDef->hoverAttack)
+			SAFE_NEW CMobileCAI(this);
+		else
+			SAFE_NEW CAirCAI(this);
+	} else if(unitDef->type=="Fighter"){
+		if (unitDef->hoverAttack)
+			SAFE_NEW CMobileCAI(this);
+		else
+			SAFE_NEW CAirCAI(this);
+	} else {
+		SAFE_NEW CCommandAI(this);
+	}*/
+
+	yardMap = unitDef->yardmaps[buildFacing];
+	if (unitDef->useCSOffset) {
+		model = modelParser->Load3DO((unitDef->model.modelpath).c_str(),unitDef->collisionSphereScale,team, unitDef->collisionSphereOffset);
+	}
+	else {
+		model = modelParser->Load3DO((unitDef->model.modelpath).c_str(),unitDef->collisionSphereScale,team);
+	}
+	SetRadius(model->radius);
+
+	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
+	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+
+	// Calculate the max() of the available weapon reloadtimes
+	int relMax = 0;
+	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
+		if ((*i)->reloadTime > relMax)
+			relMax = (*i)->reloadTime;
+		if(dynamic_cast<CBeamLaser*>(*i))
+			relMax=150;
+	}
+	relMax *= 30;		// convert ticks to milliseconds
+
+	// TA does some special handling depending on weapon count
+	if (weapons.size() > 1)
+		relMax = max(relMax, 3000);
+
+	// Call initializing script functions
+	cob->Call(COBFN_Create);
+	cob->Call("SetMaxReloadTime", relMax);
+	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
+		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
+	}
+
+	cob->Call(COBFN_SetSFXOccupy, curTerrainType);
+
+	if (unitDef->windGenerator>0) {
+		if (wind.curStrength > unitDef->windGenerator) {
+			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+		} else {
+			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength       * 3000.0f));
+		}
+		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
+	}
+
+	if (activated) {
+		cob->Call(COBFN_Activate);
+	}
+}
+
 // Member bindings
 CR_REG_METADATA(CUnit, (
-				CR_MEMBER(unitDef),
+				//CR_MEMBER(unitDef),
+				CR_MEMBER(unitDefName),
 				CR_MEMBER(id),
 				CR_MEMBER(team),
 				CR_MEMBER(allyteam),
+				CR_MEMBER(lineage),
 				CR_MEMBER(aihint),
 				CR_MEMBER(frontdir),
 				CR_MEMBER(rightdir),
@@ -1808,11 +1911,11 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(oldRadarPos),
 				CR_MEMBER(stealth),
 
-//				CR_MEMBER(commandAI),
+				CR_MEMBER(commandAI),
 				CR_MEMBER(moveType),
 				CR_MEMBER(prevMoveType),
 				CR_MEMBER(usingScriptMoveType),
-//				CR_MEMBER(group),
+				CR_MEMBER(group),
 
 				CR_MEMBER(metalUse),
 				CR_MEMBER(energyUse),
@@ -1834,6 +1937,9 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(metalCost),
 				CR_MEMBER(energyCost),
 				CR_MEMBER(buildTime),
+
+				CR_MEMBER(metalStorage),
+				CR_MEMBER(energyStorage),
 
 				CR_MEMBER(lastAttacker),
 				CR_MEMBER(lastAttack),
@@ -1885,10 +1991,14 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(selfDCountdown),
 
 				//CR_MEMBER(directControl),
-
-				//CR_MEMBER(myTrack),
+				//CR_MEMBER(myTrack),       //unused
 				CR_MEMBER(incomingMissiles),
-				CR_MEMBER(lastFlareDrop))
-				);
+				CR_MEMBER(lastFlareDrop),
+				CR_MEMBER(seismicRadius),
+				CR_MEMBER(seismicSignature),
+				CR_MEMBER(maxSpeed),
+				CR_MEMBER(weaponHitMod),
+				CR_POSTLOAD(PostLoad)
+				));
 
 

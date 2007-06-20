@@ -27,8 +27,11 @@ class CFeatureHandler :
 	public CObject
 {
 public:
+	CR_DECLARE(CFeatureHandler);
+
 	CFeatureHandler();
 	~CFeatureHandler();
+	void Serialize(creg::ISerializer *s);
 	CFeature* CreateWreckage(const float3& pos, const std::string& name,
 	                         float rot, int facing, int iter, int team,
 	                         bool emitSmoke,std::string fromUnit);
@@ -52,6 +55,7 @@ public:
 	void Draw();
 	void DrawShadowPass();
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
+	void PostLoad();
 
 	TdfParser wreckParser;
 	std::map<std::string, FeatureDef*> featureDefs;
@@ -60,16 +64,19 @@ public:
 //	std::set<CFeature*> featureSet;
 	CFeature* features[MAX_FEATURES];
 	std::deque<int> freeIDs;
-	std::set<CFeature*> activeFeatures;
+	std::list<CFeature*> activeFeatures;
 
 	std::list<int> toBeRemoved;
 	SPRING_HASH_SET<int> updateFeatures;
 
+	CR_DECLARE_SUB(DrawQuad);
 	struct DrawQuad {
-		std::set<CFeature*> features;
+		CR_DECLARE_STRUCT(DrawQuad);
+		std::list<CFeature*> features;
 	};
 	
-	DrawQuad* drawQuads;
+//	DrawQuad* drawQuads;
+	std::vector<DrawQuad> drawQuads;
 	
 	int drawQuadsX;
 	int drawQuadsY;

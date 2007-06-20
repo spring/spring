@@ -246,8 +246,13 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	lua_pushboolean(L, selUnits.find(unit) != selUnits.end());
+	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	std::list<CUnit*>::const_iterator i;
+	for (i=selUnits.begin();i!=selUnits.end();i++)
+		if (*i==unit) {
+			break;
+		}
+	lua_pushboolean(L, i != selUnits.end());
 	return 1;	
 }
 
@@ -316,8 +321,8 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	list<CUnit*>::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		count++;
 		lua_pushnumber(L, count);
@@ -334,8 +339,8 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	list<CUnit*>::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		unitDefMap[unit->unitDef->id].push_back(unit);
@@ -368,8 +373,8 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 
 	// tally the types
 	map<int, int> countMap;
-	const set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	set<CUnit*>::const_iterator it;
+	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	list<CUnit*>::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		map<int, int>::iterator mit = countMap.find(unit->unitDef->id);

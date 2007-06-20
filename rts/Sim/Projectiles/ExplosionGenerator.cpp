@@ -21,8 +21,21 @@
 #include "creg/VarTypes.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "mmgr.h"
+#include "Platform/ConfigHandler.h"
 
 using namespace std;
+
+#define CR_BIND_ABSTRACT_DERIVED(TCls, TBase, ctor_args) \
+	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
+	creg::Class* TCls::GetClass() { return binder.class_; } \
+	void TCls::_ConstructInstance(void *d) { throw content_error("Cannot create abstract class"); } \
+	void TCls::_DestructInstance(void *d) { ((MyType*)d)->~MyType(); } \
+	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+
+CR_BIND_ABSTRACT_DERIVED(CExpGenSpawnable, CWorldObject, );
+
+CR_REG_METADATA(CExpGenSpawnable, 
+				);
 
 CExplosionGeneratorHandler* explGenHandler=0;
 // -------------------------------------------------------------------------------

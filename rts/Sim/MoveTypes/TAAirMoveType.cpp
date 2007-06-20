@@ -84,8 +84,8 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 	forceHeadingTo(0),
 	goalDistance(1),
-	goalPos(owner->pos),
-	oldGoalPos(owner->pos),
+	goalPos(owner?owner->pos:float3(0,0,0)),
+	oldGoalPos(owner?owner->pos:float3(0,0,0)),
 	turnRate(1),
 	wantedSpeed(ZeroVector),
 	lastColWarning(0),
@@ -97,7 +97,8 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	reservedPad(0),
 	currentPitch(0)
 {
-	owner->dontUseWeapons=true;
+	if (owner)
+		owner->dontUseWeapons=true;
 }
 
 CTAAirMoveType::~CTAAirMoveType(void)

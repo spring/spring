@@ -86,7 +86,7 @@ public:
 
 	std::vector<TerrainType> terrainTypes;
 
-	CSolidObject** groundBlockingObjectMap;				//Pekar-karta till alla blockerande objekt på marken.
+	std::vector<CSolidObject*> groundBlockingObjectMap;				//Pekar-karta till alla blockerande objekt på marken.
 	CMetalMap *metalMap;					//Metal-density/height-map
 
 	float tidalStrength;

@@ -88,6 +88,7 @@ void CWordCompletion::Reset()
 	words[".nopause "] = sl;
 	words[".nospectatorchat "] = sl;
 	words[".reloadcob "] = sl;
+	words[".save "] = sl;
 	words[".setmaxspeed "] = sl;
 	words[".setminspeed "] = sl;
 	words[".skip +"] = sl;

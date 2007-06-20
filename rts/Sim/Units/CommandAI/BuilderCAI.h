@@ -10,8 +10,11 @@ class CBuilderCAI :
 	public CMobileCAI
 {
 public:
+	CR_DECLARE(CBuilderCAI);
 	CBuilderCAI(CUnit* owner);
+	CBuilderCAI();
 	~CBuilderCAI(void);
+	void PostLoad();
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);
 	void SlowUpdate();
 

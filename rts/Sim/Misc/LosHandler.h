@@ -25,11 +25,13 @@ struct LosInstance{
 	//inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
  	std::vector<int> losSquares;
 	LosInstance() {} // default constructor for creg
-	inline LosInstance(int lossize,int allyteam,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
+	inline LosInstance(int lossize,int allyteam,int baseX,int baseY,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
 			refCount(1),
 			allyteam(allyteam),
+			baseX(baseX),
+			baseY(baseY),
 			baseSquare(baseSquare),
 			baseAirSquare(baseAirSquare),
 			hashNum(hashNum),
@@ -39,6 +41,8 @@ struct LosInstance{
 	int airLosSize;
 	int refCount;
 	int allyteam;
+	int baseX;
+	int baseY;
 	int baseSquare;
 	int baseAirSquare;
 	int hashNum;
@@ -87,8 +91,8 @@ public:
 	CLosHandler();
 	virtual ~CLosHandler();
 
-	unsigned short* losMap[MAX_TEAMS];
-	unsigned short* airLosMap[MAX_TEAMS];
+	vector<unsigned short> losMap[MAX_TEAMS];
+	vector<unsigned short> airLosMap[MAX_TEAMS];
 
 	friend class CRadarHandler;
 
@@ -104,6 +108,7 @@ public:
 private:
 
 	void creg_Serialize(creg::ISerializer& s);
+	void PostLoad();
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);
 	int GetHashNum(CUnit* unit);

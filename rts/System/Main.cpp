@@ -50,12 +50,16 @@
 #include <SDL_syswm.h>
 
 #ifdef WIN32
+#ifdef __GNUC__
 	#include "Platform/Win/CrashHandler.h"
-	//#include "CrashRpt.h"
-	//#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
+#else
+	#include "CrashRpt.h"
+	#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
+#endif
 	#include "Platform/Win/win32.h"
 	#include <winreg.h>
 	#include <direct.h>
+	#include "Platform/Win/seh.h"
 #endif // WIN32
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
@@ -263,6 +267,7 @@ bool SpringApp::Initialize ()
 #else
 	CrashHandler::Install();
 #endif
+	InitializeSEH();
 #endif
 
 	FileSystemHandler::Initialize(true);
@@ -864,7 +869,16 @@ int SpringApp::Run (int argc, char *argv[])
 	INIT_SYNCIFY;
 	CheckCmdLineFile (argc, argv);
 	cmdline = BaseCmd::initialize(argc,argv);
-
+/*
+	logOutput.Print ("Testing error catching");
+	try {
+		int *i_=0;
+		*i_=1;
+		logOutput.Print ("Error catching doesn't work!");
+	} catch(...) {
+		logOutput.Print ("Error catching works!");
+	}
+*/
 	if (!Initialize ())
 		return -1;
 
@@ -1049,7 +1063,7 @@ int Run(int argc, char *argv[])
 	streflop_init<streflop::Simple>();
 #endif
 	good_fpu_control_registers("::Run");
-
+	
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
 	try {

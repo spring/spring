@@ -14,12 +14,13 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(size),
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
-	CR_MEMBER(numSmoke)
+	CR_MEMBER(numSmoke),
+	CR_MEMBER(randSmokeDir)
 	));
 
 void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
 {
-	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
+//	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
@@ -33,7 +34,8 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 	castShadow=true;
 	numFlame=1+(int)(size*3);
 	numSmoke=1+(int)(size*5);
-	randSmokeDir=SAFE_NEW float3[numSmoke];
+//	randSmokeDir=SAFE_NEW float3[numSmoke];
+	randSmokeDir.resize(numSmoke);
 
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
@@ -50,7 +52,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 
 CMuzzleFlame::~CMuzzleFlame(void)
 {
-	delete[] randSmokeDir;
+//	delete[] randSmokeDir;
 }
 
 void CMuzzleFlame::Update(void)

@@ -22,6 +22,51 @@
 #include "myMath.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
+
+CR_REG_METADATA(CMobileCAI, (
+				CR_MEMBER(goalPos),
+				CR_MEMBER(lastUserGoal),
+
+				CR_MEMBER(lastIdleCheck),
+				CR_MEMBER(tempOrder),
+
+				CR_MEMBER(lastPC),
+
+				CR_MEMBER(maxWantedSpeed),
+
+				CR_MEMBER(lastBuggerOffTime),
+				CR_MEMBER(buggerOffPos),
+				CR_MEMBER(buggerOffRadius),
+
+				CR_MEMBER(commandPos1),
+				CR_MEMBER(commandPos2),
+
+				CR_MEMBER(cancelDistance),
+				CR_MEMBER(slowGuard),
+				CR_MEMBER(moveDir)
+				));
+
+CMobileCAI::CMobileCAI()
+: CCommandAI(),
+//	patrolTime(0),
+	goalPos(-1,-1,-1),
+	tempOrder(false),
+	lastBuggerOffTime(-200),
+	buggerOffPos(0,0,0),
+	buggerOffRadius(0),
+	maxWantedSpeed(0),
+	lastIdleCheck(0),
+	commandPos1(ZeroVector),
+	commandPos2(ZeroVector),
+	lastPC(-1),
+	cancelDistance(1024),
+	slowGuard(false),
+	moveDir(gs->randFloat() > 0.5),
+	lastUserGoal(0,0,0)
+{}
+
+
 CMobileCAI::CMobileCAI(CUnit* owner)
 : CCommandAI(owner),
 //	patrolTime(0),

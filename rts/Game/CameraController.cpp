@@ -100,7 +100,7 @@ float3 CFPSController::GetPos()
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
 		pos.y = max(yMin, min(yMax, pos.y));
-		oldHeight = pos.y - gndHeight;
+		oldHeight = pos.y/* - gndHeight*/;
 	}
 
 	return pos;
@@ -123,7 +123,7 @@ void CFPSController::SetPos(float3 newPos)
 	if (!gu->directControl)
 #endif
 	{
-		pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
+		pos.y = /*ground->GetHeight(pos.x, pos.z) + */oldHeight;
 	}
 }
 
@@ -198,14 +198,14 @@ void COverheadController::KeyMove(float3 move)
 {
 	move*=sqrt(move.z)*200;
 	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
-	pos.x+=move.x*pixelsize*2*scrollSpeed;	
+	pos.x+=move.x*pixelsize*2*scrollSpeed;
 	pos.z-=move.y*pixelsize*2*scrollSpeed;
 }
 
 void COverheadController::MouseMove(float3 move)
 {
 	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
-	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;	
+	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 }
 
@@ -258,7 +258,7 @@ void COverheadController::MouseWheelMove(float move)
 		if(keys[SDLK_LALT]){
 			zscale=0.5f;
 			mouse->CameraTransition(1.0f);
-		} else 
+		} else
 			changeAltHeight=true;
 	}
 }
@@ -280,9 +280,9 @@ float3 COverheadController::GetPos()
 	if(height>maxHeight)
 		height=maxHeight;
 
-	pos.y=ground->GetHeight(pos.x,pos.z);
+	pos.y=/*ground->GetHeight(pos.x,pos.z)*/0;
 	dir=float3(0,-1,-zscale).Normalize();
-	
+
 	float3 cpos=pos-dir*height;
 
 	return cpos;
@@ -512,7 +512,7 @@ void CRotOverheadController::KeyMove(float3 move)
 void CRotOverheadController::MouseMove(float3 move)
 {
 	camera->rot.y -= mouseScale*move.x;
-	camera->rot.x -= mouseScale*move.y*move.z;  
+	camera->rot.x -= mouseScale*move.y*move.z;
 
 	if(camera->rot.x>PI*0.4999f)
 		camera->rot.x=PI*0.4999f;
@@ -527,10 +527,10 @@ void CRotOverheadController::ScreenEdgeMove(float3 move)
 
 void CRotOverheadController::MouseWheelMove(float move)
 {
-	float gheight=ground->GetHeight(pos.x,pos.z);
-	float height=pos.y-gheight;
+	//float gheight=ground->GetHeight(pos.x,pos.z);
+	float height=pos.y-1000/*-gheight*/;
 	height*=1+move*mouseScale;
-	pos.y=height+gheight;
+	pos.y=height+1000/*+gheight*/;
 }
 
 float3 CRotOverheadController::GetPos()
@@ -548,7 +548,7 @@ float3 CRotOverheadController::GetPos()
 	if(pos.y>9000)
 		pos.y=9000;
 
-	oldHeight=pos.y-ground->GetHeight(pos.x,pos.z);
+	oldHeight=pos.y/*-ground->GetHeight(pos.x,pos.z)*/;
 
 	return pos;
 }
@@ -565,7 +565,7 @@ float3 CRotOverheadController::GetDir()
 void CRotOverheadController::SetPos(float3 newPos)
 {
 	pos=newPos;
-	pos.y=ground->GetHeight(pos.x,pos.z)+oldHeight;
+	pos.y=/*ground->GetHeight(pos.x,pos.z)+*/oldHeight;
 }
 
 float3 CRotOverheadController::SwitchFrom()
@@ -650,7 +650,7 @@ float3 COverviewController::GetPos()
 	pos.z = gs->mapy * 4.0f;
 	const float aspect = (gu->viewSizeX / gu->viewSizeY);
 	const float height = max(pos.x / aspect, pos.z);
-	pos.y = ground->GetHeight(pos.x, pos.z) + (2.5f * height);
+	pos.y = 1000/*ground->GetHeight(pos.x, pos.z)*/ + (2.5f * height);
 	return pos;
 }
 
@@ -758,7 +758,7 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	const float3 diff = (trackPos - pos);
 	const float rads = atan2(diff.x, diff.z);
 	float radDiff = -fmod(camera->rot.y - rads, 2.0f * PI);
-	
+
 	if (radDiff < -PI) {
 		radDiff += (2.0 * PI);
 	} else if (radDiff > PI) {
@@ -870,7 +870,7 @@ void CFreeController::Update()
 		pos.x = trackPos.x + (scale * diff.x);
 		pos.z = trackPos.z + (scale * diff.z);
 		pos.y += (vel.y * ft);
-			
+
 		// convert the angular velocity into its positional change
 		const float3 diff2 = (pos - trackPos);
 		const float deltaRad = (avel.y * ft);
@@ -880,7 +880,7 @@ void CFreeController::Update()
 		pos.z = trackPos.z + ((cos_val * diff2.z) - (sin_val * diff2.x));
 	}
 
-	// setup ground lock	
+	// setup ground lock
 	const float gndHeight = ground->GetHeight2(pos.x, pos.z);
 	if (keys[SDLK_LSHIFT]) {
 		if (ctrlVelY > 0.0f) {
@@ -936,8 +936,8 @@ void CFreeController::Update()
 
 void CFreeController::KeyMove(float3 move)
 {
-	const float qy = (move.y == 0.0f) ? 0.0f : (move.y > 0.0f ? 1.0f : -1.0f);	
-	const float qx = (move.x == 0.0f) ? 0.0f : (move.x > 0.0f ? 1.0f : -1.0f);	
+	const float qy = (move.y == 0.0f) ? 0.0f : (move.y > 0.0f ? 1.0f : -1.0f);
+	const float qx = (move.x == 0.0f) ? 0.0f : (move.x > 0.0f ? 1.0f : -1.0f);
 
 	const float speed  = keys[SDLK_LMETA] ? 4.0f * scrollSpeed : scrollSpeed;
 	const float aspeed = keys[SDLK_LMETA] ? 2.0f * tiltSpeed   : tiltSpeed;

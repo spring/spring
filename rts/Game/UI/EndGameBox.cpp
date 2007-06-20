@@ -66,7 +66,7 @@ CEndGameBox::CEndGameBox(void)
 
 	dispMode=0;
 	stat1=1;
-	stat2=2;
+	stat2=-1;
 
 	CBitmap bm;
 	if (!bm.Load("bitmaps/graphPaper.bmp"))
@@ -147,9 +147,10 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
 			int sel=(int)floor(-(my-box.y1-0.57f)*50);
 
-			if(button==1)
+			if(button==1) {
 				stat1=sel;
-			else
+				stat2=-1;
+			} else
 				stat2=sel;
 		}
 	}
@@ -300,9 +301,9 @@ void CEndGameBox::Draw()
 		float maxy=1;
 
 		if(dispMode==1)
-			maxy=std::max(stats[stat1].max,stats[stat2].max);
+			maxy=std::max(stats[stat1].max,stat2!=-1?stats[stat2].max:0);
 		else
-			maxy=std::max(stats[stat1].maxdif,stats[stat2].maxdif)/CTeam::statsPeriod;
+			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/CTeam::statsPeriod;
 
 		int numPoints=stats[0].values[0].size();
 		float scalex=0.54f/max(1.0f,numPoints-1.0f);
@@ -317,7 +318,7 @@ void CEndGameBox::Draw()
 		}
 
 		font->glPrintAt(box.x1+0.55f,box.y1+0.65f,0.8f,"%s",stats[stat1].name.c_str());
-		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f,"%s",stats[stat2].name.c_str());
+		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f,"%s",stat2!=-1?stats[stat2].name.c_str():"");
 
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
@@ -334,6 +335,7 @@ void CEndGameBox::Draw()
 		glDisable(GL_LINE_STIPPLE);
 
 		for(int team=0; team<gs->activeTeams; team++){
+			if (gs->Team(team)->gaia) continue;
 			glColor4ubv(gs->Team(team)->color);
 
 			glBegin(GL_LINE_STRIP);
@@ -348,22 +350,24 @@ void CEndGameBox::Draw()
 			}
 			glEnd();
 
-			glLineStipple(3,0x5555);
-			glEnable(GL_LINE_STIPPLE);
+			if (stat2!=-1) {
+				glLineStipple(3,0x5555);
+				glEnable(GL_LINE_STIPPLE);
 
-			glBegin(GL_LINE_STRIP);
-			for(int a=0;a<numPoints;++a){
-				float value=0;
-				if(dispMode==1)
-					value=stats[stat2].values[team][a];
-				else if(a>0)
-					value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/CTeam::statsPeriod;
+				glBegin(GL_LINE_STRIP);
+				for(int a=0;a<numPoints;++a){
+					float value=0;
+					if(dispMode==1)
+						value=stats[stat2].values[team][a];
+					else if(a>0)
+						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/CTeam::statsPeriod;
 
-				glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
+					glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
+				}
+				glEnd();
+
+				glDisable(GL_LINE_STIPPLE);
 			}
-			glEnd();
-
-			glDisable(GL_LINE_STIPPLE);
 		}
 	}
 }
@@ -422,6 +426,7 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Damage Received"));
 
 	for(int team=0; team<gs->activeTeams; team++){
+		if (gs->Team(team)->gaia) continue;
 		for(std::list<CTeam::Statistics>::iterator si=gs->Team(team)->statHistory.begin(); si!=gs->Team(team)->statHistory.end(); si++){
 			stats[0].AddStat(team,0);
 

@@ -17,8 +17,11 @@ class CCommandAI :
 	public CObject
 {
 public:
+	CR_DECLARE(CCommandAI);
 	CCommandAI(CUnit* owner);
+	CCommandAI();
 	virtual ~CCommandAI(void);
+	void PostLoad();
 
 	void DependentDied(CObject* o);
 	void GiveCommand(const Command& c); // feeds into GiveCommandReal()

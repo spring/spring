@@ -50,6 +50,7 @@ public:
 	CUnit* owner;
 
 	WeaponDef *weaponDef;
+	std::string modelDispList;
 
 	int weaponNum;							//the weapons order among the owner weapons
 	bool haveUserTarget;

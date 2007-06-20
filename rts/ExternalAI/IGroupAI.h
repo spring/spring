@@ -10,7 +10,7 @@
 class IGroupAICallback;
 class IAICallback;
 
-#define AI_INTERFACE_VERSION (13 + AI_INTERFACE_GENERATED_VERSION)
+#define AI_INTERFACE_VERSION (14 + AI_INTERFACE_GENERATED_VERSION)
 
 class SPRING_API IGroupAI
 {
@@ -27,6 +27,9 @@ public:
 
 	virtual void Update()=0;											//called once a frame (30 times a second)
 	virtual void DrawCommands()=0;										//the place to use the LineDrawer interface functions
+	virtual void Load(IGroupAICallback* callback,std::istream *s){};	//load ai from file
+	virtual void Save(std::ostream *s){};							//save ai to file
+
 	DECLARE_PURE_VIRTUAL(~IGroupAI())
 };
 

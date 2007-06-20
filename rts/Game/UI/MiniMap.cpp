@@ -39,8 +39,16 @@
 #include "Lua/LuaCallInHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/GeoThermSmokeProjectile.h"
+#include "Sim/Projectiles/GfxProjectile.h"
+#include "Sim/Projectiles/BeamLaserProjectile.h"
+#include "Sim/Projectiles/LargeBeamLaserProjectile.h"
+#include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WreckProjectile.h"
+#include "Sim/Projectiles/LightingProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
@@ -50,6 +58,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Sound.h"
 #include "mmgr.h"
+#include "TimeProfiler.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -656,8 +665,8 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float zmin = min(oldPos.z, newPos.z);
 		const float zmax = max(oldPos.z, newPos.z);
 
-		set<CUnit*>::iterator ui;
-		set<CUnit*>& selection = selectedUnits.selectedUnits;
+		list<CUnit*>::iterator ui;
+		list<CUnit*>& selection = selectedUnits.selectedUnits;
 
 		CUnit* unit = NULL;
 		int addedunits = 0;
@@ -671,12 +680,16 @@ void CMiniMap::SelectUnits(int x, int y) const
 			lastTeam = gu->myTeam;
 		}
 		for (; team <= lastTeam; team++) {
-			set<CUnit*>& teamUnits = gs->Team(team)->units;
+			list<CUnit*>& teamUnits = gs->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				const float3& midPos = (*ui)->midPos;
 				if ((midPos.x > xmin) && (midPos.x < xmax) &&
 						(midPos.z > zmin) && (midPos.z < zmax)) {
-					if (keys[SDLK_LCTRL] && (selection.find(*ui) != selection.end())) {
+					std::list<CUnit*>::const_iterator i;
+					for (i = selection.begin(); i != selection.end(); i++) {
+						if (*i==unit) break;
+					}
+					if (keys[SDLK_LCTRL] && (i != selection.end())) {
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -711,12 +724,16 @@ void CMiniMap::SelectUnits(int x, int y) const
 			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
 		}
 
-		set<CUnit*>::iterator ui;
-		set<CUnit*>& selection = selectedUnits.selectedUnits;
+		list<CUnit*>::iterator ui;
+		list<CUnit*>& selection = selectedUnits.selectedUnits;
 
 		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-				if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
+				std::list<CUnit*>::const_iterator i;
+				for (i = selection.begin(); i != selection.end(); i++) {
+					if (*i==unit) break;
+				}
+				if (keys[SDLK_LCTRL] && (i != selection.end())) {
 					selectedUnits.RemoveUnit(unit);
 				} else {
 					selectedUnits.AddUnit(unit);
@@ -737,7 +754,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 						lastTeam = gu->myTeam;
 					}
 					for (; team <= lastTeam; team++) {
-						set<CUnit*>& myUnits = gs->Team(team)->units;
+						list<CUnit*>& myUnits = gs->Team(team)->units;
 						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
 							if ((*ui)->aihint == unit->aihint) {
 								selectedUnits.AddUnit(*ui);
@@ -956,6 +973,9 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal()
 {
+START_TIME_PROFILE
+	glEnable(GL_BLEND);
+	glDepthFunc(GL_LEQUAL);
 	setSurfaceCircleFunc(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
 
@@ -969,6 +989,7 @@ void CMiniMap::DrawForReal()
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
 		return;
+END_TIME_PROFILE("Draw minimap");
 	}
 
 	glViewport(xpos, ypos, width, height);
@@ -1011,49 +1032,91 @@ void CMiniMap::DrawForReal()
 	GetFrustumSide(cam2->rightside);
 	GetFrustumSide(cam2->leftside);
 
-	// draw the camera lines
-	std::vector<fline>::iterator fli,fli2;
-	for(fli=left.begin();fli!=left.end();fli++){
-	  for(fli2=left.begin();fli2!=left.end();fli2++){
-			if(fli==fli2)
-				continue;
-			float colz=0;
-			if(fli->dir-fli2->dir==0)
-				continue;
-			colz=-(fli->base-fli2->base)/(fli->dir-fli2->dir);
-			if(fli2->left*(fli->dir-fli2->dir)>0){
-				if(colz>fli->minz && colz<400096)
-					fli->minz=colz;
-			} else {
-				if(colz<fli->maxz && colz>-10000)
-					fli->maxz=colz;
+	if (!minimap->maximized) {
+		// draw the camera lines
+		std::vector<fline>::iterator fli,fli2;
+		for(fli=left.begin();fli!=left.end();fli++){
+		  for(fli2=left.begin();fli2!=left.end();fli2++){
+				if(fli==fli2)
+					continue;
+				float colz=0;
+				if(fli->dir-fli2->dir==0)
+					continue;
+				colz=-(fli->base-fli2->base)/(fli->dir-fli2->dir);
+				if(fli2->left*(fli->dir-fli2->dir)>0){
+					if(colz>fli->minz && colz<400096)
+						fli->minz=colz;
+				} else {
+					if(colz<fli->maxz && colz>-10000)
+						fli->maxz=colz;
+				}
 			}
 		}
-	}
-	glColor4f(1,1,1,0.5f);
-	glBegin(GL_LINES);
-	for(fli = left.begin(); fli != left.end(); fli++) {
-		if(fli->minz < fli->maxz) {
-			DrawInMap2D(fli->base + (fli->dir * fli->minz), fli->minz);
-			DrawInMap2D(fli->base + (fli->dir * fli->maxz), fli->maxz);
+		glColor4f(1,1,1,0.5f);
+		glBegin(GL_LINES);
+		for(fli = left.begin(); fli != left.end(); fli++) {
+			if(fli->minz < fli->maxz) {
+				DrawInMap2D(fli->base + (fli->dir * fli->minz), fli->minz);
+				DrawInMap2D(fli->base + (fli->dir * fli->maxz), fli->maxz);
+			}
 		}
+		glEnd();
 	}
-	glEnd();
-
 	// draw the projectiles
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 
-	glColor4f(1,1,1,0.0002f*(width+height));
-	glBegin(GL_POINTS);
 	Projectile_List::iterator psi;
 	for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
 		CProjectile* p=*psi;
 		if((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
-		   loshandler->InLos(p, gu->myAllyTeam)) {
-			glVertexf3((*psi)->pos);
+		loshandler->InLos(p, gu->myAllyTeam) || gu->spectatingFullView) {
+			if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
+			} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
+				glBegin(GL_POINTS);
+				glColor4f(0,1,0,0.1);
+				glVertexf3(p->pos);
+				glEnd();
+			} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
+				glBegin(GL_LINES);
+				glColor4f(((CBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
+				glVertexf3(((CBeamLaserProjectile*)p)->startPos);
+				glVertexf3(((CBeamLaserProjectile*)p)->endPos);
+				glEnd();
+			} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
+				glBegin(GL_LINES);
+				glColor4f(((CLargeBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
+				glVertexf3(((CLargeBeamLaserProjectile*)p)->startPos);
+				glVertexf3(((CLargeBeamLaserProjectile*)p)->endPos);
+				glEnd();
+			} else if (dynamic_cast<CLightingProjectile*>(p)) {
+				glBegin(GL_LINES);
+				glColor4f(((CLightingProjectile*)p)->color[0],((CLightingProjectile*)p)->color[1],((CLightingProjectile*)p)->color[2],1);
+				glVertexf3(((CLightingProjectile*)p)->pos);
+				glVertexf3(((CLightingProjectile*)p)->endPos);
+				glEnd();
+			} else if (dynamic_cast<CPieceProjectile*>(p)) {
+				glBegin(GL_POINTS);
+				glColor4f(1,0,0,1);
+				glVertexf3(p->pos);
+				glEnd();
+			} else if (dynamic_cast<CWreckProjectile*>(p)) {
+				glBegin(GL_POINTS);
+				glColor4f(1,0,0,0.5);
+				glVertexf3(p->pos);
+				glEnd();
+			} else if (dynamic_cast<CWeaponProjectile*>(p)) {
+				glBegin(GL_POINTS);
+				glColor4f(1,1,0,1);
+				glVertexf3(p->pos);
+				glEnd();
+			} else {
+				glBegin(GL_POINTS);
+				glColor4f(1,1,1,0.1/*0.0002f*(width+height)*/);
+				glVertexf3(p->pos);
+				glEnd();
+			}
 		}
 	}
-	glEnd();
 
 	// draw the queued commands
 	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
@@ -1072,8 +1135,8 @@ void CMiniMap::DrawForReal()
 
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
-	set<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	for(set<CUnit*>::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
+	list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	for(list<CUnit*>::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 		CUnit* unit = *si;
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
@@ -1149,6 +1212,7 @@ void CMiniMap::DrawForReal()
 
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
+END_TIME_PROFILE("Draw minimap");
 }
 
 

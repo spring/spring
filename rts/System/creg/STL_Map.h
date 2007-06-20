@@ -112,6 +112,7 @@ namespace creg
 			firstType->Serialize (s, &p.first);
 			secondType->Serialize (s, &p.second);
 		}
+		std::string GetName() { return "pair<" + firstType->GetName() + "," + secondType->GetName() + ">"; }
 	};
 
 	// std::pair
