@@ -23,7 +23,8 @@ AAIAttackManager::AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt)
 	this->cb = cb;
 	this->map = ai->map;
 
-	available_combat_cat = new int[bt->combat_categories];
+//	available_combat_cat = new int[bt->combat_categories];
+	available_combat_cat.resize(bt->combat_categories);
 }
 
 AAIAttackManager::~AAIAttackManager(void)
@@ -31,7 +32,7 @@ AAIAttackManager::~AAIAttackManager(void)
 	for(list<AAIAttack*>::iterator a = attacks.begin(); a != attacks.end(); ++a)
 		delete (*a);
 
-	delete [] available_combat_cat;
+//	delete [] available_combat_cat;
 }
 
 
@@ -302,7 +303,7 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 		attack_power += (float)total_units * 0.2f;
 
 		//  get expected def power
-		for(int i = 0; i < bt->combat_categories; ++i)
+		for(int i = 0; i < bt->ass_categories; ++i)
 			sector_defence += dest->stat_combat_power[i] * (float)available_combat_cat[i];
 
 		sector_defence /= (float)total_units; 

@@ -57,7 +57,7 @@ public:
 	AAIBuildTable *bt;
 	IAICallback* cb;
 
-	AAIUnit *units;
+	vector<AAIUnit> units;
 	// units[i].unitId = -1 -> not used , -2 -> enemy unit
 
 	// commanders id

@@ -90,7 +90,7 @@ AAI::~AAI()
 		}
 	}
 
-	delete [] group_list;
+//	delete [] group_list;
 
 	fclose(file);
 }
@@ -156,7 +156,8 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	execute = new AAIExecute(this, brain);
 
 	// create unit groups
-	group_list = new list<AAIGroup*>[MOBILE_CONSTRUCTOR+1];
+//	group_list = new list<AAIGroup*>[MOBILE_CONSTRUCTOR+1];
+	group_list.resize(MOBILE_CONSTRUCTOR+1);
 
 	// init airforce manager
 	af = new AAIAirForceManager(this, cb, bt);

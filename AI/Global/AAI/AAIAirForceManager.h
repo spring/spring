@@ -36,7 +36,7 @@ public:
 	void BombBestUnit(float cost, float danger);
 
 	// list of possible bombing targets
-	AAIAirTarget *targets;
+	vector<AAIAirTarget> targets;
 
 	list<AAIGroup*> *air_groups;
 

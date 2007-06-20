@@ -47,7 +47,7 @@ public:
 	void UpdateBaseCenter();
 
 	// updates max units spotted
-	void UpdateMaxCombatUnitsSpotted(float *units_spotted);
+	void UpdateMaxCombatUnitsSpotted(vector<float> &units_spotted);
 
 	void UpdateAttackedByValues();
 	void AttackedBy(int combat_category_id);
@@ -87,7 +87,7 @@ public:
 	int GetGamePeriod();
 
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
-	list<AAISector*> *sectors; 
+	vector<list<AAISector*> > sectors; 
 	int max_distance;
 
 	float3 base_center;
@@ -97,9 +97,9 @@ public:
 	bool expandable; 
 
 	// holding max number of units of a category spotted at the same time
-	float *max_units_spotted;
-	float *attacked_by;
-	float *defence_power_vs;
+	vector<float> max_units_spotted;
+	vector<float> attacked_by;
+	vector<float> defence_power_vs;
 
 	// pos where com spawned
 	float3 start_pos;

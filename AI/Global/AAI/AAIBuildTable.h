@@ -160,10 +160,10 @@ public:
 	int numOfSides;
 	
 	// side names
-	string *sideNames;
+	vector<string> sideNames;
 		
 	// start units of each side (e.g. commander)
-	int *startUnits;
+	vector<int> startUnits;
 
 	// number of unit definitions
 	int numOfUnits;
@@ -218,11 +218,14 @@ public:
 	static list<int> *units_of_category[MOBILE_CONSTRUCTOR+1];
 
 	// AAI unit defs (static things like id, side, etc.)
-	static UnitTypeStatic *units_static;
+//	static UnitTypeStatic *units_static;
+	static vector<UnitTypeStatic> units_static;
 
 	// storage for def. building selection
-	static double **def_power;
-	static double *max_pplant_eff;
+//	static double **def_power;
+	static vector<vector<double> > def_power;
+//	static double *max_pplant_eff;
+	static vector<double> max_pplant_eff;
 
 	// cached combat efficiencies
 	static vector< vector< vector<float> > > avg_eff;
@@ -235,7 +238,7 @@ public:
 	//
 
 	// AAI unit defs with aai-instance specific information (number of requested, active units, etc.)
-	UnitTypeDynamic *units_dynamic;
+	vector<UnitTypeDynamic> units_dynamic;
 
 	// for internal use
 	const char* GetCategoryString(int def_id);

@@ -21,34 +21,38 @@ AAIMap::AAIMap(AAI *ai)
 	bt = ai->bt;
 	cb = ai->cb;
 
-	sector = 0;
+//	sector = 0;
 	xSectors = ySectors = 0;
 
 	initialized = false;
 
-	blockmap = 0;
-	buildmap = 0;
+//	blockmap = 0;
+//	buildmap = 0;
 	mapType = LAND_MAP;
 
-	unitsInLos = new int[cfg->MAX_UNITS];
+//	unitsInLos = new int[cfg->MAX_UNITS];
+	unitsInLos.resize(cfg->MAX_UNITS);
 
 	// set all values to 0 (to be able to detect num. of enemies in los later
 	for(int i = 0; i < cfg->MAX_UNITS; i++)
 		unitsInLos[i] = 0;
 
-	map_usefulness = new float*[bt->assault_categories.size()];
+//	map_usefulness = new float*[bt->assault_categories.size()];
+	map_usefulness.resize(bt->assault_categories.size());
 
 	for(int i = 0; i < bt->assault_categories.size(); ++i)
-		map_usefulness[i] = new float[cfg->SIDES];
+//		map_usefulness[i] = new float[cfg->SIDES];
+		map_usefulness[i].resize(cfg->SIDES);
 
-	units_spotted = new float[bt->combat_categories];
+//	units_spotted = new float[bt->combat_categories];
+	units_spotted.resize(bt->combat_categories);
 }
 
 AAIMap::~AAIMap(void)
 {
-	delete [] unitsInLos;
-	delete [] unitsInSector;
-	delete [] units_spotted;
+//	delete [] unitsInLos;
+//	delete [] unitsInSector;
+//	delete [] units_spotted;
 
 	Learn();
 
@@ -123,25 +127,25 @@ AAIMap::~AAIMap(void)
 	fclose(save_file);
 
 	// clean up sectors..
-	if(sector)
-	{
-		for(int i = 0; i < xSectors; i++)
-			delete [] sector[i];
+//	if(sector)
+//	{
+//		for(int i = 0; i < xSectors; i++)
+//			delete [] sector[i];
 
-		delete [] sector;
-	}
+//		delete [] sector;
+//	}
 
 	// clean up buildmap
-	if(buildmap)
-		delete [] buildmap;
+//	if(buildmap)
+//		delete [] buildmap;
 
-	if(blockmap)
-		delete [] blockmap;
+//	if(blockmap)
+//		delete [] blockmap;
 
-	for(int i = 0; i < bt->assault_categories.size(); ++i)
-		delete [] map_usefulness[i];
+//	for(int i = 0; i < bt->assault_categories.size(); ++i)
+//		delete [] map_usefulness[i];
 
-	delete [] map_usefulness;
+//	delete [] map_usefulness;
 }
 
 void AAIMap::Init()
@@ -162,19 +166,24 @@ void AAIMap::Init()
 	ySectorSize = 8 * ySectorSizeMap;
 
 	// create field of sectors
-	sector = new AAISector*[xSectors];
+//	sector = new AAISector*[xSectors];
+	sector.resize(xSectors);
 
 	for(int x = 0; x < xSectors; x++)
-		sector[x] = new AAISector[ySectors];
+//		sector[x] = new AAISector[ySectors];
+		sector[x].resize(ySectors);
 
 	// for scouting
-	unitsInSector = new int[xSectors*ySectors];
+//	unitsInSector = new int[xSectors*ySectors];
+	unitsInSector.resize(xSectors*ySectors);
 
 	// create buildmap
-	buildmap = new char[xMapSize*yMapSize];
+//	buildmap = new char[xMapSize*yMapSize];
+	buildmap.resize(xMapSize*yMapSize);
 
 	// create blockmap
-	blockmap = new char[xMapSize*yMapSize];
+//	blockmap = new char[xMapSize*yMapSize];
+	blockmap.resize(xMapSize*yMapSize);
 
 	for(int i = 0; i < xMapSize*yMapSize; i++)
 	{
@@ -214,7 +223,7 @@ void AAIMap::Init()
 			metalMap = (bool)temp;
 
 			// load buildmap first
-			fread(buildmap, sizeof(char), xMapSize*yMapSize, file);
+			fread(&(buildmap.front()), sizeof(char), xMapSize*yMapSize, file);
 
 			AAIMetalSpot spot;
 			int spots;
@@ -262,7 +271,7 @@ void AAIMap::Init()
 		fprintf(file, "%i\n", (int)metalMap);
 
 		// save buildmap
-		fwrite(buildmap, sizeof(char), xMapSize*yMapSize, file);
+		fwrite(&(buildmap.front()), sizeof(char), xMapSize*yMapSize, file);
 
 		// save mex spots
 		fprintf(file, " %i \n", metal_spots.size());
@@ -1618,7 +1627,7 @@ void AAIMap::UpdateRecon()
 		units_spotted[i] = 0;
 
 	// first update all sectors with friendly units
-	cb->GetFriendlyUnits(unitsInLos);
+	cb->GetFriendlyUnits(&(unitsInLos.front()));
 
 	// go through the list
 	for(int i = 0; i < cfg->MAX_UNITS; ++i)
@@ -1676,7 +1685,7 @@ void AAIMap::UpdateRecon()
 	}
 
 	// get all enemies in los
-	cb->GetEnemyUnits(unitsInLos);
+	cb->GetEnemyUnits(&(unitsInLos.front()));
 
 	// go through the list
 	for(int i = 0; i < cfg->MAX_UNITS; ++i)

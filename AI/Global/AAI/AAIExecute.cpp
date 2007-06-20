@@ -26,8 +26,8 @@ AAIExecute::AAIExecute(AAI *ai, AAIBrain *brain)
 
 	brain->execute = this;
 
-	buildques = 0;
-	factory_table = 0;
+//	buildques = 0;
+//	factory_table = 0;
 	unitProductionRate = 1;
 
 	futureRequestedMetal = 0;
@@ -61,16 +61,16 @@ AAIExecute::AAIExecute(AAI *ai, AAIBrain *brain)
 
 AAIExecute::~AAIExecute(void)
 {
-	if(buildques)
-	{
-		for(int i = 0; i < numOfFactories; ++i)
-			buildques[i].clear();
+//	if(buildques)
+//	{
+//		for(int i = 0; i < numOfFactories; ++i)
+//			buildques[i].clear();
 
-		delete [] buildques;
-	}
+//		delete [] buildques;
+//	}
 
-	if(factory_table)
-		delete [] factory_table;
+//	if(factory_table)
+//		delete [] factory_table;
 }
 
 void AAIExecute::moveUnitTo(int unit, float3 *position)
@@ -631,10 +631,12 @@ void AAIExecute::InitBuildques()
 			++numOfFactories;
 	}
 
-	buildques = new list<int>[numOfFactories];
+//	buildques = new list<int>[numOfFactories];
+	buildques.resize(numOfFactories);
 
 	// set up factory buildque identification
-	factory_table = new int[numOfFactories];
+//	factory_table = new int[numOfFactories];
+	factory_table.resize(numOfFactories);
 	
 	int i = 0;
 
@@ -2358,7 +2360,7 @@ void AAIExecute::CheckDefences()
 	double rating, highest_rating = 0;
 
 	AAISector *first = 0, *second = 0;
-	UnitCategory cat1, cat2;
+	UnitCategory cat1=UNKNOWN, cat2=UNKNOWN;
 
 	for(int dist = 0; dist <= max_dist; ++dist)
 	{
@@ -2966,7 +2968,7 @@ bool AAIExecute::least_dangerous(AAISector *left, AAISector *right)
 		{
 			return ((left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current)) 
 					< (right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current)));  
-		}
+		} else throw "AAIExecute::least_dangerous: invalid mapType";
 	}
 }
 
@@ -2989,7 +2991,7 @@ bool AAIExecute::suitable_for_power_plant(AAISector *left, AAISector *right)
 		{
 			return ((left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current) * left->GetMapBorderDist()) 
 					< (right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current) * right->GetMapBorderDist()));  
-		}
+		} else throw "AAIExecute::suitable_for_power_plant: invalid mapType";
 	}
 }
 

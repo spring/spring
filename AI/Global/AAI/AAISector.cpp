@@ -74,7 +74,7 @@ void AAISector::SetAI(AAI *ai)
 	attacked_by_this_game.resize(categories, 0);
 	attacked_by_learned.resize(categories, 0);
 
-	lost_units.resize(MOBILE_CONSTRUCTOR-COMMANDER, 0);
+	lost_units.resize(MOBILE_CONSTRUCTOR-COMMANDER+1, 0);
 
 	stat_combat_power.resize(categories, 0);
 	mobile_combat_power.resize(categories+1, 0);

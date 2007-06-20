@@ -86,7 +86,7 @@ private:
 
 
 public:
-	AAISector **sector;			// sectors
+	vector<vector<AAISector> > sector;			// sectors
 
 	int xMapSize, yMapSize;				// x and y size of the map
 	int xSectors, ySectors;				// number of sectors
@@ -100,24 +100,25 @@ public:
 						// 3 -> water map with land connections 
 						// 4 -> "full water map
 
-	float **map_usefulness;
+//	float **map_usefulness;
+	vector<vector<float> > map_usefulness;
 
 	bool initialized;
 
-	char *buildmap;		// map of the cells in the sector; 
+	vector<char> buildmap;		// map of the cells in the sector; 
 						// 0 unoccupied, flat terrain 
 						// 1 occupied flat terrain, 
 						// 2 spaces between buildings 
 						// 3 terrain not suitable for constr.
 						// 4 water
 						// 5 occupied water
-	char *blockmap;		// number of buildings which ordered a cell to blocked
+	vector<char> blockmap;		// number of buildings which ordered a cell to blocked
 
 	list<UnitCategory> map_categories;
 	list<int> map_categories_id;
 
 	// temp for scouting
-	float *units_spotted;
+	vector<float> units_spotted;
 
 private:
 	AAI *ai;
@@ -125,6 +126,6 @@ private:
 	AAIBuildTable *bt;
 
 	// used for scouting
-	int *unitsInLos;
-	int *unitsInSector;
+	vector<int> unitsInLos;
+	vector<int> unitsInSector;
 };

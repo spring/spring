@@ -526,7 +526,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 		if(error)
 		{
-			fprintf(ai->file, "General config file % contains erroneous keyword %s\n", filename, keyword);
+			fprintf(ai->file, "General config file %s contains erroneous keyword %s\n", filename, keyword);
 			initialized = false;
 			return;
 		}

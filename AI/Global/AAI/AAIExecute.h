@@ -135,7 +135,7 @@ public:
 	float static current;
 	
 	// buildques for the factories
-	list<int> *buildques;
+	vector<list<int> > buildques;
 
 	// number of factories (both mobile and sationary)
 	int numOfFactories;
@@ -176,6 +176,6 @@ private:
 	AAIUnitTable *ut;
 
 	// stores which buildque belongs to what kind of factory
-	int *factory_table;
+	vector<int> factory_table;
 	
 };

@@ -50,7 +50,7 @@ public:
 	list<AAIAttack*> attacks;
 
 	// array stores number of combat groups per category (for SufficientAttackPowerVS(..) )
-	int *available_combat_cat;
+	vector<int> available_combat_cat;
 
 
 private:

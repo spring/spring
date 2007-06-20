@@ -25,13 +25,17 @@ AAIBrain::AAIBrain(AAI *ai)
 	srand ( time(NULL) );
 
 	max_distance = ai->map->xSectors + ai->map->ySectors - 2;
-	sectors = new list<AAISector*>[max_distance];
+//	sectors = new list<AAISector*>[max_distance];
+	sectors.resize(max_distance);
 
 	base_center = ZeroVector;
 
-	max_units_spotted = new float[bt->combat_categories];
-	attacked_by = new float[bt->combat_categories];
-	defence_power_vs = new float[bt->combat_categories];
+//	max_units_spotted = new float[bt->combat_categories];
+	max_units_spotted.resize(bt->combat_categories);
+//	attacked_by = new float[bt->combat_categories];
+	attacked_by.resize(bt->combat_categories);
+//	defence_power_vs = new float[bt->combat_categories];
+	defence_power_vs.resize(bt->combat_categories);
 
 	for(int i = 0; i < bt->combat_categories; ++i)
 	{
@@ -43,10 +47,10 @@ AAIBrain::AAIBrain(AAI *ai)
 
 AAIBrain::~AAIBrain(void)
 {
-	delete [] sectors;
-	delete [] max_units_spotted;
-	delete [] attacked_by;
-	delete [] defence_power_vs;
+//	delete [] sectors;
+//	delete [] max_units_spotted;
+//	delete [] attacked_by;
+//	delete [] defence_power_vs;
 }
 
 
@@ -140,14 +144,14 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 			{
 				if(land && sector->water_ratio < 0.35)
 				{
-					dist = sqrt( pow(sector->x - current_sector->x, 2) + pow(sector->y - current_sector->y , 2) );
+					dist = sqrt( pow((float)sector->x - current_sector->x, 2) + pow((float)sector->y - current_sector->y , 2) );
 					
 					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
 				
 				}
 				else if(water && sector->water_ratio > 0.65)
 				{
-					dist = sqrt( pow(sector->x - current_sector->x, 2) + pow(sector->y - current_sector->y , 2) );
+					dist = sqrt( pow((float)sector->x - current_sector->x, 2) + pow((float)sector->y - current_sector->y , 2) );
 
 					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
 					my_rating /= (1 + dist);
@@ -447,7 +451,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				dist = 0.1;
 
 				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); sector++)
-					dist += 3.0 * sqrt(pow( (*t)->x - (*sector)->x , 2) + pow( (*t)->y - (*sector)->y , 2));
+					dist += 3.0 * sqrt(pow((float)(*t)->x - (*sector)->x , 2) + pow((float)(*t)->y - (*sector)->y , 2));
 				
 
 				if(sectorType = LAND_SECTOR)
@@ -507,7 +511,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 	return false;
 }
 
-void AAIBrain::UpdateMaxCombatUnitsSpotted(float *units_spotted)
+void AAIBrain::UpdateMaxCombatUnitsSpotted(vector<float> &units_spotted)
 {
 	for(int i = 0; i < bt->combat_categories; ++i)
 	{
