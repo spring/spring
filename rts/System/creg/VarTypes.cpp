@@ -72,6 +72,17 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 std::string BasicType::GetName()
 {
 	switch(id) {
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+		case crSyncedSint: return "int"; //FIXME
+		case crSyncedUint: return "uint";
+		case crSyncedSshort: return "short";
+		case crSyncedUshort: return "ushort";
+		case crSyncedSchar: return "char";
+		case crSyncedUchar: return "uchar";
+		case crSyncedFloat: return "float";
+		case crSyncedDouble: return "double";
+		case crSyncedBool: return "bool";
+#endif
 		case crInt: return "int";
 		case crUInt: return "uint";
 		case crShort: return "short";
