@@ -35,7 +35,7 @@ void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS
 {
 	char buf[128];
 	sprintf(buf,"%s(0x%08x) at 0x%08x",ExceptionName(err),err,ep->ExceptionRecord->ExceptionAddress);
-	throw std::exception(buf);
+	throw content_error(buf); // FIXME: needs to be looked at, was std::exception(buf) which doesnt exist on GCC
 }
 
 void InitializeSEH()

@@ -14,12 +14,12 @@
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
 #include "creg/Serializer.h"
-#include "mmgr.h"
 #include "Game/Game.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
+#include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
 
