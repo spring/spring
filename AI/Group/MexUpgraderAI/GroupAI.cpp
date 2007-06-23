@@ -8,17 +8,46 @@
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
+#include "creg/STL_Map.h"
+#include "creg/STL_Set.h"
+#include "creg/Serializer.h"
+#include "creg/cregex.h"
 
 #define CMD_CHANGE_MODE 	160
 #define CMD_AREA_UPGRADE 	165
 #define CMD_DUMMY			170
 
+CR_BIND(CGroupAI, );
+
+CR_REG_METADATA(CGroupAI,(
+				CR_ENUM_MEMBER(mode),
+				CR_MEMBER(myUnits),
+				CR_MEMBER(lockedMexxes),
+				CR_MEMBER(maxMetal),
+				CR_MEMBER(mohoBuilderId),
+				CR_MEMBER(unitsChanged),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(CGroupAI::UnitInfo, );
+
+CR_REG_METADATA_SUB(CGroupAI, UnitInfo,(
+					CR_MEMBER(maxExtractsMetal),
+					CR_MEMBER(wantedMohoId),
+					CR_MEMBER(wantedMohoName),
+					CR_MEMBER(nearestMex),
+					CR_MEMBER(wantedBuildSite),
+					CR_ENUM_MEMBER(status)
+					));
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+int CGroupAI::Instances=0;
 
 CGroupAI::CGroupAI()
 {
+	if (!Instances++) creg::System::InitializeClasses();
 	mode			= manual;
 	maxMetal		= 0;
 	mohoBuilderId	= -1;
@@ -38,11 +67,17 @@ CGroupAI::CGroupAI()
 
 CGroupAI::~CGroupAI()
 {
+	if (!--Instances) creg::System::FreeClasses();
 	for(map<int,UnitInfo*>::iterator ui=myUnits.begin();ui!=myUnits.end();++ui)
 		delete ui->second;
 	myUnits.clear();
 	lockedMexxes.clear();
 	commandQue.clear();
+}
+
+void CGroupAI::PostLoad()
+{
+	myTeam = aicb->GetMyTeam();
 }
 
 void CGroupAI::Reset()
@@ -444,4 +479,18 @@ void CGroupAI::DrawCommands()
 			aicb->LineDrawerFinishPath();
 		}
 	}
+}
+
+CREX_REG_STATE_COLLECTOR(MexUpgraderAI,CGroupAI);
+
+void CGroupAI::Load(IGroupAICallback* callback,std::istream *ifs)
+{
+	this->callback=callback;
+	aicb=callback->GetAICallback();
+	CREX_SC_LOAD(MexUpgraderAI,ifs);
+}
+
+void CGroupAI::Save(std::ostream *ofs)
+{
+	CREX_SC_SAVE(MexUpgraderAI,ofs);
 }

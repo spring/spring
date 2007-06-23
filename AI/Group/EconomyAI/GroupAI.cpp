@@ -8,10 +8,41 @@
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
+#include "creg/STL_Deque.h"
+#include "creg/STL_Map.h"
+#include "creg/Serializer.h"
+#include "creg/cregex.h"
 
 #define CMD_SET_AREA	 	150
 #define CMD_START			160
 #define CMD_SET_PERCENTAGE	170
+
+CR_BIND(CGroupAI, );
+
+CR_REG_METADATA(CGroupAI,(
+				CR_MEMBER(idealME),
+				CR_MEMBER(currentME),
+
+				CR_MEMBER(myUnits),
+				CR_MEMBER(currentBuilder),
+				CR_MEMBER(totalBuildSpeed),
+
+				CR_MEMBER(helper),
+				//CR_MEMBER(boHandler),
+
+				CR_MEMBER(unitRemoved),
+
+				CR_MEMBER(newBuildTaskNeeded),
+				CR_MEMBER(newBuildTaskFrame),
+
+				//CR_MEMBER(initialized),
+
+				CR_MEMBER(maxResourcePercentage),
+				CR_MEMBER(totalMMenergyUpkeep),
+				CR_POSTLOAD(PostLoad)
+				));
+
+int Instances = 0;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -26,6 +57,7 @@ CGroupAI::CGroupAI()
 	newBuildTaskFrame = 0;
 	maxResourcePercentage = 1.0f;
 	initialized		= false;
+	if (!(Instances++)) creg::System::InitializeClasses ();
 }
 
 CGroupAI::~CGroupAI()
@@ -36,6 +68,21 @@ CGroupAI::~CGroupAI()
 		delete helper;
 		delete boHandler;
 	}
+	if (!(--Instances)) creg::System::FreeClasses ();
+}
+
+void CGroupAI::PostLoad()
+{
+	helper->aicb = aicb;
+	helper->PostLoad();
+	boHandler	= new CBoHandler(aicb,helper->mmkrME,helper->metalMap->AverageMetalPerSpot,helper->maxPartitionRadius);
+
+	for (map<int,float>::iterator i=myUnits.begin();i!=myUnits.end();i++) {
+		const UnitDef* ud=aicb->GetUnitDef(i->first);
+		boHandler->AddBuildOptions(ud);
+	}
+
+	initialized = true;
 }
 
 void CGroupAI::InitAi(IGroupAICallback* callback)
@@ -43,7 +90,7 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	this->callback=callback;
 	aicb=callback->GetAICallback();
 	
-	helper		= new CHelper(aicb);
+	helper		= new CHelper(aicb,this);
 	boHandler	= new CBoHandler(aicb,helper->mmkrME,helper->metalMap->AverageMetalPerSpot,helper->maxPartitionRadius);
 
 	initialized = true;
@@ -296,7 +343,7 @@ void CGroupAI::CalculateIdealME()
 
 	set<string> currentBO;
 
-	int size = aicb->GetFriendlyUnits(helper->friendlyUnits);
+	int size = aicb->GetFriendlyUnits(&helper->friendlyUnits.front());
 	for(int i=0;i<size;i++)
 	{
 		if(helper->myTeam != aicb->GetUnitTeam(helper->friendlyUnits[i]))
@@ -330,7 +377,7 @@ void CGroupAI::CalculateCurrentME()
 	float totalMetalUpkeep	= 0.0f;
 	totalMMenergyUpkeep = 0.0f;
 	// parse through every unit to get the total energy and metal upkeep
-	int size = aicb->GetFriendlyUnits(helper->friendlyUnits);
+	int size = aicb->GetFriendlyUnits(&helper->friendlyUnits.front());
 	for(int i=0;i<size;i++)
 	{
 		int unit = helper->friendlyUnits[i];
@@ -378,4 +425,18 @@ bool CGroupAI::ValidCurrentBuilder()
 		return true;
 	else
 		return false;
+}
+
+CREX_REG_STATE_COLLECTOR(EconomyAI,CGroupAI);
+
+void CGroupAI::Load(IGroupAICallback* callback,std::istream *ifs)
+{
+	this->callback=callback;
+	aicb=callback->GetAICallback();
+	CREX_SC_LOAD(EconomyAI,ifs);
+}
+
+void CGroupAI::Save(std::ostream *ofs)
+{
+	CREX_SC_SAVE(EconomyAI,ofs);
 }

@@ -1,3 +1,5 @@
+#ifndef METAL_MAP_H
+#define METAL_MAP_H
 /*
 
 MetalMap Class version 5
@@ -46,3 +48,4 @@ private:
 	IAICallback* aicb;
 	bool verbose;
 };
+#endif

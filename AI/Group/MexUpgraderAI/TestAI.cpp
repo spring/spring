@@ -15,6 +15,11 @@ DLL_EXPORT const char** GetAiNameList()
 	return aiNameList;
 }
 
+DLL_EXPORT bool IsLoadSupported(unsigned aiNumber)
+{
+	return true;
+}
+
 DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 {
 	if(unitDef->buildSpeed==0 || !unitDef->canmove)
