@@ -30,19 +30,18 @@ static const char *ExceptionName(DWORD exceptionCode)
 	}
 	return "Unknown exception";
 }
-
+#ifdef _MSC_VER
 void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS* ep)
 {
 	char buf[128];
 	sprintf(buf,"%s(0x%08x) at 0x%08x",ExceptionName(err),err,ep->ExceptionRecord->ExceptionAddress);
 	throw content_error(buf); // FIXME: needs to be looked at, was std::exception(buf) which doesnt exist on GCC
 }
+#endif
 
 void InitializeSEH()
 {
-	#ifdef __MINGW32__
-		#warning "FIXME: _set_se_translator function missing"
-	#else
-		_set_se_translator(se_translator_function);
-	#endif
+#ifdef _MSC_VER
+	_set_se_translator(se_translator_function);
+#endif
 }
