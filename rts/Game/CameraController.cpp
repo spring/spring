@@ -528,9 +528,9 @@ void CRotOverheadController::ScreenEdgeMove(float3 move)
 void CRotOverheadController::MouseWheelMove(float move)
 {
 	//float gheight=ground->GetHeight(pos.x,pos.z);
-	float height=pos.y-1000/*-gheight*/;
+	float height=pos.y/*-gheight*/;
 	height*=1+move*mouseScale;
-	pos.y=height+1000/*+gheight*/;
+	pos.y=height/*+gheight*/;
 }
 
 float3 CRotOverheadController::GetPos()
@@ -650,7 +650,7 @@ float3 COverviewController::GetPos()
 	pos.z = gs->mapy * 4.0f;
 	const float aspect = (gu->viewSizeX / gu->viewSizeY);
 	const float height = max(pos.x / aspect, pos.z);
-	pos.y = 1000/*ground->GetHeight(pos.x, pos.z)*/ + (2.5f * height);
+	pos.y = 0/*ground->GetHeight(pos.x, pos.z)*/ + (2.5f * height);
 	return pos;
 }
 
