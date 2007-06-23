@@ -124,7 +124,7 @@ def get_globalAI_source(env, which):
 
 
 def get_groupAI_source(env, which):
-	return get_AI_source(env, 'AI/Group', which)
+	return get_AI_source(env, 'AI/Group', which) + get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
 
 
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
