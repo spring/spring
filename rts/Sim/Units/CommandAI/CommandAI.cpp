@@ -59,9 +59,9 @@ CR_REG_METADATA(CCommandAI, (
 				CR_MEMBER(repeatOrders),
 				CR_MEMBER(lastSelectedCommandPage),
 				CR_MEMBER(unimportantMove),
-				CR_MEMBER(targetLostTimer)
+				CR_MEMBER(targetLostTimer),
+				CR_POSTLOAD(PostLoad)
 				));
-
 CCommandAI::CCommandAI()
 :	lastUserCommand(-1000),
 	orderTarget(0),
@@ -309,6 +309,7 @@ CCommandAI::~CCommandAI()
 
 void CCommandAI::PostLoad()
 {
+	selected=false;//HACK: selected list does not serialized
 }
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()
