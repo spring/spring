@@ -1079,12 +1079,25 @@ int Run(int argc, char *argv[])
 	}
 	catch (const std::exception& e) {
 		SDL_Quit();
-		logOutput.RemoveAllSubscribers();
 	#ifdef _MSC_VER
 		logOutput.Print ("Fatal error: %s\n",  e.what());
+		logOutput.RemoveAllSubscribers();
 		throw; // let the error handler catch it
 	#else
+		logOutput.RemoveAllSubscribers();
 		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
+		return -1;
+	#endif
+	}
+	catch (const char* e) {
+		SDL_Quit();
+	#ifdef _MSC_VER
+		logOutput.Print ("Fatal error: %s\n",  e);
+		logOutput.RemoveAllSubscribers();
+		throw; // let the error handler catch it
+	#else
+		logOutput.RemoveAllSubscribers();
+		handleerror(NULL, e, "Fatal Error", MBF_OK | MBF_EXCL);
 		return -1;
 	#endif
 	}
