@@ -12,6 +12,7 @@ Classes for serialization of registrated class instances
 #include <assert.h>
 #include <stdexcept>
 #include <map>
+#include <string.h>
 //#include "LogOutput.h"
 
 using namespace std;
