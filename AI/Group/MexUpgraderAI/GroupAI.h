@@ -22,10 +22,13 @@ using namespace std;
 class CGroupAI : public IGroupAI
 {
 public:
+	CR_DECLARE(CGroupAI);
+	CR_DECLARE_SUB(UnitInfo);
 	CGroupAI();
 	virtual ~CGroupAI();
 
 	virtual void InitAi(IGroupAICallback* callback);
+	void PostLoad();
 
 	virtual bool AddUnit(int unit);
 	virtual void RemoveUnit(int unit);
@@ -66,6 +69,7 @@ public:
 	};
 
 	struct UnitInfo{
+		CR_DECLARE(UnitInfo);
 		float maxExtractsMetal;			// the maximum amount of metal a unit buildable by othis unit can produce
 		int wantedMohoId;				// build command ID of the building above
 		string wantedMohoName;			// name of the building above
@@ -87,6 +91,9 @@ public:
 	int* friendlyUnits;
 	float drawColorPath[4];
 	float drawColorCircle[4];
+	virtual void Load(IGroupAICallback* callback,std::istream *ifs);
+	virtual void Save(std::ostream *ifs);
+	static int Instances;
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)

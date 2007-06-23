@@ -23,6 +23,11 @@ DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 		return true;
 }
 
+DLL_EXPORT bool IsLoadSupported(unsigned aiNumber)
+{
+	return true;
+}
+
 DLL_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
 {
 	CGroupAI* ai=new CGroupAI();

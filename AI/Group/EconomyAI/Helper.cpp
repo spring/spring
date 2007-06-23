@@ -2,23 +2,65 @@
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Helper.h"
+#include "GroupAI.h"
 #include <stdarg.h>
 
-CHelper::CHelper(IAICallback* aicb)
+CR_BIND(CHelper, (NULL,NULL));
+
+CR_REG_METADATA(CHelper,(
+				//errorPos
+				//metalMap
+				//friendlyUnits
+				//myTeam
+				//extractorRadius
+				CR_MEMBER(mmkrME),
+				CR_MEMBER(maxPartitionRadius),
+				CR_MEMBER(locations),
+				CR_MEMBER(metalMakerAIid),
+				//geoDef
+				//drawColor
+				CR_MEMBER(owner)
+				//CR_POSTLOAD(PostLoad)//Will be called from CGroupAI::PostLoad
+				));
+
+CR_BIND(CHelper::partition, );
+
+CR_REG_METADATA_SUB(CHelper, partition,(
+					CR_MEMBER(pos),
+					CR_MEMBER(name),
+					CR_MEMBER(taken),
+					CR_MEMBER(empty)
+					));
+
+CR_BIND(CHelper::location, );
+
+CR_REG_METADATA_SUB(CHelper, location,(
+					CR_MEMBER(centerPos),
+					CR_MEMBER(radius),
+					CR_MEMBER(partitionRadius),
+					CR_MEMBER(numPartitions),
+					CR_MEMBER(squarePartitions),
+					CR_MEMBER(mexSpots),
+					CR_MEMBER(partitions)
+					));
+
+CHelper::CHelper(IAICallback* aicb,CGroupAI *owner)
 {
 	this->aicb = aicb;
+	this->owner = owner;
 
 	errorPos		= float3(-1.0f,0.0f,0.0f);
-	friendlyUnits	= new int[MAX_UNITS];
-	extractorRadius	= aicb->GetExtractorRadius();
-	myTeam			= aicb->GetMyTeam();
+//	friendlyUnits	= new int[MAX_UNITS];
+	friendlyUnits.resize(MAX_UNITS);
+	extractorRadius	= aicb?aicb->GetExtractorRadius():0;
+	myTeam			= aicb?aicb->GetMyTeam():-1;
 	metalMakerAIid	= 0;
 	maxPartitionRadius = 100;
 	drawColor[0] = 1.0f;
 	drawColor[1] = 1.0f;
 	drawColor[2] = 1.0f;
 	drawColor[3] = 0.7f;
-
+	if (!aicb) return;
 	metalMap = new CMetalMap(aicb,false);
 	metalMap->Init();
 
@@ -26,7 +68,7 @@ CHelper::CHelper(IAICallback* aicb)
 	mmkrME	= 0;
 	geoDef	= 0;
 	map<string,const UnitDef*> targetBO;
-	int size = aicb->GetFriendlyUnits(friendlyUnits);
+	int size = aicb->GetFriendlyUnits(&(friendlyUnits.front()));
 	for(int i=0;i<size;i++)
 	{
 		if(myTeam != aicb->GetUnitTeam(friendlyUnits[i]))
@@ -59,6 +101,43 @@ CHelper::~CHelper()
 	}
 	locations.clear();
 	delete metalMap;
+}
+
+void CHelper::PostLoad()
+{
+	extractorRadius	= aicb->GetExtractorRadius();
+	myTeam			= aicb->GetMyTeam();
+
+	metalMap = new CMetalMap(aicb,false);
+	metalMap->Init();
+
+	// get the best M / E ratio for metalmakers and get a unitdef for a geo
+	mmkrME	= 0;
+	geoDef	= 0;
+	map<string,const UnitDef*> targetBO;
+	int size = aicb->GetFriendlyUnits(&(friendlyUnits.front()));
+	for(int i=0;i<size;i++)
+	{
+		if(myTeam != aicb->GetUnitTeam(friendlyUnits[i]))
+			continue;
+		ParseBuildOptions(targetBO,aicb->GetUnitDef(friendlyUnits[i]),true);
+	}
+	for(map<string,const UnitDef*>::iterator boi=targetBO.begin();boi!=targetBO.end();++boi)
+	{
+		const UnitDef* ud = boi->second;
+		if(ud->isMetalMaker)
+		{
+			float tempMmkrME = ud->makesMetal / max(1.0f,ud->energyUpkeep);
+			if(tempMmkrME > mmkrME)
+				mmkrME = tempMmkrME;
+		}
+		if(ud->needGeo && geoDef==0)
+		{
+			geoDef = ud;
+		}
+	}
+	if(mmkrME==0)
+		mmkrME = 1/100;
 }
 
 pair<int,int> CHelper::BuildNameToId(string name, int unit)
@@ -184,7 +263,7 @@ float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, float distance
 
 bool CHelper::IsMetalSpotAvailable(float3 spot,float extraction)
 {
-	int size = aicb->GetFriendlyUnits(friendlyUnits,spot,extractorRadius);
+	int size = aicb->GetFriendlyUnits(&friendlyUnits.front(),spot,extractorRadius);
 	for(int i=0;i<size;i++)
 	{
 		const UnitDef* ud=aicb->GetUnitDef(friendlyUnits[i]);
@@ -289,7 +368,7 @@ int CHelper::FindMetalSpots(float3 pos, float radius, vector<float3>* mexSpots)
 }
 void CHelper::AssignMetalMakerAI()
 {
-	int size = aicb->GetFriendlyUnits(friendlyUnits);
+	int size = aicb->GetFriendlyUnits(&friendlyUnits.front());
 	for(int i=0;i<size;i++)
 	{
 		int unit = friendlyUnits[i];
@@ -308,9 +387,9 @@ void CHelper::AssignMetalMakerAI()
 				}
 			}
 #ifdef _WIN32
-			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.dll",99);
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.dll",99);
 #else
-			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.so",99);
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.so",99);
 #endif
 			aicb->AddUnitToGroup(unit,metalMakerAIid);
 		}

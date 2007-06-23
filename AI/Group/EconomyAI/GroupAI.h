@@ -13,6 +13,7 @@
 #include "float3.h"
 #include "Helper.h"
 #include "BoHandler.h"
+#include "creg/ISerializer.h"
 
 struct UnitDef;
 class IGroupAICallback;
@@ -25,8 +26,10 @@ using namespace std;
 class CGroupAI : public IGroupAI
 {
 public:
+	CR_DECLARE(CGroupAI);
 	CGroupAI();
 	virtual ~CGroupAI();
+	void PostLoad();
 
 	virtual void InitAi(IGroupAICallback* callback);
 
@@ -72,6 +75,8 @@ public:
 
 	float maxResourcePercentage;
 	float totalMMenergyUpkeep;
+	virtual void Load(IGroupAICallback* callback,std::istream *ifs);
+	virtual void Save(std::ostream *ofs);
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
