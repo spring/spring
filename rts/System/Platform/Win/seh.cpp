@@ -40,5 +40,9 @@ void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS
 
 void InitializeSEH()
 {
-	_set_se_translator(se_translator_function);
+	#ifdef __MINGW32__
+		#warning "FIXME: _set_se_translator function missing"
+	#else
+		_set_se_translator(se_translator_function);
+	#endif
 }
