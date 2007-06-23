@@ -97,7 +97,7 @@ bool CGameSetup::Init(char* buf, int size)
 	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
 
 	demoName = file.SGetValueDef("","GAME\\Demofile");
-	if (!demoName.empty()) {
+	if (!demoName.empty() && scriptName.find("Load ")==std::string::npos) {
 		hostDemo = true;
 	}
 	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
