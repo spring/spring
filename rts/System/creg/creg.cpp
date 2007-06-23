@@ -5,6 +5,7 @@ Copyright 2005 Jelmer Cnossen
 #include "StdAfx.h"
 #include "creg.h"
 #include <map>
+#include <string.h>
 
 using namespace creg;
 using namespace std;
