@@ -6,6 +6,29 @@ static Command threeParamsCommand;
 static Command fourParamsCommand;
 static int MapWidthTest;
 static int MapHeightTest;
+
+CR_BIND(CUNIT, )
+
+CR_REG_METADATA(CUNIT,(
+				CR_MEMBER(myid),
+				CR_MEMBER(groupID),
+				CR_MEMBER(stuckCounter),
+				CR_MEMBER(attemptedUnstuck),
+				CR_MEMBER(maneuverCounter),
+				CR_MEMBER(ai),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CUNIT::CUNIT()
+{
+	this->ai=0;
+	//added for attackgroup usage
+	this->groupID = 0;
+	this->stuckCounter = 0;
+	this->attemptedUnstuck = false;
+	this->maneuverCounter = 0;
+}
+
 CUNIT::CUNIT(AIClasses *ai)
 {
 	this->ai=ai;
@@ -37,6 +60,30 @@ CUNIT::CUNIT(AIClasses *ai)
 }	
 CUNIT::~CUNIT()
 {
+}
+
+void CUNIT::PostLoad()
+{
+	//static Command oneParamsCommand;
+	//static Command threeParamsCommand;
+	//static Command fourParamsCommand;
+	if(oneParamsCommand.params.size() == 0) // Dont assign the static commands more than once.
+	{
+		MapWidthTest = ai->cb->GetMapWidth() * 8;
+		MapHeightTest = ai->cb->GetMapHeight() * 8;
+
+		oneParamsCommand.options = 0;
+		oneParamsCommand.params.push_back(0);
+		threeParamsCommand.options = 0;
+		threeParamsCommand.params.push_back(0);
+		threeParamsCommand.params.push_back(0);
+		threeParamsCommand.params.push_back(0);
+		fourParamsCommand.options = 0;
+		fourParamsCommand.params.push_back(0);
+		fourParamsCommand.params.push_back(0);
+		fourParamsCommand.params.push_back(0);
+		fourParamsCommand.params.push_back(0);
+	}
 }
 
 const UnitDef* CUNIT::def()
@@ -267,9 +314,10 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef,float3 targetpos,int separa
 	buildpos.y +=20;
 	if(buildpos.x != -1){
 		L("Site found, building");
-		Build(buildpos, unitdef, queue);
-		L("command sent");
-        return true;
+		if (Build(buildpos, unitdef, queue)) {
+			L("command sent");
+			return true;
+		}
 	}
 	else
 	{
@@ -345,10 +393,11 @@ bool CUNIT::ReclaimBest(bool metal, float radius)
 		}
 	}
 	if(bestscore > 0){
-		Reclaim(bestfeature + MAX_UNITS);
+		if (Reclaim(bestfeature + MAX_UNITS)) {
 		//Reclaim(ai->cb->GetFeaturePos(bestfeature),10);
-		//ai->uh->TaskPlanCreate(myid,ai->cb->GetFeaturePos(features[bestfeature]),ERRORDEF);
-		return true;
+			//ai->uh->TaskPlanCreate(myid,ai->cb->GetFeaturePos(features[bestfeature]),ERRORDEF);
+			return true;
+		}
 	}
 	return false;
 }
@@ -526,6 +575,7 @@ Command* CUNIT::MakeIntCommand(int id,int number){
 //---------|Target-based Abilities|--------//
 bool CUNIT::Attack(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canAttack) return false;
 	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(!mycommands->empty())
 	{
@@ -543,6 +593,7 @@ bool CUNIT::Attack(int target){
 }
 bool CUNIT::Capture(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canCapture) return false;
 	Command* c = MakeIntCommand(CMD_CAPTURE,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -552,6 +603,7 @@ bool CUNIT::Capture(int target){
 }
 bool CUNIT::Guard(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canGuard) return false;
 	Command* c = MakeIntCommand(CMD_GUARD,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -561,6 +613,7 @@ bool CUNIT::Guard(int target){
 }
 bool CUNIT::Load(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->transportCapacity) return false;
 	Command* c = MakeIntCommand(CMD_LOAD_UNITS,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -570,6 +623,7 @@ bool CUNIT::Load(int target){
 }
 bool CUNIT::Reclaim(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canReclaim) return false;
 	Command* c = MakeIntCommand(CMD_RECLAIM,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -580,6 +634,7 @@ bool CUNIT::Reclaim(int target){
 }
 bool CUNIT::Repair(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canRepair) return false;
 	Command* c = MakeIntCommand(CMD_REPAIR,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -589,6 +644,7 @@ bool CUNIT::Repair(int target){
 }
 bool CUNIT::Ressurect(int target){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canResurrect) return false;
 	Command* c = MakeIntCommand(CMD_RESURRECT,target);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -602,6 +658,7 @@ bool CUNIT::Ressurect(int target){
 bool CUNIT::Build(float3 pos, const UnitDef* unit,bool queue)
 {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canBuild) return false;
 	Command* c = MakePosCommand(-unit->id, &pos);
 	if(c->id != 0){
 		if(queue){
@@ -615,6 +672,7 @@ bool CUNIT::Build(float3 pos, const UnitDef* unit,bool queue)
 }
 bool CUNIT::Move(float3 pos){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canmove) return false;
 	Command* c = MakePosCommand(CMD_MOVE, &pos);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -625,6 +683,7 @@ bool CUNIT::Move(float3 pos){
 //added
 bool CUNIT::MoveShift(float3 pos){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canmove) return false;
 	Command* c = MakePosCommand(CMD_MOVE, &pos);
 	if(c->id != 0){
 		c->options|=SHIFT_KEY;
@@ -636,6 +695,7 @@ bool CUNIT::MoveShift(float3 pos){
 
 bool CUNIT::MoveTwice(const float3* pos1, const float3* pos2){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canmove) return false;
 	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(myid);
 	if(mycommands->empty())
 	{
@@ -695,6 +755,7 @@ bool CUNIT::MoveTwice(const float3* pos1, const float3* pos2){
 
 bool CUNIT::Patrol(float3 pos){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canPatrol) return false;
 	Command* c = MakePosCommand(CMD_PATROL, &pos);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -705,6 +766,7 @@ bool CUNIT::Patrol(float3 pos){
 
 bool CUNIT::PatrolShift(float3 pos){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canPatrol) return false;
 	Command* c = MakePosCommand(CMD_PATROL, &pos);
 	if(c->id != 0){
 		c->options|=SHIFT_KEY;
@@ -719,6 +781,7 @@ bool CUNIT::PatrolShift(float3 pos){
 //-----------|Radius Abilities|------------//
 bool CUNIT::Attack(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canAttack) return false;
 	Command* c = MakePosCommand(CMD_ATTACK, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -728,6 +791,7 @@ bool CUNIT::Attack(float3 pos, float radius){
 }
 bool CUNIT::Ressurect(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canResurrect) return false;
 	Command* c = MakePosCommand(CMD_RESURRECT, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -737,6 +801,7 @@ bool CUNIT::Ressurect(float3 pos, float radius){
 }
 bool CUNIT::Reclaim(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canReclaim) return false;
 	Command* c = MakePosCommand(CMD_RECLAIM, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -747,6 +812,7 @@ bool CUNIT::Reclaim(float3 pos, float radius){
 }
 bool CUNIT::Capture(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canCapture) return false;
 	Command* c = MakePosCommand(CMD_CAPTURE, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -756,6 +822,7 @@ bool CUNIT::Capture(float3 pos, float radius){
 }
 bool CUNIT::Restore(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canRestore) return false;
 	Command* c = MakePosCommand(CMD_RESTORE, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -765,6 +832,7 @@ bool CUNIT::Restore(float3 pos, float radius){
 }
 bool CUNIT::Load(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->transportCapacity) return false;
 	Command* c = MakePosCommand(CMD_LOAD_UNITS, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -774,6 +842,7 @@ bool CUNIT::Load(float3 pos, float radius){
 }
 bool CUNIT::Unload(float3 pos, float radius){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->transportCapacity) return false;
 	Command* c = MakePosCommand(CMD_UNLOAD_UNITS, &pos,radius);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -787,6 +856,7 @@ bool CUNIT::Unload(float3 pos, float radius){
 
 bool CUNIT::Cloaking(bool on){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->canCloak) return false;
 	Command* c = MakeIntCommand(CMD_CLOAK,on);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);
@@ -796,6 +866,7 @@ bool CUNIT::Cloaking(bool on){
 }
 bool CUNIT::OnOff(bool on){
 	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!ai->cb->GetUnitDef(myid)->onoffable) return false;
 	Command* c = MakeIntCommand(CMD_ONOFF,on);
 	if(c->id != 0){
 		ai->cb->GiveOrder(myid, c);

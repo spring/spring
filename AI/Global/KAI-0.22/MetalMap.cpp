@@ -7,7 +7,7 @@ CMetalMap::CMetalMap(AIClasses* ai) {
 	// from 0-255, the minimum percentage of metal a spot needs to have
 	// from the maximum to be saved to prevent crappier spots in between taken spaces
 	// (they are still perfectly valid and will generate metal mind you!)
-	MinMetalForSpot = 0;
+	MinMetalForSpot = 64;
 	// if more spots than that are found the map is considered a metalmap, tweak this as needed
 	MaxSpots = 5000;
 
@@ -70,11 +70,11 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 				float spotscore = VectoredSpots[i].y / distance / (mythreat + 10);
 
 				bool b1 = Tempscore < spotscore;
-				bool b2 = ai -> cheat -> GetEnemyUnits(temparray, VectoredSpots[i],XtractorRadius);
+				bool b2 = ai -> cheat -> GetEnemyUnits(temparray, VectoredSpots[i],XtractorRadius)==0;
 				bool b3 = mythreat <= ai -> tm -> GetAverageThreat() * 1.3;
-				bool b4 = ai -> uh -> TaskPlanExist(spotcoords, extractor);
+				bool b4 = !ai -> uh -> TaskPlanExist(spotcoords, extractor);
 
-				if (b1 && !b2 && b3 && !b4) {
+				if (b1 && b2 && b3 && b4) {
 					Tempscore = spotscore;
 					bestspot = spotcoords;
 					bestspot.y = VectoredSpots[i].y;
@@ -105,7 +105,7 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 	if (VectoredSpots.size()) {
 		int* temparray = new int [MAXUNITS];
 
-		for (list<int>::iterator i = ai -> uh -> AllUnitsByCat[CAT_MEX] -> begin(); i != ai -> uh -> AllUnitsByCat[CAT_MEX] -> end(); i++) {
+		for (list<int>::iterator i = ai -> uh -> AllUnitsByCat[CAT_MEX] . begin(); i != ai -> uh -> AllUnitsByCat[CAT_MEX] . end(); i++) {
 			spotcoords = ai -> MyUnits[*i] -> pos();
 
 			if (spotcoords.x != -1) {

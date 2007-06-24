@@ -1,4 +1,9 @@
 #include "AttackHandler.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Map.h"
+
+#undef assert
+#define assert(a) if (!(a)) throw "Assertion " #a "faild";
 
 #define K_MEANS_ELEVATION 40
 #define IDLE_GROUP_ID 0
@@ -13,21 +18,69 @@
 #define ATTACK_MAX_THREAT_DIFFERENCE 0.65f
 #define ATTACKED_AREA_RADIUS  600
 
+CR_BIND(CAttackHandler ,(NULL))
+
+CR_REG_METADATA(CAttackHandler,(
+				CR_MEMBER(ai),
+				CR_MEMBER(units),
+				CR_MEMBER(stuckUnits),
+				CR_MEMBER(airUnits),
+				CR_MEMBER(airIsAttacking),
+				CR_MEMBER(airPatrolOrdersGiven),
+				CR_MEMBER(airTarget),
+				CR_MEMBER(newGroupID),
+				CR_MEMBER(attackGroups),
+				CR_MEMBER(unitArray),
+				CR_MEMBER(kMeansBase),
+				CR_MEMBER(kMeansK),
+				CR_MEMBER(kMeansEnemyBase),
+				CR_MEMBER(kMeansEnemyK),
+				CR_POSTLOAD(PostLoad)
+				));
+
 
 CAttackHandler::CAttackHandler(AIClasses* ai) {
 	this -> ai = ai;
 
-	// test: setting a position to the middle of the map
-	float mapWidth = ai -> cb -> GetMapWidth() * 8.0f;
-	float mapHeight = ai -> cb -> GetMapHeight() * 8.0f;
+	if (ai) {
+		// test: setting a position to the middle of the map
+		float mapWidth = ai -> cb -> GetMapWidth() * 8.0f;
+		float mapHeight = ai -> cb -> GetMapHeight() * 8.0f;
 
-	newGroupID = GROUND_GROUP_ID_START + GROUND_GROUP_ID_START * (ai -> cb -> GetMyTeam());
+		newGroupID = GROUND_GROUP_ID_START + GROUND_GROUP_ID_START * (ai -> cb -> GetMyTeam());
 
-	this -> kMeansK = 1;
-	this -> kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
-	this -> kMeansEnemyK = 1;
-	this -> kMeansEnemyBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
+		this -> kMeansK = 1;
+		this -> kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
+		this -> kMeansEnemyK = 1;
+		this -> kMeansEnemyBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
 
+		// timers
+		this -> ah_timer_totalTime = ai -> math -> GetNewTimerGroupNumber("CAttackHandler and CAttackGroup");
+		this -> ah_timer_totalTimeMinusPather = ai -> math -> GetNewTimerGroupNumber("CAttackHandler and CAttackGroup, everything except pather calls");
+		this -> ah_timer_MicroUpdate = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::MicroUpdate()");
+		this -> ah_timer_Defend = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::Defend()");
+		this -> ah_timer_Flee = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::Flee()");
+		this -> ah_timer_MoveOrderUpdate = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::MoveOrderUpdate()");
+		this -> ah_timer_NeedsNewTarget = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::NeedsNewTarget()");
+
+		UpdateKMeans();
+	}
+	airIsAttacking = false;
+	airPatrolOrdersGiven = false;
+	airTarget = -1;
+
+	this -> debug = true;
+	this -> debugDraw = false;
+
+//	if (debug)
+//		L("constructor of CAttackHandler");
+}
+
+CAttackHandler::~CAttackHandler() {
+}
+
+void CAttackHandler::PostLoad()
+{
 	// timers
 	this -> ah_timer_totalTime = ai -> math -> GetNewTimerGroupNumber("CAttackHandler and CAttackGroup");
 	this -> ah_timer_totalTimeMinusPather = ai -> math -> GetNewTimerGroupNumber("CAttackHandler and CAttackGroup, everything except pather calls");
@@ -36,20 +89,6 @@ CAttackHandler::CAttackHandler(AIClasses* ai) {
 	this -> ah_timer_Flee = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::Flee()");
 	this -> ah_timer_MoveOrderUpdate = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::MoveOrderUpdate()");
 	this -> ah_timer_NeedsNewTarget = ai -> math -> GetNewTimerGroupNumber("CAttackGroup::NeedsNewTarget()");
-
-	UpdateKMeans();
-	airIsAttacking = false;
-	airPatrolOrdersGiven = false;
-	airTarget = -1;
-
-	this -> debug = false;
-	this -> debugDraw = false;
-
-	if (debug)
-		L("constructor of CAttackHandler");
-}
-
-CAttackHandler::~CAttackHandler() {
 }
 
 void CAttackHandler::AddUnit(int unitID) {
@@ -156,7 +195,7 @@ vector<float3>* CAttackHandler::GetKMeansEnemyBase()
 bool CAttackHandler::CanTravelToBase(float3 pos) //TODO add movetype
 {
 	ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTime);
-	ai -> pather -> micropather -> SetMapData(ai -> pather -> canMoveIntMaskArray,ai -> tm -> ThreatArray,ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
+	ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
 	bool res = ai -> pather -> PathExistsToAny(pos, *this -> GetKMeansBase());
 	ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTime);
 	return res;
@@ -166,7 +205,7 @@ bool CAttackHandler::CanTravelToBase(float3 pos) //TODO add movetype
 bool CAttackHandler::CanTravelToEnemyBase(float3 pos) //TODO add movetype
 {
 	ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTime);
-	ai -> pather -> micropather -> SetMapData(ai -> pather -> canMoveIntMaskArray,ai -> tm -> ThreatArray,ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
+	ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
    	bool res = ai -> pather -> PathExistsToAny(pos, *this -> GetKMeansEnemyBase());
 	if (debugDraw) {
 		AIHCAddMapPoint amp;
@@ -229,7 +268,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert (subset.size() > 0);
 	if (whichPath+1 < (int)subset.size() && subset[whichPath].distance2D(subset[whichPath+1]) > KMEANS_MINIMUM_LINE_LENGTH) {
         vector<float3> posPath;
-		ai -> pather -> micropather -> SetMapData(ai -> pather -> canMoveIntMaskArray,ai -> tm -> ThreatArray,ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
+		ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
 		float cost = ai -> pather -> PathToPos(&posPath, subset[whichPath], subset[whichPath+1]);
 		float3 res;
 		if (cost > 0) {
@@ -441,7 +480,7 @@ void CAttackHandler::UpdateKMeans() {
 
 bool CAttackHandler::UnitGroundAttackFilter(int unit) {
 	CUNIT u = *ai -> MyUnits[unit];
-	bool result = u.def() != NULL && u.def() -> canmove && u.category() == CAT_G_ATTACK;
+	bool result = u.def() != NULL && u.def() -> canmove && (u.category() == CAT_ATTACK || u.category() == CAT_ARTILLERY || u.category() == CAT_ASSAULT);
 	return result;
 }
 
@@ -612,7 +651,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		float myGroupDPS = group_in -> DPS();		
 
 ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
-		ai -> pather -> micropather -> SetMapData(ai -> pather -> canMoveIntMaskArray,ai -> tm -> ThreatArray,ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, group_in -> GetWorstMoveType());
+		ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, group_in -> GetWorstMoveType());
 
 ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
 		if (pathToTarget.size() > 2) { //if it found something below max threat
@@ -697,7 +736,7 @@ ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
 	if (frameNr < 2) UpdateKMeans();
 	//set the map data here so i dont have to do it in each group or whatever
 	//TODO: movement map PATHTOUSE = hack
-	ai -> pather -> micropather -> SetMapData(ai -> pather -> canMoveIntMaskArray,ai -> tm -> ThreatArray,ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
+	ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, PATHTOUSE);
 	//update the k-means
 	int frameSpread = 300; //frames between each update
 	//calculate and draw k-means for the base perimeters

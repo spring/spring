@@ -6,8 +6,11 @@
 class CUNIT
 {
 public:
+	CR_DECLARE(CUNIT);
+	CUNIT();
 	CUNIT(AIClasses *ai);
 	virtual ~CUNIT();
+	void PostLoad();
 
 	//-----------|Miscellaneous Info|----------//
 	float3 pos();
@@ -77,7 +80,6 @@ public:
 	bool SetFiringMode(int mode);
 	bool Stop();
 	bool SetMaxSpeed(float speed);
-
 
 private:
 	AIClasses *ai;

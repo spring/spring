@@ -1,24 +1,42 @@
 #include "ThreatMap.h"
 
+CR_BIND(CThreatMap ,(NULL))
+
+CR_REG_METADATA(CThreatMap,(
+				CR_MEMBER(ThreatArray),
+				CR_MEMBER(EmptyThreatArray),
+				CR_MEMBER(AverageThreat),
+				//CR_MEMBER(xend),
+				CR_MEMBER(ai),
+				CR_POSTLOAD(PostLoad)
+				));
+
 CThreatMap::CThreatMap(AIClasses *ai)
 {
 	this->ai=ai;
 	ThreatResolution = THREATRES;										// Divide map resolution by this much (8x8 standard spring resolution)
-	ThreatMapWidth = ai->cb->GetMapWidth() / ThreatResolution;
-	ThreatMapHeight = ai->cb->GetMapHeight() / ThreatResolution;
+	ThreatMapWidth = ai?ai->cb->GetMapWidth() / ThreatResolution:0;
+	ThreatMapHeight = ai?ai->cb->GetMapHeight() / ThreatResolution:0;
 	TotalCells = ThreatMapWidth * ThreatMapHeight;
-	ThreatArray = new float [TotalCells];
-	EmptyThreatArray = new float [TotalCells];
-	for(int i = 0; i < TotalCells; i++) {
-		EmptyThreatArray[i] = 5.0f;
-	}
-	xend = new int[1280];
+	ThreatArray.resize(TotalCells);
+	EmptyThreatArray.resize(TotalCells);
+//	xend.resize(1280);
 }	
 CThreatMap::~CThreatMap()
 {
-	delete [] ThreatArray;
-	delete [] xend;
+//	delete [] ThreatArray;
+//	delete [] xend;
 }
+
+void CThreatMap::PostLoad()
+{
+	ThreatMapWidth = ai->cb->GetMapWidth() / ThreatResolution;
+	ThreatMapHeight = ai->cb->GetMapHeight() / ThreatResolution;
+	TotalCells = ThreatMapWidth * ThreatMapHeight;
+//	ThreatArray.resize(TotalCells);
+//	EmptyThreatArray.resize(TotalCells);
+}
+
 void CThreatMap::Create()
 {
 	//L("Creating threat Array");

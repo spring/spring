@@ -6,8 +6,10 @@
 class CThreatMap
 {
 public:
+	CR_DECLARE(CThreatMap);
 	CThreatMap(AIClasses *ai);
 	virtual ~CThreatMap();
+	void PostLoad();
 	void Create();
 	void AddEnemyUnit (int unitid);
 	void RemoveEnemyUnit (int unitid);
@@ -17,8 +19,8 @@ public:
 	float GetAverageThreat();
 	float GetUnmodifiedAverageThreat();
 	float ThreatAtThisPoint(const float3 &pos);
-	float* ThreatArray;
-	float* EmptyThreatArray;
+	vector<float> ThreatArray;
+	vector<float> EmptyThreatArray;
 	int ThreatMapHeight;
 	int ThreatMapWidth;	
 	int ThreatResolution;
@@ -26,9 +28,7 @@ private:
 	float AverageThreat;
 	int TotalCells;
 	AIClasses *ai;
-	int* xend;
-
-
+//	vector<int> xend;
 };
 
 #endif /* THREATMAP_H */

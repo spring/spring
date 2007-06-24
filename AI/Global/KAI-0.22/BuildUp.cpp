@@ -1,4 +1,21 @@
 #include "BuildUp.h"
+#include "CoverageHandler.h"
+#include "creg/STL_List.h"
+
+CR_BIND(CBuildUp ,(NULL))
+
+CR_REG_METADATA(CBuildUp,(
+				CR_MEMBER(MexUpgraders),
+				CR_MEMBER(totalbuildingcosts),
+				CR_MEMBER(totaldefensecosts),
+
+				CR_MEMBER(factorycounter),
+				CR_MEMBER(buildercounter),
+				CR_MEMBER(storagecounter),
+
+				CR_MEMBER(ai),
+				CR_POSTLOAD(PostLoad)
+				));
 
 int factoryBuildupTime;
 int econBuildupTime;
@@ -8,20 +25,32 @@ int defenceBuildupCBC_Time;
 CBuildUp::CBuildUp(AIClasses* ai)
 {
 	this->ai = ai;
-	factorycounter = 0;
+	factorycounter = -10;
 	buildercounter = -3;
 	storagecounter = 0;
 
+	if (ai) {
+		factoryBuildupTime = ai->math->GetNewTimerGroupNumber("FactoryBuildupTime");
+		econBuildupTime = ai->math->GetNewTimerGroupNumber("EconBuildupTime");
+		getBestFactoryThatCanBeBuiltTime = ai->math->GetNewTimerGroupNumber("GetBestFactoryThatCanBeBuiltTime");
+		defenceBuildupTime = ai->math->GetNewTimerGroupNumber("DefenceBuildupTime");
+		defenceBuildupCBC_Time = ai->math->GetNewTimerGroupNumber("Defence CBC time");
+	}
+}
+CBuildUp::~CBuildUp()
+{
+
+}
+
+void CBuildUp::PostLoad()
+{
 	factoryBuildupTime = ai->math->GetNewTimerGroupNumber("FactoryBuildupTime");
 	econBuildupTime = ai->math->GetNewTimerGroupNumber("EconBuildupTime");
 	getBestFactoryThatCanBeBuiltTime = ai->math->GetNewTimerGroupNumber("GetBestFactoryThatCanBeBuiltTime");
 	defenceBuildupTime = ai->math->GetNewTimerGroupNumber("DefenceBuildupTime");
 	defenceBuildupCBC_Time = ai->math->GetNewTimerGroupNumber("Defence CBC time");
 }
-CBuildUp::~CBuildUp()
-{
 
-}
 void CBuildUp::Update()
 {
 	int frame=ai->cb->GetCurrentFrame();
@@ -32,10 +61,11 @@ void CBuildUp::Update()
 		Buildup();
 		if(ai->uh->NumIdleUnits(CAT_FACTORY) && frame % 150 == 0){				
 			for(list<Factory>::iterator i = ai->uh->Factories.begin(); i != ai->uh->Factories.end();i++){
-				for(list<int>::iterator b = ai->uh->IdleUnits[CAT_FACTORY]->begin(); b != ai->uh->IdleUnits[CAT_FACTORY]->end();b++){
+				for(list<int>::iterator b = ai->uh->IdleUnits[CAT_FACTORY].begin(); b != ai->uh->IdleUnits[CAT_FACTORY].end();b++){
 					if(*b == i->id && i->supportBuilderTrackers.size()){
-						ai->MyUnits[i->supportBuilderTrackers.front()->builderID]->Stop();
-						ai->cb->SendTextMsg("Builder Removed from factory!",0);
+						BuilderTracker *builder = i->supportBuilderTrackers.front();
+						ai->MyUnits[builder->builderID]->Stop();
+//						ai->cb->SendTextMsg("Builder Removed from factory!",0);
 					}
 				}
 			}
@@ -79,7 +109,32 @@ void CBuildUp::Buildup()
 		////assert(false);
 		//const UnitDef* factory = ai->ut->GetUnitByScore(builder,CAT_FACTORY); // This must be globaly selected soon, and the right builder must start it
 		ai->math->StartTimer(getBestFactoryThatCanBeBuiltTime);
-		const UnitDef* factory = GetBestFactoryThatCanBeBuilt(ai->cb->GetUnitPos(builder)); // This is the global selection. TEST IT!!!
+		int side = ai->ut->GetSide(builder);
+		int factype = -1;
+		float3 builderpos = ai->cb->GetUnitPos(builder);
+		const UnitDef* factory;
+		for (int a=0;a<6;a++) {
+			int r=ai->math->RandInt()%100;
+			if (builderpos.y<2) {
+				//water
+				if (r>=  0 && r< 20) factype=0;
+				if (r>= 20 && r< 50) factype=1;
+				if (r>= 50 && r<100) factype=2;
+			} else {
+				//ground
+				if (r>=  0 && r< 50) factype=0;
+				if (r>= 50 && r< 90) factype=1;
+				if (r>= 90 && r<100) factype=2;
+			}
+			if (!ai->uh->Factories.size() && factype==1) factype=0;
+			factory = ai->ut->GetUnitByScore(builder,CAT_FACTORY,factype);
+			if (factory) break;
+		}
+//		if (!ai->ut->ground_factories[side].empty()) {
+//			int factoryidx = RANDINT%ai->ut->ground_factories[side].size();
+//			factory = ai->ut->unittypearray[ai->ut->ground_factories[side][factoryidx]].def;
+//		}
+//		const UnitDef* factory = GetBestFactoryThatCanBeBuilt(ai->cb->GetUnitPos(builder)); // This is the global selection. TEST IT!!!
 		ai->math->StopTimer(getBestFactoryThatCanBeBuiltTime);
 		if(factory == NULL)
 		{
@@ -88,27 +143,43 @@ void CBuildUp::Buildup()
 			// Hack:
 			////assert(false);
 		}
-		
+		bool builderIsTaken = false;
+		ai->math->StartTimer(defenceBuildupTime);
+		if(!builderIsTaken)
+			builderIsTaken = DefenceBuildup(builder, false, true);
+		ai->math->StopTimer(defenceBuildupTime);
+
 		ai->math->StartTimer(econBuildupTime);
-		bool builderIsTaken = EconBuildup(builder, factory, false);
+		if(!builderIsTaken)
+			builderIsTaken = EconBuildup(builder, factory, false);
 		ai->math->StopTimer(econBuildupTime);
 		if(!builderIsTaken)
 			builderIsTaken = MakeStorage(builder, false);
 		ai->math->StartTimer(defenceBuildupTime);
 		if(!builderIsTaken)
-			builderIsTaken = DefenceBuildup(builder, false);
+			builderIsTaken = DefenceBuildup(builder, false, false);
 		ai->math->StopTimer(defenceBuildupTime);
 		if(!builderIsTaken)
 			builderIsTaken = AddBuilderToFactory(builder, factory, false);
+
+		ai->math->StartTimer(defenceBuildupTime);
+		if(!builderIsTaken)
+			builderIsTaken = DefenceBuildup(builder, true, false);
+		ai->math->StopTimer(defenceBuildupTime);
+		ai->math->StartTimer(econBuildupTime);
 		if(!builderIsTaken)
 		{
 			// This can happen now...
 			////assert(builderIsTaken);
 			// Try one more economy run:
-			ai->math->StartTimer(econBuildupTime);
 			EconBuildup(builder, factory, true); // The "true" part is still TODO
-			ai->math->StopTimer(econBuildupTime);
 		}
+		if (!builderIsTaken && !ai->uh->IdleUnits[CAT_BUILDER].empty()) {
+			//Move builder to idle queue end
+			ai->uh->IdleUnits[CAT_BUILDER].push_back(ai->uh->IdleUnits[CAT_BUILDER].front());
+			ai->uh->IdleUnits[CAT_BUILDER].pop_front();
+		}
+		ai->math->StopTimer(econBuildupTime);
 		
 		if(builderDef == NULL)
 		{
@@ -127,20 +198,39 @@ void CBuildUp::FactoryBuildup()
 {
 	//L("starting Factory Cycle");
 	int NumberofidleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
-	if(NumberofidleFactories  && ai->cb->GetEnergy() > ai->cb->GetEnergyStorage() * 0.8 && ai->cb->GetMetal() > ai->cb->GetMetalStorage() * 0.2){
+	if(NumberofidleFactories  && ((ai->cb->GetEnergy() > ai->cb->GetEnergyStorage() * 0.4 && ai->cb->GetMetal() > ai->cb->GetMetalStorage() * 0.2)||(RANDINT%1000<5))){
+		if (factorycounter>0) factorycounter--;
 		L("CBuildUp::FactoryBuildup(): starting Factory Cycle");
 		for(int i = 0; i < NumberofidleFactories; i++){
 			int producedcat;
+			const UnitDef* unitToBuild;
 			L("buildercounter: " << buildercounter);
 			L("ai->uh->NumIdleUnits(CAT_BUILDER): " << ai->uh->NumIdleUnits(CAT_BUILDER));
 			int factory = ai->uh->GetIU(CAT_FACTORY);
 			if(buildercounter > 0 || ai->uh->NumIdleUnits(CAT_BUILDER) > 2){
-				producedcat = CAT_G_ATTACK;
+				for (int a=0;a<6;a++) {
+					producedcat = CAT_ATTACK;
+					int r=ai->math->RandInt()%100;
+					if (r>=  0 && r< 40) producedcat=CAT_ATTACK;
+					if (r>= 40 && r< 75) producedcat=CAT_ARTILLERY;
+					if (r>= 75 && r<100) producedcat=CAT_ASSAULT;
+//					if (r>= 80 && r<100) producedcat=CAT_A_ATTACK;
+					unitToBuild = ai->ut->GetUnitByScore(factory,producedcat);
+					if (unitToBuild) break;
+				}
+				if (!unitToBuild || ai->math->RandInt()%100<5) {
+					producedcat = CAT_A_ATTACK;
+					unitToBuild = ai->ut->GetUnitByScore(factory,producedcat);
+				}
 				if(buildercounter > 0)
 					buildercounter--;
+				if ((ai->cb->GetEnergy() > ai->cb->GetEnergyStorage()*0.9 && ai->cb->GetMetal() > ai->cb->GetMetalStorage()*0.9)) buildercounter=0;
 			}
 			else {
-				// Look at all factorys, and find the best builder they have.
+				producedcat = CAT_BUILDER;
+				unitToBuild = ai->ut->GetUnitByScore(factory,producedcat);
+				buildercounter += ATTACKERSPERBUILDER;
+/*				// Look at all factorys, and find the best builder they have.
 				// Then find the builder that there are least of.
 				const UnitDef* leastBuiltBuilder = NULL;
 				int leastBuiltBuilderCount = 50000;
@@ -195,10 +285,9 @@ void CBuildUp::FactoryBuildup()
 					 if(buildercounter > 0)
 							buildercounter--;
 				}
+*/			
 			}
-			
 			L("Trying to build unit: " << producedcat);
-			const UnitDef* unitToBuild = ai->ut->GetUnitByScore(factory,producedcat);
 			if(unitToBuild != NULL)
 				ai->MyUnits[factory]->FactoryBuild(unitToBuild);
 			else
@@ -207,6 +296,8 @@ void CBuildUp::FactoryBuildup()
 				L("This is bad, the factory can make any units of that type: " << producedcat);
 			}
 		}
+	} else {
+		L("CBuildUp::FactoryBuildup(): no resources");
 	}
 }
 
@@ -225,7 +316,7 @@ const UnitDef* CBuildUp::GetBestFactoryThatCanBeBuilt(float3 builderPos) {
 			// Now test if the factory can be built by our construction units:
 			for(unsigned builtBy = 0; builtBy < ai->ut->unittypearray[factoryDef->id].builtByList.size(); builtBy++)
 			{
-				if(ai->uh->AllUnitsByType[ai->ut->unittypearray[factoryDef->id].builtByList[builtBy]]->size() > 0)
+				if(ai->uh->AllUnitsByType[ai->ut->unittypearray[factoryDef->id].builtByList[builtBy]].size() > 0)
 				{
 					// Ok, we have a builder that can make it.
 					int num = ai->ut->unittypearray[factoryDef->id].builtByList[builtBy];
@@ -273,7 +364,7 @@ const UnitDef* CBuildUp::GetBestMexThatCanBeBuilt()
 			// Now test if the factory can be built by our construction units:
 			for(unsigned builtBy = 0; builtBy < ai->ut->unittypearray[factoryDef->id].builtByList.size(); builtBy++)
 			{
-				if(ai->uh->AllUnitsByType[ai->ut->unittypearray[factoryDef->id].builtByList[builtBy]]->size() > 0)
+				if(ai->uh->AllUnitsByType[ai->ut->unittypearray[factoryDef->id].builtByList[builtBy]].size() > 0)
 				{
 					// Ok, we have a builder that can make it.
 					int num = ai->ut->unittypearray[factoryDef->id].builtByList[builtBy];
@@ -333,9 +424,11 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 	}
 	else if(ai->cb->GetEnergy() > ai->cb->GetEnergyStorage() * 0.5
 	//&&  ai->uh->metalMaker->AllAreOn() )  // Dont make metal stuff without energy
-	&& (ai->cb->GetMetal() < ai->cb->GetMetalStorage() * 0.5 // More than 40% metal, and we are down to a chance only ?
-	|| (RANDINT%3 == 0 && ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage() * 1.3) // Only more metal if 110% of the metal usage is bigger than the income ?
-	|| (!ai->math->MFeasibleConstruction(ai->cb->GetUnitDef(builder),factory) && !factorycounter))){	
+	&& (((ai->cb->GetMetal() < ai->cb->GetMetalStorage() * 0.8) // More than 40% metal, and we are down to a chance only ?
+	&& ((ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage())
+	|| (RANDINT%3 == 0 && ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage() * 2.0) // Only more metal if 200% of the metal usage is bigger than the income ?
+	|| (!ai->math->MFeasibleConstruction(ai->cb->GetUnitDef(builder),factory) && !ai->uh->Factories.size())))
+	|| (ai->cb->GetMetalIncome()<7.0))){	
 		if(!ai->MyUnits[builder]->ReclaimBest(1)){
 			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX) && mex != NULL){								
 				int upgradespot = ai->mm->FindMetalSpotUpgrade(builder,mex);		
@@ -348,14 +441,15 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 				}			
 				else if(mexpos != ERRORVECTOR && mex != NULL){
 					L("trying to build mex at: " << mexpos.x << ","<< mexpos.z);
-					ai->MyUnits[builder]->Build(mexpos,mex);					
-					MexUpgraders.remove(builder);
-					builderIsUsed = true;
+					if (ai->MyUnits[builder]->Build(mexpos,mex)) {
+						MexUpgraders.remove(builder);
+						builderIsUsed = true;
+					}
 				}
 				else if(ai->mm->NumSpotsFound == 0 && ai->mm->AverageMetal > 5 && mex != NULL){
-					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX))					
-						ai->MyUnits[builder]->Build_ClosestSite(mex,ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
-					builderIsUsed = true;
+					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX) || (ai->MyUnits[builder]->Build_ClosestSite(mex,ai->cb->GetUnitPos(builder))))
+					//MyUnits[builder].pos());
+						builderIsUsed = true;
 				}
 				else if (ai->ut->metal_makers->size() && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%10==0){
 					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MMAKER)){
@@ -377,7 +471,8 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 	else
 		if(ai->cb->GetEnergyIncome() < ai->cb->GetEnergyUsage() * 1.6 
 			//|| ai->cb->GetEnergy() < ai->cb->GetEnergyStorage() * 0.7 // Better make sure the bank is full too
-			|| !ai->math->EFeasibleConstruction(ai->cb->GetUnitDef(builder),factory)){	
+			|| !ai->math->EFeasibleConstruction(ai->cb->GetUnitDef(builder),factory)
+			|| ai->cb->GetEnergyIncome()<100){	
 			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ENERGY)){
 				L("Trying to build CAT_ENERGY");
 				const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_ENERGY);
@@ -395,21 +490,87 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 /*
 Returns true if the builder was assigned an order.
 */
-bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder) {
-	forceUseBuilder = forceUseBuilder;
+bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass) {
 	bool builderIsUsed = false;
+
+	if (!firstPass && !builderIsUsed && (forceUseBuilder || RANDINT%100<25)) {
+		const int cats[4]={CAT_RADAR, CAT_SONAR, CAT_R_JAMMER, CAT_S_JAMMER};
+		const UnitDef* Unit;
+		int cat;
+		for (int a=0;a<8;a++) {
+			int catidx=RANDINT%4;
+			cat=cats[catidx];
+			Unit = ai->ut->GetUnitByScore(builder,cat);
+			if (Unit) break;
+		}
+		if (Unit) {
+			float heightK=0;
+			switch (cat) {
+				case CAT_RADAR:heightK= 0.5;break;
+				case CAT_SONAR:heightK= 0.1;break;
+				case CAT_R_JAMMER:heightK= 0.2;break;
+				case CAT_S_JAMMER:heightK= 0.1;break;
+			}
+			CCoverageHandler* ch=0;
+			switch (cat) {
+				case CAT_RADAR:ch=ai->radarCoverage;break;
+				case CAT_SONAR:ch=ai->sonarCoverage;break;
+				case CAT_R_JAMMER:ch=ai->rjammerCoverage;break;
+				case CAT_S_JAMMER:ch=ai->sjammerCoverage;break;
+			}
+			float3 Pos = ai->dm->GetDefensePos(Unit,ai->MyUnits[builder]->pos(),heightK,ch);
+			ai->math->StartTimer(defenceBuildupCBC_Time);
+			ai->math->TimerStart();
+			if(ai->MyUnits[builder]->Build_ClosestSite(Unit,Pos,2, 150)){ // No point in looking far away, as thats the job of GetDefensePos()
+				builderIsUsed = true;
+			}
+			else
+			{
+				builderIsUsed = false;
+			}
+			ai->math->StopTimer(defenceBuildupCBC_Time);
+			L("Build_ClosestSite time:" << ai->math->TimerSecs());
+		}
+	}
+
+	int DefenseFactoryRatio = DEFENSEFACTORYRATIO;
+	if (firstPass) DefenseFactoryRatio = MINIMUMDEFENSEFACTORYRATIO;
+	if (forceUseBuilder) DefenseFactoryRatio = MAXIMUMDEFENSEFACTORYRATIO;
+	
 	//L("Checking defense building: totaldefensecosts = " <<  totaldefensecosts << " totalbuildingcosts = " << totalbuildingcosts " ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() = " << ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() << " ai->uh->AllUnitsByCat[CAT_FACTORY]->size() = " << ai->uh->AllUnitsByCat[CAT_FACTORY]->size());
-	if(ai->uh->AllUnitsByCat[CAT_FACTORY]->size() > ai->uh->AllUnitsByCat[CAT_DEFENCE]->size() / DEFENSEFACTORYRATIO){
+	if(!builderIsUsed && ai->uh->AllUnitsByCat[CAT_FACTORY].size() > ai->uh->AllUnitsByCat[CAT_DEFENCE].size() / DefenseFactoryRatio){
 	//if(totalbuildingcosts > totaldefensecosts * DEFENSEFACTORYRATIO && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
-		if(!ai->uh->BuildTaskAddBuilder(builder,CAT_DEFENCE)){
-			const UnitDef* Defense = ai->ut->GetUnitByScore(builder,CAT_DEFENCE);
-			L("Trying to build CAT_DEFENCE");
+		if(RANDINT%100<50 || !ai->uh->BuildTaskAddBuilder(builder,CAT_DEFENCE)){
+			float3 builderpos = ai->cb->GetUnitPos(builder);
+			const UnitDef* Defense;
+			int defencecat;
+			for (int a=0;a<6;a++) {
+				int r=ai->math->RandInt()%100;
+				defencecat = -1;
+				if (builderpos.y<2) {
+					//water
+					if (r>=  0 && r< 50) defencecat=0;
+					if (r>= 50 && r< 70) defencecat=1;
+					if (r>= 70 && r<100) defencecat=2;
+				} else {
+					//ground
+					if (r>=  0 && r< 70) defencecat=0;
+					if (r>= 70 && r<100) defencecat=1;
+				}
+				Defense = ai->ut->GetUnitByScore(builder,CAT_DEFENCE,defencecat);
+				if (Defense) break;
+			}
+			L("Trying to build CAT_DEFENCE " << defencecat);
 			if(Defense == NULL)
 				return false;
 			L("trying to build def " << Defense->humanName);
-			float3 defPos = ai->dm->GetDefensePos(Defense,ai->MyUnits[builder]->pos());
-			
-			
+			float heightK = 1.0;
+			switch (defencecat) {
+				case 0:heightK= 1.0;break;
+				case 1:heightK= 0.2;break;
+				case 2:heightK=-0.1;break;
+			}
+			float3 defPos = ai->dm->GetDefensePos(Defense,ai->MyUnits[builder]->pos(),heightK,0);
 			ai->math->StartTimer(defenceBuildupCBC_Time);
 			ai->math->TimerStart();
 			if(ai->MyUnits[builder]->Build_ClosestSite(Defense,defPos,2, 150)){ // No point in looking far away, as thats the job of GetDefensePos()
@@ -435,10 +596,11 @@ the builder was added to a factory (assist) or
 it helps to make a factory.
 */
 bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool forceUseBuilder) {
-	forceUseBuilder = forceUseBuilder;;
-
 	if(!ai->uh->BuildTaskAddBuilder(builder,CAT_FACTORY)){
-		if(!ai->uh->FactoryBuilderAdd(builder)){
+		if((factorycounter<=0) || (ai->uh->GetFactoryHelpersCount()>ai->uh->BuilderTrackers.size()/2) || 
+			(ai->uh->NumIdleUnits(CAT_FACTORY)<2 && RANDINT%100<25) || 
+			(factory && ai->uh->AllUnitsByType[factory->id].size()==0) || 
+			!ai->uh->FactoryBuilderAdd(builder)){
 			L("trying to build Factory.");
 			if(factory == NULL)
 				return false;
@@ -446,7 +608,7 @@ bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool for
 			// Test if this factory is made by this builder:
 			int builderId = ai->cb->GetUnitDef(builder)->id;
 			bool canBuildIt = false;
-			if(!ai->uh->NumIdleUnits(CAT_FACTORY)){	
+			if(ai->uh->NumIdleUnits(CAT_FACTORY)<4){	
 				for(unsigned builtBy = 0; builtBy < ai->ut->unittypearray[factory->id].builtByList.size(); builtBy++)
 				{
 					if(ai->ut->unittypearray[factory->id].builtByList[builtBy] == builderId)
@@ -461,12 +623,14 @@ bool CBuildUp::AddBuilderToFactory(int builder, const UnitDef* factory, bool for
 					L("This builder cant make this factory. Builder: " << ai->cb->GetUnitDef(builder)->humanName);
 					return false;
 				}			
-				else
+				else {
+					L("building Factory.");
 					ai->MyUnits[builder]->Build_ClosestSite(factory,ai->cb->GetUnitPos(builder));//MyUnits[builder].pos()))
+					factorycounter+=FACTORYBUILDTIMEOUT;
+					if (factorycounter>20) factorycounter=20;
+				}
 			}
 		}
-		else
-			factorycounter++;
 	}
 	return true;
 }
@@ -479,7 +643,7 @@ Makes either metal or energy storage
 bool CBuildUp::MakeStorage(int builder, bool forceUseBuilder) {
 	forceUseBuilder = forceUseBuilder;;
 
-	if (ai->cb->GetEnergyStorage() / (ai->cb->GetEnergyIncome() + 0.01) < STORAGETIME && ai->ut->energy_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
+	if (ai->cb->GetEnergyStorage() / (ai->cb->GetEnergyIncome() + 0.01) < STORAGETIME && ai->ut->energy_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY].size()){
 		if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ESTOR)){
 			L("Trying to build Estorage, storagecounter: " << storagecounter);
 			const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_ESTOR);
@@ -487,19 +651,19 @@ bool CBuildUp::MakeStorage(int builder, bool forceUseBuilder) {
 				return false;
 			
 			ai->MyUnits[builder]->Build_ClosestSite(def,ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
-			storagecounter += 90;
+			storagecounter += 10;
 		}
 		return true;
 	}
 	
-	if (ai->cb->GetMetalStorage() / (ai->cb->GetMetalIncome() + 0.01) < STORAGETIME * 2 && ai->ut->metal_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY]->size()){
+	if (ai->cb->GetMetalStorage() / (ai->cb->GetMetalIncome() + 0.01) < STORAGETIME * 2 && ai->ut->metal_storages->size() && !storagecounter && ai->uh->AllUnitsByCat[CAT_FACTORY].size()){
 		if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MSTOR)){
 			L("Trying to build CAT_MSTOR, storagecounter: " << storagecounter);
 			const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_MSTOR);
 			if(def == NULL)
 				return false;
 			ai->MyUnits[builder]->Build_ClosestSite(def,ai->MyUnits[builder]->pos());
-			storagecounter += 90;
+			storagecounter += 10;
 		}
 		return true;
 	}

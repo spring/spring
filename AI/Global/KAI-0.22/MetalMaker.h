@@ -5,12 +5,16 @@
 #include <map>
 #include <set>
 
+struct AIClasses;
+
 using namespace std;
 
 class CMetalMaker
 {
 public:
-	CMetalMaker(IAICallback* aicb);
+	CR_DECLARE(CMetalMaker);
+	CR_DECLARE_SUB(UnitInfo);
+	CMetalMaker(AIClasses* ai);
 	virtual ~CMetalMaker();
 //	virtual void CMetalMaker::Init(IAICallback* aicb);
 	virtual bool Add(int unit);
@@ -18,6 +22,7 @@ public:
 	virtual bool AllAreOn();
 	virtual void Update();
 	struct UnitInfo{
+		CR_DECLARE_STRUCT(UnitInfo);
 		int id;
 		float energyUse;
 		float metalPerEnergy;
@@ -25,7 +30,7 @@ public:
 	};
 	vector<UnitInfo> myUnits;
 	float lastEnergy;
-	IAICallback* aicb;
+	AIClasses* ai;
 	int listIndex;
 	int addedDelay;
 

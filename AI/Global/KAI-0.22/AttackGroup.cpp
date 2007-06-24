@@ -1,4 +1,8 @@
 #include "AttackGroup.h"
+#include "creg/STL_List.h"
+
+#undef assert
+#define assert(a) if (!(a)) throw "Assertion " #a "faild";
 
 //#define UNIT_STUCK_MOVE_DISTANCE 2.0f
 //not moving for 5*60 frames = stuck :
@@ -27,6 +31,77 @@
 #define FLEE_MIN_PATH_RECALC_SECONDS 3
 #define MIN_DEFENSE_RADIUS 100
 #define DAMAGED_UNIT_FACTOR 0.50f
+
+CR_BIND(CAttackGroup ,(NULL,0))
+
+CR_REG_METADATA(CAttackGroup,(
+				CR_MEMBER(ai),
+				CR_MEMBER(units),
+				CR_MEMBER(lowestAttackRange),
+				CR_MEMBER(highestAttackRange),
+				CR_MEMBER(lowestUnitSpeed),
+				CR_MEMBER(highestUnitSpeed),
+				CR_MEMBER(groupPhysicalSize),
+				CR_MEMBER(highestTurnRadius),
+
+				CR_MEMBER(worstMoveType),
+
+				CR_MEMBER(attackPosition),
+				CR_MEMBER(attackRadius),
+
+				CR_MEMBER(pathToTarget),
+				CR_MEMBER(pathIterator),
+
+				CR_MEMBER(unitArray),
+
+				CR_MEMBER(groupID),
+
+				CR_MEMBER(isMoving),
+				CR_MEMBER(isFleeing),
+				CR_MEMBER(isDefending),
+				CR_MEMBER(isShooting),
+
+				CR_MEMBER(groupDPS),
+
+				CR_MEMBER(groupPos),
+				CR_MEMBER(lastGroupPosUpdateFrame),
+
+				CR_MEMBER(baseReference),
+				CR_MEMBER(lastBaseReferenceUpdate),
+
+				CR_MEMBER(assignedEnemies)
+				));
+
+float3 CAttackGroup::CheckCoordinates(float3 pos)
+{
+	if (pos.x<0.01) pos.x=0.01;
+	if (pos.z<0.01) pos.z=0.01;
+	if (pos.x>ai->cb->GetMapWidth()*8-0.01) pos.x=ai->cb->GetMapWidth()*8-0.01;
+	if (pos.z>ai->cb->GetMapHeight()*8-0.01) pos.z=ai->cb->GetMapHeight()*8-0.01;
+	return pos;
+}
+
+CAttackGroup::CAttackGroup()
+{
+	this->ai=0;
+	this->groupID = -1;
+	this->pathIterator = 0;
+	this->lowestAttackRange = 100000;
+	this->highestAttackRange = 1;
+//	this->movementCounterForStuckChecking = 0;
+	this->isDefending = true;
+	this->isMoving = false;
+	this->isShooting = false;
+	this->attackPosition = float3(0,0,0);
+	this->attackRadius = 1;
+	this->isFleeing = false;
+	this->groupPos = ZEROVECTOR;
+	this->lastGroupPosUpdateFrame = -1;
+	this->baseReference = ERRORVECTOR;
+	this->lastBaseReferenceUpdate = -BASE_REFERENCE_UPDATE_FRAMES-1;
+	this->worstMoveType = 0xFFFFFFFF;
+	this->groupPhysicalSize = 1.0f;
+}
 
 CAttackGroup::CAttackGroup(AIClasses* ai, int groupID_in)
 {
@@ -250,6 +325,7 @@ void CAttackGroup::RecalcGroupPos() {
 		newGroupPosition = ERRORVECTOR; //<-----------------
 
 	}
+	newGroupPosition = CheckCoordinates(newGroupPosition);
 	this->groupPos = newGroupPosition;
 	this->lastGroupPosUpdateFrame = ai->cb->GetCurrentFrame();
 }
@@ -391,7 +467,7 @@ bool CAttackGroup::ConfirmPathToTargetIsOK()
 //		L(" CAttackGroup::ConfirmPathToTargetIsOK startpoint: " << startPoint);
 	}
 	for (int i = startPoint; i < stopPoint; i++) {
-		if (ai->tm->ThreatAtThisPoint(pathToTarget[i]) > threatLimit) {
+		if (ai->tm->ThreatAtThisPoint(CheckCoordinates(pathToTarget[i])) > threatLimit) {
 			return false;
 		}
 	}
@@ -404,7 +480,7 @@ void CAttackGroup::PathToBase(float3 groupPosition) {
 //	L("AG: pathing back to base. group:" << groupID);
     pathToTarget.clear();
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
-	ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
+	ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->ThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
 
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 	if (pathToTarget.size() <= 2) {
@@ -470,7 +546,7 @@ bool CAttackGroup::FindDefenseTarget(float3 groupPosition)
 		if (this->lastBaseReferenceUpdate < (frameNr - BASE_REFERENCE_UPDATE_FRAMES)) {
 			//find closest reachable base spot
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
-			ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
+			ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->ThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
 			float cost = ai->pather->PathToPrioritySet(&tempPathToTarget, groupPosition, ai->ah->GetKMeansBase());
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 			if (cost != 0) { //tempPathToTarget.size() >= 2) {
@@ -492,7 +568,7 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 		//search for enemy from closest reachable base spot
 		tempPathToTarget.clear();
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
-		ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->EmptyThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
+		ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->EmptyThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
 		float costToTarget = ai->pather->PathToSet(&tempPathToTarget, searchStartPosition, &enemyPositions);
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 		if (tempPathToTarget.size() <= 2) { //if theres no enemies from either your pos or closest base spot pos
@@ -515,7 +591,7 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
                 costToEnemy = costToTarget;
 			} else {
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
-				ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->EmptyThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
+				ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->EmptyThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
 				costToEnemy = ai->pather->PathToPos(&tempPathToTarget, groupPosition, selectedEnemyPosition);
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 			}
@@ -620,6 +696,7 @@ store these things in the target selection process
 				float distanceCheckPoint = max (distanceToEnemy - this->lowestAttackRange, 0.0f); //shouldnt be behind our current pos
 				float factor = distanceCheckPoint/distanceToEnemy;
 				float3 pointAtRange = groupPos + (vectorUsToEnemy*factor);
+				pointAtRange = CheckCoordinates(pointAtRange);
 				float threatAtRange = ai->tm->ThreatAtThisPoint(pointAtRange) - ai->tm->GetUnmodifiedAverageThreat();
 				
 				if (ai->ah->debugDraw) {
@@ -649,11 +726,11 @@ store these things in the target selection process
 							//add a routine finding the best(not just closest) target, but for now just fire away
 							//TODO: add canattack
 							//position focus fire for buildings
-							if(enemyUnitDef->speed > 0) {
+//							if(enemyUnitDef->speed > 0) {
 								myUnitReference->Attack(enemyID); //
-							} else {
-								myUnitReference->Attack(enemyPos, 0.001f);
-							}
+//							} else {
+//								myUnitReference->Attack(enemyPos, 0.001f);
+//							}
 							//TODO: this should be the max range of the weapon the unit has with the lowest range
 							//assuming you want to rush in with the heavy stuff, that is
 							//SINGLE UNIT MANEUVERING:
@@ -681,7 +758,7 @@ store these things in the target selection process
 								float3 moveHere;
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
 								//OBS: the move type of the single unit. maybe the group center unit will maneuver to positions that the group itself cant path from ?
-								ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, myUnitReference->GetMoveType());
+								ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->ThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, myUnitReference->GetMoveType());
 								float cost = ai->pather->ManeuverToPosRadius(&moveHere, myPos, enemyPos, myMinRange);
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 								if (cost > 0) { //TODO: is this the right check at this point ?
@@ -690,8 +767,8 @@ ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 									bool losHack = ((moveHere.y + enemyPos.y)/2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP > ai->cb->GetElevation((moveHere.x+enemyPos.x)/2, (moveHere.z+enemyPos.z)/2);
 									//im here assuming the pathfinder returns correct Y values
 									//get threat info:
-									float currentThreat = ai->tm->ThreatAtThisPoint(myPos);
-									float newThreat = ai->tm->ThreatAtThisPoint(moveHere);
+									float currentThreat = ai->tm->ThreatAtThisPoint(CheckCoordinates(myPos));
+									float newThreat = ai->tm->ThreatAtThisPoint(CheckCoordinates(moveHere));
 	//								if (newThreat <= currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myRange), float(UNIT_MIN_MANEUVER_DISTANCE))
 									if (newThreat < currentThreat && dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE*myMinRange), float(UNIT_MIN_MANEUVER_DISTANCE))
 										&& losHack) { //(enemyPos.y - moveHere.y) < UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP) {
@@ -767,7 +844,7 @@ ai->math->StartTimer(ai->ah->ah_timer_MoveOrderUpdate);
 				}
 			}
 			//check the threat at group pos and the threat at the next pos on the path, if its high, flee
-			float threatCheck = max(ai->tm->ThreatAtThisPoint(pathToTarget[pathIterator]), ai->tm->ThreatAtThisPoint(groupPos)) - ai->tm->GetUnmodifiedAverageThreat();
+			float threatCheck = max(ai->tm->ThreatAtThisPoint(CheckCoordinates(pathToTarget[pathIterator])), ai->tm->ThreatAtThisPoint(groupPos)) - ai->tm->GetUnmodifiedAverageThreat();
 			if (!isFleeing && threatCheck > this->groupDPS*FLEE_MAX_THREAT_DIFFERENCE) {
 				ai->math->StopTimer(ai->ah->ah_timer_MoveOrderUpdate);
 				this->Flee();
@@ -824,7 +901,7 @@ void CAttackGroup::StuckUnitFix() {
 					vector<float3> tempPath;
 					float3 destination;
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
-					ai->pather->micropather->SetMapData(ai->pather->canMoveIntMaskArray,ai->tm->ThreatArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
+					ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->ThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
 					float dist = ai->pather->ManeuverToPosRadius(&destination, u->pos(), u->pos(), UNIT_STUCK_MANEUVER_DISTANCE);
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 					if (dist > 0) {

@@ -11,8 +11,11 @@ class CAttackHandler;
 
 class CGlobalAI : public IGlobalAI {
 	public:
+		CR_DECLARE(CGlobalAI);
 		CGlobalAI();
 		virtual ~CGlobalAI();
+		void Serialize(creg::ISerializer *s);
+		void PostLoad();
 
 		void InitAI(IGlobalAICallback* callback, int team);
 
@@ -35,6 +38,8 @@ class CGlobalAI : public IGlobalAI {
 
 		void Update();
 
+		void Load(IGlobalAICallback* callback,std::istream *ifs);
+		void Save(std::ostream *ofs);
 
 		AIClasses* ai;
 		vector<CUNIT> MyUnits;
@@ -57,6 +62,7 @@ class CGlobalAI : public IGlobalAI {
 		int economyManagerUpdateTime;
 		int globalAILogTime;
 		int threatMapTime;
+		bool dminited;
 };
 
 

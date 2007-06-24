@@ -6,9 +6,11 @@
 
 class CBuildUp
 {
+	CR_DECLARE(CBuildUp);
 	public:
 	CBuildUp(AIClasses* ai);
 	virtual ~CBuildUp();
+	void PostLoad();
 	void Update();
 	list<int> MexUpgraders;
 
@@ -33,7 +35,7 @@ class CBuildUp
 	/*
 	Returns true if the builder was assigned an order.
 	*/
-	bool DefenceBuildup(int builder, bool forceUseBuilder);
+	bool DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass);
 
 	/*
 	Returns true if the builder was assigned an order to build a factory or

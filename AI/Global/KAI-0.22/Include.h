@@ -25,6 +25,8 @@ static inline void itoa(int i, char* buf, int size) {
 }
 #endif
 
+#include "creg/creg.h"
+
 
 
 // Spring Standard Header

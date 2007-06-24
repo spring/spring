@@ -6,23 +6,34 @@
 
 #include "DGunController.hpp"
 
-DGunController::DGunController(void) {
+CR_BIND(DGunController ,(NULL))
+
+CR_REG_METADATA(DGunController,(
+				CR_MEMBER(ai),
+				CR_MEMBER(inited),
+				CR_MEMBER(commanderID),
+				CR_MEMBER(targetID),
+				CR_MEMBER(hasDGunOrder),
+				CR_MEMBER(hasReclaimOrder),
+				CR_MEMBER(hasRetreatOrder),
+				CR_MEMBER(dgunOrderFrame),
+				CR_MEMBER(reclaimOrderFrame),
+				CR_MEMBER(retreatOrderFrame),
+				CR_MEMBER(startingPos),
+				CR_MEMBER(bt),
+				CR_POSTLOAD(PostLoad)
+				));
+
+DGunController::DGunController(AIClasses* ai) {
 	srand((unsigned) time(0));
 
 	this -> inited = false;
+	this -> ai = ai;
 	(this -> units) = (int*) calloc(MAX_UNITS, sizeof(int));
-}
-DGunController::~DGunController(void) {
-	free(this -> units);
-}
 
-void DGunController::init(IAICallback* callback, int commanderID) {
-	CALLBACK = callback;
-
-	this -> inited = true;
-	this -> commanderID = commanderID;
-	this -> commanderUD = callback -> GetUnitDef(commanderID);
-	this -> startingPos = callback -> GetUnitPos(commanderID);
+	this -> commanderID = 0;
+	this -> commanderUD = 0;
+	this -> startingPos = float3(0,0,0);
 
 	this -> targetID			= -1;
 	this -> hasDGunOrder		= false;
@@ -31,6 +42,51 @@ void DGunController::init(IAICallback* callback, int commanderID) {
 	this -> dgunOrderFrame		= 0;
 	this -> reclaimOrderFrame	= 0;
 	this -> retreatOrderFrame	= 0;
+	this -> bt                  = 0;
+	this -> commanderDGun       = 0;
+}
+DGunController::~DGunController(void) {
+	free(this -> units);
+}
+
+void DGunController::PostLoad()
+{
+	if (inited) {
+		CALLBACK = ai->cb;
+		this -> commanderUD = CALLBACK -> GetUnitDef(commanderID);
+		for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = commanderUD->weapons.begin();i!=commanderUD->weapons.end();i++)
+			if (i->def->type=="DGun") {
+				commanderDGun=i->def;
+				break;
+			}
+		if (!commanderDGun) throw content_error("DGunController: Cannot find dgun weapon");
+	}
+}
+
+void DGunController::init(IAICallback* callback, int commanderID) {
+	CALLBACK = callback;
+
+	this -> inited = true;
+	this -> commanderID = commanderID;
+	this -> commanderUD = callback -> GetUnitDef(commanderID);
+//	this -> startingPos = callback -> GetUnitPos(commanderID);
+	this -> startingPos = *callback -> GetStartPos();
+	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = commanderUD->weapons.begin();i!=commanderUD->weapons.end();i++)
+		if (i->def->type=="DGun") {
+			commanderDGun=i->def;
+			break;
+		}
+	if (!commanderDGun) throw content_error("DGunController: Cannot find dgun weapon");
+	
+	this -> targetID			= -1;
+	this -> hasDGunOrder		= false;
+	this -> hasReclaimOrder		= false;
+	this -> hasRetreatOrder		= false;
+	this -> dgunOrderFrame		= 0;
+	this -> reclaimOrderFrame	= 0;
+	this -> retreatOrderFrame	= 0;
+
+	this -> bt                  = ai -> uh -> GetBuilderTracker(commanderID);
 
 	// set commander to hold fire
 	this -> setFireState(0);
@@ -49,7 +105,7 @@ bool DGunController::inRange(float3 commanderPos, float3 attackerPos, float s) {
 void DGunController::handleDestroyEvent(int attackerID, int targetID) {
 	// if we were dgunning or reclaiming this unit and it died
 	// (reclaiming unit causes attackerID of 0 to be passed)
-	if (attackerID == 0 || this -> targetID == targetID) {
+	if (/*attackerID == 0 || */this -> targetID == targetID) {
 		this -> targetID = -1;
 		this -> hasDGunOrder = false;
 		this -> hasReclaimOrder = false;
@@ -62,6 +118,9 @@ void DGunController::handleAttackEvent(int attackerID, float damage, float3 atta
 	// in eg. EE init() is never called (no dgun)
 	if (!this -> inited)
 		return;
+	if (hasDGunOrder && damage<DGUN_MAX_DAMAGE_LEVEL) return;
+	if (hasReclaimOrder && (CALLBACK -> GetEnergy()) < DGUN_MIN_ENERGY_LEVEL && damage<DGUN_MAX_DAMAGE_LEVEL) return;
+	if (hasRetreatOrder) return;
 
 	int currentFrame = CALLBACK -> GetCurrentFrame();
 	float3 commanderPos = CALLBACK -> GetUnitPos(this -> commanderID);
@@ -129,12 +188,16 @@ void DGunController::update(unsigned int currentFrame) {
 	// make sure over-age dgun and reclaim orders are erased
 	this -> clearOrders(currentFrame);
 
+	float3 commanderPos = CALLBACK -> GetUnitPos(this -> commanderID);
+
 	if (this -> hasRetreatOrder) {
 		float healthCur = CALLBACK -> GetUnitHealth(this -> commanderID);
 		float healthMax = CALLBACK -> GetUnitMaxHealth(this -> commanderID);
 
-		if ((healthMax > 0) && ((healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2))) {
+		if ((healthMax > 0) && ((healthCur / healthMax) >= (DGUN_MIN_HEALTH_RATIO * 2)) &&
+			ai->uh->Distance2DToNearestFactory(commanderPos.x,commanderPos.z)>DEFCBS_RADIUS/4) {
 			// cancel retreat order if we are no longer in danger
+			bt->customOrderId = 0;
 			this -> hasRetreatOrder = false;
 		}
 		else {
@@ -143,9 +206,12 @@ void DGunController::update(unsigned int currentFrame) {
 		}
 	}
 
+	if (ai->uh->Distance2DToNearestFactory(commanderPos.x,commanderPos.z)>DEFCBS_RADIUS/2) {
+		this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+	}
+
 	// if we do not have any live outstanding orders
-	if (!this -> hasDGunOrder && !this -> hasReclaimOrder) {
-		float3 commanderPos = CALLBACK -> GetUnitPos(this -> commanderID);
+	if (!this -> hasDGunOrder && (!this -> hasReclaimOrder || (CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) && (!hasRetreatOrder)) {
 
 		// if our commander is dead then position will be (0, 0, 0)
 		if (commanderPos.x <= 0 && commanderPos.z <= 0) {
@@ -156,7 +222,7 @@ void DGunController::update(unsigned int currentFrame) {
 		float maxRange = CALLBACK -> GetUnitMaxRange(this -> commanderID);
 		float s = (this -> hasRetreatOrder)? 1.0f: 2.0f;
 		int numUnits = CALLBACK -> GetEnemyUnits(this -> units, commanderPos, maxRange * s);
-
+/*
 		for (int i = 0; i < numUnits; i++) {
 			// if enemy unit found in array
 			if (units[i] > 0) {
@@ -184,6 +250,40 @@ void DGunController::update(unsigned int currentFrame) {
 				}
 			}
 		}
+*/
+		int nearestEnemy = 0;
+		const UnitDef* nearestEnemyDef = 0;
+		int nearestDist = 1000;
+		for (int i = 0; i < numUnits; i++) {
+			// if enemy unit found in array
+			const UnitDef* enemyDef = CALLBACK -> GetUnitDef(units[i]);
+			if (!enemyDef) continue;
+			float dist = (commanderPos-CALLBACK->GetUnitPos(units[i])).Length();
+			if (enemyDef->canfly && (dist>50)) continue;
+//			float maxenemydist=0;
+//			for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i=enemyDef->weapons.begin();i!=enemyDef->weapons.end();i++) {
+//				if (maxenemydist<i->def->range) maxenemydist = i->def->range;
+//			}
+//			if (dist>maxenemydist) continue;
+			if (dist<nearestDist) {
+				nearestDist = dist;
+				nearestEnemy = units[i];
+				nearestEnemyDef = enemyDef;
+			}
+		}
+		if (nearestEnemy) {
+			if (nearestEnemyDef->isCommander || nearestEnemyDef->canDGun) {
+				this -> issueOrder(this -> startingPos, CMD_MOVE, currentFrame, 0);
+				return;
+			}
+			if ((CALLBACK -> GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
+				this -> issueOrder(nearestEnemy, CMD_DGUN, currentFrame, 0);
+			}
+			// suck it
+			else {
+				this -> issueOrder(nearestEnemy, CMD_RECLAIM, currentFrame, 0);
+			}
+		}
 	}
 }
 
@@ -209,6 +309,7 @@ void DGunController::evadeIncomingFire(float3 attackerDir, float3 attackerPos, i
 
 
 void DGunController::issueOrder(float3 target, int orderType, unsigned int currentFrame, int keyMod) {
+	clearBuild();
 	Command c;
 	c.id = orderType;
 	c.options |= keyMod;
@@ -223,11 +324,12 @@ void DGunController::issueOrder(float3 target, int orderType, unsigned int curre
 		this -> hasRetreatOrder = true;
 		this -> retreatOrderFrame = currentFrame;
 	}
-
+	bt->customOrderId = orderType;
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
 }
 
 void DGunController::issueOrder(int target, int orderType, unsigned int currentFrame, int keyMod) {
+	clearBuild();
 	Command c;
 	c.id = orderType;
 	c.options |= keyMod;
@@ -244,16 +346,19 @@ void DGunController::issueOrder(int target, int orderType, unsigned int currentF
 		this -> reclaimOrderFrame = currentFrame;
 	}
 
+	bt->customOrderId = orderType;
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
 }
 
 void DGunController::clearOrders(unsigned int currentFrame) {
-	if ((currentFrame - (this -> dgunOrderFrame)) > (FRAMERATE >> 2)) {
+	if ((currentFrame - (this -> dgunOrderFrame)) > (ORDERS_TIMEOUT)) {
 		// dgun order expired
+		bt->customOrderId = 0;
 		this -> hasDGunOrder = false;
 	}
-	if ((currentFrame - (this -> reclaimOrderFrame)) > (FRAMERATE << 2)) {
+	if ((currentFrame - (this -> reclaimOrderFrame)) > (ORDERS_TIMEOUT)) {
 		// reclaim order expired
+		bt->customOrderId = 0;
 		this -> hasReclaimOrder = false;
 	}
 }
@@ -267,4 +372,12 @@ void DGunController::setFireState(int state) {
 	c.params.push_back(state);
 
 	CALLBACK -> GiveOrder(this -> commanderID, &c);
+}
+
+void DGunController::clearBuild()
+{
+	ai->uh->IdleUnitRemove(commanderID);
+	if (bt->buildTaskId) ai->uh->BuildTaskRemoved(bt);
+	if (bt->taskPlanId) ai->uh->TaskPlanRemoved(bt);
+	if (bt->factoryId) ai->uh->FactoryBuilderRemoved(bt);
 }
