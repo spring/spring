@@ -30,24 +30,54 @@ CUnitTable::CUnitTable(AIClasses* ai)
 
 	// now set up the unit lists
 	ground_factories = new vector<int>[numOfSides];
+	air_factories = new vector<int>[numOfSides];
+	water_factories = new vector<int>[numOfSides];
 	ground_builders = new vector<int>[numOfSides];
-	ground_attackers = new vector<int>[numOfSides];
+	air_builders = new vector<int>[numOfSides];
+	water_builders = new vector<int>[numOfSides];
+	attackers = new vector<int>[numOfSides];
+	artillery = new vector<int>[numOfSides];
+	assault = new vector<int>[numOfSides];
+	air_attackers = new vector<int>[numOfSides];
+	transports = new vector<int>[numOfSides];
+	air_transports = new vector<int>[numOfSides];
 	metal_extractors = new vector<int>[numOfSides];
 	metal_makers = new vector<int>[numOfSides];
 	ground_energy = new vector<int>[numOfSides];
 	ground_defences = new vector<int>[numOfSides];
+	air_defences = new vector<int>[numOfSides];
+	water_defences = new vector<int>[numOfSides];
 	metal_storages = new vector<int>[numOfSides];
 	energy_storages = new vector<int>[numOfSides];
+	radars = new vector<int>[numOfSides];
+	sonars = new vector<int>[numOfSides];
+	rjammers = new vector<int>[numOfSides];
+	sjammers = new vector<int>[numOfSides];
 
 	all_lists.push_back(ground_factories);
+	all_lists.push_back(air_factories);
+	all_lists.push_back(water_factories);
 	all_lists.push_back(ground_builders);
-	all_lists.push_back(ground_attackers);
+	all_lists.push_back(air_builders);
+	all_lists.push_back(water_builders);
+	all_lists.push_back(attackers);
+	all_lists.push_back(artillery);
+	all_lists.push_back(assault);
+	all_lists.push_back(air_attackers);
+	all_lists.push_back(transports);
+	all_lists.push_back(air_transports);
 	all_lists.push_back(metal_extractors);
 	all_lists.push_back(metal_makers);
 	all_lists.push_back(ground_energy);
 	all_lists.push_back(ground_defences);
+	all_lists.push_back(air_defences);
+	all_lists.push_back(water_defences);
 	all_lists.push_back(metal_storages);
 	all_lists.push_back(energy_storages);
+	all_lists.push_back(radars);
+	all_lists.push_back(sonars);
+	all_lists.push_back(rjammers);
+	all_lists.push_back(sjammers);
 	//L("UnitTable Inited!");
 }
 
@@ -58,14 +88,29 @@ CUnitTable::~CUnitTable()
 	delete [] unitList;
 
 	delete [] ground_factories;
+	delete [] air_factories;
+	delete [] water_factories;
 	delete [] ground_builders;
-	delete [] ground_attackers;
+	delete [] air_builders;
+	delete [] water_builders;
+	delete [] attackers;
+	delete [] artillery;
+	delete [] assault;
+	delete [] air_attackers;
+	delete [] transports;
+	delete [] air_transports;
 	delete [] metal_extractors;
 	delete [] metal_makers;
 	delete [] ground_energy;
 	delete [] ground_defences;
+	delete [] air_defences;
+	delete [] water_defences;
 	delete [] metal_storages;
 	delete [] energy_storages;
+	delete [] radars;
+	delete [] sonars;
+	delete [] rjammers;
+	delete [] sjammers;
 }
 
 int CUnitTable::GetSide(int unit)
@@ -126,14 +171,26 @@ void CUnitTable::UpdateChokePointArray()
 			}		
 	}
 	ai->math->StopTimer(updateChokePointArrayTime);
-	ai->debug->MakeBWTGA(ai->dm->ChokePointArray,ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight,"CHOKEMAP");
+	ai->debug->MakeBWTGA(&ai->dm->ChokePointArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight,"CHOKEMAP");
 }
 
 
 float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 ground attackers, 4 defenses, 5 builders
 {
 	//L("Getting Score for: " << unit->humanName);
-	float Cost = (unit->metalCost * METAL2ENERGY) + unit->energyCost;
+	float eCost = unit->energyCost;
+	float eIncome = ai->cb->GetEnergyIncome();
+	float eUsage = ai->cb->GetEnergyUsage();
+	if (eUsage==0) eUsage=1;
+	if (eIncome > eUsage*2) eCost/=eIncome/(eUsage*2);
+
+	float mCost = unit->metalCost;
+	float mIncome = ai->cb->GetMetalIncome();
+	float mUsage = ai->cb->GetMetalUsage();
+	if (mUsage==0) mUsage=1;
+	if (mIncome > mUsage*2) mCost/=mIncome/(mUsage*2);
+
+	float Cost = (mCost * (mIncome>1?eIncome / mIncome:1)) + eCost;
 
 	float Hitpoints = unit->health;
 	float Benefit = 0;
@@ -141,7 +198,8 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 	int unitcounter=0;
 	bool candevelop = false;
 	// Test: make it less random:
-	float RandNum = ai->math->RandNormal(4,2.5,1) + 1;
+//	float RandNum = ai->math->RandNormal(4,2.5,1) + 1;
+	float RandNum = 1;
 	int category = GetCategory(unit);
 	switch (category){
 	case CAT_ENERGY:
@@ -154,17 +212,22 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 		}
 		
 		if(unit->needGeo)
-			Benefit = 0;
+			Benefit /= 2;
 		Benefit /= Cost;
 		//Benefit *= pow(buildTimeFix,float(-1.1));
 		break;
 	case CAT_MEX:
-		Benefit = pow(unit->extractsMetal,float(4));
+//		Benefit = pow(unit->extractsMetal,float(4));
+		Benefit = unit->extractsMetal*100;
+		if (unit->canCloak) Benefit*=1.5;
+		if (HasWeapons(unit)) Benefit*=1.5;
 		break;
 	case CAT_MMAKER:
 		Benefit = (unit->metalMake + unit->makesMetal - unit->metalUpkeep) / (unit->energyUpkeep + 0.01) + 0.01;
 		break;
-	case CAT_G_ATTACK:
+	case CAT_ATTACK:
+	case CAT_ARTILLERY:
+	case CAT_ASSAULT:
 		dps = ai->dc->GetCurrentDamageScore(unit);
 		if(unit->canfly && !unit->hoverAttack){
 			dps /= 2; // Improve to set reloadtime to the bombers turnspeed vs movespeed (eg time taken for a run)
@@ -181,7 +244,7 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 				//* pow(buildTimeFix,float(-0.35))
 				* pow(Cost,float(-0.5));		
 		// AA hack (stop mass air)
-		if(unit->canfly && ai->uh->AllUnitsByCat[CAT_FACTORY]->size() == 0)
+		if(unit->canfly && ai->uh->AllUnitsByCat[CAT_FACTORY].size() == 0)
 			Benefit *= 0.3;//0.25; //slight reduction to the feasability of air
 		break;
 	case CAT_DEFENCE:
@@ -207,17 +270,17 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 		Benefit = pow(unit->buildSpeed,float(1))
 				* pow(unit->speed,float(0.5))
 				* pow(Hitpoints,float(0.3))
-				* pow(RandNum,float(0.4));
+				/** pow(RandNum,float(0.4))*/;
 				//* pow(Cost,float(-1));
 		//if(!candevelop)
 			//Benefit = 0;
 		break;
 	case CAT_FACTORY:
 		for (unsigned int i = 0; i != unittypearray[unit->id].canBuildList.size(); i++){
-			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
+//			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
 				Benefit += GetScore(unittypearray[unittypearray[unit->id].canBuildList[i]].def);
 				unitcounter++;
-			}
+//			}
 		}
 		// If we dont have any factorys then a new one better not cost much
 		//if(ai->uh->AllUnitsByCat[CAT_FACTORY] > 0)
@@ -228,7 +291,7 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 		//L("CAT_FACTORY: " << unit->humanName << " Has a sum score of : " << Benefit);
 		
 		if(unitcounter > 0)
-			Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id]->size() + 1),float(3)));
+			Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id].size() + 1),float(3)));
 		else
 			Benefit = 0;
 		//L("Factory: " << unit->humanName << " Has a score of: " << Benefit);
@@ -242,6 +305,24 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 		Benefit = pow((unit->energyStorage),float(1))
 				* pow(Hitpoints,float(1));
 				//* pow(Cost,float(-0.5));
+		break;
+	case CAT_RADAR:
+		Benefit = unit->radarRadius*(unit->canCloak?1.5:1);
+		break;
+	case CAT_SONAR:
+		Benefit = unit->sonarRadius*(unit->canCloak?1.5:1);
+		break;
+	case CAT_R_JAMMER:
+		Benefit = unit->jammerRadius*(unit->canCloak?1.5:1);
+		break;
+	case CAT_S_JAMMER:
+		Benefit = unit->sonarJamRadius*(unit->canCloak?1.5:1);
+		break;
+	case CAT_TRANSPORT:
+		Benefit = unit->transportCapacity;
+		break;
+	case CAT_A_TRANSPORT:
+		Benefit = unit->speed;
 		break;
 	default:
 		Benefit = 0;
@@ -296,7 +377,8 @@ float CUnitTable::GetFullScore(const UnitDef* unit, unsigned needMask, float bui
 	int unitcounter=0;
 	bool candevelop = false;
 	// Test: make it less random:
-	float RandNum = ai->math->RandNormal(4,3,1) + 1;
+//	float RandNum = ai->math->RandNormal(4,3,1) + 1;
+	float RandNum = 1;
 
 	if (needMask & CATM_ENERGY) {
 		float Benefit2 = unit->energyMake - unit->energyUpkeep;
@@ -372,10 +454,10 @@ float CUnitTable::GetFullScore(const UnitDef* unit, unsigned needMask, float bui
 	if(needMask & (CATM_FACTORY | CATM_BUILDING)) {
 		float Benefit2 = 0;
 		for (unsigned int i = 0; i != unittypearray[unit->id].canBuildList.size(); i++){
-			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
+//			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
 				Benefit2 += GetScore(unittypearray[unittypearray[unit->id].canBuildList[i]].def);
 				unitcounter++;
-			}
+//			}
 		}
 		// If we dont have any factorys then a new one better not cost much
 		//if(ai->uh->AllUnitsByCat[CAT_FACTORY] > 0)
@@ -386,7 +468,7 @@ float CUnitTable::GetFullScore(const UnitDef* unit, unsigned needMask, float bui
 		//L("CAT_FACTORY: " << unit->humanName << " Has a sum score of : " << Benefit);
 		
 		if(unitcounter > 0)
-			Benefit2 /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id]->size() + 1),float(3)));
+			Benefit2 /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id].size() + 1),float(3)));
 		else
 			Benefit2 = 0;
 		Benefit += Benefit2;
@@ -516,15 +598,15 @@ float CUnitTable::GetNonNormalizationGlobalScore(const UnitType* unitType, unsig
 		float Benefit2 = 0;
 		// TODO: make this smart:
 		for (unsigned int i = 0; i != unittypearray[unit->id].canBuildList.size(); i++){
-			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
+//			if(unittypearray[unittypearray[unit->id].canBuildList[i]].category == CAT_G_ATTACK){
 				Benefit2 += GetScore(unittypearray[unittypearray[unit->id].canBuildList[i]].def);
 				unitcounter++;
-			}
+//			}
 		}
 		//L("CAT_FACTORY: " << unit->humanName << " Has a sum score of : " << Benefit);
 		
 		if(unitcounter > 0)
-			Benefit2 /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id]->size() + 1),float(3)));
+			Benefit2 /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unit->id].size() + 1),float(3)));
 		else
 			Benefit2 = 0;
 		Benefit += Benefit2;
@@ -585,12 +667,12 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, list<UnitType*> &unitList
 }
 
 
-const UnitDef* CUnitTable::GetUnitByScore(int builder, int category)//0 energy, 1 mex, 2mmaker, 3 ground attackers, 4 defenses, 5 builders
+const UnitDef* CUnitTable::GetUnitByScore(int builder, int category, int subCategory/*=0*/)//0 energy, 1 mex, 2mmaker, 3 ground attackers, 4 defenses, 5 builders
 {
 	//ai->math->TimerStart();
-	//L("Getting Score for category:" << category << " Builder: " << ai->cb->GetUnitDef(builder)->humanName);
-	vector<int>* templist;
-	const UnitDef* tempunit;
+//	L("Getting Score for category:" << category << " " << subCategory << " Builder: " << ai->cb->GetUnitDef(builder)->humanName);
+	vector<int>* templist = 0;
+	const UnitDef* tempunit = NULL;
 	int side = GetSide(builder);
 	float tempscore = 0;
 	float bestscore = 0;
@@ -605,17 +687,40 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category)//0 energy, 
 		case CAT_MMAKER:
 			templist = metal_makers;
 			break;
-		case CAT_G_ATTACK:
-			templist = ground_attackers;
+		case CAT_ATTACK:
+			templist = attackers;
+			break;
+		case CAT_ARTILLERY:
+			templist = artillery;
+			break;
+		case CAT_ASSAULT:
+			templist = assault;
+			break;
+		case CAT_A_ATTACK:
+			templist = air_attackers;
+			break;
+		case CAT_TRANSPORT:
+			templist = transports;
+			break;
+		case CAT_A_TRANSPORT:
+			templist = air_transports;
 			break;
 		case CAT_DEFENCE:
-			templist = ground_defences;
+			switch (subCategory) {
+				case 0:templist = ground_defences;break;
+				case 1:templist = air_defences;break;
+				case 2:templist = water_defences;break;
+			}
 			break;
 		case CAT_BUILDER:
 			templist = ground_builders;
 			break;
 		case CAT_FACTORY:
-			templist = ground_factories;
+			switch (subCategory) {
+				case 0:templist = ground_factories;break;
+				case 1:templist = air_factories;break;
+				case 2:templist = water_factories;break;
+			}
 			break;
 		case CAT_MSTOR:
 			templist = metal_storages;
@@ -623,11 +728,36 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category)//0 energy, 
 		case CAT_ESTOR:
 			templist = energy_storages;
 			break;
+		case CAT_RADAR:
+			templist = radars;
+			break;
+		case CAT_SONAR:
+			templist = sonars;
+			break;
+		case CAT_R_JAMMER:
+			templist = rjammers;
+			break;
+		case CAT_S_JAMMER:
+			templist = sjammers;
+			break;
 	}
 	//L("Switch done, side: " << side);
+	if (!templist) {
+		L("Error: cannot find list for: " << category << "," << subCategory);
+		return 0;
+	}
+	deque<float> score;
+	deque<const UnitDef*> scoreunit;
+	float scoresum=0;
 	for (unsigned int i = 0; i != templist[side].size(); i++){
 		if(CanBuildUnit(ai->cb->GetUnitDef(builder)->id, templist[side][i])){
 			tempscore = GetScore(unittypearray[templist[side][i]].def);
+//			tempscore = pow(tempscore,float(4));
+			score.push_back(tempscore);
+			const UnitDef* def = unittypearray[templist[side][i]].def;
+			scoreunit.push_back(def);
+			scoresum+=tempscore;
+//			L("Unit " << unittypearray[templist[side][i]].def->humanName << " : Score " << tempscore << "  Sum " << scoresum);
 			if (bestscore < tempscore){
 				//L("Better Score found");
 				bestscore = tempscore;
@@ -636,8 +766,8 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category)//0 energy, 
 		}
 	}
 	//L("Loop calculated");
-	if(!bestscore){
-		L("no scores found for unit!");
+	if(score.empty()){
+//		L("no scores found for unit!");
 		return NULL; // State that this builder cant make any units of this type
 		/*
 		for(int i = 0; i != unittypearray[ai->cb->GetUnitDef(builder)->id].canBuildList.size(); i++){
@@ -646,8 +776,26 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category)//0 energy, 
 				}
 		}*/
 	}
+	if (category==CAT_MEX) {
+		return tempunit;
+	}
+	if (category==CAT_FACTORY && category==CAT_BUILDER) {
+		return scoreunit[ai->math->RandInt()%scoreunit.size()];
+	}
+	float scorerand = ai->math->RandFloat()*scoresum;
+//	L("Units sum " << scoresum << "  Rand " << scorerand);
+	while (scorerand>0 && !score.empty()) {
+		scorerand-=score[0];
+		score.pop_front();
+		if (scorerand>0)
+			scoreunit.pop_front();
+	}
+	if(scoreunit.empty()){
+		L("error in CUnitTable::GetUnitByScore!");
+		return NULL;
+	}
 	//L("Time taken for getunitbyscore: " << ai->math->TimerSecs() << "s.");
-	return tempunit;
+	return scoreunit[0];
 }
 
 inline bool CUnitTable::pairCMP(const std::pair<float,UnitType*> &a, const std::pair<float,UnitType*> &b)
@@ -753,7 +901,9 @@ void CUnitTable::Init()
 		//L("Calcing buildtree of: " << startUnits[s]);
 		CalcBuildTree(startUnits[s]);
 	}
-	
+
+	ai -> dc -> GenerateDPSTables();
+
 	// add unit to different groups
 	for(int i = 1; i <= numOfUnits; i++){
 		UnitType* me = &unittypearray[i];
@@ -865,53 +1015,114 @@ void CUnitTable::Init()
 				}
 			}
 			
-			if(me->def->speed && me->def->minWaterDepth <= 0){
-				if(me->def->buildOptions.size()){						
+			if(me->def->speed){
+				if(me->def->buildOptions.size() && me->def->canBuild && me->def->canRepair && me->def->canReclaim && me->def->canGuard){
 					ground_builders[me->side].push_back(i);
 					me->category = CAT_BUILDER;
-				}
-				else if(!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile){
-					ground_attackers[me->side].push_back(i);
-					me->category = CAT_G_ATTACK;
+				} else if (me->def->transportCapacity) {
+					if (me->def->canfly) {
+						air_transports[me->side].push_back(i);
+						me->category = CAT_A_TRANSPORT;
+					} else {
+						transports[me->side].push_back(i);
+						me->category = CAT_TRANSPORT;
+					}
+				} else if(HasWeapons(me->def) && !me->def->weapons.begin()->def->stockpile){
+					float weapondist=0;
+					bool vlaunchweapon=false;
+					float weaponaoe=0;
+					for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i2=me->def->weapons.begin();i2!=me->def->weapons.end();i2++) {
+						if (weapondist<i2->def->range) weapondist = i2->def->range;
+						if (i2->def->vlaunch) vlaunchweapon = true;
+						if (weaponaoe<i2->def->areaOfEffect) weapondist = i2->def->range;
+					}
+
+					if (me->def->canfly) {
+						air_attackers[me->side].push_back(i);
+						me->category = CAT_A_ATTACK;
+					} else if (weapondist>=1000) {
+						artillery[me->side].push_back(i);
+						me->category = CAT_ARTILLERY;
+					} else if (me->def->health>=4000) {
+						assault[me->side].push_back(i);
+						me->category = CAT_ASSAULT;
+					} else {
+						attackers[me->side].push_back(i);
+						me->category = CAT_ATTACK;
+					}
 				}
 			}
 			else if (!me->def->canfly){
-				if(me->def->minWaterDepth <= 0){
-					if(me->def->buildOptions.size()> 1){
+				if(me->def->buildOptions.size()> 0){
+					int groundunits=0,airunits=0,waterunits=0;
+					for(map<int, string>::const_iterator j = me->def->buildOptions.begin(); j != me->def->buildOptions.end(); j++){
+						const UnitDef *ud2 = ai->cb->GetUnitDef(j->second.c_str());
+						if (ud2->minWaterDepth>0) waterunits++;
+						else if (ud2->canfly) airunits++;
+						else groundunits++;
+					}
+					if (airunits>groundunits+waterunits)
+						air_factories[me->side].push_back(i);
+					else if (waterunits>groundunits+airunits || me->def->minWaterDepth>0)
+						water_factories[me->side].push_back(i);
+					else if (groundunits>airunits+waterunits)
 						ground_factories[me->side].push_back(i);
-						me->category = CAT_FACTORY;
+					else {
+						ground_factories[me->side].push_back(i);
+						air_factories[me->side].push_back(i);
+						water_factories[me->side].push_back(i);
 					}
-					else
-					{
-						if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile){
-							ground_defences[me->side].push_back(i);
-							me->category = CAT_DEFENCE;
-						}
-						if(me->def->makesMetal){
-							metal_makers[me->side].push_back(i);
-							me->category = CAT_MMAKER;
-						}
-						if(me->def->extractsMetal){
-							metal_extractors[me->side].push_back(i);
-							me->category = CAT_MEX;
-						}
-						if((((me->def->energyMake - me->def->energyUpkeep) / UnitCost) > 0.002) || me->def->tidalGenerator || me->def->windGenerator){
-							if(me->def->minWaterDepth <= 0 && !me->def->needGeo){
-								ground_energy[me->side].push_back(i);
-								me->category = CAT_ENERGY;
-							}
-						}
-						if(me->def->energyStorage / UnitCost > 0.2){
-							energy_storages[me->side].push_back(i);
-							me->category = CAT_ESTOR;
-						}
-						if(me->def->metalStorage / UnitCost > 0.1){
-							metal_storages[me->side].push_back(i);
-							me->category = CAT_MSTOR;
-						}
-
-					}
+					me->category = CAT_FACTORY;
 				}
+				else
+				if(me->def->makesMetal){
+					metal_makers[me->side].push_back(i);
+					me->category = CAT_MMAKER;
+				} else
+				if(me->def->extractsMetal){
+					metal_extractors[me->side].push_back(i);
+					me->category = CAT_MEX;
+				} else
+				if((((me->def->energyMake - me->def->energyUpkeep) / UnitCost) > 0.002) || me->def->tidalGenerator || me->def->windGenerator){
+//						if(me->def->minWaterDepth <= 0 && !me->def->needGeo){
+					ground_energy[me->side].push_back(i);
+					me->category = CAT_ENERGY;
+//						}
+				} else
+				if(me->def->energyStorage / UnitCost > 0.2){
+					energy_storages[me->side].push_back(i);
+					me->category = CAT_ESTOR;
+				} else
+				if(me->def->metalStorage / UnitCost > 0.1){
+					metal_storages[me->side].push_back(i);
+					me->category = CAT_MSTOR;
+				} else
+				if(me->def->radarRadius>800){
+					radars[me->side].push_back(i);
+					me->category = CAT_RADAR;
+				} else
+				if(me->def->sonarRadius>800){
+					sonars[me->side].push_back(i);
+					me->category = CAT_SONAR;
+				} else
+				if(me->def->jammerRadius>200){
+					rjammers[me->side].push_back(i);
+					me->category = CAT_R_JAMMER;
+				} else
+				if(me->def->sonarJamRadius>200){
+					sjammers[me->side].push_back(i);
+					me->category = CAT_S_JAMMER;
+				} else
+				if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile){
+					if (me->def->weapons.begin()->def->type=="TorpedoLauncher")
+						water_defences[me->side].push_back(i);
+					else if (me->def->weapons.begin()->def->type=="MissileLauncher" && me->def->weapons.begin()->def->tracks)
+						air_defences[me->side].push_back(i);
+					else
+						ground_defences[me->side].push_back(i);
+					me->category = CAT_DEFENCE;
+				} else
+				;
 			}
 		}
 	}
@@ -1990,3 +2201,15 @@ void CUnitTable::Init_nr2()
 	L(k);
 }
 
+bool CUnitTable::HasWeapons(const UnitDef* unit)
+{
+//	bool found=false;
+	if (ai->ut->unittypearray[unit->id].AverageDPS>0.01) return true;
+/*	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin();i!=unit->weapons.end();i++) {
+		if (i->def->isShield) continue;
+		for (int a=0;a<i->def->damages.numTypes;a++)
+			if (i->def->damages[a]!=0) found=true;
+	}
+*/
+	return false;
+}
