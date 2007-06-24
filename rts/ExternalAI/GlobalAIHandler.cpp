@@ -34,19 +34,22 @@ bool CGlobalAIHandler::CatchException()
 // to switch off the exception handling and have it catched by the debugger.
 #define HANDLE_EXCEPTION  \
 	catch (const std::exception& e) {	\
-		if (CatchException ())			\
+		if (CatchException ()) {		\
 			AIException(e.what());		\
-		else throw;						\
+			throw;						\
+		} else throw;					\
 	}									\
 	catch (const char *s) {	\
-		if (CatchException ())			\
+		if (CatchException ()) {		\
 			AIException(s);				\
-		else throw;						\
+			throw;						\
+		} else throw;					\
 	}									\
 	catch (...) {						\
-		if (CatchException ())			\
+		if (CatchException ()) {		\
 			AIException(0);				\
-		else throw;						\
+			throw;						\
+		}else throw;					\
 	}
 
 void AIException(const char *what)
@@ -59,7 +62,7 @@ void AIException(const char *what)
 	} else
 //		handleerror(0,"An unhandled exception occured in the global ai dll, please contact the author of the ai.","Error in global ai",0);
 		logOutput.Print("Global ai exception");
-	exit(-1);
+//	exit(-1);
 }
 
 CGlobalAIHandler::CGlobalAIHandler(void)

@@ -20,6 +20,8 @@
 #include "System/Object.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
+#include "creg/STL_Map.h"
+#include "creg/STL_List.h"
 
 
 CWaitCommandsAI waitCommandsAI;
@@ -29,6 +31,55 @@ static const int maxNetDelay = 30;  // in seconds
 
 static const int updatePeriod = 3;  // 100 ms
 
+
+CR_BIND(CWaitCommandsAI, );
+
+CR_REG_METADATA(CWaitCommandsAI, (
+				CR_MEMBER(waitMap),
+				CR_MEMBER(unackedMap)
+				));
+
+CR_BIND_DERIVED_INTERFACE(CWaitCommandsAI::Wait, CObject);
+
+CR_REG_METADATA_SUB(CWaitCommandsAI,Wait, (
+					CR_MEMBER(code),
+					CR_MEMBER(key),
+					CR_MEMBER(valid),
+					CR_POSTLOAD(PostLoad)
+					));
+
+CR_BIND_DERIVED(CWaitCommandsAI::TimeWait, CWaitCommandsAI::Wait, (1,0));
+
+CR_REG_METADATA_SUB(CWaitCommandsAI,TimeWait , (
+					CR_MEMBER(unit),
+					CR_MEMBER(enabled),
+					CR_MEMBER(duration),
+					CR_MEMBER(endFrame),
+					CR_MEMBER(factory)
+					));
+
+CR_BIND_DERIVED(CWaitCommandsAI::DeathWait, CWaitCommandsAI::Wait, (Command()));
+
+CR_REG_METADATA_SUB(CWaitCommandsAI,DeathWait , (
+					CR_MEMBER(waitUnits),
+					CR_MEMBER(deathUnits),
+					CR_MEMBER(unitPos)
+					));
+
+CR_BIND_DERIVED(CWaitCommandsAI::SquadWait, CWaitCommandsAI::Wait, (Command()));
+
+CR_REG_METADATA_SUB(CWaitCommandsAI,SquadWait , (
+					CR_MEMBER(squadCount),
+					CR_MEMBER(buildUnits),
+					CR_MEMBER(waitUnits),
+					CR_MEMBER(stateText)
+					));
+
+CR_BIND_DERIVED(CWaitCommandsAI::GatherWait, CWaitCommandsAI::Wait, (Command()));
+
+CR_REG_METADATA_SUB(CWaitCommandsAI,GatherWait , (
+					CR_MEMBER(waitUnits)
+					));
 
 /******************************************************************************/
 /******************************************************************************/
@@ -328,6 +379,11 @@ CWaitCommandsAI::KeyType CWaitCommandsAI::Wait::GetKeyFromFloat(float f)
 	return *((KeyType*)&f);
 }
 
+
+void CWaitCommandsAI::Wait::PostLoad()
+{
+	deadTime = time(NULL) + maxNetDelay;
+}
 
 // static
 float CWaitCommandsAI::Wait::GetFloatFromKey(KeyType k)

@@ -99,7 +99,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.params.push_back("LandAt 0");
 	c.params.push_back("LandAt 30");
 	c.params.push_back("LandAt 50");
-	//c.params.push_back("LandAt 80");
+	c.params.push_back("LandAt 80");
 	c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
 	c.hotkey="";
 	possibleCommands.push_back(c);
@@ -155,7 +155,7 @@ void CAirCAI::GiveCommandReal(const Command &c)
 			case 0: { airMT->repairBelowHealth = 0.0f; break; }
 			case 1: { airMT->repairBelowHealth = 0.3f; break; }
 			case 2: { airMT->repairBelowHealth = 0.5f; break; }
-			//case 3: { airMT->repairBelowHealth = 0.8f; break; }
+			case 3: { airMT->repairBelowHealth = 0.8f; break; }
 		}
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){
