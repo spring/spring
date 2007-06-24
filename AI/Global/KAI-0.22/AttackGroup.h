@@ -6,8 +6,10 @@
 
 class CAttackGroup
 {
+	CR_DECLARE(CAttackGroup);
 	public:
-		CAttackGroup(AIClasses* ai, int groupID_in);
+	CAttackGroup(AIClasses* ai, int groupID_in);
+	CAttackGroup();
 
 	virtual ~CAttackGroup();
 
@@ -44,6 +46,7 @@ class CAttackGroup
 	void Defend();
 
 	private:
+	float3 CheckCoordinates(float3 pos);
 	void DrawGroupPosition();
 	bool FindDefenseTarget(float3 groupPosition);
 	void PathToBase(float3 groupPosition);

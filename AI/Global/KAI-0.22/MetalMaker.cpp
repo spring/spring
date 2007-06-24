@@ -1,12 +1,32 @@
 // implementation of the logic in a metal maker class
 //////////////////////////////////////////////////////////////////////
 
+#include "Include.h"
 //#include "StdAfx.h"
 #include "MetalMaker.h"
 //#include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include <vector>
+
+CR_BIND(CMetalMaker ,(NULL))
+
+CR_REG_METADATA(CMetalMaker,(
+				CR_MEMBER(myUnits),
+				CR_MEMBER(lastEnergy),
+				CR_MEMBER(ai),
+				CR_MEMBER(listIndex),
+				CR_MEMBER(addedDelay)
+				));
+
+CR_BIND(CMetalMaker::UnitInfo, )
+
+CR_REG_METADATA_SUB(CMetalMaker,UnitInfo,(
+					CR_MEMBER(id),
+					CR_MEMBER(energyUse),
+					CR_MEMBER(metalPerEnergy),
+					CR_MEMBER(turnedOn)
+					));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -16,13 +36,13 @@
 //	void _xlen(){};
 //}
 
-CMetalMaker::CMetalMaker(IAICallback* aicb)
+CMetalMaker::CMetalMaker(AIClasses* ai)
 {
 //	lastUpdate=0;
 	listIndex=0;
 	lastEnergy=0;
 	addedDelay=0;
-	this->aicb=aicb;
+	this->ai=ai;
 }
 
 CMetalMaker::~CMetalMaker()
@@ -40,14 +60,14 @@ CMetalMaker::~CMetalMaker()
 
 bool CMetalMaker::Add(int unit)
 {
-	const UnitDef* ud=aicb->GetUnitDef(unit);
+	const UnitDef* ud=ai->cb->GetUnitDef(unit);
 	if(!(ud->energyUpkeep>0.0f && ud->makesMetal>0.0f)){ // || !ud->extractsMetal>0.0f) {
-//		aicb->SendTextMsg("Can only use metal makers",0);
+//		ai->cb->SendTextMsg("Can only use metal makers",0);
 		return false;
 	}
 	//analyse the command and stuff on or off into the info thingy
 	UnitInfo info;//=new UnitInfo;
-	const std::vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
+	const std::vector<CommandDescription>* cd=ai->cb->GetUnitCommands(unit);
 	for(std::vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi){
 		if(cdi->id==CMD_ONOFF){
 			int on=atoi(cdi->params[0].c_str());
@@ -74,10 +94,10 @@ bool CMetalMaker::Add(int unit)
 		if (info.metalPerEnergy > theIterator->metalPerEnergy 
 			//in addition, provide a sexy ordering ability ;P
 				|| (info.metalPerEnergy == theIterator->metalPerEnergy
-					&& (aicb->GetUnitPos(info.id).x == aicb->GetUnitPos(theIterator->id).x
-					&& aicb->GetUnitPos(info.id).z > aicb->GetUnitPos(theIterator->id).z)
+					&& (ai->cb->GetUnitPos(info.id).x == ai->cb->GetUnitPos(theIterator->id).x
+					&& ai->cb->GetUnitPos(info.id).z > ai->cb->GetUnitPos(theIterator->id).z)
 				|| (info.metalPerEnergy == theIterator->metalPerEnergy
-					&& aicb->GetUnitPos(info.id).x > aicb->GetUnitPos(theIterator->id).x))
+					&& ai->cb->GetUnitPos(info.id).x > ai->cb->GetUnitPos(theIterator->id).x))
 			) {
 			myUnits.insert(theIterator, info);
 			inserted = true;
@@ -96,7 +116,7 @@ bool CMetalMaker::Add(int unit)
 			Command c;
 			c.id=CMD_ONOFF;
 			c.params.push_back(1);
-			aicb->GiveOrder(myUnits[counter].id,&c);
+			ai->cb->GiveOrder(myUnits[counter].id,&c);
 			myUnits[counter].turnedOn=true;
 		}
 		listIndex++;
@@ -108,18 +128,18 @@ bool CMetalMaker::Add(int unit)
 			Command c;
 			c.id=CMD_ONOFF;
 			c.params.push_back(0);
-			aicb->GiveOrder(myUnits[counter].id,&c);
+			ai->cb->GiveOrder(myUnits[counter].id,&c);
 			myUnits[counter].turnedOn=false;
 		}
 	}
 //	char text[500];
 //	sprintf(text, "CFirenuMM: metal maker added, id=%i, index=%i, num=%i, energyUpkeep=%f, makesMetal=%f", unit, counter, (int)myUnits.size(), ud->energyUpkeep, ud->makesMetal);
-//	aicb->SendTextMsg(text, 0);
+//	ai->cb->SendTextMsg(text, 0);
 //	for(int i = 0; i < (int)myUnits.size(); i++) {
 //		sprintf(text, "-%f", myUnits[i].metalPerEnergy);
-//		aicb->SendTextMsg(t, 0);
+//		ai->cb->SendTextMsg(t, 0);
 //	}
-	//aicb->SendTextMsg(t, 0);
+	//ai->cb->SendTextMsg(t, 0);
 	
 	
 
@@ -152,13 +172,13 @@ bool CMetalMaker::AllAreOn() {
 
 void CMetalMaker::Update()
 {
-	int frameNum=aicb->GetCurrentFrame();
+	int frameNum=ai->cb->GetCurrentFrame();
 	const int updateSpread = 33;
 	int numUnits = (int)myUnits.size();
 	if(frameNum % updateSpread == 0 && numUnits > 0 && addedDelay-- <= 0){
 		//lastUpdate=frameNum;
-		float energy=aicb->GetEnergy();
-		float estore=aicb->GetEnergyStorage();
+		float energy=ai->cb->GetEnergy();
+		float estore=ai->cb->GetEnergyStorage();
 
 		float difference=energy-lastEnergy;
 		difference /= 4.0f;
@@ -171,13 +191,13 @@ void CMetalMaker::Update()
 				listIndex--; //now it should be the last online one
 //				char t[500];
 //				sprintf(t, "CFirenuMM: %i-->off %f", listIndex, energy/estore);
-//				aicb->SendTextMsg(t, 0);
+//				ai->cb->SendTextMsg(t, 0);
 				if(myUnits[listIndex].turnedOn)
 				{
 					Command c;
 					c.id=CMD_ONOFF;
 					c.params.push_back(0);
-					aicb->GiveOrder(myUnits[listIndex].id,&c);
+					ai->cb->GiveOrder(myUnits[listIndex].id,&c);
 					myUnits[listIndex].turnedOn=false;
 					//break; //moo
 					difference += myUnits[listIndex].energyUse;
@@ -188,13 +208,13 @@ void CMetalMaker::Update()
 		} else if(energy>estore*0.9 && listIndex < numUnits){
 //			char t[500];
 //			sprintf(t, "CFirenuMM: %i--->on %f", listIndex, energy/estore);
-//			aicb->SendTextMsg(t, 0);
+//			ai->cb->SendTextMsg(t, 0);
 			if(!myUnits[listIndex].turnedOn)
 			{
 				Command c;
 				c.id=CMD_ONOFF;
 				c.params.push_back(1);
-				aicb->GiveOrder(myUnits[listIndex].id,&c);
+				ai->cb->GiveOrder(myUnits[listIndex].id,&c);
 				myUnits[listIndex].turnedOn=true;
 				//break; //moo
 				if (difference < myUnits[listIndex].energyUse) addedDelay = 4;
@@ -217,7 +237,7 @@ void CMetalMaker::Update()
 					Command c;
 					c.id=CMD_ONOFF;
 					c.params.push_back(0);
-					aicb->GiveOrder(myUnits[i].id,&c);
+					ai->cb->GiveOrder(myUnits[i].id,&c);
 					myUnits[i].turnedOn=false;
 					//break; //moo
 				}
@@ -233,7 +253,7 @@ void CMetalMaker::Update()
 					Command c;
 					c.id=CMD_ONOFF;
 					c.params.push_back(1);
-					aicb->GiveOrder(myUnits[i].id,&c);
+					ai->cb->GiveOrder(myUnits[i].id,&c);
 					myUnits[i].turnedOn=true;
 					//break; //moo
 				}
@@ -242,17 +262,17 @@ void CMetalMaker::Update()
 		}
 		*/
 	}
-	if ((aicb->GetCurrentFrame() % 1800) == 0) {
+	if ((ai->cb->GetCurrentFrame() % 1800) == 0) {
 		//TODO: super evil hack. once a minute, turn everything off and reset.
 		for (int i = 0; i < (int)myUnits.size(); i++) {
 			Command c;
 			c.id=CMD_ONOFF;
 			c.params.push_back(0);
-			aicb->GiveOrder(myUnits[i].id,&c);
+			ai->cb->GiveOrder(myUnits[i].id,&c);
 			myUnits[i].turnedOn = false;
 		}
 		this->listIndex = 0;
 		this->addedDelay = 0;
-//		aicb->SendTextMsg("MM: turned all off.", 0);
+//		ai->cb->SendTextMsg("MM: turned all off.", 0);
 	}
 }

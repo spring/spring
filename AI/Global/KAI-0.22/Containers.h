@@ -22,8 +22,11 @@ class CSurveillanceHandler;
 class CDamageControl;
 //added by Kloot
 class DGunController;
+class CCoverageHandler;
 
 struct AIClasses {
+	CR_DECLARE_STRUCT(AIClasses);
+	void PostLoad();
 	IAICallback*			cb;
 	IAICheats*				cheat;
 	CEconomyTracker*		econTracker;
@@ -45,6 +48,10 @@ struct AIClasses {
 	std::ofstream*			LOGGER;
 	// added by Kloot
 	DGunController*			dgunController;
+	CCoverageHandler*       radarCoverage;
+	CCoverageHandler*       sonarCoverage;
+	CCoverageHandler*       rjammerCoverage;
+	CCoverageHandler*       sjammerCoverage;
 };
 
 
@@ -111,7 +118,7 @@ class integer2 {
 
 class KAIMoveType {
 	public:
-		CR_DECLARE_STRUCT(KAIMoveType);
+//		CR_DECLARE_STRUCT(KAIMoveType);
 		KAIMoveType(): Air(false), MaxSlope(10000), MaxDepth(10000), MinDepth(-10000), CrushStrength(0), size(1) {
 		};
 		~KAIMoveType() {
@@ -168,6 +175,7 @@ class KAIMoveType {
  * builder container: main task is to make sure that tracking builders is easy (making asserts and tests)
  */
 struct BuilderTracker {
+	CR_DECLARE_STRUCT(BuilderTracker);
 	int builderID;
 	// if not NULL then this worker belongs to this BuildTask
 	int buildTaskId;
@@ -200,9 +208,12 @@ struct BuilderTracker {
 	int estimateETAforMoveingToBuildSite;
 	// the def -> buildDistance or something
 	float distanceToSiteBeforeItCanStartBuilding;
+	void PostLoad();
 };
 
 struct BuildTask {
+	CR_DECLARE_STRUCT(BuildTask);
+	void PostLoad();
 	int id;
 	int category;
 
@@ -219,6 +230,8 @@ struct BuildTask {
 };
 
 struct TaskPlan {
+	CR_DECLARE_STRUCT(TaskPlan);
+	void PostLoad();
 	// this will be some smart number (a counter?)
 	int id;
 
@@ -229,6 +242,7 @@ struct TaskPlan {
 
 	float currentBuildPower;
 	const UnitDef* def;
+	std::string defname;
 	float3 pos;
 };
 
@@ -236,6 +250,8 @@ struct TaskPlan {
  * This is a builder that can't move.
  */
 struct Factory {
+	CR_DECLARE_STRUCT(Factory);
+	void PostLoad();
 	int id;
 	// for speed up, and debugging
 	const UnitDef* factoryDef;

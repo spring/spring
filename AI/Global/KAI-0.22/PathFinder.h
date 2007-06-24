@@ -7,8 +7,10 @@ using namespace NSMicroPather;
 
 class CPathFinder {
 	public:
+//		CR_DECLARE(CPathFinder);
 		CPathFinder(AIClasses *ai);
 		virtual ~CPathFinder();
+//		void PostLoad();
 
 		void Init();
 		void ClearPath();
@@ -36,7 +38,7 @@ class CPathFinder {
 		void CreateDefenseMatrix();
 
 		MicroPather* micropather;
-		bool* TestMoveArray;
+		vector<bool> TestMoveArray;
 		//vector<bool*> MoveArrays;	
 		vector<KAIMoveType> MoveTypes;
 		// list of all the used slope types. Sorted, most restricted first.
@@ -50,9 +52,9 @@ class CPathFinder {
 
 		int NumOfMoveTypes;
 
-		float* SlopeMap;
-		float* HeightMap;
-		unsigned* canMoveIntMaskArray;
+		vector<float> SlopeMap;
+		vector<float> HeightMap;
+		vector<unsigned> canMoveIntMaskArray;
 		int PathMapXSize;
 		int PathMapYSize;
 		int totalcells;

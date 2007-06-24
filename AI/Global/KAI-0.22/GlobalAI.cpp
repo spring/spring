@@ -1,7 +1,163 @@
 #include "GlobalAI.h"
 #include "Unit.h"
+#include "CoverageHandler.h"
+#include "creg/cregex.h"
+#include "creg/Serializer.h"
+#include "creg/STL_List.h"
+
+CR_BIND(CGlobalAI,)
+
+CR_REG_METADATA(CGlobalAI,(
+				CR_MEMBER(MyUnits),
+/*
+				CR_MEMBER(totalSumTime),
+				CR_MEMBER(updateTimerGroup),
+				CR_MEMBER(econTrackerFrameUpdate),
+				CR_MEMBER(updateTheirDistributionTime),
+				CR_MEMBER(updateMyDistributionTime),
+				CR_MEMBER(builUpTime),
+				CR_MEMBER(idleUnitUpdateTime),
+				CR_MEMBER(attackHandlerUpdateTime),
+				CR_MEMBER(MMakerUpdateTime),
+				CR_MEMBER(unitCreatedTime),
+				CR_MEMBER(unitFinishedTime),
+				CR_MEMBER(unitDestroyedTime),
+				CR_MEMBER(unitIdleTime),
+				CR_MEMBER(economyManagerUpdateTime),
+				CR_MEMBER(globalAILogTime),
+				CR_MEMBER(threatMapTime),
+*/
+				CR_SERIALIZER(Serialize),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(AIClasses ,)
+
+CR_REG_METADATA(AIClasses,(
+				CR_MEMBER(econTracker),
+				CR_MEMBER(bu),
+			//	CR_MEMBER(parser),
+			//	CR_MEMBER(mm),
+			//	CR_MEMBER(math),
+			//	CR_MEMBER(debug),
+			//	CR_MEMBER(pather),
+			//	CR_MEMBER(ut),
+				CR_MEMBER(tm),
+				CR_MEMBER(uh),
+				CR_MEMBER(dm),
+				CR_MEMBER(ah),
+			//	CR_MEMBER(em),
+			//	CR_MEMBER(dc),
+			//	CR_MEMBER(sh),
+				CR_MEMBER(MyUnits),
+			//	CR_MEMBER(LOGGER),
+				CR_MEMBER(dgunController),
+				CR_MEMBER(radarCoverage),
+				CR_MEMBER(sonarCoverage),
+				CR_MEMBER(rjammerCoverage),
+				CR_MEMBER(sjammerCoverage)
+//				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(integer2 ,)
+
+CR_REG_METADATA(integer2,(
+				CR_MEMBER(x),
+				CR_MEMBER(y)
+				));
+
+//CR_BIND(KAIMoveType ,)
+
+////CR_REG_METADATA(KAIMoveType,(
+////				));
+
+CR_BIND(BuilderTracker ,)
+
+CR_REG_METADATA(BuilderTracker,(
+				CR_MEMBER(builderID),
+				CR_MEMBER(buildTaskId),
+				CR_MEMBER(taskPlanId),
+				CR_MEMBER(factoryId),
+				CR_MEMBER(customOrderId),
+
+				CR_MEMBER(stuckCount),
+				CR_MEMBER(idleStartFrame),
+				CR_MEMBER(commandOrderPushFrame),
+				CR_MEMBER(categoryMaker),
+
+				//def
+
+				CR_MEMBER(estimateRealStartFrame),
+				CR_MEMBER(estimateFramesForNanoBuildActivation),
+				CR_MEMBER(estimateETAforMoveingToBuildSite),
+				CR_MEMBER(distanceToSiteBeforeItCanStartBuilding),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(BuildTask ,)
+
+CR_REG_METADATA(BuildTask,(
+				CR_MEMBER(id),
+				CR_MEMBER(category),
+
+				CR_MEMBER(builderTrackers),
+
+				CR_MEMBER(currentBuildPower),
+				CR_MEMBER(pos),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(TaskPlan ,)
+
+CR_REG_METADATA(TaskPlan,(
+				CR_MEMBER(id),
+
+				CR_MEMBER(builderTrackers),
+
+				CR_MEMBER(currentBuildPower),
+				CR_MEMBER(defname),
+				CR_MEMBER(pos),
+				CR_POSTLOAD(PostLoad)
+				));
+
+CR_BIND(Factory ,)
+
+CR_REG_METADATA(Factory,(
+				CR_MEMBER(id),
+
+				CR_MEMBER(supportBuilderTrackers),
+
+				CR_MEMBER(currentBuildPower),
+				CR_MEMBER(currentTargetBuildPower),
+				CR_POSTLOAD(PostLoad)
+				));
 
 
+void AIClasses::PostLoad()
+{
+}
+
+CREX_REG_STATE_COLLECTOR(KAI,CGlobalAI);
+
+void BuilderTracker::PostLoad()
+{
+	def = KAIState->ai->cb->GetUnitDef(builderID);
+}
+
+void BuildTask::PostLoad()
+{
+	def = KAIState->ai->cb->GetUnitDef(id);
+}
+
+void TaskPlan::PostLoad()
+{
+	def = KAIState->ai->cb->GetUnitDef(defname.c_str());
+}
+
+void Factory::PostLoad()
+{
+	factoryDef = KAIState->ai->cb->GetUnitDef(id);
+}
 
 CGlobalAI::CGlobalAI() {
 }
@@ -21,7 +177,71 @@ CGlobalAI::~CGlobalAI() {
 	delete ai -> uh;
 	// added by Kloot
 	delete ai -> dgunController;
+	delete ai -> radarCoverage;
+	delete ai -> sonarCoverage;
+	delete ai -> rjammerCoverage;
+	delete ai -> sjammerCoverage;
 	delete ai;
+}
+
+void CGlobalAI::Serialize(creg::ISerializer *s)
+{
+	s->SerializeObjectInstance(ai,ai->GetClass());
+}
+
+void CGlobalAI::PostLoad()
+{
+	ai -> debug				= new CDebug(ai);
+	ai -> math				= new CMaths(ai);
+	ai -> parser			= new CSunParser(ai);
+	ai -> sh				= new CSurveillanceHandler(ai);
+	ai -> ut				= new CUnitTable(ai);
+	ai -> mm				= new CMetalMap(ai);
+	ai -> pather			= new CPathFinder(ai);
+//	ai -> tm				= new CThreatMap(ai);
+//	ai -> uh				= new CUnitHandler(ai);
+//	ai -> dm				= new CDefenseMatrix(ai);
+//	ai -> econTracker		= new CEconomyTracker(ai);
+//	ai -> bu				= new CBuildUp(ai);
+//	ai -> ah				= new CAttackHandler(ai);
+	ai -> dc				= new CDamageControl(ai);
+	ai -> em				= new CEconomyManager(ai);
+	// added by Kloot
+//	ai -> dgunController	= new DGunController(ai);
+
+//	ai -> radarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Radar);
+//	ai -> sonarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Sonar);
+//	ai -> rjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::RJammer);
+//	ai -> sjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::SJammer);
+
+
+	totalSumTime				= 0;
+	updateTimerGroup			= ai -> math -> GetNewTimerGroupNumber("CGlobalAI::Update()");
+	econTrackerFrameUpdate		= ai -> math -> GetNewTimerGroupNumber("ai -> econTracker -> frameUpdate()");
+	updateTheirDistributionTime	= ai -> math -> GetNewTimerGroupNumber("ai -> dc -> UpdateTheirDistribution()");
+	updateMyDistributionTime	= ai -> math -> GetNewTimerGroupNumber("ai -> dc -> UpdateMyDistribution()");
+	threatMapTime				= ai -> math -> GetNewTimerGroupNumber("ai -> tm -> Create()  (threatMap)");
+	builUpTime					= ai -> math -> GetNewTimerGroupNumber("ai -> bu -> Update()  (buildup)");
+	idleUnitUpdateTime			= ai -> math -> GetNewTimerGroupNumber("idleUnitUpdateTime");
+	attackHandlerUpdateTime		= ai -> math -> GetNewTimerGroupNumber("ai -> ah -> Update()  (attackHandler)");
+	MMakerUpdateTime			= ai -> math -> GetNewTimerGroupNumber("ai -> uh -> MMakerUpdate()");
+	economyManagerUpdateTime	= ai -> math -> GetNewTimerGroupNumber("ai -> em -> Update()  (economyManager)");
+	globalAILogTime				= ai -> math -> GetNewTimerGroupNumber("GlobalAI log time  ( L() )");
+	unitCreatedTime				= ai -> math -> GetNewTimerGroupNumber("CGlobalAI::UnitCreated(int unit)");
+	unitFinishedTime			= ai -> math -> GetNewTimerGroupNumber("CGlobalAI::UnitFinished(int unit)");
+	unitDestroyedTime			= ai -> math -> GetNewTimerGroupNumber("CGlobalAI::UnitDestroyed(int unit,int attacker)");
+	unitIdleTime				= ai -> math -> GetNewTimerGroupNumber("CGlobalAI::UnitIdle(int unit)");
+	L("Timers initialized");
+
+	ai -> mm -> Init();
+	L("ai -> mm -> Init(); done");
+	ai -> ut -> Init();
+	L("ai -> ut -> Init(); done");
+	ai -> pather -> Init();
+	L("post load done");
+	dminited = !ai->dm->ChokePointArray.empty();
+//	ai -> dc -> GenerateDPSTables();
+//	L("GenerateDPSTables done");
 }
 
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
@@ -73,7 +293,12 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai -> dc				= new CDamageControl(ai);
 	ai -> em				= new CEconomyManager(ai);
 	// added by Kloot
-	ai -> dgunController	= new DGunController();
+	ai -> dgunController	= new DGunController(ai);
+
+	ai -> radarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Radar);
+	ai -> sonarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Sonar);
+	ai -> rjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::RJammer);
+	ai -> sjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::SJammer);
 
 	L("All Class pointers initialized");
 
@@ -102,8 +327,10 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	L("ai -> ut -> Init(); done");
 	ai -> pather -> Init();
 	L("init done");
-	ai -> dc -> GenerateDPSTables();
-	L("GenerateDPSTables done");
+//	ai -> dc -> GenerateDPSTables();
+//	L("GenerateDPSTables done");
+
+	dminited = false;
 
 	ai -> cb -> SendTextMsg("KAI v0.22 loaded!", 0);
 }
@@ -128,6 +355,10 @@ void CGlobalAI::UnitCreated(int unit) {
 	if (ud -> isCommander && ud -> canDGun) {
 		((this -> ai) -> dgunController) -> init((this -> ai) -> cb, unit);
 	}
+	ai -> radarCoverage -> Change(unit,false);
+	ai -> sonarCoverage -> Change(unit,false);
+	ai -> rjammerCoverage -> Change(unit,false);
+	ai -> sjammerCoverage -> Change(unit,false);
 }
 
 void CGlobalAI::UnitFinished(int unit) {
@@ -169,6 +400,14 @@ void CGlobalAI::UnitDestroyed(int unit,int attacker) {
 	ai -> uh -> UnitDestroyed(unit);
 	ai -> math -> StopTimer(unitDestroyedTime);
 	ai -> math -> StopTimer(totalSumTime);
+	const UnitDef* ud = ((this -> ai) -> cb) -> GetUnitDef(unit);
+	if (ud -> isCommander && ud -> canDGun) {
+		ai -> dgunController ->inited = false;
+	}
+	ai -> radarCoverage -> Change(unit,true);
+	ai -> sonarCoverage -> Change(unit,true);
+	ai -> rjammerCoverage -> Change(unit,true);
+	ai -> sjammerCoverage -> Change(unit,true);
 }
 
 void CGlobalAI::UnitIdle(int unit) {
@@ -180,11 +419,12 @@ void CGlobalAI::UnitIdle(int unit) {
 	ai -> econTracker -> frameUpdate();
 
 	// attackhandler handles cat_g_attack units atm
-	if (GCAT(unit) == CAT_G_ATTACK && ai -> MyUnits.at(unit) -> groupID != -1) {
+	if ((GCAT(unit) == CAT_ATTACK || GCAT(unit) == CAT_ARTILLERY || GCAT(unit) == CAT_ASSAULT) && ai -> MyUnits.at(unit) -> groupID != -1) {
 		// attackHandler -> UnitIdle(unit);
 	}
 	else {
-		ai -> uh -> IdleUnitAdd(unit);
+		if (GCAT(unit)!=CAT_BUILDER || !(ai -> uh -> GetBuilderTracker(unit) -> factoryId))
+			ai -> uh -> IdleUnitAdd(unit);
 	}
 	ai -> math -> StopTimer(unitIdleTime);
 	ai -> math -> StopTimer(totalSumTime);
@@ -327,6 +567,8 @@ void CGlobalAI::Update() {
 		ai -> math -> StartTimer(idleUnitUpdateTime);
 		ai -> uh -> IdleUnitUpdate();
 		ai -> math -> StopTimer(idleUnitUpdateTime);
+
+		ai -> uh -> CloakUpdate();
 	}
 
 	ai -> math -> StartTimer(attackHandlerUpdateTime);
@@ -344,10 +586,11 @@ void CGlobalAI::Update() {
 	ai -> math -> StopTimer(totalSumTime);
 
 	// don't include the setup time of defenseMatrix in the total
-	if (frame == 1) {
+	if (!dminited) {
 		// ai -> math -> StartTimer(defenseMatrixInitTime);
 		ai -> dm -> Init();
 		// ai -> math -> StopTimer(defenseMatrixInitTime);
+		dminited = true;
 	}
 
 	// print the times every 2 mins
@@ -355,4 +598,36 @@ void CGlobalAI::Update() {
 		L("Here is the time distribution after " << (frame / 1800) << " mins");
 		ai -> math -> PrintAllTimes();
 	}
+}
+
+void CGlobalAI::Load(IGlobalAICallback* callback,std::istream *ifs)
+{
+	ai = new AIClasses;
+	ai -> cb	= callback -> GetAICallback();
+	ai -> cheat	= callback -> GetCheatInterface();
+
+	// initialize log filename
+	string mapname = string(callback -> GetAICallback() -> GetMapName());
+	mapname.resize(mapname.size() - 4);
+
+	time_t now1;
+	time(&now1);
+	struct tm* now2;
+	now2 = localtime(&now1);
+
+	int team=ai->cb->GetMyTeam();
+
+	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
+			string(LOGFOLDER).c_str(), mapname.c_str(), now2 -> tm_mon + 1, now2 -> tm_mday, now2 -> tm_year + 1900, now2 -> tm_hour, now2 -> tm_min, team);
+
+	ai -> cb -> GetValue(AIVAL_LOCATE_FILE_W, c);
+
+	ai -> LOGGER			= new std::ofstream(c);
+
+	CREX_SC_LOAD(KAI,ifs);
+}
+
+void CGlobalAI::Save(std::ostream *ofs)
+{
+	CREX_SC_SAVE(KAI,ofs);
 }

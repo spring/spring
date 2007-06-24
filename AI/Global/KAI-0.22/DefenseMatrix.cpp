@@ -1,39 +1,69 @@
 #include "DefenseMatrix.h"
+#include "CoverageHandler.h"
+
+CR_BIND(CDefenseMatrix ,(NULL))
+
+CR_REG_METADATA(CDefenseMatrix,(
+				CR_MEMBER(ChokeMapsByMovetype),
+				CR_MEMBER(ChokePointArray),
+				CR_MEMBER(BuildMaskArray),
+				CR_MEMBER(ai),
+				CR_POSTLOAD(PostLoad)
+				));
 
 CDefenseMatrix::CDefenseMatrix(AIClasses* ai) {
 	this -> ai = ai;
 }
 CDefenseMatrix::~CDefenseMatrix() {
-	for (unsigned int i = 0; i != ChokeMapsByMovetype.size();i++){
-		delete [] ChokeMapsByMovetype[i];
-	}
-	delete [] ChokePointArray;
-	delete [] BuildMaskArray;
+//	for (unsigned int i = 0; i != ChokeMapsByMovetype.size();i++){
+//		delete [] ChokeMapsByMovetype[i];
+//	}
+//	delete [] ChokePointArray;
+//	delete [] BuildMaskArray;
 }
 
 int getDefensePosTime;
+void CDefenseMatrix::PostLoad()
+{
+	getDefensePosTime = ai->math->GetNewTimerGroupNumber("GetDefensePos()");
+	
+//	ai->pather->CreateDefenseMatrix();	
+	spotFinder = new CSpotFinder(ai, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+	spotFinder->SetBackingArray(&ChokePointArray.front(), ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+}
+
 void CDefenseMatrix::Init() {
-	ChokePointArray = new float[ai->pather->totalcells];
-	BuildMaskArray = new int[ai->pather->totalcells]; // This is a temp only, it will be used to mask bad spots that workers cant build at
-	for(int i = 0; i < ai->pather->totalcells; i++)
-		BuildMaskArray[i] = 0;
+//	ChokePointArray = new float[ai->pather->totalcells];
+//	BuildMaskArray = new int[ai->pather->totalcells]; // This is a temp only, it will be used to mask bad spots that workers cant build at
+//	for(int i = 0; i < ai->pather->totalcells; i++)
+//		BuildMaskArray[i] = 0;
+	ChokePointArray.resize(ai->pather->totalcells);
+	BuildMaskArray.resize(ai->pather->totalcells);
 	
 	getDefensePosTime = ai->math->GetNewTimerGroupNumber("GetDefensePos()");
 	
 	ai->pather->CreateDefenseMatrix();	
 	spotFinder = new CSpotFinder(ai, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
-	spotFinder->SetBackingArray(ChokePointArray, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+	spotFinder->SetBackingArray(&ChokePointArray.front(), ai->pather->PathMapYSize, ai->pather->PathMapXSize);
 }
 
 void CDefenseMatrix::MaskBadBuildSpot(float3 pos)
 {
-		int f3multiplier = 8*THREATRES;
-		int x = (int) (pos.x / f3multiplier);
-		int y = (int) (pos.z / f3multiplier);
-		BuildMaskArray[y * ai->pather->PathMapXSize + x] = 1;
+	int f3multiplier = 8*THREATRES;
+	int x = (int) (pos.x / f3multiplier);
+	int y = (int) (pos.z / f3multiplier);
+	BuildMaskArray[y * ai->pather->PathMapXSize + x]++;
 }
 
-float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
+void CDefenseMatrix::UnmaskBadBuildSpot(float3 pos)
+{
+	int f3multiplier = 8*THREATRES;
+	int x = (int) (pos.x / f3multiplier);
+	int y = (int) (pos.z / f3multiplier);
+	if (BuildMaskArray[y * ai->pather->PathMapXSize + x]>0) BuildMaskArray[y * ai->pather->PathMapXSize + x]--;
+}
+
+float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos, float heightK, CCoverageHandler *ch)
 {
 	ai->math->StartTimer(getDefensePosTime);
 	ai->ut->UpdateChokePointArray();  // TODO: UpdateChokePointArray() needs fixing.
@@ -102,9 +132,13 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
 	{
 		int x = (int) (builderpos.x / f3multiplier);
 		int y = (int) (builderpos.z / f3multiplier);
+		if (x<0) x=0;
+		if (y<0) y=0;
+		if (x>ai->pather->PathMapXSize-1) x=ai->pather->PathMapXSize-1;
+		if (y>ai->pather->PathMapYSize-1) y=ai->pather->PathMapYSize-1;
 		float fastSumMap = sumMap[y * ai->pather->PathMapXSize + x];
 		float3 spotpos = float3(x*f3multiplier,0,y*f3multiplier);
-		float myscore = fastSumMap/(builderpos.distance2D(spotpos) + averagemapsize / 8) * ((ai->pather->HeightMap[y * ai->pather->PathMapXSize + x] + 200) / (ai->pather->AverageHeight + 10)) / (ai->tm->ThreatAtThisPoint(spotpos)+0.01);
+		float myscore = fastSumMap/(builderpos.distance2D(spotpos) + averagemapsize / 8) * ((ai->pather->HeightMap[y * ai->pather->PathMapXSize + x]*heightK + 200) / (ai->pather->AverageHeight + 10)) / (ai->tm->ThreatAtThisPoint(spotpos)+0.01);
 		bestscore_fast = myscore;
 		bestspotx_fast = x;
 		bestspoty_fast = y;
@@ -159,7 +193,7 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
 			float bestDistance = builderpos.distance2D(bestPosibleSpotpos);
 			//L("bestDistance: " << bestDistance);
 			//L("cachePoint->maxValueInBox: " << cachePoint->maxValueInBox << ", cachePoint->x: " << cachePoint->x << ", cachePoint->y: " << cachePoint->y);
-			float bestHeight = ai->pather->HeightMap[cachePoint->y * ai->pather->PathMapXSize + cachePoint->x] + 200; // This must be guessed atm
+			float bestHeight = ai->pather->HeightMap[cachePoint->y * ai->pather->PathMapXSize + cachePoint->x]*heightK + 200; // This must be guessed atm
 			//L("bestHeight: " << bestHeight);
 			float bestPosibleMyScore = bestScoreInThisBox / (bestDistance + averagemapsize / 8) * (bestHeight + 200) / bestThreatAtThisPoint;
 			//L("bestPosibleMyScore: " << bestPosibleMyScore);
@@ -172,9 +206,12 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos)
 				// Must test all the points inside this box:
 				for(int sx = x * CACHEFACTOR; sx < ai->pather->PathMapXSize && sx < (x * CACHEFACTOR + CACHEFACTOR); sx++){
 					for(int sy = y * CACHEFACTOR; sy < ai->pather->PathMapYSize && sy < (y * CACHEFACTOR + CACHEFACTOR); sy++){
+						if (ai->uh->Distance2DToNearestFactory(sx*f3multiplier,sy*f3multiplier)>DEFCBS_RADIUS) continue;
+						if (ch && ch->GetCoverage(float3(sx*f3multiplier,0,sy*f3multiplier))!=0) continue;
 						float fastSumMap = sumMap[sy * ai->pather->PathMapXSize + sx];
 						float3 spotpos = float3(sx*f3multiplier,0,sy*f3multiplier);
-						float myscore = fastSumMap/(builderpos.distance2D(spotpos) + averagemapsize / 4) * (ai->pather->HeightMap[sy * ai->pather->PathMapXSize + sx]+200) / (ai->tm->ThreatAtThisPoint(spotpos)+0.01);
+						float myscore = fastSumMap/(builderpos.distance2D(spotpos) + averagemapsize / 4) *
+						(ai->pather->HeightMap[sy * ai->pather->PathMapXSize + sx]*heightK+200) / (ai->tm->ThreatAtThisPoint(spotpos)+0.01);
 						//L("Checking defense spot. fastSumMap: " << fastSumMap << ", Distance: " << builderpos.distance2D(spotpos) << " Height: " << ai->pather->HeightMap[sy * ai->pather->PathMapXSize + sx] << " Threat " << ai->tm->ThreatAtThisPoint(spotpos)<< " Score: " << myscore);
 						if(myscore > bestscore_fast && BuildMaskArray[sy * ai->pather->PathMapXSize + sx] == 0 && ai->cb->CanBuildAt(def,spotpos)){ // COULD BE REALLY SLOW!
 							bestscore_fast = myscore;

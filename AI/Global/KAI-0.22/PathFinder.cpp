@@ -1,29 +1,69 @@
 #include "PathFinder.h"
+/*
+CR_BIND(CPathFinder, (0));
 
+CR_REG_METADATA(CPathFinder,(
+				CR_MEMBER(
+		micropather
+		TestMoveArray
+		MoveTypes
+		slopeTypes
+		groundUnitWaterLines
+		waterUnitGroundLines
+		crushStrengths
 
+		NumOfMoveTypes
+
+		SlopeMap
+		HeightMap
+		canMoveIntMaskArray
+		AverageHeight
+		CumulativeSlopeMeter
+		path
+		totalcost
+
+		resmodifier;
+		ai;
+				));
+*/
 CPathFinder::CPathFinder(AIClasses* ai) {
 	this  ->  ai		= ai;
 	resmodifier			= THREATRES;
-	PathMapXSize		= int(ai -> cb -> GetMapWidth() / resmodifier);
-	PathMapYSize		= int(ai -> cb -> GetMapHeight() / resmodifier);
+	PathMapXSize		= ai?int(ai -> cb -> GetMapWidth() / resmodifier):0;
+	PathMapYSize		= ai?int(ai -> cb -> GetMapHeight() / resmodifier):0;
 	totalcells			= PathMapXSize*PathMapYSize;
-	micropather			= new MicroPather(ai, totalcells);
-	HeightMap			= new float[totalcells];
-	SlopeMap			= new float[totalcells];
-	TestMoveArray		= new bool[totalcells];
-	canMoveIntMaskArray	= new unsigned[totalcells];
+	micropather			= ai?new MicroPather(ai, totalcells):0;
+//	HeightMap			= new float[totalcells];
+//	SlopeMap			= new float[totalcells];
+	HeightMap.resize(totalcells);
+	SlopeMap.resize(totalcells);
+//	TestMoveArray		= new bool[totalcells];
+	TestMoveArray.resize(totalcells);
+//	canMoveIntMaskArray	= new unsigned[totalcells];
+	canMoveIntMaskArray.resize(totalcells);
 	NumOfMoveTypes		= 0;
 }
 
 
 CPathFinder::~CPathFinder() {
-	delete[] canMoveIntMaskArray;
-	delete[] SlopeMap;
-	delete[] HeightMap;
-	delete[] TestMoveArray;
+//	delete[] canMoveIntMaskArray;
+//	delete[] SlopeMap;
+//	delete[] HeightMap;
+//	delete[] TestMoveArray;
 	delete micropather;
 }
+/*
+void CPathFinder::PostLoad()
+{
+	PathMapXSize		= int(ai -> cb -> GetMapWidth() / resmodifier);
+	PathMapYSize		= int(ai -> cb -> GetMapHeight() / resmodifier);
+	totalcells			= PathMapXSize*PathMapYSize;
 
+	patherTime = ai -> math -> GetNewTimerGroupNumber("All pather calls (simulated)");
+	microPatherTime = ai -> math -> GetNewTimerGroupNumber("Micropather");
+	patherFunctionSimulationSetup = ai -> math -> GetNewTimerGroupNumber("Pather function-simulation setup time");
+}
+*/
 int microPatherTime;
 int patherFunctionSimulationSetup;
 
@@ -38,6 +78,7 @@ void CPathFinder::Init() {
 	int hmapx = ai -> cb -> GetMapWidth() / 2;
 	int mapy = ai -> cb -> GetMapHeight() - 1;
 	int hmapy = ai -> cb -> GetMapHeight() / 2;
+/*
 	float* newSlopeMap;
 
 	if (hmapx == PathMapXSize)
@@ -81,7 +122,7 @@ void CPathFinder::Init() {
 	L("End newSlopeMap");
 //	ai -> debug -> MakeBWTGA(newSlopeMap, hmapx, hmapy, "SpringSlopeMap");
 
-
+*/
 
 
 
@@ -425,7 +466,7 @@ void CPathFinder::CreateDefenseMatrix(){
 	}
 
 	// int kitty
-	ai -> dm -> ChokeMapsByMovetype[NumOfMoveTypes] = new float [totalcells];
+	ai -> dm -> ChokeMapsByMovetype[NumOfMoveTypes].resize(totalcells);
 	for(int i = 0; i < totalcells; i++)	{
 		ai -> dm -> ChokeMapsByMovetype[NumOfMoveTypes][i] = 1;
 	}
@@ -438,23 +479,24 @@ void CPathFinder::CreateDefenseMatrix(){
 		}
 		// There are mods without a starting builder....
 		int startUnit = -1;
-		if(ai -> uh -> AllUnitsByCat[CAT_BUILDER] -> size())
-			startUnit = ai -> uh -> AllUnitsByCat[CAT_BUILDER] -> front();
+		if(ai -> uh -> AllUnitsByCat[CAT_BUILDER] . size())
+			startUnit = ai -> uh -> AllUnitsByCat[CAT_BUILDER] . front();
 		else
 		{
 			//
 			for(unsigned i = 0; i < ai -> uh -> AllUnitsByCat.size(); i++)
 			{
-				if(ai -> uh -> AllUnitsByCat[i] -> size())
+				if(ai -> uh -> AllUnitsByCat[i] . size())
 				{
-					startUnit = ai -> uh -> AllUnitsByCat[i] -> front();
+					startUnit = ai -> uh -> AllUnitsByCat[i] . front();
 					break;	
 				}
 			}
 		}
-		float3 mypos = ai -> cb -> GetUnitPos(startUnit);
+
+		float3 mypos = *(ai -> cb ->GetStartPos());
 		int reruns = 30; // 35 TEMP
-		ai -> dm -> ChokeMapsByMovetype[m] = new float [totalcells];
+		ai -> dm -> ChokeMapsByMovetype[m].resize(totalcells);
 		char k [10];
 		itoa (m,k,10);
 		
@@ -467,7 +509,7 @@ void CPathFinder::CreateDefenseMatrix(){
 		L("pathToUse: " << pathToUse);
 		pathToUse |= 1 << slopeTypes.size();
 		L("pathToUse: " << pathToUse);
-		micropather -> SetMapData(canMoveIntMaskArray, ai -> dm -> ChokeMapsByMovetype[m], PathMapXSize, PathMapYSize, pathToUse);
+		micropather -> SetMapData(&canMoveIntMaskArray.front(), &ai -> dm -> ChokeMapsByMovetype[m].front(), PathMapXSize, PathMapYSize, pathToUse);
 		double pathCostSum = 0;
 		for(int i = 0; i < totalcells; i++)	{
 			ai -> dm -> ChokeMapsByMovetype[m][i] = 1;
@@ -547,7 +589,7 @@ void CPathFinder::CreateDefenseMatrix(){
 		char k [10];
 		itoa (m,k,10);
 		if( m == (NumOfMoveTypes -1))
-			ai -> debug -> MakeBWTGA(ai -> dm -> ChokeMapsByMovetype[m],PathMapXSize,PathMapYSize,string("ChokePoint Array for Movetype ") + string(k));
+			ai -> debug -> MakeBWTGA(&ai -> dm -> ChokeMapsByMovetype[m].front(),PathMapXSize,PathMapYSize,string("ChokePoint Array for Movetype ") + string(k));
 		/*float maxvalue = 0.1;
 		for(int i = 0; i < totalcells; i++)	{
 			if(chokemap[i] > maxvalue)

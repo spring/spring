@@ -67,7 +67,9 @@ void CDamageControl::UpdateTheirDistribution()
 				TheirTotalArmyCost += enemycost;
 
 			}
-			else if(ai->ut->GetCategory(unitType->def) == CAT_G_ATTACK){
+			else if(ai->ut->GetCategory(unitType->def) == CAT_ATTACK ||
+				ai->ut->GetCategory(unitType->def) == CAT_ARTILLERY ||
+				ai->ut->GetCategory(unitType->def) == CAT_ASSAULT) {
 				TheirArmy[i].Cost = enemycost;
 				TheirArmy[i].Hitpoints = unitType->def->health;
 				TheirTotalArmyCost += enemycost;
@@ -76,12 +78,14 @@ void CDamageControl::UpdateTheirDistribution()
 			if(unitType->AverageDPS > 0 && !unittypearray[i].def->isCommander)
 			{
 				for(int e = 1; e <= NumOfUnitTypes; e++){
-					float totaldps = unitType->DPSvsUnit[e] * ai->uh->AllUnitsByType[i]->size();
+					float totaldps = unitType->DPSvsUnit[e] * ai->uh->AllUnitsByType[i].size();
 					TheirUnitsAll[e].Damage += totaldps;
 					if(ai->ut->GetCategory(unitType->def) == CAT_DEFENCE){
 						TheirDefences[e].Damage += totaldps;
 					}
-					else if(ai->ut->GetCategory(unitType->def) == CAT_G_ATTACK){
+					else if(ai->ut->GetCategory(unitType->def) == CAT_ATTACK ||
+						ai->ut->GetCategory(unitType->def) == CAT_ARTILLERY ||
+						ai->ut->GetCategory(unitType->def) == CAT_ASSAULT){
 						TheirArmy[e].Damage += totaldps;
 					}
 				}
@@ -103,13 +107,13 @@ void CDamageControl::UpdateMyDistribution()
 	UnitType* unittypearray = ai->ut->unittypearray;
 	//L("Starting first loop");
 	for(int i = 1; i <= NumOfUnitTypes; i++){
-		if(ai->uh->AllUnitsByType[i]->size())
+		if(ai->uh->AllUnitsByType[i].size())
 		{
 			//L("Unit ID: " << i);
 			//int id = ai->cheat->GetUnitDef(enemies[i])->id;
 			UnitType * unitType = &unittypearray[i];
-			float myunitcost = unitType->Cost *  ai->uh->AllUnitsByType[i]->size();
-			MyUnitsAll[i].Hitpoints = unitType->def->health * ai->uh->AllUnitsByType[i]->size();
+			float myunitcost = unitType->Cost *  ai->uh->AllUnitsByType[i].size();
+			MyUnitsAll[i].Hitpoints = unitType->def->health * ai->uh->AllUnitsByType[i].size();
 			MyUnitsAll[i].Cost = myunitcost;
 			MyTotalCost += myunitcost;
 			//L("Total Costs defined");
@@ -117,7 +121,9 @@ void CDamageControl::UpdateMyDistribution()
 				MyDefences[i].Hitpoints = unitType->def->health;
 				MyDefences[i].Cost = myunitcost;
 			}
-			else if(ai->ut->GetCategory(unitType->def) == CAT_G_ATTACK){
+			else if(ai->ut->GetCategory(unitType->def) == CAT_ATTACK ||
+				ai->ut->GetCategory(unitType->def) == CAT_ARTILLERY ||
+				ai->ut->GetCategory(unitType->def) == CAT_ASSAULT){
 				MyArmy[i].Hitpoints = unitType->def->health;
 				MyArmy[i].Cost = myunitcost;
 			}
@@ -125,12 +131,14 @@ void CDamageControl::UpdateMyDistribution()
 			if(unitType->AverageDPS > 0 && !unittypearray[i].def->isCommander)
 			{
 				for(int e = 1; e <= NumOfUnitTypes; e++){
-					float totaldps = unitType->DPSvsUnit[e] * ai->uh->AllUnitsByType[i]->size();
+					float totaldps = unitType->DPSvsUnit[e] * ai->uh->AllUnitsByType[i].size();
 					MyUnitsAll[e].Damage += totaldps;
 					if(ai->ut->GetCategory(unitType->def) == CAT_DEFENCE){
 						MyDefences[e].Damage += totaldps;
 					}
-					else if(ai->ut->GetCategory(unitType->def) == CAT_G_ATTACK){
+					else if(ai->ut->GetCategory(unitType->def) == CAT_ATTACK ||
+						ai->ut->GetCategory(unitType->def) == CAT_ARTILLERY ||
+						ai->ut->GetCategory(unitType->def) == CAT_ASSAULT){
 						MyArmy[e].Damage += totaldps;
 					}
 				}
@@ -147,7 +155,7 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 	float score = 0;
 	int category = GCAT(unit); 
 	bool foundaunit = false;
-	if(category == CAT_G_ATTACK){
+	if(category == CAT_ATTACK || category == CAT_ARTILLERY || category == CAT_ASSAULT){
 		for(int i = 1; i <= NumOfUnitTypes; i++){
 			if(TheirUnitsAll[i].Cost > 0 && ai->ut->unittypearray[unit->id].DPSvsUnit[i] > 0 && ai->ut->unittypearray[i].AverageDPS > 0){
 				//L("unit->id: " << unit->id << " I: " << i);
@@ -176,7 +184,7 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 	}
 	else if(category == CAT_DEFENCE){
 		for(int i = 1; i <= NumOfUnitTypes; i++){
-			if(TheirArmy[i].Cost > 0 && ai->ut->unittypearray[unit->id].DPSvsUnit[i] > 0 && ai->ut->unittypearray[i].category == CAT_G_ATTACK){
+			if(TheirArmy[i].Cost > 0 && ai->ut->unittypearray[unit->id].DPSvsUnit[i] > 0 && (ai->ut->unittypearray[i].category == CAT_ATTACK || ai->ut->unittypearray[i].category == CAT_ARTILLERY || ai->ut->unittypearray[i].category == CAT_ASSAULT)){
 				//L("unit->id: " << unit->id << " I: " << i);
 				//L("DPSvsUnit[i] " << ai->ut->unittypearray[unit->id].DPSvsUnit[i] << " TheirUnitsAll[i].Cost " << TheirUnitsAll[i].Cost);
 				score+= ai->ut->unittypearray[unit->id].DPSvsUnit[i] * TheirArmy[i].Cost / TheirArmy[i].Hitpoints / (MyDefences[i].Damage + 1); // kill the stuff with the best value
@@ -205,7 +213,7 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 	//L(" score " << score << " TheirTotalCost " << TheirTotalCost);
 	if (TheirTotalArmyCost <= 0)
 		return 1;
-	if (category == CAT_G_ATTACK) {
+	if (category == CAT_ATTACK || category == CAT_ARTILLERY || category == CAT_ASSAULT) {
 		return score / TheirTotalArmyCost / (TheirUnitsAll[unit->id].Damage + 1);
 	}
 

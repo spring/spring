@@ -21,6 +21,8 @@ public:
 	// returns true, if a builder can build a certain unit (use UnitDef.id)
 	bool CanBuildUnit(int id_builder, int id_unit);
 
+	bool HasWeapons(const UnitDef* unit);
+
 	// returns side of a unit
 	int GetSide(int unit);
 	
@@ -39,7 +41,7 @@ public:
 	UnitType* GetUnitType(int unit);
 
 	//returns the UnitDef of the best possible Unit of a given category
-	const UnitDef* GetUnitByScore(int builder, int category);
+	const UnitDef* GetUnitByScore(int builder, int category, int subCategory=0);
 	
 	//returns the UnitDef of the best possible Unit of a given categoryMask
 	const UnitDef* GetUnitByScore(int builder, list<UnitType*> &unitList, unsigned needMask);
@@ -63,14 +65,29 @@ public:
 
 	vector<vector<int>*>	all_lists;
 	vector<int> *ground_factories;
+	vector<int> *air_factories;
+	vector<int> *water_factories;
 	vector<int> *ground_builders;
-	vector<int> *ground_attackers;
+	vector<int> *air_builders;
+	vector<int> *water_builders;
+	vector<int> *attackers;
+	vector<int> *artillery;
+	vector<int> *assault;
+	vector<int> *air_attackers;
+	vector<int> *transports;
+	vector<int> *air_transports;
 	vector<int> *metal_extractors;
 	vector<int> *metal_makers;
 	vector<int> *ground_energy;
 	vector<int> *ground_defences;
+	vector<int> *air_defences;
+	vector<int> *water_defences;
 	vector<int> *metal_storages;
 	vector<int> *energy_storages;
+	vector<int> *radars;
+	vector<int> *sonars;
+	vector<int> *rjammers;
+	vector<int> *sjammers;
 
 	// number of sides 
 	int numOfSides;

@@ -7,6 +7,7 @@ struct EconomyUnitTracker;
 
 struct BuildingTracker
 {
+	CR_DECLARE_STRUCT(BuildingTracker);
 	int unitUnderConstruction;
 	int category;
 	float hpLastFrame;
@@ -47,11 +48,15 @@ struct BuildingTracker
 
 struct EconomyUnitTracker
 {
+	CR_DECLARE_STRUCT(EconomyUnitTracker);
+	void PostLoad();
+	AIClasses *ai;
 	int economyUnitId; // Only economyUnitId and createFrame gives a correct ID
 	int createFrame; // If this is in the future, the unit is under construction, and this is the globaly made eta (is a hack now: FIX)
 	BuildingTracker * buildingTracker; // A pointer to the BuildingTracker for this unit (if its not done), MUST be updated before use
 	bool alive;
 	const UnitDef * unitDef; // We will lose the unit id later on
+	std::string unitDefName;
 	int dieFrame;
 	int category; // Not realy needed
 	float totalEnergyMake; // The total lifetime sum
@@ -184,6 +189,7 @@ struct EconomyBuildingPlan
 
 class CEconomyTracker
 {
+	CR_DECLARE(CEconomyTracker);
 	public:
 
 	CEconomyTracker(AIClasses* ai);
@@ -196,7 +202,7 @@ class CEconomyTracker
 	
 
 	private:
-	vector<list<BuildingTracker>* > allTheBuildingTrackers;
+	vector<list<BuildingTracker> > allTheBuildingTrackers;
 	list<EconomyUnitTracker*> deadEconomyUnitTrackers;
 	list<EconomyUnitTracker*> newEconomyUnitTrackers;
 	list<EconomyUnitTracker*> activeEconomyUnitTrackers;

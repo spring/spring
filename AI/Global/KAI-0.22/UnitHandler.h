@@ -8,6 +8,7 @@
 class CUnitHandler
 {
 public:
+	CR_DECLARE(CUnitHandler);
 	CUnitHandler(AIClasses* ai);
 	virtual ~CUnitHandler();
 	void UnitCreated(int unit);
@@ -24,6 +25,8 @@ public:
 	void MMakerAdd(int unit);
 	void MMakerRemove(int unit);
 	void MMakerUpdate();
+
+	void CloakUpdate();
 
 	void BuildTaskCreate(int id);
 	void BuildTaskRemove(int id);
@@ -47,6 +50,7 @@ public:
 	bool FactoryBuilderAdd (int builder);
 	bool FactoryBuilderAdd (BuilderTracker* builderTracker);
 	void FactoryBuilderRemoved (BuilderTracker* builderTracker);
+	float Distance2DToNearestFactory (float x,float z);
 
 	void BuilderReclaimOrder(int builderId, int target); // Use this to tell the tracker that the builder is on a reclaim job.
 
@@ -54,14 +58,20 @@ public:
 	bool VerifyOrder(BuilderTracker* builderTracker);
 	void ClearOrder(BuilderTracker* builderTracker, bool reportError);
 	void DecodeOrder(BuilderTracker* builderTracker, bool reportError);
+	int GetFactoryHelpersCount();
 
-	vector<list<int>*> IdleUnits;
+	vector<list<int> > IdleUnits;
 
-	vector<list<BuildTask*>*> BuildTasks; // TODO: update useless code as the BuildTask's are free objects now.
-	vector<list<TaskPlan*>*> TaskPlans; // TODO: update useless code as the TaskPlan's are free objects now.
-	vector<list<int>*> AllUnitsByCat;
-	vector<list<int>*> AllUnitsByType;
+	vector<list<BuildTask*> > BuildTasks; // TODO: update useless code as the BuildTask's are free objects now.
+	vector<list<TaskPlan*> > TaskPlans; // TODO: update useless code as the TaskPlan's are free objects now.
+	vector<list<int> > AllUnitsByCat;
+	vector<list<int> > AllUnitsByType;
 	list<Factory> Factories;
+
+	vector<int> UncloakedBuildings;
+	vector<int> UncloakedUnits;
+	vector<int> CloakedBuildings;
+	vector<int> CloakedUnits;
 
 	list<integer2> Limbo;
 	
