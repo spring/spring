@@ -139,7 +139,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}
-
+/*
 	if(owner->unitDef->canfly){
 		c.params.clear();
 		c.id=CMD_AUTOREPAIRLEVEL;
@@ -155,7 +155,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 	}
-
+*/
 	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
 }
 
@@ -169,7 +169,7 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 {
 	if (!AllowedCommand(c))
 		return;
-
+/*
 	if(owner->unitDef->canfly && c.id==CMD_AUTOREPAIRLEVEL){
 		if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
 			return;
@@ -197,7 +197,7 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
-
+*/
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		tempOrder=false;
 		StopSlowGuard();

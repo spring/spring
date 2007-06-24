@@ -120,11 +120,17 @@ def get_AI_source(env, path, which):
 
 
 def get_globalAI_source(env, which):
-	return get_AI_source(env, 'AI/Global', which)
+	engine_files = []
+	if which == 'KAI-0.22':
+		engine_files += get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
+	return get_AI_source(env, 'AI/Global', which) + engine_files
 
 
 def get_groupAI_source(env, which):
-	return get_AI_source(env, 'AI/Group', which) + get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
+	engine_files = []
+	if which == 'EconomyAI' or which == 'MexUpgraderAI':
+		engine_files += get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
+	return get_AI_source(env, 'AI/Group', which) + engine_files
 
 
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):

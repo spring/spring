@@ -222,6 +222,7 @@ void CommandDescription::Init()
 	c.params.push_back("LandAt 0");
 	c.params.push_back("LandAt 30");
 	c.params.push_back("LandAt 50");
+	c.params.push_back("LandAt 80");
 	c.params.clear();
 	idToCommandDescription[c.id] = c;
 
