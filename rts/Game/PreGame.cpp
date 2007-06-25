@@ -36,13 +36,14 @@ extern Uint8 *keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 
-CPreGame::CPreGame(bool server, const string& demo, const std::string& save):
-		showList(0),
-		server(server),
-		state(UNKNOWN),
-		saveAddress(true),
-		hasDemo(!demo.empty()),
-		hasSave(!save.empty())
+CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
+: showList(0),
+  server(server),
+  state(UNKNOWN),
+  saveAddress(true),
+  hasDemo(!demo.empty()),
+  hasSave(!save.empty()),
+  savefile(NULL)
 {
 	CommandDescription::Init();
 
