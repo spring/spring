@@ -30,7 +30,7 @@ public:
 	int readyTime;
 	bool forceReady;
 
-	bool Init(char* buf, int size);
+	bool Init(const char* buf, int size);
 
 	char* gameSetupText;
 	int gameSetupTextLength;
@@ -60,6 +60,8 @@ public:
 	bool hostDemo;
 	std::string demoName;
 	int numDemoPlayers;
+
+	std::string saveName;
 };
 
 extern CGameSetup* gameSetup;

@@ -24,6 +24,7 @@
 #include "Platform/FileSystem.h"
 #include <SDL_timer.h>
 #include "NetProtocol.h" // this is bad, CNet should be independent of higher level layers
+#include "Game/PreGame.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -197,7 +198,7 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 		CLuaUI::UpdateTeams();
 		return 1;
 	} else {
-		if(!gameSetup || !gameSetup->hostDemo)
+		if((!gameSetup || (!gameSetup->hostDemo && gameSetup->saveName.empty())) && (!pregame->hasDemo && !pregame->hasSave))
 			CreateDemoFile();
 	}
 

@@ -63,7 +63,7 @@ bool CGameSetup::Init(std::string setupFile)
 	return ret;
 }
 
-bool CGameSetup::Init(char* buf, int size)
+bool CGameSetup::Init(const char* buf, int size)
 {
 	for(int a=0;a<MAX_PLAYERS;a++){
 		gs->players[a]->team=0;					//needed in case one tries to spec a game with only one team
@@ -97,9 +97,10 @@ bool CGameSetup::Init(char* buf, int size)
 	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
 
 	demoName = file.SGetValueDef("","GAME\\Demofile");
-	if (!demoName.empty() && scriptName.find("Load ")==std::string::npos) {
+	if (!demoName.empty()) {
 		hostDemo = true;
 	}
+	saveName = file.SGetValueDef("","GAME\\Savefile");
 	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
 
 	file.GetDef(maxSpeed, "3.0", "GAME\\MaxSpeed");

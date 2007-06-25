@@ -15,10 +15,12 @@
 #include "Platform/FileSystem.h"
 #include "creg/Serializer.h"
 #include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
+#include "Game/WaitCommandsAI.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -87,7 +89,8 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(categoryHandler, categoryHandler->GetClass());
 	s.SerializeObjectInstance(uh, uh->GetClass());
 	s.SerializeObjectInstance(ph, ph->GetClass());
-	std::map<std::string, int> unitRestrictions;
+//	std::map<std::string, int> unitRestrictions;
+	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	for (int a=0;a<MAX_TEAMS;a++)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	s.SerializeObjectInstance(globalAI, globalAI->GetClass());
@@ -112,6 +115,13 @@ void CLoadSaveHandler::SaveGame(std::string file)
 			handleerror(0,"Couldnt save game to file",file.c_str(),0);
 			return;
 		}
+
+		string scriptText;
+		if (gameSetup) {
+			scriptText.insert (scriptText.begin(), gameSetup->gameSetupText, gameSetup->gameSetupText + gameSetup->gameSetupTextLength);
+		}
+
+		WriteString(ofs, scriptText);
 
 		WriteString(ofs, modName);
 		WriteString(ofs, mapName);
@@ -143,6 +153,17 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 {
 	ifs = new std::ifstream (filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
 
+	ReadString(*ifs, scriptText);
+	if (!scriptText.empty() && !gameSetup) {
+		gameSetup = SAFE_NEW CGameSetup();
+		if (!gameSetup->Init(scriptText.c_str(),scriptText.size())) {
+			delete gameSetup;
+			gameSetup = 0;
+		} else {
+			gameSetup->saveName = file;
+		}
+	}
+
 	ReadString(*ifs, modName);
 	ReadString(*ifs, mapName);
 }
@@ -165,6 +186,19 @@ void CLoadSaveHandler::LoadGame()
 		grouphandlers[a]->Load(ifs);
 	globalAI->Load(ifs);
 	delete ifs;
-	gs->paused = true;
+	gs->paused = false;
 	UnloadStartPicture();
+}
+
+std::string CLoadSaveHandler::FindSaveFile(const char* name)
+{
+	std::string name2 = name;
+#ifdef _WIN32
+	if (name2.find(":\\")==std::string::npos)
+		name2 = "Saves\\" + name2;
+#elif
+	if (name2.find("/")==std::string::npos)
+		name2 = "Saves/" + name2;
+#endif
+	return name2;
 }
