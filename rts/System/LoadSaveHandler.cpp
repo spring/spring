@@ -196,7 +196,7 @@ std::string CLoadSaveHandler::FindSaveFile(const char* name)
 #ifdef _WIN32
 	if (name2.find(":\\")==std::string::npos)
 		name2 = "Saves\\" + name2;
-#elif
+#else
 	if (name2.find("/")==std::string::npos)
 		name2 = "Saves/" + name2;
 #endif
