@@ -1,53 +1,74 @@
+/**
+@file mapfile.h
+@brief Defines the Spring map format
+
+This file defines the Spring map format that is most common at the time of this
+writing, sometimes also refered to as SM2 (Spring Map format 2).
+
+This type of maps consists of a .smd (Spring Map Definition/Description) file,
+a .smf (Spring Map Format) file and a .smt (Spring Map Tiles) file. As you may
+have guessed by this, the map is a tilemap.
+
+The SMD file is a file in the textual TDF format defining a number of
+properties for the map.
+
+The SMF file is the main file for the map, containing the tilemap and a lot of
+additional data. See MapHeader for details.
+
+The SMT file, for which the filename is stored in the SMF file, contains the
+tiles used by the map. This file can be shared between different maps. See
+TileFileHeader for details.
+*/
+
 #ifndef __MAPFILE_H
 #define __MAPFILE_H
 
 #include "Platform/byteorder.h"
 
+/// Size in bytes of a single tile in the .smt
 #define SMALL_TILE_SIZE 680
+/// Size in bytes of the minimap (all 9 mipmap levels) in the .smf
 #define MINIMAP_SIZE 699048
+/// Number of mipmap levels stored in the file
 #define MINIMAP_NUM_MIPMAP 9
 
-/*
-map file (.smf) layout is like this
+/**
+@brief Spring Map File (.smf) main header
 
-MapHeader
+Map file (.smf) layout is like this:
 
-ExtraHeader
-ExtraHeader
-.
-.
-.
-
-Chunk of data pointed to by header or extra headers
-Chunk of data pointed to by header or extra headers
-.
-.
-.
+	- MapHeader
+	- ExtraHeader
+	- ExtraHeader
+	- ...
+	- Chunk of data pointed to by header or extra headers
+	- Chunk of data pointed to by header or extra headers
+	- ...
 */
-
 struct MapHeader {
-	char magic[16]; //"spring map file\0"
-	int version;		//must be 1 for now
-	int mapid;			//sort of a checksum of the file
+	char magic[16];      ///< "spring map file\0"
+	int version;         ///< Must be 1 for now
+	int mapid;           ///< Sort of a GUID of the file, just set to a random value when writing a map
 
-	int mapx;				//must be divisible by 128
-	int mapy;				//must be divisible by 128
-	int squareSize;	//distance between vertices. must be 8
-	int texelPerSquare;		//number of texels per square, must be 8 for now
-	int tilesize;		//number of texels in a tile, must be 32 for now
-	float minHeight;		//height value that 0 in the heightmap corresponds to	
-	float maxHeight;		//height value that 0xffff in the heightmap corresponds to
+	int mapx;            ///< Must be divisible by 128
+	int mapy;            ///< Must be divisible by 128
+	int squareSize;      ///< Distance between vertices. Must be 8
+	int texelPerSquare;  ///< Number of texels per square, must be 8 for now
+	int tilesize;        ///< Number of texels in a tile, must be 32 for now
+	float minHeight;     ///< Height value that 0 in the heightmap corresponds to	
+	float maxHeight;     ///< Height value that 0xffff in the heightmap corresponds to
 
-	int heightmapPtr;		//file offset to elevation data (short int[(mapy+1)*(mapx+1)])
-	int typeMapPtr;			//file offset to typedata (unsigned char[mapy/2 * mapx/2])
-	int tilesPtr;				//file offset to tile data (see MapTileHeader)
-	int minimapPtr;			//file offset to minimap (always 1024*1024 dxt1 compresed data with 9 mipmap sublevels)
-	int metalmapPtr;		//file offset to metalmap (unsigned char[mapx/2 * mapy/2])
-	int featurePtr;			//file offset to feature data	(see MapFeatureHeader)
+	int heightmapPtr;    ///< File offset to elevation data (short int[(mapy+1)*(mapx+1)])
+	int typeMapPtr;      ///< File offset to typedata (unsigned char[mapy/2 * mapx/2])
+	int tilesPtr;        ///< File offset to tile data (see MapTileHeader)
+	int minimapPtr;      ///< File offset to minimap (always 1024*1024 dxt1 compresed data with 9 mipmap sublevels)
+	int metalmapPtr;     ///< File offset to metalmap (unsigned char[mapx/2 * mapy/2])
+	int featurePtr;      ///< File offset to feature data (see MapFeatureHeader)
 
-	int numExtraHeaders;		//numbers of extra headers following main header
+	int numExtraHeaders; ///< Numbers of extra headers following main header
 };
 
+/// Read MapHeader mh from CFileHandler srcptr (endian aware)
 #define READPTR_MAPHEADER(mh,srcptr)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -88,42 +109,64 @@ do {							\
 } while (0)
 	
 
-//start of every extra header must look like this, then comes data specific for header type
+/**
+@brief Header for extensions in .smf file
+
+Start of every extra header must look like this, then comes data specific
+for header type.
+
+Defined ExtraHeader types are:
+
+	- MEH_None
+	- MEH_Vegetation
+*/
 struct ExtraHeader {
-	int size;			//size of extra header
-	int type;
+	int size; ///< Size of extra header
+	int type; ///< Type of extra header
 };
 
+// Defined types for extra headers
 
-//defined types for extra headers
-
+/// Not sure why this one should be used
 #define MEH_None 0
-//not sure why this one should be used
 
+/**
+@brief Extension containing a ground vegetation map
+
+This extension contains an offset to an unsigned char[mapx/4 * mapy/4] array
+that defines ground vegetation, if it's missing there is no ground vegetation.
+
+	- 0=none
+	- 1=grass
+	- rest undefined so far
+*/
 #define MEH_Vegetation 1
-//this extension contains a offset to an unsigned char[mapx/4 * mapy/4] array that defines ground vegetation, if its missing there is no ground vegetation
-//0=none
-//1=grass
-//rest undefined so far
 
+// Some structures used in the chunks of data later in the file
 
-//some structures used in the chunks of data later in the file
+/**
+@brief The header at offset MapHeader.tilesPtr in the .smf
 
+MapTileHeader is followed by numTileFiles file definition where each file
+definition is an int followed by a zero terminated file name. On loading,
+Spring prepends the filename with "maps/" and looks in it's VFS for a file
+with the resulting filename. See TileFileHeader for details.
+
+Each file defines as many tiles the int indicates with the following files
+starting where the last one ended so if there is 2 files with 100 tiles each
+the first defines 0-99 and the second 100-199.
+
+After this followes an int[mapx*texelPerSquare/tileSize * mapy*texelPerSquare/tileSize]
+(this is int[mapx/4 * mapy/4] with currently hardcoded texelPerSquare=8 and tileSize=32)
+which are indices to the defined tiles.
+*/
 struct MapTileHeader
 {
-	int numTileFiles;
-	int numTiles;
+	int numTileFiles; ///< Number of tile files to read in (usually 1)
+	int numTiles;     ///< Total number of tiles
 };
 
-#define READ_MAPTILEHEADER(mth,src)			\
-do {							\
-	unsigned int __tmpdw;				\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(mth).numTileFiles = swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(mth).numTiles = swabdword(__tmpdw);		\
-} while (0)
-
+/// Read MapTileHeader mth from CFileHandler (endian aware)
 #define READPTR_MAPTILEHEADER(mth,src)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -133,18 +176,19 @@ do {							\
 	(mth).numTiles = swabdword(__tmpdw);		\
 } while (0)
 
-//this is followed by numTileFiles file definition where each file definition is an int followed by a zero terminated file name
-//each file defines as many tiles the int indicates with the following files starting where the last one ended
-//so if there is 2 files with 100 tiles each the first defines 0-99 and the second 100-199
-//after this followes an int[mapx*texelPerSquare/tileSize * mapy*texelPerSquare/tileSize] which is indexes to the defined tiles
+/**
+@brief The header at offset MapHeader.featurePtr in the .smf
 
-
+MapFeatureHeader is followed by numFeatureType zero terminated strings indicating the names
+of the features in the map. Then follow numFeatures MapFeatureStructs.
+*/
 struct MapFeatureHeader 
 {
 	int numFeatureType;
 	int numFeatures;
 };
 
+/// Read MapFeatureHeader mfh from CFileHandler src (endian aware)
 #define READ_MAPFEATUREHEADER(mfh,src)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -154,20 +198,25 @@ do {							\
 	(mfh).numFeatures = (int)swabdword(__tmpdw);	\
 } while (0)
 
-//this is followed by numFeatureType zero terminated strings indicating the names of the features in the map
-//then follow numFeatures MapFeatureStructs
+/**
+@brief Structure defining how features are stored in .smf
 
+MapFeatureHeader is followed by numFeatureType zero terminated strings
+indicating the names of the features in the map. Then follow numFeatures
+MapFeatureStructs.
+*/
 struct MapFeatureStruct
 {
-	int featureType;	//index to one of the strings above
-	float xpos;
-	float ypos;
-	float zpos;
+	int featureType;    ///< Index to one of the strings above
+	float xpos;         ///< X coordinate of the feature
+	float ypos;         ///< Y coordinate of the feature (height)
+	float zpos;         ///< Z coordinate of the feature
 
-	float rotation;
-	float relativeSize;		//not used at the moment keep 1
+	float rotation;     ///< Orientation of this feature (-32768..32767 for full circle)
+	float relativeSize; ///< Not used at the moment keep 1
 };
 
+/// Read MapFeatureStruct mfs from CFileHandler src (endian aware)
 #define READ_MAPFEATURESTRUCT(mfs,src)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -186,27 +235,32 @@ do {							\
 	(mfs).relativeSize = swabfloat(__tmpfloat);	\
 } while (0)
 
-/*
-map texture tile file (.smt) layout is like this
+/**
+@brief Spring Tile File (.smt) main header
 
-TileFileHeader
+Map texture tile file (.smt) layout is like this:
 
-Tiles
-.
-.
-.
+	- TileFileHeader
+	- Tile
+	- Tile
+	- ...
+
+In other words TileFileHeader is followed by the raw data for the tiles.
+
+Each 32x32 tile is dxt1 compressed data with 4 mipmap levels. This takes up
+exactly SMALL_TILE_SIZE (680) bytes per tile (512 + 128 + 32 + 8).
 */
-
 struct TileFileHeader
 {
-	char magic[16];  //"spring tilefile\0"
-	int version;		//must be 1 for now
+	char magic[16];      ///< "spring tilefile\0"
+	int version;         ///< Must be 1 for now
 
-	int numTiles;			//total number of tiles in this file
-	int tileSize;			//must be 32 for now
-	int compressionType;	//must be 1=dxt1 for now
+	int numTiles;        ///< Total number of tiles in this file
+	int tileSize;        ///< Must be 32 for now
+	int compressionType; ///< Must be 1 (= dxt1) for now
 };
 
+/// Read TileFileHeader tfh from CFileHandler src (endian aware)
 #define READ_TILEFILEHEADER(tfh,src)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -221,6 +275,4 @@ do {							\
 	(tfh).compressionType = (int)swabdword(__tmpdw);\
 } while (0)
 
-//this is followed by the raw data for the tiles
-//
 #endif //ndef __MAPFILE_H
