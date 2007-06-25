@@ -428,7 +428,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 	&& ((ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage())
 	|| (RANDINT%3 == 0 && ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage() * 2.0) // Only more metal if 200% of the metal usage is bigger than the income ?
 	|| (!ai->math->MFeasibleConstruction(ai->cb->GetUnitDef(builder),factory) && !ai->uh->Factories.size())))
-	|| (ai->cb->GetMetalIncome()<7.0))){	
+	|| (ai->cb->GetMetalIncome()<4.0))){	
 		if(!ai->MyUnits[builder]->ReclaimBest(1)){
 			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX) && mex != NULL){								
 				int upgradespot = ai->mm->FindMetalSpotUpgrade(builder,mex);		
