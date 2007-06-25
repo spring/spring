@@ -6,6 +6,7 @@
 
 class CglList;
 class CInfoConsole;
+class CLoadSaveHandler;
 
 class CPreGame : public CGameController
 {
@@ -18,7 +19,7 @@ public:
 		WAIT_ON_MOD,
 		ALL_READY,
 	};
-	CPreGame(bool server, const std::string& demo);
+	CPreGame(bool server, const std::string& demo, const std::string& save);
 	virtual ~CPreGame();
 
 	CglList* showList;
@@ -31,6 +32,8 @@ public:
 	State state;
 	bool saveAddress;
 
+	bool hasDemo,hasSave;
+
 	std::string mapName;
 	std::string modName;
 
@@ -39,6 +42,7 @@ public:
 	int inbufpos;								//where in the input buffer we are
 	int inbuflength;						//last byte in input buffer
 
+	CLoadSaveHandler *savefile;
 private:
 	CInfoConsole* infoConsole;
 

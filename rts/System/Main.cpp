@@ -157,6 +157,13 @@ protected:
 	string demofile;
 
 	/**
+	 * @brief savefile
+	 *
+	 * Name of a savefile
+	 */
+	string savefile;
+
+	/**
 	 * @brief startscript
 	 *
 	 * Name of a start script
@@ -725,9 +732,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 
 	if (!command.empty()) {
-		int idx = command.rfind("sdf");
-		if (idx == command.size()-3)
+		if (command.rfind("sdf") == command.size()-3)
 			demofile = command;
+		else if (command.rfind("ssf") == command.size()-3)
+			savefile = command;
 		else startscript = command;
 	}
 #else
@@ -801,9 +809,9 @@ void SpringApp::CreateGameSetup ()
 #endif
 
 	if (!demofile.empty()) {
-		pregame = SAFE_NEW CPreGame(false, demofile);
+		pregame = SAFE_NEW CPreGame(false, demofile, "");
 	} else {
-		pregame = SAFE_NEW CPreGame(server, "");
+		pregame = SAFE_NEW CPreGame(server, "", savefile);
 	}
 }
 

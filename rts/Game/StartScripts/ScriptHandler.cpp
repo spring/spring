@@ -46,10 +46,10 @@ void CScriptHandler::LoadScripts() {
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi)
 		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*fi));
 
-	f = CFileHandler::FindFiles("Saves/", "*.ssf");
-	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
-		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
-	}
+//	f = CFileHandler::FindFiles("Saves/", "*.ssf");
+//	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
+//		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
+//	}
 	ENTER_UNSYNCED;
 }
 

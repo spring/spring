@@ -29,17 +29,20 @@
 #include "FPUCheck.h"
 #include "Platform/Clipboard.h"
 #include "mmgr.h"
+#include "LoadSaveHandler.h"
 
 CPreGame* pregame=0;
 extern Uint8 *keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 
-CPreGame::CPreGame(bool server, const string& demo):
+CPreGame::CPreGame(bool server, const string& demo, const std::string& save):
 		showList(0),
 		server(server),
 		state(UNKNOWN),
-		saveAddress(true)
+		saveAddress(true),
+		hasDemo(!demo.empty()),
+		hasSave(!save.empty())
 {
 	CommandDescription::Init();
 
@@ -72,8 +75,19 @@ CPreGame::CPreGame(bool server, const string& demo):
 	if(server){
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
+			if (!gameSetup->saveName.empty()) {
+				savefile = new CLoadSaveHandler();
+				savefile->LoadGameStartInfo(savefile->FindSaveFile(gameSetup->saveName.c_str()));
+			}
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
+			state = ALL_READY;
+		} else if (!save.empty()){
+			savefile = new CLoadSaveHandler();
+			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
+			CScriptHandler::SelectScript("Commanders");
+			SelectMap(savefile->mapName);
+			SelectMod(savefile->modName);
 			state = ALL_READY;
 		} else {
 			ShowScriptList();
@@ -278,7 +292,7 @@ bool CPreGame::Update()
 			// If so, don't wait indefinitely on a script/map/mod name, but load
 			// everything from gameSetup and switch to ALL_READY state.
 			if(gameSetup) {
-				CScriptHandler::SelectScript("Commanders");
+				CScriptHandler::SelectScript(gameSetup->scriptName);
 				SelectMap(gameSetup->mapname);
 				SelectMod(gameSetup->baseMod);
 				state = ALL_READY;
@@ -351,6 +365,10 @@ bool CPreGame::Update()
 			LoadStartPicture(team->side);
 
 			game = SAFE_NEW CGame(server, mapName, modName, infoConsole);
+
+			if (savefile) {
+				savefile->LoadGame();
+			}
 
 			infoConsole = 0;
 
