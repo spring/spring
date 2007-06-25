@@ -1016,7 +1016,7 @@ void CUnitTable::Init()
 			}
 			
 			if(me->def->speed){
-				if(me->def->buildOptions.size() && me->def->canBuild && me->def->canRepair && me->def->canReclaim && me->def->canGuard){
+				if(me->def->buildOptions.size()/* && me->def->canBuild && me->def->canRepair && me->def->canReclaim && me->def->canGuard*/){
 					ground_builders[me->side].push_back(i);
 					me->category = CAT_BUILDER;
 				} else if (me->def->transportCapacity) {
