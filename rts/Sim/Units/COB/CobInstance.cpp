@@ -32,6 +32,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+//#include "Game/Command.h"
 
 #endif
 
@@ -1110,10 +1112,20 @@ void CCobInstance::SetUnitVal(int val, int param)
 			unit->Activate();
 		break;
 	case STANDINGMOVEORDERS:
-		if (param >= 0 && param <= 2) unit->moveState = param;
+		if (param >= 0 && param <= 2) {
+			Command c;
+			c.id = CMD_MOVE_STATE;
+			c.params.push_back(param);
+			unit->commandAI->GiveCommand(c);
+		}
 		break;
 	case STANDINGFIREORDERS:
-		if (param >= 0 && param <= 2) unit->fireState = param;
+		if (param >= 0 && param <= 2) {
+			Command c;
+			c.id = CMD_FIRE_STATE;
+			c.params.push_back(param);
+			unit->commandAI->GiveCommand(c);
+		}
 		break;
 	case HEALTH:
 		break;
