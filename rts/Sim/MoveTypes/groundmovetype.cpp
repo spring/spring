@@ -194,7 +194,7 @@ void CGroundMoveType::Update()
 	{
 		skidding = true;
 	}
-	
+
 	if(skidding){
 		UpdateSkid();
 		return;
@@ -415,6 +415,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	tracefile << "Start moving called: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
+
 	if(progressState == Active) {
 		StopEngine();
 	}
@@ -609,7 +610,7 @@ void CGroundMoveType::UpdateSkid(void)
 	float3& speed=owner->speed;
 	float3& pos=owner->pos;
 	SyncedFloat3& midPos=owner->midPos;
-	
+
 	if(flying){
 		speed.y+=gs->gravity;
 		if(midPos.y < 0)
@@ -665,11 +666,11 @@ void CGroundMoveType::UpdateSkid(void)
 				speed+=newForce;
 				speedf = speed.Length();
 				speed *= 1 - (.1*dir.y);
-			} else 
+			} else
 			{
 				speed*=(speedf-speedReduction)/speedf;
 			}
-			
+
 			float remTime=speedf/speedReduction-1;
 			float rp=floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
 			skidRotSpeed2=(remTime+1 == 0 ) ? 0 : (rp-skidRotPos2)/(remTime+1);
