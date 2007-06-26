@@ -1,7 +1,6 @@
         string name{ get; }
         string humanName{ get; }
         string filename{ get; }
-        bool loaded{ get; }
         int id{ get; }
         string buildpicname{ get; }
         int aihint{ get; }

@@ -55,6 +55,8 @@ public:
 
 	set<int> myUnits;
 	set<int> enemies;
+	virtual void Load(IGlobalAICallback* callback,std::ifstream *ifs){};
+	virtual void Save(std::ifstream *ifs){};
 };
 
 #endif // !defined(AFX_GroupAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
