@@ -119,12 +119,17 @@ public:
 	int lastErrorVectorUpdate;
 
 	CWeapon* slavedTo;						//use this weapon to choose target
-	
+
 	float3 mainDir;								//main aim dir of weapon
 	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
 
 	bool avoidFriendly;		//if true tried to avoid friendly Units when aiming.
 	bool avoidFeature;      		//if true try to avoid Features while aiming.
+
+	float targetBorder;  // if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
+	float cylinderTargetting;	//if greater than 0, range will be checked in a cylinder (height=unitradius*cylinderTargetting) instead of a sphere
+	float minIntensity;	// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+
 	unsigned int collisionFlags;
 
 	float fuelUsage;

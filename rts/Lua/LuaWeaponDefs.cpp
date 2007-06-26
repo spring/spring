@@ -75,7 +75,7 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 				HSTR_PUSH(L, "__index");
 				lua_pushlightuserdata(L, (void*)wd);
 				lua_pushcclosure(L, WeaponDefIndex, 1);
-				lua_rawset(L, -3); // closure 
+				lua_rawset(L, -3); // closure
 
 				HSTR_PUSH(L, "__newindex");
 				lua_pushlightuserdata(L, (void*)wd);
@@ -110,7 +110,7 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 
 static int WeaponDefIndex(lua_State* L)
 {
-	// not a default value	
+	// not a default value
 	if (!lua_isstring(L, 2)) {
 		lua_rawget(L, 1);
 		return 1;
@@ -119,7 +119,7 @@ static int WeaponDefIndex(lua_State* L)
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
 
-	// not a default value	
+	// not a default value
 	if (paramMap.find(name) == paramMap.end()) {
 		lua_rawget(L, 1);
 		return 1;
@@ -171,7 +171,7 @@ static int WeaponDefNewIndex(lua_State* L)
 
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
-	
+
 	// not a default value, set it
 	if (paramMap.find(name) == paramMap.end()) {
 		lua_rawset(L, 1);
@@ -186,7 +186,7 @@ static int WeaponDefNewIndex(lua_State* L)
 	 	luaL_error(L, "Attempt to write WeaponDefs[%d].%s", wd->id, name);
 	 	return 0;
 	}
-	
+
 	// Definition editing
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)wd) + elem.offset;
@@ -217,7 +217,7 @@ static int WeaponDefNewIndex(lua_State* L)
 			luaL_error(L, "ERROR_TYPE in WeaponDefs __newindex");
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -266,7 +266,7 @@ static int Next(lua_State* L)
 			}
 			// start the user parameters,
 			// remove the internal key and push a nil
-			lua_settop(L, 1); 
+			lua_settop(L, 1);
 			lua_pushnil(L);
 		}
 	}
@@ -314,8 +314,8 @@ static int DamagesArray(lua_State* L, const void* data)
 		LuaPushNamedNumber(L, typeList[i].c_str(), d.damages[i]);
 	}
 	lua_rawset(L, -3);
-	
-	return 1;		
+
+	return 1;
 }
 
 
@@ -417,9 +417,9 @@ static int GuiSoundTable(lua_State* L, const void* data)
 
 static bool InitParamMap()
 {
-	paramMap["next"]  = DataElement(READONLY_TYPE); 
-	paramMap["pairs"] = DataElement(READONLY_TYPE); 
-	
+	paramMap["next"]  = DataElement(READONLY_TYPE);
+	paramMap["pairs"] = DataElement(READONLY_TYPE);
+
 	// dummy WeaponDef for offset generation
 	const WeaponDef wd;
 	const char* start = ADDRESS(wd);
@@ -481,7 +481,7 @@ static bool InitParamMap()
 	ADD_BOOL("noAutoTarget",   wd.noAutoTarget);
 	ADD_BOOL("manualFire",     wd.manualfire);
 	ADD_INT("targetable",      wd.targetable);
-	ADD_BOOL("stockpile",      wd.stockpile);					
+	ADD_BOOL("stockpile",      wd.stockpile);
 	ADD_INT("interceptor",     wd.interceptor);
 	ADD_FLOAT("coverageRange", wd.coverageRange);
 
@@ -541,6 +541,9 @@ static bool InitParamMap()
 	ADD_INT("interceptedByShieldType",  wd.interceptedByShieldType);
 
 	ADD_BOOL("avoidFriendly", wd.avoidFriendly);
+	ADD_FLOAT("targetBorder", wd.targetBorder);
+	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
+	ADD_FLOAT("minIntensity", wd.minIntensity);
 
 //	CExplosionGenerator *explosionGenerator;
 

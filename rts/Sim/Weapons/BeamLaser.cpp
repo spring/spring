@@ -85,6 +85,7 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	}
 
 	float3 dir=pos-weaponPos;
+
 	float length=dir.Length();
 	if(length==0)
 		return true;
@@ -133,6 +134,7 @@ void CBeamLaser::Fire(void)
 		}
 	}
 	dir+=(salvoError)*(1-owner->limExperience*0.7f);
+
 	dir.Normalize();
 
 	FireInternal(dir, false);
@@ -145,6 +147,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	if(owner->directControl)
 		rangeMod=0.95f;
 #endif
+
 	float maxLength=range*rangeMod;
 	float curLength=0;
 	float3 curPos=weaponPos;
@@ -152,6 +155,20 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 	bool tryAgain=true;
 	CUnit* hit;
+
+	// increase range if targets are searched for in a cylinder
+	if (cylinderTargetting > 0.01) {
+		//const float3 up(0, owner->radius*cylinderTargetting, 0);
+		//const float uplen = up.dot(dir);
+		const float uplen = owner->radius*cylinderTargetting * dir.y;
+		maxLength = sqrt(maxLength*maxLength + uplen*uplen);
+	}
+
+	// increase range if targetting edge of hitsphere
+	if (targetType == Target_Unit && targetUnit && targetBorder != 0) {
+		maxLength += targetUnit->radius*targetBorder;
+	}
+
 	for(int tries=0;tries<5 && tryAgain;++tries){
 		tryAgain=false;
 		hit=0;
@@ -172,6 +189,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 				tryAgain=true;
 			}
 		}
+
 		hitPos=curPos+dir*length;
 
 		float baseAlpha=weaponDef->intensity*255;
@@ -187,7 +205,15 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		curLength+=length;
 		dir=newDir;
 	}
-	float	intensity=1-(curLength)/(range*2);
+
+	// fix negative damage when hitting big spheres
+	float actualRange = range;
+	if (hit && targetBorder > 0) {
+		actualRange += hit->radius*targetBorder;
+	}
+	// make it possible to always hit with some minimal intensity (melee weapons have use for that)
+	float intensity=max(minIntensity, 1-(curLength)/(actualRange*2));
+
 	if(curLength<maxLength) {
 		// Dynamic Damage
 		DamageArray dynDamages;

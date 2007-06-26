@@ -59,6 +59,7 @@ public:
 
 protected:
 	int cancelDistance;
+	int lastCloseInTry;
 	bool slowGuard;
 	bool moveDir;
 	void PushOrUpdateReturnFight() {
@@ -66,5 +67,6 @@ protected:
 	}
 };
 
+#define MAX_CLOSE_IN_RETRY_TICKS 30
 
 #endif /* MOBILECAI_H */

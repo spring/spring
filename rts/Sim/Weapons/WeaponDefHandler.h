@@ -86,7 +86,7 @@ struct WeaponDef
 	bool manualfire;			//use dgun button
 	int interceptor;				//anti nuke
 	int targetable;				//nuke (can be shot by interceptor)
-	bool stockpile;					
+	bool stockpile;
 	float coverageRange;		//range of anti nuke
 
 	float intensity;
@@ -138,7 +138,7 @@ struct WeaponDef
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
-		
+
 		int stages;
 		float alphaDecay;
 		float sizeDecay;
@@ -172,6 +172,11 @@ struct WeaponDef
 
 	bool avoidFriendly;		//if true try to avoid friendly Units when aiming.
 	bool avoidFeature;      //if true try to avoid Features while aiming.
+
+	float targetBorder;		//if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
+	float cylinderTargetting;	//if greater than 0, range will be checked in a cylinder (height=unitradius*cylinderTargetting) instead of a sphere
+	float minIntensity;		// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+
 	unsigned int collisionFlags;
 
 	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
