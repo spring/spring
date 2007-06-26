@@ -35,13 +35,16 @@ void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS
 {
 	char buf[128];
 	sprintf(buf,"%s(0x%08x) at 0x%08x",ExceptionName(err),err,ep->ExceptionRecord->ExceptionAddress);
-	throw content_error(buf); // FIXME: needs to be looked at, was std::exception(buf) which doesnt exist on GCC
+	throw std::exception(buf);
 }
+
 #endif
 
 void InitializeSEH()
 {
 #ifdef _MSC_VER
 	_set_se_translator(se_translator_function);
+#else
+// GCC cannot handle win32 exceptions
 #endif
 }

@@ -46,24 +46,24 @@ CDxSound::CDxSound()
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	if (SDL_GetWMInfo (&wmInfo) != 1) {
-		throw content_error("DxSound: Could not get window from SDL");
+		throw "DxSound: Could not get window from SDL";
 	}
 	m_hWnd = wmInfo.window;
 	
 	// Initialize COM
 	hr = CoInitialize( NULL );
 	if( hr!=S_OK && hr!=S_FALSE){
-		throw content_error("DxSound: Could not initialize com");
+		throw "DxSound: Could not initialize com";
 	}
 	
 	// Create IDirectSound using the primary sound device
 	if( FAILED( hr = DirectSoundCreate( NULL, &m_pDS, NULL ) ) ){
-		throw content_error("DxSound: Could not create direct sound object");
+		throw "DxSound: Could not create direct sound object";
 	}
 
     // Set coop level to DSSCL_PRIORITY
 	if( FAILED( hr = m_pDS->SetCooperativeLevel( m_hWnd, DSSCL_PRIORITY ) ) ){
-		throw content_error("DxSound: Could not set cooperative level");
+		throw "DxSound: Could not set cooperative level";
 	}
 	
 	// Get the primary buffer 
@@ -75,7 +75,7 @@ CDxSound::CDxSound()
 	dsbd.lpwfxFormat   = NULL;
 	
 	if( FAILED( hr = m_pDS->CreateSoundBuffer( &dsbd, &pDSBPrimary, NULL ) ) ){
-		throw content_error("DxSound: Could not create primary sound buffer");
+		throw "DxSound: Could not create primary sound buffer";
 	}
 	
 	// Set primary buffer format to 22kHz and 16-bit output.
@@ -89,7 +89,7 @@ CDxSound::CDxSound()
 	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 	
 	if( FAILED( hr = pDSBPrimary->SetFormat(&wfx) ) ){
-		throw content_error("DxSound: Could not initialize primary sound format");
+		throw "DxSound: Could not initialize primary sound format";
 	}
 	
 	SAFE_RELEASE( pDSBPrimary );
