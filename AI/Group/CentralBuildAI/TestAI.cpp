@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 #include "GroupAI.h"
 #include "ExternalAI/aibase.h"
 #include "Sim/Units/UnitDef.h"

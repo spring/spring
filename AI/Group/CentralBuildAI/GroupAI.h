@@ -9,7 +9,6 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "StdAfx.h"
 #include "ExternalAI/IGroupAI.h"
 #include <set>
 #include <map>
@@ -83,6 +82,8 @@ public:
 	void SendTxt(const char *fmt, ...);
 	int FindCloseQuedBuilding(float3 pos, float radius);
 	void FinishBuilderTask(int unit,bool failure);
+	virtual void Load(IGroupAICallback* callback,std::ifstream *ifs){};
+	virtual void Save(std::ifstream *ifs){};
 };
 
 #endif // !defined(AFX_GROUPAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)
