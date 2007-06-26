@@ -45,7 +45,7 @@ CWeaponProjectile::CWeaponProjectile()
 	interceptTarget=0;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced) : 
+CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced) :
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef?weaponDef->name:std::string("")),
@@ -120,7 +120,7 @@ void CWeaponProjectile::Collision()
 		DamageArray dynDamages;
 		if (weaponDef->dynDamageExp > 0)
 			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
-		
+
 		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir, weaponDef->id);
 	}
 
@@ -155,7 +155,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		DamageArray dynDamages;
 		if (weaponDef->dynDamageExp > 0)
 			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
-			
+
 		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir, weaponDef->id);
 	}
 
@@ -226,7 +226,7 @@ void CWeaponProjectile::DrawUnitPart()
 	transMatrix[12]=interPos.x;
 	transMatrix[13]=interPos.y;
 	transMatrix[14]=interPos.z;
-	glMultMatrixf(&transMatrix[0]);		
+	glMultMatrixf(&transMatrix[0]);
 
 	glCallList(modelDispList);
 	glPopMatrix();

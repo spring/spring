@@ -31,8 +31,8 @@
 
 CProjectileHandler* ph;
 using namespace std;
-extern GLfloat FogBlack[]; 
-extern GLfloat FogLand[]; 
+extern GLfloat FogBlack[];
+extern GLfloat FogLand[];
 
 CR_BIND(CProjectileHandler,);
 
@@ -137,7 +137,7 @@ CProjectileHandler::CProjectileHandler()
 	wrecktex            = textureAtlas->GetTextureWithBackup(  "wrecktexture",           "circularthingy"  );
 	plasmatex           = textureAtlas->GetTextureWithBackup(  "plasmatexture",          "circularthingy"  );
 
-	
+
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
 	ptex = resources.GetAllValues("resources\\graphics\\groundfx");
@@ -328,9 +328,9 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	int numFlyingPieces = 0;
 	int drawnPieces = 0;
-	
+
 	/* Putting in, say, viewport culling will deserve refactoring. */
-	
+
 	/* 3DO */
 	unitDrawer->SetupForUnitDrawing();
 
@@ -376,27 +376,27 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
 		/* TODO Skip this if there's no FlyingPieces. */
-		
+
 		texturehandler->SetS3oTexture(textureType);
-		
+
 		for (int team = 0; team < flyings3oPieces[textureType].size(); team++){
 			FlyingPiece_List * fpl = flyings3oPieces[textureType][team];
-		
+
 			unitDrawer->SetS3OTeamColour(team);
-			
+
 			va->Initialize();
-			
+
 			numFlyingPieces += fpl->size();
-		
+
 			for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
 				CMatrix44f m;
 				m.Rotate((*pi)->rot,(*pi)->rotAxis);
 				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
-				
+
 				SS3OVertex * verts = (*pi)->verts;
-				
+
 				float3 tp, tn;
-				
+
 				for (int i = 0; i < 4; i++){
 					tp=m.Mul(verts[i].pos);
 					tn=m.Mul(verts[i].normal);
@@ -408,9 +408,9 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			va->DrawArrayTN(GL_QUADS);
 		}
 	}
-	
+
 	unitDrawer->CleanUpS3ODrawing();
-	
+
 	/*
 	 * TODO Nearly cut here.
 	 */
@@ -565,7 +565,7 @@ void CProjectileHandler::CheckUnitCol()
 						if(readmap->groundBlockingObjectMap[square]!=unit)
 							continue;
 					}
-					//adjust projectile position so explosion happens at the correct position 
+					//adjust projectile position so explosion happens at the correct position
 					p->pos = p->pos + p->speed*closeTime;
 					p->Collision(*ui);
 					break;
@@ -603,7 +603,7 @@ void CProjectileHandler::CheckUnitCol()
 				}
 			}
 		}
-	}	
+	}
 }
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
@@ -687,7 +687,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 		flyings3oPieces[textureType].push_back(fpl);
 		flyingPieces.push_back(fpl);
 	}
-	
+
 	pieceList=flyings3oPieces[textureType][team];
 
 	FlyingPiece* fp=new FlyingPiece;
@@ -745,7 +745,7 @@ void CProjectileHandler::UpdatePerlin()
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_FOG);
 
-	unsigned char col[4];	
+	unsigned char col[4];
 	float time=gu->lastFrameTime*gs->speedFactor*3;
 	float speed=1;
 	float size=1;
