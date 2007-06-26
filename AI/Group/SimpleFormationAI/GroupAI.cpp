@@ -218,3 +218,4 @@ void CGroupAI::CreateUnitOrder(std::multimap<float,int>& out)
 		out.insert(pair<float,int>(value,*ui));
 	}
 }
+

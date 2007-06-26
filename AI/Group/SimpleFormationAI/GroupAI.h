@@ -60,6 +60,8 @@ public:
 	float lineDist;
 	float GetRotationFromVector(float3 vector);
 	void CreateUnitOrder(std::multimap<float,int>& out);
+	virtual void Load(IGroupAICallback* callback,std::ifstream *ifs){};
+	virtual void Save(std::ifstream *ifs){};
 };
 
 #endif // !defined(AFX_GROUPAI_H__10718E36_5CDF_4CD4_8D90_F41311DD2694__INCLUDED_)

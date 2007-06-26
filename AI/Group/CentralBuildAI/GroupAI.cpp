@@ -284,7 +284,7 @@ void CGroupAI::UpdateFactoryIcon(CommandDescription* cd, int numQued)
 	cd->params.clear();
 	if(numQued){
 		char t[32];
-		SNPRINTF(t,10,"%d",numQued);
+		_snprintf(t,10,"%d",numQued);
 		cd->params.push_back(t);
 	}
 }
