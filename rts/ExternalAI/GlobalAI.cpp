@@ -28,19 +28,22 @@ void AIException(const char *what);
 
 #define HANDLE_EXCEPTION  \
 	catch (const std::exception& e) {	\
-		if (globalAI->CatchException ())			\
+		if (globalAI->CatchException ()) {		\
 			AIException(e.what());		\
-		else throw;						\
+			throw;						\
+		} else throw;					\
 	}									\
 	catch (const char *s) {	\
-		if (globalAI->CatchException ())			\
+		if (globalAI->CatchException ()) {		\
 			AIException(s);				\
-		else throw;						\
+			throw;						\
+		} else throw;					\
 	}									\
 	catch (...) {						\
-		if (globalAI->CatchException ())			\
+		if (globalAI->CatchException ()) {		\
 			AIException(0);				\
-		else throw;						\
+			throw;						\
+		}else throw;					\
 	}
 
 CGlobalAI::CGlobalAI(int team, const char* dll): team(team), cheatevents(false),dllName(dll?dll:"")
@@ -235,9 +238,7 @@ void CGlobalAI::PostLoad()
 void CGlobalAI::Update(void)
 {
 //	gh->Update();
-	try {
-		ai->Update();
-	} HANDLE_EXCEPTION;
+	ai->Update();
 }
 
 IMPLEMENT_PURE_VIRTUAL(IGlobalAI::~IGlobalAI())

@@ -116,12 +116,12 @@ void COutputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *
 		obj = &*objects.insert(objects.end(),ObjectRef(inst,objects.size (),true,objClass));
 		ptrToId[inst].push_back(obj);
 	} else if (obj->isEmbedded) 
-		throw content_error("Reserialization of embedded object");
+		throw "Reserialization of embedded object";
 	else {
 		std::vector<ObjectRef*>::iterator pos;
 		for (pos=pendingObjects.begin();pos!=pendingObjects.end() && (*pos)!=obj;pos++) ;
 		if (pos==pendingObjects.end())
-			throw content_error("Object pointer was serialized");
+			throw "Object pointer was serialized";
 		else {
 			pendingObjects.erase(pos);
 		}
