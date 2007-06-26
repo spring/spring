@@ -209,16 +209,17 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 				closeLength=length;
 			float3 closeVect=dif-dir*closeLength;
 
-			float rad=(*ui)->radius;
-			float tmp = rad * rad - closeVect.SqLength();
-			if(tmp > 0 && length>closeLength+sqrt(tmp)){
+			/*float rad=(*ui)->radius;
+			float tmp = rad * rad - closeVect.SqLength();*/
+
+			/*if(tmp > 0 && length>closeLength+sqrt(tmp)){
 				length=closeLength-sqrt(tmp)*0.5f;
 				hit=*ui;
-			}
-/*			if(closeVect.SqLength() < (*ui)->sqRadius){
+			}*/
+			if(closeVect.SqLength() < (*ui)->sqRadius){
 				length=closeLength;
 				hit=*ui;
-			}*/
+			}
 		}
 	}
 	return length;

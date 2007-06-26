@@ -83,6 +83,9 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(avoidFriendly),
 	CR_MEMBER(avoidFeature),
+	CR_MEMBER(targetBorder),
+	CR_MEMBER(cylinderTargetting),
+	CR_MEMBER(minIntensity),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum)
@@ -151,6 +154,9 @@ CWeapon::CWeapon(CUnit* owner)
 	hasCloseTarget(false),
 	avoidFriendly(true),
 	avoidFeature(true),
+	targetBorder(0.f),
+	cylinderTargetting(0.f),
+	minIntensity(0.f),
 	collisionFlags(0),
 	fuelUsage(0)
 {
@@ -544,7 +550,31 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 	float3 dif=pos-weaponPos;
 
-	float r=GetRange2D(owner->pos.y-pos.y);
+	if (targetBorder != 0 && unit) {
+		float3 diff(dif);
+		diff.Normalize();
+		// weapon inside target sphere
+		if (dif.SqLength() < unit->sqRadius*targetBorder*targetBorder) {
+			dif -= diff*(dif.Length() - 10); // a hack
+			//logOutput << "inside\n";
+		} else {
+			dif -= diff*(unit->radius*targetBorder);
+			//logOutput << "outside\n";
+		}
+		//geometricObjects->AddLine(weaponMuzzlePos, weaponMuzzlePos+dif, 3, 0, 16);
+	}
+
+	float r;
+	if (!unit || cylinderTargetting < 0.01) {
+		r=GetRange2D(owner->pos.y-pos.y);
+	} else {
+		if (cylinderTargetting * unit->radius > owner->pos.y-pos.y) {
+			r = GetRange2D(0);
+		} else {
+			r = 0;
+		}
+	}
+
 	if(dif.SqLength2D()>=r*r)
 		return false;
 

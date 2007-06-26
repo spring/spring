@@ -42,6 +42,8 @@ CR_REG_METADATA(CMobileCAI, (
 				CR_MEMBER(commandPos1),
 				CR_MEMBER(commandPos2),
 
+				CR_MEMBER(lastCloseInTry),
+
 				CR_MEMBER(cancelDistance),
 				CR_MEMBER(slowGuard),
 				CR_MEMBER(moveDir)
@@ -61,6 +63,7 @@ CMobileCAI::CMobileCAI()
 	commandPos2(ZeroVector),
 	lastPC(-1),
 	cancelDistance(1024),
+	lastCloseInTry(-1),
 	slowGuard(false),
 	moveDir(gs->randFloat() > 0.5),
 	lastUserGoal(0,0,0)
@@ -81,6 +84,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	commandPos2(ZeroVector),
 	lastPC(-1),
 	cancelDistance(1024),
+	lastCloseInTry(-1),
 	slowGuard(false),
 	moveDir(gs->randFloat() > 0.5)
 {
@@ -582,7 +586,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// check if we have valid target parameter and that we aren't attacking ourselves
 			if (uh->units[unitID] != 0 && uh->units[unitID] != owner) {
 				float3 fix = uh->units[unitID]->pos + owner->posErrorVector * 128;
-				SetGoal(fix, owner->pos);
+				float3 diff = float3(fix - owner->pos).Normalize();
+				SetGoal(fix - diff*uh->units[unitID]->radius, owner->pos);
 				// get ID of attack-order target unit
 				orderTarget = uh->units[unitID];
 				AddDeathDependence(orderTarget);
@@ -626,6 +631,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		//bool b1 = owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
 		bool b2 = false;
 		bool b3 = false;
+		float edgeFactor = 0.f; // percent offset to target center
 
 		if (owner->weapons.size() > 0) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
@@ -638,15 +644,21 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// can hit target with our first (meanest) one
 			b2 = w->TryTargetRotate(orderTarget, c.id == CMD_DGUN);
 			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
+			edgeFactor = fabs(w->targetBorder);
 		}
 		float3 diff = owner->pos - orderTarget->pos;
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
+		// also make sure that we're not locked in close-in/in-range state loop
+		// due to rotates invoked by in-range or out-of-range states
 		if (b2) {
 			StopMove();
 			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
-			owner->moveType->KeepPointingTo(orderTarget,
-				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+			// FIXME kill magic frame number
+			if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
+				owner->moveType->KeepPointingTo(orderTarget,
+					min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+			}
 		}
 
 		// if (((first weapon range minus first weapon length greater than distance to target
@@ -675,7 +687,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		else if ((orderTarget->pos + owner->posErrorVector * 128).distance2D(goalPos)
 				> (10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
 			float3 fix = orderTarget->pos + owner->posErrorVector * 128;
-			SetGoal(fix, owner->pos);
+			float3 norm = float3(fix - owner->pos).Normalize();
+			SetGoal(fix - norm*(orderTarget->radius*edgeFactor*0.8f), owner->pos);
+			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
+				lastCloseInTry = gs->frameNum;
 		}
 	}
 

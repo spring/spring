@@ -91,6 +91,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	if(!collideFeature)
 		weaponDefs[id].collisionFlags+=COLLISION_NOFEATURE;
 
+	sunparser->GetDef(weaponDefs[id].minIntensity, "0", weaponname + "\\MinIntensity");
+
 	sunparser->GetDef(weaponDefs[id].dropped, "0", weaponname + "\\dropped");
 	sunparser->GetDef(lineofsight, "0", weaponname + "\\lineofsight");
 	sunparser->GetDef(ballistic, "0", weaponname + "\\ballistic");
@@ -119,7 +121,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].laserflaresize, "15", weaponname + "\\laserflaresize");
 	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
 	sunparser->GetDef(weaponDefs[id].duration, "0.05", weaponname + "\\duration");
-	
+
 	sunparser->GetDef(weaponDefs[id].visuals.sizeDecay,  "0", weaponname + "\\sizeDecay");
 	sunparser->GetDef(weaponDefs[id].visuals.alphaDecay, "1", weaponname + "\\alphaDecay");
 	sunparser->GetDef(weaponDefs[id].visuals.separation, "1", weaponname + "\\separation");
@@ -188,6 +190,15 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 
 //	logOutput.Print("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
 
+	sunparser->GetDef(weaponDefs[id].targetBorder, (weaponDefs[id].type == "Melee"?"1":"0"), weaponname + "\\TargetBorder");
+	if (weaponDefs[id].targetBorder > 1.f) {
+		logOutput.Print("warning: targetBorder truncated to 1 (was %f)", weaponDefs[id].targetBorder);
+		weaponDefs[id].targetBorder = 1.f;
+	} else if (weaponDefs[id].targetBorder < -1.f) {
+		logOutput.Print("warning: targetBorder truncated to -1 (was %f)", weaponDefs[id].targetBorder);
+		weaponDefs[id].targetBorder = -1.f;
+	}
+	sunparser->GetDef(weaponDefs[id].cylinderTargetting, (weaponDefs[id].type == "Melee"?"1":"0"), weaponname + "\\CylinderTargetting");
 
 
 	weaponDefs[id].range = atof(sunparser->SGetValueDef("10", weaponname + "\\range").c_str());
@@ -576,7 +587,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 
 	if (inverted == true) {
 		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
-			
+
 			dynDamages[i] = damages[i] - (1 - pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0) {
@@ -591,7 +602,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 	}
 	else {
 		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
-			
+
 			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0) {
