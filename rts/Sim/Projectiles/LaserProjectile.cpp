@@ -31,7 +31,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* 
 	length(length),
 	curLength(0),
 	intensity(intensity),
-	intensityFalloff(intensity*0.1f)
+	intensityFalloff(intensity*weaponDef->falloffRate)
 {
 	dir=speed;
 	dir.Normalize();
@@ -67,7 +67,7 @@ void CLaserProjectile::Update(void)
 	ttl--;
 
 	if(ttl<5){
-		intensity-=intensityFalloff;
+		intensity-=intensityFalloff*0.2f;
 		if(intensity<=0){
 			deleteMe=true;
 			intensity=0;
@@ -156,7 +156,7 @@ void CLaserProjectile::Draw(void)
 	float size=weaponDef->thickness;
 	float coresize=size * weaponDef->corethickness;
 
-	if(camDist<1000){
+	if(camDist<weaponDef->lodDistance){
 		float3 pos1=pos+speed*gu->timeOffset;
 		float3 pos2=pos1-dir*curLength;
 
