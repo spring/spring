@@ -53,6 +53,9 @@ CUnitTable::CUnitTable(AIClasses* ai)
 	sonars = new vector<int>[numOfSides];
 	rjammers = new vector<int>[numOfSides];
 	sjammers = new vector<int>[numOfSides];
+	antinukes = new vector<int>[numOfSides];
+	nukes = new vector<int>[numOfSides];
+	shields = new vector<int>[numOfSides];
 
 	all_lists.push_back(ground_factories);
 	all_lists.push_back(air_factories);
@@ -78,6 +81,9 @@ CUnitTable::CUnitTable(AIClasses* ai)
 	all_lists.push_back(sonars);
 	all_lists.push_back(rjammers);
 	all_lists.push_back(sjammers);
+	all_lists.push_back(antinukes);
+	all_lists.push_back(nukes);
+	all_lists.push_back(shields);
 	//L("UnitTable Inited!");
 }
 
@@ -111,6 +117,9 @@ CUnitTable::~CUnitTable()
 	delete [] sonars;
 	delete [] rjammers;
 	delete [] sjammers;
+	delete [] antinukes;
+	delete [] nukes;
+	delete [] shields;
 }
 
 int CUnitTable::GetSide(int unit)
@@ -323,6 +332,15 @@ float CUnitTable::GetScore(const UnitDef* unit)//0 energy, 1 mex, 2mmaker, 3 gro
 		break;
 	case CAT_A_TRANSPORT:
 		Benefit = unit->speed;
+		break;
+	case CAT_ANTINUKE:
+		Benefit = unit->weapons.front().def->coverageRange;
+		break;
+	case CAT_NUKE:
+		Benefit = unit->weapons.front().def->range;
+		break;
+	case CAT_SHIELD:
+		Benefit = unit->weapons.front().def->shieldRadius;
 		break;
 	default:
 		Benefit = 0;
@@ -740,6 +758,15 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category, int subCate
 		case CAT_S_JAMMER:
 			templist = sjammers;
 			break;
+		case CAT_ANTINUKE:
+			templist = antinukes;
+			break;
+		case CAT_NUKE:
+			templist = nukes;
+			break;
+		case CAT_SHIELD:
+			templist = nukes;
+			break;
 	}
 	//L("Switch done, side: " << side);
 	if (!templist) {
@@ -1027,7 +1054,7 @@ void CUnitTable::Init()
 						transports[me->side].push_back(i);
 						me->category = CAT_TRANSPORT;
 					}
-				} else if(HasWeapons(me->def) && !me->def->weapons.begin()->def->stockpile){
+				} else if(HasWeapons(me->def) && !me->def->weapons.begin()->def->stockpile) {
 					float weapondist=0;
 					bool vlaunchweapon=false;
 					float weaponaoe=0;
@@ -1113,7 +1140,20 @@ void CUnitTable::Init()
 					sjammers[me->side].push_back(i);
 					me->category = CAT_S_JAMMER;
 				} else
-				if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile){
+				if (!me->def->weapons.empty() && me->def->weapons.begin()->def->stockpile){
+					if (me->def->weapons.begin()->def->interceptor & 1) {
+						antinukes[me->side].push_back(i);
+						me->category = CAT_ANTINUKE;
+					} else if (me->def->weapons.begin()->def->targetable & 1){
+						nukes[me->side].push_back(i);
+						me->category = CAT_NUKE;
+					}
+				} else
+				if (!me->def->weapons.empty() && me->def->weapons.begin()->def->isShield){
+					shields[me->side].push_back(i);
+					me->category = CAT_SHIELD;
+				} else
+				if (HasWeapons(me->def)){
 					if (me->def->weapons.begin()->def->type=="TorpedoLauncher")
 						water_defences[me->side].push_back(i);
 					else if (me->def->weapons.begin()->def->type=="MissileLauncher" && me->def->weapons.begin()->def->tracks)

@@ -908,3 +908,26 @@ bool CUNIT::SetMaxSpeed(float speed){
 	ai->cb->GiveOrder(myid,&oneParamsCommand);
 	return true;
 }
+
+bool CUNIT::BuildWeapon()
+{
+	assert(ai->cb->GetUnitDef(myid) != NULL);
+	if (!def()->stockpileWeaponDef) return false;
+	nullParamsCommand.id = CMD_STOCKPILE;
+	ai->cb->GiveOrder(myid,&nullParamsCommand);
+	return true;
+}
+
+int CUNIT::GetStockpiled() const
+{
+	int a=0;
+	if (!ai->cb->GetProperty(myid,AIVAL_STOCKPILED,&a)) return 0;
+	return a;
+}
+
+int CUNIT::GetStockpileQued() const
+{
+	int a=0;
+	if (!ai->cb->GetProperty(myid,AIVAL_STOCKPILE_QUED,&a)) return 0;
+	return a;
+}

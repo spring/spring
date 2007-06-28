@@ -28,6 +28,8 @@ public:
 
 	void CloakUpdate();
 
+	void StockpileUpdate();
+
 	void BuildTaskCreate(int id);
 	void BuildTaskRemove(int id);
 	void BuildTaskRemoved(BuilderTracker* builderTracker);
@@ -72,6 +74,9 @@ public:
 	vector<int> UncloakedUnits;
 	vector<int> CloakedBuildings;
 	vector<int> CloakedUnits;
+
+	vector<int> StockpileDefenceUnits;
+	vector<int> StockpileAttackUnits;
 
 	list<integer2> Limbo;
 	

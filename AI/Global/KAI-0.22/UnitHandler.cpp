@@ -21,6 +21,9 @@ CR_REG_METADATA(CUnitHandler, (
 				CR_MEMBER(CloakedBuildings),
 				CR_MEMBER(CloakedUnits),
 
+				CR_MEMBER(StockpileDefenceUnits),
+				CR_MEMBER(StockpileAttackUnits),
+
 				CR_MEMBER(Limbo),
 				
 				CR_MEMBER(BuilderTrackers),
@@ -92,11 +95,12 @@ void CUnitHandler::IdleUnitUpdate()
 				L(" Removeing dead unit... ");
 				
 			}
-			else
+			else {
 				IdleUnits[ai->ut->GetCategory(i->x)].push_back(i->x);
-			if(ai->ut->GetCategory(i->x) == CAT_BUILDER)
-			{
-				//GetBuilderTracker(i->x)->idleStartFrame = -1; // Its ok now, stop the force idle  (hack)
+				if(ai->ut->GetCategory(i->x) == CAT_BUILDER)
+				{
+					//GetBuilderTracker(i->x)->idleStartFrame = -1; // Its ok now, stop the force idle  (hack)
+				}
 			}
 			
 				
@@ -247,6 +251,13 @@ void CUnitHandler::UnitCreated(int unit)
 			MMakerAdd(unit);
 		}
 
+		if(category == CAT_NUKE){
+			StockpileAttackUnits.push_back(unit);
+			ai->MyUnits[unit]->SetFiringMode(2);
+		}
+		if(category == CAT_ANTINUKE){
+			StockpileDefenceUnits.push_back(unit);
+		}
 	}
 	if (newUnitDef->canCloak) {
 //		L("New unit can cloak");
@@ -309,6 +320,20 @@ void CUnitHandler::UnitDestroyed(int unit)
 			}
 			
 			
+		}
+		if(category == CAT_NUKE){
+			for (vector<int>::iterator i=StockpileAttackUnits.begin();i!=StockpileAttackUnits.end();i++)
+				if (*i==unit) {
+					StockpileAttackUnits.erase(i);
+					break;
+				}
+		}
+		if(category == CAT_ANTINUKE){
+			for (vector<int>::iterator i=StockpileDefenceUnits.begin();i!=StockpileDefenceUnits.end();i++)
+				if (*i==unit) {
+					StockpileDefenceUnits.erase(i);
+					break;
+				}
 		}
 	}
 	for (vector<int>::iterator i=CloakedUnits.begin();i!=CloakedUnits.end();i++) 
@@ -1542,5 +1567,29 @@ void CUnitHandler::CloakUpdate()
 				}
 			}
 		}
+	}
+}
+
+void CUnitHandler::StockpileUpdate()
+{
+	for(vector<int>::iterator i = StockpileDefenceUnits.begin(); i != StockpileDefenceUnits.end(); i++){
+		if ((ai->MyUnits[*i]->GetStockpiled()<5 || 
+			(ai->cb->GetEnergyIncome()-ai->cb->GetEnergyUsage()>1 &&
+			ai->cb->GetMetalIncome()-ai->cb->GetMetalUsage()>1 &&
+			ai->MyUnits[*i]->GetStockpiled()<50)) &&
+			ai->MyUnits[*i]->GetStockpileQued()==0) {
+			ai->MyUnits[*i]->BuildWeapon();
+		}
+	}
+	for(vector<int>::iterator i = StockpileAttackUnits.begin(); i != StockpileAttackUnits.end(); i++){
+		if ((ai->cb->GetEnergyIncome()-ai->cb->GetEnergyUsage()>500 &&
+			ai->cb->GetMetalIncome()-ai->cb->GetMetalUsage()>5 &&
+			ai->MyUnits[*i]->GetStockpiled()<5) &&
+			ai->MyUnits[*i]->GetStockpileQued()==0) {
+			ai->MyUnits[*i]->BuildWeapon();
+			break;
+		}
+//		if (ai->MyUnits[*i]->GetStockpiled()>0) {
+//		}
 	}
 }
