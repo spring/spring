@@ -80,6 +80,9 @@ public:
 	bool SetFiringMode(int mode);
 	bool Stop();
 	bool SetMaxSpeed(float speed);
+	bool BuildWeapon();
+	int GetStockpiled() const;
+	int GetStockpileQued() const;
 
 private:
 	AIClasses *ai;

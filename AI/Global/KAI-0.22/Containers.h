@@ -52,6 +52,8 @@ struct AIClasses {
 	CCoverageHandler*       sonarCoverage;
 	CCoverageHandler*       rjammerCoverage;
 	CCoverageHandler*       sjammerCoverage;
+	CCoverageHandler*       antinukeCoverage;
+	CCoverageHandler*       shieldCoverage;
 };
 
 

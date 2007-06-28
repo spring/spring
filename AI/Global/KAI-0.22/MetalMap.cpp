@@ -133,7 +133,7 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 	else {
 		// draw green arrow pointing upward above metal extractor
 		spotcoords = ai -> cb -> GetUnitPos(bestspot);
-		ai -> cb -> CreateLineFigure(spotcoords, float3(spotcoords.x, spotcoords.y + 100, spotcoords.z), 10, 1, 10000, 98);
+//		ai -> cb -> CreateLineFigure(spotcoords, float3(spotcoords.x, spotcoords.y + 100, spotcoords.z), 10, 1, 10000, 98);
 	}
 	return bestspot;
 }

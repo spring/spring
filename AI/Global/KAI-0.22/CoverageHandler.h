@@ -11,7 +11,8 @@ public:
 		Sonar,
 		RJammer,
 		SJammer,
-		AntiNuke
+		AntiNuke,
+		Shield
 	};
     CCoverageHandler(AIClasses* _ai,CoverageType type);
 	~CCoverageHandler();

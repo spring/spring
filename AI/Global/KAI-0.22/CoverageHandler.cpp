@@ -1,6 +1,9 @@
 
 #include "CoverageHandler.h"
 
+#define COVERAGE_SQUARE 4.0
+#define COVERAGE_SQUARE2 32.0
+
 CR_BIND(CCoverageHandler ,(NULL,Radar))
 
 CR_REG_METADATA(CCoverageHandler,(
@@ -30,7 +33,7 @@ ai(_ai),
 Type(type)
 /*RadMap(NULL)*/{
 //    RadMap = new unsigned char[(ai->cb->GetMapWidth() / 8) * (ai->cb->GetMapHeight() / 8)];
-	if (ai) CovMap.resize((ai->cb->GetMapWidth() / 8) * (ai->cb->GetMapHeight() / 8),0);
+	if (ai) CovMap.resize((ai->cb->GetMapWidth() / COVERAGE_SQUARE) * (ai->cb->GetMapHeight() / COVERAGE_SQUARE),0);
 //    if(RadMap == NULL)
 //    for(int n=0; n<ai->cb->GetMapHeight()/8 * ai->cb->GetMapWidth()/8; n++)
 //        RadMap[n] = 0;
@@ -42,22 +45,32 @@ CCoverageHandler::~CCoverageHandler(){
 }
 
 void CCoverageHandler::Change(int unit, bool Removed){
-    int w = int(ai->cb->GetMapWidth() / 8);
-    int h = int(ai->cb->GetMapHeight() / 8);
-    int ux = int(ai->cb->GetUnitPos(unit).x / 64);
-    int uy = int(ai->cb->GetUnitPos(unit).z / 64);
+    int w = int(ai->cb->GetMapWidth() / COVERAGE_SQUARE);
+    int h = int(ai->cb->GetMapHeight() / COVERAGE_SQUARE);
+    int ux = int(ai->cb->GetUnitPos(unit).x / COVERAGE_SQUARE2);
+    int uy = int(ai->cb->GetUnitPos(unit).z / COVERAGE_SQUARE2);
 	if (ai->cb->GetUnitDef(unit)->speed!=0.0) return;
     int r = 0;
 	switch (Type) {
-		case Radar:r = int(ai->cb->GetUnitDef(unit)->radarRadius / 8.0f);break;
-		case Sonar:r = int(ai->cb->GetUnitDef(unit)->sonarRadius / 8.0f);break;
-		case RJammer:r = int(ai->cb->GetUnitDef(unit)->jammerRadius / 8.0f);break;
-		case SJammer:r = int(ai->cb->GetUnitDef(unit)->sonarJamRadius / 8.0f);break;
+		case Radar:r = int(ai->cb->GetUnitDef(unit)->radarRadius / COVERAGE_SQUARE);break;
+		case Sonar:r = int(ai->cb->GetUnitDef(unit)->sonarRadius / COVERAGE_SQUARE);break;
+		case RJammer:r = int(ai->cb->GetUnitDef(unit)->jammerRadius / COVERAGE_SQUARE);break;
+		case SJammer:r = int(ai->cb->GetUnitDef(unit)->sonarJamRadius / COVERAGE_SQUARE);break;
 		case AntiNuke:{
 			const UnitDef* ud = ai->cb->GetUnitDef(unit);
 			for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i=ud->weapons.begin();i!=ud->weapons.end();i++) {
 				if (i->def->interceptor & 1) {
-					int tmpr = int(i->def->coverageRange / 8.0f);
+					int tmpr = int(i->def->coverageRange / COVERAGE_SQUARE2);
+					if (r<tmpr) r = tmpr;
+				}
+			}
+			break;
+		}
+		case Shield:{
+			const UnitDef* ud = ai->cb->GetUnitDef(unit);
+			for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i=ud->weapons.begin();i!=ud->weapons.end();i++) {
+				if (i->def->isShield) {
+					int tmpr = int(i->def->shieldRadius*3/4 / COVERAGE_SQUARE2);
 					if (r<tmpr) r = tmpr;
 				}
 			}
@@ -65,6 +78,7 @@ void CCoverageHandler::Change(int unit, bool Removed){
 		}
 	}
 	if (r<=0) return;
+	L("Coverage handler " << Type << ":Unit " << unit << "(" << ai->cb->GetUnitDef(unit)->humanName << ")" << (Removed?" Removed":" Added") << ux << " " << uy << "Range " << r);
     int minx = ux - r < 0 ? 0 : ux - r;
     int maxx = ux + r >= w ? w-1 : ux + r;
     int miny = uy - r < 0 ? 0 : ux - r;
@@ -84,14 +98,12 @@ void CCoverageHandler::Change(int unit, bool Removed){
 
 int CCoverageHandler::GetCoverage(float3 pos)
 {
-    int w = int(ai->cb->GetMapWidth() / 8);
-    int h = int(ai->cb->GetMapHeight() / 8);
-    int bx = int(pos.x / 64.0f);
-    int by = int(pos.z / 64.0f);
-    float height = ai->cb->GetElevation(bx * 64.0f, by * 64.0f);
+    int w = int(ai->cb->GetMapWidth()/COVERAGE_SQUARE);
+    int h = int(ai->cb->GetMapHeight()/COVERAGE_SQUARE);
+    int bx = int(pos.x / COVERAGE_SQUARE2);
+    int by = int(pos.z / COVERAGE_SQUARE2);
+    float height = ai->cb->GetElevation(bx * COVERAGE_SQUARE2, by * COVERAGE_SQUARE2);
 	switch (Type) {
-		case Radar:
-		case RJammer:;break;
 		case Sonar:
 		case SJammer:if (height>0) return 1000000;
 	}
@@ -99,11 +111,11 @@ int CCoverageHandler::GetCoverage(float3 pos)
 }
 
 float3 CCoverageHandler::NextSite(int builder, const UnitDef* unit, int MaxDist){
-    int w = int(ai->cb->GetMapWidth() / 8);
-    int h = int(ai->cb->GetMapHeight() / 8);
-    int bx = int(ai->cb->GetUnitPos(builder).x / 64.0f);
-    int by = int(ai->cb->GetUnitPos(builder).z / 64.0f);
-    int r = int(MaxDist / 64.0f);
+    int w = int(ai->cb->GetMapWidth()/COVERAGE_SQUARE);
+    int h = int(ai->cb->GetMapHeight()/COVERAGE_SQUARE);
+    int bx = int(ai->cb->GetUnitPos(builder).x / COVERAGE_SQUARE2);
+    int by = int(ai->cb->GetUnitPos(builder).z / COVERAGE_SQUARE2);
+    int r = int(MaxDist / COVERAGE_SQUARE2);
     int minx = bx - r < 0 ? 0 : bx - r;
     int maxx = bx + r >= w ? w-1 : bx + r;
     int miny = by - r < 0 ? 0 : bx - r;
@@ -114,7 +126,7 @@ float3 CCoverageHandler::NextSite(int builder, const UnitDef* unit, int MaxDist)
 //    const unsigned short *RMap = ai->cb->GetRadarMap();
 	for(int y=miny; y<=maxy; y++){
         for(int x=minx; x<=maxx; x++){
-            float height = ai->cb->GetElevation(x * 64.0f, y * 64.0f);
+            float height = ai->cb->GetElevation(x * COVERAGE_SQUARE2, y * COVERAGE_SQUARE2);
 			bool validPos = false;
 			switch (Type) {
 				case Radar:
@@ -135,6 +147,6 @@ float3 CCoverageHandler::NextSite(int builder, const UnitDef* unit, int MaxDist)
 	if(bestvalue == 0){
 		return UpVector;
 	}else{
-		return float3(bestx * 64.0f, 0.0f, besty * 64.0f);
+		return float3(bestx * COVERAGE_SQUARE2, 0.0f, besty * COVERAGE_SQUARE2);
 	}
 }

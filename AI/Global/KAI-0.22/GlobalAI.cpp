@@ -55,7 +55,9 @@ CR_REG_METADATA(AIClasses,(
 				CR_MEMBER(radarCoverage),
 				CR_MEMBER(sonarCoverage),
 				CR_MEMBER(rjammerCoverage),
-				CR_MEMBER(sjammerCoverage)
+				CR_MEMBER(sjammerCoverage),
+				CR_MEMBER(antinukeCoverage),
+				CR_MEMBER(shieldCoverage)
 //				CR_POSTLOAD(PostLoad)
 				));
 
@@ -181,6 +183,8 @@ CGlobalAI::~CGlobalAI() {
 	delete ai -> sonarCoverage;
 	delete ai -> rjammerCoverage;
 	delete ai -> sjammerCoverage;
+	delete ai -> antinukeCoverage;
+	delete ai -> shieldCoverage;
 	delete ai;
 }
 
@@ -213,6 +217,8 @@ void CGlobalAI::PostLoad()
 //	ai -> sonarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Sonar);
 //	ai -> rjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::RJammer);
 //	ai -> sjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::SJammer);
+//	ai -> antinukeCoverage	= new CCoverageHandler(ai,CCoverageHandler::AntiNuke);
+//	ai -> shieldCoverage	= new CCoverageHandler(ai,CCoverageHandler::Shield);
 
 
 	totalSumTime				= 0;
@@ -299,6 +305,8 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai -> sonarCoverage		= new CCoverageHandler(ai,CCoverageHandler::Sonar);
 	ai -> rjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::RJammer);
 	ai -> sjammerCoverage	= new CCoverageHandler(ai,CCoverageHandler::SJammer);
+	ai -> antinukeCoverage	= new CCoverageHandler(ai,CCoverageHandler::AntiNuke);
+	ai -> shieldCoverage	= new CCoverageHandler(ai,CCoverageHandler::Shield);
 
 	L("All Class pointers initialized");
 
@@ -359,6 +367,8 @@ void CGlobalAI::UnitCreated(int unit) {
 	ai -> sonarCoverage -> Change(unit,false);
 	ai -> rjammerCoverage -> Change(unit,false);
 	ai -> sjammerCoverage -> Change(unit,false);
+	ai -> antinukeCoverage -> Change(unit,false);
+	ai -> shieldCoverage -> Change(unit,false);
 }
 
 void CGlobalAI::UnitFinished(int unit) {
@@ -408,6 +418,8 @@ void CGlobalAI::UnitDestroyed(int unit,int attacker) {
 	ai -> sonarCoverage -> Change(unit,true);
 	ai -> rjammerCoverage -> Change(unit,true);
 	ai -> sjammerCoverage -> Change(unit,true);
+	ai -> antinukeCoverage -> Change(unit,true);
+	ai -> shieldCoverage -> Change(unit,true);
 }
 
 void CGlobalAI::UnitIdle(int unit) {
@@ -585,6 +597,8 @@ void CGlobalAI::Update() {
 
 	ai -> math -> StopTimer(totalSumTime);
 
+	ai->uh->StockpileUpdate();
+
 	// don't include the setup time of defenseMatrix in the total
 	if (!dminited) {
 		// ai -> math -> StartTimer(defenseMatrixInitTime);
@@ -592,7 +606,6 @@ void CGlobalAI::Update() {
 		// ai -> math -> StopTimer(defenseMatrixInitTime);
 		dminited = true;
 	}
-
 	// print the times every 2 mins
 	if (frame % 3600 == 0 && frame > 1) {
 		L("Here is the time distribution after " << (frame / 1800) << " mins");

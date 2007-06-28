@@ -479,7 +479,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 				if(def == NULL)
 					return false;
 				//Find a safe position to build this at
-				ai->MyUnits[builder]->Build_ClosestSite(def,ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
+				if (!ai->MyUnits[builder]->Build_ClosestSite(def,ai->cb->GetUnitPos(builder))) return false;//MyUnits[builder].pos());
 			}
 		builderIsUsed = true;
 	}
@@ -531,6 +531,28 @@ bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass)
 			ai->math->StopTimer(defenceBuildupCBC_Time);
 			L("Build_ClosestSite time:" << ai->math->TimerSecs());
 		}
+	}
+
+	if(!builderIsUsed && ai->antinukeCoverage->GetCoverage(ai->cb->GetUnitPos(builder))==0 && (forceUseBuilder || RANDINT%100<20)){
+		if (!ai->uh->BuildTaskAddBuilder(builder,CAT_ANTINUKE)) {
+			const UnitDef* AntiNuke = ai->ut->GetUnitByScore(builder,CAT_ANTINUKE);
+			if(AntiNuke == NULL)
+				return false;
+			L("trying to build antinuke " << AntiNuke->humanName);
+			if (ai->MyUnits[builder]->Build_ClosestSite(AntiNuke,ai->cb->GetUnitPos(builder)))
+				builderIsUsed=true;
+		} else builderIsUsed = true;
+	}
+
+	if(!builderIsUsed && ai->shieldCoverage->GetCoverage(ai->cb->GetUnitPos(builder))==0 && (forceUseBuilder || RANDINT%100<40)){
+		if (!ai->uh->BuildTaskAddBuilder(builder,CAT_SHIELD)) {
+			const UnitDef* Shield = ai->ut->GetUnitByScore(builder,CAT_SHIELD);
+			if(Shield == NULL)
+				return false;
+			L("trying to build shield " << Shield->humanName);
+			if (ai->MyUnits[builder]->Build_ClosestSite(Shield,ai->cb->GetUnitPos(builder)))
+				builderIsUsed=true;
+		} else builderIsUsed = true;
 	}
 
 	int DefenseFactoryRatio = DEFENSEFACTORYRATIO;
@@ -586,7 +608,19 @@ bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass)
 		else
 			builderIsUsed = true;
 	}
-	
+
+	if(!builderIsUsed && ai->uh->AllUnitsByCat[CAT_NUKE].size()<5 && RANDINT%100<2 
+		&& (ai->cb->GetMetal()>=ai->cb->GetMetalStorage()*0.9)
+		&& (ai->cb->GetEnergy()>=ai->cb->GetEnergyStorage()*0.9)){
+		if (!ai->uh->BuildTaskAddBuilder(builder,CAT_NUKE)) {
+			const UnitDef* Nuke = ai->ut->GetUnitByScore(builder,CAT_NUKE);
+			if(Nuke == NULL)
+				return false;
+			L("trying to build nuke " << Nuke->humanName);
+			if (ai->MyUnits[builder]->Build_ClosestSite(Nuke,ai->cb->GetUnitPos(builder)))
+				builderIsUsed=true;
+		} else builderIsUsed = true;
+	}
 	return builderIsUsed;
 }
 

@@ -88,6 +88,9 @@ public:
 	vector<int> *sonars;
 	vector<int> *rjammers;
 	vector<int> *sjammers;
+	vector<int> *nukes;
+	vector<int> *antinukes;
+	vector<int> *shields;
 
 	// number of sides 
 	int numOfSides;
