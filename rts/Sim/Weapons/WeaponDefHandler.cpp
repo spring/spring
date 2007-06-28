@@ -121,6 +121,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].laserflaresize, "15", weaponname + "\\laserflaresize");
 	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
 	sunparser->GetDef(weaponDefs[id].duration, "0.05", weaponname + "\\duration");
+	sunparser->GetDef(weaponDefs[id].lodDistance, "1000", weaponname + "\\lodDistance");
+	sunparser->GetDef(weaponDefs[id].falloffRate, "0.5", weaponname + "\\falloffRate");
 
 	sunparser->GetDef(weaponDefs[id].visuals.sizeDecay,  "0", weaponname + "\\sizeDecay");
 	sunparser->GetDef(weaponDefs[id].visuals.alphaDecay, "1", weaponname + "\\alphaDecay");
