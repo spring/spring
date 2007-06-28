@@ -43,6 +43,7 @@
 #include "Platform/FileSystem.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
 #include "mmgr.h"
 
 /* Cast id to unsigned to catch negative ids in the same operations,
@@ -1190,6 +1191,18 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 			}
 			case AIVAL_CURRENT_FUEL: {
 				(*(float*)data) = unit->currentFuel;
+				return true;
+			}
+			case AIVAL_STOCKPILED: {
+				if (!unit->stockpileWeapon)
+					return false;
+				(*(int*)data) = unit->stockpileWeapon->numStockpiled;
+				return true;
+			}
+			case AIVAL_STOCKPILE_QUED: {
+				if (!unit->stockpileWeapon)
+					return false;
+				(*(int*)data) = unit->stockpileWeapon->numStockpileQued;
 				return true;
 			}
 			default:
