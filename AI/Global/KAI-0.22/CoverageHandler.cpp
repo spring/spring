@@ -70,7 +70,7 @@ void CCoverageHandler::Change(int unit, bool Removed){
 			const UnitDef* ud = ai->cb->GetUnitDef(unit);
 			for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i=ud->weapons.begin();i!=ud->weapons.end();i++) {
 				if (i->def->isShield) {
-					int tmpr = int(i->def->shieldRadius*3/4 / COVERAGE_SQUARE2);
+					int tmpr = int(i->def->shieldRadius / COVERAGE_SQUARE2);
 					if (r<tmpr) r = tmpr;
 				}
 			}
