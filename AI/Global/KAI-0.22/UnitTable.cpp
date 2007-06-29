@@ -765,7 +765,7 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category, int subCate
 			templist = nukes;
 			break;
 		case CAT_SHIELD:
-			templist = nukes;
+			templist = shields;
 			break;
 	}
 	//L("Switch done, side: " << side);

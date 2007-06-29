@@ -609,9 +609,9 @@ bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass)
 			builderIsUsed = true;
 	}
 
-	if(!builderIsUsed && ai->uh->AllUnitsByCat[CAT_NUKE].size()<5 && RANDINT%100<2 
-		&& (ai->cb->GetMetal()>=ai->cb->GetMetalStorage()*0.9)
-		&& (ai->cb->GetEnergy()>=ai->cb->GetEnergyStorage()*0.9)){
+	if(!builderIsUsed && ai->uh->AllUnitsByCat[CAT_NUKE].size()<5 && RANDINT%100<10 
+		&& (ai->cb->GetMetal()>=ai->cb->GetMetalStorage()*0.8)
+		&& (ai->cb->GetEnergy()>=ai->cb->GetEnergyStorage()*0.8)){
 		if (!ai->uh->BuildTaskAddBuilder(builder,CAT_NUKE)) {
 			const UnitDef* Nuke = ai->ut->GetUnitByScore(builder,CAT_NUKE);
 			if(Nuke == NULL)
