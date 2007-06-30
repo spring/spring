@@ -23,8 +23,11 @@
 #endif
 #include "Platform/FileSystem.h"
 #include <SDL_timer.h>
-#include "NetProtocol.h" // this is bad, CNet should be independent of higher level layers
+#include "NetProtocol.h" // FIXME: this is bad, CNet should be independent of higher level layers
 #include "Game/PreGame.h"
+#include "Lua/LuaGaia.h" // FIXME: this is even worse
+#include "Lua/LuaRules.h"
+#include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -698,7 +701,7 @@ bool CNet::FindDemoFile(const char* name)
 		logOutput.Print("Playing demo from %s",name);
 		char c;
 		playbackDemo->Read(&c,1);
-		if(c){
+		if(c){ // Got a CGameSetup script
 			int length;
 			playbackDemo->Read(&length,sizeof(int));
 			char* buf=SAFE_NEW char[length];
@@ -707,6 +710,25 @@ bool CNet::FindDemoFile(const char* name)
 			gameSetup=SAFE_NEW CGameSetup();
 			gameSetup->Init(buf,length);
 			delete[] buf;
+		} else { // Didn't get a CGameSetup script
+			// FIXME: duplicated in Main.cpp
+			const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
+			const string luaRulesStr = configHandler.GetString("LuaRules", "1");
+			gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+			gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
+			if (gs->useLuaGaia) {
+				gs->gaiaTeamID = gs->activeTeams;
+				gs->gaiaAllyTeamID = gs->activeAllyTeams;
+				gs->activeTeams++;
+				gs->activeAllyTeams++;
+				CTeam* team = gs->Team(gs->gaiaTeamID);
+				team->color[0] = 255;
+				team->color[1] = 255;
+				team->color[2] = 255;
+				team->color[3] = 255;
+				team->gaia = true;
+				gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
+			}
 		}
 		playbackDemo->Read(&demoTimeOffset,sizeof(float));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
