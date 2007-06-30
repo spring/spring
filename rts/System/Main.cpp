@@ -768,8 +768,9 @@ void SpringApp::CreateGameSetup ()
 		}
 	}
 
-	if (!gameSetup) {
+	if (!gameSetup && demofile.empty()) {
 		gs->noHelperAIs = !!configHandler.GetInt("NoHelperAIs", 0);
+		//FIXME: duplicated in Net.cpp
 		const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
 		const string luaRulesStr = configHandler.GetString("LuaRules", "1");
 		gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
@@ -1071,7 +1072,7 @@ int Run(int argc, char *argv[])
 	streflop_init<streflop::Simple>();
 #endif
 	good_fpu_control_registers("::Run");
-	
+
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
 	try {
