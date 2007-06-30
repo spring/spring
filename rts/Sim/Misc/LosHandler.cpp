@@ -117,18 +117,18 @@ CLosHandler::CLosHandler()
 {
 	losMipLevel = sensorHandler->losMipLevel;
 	airMipLevel = sensorHandler->airMipLevel;
-	airSizeX=gs->mapx>>sensorHandler->airMipLevel;
-	airSizeY=gs->mapy>>sensorHandler->airMipLevel;
-	losSizeX=gs->mapx>>sensorHandler->losMipLevel;
-	losSizeY=gs->mapy>>sensorHandler->losMipLevel;
-	invLosDiv = 1/((float)SQUARE_SIZE*(1<<sensorHandler->losMipLevel));
-	invAirDiv = 1/((float)SQUARE_SIZE*(1<<sensorHandler->airMipLevel));
+	airSizeX = std::max(1, gs->mapx >> airMipLevel);
+	airSizeY = std::max(1, gs->mapy >> airMipLevel);
+	losSizeX = std::max(1, gs->mapx >> losMipLevel);
+	losSizeY = std::max(1, gs->mapy >> losMipLevel);
+	invLosDiv = 1 / ((float)SQUARE_SIZE * (1 << losMipLevel));
+	invAirDiv = 1 / ((float)SQUARE_SIZE * (1 << airMipLevel));
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
 //		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
-		losMap[a].resize(losSizeX*losSizeY*2,0);
+		losMap[a].resize(losSizeX*losSizeY,0);
 //		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
-		airLosMap[a].resize(losSizeX*losSizeY*2,0);
+		airLosMap[a].resize(airSizeX*airSizeY,0);
 	}
 
 	for(int a=1;a<=MAX_LOS_TABLE;++a)
