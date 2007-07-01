@@ -973,7 +973,7 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal()
 {
-START_TIME_PROFILE
+	START_TIME_PROFILE
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 	setSurfaceCircleFunc(DrawSurfaceCircle);
@@ -988,8 +988,8 @@ START_TIME_PROFILE
 		}
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
+		END_TIME_PROFILE("Draw minimap");
 		return;
-END_TIME_PROFILE("Draw minimap");
 	}
 
 	glViewport(xpos, ypos, width, height);
@@ -1212,7 +1212,7 @@ END_TIME_PROFILE("Draw minimap");
 
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
-END_TIME_PROFILE("Draw minimap");
+	END_TIME_PROFILE("Draw minimap");
 }
 
 
