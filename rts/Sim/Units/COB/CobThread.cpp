@@ -669,7 +669,7 @@ int CCobThread::Tick(int deltaTime)
 			case LOGICAL_AND:
 				r1 = POP();
 				r2 = POP();
-				if (r1 & r2)
+				if (r1 && r2)
 					stack.push_back(1);
 				else
 					stack.push_back(0);
@@ -677,7 +677,7 @@ int CCobThread::Tick(int deltaTime)
 			case LOGICAL_OR:
 				r1 = POP();
 				r2 = POP();
-				if (r1 | r2)
+				if (r1 || r2)
 					stack.push_back(1);
 				else
 					stack.push_back(0);
@@ -685,7 +685,7 @@ int CCobThread::Tick(int deltaTime)
 			case LOGICAL_XOR:
 				r1 = POP();
 				r2 = POP();
-				if (r1 ^ r2)
+				if (!!r1 ^ !!r2)
 					stack.push_back(1);
 				else
 					stack.push_back(0);
