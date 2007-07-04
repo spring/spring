@@ -285,8 +285,8 @@ void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
 	localmodel=NULL;
 	SetRadius(1.2f);
 	mapSquare=ground->GetSquare(pos);
+	uh->AddUnit(this);
 	qf->MovedUnit(this);
-	id=uh->AddUnit(this);
 	oldRadarPos.x=-1;
 
 	for(int a=0;a<MAX_TEAMS;++a)
