@@ -9,6 +9,7 @@ class CColorMap;
 class CSimpleParticleSystem : public CProjectile
 {
 	CR_DECLARE(CSimpleParticleSystem);
+	CR_DECLARE_SUB(Particle);
 public:
 	virtual void Draw();
 	virtual void Update();
@@ -42,14 +43,15 @@ public:
 
 	struct Particle
 	{
-        float3 pos;
+		CR_DECLARE_STRUCT(Particle);
+
+		float3 pos;
 		float life;
 		float3 speed;
 		float decayrate;
 		float size;
-	float sizeGrowth;
-	float sizeMod;
-
+		float sizeGrowth;
+		float sizeMod;
 	};
 
 protected:
