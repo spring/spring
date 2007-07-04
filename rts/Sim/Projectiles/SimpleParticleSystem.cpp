@@ -9,7 +9,7 @@
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
-CR_REG_METADATA(CSimpleParticleSystem, 
+CR_REG_METADATA(CSimpleParticleSystem,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(emitVector),
@@ -30,7 +30,21 @@ CR_REG_METADATA(CSimpleParticleSystem,
 		CR_MEMBER(directional),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizeMod),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_MEMBER(particles)
+));
+
+CR_BIND(CSimpleParticleSystem::Particle, );
+
+CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
+(
+	CR_MEMBER(pos),
+	CR_MEMBER(life),
+	CR_MEMBER(speed),
+	CR_MEMBER(decayrate),
+	CR_MEMBER(size),
+	CR_MEMBER(sizeGrowth),
+	CR_MEMBER(sizeMod)
 ));
 
 CSimpleParticleSystem::CSimpleParticleSystem(void)
@@ -124,7 +138,7 @@ void CSimpleParticleSystem::Update()
 void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 {
 	CProjectile::Init(explosionPos, owner);
-	
+
 	particles = new Particle[numParticles];
 
 	float3 up = emitVector;
@@ -151,7 +165,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 
 CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, );
 
-CR_REG_METADATA(CSphereParticleSpawner, 
+CR_REG_METADATA(CSphereParticleSpawner,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 	CR_MEMBER_ENDFLAG(CM_Config)
