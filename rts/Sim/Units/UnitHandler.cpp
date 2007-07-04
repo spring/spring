@@ -178,14 +178,13 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	}
 	activeUnits.insert(ui,unit);		//randomize this to make the order in slowupdate random (good if one build say many buildings at once and then many mobile ones etc)
 
-	int id;
-	id=freeIDs.front();
+	unit->id=freeIDs.front();
 	freeIDs.pop_front();
 
-	units[id]=unit;
+	units[unit->id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
 	unitsType[unit->team][unit->unitDef->id]++;
-	return id;
+	return unit->id;
 }
 
 void CUnitHandler::DeleteUnit(CUnit* unit)
