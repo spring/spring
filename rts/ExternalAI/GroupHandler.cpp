@@ -97,7 +97,7 @@ void CGroupHandler::TestDll(string name)
 	typedef int (* GETGROUPAIVERSION)();
 	typedef const char ** (* GETAINAMELIST)();
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
-	
+
 	SharedLib *lib;
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETAINAMELIST GetAiNameList;
@@ -130,7 +130,7 @@ void CGroupHandler::TestDll(string name)
 		delete lib;
 		return;
 	}
-	
+
 	GetAiNameList = (GETAINAMELIST)lib->FindAddress("GetAiNameList");
 	if (!GetAiNameList){
 		logOutput.Print("No GetAiNameList function found in AI dll %s",name.c_str());
@@ -156,15 +156,15 @@ void CGroupHandler::GroupCommand(int num)
 		if (!keys[SDLK_LSHIFT]) {
 			groups[num]->ClearUnits();
 		}
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		list<CUnit*>::const_iterator ui;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		CUnitSet::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
 	}
 	else if (keys[SDLK_LSHIFT])  {
 		// do not select the group, just add its members to the current selection
-		std::list<CUnit*>::const_iterator gi;
+		CUnitSet::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.AddUnit(*gi);
 		}
@@ -172,14 +172,10 @@ void CGroupHandler::GroupCommand(int num)
 	}
 	else if (keys[SDLK_LALT] || keys[SDLK_LMETA])  {
 		// do not select the group, just toggle its members with the current selection
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		std::list<CUnit*>::const_iterator gi;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		CUnitSet::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			std::list<CUnit*>::const_iterator i;
-			for (i = selUnits.begin(); i != selUnits.end(); i++) {
-				if (*i==*gi) break;
-			}
-			if (i == selUnits.end()) {
+			if (selUnits.find(*gi) == selUnits.end()) {
 				selectedUnits.AddUnit(*gi);
 			} else {
 				selectedUnits.RemoveUnit(*gi);
@@ -187,16 +183,16 @@ void CGroupHandler::GroupCommand(int num)
 		}
 		return;
 	}
-	
+
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
-		for(std::list<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+		for(CUnitSet::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
 		mouse->currentCamController->SetPos(p);
 	}
-	
+
 	selectedUnits.SelectGroup(num);
 }
 
@@ -206,15 +202,15 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 		if (cmd == "set") {
 			groups[num]->ClearUnits();
 		}
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		list<CUnit*>::const_iterator ui;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		CUnitSet::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
 			(*ui)->SetGroup(groups[num]);
 		}
 	}
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
-		std::list<CUnit*>::const_iterator gi;
+		CUnitSet::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.AddUnit(*gi);
 		}
@@ -222,7 +218,7 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
-		std::list<CUnit*>::const_iterator gi;
+		CUnitSet::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
 			selectedUnits.RemoveUnit(*gi);
 		}
@@ -230,14 +226,10 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		std::list<CUnit*>::const_iterator gi;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		CUnitSet::const_iterator gi;
 		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			std::list<CUnit*>::const_iterator i;
-			for (i = selUnits.begin(); i != selUnits.end(); i++) {
-				if (*i==*gi) break;
-			}
-			if (i == selUnits.end()) {
+			if (selUnits.find(*gi) == selUnits.end()) {
 				selectedUnits.AddUnit(*gi);
 			} else {
 				selectedUnits.RemoveUnit(*gi);
@@ -245,16 +237,16 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 		}
 		return;
 	}
-	
+
 	if(selectedUnits.selectedGroup==num && !groups[num]->units.empty()){
 		float3 p(0,0,0);
-		for(std::list<CUnit*>::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
+		for(CUnitSet::iterator gi=groups[num]->units.begin();gi!=groups[num]->units.end();++gi){
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
 		mouse->currentCamController->SetPos(p);
 	}
-	
+
 	selectedUnits.SelectGroup(num);
 }
 
@@ -264,7 +256,7 @@ void CGroupHandler::FindDlls(void)
 	std::string dir("AI/Helper-libs");
 	match = filesystem.FindFiles(dir, std::string("*.") + SharedLib::GetLibExtension());
 
-	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++) 
+	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++)
 		TestDll(*it);
 }
 
@@ -299,7 +291,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	delete group;
 }
 
-map<AIKey,string> CGroupHandler::GetSuitedAis(list<CUnit*> units)
+map<AIKey,string> CGroupHandler::GetSuitedAis(const CUnitSet& units)
 {
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	ISUNITSUITED IsUnitSuited;
@@ -315,7 +307,7 @@ map<AIKey,string> CGroupHandler::GetSuitedAis(list<CUnit*> units)
 		lib = SharedLib::Instantiate(aiKey.dllName);
 		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 		bool suited = false;
-		list<CUnit*>::iterator ui;
+		CUnitSet::const_iterator ui;
 		for(ui=units.begin();ui!=units.end();++ui)
 		{
 			const UnitDef* ud = (*ui)->unitDef;

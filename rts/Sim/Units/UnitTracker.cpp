@@ -18,7 +18,7 @@ CUnitTracker unitTracker;
 const char* CUnitTracker::modeNames[TrackModeCount] = {
 	"Single",
 	"Average",
-	"Extents"	
+	"Extents"
 };
 
 
@@ -83,10 +83,10 @@ void CUnitTracker::SetMode(int m)
 
 void CUnitTracker::Track()
 {
-	list<CUnit*>& units = selectedUnits.selectedUnits;
-	
+	CUnitSet& units = selectedUnits.selectedUnits;
+
 	CleanTrackGroup();
-	
+
 	if (trackGroup.empty()) {
 		if (units.empty()) {
 			Disable();
@@ -118,8 +118,8 @@ void CUnitTracker::Track()
 void CUnitTracker::MakeTrackGroup()
 {
 	trackGroup.clear();
-	list<CUnit*>& units = selectedUnits.selectedUnits;
-	list<CUnit*>::const_iterator it;
+	CUnitSet& units = selectedUnits.selectedUnits;
+	CUnitSet::const_iterator it;
 	for (it = units.begin(); it != units.end(); ++it) {
 		trackGroup.insert((*it)->id);
 	}
@@ -147,7 +147,7 @@ void CUnitTracker::CleanTrackGroup()
 		trackGroup.erase(it);
 		it = it_next;
 	}
-	
+
 	if (trackGroup.empty()) {
 		Disable();
 	}
@@ -182,12 +182,12 @@ void CUnitTracker::NextUnit()
 CUnit* CUnitTracker::GetTrackUnit()
 {
 	CleanTrackGroup();
-	
+
 	if (trackGroup.empty()) {
 		Disable();
 		return NULL;
 	}
-	
+
 	return uh->units[trackUnit];
 }
 
@@ -241,7 +241,7 @@ void CUnitTracker::SetCam()
 		timeOut=1;
 		lastFollowUnit=0;
 	}
-	
+
 	CFPSController* fpsCamera = (CFPSController*) mouse->camControllers[0];
 
 	if(timeOut>0){
@@ -295,7 +295,7 @@ void CUnitTracker::SetCam()
 	trackPos += (modPlanePos - trackPos) * (1 - pow(0.95f, deltaTime));
 	trackDir += (u->frontdir - trackDir) * (1 - pow(0.90f, deltaTime));
 	trackDir.Normalize();
-	
+
 	camera->pos=trackPos;
 	fpsCamera->pos = trackPos;
 

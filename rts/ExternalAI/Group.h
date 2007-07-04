@@ -10,6 +10,7 @@
 #include "Game/command.h"
 #include "Platform/SharedLib.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitSet.h"
 #include "ExternalAI/aikey.h"
 class IGroupAI;
 class CUnit;
@@ -19,7 +20,7 @@ class CGroupHandler;
 
 using namespace std;
 
-class CGroup : public CObject  
+class CGroup : public CObject
 {
 public:
 	CR_DECLARE(CGroup);
@@ -42,7 +43,7 @@ public:
 
 	int id;
 
-	list<CUnit*> units;
+	CUnitSet units;
 
 	vector<CommandDescription> myCommands;
 	SharedLib *lib;
@@ -50,7 +51,7 @@ public:
 	typedef IGroupAI* (* GETNEWAI)(unsigned aiNumber);
 	typedef void (* RELEASEAI)(unsigned aiNumber,IGroupAI* i);
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
-	
+
 	GETGROUPAIVERSION GetGroupAiVersion;
 	GETNEWAI GetNewAI;
 	RELEASEAI ReleaseAI;

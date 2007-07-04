@@ -89,7 +89,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	int foundGroup2=-2;
 	map<int,int> count;
 
-	for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
 		for(ci=c->begin();ci!=c->end();++ci)
@@ -171,7 +171,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
-	for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
 		for(ci=c->begin(); ci!=c->end(); ++ci){
@@ -197,7 +197,7 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	}
 
 	// load the second set  (all those that have not already been included)
-	for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
 		for(ci=c->begin(); ci!=c->end(); ++ci){
@@ -244,7 +244,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 
 	if (c.id == CMD_GROUPCLEAR) {
-		for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 			if((*ui)->group){
 				(*ui)->SetGroup(0);
 				possibleCommandsChanged=true;
@@ -258,7 +258,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 	else if (c.id == CMD_GROUPADD) {
 		CGroup* group=0;
-		for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+		for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 			if((*ui)->group){
 				group=(*ui)->group;
 				possibleCommandsChanged=true;
@@ -266,7 +266,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 			}
 		}
 		if(group){
-			for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+			for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 				if(!(*ui)->group)
 					(*ui)->SetGroup(group);
 			}
@@ -287,7 +287,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 			}
 			CGroup* group=grouphandlers[gu->myTeam]->CreateNewGroup(aai->first);
 
-			for(list<CUnit*>::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
+			for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 				(*ui)->SetGroup(group);
 			}
 			SelectGroup(group->id);
@@ -325,7 +325,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	SendCommand(c);
 
 	if (!selectedUnits.empty()) {
-		list<CUnit*>::iterator ui = selectedUnits.begin();
+		CUnitSet::iterator ui = selectedUnits.begin();
 
 		int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
 		if (soundIdx >= 0) {
@@ -344,12 +344,12 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 	if (unit->transporter != NULL && !unit->transporter->unitDef->isfireplatform) {
 		return;
 	}
-	
+
 	if (unit->noSelect) {
 		return;
 	}
 
-	selectedUnits.insert(selectedUnits.end(),unit);
+	selectedUnits.insert(unit);
 	AddDeathDependence(unit);
 	selectionChanged = true;
 	possibleCommandsChanged = true;
@@ -366,7 +366,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 
 void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
-	ListErase(CUnit*,selectedUnits,unit);
+	selectedUnits.erase(unit);
 	DeleteDeathDependence(unit);
 	selectionChanged=true;
 	possibleCommandsChanged=true;
@@ -380,7 +380,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 
 void CSelectedUnits::ClearSelected()
 {
-	list<CUnit*>::iterator ui;
+	CUnitSet::iterator ui;
 	ENTER_MIXED;
 	for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		(*ui)->commandAI->selected=false;
@@ -401,11 +401,11 @@ void CSelectedUnits::SelectGroup(int num)
 	selectedGroup=num;
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
 
-	list<CUnit*>::iterator ui;
+	CUnitSet::iterator ui;
 	ENTER_MIXED;
 	for(ui=group->units.begin();ui!=group->units.end();++ui){
 		(*ui)->commandAI->selected=true;
-		selectedUnits.insert(selectedUnits.end(),*ui);
+		selectedUnits.insert(*ui);
 		AddDeathDependence(*ui);
 	}
 	ENTER_UNSYNCED;
@@ -427,7 +427,7 @@ void CSelectedUnits::Draw()
 		glColor4fv(cmdColors.unitBox);
 
 		glBegin(GL_QUADS);
-		list<CUnit*>::iterator ui;
+		CUnitSet::iterator ui;
 		if(selectedGroup!=-1){
 			for(ui=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.begin();ui!=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.end();++ui){
 				if((*ui)->isIcon)
@@ -479,7 +479,7 @@ void CSelectedUnits::Draw()
 
 void CSelectedUnits::DependentDied(CObject *o)
 {
-	ListErase(CUnit*,selectedUnits,((CUnit*)o))
+	selectedUnits.erase((CUnit*)o);
 	selectionChanged=true;
 	possibleCommandsChanged=true;
 }
@@ -573,7 +573,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
 	}
 
 	// return the default if there are no units selected
-	list<CUnit*>::const_iterator ui = selectedUnits.begin();
+	CUnitSet::const_iterator ui = selectedUnits.begin();
 	if (ui == selectedUnits.end()) {
 		return CMD_STOP;
 	}
@@ -588,7 +588,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
 	// find the best leader to pick the command
 	const CUnit* leaderUnit = *ui;
 	const UnitDef* leaderDef = leaderUnit->unitDef;
-	for (ui++; ui != selectedUnits.end(); ++ui) {
+	for (++ui; ui != selectedUnits.end(); ++ui) {
 		const CUnit* testUnit = *ui;
 		const UnitDef* testDef = testUnit->unitDef;
 		if (testDef != leaderDef) {
@@ -614,13 +614,8 @@ void CSelectedUnits::AiOrder(int unitid, Command &c)
 
 void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 {
-	std::list<CUnit*>::iterator i;
-	for (i=selectedUnits.begin();i!=selectedUnits.end();i++)
-		if (*i==sender) {
-			break;
-		}
-	if(sender==0 || i!=selectedUnits.end())
-		possibleCommandsChanged=true;
+	if (sender == NULL || selectedUnits.find(sender) != selectedUnits.end())
+		possibleCommandsChanged = true;
 }
 
 
@@ -641,9 +636,9 @@ void CSelectedUnits::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	list<CUnit*>::iterator ui;
+	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
-		list<CUnit*>& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
+		CUnitSet& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 		for(ui = groupUnits.begin(); ui != groupUnits.end(); ++ui) {
 			(*ui)->commandAI->DrawCommands();
 		}
@@ -687,7 +682,7 @@ std::string CSelectedUnits::GetTooltip(void)
 	float exp = 0.0f, cost = 0.0f, range = 0.0f;
 	float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
 
-	list<CUnit*>::iterator ui;
+	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		const CUnit* unit = *ui;
 		maxHealth  += unit->maxHealth;
@@ -735,7 +730,7 @@ void CSelectedUnits::SetCommandPage(int page)
 		grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage=page;
 	}
 
-	std::list<CUnit*>::iterator ui;
+	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		(*ui)->commandAI->lastSelectedCommandPage = page;
 	}
@@ -747,7 +742,7 @@ void CSelectedUnits::SendSelection(void)
 	// first, convert CUnit* to unit IDs.
 	std::vector<short> selectedUnitIDs(selectedUnits.size());
 	std::vector<short>::iterator i = selectedUnitIDs.begin();
-	std::list<CUnit*>::const_iterator ui = selectedUnits.begin();
+	CUnitSet::const_iterator ui = selectedUnits.begin();
 	for(; ui != selectedUnits.end(); ++i, ++ui) *i = (*ui)->id;
 	net->SendSelect(gu->myPlayerNum, selectedUnitIDs);
 	selectionChanged=false;

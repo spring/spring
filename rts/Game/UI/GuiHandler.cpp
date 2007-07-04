@@ -2428,7 +2428,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 static bool WouldCancelAnyQueued(const BuildInfo& b) {
 	Command c;
 	b.FillCmd(c);
-	std::list<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
+	CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
 			return true;
@@ -3700,8 +3700,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
-						std::list<CUnit*>::iterator ui = selectedUnits.selectedUnits.begin();
-						for (; ui != selectedUnits.selectedUnits.end(); ui++) {
+						CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
+						for (; ui != selectedUnits.selectedUnits.end(); ++ui) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
 							for (; ti != temp.end(); ti++) {
@@ -3730,7 +3730,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
-		for(std::list<CUnit*>::iterator si=selectedUnits.selectedUnits.begin();si!=selectedUnits.selectedUnits.end();++si){
+		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
 			CUnit* unit = *si;
 			if (unit == pointedAt) {
 				continue;
@@ -3818,7 +3818,7 @@ void CGuiHandler::DrawMiniMapMarker()
 
 void CGuiHandler::DrawCentroidCursor()
 {
-	const std::list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 	if (selUnits.size() < 2) {
 		return;
 	}
@@ -3852,7 +3852,7 @@ void CGuiHandler::DrawCentroidCursor()
 	}
 
 	float3 pos(0.0f, 0.0f, 0.0f);
-	std::list<CUnit*>::const_iterator it;
+	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		pos += (*it)->midPos;
 	}

@@ -927,12 +927,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						&& (object->mobility || Distance2D(owner, object) >= 0)) {
 							//Avoid collision by turning the heading to left or right.
 							//Using the one who need most adjustment.
-							std::list<CUnit*>::iterator i;
-							for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
-								if (*i==owner) {
-									break;
-								}
-							if(DEBUG_CONTROLLER && i!=selectedUnits.selectedUnits.end())
+							if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos+UpVector*20,object->pos+UpVector*20,3,1,4);
 							if(objectDistToAvoidDirCenter > 0) {
 								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
@@ -954,12 +949,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			//Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0,1,0)) * (avoidRight - avoidLeft));
-			std::list<CUnit*>::iterator i;
-			for (i=selectedUnits.selectedUnits.begin();i!=selectedUnits.selectedUnits.end();i++)
-				if (*i==owner) {
-					break;
-				}
-			if(DEBUG_CONTROLLER && i!=selectedUnits.selectedUnits.end()){
+			if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
 				int a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+avoidanceVec*40,7,1,4);
 				geometricObjects->SetColor(a,1,0.3f,0.3f,0.6f);
 

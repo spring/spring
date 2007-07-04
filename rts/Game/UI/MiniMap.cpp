@@ -665,8 +665,8 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float zmin = min(oldPos.z, newPos.z);
 		const float zmax = max(oldPos.z, newPos.z);
 
-		list<CUnit*>::iterator ui;
-		list<CUnit*>& selection = selectedUnits.selectedUnits;
+		CUnitSet::iterator ui;
+		CUnitSet& selection = selectedUnits.selectedUnits;
 
 		CUnit* unit = NULL;
 		int addedunits = 0;
@@ -680,16 +680,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 			lastTeam = gu->myTeam;
 		}
 		for (; team <= lastTeam; team++) {
-			list<CUnit*>& teamUnits = gs->Team(team)->units;
+			CUnitSet& teamUnits = gs->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				const float3& midPos = (*ui)->midPos;
 				if ((midPos.x > xmin) && (midPos.x < xmax) &&
 						(midPos.z > zmin) && (midPos.z < zmax)) {
-					std::list<CUnit*>::const_iterator i;
-					for (i = selection.begin(); i != selection.end(); i++) {
-						if (*i==unit) break;
-					}
-					if (keys[SDLK_LCTRL] && (i != selection.end())) {
+					if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -724,16 +720,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
 		}
 
-		list<CUnit*>::iterator ui;
-		list<CUnit*>& selection = selectedUnits.selectedUnits;
+		CUnitSet::iterator ui;
+		CUnitSet& selection = selectedUnits.selectedUnits;
 
 		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-				std::list<CUnit*>::const_iterator i;
-				for (i = selection.begin(); i != selection.end(); i++) {
-					if (*i==unit) break;
-				}
-				if (keys[SDLK_LCTRL] && (i != selection.end())) {
+				if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
 					selectedUnits.RemoveUnit(unit);
 				} else {
 					selectedUnits.AddUnit(unit);
@@ -754,7 +746,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 						lastTeam = gu->myTeam;
 					}
 					for (; team <= lastTeam; team++) {
-						list<CUnit*>& myUnits = gs->Team(team)->units;
+						CUnitSet& myUnits = gs->Team(team)->units;
 						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
 							if ((*ui)->aihint == unit->aihint) {
 								selectedUnits.AddUnit(*ui);
@@ -1135,8 +1127,8 @@ void CMiniMap::DrawForReal()
 
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
-	list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	for(list<CUnit*>::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
+	CUnitSet& selUnits = selectedUnits.selectedUnits;
+	for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 		CUnit* unit = *si;
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);

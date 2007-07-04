@@ -107,7 +107,7 @@ public:
 
 	void ExperienceChange();
 	void DoSeismicPing(int pingSize);
-	
+
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 

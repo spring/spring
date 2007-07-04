@@ -15,6 +15,7 @@
 #include "ExternalAI/aikey.h"
 
 class CGroup;
+class CUnitSet;
 
 using namespace std;
 
@@ -38,7 +39,7 @@ public:
 	vector<CGroup*> groups;
 	map<AIKey,string> availableAI;
 
-	map<AIKey,string> GetSuitedAis(list<CUnit*> units);
+	map<AIKey,string> GetSuitedAis(const CUnitSet& units);
 	map<AIKey,string> lastSuitedAis;
 
 	int team;

@@ -1240,7 +1240,7 @@ int CAICallback::GetSelectedUnits(int *units)
 	verify ();
 	int a=0;
 	if (gu->myAllyTeam == gs->AllyTeam(team)) {
-		for(list<CUnit*>::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
+		for(CUnitSet::iterator ui=selectedUnits.selectedUnits.begin();ui!=selectedUnits.selectedUnits.end();++ui)
 			units[a++]=(*ui)->id;
 	}
 	return a;

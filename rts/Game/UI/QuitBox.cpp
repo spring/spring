@@ -230,10 +230,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
-		list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
+		CUnitSet* tu=&gs->Team(gu->myTeam)->units;
 		//select all units
 		selectedUnits.ClearSelected();
-		for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+		for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 			selectedUnits.AddUnit(*ui);
 		}
 		Command c;

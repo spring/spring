@@ -2109,8 +2109,8 @@ int CLuaUI::GetGroupUnits(lua_State* L)
 
 	lua_newtable(L);
 	int count = 0;
-	const list<CUnit*>& groupUnits = groups[groupID]->units;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& groupUnits = groups[groupID]->units;
+	CUnitSet::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		count++;
 		lua_pushnumber(L, count);
@@ -2137,8 +2137,8 @@ int CLuaUI::GetGroupUnitsSorted(lua_State* L)
 	}
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const list<CUnit*>& groupUnits = groups[groupID]->units;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& groupUnits = groups[groupID]->units;
+	CUnitSet::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		CUnit* unit = *it;
 		unitDefMap[unit->unitDef->id].push_back(unit);
@@ -2180,8 +2180,8 @@ int CLuaUI::GetGroupUnitsCounts(lua_State* L)
 	}
 
 	map<int, int> countMap;
-	const list<CUnit*>& groupUnits = groups[groupID]->units;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& groupUnits = groups[groupID]->units;
+	CUnitSet::const_iterator it;
 	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
 		CUnit* unit = *it;
 		const int udID = unit->unitDef->id;
