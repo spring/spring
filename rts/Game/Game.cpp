@@ -354,7 +354,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater();
-	for(int a=0;a<MAX_TEAMS;a++) 
+	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
 //	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
 	globalAI=SAFE_NEW CGlobalAIHandler();
@@ -908,11 +908,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->LoadView(action.extra);
 	}
 	else if (cmd == "viewselection") {
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
 			float3 pos(0.0f, 0.0f, 0.0f);
-			list<CUnit*>::const_iterator it;
-			for (it = selUnits.begin(); it != selUnits.end(); it++) {
+			CUnitSet::const_iterator it;
+			for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 				pos += (*it)->midPos;
 			}
 			pos /= (float)selUnits.size();
@@ -1901,7 +1901,7 @@ END_TIME_PROFILE("Shadows/Reflect");
 START_TIME_PROFILE
 	water->UpdateWater(this);
 END_TIME_PROFILE("Water");
-	
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
 	if (hideInterface || !minimap->GetMaximized() || minimap->GetMinimized())
@@ -2229,7 +2229,7 @@ void CGame::SimFrame()
 		sound->NewFrame();
 		treeDrawer->Update();
 		globalAI->Update();
-		for(int a=0;a<MAX_TEAMS;a++) 
+		for(int a=0;a<MAX_TEAMS;a++)
 			grouphandlers[a]->Update();
 
 #ifdef PROFILE_TIME
@@ -3711,8 +3711,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		selectedUnits.PossibleCommandChange(NULL);
 		if (gs->noHelperAIs) {
 			// remove any current GroupAIs
-			list<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-			list<CUnit*>::iterator it;
+			CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
+			CUnitSet::iterator it;
       for(it = teamUnits.begin(); it != teamUnits.end(); ++it) {
       	CUnit* unit = *it;
 				if (unit->group && (unit->group->id > 9)) {
@@ -4105,12 +4105,8 @@ void CGame::SelectUnits(const string& line)
 				continue; // bad pointer
 			}
 			if (!gu->spectatingFullSelect) {
-				const list<CUnit*>& teamUnits = gs->Team(gu->myTeam)->units;
-				std::list<CUnit*>::const_iterator i;
-				for (i = teamUnits.begin(); i != teamUnits.end(); i++) {
-					if (*i==unit) break;
-				}
-				if (i == teamUnits.end()) {
+				const CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
+				if (teamUnits.find(unit) == teamUnits.end()) {
 					continue; // not mine to select
 				}
 			}
@@ -4131,7 +4127,7 @@ void CGame::SelectCycle(const string& command)
 	static set<int> unitIDs;
 	static int lastID = -1;
 
-	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 
 	if (command == "restore") {
 		selectedUnits.ClearSelected();
@@ -4148,7 +4144,7 @@ void CGame::SelectCycle(const string& command)
 	if (selUnits.size() >= 2) {
 		// assign the cycle units
 		unitIDs.clear();
-		list<CUnit*>::const_iterator it;
+		CUnitSet::const_iterator it;
 		for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 			unitIDs.insert((*it)->id);
 		}

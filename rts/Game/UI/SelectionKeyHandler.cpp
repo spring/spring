@@ -145,13 +145,13 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
-		  // team units
-			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			// team units
+			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				selection.push_back(*ui);
 			}
 		} else {
-		  // all units
+			// all units
 			list<CUnit*>* au=&uh->activeUnits;
 			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
 				selection.push_back(*ui);
@@ -159,9 +159,9 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		}
 	} else if(s=="Visible"){
 		if (!gu->spectatingFullSelect) {
-		  // team units in viewport
-			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			// team units in viewport
+			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if(camera->InView((*ui)->midPos,(*ui)->radius)){
 					selection.push_back(*ui);
 				}
@@ -184,8 +184,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
-			list<CUnit*>* tu=&gs->Team(gu->myTeam)->units;
-			for(list<CUnit*>::iterator ui=tu->begin();ui!=tu->end();++ui){
+			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if(mp.distance((*ui)->pos)<maxDist){
 					selection.push_back(*ui);
 				}
@@ -200,8 +200,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		}
 	} else if(s=="PrevSelection"){
-		list<CUnit*>* su=&selectedUnits.selectedUnits;
-		for(list<CUnit*>::iterator ui=su->begin();ui!=su->end();++ui){
+		CUnitSet* su=&selectedUnits.selectedUnits;
+		for(CUnitSet::iterator ui=su->begin();ui!=su->end();++ui){
 			selection.push_back(*ui);
 		}
 	} else {
@@ -367,8 +367,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		} else if(s=="InPrevSel"){
 			set<int> prevTypes;
-			list<CUnit*>* tu=&selectedUnits.selectedUnits;
-			for(list<CUnit*>::iterator si=tu->begin();si!=tu->end();++si){
+			CUnitSet* tu=&selectedUnits.selectedUnits;
+			for(CUnitSet::iterator si=tu->begin();si!=tu->end();++si){
 				prevTypes.insert((*si)->aihint);
 			}
 			list<CUnit*>::iterator ui=selection.begin();

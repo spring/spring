@@ -1167,13 +1167,8 @@ int LuaSyncedCtrl::SetUnitNoSelect(lua_State* L)
 	if (unit->noSelect) {
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-		const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-		std::list<CUnit*>::const_iterator i;
-		for (i=selUnits.begin();i!=selUnits.end();i++)
-			if (*i==unit) {
-				break;
-			}
-		if (i != selUnits.end()) {
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		if (selUnits.find(unit) != selUnits.end()) {
 			selectedUnits.RemoveUnit(unit);
 		}
 		POP_CODE_MODE;

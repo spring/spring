@@ -13,8 +13,7 @@
 #include <set>
 #include <map>
 #include <list>
-class CUnit;
-class CCity;
+#include "Sim/Units/UnitSet.h"
 
 using namespace std;
 
@@ -60,7 +59,7 @@ public:
 	float handicap;
 	std::string side;
 
-	list<CUnit*> units;
+	CUnitSet units;
 	float3 startPos;
 
 	SyncedFloat metal;

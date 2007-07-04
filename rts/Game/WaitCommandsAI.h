@@ -13,12 +13,10 @@
 #include <set>
 #include <deque>
 #include <string>
-using namespace std;
-
 #include "System/Object.h"
+#include "Sim/Units/UnitSet.h"
 
 class float3;
-class CUnit;
 class CObject;
 struct Command;
 class CCommandQueue;
@@ -62,25 +60,7 @@ class CWaitCommandsAI {
 
 	private:
 		typedef int KeyType;
-		typedef list<CUnit*> UnitSet;
-		static inline UnitSet::iterator UnitSetFind(UnitSet &list,const CUnit*what)
-		{
-			UnitSet::iterator i;
-			for (i = list.begin(); i != list.end(); i++) {
-				if (*i==what) break;
-			}
-			return i;
-		}
-		static inline UnitSet::const_iterator UnitSetFind(const UnitSet &list,const CUnit*what)
-		{
-			UnitSet::const_iterator i;
-			for (i = list.begin(); i != list.end(); i++) {
-				if (*i==what) break;
-			}
-			return i;
-		}
-
-		typedef map<KeyType, Wait*> WaitMap;
+		typedef std::map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;
 		WaitMap unackedMap;
 
@@ -111,9 +91,9 @@ class CWaitCommandsAI {
 				};
 				WaitState GetWaitState(const CUnit* unit) const;
 				bool IsWaitingOn(const CUnit* unit) const;
-				void SendCommand(const Command& cmd, const UnitSet& unitSet);
-				void SendWaitCommand(const UnitSet& unitSet);
-				UnitSet::iterator RemoveUnitFromSet(UnitSet::iterator, UnitSet&);
+				void SendCommand(const Command& cmd, const CUnitSet& unitSet);
+				void SendWaitCommand(const CUnitSet& unitSet);
+				CUnitSet::iterator RemoveUnitFromSet(CUnitSet::iterator, CUnitSet&);
 			protected:
 				float code;
 				KeyType key;
@@ -167,11 +147,11 @@ class CWaitCommandsAI {
 			private:
 				DeathWait(const Command& cmd);
 				void SelectAreaUnits(const float3& pos0, const float3& pos1,
-				                     UnitSet& units, bool enemies);
+				                     CUnitSet& units, bool enemies);
 			private:
-				UnitSet waitUnits;
-				UnitSet deathUnits;
-				mutable vector<float3> unitPos; // FIXME -- laziness
+				CUnitSet waitUnits;
+				CUnitSet deathUnits;
+				mutable std::vector<float3> unitPos; // FIXME -- laziness
 		};
 
 		// SquadWait
@@ -185,15 +165,15 @@ class CWaitCommandsAI {
 				void RemoveUnit(CUnit* unit);
 				void Update();
 				void Draw() const;
-				const string& GetStateText() const { return stateText; }
+				const std::string& GetStateText() const { return stateText; }
 			private:
 				SquadWait(const Command& cmd);
 				void UpdateText();
 			private:
 				int squadCount;
-				UnitSet buildUnits;
-				UnitSet waitUnits;
-				string stateText;
+				CUnitSet buildUnits;
+				CUnitSet waitUnits;
+				std::string stateText;
 		};
 
 		// GatherWait
@@ -209,7 +189,7 @@ class CWaitCommandsAI {
 			private:
 				GatherWait(const Command& cmd);
 			private:
-				UnitSet waitUnits;
+				CUnitSet waitUnits;
 		};
 };
 

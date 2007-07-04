@@ -307,7 +307,7 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit,AddType type)
 {
-	units.insert(units.end(),unit);
+	units.insert(unit);
 	switch(type){
 	case AddBuilt:
 		currentStats.unitsProduced++;
@@ -325,7 +325,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 
 void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 {
-	ListErase(CUnit*,units,unit);
+	units.erase(unit);
 	switch(type){
 	case RemoveDied:
 		currentStats.unitsDied++;

@@ -145,7 +145,7 @@ int LuaUnsyncedRead::IsReplay(lua_State* L)
 	} else {
 		lua_pushboolean(L, false);
 	}
-	return 1;	
+	return 1;
 }
 
 
@@ -157,7 +157,7 @@ int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 	} else {
 		lua_pushboolean(L, false);
 	}
-	return 1;	
+	return 1;
 }
 
 
@@ -165,7 +165,7 @@ int LuaUnsyncedRead::GetFrameTimeOffset(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, gu->timeOffset);
-	return 1;	
+	return 1;
 }
 
 
@@ -183,9 +183,9 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 	if ((args >= 4) && lua_isnumber(L, 4)) {
 		radius = (float)lua_tonumber(L, 4);
 	}
-	
+
 	lua_pushboolean(L, camera->InView(pos, radius));
-	return 1;	
+	return 1;
 }
 
 
@@ -200,7 +200,7 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 	} else {
 		lua_pushboolean(L, (unit->allyteam == readAllyTeam));
 	}
-	return 1;	
+	return 1;
 }
 
 
@@ -211,7 +211,7 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
-	return 1;	
+	return 1;
 }
 
 
@@ -236,7 +236,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, camera->InView(unit->midPos, radius));
 		}
 	}
-	return 1;	
+	return 1;
 }
 
 
@@ -246,14 +246,9 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	std::list<CUnit*>::const_iterator i;
-	for (i=selUnits.begin();i!=selUnits.end();i++)
-		if (*i==unit) {
-			break;
-		}
-	lua_pushboolean(L, i != selUnits.end());
-	return 1;	
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	lua_pushboolean(L, selUnits.find(unit) != selUnits.end());
+	return 1;
 }
 
 
@@ -272,7 +267,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
-	return 3;	
+	return 3;
 }
 
 
@@ -321,8 +316,8 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		count++;
 		lua_pushnumber(L, count);
@@ -339,8 +334,8 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
-	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		unitDefMap[unit->unitDef->id].push_back(unit);
@@ -373,8 +368,8 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 
 	// tally the types
 	map<int, int> countMap;
-	const list<CUnit*>& selUnits = selectedUnits.selectedUnits;
-	list<CUnit*>::const_iterator it;
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	CUnitSet::const_iterator it;
 	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
 		CUnit* unit = *it;
 		map<int, int>::iterator mit = countMap.find(unit->unitDef->id);
@@ -567,7 +562,7 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 #define PUSH_ROSTER_ENTRY(type, val) \
 	lua_pushnumber(L, index); index++; \
 	lua_push ## type(L, val); lua_rawset(L, -3);
-	
+
 	const CPlayer* p = gs->players[playerID];
 	int index = 1;
 	lua_newtable(L);
@@ -657,7 +652,7 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const Uint32 t2 = *((const Uint32*)&p2);
 	const Uint32 diffTime = (t1 - t2);
 	lua_pushnumber(L, (float)diffTime * 0.001f); // return seconds
-	return 1;	
+	return 1;
 }
 
 

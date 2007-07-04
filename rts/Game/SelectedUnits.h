@@ -12,7 +12,7 @@
 #include <vector>
 #include <set>
 #include "command.h"
-class CUnit;
+#include "Sim/Units/UnitSet.h"
 class CFeature;
 
 using namespace std;
@@ -46,7 +46,7 @@ public:
 	void ToggleBuildIconsFirst();
 	bool BuildIconsFirst() const { return buildIconsFirst; }
 
-	list<CUnit*> selectedUnits;
+	CUnitSet selectedUnits;
 
 	bool selectionChanged;
 	bool possibleCommandsChanged;

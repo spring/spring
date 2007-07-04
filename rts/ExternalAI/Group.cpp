@@ -98,18 +98,18 @@ void CGroup::PostLoad()
 	}
 
 	lib = SharedLib::Instantiate(currentAiKey.dllName);
-	if (lib==0) 
+	if (lib==0)
 		handleerror(NULL,currentAiKey.dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
-	
+
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (GetGroupAiVersion==0)
 		handleerror(NULL,currentAiKey.dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
-	
+
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION)
 		handleerror(NULL,currentAiKey.dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
-	
+
 	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
@@ -123,10 +123,10 @@ void CGroup::PostLoad()
 		return;
 	}
 	ai->InitAi(callback);
-	
-	list<CUnit*> unitBackup=units;
 
-	for(list<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
+	CUnitSet unitBackup=units;
+
+	for(CUnitSet::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
 	{
 		if(IsUnitSuited(currentAiKey.aiNumber,(*ui)->unitDef))
 		{
@@ -135,7 +135,7 @@ void CGroup::PostLoad()
 				continue;
 			}
 		}
-		ListErase(CUnit*,units,*ui);
+		units.erase(*ui);
 		(*ui)->group=0;
 	}
 }
@@ -145,7 +145,7 @@ bool CGroup::AddUnit(CUnit *unit)
 	if (luaUI) {
 		luaUI->GroupChanged(id);
 	}
-	units.insert(units.end(),unit);
+	units.insert(unit);
 	if(ai)
 	{
 		if(IsUnitSuited(currentAiKey.aiNumber,unit->unitDef))
@@ -155,7 +155,7 @@ bool CGroup::AddUnit(CUnit *unit)
 				return true;
 			}
 		}
-		ListErase(CUnit*,units,unit);
+		units.erase(unit);
 		return false;
 	}
 	return true;
@@ -168,7 +168,7 @@ void CGroup::RemoveUnit(CUnit *unit)
 	}
 	if(ai)
 		ai->RemoveUnit(unit->id);
-	ListErase(CUnit*,units,unit);
+	units.erase(unit);
 }
 
 void CGroup::SetNewAI(AIKey aiKey)
@@ -191,28 +191,28 @@ void CGroup::SetNewAI(AIKey aiKey)
 	}
 
 	lib = SharedLib::Instantiate(aiKey.dllName);
-	if (lib==0) 
+	if (lib==0)
 		handleerror(NULL,aiKey.dllName.c_str(),"Could not find AI dll",MBF_OK|MBF_EXCL);
-	
+
 	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
 	if (GetGroupAiVersion==0)
 		handleerror(NULL,aiKey.dllName.c_str(),"Incorrect AI dll",MBF_OK|MBF_EXCL);
-	
+
 	int i=GetGroupAiVersion();
 
 	if (i!=AI_INTERFACE_VERSION)
 		handleerror(NULL,aiKey.dllName.c_str(),"Incorrect AI dll version",MBF_OK|MBF_EXCL);
-	
+
 	GetNewAI = (GETNEWAI)lib->FindAddress("GetNewAI");
 	ReleaseAI = (RELEASEAI)lib->FindAddress("ReleaseAI");
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 
 	ai=GetNewAI(currentAiKey.aiNumber);
 	ai->InitAi(callback);
-	
-	list<CUnit*> unitBackup=units;
 
-	for(list<CUnit*>::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
+	CUnitSet unitBackup=units;
+
+	for(CUnitSet::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
 	{
 		if(IsUnitSuited(currentAiKey.aiNumber,(*ui)->unitDef))
 		{
@@ -221,7 +221,7 @@ void CGroup::SetNewAI(AIKey aiKey)
 				continue;
 			}
 		}
-		ListErase(CUnit*,units,(*ui));
+		units.erase(*ui);
 		(*ui)->group=0;
 	}
 }
@@ -349,7 +349,7 @@ void CGroup::ClearUnits(void)
 	if (luaUI) {
 		luaUI->GroupChanged(id);
 	}
-	while(!units.empty()){	
+	while(!units.empty()){
 		(*units.begin())->SetGroup(0);
 	}
 }
