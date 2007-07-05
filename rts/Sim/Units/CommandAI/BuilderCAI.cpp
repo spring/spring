@@ -518,9 +518,10 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 	assert(owner->unitDef->canReclaim);
 	if(c.params.size()==1){
 		int id=(int) c.params[0];
-		if(id>=MAX_UNITS){		//reclaim feature
-			CFeature* feature=featureHandler->features[id-MAX_UNITS];
-			if(feature){
+		if (id >= MAX_UNITS) {     //reclaim feature
+			CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
+			if (it != featureHandler->activeFeatures.end()) {
+				CFeature* feature = *it;
 				if(!ReclaimObject(feature)){
 					StopMove();
 					FinishCommand();
@@ -530,7 +531,7 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 				FinishCommand();
 			}
 
-		} else {							//reclaim unit
+		} else {                   //reclaim unit
 			CUnit* unit=uh->units[id];
 			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
 				if(!ReclaimObject(unit)){
@@ -565,8 +566,9 @@ void CBuilderCAI::ExecuteResurrect(Command &c)
 	if(c.params.size()==1){
 		int id=(int)c.params[0];
 		if(id>=MAX_UNITS){		//resurrect feature
-			CFeature* feature=featureHandler->features[id-MAX_UNITS];
-			if(feature && feature->createdFromUnit!=""){
+			CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
+			if (it != featureHandler->activeFeatures.end() && (*it)->createdFromUnit != "") {
+				CFeature* feature = *it;
 				if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
 					StopMove();
 					owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
@@ -842,9 +844,9 @@ void CBuilderCAI::DrawCommands(void)
 				} else {
 					int id = (int)ci->params[0];
 					if (id >= MAX_UNITS) {
-						if (featureHandler->features[id - MAX_UNITS]) {
-							const float3 endPos =
-								featureHandler->features[id - MAX_UNITS]->midPos;
+						CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
+						if (it != featureHandler->activeFeatures.end()) {
+							const float3 endPos = (*it)->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {

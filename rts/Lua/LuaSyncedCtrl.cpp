@@ -271,17 +271,15 @@ static inline CFeature* ParseFeature(lua_State* L,
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = (int)lua_tonumber(L, index);
-	if ((featureID < 0) || (featureID >= MAX_FEATURES)) {
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(featureID);
+
+	if (it == featureHandler->activeFeatures.end())
+		return NULL;
+
+	if (!CanControlFeature(*it)) {
 		return NULL;
 	}
-	CFeature* feature = featureHandler->features[featureID];
-	if (feature == NULL) {
-		return NULL;
-	}
-	if (!CanControlFeature(feature)) {
-		return NULL;
-	}
-	return feature;
+	return *it;
 }
 
 

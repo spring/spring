@@ -354,8 +354,8 @@ bool CCommandAI::AllowedCommand(const Command& c)
 			if(unit && !unit->unitDef->reclaimable)
 				return false;
 		} else {
-			CFeature* feature = featureHandler->features[unitID - MAX_UNITS];
-			if (feature && !feature->def->reclaimable)
+			CFeatureSet::const_iterator f = featureHandler->activeFeatures.find(unitID - MAX_UNITS);
+			if (f != featureHandler->activeFeatures.end() && !(*f)->def->reclaimable)
 				return false;
 		}
 	}
@@ -701,7 +701,7 @@ void CCommandAI::ExecuteInsert(const Command& c)
 	}
 
 	// FIXME: handle CMD_LOOPBACKATTACK, etc...
-	
+
 	CCommandQueue::iterator insertIt = queue->begin();
 
 	if (c.options & ALT_KEY) {
@@ -760,7 +760,7 @@ void CCommandAI::ExecuteInsert(const Command& c)
 	queue->insert(insertIt, newCmd);
 
 	SlowUpdate();
-	
+
 	return;
 }
 
