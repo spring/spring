@@ -1,6 +1,10 @@
 /** @file UnitSet.h
  *  @brief Defines STL like container wrapper for storing CUnit pointers.
  *  @author Tobi Vollebregt
+ *
+ *  This file has a strong resemblence to Sim/Misc/FeatureSet.h, if you find a
+ *  bug in this one don't forget to update the other too. Or refactor them both
+ *  using one set of template code.
  */
 
 #ifndef UNITSET_H
@@ -100,6 +104,9 @@ class CUnitSet
 
 		iterator find(const CUnit* unit) { return iterator(units.find(unit->id)); }
 		const_iterator find(const CUnit* unit) const { return const_iterator(units.find(unit->id)); }
+
+		iterator find(int id) { return iterator(units.find(id)); }
+		const_iterator find(int id) const { return const_iterator(units.find(id)); }
 
 		bool operator==(const CUnitSet& other) const { return units == other.units; }
 		bool operator!=(const CUnitSet& other) const { return !(*this == other); }

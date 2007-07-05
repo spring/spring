@@ -3057,17 +3057,15 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = (int)lua_tonumber(L, index);
-	if ((featureID < 0) || (featureID >= MAX_FEATURES)) {
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(featureID);
+
+	if (it == featureHandler->activeFeatures.end())
+		return NULL;
+
+	if (!IsFeatureVisible(*it)) {
 		return NULL;
 	}
-	CFeature* feature = featureHandler->features[featureID];
-	if (feature == NULL) {
-		return NULL;
-	}
-	if (!IsFeatureVisible(feature)) {
-		return NULL;
-	}
-	return feature;
+	return *it;
 }
 
 
@@ -3076,8 +3074,8 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const list<CFeature*>& activeFeatures = featureHandler->activeFeatures;
-	list<CFeature*>::const_iterator fit;
+	const CFeatureSet& activeFeatures = featureHandler->activeFeatures;
+	CFeatureSet::const_iterator fit;
 	if (fullRead) {
 		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
 			count++;

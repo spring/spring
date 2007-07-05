@@ -50,7 +50,6 @@
 cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
-#define CHECK_FEATURE(id) ((unsigned)(id) < (unsigned)MAX_FEATURES)
 /* With some hacking you can raise an abort (assert) instead of ignoring the id, */
 //#define CHECK_UNITID(id) (assert(id > 0 && id < MAX_UNITS), true)
 /* ...or disable the check altogether for release... */
@@ -956,18 +955,17 @@ int CAICallback::GetFeatures (int *features, int max)
 	int i = 0;
 	int allyteam = gs->AllyTeam(team);
 
-	for (int a=0;a<MAX_FEATURES;a++) {
-		if (featureHandler->features [a]) {
-			CFeature *f = featureHandler->features[a];
+	const CFeatureSet& fset = featureHandler->activeFeatures;
+	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++i) {
+		CFeature *f = *it;
 
-			if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
-				continue;
+		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+			continue;
 
-			features [i++] = f->id;
+		features [i++] = f->id;
 
-			if (i == max)
-				break;
-		}
+		if (i == max)
+			break;
 	}
 	return i;
 }
@@ -997,8 +995,11 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 FeatureDef* CAICallback::GetFeatureDef (int feature)
 {
 	verify ();
-	if (CHECK_FEATURE(feature)) {
-		CFeature *f = featureHandler->features [feature];
+
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+
+	if (it != featureHandler->activeFeatures.end()) {
+		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->def;
@@ -1010,8 +1011,11 @@ FeatureDef* CAICallback::GetFeatureDef (int feature)
 float CAICallback::GetFeatureHealth (int feature)
 {
 	verify ();
-	if (CHECK_FEATURE(feature)) {
-		CFeature *f = featureHandler->features [feature];
+
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+
+	if (it != featureHandler->activeFeatures.end()) {
+		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->health;
@@ -1022,8 +1026,11 @@ float CAICallback::GetFeatureHealth (int feature)
 float CAICallback::GetFeatureReclaimLeft (int feature)
 {
 	verify ();
-	if (CHECK_FEATURE(feature)) {
-		CFeature *f = featureHandler->features [feature];
+
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+
+	if (it != featureHandler->activeFeatures.end()) {
+		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->reclaimLeft;
@@ -1034,8 +1041,11 @@ float CAICallback::GetFeatureReclaimLeft (int feature)
 float3 CAICallback::GetFeaturePos (int feature)
 {
 	verify ();
-	if (CHECK_FEATURE(feature)) {
-		CFeature *f = featureHandler->features [feature];
+
+	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+
+	if (it != featureHandler->activeFeatures.end()) {
+		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->pos;

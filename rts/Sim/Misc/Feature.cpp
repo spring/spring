@@ -106,7 +106,7 @@ void CFeature::PostLoad()
 		}
 		height = model->height;
 		def->radius = model->radius;
-		SetRadius(def->radius);			
+		SetRadius(def->radius);
 		midPos = pos + model->relMidPos;
 	}
 	else if (def->drawType == DRAWTYPE_TREE){
@@ -192,7 +192,7 @@ void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _headi
 		midPos = pos;
 	}
 
-	id = featureHandler->AddFeature(this);
+	featureHandler->AddFeature(this);
 
 	qf->AddFeature(this);
 

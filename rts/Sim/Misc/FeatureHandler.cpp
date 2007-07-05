@@ -60,24 +60,23 @@ CFeatureHandler* featureHandler=0;
 CR_BIND_DERIVED(CFeatureHandler,CObject, );
 
 CR_REG_METADATA(CFeatureHandler, (
+
 //	CR_MEMBER(wreckParser),
 //	CR_MEMBER(featureDefs),
 //	CR_MEMBER(featureDefsVector),
 
-//	CR_MEMBER(features),
-//	CR_MEMBER(freeIDs),
-//	CR_MEMBER(activeFeatures),
+	CR_MEMBER(nextFreeID),
+	CR_MEMBER(freeIDs),
+	CR_MEMBER(activeFeatures),
 
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures),
 
 //	CR_MEMBER(drawQuads),
-	
+
 //	CR_MEMBER(drawQuadsX),
 //	CR_MEMBER(drawQuadsY),
-//	CR_MEMBER(numQuads),
 
-//	CR_MEMBER(overrideId),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 		));
@@ -89,20 +88,14 @@ CR_REG_METADATA_SUB(CFeatureHandler,DrawQuad,(
 	));
 
 
-CFeatureHandler::CFeatureHandler()
-:	overrideId(-1)
+CFeatureHandler::CFeatureHandler() :
+		nextFreeID(0)
 {
 	PrintLoadMsg("Initializing map features");
 
-	for(int a=0;a<MAX_FEATURES;++a){
-		freeIDs.push_back(a);
-		features[a]=0;
-	}
-
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
-	numQuads=drawQuadsX*drawQuadsY;
-	drawQuads.resize(numQuads);
+	drawQuads.resize(drawQuadsX * drawQuadsY);
 
 	LoadWreckFeatures();
 
@@ -111,66 +104,32 @@ CFeatureHandler::CFeatureHandler()
 
 CFeatureHandler::~CFeatureHandler()
 {
-//	for(std::set<CFeature*>::iterator fi=featureSet.begin();fi!=featureSet.end();++fi)
-//		delete *fi;
-//	featureSet.clear();
+	for(CFeatureSet::iterator fi=activeFeatures.begin(); fi != activeFeatures.end(); ++fi)
+		delete *fi;
+	activeFeatures.clear();
 
-	for(int a=0;a<MAX_FEATURES;++a){
-		if(features[a]!=0){
-			delete features[a];
-			features[a]=0;
-		}
-	}
 	while(!featureDefs.empty()){
 		std::map<std::string,FeatureDef*>::iterator fi=featureDefs.begin();
 		delete fi->second;
 		featureDefs.erase(fi);
 	}
 	delete treeDrawer;
-//	delete[] drawQuads;
 }
 
 void CFeatureHandler::Serialize(creg::ISerializer *s)
 {
-	if (s->IsWriting()) {
-		for(int a=0;a<MAX_FEATURES;++a){
-			int skip;
-			for (skip=0;a<MAX_FEATURES && !features[a];a++,skip++);
-			bool hasskip = (bool) skip;
-			s->Serialize(&hasskip,sizeof(hasskip));
-			if (hasskip)
-				s->Serialize(&skip,sizeof(skip));
-			if (a>=MAX_FEATURES) break;
-			s->SerializeObjectPtr((void**)&(features[a]),features[a]->GetClass());
-		}
-	} else {
-		for(int a=0;a<MAX_FEATURES;++a){
-			bool hasskip = false;
-			int skip = 0;
-			s->Serialize(&hasskip,sizeof(hasskip));
-			if (hasskip)
-				s->Serialize(&skip,sizeof(skip));
-			a+=skip;
-			if (a>=MAX_FEATURES) break;
-			s->SerializeObjectPtr((void**)&(features[a]),0/*FIXME*/);
-		}
-	}
 }
 
 void CFeatureHandler::PostLoad()
 {
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
-	numQuads=drawQuadsX*drawQuadsY;
 	drawQuads.clear();
-	drawQuads.resize(numQuads);
-	freeIDs.clear();
-	activeFeatures.clear();
-	for(int a=0;a<MAX_FEATURES;++a) if (features[a]){
-		activeFeatures.insert(activeFeatures.end(),features[a]);
-		if (features[a]->drawQuad >= 0)
-			drawQuads[features[a]->drawQuad].features.insert(drawQuads[features[a]->drawQuad].features.end(),features[a]);
-	} else freeIDs.push_back(a);
+	drawQuads.resize(drawQuadsX * drawQuadsY);
+
+	for (CFeatureSet::const_iterator it = activeFeatures.begin(); it != activeFeatures.end(); ++it)
+		if ((*it)->drawQuad >= 0)
+			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
@@ -263,36 +222,35 @@ void CFeatureHandler::Update()
 	ASSERT_SYNCED_MODE;
 START_TIME_PROFILE
 	while (!toBeRemoved.empty()) {
-		CFeature* feature = features[toBeRemoved.back()];
+		CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
 		toBeRemoved.pop_back();
-		if (feature) {
+		if (it != activeFeatures.end()) {
+			CFeature* feature = *it;
 			freeIDs.push_back(feature->id);
-			features[feature->id] = 0;
-			ListErase(CFeature*,activeFeatures,feature);
+			activeFeatures.erase(feature);
 
 			if (feature->drawQuad >= 0) {
 				DrawQuad* dq = &drawQuads[feature->drawQuad];
-				ListErase(CFeature*,dq->features,feature);
+				dq->features.erase(feature);
 			}
 
 			if (feature->inUpdateQue) {
-				updateFeatures.erase(feature->id);
+				updateFeatures.erase(feature);
 			}
 
 			delete feature;
 		}
 	}
 
-	SPRING_HASH_SET<int>::iterator fi=updateFeatures.begin();
-	while(fi!= updateFeatures.end()){
-		CFeature* feature = features[*fi];
+	CFeatureSet::iterator fi=updateFeatures.begin();
+	while (fi != updateFeatures.end()) {
+		CFeature* feature = *fi;
+		++fi;
 
-		const bool remove = !feature->Update();
-		if (remove) {
+		if (!feature->Update()) {
+			// remove it
 			feature->inUpdateQue = false;
-			updateFeatures.erase(fi++);
-		} else {
-			++fi;
+			updateFeatures.erase(feature);
 		}
 	}
 END_TIME_PROFILE("Feature::Update");
@@ -316,29 +274,27 @@ void CFeatureHandler::LoadWreckFeatures()
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
 	ASSERT_SYNCED_MODE;
-	int ret;
-	if(overrideId!=-1){
-		ret=overrideId;
-	}else{
-		ret=freeIDs.front();
+
+	if (freeIDs.empty()) {
+		feature->id = nextFreeID++;
+	} else {
+		feature->id = freeIDs.front();
 		freeIDs.pop_front();
 	}
-	features[ret]=feature;
-	feature->id=ret;
+	activeFeatures.insert(feature);
 	SetFeatureUpdateable(feature);
-	activeFeatures.insert(activeFeatures.end(),feature);
 
 	if(feature->def->drawType==DRAWTYPE_3DO){
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
 		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		DrawQuad* dq=&drawQuads[quad];
-		dq->features.insert(dq->features.begin(),feature);
+		dq->features.insert(feature);
 		feature->drawQuad=quad;
 	}
 
 	luaCallIns.FeatureCreated(feature);
 
-	return ret;
+	return feature->id ;
 }
 
 
@@ -360,9 +316,9 @@ void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
 			int(newPos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		if (oldDrawQuad != newDrawQuad) {
 			DrawQuad* oldDQ = &drawQuads[oldDrawQuad];
-			ListErase(CFeature*,oldDQ->features,feature);
+			oldDQ->features.erase(feature);
 			DrawQuad* newDQ = &drawQuads[newDrawQuad];
-			newDQ->features.insert(newDQ->features.begin(),feature);
+			newDQ->features.insert(feature);
 			feature->drawQuad = newDrawQuad;
 		}
 	}
@@ -447,8 +403,8 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 	if(feature->inUpdateQue)
 		return;
 
-	updateFeatures.insert(feature->id);
-	feature->inUpdateQue=true;
+	updateFeatures.insert(feature);
+	feature->inUpdateQue = true;
 }
 
 
@@ -481,48 +437,6 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 }
 
 
-void CFeatureHandler::LoadSaveFeatures(CLoadSaveInterface* file, bool loading)
-{
-	if(loading)
-		freeIDs.clear();
-	for(int a=0;a<MAX_FEATURES;++a){
-		bool exists=!!features[a];
-		file->lsBool(exists);
-		if(exists){
-			if(loading){
-				overrideId=a;
-				float3 pos;
-				file->lsFloat3(pos);
-
-				string def;
-				file->lsString(def);
-				if(featureDefs.find(def)==featureDefs.end())
-					GetFeatureDef(def);
-
-				short rotation;
-				file->lsShort(rotation);
-				string fromUnit;
-				file->lsString(fromUnit);
-				CFeature* f = SAFE_NEW CFeature;
-				f->Initialize (pos,featureDefs[def],rotation,0,-1,fromUnit);
-			} else {
-				file->lsFloat3(features[a]->pos);
-				file->lsString(features[a]->def->myName);
-				file->lsShort(features[a]->heading);
-				file->lsString(features[a]->createdFromUnit);
-			}
-			CFeature* f=features[a];
-			file->lsFloat(f->health);
-			file->lsFloat(f->reclaimLeft);
-			file->lsInt(f->allyteam);
-		} else {
-			if(loading)
-				freeIDs.push_back(a);
-		}
-	}
-	overrideId=-1;
-}
-
 
 struct CFeatureDrawer : CReadMap::IQuadDrawer
 {
@@ -542,7 +456,7 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 {
 	CFeatureHandler::DrawQuad* dq=&(*drawQuads)[y*drawQuadsX+x];
 
-	for(list<CFeature*>::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
+	for(CFeatureSet::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
 		CFeature* f=(*fi);
 		FeatureDef* def=f->def;
 
