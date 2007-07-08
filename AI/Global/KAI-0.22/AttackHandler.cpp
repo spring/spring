@@ -652,6 +652,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 
 ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
 		ai -> pather -> micropather -> SetMapData(&ai -> pather -> canMoveIntMaskArray.front(),&ai -> tm -> ThreatArray.front(),ai -> tm -> ThreatMapWidth,ai -> tm -> ThreatMapHeight, group_in -> GetWorstMoveType());
+		ai -> pather -> PathToSet(&pathToTarget,group_in->GetGroupPos(),&enemyPositions,myGroupDPS);
 
 ai -> math -> StartTimer(ai -> ah -> ah_timer_totalTimeMinusPather);
 		if (pathToTarget.size() > 2) { //if it found something below max threat

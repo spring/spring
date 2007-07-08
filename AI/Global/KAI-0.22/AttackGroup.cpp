@@ -443,7 +443,7 @@ ai->math->StopTimer(ai->ah->ah_timer_NeedsNewTarget);
 ai->math->StopTimer(ai->ah->ah_timer_NeedsNewTarget);
 			return true;
 		}
-		if (isFleeing && groupDPS > ai->tm->ThreatAtThisPoint(groupPos) + ai->tm->GetUnmodifiedAverageThreat()) {
+		if (isFleeing && groupDPS < ai->tm->ThreatAtThisPoint(groupPos) + ai->tm->GetUnmodifiedAverageThreat()) {
 ai->math->StopTimer(ai->ah->ah_timer_NeedsNewTarget);
 			return true;
 		}
@@ -478,10 +478,14 @@ void CAttackGroup::PathToBase(float3 groupPosition) {
 	groupPosition = groupPosition;
 
 //	L("AG: pathing back to base. group:" << groupID);
+	vector<float3> basePositions;
+	for (list<Factory>::iterator i = ai->uh->Factories.begin();i!=ai->uh->Factories.end();i++) {
+		basePositions.push_back(ai->cb->GetUnitPos(i->id));
+	}
     pathToTarget.clear();
 ai->math->StopTimer(ai->ah->ah_timer_totalTimeMinusPather);
 	ai->pather->micropather->SetMapData(&ai->pather->canMoveIntMaskArray.front(),&ai->tm->ThreatArray.front(),ai->tm->ThreatMapWidth,ai->tm->ThreatMapHeight, this->GetWorstMoveType());
-
+	ai -> pather -> PathToSet(&pathToTarget,GetGroupPos(),&basePositions,DPS()*4);
 ai->math->StartTimer(ai->ah->ah_timer_totalTimeMinusPather);
 	if (pathToTarget.size() <= 2) {
 		//isMoving = false;
