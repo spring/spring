@@ -31,15 +31,6 @@ public:
 	};
 
 	std::deque<Explo*> explosions;
-	bool unsinkable[256];
-
-	struct RejuvSquare{
-		int x;
-		int y;
-	};
-	std::deque<RejuvSquare> rejuvQue;
-	bool inRejuvQue[64][64];//todo supposes 512*512 map
-	float nextRejuv;
 
 	struct RelosSquare{
 		int x;

@@ -17,18 +17,6 @@
 
 CBasicMapDamage::CBasicMapDamage(void)
 {
-	for(int a=0;a<128;++a)
-		unsinkable[a]=false;
-
-	for(int a=0;a<128;++a)
-		unsinkable[a+128]=true;
-
-	for(int y=0;y<64;++y){
-		for(int x=0;x<64;++x){
-			inRejuvQue[y][x]=false;
-		}
-	}
-	nextRejuv=0;
 	inRelosQue=SAFE_NEW bool[qf->numQuadsX*qf->numQuadsZ];
 	for(int a=0;a<qf->numQuadsX*qf->numQuadsZ;++a){
 		inRelosQue[a]=false;
