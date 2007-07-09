@@ -143,7 +143,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}
-/*
+
 	if(owner->unitDef->canfly){
 		c.params.clear();
 		c.id=CMD_AUTOREPAIRLEVEL;
@@ -154,12 +154,13 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.params.push_back("LandAt 0");
 		c.params.push_back("LandAt 30");
 		c.params.push_back("LandAt 50");
+		c.params.push_back("LandAt 80");
 		c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
 		c.hotkey="";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 	}
-*/
+
 	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
 }
 
@@ -173,24 +174,28 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 {
 	if (!AllowedCommand(c))
 		return;
-/*
 	if(owner->unitDef->canfly && c.id==CMD_AUTOREPAIRLEVEL){
-		if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+		if (c.params.empty()) {
 			return;
-		if(c.params.empty())
-			return;
-		switch((int)c.params[0]){
-		case 0:
-			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0;
-			break;
-		case 1:
-			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.3f;
-			break;
-		case 2:
-			((CTAAirMoveType*)owner->moveType)->repairBelowHealth=0.5f;
-			break;
 		}
-		for(vector<CommandDescription>::iterator cdi=possibleCommands.begin();cdi!=possibleCommands.end();++cdi){
+		CTAAirMoveType* airMT;
+		if (owner->usingScriptMoveType) {
+			if(!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
+				return;
+			airMT = (CTAAirMoveType*)owner->prevMoveType;
+		} else {
+			if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+				return;
+			airMT = (CTAAirMoveType*)owner->moveType;
+		}
+		switch((int)c.params[0]){
+			case 0: { airMT->repairBelowHealth = 0.0f; break; }
+			case 1: { airMT->repairBelowHealth = 0.3f; break; }
+			case 2: { airMT->repairBelowHealth = 0.5f; break; }
+			case 3: { airMT->repairBelowHealth = 0.8f; break; }
+		}
+		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
+				cdi != possibleCommands.end(); ++cdi){
 			if(cdi->id==CMD_AUTOREPAIRLEVEL){
 				char t[10];
 				SNPRINTF(t,10,"%d", (int)c.params[0]);
@@ -201,7 +206,6 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
-*/
 	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
 		tempOrder=false;
 		StopSlowGuard();

@@ -89,7 +89,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}*/
-
+/*
 	c.params.clear();
 	c.id=CMD_AUTOREPAIRLEVEL;
 	c.action="autorepairlevel";
@@ -104,7 +104,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.hotkey="";
 	possibleCommands.push_back(c);
 	nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
-
+*/
 	if(owner->unitDef->canLoopbackAttack){
 		c.params.clear();
 		c.id=CMD_LOOPBACKATTACK;
