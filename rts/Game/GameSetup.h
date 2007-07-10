@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "TdfParser.h"
-
+#include "GlobalStuff.h"
 
 class CGameSetup
 {

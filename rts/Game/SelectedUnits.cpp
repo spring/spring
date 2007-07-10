@@ -819,7 +819,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 		}
 	}
 
-	net->SendData(buf, msgLen);
+	net->RawSend(buf, msgLen);
 
 	return;
 }

@@ -9,11 +9,12 @@
 #include <string>
 
 #include <Sim/Units/UnitHandler.h> // for CChecksum (should be moved somewhere else tho)
+#include <System/NetProtocol.h>
 
 class CGameServer
 {
 public:
-	CGameServer();
+	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();
 	void CheckSync();
 	bool Update();
@@ -21,6 +22,13 @@ public:
 	void CheckForGameEnd();
 	void CreateNewFrame(bool fromServerThread=false);
 	void UpdateLoop();
+	
+	bool WaitsOnCon() const;
+	/**
+	@brief kick the specified player from the battle
+	@todo in order to build a dedicated server, there should be some kind of rights system which allow some people to kick players or force a start, but currently only the host is able to do this
+	*/
+	void KickPlayer(const int playerNum);
 
 	bool makeMemDump;
 	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE but dont want to include net.h here
@@ -55,6 +63,9 @@ public:
 	int syncErrorFrame;
 	int syncWarningFrame;
 	int delayedSyncResponseFrame;
+	
+private:
+	CNetProtocol* serverNet;
 };
 
 extern CGameServer* gameServer;

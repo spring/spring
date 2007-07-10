@@ -32,6 +32,11 @@
 #include "LoadSaveHandler.h"
 
 CPreGame* pregame=0;
+std::string CPreGame::mapName;
+std::string CPreGame::modName;
+std::string CPreGame::modArchive;
+std::string CPreGame::scriptName;
+
 extern Uint8 *keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
@@ -45,18 +50,13 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
   hasSave(!save.empty()),
   savefile(NULL)
 {
+	demoFile = gameSetup? gameSetup->demoName : demo;
 	CommandDescription::Init();
 
 	infoConsole = SAFE_NEW CInfoConsole;
 
 	pregame = this; // prevent crashes if Select* is called from ctor
 	net = SAFE_NEW CNetProtocol();
-
-	if (server) {
-		good_fpu_control_registers("before CGameServer creation");
-		gameServer = SAFE_NEW CGameServer;
-		good_fpu_control_registers("after CGameServer creation");
-	}
 
 	//hpiHandler=SAFE_NEW CHpiHandler();
 
@@ -76,6 +76,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	if(server){
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
+			SelectScript(gameSetup->scriptName);
 			if (!gameSetup->saveName.empty()) {
 				savefile = new CLoadSaveHandler();
 				savefile->LoadGameStartInfo(savefile->FindSaveFile(gameSetup->saveName.c_str()));
@@ -87,6 +88,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			savefile = new CLoadSaveHandler();
 			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
 			CScriptHandler::SelectScript("Commanders");
+			SelectScript("Commanders");
 			SelectMap(savefile->mapName);
 			SelectMod(savefile->modName);
 			state = ALL_READY;
@@ -96,22 +98,34 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 		}
 	} else {
 		if(gameSetup){
+			server = false;
 			PrintLoadMsg("Connecting to server");
 			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport)==-1){
 				handleerror(0,"Client couldn't connect","PreGame error",0);
 				exit(-1);
 			}
 			CScriptHandler::SelectScript(gameSetup->scriptName);
+			SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
 			state = ALL_READY;
 		} else {
-			if (demo != "") {
-				userInput = demo;
-				writingPos = userInput.length();
-				state = WAIT_ON_ADDRESS;
-				userWriting = false;
-				saveAddress = false;
+			if (hasDemo) {
+				/*
+				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
+				*/
+				net->localDemoPlayback = true;
+				server = false;
+				state = WAIT_ON_SCRIPT;
+				good_fpu_control_registers("before CGameServer creation");
+				gameServer = SAFE_NEW CGameServer(8452, pregame->mapName, pregame->modName, pregame->scriptName, demoFile);
+				good_fpu_control_registers("after CGameServer creation");
+				if (gameSetup) {	// we read a gameSetup from the demofiles
+					SelectMap(gameSetup->mapname);
+					SelectMod(gameSetup->baseMod);
+					CScriptHandler::SelectScript(gameSetup->scriptName);
+					SelectScript(gameSetup->scriptName);
+				}
 			}
 			else {
 				userInput=configHandler.GetString("address","");
@@ -255,7 +269,7 @@ bool CPreGame::Draw()
 
 	if(net->inInitialConnect){
 		char text[400];
-		sprintf(text,"Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastSendTime));
+		sprintf(text,"Connecting to server %i",40-(int)(net->curTime - net->connections[0]->lastSendTime));
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
@@ -286,19 +300,7 @@ bool CPreGame::Update()
 				logOutput.Print("Client couldn't connect");
 				return false;
 			}
-
-			// State is never WAIT_ON_ADDRESS if gameSetup was true in our constructor,
-			// so if it's true here, it means net->InitClient() just loaded a demo
-			// with gameSetup.
-			// If so, don't wait indefinitely on a script/map/mod name, but load
-			// everything from gameSetup and switch to ALL_READY state.
-			if(gameSetup) {
-				CScriptHandler::SelectScript(gameSetup->scriptName);
-				SelectMap(gameSetup->mapname);
-				SelectMod(gameSetup->baseMod);
-				state = ALL_READY;
-				break;
-			} else {
+			{
 				state = WAIT_ON_SCRIPT;
 				// fall trough
 			}
@@ -319,11 +321,11 @@ bool CPreGame::Update()
 			if (showList || !server)
 				break;
 
-			modName = CScriptHandler::Instance().chosenScript->GetModName();
-			if (modName == "")
+			pregame->modName = CScriptHandler::Instance().chosenScript->GetModName();
+			if (pregame->modName == "")
 				ShowModList();
 			else
-				SelectMod(modName);
+				SelectMod(pregame->modName);
 			state = WAIT_ON_MOD;
 			// fall through
 
@@ -338,19 +340,19 @@ bool CPreGame::Update()
 			ENTER_MIXED;
 
 			// Map all required archives depending on selected mod(s)
-			vector<string> ars = archiveScanner->GetArchives(modName);
+			vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
 			if (ars.empty())
-				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", modName.c_str());
+				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modName.c_str());
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 				if (!hpiHandler->AddArchive(*i, false))
 					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 
 			// Determine if the map is inside an archive, and possibly map needed archives
-			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
+			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + pregame->mapName);
 			if (!f->FileExists()) {
-				vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+				vector<string> ars = archiveScanner->GetArchivesForMap(pregame->mapName);
 				if (ars.empty())
-					logOutput.Print("Warning: map archive \"%s\" is missing?\n", mapName.c_str());
+					logOutput.Print("Warning: map archive \"%s\" is missing?\n", pregame->mapName.c_str());
 				for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 					if (!hpiHandler->AddArchive(*i, false))
 						logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
@@ -365,7 +367,14 @@ bool CPreGame::Update()
 			const CTeam* team = gs->Team(teamID);
 			LoadStartPicture(team->side);
 
-			game = SAFE_NEW CGame(server, mapName, modName, infoConsole);
+			// create GameServer here where we can ensure to know which map and mod we are using
+			if (server) {
+				good_fpu_control_registers("before CGameServer creation");
+				gameServer = SAFE_NEW CGameServer(gameSetup? gameSetup->hostport : 8452, pregame->mapName, pregame->modName, pregame->scriptName, demoFile);
+				good_fpu_control_registers("after CGameServer creation");
+			}
+
+			game = SAFE_NEW CGame(server, pregame->mapName, pregame->modName, infoConsole);
 
 			if (savefile) {
 				savefile->LoadGame();
@@ -394,7 +403,7 @@ bool CPreGame::Update()
 void CPreGame::UpdateClientNet()
 {
 	int a;
-	if((a=net->GetData(&inbuf[inbuflength],15000-inbuflength,0))==-1){
+	if((a=net->GetData(&inbuf[inbuflength],15000-inbuflength,gameSetup ? gameSetup->myPlayer : 0))==-1){
 		globalQuit=true;
 		return;
 	}
@@ -402,15 +411,13 @@ void CPreGame::UpdateClientNet()
 
 	while(inbufpos<inbuflength){
 		switch (inbuf[inbufpos]){
-		case NETMSG_HELLO:
-			inbufpos += 1;
-			break;
-
 		case NETMSG_SCRIPT:
-			if (!gameSetup)
+			if (!gameSetup) {
 				CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
+				SelectScript((char*)(&inbuf[inbufpos+2]));
+			}
 			if (mapName.empty()) state = WAIT_ON_MAP;
-			else if (modName.empty()) state = WAIT_ON_MOD;
+			else if (pregame->modName.empty()) state = WAIT_ON_MOD;
 			else state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
 			break;
@@ -420,7 +427,7 @@ void CPreGame::UpdateClientNet()
 				SelectMap((char*)(&inbuf[inbufpos+6]));
 			archiveScanner->CheckMap(mapName, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
-			else if (modName.empty()) state = WAIT_ON_MOD;
+			else if (pregame->modName.empty()) state = WAIT_ON_MOD;
 			else state = ALL_READY;
 			inbufpos += inbuf[inbufpos+1];
 			break;
@@ -428,7 +435,7 @@ void CPreGame::UpdateClientNet()
 		case NETMSG_MODNAME:
 			if (!gameSetup)
 				SelectMod((char*)(&inbuf[inbufpos+6]));
-			archiveScanner->CheckMod(modName, *(unsigned*)(&inbuf[inbufpos+2]));
+			archiveScanner->CheckMod(pregame->modArchive, *(unsigned*)(&inbuf[inbufpos+2]));
 			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
 			else if (mapName.empty()) state = WAIT_ON_MAP;
 			else state = ALL_READY;
@@ -472,6 +479,11 @@ void CPreGame::UpdateClientNet()
 		case NETMSG_INTERNAL_SPEED:
 			inbufpos += 5;
 			break;
+
+		case NETMSG_SENDPLAYERSTAT:
+			inbufpos += 1;
+			break;
+
 		default:
 			char txt[200];
 			sprintf(txt,"Unknown net msg in client %d",(int)inbuf[inbufpos]);
@@ -489,7 +501,7 @@ void CPreGame::SelectScript(std::string s)
 	pregame->showList = 0;
 	logOutput << "Using script " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SetScript(s);
+		pregame->scriptName = s;
 }
 
 /** Create a CglList for selecting the script. */
@@ -510,7 +522,10 @@ void CPreGame::SelectMap(std::string s)
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SetMap(archiveScanner->GetMapChecksum(pregame->mapName), pregame->mapName);
+		mapName = s;
+	if (net)
+		// inform CNetProtocol about our map (for demo writing)
+		net->SendMapName(archiveScanner->GetMapChecksum(pregame->mapName), pregame->mapName);
 }
 
 /** Create a CglList for selecting the map. */
@@ -546,15 +561,15 @@ void CPreGame::SelectMod(std::string s)
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
 		const string& modName = pregame->showList->items[index];
-		pregame->modName = archiveScanner->ModNameToModArchive(modName);
+		pregame->modArchive = archiveScanner->ModNameToModArchive(modName);
 	} else {
-		pregame->modName = archiveScanner->ModNameToModArchive(s);
+		pregame->modArchive = archiveScanner->ModNameToModArchive(s);
 	}
 	delete pregame->showList;
 	pregame->showList = 0;
-	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modName.c_str() << "\n";
+	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modArchive.c_str() << "\n";
 	if (pregame->server)
-		serverNet->SetMod(archiveScanner->GetModChecksum(pregame->modName), s);
+		pregame->modName = s;
 }
 
 /** Create a CglList for selecting the mod. */

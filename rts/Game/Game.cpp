@@ -212,9 +212,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 		gs->players[0]->readyToStart=true;
 	gs->players[0]->active=true;
 
-	if(net->playbackDemo)
-		gu->myPlayerNum=MAX_PLAYERS-1;
-
 	for(int a=0;a<8;++a)
 		camMove[a]=false;
 	for(int a=0;a<4;++a)
@@ -433,9 +430,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 		gameServer->gameLoading=false;
 
 	UnloadStartPicture();
-
-	if(serverNet && serverNet->playbackDemo)
-		serverNet->StartDemoServer();
 
 	lastCpuUsageTime = gu->gameTime + 10;
 }
@@ -1009,7 +1003,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-	         (ks.Key() != SDLK_RETURN || !(gameServer && serverNet->waitOnCon && allReady))) {
+				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon() && allReady))) {
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
 		if (cmd == "chatspec") { userInputPrefix = "s:"; }
@@ -1049,7 +1043,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			newPause = !!atoi(action.extra.c_str());
 		}
-		if (net->playbackDemo) {
+		if (net->IsDemoServer()) {
 			gs->paused = newPause;
 		} else {
 			net->SendPause(gu->myPlayerNum, newPause);
@@ -1211,7 +1205,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			speed+=0.5f;
 		}
-		if (!net->playbackDemo) {
+		if (!net->IsDemoServer()) {
 			net->SendUserSpeed(speed);
 		} else {
 			gs->speedFactor=speed;
@@ -1229,7 +1223,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			speed-=0.5f;
 		}
-		if (!net->playbackDemo) {
+		if (!net->IsDemoServer()) {
 			net->SendUserSpeed(speed);
 		} else {
 			gs->speedFactor=speed;
@@ -1718,7 +1712,7 @@ bool CGame::Update()
 
 	if(gameSetup && !playing) {
 		allReady=gameSetup->Update();
-	} else if( gameServer && serverNet->waitOnCon) {
+	} else if( gameServer && gameServer->WaitsOnCon()) {
 		allReady=true;
 		for(int a=0;a<gs->activePlayers;a++) {
 			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
@@ -1728,7 +1722,7 @@ bool CGame::Update()
 		}
 	}
 
-	if (gameServer && serverNet->waitOnCon && allReady &&
+	if (gameServer && gameServer->WaitsOnCon() && allReady &&
 	    (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)) {
 		chatting = false;
 		userWriting = false;
@@ -1991,7 +1985,7 @@ END_TIME_PROFILE("Interface draw");
 
 	if(gameSetup && !playing){
 		gameSetup->Draw();
-	} else if( gameServer && serverNet->waitOnCon){
+	} else if( gameServer && gameServer->WaitsOnCon()){
 		if (allReady) {
 			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
@@ -2194,7 +2188,7 @@ void CGame::SimFrame()
 {
 	// Enable trapping of NaNs and divisions by zero to make debugging easier.
 #ifdef DEBUG
-	feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 #endif
 	good_fpu_control_registers("CGame::SimFrame");
 
@@ -2351,7 +2345,7 @@ END_TIME_PROFILE("Sim time")
 	ENTER_SYNCED;
 
 #ifdef DEBUG
-	feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
+	//feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 #endif
 }
 
@@ -2370,14 +2364,14 @@ bool CGame::ClientReadNet()
 		inbufpos=0;
 		inbuflength=0;
 	}
-	if(inbufpos>NETWORK_BUFFER_SIZE*0.5f){
+	if(inbufpos>netcode::NETWORK_BUFFER_SIZE*0.5f){
 		for(a=inbufpos;a<inbuflength;a++)
 			inbuf[a-inbufpos]=inbuf[a];
 		inbuflength-=inbufpos;
 		inbufpos=0;
 	}
 
-	if((a=net->GetData(&inbuf[inbuflength],NETWORK_BUFFER_SIZE*2-inbuflength,0))==-1){
+	if((a=net->GetData(&inbuf[inbuflength],netcode::NETWORK_BUFFER_SIZE*2-inbuflength,gameSetup?gameSetup->myPlayer:0))==-1){
 		return gameOver;
 	}
 	inbuflength+=a;
@@ -2390,7 +2384,7 @@ bool CGame::ClientReadNet()
 	}
 #endif
 
-	if(!gameServer/* && !net->onlyLocal*/){
+	if(!gameServer && !net->onlyLocal){
 		Uint64 currentFrame;
 		currentFrame = SDL_GetTicks();
 
@@ -2440,7 +2434,6 @@ bool CGame::ClientReadNet()
 			case NETMSG_SYNCREQUEST:
 				i2+=5;
 				break;
-			case NETMSG_HELLO:
 			case NETMSG_QUIT:
 			case NETMSG_STARTPLAYING:
 			case NETMSG_MEMDUMP:
@@ -2486,7 +2479,7 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	while((inbufpos<inbuflength) && ((timeLeft>0) || gameServer/* || net->onlyLocal*/)){
+	while((inbufpos<inbuflength) && ((timeLeft>0) || gameServer || net->onlyLocal)){
 		thisMsg=inbuf[inbufpos];
 		int lastLength=0;
 
@@ -2494,10 +2487,6 @@ bool CGame::ClientReadNet()
 		case NETMSG_ATTEMPTCONNECT:
 			lastLength=3;
 			logOutput.Print("Attempted connection to client?");
-			break;
-
-		case NETMSG_HELLO:
-			lastLength=1;
 			break;
 
 		case NETMSG_QUIT:
@@ -2587,14 +2576,14 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_INTERNAL_SPEED:{
-			if(!net->playbackDemo)
+			if(!net->IsDemoServer())
 				gs->speedFactor=*((float*)&inbuf[inbufpos+1]);
 			lastLength=5;
 //			logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 			break;}
 
 		case NETMSG_USER_SPEED:
-			if (!net->playbackDemo) {
+			if (!net->IsDemoServer()) {
 				gs->userSpeedFactor=*((float*)&inbuf[inbufpos+1]);
 				if(gs->userSpeedFactor>maxUserSpeed)
 					gs->userSpeedFactor=maxUserSpeed;
@@ -2635,10 +2624,12 @@ bool CGame::ClientReadNet()
 			lastLength = inbuf[inbufpos+1];
 			break;
 
-		case NETMSG_MODNAME:
-			archiveScanner->CheckMod(modInfo->name, *(unsigned*)(&inbuf[inbufpos+2]));
+		case NETMSG_MODNAME: {
+			std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->name);
+			archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[inbufpos+2]));
 			lastLength = inbuf[inbufpos+1];
 			break;
+		}
 
 		case NETMSG_PLAYERNAME:{
 			int player=inbuf[inbufpos+2];
@@ -2699,10 +2690,7 @@ bool CGame::ClientReadNet()
 			CSyncChecker::NewFrame();
 #endif
 
-			if(gameServer && serverNet && serverNet->playbackDemo)	//server doesnt update framenums automatically while playing demo
-				gameServer->serverframenum=gs->frameNum;
-
-			if(creatingVideo && net->playbackDemo){
+			if(creatingVideo && net->IsDemoServer()){
 				POP_CODE_MODE;
 				return true;
 			}
@@ -3396,7 +3384,7 @@ void CGame::SendNetChat(const std::string& message)
 		msg.resize(128); // safety
 	}
 	net->SendChat(gu->myPlayerNum, msg);
-	if (net->playbackDemo) {
+	if (net->IsDemoServer()) {
 		HandleChatMsg(msg, gu->myPlayerNum, true);
 	}
 }
@@ -3483,7 +3471,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
 #ifdef SYNCDEBUG
-	else if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer && serverNet) {
+	else if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer) {
 		gameServer->fakeDesync = true;
 		logOutput.Print("Fake desyncing.");
 	}
@@ -3492,7 +3480,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("Resetting sync debugger.");
 	}
 #endif
-	else if(s==".spectator" && (gs->cheatEnabled || net->playbackDemo)){
+	else if(s==".spectator" && (gs->cheatEnabled || net->IsDemoServer())){
 		gs->players[player]->spectator=true;
 		if(player==gu->myPlayerNum){
 			gu->spectating = true;
@@ -3501,7 +3489,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			CLuaUI::UpdateTeams();
 		}
 	}
-	else if(s.find(".team")==0 && (gs->cheatEnabled || net->playbackDemo)){
+	else if(s.find(".team")==0 && (gs->cheatEnabled || net->IsDemoServer())){
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if(team>=0 && team<gs->activeTeams){
 			gs->players[player]->team=team;
@@ -3663,21 +3651,13 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if ((s.find(".kickbynum") == 0) && (player == 0) && gameServer && serverNet) {
+	else if ((s.find(".kickbynum") == 0) && (player == 0) && gameServer) {
 		if (s.length() >= 11) {
 			int a = atoi(s.substr(11, string::npos).c_str());
-			if (a != 0 && gs->players[a]->active) {
-				unsigned char c=NETMSG_QUIT;
-				serverNet->SendData(&c,1,a);
-				serverNet->FlushConnection(a);
-				//this will rather ungracefully close the connection from our side
-				serverNet->connections[a].readyData[0]=NETMSG_QUIT;
-				//so if the above was lost in packetlos etc it will never be resent
-				serverNet->connections[a].readyLength=1;
-			}
+			gameServer->KickPlayer(a);
 		}
 	}
-	else if ((s.find(".kick") == 0) && (player == 0) && gameServer && serverNet) {
+	else if ((s.find(".kick") == 0) && (player == 0) && gameServer) {
 		if (s.length() >= 6) {
 			string name=s.substr(6,string::npos);
 			if (!name.empty()){
@@ -3686,13 +3666,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					if (gs->players[a]->active){
 						string p = StringToLower(gs->players[a]->playerName);
 						if (p.find(name)==0){               //can kick on substrings of name
-							unsigned char c=NETMSG_QUIT;
-							serverNet->SendData(&c,1,a);
-							serverNet->FlushConnection(a);
-							//this will rather ungracefully close the connection from our side
-							serverNet->connections[a].readyData[0]=NETMSG_QUIT;
-							//so if the above was lost in packetlos etc it will never be resent
-							serverNet->connections[a].readyLength=1;
+							gameServer->KickPlayer(a);
 						}
 					}
 				}

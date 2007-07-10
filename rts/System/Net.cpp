@@ -1,63 +1,54 @@
-#include "StdAfx.h"
+// 
 // Net.cpp: implementation of the CNet class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
-#include "Game/Game.h"
-#include "Game/GameSetup.h"
-#include "Game/Team.h"
-#include "Game/GameVersion.h"
-#include "Game/UI/LuaUI.h"
-#include "Platform/errorhandler.h"
-#include "Platform/Win/win32.h"
+#include <SDL_timer.h>
+
 #ifdef _WIN32
+#include "Platform/Win/win32.h"
 #include <direct.h>
 #include <io.h>
 #else
 #include <unistd.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #endif
-#include "Platform/FileSystem.h"
-#include <SDL_timer.h>
-#include "NetProtocol.h" // FIXME: this is bad, CNet should be independent of higher level layers
-#include "Game/PreGame.h"
-#include "Lua/LuaGaia.h" // FIXME: this is even worse
-#include "Lua/LuaRules.h"
-#include "Platform/ConfigHandler.h"
-#include "mmgr.h"
+
+#include "Net.h"
+#include "StdAfx.h"
+#include "LogOutput.h"
+#include "Game/GameVersion.h"
+#include "RemoteConnection.h"
+#include "LocalConnection.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+namespace netcode {
+
+std::string GetErrorMsg()
+{
+#ifdef _WIN32
+	return strerror(WSAGetLastError());	// does windows have such a function?
+#else
+	return strerror(errno);
+#endif
+}
+
 #ifdef _WIN32
 typedef int socklen_t;
 #else
-#define WSAGetLastError() errno
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
+const int INVALID_SOCKET = -1;
+const int SOCKET_ERROR = -1;
 typedef struct hostent* LPHOSTENT;
 typedef struct in_addr* LPIN_ADDR;
 #define closesocket(x) close(x)
 #endif
 
-#ifdef __GNUC__
-#define __time64_t time_t
-#define _time64(x) time(x)
-#define _localtime64(x) localtime(x)
-#endif
-
-#define NETWORK_VERSION 1
-
-// Mutex to prevent a race condition between client and server in
-// CNet::SendData and CNet::GetData. (for local connections only)
-static boost::mutex netMutex;
-
-static bool IsFakeError()
+bool IsFakeError()
 {
 #ifdef _WIN32
 	int err=WSAGetLastError();
@@ -79,7 +70,7 @@ CNet::CNet()
 
 	wVersionRequested = MAKEWORD( 2, 2 );
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
-		handleerror(NULL,"Couldnt initialize winsock.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
+		throw network_error("Couldn't initialize winsock");
 		return;
 	}
 	/* Confirm that the WinSock DLL supports 2.2.*/
@@ -87,74 +78,79 @@ CNet::CNet()
 	/* than 2.2 in addition to 2.2, it will still return */
 	/* 2.2 in wVersion since that is the version we      */
 	/* requested.                                        */
-	if ( LOBYTE( wsaData.wVersion ) != 2 ||
-        HIBYTE( wsaData.wVersion ) != 2 ) {
-		handleerror(NULL,"Wrong WSA version.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
+	if ( LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 2 ) {
+		throw network_error("Wrong WSA version");
 		WSACleanup( );
 		return;
 	}
 #endif
 	connected=false;
 
-	for(int a=0;a<gs->activePlayers;a++){
-		connections[a].active=false;
-		connections[a].localConnection=0;
+	for(int a=0;a<MAX_PLAYERS;a++){
+		connections[a]=0;
 	}
 
 	imServer=false;
-	onlyLocal=false;
 	inInitialConnect=false;
+	onlyLocal = false;
 
-	recordDemo=0;
-	playbackDemo=0;
 	mySocket=0;
 }
 
 CNet::~CNet()
 {
-	if(connected && (imServer || !connections[0].localConnection)){
-		SendData(NETMSG_QUIT);
-		FlushNet();
-	}
 	if(mySocket)
 		closesocket(mySocket);
 #ifdef _WIN32
 	WSACleanup();
 #endif
-
-	if (recordDemo) {
-		delete recordDemo;
-		if (!gameSetup) {
-			remove("demos/test.sdf");
-			rename(demoName.c_str(), "demos/test.sdf");
-		}
-	}
-	delete playbackDemo;
-
-	for (int a=0;a<gs->activePlayers;a++){
-		Connection* c=&connections[a];
-		if(!c->active)
-			continue;
-		std::deque<Packet*>::iterator pi;
-		for(pi=c->unackedPackets.begin();pi!=c->unackedPackets.end();++pi)
-			delete (*pi);
-		std::map<int,Packet*>::iterator pi2;
-		for(pi2=c->waitingPackets.begin();pi2!=c->waitingPackets.end();++pi2)
-			delete (pi2->second);
+	
+	for (int a=0;a<MAX_PLAYERS;a++){
+		if(connections[a])
+			delete connections[a];	
 	}
 }
 
-int CNet::InitServer(int portnum)
+void CNet::StopListening()
 {
-	connected=true;
+	waitOnCon=false;
+}
+
+void CNet::Kill(const unsigned connNumber)
+{
+	connections[connNumber]->Flush();
+	connections[connNumber]->active = false;
+}
+
+void CNet::PingAll()
+{
+	for(unsigned a=0;a<MAX_PLAYERS;++a){
+		if (connections[a] && connections[a]->active)
+			connections[a]->Ping();
+	}
+}
+
+int CNet::GetData(unsigned char *buf, const unsigned length, const unsigned conNum)
+{
+	if (!connections[conNum])
+	{
+		logOutput.Print("Someone tried to read data from empty connection %i", conNum);
+		return -1;
+	}
+	return connections[conNum]->GetData(buf,length);
+}
+
+int CNet::InitServer(unsigned portnum)
+{
 	waitOnCon=true;
 	imServer=true;
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		handleerror(NULL,"Error initializing socket as server.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
-		connected=false;
+		throw network_error("Error initializing socket as server: "+GetErrorMsg());
 		exit(0);
 	}
+	
+	connected = true;
 
 	sockaddr_in saMe;
 
@@ -164,25 +160,21 @@ int CNet::InitServer(int portnum)
 
 	if (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
 		closesocket(mySocket);
-		handleerror(NULL,"Error binding socket as server.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
+		throw network_error("Error binding socket as server: "+GetErrorMsg());
 		exit(0);
 	}
 
 #ifdef _WIN32
-	u_long u=1;
-	ioctlsocket(mySocket,FIONBIO,&u);
+		u_long u=1;
+		ioctlsocket(mySocket,FIONBIO,&u);
 #else
-	fcntl(mySocket, F_SETFL, O_NONBLOCK);
+		fcntl(mySocket, F_SETFL, O_NONBLOCK);
 #endif
+	
 	return 0;
 }
 
-void CNet::StopListening()
-{
-	waitOnCon=false;
-}
-
-int CNet::InitClient(const char *server, int portnum,int sourceport,bool localConnect)
+int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
 	LPHOSTENT lpHostEntry;
 
@@ -190,69 +182,46 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 	t = SDL_GetTicks();
 	curTime=float(t)/1000.f;
 
-	if(FindDemoFile(server)){
-		onlyLocal=true;
-		connections[0].active=true;
-		connections[0].readyLength=0;
-		connected=true;
-		gu->spectating = true;
-		gu->spectatingFullView = gu->spectating;
-		gu->spectatingFullSelect = false;
-		CLuaUI::UpdateTeams();
-		return 1;
-	} else {
-		if((!gameSetup || (!gameSetup->hostDemo && gameSetup->saveName.empty())) && (!pregame->hasDemo && !pregame->hasSave))
-			CreateDemoFile();
-	}
+	Pending WannaBeClient;
+	WannaBeClient.wantedNumber = playerNum;	// 
 
-	sockaddr_in saOther;
-
-	saOther.sin_family = AF_INET;
-	saOther.sin_port = htons(portnum);
+	WannaBeClient.other.sin_family = AF_INET;
+	WannaBeClient.other.sin_port = htons(portnum);
 
 #ifdef _WIN32
 	unsigned long ul;
 	if((ul=inet_addr(server))!=INADDR_NONE){
-		saOther.sin_addr.S_un.S_addr = 	ul;
+		WannaBeClient.other.sin_addr.S_un.S_addr = 	ul;
 	} else
-#else /* } */
-	if(inet_aton(server,&(saOther.sin_addr))==0)
+#else
+	if(inet_aton(server,&(WannaBeClient.other.sin_addr))==0)
 #endif
 	{
 		lpHostEntry = gethostbyname(server);
 		if (lpHostEntry == NULL)
 		{
-			char buf[100];
-			SNPRINTF(buf, sizeof(buf), "Error looking up server \"%s\" from dns.", server);
-			handleerror(NULL, buf, "SHUTDOWN ERROR", MBF_OK | MBF_INFO);
-			exit(0);
-			return -1;
+			throw network_error("Error looking up server from DNS: "+std::string(server));
 		}
-		saOther.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);
+		WannaBeClient.other.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);
 	}
+
+	sockaddr_in saMe;
+	saMe.sin_family = AF_INET;
+	saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
+	saMe.sin_port = htons(sourceport);	   // Use port passed from user
 
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		handleerror(NULL,"Error initializing socket.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
-		exit(0);
-		return -1;
+		throw network_error("Error initializing socket "+GetErrorMsg());
 	}
-
-	if(strcmp(server,"localhost")!=0){
-		sockaddr_in saMe;
-		saMe.sin_family = AF_INET;
-		saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-		saMe.sin_port = htons(sourceport);	   // Use port passed from user
-
-		int numTries=0;
-		while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
-			numTries++;
-			if(numTries>10){
-				closesocket(mySocket);
-				handleerror(NULL,"Error binding socket as client.","SHUTDOWN ERROR",MBF_OK | MBF_INFO);
-				exit(0);
-			}
-			saMe.sin_port = htons(sourceport+numTries);
+	
+	unsigned numTries=0;
+	while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
+		numTries++;
+		if(numTries>10){
+			closesocket(mySocket);
+			throw network_error("Error binding socket as client: "+GetErrorMsg());
 		}
+		saMe.sin_port = htons(sourceport+numTries);
 	}
 
 #ifdef _WIN32
@@ -264,208 +233,143 @@ int CNet::InitClient(const char *server, int portnum,int sourceport,bool localCo
 
 	waitOnCon=false;
 	imServer=false;
+	connected = true;
+	onlyLocal = false;
 
-	InitNewConn(&saOther,false,0);
-	if(!localConnect){
-		// FIXME cant use this here...
-		SendData<unsigned char, unsigned char>(
-				NETMSG_ATTEMPTCONNECT, gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
-		FlushNet();
-		inInitialConnect=true;
-	}
+	InitNewConn(WannaBeClient);
+	
 	return 1;
 }
 
-int CNet::SendData(unsigned char *data, int length)
+int CNet::InitLocalClient(const unsigned wantedNumber)
 {
-	int ret=1;			//becomes 0 if any connection return 0
-	for (int a=0;a<gs->activePlayers;a++){
-		Connection* c=&connections[a];
-		if(c->active){
-			ret&=SendData(data,length,a);
-		}
-	}
-	return ret;
+	Uint64 t;
+	t = SDL_GetTicks();
+	curTime=float(t)/1000.f;
+
+	waitOnCon=false;
+	imServer=false;
+	onlyLocal = true;
+
+	Pending temp;
+	temp.wantedNumber = wantedNumber;
+	InitNewConn(temp, true);
+	
+	return 1;
 }
 
-int CNet::SendData(unsigned char *data, int length,int connection)
+int CNet::InitNewConn(const Pending& NewClient, bool local)
 {
-	if(playbackDemo && !serverNet)
-		return 1;
+	unsigned freeConn = 0;
+	if(NewClient.wantedNumber){
+		if(NewClient.wantedNumber>=MAX_PLAYERS){	// unsigned char can't be <0
+			logOutput.Print("Warning attempt to connect to errenous connection number");
+		}
+		else if(connections[NewClient.wantedNumber] && connections[NewClient.wantedNumber]->active){
+			logOutput.Print("Warning attempt to connect to already active connection number");
+		}
+		else
+			freeConn = NewClient.wantedNumber;
+	}
+	
+	if (freeConn == 0)
+		for(freeConn=0;freeConn<MAX_PLAYERS;++freeConn){
+		if(!connections[freeConn])
+			break;
+		}
+		
+	if (!local)
+		connections[freeConn]= new CRemoteConnection(NewClient.other, &mySocket);
+	else
+		connections[freeConn]= new CLocalConnection();
 
+	connected=true;
+
+	return freeConn;
+}
+
+int CNet::SendData(const unsigned char *data, const unsigned length)
+{
 	if(length<=0)
 		logOutput.Print("Errenous send length in SendData %i",length);
 
-	Connection* c=&connections[connection];
-	if(c->active){
-		if(c->localConnection){
-			boost::mutex::scoped_lock scoped_lock(netMutex);
-			Connection* lc=c->localConnection;
-			if(lc->readyLength+length>=NETWORK_BUFFER_SIZE){
-				logOutput.Print("Overflow when sending to local connection %i %i %i %i %i",imServer,connection,lc->readyLength,length,NETWORK_BUFFER_SIZE);
-				return 0;
-			}
-			memcpy(&lc->readyData[lc->readyLength],data,length);
-			lc->readyLength+=length;
-		} else {
-			if(c->outgoingLength+length>=NETWORK_BUFFER_SIZE){
-				logOutput.Print("Overflow when sending to remote connection %i %i %i %i %i",imServer,connection,c->outgoingLength,length,NETWORK_BUFFER_SIZE);
-				return 0;
-			}
-			memcpy(&c->outgoingData[c->outgoingLength],data,length);
-			c->outgoingLength+=length;
+	unsigned ret=1;			//becomes 0 if any connection return 0
+	for (unsigned a=0;a<MAX_PLAYERS-1;a++){	//improve: dont check every connection
+		CConnection* c=connections[a];
+		if(c){
+			ret&=c->SendData(data,length);
 		}
 	}
-	return 1;
-}
-
-int CNet::GetData(unsigned char *buf, int length,int conNum)
-{
-	if(connections[conNum].active){
-		boost::mutex::scoped_lock scoped_lock(netMutex,!!connections[conNum].localConnection);
-
-		int ret=connections[conNum].readyLength;
-		if(length<=ret)
-			return 0;
-		memcpy(buf,connections[conNum].readyData,connections[conNum].readyLength);
-		connections[conNum].readyLength=0;
-
-		if(recordDemo && ret>0)
-			SaveToDemo(buf,ret);
-
-		return ret;
-	} else {
-		return -1;
-	}
+	return ret;
 }
 
 void CNet::Update(void)
 {
 	Uint64 t;
 	t = SDL_GetTicks();
-	curTime=float(t)/1000.f;
-	if(playbackDemo)
-		ReadDemoFile();
-	if(onlyLocal){
-		return;
-	}
-	sockaddr_in from;
-	socklen_t fromsize;
-	fromsize=sizeof(from);
-	int r;
-	unsigned char inbuf[16000];
-	if(connected)
-	while(true){
-		if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR){
-			if (IsFakeError())
-				break;
-			char test[500];
-			sprintf(test,"Error receiving data. %i %d",(int)imServer,WSAGetLastError());
-			handleerror(NULL,test,"SHUTDOWN ERROR",MBF_OK | MBF_INFO);
-			exit(0);
-		}
-		int conn=ResolveConnection(&from);
-		if(conn==-1){
-			if(waitOnCon && r>=12 && (*(int*)inbuf)==0 && (*(int*)&inbuf[4])==-1 && inbuf[8]==0 && inbuf[9]==NETMSG_ATTEMPTCONNECT && inbuf[11]==NETWORK_VERSION){
-				conn=InitNewConn(&from,false,inbuf[10]);
-			} else {
-				continue;
+	curTime=static_cast<float>(t)/1000.f;
+	
+	if(!onlyLocal && connected) {
+		sockaddr_in from;
+		socklen_t fromsize;
+		fromsize=sizeof(from);
+		int r;
+		unsigned char inbuf[16000];
+		
+		while(true)
+		{
+			if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR)
+			{
+				if (IsFakeError())
+					break;
+				throw network_error("Error receiving data: "+GetErrorMsg());
+			}
+			int conn=ResolveConnection(&from);
+			if(conn>= 0)
+			{
+				inInitialConnect=false;
+				connections[conn]->ProcessRawPacket(inbuf,r);
+			}
+			else
+			{
+				int packetNum=*(unsigned int*)inbuf;
+				// int ack=*(int*)(inbuf+4);
+				// unsigned char nak = *(int*)(inbuf+8);
+				
+				if(waitOnCon && r>=12 && packetNum ==0)
+				{
+					Pending newConn;
+					newConn.other = from;
+					newConn.netmsg = inbuf[9];
+					newConn.networkVersion = inbuf[11];
+					newConn.wantedNumber = inbuf[10];
+					justConnected.push_back(newConn);
+				}
 			}
 		}
-		inInitialConnect=false;
-		ProcessRawPacket(inbuf,r,conn);
 	}
+	
+	for(unsigned a=0;a<MAX_PLAYERS;++a){
+		if (connections[a] != 0)
+			connections[a]->Update(inInitialConnect);
+	}
+}
 
-	for(int a=0;a<gs->activePlayers;++a){
-		Connection* c=&connections[a];
-		if(c->localConnection || !c->active)
-			continue;
-		std::map<int,Packet*>::iterator wpi;
-		while((wpi=c->waitingPackets.find(c->lastInOrder+1))!=c->waitingPackets.end()){		//process all in order packets that we have waiting
-			if(c->readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
-				logOutput.Print("Overflow in incoming network buffer");
-				break;
-			}
-			memcpy(&c->readyData[c->readyLength],wpi->second->data,wpi->second->length);
-			c->readyLength+=wpi->second->length;
-			delete wpi->second;
-			c->waitingPackets.erase(wpi);
-			c->lastInOrder++;
-		}
-		if(inInitialConnect && c->lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
-			SendRawPacket(a,c->unackedPackets[0]->data,c->unackedPackets[0]->length,0);
-			c->lastSendTime=curTime;
-		}
-
-		if(c->lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
-			SendData(NETMSG_HELLO);
-		}
-		if(c->lastSendTime<curTime-0.2f && !c->waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-			SendData(NETMSG_HELLO);
-		}
-		if(c->lastReceiveTime < curTime-(inInitialConnect ? 40 : 30)){		//other side has timed out
-			c->active=false;
-		}
-
-		if(c->outgoingLength>0 && (c->lastSendTime < (curTime-0.2f+c->outgoingLength*0.01f) || c->lastSendFrame < gs->frameNum-1)){
-			FlushConnection(a);
+void CNet::FlushNet(void)
+{
+	for (int a=0;a<MAX_PLAYERS;a++){
+		CConnection* c=connections[a];
+		if(c){
+			c->Flush();
 		}
 	}
 }
 
-void CNet::ProcessRawPacket(unsigned char* data, int length, int conn)
+int CNet::ResolveConnection(const sockaddr_in* from) const
 {
-	Connection* c=&connections[conn];
-	c->lastReceiveTime=curTime;
-
-	int packetNum=*(int*)data;
-	int ack=*(int*)&data[4];
-	int hsize=9;
-
-	while(ack>=c->firstUnacked){
-		delete c->unackedPackets.front();
-		c->unackedPackets.pop_front();
-		c->firstUnacked++;
-	}
-//	if(!imServer)
-//		logOutput.Print("Got packet %i %i %i %i %i %i",(int)imServer,packetNum,length,ack,c->lastInOrder,c->waitingPackets.size());
-	if(data[8]==1){
-		hsize=13;
-		int nak=*(int*)&data[9];
-//		logOutput.Print("Got nak %i %i %i",nak,c->lastNak,c->firstUnacked);
-		if(nak!=c->lastNak || c->lastNakTime < curTime-0.1f){
-			c->lastNak=nak;
-			c->lastNakTime=curTime;
-			for(int b=c->firstUnacked;b<=nak;++b){
-				SendRawPacket(conn,c->unackedPackets[b-c->firstUnacked]->data,c->unackedPackets[b-c->firstUnacked]->length,b);
-			}
-		}
-	}
-
-	if(!c->active || c->lastInOrder>=packetNum || c->waitingPackets.find(packetNum)!=c->waitingPackets.end())
-		return;
-
-	Packet* p=SAFE_NEW Packet(data+hsize,length-hsize);
-	c->waitingPackets[packetNum]=p;
-}
-
-int CNet::ResolveConnection(sockaddr_in* from)
-{
-	unsigned int addr;
-#ifdef _WIN32
-	addr = from->sin_addr.S_un.S_addr;
-#else
-	addr = from->sin_addr.s_addr;
-#endif
-	for(int a=0;a<gs->activePlayers;++a){
-		if(connections[a].active){
-			if(
-#ifdef _WIN32
-			    connections[a].addr.sin_addr.S_un.S_addr==addr
-#else
-			    connections[a].addr.sin_addr.s_addr==addr
-#endif
-			    && connections[a].addr.sin_port==from->sin_port){
+	for(int a=0;a<MAX_PLAYERS;++a){
+		if(connections[a] && connections[a]->active){
+			if(connections[a]->CheckAddress(*from)){
 				return a;
 			}
 		}
@@ -473,378 +377,7 @@ int CNet::ResolveConnection(sockaddr_in* from)
 	return -1;
 }
 
-int CNet::InitNewConn(sockaddr_in* other,bool localConnect,int wantedNumber)
-{
-	int freeConn=0;
-	if(wantedNumber){
-		if(wantedNumber<0 || wantedNumber>=MAX_PLAYERS){
-			logOutput.Print("Warning attempt to connect to errenous connection number");
-			wantedNumber=0;
-		}
-		if(connections[wantedNumber].active){
-			logOutput.Print("Warning attempt to connect to already active connection number");
-			wantedNumber=0;
-		}
-		freeConn=wantedNumber;
-	}
-	if(wantedNumber==0){
-		for(freeConn=0;freeConn<gs->activePlayers;++freeConn){
-			if(!connections[freeConn].active)
-				break;
-		}
-	}
 
-	gs->players[freeConn]->active=true;
-	connections[freeConn].active=true;
-	connections[freeConn].addr=*other;
-	connections[freeConn].lastInOrder=-1;
-	connections[freeConn].readyLength=0;
-	connections[freeConn].waitingPackets.clear();
-	connections[freeConn].firstUnacked=0;
-	connections[freeConn].currentNum=0;
-	connections[freeConn].outgoingLength=0;
-	connections[freeConn].lastReceiveTime=curTime;
-	connections[freeConn].lastSendFrame=0;
-	connections[freeConn].lastSendTime=0;
-	connections[freeConn].lastNak=-1;
-	connections[freeConn].lastNakTime=0;
-
-	connected=true;
-
-	if(imServer){
-		tempbuf[0]=NETMSG_SETPLAYERNUM;
-		tempbuf[1]=freeConn;
-		SendData(tempbuf,2,freeConn);
-
-		// Send over data that's already known to other clients.
-		// Don't send it if host has not yet decided.
-		// FIXME should be in higher layer
-		if (!scriptName.empty())
-			SendSTLData<std::string>(NETMSG_SCRIPT, scriptName);
-		if (!mapName.empty())
-			SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, mapChecksum, mapName);
-		if (!modName.empty())
-			SendSTLData<unsigned, std::string>(NETMSG_MODNAME, modChecksum, modName);
-
-		for(int a=0;a<gs->activePlayers;a++){
-			if(!gs->players[a]->readyToStart)
-				continue;
-			SendSTLData<unsigned char, std::string>(NETMSG_PLAYERNAME, a, gs->players[a]->playerName);
-		}
-		if(gameSetup){
-			for(int a=0;a<gs->activeTeams;a++){
-				SendData<unsigned char, unsigned char, float, float, float>(
-						NETMSG_STARTPOS, a, 2, gs->Team(a)->startPos.x,
-						gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-			}
-		}
-		FlushNet();
-	}
-	return freeConn;
-}
-
-void CNet::FlushNet(void)
-{
-	for (int a=0;a<gs->activePlayers;a++){
-		Connection* c=&connections[a];
-		if(c->active && c->outgoingLength>0){
-			FlushConnection(a);
-		}
-	}
-}
-
-void CNet::FlushConnection(int conn)
-{
-	Connection* c=&connections[conn];
-	c->lastSendFrame=gs->frameNum;
-	c->lastSendTime=curTime;
-
-	SendRawPacket(conn,c->outgoingData,c->outgoingLength,c->currentNum++);
-	Packet* p=SAFE_NEW Packet(c->outgoingData,c->outgoingLength);
-	c->outgoingLength=0;
-	c->unackedPackets.push_back(p);
-}
-
-void CNet::SendRawPacket(int conn, unsigned char* data, int length, int packetNum)
-{
-	Connection* c=&connections[conn];
-
-	*(int*)&tempbuf[0]=packetNum;
-	*(int*)&tempbuf[4]=c->lastInOrder;
-	int hsize=9;
-	if(!c->waitingPackets.empty() && c->waitingPackets.find(c->lastInOrder+1)==c->waitingPackets.end()){
-		tempbuf[8]=1;
-		*(int*)&tempbuf[9]=c->waitingPackets.begin()->first-1;
-		hsize=13;
-	} else {
-		tempbuf[8]=0;
-	}
-
-	memcpy(&tempbuf[hsize],data,length);
-//	if(rand()&7)
-	if(sendto(mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&c->addr,sizeof(c->addr))==SOCKET_ERROR){
-		if (IsFakeError())
-			return;
-		char test[100];
-		sprintf(test,"Error sending data. %d",WSAGetLastError());
-		handleerror(NULL,test,"SHUTDOWN ERROR", MBF_OK | MBF_INFO);
-		exit(0);
-	}
-}
-
-static string MakeDemoStartScript(char *startScript, int ssLen)
-{
-	string script;
-	// find the last non-zero character
-	int last = ssLen-1;
-	while (last >= 0)  {
-		if (startScript[last] != 0) break;
-		last --;
-	}
-	time_t currtime;
-	time(&currtime);
-	tm* gmttime = gmtime(&currtime);
-	char buff[500];
-	sprintf(buff, "%d-%d-%d %2d:%2d:%2d GMT", gmttime->tm_year+1900, gmttime->tm_mon, gmttime->tm_mday,
-		gmttime->tm_hour, gmttime->tm_min, gmttime->tm_sec);
-	string datetime;
-	script.insert (script.begin(), startScript, startScript + last + 1);
-	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n";
-	script += "\tDateTime=" + string(buff) + ";\n";
-	sprintf(buff, "%u", (unsigned)currtime);
-	script += "\tUnixTime=" + string(buff) + ";\n}\n";
-	return script;
-}
-
-void CNet::CreateDemoFile()
-{
-	// We want this folder to exist
-	if (!filesystem.CreateDirectory("demos"))
-		return;
-
-	if(gameSetup){
-		struct tm *newtime;
-		__time64_t long_time;
-		_time64(&long_time);                /* Get time as long integer. */
-		newtime = _localtime64(&long_time); /* Convert to local time. */
-
-		char buf[500];
-		sprintf(buf,"%02i%02i%02i",newtime->tm_year%100,newtime->tm_mon+1,newtime->tm_mday);
-		string name=string(buf)+"-"+gameSetup->mapname.substr(0,gameSetup->mapname.find_first_of("."));
-/*		for(int a=0;a<gameSetup->numPlayers;++a){
-			name+="-"+gs->players[a]->playerName;
-		}*/
-		name+=string("-")+VERSION_STRING;
-
-// This was a boost::filesystem workaround, I assume it can be trashed?
-// 		for (int i = 0; i < name.length(); ++i)
-// 			if (name[i] == ' ') name[i] = '_';
-
-		sprintf(buf,"demos/%s.sdf",name.c_str());
-		CFileHandler ifs(buf);
-		if(ifs.FileExists()){
-			for(int a=0;a<9999;++a){
-				sprintf(buf,"demos/%s-%i.sdf",name.c_str(),a);
-				CFileHandler ifs(buf);
-				if(!ifs.FileExists())
-					break;
-			}
-		}
-		demoName = buf;
-		recordDemo=SAFE_NEW std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
-
-		// add a TDF section containing the game version to the startup script
-		string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
-
-		char c=1;
-		recordDemo->write(&c,1);
-		int len = scriptText.length();
-		recordDemo->write((char*)&len, sizeof(int));
-		recordDemo->write(scriptText.c_str(), scriptText.length());
-	} else {
-		// Write demo to a temporary file which is renamed to test.sdf in ~CNet.
-		// This way running multiple instances of spring in same data directory
-		// is possible without them corrupting the demo file.
-		// (because both springs are writing to the same file)
-		char buf[500] = "demos/XXXXXX";
-#ifndef _WIN32
-		mkstemp(buf);
-#else
-		_mktemp(buf);
-#endif
-		demoName = buf;
-		recordDemo=SAFE_NEW std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), ios::out|ios::binary);
-		char c=0;
-		recordDemo->write(&c,1);
-	}
-}
-
-void CNet::SaveToDemo(unsigned char* buf,int length)
-{
-	recordDemo->write((char*)&gu->modGameTime,sizeof(float));
-	recordDemo->write((char*)&length,sizeof(int));
-	recordDemo->write((char*)buf,length);
-	recordDemo->flush();
-}
-
-bool CNet::FindDemoFile(const char* name)
-{
-	string firstTry = name;
-	firstTry = "demos/" + firstTry;
-	playbackDemo=SAFE_NEW CFileHandler(firstTry);
-	if (!playbackDemo->FileExists()) {
-		delete playbackDemo;
-		playbackDemo=SAFE_NEW CFileHandler(name);
-	}
-
-	if(playbackDemo->FileExists()){
-		logOutput.Print("Playing demo from %s",name);
-		char c;
-		playbackDemo->Read(&c,1);
-		if(c){ // Got a CGameSetup script
-			int length;
-			playbackDemo->Read(&length,sizeof(int));
-			char* buf=SAFE_NEW char[length];
-			playbackDemo->Read(buf,length);
-
-			gameSetup=SAFE_NEW CGameSetup();
-			gameSetup->Init(buf,length);
-			delete[] buf;
-		} else { // Didn't get a CGameSetup script
-			// FIXME: duplicated in Main.cpp
-			const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
-			const string luaRulesStr = configHandler.GetString("LuaRules", "1");
-			gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-			gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-			if (gs->useLuaGaia) {
-				gs->gaiaTeamID = gs->activeTeams;
-				gs->gaiaAllyTeamID = gs->activeAllyTeams;
-				gs->activeTeams++;
-				gs->activeAllyTeams++;
-				CTeam* team = gs->Team(gs->gaiaTeamID);
-				team->color[0] = 255;
-				team->color[1] = 255;
-				team->color[2] = 255;
-				team->color[3] = 255;
-				team->gaia = true;
-				gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
-			}
-		}
-		playbackDemo->Read(&demoTimeOffset,sizeof(float));
-		demoTimeOffset=gu->modGameTime-demoTimeOffset;
-		nextDemoRead=gu->modGameTime-0.01f;
-		return true;
-	} else {
-		delete playbackDemo;
-		playbackDemo=0;
-		return false;
-	}
-}
-
-void CNet::ReadDemoFile(void)
-{
-//	if(!game)
-//		return;
-	if(gs->paused){
-		return;
-	}
-	if(this==serverNet){
-		while(nextDemoRead<gu->modGameTime){
-			if(playbackDemo->Eof()){
-				for(int a=0;a<gs->activePlayers;++a)
-					connections[a].active=false;
-				return;
-			}
-			int l;
-			playbackDemo->Read(&l,sizeof(int));
-			playbackDemo->Read(tempbuf,l);
-			SendData(tempbuf,l);
-			playbackDemo->Read(&nextDemoRead,sizeof(float));
-			nextDemoRead+=demoTimeOffset;
-			if(playbackDemo->Eof()){
-				logOutput.Print("End of demo");
-				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
-			}
-	//		logOutput.Print("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
-		}
-	} else {
-		while(connections[0].readyLength<500 && nextDemoRead<gu->modGameTime/**/){
-			if(playbackDemo->Eof()){
-				if(connections[0].readyLength<30 && (!game || game->inbuflength-game->inbufpos<30))
-					connections[0].active=false;
-				return;
-			}
-			int l;
-			playbackDemo->Read(&l,sizeof(int));
-			playbackDemo->Read(&connections[0].readyData[connections[0].readyLength],l);
-			connections[0].readyLength+=l;
-			playbackDemo->Read(&nextDemoRead,sizeof(float));
-			nextDemoRead+=demoTimeOffset;
-			if(playbackDemo->Eof()){
-				logOutput.Print("End of demo");
-				nextDemoRead=gu->modGameTime+4*gs->speedFactor;
-			}
-	//		logOutput.Print("Read packet length %i ready %i time %.0f",l,connections[0].readyLength,nextDemoRead);
-		}
-	}
-}
-
-void CNet::CreateDemoServer(std::string demoname)
-{
-	string firstTry = demoname;
-	firstTry = "./demos/" + firstTry;
-	playbackDemo=SAFE_NEW CFileHandler(firstTry);
-	if (!playbackDemo->FileExists()) {
-		delete playbackDemo;
-		playbackDemo = SAFE_NEW CFileHandler(demoname);
-	}
-
-	if(playbackDemo->FileExists()){
-		char c;
-		playbackDemo->Read(&c,1);
-		if(c){
-			int length;
-			playbackDemo->Read(&length,sizeof(int));
-			char* buf=SAFE_NEW char[length];
-			playbackDemo->Read(buf,length);
-
-			//gameSetup=SAFE_NEW CGameSetup();	//we have already initialized ...
-			//gameSetup->Init(buf,length);
-			delete[] buf;
-			nextDemoRead=gu->modGameTime+100000000;
-		}
-	} else {
-		logOutput.Print("Couldnt find file to use as server demo");
-		delete playbackDemo;
-		playbackDemo=0;
-	}
-}
+} // namespace netcode
 
 
-void CNet::StartDemoServer(void)
-{
-	playbackDemo->Read(&demoTimeOffset,sizeof(float));
-	demoTimeOffset=gu->modGameTime-demoTimeOffset;
-	nextDemoRead=gu->modGameTime-0.01f;
-}
-
-
-void CNet::SetScript(const std::string& name)
-{
-	scriptName = name;
-	SendSTLData<std::string>(NETMSG_SCRIPT, scriptName);
-}
-
-void CNet::SetMap(unsigned checksum, const std::string& name)
-{
-	mapChecksum = checksum;
-	mapName = name;
-	SendSTLData<unsigned, std::string>(NETMSG_MAPNAME, mapChecksum, mapName);
-}
-
-void CNet::SetMod(unsigned checksum, const std::string& name)
-{
-	modChecksum = checksum;
-	modName = name;
-	SendSTLData<unsigned, std::string>(NETMSG_MODNAME, modChecksum, modName);
-}
