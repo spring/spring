@@ -111,6 +111,7 @@ class LuaOpenGL {
 	private:
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
+		static int GetString(lua_State* L);
 	
 		static int ConfigScreen(lua_State* L);
 

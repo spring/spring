@@ -141,6 +141,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(HasExtension);
 	REGISTER_LUA_CFUNC(GetNumber);
+	REGISTER_LUA_CFUNC(GetString);
 
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
@@ -889,6 +890,14 @@ int LuaOpenGL::GetNumber(lua_State* L)
 		lua_pushnumber(L, values[i]);
 	}
 	return count;
+}
+
+
+int LuaOpenGL::GetString(lua_State* L)
+{
+	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
+	lua_pushstring(L, (const char*)glGetString(pname));
+	return 1;
 }
 
 
