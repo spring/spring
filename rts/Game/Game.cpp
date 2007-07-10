@@ -1613,21 +1613,17 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (!action.extra.empty()) {
 			vector<string> args = SimpleParser::Tokenize(action.extra, 0);
 			if (args.size() == 1) {
-				const float value = atof(args[0].c_str());
-				if (value > 0.0f) {
-					unitDrawer->LODScale = (1.0f / value);
-				}
+				const float value = max(1.0e-9f, (float)atof(args[0].c_str()));
+				unitDrawer->LODScale = (1.0f / value);
 			}
 			else if (args.size() == 2) {
-				const float value = atof(args[1].c_str());
-				if (value > 0.0f) {
-					if (args[0] == "shadow") {
-						unitDrawer->LODScaleShadow = (1.0f / value);
-					} else if (args[0] == "reflection") {
-						unitDrawer->LODScaleReflection = (1.0f / value);
-					} else if (args[0] == "refraction") {
-						unitDrawer->LODScaleRefraction = (1.0f / value);
-					}
+				const float value = max(1.0e-9f, (float)atof(args[1].c_str()));
+				if (args[0] == "shadow") {
+					unitDrawer->LODScaleShadow = (1.0f / value);
+				} else if (args[0] == "reflection") {
+					unitDrawer->LODScaleReflection = (1.0f / value);
+				} else if (args[0] == "refraction") {
+					unitDrawer->LODScaleRefraction = (1.0f / value);
 				}
 			}
 		}
