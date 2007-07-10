@@ -234,16 +234,18 @@ bool crashCallback(void* crState)
 
 	// Stop writing to infolog.txt
 	logOutput.End();
-	bool wasRecording = false;
-	if (net->recordDemo) {
-		delete net->recordDemo;
-		wasRecording = true;
-	}
+
+	// FIXME needs to be updated for new netcode
+	//bool wasRecording = false;
+	//if (net->recordDemo) {
+	//	delete net->recordDemo;
+	//	wasRecording = true;
+	//}
 
 	AddFile("infolog.txt", "Spring information log");
 
-	if (wasRecording)
-		AddFile(net->demoName.c_str(), "Spring game demo");
+	//if (wasRecording)
+	//	AddFile(net->demoName.c_str(), "Spring game demo");
 
 	SDL_Quit();
 

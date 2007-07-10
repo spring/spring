@@ -142,9 +142,8 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 
 	// Cleanup.
 	SDL_Quit();
-	logOutput.End();  // Stop writing to log & demo.
-	if (net)
-		delete net->recordDemo;
+	logOutput.End();  // Stop writing to log.
+	// FIXME: update closing of demo to new netcode
 
 	// Inform user.
 	char dir[MAX_PATH], msg[MAX_PATH+200];
