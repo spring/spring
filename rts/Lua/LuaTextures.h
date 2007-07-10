@@ -30,7 +30,9 @@ class CLuaTextures {
 			  target(GL_TEXTURE_2D), format(GL_RGBA8),
 			  xsize(0), ysize(0), border(0),
 			  min_filter(GL_LINEAR), mag_filter(GL_LINEAR),
-			  wrap_s(GL_REPEAT), wrap_t(GL_REPEAT), wrap_r(GL_REPEAT) {}
+			  wrap_s(GL_REPEAT), wrap_t(GL_REPEAT), wrap_r(GL_REPEAT),
+			  aniso(0.0f)
+			{}
 
 			string name;
 
@@ -52,6 +54,8 @@ class CLuaTextures {
 			GLenum wrap_s;
 			GLenum wrap_t;
 			GLenum wrap_r;
+
+			GLfloat aniso;
 		};
 
 		string Create(const Texture& tex);

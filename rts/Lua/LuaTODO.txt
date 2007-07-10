@@ -18,15 +18,14 @@
 
 - Cursor in minimap kills some DrawWorld() rendering
 - AddLayout Button
-- Fix ScriptMoveType vs. air units (busted z coord after commands)
 - Implement ScriptMoveType stops
 - Fix SetFeatureDirection()
-- SetUnitRotation() y is backwards (clean-up rotation / heading in general)
++ SetUnitRotation() y is backwards (clean-up rotation / heading in general)
 - Split Outlines and fontHandler usability
 - Make obj2lua callable
 - Finish AICallback/Lua
 - Fix "luaui reload"
-- __lll_mutex_lock  (test dynamic mutex'ing?)
++ __lll_mutex_lock  (test dynamic mutex'ing?)
 - DrawFunctionAtUnit() (and a billboard setup?)
 
 - COB test gadget

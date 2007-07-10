@@ -25,6 +25,15 @@ public:
 		float ystart;
 		float yend;
 	};
+	struct S3oTex {
+		int num;
+		unsigned int tex1;
+		unsigned int tex1SizeX;
+		unsigned int tex1SizeY;
+		unsigned int tex2;
+		unsigned int tex2SizeX;
+		unsigned int tex2SizeY;
+	};
 
 	CTextureHandler();
 	virtual ~CTextureHandler();
@@ -36,17 +45,24 @@ public:
 	int LoadS3OTexture(string tex1, string tex2);
 	void SetS3oTexture(int num);
 
+	const S3oTex* GetS3oTex(int num) {
+		if ((num < 0) || (num >= (int)s3oTextures.size())) {
+			return NULL;
+		}
+		return &s3oTextures[num];
+	}
+
+	unsigned int GetGlobalTexID() const  { return globalTex; }
+	unsigned int GetGlobalTexSizeX() const { return bigTexX; }
+	unsigned int GetGlobalTexSizeY() const { return bigTexY; }
+	const map<string, UnitTexture*>& GetGlobalTextures() const { return textures; }
+
 private:
 	map<string,UnitTexture*> textures;
 	unsigned int globalTex;
 	int bigTexX;
 	int bigTexY;
 
-	struct S3oTex{
-		int num;
-		unsigned int tex1;
-		unsigned int tex2;
-	};
 	map<string,int> s3oTextureNames;
 	vector<S3oTex> s3oTextures;
 

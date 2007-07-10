@@ -8,6 +8,8 @@
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Lua/LuaMaterial.h"
+#include "Lua/LuaUnitMaterial.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -34,21 +36,50 @@
 CUnitDrawer* unitDrawer;
 using namespace std;
 
+
+static bool luaDrawing = false; // FIXME
+
+
+static float GetLODFloat(const string& name, float def)
+{
+	// NOTE: the inverse of the value is used
+	char buf[64];
+	SNPRINTF(buf, sizeof(buf), "%.3f", def);
+	const string valueStr = configHandler.GetString(name, buf);
+	char* end;
+	float value = (float)strtod(valueStr.c_str(), &end);
+	if ((end == valueStr.c_str()) || (value <= 0.0f)) {
+		return (1.0f / def);
+	}
+	return (1.0f / value);
+}
+
+
 CUnitDrawer::CUnitDrawer(void)
 :	showHealthBars(true),
 	updateFace(0)
 {
-	if(texturehandler==0)
-		texturehandler=SAFE_NEW CTextureHandler;
+	if (texturehandler == 0) { 
+		texturehandler = SAFE_NEW CTextureHandler;
+	}
 
-	unitDrawDist=configHandler.GetInt("UnitLodDist",200);
-	unitIconDist=configHandler.GetInt("UnitIconDist",200);
-	iconLength=750*unitIconDist*unitIconDist;
+	unitDrawDist = configHandler.GetInt("UnitLodDist",200);
+	unitIconDist = configHandler.GetInt("UnitIconDist",200);
+	iconLength = 750 * unitIconDist * unitIconDist;
+
+	specTexSize = configHandler.GetInt("CubeTexSizeSpecular", 128);
+	reflTexSize = configHandler.GetInt("CubeTexSizeReflection", 128);
+
+	LODScale           = GetLODFloat("LODScale",           1.0f);
+	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
+	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
+	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
 
 	CBitmap white;
 	white.Alloc(1,1);
-	for(int a=0;a<4;++a)
-		white.mem[a]=255;
+	for (int a = 0; a < 4; ++a) {
+		white.mem[a] = 255;
+	}
 
 	whiteTex=white.CreateTexture(false);
 
@@ -76,7 +107,7 @@ CUnitDrawer::CUnitDrawer(void)
 			unitShadowS3oFP = LoadFragmentProgram("units3o_shadow.fp");
 			unitShadowGenVP = LoadVertexProgram("unit_genshadow.vp");
 		} else {
-			unitShadowFP = 0;
+			unitShadowFP    = 0;
 			unitShadowS3oFP = 0;
 			unitShadowGenVP = 0;
 		}
@@ -88,12 +119,12 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,0,GL_RGBA8,128,128,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
 
 		glGenTextures(1,&specularTex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
@@ -102,23 +133,24 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,128,float3(1,1,1),float3(0,0,-2),float3(0,-2,0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,128,float3(-1,1,-1),float3(0,0,2),float3(0,-2,0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,128,float3(-1,1,-1),float3(2,0,0),float3(0,0,2),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,128,float3(-1,-1,1),float3(2,0,0),float3(0,0,-2),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,128,float3(-1,1,1),float3(2,0,0),float3(0,-2,0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,128,float3(1,1,-1),float3(-2,0,0),float3(0,-2,0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,specTexSize,float3( 1, 1, 1),float3( 0, 0,-2),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,specTexSize,float3(-1, 1,-1),float3( 0, 0, 2),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,specTexSize,float3(-1 ,1,-1),float3( 2, 0, 0),float3(0, 0, 2),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,specTexSize,float3(-1,-1, 1),float3( 2, 0, 0),float3(0, 0,-2),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
 	}
 }
 
 
 CUnitDrawer::~CUnitDrawer(void)
 {
-	glDeleteTextures(1,&whiteTex);
+	glDeleteTextures(1, &whiteTex);
 
-	if(advShading){
+	if (advShading) {
 		glSafeDeleteProgram(unitVP);
 		glSafeDeleteProgram(unitFP);
+
 		glSafeDeleteProgram(unitShadowFP);
 		glSafeDeleteProgram(unitS3oVP);
 		glSafeDeleteProgram(unitS3oFP);
@@ -128,19 +160,26 @@ CUnitDrawer::~CUnitDrawer(void)
 		glDeleteTextures(1, &boxtex);
 		glDeleteTextures(1, &specularTex);
 	}
-	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildings.begin();gbi!=ghostBuildings.end();){
-		if((*gbi)->decal)
-			(*gbi)->decal->gbOwner=0;
+
+	std::list<GhostBuilding*>::iterator gbi;
+
+	for (gbi = ghostBuildings.begin(); gbi != ghostBuildings.end(); /* no inc */) {
+		if ((*gbi)->decal) {
+			(*gbi)->decal->gbOwner = 0;
+		}
 		delete *gbi;
-		gbi=ghostBuildings.erase(gbi);
+		gbi = ghostBuildings.erase(gbi);
 	}
-	for(std::list<GhostBuilding*>::iterator gbi=ghostBuildingsS3O.begin();gbi!=ghostBuildingsS3O.end();){
-		if((*gbi)->decal)
-			(*gbi)->decal->gbOwner=0;
+
+	for (gbi = ghostBuildingsS3O.begin(); gbi != ghostBuildingsS3O.end(); /* no inc */) {
+		if ((*gbi)->decal) {
+			(*gbi)->decal->gbOwner = 0;
+		}
 		delete *gbi;
-		gbi=ghostBuildingsS3O.erase(gbi);
+		gbi = ghostBuildingsS3O.erase(gbi);
 	}
 }
+
 
 void CUnitDrawer::Update(void)
 {
@@ -152,7 +191,67 @@ void CUnitDrawer::Update(void)
 	}
 }
 
+
 extern GLfloat FogLand[];
+
+
+inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
+{
+	if (unit->isCloaked) {
+		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_ALPHA];
+		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+		unit->currentLOD = lod;
+		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+		if ((lodMat != NULL) && lodMat->IsActive()) {
+			lodMat->AddUnit(unit);
+		} else {
+			if (unit->model->textureType) {
+				drawCloakedS3O.push_back(unit);
+			} else {
+				drawCloaked.push_back(unit);
+			}
+		}
+	}
+	else {
+		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_OPAQUE];
+		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+		unit->currentLOD = lod;
+		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+		if ((lodMat != NULL) && lodMat->IsActive()) {
+			lodMat->AddUnit(unit);
+		} else {
+			if (unit->model->textureType) {
+				QueS3ODraw(unit, unit->model->textureType);
+			} else {
+				unit->Draw();
+			}
+		}
+	}
+}
+
+
+inline void CUnitDrawer::DrawUnit(CUnit* unit)
+{
+	if (unit->lodCount > 0) {
+		DrawUnitLOD(unit);
+		return;
+	}
+
+	if (unit->model->textureType) {
+		if (unit->isCloaked) {
+			drawCloakedS3O.push_back(unit);
+		} else {
+			QueS3ODraw(unit, unit->model->textureType);
+		}
+	} else {
+		if (unit->isCloaked) {
+			drawCloaked.push_back(unit);
+		} else {
+			unit->Draw();
+		}
+	}
+}
+
 
 void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 {
@@ -162,179 +261,352 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	vector<CUnit*> drawStat;
 	drawCloaked.clear();
 	drawCloakedS3O.clear();
+	
 	glFogfv(GL_FOG_COLOR,FogLand);
 
 	vector<CUnit*> drawIcon;
 	vector<CUnit*> drawRadarIcon;
 
+	if (drawReflection) {
+		CUnit::SetLODFactor(LODScale * LODScaleReflection);
+	} else if (drawRefraction) {
+		CUnit::SetLODFactor(LODScale * LODScaleRefraction);
+	} else {
+		CUnit::SetLODFactor(LODScale);
+	}
+
 	SetupForUnitDrawing();
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	CUnit* excludeUnit=gu->directControl;
+	CUnit* excludeUnit = gu->directControl;
 #endif
 
 	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){
+
+		CUnit* unit = *usi;
+
 #ifdef DIRECT_CONTROL_ALLOWED
-		if((*usi)==excludeUnit)
-			continue;
-#endif
-		if ((*usi)->noDraw) {
+		if (unit == excludeUnit) {
 			continue;
 		}
-		if(camera->InView((*usi)->midPos,(*usi)->radius+30)){
-			if(gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView){
-				if(drawReflection){
+#endif
+		if (unit->noDraw) {
+			continue;
+		}
+		if (camera->InView(unit->midPos, unit->radius + 30)) {
+			if (gs->Ally(unit->allyteam,gu->myAllyTeam)       ||
+			    (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
+			    gu->spectatingFullView) {
+
+				if (drawReflection) {
 					float3 zeroPos;
-					if((*usi)->midPos.y<0){
-						zeroPos=(*usi)->midPos;
-					}else{
-						float dif=(*usi)->midPos.y-camera->pos.y;
-						zeroPos=camera->pos*((*usi)->midPos.y/dif) + (*usi)->midPos*(-camera->pos.y/dif);
-					}
-					if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>(*usi)->radius){
-						continue;
-					}
-				}
-				if(drawRefraction){
-					if((*usi)->pos.y > 0)
-						continue;
-				}
-				float sqDist=((*usi)->pos-camera->pos).SqLength();
-				float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
-				float realIconLength=iconLength*iconDistMult*iconDistMult;
-				if(sqDist>realIconLength){
-					drawIcon.push_back(*usi);
-					(*usi)->isIcon = true;
-				} else {
-					(*usi)->isIcon = false;
-					float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
-					if(sqDist>farLength){
-						drawFar.push_back(*usi);
+					if (unit->midPos.y < 0.0f) {
+						zeroPos = unit->midPos;
 					} else {
-						if((*usi)->model->textureType){ // s3o
-							if((*usi)->isCloaked){
-								drawCloakedS3O.push_back(*usi);
-							} else {
-								QueS3ODraw(*usi,(*usi)->model->textureType);
-							}
-						} else { // 3do
-							if((*usi)->isCloaked){
-								drawCloaked.push_back(*usi);
-							} else {
-								(*usi)->Draw();
-							}
-						}
+						const float dif = unit->midPos.y - camera->pos.y;
+						zeroPos = camera->pos  * (unit->midPos.y / dif) +
+						          unit->midPos * (-camera->pos.y / dif);
 					}
-					if(sqDist<unitDrawDist*unitDrawDist*500 && showHealthBars){
-						drawStat.push_back(*usi);
+					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
+						continue;
 					}
 				}
-			} else if((*usi)->losStatus[gu->myAllyTeam] & LOS_PREVLOS){
-				(*usi)->isIcon = true;
-				if ((!gameSetup || gameSetup->ghostedBuildings) && !((*usi)->mobility))
-				{
+
+				if (drawRefraction) {
+					if (unit->pos.y > 0.0f) {
+						continue;
+					}
+				}
+
+				float sqDist = (unit->pos-camera->pos).SqLength();
+				float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+				float realIconLength = iconLength * (iconDistMult * iconDistMult);
+				if (sqDist>realIconLength) {
+					drawIcon.push_back(unit);
+					unit->isIcon = true;
+				}
+				else {
+					unit->isIcon = false;
+
+					float farLength = unit->sqRadius * (unitDrawDist * unitDrawDist);
+					if (sqDist>farLength) {
+						drawFar.push_back(unit);
+					} else {
+						DrawUnit(unit);
+					}
+
+					if ((sqDist < (unitDrawDist * unitDrawDist * 500)) && showHealthBars) {
+						drawStat.push_back(unit);
+					}
+				}
+			}
+			else if (unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) {
+				unit->isIcon = true;
+				if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
 					// it's a building we've had LOS on once
-					float sqDist=((*usi)->pos-camera->pos).SqLength();
-					float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
-					float realIconLength=iconLength*iconDistMult*iconDistMult;
-					if(sqDist<realIconLength){
-						if ((*usi)->model->textureType)
-							drawCloakedS3O.push_back(*usi);
-						else
-							drawCloaked.push_back(*usi);
-						(*usi)->isIcon = false;
+					float sqDist = (unit->pos-camera->pos).SqLength();
+					float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+					float realIconLength = iconLength * (iconDistMult * iconDistMult);
+					if (sqDist<realIconLength) {
+						if (unit->model->textureType) {
+							drawCloakedS3O.push_back(unit);
+						} else {
+							drawCloaked.push_back(unit);
+						}
+						unit->isIcon = false;
 					}
 				}
-				if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
-					if(!((*usi)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)){
-						drawRadarIcon.push_back(*usi);
-					} else if((*usi)->isIcon){ // this prevents us from drawing icons on top of ghosted buildings
-						drawIcon.push_back(*usi);
+				if ((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)) {
+					if (!(unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) {
+						drawRadarIcon.push_back(unit);
+					} else if (unit->isIcon) {
+						// this prevents us from drawing icons on top of ghosted buildings
+						drawIcon.push_back(unit);
 					}
 				}
-			} else if(((*usi)->losStatus[gu->myAllyTeam] & LOS_INRADAR)){
-				drawRadarIcon.push_back(*usi);
+			} else if ((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)) {
+				drawRadarIcon.push_back(unit);
 			}
 		}
 	}
-	for(std::multimap<int,TempDrawUnit>::iterator ti=tempDrawUnits.begin();ti!=tempDrawUnits.end();++ti){
-		if(camera->InView(ti->second.pos,100)){
+
+	std::multimap<int, TempDrawUnit>::iterator ti;
+	for(ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
+		if (camera->InView(ti->second.pos, 100)) {
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
-			glRotatef(ti->second.rotation*180/PI,0,1,0);
-			modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team)->DrawStatic();
+			glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+			ti->second.unitdef->LoadModel(ti->second.team)->DrawStatic();
 			glPopMatrix();
 		}
 	}
 
 	DrawQuedS3O();
-
+	
 	CleanUpUnitDrawing();
 
-	va=GetVertexArray();
+	DrawOpaqueShaderUnits();
+
+	glEnable(GL_TEXTURE_2D);
+
+	va = GetVertexArray();
 	va->Initialize();
-	glAlphaFunc(GL_GREATER,0.8f);
+	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D,fartextureHandler->farTexture);
-	camNorm=camera->forward;
-	camNorm.y=-0.1f;
+	glBindTexture(GL_TEXTURE_2D, fartextureHandler->farTexture);
+	camNorm = camera->forward;
+	camNorm.y = -0.1f;
 	camNorm.Normalize();
-	glColor3f(1,1,1);
+	glColor3f(1, 1, 1);
 	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR,FogLand);
-	for(vector<CUnit*>::iterator usi=drawFar.begin();usi!=drawFar.end();usi++){
+	glFogfv(GL_FOG_COLOR, FogLand);
+	for (vector<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 		DrawFar(*usi);
 	}
 	va->DrawArrayTN(GL_QUADS);
 
-	if(!drawReflection){
+	if (!drawReflection) {
 		// Draw unit icons and radar blips.
-		glAlphaFunc(GL_GREATER,0.5f);
-		for(vector<CUnit*>::iterator ui=drawIcon.begin();ui!=drawIcon.end();ui++){
-			DrawIcon(*ui,false);
+		glAlphaFunc(GL_GREATER, 0.5f);
+		vector<CUnit*>::iterator ui;
+		for (ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
+			DrawIcon(*ui, false);
 		}
-		for(vector<CUnit*>::iterator ui=drawRadarIcon.begin();ui!=drawRadarIcon.end();ui++){
-			DrawIcon(*ui,true);
+		for (ui = drawRadarIcon.begin(); ui != drawRadarIcon.end(); ++ui) {
+			DrawIcon(*ui, true);
 		}
 		glDisable(GL_TEXTURE_2D);
-		for(vector<CUnit*>::iterator usi=drawStat.begin();usi!=drawStat.end();usi++){
-			(*usi)->DrawStats();
+		for (ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
+			(*ui)->DrawStats();
 		}
 	}
 	glDisable(GL_TEXTURE_2D);
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+static void DrawBins(LuaMatType type)
+{
+	const LuaMatBinSet& bins = luaMatHandler.GetBins(type);
+	if (bins.empty()) {
+		return;
+	}
+
+	const LuaMaterial* currMat = &LuaMaterial::defMat;
+
+	luaDrawing = true;
+
+	LuaMatBinSet::iterator it;
+	for (it = bins.begin(); it != bins.end(); ++it) {
+		LuaMatBin* bin = *it;
+		bin->Execute(*currMat);
+		currMat = (LuaMaterial*)bin;
+
+		const vector<CUnit*>& units = bin->GetUnits();
+		const int count = (int)units.size();
+		for (int i = 0; i < count; i++) {
+			CUnit* unit = units[i];
+			const LuaUnitMaterial& unitMat = unit->luaMats[type];
+			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
+
+			lodMat->uniforms.Execute(unit);
+			unitDrawer->SetS3OTeamColour(unit->team);
+			unit->DrawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
+		}
+	}
+
+	LuaMaterial::defMat.Execute(*currMat);
+	
+	luaMatHandler.ClearBins(type);
+
+	luaDrawing = false;
+}
+
+
+/******************************************************************************/
+
+static void SetupShadowDrawing()
+{
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glDisable(GL_TEXTURE_2D);
+	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP);
+	glEnable(GL_VERTEX_PROGRAM_ARB);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+
+	const CShadowHandler* sh = shadowHandler;
+	glProgramEnvParameter4fARB(
+		GL_VERTEX_PROGRAM_ARB, 16, sh->xmid, sh->ymid, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(
+		GL_VERTEX_PROGRAM_ARB, 17, sh->p17,  sh->p17,  0.0f, 0.0f);
+	glProgramEnvParameter4fARB(
+		GL_VERTEX_PROGRAM_ARB, 18, sh->p18,  sh->p18,  0.0f, 0.0f);
+}
+
+
+static void CleanUpShadowDrawing()
+{
+	glDisable(GL_VERTEX_PROGRAM_ARB);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+}
+
+
+/******************************************************************************/
+
+static void SetupOpaque3DO() { unitDrawer->SetupForUnitDrawing(); }
+static void ResetOpaque3DO() { unitDrawer->CleanUpUnitDrawing();  }
+static void SetupOpaqueS3O() { unitDrawer->SetupForS3ODrawing();  }
+static void ResetOpaqueS3O() { unitDrawer->CleanUpS3ODrawing();   }
+
+static void SetupAlpha3DO()  { unitDrawer->SetupForGhostDrawing();    }
+static void ResetAlpha3DO()  { unitDrawer->CleanUpGhostDrawing();     }
+static void SetupAlphaS3O()  { unitDrawer->SetupForGhostDrawing();
+                               unitDrawer->SetupForGhostDrawingS3O(); }
+static void ResetAlphaS3O()  { unitDrawer->CleanUpGhostDrawing();     }
+
+static void SetupShadow3DO() { SetupShadowDrawing();   }
+static void ResetShadow3DO() { CleanUpShadowDrawing(); }
+static void SetupShadowS3O() { SetupShadowDrawing();   }
+static void ResetShadowS3O() { CleanUpShadowDrawing(); }
+
+
+/******************************************************************************/
+
+void CUnitDrawer::DrawOpaqueShaderUnits()
+{
+	luaMatHandler.setup3doShader = SetupOpaque3DO;
+	luaMatHandler.reset3doShader = ResetOpaque3DO;
+	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
+	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
+
+	DrawBins(LUAMAT_OPAQUE);
+}
+
+
+void CUnitDrawer::DrawCloakedShaderUnits()
+{
+	luaMatHandler.setup3doShader = SetupAlpha3DO;
+	luaMatHandler.reset3doShader = ResetAlpha3DO;
+	luaMatHandler.setupS3oShader = SetupAlphaS3O;
+	luaMatHandler.resetS3oShader = ResetAlphaS3O;
+
+	DrawBins(LUAMAT_ALPHA);
+}
+
+
+void CUnitDrawer::DrawShadowShaderUnits()
+{
+	luaMatHandler.setup3doShader = SetupShadow3DO;
+	luaMatHandler.reset3doShader = ResetShadow3DO;
+	luaMatHandler.setupS3oShader = SetupShadowS3O;
+	luaMatHandler.resetS3oShader = ResetShadowS3O;
+
+	DrawBins(LUAMAT_SHADOW);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CUnitDrawer::DrawShadowPass(void)
 {
 	ASSERT_UNSYNCED_MODE;
-	glColor3f(1,1,1);
+	glColor3f(1.0f, 1.0f, 1.0f);
 	glDisable(GL_TEXTURE_2D);
 //	glEnable(GL_TEXTURE_2D);
 //	texturehandler->SetTexture();
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitShadowGenVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
-	glPolygonOffset(1,1);
+	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){
-		if((gs->Ally((*usi)->allyteam,gu->myAllyTeam) || ((*usi)->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) && camera->InView((*usi)->midPos,(*usi)->radius+700)){
-			float sqDist=((*usi)->pos-camera->pos).SqLength();
-			float farLength=(*usi)->sqRadius*unitDrawDist*unitDrawDist;
-			if(sqDist<farLength){
-				float iconDistMult=iconHandler->GetDistance((*usi)->unitDef->iconType);
-				float realIconLength=iconLength*iconDistMult*iconDistMult;
-				if(sqDist<realIconLength){
-					if(!(*usi)->isCloaked){
-						(*usi)->Draw();
+	CUnit::SetLODFactor(LODScale * LODScaleShadow);
+
+	list<CUnit*>::iterator usi;
+	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+		CUnit* unit = *usi;
+		if ((gs->Ally(unit->allyteam, gu->myAllyTeam)      ||
+		     (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
+		     gu->spectatingFullView)
+		    && camera->InView(unit->midPos, unit->radius + 700)) {
+			// FIXME: test against the shadow projection intersection
+			float sqDist = (unit->pos-camera->pos).SqLength();
+			float farLength = unit->sqRadius * (unitDrawDist * unitDrawDist);
+			if (sqDist < farLength) {
+				float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+				float realIconLength = iconLength * (iconDistMult * iconDistMult);
+				if (sqDist < realIconLength) {
+					if (!unit->isCloaked) {
+						if (unit->lodCount <= 0) {
+							unit->Draw();
+						} else {
+							LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
+							const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+							unit->currentLOD = lod;
+							LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+							if ((lodMat != NULL) && lodMat->IsActive()) {
+								lodMat->AddUnit(unit);
+							} else {
+								unit->Draw();
+							}
+						}
 					}
 				}
 			}
 		}
 	}
+
+	glDisable(GL_VERTEX_PROGRAM_ARB);
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable( GL_VERTEX_PROGRAM_ARB );
+
+	DrawShadowShaderUnits();
+
 //	glDisable(GL_TEXTURE_2D);
 }
+
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
@@ -353,6 +625,7 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	va->AddVertexTN(interPos+(camera->up*unit->radius*1.4f+offset)-camera->right*unit->radius,tx+(1.0f/64.0f),ty+(1.0f/64.0f),camNorm);
 	va->AddVertexTN(interPos-(camera->up*unit->radius*1.4f-offset)-camera->right*unit->radius,tx+(1.0f/64.0f),ty,camNorm);
 }
+
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
@@ -382,16 +655,17 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	}
 	float dist=sqrt((pos-camera->pos).Length());
 	float scale=0.4f*icon->size*dist;
-	if(icon->radiusAdjust && !asRadarBlip)
+	if (icon->radiusAdjust && !asRadarBlip) {
 		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
+	}
 
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
-	if(unit->commandAI->selected){
-		color[0]=255;
-		color[1]=255;
-		color[2]=255;
+	if (unit->commandAI->selected) {
+		color[0] = 255;
+		color[1] = 255;
+		color[2] = 255;
 	} else {
 		color[0] = gs->Team(unit->team)->color[0];
 		color[1] = gs->Team(unit->team)->color[1];
@@ -399,20 +673,22 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	}
 
 	// If the icon is partly under the ground, move it up.
-	float h=ground->GetHeight(pos.x,pos.z);
-	if(pos.y<h+scale)
-		pos.y=h+scale;
+	const float h = ground->GetHeight(pos.x, pos.z);
+	if (pos.y < (h + scale)) {
+		pos.y = (h + scale);
+	}
 
 	// Draw the icon.
-	glBindTexture(GL_TEXTURE_2D,icon->texture);
-	va=GetVertexArray();
+	glBindTexture(GL_TEXTURE_2D, icon->texture);
+	va = GetVertexArray();
 	va->Initialize();
-	va->AddVertexTC(pos+camera->up*scale+camera->right*scale,1,0,color);
-	va->AddVertexTC(pos-camera->up*scale+camera->right*scale,1,1,color);
-	va->AddVertexTC(pos-camera->up*scale-camera->right*scale,0,1,color);
-	va->AddVertexTC(pos+camera->up*scale-camera->right*scale,0,0,color);
+	va->AddVertexTC(pos + camera->up * scale + camera->right * scale, 1, 0, color);
+	va->AddVertexTC(pos - camera->up * scale + camera->right * scale, 1, 1, color);
+	va->AddVertexTC(pos - camera->up * scale - camera->right * scale, 0, 1, color);
+	va->AddVertexTC(pos + camera->up * scale - camera->right * scale, 0, 0, color);
 	va->DrawArrayTC(GL_QUADS);
 }
+
 
 void CUnitDrawer::SetupForGhostDrawing ()
 {
@@ -428,6 +704,7 @@ void CUnitDrawer::SetupForGhostDrawing ()
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 }
 
+
 void CUnitDrawer::SetupForGhostDrawingS3O ()
 {
 	SetupBasicS3OTexture0();
@@ -440,9 +717,10 @@ void CUnitDrawer::SetupForGhostDrawingS3O ()
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
+
 void CUnitDrawer::CleanUpGhostDrawing ()
 {
-	glPopAttrib ();
+	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
 	glDisable(GL_ALPHA_TEST);
@@ -458,6 +736,7 @@ void CUnitDrawer::CleanUpGhostDrawing ()
 	// reset texture0 state
 	CleanupBasicS3OTexture0();
 }
+
 
 void CUnitDrawer::DrawCloakedUnits(void)
 {
@@ -478,7 +757,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 			glPushMatrix();
 			glTranslatef3(ti->second.pos);
 			glRotatef(ti->second.rotation*180/PI,0,1,0);
-			S3DOModel* model = modelParser->Load3DO(ti->second.unitdef->model.modelpath,1,ti->second.team);
+			S3DOModel* model = ti->second.unitdef->LoadModel(ti->second.team);
 			model->DrawStatic();
 			glPopMatrix();
 		}
@@ -515,30 +794,34 @@ void CUnitDrawer::DrawCloakedUnits(void)
 
 	// reset gl states
 	CleanUpGhostDrawing();
+
+	// shader rendering
+	DrawCloakedShaderUnits();
 }
 
 void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o)
 {
 	// cloaked units and living ghosted buildings
 	for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
-		if((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS){
+		CUnit* unit = *ui;
+		if(unit->losStatus[gu->myAllyTeam] & LOS_INLOS){
 			if (is_s3o) {
-				SetBasicS3OTeamColour((*ui)->team);
-				texturehandler->SetS3oTexture((*ui)->model->textureType);
+				SetBasicS3OTeamColour(unit->team);
+				texturehandler->SetS3oTexture(unit->model->textureType);
 			}
-			(*ui)->Draw();
+			unit->Draw();
 		} else {
-			if((*ui)->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
+			if(unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
 				glColor4f(0.9f,0.9f,0.9f,0.5f);
 			else
 				glColor4f(0.6f,0.6f,0.6f,0.4f);
 			glPushMatrix();
-			glTranslatef3((*ui)->pos);
+			glTranslatef3(unit->pos);
 			if (is_s3o) {
-				SetBasicS3OTeamColour((*ui)->team);
-				texturehandler->SetS3oTexture((*ui)->model->textureType);
+				SetBasicS3OTeamColour(unit->team);
+				texturehandler->SetS3oTexture(unit->model->textureType);
 			}
-			(*ui)->model->DrawStatic();
+			unit->model->DrawStatic();
 			glPopMatrix();
 		}
 	}
@@ -567,6 +850,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 		}
 	}
 }
+
 
 void CUnitDrawer::SetupForUnitDrawing(void)
 {
@@ -645,6 +929,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	glDisable(GL_BLEND);
 }
 
+
 void CUnitDrawer::CleanUpUnitDrawing(void)
 {
 	if (shadowHandler->inShadowPass)
@@ -677,15 +962,20 @@ void CUnitDrawer::CleanUpUnitDrawing(void)
 	}
 }
 
+
 void CUnitDrawer::SetS3OTeamColour(int team)
 {
 	if(advShading){
 		unsigned char* col=gs->Team(team)->color;
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, col[0]*(1.f/255.f),col[1]*(1.f/255.f),col[2]*(1.f/255.f),1);
+		if (luaDrawing) { // FIXME?
+			SetBasicS3OTeamColour(team);
+		}
 	} else {
 		SetBasicS3OTeamColour(team);
 	}
 }
+
 
 void CUnitDrawer::SetBasicS3OTeamColour(int team)
 {
@@ -693,6 +983,7 @@ void CUnitDrawer::SetBasicS3OTeamColour(int team)
 	float texConstant[]={col[0]*(1.f/255.f),col[1]*(1.f/255.f),col[2]*(1.f/255.f),1};
 	glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant);
 }
+
 
 /**
  * Set up the texture environment in texture unit 0
@@ -714,6 +1005,7 @@ void CUnitDrawer::SetupBasicS3OTexture0(void)
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 	glEnable(GL_TEXTURE_2D);
 }
+
 
 /**
  * This sets the first texture unit to GL_MODULATE the colours from the
@@ -836,6 +1128,7 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 	}
 }
 
+
 void CUnitDrawer::CleanUpS3ODrawing(void)
 {
 	glDisable(GL_CULL_FACE);
@@ -883,6 +1176,7 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 	}
 }
 
+
 void CUnitDrawer::CleanupBasicS3OTexture1(void)
 {
 	// reset texture1 state
@@ -891,6 +1185,7 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void)
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 }
+
 
 void CUnitDrawer::CleanupBasicS3OTexture0(void)
 {
@@ -902,6 +1197,7 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void)
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
+
 
 /**
  * Between a pair of SetupFor/CleanUpUnitDrawing (or SetupForS3ODrawing),
@@ -965,6 +1261,7 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
 	}
 }
 
+
 /**
  * The companion to UnitDrawingTexturesOff(), re-enables the texture units
  * needed for drawing a model.
@@ -1021,6 +1318,7 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
 	}
 }
 
+
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
 {
 	unsigned char* buf=SAFE_NEW unsigned char[size*size*4];
@@ -1041,6 +1339,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 	glTexImage2D(gltype,0,GL_RGBA8,size,size,0,GL_RGBA,GL_UNSIGNED_BYTE,buf);
 	delete[] buf;
 }
+
 
 void CUnitDrawer::UpdateReflectTex(void)
 {
@@ -1070,9 +1369,10 @@ void CUnitDrawer::UpdateReflectTex(void)
 	}
 }
 
+
 void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
-	glViewport(0,0,128,128);
+	glViewport(0,0,reflTexSize,reflTexSize);
 
 	CCamera realCam=*camera;
 	camera->fov=90;
@@ -1098,13 +1398,14 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	readmap->GetGroundDrawer()->Draw(false,true);
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
-	glCopyTexSubImage2D(gltype,0,0,0,0,0,128,128);
+	glCopyTexSubImage2D(gltype,0,0,0,0,0,reflTexSize,reflTexSize);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
 	(*camera)=realCam;
 	camera->Update(false);
 }
+
 
 void CUnitDrawer::QueS3ODraw(CWorldObject* object,int textureType)
 {
@@ -1115,13 +1416,14 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object,int textureType)
 	usedS3OTextures.insert(textureType);
 }
 
+
 void CUnitDrawer::DrawQuedS3O(void)
 {
 	SetupForS3ODrawing();
-	for(std::set<int>::iterator uti=usedS3OTextures.begin();uti!=usedS3OTextures.end();++uti){
-		int tex=*uti;
+	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
+		const int tex = *uti;
 		texturehandler->SetS3oTexture(tex);
-		for(std::vector<CWorldObject*>::iterator ui=quedS3Os[tex].begin();ui!=quedS3Os[tex].end();++ui){
+		for(std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
 			(*ui)->DrawS3O();
 		}
 		quedS3Os[tex].clear();
@@ -1129,6 +1431,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 	usedS3OTextures.clear();
 	CleanUpS3ODrawing();
 }
+
 
 /**
  * Draw one unit.
@@ -1142,12 +1445,39 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 {
 	const bool origDebug = gu->drawdebug;
 	gu->drawdebug = false;
-	if (unit->model->textureType == 0){
+
+	LuaUnitLODMaterial* lodMat = NULL;
+
+	if (unit->lodCount > 0) {
+		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_OPAQUE];
+		lodMat = unitMat.GetMaterial(unit->currentLOD);
+	}
+
+	if (lodMat && lodMat->IsActive()) {
+		CUnit::SetLODFactor(LODScale);
+
+		luaMatHandler.setup3doShader = SetupOpaque3DO;
+		luaMatHandler.reset3doShader = ResetOpaque3DO;
+		luaMatHandler.setupS3oShader = SetupOpaqueS3O;
+		luaMatHandler.resetS3oShader = ResetOpaqueS3O;
+
+		const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
+
+		mat.Execute(LuaMaterial::defMat);
+
+		lodMat->uniforms.Execute(unit);
+		SetS3OTeamColour(unit->team);
+		unit->DrawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
+
+		LuaMaterial::defMat.Execute(mat);
+	}
+	else if (unit->model->textureType == 0){
 		/* 3DO */
 		SetupForUnitDrawing();
 		unit->Draw();
 		CleanUpUnitDrawing();
-	} else {
+	}
+	else {
 		/* S3O */
 		SetupForS3ODrawing();
 		texturehandler->SetS3oTexture(unit->model->textureType);
@@ -1155,8 +1485,10 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		unit->Draw();
 		CleanUpS3ODrawing();
 	}
+
 	gu->drawdebug = origDebug;
 }
+
 
 /**
  * Draw one unit,
@@ -1170,7 +1502,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
  */
 void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
 {
-	S3DOModel* model=modelParser->Load3DO(unitdef->model.modelpath.c_str(), 1, side);
+	S3DOModel* model = unitdef->LoadModel(side);
 
 	if (model->textureType == 0){
 		/* 3DO */
@@ -1240,8 +1572,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 
 void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 {
-	S3DOModel* model =
-		modelParser->Load3DO(unitDef->model.modelpath.c_str(), 1, team);
+	S3DOModel* model = unitDef->LoadModel(team);
 
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);

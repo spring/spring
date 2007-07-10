@@ -94,6 +94,10 @@ void CBFGroundDrawer::DrawGroundVertexArray()
 
 void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
 {
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
 	drawWater=drawWaterReflection;
 
 	int baseViewRadius=max(4,viewRadius);
@@ -481,6 +485,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	}
 	ResetTextureUnits(drawWaterReflection,overrideVP);
 	glDisable(GL_CULL_FACE);
+
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	if(map->voidWater && !drawWater){
 		glDisable(GL_ALPHA_TEST);

@@ -49,6 +49,7 @@ using namespace std;
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/FontTexture.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -122,6 +123,11 @@ CLuaUI::CLuaUI()
 
 	UpdateTeams();
 
+	haveShockFront = false;
+	shockFrontMinArea  = 0.0f;
+	shockFrontMinPower = 0.0f;
+	shockFrontDistAdj  = 100.0f;
+
 	lastUpdateTime = SDL_GetTicks();
 	lastUpdateSeconds = 0.0f;
 
@@ -140,6 +146,15 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_string);
 	LUA_OPEN_LIB(L, luaopen_package);
 	LUA_OPEN_LIB(L, luaopen_debug);
+
+	// remove a few dangerous calls
+	lua_getglobal(L, "io");
+	lua_pushstring(L, "popen"); lua_pushnil(L); lua_rawset(L, -3);
+	lua_pop(L, 1);
+	lua_getglobal(L, "os");
+	lua_pushstring(L, "exit");    lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushstring(L, "execute"); lua_pushnil(L); lua_rawset(L, -3);
+	lua_pop(L, 1);
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
@@ -217,9 +232,10 @@ bool CLuaUI::HasCallIn(const string& name)
 		return false;
 	}
 
-	// never allow these calls;
-	// use UpdateLayout, DrawWorldItems, and DrawScreenItems instead
+	// never allow these calls
+	// (use UpdateLayout, ShockFront, DrawWorldItems, and DrawScreenItems instead)
 	if ((name == "Update")    ||
+	    (name == "Explosion") ||
 	    (name == "DrawWorld") ||
 	    (name == "DrawScreen")) {
 		return false;
@@ -297,8 +313,11 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
-	REGISTER_LUA_CFUNC(AddMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
+
+	REGISTER_LUA_CFUNC(SetCameraOffset);
+
+	REGISTER_LUA_CFUNC(SetShockFrontFactors);
 
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
@@ -336,6 +355,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnits);
 	REGISTER_LUA_CFUNC(GetGroupUnitsSorted);
 	REGISTER_LUA_CFUNC(GetGroupUnitsCounts);
+	REGISTER_LUA_CFUNC(GetGroupUnitsCount);
 
 	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(ShareResources);
@@ -531,6 +551,60 @@ bool CLuaUI::GroupChanged(int groupID)
 	}
 
 	return true;
+}
+
+
+static inline float fuzzRand(float fuzz)
+{
+	return (1.0f + fuzz) - ((2.0f * fuzz) * (float)rand() / (float)RAND_MAX);
+}
+
+
+void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
+{
+	if (!haveShockFront) {
+		return;
+	}
+	if (areaOfEffect < shockFrontMinArea) {
+		return;
+	}
+
+	float3 gap = (camera->pos - pos);
+	float dist = gap.Length() + shockFrontDistAdj;
+
+	power = power / (dist * dist);
+	if (power < shockFrontMinPower) {
+		return;
+	}
+
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("ShockFront");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		haveShockFront = false;
+		lua_settop(L, 0);
+		return; // the call is not defined
+	}
+
+	if (!loshandler->InLos(pos, gu->myAllyTeam) && !gu->spectatingFullView) {
+		const float fuzz = 0.25f;
+		gap.x *= fuzzRand(fuzz);
+		gap.y *= fuzzRand(fuzz);
+		gap.z *= fuzzRand(fuzz);
+		dist = gap.Length() + shockFrontDistAdj;
+	}
+	const float3 dir = (gap / dist); // normalize
+
+	lua_pushnumber(L, power);
+	lua_pushnumber(L, dir.x);
+	lua_pushnumber(L, dir.y);
+	lua_pushnumber(L, dir.z);
+
+	// call the routinea
+	if (!RunCallIn(cmdStr, 4, 0)) {
+		return;
+	}
+
+	return;
 }
 
 
@@ -731,6 +805,32 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 	}
 
 	return -1;
+}
+
+
+bool CLuaUI::MouseWheel(bool up, float value)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("MouseWheel");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushboolean(L, up);
+	lua_pushnumber(L, value);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 2, 1)) {
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args == 1) && lua_isboolean(L, 1)) {
+		return !!lua_toboolean(L, 1);
+	}
+
+	return false;
 }
 
 
@@ -1595,34 +1695,41 @@ int CLuaUI::SetMouseCursor(lua_State* L)
 }
 
 
-int CLuaUI::AddMouseCursor(lua_State* L)
+/******************************************************************************/
+
+int CLuaUI::SetCameraOffset(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to AddMouseCursor()");
+	if (camera == NULL) {
+		return 0;
 	}
+	const float px = (float)luaL_optnumber(L, 1, 0.0f);
+	const float py = (float)luaL_optnumber(L, 2, 0.0f);
+	const float pz = (float)luaL_optnumber(L, 3, 0.0f);
+	const float tx = (float)luaL_optnumber(L, 4, 0.0f);
+	const float ty = (float)luaL_optnumber(L, 5, 0.0f);
+	const float tz = (float)luaL_optnumber(L, 6, 0.0f);
+	camera->posOffset = float3(px, py, pz);
+	camera->tiltOffset = float3(tx, ty, tz);
+	return 0;
+}
 
-	const string cursorName = lua_tostring(L, 1);
-	const string fileName   = lua_tostring(L, 2);
 
-	bool overwrite = true;
-	if ((args >= 3) && lua_isboolean(L, 3)) {
-		overwrite = lua_toboolean(L, 3);
+int CLuaUI::SetShockFrontFactors(lua_State* L)
+{
+	luaUI->haveShockFront = true;
+	if (lua_isnumber(L, 1)) {
+		const float value = max(0.0f, (float)lua_tonumber(L, 1));
+		luaUI->shockFrontMinArea = value;
 	}
-
-	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if ((args >= 4) && lua_isboolean(L, 4)) {
-		if (lua_toboolean(L, 4)) {
-			hotSpot = CMouseCursor::TopLeft;
-		}
+	if (lua_isnumber(L, 2)) {
+		const float value = max(0.0f, (float)lua_tonumber(L, 2));
+		luaUI->shockFrontMinPower = value;
 	}
-
-	if (mouse->AddMouseCursor(cursorName, fileName, hotSpot, overwrite)) {
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
+	if (lua_isnumber(L, 3)) {
+		const float value = max(1.0f, (float)lua_tonumber(L, 3));
+		luaUI->shockFrontDistAdj = value;
 	}
-	return 1;
+	return 0;
 }
 
 
@@ -2064,6 +2171,10 @@ int CLuaUI::GetUnitGroup(lua_State* L)
 
 int CLuaUI::SetUnitGroup(lua_State* L)
 {
+	if (gs->noHelperAIs) {
+		return 0;
+	}
+
 	CUnit* unit = ParseRawUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
@@ -2096,11 +2207,7 @@ int CLuaUI::SetUnitGroup(lua_State* L)
 
 int CLuaUI::GetGroupUnits(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetGroupUnits(groupID)");
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
+	const int groupID = (int)luaL_checknumber(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
@@ -2125,11 +2232,7 @@ int CLuaUI::GetGroupUnits(lua_State* L)
 
 int CLuaUI::GetGroupUnitsSorted(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetGroupUnitsSorted(groupID)");
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
+	const int groupID = (int)luaL_checknumber(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
@@ -2168,11 +2271,7 @@ int CLuaUI::GetGroupUnitsSorted(lua_State* L)
 
 int CLuaUI::GetGroupUnitsCounts(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "Incorrect arguments to GetGroupUnitsCounts(groupID)");
-	}
-	const int groupID = (int)lua_tonumber(L, 1);
+	const int groupID = (int)luaL_checknumber(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
@@ -2202,6 +2301,19 @@ int CLuaUI::GetGroupUnitsCounts(lua_State* L)
 	}
 	HSTR_PUSH_NUMBER(L, "n", countMap.size());
 
+	return 1;
+}
+
+
+int CLuaUI::GetGroupUnitsCount(lua_State* L)
+{
+	const int groupID = (int)luaL_checknumber(L, 1);
+	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
+	if ((groupID < 0) || (groupID >= groups.size()) ||
+	    (groups[groupID] == NULL)) {
+		return 0; // nils
+	}
+	lua_pushnumber(L, groups[groupID]->units.size());
 	return 1;
 }
 
@@ -2548,7 +2660,7 @@ int CLuaUI::GiveOrderArrayToUnitArray(lua_State* L)
 
 int CLuaUI::SetShareLevel(lua_State* L)
 {
-	if (gu->spectating || (gs->frameNum <= 0)) {
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
 		return 0;
 	}
 
@@ -2575,7 +2687,7 @@ int CLuaUI::SetShareLevel(lua_State* L)
 
 int CLuaUI::ShareResources(lua_State* L)
 {
-	if (gu->spectating || (gs->frameNum <= 0)) {
+	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
 		return 0;
 	}
 

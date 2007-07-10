@@ -16,8 +16,10 @@ struct FeatureDef
 		metal(0), energy(0), maxHealth(0), radius(0), mass(0),
 		upright(false), drawType(0), modelType(0),
 		destructable(false), reclaimable(true), blocking(false),
-		burnable(false), floating(false), geoThermal(false),
+		burnable(false), floating(false), geoThermal(false), noSelect(false),
 		xsize(0), ysize(0) {}
+
+	S3DOModel* LoadModel(int team) const;
 
 	std::string myName;
 	std::string description;
@@ -44,6 +46,7 @@ struct FeatureDef
 	bool blocking;
 	bool burnable;
 	bool floating;
+	bool noSelect;
 
 	bool geoThermal;
 

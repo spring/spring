@@ -8,7 +8,9 @@
 #include <locale>
 #include <cctype>
 #include "FileSystem/FileHandler.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "LogOutput.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sound.h"
@@ -17,7 +19,6 @@
 #include "UnitDef.h"
 #include "Map/ReadMap.h"
 #include "Game/GameSetup.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Team.h"
 #include "Sim/Misc/SensorHandler.h"
@@ -39,7 +40,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
 
-	numUnits = 0;
+	numUnitDefs = 0;
 
 	std::vector<std::string> tafiles = CFileHandler::FindFiles("units/", "*.fbi");
 	std::vector<std::string> tafiles2 = CFileHandler::FindFiles("units/", "*.swu");
@@ -50,13 +51,13 @@ CUnitDefHandler::CUnitDefHandler(void)
 
 	soundcategory.LoadFile("gamedata/SOUND.TDF");
 
-	numUnits = tafiles.size();
+	numUnitDefs = tafiles.size();
 	if (gameSetup) {
-		numUnits -= gameSetup->restrictedUnits.size();
+		numUnitDefs -= gameSetup->restrictedUnits.size();
 	}
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
-	unitDefs = SAFE_NEW UnitDef[numUnits + 1];
+	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
 
 	unsigned int id = 1;  // Start at unit id 1
 
@@ -99,7 +100,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 	}
 
 	// set the real number of unitdefs
-	numUnits = (id - 1);
+	numUnitDefs = (id - 1);
 
 	FindTABuildOpt();
 
@@ -112,7 +113,7 @@ CUnitDefHandler::CUnitDefHandler(void)
 CUnitDefHandler::~CUnitDefHandler(void)
 {
 	//Deleting eventual yeardmaps.
-	for(int i = 1; i <= numUnits; i++){
+	for(int i = 1; i <= numUnitDefs; i++){
 		for (int u = 0; u < 4; u++)
 			delete[] unitDefs[i].yardmaps[u];
 
@@ -725,8 +726,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 }
 
 
-
-void CUnitDefHandler::LoadSounds(TdfParser &tdfparser, GuiSound& gsound, std::string soundName, int numSounds)
+void CUnitDefHandler::LoadSounds(TdfParser &tdfparser, GuiSoundSet& gsound, std::string soundName, int numSounds)
 {
 	if (numSounds > 1) {
 		for (int i = 1; i <= numSounds; i++) {
@@ -739,7 +739,8 @@ void CUnitDefHandler::LoadSounds(TdfParser &tdfparser, GuiSound& gsound, std::st
 	}
 }
 
-void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound& gsound, std::string soundCatName, int soundNum)
+
+void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSoundSet& gsound, std::string soundCatName, int soundNum)
 {
 	if (soundNum > 0) {
 		// soundNum of 0 means this sound has no
@@ -765,13 +766,11 @@ void CUnitDefHandler::LoadSound(TdfParser &tdfparser, GuiSound& gsound, std::str
 			int id = sound->GetWaveId(soundFile);
 			POP_CODE_MODE;
 
-			gsound.names.push_back(soundName);
-			gsound.ids.push_back(id);
-			gsound.volumes.push_back(5.0f);
+			GuiSoundSet::Data soundData(soundName, id, 5.0f);
+			gsound.sounds.push_back(soundData);
 		}
 	}
 }
-
 
 
 void CUnitDefHandler::ParseUnit(std::string file, int id)
@@ -815,7 +814,7 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 
 UnitDef *CUnitDefHandler::GetUnitByID(int id)
 {
-	if ((id <= 0) || (id > numUnits)) {
+	if ((id <= 0) || (id > numUnitDefs)) {
 		return NULL;
 	}
 	UnitDef* ud = &unitDefs[id];
@@ -987,4 +986,17 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 
 UnitDef::~UnitDef()
 {
+}
+
+
+S3DOModel* UnitDef::LoadModel(int team) const
+{
+	if (!useCSOffset) {
+		return modelParser->Load3DO(model.modelpath.c_str(),
+		                            collisionSphereScale, team);
+	} else {
+		return modelParser->Load3DO(model.modelpath.c_str(),
+		                            collisionSphereScale, team,
+		                            collisionSphereOffset);
+	};
 }

@@ -26,7 +26,7 @@ class CScriptMoveType : public CMoveType
 		void SetHeading(short heading);
 		void SetNoBlocking(bool state);
 		
-	public: // null'ed virtuals  (FIXME -- redirect to the real MoveType?)
+	public: // null'ed virtuals
 		void StartMoving(float3 pos, float goalRadius) {};
 		void StartMoving(float3 pos, float goalRadius, float speed) {};
 		void KeepPointingTo(float3 pos, float distance, bool aggressive) {};
@@ -72,9 +72,12 @@ class CScriptMoveType : public CMoveType
 
 		bool noBlocking;
 
+		bool gndStop;
 		bool shotStop;
 		bool slopeStop;
 		bool collideStop;
+
+		bool leaveTracks;
 
 	protected:
 		bool hasDecal;

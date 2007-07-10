@@ -29,13 +29,14 @@ void CWordCompletion::Reset()
 	WordProperties sl(true, false, false);
 
 	// local commands
+	words["/advshading "] = sl;
 	words["/clock"] = sl;
-	words["/cmdcolors"] = sl;
-	words["/ctrlpanel"] = sl;
+	words["/cmdcolors "] = sl;
+	words["/ctrlpanel "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
-	words["/info"] = sl;
+	words["/info "] = sl;
 	words["/luaui "] = sl;
 	words["/maxparticles "] = sl;
 	words["/minimap "] = sl;

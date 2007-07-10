@@ -39,10 +39,16 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side,const float3
 
 LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
 {
-	if(model->rootobject3do)
-		return unit3doparser->CreateLocalModel(model,pieces);
-	else
-		return units3oparser->CreateLocalModel(model,pieces);
+	LocalS3DOModel* lm;
+	if (model->rootobject3do) {
+		lm = unit3doparser->CreateLocalModel(model,pieces);
+	} else {
+		lm = units3oparser->CreateLocalModel(model,pieces);
+	}
+	for (int i = 0; i < lm->numpieces; i++) {
+		LocalS3DO& piece = lm->pieces[i];
+	}
+	return lm;
 }
 
 void S3DOModel::DrawStatic()

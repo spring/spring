@@ -27,9 +27,13 @@ using namespace std;
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/ReadMap.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseWater.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Net.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -53,9 +57,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
-
 	REGISTER_LUA_CFUNC(IsReplay);
-	REGISTER_LUA_CFUNC(IsGUIHidden);
 
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(IsSphereInView);
@@ -75,6 +77,13 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSelectedUnits);
 	REGISTER_LUA_CFUNC(GetSelectedUnitsSorted);
 	REGISTER_LUA_CFUNC(GetSelectedUnitsCounts);
+	REGISTER_LUA_CFUNC(GetSelectedUnitsCount);
+
+	REGISTER_LUA_CFUNC(IsGUIHidden);
+	REGISTER_LUA_CFUNC(HaveShadows);
+	REGISTER_LUA_CFUNC(HaveAdvShading);
+	REGISTER_LUA_CFUNC(GetWaterMode);
+	REGISTER_LUA_CFUNC(GetMapDrawMode);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
@@ -82,8 +91,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCameraVectors);
 	REGISTER_LUA_CFUNC(WorldToScreenCoords);
 	REGISTER_LUA_CFUNC(TraceScreenRay);
-
-	REGISTER_LUA_CFUNC(GetMapDrawMode);
 
 	REGISTER_LUA_CFUNC(GetTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
@@ -149,17 +156,7 @@ int LuaUnsyncedRead::IsReplay(lua_State* L)
 }
 
 
-int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	if (!game || game->hideInterface) {
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
-	}
-	return 1;
-}
-
+/******************************************************************************/
 
 int LuaUnsyncedRead::GetFrameTimeOffset(lua_State* L)
 {
@@ -258,12 +255,15 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	float3 pos;
-	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
-		pos = unit->midPos + (unit->speed * gu->timeOffset);
+	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+
+	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
+	if (unit->transporter == NULL) {
+		pos += (unit->speed * gu->timeOffset);
 	} else {
-		pos = unit->pos + (unit->speed * gu->timeOffset);
+		pos += (unit->transporter->speed * gu->timeOffset);
 	}
+
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
@@ -392,7 +392,86 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 }
 
 
+int LuaUnsyncedRead::GetSelectedUnitsCount(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, selectedUnits.selectedUnits.size());
+	return 1;
+}
+
+
 /******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (game == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, game->hideInterface);
+	return 1;	
+}
+
+
+int LuaUnsyncedRead::HaveShadows(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (shadowHandler == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, shadowHandler->drawShadows);
+	return 1;	
+}
+
+
+int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (unitDrawer == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unitDrawer->advShading);
+	return 1;	
+}
+
+
+int LuaUnsyncedRead::GetWaterMode(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (water == NULL) {
+		return 0;
+	}
+	const int mode = water->GetID();
+	const char* modeName;
+	switch (mode) {
+		case 0:  { modeName = "basic";      break; }
+		case 1:  { modeName = "reflective"; break; }
+		case 2:  { modeName = "dynamic";    break; }
+		case 3:  { modeName = "refractive"; break; }
+		default: { modeName = "unknown";    break; }
+	}
+	lua_pushnumber(L, mode);
+	lua_pushstring(L, modeName);
+	return 2;	
+}
+
+
+int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	switch (gd->drawMode) {
+		case CBaseGroundDrawer::drawNormal: { HSTR_PUSH(L, "normal"); break; }
+		case CBaseGroundDrawer::drawHeight: { HSTR_PUSH(L, "height"); break; }
+		case CBaseGroundDrawer::drawMetal:  { HSTR_PUSH(L, "metal");  break; }
+		case CBaseGroundDrawer::drawPath:   { HSTR_PUSH(L, "path");   break; }
+		case CBaseGroundDrawer::drawLos:    { HSTR_PUSH(L, "los");    break; }
+	}
+	return 1;
+}
+
+
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
@@ -425,7 +504,9 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	lua_pushstring(L, mouse->currentCamController->GetName().c_str());
 	lua_rawset(L, -3);
 
-	vector<float> camState = mouse->currentCamController->GetState();
+
+	vector<float> camState;
+	mouse->currentCamController->GetState(camState);
 	for (int i = 0; i < (int)camState.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, camState[i]);
@@ -607,24 +688,6 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 	lua_pushnumber(L, count);
 	lua_rawset(L, -3);
 
-	return 1;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	switch (gd->drawMode) {
-		case CBaseGroundDrawer::drawNormal: { HSTR_PUSH(L, "normal"); break; }
-		case CBaseGroundDrawer::drawHeight: { HSTR_PUSH(L, "height"); break; }
-		case CBaseGroundDrawer::drawMetal:  { HSTR_PUSH(L, "metal");  break; }
-		case CBaseGroundDrawer::drawPath:   { HSTR_PUSH(L, "path");   break; }
-		case CBaseGroundDrawer::drawLos:    { HSTR_PUSH(L, "los");    break; }
-	}
 	return 1;
 }
 

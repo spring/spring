@@ -80,6 +80,7 @@ class LuaSyncedRead {
 
 		static int GetFeaturesInRectangle(lua_State* L);
 
+		static int GetUnitTooltip(lua_State* L);
 		static int GetUnitDefID(lua_State* L);
 		static int GetUnitTeam(lua_State* L);
 		static int GetUnitAllyTeam(lua_State* L);
@@ -89,6 +90,8 @@ class LuaSyncedRead {
 		static int GetUnitResources(lua_State* L);
 		static int GetUnitExperience(lua_State* L);
 		static int GetUnitStates(lua_State* L);
+		static int GetUnitIsActive(lua_State* L);
+		static int GetUnitIsCloaked(lua_State* L);
 		static int GetUnitSelfDTime(lua_State* L);
 		static int GetUnitStockpile(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
@@ -101,6 +104,7 @@ class LuaSyncedRead {
 		static int GetUnitIsBuilding(lua_State* L);
 		static int GetUnitTransporter(lua_State* L);
 		static int GetUnitIsTransporting(lua_State* L);
+		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
 
 		static int GetUnitCommands(lua_State* L);
@@ -132,6 +136,7 @@ class LuaSyncedRead {
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
 		static int GetFeatureResources(lua_State* L);
+		static int GetFeatureNoSelect(lua_State* L);
 
 		static int GetGroundHeight(lua_State* L);
 		static int GetGroundNormal(lua_State* L);
@@ -148,6 +153,10 @@ class LuaSyncedRead {
 		static int TraceRayGround(lua_State* L); // not implemented
 
 		static int GetPositionLosState(lua_State* L);
+
+		static int GetUnitPiecePosition(lua_State* L);
+		static int GetUnitPieceDirection(lua_State* L);
+		static int GetUnitPieceMatrix(lua_State* L);
 };
 
 

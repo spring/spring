@@ -383,7 +383,9 @@ void CBasicSky::Update()
 {
 	if(lastCloudUpdate>gs->frameNum-10 || !dynamicSky)
 		return;
-START_TIME_PROFILE
+
+START_TIME_PROFILE("Drawing sky");
+
 	lastCloudUpdate=gs->frameNum;
 
 	int blendMatrix[CLOUD_DETAIL][32][32];

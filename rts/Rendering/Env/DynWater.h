@@ -15,6 +15,7 @@ public:
 	virtual void UpdateWater(CGame* game);
 	virtual void Update();
 	virtual void AddExplosion(const float3& pos, float strength, float size);
+	int GetID() const { return 2; }
 
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);

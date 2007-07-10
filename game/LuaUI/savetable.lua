@@ -59,14 +59,14 @@ end
 local keyTypes = {
   ['string']  = true,
   ['number']  = true,
-  ['boolean'] = true
+  ['boolean'] = true,
 }
 
 local valueTypes = {
   ['string']  = true,
   ['number']  = true,
   ['boolean'] = true,
-  ['table']   = true
+  ['table']   = true,
 }
 
 
@@ -147,6 +147,9 @@ end
 
 function table.save(t, filename, header)
   local file = io.open(filename, 'w')
+  if (file == nil) then
+    return
+  end
   if (header) then
     file:write(header..'\n')
   end

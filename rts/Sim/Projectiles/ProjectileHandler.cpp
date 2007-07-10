@@ -26,6 +26,7 @@
 #include "LogOutput.h"
 #include <algorithm>
 #include "Rendering/GL/IFramebuffer.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 #include "creg/STL_List.h"
 
@@ -57,14 +58,18 @@ CProjectileHandler::CProjectileHandler()
 	particleSaturation=0;
 	numPerlinProjectiles=0;
 
-	TdfParser resources("gamedata/resources.tdf");
 	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 
+	// used to block resources_map.tdf from loading textures
+	std::set<std::string> blockMapTexNames;
+
+	TdfParser resources("gamedata/resources.tdf");
 	//add all textures in projectiletextures section
 	std::map<std::string,std::string> ptex = resources.GetAllValues("resources\\graphics\\projectiletextures");
 	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
 	{
 		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+		blockMapTexNames.insert(pi->first);
 	}
 	//add all texture from sections within projectiletextures section
 	std::vector<std::string> seclist = resources.GetSectionList("resources\\graphics\\projectiletextures");
@@ -74,30 +79,79 @@ CProjectileHandler::CProjectileHandler()
 		for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
 		{
 			textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+			blockMapTexNames.insert(pi->first);
 		}
 	}
 
 
-	for(int i=0; i<12; i++)
-	{
+	for (int i = 0; i < 12; i++) {
 		char num[10];
 		sprintf(num, "%02i", i);
 		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+resources.SGetValueDef(std::string("smoke/smoke") + num +".tga",std::string("resources\\graphics\\smoke\\smoke")+num+"alpha"));
+		blockMapTexNames.insert(std::string("ismoke") + num);
 	}
 
 	char tex[128][128][4];
-	for(int y=0;y<128;y++){//shield
-		for(int x=0;x<128;x++){
-			tex[y][x][0]=70;
-			tex[y][x][1]=70;
-			tex[y][x][2]=70;
-			tex[y][x][3]=70;
+	for (int y = 0; y < 128; y++) { // shield
+		for (int x = 0; x < 128; x++) {
+			tex[y][x][0] = 70;
+			tex[y][x][1] = 70;
+			tex[y][x][2] = 70;
+			tex[y][x][3] = 70;
 		}
 	}
 	textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, tex);
+	blockMapTexNames.insert("perlintex");
 
-	if (!textureAtlas->Finalize())
+	blockMapTexNames.insert("flare");
+	blockMapTexNames.insert("explo");
+	blockMapTexNames.insert("explofade");
+	blockMapTexNames.insert("heatcloud");
+	blockMapTexNames.insert("laserend");
+	blockMapTexNames.insert("laserfalloff");
+	blockMapTexNames.insert("randdots");
+	blockMapTexNames.insert("smoketrail");
+	blockMapTexNames.insert("wake");
+	blockMapTexNames.insert("perlintex");
+	blockMapTexNames.insert("flame");
+
+	blockMapTexNames.insert("sbtrailtexture");
+	blockMapTexNames.insert("missiletrailtexture");
+	blockMapTexNames.insert("muzzleflametexture");
+	blockMapTexNames.insert("repulsetexture");
+	blockMapTexNames.insert("dguntexture");
+	blockMapTexNames.insert("flareprojectiletexture");
+	blockMapTexNames.insert("sbflaretexture");
+	blockMapTexNames.insert("missileflaretexture");
+	blockMapTexNames.insert("beamlaserflaretexture");
+	blockMapTexNames.insert("bubbletexture");
+	blockMapTexNames.insert("geosquaretexture");
+	blockMapTexNames.insert("gfxtexture");
+	blockMapTexNames.insert("projectiletexture");
+	blockMapTexNames.insert("repulsegfxtexture");
+	blockMapTexNames.insert("sphereparttexture");
+	blockMapTexNames.insert("torpedotexture");
+	blockMapTexNames.insert("wrecktexture");
+	blockMapTexNames.insert("plasmatexture");
+
+	// allow map specified atlas textures for gaia unit projectiles
+	CFileHandler fh("gamedata/resources_map.tdf");
+	if (fh.FileExists()) {
+		TdfParser resources_map("gamedata/resources_map.tdf");
+		//add all textures in projectiletextures section 
+		std::map<std::string,std::string> mptex =
+			resources_map.GetAllValues("resources\\graphics\\projectiletextures");
+		std::map<std::string,std::string>::iterator pi;
+		for (pi = mptex.begin(); pi != mptex.end(); ++pi) {
+			if (blockMapTexNames.find(pi->first) == blockMapTexNames.end()) {
+				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+			}
+		}
+	}
+
+	if (!textureAtlas->Finalize()) {
 		logOutput.Print("Could not finalize projectile texture atlas. Use less/smaller textures.");
+	}
 
 	flaretex        = textureAtlas->GetTexture("flare");
 	explotex        = textureAtlas->GetTexture("explo");
@@ -111,32 +165,30 @@ CProjectileHandler::CProjectileHandler()
 	perlintex       = textureAtlas->GetTexture("perlintex");
 	flametex        = textureAtlas->GetTexture("flame");
 
-	for(int i=0; i<12; i++)
-	{
+	for (int i = 0; i < 12; i++) {
 		char num[10];
 		sprintf(num, "%02i", i);
 		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
 	}
 
-	sbtrailtex          = textureAtlas->GetTextureWithBackup(  "sbtrailtexture",         "smoketrail"      );
-	missiletrailtex     = textureAtlas->GetTextureWithBackup(  "missiletrailtexture",    "smoketrail"      );
-	muzzleflametex      = textureAtlas->GetTextureWithBackup(  "muzzleflametexture",     "explo"           );
-	repulsetex          = textureAtlas->GetTextureWithBackup(  "repulsetexture",         "explo"           );
-	dguntex             = textureAtlas->GetTextureWithBackup(  "dguntexture",            "flare"           );
-	flareprojectiletex  = textureAtlas->GetTextureWithBackup(  "flareprojectiletexture", "flare"           );
-	sbflaretex          = textureAtlas->GetTextureWithBackup(  "sbflaretexture",         "flare"           );
-	missileflaretex     = textureAtlas->GetTextureWithBackup(  "missileflaretexture",    "flare"           );
-	beamlaserflaretex   = textureAtlas->GetTextureWithBackup(  "beamlaserflaretexture",  "flare"           );
-	bubbletex           = textureAtlas->GetTextureWithBackup(  "bubbletexture",          "circularthingy"  );
-	geosquaretex        = textureAtlas->GetTextureWithBackup(  "geosquaretexture",       "circularthingy"  );
-	gfxtex              = textureAtlas->GetTextureWithBackup(  "gfxtexture",             "circularthingy"  );
-	projectiletex       = textureAtlas->GetTextureWithBackup(  "projectiletexture",      "circularthingy"  );
-	repulsegfxtex       = textureAtlas->GetTextureWithBackup(  "repulsegfxtexture",      "circularthingy"  );
-	sphereparttex       = textureAtlas->GetTextureWithBackup(  "sphereparttexture",      "circularthingy"  );
-	torpedotex          = textureAtlas->GetTextureWithBackup(  "torpedotexture",         "circularthingy"  );
-	wrecktex            = textureAtlas->GetTextureWithBackup(  "wrecktexture",           "circularthingy"  );
-	plasmatex           = textureAtlas->GetTextureWithBackup(  "plasmatexture",          "circularthingy"  );
-
+	sbtrailtex        = textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
+	missiletrailtex   = textureAtlas->GetTextureWithBackup("missiletrailtexture",    "smoketrail"    );
+	muzzleflametex    = textureAtlas->GetTextureWithBackup("muzzleflametexture",     "explo"         );
+	repulsetex        = textureAtlas->GetTextureWithBackup("repulsetexture",         "explo"         );
+	dguntex           = textureAtlas->GetTextureWithBackup("dguntexture",            "flare"         );
+	flareprojectiletex= textureAtlas->GetTextureWithBackup("flareprojectiletexture", "flare"         );
+	sbflaretex        = textureAtlas->GetTextureWithBackup("sbflaretexture",         "flare"         );
+	missileflaretex   = textureAtlas->GetTextureWithBackup("missileflaretexture",    "flare"         );
+	beamlaserflaretex = textureAtlas->GetTextureWithBackup("beamlaserflaretexture",  "flare"         );
+	bubbletex         = textureAtlas->GetTextureWithBackup("bubbletexture",          "circularthingy");
+	geosquaretex      = textureAtlas->GetTextureWithBackup("geosquaretexture",       "circularthingy");
+	gfxtex            = textureAtlas->GetTextureWithBackup("gfxtexture",             "circularthingy");
+	projectiletex     = textureAtlas->GetTextureWithBackup("projectiletexture",      "circularthingy");
+	repulsegfxtex     = textureAtlas->GetTextureWithBackup("repulsegfxtexture",      "circularthingy");
+	sphereparttex     = textureAtlas->GetTextureWithBackup("sphereparttexture",      "circularthingy");
+	torpedotex        = textureAtlas->GetTextureWithBackup("torpedotexture",         "circularthingy");
+	wrecktex          = textureAtlas->GetTextureWithBackup("wrecktexture",           "circularthingy");
+	plasmatex         = textureAtlas->GetTextureWithBackup("plasmatexture",          "circularthingy");
 
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
@@ -266,7 +318,8 @@ void CProjectileHandler::SetMaxParticles(int value)
 
 void CProjectileHandler::Update()
 {
-START_TIME_PROFILE
+	START_TIME_PROFILE("Projectile handler");
+
 	Projectile_List::iterator psi=ps.begin();
 	while(psi!= ps.end()){
 		CProjectile *p = *psi;
@@ -309,7 +362,8 @@ START_TIME_PROFILE
 			}
 		}
 	}
-END_TIME_PROFILE("Projectile handler");
+
+	END_TIME_PROFILE("Projectile handler");
 }
 
 int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){

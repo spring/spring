@@ -71,7 +71,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
                              bool build, int facing, const CUnit* builder)
 {
 	CUnit* unit;
-START_TIME_PROFILE;
+
+	START_TIME_PROFILE("Unit loader");
 
 	UnitDef* ud= unitDefHandler->GetUnitByName(name);
 	if(!ud) {
@@ -275,12 +276,7 @@ START_TIME_PROFILE;
 	if(ud->tidalGenerator>0)
 		unit->energyTickMake += ud->tidalGenerator*readmap->tidalStrength;
 
-	if (ud->useCSOffset) {
-		unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side, ud->collisionSphereOffset);
-	}
-	else {
-		unit->model = modelParser->Load3DO((ud->model.modelpath).c_str(),ud->collisionSphereScale,side);
-	};
+	unit->model = ud->LoadModel(side);
 	unit->SetRadius(unit->model->radius);
 
 	if(ud->floater)
@@ -324,7 +320,8 @@ START_TIME_PROFILE;
 	if(!build)
 		unit->FinishedBuilding();
 
-END_TIME_PROFILE("Unit loader");
+	END_TIME_PROFILE("Unit loader");
+
 	return unit;
 }
 

@@ -14,6 +14,7 @@ public:
 	void UpdateWater(CGame* game){};
 	CBasicWater();
 	virtual ~CBasicWater();
+	int GetID() const { return 0; }
 
 	unsigned int texture;
 	unsigned int displist;

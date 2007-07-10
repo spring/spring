@@ -147,6 +147,8 @@
 //
 //  Default Bindings:
 //
+//  fakemeta          space
+//
 //  bind                esc  quitwarn
 //  bind          Shift+esc  quit
 //

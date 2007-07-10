@@ -1,9 +1,9 @@
 #include "StdAfx.h"
-// LuaBoolOps.cpp: implementation of the LuaBoolOps class.
+// LuaBitOps.cpp: implementation of the LuaBitOps class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaBoolOps.h"
+#include "LuaBitOps.h"
 
 #include "LuaInclude.h"
 
@@ -16,13 +16,13 @@ const int mask = 0x00FFFFFF; // 2^24
 /******************************************************************************/
 /******************************************************************************/
 
-bool LuaBoolOps::PushEntries(lua_State* L)
+bool LuaBitOps::PushEntries(lua_State* L)
 {
-	LuaPushNamedCFunc(L, "bool_or",   bool_or);
-	LuaPushNamedCFunc(L, "bool_and",  bool_and);
-	LuaPushNamedCFunc(L, "bool_xor",  bool_xor);
-	LuaPushNamedCFunc(L, "bool_inv",  bool_inv);
-	LuaPushNamedCFunc(L, "bool_bits", bool_bits);
+	LuaPushNamedCFunc(L, "bit_or",   bit_or);
+	LuaPushNamedCFunc(L, "bit_and",  bit_and);
+	LuaPushNamedCFunc(L, "bit_xor",  bit_xor);
+	LuaPushNamedCFunc(L, "bit_inv",  bit_inv);
+	LuaPushNamedCFunc(L, "bit_bits", bit_bits);
 	return true;
 }
 
@@ -30,7 +30,7 @@ bool LuaBoolOps::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaBoolOps::bool_or(lua_State* L)
+int LuaBitOps::bit_or(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	unsigned int result = 0x00000000;
@@ -45,11 +45,11 @@ int LuaBoolOps::bool_or(lua_State* L)
 }
 
 
-int LuaBoolOps::bool_and(lua_State* L)
+int LuaBitOps::bit_and(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bool_and()");
+		luaL_error(L, "Incorrect arguments to bit_and()");
 	}
 	unsigned int result = 0xFFFFFFFF;
 	for (int i = 1; i <= args; i++) {
@@ -63,11 +63,11 @@ int LuaBoolOps::bool_and(lua_State* L)
 }
 
 
-int LuaBoolOps::bool_xor(lua_State* L)
+int LuaBitOps::bit_xor(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bool_xor()");
+		luaL_error(L, "Incorrect arguments to bit_xor()");
 	}
 	unsigned int result = 0x00000000;
 	for (int i = 1; i <= args; i++) {
@@ -81,11 +81,11 @@ int LuaBoolOps::bool_xor(lua_State* L)
 }
 
 
-int LuaBoolOps::bool_inv(lua_State* L)
+int LuaBitOps::bit_inv(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bool_inv()");
+		luaL_error(L, "Incorrect arguments to bit_inv()");
 	}
 	const unsigned int b1 = (unsigned int)lua_tonumber(L, 1);
 	lua_pushnumber(L, (~b1) & mask);
@@ -93,7 +93,7 @@ int LuaBoolOps::bool_inv(lua_State* L)
 }
 
 
-int LuaBoolOps::bool_bits(lua_State* L)
+int LuaBitOps::bit_bits(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	unsigned int result = 0x00000000;

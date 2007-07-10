@@ -152,7 +152,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 		for(int i=0; i<MAX_TEAMS; i++)
 		{
-			unitsType[i].resize(unitDefHandler->numUnits+1,0);
+			unitsType[i].resize(unitDefHandler->numUnitDefs+1,0);
 		}
 	}
 }
@@ -196,7 +196,9 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 void CUnitHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
-START_TIME_PROFILE;
+
+	START_TIME_PROFILE("Unit handler");
+
 	while(!toBeRemoved.empty()){
 		CUnit* delUnit=toBeRemoved.back();
 		toBeRemoved.pop_back();
@@ -244,7 +246,8 @@ START_TIME_PROFILE;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 		(*usi)->Update();
 
-START_TIME_PROFILE
+	START_TIME_PROFILE("Unit slow update");
+
 	if(!(gs->frameNum&15)){
 		slowUpdateIterator=activeUnits.begin();
 	}
@@ -255,7 +258,7 @@ START_TIME_PROFILE
 		numToUpdate--;
 	}
 
-END_TIME_PROFILE("Unit slow update");
+	END_TIME_PROFILE("Unit slow update");
 
 	if(!(gs->frameNum&15)){
 		if(diminishingMetalMakers)

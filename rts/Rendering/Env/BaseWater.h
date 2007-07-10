@@ -13,6 +13,7 @@ public:
 	virtual void Update(){};
 	virtual void UpdateWater(CGame* game)=0;
 	virtual void AddExplosion(const float3& pos, float strength, float size){};
+	virtual int  GetID() const { return -1; }
 
 	static CBaseWater* GetWater();
 

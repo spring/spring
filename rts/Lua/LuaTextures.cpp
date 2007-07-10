@@ -42,17 +42,19 @@ string CLuaTextures::Create(const Texture& tex)
 	glBindTexture(tex.target, texID);
 
 	GLenum dataFormat = GL_RGBA;
+	GLenum dataType   = GL_UNSIGNED_BYTE;
 	if ((tex.format == GL_DEPTH_COMPONENT) ||
 	    (tex.format == GL_DEPTH_COMPONENT16) ||
 	    (tex.format == GL_DEPTH_COMPONENT24) ||
 	    (tex.format == GL_DEPTH_COMPONENT32)) {
 		dataFormat = GL_DEPTH_COMPONENT;
+		dataType = GL_FLOAT;
 	}
 
 	glClearErrors();
 	glTexImage2D(tex.target, 0, tex.format,
 	             tex.xsize, tex.ysize, tex.border,
-	             dataFormat, GL_UNSIGNED_BYTE, NULL);
+	             dataFormat, dataType, NULL);
 	const GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
@@ -65,8 +67,18 @@ string CLuaTextures::Create(const Texture& tex)
 	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
 	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
 	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 
-	glBindTexture(GL_TEXTURE_2D, currentBinding);
+	if ((tex.aniso != 0.0f) && GLEW_EXT_texture_filter_anisotropic) {
+		static GLfloat maxAniso = -1.0f;
+		if (maxAniso == -1.0f) {
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+		}
+		const GLfloat aniso = std::max(1.0f, std::min(maxAniso, tex.aniso));
+		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+	}
+
+	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
 
 	GLuint fbo = 0;
 	GLuint fboDepth = 0;

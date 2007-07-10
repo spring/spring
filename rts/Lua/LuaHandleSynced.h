@@ -99,6 +99,9 @@ class CLuaHandleSynced : public CLuaHandle
 
 		static int AddSyncedActionFallback(lua_State* L);
 		static int RemoveSyncedActionFallback(lua_State* L);
+
+		static int GetWatchWeapon(lua_State* L);
+		static int SetWatchWeapon(lua_State* L);
 };
 
 

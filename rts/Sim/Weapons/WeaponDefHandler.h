@@ -38,8 +38,8 @@ struct WeaponDef
 	std::string type;
 	std::string description;
 
-	GuiSound firesound;
-	GuiSound soundhit;
+	GuiSoundSet firesound;
+	GuiSoundSet soundhit;
 
 	float range;
 	float heightmod;
@@ -202,14 +202,14 @@ class CWeaponDefHandler
 public:
 	WeaponDef *weaponDefs;
 	std::map<std::string, int> weaponID;
-	int numWeapons;
+	int numWeaponDefs;
 
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
 	WeaponDef* GetWeapon(const std::string weaponname);
 
-	void LoadSound(TdfParser*, GuiSound&, int, std::string);
+	void LoadSound(TdfParser*, GuiSoundSet&, int, std::string);
 
 	DamageArray DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted);
 

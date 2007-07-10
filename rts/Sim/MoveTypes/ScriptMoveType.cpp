@@ -37,9 +37,11 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
 	CR_MEMBER(noBlocking),
+	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
+	CR_MEMBER(leaveTracks),
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),
@@ -60,15 +62,17 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   useRotVel(false),
   hasDecal(false),
   isBuilding(false),
-  gravityFactor(0.0f),
+  gravityFactor(0.0f), // FIXME: better default
   windFactor(0.0f),
   trackSlope(false),
   trackGround(false),
   groundOffset(0.0f),
   noBlocking(false),
+  gndStop(false),
   shotStop(false),
   slopeStop(false),
   collideStop(false),
+  leaveTracks(true),
   mins(-1.0e9f, -1.0e9f, -1.0e9f),
   maxs(+1.0e9f, +1.0e9f, +1.0e9f),
   lastTrackUpdate(0),
@@ -182,12 +186,17 @@ void CScriptMoveType::Update()
 		if (owner->pos.y <= gndMin) {
 			owner->pos.y = gndMin;
 			owner->speed.y = 0.0f;
+			if (gndStop) {
+				owner->speed.y = 0.0f;
+				vel    = ZeroVector;
+				relVel = ZeroVector;
+				rotVel = ZeroVector;
+			}
 		}
 	}
 
 	// positional clamps
 	CheckLimits();
-//	owner->pos.CheckInBounds();
 
 	if (trackSlope) {
 		TrackSlope();
@@ -206,8 +215,8 @@ void CScriptMoveType::Update()
 		owner->Block();
 	}
 
-	if (groundDecals && owner->unitDef->leaveTracks &&
-	    lastTrackUpdate < (gs->frameNum - 7) &&
+	if (groundDecals && owner->unitDef->leaveTracks && leaveTracks &&
+	    (lastTrackUpdate < (gs->frameNum - 7)) &&
 	    ((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 		lastTrackUpdate = gs->frameNum;
 		groundDecals->UnitMoved(owner);
@@ -217,30 +226,12 @@ void CScriptMoveType::Update()
 
 void CScriptMoveType::CheckLimits()
 {
-	if (owner->pos.x < mins.x) {
-		owner->pos.x = mins.x;
-		owner->speed.x = 0.0f;
-	}
-	if (owner->pos.x > maxs.x) {
-		owner->pos.x = maxs.x;
-		owner->speed.x = 0.0f;
-	}
-	if (owner->pos.y < mins.y) {
-		owner->pos.y = mins.y;
-		owner->speed.y = 0.0f;
-	}
-	if (owner->pos.y > maxs.y) {
-		owner->pos.y = maxs.y;
-		owner->speed.y = 0.0f;
-	}
-	if (owner->pos.z < mins.z) {
-		owner->pos.z = mins.z;
-		owner->speed.z = 0.0f;
-	}
-	if (owner->pos.z > maxs.z) {
-		owner->pos.z = maxs.z;
-		owner->speed.z = 0.0f;
-	}
+	if (owner->pos.x < mins.x) { owner->pos.x = mins.x; owner->speed.x = 0.0f; }
+	if (owner->pos.x > maxs.x) { owner->pos.x = maxs.x; owner->speed.x = 0.0f; }
+	if (owner->pos.y < mins.y) { owner->pos.y = mins.y; owner->speed.y = 0.0f; }
+	if (owner->pos.y > maxs.y) { owner->pos.y = maxs.y; owner->speed.y = 0.0f; }
+	if (owner->pos.z < mins.z) { owner->pos.z = mins.z; owner->speed.z = 0.0f; }
+	if (owner->pos.z > maxs.z) { owner->pos.z = maxs.z; owner->speed.z = 0.0f; }
 }
 
 

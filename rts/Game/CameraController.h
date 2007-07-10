@@ -24,13 +24,16 @@ class CCameraController {
 		virtual float GetFOV() { return fov; }
 
 		virtual void SetPos(float3 newPos)=0;
-		virtual bool DisableTrackerByKey() { return true; }
+		virtual bool DisableTrackingByKey() { return true; }
 
 		virtual float3 SwitchFrom()=0;			//return pos that to send to new controllers SetPos
 		virtual void SwitchTo(bool showText=true)=0;
 		
-		virtual std::vector<float> GetState() const = 0;
+		virtual void GetState(std::vector<float>& fv) const = 0;
 		virtual bool SetState(const std::vector<float>& fv) = 0;
+		virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
+
+//FIXME		virtual const std::vector<std::string>& GetStateNames() const = 0;
 		
 		const int num;
 		float fov;
@@ -58,7 +61,7 @@ class CFPSController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float3 pos;
@@ -86,7 +89,7 @@ class COverheadController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float zscale;
@@ -97,6 +100,7 @@ class COverheadController : public CCameraController {
 		bool changeAltHeight;
 		float maxHeight;
 		float tiltSpeed;
+		bool flipped;
 };
 
 
@@ -118,7 +122,7 @@ class CTWController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float3 pos;
@@ -143,7 +147,7 @@ class CRotOverheadController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float3 pos;
@@ -171,7 +175,7 @@ class COverviewController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float3 pos;
@@ -192,7 +196,7 @@ class CFreeController : public CCameraController {
 		void ScreenEdgeMove(float3 move);
 		void MouseWheelMove(float move);
 
-		bool DisableTrackerByKey() { return false; }
+		bool DisableTrackingByKey() { return false; }
 
 		void Update();
 
@@ -204,7 +208,7 @@ class CFreeController : public CCameraController {
 		float3 SwitchFrom();
 		void SwitchTo(bool showText);
 
-		std::vector<float> GetState() const;
+		void GetState(std::vector<float>& fv) const;
 		bool SetState(const std::vector<float>& fv);
 
 		float3 pos;
@@ -232,6 +236,39 @@ class CFreeController : public CCameraController {
 
 		bool invertAlt;
 		bool goForward;
+};
+
+
+class CLuaCameraCtrl : public CCameraController {
+	public:
+		CLuaCameraCtrl(int num);
+
+		const std::string GetName() const { return "lua"; }
+
+		void KeyMove(float3 move);
+		void MouseMove(float3 move);
+		void ScreenEdgeMove(float3 move);
+		void MouseWheelMove(float move);
+
+		void Update();
+
+		float3 GetPos();
+		float3 GetDir();
+
+		void SetPos(float3 newPos);
+		void SetTrackingInfo(const float3& pos, float radius);
+
+		bool DisableTrackingByKey();
+
+		float3 SwitchFrom(); // return pos that to send to new controllers SetPos
+		void SwitchTo(bool showText);
+		
+		void GetState(std::vector<float>& fv) const;
+		bool SetState(const std::vector<float>& fv);
+
+	private:
+		float3 pos;
+		float3 dir;
 };
 
 

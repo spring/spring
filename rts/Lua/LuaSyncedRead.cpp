@@ -43,6 +43,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
@@ -152,6 +153,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
 	REGISTER_LUA_CFUNC(GetUnitNearestEnemy);
 
+	REGISTER_LUA_CFUNC(GetUnitTooltip);
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
@@ -161,6 +163,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
+	REGISTER_LUA_CFUNC(GetUnitIsActive);
+	REGISTER_LUA_CFUNC(GetUnitIsCloaked);
 	REGISTER_LUA_CFUNC(GetUnitSelfDTime);
 	REGISTER_LUA_CFUNC(GetUnitStockpile);
 	REGISTER_LUA_CFUNC(GetUnitRadius);
@@ -173,6 +177,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
+	REGISTER_LUA_CFUNC(GetUnitShieldState);
 	REGISTER_LUA_CFUNC(GetUnitWeaponState);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
@@ -202,6 +207,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
 	REGISTER_LUA_CFUNC(GetFeatureResources);
+	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundNormal);
@@ -212,6 +218,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(GetPositionLosState);
+
+	REGISTER_LUA_CFUNC(GetUnitPiecePosition);
+	REGISTER_LUA_CFUNC(GetUnitPieceDirection);
+	REGISTER_LUA_CFUNC(GetUnitPieceMatrix);
 
 	return true;
 }
@@ -799,18 +809,24 @@ int LuaSyncedRead::GetTeamList(lua_State* L)
 
 int LuaSyncedRead::GetPlayerList(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		luaL_error(L, "Incorrect arguments to GetPlayerList([teamID])");
+	int teamID = -1;
+	bool active = false;
+
+	if (lua_isnumber(L, 1)) {
+		teamID = (int)lua_tonumber(L, 1);
+		if (lua_isboolean(L, 2)) {
+			active = lua_toboolean(L, 2);
+		}
+	}
+	else if (lua_isboolean(L, 1)) {
+		active = lua_toboolean(L, 1);
+		if (lua_isnumber(L, 2)) {
+			teamID = (int)lua_tonumber(L, 2);
+		}
 	}
 
-	int teamID = -1;
-	if (args == 1) {
-		teamID = (int)lua_tonumber(L, 1);
-		if ((teamID < 0) || (teamID >= gs->activeTeams) ||
-		    (gs->Team(teamID) == NULL)) {
-			return 0;
-		}
+	if (teamID >= gs->activeTeams) {
+		return 0;
 	}
 
 	lua_newtable(L);
@@ -818,6 +834,9 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 	for (int p = 0; p < gs->activePlayers; p++) {
 		const CPlayer* player = gs->players[p];
 		if (player == NULL) {
+			continue;
+		}
+		if (active && !player->active) {
 			continue;
 		}
 		if ((teamID < 0) || (player->team == teamID)) {
@@ -1347,7 +1366,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	if (IsAlliedTeam(teamID)) {
 		lua_newtable(L);
 		int defCount = 0;
-		for (int udID = 0; udID < (unitDefHandler->numUnits + 1); udID++) {
+		for (int udID = 0; udID < (unitDefHandler->numUnitDefs + 1); udID++) {
 			const int unitCount = uh->unitsType[teamID][udID];
 			if (unitCount > 0) {
 				lua_pushnumber(L, udID);
@@ -1361,7 +1380,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	}
 
 	// tally the counts for enemies
-	map<const UnitDef*, int> unitDefCounts;
+	map<int, int> unitDefCounts; // use the unitDef->id for ordering
 	const CUnitSet& unitSet = team->units;
 	CUnitSet::const_iterator uit;
 	int unknownCount = 0;
@@ -1372,11 +1391,11 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 				unknownCount++;
 			} else {
 				const UnitDef* ud = EffectiveUnitDef(unit);
-				map<const UnitDef*, int>::iterator mit = unitDefCounts.find(ud);
+				map<int, int>::iterator mit = unitDefCounts.find(ud->id);
 				if (mit == unitDefCounts.end()) {
-					unitDefCounts[ud] = 1;
+					unitDefCounts[ud->id] = 1;
 				} else {
-					unitDefCounts[ud] = mit->second + 1;
+					unitDefCounts[ud->id] = mit->second + 1;
 				}
 			}
 		}
@@ -1385,9 +1404,9 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	// push the counts
 	lua_newtable(L);
 	int defCount = 0;
-	map<const UnitDef*, int>::const_iterator mit;
+	map<int, int>::const_iterator mit;
 	for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
-		lua_pushnumber(L, mit->first->id);
+		lua_pushnumber(L, mit->first);
 		lua_pushnumber(L, mit->second);
 		lua_rawset(L, -3);
 		defCount++;
@@ -1421,12 +1440,12 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	const int teamID = team->teamNum;
 
 	// parse the unitDefs
-	set<const UnitDef*> defs;
+	list<int> defs;
 	if (lua_isnumber(L, 2)) {
 		const int unitDefID = (int)lua_tonumber(L, 2);
 		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 		if (ud != NULL) {
-			defs.insert(ud);
+			defs.push_back(ud->id);
 		}
 	} else if (lua_istable(L, 2)) {
 		const int table = 2;
@@ -1435,7 +1454,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 				const int unitDefID = (int)lua_tonumber(L, -1);
 				const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 				if (ud != NULL) {
-					defs.insert(ud);
+					defs.push_back(ud->id);
 				}
 			}
 		}
@@ -1446,9 +1465,9 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	lua_newtable(L);
 	int count = 0;
 
-	set<const UnitDef*>::const_iterator udit;
+	list<int>::const_iterator udit;
 	for (udit = defs.begin(); udit != defs.end(); ++udit) {
-		const UnitDef* unitDef = *udit;
+		const UnitDef* unitDef = unitDefHandler->GetUnitByID(*udit);
 		const int unitCount = uh->unitsType[teamID][unitDef->id];
 		if (unitCount <= 0) {
 			continue; // don't bother
@@ -1941,7 +1960,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	for (int team = startTeam; team <= endTeam; team++) {
 		const CUnitSet& units = gs->Team(team)->units;
 		CUnitSet::const_iterator it;
-
+		
 		if (allegiance >= 0) {
 			if (allegiance == team) {
 				if (IsAlliedTeam(allegiance)) {
@@ -2117,6 +2136,28 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitIsActive(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->activated);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitIsCloaked(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->isCloaked);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitSelfDTime(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -2141,6 +2182,30 @@ int LuaSyncedRead::GetUnitStockpile(lua_State* L)
 	lua_pushnumber(L, unit->stockpileWeapon->numStockpileQued);
 	lua_pushnumber(L, unit->stockpileWeapon->buildPercent);
 	return 3;
+}
+
+
+int LuaSyncedRead::GetUnitTooltip(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	string tooltip;
+	const UnitDef* unitDef = unit->unitDef;
+	const UnitDef* decoyDef = IsAllyUnit(unit) ? NULL : unitDef->decoyDef;
+	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
+	if (effectiveDef->showPlayerName) {
+		tooltip = gs->players[gs->Team(unit->team)->leader]->playerName;
+	} else {
+		if (!decoyDef) {
+			tooltip = unit->tooltip;
+		} else {
+			tooltip = decoyDef->humanName + " - " + decoyDef->tooltip;
+		}
+	}
+	lua_pushstring(L, tooltip.c_str());
+	return 1;
 }
 
 
@@ -2278,7 +2343,7 @@ int LuaSyncedRead::GetUnitRadius(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->radius);
+	lua_pushnumber(L, unit->radius); // FIXME: decoy give-away?
 	return 1;
 }
 
@@ -2429,6 +2494,22 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitShieldState(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+	if (shield == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, shield->isEnabled);
+	lua_pushnumber(L, shield->curPower);
+	return 2;
+}
+
+
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -2539,8 +2620,7 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	if (ud == NULL) {
 		return 0;
 	}
-	const S3DOModel* model;
-	model = modelParser->Load3DO(ud->model.modelpath, 1.0f, 0 /* team */);
+	const S3DOModel* model = ud->LoadModel(0);
 	if (model == NULL) {
 		return 0;
 	}
@@ -2852,8 +2932,8 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 					continue; // something is wrong, bail
 				}
 				const string& orderName = StringToLower(order_ud->name);
-				const std::map<int, std::string>& bOpts = builder_ud->buildOptions;
-				std::map<int, std::string>::const_iterator it;
+				const map<int, std::string>& bOpts = builder_ud->buildOptions;
+				map<int, std::string>::const_iterator it;
 				for (it = bOpts.begin(); it != bOpts.end(); ++it) {
 					if (it->second == orderName) {
 						break;
@@ -3224,6 +3304,17 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, feature->noSelect);
+	return 1;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -3410,7 +3501,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 			"Incorrect arguments to TestBuildOrder(unitDefID, x, y, z, facing");
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		lua_pushboolean(L, 0);
 		return 1;
 	}
@@ -3503,6 +3594,7 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 		}
 	}
 	else if (lua_isnumber(L, 4)) {
+		// special case for LuaGaia
 		if (fullRead || (readAllyTeam == gs->gaiaAllyTeamID)) {
 			allyTeamID = (int)lua_tonumber(L, 4);
 			if (allyTeamID >= gs->activeAllyTeams) {
@@ -3532,6 +3624,75 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	lua_pushboolean(L, radar);
 
 	return 3;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		luaL_error(L, "Incorrect arguments to GetUnitPiecePosition()");
+	}
+	const LocalS3DOModel* localModel = unit->localmodel;
+	if (localModel == NULL) {
+		return 0;
+	}
+	const int piece = (int)luaL_checknumber(L, 2) - 1;
+	if ((piece < 0) || (piece >= localModel->numpieces)) {
+		return 0;
+	}
+	const float3 pos = localModel->GetPiecePos(piece);
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	return 3;
+}
+
+
+int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		luaL_error(L, "Incorrect arguments to GetUnitPieceDirection()");
+	}
+	const LocalS3DOModel* localModel = unit->localmodel;
+	if (localModel == NULL) {
+		return 0;
+	}
+	const int piece = (int)luaL_checknumber(L, 2) - 1;
+	if ((piece < 0) || (piece >= localModel->numpieces)) {
+		return 0;
+	}
+	const float3 dir = localModel->GetPieceDirection(piece);
+	lua_pushnumber(L, dir.x);
+	lua_pushnumber(L, dir.y);
+	lua_pushnumber(L, dir.z);
+	return 3;
+}
+
+
+int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		luaL_error(L, "Incorrect arguments to GetUnitPieceMatrix()");
+	}
+	const LocalS3DOModel* localModel = unit->localmodel;
+	if (localModel == NULL) {
+		return 0;
+	}
+	const int piece = (int)luaL_checknumber(L, 2) - 1;
+	if ((piece < 0) || (piece >= localModel->numpieces)) {
+		return 0;
+	}
+	const CMatrix44f mat = unit->localmodel->GetPieceMatrix(piece);
+	for (int m = 0; m < 16; m++) {
+		lua_pushnumber(L, mat.m[m]);
+	}
+	return 16;	
 }
 
 

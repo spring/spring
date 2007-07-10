@@ -11,7 +11,7 @@ class CWeapon;
 #include "UnitDef.h"
 
 using namespace std;
-struct GuiSound;
+struct GuiSoundSet;
 
 class CUnitLoader  
 {
@@ -25,7 +25,7 @@ public:
 
 	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);
 protected:
-	void LoadSound(GuiSound &sound);
+	void LoadSound(GuiSoundSet &sound);
 };
 
 extern CUnitLoader unitLoader;

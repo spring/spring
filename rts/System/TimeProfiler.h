@@ -15,10 +15,10 @@
 #endif
 
 #ifdef PROFILE_TIME
-	#define START_TIME_PROFILE profiler.StartTimer();
+	#define START_TIME_PROFILE(name) profiler.StartTimer(name);
 	#define END_TIME_PROFILE(name) profiler.EndTimer(name);
 #else
-	#define START_TIME_PROFILE
+	#define START_TIME_PROFILE(name) ;
 	#define END_TIME_PROFILE(name) ;
 #endif
 
@@ -48,7 +48,7 @@ class CTimeProfiler : public CInputReceiver
 		bool showGraph;
 	};
 public:
-	void StartTimer();
+	void StartTimer(const char* name);
 	void EndTimer(const char* name);
 
 	void AddTime(string name,Sint64 time);
@@ -64,6 +64,7 @@ public:
 	virtual bool IsAbove(int x, int y);
 
 	Sint64 startTimes[1000];
+	const char* startNames[1000];
 	int startTimeNum;
 };
 

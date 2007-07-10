@@ -35,7 +35,7 @@ class CLuaDisplayLists {
 
 		unsigned int GetCount() const { return active.size(); }
 		
-		GLuint GetDList(unsigned int index)
+		GLuint GetDList(unsigned int index) const
 		{
 			if ((index <= 0) || (index >= active.size())) {
 				return 0;

@@ -50,6 +50,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddWorldText);
 	REGISTER_LUA_CFUNC(AddWorldUnit);
 
+	REGISTER_LUA_CFUNC(AssignMouseCursor);
+	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
+
 	return true;
 }
 
@@ -279,7 +282,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnits)) {
+	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return 0;
 	}
 	const float3 pos((float)lua_tonumber(L, 2),
@@ -432,6 +435,61 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 	}
 
 	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to AssignMouseCursor()");
+	}
+
+	const string cmdName  = lua_tostring(L, 1);
+	const string fileName = lua_tostring(L, 2);
+
+	bool overwrite = true;
+	if ((args >= 3) && lua_isboolean(L, 3)) {
+		overwrite = lua_toboolean(L, 3);
+	}
+
+	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
+	if ((args >= 4) && lua_isboolean(L, 4)) {
+		if (lua_toboolean(L, 4)) {
+			hotSpot = CMouseCursor::TopLeft;
+		}
+	}
+
+	if (mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite)) {
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	return 1;
+}
+
+
+int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to ReplaceMouseCursor()");
+	}
+
+	const string oldName = lua_tostring(L, 1);
+	const string newName = lua_tostring(L, 2);
+
+	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
+	if ((args >= 3) && lua_isboolean(L, 3)) {
+		if (lua_toboolean(L, 3)) {
+			hotSpot = CMouseCursor::TopLeft;
+		}
+	}
+
+	lua_pushboolean(L, mouse->ReplaceMouseCursor(oldName, newName, hotSpot));
+	return 1;
 }
 
 

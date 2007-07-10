@@ -35,6 +35,21 @@ bool LuaVFS::PushSynced(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "RAW_FIRST", RAW_FIRST);
 	HSTR_PUSH_NUMBER(L, "ZIP_FIRST", ZIP_FIRST);
 
+	HSTR_PUSH_CFUNC(L, "PackU8",    PackU8);
+	HSTR_PUSH_CFUNC(L, "PackU16",   PackU16);
+	HSTR_PUSH_CFUNC(L, "PackU32",   PackU32);
+	HSTR_PUSH_CFUNC(L, "PackS8",    PackS8);
+	HSTR_PUSH_CFUNC(L, "PackS16",   PackS16);
+	HSTR_PUSH_CFUNC(L, "PackS32",   PackS32);
+	HSTR_PUSH_CFUNC(L, "PackF32",   PackF32);
+	HSTR_PUSH_CFUNC(L, "UnpackU8",  UnpackU8);
+	HSTR_PUSH_CFUNC(L, "UnpackU16", UnpackU16);
+	HSTR_PUSH_CFUNC(L, "UnpackU32", UnpackU32);
+	HSTR_PUSH_CFUNC(L, "UnpackS8",  UnpackS8);
+	HSTR_PUSH_CFUNC(L, "UnpackS16", UnpackS16);
+	HSTR_PUSH_CFUNC(L, "UnpackS32", UnpackS32);
+	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
+
 	return true;
 }
 
@@ -50,6 +65,21 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "ZIP_ONLY",  ZIP_ONLY);
 	HSTR_PUSH_NUMBER(L, "RAW_FIRST", RAW_FIRST);
 	HSTR_PUSH_NUMBER(L, "ZIP_FIRST", ZIP_FIRST);
+
+	HSTR_PUSH_CFUNC(L, "PackU8",    PackU8);
+	HSTR_PUSH_CFUNC(L, "PackU16",   PackU16);
+	HSTR_PUSH_CFUNC(L, "PackU32",   PackU32);
+	HSTR_PUSH_CFUNC(L, "PackS8",    PackS8);
+	HSTR_PUSH_CFUNC(L, "PackS16",   PackS16);
+	HSTR_PUSH_CFUNC(L, "PackS32",   PackS32);
+	HSTR_PUSH_CFUNC(L, "PackF32",   PackF32);
+	HSTR_PUSH_CFUNC(L, "UnpackU8",  UnpackU8);
+	HSTR_PUSH_CFUNC(L, "UnpackU16", UnpackU16);
+	HSTR_PUSH_CFUNC(L, "UnpackU32", UnpackU32);
+	HSTR_PUSH_CFUNC(L, "UnpackS8",  UnpackS8);
+	HSTR_PUSH_CFUNC(L, "UnpackS16", UnpackS16);
+	HSTR_PUSH_CFUNC(L, "UnpackS32", UnpackS32);
+	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
 	return true;
 }
@@ -478,6 +508,124 @@ int LuaVFS::UnsyncDirList(lua_State* L)
 {
 	return DirList(L, false);
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  NOTE: Endianess should be handled
+//
+
+template <typename T>
+int PackType(lua_State* L)
+{
+	vector<T> vals;
+
+	if (lua_istable(L, 1)) {
+		const int table = 1;
+		for (int i = 1;
+		     lua_rawgeti(L, 1, i), lua_isnumber(L, -1);
+		     lua_pop(L, 1), i++) {
+			vals.push_back((T)lua_tonumber(L, i));
+		}
+		return 1;
+	}
+	else {
+		const int args = lua_gettop(L);
+		for (int i = 1; i <= args; i++) {
+			if (!lua_isnumber(L, i)) {
+				break;
+			}
+			vals.push_back((T)lua_tonumber(L, i));
+		}
+	}
+
+	if (vals.empty()) {
+		return 0;
+	}
+
+	const int bufSize = sizeof(T) * vals.size();
+	char* buf = SAFE_NEW char[bufSize];
+	for (int i = 0; i < (int)vals.size(); i++) {
+		memcpy(buf + (i * sizeof(T)), &vals[i], sizeof(T));
+	}
+	lua_pushlstring(L, buf, bufSize);
+	delete[] buf;
+	
+	return 1;
+}
+
+
+int LuaVFS::PackU8(lua_State* L)  { return PackType<uint8_t>(L); }
+int LuaVFS::PackU16(lua_State* L) { return PackType<uint16_t>(L); }
+int LuaVFS::PackU32(lua_State* L) { return PackType<uint32_t>(L); }
+int LuaVFS::PackS8(lua_State* L)  { return PackType<int8_t>(L); }
+int LuaVFS::PackS16(lua_State* L) { return PackType<int16_t>(L); }
+int LuaVFS::PackS32(lua_State* L) { return PackType<int32_t>(L); }
+int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L); }
+
+
+/******************************************************************************/
+
+template <typename T>
+int UnpackType(lua_State* L)
+{
+	if (!lua_isstring(L, 1)) {
+		return 0;
+	}
+	size_t len;
+	const char* str = lua_tolstring(L, 1, &len);
+
+	if (lua_isnumber(L, 2)) {
+		const int pos = (int)lua_tonumber(L, 2);
+		if ((pos < 1) || (pos >= len)) {
+			return 0;
+		}
+		const int offset = (pos - 1);
+		str += offset;
+		len -= offset;
+	}
+	
+	const int eSize = sizeof(T);
+	if (len < eSize) {
+		return 0;
+	}
+
+	if (!lua_isnumber(L, 3)) {
+		const T value = *((T*)str);
+		lua_pushnumber(L, value);
+		return 1;
+	}
+	else {
+		const int maxCount = (len / eSize);
+		int tableCount = (int)lua_tonumber(L, 3);
+		if (tableCount < 0) {
+			tableCount = maxCount;
+		}
+		tableCount = min(maxCount, tableCount);
+		lua_newtable(L);
+		for (int i = 0; i < tableCount; i++) {
+			const T value = *(((T*)str) + i);
+			lua_pushnumber(L, value);
+			lua_rawseti(L, -2, (i + 1));
+		}
+		lua_pushstring(L, "n");
+		lua_pushnumber(L, tableCount);
+		lua_rawset(L, -3);
+		return 1;
+	}			
+
+	return 0;
+}
+
+
+int LuaVFS::UnpackU8(lua_State* L)  { return UnpackType<uint8_t>(L); }
+int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<uint16_t>(L); }
+int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<uint32_t>(L); }
+int LuaVFS::UnpackS8(lua_State* L)  { return UnpackType<int8_t>(L); }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<int16_t>(L); }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<int32_t>(L); }
+int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L); }
 
 
 /******************************************************************************/

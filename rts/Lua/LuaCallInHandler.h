@@ -69,6 +69,8 @@ class CLuaCallInHandler
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
+		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+
 		// Unsynced
 		void Update();
 
@@ -116,6 +118,8 @@ class CLuaCallInHandler
 
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
+
+		CallInList listExplosion;
 
 		CallInList listUpdate;
 
@@ -318,6 +322,21 @@ inline void CLuaCallInHandler::FeatureDestroyed(const CFeature* feature)
 			lh->FeatureDestroyed(feature);
 		}
 	}
+}
+
+
+inline bool CLuaCallInHandler::Explosion(int weaponID,
+                                         const float3& pos, const CUnit* owner)
+{
+	const int count = listExplosion.size();
+	bool noGfx = false;
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listExplosion[i];
+		if (lh->GetFullRead()) {
+			noGfx = noGfx || lh->Explosion(weaponID, pos, owner);
+		}
+	}
+	return noGfx;
 }
 
 

@@ -9,7 +9,7 @@
 #include "LuaCallInHandler.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
-#include "LuaBoolOps.h"
+#include "LuaBitOps.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -545,6 +545,49 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 /******************************************************************************/
 
+bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
+{
+	// FIXME
+	if ((weaponID >= (int)watchWeapons.size()) || (weaponID < 0)) {
+		return false;
+	}
+	if (!watchWeapons[weaponID]) {
+		return false;
+	}
+
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("Explosion");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false; // the call is not defined
+	}
+
+	lua_pushnumber(L, weaponID);
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	if (owner != NULL) {
+		lua_pushnumber(L, owner->id);
+	}
+
+	// call the routine
+	RunCallIn(cmdStr, (owner == NULL) ? 4 : 5, 1);
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return false;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
+/******************************************************************************/
+
 inline bool CLuaHandle::LoadDrawCallIn(const LuaHashString& hs)
 {
 	// LuaUI keeps these call-ins in the Global table,
@@ -756,7 +799,7 @@ bool CLuaHandle::AddBasicCalls()
 
 	// boolean operations
 	lua_getglobal(L, "math");
-	LuaBoolOps::PushEntries(L);
+	LuaBitOps::PushEntries(L);
 	lua_pop(L, 1);
 	return true;	
 }

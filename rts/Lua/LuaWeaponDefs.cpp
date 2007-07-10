@@ -46,7 +46,7 @@ static int NoFeatureCollide(lua_State* L, const void* data);
 static int NoFriendlyCollide(lua_State* L, const void* data);
 static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
-static int GuiSoundTable(lua_State* L, const void* data);
+static int GuiSoundSetTable(lua_State* L, const void* data);
 static int CategorySetFromBits(lua_State* L, const void* data);
 static int CategorySetFromString(lua_State* L, const void* data);
 
@@ -397,17 +397,23 @@ static int CategorySetFromString(lua_State* L, const void* data)
 }
 
 
-
-static int GuiSoundTable(lua_State* L, const void* data)
+static int GuiSoundSetTable(lua_State* L, const void* data)
 {
-	const GuiSound& sound = *((const GuiSound*) data);
+	const GuiSoundSet& soundSet = *((const GuiSoundSet*) data);
+	const int soundCount = (int)soundSet.sounds.size();
 	lua_newtable(L);
-
-	HSTR_PUSH_STRING(L, "name", ((GuiSound&) sound).getName(0));
-	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		HSTR_PUSH_NUMBER(L, "id", ((GuiSound&) sound).getID(0));
+	for (int i = 0; i < soundCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_newtable(L);
+		const GuiSoundSet::Data& sound = soundSet.sounds[i];
+		HSTR_PUSH_STRING(L, "name",   sound.name);
+		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
+		if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+			HSTR_PUSH_NUMBER(L, "id", sound.id);
+		}
+		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "volume", ((GuiSound&) sound).getVolume(0));
+	HSTR_PUSH_NUMBER(L, "n", soundCount);
 	return 1;
 }
 
@@ -426,8 +432,8 @@ static bool InitParamMap()
 
 	ADD_FUNCTION("damages",   wd.damages,   DamagesArray);
 	ADD_FUNCTION("visuals",   wd.visuals,   VisualsTable);
-	ADD_FUNCTION("hitSound",  wd.soundhit,  GuiSoundTable);
-	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundTable);
+	ADD_FUNCTION("hitSound",  wd.soundhit,  GuiSoundSetTable);
+	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundSetTable);
 	ADD_FUNCTION("noFeatureCollide",  wd.collisionFlags, NoFeatureCollide);
 	ADD_FUNCTION("noFriendlyCollide", wd.collisionFlags, NoFriendlyCollide);
 	ADD_FUNCTION("onlyTargetCategories",
@@ -536,8 +542,7 @@ static bool InitParamMap()
 	ADD_FLOAT("shieldBadColorB",        wd.shieldBadColor.z);
 	ADD_FLOAT("shieldAlpha",            wd.shieldAlpha);
 
-	// FIXME: these 2 are bit fields
-	ADD_INT("shieldInterceptType",  wd.shieldInterceptType);
+	ADD_INT("shieldInterceptType",      wd.shieldInterceptType);
 	ADD_INT("interceptedByShieldType",  wd.interceptedByShieldType);
 
 	ADD_BOOL("avoidFriendly", wd.avoidFriendly);

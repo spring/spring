@@ -17,7 +17,6 @@ struct SS3OVertex;
 #include <list>
 #include <vector>
 
-#include <set>
 #include <stack>
 #include "MemPool.h"
 #include "Rendering/Textures/TextureAtlas.h"

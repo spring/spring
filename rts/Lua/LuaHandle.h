@@ -121,6 +121,8 @@ class CLuaHandle {
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
+		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+
 		void DrawWorld();
 		void DrawWorldPreUnit();
 		void DrawWorldShadow();
@@ -177,6 +179,8 @@ class CLuaHandle {
 		CLuaTextures textures;
 		CLuaDisplayLists displayLists;
 
+		vector<bool> watchWeapons; // for the Explosion call-in
+    
 		struct CobCallbackData {
 			CobCallbackData(int rc, int uid, float fd)
 			: retCode(rc), unitID(uid), floatData(fd) {}

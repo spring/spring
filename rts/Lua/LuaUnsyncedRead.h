@@ -20,7 +20,6 @@ class LuaUnsyncedRead {
 
 	private:
 		static int IsReplay(lua_State* L);
-		static int IsGUIHidden(lua_State* L);
 
 		static int GetFrameTimeOffset(lua_State* L);
 		static int IsSphereInView(lua_State* L);
@@ -40,6 +39,13 @@ class LuaUnsyncedRead {
 		static int GetSelectedUnits(lua_State* L);
 		static int GetSelectedUnitsSorted(lua_State* L);
 		static int GetSelectedUnitsCounts(lua_State* L);
+		static int GetSelectedUnitsCount(lua_State* L);
+
+		static int IsGUIHidden(lua_State* L);
+		static int HaveShadows(lua_State* L);
+		static int HaveAdvShading(lua_State* L);
+		static int GetWaterMode(lua_State* L);
+		static int GetMapDrawMode(lua_State* L);
 
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);
@@ -47,8 +53,6 @@ class LuaUnsyncedRead {
 		static int GetCameraVectors(lua_State* L);
 		static int WorldToScreenCoords(lua_State* L);
 		static int TraceScreenRay(lua_State* L);
-
-		static int GetMapDrawMode(lua_State* L);
 
 		static int GetTimer(lua_State* L);
 		static int DiffTimers(lua_State* L);

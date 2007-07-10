@@ -44,9 +44,9 @@ CWeaponDefHandler::CWeaponDefHandler()
 
 	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
 
-	weaponDefs = SAFE_NEW WeaponDef[weaponlist.size()+1];
-	for(std::size_t taid=0; taid<weaponlist.size(); taid++)
-	{
+	numWeaponDefs = weaponlist.size(); // FIXME: starting at 0, don't need the +1 ?
+	weaponDefs = SAFE_NEW WeaponDef[numWeaponDefs + 1];
+	for(std::size_t taid = 0; taid < weaponlist.size(); taid++) {
 		ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
 	}
 }
@@ -489,7 +489,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 
 
 
-void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSound& gsound, int id, string soundCat)
+void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSoundSet& gsound, int id, string soundCat)
 {
 	string name = "";
 	float volume = -1;
@@ -513,9 +513,8 @@ void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSound& gsound, int id
 
 		if (sfile.FileExists()) {
 			// only push data if we extracted a valid name
-			gsound.names.push_back(name);
-			gsound.ids.push_back(0);
-			gsound.volumes.push_back(volume);
+			GuiSoundSet::Data soundData(name, 0, volume);
+			gsound.sounds.push_back(soundData);
 
 			PUSH_CODE_MODE;
 			ENTER_UNSYNCED;

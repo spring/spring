@@ -24,7 +24,7 @@ public:
 
 
 	UnitDef *unitDefs;
-	int numUnits;
+	int numUnitDefs;
 	std::map<std::string, int> unitID;
 	std::map<UnitDef*, std::set<UnitDef*> > decoyMap;
 	std::set<int> commanderIDs;
@@ -52,8 +52,8 @@ protected:
 
 	void AssignTechLevel(UnitDef& ud, int level);
 	
-	void LoadSounds(TdfParser&, GuiSound&, std::string, int);
-	void LoadSound(TdfParser&, GuiSound&, std::string, int);
+	void LoadSounds(TdfParser&, GuiSoundSet&, std::string, int);
+	void LoadSound(TdfParser&, GuiSoundSet&, std::string, int);
 
 public:
 //	void CreateBlockingLevels(UnitDef *def,std::string yardmap);

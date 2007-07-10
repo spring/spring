@@ -528,6 +528,7 @@ bool CKeyBindings::ParseKeySet(const string& keystr, CKeySet& ks) const
 
 void CKeyBindings::LoadDefaults()
 {
+	SetFakeMetaKey("space");
 	const int count = sizeof(defaultBindings) / sizeof(defaultBindings[0]);
 	for (int i = 0; i < count; ++i) {
 		Bind(defaultBindings[i].key, defaultBindings[i].action);

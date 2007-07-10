@@ -113,7 +113,7 @@ void S3DO::DrawStatic()
 
 S3DO::~S3DO()
 {
-	glDeleteLists(displist,1);
+	glDeleteLists(displist, 1);
 }
 
 C3DOParser::C3DOParser()
@@ -488,7 +488,7 @@ void C3DOParser::DrawSub(S3DO* o)
 
 void C3DOParser::CreateLists(S3DO *o)
 {
-	o->displist=glGenLists(1);
+	o->displist = glGenLists(1);
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	glNewList(o->displist,GL_COMPILE);
@@ -686,16 +686,20 @@ LocalS3DOModel *C3DOParser::CreateLocalModel(S3DOModel *model, vector<struct Pie
 	return lmodel;
 }
 
+
 LocalS3DOModel::~LocalS3DOModel()
 {
 	delete [] pieces;
 	delete [] scritoa;
 }
 
-void LocalS3DO::Draw()
+
+static const float CORDDIV = 65536.0f;
+static const float ANGDIV  = 182.0f;
+
+
+void LocalS3DO::Draw() const
 {
-	#define CORDDIV 65536.0f
-	#define ANGDIV 182.0f
 	//detta kan v� optimeras lite kanske.. men tills vidare
 	glPushMatrix();
 	glTranslatef(offset.x,offset.y,offset.z);
@@ -720,7 +724,53 @@ void LocalS3DO::Draw()
 	glPopMatrix();
 }
 
-void LocalS3DOModel::Draw()
+
+void LocalS3DO::DrawLOD(unsigned int lod) const
+{
+	const	unsigned int lodDispList = lodDispLists[lod];
+
+	//detta kan v� optimeras lite kanske.. men tills vidare
+	glPushMatrix();
+	glTranslatef(offset.x, offset.y, offset.z);
+
+	if (!anim) {
+		glCallList(lodDispList);
+	} else {
+		glTranslatef(-anim->coords[0] / CORDDIV,
+		              anim->coords[1] / CORDDIV,
+		              anim->coords[2] / CORDDIV);
+		if (anim->rot[1]) { glRotatef( anim->rot[1] / ANGDIV, 0.0f, 1.0f, 0.0f); }
+		if (anim->rot[0]) { glRotatef( anim->rot[0] / ANGDIV, 1.0f, 0.0f, 0.0f); }
+		if (anim->rot[2]) { glRotatef(-anim->rot[2] / ANGDIV, 0.0f, 0.0f, 1.0f); }
+		if (anim->visible) {
+			glCallList(lodDispList);
+		}
+	}
+
+	for (unsigned int i = 0; i < childs.size(); i++) {
+		childs[i]->DrawLOD(lod);
+	}
+
+	glPopMatrix();
+}
+
+
+void LocalS3DO::SetLODCount(unsigned int count)
+{
+	const unsigned int oldCount = lodDispLists.size();
+
+	lodDispLists.resize(count);
+	for (unsigned int i = oldCount; i < count; i++) {
+		lodDispLists[i] = 0;
+	}
+
+	for (unsigned int i = 0; i < childs.size(); i++) {
+		childs[i]->SetLODCount(count);
+	}
+}
+
+
+void LocalS3DOModel::Draw() const
 {
 	//glPushMatrix();
 	//glRotatef(180, 0, 1, 0);
@@ -728,7 +778,24 @@ void LocalS3DOModel::Draw()
 	//glPopMatrix();
 }
 
-bool LocalS3DOModel::PieceExists(int piecenum)
+
+void LocalS3DOModel::DrawLOD(unsigned int lod) const
+{
+	if (lod > lodCount) {
+		return;
+	}
+	pieces->DrawLOD(lod);
+}
+
+
+void LocalS3DOModel::SetLODCount(unsigned int count)
+{
+	lodCount = count;
+	pieces->SetLODCount(count);
+}
+
+
+bool LocalS3DOModel::PieceExists(int piecenum) const
 {
 	if(piecenum>=numpieces || piecenum<0)
 		return false;
@@ -741,7 +808,7 @@ bool LocalS3DOModel::PieceExists(int piecenum)
 	return true;
 }
 
-float3 LocalS3DOModel::GetPiecePos(int piecenum)
+float3 LocalS3DOModel::GetPiecePos(int piecenum) const
 {
 	if(piecenum>=numpieces || piecenum<0)
 		return ZeroVector;
@@ -773,7 +840,7 @@ float3 LocalS3DOModel::GetPiecePos(int piecenum)
 	//return UpVector;
 }
 
-CMatrix44f LocalS3DOModel::GetPieceMatrix(int piecenum)
+CMatrix44f LocalS3DOModel::GetPieceMatrix(int piecenum) const
 {
 	int p=scritoa[piecenum];
 
@@ -787,7 +854,7 @@ CMatrix44f LocalS3DOModel::GetPieceMatrix(int piecenum)
 }
 
 //gets the number of vertices in the piece
-int LocalS3DOModel::GetPieceVertCount(int piecenum)
+int LocalS3DOModel::GetPieceVertCount(int piecenum) const
 {
 	int p=scritoa[piecenum];
 
@@ -804,7 +871,8 @@ int LocalS3DOModel::GetPieceVertCount(int piecenum)
 	}
 }
 
-void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir)
+void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir) const
+
 {
 	int p=scritoa[piecenum];
 
@@ -870,7 +938,7 @@ void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir)
 }
 
 //Only useful for special pieces used for emit-sfx
-float3 LocalS3DOModel::GetPieceDirection(int piecenum)
+float3 LocalS3DOModel::GetPieceDirection(int piecenum) const
 {
 	int p=scritoa[piecenum];
 
@@ -902,7 +970,7 @@ float3 LocalS3DOModel::GetPieceDirection(int piecenum)
 
 }
 
-void LocalS3DO::GetPiecePosIter(CMatrix44f* mat)
+void LocalS3DO::GetPiecePosIter(CMatrix44f* mat) const
 {
 	if(parent)
 		parent->GetPiecePosIter(mat);

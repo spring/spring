@@ -9,6 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
+#include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -33,6 +34,7 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(id),
 				CR_MEMBER(allyteam),
 				CR_MEMBER(team),
+				CR_MEMBER(noSelect),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(lastReclaim),
 //				CR_MEMBER(def),
@@ -56,6 +58,7 @@ CFeature::CFeature()
 	drawQuad(-1),
 	team(0),
 	allyteam(0),
+	noSelect(false),
 	tempNum(0),
 	emitSmokeTime(0),
 	lastReclaim(0),
@@ -96,14 +99,7 @@ void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
 	if (def->drawType == DRAWTYPE_3DO) {
-		if (!def->useCSOffset) {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team);
-		} else {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team,
-			                             def->collisionSphereOffset);
-		}
+		model = def->LoadModel(team);
 		height = model->height;
 		def->radius = model->radius;
 		SetRadius(def->radius);
@@ -136,14 +132,7 @@ void CFeature::ChangeTeam(int newTeam)
 	}
 
 	if (def->drawType == DRAWTYPE_3DO){
-		if (!def->useCSOffset) {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team);
-		} else {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team,
-			                             def->collisionSphereOffset);
-		}
+		model = def->LoadModel(team);
 	}
 }
 
@@ -168,17 +157,11 @@ void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _headi
 	xsize    = def->xsize;
 	ysize    = def->ysize;
 	mass     = def->mass;
+	noSelect = def->noSelect;
 	SetRadius(def->radius);
 
 	if (def->drawType == DRAWTYPE_3DO) {
-		if (!def->useCSOffset) {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team);
-		} else {
-			model = modelParser->Load3DO(def->modelname.c_str(),
-			                             def->collisionSphereScale, team,
-			                             def->collisionSphereOffset);
-		}
+		model = def->LoadModel(team);
 		height = model->height;
 		def->radius = model->radius;
 		SetRadius(def->radius);
@@ -234,13 +217,13 @@ void CFeature::CalculateTransform()
 
 bool CFeature::AddBuildPower(float amount, CUnit* builder)
 {
-	float oldReclaimLeft = reclaimLeft;
-	float fractionReclaimed;
-	if(amount>0){
+	const float oldReclaimLeft = reclaimLeft;
 
+	if (amount > 0.0f) {
 		// Check they are trying to repair a feature that can be resurrected
-		if(createdFromUnit == "")
+		if (createdFromUnit == "") {
 			return false;
+		}
 
 		// 'Repairing' previously-sucked features prior to resurrection
 		// This is reclaim-option independant - repairing features should always
@@ -249,87 +232,98 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
 
-		if (reclaimLeft >= 1)
-			return false;		// cant repair a 'fresh' feature
+		if (reclaimLeft >= 1) {
+			return false; // cant repair a 'fresh' feature
+		}
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		float part=(100-amount)*0.02f/max(10.0f,(def->metal+def->energy));
+		const float part = (100 - amount) * 0.02f / max(10.0f, (def->metal + def->energy));
 
 		// Work out how much that will cost
-		float metalUse=def->metal*part;
-		float energyUse=def->energy*part;
-		if (gs->Team(builder->team)->metal >= metalUse && gs->Team(builder->team)->energy >= energyUse)
-		{
+		const float metalUse  = part * def->metal;
+		const float energyUse = part * def->energy;
+		if ((gs->Team(builder->team)->metal  >= metalUse)  &&
+		    (gs->Team(builder->team)->energy >= energyUse) &&
+				(!luaRules || luaRules->AllowFeatureBuildStep(builder, this, part))) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 			reclaimLeft+=part;
-			if(reclaimLeft>=1)
-			{
+			if (reclaimLeft >= 1) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
 			}
 			return true;
-		} else {
+		}
+		else {
 			// update the energy and metal required counts
 			gs->Team(builder->team)->energyPull += energyUse;
-			gs->Team(builder->team)->metalPull += metalUse;
+			gs->Team(builder->team)->metalPull  += metalUse;
 		}
 		return false;
-
-
-	} else {
-		// Reclaiming
-		if(reclaimLeft <= 0)	// avoid multisuck when reclaim has already completed during this frame
+	}
+	else { // Reclaiming
+		// avoid multisuck when reclaim has already completed during this frame
+		if (reclaimLeft <= 0) {
 			return false;
+		}
 
-		if(isRepairingBeforeResurrect && modInfo->reclaimMethod > 1) // don't let them exploit chunk reclaim
+		// don't let them exploit chunk reclaim
+		if (isRepairingBeforeResurrect && (modInfo->reclaimMethod > 1)) {
 			return false;
+		}
 
-		if(modInfo->multiReclaim == 0 && lastReclaim == gs->frameNum) // make sure several units cant reclaim at once on a single feature
+		// make sure several units cant reclaim at once on a single feature
+		if ((modInfo->multiReclaim == 0) && (lastReclaim == gs->frameNum)) {
 			return true;
+		}
 
-		float part=(100-amount)*0.02f/max(10.0f,(def->metal+def->energy));
-		reclaimLeft-=part;
+		const float part = (100 - amount) * 0.02f / max(10.0f, (def->metal + def->energy));
 
-		// Stop the last bit giving too much resource
-		if(reclaimLeft < 0) reclaimLeft = 0;
+		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, part)) {
+			return false;
+		}
 
-		fractionReclaimed = oldReclaimLeft-reclaimLeft;
+		reclaimLeft -= part;
 
-		if(modInfo->reclaimMethod == 1 && reclaimLeft == 0) // All-at-end method
-		{
+		// stop the last bit giving too much resource
+		if (reclaimLeft < 0) {
+			reclaimLeft = 0;
+		}
+
+		const float fractionReclaimed = oldReclaimLeft - reclaimLeft;
+
+		if ((modInfo->reclaimMethod == 1) && (reclaimLeft == 0)) {
+			// All-at-end method
 			builder->AddMetal(def->metal);
 			builder->AddEnergy(def->energy);
 		}
-		else if(modInfo->reclaimMethod == 0) // Gradual reclaim
-		{
+		else if (modInfo->reclaimMethod == 0) {
+			// Gradual reclaim
 			builder->AddMetal(def->metal * fractionReclaimed);
 			builder->AddEnergy(def->energy * fractionReclaimed);
 		}
-		else  // Chunky reclaiming
-		{
-			// Work out how many chunk boundaries we crossed
-			float chunkSize = 1.0f / modInfo->reclaimMethod;
-			int oldChunk = ChunkNumber(oldReclaimLeft);
-			int newChunk = ChunkNumber(reclaimLeft);
-			if (oldChunk != newChunk)
-			{
-				float noChunks = (float)oldChunk - (float)newChunk;
+		else {
+			// Chunky reclaiming, work out how many chunk boundaries we crossed
+			const float chunkSize = 1.0f / modInfo->reclaimMethod;
+			const int oldChunk = ChunkNumber(oldReclaimLeft);
+			const int newChunk = ChunkNumber(reclaimLeft);
+			if (oldChunk != newChunk) {
+				const float noChunks = (float)oldChunk - (float)newChunk;
 				builder->AddMetal(noChunks * def->metal * chunkSize);
 				builder->AddEnergy(noChunks * def->energy * chunkSize);
 			}
 		}
 
 		// Has the reclaim finished?
-		if(reclaimLeft<=0)
-		{
+		if (reclaimLeft <= 0) {
 			featureHandler->DeleteFeature(this);
 			return false;
 		}
 
-		lastReclaim=gs->frameNum;
+		lastReclaim = gs->frameNum;
 		return true;
 	}
+
 	// Should never get here
 	assert(false);
 	return false;

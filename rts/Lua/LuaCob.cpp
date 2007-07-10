@@ -104,14 +104,10 @@ bool CLuaCob::AddSyncedCode()
 
 int CLuaCob::UnpackCobArg(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UnpackCobArg(arg)");
-	}
 	if (currentArgs == NULL) {
 		luaL_error(L, "Error in UnpackCobArg(), no current args");
 	}
-	const int arg = (int)lua_tonumber(L, 1) - 1;
+	const int arg = (int)luaL_checknumber(L, 1) - 1;
 	if ((arg < 0) || (arg >= MAX_LUA_COB_ARGS)) {
 		luaL_error(L, "Error in UnpackCobArg(), bad index");
 	}

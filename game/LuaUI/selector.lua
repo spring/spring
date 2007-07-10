@@ -19,6 +19,7 @@ function widget:GetInfo()
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = -9,
+    handler   = true, --  needs the real widgetHandler
     enabled   = true  --  loaded by default?
   }
 end
@@ -33,44 +34,26 @@ include("fonts.lua")
 
 local floor = math.floor
 
-
-widgetHandler.knownChanged = true
-
 local widgetsList = {}
+local fullWidgetsList = {}
 
 local vsx, vsy = widgetHandler:GetViewSizes()
+
+local maxEntries = 40
+local startEntry = 1
+local pageStep  = math.floor(maxEntries / 2) - 1
 
 local fontSize = 11
 local fontSpace = 5
 local yStep = fontSize + fontSpace
 
 local fh = (1 > 0)
---[[
-local entryFont  = "LuaUI/Fonts/arial_14"
-local headerFont = "LuaUI/Fonts/arial_20"
-local entryFont  = "LuaUI/Fonts/dustismo_14"
-local headerFont = "LuaUI/Fonts/dustismo_18"
-local entryFont  = "LuaUI/Fonts/courbd_14"
-local headerFont = "LuaUI/Fonts/courbd_18"
-local entryFont  = "LuaUI/Fonts/times_14"
-local headerFont = "LuaUI/Fonts/times_18"
-local entryFont  = "LuaUI/Fonts/trebucbd_14"
-local headerFont = "LuaUI/Fonts/trebucbd_18"
-local entryFont  = "LuaUI/Fonts/monofont_14"
-local headerFont = "LuaUI/Fonts/monofont_18"
---]]
-local entryFont  = "LuaUI/Fonts/FreeSansBold_12"
-local headerFont = "LuaUI/Fonts/FreeSansBold_16"
 local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
 local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
-
---local headerFont = "LuaUI/Fonts/FreeSerifBold_24"
-
 if (1 > 0) then
   entryFont  = ":n:" .. entryFont
   headerFont = ":n:" .. headerFont
 end
-
 fontHandler.UseDefaultFont()
 local entryFont = fontHandler.GetFontName()
 
@@ -98,6 +81,13 @@ local maxy = vsy * 0.6
 
 -------------------------------------------------------------------------------
 
+function widget:Initialize()
+  widgetHandler.knownChanged = true
+end
+
+
+-------------------------------------------------------------------------------
+
 local function UpdateGeometry()
   midx  = vsx * 0.5
   midy  = vsy * 0.5
@@ -110,11 +100,52 @@ local function UpdateGeometry()
   miny = floor(midy - (0.5 * ySize) - bordery)
   maxy = floor(midy + (0.5 * ySize) + bordery)
 end
-UpdateGeometry()
+
+
+local function UpdateListScroll()
+  local wCount = table.getn(fullWidgetsList)
+  local lastStart = wCount - maxEntries + 1
+  if (lastStart < 1) then lastStart = 1 end
+  if (startEntry > lastStart) then startEntry = lastStart end
+  if (startEntry < 1) then startEntry = 1 end
+  
+  widgetsList = {}
+  local se = startEntry
+  local ee = se + maxEntries - 1
+  for i = se, ee do
+    table.insert(widgetsList, fullWidgetsList[i])
+  end
+end
+
+
+local function ScrollUp(step)
+  startEntry = startEntry - step
+  UpdateListScroll()
+end
+
+
+local function ScrollDown(step)
+  startEntry = startEntry + step
+  UpdateListScroll()
+end
+
+
+function widget:MouseWheel(up, value)
+  local a,c,m,s = Spring.GetModKeyState()
+  if (a or m) then
+    return false  -- alt and meta allow normal control
+  end
+  local step = (s and 4) or (c and 1) or 2
+  if (up) then
+    ScrollUp(step)
+  else
+    ScrollDown(step)
+  end
+  return true
+end
 
 
 local function UpdateList()
-  local myCount = table.getn(widgetsList)
   if (not widgetHandler.knownChanged) then
     return
   end
@@ -125,7 +156,7 @@ local function UpdateList()
   widgetsList = {}
   for name,data in pairs(widgetHandler.knownWidgets) do
     if (name ~= myName) then
-      table.insert(widgetsList, { name, data })
+      table.insert(fullWidgetsList, { name, data })
       -- look for the maxWidth
       local width = gl.GetTextWidth(name)
       local width = fontHandler.GetTextWidth(name)
@@ -137,14 +168,19 @@ local function UpdateList()
   
   maxWidth = maxWidth / fontSize
 
-  local myCount = table.getn(widgetsList)
+  local myCount = table.getn(fullWidgetsList)
   if (widgetHandler.knownCount ~= (myCount + 1)) then
     error('knownCount mismatch')
   end
 
-  table.sort(widgetsList, function(nd1, nd2)
+  table.sort(fullWidgetsList, function(nd1, nd2)
+    if (nd1[2].fromZip ~= nd2[2].fromZip) then
+      return nd1[2].fromZip  -- mod widgets first
+    end
     return (nd1[1] < nd2[1]) -- sort by name
   end)
+
+  UpdateListScroll()
 
   UpdateGeometry()
 end
@@ -165,6 +201,14 @@ function widget:KeyPress(key, mods, isRepeat)
       ((key == KEYSYMS.F11) and not isRepeat and
        not (mods.alt or mods.ctrl or mods.meta or mods.shift))) then
     widgetHandler:RemoveWidget(self)
+    return true
+  end
+  if (key == KEYSYMS.PAGEUP) then
+    ScrollUp(pageStep)
+    return true
+  end
+  if (key == KEYSYMS.PAGEDOWN) then
+    ScrollDown(pageStep)
     return true
   end
   return false
@@ -306,6 +350,16 @@ end
 
 function widget:MousePress(x, y, button)
   UpdateList()
+
+  if ((x >= minx) and (x <= maxx)) then
+    if ((y >= (maxy - bordery)) and (y <= maxy)) then
+      ScrollUp(pageStep)
+      return false
+    elseif ((y >= miny) and (y <= miny + bordery)) then
+      ScrollDown(pageStep)
+      return false
+    end
+  end
   
   local namedata = self:AboveLabel(x, y)
   if (not namedata) then

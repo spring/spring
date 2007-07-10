@@ -28,6 +28,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	drawMode=drawNormal;
 	drawLineOfSight=false;
 	drawRadarAndJammer=true;
+	wireframe=false;
 
 	extraTex=0;
 	extraTexPal=0;

@@ -15,6 +15,7 @@ public:
 	void Draw(bool useBlending);
 	CAdvWater(bool loadShader=true);
 	virtual ~CAdvWater();
+	virtual int GetID() const { return 1; }
 
 	unsigned int reflectTexture;
 	unsigned int bumpTexture;

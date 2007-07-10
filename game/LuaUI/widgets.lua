@@ -21,6 +21,7 @@ end
 include("keysym.h.lua")
 include("utils.lua")
 include("system.lua")
+include("callins.lua")
 include("savetable.lua")
 
 
@@ -33,11 +34,14 @@ local MOD_WIDGET_DIRNAME = MODUI_DIRNAME .. 'Widgets/'
 
 local SELECTOR_BASENAME = 'selector.lua'
 
-
 local SAFEWRAP = 1
 -- 0: disabled
 -- 1: enabled, but can be overriden by widget.GetInfo().unsafe
 -- 2: always enabled
+
+local SAFEDRAW = true  -- requires SAFEWRAP to work
+local glPopAttrib  = gl.PopAttrib
+local glPushAttrib = gl.PushAttrib
 
 
 --------------------------------------------------------------------------------
@@ -75,9 +79,13 @@ widgetHandler = {
   customCommands = {},
   inCommandsChanged = false,
 
+  autoModWidgets = false,
+
   actionHandler = include("actions.lua"),
   
   WG = {}, -- shared table for widgets
+
+  globals = {}, -- global vars/funcs
 
   mouseOwner = nil,
   ownedButton = 0,
@@ -96,6 +104,7 @@ widgetHandler = {
 local flexCallIns = {
   'GameOver',
   'TeamDied',
+  'ShockFront',
   'UnitCreated',
   'UnitFinished',
   'UnitFromFactory',
@@ -134,11 +143,13 @@ local callInLists = {
   'KeyPress',
   'KeyRelease',
   'MousePress',
+  'MouseWheel',
   'IsAbove',
   'GetTooltip',
   'GroupChanged',
   'CommandsChanged',
   'TweakMousePress',
+  'TweakMouseWheel',
   'TweakIsAbove',
   'TweakGetTooltip',
 
@@ -261,6 +272,9 @@ function widgetHandler:Initialize()
   self:LoadOrderList()
   self:LoadConfigData()
 
+  local autoModWidgets = Spring.GetConfigInt('LuaAutoModWidgets', 1)
+  self.autoModWidgets = (autoModWidgets ~= 0)
+
   -- create the "LuaUI/Config" directory
   Spring.CreateDir('LuaUI/Config')
 
@@ -331,17 +345,19 @@ function widgetHandler:LoadWidget(filename, fromZip)
   end
   
   local widget = widgetHandler:NewWidget()
-
-  -- special access for the widget selector
-  if (basename == SELECTOR_BASENAME) then
-    widget.widgetHandler = self
-  end
-  
   setfenv(chunk, widget)
   local success, err = pcall(chunk)
   if (not success) then
     Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
+  end
+  if (err == false) then
+    return nil -- widget asked for a silent death
+  end
+
+  -- raw access to widgetHandler
+  if (widget.GetInfo and widget:GetInfo().handler) then
+    widget.widgetHandler = self
   end
 
   self:FinalizeWidget(widget, filename, basename)
@@ -376,10 +392,16 @@ function widgetHandler:LoadWidget(filename, fromZip)
   end
   knownInfo.active = true
 
-  local info  = widget.GetInfo and widget:GetInfo()
+  if (widget.GetInfo == nil) then
+    print('Failed to load: ' .. basename .. '  (no GetInfo() call)')
+    return nil
+  end
+
+  local info  = widget:GetInfo()
   local order = self.orderList[name]
   if (((order ~= nil) and (order > 0)) or
-      ((order == nil) and ((info == nil) or info.enabled))) then
+      ((order == nil) and  -- unknown widget
+       (info.enabled and ((not knownInfo.fromZip) or self.autoModWidgets)))) then
     -- this will be an active widget
     if (order == nil) then
       self.orderList[name] = 12345  -- back of the pack
@@ -453,6 +475,16 @@ function widgetHandler:NewWidget()
     end
   end
 
+  wh.RegisterGlobal = function(_, owner, name, value)
+    self:RegisterGlobal(widget, name, value)
+  end
+  wh.DeregisterGlobal = function(_, owner, name)
+    self:DeregisterGlobal(widget, name)
+  end
+  wh.SetGlobal = function(_, name, value)
+    self:SetGlobal(widget, name, value)
+  end
+
   wh.ConfigLayoutHandler = function(_, d) self:ConfigLayoutHandler(d) end
 
   return widget
@@ -501,10 +533,13 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function SafeWrap(func, funcName)
+local function SafeWrapFuncNoGL(func, funcName)
   local wh = widgetHandler
+
   return function(w, ...)
+
     local r = { pcall(func, w, unpack(arg)) }
+
     if (r[1]) then
       table.remove(r, 1)
       return unpack(r)
@@ -523,6 +558,46 @@ local function SafeWrap(func, funcName)
 end
 
 
+local function SafeWrapFuncGL(func, funcName)
+  local wh = widgetHandler
+
+  return function(w, ...)
+
+    glPushAttrib(GL.ALL_ATTRIB_BITS)
+    local r = { pcall(func, w, unpack(arg)) }
+    glPopAttrib()
+
+    if (r[1]) then
+      table.remove(r, 1)
+      return unpack(r)
+    else
+      if (funcName ~= 'Shutdown') then
+        widgetHandler:RemoveWidget(w)
+      else
+        Spring.Echo('Error in Shutdown()')
+      end
+      local name = w.whInfo.name
+      Spring.Echo(r[2]) -- print the error
+      Spring.Echo('Removed widget: ' .. name)
+      return nil
+    end
+  end
+end
+
+
+local function SafeWrapFunc(func, funcName)
+  if (not SAFEDRAW) then
+    return SafeWrapFuncNoGL(func, funcName)
+  else
+    if (string.sub(funcName, 1, 4) ~= 'Draw') then
+      return SafeWrapFuncNoGL(func, funcName)
+    else
+      return SafeWrapFuncGL(func, funcName)
+    end
+  end
+end
+
+
 local function SafeWrapWidget(widget)
   if (SAFEWRAP <= 0) then
     return
@@ -535,10 +610,10 @@ local function SafeWrapWidget(widget)
 
   for _,ciName in ipairs(callInLists) do
     if (widget[ciName]) then
-      widget[ciName] = SafeWrap(widget[ciName], ciName)
+      widget[ciName] = SafeWrapFunc(widget[ciName], ciName)
     end
     if (widget.Initialize) then
-      widget.Initialize = SafeWrap(widget.Initialize, 'Initialize')
+      widget.Initialize = SafeWrapFunc(widget.Initialize, 'Initialize')
     end
   end
 end
@@ -608,8 +683,8 @@ function widgetHandler:RemoveWidget(widget)
   if (widget.Shutdown) then
     widget:Shutdown()
   end
-
   ArrayRemove(self.widgets, widget)
+  self:RemoveWidgetGlobals(widget)
   self.actionHandler:RemoveWidgetActions(widget)
   for _,listname in ipairs(callInLists) do
     ArrayRemove(self[listname..'List'], widget)
@@ -825,6 +900,57 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
+--  Global var/func management
+--
+
+function widgetHandler:RegisterGlobal(owner, name, value)
+  if ((name == nil)        or
+      (_G[name])           or
+      (self.globals[name]) or
+      (CallInsMap[name])) then
+    return false
+  end
+  _G[name] = value
+  self.globals[name] = owner
+  return true
+end
+
+
+function widgetHandler:DeregisterGlobal(owner, name)
+  if ((name == nil) or (self.globals[name] == nil)) then
+    return false
+  end
+  _G[name] = nil
+  self.globals[name] = nil
+  return true
+end
+
+
+function widgetHandler:SetGlobal(owner, name, value)
+  if ((name == nil) or (self.globals[name] ~= owner)) then
+    return false
+  end
+  _G[name] = value
+  return true
+end
+
+
+function widgetHandler:RemoveWidgetGlobals(owner)
+  local count = 0
+  for name, o in pairs(self.globals) do
+    if (o == owner) then
+      _G[name] = nil
+      self.globals[name] = nil
+      count = count + 1
+    end
+  end
+  return count
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
 --  Helper facilities
 --
 
@@ -961,6 +1087,7 @@ end
 --  Drawing call-ins
 --
 
+
 -- generates ViewResize() calls for the widgets
 function widgetHandler:SetViewSize(vsx, vsy)
   self.xViewSize = vsx
@@ -989,7 +1116,6 @@ function widgetHandler:DrawWorldItems()
   return
 end
 
-
 function widgetHandler:DrawScreenItems()
   if (self.tweakMode) then
     gl.Color(0, 0, 0, 0.5)
@@ -1005,6 +1131,7 @@ function widgetHandler:DrawScreenItems()
       w:TweakDrawScreen()
     end
   end
+  return
 end
 
 
@@ -1182,6 +1309,16 @@ function widgetHandler:MouseRelease(x, y, button)
 end
 
 
+function widgetHandler:MouseWheel(up, value)
+  for _,w in ipairs(self.MouseWheelList) do
+    if (w:MouseWheel(up, value)) then
+      return true
+    end
+  end
+  return false
+end
+
+
 function widgetHandler:IsAbove(x, y)
   if (self.tweakMode) then
     return true
@@ -1231,6 +1368,14 @@ end
 function widgetHandler:TeamDied(teamID)
   for _,w in ipairs(self.TeamDiedList) do
     w:TeamDied(teamID)
+  end
+  return
+end
+
+
+function widgetHandler:ShockFront(power, dx, dy, dz)
+  for _,w in ipairs(self.ShockFrontList) do
+    w:ShockFront(power, dx, dy, dz)
   end
   return
 end

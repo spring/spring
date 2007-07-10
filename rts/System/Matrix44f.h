@@ -12,6 +12,8 @@ public:
 	CMatrix44f(const float3& pos,const float3& x,const float3& y,const float3& z);
 	~CMatrix44f(void);
 
+	void LoadIdentity();
+
 	inline float& operator[](int a){return m[a];};
 	inline float operator[](int a)const {return m[a];};
 	void operator=(const CMatrix44f& other){for(int a=0;a<16;++a) m[a]=other[a];};

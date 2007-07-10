@@ -18,8 +18,7 @@ using std::vector;
 
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
-#include "System/LogOutput.h"
-#include "System/Platform/ConfigHandler.h"
+#include "Rendering/ShadowHandler.h"
 
 
 /******************************************************************************/
@@ -27,14 +26,6 @@ using std::vector;
 
 bool CLuaShaders::PushEntries(lua_State* L)
 {
-	if (!GLEW_ARB_shader_objects) {
-		return true;
-	}
-
-	if (!configHandler.GetInt("LuaShaders", 1)) {
-		return true;
-	}
-
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
@@ -687,6 +678,16 @@ int CLuaShaders::UniformInt(lua_State* L)
 }
 
 
+static void UniformMatrix4dv(GLint location, const double dm[16])
+{
+	float fm[16];
+	for (int i = 0; i < 16; i++) {
+		fm[i] = (float)dm[i];
+	}
+	glUniformMatrix4fv(location, 1, GL_FALSE, fm);
+}
+
+
 int CLuaShaders::UniformMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -694,6 +695,31 @@ int CLuaShaders::UniformMatrix(lua_State* L)
 
 	const int values = lua_gettop(L) - 1;
 	switch (values) {
+		case 1: {
+			if (!lua_isstring(L, 2)) {
+				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
+			}
+			const string matName = lua_tostring(L, 2);
+			if (matName == "shadow") {
+				if (shadowHandler) {
+					glUniformMatrix4fv(location, 1, GL_FALSE,
+					                   shadowHandler->shadowMatrix.m);
+				}
+			}
+			else if (matName == "camera") {
+				UniformMatrix4dv(location, camera->modelview);
+			}
+			else if (matName == "caminv") {
+				UniformMatrix4dv(location, camera->modelviewInverse);
+			}
+			else if (matName == "camprj") {
+				UniformMatrix4dv(location, camera->projection);
+			}
+			else {
+				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
+			}
+			break;
+		}
 		case (2 * 2): {
 			float array[2 * 2];
 			for (int i = 0; i < (2 * 2); i++) {

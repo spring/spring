@@ -18,7 +18,7 @@ function widget:GetInfo()
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
-    layer     = 0,
+    layer     = -5,
     enabled   = true  --  loaded by default?
   }
 end
@@ -38,6 +38,8 @@ local divs = 64
 local eyeGap = 8
 local lineWidth = 4
 
+local vsx, vsy = widgetHandler:GetViewSizes()
+
 local lEye = {
   x = 0, y = 0, sx = 60, sy = 90, ps = 0.25, px = 0, py = 0, td = -1
 }
@@ -50,8 +52,9 @@ local white  = { 0.8, 0.8, 1.0, alpha }
 local black  = { 0.0, 0.0, 0.0, alpha }
 
 
-local function UpdateGeometry(vsx, vsy)
+local function UpdateGeometry(viewSizeX, viewSizeY)
   local gap = 8
+  vsx, vsy = viewSizeX, viewSizeY
   lEye.x = (vsx * 0.25) - (0.5 * (lEye.sx + eyeGap + lineWidth))
   rEye.x = (vsx * 0.25) + (0.5 * (rEye.sx + eyeGap + lineWidth))
   lEye.y = (vsy * 0.20)
@@ -60,7 +63,7 @@ local function UpdateGeometry(vsx, vsy)
   lEye.px, lEye.py = lEye.x, lEye.y
   rEye.px, rEye.py = rEye.x, rEye.y
 end
-UpdateGeometry(widgetHandler:GetViewSizes())
+UpdateGeometry(vsx, vsy)
 
 
 function widget:ViewResize(viewSizeX, viewSizeY)
@@ -149,12 +152,9 @@ function widget:GetTooltip(x, y)
   local r = 0.333
   local toggle = (math.mod(widgetHandler:GetHourTimer(), r) < (r * 0.5))
   local cs1 = (toggle and '\255\64\255\64') or '\255\64\128\64'
-  local cs2 = (toggle and '\255\128\64\64') or '\255\255\128\128'
   local w = WhiteStr
   local tt = w
   local tt = tt.."Use "..cs1.."F11"..w.." to enable/disable widgets\n"
---  local tt = tt.."Use "..cs2.."CTRL+F11"..w.." to tweak widget geometry\n"
---  local tt = tt.."\255\160\160\225(for those widgets which support it)"
   return tt
 end
 
@@ -242,9 +242,7 @@ local function DrawEye(e)
   end
 
   -- eye
-  gl.Texture("bitmaps/detailtex.bmp")
   gl.Texture("bitmaps/graphpaper.bmp")
---  gl.Texture("bitmaps/grassa.bmp")
   local timer = widgetHandler:GetHourTimer()
   gl.MatrixMode(GL.TEXTURE)
   gl.PushMatrix()
@@ -269,6 +267,29 @@ function widget:DrawScreen()
   DrawEye(lEye)
   DrawEye(rEye)
   gl.LineWidth(1.0)
+
+  -- an unmissable message
+  local htime = widgetHandler:GetHourTimer()
+  local r = 0.333
+  local toggle = math.mod(htime, r) < (r * 0.5)
+  local cs1 = (toggle and '\255\255\255\64') or '\255\128\128\64'
+  local tt = ''
+  tt = tt .. WhiteStr .. 'Use'
+  tt = tt .. cs1      .. ' F11'
+  tt = tt .. WhiteStr .. ' to'
+  tt = tt .. GreenStr .. ' enable'
+  tt = tt .. GreyStr  .. '/'
+  tt = tt .. RedStr   .. 'disable'
+  tt = tt .. BlueStr  .. ' widgets'
+  gl.PushMatrix()
+  local fs = (vsy / 16)
+  gl.Translate(0.5 * vsx, 0.5 * (vsy - fs), 0)
+  gl.Rotate(math.cos(htime) * 60, 0, 1, 0)
+  gl.Text(tt, 0, 0, fs, 'oc')
+  gl.PopMatrix()
+  fs = fs * 0.75
+  gl.Text('\255\200\64\255'..'Brought to you by "Eyes"',
+          0.5 * vsx, 0.5 * vsy - 2 * fs, fs, 'oc')
 end
   
 

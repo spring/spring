@@ -57,6 +57,8 @@ public:
 	int allyteam;
 	int team;
 
+	bool noSelect;
+
 	int tempNum;
 	int lastReclaim;
 

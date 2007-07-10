@@ -12,6 +12,7 @@ public:
 	void LoadGfx();
 
 	void Draw();
+	int GetID() const { return 3; }
 
 protected:
 	void SetupWaterDepthTex();

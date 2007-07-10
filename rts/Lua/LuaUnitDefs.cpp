@@ -462,21 +462,24 @@ static int WeaponsTable(lua_State* L, const void* data)
 }
 
 
-static void PushGuiSound(lua_State* L, const string& name, const GuiSound& sound) {
+static void PushGuiSoundSet(lua_State* L, const string& name,
+                            const GuiSoundSet& soundSet)
+{
+	const int soundCount = (int)soundSet.sounds.size();
 	lua_pushstring(L, name.c_str());
 	lua_newtable(L);
-
-	for (int idx = 0; idx < sound.names.size(); idx++)
-		HSTR_PUSH_STRING(L, "name", ((GuiSound&) sound).getName(idx));
-
-	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		for (int idx = 0; idx < sound.ids.size(); idx++)
-			HSTR_PUSH_NUMBER(L, "id", ((GuiSound&) sound).getID(idx));
+	for (int i = 0; i < soundCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_newtable(L);
+		const GuiSoundSet::Data& sound = soundSet.sounds[i];
+		HSTR_PUSH_STRING(L, "name",   sound.name);
+		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
+		if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+			HSTR_PUSH_NUMBER(L, "id", sound.id);
+		}
+		lua_rawset(L, -3);
 	}
-
-	for (int idx = 0; idx < sound.volumes.size(); idx++)
-		HSTR_PUSH_NUMBER(L, "volume", ((GuiSound&) sound).getVolume(idx));
-
+	HSTR_PUSH_NUMBER(L, "n", soundCount);
 	lua_rawset(L, -3);
 }
 
@@ -485,16 +488,16 @@ static int SoundsTable(lua_State* L, const void* data) {
 	const UnitDef::SoundStruct& sounds = *((const UnitDef::SoundStruct*) data);
 
 	lua_newtable(L);
-	PushGuiSound(L, "select",      sounds.select);
-	PushGuiSound(L, "ok",          sounds.ok);
-	PushGuiSound(L, "arrived",     sounds.arrived);
-	PushGuiSound(L, "build",       sounds.build);
-	PushGuiSound(L, "repair",      sounds.repair);
-	PushGuiSound(L, "working",     sounds.working);
-	PushGuiSound(L, "underattack", sounds.underattack);
-	PushGuiSound(L, "cant",        sounds.cant);
-	PushGuiSound(L, "activate",    sounds.activate);
-	PushGuiSound(L, "deactivate",  sounds.deactivate);
+	PushGuiSoundSet(L, "select",      sounds.select);
+	PushGuiSoundSet(L, "ok",          sounds.ok);
+	PushGuiSoundSet(L, "arrived",     sounds.arrived);
+	PushGuiSoundSet(L, "build",       sounds.build);
+	PushGuiSoundSet(L, "repair",      sounds.repair);
+	PushGuiSoundSet(L, "working",     sounds.working);
+	PushGuiSoundSet(L, "underattack", sounds.underattack);
+	PushGuiSoundSet(L, "cant",        sounds.cant);
+	PushGuiSoundSet(L, "activate",    sounds.activate);
+	PushGuiSoundSet(L, "deactivate",  sounds.deactivate);
 
 	return 1;
 }
@@ -504,7 +507,14 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 static int ModelDefTable(lua_State* L, const void* data) {
 	const UnitModelDef& md = *((const UnitModelDef*) data);
+	const char* type;
+	if (md.modelpath.find(".s3o") != string::npos) {
+		type = "s3o";
+	} else {
+		type = "3do";
+	}
 	lua_newtable(L);
+	HSTR_PUSH_STRING(L, "type", type);
 	HSTR_PUSH_STRING(L, "path", md.modelpath);
 	HSTR_PUSH_STRING(L, "name", md.modelname);
 	HSTR_PUSH(L, "textures");
