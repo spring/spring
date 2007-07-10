@@ -39,7 +39,7 @@ local SAFEWRAP = 1
 -- 1: enabled, but can be overriden by widget.GetInfo().unsafe
 -- 2: always enabled
 
-local SAFEDRAW = true  -- requires SAFEWRAP to work
+local SAFEDRAW = false  -- requires SAFEWRAP to work
 local glPopAttrib  = gl.PopAttrib
 local glPushAttrib = gl.PushAttrib
 
