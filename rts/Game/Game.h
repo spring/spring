@@ -90,6 +90,7 @@ public:
 	bool hideInterface;
 	bool gameOver;
 	bool windowedEdgeMove;
+	bool showFPS;
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 	bool drawFpsHUD;

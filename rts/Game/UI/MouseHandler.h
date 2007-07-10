@@ -30,6 +30,7 @@ public:
 	void MouseRelease(int x,int y,int button);
 	void MousePress(int x,int y,int button);
 	void MouseMove(int x,int y);
+	void MouseWheel(bool up);
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
@@ -42,6 +43,7 @@ public:
 	bool locked;
 	bool invertMouse;
 	float doubleClickTime;
+	float scrollWheelSpeed;
 	
 	void CameraTransition(float time);
 	float cameraTime;
@@ -97,10 +99,14 @@ public:
 
 	int soundMultiselID;
 
-	bool AddMouseCursor(const std::string& cmdname,
-	                    const std::string& filename,
-	                    CMouseCursor::HotSpot hotSpot,
-	                    bool overwrite);
+	bool AssignMouseCursor(const std::string& cmdName,
+	                       const std::string& fileName,
+	                       CMouseCursor::HotSpot hotSpot,
+	                       bool overwrite);
+	bool ReplaceMouseCursor(const string& oldName,
+	                        const string& newName,
+	                        CMouseCursor::HotSpot hotSpot);
+	void SafeDeleteCursor(CMouseCursor* cursor);
 
 protected:
 	void LoadCursors();

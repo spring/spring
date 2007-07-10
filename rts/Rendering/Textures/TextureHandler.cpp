@@ -123,7 +123,7 @@ CTextureHandler::CTextureHandler()
 	} else {
 		bigTexX=2048;
 		bigTexY=2048;
-		handleerror(0,"To many/large unit textures to fit in 2048*2048","Error",0);
+		handleerror(0,"Too many/large unit textures to fit in 2048*2048","Error",0);
 	}
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
@@ -149,7 +149,7 @@ CTextureHandler::CTextureHandler()
 					cury=maxy;
 					maxy+=curtex->ysize;
 					if(maxy>bigTexY){
-						handleerror(0,"To many/large unit textures","Error",0);
+						handleerror(0,"Too many/large unit textures","Error",0);
 						break;
 					}
 					thisSub.push_back(int2(0,cury));
@@ -291,8 +291,12 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 	CBitmap bm;
 	if (!bm.Load(string("unittextures/"+tex1)))
 		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
-	tex.tex1=bm.CreateTexture(true);
+	tex.tex1 = bm.CreateTexture(true);
+	tex.tex1SizeX = bm.xsize;
+	tex.tex1SizeY = bm.ysize;
 	tex.tex2=0;
+	tex.tex2SizeX = 0;
+	tex.tex2SizeY = 0;
 	if(unitDrawer->advShading){
 		CBitmap bm;
 		// No error checking here... other code relies on an empty texture
@@ -303,7 +307,9 @@ int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
 			bm.Alloc(1,1);
 			bm.mem[3] = 255;//file not found, set alpha to white so unit is visible
 		}
-		tex.tex2=bm.CreateTexture(true);
+		tex.tex2 = bm.CreateTexture(true);
+		tex.tex2SizeX = bm.xsize;
+		tex.tex2SizeY = bm.ysize;
 	}
 	s3oTextures.push_back(tex);
 	s3oTextureNames[totalName]=newNum;

@@ -10,8 +10,10 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
+#include "LuaMaterial.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
+#include "LuaUnitRendering.h"
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
@@ -20,6 +22,10 @@
 #include "Game/Team.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/s3oParser.h"
+#include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -95,14 +101,16 @@ CLuaRules::CLuaRules()
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename);
 
-	haveAllowCommand          = HasCallIn("AllowCommand");
-	haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
-	haveAllowUnitTransfer     = HasCallIn("AllowUnitTransfer");
-	haveAllowUnitBuildStep    = HasCallIn("AllowUnitBuildStep");
-	haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
-	haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
-	haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
-	haveCommandFallback       = HasCallIn("CommandFallback");
+	haveCommandFallback        = HasCallIn("CommandFallback");
+	haveAllowCommand           = HasCallIn("AllowCommand");
+	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
+	haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
+	haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
+	haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
+	haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
+	haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
+	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
+	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
 }
 
 
@@ -112,6 +120,13 @@ CLuaRules::~CLuaRules()
 		Shutdown();
 	}
 	luaRules = NULL;
+
+	// clear all lods
+	std::list<CUnit*>::iterator it;
+	for (it = uh->activeUnits.begin(); it != uh->activeUnits.end(); ++it) {
+		CUnit* unit = *it;
+		unit->SetLODCount(0);
+	}
 }
 
 
@@ -119,6 +134,7 @@ bool CLuaRules::AddSyncedCode()
 {
 	lua_getglobal(L, "Script");
 	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
+	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
 	lua_pop(L, 1);
 
 	lua_getglobal(L, "Spring");
@@ -139,10 +155,21 @@ bool CLuaRules::AddUnsyncedCode()
 {
 	lua_pushstring(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);
+
 	lua_pushstring(L, "Script");
 	lua_rawget(L, -2);
 	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
-	lua_pop(L, 1);
+	lua_pop(L, 1); // Script
+
+	lua_pushstring(L, "Spring");
+	lua_rawget(L, -2);
+	lua_pushstring(L, "UnitRendering");
+	lua_newtable(L);
+	LuaUnitRendering::PushEntries(L);
+	lua_rawset(L, -3);
+	lua_pop(L, 1); // Spring
+
+	lua_pop(L, 1); // UNSYNCED
 
 	return true;
 }
@@ -179,7 +206,9 @@ const map<string, int>& CLuaRules::GetGameParamsMap()
 
 bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
-	if (name == "AllowCommand") {
+	if (name == "CommandFallback") {
+		haveCommandFallback       = HasCallIn("CommandFallback");
+	} else if (name == "AllowCommand") {
 		haveAllowCommand          = HasCallIn("AllowCommand");
 	} else if (name == "AllowUnitCreation") {
 		haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
@@ -189,12 +218,14 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 		haveAllowUnitBuildStep    = HasCallIn("AllowUnitBuildStep");
 	} else if (name == "AllowFeatureCreation") {
 		haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
+	} else if (name == "AllowFeatureBuildStep") {
+		haveAllowFeatureBuildStep = HasCallIn("AllowFeatureBuildStep");
 	} else if (name == "AllowResourceLevel") {
 		haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
 	} else if (name == "AllowResourceTransfer") {
 		haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
-	} else if (name == "CommandFallback") {
-		haveCommandFallback       = HasCallIn("CommandFallback");
+	} else if (name == "AllowDirectUnitControl") {
+		haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
 	} else {
 		return CLuaHandleSynced::SyncedUpdateCallIn(name);
 	}
@@ -205,6 +236,64 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 {
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
+}
+
+
+bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
+{
+	if (!haveCommandFallback) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("CommandFallback");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	// push the unit info
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// push the command id
+	lua_pushnumber(L, cmd.id);
+
+	// push the params list
+	lua_newtable(L);
+	for (int p = 0; p < (int)cmd.params.size(); p++) {
+		lua_pushnumber(L, p + 1);
+		lua_pushnumber(L, cmd.params[p]);
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", cmd.params.size());
+
+	// push the options table
+	lua_newtable(L);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
+
+	// call the function
+	if (!RunCallIn(cmdStr, 6, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+  // return 'true' to remove the command
+	return !!lua_toboolean(L, -1);
 }
 
 
@@ -424,6 +513,45 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 }
 
 
+bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
+                                      const CFeature* feature, float part)
+{
+	if (!haveAllowFeatureBuildStep) {
+		return true; // the call is not defined
+	}
+
+	lua_settop(L, 0);
+
+	static const LuaHashString cmdStr("AllowFeatureBuildStep");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return true; // the call is not defined
+	}
+
+	lua_pushnumber(L, builder->id);
+	lua_pushnumber(L, builder->team);
+	lua_pushnumber(L, feature->id);
+	lua_pushnumber(L, feature->def->id);
+	lua_pushnumber(L, part);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 5, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_settop(L, 0);
+		return true;
+	}
+
+	return !!lua_toboolean(L, -1);
+}
+
+
 bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 {
 	if (!haveAllowResourceLevel) {
@@ -498,47 +626,27 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 }
 
 
-bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
+bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 {
-	if (!haveCommandFallback) {
+	if (!haveAllowDirectUnitControl) {
 		return true; // the call is not defined
 	}
 
 	lua_settop(L, 0);
 
-	static const LuaHashString cmdStr("CommandFallback");
+	static const LuaHashString cmdStr("AllowDirectUnitControl");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
-	// push the unit info
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-
-	// push the command id
-	lua_pushnumber(L, cmd.id);
-
-	// push the params list
-	lua_newtable(L);
-	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, p + 1);
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawset(L, -3);
-	}
-	HSTR_PUSH_NUMBER(L, "n", cmd.params.size());
-
-	// push the options table
-	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
+	lua_pushnumber(L, playerID);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 6, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1)) {
 		return true;
 	}
 
@@ -551,7 +659,6 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		return true;
 	}
 
-  // return 'true' to remove the command
 	return !!lua_toboolean(L, -1);
 }
 
@@ -561,6 +668,32 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 //
 // LuaRules Call-Outs
 //
+
+int CLuaRules::GetConfigString(lua_State* L)
+{
+	lua_pushlstring(L, configString.c_str(), configString.size());
+	return 1;
+}
+
+
+/******************************************************************************/
+
+int CLuaRules::PermitHelperAIs(lua_State* L)
+{
+	if (!lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect argument to PermitHelperAIs()");
+	}
+	gs->noHelperAIs = !lua_toboolean(L, 1);
+	if (gs->noHelperAIs) {
+		logOutput.Print("LuaRules has Disabled helper AIs");
+	} else {
+		logOutput.Print("LuaRules has Enabled helper AIs");
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
 
 int CLuaRules::SetRulesInfoMap(lua_State* L)
 {
@@ -773,15 +906,6 @@ int CLuaRules::CreateUnitRulesParams(lua_State* L)
 	}
 	CreateRulesParams(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
 	return 0;
-}
-
-
-/******************************************************************************/
-
-int CLuaRules::GetConfigString(lua_State* L)
-{
-	lua_pushlstring(L, configString.c_str(), configString.size());
-	return 1;
 }
 
 

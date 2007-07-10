@@ -42,6 +42,8 @@ class LuaSyncedCtrl {
 		static int CallCOBScript(lua_State* L);
 		static int CallCOBScriptCB(lua_State* L);
 		static int GetCOBScriptID(lua_State* L);
+		static int GetUnitCOBValue(lua_State* L);
+		static int SetUnitCOBValue(lua_State* L);
 
 		static int GiveOrderToUnit(lua_State* L);
 		static int GiveOrderToUnitMap(lua_State* L);
@@ -58,6 +60,7 @@ class LuaSyncedCtrl {
 		static int TransferFeature(lua_State* L);
 
 		static int SetUnitCosts(lua_State* L);
+		static int SetUnitResourcing(lua_State* L);
 		static int SetUnitTooltip(lua_State* L);
 		static int SetUnitHealth(lua_State* L);
 		static int SetUnitMaxHealth(lua_State* L);
@@ -72,11 +75,14 @@ class LuaSyncedCtrl {
 		static int SetUnitMetalExtraction(lua_State* L);
 		static int SetUnitBuildSpeed(lua_State* L);
 		static int SetUnitBlocking(lua_State* L);
+		static int SetUnitShieldState(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
 		static int SetUnitRotation(lua_State* L);
 		static int SetUnitVelocity(lua_State* L);
+
+		static int AddUnitImpulse(lua_State* L);
 
 		static int AddUnitResource(lua_State* L);
 		static int UseUnitResource(lua_State* L);
@@ -88,6 +94,7 @@ class LuaSyncedCtrl {
 		static int SetFeatureResurrect(lua_State* L);
 		static int SetFeaturePosition(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);
+		static int SetFeatureNoSelect(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);

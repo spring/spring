@@ -78,12 +78,15 @@ class CLuaUI : public CLuaHandle {
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
+		bool MouseWheel(bool up, float value);
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
 
 		bool AddConsoleLine(const string& line, int priority);
 
 		bool GroupChanged(int groupID);
+
+		void ShockFront(float power, const float3& pos, float areaOfEffect);
 
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
@@ -118,6 +121,12 @@ class CLuaUI : public CLuaHandle {
 		                       vector<CommandDescription>& customCmds);
 
 	protected:
+		bool haveShockFront;
+		float shockFrontMinArea;
+		float shockFrontMinPower;
+		float shockFrontDistAdj;
+
+	protected:
 		static Uint32 lastUpdateTime;
 		static float  lastUpdateSeconds;
 
@@ -137,9 +146,12 @@ class CLuaUI : public CLuaHandle {
 		static int GetMouseState(lua_State* L);
 		static int WarpMouse(lua_State* L);
 
+		static int SetCameraOffset(lua_State* L);
+
+		static int SetShockFrontFactors(lua_State* L);
+
 		static int SetMouseCursor(lua_State* L);
 		static int GetMouseCursor(lua_State* L);
-		static int AddMouseCursor(lua_State* L);
 
 		static int GetKeyState(lua_State* L);
 		static int GetModKeyState(lua_State* L);
@@ -180,6 +192,7 @@ class CLuaUI : public CLuaHandle {
 		static int GetGroupUnits(lua_State* L);
 		static int GetGroupUnitsSorted(lua_State* L);
 		static int GetGroupUnitsCounts(lua_State* L);
+		static int GetGroupUnitsCount(lua_State* L);
 
 		static int GiveOrder(lua_State* L);
 		static int GiveOrderToUnit(lua_State* L);

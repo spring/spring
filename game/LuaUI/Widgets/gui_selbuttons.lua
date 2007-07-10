@@ -42,8 +42,6 @@ end
 
 include("colors.h.lua")
 
-local useCulling = false  -- s3o do not draw properly using culling
-
 local vsx, vsy = widgetHandler:GetViewSizes()
 function widget:ViewResize(viewSizeX, viewSizeY)
   vsx = viewSizeX
@@ -134,11 +132,17 @@ function CenterUnitDef(unitDefID)
   if (not ud.dimensions) then
     return
   end
-
+    
   local d = ud.dimensions
   local xSize = (d.maxx - d.minx)
   local ySize = (d.maxy - d.miny)
   local zSize = (d.maxz - d.minz)
+  if (ud.name == 'corcomXXX') then -- FIXME
+    print(xSize, ySize, zSize)
+    print(d.minx, d.maxx)
+    print(d.miny, d.maxy)
+    print(d.minz, d.maxz)
+  end
 
   local hSize -- maximum horizontal dimension
   if (xSize > zSize) then hSize = xSize else hSize = zSize end
@@ -168,7 +172,6 @@ end
 local function SetupModelDrawing()
   gl.DepthTest(true) 
   gl.DepthMask(true)
-  if (useCulling) then gl.Culling(GL.FRONT) end
   gl.Lighting(true)
   gl.Blending(false)
   gl.Material({
@@ -184,7 +187,6 @@ end
 local function RevertModelDrawing()
   gl.Blending(true)
   gl.Lighting(false)
-  if (useCulling) then gl.Culling(false) end
   gl.DepthMask(false)
   gl.DepthTest(false)
 end
@@ -230,7 +232,7 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
 
   -- draw the 3D unit
 	SetupModelDrawing()
-  
+
   gl.PushMatrix()
   gl.Scissor(xmin, ymin, xmax - xmin, ymax - ymin)
   gl.Translate(xmid, ymid, 0)
@@ -243,7 +245,6 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   local scribe = false
   if (scribe) then
     gl.Lighting(false)
-    if (useCulling) then gl.Culling(false) end
     gl.Color(0,0,0,1)
   end
 

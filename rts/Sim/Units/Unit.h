@@ -13,7 +13,9 @@
 #include <vector>
 #include <string>
 #include <deque>
+#include "Lua/LuaUnitMaterial.h"
 #include "Sim/Misc/DamageArray.h"
+#include "System/Matrix44f.h"
 #include "GlobalStuff.h"
 #include "UnitDef.h"
 
@@ -90,6 +92,13 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual void Draw();
+	void DrawModel();
+	void DrawDebug();
+	void DrawBeingBuilt();
+	void DrawWithLists(unsigned int preList, unsigned int postList);
+
+	void ApplyTransformMatrix() const;
+	void GetTransformMatrix(CMatrix44f& matrix) const;
 
 	void SetLastAttacker(CUnit* attacker);
 	void DependentDied(CObject* o);
@@ -106,7 +115,7 @@ public:
 	void SetEnergyStorage(float newStorage);
 
 	void ExperienceChange();
-	void DoSeismicPing(int pingSize);
+	void DoSeismicPing(float pingSize);
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
@@ -170,7 +179,8 @@ public:
 	int restTime;							//how long the unit has been inactive
 
 	std::vector<CWeapon*> weapons;
-	CWeapon* stockpileWeapon;			//if we have a weapon with stockpiled ammo
+	CWeapon* shieldWeapon;		//if we have a shield weapon
+	CWeapon* stockpileWeapon;	//if we have a weapon with stockpiled ammo
 	float reloadSpeed;
 	float maxRange;
 	bool haveTarget;
@@ -213,6 +223,17 @@ public:
 
 	CCommandAI* commandAI;
 	CGroup* group; // if the unit is part of an group (hotkey group)
+
+	// only when the unit is active
+	float condUseMetal;
+	float condUseEnergy;
+	float condMakeMetal;
+	float condMakeEnergy;
+	// always applied
+	float uncondUseMetal;
+	float uncondUseEnergy;
+	float uncondMakeMetal;
+	float uncondMakeEnergy;
 
 	float metalUse;   // cost per 16 frames
 	float energyUse;  // cost per 16 frames
@@ -313,6 +334,16 @@ public:
 
 	float weaponHitMod; //percentage of weapondamage to use when hit by weapon (set by script callbak
 
+	// unsynced calls
+	void SetLODCount(unsigned int count);
+	unsigned int CalcLOD(unsigned int lastLOD) const;
+	unsigned int CalcShadowLOD(unsigned int lastLOD) const;
+	// unsynced data
+	unsigned int lodCount;
+	unsigned int currentLOD;
+	vector<float> lodLengths; // length-per-pixel
+	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
+
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
@@ -324,8 +355,13 @@ public:
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
 	virtual void DrawS3O(void);
-	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
 	void PostLoad();
+	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
+
+public:
+	static void SetLODFactor(float);
+private:
+	static float lodFactor; // unsynced
 };
 
 #endif /* UNIT_H */

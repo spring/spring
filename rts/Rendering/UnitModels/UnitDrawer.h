@@ -23,6 +23,8 @@ public:
 
 	void Update(void);
 	void Draw(bool drawReflection,bool drawRefraction=false);
+	void DrawUnit(CUnit* unit);
+	void DrawUnitLOD(CUnit* unit);
 
 	void DrawCloakedUnits(void);		//cloaked units must be drawn after all others;
 	void DrawShadowPass(void);
@@ -34,12 +36,23 @@ public:
 	void SetupForGhostDrawing();
 	void SetupForGhostDrawingS3O();//S3DOModel *model, int team);
 
+	void DrawOpaqueShaderUnits();
+	void DrawCloakedShaderUnits();
+	void DrawShadowShaderUnits();
+
 	inline void DrawFar(CUnit* unit);
 
 	std::vector<CUnit*> drawCloaked;
 	std::vector<CUnit*> drawCloakedS3O;
+
 	CVertexArray* va;
+
 	bool advShading;
+
+	float LODScale;
+	float LODScaleShadow;
+	float LODScaleReflection;
+	float LODScaleRefraction;
 
 	unsigned int unitVP;             // vertex program for 3DO
 	unsigned int unitFP;             // fragment program for 3DO, shadows disabled
@@ -48,8 +61,12 @@ public:
 	unsigned int unitS3oFP;          // fragment program for S3O, shadows disabled
 	unsigned int unitShadowS3oFP;    // fragment program for S3O, shadows enabled
 	unsigned int unitShadowGenVP;    // vertex program for shadow pass (both 3DO and S3O)
+
 	unsigned int boxtex;
+	unsigned int reflTexSize;
+
 	unsigned int specularTex;
+	unsigned int specTexSize;
 
 	float unitDrawDist;
 	float unitIconDist;

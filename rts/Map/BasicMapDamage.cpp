@@ -236,7 +236,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 
 void CBasicMapDamage::Update(void)
 {
-START_TIME_PROFILE;
+START_TIME_PROFILE("Map damage");
 
 	std::deque<Explo*>::iterator ei;
 	float* heightmap=readmap->GetHeightmap();

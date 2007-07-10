@@ -115,7 +115,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 //	static int calls = 0;
 //	logOutput << "RequestPath() called: " << (++calls) << "\n";	//Debug
 
-	START_TIME_PROFILE;
+	START_TIME_PROFILE("AI:PFS");
 
 	//Creates a new multipath.
 	MultiPath* newPath = SAFE_NEW MultiPath(startPos, peDef, moveData);
@@ -400,12 +400,14 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 /*
 Runned every 1/30sec during runtime.
 */
-void CPathManager::Update() {
-START_TIME_PROFILE;
+void CPathManager::Update()
+{
+	START_TIME_PROFILE("AI:PFS:Update");
+
 	pe->Update();
 	pe2->Update();
 
-END_TIME_PROFILE("AI:PFS:Update");
+	END_TIME_PROFILE("AI:PFS:Update");
 }
 
 

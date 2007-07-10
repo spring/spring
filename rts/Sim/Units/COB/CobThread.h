@@ -55,6 +55,7 @@ public:
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 	State state;
 	int signalMask;
+
 public:
 	CCobThread(CCobFile &script, CCobInstance *owner);
 	~CCobThread(void);

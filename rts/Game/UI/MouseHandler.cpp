@@ -12,6 +12,7 @@
 #include "InfoConsole.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
+#include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
 #include "MouseInput.h"
@@ -82,14 +83,17 @@ CMouseHandler::CMouseHandler()
 	invertMouse=!!configHandler.GetInt("InvertMouse",1);
 	doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
+	scrollWheelSpeed = (float)configHandler.GetInt("ScrollWheelSpeed", 25);
+	scrollWheelSpeed = max(-255.0f, min(255.0f, scrollWheelSpeed));
+    
 	//fps camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
-	camCtrls.push_back(SAFE_NEW CFPSController         (camCtrls.size())); // 0
+	camCtrls.push_back(SAFE_NEW CFPSController         (camCtrls.size())); // 0  (first)
 	camCtrls.push_back(SAFE_NEW COverheadController    (camCtrls.size())); // 1
 	camCtrls.push_back(SAFE_NEW CTWController          (camCtrls.size())); // 2
 	camCtrls.push_back(SAFE_NEW CRotOverheadController (camCtrls.size())); // 3
 	camCtrls.push_back(SAFE_NEW CFreeController        (camCtrls.size())); // 4
-	camCtrls.push_back(SAFE_NEW COverviewController    (camCtrls.size())); // 5
+	camCtrls.push_back(SAFE_NEW COverviewController    (camCtrls.size())); // 5  (last)
 
 	int mode = configHandler.GetInt("CamMode", 1);
 	mode = max(0, min(mode, (int)camControllers.size() - 1));
@@ -123,39 +127,39 @@ void CMouseHandler::LoadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
-	AddMouseCursor("",             "cursornormal",     mTopLeft, false);
-	AddMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
-	AddMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
-	AddMouseCursor("Attack",       "cursorattack",     mCenter,  false);
-	AddMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
-	AddMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
-	AddMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
-	AddMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
-	AddMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
-	AddMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
-	AddMouseCursor("DGun",         "cursordgun",       mCenter,  false);
-	AddMouseCursor("DGun",         "cursorattack",     mCenter,  false); // backup
-	AddMouseCursor("Fight",        "cursorfight",      mCenter,  false);
-	AddMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
-	AddMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
-	AddMouseCursor("GatherWait",   "cursorwait",       mCenter,  false); // backup
-	AddMouseCursor("Guard",        "cursordefend",     mCenter,  false);
-	AddMouseCursor("Load units",   "cursorpickup",     mCenter,  false);
-	AddMouseCursor("Move",         "cursormove",       mCenter,  false);
-	AddMouseCursor("Patrol",       "cursorpatrol",     mCenter,  false);
-	AddMouseCursor("Reclaim",      "cursorreclamate",  mCenter,  false);
-	AddMouseCursor("Repair",       "cursorrepair",     mCenter,  false);
-	AddMouseCursor("Resurrect",    "cursorrevive",     mCenter,  false);
-	AddMouseCursor("Resurrect",    "cursorrepair",     mCenter,  false); // backup
-	AddMouseCursor("Restore",      "cursorrestore",    mCenter,  false);
-	AddMouseCursor("Restore",      "cursorrepair",     mCenter,  false); // backup
-	AddMouseCursor("SelfD",        "cursorselfd",      mCenter,  false);
-	AddMouseCursor("SquadWait",    "cursornumber",     mCenter,  false);
-	AddMouseCursor("SquadWait",    "cursorwait",       mCenter,  false); // backup
-	AddMouseCursor("TimeWait",     "cursortime",       mCenter,  false);
-	AddMouseCursor("TimeWait",     "cursorwait",       mCenter,  false); // backup
-	AddMouseCursor("Unload units", "cursorunload",     mCenter,  false);
-	AddMouseCursor("Wait",         "cursorwait",       mCenter,  false);
+	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
+	AssignMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
+	AssignMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
+	AssignMouseCursor("Attack",       "cursorattack",     mCenter,  false);
+	AssignMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
+	AssignMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
+	AssignMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
+	AssignMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
+	AssignMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
+	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
+	AssignMouseCursor("DGun",         "cursordgun",       mCenter,  false);
+	AssignMouseCursor("DGun",         "cursorattack",     mCenter,  false); // backup
+	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);
+	AssignMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
+	AssignMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
+	AssignMouseCursor("GatherWait",   "cursorwait",       mCenter,  false); // backup
+	AssignMouseCursor("Guard",        "cursordefend",     mCenter,  false);
+	AssignMouseCursor("Load units",   "cursorpickup",     mCenter,  false);
+	AssignMouseCursor("Move",         "cursormove",       mCenter,  false);
+	AssignMouseCursor("Patrol",       "cursorpatrol",     mCenter,  false);
+	AssignMouseCursor("Reclaim",      "cursorreclamate",  mCenter,  false);
+	AssignMouseCursor("Repair",       "cursorrepair",     mCenter,  false);
+	AssignMouseCursor("Resurrect",    "cursorrevive",     mCenter,  false);
+	AssignMouseCursor("Resurrect",    "cursorrepair",     mCenter,  false); // backup
+	AssignMouseCursor("Restore",      "cursorrestore",    mCenter,  false);
+	AssignMouseCursor("Restore",      "cursorrepair",     mCenter,  false); // backup
+	AssignMouseCursor("SelfD",        "cursorselfd",      mCenter,  false);
+	AssignMouseCursor("SquadWait",    "cursornumber",     mCenter,  false);
+	AssignMouseCursor("SquadWait",    "cursorwait",       mCenter,  false); // backup
+	AssignMouseCursor("TimeWait",     "cursortime",       mCenter,  false);
+	AssignMouseCursor("TimeWait",     "cursorwait",       mCenter,  false); // backup
+	AssignMouseCursor("Unload units", "cursorunload",     mCenter,  false);
+	AssignMouseCursor("Wait",         "cursorwait",       mCenter,  false);
 
 	// the default cursor must exist
 	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
@@ -466,6 +470,16 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 }
 
 
+void CMouseHandler::MouseWheel(bool up)
+{
+	const float value = up ? +scrollWheelSpeed : -scrollWheelSpeed;
+	if (luaUI && luaUI->MouseWheel(up, value)) {
+		return;
+	}
+	currentCamController->MouseWheelMove(value);
+}
+
+
 void CMouseHandler::Draw()
 {
 	dir = hide ? camera->forward : camera->CalcPixelDir(lastx, lasty);
@@ -773,7 +787,7 @@ void CMouseHandler::SaveView(const std::string& name)
 	}
 	ViewData vd;
 	vd.mode = currentCamControllerNum;
-	vd.state = currentCamController->GetState();
+	currentCamController->GetState(vd.state);
 	views[name] = vd;
 	logOutput.Print("Saved view: " + name);
 	return;
@@ -794,7 +808,7 @@ bool CMouseHandler::LoadView(const std::string& name)
 
 	ViewData current;
 	current.mode = currentCamControllerNum;
-	current.state = currentCamController->GetState();
+	currentCamController->GetState(current.state);
 
 	for (it = views.begin(); it != views.end(); ++it) {
 		if (it->second == current) {
@@ -892,32 +906,97 @@ void CMouseHandler::DrawCursor(void)
 }
 
 
-bool CMouseHandler::AddMouseCursor(const std::string& name,
-	                                 const std::string& filename,
-	                                 CMouseCursor::HotSpot hotSpot,
-																	 bool overwrite)
+bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
+                                      const std::string& fileName,
+                                      CMouseCursor::HotSpot hotSpot,
+                                      bool overwrite)
 {
-	if (!overwrite && (cursorCommandMap.find(name) != cursorCommandMap.end())) {
-		return true; // already assigned
+	std::map<std::string, CMouseCursor*>::iterator cmdIt;
+	cmdIt = cursorCommandMap.find(cmdName);
+	const bool haveCmd  = (cmdIt  != cursorCommandMap.end());
+
+	std::map<std::string, CMouseCursor*>::iterator fileIt;
+	fileIt = cursorFileMap.find(fileName);
+	const bool haveFile = (fileIt != cursorFileMap.end());
+
+	if (haveCmd && !overwrite) {
+		return false; // already assigned
 	}
 
-	CMouseCursor* cursor = NULL;
-	std::map<std::string, CMouseCursor*>::iterator fileIt;
-	fileIt = cursorFileMap.find(filename);
-	if (fileIt != cursorFileMap.end()) {
-		cursor = fileIt->second;
-	} else {
-		cursor = CMouseCursor::New(filename, hotSpot);
-		if (cursor == NULL) {
-			return false; // invalid cursor
-		}
-		cursorFileMap[filename] = cursor;
+	if (haveFile) {
+		cursorCommandMap[cmdName] = fileIt->second;
+		return true;
 	}
+
+	CMouseCursor* oldCursor = haveCmd ? cmdIt->second : NULL;
+
+	CMouseCursor* cursor = CMouseCursor::New(fileName, hotSpot);
+	if (cursor == NULL) {
+		return false; // invalid cursor
+	}
+	cursorFileMap[fileName] = cursor;
 
 	// assign the new cursor
-	cursorCommandMap[name] = cursor;
+	cursorCommandMap[cmdName] = cursor;
+
+	SafeDeleteCursor(oldCursor);
 
 	return true;
+}
+
+
+bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
+                                       const string& newName,
+                                       CMouseCursor::HotSpot hotSpot)
+{
+	std::map<std::string, CMouseCursor*>::iterator fileIt;
+	fileIt = cursorFileMap.find(oldName);
+	if (fileIt == cursorFileMap.end()) {
+		return false;
+	}
+
+	CMouseCursor* newCursor = CMouseCursor::New(newName, hotSpot);
+	if (newCursor == NULL) {
+		return false; // leave the old one
+	}
+
+	CMouseCursor* oldCursor = fileIt->second;
+	
+	std::map<std::string, CMouseCursor*>& cmdMap = cursorCommandMap;
+	std::map<std::string, CMouseCursor*>::iterator cmdIt;
+	for (cmdIt = cmdMap.begin(); cmdIt != cmdMap.end(); ++cmdIt) {
+		if (cmdIt->second == oldCursor) {
+			cmdIt->second = newCursor;
+		}
+	}
+
+	fileIt->second = newCursor;
+
+	delete oldCursor;
+
+	return true;
+}
+
+
+void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
+{
+	std::map<std::string, CMouseCursor*>::iterator it;
+
+	for (it = cursorCommandMap.begin(); it != cursorCommandMap.end(); ++it) {
+		if (it->second == cursor) {
+			return; // being used
+		}
+	}
+
+	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
+		if (it->second == cursor) {
+			cursorFileMap.erase(it);
+			delete cursor;
+			return;
+		}
+	}
+
+	delete cursor;
 }
 
 

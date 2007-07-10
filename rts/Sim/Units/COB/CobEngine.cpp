@@ -12,7 +12,7 @@
 #include "TimeProfiler.h"
 #endif
 #ifdef _CONSOLE
-#define START_TIME_PROFILE {}
+#define START_TIME_PROFILE(a) {}
 #define END_TIME_PROFILE(a) {}
 #endif
 
@@ -96,7 +96,7 @@ void CCobEngine::RemoveInstance(CCobInstance *instance)
 
 void CCobEngine::Tick(int deltaTime)
 {
-START_TIME_PROFILE
+START_TIME_PROFILE("Scripts");
 
 	GCurrentTime += deltaTime;
 

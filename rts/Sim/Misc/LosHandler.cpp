@@ -171,7 +171,7 @@ CLosHandler::~CLosHandler()
 
 void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 {
-START_TIME_PROFILE;
+	START_TIME_PROFILE("Los");
 	float3 losPos=unit->pos;
 	losPos.CheckInBounds();
 

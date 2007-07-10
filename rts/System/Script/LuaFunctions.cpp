@@ -123,7 +123,7 @@ namespace luafunctions
 
 	int GetNumUnitDefs()
 	{
-		return unitDefHandler->numUnits;
+		return unitDefHandler->numUnitDefs;
 	}
 
 	// This doesnt work, not sure why; Spring crashes
@@ -145,7 +145,7 @@ namespace luafunctions
 		return o;
 
 		int count = 1;
-		for (int a=0;a<unitDefHandler->numUnits && a < 10;a++)
+		for (int a=0;a<unitDefHandler->numUnitDefs && a < 10;a++)
 		{
 			UnitDef *def = unitDefHandler->GetUnitByID (a+1);
 			o[count++] = SAFE_NEW CObject_pointer<UnitDef>(def);

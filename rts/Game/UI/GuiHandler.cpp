@@ -2633,8 +2633,8 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 
 bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 {
-	// UnitDefHandler's array size is (numUnits + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnits)) {
+	// UnitDefHandler's array size is (numUnitDefs + 1)
+	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return false;
 	}
 	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
@@ -4072,10 +4072,6 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 		glDrawVolume(DrawBoxShape, &boxData);
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
-
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-//	DrawBoxShape(&boxData); // FIXME
 
 	DrawCornerPosts(pos0, pos1);
 

@@ -26,10 +26,15 @@ public:
 	float3 bottom;
 	float3 rightside;
 	float3 leftside;
+	float3 posOffset;
+	float3 tiltOffset;
 	float fov;
 	float oldFov;
+	float lppScale; // length-per-pixel scale
 	double modelview[16];
 	double projection[16];
+	double billboard[16];
+	double modelviewInverse[16];
 	int viewport[4];
 };
 

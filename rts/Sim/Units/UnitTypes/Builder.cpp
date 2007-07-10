@@ -253,16 +253,14 @@ void CBuilder::Update()
 	else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
 		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
-			if( modInfo->reclaimMethod != 1 && curResurrect->reclaimLeft < 1)
-			{
+			if ((modInfo->reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 				// This corpse has been reclaimed a little, need to restore the resources
 				// before we can let the player resurrect it.
 				curResurrect->AddBuildPower(repairSpeed, this);
 			}
-			else
-			{
+			else {
 				// Corpse has been restored, begin resurrection
-				if(UseEnergy(ud->energyCost*resurrectSpeed/ud->buildTime*0.5f)){
+				if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * 0.5f)) {
 					curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
 					CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
 				}

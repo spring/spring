@@ -12,9 +12,13 @@
 --------------------------------------------------------------------------------
 
 function widget:GetInfo()
+  local grey   = "\255\192\192\192"
+  local yellow = "\255\255\255\128"
   return {
     name      = "HighlightUnit",
-    desc      = "Highlights the unit or feature under the cursor",
+    desc      = "Highlights the unit or feature under the cursor\n"..
+                grey.."Hold "..yellow.."META"..grey..
+                " to show the unit or feature name",
     author    = "trepan",
     date      = "Apr 16, 2007",
     license   = "GNU GPL, v2 or later",
@@ -29,19 +33,21 @@ end
 include("colors.h.lua")
 
 
+local showName = (1 > 0)
+
+local customTex = LUAUI_DIRNAME .. 'Images/highlight_strip.png'
+local texName = LUAUI_DIRNAME .. 'Images/highlight_strip.png'
+--local texName = 'bitmaps/laserfalloff.tga'
+
 local cylDivs = 64
 local cylList = 0
 
-local blink = (-1 > 0)
-
-local showName = (-1 > 0)
+local outlineWidth = 3
 
 local vsx, vsy = widgetHandler:GetViewSizes()
-if (showName) then
-  function widget:ViewResize(viewSizeX, viewSizeY)
-    vsx = viewSizeX
-    vsy = viewSizeY
-  end
+function widget:ViewResize(viewSizeX, viewSizeY)
+  vsx = viewSizeX
+  vsy = viewSizeY
 end
 
 
@@ -55,6 +61,7 @@ end
 
 function widget:Shutdown()
   gl.DeleteList(cylList)
+  gl.DeleteTexture(customTex)
 end
 
 
@@ -93,39 +100,107 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function SetUnitColorMask(unitID)
-  local team = Spring.GetUnitTeam(unitID)
-  if (not team) then
-    gl.ColorMask(true,  false, false, false) -- red
-  elseif (team == Spring.GetMyTeamID()) then
-    gl.ColorMask(false, true,  true,  false) -- cyan
+local function HilightModel(drawFunc, drawData, outline)
+  gl.DepthTest(true)
+  gl.PolygonOffset(-2, -2)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE)
+
+  local scale = 20
+  local shift = (2 * widgetHandler:GetHourTimer()) % scale
+  gl.TexCoord(0, 0)
+  gl.TexGen(GL.T, GL.TEXTURE_GEN_MODE, GL.EYE_LINEAR)
+  gl.TexGen(GL.T, GL.EYE_PLANE, 0, (1 / scale), 0, shift)
+  gl.Texture(texName)
+
+  drawFunc(drawData)
+
+  gl.Texture(false)
+  gl.TexGen(GL.T, false)
+
+  -- more edge highlighting
+  if (outline) then
+    gl.LineWidth(outlineWidth)
+    gl.PointSize(outlineWidth)
+    gl.PolygonOffset(10, 100)
+    gl.PolygonMode(GL.FRONT_AND_BACK, GL.POINT)
+    drawFunc(drawData)
+    gl.PolygonMode(GL.FRONT_AND_BACK, GL.LINE)
+    drawFunc(drawData)
+    gl.PolygonMode(GL.FRONT_AND_BACK, GL.FILL)
+    gl.PointSize(1)
+    gl.LineWidth(1)
+  end
+
+  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+  gl.PolygonOffset(false)
+  gl.DepthTest(false)
+end
+
+
+--------------------------------------------------------------------------------
+
+local function SetUnitColor(unitID, alpha)
+  local teamID = Spring.GetUnitTeam(unitID)
+  if (teamID == nil) then
+    gl.Color(1.0, 0.0, 0.0, alpha) -- red
+  elseif (teamID == Spring.GetMyTeamID()) then
+    gl.Color(0.0, 1.0, 1.0, alpha) -- cyan
   elseif (Spring.GetUnitAllyTeam(unitID) == Spring.GetMyAllyTeamID()) then
-    gl.ColorMask(false, true,  false, false) -- green
+    gl.Color(0.0, 1.0, 0.0, alpha) -- green
   else
-    gl.ColorMask(true,  false, false, false) -- red
+    gl.Color(1.0, 0.0, 0.0, alpha) -- red
   end
 end
 
 
+local function SetFeatureColor(featureID, alpha)
+  gl.Color(1.0, 0.0, 1.0, alpha) -- purple
+  do return end  -- FIXME -- wait for feature team/allyteam resolution
+
+  local allyTeamID = Spring.GetFeatureAllyTeam(featureID)
+  if ((allyTeamID == nil) or (allyTeamID < 0)) then
+    gl.Color(1.0, 1.0, 1.0, alpha) -- white
+  elseif (allyTeamID == Spring.GetMyAllyTeamID()) then
+    gl.Color(0.0, 1.0, 1.0, alpha) -- cyan
+  else
+    gl.Color(1.0, 0.0, 0.0, alpha) -- red
+  end
+end
+
+
+local function UnitDrawFunc(unitID)
+  gl.Unit(unitID, true)
+end
+
+
+local function FeatureDrawFunc(featureID)
+  gl.Feature(featureID, true)
+end
+
+
 local function HilightUnit(unitID)
-  gl.DepthTest(true)
-  gl.Color(1, 0, 0, 0.25)
+  local outline = (Spring.GetUnitIsCloaked(unitID) ~= true)
+  SetUnitColor(unitID, outline and 0.5 or 0.25)
+  HilightModel(UnitDrawFunc, unitID, outline)
+end
 
-  gl.LogicOp(GL.SET)
-  SetUnitColorMask(unitID)
-  gl.Unit(unitID)
-  gl.ColorMask(true, true, true, true)
-  gl.LogicOp(false)
 
-  gl.DepthTest(false)
+local function HilightFeatureModel(featureID)
+  SetFeatureColor(featureID, 0.5)
+  HilightModel(FeatureDrawFunc, featureID, true)
 end
 
 
 local function HilightFeature(featureID)
   local fDefID = Spring.GetFeatureDefID(featureID)
-
   local fd = FeatureDefs[fDefID]
   if (fd == nil) then return end
+
+  if (fd.drawType == 0) then
+    HilightFeatureModel(featureID)
+    return
+  end
+
   local radius = fd.radius
 
   local px, py, pz = Spring.GetFeaturePosition(featureID)
@@ -158,11 +233,8 @@ local GetMyPlayerID           = Spring.GetMyPlayerID
 local GetPlayerControlledUnit = Spring.GetPlayerControlledUnit
 
 
-function widget:DrawWorld()
-  if (blink and (math.mod(widgetHandler:GetHourTimer(), 0.1) > 0.05)) then
-    return
-  end
 
+function widget:DrawWorld()
   local mx, my = Spring.GetMouseState()
   local type, data = Spring.TraceScreenRay(mx, my)
 
@@ -175,44 +247,82 @@ function widget:DrawWorld()
     end
   end
 end
-              
 
-if (showName) then
-  function widget:DrawScreen()
-    if (blink and (math.mod(widgetHandler:GetHourTimer(), 0.1) > 0.05)) then
-      return
-    end
 
-    local mx, my = Spring.GetMouseState()
-    local type, data = Spring.TraceScreenRay(mx, my)
+function widget:DrawScreen()
+  local a,c,m,s = Spring.GetModKeyState()
+  if (not m) then
+    return
+  end
 
-    local str = ''
+  local mx, my = Spring.GetMouseState()
+  local type, data = Spring.TraceScreenRay(mx, my)
 
-    if (type == 'unit') then
-      local udid = Spring.GetUnitDefID(data)
-      if (udid == nil) then return end
-      local ud = UnitDefs[udid]
-      if (ud == nil) then return end
-      str = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
-    elseif (type == 'feature') then
-      local fdid = Spring.GetFeatureDefID(data)
-      if (fdid == nil) then return end
-      local fd = FeatureDefs[fdid]
-      if (fd == nil) then return end
-      str = '\255\255\128\255' .. fd.tooltip
-    end
+  local str = ''
 
-    local f = 14
-    local g = 10
-    local l = f * gl.GetTextWidth(str)
-    if ((mx + l + g) < vsx) then
-      gl.Text(str, mx + g, my + g, f, 'o')
-    else
-      gl.Text(str, mx - g, my + g, f, 'or')
-    end
+  if (type == 'unit') then
+    local udid = Spring.GetUnitDefID(data)
+    if (udid == nil) then return end
+    local ud = UnitDefs[udid]
+    if (ud == nil) then return end
+    str = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
+  elseif (type == 'feature') then
+    local fdid = Spring.GetFeatureDefID(data)
+    if (fdid == nil) then return end
+    local fd = FeatureDefs[fdid]
+    if (fd == nil) then return end
+    str = '\255\255\128\255' .. fd.tooltip
+  end
+
+  local f = 14
+  local g = 10
+  local l = f * gl.GetTextWidth(str)
+  if ((mx + l + g) < vsx) then
+    gl.Text(str, mx + g, my + g, f, 'o')
+  else
+    gl.Text(str, mx - g, my + g, f, 'or')
   end
 end
               
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+--[[
+local gndList --FIXME
+
+
+local function DrawGroundQuad()
+  local xo = 3000
+  local zo = 3000
+  gl.Texture(':a:bitmaps/loadpictures/allside_transporttut2.jpg')
+  --gl.Texture('bitmaps/loadpictures/allside_transporttut2.jpg')
+  gl.DepthTest(true)
+  gl.Blending(GL.SRC_COLOR, GL.ONE)
+  gl.Culling(GL.BACK)
+  gl.PolygonOffset(-20, -20)
+  gl.Color(1, 1, 1, 0.5)
+  local scale = 240
+  gl.DrawGroundQuad(xo, zo, xo + 4*scale, zo + 3*scale, false, 0, 0, 1, 1)
+  gl.DrawGroundCircle(1000, 0, 500, 400, 64)
+  gl.Color(1, 1, 1)
+  gl.PolygonOffset(false)
+  gl.Culling(false)
+  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+  gl.DepthTest(false)
+  gl.Texture(false)
+end
+
+
+function widget:DrawWorldPreUnit() -- FIXME
+  if (gndList) then
+--    DrawGroundQuad()
+    gl.CallList(gndList)
+  else
+    gndList = gl.CreateList(function()
+      DrawGroundQuad()
+    end)
+  end
+end
+--]]
+

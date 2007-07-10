@@ -98,8 +98,17 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 
 	map<int,string>::iterator bi;
 	for(bi=fac->unitDef->buildOptions.begin();bi!=fac->unitDef->buildOptions.end();++bi){
-		string name=bi->second;
-		UnitDef* ud= unitDefHandler->GetUnitByName(name);
+		const string name = bi->second;
+
+		const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+		if (ud == NULL) {
+		  string errmsg = "MOD ERROR: loading ";
+		  errmsg += name.c_str();
+		  errmsg += " for ";
+		  errmsg += owner->unitDef->name;
+			throw content_error(errmsg);
+		}
+
 		CommandDescription c;
 		c.id=-ud->id; //build options are always negative
 		c.action="buildunit_" + StringToLower(ud->name);

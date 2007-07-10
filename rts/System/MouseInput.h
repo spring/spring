@@ -17,9 +17,6 @@ public:
 	virtual void Update () {}
 
 	virtual void HandleSDLMouseEvent (SDL_Event& event) = 0;
-
-protected:
-	int scrollWheelSpeed;
 };
 
 

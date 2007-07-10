@@ -220,7 +220,7 @@ void CFeatureHandler::DrawShadowPass()
 void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
-START_TIME_PROFILE
+	START_TIME_PROFILE("Feature::Update");
 	while (!toBeRemoved.empty()) {
 		CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
 		toBeRemoved.pop_back();
@@ -253,7 +253,7 @@ START_TIME_PROFILE
 			updateFeatures.erase(feature);
 		}
 	}
-END_TIME_PROFILE("Feature::Update");
+	END_TIME_PROFILE("Feature::Update");
 }
 
 
@@ -550,10 +550,12 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		fd->reclaimable=!!atoi(wreckParser.SGetValueDef(
 			fd->destructable ? "1" : "0",name+"\\reclaimable").c_str());
 		fd->burnable=!!atoi(wreckParser.SGetValueDef("0",name+"\\flammable").c_str());
-		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());		//this seem to be the closest thing to floating that ta wreckage contains
+		//this seem to be the closest thing to floating that ta wreckage contains
+		fd->floating=!!atoi(wreckParser.SGetValueDef("1",name+"\\nodrawundergray").c_str());
 		if (fd->floating && !fd->blocking) {
 			fd->floating=false;
 		}
+		fd->noSelect=!!atoi(wreckParser.SGetValueDef("0",name+"\\noselect").c_str());
 
 		fd->deathFeature=wreckParser.SGetValueDef("",name+"\\featuredead");
 		fd->upright=!!atoi(wreckParser.SGetValueDef("0",name+"\\upright").c_str());
@@ -605,4 +607,17 @@ FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 		return NULL;
 	}
 	return featureDefsVector[id];
+}
+
+
+S3DOModel* FeatureDef::LoadModel(int team) const
+{
+		if (!useCSOffset) {
+			return modelParser->Load3DO(modelname.c_str(),
+			                            collisionSphereScale, team);
+		} else {
+			return modelParser->Load3DO(modelname.c_str(),
+			                            collisionSphereScale, team,
+			                            collisionSphereOffset);
+		}
 }

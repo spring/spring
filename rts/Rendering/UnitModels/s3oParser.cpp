@@ -30,7 +30,7 @@ void SS3O::DrawStatic()
 
 SS3O::~SS3O()
 {
-	glDeleteLists(displist,1);
+	glDeleteLists(displist, 1);
 }
 
 
@@ -129,8 +129,9 @@ LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, vector<struct Pie
 	lmodel->pieces = SAFE_NEW LocalS3DO[model->numobjects];
 	lmodel->pieces->parent = NULL;
 	lmodel->scritoa = SAFE_NEW int[pieces->size()];
-	for(int a=0;a<pieces->size();++a)
+	for (int a = 0; a < pieces->size(); ++a) {
 		lmodel->scritoa[a]=-1;
+	}
 
 	CreateLocalModel(model->rootobjects3o, lmodel, pieces, &piecenum);
 
@@ -151,9 +152,11 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 	unsigned int cur;
 
 	//Map this piecename to an index in the script's pieceinfo
-	for(cur=0; cur<pieces->size(); cur++)
-        if(lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0)
+	for (cur=0; cur<pieces->size(); cur++) {
+		if (lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0) {
 			break;
+		}
+	}
 
 	//Not found? Try again with partial matching
 	if (cur == pieces->size()) {
@@ -163,8 +166,9 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 			int maxcompare = min(s1.size(), s2.size());
 			int j;
 			for (j = 0; j < maxcompare; ++j) {
-				if (s1[j] != s2[j])
+				if (s1[j] != s2[j]) {
 					break;
+				}
 			}
 			//Match now?
 			if (j == maxcompare) {
@@ -183,14 +187,14 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 	}
 
 	int thispiece = *piecenum;
-	for(unsigned int i=0; i<model->childs.size(); i++)
-	{
 
+	for (unsigned int i=0; i<model->childs.size(); i++) {
 		(*piecenum)++;
 		lmodel->pieces[thispiece].childs.push_back(&lmodel->pieces[*piecenum]);
 		lmodel->pieces[*piecenum].parent = &lmodel->pieces[thispiece];
 		CreateLocalModel(model->childs[i], lmodel, pieces, piecenum);
 	}
+
 	POP_CODE_MODE;
 }
 
@@ -308,7 +312,7 @@ void CS3OParser::DrawSub(SS3O* o)
 
 void CS3OParser::CreateLists(SS3O *o)
 {
-	o->displist=glGenLists(1);
+	o->displist = glGenLists(1);
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	glNewList(o->displist,GL_COMPILE);

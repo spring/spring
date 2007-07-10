@@ -130,8 +130,15 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 
 	map<int,string>::iterator bi;
 	for(bi=fac->unitDef->buildOptions.begin();bi!=fac->unitDef->buildOptions.end();++bi){
-		string name=bi->second;
-		UnitDef* ud= unitDefHandler->GetUnitByName(name);
+		const string name = bi->second;
+		const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+		if (ud == NULL) {
+		  string errmsg = "MOD ERROR: loading ";
+		  errmsg += name.c_str();
+		  errmsg += " for ";
+		  errmsg += owner->unitDef->name;
+			throw content_error(errmsg);
+		}
 		CommandDescription c;
 		c.id=-ud->id; //build options are always negative
 		c.action="buildunit_" + StringToLower(ud->name);
@@ -172,7 +179,7 @@ float CBuilderCAI::GetUnitRadius(const UnitDef* ud, int cmdId)
 	if (cachedRadiusId == cmdId) {
 		radius = cachedRadius;
 	} else {
-		radius = modelParser->Load3DO(ud->model.modelpath, 1.0f, owner->team)->radius;
+		radius = ud->LoadModel(owner->team)->radius;
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}
@@ -194,12 +201,12 @@ void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 
 void CBuilderCAI::SlowUpdate()
 {
-	if(commandQue.empty()){
+	if (commandQue.empty()) {
 		CMobileCAI::SlowUpdate();
 		return;
 	}
 
-	if(owner->stunned){
+	if (owner->stunned) {
 		return;
 	}
 

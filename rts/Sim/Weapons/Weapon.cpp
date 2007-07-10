@@ -679,6 +679,13 @@ void CWeapon::Init(void)
 		owner->stockpileWeapon = this;
 		owner->commandAI->AddStockpileWeapon(this);
 	}
+
+	if (weaponDef->isShield) {
+		if ((owner->shieldWeapon == NULL) ||
+		    (owner->shieldWeapon->weaponDef->shieldRadius < weaponDef->shieldRadius)) {
+			owner->shieldWeapon = this;
+		}
+	}
 }
 
 void CWeapon::ScriptReady(void)

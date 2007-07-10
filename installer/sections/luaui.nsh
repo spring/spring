@@ -5,6 +5,7 @@
   File "..\game\usericons.tdf"
 
   SetOutPath "$INSTDIR\LuaUI\Images\"
+  File "..\game\LuaUI\Images\highlight_strip.png"
   File "..\game\LuaUI\Images\players.png"
   SetOutPath "$INSTDIR\LuaUI\Icons\"
   File "..\game\LuaUI\Icons\m.png"
@@ -104,6 +105,7 @@
   Delete "$INSTDIR\gui.lua"
   Delete "$INSTDIR\usericons.tdf"
 
+  Delete "$INSTDIR\LuaUI\Images\highlight_strip.png"
   Delete "$INSTDIR\LuaUI\Images\players.png"
   RmDir "$INSTDIR\LuaUI\Images\"
   Delete "$INSTDIR\LuaUI\Icons\m.png"

@@ -871,7 +871,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 	//Obstacle-avoidance-system only need to be runned if the unit want to move.
 	if(pathId) {
-//		START_TIME_PROFILE;
+//		START_TIME_PROFILE("AI:SMoveOA");
 		float3 avoidanceDir = desiredDir;
 		//Speed-optimizer. Reduces the times this system is runned.
 		if(gs->frameNum>=nextObstacleAvoidanceUpdate) {

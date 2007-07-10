@@ -340,7 +340,7 @@ void CAdvSky::Update()
 		return;
 
 
-START_TIME_PROFILE
+START_TIME_PROFILE("Updating sky");
 
 	CreateDetailTex();
 

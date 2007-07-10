@@ -138,25 +138,35 @@ void CTimeProfiler::AddTime(string name, Sint64 time)
 	}
 }
 
-void CTimeProfiler::StartTimer()
+void CTimeProfiler::StartTimer(const char* name)
 {
-	if(startTimeNum==999){
-		logOutput.Print("To many timers");
+	if (startTimeNum == 999) {
+		logOutput.Print("Too many timers");
 		return;
 	}
 	Uint64 starttime;
 	starttime = SDL_GetTicks();
-	startTimes[startTimeNum++]=(starttime);
+	startTimes[startTimeNum] = (starttime);
+	startNames[startTimeNum] = name;
+	startTimeNum++;
 }
 
 void CTimeProfiler::EndTimer(const char* name)
 {
-	if(startTimeNum==0)
+	if (startTimeNum == 0) {
+		logOutput.Print("Not enough timers");
 		return;
-
+	}
+	startTimeNum--;
+/* 
+	if (strcmp(name, startNames[startTimeNum]) != 0) {
+		logOutput.Print("Timer mismatch: start = %s, end = %s\n",
+	                  startTimes[startTimeNum], name);
+	}
+*/
 	Uint64 stop;
 	stop = SDL_GetTicks();
-	AddTime(name,stop - startTimes[--startTimeNum]);
+	AddTime(name,stop - startTimes[startTimeNum]);
 }
 
 bool CTimeProfiler::IsAbove(int x, int y)

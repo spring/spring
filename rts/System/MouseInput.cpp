@@ -13,11 +13,10 @@ IMouseInput *mouseInput = 0;
 
 IMouseInput::IMouseInput()
 {
-	scrollWheelSpeed = configHandler.GetInt("ScrollWheelSpeed",25);
-	scrollWheelSpeed = max(-255, min(255, scrollWheelSpeed));
 }
 
-IMouseInput::~IMouseInput() {
+IMouseInput::~IMouseInput()
+{
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -122,9 +121,9 @@ public:
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 			if (event.button.button == SDL_BUTTON_WHEELUP)
-				mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
+				mouse->MouseWheel(true);
 			else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-				mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
+				mouse->MouseWheel(false);
 			else
 				mouse->MousePress(mousepos.x, mousepos.y,event.button.button);
 			break;
@@ -167,9 +166,9 @@ public:
 				mousepos = int2(event.button.x, event.button.y);
 				if (mouse) {
 					if (event.button.button == SDL_BUTTON_WHEELUP) {
-						mouse->currentCamController->MouseWheelMove(scrollWheelSpeed);
+						mouse->MouseWheel(true);
 					} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
-						mouse->currentCamController->MouseWheelMove(-scrollWheelSpeed);
+						mouse->MouseWheel(false);
 					} else {
 						mouse->MousePress(event.button.x, event.button.y, event.button.button);
 					}

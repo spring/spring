@@ -1,6 +1,6 @@
 #ifndef LUA_SHADERS_H
 #define LUA_SHADERS_H
-// LuaShaderLists.h: interface for the LuaShaderLists class.
+// LuaShaders.h: interface for the LuaShaders class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -29,6 +29,8 @@ class CLuaShaders {
 
 		string errorLog;
 
+		GLuint GetProgramName(unsigned int progID) const;
+
 	private:
 		struct Object {
 			Object(GLuint _id, GLenum _type) : id(_id), type(_type) {}
@@ -47,7 +49,6 @@ class CLuaShaders {
 	private:
 		unsigned int AddProgram(const Program& p);
 		void RemoveProgram(unsigned int progID);
-		GLuint GetProgramName(unsigned int progID) const;
 		GLuint GetProgramName(lua_State* L, int index) const;
 
 	private:

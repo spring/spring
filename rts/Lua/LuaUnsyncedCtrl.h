@@ -30,6 +30,9 @@ class LuaUnsyncedCtrl {
 		static int AddWorldIcon(lua_State* L);
 		static int AddWorldText(lua_State* L);
 		static int AddWorldUnit(lua_State* L);
+
+		static int AssignMouseCursor(lua_State* L);
+		static int ReplaceMouseCursor(lua_State* L);
 };
 
 

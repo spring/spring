@@ -43,6 +43,8 @@ COpenALSound::COpenALSound()
 		}
 	}
 
+	printf("OpenAL: %s\n", (const char*)alGetString(AL_EXTENSIONS));
+
 	// Generate sound sources
 	Sources = SAFE_NEW ALuint[maxSounds];
 	for (int a=0;a<maxSounds;a++) {

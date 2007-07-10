@@ -6,40 +6,40 @@
 
 #ifndef _CONSOLE
 
-#include "Sim/Units/Unit.h"
 #include "LogOutput.h"
+#include "Game/command.h"
+#include "Game/GameHelper.h"
+#include "Map/Ground.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
+#include "Sim/Projectiles/MuzzleFlame.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/SmokeProjectile.h"
 #include "Sim/Projectiles/WreckProjectile.h"
 #include "Sim/Projectiles/HeatCloudProjectile.h"
-#include "Game/GameHelper.h"
-#include "Sim/Projectiles/MuzzleFlame.h"
-#include "Sync/SyncTracer.h"
-#include "Map/Ground.h"
 #include "Sim/Projectiles/BubbleProjectile.h"
 #include "Sim/Projectiles/WakeProjectile.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sound.h"
-#include "SDL_types.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-//#include "Game/Command.h"
+#include "Sync/SyncTracer.h"
+#include "Sound.h"
+#include "SDL_types.h"
+#include "mmgr.h"
 
 #endif
 
 
 // Indices for set/get value
-// * NOTE: [ LUA0 - LUA9 ] are defined in CobThread.cpp
 #define ACTIVATION           1  // set or get
 #define STANDINGMOVEORDERS   2  // set or get
 #define STANDINGFIREORDERS   3  // set or get
@@ -85,18 +85,21 @@
 #define	POW                      80 // get
 #define PRINT                    81 // get, so multiple args can be passed
 #define HEADING                  82 // get
-#define TARGET_ID				 83 // get
-#define LAST_ATTACKER_ID		 84 // get
-#define LOS_RADIUS				 85 // set or get
-#define AIR_LOS_RADIUS			 86 // set or get
-#define RADAR_RADIUS			 87 // set or get
-#define JAMMER_RADIUS			 88 // set or get
-#define SONAR_RADIUS			 89 // set or get
-#define SONAR_JAM_RADIUS		 90 // set or get
-#define SEISMIC_RADIUS			 91 // set or get
-#define DO_SEISMIC_PING			 92 // get
-#define CURRENT_FUEL			 93 // set or get
-#define TRANSPORT_ID			 94 // get
+#define TARGET_ID                83 // get
+#define LAST_ATTACKER_ID         84 // get
+#define LOS_RADIUS               85 // set or get
+#define AIR_LOS_RADIUS           86 // set or get
+#define RADAR_RADIUS             87 // set or get
+#define JAMMER_RADIUS            88 // set or get
+#define SONAR_RADIUS             89 // set or get
+#define SONAR_JAM_RADIUS         90 // set or get
+#define SEISMIC_RADIUS           91 // set or get
+#define DO_SEISMIC_PING          92 // get
+#define CURRENT_FUEL             93 // set or get
+#define TRANSPORT_ID             94 // get
+#define SHIELD_POWER             95 // set or get
+
+// * NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script)
@@ -1084,13 +1087,25 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case SEISMIC_RADIUS:
 		return unit->seismicRadius;
 	case DO_SEISMIC_PING:
-		if (p1 == 0) p1 = (int)unit->seismicSignature;
-		unit->DoSeismicPing(p1);
+		float pingSize;
+		if (p1 == 0) {
+			pingSize = unit->seismicSignature;
+		} else {
+			pingSize = p1;
+		}
+		unit->DoSeismicPing(pingSize);
 		break;
 	case CURRENT_FUEL:
-		return (int)(unit->currentFuel * COBSCALE);
+		return int(unit->currentFuel * float(COBSCALE));
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
+	case SHIELD_POWER: {
+		if (unit->shieldWeapon == NULL) {
+			return -1;
+		}
+		const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+		return int(shield->curPower * float(COBSCALE));
+	}
 	default:
 		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
 		                val, p1, p2, p3, p4);
@@ -1103,145 +1118,189 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 void CCobInstance::SetUnitVal(int val, int param)
 {
 #ifndef _CONSOLE
-	switch(val)
-	{
-	case ACTIVATION:
-		if (param == 0)
-			unit->Deactivate();
-		else
-			unit->Activate();
-		break;
-	case STANDINGMOVEORDERS:
-		if (param >= 0 && param <= 2) {
-			Command c;
-			c.id = CMD_MOVE_STATE;
-			c.params.push_back(param);
-			unit->commandAI->GiveCommand(c);
+	switch(val) {
+		case ACTIVATION: {
+			if (param == 0) {
+				unit->Deactivate();
+			} else {
+				unit->Activate();
+			}
+			break;
 		}
-		break;
-	case STANDINGFIREORDERS:
-		if (param >= 0 && param <= 2) {
-			Command c;
-			c.id = CMD_FIRE_STATE;
-			c.params.push_back(param);
-			unit->commandAI->GiveCommand(c);
+		case STANDINGMOVEORDERS: {
+			if (param >= 0 && param <= 2) {
+				Command c;
+				c.id = CMD_MOVE_STATE;
+				c.params.push_back(param);
+				unit->commandAI->GiveCommand(c);
+			}
+			break;
 		}
-		break;
-	case HEALTH:
-		break;
-	case INBUILDSTANCE:
-		//logOutput.Print("buildstance %d", param);
-		unit->inBuildStance = (param != 0);
-		break;
-	case BUSY:
-		busy = (param != 0);
-		break;
-	case PIECE_XZ:
-		break;
-	case PIECE_Y:
-		break;
-	case UNIT_XZ:
-		break;
-	case UNIT_Y:
-		break;
-	case UNIT_HEIGHT:
-		break;
-	case XZ_ATAN:
-		break;
-	case XZ_HYPOT:
-		break;
-	case ATAN:
-		break;
-	case HYPOT:
-		break;
-	case GROUND_HEIGHT:
-		break;
-	case GROUND_WATER_HEIGHT:
-		break;
-	case BUILD_PERCENT_LEFT:
-		break;
-	case YARD_OPEN:
-		if (param == 0) {
-			if (uh->CanCloseYard(unit))
-				yardOpen = false;
+		case STANDINGFIREORDERS: {
+			if (param >= 0 && param <= 2) {
+				Command c;
+				c.id = CMD_FIRE_STATE;
+				c.params.push_back(param);
+				unit->commandAI->GiveCommand(c);
+			}
+			break;
 		}
-		else {
-			yardOpen = true;
+		case HEALTH: {
+			break;
 		}
-		break;
-	case BUGGER_OFF:
-		if (param != 0) {
-			helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5f);
+		case INBUILDSTANCE: {
+			//logOutput.Print("buildstance %d", param);
+			unit->inBuildStance = (param != 0);
+			break;
 		}
-		//yardOpen = (param != 0);
-		break;
-	case ARMORED:
-		if(param){
-			unit->curArmorMultiple=unit->armoredMultiple;
-		} else {
-			unit->curArmorMultiple=1;
+		case BUSY: {
+			busy = (param != 0);
+			break;
 		}
-		unit->armoredState = (param != 0);
-		break;
-	default:
-		logOutput.Print("CobError: Unknown set constant %d", val);
-	case VETERAN_LEVEL:
-		unit->experience=param*0.01f;
-		break;
-	case MAX_SPEED:
-		if(unit->moveType && param > 0){
-			unit->moveType->SetMaxSpeed(param/(float)COBSCALE);
-			unit->maxSpeed = param/(float)COBSCALE;
+		case PIECE_XZ: {
+			break;
 		}
-		break;
-	case CLOAKED:
-		unit->wantCloak = !!param;
-		break;
-	case WANT_CLOAK:
-		unit->wantCloak = !!param;
-		break;
-	case UPRIGHT:
-		unit->upright = !!param;
-		break;
-	case HEADING:
-		unit->heading = param % COBSCALE;
-		break;
-	case LOS_RADIUS:
-		unit->ChangeLos(param, unit->realAirLosRadius);
-		unit->realLosRadius = param;
-		break;
-	case AIR_LOS_RADIUS:
-		unit->ChangeLos(unit->realLosRadius, param);
-		unit->realAirLosRadius = param;
-		break;
-	case RADAR_RADIUS:
-		radarhandler->RemoveUnit(unit);
-		unit->radarRadius = param;
-		radarhandler->MoveUnit(unit);
-		break;
-	case JAMMER_RADIUS:
-		radarhandler->RemoveUnit(unit);
-		unit->jammerRadius = param;
-		radarhandler->MoveUnit(unit);
-		break;
-	case SONAR_RADIUS:
-		radarhandler->RemoveUnit(unit);
-		unit->sonarRadius = param;
-		radarhandler->MoveUnit(unit);
-		break;
-	case SONAR_JAM_RADIUS:
-		radarhandler->RemoveUnit(unit);
-		unit->sonarJamRadius = param;
-		radarhandler->MoveUnit(unit);
-		break;
-	case SEISMIC_RADIUS:
-		radarhandler->RemoveUnit(unit);
-		unit->seismicRadius = param;
-		radarhandler->MoveUnit(unit);
-		break;
-	case CURRENT_FUEL:
-		unit->currentFuel = param / (float) COBSCALE;
-		break;
+		case PIECE_Y: {
+			break;
+		}
+		case UNIT_XZ: {
+			break;
+		}
+		case UNIT_Y: {
+			break;
+		}
+		case UNIT_HEIGHT: {
+			break;
+		}
+		case XZ_ATAN: {
+			break;
+		}
+		case XZ_HYPOT: {
+			break;
+		}
+		case ATAN: {
+			break;
+		}
+		case HYPOT: {
+			break;
+		}
+		case GROUND_HEIGHT: {
+			break;
+		}
+		case GROUND_WATER_HEIGHT: {
+			break;
+		}
+		case BUILD_PERCENT_LEFT: {
+			break;
+		}
+		case YARD_OPEN: {
+			if (param == 0) {
+				if (uh->CanCloseYard(unit)) {
+					yardOpen = false;
+				}
+			}
+			else {
+				yardOpen = true;
+			}
+			break;
+		}
+		case BUGGER_OFF: {
+			if (param != 0) {
+				helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5f);
+			}
+			//yardOpen = (param != 0);
+			break;
+		}
+		case ARMORED: {
+			if(param){
+				unit->curArmorMultiple=unit->armoredMultiple;
+			} else {
+				unit->curArmorMultiple=1;
+			}
+			unit->armoredState = (param != 0);
+			break;
+		}
+		case VETERAN_LEVEL: {
+			unit->experience=param*0.01f;
+			break;
+		}
+		case MAX_SPEED: {
+			if(unit->moveType && param > 0){
+				unit->moveType->SetMaxSpeed(param/(float)COBSCALE);
+				unit->maxSpeed = param/(float)COBSCALE;
+			}
+			break;
+		}
+		case CLOAKED: {
+			unit->wantCloak = !!param;
+			break;
+		}
+		case WANT_CLOAK: {
+			unit->wantCloak = !!param;
+			break;
+		}
+		case UPRIGHT: {
+			unit->upright = !!param;
+			break;
+		}
+		case HEADING: {
+			unit->heading = param % COBSCALE;
+			break;
+		}
+		case LOS_RADIUS: {
+			unit->ChangeLos(param, unit->realAirLosRadius);
+			unit->realLosRadius = param;
+			break;
+		}
+		case AIR_LOS_RADIUS: {
+			unit->ChangeLos(unit->realLosRadius, param);
+			unit->realAirLosRadius = param;
+			break;
+		}
+		case RADAR_RADIUS: {
+			radarhandler->RemoveUnit(unit);
+			unit->radarRadius = param;
+			radarhandler->MoveUnit(unit);
+			break;
+		}
+		case JAMMER_RADIUS: {
+			radarhandler->RemoveUnit(unit);
+			unit->jammerRadius = param;
+			radarhandler->MoveUnit(unit);
+			break;
+		}
+		case SONAR_RADIUS: {
+			radarhandler->RemoveUnit(unit);
+			unit->sonarRadius = param;
+			radarhandler->MoveUnit(unit);
+			break;
+		}
+		case SONAR_JAM_RADIUS: {
+			radarhandler->RemoveUnit(unit);
+			unit->sonarJamRadius = param;
+			radarhandler->MoveUnit(unit);
+			break;
+		}
+		case SEISMIC_RADIUS: {
+			radarhandler->RemoveUnit(unit);
+			unit->seismicRadius = param;
+			radarhandler->MoveUnit(unit);
+			break;
+		}
+		case CURRENT_FUEL: {
+			unit->currentFuel = param / (float) COBSCALE;
+			break;
+		}
+		case SHIELD_POWER: {
+			if (unit->shieldWeapon != NULL) {
+				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+				shield->curPower = max(0.0f, float(param) / float(COBSCALE));
+			}
+			break;
+		}
+		default: {
+			logOutput.Print("CobError: Unknown set constant %d", val);
+		}
 	}
 #endif
 }

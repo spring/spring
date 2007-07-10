@@ -46,6 +46,7 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/ExtractorBuilding.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
@@ -111,6 +112,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TransferFeature);
 
 	REGISTER_LUA_CFUNC(SetUnitCosts);
+	REGISTER_LUA_CFUNC(SetUnitResourcing);
 	REGISTER_LUA_CFUNC(SetUnitTooltip);
 	REGISTER_LUA_CFUNC(SetUnitHealth);
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
@@ -125,10 +127,13 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
+	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
+
+	REGISTER_LUA_CFUNC(AddUnitImpulse);
 
 	REGISTER_LUA_CFUNC(AddUnitResource);
 	REGISTER_LUA_CFUNC(UseUnitResource);
@@ -140,10 +145,13 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
+	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
 	REGISTER_LUA_CFUNC(CallCOBScriptCB);
 	REGISTER_LUA_CFUNC(GetCOBScriptID);
+	REGISTER_LUA_CFUNC(GetUnitCOBValue);
+	REGISTER_LUA_CFUNC(SetUnitCOBValue);
 
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitMap);
@@ -607,6 +615,14 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	else if ((type == "e") || (type == "energy")) {
 		team->energy = min(team->energyStorage, value);
 	}
+	else if ((type == "ms") || (type == "metalStorage")) {
+		team->metalStorage = value;
+		team->metal = min(team->metal, team->metalStorage);
+	}
+	else if ((type == "es") || (type == "energyStorage")) {
+		team->energyStorage = value;
+		team->energy = min(team->energy, team->energyStorage);
+	}
 	return 0;
 }
 
@@ -805,6 +821,69 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->cob == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	int arg = 2;
+	bool splitData = false;
+	if (lua_isboolean(L, arg)) {
+		splitData = lua_toboolean(L, arg);
+		arg++;
+	}
+
+	const int val = (int)luaL_checknumber(L, arg); arg++;
+
+	int p[4];
+	for (int a = 0; a < 4; a++, arg++) {
+		if (lua_istable(L, arg)) {
+			int x, z;
+			lua_rawgeti(L, -1, 1); x = (int)luaL_checknumber(L, -1); lua_pop(L, 1); 
+			lua_rawgeti(L, -1, 2); z = (int)luaL_checknumber(L, -1); lua_pop(L, 1); 
+			p[a] = PACKXZ(x, z);
+		}
+		else {
+			p[a] = (int)luaL_optnumber(L, arg, 0);
+		}
+	}
+
+	const int result = unit->cob->GetUnitVal(val, p[0], p[1], p[2], p[3]);
+	if (!splitData) {
+		lua_pushnumber(L, result);
+		return 1;
+	}
+	lua_pushnumber(L, UNPACKX(result));
+	lua_pushnumber(L, UNPACKZ(result));
+	return 2;
+}
+
+
+int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->cob == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	const int val = (int)luaL_checknumber(L, 2);
+	int param;
+	if (args == 3) {
+		param = (int)luaL_checknumber(L, 3);
+	}
+	else {
+		const int x = (int)luaL_checknumber(L, 3);
+		const int z = (int)luaL_checknumber(L, 4);
+		param = PACKXZ(x, z);
+	}
+	unit->cob->SetUnitVal(val, param);
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -965,6 +1044,76 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 			unit->energyCost = max(1.0f, value);
 		}
 	}
+	return 0;
+}
+
+
+static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
+{
+	if (name.size() != 3) {
+		return false;
+	}
+	// [u|c][u|m][m|e]
+	//
+	// unconditional | conditional
+	//           use | make
+	//         metal | energy
+
+	value *= 0.25f;
+
+	if (name[0] == 'u') {
+		if (name[1] == 'u') {
+					 if (name[2] == 'm') { unit->uncondUseMetal = value;  return true; }
+			else if (name[2] == 'e') { unit->uncondUseEnergy = value; return true; }
+		}
+		else if (name[1] == 'm') {
+					 if (name[2] == 'm') { unit->uncondMakeMetal = value;  return true; }
+			else if (name[2] == 'e') { unit->uncondMakeEnergy = value; return true; }
+		}
+	}
+	else if (name[0] == 'c') {
+		if (name[1] == 'u') {
+					 if (name[2] == 'm') { unit->condUseMetal = value;  return true; }
+			else if (name[2] == 'e') { unit->condUseEnergy = value; return true; }
+		}
+		else if (name[1] == 'm') {
+					 if (name[2] == 'm') { unit->condMakeMetal = value;  return true; }
+			else if (name[2] == 'e') { unit->condMakeEnergy = value; return true; }
+		}
+	}
+	return false;
+}
+
+
+int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args == 3) && lua_isstring(L, 2) && lua_isnumber(L, 3)) {
+		const string key = lua_tostring(L, 2);
+		const float value = lua_tonumber(L, 3);
+		SetUnitResourceParam(unit, key, value);
+	}
+	else if ((args == 2) && lua_istable(L, 2)) {
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (!lua_isstring(L, -2) || !lua_isnumber(L, -1)) {
+				continue;
+			}
+			const string key = lua_tostring(L, -2);
+			const float value = lua_tonumber(L, -1);
+
+			SetUnitResourceParam(unit, key, value);
+		}
+	}
+	else {
+		luaL_error(L, "Incorrect arguments to SetUnitResourcing");
+	}
+
 	return 0;
 }
 
@@ -1290,6 +1439,26 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+	if (shield == NULL) {
+		return 0;
+	}
+	if (lua_isboolean(L, 2)) {
+		shield->isEnabled = lua_toboolean(L, 2);
+	}
+	if (lua_isnumber(L, 3)) {
+		shield->curPower = (float)lua_tonumber(L, 3);
+	}
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1338,14 +1507,28 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+	if ((args < 3) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
 		luaL_error(L, "Incorrect arguments to SetUnitPosition()");
 	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
-	unit->ForcedMove(pos);
+
+	if (lua_isnumber(L, 4)) {
+		float3 pos((float)lua_tonumber(L, 2),
+							 (float)lua_tonumber(L, 3),
+							 (float)lua_tonumber(L, 4));
+		unit->ForcedMove(pos);
+		return 0;
+	}
+	
+	float x, y, z;	
+	x = (float)lua_tonumber(L, 2);
+	z = (float)lua_tonumber(L, 3);
+	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
+		y = ground->GetHeight(x, z);
+	} else {
+		y = ground->GetHeight2(x, z);
+	}
+	unit->ForcedMove(float3(x, y, z));
+	
 	return 0;
 }
 
@@ -1401,6 +1584,26 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	           (float)lua_tonumber(L, 3),
 	           (float)lua_tonumber(L, 4));
 	unit->speed = dir;
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 4) ||
+	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		luaL_error(L, "Incorrect arguments to AddUnitImpulse()");
+	}
+	float3 impulse((float)lua_tonumber(L, 2),
+	               (float)lua_tonumber(L, 3),
+	               (float)lua_tonumber(L, 4));
+	unit->residualImpulse += impulse;
+	unit->moveType->ImpulseAdded();
 	return 0;
 }
 
@@ -1487,6 +1690,8 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	return 0;
 }
 
+
+/******************************************************************************/
 
 int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 {
@@ -1700,6 +1905,21 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	if (args >= 3) {
 		feature->buildFacing = ParseFacing(L, __FUNCTION__, 3);
 	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetFeatureNoSelect()");
+	}
+	feature->noSelect = !!lua_toboolean(L, 2);
 	return 0;
 }
 
@@ -2339,7 +2559,7 @@ static bool ParseCommandDescription(lua_State* L, int table,
 int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 {
 	if (!FullCtrl()) {
-		return 0; // not LuaGaia, or LuaCob in a script
+		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 3) ||
@@ -2369,7 +2589,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 {
 	if (!FullCtrl()) {
-		return 0; // not LuaGaia, or LuaCob in a script
+		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
 	if (((args == 2) && !lua_istable(L, 2)) ||
@@ -2416,7 +2636,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 {
 	if (!FullCtrl()) {
-		return 0; // not LuaGaia, or LuaCob in a script
+		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isnumber(L, 1)) {

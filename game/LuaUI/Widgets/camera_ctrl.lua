@@ -60,11 +60,12 @@ local function GetCamereTable()
     ct.oldHeight = 11
   elseif (cs.name == 'ta') then    -- Total Annihilation
     ct.fullName = "Total Annihalition Overhead Camera"
-    ct.dx     = 5
-    ct.dy     = 6
-    ct.dz     = 7
-    ct.height = 8
-    ct.zscale = 9
+    ct.dx      = 5
+    ct.dy      = 6
+    ct.dz      = 7
+    ct.height  = 8
+    ct.zscale  = 9
+    ct.flipped = 10
   elseif (cs.name == 'tw') then    -- Total War 
     ct.fullName = "Total War Camera"
     ct.rx = 5

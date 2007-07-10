@@ -55,6 +55,7 @@ bool CNamedTextures::Bind(const string& texName)
 	bool clamped = false;
 	bool nearest = false;
 	bool linear  = false;
+	bool aniso   = false;
 	bool invert  = false;
 	bool greyed  = false;
 	bool tint    = false;
@@ -67,6 +68,7 @@ bool CNamedTextures::Bind(const string& texName)
 			if (ch == ':')      { break; }
 			else if (ch == 'n') { nearest = true; }
 			else if (ch == 'l') { linear  = true; }
+			else if (ch == 'a') { aniso   = true; }
 			else if (ch == 'i') { invert  = true; }
 			else if (ch == 'g') { greyed  = true; }
 			else if (ch == 'c') { clamped = true; }
@@ -148,6 +150,14 @@ bool CNamedTextures::Bind(const string& texName)
 		}
 		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
 											GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+	}
+
+	if (aniso && GLEW_EXT_texture_filter_anisotropic) {
+		static GLfloat maxAniso = -1.0f;
+		if (maxAniso == -1.0f) {
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+		}
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
 	}
 
 	texInfo.id    = texID;

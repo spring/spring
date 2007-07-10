@@ -10,58 +10,67 @@
 
 struct MoveData;
 struct WeaponDef;
+struct S3DOModel;
 class CExplosionGenerator;
 
 const int MAX_UNITS = 5000;
 
 
-struct GuiSound
+struct GuiSoundSet
 {
-	// note: vector sizes are always equal
-	// (vector of triples would be better)
-	std::vector<std::string> names;
-	std::vector<int> ids;
-	std::vector<float> volumes;
+	struct Data {
+		Data() : name(""), id(0), volume(0.0f) {}
+		Data(const std::string& n, int i, float v) : name(n), id(i), volume(v) {}
+		std::string name;
+		int id;
+		float volume;
+	};
+	std::vector<Data> sounds;
 
 	// return a random sound index if more than one sound was loaded
 	// (used for unit acknowledgements, could be called for weapons too)
 	int getRandomIdx(void) {
-		switch (ids.size()) {
-			case 0: { return -1; } break;
-			case 1: { return 0; } break;
-			default: {
-				return rand() % ids.size();
-			} break;
+		switch (sounds.size()) {
+			case 0:  { return -1; break; }
+			case 1:  { return  0; break; }
+			default: { return rand() % sounds.size(); }
 		}
 	}
 
+	bool ValidIndex(int idx) const {
+		return ((idx >= 0) && (idx < sounds.size()));
+	}
+
 	// get a (loaded) sound's name for index <idx>
-	std::string getName(int idx) {
-		return (idx >= 0 && idx < names.size())? names[idx]: "";
+	std::string getName(int idx) const {
+		return ValidIndex(idx) ? sounds[idx].name : "";
 	}
 	// get a (loaded) sound's ID for index <idx>
-	int getID(int idx) {
-		return (idx >= 0 && idx < ids.size())? ids[idx]: 0;
+	int getID(int idx) const {
+		return ValidIndex(idx) ? sounds[idx].id : 0;
 	}
 	// get a (loaded) sound's volume for index <idx>
-	float getVolume(int idx) {
-		return (idx >= 0 && idx < volumes.size())? volumes[idx]: 0.0f;
+	float getVolume(int idx) const {
+		return ValidIndex(idx) ? sounds[idx].volume : 0.0f;
 	}
 
 	// set a (loaded) sound's name for index <idx>
 	void setName(int idx, std::string name) {
-		if (idx >= 0 && idx < names.size())
-			names[idx] = name;
+		if (ValidIndex(idx)) {
+			sounds[idx].name = name;
+		}
 	}
 	// set a (loaded) sound's ID for index <idx>
-	void setID(int idx, int ID) {
-		if (idx >= 0 && idx < ids.size())
-			ids[idx] = ID;
+	void setID(int idx, int id) {
+		if (ValidIndex(idx)) {
+			sounds[idx].id = id;
+		}
 	}
 	// set a (loaded) sound's volume for index <idx>
 	void setVolume(int idx, float volume) {
-		if (idx >= 0 && idx < volumes.size())
-			volumes[idx] = volume;
+		if (ValidIndex(idx)) {
+			sounds[idx].volume = volume;
+		}
 	}
 };
 
@@ -79,6 +88,7 @@ struct UnitDef
 	CR_DECLARE(UnitDef);
 	UnitDef() : valid(false) {}
 	virtual ~UnitDef();
+	S3DOModel* LoadModel(int team) const;
 
 	bool valid;
 	std::string name;
@@ -296,16 +306,16 @@ struct UnitDef
 	unsigned int noChaseCategory;
 
 	struct SoundStruct {
-		GuiSound select;
-		GuiSound ok;
-		GuiSound arrived;
-		GuiSound build;
-		GuiSound repair;
-		GuiSound working;
-		GuiSound underattack;
-		GuiSound cant;
-		GuiSound activate;
-		GuiSound deactivate;
+		GuiSoundSet select;
+		GuiSoundSet ok;
+		GuiSoundSet arrived;
+		GuiSoundSet build;
+		GuiSoundSet repair;
+		GuiSoundSet working;
+		GuiSoundSet underattack;
+		GuiSoundSet cant;
+		GuiSoundSet activate;
+		GuiSoundSet deactivate;
 	};
 	SoundStruct sounds;
 

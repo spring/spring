@@ -274,12 +274,7 @@ void CUnitTracker::SetCam()
 			}
 		}
 		CCameraController* currentCam = mouse->currentCamController;
-		CFreeController* freeCam = dynamic_cast<CFreeController*>(currentCam);
-		if (freeCam) {
-			freeCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
-		} else {
-			mouse->currentCamController->SetPos(pos);
-		}
+		currentCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
 		return;
 	}
 

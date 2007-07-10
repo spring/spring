@@ -36,14 +36,17 @@ struct LocalS3DO
 {
 	float3 offset;
 	unsigned int displist;
+	vector<unsigned int> lodDispLists;
 	string name;
 	std::vector<LocalS3DO*> childs;
 	LocalS3DO *parent;
 	S3DO *original3do;
 	SS3O *originals3o;
 	PieceInfo *anim;
-	void Draw();
-	void GetPiecePosIter(CMatrix44f* mat);
+	void Draw() const;
+	void DrawLOD(unsigned int lod) const;
+	void GetPiecePosIter(CMatrix44f* mat) const;
+	void SetLODCount(unsigned int count);
 };
 
 struct LocalS3DOModel
@@ -52,17 +55,21 @@ struct LocalS3DOModel
 	//LocalS3DO *rootobject;
 	LocalS3DO *pieces;
 	int *scritoa;  //scipt index to local array index
-	LocalS3DOModel(){};
+	unsigned int lodCount;
+
+	LocalS3DOModel() : lodCount(0) {};
 	~LocalS3DOModel();
-	void Draw();
-	bool PieceExists(int piecenum);
-	float3 GetPiecePos(int piecenum);
-	CMatrix44f GetPieceMatrix(int piecenum);
-	float3 GetPieceDirection(int piecenum);
-	int GetPieceVertCount(int piecenum);
+	void Draw() const;
+	void DrawLOD(unsigned int lod) const;
+	bool PieceExists(int piecenum) const;
+	float3 GetPiecePos(int piecenum) const;
+	CMatrix44f GetPieceMatrix(int piecenum) const;
+	float3 GetPieceDirection(int piecenum) const;
+	int GetPieceVertCount(int piecenum) const;
 
 	//helper function for emit-sfx, get position and direction for a specific piece
-	void GetEmitDirPos(int piecenum, float3 &pos, float3 &dir);
+	void GetEmitDirPos(int piecenum, float3 &pos, float3 &dir) const;
+	void SetLODCount(unsigned int count);
 };
 
 class C3DModelParser

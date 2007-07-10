@@ -11,61 +11,79 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function OneShot(name)
-  _G[name] = function()
-    print("LuaUI: removed unused call-in: " .. name .. "()")
-    _G[name] = nil
-  end
+CallInsList = {
+
+  "Shutdown",
+  "LayoutButtons",
+  "UpdateLayout",
+  "ConfigureLayout",
+  "CommandNotify",
+
+  "DrawWorldItems",
+  "DrawScreenItems",
+
+  "KeyPress",
+  "KeyRelease",
+  "MouseMove",
+  "MousePress",
+  "MouseRelease",
+  "IsAbove",
+  "GetTooltip",
+  "AddConsoleLine",
+  "GroupChanged",
+
+  "GameOver",
+  "TeamDied",
+
+  "UnitCreated",
+  "UnitFinished",
+  "UnitFromFactory",
+  "UnitDestroyed",
+  "UnitTaken",
+  "UnitGiven",
+  "UnitIdle",
+  "UnitSeismicPing",
+  "UnitEnteredRadar",
+  "UnitEnteredLos",
+  "UnitLeftRadar",
+  "UnitLeftLos",
+  "UnitLoaded",
+  "UnitUnloaded",
+
+  "FeatureCreated",
+  "FeatureDestroyed",
+
+  "DrawWorld",
+  "DrawWorldPreUnit",
+  "DrawWorldShadow",
+  "DrawWorldReflection",
+  "DrawWorldRefraction",
+  "DrawScreen",
+  "DrawInMiniMap",
+
+  "Explosion",
+  "ShockFront",
+
+  "GameFrame",
+  "CobCallback",
+  "AllowCommand",
+  "CommandFallback",
+  "AllowUnitCreation",
+  "AllowUnitTransfer",
+  "AllowUnitBuildStep",
+  "AllowFeatureCreation",
+  "AllowFeatureBuildStep",
+  "AllowResourceLevel",
+  "AllowResourceTransfer",
+}
+
+
+-- make the map
+CallInsMap = {}
+for _, callin in ipairs(CallInsList) do
+  CallInsMap[callin] = true
 end
 
-local function OneShot(name)  -- FIXME
-end
 
-OneShot("Shutdown")
-OneShot("LayoutButtons")
-OneShot("UpdateLayout")
-OneShot("ConfigureLayout")
-OneShot("CommandNotify")
-
-OneShot("DrawWorldItems")
-OneShot("DrawScreenItems")
-
-OneShot("KeyPress")
-OneShot("KeyRelease")
-OneShot("MouseMove")
-OneShot("MousePress")
-OneShot("MouseRelease")
-OneShot("IsAbove")
-OneShot("GetTooltip")
-OneShot("AddConsoleLine")
-OneShot("GroupChanged")
-
-OneShot("GameOver")
-OneShot("TeamDied")
-
-OneShot("UnitCreated")
-OneShot("UnitFinished")
-OneShot("UnitFromFactory")
-OneShot("UnitDestroyed")
-OneShot("UnitTaken")
-OneShot("UnitGiven")
-OneShot("UnitIdle")
-OneShot("UnitSeismicPing")
-OneShot("UnitEnteredRadar")
-OneShot("UnitEnteredLos")
-OneShot("UnitLeftRadar")
-OneShot("UnitLeftLos")
-OneShot("UnitLoaded")
-OneShot("UnitUnloaded")
-
-OneShot("FeatureCreated")
-OneShot("FeatureDestroyed")
-
-OneShot("DrawWorld")
-OneShot("DrawWorldPreUnit")
-OneShot("DrawWorldShadow")
-OneShot("DrawWorldReflection")
-OneShot("DrawWorldRefraction")
-OneShot("DrawScreen")
-OneShot("DrawInMiniMap")
-
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

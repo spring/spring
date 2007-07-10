@@ -151,6 +151,7 @@ CUnit::CUnit ()
 	isCloaked(false),
 	wantCloak(false),
 	scriptCloak(0),
+	shieldWeapon(0),
 	stockpileWeapon(0),
 	haveDGunRequest(false),
 	jammerRadius(0),
@@ -159,6 +160,14 @@ CUnit::CUnit ()
 	sonarRadius(0),
 	hasRadarCapacity(false),
 	stunned(false),
+	condUseMetal(0.0f),
+	condUseEnergy(0.0f),
+	condMakeMetal(0.0f),
+	condMakeEnergy(0.0f),
+	uncondUseMetal(0.0f),
+	uncondUseEnergy(0.0f),
+	uncondMakeMetal(0.0f),
+	uncondMakeEnergy(0.0f),
 	metalUse(0),
 	energyUse(0),
 	metalMake(0),
@@ -196,7 +205,9 @@ CUnit::CUnit ()
 	isIcon(false),
 	iconRadius(0),
 	prevMoveType(NULL),
-	usingScriptMoveType(false)
+	usingScriptMoveType(false),
+	lodCount(0),
+	currentLOD(0)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -361,10 +372,21 @@ void CUnit::DisableScriptMoveType()
 	if (!usingScriptMoveType) {
 		return;
 	}
+
 	delete moveType;
 	moveType = prevMoveType;
 	prevMoveType = NULL;
 	usingScriptMoveType = false;
+
+	// FIXME: prevent the issuing of extra commands ?
+	if (moveType) {
+		moveType->SetGoal(pos);
+		moveType->StopMoving();
+	}
+	CMobileCAI* mobile = dynamic_cast<CMobileCAI*>(moveType);
+	if (mobile) {
+		mobile->lastUserGoal = pos;
+	}
 }
 
 
@@ -502,17 +524,20 @@ void CUnit::SlowUpdate()
 
 	if (selfDCountdown && !stunned) {
 		selfDCountdown--;
-		if(selfDCountdown<=1){
-			if(!beingBuilt)
-				KillUnit(true,false,0);
-			else
-				KillUnit(false,true,0);	//avoid unfinished buildings making an explosion
-			selfDCountdown=0;
+		if (selfDCountdown <= 1) {
+			if (!beingBuilt) {
+				KillUnit(true, false, 0);
+			} else {
+				KillUnit(false, true, 0);	//avoid unfinished buildings making an explosion
+			}
+			selfDCountdown = 0;
 			return;
 		}
 		ENTER_MIXED;
-		if(selfDCountdown&1 && team==gu->myTeam)
-			logOutput.Print("%s: Self destruct in %i s",unitDef->humanName.c_str(),selfDCountdown/2);
+		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
+			logOutput.Print("%s: Self destruct in %i s",
+			                unitDef->humanName.c_str(), selfDCountdown / 2);
+		}
 		ENTER_SYNCED;
 	}
 
@@ -535,50 +560,58 @@ void CUnit::SlowUpdate()
 
 	UpdateResources();
 
-	AddMetal(unitDef->metalMake*0.5f);
-	if(activated)
-	{
-		if(UseEnergy(unitDef->energyUpkeep*0.5f))
-		{
-			if(unitDef->isMetalMaker){
-				AddMetal(unitDef->makesMetal*0.5f*uh->metalMakerEfficiency);
-				uh->metalMakerIncome+=unitDef->makesMetal;
-			} else {
-				AddMetal(unitDef->makesMetal*0.5f);
-			}
-			if(unitDef->extractsMetal>0)
-				AddMetal(metalExtract * 0.5f);
+	// FIXME: scriptMakeMetal ...?
+	AddMetal(uncondMakeMetal);
+	AddEnergy(uncondMakeEnergy);
+	UseMetal(uncondUseMetal);
+	UseEnergy(uncondUseEnergy);
+	if (activated) {
+		if (UseMetal(condUseMetal)) {
+			AddEnergy(condMakeEnergy);
 		}
-		UseMetal(unitDef->metalUpkeep*0.5f);
+		if (UseEnergy(condUseEnergy)) {
+			AddMetal(condMakeMetal);
+		}
+	}
 
-		if(unitDef->windGenerator>0)
-		{
-			if(wind.curStrength > unitDef->windGenerator)
-			{
- 				AddEnergy(unitDef->windGenerator*0.5f);
+	AddMetal(unitDef->metalMake*0.5f);
+	if (activated) {
+		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
+			if (unitDef->isMetalMaker) {
+				AddMetal(unitDef->makesMetal * 0.5f * uh->metalMakerEfficiency);
+				uh->metalMakerIncome += unitDef->makesMetal;
+			} else {
+				AddMetal(unitDef->makesMetal * 0.5f);
 			}
-			else
-			{
- 				AddEnergy(wind.curStrength*0.5f);
+			if (unitDef->extractsMetal > 0.0f) {
+				AddMetal(metalExtract * 0.5f);
+			}
+		}
+		UseMetal(unitDef->metalUpkeep * 0.5f);
+
+		if (unitDef->windGenerator > 0.0f) {
+			if (wind.curStrength > unitDef->windGenerator) {
+ 				AddEnergy(unitDef->windGenerator * 0.5f);
+			} else {
+ 				AddEnergy(wind.curStrength * 0.5f);
 			}
 		}
 	}
-	AddEnergy(energyTickMake*0.5f);
+	AddEnergy(energyTickMake * 0.5f);
 
-	if(health<maxHealth)
-	{
+	if (health<maxHealth) {
 		health += unitDef->autoHeal;
 
-		if(restTime > unitDef->idleTime)
-		{
+		if (restTime > unitDef->idleTime) {
 			health += unitDef->idleAutoHeal;
 		}
-		if(health>maxHealth)
-			health=maxHealth;
+		if (health > maxHealth) {
+			health = maxHealth;
+		}
 	}
 
-	bonusShieldSaved+=0.05f;
-	residualImpulse*=0.6f;
+	bonusShieldSaved += 0.05f;
+	residualImpulse *= 0.6f;
 
 	if (scriptCloak >= 3) {
 		isCloaked = true;
@@ -808,118 +841,238 @@ void CUnit::Kill(float3& impulse) {
 }
 
 
+inline void CUnit::DrawModel()
+{
+	if (lodCount <= 0) {
+		localmodel->Draw();
+	} else {
+		localmodel->DrawLOD(currentLOD);
+	}
+}
+
+
+inline void CUnit::DrawDebug()
+{
+	if (gu->drawdebug) {
+		glPushMatrix();
+		glTranslatef3((frontdir * relMidPos.z) +
+		              (updir    * relMidPos.y) +
+									(rightdir * relMidPos.x));
+		GLUquadricObj* q = gluNewQuadric();
+		gluQuadricDrawStyle(q, GLU_LINE);
+		gluSphere(q, radius, 10, 10);
+		gluDeleteQuadric(q);
+		glPopMatrix();
+	}
+}
+
+
 void CUnit::Draw()
 {
 	glPushMatrix();
 
-	const float3 interPos = pos + (speed * gu->timeOffset);
+	ApplyTransformMatrix();
+
+	if (!beingBuilt || !unitDef->showNanoFrame) {
+		DrawModel();
+	} else {
+		DrawBeingBuilt();
+	}
+
+	DrawDebug();
+
+	glPopMatrix();
+}
+
+
+void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
+{
+	glPushMatrix();
+
+	ApplyTransformMatrix();
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
+
+	if (!beingBuilt || !unitDef->showNanoFrame) {
+		DrawModel();
+	} else {
+		DrawBeingBuilt();
+	}
+
+	if (postList != 0) {
+		glCallList(postList);
+	}
+
+	DrawDebug();
+
+	glPopMatrix();
+}
+
+
+void CUnit::DrawBeingBuilt()
+{
+	if (shadowHandler->inShadowPass) {
+		if (buildProgress > 0.66f) {
+			DrawModel();
+		}
+		return;
+	}
+      	
+	const float start  = model->miny;
+	const float height = model->height;
+
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+
+	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	float3 fc;// fc frame color
+	if (!gu->teamNanospray) {
+		fc = unitDef->nanoColor;
+	}
+	else {
+		const unsigned char* tcol = gs->Team(team)->color;
+		fc = float3(tcol[0] * (1.0f / 255.0f),
+								tcol[1] * (1.0f / 255.0f),
+								tcol[2] * (1.0f / 255.0f));
+	}
+	glColorf3(fc * col);
+
+	unitDrawer->UnitDrawingTexturesOff(model);
+
+	const double plane0[4] = { 0, -1, 0, start + height * buildProgress * 3 };
+	glClipPlane(GL_CLIP_PLANE0, plane0);
+	const double plane1[4] = { 0, 1, 0, -start - height * (buildProgress * 10 - 9) };
+	glClipPlane(GL_CLIP_PLANE1, plane1);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	DrawModel();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	if (buildProgress>0.33f) {
+		glColorf3(fc * (1.5f - col));
+		const double plane0[4] = { 0, -1, 0, start + height * (buildProgress * 3 - 1) };
+		glClipPlane(GL_CLIP_PLANE0, plane0);
+		const double plane1[4] = { 0, 1, 0, -start - height * (buildProgress * 3 - 2) };
+		glClipPlane(GL_CLIP_PLANE1, plane1);
+
+		DrawModel();
+	}
+	glDisable(GL_CLIP_PLANE1);
+
+	unitDrawer->UnitDrawingTexturesOn(model);
+
+	if (buildProgress > 0.66f){
+		const double plane0[4] = { 0, -1, 0 , start + height * (buildProgress * 3 - 2) };
+		glClipPlane(GL_CLIP_PLANE0, plane0);
+		if (shadowHandler->drawShadows && !water->drawReflection) {
+			glPolygonOffset(1.0f, 1.0f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
+		}
+		DrawModel();
+		if (shadowHandler->drawShadows && !water->drawReflection) {
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
+	}
+	glDisable(GL_CLIP_PLANE0);
+}
+
+
+void CUnit::ApplyTransformMatrix() const
+{
+	float3 interPos;
+	if (!transporter) {
+		interPos = pos + (speed * gu->timeOffset);
+	} else {
+		interPos = pos + (transporter->speed * gu->timeOffset);
+	}
 
 	if (usingScriptMoveType ||
-	    (physicalState == Flying && unitDef->canmove)) {
+	    ((physicalState == Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
 		glMultMatrixf(&transMatrix[0]);
 	}
-	else if (transporter && transporter->unitDef->holdSteady){
-
-		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
-		float3 upDir=updir;
-		float3 rightDir=frontDir.cross(upDir);
+	else if (transporter && transporter->unitDef->holdSteady) {
+		//making local copies of vectors
+		float3 frontDir = GetVectorFromHeading(heading);
+		float3 upDir    = updir;
+		float3 rightDir = frontDir.cross(upDir);
 		rightDir.Normalize();
-		frontDir=upDir.cross(rightDir);
-
+		frontDir = upDir.cross(rightDir);
 		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
-
 		glMultMatrixf(&transMatrix[0]);
 	}
-	else if(upright || !unitDef->canmove){
+	else if (upright || !unitDef->canmove) {
 		glTranslatef3(interPos);
-		if(heading!=0)
+		if (heading != 0) {
 			glRotatef(heading*(180.0f/32768.0f),0,1,0);
+		}
 	}
 	else {
-		float3 frontDir=GetVectorFromHeading(heading);		//making local copies of vectors
-		float3 upDir=ground->GetSmoothNormal(pos.x,pos.z);
-		float3 rightDir=frontDir.cross(upDir);
+		//making local copies of vectors
+		float3 frontDir = GetVectorFromHeading(heading);
+		float3 upDir    = ground->GetSmoothNormal(pos.x,pos.z);
+		float3 rightDir = frontDir.cross(upDir);
 		rightDir.Normalize();
-		frontDir=upDir.cross(rightDir);
-
+		frontDir = upDir.cross(rightDir);
 		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
-
 		glMultMatrixf(&transMatrix[0]);
 	}
+}
 
-	if (beingBuilt && unitDef->showNanoFrame) {
-		if (shadowHandler->inShadowPass) {
-			if (buildProgress>0.66f) {
-				localmodel->Draw();
-			}
-		} else {
-			float height=model->height;
-			float start=model->miny;
-			glEnable(GL_CLIP_PLANE0);
-			glEnable(GL_CLIP_PLANE1);
-			float col=fabs(128.0f-((gs->frameNum*4)&255))/255.0f+0.5f;
-			float3 fc;// fc frame color
-			if(gu->teamNanospray){
-				unsigned char* tcol=gs->Team(team)->color;
-				fc = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
-			}else{
-				fc = unitDef->nanoColor;
-			}
-			glColorf3(fc*col);
 
-			unitDrawer->UnitDrawingTexturesOff(model);
-
-			double plane[4]={0,-1,0,start+height*buildProgress*3};
-			glClipPlane(GL_CLIP_PLANE0 ,plane);
-			double plane2[4]={0,1,0,-start-height*(buildProgress*10-9)};
-			glClipPlane(GL_CLIP_PLANE1 ,plane2);
-			glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-			localmodel->Draw();
-			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-
-			if(buildProgress>0.33f){
-				glColorf3(fc*(1.5f-col));
-				double plane[4]={0,-1,0,start+height*(buildProgress*3-1)};
-				glClipPlane(GL_CLIP_PLANE0 ,plane);
-				double plane2[4]={0,1,0,-start-height*(buildProgress*3-2)};
-				glClipPlane(GL_CLIP_PLANE1 ,plane2);
-
-				localmodel->Draw();
-			}
-			glDisable(GL_CLIP_PLANE1);
-			unitDrawer->UnitDrawingTexturesOn(model);
-
-			if(buildProgress>0.66f){
-				double plane[4]={0,-1,0,start+height*(buildProgress*3-2)};
-				glClipPlane(GL_CLIP_PLANE0 ,plane);
-				if(shadowHandler->drawShadows && !water->drawReflection){
-					glPolygonOffset(1,1);
-					glEnable(GL_POLYGON_OFFSET_FILL);
-				}
-				localmodel->Draw();
-				if(shadowHandler->drawShadows && !water->drawReflection){
-					glDisable(GL_POLYGON_OFFSET_FILL);
-				}
-			}
-			glDisable(GL_CLIP_PLANE0);
-		}
+void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
+{
+	float3 interPos;
+	if (!transporter) {
+		interPos = pos + (speed * gu->timeOffset);
 	} else {
-		localmodel->Draw();
+		interPos = pos + (transporter->speed * gu->timeOffset);
 	}
 
-	if(gu->drawdebug){
-		glPushMatrix();
-		glTranslatef3(frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x);
-		GLUquadricObj* q=gluNewQuadric();
-		gluQuadricDrawStyle(q,GLU_LINE);
-		gluSphere(q,radius,10,10);
-		gluDeleteQuadric(q);
-		glPopMatrix();
-	}/**/
-	glPopMatrix();
+	if (usingScriptMoveType || ((physicalState == Flying) && unitDef->canmove)) {
+		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
+		matrix = transMatrix;
+	}
+	else if (transporter && transporter->unitDef->holdSteady) {
+		//making local copies of vectors
+		float3 frontDir = GetVectorFromHeading(heading);
+		float3 upDir    = updir;
+		float3 rightDir = frontDir.cross(upDir);
+		rightDir.Normalize();
+		frontDir = upDir.cross(rightDir);
+		CMatrix44f transMatrix(interPos, -rightDir, upDir, frontDir);
+		matrix = transMatrix;
+	}
+	else if (upright || !unitDef->canmove) {
+		if (heading == 0) {
+			matrix.LoadIdentity();
+			matrix.Translate(interPos);
+		} else {
+			//making local copies of vectors
+			float3 frontDir = GetVectorFromHeading(heading);
+			float3 upDir    = updir;
+			float3 rightDir = frontDir.cross(upDir);
+			rightDir.Normalize();
+			frontDir = upDir.cross(rightDir);
+			CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
+			matrix = transMatrix;
+		}
+	}
+	else {
+		//making local copies of vectors
+		float3 frontDir = GetVectorFromHeading(heading);
+		float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
+		float3 rightDir = frontDir.cross(upDir);
+		rightDir.Normalize();
+		frontDir = upDir.cross(rightDir);
+		CMatrix44f transMatrix(interPos, -rightDir, upDir, frontDir);
+		matrix = transMatrix;
+	}
 }
+
 
 void CUnit::DrawStats()
 {
@@ -928,7 +1081,12 @@ void CUnit::DrawStats()
 		return;
 	}
 
-	float3 interPos = pos + (speed * gu->timeOffset);
+	float3 interPos;
+	if (!transporter) {
+		interPos = pos + (speed * gu->timeOffset);
+	} else {
+		interPos = pos + (transporter->speed * gu->timeOffset);
+	}
 	interPos.y += model->height + 5.0f;
 
 	glBegin(GL_QUADS);
@@ -965,6 +1123,16 @@ void CUnit::DrawStats()
 		glEnd();
 		return;
 	}
+
+	// stun level
+	if (!stunned && (paralyzeDamage > 0.0f)) {
+		glColor3f(0.0f, 0.0f, 1.0f);
+		const float pEnd = (0.5f - (paralyzeDamage / maxHealth)) * 10.0f;
+		glVertexf3(interPos + (camUp * 6.0f) - (camRight * 5.0f));
+		glVertexf3(interPos + (camUp * 6.0f) - (camRight * pEnd));
+		glVertexf3(interPos + (camUp * 4.0f) - (camRight * pEnd));
+		glVertexf3(interPos + (camUp * 4.0f) - (camRight * 5.0f));
+	} 
 
 	// experience bar
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -1022,7 +1190,7 @@ void CUnit::ExperienceChange()
 	health+=(maxHealth-oldMaxHealth)*(health/oldMaxHealth);
 }
 
-void CUnit::DoSeismicPing(int pingSize)
+void CUnit::DoSeismicPing(float pingSize)
 {
 	float rx = gs->randFloat();
 	float rz = gs->randFloat();
@@ -1034,8 +1202,8 @@ void CUnit::DoSeismicPing(int pingSize)
 		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
 		SAFE_NEW CSeismicGroundFlash(pos + err,
-                                     ph->seismictex, 30, 15, 0, pingSize, 1,
-                                     float3(0.8f,0.0f,0.0f));
+		                             ph->seismictex, 30, 15, 0, pingSize, 1,
+		                             float3(0.8f,0.0f,0.0f));
 	}
 	for (int a=0; a<gs->activeAllyTeams; ++a) {
 		if (radarhandler->InSeismicDistance(this, a)) {
@@ -1135,15 +1303,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		radarhandler->MoveUnit(this);
 	}
 
-	if (unitDef->useCSOffset) {
-		model = modelParser->Load3DO(model->name.c_str(),
-				unitDef->collisionSphereScale, newteam,
-				unitDef->collisionSphereOffset);
-	}
-	else {
-		model = modelParser->Load3DO(model->name.c_str(),
-				unitDef->collisionSphereScale, newteam);
-	}
+	model = unitDef->LoadModel(newteam);
 
 	delete localmodel;
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
@@ -1376,7 +1536,7 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
-	if(group!=0){
+	if (group != 0) {
 		group->RemoveUnit(this);
 	}
 	group=newGroup;
@@ -1439,12 +1599,16 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		}
 	}
 	else { // reclaim
-		if(isDead)
+		if (isDead) {
 			return false;
-		restTime=0;
-		float part=amount/buildTime;
-		health+=maxHealth*part;
-		if(beingBuilt){
+		}
+		const float part = amount / buildTime;
+		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
+			return false;
+		}
+		restTime = 0;
+		health += maxHealth * part;
+		if (beingBuilt) {
 			builder->AddMetal(metalCost*-part);
 			buildProgress+=part;
 			if(buildProgress<0 || health<0){
@@ -1452,9 +1616,9 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 				return false;
 			}
 		} else {
-			if(health<0){
+			if (health < 0) {
 				builder->AddMetal(metalCost);
-				KillUnit(false,true,0);
+				KillUnit(false, true, 0);
 				return false;
 			}
 		}
@@ -1759,6 +1923,83 @@ void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
 	((CUnit*)p1)->weaponHitMod = retCode*0.01f;
 }
 
+
+/******************************************************************************/
+
+float CUnit::lodFactor = 1.0f;
+
+
+void CUnit::SetLODFactor(float value)
+{
+	if (value <= 0.0f) {
+		value = 1.0f;
+	}
+	lodFactor = (value * camera->lppScale);
+}
+
+
+void CUnit::SetLODCount(unsigned int count)
+{
+	const unsigned int oldCount = lodCount;
+
+	lodCount = count;
+
+	lodLengths.resize(count);
+	for (unsigned int i = oldCount; i < count; i++) {
+		lodLengths[i] = -1.0f;
+	}
+	
+	localmodel->SetLODCount(count);
+
+	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
+		luaMats[m].SetLODCount(count);
+	}
+
+	return;
+}
+
+
+unsigned int CUnit::CalcLOD(unsigned int lastLOD) const
+{
+	if (lastLOD == 0) { return 0; }
+
+	const float3 diff = (pos - camera->pos);
+	const float dist = diff.dot(camera->forward);
+	const float lpp = max(0.0f, dist * lodFactor);
+	for (/* no-op */; lastLOD != 0; lastLOD--) {
+		if (lpp > lodLengths[lastLOD]) {
+			break;
+		}
+	}
+	return lastLOD;
+}
+
+
+unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
+{
+	return CalcLOD(lastLOD); // FIXME
+
+	// FIXME -- the more 'correct' method
+	if (lastLOD == 0) { return 0; }
+		
+	// FIXME: fix it, cap it for shallow shadows?
+	const float3& sun = gs->sunVector;
+	const float3 diff = (camera->pos - pos);
+	const float  dot  = diff.dot(sun);
+	const float3 gap  = diff - (sun * dot);
+	const float  lpp  = max(0.0f, gap.Length() * lodFactor);
+
+	for (/* no-op */; lastLOD != 0; lastLOD--) {
+		if (lpp > lodLengths[lastLOD]) {
+			break;
+		}
+	}
+	return lastLOD;
+}
+
+
+/******************************************************************************/
+
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
@@ -1786,12 +2027,7 @@ void CUnit::PostLoad()
 	}*/
 
 	yardMap = unitDef->yardmaps[buildFacing];
-	if (unitDef->useCSOffset) {
-		model = modelParser->Load3DO((unitDef->model.modelpath).c_str(),unitDef->collisionSphereScale,team, unitDef->collisionSphereOffset);
-	}
-	else {
-		model = modelParser->Load3DO((unitDef->model.modelpath).c_str(),unitDef->collisionSphereScale,team);
-	}
+	model = unitDef->LoadModel(team);
 	SetRadius(model->radius);
 
 	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
@@ -1878,6 +2114,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(restTime),
 
 				CR_MEMBER(weapons),
+				CR_MEMBER(shieldWeapon),
 				CR_MEMBER(stockpileWeapon),
 				CR_MEMBER(reloadSpeed),
 				CR_MEMBER(maxRange),
@@ -1916,6 +2153,15 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(prevMoveType),
 				CR_MEMBER(usingScriptMoveType),
 				CR_MEMBER(group),
+
+				CR_MEMBER(condUseMetal),
+				CR_MEMBER(condUseEnergy),
+				CR_MEMBER(condMakeMetal),
+				CR_MEMBER(condMakeEnergy),
+				CR_MEMBER(uncondUseMetal),
+				CR_MEMBER(uncondUseEnergy),
+				CR_MEMBER(uncondMakeMetal),
+				CR_MEMBER(uncondMakeEnergy),
 
 				CR_MEMBER(metalUse),
 				CR_MEMBER(energyUse),

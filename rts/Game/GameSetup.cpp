@@ -285,35 +285,38 @@ bool CGameSetup::Init(const char* buf, int size)
 
 void CGameSetup::Draw()
 {
-	glColor4f(1,1,1,1);
+	const float yScale = 20.0f / (float)gu->viewSizeX;
+	const float xScale = yScale / gu->aspectRatio;
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glPushMatrix();
-	glTranslatef(0.3f,0.7f,0.0f);
-	glScalef(0.03f,0.04f,0.1f);
-	if(!gameServer && net->inInitialConnect){
-		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0]->lastReceiveTime));
-	}else if(readyTime>0)
+	glTranslatef(0.3f, 0.7f, 0.0f);
+	glScalef(0.03f, 0.04f, 0.1f);
+	if (!gameServer && net->inInitialConnect) {
+		font->glPrint("Connecting to server %i", 40 - (int)(net->curTime-net->connections[0]->lastReceiveTime));
+	} else if (readyTime > 0) {
 		font->glPrint("Starting in %i", 3 - (SDL_GetTicks() - readyTime) / 1000);
-	else if(!readyTeams[gu->myTeam])
+	} else if (!readyTeams[gu->myTeam]) {
 		font->glPrint("Choose start pos");
-	else if(gu->myPlayerNum==0){
-		glTranslatef(-8,0.0f,0.0f);
+	} else if (gu->myPlayerNum==0) {
+		glTranslatef(-8.0f, 0.0f, 0.0f);
 		font->glPrint("Waiting for players, Ctrl+Return to force start");
-	}else
+	} else {
 		font->glPrint("Waiting for players");
-
+	}
 	glPopMatrix();
+
 	glPushMatrix();
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
-			glColor4f(1,0.2f,0.2f,1);
-		} else if(!readyTeams[gs->players[a]->team]){
-			glColor4f(0.8f,0.8f,0.2f,1);
+			glColor4f(1.0f ,0.2f, 0.2f, 1.0f);
+		} else if (!readyTeams[gs->players[a]->team]){
+			glColor4f(0.8f, 0.8f, 0.2f, 1.0f);
 		} else {
-			glColor4f(0.2f,1,0.2f,1);
+			glColor4f(0.2f, 1.0f, 0.2f, 1.0f);
 		}
 		glPushMatrix();
-		glTranslatef(0.3f,0.6f-a*0.05f,0.0f);
-		glScalef(0.03f,0.04f,0.1f);
+		glTranslatef(0.3f, 0.6f - a * 0.05f, 0.0f);
+		glScalef(0.03f, 0.04f, 1.0f);
 		font->glPrintRaw(gs->players[a]->playerName.c_str());
 		glPopMatrix();
 	}

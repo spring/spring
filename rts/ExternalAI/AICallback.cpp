@@ -1149,12 +1149,12 @@ int CAICallback::HandleCommand (int commandId, void *data)
 
 int CAICallback::GetNumUnitDefs ()
 {
-	return unitDefHandler->numUnits;
+	return unitDefHandler->numUnitDefs;
 }
 
 void CAICallback::GetUnitDefList (const UnitDef** list)
 {
-	for (int a=0;a<unitDefHandler->numUnits;a++)
+	for (int a=0;a<unitDefHandler->numUnitDefs;a++)
 		list [a] = unitDefHandler->GetUnitByID (a+1);
 }
 
@@ -1162,14 +1162,14 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->collisionSphereScale,0);
+	S3DOModel* mdl = ud->LoadModel(0);
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = modelParser->Load3DO(ud->model.modelpath,ud->collisionSphereScale,0);
+	S3DOModel* mdl = ud->LoadModel(0);
 	return mdl->height;
 }
 
@@ -1204,14 +1204,16 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 				return true;
 			}
 			case AIVAL_STOCKPILED: {
-				if (!unit->stockpileWeapon)
+				if (!unit->stockpileWeapon || !gs->Ally(unit->allyteam, allyTeam)) {
 					return false;
+				}
 				(*(int*)data) = unit->stockpileWeapon->numStockpiled;
 				return true;
 			}
 			case AIVAL_STOCKPILE_QUED: {
-				if (!unit->stockpileWeapon)
+				if (!unit->stockpileWeapon || !gs->Ally(unit->allyteam, allyTeam)) {
 					return false;
+				}
 				(*(int*)data) = unit->stockpileWeapon->numStockpileQued;
 				return true;
 			}

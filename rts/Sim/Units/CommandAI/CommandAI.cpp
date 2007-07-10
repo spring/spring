@@ -512,7 +512,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			     (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED))) {
 				// bail early, do not check for overlaps or queue cancelling
 				commandQue.push_back(c);
-				if(commandQue.size()==1 && !owner->beingBuilt) {
+				if (commandQue.size()==1 && !owner->beingBuilt) {
 					SlowUpdate();
 				}
 			}
@@ -615,7 +615,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 
 	commandQue.push_back(c);
 
-	if (commandQue.size()==1 && !owner->beingBuilt) {
+	if (commandQue.size()==1 && !owner->beingBuilt && !owner->stunned) {
 		SlowUpdate();
 	}
 }
@@ -742,7 +742,9 @@ void CCommandAI::ExecuteInsert(const Command& c)
 
 	if (facBuildQueue) {
 		facCAI->InsertBuildCommand(insertIt, newCmd);
-		SlowUpdate();
+		if (!owner->stunned) {
+			SlowUpdate();
+		}
 		return;
 	}
 
@@ -759,7 +761,9 @@ void CCommandAI::ExecuteInsert(const Command& c)
 
 	queue->insert(insertIt, newCmd);
 
-	SlowUpdate();
+	if (!owner->stunned) {
+		SlowUpdate();
+	}
 
 	return;
 }
@@ -1222,9 +1226,11 @@ void CCommandAI::FinishCommand(void)
 		luaCallIns.UnitIdle(owner);
 	}
 
-	if(lastFinishCommand!=gs->frameNum){	//avoid infinite loops
-		lastFinishCommand=gs->frameNum;
-		SlowUpdate();
+	if (lastFinishCommand != gs->frameNum) {	//avoid infinite loops
+		lastFinishCommand = gs->frameNum;
+		if (!owner->stunned) {
+			SlowUpdate();
+		}
 	}
 }
 

@@ -48,6 +48,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetExtrapolate);
 
+	REGISTER_LUA_CFUNC(SetPhysics);
 	REGISTER_LUA_CFUNC(SetPosition);
 	REGISTER_LUA_CFUNC(SetVelocity);
 	REGISTER_LUA_CFUNC(SetRelativeVelocity);
@@ -66,6 +67,8 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetLimits);
 
 	REGISTER_LUA_CFUNC(SetNoBlocking);
+
+	REGISTER_LUA_CFUNC(SetLeaveTracks);
 
 	REGISTER_LUA_CFUNC(SetShotStop);
 	REGISTER_LUA_CFUNC(SetSlopeStop);
@@ -276,22 +279,15 @@ int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 10) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6) || !lua_isnumber(L, 7) ||
-	    !lua_isnumber(L, 8) || !lua_isnumber(L, 9) || !lua_isnumber(L, 10)) {
-		luaL_error(L, "Incorrect arguments to SetPhysics()");
-	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
-	const float3 vel((float)lua_tonumber(L, 5),
-	                 (float)lua_tonumber(L, 6),
-	                 (float)lua_tonumber(L, 7));
-	const float3 rot((float)lua_tonumber(L, 8),
-	                 (float)lua_tonumber(L, 9),
-	                 (float)lua_tonumber(L, 10));
+	const float3 pos((float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3),
+	                 (float)luaL_checknumber(L, 4));
+	const float3 vel((float)luaL_checknumber(L, 5),
+	                 (float)luaL_checknumber(L, 6),
+	                 (float)luaL_checknumber(L, 7));
+	const float3 rot((float)luaL_checknumber(L, 8),
+	                 (float)luaL_checknumber(L, 9),
+	                 (float)luaL_checknumber(L, 10));
 	moveType->SetPhysics(pos, vel, rot);
 	return 0;
 }
@@ -303,14 +299,9 @@ int LuaSyncedMoveCtrl::SetPosition(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetPosition()");
-	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+	const float3 pos((float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3),
+	                 (float)luaL_checknumber(L, 4));
 	moveType->SetPosition(pos);
 	return 0;
 }
@@ -322,14 +313,9 @@ int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetVelocity()");
-	}
-	const float3 vel((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+	const float3 vel((float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3),
+	                 (float)luaL_checknumber(L, 4));
 	moveType->SetVelocity(vel);
 	return 0;
 }
@@ -341,14 +327,9 @@ int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetVelocity()");
-	}
-	const float3 relVel((float)lua_tonumber(L, 2),
-	                    (float)lua_tonumber(L, 3),
-	                    (float)lua_tonumber(L, 4));
+	const float3 relVel((float)luaL_checknumber(L, 2),
+	                    (float)luaL_checknumber(L, 3),
+	                    (float)luaL_checknumber(L, 4));
 	moveType->SetRelativeVelocity(relVel);
 	return 0;
 }
@@ -360,14 +341,9 @@ int LuaSyncedMoveCtrl::SetRotation(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetRotation()");
-	}
-	const float3 rot((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+	const float3 rot((float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3),
+	                 (float)luaL_checknumber(L, 4));
 	moveType->SetRotation(rot);
 	return 0;
 }
@@ -379,14 +355,9 @@ int LuaSyncedMoveCtrl::SetRotationOffset(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetRotationOffset()");
-	}
-	const float3 rotOff((float)lua_tonumber(L, 2),
-	                    (float)lua_tonumber(L, 3),
-	                    (float)lua_tonumber(L, 4));
+	const float3 rotOff((float)luaL_checknumber(L, 2),
+	                    (float)luaL_checknumber(L, 3),
+	                    (float)luaL_checknumber(L, 4));
 	moveType->SetRotationOffset(rotOff);
 	return 0;
 }
@@ -398,14 +369,9 @@ int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetRotationVelocity()");
-	}
-	const float3 rotVel((float)lua_tonumber(L, 2),
-	                    (float)lua_tonumber(L, 3),
-	                    (float)lua_tonumber(L, 4));
+	const float3 rotVel((float)luaL_checknumber(L, 2),
+	                    (float)luaL_checknumber(L, 3),
+	                    (float)luaL_checknumber(L, 4));
 	moveType->SetRotationVelocity(rotVel);
 	return 0;
 }
@@ -417,11 +383,7 @@ int LuaSyncedMoveCtrl::SetHeading(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetHeading()");
-	}
-	const short heading = (short)lua_tonumber(L, 2);
+	const short heading = (short)luaL_checknumber(L, 2);
 	moveType->SetHeading(heading);
 	return 0;
 }
@@ -465,11 +427,7 @@ int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetGroundOffset()");
-	}
-	moveType->groundOffset = (float)lua_tonumber(L, 2);
+	moveType->groundOffset = (float)luaL_checknumber(L, 2);
 	return 0;
 }
 
@@ -480,11 +438,7 @@ int LuaSyncedMoveCtrl::SetGravity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetGravity()");
-	}
-	moveType->gravityFactor = (float)lua_tonumber(L, 2);
+	moveType->gravityFactor = (float)luaL_checknumber(L, 2);
 	return 0;
 }
 
@@ -495,11 +449,7 @@ int LuaSyncedMoveCtrl::SetWindFactor(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetWindFactor()");
-	}
-	moveType->windFactor = (float)lua_tonumber(L, 2);
+	moveType->windFactor = (float)luaL_checknumber(L, 2);
 	return 0;
 }
 
@@ -510,18 +460,12 @@ int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 7) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6) || !lua_isnumber(L, 7)) {
-		luaL_error(L, "Incorrect arguments to SetLimits()");
-	}
-	const float3 mins((float)lua_tonumber(L, 2),
-	                  (float)lua_tonumber(L, 3),
-	                  (float)lua_tonumber(L, 4));
-	const float3 maxs((float)lua_tonumber(L, 5),
-	                  (float)lua_tonumber(L, 6),
-	                  (float)lua_tonumber(L, 7));
+	const float3 mins((float)luaL_checknumber(L, 2),
+	                  (float)luaL_checknumber(L, 3),
+	                  (float)luaL_checknumber(L, 4));
+	const float3 maxs((float)luaL_checknumber(L, 5),
+	                  (float)luaL_checknumber(L, 6),
+	                  (float)luaL_checknumber(L, 7));
 	moveType->mins = mins;
 	moveType->maxs = maxs;
 	return 0;
@@ -541,6 +485,21 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetNoBlocking()");
 	}
 	moveType->SetNoBlocking(lua_toboolean(L, 2));
+	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::SetLeaveTracks(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetLeaveTracks()");
+	}
+	moveType->leaveTracks = lua_toboolean(L, 2);
 	return 0;
 }
 
@@ -585,6 +544,7 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	if ((args < 2) || !lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetCollideStop()");
 	}
+	moveType->gndStop = lua_toboolean(L, 2); // FIXME
 	moveType->collideStop = lua_toboolean(L, 2);
 	return 0;
 }

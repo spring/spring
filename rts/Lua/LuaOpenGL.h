@@ -38,6 +38,8 @@ class LuaOpenGL {
 
 		static bool IsDrawingEnabled() { return drawingEnabled; }
 
+		static bool CanUseShaders() { return canUseShaders; }
+
 		static bool GetSafeMode() { return safeMode; }
 		static void SetSafeMode(bool value) { safeMode = value; }
 
@@ -96,6 +98,7 @@ class LuaOpenGL {
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
 		static bool drawingEnabled;
 		static bool safeMode;
+		static bool canUseShaders;
 		static float fontHeight;
 		static float screenWidth;
 		static float screenDistance;
@@ -107,6 +110,7 @@ class LuaOpenGL {
 
 	private:
 		static int HasExtension(lua_State* L);
+		static int GetNumber(lua_State* L);
 	
 		static int ConfigScreen(lua_State* L);
 
@@ -149,6 +153,11 @@ class LuaOpenGL {
 		static int CopyToTexture(lua_State* L);
 		static int RenderToTexture(lua_State* L);
 		static int GenerateMipmap(lua_State* L);
+		static int ActiveTexture(lua_State* L);
+		static int TexEnv(lua_State* L);
+		static int TexGen(lua_State* L);
+		static int MultiTexEnv(lua_State* L);
+		static int MultiTexGen(lua_State* L);
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);
@@ -161,15 +170,22 @@ class LuaOpenGL {
 		
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
+
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 
 		static int Unit(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitPiece(lua_State* L);
+		static int UnitPieceMatrix(lua_State* L);
+		static int Feature(lua_State* L);
+		static int FeatureShape(lua_State* L);
 		static int DrawListAtUnit(lua_State* L);
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
+		static int DrawGroundQuad(lua_State* L);
 
+		static int Light(lua_State* L);
 		static int ClipPlane(lua_State* L);
 
 		static int MatrixMode(lua_State* L);
@@ -181,15 +197,27 @@ class LuaOpenGL {
 		static int Rotate(lua_State* L);
 		static int Ortho(lua_State* L);
 		static int Frustum(lua_State* L);
+		static int Billboard(lua_State* L);
 		static int PushMatrix(lua_State* L);
 		static int PopMatrix(lua_State* L);
+		static int PushPopMatrix(lua_State* L);
 		static int GetMatrixData(lua_State* L);
+
+		static int PushAttrib(lua_State* L);
+		static int PopAttrib(lua_State* L);
 
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);
 		static int DeleteList(lua_State* L);
 
+		static int Flush(lua_State* L);
+		static int Finish(lua_State* L);
+
+		static int GetGlobalTexNames(lua_State* L);
+		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);
+
+		static int GetSun(lua_State* L);
 };
 
 

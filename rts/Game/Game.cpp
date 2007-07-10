@@ -177,6 +177,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(chatSound),
 
 	CR_MEMBER(hideInterface),
+	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
@@ -233,7 +234,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	hideInterface=false;
 	gameOver=false;
 	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove", 1);
-	showClock=!!configHandler.GetInt("ShowClock", 1);
+	showFPS   = !!configHandler.GetInt("ShowFPS",   0);
+	showClock = !!configHandler.GetInt("ShowClock", 1);
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
 
@@ -365,7 +367,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 	ENTER_MIXED;
-	if(!shadowHandler->drawShadows){
+	if(true || !shadowHandler->drawShadows){ // FIXME ?
 		for(int a=0;a<3;++a){
 			LightAmbientLand[a]=unitDrawer->unitAmbientColor[a];
 			LightDiffuseLand[a]=unitDrawer->unitSunColor[a];
@@ -846,6 +848,18 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		logOutput.Print("Set ReflectiveWater to %i", next);
 		water = CBaseWater::GetWater();
 	}
+	else if (cmd == "advshading") {
+		static bool canUse = unitDrawer->advShading;
+		if (canUse) {
+			if (!action.extra.empty()) {
+				unitDrawer->advShading = atoi(action.extra.c_str());
+			} else {
+				unitDrawer->advShading = !unitDrawer->advShading;
+			}
+			logOutput.Print("Advanced shading %s",
+			                unitDrawer->advShading ? "enabled" : "disabled");
+		}
+	}
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
 	}
@@ -894,6 +908,23 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "viewfree") {
 		mouse->SetCameraMode(4);
+	}
+	else if (cmd == "viewov") {
+		mouse->SetCameraMode(5);
+	}
+	else if (cmd == "viewlua") {
+		mouse->SetCameraMode(6);
+	}
+	else if (cmd == "viewtaflip") {
+		COverheadController* taCam =
+			dynamic_cast<COverheadController*>(mouse->camControllers[1]);
+		if (taCam) {
+			if (!action.extra.empty()) {
+				taCam->flipped = !!atoi(action.extra.c_str());
+			} else {
+				taCam->flipped = !taCam->flipped;
+			}
+		}
 	}
 	else if (cmd == "viewsave") {
 		mouse->SaveView(action.extra);
@@ -1398,6 +1429,14 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		configHandler.SetInt("ShowClock", showClock ? 1 : 0);
 	}
+	else if (cmd == "fps") {
+		if (action.extra.empty()) {
+			showFPS = !showFPS;
+		} else {
+			showFPS = !!atoi(action.extra.c_str());
+		}
+		configHandler.SetInt("ShowFPS", showFPS ? 1 : 0);
+	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
@@ -1570,6 +1609,36 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			ParseInputTextGeometry(action.extra);
 		}
 	}
+	else if (cmd == "lodscale") {
+		if (!action.extra.empty()) {
+			vector<string> args = SimpleParser::Tokenize(action.extra, 0);
+			if (args.size() == 1) {
+				const float value = atof(args[0].c_str());
+				if (value > 0.0f) {
+					unitDrawer->LODScale = (1.0f / value);
+				}
+			}
+			else if (args.size() == 2) {
+				const float value = atof(args[1].c_str());
+				if (value > 0.0f) {
+					if (args[0] == "shadow") {
+						unitDrawer->LODScaleShadow = (1.0f / value);
+					} else if (args[0] == "reflection") {
+						unitDrawer->LODScaleReflection = (1.0f / value);
+					} else if (args[0] == "refraction") {
+						unitDrawer->LODScaleRefraction = (1.0f / value);
+					}
+				}
+			}
+		}
+	}
+	else if (cmd == "wiremap") {
+		if (action.extra.empty()) {
+			gd->wireframe = !gd->wireframe;
+		} else {
+			gd->wireframe = !atoi(action.extra.c_str());
+		}
+	}
 	else {
 		return false;
 	}
@@ -1735,7 +1804,8 @@ bool CGame::Update()
 
 bool CGame::DrawWorld()
 {
-START_TIME_PROFILE
+	START_TIME_PROFILE("Draw world");
+
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
 	sky->Draw();
@@ -1826,7 +1896,9 @@ START_TIME_PROFILE
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
 		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 	}
-END_TIME_PROFILE("Draw world");
+
+	END_TIME_PROFILE("Draw world");
+
 	return true;
 }
 
@@ -1859,9 +1931,10 @@ bool CGame::Draw()
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
 
-START_TIME_PROFILE
+	START_TIME_PROFILE("Sky");
 	sky->Update();
-END_TIME_PROFILE("Sky");
+	END_TIME_PROFILE("Sky");
+
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1878,28 +1951,34 @@ END_TIME_PROFILE("Sky");
 	if(playing && (hideInterface || script->wantCameraControl))
 		script->SetCamera();
 
-START_TIME_PROFILE
+	START_TIME_PROFILE("Ground");
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	gd->Update(); // let it update before shadows have to be drawn
-END_TIME_PROFILE("Ground");
+	END_TIME_PROFILE("Ground");
 
-START_TIME_PROFILE
-	if(shadowHandler->drawShadows)
-		shadowHandler->CreateShadows();
-	if (unitDrawer->advShading)
-		unitDrawer->UpdateReflectTex();
-END_TIME_PROFILE("Shadows/Reflect");
+	const bool doDrawWorld =
+		hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+
+	if (doDrawWorld) {
+		START_TIME_PROFILE("Shadows/Reflect");
+		if(shadowHandler->drawShadows)
+			shadowHandler->CreateShadows();
+		if (unitDrawer->advShading)
+			unitDrawer->UpdateReflectTex();
+		END_TIME_PROFILE("Shadows/Reflect");
+	}
 
 	camera->Update(false);
 
-START_TIME_PROFILE
+	START_TIME_PROFILE("Water");
 	water->UpdateWater(this);
-END_TIME_PROFILE("Water");
+	END_TIME_PROFILE("Water");
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 
-	if (hideInterface || !minimap->GetMaximized() || minimap->GetMinimized())
+	if (doDrawWorld) {
 		DrawWorld();
+	}
 	else {
 		glLoadIdentity();
 		glDisable(GL_DEPTH_TEST);
@@ -1946,7 +2025,7 @@ END_TIME_PROFILE("Water");
 		infoConsole->Draw();
 
 	if(!hideInterface) {
-START_TIME_PROFILE
+		START_TIME_PROFILE("Interface draw");
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty()){
 			std::deque<CInputReceiver*>::iterator ri;
@@ -1957,7 +2036,7 @@ START_TIME_PROFILE
 			if (*ri)
 				(*ri)->Draw();
 		}
-END_TIME_PROFILE("Interface draw");
+		END_TIME_PROFILE("Interface draw");
 	} else {
 		guihandler->Update();
 	}
@@ -1971,7 +2050,7 @@ END_TIME_PROFILE("Interface draw");
 		glScalef(0.03f,0.04f,0.1f);
 
 		//skriv ut fps etc
-		font->glPrint("FPS %d Frame %d Units %d Part %d(%d)",fps,gs->frameNum,uh->activeUnits.size(),ph->ps.size(),ph->currentParticles);
+		font->glPrint("FPS %d Frame %d Part %d(%d)",fps,gs->frameNum,ph->ps.size(),ph->currentParticles);
 		glPopMatrix();
 
 		if(playing){
@@ -2027,6 +2106,26 @@ END_TIME_PROFILE("Interface draw");
 			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			outlineFont.print(xPixel, yPixel, white, buf);
+		}
+		glLoadIdentity();
+	}
+
+	if (showFPS) {
+		char buf[32];
+		SNPRINTF(buf, sizeof(buf), "%i", fps);
+		const float xScale = 0.015f;
+		const float yScale = 0.020f;
+		const float tWidth = font->CalcTextWidth(buf) * xScale;
+		glTranslatef(0.99f - tWidth, 0.03f, 1.0f);
+		glScalef(xScale, yScale, 1.0f);
+		glColor4f(1.0f, 1.0f, 0.25f, 1.0f);
+		if (!outlineFont.IsEnabled()) {
+			font->glPrintRaw(buf);
+		} else {
+			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
+			const float yellow[4] = { 1.0f, 1.0f, 0.25f, 1.0f };
+			outlineFont.print(xPixel, yPixel, yellow, buf);
 		}
 		glLoadIdentity();
 	}
@@ -2254,17 +2353,17 @@ void CGame::SimFrame()
 	}
 
 	ENTER_SYNCED;
-START_TIME_PROFILE
+	START_TIME_PROFILE("Sim time")
 
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
 
-START_TIME_PROFILE
+	START_TIME_PROFILE("Collisions");
 	ph->CheckUnitCol();
 	ground->CheckCol(ph);
-END_TIME_PROFILE("Collisions");
+	END_TIME_PROFILE("Collisions");
 
 	ph->Update();
 	featureHandler->Update();
@@ -2282,7 +2381,7 @@ END_TIME_PROFILE("Collisions");
 	Uint64 stopPhysics;
 	stopPhysics = SDL_GetTicks();
 
-END_TIME_PROFILE("Sim time")
+	END_TIME_PROFILE("Sim time")
 
 	lastUpdate=stopPhysics;
 
@@ -2889,21 +2988,25 @@ bool CGame::ClientReadNet()
 				break;
 			}
 
-			if(gs->players[player]->playerControlledUnit){
+			CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
+			if (ctrlUnit) {
 				CUnit* unit=gs->players[player]->playerControlledUnit;
 				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
 				unit->directControl=0;
 				unit->AttackUnit(0,true);
 				gs->players[player]->StopControllingUnit();
-			} else {
+			}
+			else {
 				if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
-					CUnit* unit=uh->units[selectedUnits.netSelected[player][0]];
+					CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
 					//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
-					if(unit->directControl){
-						if(player==gu->myPlayerNum)
+					if (unit->directControl) {
+						if (player == gu->myPlayerNum) {
 							logOutput.Print("Sorry someone already controls that unit");
-					}	else {
+						}
+					}
+					else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
 						unit->directControl=&gs->players[player]->myControl;
 						gs->players[player]->playerControlledUnit=unit;
 						ENTER_UNSYNCED;
@@ -3032,7 +3135,7 @@ void CGame::UpdateUI()
 		}
 
 		CCameraController* camCtrl = mouse->currentCamController;
-		if (disableTracker && camCtrl->DisableTrackerByKey()) {
+		if (disableTracker && camCtrl->DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
 		movement.z = cameraSpeed;
@@ -3220,6 +3323,7 @@ void CGame::DrawDirectControlHud(void)
 		}
 		glTranslatef3(-unit->pos - (unit->speed * gu->timeOffset));
 		glDisable(GL_BLEND);
+		unit->currentLOD = 0;
 		unitDrawer->DrawIndividual(unit); // draw the unit
 		glPopMatrix();
 		glDisable(GL_DEPTH_TEST);
@@ -3372,10 +3476,21 @@ void CGame::SendNetChat(const std::string& message)
 	}
 	string msg = message;
 	if ((msg.find(".give") == 0) && (msg.find('@') == string::npos)) {
-		const float3& pos = camera->pos;
-		const float3& dir = mouse->dir;
-		const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
-		const float3 p = pos + (dir * dist);
+		float3 p;
+		CInputReceiver* ir = NULL;
+		if (!hideInterface) {
+			ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
+		}
+		if (ir == minimap) {
+			p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+		}
+		else {
+			const float3& pos = camera->pos;
+			const float3& dir = mouse->dir;
+			const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
+			p = pos + (dir * dist);
+		}
+
 		char buf[128];
 		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 		msg += buf;
@@ -3422,7 +3537,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 	}
 	else if(s.find(".nocost")==0 && player==0 && gs->cheatEnabled){
-		for(int i=0; i<unitDefHandler->numUnits; i++)
+		for(int i=0; i<unitDefHandler->numUnitDefs; i++)
 		{
 			unitDefHandler->unitDefs[i].metalCost = 1;
 			unitDefHandler->unitDefs[i].energyCost = 1;
@@ -3482,26 +3597,28 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 #endif
 	else if(s==".spectator" && (gs->cheatEnabled || net->IsDemoServer())){
 		gs->players[player]->spectator=true;
-		if(player==gu->myPlayerNum){
+		if (player == gu->myPlayerNum) {
 			gu->spectating = true;
 			gu->spectatingFullView = gu->spectating;
 			gu->spectatingFullSelect = false;
+			selectedUnits.ClearSelected();
+			unitTracker.Disable();
 			CLuaUI::UpdateTeams();
 		}
 	}
 	else if(s.find(".team")==0 && (gs->cheatEnabled || net->IsDemoServer())){
 		int team=atoi(&s.c_str()[s.find(" ")]);
-		if(team>=0 && team<gs->activeTeams){
-			gs->players[player]->team=team;
-			gs->players[player]->spectator=false;
-			if(player==gu->myPlayerNum){
-				selectedUnits.ClearSelected();
+		if ((team >= 0) && (team <gs->activeTeams)) {
+			gs->players[player]->team = team;
+			gs->players[player]->spectator = false;
+			if(player == gu->myPlayerNum){
 				gu->spectating = false;
 				gu->spectatingFullView = gu->spectating;
 				gu->spectatingFullSelect = false;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
-//				grouphandler->team = gu->myTeam;
+				selectedUnits.ClearSelected();
+				unitTracker.Disable();
 				CLuaUI::UpdateTeams();
 			}
 		}
@@ -3524,9 +3641,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 
 		if (s.find(" all") != string::npos) {
 			// player entered ".give all"
-			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnits));
+			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
 			int currentNumUnits = gs->Team(team)->units.size();
-			int numRequestedUnits = unitDefHandler->numUnits;
+			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
 			// make sure team unit-limit not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits)
@@ -3612,7 +3729,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 							for (int x = 0; x < squareSize && total > 0; ++x) {
 								float minposx = minpos.x + x * xsize * SQUARE_SIZE;
 								float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-								const float3 upos(minposx, minpos.y, minposz);
+								float minposy = ground->GetHeight2(minposx, minposz);
+								const float3 upos(minposx, minposy, minposz);
 								CFeature* feature = SAFE_NEW CFeature();
 								feature->Initialize(upos, featureDef, 0, 0, team, "");
 								--total;

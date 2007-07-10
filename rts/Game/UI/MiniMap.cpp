@@ -965,7 +965,8 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal()
 {
-	START_TIME_PROFILE
+	START_TIME_PROFILE("Draw minimap");
+
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 	setSurfaceCircleFunc(DrawSurfaceCircle);

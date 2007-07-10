@@ -49,6 +49,7 @@ public:
 	bool updateFov;
 	bool drawRadarAndJammer;
 	bool drawLineOfSight;
+	bool wireframe;
 
 	int striptype;
 	unsigned int infoTex;

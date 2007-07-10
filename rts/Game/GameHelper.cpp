@@ -19,6 +19,8 @@
 #include "Sound.h"
 #include "Map/MapDamage.h"
 #include "Camera.h"
+#include "Game/UI/LuaUI.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Weapons/Weapon.h"
@@ -61,8 +63,19 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed,CUnit *owner,bool damageGround,float gfxMod,bool ignoreOwner,CExplosionGenerator *explosionGraphics, CUnit *hit,const float3 &impactDir, int weaponId)
+
+void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
+                            float radius, float edgeEffectiveness,
+                            float explosionSpeed, CUnit* owner,
+                            bool damageGround, float gfxMod, bool ignoreOwner,
+                            CExplosionGenerator* explosionGraphics, CUnit* hit,
+                            const float3& impactDir, int weaponId)
 {
+	if (luaUI) {
+		luaUI->ShockFront(damages.damages[0], pos, radius);
+	}
+	bool noGfx = luaCallIns.Explosion(weaponId, pos, owner);
+
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
 	tracefile << pos.x << " " << damages[0] <<  " " << radius << "\n";
@@ -73,93 +86,115 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages, float radius
 	}
 */
 //	logOutput.Print("Explosion %i",damageGround);
-	if(radius<1)
-		radius=1;
+	if (radius < 1.0f) {
+		radius = 1.0f;
+	}
 
-	float h2=ground->GetHeight2(pos.x,pos.z);
-	if(pos.y<h2)
-		pos.y=h2;
+	float h2 = ground->GetHeight2(pos.x, pos.z);
+	if (pos.y < h2) {
+		pos.y = h2;
+	}
 
-	float height=pos.y-h2;
-	if(height<0)
-		height=0;
+	float height = pos.y - h2;
+	if (height < 0.0f) {
+		height = 0.0f;
+	}
 
-	vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
+	vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	//float gd=max(30.f,damages[0]/20);
 	//float explosionSpeed=(8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f;	//this is taken from the explosion graphics and could probably be simplified a lot
 
-	for(vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
-		if(ignoreOwner && (*ui)==owner)
-				continue;
+	// Damage Units
+	for (vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
+		CUnit* unit = *ui;
+		if (ignoreOwner && (unit == owner)) {
+			continue;
+		}
 		// dist = max(distance from center of unit to center of explosion, unit->radius+0.1)
-		float3 dif=(*ui)->midPos-pos;
-		float dist=dif.Length();
-		if(dist<(*ui)->radius+0.1f)
-			dist=(*ui)->radius+0.1f;
+		float3 dif = unit->midPos - pos;
+		float dist = dif.Length();
+		const float fudgeRad = unit->radius + 0.1f;
+		if (dist < fudgeRad) {
+			dist = fudgeRad;
+		}
 		// dist2 = distance from boundary of unit's hitsphere to center of explosion,
 		// unless unit->isUnderwater and explosion is above water: then it's center to center distance
-		float dist2=dist - (*ui)->radius;
-		if((*ui)->isUnderWater && pos.y>-1){	//should make it harder to damage subs with above water weapons
-			dist2+=(*ui)->radius;
-			if(dist2>radius)
-				dist2=radius;
+		float dist2 = dist - unit->radius;
+		if (unit->isUnderWater && (pos.y > -1.0f)) {	//should make it harder to damage subs with above water weapons
+			dist2 += unit->radius;
+			if (dist2 > radius) {
+				dist2 = radius;
+			}
 		}
 		// Clamp dist to radius to prevent division by zero. (dist2 can never be > radius)
 		// We still need the original dist later to normalize dif.
 		float dist1 = dist;
-		if (dist1 > radius)
+		if (dist1 > radius) {
 			dist1 = radius;
+		}
 		float mod =(radius-dist1)/(radius-dist1*edgeEffectiveness);
 		float mod2=(radius-dist2)/(radius-dist2*edgeEffectiveness);
-		dif/=dist; // dist > (*ui)->radius+0.1f, see above
-		dif.y+=0.12f;
+		dif /= dist; // dist > unit->radius+0.1f, see above
+		dif.y += 0.12f;
 
 		DamageArray damageDone = damages*mod2;
-		float3 addedImpulse = dif*(damages.impulseFactor*mod*(damages[0] + damages.impulseBoost)*3.2f);
+		float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
 
-		if(dist2<explosionSpeed*4){	//damage directly
-			(*ui)->DoDamage(damageDone,owner,addedImpulse, weaponId);
-		}else {	//damage later
-			WaitingDamage* wd=SAFE_NEW WaitingDamage(owner?owner->id:-1, (*ui)->id, damageDone, addedImpulse, weaponId);
+		if (dist2 < (explosionSpeed * 4.0f)) { //damage directly
+			unit->DoDamage(damageDone,owner,addedImpulse, weaponId);
+		} else { //damage later
+			WaitingDamage* wd = SAFE_NEW WaitingDamage(owner ? owner->id : -1, unit->id, damageDone, addedImpulse, weaponId);
 			waitingDamages[(gs->frameNum+int(dist2/explosionSpeed)-3)&127].push_front(wd);
 		}
 	}
 
 	vector<CFeature*> features=qf->GetFeaturesExact(pos,radius);
 	vector<CFeature*>::iterator fi;
-	for(fi=features.begin();fi!=features.end();++fi){
-		float3 dif=(*fi)->midPos-pos;
-		float dist=dif.Length();
-		if(dist<0.1f)
-			dist=0.1f;
-		float mod=(radius-dist)/radius;
-		if(radius>8 && dist<(*fi)->radius*1.1f && mod<0.1f)		//always do some damage with explosive stuff (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
-			mod=0.1f;
-		if(mod>0)
-			(*fi)->DoDamage(damages*mod,owner,dif*(damages.impulseFactor*mod/dist*(damages[0] + damages.impulseBoost) ));
-		if(gs->randFloat()>0.7f)
-			(*fi)->StartFire();
+	for (fi = features.begin(); fi != features.end(); ++fi) {
+		CFeature* feature = *fi;
+		float3 dif= feature->midPos -pos;
+		float dist = dif.Length();
+		if (dist < 0.1f) {
+			dist = 0.1f;
+		}
+		float mod = (radius - dist) / radius;
+		// always do some damage with explosive stuff
+		// (ddm wreckage etc is to big to normally be damaged otherwise, even by bb shells)
+		if ((radius > 8.0f) && (dist < (feature->radius * 1.1f)) && (mod < 0.1f)) {
+			mod = 0.1f;
+		}
+		if (mod > 0.0f) {
+			feature->DoDamage(damages * mod, owner,
+			                  dif * (damages.impulseFactor * mod / dist * (damages[0] + damages.impulseBoost)));
+		}
+		if (gs->randFloat() > 0.7f) {
+			feature->StartFire();
+		}
 	}
 
-	if(damageGround && !(mapDamage->disabled) && radius>height && damages.craterMult > 0)
-	{
-		float damage = damages[0]*(1-height/radius);
-		if(damage>radius*10)
-			damage=radius*10;  //limit the depth somewhat
+	if (damageGround && !mapDamage->disabled &&
+	    (radius > height) && (damages.craterMult > 0.0f)) {
+		float damage = damages[0] * (1.0f - (height / radius));
+		if (damage > (radius * 10.0f)) {
+			damage = radius * 10.0f;  // limit the depth somewhat
+		}
 		mapDamage->Explosion(pos,(damage + damages.craterBoost)*damages.craterMult,radius-height);
 	}
 
 	// use CStdExplosionGenerator by default
-	if (!explosionGraphics)
-		explosionGraphics = stdExplosionGenerator;
-
-	explosionGraphics->Explosion(pos,damages[0],radius,owner,gfxMod,hit,impactDir);
-	groundDecals->AddExplosion(pos,damages[0],radius);
-	//sound->PlaySample(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
+	if (!noGfx) {
+		if (!explosionGraphics) {
+			explosionGraphics = stdExplosionGenerator;
+		}
+		explosionGraphics->Explosion(pos, damages[0], radius, owner, gfxMod, hit, impactDir);
+	}
+	groundDecals->AddExplosion(pos, damages[0], radius);
+	// sound->PlaySample(explosionSounds[rand()*4/(RAND_MAX+1)],pos,damage*2);
 	ENTER_UNSYNCED;
 	water->AddExplosion(pos,damages[0],radius);
 	ENTER_SYNCED;
 }
+
 
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit)
 {
@@ -627,6 +662,9 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 			if ((f->allyteam >= 0) && !gu->spectatingFullView &&
 			    (f->allyteam != gu->myAllyTeam) &&
 			    !loshandler->InLos(f->pos, gu->myAllyTeam)) {
+				continue;
+			}
+			if (f->noSelect) {
 				continue;
 			}
 			float3 dif = f->midPos-start;

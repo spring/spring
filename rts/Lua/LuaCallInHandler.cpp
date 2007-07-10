@@ -43,6 +43,8 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["FeatureCreated"]      = &listFeatureCreated;
 	callInMap["FeatureDestroyed"]    = &listFeatureDestroyed;
 
+	callInMap["Explosion"]           = &listExplosion;
+
 	callInMap["Update"]              = &listUpdate;
 
 	callInMap["DrawWorld"]           = &listDrawWorld;
@@ -95,6 +97,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(FeatureCreated);
 	ADDHANDLE(FeatureDestroyed);
 
+	ADDHANDLE(Explosion);
+
 	ADDHANDLE(Update);
 
 	ADDHANDLE(DrawWorld);
@@ -136,6 +140,8 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listFeatureCreated, lh);
 	ListRemove(listFeatureDestroyed, lh);
+
+	ListRemove(listExplosion, lh);
 
 	ListRemove(listUpdate, lh);
 

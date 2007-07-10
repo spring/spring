@@ -34,6 +34,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
@@ -101,6 +102,13 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 {
 	if (L == NULL) {
 		return;
+	}
+
+	if (fullCtrl) {
+		// numWeaponDefs has an extra slot
+		for (int w = 0; w <= weaponDefHandler->numWeaponDefs; w++) {
+			watchWeapons.push_back(false);
+		}
 	}
 	
 	const string syncedCode   = LoadFile(syncedFile);
@@ -191,6 +199,8 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	LuaPushNamedCFunc(L, "AddActionFallback",    AddSyncedActionFallback);
 	LuaPushNamedCFunc(L, "RemoveActionFallback", RemoveSyncedActionFallback);
 	LuaPushNamedCFunc(L, "UpdateCallIn",         CallOutSyncedUpdateCallIn);
+	LuaPushNamedCFunc(L, "GetWatchWeapon",       GetWatchWeapon);
+	LuaPushNamedCFunc(L, "SetWatchWeapon",       SetWatchWeapon);
 	lua_pop(L, 1);
 
 	// add the custom file loader
@@ -1219,9 +1229,38 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 	} else {
 		lua_pushboolean(L, false);
 	}
-	// FIXME -- word completion
+	// FIXME -- word completion should also be removed
 	lua_pushboolean(L, true);
 	return 1;
+}
+
+
+/******************************************************************************/
+
+int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
+{
+	CLuaHandleSynced* lhs = GetActiveHandle();
+	const int weaponID = (int)luaL_checknumber(L, 1);
+	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
+		return 0;
+	}
+	lua_pushboolean(L, lhs->watchWeapons[weaponID]);
+	return 1;
+}
+
+
+int CLuaHandleSynced::SetWatchWeapon(lua_State* L)
+{
+	CLuaHandleSynced* lhs = GetActiveHandle();
+	const int weaponID = (int)luaL_checknumber(L, 1);
+	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetWatchWeapon()");
+	}
+	lhs->watchWeapons[weaponID] = lua_toboolean(L, 2);
+	return 0;
 }
 
 
