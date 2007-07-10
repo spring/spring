@@ -6,6 +6,8 @@ LogOutput - global object to write log info to.
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
 
+#include <vector>
+
 // format string error checking
 #ifdef __GNUC__
 #define FORMATSTRING(n) __attribute__((format(printf, n, n + 1)))

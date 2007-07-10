@@ -6,7 +6,7 @@
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "LogOutput.h"
-#include "NetProtocol.h"
+#include "GameServer.h"
 #include "Player.h"
 #include "TdfParser.h"
 #include "Team.h"
@@ -289,8 +289,8 @@ void CGameSetup::Draw()
 	glPushMatrix();
 	glTranslatef(0.3f,0.7f,0.0f);
 	glScalef(0.03f,0.04f,0.1f);
-	if(!serverNet && net->inInitialConnect){
-		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0].lastReceiveTime));
+	if(!gameServer && net->inInitialConnect){
+		font->glPrint("Connecting to server %i",40-(int)(net->curTime-net->connections[0]->lastReceiveTime));
 	}else if(readyTime>0)
 		font->glPrint("Starting in %i", 3 - (SDL_GetTicks() - readyTime) / 1000);
 	else if(!readyTeams[gu->myTeam])
@@ -323,7 +323,7 @@ void CGameSetup::Draw()
 bool CGameSetup::Update()
 {
 	bool allReady=true;
-	if(!serverNet && net->inInitialConnect)
+	if(!gameServer && net->inInitialConnect)
 		return false;
 	for(int a=0;a<numPlayers;a++){
 		if(!gs->players[a]->readyToStart){
@@ -340,7 +340,7 @@ bool CGameSetup::Update()
 	if(forceReady)
 		allReady=true;
 	if(allReady){
-		if(readyTime==0 && !net->playbackDemo){
+		if(readyTime==0 && !net->IsDemoServer()){
 			int mode=configHandler.GetInt("CamMode",1);
 			mouse->currentCamController=mouse->camControllers[mode];
 			mouse->currentCamControllerNum=mode;

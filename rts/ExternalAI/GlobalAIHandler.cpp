@@ -8,6 +8,7 @@
 #include "TimeProfiler.h"
 #include "Platform/errorhandler.h"
 #include "Game/Player.h"
+#include "System/NetProtocol.h"
 #include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
@@ -218,7 +219,7 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 bool CGlobalAIHandler::CreateGlobalAI(int team, const char* dll)
 {
 	try {
-		if(team>=gs->activeTeams)
+		if(team>=gs->activeTeams || net->IsDemoServer())
 			return false;
 
 		if(ais[team]){

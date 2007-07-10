@@ -34,8 +34,11 @@ public:
 
 	bool hasDemo,hasSave;
 
-	std::string mapName;
-	std::string modName;
+	static std::string mapName;
+	static std::string modName;
+	static std::string modArchive;
+	static std::string scriptName;
+	std::string demoFile;
 
 	void UpdateClientNet();
 	unsigned char inbuf[16000];	//buffer space for incomming data
