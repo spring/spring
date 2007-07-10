@@ -578,45 +578,45 @@ float3 CWeaponDefHandler::hs2rgb(float h, float s)
 
 DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted)
 {
-	DamageArray dynDamages;
+	DamageArray dynDamages(damages);
 
 	curPos.y = 0;
 	startPos.y = 0;
 
 	float travDist = (curPos-startPos).Length()>range?range:(curPos-startPos).Length();
-	float ddmod = dynDamages[0]/damageMin; // get damage mod from first damage type
+	float ddmod;
+
+	if (damageMin > 0)
+		ddmod = damageMin/damages[0]; // get damage mod from first damage type
 
 	if (inverted == true) {
 		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
-
 			dynDamages[i] = damages[i] - (1 - pow(1 / range * travDist, exp)) * damages[i];
 
-			if (damageMin > 0) {
+			if (damageMin > 0)
 				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
-			}
 
 			// div by 0
 			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			logOutput.Print("%s D%i: %f (%f)", weaponDefs->name.c_str(), i, dynDamages[i]);
-//			logOutput.Print("%s F%i: %f - (1 - (1/%f * %f) ^ %f * %f", weaponDefs->name.c_str(), i, dynDamages[i], range, travDist, exp, damages[i]);
+//			logOutput.Print("D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
+//			logOutput.Print("F%i: %f - (1 - (1/%f * %f) ^ %f) * %f", i, damages[i], range, travDist, exp, damages[i]);
 		}
 	}
 	else {
-		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
-
+		for(int i=0; i < damageArrayHandler->numTypes; ++i) {	
 			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
 
-			if (damageMin > 0) {
+			if (damageMin > 0)
 				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
-			}
 
 			// div by 0
 			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			logOutput.Print("%s D%i: %f (%f)", weaponDefs->name.c_str(), i, dynDamages[i]);
-//			logOutput.Print("%s F%i: (1 - (1/%f * %f) ^ %f * %f", weaponDefs->name.c_str(), i, range, travDist, exp, damages[i]);
+//			logOutput.Print("D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
+//			logOutput.Print("F%i: (1 - (1/%f * %f) ^ %f) * %f", i, range, travDist, exp, damages[i]);
 		}
 	}
 	return dynDamages;
 }
+
 WeaponDef::~WeaponDef() {
 }
