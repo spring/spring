@@ -31,16 +31,18 @@ CNetProtocol::~CNetProtocol()
 
 int CNetProtocol::InitServer(const unsigned portnum)
 {
-	CNet::InitServer(portnum);
+	int ret = CNet::InitServer(portnum);
 	logOutput.Print("Created server on port %i", portnum);
 	
 	//TODO demo recording support for server
+	return ret;
 }
 
 int CNetProtocol::InitServer(const unsigned portnum, const std::string& demoName)
 {
-	InitServer(portnum);	
+	int ret = InitServer(portnum);	
 	play = new CDemoReader(demoName);
+	return ret;
 }
 
 int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport)
@@ -181,6 +183,7 @@ int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsig
 int CNetProtocol::SendHello()
 {
 	PingAll();
+	return 1;
 }
 
 //  NETMSG_QUIT             = 2,  //

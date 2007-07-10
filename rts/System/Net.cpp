@@ -3,6 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include <SDL_timer.h>
 
 #ifdef _WIN32
@@ -17,7 +18,6 @@
 #endif
 
 #include "Net.h"
-#include "StdAfx.h"
 #include "LogOutput.h"
 #include "Game/GameVersion.h"
 #include "RemoteConnection.h"

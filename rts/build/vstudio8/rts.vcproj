@@ -2311,6 +2311,38 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Connection.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Connection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Demo.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Demo.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\FPUCheck.h"
 				>
 			</File>
@@ -2320,6 +2352,22 @@
 			</File>
 			<File
 				RelativePath="..\..\System\GlobalStuff.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\LocalConnection.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\LocalConnection.h"
 				>
 			</File>
 			<File
@@ -2392,6 +2440,22 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Object.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\RemoteConnection.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\RemoteConnection.h"
 				>
 			</File>
 			<File

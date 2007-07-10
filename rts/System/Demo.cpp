@@ -1,6 +1,10 @@
 #include "Demo.h"
 
 #include <assert.h>
+#include <time.h>
+#ifdef _WIN32
+#include <io.h> // for _mktemp
+#endif
 
 #include "Platform/FileSystem.h"
 #include "Sync/Syncify.h"
