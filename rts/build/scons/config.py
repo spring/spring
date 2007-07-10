@@ -181,8 +181,8 @@ def check_python(env, conf):
 def check_java(env, conf):
 	print "Checking for Java...",
 	if env.has_key('javapath') and env['javapath']:
-		env.AppendUnique(CPPPATH = env['javapath'])
-		env.AppendUnique(CPPPATH = os.path.join(env['javapath'], "linux"))
+		env.AppendUnique(CPPPATH = [env['javapath']])
+		env.AppendUnique(CPPPATH = [os.path.join(env['javapath'], "linux")])
 		return
 	if env['platform'] == 'windows':
 		guess_include_path(env, conf, 'Java', 'java')
