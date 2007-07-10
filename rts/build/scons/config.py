@@ -202,8 +202,8 @@ def check_java(env, conf):
 	else:
 		possible_dirs.sort()
 		print possible_dirs[-1]
-		env.AppendUnique(CPPPATH = possible_dirs[-1])
-		env.AppendUnique(CPPPATH = os.path.join(possible_dirs[-1], "linux"))
+		env.AppendUnique(CPPPATH = [possible_dirs[-1]])
+		env.AppendUnique(CPPPATH = [os.path.join(possible_dirs[-1], "linux")])
 
 
 class Dependency:
