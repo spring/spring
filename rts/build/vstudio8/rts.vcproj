@@ -64,10 +64,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib freetype2110_D.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib ILU.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib imagehlp.lib advapi32.lib ole32.lib"
 				OutputFile="../../../game/debug.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				IgnoreDefaultLibraryNames="libc.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/spring.pdb"
 				SubSystem="2"
@@ -153,11 +154,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib ilu.lib winmm.lib wsock32.lib SDLmain.lib ..\..\..\crashrpt\lib\CrashRpt.lib imagehlp.lib advapi32.lib ole32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg"
+				IgnoreDefaultLibraryNames="libc.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
 				ProgramDatabaseFile="../../../installer/spring.pdb"
@@ -248,7 +250,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -1400,6 +1402,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Units\UnitSet.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Units\UnitSet.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Units\UnitTracker.cpp"
 					>
 				</File>
@@ -2217,6 +2227,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\FeatureHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureSet.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\FeatureSet.h"
 					>
 				</File>
 				<File
@@ -3566,7 +3584,8 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="2"
+							UsePrecompiledHeader="0"
+							PrecompiledHeaderFile=""
 						/>
 					</FileConfiguration>
 					<FileConfiguration
