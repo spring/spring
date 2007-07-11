@@ -6,6 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "FileHandler.h"
 #include "Platform/FileSystem.h"
+#include "LogOutput.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,7 +54,7 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 	ModData md;
 	md.name = "";
 
-	if (!p->SectionExist(section)) 
+	if (!p->SectionExist(section))
 		return md;
 
 	md.name = p->SGetValueDef("", (section + "\\Name").c_str());
@@ -423,7 +424,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	FILE* out = fopen(filename.c_str(), "wt");
 	if (!out)
 		return;
-	
+
 	// First delete all outdated information
 	for (map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
 		map<string, ArchiveInfo>::iterator next = i;
@@ -507,7 +508,7 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods()
 		}
 	}
 
-	return ret;	
+	return ret;
 }
 
 vector<string> CArchiveScanner::GetArchives(const string& root)
@@ -622,6 +623,8 @@ unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 {
 	if (GetModChecksum(root) != checksum) {
+		logOutput.Print("Mod checksums differ: local: %u; remote: %u (%s)\n",
+							 GetModChecksum(root), checksum, root.c_str());
 		throw content_error(
 				"Your mod differs from the host's mod. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"
@@ -635,6 +638,8 @@ void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 {
 	if (GetMapChecksum(mapName) != checksum) {
+		logOutput.Print("Map checksums differ: local: %u; remote: %u (%s)\n",
+							 GetMapChecksum(mapName), checksum, mapName.c_str());
 		throw content_error(
 				"Your map differs from the host's map. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"
