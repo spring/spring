@@ -438,7 +438,7 @@ static void DrawBins(LuaMatType type)
 
 	luaDrawing = true;
 
-	LuaMatBinSet::iterator it;
+	LuaMatBinSet::const_iterator it;
 	for (it = bins.begin(); it != bins.end(); ++it) {
 		LuaMatBin* bin = *it;
 		bin->Execute(*currMat);

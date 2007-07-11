@@ -556,12 +556,12 @@ int PackType(lua_State* L)
 }
 
 
-int LuaVFS::PackU8(lua_State* L)  { return PackType<uint8_t>(L); }
-int LuaVFS::PackU16(lua_State* L) { return PackType<uint16_t>(L); }
-int LuaVFS::PackU32(lua_State* L) { return PackType<uint32_t>(L); }
-int LuaVFS::PackS8(lua_State* L)  { return PackType<int8_t>(L); }
-int LuaVFS::PackS16(lua_State* L) { return PackType<int16_t>(L); }
-int LuaVFS::PackS32(lua_State* L) { return PackType<int32_t>(L); }
+int LuaVFS::PackU8(lua_State* L)  { return PackType<boost::uint8_t>(L); }
+int LuaVFS::PackU16(lua_State* L) { return PackType<boost::uint16_t>(L); }
+int LuaVFS::PackU32(lua_State* L) { return PackType<boost::uint32_t>(L); }
+int LuaVFS::PackS8(lua_State* L)  { return PackType<boost::int8_t>(L); }
+int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L); }
+int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L); }
 int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L); }
 
 
@@ -619,12 +619,12 @@ int UnpackType(lua_State* L)
 }
 
 
-int LuaVFS::UnpackU8(lua_State* L)  { return UnpackType<uint8_t>(L); }
-int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<uint16_t>(L); }
-int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<uint32_t>(L); }
-int LuaVFS::UnpackS8(lua_State* L)  { return UnpackType<int8_t>(L); }
-int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<int16_t>(L); }
-int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<int32_t>(L); }
+int LuaVFS::UnpackU8(lua_State* L)  { return UnpackType<boost::uint8_t>(L); }
+int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<boost::uint16_t>(L); }
+int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<boost::uint32_t>(L); }
+int LuaVFS::UnpackS8(lua_State* L)  { return UnpackType<boost::int8_t>(L); }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L); }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L); }
 int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L); }
 
 

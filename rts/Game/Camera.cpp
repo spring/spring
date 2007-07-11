@@ -145,13 +145,13 @@ void CCamera::Update(bool freeze)
 	up = right.cross(forward);
 	up.Normalize();
 
-	const float viewx = (float)tan(float(gu->viewSizeX)/gu->viewSizeY * PI / 4 * fov / 90);
-	const float viewy = (float)tan(PI / 4 * fov / 90);
+	const float viewx = (float)tanf(float(gu->viewSizeX)/gu->viewSizeY * PI / 4 * fov / 90);
+	const float viewy = (float)tanf(PI / 4 * fov / 90);
 
 	if (gu->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
-		const float span = 2.0f * (float)tan((PI / 180.0) * (fov * 0.5f));
+		const float span = 2.0f * (float)tanf((PI / 180.0) * (fov * 0.5f));
 		lppScale = span / (float)gu->viewSizeY;
 	}
 
@@ -260,8 +260,8 @@ void CCamera::UpdateForward()
 
 float3 CCamera::CalcPixelDir(int x, int y)
 {
-	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY*tan(fov/180/2*PI)*2;
-	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY*tan(fov/180/2*PI)*2;
+	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY*tanf(fov/180/2*PI)*2;
+	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY*tanf(fov/180/2*PI)*2;
 	float3 dir = camera->forward-camera->up*dy+camera->right*dx;
 	dir.Normalize();
 	return dir;
