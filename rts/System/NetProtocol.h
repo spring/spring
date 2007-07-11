@@ -22,7 +22,8 @@ including `command' and `messageSize'.
 
 enum NETMSG {
 	// WARNING: This is now in CNet, but dont use thos number for anything else
-	//NETMSG_HELLO            = 1,  reserved for CNet
+	// tvo: CGame and CPreGame still need to throw it away...
+	NETMSG_HELLO            = 1,  // reserved for CNet
 	NETMSG_QUIT             = 2,  //
 	NETMSG_NEWFRAME         = 3,  // int frameNum;
 	NETMSG_STARTPLAYING     = 4,  //
@@ -70,18 +71,18 @@ enum NETMSG {
 #endif // SYNCDEBUG
 };
 
-/** 
-@brief High level network code layer 
+/**
+@brief High level network code layer
 @TODO drop Send-commands if we are client from a demo host
 */
 class CNetProtocol : public netcode::CNet {
 public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
-	
+
 	CNetProtocol();
 	~CNetProtocol();
-	
+
 	int InitServer(const unsigned portnum);
 	/**
 	@brief use this if you want to host a demo file
@@ -94,22 +95,22 @@ public:
 	int InitLocalClient(const unsigned wantedNumber);
 	/// This will tell our server that we have a CLocalConnection
 	int ServerInitLocalClient(const unsigned wantedNumber);
-	
+
 	/// Check for new incoming data / connections
 	void Update();
-	
+
 	bool IsDemoServer() const;
 	bool localDemoPlayback;
-	
+
 	/**
 	@brief  Broadcast raw data to all clients
 	Should not be used. Use Send*(...) instead, only redirects to CNet::SendData(char*, int);
 	@TODO make everything use the Send* functions
 	 */
 	void RawSend(const uchar* data,const unsigned length);
-	
+
 	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum);
-	
+
 	int SendHello();
 	int SendQuit();
 	int SendNewFrame(int frameNum);
@@ -150,7 +151,7 @@ public:
 private:
 	CDemoRecorder* record;
 	CDemoReader* play;
-	
+
 	std::string scriptName;
 	uint mapChecksum;
 	std::string mapName;
