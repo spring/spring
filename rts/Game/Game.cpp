@@ -1599,7 +1599,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			return 0;
 		}
 	}
-	else if (cmd == "buffertext") {
+	/*else*/ if (cmd == "buffertext") {
 		if (!action.extra.empty()) {
 			consoleHistory->AddLine(action.extra);
 		}

@@ -227,7 +227,7 @@ class LuaMatBin : public LuaMaterial {
 
 
 /******************************************************************************/
-
+/*
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b)
 	{	
@@ -236,8 +236,8 @@ struct LuaMatBinPtrLessThan {
 		return (*ma < *mb);
 	}
 };
-
-typedef set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
+*/
+typedef set<LuaMatBin* /*, LuaMatBinPtrLessThan*/> LuaMatBinSet;
 
 
 /******************************************************************************/
