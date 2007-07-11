@@ -23,10 +23,6 @@
 #define _localtime64(x) localtime(x)
 #endif
 
-#ifdef _WIN32
-#  include <io.h>
-#endif
-
 
 static std::string MakeDemoStartScript(const char *startScript, const int ssLen)
 {
