@@ -475,14 +475,14 @@ function widgetHandler:NewWidget()
     end
   end
 
-  wh.RegisterGlobal = function(_, owner, name, value)
-    self:RegisterGlobal(widget, name, value)
+  wh.RegisterGlobal = function(_, name, value)
+    return self:RegisterGlobal(widget, name, value)
   end
-  wh.DeregisterGlobal = function(_, owner, name)
-    self:DeregisterGlobal(widget, name)
+  wh.DeregisterGlobal = function(_, name)
+    return self:DeregisterGlobal(widget, name)
   end
   wh.SetGlobal = function(_, name, value)
-    self:SetGlobal(widget, name, value)
+    return self:SetGlobal(widget, name, value)
   end
 
   wh.ConfigLayoutHandler = function(_, d) self:ConfigLayoutHandler(d) end
@@ -917,7 +917,7 @@ end
 
 
 function widgetHandler:DeregisterGlobal(owner, name)
-  if ((name == nil) or (self.globals[name] == nil)) then
+  if (name == nil) then
     return false
   end
   _G[name] = nil
