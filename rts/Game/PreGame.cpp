@@ -523,8 +523,6 @@ void CPreGame::SelectMap(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
-	if (pregame->server)
-		mapName = s;
 	if (net)
 		// inform CNetProtocol about our map (for demo writing)
 		net->SendMapName(archiveScanner->GetMapChecksum(pregame->mapName), pregame->mapName);
@@ -570,8 +568,7 @@ void CPreGame::SelectMod(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modArchive.c_str() << "\n";
-	if (pregame->server)
-		pregame->modName = s;
+	pregame->modName = s;
 }
 
 /** Create a CglList for selecting the mod. */
