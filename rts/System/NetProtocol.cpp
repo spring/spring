@@ -22,7 +22,7 @@ CNetProtocol::~CNetProtocol()
 		SendQuit();
 		FlushNet();
 	}
-	
+
 	if (record != 0)
 		delete record;
 	if (play != 0)
@@ -33,32 +33,32 @@ int CNetProtocol::InitServer(const unsigned portnum)
 {
 	int ret = CNet::InitServer(portnum);
 	logOutput.Print("Created server on port %i", portnum);
-	
+
 	//TODO demo recording support for server
 	return ret;
 }
 
 int CNetProtocol::InitServer(const unsigned portnum, const std::string& demoName)
 {
-	int ret = InitServer(portnum);	
+	int ret = InitServer(portnum);
 	play = new CDemoReader(demoName);
 	return ret;
 }
 
 int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport)
-{	
+{
 	int error = CNet::InitClient(server, portnum, sourceport,gameSetup ? gameSetup->myPlayer : 0);
 	SendAttemptConnect(gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 	FlushNet();
 	inInitialConnect=true;
-	
+
 	if (true)	//TODO do we really want this?
 	{
 		record = new CDemoRecorder();
 	}
 	if (error == 1)
 		logOutput.Print("Connected to %s:%i using number %i", server, portnum, gameSetup ? gameSetup->myPlayer : 0);
-	
+
 	return error;
 }
 
@@ -70,7 +70,7 @@ int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 		if (!mapName.empty())
 			record->SetName(mapName);
 	}
-	
+
 	int error = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
 	logOutput.Print("Created local client with number %i", wantedNumber);
@@ -84,7 +84,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 	int hisNewNumber = InitNewConn(buffer, true);
 	logOutput.Print("Listening to local client on connection %i", wantedNumber);
 	gs->players[wantedNumber]->active=true;
-	
+
 	if (!IsDemoServer()) {
 	// send game data for demo recording
 		if (!scriptName.empty())
@@ -94,7 +94,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 		if (!modName.empty())
 			SendModName(modChecksum, modName);
 	}
-	
+
 	return 1;
 }
 
@@ -123,7 +123,7 @@ void CNetProtocol::Update()
 			continue;
 		}
 		unsigned hisNewNumber = InitNewConn(it);
-			
+
 		if(imServer){	// send server data if already decided
 			SendSetPlayerNum(hisNewNumber);
 
@@ -133,7 +133,7 @@ void CNetProtocol::Update()
 				SendMapName(mapChecksum, mapName);
 			if (!modName.empty())
 				SendModName(modChecksum, modName);
-		
+
 			for(unsigned a=0;a<gs->activePlayers;a++){
 				if(!gs->players[a]->readyToStart)
 					continue;
@@ -161,7 +161,7 @@ bool CNetProtocol::IsDemoServer() const
 	{
 		return false;
 	}
-}	
+}
 
 void CNetProtocol::RawSend(const uchar* data,const unsigned length)
 {
@@ -171,7 +171,7 @@ void CNetProtocol::RawSend(const uchar* data,const unsigned length)
 int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsigned conNum)
 {
 	const int ret = CNet::GetData(buf, length, conNum);
-	
+
 	if (record!=0 && !imServer && ret > 0)
 	{
 		record->SaveToDemo(buf,ret);
@@ -286,14 +286,15 @@ int CNetProtocol::SendScript(const std::string& newScriptName)
 
 int CNetProtocol::SendMapName(const uint checksum, const std::string& newMapName)
 {
+	//logOutput.Print("SendMapName: %s %d", newMapName.c_str(), checksum);
 	mapChecksum = checksum;
 	mapName = newMapName;
 	if (imServer)
 		return SendSTLData<uint, std::string>(NETMSG_MAPNAME, checksum, mapName);
-	
+
 	if (record)
 		record->SetName(newMapName);
-	
+
 	return 0;
 }
 
@@ -443,9 +444,12 @@ int CNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 
 int CNetProtocol::SendModName(const uint checksum, const std::string& newModName)
 {
+	//logOutput.Print("SendModName: %s %d", newModName.c_str(), checksum);
 	modChecksum = checksum;
 	modName = newModName;
-	return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, modName);
+	if (imServer)
+		return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, modName);
+	return 0;
 }
 
 /* FIXME: add these:
