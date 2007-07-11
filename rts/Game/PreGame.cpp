@@ -473,6 +473,7 @@ void CPreGame::UpdateClientNet()
 		case NETMSG_QUIT:
 			net->connected=false;
 			globalQuit=true;
+			inbufpos += 1;
 			return;
 
 		case NETMSG_USER_SPEED:
@@ -480,6 +481,7 @@ void CPreGame::UpdateClientNet()
 			inbufpos += 5;
 			break;
 
+		case NETMSG_HELLO:
 		case NETMSG_SENDPLAYERSTAT:
 			inbufpos += 1;
 			break;

@@ -1,5 +1,5 @@
 #include "RemoteConnection.h"
- 
+
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -21,7 +21,7 @@
 
 namespace netcode {
 
-	
+
 Packet::Packet(): data(0),length(0)
 {
 }
@@ -36,7 +36,7 @@ Packet::~Packet()
 {
 	delete[] data;
 }
-	
+
 // both defined in Net.cpp
 std::string GetErrorMsg();
 bool IsFakeError();
@@ -70,7 +70,7 @@ CRemoteConnection::~CRemoteConnection()
 	std::map<int,Packet*>::iterator pi2;
 	for(pi2=waitingPackets.begin();pi2!=waitingPackets.end();++pi2)
 		delete (pi2->second);
-	
+
 	logOutput.Print("Network statistics for %s",inet_ntoa(addr.sin_addr));
 	logOutput.Print("Bytes send/recieved: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
 }
@@ -104,30 +104,30 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 }
 
 void CRemoteConnection::Update(const bool inInitialConnect)
-{	
+{
 	if (!active)
 		return;
-	
+
 	std::map<int,Packet*>::iterator wpi;
 	while((wpi=waitingPackets.find(lastInOrder+1))!=waitingPackets.end()){		//process all in order packets that we have waiting
 		if(readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
 			logOutput.Print("Overflow in incoming network buffer");
 			break;
 		}
-		
+
 		lastInOrder++;
 		if (wpi->second->data[0] != NETMSG_HELLO)	// HELLO is only internal
 		{
 			memcpy(&readyData[readyLength],wpi->second->data,wpi->second->length);
 			readyLength+=wpi->second->length;
 		}
-		
+
 		delete wpi->second;
 		waitingPackets.erase(wpi);
 	}
-	
+
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-	
+
 	if(inInitialConnect && lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0]->data,unackedPackets[0]->length,0);
 		lastSendTime=curTime;
@@ -138,12 +138,12 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 	if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		Ping();
 	}
-	
+
 	if(lastReceiveTime < curTime-(inInitialConnect ? 40 : 30))
 	{
 		active=false;
 	}
-	
+
 	if(outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f) || lastSendFrame < gs->frameNum-1)){
 		Flush();
 	}
@@ -152,23 +152,23 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsigned length)
 {
 	lastReceiveTime=static_cast<float>(SDL_GetTicks())/1000.0f;
-	
+
 	const unsigned hsize = 9;
-	int packetNum=*(unsigned int*)data;
+	int packetNum=*(int*)data;
 	int ack=*(int*)(data+4);
-	unsigned char nak = *(int*)(data+8);
-	
+	unsigned char nak = *(unsigned char*)(data+8);
+
 	AckPackets(ack);
-	
+
 	if (nak > 0)	// we have lost $nak packets
 	{
-		unsigned nak_abs = nak + firstUnacked - 1;
+		int nak_abs = nak + firstUnacked - 1;
 		if (nak_abs!=lastNak || lastNakTime < lastReceiveTime-0.1f)
 		{
 			// resend all packets from firstUnacked till nak_abs
 			lastNak=nak_abs;
 			lastNakTime=lastReceiveTime;
-			for(unsigned b=firstUnacked;b<=nak_abs;++b){
+			for(int b=firstUnacked;b<=nak_abs;++b){
 				SendRawPacket(unackedPackets[b-firstUnacked]->data,unackedPackets[b-firstUnacked]->length,b);
 			}
 		}
@@ -179,7 +179,7 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 
 	Packet* p=SAFE_NEW Packet(data+hsize,length-hsize);
 	waitingPackets[packetNum]=p;
-	
+
 	dataRecv += length;
 	recvOverhead += hsize;
 }
@@ -188,7 +188,7 @@ void CRemoteConnection::Flush()
 {
 	if (outgoingLength <= 0)
 		return;
-	
+
 	lastSendFrame=gs->frameNum;
 	lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
 
@@ -219,7 +219,7 @@ bool CRemoteConnection::CheckAddress(const sockaddr_in& from) const
 	return false;
 }
 
-void CRemoteConnection::AckPackets(const unsigned nextAck)
+void CRemoteConnection::AckPackets(const int nextAck)
 {
 	while(nextAck>=firstUnacked){
 		delete unackedPackets.front();
@@ -228,27 +228,27 @@ void CRemoteConnection::AckPackets(const unsigned nextAck)
 	}
 }
 
-void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned length, const unsigned packetNum)
+void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
 {
 	if (!active)
 		return;
-	
+
 	const unsigned hsize= 9;
 	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
-	*(unsigned int*)tempbuf = packetNum;
+	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		unsigned nak = (waitingPackets.begin()->first-1) - lastInOrder;
+		int nak = (waitingPackets.begin()->first-1) - lastInOrder;
+		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;
 		else
 			*(unsigned char*)(tempbuf+8) = 255;
-		
 	}
 	else {
 		*(unsigned char*)(tempbuf+8) = 0;
 	}
-	
+
 	/* *(int*)&tempbuf[0]=packetNum;
 	*(int*)&tempbuf[4]=lastInOrder;
 	const unsigned hsize= sizeof(packetHeader);

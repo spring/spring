@@ -2529,6 +2529,7 @@ bool CGame::ClientReadNet()
 			case NETMSG_SYNCREQUEST:
 				i2+=5;
 				break;
+			case NETMSG_HELLO:
 			case NETMSG_QUIT:
 			case NETMSG_STARTPLAYING:
 			case NETMSG_MEMDUMP:
@@ -2579,6 +2580,10 @@ bool CGame::ClientReadNet()
 		int lastLength=0;
 
 		switch (inbuf[inbufpos]){
+		case NETMSG_HELLO:
+			lastLength = 1;
+			break;
+
 		case NETMSG_ATTEMPTCONNECT:
 			lastLength=3;
 			logOutput.Print("Attempted connection to client?");
