@@ -24,7 +24,10 @@
 
 import os
 
-os.chdir('game')
+try:
+	os.chdir('game')
+except OSError:
+	os.chdir('../game')
 
 top = 'LuaUI/'
 
