@@ -2519,6 +2519,7 @@ bool CGame::ClientReadNet()
 			case NETMSG_COMMAND:
 			case NETMSG_SELECT:
 			case NETMSG_AICOMMAND:
+			case NETMSG_AICOMMANDS:
 				i2+=(*((short int*)&inbuf[i2+1]));
 				break;
 			case NETMSG_NEWFRAME:
@@ -2543,6 +2544,7 @@ bool CGame::ClientReadNet()
 				break;
 			case NETMSG_SETSHARE:
 			case NETMSG_PLAYERINFO:
+			case NETMSG_SYNCRESPONSE:
 				i2+=10;
 				break;
 			case NETMSG_PLAYERSTAT:
