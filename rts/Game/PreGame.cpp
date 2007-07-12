@@ -118,7 +118,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				server = false;
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = SAFE_NEW CGameServer(8452, pregame->mapName, pregame->modName, pregame->scriptName, demoFile);
+				gameServer = SAFE_NEW CGameServer(8452, pregame->mapName, pregame->modArchive, pregame->scriptName, demoFile);
 				good_fpu_control_registers("after CGameServer creation");
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					SelectMap(gameSetup->mapname);
@@ -342,7 +342,7 @@ bool CPreGame::Update()
 			// Map all required archives depending on selected mod(s)
 			vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
 			if (ars.empty())
-				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modName.c_str());
+				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modArchive.c_str());
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 				if (!hpiHandler->AddArchive(*i, false))
 					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
@@ -370,11 +370,11 @@ bool CPreGame::Update()
 			// create GameServer here where we can ensure to know which map and mod we are using
 			if (server) {
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = SAFE_NEW CGameServer(gameSetup? gameSetup->hostport : 8452, pregame->mapName, pregame->modName, pregame->scriptName, demoFile);
+				gameServer = SAFE_NEW CGameServer(gameSetup? gameSetup->hostport : 8452, pregame->mapName, pregame->modArchive, pregame->scriptName, demoFile);
 				good_fpu_control_registers("after CGameServer creation");
 			}
 
-			game = SAFE_NEW CGame(server, pregame->mapName, pregame->modName, infoConsole);
+			game = SAFE_NEW CGame(server, pregame->mapName, pregame->modArchive, infoConsole);
 
 			if (savefile) {
 				savefile->LoadGame();
