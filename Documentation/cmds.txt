@@ -63,8 +63,13 @@ selectcycle ["restore"]
 
 deselect
 
-clock [0|1]
-info  [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+info    [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+tooltip [0|1]
+resbar  [0|1]
+console [0|1]
+clock   [0|1]
+fps     [0|1]
+
 
 quit
 quitwarn
@@ -89,6 +94,8 @@ mouse4
 mouse5
 
 mousestate
+
+fpshud [0|1]
 
 viewfps
 viewta
@@ -215,10 +222,6 @@ minimap <"unitsize"> <float>
 minimap <"geo" | "geometry"> px py sx sy
 minimap <"slavemode"> [0|1]
 minimap <"draw">
-
-tooltip [0|1]
-resbar  [0|1]
-console [0|1]
 
 luaui < "reload" | "disable" | <custom command> >
 safegl [0|1]
