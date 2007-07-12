@@ -160,6 +160,8 @@ showmetalmap
 showpathmap
 toggleradarandjammer
 yardmap4
+wiremap [0|1]
+lodscale ["shadow"|"reflection"|"refraction"] <value>
 
 togglelos
 sharedialog
