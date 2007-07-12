@@ -25,7 +25,8 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(maxPredict),
 	CR_MEMBER(minPredict),
 	CR_MEMBER(highTrajectory),
-	CR_MEMBER(selfExplode)
+	CR_MEMBER(selfExplode),
+	CR_RESERVED(16)
 	));
 
 //////////////////////////////////////////////////////////////////////

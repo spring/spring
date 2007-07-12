@@ -13,7 +13,8 @@
 CR_BIND_DERIVED(CLightingCannon, CWeapon, (NULL));
 
 CR_REG_METADATA(CLightingCannon,(
-	CR_MEMBER(color)
+	CR_MEMBER(color),
+	CR_RESERVED(8)
 	));
 
 CLightingCannon::CLightingCannon(CUnit* owner)

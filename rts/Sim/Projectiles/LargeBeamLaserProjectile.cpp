@@ -21,7 +21,8 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(scrollspeed),
 	CR_MEMBER(pulseSpeed),
 	CR_MEMBER(beamtex),
-	CR_MEMBER(side)
+	CR_MEMBER(side),
+	CR_RESERVED(16)
 	));
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos,const float3& endPos,const float3& color, const float3& color2,CUnit* owner, WeaponDef *weaponDef)

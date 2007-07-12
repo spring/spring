@@ -31,6 +31,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(modelDispList),
 	CR_MEMBER(colorTeam),
+	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 	));
 

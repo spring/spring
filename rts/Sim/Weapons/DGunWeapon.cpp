@@ -10,6 +10,10 @@
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
 
+CR_REG_METADATA(CDGunWeapon,(
+				CR_RESERVED(8)
+				));
+
 CDGunWeapon::CDGunWeapon(CUnit* owner)
 : CWeapon(owner)
 {

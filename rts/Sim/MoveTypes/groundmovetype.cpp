@@ -95,7 +95,9 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_ENUM_MEMBER(oldPhysState),
 
 		CR_MEMBER(mainHeadingPos),
-		CR_MEMBER(useMainHeading)));
+		CR_MEMBER(useMainHeading),
+		CR_RESERVED(64)
+		));
 
 
 const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.

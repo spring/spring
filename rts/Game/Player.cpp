@@ -23,7 +23,8 @@ CR_REG_METADATA(CPlayer, (
 //				CR_MEMBER(readyToStart),
 //				CR_MEMBER(cpuUsage),
 //				CR_MEMBER(ping),
-				CR_MEMBER(currentStats)
+				CR_MEMBER(currentStats),
+				CR_RESERVED(32)
 				));
 
 CR_BIND(CPlayer::Statistics,);
@@ -33,7 +34,8 @@ CR_REG_METADATA_SUB(CPlayer, Statistics, (
 					CR_MEMBER(mouseClicks),
 					CR_MEMBER(keyPresses),
 					CR_MEMBER(numCommands),
-					CR_MEMBER(unitCommands)
+					CR_MEMBER(unitCommands),
+					CR_RESERVED(16)
 					));
 
 //////////////////////////////////////////////////////////////////////

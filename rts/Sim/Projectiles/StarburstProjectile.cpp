@@ -35,7 +35,8 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(numParts),
 	CR_MEMBER(doturn),
 	CR_MEMBER(curCallback),
-	CR_MEMBER(missileAge)
+	CR_MEMBER(missileAge),
+	CR_RESERVED(16)
 	));
 
 void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)

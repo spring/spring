@@ -27,6 +27,7 @@ CR_REG_METADATA(CFactoryCAI , (
 				CR_MEMBER(buildOptions),
 				CR_MEMBER(building),
 				CR_MEMBER(lastRestrictedWarning),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 

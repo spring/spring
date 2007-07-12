@@ -21,7 +21,9 @@ CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
 	CR_MEMBER(bombMoveRange),
-	CR_MEMBER(tracking)));
+	CR_MEMBER(tracking),
+	CR_RESERVED(16)
+	));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

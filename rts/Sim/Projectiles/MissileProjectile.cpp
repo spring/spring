@@ -42,7 +42,8 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(wobbleDif),
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
-	CR_MEMBER(extraHeightTime)
+	CR_MEMBER(extraHeightTime),
+	CR_RESERVED(16)
 	));
 
 CMissileProjectile::CMissileProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed, int ttl,CUnit* target, WeaponDef *weaponDef,float3 targetPos)

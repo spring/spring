@@ -24,7 +24,8 @@ CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
 	CR_MEMBER(oldDir),
-	CR_MEMBER(damageMul)
+	CR_MEMBER(damageMul),
+	CR_RESERVED(16)
 	));
 
 CBeamLaser::CBeamLaser(CUnit* owner)

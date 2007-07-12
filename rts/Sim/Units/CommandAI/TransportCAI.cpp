@@ -29,7 +29,8 @@ CR_BIND_DERIVED(CTransportCAI,CMobileCAI , );
 CR_REG_METADATA(CTransportCAI, (
 				CR_MEMBER(toBeTransportedUnitId),
 				CR_MEMBER(scriptReady),
-				CR_MEMBER(lastCall)
+				CR_MEMBER(lastCall),
+				CR_RESERVED(16)
 				));
 
 CTransportCAI::CTransportCAI()

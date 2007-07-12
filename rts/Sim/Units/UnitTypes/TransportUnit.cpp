@@ -19,6 +19,7 @@ CR_REG_METADATA(CTransportUnit, (
 				CR_MEMBER(transported),
 				CR_MEMBER(transportCapacityUsed),
 				CR_MEMBER(transportMassUsed),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -28,7 +29,8 @@ CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
 					CR_MEMBER(unit),
 					CR_MEMBER(piece),
 					CR_MEMBER(size),
-					CR_MEMBER(mass)
+					CR_MEMBER(mass),
+					CR_RESERVED(8)
 					));
 
 CTransportUnit::CTransportUnit()

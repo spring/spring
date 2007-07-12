@@ -64,7 +64,8 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(numCommanders),
 				CR_MEMBER(statHistory),
 				CR_MEMBER(modParams),
-				CR_MEMBER(modParamsMap)
+				CR_MEMBER(modParamsMap),
+				CR_RESERVED(64)
 				));
 
 CR_BIND(CTeam::Statistics,);
@@ -88,7 +89,8 @@ CR_REG_METADATA_SUB(CTeam, Statistics, (
 					CR_MEMBER(unitsSent),
 					CR_MEMBER(unitsCaptured),
 					CR_MEMBER(unitsOutCaptured),
-					CR_MEMBER(unitsKilled)
+					CR_MEMBER(unitsKilled),
+					CR_RESERVED(16)
 					));
 
 //////////////////////////////////////////////////////////////////////

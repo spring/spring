@@ -20,7 +20,8 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(curLength),
 	CR_MEMBER(speedf),
 	CR_MEMBER(intensityFalloff),
-	CR_MEMBER(midtexx)
+	CR_MEMBER(midtexx),
+	CR_RESERVED(16)
 	));
 
 CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)

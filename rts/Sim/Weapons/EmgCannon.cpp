@@ -14,6 +14,10 @@
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL));
 
+CR_REG_METADATA(CEmgCannon,(
+				CR_RESERVED(8)
+				));
+
 CEmgCannon::CEmgCannon(CUnit* owner)
 : CWeapon(owner)
 {

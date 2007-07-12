@@ -46,6 +46,7 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(myFire),
 				CR_MEMBER(fireTime),
 				CR_MEMBER(emitSmokeTime),
+				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
 

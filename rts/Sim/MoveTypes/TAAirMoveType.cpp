@@ -60,7 +60,9 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(repairBelowHealth),
 	CR_MEMBER(reservedPad),
 	CR_MEMBER(padStatus),
-	CR_MEMBER(oldGoalPos)));
+	CR_MEMBER(oldGoalPos),
+	CR_RESERVED(64)
+	));
 
 
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :

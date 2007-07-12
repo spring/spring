@@ -20,6 +20,7 @@
 CR_BIND_DERIVED(CBuilding, CUnit, );
 
 CR_REG_METADATA(CBuilding, (
+				CR_RESERVED(8),
 				CR_POSTLOAD(PostLoad)
 				));
 

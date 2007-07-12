@@ -88,7 +88,8 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(minIntensity),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(fuelUsage),
-	CR_MEMBER(weaponNum)
+	CR_MEMBER(weaponNum),
+	CR_RESERVED(64)
 	));
 
 //////////////////////////////////////////////////////////////////////

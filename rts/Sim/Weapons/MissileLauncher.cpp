@@ -12,6 +12,10 @@
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
 
+CR_REG_METADATA(CMissileLauncher,(
+	CR_RESERVED(8)
+	));
+
 CMissileLauncher::CMissileLauncher(CUnit* owner)
 : CWeapon(owner)
 {

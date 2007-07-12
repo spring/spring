@@ -77,6 +77,7 @@ CR_REG_METADATA(CFeatureHandler, (
 //	CR_MEMBER(drawQuadsX),
 //	CR_MEMBER(drawQuadsY),
 
+	CR_RESERVED(128),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 		));

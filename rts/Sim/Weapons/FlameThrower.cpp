@@ -12,7 +12,8 @@ CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL));
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),
-	CR_MEMBER(color2)
+	CR_MEMBER(color2),
+	CR_RESERVED(8)
 	));
 
 CFlameThrower::CFlameThrower(CUnit* owner)

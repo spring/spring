@@ -39,6 +39,7 @@ CR_REG_METADATA(CFactory, (
 				CR_MEMBER(curBuild),
 				CR_MEMBER(opening),
 				CR_MEMBER(lastBuild),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 

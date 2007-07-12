@@ -52,6 +52,7 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(terraformRadius),
 				CR_MEMBER(nextBuildType),
 				CR_MEMBER(nextBuildPos),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 

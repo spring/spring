@@ -18,6 +18,7 @@
 CR_BIND_DERIVED(CWreckProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
 
 CR_REG_METADATA(CWreckProjectile,
+				CR_RESERVED(8)
 				);
 
 //////////////////////////////////////////////////////////////////////

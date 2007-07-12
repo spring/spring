@@ -53,7 +53,8 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 				CR_MEMBER(activePlayers),
 				CR_MEMBER(allies),
 				CR_MEMBER(team2allyteam),
-				CR_MEMBER(teams)
+				CR_MEMBER(teams),
+				CR_RESERVED(64)
 				));
 
 CR_BIND(CGlobalUnsyncedStuff,);
@@ -73,7 +74,8 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
 				CR_MEMBER(timeOffset),
 				CR_MEMBER(drawFog),
 				CR_MEMBER(autoQuit),
-				CR_MEMBER(quitTime)
+				CR_MEMBER(quitTime),
+				CR_RESERVED(64)
 				));
 
 /**
