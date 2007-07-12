@@ -63,12 +63,13 @@ selectcycle ["restore"]
 
 deselect
 
-info    [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
-tooltip [0|1]
-resbar  [0|1]
-console [0|1]
-clock   [0|1]
-fps     [0|1]
+info     [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+tooltip  [0|1]
+resbar   [0|1]
+console  [0|1]
+clock    [0|1]
+fps      [0|1]
+endgraph [0|1]
 
 
 quit
