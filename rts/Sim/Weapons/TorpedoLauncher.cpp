@@ -12,7 +12,9 @@
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL));
 
 CR_REG_METADATA(CTorpedoLauncher,(
-       CR_MEMBER(tracking)));
+		CR_MEMBER(tracking),
+		CR_RESERVED(8)
+		));
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),

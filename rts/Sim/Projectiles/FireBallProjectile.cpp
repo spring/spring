@@ -11,14 +11,16 @@ CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,
 CR_BIND(CFireBallProjectile::Spark, );
 
 CR_REG_METADATA(CFireBallProjectile,(
-	CR_MEMBER(sparks)
+	CR_MEMBER(sparks),
+	CR_RESERVED(8)
 	));
 
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),
 	CR_MEMBER(size),
-	CR_MEMBER(ttl)
+	CR_MEMBER(ttl),
+	CR_RESERVED(8)
 	));
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)

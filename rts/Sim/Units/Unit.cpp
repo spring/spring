@@ -2088,6 +2088,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(noDraw),
 				CR_MEMBER(noSelect),
 				CR_MEMBER(noMinimap),
+				CR_RESERVED(16),
 
 				CR_MEMBER(maxHealth),
 				CR_MEMBER(health),
@@ -2108,6 +2109,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(inBuildStance),
 				CR_MEMBER(stunned),
 				CR_MEMBER(useHighTrajectory),
+				CR_RESERVED(16),
 
 				CR_MEMBER(deathCountdown),
 				CR_MEMBER(delayedWreckLevel),
@@ -2123,6 +2125,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(haveDGunRequest),
 				CR_MEMBER(lastMuzzleFlameSize),
 				CR_MEMBER(lastMuzzleFlameDir),
+				CR_RESERVED(16),
 
 				CR_MEMBER(armorType),
 				CR_MEMBER(category),
@@ -2138,6 +2141,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(airLosRadius),
 				CR_MEMBER(losHeight),
 				CR_MEMBER(lastLosUpdate),
+				CR_RESERVED(16),
 
 				CR_MEMBER(radarRadius),
 				CR_MEMBER(sonarRadius),
@@ -2147,12 +2151,14 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(radarSquares),
 				CR_MEMBER(oldRadarPos),
 				CR_MEMBER(stealth),
+				CR_RESERVED(16),
 
 				CR_MEMBER(commandAI),
 				CR_MEMBER(moveType),
 				CR_MEMBER(prevMoveType),
 				CR_MEMBER(usingScriptMoveType),
 				CR_MEMBER(group),
+				CR_RESERVED(16),
 
 				CR_MEMBER(condUseMetal),
 				CR_MEMBER(condUseEnergy),
@@ -2183,6 +2189,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(metalCost),
 				CR_MEMBER(energyCost),
 				CR_MEMBER(buildTime),
+				CR_RESERVED(16),
 
 				CR_MEMBER(metalStorage),
 				CR_MEMBER(energyStorage),
@@ -2203,6 +2210,7 @@ CR_REG_METADATA(CUnit, (
 
 				CR_MEMBER(activated),
 
+				CR_RESERVED(32),
 				//CR_MEMBER(model),
 				//CR_MEMBER(cob),
 				//CR_MEMBER(localmodel),
@@ -2217,6 +2225,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(armoredState),
 				CR_MEMBER(armoredMultiple),
 				CR_MEMBER(curArmorMultiple),
+				CR_RESERVED(16),
 
 				CR_MEMBER(wreckName),
 				CR_MEMBER(posErrorVector),
@@ -2235,6 +2244,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(curTerrainType),
 
 				CR_MEMBER(selfDCountdown),
+				CR_RESERVED(16),
 
 				//CR_MEMBER(directControl),
 				//CR_MEMBER(myTrack),       //unused
@@ -2244,6 +2254,9 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(seismicSignature),
 				CR_MEMBER(maxSpeed),
 				CR_MEMBER(weaponHitMod),
+
+				CR_RESERVED(128),
+
 				CR_POSTLOAD(PostLoad)
 				));
 

@@ -45,6 +45,7 @@ CR_REG_METADATA(CBuilderCAI , (
 
 				CR_MEMBER(lastPC1),
 				CR_MEMBER(lastPC2),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 

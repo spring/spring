@@ -18,7 +18,8 @@ CR_REG_METADATA(Command, (
 				CR_MEMBER(params),
 				CR_MEMBER(options),
 				CR_MEMBER(tag),
-				CR_MEMBER(timeOut)
+				CR_MEMBER(timeOut),
+				CR_RESERVED(16)
 				));
 
 CR_BIND(CommandDescription, );
@@ -38,7 +39,8 @@ CR_REG_METADATA(CommandDescription, (
 				CR_MEMBER(onlyTexture),
 				CR_MEMBER(disabled),
 
-				CR_MEMBER(params)
+				CR_MEMBER(params),
+				CR_RESERVED(32)
 				));
 
 using namespace std;

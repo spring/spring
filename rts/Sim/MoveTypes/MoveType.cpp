@@ -13,7 +13,9 @@ CR_REG_METADATA(CMoveType, (
 		CR_MEMBER(maxSpeed),
 		CR_MEMBER(maxWantedSpeed),
 		CR_MEMBER(useHeading),
-		CR_ENUM_MEMBER(progressState)));
+		CR_ENUM_MEMBER(progressState),
+		CR_RESERVED(32)
+		));
 
 
 CMoveType::CMoveType(CUnit* owner)

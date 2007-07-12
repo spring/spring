@@ -13,7 +13,9 @@ CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
 
 CR_REG_METADATA(CStarburstLauncher,(
 	CR_MEMBER(uptime),
-	CR_MEMBER(tracking)));
+	CR_MEMBER(tracking),
+	CR_RESERVED(8)
+	));
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),

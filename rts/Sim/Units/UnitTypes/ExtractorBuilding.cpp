@@ -27,6 +27,7 @@ CR_REG_METADATA(CExtractorBuilding, (
 				CR_MEMBER(extractionDepth),
 				CR_MEMBER(metalAreaOfControl),
 				CR_MEMBER(neighbours),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 

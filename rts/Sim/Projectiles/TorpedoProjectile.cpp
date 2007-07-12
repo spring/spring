@@ -23,7 +23,8 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(target),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
-	CR_MEMBER(texy)
+	CR_MEMBER(texy),
+	CR_RESERVED(16)
 	));
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)

@@ -29,7 +29,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(mapPos),
 	CR_MEMBER(isMarkedOnBlockingMap),
 	CR_ENUM_MEMBER(physicalState),
-	CR_MEMBER(speed))
+	CR_MEMBER(speed),
+	CR_RESERVED(16))
 );
 
 CSolidObject::CSolidObject(EObjectType synced):

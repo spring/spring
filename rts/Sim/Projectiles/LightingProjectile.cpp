@@ -15,7 +15,8 @@ CR_REG_METADATA(CLightingProjectile,(
 	CR_MEMBER(endPos),
 	CR_MEMBER(weapon),
 	CR_MEMBER(displacements),
-	CR_MEMBER(displacements2)
+	CR_MEMBER(displacements2),
+	CR_RESERVED(16)
 	));
 
 CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, WeaponDef *weaponDef,int ttl,CWeapon* weap)

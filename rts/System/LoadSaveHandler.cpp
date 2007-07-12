@@ -21,6 +21,7 @@
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "Game/WaitCommandsAI.h"
+#include "Sim/Misc/Wind.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -91,6 +92,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(ph, ph->GetClass());
 //	std::map<std::string, int> unitRestrictions;
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
+	s.SerializeObjectInstance(&wind, wind.GetClass());
 	for (int a=0;a<MAX_TEAMS;a++)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	s.SerializeObjectInstance(globalAI, globalAI->GetClass());

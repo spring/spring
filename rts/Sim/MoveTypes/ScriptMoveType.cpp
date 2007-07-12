@@ -45,8 +45,9 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),
-	CR_MEMBER(oldSlowUpdatePos)
-));
+	CR_MEMBER(oldSlowUpdatePos),
+	CR_RESERVED(64)
+	));
 
 
 CScriptMoveType::CScriptMoveType(CUnit* owner)

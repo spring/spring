@@ -36,7 +36,8 @@ CR_BIND(CWaitCommandsAI, );
 
 CR_REG_METADATA(CWaitCommandsAI, (
 				CR_MEMBER(waitMap),
-				CR_MEMBER(unackedMap)
+				CR_MEMBER(unackedMap),
+				CR_RESERVED(16)
 				));
 
 CR_BIND_DERIVED_INTERFACE(CWaitCommandsAI::Wait, CObject);
@@ -45,6 +46,7 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,Wait, (
 					CR_MEMBER(code),
 					CR_MEMBER(key),
 					CR_MEMBER(valid),
+					CR_RESERVED(16),
 					CR_POSTLOAD(PostLoad)
 					));
 
@@ -55,7 +57,8 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,TimeWait , (
 					CR_MEMBER(enabled),
 					CR_MEMBER(duration),
 					CR_MEMBER(endFrame),
-					CR_MEMBER(factory)
+					CR_MEMBER(factory),
+					CR_RESERVED(16)
 					));
 
 CR_BIND_DERIVED(CWaitCommandsAI::DeathWait, CWaitCommandsAI::Wait, (Command()));
@@ -63,7 +66,8 @@ CR_BIND_DERIVED(CWaitCommandsAI::DeathWait, CWaitCommandsAI::Wait, (Command()));
 CR_REG_METADATA_SUB(CWaitCommandsAI,DeathWait , (
 					CR_MEMBER(waitUnits),
 					CR_MEMBER(deathUnits),
-					CR_MEMBER(unitPos)
+					CR_MEMBER(unitPos),
+					CR_RESERVED(16)
 					));
 
 CR_BIND_DERIVED(CWaitCommandsAI::SquadWait, CWaitCommandsAI::Wait, (Command()));
@@ -72,13 +76,15 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,SquadWait , (
 					CR_MEMBER(squadCount),
 					CR_MEMBER(buildUnits),
 					CR_MEMBER(waitUnits),
-					CR_MEMBER(stateText)
+					CR_MEMBER(stateText),
+					CR_RESERVED(16)
 					));
 
 CR_BIND_DERIVED(CWaitCommandsAI::GatherWait, CWaitCommandsAI::Wait, (Command()));
 
 CR_REG_METADATA_SUB(CWaitCommandsAI,GatherWait , (
-					CR_MEMBER(waitUnits)
+					CR_MEMBER(waitUnits),
+					CR_RESERVED(8)
 					));
 
 /******************************************************************************/

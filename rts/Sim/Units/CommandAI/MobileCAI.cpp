@@ -46,7 +46,8 @@ CR_REG_METADATA(CMobileCAI, (
 
 				CR_MEMBER(cancelDistance),
 				CR_MEMBER(slowGuard),
-				CR_MEMBER(moveDir)
+				CR_MEMBER(moveDir),
+				CR_RESERVED(16)
 				));
 
 CMobileCAI::CMobileCAI()

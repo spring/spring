@@ -16,7 +16,8 @@ CR_REG_METADATA(CShieldPartProjectile,(
 	CR_MEMBER(texCoords),
 	CR_MEMBER(sphereSize),
 	CR_MEMBER(baseAlpha),
-	CR_MEMBER(color)
+	CR_MEMBER(color),
+	CR_RESERVED(16)
 	));
 
 CShieldPartProjectile::CShieldPartProjectile(const float3& centerPos,int xpart,int ypart,float sphereSize,float3 color,float alpha,AtlasedTexture *texture,CUnit* owner)

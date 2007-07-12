@@ -190,6 +190,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(gameSoundVolume),
 
 //	CR_MEMBER(script),
+	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
 				));
 

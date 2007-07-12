@@ -85,7 +85,9 @@ CR_REG_METADATA(CAirMoveType, (
 
 		CR_MEMBER(repairBelowHealth),
 		CR_MEMBER(reservedPad),
-		CR_MEMBER(padStatus)));
+		CR_MEMBER(padStatus),
+		CR_RESERVED(64)
+		));
 
 CR_REG_METADATA_SUB(CAirMoveType, DrawLine, (
 		CR_MEMBER(pos1), CR_MEMBER(pos2),

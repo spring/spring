@@ -60,6 +60,7 @@ CR_REG_METADATA(CCommandAI, (
 				CR_MEMBER(lastSelectedCommandPage),
 				CR_MEMBER(unimportantMove),
 				CR_MEMBER(targetLostTimer),
+				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
 CCommandAI::CCommandAI()

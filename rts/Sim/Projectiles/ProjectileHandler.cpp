@@ -40,6 +40,7 @@ CR_BIND(CProjectileHandler,);
 CR_REG_METADATA(CProjectileHandler,(
 				//CR_MEMBER(ps),
 				CR_MEMBER(groundFlashes),
+				CR_RESERVED(16),
 				CR_SERIALIZER(Serialize),
 				CR_POSTLOAD(PostLoad)
 				));

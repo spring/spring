@@ -20,7 +20,8 @@ CR_REG_METADATA(CWorldObject, (
 					CR_MEMBER(alwaysVisible),
 				CR_MEMBER_ENDFLAG(CM_Config),
 				CR_MEMBER(sqRadius),
-				CR_MEMBER(drawRadius))
+				CR_MEMBER(drawRadius),
+				CR_RESERVED(16))
 
 			);
 

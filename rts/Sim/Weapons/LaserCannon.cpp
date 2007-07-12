@@ -13,7 +13,8 @@
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
 
 CR_REG_METADATA(CLaserCannon,(
-	CR_MEMBER(color)
+	CR_MEMBER(color),
+	CR_RESERVED(8)
 	));
 
 CLaserCannon::CLaserCannon(CUnit* owner)

@@ -28,7 +28,8 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(wasDrawn),
 	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
-	CR_MEMBER(visibleShieldParts)
+	CR_MEMBER(visibleShieldParts),
+	CR_RESERVED(8)
 	));
 
 
