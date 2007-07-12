@@ -165,7 +165,7 @@ class LuaMaterial {
 		bool useCamera;
 		GLint cameraLoc;
 
-		static const LuaMaterial defMat; // FIXME?
+		static const LuaMaterial defMat;
 };
 
 
@@ -227,7 +227,11 @@ class LuaMatBin : public LuaMaterial {
 
 
 /******************************************************************************/
-/*
+
+// Victor, you broke this feature with a commit of "Fixed VS8 errors".
+// I didn't add the comparison object because I was bored, it serves a
+// very specific purpose. What was your error?
+
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b)
 	{	
@@ -236,8 +240,8 @@ struct LuaMatBinPtrLessThan {
 		return (*ma < *mb);
 	}
 };
-*/
-typedef set<LuaMatBin* /*, LuaMatBinPtrLessThan*/> LuaMatBinSet;
+
+typedef set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
 
 
 /******************************************************************************/
