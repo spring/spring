@@ -232,6 +232,27 @@ class LuaMatBin : public LuaMaterial {
 // I didn't add the comparison object because I was bored, it serves a
 // very specific purpose. What was your error?
 
+/*
+In Visual studio 8 I receive compiler error when compiling LuaMaterial.cpp:
+E:\Program Files\Microsoft Visual Studio 8\VC\include\xtree(1174) : error C3848: expression having type 'const LuaMatBinPtrLessThan' would lose some const-volatile qualifiers in order to call 'bool LuaMatBinPtrLessThan::operator ()(const LuaMatBin *,const LuaMatBin *)'
+        E:\Program Files\Microsoft Visual Studio 8\VC\include\xtree(1169) : while compiling class template member function 'std::_Tree_nod<_Traits>::_Node *std::_Tree<_Traits>::_Lbound(LuaMatBin *const &) const'
+        with
+        [
+            _Traits=std::_Tset_traits<LuaMatBin *,LuaMatBinPtrLessThan,std::allocator<LuaMatBin *>,false>
+        ]
+        E:\Program Files\Microsoft Visual Studio 8\VC\include\set(69) : see reference to class template instantiation 'std::_Tree<_Traits>' being compiled
+        with
+        [
+            _Traits=std::_Tset_traits<LuaMatBin *,LuaMatBinPtrLessThan,std::allocator<LuaMatBin *>,false>
+        ]
+        e:\vitya\spring\trunk\rts\lua\LuaMaterial.h(279) : see reference to class template instantiation 'std::set<_Kty,_Pr>' being compiled
+        with
+        [
+            _Kty=LuaMatBin *,
+            _Pr=LuaMatBinPtrLessThan
+        ]
+*/
+
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b)
 	{	
