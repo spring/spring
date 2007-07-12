@@ -47,7 +47,7 @@ void CLosHandler::creg_Serialize(creg::ISerializer& s)
 void CLosHandler::PostLoad()
 {
 	for(int a=0;a<2309;++a)
-		for(std::list<LosInstance*>::iterator li=instanceHash[a].begin();li!=instanceHash[a].end();++li){
+		for(std::list<LosInstance*>::iterator li=instanceHash[a].begin();li!=instanceHash[a].end();++li) if ((*li)->refCount){
 			if((*li)->baseX-(*li)->losSize<0 || (*li)->baseX+(*li)->losSize>=losSizeX || (*li)->baseY-(*li)->losSize<0 || (*li)->baseY+(*li)->losSize>=losSizeY)
 				SafeLosAdd(*li,(*li)->baseX,(*li)->baseY);
 			else
