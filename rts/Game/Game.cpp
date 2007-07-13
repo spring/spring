@@ -794,6 +794,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 
 	const string& cmd = action.command;
+	bool notfound1=false;
 
 	// process the action
 	if (cmd == "select") {
@@ -1600,7 +1601,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			return 0;
 		}
 	}
-	else if (cmd == "buffertext") {
+	else notfound1=true;
+	if (notfound1) if (cmd == "buffertext") {
 		if (!action.extra.empty()) {
 			consoleHistory->AddLine(action.extra);
 		}
