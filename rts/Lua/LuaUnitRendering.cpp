@@ -410,6 +410,19 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 		else if (key == "shader") {
 			ParseShader(L, caller, -1, mat.shader);
 		}
+		else if (key == "texunits") {
+			if (lua_istable(L, -1)) {
+			  const int texTable = (int)lua_gettop(L);
+				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
+					if (lua_isnumber(L, -2)) {
+						const int texUnit = (int)lua_tonumber(L, -2);
+						if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
+							ParseTexture(L, caller, -1, mat.textures[texUnit]);
+						}
+					}
+				}
+			}
+		}
 		else if (key.substr(0, 7) == "texunit") {
 			const int texUnit = atoi(key.c_str() + 7);
 			if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
@@ -783,7 +796,7 @@ int LuaUnitRendering::Debug(lua_State* L)
 	printf("CurrentLod  = %i\n", unit->currentLOD);
 	printf("\n");
 
-	const LuaUnitMaterial& alphaMat = unit->luaMats[LUAMAT_ALPHA];
+	const LuaUnitMaterial& alphaMat  = unit->luaMats[LUAMAT_ALPHA];
 	const LuaUnitMaterial& opaqueMat = unit->luaMats[LUAMAT_OPAQUE];
 	const LuaUnitMaterial& shadowMat = unit->luaMats[LUAMAT_SHADOW];
 	printf("LUAMAT_ALPHA  lastLOD = %i\n", alphaMat.GetLastLOD());

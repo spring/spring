@@ -387,8 +387,6 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 
 	DrawOpaqueShaderUnits();
 
-	glEnable(GL_TEXTURE_2D);
-
 	va = GetVertexArray();
 	va->Initialize();
 	glAlphaFunc(GL_GREATER, 0.8f);
@@ -434,9 +432,11 @@ static void DrawBins(LuaMatType type)
 		return;
 	}
 
-	const LuaMaterial* currMat = &LuaMaterial::defMat;
-
 	luaDrawing = true;
+
+	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+
+	const LuaMaterial* currMat = &LuaMaterial::defMat;
 
 	LuaMatBinSet::const_iterator it;
 	for (it = bins.begin(); it != bins.end(); ++it) {
@@ -460,6 +460,8 @@ static void DrawBins(LuaMatType type)
 	LuaMaterial::defMat.Execute(*currMat);
 	
 	luaMatHandler.ClearBins(type);
+
+	glPopAttrib();
 
 	luaDrawing = false;
 }

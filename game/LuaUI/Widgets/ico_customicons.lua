@@ -69,7 +69,7 @@ function widget:Initialize()
         ud.origIconType = ud.iconType
       end
 
-      ud.weaponCount = table.getn(ud.weapons)
+      ud.weaponCount = #ud.weapons
 
       if (ud.isCommander) then
         -- commanders

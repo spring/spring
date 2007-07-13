@@ -195,7 +195,7 @@ local function rev_iter(t, key)
 end
 
 local function ripairs(t)
-  return rev_iter, t, (1 + table.getn(t))
+  return rev_iter, t, (1 + #t)
 end
 
 
@@ -697,7 +697,7 @@ end
 
 function widgetHandler:UpdateCallIn(name)
   local listName = name .. 'List'
-  if ((table.getn(self[listName]) > 0) or
+  if ((#self[listName] > 0) or
       (not flexCallInMap[name]) or
       ((name == 'GotChatMsg')     and actionHandler.HaveChatAction()) or
       ((name == 'RecvFromSynced') and actionHandler.HaveSyncAction())) then
@@ -853,7 +853,7 @@ end
 
 
 local function FindHighestIndex(t, i, layer)
-  local ts = table.getn(t)
+  local ts = #t
   for x = (i + 1),ts do
     if (t[x].whInfo.layer > layer) then
       return (x - 1)

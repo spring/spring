@@ -128,6 +128,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
+	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -1454,6 +1455,22 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 	}
 	if (lua_isnumber(L, 3)) {
 		shield->curPower = (float)lua_tonumber(L, 3);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (lua_isnumber(L, 2)) {
+		unit->travel = (float)lua_tonumber(L, 2);
+	}
+	if (lua_isnumber(L, 3)) {
+		unit->travelPeriod = (float)lua_tonumber(L, 3);
 	}
 	return 0;
 }

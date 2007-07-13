@@ -547,7 +547,6 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 {
-	// FIXME
 	if ((weaponID >= (int)watchWeapons.size()) || (weaponID < 0)) {
 		return false;
 	}
