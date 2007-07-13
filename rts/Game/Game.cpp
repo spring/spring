@@ -1036,7 +1036,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon() && allReady))) {
+				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback && allReady))) {
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
 		if (cmd == "chatspec") { userInputPrefix = "s:"; }
@@ -1780,7 +1780,7 @@ bool CGame::Update()
 
 	if(gameSetup && !playing) {
 		allReady=gameSetup->Update();
-	} else if( gameServer && gameServer->WaitsOnCon()) {
+	} else if( gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback) {
 		allReady=true;
 		for(int a=0;a<gs->activePlayers;a++) {
 			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
@@ -1790,7 +1790,7 @@ bool CGame::Update()
 		}
 	}
 
-	if (gameServer && gameServer->WaitsOnCon() && allReady &&
+	if (gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback && allReady &&
 	    (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)) {
 		chatting = false;
 		userWriting = false;
@@ -2063,7 +2063,7 @@ bool CGame::Draw()
 
 	if(gameSetup && !playing){
 		gameSetup->Draw();
-	} else if( gameServer && gameServer->WaitsOnCon()){
+	} else if( gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback){
 		if (allReady) {
 			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
