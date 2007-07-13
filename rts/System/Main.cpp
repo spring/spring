@@ -800,7 +800,8 @@ void SpringApp::CreateGameSetup ()
 		server = false;
 	}
 	else if (gameSetup) {
-		server = ((gameSetup->myPlayer - gameSetup->numDemoPlayers) == 0);
+		// first real player is demo host
+		server = (gameSetup->myPlayer == gameSetup->numDemoPlayers);
 	}
 	else {
 		server = !cmdline->result("client") || cmdline->result("server");

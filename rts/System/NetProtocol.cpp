@@ -153,14 +153,7 @@ void CNetProtocol::Update()
 
 bool CNetProtocol::IsDemoServer() const
 {
-	if (play != 0 || (gameSetup && !gameSetup->demoName.empty()) || localDemoPlayback)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return (play != NULL || localDemoPlayback);
 }
 
 void CNetProtocol::RawSend(const uchar* data,const unsigned length)

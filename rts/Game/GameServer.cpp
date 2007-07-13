@@ -277,8 +277,8 @@ bool CGameServer::ServerReadNet()
 		int inbufpos=0;
 		int inbuflength=0;
 		if (gs->players[a]->active &&
-				  ((gameSetup && a >= gameSetup->numDemoPlayers) ||
-				  (!gameSetup && !serverNet->IsDemoServer()))) {
+				  ((!net->localDemoPlayback && (!gameSetup || a>=gameSetup->numDemoPlayers)) ||
+				  (net->localDemoPlayback && a == (gameSetup ? gameSetup->myPlayer : 0) ))) {
 			if((inbuflength=serverNet->GetData(inbuf,netcode::NETWORK_BUFFER_SIZE,a))==-1){
 				PUSH_CODE_MODE;		//this could lead to some nasty errors if the other thread switches code mode...
 				ENTER_MIXED;

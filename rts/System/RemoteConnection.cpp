@@ -116,7 +116,7 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 		}
 
 		lastInOrder++;
-		if (wpi->second->data[0] != NETMSG_HELLO)	// HELLO is only internal
+		if (wpi->second->data[0] != NETMSG_HELLO || wpi->second->length != 1)	// HELLO is only internal
 		{
 			memcpy(&readyData[readyLength],wpi->second->data,wpi->second->length);
 			readyLength+=wpi->second->length;

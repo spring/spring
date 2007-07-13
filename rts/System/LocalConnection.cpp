@@ -11,7 +11,7 @@ boost::mutex CLocalConnection::Mutex[2];
 unsigned CLocalConnection::Length[2] = {0,0};
 
 CLocalConnection::CLocalConnection()
-{	
+{
 // TODO check and prevent further instances if we already have 2
 	instance = Instances;
 	Instances++;
@@ -27,7 +27,7 @@ CLocalConnection::~CLocalConnection()
 
 int CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	if (data[0] == NETMSG_HELLO)
+	if (data[0] == NETMSG_HELLO && length == 1)
 		return 1;
 
 	boost::mutex::scoped_lock scoped_lock(Mutex[otherInstance()]);
@@ -88,7 +88,7 @@ unsigned CLocalConnection::otherInstance() const
 {
 	if (instance == 0)
 		return 1;
-	else 
+	else
 		return 0;
 }
 
