@@ -84,16 +84,13 @@ void CCoverageHandler::Change(int unit, bool Removed){
     int miny = uy - r < 0 ? 0 : ux - r;
     int maxy = uy + r >= h ? h-1 : uy + r;
     int x,y;
-    if(!Removed)    // New Radar
-        for(y = miny; y <= maxy; y++)
-            for(x = minx; x <= maxx; x++)
-                if(Dist((float)x,(float)y,(float)ux,(float)uy) <= r)
-                    CovMap[y * w + x]++;
-    else            // Lost Radar
-        for(y = miny; y <= maxy; y++)
-            for(x = minx; x <= maxx; x++)
-                if(Dist((float)x,(float)y,(float)ux,(float)uy) <= r)
-                    CovMap[y * w + x]--;
+    for(y = miny; y <= maxy; y++)
+        for(x = minx; x <= maxx; x++)
+            if(Dist((float)x,(float)y,(float)ux,(float)uy) <= r)
+			    if(!Removed)    // New Radar
+					CovMap[y * w + x]++;
+			    else            // Lost Radar
+				    CovMap[y * w + x]--;
 }
 
 int CCoverageHandler::GetCoverage(float3 pos)
@@ -107,6 +104,7 @@ int CCoverageHandler::GetCoverage(float3 pos)
 		case Sonar:
 		case SJammer:if (height>0) return 1000000;
 	}
+	if (bx<0||by<0||bx>=w||by>=h) return 1000000;
 	return CovMap[by * w + bx];
 }
 
