@@ -85,6 +85,8 @@ CUnit::CUnit ()
 	team(0),
 	maxHealth(100),
 	health(100),
+	travel(0.0f),
+	travelPeriod(0.0f),
 	power(100),
 	experience(0),
 	logExperience(0),
@@ -409,6 +411,11 @@ void CUnit::Update()
 		return;
 
 	moveType->Update();
+
+	if (travelPeriod != 0.0f) {
+		travel += speed.Length();
+		travel = fmodf(travel, travelPeriod);
+	}
 
 	recentDamage*=0.9f;
 	bonusShieldSaved+=0.005f;
@@ -1307,6 +1314,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	delete localmodel;
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+	SetLODCount(0);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
@@ -1552,6 +1560,7 @@ bool CUnit::SetGroup(CGroup* newGroup)
 	}
 	return true;
 }
+
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
@@ -1931,9 +1940,6 @@ float CUnit::lodFactor = 1.0f;
 
 void CUnit::SetLODFactor(float value)
 {
-	if (value <= 0.0f) {
-		value = 1.0f;
-	}
 	lodFactor = (value * camera->lppScale);
 }
 
@@ -2084,6 +2090,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(updir),
 				CR_MEMBER(upright),
 				CR_MEMBER(relMidPos),
+				CR_MEMBER(travel),
+				CR_MEMBER(travelPeriod),
 				CR_MEMBER(power),
 				CR_MEMBER(noDraw),
 				CR_MEMBER(noSelect),

@@ -11,7 +11,6 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local getn   = table.getn
 local insert = table.insert
 
 local debug = 1
@@ -303,10 +302,10 @@ local function LoadModel(filename)
   end
 
   -- cache the counts
-  local vCount = getn(v)
-  local tCount = getn(t)
-  local nCount = getn(n)
-  local cCount = getn(c)
+  local vCount = #v
+  local tCount = #t
+  local nCount = #n
+  local cCount = #c
   objs.vCount = vCount
   objs.tCount = tCount
   objs.nCount = nCount

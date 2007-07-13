@@ -63,7 +63,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   useRotVel(false),
   hasDecal(false),
   isBuilding(false),
-  gravityFactor(0.0f), // FIXME: better default
+  gravityFactor(0.0f),
   windFactor(0.0f),
   trackSlope(false),
   trackGround(false),
@@ -77,7 +77,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   mins(-1.0e9f, -1.0e9f, -1.0e9f),
   maxs(+1.0e9f, +1.0e9f, +1.0e9f),
   lastTrackUpdate(0),
-	oldPos(owner?owner->pos:float3(0,0,0)),
+	oldPos(owner ? owner->pos:float3(0,0,0)),
 	oldSlowUpdatePos(oldPos)
 {
 	useHeading = false; // use the transformation matrix instead of heading

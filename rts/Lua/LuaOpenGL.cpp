@@ -1146,6 +1146,8 @@ int LuaOpenGL::Unit(lua_State* L)
 	glPushAttrib(GL_ENABLE_BIT);
 
 	if (rawDraw) {
+		const bool origDebug = gu->drawdebug;
+		gu->drawdebug = false;
 		if (useLOD) {
 			unit->Draw();
 		} else {
@@ -1154,7 +1156,9 @@ int LuaOpenGL::Unit(lua_State* L)
 			unit->Draw();
 			unit->lodCount = origLodCount;
 		}
-	} else {
+		gu->drawdebug = origDebug;
+	}
+	else {
 		if (useLOD) {
 			unitDrawer->DrawIndividual(unit);
 		} else {
@@ -4088,7 +4092,15 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	const float3* data = NULL;
 
-	if (param == "diffuse") {
+	if (param == "shadowDensity") {
+		if (!unitMode) {
+			lua_pushnumber(L, readmap->shadowDensity);
+		} else {
+			lua_pushnumber(L, unitDrawer->unitShadowDensity);
+		}
+		return 1;
+	}
+	else if (param == "diffuse") {
 		if (!unitMode) {
 			data = &readmap->sunColor;
 		} else {

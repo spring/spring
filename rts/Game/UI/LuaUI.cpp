@@ -1195,12 +1195,10 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 				const string key = StringToLower(lua_tostring(L, -2));
 				if (key != "actions") {
 					logOutput.Print("GetLuaCmdDescList() non \"actions\" table\n");
-					lua_pop(L, 1); // pop the value
 					continue;
 				}
 				const int actionsTable = lua_gettop(L);
-				lua_pushnil(L);
-				while (lua_next(L, actionsTable) != 0) {
+				for (lua_pushnil(L); lua_next(L, actionsTable) != 0; lua_pop(L, 1)) {
 					if (lua_isstring(L, -1)) {
 						string action = lua_tostring(L, -1);
 						if (action[0] != '@') {
@@ -1208,7 +1206,6 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 						}
 						cd.params.push_back(action);
 					}
-					lua_pop(L, 1); // pop the value
 				}
 			}
 			else {

@@ -1600,7 +1600,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			return 0;
 		}
 	}
-	/*else*/ if (cmd == "buffertext") {
+	else if (cmd == "buffertext") {
 		if (!action.extra.empty()) {
 			consoleHistory->AddLine(action.extra);
 		}
@@ -1614,17 +1614,17 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (!action.extra.empty()) {
 			vector<string> args = SimpleParser::Tokenize(action.extra, 0);
 			if (args.size() == 1) {
-				const float value = max(1.0e-9f, (float)atof(args[0].c_str()));
-				unitDrawer->LODScale = (1.0f / value);
+				const float value = (float)atof(args[0].c_str());
+				unitDrawer->LODScale = value;
 			}
 			else if (args.size() == 2) {
-				const float value = max(1.0e-9f, (float)atof(args[1].c_str()));
+				const float value = (float)atof(args[1].c_str());
 				if (args[0] == "shadow") {
-					unitDrawer->LODScaleShadow = (1.0f / value);
+					unitDrawer->LODScaleShadow = value;
 				} else if (args[0] == "reflection") {
-					unitDrawer->LODScaleReflection = (1.0f / value);
+					unitDrawer->LODScaleReflection = value;
 				} else if (args[0] == "refraction") {
-					unitDrawer->LODScaleRefraction = (1.0f / value);
+					unitDrawer->LODScaleRefraction = value;
 				}
 			}
 		}

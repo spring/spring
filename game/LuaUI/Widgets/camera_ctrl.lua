@@ -99,7 +99,7 @@ end
 --------------------------------------------------------------------------------
 
 local function CamCtrl(cmd, line, words)
-  local wc = table.getn(words)
+  local wc = #words
   local ct, cs = GetCamereTable()
   if (ct == nil) then
     Spring.Echo("Couldn't get the camera state")

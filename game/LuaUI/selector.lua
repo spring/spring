@@ -96,14 +96,14 @@ local function UpdateGeometry()
   minx = floor(midx - halfWidth - borderx)
   maxx = floor(midx + halfWidth + borderx)
 
-  local ySize = yStep * table.getn(widgetsList)
+  local ySize = yStep * (#widgetsList)
   miny = floor(midy - (0.5 * ySize) - bordery)
   maxy = floor(midy + (0.5 * ySize) + bordery)
 end
 
 
 local function UpdateListScroll()
-  local wCount = table.getn(fullWidgetsList)
+  local wCount = #fullWidgetsList
   local lastStart = wCount - maxEntries + 1
   if (lastStart < 1) then lastStart = 1 end
   if (startEntry > lastStart) then startEntry = lastStart end
@@ -168,7 +168,7 @@ local function UpdateList()
   
   maxWidth = maxWidth / fontSize
 
-  local myCount = table.getn(fullWidgetsList)
+  local myCount = #fullWidgetsList
   if (widgetHandler.knownCount ~= (myCount + 1)) then
     error('knownCount mismatch')
   end
@@ -408,7 +408,7 @@ function widget:AboveLabel(x, y)
       (x > maxx) or (y > (maxy - bordery))) then
     return nil
   end
-  local count = table.getn(widgetsList)
+  local count = #widgetsList
   if (count < 1) then return nil end
   
   local i = floor(1 + ((maxy - bordery) - y) / yStep)

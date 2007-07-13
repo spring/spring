@@ -111,7 +111,7 @@ function actionHandler:RemoveAction(widget, cmd, types)
       return false
     end
     local count = RemoveCallInfo(callInfoList, widget)
-    if (table.getn(callInfoList) <= 0) then
+    if (#callInfoList <= 0) then
       actionMap[cmd] = nil
     end
     return (count > 0)

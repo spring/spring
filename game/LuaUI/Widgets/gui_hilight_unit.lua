@@ -260,18 +260,26 @@ function widget:DrawScreen()
 
   local str = ''
 
+  local cheat  = Spring.IsCheatingEnabled()
+
   if (type == 'unit') then
     local udid = Spring.GetUnitDefID(data)
     if (udid == nil) then return end
     local ud = UnitDefs[udid]
     if (ud == nil) then return end
     str = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
+    if (cheat) then
+      str = str .. ' ' .. '\255\255\255\255#' .. data
+    end
   elseif (type == 'feature') then
     local fdid = Spring.GetFeatureDefID(data)
     if (fdid == nil) then return end
     local fd = FeatureDefs[fdid]
     if (fd == nil) then return end
     str = '\255\255\128\255' .. fd.tooltip
+    if (cheat) then
+      str = str .. ' ' .. '\255\255\255\255#' .. data
+    end
   end
 
   local f = 14
@@ -287,42 +295,3 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-
---[[
-local gndList --FIXME
-
-
-local function DrawGroundQuad()
-  local xo = 3000
-  local zo = 3000
-  gl.Texture(':a:bitmaps/loadpictures/allside_transporttut2.jpg')
-  --gl.Texture('bitmaps/loadpictures/allside_transporttut2.jpg')
-  gl.DepthTest(true)
-  gl.Blending(GL.SRC_COLOR, GL.ONE)
-  gl.Culling(GL.BACK)
-  gl.PolygonOffset(-20, -20)
-  gl.Color(1, 1, 1, 0.5)
-  local scale = 240
-  gl.DrawGroundQuad(xo, zo, xo + 4*scale, zo + 3*scale, false, 0, 0, 1, 1)
-  gl.DrawGroundCircle(1000, 0, 500, 400, 64)
-  gl.Color(1, 1, 1)
-  gl.PolygonOffset(false)
-  gl.Culling(false)
-  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
-  gl.DepthTest(false)
-  gl.Texture(false)
-end
-
-
-function widget:DrawWorldPreUnit() -- FIXME
-  if (gndList) then
---    DrawGroundQuad()
-    gl.CallList(gndList)
-  else
-    gndList = gl.CreateList(function()
-      DrawGroundQuad()
-    end)
-  end
-end
---]]
-

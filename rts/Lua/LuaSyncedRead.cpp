@@ -179,6 +179,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
 	REGISTER_LUA_CFUNC(GetUnitShieldState);
 	REGISTER_LUA_CFUNC(GetUnitWeaponState);
+	REGISTER_LUA_CFUNC(GetUnitTravel);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
@@ -2531,6 +2532,18 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	lua_pushnumber(L,  weapon->salvoLeft);
 	lua_pushnumber(L,  weapon->numStockpiled);
 	return 5;
+}
+
+
+int LuaSyncedRead::GetUnitTravel(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->travel);
+	lua_pushnumber(L, unit->travelPeriod);
+	return 2;
 }
 
 

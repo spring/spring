@@ -52,6 +52,26 @@ local fh = (font ~= nil)
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
+--  Default GUI override
+--
+
+local defaultFPSUsed = 0
+
+
+function widget:Initialize()
+  defaultFPSUsed = Spring.GetConfigInt("ShowFPS", 1)
+  Spring.SendCommands({"fps 0"})
+end
+
+
+function widget:Shutdown()
+  Spring.SendCommands({"fps " .. defaultFPSUsed})
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
 --  Rendering
 --
 
