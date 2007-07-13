@@ -430,7 +430,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 	|| (!ai->math->MFeasibleConstruction(ai->cb->GetUnitDef(builder),factory) && !ai->uh->Factories.size())))
 	|| (ai->cb->GetMetalIncome()<4.0))){	
 		if(!ai->MyUnits[builder]->ReclaimBest(1)){
-			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX) && mex != NULL){								
+			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX))if (mex != NULL){								
 				int upgradespot = ai->mm->FindMetalSpotUpgrade(builder,mex);		
 				if(upgradespot != -1){
 					L("reclaiming unit number: " << upgradespot << " of type " << ai->cb->GetUnitDef(upgradespot)->humanName);
@@ -461,7 +461,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 					}
 					builderIsUsed = true;
 				}
-			}
+			}else;
 			else
 				builderIsUsed = true;
 		}
