@@ -2791,9 +2791,11 @@ bool CGame::ClientReadNet()
 			net->SendNewFrame(gs->frameNum);
 			SimFrame();
 #ifdef SYNCCHECK
-			net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
-			if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
-				CSyncChecker::NewFrame();
+			if(!net->IsDemoServer()) {
+				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
+					CSyncChecker::NewFrame();
+			}
 #endif
 
 			if(creatingVideo && net->IsDemoServer()){
