@@ -1,4 +1,4 @@
-// 
+//
 // Net.cpp: implementation of the CNet class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -104,10 +104,10 @@ CNet::~CNet()
 #ifdef _WIN32
 	WSACleanup();
 #endif
-	
+
 	for (int a=0;a<MAX_PLAYERS;a++){
 		if(connections[a])
-			delete connections[a];	
+			delete connections[a];
 	}
 }
 
@@ -149,7 +149,7 @@ int CNet::InitServer(unsigned portnum)
 		throw network_error("Error initializing socket as server: "+GetErrorMsg());
 		exit(0);
 	}
-	
+
 	connected = true;
 
 	sockaddr_in saMe;
@@ -170,7 +170,7 @@ int CNet::InitServer(unsigned portnum)
 #else
 		fcntl(mySocket, F_SETFL, O_NONBLOCK);
 #endif
-	
+
 	return 0;
 }
 
@@ -183,7 +183,7 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 	curTime=float(t)/1000.f;
 
 	Pending WannaBeClient;
-	WannaBeClient.wantedNumber = playerNum;	// 
+	WannaBeClient.wantedNumber = playerNum;	//
 
 	WannaBeClient.other.sin_family = AF_INET;
 	WannaBeClient.other.sin_port = htons(portnum);
@@ -213,7 +213,7 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
 		throw network_error("Error initializing socket "+GetErrorMsg());
 	}
-	
+
 	unsigned numTries=0;
 	while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
 		numTries++;
@@ -237,7 +237,7 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 	onlyLocal = false;
 
 	InitNewConn(WannaBeClient);
-	
+
 	return 1;
 }
 
@@ -254,7 +254,7 @@ int CNet::InitLocalClient(const unsigned wantedNumber)
 	Pending temp;
 	temp.wantedNumber = wantedNumber;
 	InitNewConn(temp, true);
-	
+
 	return 1;
 }
 
@@ -271,13 +271,13 @@ int CNet::InitNewConn(const Pending& NewClient, bool local)
 		else
 			freeConn = NewClient.wantedNumber;
 	}
-	
+
 	if (freeConn == 0)
 		for(freeConn=0;freeConn<MAX_PLAYERS;++freeConn){
 		if(!connections[freeConn])
 			break;
 		}
-		
+
 	if (!local)
 		connections[freeConn]= new CRemoteConnection(NewClient.other, &mySocket);
 	else
@@ -294,7 +294,7 @@ int CNet::SendData(const unsigned char *data, const unsigned length)
 		logOutput.Print("Errenous send length in SendData %i",length);
 
 	unsigned ret=1;			//becomes 0 if any connection return 0
-	for (unsigned a=0;a<MAX_PLAYERS-1;a++){	//improve: dont check every connection
+	for (unsigned a=0;a<MAX_PLAYERS;a++){	//improve: dont check every connection
 		CConnection* c=connections[a];
 		if(c){
 			ret&=c->SendData(data,length);
@@ -308,14 +308,14 @@ void CNet::Update(void)
 	Uint64 t;
 	t = SDL_GetTicks();
 	curTime=static_cast<float>(t)/1000.f;
-	
+
 	if(!onlyLocal && connected) {
 		sockaddr_in from;
 		socklen_t fromsize;
 		fromsize=sizeof(from);
 		int r;
 		unsigned char inbuf[16000];
-		
+
 		while(true)
 		{
 			if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR)
@@ -335,7 +335,7 @@ void CNet::Update(void)
 				int packetNum=*(unsigned int*)inbuf;
 				// int ack=*(int*)(inbuf+4);
 				// unsigned char nak = *(int*)(inbuf+8);
-				
+
 				if(waitOnCon && r>=12 && packetNum ==0)
 				{
 					Pending newConn;
@@ -348,7 +348,7 @@ void CNet::Update(void)
 			}
 		}
 	}
-	
+
 	for(unsigned a=0;a<MAX_PLAYERS;++a){
 		if (connections[a] != 0)
 			connections[a]->Update(inInitialConnect);

@@ -585,8 +585,10 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	StringToLowerInPlace(lcname);
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
-	if (aii == archiveInfo.end())
+	if (aii == archiveInfo.end()) {
+		logOutput.Print("GetArchiveChecksum: Could not find archive \"%s\"", name.c_str());
 		return 0;
+	}
 
 	return aii->second.checksum;
 }
@@ -622,9 +624,10 @@ unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 /** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 {
-	if (GetModChecksum(root) != checksum) {
+	unsigned local = GetModChecksum(root);
+	if (local != checksum) {
 		logOutput.Print("Mod checksums differ: local: %u; remote: %u (%s)\n",
-							 GetModChecksum(root), checksum, root.c_str());
+							 local, checksum, root.c_str());
 		throw content_error(
 				"Your mod differs from the host's mod. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"
@@ -637,9 +640,10 @@ void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 /** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 {
-	if (GetMapChecksum(mapName) != checksum) {
+	unsigned local = GetMapChecksum(mapName);
+	if (local != checksum) {
 		logOutput.Print("Map checksums differ: local: %u; remote: %u (%s)\n",
-							 GetMapChecksum(mapName), checksum, mapName.c_str());
+							 local, checksum, mapName.c_str());
 		throw content_error(
 				"Your map differs from the host's map. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"

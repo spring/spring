@@ -84,7 +84,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
 			state = ALL_READY;
-		} else if (!save.empty()){
+		} else if (hasSave) {
 			savefile = new CLoadSaveHandler();
 			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
 			CScriptHandler::SelectScript("Commanders");
