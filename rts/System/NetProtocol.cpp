@@ -52,7 +52,7 @@ int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourc
 	FlushNet();
 	inInitialConnect=true;
 
-	if (true)	//TODO do we really want this?
+	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
 		record = new CDemoRecorder();
 	}

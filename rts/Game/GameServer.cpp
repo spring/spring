@@ -288,6 +288,12 @@ bool CGameServer::ServerReadNet()
 				serverNet->SendPlayerLeft(a, 0);
 			}
 		}
+
+		// dont bother handling anything if we are just sending a demo to
+		// localhost, this would result in double chat messages and server warnings..
+		if (net->localDemoPlayback)
+			continue;
+
 		//		logOutput << serverNet->numConnected << "\n";
 
 		while(inbufpos<inbuflength){
