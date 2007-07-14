@@ -2,17 +2,19 @@ Spring change log
 
 0.75b1
 
-Uncategorized or major changes:
+Uncategorized:
 - Added LuaCob, LuaGaia, LuaRules synchronized scripting:
   - LuaCob:   (mod)  provides access to lua functions for COB scripts
   - LuaGaia:  (map)  controllers the Gaia team
   - LuaRules: (mod)  gives full read/ctrl to setup custom mod game rules
+- Added LuaMaterials (unfinished).
 - Merged the LuaUI code with the new lua library setup.
 - Made LuaUI mod widgets possible.
 - Added support for the Gaia team.
 - Added SimpleGroundFlash to explosion generator.
-- Load/save now uses the creg serializer.
 - Added 'dds' and 'png' as default buildpic formats.
+- Load/save now uses the creg serializer.
+- Netcode has been refactored to be more readable.
 
 AI:
 - Added GetStartPos to IAICallback.
@@ -21,9 +23,11 @@ AI:
 - Added AIVAL_UNITLIMIT enabling AIs to query the maximum number of units.
 - Added the ability to unload a specific unit using the UNLOAD_UNIT command
   (the unitID should be added as the fourth parameter)
+- Added AIVAL_STOCKPILED to query the amount of stockpiled ammo.
+- Added AIVAL_STOCKPILE_QUED to query the amount of queued stockpile ammo.
 
 Behavorial:
-- Allow up to 16 pads per air base
+- Allow up to 16 pads per air base.
 - Units can not build stuff on top of cloaked stuff anymore.
 - Units guarding other units now properly repair the other unit if it's damaged.
 - Units guarding factories prioritize repairing the factory instead of building
@@ -34,8 +38,8 @@ Behavorial:
 - Transporters can carry hovers and ships now.
 - Transporters now check ground slope before unloading.
 - Units on a slope steeper than their max slope will now skid down it.
-- Disabled the ground flattening when building mobile units
-- Added paralyzed unit skipping for paralyzers
+- Disabled the ground flattening when building mobile units.
+- Added paralyzed unit skipping for paralyzers.
   (use ALT to disable skipping, same modifier as for permanent area commands)
 - Made a unit's ablity to slow itself relative to the angle of the slope.
 - Improved aiming of Cannon type weapons. They will no longer over/under shoot
@@ -46,6 +50,8 @@ Behavorial:
 - Added ScriptMoveType (incomplete, but functional). This should be tied into
   the COB scripting engine, and the 'stop' features and rotationOffset
   feature should be fixed.
+- Commander doesn't randomly D-gun buildings anymore when FPS mode is disabled.
+- Missiles now honour SprayAngle weapon TDF tag.
 
 Bugfixes:
 - Removed the maximum 8 sides limit.
@@ -59,6 +65,7 @@ Bugfixes:
 - Fixed rendering of underwater grass.
 - Made LuaUI compatible with VFS access.
 - Fixed SM3 shader for ATI x1* series.
+- Fixed incorrect cancelling of rotated buildings build orders.
 - And many more
 
 Chat commands:
@@ -88,6 +95,7 @@ Chat commands:
    "/luaui togglewidget  <widgetname>"
    "/luaui enablewidget  <widgetname>"
    "/luaui disablewidget <widgetname>"
+- Added the '/lodscale [shadow|reflection|refraction] <scale>' command.
 
 COB:
 - HitByWeaponId(z,x,id,damage) will be called instead of HitByWeapon if it exist
@@ -98,6 +106,8 @@ COB:
   - if not defined, Spring will assume 16 as the maximum number of pads
   - it takes one argument, which is initially set to 16, the number
     returned in arg0 will be used as the maximum number of pads.
+- Fixed logical XOR,AND,OR (they were implemented as binary XOR,AND,OR)
+- Added COB get/set constant UPRIGHT (79)
 - Added COB get constant POW (80) with 2 arguments x and y: it returns x^y.
 - Added COB get constant PRINT (81) which prints it's 4 arguments to infolog.
 - Added COB get constant HEADING (82)
@@ -121,14 +131,21 @@ Config:
   (application controlled anisotropic texture filtering for SMF maps)
 - Removed "SM3MaxTextureStages", it's confusing and the fallback mode isnt
   really useful (still slow).
+- Added config parameter MaximumTransmissionUnit. This can be used to control
+  the maximum UDP packet size Spring uses. The default is 512, which should keep
+  all UDP packets below the required minimum MTU of 576 bytes (512 payload).
+  If the hypothese that many player drops are because of too big UDP packets is
+  correct, then this may solve it.
+
+Feature TDF tags:
+- Added boolean feature TDF tag NoSelect. (default: 1)
 
 Fixed exploits:
 - Fixed exploit: UnitRestricted could be circumvented by making multiple
   factories and starting a build of the restricted unit in all factories at
   the same time.
 - Fixed exploit: CanAssist could be circumvented if multiple builders were
-  ordered an identical build at the same time out of their immediate range so
-  they had to move.
+  ordered an identical build at the same time out of their immediate range.
 
 Game Setup:
 - Added 'lineage' game mode (2). If the commander dies, all units directly or
@@ -137,6 +154,9 @@ Game Setup:
 - Added game setup script parameter 'Savefile'.
 - SaveGame can also be loaded by command line: 'spring QuickSave.ssf' or
   'spring C:\Spring\Saves\QuickSave.ssf'
+- Added NoHelperAIs tag: determines whether helper AIs are allowed.
+- Added LuaGaia tag: is LuaGaia enabled this game?
+- Added LuaRules tag: is LuaRules enabled this game?
 
 GUI:
 - Added land at 80% for aircraft.
@@ -161,6 +181,14 @@ GUI:
 - Added the "hotspot" command for the *.txt mouse cursor spec file
 - Added side preference prefix for start pictures.
 - Allow "allside_" start pictures to always be used (regardless of side).
+- FPS mode now shows weapon names instead of numbers.
+- Area build now builds every second row in the opposite direction.
+- Perimeter build now builds everything in clockwise or counterclockwise order.
+- Circle build now builds everything in clockwise or counterclockwise order.
+- Circle build now works correctly when trying to use non-square buildings for
+  circling anything.
+- Improved QuitBox player selection visibility.
+- Gunships and air builders now have a repair level switch.
 
 Mapping:
 - New ocean.jpg (public domain) comes from golgotha texture set and tiles better
@@ -169,6 +197,7 @@ Mapping:
 - Added "MAP\WATER\WaterRepeatX" and "MAP\WATER\WaterRepeatY" SMD tags, defining
   the amount of times the water texture should be repeated in X and Y direction.
 - Aspect ratio of water texture is taken into account now.
+- Added 'gamedata/resources_map.tdf' for gaia unit projectile textures.
 
 Unit FBI tags:
 - Added boolean FBI tag AirStrafe.  Only effective if HoverAttack=1.
@@ -189,14 +218,14 @@ Unit FBI tags:
   carried by the transport will survive the destruction of the transport itself.
 - Added float FBI tag SlideTolerance, multiplies the the max slope for
   determining when skidding should begin, due to slope. Values less than 1 will
-  cause the unit to never start skidding due to slope. (default: 2)
+  cause the unit to never start skidding due to slope. (default: 0)
 - Added float FBI tag MinCollisionSpeed, indicating the minimum net impact speed
   that will cause damage to a unit.
 - Added vector FBI tag CollsionSphereOffset
 - Added float FBI tag LoadingRadius
 - Added boolean FBI tag FullHealthFactory, controls whether or not a unit can
   leave the factory if it is not at full health. (default: 0)
-- Added float FBI tag RepairSpeed  (default: WorkerTime)
+- Added float FBI tag RepairSpeed (default: WorkerTime)
 - Added float FBI tag ReclaimSpeed (default: WorkerTime)
 - Added float FBI tag ResurrectSpeed (default: WorkerTime)
 - Added float FBI tag CaptureSpeed (default: WorkerTime)
@@ -204,8 +233,15 @@ Unit FBI tags:
 - Added boolean FBI tag DecloakOnFire (default: 1)
 - Up to 8 ok, select and arrived sounds can now be defined.
   (use tags ok1, ok2, etc.)
+- Added float FBI tag CollisionSphereScale, this is a scaling factor for the
+  unit's collision sphere. (default: 0.5 for aircraft, 1 for other units)
 
 Weapon TDF tags:
+
+- Added weapon tdf command SweepFire, if 1 (default 0) it will make the weapon
+  continue firing while it aims for a new target. Only works on continous beam
+  lasers currently.
+- Added boolean weapon TDF tag CanAttackGround. (default: 1)
 - Added float weapon TDF tag float TargetBorder: if nonzero, targetting units
   will TryTarget at the edge of collision sphere (radius*tag_value, [-1;1])
   instead of its centre. Defaults to 1 for Melee type weapons, 0 otherwise.
@@ -214,9 +250,6 @@ Weapon TDF tags:
   of a sphere. Defaults to 1 for Melee type weapons, 0 otherwise.
 - Added float weapon TDF tag MinIntensity: for beamlasers - always hit with some
   minimum intensity (a damage coeffcient normally dependent on distance).
-- Added weapon tdf command SweepFire, if 1 (default 0) it will make the weapon continue
-  firing while it aims for a new target. Only works on continous beam lasers currently.
-- Added boolean weapon TDF tag CanAttackGround. (default: 1)
 - Added float weapon TDF tag SizeDecay: how much a plasma particle is smaller
   than the previous within the same plasma shot. (default: 0)
 - Added float weapon TDF tag AlphaDecay: how much a plasma particle is more
@@ -233,6 +266,37 @@ Weapon TDF tags:
   - can be used along with  'visibleShieldHit'
   - the alpha value fades after the hit
 - Added colormap for ballistic ('cannon' type) weapons.
+- Added boolean weapon TDF tag AvoidFeature, this makes the weapon avoid
+  features while targetting. (default: 1)
+- Added float weapon TDF tag FallOffRate: rate at which the beamweapon fades out
+  after it goes past its maximum range. 0 is never fade out, 1 is finish fading
+  out exactly at max range, the default 0.5 is the previous behaviour.
+- Added float weapon TDF tag LodDistance: minimum camera distance at which the
+  default beamweapon projectile is simplified to rectangle. (default: 1000)
+- Added float weapon TDF tag DynDamageExp: exponent of the damage formula, 0
+  (the default) disables dynamic damage. 1 means linear scaling.
+- Added float weapon TDF tag DynDamageMin: minimum damage value. (default: 0)
+- Added boolean weapon TDF tag DynDamageInverted: inverts the damage curve.
+- Added float weapon TDF tag DynDamageRange: if set it will use this value
+  instead of the range value from the weapon in the calculation.
+
+New projectile handler textures:
+- sbtrailtexture         - default first section of starburst missile trail texture
+- missiletrailtexture    - default first section of missile trail texture
+- muzzleflametexture     - default muzzle flame texture
+- repulsetexture         - texture of impact on repulsor
+- dguntexture            - dgun texture
+- flareprojectiletexture - texture used by flares that trick missiles
+- sbflaretexture         - default first section of starburst missile trail texture
+- missileflaretexture    - default first section of missile trail texture
+- beamlaserflaretexture  - default beam laser flare texture
+- bubbletexture          - torpedo trail texture
+- gfxtexture             - nanospray texture
+- projectiletexture      - appears to be unused
+- repulsegfxtexture      - used by repulsor
+- sphereparttexture      - sphere explosion texture
+- wrecktexture           - smoking explosion part texture
+- plasmatexture          - default plasma texture
 
 Scons build system:
 - Added debugdefines configure option: true by default, if it's set to false
@@ -245,25 +309,6 @@ Unitsync:
 - Deprecated InitArchiveScanner() unitsync function.
 - Added java bindings to unitsync.
 - Unitsync is now installed to libdir on Linux.
-
-
-TODO: r3861 (imbaczek's patch) to HEAD
-MORE TODO:
-- TODO: kloots range patch (r3338, bug #363)
-- TODO: bug# 263
-- Collision spheres can now be scaled (TODO r 3395)
-- Applied patch by KDR_11k, missle accuracy. (TODO r 3426)
-- Committing 2 patches by FLOZi, fps weapon names and getsetupright. (TODO r 3453)
-- Applied mantis patch 455 (TODO r 3463)
-- Bug #461: Committed patch by M2. ( TODO r 3466)
-- Mantis # 504 (r 3505)
-- Mantis # 508 (r 3541)
-- Mantis # 509 (r 3542)
-- Fix for Mantis #515  --  QuitBox player selection visibility
-  (also threw in the Gaia name change, same code as in ShareBox.cpp) (r3580)
-- Added quantum's texture customization patch (r3612)
-- Applied yuritch's repairMult / reclaimMult / resurrectMult / captureMult patch
-  (closes Mantis #0000527). Updated it for SVN and cleaned it up a little first. (r 3650)
 
 
 
