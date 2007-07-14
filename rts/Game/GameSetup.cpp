@@ -122,7 +122,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(numPlayers,"2","GAME\\NumPlayers");
 	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
 	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
-	
+
 	// gaia adjustments
 	if (gs->useLuaGaia) {
 		gs->gaiaTeamID = gs->activeTeams;
@@ -286,13 +286,12 @@ bool CGameSetup::Init(const char* buf, int size)
 void CGameSetup::Draw()
 {
 	const float yScale = 20.0f / (float)gu->viewSizeX;
-	const float xScale = yScale / gu->aspectRatio;
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glPushMatrix();
 	glTranslatef(0.3f, 0.7f, 0.0f);
 	glScalef(0.03f, 0.04f, 0.1f);
 	if (!gameServer && net->inInitialConnect) {
-		font->glPrint("Connecting to server %i", 40 - (int)(net->curTime-net->connections[0]->lastReceiveTime));
+		font->glPrint("Connecting to server %i", 40 - (int)(SDL_GetTicks()/1000.0f - net->connections[0]->lastReceiveTime));
 	} else if (readyTime > 0) {
 		font->glPrint("Starting in %i", 3 - (SDL_GetTicks() - readyTime) / 1000);
 	} else if (!readyTeams[gu->myTeam]) {

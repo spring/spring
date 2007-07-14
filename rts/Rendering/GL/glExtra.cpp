@@ -32,7 +32,7 @@ void setSurfaceCircleFunc(SurfaceCircleFunc func)
 		glSurfaceCircle = defSurfaceCircle;
 	} else {
 		glSurfaceCircle = func;
-	} 
+	}
 }
 
 
@@ -72,7 +72,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			ydiff = fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
-			adjRadius = weapon->GetRange2D(heightDiff);
+			adjRadius = weapon ? weapon->GetRange2D(heightDiff) : rad;
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);

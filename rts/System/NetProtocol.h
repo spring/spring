@@ -89,7 +89,6 @@ public:
 	This is the best way to see a demo, this should also be used when only one local client will watch this
 	*/
 	int InitServer(const unsigned portnum, const std::string& demoName);
-	// see line ~150 for ugly details
 	int InitClient(const char* server,unsigned portnum,unsigned sourceport);
 	/// Initialise our client to listen to CLocalConnection
 	int InitLocalClient(const unsigned wantedNumber);
@@ -109,9 +108,9 @@ public:
 	 */
 	void RawSend(const uchar* data,const unsigned length);
 
-	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum);
+	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum, int* que = NULL);
 
-	int SendHello();
+	void SendHello();
 	int SendQuit();
 	int SendNewFrame(int frameNum);
 	int SendStartPlaying();
@@ -148,6 +147,9 @@ public:
 	int SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	int SendModName(const uint checksum, const std::string& modName);
 
+	int GetMessageLength(const unsigned char* inbuf, int inbuflength) const;
+	int ReadAhead(const unsigned char* inbuf, int inbuflength, int* que = NULL) const;
+
 private:
 	CDemoRecorder* record;
 	CDemoReader* play;
@@ -157,6 +159,10 @@ private:
 	std::string mapName;
 	uint modChecksum;
 	std::string modName;
+
+	/// Bytes that don't make a complete net message yet (fragmented message).
+	unsigned char fragbuf[netcode::NETWORK_BUFFER_SIZE];
+	int fragbufLength;
 };
 
 extern CNetProtocol* net;

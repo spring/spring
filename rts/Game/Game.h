@@ -37,8 +37,6 @@ public:
 	bool ClientReadNet();
 	void PostLoad();
 
-	bool debugging;
-	int que;
 	void SimFrame();
 	void StartPlaying();
 	bool DrawWorld();
@@ -49,7 +47,7 @@ public:
 	CGame(bool server, std::string mapname, std::string modName, CInfoConsole *infoConsole);
 	void ResizeEvent();
 	virtual ~CGame();
-	
+
 	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
 	bool ActionReleased(const CKeyBindings::Action&);
 
@@ -63,7 +61,7 @@ public:
 
 	Uint64 lastModGameTimeMeasure;
 
-	Uint64 lastframe;
+	unsigned int lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 
 	unsigned char inbuf[40000*2];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE*2
@@ -119,9 +117,9 @@ public:
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
 #endif
-	
+
 	void HandleChatMsg(std::string msg, int player, bool demoPlayer);
-	
+
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 protected:

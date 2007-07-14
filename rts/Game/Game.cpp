@@ -156,7 +156,6 @@ CGame* game = 0;
 CR_BIND(CGame,(false,std::string(""),std::string(""),NULL));
 
 CR_REG_METADATA(CGame,(
-	CR_MEMBER(que),
 	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
@@ -206,7 +205,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	lastTick=clock();
 	consumeSpeed=1;
 	leastQue=0;
-	que=0;
 	timeLeft=0.0f;
 
 	oldframenum=0;
@@ -223,8 +221,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	thisFps=0;
 	totalGameTime=0;
 	drawFpsHUD = true;
-
-	debugging=false;
 
 	bOneStep=false;
 	creatingVideo=false;
@@ -2451,10 +2447,6 @@ bool CGame::ClientReadNet()
 {
 	static int lastMsg=0,thisMsg=0;
 	int a;
-/*	if(gameServer){
-		inbufpos=0;
-		inbuflength=0;
-	}*/
 
 	if(inbufpos>inbuflength)
 		logOutput.Print("Too much data read");
@@ -2462,14 +2454,16 @@ bool CGame::ClientReadNet()
 		inbufpos=0;
 		inbuflength=0;
 	}
-	if(inbufpos>netcode::NETWORK_BUFFER_SIZE*0.5f){
+	if (inbufpos > netcode::NETWORK_BUFFER_SIZE/2) {
 		for(a=inbufpos;a<inbuflength;a++)
 			inbuf[a-inbufpos]=inbuf[a];
 		inbuflength-=inbufpos;
 		inbufpos=0;
 	}
 
-	if((a=net->GetData(&inbuf[inbuflength],netcode::NETWORK_BUFFER_SIZE*2-inbuflength,gameSetup?gameSetup->myPlayer:0))==-1){
+	int que;
+
+	if ((a = net->GetData(&inbuf[inbuflength], netcode::NETWORK_BUFFER_SIZE*2-inbuflength, gameSetup ? gameSetup->myPlayer : 0, &que)) == -1) {
 		return gameOver;
 	}
 	inbuflength+=a;
@@ -2483,7 +2477,7 @@ bool CGame::ClientReadNet()
 #endif
 
 	if(!gameServer && !net->onlyLocal){
-		Uint64 currentFrame;
+		unsigned int currentFrame;
 		currentFrame = SDL_GetTicks();
 
 		if (timeLeft > 1.0f) {
@@ -2495,92 +2489,13 @@ bool CGame::ClientReadNet()
 		}
 		lastframe=currentFrame;
 
-		que=0;
-		for(int i2=inbufpos;i2<inbuflength;){
-			switch (inbuf[i2]){
-			case NETMSG_SETPLAYERNUM:
-#ifdef DIRECT_CONTROL_ALLOWED
-			case NETMSG_DIRECT_CONTROL:
-#endif
-				i2+=2;
-				break;
-#ifdef DIRECT_CONTROL_ALLOWED
-			case NETMSG_DC_UPDATE:
-				i2+=7;
-				break;
-#endif
-			case NETMSG_PLAYERNAME:
-			case NETMSG_CHAT:
-			case NETMSG_SYSTEMMSG:
-			case NETMSG_MAPNAME:
-			case NETMSG_MODNAME:
-			case NETMSG_SCRIPT:
-			case NETMSG_MAPDRAW:
-				i2+=inbuf[i2+1];
-				break;
-			case NETMSG_COMMAND:
-			case NETMSG_SELECT:
-			case NETMSG_AICOMMAND:
-			case NETMSG_AICOMMANDS:
-				i2+=(*((short int*)&inbuf[i2+1]));
-				break;
-			case NETMSG_NEWFRAME:
-				que++;
-			case NETMSG_RANDSEED:
-			case NETMSG_INTERNAL_SPEED:
-			case NETMSG_USER_SPEED:
-			case NETMSG_CPU_USAGE:
-			case NETMSG_SYNCREQUEST:
-				i2+=5;
-				break;
-			case NETMSG_HELLO:
-			case NETMSG_QUIT:
-			case NETMSG_STARTPLAYING:
-			case NETMSG_MEMDUMP:
-			case NETMSG_SENDPLAYERSTAT:
-			case NETMSG_GAMEOVER:
-				i2++;
-				break;
-			case NETMSG_SHARE:
-				i2+=12;
-				break;
-			case NETMSG_SETSHARE:
-			case NETMSG_PLAYERINFO:
-			case NETMSG_SYNCRESPONSE:
-				i2+=10;
-				break;
-			case NETMSG_PLAYERSTAT:
-				i2+=sizeof(CPlayer::Statistics)+2;
-				break;
-			case NETMSG_PAUSE:
-			case NETMSG_ATTEMPTCONNECT:
-			case NETMSG_PLAYERLEFT:
-				i2+=3;
-				break;
-			case NETMSG_STARTPOS:
-				i2+=15;
-				break;
-			default:{
-#ifdef SYNCDEBUG
-				// maybe something for the sync debugger?
-				int x = CSyncDebugger::GetInstance()->GetMessageLength(&inbuf[i2]);
-				if (x) i2 += x;
-				else
-#endif
-				{
-					logOutput.Print("Unknown net msg in read ahead %i",(int)inbuf[i2]);
-					i2++;
-				}
-				break;}
-			}
-		}
 		if(que<leastQue)
 			leastQue=que;
 	}
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	while((inbufpos<inbuflength) && ((timeLeft>0) || gameServer || net->onlyLocal)){
+	while (inbufpos < inbuflength && (timeLeft > 0 || gameServer || net->onlyLocal)) {
 		thisMsg=inbuf[inbufpos];
 		int lastLength=0;
 

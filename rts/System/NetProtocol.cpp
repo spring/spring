@@ -13,6 +13,8 @@ CNetProtocol::CNetProtocol()
 	record = 0;
 	play = 0;
 	localDemoPlayback = false;
+	fragbufLength = 0;
+	memset(fragbuf, 0, sizeof(fragbuf));
 }
 
 CNetProtocol::~CNetProtocol()
@@ -102,8 +104,8 @@ void CNetProtocol::Update()
 {
 	// when hosting a demo, read from file and broadcast data
 	if (play != 0 && imServer) {
-		unsigned char demobuffer[40000];
-		unsigned length = play->GetData(demobuffer, 40000);
+		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
+		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		if (length > 0) {
 			RawSend(demobuffer, length);
 		}
@@ -161,22 +163,41 @@ void CNetProtocol::RawSend(const uchar* data,const unsigned length)
 	SendData(data, length);
 }
 
-int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsigned conNum)
+int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsigned conNum, int* que)
 {
-	const int ret = CNet::GetData(buf, length, conNum);
-
-	if (record!=0 && !imServer && ret > 0)
-	{
-		record->SaveToDemo(buf,ret);
+	// If we got the start of a fragmented message left,
+	// we insert it at the start of the buffer.
+	if (fragbufLength != 0) {
+		if (fragbufLength > length) {
+			logOutput.Print("Overflow in incoming network buffer");
+			return 0; // just return we read 0 bytes, it isn't too severe after all...
+		}
+		memcpy(buf, fragbuf, fragbufLength);
 	}
-	return ret;
+
+	int ret = CNet::GetData(buf + fragbufLength, length - fragbufLength, conNum);
+
+	if (ret <= 0) // error in CNet::GetData or 0 bytes read so nothing to do..
+		return ret;
+	ret += fragbufLength;
+
+	int readahead = ReadAhead(buf, ret, que);
+
+	// If we got a fragmented packet on end, store it for a later call to GetData.
+	fragbufLength = ret - readahead;
+	if (fragbufLength != 0)
+		memcpy(fragbuf, buf + readahead, fragbufLength);
+
+	// We only return complete messages here (so use readahead instead of ret).
+	if (record != NULL && !imServer)
+		record->SaveToDemo(buf, readahead);
+	return readahead;
 }
 // 	NETMSG_HELLO            = 1,  //
 
-int CNetProtocol::SendHello()
+void CNetProtocol::SendHello()
 {
 	PingAll();
-	return 1;
 }
 
 //  NETMSG_QUIT             = 2,  //
@@ -443,6 +464,124 @@ int CNetProtocol::SendModName(const uint checksum, const std::string& newModName
 	if (imServer)
 		return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, modName);
 	return 0;
+}
+
+/** @brief Return the length (in bytes) of the first net message in inbuf.
+If the message doesn't fit in inbuf, it returns 0, so it can also be used to
+check whether a net buffer contains a complete message. */
+int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) const
+{
+	if (inbuflength <= 0)
+		return 0;
+
+	int length = 0;
+	switch (inbuf[0]) {
+		case NETMSG_HELLO:
+		case NETMSG_QUIT:
+		case NETMSG_STARTPLAYING:
+		case NETMSG_MEMDUMP:
+		case NETMSG_SENDPLAYERSTAT:
+		case NETMSG_GAMEOVER:
+			length = 1;
+			break;
+		case NETMSG_SETPLAYERNUM:
+#ifdef DIRECT_CONTROL_ALLOWED
+		case NETMSG_DIRECT_CONTROL:
+#endif
+			length = 2;
+			break;
+		case NETMSG_PAUSE:
+		case NETMSG_ATTEMPTCONNECT:
+		case NETMSG_PLAYERLEFT:
+			length = 3;
+			break;
+		case NETMSG_NEWFRAME:
+		case NETMSG_RANDSEED:
+		case NETMSG_INTERNAL_SPEED:
+		case NETMSG_USER_SPEED:
+		case NETMSG_CPU_USAGE:
+		case NETMSG_SYNCREQUEST:
+			length = 5;
+			break;
+#ifdef DIRECT_CONTROL_ALLOWED
+		case NETMSG_DC_UPDATE:
+			length = 7;
+			break;
+#endif
+		case NETMSG_SETSHARE:
+		case NETMSG_PLAYERINFO:
+		case NETMSG_SYNCRESPONSE:
+			length = 10;
+			break;
+		case NETMSG_SHARE:
+			length = 12;
+			break;
+		case NETMSG_STARTPOS:
+			length = 15;
+			break;
+		case NETMSG_PLAYERSTAT:
+			length = sizeof(CPlayer::Statistics) + 2;
+			break;
+		case NETMSG_PLAYERNAME:
+		case NETMSG_CHAT:
+		case NETMSG_SYSTEMMSG:
+		case NETMSG_MAPNAME:
+		case NETMSG_MODNAME:
+		case NETMSG_SCRIPT:
+		case NETMSG_MAPDRAW:
+			if (2 > inbuflength) // there was no room for the size field
+				return 0;
+			length = inbuf[1];
+			break;
+		case NETMSG_COMMAND:
+		case NETMSG_SELECT:
+		case NETMSG_AICOMMAND:
+		case NETMSG_AICOMMANDS:
+			if (3 > inbuflength) // there was no room for the size field
+				return 0;
+			length = *((const short int*)&inbuf[1]);
+			break;
+		default:{
+#ifdef SYNCDEBUG
+			// maybe something for the sync debugger?
+			// FIXME fix sync debugger so it handles truncated messages correctly
+			length = CSyncDebugger::GetInstance()->GetMessageLength(inbuf);
+			if (length == 0)
+#endif
+			{
+				logOutput.Print("Unknown net msg in read ahead %i", inbuf[0]);
+				length = 1;
+			}
+			break;
+		}
+	}
+
+	if (length > inbuflength)
+		return 0;
+
+	return length;
+}
+
+/** @brief This performs a read ahead in the network buffer.
+It returns the position in inbuf on which the first fragmented message starts.
+If que is not null it is set to the number of NETMSG_NEWFRAME messages in the
+buffer. */
+int CNetProtocol::ReadAhead(const unsigned char* inbuf, int inbuflength, int* que) const
+{
+	int pos = 0;
+	int lastLength;
+	int newFrameCount = 0;
+
+	while ((lastLength = GetMessageLength(inbuf + pos, inbuflength - pos)) != 0) {
+		if (inbuf[pos] == NETMSG_NEWFRAME)
+			++newFrameCount;
+		pos += lastLength;
+	}
+
+	if (que != NULL)
+		*que = newFrameCount;
+
+	return pos;
 }
 
 /* FIXME: add these:
