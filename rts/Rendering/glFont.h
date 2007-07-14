@@ -29,6 +29,15 @@ public:
 	void glPrintRaw(const char* text) {
 		printstring((const unsigned char*)text);
 	}
+
+	void glPrintSuperRaw(const char* text) const {
+		for (const char* c = text; *c != 0; c++) {
+			const unsigned int ch = (unsigned char)(*c);
+			if ((ch >= charstart) && (ch <= charend)) {
+				glCallList((ch - charstart) + listbase);
+			}
+		}
+	}
 	
 private:
 	void printstring(const unsigned char *text);

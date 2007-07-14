@@ -1096,21 +1096,18 @@ void CUnit::DrawStats()
 	}
 	interPos.y += model->height + 5.0f;
 
-	glBegin(GL_QUADS);
-
-	const float3& camUp    = camera->up;
-	const float3& camRight = camera->right;
-
-	const float hpp = max(0.0f, health / maxHealth);
-	const float end = (0.5f - hpp) * 10.0f;
+	// setup the billboard transformation
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	glMultMatrixd(camera->billboard);
 
 	// black background for healthbar
 	glColor3f(0.0f, 0.0f, 0.0f);
-	glVertexf3(interPos + (camUp * 6.0f) - (camRight * end));
-	glVertexf3(interPos + (camUp * 6.0f) + (camRight * 5.0f));
-	glVertexf3(interPos + (camUp * 4.0f) + (camRight * 5.0f));
-	glVertexf3(interPos + (camUp * 4.0f) - (camRight * end));
+	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
 
+	// healthbar
+	const float hpp = max(0.0f, health / maxHealth);
+	const float hEnd = hpp * 10.0f;
 	if (stunned) {
 		glColor3f(0.0f, 0.0f, 1.0f);
 	} else {
@@ -1120,69 +1117,56 @@ void CUnit::DrawStats()
 			glColor3f(1.0f, hpp * 2.0f, 0.0f);
 		}
 	}
-	// healthbar
-	glVertexf3(interPos + (camUp * 6.0f) - (camRight * 5.0f));
-	glVertexf3(interPos + (camUp * 6.0f) - (camRight * end));
-	glVertexf3(interPos + (camUp * 4.0f) - (camRight * end));
-	glVertexf3(interPos + (camUp * 4.0f) - (camRight * 5.0f));
-
-	if ((gu->myTeam != team) && !gu->spectatingFullView) {
-		glEnd();
-		return;
-	}
+	glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
 
 	// stun level
 	if (!stunned && (paralyzeDamage > 0.0f)) {
+		const float pEnd = (paralyzeDamage / maxHealth) * 10.0f;
 		glColor3f(0.0f, 0.0f, 1.0f);
-		const float pEnd = (0.5f - (paralyzeDamage / maxHealth)) * 10.0f;
-		glVertexf3(interPos + (camUp * 6.0f) - (camRight * 5.0f));
-		glVertexf3(interPos + (camUp * 6.0f) - (camRight * pEnd));
-		glVertexf3(interPos + (camUp * 4.0f) - (camRight * pEnd));
-		glVertexf3(interPos + (camUp * 4.0f) - (camRight * 5.0f));
+		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
 	} 
 
-	// experience bar
-	glColor3f(1.0f, 1.0f, 1.0f);
-	const float hEnd = (limExperience * 0.8f) * 10.0f;
-	glVertexf3(interPos + (-camUp * 2.0f)         + (camRight * 6.0f));
-	glVertexf3(interPos + (-camUp * 2.0f)         + (camRight * 8.0f));
-	glVertexf3(interPos + (camUp * (hEnd - 2.0f)) + (camRight * 8.0f));
-	glVertexf3(interPos + (camUp * (hEnd - 2.0f)) + (camRight * 6.0f));
-	glEnd();
-
-	if (group) {
-		glPushMatrix();
-		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glTranslatef3(interPos - (camRight * 10.0f));
-		glScalef(10.0f, 10.0f, 10.0f);
-		font->glWorldPrint("%d", group->id);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
+	// skip the rest of the indicators if it isn't a local unit
+	if ((gu->myTeam != team) && !gu->spectatingFullView) {
 		glPopMatrix();
+		return;
 	}
+
+	// experience bar
+	const float eEnd = (limExperience * 0.8f) * 10.0f;
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
 
 	if (beingBuilt) {
+		const float bEnd = (buildProgress * 0.8f) * 10.0f;
 		glColor3f(1.0f, 0.0f, 0.0f);
-		const float end = (buildProgress * 0.8f) * 10.0f;
-		glBegin(GL_QUADS);
-		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 6.0f));
-		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 8.0f));
-		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 8.0f));
-		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 6.0f));
-		glEnd();
+		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
 	}
 	else if (stockpileWeapon) {
+		const float sEnd = (stockpileWeapon->buildPercent * 0.8f) * 10.0f;
 		glColor3f(1.0f, 0.0f, 0.0f);
-		const float end = (stockpileWeapon->buildPercent * 0.8f) * 10.0f;
-		glBegin(GL_QUADS);
-		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 6.0f));
-		glVertexf3(interPos - (camUp * 2.0f)         - (camRight * 8.0f));
-		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 8.0f));
-		glVertexf3(interPos + (camUp * (end - 2.0f)) - (camRight * 6.0f));
-		glEnd();
+		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
 	}
+
+	if (group) {
+		const float scale = 10.0f;
+		char buf[32];
+		sprintf(buf, "%i", group->id);
+		const float width = scale * font->CalcTextWidth(buf);
+
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glTranslatef(-7.0f - width, 0.0f, 0.0f); // right justified
+		glScalef(scale, scale, scale);
+		glColor3f(1.0f, 1.0f, 1.0f);
+		font->glPrintSuperRaw(buf);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+	}
+
+	glPopMatrix();
 }
+
 
 void CUnit::ExperienceChange()
 {
