@@ -354,7 +354,7 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 
 
 void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage)
+                             float damage, bool paralyzer)
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("UnitDamaged");
@@ -363,11 +363,12 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		return; // the call is not defined
 	}
 
-	int argCount = 4;
+	int argCount = 5;
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
+	lua_pushboolean(L, paralyzer);
 	if (fullRead && (attacker != NULL)) {
 		lua_pushnumber(L, attacker->id);
 		lua_pushnumber(L, attacker->unitDef->id);

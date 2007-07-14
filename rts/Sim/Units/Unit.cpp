@@ -823,7 +823,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		ENTER_SYNCED;
 	}
 
-	luaCallIns.UnitDamaged(this, attacker, damage);
+	luaCallIns.UnitDamaged(this, attacker, damage, !!damages.paralyzeDamageTime);
 	globalAI->UnitDamaged(this, attacker, damage);
 
 	if(health<=0){
