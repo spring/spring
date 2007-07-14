@@ -4,7 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include <SDL_timer.h>
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
@@ -60,9 +59,6 @@ bool IsFakeError()
 
 CNet::CNet()
 {
-	Uint64 t;
-	t = SDL_GetTicks();
-	curTime=float(t)/1000.f;
 #ifdef _WIN32
 	Uint16 wVersionRequested;
 	WSADATA wsaData;
@@ -178,13 +174,8 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 {
 	LPHOSTENT lpHostEntry;
 
-	Uint64 t;
-	t = SDL_GetTicks();
-	curTime=float(t)/1000.f;
-
 	Pending WannaBeClient;
-	WannaBeClient.wantedNumber = playerNum;	//
-
+	WannaBeClient.wantedNumber = playerNum;
 	WannaBeClient.other.sin_family = AF_INET;
 	WannaBeClient.other.sin_port = htons(portnum);
 
@@ -243,10 +234,6 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 
 int CNet::InitLocalClient(const unsigned wantedNumber)
 {
-	Uint64 t;
-	t = SDL_GetTicks();
-	curTime=float(t)/1000.f;
-
 	waitOnCon=false;
 	imServer=false;
 	onlyLocal = true;
@@ -262,7 +249,7 @@ int CNet::InitNewConn(const Pending& NewClient, bool local)
 {
 	unsigned freeConn = 0;
 	if(NewClient.wantedNumber){
-		if(NewClient.wantedNumber>=MAX_PLAYERS){	// unsigned char can't be <0
+		if(NewClient.wantedNumber>=MAX_PLAYERS){
 			logOutput.Print("Warning attempt to connect to errenous connection number");
 		}
 		else if(connections[NewClient.wantedNumber] && connections[NewClient.wantedNumber]->active){
@@ -305,10 +292,6 @@ int CNet::SendData(const unsigned char *data, const unsigned length)
 
 void CNet::Update(void)
 {
-	Uint64 t;
-	t = SDL_GetTicks();
-	curTime=static_cast<float>(t)/1000.f;
-
 	if(!onlyLocal && connected) {
 		sockaddr_in from;
 		socklen_t fromsize;

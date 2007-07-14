@@ -22,7 +22,7 @@ public:
 	void CheckForGameEnd();
 	void CreateNewFrame(bool fromServerThread=false);
 	void UpdateLoop();
-	
+
 	bool WaitsOnCon() const;
 	/**
 	@brief kick the specified player from the battle
@@ -31,8 +31,7 @@ public:
 	void KickPlayer(const int playerNum);
 
 	bool makeMemDump;
-	unsigned char inbuf[40000];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE but dont want to include net.h here
-	unsigned char outbuf[40000];
+	unsigned char inbuf[netcode::NETWORK_BUFFER_SIZE];
 
 	unsigned lastTick;
 	float timeLeft;
@@ -63,7 +62,7 @@ public:
 	int syncErrorFrame;
 	int syncWarningFrame;
 	int delayedSyncResponseFrame;
-	
+
 private:
 	CNetProtocol* serverNet;
 };

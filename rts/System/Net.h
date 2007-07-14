@@ -80,8 +80,6 @@ public:
 	bool imServer;
 	bool onlyLocal;
 
-	float curTime;
-
 	CConnection* connections[MAX_PLAYERS];
 	int GetData(unsigned char* buf, const unsigned length, const unsigned conNum);
 	

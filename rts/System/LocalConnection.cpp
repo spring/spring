@@ -27,9 +27,6 @@ CLocalConnection::~CLocalConnection()
 
 int CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	if (data[0] == NETMSG_HELLO && length == 1)
-		return 1;
-
 	boost::mutex::scoped_lock scoped_lock(Mutex[otherInstance()]);
 	if(active){
 		if(Length[otherInstance()]+length>=NETWORK_BUFFER_SIZE){

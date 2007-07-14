@@ -269,7 +269,7 @@ bool CPreGame::Draw()
 
 	if(net->inInitialConnect){
 		char text[400];
-		sprintf(text,"Connecting to server %i",40-(int)(net->curTime - net->connections[0]->lastSendTime));
+		sprintf(text,"Connecting to server %i",40-(int)(static_cast<float>(SDL_GetTicks())/1000.0f - net->connections[0]->lastSendTime));
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);

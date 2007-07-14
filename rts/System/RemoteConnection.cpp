@@ -18,6 +18,7 @@
 #include "LogOutput.h"
 #include "GlobalStuff.h"
 #include "Sync/Syncify.h"
+#include "Platform/ConfigHandler.h"
 
 namespace netcode {
 
@@ -50,7 +51,6 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, const SOCKET* con
 {
 	addr=MyAddr;
 	lastInOrder=-1;
-	readyLength=0;
 	waitingPackets.clear();
 	firstUnacked=0;
 	currentNum=0;
@@ -60,6 +60,9 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, const SOCKET* con
 	lastSendTime=0;
 	lastNak=-1;
 	lastNakTime=0;
+	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
+	fragmentedFlushes = 0;
+	resentPackets = 0;
 }
 
 CRemoteConnection::~CRemoteConnection()
@@ -72,7 +75,9 @@ CRemoteConnection::~CRemoteConnection()
 		delete (pi2->second);
 
 	logOutput.Print("Network statistics for %s",inet_ntoa(addr.sin_addr));
-	logOutput.Print("Bytes send/recieved: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
+	logOutput.Print("Bytes send/received: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
+	logOutput.Print("Packets send/received: %i/%i (Lost: %i%%)", currentNum, lastInOrder, resentPackets * 100 / currentNum);
+	logOutput.Print("Flushes requiring fragmentation: %i", fragmentedFlushes);
 }
 
 int CRemoteConnection::SendData(const unsigned char *data, const unsigned length)
@@ -91,13 +96,26 @@ int CRemoteConnection::SendData(const unsigned char *data, const unsigned length
 int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 {
 	if(active){
-		unsigned int ret=readyLength;
-		if(length<=ret)
-			return 0;
-		memcpy(buf,readyData,readyLength);
-		readyLength=0;
+		unsigned readyLength = 0;
 
-		return ret;
+		std::map<int,Packet*>::iterator wpi;
+		//process all in order packets that we have waiting
+		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
+			if (readyLength + wpi->second->length >= length) {
+				logOutput.Print("Overflow in incoming network buffer");
+				break;
+			}
+
+			lastInOrder++;
+
+			memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
+			readyLength+=wpi->second->length;
+
+			delete wpi->second;
+			waitingPackets.erase(wpi);
+		}
+
+		return readyLength;
 	} else {
 		return -1;
 	}
@@ -107,24 +125,6 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 {
 	if (!active)
 		return;
-
-	std::map<int,Packet*>::iterator wpi;
-	while((wpi=waitingPackets.find(lastInOrder+1))!=waitingPackets.end()){		//process all in order packets that we have waiting
-		if(readyLength+wpi->second->length>=NETWORK_BUFFER_SIZE){
-			logOutput.Print("Overflow in incoming network buffer");
-			break;
-		}
-
-		lastInOrder++;
-		if (wpi->second->data[0] != NETMSG_HELLO || wpi->second->length != 1)	// HELLO is only internal
-		{
-			memcpy(&readyData[readyLength],wpi->second->data,wpi->second->length);
-			readyLength+=wpi->second->length;
-		}
-
-		delete wpi->second;
-		waitingPackets.erase(wpi);
-	}
 
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
 
@@ -170,6 +170,7 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 			lastNakTime=lastReceiveTime;
 			for(int b=firstUnacked;b<=nak_abs;++b){
 				SendRawPacket(unackedPackets[b-firstUnacked]->data,unackedPackets[b-firstUnacked]->length,b);
+				++resentPackets;
 			}
 		}
 	}
@@ -192,10 +193,20 @@ void CRemoteConnection::Flush()
 	lastSendFrame=gs->frameNum;
 	lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
 
-	SendRawPacket(outgoingData,outgoingLength,currentNum++);
-	Packet* p=SAFE_NEW Packet(outgoingData,outgoingLength);
-	outgoingLength=0;
-	unackedPackets.push_back(p);
+	// Manually fragment packets to respect configured MTU.
+	// This is an attempt to fix the bug where players drop out of the game if
+	// someone in the game gives a large order.
+
+	if (outgoingLength > mtu)
+		++fragmentedFlushes;
+
+	for (int pos = 0; outgoingLength != 0; pos += mtu) {
+		int length = std::min(mtu, outgoingLength);
+		SendRawPacket(outgoingData + pos, length, currentNum++);
+		Packet* p = SAFE_NEW Packet(outgoingData + pos, length);
+		outgoingLength -= length;
+		unackedPackets.push_back(p);
+	}
 }
 
 void CRemoteConnection::Ping()
@@ -233,7 +244,7 @@ void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned 
 	if (!active)
 		return;
 
-	const unsigned hsize= 9;
+	const unsigned hsize = 9;
 	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
@@ -248,17 +259,6 @@ void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned 
 	else {
 		*(unsigned char*)(tempbuf+8) = 0;
 	}
-
-	/* *(int*)&tempbuf[0]=packetNum;
-	*(int*)&tempbuf[4]=lastInOrder;
-	const unsigned hsize= sizeof(packetHeader);
-	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		tempbuf[8]=1;
-		*(int*)&tempbuf[9]=waitingPackets.begin()->first-1;
-		hsize=13;
-	} else {
-		tempbuf[8]=0;
-	}*/
 
 	memcpy(&tempbuf[hsize],data,length);
 
