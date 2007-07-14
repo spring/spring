@@ -64,11 +64,23 @@ BOOL __stdcall DllMain(HINSTANCE hInst,
 }
 #endif
 
+/**
+ * @brief returns the version fo spring this was compiled with
+ *
+ * Returns a const char* string specifying the version of spring used to build this library with.
+ * It was added to aid in lobby creation, where checks for updates to spring occur.
+ */
 DLL_EXPORT const char* __stdcall GetSpringVersion()
 {
 	return VERSION_STRING;
 }
 
+/**
+ * @brief Creates a messagebox with said message
+ * @param p_szMessage const char* string holding the message
+ *
+ * Creates a messagebox with the title "Message from DLL", an OK button, and the specified message
+ */
 DLL_EXPORT void __stdcall Message(const char* p_szMessage)
 {
 	MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
@@ -117,11 +129,24 @@ DLL_EXPORT int __stdcall InitArchiveScanner(void)
 	return 1;
 }
 
+/**
+ * @brief process another unit and return how many are left to process
+ * @return int The number of unprocessed units to be handled
+ *
+ * Call this function repeatedly untill it returns 0 before calling any other function related to units.
+ */
 DLL_EXPORT int __stdcall ProcessUnits(void)
 {
 	return syncer->ProcessUnits();
 }
 
+/**
+ * @brief process another unit and return how many are left to process without checksumming
+ * @return int The number of unprocessed units to be handled
+ *
+ * Call this function repeatedly untill it returns 0 before calling any other function related to units.
+ * This function performs the same operations as ProcessUnits() but it does not generate checksums.
+ */
 DLL_EXPORT int __stdcall ProcessUnitsNoChecksum(void)
 {
 	return syncer->ProcessUnits(false);
@@ -146,11 +171,6 @@ DLL_EXPORT const char * __stdcall GetCurrentList()
 	return GetStr(tmp);
 }
 
-/*void AddClient(int id, char *unitList)
-void RemoveClient(int id)
-char *GetClientDiff(int id)
-void InstallClientDiff(char *diff) */
-
 DLL_EXPORT void __stdcall AddClient(int id, const char *unitList)
 {
 	((CSyncServer *)syncer)->AddClient(id, unitList);
@@ -172,22 +192,44 @@ DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
 	syncer->InstallClientDiff(diff);
 }
 
-/*int GetUnitCount()
-char *GetUnitName(int unit)
-int IsUnitDisabled(int unit)
-int IsUnitDisabledByClient(int unit, int clientId)*/
-
+/**
+ * @brief returns the number of units
+ * @return int number of units processed and available
+ * 
+ * Will return the number of units. Remember to call processUnits() beforehand untill it returns 0
+ * As ProcessUnits is called the number of processed units goes up, and so will the value returned
+ * by this function.
+ *
+ * while(processUnits()){}
+ * int unit_number = GetUnitCount();
+ */
 DLL_EXPORT int __stdcall GetUnitCount()
 {
 	return syncer->GetUnitCount();
 }
 
+/**
+ * @brief returns the units internal mod name
+ * @param int the units id number
+ * @return const char* The units internal modname
+ * 
+ * This function returns the units internal mod name. For example it would return armck and not
+ * Arm Construction kbot.
+ */
 DLL_EXPORT const char * __stdcall GetUnitName(int unit)
 {
 	string tmp = syncer->GetUnitName(unit);
 	return GetStr(tmp);
 }
 
+/**
+ * @brief returns The units human readable name
+ * @param int The units id number
+ * @return const char* The Units human readable name
+ * 
+ * This function returns the units human name. For example it would return Arm Construction kbot
+ * and not armck.
+ */
 DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
 {
 	string tmp = syncer->GetFullUnitName(unit);
