@@ -156,6 +156,7 @@ CGame* game = 0;
 CR_BIND(CGame,(false,std::string(""),std::string(""),NULL));
 
 CR_REG_METADATA(CGame,(
+	CR_RESERVED(4),//r3927
 	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
