@@ -1,27 +1,270 @@
-TASpring change log
+Spring change log
 
-0.next
+0.75b1
 
-- Added string  FBI tag Gaia
-- Added string  FBI tag DecoyFor
-- Added boolean FBI tag CanBeAssisted
-- Added boolean FBI tag CanSelfRepair
-- Added boolean FBI tag TransportByEnemy
-- Added boolean FBI tag HoldSteady
-- Added boolean FBI tag ReleaseHeld
-- Added float   FBI tag SlideTolerance
-- Added float   FBI tag MinCollisionSpeed
-- Added vector  FBI tag CollsionSphereOffset
+Uncategorized or major changes:
+- Added LuaCob, LuaGaia, LuaRules synchronized scripting:
+  - LuaCob:   (mod)  provides access to lua functions for COB scripts
+  - LuaGaia:  (map)  controllers the Gaia team
+  - LuaRules: (mod)  gives full read/ctrl to setup custom mod game rules
+- Merged the LuaUI code with the new lua library setup.
+- Made LuaUI mod widgets possible.
+- Added support for the Gaia team.
+- Added SimpleGroundFlash to explosion generator.
+- Load/save now uses the creg serializer.
+- Added 'dds' and 'png' as default buildpic formats.
 
+AI:
+- Added GetStartPos to IAICallback.
+- Fixed CCommandQueue in AI interface.
+- Load/save support for EconomyAI and MexUpgraderAI.
+- Added AIVAL_UNITLIMIT enabling AIs to query the maximum number of units.
+- Added the ability to unload a specific unit using the UNLOAD_UNIT command
+  (the unitID should be added as the fourth parameter)
+
+Behavorial:
+- Allow up to 16 pads per air base
+- Units can not build stuff on top of cloaked stuff anymore.
+- Units guarding other units now properly repair the other unit if it's damaged.
+- Units guarding factories prioritize repairing the factory instead of building
+  new units.
+- Stunned (and transported) units can not build anymore.
+- Units (that are still paralyzed) are not un-stunned anymore during unloading.
+- Changed the unit resource updates so that they occur even while stunned.
+- Transporters can carry hovers and ships now.
+- Transporters now check ground slope before unloading.
+- Units on a slope steeper than their max slope will now skid down it.
+- Disabled the ground flattening when building mobile units
+- Added paralyzed unit skipping for paralyzers
+  (use ALT to disable skipping, same modifier as for permanent area commands)
+- Made a unit's ablity to slow itself relative to the angle of the slope.
+- Improved aiming of Cannon type weapons. They will no longer over/under shoot
+  due to large height differences.
+- Weapons don't target dead and crashing units anymore.
+- Mobile units under hold position in a temporary attack order don't move away
+  from their patrol route anymore.
+- Added ScriptMoveType (incomplete, but functional). This should be tied into
+  the COB scripting engine, and the 'stop' features and rotationOffset
+  feature should be fixed.
+
+Bugfixes:
+- Removed the maximum 8 sides limit.
+- Fixed incorrect searching order in the virtual file system.
+- Fixed teamcolor for S3O and 3DO features.
+- Fixed cloaked S3O units losing their texture.
+- Fixed teamcolor rendering for MissileProjectile and WeaponProjectile.
+- Fixed handling of .give so team unitlimit is respected.
+- Dynamic and refractive water are now reinitialized after window resize.
+- Fixed rendering of shadows of S3O models with transparency.
+- Fixed rendering of underwater grass.
+- Made LuaUI compatible with VFS access.
+- Fixed SM3 shader for ATI x1* series.
+- And many more
+
+Chat commands:
+- Added an optional [0|1] parameter to the pause command.
+- Added an optional [0|1] parameter to the showHealthBars command.
+- Added an optional [0|1] parameter to the updatefov command.
+- Added an optional [0|1] parameter to the drawtrees command.
+- Added an optional [0|1] parameter to the dynamicsky command.
+- Added an optional [0|1] parameter to the hideinterface command.
+- Added ".editdefs [0|1]" to allow lua based UnitDef editing.
+- Added ".reloadcob <unitName>" to reload cob scripts.
+- Added ".skip <[+|f]seconds>" for in-game and replay fast-forwarding.
+- Added "/safegl [0|1]" command for testing lua rendering overhead.
+- Added "/buffertext <text>", copies text into the console history.
+- Added dynamic "/vsync" control.
+- Added the "/fpshud [0|1]" action.
+- Added "endgraph [0|1]" action.
+- Changed ".take" so that cheating must be enabled for spectators to use it.
+- Added the ability to give features using ".give"
+  (only if the unit name doesn't match, player's team is used)
+- Added input text editing
+  - backspace & delete
+  - home & end  (or ALT+{left|right})
+  - CTRL+{left|right} for word skipping
+- Added the '//' -> '/' command prefix conversion syntax
+- Added the following LuaUI widget handler commands:
+   "/luaui togglewidget  <widgetname>"
+   "/luaui enablewidget  <widgetname>"
+   "/luaui disablewidget <widgetname>"
+
+COB:
+- HitByWeaponId(z,x,id,damage) will be called instead of HitByWeapon if it exist
+  in script.
+- Implemented COB get/set constant STANDINGMOVEORDER (2)
+- Implemented COB get/set constant STANDINGFIREORDER (3)
+- Added a new COB query call, "QueryLandingPadCount".
+  - if not defined, Spring will assume 16 as the maximum number of pads
+  - it takes one argument, which is initially set to 16, the number
+    returned in arg0 will be used as the maximum number of pads.
+- Added COB get constant POW (80) with 2 arguments x and y: it returns x^y.
+- Added COB get constant PRINT (81) which prints it's 4 arguments to infolog.
+- Added COB get constant HEADING (82)
+- Added COB get constant TARGET_ID (83)
+- Added COB get constant LAST_ATTACKER_ID (84)
+- Added COB get/set constant LOS_RADIUS (85)
+- Added COB get/set constant AIR_LOS_RADIUS (86)
+- Added COB get/set constant RADAR_RADIUS (87)
+- Added COB get/set constant JAMMER_RADIUS (88)
+- Added COB get/set constant SONAR_RADIUS (89)
+- Added COB get/set constant SONAR_JAM_RADIUS (90)
+- Added COB get/set constant SEISMIC_RADIUS (91)
+- Added COB get constant DO_SEISMIC_PING (92)
+- Added COB get/set constant CURRENT_FUEL (93)
+- Added COB get constant TRANSPORT_ID (94)
+- Added COB get/set constant SHIELD_POWER (95)
+- Added COB get/set constants LUA0-LUA9 (110-119)
+
+Config:
+- Added "SMFTexAniso" config parameter (default = 0, disabled)
+  (application controlled anisotropic texture filtering for SMF maps)
+- Removed "SM3MaxTextureStages", it's confusing and the fallback mode isnt
+  really useful (still slow).
+
+Fixed exploits:
+- Fixed exploit: UnitRestricted could be circumvented by making multiple
+  factories and starting a build of the restricted unit in all factories at
+  the same time.
+- Fixed exploit: CanAssist could be circumvented if multiple builders were
+  ordered an identical build at the same time out of their immediate range so
+  they had to move.
+
+Game Setup:
+- Added 'lineage' game mode (2). If the commander dies, all units directly or
+  indirectly built by him die, regardless of the current owner of the unit.
+- Added player 'CountryCode' tag for the gameSetup script.
+- Added game setup script parameter 'Savefile'.
+- SaveGame can also be loaded by command line: 'spring QuickSave.ssf' or
+  'spring C:\Spring\Saves\QuickSave.ssf'
+
+GUI:
+- Added land at 80% for aircraft.
+- Better handling and display of widgets which are enabled, but not active.
+- Disable unit tracking when using middle mouse button scrolling.
+- Disable unit tracking when the viewport is set via the minimap.
+- New unit selection filter "in hotkey group".
+- Units being transported can not be selected anymore unless the transporter
+  isfireplatform.
+- Mobile units can be loaded onto a transport by clicking on the transport with
+  the mobile unit selected.
+- Added Free camera mode (to help make better videos). It's primarily intended
+  to be used with keyboard input (CTRL/ALT/SHIFT/META behave differently then
+  the normal camera modes). It's is not in the toggle list by default.
+- Free camera mode has gravity driven sliding.
+- Added CTRL+F5 default keybinding for free camera mode.
+- Added text coloring for ally and spec message input.
+- Changed unit sharing so that allied units do not clear their command
+  queue, and cleaned up some more state for enemy transfers.
+- Allowed build command descriptions to use text in the 4 corners of a button
+  (0 = SW, 1 = NE, 2 = NW, 3 = SE)
+- Added the "hotspot" command for the *.txt mouse cursor spec file
+- Added side preference prefix for start pictures.
+- Allow "allside_" start pictures to always be used (regardless of side).
+
+Mapping:
+- New ocean.jpg (public domain) comes from golgotha texture set and tiles better
+  then original ocean.jpg.
+- Changed default repeat settings so the new texture fits better (wrt. scale)
+- Added "MAP\WATER\WaterRepeatX" and "MAP\WATER\WaterRepeatY" SMD tags, defining
+  the amount of times the water texture should be repeated in X and Y direction.
+- Aspect ratio of water texture is taken into account now.
+
+Unit FBI tags:
 - Added boolean FBI tag AirStrafe.  Only effective if HoverAttack=1.
-  If AirStrafe=1, gunships and construction aircraft will strafe in a circle around the target.
-  If AirStrafe=0, they will not strafe, they will sit stationary in the air firing their weapons.
-  around their target, if set to 0 they sit at one place
+  If AirStrafe=1, gunships and construction aircraft will strafe in a circle
+  around the target. If AirStrafe=0, they will not strafe, they will sit
+  stationary in the air firing their weapons. If set to 0 they sit at one place.
+- Added string FBI tag Gaia.
+- Added string FBI tag DecoyFor: the name of the unit this one is a decoy for.
+- Added boolean FBI tag CanBeAssisted. (default: 1)
+  - Disabling assists to factories should work well.
+  - Builders have to die to release their hold on a unit being built,
+    and once the unit is released, multiple builders can repair the unit.
+- Added boolean FBI tag CanSelfRepair. (default: 0)
+- Added boolean FBI tag TransportByEnemy. (default: 1)
+- Added boolean FBI tag HoldSteady, causes transports to hold units such that
+  their updirs are always aligned.
+- Added boolean FBI tag ReleaseHeld for transports. When set to 1, the units
+  carried by the transport will survive the destruction of the transport itself.
+- Added float FBI tag SlideTolerance, multiplies the the max slope for
+  determining when skidding should begin, due to slope. Values less than 1 will
+  cause the unit to never start skidding due to slope. (default: 2)
+- Added float FBI tag MinCollisionSpeed, indicating the minimum net impact speed
+  that will cause damage to a unit.
+- Added vector FBI tag CollsionSphereOffset
+- Added float FBI tag LoadingRadius
+- Added boolean FBI tag FullHealthFactory, controls whether or not a unit can
+  leave the factory if it is not at full health. (default: 0)
+- Added float FBI tag RepairSpeed  (default: WorkerTime)
+- Added float FBI tag ReclaimSpeed (default: WorkerTime)
+- Added float FBI tag ResurrectSpeed (default: WorkerTime)
+- Added float FBI tag CaptureSpeed (default: WorkerTime)
+- Added float FBI tag TerraformSpeed (default: WorkerTime)
+- Added boolean FBI tag DecloakOnFire (default: 1)
+- Up to 8 ok, select and arrived sounds can now be defined.
+  (use tags ok1, ok2, etc.)
 
-- Added boolean weapon tdf tag canAttackGround.
-
+Weapon TDF tags:
+- Added float weapon TDF tag float TargetBorder: if nonzero, targetting units
+  will TryTarget at the edge of collision sphere (radius*tag_value, [-1;1])
+  instead of its centre. Defaults to 1 for Melee type weapons, 0 otherwise.
+- Added float weapon TDF tag CylinderTargetting: if greater than 0, range will
+  be checked in a cylinder (half height=unitradius*cylinderTargetting) instead
+  of a sphere. Defaults to 1 for Melee type weapons, 0 otherwise.
+- Added float weapon TDF tag MinIntensity: for beamlasers - always hit with some
+  minimum intensity (a damage coeffcient normally dependent on distance).
 - Added weapon tdf command SweepFire, if 1 (default 0) it will make the weapon continue
   firing while it aims for a new target. Only works on continous beam lasers currently.
+- Added boolean weapon TDF tag CanAttackGround. (default: 1)
+- Added float weapon TDF tag SizeDecay: how much a plasma particle is smaller
+  than the previous within the same plasma shot. (default: 0)
+- Added float weapon TDF tag AlphaDecay: how much a plasma particle is more
+  transparent than the previous particle. (default: 1)
+- Added float weapon TDF tag Separation: distance between each plasma particle.
+  (default: 1)
+- Added int weapon TDF tag Stages: number of particles used in one plasma shot.
+  (default: 5)
+- Added boolean weapon TDF tag NoGap: if set to 1, the distance between plasma
+  particles is proportional to the size of the two particles. If set to 0, the
+  distance between plasma particles will be proportional to the size of the
+  first particle. (default: 1)
+- Added the weapons TDF tag 'visibleShieldHitFrames' (defaults to 0 frames)
+  - can be used along with  'visibleShieldHit'
+  - the alpha value fades after the hit
+- Added colormap for ballistic ('cannon' type) weapons.
+
+Scons build system:
+- Added debugdefines configure option: true by default, if it's set to false
+  (debugdefines=no) then a debug build will be made with release preprocessor
+  defines. This can be used to generate debugging symbols for release builds.
+- Added dc_allowed configure option to enable/disable direct control.
+
+Unitsync:
+- Added GetSpringVersion() function to unitsync. This returns the Spring version.
+- Deprecated InitArchiveScanner() unitsync function.
+- Added java bindings to unitsync.
+- Unitsync is now installed to libdir on Linux.
+
+
+TODO: r3861 (imbaczek's patch) to HEAD
+MORE TODO:
+- TODO: kloots range patch (r3338, bug #363)
+- TODO: bug# 263
+- Collision spheres can now be scaled (TODO r 3395)
+- Applied patch by KDR_11k, missle accuracy. (TODO r 3426)
+- Committing 2 patches by FLOZi, fps weapon names and getsetupright. (TODO r 3453)
+- Applied mantis patch 455 (TODO r 3463)
+- Bug #461: Committed patch by M2. ( TODO r 3466)
+- Mantis # 504 (r 3505)
+- Mantis # 508 (r 3541)
+- Mantis # 509 (r 3542)
+- Fix for Mantis #515  --  QuitBox player selection visibility
+  (also threw in the Gaia name change, same code as in ShareBox.cpp) (r3580)
+- Added quantum's texture customization patch (r3612)
+- Applied yuritch's repairMult / reclaimMult / resurrectMult / captureMult patch
+  (closes Mantis #0000527). Updated it for SVN and cleaned it up a little first. (r 3650)
+
 
 
 0.74b3
