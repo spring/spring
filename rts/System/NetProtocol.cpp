@@ -84,8 +84,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 	Pending buffer;
 	buffer.wantedNumber = wantedNumber;
 	int hisNewNumber = InitNewConn(buffer, true);
-	logOutput.Print("Listening to local client on connection %i", wantedNumber);
-	gs->players[wantedNumber]->active=true;
+	gs->players[hisNewNumber]->active=true;
 
 	if (!IsDemoServer()) {
 	// send game data for demo recording
@@ -96,6 +95,8 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 		if (!modName.empty())
 			SendModName(modChecksum, modName);
 	}
+	
+	logOutput.Print("Listening to local client on connection %i", hisNewNumber);
 
 	return 1;
 }
