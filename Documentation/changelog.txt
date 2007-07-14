@@ -5,9 +5,9 @@ Spring change log
 Uncategorized:
 - Added LuaCob, LuaGaia, LuaRules synchronized scripting:
   - LuaCob:   (mod)  provides access to lua functions for COB scripts
-  - LuaGaia:  (map)  controllers the Gaia team
+  - LuaGaia:  (map)  controls the Gaia team
   - LuaRules: (mod)  gives full read/ctrl to setup custom mod game rules
-- Added LuaMaterials (unfinished).
+- Added LuaRules Spring.UnitRendering (LuaMaterials, unfinished).
 - Merged the LuaUI code with the new lua library setup.
 - Made LuaUI mod widgets possible.
 - Added support for the Gaia team.
@@ -47,9 +47,7 @@ Behavorial:
 - Weapons don't target dead and crashing units anymore.
 - Mobile units under hold position in a temporary attack order don't move away
   from their patrol route anymore.
-- Added ScriptMoveType (incomplete, but functional). This should be tied into
-  the COB scripting engine, and the 'stop' features and rotationOffset
-  feature should be fixed.
+- Added ScriptMoveType (incomplete, but functional).
 - Commander doesn't randomly D-gun buildings anymore when FPS mode is disabled.
 - Missiles now honour SprayAngle weapon TDF tag.
 
@@ -138,7 +136,7 @@ Config:
   correct, then this may solve it.
 
 Feature TDF tags:
-- Added boolean feature TDF tag NoSelect. (default: 1)
+- Added boolean feature TDF tag NoSelect. (default: 0)
 
 Fixed exploits:
 - Fixed exploit: UnitRestricted could be circumvented by making multiple
@@ -171,7 +169,6 @@ GUI:
 - Added Free camera mode (to help make better videos). It's primarily intended
   to be used with keyboard input (CTRL/ALT/SHIFT/META behave differently then
   the normal camera modes). It's is not in the toggle list by default.
-- Free camera mode has gravity driven sliding.
 - Added CTRL+F5 default keybinding for free camera mode.
 - Added text coloring for ally and spec message input.
 - Changed unit sharing so that allied units do not clear their command
