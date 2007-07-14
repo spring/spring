@@ -220,9 +220,10 @@ function widget:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage)
+function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
   print('DEBUG (UnitDamaged) '
-        ..unitID..' '..unitDefID..' '..unitTeam..' '..damage)
+        ..unitID..' '..unitDefID..' '..unitTeam..' '
+        ..damage..' '..tostring(paralyzer))
   return
 end
 
