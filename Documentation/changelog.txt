@@ -308,7 +308,8 @@ Unitsync:
 - Added GetSpringVersion() function to unitsync. This returns the Spring version.
 - Deprecated InitArchiveScanner() unitsync function.
 - Added java bindings to unitsync.
-- Unitsync is now installed to libdir on Linux.
+- Unitsync is now installed to libdir on Linux. It can be assumed this is
+  either /usr/local/lib/spring/unitsync.so or /usr/lib/spring/unitsync.so.
 
 
 
