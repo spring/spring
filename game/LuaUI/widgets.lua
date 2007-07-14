@@ -1444,9 +1444,10 @@ function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam, damage)
+function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
+                                   damage, paralyzer)
   for _,w in ipairs(self.UnitDamagedList) do
-    w:UnitDamaged(unitID, unitDefID, unitTeam, damage)
+    w:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
   end
   return
 end

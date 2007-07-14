@@ -146,7 +146,7 @@ public:
 	bool upright;						//if the updir is straight up or align to the ground vector
 	SyncedFloat3 relMidPos;							//= (midPos - pos)
 
-	float travel; // distance moved along frontdire 
+	float travel; // total distance the unit has moved
 	float travelPeriod; // 0.0f disables travel accumulation
 
 //	float3 residualImpulse;	//impulse energy that havent been acted on

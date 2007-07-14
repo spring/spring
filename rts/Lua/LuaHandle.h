@@ -106,7 +106,8 @@ class CLuaHandle {
 		void UnitGiven(const CUnit* unit, int oldTeam);
 
 		void UnitIdle(const CUnit* unit);
-		void UnitDamaged(const CUnit* unit, const CUnit* attacker, float damage);
+		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
+		                 float damage, bool paralyzer);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
