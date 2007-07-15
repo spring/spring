@@ -7,6 +7,10 @@
   File "..\game\spring.exe"
   File "..\game\spring.def"
 
+  ; Devil.dll has been upgraded to 1.6.8rc2
+  ; (even though the DLL properties say 1.6.5, this is a Devil bug...)
+  File "..\mingwlibs\dll\DevIL.dll"
+
   ; ILU.dll is new since 0.75b1
   File "..\mingwlibs\dll\ILU.dll"
 
@@ -26,7 +30,6 @@
 
   ; DLLs
   File "..\game\MSVCR71.dll"
-  File "..\mingwlibs\dll\DevIL.dll"
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
