@@ -67,6 +67,10 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		static void EnableDrawScreenEffects();
+		static void ResetDrawScreenEffects();
+		static void DisableDrawScreenEffects();
+
 		static void EnableDrawScreen();
 		static void ResetDrawScreen();
 		static void DisableDrawScreen();

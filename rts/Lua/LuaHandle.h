@@ -20,10 +20,10 @@ using std::set;
 #include "LuaDisplayLists.h"
 
 
-#define LUA_HANDLE_ORDER_MOD  0
-#define LUA_HANDLE_ORDER_COB  1
-#define LUA_HANDLE_ORDER_GAIA 2
-#define LUA_HANDLE_ORDER_UI   3
+#define LUA_HANDLE_ORDER_RULES 0
+#define LUA_HANDLE_ORDER_COB   1
+#define LUA_HANDLE_ORDER_GAIA  2
+#define LUA_HANDLE_ORDER_UI    3
 
 
 class CUnit;
@@ -129,6 +129,7 @@ class CLuaHandle {
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
+		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
 

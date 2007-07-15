@@ -58,8 +58,10 @@ public:
 	time_t fpstimer, starttime;
 	Uint64 lastUpdate;
 	Uint64 lastMoveUpdate;
-
 	Uint64 lastModGameTimeMeasure;
+
+	Uint64 lastUpdateRaw;
+	float updateDeltaSeconds;
 
 	unsigned int lastframe;
 	float totalGameTime;			//time in seconds, stops at game end

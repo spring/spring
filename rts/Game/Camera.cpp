@@ -226,6 +226,30 @@ void CCamera::Update(bool freeze)
 }
 
 
+static inline bool AABBInOriginPlane(const float3& plane, const float3& camPos,
+                                     const float3& mins, const float3& maxs)
+{
+	float3 fp; // far point
+	fp.x = (plane.x > 0.0f) ? mins.x : maxs.x;
+	fp.y = (plane.y > 0.0f) ? mins.y : maxs.y;
+	fp.z = (plane.z > 0.0f) ? mins.z : maxs.z;
+	return (plane.dot(fp - camPos) < 0.0f);
+}
+
+
+bool CCamera::InView(const float3& mins, const float3& maxs)
+{
+	// Axis-aligned bounding box test  (AABB)
+	if (AABBInOriginPlane(rightside, pos, mins, maxs) &&
+	    AABBInOriginPlane(leftside,  pos, mins, maxs) &&
+	    AABBInOriginPlane(bottom,    pos, mins, maxs) &&
+	    AABBInOriginPlane(top,       pos, mins, maxs)) {
+		return true;
+	}
+	return false;
+}
+
+
 bool CCamera::InView(const float3 &p, float radius)
 {
 	const float3 t = (p - pos);

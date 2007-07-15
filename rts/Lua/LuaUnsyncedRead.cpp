@@ -60,7 +60,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsReplay);
 
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
+	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
+
+	REGISTER_LUA_CFUNC(IsAABBInView);
 	REGISTER_LUA_CFUNC(IsSphereInView);
+
 	REGISTER_LUA_CFUNC(IsUnitAllied);
 	REGISTER_LUA_CFUNC(IsUnitInView);
 	REGISTER_LUA_CFUNC(IsUnitVisible);
@@ -162,6 +166,28 @@ int LuaUnsyncedRead::GetFrameTimeOffset(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, gu->timeOffset);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, game->updateDeltaSeconds);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::IsAABBInView(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	float3 mins = float3((float)luaL_checknumber(L, 1),
+	                     (float)luaL_checknumber(L, 2),
+	                     (float)luaL_checknumber(L, 3));
+	float3 maxs = float3((float)luaL_checknumber(L, 4),
+	                     (float)luaL_checknumber(L, 5),
+	                     (float)luaL_checknumber(L, 6));
+	lua_pushboolean(L, camera->InView(mins, maxs));
 	return 1;
 }
 

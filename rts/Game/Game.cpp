@@ -78,6 +78,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaUnsyncedCtrl.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/FeatureHandler.h"
@@ -404,6 +405,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	lastframe = SDL_GetTicks();
 	lastUpdate = SDL_GetTicks();
 	lastMoveUpdate = SDL_GetTicks();
+	lastUpdateRaw = SDL_GetTicks();
+	updateDeltaSeconds = 0.0f;
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START,0);
@@ -1830,6 +1833,7 @@ bool CGame::DrawWorld()
 	luaCallIns.DrawWorld();
 
 	lineDrawer.UpdateLineStipple();
+	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
 		cursorIcons.Draw();
@@ -1902,10 +1906,15 @@ bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
 
+	const Uint64 currentTime = SDL_GetTicks();
+	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
+	lastUpdateRaw = SDL_GetTicks();
+
+	LuaUnsyncedCtrl::ClearUnitCommandQueues();
+
 	luaCallIns.Update();
 
 	if (!gu->active) {
-		// update LuaUI
 		guihandler->Update();
 		SDL_Delay(10); // milliseconds
 		return true;
@@ -1991,7 +2000,7 @@ bool CGame::Draw()
 		glLoadIdentity();
 	}
 
-	luaCallIns.DrawScreen();
+	luaCallIns.DrawScreenEffects();
 
 	if(mouse->locked){
 		glColor4f(1,1,1,0.5f);
@@ -2014,28 +2023,32 @@ bool CGame::Draw()
 
 	glEnable(GL_TEXTURE_2D);
 
-	if(!hideInterface)
-		minimap->Draw();
-
-	if(!hideInterface)
-		infoConsole->Draw();
-
-	if(!hideInterface) {
-		START_TIME_PROFILE("Interface draw");
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (!inputReceivers.empty()){
-			std::deque<CInputReceiver*>::iterator ri;
-			for(ri=--inputReceivers.end();ri!=inputReceivers.begin();--ri){
-				if ((*ri)&&(*ri!=minimap))
-					(*ri)->Draw();
-			}
-			if (*ri)
-				(*ri)->Draw();
+	START_TIME_PROFILE("Interface draw");
+	{
+		if (hideInterface) {
+			guihandler->Update();
 		}
-		END_TIME_PROFILE("Interface draw");
-	} else {
-		guihandler->Update();
+		else {
+			minimap->Draw();
+
+			infoConsole->Draw();
+
+			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+			if (!inputReceivers.empty()) {
+				std::deque<CInputReceiver*>::reverse_iterator ri;
+				for(ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
+					CInputReceiver* rcvr = *ri;
+					if (rcvr && (rcvr != minimap)) {
+						rcvr->Draw();
+					}
+				}
+			}
+
+		}
+
+		luaCallIns.DrawScreen();
 	}
+	END_TIME_PROFILE("Interface draw");
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -3675,7 +3688,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 	}
 
-	else if(s.find(".take")==0 && (!gu->spectating || gs->cheatEnabled)){
+	else if(s.find(".take")==0 && (!gs->players[player]->spectator || gs->cheatEnabled)){
 		int sendTeam=gs->players[player]->team;
 		for(int a=0;a<gs->activeTeams;++a){
 			if(gs->AlliedTeams(a,sendTeam)){

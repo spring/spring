@@ -63,7 +63,7 @@ end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 --
---  UpdateLayout  --  called every frame
+--  Update()  --  called every frame
 --
 
 activePage = 0
@@ -71,40 +71,26 @@ activePage = 0
 forceLayout = true
 
 
-function UpdateLayout(cmdsChanged, page, alt, ctrl, meta, shift)
+function Update()
+  local currentPage = Spring.GetActivePage()
+  if (forceLayout or (currentPage ~= activePage)) then
+    Spring.ForceLayoutUpdate()  --  for the page number indicator
+    forceLayout = false
+  end
+  activePage = currentPage
 
   fontHandler.Update()
 
-  local needUpdate = forceLayout
-  forceLayout = false
-
-  if (activePage ~= page) then
-    needUpdate = true
-  end
-  activePage = page
-
   widgetHandler:Update()
 
-  return needUpdate
+  return
 end
 
 
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 --
---  DrawScreenItems
---
-
-function DrawScreenItems(windowSizeX, windowSizeY)
-  widgetHandler:SetViewSize(windowSizeX, windowSizeY)
-  widgetHandler:DrawScreenItems()
-end
-
-
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
---
---  WidgetHandler calls
+--  WidgetHandler fixed calls
 --
 
 function Shutdown()
@@ -119,13 +105,9 @@ function CommandNotify(id, params, options)
   return widgetHandler:CommandNotify(id, params, options)
 end
 
-function DrawWorldItems()
-  return widgetHandler:DrawWorldItems()
-end
-
-function DrawScreenItems(vsx, vsy)
+function DrawScreen(vsx, vsy)
   widgetHandler:SetViewSize(vsx, vsy)
-  return widgetHandler:DrawScreenItems()
+  return widgetHandler:DrawScreen()
 end
 
 function KeyPress(key, mods, isRepeat)

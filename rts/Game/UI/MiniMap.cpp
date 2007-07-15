@@ -37,6 +37,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/glExtra.h"
 #include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaUnsyncedCtrl.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
@@ -1112,14 +1113,16 @@ void CMiniMap::DrawForReal()
 	}
 
 	// draw the queued commands
+	//
+	// NOTE: this needlessly adds to the CursorIcons list, but at least
+	//       they are not drawn  (because the input receivers are drawn
+	//       after the command queues)
+  LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-	  // NOTE: this needlessly adds to the CursorIcons list, but at least
-	  //       they are not drawn  (because the input receivers are drawn
-	  //       after the command queues)
 	  selectedUnits.DrawCommands();
-	  glDisable(GL_DEPTH_TEST);
-	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
+	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0) {

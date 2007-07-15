@@ -80,6 +80,7 @@ class CLuaCallInHandler
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
+		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
 
@@ -129,6 +130,7 @@ class CLuaCallInHandler
 		CallInList listDrawWorldShadow;
 		CallInList listDrawWorldReflection;
 		CallInList listDrawWorldRefraction;
+		CallInList listDrawScreenEffects;
 		CallInList listDrawScreen;
 		CallInList listDrawInMiniMap;
 };

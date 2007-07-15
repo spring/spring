@@ -6,6 +6,7 @@
 unitBoxLineWidth  1.49
 unitBox           0.0  1.0  0.0  1.0
 buildBox          0.0  1.0  0.0  1.0
+allyBuildBox      0.8  0.8  0.2  1.0
 buildBoxesOnShift 1
 
 

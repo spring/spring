@@ -9,6 +9,8 @@
 #endif
 
 
+#include "Sim/Units/UnitSet.h"
+
 struct lua_State;
 
 
@@ -16,6 +18,12 @@ class LuaUnsyncedCtrl {
 	public:
 		static bool PushEntries(lua_State* L);
 
+		static void DrawUnitCommandQueues();
+		static void ClearUnitCommandQueues();
+
+	private:
+		static CUnitSet drawCmdQueueUnits;
+		
 	private:
 		static int Echo(lua_State* L);
 
@@ -30,6 +38,8 @@ class LuaUnsyncedCtrl {
 		static int AddWorldIcon(lua_State* L);
 		static int AddWorldText(lua_State* L);
 		static int AddWorldUnit(lua_State* L);
+
+		static int DrawUnitCommands(lua_State* L);
 
 		static int AssignMouseCursor(lua_State* L);
 		static int ReplaceMouseCursor(lua_State* L);

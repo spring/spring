@@ -455,16 +455,29 @@ void CSelectedUnits::Draw()
 	// highlight queued build sites if we are about to build something
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
-		glColor4fv(cmdColors.buildBox);
 		if (!selectedUnits.empty() &&
 				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < guihandler->commands.size()) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
+			bool myColor = true;
+			glColor4fv(cmdColors.buildBox);
 			list<CBuilderCAI*>::const_iterator bi;
 			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
-				if ((*bi)->owner->team == gu->myTeam) {
-					(*bi)->DrawQuedBuildingSquares();
+				CBuilderCAI* builder = *bi;
+				if (builder->owner->team == gu->myTeam) {
+					if (!myColor) {
+						glColor4fv(cmdColors.buildBox);
+						myColor = true;
+					}
+					builder->DrawQuedBuildingSquares();
+				}
+				else if (gs->AlliedTeams(builder->owner->team, gu->myTeam)) {
+					if (myColor) {
+						glColor4fv(cmdColors.allyBuildBox);
+						myColor = false;
+					}
+					builder->DrawQuedBuildingSquares();
 				}
 			}
 		}

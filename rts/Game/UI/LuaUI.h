@@ -66,12 +66,7 @@ class CLuaUI : public CLuaHandle {
 
 		bool ConfigCommand(const string& command);
 
-		bool UpdateLayout(bool commandsChanged, int activePage);
-
 		bool CommandNotify(const Command& cmd);
-
-		bool DrawWorldItems();
-		bool DrawScreenItems();
 
 		bool KeyPress(unsigned short key, bool isRepeat);
 		bool KeyRelease(unsigned short key);
@@ -126,10 +121,6 @@ class CLuaUI : public CLuaHandle {
 		float shockFrontMinPower;
 		float shockFrontDistAdj;
 
-	protected:
-		static Uint32 lastUpdateTime;
-		static float  lastUpdateSeconds;
-
 	private: // call-outs
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
@@ -141,7 +132,6 @@ class CLuaUI : public CLuaHandle {
 		static int SetUnitDefIcon(lua_State* L);
 
 		static int GetFPS(lua_State* L);
-		static int GetLastUpdateSeconds(lua_State* L);
 
 		static int GetMouseState(lua_State* L);
 		static int WarpMouse(lua_State* L);
@@ -163,6 +153,9 @@ class CLuaUI : public CLuaHandle {
 		static int GetActiveCmdDescs(lua_State* L);
 		static int GetActiveCmdDesc(lua_State* L);
 		static int GetCmdDescIndex(lua_State* L);
+
+		static int GetActivePage(lua_State* L);
+		static int ForceLayoutUpdate(lua_State* L);
 
 		static int GetConsoleBuffer(lua_State* L);
 		static int GetCurrentTooltip(lua_State* L);

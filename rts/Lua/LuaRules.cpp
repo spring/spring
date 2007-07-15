@@ -84,7 +84,7 @@ bool CLuaRules::SetConfigString(const string& cfg)
 /******************************************************************************/
 
 CLuaRules::CLuaRules()
-: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_MOD, CobCallback, ".luarules ")
+: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES, CobCallback, ".luarules ")
 {
 	luaRules = this;
 

@@ -573,6 +573,40 @@ void LuaOpenGL::ResetDrawWorldRefraction()
 
 /******************************************************************************/
 //
+//  ScreenEffects -- same as Screen
+//
+
+void LuaOpenGL::EnableDrawScreenEffects()
+{
+	EnableCommon(DRAW_SCREEN);
+	resetMatrixFunc = ResetScreenMatrices;
+
+	SetupScreenMatrices();
+	SetupScreenLighting();
+	glCallList(resetStateList);
+	glEnable(GL_NORMALIZE);
+}
+
+
+void LuaOpenGL::DisableDrawScreenEffects()
+{
+	RevertScreenLighting();
+	RevertScreenMatrices();
+	DisableCommon(DRAW_SCREEN);
+}
+
+
+void LuaOpenGL::ResetDrawScreenEffects()
+{
+	if (safeMode) {
+		ResetScreenMatrices();
+		glCallList(resetStateList);
+	}
+}
+
+
+/******************************************************************************/
+//
 //  Screen
 //
 

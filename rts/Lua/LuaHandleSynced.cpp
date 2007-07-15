@@ -354,6 +354,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	    !SetupUnsyncedFunction("DrawWorldShadow")     ||
 	    !SetupUnsyncedFunction("DrawWorldReflection") ||
 	    !SetupUnsyncedFunction("DrawWorldRefraction") ||
+	    !SetupUnsyncedFunction("DrawScreenEffects")   ||
 	    !SetupUnsyncedFunction("DrawScreen")          ||
 	    !SetupUnsyncedFunction("DrawInMiniMap")) {
 		return false;
