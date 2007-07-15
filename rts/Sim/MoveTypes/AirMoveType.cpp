@@ -956,22 +956,25 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	}
 #endif
 
+
+	speed += engineVector * maxAcc * engine;
+	speed.y += gs->gravity * myGravity;
+	speed *= invDrag;
+
+	float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
+	float wingForce = wingDir.dot(speed) * wingDrag;
+	speed -= wingDir * wingForce;
+
+	frontdir += rightdir * rudder * maxRudder * speedf;
+	updir += rightdir * aileron * maxAileron * speedf;
+	frontdir += updir * elevator * maxElevator * speedf;
+	frontdir += (speeddir - frontdir) * frontToSpeed;
+	speed += (frontdir * speedf - speed) * speedToFront;
+
 	if (nextPosInBounds) {
-		speed += engineVector * maxAcc * engine;
-		speed.y += gs->gravity * myGravity;
-		speed *= invDrag;
-
-		float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
-		float wingForce = wingDir.dot(speed) * wingDrag;
-		speed -= wingDir * wingForce;
-
-		frontdir += rightdir * rudder * maxRudder * speedf;
-		updir += rightdir * aileron * maxAileron * speedf;
-		frontdir += updir * elevator * maxElevator * speedf;
-		frontdir += (speeddir - frontdir) * frontToSpeed;
-		speed += (frontdir * speedf - speed) * speedToFront;
 		pos += speed;
 	}
+
 
 	if (gHeight > owner->pos.y - owner->model->radius * 0.2f && !owner->crashing) {
 		float3 gNormal = ground->GetNormal(pos.x, pos.z);
