@@ -19,9 +19,6 @@ CallInsList = {
   "ConfigureLayout",
   "CommandNotify",
 
-  "DrawWorldItems",
-  "DrawScreenItems",
-
   "KeyPress",
   "KeyRelease",
   "MouseMove",
@@ -58,6 +55,7 @@ CallInsList = {
   "DrawWorldShadow",
   "DrawWorldReflection",
   "DrawWorldRefraction",
+  "DrawScreenEffects",
   "DrawScreen",
   "DrawInMiniMap",
 

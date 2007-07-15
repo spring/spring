@@ -17,13 +17,26 @@ using namespace std;
 #include "Game/Camera.h"
 #include "Game/CameraController.h"
 #include "Game/SelectedUnits.h"
+#include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/MouseHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
+
+static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
+static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
 
 
 /******************************************************************************/
@@ -49,6 +62,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddWorldIcon);
 	REGISTER_LUA_CFUNC(AddWorldText);
 	REGISTER_LUA_CFUNC(AddWorldUnit);
+
+	REGISTER_LUA_CFUNC(DrawUnitCommands);
 
 	REGISTER_LUA_CFUNC(AssignMouseCursor);
 	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
@@ -111,17 +126,44 @@ static inline bool CanCtrlAllyTeam(int allyteam)
 //  Parsing helpers
 //
 
-static inline CUnit* ParseSelectUnit(lua_State* L,
-                                     const char* caller, int luaIndex)
+static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_isnumber(L, luaIndex)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
+	if (!lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		} else {
+			return NULL;
+		}
 	}
-	const int unitID = (int)lua_tonumber(L, luaIndex);
+	const int unitID = (int)lua_tonumber(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		return NULL;
+	}
+	return unit;
+}
+
+
+static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+	if (unit == NULL) {
+		return NULL;
+	}
+	if (readAllyTeam < 0) {
+		return fullRead ? unit : NULL;
+	}
+	return (unit->allyteam == readAllyTeam) ? unit : NULL;
+}
+
+
+static inline CUnit* ParseSelectUnit(lua_State* L,
+                                     const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -133,6 +175,51 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 		return unit;
 	}
 	return NULL;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+void LuaUnsyncedCtrl::DrawUnitCommandQueues()
+{
+	if (drawCmdQueueUnits.empty()) {
+		return;
+	}
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+
+	lineDrawer.Configure(cmdColors.UseColorRestarts(),
+	                     cmdColors.UseRestartColor(),
+	                     cmdColors.restart,
+	                     cmdColors.RestartAlpha());
+	lineDrawer.SetupLineStipple();
+
+	glEnable(GL_BLEND);
+	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
+	            (GLenum)cmdColors.QueuedBlendDst());
+
+	glLineWidth(cmdColors.QueuedLineWidth());
+
+	const CUnitSet& units = drawCmdQueueUnits;
+	CUnitSet::const_iterator ui;
+	for (ui = units.begin(); ui != units.end(); ++ui) {
+		CUnit* unit = *ui;
+		if (unit) {
+			unit->commandAI->DrawCommands();
+		}
+	}
+	
+	glLineWidth(1.0f);
+
+	glEnable(GL_DEPTH_TEST);
+}
+
+
+void LuaUnsyncedCtrl::ClearUnitCommandQueues()
+{
+	drawCmdQueueUnits.clear();	
 }
 
 
@@ -294,6 +381,30 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	}
 	const int facing = (int)lua_tonumber(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
+{
+	if (lua_istable(L, 1)) {
+		const bool isMap = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+		const int unitArg = isMap ? -2 : -1;
+		const int table = 1;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_isnumber(L, -2)) {
+				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
+				if (unit != NULL) {
+					drawCmdQueueUnits.insert(unit);
+				}
+			}
+		}
+		return 0;
+	}
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit != NULL) {
+		drawCmdQueueUnits.insert(unit);
+	}
 	return 0;
 }
 

@@ -743,6 +743,29 @@ void CLuaHandle::DrawScreen()
 }
 
 
+void CLuaHandle::DrawScreenEffects()
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("DrawScreenEffects");
+	if (!LoadDrawCallIn(cmdStr)) {
+		lua_settop(L, 0);
+		return;
+	}
+	
+	lua_pushnumber(L, gu->viewSizeX);
+	lua_pushnumber(L, gu->viewSizeY);
+
+	synced = false;
+
+	// call the routine
+	RunCallIn(cmdStr, 2, 0);
+
+	synced = !userMode;
+
+	return;
+}
+
+
 void CLuaHandle::DrawInMiniMap()
 {
 	lua_settop(L, 0);

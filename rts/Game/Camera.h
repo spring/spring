@@ -12,6 +12,7 @@ public:
 	float3 CalcWindowCoordinates(const float3& objPos);
 	void UpdateForward();
 	bool InView(const float3& p,float radius=0);
+	bool InView(const float3& mins, const float3& maxs);
 	void Update(bool freeze);
 	CCamera();
 	virtual ~CCamera();

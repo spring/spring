@@ -52,6 +52,7 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["DrawWorldShadow"]     = &listDrawWorldShadow;
 	callInMap["DrawWorldReflection"] = &listDrawWorldReflection;
 	callInMap["DrawWorldRefraction"] = &listDrawWorldRefraction;
+	callInMap["DrawScreenEffects"]   = &listDrawScreenEffects;
 	callInMap["DrawScreen"]          = &listDrawScreen;
 	callInMap["DrawInMiniMap"]       = &listDrawInMiniMap;
 }
@@ -106,6 +107,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(DrawWorldShadow);
 	ADDHANDLE(DrawWorldReflection);
 	ADDHANDLE(DrawWorldRefraction);
+	ADDHANDLE(DrawScreenEffects);
 	ADDHANDLE(DrawScreen);
 	ADDHANDLE(DrawInMiniMap);
 }
@@ -150,6 +152,7 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listDrawWorldShadow, lh);
 	ListRemove(listDrawWorldReflection, lh);
 	ListRemove(listDrawWorldRefraction, lh);
+	ListRemove(listDrawScreenEffects, lh);
 	ListRemove(listDrawScreen, lh);
 	ListRemove(listDrawInMiniMap, lh);
 }
@@ -172,6 +175,7 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 	    (ciName == "DrawWorldShadow")     ||
 	    (ciName == "DrawWorldReflection") ||
 	    (ciName == "DrawWorldRefraction") ||
+	    (ciName == "DrawScreenEffects")   ||
 	    (ciName == "DrawScreen")          ||
 	    (ciName == "DrawInMiniMap")) {
 		return true;
@@ -296,6 +300,7 @@ DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
+DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
 

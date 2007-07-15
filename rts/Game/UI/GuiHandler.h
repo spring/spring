@@ -51,6 +51,8 @@ class CGuiHandler : public CInputReceiver {
 
 		bool ReloadConfig(const string& filename);
 
+		void ForceLayoutUpdate() { forceLayoutUpdate = true; }
+
 		int GetMaxPage()    const { return maxPage; }
 		int GetActivePage() const { return activePage; }
 

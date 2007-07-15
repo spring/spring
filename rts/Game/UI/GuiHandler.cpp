@@ -942,17 +942,12 @@ void CGuiHandler::Update()
 
 	const bool commandsChanged = selectedUnits.CommandsChanged();
 
-	bool handlerUpdate = false;
-	if (luaUI != NULL) {
-		handlerUpdate = luaUI->UpdateLayout(commandsChanged, activePage);
-	}
-
 	if (commandsChanged) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
 		fadein = 100;
 	}
-	else if (forceLayoutUpdate || handlerUpdate) {
+	else if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
 
@@ -2570,10 +2565,6 @@ void CGuiHandler::Draw()
 		DrawButtons();
 	}
 
-	if (luaUI != NULL) {
-		luaUI->DrawScreenItems();
-	}
-
 	glPopAttrib();
 }
 
@@ -3750,12 +3741,6 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	}
 
 	glLineWidth(1.0f);
-
-	if (!onMinimap) {
-		if (luaUI != NULL) {
-			luaUI->DrawWorldItems();
-		}
-	}
 
 	if (minimapCoords) {
 		camera->pos = tmpCamPos;

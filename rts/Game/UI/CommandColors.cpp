@@ -100,6 +100,7 @@ CCommandColors::CCommandColors()
 	SETUP_COLOR(rangeInterceptorOff, 0.0f, 0.0f, 0.0f, 0.7f);
 	SETUP_COLOR(unitBox,             0.0f, 1.0f, 0.0f, 0.9f);
 	SETUP_COLOR(buildBox,            0.0f, 1.0f, 0.0f, 0.9f);
+	SETUP_COLOR(allyBuildBox,        0.8f, 0.8f, 0.2f, 0.9f);
 	SETUP_COLOR(mouseBox,            1.0f, 1.0f, 1.0f, 0.9f);
 }
 

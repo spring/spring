@@ -22,7 +22,11 @@ class LuaUnsyncedRead {
 		static int IsReplay(lua_State* L);
 
 		static int GetFrameTimeOffset(lua_State* L);
+		static int GetLastUpdateSeconds(lua_State* L);
+
+		static int IsAABBInView(lua_State* L);
 		static int IsSphereInView(lua_State* L);
+
 		static int IsUnitAllied(lua_State* L);
 		static int IsUnitInView(lua_State* L);
 		static int IsUnitVisible(lua_State* L);

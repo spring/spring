@@ -120,10 +120,12 @@ local flexCallIns = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'DrawWorld',
   'DrawWorldPreUnit',
   'DrawWorldShadow',
   'DrawWorldReflection',
   'DrawWorldRefraction',
+  'DrawScreenEffects',
   'DrawInMiniMap'
 }
 local flexCallInMap = {}
@@ -138,7 +140,6 @@ local callInLists = {
   'CommandNotify',
   'AddConsoleLine',
   'ViewResize',
-  'DrawWorld',
   'DrawScreen',
   'KeyPress',
   'KeyRelease',
@@ -697,6 +698,12 @@ end
 
 function widgetHandler:UpdateCallIn(name)
   local listName = name .. 'List'
+  if ((name == 'Update')     or
+      (name == 'DrawScreen')) then
+--      (name == 'DrawWorld')) then
+    return
+  end
+
   if ((#self[listName] > 0) or
       (not flexCallInMap[name]) or
       ((name == 'GotChatMsg')     and actionHandler.HaveChatAction()) or
@@ -1109,14 +1116,8 @@ function widgetHandler:ViewResize(vsx, vsy)
 end
 
 
-function widgetHandler:DrawWorldItems()
-  for _,w in ripairs(self.DrawWorldList) do
-    w:DrawWorld()
-  end
-  return
-end
 
-function widgetHandler:DrawScreenItems()
+function widgetHandler:DrawScreen()
   if (self.tweakMode) then
     gl.Color(0, 0, 0, 0.5)
     local sx, sy = self.xViewSize, self.yViewSize
@@ -1130,6 +1131,14 @@ function widgetHandler:DrawScreenItems()
     if (self.tweakMode and w.TweakDrawScreen) then
       w:TweakDrawScreen()
     end
+  end
+  return
+end
+
+
+function widgetHandler:DrawWorld()
+  for _,w in ripairs(self.DrawWorldList) do
+    w:DrawWorld()
   end
   return
 end
@@ -1162,6 +1171,14 @@ end
 function widgetHandler:DrawWorldRefraction()
   for _,w in ripairs(self.DrawWorldRefractionList) do
     w:DrawWorldRefraction()
+  end
+  return
+end
+
+
+function widgetHandler:DrawScreenEffects(vsx, vsy)
+  for _,w in ripairs(self.DrawScreenEffectsList) do
+    w:DrawScreenEffects(vsx, vsy)
   end
   return
 end

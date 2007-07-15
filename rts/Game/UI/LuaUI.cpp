@@ -108,10 +108,6 @@ void CLuaUI::FreeHandler()
 
 /******************************************************************************/
 
-Uint32 CLuaUI::lastUpdateTime = SDL_GetTicks();
-float  CLuaUI::lastUpdateSeconds = 0.0f;
-
-
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, NULL)
 {
@@ -127,9 +123,6 @@ CLuaUI::CLuaUI()
 	shockFrontMinArea  = 0.0f;
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
-
-	lastUpdateTime = SDL_GetTicks();
-	lastUpdateSeconds = 0.0f;
 
 	const string code = LoadFile("gui.lua");
 	if (code.empty()) {
@@ -233,11 +226,7 @@ bool CLuaUI::HasCallIn(const string& name)
 	}
 
 	// never allow these calls
-	// (use UpdateLayout, ShockFront, DrawWorldItems, and DrawScreenItems instead)
-	if ((name == "Update")    ||
-	    (name == "Explosion") ||
-	    (name == "DrawWorld") ||
-	    (name == "DrawScreen")) {
+	if (name == "Explosion") {
 		return false;
 	}
 
@@ -253,11 +242,11 @@ bool CLuaUI::HasCallIn(const string& name)
 
 bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 {
-	if ((name == "Update")    ||
-	    (name == "DrawWorld") ||
-	    (name == "DrawScreen")) {
+	// never allow these calls
+	if (name == "Explosion") {
 		return false;
 	}
+
 	if (HasCallIn(name)) {
 		luaCallIns.InsertCallIn(this, name);
 	} else {
@@ -301,7 +290,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
 
 	REGISTER_LUA_CFUNC(GetFPS);
-	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
 
 	REGISTER_LUA_CFUNC(SetActiveCommand);
 	REGISTER_LUA_CFUNC(GetActiveCommand);
@@ -309,6 +297,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActiveCmdDescs);
 	REGISTER_LUA_CFUNC(GetActiveCmdDesc);
 	REGISTER_LUA_CFUNC(GetCmdDescIndex);
+
+	REGISTER_LUA_CFUNC(GetActivePage);
+	REGISTER_LUA_CFUNC(ForceLayoutUpdate);
 
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
@@ -439,56 +430,6 @@ bool CLuaUI::AddConsoleLines(lua_State* L)
 }
 
 
-bool CLuaUI::UpdateLayout(bool commandsChanged, int activePage)
-{
-	if (killMe) {
-		string msg = name;
-		if (!killMsg.empty()) {
-			msg += ": " + killMsg;
-		}
-		logOutput.Print("Disabled %s\n", msg.c_str());
-		delete this;
-		return true; // force the update
-	}
-
-	// update the timer
-	const Uint32 newTime = SDL_GetTicks();
-	lastUpdateSeconds = 0.001f * (newTime - lastUpdateTime);
-	lastUpdateTime = newTime;
-
-	// add new lines from the console buffer
-	AddConsoleLines(L);
-
-	lua_settop(L, 0);
-	static const LuaHashString cmdStr("UpdateLayout");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
-		return false;
-	}
-
-	lua_pushboolean(L, commandsChanged);
-	lua_pushnumber(L,  activePage);
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
-
-	if (!RunCallIn(cmdStr, 6, 1)) {
-		return false;
-	}
-
-	if (!lua_isboolean(L, 1)) {
-		logOutput.Print("UpdateLayout() expects a boolean return value\n");
-		return false;
-	}
-
-	const bool forceLayout = !!lua_toboolean(L, 1);
-	lua_settop(L, 0);
-
-	return forceLayout;
-}
-
-
 bool CLuaUI::CommandNotify(const Command& cmd)
 {
 	lua_settop(L, 0);
@@ -605,51 +546,6 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 	}
 
 	return;
-}
-
-
-/******************************************************************************/
-
-bool CLuaUI::DrawWorldItems()
-{
-	lua_settop(L, 0);
-	static const LuaHashString cmdStr("DrawWorldItems");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
-		return true; // the call is not defined
-	}
-
-	LuaOpenGL::EnableDrawWorld();
-
-	// call the routine
-	bool retval = RunCallIn(cmdStr, 0, 0);
-
-	LuaOpenGL::DisableDrawWorld();
-
-	return retval;
-}
-
-
-bool CLuaUI::DrawScreenItems()
-{
-	lua_settop(L, 0);
-	static const LuaHashString cmdStr("DrawScreenItems");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
-		return true; // the call is not defined
-	}
-
-	LuaOpenGL::EnableDrawScreen();
-
-	lua_pushnumber(L, gu->viewSizeX);
-	lua_pushnumber(L, gu->viewSizeY);
-
-	// call the routine
-	bool retval = RunCallIn(cmdStr, 2, 0);
-
-	LuaOpenGL::DisableDrawScreen();
-
-	return retval;
 }
 
 
@@ -1391,14 +1287,6 @@ int CLuaUI::GetFPS(lua_State* L)
 }
 
 
-int CLuaUI::GetLastUpdateSeconds(lua_State* L)
-{
-	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, lastUpdateSeconds);
-	return 1;
-}
-
-
 int CLuaUI::SendCommands(lua_State* L)
 {
 	if ((guihandler == NULL) || gs->noHelperAIs) {
@@ -1636,6 +1524,29 @@ int CLuaUI::GetCmdDescIndex(lua_State* L)
 			return 1;
 		}
 	}
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::GetActivePage(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, guihandler->GetActivePage());
+	lua_pushnumber(L, guihandler->GetMaxPage());
+	return 2;
+}
+
+
+int CLuaUI::ForceLayoutUpdate(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	guihandler->ForceLayoutUpdate();
 	return 0;
 }
 
