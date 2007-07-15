@@ -145,6 +145,7 @@ Fixed exploits:
   the same time.
 - Fixed exploit: CanAssist could be circumvented if multiple builders were
   ordered an identical build at the same time out of their immediate range.
+- Fixed exploit: Aircraft can not cross map boundaries anymore in FPS mode.
 
 Game Setup:
 - Added 'lineage' game mode (2). If the commander dies, all units directly or
