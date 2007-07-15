@@ -113,6 +113,7 @@
         for more info.</li>
     <li>Added ACQUIREUSERID and USERID commands. See documentation bellow for further details.</li>
     <li>Added 'url' parameter to SERVERMSGBOX command.</li>
+    <li>Added lineage mode to "end game condition" parameter (which is used with several commands).</li>
   </ul>
   
   </p>
@@ -873,7 +874,7 @@
         Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
-        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies)
+        Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
         </Argument>
         <Argument Name="limitdgun" Optional="no" Sentence="no"/>
         <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
@@ -1100,7 +1101,7 @@
         Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
-        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies).
+        Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
         </Argument>
         <Argument Name="limitdgun" Optional="no" Sentence="no"/>
         <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
@@ -1127,7 +1128,7 @@
         Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
-        Can only be 0 or 1 (0=game continues, 1=game ends if commander dies).
+        Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
         </Argument>
         <Argument Name="limitdgun" Optional="no" Sentence="no"/>
         <Argument Name="diminishingMMs" Optional="no" Sentence="no"/>
