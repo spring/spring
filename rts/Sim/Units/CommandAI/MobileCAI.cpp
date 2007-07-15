@@ -368,7 +368,11 @@ void CMobileCAI::ExecuteLoadUnits(Command &c){
 		FinishCommand();
 		return;
 	}
-	float3 pos = uh->units[(int)c.params[0]]->pos;
+	CUnit *unit = uh->units[(int)c.params[0]];
+	if (!unit) {
+		return;
+	}
+	float3 pos = unit->pos;
 	if((pos - goalPos).SqLength2D() > cancelDistance){
 		SetGoal(pos, owner->pos);
 	}
