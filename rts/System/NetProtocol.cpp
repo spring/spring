@@ -95,7 +95,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 		if (!modName.empty())
 			SendModName(modChecksum, modName);
 	}
-	
+
 	logOutput.Print("Listening to local client on connection %i", hisNewNumber);
 
 	return 1;
@@ -565,22 +565,18 @@ int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) 
 
 /** @brief This performs a read ahead in the network buffer.
 It returns the position in inbuf on which the first fragmented message starts.
-If que is not null it is set to the number of NETMSG_NEWFRAME messages in the
+If que is not null it is incremented for each NETMSG_NEWFRAME message in the
 buffer. */
 int CNetProtocol::ReadAhead(const unsigned char* inbuf, int inbuflength, int* que) const
 {
 	int pos = 0;
 	int lastLength;
-	int newFrameCount = 0;
 
 	while ((lastLength = GetMessageLength(inbuf + pos, inbuflength - pos)) != 0) {
-		if (inbuf[pos] == NETMSG_NEWFRAME)
-			++newFrameCount;
+		if (inbuf[pos] == NETMSG_NEWFRAME && que != NULL)
+			++*que;
 		pos += lastLength;
 	}
-
-	if (que != NULL)
-		*que = newFrameCount;
 
 	return pos;
 }

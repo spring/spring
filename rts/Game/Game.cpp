@@ -209,6 +209,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	leastQue=0;
 	timeLeft=0.0f;
 
+	que = 0;
 	oldframenum=0;
 	if(server)
 		gs->players[0]->readyToStart=true;
@@ -2475,8 +2476,6 @@ bool CGame::ClientReadNet()
 		inbufpos=0;
 	}
 
-	int que;
-
 	if ((a = net->GetData(&inbuf[inbuflength], netcode::NETWORK_BUFFER_SIZE*2-inbuflength, gameSetup ? gameSetup->myPlayer : 0, &que)) == -1) {
 		return gameOver;
 	}
@@ -2715,6 +2714,7 @@ bool CGame::ClientReadNet()
 			break;
 
 		case NETMSG_NEWFRAME:
+			--que;
 			if(!gameServer)
 				timeLeft-=1;
 			net->SendNewFrame(gs->frameNum);
