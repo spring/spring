@@ -14,7 +14,7 @@ if [ ! -x /usr/bin/svn ]; then
 fi
 
 version="$1"
-svnbase="https://taspring.clan-sy.com/svn/spring"
+svnbase="https://spring.clan-sy.com/svn/spring"
 
 if [ "$version" = "trunk" ]; then
 	svnurl="$svnbase/trunk"
@@ -68,7 +68,7 @@ include=" \
 # On linux, win32 executables are useless.
 # TASClient is windows only.
 linux_exclude="$dir/installer/pkzip.exe $dir/TASClient/brcc32.exe"
-linux_include="$dir/UnityLobby"
+linux_include=""
 windows_exclude=""
 windows_include="$dir/TASClient/"
 
