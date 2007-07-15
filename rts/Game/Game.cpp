@@ -1837,8 +1837,8 @@ bool CGame::DrawWorld()
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
-		cursorIcons.Draw();
 	}
+	cursorIcons.Draw();
 	cursorIcons.Clear();
 
 	mouse->Draw();

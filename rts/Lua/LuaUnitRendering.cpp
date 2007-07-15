@@ -185,9 +185,11 @@ static const map<string, LuaMatType>& GetMatNameMap()
 {
 	static map<string, LuaMatType> matNameMap;
 	if (matNameMap.empty()) {
-		matNameMap["alpha"]  = LUAMAT_ALPHA;
-		matNameMap["opaque"] = LUAMAT_OPAQUE;
-		matNameMap["shadow"] = LUAMAT_SHADOW;
+		matNameMap["alpha"]          = LUAMAT_ALPHA;
+		matNameMap["opaque"]         = LUAMAT_OPAQUE;
+		matNameMap["alpha_reflect"]  = LUAMAT_ALPHA_REFLECT;
+		matNameMap["opaque_reflect"] = LUAMAT_OPAQUE_REFLECT;
+		matNameMap["shadow"]         = LUAMAT_SHADOW;
 	}
 	return matNameMap;
 }

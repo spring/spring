@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 --
 --  file:    callins.lua
---  brief:   wrapper to make sure that all call-ins exist after initialization
+--  brief:   array and map of call-ins
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.
@@ -15,7 +15,6 @@ CallInsList = {
 
   "Shutdown",
   "LayoutButtons",
-  "UpdateLayout",
   "ConfigureLayout",
   "CommandNotify",
 

@@ -198,7 +198,9 @@ extern GLfloat FogLand[];
 inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	if (unit->isCloaked) {
-		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_ALPHA];
+		const LuaMatType matType =
+			(water->drawReflection) ? LUAMAT_ALPHA_REFLECT : LUAMAT_ALPHA;
+		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
 		unit->currentLOD = lod;
 		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
@@ -213,7 +215,9 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 		}
 	}
 	else {
-		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_OPAQUE];
+		const LuaMatType matType =
+			(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
 		unit->currentLOD = lod;
 		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
@@ -253,7 +257,7 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 }
 
 
-void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
+void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	ASSERT_UNSYNCED_MODE;
 
@@ -261,7 +265,8 @@ void CUnitDrawer::Draw(bool drawReflection,bool drawRefraction)
 	vector<CUnit*> drawStat;
 	drawCloaked.clear();
 	drawCloakedS3O.clear();
-	
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glFogfv(GL_FOG_COLOR,FogLand);
 
 	vector<CUnit*> drawIcon;
