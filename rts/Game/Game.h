@@ -51,6 +51,7 @@ public:
 	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
 	bool ActionReleased(const CKeyBindings::Action&);
 
+	int que;
 	unsigned int oldframenum;
 	unsigned int fps;
 	unsigned int thisFps;

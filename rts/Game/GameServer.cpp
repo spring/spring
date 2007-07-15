@@ -471,7 +471,7 @@ bool CGameServer::ServerReadNet()
 						int frameNum = *(int*)&inbuf[inbufpos+2];
 						if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 							syncResponse[a][frameNum] = *(unsigned*)&inbuf[inbufpos+6];
-						else if (serverframenum > delayedSyncResponseFrame) {
+						else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
 							delayedSyncResponseFrame = serverframenum;
 							logOutput.Print("Delayed respone from %s for frame %d (current %d)",
 											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
