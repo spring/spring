@@ -17,7 +17,7 @@ end
 
 -- Return the modname this script wants
 function MissionTest:GetModName()
-    return "xtape.sd7"
+    return "XTAPE.sdz"
 end
 
 -- This function is executed every simulated frame (30 times/sec)
