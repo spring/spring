@@ -285,7 +285,6 @@ bool CGameSetup::Init(const char* buf, int size)
 
 void CGameSetup::Draw()
 {
-	const float yScale = 20.0f / (float)gu->viewSizeX;
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glPushMatrix();
 	glTranslatef(0.3f, 0.7f, 0.0f);
