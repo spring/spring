@@ -4821,11 +4821,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Lua\LuaBoolOps.cpp"
+						RelativePath="..\..\Lua\LuaBitOps.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Lua\LuaBoolOps.h"
+						RelativePath="..\..\Lua\LuaBitOps.h"
 						>
 					</File>
 					<File
@@ -4925,6 +4925,14 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\Lua\LuaMaterial.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaMaterial.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\Lua\LuaOpenGL.cpp"
 						>
 					</File>
@@ -4997,11 +5005,27 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\Lua\LuaUniqueBin.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\Lua\LuaUnitDefs.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\..\Lua\LuaUnitDefs.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnitMaterial.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnitRendering.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Lua\LuaUnitRendering.h"
 						>
 					</File>
 					<File

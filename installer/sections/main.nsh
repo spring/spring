@@ -7,6 +7,12 @@
   File "..\game\spring.exe"
   File "..\game\spring.def"
 
+  ; ILU.dll is new since 0.75b1
+  File "..\mingwlibs\dll\ILU.dll"
+
+  ; zlibwapi.dll one is removed since 0.75b1
+  Delete "$INSTDIR\zlibwapi.dll"
+
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
   File "..\game\selectkeys.txt"
@@ -20,7 +26,12 @@
 
   ; DLLs
   File "..\game\MSVCR71.dll"
-  File "..\mingwlibs\dll\*.dll"
+  File "..\mingwlibs\dll\DevIL.dll"
+  File "..\mingwlibs\dll\freetype6.dll"
+  File "..\mingwlibs\dll\glew32.dll"
+  File "..\mingwlibs\dll\python25.dll"
+  File "..\mingwlibs\dll\SDL.dll"
+  File "..\mingwlibs\dll\zlib1.dll"
 
   File "..\game\PALETTE.PAL"
   
