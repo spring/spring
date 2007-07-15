@@ -186,21 +186,23 @@ void CAirMoveType::Update(void)
 	if (owner->directControl && !(aircraftState == AIRCRAFT_CRASHING)) {
 		SetState(AIRCRAFT_FLYING);
 		DirectControlStruct* dc = owner->directControl;
-		
-		inefficientAttackTime=0;
-		if(dc->forward || dc->back || dc->left || dc->right){
-			float aileron=0;
-			float elevator=0;
-			if(dc->forward)
-				elevator-=1;
-			if(dc->back)
-				elevator+=1;
-			if(dc->right)
-				aileron+=1;
-			if(dc->left)
-				aileron-=1;
-			UpdateAirPhysics(0,aileron,elevator,1,owner->frontdir);
-			maneuver=0;
+		inefficientAttackTime = 0;
+
+		if (dc->forward || dc->back || dc->left || dc->right) {
+			float aileron = 0;
+			float elevator = 0;
+			if (dc->forward)
+				elevator -= 1;
+			if (dc->back)
+				elevator += 1;
+			if (dc->right)
+				aileron += 1;
+			if (dc->left)
+				aileron -= 1;
+
+			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
+			maneuver = 0;
+
 			goto EndNormalControl;		//ok so goto is bad i know
 		}
 	}
@@ -924,75 +926,81 @@ void CAirMoveType::UpdateLanding(void)
 
 
 
-void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector)
+void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator, float engine, const float3& engineVector)
 {
 	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
+	bool nextPosInBounds = true;
 
-	lastRudderPos=rudder;
-	lastAileronPos=aileron;
-	lastElevatorPos=elevator;
+	lastRudderPos = rudder;
+	lastAileronPos = aileron;
+	lastElevatorPos = elevator;
 
-	float speedf=speed.Length();
-	float3 speeddir=frontdir;
-	if(speedf!=0)
-		speeddir=speed/speedf;
+	float speedf = speed.Length();
+	float3 speeddir = frontdir;
+	if (speedf != 0)
+		speeddir = speed / speedf;
 
-	float gHeight=ground->GetHeight(pos.x,pos.z);
+	float gHeight = ground->GetHeight(pos.x, pos.z);
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(owner->directControl)
-		if((pos.y-gHeight)>wantedHeight*1.2f)
-			engine=max(0.0f,min(engine,1-(pos.y-gHeight-wantedHeight*1.2f)/wantedHeight));
+	if (owner->directControl) {
+		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
+			engine = max(0.0f, min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
+		}
+		// check next position given current (unadjusted) pos and speed
+		nextPosInBounds = (pos + speed).CheckInBounds();
+	}
 #endif
 
-	speed+=engineVector*maxAcc*engine;
+	if (nextPosInBounds) {
+		speed += engineVector * maxAcc * engine;
+		speed.y += gs->gravity * myGravity;
+		speed *= invDrag;
 
-	speed.y+=gs->gravity*myGravity;
-	speed*=invDrag;
+		float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
+		float wingForce = wingDir.dot(speed) * wingDrag;
+		speed -= wingDir * wingForce;
 
-	float3 wingDir=updir*(1-wingAngle)-frontdir*wingAngle;
-	float wingForce=wingDir.dot(speed)*wingDrag;
-	speed-=wingDir*wingForce;
+		frontdir += rightdir * rudder * maxRudder * speedf;
+		updir += rightdir * aileron * maxAileron * speedf;
+		frontdir += updir * elevator * maxElevator * speedf;
+		frontdir += (speeddir - frontdir) * frontToSpeed;
+		speed += (frontdir * speedf - speed) * speedToFront;
+		pos += speed;
+	}
 
-	frontdir+=rightdir*rudder*maxRudder*speedf;
-	updir+=rightdir*aileron*maxAileron*speedf;
-	frontdir+=updir*elevator*maxElevator*speedf;
-	frontdir+=(speeddir-frontdir)*frontToSpeed;
-	speed+=(frontdir*speedf-speed)*speedToFront;
-	pos+=speed;
+	if (gHeight > owner->pos.y - owner->model->radius * 0.2f && !owner->crashing) {
+		float3 gNormal = ground->GetNormal(pos.x, pos.z);
+		float impactSpeed =- speed.dot(gNormal);
 
-	if(gHeight>owner->pos.y-owner->model->radius*0.2f && !owner->crashing){
-		float3 gNormal=ground->GetNormal(pos.x,pos.z);
-		float impactSpeed=-speed.dot(gNormal);
-
-		if(impactSpeed>0){
-			if(owner->stunned){
-				float damage=0;
-				if(impactSpeed>0.5f)
-					damage+=impactSpeed*impactSpeed*1000;
-				if(updir.dot(gNormal)<0.95f)
-					damage+=(1-(updir.dot(gNormal)))*1000;
-				if(damage>0)
-					owner->DoDamage(DamageArray()*(damage*0.4f),0,ZeroVector);	//only do damage while stunned for now
+		if (impactSpeed > 0) {
+			if (owner->stunned) {
+				float damage = 0;
+				if (impactSpeed > 0.5f)
+					damage += impactSpeed * impactSpeed * 1000;
+				if (updir.dot(gNormal) < 0.95f)
+					damage += (1 - (updir.dot(gNormal))) * 1000;
+				if (damage > 0)
+					owner->DoDamage(DamageArray() * (damage * 0.4f), 0, ZeroVector);	//only do damage while stunned for now
 			}
-			pos.y=gHeight+owner->model->radius*0.2f+0.01f;
-			speed+=gNormal*(impactSpeed*1.5f);
-			speed*=0.95f;
-			updir=gNormal-frontdir*0.1f;
-			frontdir=updir.cross(frontdir.cross(updir));
+			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;
+			speed += gNormal * (impactSpeed * 1.5f);
+			speed *= 0.95f;
+			updir = gNormal - frontdir * 0.1f;
+			frontdir = updir.cross(frontdir.cross(updir));
 		}
 	}
 
 	frontdir.Normalize();
-	rightdir=frontdir.cross(updir);
+	rightdir = frontdir.cross(updir);
 	rightdir.Normalize();
-	updir=rightdir.cross(frontdir);
+	updir = rightdir.cross(frontdir);
 
-	owner->midPos=pos+frontdir*owner->relMidPos.z + updir*owner->relMidPos.y + rightdir*owner->relMidPos.x;
+	owner->midPos = pos + frontdir * owner->relMidPos.z + updir * owner->relMidPos.y + rightdir * owner->relMidPos.x;
 
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){

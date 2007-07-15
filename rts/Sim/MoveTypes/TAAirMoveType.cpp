@@ -727,7 +727,7 @@ void CTAAirMoveType::UpdateMoveRate()
 void CTAAirMoveType::Update()
 {
 	//Handy stuff. Wonder if there is a better way?
-	float3 &pos=owner->pos;
+	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
@@ -745,35 +745,40 @@ void CTAAirMoveType::Update()
 
 	float3 lastSpeed = speed;
 
-	if(owner->stunned){
-		wantedSpeed=ZeroVector;
+	if (owner->stunned) {
+		wantedSpeed = ZeroVector;
 		UpdateAirPhysics();
 	} else {
 #ifdef DIRECT_CONTROL_ALLOWED
-		if(owner->directControl){
-			DirectControlStruct* dc=owner->directControl;
+		if (owner->directControl) {
+			DirectControlStruct* dc = owner->directControl;
 			SetState(AIRCRAFT_FLYING);
 
-			float3 forward=dc->viewDir;
-			float3 flatForward=forward;
-			flatForward.y=0;
+			float3 forward = dc->viewDir;
+			float3 flatForward = forward;
+			flatForward.y = 0;
 			flatForward.Normalize();
-			float3 right=forward.cross(UpVector);
+			float3 right = forward.cross(UpVector);
+			float3 nextPos = pos + speed;
+			wantedSpeed = ZeroVector;
 
-			wantedSpeed=ZeroVector;
-			if(dc->forward)
-				wantedSpeed+=flatForward;
-			if(dc->back)
-				wantedSpeed-=flatForward;
-			if(dc->right)
-				wantedSpeed+=right;
-			if(dc->left)
-				wantedSpeed-=right;
+			if (dc->forward)
+				wantedSpeed += flatForward;
+			if (dc->back)
+				wantedSpeed -= flatForward;
+			if (dc->right)
+				wantedSpeed += right;
+			if (dc->left)
+				wantedSpeed -= right;
 			wantedSpeed.Normalize();
-			wantedSpeed*=maxSpeed;
-			UpdateAirPhysics();
-			wantedHeading=GetHeadingFromVector(flatForward.x,flatForward.z);
+			wantedSpeed *= maxSpeed;
 
+			if (!nextPos.CheckInBounds()) {
+				speed = ZeroVector;
+			}
+
+			UpdateAirPhysics();
+			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 		} else
 #endif
 		{
