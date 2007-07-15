@@ -17,9 +17,10 @@ Uncategorized:
 - Netcode has been refactored to be more readable.
 
 AI:
+- Added Load/Save interface for AIs.
+- Load/save support for EconomyAI and MexUpgraderAI.
 - Added GetStartPos to IAICallback.
 - Fixed CCommandQueue in AI interface.
-- Load/save support for EconomyAI and MexUpgraderAI.
 - Added AIVAL_UNITLIMIT enabling AIs to query the maximum number of units.
 - Added the ability to unload a specific unit using the UNLOAD_UNIT command
   (the unitID should be added as the fourth parameter)

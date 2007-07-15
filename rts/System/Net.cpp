@@ -60,7 +60,7 @@ bool IsFakeError()
 CNet::CNet()
 {
 #ifdef _WIN32
-	Uint16 wVersionRequested;
+	unsigned short wVersionRequested;
 	WSADATA wsaData;
 	int err;
 
