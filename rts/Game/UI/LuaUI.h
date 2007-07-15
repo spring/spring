@@ -77,7 +77,7 @@ class CLuaUI : public CLuaHandle {
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
 
-		bool AddConsoleLine(const string& line, int priority);
+		bool AddConsoleLines();
 
 		bool GroupChanged(int groupID);
 
@@ -96,8 +96,6 @@ class CLuaUI : public CLuaHandle {
 		string LoadFile(const string& filename) const;
 
 		bool LoadCFunctions(lua_State* L);
-
-		bool AddConsoleLines(lua_State* L);
 
 		bool BuildCmdDescTable(lua_State* L,
 		                       const vector<CommandDescription>& cmds);

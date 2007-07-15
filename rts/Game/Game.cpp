@@ -1913,6 +1913,10 @@ bool CGame::Draw()
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 
+	if (luaUI) {
+		luaUI->AddConsoleLines();
+	}
+
 	luaCallIns.Update();
 
 	if (!gu->active) {

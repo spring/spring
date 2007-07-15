@@ -395,7 +395,7 @@ bool CLuaUI::ConfigCommand(const string& command)
 }
 
 
-bool CLuaUI::AddConsoleLines(lua_State* L)
+bool CLuaUI::AddConsoleLines()
 {
 	CInfoConsole* ic = game->infoConsole;
 	if (ic == NULL) {
