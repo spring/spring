@@ -798,12 +798,16 @@ int LuaUnitRendering::Debug(lua_State* L)
 	printf("CurrentLod  = %i\n", unit->currentLOD);
 	printf("\n");
 
-	const LuaUnitMaterial& alphaMat  = unit->luaMats[LUAMAT_ALPHA];
-	const LuaUnitMaterial& opaqueMat = unit->luaMats[LUAMAT_OPAQUE];
-	const LuaUnitMaterial& shadowMat = unit->luaMats[LUAMAT_SHADOW];
-	printf("LUAMAT_ALPHA  lastLOD = %i\n", alphaMat.GetLastLOD());
-	printf("LUAMAT_OPAQUE lastLOD = %i\n", opaqueMat.GetLastLOD());
-	printf("LUAMAT_SHADOW lastLOD = %i\n", shadowMat.GetLastLOD());
+	const LuaUnitMaterial& alphaMat      = unit->luaMats[LUAMAT_ALPHA];
+	const LuaUnitMaterial& opaqueMat     = unit->luaMats[LUAMAT_OPAQUE];
+	const LuaUnitMaterial& alphaReflMat  = unit->luaMats[LUAMAT_ALPHA_REFLECT];
+	const LuaUnitMaterial& opaqueReflMat = unit->luaMats[LUAMAT_OPAQUE_REFLECT];
+	const LuaUnitMaterial& shadowMat     = unit->luaMats[LUAMAT_SHADOW];
+	printf("LUAMAT_ALPHA          lastLOD = %i\n", alphaMat.GetLastLOD());
+	printf("LUAMAT_OPAQUE         lastLOD = %i\n", opaqueMat.GetLastLOD());
+	printf("LUAMAT_ALPHA_REFLECT  lastLOD = %i\n", alphaReflMat.GetLastLOD());
+	printf("LUAMAT_OPAQUE_REFLECT lastLOD = %i\n", opaqueReflMat.GetLastLOD());
+	printf("LUAMAT_SHADOW         lastLOD = %i\n", shadowMat.GetLastLOD());
 
 	for (int lod = 0; lod < unit->lodCount; lod++) {
 		PrintUnitLOD(unit, lod);
