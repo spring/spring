@@ -404,6 +404,8 @@ static const char* GetMatTypeName(LuaMatType type)
 	switch (type) {
 		STRING_CASE(typeName, LUAMAT_ALPHA);
 		STRING_CASE(typeName, LUAMAT_OPAQUE);
+		STRING_CASE(typeName, LUAMAT_ALPHA_REFLECT);
+		STRING_CASE(typeName, LUAMAT_OPAQUE_REFLECT);
 		STRING_CASE(typeName, LUAMAT_SHADOW);
 	}
 	return typeName;

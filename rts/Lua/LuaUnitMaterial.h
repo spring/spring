@@ -23,10 +23,12 @@ class LuaMatBin;
 /******************************************************************************/
 
 enum LuaMatType {
-	LUAMAT_ALPHA      = 0,
-	LUAMAT_OPAQUE     = 1,
-	LUAMAT_SHADOW     = 2,
-	LUAMAT_TYPE_COUNT = 3
+	LUAMAT_ALPHA          = 0,
+	LUAMAT_OPAQUE         = 1,
+	LUAMAT_ALPHA_REFLECT  = 2,
+	LUAMAT_OPAQUE_REFLECT = 3,
+	LUAMAT_SHADOW         = 4,
+	LUAMAT_TYPE_COUNT     = 5
 };
 
 
