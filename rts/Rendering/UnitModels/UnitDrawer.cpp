@@ -528,7 +528,10 @@ void CUnitDrawer::DrawOpaqueShaderUnits()
 	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
 	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
 
-	DrawBins(LUAMAT_OPAQUE);
+	const LuaMatType matType =
+		(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+
+	DrawBins(matType);
 }
 
 
@@ -539,7 +542,10 @@ void CUnitDrawer::DrawCloakedShaderUnits()
 	luaMatHandler.setupS3oShader = SetupAlphaS3O;
 	luaMatHandler.resetS3oShader = ResetAlphaS3O;
 
-	DrawBins(LUAMAT_ALPHA);
+	const LuaMatType matType =
+		(water->drawReflection) ? LUAMAT_ALPHA_REFLECT : LUAMAT_ALPHA;
+
+	DrawBins(matType);
 }
 
 
@@ -1456,7 +1462,9 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 	LuaUnitLODMaterial* lodMat = NULL;
 
 	if (unit->lodCount > 0) {
-		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_OPAQUE];
+		const LuaMatType matType =
+			(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
 

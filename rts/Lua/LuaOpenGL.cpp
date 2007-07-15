@@ -33,6 +33,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/IFramebuffer.h"
@@ -1165,7 +1166,9 @@ int LuaOpenGL::Unit(lua_State* L)
 	else {
 		unsigned int lod;
 		if (!lua_isnumber(L, 3)) {
-			lod = unit->CalcLOD(unit->luaMats[LUAMAT_OPAQUE].GetLastLOD());
+			const LuaMatType matType =
+				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+			lod = unit->CalcLOD(unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = (int)lua_tonumber(L, 3);
 			if (tmpLod < 0) {
