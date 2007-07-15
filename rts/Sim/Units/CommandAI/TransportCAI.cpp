@@ -101,6 +101,10 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			return;
 		}
 		CUnit* unit=uh->units[(int)c.params[0]];
+		if (!unit) {
+			FinishCommand();
+			return;
+		}
 		if(c.options & INTERNAL_ORDER) {
 			if(unit->commandAI->commandQue.empty()){
 				if(!LoadStillValid(unit)){
