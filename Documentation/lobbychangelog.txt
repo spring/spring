@@ -1,7 +1,8 @@
   ------ CHANGELOG ------
+  *** 0.35 (??x??x??) ***
+  * added "balance teams" feature for hosts
 
   *** 0.34 (??x??x??) ***
-  * added "balance teams" feature for hosts
   * added "auto setup start rectangles" feature for hosts
   * fixed /ignore command not working in certain (most) cases. You would always have to restart the client before it worked
   * added quick searchbar for unknown-files.net
