@@ -1,5 +1,11 @@
 !ifdef INSTALL
 
+  ; these are deleted since 0.75
+  ; (this can be overwritten with next generation of this file)
+  Delete "LuaUI\Config\README.txt"
+  Delete "LuaUI\Headers\opengl.h.lua"
+  Delete "LuaUI\Headers\spring.h.lua"
+
   SetOutPath "$INSTDIR"
   File "..\game\gui.lua"
   File "..\game\usericons.tdf"
