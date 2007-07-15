@@ -40,7 +40,7 @@
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\zlib1.dll"
-  File "..\mingwlibs\dll\zlibwapi.dll"
+  File "..\game\zlibwapi.dll"
 
   File "..\game\PALETTE.PAL"
   
