@@ -11,11 +11,15 @@
   ; (even though the DLL properties say 1.6.5, this is a Devil bug...)
   File "..\mingwlibs\dll\DevIL.dll"
 
+  ; SDL is upgraded too
+  File "..\mingwlibs\dll\SDL.dll"
+
   ; ILU.dll is new since 0.75b1
   File "..\mingwlibs\dll\ILU.dll"
 
-  ; zlibwapi.dll one is removed since 0.75b1
+  ; zlibwapi.dll and MSVCP71.dll is removed since 0.75b1
   Delete "$INSTDIR\zlibwapi.dll"
+  Delete "$INSTDIR\MSVCP71.dll"
 
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
@@ -33,7 +37,6 @@
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\SDL.dll"
   File "..\mingwlibs\dll\zlib1.dll"
 
   File "..\game\PALETTE.PAL"
