@@ -806,7 +806,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 	// cloaked units and living ghosted buildings
 	for(vector<CUnit*>::iterator ui=dC.begin();ui!=dC.end();++ui){
 		CUnit* unit = *ui;
-		if(unit->losStatus[gu->myAllyTeam] & LOS_INLOS){
+		if((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView){
 			if (is_s3o) {
 				SetBasicS3OTeamColour(unit->team);
 				texturehandler->SetS3oTexture(unit->model->textureType);
