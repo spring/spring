@@ -89,7 +89,7 @@
 ; Default mod
 !ifndef NO_TOTALA
   SetOutPath "$INSTDIR\mods"
-  File "..\game\mods\XTAPE.sd7"
+  File "..\game\mods\XTAPE.sdz"
 !endif
 
 !endif ; SP_UPDATE
@@ -171,7 +171,7 @@
 
   ; default mod
 !ifndef NO_TOTALA
-  Delete "$INSTDIR\mods\XTAPE.sd7"
+  Delete "$INSTDIR\mods\XTAPE.sdz"
   RmDir "$INSTDIR\mods"
 !endif
 
