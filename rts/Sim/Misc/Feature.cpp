@@ -337,7 +337,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 	health-=damages[0];
 	if(health<=0 && def->destructable){
 		featureHandler->CreateWreckage(pos, def->deathFeature, heading,
-		                               buildFacing, 1, team, false, "");
+		                               buildFacing, 1, team, -1, false, "");
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges=false;
 

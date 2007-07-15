@@ -147,7 +147,7 @@ void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 }
 
 
-CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int team, bool emitSmoke,std::string fromUnit)
+CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int team, int allyteam, bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
 	if(name.empty())
@@ -158,7 +158,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		return 0;
 
 	if(iter>1){
-		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, emitSmoke, "");
+		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, allyteam, emitSmoke, "");
 	} else {
 		if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos)) {
 			return NULL;
@@ -166,6 +166,8 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		if(!fd->modelname.empty()){
 			CFeature* f=SAFE_NEW CFeature;
 			f->Initialize (pos, fd, (short int)rot, facing, team, fromUnit);
+			// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)
+			f->allyteam = allyteam;
 			if(emitSmoke && f->blocking)
 				f->emitSmokeTime=300;
 			return f;

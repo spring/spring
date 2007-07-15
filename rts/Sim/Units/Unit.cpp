@@ -221,7 +221,7 @@ CUnit::CUnit ()
 CUnit::~CUnit()
 {
 	if(delayedWreckLevel>=0){
-		featureHandler->CreateWreckage(pos,wreckName, heading, buildFacing, delayedWreckLevel,team,true,unitDef->name);
+		featureHandler->CreateWreckage(pos,wreckName, heading, buildFacing, delayedWreckLevel,team,-1,true,unitDef->name);
 	}
 
 	if(unitDef->isAirBase){
@@ -926,7 +926,7 @@ void CUnit::DrawBeingBuilt()
 		}
 		return;
 	}
-      	
+
 	const float start  = model->miny;
 	const float height = model->height;
 
@@ -1124,7 +1124,7 @@ void CUnit::DrawStats()
 		const float pEnd = (paralyzeDamage / maxHealth) * 10.0f;
 		glColor3f(0.0f, 0.0f, 1.0f);
 		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
-	} 
+	}
 
 	// skip the rest of the indicators if it isn't a local unit
 	if ((gu->myTeam != team) && !gu->spectatingFullView) {
@@ -1670,7 +1670,7 @@ void CUnit::FinishedBuilding(void)
 		UnBlock();
 		CFeature* f =
 			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-			                               0, team, false, "");
+			                               0, team, allyteam, false, "");
 		if (f) {
 			f->blockHeightChanges = true;
 		}
@@ -1938,7 +1938,7 @@ void CUnit::SetLODCount(unsigned int count)
 	for (unsigned int i = oldCount; i < count; i++) {
 		lodLengths[i] = -1.0f;
 	}
-	
+
 	localmodel->SetLODCount(count);
 
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
@@ -1971,7 +1971,7 @@ unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
 
 	// FIXME -- the more 'correct' method
 	if (lastLOD == 0) { return 0; }
-		
+
 	// FIXME: fix it, cap it for shallow shadows?
 	const float3& sun = gs->sunVector;
 	const float3 diff = (camera->pos - pos);

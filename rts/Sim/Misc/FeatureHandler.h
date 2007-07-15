@@ -31,7 +31,7 @@ public:
 	void PostLoad();
 
 	CFeature* CreateWreckage(const float3& pos, const std::string& name,
-	                         float rot, int facing, int iter, int team,
+	                         float rot, int facing, int iter, int team, int allyteam,
 	                         bool emitSmoke,std::string fromUnit);
 
 	void Update();
