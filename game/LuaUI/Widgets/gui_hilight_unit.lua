@@ -229,14 +229,23 @@ local function HilightFeature(featureID)
 end
 
 
-local GetMyPlayerID           = Spring.GetMyPlayerID
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local GetPlayerControlledUnit = Spring.GetPlayerControlledUnit
+local GetMyPlayerID           = Spring.GetMyPlayerID
+local TraceScreenRay          = Spring.TraceScreenRay
+local GetMouseState           = Spring.GetMouseState
+local GetUnitDefID            = Spring.GetUnitDefID
+local GetFeatureDefID         = Spring.GetFeatureDefID
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function widget:DrawWorld()
-  local mx, my = Spring.GetMouseState()
-  local type, data = Spring.TraceScreenRay(mx, my)
+  local mx, my = GetMouseState()
+  local type, data = TraceScreenRay(mx, my)
 
   if (type == 'feature') then
     HilightFeature(data)
@@ -249,46 +258,133 @@ function widget:DrawWorld()
 end
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+local teamNames = {}
+
+
+local function GetTeamName(teamID)
+  local name = teamNames[teamID]
+  if (name) then
+    return name
+  end
+
+  local teamNum, teamLeader = Spring.GetTeamInfo(teamID)
+  if (teamLeader == nil) then
+    return ''
+  end
+
+  name = Spring.GetPlayerInfo(teamLeader)
+  teamNames[teamID] = name
+  return name
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+local teamColorStrs = {}
+
+
+local function GetTeamColorStr(teamID)
+  local colorSet = teamColorStrs[teamID]
+  if (colorSet) then
+    return colorSet[1], colorSet[2]
+  end
+
+  local outlineChar = ''
+  local _,_,_,_,_,_,r,g,b = Spring.GetTeamInfo(teamID)
+  if (r and g and b) then
+    local function ColorChar(x)
+      local c = math.floor(x * 255)
+      c = ((c <= 1) and 1) or ((c >= 255) and 255) or c
+      return string.char(c)
+    end
+    local colorStr
+    colorStr = '\255'
+    colorStr = colorStr .. ColorChar(r)
+    colorStr = colorStr .. ColorChar(g)
+    colorStr = colorStr .. ColorChar(b)
+    local i = (r * 0.299) + (g * 0.587) + (b * 0.114)
+    outlineChar = ((i > 0.25) and 'o') or 'O'
+    teamColorStrs[teamID] = { colorStr, outlineChar }
+    return colorStr, outlineChar
+  end
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function widget:DrawScreen()
   local a,c,m,s = Spring.GetModKeyState()
   if (not m) then
     return
   end
 
-  local mx, my = Spring.GetMouseState()
-  local type, data = Spring.TraceScreenRay(mx, my)
+  local mx, my = GetMouseState()
+  local type, data = TraceScreenRay(mx, my)
 
-  local str = ''
+  local typeStr = ''
+  local teamID = nil
 
   local cheat  = Spring.IsCheatingEnabled()
 
   if (type == 'unit') then
-    local udid = Spring.GetUnitDefID(data)
+    local udid = GetUnitDefID(data)
     if (udid == nil) then return end
     local ud = UnitDefs[udid]
     if (ud == nil) then return end
-    str = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
+    typeStr = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
     if (cheat) then
-      str = str .. ' ' .. '\255\255\255\255#' .. data
+      typeStr = typeStr .. ' ' .. '\255\255\255\255#' .. data
     end
+    teamID = Spring.GetUnitTeam(data)
   elseif (type == 'feature') then
-    local fdid = Spring.GetFeatureDefID(data)
+    local fdid = GetFeatureDefID(data)
     if (fdid == nil) then return end
     local fd = FeatureDefs[fdid]
     if (fd == nil) then return end
-    str = '\255\255\128\255' .. fd.tooltip
+    typeStr = '\255\255\128\255' .. fd.tooltip
     if (cheat) then
-      str = str .. ' ' .. '\255\255\255\255#' .. data
+      typeStr = typeStr .. ' ' .. '\255\255\255\255#' .. data
+    end
+    teamID = Spring.GetFeatureTeam(data)
+  end
+
+  local pName = nil
+  local colorStr, outlineChar = nil, nil
+  if (teamID) then
+    pName = GetTeamName(teamID)
+    if (pName) then
+      colorStr, outlineChar = GetTeamColorStr(teamID)
+      if ((colorStr == nil) or (outlineChar == nil)) then
+        pName = nil
+      end
     end
   end
 
   local f = 14
-  local g = 10
-  local l = f * gl.GetTextWidth(str)
-  if ((mx + l + g) < vsx) then
-    gl.Text(str, mx + g, my + g, f, 'o')
+  local gx = 16
+  local gy = 8
+
+  local lt = f * gl.GetTextWidth(typeStr)
+  local lp = pName and (f * gl.GetTextWidth(pName)) or 0
+  local lm = (lt > lp) and lt or lp  --  max len
+
+  pName = pName and (colorStr .. pName)
+
+  if ((mx + lm + gx) < vsx) then
+    gl.Text(typeStr, mx + gx, my + gy, f, 'o')
+    if (pName) then
+      gl.Text(pName, mx + gx, my - gy - f, f, outlineChar)
+    end
   else
-    gl.Text(str, mx - g, my + g, f, 'or')
+    gl.Text(typeStr, mx - gx, my + gy, f, 'or')
+    if (pName) then
+      gl.Text(pName, mx - gx, my - gy - f, f, outlineChar .. 'r')
+    end
   end
 end
               
