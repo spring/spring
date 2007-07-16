@@ -30,8 +30,6 @@ end
 --
 --  1. The GetCameraState() table is supposed to be opaque.
 --
---  2. The mouse cursor should probably be centered
---
 
 local gl = gl
 
