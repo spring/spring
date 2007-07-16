@@ -2004,6 +2004,8 @@ bool CGame::Draw()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glLoadIdentity();
 	}
+	
+	glDisable(GL_FOG);
 
 	luaCallIns.DrawScreenEffects();
 
@@ -3772,6 +3774,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	else if (s.find(".skip") == 0) {
 		if (!demoPlayer && ((player != 0) || !gs->cheatEnabled)) {
 			logOutput.Print(".skip only works in replay, and when cheating\n");
+		} else if (gs->frameNum < 1) {
+			logOutput.Print(".skip only works after the game has started\n");
 		} else {
 			Skip(s, demoPlayer);
 		}
