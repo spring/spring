@@ -290,7 +290,11 @@ void CGameSetup::Draw()
 	glTranslatef(0.3f, 0.7f, 0.0f);
 	glScalef(0.03f, 0.04f, 0.1f);
 	if (!gameServer && net->inInitialConnect) {
-		font->glPrint("Connecting to server %i", 40 - (int)(SDL_GetTicks()/1000.0f - net->connections[0]->lastReceiveTime));
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+			if (net->connections[i] != NULL) {
+				font->glPrint("Connecting to server %i", 40 - (int)(SDL_GetTicks()/1000.0f - net->connections[i]->lastReceiveTime));
+				break;
+			}
 	} else if (readyTime > 0) {
 		font->glPrint("Starting in %i", 3 - (SDL_GetTicks() - readyTime) / 1000);
 	} else if (!readyTeams[gu->myTeam]) {
