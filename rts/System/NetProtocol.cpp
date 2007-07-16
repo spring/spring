@@ -13,8 +13,12 @@ CNetProtocol::CNetProtocol()
 	record = 0;
 	play = 0;
 	localDemoPlayback = false;
-	fragbufLength = 0;
-	memset(fragbuf, 0, sizeof(fragbuf));
+	
+	for (unsigned i = 0; i < MAX_PLAYERS; i++)
+	{
+		fragbufLength[i] = 0;
+		memset(fragbuf[i], 0, sizeof(fragbuf[i]));
+	}
 }
 
 CNetProtocol::~CNetProtocol()
@@ -168,26 +172,26 @@ int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsig
 {
 	// If we got the start of a fragmented message left,
 	// we insert it at the start of the buffer.
-	if (fragbufLength != 0) {
-		if (fragbufLength > length) {
+	if (fragbufLength[conNum] != 0) {
+		if (fragbufLength[conNum] > length) {
 			logOutput.Print("Overflow in incoming network buffer");
 			return 0; // just return we read 0 bytes, it isn't too severe after all...
 		}
-		memcpy(buf, fragbuf, fragbufLength);
+		memcpy(buf, fragbuf[conNum], fragbufLength[conNum]);
 	}
 
-	int ret = CNet::GetData(buf + fragbufLength, length - fragbufLength, conNum);
+	int ret = CNet::GetData(buf + fragbufLength[conNum], length - fragbufLength[conNum], conNum);
 
 	if (ret <= 0) // error in CNet::GetData or 0 bytes read so nothing to do..
 		return ret;
-	ret += fragbufLength;
+	ret += fragbufLength[conNum];
 
 	int readahead = ReadAhead(buf, ret, que);
 
 	// If we got a fragmented packet on end, store it for a later call to GetData.
-	fragbufLength = ret - readahead;
-	if (fragbufLength != 0)
-		memcpy(fragbuf, buf + readahead, fragbufLength);
+	fragbufLength[conNum] = ret - readahead;
+	if (fragbufLength[conNum] != 0)
+		memcpy(fragbuf[conNum], buf + readahead, fragbufLength[conNum]);
 
 	// We only return complete messages here (so use readahead instead of ret).
 	if (record != NULL && !imServer)
