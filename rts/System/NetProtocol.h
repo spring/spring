@@ -22,8 +22,7 @@ including `command' and `messageSize'.
 
 enum NETMSG {
 	// WARNING: This is now in CNet, but dont use thos number for anything else
-	// tvo: CGame and CPreGame still need to throw it away...
-	NETMSG_HELLO            = 1,  // reserved for CNet
+	NETMSG_HELLO            = 1,  //
 	NETMSG_QUIT             = 2,  //
 	NETMSG_NEWFRAME         = 3,  // int frameNum;
 	NETMSG_STARTPLAYING     = 4,  //
@@ -161,8 +160,8 @@ private:
 	std::string modName;
 
 	/// Bytes that don't make a complete net message yet (fragmented message).
-	unsigned char fragbuf[netcode::NETWORK_BUFFER_SIZE];
-	int fragbufLength;
+	unsigned char fragbuf[MAX_PLAYERS][netcode::NETWORK_BUFFER_SIZE];
+	int fragbufLength[MAX_PLAYERS];
 };
 
 extern CNetProtocol* net;
