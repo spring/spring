@@ -271,6 +271,7 @@ void CBasicSky::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	if (gu->drawFog) {
+		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR,FogLand);
 		glFogi(GL_FOG_MODE,GL_LINEAR);
 		glFogf(GL_FOG_START,gu->viewRange*fogStart);
