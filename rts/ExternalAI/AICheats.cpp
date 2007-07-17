@@ -11,6 +11,9 @@
 #include "Game/Team.h"
 #include "mmgr.h"
 
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
+#define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
+
 using namespace std;
 
 CAICheats::CAICheats(CGlobalAI* ai)
@@ -62,6 +65,7 @@ int CAICheats::CreateUnit(const char* name,float3 pos)
 
 const UnitDef* CAICheats::GetUnitDef(int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->unitDef;
@@ -72,6 +76,7 @@ const UnitDef* CAICheats::GetUnitDef(int unitid)
 
 float3 CAICheats::GetUnitPos(int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return ZeroVector;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->pos;
@@ -112,6 +117,7 @@ int CAICheats::GetEnemyUnits(int *units,const float3& pos,float radius)
 
 int CAICheats::GetUnitTeam(int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->team;
@@ -121,6 +127,7 @@ int CAICheats::GetUnitTeam(int unitid)
 
 int CAICheats::GetUnitAllyTeam(int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->allyteam;
@@ -130,6 +137,7 @@ int CAICheats::GetUnitAllyTeam(int unitid)
 
 float CAICheats::GetUnitHealth(int unitid)			//the units current health
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->health;
@@ -139,6 +147,7 @@ float CAICheats::GetUnitHealth(int unitid)			//the units current health
 
 float CAICheats::GetUnitMaxHealth(int unitid)		//the units max health
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->maxHealth;
@@ -148,6 +157,7 @@ float CAICheats::GetUnitMaxHealth(int unitid)		//the units max health
 
 float CAICheats::GetUnitPower(int unitid)				//sort of the measure of the units overall power
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->power;
@@ -157,6 +167,7 @@ float CAICheats::GetUnitPower(int unitid)				//sort of the measure of the units 
 
 float CAICheats::GetUnitExperience(int unitid)	//how experienced the unit is (0.0-1.0)
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->experience;
@@ -166,6 +177,7 @@ float CAICheats::GetUnitExperience(int unitid)	//how experienced the unit is (0.
 
 bool CAICheats::IsUnitActivated (int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return false;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->activated;
@@ -175,6 +187,7 @@ bool CAICheats::IsUnitActivated (int unitid)
 
 bool CAICheats::UnitBeingBuilt (int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return false;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->beingBuilt;
@@ -184,6 +197,7 @@ bool CAICheats::UnitBeingBuilt (int unitid)
 
 bool CAICheats::GetUnitResourceInfo (int unitid, UnitResourceInfo *i)
 {
+	if (!CHECK_UNITID(unitid)) return false;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		i->energyMake = unit->energyMake;
@@ -197,6 +211,7 @@ bool CAICheats::GetUnitResourceInfo (int unitid, UnitResourceInfo *i)
 
 const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitid)
 {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit *unit = uh->units[unitid];
 	if (unit){
 		return &unit->commandAI->commandQue;
@@ -205,6 +220,7 @@ const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitid)
 }
 
 int CAICheats::GetBuildingFacing(int unitid) {
+	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->buildFacing;
@@ -213,6 +229,7 @@ int CAICheats::GetBuildingFacing(int unitid) {
 }
 
 bool CAICheats::IsUnitCloaked(int unitid) {
+	if (!CHECK_UNITID(unitid)) return false;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->isCloaked;
@@ -221,6 +238,7 @@ bool CAICheats::IsUnitCloaked(int unitid) {
 }
 
 bool CAICheats::IsUnitParalyzed(int unitid){
+	if (!CHECK_UNITID(unitid)) return false;
 	CUnit* unit=uh->units[unitid];
 	if(unit){
 		return unit->stunned;
@@ -232,6 +250,7 @@ bool CAICheats::GetProperty(int id, int property, void *data)
 {
 	switch (property) {
 		case AIVAL_UNITDEF:{
+			if (!CHECK_UNITID(id)) return false;
 			CUnit *unit = uh->units[id];
 			if (unit) {
 				(*(const UnitDef**)data) = unit->unitDef;
