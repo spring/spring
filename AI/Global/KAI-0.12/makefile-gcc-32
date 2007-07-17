@@ -4,7 +4,7 @@ TARGET=KAI012-gcc-32.so
 BUILD_DIR=build-gcc-32
 
 all:
-	$(CC) -Wall -Wextra -c *.cpp $(IFLAGS)
+	$(CC) -Wall -Wextra -c -g *.cpp $(IFLAGS)
 	$(CC) -shared -o $(TARGET) *.o
 	mv $(TARGET) $(BUILD_DIR)
 
