@@ -8,6 +8,7 @@ CR_REG_METADATA(CThreatMap,(
 				CR_MEMBER(AverageThreat),
 				//CR_MEMBER(xend),
 				CR_MEMBER(ai),
+				CR_RESERVED(128),
 				CR_POSTLOAD(PostLoad)
 				));
 

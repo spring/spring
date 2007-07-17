@@ -16,7 +16,8 @@ CR_REG_METADATA(CMetalMaker,(
 				CR_MEMBER(lastEnergy),
 				CR_MEMBER(ai),
 				CR_MEMBER(listIndex),
-				CR_MEMBER(addedDelay)
+				CR_MEMBER(addedDelay),
+				CR_RESERVED(64)
 				));
 
 CR_BIND(CMetalMaker::UnitInfo, )
@@ -25,7 +26,8 @@ CR_REG_METADATA_SUB(CMetalMaker,UnitInfo,(
 					CR_MEMBER(id),
 					CR_MEMBER(energyUse),
 					CR_MEMBER(metalPerEnergy),
-					CR_MEMBER(turnedOn)
+					CR_MEMBER(turnedOn),
+					CR_RESERVED(16)
 					));
 
 //////////////////////////////////////////////////////////////////////

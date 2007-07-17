@@ -14,6 +14,7 @@ CR_REG_METADATA(CBuildUp,(
 				CR_MEMBER(storagecounter),
 
 				CR_MEMBER(ai),
+				CR_RESERVED(256),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -429,7 +430,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 	|| (RANDINT%3 == 0 && ai->cb->GetMetalIncome() < ai->cb->GetMetalUsage() * 2.0) // Only more metal if 200% of the metal usage is bigger than the income ?
 	|| (!ai->math->MFeasibleConstruction(ai->cb->GetUnitDef(builder),factory) && !ai->uh->Factories.size())))
 	|| (ai->cb->GetMetalIncome()<4.0))){	
-		if(!ai->MyUnits[builder]->ReclaimBest(1)){
+		if(!ai->uh->Factories.size() || !ai->MyUnits[builder]->ReclaimBest(1)){
 			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MEX))if (mex != NULL){								
 				int upgradespot = ai->mm->FindMetalSpotUpgrade(builder,mex);		
 				if(upgradespot != -1){
@@ -439,7 +440,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 					//ai->uh->TaskPlanCreate(builder,ai->cb->GetUnitPos(upgradespot),mex);
 					builderIsUsed = true;
 				}			
-				else if(mexpos != ERRORVECTOR && mex != NULL){
+				else if(mexpos != ERRORVECTOR && mex != NULL && (ai->uh->Distance2DToNearestFactory(mexpos.x,mexpos.z)<DEFCBS_RADIUS || RANDINT%100<75)){
 					L("trying to build mex at: " << mexpos.x << ","<< mexpos.z);
 					if (ai->MyUnits[builder]->Build(mexpos,mex)) {
 						MexUpgraders.remove(builder);
@@ -451,7 +452,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 					//MyUnits[builder].pos());
 						builderIsUsed = true;
 				}
-				else if (ai->ut->metal_makers->size() && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%10==0){
+				else if (ai->ut->metal_makers->size() && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%100<50){
 					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MMAKER)){
 						L("Trying to build CAT_MMAKER");
 						const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_MMAKER);
@@ -492,6 +493,7 @@ Returns true if the builder was assigned an order.
 */
 bool CBuildUp::DefenceBuildup(int builder, bool forceUseBuilder, bool firstPass) {
 	bool builderIsUsed = false;
+	if (firstPass && RANDINT%100>25) return false;
 
 	if (!firstPass && !builderIsUsed && (forceUseBuilder || RANDINT%100<25)) {
 		const int cats[4]={CAT_RADAR, CAT_SONAR, CAT_R_JAMMER, CAT_S_JAMMER};

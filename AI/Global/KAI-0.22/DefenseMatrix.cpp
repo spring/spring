@@ -8,6 +8,7 @@ CR_REG_METADATA(CDefenseMatrix,(
 				CR_MEMBER(ChokePointArray),
 				CR_MEMBER(BuildMaskArray),
 				CR_MEMBER(ai),
+				CR_RESERVED(128),
 				CR_POSTLOAD(PostLoad)
 				));
 

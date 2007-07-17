@@ -21,6 +21,7 @@ CR_REG_METADATA(DGunController,(
 				CR_MEMBER(retreatOrderFrame),
 				CR_MEMBER(startingPos),
 				CR_MEMBER(bt),
+				CR_RESERVED(256),
 				CR_POSTLOAD(PostLoad)
 				));
 

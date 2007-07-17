@@ -69,7 +69,8 @@ CR_REG_METADATA(CAttackGroup,(
 				CR_MEMBER(baseReference),
 				CR_MEMBER(lastBaseReferenceUpdate),
 
-				CR_MEMBER(assignedEnemies)
+				CR_MEMBER(assignedEnemies),
+				CR_RESERVED(256)
 				));
 
 float3 CAttackGroup::CheckCoordinates(float3 pos)
