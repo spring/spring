@@ -8,7 +8,7 @@
 CR_BIND(CGlobalAI,)
 
 CR_REG_METADATA(CGlobalAI,(
-				CR_MEMBER(MyUnits),
+//				CR_MEMBER(MyUnits),
 /*
 				CR_MEMBER(totalSumTime),
 				CR_MEMBER(updateTimerGroup),
@@ -27,6 +27,7 @@ CR_REG_METADATA(CGlobalAI,(
 				CR_MEMBER(globalAILogTime),
 				CR_MEMBER(threatMapTime),
 */
+				CR_RESERVED(64),
 				CR_SERIALIZER(Serialize),
 				CR_POSTLOAD(PostLoad)
 				));
@@ -49,7 +50,7 @@ CR_REG_METADATA(AIClasses,(
 			//	CR_MEMBER(em),
 			//	CR_MEMBER(dc),
 			//	CR_MEMBER(sh),
-				CR_MEMBER(MyUnits),
+			//	CR_MEMBER(MyUnits),
 			//	CR_MEMBER(LOGGER),
 				CR_MEMBER(dgunController),
 				CR_MEMBER(radarCoverage),
@@ -57,7 +58,8 @@ CR_REG_METADATA(AIClasses,(
 				CR_MEMBER(rjammerCoverage),
 				CR_MEMBER(sjammerCoverage),
 				CR_MEMBER(antinukeCoverage),
-				CR_MEMBER(shieldCoverage)
+				CR_MEMBER(shieldCoverage),
+				CR_RESERVED(128)
 //				CR_POSTLOAD(PostLoad)
 				));
 
@@ -87,12 +89,13 @@ CR_REG_METADATA(BuilderTracker,(
 				CR_MEMBER(commandOrderPushFrame),
 				CR_MEMBER(categoryMaker),
 
-				//def
+				//CR_MEMBER(def),
 
 				CR_MEMBER(estimateRealStartFrame),
 				CR_MEMBER(estimateFramesForNanoBuildActivation),
 				CR_MEMBER(estimateETAforMoveingToBuildSite),
 				CR_MEMBER(distanceToSiteBeforeItCanStartBuilding),
+				CR_RESERVED(128),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -106,6 +109,7 @@ CR_REG_METADATA(BuildTask,(
 
 				CR_MEMBER(currentBuildPower),
 				CR_MEMBER(pos),
+				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -119,6 +123,7 @@ CR_REG_METADATA(TaskPlan,(
 				CR_MEMBER(currentBuildPower),
 				CR_MEMBER(defname),
 				CR_MEMBER(pos),
+				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -131,6 +136,7 @@ CR_REG_METADATA(Factory,(
 
 				CR_MEMBER(currentBuildPower),
 				CR_MEMBER(currentTargetBuildPower),
+				CR_RESERVED(128),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -179,6 +185,7 @@ CGlobalAI::~CGlobalAI() {
 	delete ai -> uh;
 	// added by Kloot
 	delete ai -> dgunController;
+
 	delete ai -> radarCoverage;
 	delete ai -> sonarCoverage;
 	delete ai -> rjammerCoverage;
@@ -190,6 +197,17 @@ CGlobalAI::~CGlobalAI() {
 
 void CGlobalAI::Serialize(creg::ISerializer *s)
 {
+	if (!s->IsWriting()) MyUnits.resize(MAXUNITS,CUNIT(ai));
+	for (int i = 0; i < MAXUNITS; i++) {
+		if (ai->cheat->GetUnitDef(i)) // do not save non existing units
+			s->SerializeObjectInstance(&(MyUnits[i]),MyUnits[i].GetClass());
+			if (!s->IsWriting()) MyUnits[i].myid = i;
+		else if (!s->IsWriting()) {
+			MyUnits[i].myid = i;
+			MyUnits[i].groupID = -1;
+		}
+		if (!s->IsWriting()) ai -> MyUnits.push_back(&MyUnits[i]);
+	}
 	s->SerializeObjectInstance(ai,ai->GetClass());
 }
 

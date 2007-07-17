@@ -142,7 +142,7 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 #define	FEASIBLEMSTORRATIO		0.4
 #define	FEASIBLEESTORRATIO		0.6
 // Maximum units in a game
-#define MAXUNITS				10000
+#define MAXUNITS				MAX_UNITS//10000
 // Time idle units stay in limbo mode (in frames)
 #define LIMBOTIME				40
 // Income multiplier for tech tree advancement

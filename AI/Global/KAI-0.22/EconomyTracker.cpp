@@ -26,7 +26,8 @@ CR_REG_METADATA(CEconomyTracker,(
 	CR_MEMBER(constructionMetal),
 
 	CR_MEMBER(constructionEnergySum),
-	CR_MEMBER(constructionMetalSum)
+	CR_MEMBER(constructionMetalSum),
+	CR_RESERVED(128)
 				));
 
 CR_BIND(BuildingTracker ,)
@@ -47,7 +48,8 @@ CR_REG_METADATA(BuildingTracker,(
 				
 				CR_MEMBER(buildTask),
 				CR_MEMBER(factory),
-				CR_MEMBER(economyUnitTracker)
+				CR_MEMBER(economyUnitTracker),
+				CR_RESERVED(64)
 				));
 
 CR_BIND(EconomyUnitTracker ,)
@@ -75,6 +77,7 @@ CR_REG_METADATA(EconomyUnitTracker,(
 				CR_MEMBER(estimateMetalChangeFromDefWhileOn),
 				CR_MEMBER(estimateEnergyChangeFromDefWhileOff),
 				CR_MEMBER(estimateMetalChangeFromDefWhileOff),
+				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
 

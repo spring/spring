@@ -35,6 +35,7 @@ CR_REG_METADATA(CAttackHandler,(
 				CR_MEMBER(kMeansK),
 				CR_MEMBER(kMeansEnemyBase),
 				CR_MEMBER(kMeansEnemyK),
+				CR_RESERVED(256),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -128,7 +129,9 @@ void CAttackHandler::UnitDestroyed(int unitID)
 				break;
 			}
 		}
-		assert(found_dead_unit_in_attackHandler);
+		if (!found_dead_unit_in_attackHandler) 
+			L("ERROR: cannot find dead unit in attack handler idle list "<<unitID);
+//		assert(found_dead_unit_in_attackHandler);
 	} else if (attackGroupID >= GROUND_GROUP_ID_START) {
 		//its in an attackgroup
 		bool foundGroup = false;
@@ -143,8 +146,9 @@ void CAttackHandler::UnitDestroyed(int unitID)
 				break;
 			}
 		}
-		assert(foundGroup); // TODO: this has failed before. and again.
-		assert(removedDeadUnit);
+		L("ERROR: cannot find dead unit in attack handler group list "<<unitID);
+//		assert(foundGroup); // TODO: this has failed before. and again.
+//		assert(removedDeadUnit);
 		//check if the group is now empty
 //		L("AH: about to check if a group needs to be deleted entirely");
 		int groupSize = it -> Size();
@@ -162,7 +166,8 @@ void CAttackHandler::UnitDestroyed(int unitID)
 				break;
 			}
 		}
-		assert(found_dead_unit_in_airUnits);
+		L("ERROR: cannot find dead unit in attack handler air list "<<unitID);
+//		assert(found_dead_unit_in_airUnits);
 	}else {
 		//its in stuckunits
 		bool found_dead_in_stuck_units = false;
@@ -174,7 +179,8 @@ void CAttackHandler::UnitDestroyed(int unitID)
 				break;
 			}
 		}
-		assert(found_dead_in_stuck_units);
+		L("ERROR: cannot find dead unit in attack handler stuck list "<<unitID);
+//		assert(found_dead_in_stuck_units);
 	}
 	if (debug) L("AH: unit deletion done");
 	ai -> math -> StopTimer(ai -> ah -> ah_timer_totalTime);

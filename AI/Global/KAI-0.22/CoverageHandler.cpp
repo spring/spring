@@ -9,7 +9,8 @@ CR_BIND(CCoverageHandler ,(NULL,Radar))
 CR_REG_METADATA(CCoverageHandler,(
 				CR_MEMBER(CovMap),
 			    CR_MEMBER(ai),
-				CR_ENUM_MEMBER(Type)
+				CR_ENUM_MEMBER(Type),
+				CR_RESERVED(64)
 				));
 
 int mandist(int x1, int y1, int x2, int y2){

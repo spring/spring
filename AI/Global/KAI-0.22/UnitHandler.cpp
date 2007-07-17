@@ -30,7 +30,8 @@ CR_REG_METADATA(CUnitHandler, (
 
 				CR_MEMBER(metalMaker),
 				CR_MEMBER(ai),
-				CR_MEMBER(taskPlanCounter)
+				CR_MEMBER(taskPlanCounter),
+				CR_RESERVED(256)
 				//CR_MEMBER(debugPoints)
 				));
 

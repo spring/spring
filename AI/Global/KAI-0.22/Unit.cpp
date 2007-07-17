@@ -16,6 +16,7 @@ CR_REG_METADATA(CUNIT,(
 				CR_MEMBER(attemptedUnstuck),
 				CR_MEMBER(maneuverCounter),
 				CR_MEMBER(ai),
+				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -659,6 +660,8 @@ bool CUNIT::Build(float3 pos, const UnitDef* unit,bool queue)
 {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	if (!ai->cb->GetUnitDef(myid)->canBuild) return false;
+	if (def()->isCommander && ai->uh->Distance2DToNearestFactory(pos.x,pos.z)>DEFCBS_RADIUS*3/4) 
+		return false;
 	Command* c = MakePosCommand(-unit->id, &pos);
 	if(c->id != 0){
 		if(queue){

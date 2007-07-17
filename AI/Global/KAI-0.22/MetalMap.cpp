@@ -100,7 +100,10 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 	float distance;
 	float3 spotcoords = ERRORVECTOR;
 	int bestspot = -1;
-	float bestfreemetal = GetNearestMetalSpot(builderid, extractor).y;
+	float3 bestfreemetalpos = GetNearestMetalSpot(builderid, extractor);
+	float bestfreemetal = bestfreemetalpos.y;
+	float bestfreedistance = ai->uh->Distance2DToNearestFactory(bestfreemetalpos.x,bestfreemetalpos.z);
+	if (bestfreedistance<DEFCBS_RADIUS) bestfreemetal/=10;
 
 	if (VectoredSpots.size()) {
 		int* temparray = new int [MAXUNITS];
@@ -111,6 +114,7 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 			if (spotcoords.x != -1) {
 				distance = sqrt(spotcoords.distance2D(ai -> cb -> GetUnitPos(builderid)) + 150);
 				// L("Spot number " << i << " Threat: " << mythreat);
+				if (extractor -> extractsMetal/ai -> cb -> GetUnitDef(*i) -> extractsMetal<1.2) continue;
 				float metaldifference = extractor -> extractsMetal - ai -> cb -> GetUnitDef(*i) -> extractsMetal;
 				float spotscore = (GetMetalAtThisPoint(spotcoords) * metaldifference) / sqrt(distance + 500);
 
