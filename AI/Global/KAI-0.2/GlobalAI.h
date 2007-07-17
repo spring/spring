@@ -4,7 +4,7 @@
 
 #include "Include.h"
 
-const char AI_NAME[] = "KAI 0.22 (0.21 Patched)";
+const char AI_NAME[] = "KAI 0.23 (0.21 Patched)";
 
 using namespace std;
 class CAttackHandler;
