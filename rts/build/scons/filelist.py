@@ -121,7 +121,7 @@ def get_AI_source(env, path, which):
 
 def get_globalAI_source(env, which):
 	engine_files = []
-	if which == 'KAI-0.22':
+	if which == 'KAI-0.2':
 		engine_files += get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
 	return get_AI_source(env, 'AI/Global', which) + engine_files
 
