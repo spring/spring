@@ -100,7 +100,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 			attackGroups.erase(it);
 		}
 	}
-	else if(attackGroupID == AIR_GROUP_ID) {
+	else if (attackGroupID == AIR_GROUP_ID) {
 		// L("AH: unit destroyed and its in the air group, trying to remove");
 		bool found_dead_unit_in_airUnits = false;
 		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
