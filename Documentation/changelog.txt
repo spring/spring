@@ -11,6 +11,9 @@ Spring change log
   everyone including the host himself.
 - Game end condition is now fixed to check allyteams instead of teams.
 
+- Added gui_xray_shader.lua widget
+- Added gui_team_platter.lua widget
+
 0.75b1
 
 Uncategorized:
