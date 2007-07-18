@@ -40,7 +40,7 @@ end
 
 local edgeExponent = 2.5
 
-local doFeatures = true
+local doFeatures = false
 
 local featureColor = { 1, 0, 1 }
 
