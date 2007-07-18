@@ -22,11 +22,6 @@
 
 namespace netcode {
 
-
-Packet::Packet(): data(0),length(0)
-{
-}
-
 Packet::Packet(const void* indata,const unsigned int length): length(length)
 {
 	data=SAFE_NEW unsigned char[length];
@@ -35,7 +30,8 @@ Packet::Packet(const void* indata,const unsigned int length): length(length)
 
 Packet::~Packet()
 {
-	delete[] data;
+	if (length > 0)	//TODO find out where the 0-length-packets are constructed and fix it there
+		delete[] data;
 }
 
 // both defined in Net.cpp
@@ -61,6 +57,11 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, const SOCKET* con
 	lastNak=-1;
 	lastNakTime=0;
 	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
+	if (mtu < 50)
+	{
+		logOutput.Print("Your MaximumTransmissionUnit is to low (%i, minimum 50)", mtu);
+		mtu = 50;
+	}
 	fragmentedFlushes = 0;
 	resentPackets = 0;
 }
