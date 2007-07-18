@@ -690,12 +690,13 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 											ai->tm->ThreatMapWidth,
 											ai->tm->ThreatMapHeight);
 
-		// KLOOTNOTE: this never succeeds in finding a path at all?
-		// ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[0], radius);
-		ai->pather->FindBestPath(&pathToTarget, &groupPos, 1000000.0f, &enemyPositions);
+		// KLOOTNOTE: FindBestPath() never succeeds in finding a path at all?
+		ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[0], 1000000.0f);
+		// ai->pather->FindBestPath(&pathToTarget, &groupPos, 1000000.0f, &enemyPositions);
+
+		// std::cout << "[CAttackHandler::AssignTarget()] length of path to target: " << (pathToTarget.size()) << std::endl;
 
 		if (pathToTarget.size() >= 2) {
-			// std::cout << "[CAttackHandler::AssignTarget()] path to target found" << std::endl;
 			const int ATTACKED_AREA_RADIUS = 800;
 			int lastIndex = pathToTarget.size() - 1;
 			float3 endPos = pathToTarget[lastIndex];
