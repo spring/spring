@@ -92,10 +92,12 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual void Draw();
+	void DrawRaw();
 	void DrawModel();
 	void DrawDebug();
 	void DrawBeingBuilt();
 	void DrawWithLists(unsigned int preList, unsigned int postList);
+	void DrawRawWithLists(unsigned int preList, unsigned int postList);
 
 	void ApplyTransformMatrix() const;
 	void GetTransformMatrix(CMatrix44f& matrix) const;

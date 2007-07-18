@@ -892,6 +892,18 @@ void CUnit::Draw()
 }
 
 
+void CUnit::DrawRaw()
+{
+	glPushMatrix();
+
+	ApplyTransformMatrix();
+
+	DrawModel();
+
+	glPopMatrix();
+}
+
+
 void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
 {
 	glPushMatrix();
@@ -913,6 +925,26 @@ void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
 	}
 
 	DrawDebug();
+
+	glPopMatrix();
+}
+
+
+void CUnit::DrawRawWithLists(unsigned int preList, unsigned int postList)
+{
+	glPushMatrix();
+
+	ApplyTransformMatrix();
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
+
+	DrawModel();
+
+	if (postList != 0) {
+		glCallList(postList);
+	}
 
 	glPopMatrix();
 }
