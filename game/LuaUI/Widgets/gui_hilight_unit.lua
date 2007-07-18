@@ -387,6 +387,24 @@ function widget:DrawScreen()
     end
   end
 end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+function widget:Update()
+  local a,c,m,s = Spring.GetModKeyState()
+  if (not m) then
+    return
+  end
+
+  local mx, my = GetMouseState()
+  local type, data = TraceScreenRay(mx, my)
+
+  if (type == 'unit') then
+    Spring.DrawUnitCommands(data)
+  end
+end
               
 
 --------------------------------------------------------------------------------
