@@ -1183,17 +1183,14 @@ int LuaOpenGL::Unit(lua_State* L)
 	glPushAttrib(GL_ENABLE_BIT);
 
 	if (rawDraw) {
-		const bool origDebug = gu->drawdebug;
-		gu->drawdebug = false;
 		if (useLOD) {
-			unit->Draw();
+			unit->DrawRaw();
 		} else {
 			const unsigned int origLodCount = unit->lodCount;
 			unit->lodCount = 0;
-			unit->Draw();
+			unit->DrawRaw();
 			unit->lodCount = origLodCount;
 		}
-		gu->drawdebug = origDebug;
 	}
 	else {
 		if (useLOD) {

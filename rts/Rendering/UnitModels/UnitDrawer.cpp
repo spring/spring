@@ -1482,14 +1482,14 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 
 		lodMat->uniforms.Execute(unit);
 		SetS3OTeamColour(unit->team);
-		unit->DrawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
+		unit->DrawRawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
 
 		LuaMaterial::defMat.Execute(mat);
 	}
 	else if (unit->model->textureType == 0){
 		/* 3DO */
 		SetupForUnitDrawing();
-		unit->Draw();
+		unit->DrawRaw();
 		CleanUpUnitDrawing();
 	}
 	else {
@@ -1497,7 +1497,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		SetupForS3ODrawing();
 		texturehandler->SetS3oTexture(unit->model->textureType);
 		SetS3OTeamColour(unit->team);
-		unit->Draw();
+		unit->DrawRaw();
 		CleanUpS3ODrawing();
 	}
 
