@@ -59,7 +59,7 @@ enum NETMSG {
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
 	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
-	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left*/;
+	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
 	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
 #ifdef SYNCDEBUG
 	NETMSG_SD_CHKREQUEST    = 41,

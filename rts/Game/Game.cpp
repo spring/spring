@@ -2004,7 +2004,7 @@ bool CGame::Draw()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glLoadIdentity();
 	}
-	
+
 	glDisable(GL_FOG);
 
 	luaCallIns.DrawScreenEffects();
@@ -2539,10 +2539,17 @@ bool CGame::ClientReadNet()
 			if(player>=MAX_PLAYERS || player<0){
 				logOutput.Print("Got invalid player num %i in player left msg",player);
 			} else {
-				if(inbuf[inbufpos+2]==1)
-					logOutput.Print("Player %s left",gs->players[player]->playerName.c_str());
-				else
-					logOutput.Print("Lost connection to %s",gs->players[player]->playerName.c_str());
+				switch (inbuf[inbufpos+2]) {
+					case 1:
+						logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
+						break;
+					case 2:
+						logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
+						break;
+					default:
+						logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
+						break;
+				}
 				gs->players[player]->active=false;
 			}
 			lastLength=3;

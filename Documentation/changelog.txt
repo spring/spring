@@ -1,5 +1,16 @@
 Spring change log
 
+0.75b2
+
+- Fixed possible crash while waiting for connection to the host.
+- Fixed unknown net msg in read ahead bugs when large UDP packets were received.
+- Fixed a crash when empty network packets where destructed.
+
+- TargetBorder now takes the correct vertical distance into account.
+- ".kick" and ".kickbynum" now just kick the given player instead of kicking
+  everyone including the host himself.
+- Game end condition is now fixed to check allyteams instead of teams.
+
 0.75b1
 
 Uncategorized:

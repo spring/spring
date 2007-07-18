@@ -155,6 +155,8 @@ Function CheckVersion
   IntCmp $1 5487104 Done              ; 0.74b2
   IntCmp $1 5478912 Done              ; 0.74b3
   IntCmp $1 7470080 Done              ; 0.75b1
+  IntCmp $1 7470592 Done              ; 0.75b1+svn3976 - 0.75b1+svn3997
+  IntCmp $1 7471104 Done              ; 0.75b1+svn3998 - 0.75b1+svn4009
 Fail:
   MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.74. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
   Abort "Unable to upgrade, version 0.74b1, 0.74b2, 0.74b3 or 0.75b1 not found.."
