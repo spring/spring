@@ -13,6 +13,7 @@ Spring change log
 
 - Added gui_xray_shader.lua widget
 - Added gui_team_platter.lua widget
+- Added camera_smooth_move.lua widget
 
 0.75b1
 
