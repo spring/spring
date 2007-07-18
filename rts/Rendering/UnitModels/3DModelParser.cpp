@@ -45,9 +45,6 @@ LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, vector<struct
 	} else {
 		lm = units3oparser->CreateLocalModel(model,pieces);
 	}
-	for (int i = 0; i < lm->numpieces; i++) {
-		LocalS3DO& piece = lm->pieces[i];
-	}
 	return lm;
 }
 
