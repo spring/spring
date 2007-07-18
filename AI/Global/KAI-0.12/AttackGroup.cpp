@@ -367,13 +367,8 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 
 
 bool CAttackGroup::NeedsNewTarget() {
-	bool needs = false;
-
-	if (!isShooting && !isMoving) {
-		needs = true;
-	}
-
-	return (defending && !isShooting && !isMoving);
+	return (!defending && !isShooting && !isMoving);
+	// return (defending && !isShooting && !isMoving);
 }
 
 void CAttackGroup::ClearTarget() {
@@ -611,6 +606,7 @@ void CAttackGroup::Update() {
 	}
 
 
+	/*
 	// stuck fix stuff. disabled because the spring one works now and that's not taken into consideration yet.
 	frameSpread = 60;
 	if ((false && isMoving && !isShooting) && (frameNr % frameSpread == 0)) {
@@ -655,4 +651,5 @@ void CAttackGroup::Update() {
 			}
 		}
 	}
+	*/
 }

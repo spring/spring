@@ -13,4 +13,6 @@ fix XTA FARKs/Necros building radars like mad
 better support for mods with dgun-less
 commanders (less aggressive expansion eg.)
 
+nukes/shields support
+
 state serialization
