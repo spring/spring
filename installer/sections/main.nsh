@@ -11,8 +11,10 @@
   ; (even though the DLL properties say 1.6.5, this is a Devil bug...)
   File "..\mingwlibs\dll\DevIL.dll"
 
-  ; SDL is upgraded too
-  File "..\mingwlibs\dll\SDL.dll"
+  ; SDL is downgraded
+  ; grab SDL 1.2.10 from game directory, the one in mingwlibs (1.2.11) breaks
+  ; azerty/qwerty for non-chat input.
+  File "..\game\SDL.dll"
 
   ; ILU.dll and python25.dll are new since 0.75b1
   File "..\mingwlibs\dll\ILU.dll"
