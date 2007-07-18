@@ -602,13 +602,19 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	unsigned numActive=0;
+	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
+	unsigned numActiveAllyTeams = 0, a;
+	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 
-	for(unsigned a=0;a<gs->activeTeams;++a)
-		if(!gs->Team(a)->isDead && !gs->Team(a)->gaia)
-			++numActive;
+	for (a = 0; a < gs->activeTeams; ++a)
+		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia)
+			++numActiveTeams[gs->AllyTeam(a)];
 
-	if(numActive<=1){
+	for (a = 0; a < gs->activeAllyTeams; ++a)
+		if (numActiveTeams[a] != 0)
+			++numActiveAllyTeams;
+
+	if (numActiveAllyTeams <= 1) {
 		gameEndDetected=true;
 		gameEndTime=0;
 		serverNet->SendSendPlayerStat();
@@ -662,7 +668,9 @@ bool CGameServer::WaitsOnCon() const
 void CGameServer::KickPlayer(const int playerNum)
 {
 	if (playerNum != 0 && gs->players[playerNum]->active) {
-		serverNet->SendQuit();
+		unsigned char a = NETMSG_QUIT;
+		serverNet->SendPlayerLeft(playerNum, 2);
+		serverNet->connections[playerNum]->SendData(&a, 1);
 		serverNet->Kill(playerNum);
 	}
 }
