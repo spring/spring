@@ -304,8 +304,9 @@ public:
 	 * @brief game mode
 	 *
 	 * Determines the commander mode of this game
-	 * (0 means game continues after commander dies,
-	 * 1 means game ends when commander dies)
+	 *   0: game continues after commander dies
+	 *   1: game ends when commander dies
+	 *   2: lineage mode (all descendants die when a commander dies)
 	 */
 	int gameMode;
 
