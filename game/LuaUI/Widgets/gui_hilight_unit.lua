@@ -253,6 +253,11 @@ function widget:DrawWorld()
     local unitID = GetPlayerControlledUnit(GetMyPlayerID())
     if (data ~= unitID) then
       HilightUnit(data)
+      -- also draw the unit's command queue
+      local a,c,m,s = Spring.GetModKeyState()
+      if (m) then
+        Spring.DrawUnitCommands(data)
+      end
     end
   end
 end
@@ -388,24 +393,6 @@ function widget:DrawScreen()
   end
 end
 
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-function widget:Update()
-  local a,c,m,s = Spring.GetModKeyState()
-  if (not m) then
-    return
-  end
-
-  local mx, my = GetMouseState()
-  local type, data = TraceScreenRay(mx, my)
-
-  if (type == 'unit') then
-    Spring.DrawUnitCommands(data)
-  end
-end
-              
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
