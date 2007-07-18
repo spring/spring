@@ -62,7 +62,7 @@ void DGunController::trackAttackTarget(unsigned int currentFrame) {
 		// CALLOUT -> CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
 
 		if ((commanderPos - attackPos).Length() < maxRange * 0.9) {
-			// multiply by 0.8 to ensure commander does not have to walk
+			// multiply by 0.9 to ensure commander does not have to walk
 			if ((CALLOUT->GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
 				state.dgunOrderFrame = currentFrame;
 				issueOrder(attackPos, CMD_DGUN, 0);
