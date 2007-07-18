@@ -30,6 +30,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
 	const bool limitDGun      = gameSetup ? gameSetup->limitDgun      : false;
 	const bool diminishingMMs = gameSetup ? gameSetup->diminishingMMs : false;
+	const int  startPosType   = gameSetup ? gameSetup->startPosType   : 0;
 	
 	LuaPushNamedString(L, "version",       VERSION_STRING);
 
@@ -38,7 +39,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
+
 	LuaPushNamedNumber(L, "gameMode",      gs->gameMode);
+	LuaPushNamedNumber(L, "startPosType",  startPosType);
 
 	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
