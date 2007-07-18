@@ -367,7 +367,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 
 
 bool CAttackGroup::NeedsNewTarget() {
-	return (!defending && !isShooting && !isMoving);
+	return (!isShooting && !isMoving);
 	// return (defending && !isShooting && !isMoving);
 }
 
