@@ -95,7 +95,7 @@ function widget:Initialize()
 
       void main()
       {
-          float opac = dot(normalize(-normal), normalize(-eyeVec));
+          float opac = dot(normalize(normal), normalize(eyeVec));
           opac = 1.0 - abs(opac);
           opac = pow(opac, edgeExponent);
           
@@ -165,7 +165,7 @@ function widget:DrawWorld()
 
   gl.Blending(GL.SRC_ALPHA, GL.ONE)
 
-  gl.PolygonOffset(-1, -1)
+  gl.PolygonOffset(-2, -2)
 
   for _, teamID in ipairs(GetTeamList()) do
     SetTeamColor(teamID)
