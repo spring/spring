@@ -22,7 +22,6 @@ How Spring protocolheader looks like (size in bytes):
 
 struct Packet
 {
-	Packet();
 	Packet(const void* indata,const unsigned int length);
 	~Packet();
 
