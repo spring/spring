@@ -161,7 +161,7 @@ function widget:DrawWorldPreUnit()
 
   gl.DepthTest(true)
   
-  gl.PolygonOffset(-50, -10)
+  gl.PolygonOffset(-50, -2)
 
   local lastColorSet = nil
   for _,unitID in ipairs(Spring.GetAllUnits()) do
