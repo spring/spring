@@ -584,7 +584,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 	startPos.y = 0;
 
 	float travDist = (curPos-startPos).Length()>range?range:(curPos-startPos).Length();
-	float ddmod;
+	float ddmod = 0;
 
 	if (damageMin > 0)
 		ddmod = damageMin/damages[0]; // get damage mod from first damage type
@@ -603,7 +603,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 		}
 	}
 	else {
-		for(int i=0; i < damageArrayHandler->numTypes; ++i) {	
+		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
 			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0)
