@@ -16,8 +16,6 @@ class LuaUnsyncedRead {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		static void AllowGameChanges(bool value);
-
 	private:
 		static int IsReplay(lua_State* L);
 
