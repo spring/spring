@@ -149,9 +149,19 @@ aienv.Append(CPPPATH = ['rts/ExternalAI'])
 # Use subst() to substitute $installprefix in datadir.
 install_dir = os.path.join(aienv['installprefix'], aienv['libdir'], 'AI/Helper-libs')
 
+# store shared ai objects so newer scons versions don't choke with
+# *** Two environments with different actions were specified for the same target
+aiobjs = []
+for f in filelist.get_shared_AI_source(aienv):
+        while isinstance(f, list):
+                f = f[0]
+        fpath, fbase = os.path.split(f)
+        fname, fext = fbase.rsplit('.', 1)
+        aiobjs.append(aienv.SharedObject(os.path.join(fpath, fname + '-ai'), f))
+
 #Build GroupAIs
 for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
-	lib = aienv.SharedLibrary(os.path.join('game/AI/Helper-libs', f), filelist.get_groupAI_source(aienv, f))
+	lib = aienv.SharedLibrary(os.path.join('game/AI/Helper-libs', f), aiobjs + filelist.get_groupAI_source(aienv, f))
 	Alias(f, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
 	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
 	Default(lib)
@@ -166,7 +176,7 @@ install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']),
 
 #Build GlobalAIs
 for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI']):
-	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), filelist.get_globalAI_source(aienv, f))
+	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), aiobjs + filelist.get_globalAI_source(aienv, f))
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
 	Default(lib)
