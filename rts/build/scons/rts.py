@@ -136,6 +136,11 @@ def generate(env):
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
 
+	# Dont throw an exception if scons -c is run before scons configure (this is done by debian build system for example)
+	if not env.has_key('is_configured') and env.GetOption('clean'):
+		print "Not configured: nothing to clean"
+		env.Exit(0)
+
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
