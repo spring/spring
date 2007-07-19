@@ -182,7 +182,7 @@ function widget:DrawWorld()
         if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= msx) or (zp ~= msz))) then
           local alpha = 0.2 + (0.2 * math.abs(((time * 3) % 1) - 0.5))
           local color
-          alpha = 0.5
+          alpha = 0.25
           if (at == Spring.GetMyAllyTeamID()) then
             color = { 0, 1, 0, alpha }  --  green
           else
