@@ -348,9 +348,9 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 			if(gs->players[a]->active && gs->players[a]->team==teamNum){
 				gs->players[a]->spectator=true;
 				if(a==gu->myPlayerNum){
-					gu->spectating = true;
-					gu->spectatingFullView = gu->spectating;
-					gu->spectatingFullSelect = false;
+					gu->spectating           = true;
+					gu->spectatingFullView   = true;
+					gu->spectatingFullSelect = true;
 					CLuaUI::UpdateTeams();
 				}
 			}
