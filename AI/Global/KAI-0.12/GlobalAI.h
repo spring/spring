@@ -9,6 +9,7 @@ const char AI_NAME[] = "KAI 0.12 (0.11 Patched)";
 class CAttackHandler;
 class CGlobalAI: public IGlobalAI {
 	public:
+		CR_DECLARE(CGlobalAI);
 		CGlobalAI();
 		virtual ~CGlobalAI();
 
@@ -33,6 +34,10 @@ class CGlobalAI: public IGlobalAI {
 
 		void Update();
 
+		void Load(IGlobalAICallback* callback, std::istream* ifs);
+		void Save(std::ostream* ofs);
+		void PostLoad(void);
+		void Serialize(creg::ISerializer* s);
 
 		AIClasses* ai;
 		std::vector<CUNIT> MyUnits;

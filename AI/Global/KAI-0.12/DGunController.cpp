@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "./DGunController.hpp"
+#include "DGunController.hpp"
 
 DGunController::DGunController(IAICallback* gAICallback) {
 	CALLOUT = gAICallback;

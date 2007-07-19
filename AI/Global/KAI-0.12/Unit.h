@@ -6,8 +6,11 @@
 
 class CUNIT {
 	public:
+		CR_DECLARE(CUNIT);
+		CUNIT(void);
 		CUNIT(AIClasses* ai);
 		virtual ~CUNIT();
+		void PostLoad();
 
 		// misc. info
 		float3 pos();

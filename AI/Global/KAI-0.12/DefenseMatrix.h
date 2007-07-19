@@ -8,6 +8,7 @@ class CSpotFinder;
 
 class CDefenseMatrix {
 	public:
+		CR_DECLARE(CDefenseMatrix);
 		CDefenseMatrix(AIClasses* ai);
 		virtual ~CDefenseMatrix();
 

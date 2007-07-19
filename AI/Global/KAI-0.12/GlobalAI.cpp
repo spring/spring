@@ -1,6 +1,123 @@
 #include "GlobalAI.h"
 #include "Unit.h"
 
+// TODO: move to GlobalAI.h
+CR_BIND(CGlobalAI, );
+CR_REG_METADATA(CGlobalAI, (
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+));
+
+// TODO: REG_METADATA for each of these...
+CR_BIND(CAttackGroup, (NULL, 0));
+CR_BIND(CAttackHandler, (NULL));
+CR_BIND(CBuildUp, (NULL));
+CR_BIND(CDefenseMatrix, (NULL));
+CR_BIND(DGunController, (NULL));
+CR_BIND(CEconomyTracker, (NULL));
+CR_BIND(BuildingTracker, );
+CR_BIND(EconomyUnitTracker, );
+CR_BIND(CMetalMaker, (NULL));
+CR_BIND(CMetalMaker::UnitInfo, );
+CR_BIND(CThreatMap, (NULL));
+CR_BIND(CUNIT, );
+CR_BIND(CUnitHandler, (NULL));
+
+
+
+// TODO: move to Containers.h
+CR_BIND(AIClasses, );
+CR_REG_METADATA(AIClasses, (
+	CR_MEMBER(econTracker),
+	CR_MEMBER(bu),
+	CR_MEMBER(tm),
+	CR_MEMBER(uh),
+	CR_MEMBER(dm),
+	CR_MEMBER(ah),
+	CR_MEMBER(dgunController)
+));
+
+// TODO: move to Containers.h
+CR_BIND(integer2, );
+CR_REG_METADATA(integer2, (
+	CR_MEMBER(x),
+	CR_MEMBER(y)
+));
+
+// TODO: move to Containers.h
+CR_BIND(BuilderTracker, );
+CR_REG_METADATA(BuilderTracker, (
+	CR_MEMBER(builderID),
+	CR_MEMBER(buildTaskId),
+	CR_MEMBER(taskPlanId),
+	CR_MEMBER(factoryId),
+	CR_MEMBER(customOrderId),
+	CR_MEMBER(stuckCount),
+	CR_MEMBER(idleStartFrame),
+	CR_MEMBER(commandOrderPushFrame),
+	CR_MEMBER(categoryMaker),
+	CR_MEMBER(estimateRealStartFrame),
+	CR_MEMBER(estimateFramesForNanoBuildActivation),
+	CR_MEMBER(estimateETAforMoveingToBuildSite),
+	CR_MEMBER(distanceToSiteBeforeItCanStartBuilding)
+));
+
+// TODO: move to Containers.h
+CR_BIND(BuildTask, );
+CR_REG_METADATA(BuildTask, (
+	CR_MEMBER(id),
+	CR_MEMBER(category),
+	CR_MEMBER(builders),
+	CR_MEMBER(builderTrackers),
+	CR_MEMBER(currentBuildPower),
+	// CR_MEMBER(def),
+	CR_MEMBER(pos),
+	CR_POSTLOAD(PostLoad)
+));
+
+// TODO: move to Containers.h
+CR_BIND(TaskPlan, );
+CR_REG_METADATA(TaskPlan, (
+	CR_MEMBER(id),
+	CR_MEMBER(builders),
+	CR_MEMBER(builderTrackers),
+	CR_MEMBER(currentBuildPower),
+	// CR_MEMBER(def),
+	CR_MEMBER(pos),
+	CR_POSTLOAD(PostLoad)
+));
+
+// TODO: move to Containers.h
+CR_BIND(Factory, );
+CR_REG_METADATA(Factory, (
+	CR_MEMBER(id),
+	CR_MEMBER(supportbuilders),
+	CR_MEMBER(supportBuilderTrackers)
+));
+
+// TODO: move to DGunController.hpp
+CR_BIND(ControllerState, );
+CR_REG_METADATA(ControllerState, (
+	CR_MEMBER(inited),
+	CR_MEMBER(dgunOrderFrame),
+	CR_MEMBER(reclaimOrderFrame),
+	CR_MEMBER(targetSelectionFrame),
+	CR_MEMBER(targetID),
+	CR_MEMBER(oldTargetPos)
+));
+
+CREX_REG_STATE_COLLECTOR(KAI, CGlobalAI);
+
+// TODO: move to Containers.h
+void BuildTask::PostLoad(void) { def = KAIState->ai->cb->GetUnitDef(id); }
+void TaskPlan::PostLoad(void) { def = KAIState->ai->cb->GetUnitDef(id); }
+
+
+
+
+
+
+
 
 CGlobalAI::CGlobalAI() {
 }
@@ -24,8 +141,71 @@ CGlobalAI::~CGlobalAI() {
 }
 
 
+// called instead of InitAI() if IsLoadSupported() returns 1
+void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
+	ai = new AIClasses;
+	ai->cb = callback->GetAICallback();
+	ai->cheat = callback->GetCheatInterface();
+
+	// initialize log filename
+	string mapname = string(callback->GetAICallback()->GetMapName());
+	mapname.resize(mapname.size() - 4);
+
+	time_t now1;
+	time(&now1);
+	struct tm* now2;
+	now2 = localtime(&now1);
+
+	int team = ai->cb->GetMyTeam();
+
+	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
+		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
+
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, c);
+	ai->LOGGER = new std::ofstream(c);
+
+	CREX_SC_LOAD(KAI, ifs);
+}
+
+void CGlobalAI::Save(std::ostream* ofs) {
+	CREX_SC_SAVE(KAI, ofs);
+}
+
+
+
+void CGlobalAI::PostLoad(void) {
+	// TODO
+}
+
+void CGlobalAI::Serialize(creg::ISerializer* s) {
+//	TODO
+// 	if (!s->IsWriting())
+// 		MyUnits.resize(MAXUNITS, CUNIT(ai));
+// 
+// 	for (int i = 0; i < MAXUNITS; i++) {
+// 		if (ai->cheat->GetUnitDef(i)) {
+// 			// do not save non existing units
+// 			s->SerializeObjectInstance(&(MyUnits[i]), MyUnits[i].GetClass());
+// 			if (!s->IsWriting()) {
+// 				MyUnits[i].myid = i;
+// 			}
+// 		} else if (!s->IsWriting()) {
+// 			MyUnits[i].myid = i;
+// 			MyUnits[i].groupID = -1;
+// 		}
+// 		if (!s->IsWriting())
+// 			ai->MyUnits.push_back(&MyUnits[i]);
+// 	}
+// 
+// 	s->SerializeObjectInstance(ai, ai->GetClass());
+}
+
+
+
+
+
 void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
-	// Initialize Log filename
+	// initialize log filename
 	string mapname = string(callback->GetAICallback()->GetMapName());
 	mapname.resize(mapname.size() - 4);
 
@@ -33,7 +213,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	time(&now1);
 	struct tm* now2 = localtime(&now1);
 
-	// Date logfile name
+	// timestamp logfile name
 	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
 
@@ -131,6 +311,8 @@ void CGlobalAI::UnitIdle(int unit) {
 }
 
 void CGlobalAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir) {
+	attacker = attacker;
+	dir = dir;
 	ai->econTracker->UnitDamaged(damaged, damage);
 }
 

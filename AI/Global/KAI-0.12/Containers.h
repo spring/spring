@@ -22,6 +22,8 @@ class CEconomyManager;
 class DGunController;
 
 struct AIClasses {
+	CR_DECLARE_STRUCT(AIClasses);
+
 	IAICallback*		cb;
 	IAICheats*			cheat;
 	CEconomyTracker*	econTracker;
@@ -80,6 +82,8 @@ class integer2 {
  * builder container: main task is to make sure that tracking builders is easy (making asserts and tests)
  */
 struct BuilderTracker {
+	CR_DECLARE_STRUCT(BuilderTracker);
+
 	int builderID;
 	// if not NULL then this worker belongs to this BuildTask.
 	int buildTaskId;
@@ -112,6 +116,9 @@ struct BuilderTracker {
 };
 
 struct BuildTask {
+	CR_DECLARE_STRUCT(BuildTask);
+	void PostLoad(void);
+
 	int id;
 	int category;
 	// temp only, for compability (will be removed)
@@ -127,6 +134,9 @@ struct BuildTask {
 };
 
 struct TaskPlan {
+	CR_DECLARE_STRUCT(TaskPlan);
+	void PostLoad(void);
+
 	// this will be some smart number (a counter?)
 	int id;
 	// temp only, for compability (will be removed)
@@ -140,6 +150,8 @@ struct TaskPlan {
 };
 
 struct Factory {
+	CR_DECLARE_STRUCT(Factory);
+
 	int id;
 	// temp only, for compability (will be removed)
 	list<int> supportbuilders;

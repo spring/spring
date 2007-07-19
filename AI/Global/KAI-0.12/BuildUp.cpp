@@ -16,6 +16,7 @@ void CBuildUp::Update() {
 	int frame = ai->cb->GetCurrentFrame();
 
 	if (frame % 15 == 0) {
+		// update current threat map
 		ai->tm->Create();
 		Buildup();
 

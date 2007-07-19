@@ -1,7 +1,7 @@
 #ifndef DGUN_CONTROLLER_HPP
 #define DGUN_CONTROLLER_HPP
 
-#include "./Include.h"
+#include "Include.h"
 
 // NOTE: MAX_UNITS IS 5000 IN UNITDEF.H BUT TASCLIENT GOES UP TO 10K?
 #define MAX_UNITS	5000
@@ -16,6 +16,7 @@
 
 
 struct ControllerState {
+	CR_DECLARE_STRUCT(ControllerState);
 	ControllerState(void) {
 		inited					= false;
 		targetID				= -1;
@@ -63,6 +64,7 @@ struct ControllerState {
 
 class DGunController {
 	public:
+		CR_DECLARE(DGunController);
 		DGunController(IAICallback*);
 		~DGunController(void);
 

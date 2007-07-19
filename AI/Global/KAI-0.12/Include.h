@@ -35,6 +35,13 @@ static inline void itoa(int i, char* buf, int size) {
 // Spring Standard Header
 #include "System/StdAfx.h"
 
+// Spring Class Registration System
+#include "creg/creg.h"
+#include "creg/cregex.h"
+#include "creg/Serializer.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Map.h"
+
 // Spring Engine
 #include "Game/command.h"						// Commands
 #include "Sim/Units/UnitDef.h"					// Unit Definitions

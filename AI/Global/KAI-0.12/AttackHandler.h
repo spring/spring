@@ -8,6 +8,7 @@ class CAttackGroup;
 
 class CAttackHandler {
 	public:
+		CR_DECLARE(CAttackHandler);
 		CAttackHandler(AIClasses* ai);
 		virtual ~CAttackHandler();
 
