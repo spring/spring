@@ -181,8 +181,9 @@ CDemoReader::CDemoReader(const std::string& filename)
 			}
 		}
 		
-		gu->spectating = true;
-		gu->spectatingFullView = true;
+		gu->spectating           = true;
+		gu->spectatingFullView   = true;
+		gu->spectatingFullSelect = true;
 		
 		playbackDemo->Read(&demoTimeOffset,sizeof(float));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
