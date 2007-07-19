@@ -7,6 +7,8 @@
 struct EconomyUnitTracker;
 
 struct BuildingTracker {
+	CR_DECLARE_STRUCT(BuildingTracker);
+
 	int unitUnderConstruction;
 	int category;
 	float hpLastFrame;
@@ -24,8 +26,7 @@ struct BuildingTracker {
 	int factory;								// The factory, if it have one (cant use a pointer, as its inside a dynamic list ??)
 	EconomyUnitTracker* economyUnitTracker;		// A pointer to the planed EconomyUnitTracker for this unit, this pointer is stable
 
-
-	void clear() 	{
+	void clear() {
 		unitUnderConstruction		= 0;
 		category					= 0;
 		hpLastFrame					= 0;
@@ -45,6 +46,8 @@ struct BuildingTracker {
 };
 
 struct EconomyUnitTracker {
+	CR_DECLARE_STRUCT(EconomyUnitTracker);
+
 	int economyUnitId;							// Only economyUnitId and createFrame gives a correct ID
 	int createFrame;							// If this is in the future, the unit is under construction, and this is the globaly made eta (is a hack now: FIX)
 	BuildingTracker * buildingTracker;			// A pointer to the BuildingTracker for this unit (if its not done), MUST be updated before use
@@ -173,41 +176,40 @@ struct EconomyBuildingPlan {
 
 class CEconomyTracker {
 	public:
-
-	CEconomyTracker(AIClasses* ai);
-	virtual ~CEconomyTracker();
-	void frameUpdate();
-	void UnitCreated(int unit);
-	void UnitFinished(int unit);
-	void UnitDestroyed(int unit);
-	void UnitDamaged(int unit, float damage);
+		CR_DECLARE(CEconomyTracker);
+		CEconomyTracker(AIClasses* ai);
+		virtual ~CEconomyTracker();
+		void frameUpdate();
+		void UnitCreated(int unit);
+		void UnitFinished(int unit);
+		void UnitDestroyed(int unit);
+		void UnitDamaged(int unit, float damage);
 
 	private:
-	vector<list<BuildingTracker>* > allTheBuildingTrackers;
-	list<EconomyUnitTracker*> deadEconomyUnitTrackers;
-	list<EconomyUnitTracker*> newEconomyUnitTrackers;
-	list<EconomyUnitTracker*> activeEconomyUnitTrackers;
-	list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
+		vector<list<BuildingTracker>* > allTheBuildingTrackers;
+		list<EconomyUnitTracker*> deadEconomyUnitTrackers;
+		list<EconomyUnitTracker*> newEconomyUnitTrackers;
+		list<EconomyUnitTracker*> activeEconomyUnitTrackers;
+		list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
 
-	AIClasses* ai;
-	void updateUnitUnderConstruction(BuildingTracker * bt);
-	void SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTracker);
-	TotalEconomyState makePrediction(int targetFrame);
+		AIClasses* ai;
+		void updateUnitUnderConstruction(BuildingTracker * bt);
+		void SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTracker);
+		TotalEconomyState makePrediction(int targetFrame);
 
-	bool trackerOff;
+		bool trackerOff;
 
-	float oldEnergy;
-	float oldMetal;
+		float oldEnergy;
+		float oldMetal;
 
-	float myCalcEnergy;
-	float myCalcMetal;
+		float myCalcEnergy;
+		float myCalcMetal;
 
-	float constructionEnergy;
-	float constructionMetal;
-	//float oldHP;
+		float constructionEnergy;
+		float constructionMetal;
 
-	float constructionEnergySum;
-	float constructionMetalSum;
+		float constructionEnergySum;
+		float constructionMetalSum;
 };
 
 

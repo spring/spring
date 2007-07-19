@@ -789,7 +789,7 @@ void CAttackHandler::Update() {
 	if (frameNr < 2)
 		UpdateKMeans();
 	
-	// set the map data here so i dont have to do it in each group or whatever
+	// set map data here so it doesn't have to be done in each group
 	// TODO: movement map PATHTOUSE = hack
 	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
 	
@@ -882,7 +882,7 @@ void CAttackHandler::Update() {
 	// basic attack group formation from defense units
 	this->AssignTargets();
 
-	//update current groups
+	// update current groups
 	for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 		it->Update();
 	}

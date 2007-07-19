@@ -6,6 +6,7 @@
 
 class CBuildUp {
 	public:
+		CR_DECLARE(CBuildUp);
 		CBuildUp(AIClasses* ai);
 		virtual ~CBuildUp();
 

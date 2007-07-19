@@ -1,9 +1,6 @@
 // implementation of the logic in a metal maker class
-//////////////////////////////////////////////////////////////////////
 
-//#include "StdAfx.h"
 #include "MetalMaker.h"
-//#include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include <vector>
@@ -11,11 +8,11 @@
 
 
 CMetalMaker::CMetalMaker(IAICallback* aicb) {
-//	lastUpdate=0;
-	listIndex=0;
-	lastEnergy=0;
-	addedDelay=0;
-	this->aicb=aicb;
+//	lastUpdate = 0;
+	listIndex = 0;
+	lastEnergy = 0;
+	addedDelay = 0;
+	this->aicb = aicb;
 }
 
 CMetalMaker::~CMetalMaker()

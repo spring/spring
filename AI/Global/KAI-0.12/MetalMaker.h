@@ -11,6 +11,8 @@ using namespace std;
 
 class CMetalMaker {
 	public:
+		CR_DECLARE(CMetalMaker);
+		CR_DECLARE_SUB(UnitInfo);
 		CMetalMaker(IAICallback* aicb);
 		virtual ~CMetalMaker();
 
@@ -20,6 +22,7 @@ class CMetalMaker {
 		virtual void Update();
 
 		struct UnitInfo {
+			CR_DECLARE_STRUCT(UnitInfo);
 			int id;
 			float energyUse;
 			float metalPerEnergy;

@@ -272,10 +272,7 @@ void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radi
 	this->pathIterator = 0;
 	this->defending = false;
 
-	// L("AG: drawing the assigned path to the assigned target:");
 	ai->cb->DeleteFigureGroup(groupID + 100);
-
-	// L("AG: target assigning complete. path size: " << pathToTarget.size() << " targetx:" << attackPosition.x << " targety:" << attackPosition.y << " radius:" << attackRadius << " isMoving:" << isMoving << " frame:" << ai->cb->GetCurrentFrame() << " groupID:" << groupID);
 }
 
 
@@ -382,14 +379,11 @@ void CAttackGroup::ClearTarget() {
 }
 
 
+// called from CAttackHandler::Update()
 void CAttackGroup::Update() {
-	int frameNr = ai->cb->GetCurrentFrame();
-
-	// L("AG: Update-start. isShooting:" << isShooting << " isMoving:" << isMoving << " frame:" << frameNr << " groupID:" << groupID << " path size:" << pathToTarget.size());
-
-	// variable used as a varying "constant" for determining how often a part of the update scheme is done
 	int frameSpread = 30;
 	unsigned int numUnits = units.size();
+	int frameNr = ai->cb->GetCurrentFrame();
 
 	if (!numUnits) {
 		// L("updated an empty AttackGroup!");
@@ -404,20 +398,14 @@ void CAttackGroup::Update() {
 
 	// this part of the code checks for nearby enemies and does focus fire/maneuvering
 	if ((frameNr % frameSpread) == ((groupID * 4) % frameSpread)) {
-		// L("AG: isShooting start");
 		this->isShooting = false;
 
-		// get all enemies within attack range:
+		// get all enemies within attack range
 		float range = this->highestAttackRange + 100.0f;
 		int numEnemies = ai->cheat->GetEnemyUnits(unitArray, groupPosition, range);
 
-		// L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
-
 		if (numEnemies > 0) {
-			// L("this is the isShooting setting procedure, numEnemies=" << numEnemies << " range checked: " << range << " and the position of the group is (" << groupPosition.x << " " << groupPosition.y << " " << groupPosition.z << ") numUnits:" << numUnits);
-			// L("this is the isShooting setting and numEnemies was more than 0 : " << numEnemies);
-
-			// selecting one of the enemies
+			// select one of the enemies
 			int enemySelected = -1;
 			float shortestDistanceFound = FLT_MAX;
 			float temp;
@@ -436,12 +424,11 @@ void CAttackGroup::Update() {
 				}
 			}
 
-			// for every unit, pathfind to enemy perifery (with personal range - 10) then if distance to that last point in the path is < 10 or cost is 0, attack
-			// L("index of the best enemy: " << enemySelected << " its distance: " << shortestDistanceFound << " its id:" << enemies[enemySelected] << " humanName:" << ai->cheat->GetUnitDef(enemies[enemySelected])->humanName);
+			// for every unit, pathfind to enemy perifery (with personal range - 10) then
+			// if distance to that last point in the path is < 10 or cost is 0, attack
 			// TODO: can enemy id be 0
 
 			if (enemySelected != -1) {
-				// L("AG:isShooting: YES");
 				float3 enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
 				assert(CloakedFix(unitArray[enemySelected]));
 				this->isShooting = true;
@@ -456,8 +443,8 @@ void CAttackGroup::Update() {
 						// TODO: add canattack
 						ai->MyUnits[unit]->Attack(unitArray[enemySelected]);
 
-						// TODO: this should be the max range of the weapon the unit has with the lowest range
-						// assuming you want to rush in with the heavy stuff, that is
+						// TODO: this should be the max range of the weapon the unit has with the
+						// lowest range assuming you want to rush in with the heavy stuff, that is
 						assert(range >= ai->cb->GetUnitMaxRange(unit));
 
 						// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max range if target is too close
@@ -517,8 +504,8 @@ void CAttackGroup::Update() {
 		}
 	}
 
+	/*
 	if (frameNr % 30 == 0 && !defending) {
-		// L("AG update: drawing target region (attacking)");
 		int heightOffset = 50;
 		vector<float3> circleHack;
 		float diagonalHack = attackRadius * (2.0f / 3.0f);
@@ -535,9 +522,10 @@ void CAttackGroup::Update() {
 
 		// from pos to circle center
 		ai->cb->SetFigureColor(GetGroupID() + 6000, 0, 0, 0, 1.0f);
-		// L("AG update: done drawing stuff");
 	}
+	*/
 
+	// KLOOTNOTE: what is (groupID % 60) check for and why do this if group already defending?
 	if ((defending && !isShooting && !isMoving) && (frameNr % 60 == groupID % 60)) {
 		FindDefenseTarget(groupPosition);
 	}
