@@ -8,6 +8,21 @@ import os, re, sys
 ###############################
 
 
+def check_zip_version(env, conf):
+	print "Checking for zip...",
+	try:
+		f = os.popen("zip -h 2>/dev/null")
+		version = f.read()
+	finally:
+		f.close()
+	if version:
+		version = re.search('Zip [0-9]\.[0-9]\.?[0-9]', version).group()
+		print version, "found"
+	else:
+		print "not found"
+		env.Exit(1)
+
+
 def check_gcc_version(env, conf = None):
 	# The GCC version is needed by the detect.processor() function to recognize
 	# versions below 3.4 and versions equal to or greater than 3.4.
@@ -299,6 +314,7 @@ def CheckHeadersAndLibraries(env, conf):
 def configure(env, conf_dir):
 	print "\nConfiguring spring"
 	conf = env.Configure(conf_dir = conf_dir)
+	check_zip_version(env, conf)
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
