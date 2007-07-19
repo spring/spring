@@ -309,17 +309,28 @@ void CGameSetup::Draw()
 
 	glPushMatrix();
 	for(int a=0;a<numPlayers;a++){
-		if(!gs->players[a]->readyToStart){
-			glColor4f(1.0f ,0.2f, 0.2f, 1.0f);
-		} else if (!readyTeams[gs->players[a]->team]){
-			glColor4f(0.8f, 0.8f, 0.2f, 1.0f);
+		const float* color;
+		const float red[4]    = { 1.0f ,0.2f, 0.2f, 1.0f };
+		const float green[4]  = { 0.2f, 1.0f, 0.2f, 1.0f };
+		const float yellow[4] = { 0.8f, 0.8f, 0.2f, 1.0f };
+		const float dark[4]   = { 0.2f, 0.2f, 0.2f, 0.8f };
+		if (!gs->players[a]->readyToStart) {
+			color = red;
+		} else if (!readyTeams[gs->players[a]->team]) {
+			color = yellow;
 		} else {
-			glColor4f(0.2f, 1.0f, 0.2f, 1.0f);
+			color = green;
 		}
+		const float yScale = 0.028f;
+		const float yShift = yScale * 1.25f;
+		const float xScale = yScale / gu->aspectRatio;
+		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+		const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 		glPushMatrix();
-		glTranslatef(0.3f, 0.6f - a * 0.05f, 0.0f);
-		glScalef(0.03f, 0.04f, 1.0f);
-		font->glPrintRaw(gs->players[a]->playerName.c_str());
+		glTranslatef(0.3f, 0.64f - (a * yShift), 0.0f);
+		glScalef(xScale, yScale, 1.0f);
+		font->glPrintOutlined(gs->players[a]->playerName.c_str(),
+		                      xPixel, yPixel, color, dark);
 		glPopMatrix();
 	}
 	glPopMatrix();
