@@ -35,6 +35,7 @@ end
 --
 --  config options
 --
+
 local drawGroundQuads = false
 
 
@@ -43,19 +44,19 @@ local drawGroundQuads = false
 
 local gl = gl  --  use a local copy for faster access
 
-
--- map sizes
 local msx = Game.mapX * 512.0
 local msz = Game.mapY * 512.0
 
 local xformList = 0
 local coneList = 0
 
-local startTimer = Spring.GetTimer()
-
 local gaiaTeamID
 local gaiaAllyTeamID
 
+local startTimer = Spring.GetTimer()
+
+local texName = LUAUI_DIRNAME .. 'Images/highlight_strip.png'
+local texScale = 512
 
 --------------------------------------------------------------------------------
 
@@ -160,49 +161,64 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawWorld()
-  -- show the team start positions
   gl.Fog(false)
-  for _, teamID in ipairs(Spring.GetTeamList()) do
-    if (teamID ~= gaiaTeamID) then
-      local _,leader = Spring.GetTeamInfo(teamID)
-      local name = Spring.GetPlayerInfo(leader)
-      local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x) then
-        local color = GetTeamColor(teamID)
-        local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
-        local alpha = 0.5 + math.abs(((time * 3) % 1) - 0.5)
-        gl.PushMatrix()
-        gl.Translate(x, y, z)
-        gl.Color(color[1], color[2], color[3], alpha)
-        gl.CallList(coneList)
-        gl.PopMatrix()
-      end
-    end
-  end
+
+  local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
 
   -- show all start boxes
   if (drawGroundQuads) then
+
     gl.PolygonOffset(-25, -2)
     gl.Culling(GL.BACK)
     gl.DepthTest(true)
+
+    gl.Texture(texName)
+    gl.TexGen(GL.T, GL.TEXTURE_GEN_MODE, GL.EYE_LINEAR)
+    gl.TexGen(GL.T, GL.EYE_PLANE, (1 / texScale), 0, (1 / texScale), time % 1)
+
     for _,at in ipairs(Spring.GetAllyTeamList()) do
-      if (at ~= gaiaAllyTeamID) then
+      if (true or at ~= gaiaAllyTeamID) then
         local xn, zn, xp, zp = Spring.GetAllyTeamStartBox(at)
-        if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= 1) or (zp ~= 1))) then
+        if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= msx) or (zp ~= msz))) then
+          local alpha = 0.2 + (0.2 * math.abs(((time * 3) % 1) - 0.5))
           local color
+          alpha = 0.5
           if (at == Spring.GetMyAllyTeamID()) then
-            color = { 0, 1, 0, 0.1 }  --  green
+            color = { 0, 1, 0, alpha }  --  green
           else
-            color = { 1, 0, 0, 0.1 }  --  red
+            color = { 1, 0, 0, alpha }  --  red
           end
           gl.Color(color)
           gl.DrawGroundQuad(xn, zn, xp, zp)
         end
       end
     end
+
+    gl.Texture(false)
+    gl.TexGen(GL.T, false)
+
     gl.DepthTest(false)
     gl.Culling(false)
     gl.PolygonOffset(false)
+  end
+
+  -- show the team start positions
+  for _, teamID in ipairs(Spring.GetTeamList()) do
+    if (teamID ~= gaiaTeamID) then
+      local _,leader = Spring.GetTeamInfo(teamID)
+      local name = Spring.GetPlayerInfo(leader)
+      local x, y, z = Spring.GetTeamStartPosition(teamID)
+      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
+        local color = GetTeamColor(teamID)
+        local alpha = 0.5 + math.abs(((time * 3) % 1) - 0.5)
+        gl.PushMatrix()
+        gl.Translate(x, y, z)
+        print(x, y, z)
+        gl.Color(color[1], color[2], color[3], alpha)
+        gl.CallList(coneList)
+        gl.PopMatrix()
+      end
+    end
   end
 
   gl.Fog(true)
@@ -223,7 +239,7 @@ function widget:DrawScreen()
       local colorStr, outlineStr = GetTeamColorStr(teamID)
       name = colorStr .. name
       local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x) then
+      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
         local sx, sy, sz = Spring.WorldToScreenCoords(x, y + 135, z)
         if (sz < 1) then
           gl.Text(name, sx, sy + 12, 12, outlineStr .. 'c')
@@ -260,7 +276,7 @@ function widget:DrawInMiniMap(sx, sz)
   for _,at in ipairs(Spring.GetAllyTeamList()) do
     if (at ~= gaiaAllyTeamID) then
       local xn, zn, xp, zp = Spring.GetAllyTeamStartBox(at)
-      if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= 1) or (zp ~= 1))) then
+      if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= msx) or (zp ~= msz))) then
         local color
         if (at == Spring.GetMyAllyTeamID()) then
           color = { 0, 1, 0, 0.1 }  --  green
@@ -286,15 +302,15 @@ function widget:DrawInMiniMap(sx, sz)
     local _,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
       local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x) then
+      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
         local color = GetTeamColor(teamID)
         local r, g, b = color[1], color[2], color[3]
         local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
         local i = 2 * math.abs(((time * 3) % 1) - 0.5)
-        gl.PointSize(8)
+        gl.PointSize(7)
         gl.Color(i, i, i)
         gl.BeginEnd(GL.POINTS, function() gl.Vertex(x, z) end)
-        gl.PointSize(6.5)
+        gl.PointSize(5.5)
         gl.Color(r, g, b)
         gl.BeginEnd(GL.POINTS, function() gl.Vertex(x, z) end)
       end
