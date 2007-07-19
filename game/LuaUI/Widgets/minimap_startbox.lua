@@ -32,6 +32,14 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+--
+--  config options
+--
+local drawGroundQuads = false
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local gl = gl  --  use a local copy for faster access
 
@@ -49,7 +57,6 @@ local gaiaTeamID
 local gaiaAllyTeamID
 
 
-
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
@@ -59,6 +66,7 @@ function widget:Initialize()
     return
   end
 
+  -- get the gaia teamID and allyTeamID
   gaiaTeamID = Spring.GetGaiaTeamID()
   if (gaiaTeamID) then
     local _,_,_,_,_,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
@@ -72,6 +80,7 @@ function widget:Initialize()
     gl.Scale(1 / msx, -1 / msz, 1)
   end)
 
+  -- cone list for world start positions
   coneList = gl.CreateList(function()
     local h = 100
     local r = 25
@@ -170,6 +179,32 @@ function widget:DrawWorld()
       end
     end
   end
+
+  -- show all start boxes
+  if (drawGroundQuads) then
+    gl.PolygonOffset(-25, -2)
+    gl.Culling(GL.BACK)
+    gl.DepthTest(true)
+    for _,at in ipairs(Spring.GetAllyTeamList()) do
+      if (at ~= gaiaAllyTeamID) then
+        local xn, zn, xp, zp = Spring.GetAllyTeamStartBox(at)
+        if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= 1) or (zp ~= 1))) then
+          local color
+          if (at == Spring.GetMyAllyTeamID()) then
+            color = { 0, 1, 0, 0.1 }  --  green
+          else
+            color = { 1, 0, 0, 0.1 }  --  red
+          end
+          gl.Color(color)
+          gl.DrawGroundQuad(xn, zn, xp, zp)
+        end
+      end
+    end
+    gl.DepthTest(false)
+    gl.Culling(false)
+    gl.PolygonOffset(false)
+  end
+
   gl.Fog(true)
 end
 
@@ -178,14 +213,13 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawScreen()
-  -- show the team start positions
+  -- show the names over the team start positions
   gl.Fog(false)
   for _, teamID in ipairs(Spring.GetTeamList()) do
     local _,leader = Spring.GetTeamInfo(teamID)
-    local _,_,spec = Spring.GetPlayerInfo(leader)
+    local name,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
       local _,leader = Spring.GetTeamInfo(teamID)
-      local name = Spring.GetPlayerInfo(leader)
       local colorStr, outlineStr = GetTeamColorStr(teamID)
       name = colorStr .. name
       local x, y, z = Spring.GetTeamStartPosition(teamID)
