@@ -86,8 +86,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	lastPC(-1),
 	cancelDistance(1024),
 	lastCloseInTry(-1),
-	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5)
+	slowGuard(false)
 {
 	lastUserGoal=owner->pos;
 	CommandDescription c;
@@ -655,7 +654,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b3 = (w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.distance(owner->pos));
 			edgeFactor = fabs(w->targetBorder);
 		}
-		float3 diff = owner->pos - orderTarget->pos;
+
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
 		// also make sure that we're not locked in close-in/in-range state loop
@@ -673,21 +672,14 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// if (((first weapon range minus first weapon length greater than distance to target
 		// or our movetype has type TAAirMoveType) and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
-		// less than 1024) then we are close enough, but something is in the way. Move a little
-		// closer or further away, and to the side (arbitrary direction).
+		// less than 1024) then we are close enough
 		else if (((b3
 				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				&& diff.Length2D() < (owner->maxRange * 0.9f))
-				|| diff.SqLength2D() < 1024) {
-			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
-			float sin = moveDir ? 3.0/5 : -3.0/5;
-			float cos = 4.0/5;
-			float3 goalDiff(0, 0, 0);
-			goalDiff.x = diff.dot(float3(cos, 0, -sin));
-			goalDiff.z = diff.dot(float3(sin, 0, cos));
-			goalDiff *= diff.Length2D() < (owner->maxRange * 0.3f) ? 1/cos : cos;
-			goalDiff += orderTarget->pos;
-			SetGoal(goalDiff, owner->pos);
+				&& (owner->pos - orderTarget->pos).Length2D() < (owner->maxRange * 0.9f))
+				|| (owner->pos - orderTarget->pos).SqLength2D() < 1024) {
+			StopMove();
+			owner->moveType->KeepPointingTo(orderTarget,
+				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
 		}
 
 		// if 2D distance of (target position plus attacker error vector times 128) to goal position
@@ -722,20 +714,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 			}
 		}
+
 		else if (diff.SqLength2D() < 1024) {
-			// if (length of 3D vector from our pos. to attack pos. less than first weapon range minus
-			// first weapon length OR squared length of 2D vector from our pos. to attack pos. less
-			// than 1024) then we are close enough, but something is in the way. Move a little closer
-			// or further away, and to the side (arbitrary direction).
-			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
-			float sin = moveDir ? 3.0/5 : -3.0/5;
-			float cos = 4.0/5;
-			float3 goalDiff(0, 0, 0);
-			goalDiff.x = diff.dot(float3(cos, 0, -sin));
-			goalDiff.z = diff.dot(float3(sin, 0, cos));
-			goalDiff *= diff.Length2D() < (owner->maxRange * 0.3f) ? 1/cos : cos;
-			goalDiff += pos;
-			SetGoal(goalDiff, owner->pos);
+			StopMove();
+			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 		}
 
 		// if we are more than 10 units distant from target position then keeping moving closer
