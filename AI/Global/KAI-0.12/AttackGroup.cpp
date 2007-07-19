@@ -232,11 +232,6 @@ float3 CAttackGroup::GetGroupPos() {
 
 		assert(closestUnitID != -1);
 		groupPosition = ai->cb->GetUnitPos(closestUnitID);
-
-		// draw arrow pointing to the group center
-		if (!defending) {
-			ai->cb->SetFigureColor(groupID, 65535.0f, 0.1f, FLT_MAX, 1);
-		}
 	}
 	else {
 		// L("AttackGroup: empty attack group when calcing group pos!");
@@ -271,48 +266,45 @@ void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radi
 	this->isShooting = false;
 	this->pathIterator = 0;
 	this->defending = false;
-
-	ai->cb->DeleteFigureGroup(groupID + 100);
 }
 
 
-void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
-//	ai->cb->SendTextMsg("AG: FindDefenseTarget - group is defending and selecting a target.", 0);
 
+// attack routine (the "find new enemy" part)
+void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 	int frameNr = ai->cb->GetCurrentFrame();
 	char tx[512];
-	sprintf(tx, "AG:running find-new-target, group %i, frame %i, numUnits %i", this->groupID, frameNr, this->units.size());
+	sprintf(tx, "AG:running find-new-target, group %i, frame %i, numUnits %i",
+		this->groupID, frameNr, this->units.size());
 
-	// attack routine *the "find new enemy" part)
+	// KLOOTNOTE: numEnemies will be zero if no enemies in LOS or radar
+	// int numEnemies = ai->cb->GetEnemyUnitsInRadarAndLos(unitArray);
+	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
 
-	int numOfEnemies;
-	numOfEnemies = ai->cb->GetEnemyUnitsInRadarAndLos(unitArray);
 
-	// TODO: don't re-make the enemies list every time
-	if (numOfEnemies) {
+	if (numEnemies) {
 		//build vector of enemies
 		vector<float3> enemyPositions;
-		enemyPositions.reserve(numOfEnemies);
+		enemyPositions.reserve(numEnemies);
 
 		// make a vector with the positions of all enemies
-		for (int i = 0; i < numOfEnemies; i++) {
+		for (int i = 0; i < numEnemies; i++) {
 			if( unitArray[i] != -1) {
 				const UnitDef* enemy_ud = ai->cheat->GetUnitDef(unitArray[i]);
 				float3 enemyPos = ai->cheat->GetUnitPos(unitArray[i]);
 
-				// do some filtering and then
+				// store enemy position if unit not cloaked and not an aircraft
 				if (ai->cb->GetUnitDef(unitArray[i]) != NULL && this->CloakedFix(unitArray[i]) && !enemy_ud->canfly) {
 					// TODO: remove currently cloaked units
 					// TODO: remove units not reachable by my unit type and position
 					enemyPositions.push_back(enemyPos);
-					// L("added enemy position to the list being sent to path finder x" << enemyPos.x << " y" << enemyPos.y << " z" << enemyPos.z << " ");
 				}
 			}
 		}
 
-		// if all units are cloaked or otherwise not eligible (but there are units)
-		if (enemyPositions.size() < 1) {
-			for (int i = 0; i < numOfEnemies; i++) {
+		// if ALL units are cloaked or aircraft, get their positions anyway
+		if (enemyPositions.size() == 0) {
+			for (int i = 0; i < numEnemies; i++) {
 				if (unitArray[i] != -1) {
 					float3 enemyPos = ai->cheat->GetUnitPos(unitArray[i]);
 					enemyPositions.push_back(enemyPos);
@@ -323,12 +315,9 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 		pathToTarget.clear();
 		float costToTarget = ai->pather->FindBestPath(&pathToTarget, &groupPosition, lowestAttackRange, &enemyPositions);
 
-		// L("AttackGroup debug: findbestpath run to all enemies, resulting cost:" << costToTarget);
-
-		if (costToTarget == 0 && pathToTarget.size() <= 2) {
+		if (costToTarget < 0.001f && pathToTarget.size() <= 2) {
+			// cost of zero means something is in range, isShooting will take care of it
 			isMoving = false;
-			// L("AG: FindNewTarget sets isMoving to false.");
-			// if this happens then isshooting will take care of it (there are enemies but cost is 0 ==> something is in range)
 		}
 		else {
 			isMoving = true;
@@ -337,19 +326,19 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 	}
 	else {
 		// attempt to path back to base if there are no targets
-		// L("AG: found no defense targets, pathing back to base. group:" << groupID);
+		// KLOOTNOTE: this branch is now purposely never taken
         pathToTarget.clear();
 		float3 closestBaseSpot = ai->ah->GetClosestBaseSpot(groupPosition);
 		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES * 8, &closestBaseSpot);
 
 		// TODO: GetKBaseMeans() for support of multiple islands/movetypes
-		// TODO: this doesnt need to be to radius
+		// TODO: this doesn't need to be to radius
 
 		if (costToTarget == 0 && pathToTarget.size() <= 2) {
 			isMoving = false;
 
 			if (ai->ah->DistanceToBase(groupPosition) > 500) {
-				// L("AG: group " << groupID << " couldnt path back to closest base spot!");
+				// we could not path back to closest base spot
 			}
 		}
 		else {
@@ -358,14 +347,13 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
 		}
 	}
 	if (!isShooting && !isMoving) {
-		// L("AttackGroup: There are no accessible enemies and we're idling. groupid:" << this->groupID << " we are defending: " << this->defending);
+		// no accessible enemies and we're idling
 	}
 }
 
 
 bool CAttackGroup::NeedsNewTarget() {
-	return (!isShooting && !isMoving);
-	// return (defending && !isShooting && !isMoving);
+	return (defending && !isShooting && !isMoving);
 }
 
 void CAttackGroup::ClearTarget() {
@@ -504,28 +492,7 @@ void CAttackGroup::Update() {
 		}
 	}
 
-	/*
-	if (frameNr % 30 == 0 && !defending) {
-		int heightOffset = 50;
-		vector<float3> circleHack;
-		float diagonalHack = attackRadius * (2.0f / 3.0f);
-
-		circleHack.resize(8, attackPosition);
-		circleHack[0] += float3(-diagonalHack, heightOffset, -diagonalHack);
-		circleHack[1] += float3(0, heightOffset, -attackRadius);
-		circleHack[2] += float3(diagonalHack, heightOffset, -diagonalHack);
-		circleHack[3] += float3(attackRadius, heightOffset, 0);
-		circleHack[4] += float3(diagonalHack, heightOffset, diagonalHack);
-		circleHack[5] += float3(0, heightOffset, attackRadius);
-		circleHack[6] += float3(-diagonalHack, heightOffset, diagonalHack);
-		circleHack[7] += float3(-attackRadius, heightOffset, 0);
-
-		// from pos to circle center
-		ai->cb->SetFigureColor(GetGroupID() + 6000, 0, 0, 0, 1.0f);
-	}
-	*/
-
-	// KLOOTNOTE: what is (groupID % 60) check for and why do this if group already defending?
+	// KLOOTNOTE: why do this if group already defending?
 	if ((defending && !isShooting && !isMoving) && (frameNr % 60 == groupID % 60)) {
 		FindDefenseTarget(groupPosition);
 	}
@@ -539,8 +506,6 @@ void CAttackGroup::Update() {
 		int pathMaxIndex = (int) pathToTarget.size() - 1;
 		int step1 = min(this->pathIterator + maxStepsAhead / 2, pathMaxIndex);
 		int step2 = min(this->pathIterator + maxStepsAhead, pathMaxIndex);
-		// L("AG: picking stuff out of pathToTarget");
-		// L("AG: pathtotarget size: " << pathToTarget.size());
 		float3 moveToHereFirst = this->pathToTarget[step1];
 		float3 moveToHere = this->pathToTarget[step2];
 
@@ -550,9 +515,11 @@ void CAttackGroup::Update() {
 				int unit = units[i];
 
 				if (ai->cb->GetUnitDef(unit) != NULL) {
-					// TODO: when they are near target, change this so they line up or something while some are here and some arent. attack checker will take over soon.
-					// theres also something that should be done with the units in front that are given the same order+shiftorder and skittle around back and forth meanwhile
-					// if the single unit isn't there yet
+					// TODO: when they are near target, change this so they eg. line up
+					// while some are here and some aren't, there's also something that
+					// should be done with the units in front that are given the same
+					// order+shiftorder and skittle around back and forth meanwhile if
+					// the single unit isn't there yet
 					if (ai->cb->GetUnitPos(unit).distance2D(pathToTarget[pathMaxIndex]) > UNIT_DESTINATION_SLACK) {
 						ai->MyUnits[unit]->Move(moveToHereFirst);
 
@@ -592,52 +559,4 @@ void CAttackGroup::Update() {
 
 		// L("AG: done updating move stuff");
 	}
-
-
-	/*
-	// stuck fix stuff. disabled because the spring one works now and that's not taken into consideration yet.
-	frameSpread = 60;
-	if ((false && isMoving && !isShooting) && (frameNr % frameSpread == 0)) {
-		// L("AG: unit stuck checking start");
-		// stuck unit counter update. (at a 60 frame modulo)
-		// TODO: if one unit has completed the path, it won't be given any new orders, but this will still happen
-		// so there might be false positives here
-		for (vector<int>::iterator it = units.begin(); it != units.end(); it++) {
-			int unit = *it;
-
-			if (ai->cb->GetUnitDef(unit)) {
-				CUNIT* u = ai->MyUnits[unit];
-				float distanceMovedSinceLastUpdate = ai->cb->GetUnitPos(unit).distance2D(u->earlierPosition);
-
-				if (distanceMovedSinceLastUpdate < UNIT_STUCK_MOVE_DISTANCE) {
-					u->stuckCounter++;
-				}
-				else {
-					// it moved so it isn't stuck
-					u->stuckCounter = 0;
-				}
-
-				u->earlierPosition = u->pos();
-
-				// hack for slight maneuvering around buildings, spring fails at this sometimes
-				if (u->stuckCounter == UNIT_STUCK_COUNTER_MANEUVER_LIMIT) {
-					// L("AG: attempting unit unstuck manuevering for " << unit << " at pos " << u->pos().x << " " << u->pos().y << " " << u->pos().z);
-					AIHCAddMapPoint amp;
-					amp.label = "stuck-fix";
-					amp.pos = u->pos();
-
-					// findbestpath to perifery of circle around mypos, distance 2x resolution or somesuch
-					// don't reset counter, that would make it loop manuever attempts.
-					vector<float3> tempPath;
-					float3 upos = u->pos();
-
-					if (tempPath.size() > 0) {
-						float3 moveHere = tempPath.back();
-						u->Move(moveHere);
-					}
-				}
-			}
-		}
-	}
-	*/
 }

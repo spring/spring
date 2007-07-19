@@ -671,8 +671,6 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		if (availableEnemies.size() == 0)
 			return;
 
-		// std::cout << "[CAttackHandler::AssignTarget()] availableEnemies.size(): " << availableEnemies.size() << std::endl;
-
 		// make a list of the positions of all available enemies
 		vector<float3> enemyPositions;
 		enemyPositions.reserve(availableEnemies.size());
@@ -692,10 +690,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 
 		int idx = rand() % enemyPositions.size();
 		ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[idx], 1 << 20);
-		// KLOOTNOTE: FindBestPath() never succeeds in finding a path at all?
-		// ai->pather->FindBestPath(&pathToTarget, &groupPos, 1000000.0f, &enemyPositions);
-
-		// std::cout << "[CAttackHandler::AssignTarget()] length of path to target: " << (pathToTarget.size()) << std::endl;
+		// ai->pather->FindBestPath(&pathToTarget, &groupPos, 1 << 20, &enemyPositions);
 
 		if (pathToTarget.size() >= 2) {
 			const int ATTACKED_AREA_RADIUS = 800;
@@ -713,14 +708,12 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 				}
 			}
 
-			if ((enemiesInArea > 0) && ((group_in->Power()) > powerOfEnemies * 1.2f)) {
-				// ATTACK!
-				// std::cout << "[CAttackHandler::AssignTarget()] ATTACKING" << std::endl;
+			if ((enemiesInArea > 0) && (group_in->Power() > powerOfEnemies * 1.1f)) {
+				// assign target to this group
 				group_in->AssignTarget(pathToTarget, pathToTarget.back(), ATTACKED_AREA_RADIUS);
 			}
 			else {
 				// group too weak, forget about this target
-				// std::cout << "[CAttackHandler::AssignTarget()] BACKING OFF" << std::endl;
 				group_in->ClearTarget();
 			}
 		}
@@ -843,7 +836,7 @@ void CAttackHandler::Update() {
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			if (it->Size() < 16 && it->defending && this->DistanceToBase(it->GetGroupPos()) < 300) {
 				existingGroup = &(*it);
-				// KLOOTNOTE: pick the first valid group, not the last...
+				// KLOOTNOTE: pick the first valid group, not the last
 				break;
 			}
 		}
@@ -878,7 +871,7 @@ void CAttackHandler::Update() {
 	}
 
 
-	UpdateAir();
+	this->UpdateAir();
 	// basic attack group formation from defense units
 	this->AssignTargets();
 
@@ -886,30 +879,4 @@ void CAttackHandler::Update() {
 	for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 		it->Update();
 	}
-
-
-	/*
-	frameSpread = 7200;
-	if (ai->cb->GetCurrentFrame() % frameSpread == 0) {
-		// L("AttackHandler: writing out the number of total units");
-		int sum = 0;
-		float powerSum = 0;
-
-		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
-			int size = it->Size();
-			sum += size;
-			powerSum += it->Power();
-			it->Log();
-		}
-
-		float airPower = 0;
-
-		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
-			airPower += ai->cb->GetUnitPower(*it);
-		}
-
-		sum += airUnits.size();
-		powerSum += airPower;
-	}
-	*/
 }
