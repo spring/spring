@@ -987,7 +987,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gu->spectatingFullSelect = (mode >= 2);
 		} else {
 			gu->spectatingFullView = !gu->spectatingFullView;
-			gu->spectatingFullSelect = false;
+			gu->spectatingFullSelect = gu->spectatingFullView;
 		}
 		CLuaUI::UpdateTeams();
 	}
@@ -3549,9 +3549,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	else if(s==".spectator" && (gs->cheatEnabled || net->IsDemoServer())){
 		gs->players[player]->spectator=true;
 		if (player == gu->myPlayerNum) {
-			gu->spectating = true;
-			gu->spectatingFullView = gu->spectating;
-			gu->spectatingFullSelect = false;
+			gu->spectating           = true;
+			gu->spectatingFullView   = true;
+			gu->spectatingFullSelect = true;
 			selectedUnits.ClearSelected();
 			unitTracker.Disable();
 			CLuaUI::UpdateTeams();
@@ -3563,8 +3563,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			gs->players[player]->team = team;
 			gs->players[player]->spectator = false;
 			if(player == gu->myPlayerNum){
-				gu->spectating = false;
-				gu->spectatingFullView = gu->spectating;
+				gu->spectating           = false;
+				gu->spectatingFullView   = false;
 				gu->spectatingFullSelect = false;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);

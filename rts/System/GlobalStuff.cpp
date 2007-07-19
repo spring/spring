@@ -203,8 +203,8 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	myPlayerNum=0;
 	myTeam=1;
 	myAllyTeam=1;
-	spectating = false;
-	spectatingFullView = spectating;
+	spectating           = false;
+	spectatingFullView   = false;
 	spectatingFullSelect = false;
 	drawdebug=false;
 	active=true;
