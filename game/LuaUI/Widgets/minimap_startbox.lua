@@ -174,11 +174,16 @@ function widget:DrawWorld()
 end
 
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function widget:DrawScreen()
   -- show the team start positions
   gl.Fog(false)
   for _, teamID in ipairs(Spring.GetTeamList()) do
-    if (teamID ~= gaiaTeamID) then
+    local _,leader = Spring.GetTeamInfo(teamID)
+    local _,_,spec = Spring.GetPlayerInfo(leader)
+    if ((not spec) and (teamID ~= gaiaTeamID)) then
       local _,leader = Spring.GetTeamInfo(teamID)
       local name = Spring.GetPlayerInfo(leader)
       local colorStr, outlineStr = GetTeamColorStr(teamID)
@@ -243,17 +248,20 @@ function widget:DrawInMiniMap(sx, sz)
 
   -- show the team start positions
   for _, teamID in ipairs(Spring.GetTeamList()) do
-    if (teamID ~= gaiaTeamID) then
+    local _,leader = Spring.GetTeamInfo(teamID)
+    local _,_,spec = Spring.GetPlayerInfo(leader)
+    if ((not spec) and (teamID ~= gaiaTeamID)) then
       local x, y, z = Spring.GetTeamStartPosition(teamID)
       if (x) then
         local color = GetTeamColor(teamID)
+        local r, g, b = color[1], color[2], color[3]
         local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
-        local alpha = 0.5 + math.abs(((time * 3) % 1) - 0.5)
-        gl.PointSize(6.5)
-        gl.Color(0, 0, 0)
+        local i = 2 * math.abs(((time * 3) % 1) - 0.5)
+        gl.PointSize(8)
+        gl.Color(i, i, i)
         gl.BeginEnd(GL.POINTS, function() gl.Vertex(x, z) end)
-        gl.PointSize(5.0)
-        gl.Color(color[1], color[2], color[3], alpha)
+        gl.PointSize(6.5)
+        gl.Color(r, g, b)
         gl.BeginEnd(GL.POINTS, function() gl.Vertex(x, z) end)
       end
     end
