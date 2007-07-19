@@ -49,6 +49,7 @@ local msz = Game.mapY * 512.0
 
 local xformList = 0
 local coneList = 0
+local allyTeamGndLists = {}
 
 local gaiaTeamID
 local gaiaAllyTeamID
@@ -96,12 +97,26 @@ function widget:Initialize()
       end
     end)
   end)
+
+  if (drawGroundQuads) then
+    for _,at in ipairs(Spring.GetAllyTeamList()) do
+      local xn, zn, xp, zp = Spring.GetAllyTeamStartBox(at)
+      if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= msx) or (zp ~= msz))) then
+        allyTeamGndLists[at] = gl.CreateList(function()
+          gl.DrawGroundQuad(xn, zn, xp, zp)
+        end)
+      end
+    end
+  end
 end
 
 
 function widget:Shutdown()
   gl.DeleteList(xformList)
   gl.DeleteList(coneList)
+  for _, gndList in pairs(allyTeamGndLists) do
+    gl.DeleteList(gndList)
+  end
 end
 
 
@@ -189,7 +204,7 @@ function widget:DrawWorld()
             color = { 1, 0, 0, alpha }  --  red
           end
           gl.Color(color)
-          gl.DrawGroundQuad(xn, zn, xp, zp)
+          gl.CallList(allyTeamGndLists[at])
         end
       end
     end
