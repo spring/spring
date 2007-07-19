@@ -141,7 +141,7 @@ CGlobalAI::~CGlobalAI() {
 }
 
 
-// called instead of InitAI() if IsLoadSupported() returns 1
+// called instead of InitAI() on load if IsLoadSupported() returns 1
 void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai = new AIClasses;
 	ai->cb = callback->GetAICallback();
@@ -174,30 +174,40 @@ void CGlobalAI::Save(std::ostream* ofs) {
 
 
 void CGlobalAI::PostLoad(void) {
-	// TODO
+	// init non-serialized objects
+	ai->debug	= new CDebug(ai);
+	ai->math	= new CMaths(ai);
+	ai->parser	= new CSunParser(ai);
+	ai->ut		= new CUnitTable(ai);
+	ai->mm		= new CMetalMap(ai);
+	ai->pather	= new CPathFinder(ai);
+	ai->em		= new CEconomyManager(ai);
+
+	ai->mm->Init();
+	ai->ut->Init();
+	ai->pather->Init();
 }
 
 void CGlobalAI::Serialize(creg::ISerializer* s) {
-//	TODO
-// 	if (!s->IsWriting())
-// 		MyUnits.resize(MAXUNITS, CUNIT(ai));
-// 
-// 	for (int i = 0; i < MAXUNITS; i++) {
-// 		if (ai->cheat->GetUnitDef(i)) {
-// 			// do not save non existing units
-// 			s->SerializeObjectInstance(&(MyUnits[i]), MyUnits[i].GetClass());
-// 			if (!s->IsWriting()) {
-// 				MyUnits[i].myid = i;
-// 			}
-// 		} else if (!s->IsWriting()) {
-// 			MyUnits[i].myid = i;
-// 			MyUnits[i].groupID = -1;
-// 		}
-// 		if (!s->IsWriting())
-// 			ai->MyUnits.push_back(&MyUnits[i]);
-// 	}
-// 
-// 	s->SerializeObjectInstance(ai, ai->GetClass());
+	if (!s->IsWriting())
+		MyUnits.resize(MAXUNITS, CUNIT(ai));
+
+	for (int i = 0; i < MAXUNITS; i++) {
+		if (ai->cheat->GetUnitDef(i)) {
+			// do not save non-existing units
+			s->SerializeObjectInstance(&(MyUnits[i]), MyUnits[i].GetClass());
+			if (!s->IsWriting()) {
+				MyUnits[i].myid = i;
+			}
+		} else if (!s->IsWriting()) {
+			MyUnits[i].myid = i;
+			MyUnits[i].groupID = -1;
+		}
+		if (!s->IsWriting())
+			ai->MyUnits.push_back(&MyUnits[i]);
+	}
+
+	s->SerializeObjectInstance(ai, ai->GetClass());
 }
 
 

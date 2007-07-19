@@ -35,7 +35,7 @@ static inline void itoa(int i, char* buf, int size) {
 // Spring Standard Header
 #include "System/StdAfx.h"
 
-// Spring Class Registration System
+// Spring Component Registration System Headers
 #include "creg/creg.h"
 #include "creg/cregex.h"
 #include "creg/Serializer.h"
