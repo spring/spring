@@ -2,8 +2,6 @@ support for Gundam (crashes ingame)
 
 fix "air group is attacking" crash
 
-attack behavior (related to LOS hack?)
-
 prevent commander from wandering around
 
 unit-limit checking when building stuff
