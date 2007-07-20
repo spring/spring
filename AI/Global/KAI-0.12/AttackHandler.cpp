@@ -9,7 +9,7 @@
 //#define SAFE_SPOT_DISTANCE_SLACK 700
 #define KMEANS_ENEMY_MAX_K 32
 #define KMEANS_BASE_MAX_K 32
-#define KMEANS_MINIMUM_LINE_LENGTH 8*THREATRES
+#define KMEANS_MINIMUM_LINE_LENGTH (8 * THREATRES)
 
 CAttackHandler::CAttackHandler(AIClasses* ai) {
 	this->ai = ai;
@@ -616,15 +616,15 @@ void CAttackHandler::UpdateAir() {
 
 void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 	// get all enemies on map
-	int numOfEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
 
-	if (numOfEnemies) {
+	if (numEnemies) {
 		vector<int> allEligibleEnemies;
-		allEligibleEnemies.reserve(numOfEnemies);
+		allEligibleEnemies.reserve(numEnemies);
 
 		// make a vector with the positions of all
 		// non-air and non-cloaked (non-dead) enemies
-		for (int i = 0; i < numOfEnemies; i++) {
+		for (int i = 0; i < numEnemies; i++) {
 			if (unitArray[i] != -1) {
 				const UnitDef* ud = ai->cheat->GetUnitDef(unitArray[i]);
 
@@ -641,6 +641,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		}
 
 		vector<int> availableEnemies;
+		vector<float3> enemyPositions;
 		availableEnemies.reserve(allEligibleEnemies.size());
 
 		// make a list of all enemies already assigned to (non-defending) groups
@@ -664,20 +665,14 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 				}
 			}
 
-			if (!found)
+			if (!found) {
 				availableEnemies.push_back(enemyID);
+				enemyPositions.push_back(ai->cheat->GetUnitPos(enemyID));
+			}
 		}
 
 		if (availableEnemies.size() == 0)
 			return;
-
-		// make a list of the positions of all available enemies
-		vector<float3> enemyPositions;
-		enemyPositions.reserve(availableEnemies.size());
-
-		for (vector<int>::iterator it = availableEnemies.begin(); it != availableEnemies.end(); it++) {
-			enemyPositions.push_back(ai->cheat->GetUnitPos(*it));
-		}
 
 		// find cheapest target for this group
 		vector<float3> pathToTarget;
@@ -688,9 +683,10 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 											ai->tm->ThreatMapWidth,
 											ai->tm->ThreatMapHeight);
 
+		// pick a random enemy position
 		int idx = rand() % enemyPositions.size();
-		ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[idx], 1 << 20);
-		// ai->pather->FindBestPath(&pathToTarget, &groupPos, 1 << 20, &enemyPositions);
+		// ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[idx], 32);
+		ai->pather->FindBestPath(&pathToTarget, &groupPos, 32, &enemyPositions);
 
 		if (pathToTarget.size() >= 2) {
 			const int ATTACKED_AREA_RADIUS = 800;
@@ -698,17 +694,17 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			float3 endPos = pathToTarget[lastIndex];
 
 			// get all enemies surrounding endpoint of found path
-			int enemiesInArea = ai->cheat->GetEnemyUnits(unitArray, endPos, ATTACKED_AREA_RADIUS);
+			int enemiesInArea = ai->cheat->GetEnemyUnits(unitArray, enemyPositions[idx], ATTACKED_AREA_RADIUS);
 			float powerOfEnemies = 0.000001;
 
-			// calculate combined firepower of enemies near endpoint
+			// calculate combined "firepower" of armed enemies near endpoint
 			for (int i = 0; i < enemiesInArea; i++) {
 				if (ai->cheat->GetUnitDef(unitArray[i])->weapons.size() > 0) {
-					powerOfEnemies += ai->cheat->GetUnitDef(unitArray[i])->power;
+					powerOfEnemies += ai->cheat->GetUnitPower(unitArray[i]);
 				}
 			}
 
-			if ((enemiesInArea > 0) && (group_in->Power() > powerOfEnemies * 1.1f)) {
+			if ((enemiesInArea > 0) && (group_in->Power() > powerOfEnemies * 1.25f)) {
 				// assign target to this group
 				group_in->AssignTarget(pathToTarget, pathToTarget.back(), ATTACKED_AREA_RADIUS);
 			}
@@ -728,8 +724,9 @@ void CAttackHandler::AssignTargets() {
 		// for each attack-group check whether it needs new target, if so assign one
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			CAttackGroup* group = &(*it);
-			// force target updates every 300 frames
-			if (group->NeedsNewTarget() || frameNr % 300 == 0) {
+			// force group target updates every 300 frames
+			// KLOOTNOTE: disabled, paths can be very long
+			if (group->NeedsNewTarget() /*|| frameNr % 300 == 0*/) {
 				AssignTarget(group);
 			}
 		}
@@ -795,11 +792,9 @@ void CAttackHandler::Update() {
 		for (int i = 0; i < num; i++) {
 			int unit = ai->uh->GetIU(CAT_G_ATTACK);
 			if (this->PlaceIdleUnit(unit) && !ai->cb->GetUnitDef(unit)->canfly)  {
-				// L("AH: moved idle cat_g_attack unit. unit:" << unit << " groupid:" << ai->MyUnits[unit]->groupID);
 				ai->uh->IdleUnitRemove(unit);
 			}
 		}
-		// L("finished updating position for defense units");
 	}
 
 	// check for stuck units in each attack group every second
@@ -871,9 +866,9 @@ void CAttackHandler::Update() {
 	}
 
 
-	this->UpdateAir();
 	// basic attack group formation from defense units
-	this->AssignTargets();
+	UpdateAir();
+	AssignTargets();
 
 	// update current groups
 	for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {

@@ -41,6 +41,7 @@ class CAttackGroup {
 
 		bool NeedsNewTarget();
 		void AssignTarget(vector<float3> path, float3 target, float radius);
+		void MoveAlongPath(float3& groupPosition, int numUnits);
 
 
 	private:
