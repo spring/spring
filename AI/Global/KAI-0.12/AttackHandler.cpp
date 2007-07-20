@@ -656,16 +656,16 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		// filter out assigned enemies from eligible enemies
 		for (vector<int>::iterator enemy = allEligibleEnemies.begin(); enemy != allEligibleEnemies.end(); enemy++) {
 			int enemyID = *enemy;
-			bool found = false;
+			bool taken = false;
 
 			for (list<int>::iterator it = takenEnemies.begin(); it != takenEnemies.end(); it++) {
 				if (*it == enemyID) {
-					found = true;
+					taken = true;
 					break;
 				}
 			}
 
-			if (!found) {
+			if (!taken) {
 				availableEnemies.push_back(enemyID);
 				enemyPositions.push_back(ai->cheat->GetUnitPos(enemyID));
 			}
@@ -683,10 +683,9 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 											ai->tm->ThreatMapWidth,
 											ai->tm->ThreatMapHeight);
 
-		// pick a random enemy position
+		// pick a random enemy position and path to it
 		int idx = rand() % enemyPositions.size();
-		// ai->pather->MakePath(&pathToTarget, &groupPos, &enemyPositions[idx], 32);
-		ai->pather->FindBestPath(&pathToTarget, &groupPos, 32, &enemyPositions);
+		ai->pather->FindBestPathToRadius(&pathToTarget, &groupPos, THREATRES * 8, &enemyPositions[idx]);
 
 		if (pathToTarget.size() >= 2) {
 			const int ATTACKED_AREA_RADIUS = 800;

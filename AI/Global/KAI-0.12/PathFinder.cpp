@@ -342,7 +342,6 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 
 	endNodes.resize(0);
 	endNodes.reserve(possibleTargets -> size() * radius * 10);
-	// L("possibleTargets -> size(): " << possibleTargets -> size());
 
 	pair<int, int>* offsets;
 
@@ -363,23 +362,17 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		int index = 0;
 
 		offsets[index].first = 0;
-		// L("offsets[index].first: " << offsets[index].first);
 		offsets[index].second = 0;
-		// L("offsets[index].second: " << offsets[index].second);
 		index++;
 
 		for (int a = 1; a < radius + 1; a++) {
 			// L("a: " << a);
 			int endPos = xend[a];
 			int startPos = xend[a - 1];
-			// L("endPos: " << endPos);
 
 			while (startPos <= endPos) {
-				// L("startPos: " << startPos);
 				offsets[index].first = startPos;
-				// L("offsets[index].first: " << offsets[index].first);
 				offsets[index].second = a;
-				// L("offsets[index].second: " << offsets[index].second);
 				startPos++;
 				index++;
 			}
@@ -390,9 +383,7 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		int index2 = index;
 		for (int a = 0; a < index2 - 2; a++) {
 			offsets[index].first = offsets[a].first;
-			// L("offsets[index].first: " << offsets[index].first);
 			offsets[index].second = DoubleRadius - ( offsets[a].second);
-			// L("offsets[index].second: " << offsets[index].second);
 			index++;
 		}
 
@@ -400,17 +391,13 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 
 		for (int a = 0; a < index2; a++) {
 			offsets[index].first =  -( offsets[a].first);
-			// L("offsets[index].first: " << offsets[index].first);
 			offsets[index].second = offsets[a].second;
-			// L("offsets[index].second: " << offsets[index].second);
 			index++;
 		}
 
 		for (int a = 0; a < index; a++) {
 			offsets[a].first = offsets[a].first;
-			// L("offsets[index].first: " << offsets[a].first);
 			offsets[a].second = offsets[a].second - radius;
-			// L("offsets[index].second: " << offsets[a].second);
 		}
 
 		offsetSize = index;
@@ -434,33 +421,22 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 			if (sx >= 0 && sx < PathMapXSize && sy >= 0 && sy < PathMapYSize)
 				endNodes.push_back(XY2Node(sx, sy));
 		}
-
-		// L("node: " << ((int) node) << ", x: " << x << ", y: " << y);
 	}
-
-	// L("endNodes.size(): " << endNodes.size());
 
 	ai -> math -> F3MapBound(startPos);
 	delete[] offsets;
 	
 	if (micropather -> FindBestPathToAnyGivenPoint(Pos2Node(*startPos), endNodes, &path, &totalcost) == MicroPather::SOLVED) {
-		// L("attack solution solved! Path size = " << path.size());
         posPath -> reserve(path.size());
 
 		for (unsigned i = 0; i < path.size(); i++) {
-			// L("adding path point");
 			int x, y;
 			Node2XY(path[i], &x, &y);
-			// L("node: " << ((int) path[i]) << ". x: " << x << ", y: " << y);
 			float3 mypos = Node2Pos(path[i]);
-			// L("mypos: x: " << mypos.x << ", z: " << mypos.z);
 			mypos.y = ai -> cb -> GetElevation(mypos.x, mypos.z);
 			posPath -> push_back(mypos);
 		}
 	}
-
-//	else
-//		L("FindBestPath: path failed!");
 
 	return totalcost;
 }
@@ -470,6 +446,5 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 float CPathFinder::FindBestPathToRadius(vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target) {
 	vector<float3> foo;
 	foo.push_back(*target);
-
 	return (this -> FindBestPath(posPath, startPos, radiusAroundTarget, &foo));
 }
