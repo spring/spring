@@ -1,0 +1,32 @@
+Q: Fast & Dirty Configs Howto
+
+1: Start NTai with your mod to generate a blank config then open it.
+2: Create a very basic tasklist, say b_mex b_mex b_power b_factory, and call it the commander1 list.
+3: Now goto the units tab, select your commander units and assign them the commanders tasklist by checking the commanders item at the right.
+4: Goto the Global Config tab and turn off Antistall algorithm and set the initial handicap to 50.
+5: Now save your config and start NTai again.
+6: Congratulations your commander should build 2 mexes and a factory!
+
+
+
+Q: All the unit lists are empty!!!!!!!
+
+Don't load the file in the /AI/NTai/Configs/ folder, load the one from /AI/NTai/
+
+
+
+Q: I still dont Understand anything!
+
+Imagine all the AIs units under NTai. And they're sitting, they havent been told what todo. So you goto the Units page and tell NTai which ones are attackers and scouters, and NTai tells them what todo and off they go scouting and attacking stuff.
+
+"But the builders arent building things!?!?" I hear you say. That's because they don't know what to build. You need to tell them, by assigning them a tasklists. Think of tasklists as todo lists or build orders. When NTai is given a new builder or factorys, it looks to see what tasklists you'e given it then randomly picks one. It then follows each task one by one, skipping any it cant do. When its finished it repeats the process and randmly picks another list to follow.
+
+So you need to make a few tasklists then give them to some units.
+
+When you've done the above you'll have a nice simple config.You dont need to know all the other extra options to make it work, but if you use them then your config can get better and better and NTai will be harder to beat.
+
+
+
+Q: How do I make NTai Learn?
+
+Use the universal keywords. Dont always use them but do use them whenever you have a selection of mexes such as armed/cloakable/normal or when you got to choose between tidal/wind/solar
