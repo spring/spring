@@ -90,15 +90,10 @@
   
   <RecentChanges>
   <p>
-  <b><u>Version 0.33:</u></b><br />
-  
+
+  <b><u>Version 0.35:</u></b><br />
   <ul>
-    <li>TASSERVER command has been modified, see documentation bellow for further details.
-        Note that clients should now acquire local Spring version by running "spring.exe /version"
-        (they need this info to compare local Spring version to the server's).</li>
-    <li>REQUESTUPDATEFILE command has been modified, see documentation bellow for further details</li>    
-    <li>Note that MsgIDs (as described in the "Introduction" part) aren't fully supported yet - server will
-        parse IDs, but won't include them in the response.</li>
+    <li>New 'servermode' argument has been added to TASSERVER command.</li>
   </ul>
 
   <b><u>Version 0.34:</u></b><br />
@@ -115,7 +110,17 @@
     <li>Added 'url' parameter to SERVERMSGBOX command.</li>
     <li>Added lineage mode to "end game condition" parameter (which is used with several commands).</li>
   </ul>
-  
+
+  <b><u>Version 0.33:</u></b><br />
+  <ul>
+    <li>TASSERVER command has been modified, see documentation bellow for further details.
+        Note that clients should now acquire local Spring version by running "spring.exe /version"
+        (they need this info to compare local Spring version to the server's).</li>
+    <li>REQUESTUPDATEFILE command has been modified, see documentation bellow for further details</li>    
+    <li>Note that MsgIDs (as described in the "Introduction" part) aren't fully supported yet - server will
+        parse IDs, but won't include them in the response.</li>
+  </ul>
+    
   </p>
   </RecentChanges>
 
@@ -161,14 +166,21 @@
         which clients should send their UDP packets when trying to figure out their public
         UDP source port. This is used with some NAT traversal techniques (e.g. "hole punching").
         </Argument>
+        <Argument Name="servermode" Optional="no" Sentence="no">
+        Tells what mode server is in. Currently valid are:
+        <ul>
+          <li>0 - normal mode</li>
+          <li>1 - LAN mode</li>          
+        </ul>
+        </Argument>
       </Arguments>
       <Description>
       This is the first message (i.e. "greeting message") that client receives upon connecting to the server.
       </Description>
       <Response />
       <Examples>
-        <Example>TASSERVER 0.30 0.72b1 8201</Example>
-        <Example>TASSERVER 0.30 * 8201</Example>
+        <Example>TASSERVER 0.35 0.72b1 8201 0</Example>
+        <Example>TASSERVER 0.35 * 8201 0</Example>
       </Examples>
     </Command>
 
