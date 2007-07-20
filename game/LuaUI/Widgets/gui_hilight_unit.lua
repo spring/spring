@@ -243,10 +243,16 @@ local GetFeatureDefID         = Spring.GetFeatureDefID
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-function widget:DrawWorld()
-  local mx, my = GetMouseState()
-  local type, data = TraceScreenRay(mx, my)
+local type, data  --  for the TraceScreenRay() call
 
+
+function widget:Update()
+  local mx, my = GetMouseState()
+  type, data = TraceScreenRay(mx, my)
+end
+
+
+function widget:DrawWorld()
   if (type == 'feature') then
     HilightFeature(data)
   elseif (type == 'unit') then
@@ -261,6 +267,12 @@ function widget:DrawWorld()
     end
   end
 end
+
+
+widget.DrawWorldReflection = widget.DrawWorld
+
+
+widget.DrawWorldRefraction = widget.DrawWorld
 
 
 --------------------------------------------------------------------------------
