@@ -142,32 +142,34 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	int facing = -1;
 
 	if (hubPos.x < (mapWidth >> 1)) {
-		if (hubPos.z < (mapHeight >> 1))
+		if (hubPos.z < (mapHeight >> 1)) {
 			mapQuadrant = QUADRANT_TOP_LEFT;
-		else
+		} else {
 			mapQuadrant = QUADRANT_BOT_LEFT;
+		}
 	}
 	else {
-		if (hubPos.z < (mapHeight >> 1))
+		if (hubPos.z < (mapHeight >> 1)) {
 			mapQuadrant = QUADRANT_TOP_RIGHT;
-		else
+		} else {
 			mapQuadrant = QUADRANT_BOT_RIGHT;
+		}
 	}
 
 
 	switch (mapQuadrant) {
 		case QUADRANT_TOP_LEFT: {
-			facing = (frame % 2)? FACING_DOWN: FACING_RIGHT; break;
-		}
+			facing = (frame % 2)? FACING_DOWN: FACING_RIGHT;
+		} break;
 		case QUADRANT_TOP_RIGHT: {
-			facing = (frame % 2)? FACING_DOWN: FACING_LEFT; break;
-		}
+			facing = (frame % 2)? FACING_DOWN: FACING_LEFT;
+		} break;
 		case QUADRANT_BOT_RIGHT: {
-			facing = (frame % 2)? FACING_UP: FACING_LEFT; break;
-		}
+			facing = (frame % 2)? FACING_UP: FACING_LEFT;
+		} break;
 		case QUADRANT_BOT_LEFT: {
-			facing = (frame % 2)? FACING_UP: FACING_RIGHT; break;
-		}
+			facing = (frame % 2)? FACING_UP: FACING_RIGHT;
+		} break;
 	}
 
 
