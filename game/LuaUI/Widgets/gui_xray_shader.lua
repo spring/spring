@@ -44,6 +44,9 @@ local doFeatures = false
 
 local featureColor = { 1, 0, 1 }
 
+-- looks a lot nicer, esp. without FSAA  (but eats into the FPS too much)
+local smoothPolys = false
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -157,9 +160,9 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawWorld()
-  -- looks a lot nicer, esp. without FSAA
-  -- (but eats into the FPS too much)
-  -- gl.Smoothing(nil, nil, true)
+  if (smoothPolys) then
+    gl.Smoothing(nil, nil, true)
+  end
 
   gl.Color(1, 1, 1, 1)
 
@@ -197,7 +200,9 @@ function widget:DrawWorld()
 
   gl.Color(1, 1, 1, 1)
 
-  -- gl.Smoothing(nil, nil, false)
+  if (smoothPolys) then
+    gl.Smoothing(nil, nil, false)
+  end
 end
               
 
