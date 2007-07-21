@@ -157,7 +157,9 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawWorld()
-  gl.Smoothing(nil, nil, true) -- looks a lot nicer, esp. without FSAA
+  -- looks a lot nicer, esp. without FSAA
+  -- (but eats into the FPS too much)
+  -- gl.Smoothing(nil, nil, true)
 
   gl.Color(1, 1, 1, 1)
 
@@ -195,7 +197,7 @@ function widget:DrawWorld()
 
   gl.Color(1, 1, 1, 1)
 
-  gl.Smoothing(nil, nil, false)
+  -- gl.Smoothing(nil, nil, false)
 end
               
 
