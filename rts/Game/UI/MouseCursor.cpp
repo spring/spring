@@ -184,8 +184,8 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 
 bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 {
-	CFileHandler* f = SAFE_NEW CFileHandler(name);
-	if (!f->FileExists()) {
+	CFileHandler f(name);
+	if (!f.FileExists()) {
 		return false;
 	}
 
