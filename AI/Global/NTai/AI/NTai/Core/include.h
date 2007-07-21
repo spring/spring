@@ -253,7 +253,7 @@ typedef boost::mutex::scoped_lock scoped_lock;
 #include "ExternalAI/AICallback.h" // AI Callback
 #include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
 #include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
-#include "Sim/Misc/damagearray.h" // Needed for WeaponDef
+#include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Misc/FeatureDef.h" // Needed for FeatureDef
 #include "../Helpers/grid/CGridManager.h"
