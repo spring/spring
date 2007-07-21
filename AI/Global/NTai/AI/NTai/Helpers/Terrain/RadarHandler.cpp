@@ -10,10 +10,10 @@ int RevDist(int X1, int Y1, int X2, int Y2, int Max, int Increment){
 		return Max - dist * Increment;
 }
 float Dist(float x1, float y1, float x2, float y2){
-	return (float)_hypot(fabs(x1 - x2), fabs(y1-y2));
+	return (float)hypot(fabs(x1 - x2), fabs(y1-y2));
 }
 float F3Dist(float3 A, float3 B){
-	return (float)_hypot(fabs(A.x - B.x), fabs(A.z - A.z));
+	return (float)hypot(fabs(A.x - B.x), fabs(A.z - A.z));
 }
 CRadarHandler::CRadarHandler(Global*_gs):
 G(_gs),
