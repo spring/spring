@@ -157,6 +157,8 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawWorld()
+  gl.Smoothing(nil, nil, true) -- looks a lot nicer, esp. without FSAA
+
   gl.Color(1, 1, 1, 1)
 
   gl.UseShader(shader)
@@ -192,6 +194,8 @@ function widget:DrawWorld()
   gl.UseShader(0)
 
   gl.Color(1, 1, 1, 1)
+
+  gl.Smoothing(nil, nil, false)
 end
               
 
