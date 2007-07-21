@@ -162,6 +162,17 @@ bool LuaConstGL::PushEntries(lua_State* L)
 	//PUSH_GL(ALL_ATTRIB_BITS);  // floating point clip
 	LuaPushNamedNumber(L, "ALL_ATTRIB_BITS", -1.0f);
 
+	// glHint() targets
+	PUSH_GL(FOG_HINT);
+	PUSH_GL(LINE_SMOOTH_HINT);
+	PUSH_GL(POINT_SMOOTH_HINT);
+	PUSH_GL(POLYGON_SMOOTH_HINT);
+	PUSH_GL(PERSPECTIVE_CORRECTION_HINT);
+	// glHint() modes
+	PUSH_GL(DONT_CARE);
+	PUSH_GL(FASTEST);
+	PUSH_GL(NICEST);
+
 	// Light Specification
 	PUSH_GL(AMBIENT);
 	PUSH_GL(DIFFUSE);
