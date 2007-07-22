@@ -47,24 +47,24 @@ void CBuildUp::Buildup() {
 	//	int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
 	//	int factoriesOfTypeMax = factoryDef->maxThisUnit;
 
-		bool makersOn  = ai->uh->metalMaker->AllAreOn();								// are all our metal makers active?
+		float mIncome = ai->cb->GetMetalIncome();
+		float eIncome = ai->cb->GetEnergyIncome();
+		bool makersOn = ai->uh->metalMaker->AllAreOn();									// are all our metal makers active?
 
-		bool mLevel50  = (ai->cb->GetMetal()) < (ai->cb->GetMetalStorage() * 0.5);		// is our current metal level less than 50% of our current metal storage capacity?
-		bool eLevel50  = (ai->cb->GetEnergy()) > (ai->cb->GetEnergyStorage() * 0.5);	// is our current energy level more than 50% of our current energy storage capacity?
-		bool eLevel80  = (ai->cb->GetEnergy()) > (ai->cb->GetEnergyStorage() * 0.8);	// is our current energy level more than 80% of our current energy storage capacity?
+		bool mLevel50 = (ai->cb->GetMetal()) < (ai->cb->GetMetalStorage() * 0.5);		// is our current metal level less than 50% of our current metal storage capacity?
+		bool eLevel50 = (ai->cb->GetEnergy()) > (ai->cb->GetEnergyStorage() * 0.5);		// is our current energy level more than 50% of our current energy storage capacity?
+		bool eLevel80 = (ai->cb->GetEnergy()) > (ai->cb->GetEnergyStorage() * 0.8);		// is our current energy level more than 80% of our current energy storage capacity?
 
-		bool mStall  = (ai->cb->GetMetalIncome()) < (ai->cb->GetMetalUsage() * 1.3);	// are we currently producing less metal than we are currently expending * 1.3?
-		bool eStall  = (ai->cb->GetEnergyIncome()) < (ai->cb->GetEnergyUsage() * 1.6);	// are we currently producing less energy than we are currently expending * 1.6?
+		bool mStall = (mIncome) < (ai->cb->GetMetalUsage() * 1.3);						// are we currently producing less metal than we are currently expending * 1.3?
+		bool eStall = (eIncome) < (ai->cb->GetEnergyUsage() * 1.6);						// are we currently producing less energy than we are currently expending * 1.6?
 
 		bool factFeasM = !ai->math->MFeasibleConstruction(builderDef, factoryDef);		// is factory we want to build feasible metal-wise?
-		bool factFeasE  = !ai->math->EFeasibleConstruction(builderDef, factoryDef);		// is factory we want to build feasible energy-wise?
+		bool factFeasE = !ai->math->EFeasibleConstruction(builderDef, factoryDef);		// is factory we want to build feasible energy-wise?
 
 
 		if (builderDef == NULL) {
-			// L(" It's dead Jim... ");
 			ai->uh->UnitDestroyed(builder);
 		}
-
 
 		else {
 			if (builderDef->isCommander && builderDef->canDGun && ai->dgunController->isBusy()) {
@@ -72,25 +72,23 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			/*
-			else if (builderDef->isCommander && (ai->cb->GetCurrentFrame() < (30 * 60 * 15)) && ai->uh->FactoryBuilderAdd(builder)) {
-				// add commander to factory early in game so it doesn't wander around
-				// (FIXME: FactoryBuilderAdd() is too strict here, this never happens)
+			else if ((mIncome > 20.0f && eIncome > 250.0f) && builderDef->isCommander && ai->uh->FactoryBuilderAdd(builder)) {
+				// add commander to factory so it doesn't wander around too much (works best if
+				// AI given bonus, otherwise initial expansion still mostly done by commander)
 				factoryCounter += 2;
 				builderCounter = 0;
 				return;
 			}
-			*/
 
 			else if ((eLevel50 && makersOn) && (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (factFeasM && factoryCounter <= 0))) {
 				if (!ai->MyUnits[builder]->ReclaimBest(1)) {
 					const UnitDef* mex = ai->ut->GetUnitByScore(builder, CAT_MEX);
 					float3 mexpos = ai->mm->GetNearestMetalSpot(builder, mex);
 
-					bool eOverflow = (ai->cb->GetEnergyStorage() / (ai->cb->GetEnergyIncome() + 0.01) < STORAGETIME);
+					bool eOverflow = (ai->cb->GetEnergyStorage() / (eIncome + 0.01) < STORAGETIME);
 					int eStorage = ai->ut->energy_storages->size();
 					int mStorage = ai->ut->metal_makers->size();
-					bool eExcess = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.5);
+					bool eExcess = (eIncome) > (ai->cb->GetEnergyUsage() * 1.5);
 
 					if (mexpos != ERRORVECTOR) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX))
@@ -121,7 +119,7 @@ void CBuildUp::Buildup() {
 			}
 
 			else {
-				bool mOverflow = (ai->cb->GetMetalStorage() / (ai->cb->GetMetalIncome() + 0.01)) < (STORAGETIME * 2);
+				bool mOverflow = (ai->cb->GetMetalStorage() / (mIncome + 0.01)) < (STORAGETIME * 2);
 				bool numMStorage = ai->ut->metal_storages->size();
 				int numDefenses = ai->uh->AllUnitsByCat[CAT_DEFENCE]->size();
 				int numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();

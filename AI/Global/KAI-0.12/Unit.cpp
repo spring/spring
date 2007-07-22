@@ -148,7 +148,7 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int sepa
 
 	if (buildpos.x != -1) {
 		Build(buildpos, unitdef, buildFacing);
-        return true;
+		return true;
 	}
 	else
 		Move(ai->math->F3Randomize(pos(), 300));
