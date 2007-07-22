@@ -97,8 +97,8 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 
 int CUNIT::GetBuildFacing(float3& pos) {
 	int frame = (ai->cb)->GetCurrentFrame();
-	int mapWidth = (ai->cb)->GetMapWidth();
-	int mapHeight = (ai->cb)->GetMapHeight();
+	int mapWidth = (ai->cb)->GetMapWidth() * 8;
+	int mapHeight = (ai->cb)->GetMapHeight() * 8;
 	int mapQuadrant = -1;
 	int facing = -1;
 
@@ -284,7 +284,7 @@ Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) {
 	if (facing >= 0)
 		c.params.push_back(facing);
 
-	if (radius)
+	if (radius > 0.0f)
 		c.params.push_back(radius);
 
 	ai->uh->IdleUnitRemove(myid);

@@ -88,7 +88,7 @@ class CUNIT {
 		AIClasses *ai;
 
 		// command generators
-		Command MakePosCommand(int id, float3 pos, float radius = 0, int facing = -1);
+		Command MakePosCommand(int id, float3 pos, float radius = -1.0f, int facing = -1);
 		Command MakeIntCommand(int id, int number, int maxnum = 4999);
 };
 
