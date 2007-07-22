@@ -27,6 +27,12 @@ void CUNIT::PostLoad(void) {
 
 
 
+bool CUNIT::isHub(void) {
+	// look up the type of this unit via its unitdef ID,
+	// then check if it has been flagged as a hub or not
+	return (ai->ut->unittypearray[this->def()->id]).isHub;
+}
+
 const UnitDef* CUNIT::def() {
 	return ai->cb->GetUnitDef(myid);
 }
@@ -64,19 +70,15 @@ int CUNIT::category() {
 
 bool CUNIT::CanAttack(int otherUnit) {
 	// currently doesn't see if sending me vs other is a good idea, like peewee vs bomber (not)
-	// L("doing CanAttack from " << this->myid << " to " << otherUnit);
 	const UnitDef *ud_mine = ai->cb->GetUnitDef(this->myid);
 	const UnitDef *ud_other = ai->cheat->GetUnitDef(otherUnit);
+
 	if (ud_mine && ud_other) {
-		// L("CanAttack: GUD returned on the second unit: " << ud_other);
-		// L("types: " << ud_mine->humanName << " to " << ud_other->humanName);
 		assert(otherUnit != 0);
 
-		// dps = this->ai->ut->GetDPSvsUnit(ud_mine, ud_other);
+		// float dps = this->ai->ut->GetDPSvsUnit(ud_mine, ud_other);
 		float dps = ai->ut->unittypearray[ud_mine->id].DPSvsUnit[ud_other->id];
-
-		// L("part-result in CUNIT::CanAttack dps: " << dps);
-		return dps > 5.0f;
+		return (dps > 5.0f);
 	}
 
 	// might be a false negative
@@ -91,17 +93,61 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 
 
 
+
+
+int CUNIT::GetBuildFacing(float3& pos) {
+	int frame = (ai->cb)->GetCurrentFrame();
+	int mapWidth = (ai->cb)->GetMapWidth();
+	int mapHeight = (ai->cb)->GetMapHeight();
+	int mapQuadrant = -1;
+	int facing = -1;
+
+	if (pos.x < (mapWidth >> 1)) {
+		// left half of map
+		if (pos.z < (mapHeight >> 1)) {
+			mapQuadrant = QUADRANT_TOP_LEFT;
+		} else {
+			mapQuadrant = QUADRANT_BOT_LEFT;
+		}
+	}
+	else {
+		// right half of map
+		if (pos.z < (mapHeight >> 1)) {
+			mapQuadrant = QUADRANT_TOP_RIGHT;
+		} else {
+			mapQuadrant = QUADRANT_BOT_RIGHT;
+		}
+	}
+
+	switch (mapQuadrant) {
+		case QUADRANT_TOP_LEFT: {
+			facing = (frame & 1)? FACING_DOWN: FACING_RIGHT;
+		} break;
+		case QUADRANT_TOP_RIGHT: {
+			facing = (frame & 1)? FACING_DOWN: FACING_LEFT;
+		} break;
+		case QUADRANT_BOT_RIGHT: {
+			facing = (frame & 1)? FACING_UP: FACING_LEFT;
+		} break;
+		case QUADRANT_BOT_LEFT: {
+			facing = (frame & 1)? FACING_UP: FACING_RIGHT;
+		} break;
+	}
+
+	return facing;
+}
+
+
+// called for mobile construction units
 bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation, float radius) {
-	float3 buildpos;
-	buildpos = ai->cb->ClosestBuildSite(unitdef, targetpos, radius, separation);
+	int buildFacing = GetBuildFacing(targetpos);
+	float3 buildpos = ai->cb->ClosestBuildSite(unitdef, targetpos, radius, separation, buildFacing);
 
 	targetpos.y += 20;
 	buildpos.y += 20;
 
 	if (buildpos.x != -1) {
-		// L("Site found, building");
-		Build(buildpos, unitdef);
-		// L("command sent");
+		Build(buildpos, unitdef, buildFacing);
         return true;
 	}
 	else
@@ -124,8 +170,7 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
 	return true;
 }
 
-// added by Kloot
-// tell a hub to build something
+// added by Kloot; tell a hub to build something
 bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	int hub = myid;
 	assert(ai->cb->GetUnitDef(hub) != NULL);
@@ -134,44 +179,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	float3 buildPos = ZeroVector;
 	float maxRadius = ai->cb->GetUnitDef(hub)->buildDistance;
 	float minRadius = 40.0f;
-
-	int frame = (ai->cb)->GetCurrentFrame();
-	int mapWidth = (ai->cb)->GetMapWidth();
-	int mapHeight = (ai->cb)->GetMapHeight();
-	int mapQuadrant = -1;
-	int facing = -1;
-
-	if (hubPos.x < (mapWidth >> 1)) {
-		if (hubPos.z < (mapHeight >> 1)) {
-			mapQuadrant = QUADRANT_TOP_LEFT;
-		} else {
-			mapQuadrant = QUADRANT_BOT_LEFT;
-		}
-	}
-	else {
-		if (hubPos.z < (mapHeight >> 1)) {
-			mapQuadrant = QUADRANT_TOP_RIGHT;
-		} else {
-			mapQuadrant = QUADRANT_BOT_RIGHT;
-		}
-	}
-
-
-	switch (mapQuadrant) {
-		case QUADRANT_TOP_LEFT: {
-			facing = (frame % 2)? FACING_DOWN: FACING_RIGHT;
-		} break;
-		case QUADRANT_TOP_RIGHT: {
-			facing = (frame % 2)? FACING_DOWN: FACING_LEFT;
-		} break;
-		case QUADRANT_BOT_RIGHT: {
-			facing = (frame % 2)? FACING_UP: FACING_LEFT;
-		} break;
-		case QUADRANT_BOT_LEFT: {
-			facing = (frame % 2)? FACING_UP: FACING_RIGHT;
-		} break;
-	}
-
+	int facing = GetBuildFacing(hubPos);
 
 	// NOTE: this can still go wrong if there is another
 	// hub or open factory anywhere inside build radius!
@@ -181,7 +189,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 			buildPos.y = hubPos.y;
 			buildPos.z = hubPos.z + (radius * sin(angle * DEG2RAD));
 
-			float3 closestPos = ai->cb->ClosestBuildSite(toBuild, buildPos, minRadius, 1, facing);
+			float3 closestPos = ai->cb->ClosestBuildSite(toBuild, buildPos, minRadius, 4, facing);
 
 			if (closestPos.x >= 0.0f) {
 				Command c;
@@ -192,7 +200,6 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 				c.params.push_back(facing);
 				ai->cb->GiveOrder(hub, &c);
 				ai->uh->IdleUnitRemove(hub);
-
 				return true;
 			}
 		}
@@ -232,7 +239,7 @@ bool CUNIT::ReclaimBest(bool metal, float radius) {
 		}
 	}
 	else {
-		for(int i = 0; i < numfound;i++) {
+		for (int i = 0; i < numfound;i++) {
 			myscore = ai->cb->GetFeatureDef(features[i])->energy;
 			if (myscore > bestscore && ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(features[i])) < ai->tm->GetAverageThreat()) {
 				bestscore = myscore;
@@ -248,14 +255,14 @@ bool CUNIT::ReclaimBest(bool metal, float radius) {
 		}
 	}
 	if (bestscore > 0) {
-		Reclaim(ai->cb->GetFeaturePos(bestfeature),10);
+		Reclaim(ai->cb->GetFeaturePos(bestfeature), 10);
 		return true;
 	}
 	return false;
 }
 
 
-Command CUNIT::MakePosCommand(int id, float3 pos, float radius) {
+Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 
 	if (pos.x > ai->cb->GetMapWidth() * 8)
@@ -273,11 +280,14 @@ Command CUNIT::MakePosCommand(int id, float3 pos, float radius) {
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
 
+	// for build commands
+	if (facing >= 0)
+		c.params.push_back(facing);
+
 	if (radius)
 		c.params.push_back(radius);
 
 	ai->uh->IdleUnitRemove(myid);
-	// L("idle unit removed");
 	return c;
 }
 
@@ -382,9 +392,9 @@ bool CUNIT::Ressurect(int target) {
 
 
 // Location Point Abilities
-bool CUNIT::Build(float3 pos, const UnitDef* unit) {
+bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command c = MakePosCommand(-(unit->id), pos);
+	Command c = MakePosCommand(-(unit->id), pos, -1.0f, facing);
 
 	if (c.id != 0) {
 		ai->cb->GiveOrder(myid, &c);
@@ -448,7 +458,7 @@ bool CUNIT::PatrolShift(float3 pos) {
 // Radius Abilities
 bool CUNIT::Attack(float3 pos, float radius) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command c = MakePosCommand(CMD_ATTACK,pos,radius);
+	Command c = MakePosCommand(CMD_ATTACK, pos, radius);
 
 	if (c.id != 0) {
 		ai->cb->GiveOrder(myid, &c);
@@ -496,7 +506,7 @@ bool CUNIT::Capture(float3 pos, float radius) {
 
 bool CUNIT::Restore(float3 pos, float radius) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command c = MakePosCommand(CMD_RESTORE,pos,radius);
+	Command c = MakePosCommand(CMD_RESTORE, pos, radius);
 
 	if (c.id != 0) {
 		ai->cb->GiveOrder(myid, &c);

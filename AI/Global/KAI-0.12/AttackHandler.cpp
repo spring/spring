@@ -674,7 +674,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		if (availableEnemies.size() == 0)
 			return;
 
-		// find cheapest target for this group
+		// find cheapest (best) target for this group
 		vector<float3> pathToTarget;
 		float3 groupPos = group_in->GetGroupPos();
 
@@ -683,17 +683,17 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 											ai->tm->ThreatMapWidth,
 											ai->tm->ThreatMapHeight);
 
-		// pick a random enemy position and path to it
-		int idx = rand() % enemyPositions.size();
-		ai->pather->FindBestPathToRadius(&pathToTarget, &groupPos, THREATRES * 8, &enemyPositions[idx]);
+		// pick an enemy position and path to it
+		// KLOOTNOTE: should be more like KAI 0.23 by passing group DPS to FindBestPath()
+		ai->pather->FindBestPath(&pathToTarget, &groupPos, THREATRES * 8, &enemyPositions);
 
-		if (pathToTarget.size() >= 2) {
+		if (pathToTarget.size() > 2) {
 			const int ATTACKED_AREA_RADIUS = 800;
 			int lastIndex = pathToTarget.size() - 1;
 			float3 endPos = pathToTarget[lastIndex];
 
 			// get all enemies surrounding endpoint of found path
-			int enemiesInArea = ai->cheat->GetEnemyUnits(unitArray, enemyPositions[idx], ATTACKED_AREA_RADIUS);
+			int enemiesInArea = ai->cheat->GetEnemyUnits(unitArray, endPos, ATTACKED_AREA_RADIUS);
 			float powerOfEnemies = 0.000001;
 
 			// calculate combined "firepower" of armed enemies near endpoint
@@ -724,8 +724,7 @@ void CAttackHandler::AssignTargets() {
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			CAttackGroup* group = &(*it);
 			// force group target updates every 300 frames
-			// KLOOTNOTE: disabled, paths can be very long
-			if (group->NeedsNewTarget() /*|| frameNr % 300 == 0*/) {
+			if (group->NeedsNewTarget() || frameNr % 300 == 0) {
 				AssignTarget(group);
 			}
 		}
@@ -750,7 +749,6 @@ void CAttackHandler::CombineGroups() {
 				int groupBid = groupB->GetGroupID();
 
 				if ((groupB->defending) && (groupAid != groupBid) && (groupApos.distance2D(groupBpos) < 1500)) {
-					// L("AH:CombineGroups():: adding group " << groupB->GetGroupID() << " to group " << groupA->GetGroupID());
 					vector<int>* bUnits = groupB->GetAllUnits();
 
 					for (vector<int>::iterator groupBunit = bUnits->begin(); groupBunit != bUnits->end(); groupBunit++) {
@@ -779,7 +777,7 @@ void CAttackHandler::Update() {
 		UpdateKMeans();
 	
 	// set map data here so it doesn't have to be done in each group
-	// TODO: movement map PATHTOUSE = hack
+	// TODO: movement map PATHTOUSE is hack
 	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
 	
 	int frameSpread = 300;

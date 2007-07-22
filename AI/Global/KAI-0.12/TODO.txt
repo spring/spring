@@ -9,15 +9,15 @@ unit-limit checking when building stuff
 fix XTA FARKs/Necros building radars like mad
 (still happens as of r4045)
 
-fix EE hubs rotating buildings incorrectly
-(note: does this still happen as of r4045?)
-
 better support for mods with dgun-less
 commanders (less aggressive expansion eg.)
 
 one centralized ai->cheat->GetEnemyUnits()
 call for performance reasons
 
-nukes/shields support
+nukes/shields/geothermals support
+
+stop depthcharge launchers being used as
+ground defenses (BA and derivatives)
 
 state serialization

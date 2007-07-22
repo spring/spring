@@ -236,6 +236,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	MyUnits.reserve(MAXUNITS);
 	ai->MyUnits.reserve(MAXUNITS);
 
+	// initialize 5000 CUNIT objects
 	for (int i = 0; i < MAXUNITS; i++) {
 		MyUnits.push_back(CUNIT(ai));
 		MyUnits[i].myid = i;
