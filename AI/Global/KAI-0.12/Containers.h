@@ -47,6 +47,7 @@ struct AIClasses {
 
 struct UnitType {
 	// 1 means arm, 2 core; 0 if side has not been set
+	// note: CUNIT does not know about this
 	int side;
 	vector<int> canBuildList;
 	vector<int> builtByList;
@@ -54,6 +55,7 @@ struct UnitType {
 	vector<string> TargetCategories;
 	const UnitDef* def;
 	int category;
+	bool isHub;
 };
 
 

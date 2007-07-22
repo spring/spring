@@ -12,7 +12,6 @@ CBuildUp::~CBuildUp() {
 
 
 void CBuildUp::Update() {
-//	std::cout << "CBuildUp::Update()" << std::endl;
 	int frame = ai->cb->GetCurrentFrame();
 
 	if (frame % 15 == 0) {
@@ -96,7 +95,7 @@ void CBuildUp::Buildup() {
 					if (mexpos != ERRORVECTOR) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX))
 							// build metal extractor
-							ai->MyUnits[builder]->Build(mexpos, mex);
+							ai->MyUnits[builder]->Build(mexpos, mex, -1);
 					}
 					else if (eOverflow && eStorage > 0 && storageCounter <= 0) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ESTOR)) {
@@ -166,7 +165,6 @@ void CBuildUp::Buildup() {
 	}
 
 
-
 	bool b1 = (ai->cb->GetEnergy()) > (ai->cb->GetEnergyStorage() * 0.8);
 	bool b2 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * 0.2);
 	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
@@ -182,7 +180,7 @@ void CBuildUp::Buildup() {
 void CBuildUp::FactoryCycle(int numIdleFactories) {
 	for (int i = 0; i < numIdleFactories; i++) {
 		int producedCat;
-		int factory = ai->uh->GetIU(CAT_FACTORY);
+		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
 
 		if ((builderCounter > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
 			producedCat = CAT_G_ATTACK;
@@ -200,6 +198,7 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			assert(factoryCount > 0);
 
 			for (list<int>::iterator i = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); i != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); i++) {
+				// get factory unitID
 				int factoryToLookAt = *i;
 
 				if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
@@ -214,7 +213,7 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			}
 
 			// find the builder type this factory makes
-			const UnitDef* builder_unit = ai->ut->GetUnitByScore(factory, CAT_BUILDER);
+			const UnitDef* builder_unit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
 
 			if (builder_unit == leastBuiltBuilder) {
 				// see if it is the least built builder, if so then make one
@@ -230,11 +229,11 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			}
 		}
 
-
-		if ((ai->MyUnits[i])->isHub)
-			(ai->MyUnits[factory])->HubBuild(ai->ut->GetUnitByScore(factory, producedCat));
-		else
-			(ai->MyUnits[factory])->FactoryBuild(ai->ut->GetUnitByScore(factory, producedCat));
+		if ((ai->MyUnits[factoryUnitID])->isHub()) {
+			(ai->MyUnits[factoryUnitID])->HubBuild(ai->ut->GetUnitByScore(factoryUnitID, producedCat));
+		} else {
+			(ai->MyUnits[factoryUnitID])->FactoryBuild(ai->ut->GetUnitByScore(factoryUnitID, producedCat));
+		}
 	}
 }
 

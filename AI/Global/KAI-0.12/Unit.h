@@ -39,11 +39,13 @@ class CUNIT {
 		bool ReclaimBest(bool metal, float radius = 1000);
 
 		// construction
+		int GetBuildFacing(float3& pos);
 		bool Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation = DEFCBS_SEPARATION, float radius = DEFCBS_RADIUS);
 		bool FactoryBuild(const UnitDef* built);
+
 		// added by Kloot
+		bool isHub(void);
 		bool HubBuild(const UnitDef* built);
-		bool isHub;
 
 
 		// target-based abilities
@@ -56,7 +58,7 @@ class CUNIT {
 		bool Ressurect(int target);
 
 		// location point abilities
-		bool Build(float3 pos, const UnitDef* unit);
+		bool Build(float3 pos, const UnitDef* unit, int facing);
 		bool Move(float3 pos);
 		bool MoveShift(float3 pos);
 		bool Patrol(float3 pos);
@@ -86,7 +88,7 @@ class CUNIT {
 		AIClasses *ai;
 
 		// command generators
-		Command MakePosCommand(int id, float3 pos, float radius = 0);
+		Command MakePosCommand(int id, float3 pos, float radius = 0, int facing = -1);
 		Command MakeIntCommand(int id, int number, int maxnum = 4999);
 };
 

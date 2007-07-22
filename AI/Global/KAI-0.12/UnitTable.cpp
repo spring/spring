@@ -3,7 +3,7 @@
 #include "UnitTable.h"
 
 CUnitTable::CUnitTable(AIClasses* ai) {
-	this -> ai = ai;
+	this->ai = ai;
 	// L("Starting Unit Table");
 	numOfUnits = 0;
 	unitList = 0;
@@ -14,16 +14,16 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	string Valuestring;
 	char k[50];
 	// L("Loading sidedata");
-	ai -> parser -> LoadVirtualFile("gamedata\\SIDEDATA.tdf");
+	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
 
 	// L("Starting Loop");
 	for (int i = 0; i < 10; i++) {
 		sprintf(k,"%i",i);
-		ai -> parser -> GetDef(Valuestring, errorstring, string(sidestr + k + "\\commander"));
+		ai->parser->GetDef(Valuestring, errorstring, string(sidestr + k + "\\commander"));
 
-		if (ai -> cb -> GetUnitDef(Valuestring.c_str())) {
-			startUnits.push_back(ai -> cb -> GetUnitDef(Valuestring.c_str()) -> id);
-			ai -> parser -> GetDef(Valuestring, errorstring, string(sidestr + k + "\\name"));
+		if (ai->cb->GetUnitDef(Valuestring.c_str())) {
+			startUnits.push_back(ai->cb->GetUnitDef(Valuestring.c_str())->id);
+			ai->parser->GetDef(Valuestring, errorstring, string(sidestr + k + "\\name"));
 			sideNames.push_back(Valuestring);
 			numOfSides = i + 1;
 		}
@@ -73,18 +73,18 @@ CUnitTable::~CUnitTable() {
 
 
 int CUnitTable::GetSide(int unit) {
-	assert(ai -> cb -> GetUnitDef(unit) != NULL);
-	return unittypearray[ai -> cb -> GetUnitDef(unit) -> id].side;
+	assert(ai->cb->GetUnitDef(unit) != NULL);
+	return unittypearray[ai->cb->GetUnitDef(unit)->id].side;
 }
 
 int CUnitTable::GetCategory(const UnitDef* unitdef) {
-	return unittypearray[unitdef -> id].category;
+	return unittypearray[unitdef->id].category;
 }
 
 int CUnitTable::GetCategory(int unit) {
-	assert(ai -> cb -> GetUnitDef(unit) != NULL);
+	assert(ai->cb->GetUnitDef(unit) != NULL);
 
-	return (unittypearray[ai -> cb -> GetUnitDef(unit) -> id].category);
+	return (unittypearray[ai->cb->GetUnitDef(unit)->id].category);
 }
 
 
@@ -99,19 +99,19 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 
 		for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 			float dps = 0;
-			if (!i -> def -> paralyzer) {
+			if (!i->def->paralyzer) {
 				// L("weapon: " << i->name);
 				// L("Categories, ONLY:" <<  i->onlyTargetCat << "BAD: " << i->onlyTargetCat << " ONLY(def): " << i->def->onlyTargetCategory);
 				int numberofdamages;
-				ai -> cb -> GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
-				float reloadtime = i -> def -> reload;
+				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
+				float reloadtime = i->def->reload;
 
 				for (int k = 0; k < numberofdamages; k++) {
 					// L("damage: " << i->def->damages.damages[k]);
-					dps += i -> def -> damages.damages[k];
+					dps += i->def->damages.damages[k];
 				}
 
-				dps = dps * i -> def -> salvosize / numberofdamages / reloadtime;
+				dps = dps * i->def->salvosize / numberofdamages / reloadtime;
 				
 				// L("dps for this weapon: " << dps << " Salvo size: " << i->def->salvosize << " Reload: " << reloadtime << " number of damages: " << numberofdamages);
 			}
@@ -130,45 +130,45 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 
 float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 	if (unit->weapons.size()) {
-		ai -> math -> TimerStart();
+		ai->math->TimerStart();
 		// L("");
-		// L("Getting DPS for Unit: " << unit->humanName << " Against " << victim -> humanName);
+		// L("Getting DPS for Unit: " << unit->humanName << " Against " << victim->humanName);
 		float dps = 0;
 		bool canhit = false;
 		string targetcat;
-		int armortype = victim -> armorType;
+		int armortype = victim->armorType;
 		int numberofdamages;
-		ai -> cb -> GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
+		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
 
-		for (unsigned int i = 0; i != unit -> weapons.size(); i++) {
-			if (!unit -> weapons[i].def -> paralyzer) {
+		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
+			if (!unit->weapons[i].def->paralyzer) {
 				targetcat = unittypearray[unit->id].TargetCategories[i];
 				// L(unit->weapons[i].name << " Targcat: " <<  targetcat);
 				// L("unit->categoryString " <<  unit->categoryString);
 				// L("victim->categoryString " <<  victim->categoryString);
 				
-				unsigned int a = victim -> category;
-				unsigned int b = unit -> weapons[i].def -> onlyTargetCategory;	// This is what the weapon can target
-				unsigned int c = unit -> weapons[i].onlyTargetCat;				// This is what the unit accepts as this weapons target
-//				unsigned int d = unit -> weapons[i].badTargetCat;				// This is what the unit thinks this weapon must be used for (hmm ?)
+				unsigned int a = victim->category;
+				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// This is what the weapon can target
+				unsigned int c = unit->weapons[i].onlyTargetCat;				// This is what the unit accepts as this weapons target
+//				unsigned int d = unit->weapons[i].badTargetCat;				// This is what the unit thinks this weapon must be used for (hmm ?)
 				bool canWeaponTarget = (a & b) > 0;
 				bool canUnitTarget = (a & c) > 0;								// How is this used in spring, needs testing...
 //				bool badUnitTarget = (a & d) > 0;								// This probably means that it have low priority, ignore it for now
 
 				canhit = (canWeaponTarget && canUnitTarget);
 
-				if (!unit -> weapons[i].def -> waterweapon && ai -> cb -> GetUnitDefHeight(victim -> id) - victim -> waterline < 0) {
+				if (!unit->weapons[i].def->waterweapon && ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0) {
 					canhit = false;
 					// L("This weapon cannot hit this sub");
 				}
 
-				if (unit -> weapons[i].def -> waterweapon && victim -> minWaterDepth == 0) {
+				if (unit->weapons[i].def->waterweapon && victim->minWaterDepth == 0) {
 					canhit = false;
 					// L("this anti-sub weapon cannot kill this unit");
 				}
 
 				// Bombers are useless against air:
-				if (unit -> weapons[i].def -> dropped && victim -> canfly && unit -> canfly && unit -> wantedHeight <= victim -> wantedHeight) {
+				if (unit->weapons[i].def->dropped && victim->canfly && unit->canfly && unit->wantedHeight <= victim->wantedHeight) {
 					canhit = false;
 				}
 
@@ -178,31 +178,31 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 					// L("victim->categoryString " <<  victim->categoryString);
 					float accuracy = unit->weapons[i].def->accuracy * 2.8;
 
-					if (victim -> speed != 0) {
-						accuracy *= 1 - (unit -> weapons[i].def -> targetMoveError);
+					if (victim->speed != 0) {
+						accuracy *= 1 - (unit->weapons[i].def->targetMoveError);
 					}
 
 					float basedamage = unit->weapons[i].def->damages.damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;
-					float AOE = unit -> weapons[i].def -> areaOfEffect * 0.7;
+					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
 					float tohitprobability;
 					float impactarea;
 					float targetarea;
-					float distancetravelled = 0.7f * unit->weapons[i].def -> range;
+					float distancetravelled = 0.7f * unit->weapons[i].def->range;
 					// L("Initial DT: " << distancetravelled);
 					float firingangle;
-					float gravity = -(ai -> cb -> GetGravity() * 900);
+					float gravity = -(ai->cb->GetGravity() * 900);
 					float timetoarrive;
-					float u = unit -> weapons[i].def -> projectilespeed * 30;
-					// L("Type: " << unit->weapons[i].def -> type);
+					float u = unit->weapons[i].def->projectilespeed * 30;
+					// L("Type: " << unit->weapons[i].def->type);
 
-					if (unit->weapons[i].def -> type == string("Cannon")) {
+					if (unit->weapons[i].def->type == string("Cannon")) {
 						// L("Is ballistic! Gravity: " << gravity);
 						// L("u = " << u << " distancetravelled * gravity) / (u * u) = " << (distancetravelled * gravity) / (u * u));
 						float sinoid = (distancetravelled * gravity) / (u * u);
 						sinoid = min(sinoid, 1.0f);
 						firingangle = asin(sinoid) / 2;
 
-						if (unit -> highTrajectoryType == 1) {
+						if (unit->highTrajectoryType == 1) {
 							firingangle = (PI / 2) - firingangle;
 						}
 
@@ -213,14 +213,14 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 						// L("Height reached: " << heightreached << " distance travelled " << distancetravelled);
 					}
 
-					// L("Name: " << unit->weapons[i].name << " AOE: " << AOE << " Accuracy: " << unit -> weapons[i].def -> accuracy << " range: " << unit->weapons[i].def -> range);
-					if ((victim -> canfly && unit -> weapons[i].def -> selfExplode) || !victim -> canfly) {
+					// L("Name: " << unit->weapons[i].name << " AOE: " << AOE << " Accuracy: " << unit->weapons[i].def->accuracy << " range: " << unit->weapons[i].def->range);
+					if ((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly) {
 						impactarea = pow((accuracy * distancetravelled) + AOE, 2);
-						targetarea = ((victim -> xsize * 16) + AOE) * ((victim -> ysize * 16) + AOE);
+						targetarea = ((victim->xsize * 16) + AOE) * ((victim->ysize * 16) + AOE);
 					}
 					else {
 						impactarea = pow((accuracy) * (0.7f * distancetravelled), 2);
-						targetarea = (victim -> xsize * victim -> ysize * 256);
+						targetarea = (victim->xsize * victim->ysize * 256);
 					}
 
 					// L("Impact Area: " << impactarea << " Target Area: " << targetarea);
@@ -231,19 +231,19 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 						tohitprobability = 1;
 					}
 
-					if (!unit->weapons[i].def -> guided && unit -> weapons[i].def -> projectilespeed != 0 && victim -> speed != 0 && unit -> weapons[i].def -> beamtime == 1) {
-						if (unit->weapons[i].def -> type == string("Cannon")) {
+					if (!unit->weapons[i].def->guided && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
+						if (unit->weapons[i].def->type == string("Cannon")) {
 							timetoarrive = (2 * u * sin(firingangle)) / gravity;
 						}
 						else {
-							timetoarrive = distancetravelled / (unit->weapons[i].def -> projectilespeed * 30);
+							timetoarrive = distancetravelled / (unit->weapons[i].def->projectilespeed * 30);
 						}
 
-						float shotwindow = sqrt(targetarea) / victim -> speed * 1.3;
+						float shotwindow = sqrt(targetarea) / victim->speed * 1.3;
 						if (shotwindow < timetoarrive) {
 							tohitprobability *= shotwindow / timetoarrive;
 						}
-						// L("Not guided. TTA: " <<  timetoarrive << " shotwindow " << shotwindow << " unit->weapons[i].def -> targetmoveerror " << unit -> weapons[i].def -> targetMoveError);
+						// L("Not guided. TTA: " <<  timetoarrive << " shotwindow " << shotwindow << " unit->weapons[i].def->targetmoveerror " << unit->weapons[i].def->targetMoveError);
 					}
 
 					//L("chance to hit: " << tohitprobability);
@@ -254,7 +254,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 		}
 
 		// L("DPS: " << dps);
-		// L("Time taken: " << ai -> math -> TimerSecs() << "s.");
+		// L("Time taken: " << ai->math->TimerSecs() << "s.");
 		return dps;
 	}
 
@@ -264,39 +264,37 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	// L("Getting CombatScore for : " << unit->humanName);
 	int enemies[MAXUNITS];
-	int numofenemies = ai -> cheat -> GetEnemyUnits(enemies);
+	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
 	float score = 0.01;
 	float totalcost=0.01;
-	enemyunitsoftype.resize(ai -> cb -> GetNumUnitDefs() + 1, 0);
+	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < numofenemies; i++) {
-		enemyunitsoftype[ai -> cheat -> GetUnitDef(enemies[i]) -> id]++;
-		// assert(ai -> cheat -> GetUnitDef(enemies[i]) == unittypearray[ai -> cheat -> GetUnitDef(enemies[i]) -> id].def);
+		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
+		// assert(ai->cheat->GetUnitDef(enemies[i]) == unittypearray[ai->cheat->GetUnitDef(enemies[i])->id].def);
 	}
 
 	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
-		bool b1 = unittypearray[i].def -> builder;
+		bool b1 = unittypearray[i].def->builder;
 		bool b2 = enemyunitsoftype[i] > 0;
 		bool b3 = unittypearray[i].side != -1;
-	//	bool b4 = (!unit -> speed && !unittypearray[i].def -> speed);
+	//	bool b4 = (!unit->speed && !unittypearray[i].def->speed);
 
 	//	if (!b1 && b2 && b3 && !b4) {
 		if (!b1 && b2 && b3) {
 			float currentscore = 0;
-			float costofenemiesofthistype = ((unittypearray[i].def -> metalCost * METAL2ENERGY) + unittypearray[i].def -> energyCost) * enemyunitsoftype[i];
-			currentscore = unittypearray[unit -> id].DPSvsUnit[i] * costofenemiesofthistype;
+			float costofenemiesofthistype = ((unittypearray[i].def->metalCost * METAL2ENERGY) + unittypearray[i].def->energyCost) * enemyunitsoftype[i];
+			currentscore = unittypearray[unit->id].DPSvsUnit[i] * costofenemiesofthistype;
 			totalcost += costofenemiesofthistype;
 
 			/*
 			if (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype > 0) {
-				// L("Score of them vs me: " << unittypearray[i].DPSvsUnit[unit -> id] * costofenemiesofthistype);
-				currentscore -= (unittypearray[i].DPSvsUnit[unit -> id] * costofenemiesofthistype);
+				// L("Score of them vs me: " << unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
+				currentscore -= (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
 			}*/
 
 		score += currentscore;
-		// L("MyScore Vs " << unittypearray[i].def -> humanName << " is " << currentscore);
-		// L("unittypearray.size()= " << unittypearray[i].DPSvsUnit.size() << " My ID " << unit -> id << " their ID: " << i << " costofenemiesofthistype= " << costofenemiesofthistype);
 		}
 	}
 
@@ -309,119 +307,117 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 
 void CUnitTable::UpdateChokePointArray() {
 	vector<float> EnemyCostsByMoveType;
-	EnemyCostsByMoveType.resize(ai -> pather -> NumOfMoveTypes);
+	EnemyCostsByMoveType.resize(ai->pather->NumOfMoveTypes);
 	vector<int> enemyunitsoftype;
 	float totalcosts = 1;
 	int enemies[MAXUNITS];
-	int numofenemies = ai -> cheat -> GetEnemyUnits(enemies);
-	enemyunitsoftype.resize(ai -> cb -> GetNumUnitDefs() + 1, 0);
+	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
+	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
-	for (int i = 0; i < ai -> pather -> totalcells; i++) {
-		ai -> dm -> ChokePointArray[i] = 0;
+	for (int i = 0; i < ai->pather->totalcells; i++) {
+		ai->dm->ChokePointArray[i] = 0;
 	}
-	for (int i = 0; i < ai -> pather -> NumOfMoveTypes; i++) {
+	for (int i = 0; i < ai->pather->NumOfMoveTypes; i++) {
 		EnemyCostsByMoveType[i] = 0;
 	}
 	for (int i = 0; i < numofenemies; i++) {
-		enemyunitsoftype[ai -> cheat -> GetUnitDef(enemies[i]) -> id]++;
+		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
 	}
 
 	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
-		if (unittypearray[i].side != -1 && !unittypearray[i].def -> canfly && unittypearray[i].def -> speed > 0) {
-			float currentcosts = ((unittypearray[i].def -> metalCost * METAL2ENERGY) + unittypearray[i].def -> energyCost) * (enemyunitsoftype[i]);
-			EnemyCostsByMoveType[unittypearray[i].def -> moveType] += currentcosts;
+		if (unittypearray[i].side != -1 && !unittypearray[i].def->canfly && unittypearray[i].def->speed > 0) {
+			float currentcosts = ((unittypearray[i].def->metalCost * METAL2ENERGY) + unittypearray[i].def->energyCost) * (enemyunitsoftype[i]);
+			EnemyCostsByMoveType[unittypearray[i].def->moveType] += currentcosts;
 			totalcosts += currentcosts;
 		}
 	}
 
-	for (int i = 0; i < ai -> pather -> NumOfMoveTypes; i++) {
+	for (int i = 0; i < ai->pather->NumOfMoveTypes; i++) {
 		EnemyCostsByMoveType[i] /= totalcosts;
 
-		for (int c = 0; c < ai -> pather -> totalcells; c++) {
-			ai -> dm -> ChokePointArray[c] += ai -> dm -> ChokeMapsByMovetype[i][c] * EnemyCostsByMoveType[i];
+		for (int c = 0; c < ai->pather->totalcells; c++) {
+			ai->dm->ChokePointArray[c] += ai->dm->ChokeMapsByMovetype[i][c] * EnemyCostsByMoveType[i];
 		}
 	}
 }
 
 
 // 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
-float CUnitTable::GetScore(const UnitDef* unit) {
-	// L("Getting Score for: " << unit -> humanName);
-
+float CUnitTable::GetScore(const UnitDef* unitDef) {
 	// Ignore the cost now
-	float Cost = (unit -> metalCost * METAL2ENERGY) + unit -> energyCost;
-	float CurrentIncome = INCOMEMULTIPLIER * (ai -> cb -> GetEnergyIncome() + (ai -> cb -> GetMetalIncome() * METAL2ENERGY)) + ai -> cb -> GetCurrentFrame() / 2;
-	float Hitpoints = unit->health;
+	float Cost = (unitDef->metalCost * METAL2ENERGY) + unitDef->energyCost;
+	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
+	float Hitpoints = unitDef->health;
 	float Benefit = 0;
 	float dps = 0;
 	int unitcounter = 0;
 	bool candevelop = false;
 
-	float RandNum = ai -> math -> RandNormal(4, 3, 1) + 1;
-	int category = GetCategory(unit);
+	float RandNum = ai->math->RandNormal(4, 3, 1) + 1;
+	int category = GetCategory(unitDef);
 
 	switch (category) {
 		case CAT_ENERGY:
-			Benefit = unit -> energyMake - unit -> energyUpkeep;
-			if (unit -> windGenerator) {
+			Benefit = unitDef->energyMake - unitDef->energyUpkeep;
+			if (unitDef->windGenerator) {
 				Benefit += ai->cb->GetMinWind();
 			}
-			if (unit -> tidalGenerator) {
-				Benefit += ai -> cb -> GetTidalStrength();
+			if (unitDef->tidalGenerator) {
+				Benefit += ai->cb->GetTidalStrength();
 			}
 
-			if (unit -> needGeo)
+			if (unitDef->needGeo)
 				Benefit = 0;
 
 			Benefit /= Cost;
 			break;
 		case CAT_MEX:
-			Benefit = pow(unit -> extractsMetal, float(4));
+			Benefit = pow(unitDef->extractsMetal, float(4));
 			break;
 		case CAT_MMAKER:
-			Benefit = (unit -> metalMake - unit -> metalUpkeep) / unit -> energyUpkeep + 0.01;
+			Benefit = (unitDef->metalMake - unitDef->metalUpkeep) / unitDef->energyUpkeep + 0.01;
 			break;
 		case CAT_G_ATTACK:
-			dps = GetCurrentDamageScore(unit);
+			dps = GetCurrentDamageScore(unitDef);
 
-			if (unit -> canfly && !unit -> hoverAttack) {
+			if (unitDef->canfly && !unitDef->hoverAttack) {
 				// Improve to set reloadtime to the bombers turnspeed vs movespeed (eg time taken for a run)
 				dps /= 6;
 			}
 
-			Benefit = pow((unit -> weapons.front().def -> areaOfEffect + 80), float(1.5))
-					* pow(GetMaxRange(unit) + 200, float(1.5))
+			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), float(1.5))
+					* pow(GetMaxRange(unitDef) + 200, float(1.5))
 					* pow(dps, float(1))
-					* pow(unit -> speed + 40, float(1))
+					* pow(unitDef->speed + 40, float(1))
 					* pow(Hitpoints, float(1))
 					* pow(RandNum, float(2.5))
 					* pow(Cost, float(-0.5));
 			
-			if (unit -> canfly) {
+			if (unitDef->canfly) {
 				 // AA hack: slight reduction to the feasability of air
 				Benefit *= 0.25;
 			}
 			break;
 		case CAT_DEFENCE:
-			// L("Getting DEFENCE SCORE FOR: " << unit -> humanName);
-			Benefit = pow((unit -> weapons.front().def -> areaOfEffect + 80), float(1.5))
-					* pow(GetMaxRange(unit), float(2))
-					* pow(GetCurrentDamageScore(unit), float(1.5))
+			// L("Getting DEFENCE SCORE FOR: " << unitDef->humanName);
+			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), float(1.5))
+					* pow(GetMaxRange(unitDef), float(2))
+					* pow(GetCurrentDamageScore(unitDef), float(1.5))
 					* pow(Hitpoints, float(0.5))
 					* pow(RandNum, float(2.5))
 					* pow(Cost, float(-1));
 			break;
 		case CAT_BUILDER:
 			// L("Getting Score For Builder");
-			for (unsigned int i = 0; i != unittypearray[unit->id].canBuildList.size(); i++) {
-				// L("category: " << unittypearray[unittypearray[unit -> id].canBuildList[i]].category);
-				if (unittypearray[unittypearray[unit -> id].canBuildList[i]].category == CAT_FACTORY) {
+			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
+				// L("category: " << unittypearray[unittypearray[unitDef->id].canBuildList[i]].category);
+				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_FACTORY) {
 					candevelop = true;
 				}
 			}
 
-			Benefit = pow(unit -> buildSpeed, float(1))
-					* pow(unit -> speed, float(0.5))
+			Benefit = pow(unitDef->buildSpeed, float(1))
+					* pow(unitDef->speed, float(0.5))
 					* pow(Hitpoints, float(0.3))
 					* pow(RandNum, float(0.4));
 
@@ -429,42 +425,39 @@ float CUnitTable::GetScore(const UnitDef* unit) {
 				Benefit = 0;
 			break;
 		case CAT_FACTORY:
-			for (unsigned int i = 0; i != unittypearray[unit -> id].canBuildList.size(); i++) {
-				if (unittypearray[unittypearray[unit -> id].canBuildList[i]].category == CAT_G_ATTACK) {
-					Benefit += GetScore(unittypearray[unittypearray[unit -> id].canBuildList[i]].def);
+			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
+				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_G_ATTACK) {
+					Benefit += GetScore(unittypearray[unittypearray[unitDef->id].canBuildList[i]].def);
 					unitcounter++;
 				}
 			}
 		
 			if (unitcounter > 0)
-				Benefit /= (unitcounter * pow(float(ai -> uh -> AllUnitsByType[unit -> id] -> size() + 1), float(3)));
+				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), float(3)));
 			else
 				Benefit = 0;
-			// L("Factory: " << unit->humanName << " Has a score of: " << Benefit);
+
 			break;
 		case CAT_MSTOR:
-			Benefit = pow((unit -> metalStorage), float(1)) * pow(Hitpoints, float(1));
+			Benefit = pow((unitDef->metalStorage), float(1)) * pow(Hitpoints, float(1));
 			break;
 		case CAT_ESTOR:
-			Benefit = pow((unit -> energyStorage), float(1)) * pow(Hitpoints, float(1));
+			Benefit = pow((unitDef->energyStorage), float(1)) * pow(Hitpoints, float(1));
 			break;
 		default:
 			Benefit = 0;
 	}
 	
-	// L("Unit: " << unit -> humanName << " Has a score of : " << Benefit);
 	float EScore = Benefit / (Cost + CurrentIncome);
-	// L("EScore: " << EScore);
 	return EScore;
 }
 
 // 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
-const UnitDef* CUnitTable::GetUnitByScore(int builder, int category) {
-	ai -> math -> TimerStart();
-	// L("Getting Score for category:" << category << " Builder: " << ai -> cb -> GetUnitDef(builder) -> humanName);
+const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
+	ai->math->TimerStart();
 	vector<int>* templist;
-	const UnitDef* tempunit;
-	int side = GetSide(builder);
+	const UnitDef* tempUnitDef;
+	int side = GetSide(builderUnitID);
 	float tempscore = 0;
 	float bestscore = 0;
 
@@ -498,30 +491,26 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category) {
 			templist = energy_storages;
 			break;
 	}
-	// L("Switch done, side: " << side);
+
 	for (unsigned int i = 0; i != templist[side].size(); i++) {
-		if (CanBuildUnit(ai -> cb -> GetUnitDef(builder) -> id, templist[side][i])) {
+		if (CanBuildUnit(ai->cb->GetUnitDef(builderUnitID)->id, templist[side][i])) {
 			tempscore = GetScore(unittypearray[templist[side][i]].def);
 			if (bestscore < tempscore) {
-				// L("Better Score found");
 				bestscore = tempscore;
-				tempunit = unittypearray[templist[side][i]].def;
+				tempUnitDef = unittypearray[templist[side][i]].def;
 			}
 		}
 	}
 
-	// L("Loop calculated");
-	if (!bestscore){
-		// L("no scores found for unit!");
-		for (unsigned int i = 0; i != unittypearray[ai -> cb -> GetUnitDef(builder) -> id].canBuildList.size(); i++) {
-			if (unittypearray[unittypearray[ai -> cb -> GetUnitDef(builder) -> id].canBuildList[i]].category != -1) {
-				return unittypearray[unittypearray[ai -> cb -> GetUnitDef(builder) -> id].canBuildList.front()].def;
+	if (!bestscore) {
+		for (unsigned int i = 0; i != unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList.size(); i++) {
+			if (unittypearray[unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList[i]].category != -1) {
+				return unittypearray[unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList.front()].def;
 			}
 		}
 	}
 
-	// L("Time taken for getunitbyscore: " << ai -> math -> TimerSecs() << "s.");
-	return tempunit;
+	return tempUnitDef;
 }
 
 
@@ -543,16 +532,16 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 
 
 void CUnitTable::Init() {
-	ai -> math -> TimerStart();
-	numOfUnits = ai -> cb -> GetNumUnitDefs();
+	ai->math->TimerStart();
+	numOfUnits = ai->cb->GetNumUnitDefs();
 
-	// one more than needed because 0 is dummy object (so UnitDef -> id can be used to adress that unit in the array)
+	// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array)
 	unittypearray = new UnitType[numOfUnits + 1];
 	unittypearray[0].side = -1;
 
 	// get unit defs from game and stick them in the unittypearray[] array
 	unitList = new const UnitDef*[numOfUnits];
-	ai -> cb -> GetUnitDefList(unitList);
+	ai->cb->GetUnitDefList(unitList);
 
 	for (int i = 1; i <= numOfUnits; i++) {
 		unittypearray[i].def=unitList[i - 1];
@@ -565,8 +554,8 @@ void CUnitTable::Init() {
 		unittypearray[i].category = -1;
 
 		// get build options
-		for (map<int, string>::const_iterator j = unittypearray[i].def -> buildOptions.begin(); j != unittypearray[i].def -> buildOptions.end(); j++) {
-			unittypearray[i].canBuildList.push_back(ai -> cb -> GetUnitDef(j -> second.c_str()) -> id);
+		for (map<int, string>::const_iterator j = unittypearray[i].def->buildOptions.begin(); j != unittypearray[i].def->buildOptions.end(); j++) {
+			unittypearray[i].canBuildList.push_back(ai->cb->GetUnitDef(j->second.c_str())->id);
 		}
 	}
 
@@ -581,87 +570,87 @@ void CUnitTable::Init() {
 	// add unit to different groups
 	for (int i = 1; i <= numOfUnits; i++) {
 		UnitType* me = &unittypearray[i];
-		// filter out neutral units
-		if (me -> side == -1) {
-		}
-		else {
-			int UnitCost = int(me -> def -> metalCost * METAL2ENERGY + me -> def -> energyCost);
 
-			// L("name: " << me -> def -> name << ", : " << me -> def -> humanName);
+		// filter out neutral units
+		if (me->side != -1) {
+			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
+
+			// L("name: " << me->def->name << ", : " << me->def->humanName);
 			CSunParser* attackerparser = new CSunParser(ai);
 			char weaponnumber[10] = "";
 
-			attackerparser -> LoadVirtualFile(me -> def -> filename.c_str());
-			// L(me -> def -> filename.c_str());
-			me -> TargetCategories.resize(me -> def -> weapons.size());
+			attackerparser->LoadVirtualFile(me->def->filename.c_str());
+			// L(me->def->filename.c_str());
+			me->TargetCategories.resize(me->def->weapons.size());
 
-			for (unsigned int w = 0; w != me -> def -> weapons.size(); w++) {
+			for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
 				itoa(w, weaponnumber, 10);
 				// L("pre string ans;");
 				string ans;
 				
-				attackerparser -> GetDef(me -> TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
+				attackerparser->GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
 			}
 
 			delete attackerparser;
 
-			me -> DPSvsUnit.resize(numOfUnits + 1);
+			me->DPSvsUnit.resize(numOfUnits + 1);
 
 			for (int v = 1; v <= numOfUnits; v++) {
-				me -> DPSvsUnit[v] = GetDPSvsUnit(me -> def, unittypearray[v].def);
-				// L(me -> def -> humanName << " has a DPS of : " << me -> DPSvsUnit[v] << " against: " << unittypearray[v].def -> humanName);
+				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unittypearray[v].def);
+				// L(me->def->humanName << " has a DPS of : " << me->DPSvsUnit[v] << " against: " << unittypearray[v].def->humanName);
 			}
 
-			if (me -> def -> speed && me -> def -> minWaterDepth <= 0) {
-				if (me -> def -> buildOptions.size()) {
-					ground_builders[me -> side].push_back(i);
-					me -> category = CAT_BUILDER;
+			if (me->def->speed && me->def->minWaterDepth <= 0) {
+				if (me->def->buildOptions.size()) {
+					ground_builders[me->side].push_back(i);
+					me->category = CAT_BUILDER;
 				}
-				else if (!me -> def -> weapons.empty() && !me -> def -> weapons.begin() -> def -> stockpile) {
-					ground_attackers[me -> side].push_back(i);
-					me -> category = CAT_G_ATTACK;
+				else if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile) {
+					ground_attackers[me->side].push_back(i);
+					me->category = CAT_G_ATTACK;
 				}
 			}
 
 
 
-			else if (!me -> def -> canfly) {
-				if (me -> def -> minWaterDepth <= 0) {
-					if (me -> def -> buildOptions.size() > 1) {
-						if ((((me -> def) -> TEDClassString) == "PLANT") || (((me -> def) -> speed) > 0.0f))
-							(ai -> MyUnits[i]) -> isHub = false;
-						else
-							(ai -> MyUnits[i]) -> isHub = true;
+			else if (!me->def->canfly) {
+				if (me->def->minWaterDepth <= 0) {
+					if (me->def->buildOptions.size() > 1) {
+						if ((((me->def)->TEDClassString) == "PLANT") || (((me->def)->speed) > 0.0f)) {
+							me->isHub = false;
+						} else {
+							me->isHub = true;
+						}
 
-						ground_factories[me -> side].push_back(i);
-						me -> category = CAT_FACTORY;
+						ground_factories[me->side].push_back(i);
+						me->category = CAT_FACTORY;
 					}
 					else {
-						if (!me -> def -> weapons.empty() && !me -> def -> weapons.begin() -> def -> stockpile) {
-							ground_defences[me -> side].push_back(i);
-							me -> category = CAT_DEFENCE;
+						if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile) {
+							ground_defences[me->side].push_back(i);
+							me->category = CAT_DEFENCE;
 						}
-						if (me -> def -> makesMetal){
-							metal_makers[me -> side].push_back(i);
-							me -> category = CAT_MMAKER;
+						if (me->def->makesMetal){
+							metal_makers[me->side].push_back(i);
+							me->category = CAT_MMAKER;
 						}
-						if (me -> def -> extractsMetal){
-							metal_extractors[me -> side].push_back(i);
-							me -> category = CAT_MEX;
+						if (me->def->extractsMetal){
+							metal_extractors[me->side].push_back(i);
+							me->category = CAT_MEX;
 						}
-						if ((me -> def -> energyMake - me -> def -> energyUpkeep) / UnitCost > 0.002 || me -> def -> tidalGenerator || me -> def -> windGenerator) {
-							if (me -> def -> minWaterDepth <= 0 && !me -> def -> needGeo) {
-								ground_energy[me -> side].push_back(i);
-								me -> category = CAT_ENERGY;
+						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
+							if (me->def->minWaterDepth <= 0 && !me->def->needGeo) {
+								ground_energy[me->side].push_back(i);
+								me->category = CAT_ENERGY;
 							}
 						}
-						if (me -> def -> energyStorage / UnitCost > 0.2) {
-							energy_storages[me -> side].push_back(i);
-							me -> category = CAT_ESTOR;
+						if (me->def->energyStorage / UnitCost > 0.2) {
+							energy_storages[me->side].push_back(i);
+							me->category = CAT_ESTOR;
 						}
-						if (me -> def -> metalStorage / UnitCost > 0.1) {
-							metal_storages[me -> side].push_back(i);
-							me -> category = CAT_MSTOR;
+						if (me->def->metalStorage / UnitCost > 0.1) {
+							metal_storages[me->side].push_back(i);
+							me->category = CAT_MSTOR;
 						}
 
 					}
@@ -670,12 +659,11 @@ void CUnitTable::Init() {
 		}
 	}
 
-	// L("All units added!");
 	char k[256];
-	sprintf(k, "UnitTable loaded in %fs", ai -> math -> TimerSecs());
-	ai -> cb -> SendTextMsg(k, 0);
+	sprintf(k, "UnitTable loaded in %fs", ai->math->TimerSecs());
+	ai->cb->SendTextMsg(k, 0);
 	// KLOOTNOTE: dump generated unit table to file
-	this -> DebugPrint();
+	this->DebugPrint();
 }
 
 
@@ -718,24 +706,24 @@ void CUnitTable::DebugPrint() {
 
 	// for debugging
 	char filename[1024] = ROOTFOLDER"CUnitTable Debug.log";
-	ai -> cb -> GetValue(AIVAL_LOCATE_FILE_W, filename);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w");
 
 	for (int i = 1; i <= numOfUnits; i++) {
 		if (unittypearray[i].side != -1) {
 			fprintf(file, "ID: %i\nName:         %s \nSide:         %s",
-				i, unitList[i - 1] -> humanName.c_str(), sideNames[unittypearray[i].side].c_str());
+				i, unitList[i - 1]->humanName.c_str(), sideNames[unittypearray[i].side].c_str());
 
 			fprintf(file, "\nCan Build:    ");
 
 			for (unsigned int j = 0; j != unittypearray[i].canBuildList.size(); j++) {
-				fprintf(file, "%s ", unittypearray[unittypearray[i].canBuildList[j]].def -> humanName.c_str());
+				fprintf(file, "%s ", unittypearray[unittypearray[i].canBuildList[j]].def->humanName.c_str());
 			}
 
 			fprintf(file, "\nBuilt by:     ");
 
 			for (unsigned int k = 0; k != unittypearray[i].builtByList.size(); k++) {
-				fprintf(file, "%s ", unittypearray[unittypearray[i].builtByList[k]].def -> humanName.c_str());
+				fprintf(file, "%s ", unittypearray[unittypearray[i].builtByList[k]].def->humanName.c_str());
 			}
 
 			fprintf(file, "\n\n");
@@ -747,7 +735,7 @@ void CUnitTable::DebugPrint() {
 			fprintf(file, "\n\n%s:\n", sideNames[s].c_str());
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
-				fprintf(file, "%s\n", unittypearray[all_lists[l][s][i]].def -> humanName.c_str());
+				fprintf(file, "%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
 		}
 	}
 
@@ -758,9 +746,9 @@ void CUnitTable::DebugPrint() {
 float CUnitTable::GetMaxRange(const UnitDef* unit) {
 	float max_range = 0;
 
-	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit -> weapons.begin(); i != unit -> weapons.end(); i++) {
-		if ((i -> def -> range) > max_range)
-			max_range = i -> def -> range;
+	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+		if ((i->def->range) > max_range)
+			max_range = i->def->range;
 	}
 
 	return max_range;
@@ -769,9 +757,9 @@ float CUnitTable::GetMaxRange(const UnitDef* unit) {
 float CUnitTable::GetMinRange(const UnitDef* unit) {
 	float min_range = FLT_MAX;
 
-	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit -> weapons.begin(); i != unit -> weapons.end(); i++) {
-		if ((i -> def -> range) < min_range)
-			min_range = i -> def -> range;
+	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+		if ((i->def->range) < min_range)
+			min_range = i->def->range;
 	}
 
 	return min_range;
