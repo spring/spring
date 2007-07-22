@@ -13,7 +13,6 @@
 #include "bitops.h"
 #include "FPUCheck.h"
 #include "LogOutput.h"
-#include "MouseInput.h"
 #include "NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
