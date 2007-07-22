@@ -290,8 +290,6 @@ bool SpringApp::Initialize ()
 		return false;
 	}
 
-	mouseInput = IMouseInput::Get ();
-
 	// Global structures
 	ENTER_SYNCED;
 	gs=SAFE_NEW CGlobalSyncedStuff();
@@ -831,8 +829,6 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-	mouseInput->Update ();
-
 	int ret = 1;
 	if (activeController) {
 		if (activeController->Update() == 0) {
@@ -894,10 +890,6 @@ int SpringApp::Run (int argc, char *argv[])
 	if (!Initialize ())
 		return -1;
 
-#ifdef WIN32
-	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
-#endif
-
 	SDL_Event event;
 	bool done = false;
 
@@ -937,9 +929,9 @@ int SpringApp::Run (int argc, char *argv[])
 				}
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
-				case SDL_SYSWMEVENT: {
-					mouseInput->HandleSDLMouseEvent (event);
+				case SDL_MOUSEBUTTONUP: {
+					if (mouse)
+						mouse->HandleSDLMouseEvent (event);
 					break;
 				}
 				case SDL_KEYDOWN: {
@@ -1046,7 +1038,6 @@ void SpringApp::Shutdown()
 	GLContext::Free();
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
-	delete mouseInput;
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 	SDL_Quit();
 	delete gs;
