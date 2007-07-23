@@ -24,7 +24,7 @@ namespace netcode {
 UDPSocket::UDPSocket(int port, unsigned range)
 {
 #ifdef _WIN32
-	Uint16 wVersionRequested;
+	unsigned short wVersionRequested;
 	WSADATA wsaData;
 	int err;
 		
@@ -91,7 +91,7 @@ UDPSocket::~UDPSocket()
 unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress)
 {
 	socklen_t fromsize = sizeof(*fromAddress);
-	const int data =  recvfrom(mySocket,buf,bufLength,0,(sockaddr*)fromAddress,&fromsize);
+	const int data =  recvfrom(mySocket,(void*)buf,bufLength,0,(sockaddr*)fromAddress,&fromsize);
 	if (data == SOCKET_ERROR)
 	{
 		if (IsFakeError())
@@ -105,7 +105,7 @@ unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, socka
 
 void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination)
 {
-	const int error = sendto(mySocket,(const void* const)buf,dataLength,0,(const struct sockaddr* const)destination,sizeof(*destination));
+	const int error = sendto(mySocket,(const void*)buf,dataLength,0,(const struct sockaddr* const)destination,sizeof(*destination));
 	if(error==SOCKET_ERROR){
 		if (IsFakeError())
 			return;
