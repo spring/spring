@@ -7,13 +7,10 @@
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
-typedef int socklen_t;
 #else
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-typedef struct hostent* LPHOSTENT;
-typedef struct in_addr* LPIN_ADDR;
 #endif
 
 #include "Net.h"
@@ -27,6 +24,13 @@ typedef struct in_addr* LPIN_ADDR;
 //////////////////////////////////////////////////////////////////////
 
 namespace netcode {
+
+#ifdef _WIN32
+typedef int socklen_t;
+#else
+typedef struct hostent* LPHOSTENT;
+typedef struct in_addr* LPIN_ADDR;
+#endif
 
 CNet::CNet()
 {
