@@ -97,7 +97,7 @@ void CBuildUp::Update()
 		}
 	}
 }
-
+#define GROUND_WATER_SUBCAT (builderpos.y>2?0:builderpos.y<-1?1:(RANDINT%2))
 void CBuildUp::Buildup()
 {
 	int NumberofidleBuilders = ai->uh->NumIdleUnits(CAT_BUILDER);
@@ -353,7 +353,7 @@ const UnitDef* CBuildUp::GetBestFactoryThatCanBeBuilt(float3 builderPos) {
 	return bestFactoryDef;
 }
 
-
+/*
 const UnitDef* CBuildUp::GetBestMexThatCanBeBuilt()
 {
 	// Look at all factories, and find the factories we can make
@@ -400,13 +400,14 @@ const UnitDef* CBuildUp::GetBestMexThatCanBeBuilt()
 	}
 	return bestFactoryDef;
 }
-
+*/
 /*
 Returns true if the builder was assigned an order.
 factory is the current target factory thats needed (globaly).
 */
 bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBuilder) {
 	forceUseBuilder = forceUseBuilder;
+	float3 builderpos = ai->cb->GetUnitPos(builder);
 	bool mexupgrader = false;
 	for(list<int>::iterator i = MexUpgraders.begin(); i != MexUpgraders.end();i++){
 		L("Mex upgrader number: " << *i);
@@ -415,7 +416,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 		}
 	}
 	bool builderIsUsed = false;
-	const UnitDef* mex = ai->ut->GetUnitByScore(builder,CAT_MEX);
+	const UnitDef* mex = ai->ut->GetUnitByScore(builder,CAT_MEX,GROUND_WATER_SUBCAT);
 	float3 mexpos = ai->mm->GetNearestMetalSpot(builder,mex);
 	if(mexpos != ERRORVECTOR && mex != NULL && mexupgrader){ //if the unit just reclaimed a mex you have to build one and nothing else
 		L("trying to build upgraded mex at: " << mexpos.x << ","<< mexpos.z);
@@ -440,7 +441,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 					//ai->uh->TaskPlanCreate(builder,ai->cb->GetUnitPos(upgradespot),mex);
 					builderIsUsed = true;
 				}			
-				else if(mexpos != ERRORVECTOR && mex != NULL && (ai->uh->Distance2DToNearestFactory(mexpos.x,mexpos.z)<DEFCBS_RADIUS || RANDINT%100<75)){
+				else if(mexpos != ERRORVECTOR && mex != NULL && (ai->uh->Distance2DToNearestFactory(mexpos.x,mexpos.z)<DEFCBS_RADIUS || mexpos.distance2D(builderpos)<DEFCBS_RADIUS/2 || RANDINT%100<75)){
 					L("trying to build mex at: " << mexpos.x << ","<< mexpos.z);
 					if (ai->MyUnits[builder]->Build(mexpos,mex)) {
 						MexUpgraders.remove(builder);
@@ -452,10 +453,10 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 					//MyUnits[builder].pos());
 						builderIsUsed = true;
 				}
-				else if (ai->ut->metal_makers->size() && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%100<50){
+				else if ((ai->ut->ground_metal_makers->size()||ai->ut->water_metal_makers->size()) && ai->cb->GetEnergyIncome() > ai->cb->GetEnergyUsage() * 1.5 && RANDINT%100<50){
 					if(!ai->uh->BuildTaskAddBuilder(builder,CAT_MMAKER)){
 						L("Trying to build CAT_MMAKER");
-						const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_MMAKER);
+						const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_MMAKER,GROUND_WATER_SUBCAT);
 						if(def == NULL)
 							return false;
 						ai->MyUnits[builder]->Build_ClosestSite(def,ai->cb->GetUnitPos(builder));//MyUnits[builder].pos());
@@ -476,7 +477,7 @@ bool CBuildUp::EconBuildup(int builder, const UnitDef* factory, bool forceUseBui
 			|| ai->cb->GetEnergyIncome()<100){	
 			if(!ai->uh->BuildTaskAddBuilder(builder,CAT_ENERGY)){
 				L("Trying to build CAT_ENERGY");
-				const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_ENERGY);
+				const UnitDef* def = ai->ut->GetUnitByScore(builder,CAT_ENERGY,GROUND_WATER_SUBCAT);
 				if(def == NULL)
 					return false;
 				//Find a safe position to build this at

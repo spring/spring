@@ -76,9 +76,12 @@ public:
 	vector<int> *air_attackers;
 	vector<int> *transports;
 	vector<int> *air_transports;
-	vector<int> *metal_extractors;
-	vector<int> *metal_makers;
+	vector<int> *ground_metal_extractors;
+	vector<int> *water_metal_extractors;
+	vector<int> *ground_metal_makers;
+	vector<int> *water_metal_makers;
 	vector<int> *ground_energy;
+	vector<int> *water_energy;
 	vector<int> *ground_defences;
 	vector<int> *air_defences;
 	vector<int> *water_defences;

@@ -97,36 +97,50 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 
 int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 	float Tempscore = 0;
-	float distance;
-	float3 spotcoords = ERRORVECTOR;
+//	float distance;
+//	float3 spotcoords = ERRORVECTOR;
 	int bestspot = -1;
 	float3 bestfreemetalpos = GetNearestMetalSpot(builderid, extractor);
 	float bestfreemetal = bestfreemetalpos.y;
 	float bestfreedistance = ai->uh->Distance2DToNearestFactory(bestfreemetalpos.x,bestfreemetalpos.z);
-	if (bestfreedistance<DEFCBS_RADIUS) bestfreemetal/=10;
+	if (bestfreedistance>DEFCBS_RADIUS) bestfreemetal/=10;
 
 	if (VectoredSpots.size()) {
 		int* temparray = new int [MAXUNITS];
 
 		for (list<int>::iterator i = ai -> uh -> AllUnitsByCat[CAT_MEX] . begin(); i != ai -> uh -> AllUnitsByCat[CAT_MEX] . end(); i++) {
-			spotcoords = ai -> MyUnits[*i] -> pos();
-
-			if (spotcoords.x != -1) {
-				distance = sqrt(spotcoords.distance2D(ai -> cb -> GetUnitPos(builderid)) + 150);
-				// L("Spot number " << i << " Threat: " << mythreat);
-				if (extractor -> extractsMetal/ai -> cb -> GetUnitDef(*i) -> extractsMetal<1.2) continue;
-				float metaldifference = extractor -> extractsMetal - ai -> cb -> GetUnitDef(*i) -> extractsMetal;
-				float spotscore = (GetMetalAtThisPoint(spotcoords) * metaldifference) / sqrt(distance + 500);
-
-				bool b1 = Tempscore < spotscore;
-				bool b2 = ai -> uh -> TaskPlanExist(spotcoords, extractor);
-				bool b3 = bestfreemetal < (GetMetalAtThisPoint(spotcoords) * (metaldifference / extractor -> extractsMetal));
-
-				if (b1 && !b2 && b3) {
-					Tempscore = spotscore;
-					bestspot = *i;
-				}
+			float3 spotcoords = ai -> MyUnits[*i] -> pos();
+			if (spotcoords.x == -1) continue;
+			float oldextracts = ai -> cb -> GetUnitDef(*i) -> extractsMetal;
+			float newextracts = extractor -> extractsMetal;
+			if (newextracts<oldextracts*1.2) continue;
+			if (ai -> uh -> TaskPlanExist(spotcoords, extractor)) continue;
+			float metalatpos = GetMetalAtThisPoint(spotcoords);
+			L("Metal at upgrade "<<metalatpos<<"At "<<spotcoords.x<<"."<<spotcoords.z<<" (free "<<bestfreemetal<<")");
+			float dist = spotcoords.distance2D(ai -> cb -> GetUnitPos(builderid));
+			if (dist>DEFCBS_RADIUS) metalatpos/=10;
+			float addmetal = metalatpos*(newextracts-oldextracts);
+			float spotscore = addmetal;
+			if (Tempscore<spotscore) {
+				Tempscore = spotscore;
+				bestspot = *i;
 			}
+/*
+			distance = sqrt(spotcoords.distance2D(ai -> cb -> GetUnitPos(builderid)) + 150);
+			// L("Spot number " << i << " Threat: " << mythreat);
+			if (extractor -> extractsMetal/ai -> cb -> GetUnitDef(*i) -> extractsMetal<1.2) continue;
+			float metaldifference = extractor -> extractsMetal - ai -> cb -> GetUnitDef(*i) -> extractsMetal;
+			float spotscore = (GetMetalAtThisPoint(spotcoords) * metaldifference) / sqrt(distance + 500);
+
+			bool b1 = Tempscore < spotscore;
+			bool b2 = ai -> uh -> TaskPlanExist(spotcoords, extractor);
+			bool b3 = bestfreemetal < (GetMetalAtThisPoint(spotcoords) * (metaldifference / extractor -> extractsMetal));
+
+			if (b1 && !b2 && b3) {
+				Tempscore = spotscore;
+				bestspot = *i;
+			}
+*/
 		}
 
 		delete[] temparray;
@@ -136,7 +150,7 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor) {
 		L("No spot found for upgrade");
 	else {
 		// draw green arrow pointing upward above metal extractor
-		spotcoords = ai -> cb -> GetUnitPos(bestspot);
+//		spotcoords = ai -> cb -> GetUnitPos(bestspot);
 //		ai -> cb -> CreateLineFigure(spotcoords, float3(spotcoords.x, spotcoords.y + 100, spotcoords.z), 10, 1, 10000, 98);
 	}
 	return bestspot;
