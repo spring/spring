@@ -358,7 +358,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 
 	dminited = false;
 
-	ai -> cb -> SendTextMsg("KAI v0.22 loaded!", 0);
+	ai -> cb -> SendTextMsg("KAI v0.23b1 loaded!", 0);
 }
 
 

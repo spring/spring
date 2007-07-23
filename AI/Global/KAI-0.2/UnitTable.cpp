@@ -41,9 +41,12 @@ CUnitTable::CUnitTable(AIClasses* ai)
 	air_attackers = new vector<int>[numOfSides];
 	transports = new vector<int>[numOfSides];
 	air_transports = new vector<int>[numOfSides];
-	metal_extractors = new vector<int>[numOfSides];
-	metal_makers = new vector<int>[numOfSides];
+	ground_metal_extractors = new vector<int>[numOfSides];
+	water_metal_extractors = new vector<int>[numOfSides];
+	ground_metal_makers = new vector<int>[numOfSides];
+	water_metal_makers = new vector<int>[numOfSides];
 	ground_energy = new vector<int>[numOfSides];
+	water_energy = new vector<int>[numOfSides];
 	ground_defences = new vector<int>[numOfSides];
 	air_defences = new vector<int>[numOfSides];
 	water_defences = new vector<int>[numOfSides];
@@ -69,9 +72,12 @@ CUnitTable::CUnitTable(AIClasses* ai)
 	all_lists.push_back(air_attackers);
 	all_lists.push_back(transports);
 	all_lists.push_back(air_transports);
-	all_lists.push_back(metal_extractors);
-	all_lists.push_back(metal_makers);
+	all_lists.push_back(ground_metal_extractors);
+	all_lists.push_back(water_metal_extractors);
+	all_lists.push_back(ground_metal_makers);
+	all_lists.push_back(water_metal_makers);
 	all_lists.push_back(ground_energy);
+	all_lists.push_back(water_energy);
 	all_lists.push_back(ground_defences);
 	all_lists.push_back(air_defences);
 	all_lists.push_back(water_defences);
@@ -105,9 +111,12 @@ CUnitTable::~CUnitTable()
 	delete [] air_attackers;
 	delete [] transports;
 	delete [] air_transports;
-	delete [] metal_extractors;
-	delete [] metal_makers;
+	delete [] ground_metal_extractors;
+	delete [] water_metal_extractors;
+	delete [] ground_metal_makers;
+	delete [] water_metal_makers;
 	delete [] ground_energy;
+	delete [] water_energy;
 	delete [] ground_defences;
 	delete [] air_defences;
 	delete [] water_defences;
@@ -697,13 +706,22 @@ const UnitDef* CUnitTable::GetUnitByScore(int builder, int category, int subCate
 	//L("vars set");
 	switch (category){
 		case CAT_ENERGY:
-			templist = ground_energy;
+			switch (subCategory) {
+				case 0:templist = ground_energy; break;
+				case 1:templist = water_energy; break;
+			}
 			break;
 		case CAT_MEX:
-			templist = metal_extractors;
+			switch (subCategory) {
+				case 0:templist = ground_metal_extractors; break;
+				case 1:templist = water_metal_extractors; break;
+			}
 			break;
 		case CAT_MMAKER:
-			templist = metal_makers;
+			switch (subCategory) {
+				case 0:templist = ground_metal_makers; break;
+				case 1:templist = water_metal_makers; break;
+			}
 			break;
 		case CAT_ATTACK:
 			templist = attackers;
@@ -1103,18 +1121,28 @@ void CUnitTable::Init()
 				}
 				else
 				if(me->def->makesMetal){
-					metal_makers[me->side].push_back(i);
+					if(me->def->minWaterDepth <= 0){
+						ground_metal_makers[me->side].push_back(i);
+					} else {
+						water_metal_makers[me->side].push_back(i);
+					}
 					me->category = CAT_MMAKER;
 				} else
 				if(me->def->extractsMetal){
-					metal_extractors[me->side].push_back(i);
+					if(me->def->minWaterDepth <= 0){
+						ground_metal_extractors[me->side].push_back(i);
+					} else {
+						water_metal_extractors[me->side].push_back(i);
+					}
 					me->category = CAT_MEX;
 				} else
 				if((((me->def->energyMake - me->def->energyUpkeep) / UnitCost) > 0.002) || me->def->tidalGenerator || me->def->windGenerator){
-//						if(me->def->minWaterDepth <= 0 && !me->def->needGeo){
-					ground_energy[me->side].push_back(i);
+					if(me->def->minWaterDepth <= 0){
+						ground_energy[me->side].push_back(i);
+					} else {
+						water_energy[me->side].push_back(i);
+					}
 					me->category = CAT_ENERGY;
-//						}
 				} else
 				if(me->def->energyStorage / UnitCost > 0.2){
 					energy_storages[me->side].push_back(i);
