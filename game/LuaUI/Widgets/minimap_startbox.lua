@@ -36,7 +36,8 @@ end
 --  config options
 --
 
-local drawGroundQuads = false
+-- assumes that cards which support GL 2.0 don't suck
+local drawGroundQuads = (gl.CreateShader ~= nil)
 
 
 --------------------------------------------------------------------------------
