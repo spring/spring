@@ -115,7 +115,7 @@ AAIMap::~AAIMap(void)
 		for(int x = 0; x < xSectors; x++)
 		{
 			// save sector data
-			fprintf(save_file, "%f %f %f %f ", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
+			fprintf(save_file, "%f %f %f", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
 			// save combat data
 			for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
 				fprintf(save_file, "%f %f ", sector[x][y].attacked_by_this_game[cat], sector[x][y].combats_this_game[cat]);
