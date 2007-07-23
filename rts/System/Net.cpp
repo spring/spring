@@ -7,13 +7,12 @@
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
-#include <direct.h>
-#include <io.h>
 #else
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+typedef struct hostent* LPHOSTENT;
+typedef struct in_addr* LPIN_ADDR;
 #endif
 
 #include "Net.h"
@@ -28,58 +27,8 @@
 
 namespace netcode {
 
-std::string GetErrorMsg()
-{
-#ifdef _WIN32
-	return strerror(WSAGetLastError());	// does windows have such a function?
-#else
-	return strerror(errno);
-#endif
-}
-
-#ifdef _WIN32
-typedef int socklen_t;
-#else
-const int INVALID_SOCKET = -1;
-const int SOCKET_ERROR = -1;
-typedef struct hostent* LPHOSTENT;
-typedef struct in_addr* LPIN_ADDR;
-#define closesocket(x) close(x)
-#endif
-
-bool IsFakeError()
-{
-#ifdef _WIN32
-	int err=WSAGetLastError();
-	return err==WSAEWOULDBLOCK || err==WSAECONNRESET || err==WSAEINTR;
-#else
-	return errno==EWOULDBLOCK || errno==ECONNRESET || errno==EINTR;
-#endif
-}
-
 CNet::CNet()
 {
-#ifdef _WIN32
-	unsigned short wVersionRequested;
-	WSADATA wsaData;
-	int err;
-
-	wVersionRequested = MAKEWORD( 2, 2 );
-	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
-		throw network_error("Couldn't initialize winsock");
-		return;
-	}
-	/* Confirm that the WinSock DLL supports 2.2.*/
-	/* Note that if the DLL supports versions greater    */
-	/* than 2.2 in addition to 2.2, it will still return */
-	/* 2.2 in wVersion since that is the version we      */
-	/* requested.                                        */
-	if ( LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 2 ) {
-		throw network_error("Wrong WSA version");
-		WSACleanup( );
-		return;
-	}
-#endif
 	connected=false;
 
 	for(int a=0;a<MAX_PLAYERS;a++){
@@ -96,10 +45,7 @@ CNet::CNet()
 CNet::~CNet()
 {
 	if(mySocket)
-		closesocket(mySocket);
-#ifdef _WIN32
-	WSACleanup();
-#endif
+		delete mySocket;
 
 	for (int a=0;a<MAX_PLAYERS;a++){
 		if(connections[a])
@@ -141,31 +87,9 @@ int CNet::InitServer(unsigned portnum)
 	waitOnCon=true;
 	imServer=true;
 
-	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		throw network_error("Error initializing socket as server: "+GetErrorMsg());
-		exit(0);
-	}
+	mySocket = new UDPSocket(portnum);
 
 	connected = true;
-
-	sockaddr_in saMe;
-
-	saMe.sin_family = AF_INET;
-	saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-	saMe.sin_port = htons(portnum);	   // Use port passed from user
-
-	if (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
-		closesocket(mySocket);
-		throw network_error("Error binding socket as server: "+GetErrorMsg());
-		exit(0);
-	}
-
-#ifdef _WIN32
-		u_long u=1;
-		ioctlsocket(mySocket,FIONBIO,&u);
-#else
-		fcntl(mySocket, F_SETFL, O_NONBLOCK);
-#endif
 
 	return 0;
 }
@@ -196,31 +120,7 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 		WannaBeClient.other.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);
 	}
 
-	sockaddr_in saMe;
-	saMe.sin_family = AF_INET;
-	saMe.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-	saMe.sin_port = htons(sourceport);	   // Use port passed from user
-
-	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		throw network_error("Error initializing socket "+GetErrorMsg());
-	}
-
-	unsigned numTries=0;
-	while (bind(mySocket,(struct sockaddr *)&saMe,sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
-		numTries++;
-		if(numTries>10){
-			closesocket(mySocket);
-			throw network_error("Error binding socket as client: "+GetErrorMsg());
-		}
-		saMe.sin_port = htons(sourceport+numTries);
-	}
-
-#ifdef _WIN32
-	u_long u=1;
-	ioctlsocket(mySocket,FIONBIO,&u);
-#else
-	fcntl(mySocket, F_SETFL, O_NONBLOCK);
-#endif
+	mySocket = new UDPSocket(sourceport, 10);
 
 	waitOnCon=false;
 	imServer=false;
@@ -266,7 +166,7 @@ int CNet::InitNewConn(const Pending& NewClient, bool local)
 		}
 
 	if (!local)
-		connections[freeConn]= new CRemoteConnection(NewClient.other, &mySocket);
+		connections[freeConn]= new CRemoteConnection(NewClient.other, mySocket);
 	else
 		connections[freeConn]= new CLocalConnection();
 
@@ -296,17 +196,14 @@ void CNet::Update(void)
 		sockaddr_in from;
 		socklen_t fromsize;
 		fromsize=sizeof(from);
-		int r;
 		unsigned char inbuf[16000];
 
 		while(true)
 		{
-			if((r=recvfrom(mySocket,(char*)inbuf,16000,0,(sockaddr*)&from,&fromsize))==SOCKET_ERROR)
-			{
-				if (IsFakeError())
-					break;
-				throw network_error("Error receiving data: "+GetErrorMsg());
-			}
+			const unsigned r = mySocket->RecvFrom(inbuf, (unsigned)16000, &from);
+			if (r == 0)
+				break;
+			
 			int conn=ResolveConnection(&from);
 			if(conn>= 0)
 			{

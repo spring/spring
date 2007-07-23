@@ -4,16 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-// Network dependent includes
-#ifdef _WIN32
-#include "Platform/Win/win32.h"
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#endif
 
 // general includes
 #include <string>
@@ -25,25 +15,10 @@
 #include "Connection.h"
 #include "GlobalStuff.h"
 #include "Sync/Syncify.h"
+#include "Net/UDPSocket.h"
 
 namespace netcode {
 
-#ifndef _WIN32
-	typedef int SOCKET;
-#endif
-
-
-/**
-* network_error
-* thrown when network error occured
-*/
-class network_error : public std::runtime_error
-{
-public:
-	network_error(const std::string& msg) :
-	std::runtime_error(msg) {}
-};
-	
 // If we switch to a networking lib and start using a bitstream, we might
 // as well remove this and use int as size type (because it'd be compressed anyway).
 template<typename T> struct is_string    {
@@ -299,7 +274,7 @@ private:
 	@return the number of the connection it matches, or -1 if it doesnt match any con
 	*/
 	int ResolveConnection(const sockaddr_in* from) const;
-	SOCKET mySocket;
+	UDPSocket* mySocket;
 	
 	struct AssembleBuffer
 	{

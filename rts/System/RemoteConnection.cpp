@@ -1,20 +1,14 @@
 #include "RemoteConnection.h"
 
-#ifdef _WIN32
-#include <direct.h>
-#include <io.h>
-#else
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#endif
-
 #include <SDL_timer.h>
 
-#include "Net.h"
+#ifdef _WIN32
+#include "Platform/Win/win32.h"
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#endif
+
 #include "LogOutput.h"
 #include "GlobalStuff.h"
 #include "Sync/Syncify.h"
@@ -34,16 +28,8 @@ Packet::~Packet()
 		delete[] data;
 }
 
-// both defined in Net.cpp
-std::string GetErrorMsg();
-bool IsFakeError();
 
-#ifndef _WIN32
-const int SOCKET_ERROR = -1;
-#endif
-
-
-CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, const SOCKET* const NetSocket) : mySocket(NetSocket)
+CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const NetSocket) : mySocket(NetSocket)
 {
 	addr=MyAddr;
 	lastInOrder=-1;
@@ -263,11 +249,8 @@ void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned 
 
 	memcpy(&tempbuf[hsize],data,length);
 
-	if(sendto(*mySocket,(char*)tempbuf,length+hsize,0,(sockaddr*)&addr,sizeof(addr))==SOCKET_ERROR){
-		if (IsFakeError())
-			return;
-		throw network_error("Error sending data: "+GetErrorMsg());
-	}
+	mySocket->SendTo(tempbuf, length+hsize, &addr);
+	
 	dataSent += length;
 	sentOverhead += hsize;
 }
