@@ -572,7 +572,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			if(load_file)
 			{
 				// load sector data
-				fscanf(load_file, "%f %f %f %f ", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
+				fscanf(load_file, "%f %f %f", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
 
 				// load combat data
 				for(int cat = 0; cat < bt->assault_categories.size(); cat++)
