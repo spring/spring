@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
+typedef int socklen_t;
 #else
 #include <netdb.h>
 #include <arpa/inet.h>
