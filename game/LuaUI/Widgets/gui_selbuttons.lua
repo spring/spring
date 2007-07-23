@@ -55,13 +55,15 @@ end
 --  Selection Icons (rough around the edges)
 --
 
+local useModels = false
+
 local unitTypes = 0
 local countsTable = {}
 local activePress = false
 local mouseIcon = -1
 local currentDef = nil
 
-local iconSizeX = math.floor(100)
+local iconSizeX = math.floor(useModels and 80 or 64)
 local iconSizeY = math.floor(iconSizeX * 0.75)
 local fontSize = iconSizeY * 0.25
 
@@ -70,6 +72,9 @@ local rectMaxX = 0
 local rectMinY = 0
 local rectMaxY = 0
 
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 function widget:DrawScreen()
   unitCounts = Spring.GetSelectedUnitsCounts()
@@ -93,7 +98,12 @@ function widget:DrawScreen()
   unitCounts.n = nil  
   local icon = 0
   for udid,count in pairs(unitCounts) do
-    DrawUnitDefIcon(udid, icon, count)
+    if (useModels) then
+      DrawUnitDefModel(udid, icon, count)
+    else
+      DrawUnitDefTexture(udid, icon, count)
+    end
+      
     if (icon == mouseIcon) then
       currentDef = UnitDefs[udid]
     end
@@ -206,7 +216,7 @@ local function SetupBackgroundColor(ud)
 end
 
 
-function DrawUnitDefIcon(unitDefID, iconPos, count)
+function DrawUnitDefModel(unitDefID, iconPos, count)
   local xmin = math.floor(rectMinX + (iconSizeX * iconPos))
   local xmax = xmin + iconSizeX
   if ((xmax < 0) or (xmin > vsx)) then return end  -- bail
@@ -221,14 +231,10 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
   -- draw background quad
 --  gl.Color(0.3, 0.3, 0.3, 1.0)
 --  gl.Texture('#'..unitDefID)
-  SetupBackgroundColor(ud)
-  gl.Shape(GL.QUADS, {
-    { v = { xmin + 1, ymin + 1 }, t = { 0, 1 } },
-    { v = { xmax - 0, ymin + 1 }, t = { 1, 1 } },
-    { v = { xmax - 0, ymax - 0 }, t = { 1, 0 } },
-    { v = { xmin + 1, ymax - 0 }, t = { 0, 0 } },
-  })
   gl.Texture(false)
+  SetupBackgroundColor(ud)
+  gl.Rect(xmin + 1, ymin + 1, xmax, ymax)
+
 
   -- draw the 3D unit
 	SetupModelDrawing()
@@ -273,12 +279,42 @@ function DrawUnitDefIcon(unitDefID, iconPos, count)
 
   -- draw the border  (note the half pixel shift for drawing lines)
   gl.Color(1, 1, 1)
-  gl.Shape(GL.LINE_LOOP, {
-    { v = { xmin + 0.5, ymin + 0.5 }, t = { 0, 1 } },
-    { v = { xmax + 0.5, ymin + 0.5 }, t = { 1, 1 } },
-    { v = { xmax + 0.5, ymax + 0.5 }, t = { 1, 0 } },
-    { v = { xmin + 0.5, ymax + 0.5 }, t = { 0, 0 } },
-  })
+  gl.BeginEnd(GL.LINE_LOOP, function()
+    gl.Vertex(xmin + 0.5, ymin + 0.5)
+    gl.Vertex(xmax + 0.5, ymin + 0.5)
+    gl.Vertex(xmax + 0.5, ymax + 0.5)
+    gl.Vertex(xmin + 0.5, ymax + 0.5)
+  end)
+end
+
+
+function DrawUnitDefTexture(unitDefID, iconPos, count)
+  local xmin = math.floor(rectMinX + (iconSizeX * iconPos))
+  local xmax = xmin + iconSizeX
+  if ((xmax < 0) or (xmin > vsx)) then return end  -- bail
+  
+  local ymin = rectMinY
+  local ymax = rectMaxY
+  local xmid = (xmin + xmax) * 0.5
+  local ymid = (ymin + ymax) * 0.5
+
+  local ud = UnitDefs[unitDefID] 
+
+  gl.Color(1, 1, 1)
+  gl.Texture('#' .. unitDefID)
+  gl.TexRect(xmin, ymin, xmax, ymax)
+  gl.Texture(false)
+
+  -- draw the count text
+  gl.Text(count, (xmin + xmax) * 0.5, ymax + 2, fontSize, "oc")
+
+  -- draw the border  (note the half pixel shift for drawing lines)
+  gl.BeginEnd(GL.LINE_LOOP, function()
+    gl.Vertex(xmin + 0.5, ymin + 0.5)
+    gl.Vertex(xmax + 0.5, ymin + 0.5)
+    gl.Vertex(xmax + 0.5, ymax + 0.5)
+    gl.Vertex(xmin + 0.5, ymax + 0.5)
+  end)
 end
 
 
@@ -289,12 +325,7 @@ function DrawIconQuad(iconPos, color)
   local ymax = rectMaxY
   gl.Color(color)
   gl.Blending(GL.SRC_ALPHA, GL.ONE)
-  gl.Shape(GL.QUADS, {
-    { v = { xmin, ymin } },
-    { v = { xmax, ymin } },
-    { v = { xmax, ymax } },
-    { v = { xmin, ymax } },
-  })
+  gl.Rect(xmin, ymin, xmax, ymax)
   gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
 end
 
@@ -440,7 +471,7 @@ function widget:GetTooltip(x, y)
   if (not ud) then
     return ''
   end
-  return ud.humanName .. ' ' .. ud.tooltip
+  return ud.humanName .. ' - ' .. ud.tooltip
 end
 
 
