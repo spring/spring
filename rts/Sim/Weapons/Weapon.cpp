@@ -25,6 +25,7 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
+#include "float3.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -550,7 +551,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 		return false;
 
 	float3 dif=pos-weaponPos;
-	float heightDiff;
+	float heightDiff; // negative when target below owner
 
 	if (targetBorder != 0 && unit) {
 		float3 diff(dif);
@@ -564,16 +565,16 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 			//logOutput << "outside\n";
 		}
 		//geometricObjects->AddLine(weaponMuzzlePos, weaponMuzzlePos+dif, 3, 0, 16);
-		heightDiff = owner->pos.y - (weaponPos.y + dif.y);
+		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;
 	} else {
-		heightDiff = owner->pos.y - pos.y;
+		heightDiff = pos.y - owner->pos.y;
 	}
 
 	float r;
 	if (!unit || cylinderTargetting < 0.01) {
-		r=GetRange2D(heightDiff);
+		r=GetRange2D(heightDiff*heightMod);
 	} else {
-		if (cylinderTargetting * unit->radius > heightDiff) {
+		if (cylinderTargetting * unit->radius > fabs(heightDiff)*heightMod) {
 			r = GetRange2D(0);
 		} else {
 			r = 0;

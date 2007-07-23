@@ -325,9 +325,14 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].visuals.pulseSpeed, "1", weaponname + "\\pulseSpeed");
 	sunparser->GetDef(weaponDefs[id].largeBeamLaser, "0", weaponname + "\\largeBeamLaser");
 
-	weaponDefs[id].heightmod = 0.2f;
-	if(weaponDefs[id].type == "Cannon")
-		weaponDefs[id].heightmod = 0.8f;
+	std::string hmod = sunparser->SGetValueDef("", weaponname+"\\heightmod");
+	if (hmod == "") {
+		weaponDefs[id].heightmod = 0.2f;
+		if(weaponDefs[id].type == "Cannon")
+			weaponDefs[id].heightmod = 0.8f;
+	} else {
+		weaponDefs[id].heightmod = atof(hmod.c_str());
+	}
 
 	weaponDefs[id].supplycost = 0.0f;
 
