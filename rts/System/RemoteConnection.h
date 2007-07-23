@@ -2,15 +2,12 @@
 #define _REMOTE_CONNECTION
 
 #include "Connection.h"
+#include "Net/UDPSocket.h"
 
 #include <deque>
 #include <map>
 
 namespace netcode {
-
-#ifndef _WIN32
-	typedef int SOCKET;
-#endif
 
 /**
 How Spring protocolheader looks like (size in bytes):
@@ -32,7 +29,7 @@ struct Packet
 class CRemoteConnection : public CConnection
 {
 public:
-	CRemoteConnection(const sockaddr_in MyAddr, const SOCKET* const NetSocket);
+	CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const NetSocket);
 	virtual ~CRemoteConnection();
 
 	/// use this if you want data to be sent
@@ -90,7 +87,7 @@ private:
 
 	/** Our socket. Every CRemoteConnection uses the same socket, which is bad but
 	can't be circumvented since we don't want more than 1 listening UDP-Sockets. */
-	const SOCKET* const mySocket;
+	UDPSocket* const mySocket;
 
 	/** Configurable Maximum Transmission Unit. This is enforced by Flush:
 	it only gives this much bytes to each SendRawPacket() call.
