@@ -3,6 +3,7 @@
 
 #include "Connection.h"
 #include "Net/UDPSocket.h"
+#include "Net/RawPacket.h"
 
 #include <deque>
 #include <map>
@@ -17,14 +18,6 @@ How Spring protocolheader looks like (size in bytes):
 
 */
 
-struct Packet
-{
-	Packet(const void* indata,const unsigned int length);
-	~Packet();
-
-	unsigned int length;
-	unsigned char* data;
-};
 
 class CRemoteConnection : public CConnection
 {
@@ -75,12 +68,12 @@ private:
 	int outgoingLength;
 
 	/// packets the other side didn't ack'ed until now
-	std::deque<Packet*> unackedPackets;
+	std::deque<RawPacket*> unackedPackets;
 	int firstUnacked;
 	int currentNum;
 
 	/// packets we have recieved but not yet read
-	std::map<int,Packet*> waitingPackets;
+	std::map<int,RawPacket*> waitingPackets;
 	int lastInOrder;
 	int lastNak;
 	float lastNakTime;

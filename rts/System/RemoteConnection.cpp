@@ -16,18 +16,6 @@
 
 namespace netcode {
 
-Packet::Packet(const void* indata,const unsigned int length): length(length)
-{
-	data=SAFE_NEW unsigned char[length];
-	memcpy(data,indata,length);
-}
-
-Packet::~Packet()
-{
-	if (length > 0)	//TODO find out where the 0-length-packets are constructed and fix it there
-		delete[] data;
-}
-
 
 CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const NetSocket) : mySocket(NetSocket)
 {
@@ -54,10 +42,10 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const 
 
 CRemoteConnection::~CRemoteConnection()
 {
-	std::deque<Packet*>::iterator pi;
+	std::deque<RawPacket*>::iterator pi;
 	for(pi=unackedPackets.begin();pi!=unackedPackets.end();++pi)
 		delete (*pi);
-	std::map<int,Packet*>::iterator pi2;
+	std::map<int,RawPacket*>::iterator pi2;
 	for(pi2=waitingPackets.begin();pi2!=waitingPackets.end();++pi2)
 		delete (pi2->second);
 
@@ -85,7 +73,7 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 	if(active){
 		unsigned readyLength = 0;
 
-		std::map<int,Packet*>::iterator wpi;
+		std::map<int,RawPacket*>::iterator wpi;
 		//process all in order packets that we have waiting
 		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
 			if (readyLength + wpi->second->length >= length) {
@@ -165,7 +153,7 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 	if(!active || lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
 		return;
 
-	Packet* p=SAFE_NEW Packet(data+hsize,length-hsize);
+	RawPacket* p= new RawPacket(data+hsize,length-hsize);
 	waitingPackets[packetNum]=p;
 
 	dataRecv += length;
@@ -190,7 +178,7 @@ void CRemoteConnection::Flush()
 	for (int pos = 0; outgoingLength != 0; pos += mtu) {
 		int length = std::min(mtu, outgoingLength);
 		SendRawPacket(outgoingData + pos, length, currentNum++);
-		Packet* p = SAFE_NEW Packet(outgoingData + pos, length);
+		RawPacket* p = new RawPacket(outgoingData + pos, length);
 		outgoingLength -= length;
 		unackedPackets.push_back(p);
 	}
