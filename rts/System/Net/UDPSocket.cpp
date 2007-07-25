@@ -46,7 +46,7 @@ UDPSocket::UDPSocket(int port, unsigned range)
 #endif
 	
 	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
-		throw network_error("Error initializing socket: "+GetErrorMsg());
+		throw network_error(std::string("Error initializing socket: ") + GetErrorMsg());
 		exit(0);
 	}
 	
@@ -60,7 +60,8 @@ UDPSocket::UDPSocket(int port, unsigned range)
 		{
 			if (range == 0)
 			{
-				throw network_error("Error binding socket: "+GetErrorMsg());	// last try, error will break through to higher levels
+				// last try, error will break through to higher levels
+				throw network_error(std::string("Error binding socket: ") + GetErrorMsg());
 			}
 			--range;
 			++port;
@@ -92,12 +93,12 @@ unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, socka
 {
 	socklen_t fromsize = sizeof(*fromAddress);
 	const int data =  recvfrom(mySocket,(char*)buf,bufLength,0,(sockaddr*)fromAddress,&fromsize);
-	if (data == SOCKET_ERROR)
-	{
-		if (IsFakeError())
+	if (data == SOCKET_ERROR) {
+		if (IsFakeError()) {
 			return 0;
-		else
-			throw network_error("Error receiving data from socket: "+GetErrorMsg());
+		} else {
+			throw network_error(std::string("Error receiving data from socket: ") + GetErrorMsg());
+    }
 	}
 
 	return data;
@@ -106,11 +107,12 @@ unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, socka
 void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination)
 {
 	const int error = sendto(mySocket,(const char*)buf,dataLength,0,(const struct sockaddr* const)destination,sizeof(*destination));
-	if(error==SOCKET_ERROR){
-		if (IsFakeError())
+	if (error == SOCKET_ERROR) {
+		if (IsFakeError()) {
 			return;
-		else
-			throw network_error("Error sending data to socket: "+GetErrorMsg());
+		} else {
+			throw network_error(std::string("Error sending data to socket: ") + GetErrorMsg());
+    }
 	}
 }
 
