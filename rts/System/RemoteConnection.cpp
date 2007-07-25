@@ -42,13 +42,6 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const 
 
 CRemoteConnection::~CRemoteConnection()
 {
-	std::deque<RawPacket*>::iterator pi;
-	for(pi=unackedPackets.begin();pi!=unackedPackets.end();++pi)
-		delete (*pi);
-	std::map<int,RawPacket*>::iterator pi2;
-	for(pi2=waitingPackets.begin();pi2!=waitingPackets.end();++pi2)
-		delete (pi2->second);
-
 	logOutput.Print("Network statistics for %s",inet_ntoa(addr.sin_addr));
 	logOutput.Print("Bytes send/received: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
 	logOutput.Print("Packets send/received: %i/%i (Lost: %i%%)", currentNum, lastInOrder, resentPackets * 100 / currentNum);
@@ -73,7 +66,7 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 	if(active){
 		unsigned readyLength = 0;
 
-		std::map<int,RawPacket*>::iterator wpi;
+		packetMap::iterator wpi;
 		//process all in order packets that we have waiting
 		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
 			if (readyLength + wpi->second->length >= length) {
@@ -86,7 +79,6 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 			memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
 			readyLength+=wpi->second->length;
 
-			delete wpi->second;
 			waitingPackets.erase(wpi);
 		}
 
@@ -104,7 +96,7 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
 
 	if(inInitialConnect && lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
-		SendRawPacket(unackedPackets[0]->data,unackedPackets[0]->length,0);
+		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime=curTime;
 	}
 	if(lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
@@ -144,7 +136,7 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 			lastNak=nak_abs;
 			lastNakTime=lastReceiveTime;
 			for(int b=firstUnacked;b<=nak_abs;++b){
-				SendRawPacket(unackedPackets[b-firstUnacked]->data,unackedPackets[b-firstUnacked]->length,b);
+				SendRawPacket(unackedPackets[b-firstUnacked].data,unackedPackets[b-firstUnacked].length,b);
 				++resentPackets;
 			}
 		}
@@ -153,8 +145,7 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 	if(!active || lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
 		return;
 
-	RawPacket* p= new RawPacket(data+hsize,length-hsize);
-	waitingPackets[packetNum]=p;
+	waitingPackets.insert(packetNum, new RawPacket(data+hsize,length-hsize));
 
 	dataRecv += length;
 	recvOverhead += hsize;
@@ -178,9 +169,8 @@ void CRemoteConnection::Flush()
 	for (int pos = 0; outgoingLength != 0; pos += mtu) {
 		int length = std::min(mtu, outgoingLength);
 		SendRawPacket(outgoingData + pos, length, currentNum++);
-		RawPacket* p = new RawPacket(outgoingData + pos, length);
+		unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
 		outgoingLength -= length;
-		unackedPackets.push_back(p);
 	}
 }
 
@@ -208,7 +198,6 @@ bool CRemoteConnection::CheckAddress(const sockaddr_in& from) const
 void CRemoteConnection::AckPackets(const int nextAck)
 {
 	while(nextAck>=firstUnacked){
-		delete unackedPackets.front();
 		unackedPackets.pop_front();
 		firstUnacked++;
 	}

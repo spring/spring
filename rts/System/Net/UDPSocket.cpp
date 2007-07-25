@@ -89,7 +89,7 @@ UDPSocket::~UDPSocket()
 #endif
 }
 
-unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress)
+unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress) const 
 {
 	socklen_t fromsize = sizeof(*fromAddress);
 	const int data =  recvfrom(mySocket,(char*)buf,bufLength,0,(sockaddr*)fromAddress,&fromsize);
@@ -104,7 +104,7 @@ unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, socka
 	return data;
 }
 
-void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination)
+void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const
 {
 	const int error = sendto(mySocket,(const char*)buf,dataLength,0,(const struct sockaddr* const)destination,sizeof(*destination));
 	if (error == SOCKET_ERROR) {

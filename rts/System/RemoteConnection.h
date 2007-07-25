@@ -5,8 +5,8 @@
 #include "Net/UDPSocket.h"
 #include "Net/RawPacket.h"
 
-#include <deque>
-#include <map>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
 
 namespace netcode {
 
@@ -54,6 +54,7 @@ public:
 
 
 private:
+	typedef boost::ptr_map<int,RawPacket> packetMap;
 	/// all packets with number <= nextAck arrived at the other end
 	void AckPackets(const int nextAck);
 	/// add header to data and send it
@@ -68,12 +69,12 @@ private:
 	int outgoingLength;
 
 	/// packets the other side didn't ack'ed until now
-	std::deque<RawPacket*> unackedPackets;
+	boost::ptr_deque<RawPacket> unackedPackets;
 	int firstUnacked;
 	int currentNum;
 
 	/// packets we have recieved but not yet read
-	std::map<int,RawPacket*> waitingPackets;
+	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
 	float lastNakTime;

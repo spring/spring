@@ -57,7 +57,7 @@ class UDPSocket : public boost::noncopyable
 	@throw network_error when a error occurs
 	@return The amount of bytes read (0 means no data)
 	 */
-	unsigned RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress);
+	unsigned RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress) const;
 	
 	/**
 	@brief Send data to the socket
@@ -66,7 +66,7 @@ class UDPSocket : public boost::noncopyable
 	@param destination The address we want to send to
 	@throw network_error when data could not be sent
 	 */
-	void SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination);
+	void SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const;
 	
 protected:
 	/// return the last errormessage from the OS
