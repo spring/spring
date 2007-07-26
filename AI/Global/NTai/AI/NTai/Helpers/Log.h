@@ -32,6 +32,9 @@ public:
 		}
 		return verbose;
 	}
+        bool IsVerbose(){
+            return verbose;
+        }
 	map<int,string> PlayerNames; // player id <> Player name
 	bool FirstInstance(); // Is this the first instance of the AI/logger class
 private:

@@ -6,16 +6,13 @@
     <conf name="Debug" type="2">
       <runprofile version="5">
         <args></args>
-        <rundir></rundir>
+        <rundir>C:\Program Files\Spring</rundir>
         <buildfirst>true</buildfirst>
         <console-type>0</console-type>
         <terminal-type>0</terminal-type>
         <environment>
         </environment>
       </runprofile>
-      <gdbdebugger version="1">
-        <gdb_command>gdb</gdb_command>
-      </gdbdebugger>
     </conf>
     <conf name="Release" type="2">
       <runprofile version="5">
@@ -27,9 +24,6 @@
         <environment>
         </environment>
       </runprofile>
-      <gdbdebugger version="1">
-        <gdb_command>gdb</gdb_command>
-      </gdbdebugger>
     </conf>
   </confs>
 </configurationDescriptor>

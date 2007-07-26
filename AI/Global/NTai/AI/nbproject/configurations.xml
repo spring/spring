@@ -134,6 +134,7 @@
         <fortranCompilerTool>
         </fortranCompilerTool>
         <linkerTool>
+          <output>dist/Debug/GNU-Windows/NTai.dll</output>
           <linkerAddLib>
             <directoryPath>C:/Users/Tom/Documents/Development/taspring/spring_folder/minglibs/mingwlibs/lib</directoryPath>
           </linkerAddLib>

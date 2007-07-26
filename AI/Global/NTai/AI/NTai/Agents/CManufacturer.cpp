@@ -966,13 +966,13 @@ void CManufacturer::Update(){
 	}*/
 
 
-	if(!G->L.Verbose()==false){
+	if(!G->L.IsVerbose()==false){
 		return;
 	}
 	if EVERY_SECOND{
 		// iterate through all the plans and print out their positions and helping builders to verify that the plan system is actually working
 		// and keeping track of construction....
-		if(!BPlans->empty()){
+		if(!BPlans->empty() && G->L.IsVerbose()){
 			for(deque<CBPlan>::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
 				if(!i->builders.empty()){
 					for(set<int>::iterator j = i->builders.begin(); j != i->builders.end(); ++j){

@@ -59,7 +59,7 @@ void CUnit::RecieveMessage(CMessage &message){
 		if(EVERY_((GetAge()%16+17))){
 			if(!tasks.empty()){
 				if(tasks.front()->IsValid()==false){
-					G->L.iprint("next task?");
+					G->L.print("next task?");
 					tasks.erase(tasks.begin());
 					boost::shared_ptr<IModule> t = tasks.front();
 					t->Init(t);
@@ -179,7 +179,7 @@ bool CUnit::LoadTaskList(){
 	v = bds::set_cont(v,s.c_str());
 
 	if(v.empty() == false){
-		G->L.iprint("loading contents of  tasklist :: " + u + " :: filling tasklist with #" + to_string(v.size()) + " items");
+		G->L.print("loading contents of  tasklist :: " + u + " :: filling tasklist with #" + to_string(v.size()) + " items");
 		bool polate=false;
 		bool polation = G->info->rule_extreme_interpolate;
 		btype bt = G->Manufacturer->GetTaskType(G->Get_mod_tdf()->SGetValueDef("b_na","AI\\interpolate_tag"));
@@ -244,7 +244,7 @@ bool CUnit::LoadTaskList(){
 					boost::shared_ptr<IModule> t(new CKeywordConstructionTask(G,this->uid,x));
 					AddTask(t);
 				}else{
-					G->L.iprint("error :: a value :: " + *vi +" :: was parsed in :: "+u + " :: this does not have a valid UnitDef according to the engine, and is not a Task keyword such as repair or b_mex");
+					G->L.print("error :: a value :: " + *vi +" :: was parsed in :: "+u + " :: this does not have a valid UnitDef according to the engine, and is not a Task keyword such as repair or b_mex");
 				}
 			}
 
