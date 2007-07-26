@@ -69,15 +69,18 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 		packetMap::iterator wpi;
 		//process all in order packets that we have waiting
 		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
-			if (readyLength + wpi->second->length >= length) {
+		//	if (readyLength + wpi->second->length >= length) {
+			if (readyLength + (*wpi).length >= length) {
 				logOutput.Print("Overflow in incoming network buffer");
 				break;
 			}
 
 			lastInOrder++;
 
-			memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
-			readyLength+=wpi->second->length;
+		//	memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
+		//	readyLength += (wpi->second)->length;
+			memcpy(buf + readyLength, (*wpi).data, (*wpi).length);
+			readyLength += (*wpi).length;
 
 			waitingPackets.erase(wpi);
 		}
@@ -213,7 +216,7 @@ void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned 
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		int nak = (waitingPackets.begin()->first-1) - lastInOrder;
+		int nak = (waitingPackets.begin().key() - 1) - lastInOrder;
 		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;
