@@ -71,11 +71,11 @@ LDLIBSOPTIONS=\
 	C:/Users/Tom/Documents/Development/taspring/spring_folder/minglibs/mingwlibs/lib/libboost_thread-mt.a
 
 # Build Targets
-.build-conf: ${BUILD_SUBPROJECTS} dist/Debug/GNU-Windows/cygNTaiDLL.dll
+.build-conf: ${BUILD_SUBPROJECTS} dist/Debug/GNU-Windows/NTai.dll
 
-dist/Debug/GNU-Windows/cygNTaiDLL.dll: ${OBJECTFILES}
+dist/Debug/GNU-Windows/NTai.dll: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Windows
-	${LINK.cc} -shared -o dist/Debug/GNU-Windows/cygNTaiDLL.dll ${OBJECTFILES} ${LDLIBSOPTIONS} 
+	${LINK.cc} -shared -o dist/Debug/GNU-Windows/NTai.dll ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
 build/Debug/GNU-Windows/NTai/Core/GlobalAI.o: NTai/Core/GlobalAI.cpp 
 	${MKDIR} -p build/Debug/GNU-Windows/NTai/Core
@@ -211,7 +211,7 @@ build/Debug/GNU-Windows/NTai/Helpers/mtrand.o: NTai/Helpers/mtrand.cpp
 # Clean Targets
 .clean-conf:
 	${RM} -r build/Debug
-	${RM} dist/Debug/GNU-Windows/cygNTaiDLL.dll
+	${RM} dist/Debug/GNU-Windows/NTai.dll
 
 # Subprojects
 .clean-subprojects:
