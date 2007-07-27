@@ -4,9 +4,6 @@ fix "air group is attacking" crash
 
 unit-limit checking when building stuff
 
-fix XTA FARKs/Necros building radars like mad
-(still happens as of r4045)
-
 better support for mods with dgun-less
 commanders (less aggressive expansion eg.)
 
