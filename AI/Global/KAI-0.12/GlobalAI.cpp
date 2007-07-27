@@ -378,7 +378,7 @@ int CGlobalAI::HandleEvent(int msg, const void* data) {
 				// got a unit
 				UnitCreated(cte->unit);
 				UnitFinished(cte->unit);
-				ai->MyUnits[cte->unit]->Stop();
+				ai->uh->IdleUnitAdd(cte->unit);
 			}
 		} break;
 		case AI_EVENT_UNITCAPTURED: {

@@ -15,7 +15,7 @@ class CBuildUp {
 	private:
 		void Buildup();
 		void FactoryCycle(int);
-		void EconBuildup(int builder, const UnitDef* factory);
+		void FallbackBuild(int, int);
 
 		int factoryCounter;
 		int builderCounter;

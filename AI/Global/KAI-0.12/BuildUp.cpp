@@ -39,13 +39,12 @@ void CBuildUp::Buildup() {
 	if (ai->uh->NumIdleUnits(CAT_BUILDER)) {
 		// get idle (mobile) builder
 		int builder = ai->uh->GetIU(CAT_BUILDER);
-
 		const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
 		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builder, CAT_FACTORY);
 
-		// KLOOTNOTE: TODO
-	//	int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
-	//	int factoriesOfTypeMax = factoryDef->maxThisUnit;
+		// KLOOTNOTE: check unit-limit before building something
+		// int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
+		// int factoriesOfTypeMax = factoryDef->maxThisUnit;
 
 		float mIncome = ai->cb->GetMetalIncome();
 		float eIncome = ai->cb->GetEnergyIncome();
@@ -58,8 +57,9 @@ void CBuildUp::Buildup() {
 		bool mStall = (mIncome) < (ai->cb->GetMetalUsage() * 1.3);						// are we currently producing less metal than we are currently expending * 1.3?
 		bool eStall = (eIncome) < (ai->cb->GetEnergyUsage() * 1.6);						// are we currently producing less energy than we are currently expending * 1.6?
 
-		bool factFeasM = !ai->math->MFeasibleConstruction(builderDef, factoryDef);		// is factory we want to build feasible metal-wise?
-		bool factFeasE = !ai->math->EFeasibleConstruction(builderDef, factoryDef);		// is factory we want to build feasible energy-wise?
+		// KLOOTNOTE: prevent NPE if this builder cannot build any factories
+		bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
+		bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
 
 
 		if (builderDef == NULL) {
@@ -80,7 +80,7 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			else if ((eLevel50 && makersOn) && (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (factFeasM && factoryCounter <= 0))) {
+			else if ((eLevel50 && makersOn) && (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (!factFeasM && factoryCounter <= 0))) {
 				if (!ai->MyUnits[builder]->ReclaimBest(1)) {
 					const UnitDef* mex = ai->ut->GetUnitByScore(builder, CAT_MEX);
 					float3 mexpos = ai->mm->GetNearestMetalSpot(builder, mex);
@@ -91,30 +91,55 @@ void CBuildUp::Buildup() {
 					bool eExcess = (eIncome) > (ai->cb->GetEnergyUsage() * 1.5);
 
 					if (mexpos != ERRORVECTOR) {
-						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX))
+						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX)) {
 							// build metal extractor
 							ai->MyUnits[builder]->Build(mexpos, mex, -1);
+						}
 					}
 					else if (eOverflow && eStorage > 0 && storageCounter <= 0) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ESTOR)) {
 							// build energy storage
-							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder, CAT_ESTOR), ai->cb->GetUnitPos(builder));
-							storageCounter += 90;
+							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_ESTOR);
+							bool r = false;
+
+							if (building) {
+								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
+							} else {
+								FallbackBuild(builder, CAT_ESTOR);
+							}
+
+							if (r)
+								storageCounter += 90;
 						}
 					}
 					else if (mStorage > 0 && eExcess && ((RANDINT % 10) == 0)) {
-						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MMAKER))
+						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MMAKER)) {
 							// build metal maker
-							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder, CAT_MMAKER), ai->cb->GetUnitPos(builder));
+							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_MMAKER);
+							bool r = false;
+
+							if (building) {
+								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
+							} else {
+								FallbackBuild(builder, CAT_MMAKER);
+							}
+						}
 					}
 				}
 			}
 
 
-			else if (eStall || factFeasE) {
+			else if (eStall || !factFeasE) {
 				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ENERGY)) {
 					// build energy generator
-					ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder, CAT_ENERGY), ai->cb->GetUnitPos(builder));
+					const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_ENERGY);
+					bool r = false;
+
+					if (building) {
+						r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
+					} else {
+						FallbackBuild(builder, CAT_ENERGY);
+					}
 				}
 			}
 
@@ -129,17 +154,31 @@ void CBuildUp::Buildup() {
 					if (mOverflow && numMStorage > 0 && storageCounter <= 0 && (numFactories > 0)) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MSTOR)) {
 							// build metal storage
-							ai->MyUnits[builder]->Build_ClosestSite(ai->ut->GetUnitByScore(builder, CAT_MSTOR),ai->MyUnits[builder]->pos());
-							storageCounter += 90;
+							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_MSTOR);
+							bool r = false;
+
+							if (building) {
+								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->MyUnits[builder]->pos());
+							} else {
+								FallbackBuild(builder, CAT_MSTOR);
+							}
+
+							if (r)
+								storageCounter += 90;
 						}
 					}
 					else {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_DEFENCE)) {
-							// if we can't add this builder to some defense task
-							const UnitDef* defenseDef = ai->ut->GetUnitByScore(builder, CAT_DEFENCE);
+							// if we can't add this builder to some defense
+							// task then build something in CAT_DEFENCE
+							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_DEFENCE);
+							float3 buildPos = ai->dm->GetDefensePos(building, ai->MyUnits[builder]->pos());
+							bool r = false;
 
-							// build something in CAT_DEFENCE
-							if (ai->MyUnits[builder]->Build_ClosestSite(defenseDef, ai->dm->GetDefensePos(defenseDef, ai->MyUnits[builder]->pos()), 2)) {
+							if (building) {
+								r = ai->MyUnits[builder]->Build_ClosestSite(building, buildPos, 2);
+							} else {
+								FallbackBuild(builder, CAT_DEFENCE);
 							}
 						}
 					}
@@ -150,8 +189,17 @@ void CBuildUp::Buildup() {
 					if (!ai->uh->BuildTaskAddBuilder(builder, CAT_FACTORY)) {
 						// if we can't add this builder to some other buildtask
 						if (!ai->uh->FactoryBuilderAdd(builder)) {
-							// if we can't add this builder to some other factory then construct one with it
-							if (ai->MyUnits[builder]->Build_ClosestSite(factoryDef, ai->cb->GetUnitPos(builder))) {
+							// if we can't add this builder to some
+							// other factory then construct new one
+						//	const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_FACTORY);
+							bool r = false;
+
+						//	if (building) {
+						//		r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
+							if (factoryDef) {
+								r = ai->MyUnits[builder]->Build_ClosestSite(factoryDef, ai->cb->GetUnitPos(builder));
+							} else {
+								FallbackBuild(builder, CAT_FACTORY);
 							}
 						}
 						else
@@ -174,7 +222,6 @@ void CBuildUp::Buildup() {
 
 
 
-// added by Kloot
 void CBuildUp::FactoryCycle(int numIdleFactories) {
 	for (int i = 0; i < numIdleFactories; i++) {
 		int producedCat;
@@ -211,9 +258,9 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			}
 
 			// find the builder type this factory makes
-			const UnitDef* builder_unit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
+			const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
 
-			if (builder_unit == leastBuiltBuilder) {
+			if (builderUnit == leastBuiltBuilder) {
 				// see if it is the least built builder, if so then make one
 				producedCat = CAT_BUILDER;
 				builderCounter += 4;
@@ -238,7 +285,43 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 
 
 
-void CBuildUp::EconBuildup(int builder, const UnitDef* factory) {
-	builder = builder;
-	factory = factory;
+void CBuildUp::FallbackBuild(int builder, int failedCat) {
+	// called if an idle builder was selected to construct
+	// some category of unit, but builder not capable of
+	// constructing anything of that category
+
+	bool b1 = ai->uh->BuildTaskAddBuilder(builder, CAT_MEX);
+	bool b2 = false;
+	bool b3 = false;
+	bool b4 = false;
+	float3 builderPos = ai->cb->GetUnitPos(builder);
+	const UnitDef* udef1 = ai->ut->GetUnitByScore(builder, CAT_MEX);
+	const UnitDef* udef2 = ai->ut->GetUnitByScore(builder, CAT_ENERGY);
+	const UnitDef* udef3 = ai->ut->GetUnitByScore(builder, CAT_DEFENCE);
+
+	if (!b1) { b2 = ai->uh->BuildTaskAddBuilder(builder, CAT_ENERGY); }
+	if (!b2) { b3 = ai->uh->BuildTaskAddBuilder(builder, CAT_DEFENCE); }
+	if (!b3) { b4 = ai->uh->BuildTaskAddBuilder(builder, CAT_FACTORY); }
+/*
+	if (!b2 && !b3 && !b4) {
+		if (udef2 && failedCat != CAT_ENERGY) {
+			ai->MyUnits[builder]->Build_ClosestSite(udef2, builderPos);
+			return;
+		}
+		if (udef3 && failedCat != CAT_DEFENCE) {
+			float3 pos = ai->dm->GetDefensePos(udef3, builderPos);
+			ai->MyUnits[builder]->Build_ClosestSite(udef3, pos);
+			return;
+		}
+		if (udef1 && failedCat != CAT_MEX) {
+			float3 pos = ai->mm->GetNearestMetalSpot(builder, udef1);
+			if (pos != ERRORVECTOR)
+				ai->MyUnits[builder]->Build(pos, udef1, -1);
+			return;
+		}
+	}
+*/
+	// unable to assist and unable to build, just patrol
+	if (!b1 && !b2 && !b3 && !b4)
+		ai->MyUnits[builder]->Patrol(builderPos);
 }

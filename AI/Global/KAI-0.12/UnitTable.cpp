@@ -4,21 +4,19 @@
 
 CUnitTable::CUnitTable(AIClasses* ai) {
 	this->ai = ai;
-	// L("Starting Unit Table");
+
 	numOfUnits = 0;
 	unitList = 0;
 
-	// Get all sides and commanders
+	// get all sides and commanders
 	string sidestr = "SIDE";
 	string errorstring = "-1";
 	string Valuestring;
-	char k[50];
-	// L("Loading sidedata");
+	char k[64];
 	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
 
-	// L("Starting Loop");
 	for (int i = 0; i < 10; i++) {
-		sprintf(k,"%i",i);
+		sprintf(k, "%i", i);
 		ai->parser->GetDef(Valuestring, errorstring, string(sidestr + k + "\\commander"));
 
 		if (ai->cb->GetUnitDef(Valuestring.c_str())) {
@@ -28,8 +26,6 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 			numOfSides = i + 1;
 		}
 	}
-
-	// L("Sides Set Up");
 
 	// now set up the unit lists
 	ground_factories = new vector<int>[numOfSides];
@@ -51,8 +47,6 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	all_lists.push_back(ground_defences);
 	all_lists.push_back(metal_storages);
 	all_lists.push_back(energy_storages);
-
-	// L("UnitTable Inited!");
 }
 
 CUnitTable::~CUnitTable() {
@@ -91,35 +85,26 @@ int CUnitTable::GetCategory(int unit) {
 
 
 float CUnitTable::GetDPS(const UnitDef* unit) {
-	// L("");
-	// L("Getting DPS for Unit: " << unit->humanName << "category: " << unit->category << " catstring: " << unit->categoryString);
 	if (unit) {
-		// L("Units Only targetcat:" << defaultvalue);
 		float totaldps = 0;
 
 		for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 			float dps = 0;
 			if (!i->def->paralyzer) {
-				// L("weapon: " << i->name);
-				// L("Categories, ONLY:" <<  i->onlyTargetCat << "BAD: " << i->onlyTargetCat << " ONLY(def): " << i->def->onlyTargetCategory);
 				int numberofdamages;
 				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
 				float reloadtime = i->def->reload;
 
 				for (int k = 0; k < numberofdamages; k++) {
-					// L("damage: " << i->def->damages.damages[k]);
 					dps += i->def->damages.damages[k];
 				}
 
 				dps = dps * i->def->salvosize / numberofdamages / reloadtime;
-				
-				// L("dps for this weapon: " << dps << " Salvo size: " << i->def->salvosize << " Reload: " << reloadtime << " number of damages: " << numberofdamages);
 			}
 
 			totaldps += dps;
 		}
 
-		// L("DPS sucessful: " << totaldps);
 		return totaldps;
 	}
 
@@ -131,8 +116,7 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 	if (unit->weapons.size()) {
 		ai->math->TimerStart();
-		// L("");
-		// L("Getting DPS for Unit: " << unit->humanName << " Against " << victim->humanName);
+
 		float dps = 0;
 		bool canhit = false;
 		string targetcat;
@@ -143,10 +127,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
 			if (!unit->weapons[i].def->paralyzer) {
 				targetcat = unittypearray[unit->id].TargetCategories[i];
-				// L(unit->weapons[i].name << " Targcat: " <<  targetcat);
-				// L("unit->categoryString " <<  unit->categoryString);
-				// L("victim->categoryString " <<  victim->categoryString);
-				
+
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// This is what the weapon can target
 				unsigned int c = unit->weapons[i].onlyTargetCat;				// This is what the unit accepts as this weapons target
@@ -158,24 +139,21 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 				canhit = (canWeaponTarget && canUnitTarget);
 
 				if (!unit->weapons[i].def->waterweapon && ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0) {
+					// weapon cannot hit this sub
 					canhit = false;
-					// L("This weapon cannot hit this sub");
 				}
 
 				if (unit->weapons[i].def->waterweapon && victim->minWaterDepth == 0) {
+					// anti-sub weapon cannot kill this unit
 					canhit = false;
-					// L("this anti-sub weapon cannot kill this unit");
 				}
 
-				// Bombers are useless against air:
+				// bombers are useless against air
 				if (unit->weapons[i].def->dropped && victim->canfly && unit->canfly && unit->wantedHeight <= victim->wantedHeight) {
 					canhit = false;
 				}
 
 				if (canhit) {
-					// L(unit->weapons[i].name << " a: " <<  a << ", b: " << b << ", c: " << c << ", d: " << d);
-					// L("unit->categoryString " <<  unit->categoryString);
-					// L("victim->categoryString " <<  victim->categoryString);
 					float accuracy = unit->weapons[i].def->accuracy * 2.8;
 
 					if (victim->speed != 0) {
@@ -188,15 +166,12 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 					float impactarea;
 					float targetarea;
 					float distancetravelled = 0.7f * unit->weapons[i].def->range;
-					// L("Initial DT: " << distancetravelled);
 					float firingangle;
 					float gravity = -(ai->cb->GetGravity() * 900);
 					float timetoarrive;
 					float u = unit->weapons[i].def->projectilespeed * 30;
-					// L("Type: " << unit->weapons[i].def->type);
 
 					if (unit->weapons[i].def->type == string("Cannon")) {
-						// L("Is ballistic! Gravity: " << gravity);
 						// L("u = " << u << " distancetravelled * gravity) / (u * u) = " << (distancetravelled * gravity) / (u * u));
 						float sinoid = (distancetravelled * gravity) / (u * u);
 						sinoid = min(sinoid, 1.0f);
@@ -206,63 +181,52 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 							firingangle = (PI / 2) - firingangle;
 						}
 
-						// L("Firing angle = " << firingangle * 180 / PI);
 						float heightreached = pow(u * sin(firingangle), 2) / (2 * gravity);
 						float halfd = distancetravelled / 2;
 						distancetravelled = 2 * sqrt(halfd * halfd + heightreached * heightreached) * 1.1;
-						// L("Height reached: " << heightreached << " distance travelled " << distancetravelled);
 					}
 
-					// L("Name: " << unit->weapons[i].name << " AOE: " << AOE << " Accuracy: " << unit->weapons[i].def->accuracy << " range: " << unit->weapons[i].def->range);
 					if ((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly) {
 						impactarea = pow((accuracy * distancetravelled) + AOE, 2);
 						targetarea = ((victim->xsize * 16) + AOE) * ((victim->ysize * 16) + AOE);
-					}
-					else {
+					} else {
 						impactarea = pow((accuracy) * (0.7f * distancetravelled), 2);
 						targetarea = (victim->xsize * victim->ysize * 256);
 					}
 
-					// L("Impact Area: " << impactarea << " Target Area: " << targetarea);
 					if (impactarea > targetarea) {
 						tohitprobability = targetarea / impactarea;
-					}
-					else {
+					} else {
 						tohitprobability = 1;
 					}
 
 					if (!unit->weapons[i].def->guided && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
 						if (unit->weapons[i].def->type == string("Cannon")) {
 							timetoarrive = (2 * u * sin(firingangle)) / gravity;
-						}
-						else {
+						} else {
 							timetoarrive = distancetravelled / (unit->weapons[i].def->projectilespeed * 30);
 						}
 
 						float shotwindow = sqrt(targetarea) / victim->speed * 1.3;
+
 						if (shotwindow < timetoarrive) {
 							tohitprobability *= shotwindow / timetoarrive;
 						}
-						// L("Not guided. TTA: " <<  timetoarrive << " shotwindow " << shotwindow << " unit->weapons[i].def->targetmoveerror " << unit->weapons[i].def->targetMoveError);
 					}
 
-					//L("chance to hit: " << tohitprobability);
-					//L("Dps for this weapon: " << basedamage * tohitprobability);
 					dps += basedamage * tohitprobability;
 				}
 			}
 		}
 
-		// L("DPS: " << dps);
-		// L("Time taken: " << ai->math->TimerSecs() << "s.");
 		return dps;
 	}
 
 	return 0;
 }
 
+
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
-	// L("Getting CombatScore for : " << unit->humanName);
 	int enemies[MAXUNITS];
 	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
@@ -272,7 +236,6 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 
 	for (int i = 0; i < numofenemies; i++) {
 		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
-		// assert(ai->cheat->GetUnitDef(enemies[i]) == unittypearray[ai->cheat->GetUnitDef(enemies[i])->id].def);
 	}
 
 	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
@@ -294,16 +257,16 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 				currentscore -= (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
 			}*/
 
-		score += currentscore;
+			score += currentscore;
 		}
 	}
 
 	if (totalcost <= 0)
 		return 0;
 
-	// L(unit->humanName << " has an average dps vs all enemies: " << score / totalcost);
 	return score / totalcost;
 }
+
 
 void CUnitTable::UpdateChokePointArray() {
 	vector<float> EnemyCostsByMoveType;
@@ -344,7 +307,7 @@ void CUnitTable::UpdateChokePointArray() {
 
 // 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
 float CUnitTable::GetScore(const UnitDef* unitDef) {
-	// Ignore the cost now
+	// ignore the cost now
 	float Cost = (unitDef->metalCost * METAL2ENERGY) + unitDef->energyCost;
 	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
 	float Hitpoints = unitDef->health;
@@ -372,7 +335,7 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			Benefit /= Cost;
 			break;
 		case CAT_MEX:
-			Benefit = pow(unitDef->extractsMetal, float(4));
+			Benefit = pow(unitDef->extractsMetal, 4.0f);
 			break;
 		case CAT_MMAKER:
 			Benefit = (unitDef->metalMake - unitDef->metalUpkeep) / unitDef->energyUpkeep + 0.01;
@@ -381,45 +344,43 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			dps = GetCurrentDamageScore(unitDef);
 
 			if (unitDef->canfly && !unitDef->hoverAttack) {
-				// Improve to set reloadtime to the bombers turnspeed vs movespeed (eg time taken for a run)
+				// TODO: improve to set reloadtime to the bomber's
+				// turnspeed vs movespeed (eg. time taken for a run)
 				dps /= 6;
 			}
 
-			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), float(1.5))
-					* pow(GetMaxRange(unitDef) + 200, float(1.5))
-					* pow(dps, float(1))
-					* pow(unitDef->speed + 40, float(1))
-					* pow(Hitpoints, float(1))
-					* pow(RandNum, float(2.5))
-					* pow(Cost, float(-0.5));
-			
+			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), 1.5f)
+					* pow(GetMaxRange(unitDef) + 200, 1.5f)
+					* pow(dps, 1.0f)
+					* pow(unitDef->speed + 40, 1.0f)
+					* pow(Hitpoints, 1.0f)
+					* pow(RandNum, 2.5f)
+					* pow(Cost, -0.5f);
+
 			if (unitDef->canfly) {
 				 // AA hack: slight reduction to the feasability of air
 				Benefit *= 0.25;
 			}
 			break;
 		case CAT_DEFENCE:
-			// L("Getting DEFENCE SCORE FOR: " << unitDef->humanName);
-			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), float(1.5))
-					* pow(GetMaxRange(unitDef), float(2))
-					* pow(GetCurrentDamageScore(unitDef), float(1.5))
-					* pow(Hitpoints, float(0.5))
-					* pow(RandNum, float(2.5))
-					* pow(Cost, float(-1));
+			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), 1.5f)
+					* pow(GetMaxRange(unitDef), 2.0f)
+					* pow(GetCurrentDamageScore(unitDef), 1.5f)
+					* pow(Hitpoints, 0.5f)
+					* pow(RandNum, 2.5f)
+					* pow(Cost, -1.0f);
 			break;
 		case CAT_BUILDER:
-			// L("Getting Score For Builder");
 			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
-				// L("category: " << unittypearray[unittypearray[unitDef->id].canBuildList[i]].category);
 				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_FACTORY) {
 					candevelop = true;
 				}
 			}
 
-			Benefit = pow(unitDef->buildSpeed, float(1))
-					* pow(unitDef->speed, float(0.5))
-					* pow(Hitpoints, float(0.3))
-					* pow(RandNum, float(0.4));
+			Benefit = pow(unitDef->buildSpeed, 1.0f)
+					* pow(unitDef->speed, 0.5f)
+					* pow(Hitpoints, 0.3f)
+					* pow(RandNum, 0.4f);
 
 			if (!candevelop)
 				Benefit = 0;
@@ -433,21 +394,21 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			}
 		
 			if (unitcounter > 0)
-				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), float(3)));
+				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), 3.0f));
 			else
 				Benefit = 0;
 
 			break;
 		case CAT_MSTOR:
-			Benefit = pow((unitDef->metalStorage), float(1)) * pow(Hitpoints, float(1));
+			Benefit = pow((unitDef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
 			break;
 		case CAT_ESTOR:
-			Benefit = pow((unitDef->energyStorage), float(1)) * pow(Hitpoints, float(1));
+			Benefit = pow((unitDef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
 			break;
 		default:
 			Benefit = 0;
 	}
-	
+
 	float EScore = Benefit / (Cost + CurrentIncome);
 	return EScore;
 }
@@ -456,12 +417,12 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	ai->math->TimerStart();
 	vector<int>* templist;
+	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
 	const UnitDef* tempUnitDef;
 	int side = GetSide(builderUnitID);
-	float tempscore = 0;
-	float bestscore = 0;
+	float tempscore = 0.0f;
+	float bestscore = 0.0f;
 
-	// L("vars set");
 	switch (category) {
 		case CAT_ENERGY:
 			templist = ground_energy;
@@ -492,41 +453,44 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 			break;
 	}
 
+	// iterate over all units for <side> in templist (eg. Core ground_defences)
 	for (unsigned int i = 0; i != templist[side].size(); i++) {
-		if (CanBuildUnit(ai->cb->GetUnitDef(builderUnitID)->id, templist[side][i])) {
-			tempscore = GetScore(unittypearray[templist[side][i]].def);
-			if (bestscore < tempscore) {
+		int tempUnitDefID = templist[side][i];
+		// if our builder can build the i-th unit
+		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
+			// get the unit's heuristic score
+			tempscore = GetScore(unittypearray[tempUnitDefID].def);
+
+			if (tempscore > bestscore) {
 				bestscore = tempscore;
-				tempUnitDef = unittypearray[templist[side][i]].def;
+				tempUnitDef = unittypearray[tempUnitDefID].def;
 			}
 		}
 	}
 
-	if (!bestscore) {
-		for (unsigned int i = 0; i != unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList.size(); i++) {
-			if (unittypearray[unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList[i]].category != -1) {
-				return unittypearray[unittypearray[ai->cb->GetUnitDef(builderUnitID)->id].canBuildList.front()].def;
-			}
-		}
-	}
-
-	return tempUnitDef;
+	// if we didn't find a unit to build with score > 0 (ie.
+	// if builder has no build-option matching this category)
+	// then return NULL instead of first option on build menu
+	// (to prevent radar farms and other bizarro side-effects)
+	return ((bestscore > 0.0f)? tempUnitDef: NULL);
 }
 
 
 
 /*
- * Find and return the unit that its best to make for this builder.
- * If no buildings/units are better that minUsefullnes, or it cant make any economy units, NULL is returned.
- * TODO: make it, and look at how to integrate it into the main economy manager
- * NOTE: this function will most likely be removed/replaced soon
+ * find and return the unit that's best to make for this builder
+ * (returns NULL if no buildings/units are better than minUsefulness
+ * or buidler can't make any economy units)
+ * TODO: make it, look at how to integrate into the main economy manager
  */
+/*
 const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulness) {
 	builder = builder;
 	minUsefulness = minUsefulness;
 
 	return NULL;
 }
+*/
 
 
 
@@ -535,7 +499,8 @@ void CUnitTable::Init() {
 	ai->math->TimerStart();
 	numOfUnits = ai->cb->GetNumUnitDefs();
 
-	// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array)
+	// one more than needed because 0 is dummy object (so
+	// UnitDef->id can be used to adress that unit in array)
 	unittypearray = new UnitType[numOfUnits + 1];
 	unittypearray[0].side = -1;
 
@@ -563,7 +528,6 @@ void CUnitTable::Init() {
 	for (int s = 0; s < numOfSides; s++) {
 		// set side of the start unit (eg commander) and continue recursively
 		unittypearray[startUnits[s]].side = s;
-		// L("Calcing buildtree of: " << startUnits[s]);
 		CalcBuildTree(startUnits[s]);
 	}
 
@@ -575,19 +539,15 @@ void CUnitTable::Init() {
 		if (me->side != -1) {
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 
-			// L("name: " << me->def->name << ", : " << me->def->humanName);
 			CSunParser* attackerparser = new CSunParser(ai);
 			char weaponnumber[10] = "";
 
 			attackerparser->LoadVirtualFile(me->def->filename.c_str());
-			// L(me->def->filename.c_str());
 			me->TargetCategories.resize(me->def->weapons.size());
 
 			for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
 				itoa(w, weaponnumber, 10);
-				// L("pre string ans;");
 				string ans;
-				
 				attackerparser->GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
 			}
 
@@ -597,7 +557,6 @@ void CUnitTable::Init() {
 
 			for (int v = 1; v <= numOfUnits; v++) {
 				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unittypearray[v].def);
-				// L(me->def->humanName << " has a DPS of : " << me->DPSvsUnit[v] << " against: " << unittypearray[v].def->humanName);
 			}
 
 			if (me->def->speed && me->def->minWaterDepth <= 0) {
@@ -640,6 +599,7 @@ void CUnitTable::Init() {
 						}
 						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
 							if (me->def->minWaterDepth <= 0 && !me->def->needGeo) {
+								// filter geothermals
 								ground_energy[me->side].push_back(i);
 								me->category = CAT_ENERGY;
 							}
@@ -677,7 +637,7 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 			return true;
 	}
 
-	// unit not found in builders buildoptions
+	// unit not found in builder's buildoptions
 	return false;
 }
 
@@ -689,7 +649,7 @@ void CUnitTable::CalcBuildTree(int unit) {
 		unittypearray[unittypearray[unit].canBuildList[i]].builtByList.push_back(unit);
 
 		if (unittypearray[unittypearray[unit].canBuildList[i]].side == -1) {
-			// unit has not been checked yet, set side as side of its builder and continue 
+			// unit has not been checked yet, set side as side of its builder and continue
 			unittypearray[unittypearray[unit].canBuildList[i]].side = unittypearray[unit].side;
 			CalcBuildTree(unittypearray[unit].canBuildList[i]);
 		}
