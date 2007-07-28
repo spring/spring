@@ -10,6 +10,8 @@
 
 #include <Sim/Units/UnitHandler.h> // for CChecksum (should be moved somewhere else tho)
 #include <System/NetProtocol.h>
+#include "System/AutohostInterface.h"
+
 
 class CGameServer
 {
@@ -29,6 +31,7 @@ public:
 	@todo in order to build a dedicated server, there should be some kind of rights system which allow some people to kick players or force a start, but currently only the host is able to do this
 	*/
 	void KickPlayer(const int playerNum);
+	void PlayerDefeated(const int playerNum) const;
 
 	bool makeMemDump;
 	unsigned char inbuf[netcode::NETWORK_BUFFER_SIZE];
@@ -65,6 +68,7 @@ public:
 
 private:
 	CNetProtocol* serverNet;
+	AutohostInterface* hostif;
 };
 
 extern CGameServer* gameServer;

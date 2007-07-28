@@ -9,6 +9,7 @@
 #include "StartScripts/ScriptHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Platform/errorhandler.h"
+#include "Platform/ConfigHandler.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
@@ -66,6 +67,18 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	serverNet->ServerInitLocalClient(myPlayer);
 
 	lastTick = SDL_GetTicks();
+	
+	int autohostport = configHandler.GetInt("Autohost", 0);
+	if (autohostport > 0)
+	{
+		logOutput.Print("Conencting to autohost on port %i", autohostport);
+		hostif = new AutohostInterface(port+10, autohostport);
+		hostif->SendStart();
+	}
+	else
+	{
+		hostif = 0;
+	}
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thread = SAFE_NEW boost::thread(boost::bind(GameServerThreadProc,this));
@@ -88,6 +101,11 @@ CGameServer::~CGameServer()
 	thread->join();
 	delete serverNet;
 	serverNet=0;
+	if (hostif)
+	{
+		hostif->SendQuit();
+		delete hostif;
+	}
 }
 
 static std::string GetPlayerNames(const std::vector<int>& indices)
@@ -264,7 +282,12 @@ bool CGameServer::Update()
 		}
 	}
 	serverNet->Update();
-
+	
+	if (hostif)
+	{
+		std::string msg = hostif->GetChatMessage();
+		game->HandleChatMsg(msg, gameSetup ? gameSetup->myPlayer : 0, false);
+	}
 	CheckForGameEnd();
 	return true;
 }
@@ -286,6 +309,10 @@ bool CGameServer::ServerReadNet()
 				POP_CODE_MODE;
 				inbuflength=0;
 				serverNet->SendPlayerLeft(a, 0);
+				if (hostif)
+				{
+					hostif->SendPlayerLeft(a, 0);
+				}
 			}
 		}
 
@@ -362,15 +389,20 @@ bool CGameServer::ServerReadNet()
 				lastLength=5;
 				break;
 
-			case NETMSG_QUIT:
+			case NETMSG_QUIT: {
 				ENTER_MIXED;
 				gs->players[a]->active=false;
 				ENTER_UNSYNCED;
 				serverNet->connections[a]->active=false;
 				serverNet->SendPlayerLeft(a, 1);
 				lastLength=1;
+				if (hostif)
+				{
+					hostif->SendPlayerLeft(a, 1);
+				}
 				break;
-
+			}
+			
 			case NETMSG_PLAYERNAME: {
 				unsigned char playerNum = inbuf[inbufpos+2];
 				if(playerNum!=a && a!=0){
@@ -384,6 +416,10 @@ bool CGameServer::ServerReadNet()
 
 					SendSystemMsg("Player %s joined as %i",&inbuf[inbufpos+3],playerNum);
 					serverNet->SendPlayerName(playerNum,gs->players[playerNum]->playerName);
+					if (hostif)
+					{
+						hostif->SendPlayerJoined(a, gs->players[playerNum]->playerName);
+					}
 				}
 				lastLength=inbuf[inbufpos+1];
 				break;
@@ -394,6 +430,10 @@ bool CGameServer::ServerReadNet()
 					SendSystemMsg("Server: Warning got chat msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
 				} else {
 					serverNet->SendChat(inbuf[inbufpos+2], (char*)(&inbuf[inbufpos+3]));
+					if (hostif)
+					{
+						hostif->SendPlayerChat(a, std::string((char*)(&inbuf[inbufpos+3])));
+					}
 				}
 				lastLength=inbuf[inbufpos+1];
 				break;
@@ -412,6 +452,10 @@ bool CGameServer::ServerReadNet()
 					SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
 				} else {
 					serverNet->SendStartPos(inbuf[inbufpos+1],inbuf[inbufpos+2], *((float*)&inbuf[inbufpos+3]), *((float*)&inbuf[inbufpos+7]), *((float*)&inbuf[inbufpos+11])); //forward data
+					if (hostif)
+					{
+						hostif->SendPlayerReady(a, inbuf[inbufpos+2]);
+					}
 				}
 				lastLength=15;
 				break;
@@ -589,6 +633,10 @@ void CGameServer::StartGame()
 		}
 	}
 	serverNet->SendStartPlaying();
+	if (hostif)
+	{
+		hostif->SendStartPlaying();
+	}
 	timeLeft=0;
 }
 
@@ -598,6 +646,10 @@ void CGameServer::CheckForGameEnd()
 		if(gameEndTime>2 && gameEndTime<500){
 			serverNet->SendGameOver();
 			gameEndTime=600;
+			if (hostif)
+			{
+				hostif->SendGameOver();
+			}
 		}
 		return;
 	}
@@ -672,6 +724,18 @@ void CGameServer::KickPlayer(const int playerNum)
 		serverNet->SendPlayerLeft(playerNum, 2);
 		serverNet->connections[playerNum]->SendData(&a, 1);
 		serverNet->Kill(playerNum);
+		if (hostif)
+		{
+			hostif->SendPlayerLeft(playerNum, 2);
+		}
+	}
+}
+
+void CGameServer::PlayerDefeated(const int playerNum) const
+{
+	if (hostif)
+	{
+		hostif->SendPlayerDefeated((unsigned char)playerNum);
 	}
 }
 
