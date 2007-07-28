@@ -70,6 +70,7 @@ public:
 	int padStatus;						//0 flying toward,1 landing at,2 landed
 	float3 oldGoalPos;				//goalpos to resume flying to after landing
 
+	bool AutoLand;
 
 	CTAAirMoveType(CUnit* owner);
 	~CTAAirMoveType(void);

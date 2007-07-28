@@ -86,7 +86,8 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(repairBelowHealth),
 		CR_MEMBER(reservedPad),
 		CR_MEMBER(padStatus),
-		CR_RESERVED(64)
+		CR_MEMBER(AutoLand),
+		CR_RESERVED(63)
 		));
 
 CR_REG_METADATA_SUB(CAirMoveType, DrawLine, (
@@ -129,7 +130,8 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	repairBelowHealth(0.30f),
 	padStatus(0),
 	reservedPad(0),
-	loopbackAttack(false)
+	loopbackAttack(false),
+	AutoLand(true)
 {
 	turnRadius=150;
 	if (owner)owner->mapSquare+=1;						//to force los recalculation

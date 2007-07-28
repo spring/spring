@@ -159,6 +159,19 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.hotkey="";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
+
+		c.params.clear();
+		c.id=CMD_IDLEMODE;
+		c.action="idlemode";
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Land mode";
+		c.params.push_back("1");
+		c.params.push_back("Fly");
+		c.params.push_back("Land");
+		c.tooltip="Land mode: Sets what aircraft will do on idle";
+		c.hotkey="";
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_IDLEMODE);
 	}
 
 	nonQueingCommands.insert(CMD_SET_WANTED_MAX_SPEED);
@@ -197,6 +210,36 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){
 			if(cdi->id==CMD_AUTOREPAIRLEVEL){
+				char t[10];
+				SNPRINTF(t,10,"%d", (int)c.params[0]);
+				cdi->params[0]=t;
+				break;
+			}
+		}
+		selectedUnits.PossibleCommandChange(owner);
+		return;
+	}
+	if(owner->unitDef->canfly && c.id==CMD_IDLEMODE){
+		if (c.params.empty()) {
+			return;
+		}
+		CTAAirMoveType* airMT;
+		if (owner->usingScriptMoveType) {
+			if(!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
+				return;
+			airMT = (CTAAirMoveType*)owner->prevMoveType;
+		} else {
+			if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+				return;
+			airMT = (CTAAirMoveType*)owner->moveType;
+		}
+		switch((int)c.params[0]){
+			case 0: { airMT->AutoLand = false; break; }
+			case 1: { airMT->AutoLand = true; break; }
+		}
+		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
+				cdi != possibleCommands.end(); ++cdi){
+			if(cdi->id==CMD_IDLEMODE){
 				char t[10];
 				SNPRINTF(t,10,"%d", (int)c.params[0]);
 				cdi->params[0]=t;

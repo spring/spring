@@ -171,6 +171,33 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		return;
 	}
 
+	if (c.id == CMD_IDLEMODE) {
+		if (c.params.empty()) {
+			return;
+		}
+		CAirMoveType* airMT;
+		if (owner->usingScriptMoveType) {
+			airMT = (CAirMoveType*)owner->prevMoveType;
+		} else {
+			airMT = (CAirMoveType*)owner->moveType;
+		}
+		switch((int)c.params[0]){
+			case 0: { airMT->AutoLand = false; break; }
+			case 1: { airMT->AutoLand = true;  break; }
+		}
+		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
+				cdi != possibleCommands.end(); ++cdi){
+			if(cdi->id == CMD_IDLEMODE){
+				char t[10];
+				SNPRINTF(t, 10, "%d", (int)c.params[0]);
+				cdi->params[0] = t;
+				break;
+			}
+		}
+		selectedUnits.PossibleCommandChange(owner);
+		return;
+	}
+
 	if (c.id == CMD_LOOPBACKATTACK) {
 		if (c.params.empty()) {
 			return;
@@ -283,7 +310,7 @@ void CAirCAI::SlowUpdate()
 
 	if(commandQue.empty()){
 		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING
-				&& !owner->unitDef->DontLand()){
+			&& !owner->unitDef->DontLand() && myPlane->AutoLand){
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 		}
 
@@ -325,7 +352,7 @@ void CAirCAI::SlowUpdate()
 
 	if (c.id == CMD_WAIT) {
 		if ((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-		    && !owner->unitDef->DontLand()) {
+		    && !owner->unitDef->DontLand() && myPlane->AutoLand) {
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 		}
 		return;
@@ -759,7 +786,7 @@ void CAirCAI::StopMove()
 {
 	CAirMoveType* myPlane = (CAirMoveType*)owner->moveType;
 	if((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-	   && !owner->unitDef->DontLand()) {
+	   && !owner->unitDef->DontLand() && myPlane->AutoLand) {
 		myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 	}
 }
