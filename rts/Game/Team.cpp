@@ -8,6 +8,7 @@
 #include "LogOutput.h"
 #include "Player.h"
 #include "Game/UI/LuaUI.h"
+#include "Game/GameServer.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -352,6 +353,9 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 					gu->spectatingFullView   = true;
 					gu->spectatingFullSelect = true;
 					CLuaUI::UpdateTeams();
+				}
+				if (gameServer)	{
+					gameServer->PlayerDefeated(a);
 				}
 			}
 		}

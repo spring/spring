@@ -646,6 +646,7 @@ bool SpringApp::ParseCmdLine()
 	cmdline->addoption('t', "textureatlas",   OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->addoption('q', "quit",           OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
 	cmdline->addoption('n', "name",           OPTPARM_STRING, "",  "Set your player name");
+	cmdline->addoption('a', "autohost",           OPTPARM_INT,    "A", "Connect to autohost on localhost:A (UDP)");
 	cmdline->parse();
 
 #ifdef _DEBUG
@@ -681,7 +682,12 @@ bool SpringApp::ParseCmdLine()
 	if (cmdline->result("name", name)) {
 		configHandler.SetString("name", name);
 	}
-
+	
+	int autohost;
+	if (cmdline->result("autohost", autohost)) {
+		configHandler.SetInt("Autohost", autohost);
+	}
+	
 	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
 
