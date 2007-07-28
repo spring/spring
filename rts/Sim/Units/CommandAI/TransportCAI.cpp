@@ -285,9 +285,11 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 				am->maxDrift = 1;
 				if ((owner->pos.distance(wantedPos) < 8) &&
 				    (owner->updir.dot(UpVector) > 0.99f)) {
-					am->dontLand = false;
-					owner->cob->Call("EndTransport");
 					transport->DetachUnit(unit);
+					if (transport->transported.empty()) {
+						am->dontLand = false;
+						owner->cob->Call("EndTransport");
+					}
 					const float3 fix = owner->pos + owner->frontdir * 20;
 					SetGoal(fix, owner->pos);		//move the transport away slightly
 					FinishCommand();

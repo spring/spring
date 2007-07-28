@@ -225,8 +225,21 @@ void CommandDescription::Init()
 	c.params.push_back("LandAt 30");
 	c.params.push_back("LandAt 50");
 	c.params.push_back("LandAt 80");
-	c.params.clear();
 	idToCommandDescription[c.id] = c;
+	c.params.clear();
+
+	// IDLEMODE
+	c.id=CMD_IDLEMODE;
+	c.type=CMDTYPE_ICON_MODE;
+	c.action="idlemode";
+	c.hotkey="";
+	c.name="Land mode";
+	c.tooltip="Land mode: Sets what aircraft will do on idle";
+	c.params.push_back("1");
+	c.params.push_back("Fly");
+	c.params.push_back("Land");
+	idToCommandDescription[c.id] = c;
+	c.params.clear();
 
 	// SELFD	
 	c.id=CMD_SELFD;
