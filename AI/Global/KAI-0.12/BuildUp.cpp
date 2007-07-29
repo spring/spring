@@ -4,7 +4,7 @@
 CBuildUp::CBuildUp(AIClasses* ai) {
 	this->ai = ai;
 
-	// these are used to ddetermine how many update
+	// these are used to determine how many update
 	// cycles should pass before building or unit of
 	// this type is (re-)considered for construction
 	factoryTimer = 0;

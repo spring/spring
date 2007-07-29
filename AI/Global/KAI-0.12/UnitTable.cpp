@@ -591,7 +591,7 @@ void CUnitTable::Init() {
 
 			else if (!me->def->canfly) {
 				if (me->def->minWaterDepth <= 0) {
-					if (me->def->buildOptions.size() > 1) {
+					if (me->def->buildOptions.size() >= 1) {
 						if ((((me->def)->TEDClassString) == "PLANT") || (((me->def)->speed) > 0.0f)) {
 							me->isHub = false;
 						} else {
