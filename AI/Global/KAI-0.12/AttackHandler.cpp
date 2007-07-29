@@ -28,7 +28,7 @@ CAttackHandler::CAttackHandler(AIClasses* ai) {
 	airTarget = -1;
 }
 
-CAttackHandler::~CAttackHandler() {
+CAttackHandler::~CAttackHandler(void) {
 }
 
 
@@ -161,12 +161,8 @@ bool CAttackHandler::IsVerySafeBuildSpot(float3 mypos) {
 
 
 // returns a safe spot from k-means, adjacent to myPos, safety params are (0..1).
-// this is going away or changing.
 // change to: decide on the random float 0...1 first, then find it. waaaay easier.
 float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafety) {
-	// L("FindSafeSpot called at " << ai->cb->GetCurrentFrame());
-	// L("kMeansK:" << kMeansK << " myPos.x:" << myPos.x << " minSafety:" << minSafety << " maxSafety:" << maxSafety);
-
 	// find a safe spot
 	myPos = myPos;
 	int startIndex = int(minSafety * this->kMeansK);
@@ -183,8 +179,6 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	if (startIndex > endIndex)
 		startIndex = endIndex;
 
-	// L("startIndex:" << startIndex << " endIndex:" << endIndex);
-
 	char text[512];
 
 	if (kMeansK <= 1 || startIndex == endIndex) {
@@ -195,15 +189,8 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		pos.y = ai->cb->GetElevation(pos.x, pos.z);
 
 		sprintf(text, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
-
-		AIHCAddMapPoint amp;
-		amp.label = text;
-		amp.pos = pos;
-
 		return pos;
 	}
-
-	// L("CAttackHandler::FindSafeSpot - about to get the subset");
 
 	assert(startIndex < endIndex);
 	assert(startIndex < kMeansK);
@@ -212,17 +199,13 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	// get a subset of the kmeans
 	vector<float3> subset;
 
-	// L("CAttackHandler::FindSafeSpot - before the for loop. size:" << size);
 	for (int i = startIndex; i < endIndex; i++) {
 		// subset[i] = kMeansBase[startIndex + i];
-		// L("i:" << i << " startIndex:" << startIndex << " endIndex:" << endIndex << " kMeansK:" << kMeansK);
 		assert(i < kMeansK);
 		subset.push_back(kMeansBase[i]);
-		// L("pushed kMeansBase[startIndex + i] to subset, it was " << kMeansBase[startIndex + i].x << " " << kMeansBase[startIndex + i].y << " " << kMeansBase[startIndex + i].z);
 	}
 
 	// then find a position on one of the lines between those points (pather)
-//	// L("CAttackHandler::FindSafeSpot - before the for random and modulo thing. subset.size:" << subset.size());
 	int whichPath;
 	if (subset.size() > 1)
 		whichPath = (RANDINT % (int) subset.size());
@@ -232,7 +215,6 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(whichPath < (int) subset.size());
 	assert(subset.size() > 0);
 
-	// L("CAttackHandler::AH-FSA - before the if, whichPath is " << whichPath << " subset size is " << subset.size());
 	if ((whichPath + 1) < (int) subset.size() && subset[whichPath].distance2D(subset[whichPath + 1]) > KMEANS_MINIMUM_LINE_LENGTH) {
         vector<float3> posPath;
 		 //TODO: implement one in pathfinder without radius (or unit ID)
@@ -398,7 +380,7 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 }
 
 
-void CAttackHandler::UpdateKMeans() {
+void CAttackHandler::UpdateKMeans(void) {
 	// we want local variable definitions
 	{
 		// get positions of all friendly units and put them in a vector (completed buildings only)
@@ -445,7 +427,6 @@ void CAttackHandler::UpdateKMeans() {
 		if (this->UnitBuildingFilter(ud)) {
 //		if (this->UnitBuildingFilter(ud) && this->UnitReadyFilter(unit)) {
 			enemyPositions.push_back(ai->cheat->GetUnitPos(enemies[i]));
-			// L("AttackHandler debug: added enemy building position for k-means " << i);
 		}
 	}
 
@@ -464,7 +445,6 @@ void CAttackHandler::UpdateKMeans() {
 	// calculate a new K. change the formula to adjust max K, needs to be 1 minimum
 	this->kMeansEnemyK = int(min(float(KMEANS_ENEMY_MAX_K), 1.0f + sqrtf((float) numEnemies + 0.01f)));
 
-	// L("AttackHandler: doing k-means k:" << kMeansK << " numPositions=" << numFriendlies);
 	// iterate k-means algo over these positions and move the means
 	this->kMeansEnemyBase = KMeansIteration(this->kMeansEnemyBase, enemyPositions, this->kMeansEnemyK);
 
@@ -521,7 +501,9 @@ bool CAttackHandler::UnitReadyFilter(int unit) {
 
 
 
-void CAttackHandler::UpdateAir() {
+
+
+void CAttackHandler::UpdateAir(void) {
 	if (airUnits.size() == 0)
 		return;
 
@@ -536,9 +518,8 @@ void CAttackHandler::UpdateAir() {
 		airIsAttacking = false;
 	}
 
- 	// 5 mins || 30 secs && 8+ units
+	// 5 mins || 30 secs && 8+ units
 	if ((ai->cb->GetCurrentFrame() % (60 * 30 * 5) == 0) || ((ai->cb->GetCurrentFrame() % (30 * 30) == 0) && (airUnits.size() > 8))) {
-		// L("AH: trying to attack with air units.");
 		int numOfEnemies = ai->cheat->GetEnemyUnits(unitArray);
 		int bestID = -1;
 		float bestFound = -1.0;
@@ -551,7 +532,6 @@ void CAttackHandler::UpdateAir() {
 			}
 		}
 
-		// L("AH: selected the enemy: " << bestID);
 		if ((bestID != -1) && (ai->cheat->GetUnitDef(bestID))) {
 			// give the order
 			for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
@@ -561,7 +541,7 @@ void CAttackHandler::UpdateAir() {
 
 			airIsAttacking = true;
 			airTarget = bestID;
-			ai->cb->SendTextMsg("AH: air group is attacking", 0);
+			// ai->cb->SendTextMsg("AH: air group is attacking", 0);
 		}
 	}
 
@@ -589,7 +569,7 @@ void CAttackHandler::UpdateAir() {
 			}
 		}
 		else {
-			// there is just 1 kmeans and we need three
+			// there is just 1 k-means cluster and we need three
 			for (int i = 0; i < num; i++) {
 				outerMeans.push_back(kMeansBase[0] + float3(250 * i, 0, 0));
 			}
@@ -611,6 +591,71 @@ void CAttackHandler::UpdateAir() {
 		airPatrolOrdersGiven = true;
 	}
 }
+
+
+
+
+void CAttackHandler::UpdateNukeSilos(void) {
+	if ((ai->cb->GetCurrentFrame() % 300) == 0 && ai->uh->NukeSilos.size() > 0) {
+		std::vector<std::pair<int, float> > potentialTargets;
+		GetNukeSiloTargets(potentialTargets);
+
+		for (std::list<NukeSilo>::iterator i = ai->uh->NukeSilos.begin(); i != ai->uh->NukeSilos.end(); i++) {
+			NukeSilo* silo = &*i;
+
+			if (silo->numNukesReady > 0) {
+				int targetID = PickNukeSiloTarget(potentialTargets);
+
+				if (targetID != -1) {
+					ai->MyUnits[silo->id]->Attack(targetID);
+				}
+			}
+		}
+	}
+}
+
+// pick a nuke-silo target from a vector of potential ones
+// (if there are more than MAX_NUKE_SILOS targets to choose
+// from, pick one of the first <MAX_NUKE_SILOS>, else pick
+// from the full size of the vector)
+int CAttackHandler::PickNukeSiloTarget(std::vector<std::pair<int, float> >& potentialTargets) {
+	int s = potentialTargets.size();
+	int n = ((s > MAX_NUKE_SILOS)? MAX_NUKE_SILOS: s);
+	return ((s > 0)? potentialTargets[RANDINT % n].first: -1);
+}
+
+
+bool SortPairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
+	return (l.second > r.second);
+}
+
+// sort all enemy targets in decreasing order by unit value
+void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
+	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	float minTargetValue = ((numEnemies > MAX_NUKE_SILOS)? 1000.0f: 10.0f);
+
+	for (int i = 0; i < numEnemies; i++) {
+		int targetID = unitArray[i];
+		const UnitDef* udef = ai->cheat->GetUnitDef(targetID);
+
+		if (udef) {
+			float mCost = ai->cheat->GetUnitDef(targetID)->metalCost;
+			float eCost = ai->cheat->GetUnitDef(targetID)->energyCost;
+			float targetValue = mCost + eCost * 0.1f;
+
+		//	if (targetValue > minTargetValue) {
+				potentialTargets.push_back(std::make_pair(targetID, targetValue));
+		//	}
+		}
+	}
+
+	if (potentialTargets.size() > 1) {
+		std::sort(potentialTargets.begin(), potentialTargets.end(), &SortPairs);
+	}
+}
+
+
+
 
 
 
@@ -716,7 +761,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 }
 
 
-void CAttackHandler::AssignTargets() {
+void CAttackHandler::AssignTargets(void) {
 	int frameNr = ai->cb->GetCurrentFrame();
 
 	if (frameNr % 120 == 0) {
@@ -733,7 +778,7 @@ void CAttackHandler::AssignTargets() {
 
 
 
-void CAttackHandler::CombineGroups() {
+void CAttackHandler::CombineGroups(void) {
 	bool removedSomething = false;
 
 	// pick a group A
@@ -770,7 +815,7 @@ void CAttackHandler::CombineGroups() {
 
 
 
-void CAttackHandler::Update() {
+void CAttackHandler::Update(void) {
 	int frameNr = ai->cb->GetCurrentFrame();
 
 	if (frameNr < 2)
@@ -865,6 +910,7 @@ void CAttackHandler::Update() {
 
 	// basic attack group formation from defense units
 	UpdateAir();
+	UpdateNukeSilos();
 	AssignTargets();
 
 	// update current groups

@@ -15,11 +15,13 @@ class CBuildUp {
 	private:
 		void Buildup();
 		void FactoryCycle(int);
+		void NukeSiloCycle(void);
 		void FallbackBuild(int, int);
 
-		int factoryCounter;
-		int builderCounter;
-		int storageCounter;
+		int factoryTimer;
+		int builderTimer;
+		int storageTimer;
+		int nukeSiloTimer;
 
 		AIClasses* ai;
 };

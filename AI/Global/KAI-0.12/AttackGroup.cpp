@@ -502,7 +502,8 @@ void CAttackGroup::Update() {
 	if (pathToTarget.size() >= 2) {
 		// AssignToTarget() was called for this group so
 		// we have an attack position and path, just move
-		if (!isShooting && isMoving /*&& (frameNr % 60 == (groupID * 5) % frameSpread)*/) {
+		// (movement may be slow due to spreading of orders)
+		if (!isShooting && isMoving && (frameNr % 60 == (groupID * 5) % frameSpread)) {
 			MoveAlongPath(groupPosition, numUnits);
 		}
 	} else {

@@ -37,6 +37,7 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	ground_defences = new vector<int>[numOfSides];
 	metal_storages = new vector<int>[numOfSides];
 	energy_storages = new vector<int>[numOfSides];
+	nuke_silos = new vector<int>[numOfSides];
 
 	all_lists.push_back(ground_factories);
 	all_lists.push_back(ground_builders);
@@ -47,6 +48,7 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	all_lists.push_back(ground_defences);
 	all_lists.push_back(metal_storages);
 	all_lists.push_back(energy_storages);
+	all_lists.push_back(nuke_silos);
 }
 
 CUnitTable::~CUnitTable() {
@@ -62,6 +64,7 @@ CUnitTable::~CUnitTable() {
 	delete[] ground_defences;
 	delete[] metal_storages;
 	delete[] energy_storages;
+	delete[] nuke_silos;
 }
 
 
@@ -83,13 +86,13 @@ int CUnitTable::GetCategory(int unit) {
 
 
 
-
+// used to update threat-map
 float CUnitTable::GetDPS(const UnitDef* unit) {
 	if (unit) {
-		float totaldps = 0;
+		float totaldps = 0.0f;
 
 		for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
-			float dps = 0;
+			float dps = 0.0f;
 			if (!i->def->paralyzer) {
 				int numberofdamages;
 				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
@@ -108,7 +111,7 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 		return totaldps;
 	}
 
-	return 0;
+	return 0.0f;
 }
 
 
@@ -117,7 +120,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 	if (unit->weapons.size()) {
 		ai->math->TimerStart();
 
-		float dps = 0;
+		float dps = 0.0f;
 		bool canhit = false;
 		string targetcat;
 		int armortype = victim->armorType;
@@ -222,7 +225,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 		return dps;
 	}
 
-	return 0;
+	return 0.0f;
 }
 
 
@@ -230,8 +233,8 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int enemies[MAXUNITS];
 	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
-	float score = 0.01;
-	float totalcost=0.01;
+	float score = 0.01f;
+	float totalcost=0.01f;
 	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < numofenemies; i++) {
@@ -246,7 +249,7 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 
 	//	if (!b1 && b2 && b3 && !b4) {
 		if (!b1 && b2 && b3) {
-			float currentscore = 0;
+			float currentscore = 0.0f;
 			float costofenemiesofthistype = ((unittypearray[i].def->metalCost * METAL2ENERGY) + unittypearray[i].def->energyCost) * enemyunitsoftype[i];
 			currentscore = unittypearray[unit->id].DPSvsUnit[i] * costofenemiesofthistype;
 			totalcost += costofenemiesofthistype;
@@ -262,10 +265,12 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	}
 
 	if (totalcost <= 0)
-		return 0;
+		return 0.0f;
 
 	return score / totalcost;
 }
+
+
 
 
 void CUnitTable::UpdateChokePointArray() {
@@ -311,8 +316,8 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 	float Cost = (unitDef->metalCost * METAL2ENERGY) + unitDef->energyCost;
 	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
 	float Hitpoints = unitDef->health;
-	float Benefit = 0;
-	float dps = 0;
+	float Benefit = 0.0f;
+	float dps = 0.0f;
 	int unitcounter = 0;
 	bool candevelop = false;
 
@@ -330,7 +335,7 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			}
 
 			if (unitDef->needGeo)
-				Benefit = 0;
+				Benefit = 0.0f;
 
 			Benefit /= Cost;
 			break;
@@ -383,7 +388,7 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 					* pow(RandNum, 0.4f);
 
 			if (!candevelop)
-				Benefit = 0;
+				Benefit = 0.0f;
 			break;
 		case CAT_FACTORY:
 			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
@@ -396,7 +401,7 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			if (unitcounter > 0)
 				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), 3.0f));
 			else
-				Benefit = 0;
+				Benefit = 0.0f;
 
 			break;
 		case CAT_MSTOR:
@@ -405,13 +410,22 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 		case CAT_ESTOR:
 			Benefit = pow((unitDef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
 			break;
+		case CAT_NUKE: {
+			// KLOOTNOTE: should factor damage into this as well
+			float metalcost = unitDef->stockpileWeaponDef->metalcost;
+			float energycost = unitDef->stockpileWeaponDef->energycost;
+			float supplycost = unitDef->stockpileWeaponDef->supplycost;
+			float denom = metalcost + energycost + supplycost + 1.0f;
+			Benefit = unitDef->stockpileWeaponDef->areaOfEffect / denom;
+		} break;
 		default:
-			Benefit = 0;
+			Benefit = 0.0f;
 	}
 
-	float EScore = Benefit / (Cost + CurrentIncome);
-	return EScore;
+	return (Benefit / (Cost + CurrentIncome));
 }
+
+
 
 // 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
@@ -450,6 +464,9 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 			break;
 		case CAT_ESTOR:
 			templist = energy_storages;
+			break;
+		case CAT_NUKE:
+			templist = nuke_silos;
 			break;
 	}
 
@@ -552,9 +569,9 @@ void CUnitTable::Init() {
 			}
 
 			delete attackerparser;
-
 			me->DPSvsUnit.resize(numOfUnits + 1);
 
+			// calculate this unit type's DPS against all other unit types
 			for (int v = 1; v <= numOfUnits; v++) {
 				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unittypearray[v].def);
 			}
@@ -589,11 +606,23 @@ void CUnitTable::Init() {
 							ground_defences[me->side].push_back(i);
 							me->category = CAT_DEFENCE;
 						}
-						if (me->def->makesMetal){
+
+						if (!me->def->weapons.empty() && me->def->weapons.begin()->def->stockpile) {
+							if (me->def->weapons.begin()->def->targetable) {
+								// nuke
+								nuke_silos[me->side].push_back(i);
+								me->category = CAT_NUKE;
+							}
+							if (me->def->weapons.begin()->def->interceptor) {
+								// anti-nuke, not implemented yet
+							}
+						}
+
+						if (me->def->makesMetal) {
 							metal_makers[me->side].push_back(i);
 							me->category = CAT_MMAKER;
 						}
-						if (me->def->extractsMetal){
+						if (me->def->extractsMetal) {
 							metal_extractors[me->side].push_back(i);
 							me->category = CAT_MEX;
 						}
@@ -612,7 +641,6 @@ void CUnitTable::Init() {
 							metal_storages[me->side].push_back(i);
 							me->category = CAT_MSTOR;
 						}
-
 					}
 				}
 			}
@@ -622,6 +650,7 @@ void CUnitTable::Init() {
 	char k[256];
 	sprintf(k, "UnitTable loaded in %fs", ai->math->TimerSecs());
 	ai->cb->SendTextMsg(k, 0);
+
 	// KLOOTNOTE: dump generated unit table to file
 	this->DebugPrint();
 }
@@ -665,7 +694,7 @@ void CUnitTable::DebugPrint() {
 		return;
 
 	// for debugging
-	char filename[1024] = ROOTFOLDER"CUnitTable Debug.log";
+	char filename[1024] = ROOTFOLDER"CUnitTable.log";
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w");
 
@@ -692,10 +721,10 @@ void CUnitTable::DebugPrint() {
 
 	for (int s = 0; s < numOfSides; s++) {
 		for (unsigned int l = 0; l != all_lists.size(); l++) {
-			fprintf(file, "\n\n%s:\n", sideNames[s].c_str());
+			fprintf(file, "\n\n%s units of category %s:\n", sideNames[s].c_str(), GetUnitCategoryName(l));
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
-				fprintf(file, "%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
+				fprintf(file, "\t%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
 		}
 	}
 
@@ -703,8 +732,10 @@ void CUnitTable::DebugPrint() {
 }
 
 
+
+
 float CUnitTable::GetMaxRange(const UnitDef* unit) {
-	float max_range = 0;
+	float max_range = 0.0f;
 
 	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 		if ((i->def->range) > max_range)
@@ -723,4 +754,20 @@ float CUnitTable::GetMinRange(const UnitDef* unit) {
 	}
 
 	return min_range;
+}
+
+const char* CUnitTable::GetUnitCategoryName(int i) {
+	switch (i) {
+		case 0: { return "GROUND-FACTORY"; } break;
+		case 1: { return "GROUND-BUILDER"; } break;
+		case 2: { return "GROUND-ATTACKER"; } break;
+		case 3: { return "METAL-EXTRACTOR"; } break;
+		case 4: { return "METAL-MAKER"; } break;
+		case 5: { return "GROUND-ENERGY"; } break;
+		case 6: { return "GROUND-DEFENSE"; } break;
+		case 7: { return "METAL-STORAGE"; } break;
+		case 8: { return "ENERGY-STORAGE"; } break;
+		case 9: { return "NUKE-SILO"; } break;
+		default: { return "LAST-CATEGORY"; } break;
+	}
 }

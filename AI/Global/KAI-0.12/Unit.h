@@ -43,7 +43,8 @@ class CUNIT {
 		bool Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation = DEFCBS_SEPARATION, float radius = DEFCBS_RADIUS);
 		bool FactoryBuild(const UnitDef* built);
 
-		// added by Kloot
+		// nuke- and hub-related functions
+		bool NukeSiloBuild(void);
 		bool isHub(void);
 		bool HubBuild(const UnitDef* built);
 

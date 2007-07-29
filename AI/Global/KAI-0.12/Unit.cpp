@@ -93,6 +93,17 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 
 
 
+// tell a nuke-silo to build a missile
+bool CUNIT::NukeSiloBuild(void) {
+	if (!def()->stockpileWeaponDef)
+		return false;
+
+	Command c;
+	c.id = CMD_STOCKPILE;
+	ai->cb->GiveOrder(myid, &c);
+	return true;
+}
+
 
 
 int CUNIT::GetBuildFacing(float3& pos) {
@@ -169,7 +180,7 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
 	return true;
 }
 
-// added by Kloot; tell a hub to build something
+// tell a hub to build something
 bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	int hub = myid;
 	assert(ai->cb->GetUnitDef(hub) != NULL);
@@ -303,7 +314,6 @@ Command CUNIT::MakeIntCommand(int id, int number, int maxnum) {
 	c.params.push_back(number);
 
 	ai->uh->IdleUnitRemove(myid);
-	// L("idle unit removed");
 	return c;
 }
 

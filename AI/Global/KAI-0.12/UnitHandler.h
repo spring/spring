@@ -19,7 +19,7 @@ class CUnitHandler {
 		void IdleUnitRemove(int unit);
 		int GetIU(int category);
 		int NumIdleUnits(int category);
-		// Will be used to track stuck workers
+		// used to track stuck workers
 		void UnitMoveFailed(int unit);
 
 		void MMakerAdd(int unit);
@@ -42,13 +42,16 @@ class CUnitHandler {
 
 		BuilderTracker* GetBuilderTracker(int builder);
 
+		void NukeSiloAdd(int siloID);
+		void NukeSiloRemove(int siloID);
+
 		void FactoryAdd(int id);
 		void FactoryRemove(int id);
 		bool FactoryBuilderAdd(int builder);
 		bool FactoryBuilderAdd(BuilderTracker* builderTracker);
 		void FactoryBuilderRemove(BuilderTracker* builderTracker);
 
-		// Use this to tell the tracker that the builder is on a reclaim job
+		// use this to tell the tracker that the builder is on a reclaim job
 		void BuilderReclaimOrder(int builderId, float3 pos);
 
 		bool VerifyOrder(BuilderTracker* builderTracker);
@@ -63,6 +66,7 @@ class CUnitHandler {
 		vector<list<int>*> AllUnitsByType;
 
 		list<Factory> Factories;
+		list<NukeSilo> NukeSilos;
 		list<integer2> Limbo;
 		list<BuilderTracker*> BuilderTrackers;
 
