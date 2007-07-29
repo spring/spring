@@ -291,11 +291,14 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 
 				if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
 					const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
-					int bestBuilderCount =  ai->uh->AllUnitsByType[bestBuilder->id]->size();
 
-					if (bestBuilderCount < leastBuiltBuilderCount) {
-						leastBuiltBuilderCount = bestBuilderCount;
-						leastBuiltBuilder = bestBuilder;
+					if (bestBuilder) {
+						int bestBuilderCount =  ai->uh->AllUnitsByType[bestBuilder->id]->size();
+
+						if (bestBuilderCount < leastBuiltBuilderCount) {
+							leastBuiltBuilderCount = bestBuilderCount;
+							leastBuiltBuilder = bestBuilder;
+						}
 					}
 				}
 			}
@@ -303,7 +306,7 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			// find the builder type this factory makes
 			const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
 
-			if (builderUnit == leastBuiltBuilder) {
+			if (builderUnit && builderUnit == leastBuiltBuilder) {
 				// see if it is the least built builder, if so then make one
 				producedCat = CAT_BUILDER;
 				builderTimer += 4;
