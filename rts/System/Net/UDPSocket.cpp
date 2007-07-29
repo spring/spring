@@ -1,10 +1,12 @@
+
+#include "StdAfx.h"
+#include <xstring>
 #include "UDPSocket.h" 
 
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
 #else
-#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #endif
