@@ -24,7 +24,6 @@ class CAttackHandler {
 
 		// for use for builders
 		bool IsSafeBuildSpot(float3 mypos);
-		bool IsVerySafeBuildSpot(float3 mypos);
 
 		float3 FindSafeSpot(float3 myPos, float minSafety, float maxSafety);
 		float3 FindSafeArea(float3 pos);

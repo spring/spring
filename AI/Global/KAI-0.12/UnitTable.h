@@ -71,7 +71,6 @@ class CUnitTable {
 		// for internal use
 		void CalcBuildTree(int unit);
 		void DebugPrint();
-		const char* GetUnitCategoryName(int);
 
 		// start units of each side (e.g. commander)
 		vector<int> startUnits;

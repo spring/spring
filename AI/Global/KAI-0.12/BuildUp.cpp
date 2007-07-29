@@ -61,6 +61,12 @@ void CBuildUp::Buildup() {
 	bool mStall = (mIncome) < (mUsage * 1.3f);			// are we currently producing less metal than we are currently expending * 1.3?
 	bool eStall = (eIncome) < (eUsage * 1.6f);			// are we currently producing less energy than we are currently expending * 1.6?
 
+	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
+	// everybody (assuming we can build them at all in current mod)
+	// TODO: use actual metal and energy drain of nuke weapon here
+	bool buildNukeSilo =
+		(mIncome > 100.0f && eIncome > 6000.0f && mUsage < mIncome && eUsage < eIncome &&
+		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
 
 	if (ai->uh->NumIdleUnits(CAT_BUILDER)) {
 		// get idle (mobile) builder
@@ -75,16 +81,6 @@ void CBuildUp::Buildup() {
 		// KLOOTNOTE: prevent NPE if this builder cannot build any factories
 		bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
 		bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
-
-		// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
-		// everybody (assuming we can build them at all in current mod)
-		// TODO: use actual metal and energy drain of nuke weapon here
-		bool buildNukeSilo =
-			(mIncome > 100.0f && eIncome > 6000.0f &&
-			mUsage < mIncome && eUsage < eIncome &&
-			nukeSiloTimer <= 0 && ai->ut->nuke_silos->size() &&
-			ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
-
 
 		if (builderDef == NULL) {
 			ai->uh->UnitDestroyed(builder);
@@ -104,11 +100,14 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			else if (buildNukeSilo) {
+			else if (buildNukeSilo && nukeSiloTimer <= 0) {
 				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_NUKE)) {
-					// this will result in ALL builders trying to build nothing but
-					// nukes eventually (up to the defined limit), though at this
-					// point it shouldn't matter
+					// always favor building one silo at a time rather than
+					// many in parallel to prevent a sudden massive resource
+					// drain when silos are finished since nukes get queued
+					// right away (note that this will result in ALL builders
+					// trying to build nothing but silos eventually until the
+					// defined limit is reached)
 					const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_NUKE);
 					bool r = false;
 	
@@ -259,7 +258,8 @@ void CBuildUp::Buildup() {
 	if (b1 && b2 && numIdleFactories > 0)
 		FactoryCycle(numIdleFactories);
 
-	NukeSiloCycle();
+	if (buildNukeSilo)
+		NukeSiloCycle();
 }
 
 
@@ -278,11 +278,14 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 		}
 
 		else {
-			// look at all factories, and find the best builder they have
+			// look at all factories and their best builders,
 			// then find the builder that there are least of
+			// and construct one (leastBuiltBuilder might not
+			// be on the build-menu of factory <factoryUnitID>
+			// however!)
 			int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
 			const UnitDef* leastBuiltBuilder;
-			int leastBuiltBuilderCount = 50000;
+			int leastBuiltBuilderCount = 65536;
 			assert(factoryCount > 0);
 
 			for (list<int>::iterator i = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); i != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); i++) {
@@ -290,6 +293,7 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 				int factoryToLookAt = *i;
 
 				if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
+					// if factory isn't still under construction
 					const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
 
 					if (bestBuilder) {
@@ -307,7 +311,6 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
 
 			if (builderUnit && builderUnit == leastBuiltBuilder) {
-				// see if it is the least built builder, if so then make one
 				producedCat = CAT_BUILDER;
 				builderTimer += 4;
 			}
@@ -320,6 +323,7 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 			}
 		}
 
+		// KLOOTNOTE: LOOK AT THIS MORE CLOSELY
 		if ((ai->MyUnits[factoryUnitID])->isHub()) {
 			(ai->MyUnits[factoryUnitID])->HubBuild(ai->ut->GetUnitByScore(factoryUnitID, producedCat));
 		} else {
@@ -329,7 +333,10 @@ void CBuildUp::FactoryCycle(int numIdleFactories) {
 }
 
 
-// silo might not be finished, but we can queue up anyway
+// queue up nukes if we have any silos (note that this
+// doesn't cause a resource drain if silo still under
+// construction, missiles won't start building until
+// silo done)
 void CBuildUp::NukeSiloCycle(void) {
 	for (std::list<NukeSilo>::iterator i = ai->uh->NukeSilos.begin(); i != ai->uh->NukeSilos.end(); i++) {
 		NukeSilo* silo = &*i;

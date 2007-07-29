@@ -21,8 +21,9 @@ CAttackHandler::CAttackHandler(AIClasses* ai) {
 	this->kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
 	this->kMeansEnemyK = 1;
 	this->kMeansEnemyBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
-	// L("constructor of CAttackHandler");
+
 	UpdateKMeans();
+
 	airIsAttacking = false;
 	airPatrolOrdersGiven = false;
 	airTarget = -1;
@@ -50,7 +51,7 @@ void CAttackHandler::AddUnit(int unitID) {
 		ai->MyUnits[unitID]->stuckCounter = 0;
 		// do some checking then essentially add it to defense group
 		units.push_back(unitID);
-		// TODO: this aint that good tbh
+		// TODO: not that good
 		this->PlaceIdleUnit(unitID);
 	}
 }
@@ -58,9 +59,8 @@ void CAttackHandler::AddUnit(int unitID) {
 
 void CAttackHandler::UnitDestroyed(int unitID) {
 	int attackGroupID = ai->MyUnits[unitID]->groupID;
-	// L("AttackHandler: unitDestroyed id:" << unitID << " groupID:" << attackGroupID << " numGroups:" << attackGroups.size());
 
-	// if its in the defense group:
+	// if it's in the defense group
 	if (attackGroupID == IDLE_GROUP_ID) {
 		bool found_dead_unit_in_attackHandler = false;
 
@@ -74,7 +74,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		assert(found_dead_unit_in_attackHandler);
 	}
 	else if (attackGroupID >= GROUND_GROUP_ID_START) {
-		// its in an attackgroup
+		// it's in an attack group
 		bool foundGroup = false;
 		bool removedDeadUnit = false;
 		list<CAttackGroup>::iterator it;
@@ -87,21 +87,18 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 			}
 		}
 
-		// TODO: this has failed before. and again.
 		assert(foundGroup);
 		assert(removedDeadUnit);
 
 		// check if the group is now empty
-		// L("AH: about to check if a group needs to be deleted entirely");
 		int groupSize = it->Size();
 
 		if (groupSize == 0) {
-			// L("AH: yes, its ID is " << it->GetGroupID());
 			attackGroups.erase(it);
 		}
 	}
 	else if (attackGroupID == AIR_GROUP_ID) {
-		// L("AH: unit destroyed and its in the air group, trying to remove");
+		// unit in air group
 		bool found_dead_unit_in_airUnits = false;
 		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
 			if (*it == unitID) {
@@ -113,7 +110,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		assert(found_dead_unit_in_airUnits);
 	}
 	else {
-		// its in stuckunits
+		// unit in stuck-units group
 		bool found_dead_in_stuck_units = false;
 		list<pair<int,float3> >::iterator it;
 
@@ -126,8 +123,6 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		}
 		assert(found_dead_in_stuck_units);
 	}
-
-	// L("AH: deletion done");
 }
 
 
@@ -146,18 +141,15 @@ bool CAttackHandler::PlaceIdleUnit(int unit) {
 
 // is it ok to build at CBS from this position?
 bool CAttackHandler::IsSafeBuildSpot(float3 mypos) {
-	// get a subset of the kmeans
-	// iterate the lines along the path that they make with a min distance slightly lower than the area radius definition
+	// TODO: get a subset of the k-means, then
+	// iterate the lines along the path that they
+	// make with a min distance slightly lower than
+	// the area radius definition
 
 	mypos = mypos;
 	return false;
 }
 
-// is it ok to build at CBS from this position?
-bool CAttackHandler::IsVerySafeBuildSpot(float3 mypos) {
-	mypos = mypos;
-	return false;
-}
 
 
 // returns a safe spot from k-means, adjacent to myPos, safety params are (0..1).
@@ -196,7 +188,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(startIndex < kMeansK);
 	assert(endIndex <= kMeansK);
 
-	// get a subset of the kmeans
+	// get a subset of the k-means
 	vector<float3> subset;
 
 	for (int i = startIndex; i < endIndex; i++) {
@@ -625,7 +617,7 @@ int CAttackHandler::PickNukeSiloTarget(std::vector<std::pair<int, float> >& pote
 }
 
 
-bool SortPairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
+bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
 	return (l.second > r.second);
 }
 
@@ -633,6 +625,9 @@ bool SortPairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
 void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
 	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
 	float minTargetValue = ((numEnemies > MAX_NUKE_SILOS)? 1000.0f: 10.0f);
+
+	std::vector<std::pair<int, float> > staticTargets;
+	std::vector<std::pair<int, float> > mobileTargets;
 
 	for (int i = 0; i < numEnemies; i++) {
 		int targetID = unitArray[i];
@@ -642,15 +637,32 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 			float mCost = ai->cheat->GetUnitDef(targetID)->metalCost;
 			float eCost = ai->cheat->GetUnitDef(targetID)->energyCost;
 			float targetValue = mCost + eCost * 0.1f;
+			bool isMobileTarget = (udef->speed > 0.0f);
 
 		//	if (targetValue > minTargetValue) {
-				potentialTargets.push_back(std::make_pair(targetID, targetValue));
+				if (isMobileTarget) {
+					mobileTargets.push_back(std::make_pair(targetID, targetValue));
+				} else {
+					staticTargets.push_back(std::make_pair(targetID, targetValue));
+				}
 		//	}
 		}
 	}
 
-	if (potentialTargets.size() > 1) {
-		std::sort(potentialTargets.begin(), potentialTargets.end(), &SortPairs);
+	std::sort(staticTargets.begin(), staticTargets.end(), &ComparePairs);
+	std::sort(mobileTargets.begin(), mobileTargets.end(), &ComparePairs);
+
+	// copy over all static targets
+	for (int i = 0; i < staticTargets.size(); i++) {
+		potentialTargets.push_back(staticTargets[i]);
+	}
+
+	// if there weren't any static targets
+	// then copy over all the mobile ones
+	if (staticTargets.size() == 0) {
+		for (int i = 0; i < mobileTargets.size(); i++) {
+			potentialTargets.push_back(mobileTargets[i]);
+		}
 	}
 }
 
@@ -821,8 +833,8 @@ void CAttackHandler::Update(void) {
 	if (frameNr < 2)
 		UpdateKMeans();
 	
-	// set map data here so it doesn't have to be done in each group
-	// TODO: movement map PATHTOUSE is hack
+	// set map data here so it doesn't have to be done
+	// in each group (movement map PATHTOUSE is hack)
 	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
 	
 	int frameSpread = 300;
@@ -908,7 +920,7 @@ void CAttackHandler::Update(void) {
 	}
 
 
-	// basic attack group formation from defense units
+	// do basic attack group formation from defense units
 	UpdateAir();
 	UpdateNukeSilos();
 	AssignTargets();

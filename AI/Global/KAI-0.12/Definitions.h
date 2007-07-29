@@ -28,25 +28,30 @@
 
 // Error outputs
 #define ERRORDEF		ai-cb->GetUnitDef("")
-#define	ZEROVECTOR		float3( 0, 0, 0)
-#define	ERRORVECTOR		float3(-1, 0, 0)
+#define ZEROVECTOR		float3( 0, 0, 0)
+#define ERRORVECTOR		float3(-1, 0, 0)
 
 // Maths
 #define DEG2RAD			0.01745329252f
-#define	RAD2DEG			57.2957795f
+#define RAD2DEG			57.2957795f
 
 
 // Unit Categories
-enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MSTOR, CAT_FACTORY, CAT_DEFENCE, CAT_G_ATTACK, CAT_NUKE, LASTCATEGORY};
+enum {
+	CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER,
+	CAT_BUILDER, CAT_ESTOR, CAT_MSTOR, CAT_FACTORY,
+	CAT_DEFENCE, CAT_G_ATTACK, CAT_NUKE, /* CAT_SHIELD, */
+	LASTCATEGORY
+};
 
 
 
-//Map sizing multipliers
+// Map sizing multipliers
 #define METALMAP2MAPUNIT		 2
 #define MAPUNIT2POS				 8
-#define	METALMAP2POS			16
+#define METALMAP2POS			16
 
-// Threatmap / pathfinder resolution:
+// Threatmap / pathfinder resolution
 #define THREATRES				8
 
 // Maximum Builders helping each factory
@@ -58,8 +63,8 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 #define METAL2ENERGY			45
 
 // Minimum stocks for a "feasible" construction (ratio of storage)
-#define	FEASIBLEMSTORRATIO		0.3
-#define	FEASIBLEESTORRATIO		0.6
+#define FEASIBLEMSTORRATIO		0.3
+#define FEASIBLEESTORRATIO		0.6
 
 // Maximum units in a game
 #define MAXUNITS				5000
@@ -75,10 +80,10 @@ enum {CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER, CAT_BUILDER, CAT_ESTOR, CAT_MST
 #define PATHTOUSE				ai->pather->NumOfMoveTypes - 1
 
 // ClosestBuildsite Stuff
-#define	DEFCBS_SEPARATION		8
+#define DEFCBS_SEPARATION		8
 #define DEFCBS_RADIUS			2000
 
-// Command lag acceptance 5 sec  (30 * 5)
+// Command lag acceptance 5 sec (30 * 5)
 #define LAG_ACCEPTANCE			150
 
 // SpotFinder stuff

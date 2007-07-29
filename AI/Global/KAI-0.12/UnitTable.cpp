@@ -618,6 +618,8 @@ void CUnitTable::Init() {
 							}
 						}
 
+						// if (shield) me->category = CAT_SHIELD;
+
 						if (me->def->makesMetal) {
 							metal_makers[me->side].push_back(i);
 							me->category = CAT_MMAKER;
@@ -682,8 +684,6 @@ void CUnitTable::CalcBuildTree(int unit) {
 			unittypearray[unittypearray[unit].canBuildList[i]].side = unittypearray[unit].side;
 			CalcBuildTree(unittypearray[unit].canBuildList[i]);
 		}
-
-		// if already checked end recursion
 	}
 }
 
@@ -692,6 +692,13 @@ void CUnitTable::CalcBuildTree(int unit) {
 void CUnitTable::DebugPrint() {
 	if (!unitList)
 		return;
+
+	// same order as all_lists, not as CAT_* enum
+	const char* listCategoryNames[12] = {
+		"GROUND-FACTORY", "GROUND-BUILDER", "GROUND-ATTACKER", "METAL-EXTRACTOR",
+		"METAL-MAKER", "GROUND-ENERGY", "GROUND-DEFENSE", "METAL-STORAGE",
+		"ENERGY-STORAGE", "NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
+	};
 
 	// for debugging
 	char filename[1024] = ROOTFOLDER"CUnitTable.log";
@@ -721,7 +728,7 @@ void CUnitTable::DebugPrint() {
 
 	for (int s = 0; s < numOfSides; s++) {
 		for (unsigned int l = 0; l != all_lists.size(); l++) {
-			fprintf(file, "\n\n%s units of category %s:\n", sideNames[s].c_str(), GetUnitCategoryName(l));
+			fprintf(file, "\n\n%s units of category %s:\n", sideNames[s].c_str(), listCategoryNames[l]);
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
 				fprintf(file, "\t%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
@@ -754,20 +761,4 @@ float CUnitTable::GetMinRange(const UnitDef* unit) {
 	}
 
 	return min_range;
-}
-
-const char* CUnitTable::GetUnitCategoryName(int i) {
-	switch (i) {
-		case 0: { return "GROUND-FACTORY"; } break;
-		case 1: { return "GROUND-BUILDER"; } break;
-		case 2: { return "GROUND-ATTACKER"; } break;
-		case 3: { return "METAL-EXTRACTOR"; } break;
-		case 4: { return "METAL-MAKER"; } break;
-		case 5: { return "GROUND-ENERGY"; } break;
-		case 6: { return "GROUND-DEFENSE"; } break;
-		case 7: { return "METAL-STORAGE"; } break;
-		case 8: { return "ENERGY-STORAGE"; } break;
-		case 9: { return "NUKE-SILO"; } break;
-		default: { return "LAST-CATEGORY"; } break;
-	}
 }

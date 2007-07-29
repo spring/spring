@@ -171,6 +171,9 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int sepa
 
 // tell a factory to build something
 bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
+	if (!toBuild)
+		return false;
+
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = -(toBuild->id);
@@ -182,6 +185,9 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
 
 // tell a hub to build something
 bool CUNIT::HubBuild(const UnitDef* toBuild) {
+	if (!toBuild)
+		return false;
+
 	int hub = myid;
 	assert(ai->cb->GetUnitDef(hub) != NULL);
 

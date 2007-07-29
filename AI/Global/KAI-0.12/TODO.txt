@@ -12,4 +12,6 @@ these near k-means clusters?)
 stop depthcharge launchers being used as
 ground defenses (BA and derivatives)
 
+cloak commander (if possible) when +1000E?
+
 state serialization
