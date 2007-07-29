@@ -792,15 +792,14 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTr
 	
 }
 
-void CEconomyTracker::UnitFinished(int unit)
-{
-	if(trackerOff)
+void CEconomyTracker::UnitFinished(int unit) {
+	if (trackerOff)
 		return;
-	int frame=ai->cb->GetCurrentFrame();
+
+	int frame = ai->cb->GetCurrentFrame();
 	
-	if(frame == 0)
-	{
-		// Add the commander to a EconomyUnitTracker
+	if (frame == 0) {
+		// add the commander to a EconomyUnitTracker
 		EconomyUnitTracker * economyUnitTracker = new EconomyUnitTracker;
 		economyUnitTracker->clear();
 		economyUnitTracker->economyUnitId = unit;
@@ -811,155 +810,150 @@ void CEconomyTracker::UnitFinished(int unit)
 		SetUnitDefDataInTracker(economyUnitTracker);
 		newEconomyUnitTrackers.push_back(economyUnitTracker);
 		return;
-	}	
-	
-	// Move the new EconomyUnitTrackers
+	}
+
+	// move the new EconomyUnitTrackers
 	bool found = false;
 	list<EconomyUnitTracker*> removeList;
-	for(list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++){
-		EconomyUnitTracker *bt = *i; // This is bad, but needed
-		if(bt->economyUnitId == unit)
-		{
+	for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+		EconomyUnitTracker *bt = *i;
+		if (bt->economyUnitId == unit) {
 			 bt->createFrame = frame;
-			// Move it to the new list
 			assert(bt->alive);
 			newEconomyUnitTrackers.push_back(bt);
 			removeList.push_back(bt);
-			//L("Moved "  << bt->unitDef->humanName << " to newEconomyUnitTrackers");
 			found = true;
 			break;
 		}
 	}
+
 	assert(found);
-	// Remove them from underConstructionEconomyUnitTrackers: 
-	for(list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++){
+	// remove them from underConstructionEconomyUnitTrackers
+	for (list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++) {
 		underConstructionEconomyUnitTrackers.remove(*i);
 	}
-	
-	//L("Finished a " << ai->cb->GetUnitDef(unit)->humanName);
+
 	int category = ai->ut->GetCategory(unit);
 	found = false;
-	if(category != -1)
-		for(list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++){
-			BuildingTracker *bt = &*i;
-			if(bt->unitUnderConstruction == unit)
-			{
+
+	if (category != -1) {
+		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+			BuildingTracker* bt = &*i;
+			if (bt->unitUnderConstruction == unit) {
 				updateUnitUnderConstruction(bt);
 				found = true;
 				allTheBuildingTrackers[category]->erase(i);
 				break;
 			}
 		}
-		if(!found){
-		//L("This unit was not in a BuildingTracker!!!!!!!!!");
+		if (!found) {
+			// unit not in a BuildingTracker?
 		}
+	}
 }
 
-void CEconomyTracker::UnitDestroyed(int unit)
-{
-	if(trackerOff)
+
+
+
+void CEconomyTracker::UnitDestroyed(int unit) {
+	if (trackerOff)
 		return;
+
 	assert(ai->cb->GetUnitDef(unit) != NULL);
-	int frame=ai->cb->GetCurrentFrame();
-	// Move the dead EconomyUnitTracker
+	int frame = ai->cb->GetCurrentFrame();
+
+	// move the dead EconomyUnitTracker
 	bool found = false;
-	for(list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++){
-		EconomyUnitTracker *bt = *i; // This is bad, but needed
-		if(bt->economyUnitId == unit)
-		{
-			// Move it to the dead list
+	for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+		EconomyUnitTracker *bt = *i;
+		if (bt->economyUnitId == unit) {
 			assert(bt->alive);
 			bt->alive = false;
 			bt->dieFrame = frame;
 			deadEconomyUnitTrackers.push_back(bt);
 			activeEconomyUnitTrackers.remove(bt);
-			//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-			//L("It was alive for " << (frame - bt->createFrame) << " frames");
+			// was alive for (frame - bt->createFrame) frames
 			found = true;
 			break;
 		}
 	}
-	if(!found)
-		for(list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++){
-			EconomyUnitTracker *bt = *i; // This is bad, but needed
-			if(bt->economyUnitId == unit)
-			{
-				// Move it to the dead list
+	if (!found) {
+		for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+			EconomyUnitTracker *bt = *i;
+			if (bt->economyUnitId == unit) {
 				assert(bt->alive);
 				bt->alive = false;
 				bt->dieFrame = frame;
 				deadEconomyUnitTrackers.push_back(bt);
 				underConstructionEconomyUnitTrackers.remove(bt);
-				//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-				//L("It was still under construction");
+				// was still under construction
 				found = true;
 				break;
 			}
 		}
-	if(!found)
-		for(list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++){
-			EconomyUnitTracker *bt = *i; // This is bad, but needed
-			if(bt->economyUnitId == unit)
-			{
-				// Move it to the dead list
+	}
+	if (!found) {
+		for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+			EconomyUnitTracker *bt = *i;
+			if (bt->economyUnitId == unit) {
 				assert(bt->alive);
 				bt->alive = false;
 				bt->dieFrame = frame;
 				deadEconomyUnitTrackers.push_back(bt);
 				newEconomyUnitTrackers.remove(bt);
-				//L("Moved "  << bt->unitDef->humanName << " to deadEconomyUnitTrackers");
-				//L("It was alive for " << (frame - bt->createFrame) << " frames, and never managed to do anything....");
+				// was alive for (frame - bt->createFrame) frames and never managed to do anything
 				found = true;
 				break;
 			}
 		}
-	
-	// If the unit was being built, remove it
-	if(ai->cb->UnitBeingBuilt(unit))
-	{
-		//L("Lost a " << ai->cb->GetUnitDef(unit)->humanName);
+	}
+
+	// if unit was being built, remove it
+	if (ai->cb->UnitBeingBuilt(unit)) {
 		int category = ai->ut->GetCategory(unit);
 		bool found = false;
-		if(category != -1)
-			for(list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++){
+
+		if (category != -1) {
+			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
 				BuildingTracker *bt = &*i;
-				if(bt->unitUnderConstruction == unit)
-				{
-					//updateUnitUnderConstruction(bt); // Add this back in ???   then the hp will be negative, and it needs to be fixed...
+				if (bt->unitUnderConstruction == unit) {
+					// hp will be negative if this re-enabled
+					// updateUnitUnderConstruction(bt);
 					found = true;
 					allTheBuildingTrackers[category]->erase(i);
 					break;
 				}
 			}
-			if(!found){
-			//L("This unit was not in a BuildingTracker!!!!!!!!!");
+			if (!found) {
+				// unit not in a BuildingTracker?
 			}
+		}
 	}
 }
 
-void CEconomyTracker::UnitDamaged(int unit, float damage)
-{
-	if(trackerOff)
+
+
+void CEconomyTracker::UnitDamaged(int unit, float damage) {
+	if (trackerOff)
 		return;
-	if(ai->cb->UnitBeingBuilt(unit))
-	{
-		//L("Damage to " << ai->cb->GetUnitDef(unit)->humanName);
+
+	if (ai->cb->UnitBeingBuilt(unit)) {
 		int category = ai->ut->GetCategory(unit);
 		bool found = false;
-		if(category != -1)
-			for(list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++){
+
+		if (category != -1) {
+			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
 				BuildingTracker *bt = &*i;
-				if(bt->unitUnderConstruction == unit)
-				{
+				if (bt->unitUnderConstruction == unit) {
 					bt->damage += damage;
 					bt->hpLastFrame -= damage;
 					found = true;
 					break;
 				}
 			}
-			if(!found){
-			//L("This unit was not in a BuildingTracker!!!!!!!!!");
+			if (!found) {
+				// unit not in a BuildingTracker?
 			}
+		}
 	}
 }
-

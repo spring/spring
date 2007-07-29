@@ -1,7 +1,3 @@
-support for Gundam (crashes ingame)
-
-fix "air group is attacking" crash
-
 unit-limit checking when building stuff
 
 better support for mods with dgun-less
@@ -10,7 +6,8 @@ commanders (less aggressive expansion eg.)
 one centralized ai->cheat->GetEnemyUnits()
 call for performance reasons
 
-nukes/shields/geothermals support
+support for shields and antinukes (place
+these near k-means clusters?)
 
 stop depthcharge launchers being used as
 ground defenses (BA and derivatives)

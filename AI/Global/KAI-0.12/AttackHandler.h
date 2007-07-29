@@ -10,10 +10,10 @@ class CAttackHandler {
 	public:
 		CR_DECLARE(CAttackHandler);
 		CAttackHandler(AIClasses* ai);
-		virtual ~CAttackHandler();
+		virtual ~CAttackHandler(void);
 
 		void AddUnit(int unitID);
-		void Update();
+		void Update(void);
 		void UnitDestroyed(int unitID);
 
 		// the kmeans is placed here for now =)
@@ -31,17 +31,22 @@ class CAttackHandler {
 		float3 FindVerySafeArea(float3 pos);
 		float3 FindUnsafeArea(float3 pos);
 
-		void UpdateKMeans();
-		void UpdateAir();
+		void UpdateKMeans(void);
+		void UpdateAir(void);
 
-		void AssignTargets();
+		// nuke-related functions
+		void UpdateNukeSilos(void);
+		int PickNukeSiloTarget(std::vector<std::pair<int, float> >&);
+		void GetNukeSiloTargets(std::vector<std::pair<int, float> >&);
+
+		void AssignTargets(void);
 		void AssignTarget(CAttackGroup* group);
 
 		bool UnitGroundAttackFilter(int unit);
 		bool UnitBuildingFilter(const UnitDef* ud);
 		bool UnitReadyFilter(int unit);
 
-		void CombineGroups();
+		void CombineGroups(void);
 
 	private:
 		AIClasses* ai;

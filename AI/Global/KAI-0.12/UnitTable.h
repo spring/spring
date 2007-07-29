@@ -56,6 +56,7 @@ class CUnitTable {
 		vector<int>* ground_defences;
 		vector<int>* metal_storages;
 		vector<int>* energy_storages;
+		vector<int>* nuke_silos;
 
 		// number of sides
 		int numOfSides;
@@ -70,6 +71,7 @@ class CUnitTable {
 		// for internal use
 		void CalcBuildTree(int unit);
 		void DebugPrint();
+		const char* GetUnitCategoryName(int);
 
 		// start units of each side (e.g. commander)
 		vector<int> startUnits;

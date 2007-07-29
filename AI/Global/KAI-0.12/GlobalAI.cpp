@@ -95,6 +95,14 @@ CR_REG_METADATA(Factory, (
 	CR_MEMBER(supportBuilderTrackers)
 ));
 
+// TODO: move to Containers.h
+CR_BIND(NukeSilo, );
+CR_REG_METADATA(NukeSilo, (
+	CR_MEMBER(id),
+	CR_MEMBER(numNukesReady),
+	CR_MEMBER(numNukesQueued)
+));
+
 // TODO: move to DGunController.hpp
 CR_BIND(ControllerState, );
 CR_REG_METADATA(ControllerState, (
@@ -135,7 +143,6 @@ CGlobalAI::~CGlobalAI() {
 	delete ai->ut;
 	delete ai->mm;
 	delete ai->uh;
-	// added by Kloot
 	delete ai->dgunController;
 	delete ai;
 }
@@ -258,7 +265,6 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->econTracker		= new CEconomyTracker(ai);
 	ai->bu				= new CBuildUp(ai);
 	ai->ah				= new CAttackHandler(ai);
-	// added by Kloot
 	ai->dgunController	= new DGunController(ai->cb);
 
 	L("All Class pointers initialized");
@@ -276,7 +282,6 @@ void CGlobalAI::UnitCreated(int unit) {
 	ai->econTracker->UnitCreated(unit);
 
 
-	// added by Kloot
 	const UnitDef* ud = ((this->ai)->cb)->GetUnitDef(unit);
 
 	if (ud->isCommander && ud->canDGun) {
@@ -350,7 +355,6 @@ void CGlobalAI::EnemyLeaveRadar(int enemy) {
 }
 
 void CGlobalAI::EnemyDestroyed(int enemy, int attacker) {
-	// added by Kloot
 	((this->ai)->dgunController)->handleDestroyEvent(attacker, enemy);
 }
 
@@ -413,7 +417,6 @@ void CGlobalAI::Update() {
 		ai->uh->IdleUnitUpdate();
 	}
 
-	// added by Kloot
 	((this->ai)->dgunController)->update(frame);
 
 	// call attack handler and unit handler (metal maker) update routines

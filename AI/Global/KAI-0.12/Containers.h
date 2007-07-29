@@ -18,7 +18,6 @@ class CEconomyTracker;
 class CBuildUp;
 class CAttackHandler;
 class CEconomyManager;
-// added by Kloot
 class DGunController;
 
 struct AIClasses {
@@ -41,7 +40,6 @@ struct AIClasses {
 	CEconomyManager*	em;
 	vector<CUNIT*>		MyUnits;
 	std::ofstream*		LOGGER;
-	// added by Kloot
 	DGunController*		dgunController;
 };
 
@@ -159,6 +157,14 @@ struct Factory {
 	list<int> supportbuilders;
 	// the new container
 	list<BuilderTracker*> supportBuilderTrackers;
+};
+
+struct NukeSilo {
+	CR_DECLARE_STRUCT(NukeSilo);
+
+	int id;
+	int numNukesReady;
+	int numNukesQueued;
 };
 
 

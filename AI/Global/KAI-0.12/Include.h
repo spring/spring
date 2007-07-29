@@ -78,7 +78,6 @@ static inline void itoa(int i, char* buf, int size) {
 #include "AttackHandler.h"
 #include "AttackGroup.h"
 #include "EconomyManager.h"
-// added by Kloot
 #include "DGunController.hpp"
 
 
