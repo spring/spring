@@ -78,12 +78,12 @@ void CBuildUp::Buildup() {
 
 		// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
 		// everybody (assuming we can build them at all in current mod)
+		// TODO: use actual metal and energy drain of nuke weapon here
 		bool buildNukeSilo =
-			(mIncome > 200.0f && eIncome > 8000.0f &&
+			(mIncome > 100.0f && eIncome > 6000.0f &&
 			mUsage < mIncome && eUsage < eIncome &&
 			nukeSiloTimer <= 0 && ai->ut->nuke_silos->size() &&
 			ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
-			/* && (RANDINT % 7) == 0 */
 
 
 		if (builderDef == NULL) {
@@ -107,7 +107,8 @@ void CBuildUp::Buildup() {
 			else if (buildNukeSilo) {
 				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_NUKE)) {
 					// this will result in ALL builders trying to build nothing but
-					// nukes eventually, though at this point it shouldn't matter
+					// nukes eventually (up to the defined limit), though at this
+					// point it shouldn't matter
 					const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_NUKE);
 					bool r = false;
 	
@@ -251,8 +252,8 @@ void CBuildUp::Buildup() {
 	}
 
 
-	bool b1 = ((eLevel > (eStorage * 0.8f)) || (eIncome > 8000.0f && eUsage < eIncome));
-	bool b2 = ((mLevel > (mStorage * 0.2f)) || (mIncome > 200.0f && mUsage < mIncome));
+	bool b1 = ((eLevel > (eStorage * 0.8f)) || (eIncome > 6000.0f && eUsage < eIncome));
+	bool b2 = ((mLevel > (mStorage * 0.2f)) || (mIncome > 100.0f && mUsage < mIncome));
 	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 
 	if (b1 && b2 && numIdleFactories > 0)
