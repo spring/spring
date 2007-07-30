@@ -95,7 +95,6 @@ void CBuildUp::Buildup() {
 			else if ((mIncome > 20.0f && eIncome > 250.0f) && builderDef->isCommander && ai->uh->FactoryBuilderAdd(builder)) {
 				// add commander to factory so it doesn't wander around too much (works best if
 				// AI given bonus, otherwise initial expansion still mostly done by commander)
-				factoryTimer += 2;
 				builderTimer = 0;
 				return;
 			}
@@ -242,8 +241,6 @@ void CBuildUp::Buildup() {
 								FallbackBuild(builder, CAT_FACTORY);
 							}
 						}
-						else
-							factoryTimer++;
 					}
 				}
 			}
@@ -253,10 +250,9 @@ void CBuildUp::Buildup() {
 
 	bool b1 = ((eLevel > (eStorage * 0.8f)) || (eIncome > 6000.0f && eUsage < eIncome));
 	bool b2 = ((mLevel > (mStorage * 0.2f)) || (mIncome > 100.0f && mUsage < mIncome));
-	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 
-	if (b1 && b2 && numIdleFactories > 0)
-		FactoryCycle(numIdleFactories);
+	if (b1 && b2)
+		FactoryCycle();
 
 	if (buildNukeSilo)
 		NukeSiloCycle();
@@ -265,69 +261,87 @@ void CBuildUp::Buildup() {
 
 
 
-void CBuildUp::FactoryCycle(int numIdleFactories) {
+void CBuildUp::FactoryCycle(void) {
+	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
+
 	for (int i = 0; i < numIdleFactories; i++) {
-		int producedCat;
+		int producedCat = 0;
 		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
+		bool isHub = (ai->MyUnits[factoryUnitID]->isHub());
 
-		if ((builderTimer > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
-			producedCat = CAT_G_ATTACK;
-
-			if (builderTimer > 0)
-				builderTimer--;
+		if (isHub) {
+			// if we are a hub then we can only construct
+			// factories (and some other types of buildings)
+			producedCat = CAT_FACTORY;
+			builderTimer = 0;
 		}
-
 		else {
-			// look at all factories and their best builders,
-			// then find the builder that there are least of
-			// and construct one (leastBuiltBuilder might not
-			// be on the build-menu of factory <factoryUnitID>
-			// however!)
-			int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
-			const UnitDef* leastBuiltBuilder;
-			int leastBuiltBuilderCount = 65536;
-			assert(factoryCount > 0);
-
-			for (list<int>::iterator i = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); i != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); i++) {
-				// get factory unitID
-				int factoryToLookAt = *i;
-
-				if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
-					// if factory isn't still under construction
-					const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
-
-					if (bestBuilder) {
-						int bestBuilderCount =  ai->uh->AllUnitsByType[bestBuilder->id]->size();
-
-						if (bestBuilderCount < leastBuiltBuilderCount) {
-							leastBuiltBuilderCount = bestBuilderCount;
-							leastBuiltBuilder = bestBuilder;
-						}
-					}
-				}
-			}
-
-			// find the builder type this factory makes
-			const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
-
-			if (builderUnit && builderUnit == leastBuiltBuilder) {
-				producedCat = CAT_BUILDER;
-				builderTimer += 4;
-			}
-			else {
-				// build some offensive unit
+			if ((builderTimer > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
+				// if we have more than two idle builders
+				// then compensate with an offensive unit
 				producedCat = CAT_G_ATTACK;
 
 				if (builderTimer > 0)
 					builderTimer--;
 			}
+
+			else {
+				// look at all factories and their best builders,
+				// then find the builder that there are least of
+				// and construct one (leastBuiltBuilder might not
+				// be on the build-menu of this factory however!)
+				int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
+				const UnitDef* leastBuiltBuilder;
+				int leastBuiltBuilderCount = 65536;
+				assert(factoryCount > 0);
+	
+
+				for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); j++) {
+					// get factory unitID
+					int factoryToLookAt = *j;
+	
+					if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
+						// if factory isn't still under construction
+						const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
+	
+						if (bestBuilder) {
+							int bestBuilderCount = ai->uh->AllUnitsByType[bestBuilder->id]->size();
+	
+							if (bestBuilderCount < leastBuiltBuilderCount) {
+								leastBuiltBuilderCount = bestBuilderCount;
+								leastBuiltBuilder = bestBuilder;
+							}
+						}
+					}
+				}
+
+
+				const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
+
+				// if this factory makes the builder that we are short of
+				if (builderUnit && builderUnit == leastBuiltBuilder) {
+					producedCat = CAT_BUILDER;
+					builderTimer += 4;
+				}
+				else {
+					// build some offensive unit
+					producedCat = CAT_G_ATTACK;
+
+					if (builderTimer > 0)
+						builderTimer--;
+				}
+			}
 		}
 
-		// KLOOTNOTE: LOOK AT THIS MORE CLOSELY
-		if ((ai->MyUnits[factoryUnitID])->isHub()) {
-			(ai->MyUnits[factoryUnitID])->HubBuild(ai->ut->GetUnitByScore(factoryUnitID, producedCat));
-		} else {
-			(ai->MyUnits[factoryUnitID])->FactoryBuild(ai->ut->GetUnitByScore(factoryUnitID, producedCat));
+		// get a unit of the category we want this factory to produce
+		const UnitDef* udef = ai->ut->GetUnitByScore(factoryUnitID, producedCat);
+
+		if (udef) {
+			if (isHub) {
+				(ai->MyUnits[factoryUnitID])->HubBuild(udef);
+			} else {
+				(ai->MyUnits[factoryUnitID])->FactoryBuild(udef);
+			}
 		}
 	}
 }

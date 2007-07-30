@@ -325,7 +325,7 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 	int category = GetCategory(unitDef);
 
 	switch (category) {
-		case CAT_ENERGY:
+		case CAT_ENERGY: {
 			Benefit = unitDef->energyMake - unitDef->energyUpkeep;
 			if (unitDef->windGenerator) {
 				Benefit += ai->cb->GetMinWind();
@@ -334,18 +334,19 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 				Benefit += ai->cb->GetTidalStrength();
 			}
 
+			// filter geothermals
 			if (unitDef->needGeo)
 				Benefit = 0.0f;
 
 			Benefit /= Cost;
-			break;
-		case CAT_MEX:
+		} break;
+		case CAT_MEX: {
 			Benefit = pow(unitDef->extractsMetal, 4.0f);
-			break;
-		case CAT_MMAKER:
+		} break;
+		case CAT_MMAKER: {
 			Benefit = (unitDef->metalMake - unitDef->metalUpkeep) / unitDef->energyUpkeep + 0.01;
-			break;
-		case CAT_G_ATTACK:
+		} break;
+		case CAT_G_ATTACK: {
 			dps = GetCurrentDamageScore(unitDef);
 
 			if (unitDef->canfly && !unitDef->hoverAttack) {
@@ -366,50 +367,64 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 				 // AA hack: slight reduction to the feasability of air
 				Benefit *= 0.25;
 			}
-			break;
-		case CAT_DEFENCE:
+		} break;
+		case CAT_DEFENCE: {
 			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), 1.5f)
 					* pow(GetMaxRange(unitDef), 2.0f)
 					* pow(GetCurrentDamageScore(unitDef), 1.5f)
 					* pow(Hitpoints, 0.5f)
 					* pow(RandNum, 2.5f)
 					* pow(Cost, -1.0f);
-			break;
-		case CAT_BUILDER:
+		} break;
+
+		case CAT_BUILDER: {
 			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
 				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_FACTORY) {
 					candevelop = true;
 				}
 			}
 
-			Benefit = pow(unitDef->buildSpeed, 1.0f)
-					* pow(unitDef->speed, 0.5f)
-					* pow(Hitpoints, 0.3f)
-					* pow(RandNum, 0.4f);
-
-			if (!candevelop)
+			// builder units that cannot construct any
+			// factories are worthless, prevent them
+			// from being chosen via GetUnitByScore()
+			// (they might have other uses though)
+			if (!candevelop) {
 				Benefit = 0.0f;
-			break;
-		case CAT_FACTORY:
+			} else {
+				Benefit = pow(unitDef->buildSpeed, 1.0f)
+						* pow(unitDef->speed, 0.5f)
+						* pow(Hitpoints, 0.3f)
+						* pow(RandNum, 0.4f);
+			}
+		} break;
+
+		case CAT_FACTORY: {
+			// benefit of a factory is dependant on the kind of
+			// offensive units it can build, but EE-hubs are only
+			// capable of building other buildings
 			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
-				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_G_ATTACK) {
-					Benefit += GetScore(unittypearray[unittypearray[unitDef->id].canBuildList[i]].def);
+				int buildOption = unittypearray[unitDef->id].canBuildList[i];
+				int buildOptionCategory = unittypearray[buildOption].category;
+
+				if (buildOptionCategory == CAT_G_ATTACK || buildOptionCategory == CAT_FACTORY) {
+					Benefit += GetScore(unittypearray[buildOption].def);
 					unitcounter++;
 				}
 			}
 		
-			if (unitcounter > 0)
+			if (unitcounter > 0) {
 				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), 3.0f));
-			else
+			} else {
 				Benefit = 0.0f;
+			}
 
-			break;
-		case CAT_MSTOR:
+		} break;
+		case CAT_MSTOR: {
 			Benefit = pow((unitDef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
-			break;
-		case CAT_ESTOR:
+		} break;
+		case CAT_ESTOR: {
 			Benefit = pow((unitDef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
-			break;
+		} break;
 		case CAT_NUKE: {
 			// KLOOTNOTE: should factor damage into this as well
 			float metalcost = unitDef->stockpileWeaponDef->metalcost;
@@ -607,18 +622,21 @@ void CUnitTable::Init() {
 							me->category = CAT_DEFENCE;
 						}
 
-						if (!me->def->weapons.empty() && me->def->weapons.begin()->def->stockpile) {
-							if (me->def->weapons.begin()->def->targetable) {
+						if (me->def->stockpileWeaponDef) {
+							if (me->def->stockpileWeaponDef->targetable) {
 								// nuke
 								nuke_silos[me->side].push_back(i);
 								me->category = CAT_NUKE;
 							}
-							if (me->def->weapons.begin()->def->interceptor) {
+							if (me->def->stockpileWeaponDef->interceptor) {
 								// anti-nuke, not implemented yet
 							}
 						}
 
-						// if (shield) me->category = CAT_SHIELD;
+						if (me->def->shieldWeaponDef && me->def->shieldWeaponDef->isShield) {
+							// shield, not implemented yet
+							// me->category = CAT_SHIELD;
+						}
 
 						if (me->def->makesMetal) {
 							metal_makers[me->side].push_back(i);
