@@ -829,6 +829,7 @@ void CAttackHandler::CombineGroups(void) {
 
 void CAttackHandler::Update(void) {
 	int frameNr = ai->cb->GetCurrentFrame();
+	int frameSpread = 300;
 
 	if (frameNr < 2)
 		UpdateKMeans();
@@ -837,15 +838,16 @@ void CAttackHandler::Update(void) {
 	// in each group (movement map PATHTOUSE is hack)
 	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
 	
-	int frameSpread = 300;
 	// calculate and draw k-means for the base perimeters every 10 seconds
 	if (frameNr % frameSpread == 0) {
 		UpdateKMeans();
 
 		int num = ai->uh->NumIdleUnits(CAT_G_ATTACK);
+
 		for (int i = 0; i < num; i++) {
 			int unit = ai->uh->GetIU(CAT_G_ATTACK);
-			if (this->PlaceIdleUnit(unit) && !ai->cb->GetUnitDef(unit)->canfly)  {
+
+			if (PlaceIdleUnit(unit) && !ai->cb->GetUnitDef(unit)->canfly)  {
 				ai->uh->IdleUnitRemove(unit);
 			}
 		}

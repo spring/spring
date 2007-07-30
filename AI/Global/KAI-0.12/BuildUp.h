@@ -17,6 +17,7 @@ class CBuildUp {
 		void FactoryCycle(void);
 		void NukeSiloCycle(void);
 		void FallbackBuild(int, int);
+		const UnitDef* GetLeastBuiltBuilder(void);
 
 		int factoryTimer;
 		int builderTimer;
