@@ -69,7 +69,7 @@ void CBuildUp::Buildup() {
 		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
 
 	if (ai->uh->NumIdleUnits(CAT_BUILDER)) {
-		// get idle (mobile) builder
+		// get first idle (mobile) builder every Update() cycle
 		int builder = ai->uh->GetIU(CAT_BUILDER);
 		const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
 		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builder, CAT_FACTORY);
@@ -260,11 +260,15 @@ void CBuildUp::Buildup() {
 
 
 
-
 void CBuildUp::FactoryCycle(void) {
 	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 
 	for (int i = 0; i < numIdleFactories; i++) {
+		// pick the first idle factory we have
+		// (note: if we don't give a build order
+		// or the order fails somehow then this
+		// will keep picking the same one each
+		// iteration)
 		int producedCat = 0;
 		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
 		bool isHub = (ai->MyUnits[factoryUnitID]->isHub());
@@ -286,40 +290,11 @@ void CBuildUp::FactoryCycle(void) {
 			}
 
 			else {
-				// look at all factories and their best builders,
-				// then find the builder that there are least of
-				// and construct one (leastBuiltBuilder might not
-				// be on the build-menu of this factory however!)
-				int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
-				const UnitDef* leastBuiltBuilder;
-				int leastBuiltBuilderCount = 65536;
-				assert(factoryCount > 0);
-	
-
-				for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); j++) {
-					// get factory unitID
-					int factoryToLookAt = *j;
-	
-					if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
-						// if factory isn't still under construction
-						const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
-	
-						if (bestBuilder) {
-							int bestBuilderCount = ai->uh->AllUnitsByType[bestBuilder->id]->size();
-	
-							if (bestBuilderCount < leastBuiltBuilderCount) {
-								leastBuiltBuilderCount = bestBuilderCount;
-								leastBuiltBuilder = bestBuilder;
-							}
-						}
-					}
-				}
-
-
+				const UnitDef* leastBuiltBuilder = GetLeastBuiltBuilder();
 				const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
 
-				// if this factory makes the builder that we are short of
 				if (builderUnit && builderUnit == leastBuiltBuilder) {
+					// if this factory makes the builder that we are short of
 					producedCat = CAT_BUILDER;
 					builderTimer += 4;
 				}
@@ -414,4 +389,36 @@ void CBuildUp::FallbackBuild(int builder, int failedCat) {
 	// unable to assist and unable to build, just patrol
 	if (!b1 && !b2 && !b3 && !b4)
 		ai->MyUnits[builder]->Patrol(builderPos);
+}
+
+
+
+// look at all online factories and their best builders,
+// then find the best builder that there are least of
+const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
+	int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
+	const UnitDef* leastBuiltBuilder;
+	int leastBuiltBuilderCount = 65536;
+	assert(factoryCount > 0);
+
+	for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); j++) {
+		// get factory unitID
+		int factoryToLookAt = *j;
+
+		if (!ai->cb->UnitBeingBuilt(factoryToLookAt)) {
+			// if factory isn't still under construction
+			const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
+
+			if (bestBuilder) {
+				int bestBuilderCount = ai->uh->AllUnitsByType[bestBuilder->id]->size();
+
+				if (bestBuilderCount < leastBuiltBuilderCount) {
+					leastBuiltBuilderCount = bestBuilderCount;
+					leastBuiltBuilder = bestBuilder;
+				}
+			}
+		}
+	}
+
+	return leastBuiltBuilder;
 }

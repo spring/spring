@@ -488,41 +488,54 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 
 void CUnitHandler::IdleUnitRemove(int unit) {
 	int category = ai->ut->GetCategory(unit);
+
 	if (category != -1) {
 		IdleUnits[category]->remove(unit);
 
 		if (category == CAT_BUILDER) {
 			BuilderTracker* builderTracker = GetBuilderTracker(unit);
-			builderTracker->idleStartFrame = -1; // Its not in the idle list now
+			builderTracker->idleStartFrame = -1;
+
 			if (builderTracker->commandOrderPushFrame == -2) {
 				// bad
 			}
 
  			// update the order start frame
 			builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame();
-			//assert(builderTracker->buildTaskId == 0);
-			//assert(builderTracker->taskPlanId == 0);
-			//assert(builderTracker->factoryId == 0);
+			// assert(builderTracker->buildTaskId == 0);
+			// assert(builderTracker->taskPlanId == 0);
+			// assert(builderTracker->factoryId == 0);
 		}
 
 		list<integer2>::iterator tempunit;
 		bool foundit = false;
+
 		for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
 			if (i->x == unit) {
 				tempunit = i;
-				foundit=true;
+				foundit = true;
 			}
 		}
+
 		if (foundit)
 			Limbo.erase(tempunit);
 	}
 }
 
-int CUnitHandler::GetIU(int category) {
-	assert((category >= 0) && (category < LASTCATEGORY));
-	assert(IdleUnits[category]->size() > 0);
 
-	return IdleUnits[category]->front();
+int CUnitHandler::GetIU(int category) {
+	assert(IdleUnits[category]->size() > 0);
+	int unitID = IdleUnits[category]->front();
+
+	// move the returned unitID to the back
+	// of the list, so CBuildUp::FactoryCycle()
+	// doesn't keep examining the same factory
+	// if a build order fails and we have more
+	// than one idle factory
+	IdleUnits[category]->pop_front();
+	IdleUnits[category]->push_back(unitID);
+
+	return unitID;
 }
 
 int CUnitHandler::NumIdleUnits(int category) {
@@ -1111,7 +1124,8 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->customOrderId == 0);
 
 	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
-		float totalbuildercost = 0;
+		float totalbuildercost = 0.0f;
+
 		// HACK
 		for (list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
 			totalbuildercost += ai->math->GetUnitCost(*j);

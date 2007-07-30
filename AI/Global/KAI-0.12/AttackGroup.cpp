@@ -422,7 +422,6 @@ void CAttackGroup::Update() {
 
 			// for every unit, pathfind to enemy perifery (with personal range - 10) then
 			// if distance to that last point in the path is < 10 or cost is 0, attack
-			// TODO: can enemy ID be 0
 
 			if (enemySelected != -1) {
 				float3 enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
@@ -443,7 +442,8 @@ void CAttackGroup::Update() {
 						// lowest range assuming you want to rush in with the heavy stuff, that is
 						assert(range >= ai->cb->GetUnitMaxRange(unit));
 
-						// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max range if target is too close
+						// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max
+						// range if target is too close, EXCEPT FOR FLAMETHROWER-EQUIPPED units
 						float3 myPos = ai->cb->GetUnitPos(unit);
 						float myRange = this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unit));
 
@@ -458,7 +458,8 @@ void CAttackGroup::Update() {
 
 							vector<float3> tempPath;
 
-							// two things: 1. don't need a path, just a position and 2. it should avoid other immediate friendly units and/or immediate enemy units+radius
+							// 1. don't need a path, just a position
+							// 2. should avoid other immediate friendly units and/or immediate enemy units + radius
 							// maybe include the height parameter in the search? probably not possible
 							// TODO: OBS doesn't this mean pathing might happen every second? outer limit should be more harsh than inner
 							float3 unitPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
@@ -469,7 +470,8 @@ void CAttackGroup::Update() {
 								dist = myPos.distance2D(moveHere);
 
 								// TODO: penetrators are now broken
-								// is the position between the proposed destination and the enemy higher than the average of mine and his height?
+								// is the position between the proposed destination and the
+								// enemy higher than the average of mine and his height?
 								float v1 = ((moveHere.y + enemyPos.y) / 2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP;
 								float v2 = ai->cb->GetElevation((moveHere.x + enemyPos.x) / 2, (moveHere.z + enemyPos.z) / 2);
 								bool losHack = v1 > v2;
@@ -483,7 +485,7 @@ void CAttackGroup::Update() {
 								}
 							}
 							if (debug1 && !debug2) {
-								// L("AG: maneuver: pathfinder run but path not used");
+								// pathfinder run but path not used?
 							}
 						}
 						else if (!ai->cb->GetUnitDef(unit)->canfly || myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25)) {
@@ -508,7 +510,7 @@ void CAttackGroup::Update() {
 		}
 	} else {
 		// find something to attack within visual and radar LOS if AssignToTarget() wasn't called
-		if ((defending && !isShooting && !isMoving) /*&& (frameNr % 60 == groupID % 60)*/) {
+		if ((defending && !isShooting && !isMoving) && (frameNr % 60 == groupID % 60)) {
 			FindDefenseTarget(groupPosition);
 		}
 	}
@@ -564,7 +566,7 @@ void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 		pathIterator = min(pathIterator, pathMaxIndex);
 	}
 	else {
-		// L("AG: group thinks it has arrived at the destination:" << groupID);
+		// group thinks it has arrived at the destination
 		this->ClearTarget();
 	}
 }

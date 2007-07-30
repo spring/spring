@@ -39,7 +39,7 @@ class CUNIT {
 		bool ReclaimBest(bool metal, float radius = 1000);
 
 		// construction
-		int GetBuildFacing(float3& pos);
+		int GetBestBuildFacing(float3& pos);
 		bool Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation = DEFCBS_SEPARATION, float radius = DEFCBS_RADIUS);
 		bool FactoryBuild(const UnitDef* built);
 

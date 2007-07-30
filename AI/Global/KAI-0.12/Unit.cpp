@@ -34,6 +34,7 @@ bool CUNIT::isHub(void) {
 }
 
 const UnitDef* CUNIT::def() {
+	// KLOOTNOTE: returns 0 for EE factories?
 	return ai->cb->GetUnitDef(myid);
 }
 
@@ -106,7 +107,7 @@ bool CUNIT::NukeSiloBuild(void) {
 
 
 
-int CUNIT::GetBuildFacing(float3& pos) {
+int CUNIT::GetBestBuildFacing(float3& pos) {
 	int frame = (ai->cb)->GetCurrentFrame();
 	int mapWidth = (ai->cb)->GetMapWidth() * 8;
 	int mapHeight = (ai->cb)->GetMapHeight() * 8;
@@ -151,7 +152,7 @@ int CUNIT::GetBuildFacing(float3& pos) {
 
 // called for mobile construction units
 bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation, float radius) {
-	int buildFacing = GetBuildFacing(targetpos);
+	int buildFacing = GetBestBuildFacing(targetpos);
 	float3 buildpos = ai->cb->ClosestBuildSite(unitdef, targetpos, radius, separation, buildFacing);
 
 	targetpos.y += 20;
@@ -189,10 +190,20 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	float3 buildPos = ZeroVector;
 	float maxRadius = ai->cb->GetUnitDef(hub)->buildDistance;
 	float minRadius = 40.0f;
-	int facing = GetBuildFacing(hubPos);
+	int facing = GetBestBuildFacing(hubPos);
 
-	// NOTE: this can still go wrong if there is another
-	// hub or open factory anywhere inside build radius!
+	// CPU usage reduction hack, force
+	// hubs to stay idle if the area
+	// around them is too crowded
+	int units[512];
+	int numFriendlies = ai->cb->GetFriendlyUnits(units, hubPos, maxRadius);
+
+	if (numFriendlies > 16)
+		return false;
+
+	// note: this can still go wrong if there is another
+	// hub or open factory anywhere inside build radius
+	// (due to the blocking-map issue)
 	for (float radius = maxRadius; radius >= minRadius; radius -= 5.0f) {
 		for (float angle = 0.0f; angle < 360.0f; angle += 45.0f) {
 			buildPos.x = hubPos.x + (radius * cos(angle * DEG2RAD));
@@ -226,10 +237,10 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 bool CUNIT::ReclaimBest(bool metal, float radius) {
 	int features[1000];
 	int numfound = ai->cb->GetFeatures(features, 1000, pos(), radius);
-	float bestscore = 0;
-	float myscore = 0;
-	float bestdistance = 100000;
-	float mydistance = 100000;
+	float bestscore = 0.0f;
+	float myscore = 0.0f;
+	float bestdistance = 100000.0f;
+	float mydistance = 100000.0f;
 	int bestfeature = -1;
 
 	if (metal) {
