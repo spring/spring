@@ -624,7 +624,7 @@ bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, float>& r
 // sort all enemy targets in decreasing order by unit value
 void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
 	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
-	float minTargetValue = ((numEnemies > MAX_NUKE_SILOS)? 1000.0f: 10.0f);
+	float minTargetValue = 100.0f;
 
 	std::vector<std::pair<int, float> > staticTargets;
 	std::vector<std::pair<int, float> > mobileTargets;
@@ -639,13 +639,14 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 			float targetValue = mCost + eCost * 0.1f;
 			bool isMobileTarget = (udef->speed > 0.0f);
 
-		//	if (targetValue > minTargetValue) {
+			if (targetValue > minTargetValue) {
+				// don't waste nukes on radar towers
 				if (isMobileTarget) {
 					mobileTargets.push_back(std::make_pair(targetID, targetValue));
 				} else {
 					staticTargets.push_back(std::make_pair(targetID, targetValue));
 				}
-		//	}
+			}
 		}
 	}
 
