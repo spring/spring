@@ -4,11 +4,12 @@
 #include "UDPSocket.h" 
 
 #ifdef _WIN32
+#ifdef _MSC_VER
 #include <xstring>
+#endif
 #include <direct.h>
 #include <io.h>
 #else
-#include <string>
 #include <fcntl.h>
 #include <errno.h>
 #endif
