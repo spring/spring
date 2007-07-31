@@ -431,8 +431,17 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			float energycost = unitDef->stockpileWeaponDef->energycost;
 			float supplycost = unitDef->stockpileWeaponDef->supplycost;
 			float denom = metalcost + energycost + supplycost + 1.0f;
-			Benefit = unitDef->stockpileWeaponDef->areaOfEffect / denom;
+			float range = unitDef->stockpileWeaponDef->range;
+			Benefit = (unitDef->stockpileWeaponDef->areaOfEffect + range) / denom;
 		} break;
+		/*
+		case CAT_ANTINUKE: {
+			Benefit = unitDef->stockpileWeaponDef->coverageRange;
+		} break;
+		case CAT_SHIELD: {
+			Benefit = unitDef->shieldWeaponDef->shieldRadius;
+		} break;
+		*/
 		default:
 			Benefit = 0.0f;
 	}
