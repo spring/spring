@@ -40,6 +40,8 @@ class CAttackGroup {
 		void ClearTarget();
 
 		bool NeedsNewTarget();
+		int SelectEnemy(int, const float3&);
+		void AttackEnemy(int, int, float, int);
 		void AssignTarget(vector<float3> path, float3 target, float radius);
 		void MoveAlongPath(float3& groupPosition, int numUnits);
 

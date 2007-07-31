@@ -374,128 +374,42 @@ void CAttackGroup::ClearTarget() {
 }
 
 
+
+
 // called from CAttackHandler::Update()
 void CAttackGroup::Update() {
 	int frameSpread = 30;
-	unsigned int numUnits = units.size();
 	int frameNr = ai->cb->GetCurrentFrame();
+	unsigned int numUnits = units.size();
 
 	if (!numUnits) {
 		// empty attack group, nothing to update
 		return;
 	}
 
-	float3 groupPosition = this->GetGroupPos();
+	float3 groupPosition = GetGroupPos();
 
 	if (groupPosition == ERRORVECTOR)
 		return;
 
 
-
 	// this part of the code checks for nearby enemies and does focus fire/maneuvering
 	if ((frameNr % frameSpread) == ((groupID * 4) % frameSpread)) {
-		this->isShooting = false;
+		isShooting = false;
 
 		// get all enemies within attack range
-		float range = this->highestAttackRange + 100.0f;
+		float range = highestAttackRange + 100.0f;
 		int numEnemies = ai->cheat->GetEnemyUnits(unitArray, groupPosition, range);
 
 		if (numEnemies > 0) {
 			// select one of the enemies
-			int enemySelected = -1;
-			float shortestDistanceFound = FLT_MAX;
-			float temp;
-
-			for (int i = 0; i < numEnemies; i++) {
-				// my range not considered in picking the closest one
-				// TODO: is it air? is it cloaked?
-				bool b1 = ((temp = groupPosition.distance2D(ai->cheat->GetUnitPos(unitArray[i]))) < shortestDistanceFound);
-				bool b2 = ai->cheat->GetUnitDef(unitArray[i]) != NULL;
-				bool b3 = CloakedFix(unitArray[i]);
-				bool b4 = ai->cheat->GetUnitDef(unitArray[i])->canfly;
-
-				if (b1 && b2 && b3 && !b4) {
-					enemySelected = i;
-					shortestDistanceFound = temp;
-				}
-			}
+			int enemySelected = SelectEnemy(numEnemies, groupPosition);
 
 			// for every unit, pathfind to enemy perifery (with personal range - 10) then
 			// if distance to that last point in the path is < 10 or cost is 0, attack
 
 			if (enemySelected != -1) {
-				float3 enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
-				assert(CloakedFix(unitArray[enemySelected]));
-				this->isShooting = true;
-
-				for (unsigned int i = 0; i < numUnits; i++) {
-					int unit = units[i];
-
-					// does our unit exist and is it not currently maneuvering?
-					if ((ai->cb->GetUnitDef(unit) != NULL) && (ai->MyUnits[unit]->maneuverCounter-- <= 0)) {
-						// TODO: add a routine finding the best(not just closest) target, but for now just fire away
-						// TODO: some cases, force fire on position
-						// TODO: add canattack
-						ai->MyUnits[unit]->Attack(unitArray[enemySelected]);
-
-						// TODO: this should be the max range of the weapon the unit has with the
-						// lowest range assuming you want to rush in with the heavy stuff, that is
-						assert(range >= ai->cb->GetUnitMaxRange(unit));
-
-						// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max
-						// range if target is too close, EXCEPT FOR FLAMETHROWER-EQUIPPED units
-						float3 myPos = ai->cb->GetUnitPos(unit);
-						float myRange = this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unit));
-
-						bool b5 = ai->cb->GetUnitDef(unit)->canfly;
-						bool b6 = myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25);
-						bool b7 = (myRange - UNIT_MIN_MANEUVER_RANGE_DELTA) > myPos.distance2D(enemyPos);
-
-						// is it air, or air that's landed
-						if (!b5 || b6 && b7) {
-							bool debug1 = true;
-							bool debug2 = false;
-
-							vector<float3> tempPath;
-
-							// 1. don't need a path, just a position
-							// 2. should avoid other immediate friendly units and/or immediate enemy units + radius
-							// maybe include the height parameter in the search? probably not possible
-							// TODO: OBS doesn't this mean pathing might happen every second? outer limit should be more harsh than inner
-							float3 unitPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
-							float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &unitPos);
-
-							if (tempPath.size() > 0) {
-								float3 moveHere = tempPath.back();
-								dist = myPos.distance2D(moveHere);
-
-								// TODO: penetrators are now broken
-								// is the position between the proposed destination and the
-								// enemy higher than the average of mine and his height?
-								float v1 = ((moveHere.y + enemyPos.y) / 2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP;
-								float v2 = ai->cb->GetElevation((moveHere.x + enemyPos.x) / 2, (moveHere.z + enemyPos.z) / 2);
-								bool losHack = v1 > v2;
-
-								// assume the pathfinder returns correct Y values
-								// REMEMBER that this will suck for planes
-								if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE * myRange), float(UNIT_MIN_MANEUVER_DISTANCE)) && losHack) {
-									debug2 = true;
-									ai->MyUnits[unit]->maneuverCounter = int(ceilf(max((float) UNIT_MIN_MANEUVER_TIME / frameSpread, (dist / ai->MyUnits[unit]->def()->speed))));
-									ai->MyUnits[unit]->Move(moveHere);
-								}
-							}
-							if (debug1 && !debug2) {
-								// pathfinder run but path not used?
-							}
-						}
-						else if (!ai->cb->GetUnitDef(unit)->canfly || myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25)) {
-							// this unit is an air unit
-						}
-					}
-					else {
-						// OUR unit is dead?
-					}
-				}
+				AttackEnemy(enemySelected, numUnits, range, frameSpread);
 			}
 		}
 	}
@@ -518,14 +432,121 @@ void CAttackGroup::Update() {
 
 
 
+
+int CAttackGroup::SelectEnemy(int numEnemies, const float3& groupPos) {
+	int enemySelected = -1;
+	float shortestDistanceFound = FLT_MAX;
+	float temp;
+
+	for (int i = 0; i < numEnemies; i++) {
+		// my range not considered in picking the closest one
+		// TODO: is it air? is it cloaked?
+		bool b1 = ((temp = groupPos.distance2D(ai->cheat->GetUnitPos(unitArray[i]))) < shortestDistanceFound);
+		bool b2 = (ai->cheat->GetUnitDef(unitArray[i]) != NULL);
+		bool b3 = CloakedFix(unitArray[i]);
+		bool b4 = ai->cheat->GetUnitDef(unitArray[i])->canfly;
+
+		if (b1 && b2 && b3 && !b4) {
+			enemySelected = i;
+			shortestDistanceFound = temp;
+		}
+	}
+
+	return enemySelected;
+}
+
+
+void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int frameSpread) {
+	float3 enemyPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
+	assert(CloakedFix(unitArray[enemySelected]));
+	isShooting = true;
+
+	for (unsigned int i = 0; i < numUnits; i++) {
+		int unit = units[i];
+
+		// does our unit exist and is it not currently maneuvering?
+		if ((ai->cb->GetUnitDef(unit) != NULL) && (ai->MyUnits[unit]->maneuverCounter-- <= 0)) {
+			// TODO: add a routine finding the best (not just closest) target
+			// TODO: some cases, force fire on position
+			// TODO: add canattack
+			ai->MyUnits[unit]->Attack(unitArray[enemySelected]);
+
+			// TODO: this should be the max range of the weapon the unit has with the
+			// lowest range assuming you want to rush in with the heavy stuff, that is
+			assert(range >= ai->cb->GetUnitMaxRange(unit));
+
+			// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max
+			// range if target is too close, EXCEPT FOR FLAMETHROWER-EQUIPPED units
+			float3 myPos = ai->cb->GetUnitPos(unit);
+			float myRange = ai->ut->GetMaxRange(ai->cb->GetUnitDef(unit));
+
+			bool b5 = ai->cb->GetUnitDef(unit)->canfly;
+			bool b6 = myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25);
+			bool b7 = (myRange - UNIT_MIN_MANEUVER_RANGE_DELTA) > myPos.distance2D(enemyPos);
+
+			// is it air, or air that's landed
+			if (!b5 || (b6 && b7)) {
+				bool debug1 = true;
+				bool debug2 = false;
+
+				vector<float3> tempPath;
+
+				// 1. don't need a path, just a position
+				// 2. should avoid other immediate friendly units and/or immediate enemy units + radius
+				// maybe include the height parameter in the search? probably not possible
+				// doesn't this mean pathing might happen every second? outer limit should be more harsh than inner
+				float3 unitPos = ai->cheat->GetUnitPos(unitArray[enemySelected]);
+				float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &unitPos);
+
+				if (tempPath.size() > 0) {
+					float3 moveHere = tempPath.back();
+					dist = myPos.distance2D(moveHere);
+
+					// TODO: penetrators are now broken
+					// is the position between the proposed destination and the
+					// enemy higher than the average of mine and his height?
+					float v1 = ((moveHere.y + enemyPos.y) / 2.0f) + UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP;
+					float v2 = ai->cb->GetElevation((moveHere.x + enemyPos.x) / 2, (moveHere.z + enemyPos.z) / 2);
+					bool losHack = v1 > v2;
+					float a = (float) UNIT_MIN_MANEUVER_TIME / frameSpread;
+					float b = (dist / ai->MyUnits[unit]->def()->speed);
+					float c = ceilf(max(a, b));
+
+					// assume the pathfinder returns correct Y values
+					// REMEMBER that this will suck for planes
+					if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE * myRange), float(UNIT_MIN_MANEUVER_DISTANCE)) && losHack) {
+						debug2 = true;
+						ai->MyUnits[unit]->maneuverCounter = int(c);
+						ai->MyUnits[unit]->Move(moveHere);
+					}
+				}
+				if (debug1 && !debug2) {
+					// pathfinder run but path not used?
+				}
+			}
+			else if (!ai->cb->GetUnitDef(unit)->canfly || myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25)) {
+				// this unit is an air unit
+			}
+		}
+		else {
+			// OUR unit is dead?
+		}
+	}
+}
+
+
+
+
+
+
 // give move orders to units along previously generated pathToTarget
 void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 	const int maxStepsAhead = 8;
 	int pathMaxIndex = (int) pathToTarget.size() - 1;
-	int step1 = min(this->pathIterator + maxStepsAhead / 2, pathMaxIndex);
-	int step2 = min(this->pathIterator + maxStepsAhead, pathMaxIndex);
-	float3 moveToHereFirst = this->pathToTarget[step1];
-	float3 moveToHere = this->pathToTarget[step2];
+	int step1 = min(pathIterator + maxStepsAhead / 2, pathMaxIndex);
+	int step2 = min(pathIterator + maxStepsAhead, pathMaxIndex);
+	float3 moveToHereFirst = pathToTarget[step1];
+	float3 moveToHere = pathToTarget[step2];
 
 	// if we aren't there yet
 	if (groupPosition.distance2D(pathToTarget[pathMaxIndex]) > GROUP_DESTINATION_SLACK) {

@@ -617,14 +617,14 @@ int CAttackHandler::PickNukeSiloTarget(std::vector<std::pair<int, float> >& pote
 }
 
 
-bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
+inline bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, float>& r) {
 	return (l.second > r.second);
 }
 
 // sort all enemy targets in decreasing order by unit value
 void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
 	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
-	float minTargetValue = 100.0f;
+	float minTargetValue = 500.0f;
 
 	std::vector<std::pair<int, float> > staticTargets;
 	std::vector<std::pair<int, float> > mobileTargets;
