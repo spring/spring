@@ -34,7 +34,6 @@ bool CUNIT::isHub(void) {
 }
 
 const UnitDef* CUNIT::def() {
-	// KLOOTNOTE: returns 0 for EE factories?
 	return ai->cb->GetUnitDef(myid);
 }
 
@@ -193,12 +192,12 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	int facing = GetBestBuildFacing(hubPos);
 
 	// CPU usage reduction hack, force
-	// hubs to stay idle if the area
-	// around them is too crowded
-	int units[512];
-	int numFriendlies = ai->cb->GetFriendlyUnits(units, hubPos, maxRadius);
+	// a hub to stay idle if the area
+	// around it is too crowded
+	int friends[MAXUNITS];
+	int numFriends = ai->cb->GetFriendlyUnits(friends, hubPos, maxRadius);
 
-	if (numFriendlies > 16)
+	if (numFriends > 16)
 		return false;
 
 	// note: this can still go wrong if there is another

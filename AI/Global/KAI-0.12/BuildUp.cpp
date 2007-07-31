@@ -128,7 +128,7 @@ void CBuildUp::Buildup() {
 
 					bool eOverflow = (eStorage / (eIncome + 0.01) < STORAGETIME);
 					bool eExcess = (eIncome > (eUsage * 1.5));
-					// number of buildings supported by mod, not how many currently built
+					// number of buildings in unit-table, not how many currently built
 					int buildableEStorage = ai->ut->energy_storages->size();
 					int buildableMMakers = ai->ut->metal_makers->size();
 
@@ -264,11 +264,7 @@ void CBuildUp::FactoryCycle(void) {
 	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 
 	for (int i = 0; i < numIdleFactories; i++) {
-		// pick the first idle factory we have
-		// (note: if we don't give a build order
-		// or the order fails somehow then this
-		// will keep picking the same one each
-		// iteration)
+		// pick the i-th idle factory we have
 		int producedCat = 0;
 		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
 		bool isHub = (ai->MyUnits[factoryUnitID]->isHub());
