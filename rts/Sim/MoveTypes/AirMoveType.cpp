@@ -309,36 +309,51 @@ void CAirMoveType::Update(void)
 
 EndNormalControl:
 
-	if(pos!=oldpos){
-		oldpos=pos;
-		if(aircraftState==AIRCRAFT_FLYING || aircraftState==AIRCRAFT_CRASHING){
-			vector<CUnit*> nearUnits=qf->GetUnitsExact(pos,owner->radius+6);
+	if (pos != oldpos) {
+		oldpos = pos;
+
+		if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING) {
+			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 			vector<CUnit*>::iterator ui;
-			for(ui=nearUnits.begin();ui!=nearUnits.end();++ui){
-				float sqDist=(pos-(*ui)->pos).SqLength();
-				float totRad=owner->radius+(*ui)->radius;
-				if(sqDist<totRad*totRad && sqDist!=0){
-					float dist=sqrt(sqDist);
-					float3 dif=pos-(*ui)->pos;
-					dif/=dist;
-					if((*ui)->immobile){
-						pos-=dif*(dist-totRad);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;	
-						owner->speed*=0.99f;
-						float damage=(((*ui)->speed-owner->speed)*0.1f).SqLength();
-						owner->DoDamage(DamageArray()*damage,0,ZeroVector);
-						(*ui)->DoDamage(DamageArray()*damage,0,ZeroVector);
+
+			for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+				float sqDist = (pos - (*ui)->pos).SqLength();
+				float totRad = owner->radius + (*ui)->radius;
+
+				if (sqDist < totRad * totRad && sqDist != 0) {
+					float dist = sqrt(sqDist);
+					float3 dif = pos - (*ui)->pos;
+					dif /= dist;
+
+					if ((*ui)->immobile) {
+						pos -= dif * (dist - totRad);
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->speed *= 0.99f;
+						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
+						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
+						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
+
+						if (owner->crashing) {
+							// if our collision sphere overlaps with that
+							// of a building and we're crashing, die right
+							// now rather than waiting until we're close
+							// enough to the ground (which may never happen
+							// if eg. we're going down over a crowded field
+							// of windmills due to col-det)
+							owner->KillUnit(true, false, 0);
+							return;
+						}
 					} else {
-						float part=owner->mass/(owner->mass+(*ui)->mass);
-						pos-=dif*(dist-totRad)*(1-part);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;	
-						CUnit* u=(CUnit*)(*ui);
-						u->pos+=dif*(dist-totRad)*(part);
-						u->midPos=u->pos+u->frontdir*u->relMidPos.z + u->updir*u->relMidPos.y + u->rightdir*u->relMidPos.x;	
-						float damage=(((*ui)->speed-owner->speed)*0.1f).SqLength();
-						owner->DoDamage(DamageArray()*damage,0,ZeroVector);
-						(*ui)->DoDamage(DamageArray()*damage,0,ZeroVector);
-						owner->speed*=0.99f;
+						float part = owner->mass / (owner->mass + (*ui)->mass);
+						pos -= dif * (dist - totRad) * (1 - part);
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						CUnit* u = (CUnit*)(*ui);
+						u->pos += dif * (dist - totRad) * (part);
+						u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
+						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
+						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
+						owner->speed *= 0.99f;
 					}
 				}
 			}
