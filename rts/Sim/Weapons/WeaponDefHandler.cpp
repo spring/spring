@@ -327,9 +327,12 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 
 	std::string hmod = sunparser->SGetValueDef("", weaponname+"\\heightmod");
 	if (hmod == "") {
-		weaponDefs[id].heightmod = 0.2f;
 		if(weaponDefs[id].type == "Cannon")
 			weaponDefs[id].heightmod = 0.8f;
+		else if (weaponDefs[id].type == "BeamLaser")
+			weaponDefs[id].heightmod = 1.0f;
+		else
+			weaponDefs[id].heightmod = 0.2f;
 	} else {
 		weaponDefs[id].heightmod = atof(hmod.c_str());
 	}
