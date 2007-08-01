@@ -537,7 +537,6 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 
 
 void CUnitTable::Init() {
-	ai->math->TimerStart();
 	numOfUnits = ai->cb->GetNumUnitDefs();
 
 	// one more than needed because 0 is dummy object (so
@@ -675,10 +674,6 @@ void CUnitTable::Init() {
 			}
 		}
 	}
-
-	char k[256];
-	sprintf(k, "UnitTable loaded in %fs", ai->math->TimerSecs());
-	ai->cb->SendTextMsg(k, 0);
 
 	// KLOOTNOTE: dump generated unit table to file
 	this->DebugPrint();

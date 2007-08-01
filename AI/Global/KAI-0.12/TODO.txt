@@ -12,9 +12,6 @@ these near k-means clusters?)
 stop depthcharge launchers being used as
 ground defenses (BA and derivatives)
 
-make flamethrower units attack from less
-than max range
-
 cloak commander (if possible) when enough
 energy?
 

@@ -2,9 +2,8 @@
 
 //using namespace std;
 
-CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width)
-{
-	this->ai=ai;
+CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width) {
+	this->ai = ai;
 	//MinMetalForSpot = 50;	// from 0-255, the minimum percentage of metal a spot needs to have
 							//from the maximum to be saved. Prevents crappier spots in between taken spaces.
 							//They are still perfectly valid and will generate metal mind you!
@@ -16,13 +15,12 @@ CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width)
 	int cacheWidtht = (width + 1) / CACHEFACTOR;
 	int totalCacheCells = cacheHeight * cacheWidtht;
 	cachePoints = new CachePoint[totalCacheCells];
-	
-	for(int i = 0; i < totalCacheCells; i++)
-	{
+
+	for (int i = 0; i < totalCacheCells; i++) {
 		cachePoints[i].isValid = false;
 		cachePoints[i].isMasked = false;
 	}
-	
+
 	//MexArrayB = new unsigned char [TotalCells];
 	//MexArrayC = new unsigned char [TotalCells]; //used for drawing the TGA, not really needed with a couple of changes
 	TempAverage = new float [TotalCells];
@@ -34,8 +32,7 @@ CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width)
 	//L("SpotFinder class");
 }
 
-CSpotFinder::~CSpotFinder()
-{
+CSpotFinder::~CSpotFinder() {
 	//delete [] MexArrayB;
 	//delete [] MexArrayC;
 	delete [] TempAverage;
@@ -428,399 +425,103 @@ void CSpotFinder::UpdateSumMapArea(int cacheX, int cacheY)
 
 
 /*
-Updates the given spot, based on that the values on, and around, that point have changed.
-Radius have the same resolution as the map given to SpotFinder.
-Dont affect the current radius of SumMap.
-This update is not delayed (so dont call more than needed), unless the SumMap is already unvalid.
-
+ * updates the given spot, based on the changed values on and around that point
+ * radius has the same resolution as the map given to SpotFinder
+ * does not affect the current radius of SumMap
+ * update is not delayed (so do not call more than needed), unless SumMap is already invalid
 */
-void CSpotFinder::UpdateSumMap(int coordx, int coordy, int clearRadius)
-{
-	if(!isValid)
+void CSpotFinder::UpdateSumMap(int coordx, int coordy, int clearRadius) {
+	if (!isValid)
 		return;
-	haveTheBestSpotReady = false; // TODO: this is not needed all the time
-	
+
+	// TODO: this is not needed all the time
+	haveTheBestSpotReady = false;
+
 	int XtractorRadius = radius;
-//	int DoubleRadius = XtractorRadius * 2;
-	//int SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
-	//int DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above
-	
-	// Time stuff:
-	
 	int clearRealRadius = clearRadius + radius +1;
-	// Redo the whole averaging process around the picked spot so other spots can be found around it
-	// TODO: fix it so that it dont work as a box update
-	for (int y = coordy - clearRealRadius; y <= coordy + clearRealRadius; y++)
-	{
-		if(y >=0 && y < MapHeight)
-		{
-			for (int x = coordx - clearRealRadius; x <= coordx + clearRealRadius; x++)
-			{						
-				if(x >=0 && x < MapWidth)
-				{
-					//double TotalMetal = 0;
+
+	// redo the whole averaging process around the picked
+	// spot so other spots can be found around it
+	// TODO: fix it so that it does not work as a box update
+
+	for (int y = coordy - clearRealRadius; y <= coordy + clearRealRadius; y++) {
+		if (y >=0 && y < MapHeight) {
+			for (int x = coordx - clearRealRadius; x <= coordx + clearRealRadius; x++) {
+				if (x >=0 && x < MapWidth) {
 					float TotalMetal = 0;
-					if(x == 0 && y == 0) // Comment out for debug
-						for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-							if (sy >= 0 && sy < MapHeight){
-								for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
-									if (sx >= 0 && sx < MapWidth){
-										TotalMetal += MexArrayA[sy * MapWidth + sx]; //get the metal from all pixels around the extractor radius  
+
+					if (x == 0 && y == 0) {
+						for (int sy = y - XtractorRadius, a = 0; sy <= y + XtractorRadius; sy++, a++) {
+							if (sy >= 0 && sy < MapHeight) {
+								for (int sx = x - xend[a]; sx <= x + xend[a]; sx++) {
+									if (sx >= 0 && sx < MapWidth) {
+ 										//get the metal from all pixels around the extractor radius
+										TotalMetal += MexArrayA[sy * MapWidth + sx];
 									}
-								} 
+								}
 							}
 						}
+					}
 
-					// Quick calc test:
-					if(x > 0){
-						TotalMetal = TempAverage[y * MapWidth + x -1];
-						for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-							if (sy >= 0 && sy < MapHeight){
-								int addX = x+xend[a];
-								int remX = x-xend[a] -1;
-								if(addX < MapWidth)
+					if (x > 0) {
+						TotalMetal = TempAverage[y * MapWidth + x - 1];
+
+						for (int sy = y - XtractorRadius, a = 0; sy <= y + XtractorRadius; sy++, a++) {
+							if (sy >= 0 && sy < MapHeight) {
+								int addX = x + xend[a];
+								int remX = x - xend[a] - 1;
+
+								if (addX < MapWidth)
 									TotalMetal += MexArrayA[sy * MapWidth + addX];
-								if(remX >= 0)
+								if (remX >= 0)
 									TotalMetal -= MexArrayA[sy * MapWidth + remX];
 							}
 						}
-					} 
-					else if(y > 0){
+					}
+					else if (y > 0) {
 						// x == 0 here
-						TotalMetal = TempAverage[(y-1) * MapWidth];
-						// Remove the top half:
+						TotalMetal = TempAverage[(y - 1) * MapWidth];
+						// remove the top half
 						int a = XtractorRadius;
-						for (int sx=0;sx<=XtractorRadius;sx++,a++){
-							if (sx < MapWidth){
-								int remY = y-xend[a] -1;
-								if(remY >= 0)
+
+						for (int sx = 0; sx <= XtractorRadius; sx++, a++) {
+							if (sx < MapWidth) {
+								int remY = y - xend[a] - 1;
+
+								if (remY >= 0)
 									TotalMetal -= MexArrayA[remY * MapWidth + sx];
 							}
 						}
-						// Add the bottom half:
+						// add the bottom half
 						a = XtractorRadius;
-						for (int sx=0;sx<=XtractorRadius;sx++,a++){
-							if (sx < MapWidth){
-								int addY = y+xend[a];
-								if(addY < MapHeight)
+						for (int sx = 0; sx <= XtractorRadius; sx++, a++) {
+							if (sx < MapWidth) {
+								int addY = y + xend[a];
+								if (addY < MapHeight)
 									TotalMetal += MexArrayA[addY * MapWidth + sx];
 							}
 						}
 					}
 					TempAverage[y * MapWidth + x] = TotalMetal;
-					//MexArrayB[y * MapWidth + x] = TotalMetal * 255 / MaxMetal; //set that spots metal amount 
-					// end
+ 					//set that spot's metal amount
+					//MexArrayB[y * MapWidth + x] = TotalMetal * 255 / MaxMetal;
 				}
 			}
 		}
 	}
-
-
 }
 
-/*
-void CSpotFinder::GetMetalPoints()
-{		
-	// Time stuff:
-	ai->math->TimerStart();
 
-	int* xend = new int[DoubleRadius+1]; 
-	for (int a=0;a<DoubleRadius+1;a++){ 
-		float z=a-XtractorRadius;
-		float floatsqrradius = SquareRadius;
-		xend[a]=sqrt(floatsqrradius-z*z);
-	}
-	
-	// Now work out how much metal each spot can make by adding up the metal from nearby spots
-	for (int y = 0; y < MapHeight; y++){
-		for (int x = 0; x < MapWidth; x++){
-			TotalMetal = 0;			
-			if(x == 0 && y == 0) // First Spot needs full calculation
-			for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-				if (sy >= 0 && sy < MapHeight){
-					for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
-						if (sx >= 0 && sx < MapWidth){
-							TotalMetal += MexArrayA[sy * MapWidth + sx]; //get the metal from all pixels around the extractor radius  
-						}
-					} 
-				}
-			}
-			// Quick calc test:		
-			if(x > 0)
-			{
-				TotalMetal = TempAverage[y * MapWidth + x -1];
-				for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-					if (sy >= 0 && sy < MapHeight){
-						int addX = x+xend[a];
-						int remX = x-xend[a] -1;
-						if(addX < MapWidth)
-							TotalMetal += MexArrayA[sy * MapWidth + addX];
-						if(remX >= 0)
-							TotalMetal -= MexArrayA[sy * MapWidth + remX];
-					}
-				}
-			} else if(y > 0){
-				// x == 0 here
-				TotalMetal = TempAverage[(y-1) * MapWidth];
-				// Remove the top half:
-				int a = XtractorRadius;
-				for (int sx=0;sx<=XtractorRadius;sx++,a++){
-					if (sx < MapWidth){
-						int remY = y-xend[a] -1;
-						if(remY >= 0)
-							TotalMetal -= MexArrayA[remY * MapWidth + sx];
-					}
-				}
-				// Add the bottom half:
-				a = XtractorRadius;
-				for (int sx=0;sx<=XtractorRadius;sx++,a++){
-					if (sx < MapWidth){
-						int addY = y+xend[a];
-						if(addY < MapHeight)
-							TotalMetal += MexArrayA[addY * MapWidth + sx];
-					}
-				}
-
-				TotalMetal = TotalMetal; // Comment out for debug
-			}
-			TempAverage[y * MapWidth + x] = TotalMetal; //set that spots metal making ability (divide by cells to values are small)
-			if (MaxMetal < TotalMetal)
-				MaxMetal = TotalMetal;  //find the spot with the highest metal to set as the map's max
-		}
-	}
-	// Make a list for the distribution of values
-	int * valueDist = new int[256];
-	for (int i = 0; i < 256; i++){ // Clear the array (useless?)
-		valueDist[i] = 0;
-	}
-
-	for (int i = 0; i < TotalCells; i++){ // this will get the total metal a mex placed at each spot would make
-		MexArrayB[i] = TempAverage[i] * 255 / MaxMetal;  //scale the metal so any map will have values 0-255, no matter how much metal it has
-		MexArrayC[i] = 0; // clear out the array since its never been used.
-		int value = MexArrayB[i];
-		valueDist[value]++;
-	}
-	
-	// Find the current best value
-	int bestValue = 0;
-	int numberOfValues = 0;
-	int usedSpots = 0;
-	for (int i = 255; i >= 0; i--){
-		if(valueDist[i] != 0){
-			bestValue = i;
-			numberOfValues = valueDist[i];
-			break;
-		}
-	}
-
-	// Make a list of the indexes of the best spots
-	if(numberOfValues > 256) // Make sure that the list wont be too big
-		numberOfValues = 256;
-	int *bestSpotList = new int[numberOfValues];	
-	for (int i = 0; i < TotalCells; i++){			
-		if (MexArrayB[i] == bestValue){
-			// Add the index of this spot to the list.
-			bestSpotList[usedSpots] = i;
-			usedSpots++;
-			if(usedSpots == numberOfValues){
-				// The list is filled, stop the loop.
-				usedSpots = 0;
-				break;
-			}
-		}
-	}
-
-	int printDebug1 = 100;
-	for (int a = 0; a < MaxSpots; a++){	
-		if(!Stopme){
-			TempMetal = 0; //reset tempmetal so it can find new spots
-			// Take the first spot
-			int speedTempMetal_x;
-			int speedTempMetal_y;
-			int speedTempMetal = 0;
-			bool found = false;
-			while(!found){				
-				if(usedSpots == numberOfValues){
-					// The list is empty now, refill it:
-					// Make a list of all the best spots:
-					for (int i = 0; i < 256; i++){ // Clear the array
-						valueDist[i] = 0;
-					}
-					// Find the metal distribution
-					for (int i = 0; i < TotalCells; i++){
-						int value = MexArrayB[i];
-						valueDist[value]++;
-					}
-					// Find the current best value
-					bestValue = 0;
-					numberOfValues = 0;
-					usedSpots = 0;
-					for (int i = 255; i >= 0; i--){
-						if(valueDist[i] != 0){
-							bestValue = i;
-							numberOfValues = valueDist[i];
-							break;
-						}
-					}
-					// Make a list of the indexes of the best spots
-					if(numberOfValues > 256) // Make sure that the list wont be too big
-						numberOfValues = 256;
-					delete[] bestSpotList;
-					bestSpotList = new int[numberOfValues];
-					
-					for (int i = 0; i < TotalCells; i++){			
-						if (MexArrayB[i] == bestValue){
-							// Add the index of this spot to the list.
-							bestSpotList[usedSpots] = i;
-							usedSpots++;
-							if(usedSpots == numberOfValues){
-								// The list is filled, stop the loop.
-								usedSpots = 0;
-								break;
-							}
-						}
-					}
-				}
-				// The list is not empty now.
-				int spotIndex = bestSpotList[usedSpots];
-				if(MexArrayB[spotIndex] == bestValue){
-					// The spot is still valid, so use it
-					speedTempMetal_x = spotIndex%MapWidth;
-					speedTempMetal_y = spotIndex/MapWidth;
-					speedTempMetal = bestValue;
-					found = true;
-				}
-				// Update the bestSpotList index
-				usedSpots++;
-			}			
-			coordx = speedTempMetal_x;
-			coordy = speedTempMetal_y;
-			TempMetal = speedTempMetal;
-		}
-		if (TempMetal < MinMetalForSpot)
-			Stopme = 1; // if the spots get too crappy it will stop running the loops to speed it all up
-
-		if (!Stopme){
-
-			BufferSpot.x=coordx * 16 + 8; // format metal coords to game-coords
-			BufferSpot.z=coordy * 16 + 8;
-			BufferSpot.y=TempMetal *ai->cb->GetMaxMetal() * MaxMetal / 255; //Gets the actual amount of metal an extractor can make
-			VectoredSpots.push_back(BufferSpot);
-			MexArrayC[coordy * MapWidth + coordx] = TempMetal; //plot TGA array (not necessary) for debug
-			NumSpotsFound += 1;
-			
-			// Small speedup of "wipes the metal around the spot so its not counted twice":
-			for (int sy=coordy-XtractorRadius,a=0;sy<=coordy+XtractorRadius;sy++,a++){
-				if (sy >= 0 && sy < MapHeight){
-					int clearXStart = coordx-xend[a];
-					int clearXEnd = coordx+xend[a];
-					if(clearXStart < 0)
-						clearXStart = 0;
-					if(clearXEnd >= MapWidth)
-						clearXEnd = MapWidth -1;
-					for(int xClear = clearXStart; xClear <= clearXEnd; xClear++){
-						MexArrayA[sy * MapWidth + xClear] = 0; //wipes the metal around the spot so its not counted twice
-						MexArrayB[sy * MapWidth + xClear] = 0;
-						TempAverage[sy * MapWidth + xClear] = 0;						
-					}
-				}
-			}
-
-			// Redo the whole averaging process around the picked spot so other spots can be found around it
-			for (int y = coordy - DoubleRadius; y <= coordy + DoubleRadius; y++)
-			{
-				if(y >=0 && y < MapHeight)
-				{
-					for (int x = coordx - DoubleRadius; x <= coordx + DoubleRadius; x++)
-					{						
-						if(x >=0 && x < MapWidth)
-						{
-							TotalMetal = 0;
-							if(x == 0 && y == 0) // Comment out for debug
-								for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-									if (sy >= 0 && sy < MapHeight){
-										for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
-											if (sx >= 0 && sx < MapWidth){
-												TotalMetal += MexArrayA[sy * MapWidth + sx]; //get the metal from all pixels around the extractor radius  
-											}
-										} 
-									}
-								}
-
-							// Quick calc test:
-							if(x > 0){
-								TotalMetal = TempAverage[y * MapWidth + x -1];
-								for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-									if (sy >= 0 && sy < MapHeight){
-										int addX = x+xend[a];
-										int remX = x-xend[a] -1;
-										if(addX < MapWidth)
-											TotalMetal += MexArrayA[sy * MapWidth + addX];
-										if(remX >= 0)
-											TotalMetal -= MexArrayA[sy * MapWidth + remX];
-									}
-								}
-							} 
-							else if(y > 0){
-								// x == 0 here
-								TotalMetal = TempAverage[(y-1) * MapWidth];
-								// Remove the top half:
-								int a = XtractorRadius;
-								for (int sx=0;sx<=XtractorRadius;sx++,a++){
-									if (sx < MapWidth){
-										int remY = y-xend[a] -1;
-										if(remY >= 0)
-											TotalMetal -= MexArrayA[remY * MapWidth + sx];
-									}
-								}
-								// Add the bottom half:
-								a = XtractorRadius;
-								for (int sx=0;sx<=XtractorRadius;sx++,a++){
-									if (sx < MapWidth){
-										int addY = y+xend[a];
-										if(addY < MapHeight)
-											TotalMetal += MexArrayA[addY * MapWidth + sx];
-									}
-								}
-							}
-							TempAverage[y * MapWidth + x] = TotalMetal;
-							MexArrayB[y * MapWidth + x] = TotalMetal * 255 / MaxMetal; //set that spots metal amount 
-							// end
-						}
-					}
-				}
-			}
-
-	
-
-
-		}
-	}
-	// Kill the lists:
-	delete[] bestSpotList;
-	delete[] valueDist;
-	delete[] xend;
-	if (NumSpotsFound > MaxSpots * 0.95){ // 0.95 used for for reliability, fucking with is bad juju
-		ai->cb->SendTextMsg("Metal Map Found",0);
-		NumSpotsFound = 0; //no point in saving spots if the map is a metalmap
-	}
-	//L("Time taken to generate spots: " << ai->math->TimerSecs() << " seconds.");
-	//ai->cb->SendTextMsg(c,0);
-	
-}
-*/
-
-// Test
 
 /*
-Call when the backing array have changed, and this change has not beed notified
-with UpdateSumMap().
+ * Call when the backing array have changed, and this
+ * change has not beed notified with UpdateSumMap().
 
-This will trigger a full remake of the SumMap, when it is requested again.
-(calling this will not update SumMap)
-*/
-void CSpotFinder::BackingArrayChanged()
-{
+ * This will trigger a full remake of the SumMap, when
+ * it is requested again. (calling this will not update
+ * SumMap)
+ */
+void CSpotFinder::BackingArrayChanged() {
 	haveTheBestSpotReady = false;
 	isValid = false;
 }
