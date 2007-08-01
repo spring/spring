@@ -481,7 +481,7 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 			float3 myPos = ai->cb->GetUnitPos(unit);
 			float maxRange = ai->ut->GetMaxRange(udef);
 			float losDiff = (maxRange - udef->losRadius);
-		//	float myRange = (maxRange + udef->losRadius) * 0.5f;
+		//	float myRange = (losDiff > 0.0f)? (maxRange + udef->losRadius) * 0.5f: maxRange;
 			float myRange = (losDiff > 0.0f)? maxRange * 0.75f: maxRange;
 
 			bool b5 = udef->canfly;

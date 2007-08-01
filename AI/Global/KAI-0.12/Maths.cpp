@@ -1,10 +1,10 @@
 #include "Maths.h"
 
 CMaths::CMaths(AIClasses* ai) {
-	this -> ai = ai;
+	this->ai = ai;
 
-	mapfloat3height = ai -> cb -> GetMapHeight() * MAPUNIT2POS;
-	mapfloat3width = ai -> cb -> GetMapWidth() * MAPUNIT2POS;
+	mapfloat3height = ai->cb->GetMapHeight() * MAPUNIT2POS;
+	mapfloat3width = ai->cb->GetMapWidth() * MAPUNIT2POS;
 
 	MTRandInt.seed(time(NULL));
 	MTRandFloat.seed(MTRandInt());
@@ -19,15 +19,15 @@ CMaths::~CMaths() {
 
 
 void CMaths::F3MapBound(float3* pos) {
-	if (pos -> x < 65)
-		pos -> x = 65;
-	else if (pos -> x > mapfloat3width - 65)
-		pos -> x = mapfloat3width - 65;
+	if (pos->x < 65)
+		pos->x = 65;
+	else if (pos->x > mapfloat3width - 65)
+		pos->x = mapfloat3width - 65;
 
-	if (pos -> z < 65)
-		pos -> z = 65;
-	else if (pos -> z > mapfloat3height - 65)
-		pos -> z = mapfloat3height - 65;
+	if (pos->z < 65)
+		pos->z = 65;
+	else if (pos->z > mapfloat3height - 65)
+		pos->z = mapfloat3height - 65;
 }
 
 float3 CMaths::F3Randomize(float3 pos, float radius) {
@@ -51,44 +51,46 @@ float3  CMaths::XY2F3(int x ,int y, int resolution) {
 	return testpos;
 }
 
-float CMaths::BuildMetalPerSecond(const UnitDef* builder,const UnitDef* built) {
-	if (builder -> buildSpeed) {
-		float buildtime = built -> buildTime / builder -> buildSpeed;
 
-		return ((built -> metalCost) / buildtime);
+float CMaths::BuildMetalPerSecond(const UnitDef* builder,const UnitDef* built) {
+	if (builder->buildSpeed) {
+		float buildtime = built->buildTime / builder->buildSpeed;
+
+		return ((built->metalCost) / buildtime);
 	}
 
-	ai -> cb -> SendTextMsg("MPS FAILED, unit has no buildspeed!", 0);
+	// MPS FAILED, unit has no buildspeed
 	return -1;
 }
 
 float CMaths::BuildEnergyPerSecond(const UnitDef* builder,const UnitDef* built) {
-	if (builder -> buildSpeed) {
-		float buildtime = built -> buildTime / builder -> buildSpeed;
+	if (builder->buildSpeed) {
+		float buildtime = built->buildTime / builder->buildSpeed;
 
-		return ((built -> energyCost) / buildtime);
+		return ((built->energyCost) / buildtime);
 	}
 
-	ai -> cb -> SendTextMsg("EPS FAILED, unit has no buildspeed!", 0);
+	// EPS FAILED, unit has no buildspeed
 	return -1;
 }
 
+
 float CMaths::BuildTime(const UnitDef* builder,const UnitDef* built) {
-	if (builder -> buildSpeed)
-		return ((built -> buildTime) / (builder -> buildSpeed));
+	if (builder->buildSpeed)
+		return ((built->buildTime) / (builder->buildSpeed));
 
 	return -1;
 }
 
 bool CMaths::FeasibleConstruction(const UnitDef* builder, const UnitDef* built, float MinMpc, float MinEpc) {
-	if (builder -> buildSpeed) {
-		float buildtime = (built -> buildTime) / (builder -> buildSpeed);
-		float Echange = ((ai -> cb -> GetEnergyIncome()) * ECONRATIO) - (ai -> cb -> GetEnergyUsage()) - (built -> energyCost / buildtime);
-		float ResultingRatio = (ai -> cb -> GetEnergy() + (Echange * buildtime)) / ai -> cb -> GetEnergyStorage();
+	if (builder->buildSpeed) {
+		float buildtime = (built->buildTime) / (builder->buildSpeed);
+		float Echange = ((ai->cb->GetEnergyIncome()) * ECONRATIO) - (ai->cb->GetEnergyUsage()) - (built->energyCost / buildtime);
+		float ResultingRatio = (ai->cb->GetEnergy() + (Echange * buildtime)) / ai->cb->GetEnergyStorage();
 
 		if (ResultingRatio > MinEpc) {
-			float Mchange = ai -> cb -> GetMetalIncome() * ECONRATIO - ai -> cb -> GetMetalUsage() - built -> metalCost / buildtime;
-			ResultingRatio = (ai -> cb -> GetMetal() + (Mchange * buildtime)) / (ai -> cb -> GetMetalStorage());
+			float Mchange = ai->cb->GetMetalIncome() * ECONRATIO - ai->cb->GetMetalUsage() - built->metalCost / buildtime;
+			ResultingRatio = (ai->cb->GetMetal() + (Mchange * buildtime)) / (ai->cb->GetMetalStorage());
 
 			if (ResultingRatio > MinMpc) {
 				return true;
@@ -100,10 +102,10 @@ bool CMaths::FeasibleConstruction(const UnitDef* builder, const UnitDef* built, 
 }
 
 bool CMaths::MFeasibleConstruction(const UnitDef* builder, const UnitDef* built, float MinMpc) {
-	if (builder -> buildSpeed) {
-		float buildtime = (built -> buildTime) / (builder -> buildSpeed);
-		float Mchange = ((ai -> cb -> GetMetalIncome()) * ECONRATIO) - (ai -> cb -> GetMetalUsage()) - (built -> metalCost / buildtime);
-		float ResultingRatio = (ai -> cb -> GetMetal()+(Mchange*buildtime)) / ai -> cb -> GetMetalStorage();
+	if (builder->buildSpeed) {
+		float buildtime = (built->buildTime) / (builder->buildSpeed);
+		float Mchange = ((ai->cb->GetMetalIncome()) * ECONRATIO) - (ai->cb->GetMetalUsage()) - (built->metalCost / buildtime);
+		float ResultingRatio = (ai->cb->GetMetal()+(Mchange*buildtime)) / ai->cb->GetMetalStorage();
 
 		if (ResultingRatio > MinMpc) {
 			return true;
@@ -114,10 +116,10 @@ bool CMaths::MFeasibleConstruction(const UnitDef* builder, const UnitDef* built,
 }
 
 bool CMaths::EFeasibleConstruction(const UnitDef* builder, const UnitDef* built, float MinEpc) {
-	if (builder -> buildSpeed) {
-		float buildtime = (built -> buildTime) / (builder -> buildSpeed);
-		float Echange = ((ai -> cb -> GetEnergyIncome()) * ECONRATIO) - (ai -> cb -> GetEnergyUsage()) - (built -> energyCost / buildtime);
-		float ResultingRatio = (ai -> cb -> GetEnergy() + (Echange * buildtime)) / (ai -> cb -> GetEnergyStorage());
+	if (builder->buildSpeed) {
+		float buildtime = (built->buildTime) / (builder->buildSpeed);
+		float Echange = ((ai->cb->GetEnergyIncome()) * ECONRATIO) - (ai->cb->GetEnergyUsage()) - (built->energyCost / buildtime);
+		float ResultingRatio = (ai->cb->GetEnergy() + (Echange * buildtime)) / (ai->cb->GetEnergyStorage());
 
 		if (ResultingRatio > MinEpc) {
 			return true;
@@ -129,20 +131,20 @@ bool CMaths::EFeasibleConstruction(const UnitDef* builder, const UnitDef* built,
 
 
 float CMaths::ETA(int unit, float3 destination) {
-	float speed = ai -> cb -> GetUnitDef(unit) -> speed;
-	float distance = destination.distance2D(ai -> cb -> GetUnitPos(unit));
+	float speed = ai->cb->GetUnitDef(unit)->speed;
+	float distance = destination.distance2D(ai->cb->GetUnitPos(unit));
 
 	return (distance / speed * 2);
 }
 
 float CMaths::ETT(BuildTask bt) {
-	float percentdone = (ai -> cb -> GetUnitHealth(bt.id)) / (ai -> cb -> GetUnitMaxHealth(bt.id));
+	float percentdone = (ai->cb->GetUnitHealth(bt.id)) / (ai->cb->GetUnitMaxHealth(bt.id));
 	float buildpower = 0;
 	list<int> killbuilders;
 
 	for (list<int>::iterator i = bt.builders.begin(); i != bt.builders.end(); i++) {
-		if (ai -> cb -> GetUnitDef(*i))
-			buildpower += ai -> cb -> GetUnitDef(*i) -> buildSpeed;
+		if (ai->cb->GetUnitDef(*i))
+			buildpower += ai->cb->GetUnitDef(*i)->buildSpeed;
 		else
 			killbuilders.push_back(*i);
 	}
@@ -152,7 +154,7 @@ float CMaths::ETT(BuildTask bt) {
 	}
 
 	if (buildpower > 0) {
-		return ((ai -> cb -> GetUnitDef(bt.id) -> buildTime) / buildpower) * (1 - percentdone);
+		return ((ai->cb->GetUnitDef(bt.id)->buildTime) / buildpower) * (1 - percentdone);
 	}
 
 	// L("Error, buildpower <= 0");
@@ -161,11 +163,11 @@ float CMaths::ETT(BuildTask bt) {
 
 
 float CMaths::GetUnitCost(const UnitDef* unit) {
-	return ((unit -> metalCost * METAL2ENERGY) + (unit -> energyCost));
+	return ((unit->metalCost * METAL2ENERGY) + (unit->energyCost));
 }
 
 float CMaths::GetUnitCost(int unit) {
-	return (ai -> cb -> GetUnitDef(unit) -> metalCost * METAL2ENERGY) + (ai -> cb -> GetUnitDef(unit) -> energyCost);
+	return (ai->cb->GetUnitDef(unit)->metalCost * METAL2ENERGY) + (ai->cb->GetUnitDef(unit)->energyCost);
 }
 
 float CMaths::RandNormal(float m, float s, bool positiveonly) {

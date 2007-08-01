@@ -4,8 +4,6 @@
 
 #include "Include.h"
 
-const char AI_NAME[] = "KAI-0.12 Unofficial";
-
 class CAttackHandler;
 class CGlobalAI: public IGlobalAI {
 	public:

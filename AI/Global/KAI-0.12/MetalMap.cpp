@@ -2,7 +2,7 @@
 
 
 CMetalMap::CMetalMap(AIClasses* ai) {
-	this -> ai = ai;
+	this->ai = ai;
 
 	// from 0-255, the minimum percentage of metal a spot needs to have
 	// from the maximum to be saved, prevents crappier spots in between taken spaces
@@ -12,11 +12,11 @@ CMetalMap::CMetalMap(AIClasses* ai) {
 	MaxSpots = 10000;
 
 	// metal map has 1/2 resolution of normal map
-	MetalMapHeight = ai -> cb -> GetMapHeight() / 2;
-	MetalMapWidth = ai -> cb -> GetMapWidth() / 2;
+	MetalMapHeight = ai->cb->GetMapHeight() / 2;
+	MetalMapWidth = ai->cb->GetMapWidth() / 2;
 
 	TotalCells = MetalMapHeight * MetalMapWidth;
-	XtractorRadius = int(ai -> cb -> GetExtractorRadius() / 16);
+	XtractorRadius = int(ai->cb->GetExtractorRadius() / 16);
 	DoubleRadius = XtractorRadius * 2;
 	SquareRadius = XtractorRadius * XtractorRadius;
 	DoubleSquareRadius = DoubleRadius * DoubleRadius;
@@ -29,7 +29,6 @@ CMetalMap::CMetalMap(AIClasses* ai) {
 	TempAverage = new int [TotalCells];
 	TotalMetal = MaxMetal = NumSpotsFound = 0;
 	Stopme = false;
-	// L("Metal class logging works!");
 }
 
 CMetalMap::~CMetalMap() {
@@ -41,32 +40,30 @@ CMetalMap::~CMetalMap() {
 
 
 float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
-	float Tempscore = 0;
-	float MaxDivergence = 16;
+	float TempScore = 0.0f;
+	float MaxDivergence = 16.0f;
 	float distance;
 	float3 spotcoords = ERRORVECTOR;
 	float3 bestspot = ERRORVECTOR;
 
-	// L("Getting Metal spot. Ave threat = " << ai -> tm -> GetAverageThreat());
 	if (VectoredSpots.size()) {
 		int* temparray = new int [MAXUNITS];
 
 		for (unsigned int i = 0; i != VectoredSpots.size(); i++) {
-			spotcoords = ai -> cb -> ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);
+			spotcoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);
 
 			if (spotcoords.x != -1) {
-				distance = spotcoords.distance2D(ai -> cb -> GetUnitPos(builderid)) + 150;
-				float mythreat = ai -> tm -> ThreatAtThisPoint(VectoredSpots[i]);
-				// L("Spot number " << i << " Threat: " << mythreat);
+				distance = spotcoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
+				float mythreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
 				float spotscore = VectoredSpots[i].y / distance / (mythreat + 10);
 
-				bool b1 = Tempscore < spotscore;
-				bool b2 = ai -> cheat -> GetEnemyUnits(temparray, VectoredSpots[i], XtractorRadius);
-				bool b3 = mythreat <= (ai -> tm -> GetAverageThreat() * 1.5);
-				bool b4 = ai -> uh -> TaskPlanExist(spotcoords, extractor);
+				bool b1 = TempScore < spotscore;
+				bool b2 = ai->cheat->GetEnemyUnits(temparray, VectoredSpots[i], XtractorRadius);
+				bool b3 = mythreat <= (ai->tm->GetAverageThreat() * 1.5);
+				bool b4 = ai->uh->TaskPlanExist(spotcoords, extractor);
 
 				if (b1 && !b2 && b3 && !b4) {
-					Tempscore = spotscore;
+					TempScore = spotscore;
 					bestspot = spotcoords;
 					bestspot.y = VectoredSpots[i].y;
 				}
@@ -76,37 +73,32 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 		delete[] temparray;
 	}
 
-//	if (Tempscore == 0)
-//		L("No spot found: ");
-
+	// no spot found if TempScore is zero
 	return bestspot;
 }
 
 
 void CMetalMap::Init() {
 	// leave this line if you want to use this class in your AI
-	ai -> cb -> SendTextMsg("KAI Metal Class by Krogothe", 0);
+	ai->cb->SendTextMsg("KAI Metal Class by Krogothe", 0);
 
 	// if there's no available load file, create one and save it
 	if (!LoadMetalMap()) {
 		GetMetalPoints();
 		SaveMetalMap();
 
-		string mapname =  string("Metal - ") + ai -> cb -> GetMapName();
+		string mapname =  string("Metal - ") + ai->cb->GetMapName();
 		mapname.resize(mapname.size() - 4);
-		// ai -> debug -> MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
+		// ai->debug->MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
 	}
 
 	char k[256];
-	sprintf(k, "Metal Spots Found %i", NumSpotsFound);
-	ai -> cb -> SendTextMsg(k, 0);
+	sprintf(k, "Metal Spots Found: %i", NumSpotsFound);
+	ai->cb->SendTextMsg(k, 0);
 }
 
 
 void CMetalMap::GetMetalPoints() {
-	// time stuff
-	ai -> math -> TimerStart();
-
 	int* xend = new int[DoubleRadius + 1];
 
 	for (int a = 0; a < DoubleRadius + 1; a++) {
@@ -116,7 +108,7 @@ void CMetalMap::GetMetalPoints() {
 	}
 
 	// load up the metal values in each pixel
-	const unsigned char* metalMapArray = ai -> cb -> GetMetalMap();
+	const unsigned char* metalMapArray = ai->cb->GetMetalMap();
 	double TotalMetalDouble  = 0;
 
 	for (int i = 0; i < TotalCells; i++) {
@@ -132,7 +124,7 @@ void CMetalMap::GetMetalPoints() {
 		// the map doesn't have any metal, just stop
 		NumSpotsFound = 0;
 		delete[] xend;
-		//("Time taken to generate spots: " << ai -> math -> TimerSecs() << " seconds.");
+		//("Time taken to generate spots: " << ai->math->TimerSecs() << " seconds.");
 		return;
 	}
 
@@ -355,7 +347,7 @@ void CMetalMap::GetMetalPoints() {
 			BufferSpot.x = coordx * 16 + 8;
 			BufferSpot.z = coordy * 16 + 8;
 			// gets the actual amount of metal an extractor can make
-			BufferSpot.y = TempMetal * (ai -> cb -> GetMaxMetal()) * MaxMetal / 255;
+			BufferSpot.y = TempMetal * (ai->cb->GetMaxMetal()) * MaxMetal / 255;
 			VectoredSpots.push_back(BufferSpot);
 
 			// plot TGA array (not necessary) for debug
@@ -462,48 +454,40 @@ void CMetalMap::GetMetalPoints() {
 	delete[] xend;
 
 	// 0.95 used for for reliability
-	if (NumSpotsFound > MaxSpots * 0.95) {
-		ai -> cb -> SendTextMsg("Metal Map Found", 0);
-	}
-
-	// L("Time taken to generate spots: " << ai -> math -> TimerSecs() << " seconds.");
-	// ai -> cb -> SendTextMsg(c, 0);
+	// bool isMetalMap = (NumSpotsFound > MaxSpots * 0.95);
 }
 
 
 void CMetalMap::SaveMetalMap() {
-	string filename = string(METALFOLDER) + string(ai -> cb -> GetMapName());
+	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
 	filename.resize(filename.size() - 3);
 	filename += string("Metal");
 
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
-	ai -> cb -> GetValue(AIVAL_LOCATE_FILE_W, filename_buf);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename_buf);
 
 	FILE* save_file = fopen(filename_buf, "wb");
 	fwrite(&NumSpotsFound, sizeof(int), 1, save_file);
 
-	// L("Spots found: " << NumSpotsFound << " AverageMetal: " << AverageMetal);
 	fwrite(&AverageMetal, sizeof(float), 1, save_file);
 
 	for (int i = 0; i < NumSpotsFound; i++) {
-		// L("Loaded i: " << i << ", x; " << VectoredSpots[i].x << ", y; " << VectoredSpots[i].z << ", value: " << VectoredSpots[i].y);
 		fwrite(&VectoredSpots[i], sizeof(float3), 1, save_file);
 	}
 
 	fclose(save_file);
-	ai -> cb -> SendTextMsg("Metal Spots created and saved!", 0);
 }
 
 
 bool CMetalMap::LoadMetalMap() {
-	string filename = string(METALFOLDER) + string(ai -> cb -> GetMapName());
+	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
 	filename.resize(filename.size() - 3);
 	filename += string("Metal");
 
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
-	ai -> cb -> GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
 
 	FILE* load_file;
 
@@ -515,11 +499,9 @@ bool CMetalMap::LoadMetalMap() {
 
 		for (int i = 0; i < NumSpotsFound; i++) {
 			fread(&VectoredSpots[i], sizeof(float3), 1, load_file);
-			// L("Loaded i: " << i << ", x; " << VectoredSpots[i].x << ", y; " << VectoredSpots[i].z << ", value: " << VectoredSpots[i].y);
 		}
 
 		fclose(load_file);
-		ai -> cb -> SendTextMsg("Metal Spots loaded from file", 0);
 		return true;
 	}
 

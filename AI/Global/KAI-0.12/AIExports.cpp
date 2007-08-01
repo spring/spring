@@ -8,7 +8,7 @@ DLL_EXPORT int GetGlobalAiVersion() {
 }
 
 DLL_EXPORT void GetAiName(char* name) {
-	strcpy(name, AI_NAME);
+	strcpy(name, AI_VERSION);
 }
 
 DLL_EXPORT IGlobalAI* GetNewAI() {

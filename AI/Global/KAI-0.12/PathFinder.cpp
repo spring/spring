@@ -1,11 +1,11 @@
 #include "PathFinder.h"
 
 CPathFinder::CPathFinder(AIClasses* ai) {
-	this -> ai = ai;
+	this->ai = ai;
 	// 8 = speed, 2 = precision
 	resmodifier = THREATRES;
-	PathMapXSize = int(ai -> cb -> GetMapWidth() / resmodifier);
-	PathMapYSize = int(ai -> cb -> GetMapHeight() / resmodifier);
+	PathMapXSize = int(ai->cb->GetMapWidth() / resmodifier);
+	PathMapYSize = int(ai->cb->GetMapHeight() / resmodifier);
 	totalcells = PathMapXSize*PathMapYSize;
 	micropather = new MicroPather(this, ai, totalcells);
 	HeightMap = new float[totalcells];
@@ -33,7 +33,7 @@ void CPathFinder::Init() {
 	for (int x = 0; x < PathMapXSize; x++) {
 		for (int y = 0; y < PathMapYSize; y++) {
 			int index = y * PathMapXSize + x;
-			HeightMap[index] = *(ai -> cb -> GetHeightMap() + int(y * resmodifier * resmodifier * PathMapXSize + resmodifier * x));
+			HeightMap[index] = *(ai->cb->GetHeightMap() + int(y * resmodifier * resmodifier * PathMapXSize + resmodifier * x));
 
 			if (HeightMap[index] > 0)
 				AverageHeight += HeightMap[index];
@@ -82,23 +82,23 @@ void CPathFinder::Init() {
 	char k[50];
 
 	// L("Loading sidedata");
-	ai -> parser -> LoadVirtualFile("gamedata\\MOVEINFO.tdf");
+	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
 
 	// L("Starting Loop");
 	while(Valuestring != errorstring) {
 		// L("Run Number: " << NumOfMoveTypes);
 		sprintf(k, "%i", NumOfMoveTypes);
-		ai -> parser -> GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
+		ai->parser->GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
 		// L("Movetype: " << Valuestring);
 
 		if (Valuestring != errorstring) {
-			ai -> parser -> GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxWaterDepth"));
+			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxWaterDepth"));
 			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
 			// L("Max water depth: " << Valuestring);
-			ai -> parser -> GetDef(Valuestring, string("-10000"), string(sectionstring + k + "\\MinWaterDepth"));
+			ai->parser->GetDef(Valuestring, string("-10000"), string(sectionstring + k + "\\MinWaterDepth"));
 			minwaterdepths.push_back(atoi(Valuestring.c_str()));
 			// L("minwaterdepths: " << Valuestring);
-			ai -> parser -> GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxSlope"));
+			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxSlope"));
 			moveslopes.push_back(atoi(Valuestring.c_str()));
 			// L("moveslopes: " << Valuestring);
 			NumOfMoveTypes++;
@@ -158,11 +158,9 @@ void CPathFinder::Init() {
 
 
 void CPathFinder::CreateDefenseMatrix() {
-	// L("Starting pathing");
-	ai -> math -> TimerStart();
 	int enemycomms[16];
 	float3 enemyposes[16];
-	ai -> dm -> ChokeMapsByMovetype.resize(NumOfMoveTypes);
+	ai->dm->ChokeMapsByMovetype.resize(NumOfMoveTypes);
 
 	int Range = int(sqrtf(float(PathMapXSize * PathMapYSize)) / THREATRES / 3);
 	int squarerange = Range * Range;
@@ -183,24 +181,23 @@ void CPathFinder::CreateDefenseMatrix() {
 	}
 
 	for (int m = 0; m < 	NumOfMoveTypes;m++) {
-		int numberofenemyplayers = ai -> cheat -> GetEnemyUnits(enemycomms);
+		int numberofenemyplayers = ai->cheat->GetEnemyUnits(enemycomms);
 
 		for (int i = 0; i < numberofenemyplayers; i++) {
-			// L("Enemy comm: " << enemycomms[i]);
-			enemyposes[i] = ai -> cheat -> GetUnitPos(enemycomms[i]);
+			enemyposes[i] = ai->cheat->GetUnitPos(enemycomms[i]);
 		}
 
-		float3 mypos = ai -> cb -> GetUnitPos(ai -> uh -> AllUnitsByCat[CAT_BUILDER] -> front());
+		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER]->front());
 		int reruns = 35;
-		ai -> dm -> ChokeMapsByMovetype[m] = new float[totalcells];
+		ai->dm->ChokeMapsByMovetype[m] = new float[totalcells];
 		char k[10];
 		itoa(m, k, 10);
 
-		micropather -> SetMapData(MoveArrays[m], ai -> dm -> ChokeMapsByMovetype[m], PathMapXSize, PathMapYSize);
+		micropather->SetMapData(MoveArrays[m], ai->dm->ChokeMapsByMovetype[m], PathMapXSize, PathMapYSize);
 		double pathCostSum = 0;
 
 		for (int i = 0; i < totalcells; i++) {
-			ai -> dm -> ChokeMapsByMovetype[m][i] = 1;
+			ai->dm->ChokeMapsByMovetype[m][i] = 1;
 		}
 
 		int runcounter = 0;
@@ -210,7 +207,7 @@ void CPathFinder::CreateDefenseMatrix() {
 			for (int r = 0; r < reruns; r++) {
 				// L("reruns: " << r);
 				for (int startpos = 0; startpos < numberofenemyplayers; startpos++) {
-					if (micropather -> Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) == MicroPather::SOLVED) {
+					if (micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) == MicroPather::SOLVED) {
 						for (int i = 12; i < int(path.size() - 12); i++) {
 							if (i % 2) {
 								int x, y;
@@ -224,30 +221,24 @@ void CPathFinder::CreateDefenseMatrix() {
 											int actualy = y + myy;
 
 											if (actualy >= 0 && actualy < PathMapYSize){
-												ai -> dm -> ChokeMapsByMovetype[m][actualy * PathMapXSize + actualx] += costmask[(myy + Range) * maskwidth + (myx+Range)];
+												ai->dm->ChokeMapsByMovetype[m][actualy * PathMapXSize + actualx] += costmask[(myy + Range) * maskwidth + (myx+Range)];
 											}
 										}
 									}
 								}
 							}
 						}
+
 						runcounter++;
 					}
-					// L("Enemy Pos " << startpos << " Cost: " << totalcost);
+
 					pathCostSum += totalcost;
-					// L("Time Taken: " << clock() - timetaken);
 				}
 			}
-
-			// L("pathCostSum:  " << pathCostSum);
-			// L("paths calculated, resmodifier: " << resmodifier );
 		}
 	}
 
 	delete[] costmask;
-	char c[512];
-	sprintf(c, "Time Taken to create chokepoints: %f", ai -> math -> TimerSecs());
-	ai -> cb -> SendTextMsg(c, 0);
 }
 
 void CPathFinder::PrintData(string s) {
@@ -260,7 +251,7 @@ void CPathFinder::ClearPath() {
 }
 
 unsigned CPathFinder::Checksum() {
-	return micropather -> Checksum();
+	return micropather->Checksum();
 }
 
 
@@ -294,34 +285,26 @@ void* CPathFinder::Pos2Node(float3 pos) {
  * returns the path cost.
  */
 float CPathFinder::MakePath(vector<float3>* posPath, float3* startPos, float3* endPos, int radius) {
-	// L("Makepath radius Started");
-	ai -> math -> TimerStart();
+	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
 	int sx, sy, ex, ey;
-	ai -> math -> F3MapBound(startPos);
-	ai -> math -> F3MapBound(endPos);
-	ex = int(endPos -> x / (8 * resmodifier));
-	ey = int(endPos -> z / (8 * resmodifier));
-	sy = int(startPos -> z / (8 * resmodifier));
-	sx = int(startPos -> x / (8 * resmodifier));
+	ai->math->F3MapBound(startPos);
+	ai->math->F3MapBound(endPos);
+	ex = int(endPos->x / (8 * resmodifier));
+	ey = int(endPos->z / (8 * resmodifier));
+	sy = int(startPos->z / (8 * resmodifier));
+	sx = int(startPos->x / (8 * resmodifier));
 	radius /= int(8 * resmodifier);
 
-	// L("StartPos : " << startPos -> x << "," << startPos -> z << " End Pos: " << endPos -> x << "," << endPos -> z);
-	if (micropather -> FindBestPathToPointOnRadius(XY2Node(sx, sy), XY2Node(ex, ey), &path, &totalcost, radius) == MicroPather::SOLVED) {
-		// L("attack solution solved! Path size = " << path.size());
-		posPath -> reserve(path.size());
+	if (micropather->FindBestPathToPointOnRadius(XY2Node(sx, sy), XY2Node(ex, ey), &path, &totalcost, radius) == MicroPather::SOLVED) {
+		posPath->reserve(path.size());
 
 		for (unsigned i = 0; i < path.size(); i++) {
-			// L("adding path point");
 			float3 mypos = Node2Pos(path[i]);
-			mypos.y = ai -> cb -> GetElevation(mypos.x, mypos.z);
-			posPath -> push_back(mypos);
+			mypos.y = ai->cb->GetElevation(mypos.x, mypos.z);
+			posPath->push_back(mypos);
 		}
-	}
-	else {
-		// L("MakePath: path failed");
-		// ai -> cb -> SendTextMsg("ATTACK FAILED!", 0);
 	}
 
 	return totalcost;
@@ -329,9 +312,7 @@ float CPathFinder::MakePath(vector<float3>* posPath, float3* startPos, float3* e
 
 
 float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float myMaxRange, vector<float3>* possibleTargets) {
-	// L("FindBestPath Started");
-	// L("startPos: x: " << startPos -> x << ", z: " << startPos -> z);
-	ai -> math -> TimerStart();
+	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
 
@@ -341,7 +322,7 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 	int offsetSize = 0;
 
 	endNodes.resize(0);
-	endNodes.reserve(possibleTargets -> size() * radius * 10);
+	endNodes.reserve(possibleTargets->size() * radius * 10);
 
 	pair<int, int>* offsets;
 
@@ -404,13 +385,13 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		delete[] xend;
 	}
 
-	for (unsigned i = 0; i < possibleTargets -> size(); i++) {
+	for (unsigned i = 0; i < possibleTargets->size(); i++) {
 		float3 f = (*possibleTargets)[i];
 		int x, y;
 		// L("Added: x: " << f.x << ", z: " << f.z);
 		// TODO: make the circle here
 		
-		ai -> math -> F3MapBound(&f);
+		ai->math->F3MapBound(&f);
 		void * node = Pos2Node(f);
 		Node2XY(node, &x, &y);
 
@@ -423,18 +404,18 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		}
 	}
 
-	ai -> math -> F3MapBound(startPos);
+	ai->math->F3MapBound(startPos);
 	delete[] offsets;
 	
-	if (micropather -> FindBestPathToAnyGivenPoint(Pos2Node(*startPos), endNodes, &path, &totalcost) == MicroPather::SOLVED) {
-        posPath -> reserve(path.size());
+	if (micropather->FindBestPathToAnyGivenPoint(Pos2Node(*startPos), endNodes, &path, &totalcost) == MicroPather::SOLVED) {
+        posPath->reserve(path.size());
 
 		for (unsigned i = 0; i < path.size(); i++) {
 			int x, y;
 			Node2XY(path[i], &x, &y);
 			float3 mypos = Node2Pos(path[i]);
-			mypos.y = ai -> cb -> GetElevation(mypos.x, mypos.z);
-			posPath -> push_back(mypos);
+			mypos.y = ai->cb->GetElevation(mypos.x, mypos.z);
+			posPath->push_back(mypos);
 		}
 	}
 
@@ -446,5 +427,5 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 float CPathFinder::FindBestPathToRadius(vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target) {
 	vector<float3> foo;
 	foo.push_back(*target);
-	return (this -> FindBestPath(posPath, startPos, radiusAroundTarget, &foo));
+	return (this->FindBestPath(posPath, startPos, radiusAroundTarget, &foo));
 }

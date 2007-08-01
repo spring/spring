@@ -267,13 +267,11 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->ah				= new CAttackHandler(ai);
 	ai->dgunController	= new DGunController(ai->cb);
 
-	L("All Class pointers initialized");
-
 	ai->mm->Init();
 	ai->ut->Init();
 	ai->pather->Init();
 
-	L("InitAI() complete");
+	ai->cb->SendTextMsg(AI_VERSION " initialized succesfully!", 0);
 }
 
 
