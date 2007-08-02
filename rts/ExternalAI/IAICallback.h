@@ -11,12 +11,14 @@ struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
 class CCommandQueue;
+
 // GetProperty() constants
                             // Data buffer will be filled with this:
-#define AIVAL_UNITDEF					1  // const UnitDef*
-#define AIVAL_CURRENT_FUEL				2  // float
-#define AIVAL_STOCKPILED				3  // int
-#define AIVAL_STOCKPILE_QUED			4  // int
+#define AIVAL_UNITDEF					1 // const UnitDef*
+#define AIVAL_CURRENT_FUEL				2 // float
+#define AIVAL_STOCKPILED				3 // int
+#define AIVAL_STOCKPILE_QUED			4 // int
+#define AIVAL_UNIT_MAXSPEED				5 // float
 
 // GetValue() constants
 #define AIVAL_NUMDAMAGETYPES              1 // int

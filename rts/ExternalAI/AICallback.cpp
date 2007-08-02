@@ -1217,6 +1217,10 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 				(*(int*)data) = unit->stockpileWeapon->numStockpileQued;
 				return true;
 			}
+			case AIVAL_UNIT_MAXSPEED: {
+				(*(float*) data) = unit->maxSpeed;
+				return true;
+			}
 			default:
 				return false;
 		}
