@@ -309,8 +309,10 @@ void CAirMoveType::Update(void)
 
 EndNormalControl:
 
+
 	if (pos != oldpos) {
 		oldpos = pos;
+		bool hitBuilding = false;
 
 		if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING) {
 			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
@@ -332,17 +334,7 @@ EndNormalControl:
 						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
 						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
 						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
-
-						if (owner->crashing) {
-							// if our collision sphere overlaps with that
-							// of a building and we're crashing, die right
-							// now rather than waiting until we're close
-							// enough to the ground (which may never happen
-							// if eg. we're going down over a crowded field
-							// of windmills due to col-det)
-							owner->KillUnit(true, false, 0);
-							return;
-						}
+						hitBuilding = true;
 					} else {
 						float part = owner->mass / (owner->mass + (*ui)->mass);
 						pos -= dif * (dist - totRad) * (1 - part);
@@ -356,6 +348,16 @@ EndNormalControl:
 						owner->speed *= 0.99f;
 					}
 				}
+			}
+			if (hitBuilding && owner->crashing) {
+				// if our collision sphere overlapped with that
+				// of a building and we're crashing, die right
+				// now rather than waiting until we're close
+				// enough to the ground (which may never happen
+				// if eg. we're going down over a crowded field
+				// of windmills due to col-det)
+				owner->KillUnit(true, false, 0);
+				return;
 			}
 		}
 		if(pos.x<0){
