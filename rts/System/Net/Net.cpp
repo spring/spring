@@ -3,13 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+// #include "StdAfx.h"
 
 #include "Net.h"
 #include "LogOutput.h"
-#include "Game/GameVersion.h"
-#include "Net/UDPConnection.h"
-#include "Net/UDPListener.h"
+#include "UDPConnection.h"
+#include "UDPListener.h"
 #include "LocalConnection.h"
 
 //////////////////////////////////////////////////////////////////////

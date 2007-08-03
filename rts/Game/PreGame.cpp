@@ -121,10 +121,12 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				gameServer = SAFE_NEW CGameServer(8452, pregame->mapName, pregame->modArchive, pregame->scriptName, demoFile);
 				good_fpu_control_registers("after CGameServer creation");
 				if (gameSetup) {	// we read a gameSetup from the demofiles
+					logOutput.Print("Read GameSetup from Demofile");
 					SelectMap(gameSetup->mapname);
 					SelectMod(gameSetup->baseMod);
 					CScriptHandler::SelectScript(gameSetup->scriptName);
 					SelectScript(gameSetup->scriptName);
+					state = ALL_READY;
 				}
 			}
 			else {
