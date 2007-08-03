@@ -271,7 +271,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		int nak = (waitingPackets.begin().key - 1) - lastInOrder;
+		int nak = (waitingPackets.begin().key() - 1) - lastInOrder;
 		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;
