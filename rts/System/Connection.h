@@ -22,24 +22,20 @@ public:
 	
 	virtual int SendData(const unsigned char *data, const unsigned length)=0;
 	virtual int GetData(unsigned char *buf, const unsigned length)=0;
-	
-	virtual void Update(const bool inInitialConnect)=0;
-	virtual void ProcessRawPacket(const unsigned char* data, const unsigned length)=0;
 
 	virtual void Flush()=0;
 	virtual void Ping()=0;
-	
-	virtual bool CheckAddress(const sockaddr_in&) const=0;
 
 	bool active;
 	float lastSendTime;
 	float lastReceiveTime;
 	
-protected:
-	static const unsigned char NETMSG_HELLO; // is 1
-	
+// protected:
 	unsigned dataSent, sentOverhead;
 	unsigned dataRecv, recvOverhead;
+	
+	static const unsigned char NETMSG_HELLO;
+
 };
 
 } // namespace netcode

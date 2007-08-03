@@ -616,7 +616,7 @@ bool CGameServer::ServerReadNet()
 void CGameServer::StartGame()
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-	serverNet->StopListening();
+	serverNet->Listening(false);
 
 	// This should probably work now that I fixed a bug (netbuf->inbuf)
 	// in Game.cpp, in the code receiving NETMSG_RANDSEED. --tvo
@@ -714,7 +714,7 @@ void CGameServer::UpdateLoop()
 
 bool CGameServer::WaitsOnCon() const
 {
-	return serverNet->waitOnCon;
+	return serverNet->Listening();
 }
 
 void CGameServer::KickPlayer(const int playerNum)

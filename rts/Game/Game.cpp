@@ -1328,7 +1328,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		//  * If he's a spectator.
 		//  * If there are other active players on his team.
 		//  * If there are no other players
-		if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating || (net->onlyLocal && !gameServer)) {
+		if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating) {
 			userMayQuit=true;
 		}else{
 			// Check if there are more active players on his team.
@@ -1772,7 +1772,8 @@ bool CGame::Update()
 	}
 
 	//listen to network
-	if(net->connected){
+	// if(net->Connected())
+	{
 		if(!ClientReadNet()){
 			logOutput.Print("Client read net wanted quit");
 			return false;
@@ -2495,7 +2496,7 @@ bool CGame::ClientReadNet()
 	}
 #endif
 
-	if(!gameServer && !net->onlyLocal){
+	if(!gameServer){
 		unsigned int currentFrame;
 		currentFrame = SDL_GetTicks();
 
@@ -2514,7 +2515,7 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	while (inbufpos < inbuflength && (timeLeft > 0 || gameServer || net->onlyLocal)) {
+	while (inbufpos < inbuflength && (timeLeft > 0 || gameServer)) {
 		thisMsg=inbuf[inbufpos];
 		int lastLength=0;
 
@@ -2530,7 +2531,7 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_QUIT:
 			logOutput.Print("Server exited");
-			net->connected=false;
+			// net->connected=false;
 			POP_CODE_MODE;
 			return gameOver;
 

@@ -18,15 +18,19 @@ How Spring protocolheader looks like (size in bytes):
 
 */
 
-
-class CRemoteConnection : public CConnection
+/**
+@brief Communication class over UDP
+*/
+class UDPConnection : public CConnection
 {
 public:
-	CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const NetSocket);
-	virtual ~CRemoteConnection();
+	UDPConnection(UDPSocket* const NetSocket, const sockaddr_in& MyAddr);
+	UDPConnection(UDPSocket* const NetSocket, const std::string& address, const unsigned port);
+	virtual ~UDPConnection();
 
 	/// use this if you want data to be sent
 	virtual int SendData(const unsigned char *data, const unsigned length);
+	
 	/**
 	@brief use this to recieve ready data
 	Will read all waiting in-order packages from waitingPackets, copy their  data to buf and deleting them
@@ -40,9 +44,13 @@ public:
 	@brief update internals
 	Check for unack'd packets, timeout etc.
 	*/
-	virtual void Update(const bool inInitialConnect);
-	/// strip and parse header data and add data to waitingPackets
-	virtual void ProcessRawPacket(const unsigned char* data, const unsigned length);
+	void Update();
+	
+	/**
+	@brief strip and parse header data and add data to waitingPackets
+	UDPConnection takes the ownership of the packet and will delete it in this func
+	*/
+	void ProcessRawPacket(RawPacket* packet);
 
 	/// send all data waiting in char outgoingData[]
 	virtual void Flush();
@@ -50,8 +58,10 @@ public:
 	virtual void Ping();
 
 	/// do we have these address?
-	virtual bool CheckAddress(const sockaddr_in&) const;
+	bool CheckAddress(const sockaddr_in&) const;
 
+	/// The size of the protocol-header (Packets smaller than this get rejected)
+	static const unsigned hsize;
 
 private:
 	typedef boost::ptr_map<int,RawPacket> packetMap;

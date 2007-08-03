@@ -5,7 +5,7 @@
 #include "Game/Team.h"
 #include "LogOutput.h"
 
-#define NETWORK_VERSION 1
+const unsigned char NETWORK_VERSION = 1;
 
 
 CNetProtocol::CNetProtocol()
@@ -23,11 +23,8 @@ CNetProtocol::CNetProtocol()
 
 CNetProtocol::~CNetProtocol()
 {
-	if(connected)
-	{
-		SendQuit();
-		FlushNet();
-	}
+	SendQuit();
+	FlushNet();
 
 	if (record != 0)
 		delete record;
@@ -56,7 +53,6 @@ int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourc
 	int error = CNet::InitClient(server, portnum, sourceport,gameSetup ? gameSetup->myPlayer : 0);
 	SendAttemptConnect(gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 	FlushNet();
-	inInitialConnect=true;
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
@@ -79,16 +75,13 @@ int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 
 	int error = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
-	logOutput.Print("Created local client with number %i", wantedNumber);
+	// logOutput.Print("Created local client with number %i", wantedNumber);
 	return error;
 }
 
 int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 {
-	Pending buffer;
-	buffer.wantedNumber = wantedNumber;
-	int hisNewNumber = InitNewConn(buffer, true);
-	gs->players[hisNewNumber]->active=true;
+	int hisNewNumber = CNet::InitLocalClient(wantedNumber);
 
 	if (!IsDemoServer()) {
 	// send game data for demo recording
@@ -100,7 +93,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 			SendModName(modChecksum, modName);
 	}
 
-	logOutput.Print("Listening to local client on connection %i", hisNewNumber);
+	logOutput.Print("Local client connected using number %i", hisNewNumber);
 
 	return 1;
 }
@@ -120,41 +113,51 @@ void CNetProtocol::Update()
 	CNet::Update();
 
 	// handle new connections
-	while (!justConnected.empty())
+	while (GetIncomingConnection())
 	{
-		Pending it=justConnected.back();
-		justConnected.pop_back();
-		if (it.netmsg != NETMSG_ATTEMPTCONNECT || it.networkVersion != NETWORK_VERSION)
+		netcode::CConnection* newguy = GetIncomingConnection();
+		unsigned inbuflength = 4096;
+		unsigned char inbuf[inbuflength];
+		
+		int ret = newguy->GetData(inbuf, inbuflength);
+		
+		uchar netmsg = inbuf[0];
+		uchar netversion = inbuf[2];
+		
+		if (ret >= 3 && netmsg == NETMSG_ATTEMPTCONNECT && netversion == NETWORK_VERSION)
 		{
-			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i", it.netmsg, it.networkVersion);
-			continue;
-		}
-		unsigned hisNewNumber = InitNewConn(it);
+			unsigned hisNewNumber = AcceptIncomingConnection(inbuf[1]);
+			
+			if(imServer){	// send server data if already decided
+				SendSetPlayerNum(hisNewNumber);
 
-		if(imServer){	// send server data if already decided
-			SendSetPlayerNum(hisNewNumber);
+				if (!scriptName.empty())
+					SendScript(scriptName);
+				if (!mapName.empty())
+					SendMapName(mapChecksum, mapName);
+				if (!modName.empty())
+					SendModName(modChecksum, modName);
 
-			if (!scriptName.empty())
-				SendScript(scriptName);
-			if (!mapName.empty())
-				SendMapName(mapChecksum, mapName);
-			if (!modName.empty())
-				SendModName(modChecksum, modName);
-
-			for(unsigned a=0;a<gs->activePlayers;a++){
-				if(!gs->players[a]->readyToStart)
-					continue;
-				SendPlayerName(a, gs->players[a]->playerName);
-			}
-			if(gameSetup){
-				for(unsigned a=0;a<gs->activeTeams;a++){
-					SendStartPos(a, 2, gs->Team(a)->startPos.x,
-								 gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+				for(unsigned a=0;a<gs->activePlayers;a++){
+					if(!gs->players[a]->readyToStart)
+						continue;
+					SendPlayerName(a, gs->players[a]->playerName);
 				}
+				if(gameSetup){
+					for(unsigned a=0;a<gs->activeTeams;a++){
+						SendStartPos(a, 2, gs->Team(a)->startPos.x,
+									 gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+					}
+				}
+				FlushNet();
 			}
-			FlushNet();
+			gs->players[hisNewNumber]->active=true;
 		}
-		gs->players[hisNewNumber]->active=true;
+		else
+		{
+			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i", netmsg, netversion);
+			RejectIncomingConnection();
+		}
 	}
 }
 

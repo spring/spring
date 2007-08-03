@@ -5,18 +5,11 @@
 
 #include "StdAfx.h"
 
-#ifdef _WIN32
-#include "Platform/Win/win32.h"
-#else
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#endif
-
 #include "Net.h"
 #include "LogOutput.h"
 #include "Game/GameVersion.h"
-#include "RemoteConnection.h"
+#include "Net/UDPConnection.h"
+#include "Net/UDPListener.h"
 #include "LocalConnection.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -25,55 +18,80 @@
 
 namespace netcode {
 
-#ifdef _WIN32
-typedef int socklen_t;
-#else
-typedef struct hostent* LPHOSTENT;
-typedef struct in_addr* LPIN_ADDR;
-#endif
-
 CNet::CNet()
 {
-	connected=false;
-
 	for(int a=0;a<MAX_PLAYERS;a++){
 		connections[a]=0;
 	}
+	
+	local = 0;
 
 	imServer=false;
-	inInitialConnect=false;
-	onlyLocal = false;
 
-	mySocket=0;
+	udplistener=0;
 }
 
 CNet::~CNet()
 {
-	if(mySocket)
-		delete mySocket;
+	if(udplistener)
+		delete udplistener;
+	
+	if (local)
+		delete local;
+}
 
-	for (int a=0;a<MAX_PLAYERS;a++){
-		if(connections[a])
-			delete connections[a];
+void CNet::Listening(const bool state)
+{
+	if (udplistener)
+	{
+		udplistener->SetWaitingForConnections(false);
 	}
 }
 
-void CNet::StopListening()
+bool CNet::Listening()
 {
-	waitOnCon=false;
+	if (udplistener)
+	{
+		return udplistener->GetWaitingForConnections();
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void CNet::Kill(const unsigned connNumber)
 {
+	// logOutput.Print("Killing connection %i", connNumber);
 	connections[connNumber]->Flush();
 	connections[connNumber]->active = false;
 }
 
 void CNet::PingAll()
 {
+	// logOutput.Print("Pinging all players");
 	for(unsigned a=0;a<MAX_PLAYERS;++a){
 		if (connections[a] && connections[a]->active)
 			connections[a]->Ping();
+	}
+}
+
+bool CNet::Connected() const
+{
+	for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (connections[i] && (connections[i]->dataRecv > 0))
+		{
+			return true;
+		}
+	}
+	if (local)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
@@ -89,80 +107,46 @@ int CNet::GetData(unsigned char *buf, const unsigned length, const unsigned conN
 
 int CNet::InitServer(unsigned portnum)
 {
-	waitOnCon=true;
 	imServer=true;
 
-	mySocket = new UDPSocket(portnum);
-
-	connected = true;
+	udplistener = new UDPListener(portnum);
 
 	return 0;
 }
 
 int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
-	LPHOSTENT lpHostEntry;
+	udplistener = new UDPListener(sourceport);
+	UDPConnection* incoming = udplistener->SpawnConnection(std::string(server), portnum);
 
-	Pending WannaBeClient;
-	WannaBeClient.wantedNumber = playerNum;
-	WannaBeClient.other.sin_family = AF_INET;
-	WannaBeClient.other.sin_port = htons(portnum);
-
-#ifdef _WIN32
-	unsigned long ul;
-	if((ul=inet_addr(server))!=INADDR_NONE){
-		WannaBeClient.other.sin_addr.S_un.S_addr = 	ul;
-	} else
-#else
-	if(inet_aton(server,&(WannaBeClient.other.sin_addr))==0)
-#endif
-	{
-		lpHostEntry = gethostbyname(server);
-		if (lpHostEntry == NULL)
-		{
-			throw network_error("Error looking up server from DNS: "+std::string(server));
-		}
-		WannaBeClient.other.sin_addr = 	*((LPIN_ADDR)*lpHostEntry->h_addr_list);
-	}
-
-	mySocket = new UDPSocket(sourceport, 10);
-
-	waitOnCon=false;
 	imServer=false;
-	connected = true;
-	onlyLocal = false;
 
-	InitNewConn(WannaBeClient);
-
-	return 1;
+	return InitNewConn(incoming, playerNum);
 }
 
 int CNet::InitLocalClient(const unsigned wantedNumber)
 {
-	waitOnCon=false;
-	imServer=false;
-	onlyLocal = true;
-
-	Pending temp;
-	temp.wantedNumber = wantedNumber;
-	InitNewConn(temp, true);
-
-	return 1;
+	CLocalConnection* conn = new CLocalConnection();
+	local = conn;
+	
+	return InitNewConn(conn, wantedNumber);
 }
 
-int CNet::InitNewConn(const Pending& NewClient, bool local)
+unsigned CNet::InitNewConn(CConnection* newClient, const unsigned wantedNumber)
 {
 	unsigned freeConn = 0;
-	if(NewClient.wantedNumber){
-		if(NewClient.wantedNumber>=MAX_PLAYERS){
-			logOutput.Print("Warning attempt to connect to errenous connection number");
-		}
-		else if(connections[NewClient.wantedNumber] && connections[NewClient.wantedNumber]->active){
-			logOutput.Print("Warning attempt to connect to already active connection number");
-		}
-		else
-			freeConn = NewClient.wantedNumber;
+	
+	if(wantedNumber>=MAX_PLAYERS){
+		logOutput.Print("Warning attempt to connect to errenous connection number");
 	}
+	else if(connections[wantedNumber] && connections[wantedNumber]->active && wantedNumber > 0){
+		logOutput.Print("Warning attempt to connect to already active connection number");
+	}
+	else
+	{
+		freeConn = wantedNumber;
+	}
+	
 
 	if (freeConn == 0)
 		for(freeConn=0;freeConn<MAX_PLAYERS;++freeConn){
@@ -170,19 +154,14 @@ int CNet::InitNewConn(const Pending& NewClient, bool local)
 			break;
 		}
 
-	if (!local)
-		connections[freeConn]= new CRemoteConnection(NewClient.other, mySocket);
-	else
-		connections[freeConn]= new CLocalConnection();
-
-	connected=true;
+	connections[freeConn]= newClient;
 
 	return freeConn;
 }
 
 int CNet::SendData(const unsigned char *data, const unsigned length)
 {
-	if(length<=0)
+	if(length==0)
 		logOutput.Print("Errenous send length in SendData %i",length);
 
 	unsigned ret=1;			//becomes 0 if any connection return 0
@@ -197,46 +176,9 @@ int CNet::SendData(const unsigned char *data, const unsigned length)
 
 void CNet::Update(void)
 {
-	if(!onlyLocal && connected) {
-		sockaddr_in from;
-		socklen_t fromsize;
-		fromsize=sizeof(from);
-		unsigned char inbuf[16000];
-
-		while(true)
-		{
-			const unsigned r = mySocket->RecvFrom(inbuf, (unsigned)16000, &from);
-			if (r == 0)
-				break;
-			
-			int conn=ResolveConnection(&from);
-			if(conn>= 0)
-			{
-				inInitialConnect=false;
-				connections[conn]->ProcessRawPacket(inbuf,r);
-			}
-			else
-			{
-				int packetNum=*(unsigned int*)inbuf;
-				// int ack=*(int*)(inbuf+4);
-				// unsigned char nak = *(int*)(inbuf+8);
-
-				if(waitOnCon && r>=12 && packetNum ==0)
-				{
-					Pending newConn;
-					newConn.other = from;
-					newConn.netmsg = inbuf[9];
-					newConn.networkVersion = inbuf[11];
-					newConn.wantedNumber = inbuf[10];
-					justConnected.push_back(newConn);
-				}
-			}
-		}
-	}
-
-	for(unsigned a=0;a<MAX_PLAYERS;++a){
-		if (connections[a] != 0)
-			connections[a]->Update(inInitialConnect);
+	if (udplistener)
+	{
+		udplistener->Update();
 	}
 }
 
@@ -250,16 +192,48 @@ void CNet::FlushNet(void)
 	}
 }
 
-int CNet::ResolveConnection(const sockaddr_in* from) const
+CConnection* CNet::GetIncomingConnection() const
 {
-	for(int a=0;a<MAX_PLAYERS;++a){
-		if(connections[a] && connections[a]->active){
-			if(connections[a]->CheckAddress(*from)){
-				return a;
-			}
-		}
+	if (udplistener)
+	{
+		return udplistener->GetWaitingConenction();
 	}
-	return -1;
+	else
+	{
+		return 0;
+	}
+}
+
+unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)
+{
+	if (udplistener)
+	{
+		CConnection* conn = udplistener->GetWaitingConenction();
+		
+		if (conn == 0)
+		{
+			throw network_error("No waiting connections to accept");
+		}
+		
+		udplistener->AcceptWaitingConnection();
+		return InitNewConn(conn, wantedNumber);
+	}
+	else
+	{
+		throw network_error("No listensocket was set up so no connections can be accepted");
+	}
+}
+
+void CNet::RejectIncomingConnection()
+{
+	if (udplistener && !udplistener->GetWaitingConenction())
+	{
+		udplistener->RejectWaitingConnection();
+	}
+	else
+	{
+		throw network_error("No connection found to reject");
+	}
 }
 
 
