@@ -1,7 +1,7 @@
 #ifndef NETPROTOCOL_H
 #define NETPROTOCOL_H
 
-#include "Net.h"
+#include "Net/Net.h"
 #include "Game/Player.h"
 #include "Demo.h"
 

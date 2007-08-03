@@ -19,7 +19,6 @@
 namespace netcode {
 
 class UDPListener;
-class CConnection;
 class CLocalConnection;
 
 // If we switch to a networking lib and start using a bitstream, we might

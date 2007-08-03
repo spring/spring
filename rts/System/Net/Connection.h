@@ -1,11 +1,6 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#ifdef _WIN32
-#include "Platform/Win/win32.h"
-#else
-#include <netinet/in.h>
-#endif
 
 namespace netcode
 {
