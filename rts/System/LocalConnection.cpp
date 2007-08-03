@@ -5,7 +5,7 @@
 namespace netcode {
 
 // static stuff
-	unsigned CLocalConnection::Instances = 0;
+unsigned CLocalConnection::Instances = 0;
 unsigned char CLocalConnection::Data[2][NETWORK_BUFFER_SIZE];
 boost::mutex CLocalConnection::Mutex[2];
 unsigned CLocalConnection::Length[2] = {0,0};
@@ -19,23 +19,24 @@ CLocalConnection::CLocalConnection()
 
 CLocalConnection::~CLocalConnection()
 {
-	logOutput.Print("Network statistics for local Connection");
-	logOutput.Print("Bytes send/recieved: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
-	logOutput.Print("Deleting %i bytes unhandled data", Length[instance]);
+	// logOutput.Print("Network statistics for local Connection");
+	// logOutput.Print("Bytes send/recieved: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
+	// logOutput.Print("Deleting %i bytes unhandled data", Length[instance]);
 	Instances--; // not sure this is needed
 }
 
 int CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	boost::mutex::scoped_lock scoped_lock(Mutex[otherInstance()]);
+	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 	if(active){
-		if(Length[otherInstance()]+length>=NETWORK_BUFFER_SIZE){
-			logOutput.Print("Overflow when sending to local connection: Outbuf: %i Data: %i BuffSize: %i",Length[otherInstance()],length,NETWORK_BUFFER_SIZE);
+		if(Length[OtherInstance()]+length>=NETWORK_BUFFER_SIZE){
+			logOutput.Print("Overflow when sending to local connection: Outbuf: %i Data: %i BuffSize: %i",Length[OtherInstance()],length,NETWORK_BUFFER_SIZE);
 			return 0;
 		}
-		memcpy(&Data[otherInstance()][Length[otherInstance()]],data,length);
-		Length[otherInstance()]+=length;
+		memcpy(&Data[OtherInstance()][Length[OtherInstance()]],data,length);
+		Length[OtherInstance()]+=length;
 		dataSent += length;
+		// logOutput.Print("Sent %i bytes to %i", length, OtherInstance());
 	}
 	return 1;
 }
@@ -52,20 +53,12 @@ int CLocalConnection::GetData(unsigned char *buf, const unsigned length)
 		dataRecv += Length[instance];
 		memcpy(buf,Data[instance],ret);
 		Length[instance]=0;
+		// logOutput.Print("%i recieved %i bytes", instance, ret);
 		return ret;
 	} else {
 		logOutput.Print("Tried to get data from inactive connection");
 		return -1;
 	}
-}
-
-void CLocalConnection::Update(const bool inInitialConnect)
-{
-	return;
-}
-
-void CLocalConnection::ProcessRawPacket(const unsigned char* data, const unsigned length)
-{
 }
 
 void CLocalConnection::Flush()
@@ -76,12 +69,7 @@ void CLocalConnection::Ping()
 {
 }
 
-bool CLocalConnection::CheckAddress(const sockaddr_in& unused) const
-{
-	return false;
-}
-
-unsigned CLocalConnection::otherInstance() const
+unsigned CLocalConnection::OtherInstance() const
 {
 	if (instance == 0)
 		return 1;

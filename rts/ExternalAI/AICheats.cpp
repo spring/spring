@@ -9,6 +9,8 @@
 #include "Sim/Units/UnitLoader.h"
 #include "NetProtocol.h"
 #include "Game/Team.h"
+#include "Game/GameServer.h"
+#include "Game/GameSetup.h"
 #include "mmgr.h"
 
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
@@ -26,7 +28,18 @@ CAICheats::~CAICheats(void)
 
 bool CAICheats::OnlyPassiveCheats ()
 {
-	return !net->onlyLocal;
+	if (!gameServer) // if we are not server, cheats will cause desync
+	{
+		return true;
+	}
+	else if (gameSetup && (gameSetup->numPlayers == 1)) // assuming AIs dont count on numPlayers
+	{
+		return false;
+	}
+	else // disable it in case we are not sure
+	{
+		return true;
+	}
 }
 
 void CAICheats::EnableCheatEvents(bool enable)
@@ -36,26 +49,26 @@ void CAICheats::EnableCheatEvents(bool enable)
 
 void CAICheats::SetMyHandicap(float handicap)
 {
-	if (net->onlyLocal) {
+	if (!OnlyPassiveCheats()) {
 		gs->Team(ai->team)->handicap=1+handicap/100;
 	}
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
-	if (net->onlyLocal)
+	if (!OnlyPassiveCheats())
 		gs->Team(ai->team)->metal+=amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
-	if (net->onlyLocal)
+	if (!OnlyPassiveCheats())
 		gs->Team(ai->team)->energy+=amount;
 }
 
 int CAICheats::CreateUnit(const char* name,float3 pos)
 {
-	if(net->onlyLocal) {
+	if(!OnlyPassiveCheats()) {
 		CUnit* u=unitLoader.LoadUnit(name,pos,ai->team,false,0,NULL);
 		if(u)
 			return u->id;

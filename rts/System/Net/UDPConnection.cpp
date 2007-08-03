@@ -1,4 +1,4 @@
-#include "RemoteConnection.h"
+#include "UDPConnection.h"
 
 #include <SDL_timer.h>
 
@@ -7,6 +7,8 @@
 #else
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <netdb.h>
+
 #endif
 
 #include "LogOutput.h"
@@ -17,7 +19,16 @@
 namespace netcode {
 
 
-CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const NetSocket) : mySocket(NetSocket)
+#ifdef _WIN32
+#else
+	typedef struct hostent* LPHOSTENT;
+	typedef struct in_addr* LPIN_ADDR;
+	const int SOCKET_ERROR = -1;
+#endif
+
+const unsigned UDPConnection::hsize = 9;
+
+UDPConnection::UDPConnection(UDPSocket* const NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
 {
 	addr=MyAddr;
 	lastInOrder=-1;
@@ -25,9 +36,7 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const 
 	firstUnacked=0;
 	currentNum=0;
 	outgoingLength=0;
-	lastReceiveTime= static_cast<float>(SDL_GetTicks())/1000.0f;
 	lastSendFrame=0;
-	lastSendTime=0;
 	lastNak=-1;
 	lastNakTime=0;
 	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
@@ -40,7 +49,50 @@ CRemoteConnection::CRemoteConnection(const sockaddr_in MyAddr, UDPSocket* const 
 	resentPackets = 0;
 }
 
-CRemoteConnection::~CRemoteConnection()
+UDPConnection::UDPConnection(UDPSocket* const NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
+{
+	LPHOSTENT lpHostEntry;
+	
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+
+#ifdef _WIN32
+	unsigned long ul;
+	if((ul=inet_addr(address.c_str()))!=INADDR_NONE){
+		addr.sin_addr.S_un.S_addr = 	ul;
+	} else
+#else
+		if(inet_aton(address.c_str(),&(addr.sin_addr))==0)
+#endif
+		{
+			lpHostEntry = gethostbyname(address.c_str());
+			if (lpHostEntry == NULL)
+			{
+				throw network_error("Error looking up server from DNS: "+address);
+			}
+			addr.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
+		}
+	
+	//TODO same code as in other constructor, merge together
+	lastInOrder=-1;
+	waitingPackets.clear();
+	firstUnacked=0;
+	currentNum=0;
+	outgoingLength=0;
+	lastSendFrame=0;
+	lastNak=-1;
+	lastNakTime=0;
+	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
+	if (mtu < 50)
+	{
+		logOutput.Print("Your MaximumTransmissionUnit is to low (%i, minimum 50)", mtu);
+		mtu = 50;
+	}
+	fragmentedFlushes = 0;
+	resentPackets = 0;
+}
+
+UDPConnection::~UDPConnection()
 {
 	logOutput.Print("Network statistics for %s",inet_ntoa(addr.sin_addr));
 	logOutput.Print("Bytes send/received: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
@@ -48,7 +100,7 @@ CRemoteConnection::~CRemoteConnection()
 	logOutput.Print("Flushes requiring fragmentation: %i", fragmentedFlushes);
 }
 
-int CRemoteConnection::SendData(const unsigned char *data, const unsigned length)
+int UDPConnection::SendData(const unsigned char *data, const unsigned length)
 {
 	if(active){
 		if(outgoingLength+length>=NETWORK_BUFFER_SIZE){
@@ -61,7 +113,7 @@ int CRemoteConnection::SendData(const unsigned char *data, const unsigned length
 	return 1;
 }
 
-int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
+int UDPConnection::GetData(unsigned char *buf, const unsigned length)
 {
 	if(active){
 		unsigned readyLength = 0;
@@ -69,8 +121,8 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 		packetMap::iterator wpi;
 		//process all in order packets that we have waiting
 		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
-		//	if (readyLength + wpi->second->length >= length) {
-			if (readyLength + (*wpi).length >= length) {
+		//	if (readyLength + wpi->second->length >= length) {	// does only work with boost >= 1.34
+			if (readyLength + (*wpi).length >= length) {	// does only work with boost < 1.34
 				logOutput.Print("Overflow in incoming network buffer");
 				break;
 			}
@@ -91,25 +143,24 @@ int CRemoteConnection::GetData(unsigned char *buf, const unsigned length)
 	}
 }
 
-void CRemoteConnection::Update(const bool inInitialConnect)
+void UDPConnection::Update()
 {
 	if (!active)
 		return;
 
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
 
-	if(inInitialConnect && lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
+	if((dataRecv == 0) && lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime=curTime;
 	}
-	if(lastSendTime<curTime-5 && !inInitialConnect){		//we havent sent anything for a while so send something to prevent timeout
+	else if(lastSendTime<curTime-5 && !(dataRecv == 0)){		//we havent sent anything for a while so send something to prevent timeout
 		Ping();
 	}
-	if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+	else if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		Ping();
 	}
-
-	if(lastReceiveTime < curTime-(inInitialConnect ? 40 : 30))
+	else if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
 	{
 		active=false;
 	}
@@ -119,14 +170,13 @@ void CRemoteConnection::Update(const bool inInitialConnect)
 	}
 }
 
-void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsigned length)
+void UDPConnection::ProcessRawPacket(RawPacket* packet)
 {
 	lastReceiveTime=static_cast<float>(SDL_GetTicks())/1000.0f;
 
-	const unsigned hsize = 9;
-	int packetNum=*(int*)data;
-	int ack=*(int*)(data+4);
-	unsigned char nak = *(unsigned char*)(data+8);
+	int packetNum = *(int*)packet->data;
+	int ack = *(int*)(packet->data+4);
+	unsigned char nak = *(unsigned char*)(packet->data+8);
 
 	AckPackets(ack);
 
@@ -146,15 +196,20 @@ void CRemoteConnection::ProcessRawPacket(const unsigned char* data, const unsign
 	}
 
 	if(!active || lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
+	{
+		delete packet;
 		return;
+	}
 
-	waitingPackets.insert(packetNum, new RawPacket(data+hsize,length-hsize));
+	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));
 
-	dataRecv += length;
+	dataRecv += packet->length;
 	recvOverhead += hsize;
+	
+	delete packet;
 }
 
-void CRemoteConnection::Flush()
+void UDPConnection::Flush()
 {
 	if (outgoingLength <= 0)
 		return;
@@ -177,12 +232,12 @@ void CRemoteConnection::Flush()
 	}
 }
 
-void CRemoteConnection::Ping()
+void UDPConnection::Ping()
 {
 	SendData(&NETMSG_HELLO, sizeof(NETMSG_HELLO));
 }
 
-bool CRemoteConnection::CheckAddress(const sockaddr_in& from) const
+bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 {
 	if(active){
 		if(
@@ -198,7 +253,7 @@ bool CRemoteConnection::CheckAddress(const sockaddr_in& from) const
 	return false;
 }
 
-void CRemoteConnection::AckPackets(const int nextAck)
+void UDPConnection::AckPackets(const int nextAck)
 {
 	while(nextAck>=firstUnacked){
 		unackedPackets.pop_front();
@@ -206,7 +261,7 @@ void CRemoteConnection::AckPackets(const int nextAck)
 	}
 }
 
-void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
+void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
 {
 	if (!active)
 		return;
@@ -216,7 +271,7 @@ void CRemoteConnection::SendRawPacket(const unsigned char* data, const unsigned 
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		int nak = (waitingPackets.begin().key() - 1) - lastInOrder;
+		int nak = (waitingPackets.begin()->key - 1) - lastInOrder;
 		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;

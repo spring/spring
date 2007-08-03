@@ -26,24 +26,16 @@ public:
 	virtual int GetData(unsigned char *buf, const unsigned length);
 
 	/// does nothing
-	virtual void Update(const bool inInitialConnect);
-	/// does nothing
-	virtual void ProcessRawPacket(const unsigned char* data, const unsigned length);
-
-	/// does nothing
 	virtual void Flush();
 	/// does nothing
 	virtual void Ping();
-
-	/// returns always false
-	virtual bool CheckAddress(const sockaddr_in&) const;
 
 private:
 	static unsigned char Data[2][NETWORK_BUFFER_SIZE];
 	static boost::mutex Mutex[2];
 	static unsigned Length[2];
 
-	unsigned otherInstance() const;
+	unsigned OtherInstance() const;
 
 	/// we can have 2 Instances, one in serverNet and one in net
 	static unsigned Instances;

@@ -15,9 +15,12 @@
 #include "Connection.h"
 #include "GlobalStuff.h"
 #include "Sync/Syncify.h"
-#include "Net/UDPSocket.h"
 
 namespace netcode {
+
+class UDPListener;
+class CConnection;
+class CLocalConnection;
 
 // If we switch to a networking lib and start using a bitstream, we might
 // as well remove this and use int as size type (because it'd be compressed anyway).
@@ -40,7 +43,8 @@ public:
 	
 	/** Stop the server from accepting new connections	
 	*/
-	void StopListening();
+	bool Listening();
+	void Listening(const bool state);
 	/** Flush and deactivate a connection
 	*/
 	void Kill(const unsigned connNumber);
@@ -48,12 +52,9 @@ public:
 	*/
 	void PingAll();
 
-	bool connected;
-	bool inInitialConnect;
-	bool waitOnCon;	// do we accept new clients
+	bool Connected() const;
 
 	bool imServer;
-	bool onlyLocal;
 
 	CConnection* connections[MAX_PLAYERS];
 	int GetData(unsigned char* buf, const unsigned length, const unsigned conNum);
@@ -67,18 +68,9 @@ protected:
 	*/
 	int InitLocalClient(const unsigned wantedNumber);
 	
-	/** Struct to hold data of yet unaccepted clients
+	/** Insert your Connection here to become connected
 	*/
-	struct Pending
-	{
-		sockaddr_in other;
-		unsigned char networkVersion;
-		unsigned char netmsg;
-		unsigned char wantedNumber;
-	};
-	/** Insert your struct here to become connected
-	*/
-	int InitNewConn(const Pending& NewClient, bool local = false);	// don't call this directly when in server mode, use CNetProto instead
+	unsigned InitNewConn(CConnection* newClient, const unsigned wantedNumber=0);
 	
 	/** Broadcast data to all clients
 	*/
@@ -96,7 +88,9 @@ protected:
 	@brief if new clients try to connect, their data is stored here until they get accepted / rejected
 	This is where Update() stores the structs
 	*/
-	std::vector<Pending> justConnected;
+	CConnection* GetIncomingConnection() const;
+	unsigned AcceptIncomingConnection(const unsigned wantedNumber=0);
+	void RejectIncomingConnection();
 
 	/** Send a net message without any parameters. */
 	int SendData(const unsigned char msg) {
@@ -269,12 +263,8 @@ protected:
 	}
 	
 private:
-	/**
-	@brief determine which connection has the specified address
-	@return the number of the connection it matches, or -1 if it doesnt match any con
-	*/
-	int ResolveConnection(const sockaddr_in* from) const;
-	UDPSocket* mySocket;
+	UDPListener* udplistener;
+	CLocalConnection* local;
 	
 	struct AssembleBuffer
 	{

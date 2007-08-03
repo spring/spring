@@ -267,7 +267,7 @@ bool CPreGame::Draw()
 	if(showList)
 		showList->Draw();
 
-	if(net->inInitialConnect){
+	if(net && !net->Connected() && net->connections[0]){
 		char text[400];
 		sprintf(text,"Connecting to server %i",40-(int)(static_cast<float>(SDL_GetTicks())/1000.0f - net->connections[0]->lastSendTime));
 		glColor4f(1,1,1,1);
@@ -471,7 +471,7 @@ void CPreGame::UpdateClientNet()
 			break;
 
 		case NETMSG_QUIT:
-			net->connected=false;
+			// net->connected=false;
 			globalQuit=true;
 			inbufpos += 1;
 			return;
