@@ -1,5 +1,7 @@
 #include "LocalConnection.h"
 
+#include <string.h>
+
 #include "LogOutput.h"
 
 namespace netcode {
