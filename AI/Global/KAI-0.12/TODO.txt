@@ -9,10 +9,15 @@ call for performance reasons
 support for shields and antinukes (place
 these near k-means clusters?)
 
+extractor upgrading
+
 stop depthcharge launchers being used as
 ground defenses (BA and derivatives)
 
 cloak commander (if possible) when enough
 energy?
+
+better L2 economy handling (no solars when
++6000E, not just light fusions, etc)
 
 state serialization

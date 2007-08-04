@@ -132,12 +132,12 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 				targetcat = unittypearray[unit->id].TargetCategories[i];
 
 				unsigned int a = victim->category;
-				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// This is what the weapon can target
-				unsigned int c = unit->weapons[i].onlyTargetCat;				// This is what the unit accepts as this weapons target
-//				unsigned int d = unit->weapons[i].badTargetCat;				// This is what the unit thinks this weapon must be used for (hmm ?)
+				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// what the weapon can target
+				unsigned int c = unit->weapons[i].onlyTargetCat;			// what the unit accepts as this weapons target
+//				unsigned int d = unit->weapons[i].badTargetCat;				// what the unit thinks this weapon must be used for (hmm ?)
 				bool canWeaponTarget = (a & b) > 0;
-				bool canUnitTarget = (a & c) > 0;								// How is this used in spring, needs testing...
-//				bool badUnitTarget = (a & d) > 0;								// This probably means that it have low priority, ignore it for now
+				bool canUnitTarget = (a & c) > 0;							// how is this used?
+//				bool badUnitTarget = (a & d) > 0;							// probably means that it has low priority
 
 				canhit = (canWeaponTarget && canUnitTarget);
 
@@ -229,6 +229,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 }
 
 
+
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int enemies[MAXUNITS];
 	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
@@ -310,76 +311,94 @@ void CUnitTable::UpdateChokePointArray() {
 }
 
 
-// 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
-float CUnitTable::GetScore(const UnitDef* unitDef) {
-	// ignore the cost now
-	float Cost = (unitDef->metalCost * METAL2ENERGY) + unitDef->energyCost;
+
+
+
+
+float CUnitTable::GetScore(const UnitDef* udef) {
+	float Cost = ((udef->metalCost * METAL2ENERGY) + udef->energyCost) + 0.1f;
 	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
-	float Hitpoints = unitDef->health;
+	float Hitpoints = udef->health;
+	float buildTime = udef->buildTime + 0.1f;
 	float Benefit = 0.0f;
 	float dps = 0.0f;
 	int unitcounter = 0;
 	bool candevelop = false;
 
 	float RandNum = ai->math->RandNormal(4, 3, 1) + 1;
-	int category = GetCategory(unitDef);
+	float randMult = float((rand() % 2) + 1);
+	int category = GetCategory(udef);
 
 	switch (category) {
 		case CAT_ENERGY: {
-			Benefit = unitDef->energyMake - unitDef->energyUpkeep;
-			if (unitDef->windGenerator) {
+			// KLOOTNOTE: factor build-time into this as well
+			// (so benefit values generally lie closer together)
+			// Benefit = (udef->energyMake - udef->energyUpkeep);
+			// Benefit = (udef->energyMake - udef->energyUpkeep) * randMult;
+			Benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
+
+			if (udef->windGenerator) {
 				Benefit += ai->cb->GetMinWind();
 			}
-			if (unitDef->tidalGenerator) {
+			if (udef->tidalGenerator) {
 				Benefit += ai->cb->GetTidalStrength();
 			}
 
 			// filter geothermals
-			if (unitDef->needGeo)
+			if (udef->needGeo)
 				Benefit = 0.0f;
 
-			Benefit /= Cost;
+			// KLOOTNOTE: dividing by cost here as well means
+			// benefit is inversely proportional to square of
+			// cost, so expensive generators are quadratically
+			// less likely to be built if original calculation
+			// of score is used
+			// Benefit /= Cost;
 		} break;
+
 		case CAT_MEX: {
-			Benefit = pow(unitDef->extractsMetal, 4.0f);
+			Benefit = pow(udef->extractsMetal, 4.0f);
 		} break;
 		case CAT_MMAKER: {
-			Benefit = (unitDef->metalMake - unitDef->metalUpkeep) / unitDef->energyUpkeep + 0.01;
+			Benefit = (udef->metalMake - udef->metalUpkeep) / udef->energyUpkeep + 0.01;
 		} break;
-		case CAT_G_ATTACK: {
-			dps = GetCurrentDamageScore(unitDef);
 
-			if (unitDef->canfly && !unitDef->hoverAttack) {
-				// TODO: improve to set reloadtime to the bomber's
-				// turnspeed vs movespeed (eg. time taken for a run)
+		case CAT_G_ATTACK: {
+			dps = GetCurrentDamageScore(udef);
+
+			if (udef->canfly && !udef->hoverAttack) {
+				// TODO: improve to set reload-time to the bomber's
+				// turnspeed vs. movespeed (eg. time taken for a run)
 				dps /= 6;
 			}
 
-			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), 1.5f)
-					* pow(GetMaxRange(unitDef) + 200, 1.5f)
+			Benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+					* pow(GetMaxRange(udef) + 200, 1.5f)
 					* pow(dps, 1.0f)
-					* pow(unitDef->speed + 40, 1.0f)
+					* pow(udef->speed + 40, 1.0f)
 					* pow(Hitpoints, 1.0f)
 					* pow(RandNum, 2.5f)
 					* pow(Cost, -0.5f);
 
-			if (unitDef->canfly) {
-				 // AA hack: slight reduction to the feasability of air
-				Benefit *= 0.25;
+			if (udef->canfly || udef->canhover) {
+				// AA hack: slight reduction to the feasability of aircraft
+				// general hack: should mostly prefer real L2 units to hovers
+				Benefit *= 0.01;
 			}
 		} break;
+
 		case CAT_DEFENCE: {
-			Benefit = pow((unitDef->weapons.front().def->areaOfEffect + 80), 1.5f)
-					* pow(GetMaxRange(unitDef), 2.0f)
-					* pow(GetCurrentDamageScore(unitDef), 1.5f)
+			Benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+					* pow(GetMaxRange(udef), 2.0f)
+					* pow(GetCurrentDamageScore(udef), 1.5f)
 					* pow(Hitpoints, 0.5f)
 					* pow(RandNum, 2.5f)
 					* pow(Cost, -1.0f);
 		} break;
 
 		case CAT_BUILDER: {
-			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
-				if (unittypearray[unittypearray[unitDef->id].canBuildList[i]].category == CAT_FACTORY) {
+			for (unsigned int i = 0; i != unittypearray[udef->id].canBuildList.size(); i++) {
+				if (unittypearray[unittypearray[udef->id].canBuildList[i]].category == CAT_FACTORY) {
 					candevelop = true;
 				}
 			}
@@ -387,12 +406,13 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			// builder units that cannot construct any
 			// factories are worthless, prevent them
 			// from being chosen via GetUnitByScore()
-			// (they might have other uses though)
+			// (they might have other uses though, eg.
+			// nano-towers)
 			if (!candevelop) {
 				Benefit = 0.0f;
 			} else {
-				Benefit = pow(unitDef->buildSpeed, 1.0f)
-						* pow(unitDef->speed, 0.5f)
+				Benefit = pow(udef->buildSpeed, 1.0f)
+						* pow(udef->speed, 0.5f)
 						* pow(Hitpoints, 0.3f)
 						* pow(RandNum, 0.4f);
 			}
@@ -402,8 +422,8 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			// benefit of a factory is dependant on the kind of
 			// offensive units it can build, but EE-hubs are only
 			// capable of building other buildings
-			for (unsigned int i = 0; i != unittypearray[unitDef->id].canBuildList.size(); i++) {
-				int buildOption = unittypearray[unitDef->id].canBuildList[i];
+			for (unsigned int i = 0; i != unittypearray[udef->id].canBuildList.size(); i++) {
+				int buildOption = unittypearray[udef->id].canBuildList[i];
 				int buildOptionCategory = unittypearray[buildOption].category;
 
 				if (buildOptionCategory == CAT_G_ATTACK || buildOptionCategory == CAT_FACTORY) {
@@ -413,47 +433,48 @@ float CUnitTable::GetScore(const UnitDef* unitDef) {
 			}
 		
 			if (unitcounter > 0) {
-				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[unitDef->id]->size() + 1), 3.0f));
+				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id]->size() + 1), 3.0f));
 			} else {
 				Benefit = 0.0f;
 			}
-
 		} break;
+
 		case CAT_MSTOR: {
-			Benefit = pow((unitDef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
+			Benefit = pow((udef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
 		} break;
 		case CAT_ESTOR: {
-			Benefit = pow((unitDef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
+			Benefit = pow((udef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
 		} break;
 		case CAT_NUKE: {
 			// KLOOTNOTE: should factor damage into this as well
-			float metalcost = unitDef->stockpileWeaponDef->metalcost;
-			float energycost = unitDef->stockpileWeaponDef->energycost;
-			float supplycost = unitDef->stockpileWeaponDef->supplycost;
+			float metalcost = udef->stockpileWeaponDef->metalcost;
+			float energycost = udef->stockpileWeaponDef->energycost;
+			float supplycost = udef->stockpileWeaponDef->supplycost;
 			float denom = metalcost + energycost + supplycost + 1.0f;
-			float range = unitDef->stockpileWeaponDef->range;
-			Benefit = (unitDef->stockpileWeaponDef->areaOfEffect + range) / denom;
+			float range = udef->stockpileWeaponDef->range;
+			Benefit = (udef->stockpileWeaponDef->areaOfEffect + range) / denom;
 		} break;
 		/*
 		case CAT_ANTINUKE: {
-			Benefit = unitDef->stockpileWeaponDef->coverageRange;
+			Benefit = udef->stockpileWeaponDef->coverageRange;
 		} break;
 		case CAT_SHIELD: {
-			Benefit = unitDef->shieldWeaponDef->shieldRadius;
+			Benefit = udef->shieldWeaponDef->shieldRadius;
 		} break;
 		*/
 		default:
 			Benefit = 0.0f;
 	}
 
-	return (Benefit / (Cost + CurrentIncome));
+	// return (Benefit / (CurrentIncome + Cost));
+	// return ((Benefit / Cost) * CurrentIncome);
+	return ((CurrentIncome / Cost) * Benefit);
 }
 
 
 
-// 0: energy, 1: mex, 2: mmaker, 3: ground attackers, 4: defenses, 5: builders
+// operates in terms of GetScore()
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
-	ai->math->TimerStart();
 	vector<int>* templist;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
 	const UnitDef* tempUnitDef;
@@ -497,9 +518,10 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	// iterate over all units for <side> in templist (eg. Core ground_defences)
 	for (unsigned int i = 0; i != templist[side].size(); i++) {
 		int tempUnitDefID = templist[side][i];
+
 		// if our builder can build the i-th unit
 		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
-			// get the unit's heuristic score
+			// get the unit's heuristic score (based on current income)
 			tempscore = GetScore(unittypearray[tempUnitDefID].def);
 
 			if (tempscore > bestscore) {
@@ -515,6 +537,9 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	// (to prevent radar farms and other bizarro side-effects)
 	return ((bestscore > 0.0f)? tempUnitDef: NULL);
 }
+
+
+
 
 
 
@@ -614,7 +639,7 @@ void CUnitTable::Init() {
 
 			else if (!me->def->canfly) {
 				if (me->def->minWaterDepth <= 0) {
-					if (me->def->buildOptions.size() >= 1) {
+					if (me->def->buildOptions.size() >= 1 && me->def->builder) {
 						if ((((me->def)->TEDClassString) == "PLANT") || (((me->def)->speed) > 0.0f)) {
 							me->isHub = false;
 						} else {
@@ -729,7 +754,7 @@ void CUnitTable::DebugPrint() {
 
 	for (int i = 1; i <= numOfUnits; i++) {
 		if (unittypearray[i].side != -1) {
-			fprintf(file, "ID: %i\nName:         %s \nSide:         %s",
+			fprintf(file, "UnitDef ID: %i\nName:         %s\nSide:         %s",
 				i, unitList[i - 1]->humanName.c_str(), sideNames[unittypearray[i].side].c_str());
 
 			fprintf(file, "\nCan Build:    ");

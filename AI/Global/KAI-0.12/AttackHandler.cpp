@@ -761,7 +761,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 				}
 			}
 
-			if ((enemiesInArea > 0) && (group_in->Power() > powerOfEnemies * 1.25f)) {
+			if ((enemiesInArea > 0) && group_in->Size() >= 4 && (group_in->Power() > powerOfEnemies * 1.25f)) {
 				// assign target to this group
 				group_in->AssignTarget(pathToTarget, pathToTarget.back(), ATTACKED_AREA_RADIUS);
 			}
