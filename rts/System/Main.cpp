@@ -130,7 +130,7 @@ public:
 protected:
 	bool Initialize (); 	//!< Initialize app
 	void CheckCmdLineFile (int argc,char *argv[]); 	//!< Check command line for files
-	bool ParseCmdLine(); 				//!< Parse command line
+	void ParseCmdLine(); 				//!< Parse command line
 	void CreateGameSetup (); 			//!< Creates GameSetup
 	bool InitWindow (const char* title); 		//!< Initializes window
 	void InitOpenGL (); 				//!< Initializes OpenGL
@@ -280,8 +280,7 @@ bool SpringApp::Initialize ()
 
 	FileSystemHandler::Initialize(true);
 
-	if (!ParseCmdLine ())
-		return false;
+	ParseCmdLine();
 
 	if (!InitWindow ("RtsSpring"))
 	{
@@ -635,7 +634,7 @@ void SpringApp::InitOpenGL ()
  *
  * Parse command line arguments
  */
-bool SpringApp::ParseCmdLine()
+void SpringApp::ParseCmdLine()
 {
 	cmdline->addoption('f', "fullscreen",     OPTPARM_NONE,   "",  "Run in fullscreen mode");
 	cmdline->addoption('w', "window",         OPTPARM_NONE,   "",  "Run in windowed mode");
@@ -658,13 +657,13 @@ bool SpringApp::ParseCmdLine()
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->result("help")) {
 		cmdline->usage("Spring",VERSION_STRING);
-		return false;
+		exit(0);
 	} else if (cmdline->result("version")) {
 		std::cout << "Spring " << VERSION_STRING << std::endl;
-		return false;
+		exit(0);
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
-		return false;
+		exit(0);
 	}
 
 	// flags
@@ -690,8 +689,6 @@ bool SpringApp::ParseCmdLine()
 	
 	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
-
-	return true;
 }
 
 /**
