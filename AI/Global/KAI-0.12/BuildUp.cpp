@@ -61,12 +61,14 @@ void CBuildUp::Buildup() {
 	bool mStall = (mIncome) < (mUsage * 1.3f);			// are we currently producing less metal than we are currently expending * 1.3?
 	bool eStall = (eIncome) < (eUsage * 1.6f);			// are we currently producing less energy than we are currently expending * 1.6?
 
+
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
 	bool buildNukeSilo =
 		(mIncome > 100.0f && eIncome > 6000.0f && mUsage < mIncome && eUsage < eIncome &&
 		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
+
 
 	if (ai->uh->NumIdleUnits(CAT_BUILDER)) {
 		// get first idle (mobile) builder every Update() cycle
@@ -78,11 +80,18 @@ void CBuildUp::Buildup() {
 		// int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
 		// int factoriesOfTypeMax = factoryDef->maxThisUnit;
 
-		// KLOOTNOTE: prevent NPE if this builder cannot build any factories
+		// if this builder cannot build any factories, pretend it's feasible
 		bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
 		bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
+		bool eLevelMed = (eLevel50 && makersOn);
+		bool mLevelLow = (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (!factFeasM && factoryTimer <= 0));
 
-		if (builderDef == NULL) {
+		// number of buildings in unit-table, not how many currently built
+		int buildableEStorage = ai->ut->energy_storages->size();
+		int buildableMMakers = ai->ut->metal_makers->size();
+
+
+		if (!builderDef) {
 			ai->uh->UnitDestroyed(builder);
 		}
 
@@ -92,45 +101,30 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			else if ((mIncome > 20.0f && eIncome > 250.0f) && builderDef->isCommander && ai->uh->FactoryBuilderAdd(builder)) {
+			else if (builderDef->isCommander && (mIncome > 20.0f && eIncome > 250.0f) && ai->uh->FactoryBuilderAdd(builder)) {
 				// add commander to factory so it doesn't wander around too much (works best if
 				// AI given bonus, otherwise initial expansion still mostly done by commander)
 				builderTimer = 0;
-				return;
 			}
 
 			else if (buildNukeSilo && nukeSiloTimer <= 0) {
 				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_NUKE)) {
 					// always favor building one silo at a time rather than
 					// many in parallel to prevent a sudden massive resource
-					// drain when silos are finished since nukes get queued
-					// right away (note that this will result in ALL builders
-					// trying to build nothing but silos eventually until the
-					// defined limit is reached)
-					const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_NUKE);
-					bool r = false;
-	
-					if (building) {
-						r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
-					} else {
-						FallbackBuild(builder, CAT_NUKE);
-					}
-	
-					if (r)
+					// drain when silos are finished
+					if (BuildNow(builder, CAT_NUKE))
 						nukeSiloTimer += 300;
 				}
 			}
 
-			else if ((eLevel50 && makersOn) && (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (!factFeasM && factoryTimer <= 0))) {
+
+			else if (eLevelMed && mLevelLow) {
 				if (!ai->MyUnits[builder]->ReclaimBest(1)) {
 					const UnitDef* mex = ai->ut->GetUnitByScore(builder, CAT_MEX);
 					float3 mexpos = ai->mm->GetNearestMetalSpot(builder, mex);
 
 					bool eOverflow = (eStorage / (eIncome + 0.01) < STORAGETIME);
 					bool eExcess = (eIncome > (eUsage * 1.5));
-					// number of buildings in unit-table, not how many currently built
-					int buildableEStorage = ai->ut->energy_storages->size();
-					int buildableMMakers = ai->ut->metal_makers->size();
 
 					if (mexpos != ERRORVECTOR) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX)) {
@@ -141,47 +135,32 @@ void CBuildUp::Buildup() {
 					else if (eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ESTOR)) {
 							// build energy storage
-							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_ESTOR);
-							bool r = false;
-
-							if (building) {
-								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
-							} else {
-								FallbackBuild(builder, CAT_ESTOR);
-							}
-
-							if (r)
+							if (BuildNow(builder, CAT_ESTOR))
 								storageTimer += 90;
 						}
 					}
 					else if (buildableMMakers > 0 && eExcess && ((RANDINT % 10) == 0)) {
+						// build metal maker
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MMAKER)) {
-							// build metal maker
-							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_MMAKER);
-							bool r = false;
-
-							if (building) {
-								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
-							} else {
-								FallbackBuild(builder, CAT_MMAKER);
-							}
+							BuildNow(builder, CAT_MMAKER);
 						}
 					}
 				}
 			}
 
 
-			else if (eStall || !factFeasE) {
-				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ENERGY)) {
-					// build energy generator
-					const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_ENERGY);
-					bool r = false;
+			// we're producing lots of energy but aren't using it
+			else if (eIncome > 2000.0f && eUsage < (eIncome - 1000.0f) && (mStall && mLevel < 100.0f) && buildableMMakers > 0) {
+				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MMAKER)) {
+					BuildNow(builder, CAT_MMAKER);
+				}
+			}
 
-					if (building) {
-						r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
-					} else {
-						FallbackBuild(builder, CAT_ENERGY);
-					}
+
+			else if (eStall || !factFeasE) {
+				// build energy generator
+				if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ENERGY)) {
+					BuildNow(builder, CAT_ENERGY);
 				}
 			}
 
@@ -196,16 +175,7 @@ void CBuildUp::Buildup() {
 					if (mOverflow && numMStorage > 0 && storageTimer <= 0 && (numFactories > 0)) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MSTOR)) {
 							// build metal storage
-							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_MSTOR);
-							bool r = false;
-
-							if (building) {
-								r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->MyUnits[builder]->pos());
-							} else {
-								FallbackBuild(builder, CAT_MSTOR);
-							}
-
-							if (r)
+							if (BuildNow(builder, CAT_MSTOR))
 								storageTimer += 90;
 						}
 					}
@@ -233,13 +203,7 @@ void CBuildUp::Buildup() {
 						if (!ai->uh->FactoryBuilderAdd(builder)) {
 							// if we can't add this builder to some
 							// other factory then construct new one
-							bool r = false;
-
-							if (factoryDef) {
-								r = ai->MyUnits[builder]->Build_ClosestSite(factoryDef, ai->cb->GetUnitPos(builder));
-							} else {
-								FallbackBuild(builder, CAT_FACTORY);
-							}
+							BuildNow(builder, CAT_FACTORY, factoryDef);
 						}
 					}
 				}
@@ -257,6 +221,7 @@ void CBuildUp::Buildup() {
 	if (buildNukeSilo)
 		NukeSiloCycle();
 }
+
 
 
 
@@ -354,6 +319,7 @@ void CBuildUp::FallbackBuild(int builder, int failedCat) {
 	if (!b1 && !b2       ) { b3 = ai->uh->BuildTaskAddBuilder(builder, CAT_DEFENCE); }
 	if (!b1 && !b2 && !b3) { b4 = ai->uh->BuildTaskAddBuilder(builder, CAT_FACTORY); }
 
+/*
 	if (!b1 && !b2 && !b3 && !b4) {
 		// failed to add builder to any task, try building something
 		const UnitDef* udef1 = ai->ut->GetUnitByScore(builder, CAT_MEX);
@@ -381,6 +347,7 @@ void CBuildUp::FallbackBuild(int builder, int failedCat) {
 			return;
 		}
 	}
+*/
 
 	// unable to assist and unable to build, just patrol
 	if (!b1 && !b2 && !b3 && !b4)
@@ -417,4 +384,31 @@ const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 	}
 
 	return leastBuiltBuilder;
+}
+
+
+
+bool CBuildUp::BuildNow(int builder, int category) {
+	const UnitDef* building = ai->ut->GetUnitByScore(builder, category);
+	bool r = false;
+
+	if (building) {
+		r = ai->MyUnits[builder]->Build_ClosestSite(building, ai->cb->GetUnitPos(builder));
+	} else {
+		FallbackBuild(builder, category);
+	}
+
+	return r;
+}
+
+bool CBuildUp::BuildNow(int builder, int category, const UnitDef* udef) {
+	bool r = false;
+
+	if (udef) {
+		r = ai->MyUnits[builder]->Build_ClosestSite(udef, ai->cb->GetUnitPos(builder));
+	} else {
+		FallbackBuild(builder, CAT_FACTORY);
+	}
+
+	return r;
 }

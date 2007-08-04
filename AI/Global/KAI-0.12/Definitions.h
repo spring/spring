@@ -2,7 +2,7 @@
 #define DEFINITIONS_H
 
 #define AI_NAME			"KAI-0.12 Unofficial"
-#define AI_DATE			"1/8/2007"
+#define AI_DATE			"4/8/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
 
 // Logger
@@ -60,7 +60,8 @@ enum {
 // Maximum Builders helping each factory
 #define MAXBUILDERSPERFACTORY	2
 #define BUILDERFACTORYCOSTRATIO	0.5
-#define DEFENSEFACTORYRATIO		5
+// #define DEFENSEFACTORYRATIO		5
+#define DEFENSEFACTORYRATIO		4
 
 // Metal to energy ratio for cost calculations
 #define METAL2ENERGY			45
@@ -74,7 +75,7 @@ enum {
 // Time idle units stay in limbo mode (in frames)
 #define LIMBOTIME				40
 // Income multiplier for tech tree advancement
-#define	INCOMEMULTIPLIER		5
+#define INCOMEMULTIPLIER		5
 // Seconds of storage to be had
 #define STORAGETIME				6
 // Think that your econ is this much for factory feasible
