@@ -2,7 +2,7 @@
 #define DEFINITIONS_H
 
 #define AI_NAME			"KAI-0.12 Unofficial"
-#define AI_DATE			"4/8/2007"
+#define AI_DATE			"5/8/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
 
 // Logger
