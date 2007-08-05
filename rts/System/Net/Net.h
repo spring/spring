@@ -64,10 +64,6 @@ protected:
 	*/
 	int InitLocalClient(const unsigned wantedNumber);
 	
-	/** Insert your Connection here to become connected
-	*/
-	unsigned InitNewConn(CConnection* newClient, const unsigned wantedNumber=0);
-	
 	/** Broadcast data to all clients
 	*/
 	int SendData(const unsigned char* data,const unsigned length);
@@ -259,6 +255,12 @@ protected:
 	}
 	
 private:
+		
+	/** Insert your Connection here to become connected
+	 */
+	unsigned InitNewConn(CConnection* newClient, const unsigned wantedNumber=0);
+
+	
 	UDPListener* udplistener;
 	CLocalConnection* local;
 	

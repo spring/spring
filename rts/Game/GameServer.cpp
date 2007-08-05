@@ -286,7 +286,9 @@ bool CGameServer::Update()
 	if (hostif)
 	{
 		std::string msg = hostif->GetChatMessage();
-		game->HandleChatMsg(msg, gameSetup ? gameSetup->myPlayer : 0, false);
+		
+		if (!msg.empty())
+			hostif->SendPlayerChat(gameSetup ? gameSetup->myPlayer : 0, msg);
 	}
 	CheckForGameEnd();
 	return true;
