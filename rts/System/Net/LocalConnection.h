@@ -20,15 +20,21 @@ public:
 	
 	/**
 	@brief Send data to other instance
-	@return 0 on success, 1 on failure (buffer overflow)
+	@return The amount of data sent (will be length)
+	@throw network_error When data doesn't fit in the buffer
 	*/
 	virtual int SendData(const unsigned char *data, const unsigned length);
+	
+	/**
+	@brief Get data
+	@return The amount of data read
+	@param length The maximum data length to copy
+	@throw network_error When the data doesnt fit in *buf
+	*/
 	virtual int GetData(unsigned char *buf, const unsigned length);
 
 	/// does nothing
-	virtual void Flush();
-	/// does nothing
-	virtual void Ping();
+	virtual void Flush(const bool forced = false);
 
 private:
 	static unsigned char Data[2][NETWORK_BUFFER_SIZE];

@@ -21,8 +21,6 @@ including `command' and `messageSize'.
 */
 
 enum NETMSG {
-	// WARNING: This is now in CNet, but dont use thos number for anything else
-	NETMSG_HELLO            = 1,  //
 	NETMSG_QUIT             = 2,  //
 	NETMSG_NEWFRAME         = 3,  // int frameNum;
 	NETMSG_STARTPLAYING     = 4,  //
@@ -109,7 +107,6 @@ public:
 
 	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum, int* que = NULL);
 
-	void SendHello();
 	int SendQuit();
 	int SendNewFrame(int frameNum);
 	int SendStartPlaying();

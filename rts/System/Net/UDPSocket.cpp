@@ -1,6 +1,3 @@
-
-#include "StdAfx.h"
-
 #include "UDPSocket.h" 
 
 #ifdef _WIN32

@@ -47,9 +47,6 @@ public:
 	/** Flush and deactivate a connection
 	*/
 	void Kill(const unsigned connNumber);
-	/** Send an empty Packet to all Connections (NETMSG_HELLO)
-	*/
-	void PingAll();
 
 	bool Connected() const;
 

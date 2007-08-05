@@ -329,10 +329,6 @@ bool CGameServer::ServerReadNet()
 			// TODO rearrange this in order of importance (most used to the front)
 			switch (inbuf[inbufpos]){
 
-			case NETMSG_HELLO:
-				lastLength=1;
-				break;
-
 			case NETMSG_ATTEMPTCONNECT: //handled directly in CNet
 				lastLength=3;
 				break;

@@ -13,7 +13,7 @@
 
 #include "LogOutput.h"
 #include "GlobalStuff.h"
-#include "Sync/Syncify.h"
+//#include "Sync/Syncify.h"
 #include "Platform/ConfigHandler.h"
 
 namespace netcode {
@@ -149,24 +149,29 @@ void UDPConnection::Update()
 		return;
 
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-
-	if((dataRecv == 0) && lastSendTime<curTime-1){		//server hasnt responded so try to send the connection attempt again
+	bool force = false;	// should we force to send a packet?
+	
+	if(lastSendTime<curTime-1 && (dataRecv == 0)){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime=curTime;
+		force = true;
 	}
-	else if(lastSendTime<curTime-5 && !(dataRecv == 0)){		//we havent sent anything for a while so send something to prevent timeout
-		Ping();
-	}
-	else if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-		Ping();
-	}
-	else if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
+	
+	if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
 	{
 		active=false;
+		return;
 	}
-
+	
+	if (lastSendTime<curTime-5 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
+		force = true;
+	}
+	else if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+		force = true;
+	}
+	
 	if(outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f) || lastSendFrame < gs->frameNum-1)){
-		Flush();
+		Flush(force);
 	}
 }
 
@@ -209,9 +214,9 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	delete packet;
 }
 
-void UDPConnection::Flush()
+void UDPConnection::Flush(const bool forced)
 {
-	if (outgoingLength <= 0)
+	if (outgoingLength <= 0 && !forced)
 		return;
 
 	lastSendFrame=gs->frameNum;
@@ -224,17 +229,15 @@ void UDPConnection::Flush()
 	if (outgoingLength > mtu)
 		++fragmentedFlushes;
 
-	for (int pos = 0; outgoingLength != 0; pos += mtu) {
+	unsigned pos = 0;
+	do
+	{
 		int length = std::min(mtu, outgoingLength);
 		SendRawPacket(outgoingData + pos, length, currentNum++);
 		unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
 		outgoingLength -= length;
-	}
-}
-
-void UDPConnection::Ping()
-{
-	SendData(&NETMSG_HELLO, sizeof(NETMSG_HELLO));
+		pos += mtu;
+	} while (outgoingLength != 0);
 }
 
 bool UDPConnection::CheckAddress(const sockaddr_in& from) const
