@@ -2520,9 +2520,6 @@ bool CGame::ClientReadNet()
 		int lastLength=0;
 
 		switch (inbuf[inbufpos]){
-		case NETMSG_HELLO:
-			lastLength = 1;
-			break;
 
 		case NETMSG_ATTEMPTCONNECT:
 			lastLength=3;

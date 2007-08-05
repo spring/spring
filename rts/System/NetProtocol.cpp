@@ -201,12 +201,6 @@ int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsig
 		record->SaveToDemo(buf, readahead);
 	return readahead;
 }
-// 	NETMSG_HELLO            = 1,  //
-
-void CNetProtocol::SendHello()
-{
-	PingAll();
-}
 
 //  NETMSG_QUIT             = 2,  //
 
@@ -484,7 +478,6 @@ int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) 
 
 	int length = 0;
 	switch (inbuf[0]) {
-		case NETMSG_HELLO:
 		case NETMSG_QUIT:
 		case NETMSG_STARTPLAYING:
 		case NETMSG_MEMDUMP:

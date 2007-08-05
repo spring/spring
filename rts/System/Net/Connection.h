@@ -18,8 +18,7 @@ public:
 	virtual int SendData(const unsigned char *data, const unsigned length)=0;
 	virtual int GetData(unsigned char *buf, const unsigned length)=0;
 
-	virtual void Flush()=0;
-	virtual void Ping()=0;
+	virtual void Flush(const bool forced = false)=0;
 
 	bool active;
 	float lastSendTime;
@@ -28,9 +27,6 @@ public:
 // protected:
 	unsigned dataSent, sentOverhead;
 	unsigned dataRecv, recvOverhead;
-	
-	static const unsigned char NETMSG_HELLO;
-
 };
 
 } // namespace netcode

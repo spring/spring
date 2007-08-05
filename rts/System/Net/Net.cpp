@@ -62,17 +62,8 @@ bool CNet::Listening()
 void CNet::Kill(const unsigned connNumber)
 {
 	// logOutput.Print("Killing connection %i", connNumber);
-	connections[connNumber]->Flush();
+	connections[connNumber]->Flush(true);
 	connections[connNumber]->active = false;
-}
-
-void CNet::PingAll()
-{
-	// logOutput.Print("Pinging all players");
-	for(unsigned a=0;a<MAX_PLAYERS;++a){
-		if (connections[a] && connections[a]->active)
-			connections[a]->Ping();
-	}
 }
 
 bool CNet::Connected() const

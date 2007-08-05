@@ -53,9 +53,7 @@ public:
 	void ProcessRawPacket(RawPacket* packet);
 
 	/// send all data waiting in char outgoingData[]
-	virtual void Flush();
-	/// send a NETMSG_HELLO
-	virtual void Ping();
+	virtual void Flush(const bool forced = false);
 
 	/// do we have these address?
 	bool CheckAddress(const sockaddr_in&) const;

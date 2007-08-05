@@ -1,8 +1,7 @@
 #include "LocalConnection.h"
 
 #include <string.h>
-
-#include "LogOutput.h"
+#include <stdexcept>
 
 namespace netcode {
 
@@ -30,44 +29,33 @@ CLocalConnection::~CLocalConnection()
 int CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
-	if(active){
-		if(Length[OtherInstance()]+length>=NETWORK_BUFFER_SIZE){
-			logOutput.Print("Overflow when sending to local connection: Outbuf: %i Data: %i BuffSize: %i",Length[OtherInstance()],length,NETWORK_BUFFER_SIZE);
-			return 0;
-		}
-		memcpy(&Data[OtherInstance()][Length[OtherInstance()]],data,length);
-		Length[OtherInstance()]+=length;
-		dataSent += length;
-		// logOutput.Print("Sent %i bytes to %i", length, OtherInstance());
+	
+	if(Length[OtherInstance()]+length>=NETWORK_BUFFER_SIZE){
+		throw std::length_error("Buffer overflow in CLocalConnection::SendData");
 	}
-	return 1;
+	memcpy(&Data[OtherInstance()][Length[OtherInstance()]],data,length);
+	Length[OtherInstance()]+=length;
+	dataSent += length;
+	
+	return length;
 }
 
 int CLocalConnection::GetData(unsigned char *buf, const unsigned length)
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-	if(active){
-		unsigned ret=Length[instance];
-		if(length<=ret) {
-			logOutput.Print("Too small buffer to get data from local connection: Buffer: %i Datalength: %i",length, ret);
-			return -1;
-		}
-		dataRecv += Length[instance];
-		memcpy(buf,Data[instance],ret);
-		Length[instance]=0;
-		// logOutput.Print("%i recieved %i bytes", instance, ret);
-		return ret;
-	} else {
-		logOutput.Print("Tried to get data from inactive connection");
-		return -1;
+		
+	unsigned ret=Length[instance];
+	if(length<=ret) {
+		throw std::length_error("Buffer overflow in CLocalConnection::GetData");
 	}
+	dataRecv += Length[instance];
+	memcpy(buf,Data[instance],ret);
+	Length[instance]=0;
+	
+	return ret;
 }
 
-void CLocalConnection::Flush()
-{
-}
-
-void CLocalConnection::Ping()
+void CLocalConnection::Flush(const bool forced)
 {
 }
 

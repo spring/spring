@@ -483,7 +483,6 @@ void CPreGame::UpdateClientNet()
 			inbufpos += 5;
 			break;
 
-		case NETMSG_HELLO:
 		case NETMSG_SENDPLAYERSTAT:
 			inbufpos += 1;
 			break;
