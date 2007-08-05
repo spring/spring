@@ -101,9 +101,11 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			else if (builderDef->isCommander && (mIncome > 20.0f && eIncome > 250.0f) && ai->uh->FactoryBuilderAdd(builder)) {
+			else if (builderDef->isCommander && (ai->cb->GetCurrentFrame() > 9000) && ai->uh->FactoryBuilderAdd(builder)) {
 				// add commander to factory so it doesn't wander around too much (works best if
 				// AI given bonus, otherwise initial expansion still mostly done by commander)
+				// note: 5 minutes should be enough to get the resource income needed for this,
+				// don't use hardcoded metal- and energy-values
 				builderTimer = 0;
 			}
 
