@@ -1,48 +1,38 @@
 #!/bin/sh
 # Author: Tobi Vollebregt
 
-# Sanity checks.
-if [ -z "$1" ]; then
-	echo "Usage: $0 <version>"
-	echo "Example: $0 0.72b1"
-	exit 1
-fi
+# Quit on error.
+set -e
 
+# Sanity check.
 if [ ! -x /usr/bin/svn ]; then
-	echo "ERROR: Couldn't find /usr/bin/svn"
+	echo "Error: Couldn't find /usr/bin/svn"
 	exit 1
 fi
 
-version="$1"
-svnbase="https://spring.clan-sy.com/svn/spring"
+# Find correct working directory.
+# (Compatible with SConstruct, which is in trunk root)
 
-if [ "$version" = "trunk" ]; then
-	svnurl="$svnbase/trunk"
-	#version="trunk-r`svn info $svnbase/trunk | grep Revision | sed 's/^Revision: //g'`"
-	# Find checkout directory.
-	svndir="."
-	while [ ! -d "$svndir/installer" ]; do
-        	if [ "`( cd "$svndir" && echo "$PWD" )`" = "/" ]; then
-                	echo "Error: Could not find installer directory."
-	                echo "Make sure to run this script from a directory below your checkout directory."
-        	        exit 1
-	        fi
-		if [ "$svndir" = "." ]; then
-			svndir=".."
-		else
-	        	svndir="$svndir/.."
-		fi
-	done
-else
-	svnurl="$svnbase/tags/spring_$version"
-	svndir="spring_$version"
-fi
+while [ ! -d installer ]; do
+        if [ "$PWD" = "/" ]; then
+                echo "Error: Could not find installer directory."
+                echo "Make sure to run this script from a directory below your checkout directory."
+                exit 1
+        fi
+        cd ..
+done
 
+# This regex matches regexes in buildbot etc.
+version=`grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?' rts/Game/GameVersion.h`
+
+# Each one of these that is set is build when running this script.
+# .tar.bz2 and .tar.gz are built with linux (LF) line endings.
+# .zip and .7z are built with windows (CRLF) line endings.
 dir="spring_$version"
 tbz="spring_${version}_src.tar.bz2"
-tgz="spring_${version}_src.tar.gz"
+#tgz="spring_${version}_src.tar.gz"
 zip="spring_${version}_src.zip"
-seven_zip="spring_${version}_src.7z"
+#seven_zip="spring_${version}_src.7z"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
@@ -72,42 +62,30 @@ linux_include=""
 windows_exclude=""
 windows_include="$dir/TASClient/"
 
-# Update/create SVN checkout.
-if [ -d "$svndir" ]; then
-	olddir="$PWD"
-	cd "$svndir"
-	echo '-> UPDATING SVN CHECKOUT'
-	/usr/bin/svn update || exit 1
-	cd "$olddir"
-else
-	echo '-> CREATING SVN CHECKOUT'
-	/usr/bin/svn checkout "$svnurl" "$svndir" || exit 1
-fi
-
 # Linux line endings, .tar.{bz2,gz} package.
-echo '-> EXPORTING CHECKOUT DIR WITH LF LINE ENDINGS'
+echo 'Exporting checkout dir with LF line endings'
 mkdir lf || exit 1
 cd lf
-/usr/bin/svn export "../$svndir" "$dir" --native-eol LF || exit 1
+/usr/bin/svn export .. "$dir" --native-eol LF
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
-echo '-> CREATING .TAR.BZ2 ARCHIVE'
-tar cfj "../$tbz" $include $linux_include
-echo '-> CREATING .TAR.GZ ARCHIVE'
-tar cfz "../$tgz" $include
+[ -n "$tbz" ] && echo 'Creating .tar.bz2 archive' && \
+	tar cfj "../$tbz" $include $linux_include
+[ -n "$tgz" ] && echo 'Creating .tar.gz archive' && \
+	tar cfz "../$tgz" $include $linux_include
 cd ..
-echo '-> CLEANING'
+echo 'Cleaning'
 rm -rf lf
 
 # Windows line endings, .zip/.7z package
-echo '-> EXPORTING CHECKOUT DIR WITH CRLF LINE ENDINGS'
+echo 'Exporting checkout dir with CRLF line endings'
 mkdir crlf || exit 1
 cd crlf
-/usr/bin/svn export "../$svndir" "$dir" --native-eol CRLF || exit 1
+/usr/bin/svn export .. "$dir" --native-eol CRLF
 [ -n "$windows_exclude" ] && rm -rf $windows_exclude
-[ -x /usr/bin/zip ] && echo '-> CREATING .ZIP ARCHIVE' && \
+[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo 'Creating .zip archive' && \
 	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
-[ -x /usr/bin/7z ] && echo '-> CREATING .7Z ARCHIVE' && \
+[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo 'Creating .7z archive' && \
 	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
 cd ..
-echo '-> CLEANING'
+echo 'Cleaning'
 rm -rf crlf

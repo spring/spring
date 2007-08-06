@@ -3,6 +3,9 @@
 # Author: Tobi Vollebregt
 # Initial version copied from make_test_installer.bat
 
+# Quit on error.
+set -e
+
 # Find correct working directory.
 # (Compatible with SConstruct, which is in trunk root)
 
@@ -22,22 +25,22 @@ if [ -z "$1" ]; then
 else
 	REVISION=$1
 fi
+echo "Creating installers for revision $REVISION"
 
-# A slightly modified copy of make_test_installer.bat follows:
+# Figure out whether this is a test build or a release build,
+# and build the correct full and updating installers.
+# The grep regex matches the ones used in buildbot.
 
-echo This will create the various installers for a TA Spring release
-echo .
-echo Remember to generate all needed path information for the maps to be included
-echo .
-echo Also remember to update the version string in GameVersion.h so that
-echo the correct .pdb can be identified!
-echo .
+if grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+(svn[0-9]+)?' rts/Game/GameVersion.h >/dev/null; then
+	echo "Creating test installer"
+	makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi
 
-echo Creating test installer
-makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi || exit 1
+	echo "Creating updating test installer"
+	makensis -V3 -DSP_UPDATE -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi
+else
+	echo "Creating installer"
+	makensis -V3 installer/taspring.nsi
 
-echo Creating updating test installer
-makensis -V3 -DSP_UPDATE -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi || exit 1
-
-echo All done.. 
-echo If this is a public release, make sure to save this and tag CVS etc..
+	echo "Creating updating installer"
+	makensis -V3 -DSP_UPDATE installer/taspring.nsi
+fi
