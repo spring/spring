@@ -63,6 +63,15 @@ bool CGameSetup::Init(std::string setupFile)
 	return ret;
 }
 
+/** @brief random number generator function object for use with std::random_shuffle */
+struct UnsyncedRandomNumberGenerator {
+	/** @brief returns a random number in the range [0, n) */
+	int operator()(int n) {
+		// a simple gu->usRandInt() % n isn't random enough
+		return gu->usRandInt() * n / (RANDINT_MAX + 1);
+	}
+};
+
 bool CGameSetup::Init(const char* buf, int size)
 {
 	for(int a=0;a<MAX_PLAYERS;a++){
@@ -123,38 +132,32 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
 	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
 
+	file.GetDef(startPosType,"0","GAME\\StartPosType");
+
+	for (int a = 0; a < gs->activeTeams; ++a) {
+		// ready up automatically unless startPosType is choose in game
+		readyTeams[a] = (startPosType != 2);
+		teamStartNum[a] = a;
+	}
+
+	if (startPosType == 1) { // random
+		//server syncs these later, so we can use unsynced rng
+		UnsyncedRandomNumberGenerator rng;
+		std::random_shuffle(&teamStartNum[0], &teamStartNum[gs->activeTeams], rng);
+	}
+
+	if (startPosType == 2) // choose in game
+		SAFE_NEW CStartPosSelecter();
+
 	// gaia adjustments
 	if (gs->useLuaGaia) {
 		gs->gaiaTeamID = gs->activeTeams;
 		gs->gaiaAllyTeamID = gs->activeAllyTeams;
 		gs->activeTeams++;
 		gs->activeAllyTeams++;
+		teamStartNum[gs->gaiaTeamID] = gs->gaiaTeamID;
 	}
 
-	file.GetDef(startPosType,"0","GAME\\StartPosType");
-	if(startPosType==2){
-		for(int a=0;a<gs->activeTeams;++a)
-			readyTeams[a]=false;
-		for(int a=0;a<gs->activeTeams;++a)
-			teamStartNum[a]=a;
-		SAFE_NEW CStartPosSelecter();
-	} else {
-		for(int a=0;a<gs->activeTeams;++a)
-			readyTeams[a]=true;
-		if(startPosType==0){		//in order
-			for(int a=0;a<gs->activeTeams;++a)
-				teamStartNum[a]=a;
-		} else {								//random order
-			std::multimap<int,int> startNums;
-			for(int a=0;a<gs->activeTeams;++a)
-				startNums.insert(pair<int,int>(gu->usRandInt(),a));	//server syncs these later
-			int b=0;
-			for(std::multimap<int,int>::iterator si=startNums.begin();si!=startNums.end();++si){
-				teamStartNum[si->second]=b;
-				++b;
-			}
-		}
-	}
 	for(int a=0;a<numPlayers;++a){
 		char section[50];
 		sprintf(section,"GAME\\PLAYER%i\\",a);
