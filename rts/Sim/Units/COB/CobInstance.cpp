@@ -640,35 +640,49 @@ void CCobInstance::EmitSfx(int type, int piece)
 			break;}
 		default:
 			//logOutput.Print("Unknown sfx: %d", type);
-			if(type&1024)	//emit defined explosiongenerator
+			if (type & 1024)	//emit defined explosiongenerator
 			{
+				unsigned index = type - 1024;
+				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
+					GCobEngine.ShowScriptError("Invalid explosion generator index for emit-sfx");
+					break;
+				}
 				//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
-				unit->unitDef->sfxExplGens[type-1024]->Explosion(pos, 1, 1, unit, 0, 0, dir);
+				unit->unitDef->sfxExplGens[index]->Explosion(pos, 1, 1, unit, 0, 0, dir);
 			}
-			else if (type&2048)  //make a weapon fire from the piece
+			else if (type & 2048)  //make a weapon fire from the piece
 			{
+				unsigned index = type - 2048;
+				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+					GCobEngine.ShowScriptError("Invalid weapon index for emit-sfx");
+					break;
+				}
 				//this is very hackish and probably has a lot of side effects, but might be usefull for something
 				//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
 
-				float3 targetPos = unit->weapons[type-2048]->targetPos;
-				float3 weaponPos = unit->weapons[type-2048]->weaponPos;
+				float3 targetPos = unit->weapons[index]->targetPos;
+				float3 weaponPos = unit->weapons[index]->weaponPos;
 
-				unit->weapons[type-2048]->targetPos = pos+dir;
-				unit->weapons[type-2048]->weaponPos = pos;
+				unit->weapons[index]->targetPos = pos+dir;
+				unit->weapons[index]->weaponPos = pos;
 
-				unit->weapons[type-2048]->Fire();
+				unit->weapons[index]->Fire();
 
-				unit->weapons[type-2048]->targetPos = targetPos;
-				unit->weapons[type-2048]->weaponPos = weaponPos;
-
+				unit->weapons[index]->targetPos = targetPos;
+				unit->weapons[index]->weaponPos = weaponPos;
 			}
 			else if (type & 4096) {
+				unsigned index = type - 4096;
+				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+					GCobEngine.ShowScriptError("Invalid weapon index for emit-sfx");
+					break;
+				}
 				// detonate weapon from piece
-				WeaponDef* weaponDef = unit->weapons[type - 4096]->weaponDef;
+				WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 				if (weaponDef->soundhit.getID(0) > 0) {
 					sound->PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
