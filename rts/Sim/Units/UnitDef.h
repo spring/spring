@@ -38,7 +38,7 @@ struct GuiSoundSet
 	}
 
 	bool ValidIndex(int idx) const {
-		return ((idx >= 0) && (idx < sounds.size()));
+		return ((idx >= 0) && (idx < (int)sounds.size()));
 	}
 
 	// get a (loaded) sound's name for index <idx>
@@ -99,7 +99,7 @@ struct UnitDef
 	int imageSizeX;
 	int imageSizeY;
 	std::string buildpicname;
-	
+
 	UnitDef* decoyDef;
 
 	int aihint;
@@ -266,7 +266,7 @@ struct UnitDef
 	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
 	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
-	
+
 	int xsize;									//each size is 8 units
 	int ysize;									//each size is 8 units
 
