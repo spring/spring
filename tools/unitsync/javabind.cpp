@@ -20,6 +20,8 @@
 
 #define NAMEBUF_SIZE 4096
 
+#define JNI_BINDINGS_VERSION 2
+
 // JNIEXPORT doesn't define default visibility
 #ifdef __GNUC__
 #pragma GCC visibility push(default)
@@ -85,6 +87,15 @@ DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle);
 extern "C" {
 #endif
 
+	/*
+	* Class:     aflobby_CUnitSyncJNIBindings
+	* Method:    GetSpringVersion
+	* Signature: ()Ljava/lang/String;
+	*/
+	JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIVersion_GetVersion
+		(JNIEnv *env, jclass myobject){
+			return JNI_BINDINGS_VERSION;
+		}
 	/*
 	* Class:     aflobby_CUnitSyncJNIBindings
 	* Method:    GetSpringVersion

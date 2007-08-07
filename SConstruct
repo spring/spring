@@ -79,7 +79,8 @@ for d in filelist.list_directories(uenv, 'rts'):
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 unitsync_files = filelist.get_source(uenv, 'tools/unitsync');
 unitsync_extra_files = \
-	['rts/Rendering/Textures/Bitmap.cpp',
+	['rts/Game/GameVersion.cpp',
+	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/System/TdfParser.cpp',
 	'rts/System/FileSystem/Archive7Zip.cpp',
