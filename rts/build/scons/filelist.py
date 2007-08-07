@@ -111,7 +111,6 @@ def get_spring_source(env):
 		exclude += [f.replace('/','\\')]
 
 	source = get_source(env, 'rts', exclude_list = exclude)
-	source += get_source(env, 'lua')
 	return source
 
 

@@ -371,7 +371,7 @@ def generate(env):
 		stringarray_opt('libpath', [])
 
 		include_path = env['cpppath'] + ['rts', 'rts/System']
-		include_path += ['lua/luabind', 'lua/lua/include']
+		include_path += ['rts/lib/luabind', 'rts/lib/lua/include']
 		lib_path = env['libpath'] + ['rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':
@@ -425,8 +425,6 @@ def generate(env):
 	#BuildDir support code
 	if env['builddir']:
 		for d in filelist.list_directories(env, 'rts'):
-			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
-		for d in filelist.list_directories(env, 'lua'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
 		for d in filelist.list_directories(env, 'AI'):
 			env.BuildDir(os.path.join(env['builddir'], d), d, duplicate = False)
