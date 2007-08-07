@@ -80,7 +80,7 @@ bool CGameSetup::Init(const char* buf, int size)
 
 	mapname=file.SGetValueDef("","GAME\\mapname");
 	scriptName=file.SGetValueDef("Commanders","GAME\\scriptname");
-	baseMod=archiveScanner->ModArchiveToModName(file.SGetValueDef(MOD_FILE,"GAME\\Gametype"));
+	baseMod=archiveScanner->ModArchiveToModName(file.SGetValueDef("","GAME\\Gametype"));
 	file.GetDef(hostip,          "0",   "GAME\\HostIP");
 	file.GetDef(hostport,        "0",   "GAME\\HostPort");
 	file.GetDef(maxUnits,        "500", "GAME\\MaxUnits");

@@ -41,7 +41,7 @@ static std::string MakeDemoStartScript(const char *startScript, const int ssLen)
 			gmttime->tm_hour, gmttime->tm_min, gmttime->tm_sec);
 	std::string datetime;
 	script.insert (script.begin(), startScript, startScript + last + 1);
-	script += "\n[VERSION]\n{\n\tGameVersion=" VERSION_STRING ";\n";
+	script += "\n[VERSION]\n{\n\tGameVersion=" + std::string(VERSION_STRING) + ";\n";
 	script += "\tDateTime=" + std::string(buff) + ";\n";
 	sprintf(buff, "%u", (unsigned)currtime);
 	script += "\tUnixTime=" + std::string(buff) + ";\n}\n";
@@ -53,7 +53,7 @@ CDemoRecorder::CDemoRecorder()
 	// We want this folder to exist
 	if (!filesystem.CreateDirectory("demos"))
 		return;
-	
+
 	char buf[500] = "demos/XXXXXX";
 #ifndef _WIN32
 	mkstemp(buf);
@@ -61,7 +61,7 @@ CDemoRecorder::CDemoRecorder()
 	_mktemp(buf);
 #endif
 
-	
+
 	demoName = wantedName = buf;
 	recordDemo=SAFE_NEW std::ofstream(filesystem.LocateFile(demoName, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
 
@@ -69,7 +69,7 @@ CDemoRecorder::CDemoRecorder()
 	{
 		// add a TDF section containing the game version to the startup script
 		std::string scriptText = MakeDemoStartScript (gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
-	
+
 		char c=1;
 		recordDemo->write(&c,1);
 		int len = scriptText.length();
@@ -86,7 +86,7 @@ CDemoRecorder::CDemoRecorder()
 CDemoRecorder::~CDemoRecorder()
 {
 	delete recordDemo;
-	
+
 	if (demoName != wantedName)
 	{
 		rename(demoName.c_str(), wantedName.c_str());
@@ -117,7 +117,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	sprintf(buf,"%02i%02i%02i",newtime->tm_year%100,newtime->tm_mon+1,newtime->tm_mday);
 	std::string name=std::string(buf)+"-"+mapname.substr(0,mapname.find_first_of("."));
 	name+=std::string("-")+VERSION_STRING;
-	
+
 	sprintf(buf,"demos/%s.sdf",name.c_str());
 	CFileHandler ifs(buf);
 	if(ifs.FileExists()){
@@ -180,11 +180,11 @@ CDemoReader::CDemoReader(const std::string& filename)
 				gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 			}
 		}
-		
+
 		gu->spectating           = true;
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
-		
+
 		playbackDemo->Read(&demoTimeOffset,sizeof(float));
 		demoTimeOffset=gu->modGameTime-demoTimeOffset;
 		nextDemoRead=gu->modGameTime-0.01f;
@@ -200,7 +200,7 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 {
 	if(gs->paused)
 		return 0;
-	
+
 	unsigned ret=0;
 	while(nextDemoRead<gu->modGameTime){
 		if(playbackDemo->Eof()){

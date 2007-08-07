@@ -203,7 +203,7 @@ def check_java(env, conf):
 		guess_include_path(env, conf, 'Java', 'java')
 		return
 	possible_dirs = []
-	for root in ["/usr/local/lib/jvm", "/usr/lib/jvm"]:
+	for root in ["/usr/local/lib/jvm", "/usr/lib/jvm", "/usr/java"]:
 		if os.path.exists(root) and os.path.isdir(root):
 			dirs = os.listdir(root)
 			for dir in dirs:
