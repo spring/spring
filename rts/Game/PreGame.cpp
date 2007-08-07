@@ -269,9 +269,13 @@ bool CPreGame::Draw()
 	if(showList)
 		showList->Draw();
 
-	if(net && !net->Connected() && net->connections[0]){
+	if(net && !net->Connected() && state > WAIT_ON_ADDRESS){
 		char text[400];
-		sprintf(text,"Connecting to server %i",40-(int)(static_cast<float>(SDL_GetTicks())/1000.0f - net->connections[0]->lastSendTime));
+		if ( ((SDL_GetTicks()/1000) % 2) == 0 )
+			sprintf(text,"Connecting to server .");
+		else
+			sprintf(text,"Connecting to server  ");
+					
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);
