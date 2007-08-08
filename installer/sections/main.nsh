@@ -99,7 +99,8 @@
 
 !endif ; SP_UPDATE
 
-  !insertmacro APP_ASSOCIATE_SPECIAL "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe"
+  ; Demofile file association
+  !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe $\"%1$\""
   !insertmacro UPDATEFILEASSOC
 
 !else
@@ -129,6 +130,7 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\zlib1.dll"
+  Delete "$INSTDIR\zlibwapi.dll"
 
   Delete "$INSTDIR\PALETTE.PAL"
 
@@ -190,4 +192,8 @@
   Delete "$INSTDIR\ext.txt"
   Delete "$INSTDIR\demos\test.sdf"
   RmDir "$INSTDIR\demos"
+
+  ; Demofile file association
+  !insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
+
 !endif

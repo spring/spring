@@ -46,21 +46,6 @@
 ;             <verb> = <"menu-item text">
 ;                 command = <"command string">
 ;
-
-
-!macro APP_ASSOCIATE_SPECIAL EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
-  ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" ""
-  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
- 
-  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
- 
-  WriteRegStr HKCR "${FILECLASS}" "" "${DESCRIPTION}"
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" "${ICON}"
-  WriteRegStr HKCR "${FILECLASS}\shell" "" "open"
-  WriteRegStr HKCR "${FILECLASS}\shell\open" "" "${COMMANDTEXT}"
-  WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" '"${COMMAND}" %1'
-!macroend
  
 !macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
   ; Backup the previously associated file class
@@ -69,11 +54,11 @@
  
   WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
  
-  WriteRegStr HKCR "${FILECLASS}" "" "${DESCRIPTION}"
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" "${ICON}"
+  WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
+  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
   WriteRegStr HKCR "${FILECLASS}\shell" "" "open"
-  WriteRegStr HKCR "${FILECLASS}\shell\open" "" "${COMMANDTEXT}"
-  WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" "${COMMAND}"
+  WriteRegStr HKCR "${FILECLASS}\shell\open" "" `${COMMANDTEXT}`
+  WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" `${COMMAND}`
 !macroend
  
 !macro APP_ASSOCIATE_EX EXT FILECLASS DESCRIPTION ICON VERB DEFAULTVERB SHELLNEW COMMANDTEXT COMMAND
@@ -85,29 +70,29 @@
   StrCmp "${SHELLNEW}" "0" +2
   WriteRegStr HKCR ".${EXT}\ShellNew" "NullFile" ""
  
-  WriteRegStr HKCR "${FILECLASS}" "" "${DESCRIPTION}"
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" "${ICON}"
-  WriteRegStr HKCR "${FILECLASS}\shell" "" "${DEFAULTVERB}"
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" "${COMMANDTEXT}"
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" "${COMMAND}"
+  WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
+  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
+  WriteRegStr HKCR "${FILECLASS}\shell" "" `${DEFAULTVERB}`
+  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
+  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
  
 !macro APP_ASSOCIATE_ADDVERB FILECLASS VERB COMMANDTEXT COMMAND
   WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" "${COMMAND}"
+  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
  
 !macro APP_ASSOCIATE_REMOVEVERB FILECLASS VERB
-  DeleteRegKey HKCR "${FILECLASS}\shell\${VERB}"
+  DeleteRegKey HKCR `${FILECLASS}\shell\${VERB}`
 !macroend
  
  
 !macro APP_UNASSOCIATE EXT FILECLASS
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" "${FILECLASS}_backup"
+  ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
   WriteRegStr HKCR ".${EXT}" "" "$R0"
  
-  DeleteRegKey HKCR "${FILECLASS}"
+  DeleteRegKey HKCR `${FILECLASS}`
 !macroend
  
 !macro APP_ASSOCIATE_GETFILECLASS OUTPUT EXT
@@ -131,4 +116,4 @@
   System::Call "shell32::SHChangeNotify(i,i,i,i) (${SHCNE_ASSOCCHANGED}, ${SHCNF_FLUSH}, 0, 0)"
 !macroend
  
-;EOF 
+;EOF

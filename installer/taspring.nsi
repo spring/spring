@@ -206,6 +206,12 @@ Section /o "Desktop shortcut" SEC_DESKTOP
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 SectionEnd
 
+Section "Easy content installation" SEC_ARCHIVEMOVER
+  !define INSTALL
+  !include "sections\archivemover.nsh"
+  !undef INSTALL
+SectionEnd
+
 ;!ifndef SP_UPDATE
 SectionGroup "AI opponent plugins (Bots)"
 	Section "AAI" SEC_AAI
@@ -259,6 +265,7 @@ Section Uninstall
 
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
+  !include "sections\archivemover.nsh"
   !include "sections\aai.nsh"
   !include "sections\kai.nsh"
   !include "sections\battleroom.nsh"
@@ -268,8 +275,6 @@ Section Uninstall
 
   ; All done
   RMDir "$INSTDIR"
-
-  !insertmacro APP_UNASSOCIATE "sdf" "taspring.demofile"
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"

@@ -4,8 +4,10 @@
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_BATTLEROOM} "The multiplayer battleroom used to set up multiplayer games and find opponents.$\n$\nNote: This section is highly recommend and should generally not be deselected."
 
 !ifndef SP_UPDATE
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes two maps to play Spring with.$\n$\nThese maps are called Small Divide and Mars."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes three maps to play Spring with.$\n$\nThese maps are called Small Divide, Mars and Islands in War."
 !endif
+
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI} "Includes AAI, an AI opponent made by submarine."
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_KAI} "Includes KAI, an AI opponent originally made by Krogothe, Tournesol, now maintained by Kloot."
