@@ -129,6 +129,7 @@ public:
 	float targetBorder;  // if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
 	float cylinderTargetting;	//if greater than 0, range will be checked in a cylinder (height=unitradius*cylinderTargetting) instead of a sphere
 	float minIntensity;	// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+	float heightBoostFactor;	//controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
 	unsigned int collisionFlags;
 
