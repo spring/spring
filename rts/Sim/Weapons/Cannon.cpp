@@ -26,6 +26,7 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(minPredict),
 	CR_MEMBER(highTrajectory),
 	CR_MEMBER(selfExplode),
+	CR_MEMBER(rangeFactor),
 	CR_RESERVED(16)
 	));
 
@@ -37,6 +38,7 @@ CCannon::CCannon(CUnit* owner)
 : CWeapon(owner)
 {
 	highTrajectory=false;
+	rangeFactor = 1;
 }
 
 void CCannon::Init(void)
@@ -48,6 +50,19 @@ void CCannon::Init(void)
 		maxPredict=projectileSpeed*1.41f/-gs->gravity;
 	}
 	CWeapon::Init();
+
+	// initialize range factor
+	rangeFactor = 1;
+	rangeFactor = (float)range/GetRange2D(0);
+	// do not extend range if the modder specified speed too low
+	// for the projectile to reach specified range
+	if (rangeFactor > 1.f || rangeFactor <= 0.f)
+		rangeFactor = 1.f;
+	// some magical (but working) equations
+	// useful properties: if rangeFactor == 1, heightBoostFactor == 1
+	// TODO find something better?
+	if (heightBoostFactor < 0.f)
+		heightBoostFactor = (2.f - rangeFactor)/sqrt(rangeFactor);
 }
 
 CCannon::~CCannon()
@@ -237,10 +252,22 @@ float3 CCannon::GetWantedDir(const float3& diff)
 
 float CCannon::GetRange2D(float yDiff) const
 {
-	float root1 = 1 + 2*gs->gravity*yDiff/(projectileSpeed*projectileSpeed);
-	if(root1 < 0){
-		return 0;
+	const float factor = 0.7071067f; // sin pi/4 == cos pi/4
+	const float smoothHeight = 100.f;  // completely arbitrary
+	const float speed2d = projectileSpeed*factor; // speed in one direction in max-range case
+	const float speed2dSq = speed2d*speed2d;
+
+	if (yDiff < -smoothHeight)
+		yDiff *= heightBoostFactor;
+	else if (yDiff < 0.f)
+		// smooth a bit
+		// f(0) == 1, f(smoothHeight) == heightBoostFactor
+		yDiff *= 1.f + (heightBoostFactor-1.f) * (-yDiff)/smoothHeight;
+
+	float root1 = speed2dSq + 2*gs->gravity*yDiff;
+	if(root1 < 0.f){
+		return 0.f;
 	} else {
-		return range * sqrt(root1);
+		return rangeFactor*(speed2dSq + speed2d*sqrt(root1))/(-gs->gravity);
 	}
 }

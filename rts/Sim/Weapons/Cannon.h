@@ -7,9 +7,12 @@
 
 #include "Weapon.h"
 
-class CCannon : public CWeapon  
+class CCannon : public CWeapon
 {
 	CR_DECLARE(CCannon);
+protected:
+	float rangeFactor;	/// this is used to keep range true to range tag
+
 public:
 	CCannon(CUnit* owner);
 	virtual ~CCannon();

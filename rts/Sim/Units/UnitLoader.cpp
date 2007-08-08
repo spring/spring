@@ -466,6 +466,7 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->targetBorder = weapondef->targetBorder;
 	weapon->cylinderTargetting = weapondef->cylinderTargetting;
 	weapon->minIntensity = weapondef->minIntensity;
+	weapon->heightBoostFactor = weapondef->heightBoostFactor;
 	weapon->collisionFlags = weapondef->collisionFlags;
 	weapon->Init();
 

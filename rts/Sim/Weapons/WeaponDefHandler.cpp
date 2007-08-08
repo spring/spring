@@ -383,6 +383,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 		weaponDefs[id].visuals.colorMap = CColorMap::LoadFromDefString(colormap);
 	}
 
+	sunparser->GetDef(weaponDefs[id].heightBoostFactor, "-1", weaponname + "\\HeightBoostFactor");
+
 	//get some weapon specific defaults
 	if(weaponDefs[id].type=="Cannon"){
 		//CExplosiveProjectile
