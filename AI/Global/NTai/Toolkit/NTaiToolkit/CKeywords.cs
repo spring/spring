@@ -53,8 +53,10 @@ namespace NTaiToolkit
             this.AddWord("b_randmove - move randomly in any direction", EWordType.e_keyword);
             this.AddWord("b_resurect - issue a large resurrect area command", EWordType.e_keyword);
             this.AddWord("b_rule - a set of construction rules, see documentation", EWordType.e_keyword);
+            this.AddWord("b_rule_nofact - a set of construction rules, see documentation", EWordType.e_keyword);
             this.AddWord("b_rule_extreme - same as above but stricter", EWordType.e_keyword);
-            this.AddWord("b_rule_extreme_carry - same as above but keeps going ill the rules say we need nothing", EWordType.e_keyword);
+            this.AddWord("b_rule_extreme_carry - same as above but keeps going till the rules say we need nothing", EWordType.e_keyword);
+            this.AddWord("b_rule_extreme_nofact - same as b_rule but without factories", EWordType.e_keyword);
             this.AddWord("b_retreat - issues a move command telling the unit to move towards the nearest allied base", EWordType.e_keyword);
             this.AddWord("b_guardian - keep repairing things until there's nothing to repair or help build within los of the builder", EWordType.e_keyword);
             this.AddWord("b_guardian_mobiles - keep repairing unfinished mobile units until there's nothing to repair or help build within los of the builder", EWordType.e_keyword);
@@ -65,8 +67,7 @@ namespace NTaiToolkit
             this.AddWord("b_gunship - build a gunship aircraft", EWordType.e_keyword);
             this.AddWord("b_guard_factory - guard the nearest factory", EWordType.e_keyword);
             this.AddWord("b_guard_like_con - guard the nearest builder of the same type", EWordType.e_keyword);
-            this.AddWord("b_reclaim - reclaim the nearest features", EWordType.e_keyword);
-            this.AddWord("b_rule_extreme_nofact - same as b_rule but without factories", EWordType.e_keyword);
+            this.AddWord("b_reclaim - issues a wide area reclaim command", EWordType.e_keyword);
             this.AddWord("b_support - air refeuling, nto currently working", EWordType.e_keyword);
             this.AddWord("b_hub - EE or NOTA style construction hubs", EWordType.e_keyword);
             this.AddWord("b_airsupport - air support, refueling (incomplete)", EWordType.e_keyword);
@@ -111,4 +112,5 @@ namespace NTaiToolkit
         public Dictionary<string, EWordType> values;
     }
 }
+
 
