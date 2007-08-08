@@ -203,7 +203,7 @@ def check_java(env, conf):
 		guess_include_path(env, conf, 'Java', 'java')
 		return
 	possible_dirs = []
-	for root in ["/usr/local/lib/jvm", "/usr/lib/jvm", "/usr/java"]:
+	for root in ["/usr/local/lib/jvm", "/usr/local/lib64/jvm", "/usr/lib/jvm", "/usr/lib64/jvm", "/usr/java"]:
 		if os.path.exists(root) and os.path.isdir(root):
 			dirs = os.listdir(root)
 			for dir in dirs:
@@ -314,7 +314,9 @@ def CheckHeadersAndLibraries(env, conf):
 def configure(env, conf_dir):
 	print "\nConfiguring spring"
 	conf = env.Configure(conf_dir = conf_dir)
-	check_zip_version(env, conf)
+	# we dont have or need zip on windows..
+	if env['platform'] != 'windows':
+		check_zip_version(env, conf)
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
