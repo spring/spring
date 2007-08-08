@@ -772,11 +772,6 @@ void CCommandAI::ExecuteInsert(const Command& c)
 
 void CCommandAI::ExecuteRemove(const Command& c)
 {
-	if ((c.params.size() <= 0) ||
-	    (commandQue.size() <= 0)) {
-		return;
-	}
-
 	// disable repeating during the removals
 	const bool prevRepeat = repeatOrders;
 	repeatOrders = false;
@@ -785,6 +780,7 @@ void CCommandAI::ExecuteRemove(const Command& c)
 
 	bool facBuildQueue = false;
 	CFactoryCAI* facCAI = dynamic_cast<CFactoryCAI*>(this);
+
 	if (facCAI) {
 		if (c.options & CONTROL_KEY) {
 			// check the build order
@@ -795,10 +791,15 @@ void CCommandAI::ExecuteRemove(const Command& c)
 		}
 	}
 
+	if ((c.params.size() <= 0) || (queue->size() <= 0)) {
+		return;
+	}
+
 	// erase commands by a list of command types
 	bool active = false;
 	for (int p = 0; p < (int)c.params.size(); p++) {
 		const int removeValue = (int)c.params[p]; // tag or id
+
 		if (facBuildQueue && (removeValue == 0) && !(c.options & ALT_KEY)) {
 			continue; // don't remove tag=0 commands from build queues, they
 			          // are used the same way that CMD_STOP is, to void orders
