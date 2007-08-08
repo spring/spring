@@ -1549,16 +1549,6 @@ namespace NTaiToolkit
             // 
             this.AttackIncrementPercentage.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
             this.AttackIncrementPercentage.Location = new System.Drawing.Point(423, 62);
-            this.AttackIncrementPercentage.Maximum = new decimal(new int[] {
-            5000,
-            0,
-            0,
-            0});
-            this.AttackIncrementPercentage.Minimum = new decimal(new int[] {
-            5000,
-            0,
-            0,
-            -2147483648});
             this.AttackIncrementPercentage.Name = "AttackIncrementPercentage";
             this.AttackIncrementPercentage.Size = new System.Drawing.Size(122, 20);
             this.AttackIncrementPercentage.TabIndex = 5;
@@ -2969,7 +2959,7 @@ namespace NTaiToolkit
             // toolStripLabel1
             // 
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(154, 22);
+            this.toolStripLabel1.Size = new System.Drawing.Size(145, 22);
             this.toolStripLabel1.Text = "Select a property to change:";
             // 
             // QuicksetCombo
@@ -2994,7 +2984,7 @@ namespace NTaiToolkit
             this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(135, 22);
+            this.toolStripButton1.Size = new System.Drawing.Size(123, 22);
             this.toolStripButton1.Text = "Apply Changes to Units";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
@@ -4084,4 +4074,5 @@ namespace NTaiToolkit
         }
     }
 }
+
 

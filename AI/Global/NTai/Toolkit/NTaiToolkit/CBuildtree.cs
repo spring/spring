@@ -390,7 +390,7 @@ namespace NTaiToolkit
             text1 += "\tantistallwindow="+ antistallwindow+";\n";
             text1 += "\tinitial_threat_value="+ initialAttackSize+ ";\n\n";
             text1 += "\tmaximum_attack_group_size="+maxAttackSize+";\n\n";
-            text1 += "\tincrease_threshold_percentage=" + (100+AttackIncrementPercentage)/100 + ";\n\n";
+            text1 += "\tincrease_threshold_percentage=" + AttackIncrementPercentage + ";\n\n";
             text1 += "\tincrease_threshold_value=" + AttackIncrementValue + ";\n\n";
             text1 += "\tmexnoweaponradius=" + mexnoweaponradius + ";\n\n";
 
@@ -1285,4 +1285,5 @@ namespace NTaiToolkit
         public int use_mod_default_if_absent;
     }
 }
+
 
