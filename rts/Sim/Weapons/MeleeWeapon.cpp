@@ -31,6 +31,13 @@ CMeleeWeapon::~CMeleeWeapon()
 
 void CMeleeWeapon::Update()
 {
+	if(targetType!=Target_None){
+		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+		if(!onlyForward){
+			wantedDir=targetPos-weaponPos;
+			wantedDir.Normalize();
+		}
+	}
 	CWeapon::Update();
 
 }
