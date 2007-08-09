@@ -135,7 +135,13 @@ CAirCAI::~CAirCAI(void)
 
 void CAirCAI::GiveCommandReal(const Command &c)
 {
+	// take care not to allow aircraft to be ordered to move out of the map
 	if (c.id != CMD_MOVE && !AllowedCommand(c))
+		return;
+	else if (c.id == CMD_MOVE && c.params.size() >= 3 &&
+			(c.params[0] < 0.f || c.params[2] < 0.f
+			 || c.params[0] > gs->mapx*SQUARE_SIZE
+			 || c.params[2] > gs->mapy*SQUARE_SIZE))
 		return;
 
 	if (c.id == CMD_SET_WANTED_MAX_SPEED) {

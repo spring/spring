@@ -326,8 +326,36 @@ bool CCommandAI::isAttackCapable() const
 }
 
 
+static inline bool isCommandInMap(const Command& c)
+{
+	if (c.params.size() >= 3 &&
+			(c.params[0] < 0.f || c.params[2] < 0.f
+			 || c.params[0] > gs->mapx*SQUARE_SIZE
+			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+		return false;
+	return true;
+}
+
 bool CCommandAI::AllowedCommand(const Command& c)
 {
+	// check if the command is in the map first
+	switch (c.id) {
+		case CMD_MOVE:
+		case CMD_ATTACK:
+		case CMD_RECLAIM:
+		case CMD_REPAIR:
+		case CMD_RESURRECT:
+		case CMD_PATROL:
+		case CMD_RESTORE:
+		case CMD_FIGHT:
+		case CMD_DGUN:
+			if (!isCommandInMap(c)) return false;
+		default:
+			// build commands
+			if (c.id < 0 && !isCommandInMap(c)) return false;
+			break;
+	}
+
 	const UnitDef* ud = owner->unitDef;
 
 	switch (c.id) {
