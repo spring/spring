@@ -1594,15 +1594,20 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			if ((gs->Team(builder->team)->metal  >= metalUse) &&
 			    (gs->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
-				builder->UseMetal(metalUse);
-				builder->UseEnergy(energyUse);
-				health += (maxHealth * part);
-				buildProgress += part;
-				if (buildProgress >= 1.0f) {
-					if (health > maxHealth) {
-						health = maxHealth;
+				if (builder->UseMetal(metalUse)) { //just because we checked doesn't mean they were deducted since upkeep can prevent deduction
+					if (builder->UseEnergy(energyUse)) {
+						health += (maxHealth * part);
+						buildProgress += part;
+						if (buildProgress >= 1.0f) {
+							if (health > maxHealth) {
+								health = maxHealth;
+							}
+							FinishedBuilding();
+						}
 					}
-					FinishedBuilding();
+					else {
+						builder->UseMetal(-metalUse); //refund the metal if the energy cannot be deducted
+					}
 				}
 				return true;
 			} else {
@@ -2283,5 +2288,6 @@ CR_REG_METADATA(CUnit, (
 
 				CR_POSTLOAD(PostLoad)
 				));
+
 
 
