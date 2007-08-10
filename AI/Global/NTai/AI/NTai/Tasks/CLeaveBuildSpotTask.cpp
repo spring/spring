@@ -1,4 +1,6 @@
 #include "../Core/helper.h"
+// Tasks
+#include "../Tasks/CLeaveBuildSpotTask.h"
 
 CLeaveBuildSpotTask::CLeaveBuildSpotTask(Global* GL, int unit, const UnitDef* ud){
 	valid=true;

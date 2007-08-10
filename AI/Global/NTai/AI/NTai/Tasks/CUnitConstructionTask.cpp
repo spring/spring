@@ -1,5 +1,6 @@
 #include "../Core/helper.h"
-
+// Tasks
+#include "../Tasks/CUnitConstructionTask.h"
 
 CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit, const UnitDef* builder, const UnitDef* building){
 	valid=ValidUnitID(unit);
@@ -15,7 +16,7 @@ CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit, const UnitDef
 		End();
 		return;
 	}
-	
+
 	G = GL;
 	this->unit=unit;
 	this->builder = builder;

@@ -73,8 +73,8 @@ void Log::Open(bool plain){
         string filename = G->info->datapath + slash + "Logs" + slash;
         now2 = localtime(&now1);
         //             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
-        filename += to_string(now2->tm_mon+1)+"-" +to_string(now2->tm_mday) + "-" +to_string(now2->tm_year + 1900) +"-" +to_string(now2->tm_hour) +"_" +to_string(now2->tm_min) +"["+to_string(G->Cached->team)+"]XE9.67.log";
-        //sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9.3.log",
+        filename += to_string(now2->tm_mon+1)+"-" +to_string(now2->tm_mday) + "-" +to_string(now2->tm_year + 1900) +"-" +to_string(now2->tm_hour) +"_" +to_string(now2->tm_min) +"["+to_string(G->Cached->team)+"]XE9.79.log";
+        //sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9.79.log",
         //		now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
         //		now2->tm_min, G->Cached->team);
         //filename += c;
@@ -90,7 +90,7 @@ void Log::Open(bool plain){
                 return;
             }
         }
-        header(" :: NTAI XE9.73 Log File \n :: Programmed and maintained by AF/T.Nowell \n :: Copyright (C) 2004-7 Tom Nowell/AF \n");
+        header(" :: NTAI XE9.79 Log File \n :: Programmed and maintained by AF/T.Nowell \n :: Copyright (C) 2004-7 Tom Nowell/AF \n");
         logFile << " :: Game started: " << now2->tm_mday << "." << now2->tm_mon << "." << 1900 + now2->tm_year << "  " << now2->tm_hour << ":" << now2->tm_min << ":" << now2->tm_sec << endl << endl <<  flush;
         TdfParser cp(G);
         cp.LoadFile("modinfo.tdf");
@@ -131,7 +131,7 @@ void Log::Open(bool plain){
         filename += "Logs";
         filename += slash;
         //                                      DDD MMM DD HH:MM:SS YYYY_X - NTAI.htm
-        sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAIXE9.htm",
+        sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d] - NTAIXE9.79.htm",
         now2->tm_mon+1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour,
         now2->tm_min, G->Cached->team);
         filename += c;

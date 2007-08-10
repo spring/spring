@@ -270,6 +270,7 @@ typedef TdfParser CSunParser;
 #include "../Helpers/Units/CUnitDefLoader.h" // Loads unitdefs
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
 #include "../Engine/TCommand.h" // Unit cached command data structure
+#include "../Helpers/CWorkerthread.h"
 
 #include "../Core/CCached.h"// Cached data storage class
 #include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message
@@ -289,16 +290,8 @@ typedef TdfParser CSunParser;
 #include "../Helpers/Terrain/CBuildingPlacer.h" // Building placement algorithm
 
 
-// Tasks
-
-#include "../Tasks/CConsoleTask.h"
-#include "../Tasks/CUnitConstructionTask.h"
-#include "../Tasks/CKeywordConstructionTask.h"
-#include "../Tasks/CLeaveBuildSpotTask.h"
-
-
 // Agents
-#include "../Units/CUnit.h"
+
 #include "../Agents/CManufacturer.h" // Loads buildtrees and drives construction processes through the Task Cycle
 #include "../Agents/Planning.h" // Antistall algorithm and predictive targetting
 #include "../Agents/Assigner.h" // A port of the metalmaker AI designed for Skirmish AI's, also handles cloaked units

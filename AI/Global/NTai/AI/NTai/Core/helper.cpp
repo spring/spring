@@ -1,13 +1,11 @@
 #include "helper.h"
+#include "../Units/CUnit.h"
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 using namespace std;
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-bool send_to_web;
-bool get_from_web;
-bool update_NTAI;
 int iterations=0;
 bool loaded=false;
 bool firstload=false;
@@ -59,10 +57,10 @@ Global::Global(IGlobalAICallback* callback){
     Cached->team = 567;
     CLOG("getting team value");
     Cached->team = cb->GetMyTeam();
-    
+
     CLOG("Creating Info class");
     info = new CInfo(G);
-    
+
     CLOG("Setting the Logger class");
     L.Set(this);
     CLOG("Loading AI.tdf with TdfParser");
@@ -102,9 +100,6 @@ Global::Global(IGlobalAICallback* callback){
         firstload = false;
         iterations = 0;
         saved = false;
-        send_to_web = true;
-        get_from_web = true;
-        update_NTAI = true;
     }
     CLOG("Creating MetalHandler class");
     M = new CMetalHandler(G);
@@ -123,34 +118,34 @@ Global::Global(IGlobalAICallback* callback){
     L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
     //}
     UnitDefLoader = new CUnitDefLoader(G);
-    
+
     OrderRouter = new COrderRouter(G);
     L.print("Order Router constructed");
-    
+
     DTHandler = new CDTHandler(G);
     L.print("DTHandler constructed");
-    
+
     RadarHandler = new CRadarHandler(G);
     L.print("RadarHandler constructed");
-    
+
     Pl = new Planning(G);
     L.print("Planning constructed");
-    
+
     As = new Assigner;
     L.print("Assigner constructed");
-    
+
     Sc = new Scouter;
     L.print("Scouter constructed");
-    
+
     Economy = new CEconomy(G);
     L.print("Economy constructed");
-    
+
     Manufacturer = boost::shared_ptr<CManufacturer>(new CManufacturer(this));
     L.print("Manufacturer constructed");
-    
+
     BuildingPlacer = boost::shared_ptr<CBuildingPlacer>(new CBuildingPlacer(this));
     L.print("BuildingPlacer constructed");
-    
+
     Ch = new Chaser;
     UnitDefHelper = new CUnitDefHelp(G);
     L.print("Chaser constructed");
@@ -232,7 +227,7 @@ void Global::Update(){
     if(cb->GetCurrentFrame() == (1 SECOND)){
         NLOG("STARTUP BANNER IN Global::Update()");
         if(L.FirstInstance() == true){
-            cb->SendTextMsg(":: NTai XE9.67 by AF", 0);
+            cb->SendTextMsg(":: NTai XE9.79 by AF", 0);
             cb->SendTextMsg(":: Copyright (C) 2006 AF", 0);
             string s = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
             if(s != string("")){
@@ -260,18 +255,18 @@ void Global::Update(){
         delete[] ax;
     }
     END_EXCEPTION_HANDLING("Startup Banner and getting commander name")
-    
+
     START_EXCEPTION_HANDLING
     OrderRouter->Update();
     END_EXCEPTION_HANDLING("OrderRouter->Update()")
-    
+
     //if( EVERY_((2 SECONDS)) && (Cached->cheating == true) ){
     //	float a = cb->GetEnergyStorage() - cb->GetEnergy();
     //	if( a > 50) chcb->GiveMeEnergy(a);
     //	a = cb->GetMetalStorage() - cb->GetMetal();
     //	if(a > 50) chcb->GiveMeMetal(a);
     //}
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_((2 MINUTES))){
         //L.print("saving UnitData");
@@ -283,25 +278,25 @@ void Global::Update(){
          }*/
     }
     END_EXCEPTION_HANDLING("SaveUnitData()")
-    
+
     //EXCEPTION_HANDLER(Pl->Update(),"Pl->Update()",NA)
-    
+
     START_EXCEPTION_HANDLING
     Actions->Update();
     END_EXCEPTION_HANDLING("Actions->Update()")
-    
+
     START_EXCEPTION_HANDLING
     As->Update();
     END_EXCEPTION_HANDLING("As->Update()")
-    
+
     START_EXCEPTION_HANDLING
     CMessage message("update");
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"update\"); FireEvent(message);")
-    
+
     //EXCEPTION_HANDLER(Manufacturer->Update(),"Manufacturer->Update()",NA)
     Ch->Update();
-    
+
     /*	if(EVERY_(1 SECOND)){
                 if(triangles.empty() == false){
                         NLOG("triangles.empty() == false");
@@ -364,18 +359,18 @@ void Global::SortSolobuilds(int unit){
 }
 
 void Global::UnitCreated(int unit){
-    
+
     if(!ValidUnitID(unit)) return;
     START_EXCEPTION_HANDLING
     SortSolobuilds(unit);
     END_EXCEPTION_HANDLING("Sorting solobuilds and singlebuilds in Global::UnitCreated")
-    
+
     //EXCEPTION_HANDLER(Ch->UnitCreated(unit),"Ch->UnitCreated",NA)
-    
+
     START_EXCEPTION_HANDLING
     Manufacturer->UnitCreated(unit);
     END_EXCEPTION_HANDLING("Manufacturer->UnitCreated")
-    
+
     START_EXCEPTION_HANDLING
     const UnitDef* udf = GetUnitDef(unit);
     if(udf){
@@ -384,7 +379,7 @@ void Global::UnitCreated(int unit){
         }
     }
     END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")
-    
+
     START_EXCEPTION_HANDLING
     boost::shared_ptr<IModule> Unit = boost::shared_ptr<IModule>(new CUnit(G, unit));
     Unit->Init(Unit);
@@ -392,12 +387,12 @@ void Global::UnitCreated(int unit){
     message.AddParameter(unit);
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"unitcreated\"); FireEvent(message);")
-    
+
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 void Global::EnemyDestroyed(int enemy, int attacker){
-    
+
     if(ValidUnitID(attacker)){
         /*if(positions.empty()==false){
          map<int,temp_pos>::iterator i = positions.find(enemy);
@@ -413,14 +408,14 @@ void Global::EnemyDestroyed(int enemy, int attacker){
             e =200/uda->metalCost;
             SetEfficiency(uda->name, e);
         }
-        
+
         uda = GetUnitDef(enemy);
         if(uda != 0){
             float e = GetEfficiency(uda->name, uda->power);
             e -=200/uda->metalCost;
             SetEfficiency(uda->name, e);
         }
-        
+
         Ch->EnemyDestroyed(enemy, attacker);
         START_EXCEPTION_HANDLING
         CMessage message("enemydestroyed");
@@ -430,26 +425,26 @@ void Global::EnemyDestroyed(int enemy, int attacker){
         END_EXCEPTION_HANDLING("CMessage message(\"enemydestroyed\"); FireEvent(message);")
     }
     //Actions->EnemyDestroyed(enemy,attacker);
-    
+
 }
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::UnitFinished(int unit){
-    
+
     START_EXCEPTION_HANDLING
     const UnitDef* ud = GetUnitDef(unit);
     if(ud!=0){
         max_energy_use += ud->energyUpkeep;
-        
+
         // prepare unitname
         string t = ud->name;
         trim(t);
         tolowercase(t);
-        
+
         // solo build cleanup
         map<string, int>::iterator k = Cached->solobuilds.find(t);
         if(k != Cached->solobuilds.end()) Cached->solobuilds.erase(k);
-        
+
         if(ud->movedata == 0){
             if(ud->canfly == false){
                 if(ud->builder == true){
@@ -463,29 +458,29 @@ void Global::UnitFinished(int unit){
         }
     }
     END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
-    
+
     START_EXCEPTION_HANDLING
     As->UnitFinished(unit);
     END_EXCEPTION_HANDLING("As->UnitFinished")
-    
+
     START_EXCEPTION_HANDLING
     Manufacturer->UnitFinished(unit);
     END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
-    
+
     START_EXCEPTION_HANDLING
     Sc->UnitFinished(unit);
     END_EXCEPTION_HANDLING("Sc->UnitFinished")
-    
+
     START_EXCEPTION_HANDLING
     Ch->UnitFinished(unit);
     END_EXCEPTION_HANDLING("Ch->UnitFinished")
-    
+
     START_EXCEPTION_HANDLING
     CMessage message("unitfinished");
     message.AddParameter(unit);
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"unitfinished\");")
-    
+
     /*START_EXCEPTION_HANDLING
      const UnitDef* udf = GetUnitDef(unit);
      if(udf){
@@ -494,7 +489,7 @@ void Global::UnitFinished(int unit){
      }
      }
      END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")*/
-    
+
 }
 
 bool Global::CanDGun(int uid){
@@ -509,25 +504,25 @@ bool Global::CanDGun(int uid){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::UnitMoveFailed(int unit){
-    
+
     START_EXCEPTION_HANDLING
     Sc->UnitMoveFailed(unit);
     END_EXCEPTION_HANDLING("Sc->UnitMoveFailed")
-    
+
     START_EXCEPTION_HANDLING
     Manufacturer->UnitMoveFailed(unit);
     END_EXCEPTION_HANDLING("Manufacturer->UnitIdle in UnitMoveFailed")
-    
+
     START_EXCEPTION_HANDLING
     Ch->UnitMoveFailed(unit);
     END_EXCEPTION_HANDLING("Ch->UnitIdle in UnitMoveFailed")
-    
+
     START_EXCEPTION_HANDLING
     CMessage message("unitmovefailed");
     message.AddParameter(unit);
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"unitmovefailed\"); FireEvent(message);")
-    
+
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -545,15 +540,15 @@ void Global::UnitIdle(int unit){
     message.AddParameter(unit);
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"unitidle\"); FireEvent(message);")
-    
+
     //EXCEPTION_HANDLER(Manufacturer->UnitIdle(unit),"Manufacturer->UnitIdle",NA)
-    
+
     START_EXCEPTION_HANDLING
     Sc->UnitIdle(unit);
     END_EXCEPTION_HANDLING("Sc->UnitIdle")
-    
+
     //EXCEPTION_HANDLER(Actions->UnitIdle(unit),"Actions->UnitIdle",NA)
-    
+
     START_EXCEPTION_HANDLING
     Ch->UnitIdle(unit);
     END_EXCEPTION_HANDLING("Ch->UnitIdle")
@@ -584,17 +579,17 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     if(!ValidUnitID(attacker)){
         return;
     }
-    
+
     START_EXCEPTION_HANDLING
     //if(damaged < 1) return;
     //if(attacker < 1) return;
     if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)) return;
     END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
-    
+
     START_EXCEPTION_HANDLING
     if(!ValidUnitID(attacker)){
         const UnitDef* uda = GetUnitDef(attacker);
-        
+
         if(uda != 0){
             float e = GetEfficiency(uda->name, uda->power);
             e += 10000/uda->metalCost;
@@ -602,13 +597,13 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
         }
     }
     END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
-    
+
     START_EXCEPTION_HANDLING
     Actions->UnitDamaged(damaged, attacker, damage, dir);
     END_EXCEPTION_HANDLING("Actions->UnitDamaged()")
-    
+
     Ch->UnitDamaged(damaged, attacker, damage, dir);
-    
+
     START_EXCEPTION_HANDLING
     CMessage message("unitdamaged");
     message.AddParameter(damaged);
@@ -711,7 +706,7 @@ void Global::GotChatMsg(const char* msg, int player){
                  if(ij != 0) Actions->RandomSpiral(ij);
                  epos = pos;
                  epos.z -= 900.0f;
-                 
+
                  angle = float(mrand()%320);
                  pos = G->Map->Rotate(epos, angle, pos);
                  pos =  cb->ClosestBuildSite(ud, pos, 1000, 300, 0);
@@ -741,12 +736,12 @@ void Global::GotChatMsg(const char* msg, int player){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 //
 void Global::UnitDestroyed(int unit, int attacker){
-    
+
     float3 p = GetUnitPos(unit);
     if(G->Map->CheckFloat3(p)){
         M->UnitDestroyed(p);
     }
-    
+
     idlenextframe.erase(unit);
     const UnitDef* udu = GetUnitDef(unit);
     if(udu != 0){
@@ -772,13 +767,13 @@ void Global::UnitDestroyed(int unit, int attacker){
             }
         }
     }
-    
+
     START_EXCEPTION_HANDLING
     CMessage message("unitdestroyed");
     message.AddParameter(unit);
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"unitdestroyed\"); FireEvent(message);");
-    
+
     //Actions->UnitDestroyed(unit);
     Cached->enemies.erase(unit);
     As->UnitDestroyed(unit);
@@ -786,7 +781,7 @@ void Global::UnitDestroyed(int unit, int attacker){
     Sc->UnitDestroyed(unit);
     Ch->UnitDestroyed(unit, attacker);
     OrderRouter->UnitDestroyed(unit);
-    
+
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -862,7 +857,7 @@ void Global::InitAI(IAICallback* callback, int team){
         Get_mod_tdf()->LoadFile(filename);
         L.print("Mod TDF loaded");
     } else {/////////////////
-        
+
         info->abstract = true;
         L.header(" :: mod.tdf failed to load, assuming default values");
         L.header(endline);
@@ -883,16 +878,16 @@ void Global::InitAI(IAICallback* callback, int team){
     info->antistall = atoi(Get_mod_tdf()->SGetValueDef("4", "AI\\antistall").c_str());
     info->Max_Stall_TimeMobile = (float)atof(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime").c_str());
     info->Max_Stall_TimeIMMobile = (float)atof(Get_mod_tdf()->SGetValueDef(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime"), "AI\\MaxStallTimeimmobile").c_str());
-    
+
     // initial handicap
     float x = 0;
     Get_mod_tdf()->GetDef(x, "0", "AI\\normal_handicap");
     chcb = G->gcb->GetCheatInterface();
     chcb->SetMyHandicap(x);
-    
+
     // cheat events
     //chcb->EnableCheatEvents(true);
-    
+
     //Get_mod_tdf()->GetDef(send_to_web, "1", "AI\\web_contribute");
     //Get_mod_tdf()->GetDef(get_from_web, "1", "AI\\web_recieve");
     //Get_mod_tdf()->GetDef(update_NTAI, "1", "AI\\NTAI_update");
@@ -905,7 +900,7 @@ void Global::InitAI(IAICallback* callback, int team){
         L.print("abstract == true");
     }
     L.print("values filled");
-    
+
     // solobuild
     set<std::string> solotemp;
     bds::set_cont(solotemp, Get_mod_tdf()->SGetValueMSG("AI\\SoloBuild"));
@@ -917,11 +912,11 @@ void Global::InitAI(IAICallback* callback, int team){
             Cached->solobuild.insert(s);
         }
     }
-    
+
     Cached->unitallyteam = cb->GetMyAllyTeam();
-    
+
     Pl->AlwaysAntiStall = bds::set_cont(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"));
-    
+
     vector<string> singlebuild;
     singlebuild = bds::set_cont(singlebuild, Get_mod_tdf()->SGetValueMSG("AI\\SingleBuild"));
     if(singlebuild.empty() == false){
@@ -932,7 +927,7 @@ void Global::InitAI(IAICallback* callback, int team){
             Cached->singlebuilds[s] = false;
         }
     }
-    
+
     L.print("Arrays filled");
     if(info->abstract == true){
         L.header(" :: Using abstract buildtree");
@@ -948,8 +943,8 @@ void Global::InitAI(IAICallback* callback, int team){
         LoadUnitData();
         L.print("Unit data loaded");
     }
-    
-    
+
+
     As->InitAI(this);
     L.print("Assigner Init'd");
     Pl->InitAI();
@@ -962,7 +957,7 @@ void Global::InitAI(IAICallback* callback, int team){
     L.print("Chaser Init'd");
     Sc->InitAI(this);
     L.print("Scouter Init'd");
-    
+
 }
 
 int Global::GetCurrentFrame(){
@@ -989,10 +984,10 @@ bool Global::ReadFile(string filename, string* buffer){
     char buf[1000];
     int ebsize= 0;
     ifstream fp;
-    
+
     strcpy(buf, filename.c_str());
     cb->GetValue(AIVAL_LOCATE_FILE_R, buf);
-    
+
     fp.open(buf, ios::in);
     if(fp.is_open() == false){
         L.header(string(" :: error loading file :: ") + filename + endline);
@@ -1311,7 +1306,7 @@ bool Global::LoadUnitData(){
                  GetEfficiency(i->first);
                  }*/
             }
-            
+
             loaded = true;
             return true;
         } else{
@@ -1348,10 +1343,10 @@ bool Global::SaveUnitData(){
         filename += ".tdf";
         off.open(filename.c_str());
         if(off.is_open() == true){
-            off << "[AI]" << endl << "{" << endl << "    // NTai XE9.67 AF :: unit efficiency cache file" << endl << endl;
+            off << "[AI]" << endl << "{" << endl << "    // NTai XE9.79 AF :: unit efficiency cache file" << endl << endl;
             // put stuff in here;
             int first = firstload;
-            off << "    version=XE9.67;" << endl;
+            off << "    version=XE9.79;" << endl;
             off << "    firstload=" << first << ";" << endl;
             off << "    modname=" << G->cb->GetModName() << ";" << endl;
             off << "    iterations=" << iterations << ";" << endl;
@@ -1366,7 +1361,7 @@ bool Global::SaveUnitData(){
                 off << "        "<< i->first << "=" << unit_names[i->first] << ";" <<endl;
             }
             off << "    }" << endl;
-            
+
             off << "    [DESCRIPTIONS]" << endl << "    {"<< endl;
             for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
                 off << "        "<< i->first << "=" << unit_descriptions[i->first] << ";"<<endl;
@@ -1476,7 +1471,7 @@ float3 Global::GetUnitPos(int unitid, int enemy){ // do 10 frame delays between 
      mine=false;
      }
      }*/
-    
+
     /*if(positions.empty()==false){
      map<int,temp_pos>::iterator i = positions.find(unitid);
      if(i!=positions.end()){

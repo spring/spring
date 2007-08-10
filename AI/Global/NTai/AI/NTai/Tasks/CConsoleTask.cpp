@@ -1,4 +1,6 @@
 #include "../Core/helper.h"
+// Tasks
+#include "../Tasks/CConsoleTask.h"
 
 CConsoleTask::CConsoleTask(Global* GL){}
 

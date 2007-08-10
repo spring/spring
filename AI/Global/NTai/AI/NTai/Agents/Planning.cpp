@@ -166,12 +166,12 @@ float3 Planning::GetDirVector(int enemy,float3 unit, const WeaponDef* def){
 bool Planning::feasable(string s, int builder){
 	const UnitDef* uud = G->GetUnitDef(s);
 	if(uud == 0){
-		G->L.print("Given the go ahead####+ :: "+s);
+		G->L.print("Feasable##:: "+s);
 		return true;
 	}
 	const UnitDef* pud = G->GetUnitDef(builder);
 	if(pud == 0){
-		G->L.print("Given the go ahead#### :: "+s);
+		G->L.print("Feasable##:: "+s);
 		return true;
 	}
 	return feasable(uud,pud);
@@ -211,7 +211,7 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 			trim(i2);
 			tolowercase(i2);
 			if(i2 == n2){
-				G->L.print("Given the go ahead @:: "+uud->name);
+				G->L.print("Feasable:: "+uud->name);
 				return true;
 			}
 		}
@@ -315,7 +315,7 @@ bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
 		G->L.print("Given the go ahead :: "+uud->name);
 		return true;
 	}
-	G->L.print("Given the go ahead :: "+uud->name);
+	G->L.print("Feasable:: "+uud->name);
 	return true;
 }
 
