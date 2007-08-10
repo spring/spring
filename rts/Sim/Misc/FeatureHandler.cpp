@@ -24,7 +24,6 @@
 #include "System/TimeProfiler.h"
 #include <GL/glu.h> // after myGL.h
 #include "mmgr.h"
-#include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
 
@@ -67,6 +66,7 @@ CR_REG_METADATA(CFeatureHandler, (
 
 	CR_MEMBER(nextFreeID),
 	CR_MEMBER(freeIDs),
+	CR_MEMBER(toBeFreedIDs),
 	CR_MEMBER(activeFeatures),
 
 	CR_MEMBER(toBeRemoved),
@@ -224,12 +224,16 @@ void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
 	START_TIME_PROFILE("Feature::Update");
+
+	if ((gs->frameNum & 31) == 0)	// let all areareclaimers choose a target with a different id
+		freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
+
 	while (!toBeRemoved.empty()) {
 		CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
 		toBeRemoved.pop_back();
 		if (it != activeFeatures.end()) {
 			CFeature* feature = *it;
-			freeIDs.push_back(feature->id);
+			toBeFreedIDs.push_back(feature->id);
 			activeFeatures.erase(feature);
 
 			if (feature->drawQuad >= 0) {
