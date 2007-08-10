@@ -4,7 +4,6 @@
 #include "Object.h"
 #include <string>
 #include <list>
-#include <deque>
 #include <vector>
 #include "TdfParser.h"
 #include "creg/creg.h"
@@ -58,7 +57,8 @@ public:
 	std::vector<FeatureDef*> featureDefsVector;
 
 	int nextFreeID;
-	std::deque<int> freeIDs;
+	std::list<int> freeIDs;
+	std::list<int> toBeFreedIDs;
 	CFeatureSet activeFeatures;
 
 	std::list<int> toBeRemoved;
