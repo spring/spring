@@ -278,9 +278,8 @@ bool SpringApp::Initialize ()
 	InitializeSEH();
 #endif
 
-	FileSystemHandler::Initialize(true);
-
 	ParseCmdLine();
+	FileSystemHandler::Initialize(true);
 
 	if (!InitWindow ("RtsSpring"))
 	{

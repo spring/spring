@@ -74,6 +74,9 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	}
 
 	if(server){
+		// create local client
+		net->InitLocalClient(gameSetup ? gameSetup->myPlayer : 0);
+			
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
