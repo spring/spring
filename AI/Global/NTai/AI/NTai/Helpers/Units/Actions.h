@@ -50,7 +50,7 @@ public:
 			attacking.erase(qw);
 		}
 	}
-	
+
 	void KeepOutOfRange();
 	set<int> attackers;
 	map<int,int> attacking;*/
@@ -60,7 +60,7 @@ public:
 	bool RepairNearby(int uid,float radius); // repair a nearby unit or unfinished building
 	bool RepairNearbyUnfinishedMobileUnits(int uid,float radius); // repair a nearby unfinished unit
 	bool OffensiveRepairRetreat(int uid,float radius); // repair a nearby unit based on offensive/defensive advantage against enemy
-	bool ReclaimNearby(int uid); // reclaim the nearest feature within a 700 pixel radius
+	bool ReclaimNearby(int uid, float radius); // reclaim the nearest feature within a 700 pixel radius
 	bool RessurectNearby(int uid); // issues an area resurrect if there are any features in a vicinity of 700 ticks
 private:
 	Global* G;

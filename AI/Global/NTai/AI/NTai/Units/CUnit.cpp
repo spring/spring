@@ -1,6 +1,11 @@
 // CBuilder class
 #include "../Core/helper.h"
-
+#include "../Units/CUnit.h"
+// Tasks
+#include "../Tasks/CConsoleTask.h"
+#include "../Tasks/CUnitConstructionTask.h"
+#include "../Tasks/CKeywordConstructionTask.h"
+#include "../Tasks/CLeaveBuildSpotTask.h"
 
 CUnit::CUnit(Global* GL, int uid){
 	G = GL;

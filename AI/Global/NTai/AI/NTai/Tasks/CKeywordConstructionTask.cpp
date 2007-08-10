@@ -1,4 +1,6 @@
 #include "../Core/helper.h"
+// Tasks
+#include "../Tasks/CKeywordConstructionTask.h"
 
 
 CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype type){
@@ -271,8 +273,9 @@ void CKeywordConstructionTask::Build(){
 		}
 		delete [] funits;
 	}
-
+        NLOG("CKeywordConstructionTask::Build  mark 4");
 	G->BuildingPlacer->GetBuildPosMessage(me,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
+        NLOG("CKeywordConstructionTask::Build  mark 5");
 }
 
 bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
@@ -379,7 +382,7 @@ bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
 		}
 		return valid;
 	}else if(type  == B_RECLAIM){
-		if(!G->Actions->ReclaimNearby(unit)){
+		if(!G->Actions->ReclaimNearby(unit,1000)){
 			End();
 			return false;
 		}else{

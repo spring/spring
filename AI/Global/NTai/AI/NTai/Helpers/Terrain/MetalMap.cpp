@@ -15,8 +15,8 @@ CMetalMap::CMetalMap(Global* ai){
 	XtractorRadius =(int)ai->cb->GetExtractorRadius()/ 16;
 	DoubleRadius = XtractorRadius * 2;
 	SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
-	DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above 
-	MexArrayA = new unsigned char [TotalCells];	
+	DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above
+	MexArrayA = new unsigned char [TotalCells];
 	MexArrayB = new unsigned char [TotalCells];
 	MexArrayC = new unsigned char [TotalCells]; //used for drawing the TGA, not really needed with a couple of changes
 	TempAverage = new int [TotalCells];
@@ -72,7 +72,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor)
 						Tempscore = spotscore;
 						bestspot = spotcoords;
 						bestspot.y = VectoredSpots[i].y;
-					}				
+					}
 			}
 		}
 		delete [] temparray;
@@ -106,7 +106,7 @@ int CMetalMap::FindMetalSpotUpgrade(int builderid, const UnitDef* extractor)
 					&& bestfreemetal < GetMetalAtThisPoint(spotcoords) * (metaldifference / extractor->extractsMetal)){
 						Tempscore = spotscore;
 						bestspot = *i;
-					}				
+					}
 			}
 		}
 		delete [] temparray;
@@ -124,8 +124,8 @@ void CMetalMap::GetMetalPoints(){
 	// Time stuff:
 	int timetaken = clock();
 
-	int* xend = new int[DoubleRadius+1]; 
-	for (int a=0;a<DoubleRadius+1;a++){ 
+	int* xend = new int[DoubleRadius+1];
+	for (int a=0;a<DoubleRadius+1;a++){
 		float z=(float)a-XtractorRadius;
 		float floatsqrradius = (float)SquareRadius;
 		xend[a]=(int)sqrt(floatsqrradius-z*z);
@@ -137,7 +137,7 @@ void CMetalMap::GetMetalPoints(){
 		TotalMetalDouble +=  MexArrayA[i] = metalMapArray[i];		// Count the total metal so you can work out an average of the whole map
 	}
 	AverageMetal = (float)TotalMetalDouble / TotalCells;  //do the average
-	
+
 	// Quick test for no metal map:
 	if(TotalMetalDouble < 0.9){
 		// The map dont have any metal, just stop.
@@ -150,18 +150,18 @@ void CMetalMap::GetMetalPoints(){
 	// Now work out how much metal each spot can make by adding up the metal from nearby spots
 	for (int y = 0; y < MetalMapHeight; y++){
 		for (int x = 0; x < MetalMapWidth; x++){
-			TotalMetal = 0;			
+			TotalMetal = 0;
 			if(x == 0 && y == 0) // First Spot needs full calculation
 			for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
 				if (sy >= 0 && sy < MetalMapHeight){
-					for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
+					for (int sx=x-xend[a];sx<=x+xend[a];sx++){
 						if (sx >= 0 && sx < MetalMapWidth){
-							TotalMetal += MexArrayA[sy * MetalMapWidth + sx]; //get the metal from all pixels around the extractor radius  
+							TotalMetal += MexArrayA[sy * MetalMapWidth + sx]; //get the metal from all pixels around the extractor radius
 						}
-					} 
+					}
 				}
 			}
-			// Quick calc test:		
+			// Quick calc test:
 			if(x > 0){
 				TotalMetal = TempAverage[y * MetalMapWidth + x -1];
 				for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
@@ -215,7 +215,7 @@ void CMetalMap::GetMetalPoints(){
 		int value = MexArrayB[i];
 		valueDist[value]++;
 	}
-	
+
 	// Find the current best value
 	int bestValue = 0;
 	int numberOfValues = 0;
@@ -231,8 +231,8 @@ void CMetalMap::GetMetalPoints(){
 	// Make a list of the indexes of the best spots
 	if(numberOfValues > 256) // Make shure that the list wont be too big
 		numberOfValues = 256;
-	int *bestSpotList = new int[numberOfValues];	
-	for (int i = 0; i < TotalCells; i++){			
+	int *bestSpotList = new int[numberOfValues];
+	for (int i = 0; i < TotalCells; i++){
 		if (MexArrayB[i] == bestValue){
 			// Add the index of this spot to the list.
 			bestSpotList[usedSpots] = i;
@@ -246,15 +246,15 @@ void CMetalMap::GetMetalPoints(){
 	}
 
 	int printDebug1 = 100;
-	for (int a = 0; a < MaxSpots; a++){	
+	for (int a = 0; a < MaxSpots; a++){
 		if(!Stopme){
 			TempMetal = 0; //reset tempmetal so it can find new spots
 			// Take the first spot
-			int speedTempMetal_x;
-			int speedTempMetal_y;
+			int speedTempMetal_x = 0;
+			int speedTempMetal_y = 0;
 			int speedTempMetal = 0;
 			bool found = false;
-			while(!found){				
+			while(!found){
 				if(usedSpots == numberOfValues){
 					// The list is empty now, refill it:
 					// Make a list of all the best spots:
@@ -282,8 +282,8 @@ void CMetalMap::GetMetalPoints(){
 						numberOfValues = 256;
 					delete[] bestSpotList;
 					bestSpotList = new int[numberOfValues];
-					
-					for (int i = 0; i < TotalCells; i++){			
+
+					for (int i = 0; i < TotalCells; i++){
 						if (MexArrayB[i] == bestValue){
 							// Add the index of this spot to the list.
 							bestSpotList[usedSpots] = i;
@@ -307,7 +307,7 @@ void CMetalMap::GetMetalPoints(){
 				}
 				// Update the bestSpotList index
 				usedSpots++;
-			}			
+			}
 			coordx = speedTempMetal_x;
 			coordy = speedTempMetal_y;
 			TempMetal = speedTempMetal;
@@ -323,7 +323,7 @@ void CMetalMap::GetMetalPoints(){
 			VectoredSpots.push_back(BufferSpot);
 			MexArrayC[coordy * MetalMapWidth + coordx] = TempMetal; //plot TGA array (not necessary) for debug
 			NumSpotsFound += 1;
-			
+
 			// Small speedup of "wipes the metal around the spot so its not counted twice":
 			for (int sy=coordy-XtractorRadius,a=0;sy<=coordy+XtractorRadius;sy++,a++){
 				if (sy >= 0 && sy < MetalMapHeight){
@@ -336,7 +336,7 @@ void CMetalMap::GetMetalPoints(){
 					for(int xClear = clearXStart; xClear <= clearXEnd; xClear++){
 						MexArrayA[sy * MetalMapWidth + xClear] = 0; //wipes the metal around the spot so its not counted twice
 						MexArrayB[sy * MetalMapWidth + xClear] = 0;
-						TempAverage[sy * MetalMapWidth + xClear] = 0;						
+						TempAverage[sy * MetalMapWidth + xClear] = 0;
 					}
 				}
 			}
@@ -350,11 +350,11 @@ void CMetalMap::GetMetalPoints(){
 							if(x == 0 && y == 0) // Comment out for debug
 								for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
 									if (sy >= 0 && sy < MetalMapHeight){
-										for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
+										for (int sx=x-xend[a];sx<=x+xend[a];sx++){
 											if (sx >= 0 && sx < MetalMapWidth){
-												TotalMetal += MexArrayA[sy * MetalMapWidth + sx]; //get the metal from all pixels around the extractor radius  
+												TotalMetal += MexArrayA[sy * MetalMapWidth + sx]; //get the metal from all pixels around the extractor radius
 											}
-										} 
+										}
 									}
 								}
 
@@ -371,7 +371,7 @@ void CMetalMap::GetMetalPoints(){
 											TotalMetal -= MexArrayA[sy * MetalMapWidth + remX];
 									}
 								}
-							} 
+							}
 							else if(y > 0){
 								// x == 0 here
 								TotalMetal = TempAverage[(y-1) * MetalMapWidth];
@@ -395,14 +395,14 @@ void CMetalMap::GetMetalPoints(){
 								}
 							}
 							TempAverage[y * MetalMapWidth + x] = TotalMetal;
-							MexArrayB[y * MetalMapWidth + x] = TotalMetal * 255 / MaxMetal; //set that spots metal amount 
+							MexArrayB[y * MetalMapWidth + x] = TotalMetal * 255 / MaxMetal; //set that spots metal amount
 							// end
 						}
 					}
 				}
 			}
 
-	
+
 
 
 		}
@@ -417,7 +417,7 @@ void CMetalMap::GetMetalPoints(){
 	}
 	timetaken = clock() - timetaken;
 	ai->L << "Time taken to generate spots: " << timetaken << "ms." << endline;
-	
+
 }
 
 void CMetalMap::SaveMetalMap(){
@@ -457,7 +457,7 @@ bool CMetalMap::LoadMetalMap(){
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
 
 	FILE *load_file;
-	// load Spots if file exists 
+	// load Spots if file exists
 	if(load_file = fopen(buffer, "rb")){
 		fread(&NumSpotsFound, sizeof(int), 1, load_file);
 		VectoredSpots.resize(NumSpotsFound);
@@ -473,5 +473,5 @@ bool CMetalMap::LoadMetalMap(){
 		ai->L << "Metal Spots couldnt be loaded from file " << filename << endline;
 		return false;
 	}
-		
+
 }

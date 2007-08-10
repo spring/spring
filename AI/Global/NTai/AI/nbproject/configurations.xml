@@ -15,94 +15,94 @@
     </logicalFolder>
     <logicalFolder name="NTai" displayName="NTai" projectFiles="true">
       <logicalFolder name="Agents" displayName="Agents" projectFiles="true">
-        <itemPath>NTai/Agents/Assigner.cpp</itemPath>
         <itemPath>NTai/Agents/Assigner.h</itemPath>
-        <itemPath>NTai/Agents/Chaser.cpp</itemPath>
+        <itemPath>NTai/Agents/Assigner.cpp</itemPath>
         <itemPath>NTai/Agents/Chaser.h</itemPath>
-        <itemPath>NTai/Agents/CManufacturer.cpp</itemPath>
+        <itemPath>NTai/Agents/Chaser.cpp</itemPath>
         <itemPath>NTai/Agents/CManufacturer.h</itemPath>
-        <itemPath>NTai/Agents/Planning.cpp</itemPath>
+        <itemPath>NTai/Agents/CManufacturer.cpp</itemPath>
         <itemPath>NTai/Agents/Planning.h</itemPath>
-        <itemPath>NTai/Agents/Scouter.cpp</itemPath>
+        <itemPath>NTai/Agents/Planning.cpp</itemPath>
         <itemPath>NTai/Agents/Scouter.h</itemPath>
+        <itemPath>NTai/Agents/Scouter.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="Core" displayName="Core" projectFiles="true">
         <itemPath>NTai/Core/CCached.h</itemPath>
-        <itemPath>NTai/Core/CMessage.cpp</itemPath>
         <itemPath>NTai/Core/CMessage.h</itemPath>
-        <itemPath>NTai/Core/GlobalAI.cpp</itemPath>
+        <itemPath>NTai/Core/CMessage.cpp</itemPath>
         <itemPath>NTai/Core/GlobalAI.h</itemPath>
-        <itemPath>NTai/Core/helper.cpp</itemPath>
+        <itemPath>NTai/Core/GlobalAI.cpp</itemPath>
         <itemPath>NTai/Core/helper.h</itemPath>
-        <itemPath>NTai/Core/IModule.cpp</itemPath>
+        <itemPath>NTai/Core/helper.cpp</itemPath>
         <itemPath>NTai/Core/IModule.h</itemPath>
+        <itemPath>NTai/Core/IModule.cpp</itemPath>
         <itemPath>NTai/Core/include.h</itemPath>
         <itemPath>NTai/Core/Interface.cpp</itemPath>
         <itemPath>NTai/Core/resource.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Engine" displayName="Engine" projectFiles="true">
-        <itemPath>NTai/Engine/COrderRouter.cpp</itemPath>
         <itemPath>NTai/Engine/COrderRouter.h</itemPath>
+        <itemPath>NTai/Engine/COrderRouter.cpp</itemPath>
         <itemPath>NTai/Engine/TCommand.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Helpers" displayName="Helpers" projectFiles="true">
         <logicalFolder name="grid" displayName="grid" projectFiles="true">
-          <itemPath>NTai/Helpers/grid/CGridCell.cpp</itemPath>
           <itemPath>NTai/Helpers/grid/CGridCell.h</itemPath>
-          <itemPath>NTai/Helpers/grid/CGridManager.cpp</itemPath>
+          <itemPath>NTai/Helpers/grid/CGridCell.cpp</itemPath>
           <itemPath>NTai/Helpers/grid/CGridManager.h</itemPath>
+          <itemPath>NTai/Helpers/grid/CGridManager.cpp</itemPath>
         </logicalFolder>
         <logicalFolder name="Terrain" displayName="Terrain" projectFiles="true">
-          <itemPath>NTai/Helpers/Terrain/CBuildingPlacer.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/CBuildingPlacer.h</itemPath>
+          <itemPath>NTai/Helpers/Terrain/CBuildingPlacer.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/CSector.h</itemPath>
-          <itemPath>NTai/Helpers/Terrain/DTHandler.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/DTHandler.h</itemPath>
-          <itemPath>NTai/Helpers/Terrain/Map.cpp</itemPath>
+          <itemPath>NTai/Helpers/Terrain/DTHandler.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/Map.h</itemPath>
-          <itemPath>NTai/Helpers/Terrain/MetalHandler.cpp</itemPath>
+          <itemPath>NTai/Helpers/Terrain/Map.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/MetalHandler.h</itemPath>
-          <itemPath>NTai/Helpers/Terrain/MetalMap.cpp</itemPath>
+          <itemPath>NTai/Helpers/Terrain/MetalHandler.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/MetalMap.h</itemPath>
-          <itemPath>NTai/Helpers/Terrain/RadarHandler.cpp</itemPath>
+          <itemPath>NTai/Helpers/Terrain/MetalMap.cpp</itemPath>
           <itemPath>NTai/Helpers/Terrain/RadarHandler.h</itemPath>
+          <itemPath>NTai/Helpers/Terrain/RadarHandler.cpp</itemPath>
         </logicalFolder>
         <logicalFolder name="Units" displayName="Units" projectFiles="true">
-          <itemPath>NTai/Helpers/Units/Actions.cpp</itemPath>
           <itemPath>NTai/Helpers/Units/Actions.h</itemPath>
-          <itemPath>NTai/Helpers/Units/CUnitDefHelp.cpp</itemPath>
+          <itemPath>NTai/Helpers/Units/Actions.cpp</itemPath>
           <itemPath>NTai/Helpers/Units/CUnitDefHelp.h</itemPath>
-          <itemPath>NTai/Helpers/Units/CUnitDefLoader.cpp</itemPath>
+          <itemPath>NTai/Helpers/Units/CUnitDefHelp.cpp</itemPath>
           <itemPath>NTai/Helpers/Units/CUnitDefLoader.h</itemPath>
+          <itemPath>NTai/Helpers/Units/CUnitDefLoader.cpp</itemPath>
         </logicalFolder>
-        <itemPath>NTai/Helpers/CEconomy.cpp</itemPath>
         <itemPath>NTai/Helpers/CEconomy.h</itemPath>
+        <itemPath>NTai/Helpers/CEconomy.cpp</itemPath>
         <itemPath>NTai/Helpers/Information.h</itemPath>
         <itemPath>NTai/Helpers/InitUtil.h</itemPath>
-        <itemPath>NTai/Helpers/Log.cpp</itemPath>
         <itemPath>NTai/Helpers/Log.h</itemPath>
-        <itemPath>NTai/Helpers/mtrand.cpp</itemPath>
+        <itemPath>NTai/Helpers/Log.cpp</itemPath>
         <itemPath>NTai/Helpers/mtrand.h</itemPath>
+        <itemPath>NTai/Helpers/mtrand.cpp</itemPath>
         <itemPath>NTai/Helpers/tdf_grammar.hpp</itemPath>
-        <itemPath>NTai/Helpers/TdfParser.cpp</itemPath>
         <itemPath>NTai/Helpers/TdfParser.h</itemPath>
-        <itemPath>NTai/Helpers/ubuild.cpp</itemPath>
+        <itemPath>NTai/Helpers/TdfParser.cpp</itemPath>
         <itemPath>NTai/Helpers/ubuild.h</itemPath>
+        <itemPath>NTai/Helpers/ubuild.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="Tasks" displayName="Tasks" projectFiles="true">
-        <itemPath>NTai/Tasks/CConsoleTask.cpp</itemPath>
         <itemPath>NTai/Tasks/CConsoleTask.h</itemPath>
-        <itemPath>NTai/Tasks/CKeywordConstructionTask.cpp</itemPath>
+        <itemPath>NTai/Tasks/CConsoleTask.cpp</itemPath>
         <itemPath>NTai/Tasks/CKeywordConstructionTask.h</itemPath>
-        <itemPath>NTai/Tasks/CLeaveBuildSpotTask.cpp</itemPath>
+        <itemPath>NTai/Tasks/CKeywordConstructionTask.cpp</itemPath>
         <itemPath>NTai/Tasks/CLeaveBuildSpotTask.h</itemPath>
-        <itemPath>NTai/Tasks/CUnitConstructionTask.cpp</itemPath>
+        <itemPath>NTai/Tasks/CLeaveBuildSpotTask.cpp</itemPath>
         <itemPath>NTai/Tasks/CUnitConstructionTask.h</itemPath>
+        <itemPath>NTai/Tasks/CUnitConstructionTask.cpp</itemPath>
         <itemPath>NTai/Tasks/ITask.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Units" displayName="Units" projectFiles="true">
-        <itemPath>NTai/Units/CUnit.cpp</itemPath>
         <itemPath>NTai/Units/CUnit.h</itemPath>
+        <itemPath>NTai/Units/CUnit.cpp</itemPath>
         <itemPath>NTai/Units/IBehaviour.h</itemPath>
       </logicalFolder>
     </logicalFolder>

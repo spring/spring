@@ -434,23 +434,27 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         }
         
     }else if(building->needGeo){
+        NLOG("CBuildingPlacer::GetBuildPosMessage geomark 1#");
         int* f = new int[20000];
         int fnum = 0;
         if(G->UnitDefHelper->IsHub(builder)){
-            fnum = G->cb->GetFeatures(f, 20000, builderpos, builder->buildDistance);
+            fnum = G->cb->GetFeatures(f, 19999, builderpos, builder->buildDistance);
         }else{
-            fnum = G->cb->GetFeatures(f, 20000);
+            fnum = G->cb->GetFeatures(f, 19999);
         }
+        NLOG("CBuildingPlacer::GetBuildPosMessage geomark 2#");
         float3 result = UpVector;
         if(fnum >0){
+            NLOG("CBuildingPlacer::GetBuildPosMessage geomark 3#");
             float gsearchdistance=3000;
             float genemydist=600;
             G->Get_mod_tdf()->GetDef(gsearchdistance, "3000", "AI\\geotherm\\searchdistance");
             G->Get_mod_tdf()->GetDef(genemydist, "600", "AI\\geotherm\\noenemiesdistance");
             float nearest_dist = 10000000;
+            NLOG("CBuildingPlacer::GetBuildPosMessage geomark 4#");
             for(int i = 0; i < fnum; i++){
                 FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
-                if(fd){
+                if(fd != 0){
                     //
                     if(fd->geoThermal){
                         float3 fpos = G->cb->GetFeaturePos(f[i]);
@@ -464,17 +468,20 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                                 }
                             }
                             if(fpos.distance2D(builderpos) < gsearchdistance){
+                                NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
                                 int* a = new int[5000];
-                                if(G->cb->CanBuildAt(building, fpos)&&(G->chcb->GetEnemyUnits(a, fpos, genemydist)<1)&&(G->cb->GetFriendlyUnits(a, fpos, 50)<1)){
+                                if(G->cb->CanBuildAt(building, fpos)&&(G->chcb->GetEnemyUnits(a, fpos, genemydist)<1)/*&&(G->cb->GetFriendlyUnits(a, fpos, 50)<1)*/){
                                     nearest_dist = t;
                                     result = fpos;
                                 }
+                                NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
                                 delete[] a;
                             }
                         }
                     }
                 }
             }
+            NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5#");
         }
         CMessage m("buildposition");
         m.AddParameter(result);
