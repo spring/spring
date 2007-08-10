@@ -58,13 +58,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 		serverNet->SendScript(scriptName);
 	}
 
-	int myPlayer=0;
-	if(gameSetup){
-		myPlayer=gameSetup->myPlayer;
-	}
-	// create local client
-	net->InitLocalClient(myPlayer);
-	serverNet->ServerInitLocalClient(myPlayer);
+	serverNet->ServerInitLocalClient( gameSetup ? gameSetup->myPlayer : 0 );
 
 	lastTick = SDL_GetTicks();
 	
