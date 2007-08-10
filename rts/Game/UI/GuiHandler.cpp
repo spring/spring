@@ -1535,6 +1535,12 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 		const float viewRange = gu->viewRange*1.4f;
 		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, 20, true);
 		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
+		const float3 hit = camPos + camDir*dist;
+
+		// make sure the ray hit in the map
+		if (unit == NULL && (hit.x < 0.f || hit.x > gs->mapx*SQUARE_SIZE
+				|| hit.z < 0.f || hit.z > gs->mapy*SQUARE_SIZE))
+			return -1;
 
 		if ((dist > viewRange - 300) && (dist2 > viewRange - 300) && (unit == NULL)) {
 			return -1;
