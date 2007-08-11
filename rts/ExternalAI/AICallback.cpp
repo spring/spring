@@ -1,9 +1,9 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
+#include "Map/ReadMap.h"
 #include "GlobalAICallback.h"
 #include "NetProtocol.h"
 #include "GlobalAI.h"
-#include "Map/ReadMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "LogOutput.h"
 #include "Game/UI/MiniMap.h"

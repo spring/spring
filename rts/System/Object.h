@@ -4,10 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 #include "creg/creg.h"
 
 #define ListErase(type,_where,what) \

@@ -101,7 +101,7 @@ void CBombDropper::Fire(void)
 		float3 dir=owner->speed;
 		dir.Normalize();
 		dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f); //add a random spray
-		dir.y=min(0.0,dir.y);
+		dir.y=min(0.0f,dir.y);
 		dir.Normalize();
 		dif-=dir*dif.dot(dir);
 		dif/=max(0.01f,predict);

@@ -4,10 +4,6 @@
 // Dont modify this file
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 #include <vector>
 #include <deque>
 #include "aibase.h"

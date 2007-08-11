@@ -2,10 +2,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4258)
-#endif
-
 #include "StdAfx.h"
 #include "AdvSky.h"
 

@@ -1,9 +1,6 @@
 // UnitLoader.cpp: implementation of the CUnitLoader class.
 //
 //////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
 
 #include "StdAfx.h"
 #include "UnitLoader.h"

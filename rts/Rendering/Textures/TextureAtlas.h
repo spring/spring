@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TEXTUREATLAS_H
+#define TEXTUREATLAS_H
 
 #include <string>
 #include <vector>
@@ -95,3 +96,5 @@ protected:
 	bool IncreaseSize();
 	void CreateTexture();
 };
+
+#endif // TEXTUREATLAS_H

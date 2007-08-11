@@ -3,10 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER_
-#pragma warning(disable:4786)
-#endif
-
 #include <string>
 #include <vector>
 #include <map>

@@ -4,10 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 class CUnit;
 #include <set>
 #include <vector>

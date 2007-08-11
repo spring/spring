@@ -4,10 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 class CProjectileHandler;
 class CProjectile;
 struct S3DOPrimitive;

@@ -1,9 +1,6 @@
 // WreckProjectile.cpp: implementation of the CWreckProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
 
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"

@@ -1,9 +1,6 @@
 // GameHelper.cpp: implementation of the CGameHelperHelper class.
 //
 //////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
 
 #include "StdAfx.h"
 #include "GameHelper.h"
