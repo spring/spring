@@ -99,7 +99,9 @@ void CBombDropper::Fire(void)
 		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;
 		float3 dir=owner->speed;
-		dir.y=0;
+		dir.Normalize();
+		dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f); //add a random spray
+		dir.y=min(0.0,dir.y);
 		dir.Normalize();
 		dif-=dir*dif.dot(dir);
 		dif/=max(0.01f,predict);
