@@ -39,7 +39,7 @@ CCamera::CCamera()
 	lppScale = 0.0f;
 
 	billboard[3]  = billboard[7]  = billboard[11] = 0.0;
-	billboard[12] = billboard[13] = billboard[15] = 0.0;
+	billboard[12] = billboard[13] = billboard[14] = 0.0;
 	billboard[15] = 1.0;
 }
 
