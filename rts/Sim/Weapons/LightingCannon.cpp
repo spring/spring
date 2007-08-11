@@ -9,6 +9,7 @@
 #include "WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "mmgr.h"
+#include "PlasmaRepulser.h"
 
 CR_BIND_DERIVED(CLightingCannon, CWeapon, (NULL));
 
@@ -79,6 +80,8 @@ void CLightingCannon::Fire(void)
 {
 	float3 dir=targetPos-weaponPos;
 	dir.Normalize();
+	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
+	dir.Normalize();
 	CUnit* u=0;
 	float r=helper->TraceRay(weaponPos,dir,range,0,owner,u);
 
@@ -87,7 +90,10 @@ void CLightingCannon::Fire(void)
 	float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,weaponPos,dir,range,newDir,shieldHit);
 	if(shieldLength<r){
 		r=shieldLength;
+		if(shieldHit) {
+			shieldHit->BeamIntercepted(this);
 		}
+	}
 
 //	if(u)
 //		u->DoDamage(damages,owner,ZeroVector);
@@ -110,7 +116,8 @@ void CLightingCannon::Fire(void)
 void CLightingCannon::SlowUpdate(void)
 {
 	CWeapon::SlowUpdate();
-	if(targetType==Target_Unit){
-		predict=(gs->randFloat()-0.5f)*20*range/weaponPos.distance(targetUnit->midPos)*(1.2f-owner->limExperience);		//make the weapon somewhat less effecient against aircrafts hopefully
-	}
+	//We don't do hardcoded inaccuracies, use targetMoveError if you want inaccuracy!
+//	if(targetType==Target_Unit){
+//		predict=(gs->randFloat()-0.5f)*20*range/weaponPos.distance(targetUnit->midPos)*(1.2f-owner->limExperience);		//make the weapon somewhat less effecient against aircrafts hopefully
+//	}
 }
