@@ -3,12 +3,6 @@
 #include <algorithm>
 #include "mmgr.h"
 
-//#pragma comment(lib, "../taspring/zlib/lib/zdll.lib")
-//#pragma comment(lib, "../crashrpt/zlib/lib/zlib.lib")
-
-// IMO, this is not flexible, it should just be specified in the building system options
-//#pragma comment(lib, "../zlib/lib/zlibwapi.lib")
-
 CArchiveZip::CArchiveZip(const string& name) :
 	CArchiveBuffered(name),
 	curSearchHandle(1)

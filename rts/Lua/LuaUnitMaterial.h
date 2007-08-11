@@ -6,10 +6,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 #include "Rendering/GL/myGL.h"
 
 #include <vector>

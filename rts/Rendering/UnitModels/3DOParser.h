@@ -4,10 +4,6 @@
 #ifndef SPRING_3DOPARSER_H
 #define SPRING_3DOPARSER_H
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 #include <vector>
 #include <string>
 #include "float3.h"

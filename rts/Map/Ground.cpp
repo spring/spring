@@ -1,9 +1,6 @@
 // Ground.cpp: implementation of the CGround class.
 //
 //////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
 
 #include "StdAfx.h"
 #include "Ground.h"

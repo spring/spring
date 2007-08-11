@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SHIELDPARTPROJECTILE_H
+#define SHIELDPARTPROJECTILE_H
+
 #include "Sim/Projectiles/Projectile.h"
 
 struct AtlasedTexture;
@@ -22,3 +24,5 @@ public:
 	float baseAlpha;
 	float3 color;
 };
+
+#endif // SHIELDPARTPROJECTILE_H

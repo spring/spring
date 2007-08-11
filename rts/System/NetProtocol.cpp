@@ -116,7 +116,7 @@ void CNetProtocol::Update()
 	while (GetIncomingConnection())
 	{
 		netcode::CConnection* newguy = GetIncomingConnection();
-		unsigned inbuflength = 4096;
+		const unsigned inbuflength = 4096;
 		unsigned char inbuf[inbuflength];
 		
 		int ret = newguy->GetData(inbuf, inbuflength);

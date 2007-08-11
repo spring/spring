@@ -100,7 +100,7 @@
 !endif ; SP_UPDATE
 
   ; Demofile file association
-  !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$INSTDIR\spring.exe $\"%1$\""
+  !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC
 
 !else

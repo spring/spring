@@ -112,7 +112,7 @@ public:
 	virtual void Explosion(float x,float y,float strength){};
 	virtual void ExplosionUpdate(int x1,int x2,int y1,int y2){};
 	virtual unsigned int GetShadingTexture () = 0; // a texture with RGB for shading and A for height
-	static inline unsigned char EncodeHeight(float h) { return std::max(0,(int)(255+10.0f*h)); }
+	static inline unsigned char EncodeHeight(float h) { return std::max(0, (int)(255+10.0f*h)); }
 
 	virtual void DrawMinimap () = 0; // draw the minimap in a quad (with extends: (0,0)-(1,1))
 
