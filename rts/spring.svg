@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="512"
+   width="512"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   version="1.0"
+   sodipodi:docbase="."
+   sodipodi:docname="spring.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3426">
+      <stop
+         style="stop-color:#ec4e18;stop-opacity:1;"
+         offset="0"
+         id="stop3428" />
+      <stop
+         style="stop-color:#ec4e18;stop-opacity:0;"
+         offset="1"
+         id="stop3430" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2449">
+      <stop
+         style="stop-color:#a22411;stop-opacity:0;"
+         offset="0"
+         id="stop2451" />
+      <stop
+         style="stop-color:#ffb59b;stop-opacity:0.50196081;"
+         offset="1"
+         id="stop2453" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3426"
+       id="radialGradient3451"
+       cx="43.220612"
+       cy="119.60201"
+       fx="43.220612"
+       fy="119.60201"
+       r="256"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.2926397,1.37543,-1.1994782,1.127292,131.50372,-150.36091)" />
+    <filter
+       inkscape:collect="always"
+       x="-0.08992231"
+       width="1.1798446"
+       y="-0.16178935"
+       height="1.3235787"
+       id="filter3577">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="15.997857"
+         id="feGaussianBlur3579" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       x="-0.10719152"
+       width="1.214383"
+       y="-0.19105114"
+       height="1.3821023"
+       id="filter5575">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="18.957339"
+         id="feGaussianBlur5577" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       id="filter3179">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="1.4946569"
+         id="feGaussianBlur3181" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:cx="395.81591"
+     inkscape:cy="274.69612"
+     inkscape:zoom="1.0703125"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="512px"
+     height="512px"
+     inkscape:window-width="1280"
+     inkscape:window-height="744"
+     inkscape:window-x="0"
+     inkscape:window-y="22" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Spring icon</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Marek &quot;baczek&quot; Baczyński</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>AF</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/GPL/2.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/GPL/2.0/">
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Reproduction" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Distribution" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/Notice" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/ShareAlike" />
+        <cc:requires
+           rdf:resource="http://web.resource.org/cc/SourceCode" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Warstwa 1"
+     id="layer1">
+    <rect
+       style="stroke-width:3.30999994;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;fill:#a22411;fill-opacity:1"
+       id="rect2443"
+       width="512"
+       height="512"
+       x="0"
+       y="0"
+       ry="37.372261" />
+    <rect
+       ry="37.372261"
+       y="0"
+       x="0"
+       height="512"
+       width="512"
+       id="rect2447"
+       style="stroke-width:3.30999994;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;fill:url(#radialGradient3451);fill-opacity:1.0" />
+    <path
+       style="fill:#ffffff;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter3577)"
+       d="M 116.78832,338.21898 L 48.583942,278.42336 L 135.47445,243.85401 L 122.39416,152.29197 L 207.41606,184.05839 L 261.60584,100.90511 L 311.12409,184.05839 L 398.0146,152.29197 L 382.13139,243.85401 L 475.56204,278.42336 L 401.75182,338.21898 L 388.67153,338.21898 C 398.32603,137.6545 122.96335,134.51054 131.73723,338.21898 L 116.78832,338.21898 z "
+       id="path2423"
+       sodipodi:nodetypes="cccccccccccccc" />
+    <path
+       style="opacity:0.55963303;fill:#ffa825;fill-opacity:0.99473685;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter5575)"
+       d="M 116.78832,338.21898 L 51.11044,265.97683 L 136.31662,233.89679 L 123.23633,139.01567 L 204.0474,173.2714 L 261.60584,100.90511 L 314.49275,174.10117 L 395.4881,142.33475 L 388.02655,231.40748 L 475.56204,267.63637 L 401.75182,338.21898 L 365.93305,338.21898 C 374.74539,153.42011 143.17533,163.55245 155.31787,339.04875 L 116.78832,338.21898 z "
+       id="path3607"
+       sodipodi:nodetypes="cccccccccccccc"
+       transform="matrix(1.1094092,0,0,1.1259843,-28.673194,-27.66136)" />
+    <path
+       sodipodi:nodetypes="cccccccccccccc"
+       id="path3581"
+       d="M 116.78832,338.21898 L 48.583942,278.42336 L 135.47445,243.85401 L 122.39416,152.29197 L 207.41606,184.05839 L 261.60584,100.90511 L 311.12409,184.05839 L 398.0146,152.29197 L 382.13139,243.85401 L 475.56204,278.42336 L 401.75182,338.21898 L 388.67153,338.21898 C 398.32603,137.6545 122.96335,134.51054 131.73723,338.21898 L 116.78832,338.21898 z "
+       style="fill:#ffffff;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter3179)" />
+  </g>
+</svg>
