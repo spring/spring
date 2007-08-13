@@ -551,7 +551,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	}
 
 	if (!hotBinding.empty()) {
-		if (k == 27) {
+		if (k == SDLK_ESCAPE) {
 			hotBinding.clear();
 		}
 		else if (!keyCodes->IsModifier(k) && (k != keyBindings->GetFakeMetaKey())) {
@@ -696,7 +696,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				}
 			}
 		}
-		else if ((k == 27) && (chatting || inMapDrawer->wantLabel)){ // escape
+		else if ((k == SDLK_ESCAPE) && (chatting || inMapDrawer->wantLabel)) {
 			if (chatting) {
 				consoleHistory->AddLine(userInput);
 			}

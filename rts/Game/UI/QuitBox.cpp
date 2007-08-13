@@ -302,7 +302,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 
 bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (key == 27) { // escape
+	if (key == SDLK_ESCAPE) {
 		if (mouse->activeReceiver == this)
 			mouse->activeReceiver = 0;
 
@@ -311,5 +311,3 @@ bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
 	}
 	return false;
 }
-
-
