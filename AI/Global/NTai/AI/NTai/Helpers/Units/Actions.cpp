@@ -401,10 +401,14 @@ bool CActions::DGunNearby(int uid){
                 delete [] en;
                 G->Manufacturer->WipePlansForBuilder(uid);
                 if(endi->canDGun){
-                    if(G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k))<(4 SECONDS)){
+                    int r = G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
+                    int c = G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
+                    if(r<(4 SECONDS) && r < c){
                         return Reclaim(uid, k);
                     }else{
-                        if(!G->Ch->defences.empty()){
+                        if(c<(4 SECONDS)){
+                            return Capture(uid, k);
+                        }else if(!G->Ch->defences.empty()){
                             return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
                         }else{
                             NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
@@ -415,10 +419,12 @@ bool CActions::DGunNearby(int uid){
                     if(G->GetDGunCost(ud->name)<G->cb->GetEnergy()){
                         return DGun(uid, k);
                     }else{
-                        if(G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k))<(4 SECONDS)){
+                        int r = G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
+                        int c = G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
+                        if(r<(4 SECONDS) && r < c){
                             return Reclaim(uid, k);
                         }else{
-                            if(G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k))<(4 SECONDS)){
+                            if(c<(4 SECONDS)){
                                 return Capture(uid, k);
                             }else{
                                 if(!G->Ch->defences.empty()){
