@@ -22,6 +22,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Map/Ground.h"
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
@@ -350,6 +351,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		case CMD_FIGHT:
 		case CMD_DGUN:
 			if (!isCommandInMap(c)) return false;
+			break;
 		default:
 			// build commands
 			if (c.id < 0 && !isCommandInMap(c)) return false;
@@ -361,7 +363,12 @@ bool CCommandAI::AllowedCommand(const Command& c)
 	switch (c.id) {
 		case CMD_ATTACK:
 		case CMD_DGUN: {
-			if (!ud->canAttack || !isAttackCapable()) return false; break;
+			if (!ud->canAttack || !isAttackCapable()) return false;
+			// check if attack ground is really attack ground
+			if (c.params.size() == 3
+					&& fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > 10)
+				return false;
+			break;
 		}
 		case CMD_MOVE:      if (!ud->canmove)       return false; break;
 		case CMD_FIGHT:     if (!ud->canFight)      return false; break;
@@ -1233,11 +1240,13 @@ void CCommandAI::DrawCommands(void)
 void CCommandAI::FinishCommand(void)
 {
 	const int type = commandQue.front().id;
+	const bool dontrepeat = commandQue.front().options & DONT_REPEAT
+			|| commandQue.front().options & INTERNAL_ORDER;
 	if (repeatOrders
+		&& !dontrepeat
 	    && (type != CMD_STOP)
 	    && (type != CMD_PATROL)
-	    && (type != CMD_SET_WANTED_MAX_SPEED)
-			&& !(commandQue.front().options & INTERNAL_ORDER)){
+	    && (type != CMD_SET_WANTED_MAX_SPEED)){
 		commandQue.push_back(commandQue.front());
 	}
 	commandQue.pop_front();

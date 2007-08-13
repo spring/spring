@@ -237,11 +237,23 @@ void CFactoryCAI::GiveCommandReal(const Command& c)
 	} else {
 		if(c.options & ALT_KEY){
 			for(int a=0;a<numItems;++a){
-				commandQue.push_front(c);
+				if (repeatOrders) {
+					Command nc(c);
+					nc.options |= DONT_REPEAT;
+					if (commandQue.empty())
+						commandQue.push_front(nc);
+					else
+						commandQue.insert(commandQue.begin()+1, nc);
+				} else {
+					commandQue.push_front(c);
+				}
+
 			}
-			building=false;
-			CFactory* fac=(CFactory*)owner;
-			fac->StopBuild();
+			if (!repeatOrders) {
+				building=false;
+				CFactory* fac=(CFactory*)owner;
+				fac->StopBuild();
+			}
 		} else {
 			for(int a=0;a<numItems;++a){
 				commandQue.push_back(c);
@@ -294,7 +306,7 @@ void CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 
 void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOption)
 {
-	if(!repeatOrders) {
+	if(!repeatOrders || c.options & DONT_REPEAT) {
 		buildOption.numQued--;
 		ENTER_MIXED;
 		if (owner->team == gu->myTeam) {
@@ -331,7 +343,7 @@ void CFactoryCAI::SlowUpdate()
 					building=false;
 					if(owner->group)
 						owner->group->CommandFinished(owner->id,commandQue.front().id);
-					if(!repeatOrders)
+					if(!repeatOrders || c.options & DONT_REPEAT)
 						boi->second.numQued--;
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
@@ -347,7 +359,7 @@ void CFactoryCAI::SlowUpdate()
 			} else {
 				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
 				if(luaRules && !luaRules->AllowUnitCreation(def, owner, NULL)) {
-					if(!repeatOrders){
+					if(!repeatOrders || c.options & DONT_REPEAT){
 						boi->second.numQued--;
 					}
 					UpdateIconName(c.id,boi->second);
