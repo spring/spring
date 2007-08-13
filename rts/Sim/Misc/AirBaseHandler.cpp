@@ -11,7 +11,7 @@ CAirBaseHandler* airBaseHandler=0;
 CR_BIND_DERIVED(CAirBaseHandler, CObject, )
 CR_REG_METADATA(CAirBaseHandler, (CR_MEMBER(freeBases), CR_MEMBER(bases)))
 
-CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, );
+CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (NULL, 0, NULL));
 CR_REG_METADATA_SUB(CAirBaseHandler, LandingPad, (CR_MEMBER(unit), CR_MEMBER(base), CR_MEMBER(piece)))
 
 CR_BIND(CAirBaseHandler::AirBase, )
@@ -62,11 +62,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 		if ((piece < 0) || (piece >= base->cob->pieces.size())) {
 			continue;
 		}
-		LandingPad* pad=SAFE_NEW LandingPad;
-		
-		pad->unit = base;
-		pad->piece = piece;
-		pad->base = ab;
+		LandingPad* pad=SAFE_NEW LandingPad(base, piece, ab);
 
 		ab->pads.push_back(pad);
 		ab->freePads.push_back(pad);
@@ -126,7 +122,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 
 void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 {
-	pad->base->freePads.push_back(pad);
+	pad->GetBase()->freePads.push_back(pad);
 }
 
 //Try to find the closest airbase even if its reserved

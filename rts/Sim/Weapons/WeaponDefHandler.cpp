@@ -216,7 +216,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 
 	sunparser->GetDef(weaponDefs[id].targetMoveError, "0", weaponname + "\\targetMoveError");
 
-	for(int a=0;a<damageArrayHandler->numTypes;++a)
+	for(int a = 0; a < damageArrayHandler->GetNumTypes(); ++a)
 	{
 		sunparser->GetDef(weaponDefs[id].damages[a], "0", weaponname + "\\DAMAGE\\default");
 		if(weaponDefs[id].damages[a]==0)		//avoid division by zeroes
@@ -600,7 +600,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 		ddmod = damageMin/damages[0]; // get damage mod from first damage type
 
 	if (inverted == true) {
-		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
+		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
 			dynDamages[i] = damages[i] - (1 - pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0)
@@ -613,7 +613,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 		}
 	}
 	else {
-		for(int i=0; i < damageArrayHandler->numTypes; ++i) {
+		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
 			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0)

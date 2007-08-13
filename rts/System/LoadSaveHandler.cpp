@@ -87,7 +87,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
-	s.SerializeObjectInstance(categoryHandler, categoryHandler->GetClass());
+	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
 	s.SerializeObjectInstance(uh, uh->GetClass());
 	s.SerializeObjectInstance(ph, ph->GetClass());
 //	std::map<std::string, int> unitRestrictions;

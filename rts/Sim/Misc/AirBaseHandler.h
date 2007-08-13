@@ -5,45 +5,58 @@
 
 class CUnit;
 
-class CAirBaseHandler :
-	public CObject
+class CAirBaseHandler : public CObject
 {
-public:
-	CR_DECLARE(CAirBaseHandler)
-	CR_DECLARE_SUB(LandingPad)
-	CR_DECLARE_SUB(AirBase)
+	CR_DECLARE(CAirBaseHandler);
+	CR_DECLARE_SUB(LandingPad);
+	CR_DECLARE_SUB(AirBase);
 
+private:
+	struct AirBase;
+
+public:
+
+	class LandingPad : public CObject {
+		CR_DECLARE(LandingPad);
+
+	public:
+		LandingPad(CUnit* u, int p, AirBase* b) :
+			unit(u), piece(p), base(b) {}
+
+		CUnit* GetUnit() const { return unit; }
+		int GetPiece() const { return piece; }
+		AirBase* GetBase() const { return base; }
+
+	private:
+		CUnit* unit;
+		int piece;
+		AirBase* base;
+	};
+
+private:
+
+	struct AirBase {
+		CR_DECLARE_STRUCT(AirBase);
+		CUnit* unit;
+		std::list<LandingPad*> freePads;
+		std::list<LandingPad*> pads;
+	};
+
+public:
 	CAirBaseHandler(void);
 	~CAirBaseHandler(void);
 
 	void RegisterAirBase(CUnit* base);
 	void DeregisterAirBase(CUnit* base);
 
-	struct AirBase;
-
-	class LandingPad : public CObject{
-	public:
-		CR_DECLARE(LandingPad)
-		CUnit* unit;
-		AirBase* base;
-		int piece;
-	};
-
-	struct AirBase {
-		CR_DECLARE_STRUCT(AirBase)
-
-		CUnit* unit;
-		std::list<LandingPad*> freePads;
-		std::list<LandingPad*> pads;
-	};
-
-	std::list<AirBase*> freeBases[MAX_TEAMS];
-	std::list<AirBase*> bases[MAX_TEAMS];
-
 	LandingPad* FindAirBase(CUnit* unit, float minPower);
 	void LeaveLandingPad(LandingPad* pad);
 
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
+
+private:
+	std::list<AirBase*> freeBases[MAX_TEAMS];
+	std::list<AirBase*> bases[MAX_TEAMS];
 };
 
 extern CAirBaseHandler* airBaseHandler;

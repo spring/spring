@@ -308,10 +308,10 @@ static int DamagesArray(lua_State* L, const void* data)
 
 	HSTR_PUSH(L, "damages");
 	lua_newtable(L);
-	const std::vector<std::string>& typeList = damageArrayHandler->typeList;
+	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
 	const int typeCount = (int)typeList.size();
 	for (int i = 0; i < typeCount; i++) {
-		LuaPushNamedNumber(L, typeList[i].c_str(), d.damages[i]);
+		LuaPushNamedNumber(L, typeList[i].c_str(), d[i]);
 	}
 	lua_rawset(L, -3);
 

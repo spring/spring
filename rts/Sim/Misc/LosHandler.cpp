@@ -35,28 +35,20 @@ CR_REG_METADATA(LosInstance,(
 		CR_MEMBER(baseHeight),
 		CR_MEMBER(toBeDeleted)));
 
-void CLosHandler::creg_Serialize(creg::ISerializer& s)
-{
-	// NOTE This could be tricky if gs is serialized after losHandler.
-//	for (int a = 0; a < gs->activeAllyTeams; ++a) {
-//		s.Serialize(losMap[a], losSizeX*losSizeY*2);
-//		s.Serialize(airLosMap[a], airSizeX*airSizeY*2);
-//	}
-}
-
 void CLosHandler::PostLoad()
 {
-	for(int a=0;a<2309;++a)
-		for(std::list<LosInstance*>::iterator li=instanceHash[a].begin();li!=instanceHash[a].end();++li) if ((*li)->refCount){
-			if((*li)->baseX-(*li)->losSize<0 || (*li)->baseX+(*li)->losSize>=losSizeX || (*li)->baseY-(*li)->losSize<0 || (*li)->baseY+(*li)->losSize>=losSizeY)
-				SafeLosAdd(*li,(*li)->baseX,(*li)->baseY);
-			else
-				LosAdd(*li);
-		}
+	for (int a = 0; a < 2309; ++a)
+		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li)
+			if ((*li)->refCount) {
+				if ((*li)->baseX-(*li)->losSize<0 || (*li)->baseX+(*li)->losSize>=losSizeX ||
+				    (*li)->baseY-(*li)->losSize<0 || (*li)->baseY+(*li)->losSize>=losSizeY)
+					SafeLosAdd(*li,(*li)->baseX,(*li)->baseY);
+				else
+					LosAdd(*li);
+			}
 }
 
 CR_REG_METADATA(CLosHandler,(
-		CR_SERIALIZER(creg_Serialize), // losMap, airLosMap
 		CR_MEMBER(losMipLevel),
 		CR_MEMBER(airMipLevel),
 		CR_MEMBER(invLosDiv),
@@ -91,27 +83,6 @@ using namespace std;
 
 CLosHandler* loshandler;
 
-static void* myNew(int size)
-{
-	int msize=size+4000;
-	unsigned char* ret=SAFE_NEW unsigned char[msize];
-	for(int a=0;a<2000;++a)
-		ret[a]=0x0;
-
-	return ret+2000;
-}
-
-static void myDelete(void* p)
-{
-	unsigned char* p2=((unsigned char*)p)-2000;
-
-	for(int a=0;a<2000;++a)
-		if(p2[a]!=0x0){
-			handleerror(0,"Write before allocated mem","Error",0);
-			break;
-		}
-	delete[] 	p2;
-}
 
 CLosHandler::CLosHandler()
 {
@@ -125,9 +96,7 @@ CLosHandler::CLosHandler()
 	invAirDiv = 1 / ((float)SQUARE_SIZE * (1 << airMipLevel));
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
-//		losMap[a]=(unsigned short*)myNew(losSizeX*losSizeY*2);
 		losMap[a].resize(losSizeX*losSizeY,0);
-//		airLosMap[a]=(unsigned short*)myNew(airSizeX*airSizeY*2);
 		airLosMap[a].resize(airSizeX*airSizeY,0);
 	}
 
@@ -153,11 +122,6 @@ CLosHandler::CLosHandler()
 
 CLosHandler::~CLosHandler()
 {
-//	for(int a=0;a<gs->activeAllyTeams;++a){
-//		myDelete(losMap[a]);
-//		myDelete(airLosMap[a]);
-//	}
-
 	std::list<LosInstance*>::iterator li;
 	for(int a=0;a<2309;++a){
 		for(li=instanceHash[a].begin();li!=instanceHash[a].end();++li){

@@ -103,7 +103,6 @@ public:
 
 private:
 
-	void creg_Serialize(creg::ISerializer& s);
 	void PostLoad();
 	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);
