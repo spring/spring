@@ -303,6 +303,9 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 bool CQuitBox::KeyPressed(unsigned short key, bool isRepeat)
 {
 	if (key == 27) { // escape
+		if (mouse->activeReceiver == this)
+			mouse->activeReceiver = 0;
+
 		delete this;
 		return true;
 	}
