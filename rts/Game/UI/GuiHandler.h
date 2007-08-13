@@ -98,6 +98,8 @@ class CGuiHandler : public CInputReceiver {
 		void SetShowingMetal(bool show);
 		float GetNumberInput(const CommandDescription& cmdDesc) const;
 
+		void ProcessFrontPositions(float3& pos0, float3& pos1);
+
 		struct IconInfo;
 
 		void DrawButtons();
@@ -185,6 +187,7 @@ class CGuiHandler : public CInputReceiver {
 		bool newAttackMode;
 		bool attackRect;
 		bool invColorSelect;
+		bool frontByEnds;
 
 		bool useStencil;
 
