@@ -3160,8 +3160,8 @@ float AAIBuildTable::GetMaxDamage(int unit_id)
 	{
 		for(int k = 0; k < armor_types; ++k)
 		{
-			if((*i).def->damages.damages[k] > max_damage)
-				max_damage = (*i).def->damages.damages[k];
+			if((*i).def->damages[k] > max_damage)
+				max_damage = (*i).def->damages[k];
 		}
 	}
 
