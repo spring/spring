@@ -288,7 +288,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 					if(victim->speed > 0){ // Better not use !=  as floats can have many forms of 0
 						accuracy *= 1-(unit->weapons[i].def->targetMoveError);
 					}					
-					float basedamage = unit->weapons[i].def->damages.damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;	
+					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;	
 					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
 					float tohitprobability;
 					float impactarea;

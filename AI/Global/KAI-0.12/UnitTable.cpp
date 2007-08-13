@@ -99,7 +99,7 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 				float reloadtime = i->def->reload;
 
 				for (int k = 0; k < numberofdamages; k++) {
-					dps += i->def->damages.damages[k];
+					dps += i->def->damages[k];
 				}
 
 				dps = dps * i->def->salvosize / numberofdamages / reloadtime;
@@ -163,7 +163,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 						accuracy *= 1 - (unit->weapons[i].def->targetMoveError);
 					}
 
-					float basedamage = unit->weapons[i].def->damages.damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;
+					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;
 					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
 					float tohitprobability;
 					float impactarea;

@@ -70,7 +70,7 @@ static float CalcAverageDamage (const DamageArray *da)
 	//	s += da->damages [a];
 
 	/*numTypes isn't accessible from the dll, so only one damage value can be used */
-	return da->damages[0];//s/DamageArray::numTypes;
+	return da->GetDefaultDamage();//s/DamageArray::numTypes;
 }
 
 void BuildTable::Init (IAICallback *callback, bool cache)
