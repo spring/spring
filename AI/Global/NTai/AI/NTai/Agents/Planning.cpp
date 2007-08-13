@@ -395,8 +395,27 @@ float Planning::BuildTime(const UnitDef* builder,const UnitDef* built){
 	return 1000000000;
 }
 float Planning::ReclaimTime(const UnitDef* builder,const UnitDef* built,float health){
-	if(builder->buildSpeed){
-		return ( (built->buildTime / builder->buildSpeed)/built->health)*health;
+    if(!builder->canReclaim){
+        return 100000000;
+    }
+    if(!built->reclaimable){
+        return 100000000;
+    }
+	if(builder->reclaimSpeed){
+		return ( (built->buildTime / builder->reclaimSpeed)/built->health)*health;
+	}
+	return 1000000000;
+}
+
+float Planning::CaptureTime(const UnitDef* builder,const UnitDef* built,float health){
+    if(!builder->canCapture){
+        return 100000000;
+    }
+    /*if(!built->reclaimable){
+        return 100000000;
+    }*/
+	if(builder->captureSpeed){
+		return ( (built->buildTime / builder->captureSpeed)/built->health)*health;
 	}
 	return 1000000000;
 }

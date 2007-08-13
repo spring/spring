@@ -418,11 +418,15 @@ bool CActions::DGunNearby(int uid){
                         if(G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k))<(4 SECONDS)){
                             return Reclaim(uid, k);
                         }else{
-                            if(!G->Ch->defences.empty()){
-                                return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
+                            if(G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k))<(4 SECONDS)){
+                                return Capture(uid, k);
                             }else{
-                                NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                                return MoveToStrike(uid, G->Map->nbasepos(compos), false);
+                                if(!G->Ch->defences.empty()){
+                                    return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
+                                }else{
+                                    NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
+                                    return MoveToStrike(uid, G->Map->nbasepos(compos), false);
+                                }
                             }
                         }
                     }
