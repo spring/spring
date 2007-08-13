@@ -695,7 +695,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 	return pos;
 }
 
-void CGameHelper::BuggerOff(float3 pos, float radius,CUnit* exclude)
+void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
 {
 	std::vector<CUnit*> units=qf->GetUnitsExact(pos,radius+8);
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
