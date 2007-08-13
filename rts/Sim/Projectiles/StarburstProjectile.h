@@ -13,7 +13,10 @@ class CStarburstProjectile :
 	CR_DECLARE(CStarburstProjectile);
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect, float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget);
+	CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,
+			float3 targetPos,float areaOfEffect, float maxSpeed,float tracking,
+			int uptime,CUnit* target, WeaponDef *weaponDef,
+			CWeaponProjectile* interceptTarget, float maxdistance);
 	~CStarburstProjectile(void);
 	void Collision(CUnit* unit);
 	void Collision();
@@ -39,6 +42,7 @@ public:
 	void DrawCallback(void);
 	int* numCallback;
 	int missileAge;
+	float distanceToTravel;
 
 	struct OldInfo{
 		float3 pos;

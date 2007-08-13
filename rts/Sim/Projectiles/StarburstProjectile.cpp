@@ -17,7 +17,7 @@
 
 static const float Smoke_Time=70;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL));
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0));
 
 CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(tracking),
@@ -36,6 +36,7 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(doturn),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(missileAge),
+	CR_MEMBER(distanceToTravel),
 	CR_RESERVED(16)
 	));
 
@@ -48,7 +49,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect,float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef, CWeaponProjectile* interceptTarget)
+CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed,CUnit* owner,float3 targetPos,float areaOfEffect,float maxSpeed,float tracking, int uptime,CUnit* target, WeaponDef *weaponDef, CWeaponProjectile* interceptTarget, float maxdistance)
 : CWeaponProjectile(pos,speed,owner,target,targetPos,weaponDef,interceptTarget, true),
 	ttl(200),
 	maxSpeed(maxSpeed),
@@ -62,7 +63,8 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos,const float3& speed
 	curCallback(0),
 	numCallback(0),
 	missileAge(0),
-	areaOfEffect(areaOfEffect)
+	areaOfEffect(areaOfEffect),
+	distanceToTravel(maxdistance)
 {
 	this->uptime=uptime;
 	ttl=(int)min(3000.f,uptime+(weaponDef?weaponDef->range:0)/maxSpeed+100);
@@ -149,7 +151,7 @@ void CStarburstProjectile::Update(void)
 			curSpeed+=0.1f;
 		dir=UpVector;
 		speed=dir*curSpeed;
-	} else if(doturn && ttl>0){
+	} else if(doturn && ttl>0 && distanceToTravel>0) {
 		float3 dif(targetPos-pos);
 		dif.Normalize();
 		if(dif.dot(dir)>0.99f){
@@ -163,7 +165,8 @@ void CStarburstProjectile::Update(void)
 			dir.Normalize();
 		}
 		speed=dir*curSpeed;
-	} else if(ttl>0){
+		distanceToTravel-=speed.Length2D();
+	} else if(ttl>0 && distanceToTravel>0) {
 		if(curSpeed<maxSpeed)
 			curSpeed+=0.1f;
 		float3 dif(targetPos-pos);
@@ -178,6 +181,7 @@ void CStarburstProjectile::Update(void)
 			dir.Normalize();
 		}
 		speed=dir*curSpeed;
+		distanceToTravel-=speed.Length2D();
 	} else {
 		dir.y+=gs->gravity;
 		dir.Normalize();

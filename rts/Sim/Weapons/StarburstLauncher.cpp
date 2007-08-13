@@ -39,7 +39,7 @@ void CStarburstLauncher::Update(void)
 
 void CStarburstLauncher::Fire(void)
 {
-	CStarburstProjectile* p=SAFE_NEW CStarburstProjectile(weaponPos+float3(0,2,0),float3(0,0.01f,0),owner,targetPos,areaOfEffect,projectileSpeed,tracking,(int)uptime,targetUnit, weaponDef,interceptTarget);
+	CStarburstProjectile* p=SAFE_NEW CStarburstProjectile(weaponPos+float3(0,2,0),float3(0,0.01f,0),owner,targetPos,areaOfEffect,projectileSpeed,tracking,(int)uptime,targetUnit, weaponDef,interceptTarget,range);
 
 	if(weaponDef->targetable)
 		interceptHandler.AddInterceptTarget(p,targetPos);
