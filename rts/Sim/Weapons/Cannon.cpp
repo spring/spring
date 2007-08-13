@@ -27,6 +27,8 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
 	CR_MEMBER(selfExplode),
 	CR_MEMBER(rangeFactor),
+	CR_MEMBER(lastDiff),
+	CR_MEMBER(lastDir),
 	CR_RESERVED(16)
 	));
 
@@ -35,7 +37,9 @@ CR_REG_METADATA(CCannon,(
 //////////////////////////////////////////////////////////////////////
 
 CCannon::CCannon(CUnit* owner)
-: CWeapon(owner)
+: CWeapon(owner),
+	lastDiff(0.f, 0.f, 0.f),
+	lastDir(0.f, -1.f, 0.f)
 {
 	highTrajectory=false;
 	rangeFactor = 1;
@@ -214,6 +218,15 @@ bool CCannon::AttackGround(float3 pos,bool userTarget)
 
 float3 CCannon::GetWantedDir(const float3& diff)
 {
+	// try to cache results, sacrifice some (not much too much even for a pewee) accuracy
+	// it saves a dozen or two expensive calculations per second when 5 guardians
+	// are shooting at several slow- and fast-moving targets
+	if (fabs(diff.x-lastDiff.x) < SQUARE_SIZE/4.f
+			&& fabs(diff.y-lastDiff.y) < SQUARE_SIZE/4.f
+			&& fabs(diff.z-lastDiff.z) < SQUARE_SIZE/4.f) {
+		return lastDir;
+	}
+
 	float Dsq = diff.SqLength();
 	float DFsq = diff.SqLength2D();
 	float g = gs->gravity;
@@ -247,6 +260,8 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	dir *= Vxz;
 	dir.y = Vy;
 	dir.Normalize();
+	lastDiff = diff;
+	lastDir = dir;
 	return dir;
 }
 
