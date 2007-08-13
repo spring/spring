@@ -6,6 +6,7 @@
 #include "GuiHandler.h"
 #include <map>
 #include <set>
+#include <list>
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
@@ -45,7 +46,6 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
-#include <list>
 
 extern Uint8 *keys;
 
@@ -151,6 +151,7 @@ void CGuiHandler::LoadDefaults()
 	attackRect = true;
 	newAttackMode = true;
 	invColorSelect = true;
+	frontByEnds = false;
 }
 
 
@@ -264,6 +265,9 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 		}
 		else if ((command == "invcolorselect") && (words.size() > 1)) {
 			invColorSelect = !!atoi(words[1].c_str());
+		}
+		else if ((command == "frontbyends") && (words.size() > 1)) {
+			frontByEnds = !!atoi(words[1].c_str());
 		}
 	}
 
@@ -2303,7 +2307,14 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos2=camera->pos+mouse->dir*dist;
+				float3 pos2 = camera->pos + mouse->dir * dist;
+
+				ProcessFrontPositions(pos, pos2);
+
+				c.params[0] = pos.x;
+				c.params[1] = pos.y;
+				c.params[2] = pos.z;
+
 				if (!commands[tempInCommand].params.empty() &&
 				    pos.distance2D(pos2) > atof(commands[tempInCommand].params[0].c_str())) {
 					float3 dif=pos2-pos;
@@ -2544,6 +2555,17 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	}
 	return ret;
 }
+
+
+void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
+{
+	if (!frontByEnds) {
+		return; // leave it centered
+	}
+	pos0 = pos1 + ((pos0 - pos1) * 0.5f);
+	pos0.y = ground->GetHeight2(pos0.x, pos0.z);
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -3907,7 +3929,10 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	if(dist<0){
 		return;
 	}
-	float3 pos2=camera->pos+mouse->dir*dist;
+	float3 pos2 = camera->pos + (mouse->dir * dist);
+
+	ProcessFrontPositions(pos1, pos2);
+
 	float3 forward=(pos1-pos2).cross(UpVector);
 	forward.Normalize();
 	float3 side=forward.cross(UpVector);
