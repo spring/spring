@@ -258,36 +258,37 @@ bool CShareBox::MousePress(int x, int y, int button)
 	return false;
 }
 
-void CShareBox::MouseRelease(int x,int y,int button)
+void CShareBox::MouseRelease(int x, int y, int button)
 {
-	float mx=MouseX(x);
-	float my=MouseY(y);
+	float mx = MouseX(x);
+	float my = MouseY(y);
 
-	if(InBox(mx,my,box+unitBox)){
-		shareUnits=!shareUnits;
+	if (InBox(mx, my, box + unitBox)) {
+		shareUnits = !shareUnits;
 	}
-	if(InBox(mx,my,box+okBox) || InBox(mx,my,box+applyBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
-		if(shareUnits){
+	if (InBox(mx, my, box + okBox) || InBox(mx, my, box + applyBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead) {
+		if (shareUnits) {
 			Command c;
-			c.id=CMD_STOP;
-			selectedUnits.GiveCommand(c,false);		//make sure the units are stopped and that the selection is transmitted
+			c.id = CMD_STOP;
+			// make sure the units are stopped and that the selection is transmitted
+			selectedUnits.GiveCommand(c, false);
 		}
 		net->SendShare(gu->myPlayerNum, shareTeam, shareUnits,
-				metalShare*gs->Team(gu->myTeam)->metal, energyShare*gs->Team(gu->myTeam)->energy);
-		if(shareUnits)
+				metalShare * gs->Team(gu->myTeam)->metal, energyShare * gs->Team(gu->myTeam)->energy);
+		if (shareUnits)
 			selectedUnits.ClearSelected();
-		lastShareTeam=shareTeam;
+		lastShareTeam = shareTeam;
 	}
-	if(InBox(mx,my,box+okBox) || InBox(mx,my,box+cancelBox)){
+	if (InBox(mx, my, box + okBox) || InBox(mx, my, box + cancelBox)) {
 		delete this;
 		return;
 	}
-	moveBox=false;
-	metalMove=false;
-	energyMove=false;
+	moveBox = false;
+	metalMove = false;
+	energyMove = false;
 }
 
-void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
+void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
 	float mx=MouseX(x);
 	float my=MouseY(y);
@@ -314,7 +315,11 @@ void CShareBox::MouseMove(int x, int y, int dx,int dy, int button)
 
 bool CShareBox::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (key == 27) { // escape
+	if (key == 27) {
+		// escape
+		if (mouse->activeReceiver == this)
+			mouse->activeReceiver = 0;
+
 		delete this;
 		return true;
 	}
