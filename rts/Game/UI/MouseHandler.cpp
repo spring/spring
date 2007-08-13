@@ -235,19 +235,20 @@ void CMouseHandler::HandleSDLMouseEvent(const SDL_Event& event)
 
 void CMouseHandler::MousePress(int x, int y, int button)
 {
-	if (button > NUM_BUTTONS) return;
+	if (button > NUM_BUTTONS)
+		return;
 
-	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
+	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
 
-	if(!game->gameOver)
+	if (!game->gameOver)
 		gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
 
-	if(button==4){
+	if (button == 4) {
 		if (guihandler->buildSpacing > 0)
 			guihandler->buildSpacing--;
 		return;
 	}
-	if(button==5){
+	if (button == 5) {
 		guihandler->buildSpacing++;
 		return;
 	}
@@ -291,9 +292,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
-		for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-			if((*ri) && (*ri)->MousePress(x,y,button)){
-				activeReceiver=*ri;
+		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+			if ((*ri) && (*ri)->MousePress(x, y, button)) {
+				activeReceiver = *ri;
 				return;
 			}
 		}
@@ -307,21 +308,20 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
-	if (button > NUM_BUTTONS) return;
+	if (button > NUM_BUTTONS)
+		return;
 
-	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
-
-
+	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
 	buttons[button].pressed=false;
 
-	if(inMapDrawer && inMapDrawer->keyPressed){
+	if (inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseRelease(x, y, button);
 		return;
 	}
 
-	if(activeReceiver){
-		activeReceiver->MouseRelease(x,y,button);
-		activeReceiver=0;
+	if (activeReceiver) {
+		activeReceiver->MouseRelease(x, y, button);
+		activeReceiver = 0;
 		return;
 	}
 
@@ -336,16 +336,18 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(gu->directControl){
+	if (gu->directControl) {
 		return;
 	}
 #endif
 
-	if(button==SDL_BUTTON_LEFT && !buttons[button].chorded && mouseHandlerMayDoSelection){
-		if(!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL])
+	if (button==SDL_BUTTON_LEFT && !buttons[button].chorded && mouseHandlerMayDoSelection) {
+		if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
 			selectedUnits.ClearSelected();
+		}
 
-		if(buttons[SDL_BUTTON_LEFT].movement>4){		//select box
+		if (buttons[SDL_BUTTON_LEFT].movement > 4) {
+			// select box
 			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
 			if(dist<0)
 				dist=gu->viewRange*1.4f;

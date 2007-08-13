@@ -1783,13 +1783,13 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 		}
 	}
 
-	if(key==SDLK_ESCAPE && activeMousePress){
-		activeMousePress=false;
-		inCommand=-1;
+	if (key == SDLK_ESCAPE && activeMousePress) {
+		activeMousePress = false;
+		inCommand = -1;
 		SetShowingMetal(false);
 		return true;
 	}
-	if(key==SDLK_ESCAPE && inCommand>0){
+	if (key == SDLK_ESCAPE && inCommand > 0) {
 		inCommand=-1;
 		SetShowingMetal(false);
 		return true;
@@ -2053,20 +2053,24 @@ void CGuiHandler::MenuSelection(std::string s)
 
 void CGuiHandler::MenuChoice(string s)
 {
+	if (mouse->activeReceiver == list)
+		mouse->activeReceiver = 0;
+
 	delete list;
-	if (inCommand>=0 && inCommand<commands.size()) {
-		CommandDescription& cd=commands[inCommand];
+
+	if (inCommand >= 0 && inCommand < commands.size()) {
+		CommandDescription& cd = commands[inCommand];
 		switch (cd.type) {
 			case CMDTYPE_COMBO_BOX: {
-				inCommand=-1;
+				inCommand = -1;
 				vector<string>::iterator pi;
-				int a=0;
-				for (pi=++cd.params.begin();pi!=cd.params.end();++pi) {
-					if (*pi==s) {
+				int a = 0;
+				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
+					if (*pi == s) {
 						Command c;
-						c.id=cd.id;
+						c.id = cd.id;
 						c.params.push_back(a);
-						CreateOptions(c,0);
+						CreateOptions(c, 0);
 						GiveCommand(c);
 						break;
 					}

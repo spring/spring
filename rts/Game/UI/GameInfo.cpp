@@ -143,7 +143,8 @@ void CGameInfo::MouseRelease(int x, int y, int button)
 
 bool CGameInfo::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (key == 27) { // escape
+	if (key == 27) {
+		// escape
 		delete this;
 		return true;
 	}
