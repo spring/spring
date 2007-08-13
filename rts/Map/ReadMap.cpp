@@ -51,7 +51,7 @@ void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 std::string CReadMap::GetTDFName(const std::string& mapname)
 {
 	string extension = mapname.substr(mapname.length()-3);
-	if (extension == "smf") 
+	if (extension == "smf")
 		return string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
 	else if(extension == "sm3")
 		return string("maps/")+mapname;
@@ -69,10 +69,10 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
 	} else
 		rm = SAFE_NEW CSmfReadMap(mapname);
-	
+
 	if (!rm)
 		return 0;
-		
+
 	rm->mapName = mapname;
 
 	/* Read metal map */
@@ -86,7 +86,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		rm->metalMap = SAFE_NEW CMetalMap(map, mbi.width, mbi.height, rm->maxMetal);
 	}
 	if (metalmap) rm->FreeInfoMap ("metal", metalmap);
-	
+
 	if (!rm->metalMap) {
 		unsigned char *zd = SAFE_NEW unsigned char[rm->width*rm->height/4];
 		memset(zd,0,rm->width*rm->height/4);
@@ -290,13 +290,13 @@ void CReadMap::CalcHeightfieldData()
 		for(int x=2;x<gs->mapx-2;x+=2){
 			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+(x-1)]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
 			float3 e2( 0,heightmap[(y-1)*(gs->mapx+1)+(x-1)]-heightmap[(y+3)*(gs->mapx+1)+(x-1)],-SQUARE_SIZE*4);
-			
+
 			float3 n=e2.cross(e1);
 			n.Normalize();
 
 			e1=float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
 			e2=float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
-			
+
 			float3 n2=e2.cross(e1);
 			n2.Normalize();
 
@@ -309,7 +309,7 @@ void CReadMap::CalcHeightfieldData()
 extern GLfloat FogLand[];
 
 void CReadMap::ParseSettings(TdfParser& resources)
-{	
+{
 	mapHumanName = mapDefParser.SGetValueDef(mapName, "MAP\\Description");
 
 	gs->sunVector=mapDefParser.GetFloat3(float3(0,1,2),"MAP\\LIGHT\\SunDir");
@@ -355,8 +355,8 @@ void CReadMap::ParseSettings(TdfParser& resources)
 
 	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");
 	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
-	
-	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");	
+
+	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");
 }
 
 void CReadMap::AddGroundBlockingObject(CSolidObject *object)
@@ -412,7 +412,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yard
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 }
 
-void CReadMap::RemoveGroundBlockingObject(CSolidObject *object) 
+void CReadMap::RemoveGroundBlockingObject(CSolidObject *object)
 {
 	object->isMarkedOnBlockingMap=false;
 	int bx=object->mapPos.x;
@@ -506,7 +506,7 @@ void CReadMap::LoadSaveMap(CLoadSaveInterface* file,bool loading)
 {
 	float* heightmap=readmap->GetHeightmap();
 	//load/save heightmap
-	for(int y=0;y<gs->mapy+1;++y){		
+	for(int y=0;y<gs->mapy+1;++y){
 		for(int x=0;x<gs->mapx+1;++x){
 			file->lsFloat(heightmap[y*(gs->mapx+1)+x]);
 		}
