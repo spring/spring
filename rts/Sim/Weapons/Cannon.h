@@ -12,6 +12,8 @@ class CCannon : public CWeapon
 	CR_DECLARE(CCannon);
 protected:
 	float rangeFactor;	/// this is used to keep range true to range tag
+	float3 lastDiff; 	/// cached input for GetWantedDir
+	float3 lastDir;		/// cached result for GetWantedDir
 
 public:
 	CCannon(CUnit* owner);
