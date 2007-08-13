@@ -14,6 +14,7 @@
 // newAttackMode     1  // enable attack by area selection
 // attackRect        1  // use a rectangular selection
 // invColorSelect    1  // use color inversion instead of tinting
+// frontByEnds       0  // use endpoints to create movement fronts
 
 
 ////////////////////////////////////////////////////////////////////////////////
