@@ -502,6 +502,26 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	}
 
 	glEnd();
+
+	if (h < 0.0f) {
+		const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
+		const float e[4] = { 0.0f, 0.5f, 1.0f, 1.0f }; // end color
+
+		glBegin(GL_LINES);
+		glColor4fv(s); glVertex3f(x1, h, z1); glColor4fv(e); glVertex3f(x1, 0.0f, z1);
+		glColor4fv(s); glVertex3f(x2, h, z1); glColor4fv(e); glVertex3f(x2, 0.0f, z1);
+		glColor4fv(s); glVertex3f(x1, h, z2); glColor4fv(e); glVertex3f(x1, 0.0f, z2);
+		glColor4fv(s); glVertex3f(x2, h, z2); glColor4fv(e); glVertex3f(x2, 0.0f, z2);
+		glEnd();
+		// using the last end color
+		glBegin(GL_LINE_LOOP);
+		glVertex3f(x1, 0.0f, z1);
+		glVertex3f(x1, 0.0f, z2);
+		glVertex3f(x2, 0.0f, z2);
+		glVertex3f(x2, 0.0f, z1);
+		glEnd();
+	}
+
 	glEnable(GL_DEPTH_TEST );
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//glDisable(GL_BLEND);
