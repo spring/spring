@@ -41,6 +41,7 @@ DamageArray::DamageArray(const DamageArray& other)
 	craterBoost = other.craterBoost;
 	impulseFactor = other.impulseFactor;
 	craterMult = other.craterMult;
+	numTypes = other.numTypes;
 	damages = SAFE_NEW float[numTypes];
 	for(int a = 0; a < numTypes; ++a)
 		damages[a] = other.damages[a];
