@@ -1,6 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
-#include "AICallback.h"
+//#include "AICallback.h"
 
 class Log{
 public:

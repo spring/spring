@@ -595,6 +595,23 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
             e += 10000/uda->metalCost;
             SetEfficiency(uda->name, e);
         }
+        const UnitDef* udb = GetUnitDef(damaged);
+
+        if(udb != 0){
+            float e = GetEfficiency(udb->name, udb->power);
+            e -= 10000/uda->metalCost;
+            SetEfficiency(udb->name, e);
+            if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
+                // if ti isnt currently building something then retreat
+                const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
+                if(uc != 0){
+                    //
+                    if(uc->front().id >= 0){
+                        G->Actions->Retreat(damaged);
+                    }
+                }
+            }
+        }
     }
     END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
 

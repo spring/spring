@@ -271,6 +271,7 @@ typedef TdfParser CSunParser;
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
 #include "../Engine/TCommand.h" // Unit cached command data structure
 #include "../Helpers/CWorkerthread.h"
+//#include "../Helpers/CThreadManager.h"
 
 #include "../Core/CCached.h"// Cached data storage class
 #include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message

@@ -32,13 +32,13 @@ void Chaser::InitAI(Global* GLI){
             }
         }
     }
-    
+
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE);
     Grid.Initialize(mapdim, float3(1024, 0, 1024), true);
     Grid.ApplyModifierOnUpdate(0.9f, (1 SECONDS));
     Grid.SetDefaultGridValue(5.0f);
     Grid.SetMinimumValue(10.0f);
-    
+
     fire_at_will = bds::set_cont(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"));
     return_fire = bds::set_cont(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"));
     hold_fire = bds::set_cont(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"));
@@ -100,7 +100,7 @@ void Chaser::UnitDestroyed(int unit, int attacker){
 
 void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     NLOG("Chaser::UnitDamaged");
-    
+
     NO_GAIA(NA)
     START_EXCEPTION_HANDLING
     float3 dpos = G->GetUnitPos(damaged);
@@ -117,7 +117,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     }
     if(attacker<0) return;
     int ateam = G->chcb->GetUnitAllyTeam(attacker);
-    if(allyteamGrudges.empty()==false){
+    /*if(allyteamGrudges.empty()==false){
         if(allyteamGrudges.find(ateam) == allyteamGrudges.end()){
             allyteamGrudges[ateam] = damage;
         }else{
@@ -125,7 +125,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
         }
     }else{
         allyteamGrudges[ateam] = damage;
-    }
+    }*/
     if(dgunners.find(damaged) != dgunners.end()){
         //
         if(dgunning.find(damaged) == dgunning.end()){
@@ -251,7 +251,7 @@ void Chaser::UnitFinished(int unit){
             }
         }
     }
-    
+
     if(G->UnitDefHelper->IsAttacker(ud)){
         unit_to_initialize.insert(unit);
     }
@@ -294,7 +294,7 @@ void Chaser::EnemyDestroyed(int enemy, int attacker){
 bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
     //NLOG("Chaser::FindTarget");
     float3 final_dest = UpVector;
-    
+
     int Index = Grid.GetHighestIndex();
     if(Grid.ValidIndex(Index)==false){
         return false;
@@ -318,14 +318,14 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
                     //AIHCAddMapPoint ac2;
                     //ac2.label=new char[12];
                     //ac2.label="bad atk pos";
-                    
+
                     if(!G->Actions->MoveToStrike(*aik, npos, true)){//ToStrike
                         //	ac2.pos = npos;
                         //}else{
                         //	ac2.pos = upos;
                         //	G->cb->HandleCommand(AIHCAddMapPointId,&ac2);
                     }
-                    
+
                     //}
                 }
             }
@@ -339,7 +339,7 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
     }else{
         return false;
     }
-    
+
     return true;
 }
 
@@ -349,7 +349,7 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
 void Chaser::UnitMoveFailed(int unit){
     NLOG("Chaser::UnitMoveFailed");
     NO_GAIA(NA)
-    
+
     this->UnitIdle(unit);
 }
 
@@ -389,20 +389,20 @@ void Chaser::UnitIdle(int unit){
                 temp_attack_units.erase(temp_attack_units.begin(), temp_attack_units.end());
                 temp_attack_units.clear();
             }
-            
+
             this->attack_groups.push_back(temp);
         } else {
             DoUnitStuff(unit);
         }
         return;
     }
-    
+
     if(dgunning.empty() == false){
         dgunning.erase(unit);
     }
     engaged.erase(unit);
     walking.erase(unit);
-    
+
     if(this->Attackers.find(unit) != Attackers.end()){
         G->Actions->Retreat(unit);
         //DoUnitStuff(unit);
@@ -613,7 +613,7 @@ void Chaser::UpdateMatrixEnemies(){
     // get all enemies in los
     int* en = new int[5000];
     int unum = G->chcb->GetEnemyUnits(en);//GetEnemyUnits(en);
-    
+
     //map<int,float> balances2;
     // go through the list
     if(unum > 0){
@@ -621,31 +621,31 @@ void Chaser::UpdateMatrixEnemies(){
             if(ValidUnitID(en[i])){
                 //if(G->cb->GetUnitAllyTeam(en[i]) == G->Cached->unitallyteam) continue;
                 pos = G->GetUnitPos(en[i]);
-                
+
                 if(Grid.ValidMapPos(pos) == false) continue;
                 //Grid.AddValueatMapPos(pos,30000);
                 const UnitDef* def = G->GetUnitDef(en[i]);
                 if(def){
                     //G->cb->DrawUnit(def->name.c_str(),pos,0,40,2,true,true,0);
                     if(def->extractsMetal > 0.0f) G->M->EnemyExtractor(pos, en[i]);
-                    
+
                     float e = G->GetEfficiency(def->name);//def->power;
                     //float3 nbpos =
-                    
+
                     // Apply grudge modifiers
                     //e = ApplyGrudge(en[i],e);
-                    
+
                     // manipulate the value to make threats bigger as they get closer to the AI base.
                     e /= (pos.distance2D(G->Map->nbasepos(pos))/2);
                     //e /= 10;
                     //int team = G->chcb->GetUnitTeam(en[i]);
                     //if(balances.empty()==false) e*= balances[team]/max(average,1.0f);
-                    
+
                     //e *=5;
                     //e *= 10;
                     // Help maintain consistency by inflating the value of this location
                     Grid.AddValueatMapPos(pos, e);
-                    
+
                     //balances2[team] += e;
                 }
                 //G->Actions->AddPoint(pos);
@@ -688,30 +688,30 @@ void Chaser::Update(){
         }
     }
     END_EXCEPTION_HANDLING("Chaser::Update :: firing silos")
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_((3 SECONDS))){
         CheckKamikaze();
     }
     END_EXCEPTION_HANDLING("Chaser::CheckKamikaze()")
-    
+
     START_EXCEPTION_HANDLING
     if((EVERY_((11 FRAMES)))&&(G->Actions->points.empty() == false)){
         UpdateSites();
     }
     END_EXCEPTION_HANDLING("Chaser::UpdateSites()")
-    
+
     START_EXCEPTION_HANDLING
     Grid.Update(G->GetCurrentFrame());
     END_EXCEPTION_HANDLING("CGridManager::Update() in Chaser class")
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_((8 FRAMES))){
         UpdateMatrixEnemies();
     }
     END_EXCEPTION_HANDLING("Chaser::UpdateMatrixEnemies()")
-    
-    
+
+
     // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
     // re-evaluate the target of an attack force
     //if(EVERY_(919 FRAMES)){
@@ -722,7 +722,7 @@ void Chaser::Update(){
         FireWeaponsNearby();
     }
     END_EXCEPTION_HANDLING("Chaser::FireWeaponsNearby()")
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_((2 MINUTES))){
         for(vector< set<int> >::iterator k = this->attack_groups.begin(); k != attack_groups.end(); ++k){
@@ -732,19 +732,19 @@ void Chaser::Update(){
         }
     }
     END_EXCEPTION_HANDLING("Chaser::Update :: re-assigning targets")
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_(120 FRAMES)&&(G->Cached->enemies.empty() == false)){
         FireDefences();
     }
     END_EXCEPTION_HANDLING("Chaser::FireDefences()")
-    
+
     START_EXCEPTION_HANDLING
     if(EVERY_(33 FRAMES)){
         FireDgunsNearby();
     }
     END_EXCEPTION_HANDLING("Chaser::FireDgunsNearby()")
-    
+
     NLOG("Chaser::Update :: DONE");
 }
 
