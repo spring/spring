@@ -22,6 +22,8 @@ public:
 	CGridManager lowheightmap;
 	CGridManager highheightmap;
 	map<int,float3> tempgeo;
+	ThreadPool* pool;
+	//CWorkerThread* c;
 //	CGridManager mexmap;
 //	CGridManager geomap;
 protected:

@@ -382,7 +382,7 @@ bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
 		}
 		return valid;
 	}else if(type  == B_RECLAIM){
-		if(!G->Actions->ReclaimNearby(unit,1000)){
+		if(!G->Actions->ReclaimNearby(unit,400)){
 			End();
 			return false;
 		}else{

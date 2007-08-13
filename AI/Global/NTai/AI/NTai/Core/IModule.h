@@ -25,6 +25,8 @@ public:
 	void RemoveListener(boost::shared_ptr<IModule> module);
 	void FireEventListener(CMessage &message);
 	void DestroyModule();
+
+	void operator()(){}
 	Global* G;
 protected:
 	bool valid;

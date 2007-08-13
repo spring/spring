@@ -1,8 +1,19 @@
 #include "../../Core/helper.h"
-
+ThreadPool* pool;
+extern ThreadPool* pool;
 CBuildingPlacer::CBuildingPlacer(Global* GL){
     G=GL;
     valid=true;
+//    workerthread = ;// t();
+    // = new CWorkerThread()
+    //workerthread(c);// =
+
+    //CWorkerThread c2;
+//    boost::thread thread(*c);
+    //boost::thread thread2(c2);
+//    boost::thread thrd1(workerthread);//workerthread.operator());
+    //workerthread = &t;
+    pool= new ThreadPool(10,500);
 }
 
 CBuildingPlacer::~CBuildingPlacer(){
@@ -65,34 +76,34 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     this->me = me;
     const float* slope = G->cb->GetSlopeMap();
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE*2, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE*2);
-    
+
     int smaxW = G->cb->GetMapWidth()/16;
     int smaxH = G->cb->GetMapHeight()/16;
-    
+
     /*slopemap.Initialize(mapdim,float3(32,0,32),true);
      slopemap.SetDefaultGridValue(0);
      slopemap.SetMinimumValue(0);
      slopemap.UseArray(slope,smaxW*smaxH,smaxH,smaxW);*/
-    
+
     /*	geomap.Initialize(mapdim,float3(124,0,124),true);
      geomap.SetDefaultGridValue(0);
      geomap.SetMinimumValue(0);*/
-    
+
     const float* heightmaparray = G->cb->GetHeightMap();
     lowheightmap.Initialize(mapdim, float3(32, 0, 32), true);
     lowheightmap.SetDefaultGridValue(0);
     lowheightmap.SetMinimumValue(0);
     lowheightmap.UseArrayLowValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);
-    
+
     highheightmap.Initialize(mapdim, float3(32, 0, 32), true);
     highheightmap.SetDefaultGridValue(0);
     highheightmap.SetMinimumValue(0);
     highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);
-    
+
     blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
     blockingmap.SetDefaultGridValue(0);
     blockingmap.SetMinimumValue(1);
-    
+
     G->RegisterMessageHandler("unitcreated", me);
     G->RegisterMessageHandler("unitdestroyed", me);
     G->RegisterMessageHandler("unitidle", me);
@@ -109,7 +120,7 @@ float3 CBuildingPlacer::GetBuildPos(float3 builderpos, const UnitDef* builder, c
     return findfreespace(building, builderpos, freespace, 1000);
 }
 
-class CBuildAlgorithm{
+class CBuildAlgorithm : public IModule{
     public:
         CBuildAlgorithm(boost::shared_ptr<IModule> buildalgorithm, boost::shared_ptr<IModule> reciever, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
             buildalgorithm(buildalgorithm),
@@ -123,7 +134,9 @@ class CBuildAlgorithm{
             mapdim(mapdim),
             valid(true),
             G(G){ }
-            
+
+            void RecieveMessage(CMessage &message){}
+            bool Init(boost::shared_ptr<IModule> me){}
             void operator()(){
                 //boost::mutex::scoped_lock lock(io_mutex[building->id]);
                 if(!reciever->IsValid()) return;
@@ -132,7 +145,7 @@ class CBuildAlgorithm{
                 //float3 nbpos = ZeroVector;
                 //nbpos.x = (building->xsize*4);
                 //nbpos.z = (building->ysize*4);
-                
+
                 //float builder_radius = (builder->xsize+builder->ysize)*4;//G->Manufacturer->GetSpacing(builder);
                 /*bool goodbpos = true;
                  if(G->UnitDefHelper->IsMobile(builder)&&(G->UnitDefHelper->IsHub(builder)==false)){
@@ -155,9 +168,9 @@ class CBuildAlgorithm{
                  }else{
                  goodbpos = false;
                  }
-                
-                
-                
+
+
+
                  if(goodbpos){//+nbpos
                  bestPosition = builderpos;//+nbpos;
                  }else{*/
@@ -192,7 +205,7 @@ class CBuildAlgorithm{
                         //if((distance < bestDistance)&&(distance > builder_radius)){
                         if(distance < bestDistance){
                             bool good = true;
-                            
+
                             // check our blocking map
                             vector<float3> cells2 = blockingmap->GetCellsInRadius(mpos, freespace);
                             if(!cells2.empty()){
@@ -205,16 +218,16 @@ class CBuildAlgorithm{
                             }else{
                                 good = false;//continue;
                             }
-                            
+
                             // if good == false then the previous check gave a negative result so exit
                             if(!good) continue;
-                            
+
                             // Check if the engine says we can build here
                             // This incorporates checking the terrain
                             if(G->cb->CanBuildAt(building, mpos)==false){
                                 continue;
                             }
-                            
+
                             // update best position/distance
                             bestPosition = gpos;
                             bestDistance = distance;
@@ -274,7 +287,7 @@ class CBuildAlgorithm{
              float3 mpos = blockingmap->GridtoMap(gpos);
              return ValidMapPos(mpos);
              }
-            
+
              bool ValidMapPos(float3 mpos){
              float distance = mpos.distance2D(builderpos);
              if(distance < bestDistance){
@@ -288,17 +301,17 @@ class CBuildAlgorithm{
              }else{
              return false;//continue;
              }
-            
+
              if(buildalgorithm->G->cb->CanBuildAt(building,mpos)==false){
              return false;
              }
-            
+
              bestDistance = distance;
              return true;
              }
              return false;
              }*/
-            
+
             bool valid;
             CGridManager* blockingmap;
             boost::shared_ptr<IModule> buildalgorithm;
@@ -327,7 +340,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         reciever->RecieveMessage(m);
         return;
     }
-    
+
     float3 q = UpVector;
     if(G->UnitDefHelper->IsMex(building)){
         q = G->M->getNearestPatch(builderpos, 0.7f, building->extractsMetal, building);
@@ -432,7 +445,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
             reciever->RecieveMessage(m);
             return;
         }
-        
+
     }else if(building->needGeo){
         NLOG("CBuildingPlacer::GetBuildPosMessage geomark 1#");
         int* f = new int[20000];
@@ -490,8 +503,8 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         delete[] f;
         return;
     }
-    
-    
+
+
     if(!G->UnitDefHelper->IsHub(builder)){
         if(!G->UnitDefHelper->IsMobile(builder)){//G->UnitDefHelper->IsFactory(builder)){
             CMessage m("buildposition");
@@ -500,7 +513,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
             return;
         }
     }
-    
+
     /*float3 bestPosition = builderpos;
      float bestDistance = 500000.0f;
      //float3 nbpos = ZeroVector;
@@ -521,7 +534,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      }
      }
      }
-    
+
      if(G->cb->CanBuildAt(building,builderpos)==false){
      goodbpos = false;
      }
@@ -538,7 +551,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      float distance = mpos.distance2D(builderpos);
      if(distance < bestDistance){
      bool good = true;
-    
+
      map<int,boost::shared_ptr<CGridCell> > n = blockingmap.GetGrid();
      if(!n.empty()){
      for(map<int,boost::shared_ptr<CGridCell> >::iterator i = n.begin(); i != n.end(); ++i){
@@ -553,7 +566,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      }
      }
      }
-    
+
      if(!good) continue;
      if(G->cb->CanBuildAt(building,mpos)==false){
      continue;
@@ -563,7 +576,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      }else{
      continue;
      }
-    
+
      }
      }else{
      bestPosition= UpVector;
@@ -577,11 +590,14 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      if(reciever->IsValid()){
      reciever->RecieveMessage(m);
      }*/
-    CBuildAlgorithm b(me, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
+    //boost::shared_ptr<IModule>
+    CBuildAlgorithm cb/* = new CBuildAlgorithm*/(me, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
+    //boost::shared_ptr<IModule> b = boost::shared_ptr<IModule>(cb);
     //
-    b();
-    
-    //boost::thread thrd1(CBuildAlgorithm(me, reciever, builderpos,builder, building, freespace,&blockingmap,G->cb->GetHeightMap(),float3(G->cb->GetMapWidth(),0,G->cb->GetMapHeight()),G));
+    //b();
+    pool->invoke(cb);
+    //CThreadManager::AddTask(b);
+//    boost::thread thrd1(b);
 }
 
 float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, float buildingradius, float searchradius){
@@ -597,7 +613,7 @@ float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, fl
             float distance = mpos.distance2D(MapPos);
             if(distance < bestDistance){
                 vector<float3> cells2 = this->blockingmap.GetCellsInRadius(mpos, buildingradius);
-                
+
                 if(!cells2.empty()){
                     bool cnt = false;
                     for(vector<float3>::iterator i2 = cells2.begin(); i2 != cells2.end(); ++i2){//for each cell
@@ -634,7 +650,7 @@ float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, fl
                     //
                     continue;
                 }
-                
+
                 if(!blockingmap.ValidGridPos(gpos)){
                     continue;
                 }else{
@@ -646,7 +662,7 @@ float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, fl
     }else{
         return UpVector;
     }
-    
+
     float3 fipos = blockingmap.GridtoMap(bestPosition);
     /*if(!G->UnitDefHelper->IsMobile(building)){
      AIHCAddMapPoint ac;
