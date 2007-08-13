@@ -76,7 +76,7 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(lastRudderPos),
 		CR_MEMBER(lastElevatorPos),
 		CR_MEMBER(lastAileronPos),
-	
+
 		CR_MEMBER(inefficientAttackTime),
 		CR_MEMBER(exitVector),
 
@@ -211,8 +211,8 @@ void CAirMoveType::Update(void)
 #endif
 
 	if (reservedPad) {
-		CUnit* unit=reservedPad->unit;
-		float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
+		CUnit* unit = reservedPad->GetUnit();
+		float3 relPos = unit->localmodel->GetPiecePos(reservedPad->GetPiece());
 		float3 pos = unit->pos + (unit->frontdir * relPos.z) + (unit->updir * relPos.y) + (unit->rightdir * relPos.x);
 
 		if (padStatus == 0) {
@@ -436,7 +436,7 @@ void CAirMoveType::UpdateManeuver(void)
 #endif
 	float speedf=owner->speed.Length();
 	switch(maneuver){
-	case 1:{	//immelman 
+	case 1:{	//immelman
 		int aileron=0,elevator=0;
 		if(owner->updir.y>0){
 			if(owner->rightdir.y>maxAileron*speedf){
@@ -521,7 +521,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 
 	float goalLength=(goalPos-pos).Length();
 	float3 goalDir=(goalPos-pos)/goalLength;
-	
+
 	float aileron=0;
 	float rudder=0;
 	float elevator=0;
@@ -559,7 +559,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 		} else {
 			if(rightdir.y<-maxAileron*speedf || frontdir.y<-0.7f)
 				aileron=-1;
-			else 
+			else
 				aileron=rightdir.y/(maxAileron*speedf);
 		}
 	}
@@ -811,7 +811,7 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 		h = pos.y - ground->GetApproximateHeight(pos.x, pos.z);
 	else
 		h = pos.y - ground->GetHeight(pos.x,pos.z);
-	
+
 	if (h > wantedHeight)
 		SetState(AIRCRAFT_FLYING);
 
@@ -885,7 +885,7 @@ void CAirMoveType::UpdateLanding(void)
 	float3 dif = reservedLandingPos - pos;
 	float dist = dif.Length();
 	dif /= dist;
-	
+
 	float wsf = min(owner->unitDef->speed, dist / speedf * 1.8f * maxAcc);
 	float3 wantedSpeed = dif * wsf;
 
@@ -1041,7 +1041,7 @@ void CAirMoveType::SetState(CAirMoveType::AircraftState state)
 		owner->cob->Call(COBFN_Deactivate);
 		else if (state == aircraft_flying)
 		//cob->Call(COBFN_Activate); */
-	
+
 	if (state == AIRCRAFT_FLYING) {
 		owner->Activate();
 		owner->cob->Call(COBFN_StartMoving);

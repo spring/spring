@@ -792,8 +792,8 @@ void CTAAirMoveType::Update()
 		{
 
 			if(reservedPad){
-				CUnit* unit=reservedPad->unit;
-				float3 relPos=unit->localmodel->GetPiecePos(reservedPad->piece);
+				CUnit* unit = reservedPad->GetUnit();
+				float3 relPos = unit->localmodel->GetPiecePos(reservedPad->GetPiece());
 				float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
 				if(padStatus==0){
 					if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)

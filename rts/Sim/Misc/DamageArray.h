@@ -4,36 +4,43 @@
 struct DamageArray
 {
 	CR_DECLARE_STRUCT(DamageArray);
-	static int numTypes;
-	float* damages;
-	int paralyzeDamageTime;
-	float impulseFactor, impulseBoost, craterMult, craterBoost;
+
+public:
 
 	DamageArray();
 	DamageArray(const DamageArray& other);
 	~DamageArray();
 
-	inline void operator=(const DamageArray& other){
-		paralyzeDamageTime=other.paralyzeDamageTime;
-		impulseFactor=other.impulseFactor;
-		impulseBoost=other.impulseBoost;
-		craterMult=other.craterMult;
-		craterBoost=other.craterBoost;
-		for(int a=0;a<numTypes;++a)
-			damages[a]=other.damages[a];
-	};
-	inline float& operator[](int i){return damages[i];};
-	inline float operator[](int i) const {return damages[i];};
+	void operator=(const DamageArray& other) {
+		paralyzeDamageTime = other.paralyzeDamageTime;
+		impulseFactor = other.impulseFactor;
+		impulseBoost = other.impulseBoost;
+		craterMult = other.craterMult;
+		craterBoost = other.craterBoost;
+		numTypes = other.numTypes;
+		for(int a = 0; a < numTypes; ++a)
+			damages[a] = other.damages[a];
+	}
+	float& operator[](int i) { return damages[i]; }
+	float operator[](int i) const { return damages[i]; }
 
-	inline DamageArray operator*(float mul) const{
+	DamageArray operator*(float mul) const {
 		DamageArray da(*this);
-		for(int a=0;a<numTypes;++a)
-			da.damages[a]*=mul;
+		for(int a = 0; a < numTypes; ++a)
+			da.damages[a] *= mul;
 		return da;
 	}
 
+	float GetDefaultDamage() const { return damages[0]; }
+
+	int paralyzeDamageTime;
+	float impulseFactor, impulseBoost, craterMult, craterBoost;
+
 private:
 	void creg_Serialize(creg::ISerializer& s);
+
+	int numTypes;
+	float* damages;
 };
 
 #endif // __DAMAGE_ARRAY_H__

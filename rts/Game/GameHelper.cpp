@@ -69,7 +69,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
                             const float3& impactDir, int weaponId)
 {
 	if (luaUI) {
-		luaUI->ShockFront(damages.damages[0], pos, radius);
+		luaUI->ShockFront(damages.GetDefaultDamage(), pos, radius);
 	}
 	bool noGfx = luaCallIns.Explosion(weaponId, pos, owner);
 

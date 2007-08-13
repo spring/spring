@@ -31,7 +31,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const bool limitDGun      = gameSetup ? gameSetup->limitDgun      : false;
 	const bool diminishingMMs = gameSetup ? gameSetup->diminishingMMs : false;
 	const int  startPosType   = gameSetup ? gameSetup->startPosType   : 0;
-	
+
 	LuaPushNamedString(L, "version",       VERSION_STRING);
 
 	LuaPushNamedNumber(L, "maxUnits",      MAX_UNITS);
@@ -88,14 +88,14 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	lua_pushstring(L, "armorTypes");
 	lua_newtable(L);
-	const std::vector<std::string>& typeList = damageArrayHandler->typeList;
+	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
 	const int typeCount = (int)typeList.size();
 	for (int i = 0; i < typeCount; i++) {
 		LuaPushNamedNumber(L, typeList[i].c_str(), i);
 	}
 	lua_rawset(L, -3);
 
-	return true;	
+	return true;
 }
 
 
