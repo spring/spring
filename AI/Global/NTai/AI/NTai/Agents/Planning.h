@@ -15,7 +15,7 @@ public:
 	void Update();
 
 	bool equalsIgnoreCase(string a ,string b);
-	
+
 	// Predictive Targetting
 	float3 GetDirVector(int enemy,float3 unit, const WeaponDef* def);
 	float GetEnergyIncome();
@@ -50,10 +50,11 @@ public:
 	float BuildMetalPerSecond(const UnitDef* builder,const UnitDef* built);		// Returns the metal per second needed to build this unit with this builder
 	float BuildEnergyPerSecond(const UnitDef* builder,const UnitDef* built);	// Returns the energy per second needed to build this unit with this builder
 	float BuildTime(const UnitDef* builder,const UnitDef* built);				// Returns the time taken for the builder to build the unit unassisted and with available resources
-	bool FeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinMpc = FEASIBLEMSTORRATIO, float MinEpc = FEASIBLEESTORRATIO); // Returns whether building this unit will put resource reserves below the specified amounts with the current income and expenditure 
-	bool MFeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinMpc = FEASIBLEMSTORRATIO);		// Returns whether building this unit will put metal reserves below the specified amount with the current income and expenditure 
-	bool EFeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinEpc = FEASIBLEESTORRATIO);		// Returns whether building this unit will put energy reserves below the specified amount with the current income and expenditure 
+	bool FeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinMpc = FEASIBLEMSTORRATIO, float MinEpc = FEASIBLEESTORRATIO); // Returns whether building this unit will put resource reserves below the specified amounts with the current income and expenditure
+	bool MFeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinMpc = FEASIBLEMSTORRATIO);		// Returns whether building this unit will put metal reserves below the specified amount with the current income and expenditure
+	bool EFeasibleConstruction(const UnitDef* builder,const UnitDef* built,float MinEpc = FEASIBLEESTORRATIO);		// Returns whether building this unit will put energy reserves below the specified amount with the current income and expenditure
 	float ReclaimTime(const UnitDef* builder,const UnitDef* built,float health);
+	float CaptureTime(const UnitDef* builder,const UnitDef* built,float health);
 
 private:
 	Global* G;

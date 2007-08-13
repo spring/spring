@@ -89,7 +89,7 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
      geomap.SetDefaultGridValue(0);
      geomap.SetMinimumValue(0);*/
 
-    const float* heightmaparray = G->cb->GetHeightMap();
+    /*const float* heightmaparray = G->cb->GetHeightMap();
     lowheightmap.Initialize(mapdim, float3(32, 0, 32), true);
     lowheightmap.SetDefaultGridValue(0);
     lowheightmap.SetMinimumValue(0);
@@ -98,9 +98,9 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     highheightmap.Initialize(mapdim, float3(32, 0, 32), true);
     highheightmap.SetDefaultGridValue(0);
     highheightmap.SetMinimumValue(0);
-    highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);
+    highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);*/
 
-    blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
+    blockingmap.Initialize(mapdim, float3(16, 0, 16), true);
     blockingmap.SetDefaultGridValue(0);
     blockingmap.SetMinimumValue(1);
 
@@ -111,14 +111,14 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     return true;
 }
 
-float3 CBuildingPlacer::GetBuildPos(float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
+/*float3 CBuildingPlacer::GetBuildPos(float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
     if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
         if(G->UnitDefHelper->IsMobile(building)){
             return builderpos;
         }
     }
     return findfreespace(building, builderpos, freespace, 1000);
-}
+}*/
 
 class CBuildAlgorithm : public IModule{
     public:
@@ -600,7 +600,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
 //    boost::thread thrd1(b);
 }
 
-float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, float buildingradius, float searchradius){
+/*float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, float buildingradius, float searchradius){
     NLOG("CBuildingPlacer::findfreespace");
     float bestDistance = searchradius+1;
     float3 bestPosition = UpVector;
@@ -637,7 +637,7 @@ float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, fl
                  }
                  }else{
                  continue;
-                 }*/
+                 }*//*
                 float fh = highheightmap.GetValuebyMap(mpos);
                 float fl = lowheightmap.GetValuebyMap(mpos);
                 if(min(fl, fh) <0){
@@ -671,9 +671,9 @@ float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, fl
      memcpy(ac.label,building->name.c_str(),l);
      ac.pos = fipos;
      G->cb->HandleCommand(AIHCAddMapPointId,&ac);
-     }*/
+     }*//*
     return fipos;
-}
+}*/
 
 void CBuildingPlacer::Block(float3 pos, const UnitDef* ud){
     int r = G->Manufacturer->GetSpacing(ud);
