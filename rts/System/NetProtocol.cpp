@@ -37,6 +37,7 @@ int CNetProtocol::InitServer(const unsigned portnum)
 	int ret = CNet::InitServer(portnum);
 	logOutput.Print("Created server on port %i", portnum);
 
+	imServer = true;
 	//TODO demo recording support for server
 	return ret;
 }
@@ -45,6 +46,7 @@ int CNetProtocol::InitServer(const unsigned portnum, const std::string& demoName
 {
 	int ret = InitServer(portnum);
 	play = new CDemoReader(demoName);
+	imServer = true;
 	return ret;
 }
 
@@ -53,6 +55,7 @@ int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourc
 	int error = CNet::InitClient(server, portnum, sourceport,gameSetup ? gameSetup->myPlayer : 0);
 	SendAttemptConnect(gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 	FlushNet();
+	imServer = false;
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
@@ -66,6 +69,7 @@ int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourc
 
 int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
+	imServer = false;
 	if (!IsDemoServer())
 	{
 		record = new CDemoRecorder();
@@ -113,13 +117,12 @@ void CNetProtocol::Update()
 	CNet::Update();
 
 	// handle new connections
-	while (GetIncomingConnection())
+	while (HasIncomingConnection())
 	{
-		netcode::CConnection* newguy = GetIncomingConnection();
 		const unsigned inbuflength = 4096;
 		unsigned char inbuf[inbuflength];
 		
-		int ret = newguy->GetData(inbuf, inbuflength);
+		int ret = CNet::GetData(inbuf, inbuflength);
 		
 		uchar netmsg = inbuf[0];
 		uchar netversion = inbuf[2];
@@ -207,6 +210,12 @@ int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsig
 int CNetProtocol::SendQuit()
 {
 	return SendData(NETMSG_QUIT);
+}
+
+int CNetProtocol::SendQuit(unsigned playerNum)
+{
+	unsigned char a = NETMSG_QUIT;
+	return SendData(&a, 1, playerNum);
 }
 
 //  NETMSG_NEWFRAME         = 3,  // int frameNum;

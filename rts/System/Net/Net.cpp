@@ -7,6 +7,7 @@
 
 #include "Net.h"
 #include "LogOutput.h"
+#include "Connection.h"
 #include "UDPConnection.h"
 #include "UDPListener.h"
 #include "LocalConnection.h"
@@ -24,8 +25,6 @@ CNet::CNet()
 	}
 	
 	local = 0;
-
-	imServer=false;
 
 	udplistener=0;
 }
@@ -97,8 +96,6 @@ int CNet::GetData(unsigned char *buf, const unsigned length, const unsigned conN
 
 int CNet::InitServer(unsigned portnum)
 {
-	imServer=true;
-
 	udplistener = new UDPListener(portnum);
 
 	return 0;
@@ -108,8 +105,6 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 {
 	udplistener = new UDPListener(sourceport);
 	UDPConnection* incoming = udplistener->SpawnConnection(std::string(server), portnum);
-
-	imServer=false;
 
 	return InitNewConn(incoming, playerNum);
 }
@@ -156,12 +151,23 @@ int CNet::SendData(const unsigned char *data, const unsigned length)
 
 	unsigned ret=1;			//becomes 0 if any connection return 0
 	for (unsigned a=0;a<MAX_PLAYERS;a++){	//improve: dont check every connection
-		CConnection* c=connections[a];
-		if(c){
-			ret&=c->SendData(data,length);
+		if(connections[a]){
+			ret&= SendData(data,length, a);
 		}
 	}
 	return ret;
+}
+
+int CNet::SendData(const unsigned char* data,const unsigned length, const unsigned playerNum)
+{
+	if (connections[playerNum])
+	{
+		return connections[playerNum]->SendData(data,length);
+	}
+	else
+	{
+		throw network_error("Wrong Connection to send data to");
+	}
 }
 
 void CNet::Update(void)
@@ -182,11 +188,31 @@ void CNet::FlushNet(void)
 	}
 }
 
-CConnection* CNet::GetIncomingConnection() const
+bool CNet::HasIncomingConnection() const
 {
 	if (udplistener)
 	{
-		return udplistener->GetWaitingConenction();
+		return (bool)udplistener->GetWaitingConenction();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+int CNet::GetData(unsigned char* buf, const unsigned length)
+{
+	if (udplistener)
+	{
+		CConnection* temp = udplistener->GetWaitingConenction();
+		if (temp)
+		{
+			return temp->GetData(buf, length);
+		}
+		else
+		{
+			return 0;
+		}
 	}
 	else
 	{

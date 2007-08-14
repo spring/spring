@@ -2,6 +2,7 @@
 #define _REMOTE_CONNECTION
 
 #include "Connection.h"
+#include "Net.h"
 #include "Net/UDPSocket.h"
 #include "Net/RawPacket.h"
 

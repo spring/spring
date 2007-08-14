@@ -4,8 +4,6 @@
 
 namespace netcode
 {
-const unsigned NETWORK_BUFFER_SIZE = 40000;
-
 /**
 @brief Base class for connecting to various recievers / senders
 */

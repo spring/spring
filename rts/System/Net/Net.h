@@ -9,17 +9,18 @@
 #include <string>
 #include <vector>
 #include <boost/scoped_array.hpp>
-#include <stdexcept>
 
 // spring includes
-#include "Connection.h"
 #include "GlobalStuff.h"
 #include "Sync/Syncify.h"
 
 namespace netcode {
 
+class CConnection;
 class UDPListener;
 class CLocalConnection;
+
+const unsigned NETWORK_BUFFER_SIZE = 40000;
 
 // If we switch to a networking lib and start using a bitstream, we might
 // as well remove this and use int as size type (because it'd be compressed anyway).
@@ -32,27 +33,26 @@ template<> struct is_string<std::string> {
 	enum { TrailingNull = 1 };
 };
 
-/** Low level network connection (basically a fast TCP-like layer on top of UDP)
-With also demo file writing and some other stuff hacked in. */
+/** Low level network connection (basically a fast TCP-like layer on top of UDP)*/
 class CNet
 {
 public:
 	CNet();
 	~CNet();
 	
-	/** Stop the server from accepting new connections	
-	*/
+	/// Are we accepting new connections?
 	bool Listening();
+	
+	/// Set Listening state
 	void Listening(const bool state);
+	
 	/** Flush and deactivate a connection
 	*/
 	void Kill(const unsigned connNumber);
 
+	/// return true when local connected or already recieved data from remote
 	bool Connected() const;
-
-	bool imServer;
-
-	CConnection* connections[MAX_PLAYERS];
+	
 	int GetData(unsigned char* buf, const unsigned length, const unsigned conNum);
 	
 protected:
@@ -67,21 +67,32 @@ protected:
 	/** Broadcast data to all clients
 	*/
 	int SendData(const unsigned char* data,const unsigned length);
+	
+	/** Send data to one particular client
+	*/
+	int SendData(const unsigned char* data,const unsigned length, const unsigned playerNum);
+	
 	/** 
 	@brief Do this from time to time
-	1. Check our socket for incoming data and and push it to the according CConnection-class
-	2. Push connection attempts in justConnected
-	3. Update() each CConnection
+	Updates the UDPlistener (you cant recieve data without doing this)
 	*/
 	void Update(void);
-	void FlushNet(void);
 	
 	/**
-	@brief if new clients try to connect, their data is stored here until they get accepted / rejected
-	This is where Update() stores the structs
+	@brief send all waiting data
 	*/
-	CConnection* GetIncomingConnection() const;
+	void FlushNet(void);
+	
+	/// did someone tried to connect?
+	bool HasIncomingConnection() const;
+	
+	/// Recieve data to check if we allow him in our game
+	int GetData(unsigned char* buf, const unsigned length);
+	
+	/// everything seems fine, accept him
 	unsigned AcceptIncomingConnection(const unsigned wantedNumber=0);
+	
+	/// we dont want you in our game
 	void RejectIncomingConnection();
 
 	/** Send a net message without any parameters. */
@@ -263,6 +274,7 @@ private:
 	
 	UDPListener* udplistener;
 	CLocalConnection* local;
+	CConnection* connections[MAX_PLAYERS];
 	
 	struct AssembleBuffer
 	{

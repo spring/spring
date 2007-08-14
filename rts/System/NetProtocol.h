@@ -108,6 +108,7 @@ public:
 	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum, int* que = NULL);
 
 	int SendQuit();
+	int SendQuit(unsigned playerNum);
 	int SendNewFrame(int frameNum);
 	int SendStartPlaying();
 	int SendSetPlayerNum(uchar myPlayerNum);
@@ -155,6 +156,8 @@ private:
 	std::string mapName;
 	uint modChecksum;
 	std::string modName;
+	
+	bool imServer;
 
 	/// Bytes that don't make a complete net message yet (fragmented message).
 	unsigned char fragbuf[MAX_PLAYERS][netcode::NETWORK_BUFFER_SIZE];
