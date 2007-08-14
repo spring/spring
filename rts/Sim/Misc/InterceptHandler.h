@@ -10,23 +10,25 @@ class CWeaponProjectile;
 class CPlasmaRepulser;
 class CProjectile;
 
-class CInterceptHandler :
-	public CObject
+class CInterceptHandler
 {
-public:
+	NO_COPY(CInterceptHandler);
 	CR_DECLARE(CInterceptHandler)
 
+public:
 	CInterceptHandler(void);
 	~CInterceptHandler(void);
+
 	void AddInterceptorWeapon(CWeapon* weapon);
 	void RemoveInterceptorWeapon(CWeapon* weapon);
-	void AddInterceptTarget(CWeaponProjectile* target,float3 destination);
+	void AddInterceptTarget(CWeaponProjectile* target, float3 destination);
 
 	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
-	float AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir,CPlasmaRepulser*& repulsedBy);
+	float AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
 	void AddPlasmaRepulser(CPlasmaRepulser* r);
 	void RemovePlasmaRepulser(CPlasmaRepulser* r);
 
+private:
 	std::list<CWeapon*> interceptors;
 	std::list<CPlasmaRepulser*> plasmaRepulsors;
 };

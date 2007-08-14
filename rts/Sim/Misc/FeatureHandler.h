@@ -17,21 +17,19 @@ class CVertexArray;
 
 #define DRAW_QUAD_SIZE 32
 
-class CFeatureHandler :
-	public CObject
+class CFeatureHandler : public CObject
 {
-public:
+	NO_COPY(CFeatureHandler);
 	CR_DECLARE(CFeatureHandler);
+	CR_DECLARE_SUB(DrawQuad);
 
+public:
 	CFeatureHandler();
 	~CFeatureHandler();
 
-	void Serialize(creg::ISerializer *s);
-	void PostLoad();
-
 	CFeature* CreateWreckage(const float3& pos, const std::string& name,
 	                         float rot, int facing, int iter, int team, int allyteam,
-	                         bool emitSmoke,std::string fromUnit);
+	                         bool emitSmoke, std::string fromUnit);
 
 	void Update();
 
@@ -50,7 +48,7 @@ public:
 
 	void Draw();
 	void DrawShadowPass();
-	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures);		//the part of draw that both draw and drawshadowpass can use
+	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
 
 	TdfParser wreckParser;
 	std::map<std::string, FeatureDef*> featureDefs;
@@ -64,7 +62,6 @@ public:
 	std::list<int> toBeRemoved;
 	CFeatureSet updateFeatures;
 
-	CR_DECLARE_SUB(DrawQuad);
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
 		CFeatureSet features;
@@ -75,7 +72,11 @@ public:
 	int drawQuadsX;
 	int drawQuadsY;
 
-	void DrawFar(CFeature* feature,CVertexArray* va);
+	void DrawFar(CFeature* feature, CVertexArray* va);
+
+private:
+	void Serialize(creg::ISerializer *s);
+	void PostLoad();
 };
 
 extern CFeatureHandler* featureHandler;

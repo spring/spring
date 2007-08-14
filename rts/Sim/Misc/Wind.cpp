@@ -4,12 +4,10 @@
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
-CWind wind;
-
 CR_BIND(CWind, );
 
 CR_REG_METADATA(CWind, (
-				
+
 	CR_MEMBER(maxWind),
 	CR_MEMBER(minWind),
 
@@ -23,6 +21,10 @@ CR_REG_METADATA(CWind, (
 	CR_RESERVED(16)
 	));
 
+
+CWind wind;
+
+
 CWind::CWind()
 {
 	curDir=float3(1,0,0);
@@ -32,18 +34,22 @@ CWind::CWind()
 	oldWind=curWind;
 	maxWind=300;
 	minWind=50;
-	status=895;						//make sure we can read in the correct wind before we try to set it
+	status=895; //make sure we can read in the correct wind before we try to set it
 }
+
 
 CWind::~CWind()
 {
 }
 
+
 void CWind::LoadWind()
 {
+	// TODO: decouple
 	readmap->mapDefParser.GetDef(minWind,"5","MAP\\ATMOSPHERE\\MinWind");
 	readmap->mapDefParser.GetDef(maxWind,"25","MAP\\ATMOSPHERE\\MaxWind");
 }
+
 
 void CWind::Update()
 {
@@ -54,6 +60,7 @@ void CWind::Update()
 
 		newWind=float3(sin(nd)*ns,0,cos(nd)*ns);
 
+		// TODO: decouple
 		uh->PushNewWind(newWind.x, newWind.z, newWind.Length());
 
 		status++;
@@ -70,4 +77,3 @@ void CWind::Update()
 		status++;
 	}
 }
-

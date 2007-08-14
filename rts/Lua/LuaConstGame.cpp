@@ -53,8 +53,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "mapY",          readmap->height / 64);
 	LuaPushNamedNumber(L, "gravity",       gravity);
 	LuaPushNamedNumber(L, "tidal",         readmap->tidalStrength);
-	LuaPushNamedNumber(L, "windMin",       wind.minWind);
-	LuaPushNamedNumber(L, "windMax",       wind.maxWind);
+	LuaPushNamedNumber(L, "windMin",       wind.GetMinWind());
+	LuaPushNamedNumber(L, "windMax",       wind.GetMaxWind());
 	LuaPushNamedBool(L,   "mapDamage",     !mapDamage->disabled);
 	LuaPushNamedBool(L,   "mapWaterVoid",  readmap->voidWater);
 	LuaPushNamedBool(L,   "mapWaterPlane", readmap->hasWaterPlane);

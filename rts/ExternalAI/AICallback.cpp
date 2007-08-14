@@ -635,12 +635,12 @@ float CAICallback::GetExtractorRadius()
 
 float CAICallback::GetMinWind()
 {
-	return wind.minWind;
+	return wind.GetMinWind();
 }
 
 float CAICallback::GetMaxWind()
 {
-	return wind.maxWind;
+	return wind.GetMaxWind();
 }
 
 float CAICallback::GetTidalStrength()

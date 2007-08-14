@@ -177,7 +177,7 @@ void CScriptMoveType::Update()
 			owner->speed += rVel;
 		}
 		vel.y        += gs->gravity * gravityFactor;
-		owner->speed += (wind.curWind * windFactor);
+		owner->speed += (wind.GetCurrentWind() * windFactor);
 		owner->pos   += owner->speed;
 	}
 

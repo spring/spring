@@ -1,19 +1,25 @@
 #ifndef SENSORHANDLER_H
 #define SENSORHANDLER_H
 
-//This class is responsible for reading the sensor.tdf file and parsing relevant data.
+/// This class is responsible for reading the gamedata/sensors.tdf file and parsing relevant data.
 class CSensorHandler
 {
+	NO_COPY(CSensorHandler);
 	CR_DECLARE(CSensorHandler);
+
 public:
 	CSensorHandler();
-	virtual ~CSensorHandler();
+	~CSensorHandler();
 
-	int losMipLevel;	//miplevel for los
-	int airMipLevel;	//miplevel to use for airlos
+	/// miplevel for los
+	int losMipLevel;
+	/// miplevel to use for airlos
+	int airMipLevel;
 
-	float losMul;		//units sightdistance will be multiplied with this, for testing purposes
-	float airLosMul;	//units airsightdistance will be multiplied with this, for testing purposes
+	/// units sightdistance will be multiplied with this, for testing purposes
+	float losMul;
+	/// units airsightdistance will be multiplied with this, for testing purposes
+	float airLosMul;
 };
 
 extern CSensorHandler* sensorHandler;

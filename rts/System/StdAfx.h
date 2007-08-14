@@ -43,11 +43,19 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #endif
 
 
-/*
- * Compile time assertion
- */
+/** @brief Compile time assertion
+    @param condition Condition to test for.
+    @param message Message to include in the compile error if the assert fails.
+    This must be a valid C++ symbol. */
 #define COMPILE_TIME_ASSERT(condition, message) \
 	typedef int _compile_time_assertion_failed__ ## message [(condition) ? 1 : -1]
+
+
+/** @brief Declare a class as being uncopyable. */
+#define NO_COPY(TClass) \
+	private: \
+		TClass(const TClass&); \
+		TClass& operator=(const TClass&);
 
 
 // This reduces compile-time with precompiled headers on msvc

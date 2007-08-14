@@ -641,13 +641,13 @@ int LuaSyncedRead::GetGameSeconds(lua_State* L)
 int LuaSyncedRead::GetWind(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, wind.curWind.x);
-	lua_pushnumber(L, wind.curWind.y);
-	lua_pushnumber(L, wind.curWind.z);
-	lua_pushnumber(L, wind.curStrength);
-	lua_pushnumber(L, wind.curDir.x);
-	lua_pushnumber(L, wind.curDir.y);
-	lua_pushnumber(L, wind.curDir.z);
+	lua_pushnumber(L, wind.GetCurrentWind().x);
+	lua_pushnumber(L, wind.GetCurrentWind().y);
+	lua_pushnumber(L, wind.GetCurrentWind().z);
+	lua_pushnumber(L, wind.GetCurrentStrength());
+	lua_pushnumber(L, wind.GetCurrentDirection().x);
+	lua_pushnumber(L, wind.GetCurrentDirection().y);
+	lua_pushnumber(L, wind.GetCurrentDirection().z);
 	return 7;
 }
 

@@ -575,7 +575,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 	const float tidalEnergy = (ud.tidalGenerator * readmap->tidalStrength);
 	float windEnergy = 0.0f;
 	if (ud.windGenerator > 0.0f) {
-		windEnergy = (0.25f * (wind.minWind + wind.maxWind));
+		windEnergy = (0.25f * (wind.GetMinWind() + wind.GetMaxWind()));
 	}
 	lua_pushnumber(L, basicEnergy + tidalEnergy + windEnergy); // CUSTOM
 	return 1;

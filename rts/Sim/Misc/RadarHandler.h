@@ -6,16 +6,19 @@
 
 #define RADAR_SIZE 8
 
-class CRadarHandler : public CObject
+class CRadarHandler
 {
+	NO_COPY(CRadarHandler);
 	CR_DECLARE(CRadarHandler);
+
 public:
 	CRadarHandler(bool circularRadar);
 	~CRadarHandler();
+
 	void MoveUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
-	inline bool InRadar(const float3& pos, int allyteam){
+	bool InRadar(const float3& pos, int allyteam) {
 		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
 		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
 		const int square = max(0, min(ysize - 1, gz)) * xsize +
@@ -31,7 +34,7 @@ public:
 		}
 	}
 
-	inline bool InRadar(const CUnit* unit,int allyteam){
+	bool InRadar(const CUnit* unit, int allyteam) {
 		if(unit->stealth)
 			return false;
 		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
@@ -45,7 +48,7 @@ public:
 		}
 	}
 
-	inline bool InSeismicDistance(const CUnit* unit,int allyteam){
+	bool InSeismicDistance(const CUnit* unit, int allyteam) {
 		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
 		return !!seismicMaps[allyteam][square];
 	}
@@ -73,7 +76,7 @@ protected:
 	void SafeLosRadarAdd(CUnit* unit);
 
 private:
-	void creg_Serialize(creg::ISerializer& s);
+	void Serialize(creg::ISerializer& s);
 };
 
 extern CRadarHandler* radarhandler;

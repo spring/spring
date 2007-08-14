@@ -24,7 +24,6 @@
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
-				//CR_MEMBER(lastBuilder),
 				//CR_MEMBER(model),
 				CR_MEMBER(createdFromUnit),
 				CR_MEMBER(isRepairingBeforeResurrect),
@@ -70,7 +69,6 @@ CFeature::CFeature()
 	finalHeight(0),
 	solidOnTop(0),
 	model(NULL)
-//	lastBuilder(0)
 {
 	immobile=true;
 	physicalState = OnGround;
@@ -360,9 +358,6 @@ void CFeature::DependentDied(CObject *o)
 {
 	if (o == solidOnTop)
 		solidOnTop = 0;
-
-//	if (o == lastBuilder)
-//		lastBuilder=0;
 
 	CSolidObject::DependentDied(o);
 }

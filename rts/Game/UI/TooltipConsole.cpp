@@ -170,10 +170,10 @@ static void GetDecoyResources(const CUnit* unit,
 		mUse += ud->metalUpkeep;
 
 		if (ud->windGenerator > 0.0f) {
-			if (wind.curStrength > ud->windGenerator) {
+			if (wind.GetCurrentStrength() > ud->windGenerator) {
 				eMake += ud->windGenerator;
 			} else {
-				eMake += wind.curStrength;
+				eMake += wind.GetCurrentStrength();
 			}
 		}
 		eUse += ud->energyUpkeep;

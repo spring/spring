@@ -7,6 +7,7 @@
 
 class CCategoryHandler
 {
+	NO_COPY(CCategoryHandler);
 	CR_DECLARE(CCategoryHandler);
 
 public:

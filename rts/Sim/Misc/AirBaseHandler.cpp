@@ -8,18 +8,20 @@
 
 CAirBaseHandler* airBaseHandler=0;
 
-CR_BIND_DERIVED(CAirBaseHandler, CObject, )
+CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler, (CR_MEMBER(freeBases), CR_MEMBER(bases)))
 
 CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (NULL, 0, NULL));
 CR_REG_METADATA_SUB(CAirBaseHandler, LandingPad, (CR_MEMBER(unit), CR_MEMBER(base), CR_MEMBER(piece)))
 
-CR_BIND(CAirBaseHandler::AirBase, )
+CR_BIND(CAirBaseHandler::AirBase, (NULL))
 CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (CR_MEMBER(unit), CR_MEMBER(freePads), CR_MEMBER(pads)))
+
 
 CAirBaseHandler::CAirBaseHandler(void)
 {
 }
+
 
 CAirBaseHandler::~CAirBaseHandler(void)
 {
@@ -36,9 +38,7 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
-	AirBase* ab = SAFE_NEW AirBase;
-	ab->unit = base;
-
+	AirBase* ab = SAFE_NEW AirBase(base);
 	std::vector<int> args;
 
 	int maxPadCount = 16; // default max pad count
@@ -72,6 +72,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 	bases[base->allyteam].push_back(ab);
 }
 
+
 void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 {
 	for(std::list<AirBase*>::iterator bi=freeBases[base->allyteam].begin();bi!=freeBases[base->allyteam].end();++bi){
@@ -92,9 +93,9 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 	}
 }
 
-//Try to find an airbase and reserve it if one can be found
-//caller must call LeaveLandingPad if it gets one and is finished with it or dies
-//its the callers responsibility to detect if the base dies while its reserved
+/** @brief Try to find an airbase and reserve it if one can be found
+Caller must call LeaveLandingPad if it gets one and is finished with it or dies
+it's the callers responsibility to detect if the base dies while its reserved. */
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
 	float closest=1e6f;
@@ -120,12 +121,14 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 	return 0;
 }
 
+
 void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 {
 	pad->GetBase()->freePads.push_back(pad);
 }
 
-//Try to find the closest airbase even if its reserved
+
+/** @brief Try to find the closest airbase even if its reserved */
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
 	float closest=1e6f;

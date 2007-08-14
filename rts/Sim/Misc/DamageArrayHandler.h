@@ -7,6 +7,7 @@
 
 class CDamageArrayHandler
 {
+	NO_COPY(CDamageArrayHandler);
 	CR_DECLARE(CDamageArrayHandler);
 
 public:

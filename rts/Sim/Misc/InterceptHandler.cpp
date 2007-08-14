@@ -9,28 +9,34 @@
 #include "creg/STL_List.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CInterceptHandler, CObject, )
+CR_BIND(CInterceptHandler, )
 CR_REG_METADATA(CInterceptHandler, (CR_MEMBER(interceptors), CR_MEMBER(plasmaRepulsors)));
 
+
 CInterceptHandler interceptHandler;
+
 
 CInterceptHandler::CInterceptHandler(void)
 {
 }
 
+
 CInterceptHandler::~CInterceptHandler(void)
 {
 }
+
 
 void CInterceptHandler::AddInterceptorWeapon(CWeapon* weapon)
 {
 	interceptors.push_back(weapon);
 }
 
+
 void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
 {
 	interceptors.remove(weapon);
 }
+
 
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 destination)
 {
@@ -47,6 +53,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 dest
 	}
 }
 
+
 void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 {
 	for(std::list<CPlasmaRepulser*>::iterator wi=plasmaRepulsors.begin();wi!=plasmaRepulsors.end();++wi){
@@ -57,7 +64,8 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 	}
 }
 
-float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir,CPlasmaRepulser*& repulsedBy)
+
+float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
 {
 	float minRange=99999999;
 	float3 tempDir;
@@ -76,10 +84,12 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, float3 sta
 	return minRange;
 }
 
+
 void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* r)
 {
 	plasmaRepulsors.push_back(r);
 }
+
 
 void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* r)
 {
