@@ -210,17 +210,15 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	instance->losSquares.push_back(mapSquare);
 	losMap[allyteam][mapSquare]++;
 
-	LosTable::iterator li;
-	for(li=table.begin();li!=table.end();++li){
+	for(LosTable::iterator li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
-		LosLine::iterator linei;
 		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
 		float maxAng1=-1000;
 		float maxAng2=-1000;
 		float maxAng3=-1000;
 		float maxAng4=-1000;
 		float r=1;
-		for(linei=line.begin();linei!=line.end();++linei){
+		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
 			float invR=1.0f/r;
 			int square=mapSquare+linei->x+linei->y*losSizeX;
 			float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
@@ -294,10 +292,8 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 	}
 	LosTable& table=lostables[tablenum-1];
 
-	LosTable::iterator li;
-	for(li=table.begin();li!=table.end();++li){
+	for(LosTable::iterator li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
-		LosLine::iterator linei;
 		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
 		float maxAng1=-1000;
 		float maxAng2=-1000;
@@ -307,7 +303,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 		instance->losSquares.push_back(mapSquare);
 		losMap[allyteam][mapSquare]++;
 
-		for(linei=line.begin();linei!=line.end();++linei){
+		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
 			if(xmap+linei->x<losSizeX && ymap+linei->y<losSizeY){
 				int square=mapSquare+linei->x+linei->y*losSizeX;
 				float dh=readmap->mipHeightmap[losMipLevel][square]-baseHeight;
@@ -568,8 +564,7 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	std::vector<int>::iterator lsi;
-	for(lsi=instance->losSquares.begin();lsi!=instance->losSquares.end();++lsi){
+	for(std::vector<int>::iterator lsi=instance->losSquares.begin();lsi!=instance->losSquares.end();++lsi){
 		--losMap[instance->allyteam][*lsi];
 	}
 
