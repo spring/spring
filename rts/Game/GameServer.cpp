@@ -385,8 +385,8 @@ bool CGameServer::ServerReadNet()
 				ENTER_MIXED;
 				gs->players[a]->active=false;
 				ENTER_UNSYNCED;
-				serverNet->connections[a]->active=false;
 				serverNet->SendPlayerLeft(a, 1);
+				serverNet->Kill(a);
 				lastLength=1;
 				if (hostif)
 				{
@@ -714,7 +714,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	if (playerNum != 0 && gs->players[playerNum]->active) {
 		unsigned char a = NETMSG_QUIT;
 		serverNet->SendPlayerLeft(playerNum, 2);
-		serverNet->connections[playerNum]->SendData(&a, 1);
+		serverNet->SendQuit(playerNum);
 		serverNet->Kill(playerNum);
 		if (hostif)
 		{

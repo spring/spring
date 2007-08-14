@@ -4,6 +4,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include "Connection.h"
+#include "Net.h"
 
 namespace netcode {
 
