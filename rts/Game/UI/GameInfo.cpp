@@ -178,10 +178,10 @@ void CGameInfo::Draw()
 	values.push_back(readmap->tidalStrength);
 
 	labels.push_back("Min Wind:");
-	values.push_back(wind.minWind);
+	values.push_back(wind.GetMinWind());
 
 	labels.push_back("Max Wind:");
-	values.push_back(wind.maxWind);
+	values.push_back(wind.GetMaxWind());
 
 	if (gameSetup) {
 		labels.push_back("Limited DGun:");

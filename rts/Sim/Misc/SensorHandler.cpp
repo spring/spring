@@ -10,7 +10,9 @@ CR_REG_METADATA(CSensorHandler, (
 		CR_MEMBER(losMul),
 		CR_MEMBER(airLosMul)));
 
+
 CSensorHandler* sensorHandler;
+
 
 CSensorHandler::CSensorHandler()
 {
@@ -43,6 +45,7 @@ CSensorHandler::CSensorHandler()
 	tdfparser.GetDef(losMul, "1", "Sensors\\Los\\LosMul");
 	tdfparser.GetDef(airLosMul, "1", "Sensors\\Los\\AirLosMul");
 }
+
 
 CSensorHandler::~CSensorHandler()
 {

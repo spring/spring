@@ -5,9 +5,20 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CRadarHandler, CObject, (false));
+CR_BIND(CRadarHandler, (false));
 
-void CRadarHandler::creg_Serialize(creg::ISerializer& s)
+CR_REG_METADATA(CRadarHandler, (
+	CR_SERIALIZER(Serialize), // radarMaps, airRadarMaps, sonarMaps, jammerMaps, seismicMaps, commonJammerMap, commonSonarJammerMap
+	CR_MEMBER(circularRadar),
+	CR_MEMBER(radarErrorSize),
+	CR_MEMBER(baseRadarErrorSize),
+	CR_MEMBER(xsize),
+	CR_MEMBER(ysize),
+	CR_MEMBER(targFacEffect)
+));
+
+
+void CRadarHandler::Serialize(creg::ISerializer& s)
 {
 	const int size = xsize*ysize*2;
 
@@ -24,79 +35,32 @@ void CRadarHandler::creg_Serialize(creg::ISerializer& s)
 	s.Serialize(&commonSonarJammerMap.front(), size);
 }
 
-CR_REG_METADATA(CRadarHandler,(
-		CR_SERIALIZER(creg_Serialize), // radarMaps, airRadarMaps, sonarMaps, jammerMaps, seismicMaps, commonJammerMap, commonSonarJammerMap
-		CR_MEMBER(circularRadar),
-		CR_MEMBER(radarErrorSize),
-		CR_MEMBER(baseRadarErrorSize),
-		CR_MEMBER(xsize),
-		CR_MEMBER(ysize),
-		CR_MEMBER(targFacEffect)
-		));
 
-
-CRadarHandler* radarhandler=0;
+CRadarHandler* radarhandler;
 
 
 CRadarHandler::CRadarHandler(bool circularRadar):
 		circularRadar(circularRadar),
-//		commonJammerMap(NULL),
-//		commonSonarJammerMap(NULL),
 		baseRadarErrorSize(96),
 		xsize(gs->mapx / RADAR_SIZE),
 		ysize(gs->mapy / RADAR_SIZE),
 		targFacEffect(2)
 {
-/*	memset(radarMaps, 0, sizeof(radarMaps));
-	memset(airRadarMaps, 0, sizeof(airRadarMaps));
-	memset(sonarMaps, 0, sizeof(sonarMaps));
-	memset(jammerMaps, 0, sizeof(jammerMaps));
-	memset(seismicMaps, 0, sizeof(seismicMaps));*/
-
 	commonJammerMap.resize(xsize*ysize,0);
 	commonSonarJammerMap.resize(xsize*ysize,0);
 
 	for(int a=0;a<gs->activeAllyTeams;++a){
-//		radarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
-//		sonarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
-//		seismicMaps[a] = SAFE_NEW unsigned short[xsize*ysize];
 		radarMaps[a].resize(xsize*ysize,0);
 		sonarMaps[a].resize(xsize*ysize,0);
 		seismicMaps[a].resize(xsize*ysize,0);
 		airRadarMaps[a].resize(xsize*ysize,0);
 		jammerMaps[a].resize(xsize*ysize,0);
-
-/*		if(circularRadar) //if we use circular radar air radar and standard radar is the same
-			airRadarMaps[a]=radarMaps[a];
-		else
-			airRadarMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
-
-		jammerMaps[a]=SAFE_NEW unsigned short[xsize*ysize];
-
-		for(int b=0;b<xsize*ysize;++b){
-			radarMaps[a][b]=0;
-			airRadarMaps[a][b]=0;
-			seismicMaps[a][b]=0;
-			jammerMaps[a][b]=0;
-			sonarMaps[a][b]=0;
-		}
-*/
 		radarErrorSize[a]=96;
 	}
 }
 
 CRadarHandler::~CRadarHandler()
 {
-/*	delete[] commonJammerMap;
-	delete[] commonSonarJammerMap;
-	for(int a=0;a<gs->activeAllyTeams;++a){
-		delete[] radarMaps[a];
-		if(!circularRadar)
-			delete[] airRadarMaps[a];
-		delete[] jammerMaps[a];		
-		delete[] sonarMaps[a];
-		delete[] seismicMaps[a];
-	}*/
 }
 
 //todo: add the optimizations that is in loshandler
@@ -112,16 +76,16 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		if(unit->jammerRadius){
 			AddMapArea(newPos,unit->jammerRadius,jammerMaps[unit->allyteam],1);
 			AddMapArea(newPos,unit->jammerRadius,commonJammerMap,1);
-		}	
+		}
 		if(unit->sonarJamRadius){
 			AddMapArea(newPos,unit->sonarJamRadius,commonSonarJammerMap,1);
-		}	
+		}
 		if(unit->radarRadius){
 			AddMapArea(newPos,unit->radarRadius,airRadarMaps[unit->allyteam],1);
 			if(!circularRadar){
 				SafeLosRadarAdd(unit);
 			}
-		}	
+		}
 		if(unit->sonarRadius){
 			AddMapArea(newPos,unit->sonarRadius,sonarMaps[unit->allyteam],1);
 		}

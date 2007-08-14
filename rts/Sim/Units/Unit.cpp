@@ -593,10 +593,10 @@ void CUnit::SlowUpdate()
 		UseMetal(unitDef->metalUpkeep * 0.5f);
 
 		if (unitDef->windGenerator > 0.0f) {
-			if (wind.curStrength > unitDef->windGenerator) {
+			if (wind.GetCurrentStrength() > unitDef->windGenerator) {
  				AddEnergy(unitDef->windGenerator * 0.5f);
 			} else {
- 				AddEnergy(wind.curStrength * 0.5f);
+ 				AddEnergy(wind.GetCurrentStrength() * 0.5f);
 			}
 		}
 	}
@@ -1675,12 +1675,12 @@ void CUnit::FinishedBuilding(void)
 	}
 
 	if (unitDef->windGenerator>0) {
-		if (wind.curStrength > unitDef->windGenerator) {
+		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
 			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength       * 3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength()       * 3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
+		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -2080,12 +2080,12 @@ void CUnit::PostLoad()
 	cob->Call(COBFN_SetSFXOccupy, curTerrainType);
 
 	if (unitDef->windGenerator>0) {
-		if (wind.curStrength > unitDef->windGenerator) {
+		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
 			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.curStrength       * 3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength()       * 3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.curDir.x, -wind.curDir.z));
+		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (activated) {

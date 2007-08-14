@@ -17,7 +17,7 @@
 #include "mmgr.h"
 
 CR_BIND(LosInstance, );
-CR_BIND_DERIVED(CLosHandler, CObject, );
+CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
 CR_BIND(CLosHandler::CPoint, );
 
@@ -369,42 +369,42 @@ void CLosHandler::OutputTable(int Table)
 {
 	LosTable lostable;
 
-  int Radius = Table;
-  char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
-  memset(PaintTable, 0 , (Radius+1)*Radius);
-  CPoint P;
+	int Radius = Table;
+	char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
+	memset(PaintTable, 0 , (Radius+1)*Radius);
+	CPoint P;
 
-  int x, y, r2;
+	int x, y, r2;
 
-  P.x = 0;
-  P.y = Radius;
-  Points.push_front(P);
+	P.x = 0;
+	P.y = Radius;
+	Points.push_front(P);
 //  DrawLine(0, Radius, Radius);
-  for(float i=Radius; i>=1; i-=0.5f)
+	for(float i=Radius; i>=1; i-=0.5f)
 	{
-    r2 = (int)(i * i);
+		r2 = (int)(i * i);
 
-    y = (int)i;
-    x = 1;
-    y = (int) (sqrt((float)r2 - 1) + 0.5f);
-    while (x < y) {
-      if(!PaintTable[x+y*Radius])
+		y = (int)i;
+		x = 1;
+		y = (int) (sqrt((float)r2 - 1) + 0.5f);
+		while (x < y) {
+			if(!PaintTable[x+y*Radius])
 			{
-        DrawLine(PaintTable, x, y, Radius);
-        P.x = x;
-        P.y = y;
-        Points.push_back(P);
+				DrawLine(PaintTable, x, y, Radius);
+				P.x = x;
+				P.y = y;
+				Points.push_back(P);
 			}
-      if(!PaintTable[y+x*Radius])
+			if(!PaintTable[y+x*Radius])
 			{
-        DrawLine(PaintTable, y, x, Radius);
-        P.x = y;
-        P.y = x;
-        Points.push_back(P);
+				DrawLine(PaintTable, y, x, Radius);
+				P.x = y;
+				P.y = x;
+				Points.push_back(P);
 			}
 
-      x += 1;
-      y = (int) (sqrt((float)r2 - x*x) + 0.5f);
+			x += 1;
+			y = (int) (sqrt((float)r2 - x*x) + 0.5f);
 		}
 		if (x == y) {
 			if(!PaintTable[x+y*Radius])
@@ -417,23 +417,20 @@ void CLosHandler::OutputTable(int Table)
 		}
 	}
 
+	Points.sort();
 
-
-  Points.sort();
-
-  int Line = 1;
-  int Size = Points.size();
-  for(int j=0; j<Size; j++)
+	int Line = 1;
+	int Size = Points.size();
+	for(int j=0; j<Size; j++)
 	{
-    lostable.push_back(OutputLine(Points.back().x, Points.back().y, Line));
-    Points.pop_back();
-    Line++;
+		lostable.push_back(OutputLine(Points.back().x, Points.back().y, Line));
+		Points.pop_back();
+		Line++;
 	}
-
 
 	lostables.push_back(lostable);
 
-  delete[] PaintTable;
+	delete[] PaintTable;
 }
 
 CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
@@ -468,7 +465,6 @@ CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
 
 void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 {
-
 	int x0 = 0;
 	int y0 = 0;
 	int dx = x;
@@ -482,7 +478,7 @@ void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 			x0 += dx;
 			PaintTable[x0+Round(m*x0 + b)*Size] = 1;
 		}
-	} else
+	} else {
 		if (dy != 0) {                              // slope = 1
 			float m = (float) dx / (float) dy;      // compute slope
 			float b = x0 - m*y0;
@@ -492,8 +488,7 @@ void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 				PaintTable[Round(m*y0 + b)+y0*Size] = 1;
 			}
 		}
-
-
+	}
 }
 
 int CLosHandler::Round(float Num)
@@ -502,7 +497,6 @@ int CLosHandler::Round(float Num)
     return (int)Num;
   else
     return (int)Num+1;
-
 }
 
 void CLosHandler::FreeInstance(LosInstance* instance)

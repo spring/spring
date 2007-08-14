@@ -9,22 +9,20 @@ class CGeoSquareProjectile;
 
 class CGeometricObjects
 {
+	NO_COPY(CGeometricObjects);
 	CR_DECLARE(CGeometricObjects);
 	CR_DECLARE_SUB(GeoGroup);
-public:
-	CGeometricObjects(void);
-	~CGeometricObjects(void);
 
-	struct GeoGroup{
+private:
+	struct GeoGroup {
 		CR_DECLARE_STRUCT(GeoGroup);
 		std::vector<CGeoSquareProjectile*> squares;
 	};
 
-	std::map<int,GeoGroup>	geoGroups;
+public:
+	CGeometricObjects(void);
+	~CGeometricObjects(void);
 
-	std::multimap<int,int> toBeDeleted;
-
-	int firstFreeGroup;
 	int AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime=-1, int group=0);
 	void DeleteGroup(int group);
 	void SetColor(int group, float r, float g, float b, float a);
@@ -32,6 +30,11 @@ public:
 	int AddLine(float3 start, float3 end, float width, int arrow, int lifetime=-1, int group=0);
 	void Update(void);
 	void MarkSquare(int mapSquare);
+
+private:
+	std::map<int,GeoGroup> geoGroups;
+	std::multimap<int,int> toBeDeleted;
+	int firstFreeGroup;
 };
 
 extern CGeometricObjects* geometricObjects;

@@ -15,13 +15,13 @@
 
 #define MAX_LOS_TABLE 110
 
-struct LosInstance{
+struct LosInstance
+{
+	NO_COPY(LosInstance);
 	CR_DECLARE_STRUCT(LosInstance);
-	//inline void* operator new(size_t size){return mempool.Alloc(size);};
-	//inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
  	std::vector<int> losSquares;
 	LosInstance() {} // default constructor for creg
-	inline LosInstance(int lossize,int allyteam,int baseX,int baseY,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
+	LosInstance(int lossize,int allyteam,int baseX,int baseY,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
 			refCount(1),
@@ -46,10 +46,10 @@ struct LosInstance{
 	bool toBeDeleted;
 };
 
-class CRadarHandler;
 
-class CLosHandler: public CObject
+class CLosHandler
 {
+	NO_COPY(CLosHandler);
 	CR_DECLARE(CLosHandler);
 	CR_DECLARE_SUB(CPoint);
 	CR_DECLARE_SUB(DelayedInstance);
@@ -57,7 +57,8 @@ class CLosHandler: public CObject
 public:
 	void MoveUnit(CUnit* unit,bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
-	inline bool InLos(const CUnit* unit, int allyteam){
+
+	bool InLos(const CUnit* unit, int allyteam) {
 		if(unit->isCloaked)
 			return false;
 		if(unit->alwaysVisible)
@@ -70,22 +71,26 @@ public:
 			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(unit->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(unit->pos.x*invLosDiv))))];
 		}
 	}
-	inline bool InLos(const CWorldObject* object, int allyteam){
+
+	bool InLos(const CWorldObject* object, int allyteam) {
 		if(object->useAirLos)
 			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(object->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(object->pos.x*invAirDiv)))))] | object->alwaysVisible;
 		else
 			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(object->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(object->pos.x*invLosDiv))))] | object->alwaysVisible;
 	}
-	inline bool InLos(float3 pos, int allyteam){
+
+	bool InLos(float3 pos, int allyteam) {
 		pos.CheckInBounds();
 		return !!losMap[allyteam][((int)(pos.z*invLosDiv))*losSizeX+((int)(pos.x*invLosDiv))];
 	}
-	inline bool InAirLos(float3 pos, int allyteam){
+
+	bool InAirLos(float3 pos, int allyteam) {
 		pos.CheckInBounds();
 		return !!airLosMap[allyteam][((int)(pos.z*invAirDiv))*airSizeX+((int)(pos.x*invAirDiv))];
 	}
+
 	CLosHandler();
-	virtual ~CLosHandler();
+	~CLosHandler();
 
 	vector<unsigned short> losMap[MAX_TEAMS];
 	vector<unsigned short> airLosMap[MAX_TEAMS];
@@ -117,7 +122,6 @@ private:
 
 	struct DelayedInstance {
 		CR_DECLARE_STRUCT(DelayedInstance);
-
 		LosInstance* instance;
 		int timeoutTime;
 	};

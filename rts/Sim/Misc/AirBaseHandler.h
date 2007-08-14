@@ -1,12 +1,14 @@
 #ifndef AIRBASEHANDLER_H
 #define AIRBASEHANDLER_H
+
 #include "Object.h"
 #include <list>
 
 class CUnit;
 
-class CAirBaseHandler : public CObject
+class CAirBaseHandler
 {
+	NO_COPY(CAirBaseHandler);
 	CR_DECLARE(CAirBaseHandler);
 	CR_DECLARE_SUB(LandingPad);
 	CR_DECLARE_SUB(AirBase);
@@ -17,6 +19,7 @@ private:
 public:
 
 	class LandingPad : public CObject {
+		NO_COPY(LandingPad);
 		CR_DECLARE(LandingPad);
 
 	public:
@@ -36,7 +39,9 @@ public:
 private:
 
 	struct AirBase {
+		NO_COPY(AirBase);
 		CR_DECLARE_STRUCT(AirBase);
+		AirBase(CUnit* u) : unit(u) {}
 		CUnit* unit;
 		std::list<LandingPad*> freePads;
 		std::list<LandingPad*> pads;

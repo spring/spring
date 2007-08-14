@@ -6,27 +6,30 @@
 #include "QuadField.h"
 
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "LogOutput.h"
 #include "Feature.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
 
+
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
-				CR_MEMBER(numQuadsX),
-				CR_MEMBER(numQuadsZ),
-//				CR_MEMBER(baseQuads),
-				CR_SERIALIZER(creg_Serialize)
-				));
+		CR_MEMBER(numQuadsX),
+		CR_MEMBER(numQuadsZ),
+//		CR_MEMBER(baseQuads),
+		CR_SERIALIZER(Serialize)
+		));
 
-void CQuadField::creg_Serialize(creg::ISerializer& s)
+
+void CQuadField::Serialize(creg::ISerializer& s)
 {
 	// no need to alloc quad array, this has already been done in constructor
 	for(int y=0;y<numQuadsZ;++y)
 		for(int x=0;x<numQuadsX;++x)
 			s.SerializeObjectInstance(&baseQuads[y*numQuadsX+x], Quad::StaticClass());
 }
+
+
 
 CR_BIND(CQuadField::Quad, );
 
@@ -37,6 +40,7 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 		CR_MEMBER(teamUnits),
 		CR_MEMBER(features)
 		));
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -400,8 +404,6 @@ void CQuadField::AddFeature(CFeature* feature)
 	for(qi=newQuads.begin();qi!=newQuads.end();++qi){
 		baseQuads[*qi].features.push_front(feature);
 	}
-//	feature->addPos=feature->pos;
-//	feature->addRadius=feature->radius;/**/
 }
 
 void CQuadField::RemoveFeature(CFeature* feature)
@@ -411,22 +413,7 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	std::vector<int>::iterator qi;
 	for(qi=quads.begin();qi!=quads.end();++qi){
 		baseQuads[*qi].features.remove(feature);
-	}/*
-	for(int a=0;a<numQuadsX*numQuadsZ;++a){
-		for(std::list<CFeature*>::iterator fi=baseQuads[a].features.begin();fi!=baseQuads[a].features.end();++fi){
-			if(*fi==feature){
-				baseQuads[a].features.erase(fi);
-				logOutput.Print("Feature not removed correctly");
-				logOutput.Print("Pos %.0f %.0f Radius %.0f",feature->pos.x,feature->pos.z,feature->radius);
-				logOutput.Print("Pos %.0f %.0f Radius %.0f",feature->addPos.x,feature->addPos.z,feature->addRadius);
-				for(qi=quads.begin();qi!=quads.end();++qi)
-					logOutput << *qi << " ";
-				logOutput << "\n";
-				logOutput.Print("New %i",a);
-				break;
-			}
-		}
-	}/**/
+	}
 }
 
 vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)

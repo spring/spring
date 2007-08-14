@@ -127,7 +127,10 @@ def get_groupAI_source(env, which):
 
 
 def get_shared_AI_source(env):
-	return get_source(env, 'rts/System/creg') + ['rts/System/float3.cpp']
+	result = get_source(env, 'rts/System/creg')
+	if env.has_key('builddir') and env['builddir']:
+		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
+	return result
 
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	exclude = re.compile(exclude_regexp)

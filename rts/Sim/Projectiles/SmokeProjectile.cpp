@@ -79,7 +79,7 @@ CSmokeProjectile::~CSmokeProjectile()
 void CSmokeProjectile::Update()
 {
 	pos+=speed;
-	pos+=wind.curWind*age*0.05f;
+	pos+=wind.GetCurrentWind()*age*0.05f;
 	age+=ageSpeed;
 	size+=sizeExpansion;
 	if(size<startSize)

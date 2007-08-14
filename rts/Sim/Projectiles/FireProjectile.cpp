@@ -86,12 +86,12 @@ void CFireProjectile::Update(void)
 			subParticles2.push_front(sub);
 		}
 		if(!(ttl&31)){		//this area must be synced
-			std::vector<CFeature*> f=qf->GetFeaturesExact(emitPos+wind.curWind*0.7f,emitRadius*2);
+			std::vector<CFeature*> f=qf->GetFeaturesExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
 			for(std::vector<CFeature*>::iterator fi=f.begin();fi!=f.end();++fi){
 				if(gs->randFloat()>0.8f)
 					(*fi)->StartFire();
 			}
-			std::vector<CUnit*> units=qf->GetUnitsExact(emitPos+wind.curWind*0.7f,emitRadius*2);
+			std::vector<CUnit*> units=qf->GetUnitsExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
 			for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 				(*ui)->DoDamage(DamageArray()*30,0,ZeroVector);
 			}
@@ -104,7 +104,7 @@ void CFireProjectile::Update(void)
 			subParticles.pop_back();
 			break;
 		}
-		pi->pos+=speed + wind.curWind*pi->age*0.05f + pi->posDif*0.1f;
+		pi->pos+=speed + wind.GetCurrentWind()*pi->age*0.05f + pi->posDif*0.1f;
 		pi->posDif*=0.9f;
 	}
 	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){

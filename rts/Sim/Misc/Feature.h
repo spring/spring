@@ -13,17 +13,20 @@ class CUnit;
 struct DamageArray;
 class CFireProjectile;
 
-class CFeature :
-	public CSolidObject
+class CFeature : public CSolidObject
 {
-public:
+	NO_COPY(CFeature);
 	CR_DECLARE(CFeature);
 
-	CFeature();	
+public:
+	CFeature();
 	~CFeature();
 
-	void Initialize(const float3& pos,FeatureDef* def,short int heading, int facing, int allyteam,std::string fromUnit); //pos of quad must not change after this
-	bool AddBuildPower(float amount, CUnit* builder);								//negative amount=reclaim,return=true->reclaimed
+	/** Pos of quad must not change after this. */
+	void Initialize(const float3& pos, FeatureDef* def, short int heading, int facing, int allyteam, std::string fromUnit);
+	/** Negative amount = reclaim
+	    @return true if reclaimed */
+	bool AddBuildPower(float amount, CUnit* builder);
 	void DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse);
 	void Kill(float3& impulse);
 	void ForcedMove(const float3& newPos);
@@ -38,16 +41,14 @@ public:
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
-	void PostLoad();
 
-//	CUnit* lastBuilder;
-	S3DOModel* model;      //used by 3do obects
+	S3DOModel* model;
 
 	std::string createdFromUnit;
-	// This flag is used to stop a potential exploit involving tripping a unit back and forth
-	// across a chunk boundary to get unlimited resources. Basically, once a corspe has been a little bit
-	// reclaimed, if they start rezzing then they cannot reclaim again until the corpse has been fully
-	// 'repaired'.
+	/** This flag is used to stop a potential exploit involving tripping a unit back and forth
+	across a chunk boundary to get unlimited resources. Basically, once a corspe has been a little bit
+	reclaimed, if they start rezzing then they cannot reclaim again until the corpse has been fully
+	'repaired'. */
 	bool isRepairingBeforeResurrect;
 	float resurrectProgress;
 
@@ -69,7 +70,8 @@ public:
 //	float3 residualImpulse;	//impulse energy that havent been acted on
 
 	bool inUpdateQue;
-	int drawQuad;							//which drawquad we are part of
+	/// which drawQuad we are part of
+	int drawQuad;
 
 	float finalHeight;
 
@@ -77,10 +79,11 @@ public:
 	int fireTime;
 	int emitSmokeTime;
 
-	CSolidObject *solidOnTop; // the solid object that is on top of the geothermal
+	/// the solid object that is on top of the geothermal
+	CSolidObject *solidOnTop;
 
-//	float3 addPos;
-//	float addRadius;
+private:
+	void PostLoad();
 };
 
 #endif // __FEATURE_H__

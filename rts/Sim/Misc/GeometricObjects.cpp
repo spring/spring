@@ -18,12 +18,13 @@ CR_REG_METADATA(CGeometricObjects, (
 CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)));
 
 
-CGeometricObjects* geometricObjects=0;
+CGeometricObjects* geometricObjects;
 
 CGeometricObjects::CGeometricObjects(void)
 {
-	firstFreeGroup=1;
+	firstFreeGroup = 1;
 }
+
 
 CGeometricObjects::~CGeometricObjects(void)
 {
@@ -31,8 +32,8 @@ CGeometricObjects::~CGeometricObjects(void)
 
 int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime, int group)
 {
-	if(group==0)
-		group=firstFreeGroup++;
+	if (group == 0)
+		group = firstFreeGroup++;
 
 	float3 old1,old2;
 	old1=CalcSpline( 0.00f,b1,b2,b3,b4);
@@ -59,6 +60,7 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 	return group;
 }
 
+
 void CGeometricObjects::DeleteGroup(int group)
 {
 	GeoGroup* gg=&geoGroups[group];
@@ -71,6 +73,7 @@ void CGeometricObjects::DeleteGroup(int group)
 
 	geoGroups.erase(group);
 }
+
 
 void CGeometricObjects::SetColor(int group, float r, float g, float b, float a)
 {
@@ -86,6 +89,7 @@ void CGeometricObjects::SetColor(int group, float r, float g, float b, float a)
 	}
 }
 
+
 float3 CGeometricObjects::CalcSpline(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4)
 {
 	float ni=1-i;
@@ -94,6 +98,7 @@ float3 CGeometricObjects::CalcSpline(float i, const float3& p1, const float3& p2
 //	logOutput.Print("%f %f %f",res.x,res.y,res.z);
 	return res;
 }
+
 
 int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow, int lifetime, int group)
 {
@@ -118,6 +123,7 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 
 	return group;
 }
+
 
 void CGeometricObjects::Update(void)
 {
