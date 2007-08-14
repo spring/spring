@@ -387,9 +387,9 @@ void CHelper::AssignMetalMakerAI()
 				}
 			}
 #ifdef _WIN32
-			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.dll",99);
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.dll",99);
 #else
-			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/mmhandler.so",99);
+			metalMakerAIid = aicb->CreateGroup("AI/Helper-libs/MetalMakerAI.so",99);
 #endif
 			aicb->AddUnitToGroup(unit,metalMakerAIid);
 		}
