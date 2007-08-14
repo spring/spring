@@ -11,9 +11,12 @@ class CCannon : public CWeapon
 {
 	CR_DECLARE(CCannon);
 protected:
-	float rangeFactor;	/// this is used to keep range true to range tag
-	float3 lastDiff; 	/// cached input for GetWantedDir
-	float3 lastDir;		/// cached result for GetWantedDir
+	/// this is used to keep range true to range tag
+	float rangeFactor;
+	/// cached input for GetWantedDir
+	float3 lastDiff;
+	/// cached result for GetWantedDir
+	float3 lastDir;
 
 public:
 	CCannon(CUnit* owner);
@@ -25,11 +28,17 @@ public:
 	virtual bool AttackGround(float3 pos,bool userTarget);
 	float GetRange2D(float yDiff) const;
 
+	/// unused?
 	float maxPredict;
+	/// unused?
 	float minPredict;
+	/// indicates high trajectory on/off state
 	bool highTrajectory;
+	/// burnblow tag. defines flakker-like behaviour
 	bool selfExplode;
+
 	void SlowUpdate(void);
+	/// tells where to point the gun to hit the point at pos+diff
 	float3 GetWantedDir(const float3& diff);
 };
 
