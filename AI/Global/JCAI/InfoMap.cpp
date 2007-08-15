@@ -504,7 +504,7 @@ void InfoMap::CalculateInfoMap (IAICallback *cb, int BlockW)
 
 	for(int a=0;a<nf;a++)
 	{
-		FeatureDef* fd = cb->GetFeatureDef(features[a]);
+		const FeatureDef* fd = cb->GetFeatureDef(features[a]);
 
 		if (fd->geoThermal)
 		{

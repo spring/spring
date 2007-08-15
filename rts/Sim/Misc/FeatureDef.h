@@ -10,10 +10,11 @@ struct S3DOModel;
 struct FeatureDef
 {
 	CR_DECLARE(FeatureDef);
+
 	~FeatureDef();
 
 	FeatureDef():
-		metal(0), energy(0), maxHealth(0), radius(0), mass(0),
+		metal(0), energy(0), maxHealth(0), mass(0),
 		upright(false), drawType(0), modelType(0),
 		destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), geoThermal(false), noSelect(false),
@@ -30,16 +31,18 @@ struct FeatureDef
 	float energy;
 	float maxHealth;
 
-	float radius;
-	float mass;            //used to see if the object can be overrun
+	/// used to see if the object can be overrun
+	float mass;
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
 	bool useCSOffset;
 
 	bool upright;
 	int drawType;
-	std::string modelname; //used by 3do obects
-	int modelType;         //used by tree etc
+	/// used by 3do obects
+	std::string modelname;
+	/// used by tree etc
+	int modelType;
 
 	bool destructable;
 	bool reclaimable;
@@ -50,10 +53,13 @@ struct FeatureDef
 
 	bool geoThermal;
 
-	std::string deathFeature; //name of feature that this turn into when killed (not reclaimed)
+	/// name of feature that this turn into when killed (not reclaimed)
+	std::string deathFeature;
 
-	int xsize;             //each size is 8 units
-	int ysize;             //each size is 8 units
+	/// each size is 8 units
+	int xsize;
+	/// each size is 8 units
+	int ysize;
 };
 
 #endif

@@ -57,7 +57,7 @@ public:
 	float GetUnitPower(int unitid);				//sort of the measure of the units overall power
 	float GetUnitExperience(int unitid);	//how experienced the unit is (0.0-1.0)
 	float GetUnitMaxRange(int unitid);		//the furthest any weapon of the unit can fire
-	bool IsUnitActivated (int unitid); 
+	bool IsUnitActivated (int unitid);
 	bool UnitBeingBuilt(int unitid);			//returns true if the unit is currently being built
 	const UnitDef* GetUnitDef(int unitid);	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	float3 GetUnitPos(int unitid);
@@ -94,7 +94,7 @@ public:
 	const char* GetModName();
 
 	float GetMaxMetal();
-	float GetExtractorRadius();	
+	float GetExtractorRadius();
 	float GetMinWind();
 	float GetMaxWind();
 	float GetTidalStrength();
@@ -122,18 +122,18 @@ public:
 	float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing);	//returns the closest position from a position that the building can be built, minDist is the distance in squares that the building must keep to other buildings (to make it easier to create paths through a base)
 
 	float GetMetal();				//stored metal for team
-	float GetMetalIncome();				
-	float GetMetalUsage();				
+	float GetMetalIncome();
+	float GetMetalUsage();
 	float GetMetalStorage();				//metal storage for team
 
 	float GetEnergy();				//stored energy for team
-	float GetEnergyIncome();			
-	float GetEnergyUsage();				
+	float GetEnergyIncome();
+	float GetEnergyUsage();
 	float GetEnergyStorage();				//energy storage for team
 
 	int GetFeatures (int *features, int max);
 	int GetFeatures (int *features, int max, const float3& pos, float radius);
-	FeatureDef* GetFeatureDef (int feature);
+	const FeatureDef* GetFeatureDef (int feature);
 	float GetFeatureHealth (int feature);
 	float GetFeatureReclaimLeft (int feature);
 	float3 GetFeaturePos (int feature);
@@ -141,11 +141,11 @@ public:
 	// future callback extensions
 	bool GetProperty(int unit, int property, void *dst);
 	bool GetValue(int id, void *dst);
-	int HandleCommand(int commandId, void *data); 
+	int HandleCommand(int commandId, void *data);
 
 	int GetFileSize (const char *name); // return -1 when the file doesn't exist
 	bool ReadFile (const char *name, void *buffer,int bufferLen); // returns false when file doesn't exist or buffer is too small
-	
+
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
@@ -180,7 +180,7 @@ public:
 		LUACALL_ERROR       = 3
 	};
 	//
-	// The 'args' array size must be at least:  max(inArgs, outArgs) 
+	// The 'args' array size must be at least:  max(inArgs, outArgs)
 	//
 	LuaCallState CallLuaRules(const char* name,
 	                          float* args, int argSize, int inArgs, int& outArgs);

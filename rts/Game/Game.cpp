@@ -3659,7 +3659,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
 				}
 				else {
-					FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
+					const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
 					if (featureDef) {
 						int xsize = featureDef->xsize;
 						int zsize = featureDef->ysize;

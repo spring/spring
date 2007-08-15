@@ -49,6 +49,10 @@ CR_REG_METADATA(CFeature, (
 				CR_POSTLOAD(PostLoad)
 				));
 
+
+#define TREE_RADIUS 20
+
+
 CFeature::CFeature()
 :	def(0),
 	inUpdateQue(false),
@@ -100,13 +104,12 @@ void CFeature::PostLoad()
 	if (def->drawType == DRAWTYPE_3DO) {
 		model = def->LoadModel(team);
 		height = model->height;
-		def->radius = model->radius;
-		SetRadius(def->radius);
+		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
 	}
 	else if (def->drawType == DRAWTYPE_TREE){
-		midPos = pos + (UpVector * def->radius);
-		height = 2 * def->radius;
+		midPos = pos + (UpVector * TREE_RADIUS);
+		height = 2 * TREE_RADIUS;
 	}
 	else {
 		midPos = pos;
@@ -136,7 +139,7 @@ void CFeature::ChangeTeam(int newTeam)
 }
 
 
-void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _heading,
+void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
                           int facing, int _team, std::string fromUnit)
 {
 	pos = _pos;
@@ -157,20 +160,20 @@ void CFeature::Initialize(const float3& _pos, FeatureDef* _def, short int _headi
 	ysize    = def->ysize;
 	mass     = def->mass;
 	noSelect = def->noSelect;
-	SetRadius(def->radius);
 
 	if (def->drawType == DRAWTYPE_3DO) {
 		model = def->LoadModel(team);
 		height = model->height;
-		def->radius = model->radius;
-		SetRadius(def->radius);
+		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
 	}
 	else if (def->drawType == DRAWTYPE_TREE){
-		midPos = pos + (UpVector * def->radius);
-		height = 2 * def->radius;
+		SetRadius(TREE_RADIUS);
+		midPos = pos + (UpVector * TREE_RADIUS);
+		height = 2 * TREE_RADIUS;
 	}
 	else {
+		SetRadius(0.0f);
 		midPos = pos;
 	}
 
@@ -387,7 +390,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	if (def->drawType == DRAWTYPE_3DO) {
 		midPos = pos + model->relMidPos;
 	} else if (def->drawType == DRAWTYPE_TREE){
-		midPos = pos + (UpVector * def->radius);
+		midPos = pos + (UpVector * TREE_RADIUS);
 	} else {
 		midPos = pos;
 	}

@@ -91,7 +91,7 @@ public:
 	virtual void SendTextMsg(const char* text,int priority) = 0;
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
-	virtual bool PosInCamera(float3 pos, float radius) = 0;	// checks if pos is within view of the current camera, using radius as a margin	
+	virtual bool PosInCamera(float3 pos, float radius) = 0;	// checks if pos is within view of the current camera, using radius as a margin
 
 	//get the current game time, there is 30 frames per second at normal speed
 	virtual int GetCurrentFrame() = 0;
@@ -127,7 +127,7 @@ public:
 	virtual float GetUnitPower(int unitid) = 0;				//sort of the measure of the units overall power
 	virtual float GetUnitExperience(int unitid) = 0;	//how experienced the unit is (0.0f-1.0f)
 	virtual float GetUnitMaxRange(int unitid) = 0;		//the furthest any weapon of the unit can fire
-	virtual bool IsUnitActivated (int unitid) = 0; 
+	virtual bool IsUnitActivated (int unitid) = 0;
 	virtual bool UnitBeingBuilt(int unitid) = 0;			//returns true if the unit is currently being built
 	virtual const UnitDef* GetUnitDef(int unitid) = 0;	//this returns the units unitdef struct from which you can read all the statistics of the unit, dont try to change any values in it, dont use this if you dont have to risk of changes in it
 	virtual float3 GetUnitPos(int unitid) = 0;
@@ -228,24 +228,24 @@ public:
 	virtual bool ReadFile (const char *name, void *buffer,int bufferLen)=0;// returns false when file doesn't exist or buffer is too small
 
 	// added by alik
-	virtual int GetSelectedUnits(int *units)=0; 
+	virtual int GetSelectedUnits(int *units)=0;
 	virtual float3 GetMousePos()=0;
 	virtual int GetMapPoints(PointMarker *pm, int maxPoints)=0;
 	virtual int GetMapLines(LineMarker *lm, int maxLines)=0;
 
 	virtual float GetMetal() = 0;				//stored metal for team
-	virtual float GetMetalIncome() = 0;				
-	virtual float GetMetalUsage() = 0;				
+	virtual float GetMetalIncome() = 0;
+	virtual float GetMetalUsage() = 0;
 	virtual float GetMetalStorage() = 0;				//metal storage for team
 
 	virtual float GetEnergy() = 0;				//stored energy for team
-	virtual float GetEnergyIncome() = 0;			
-	virtual float GetEnergyUsage() = 0;				
+	virtual float GetEnergyIncome() = 0;
+	virtual float GetEnergyUsage() = 0;
 	virtual float GetEnergyStorage() = 0;				//energy storage for team
 
 	virtual int GetFeatures (int *features, int max) = 0;
 	virtual int GetFeatures (int *features, int max, const float3& pos, float radius) = 0;
-	virtual FeatureDef* GetFeatureDef (int feature) = 0;
+	virtual const FeatureDef* GetFeatureDef (int feature) = 0;
 	virtual float GetFeatureHealth (int feature) = 0;
 	virtual float GetFeatureReclaimLeft (int feature) = 0;
 	virtual float3 GetFeaturePos (int feature) = 0;

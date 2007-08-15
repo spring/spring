@@ -40,8 +40,8 @@ public:
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
-	FeatureDef* GetFeatureDef(const std::string name);
-	FeatureDef* GetFeatureDefByID(int id);
+	const FeatureDef* GetFeatureDef(const std::string name);
+	const FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
@@ -51,8 +51,8 @@ public:
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
 
 	TdfParser wreckParser;
-	std::map<std::string, FeatureDef*> featureDefs;
-	std::vector<FeatureDef*> featureDefsVector;
+	std::map<std::string, const FeatureDef*> featureDefs;
+	std::vector<const FeatureDef*> featureDefsVector;
 
 	int nextFreeID;
 	std::list<int> freeIDs;

@@ -36,7 +36,6 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(id),
 		CR_MEMBER(energy),
 		CR_MEMBER(maxHealth),
-		CR_MEMBER(radius),
 		CR_MEMBER(mass),
 		CR_MEMBER(upright),
 		CR_MEMBER(drawType),
@@ -110,7 +109,7 @@ CFeatureHandler::~CFeatureHandler()
 	activeFeatures.clear();
 
 	while(!featureDefs.empty()){
-		std::map<std::string,FeatureDef*>::iterator fi=featureDefs.begin();
+		std::map<std::string, const FeatureDef*>::iterator fi=featureDefs.begin();
 		delete fi->second;
 		featureDefs.erase(fi);
 	}
@@ -135,7 +134,7 @@ void CFeatureHandler::PostLoad()
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 {
-	std::map<std::string,FeatureDef*>::const_iterator it = featureDefs.find(name);
+	std::map<std::string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
 
 	if (it != featureDefs.end()) {
 		featureDefsVector[it->second->id] = fd;
@@ -152,7 +151,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	ASSERT_SYNCED_MODE;
 	if(name.empty())
 		return 0;
-	FeatureDef* fd=GetFeatureDef(name);
+	const FeatureDef* fd=GetFeatureDef(name);
 
 	if(!fd)
 		return 0;
@@ -349,7 +348,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->energy=250;
 			fd->metal=0;
 			fd->maxHealth=5;
-			fd->radius=20;
 			fd->xsize=2;
 			fd->ysize=2;
 			fd->myName=name;
@@ -368,7 +366,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->energy=0;
 			fd->metal=0;
 			fd->maxHealth=0;
-			fd->radius=0;
 			fd->xsize=0;
 			fd->ysize=0;
 			fd->myName=name;
@@ -388,7 +385,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 		for(int a=0;a<numFeatures;++a){
 			string name = StringToLower(readmap->GetFeatureType (mfi[a].featureType));
-			std::map<std::string,FeatureDef*>::iterator def = featureDefs.find(name);
+			std::map<std::string, const FeatureDef*>::iterator def = featureDefs.find(name);
 
 			if (def == featureDefs.end()){
 				logOutput.Print("Unknown feature named '%s'", name.c_str());
@@ -463,9 +460,9 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 {
 	CFeatureHandler::DrawQuad* dq=&(*drawQuads)[y*drawQuadsX+x];
 
-	for(CFeatureSet::iterator fi=dq->features.begin();fi!=dq->features.end();++fi){
-		CFeature* f=(*fi);
-		FeatureDef* def=f->def;
+	for (CFeatureSet::iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
+		CFeature* f = (*fi);
+		const FeatureDef* def = f->def;
 
 		if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam ||
 		    loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectatingFullView)
@@ -541,10 +538,10 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 }
 
 
-FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
+const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 {
 	const string name = StringToLower(mixedCase);
-	std::map<std::string,FeatureDef*>::iterator fi=featureDefs.find(name);
+	std::map<std::string, const FeatureDef*>::iterator fi=featureDefs.find(name);
 
 	if (fi == featureDefs.end()) {
 		if (!wreckParser.SectionExist(name)) {
@@ -574,7 +571,6 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		if(!fd->modelname.empty()){
 			fd->modelname=string("objects3d/")+fd->modelname;
 		}
-		fd->radius=0;
 		fd->collisionSphereScale=atof(wreckParser.SGetValueDef("1",name+"\\collisionspherescale").c_str());
 		float3 cso = ZeroVector;
 		std::string strCSOffset = wreckParser.SGetValueDef("0.0 0.0 0.0",name+"\\CollisionSphereOffset").c_str();
@@ -608,7 +604,7 @@ FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 }
 
 
-FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
+const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 {
 	if ((id < 0) || (id >= (int) featureDefsVector.size())) {
 		return NULL;
@@ -619,12 +615,12 @@ FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 S3DOModel* FeatureDef::LoadModel(int team) const
 {
-		if (!useCSOffset) {
-			return modelParser->Load3DO(modelname.c_str(),
-			                            collisionSphereScale, team);
-		} else {
-			return modelParser->Load3DO(modelname.c_str(),
-			                            collisionSphereScale, team,
-			                            collisionSphereOffset);
-		}
+	if (!useCSOffset) {
+		return modelParser->Load3DO(modelname.c_str(),
+		                            collisionSphereScale, team);
+	} else {
+		return modelParser->Load3DO(modelname.c_str(),
+		                            collisionSphereScale, team,
+		                            collisionSphereOffset);
+	}
 }
