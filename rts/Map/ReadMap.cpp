@@ -50,17 +50,23 @@ void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
 
 std::string CReadMap::GetTDFName(const std::string& mapname)
 {
+	if (mapname.length() < 3)
+		throw std::runtime_error("CReadMap::GetTDFName(): mapname '" + mapname + "' too short");
+
 	string extension = mapname.substr(mapname.length()-3);
 	if (extension == "smf")
 		return string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
 	else if(extension == "sm3")
 		return string("maps/")+mapname;
 	else
-		throw std::runtime_error("GetTDFName: Unknown extension: " + extension);
+		throw std::runtime_error("CReadMap::GetTDFName(): Unknown extension: " + extension);
 }
 
 CReadMap* CReadMap::LoadMap (const std::string& mapname)
 {
+	if (mapname.length() < 3)
+		throw std::runtime_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
+
 	string extension = mapname.substr(mapname.length()-3);
 
 	CReadMap *rm = 0;
