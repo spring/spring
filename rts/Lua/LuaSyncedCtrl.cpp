@@ -843,8 +843,8 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 	for (int a = 0; a < 4; a++, arg++) {
 		if (lua_istable(L, arg)) {
 			int x, z;
-			lua_rawgeti(L, -1, 1); x = (int)luaL_checknumber(L, -1); lua_pop(L, 1); 
-			lua_rawgeti(L, -1, 2); z = (int)luaL_checknumber(L, -1); lua_pop(L, 1); 
+			lua_rawgeti(L, -1, 1); x = (int)luaL_checknumber(L, -1); lua_pop(L, 1);
+			lua_rawgeti(L, -1, 2); z = (int)luaL_checknumber(L, -1); lua_pop(L, 1);
 			p[a] = PACKXZ(x, z);
 		}
 		else {
@@ -1535,8 +1535,8 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		unit->ForcedMove(pos);
 		return 0;
 	}
-	
-	float x, y, z;	
+
+	float x, y, z;
 	x = (float)lua_tonumber(L, 2);
 	z = (float)lua_tonumber(L, 3);
 	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
@@ -1545,7 +1545,7 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		y = ground->GetHeight2(x, z);
 	}
 	unit->ForcedMove(float3(x, y, z));
-	
+
 	return 0;
 }
 
@@ -1752,7 +1752,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		luaL_error(L, "Incorrect arguments to CreateFeature()");
 	}
 	const string defName = lua_tostring(L, 1);
-	FeatureDef* featureDef = featureHandler->GetFeatureDef(defName);
+	const FeatureDef* featureDef = featureHandler->GetFeatureDef(defName);
 	if (featureDef == NULL) {
 		return 0; // do not error  (featureDefs are dynamic)
 	}

@@ -1961,7 +1961,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	for (int team = startTeam; team <= endTeam; team++) {
 		const CUnitSet& units = gs->Team(team)->units;
 		CUnitSet::const_iterator it;
-		
+
 		if (allegiance >= 0) {
 			if (allegiance == team) {
 				if (IsAlliedTeam(allegiance)) {
@@ -3204,8 +3204,8 @@ int LuaSyncedRead::GetFeatureList(lua_State* L)
 		}
 		// push loaded feature names with their IDs
 		// (this may overwrite some external entries)
-		const map<string, FeatureDef*>& defs = featureHandler->featureDefs;
-		map<string, FeatureDef*>::const_iterator it;
+		const map<string, const FeatureDef*>& defs = featureHandler->featureDefs;
+		map<string, const FeatureDef*>::const_iterator it;
 		for (it = defs.begin(); it != defs.end(); ++it) {
 			LuaPushNamedNumber(L, it->first, it->second->id);
 		}
@@ -3705,7 +3705,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	for (int m = 0; m < 16; m++) {
 		lua_pushnumber(L, mat.m[m]);
 	}
-	return 16;	
+	return 16;
 }
 
 

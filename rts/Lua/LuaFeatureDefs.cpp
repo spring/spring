@@ -96,7 +96,7 @@ static void PushFeatureDef(lua_State* L, const FeatureDef* fd, int index)
 			HSTR_PUSH(L, "__index");
 			lua_pushlightuserdata(L, (void*)fd);
 			lua_pushcclosure(L, FeatureDefIndex, 1);
-			lua_rawset(L, -3); // closure 
+			lua_rawset(L, -3); // closure
 
 			HSTR_PUSH(L, "__newindex");
 			lua_pushlightuserdata(L, (void*)fd);
@@ -154,7 +154,7 @@ static int FeatureDefTableIndex(lua_State* L)
 		return 0; // featureDef does not exist
 	}
 
-	// create a new table and return it	
+	// create a new table and return it
 	PushFeatureDef(L, fd, 1);
 	lua_rawgeti(L, 1, fd->id);
 	return 1;
@@ -179,7 +179,7 @@ static int FeatureDefTableMetatable(lua_State* L)
 
 static int FeatureDefIndex(lua_State* L)
 {
-	// not a default value	
+	// not a default value
 	if (!lua_isstring(L, 2)) {
 		lua_rawget(L, 1);
 		return 1;
@@ -188,7 +188,7 @@ static int FeatureDefIndex(lua_State* L)
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
 
-	// not a default value	
+	// not a default value
 	if (paramMap.find(name) == paramMap.end()) {
 	  lua_rawget(L, 1);
 	  return 1;
@@ -240,7 +240,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 	const char* name = lua_tostring(L, 2);
 	ParamMap::const_iterator it = paramMap.find(name);
-	
+
 	// not a default value, set it
 	if (paramMap.find(name) == paramMap.end()) {
 		lua_rawset(L, 1);
@@ -286,7 +286,7 @@ static int FeatureDefNewIndex(lua_State* L)
 			luaL_error(L, "ERROR_TYPE in FeatureDefs __newindex");
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -335,7 +335,7 @@ static int Next(lua_State* L)
 			}
 			// start the user parameters,
 			// remove the internal key and push a nil
-			lua_settop(L, 1); 
+			lua_settop(L, 1);
 			lua_pushnil(L);
 		}
 	}
@@ -398,15 +398,15 @@ static int FeatureDefToID(lua_State* L, const void* data)
 
 static bool InitParamMap()
 {
-	paramMap["next"]  = DataElement(READONLY_TYPE); 
-	paramMap["pairs"] = DataElement(READONLY_TYPE); 
+	paramMap["next"]  = DataElement(READONLY_TYPE);
+	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy FeatureDef for address lookups
 	const FeatureDef fd;
 	const char* start = ADDRESS(fd);
-	
+
 	ADD_FUNCTION("drawTypeString",  fd.drawType, DrawTypeString);
-  
+
 	ADD_INT("id", fd.id);
 
 	ADD_STRING("name",    fd.myName);
@@ -416,12 +416,11 @@ static bool InitParamMap()
 	ADD_FLOAT("energy",    fd.energy);
 	ADD_FLOAT("maxHealth", fd.maxHealth);
 
-	ADD_FLOAT("radius", fd.radius);
 	ADD_FLOAT("mass", fd.mass);
 
 	ADD_INT("xsize", fd.xsize);
 	ADD_INT("ysize", fd.ysize);
-	
+
 	ADD_FLOAT("hitSphereScale",    fd.collisionSphereScale);
 	ADD_FLOAT("hitSphereOffsetX",  fd.collisionSphereOffset.x);
 	ADD_FLOAT("hitSphereOffsetY",  fd.collisionSphereOffset.y);

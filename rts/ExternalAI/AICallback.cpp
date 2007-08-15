@@ -990,7 +990,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 	return n;
 }
 
-FeatureDef* CAICallback::GetFeatureDef (int feature)
+const FeatureDef* CAICallback::GetFeatureDef (int feature)
 {
 	verify ();
 

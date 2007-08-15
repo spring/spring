@@ -69,9 +69,9 @@ namespace luafunctions
 
 	CObject_pointer<CFeature>* FeatureLoaderLoadFeature( string name, float3 pos, int team )
 	{
-		FeatureDef *def = featureHandler->GetFeatureDef(name);
+		const FeatureDef* def = featureHandler->GetFeatureDef(name);
 		CFeature* feature = SAFE_NEW CFeature();
-		feature->Initialize( pos,def,0, 0, team,"" );
+		feature->Initialize(pos, def, 0, 0, team, "");
 		return SAFE_NEW CObject_pointer<CFeature>(feature);
 	}
 

@@ -23,7 +23,7 @@ public:
 	~CFeature();
 
 	/** Pos of quad must not change after this. */
-	void Initialize(const float3& pos, FeatureDef* def, short int heading, int facing, int allyteam, std::string fromUnit);
+	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing, int allyteam, std::string fromUnit);
 	/** Negative amount = reclaim
 	    @return true if reclaimed */
 	bool AddBuildPower(float amount, CUnit* builder);
@@ -63,7 +63,7 @@ public:
 	int tempNum;
 	int lastReclaim;
 
-	FeatureDef* def;
+	const FeatureDef* def;
 	std::string defName;
 
 	CMatrix44f transMatrix;
