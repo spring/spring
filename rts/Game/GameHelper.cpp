@@ -313,11 +313,14 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				// The argument to sqrt became negative (3.5f*10^-7) for some reason...
 				// so tempstoring the value
 				const float tmp = rad * rad - closeVect.SqLength();
-				if ((tmp > 0.0f) && (length > (closeLength + sqrt(tmp)))){
-					//note that we take the length to the backside of the units,
-					// this is so you can select stuff inside factories
-					length = closeLength + sqrt(tmp);
-					hit = unit;
+				if (tmp > 0.0f) {
+					const float sqrttmp = sqrt(tmp);
+					if (length > (closeLength + sqrttmp)){
+						//note that we take the length to the backside of the units,
+						// this is so you can select stuff inside factories
+						length = closeLength + sqrttmp;
+						hit = unit;
+					}
 				}
 			}
 		}

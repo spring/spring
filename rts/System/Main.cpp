@@ -680,12 +680,12 @@ void SpringApp::ParseCmdLine()
 	if (cmdline->result("name", name)) {
 		configHandler.SetString("name", name);
 	}
-	
+
 	int autohost;
 	if (cmdline->result("autohost", autohost)) {
 		configHandler.SetInt("Autohost", autohost);
 	}
-	
+
 	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
 	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
 }
@@ -733,11 +733,18 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 
 	if (!command.empty()) {
-		if (command.rfind("sdf") == command.size()-3)
+		if (command[0] == '"' && *command.rbegin() == '"' && command.length() > 2)
+			command = command.substr(1, command.length()-2);
+		if (command.rfind("sdf") == command.size()-3) {
 			demofile = command;
-		else if (command.rfind("ssf") == command.size()-3)
+			logOutput << "Using demofile " << demofile.c_str() << "\n";
+		} else if (command.rfind("ssf") == command.size()-3) {
 			savefile = command;
-		else startscript = command;
+			logOutput << "Using savefile " << savefile.c_str() << "\n";
+		} else {
+			startscript = command;
+			logOutput << "Using script " << startscript.c_str() << "\n";
+		}
 	}
 #else
 	for (int i = 1; i < argc; i++)
@@ -747,8 +754,13 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 			int idx = command.rfind("sdf");
 			if (idx == command.size()-3) {
 				demofile = command;
+				logOutput << "Using demofile " << demofile.c_str() << "\n";
+			} else if (command.rfind("ssf") == command.size()-3) {
+				savefile = command;
+				logOutput << "Using savefile " << savefile.c_str() << "\n";
 			} else {
 				startscript = command;
+				logOutput << "Using script " << startscript.c_str() << "\n";
 			}
 		}
 #endif
