@@ -47,7 +47,9 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 
 	if (!demoName.empty())
 	{
+		logOutput << "Initializing demo server...\n";
 		serverNet->InitServer(port,demoName);
+		net->InitLocalClient(gameSetup?gameSetup->myPlayer:0);
 	}
 	else // no demo, so set map and mod to send it to clients
 	{
@@ -61,7 +63,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	serverNet->ServerInitLocalClient( gameSetup ? gameSetup->myPlayer : 0 );
 
 	lastTick = SDL_GetTicks();
-	
+
 	int autohostport = configHandler.GetInt("Autohost", 0);
 	if (autohostport > 0)
 	{
@@ -276,11 +278,11 @@ bool CGameServer::Update()
 		}
 	}
 	serverNet->Update();
-	
+
 	if (hostif)
 	{
 		std::string msg = hostif->GetChatMessage();
-		
+
 		if (!msg.empty())
 			hostif->SendPlayerChat(gameSetup ? gameSetup->myPlayer : 0, msg);
 	}
@@ -394,7 +396,7 @@ bool CGameServer::ServerReadNet()
 				}
 				break;
 			}
-			
+
 			case NETMSG_PLAYERNAME: {
 				unsigned char playerNum = inbuf[inbufpos+2];
 				if(playerNum!=a && a!=0){
