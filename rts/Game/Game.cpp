@@ -2050,7 +2050,9 @@ bool CGame::Draw()
 
 		}
 
-		luaCallIns.DrawScreen();
+		if (!hideInterface) {
+			luaCallIns.DrawScreen();
+		}
 	}
 	END_TIME_PROFILE("Interface draw");
 
@@ -2109,7 +2111,7 @@ bool CGame::Draw()
 		const float xScale = 0.015f;
 		const float yScale = 0.020f;
 		const float tWidth = font->CalcTextWidth(buf) * xScale;
-		glTranslatef(0.99f - tWidth, 0.01f, 1.0f);
+		glTranslatef(0.99f - tWidth, 0.94f, 1.0f);
 		glScalef(xScale, yScale, 1.0f);
 		glColor4f(1,1,1,1);
 		if (!outlineFont.IsEnabled()) {
@@ -2129,7 +2131,7 @@ bool CGame::Draw()
 		const float xScale = 0.015f;
 		const float yScale = 0.020f;
 		const float tWidth = font->CalcTextWidth(buf) * xScale;
-		glTranslatef(0.99f - tWidth, 0.03f, 1.0f);
+		glTranslatef(0.99f - tWidth, 0.92f, 1.0f);
 		glScalef(xScale, yScale, 1.0f);
 		glColor4f(1.0f, 1.0f, 0.25f, 1.0f);
 		if (!outlineFont.IsEnabled()) {
@@ -3591,20 +3593,23 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
 			// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits)
+			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
 				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			}
 
 			for (int a = 1; a <= numRequestedUnits; ++a) {
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const CUnit* unit = unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name, pos2, team, false, 0, NULL);
+				const CUnit* unit = unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,
+				                                        pos2, team, false, 0, NULL);
 
 				if (unit) {
 					unitLoader.FlattenGround(unit);
 				}
 			}
-		} else if (((s.rfind(" ")) != string::npos) && ((s.length() - s.rfind(" ") - 1) > 0)) {
+		}
+		else if (((s.rfind(" ")) != string::npos) && ((s.length() - s.rfind(" ") - 1) > 0)) {
 			// player entered ".give <unitname>" or ".give <amount> <unitname>"
 			string unitName = s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
 			string tempUnitName = s.substr(s.find(" "), s.rfind(" ") + 1 - s.find(" "));
@@ -3626,8 +3631,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					numRequestedUnits = atoi(tempUnitName.c_str());
 
 					// make sure team unit-limit not exceeded
-					if ((currentNumUnits + numRequestedUnits) > uh->maxUnits)
+					if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
 						numRequestedUnits = uh->maxUnits - currentNumUnits;
+					}
 				}
 
 				UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
@@ -4117,7 +4123,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			}
 		}
 	}
-	logOutput.Print("Update cob script for %i units", count);
+	logOutput.Print("Reloaded cob script for %i units", count);
 }
 
 
