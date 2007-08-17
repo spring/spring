@@ -193,9 +193,11 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 }
 
 
-float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit, bool ignoreAllies)
+float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit, int collisionFlags)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
+	const bool ignoreAllies = collisionFlags & COLLISION_NOFRIENDLY;
+	const bool ignoreFeatures = collisionFlags & COLLISION_NOFEATURE;
 
 //	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)
@@ -204,22 +206,24 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 
 	int quads[1000];
 	int* endQuad = quads;
-	qf->GetQuadsOnRay(start,dir,length,endQuad);
+	if (!ignoreFeatures) {
+		qf->GetQuadsOnRay(start,dir,length,endQuad);
 
-	for(int* qi=quads;qi!=endQuad;++qi){
-		CQuadField::Quad& quad = qf->baseQuads[*qi];
-		for(list<CFeature*>::iterator ui=quad.features.begin();ui!=quad.features.end();++ui){
-			if(!(*ui)->blocking)
-				continue;
-			float3 dif=(*ui)->midPos-start;
-			float closeLength=dif.dot(dir);
-			if(closeLength<0)
-				continue;
-			if(closeLength>length)
-				continue;
-			float3 closeVect=dif-dir*closeLength;
-			if(closeVect.SqLength() < (*ui)->sqRadius){
-				length=closeLength;
+		for(int* qi=quads;qi!=endQuad;++qi){
+			CQuadField::Quad& quad = qf->baseQuads[*qi];
+			for(list<CFeature*>::iterator ui=quad.features.begin();ui!=quad.features.end();++ui){
+				if(!(*ui)->blocking)
+					continue;
+				float3 dif=(*ui)->midPos-start;
+				float closeLength=dif.dot(dir);
+				if(closeLength<0)
+					continue;
+				if(closeLength>length)
+					continue;
+				float3 closeVect=dif-dir*closeLength;
+				if(closeVect.SqLength() < (*ui)->sqRadius){
+					length=closeLength;
+				}
 			}
 		}
 	}
