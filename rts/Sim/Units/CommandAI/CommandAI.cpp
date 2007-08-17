@@ -359,17 +359,25 @@ bool CCommandAI::AllowedCommand(const Command& c)
 	}
 
 	const UnitDef* ud = owner->unitDef;
+	int maxHeightDiff = 200;
 
 	switch (c.id) {
 		case CMD_ATTACK:
+			maxHeightDiff = 10;
 		case CMD_DGUN: {
-			if (!ud->canAttack || !isAttackCapable()) return false;
-			// check if attack ground is really attack ground
-			if (c.params.size() == 3
-					&& fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > 10)
+			if (!ud->canAttack || !isAttackCapable())
 				return false;
+
+			if (c.params.size() == 3) {
+				// check if attack ground is really attack ground
+				if (fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) >
+					maxHeightDiff) {
+					return false;
+				}
+			}
 			break;
 		}
+
 		case CMD_MOVE:      if (!ud->canmove)       return false; break;
 		case CMD_FIGHT:     if (!ud->canFight)      return false; break;
 		case CMD_GUARD:     if (!ud->canGuard)      return false; break;
@@ -379,15 +387,15 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		case CMD_RESTORE:   if (!ud->canRestore)    return false; break;
 		case CMD_RESURRECT: if (!ud->canResurrect)  return false; break;
 		case CMD_REPAIR: {
-			if (!ud->canRepair && !ud->canAssist)     return false; break;
+			if (!ud->canRepair && !ud->canAssist)   return false; break;
 		}
 	}
 
-	if((c.id == CMD_RECLAIM) && (c.params.size() == 1)){
-		const int unitID = (int)c.params[0];
-		if(unitID < MAX_UNITS){ // not a feature
+	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1)) {
+		const int unitID = (int) c.params[0];
+		if (unitID < MAX_UNITS) { // not a feature
 			CUnit* unit = uh->units[unitID];
-			if(unit && !unit->unitDef->reclaimable)
+			if (unit && !unit->unitDef->reclaimable)
 				return false;
 		} else {
 			CFeatureSet::const_iterator f = featureHandler->activeFeatures.find(unitID - MAX_UNITS);
@@ -396,8 +404,8 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		}
 	}
 
-	if((c.id == CMD_REPAIR) && (c.params.size() == 1)){
-		CUnit* unit = uh->units[(int)c.params[0]];
+	if ((c.id == CMD_REPAIR) && (c.params.size() == 1)) {
+		CUnit* unit = uh->units[(int) c.params[0]];
 		if (unit && ((unit->beingBuilt && !ud->canAssist) || (!unit->beingBuilt && !ud->canRepair)))
 			return false;
 	}
@@ -408,7 +416,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		return false;
 	if (c.id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat))
 		return false;
-	if (c.id == CMD_TRAJECTORY && (c.params.empty() || ud->highTrajectoryType<2))
+	if (c.id == CMD_TRAJECTORY && (c.params.empty() || ud->highTrajectoryType < 2))
 		return false;
 	if (c.id == CMD_ONOFF && (c.params.empty() || !ud->onoffable || owner->beingBuilt))
 		return false;
