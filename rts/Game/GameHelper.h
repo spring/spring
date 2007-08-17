@@ -37,7 +37,7 @@ public:
 	CUnit* GetClosestFriendlyUnit(const float3& pos,float radius,int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos,float radius,int searchAllyteam);
 	void GenerateTargets(CWeapon *attacker, CUnit* lastTarget,std::map<float,CUnit*> &targets);
-	float TraceRay(const float3& start,const float3& dir,float length,float power,CUnit* owner, CUnit*& hit,bool ignoreAllies=false);
+	float TraceRay(const float3& start,const float3& dir,float length,float power,CUnit* owner, CUnit*& hit,int collisionFlags=0);
 	float GuiTraceRay(const float3& start,const float3& dir,float length, CUnit*& hit,float sizeMod,bool useRadar,CUnit* exclude=0);
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length,CFeature*& feature);
 	void Explosion(float3 pos,const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner, CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir, int weaponId);

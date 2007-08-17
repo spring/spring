@@ -174,7 +174,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		tryAgain=false;
 		hit=0;
 		float length=helper->TraceRay(curPos, dir, maxLength-curLength,
-				damages[0], owner, hit, collisionFlags&COLLISION_NOFRIENDLY);
+				damages[0], owner, hit, collisionFlags);
 
 		if(hit && hit->allyteam == owner->allyteam && sweepFire){	//never damage friendlies with sweepfire
 			lastFireFrame = 0;
