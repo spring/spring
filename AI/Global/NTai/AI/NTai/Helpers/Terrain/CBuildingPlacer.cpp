@@ -1,5 +1,5 @@
 #include "../../Core/helper.h"
-ThreadPool* pool;
+ThreadPool* pool=0;
 extern ThreadPool* pool;
 CBuildingPlacer::CBuildingPlacer(Global* GL){
     G=GL;
@@ -13,7 +13,9 @@ CBuildingPlacer::CBuildingPlacer(Global* GL){
     //boost::thread thread2(c2);
 //    boost::thread thrd1(workerthread);//workerthread.operator());
     //workerthread = &t;
-    pool= new ThreadPool(10,500);
+    if(pool ==0){
+        pool= new ThreadPool(8,200);
+    }
 }
 
 CBuildingPlacer::~CBuildingPlacer(){
@@ -100,7 +102,7 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     highheightmap.SetMinimumValue(0);
     highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);*/
 
-    blockingmap.Initialize(mapdim, float3(16, 0, 16), true);
+    blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
     blockingmap.SetDefaultGridValue(0);
     blockingmap.SetMinimumValue(1);
 
@@ -677,8 +679,8 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
 
 void CBuildingPlacer::Block(float3 pos, const UnitDef* ud){
     int r = G->Manufacturer->GetSpacing(ud);
-    //pos.x += (ud->xsize*2);
-    //pos.z += (ud->ysize*2);
+    //pos.x -= (ud->xsize);//*4);
+    //pos.z -= (ud->ysize);//*4);
     Block(pos, (float)r);
 }
 
@@ -692,8 +694,8 @@ void CBuildingPlacer::Block(float3 pos, float radius){
 
 void CBuildingPlacer::UnBlock(float3 pos, const UnitDef* ud){
     int r = G->Manufacturer->GetSpacing(ud);
-    //pos.x -= (ud->xsize*2);
-    //pos.z -= (ud->ysize*2);
+    //pos.x -= (ud->xsize);//*4);
+    //pos.z -= (ud->ysize);//*4);
     UnBlock(pos, (float)r);
 }
 
