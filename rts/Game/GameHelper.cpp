@@ -206,9 +206,9 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 
 	int quads[1000];
 	int* endQuad = quads;
-	if (!ignoreFeatures) {
-		qf->GetQuadsOnRay(start,dir,length,endQuad);
+	qf->GetQuadsOnRay(start,dir,length,endQuad);
 
+	if (!ignoreFeatures) {
 		for(int* qi=quads;qi!=endQuad;++qi){
 			CQuadField::Quad& quad = qf->baseQuads[*qi];
 			for(list<CFeature*>::iterator ui=quad.features.begin();ui!=quad.features.end();++ui){
