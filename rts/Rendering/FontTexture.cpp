@@ -205,6 +205,8 @@ bool FontTexture::Execute()
     return false;
   }
 
+  ilDisable(IL_ORIGIN_SET);
+
   if (debugLevel >= 1) {
     printf("fontfile      = %s\n", inputFile.c_str());
     printf("height        = %i\n", height);
@@ -533,6 +535,7 @@ bool Glyph::SaveSpecs(FILE* f)
   fprintf(f, "}\n");
   return true;
 }
+
 
 bool Glyph::Outline(u32 radius)
 {
