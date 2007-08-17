@@ -360,7 +360,8 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 			if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
 				continue;
 			//Don't unload anything on slopes
-			if(ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
+			if(unitToUnload->unitDef->movedata
+					&& ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 				continue;
 			if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
 				continue;
@@ -381,7 +382,8 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 				if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
 					continue;
 				//Don't unload anything on slopes
-				if(ground->GetSlope(x,y) > unitToUnload->unitDef->movedata->maxSlope)
+				if(unitToUnload->unitDef->movedata
+						&& ground->GetSlope(x,y) > unitToUnload->unitDef->movedata->maxSlope)
 					continue;
 				float3 pos(x,ground->GetApproximateHeight(x,y),y);
 				if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
