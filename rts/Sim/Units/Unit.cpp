@@ -1261,6 +1261,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	const int oldteam = team;
 
 	selectedUnits.RemoveUnit(this);
+	SetGroup(0);
 
 	luaCallIns.UnitTaken(this, newteam);
 	globalAI->UnitTaken(this, oldteam);
