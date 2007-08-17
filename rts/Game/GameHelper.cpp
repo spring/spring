@@ -193,7 +193,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 }
 
 
-float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit)
+float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit, bool ignoreAllies)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
 
@@ -232,6 +232,8 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 
 		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
 			if((*ui)==owner)
+				continue;
+			if(ignoreAllies && (*ui)->allyteam == owner->allyteam)
 				continue;
 			float3 dif=(*ui)->midPos-start;
 			float closeLength=dif.dot(dir);
