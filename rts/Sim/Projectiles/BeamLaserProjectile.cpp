@@ -23,8 +23,8 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos,const float3& endPos,float startAlpha,float endAlpha,const float3& color, const float3& color2,CUnit* owner,float thickness, float corethickness, float flaresize, WeaponDef *weaponDef)
-:	CWeaponProjectile((startPos+endPos)*0.5f,ZeroVector, owner, 0, ZeroVector, weaponDef,0, false), //CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
+CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos, float startAlpha, float endAlpha, const float3& color, const float3& color2, CUnit* owner, float thickness, float corethickness, float flaresize, const WeaponDef* weaponDef)
+:	CWeaponProjectile((startPos+endPos)*0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false), //CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),

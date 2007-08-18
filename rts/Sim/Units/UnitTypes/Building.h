@@ -9,7 +9,7 @@
 
 struct BuildingGroundDecal;
 
-class CBuilding : public CUnit  
+class CBuilding : public CUnit
 {
 public:
 	CR_DECLARE(CBuilding);
@@ -19,7 +19,7 @@ public:
 	void PostLoad();
 
 	void Init(const CUnit* builder);
-	void UnitInit (UnitDef* def, int team, const float3& position);
+	void UnitInit (const UnitDef* def, int team, const float3& position);
 
 	BuildingGroundDecal* buildingDecal;
 };

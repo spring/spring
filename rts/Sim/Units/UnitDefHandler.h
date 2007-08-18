@@ -34,16 +34,16 @@ public:
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
-	UnitDef *GetUnitByName(std::string name);
-	UnitDef *GetUnitByID(int id);
-	unsigned int GetUnitImage(UnitDef *unitdef);
+	const UnitDef* GetUnitByName(std::string name);
+	const UnitDef* GetUnitByID(int id);
+	unsigned int GetUnitImage(const UnitDef *unitdef);
 	bool SaveTechLevels(const std::string& filename, const std::string& modname);
 
 	bool noCost;
 
 protected:
 	TdfParser soundcategory;
-	
+
 	void ParseUnit(std::string file, int id);
 
 	void ParseTAUnit(std::string file, int id);
@@ -51,7 +51,7 @@ protected:
 	void FindTABuildOpt();
 
 	void AssignTechLevel(UnitDef& ud, int level);
-	
+
 	void LoadSounds(TdfParser&, GuiSoundSet&, std::string, int);
 	void LoadSound(TdfParser&, GuiSoundSet&, std::string, int);
 

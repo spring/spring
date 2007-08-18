@@ -29,7 +29,7 @@ struct GuiSoundSet
 
 	// return a random sound index if more than one sound was loaded
 	// (used for unit acknowledgements, could be called for weapons too)
-	int getRandomIdx(void) {
+	int getRandomIdx(void) const {
 		switch (sounds.size()) {
 			case 0:  { return -1; break; }
 			case 1:  { return  0; break; }
@@ -87,7 +87,7 @@ struct UnitDef
 {
 	CR_DECLARE(UnitDef);
 	UnitDef() : valid(false) {}
-	virtual ~UnitDef();
+	~UnitDef();
 	S3DOModel* LoadModel(int team) const;
 
 	bool valid;
@@ -100,7 +100,7 @@ struct UnitDef
 	int imageSizeY;
 	std::string buildpicname;
 
-	UnitDef* decoyDef;
+	const UnitDef* decoyDef;
 
 	int aihint;
 	int techLevel;
@@ -175,7 +175,7 @@ struct UnitDef
 	bool useCSOffset;
 
 	struct UnitDefWeapon {
-		UnitDefWeapon(std::string name,WeaponDef* def,int slavedTo,float3 mainDir,float maxAngleDif,unsigned int badTargetCat,unsigned int onlyTargetCat,float fuelUse)
+		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif, unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
 			: name(name),
 				def(def),
 				slavedTo(slavedTo),
@@ -186,7 +186,7 @@ struct UnitDef
 				fuelUsage(fuelUse) {}
 
 		std::string name;
-		WeaponDef* def;
+		const WeaponDef* def;
 		int slavedTo;
 		float3 mainDir;
 		float maxAngleDif;
@@ -195,8 +195,8 @@ struct UnitDef
 		unsigned int onlyTargetCat;
 	};
 	std::vector<UnitDefWeapon> weapons;
-	WeaponDef* shieldWeaponDef;
-	WeaponDef* stockpileWeaponDef;
+	const WeaponDef* shieldWeaponDef;
+	const WeaponDef* stockpileWeaponDef;
 	float maxWeaponRange;
 
 	std::map<int,std::string> buildOptions;
@@ -255,7 +255,7 @@ struct UnitDef
 	bool hoverAttack;
 	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot
-	bool DontLand () { return dlHoverFactor >= 0.0f; }
+	bool DontLand () const { return dlHoverFactor >= 0.0f; }
 
 	float maxAcc;
 	float maxDec;

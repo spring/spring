@@ -71,7 +71,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 
 	START_TIME_PROFILE("Unit loader");
 
-	UnitDef* ud= unitDefHandler->GetUnitByName(name);
+	const UnitDef* ud= unitDefHandler->GetUnitByName(name);
 	if(!ud) {
 		END_TIME_PROFILE("Unit loader");
 		throw content_error("Couldn't find unittype " +  name);
@@ -322,7 +322,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	return unit;
 }
 
-CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw)
+CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const UnitDef::UnitDefWeapon* udw)
 {
 	CWeapon* weapon;
 
@@ -393,8 +393,6 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->projectileSpeed=weapondef->projectilespeed;
 //	weapon->baseProjectileSpeed=weapondef->projectilespeed/GAME_SPEED;
 
-	weapon->damages = weapondef->damages; //not needed anymore, to be removed
-
 	weapon->areaOfEffect=weapondef->areaOfEffect;
 	weapon->accuracy=weapondef->accuracy;
 	weapon->sprayangle=weapondef->sprayangle;
@@ -405,36 +403,6 @@ CWeapon* CUnitLoader::LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::Uni
 	weapon->metalFireCost=weapondef->metalcost;
 	weapon->energyFireCost=weapondef->energycost;
 
-
-	if (weapondef->firesound.getVolume(0) == -1 || weapondef->soundhit.getVolume(0) == -1) {
-		// no volume (-1) read from weapon definition, set it dynamically here
-		if (weapon->damages[0] > 50) {
-			float soundVolume = sqrt(weapon->damages[0] * 0.5f);
-
-			if (weapondef->type == "LaserCannon")
-				soundVolume *= 0.5f;
-
-			float hitSoundVolume = soundVolume;
-
-			if ((weapondef->type == "MissileLauncher" || weapondef->type == "StarburstLauncher") && soundVolume > 100)
-				soundVolume = 10 * sqrt(soundVolume);
-			if (weapondef->firesound.getVolume(0) == -1)
-				weapondef->firesound.setVolume(0, soundVolume);
-
-			soundVolume = hitSoundVolume;
-
-			if (weapon->areaOfEffect > 8)
-				soundVolume *= 2;
-			if (weapondef->type == "DGun")
-				soundVolume *= 0.15f;
-			if (weapondef->soundhit.getVolume(0) == -1)
-				weapondef->soundhit.setVolume(0, soundVolume);
-		}
-		else {
-			weapondef->soundhit.setVolume(0, 5.0f);
-			weapondef->firesound.setVolume(0, 5.0f);
-		}
-	}
 
 	weapon->fireSoundId = weapondef->firesound.getID(0);
 	weapon->fireSoundVolume = weapondef->firesound.getVolume(0);

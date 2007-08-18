@@ -22,8 +22,8 @@ CR_REG_METADATA(CFlameProjectile,(
 	));
 
 
-CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true),
+CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, const WeaponDef* weaponDef, int ttl)
+: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true),
 	color(color),
 	color2(color2),
 	intensity(intensity),

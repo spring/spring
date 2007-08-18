@@ -271,7 +271,7 @@ void CGlobalAIHandler::GotChatMsg(const char* msg, int player)
 	if(hasAI){
 		for(int a=0;a<gs->activeTeams;++a)
 		{
-			if(ais[a]) 
+			if(ais[a])
 			{
 				try {
 					ais[a]->ai->GotChatMsg(msg,player);
@@ -294,7 +294,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 					ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
 				}
 
-			if(attacker) {			
+			if(attacker) {
 				int a = attacker->team;
 				if(ais[attacker->team] && !gs->Ally(gs->AllyTeam(a),attacked->allyteam) && (ais[a]->cheatevents || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
 					float3 dir=attacker->pos-helper->GetUnitErrorPos(attacked,attacker->allyteam);
@@ -306,7 +306,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 	}
 }
 
-void CGlobalAIHandler::WeaponFired(CUnit* unit,WeaponDef* def)
+void CGlobalAIHandler::WeaponFired(CUnit* unit, const WeaponDef* def)
 {
 	if(ais[unit->team]){
 		try {
@@ -314,7 +314,7 @@ void CGlobalAIHandler::WeaponFired(CUnit* unit,WeaponDef* def)
 			wfe.unit = unit->id;
 			wfe.def = def;
 			ais[unit->team]->ai->HandleEvent(AI_EVENT_WEAPON_FIRED,&wfe);
-		} 
+		}
 		HANDLE_EXCEPTION;
 	}
 }
@@ -348,7 +348,7 @@ void CGlobalAIHandler::UnitTaken (CUnit *unit,int newteam)
 			cte.oldteam = unit->team;
 			cte.unit = unit->id;
 			ais[unit->team]->ai->HandleEvent (AI_EVENT_UNITCAPTURED, &cte);
-		} 
+		}
 		HANDLE_EXCEPTION;
 }
 
@@ -361,7 +361,7 @@ void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Comman
 			pce.player = player;
 			pce.command = c;
 			ais[gs->players[player]->team]->ai->HandleEvent(AI_EVENT_PLAYER_COMMAND,&pce);
-		} 
+		}
 		HANDLE_EXCEPTION;
 	}
 }

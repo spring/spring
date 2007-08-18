@@ -256,7 +256,7 @@ static GLuint ParseUnitTexture(const string& texture)
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return 0;
 	}
-	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -286,10 +286,10 @@ static GLuint ParseUnitTexture(const string& texture)
 static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 {
 	GLuint texID = 0;
-	
+
 	if (image[0] == '%') {
 		texID = ParseUnitTexture(image);
-	}		
+	}
 	else if (image[0] == '#') {
 		// unit build picture
 		char* endPtr;
@@ -298,7 +298,7 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 		if (endPtr == startPtr) {
 			return;
 		}
-		UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 		if (ud == NULL) {
 			return;
 		}
@@ -361,7 +361,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 	if (!lua_istable(L, index)) {
 		return;
 	}
-	
+
 	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isstring(L, -2)) {
@@ -473,7 +473,7 @@ int LuaUnitRendering::GetMaterial(lua_State* L)
 	*matRef = new LuaMatRef;
 
 	**matRef = ParseMaterial(L, __FUNCTION__, 2, matType);
-	
+
 	return 1;
 }
 
@@ -508,7 +508,7 @@ static int material_gc(lua_State* L)
 	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
 
 	delete *matRef;
-	
+
 	return 0;
 }
 
@@ -614,7 +614,7 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 	const int args = lua_gettop(L) - 3;
 	const int lastArg = min(args, lodMat->uniforms.customCount + 3);
 	for (int i = 3; i <= lastArg; i++) {
-		
+
 	}
 	return 0;
 }

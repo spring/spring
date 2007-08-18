@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class CFactory : public CBuilding  
+class CFactory : public CBuilding
 {
 public:
 	CR_DECLARE(CFactory);
@@ -27,10 +27,10 @@ public:
 	float3 CalcBuildPos(int buildPiece=-1); // supply the build piece to speed up
 	int GetBuildPiece();
 
-	void UnitInit (UnitDef* def, int team, const float3& position);
+	void UnitInit (const UnitDef* def, int team, const float3& position);
 
 	float buildSpeed;
-	
+
 	bool quedBuild;						//if we have a unit that we want to start to nanolath when script is ready
 	string nextBuild;
 	CUnit* curBuild;					//unit that we are nanolathing

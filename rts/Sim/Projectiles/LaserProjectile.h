@@ -9,7 +9,7 @@ class CLaserProjectile :
 {
 	CR_DECLARE(CLaserProjectile);
 public:
-	CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color,const float3& color2, float intensity, WeaponDef *weaponDef, int ttl=1000);
+	CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color,const float3& color2, float intensity, const WeaponDef *weaponDef, int ttl=1000);
 	virtual ~CLaserProjectile();
 	void Draw(void);
 	void Update(void);

@@ -270,7 +270,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if (!isEnabled) {
 		return -1;
 	}
-	if (emitter->damages[0] > curPower) {
+	if (emitter->weaponDef->damages[0] > curPower) {
 		return -1;
 	}
 	if (weaponDef->smartShield && gs->AlliedTeams(emitter->owner->team,owner->team)) {
@@ -315,7 +315,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter)
 {
 	if (weaponDef->shieldPower > 0) {
-		curPower -= emitter->damages[0];
+		curPower -= emitter->weaponDef->damages[0];
 	}
 	return weaponDef->shieldRepulser;
 }

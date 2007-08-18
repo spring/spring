@@ -65,7 +65,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 	// sets the wanted speed of this unit to its max speed
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
-		UnitDef* ud = unit->unitDef;
+		const UnitDef* ud = unit->unitDef;
 		Command c;
 		c.id = CMD_SET_WANTED_MAX_SPEED;
 		c.options = options;
@@ -277,7 +277,7 @@ void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
 	for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
 		CUnit* unit=uh->units[*ui];
 		if(unit){
-			UnitDef* ud=unit->unitDef;
+			const UnitDef* ud = unit->unitDef;
 			sumLength += (int)((ud->xsize + ud->ysize)/2);
 
 			float3 unitPos;
@@ -370,7 +370,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 	for(vector<int>::const_iterator ui = netUnits.begin(); ui != netUnits.end(); ++ui){
 		CUnit* unit=uh->units[*ui];
 		if(unit){
-			UnitDef* ud=unit->unitDef;
+			const UnitDef* ud = unit->unitDef;
 			float range=unit->maxRange;
 			if(range<1)
 				range=2000;		//give weaponless units a long range to make them go to the back
@@ -393,7 +393,7 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, u
 	int unitSize=16;
 	CUnit* u = uh->units[unit];
 	if (u) {
-		UnitDef* ud=u->unitDef;
+		const UnitDef* ud = u->unitDef;
 		unitSize = (int)((ud->xsize + ud->ysize)/2);
 	}
 	float3 retPos(nextCornerPos.x+unitSize*8*2+addSpace, 0, nextCornerPos.z);

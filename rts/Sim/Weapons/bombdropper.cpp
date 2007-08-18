@@ -121,9 +121,23 @@ void CBombDropper::Init(void)
 	maxAngleDif=-1;
 }
 
+/** See SlowUpdate */
+bool CBombDropper::AttackUnit(CUnit* unit, bool userTarget)
+{
+	if (!userTarget) return false;
+	return CWeapon::AttackUnit(unit, userTarget);
+}
+
+/** See SlowUpdate */
+bool CBombDropper::AttackGround(float3 pos, bool userTarget)
+{
+	if (!userTarget) return false;
+	return CWeapon::AttackGround(pos, userTarget);
+}
+
+/** Make sure it wont try to find targets not targeted by the cai
+(to save cpu mostly) */
 void CBombDropper::SlowUpdate(void)
 {
-	weaponDef->noAutoTarget=true;		//very bad way of making sure it wont try to find targets not targeted by the cai (to save cpu mostly)
-	CWeapon::SlowUpdate();
-	weaponDef->noAutoTarget=false;
+	CWeapon::SlowUpdate(true);
 }

@@ -11,10 +11,10 @@
 using namespace std;
 class CFeature;
 
-class CBuilder : public CUnit  
+class CBuilder : public CUnit
 {
 private:
-	void UnitInit (UnitDef* def, int team, const float3& position);
+	void UnitInit (const UnitDef* def, int team, const float3& position);
 public:
 	CR_DECLARE(CBuilder);
 

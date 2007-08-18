@@ -40,7 +40,7 @@ public:
 	void UnitMoveFailed(CUnit* unit);
 	void UnitTaken(CUnit* unit, int newteam);
 	void UnitGiven(CUnit* unit, int oldteam);
-	void WeaponFired(CUnit* unit,WeaponDef* def);
+	void WeaponFired(CUnit* unit, const WeaponDef* def);
 	void PlayerCommandGiven(std::vector<int>& selectedunits,Command& c,int player);
 	void Load(std::istream *s);
 	void Save(std::ostream *s);

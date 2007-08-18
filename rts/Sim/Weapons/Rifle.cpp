@@ -88,10 +88,10 @@ void CRifle::Fire(void)
 	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 	CUnit* hit;
-	float length=helper->TraceRay(weaponPos,dir,range,damages[0],owner,hit,collisionFlags);
-	if(hit){
-		hit->DoDamage(damages,owner,ZeroVector, weaponDef->id);
-		SAFE_NEW CHeatCloudProjectile(weaponPos+dir*length,hit->speed*0.9f,30,1,owner);
+	float length = helper->TraceRay(weaponPos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
+	if (hit) {
+		hit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
+		SAFE_NEW CHeatCloudProjectile(weaponPos + dir * length, hit->speed * 0.9f, 30, 1, owner);
 	}
 	SAFE_NEW CTracerProjectile(weaponPos,dir*projectileSpeed,length,owner);
 	SAFE_NEW CSmokeProjectile(weaponPos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);

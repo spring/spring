@@ -282,7 +282,7 @@ void CUnit::SetEnergyStorage(float newStorage)
 	gs->Team(team)->energyStorage+=energyStorage;
 }
 
-void CUnit::UnitInit (UnitDef* def, int Team, const float3& position)
+void CUnit::UnitInit (const UnitDef* def, int Team, const float3& position)
 {
 	pos = position;
 	team = Team;
@@ -1749,7 +1749,7 @@ void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
 			exp = unitDef->deathExplosion;
 
 		if (!exp.empty()) {
-			WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,

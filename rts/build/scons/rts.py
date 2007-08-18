@@ -92,6 +92,8 @@ def generate(env):
 		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
+		('profile_generate',  'Set to yes to compile with -fprofile-generate to generate profiling information', False),
+		('profile_use',       'Set to yes to compile with -fprofile-use to use profiling information', False),
 		('cpppath',           'Set path to extra header files', []),
 		('libpath',           'Set path to extra libraries', []),
 		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', '387'),
@@ -144,9 +146,10 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'cpppath', 'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip', 'disable_avi', 'use_tcmalloc', 
-			'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS', 'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 
-			'spring_defines']:
+		for key in ['platform', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
+			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
+			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
+			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -286,6 +289,18 @@ def generate(env):
 		else:
 			print "\ninvalid optimize option, must be one of: yes, true, no, false, 0, 1, 2, 3, s, size."
 			env.Exit(1)
+
+		# Generate profiling information? (for profile directed optimization)
+		bool_opt('profile_generate', False)
+		if env['profile_generate']:
+			print "build will generate profiling information"
+			env.AppendUnique(CCFLAGS=['-fprofile-generate'], LINKFLAGS=['-fprofile-generate'])
+
+		# Use profiling information? (for profile directed optimization)
+		bool_opt('profile_use', False)
+		if env['profile_use']:
+			print "build will use profiling information"
+			env.AppendUnique(CCFLAGS=['-fprofile-use'], LINKFLAGS=['-fprofile-use'])
 
 		# Must come before the '-fvisibility=hidden' code.
 		bool_opt('syncdebug', False)

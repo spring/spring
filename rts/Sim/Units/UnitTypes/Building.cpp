@@ -75,7 +75,7 @@ void CBuilding::PostLoad()
 	}
 }
 
-void CBuilding::UnitInit (UnitDef* def, int team, const float3& position)
+void CBuilding::UnitInit (const UnitDef* def, int team, const float3& position)
 {
 	if(def->levelGround)
 		blockHeightChanges=true;

@@ -13,7 +13,7 @@ class CWeapon;
 using namespace std;
 struct GuiSoundSet;
 
-class CUnitLoader  
+class CUnitLoader
 {
 public:
 	CUnitLoader();
@@ -23,7 +23,7 @@ public:
 	                bool build, int facing, const CUnit* builder /* can be NULL */);
 	void FlattenGround(const CUnit* unit);
 
-	CWeapon* LoadWeapon(WeaponDef *weapondef, CUnit* owner,UnitDef::UnitDefWeapon* udw);
+	CWeapon* LoadWeapon(const WeaponDef* weapondef, CUnit* owner, const UnitDef::UnitDefWeapon* udw);
 protected:
 	void LoadSound(GuiSoundSet &sound);
 };

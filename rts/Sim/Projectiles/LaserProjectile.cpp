@@ -24,7 +24,7 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, WeaponDef *weaponDef, int ttl)
+CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, const WeaponDef *weaponDef, int ttl)
 : CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true),
 	ttl(ttl),
 	color(color),

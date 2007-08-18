@@ -25,8 +25,8 @@ CR_REG_METADATA(CExplosiveProjectile, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(const float3& pos,const float3& speed,CUnit* owner, WeaponDef *weaponDef, int ttl,float areaOfEffect)
-: CWeaponProjectile(pos,speed,owner, 0,ZeroVector,weaponDef,0, true),
+CExplosiveProjectile::CExplosiveProjectile(const float3& pos, const float3& speed, CUnit* owner, const WeaponDef* weaponDef, int ttl, float areaOfEffect)
+: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true),
 	ttl(ttl),
 	areaOfEffect(areaOfEffect),
 	curTime(0)

@@ -193,9 +193,9 @@ TdfParser::TdfParser(std::string const& filename) {
 }
 
 //find value, display messagebox if no such value found
-std::string TdfParser::SGetValueMSG(std::string const& location)
+std::string TdfParser::SGetValueMSG(std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::string value;
 	bool found = SGetValue(value, lowerd);
 	if(!found)
@@ -204,9 +204,9 @@ std::string TdfParser::SGetValueMSG(std::string const& location)
 }
 
 //find value, return default value if no such value found
-std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string const& location)
+std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::string value;
 	bool found = SGetValue(value, lowerd);
 	if(!found)
@@ -259,84 +259,93 @@ std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string
 
 //finds a value in the file , if not found returns false, and errormessages is returned in value
 //location of value is sent as a string "section\section\value"
-bool TdfParser::SGetValue(std::string &value, std::string const& location)
+bool TdfParser::SGetValue(std::string &value, std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::string searchpath; //for errormessages
 	//split the location string
 	std::vector<std::string> loclist = GetLocationVector(lowerd);
-	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
+	std::map<std::string, TdfSection*>::const_iterator sit =
+		root_section.sections.find(loclist[0]);
+	if (sit == root_section.sections.end())
 	{
 		value = "Section " + loclist[0] + " missing in file " + filename;
 		return false;
 	}
-	TdfSection *sectionptr = root_section.sections[loclist[0]];
+	TdfSection *sectionptr = sit->second;
 	searchpath = loclist[0];
 	for(unsigned int i=1; i<loclist.size()-1; i++)
 	{
 		//const char *arg = loclist[i].c_str();
 		searchpath += '\\';
 		searchpath += loclist[i];
-		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
+		sit = sectionptr->sections.find(loclist[i]);
+		if (sit == sectionptr->sections.end())
 		{
 			value = "Section " + searchpath + " missing in file " + filename;
 			return false;
 		}
-		sectionptr = sectionptr->sections[loclist[i]];
+		sectionptr = sit->second;
 	}
 	searchpath += '\\';
 	searchpath += loclist[loclist.size()-1];
-	if(sectionptr->values.find(loclist[loclist.size()-1]) == sectionptr->values.end())
+
+	std::map<std::string, std::string>::const_iterator vit =
+		sectionptr->values.find(loclist[loclist.size()-1]);
+	if(vit == sectionptr->values.end())
 	{
 		value = "Value " + searchpath + " missing in file " + filename;
 		return false;
 	}
-        std::string svalue = sectionptr->values[loclist[loclist.size()-1]];
+	std::string svalue = vit->second;
 	value = svalue;
 	return true;
 }
 
 
 //return a map with all values in section
-const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string const& location)
+const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string const& location) const
 {
 	static std::map<std::string, std::string> emptymap;
 	std::string lowerd = StringToLower(location);
 	std::string searchpath; //for errormessages
 	std::vector<std::string> loclist = GetLocationVector(lowerd);
-	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
+	std::map<std::string, TdfSection*>::const_iterator sit =
+		root_section.sections.find(loclist[0]);
+	if(sit == root_section.sections.end())
 	{
 //		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 		logOutput.Print ("Section " + loclist[0] + " missing in file " + filename);
 		return emptymap;
 	}
-	TdfSection *sectionptr = root_section.sections[loclist[0]];
+	TdfSection *sectionptr = sit->second;
 	searchpath = loclist[0];
 	for(unsigned int i=1; i<loclist.size(); i++)
 	{
 		searchpath += '\\';
 		searchpath += loclist[i];
-		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
+		sit = sectionptr->sections.find(loclist[i]);
+		if(sit == sectionptr->sections.end())
 		{
 //			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 			logOutput.Print ("Section " + searchpath + " missing in file " + filename);
 			return emptymap;
 		}
-		sectionptr = sectionptr->sections[loclist[i]];
+		sectionptr = sit->second;
 	}
 	return sectionptr->values;
 }
 
 //return vector with all section names in it
-std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
+std::vector<std::string> TdfParser::GetSectionList(std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::vector<std::string> loclist = GetLocationVector(lowerd);
 	std::vector<std::string> returnvec;
-	std::map<std::string,TdfSection*> *sectionsptr = &root_section.sections;
+	const std::map<std::string, TdfSection*>* sectionsptr = &root_section.sections;
 	if(loclist[0].compare("")!=0)
 	{
- 		std::string searchpath;// = loclist[0];
+		std::string searchpath;// = loclist[0];
 		for(unsigned int i=0; i<loclist.size(); i++)
 		{
 			searchpath += loclist[i];
@@ -344,13 +353,13 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 			{
 //				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 				logOutput.Print ("Section " + searchpath + " missing in file " + filename);
-        		return returnvec;
+				return returnvec;
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;
-        		searchpath += '\\';
+			searchpath += '\\';
 		}
 	}
-	std::map<std::string,TdfSection*>::iterator it;
+	std::map<std::string,TdfSection*>::const_iterator it;
 	for(it=sectionsptr->begin(); it!=sectionsptr->end(); it++)
 	{
 		returnvec.push_back(it->first);
@@ -359,18 +368,21 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location)
 	return returnvec;
 }
 
-bool TdfParser::SectionExist(std::string const& location)
+bool TdfParser::SectionExist(std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::vector<std::string> loclist = GetLocationVector(lowerd);
-	if(root_section.sections.find(loclist[0]) == root_section.sections.end())
+	std::map<std::string, TdfSection*>::const_iterator sit =
+		root_section.sections.find(loclist[0]);
+	if(sit == root_section.sections.end())
 	{
 		return false;
 	}
-	TdfSection *sectionptr = root_section.sections[loclist[0]];
+	TdfSection *sectionptr = sit->second;
 	for(unsigned int i=1; i<loclist.size(); i++)
 	{
-		if(sectionptr->sections.find(loclist[i]) == sectionptr->sections.end())
+		sit = sectionptr->sections.find(loclist[i]);
+		if (sit == sectionptr->sections.end())
 		{
 			return false;
 		}
@@ -379,9 +391,9 @@ bool TdfParser::SectionExist(std::string const& location)
 	return true;
 }
 
-std::vector<std::string> TdfParser::GetLocationVector(std::string const& location)
+std::vector<std::string> TdfParser::GetLocationVector(std::string const& location) const
 {
-  std::string lowerd = StringToLower(location);
+	std::string lowerd = StringToLower(location);
 	std::vector<std::string> loclist;
 	std::string::size_type start = 0;
 	std::string::size_type next = 0;
@@ -417,7 +429,7 @@ void TdfParser::GetDef(T& value, const std::string& key, const std::string& defv
 	stream >> value;
 }*/
 
-float3 TdfParser::GetFloat3(float3 def, std::string const& location)
+float3 TdfParser::GetFloat3(float3 def, std::string const& location) const
 {
 	std::string s=SGetValueDef("",location);
 	if(s.empty())

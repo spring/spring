@@ -3150,9 +3150,10 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = (int)lua_tonumber(L, index);
-	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(featureID);
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+	CFeatureSet::const_iterator it = fset.find(featureID);
 
-	if (it == featureHandler->activeFeatures.end())
+	if (it == fset.end())
 		return NULL;
 
 	if (!IsFeatureVisible(*it)) {
@@ -3167,7 +3168,7 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
-	const CFeatureSet& activeFeatures = featureHandler->activeFeatures;
+	const CFeatureSet& activeFeatures = featureHandler->GetActiveFeatures();
 	CFeatureSet::const_iterator fit;
 	if (fullRead) {
 		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
@@ -3197,14 +3198,14 @@ int LuaSyncedRead::GetFeatureList(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L); {
 		// push external feature names (-1 for IDs)
-		TdfParser& wreckParser = featureHandler->wreckParser;
+		const TdfParser& wreckParser = featureHandler->GetWreckParser();
 		const vector<string> sections = wreckParser.GetSectionList("");
 		for (int i = 0; i < (int)sections.size(); i++) {
 			LuaPushNamedNumber(L, sections[i], -1);
 		}
 		// push loaded feature names with their IDs
 		// (this may overwrite some external entries)
-		const map<string, const FeatureDef*>& defs = featureHandler->featureDefs;
+		const map<string, const FeatureDef*>& defs = featureHandler->GetFeatureDefs();
 		map<string, const FeatureDef*>::const_iterator it;
 		for (it = defs.begin(); it != defs.end(); ++it) {
 			LuaPushNamedNumber(L, it->first, it->second->id);
@@ -3564,7 +3565,7 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 			"Incorrect arguments to Pos2BuildPos(unitDefID, x, y, z)");
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
