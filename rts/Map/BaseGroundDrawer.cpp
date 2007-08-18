@@ -141,24 +141,22 @@ void CBaseGroundDrawer::ToggleRadarAndJammer()
 
 static inline int InterpolateLos(unsigned short* p, int xsize, int ysize, int mip, int factor, int x, int y)
 {
-	int x1 = x >> mip;
-	int y1 = y >> mip;
-	int s1 = p[y1*xsize+x1] != 0; // top left
+	const int x1 = (x >> mip);
+	const int y1 = (y >> mip);
+	const int s1 = (p[(y1 * xsize) + x1] != 0); // top left
 	if (mip > 0) {
-		int x2 = x1 + 1;
-		int y2 = y1 + 1;
-		if (x2 >= xsize)
-			x2 = xsize - 1;
-		if (y2 >= ysize)
-			y2 = ysize - 1;
-		int s2 = p[y1*xsize+x2] != 0; // top right
-		int s3 = p[y2*xsize+x1] != 0; // bottom left
-		int s4 = p[y2*xsize+x2] != 0; // bottom right
-		int size = 1 << mip;
-		int fracx = x % size;
-		int fracy = y % size;
-		int c1 = factor * (s2 - s1) * fracx / size + factor * s1;
-		int c2 = factor * (s4 - s3) * fracx / size + factor * s3;
+		int x2 = (x1 + 1);
+		int y2 = (y1 + 1);
+		if (x2 >= xsize) { x2 = xsize - 1; }
+		if (y2 >= ysize) { y2 = ysize - 1; }
+		const int s2 = (p[(y1 * xsize) + x2] != 0); // top right
+		const int s3 = (p[(y2 * xsize) + x1] != 0); // bottom left
+		const int s4 = (p[(y2 * xsize) + x2] != 0); // bottom right
+		const int size  = (1 << mip);
+		const int fracx = (x % size);
+		const int fracy = (y % size);
+		const int c1 = (factor * (s2 - s1) * fracx) / size + (factor * s1);
+		const int c2 = (factor * (s4 - s3) * fracx) / size + (factor * s3);
 		return (c2 - c1) * fracy / size + c1;
 	}
 	return factor * s1;
@@ -277,20 +275,43 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				int lowRes = highResInfoTexWanted ? 0 : -1;
 				int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
 				int pwr2mapx = gs->pwr2mapx >> (-lowRes);
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<endx;++x){
-						int a=y*pwr2mapx+x;
-						int inRadar=0;
-						int inJam=0;
-						if (drawRadarAndJammer){
-							inRadar = InterpolateLos(myRadar,  radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
-							inJam   = InterpolateLos(myJammer, radarhandler->xsize, radarhandler->ysize, 3+lowRes, 50, x, y);
+				const int rxsize = radarhandler->xsize;
+				const int rysize = radarhandler->ysize;
+				const int losSizeX = loshandler->losSizeX;
+				const int losSizeY = loshandler->losSizeY;
+				const int airSizeX = loshandler->airSizeX;
+				const int airSizeY = loshandler->airSizeY;
+				const int losMipLevel = loshandler->losMipLevel;
+				const int airMipLevel = loshandler->airMipLevel;
+				if (drawRadarAndJammer) {
+					for (int y = starty; y < endy; ++y) {
+						for (int x = 0; x < endx; ++x) {
+							int a = (y * pwr2mapx) + x;
+							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 64, x, y);
+							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 64, x, y);
+							const int totalLos = (inLos + inAir) / 2;
+							const int index = (a * 4);
+							const int inJam   = InterpolateLos(myJammer, rxsize, rysize, 3 + lowRes, 64, x, y);
+							const int inRadar = InterpolateLos(myRadar,  rxsize, rysize, 3 + lowRes, 64, x, y);
+							infoTexMem[index]     = 64 + ((totalLos * 3) / 4) + (inRadar  / 4) + inJam;
+							infoTexMem[index + 1] = 64 + ((inRadar  * 3) / 4) + (totalLos / 4);
+							infoTexMem[index + 2] = 64 + (totalLos * 2) - inRadar;
 						}
-						int inLos = InterpolateLos(myLos,    loshandler->losSizeX, loshandler->losSizeY, loshandler->losMipLevel+lowRes, 32, x, y);
-						int inAir = InterpolateLos(myAirLos, loshandler->airSizeX, loshandler->airSizeY, loshandler->airMipLevel+lowRes, 32, x, y);
-						infoTexMem[a*4] = 64+inLos+inAir+inJam;
-						infoTexMem[a*4+1] = 64+inLos+inAir+inRadar;
-						infoTexMem[a*4+2] = 64+inLos+inAir;
+					}
+				}
+				else {
+					for (int y = starty; y < endy; ++y) {
+						for (int x = 0; x < endx; ++x) {
+							int a = (y * pwr2mapx) + x;
+							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 64, x, y);
+							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 64, x, y);
+							const int totalLos = (inLos + inAir) / 2;
+							const int index = (a * 4);
+							const int value = (64 + totalLos);
+							infoTexMem[index]     = value;
+							infoTexMem[index + 1] = value;
+							infoTexMem[index + 2] = value;
+						}
 					}
 				}
 				break;
