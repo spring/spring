@@ -667,8 +667,8 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		CUnit* unit = NULL;
 		int addedunits = 0;
-
 		int team, lastTeam;
+
 		if (gu->spectatingFullSelect) {
 			team = 0;
 			lastTeam = gs->activeTeams - 1;
@@ -680,9 +680,11 @@ void CMiniMap::SelectUnits(int x, int y) const
 			CUnitSet& teamUnits = gs->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				const float3& midPos = (*ui)->midPos;
+
 				if ((midPos.x > xmin) && (midPos.x < xmax) &&
-						(midPos.z > zmin) && (midPos.z < zmax)) {
-					if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
+					(midPos.z > zmin) && (midPos.z < zmax)) {
+
+					if (keys[SDLK_LCTRL] && (selection.find(*ui) != selection.end())) {
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
