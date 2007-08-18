@@ -393,7 +393,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 	float3 pos=attacker->pos;
 	float heightMod=weapon->heightMod;
 	float aHeight=pos.y;
-	float secDamage=weapon->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
+	float secDamage=weapon->weaponDef->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
 	bool paralyzer=!!weapon->weaponDef->damages.paralyzeDamageTime;
 
 	vector<int> quads=qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
@@ -425,7 +425,7 @@ void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<fl
 					float modRange=radius+(aHeight-targPos.y)*heightMod;
 					if((pos-targPos).SqLength2D() <= modRange*modRange){
 						float dist2d=(pos-targPos).Length2D();
-						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4f+100)*(0.01f+(*ui)->crashing)/(weapon->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
+						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4f+100)*(0.01f+(*ui)->crashing)/(weapon->weaponDef->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
 						if((*ui)==lastTarget)
 							value*=0.4f;
 						if((*ui)->category & weapon->badTargetCategory)
@@ -713,7 +713,7 @@ void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
 	}
 }
 
-float3 CGameHelper::Pos2BuildPos(const float3& pos, UnitDef* ud)
+float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud)
 {
 	return Pos2BuildPos(BuildInfo(ud,pos,0));
 }

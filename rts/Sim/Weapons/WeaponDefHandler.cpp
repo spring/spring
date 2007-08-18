@@ -495,6 +495,36 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 
 	LoadSound(sunparser, weaponDefs[id].firesound, id, "firesound");
 	LoadSound(sunparser, weaponDefs[id].soundhit, id, "soundhit");
+
+	if (weaponDefs[id].firesound.getVolume(0) == -1 || weaponDefs[id].soundhit.getVolume(0) == -1) {
+		// no volume (-1) read from weapon definition, set it dynamically here
+		if (weaponDefs[id].damages[0] > 50) {
+			float soundVolume = sqrt(weaponDefs[id].damages[0] * 0.5f);
+
+			if (weaponDefs[id].type == "LaserCannon")
+				soundVolume *= 0.5f;
+
+			float hitSoundVolume = soundVolume;
+
+			if ((weaponDefs[id].type == "MissileLauncher" || weaponDefs[id].type == "StarburstLauncher") && soundVolume > 100)
+				soundVolume = 10 * sqrt(soundVolume);
+			if (weaponDefs[id].firesound.getVolume(0) == -1)
+				weaponDefs[id].firesound.setVolume(0, soundVolume);
+
+			soundVolume = hitSoundVolume;
+
+			if (weaponDefs[id].areaOfEffect > 8)
+				soundVolume *= 2;
+			if (weaponDefs[id].type == "DGun")
+				soundVolume *= 0.15f;
+			if (weaponDefs[id].soundhit.getVolume(0) == -1)
+				weaponDefs[id].soundhit.setVolume(0, soundVolume);
+		}
+		else {
+			weaponDefs[id].soundhit.setVolume(0, 5.0f);
+			weaponDefs[id].firesound.setVolume(0, 5.0f);
+		}
+	}
 }
 
 
@@ -538,7 +568,7 @@ void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSoundSet& gsound, int
 
 
 
-WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
+const WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
 {
 	std::string weaponname(StringToLower(weaponname2));
 

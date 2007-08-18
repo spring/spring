@@ -34,13 +34,14 @@ public:
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
+	void SlowUpdate(bool noAutoTargetOverride);
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
 
 	void HoldFire();
-	bool AttackUnit(CUnit* unit,bool userTarget);
-	virtual bool AttackGround(float3 pos,bool userTarget);
+	virtual bool AttackUnit(CUnit* unit, bool userTarget);
+	virtual bool AttackGround(float3 pos, bool userTarget);
 
 	void AimReady(int value);
 
@@ -49,13 +50,12 @@ public:
 
 	CUnit* owner;
 
-	WeaponDef *weaponDef;
+	const WeaponDef *weaponDef;
 	std::string modelDispList;
 
 	int weaponNum;							//the weapons order among the owner weapons
 	bool haveUserTarget;
 
-	DamageArray damages;
 	float areaOfEffect;
 
 	float3 relWeaponPos;				//weaponpos relative to the unit

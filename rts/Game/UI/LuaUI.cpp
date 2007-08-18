@@ -1951,7 +1951,9 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	// HACK FIXME TODO remove the const_cast: factor iconType out of UnitDef
+	// so unitDef doesn't need to be modified by this code.
+	UnitDef* ud = const_cast<UnitDef*>(unitDefHandler->GetUnitByID(unitDefID));
 	if (ud == NULL) {
 		return 0;
 	}
@@ -1962,8 +1964,9 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 	const map<UnitDef*, set<UnitDef*> >& decoyMap = unitDefHandler->decoyMap;
 	map<UnitDef*, set<UnitDef*> >::const_iterator fit;
 	if (ud->decoyDef) {
-		fit = decoyMap.find(ud->decoyDef);
-		ud->decoyDef->iconType = ud->iconType;
+		// more HACK HACK (see above)
+		fit = decoyMap.find(const_cast<UnitDef*>(ud->decoyDef));
+		const_cast<UnitDef*>(ud->decoyDef)->iconType = ud->iconType;
 	} else {
 		fit = decoyMap.find(ud);
 	}

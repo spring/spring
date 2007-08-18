@@ -462,7 +462,7 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 
 		string name;
 		tdfparser.GetDef(name, "", std::string("UNITINFO\\")+"weapon"+c);
-		WeaponDef *wd = weaponDefHandler->GetWeapon(name);
+		const WeaponDef *wd = weaponDefHandler->GetWeapon(name);
 
 		if(!wd){
 			if(a>2)	//allow empty weapons among the first 3
@@ -533,6 +533,11 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 			    !ud.stockpileWeaponDef->interceptor) {
 				ud.stockpileWeaponDef = wd;
 			}
+		}
+		if (wd->interceptor && a == 0) { //only do this if its primary weapon
+			//prevent anti nuke type units from chasing enemies,
+			// might have to change if one has a unit with both interceptors and other weapons
+			ud.noChaseCategory = 0xffffffff;
 		}
 	}
 
@@ -794,7 +799,7 @@ void CUnitDefHandler::ParseUnit(std::string file, int id)
 }
 
 
-UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
+const UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
@@ -812,7 +817,7 @@ UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 }
 
 
-UnitDef *CUnitDefHandler::GetUnitByID(int id)
+const UnitDef *CUnitDefHandler::GetUnitByID(int id)
 {
 	if ((id <= 0) || (id > numUnitDefs)) {
 		return NULL;
@@ -880,7 +885,7 @@ static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
 }
 
 
-unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
+unsigned int CUnitDefHandler::GetUnitImage(const UnitDef *unitdef)
 {
 	if (unitdef->unitimage != 0) {
 		return unitdef->unitimage;
@@ -902,9 +907,10 @@ unsigned int CUnitDefHandler::GetUnitImage(UnitDef *unitdef)
 	const unsigned int texID = bitmap.CreateTexture(false);
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	unitdef->unitimage  = texID;
-	unitdef->imageSizeX = bitmap.xsize;
-	unitdef->imageSizeY = bitmap.ysize;
+	UnitDef& ud = unitDefs[unitdef->id]; // get away with the const
+	ud.unitimage  = texID;
+	ud.imageSizeX = bitmap.xsize;
+	ud.imageSizeY = bitmap.ysize;
 	POP_CODE_MODE;
 
 	return unitdef->unitimage;

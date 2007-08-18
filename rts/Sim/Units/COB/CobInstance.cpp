@@ -682,7 +682,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 					break;
 				}
 				// detonate weapon from piece
-				WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
+				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 				if (weaponDef->soundhit.getID(0) > 0) {
 					sound->PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}

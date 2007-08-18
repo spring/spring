@@ -32,7 +32,8 @@ struct AtlasedTexture;
 struct WeaponDef
 {
 	CR_DECLARE(WeaponDef);
-	virtual ~WeaponDef();
+
+	~WeaponDef();
 
 	std::string name;
 	std::string type;
@@ -182,7 +183,7 @@ struct WeaponDef
 
 	unsigned int collisionFlags;
 
-	CExplosionGenerator *explosionGenerator; // can be zero for default explosions
+	CExplosionGenerator* explosionGenerator; // can be zero for default explosions
 
 	bool sweepFire;
 
@@ -208,13 +209,13 @@ public:
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
-	WeaponDef* GetWeapon(const std::string weaponname);
+	const WeaponDef* GetWeapon(const std::string weaponname);
 
 	void LoadSound(TdfParser*, GuiSoundSet&, int, std::string);
 
 	DamageArray DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted);
 
-protected:
+private:
 	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
 	float3 hs2rgb(float h, float s);
 };

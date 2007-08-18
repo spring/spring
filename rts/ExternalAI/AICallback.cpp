@@ -953,7 +953,7 @@ int CAICallback::GetFeatures (int *features, int max)
 	int i = 0;
 	int allyteam = gs->AllyTeam(team);
 
-	const CFeatureSet& fset = featureHandler->activeFeatures;
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++i) {
 		CFeature *f = *it;
 
@@ -994,9 +994,10 @@ const FeatureDef* CAICallback::GetFeatureDef (int feature)
 {
 	verify ();
 
-	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+	CFeatureSet::const_iterator it = fset.find(feature);
 
-	if (it != featureHandler->activeFeatures.end()) {
+	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
@@ -1010,9 +1011,10 @@ float CAICallback::GetFeatureHealth (int feature)
 {
 	verify ();
 
-	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+	CFeatureSet::const_iterator it = fset.find(feature);
 
-	if (it != featureHandler->activeFeatures.end()) {
+	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
@@ -1025,9 +1027,10 @@ float CAICallback::GetFeatureReclaimLeft (int feature)
 {
 	verify ();
 
-	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+	CFeatureSet::const_iterator it = fset.find(feature);
 
-	if (it != featureHandler->activeFeatures.end()) {
+	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
@@ -1040,9 +1043,10 @@ float3 CAICallback::GetFeaturePos (int feature)
 {
 	verify ();
 
-	CFeatureSet::const_iterator it = featureHandler->activeFeatures.find(feature);
+	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+	CFeatureSet::const_iterator it = fset.find(feature);
 
-	if (it != featureHandler->activeFeatures.end()) {
+	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = gs->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))

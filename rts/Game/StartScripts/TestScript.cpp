@@ -40,8 +40,8 @@ void CTestScript::Update()
 		for(int a=0;a<0000;++a){
 			float3 pos((gs->randFloat()+gs->randFloat())*2000,0,(gs->randFloat()+gs->randFloat())*2000);
 			pos.y=ground->GetHeight(pos.x,pos.z);
-			int num=featureHandler->wreckParser.GetSectionList("").size();
-			string feature=featureHandler->wreckParser.GetSectionList("")[(int)(gs->randFloat()*num)];
+			int num=featureHandler->GetWreckParser().GetSectionList("").size();
+			string feature=featureHandler->GetWreckParser().GetSectionList("")[(int)(gs->randFloat()*num)];
 			featureHandler->CreateWreckage(pos,feature,0,0,1,-1,-1,false,"");
 		}
  		for(int a=0;a<30;++a){

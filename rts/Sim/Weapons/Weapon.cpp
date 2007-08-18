@@ -58,7 +58,6 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(weaponPos),
 	CR_MEMBER(lastRequest),
-	CR_MEMBER(damages),
 	CR_MEMBER(relWeaponPos),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(lastTargetRetry),
@@ -354,7 +353,7 @@ void CWeapon::Update()
 	}
 }
 
-bool CWeapon::AttackGround(float3 pos,bool userTarget)
+bool CWeapon::AttackGround(float3 pos, bool userTarget)
 {
 	if((!userTarget && weaponDef->noAutoTarget))
 		return false;
@@ -431,6 +430,11 @@ void CWeapon::HoldFire()
 
 void CWeapon::SlowUpdate()
 {
+	SlowUpdate(false);
+}
+
+void CWeapon::SlowUpdate(bool noAutoTargetOverride)
+{
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
@@ -486,7 +490,7 @@ void CWeapon::SlowUpdate()
 		return;
 	}
 
-	if(!weaponDef->noAutoTarget){
+	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
 		if(owner->fireState==2 && !haveUserTarget && (targetType==Target_None || (targetType==Target_Unit && (targetUnit->category & badTargetCategory)) || gs->frameNum>lastTargetRetry+65)){
 			lastTargetRetry=gs->frameNum;
 			std::map<float,CUnit*> targets;
@@ -632,8 +636,8 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
 	return val;
 }
 
-bool CWeapon::TryTargetRotate(float3 pos, bool userTarget){
-	if((!userTarget && weaponDef->noAutoTarget)){
+bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
+	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
 	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff
@@ -675,13 +679,10 @@ void CWeapon::Init(void)
 		owner->maxRange = range;
 	}
 
-	muzzleFlareSize = min(areaOfEffect*0.2f,min(1500.f,damages[0])*0.003f);
+	muzzleFlareSize = min(areaOfEffect*0.2f,min(1500.f,weaponDef->damages[0])*0.003f);
 
-	if(weaponDef->interceptor){
+	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);
-		if(weaponNum==0)	//only do this if its primary weapon
-			owner->unitDef->noChaseCategory=0xffffffff;		//prevent anti nuke type units from chasing enemies, might have to change if one has a unit with both interceptors and other weapons
-	}
 
 	if(weaponDef->stockpile){
 		owner->stockpileWeapon = this;

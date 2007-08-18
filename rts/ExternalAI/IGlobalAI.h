@@ -19,12 +19,12 @@ struct WeaponDef;
 class SPRING_API IGlobalAI
 {
 public:
-	struct ChangeTeamEvent { 
+	struct ChangeTeamEvent {
 		int unit, newteam, oldteam;
 	};
 	struct WeaponFireEvent {
 		int unit;
-		WeaponDef* def;
+		const WeaponDef* def;
 	};
 	struct PlayerCommandEvent {
 		std::vector<int> units;
@@ -47,7 +47,7 @@ public:
 
 	virtual void EnemyEnterRadar(int enemy)=0;						//called when an enemy enter radar coverage (los always count as radar coverage to)
 	virtual void EnemyLeaveRadar(int enemy)=0;						//called when an enemy leave radar coverage (los always count as radar coverage to)
-	
+
 	virtual void EnemyDamaged(int damaged,int attacker,float damage,float3 dir)=0;	//called when an enemy inside los or radar is damaged
 	virtual void EnemyDestroyed(int enemy, int attacker)=0;		//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 

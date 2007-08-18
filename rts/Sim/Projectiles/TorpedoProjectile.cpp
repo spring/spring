@@ -27,8 +27,8 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_RESERVED(16)
 	));
 
-CTorpedoProjectile::CTorpedoProjectile(const float3& pos,const float3& speed,CUnit* owner,float areaOfEffect,float maxSpeed,float tracking, int ttl,CUnit* target, WeaponDef *weaponDef)
-: CWeaponProjectile(pos,speed,owner,target,ZeroVector,weaponDef,0, true),
+CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef *weaponDef)
+: CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true),
 	ttl(ttl),
 	maxSpeed(maxSpeed),
 	tracking(tracking),

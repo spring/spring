@@ -75,7 +75,7 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::UnitInit (UnitDef* def, int team, const float3& position)
+void CFactory::UnitInit (const UnitDef* def, int team, const float3& position)
 {
 	buildSpeed=def->buildSpeed/32.0f;
 	CBuilding::UnitInit (def, team, position);
@@ -219,7 +219,7 @@ void CFactory::Update()
 				waitCommandsAI.AddLocalUnit(curBuild, this);
 			}
 			luaCallIns.UnitFromFactory(curBuild, this, userOrders);
-			
+
 			StopBuild();
 		}
 	}

@@ -64,7 +64,7 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	virtual void UnitInit (UnitDef* def, int team, const float3& position);
+	virtual void UnitInit (const UnitDef* def, int team, const float3& position);
 
 	bool AttackGround(const float3&pos,bool dgun);
 	bool AttackUnit(CUnit* unit,bool dgun);
@@ -124,7 +124,7 @@ public:
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
 
-	UnitDef *unitDef;
+	const UnitDef *unitDef;
 	std::string unitDefName;
 
 	std::vector<float>         modParams;    // mod controlled parameters

@@ -387,10 +387,6 @@ static int FeatureDefToID(lua_State* L, const void* data)
 	return 1;
 }
 
-#define DRAWTYPE_3DO 0
-#define DRAWTYPE_TREE 1
-#define DRAWTYPE_NONE -1
-
 
 
 /******************************************************************************/

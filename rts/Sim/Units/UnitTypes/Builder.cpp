@@ -105,7 +105,7 @@ void CBuilder::PostLoad()
 }
 
 
-void CBuilder::UnitInit(UnitDef* def, int team, const float3& position)
+void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 {
 	buildDistance  = def->buildDistance;
 
@@ -252,7 +252,7 @@ void CBuilder::Update()
 		}
 	}
 	else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
-		UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
+		const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
 			if ((modInfo->reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 				// This corpse has been reclaimed a little, need to restore the resources

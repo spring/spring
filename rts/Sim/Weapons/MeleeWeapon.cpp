@@ -47,7 +47,7 @@ void CMeleeWeapon::Fire(void)
 	if(targetType==Target_Unit){
 		float3 impulseDir = targetUnit->pos-weaponPos;
 		impulseDir.Normalize();
-		targetUnit->DoDamage(damages,owner,impulseDir,weaponDef->id);
+		targetUnit->DoDamage(weaponDef->damages,owner,impulseDir,weaponDef->id);
 		if(fireSoundId)
 			sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	}

@@ -129,8 +129,8 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	}
 	CBuilder* fac=(CBuilder*)owner;
 
-	map<int,string>::iterator bi;
-	for(bi=fac->unitDef->buildOptions.begin();bi!=fac->unitDef->buildOptions.end();++bi){
+	map<int, string>::const_iterator bi;
+	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
 		const UnitDef* ud = unitDefHandler->GetUnitByName(name);
 		if (ud == NULL) {
@@ -527,8 +527,9 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 	if(c.params.size()==1){
 		int id=(int) c.params[0];
 		if (id >= MAX_UNITS) {     //reclaim feature
-			CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
-			if (it != featureHandler->activeFeatures.end()) {
+			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+			CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+			if (it != fset.end()) {
 				CFeature* feature = *it;
 				if(!ReclaimObject(feature)){
 					StopMove();
@@ -574,8 +575,8 @@ void CBuilderCAI::ExecuteResurrect(Command &c)
 	if(c.params.size()==1){
 		int id=(int)c.params[0];
 		if(id>=MAX_UNITS){		//resurrect feature
-			CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
-			if (it != featureHandler->activeFeatures.end() && (*it)->createdFromUnit != "") {
+			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - MAX_UNITS);
+			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
 				CFeature* feature = *it;
 				if(feature->pos.distance2D(fac->pos)<fac->buildDistance*0.9f+feature->radius){
 					StopMove();
@@ -852,8 +853,9 @@ void CBuilderCAI::DrawCommands(void)
 				} else {
 					int id = (int)ci->params[0];
 					if (id >= MAX_UNITS) {
-						CFeatureSet::iterator it = featureHandler->activeFeatures.find(id - MAX_UNITS);
-						if (it != featureHandler->activeFeatures.end()) {
+						const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+						CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+						if (it != fset.end()) {
 							const float3 endPos = (*it)->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}

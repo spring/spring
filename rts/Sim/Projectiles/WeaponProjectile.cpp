@@ -46,7 +46,7 @@ CWeaponProjectile::CWeaponProjectile()
 	interceptTarget=0;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos,const float3& speed,CUnit* owner, CUnit* target,const float3 &targetPos, WeaponDef *weaponDef,CWeaponProjectile* interceptTarget, bool synced) :
+CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, bool synced) :
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef?weaponDef->name:std::string("")),
@@ -92,7 +92,7 @@ CWeaponProjectile::~CWeaponProjectile(void)
 {
 }
 
-CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, WeaponDef *weaponDef)
+CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef)
 {
 	switch(weaponDef->visuals.renderType)
 	{

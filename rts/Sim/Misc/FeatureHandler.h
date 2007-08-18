@@ -33,13 +33,11 @@ public:
 
 	void Update();
 
-	void LoadWreckFeatures();
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 	void UpdateDrawQuad(CFeature* feature, const float3& newPos);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 	const FeatureDef* GetFeatureDef(const std::string name);
 	const FeatureDef* GetFeatureDefByID(int id);
 
@@ -49,6 +47,14 @@ public:
 	void Draw();
 	void DrawShadowPass();
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
+
+	const TdfParser& GetWreckParser() const { return wreckParser; }
+	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
+	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
+
+private:
+	void LoadWreckFeatures();
+	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 
 	TdfParser wreckParser;
 	std::map<std::string, const FeatureDef*> featureDefs;
@@ -74,9 +80,10 @@ public:
 
 	void DrawFar(CFeature* feature, CVertexArray* va);
 
-private:
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
+
+	friend class CFeatureDrawer;
 };
 
 extern CFeatureHandler* featureHandler;

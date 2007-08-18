@@ -472,7 +472,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 			}
 			inCommand = a;
 			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
-				UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
+				const UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
 				SetShowingMetal(ud->extractsMetal > 0);
 			} else {
 				SetShowingMetal(false);
@@ -1222,7 +1222,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			break;
 		}
 		case CMDTYPE_ICON_BUILDING: {
-			UnitDef* ud = unitDefHandler->GetUnitByID(-cd.id);
+			const UnitDef* ud = unitDefHandler->GetUnitByID(-cd.id);
 			inCommand = cmdIndex;
 			SetShowingMetal(ud->extractsMetal > 0);
 			activeMousePress = false;
@@ -1965,7 +1965,7 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 				break;
 			}
 			case CMDTYPE_ICON_BUILDING: {
-				UnitDef* ud=unitDefHandler->GetUnitByID(-cmdDesc.id);
+				const UnitDef* ud=unitDefHandler->GetUnitByID(-cmdDesc.id);
 				SetShowingMetal(ud->extractsMetal > 0);
 				actionOffset = actionIndex;
 				lastKeySet = ks;
@@ -2222,7 +2222,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(dist<0){
 				return defaultRet;
 			}
-			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
+			const UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
 
 			if(!unitdef){
 				return defaultRet;
@@ -2660,7 +2660,7 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return false;
 	}
-	UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud != NULL) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
@@ -2976,7 +2976,7 @@ void CGuiHandler::DrawButtons()
 			// unit buildpic
 			if (!usedTexture) {
 				if (cmdDesc.id < 0) {
-					UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
+					const UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
 					if (ud != NULL) {
 						DrawUnitBuildIcon(icon, -cmdDesc.id);
 						usedTexture = true;
@@ -3587,7 +3587,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
 				if (!unitdef->selfDExplosion.empty()) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
-					WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
+					const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
 					glSurfaceCircle(unit->pos, wd->areaOfEffect, 40);
 				}
 			}
@@ -3660,7 +3660,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 		float dist = ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 		if (dist > 0) {
-			UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
+			const UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
 			if (unitdef) {
 				// get the build information
 				float3 pos = camera->pos+mouse->dir*dist;

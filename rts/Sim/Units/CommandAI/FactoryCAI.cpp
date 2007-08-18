@@ -97,8 +97,8 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 
 	CFactory* fac=(CFactory*)owner;
 
-	map<int,string>::iterator bi;
-	for(bi=fac->unitDef->buildOptions.begin();bi!=fac->unitDef->buildOptions.end();++bi){
+	map<int,string>::const_iterator bi;
+	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
 
 		const UnitDef* ud = unitDefHandler->GetUnitByName(name);

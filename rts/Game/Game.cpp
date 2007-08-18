@@ -3317,7 +3317,7 @@ void CGame::DrawDirectControlHud(void)
 			glTranslatef(0.02f,0.32f-a*0.04f,0);
 			glScalef(0.0225f,0.03f,0.03f);
 			CWeapon* w=unit->weapons[a];
-			WeaponDef* wd=w->weaponDef;
+			const WeaponDef* wd = w->weaponDef;
 			if(!wd->isShield){
 				if(w->reloadStatus>gs->frameNum){
 					glColor4d(0.8f,0.2f,0.2f,0.8f);
@@ -3636,7 +3636,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 					}
 				}
 
-				UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
 
 				if (unitDef != NULL) {
 					int xsize = unitDef->xsize;
