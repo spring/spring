@@ -31,6 +31,7 @@
                  -- allows writing to UnitDefs, FeatureDefs, and WeaponDefs
 
 -- the following require .cheat
+.atm
 .team <number>
 .spectator
 .nocost
@@ -38,9 +39,11 @@
 .give <[count] unit_name> | "all"
 
 -- debugging
+.crash
 .desync
 .divbyzero
 .exception
+.fakedesync
 
 
 --------------------------------------------------------------------------------
