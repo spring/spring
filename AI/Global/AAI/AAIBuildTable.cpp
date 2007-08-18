@@ -3658,7 +3658,7 @@ bool AAIBuildTable::IsArty(int id)
 	if(!unitList[id-1]->weapons.empty())
 	{
 		float max_range = 0;
-		WeaponDef *longest = 0;
+		const WeaponDef *longest = 0;
 
 		for(vector<UnitDef::UnitDefWeapon>::const_iterator weapon = unitList[id-1]->weapons.begin(); weapon != unitList[id-1]->weapons.end(); weapon++)
 		{
