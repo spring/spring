@@ -153,7 +153,7 @@ public:
     }
 
 	// This method is not thread-safe
-    void ThreadPool::stop()
+    void stop()
     {
         // m_bStop must be set to true in a critical section.  Otherwise
         // it is possible for a thread to miss notify_all and never
@@ -167,7 +167,7 @@ public:
    }
 
 	// This method is not thread-safe
-    void ThreadPool::wait()
+    void wait()
     {
         boost::mutex::scoped_lock lock1(m_mutex);
 

@@ -270,7 +270,7 @@ typedef TdfParser CSunParser;
 #include "../Helpers/Units/CUnitDefLoader.h" // Loads unitdefs
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
 #include "../Engine/TCommand.h" // Unit cached command data structure
-#include "../Helpers/CWorkerthread.h"
+#include "../Helpers/CWorkerThread.h"
 //#include "../Helpers/CThreadManager.h"
 
 #include "../Core/CCached.h"// Cached data storage class
