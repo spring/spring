@@ -124,7 +124,6 @@ void CMetalMap::GetMetalPoints() {
 		// the map doesn't have any metal, just stop
 		NumSpotsFound = 0;
 		delete[] xend;
-		//("Time taken to generate spots: " << ai->math->TimerSecs() << " seconds.");
 		return;
 	}
 
@@ -260,8 +259,8 @@ void CMetalMap::GetMetalPoints() {
 			// reset tempmetal so it can find new spots
 			TempMetal = 0;
 			// take the first spot
-			int speedTempMetal_x;
-			int speedTempMetal_y;
+			int speedTempMetal_x = 0;
+			int speedTempMetal_y = 0;
 			int speedTempMetal = 0;
 			bool found = false;
 

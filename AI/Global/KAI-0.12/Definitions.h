@@ -2,8 +2,9 @@
 #define DEFINITIONS_H
 
 #define AI_NAME			"KAI-0.12 Unofficial"
-#define AI_DATE			"5/8/2007"
+#define AI_DATE			"19/8/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
+#define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 
 // Logger
 #define L(a)			(*ai->LOGGER << a << endl)
@@ -23,14 +24,13 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
-#define ROOTFOLDER		"AI/KAI/"
+#define ROOTFOLDER		"AI/KAI012/"
 
 #define LOGFOLDER		ROOTFOLDER"Logs/"
 #define METALFOLDER		ROOTFOLDER"Metal/"
 #define TGAFOLDER		ROOTFOLDER"TGAs/"
 
 // Error outputs
-#define ERRORDEF		ai-cb->GetUnitDef("")
 #define ZEROVECTOR		float3( 0, 0, 0)
 #define ERRORVECTOR		float3(-1, 0, 0)
 

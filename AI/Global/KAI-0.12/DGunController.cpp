@@ -35,7 +35,7 @@ void DGunController::handleDestroyEvent(int attackerID, int targetID) {
 	// if we were dgunning or reclaiming this unit and it died
 	// (if commander reclaims unit then attackerID of 0 is passed)
 	if (attackerID == 0 || state.targetID == targetID) {
-		// hack to avoid deadlocks
+		// hack to avoid wiggle deadlocks
 		stop();
 		state.reset(0, true);
 	}
@@ -59,7 +59,7 @@ void DGunController::trackAttackTarget(unsigned int currentFrame) {
 		float dgunDelay = targetDist / commanderWD->projectilespeed;				// sim-frames needed for dgun to reach target position
 		float3 attackPos = newTargetPos + targetDir * (targetSpeed * dgunDelay);	// position where target will be in <dgunDelay> frames
 		float maxRange = CALLOUT->GetUnitMaxRange(commanderID);
-		// CALLOUT -> CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
+		// CALLOUT->CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
 
 		if ((commanderPos - attackPos).Length() < maxRange * 0.9) {
 			// multiply by 0.9 to ensure commander does not have to walk

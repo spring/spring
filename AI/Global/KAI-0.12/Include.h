@@ -42,7 +42,7 @@ static inline void itoa(int i, char* buf, int size) {
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 
-// Spring Engine
+// Spring Engine Headers
 #include "Game/command.h"						// Commands
 #include "Sim/Units/UnitDef.h"					// Unit Definitions
 #include "Sim/Units/CommandAI/CommandQueue.h"	// Unit Command Queues
@@ -50,14 +50,14 @@ static inline void itoa(int i, char* buf, int size) {
 #include "Sim/MoveTypes/MoveInfo.h"				// Types of Movement units can have
 #include "Sim/Weapons/WeaponDefHandler.h"		// Weapon Definitions
 
-// Spring AI interface
+// Spring AI Interface Headers
 #include "ExternalAI/aibase.h"					// DLL exports and definitions
 #include "ExternalAI/IGlobalAI.h"				// Main AI file
 #include "ExternalAI/IAICallback.h"				// Callback functions
 #include "ExternalAI/IGlobalAICallback.h"		// AI Interface
 #include "ExternalAI/IAICheats.h"				// AI Cheat Interface
 
-// KAI
+// KAI Headers
 #include "Containers.h"							// All KAI containers
 #include "Definitions.h"						// Definition declarations
 #include "MTRand.h"								// Mersenne Twister RNG

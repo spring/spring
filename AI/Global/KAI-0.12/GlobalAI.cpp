@@ -272,6 +272,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->pather->Init();
 
 	ai->cb->SendTextMsg(AI_VERSION " initialized succesfully!", 0);
+	ai->cb->SendTextMsg(AI_CREDITS, 0);
 }
 
 
