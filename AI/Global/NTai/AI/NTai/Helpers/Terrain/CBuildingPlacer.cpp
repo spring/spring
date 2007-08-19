@@ -468,7 +468,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
             float nearest_dist = 10000000;
             NLOG("CBuildingPlacer::GetBuildPosMessage geomark 4#");
             for(int i = 0; i < fnum; i++){
-                FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
+                const FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
                 if(fd != 0){
                     //
                     if(fd->geoThermal){
