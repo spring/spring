@@ -3557,11 +3557,11 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if ((team >= 0) && (team <gs->activeTeams)) {
 			gs->players[player]->team = team;
-			gs->players[player]->spectator = false;
+			gs->players[player]->spectator = net->localDemoPlayback;
 			if(player == gu->myPlayerNum){
-				gu->spectating           = false;
-				gu->spectatingFullView   = false;
-				gu->spectatingFullSelect = false;
+				gu->spectating           = net->localDemoPlayback;
+				gu->spectatingFullView   = net->localDemoPlayback;
+				gu->spectatingFullSelect = net->localDemoPlayback;
 				gu->myTeam = team;
 				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 				selectedUnits.ClearSelected();
@@ -3766,13 +3766,13 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("GroupAI and LuaUI control is %s",
 		                gs->noHelperAIs ? "disabled" : "enabled");
 	}
-	else if ((s.find(".setmaxspeed") == 0) && (player == 0)) {
+	else if ((s.find(".setmaxspeed") == 0) && (player == 0)  && !net->localDemoPlayback) {
 		maxUserSpeed = atof(s.substr(12).c_str());
 		if (gs->userSpeedFactor > maxUserSpeed) {
 			gs->userSpeedFactor = maxUserSpeed;
 		}
 	}
-	else if ((s.find(".setminspeed") == 0) && (player == 0)) {
+	else if ((s.find(".setminspeed") == 0) && (player == 0)  && !net->localDemoPlayback) {
 		minUserSpeed = atof(s.substr(12).c_str());
 		if (gs->userSpeedFactor < minUserSpeed) {
 			gs->userSpeedFactor = minUserSpeed;
