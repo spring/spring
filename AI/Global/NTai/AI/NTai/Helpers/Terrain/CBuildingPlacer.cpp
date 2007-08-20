@@ -477,7 +477,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                         if(t < nearest_dist){
                             if(tempgeo.empty()==false){
                                 for(map<int, float3>::iterator i = tempgeo.begin(); i != tempgeo.end(); ++i){
-                                    if(i->second.distance2D(fpos) < 50){
+                                    if(i->second.distance2D(fpos) < 100){
                                         continue;
                                     }
                                 }
