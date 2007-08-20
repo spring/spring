@@ -1,10 +1,14 @@
 #include "../Core/helper.h"
 
+int* garbage = 0;
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 Chaser::Chaser(){
     G = 0;
     lock = false;
+    if(garbage == 0){
+        garbage = new int[10000];
+    }
 }
 
 void Chaser::InitAI(Global* GLI){
@@ -105,19 +109,23 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     START_EXCEPTION_HANDLING
     float3 dpos = G->GetUnitPos(damaged);
     if(G->Map->CheckFloat3(dpos) == false) return;
-    float mhealth = G->cb->GetUnitMaxHealth(damaged);
-    float chealth = G->cb->GetUnitHealth(damaged);
-    if((mhealth != 0)&&(chealth != 0)){
-        if((chealth < mhealth*0.45f)||(damage > mhealth*0.7f)){
-            // ahk ahk unit is low on health run away! run away!
-            // Or unit is being attacked by a weapon that's going to blow it up very quickly
-            // Units will want to stay alive!!!
-            G->Actions->Retreat(damaged);
+    if(attacker<0) return;
+
+    if(G->cb->GetFriendlyUnits(garbage,dpos,400) > 4){
+        float mhealth = G->cb->GetUnitMaxHealth(damaged);
+        float chealth = G->cb->GetUnitHealth(damaged);
+        if((mhealth != 0)&&(chealth != 0)){
+            if((chealth < mhealth*0.45f)||(damage > mhealth*0.7f)){
+                // ahk ahk unit is low on health run away! run away!
+                // Or unit is being attacked by a weapon that's going to blow it up very quickly
+                // Units will want to stay alive!!!
+                G->Actions->Retreat(damaged);
+            }
         }
     }
-    if(attacker<0) return;
-    int ateam = G->chcb->GetUnitAllyTeam(attacker);
-    /*if(allyteamGrudges.empty()==false){
+
+    /*int ateam = G->chcb->GetUnitAllyTeam(attacker);
+    if(allyteamGrudges.empty()==false){
         if(allyteamGrudges.find(ateam) == allyteamGrudges.end()){
             allyteamGrudges[ateam] = damage;
         }else{
@@ -269,7 +277,7 @@ void Chaser::UnitFinished(int unit){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 Chaser::~Chaser(){
-    //delete Targetting;
+    delete[] garbage;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -302,17 +310,27 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
     final_dest = Grid.GridtoMap(Grid.IndextoGrid(Index));
     if(Grid.ValidMapPos(final_dest)){
         if(atkgroup.empty() == false){
+            //check target position has enemies
+            int enenum = G->GetEnemyUnits(garbage,final_dest,1000);
+            if(enenum < 1){
+                return false;
+            }
             /*AIHCAddMapPoint ac;
              ac.label=new char[11];
              ac.label="attack pos";
              ac.pos = final_dest;
              G->cb->HandleCommand(AIHCAddMapPointId,&ac);*/
-            Grid.ApplyModifierAtMapPos(final_dest, 2.2f);
+            //Grid.ApplyModifierAtMapPos(final_dest, 1.6f);
             G->L.print("attack position targetted sending units");
             for(set<int>::iterator aik = atkgroup.begin();aik != atkgroup.end();++aik){
                 float3 upos = G->GetUnitPos(*aik);
                 if(Grid.ValidMapPos(upos)){
-                    float3 npos = final_dest;//G->Map->distfrom(upos,final_dest,G->cb->GetUnitMaxRange(*aik)*0.95f);
+                    float3 npos;
+                    if(upos.distance2D(final_dest) < G->cb->GetUnitMaxRange(*aik)){
+                        continue;
+                    }else{
+                        npos = final_dest;//G->Map->distfrom(upos,final_dest,G->cb->GetUnitMaxRange(*aik)*0.95f);
+                    }
                     //if(upos.distance2D(npos) > G->cb->GetUnitMaxRange(*aik)){
                     npos.y = 0;
                     //AIHCAddMapPoint ac2;

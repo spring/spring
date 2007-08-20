@@ -1269,9 +1269,9 @@ bool Global::LoadUnitData(){
                     cb->GetValue(AIVAL_NUMDAMAGETYPES, &numTypes);
                     for(int a=0;a<numTypes;++a){
                         if(a == 0){
-                            av = k->def->damages.damages[0];
+                            av = k->def->damages[0];//damages
                         }else{
-                            av = (av+k->def->damages.damages[a])/2;
+                            av = (av+k->def->damages[a])/2;
                         }
                     }
                     ef += av;
