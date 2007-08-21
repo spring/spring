@@ -11,6 +11,7 @@
 
 #endif
 
+#include "boost/version.hpp"
 #include "LogOutput.h"
 #include "GlobalStuff.h"
 //#include "Sync/Syncify.h"
@@ -121,18 +122,24 @@ int UDPConnection::GetData(unsigned char *buf, const unsigned length)
 		packetMap::iterator wpi;
 		//process all in order packets that we have waiting
 		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
-		//	if (readyLength + wpi->second->length >= length) {	// does only work with boost >= 1.34
-			if (readyLength + (*wpi).length >= length) {	// does only work with boost < 1.34
+#if (BOOST_VERSION >= 103400)
+			if (readyLength + wpi->second->length >= length) {
+#else
+			if (readyLength + (*wpi).length >= length) {
+#endif		
 				logOutput.Print("Overflow in incoming network buffer");
 				break;
 			}
 
 			lastInOrder++;
 
-		//	memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
-		//	readyLength += (wpi->second)->length;
+#if (BOOST_VERSION >= 103400)
+			memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
+			readyLength += (wpi->second)->length;
+#else
 			memcpy(buf + readyLength, (*wpi).data, (*wpi).length);
 			readyLength += (*wpi).length;
+#endif		
 
 			waitingPackets.erase(wpi);
 		}
@@ -274,7 +281,11 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
+#if (BOOST_VERSION >= 103400)
+		int nak = (waitingPackets.begin()->first - 1) - lastInOrder;
+#else
 		int nak = (waitingPackets.begin().key() - 1) - lastInOrder;
+#endif
 		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;
