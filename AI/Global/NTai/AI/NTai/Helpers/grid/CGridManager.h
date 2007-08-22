@@ -16,7 +16,6 @@
 #include <string>
 #include <fstream>
 #include "boost/shared_ptr.hpp"
-#include "GlobalStuff.h" // Common definitions in spring
 #include "CGridCell.h"
 
 using namespace std;
@@ -104,8 +103,8 @@ public:
 	void Rebuild();// Destroys the grid and recreates it
 	bool IsValid();
 
-	
-	
+
+
 	int GetIndex(float3 Gridpos);
 	float3 IndextoGrid(int Index);
 	float3 GridtoMap(float3 Gridpos);
@@ -141,7 +140,7 @@ public:
 
 	void Initialize(float3 MapDimensions, float3 GridSet, bool SizebyCell=true);
 	bool Initialized();
-	
+
 	bool CellExists(int Index);
 	bool ValidGridPos(float3 Gridpos);
 	int ValidGridPosE(float3 Gridpos);
@@ -158,7 +157,7 @@ public:
 	int GetHighestindexInRadius(float3 MapPos, float Radius);
 	int GetLowestindexInRadius(float3 MapPos, float Radius);
 
-	
+
 	//int GetLowestindexInRadius(float3 MapPos, float Radius);
 
 	void AddValueatMapPos(float3 MapPos, float Value);
@@ -170,7 +169,7 @@ public:
 	float3 GetGridDimensions(){
 		return GridDimensions;
 	}
-	
+
 	vector<float3> GetCellsInRadius(float3 MapPos, float Radius);
 	vector<float3> GetCellsInRadius(float3 MapPos, float Radius, int& error_code);
 
@@ -178,7 +177,7 @@ public:
 
 	boost::mutex cellmutex;
 private:
-	boost::shared_ptr<CGridCell> GetCell(int Index);	
+	boost::shared_ptr<CGridCell> GetCell(int Index);
 	bool IsInitialized;
 
 	std::map<int,boost::shared_ptr<CGridCell> > grid;

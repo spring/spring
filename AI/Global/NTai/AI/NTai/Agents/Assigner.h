@@ -1,8 +1,5 @@
 #ifndef ASSIGNER_H
 #define ASSIGNER_H
-#include <list>
-#include "AICallback.h"
-#include "Sim/Units/UnitDef.h"
 
 class Assigner{
 public:
