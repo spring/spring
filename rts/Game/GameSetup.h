@@ -9,6 +9,16 @@
 class CGameSetup
 {
 public:
+
+	enum StartPosType
+	{
+		StartPos_Fixed = 0,
+		StartPos_Random = 1,
+		StartPos_ChooseInGame = 2,
+		StartPos_ChooseBeforeGame = 3,
+		StartPos_Last = 3  // last entry in enum (for user input check)
+	};
+
 	CGameSetup();
 	~CGameSetup();
 	bool Init(std::string setupFile);
@@ -35,7 +45,7 @@ public:
 	char* gameSetupText;
 	int gameSetupTextLength;
 
-	int startPosType;			//0 fixed 1 random 2 select in map
+	StartPosType startPosType;
 	bool readyTeams[MAX_TEAMS];
 	int teamStartNum[MAX_TEAMS];
 	float startRectTop[MAX_TEAMS];
