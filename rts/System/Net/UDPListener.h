@@ -45,7 +45,7 @@ public:
 	You can use this to recieve data from it without accepting. After this it can be Accept'ed or Reject'ed.
 	@return a UDPConnection or 0 if there are no, DO NOT DELETE IT
 	*/
-	UDPConnection* GetWaitingConenction() const;
+	UDPConnection* GetWaitingConnection() const;
 	
 	/**
 	@brief Accept the first waiting connection

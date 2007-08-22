@@ -192,7 +192,7 @@ bool CNet::HasIncomingConnection() const
 {
 	if (udplistener)
 	{
-		return (bool)udplistener->GetWaitingConenction();
+		return !!udplistener->GetWaitingConnection();
 	}
 	else
 	{
@@ -204,7 +204,7 @@ int CNet::GetData(unsigned char* buf, const unsigned length)
 {
 	if (udplistener)
 	{
-		CConnection* temp = udplistener->GetWaitingConenction();
+		CConnection* temp = udplistener->GetWaitingConnection();
 		if (temp)
 		{
 			return temp->GetData(buf, length);
@@ -224,7 +224,7 @@ unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)
 {
 	if (udplistener)
 	{
-		CConnection* conn = udplistener->GetWaitingConenction();
+		CConnection* conn = udplistener->GetWaitingConnection();
 		
 		if (conn == 0)
 		{
@@ -242,7 +242,7 @@ unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)
 
 void CNet::RejectIncomingConnection()
 {
-	if (udplistener && !udplistener->GetWaitingConenction())
+	if (udplistener && !udplistener->GetWaitingConnection())
 	{
 		udplistener->RejectWaitingConnection();
 	}
