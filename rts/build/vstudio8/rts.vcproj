@@ -574,6 +574,38 @@
 			<File
 				RelativePath="..\..\Game\GameVersion.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameVersion.h"
@@ -2203,6 +2235,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\DamageArray.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\DamageArray.h"
 					>
 				</File>
@@ -2306,17 +2342,41 @@
 			<File
 				RelativePath="..\..\System\AutohostInterface.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\AutohostInterface.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\bget.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\bget.h"
 				>
 			</File>
 			<File
@@ -5999,6 +6059,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\bget.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\bget.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\get_executable_name.c"
 					>
 					<FileConfiguration
@@ -6106,6 +6174,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6115,6 +6184,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6124,6 +6194,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6133,6 +6204,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6150,6 +6222,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6159,6 +6232,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6168,6 +6242,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6177,6 +6252,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6194,6 +6270,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6203,6 +6280,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6212,6 +6290,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6221,6 +6300,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
 							ObjectFile="$(IntDir)\$(InputName)1.obj"
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
@@ -6233,6 +6313,38 @@
 				<File
 					RelativePath="..\..\System\Net\RawPacket.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\RawPacket.h"
@@ -6241,6 +6353,38 @@
 				<File
 					RelativePath="..\..\System\Net\UDPConnection.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPConnection.h"
@@ -6249,6 +6393,38 @@
 				<File
 					RelativePath="..\..\System\Net\UDPHardlink.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPHardlink.h"
@@ -6257,6 +6433,38 @@
 				<File
 					RelativePath="..\..\System\Net\UDPListener.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPListener.h"
@@ -6265,6 +6473,38 @@
 				<File
 					RelativePath="..\..\System\Net\UDPSocket.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPSocket.h"

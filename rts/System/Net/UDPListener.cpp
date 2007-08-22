@@ -72,7 +72,7 @@ UDPConnection* UDPListener::SpawnConnection(const std::string& address, const un
 	return conn.back();
 }
 
-UDPConnection* UDPListener::GetWaitingConenction() const
+UDPConnection* UDPListener::GetWaitingConnection() const
 {
 	if (!waitingConn.empty())
 	{
