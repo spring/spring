@@ -94,35 +94,36 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 
 void CGroundDecalHandler::Draw(void)
 {
-	if(decalLevel==0)
+	if (decalLevel == 0)
 		return;
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER,0.01f);
+	glAlphaFunc(GL_GREATER, 0.01f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-10,-200);
+	glPolygonOffset(-10, -200);
 	glDepthMask(0);
 
 	unsigned char color[4];
-	color[0]=255;
-	color[1]=255;
-	color[2]=255;
-	color[3]=255;
+	color[0] = 255;
+	color[1] = 255;
+	color[2] = 255;
+	color[3] = 255;
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	if(shadowHandler && shadowHandler->drawShadows){
+
+	if (shadowHandler && shadowHandler->drawShadows) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
@@ -131,51 +132,56 @@ void CGroundDecalHandler::Draw(void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, decalFP );
-		glEnable( GL_FRAGMENT_PROGRAM_ARB );
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, decalVP );
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
-		float3 ac=readmap->ambientColor*(210.0f/255.0f);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, ac.x,ac.y,ac.z,1);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,readmap->shadowDensity);
+		glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, decalFP);
+		glEnable(GL_FRAGMENT_PROGRAM_ARB );
+		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, decalVP);
+		glEnable(GL_VERTEX_PROGRAM_ARB );
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
+		float3 ac = readmap->ambientColor * (210.0f / 255.0f);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, ac.x, ac.y, ac.z, 1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, readmap->shadowDensity);
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	for(std::vector<BuildingDecalType*>::iterator bdi=buildingDecalTypes.begin();bdi!=buildingDecalTypes.end();++bdi){
-		if(!(*bdi)->buildingDecals.empty()){
-			CVertexArray* va=GetVertexArray();
+	// "draw" building decals
+	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
+		if (!(*bdi)->buildingDecals.empty()) {
+			CVertexArray* va = GetVertexArray();
 			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D,(*bdi)->texture);
-			for(set<BuildingGroundDecal*>::iterator bi=(*bdi)->buildingDecals.begin();bi!=(*bdi)->buildingDecals.end();){
-				BuildingGroundDecal* decal=*bi;
-				if(decal->owner && decal->owner->buildProgress >= 0){
-					decal->alpha=decal->owner->buildProgress;
-				} else if(!decal->gbOwner){
-					decal->alpha-=decal->AlphaFalloff*gu->lastFrameTime*gs->speedFactor;
+			glBindTexture(GL_TEXTURE_2D, (*bdi)->texture);
+
+			for (set<BuildingGroundDecal*>::iterator bi = (*bdi)->buildingDecals.begin(); bi != (*bdi)->buildingDecals.end(); ) {
+				BuildingGroundDecal* decal = *bi;
+
+				if (decal->owner && decal->owner->buildProgress >= 0) {
+					decal->alpha = decal->owner->buildProgress;
+				} else if (!decal->gbOwner) {
+					decal->alpha -= decal->AlphaFalloff * gu->lastFrameTime * gs->speedFactor;
 				}
-				if(decal->alpha<0){
+				if (decal->alpha < 0) {
 					delete decal;
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
 				}
-				if(camera->InView(decal->pos,decal->radius) && 
+
+				if (camera->InView(decal->pos,decal->radius) && 
 					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView))
 				{
-					color[3]=int(decal->alpha*255);
-					float* heightmap=readmap->GetHeightmap();
-					float xts=1.0f/decal->xsize;
-					float yts=1.0f/decal->ysize;
-					for(int x=0;x<decal->xsize;++x){
-						int x2=decal->posx+x;
-						for(int z=0;z<decal->ysize;++z){
-							int z2=decal->posy+z;
-							va->AddVertexTC(float3(x2*8,heightmap[(z2)*(gs->mapx+1)+x2]+0.2f,z2*8),x*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,heightmap[(z2)*(gs->mapx+1)+x2+1]+0.2f,z2*8),(x+1)*xts,z*yts,color);
-							va->AddVertexTC(float3(x2*8+8,heightmap[(z2+1)*(gs->mapx+1)+x2+1]+0.2f,z2*8+8),(x+1)*xts,(z+1)*yts,color);
-							va->AddVertexTC(float3(x2*8,heightmap[(z2+1)*(gs->mapx+1)+x2]+0.2f,z2*8+8),x*xts,(z+1)*yts,color);
+					color[3] = int(decal->alpha * 255);
+					float* heightmap = readmap->GetHeightmap();
+					float xts = 1.0f / decal->xsize;
+					float yts = 1.0f / decal->ysize;
+
+					for (int x = 0; x < decal->xsize; ++x) {
+						int x2 = decal->posx + x;
+						for (int z = 0; z < decal->ysize; ++z) {
+							int z2 = decal->posy+z;
+							va->AddVertexTC(float3(x2 * 8,     heightmap[(z2    ) * (gs->mapx + 1) + x2    ] + 0.2f, z2 * 8    ), (x    ) * xts, (z    ) * yts, color);
+							va->AddVertexTC(float3(x2 * 8 + 8, heightmap[(z2    ) * (gs->mapx + 1) + x2 + 1] + 0.2f, z2 * 8    ), (x + 1) * xts, (z    ) * yts, color);
+							va->AddVertexTC(float3(x2 * 8 + 8, heightmap[(z2 + 1) * (gs->mapx + 1) + x2 + 1] + 0.2f, z2 * 8 + 8), (x + 1) * xts, (z + 1) * yts, color);
+							va->AddVertexTC(float3(x2 * 8,     heightmap[(z2 + 1) * (gs->mapx + 1) + x2    ] + 0.2f, z2 * 8 + 8), (x    ) * xts, (z + 1) * yts, color);
 						}
 					}
 				}
@@ -185,54 +191,63 @@ void CGroundDecalHandler::Draw(void)
 		}
 	}
 
-	if(shadowHandler && shadowHandler->drawShadows){
-		glDisable( GL_FRAGMENT_PROGRAM_ARB );
-		glDisable( GL_VERTEX_PROGRAM_ARB );
+	if (shadowHandler && shadowHandler->drawShadows) {
+		glDisable(GL_FRAGMENT_PROGRAM_ARB);
+		glDisable(GL_VERTEX_PROGRAM_ARB);
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glDisable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	glPolygonOffset(-10,-20);
+
+	glPolygonOffset(-10, -20);
 
 	unsigned char color2[4];
-	color2[0]=255;
-	color2[1]=255;
-	color2[2]=255;
-	color2[3]=255;
+	color2[0] = 255;
+	color2[1] = 255;
+	color2[2] = 255;
+	color2[3] = 255;
 
-	for(std::vector<TrackType*>::iterator tti=trackTypes.begin();tti!=trackTypes.end();++tti){
-		if(!(*tti)->tracks.empty()){
-			CVertexArray* va=GetVertexArray();
+	// "draw" unit footprints
+	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
+		if (!(*tti)->tracks.empty()) {
+			CVertexArray* va = GetVertexArray();
 			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D,(*tti)->texture);
+			glBindTexture(GL_TEXTURE_2D, (*tti)->texture);
 
-			for(set<UnitTrackStruct*>::iterator ti=(*tti)->tracks.begin();ti!=(*tti)->tracks.end();){
-				UnitTrackStruct* track=*ti;
-				while(!track->parts.empty() && track->parts.front().creationTime<gs->frameNum-track->lifeTime){
+			for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end();) {
+				UnitTrackStruct* track = *ti;
+
+				while (!track->parts.empty() && track->parts.front().creationTime < gs->frameNum - track->lifeTime) {
 					track->parts.pop_front();
 				}
-				if(track->parts.empty()){
-					if(track->owner)
-						track->owner->myTrack=0;
+				if (track->parts.empty()) {
+					if (track->owner)
+						track->owner->myTrack = 0;
 					delete track;
 					(*tti)->tracks.erase(ti++);
 					continue;
 				}
-				if(camera->InView((track->parts.front().pos1+track->parts.back().pos1)*0.5f,track->parts.front().pos1.distance(track->parts.back().pos1)+500)){
-					list<TrackPart>::iterator ppi=track->parts.begin();
-					color2[3]=track->trackAlpha-(int)((gs->frameNum-ppi->creationTime)*track->alphaFalloff);
 
-					for(list<TrackPart>::iterator pi=++track->parts.begin();pi!=track->parts.end();++pi){
-						color[3]=track->trackAlpha-(int)((gs->frameNum-ppi->creationTime)*track->alphaFalloff);
-						if(pi->connected){
-							va->AddVertexTC(ppi->pos1,ppi->texPos,0,color2);
-							va->AddVertexTC(ppi->pos2,ppi->texPos,1,color2);
-							va->AddVertexTC(pi->pos2,pi->texPos,1,color);
-							va->AddVertexTC(pi->pos1,pi->texPos,0,color);
+				if (camera->InView((track->parts.front().pos1 + track->parts.back().pos1) * 0.5f, track->parts.front().pos1.distance(track->parts.back().pos1) + 500)) {
+					list<TrackPart>::iterator ppi = track->parts.begin();
+					color2[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
+
+					for (list<TrackPart>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
+						color[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
+						if (pi->connected) {
+							va->AddVertexTC(ppi->pos1, ppi->texPos, 0, color2);
+							va->AddVertexTC(ppi->pos2, ppi->texPos, 1, color2);
+							va->AddVertexTC(pi->pos2, pi->texPos, 1, color);
+							va->AddVertexTC(pi->pos1, pi->texPos, 0, color);
 						}
-						color2[3]=color[3];
-						ppi=pi;
+						color2[3] = color[3];
+						ppi = pi;
 					}
 				}
 				++ti;
@@ -241,50 +256,55 @@ void CGroundDecalHandler::Draw(void)
 		}
 	}
 
-	glBindTexture(GL_TEXTURE_2D,scarTex);
-	CVertexArray* va=GetVertexArray();
+	glBindTexture(GL_TEXTURE_2D, scarTex);
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	glPolygonOffset(-10,-400);
+	glPolygonOffset(-10, -400);
 
-	for(std::list<Scar*>::iterator si=scars.begin();si!=scars.end();){
-		Scar* scar=*si;
-		if(scar->lifeTime<gs->frameNum){
-			RemoveScar(*si,false);
-			si=scars.erase(si);
+
+
+	// "draw" ground scars
+	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
+		Scar* scar = *si;
+		if (scar->lifeTime < gs->frameNum) {
+			RemoveScar(*si, false);
+			si = scars.erase(si);
 			continue;
 		}
-		if(camera->InView(scar->pos,scar->radius+16)){
-			float3 pos=scar->pos;
-			float radius=scar->radius;
-			float tx=scar->texOffsetX;
-			float ty=scar->texOffsetY;
 
-			if(scar->creationTime+10>gs->frameNum)
-				color[3]=(int)(scar->startAlpha*(gs->frameNum-scar->creationTime)*0.1f);
+		if (camera->InView(scar->pos, scar->radius + 16)) {
+			float3 pos = scar->pos;
+			float radius = scar->radius;
+			float tx = scar->texOffsetX;
+			float ty = scar->texOffsetY;
+
+			if (scar->creationTime + 10 > gs->frameNum)
+				color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
 			else
-				color[3]=(int)(scar->startAlpha-(gs->frameNum-scar->creationTime)*scar->alphaFalloff);
+				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 
-			int sx=(int)max(0.f,(pos.x-radius)/16.0f);
-			int ex=(int)min(float(gs->hmapx-1),(pos.x+radius)/16.0f);
-			int sz=(int)max(0.f,(pos.z-radius)/16.0f);
-			int ez=(int)min(float(gs->hmapy-1),(pos.z+radius)/16.0f);
-			float* heightmap=readmap->GetHeightmap();
-			for(int x=sx;x<=ex;++x){
-				for(int z=sz;z<=ez;++z){
-					float px1=x*16;
-					float pz1=z*16;
-					float px2=px1+16;
-					float pz2=pz1+16;
+			int sx = (int) max(0.f,                  (pos.x - radius) / 16.0f);
+			int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
+			int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
+			int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f);
+			float* heightmap = readmap->GetHeightmap();
 
-					float tx1=min(0.5f,(pos.x-px1)/(radius*4.0f)+0.25f);
-					float tx2=max(0.0f,(pos.x-px2)/(radius*4.0f)+0.25f);
-					float tz1=min(0.5f,(pos.z-pz1)/(radius*4.0f)+0.25f);
-					float tz2=max(0.0f,(pos.z-pz2)/(radius*4.0f)+0.25f);
+			for (int x = sx; x <= ex; ++x) {
+				for (int z = sz; z <= ez; ++z) {
+					float px1 = x * 16;
+					float pz1 = z * 16;
+					float px2 = px1 + 16;
+					float pz2 = pz1 + 16;
 
-					va->AddVertexTC(float3(px1,heightmap[(z*2)*(gs->mapx+1)+x*2]+0.5f,pz1),tx1+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,heightmap[(z*2)*(gs->mapx+1)+x*2+2]+0.5f,pz1),tx2+tx,tz1+ty,color);
-					va->AddVertexTC(float3(px2,heightmap[(z*2+2)*(gs->mapx+1)+x*2+2]+0.5f,pz2),tx2+tx,tz2+ty,color);
-					va->AddVertexTC(float3(px1,heightmap[(z*2+2)*(gs->mapx+1)+x*2]+0.5f,pz2),tx1+tx,tz2+ty,color);
+					float tx1 = min(0.5f, (pos.x - px1) / (radius * 4.0f) + 0.25f);
+					float tx2 = max(0.0f, (pos.x - px2) / (radius * 4.0f) + 0.25f);
+					float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
+					float tz2 = max(0.0f, (pos.z - pz2) / (radius * 4.0f) + 0.25f);
+
+					va->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
+					va->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
+					va->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
+					va->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
 				}
 			}
 		}
@@ -301,10 +321,10 @@ void CGroundDecalHandler::Draw(void)
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
@@ -424,63 +444,64 @@ unsigned int CGroundDecalHandler::LoadTexture(std::string name)
 	return bm.CreateTexture(true);
 }
 
+
 void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 {
-	if(decalLevel==0)
+	if (decalLevel == 0)
 		return;
 
-	float height=pos.y-ground->GetHeight2(pos.x,pos.z);
-	if(height>=radius)
+	float height = pos.y - ground->GetHeight2(pos.x, pos.z);
+	if (height >= radius)
 		return;
 
-	pos.y-=height;
-	radius-=height;
+	pos.y -= height;
+	radius -= height;
 
-	if(radius<5)
+	if (radius < 5)
 		return;
 
-	if(damage>radius*30)
-		damage=radius*30;
+	if (damage > radius * 30)
+		damage = radius * 30;
 
-	damage*=(radius)/(radius+height);
-	if(radius>damage*0.25f)
-		radius=damage*0.25f;
+	damage *= (radius) / (radius + height);
+	if (radius > damage * 0.25f)
+		radius = damage * 0.25f;
 
-	if(damage>400)
-		damage=400+sqrt(damage-399);
+	if (damage > 400)
+		damage = 400 + sqrt(damage - 399);
 
 	pos.CheckInBounds();
 
-	Scar* s=SAFE_NEW Scar;
-	s->pos=pos;
-	s->radius=radius*1.4f;
-	s->creationTime=gs->frameNum;
-	s->startAlpha=max(50.f,min(255.f,damage));
-	float lifeTime=decalLevel*(damage)*3;
-	s->alphaFalloff=s->startAlpha/(lifeTime);
-	s->lifeTime=(int)(gs->frameNum+lifeTime);
-	s->texOffsetX=(gu->usRandInt()&128)?0:0.5f;
-	s->texOffsetY=(gu->usRandInt()&128)?0:0.5f;
+	Scar* s = SAFE_NEW Scar;
+	s->pos = pos;
+	s->radius = radius * 1.4f;
+	s->creationTime = gs->frameNum;
+	s->startAlpha = max(50.f, min(255.f, damage));
+	float lifeTime = decalLevel * (damage) * 3;
+	s->alphaFalloff = s->startAlpha / (lifeTime);
+	s->lifeTime = (int) (gs->frameNum + lifeTime);
+	s->texOffsetX = (gu->usRandInt() & 128)? 0: 0.5f;
+	s->texOffsetY = (gu->usRandInt() & 128)? 0: 0.5f;
 
-	s->x1=(int)max(0.f,(pos.x-radius)/16.0f);
-	s->x2=(int)min(float(gs->hmapx-1),(pos.x+radius)/16.0f+1);
-	s->y1=(int)max(0.f,(pos.z-radius)/16.0f);
-	s->y2=(int)min(float(gs->hmapy-1),(pos.z+radius)/16.0f+1);
+	s->x1 = (int) max(0.f,                  (pos.x - radius) / 16.0f    );
+	s->x2 = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f + 1);
+	s->y1 = (int) max(0.f,                  (pos.z - radius) / 16.0f    );
+	s->y2 = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f + 1);
 
-	s->basesize=(s->x2-s->x1)*(s->y2-s->y1);
-	s->overdrawn=0;
-	s->lastTest=0;
+	s->basesize = (s->x2 - s->x1) * (s->y2 - s->y1);
+	s->overdrawn = 0;
+	s->lastTest = 0;
 
 	TestOverlaps(s);
 
-	int x1=s->x1/16;
-	int x2=min(scarFieldX-1,s->x2/16);
-	int y1=s->y1/16;
-	int y2=min(scarFieldY-1,s->y2/16);
+	int x1 = s->x1 / 16;
+	int x2 = min(scarFieldX - 1, s->x2 / 16);
+	int y1 = s->y1 / 16;
+	int y2 = min(scarFieldY - 1, s->y2 / 16);
 
-	for(int y=y1;y<=y2;++y){
-		for(int x=x1;x<=x2;++x){
-			std::set<Scar*>* quad=&scarField[y*scarFieldX+x];
+	for (int y = y1; y <= y2; ++y) {
+		for (int x = x1; x <= x2; ++x) {
+			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
 			quad->insert(s);
 		}
 	}

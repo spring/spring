@@ -92,6 +92,8 @@ void CBFGroundDrawer::DrawGroundVertexArray()
 	va->Initialize();
 }
 
+
+
 void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
 {
 	if (wireframe) {
@@ -168,10 +170,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		for(int btx=sx;btx<ex;++btx){
 			bigtexsubx=btx;
 
-			if(DrawExtraTex() || !shadowHandler->drawShadows){
-				textures->SetTexture(btx,bty);
-				SetTexGen(1.0f/1024,1.0f/1024,-btx,-bty);
-				if(overrideVP){
+			// must be in drawLos mode or shadows must be off
+			if (DrawExtraTex() || !shadowHandler->drawShadows) {
+				textures->SetTexture(btx, bty);
+				SetTexGen(1.0f / 1024, 1.0f / 1024, -btx, -bty);
+				if (overrideVP) {
  					glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
  				}
 			} else {
@@ -490,12 +493,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if(map->voidWater && !drawWater){
+	if (map->voidWater && !drawWater) {
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if(map->hasWaterPlane)
-	{
+	if (map->hasWaterPlane) {
 		glDisable(GL_TEXTURE_2D);
 		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
 		glBegin(GL_QUADS);//water color edge of map <0
@@ -514,7 +516,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glEnd();
 	}
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
+
+	if (groundDecals && !(drawWaterReflection || drawUnitReflection))
 		groundDecals->Draw();
 
 	glEnable(GL_ALPHA_TEST);
@@ -524,40 +527,49 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 
 //	sky->SetCloudShadow(1);
 //	if(drawWaterReflection)
-//		treeDistance*=0.5f;
+//		treeDistance *= 0.5f;
 
 	ph->DrawGroundFlashes();
-	if(treeDrawer->drawTrees){
-		if(DrawExtraTex()){
+
+
+	if (treeDrawer->drawTrees) {
+		if (DrawExtraTex()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
-			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
+			SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
+
 		treeDrawer->Draw(drawWaterReflection || drawUnitReflection);
-		if(DrawExtraTex()){
+
+		if (DrawExtraTex()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
 			glDisable(GL_TEXTURE_GEN_S);
 			glDisable(GL_TEXTURE_GEN_T);
 			glDisable(GL_TEXTURE_2D);
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 	}
 
 	glDisable(GL_ALPHA_TEST);
-
 	glDisable(GL_TEXTURE_2D);
-	viewRadius=baseViewRadius;
+	viewRadius = baseViewRadius;
 }
+
+
+
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
@@ -831,6 +843,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
+
 void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrideVP)
 {
 	glColor4f(1,1,1,1);
@@ -940,6 +953,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 	}
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
+
 
 void CBFGroundDrawer::ResetTextureUnits(bool drawReflection,unsigned int overrideVP)
 {
