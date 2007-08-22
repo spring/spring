@@ -34,7 +34,7 @@ CGameSetup::CGameSetup()
 {
 	readyTime=0;
 	gameSetupText=0;
-	startPosType=0;
+	startPosType=StartPos_Fixed;
 	numDemoPlayers=0;
 	hostDemo=false;
 	forceReady=false;
@@ -132,21 +132,25 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
 	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
 
-	file.GetDef(startPosType,"0","GAME\\StartPosType");
+	int startPosTypeInt;
+	file.GetDef(startPosTypeInt,"0","GAME\\StartPosType");
+	if (startPosTypeInt < 0 || startPosTypeInt > StartPos_Last)
+		startPosTypeInt = 0;
+	startPosType = (StartPosType)startPosTypeInt;
 
 	for (int a = 0; a < gs->activeTeams; ++a) {
 		// ready up automatically unless startPosType is choose in game
-		readyTeams[a] = (startPosType != 2);
+		readyTeams[a] = (startPosType != StartPos_ChooseInGame);
 		teamStartNum[a] = a;
 	}
 
-	if (startPosType == 1) { // random
+	if (startPosType == StartPos_Random) {
 		//server syncs these later, so we can use unsynced rng
 		UnsyncedRandomNumberGenerator rng;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[gs->activeTeams], rng);
 	}
 
-	if (startPosType == 2) // choose in game
+	if (startPosType == StartPos_ChooseInGame)
 		SAFE_NEW CStartPosSelecter();
 
 	// gaia adjustments
@@ -206,13 +210,20 @@ bool CGameSetup::Init(const char* buf, int size)
 
 		float x,z;
 		char teamName[50];
-		sprintf(teamName,"TEAM%i",teamStartNum[a]);
-		p2.GetDef(x,"1000",string("MAP\\")+teamName+"\\StartPosX");
-		p2.GetDef(z,"1000",string("MAP\\")+teamName+"\\StartPosZ");
-		gs->Team(a)->startPos=float3(x,100,z);
+		sprintf(teamName, "TEAM%i", teamStartNum[a]);
+		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
+		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
+		gs->Team(a)->startPos = float3(x, 100, z);
 
-		if(startPosType==2)
+		if (startPosType == StartPos_ChooseInGame)
 			gs->Team(a)->startPos.y=-500;	//show that we havent selected start pos yet
+
+		if (startPosType == StartPos_ChooseBeforeGame) {
+			std::string xpos = file.SGetValueDef("", s + "StartPosX");
+			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
+			if (!xpos.empty()) gs->Team(a)->startPos.x = atoi(xpos.c_str());
+			if (!zpos.empty()) gs->Team(a)->startPos.z = atoi(zpos.c_str());
+		}
 	}
 	gu->myTeam=gs->players[myPlayer]->team;
 	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
@@ -234,10 +245,6 @@ bool CGameSetup::Init(const char* buf, int size)
 			int other=atoi(file.SGetValueDef("0",key).c_str());
 			gs->SetAlly(a,other, true);
 		}
-	}
-	if(startPosType==2){
-		for(int a=0;a<gs->activeTeams;++a)
-			gs->Team(a)->startPos=float3(startRectLeft[gs->AllyTeam(a)]*gs->mapx*8,-500,startRectTop[gs->AllyTeam(a)]*gs->mapy*8);
 	}
 
 	int metal,energy;
