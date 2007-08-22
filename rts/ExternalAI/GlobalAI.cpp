@@ -13,6 +13,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 
+#include <sstream>
+
 CR_BIND_DERIVED(CGlobalAI,CObject,(0,NULL))
 
 CR_REG_METADATA(CGlobalAI, (
@@ -88,7 +90,10 @@ CGlobalAI::CGlobalAI(int team, const char* dll): team(team), cheatevents(false),
 		int i = GetGlobalAiVersion();
 
 		if (i != GLOBAL_AI_INTERFACE_VERSION) {
-			handleerror(NULL, dll, "Incorrect Global AI dll version", MBF_OK | MBF_EXCL);
+			std::ostringstream tmp;
+			tmp << "Incorrect Global AI dll version " << i << ", expected "
+					<< GLOBAL_AI_INTERFACE_VERSION;
+			handleerror(NULL, dll, tmp.str().c_str(), MBF_OK | MBF_EXCL);
 			return;
 		}
 
