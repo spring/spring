@@ -1,14 +1,12 @@
 //-------------------------------------------------------------------------
 // NTai
 //
-// 
+//
 // Copyright 2004-2006 AF
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 //-------------------------------------------------------------------------
-#include "float3.h"
 #include "GlobalAI.h"
-#include "ExternalAI/aibase.h"
 
 DLL_EXPORT int GetGlobalAiVersion(){
 	return GLOBAL_AI_INTERFACE_VERSION;

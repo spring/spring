@@ -1,8 +1,5 @@
 #ifndef SCOUTER_H
 #define SCOUTER_H
-#include <list>
-#include "AICallback.h"
-#include "Sim/Units/UnitDef.h"
 
 // The scouter agent determines a patrol path that will
 // take the unit around the entire map, thus showing
@@ -10,7 +7,7 @@
 // and providing scouting and exploration. It takes these
 // patrol paths and gives them to any scout unit that is
 // built. Because of this, any aircraft that cannot build will
-// be added to this, though this will change surely in 
+// be added to this, though this will change surely in
 // the future.
 class Scouter{
 public:

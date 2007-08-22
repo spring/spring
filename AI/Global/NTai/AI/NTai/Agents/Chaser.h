@@ -1,8 +1,5 @@
 #ifndef CHASER_H
 #define CHASER_H
-#include <list>
-#include "AICallback.h"
-#include "Sim/Units/UnitDef.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // The class used to store info about a task force and what units
@@ -63,7 +60,7 @@ public:
 	vector<set<int> > air_attack_groups;
 
 
-	set<int> unit_to_initialize;	// a set of attackers that have been finished, but are 
+	set<int> unit_to_initialize;	// a set of attackers that have been finished, but are
 								// still leaving the factory
 	int enemynum;
 	vector<string> hold_pos;
@@ -79,7 +76,7 @@ public:
 	map<string,bool> sd_proxim;
 	map<int,float> allyteamGrudges;
 	float ApplyGrudge(int unit,float efficiency);
-	
+
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

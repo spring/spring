@@ -92,11 +92,7 @@ class Global;
 // The max n# of orders sent on each cycle by the command cache
 #define BUFFERMAX 8
 
-// typedefs to shorten these
-typedef unsigned char uchar;
-typedef unsigned long ulong;
-typedef unsigned int uint;
-typedef unsigned short ushort;
+
 
 /*enum Ttarg{
 	// Helps define targetting and random moves, but not used yet
@@ -247,15 +243,8 @@ typedef boost::mutex::scoped_lock scoped_lock;
 // random number generator
 #include "../Helpers/mtrand.h"
 
-// Spring Engine
-#include "GlobalStuff.h" // Common definitions in spring
-#include "ExternalAI/IAICheats.h" // Cheat Interface
-#include "ExternalAI/AICallback.h" // AI Callback
-#include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
-#include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
-#include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Misc/FeatureDef.h" // Needed for FeatureDef
+#include "../SDK/AI.h"
+
 #include "../Helpers/grid/CGridManager.h"
 
 #include "../Helpers/TdfParser.h"// Parses TDF files

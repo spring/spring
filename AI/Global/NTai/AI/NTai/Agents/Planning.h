@@ -1,8 +1,5 @@
 #ifndef PLANNING_H
 #define PLANNING_H
-#include <list>
-#include "AICallback.h"
-#include "Sim/Units/UnitDef.h"
 
 
 class Planning{
