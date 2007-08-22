@@ -172,14 +172,13 @@ static bool is_mod(const std::string& filename){
 }
 
 static bool is_map_or_mod(const std::string& filename, archive_type& current_filetype){
-
 	archive_type filetype = R_OTHER;
 	if(is_map(filename)){
 		filetype = R_MAP;
 	}else if(is_mod(filename)){
 		filetype = R_MOD;
 	}
-	if(filetype != R_OTHER){
+	if(filetype != R_OTHER && filetype != current_filetype){
 		if(current_filetype == R_OTHER){
 			current_filetype = filetype;
 		}else{
