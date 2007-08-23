@@ -3,6 +3,7 @@
   Delete "$INSTDIR\docs\readme.html"
   File "..\LICENSE.html"
   File "..\Documentation\changelog.txt"
+  File "..\Documentation\cmds.txt"
   File "..\Documentation\lobbychangelog.txt"
   Delete "$INSTDIR\docs\xtachanges.txt"
 
@@ -16,6 +17,7 @@
   Delete "$INSTDIR\docs\readme.html"
   Delete "$INSTDIR\docs\LICENSE.html"
   Delete "$INSTDIR\docs\changelog.txt"
+  Delete "$INSTDIR\docs\cmds.txt"
   Delete "$INSTDIR\docs\lobbychangelog.txt"
   Delete "$INSTDIR\docs\Q&A.html"
   Delete "$INSTDIR\docs\Getting Started.html"
