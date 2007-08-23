@@ -119,27 +119,20 @@ void CBuildUp::Buildup() {
 
 
 			else if (eLevelMed && mLevelLow) {
-				if (!ai->MyUnits[builder]->ReclaimBest(1)) {
-					const UnitDef* mex = ai->ut->GetUnitByScore(builder, CAT_MEX);
-					float3 mexpos = ai->mm->GetNearestMetalSpot(builder, mex);
-
+				if (!ai->MyUnits[builder]->ReclaimBestFeature(true)) {
+					bool b = BuildUpgradeExtractor(builder);
 					bool eOverflow = (eStorage / (eIncome + 0.01) < STORAGETIME);
 					bool eExcess = (eIncome > (eUsage * 1.5));
 
-					if (mexpos != ERRORVECTOR) {
-						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX)) {
-							// build metal extractor
-							ai->MyUnits[builder]->Build(mexpos, mex, -1);
-						}
-					}
-					else if (eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
+					// if we couldn't build or upgrade an extractor
+					if (!b && eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_ESTOR)) {
 							// build energy storage
 							if (BuildNow(builder, CAT_ESTOR))
 								storageTimer += 90;
 						}
 					}
-					else if (buildableMMakers > 0 && eExcess && ((RANDINT % 10) == 0)) {
+					else if (!b && buildableMMakers > 0 && eExcess && ((RANDINT % 10) == 0)) {
 						// build metal maker
 						if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MMAKER)) {
 							BuildNow(builder, CAT_MMAKER);
@@ -411,4 +404,38 @@ bool CBuildUp::BuildNow(int builder, int category, const UnitDef* udef) {
 	}
 
 	return r;
+}
+
+
+
+bool CBuildUp::BuildUpgradeExtractor(int builder) {
+	const UnitDef* mex = ai->ut->GetUnitByScore(builder, CAT_MEX);
+
+	if (mex) {
+		float3 mexPos = ai->mm->GetNearestMetalSpot(builder, mex);
+
+		if (mexPos != ERRORVECTOR) {
+			if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX)) {
+				// build metal extractor
+				ai->MyUnits[builder]->Build(mexPos, mex, -1);
+				return true;
+			}
+		} else {
+			// upgrade existing mex (NOTE: GetNearestMetalSpot()
+			// very rarely returns an error-vector, needs work)
+			int oldMexID = ai->uh->GetOldestMetalExtractor();
+			const UnitDef* oldMex = ai->cb->GetUnitDef(oldMexID);
+
+			if (oldMex) {
+				if ((mex->extractsMetal / oldMex->extractsMetal) > 2.0f) {
+					ai->MyUnits[builder]->Upgrade(oldMexID, mex);
+					return true;
+				}
+			}
+		}
+	}
+
+	// this builder cannot build a mex,
+	// so it cannot upgrade one either
+	return false;
 }

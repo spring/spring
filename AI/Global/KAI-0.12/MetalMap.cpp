@@ -92,9 +92,11 @@ void CMetalMap::Init() {
 		// ai->debug->MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
 	}
 
+	/*
 	char k[256];
 	sprintf(k, "Metal Spots Found: %i", NumSpotsFound);
 	ai->cb->SendTextMsg(k, 0);
+	*/
 }
 
 

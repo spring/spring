@@ -233,7 +233,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 
 
 
-bool CUNIT::ReclaimBest(bool metal, float radius) {
+bool CUNIT::ReclaimBestFeature(bool metal, float radius) {
 	int features[1000];
 	int numfound = ai->cb->GetFeatures(features, 1000, pos(), radius);
 	float bestscore = 0.0f;
@@ -410,6 +410,18 @@ bool CUNIT::Ressurect(int target) {
 }
 
 
+bool CUNIT::Upgrade(int target, const UnitDef* newTarget) {
+	float3 pos = ai->cb->GetUnitPos(target);
+	int facing = ai->cb->GetBuildingFacing(target);
+
+	bool b1 = Reclaim(target);
+	bool b2 = BuildShift(pos, newTarget, facing);
+	return (b1 && b2);
+}
+
+
+
+
 // Location Point Abilities
 bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
@@ -423,6 +435,21 @@ bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) {
 
 	return false;
 }
+
+bool CUNIT::BuildShift(float3 pos, const UnitDef* unit, int facing) {
+	assert(ai->cb->GetUnitDef(myid) != NULL);
+	Command c = MakePosCommand(-(unit->id), pos, -1.0f, facing);
+
+	if (c.id != 0) {
+		c.options |= SHIFT_KEY;
+		ai->cb->GiveOrder(myid, &c);
+		ai->uh->TaskPlanCreate(myid, pos, unit);
+		return true;
+	}
+
+	return false;
+}
+
 
 bool CUNIT::Move(float3 pos) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
@@ -560,7 +587,7 @@ bool CUNIT::Unload(float3 pos, float radius) {
 }
 
 
-// bool CUNIT::Abilities
+// Toggable Abilities
 bool CUNIT::Cloaking(bool on) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_CLOAK, on);

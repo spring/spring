@@ -36,7 +36,7 @@ class CUNIT {
 		int maneuverCounter;
 
 		// specialized
-		bool ReclaimBest(bool metal, float radius = 1000);
+		bool ReclaimBestFeature(bool metal, float radius = 1000);
 
 		// construction
 		int GetBestBuildFacing(float3& pos);
@@ -57,9 +57,11 @@ class CUNIT {
 		bool Reclaim(int target);
 		bool Repair(int target);
 		bool Ressurect(int target);
+		bool Upgrade(int target, const UnitDef*);
 
 		// location point abilities
 		bool Build(float3 pos, const UnitDef* unit, int facing);
+		bool BuildShift(float3 pos, const UnitDef* unit, int facing);
 		bool Move(float3 pos);
 		bool MoveShift(float3 pos);
 		bool Patrol(float3 pos);
@@ -83,6 +85,7 @@ class CUNIT {
 		bool SetFiringMode(int mode);
 		bool Stop();
 		bool SetMaxSpeed(float speed);
+
 
 
 	private:

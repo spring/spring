@@ -143,6 +143,9 @@ void CUnitHandler::UnitCreated(int unit) {
 		if (category == CAT_MMAKER) {
 			MMakerAdd(unit);
 		}
+		if (category == CAT_MEX) {
+			MetalExtractorAdd(unit);
+		}
 
 		if (category == CAT_NUKE) {
 			NukeSiloAdd(unit);
@@ -189,6 +192,9 @@ void CUnitHandler::UnitDestroyed(int unit) {
 			}
 		}
 
+		if (category == CAT_MEX) {
+			MetalExtractorRemove(unit);
+		}
 		if (category == CAT_NUKE) {
 			NukeSiloRemove(unit);
 		}
@@ -839,11 +845,19 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 	assert(builder >= 0);
 	assert(ai->MyUnits[builder] != NULL);
 	BuilderTracker* builderTracker = GetBuilderTracker(builder);
+
 	// make sure this builder is free
-	assert(builderTracker->taskPlanId == 0);
-	assert(builderTracker->buildTaskId == 0);
-	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
+	// KLOOTNOTE: no longer use assertions
+	// since new code for extractor upgrading
+	// (in CBuildUp) seems to trigger them?
+	bool b1 = (builderTracker->taskPlanId == 0);
+	bool b2 = (builderTracker->buildTaskId == 0);
+	bool b3 = (builderTracker->factoryId == 0);
+	bool b4 = (builderTracker->customOrderId == 0);
+
+	if (!b1 || !b2 || !b3 || !b4) {
+		return false;
+	}
 
 	// see if there are any BuildTasks that it can join
 	if (BuildTasks[category]->size()) {
@@ -1043,6 +1057,44 @@ bool CUnitHandler::TaskPlanExist(float3 pos, const UnitDef* builtdef) {
 
 
 
+
+void CUnitHandler::MetalExtractorAdd(int extractorID) {
+	if (ai->ut->GetCategory(extractorID) == CAT_MEX) {
+		MetalExtractor newMex;
+		newMex.id = extractorID;
+		newMex.buildFrame = ai->cb->GetCurrentFrame();
+		MetalExtractors.push_back(newMex);
+	} else {
+		assert(false);
+	}
+}
+
+void CUnitHandler::MetalExtractorRemove(int extractorID) {
+	for (vector<MetalExtractor>::iterator i = MetalExtractors.begin(); i != MetalExtractors.end(); i++) {
+		if (i->id == extractorID) {
+			MetalExtractors.erase(i);
+			break;
+		}
+	}
+}
+
+
+
+inline bool CompareExtractors(const MetalExtractor& l, const MetalExtractor& r) {
+	// higher frame means more recently built
+	return (l.buildFrame < r.buildFrame);
+}
+
+// returns the ID of the oldest (in
+// frames) metal extractor built
+int CUnitHandler::GetOldestMetalExtractor(void) {
+	std::sort(MetalExtractors.begin(), MetalExtractors.end(), &CompareExtractors);
+
+	return (MetalExtractors.size() > 0)? (MetalExtractors.begin())->id: -1;
+}
+
+
+
 void CUnitHandler::NukeSiloAdd(int siloID) {
 	if (ai->ut->GetCategory(siloID) == CAT_NUKE) {
 		NukeSilo newSilo;
@@ -1056,18 +1108,11 @@ void CUnitHandler::NukeSiloAdd(int siloID) {
 }
 
 void CUnitHandler::NukeSiloRemove(int siloID) {
-	list<NukeSilo>::iterator iter;
-	bool siloFound;
-
 	for (list<NukeSilo>::iterator i = NukeSilos.begin(); i != NukeSilos.end(); i++) {
 		if (i->id == siloID) {
-			iter = i;
-			siloFound = true;
+			NukeSilos.erase(i);
 			break;
 		}
-	}
-	if (siloFound) {
-		NukeSilos.erase(iter);
 	}
 }
 
@@ -1087,7 +1132,7 @@ void CUnitHandler::FactoryAdd(int factory) {
 
 void CUnitHandler::FactoryRemove(int id) {
 	list<Factory>::iterator iter;
-	bool factoryFound;
+	bool factoryFound = false;
 
 	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
 		if (i->id == id) {
