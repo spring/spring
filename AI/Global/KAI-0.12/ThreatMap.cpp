@@ -40,7 +40,7 @@ void CThreatMap::Create() {
 void CThreatMap::AddEnemyUnit(int unitid) {
 	const UnitDef* ud = ai->cheat->GetUnitDef(unitid);
 
-	// unarmed units do not register on the threat-map
+	// unarmed or unfinished units do not register on the threat-map
 	if (ud && (!ai->cheat->UnitBeingBuilt(unitid)) && ud->weapons.size()) {
 		float3 pos = ai->cheat->GetUnitPos(unitid);
 		int posx = int(pos.x / (8 * ThreatResolution));
