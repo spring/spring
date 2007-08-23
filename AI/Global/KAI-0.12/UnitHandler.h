@@ -44,6 +44,9 @@ class CUnitHandler {
 
 		void NukeSiloAdd(int siloID);
 		void NukeSiloRemove(int siloID);
+		void MetalExtractorAdd(int extractorID);
+		void MetalExtractorRemove(int extractorID);
+		int GetOldestMetalExtractor(void);
 
 		void FactoryAdd(int id);
 		void FactoryRemove(int id);
@@ -67,6 +70,8 @@ class CUnitHandler {
 
 		list<Factory> Factories;
 		list<NukeSilo> NukeSilos;
+		vector<MetalExtractor> MetalExtractors;
+
 		list<integer2> Limbo;
 		list<BuilderTracker*> BuilderTrackers;
 

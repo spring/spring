@@ -9,8 +9,6 @@ call for performance reasons
 support for shields and antinukes (place
 these near k-means clusters?)
 
-extractor upgrading
-
 cloak commander (if possible) when enough
 energy?
 

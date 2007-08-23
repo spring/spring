@@ -45,7 +45,7 @@ struct AIClasses {
 
 struct UnitType {
 	// 1 means arm, 2 core; 0 if side has not been set
-	// note: CUNIT does not know about this
+	// NOTE: CUNIT does not know about this structure
 	int side;
 	vector<int> canBuildList;
 	vector<int> builtByList;
@@ -54,6 +54,7 @@ struct UnitType {
 	const UnitDef* def;
 	int category;
 	bool isHub;
+	int techLevel;
 };
 
 
@@ -121,7 +122,7 @@ struct BuildTask {
 
 	int id;
 	int category;
-	// temp only, for compability (will be removed)
+	// temp only, for compatibility (will be removed)
 	list<int> builders;
 	// the new container
 	list<BuilderTracker*> builderTrackers;
@@ -139,7 +140,7 @@ struct TaskPlan {
 
 	// this will be some smart number (a counter?)
 	int id;
-	// temp only, for compability (will be removed)
+	// temp only, for compatibility (will be removed)
 	list<int> builders;
 	// the new container
 	list<BuilderTracker*> builderTrackers;
@@ -153,7 +154,7 @@ struct Factory {
 	CR_DECLARE_STRUCT(Factory);
 
 	int id;
-	// temp only, for compability (will be removed)
+	// temp only, for compatibility (will be removed)
 	list<int> supportbuilders;
 	// the new container
 	list<BuilderTracker*> supportBuilderTrackers;
@@ -165,6 +166,13 @@ struct NukeSilo {
 	int id;
 	int numNukesReady;
 	int numNukesQueued;
+};
+
+struct MetalExtractor {
+	CR_DECLARE_STRUCT(MetalExtractor);
+
+	int id;
+	int buildFrame;
 };
 
 

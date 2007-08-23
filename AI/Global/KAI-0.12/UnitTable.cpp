@@ -9,20 +9,25 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	unitList = 0;
 
 	// get all sides and commanders
-	string sidestr = "SIDE";
-	string errorstring = "-1";
-	string Valuestring;
+	// KLOOTNOTE: might not work universally
+	string sideStr = "SIDE";
+	string errorString = "-1";
+	string valueString;
 	char k[64];
 	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
 
+	// look at SIDE0 through SIDE9
+	// (should be enough for any mod)
 	for (int i = 0; i < 10; i++) {
 		sprintf(k, "%i", i);
-		ai->parser->GetDef(Valuestring, errorstring, string(sidestr + k + "\\commander"));
+		ai->parser->GetDef(valueString, errorString, string(sideStr + k + "\\commander"));
 
-		if (ai->cb->GetUnitDef(Valuestring.c_str())) {
-			startUnits.push_back(ai->cb->GetUnitDef(Valuestring.c_str())->id);
-			ai->parser->GetDef(Valuestring, errorstring, string(sidestr + k + "\\name"));
-			sideNames.push_back(Valuestring);
+		const UnitDef* udef = ai->cb->GetUnitDef(valueString.c_str());
+
+		if (udef) {
+			startUnits.push_back(udef->id);
+			ai->parser->GetDef(valueString, errorString, string(sideStr + k + "\\name"));
+			sideNames.push_back(valueString);
 			numOfSides = i + 1;
 		}
 	}
@@ -574,7 +579,7 @@ void CUnitTable::Init() {
 	ai->cb->GetUnitDefList(unitList);
 
 	for (int i = 1; i <= numOfUnits; i++) {
-		unittypearray[i].def=unitList[i - 1];
+		unittypearray[i].def = unitList[i - 1];
 	}
 
 	// add units to UnitTable
@@ -589,12 +594,16 @@ void CUnitTable::Init() {
 		}
 	}
 
-	// now set the sides and create buildtree
+
+	// now set sides and create buildtree for each
 	for (int s = 0; s < numOfSides; s++) {
-		// set side of the start unit (eg commander) and continue recursively
+		// set side of start unit (eg. commander) and continue recursively
 		unittypearray[startUnits[s]].side = s;
+		unittypearray[startUnits[s]].techLevel = 0;
+
 		CalcBuildTree(startUnits[s]);
 	}
+
 
 	// add unit to different groups
 	for (int i = 1; i <= numOfUnits; i++) {
@@ -680,7 +689,7 @@ void CUnitTable::Init() {
 							metal_makers[me->side].push_back(i);
 							me->category = CAT_MMAKER;
 						}
-						if (me->def->extractsMetal) {
+						if (me->def->extractsMetal > 0.0f) {
 							metal_extractors[me->side].push_back(i);
 							me->category = CAT_MEX;
 						}
@@ -726,15 +735,25 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 
 // determines sides of unittypearray by recursion
 void CUnitTable::CalcBuildTree(int unit) {
-	// go through all possible build options and set side if necessary
-	for (unsigned int i = 0; i != unittypearray[unit].canBuildList.size(); i++) {
-		// add this unit to targets builtby-list
-		unittypearray[unittypearray[unit].canBuildList[i]].builtByList.push_back(unit);
+	UnitType* utype = &unittypearray[unit];
 
-		if (unittypearray[unittypearray[unit].canBuildList[i]].side == -1) {
-			// unit has not been checked yet, set side as side of its builder and continue
-			unittypearray[unittypearray[unit].canBuildList[i]].side = unittypearray[unit].side;
-			CalcBuildTree(unittypearray[unit].canBuildList[i]);
+	// go through all possible build options and set side if necessary
+	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
+		// add this unit to target's built-by list
+		int buildOptionIndex = utype->canBuildList[i];
+		UnitType* buildOptionType = &unittypearray[buildOptionIndex];
+
+		// KLOOTNOTE: techLevel will not make much sense if
+		// unit has multiple ancestors at different depths
+		// in tree (eg. Adv. Vehicle Plants in XTA)
+		buildOptionType->builtByList.push_back(unit);
+		buildOptionType->techLevel = utype->techLevel + 1;
+
+		if (buildOptionType->side == -1) {
+			// unit has not been checked yet, set side
+			// as side of its builder and continue
+			buildOptionType->side = utype->side;
+			CalcBuildTree(buildOptionIndex);
 		}
 	}
 }
@@ -745,7 +764,7 @@ void CUnitTable::DebugPrint() {
 	if (!unitList)
 		return;
 
-	// same order as all_lists, not as CAT_* enum
+	// NOTE: same order as all_lists, not as CAT_* enum
 	const char* listCategoryNames[12] = {
 		"GROUND-FACTORY", "GROUND-BUILDER", "GROUND-ATTACKER", "METAL-EXTRACTOR",
 		"METAL-MAKER", "GROUND-ENERGY", "GROUND-DEFENSE", "METAL-STORAGE",
@@ -759,21 +778,23 @@ void CUnitTable::DebugPrint() {
 
 	for (int i = 1; i <= numOfUnits; i++) {
 		if (unittypearray[i].side != -1) {
-			fprintf(file, "UnitDef ID: %i\nName:         %s\nSide:         %s",
-				i, unitList[i - 1]->humanName.c_str(), sideNames[unittypearray[i].side].c_str());
-
-			fprintf(file, "\nCan Build:    ");
+			fprintf(file, "UnitDef ID: %i\n", i);
+			fprintf(file, "Name:       %s\n", unitList[i - 1]->humanName.c_str());
+			fprintf(file, "Side:       %s\n", sideNames[unittypearray[i].side].c_str());
+			fprintf(file, "Can Build:  ");
 
 			for (unsigned int j = 0; j != unittypearray[i].canBuildList.size(); j++) {
-				fprintf(file, "%s ", unittypearray[unittypearray[i].canBuildList[j]].def->humanName.c_str());
+				fprintf(file, "'%s' ", unittypearray[unittypearray[i].canBuildList[j]].def->humanName.c_str());
 			}
 
-			fprintf(file, "\nBuilt by:     ");
+			fprintf(file, "\n");
+			fprintf(file, "Built by:   ");
 
 			for (unsigned int k = 0; k != unittypearray[i].builtByList.size(); k++) {
-				fprintf(file, "%s ", unittypearray[unittypearray[i].builtByList[k]].def->humanName.c_str());
+				fprintf(file, "'%s' ", unittypearray[unittypearray[i].builtByList[k]].def->humanName.c_str());
 			}
 
+			fprintf(file, "\nTech-Level: %d", unittypearray[i].techLevel);
 			fprintf(file, "\n\n");
 		}
 	}

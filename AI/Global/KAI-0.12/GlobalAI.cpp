@@ -103,6 +103,13 @@ CR_REG_METADATA(NukeSilo, (
 	CR_MEMBER(numNukesQueued)
 ));
 
+// TODO: move to Containers.h
+CR_BIND(MetalExtractor, );
+CR_REG_METADATA(MetalExtractor, (
+	CR_MEMBER(id),
+	CR_MEMBER(buildFrame)
+));
+
 // TODO: move to DGunController.hpp
 CR_BIND(ControllerState, );
 CR_REG_METADATA(ControllerState, (
