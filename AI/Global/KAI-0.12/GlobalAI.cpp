@@ -280,24 +280,26 @@ void CGlobalAI::UnitCreated(int unit) {
 	ai->uh->UnitCreated(unit);
 	ai->econTracker->UnitCreated(unit);
 
+	const UnitDef* ud = ai->cb->GetUnitDef(unit);
 
-	const UnitDef* ud = ((this->ai)->cb)->GetUnitDef(unit);
-
-	if (ud->isCommander && ud->canDGun) {
-		((this->ai)->dgunController)->init(unit);
+	if (ud && ud->isCommander && ud->canDGun) {
+		ai->dgunController->init(unit);
 	}
 }
 
 void CGlobalAI::UnitFinished(int unit) {
 	// let attackhandler handle cat_g_attack units
 	ai->econTracker->UnitFinished(unit);
+	int frame = ai->cb->GetCurrentFrame();
+	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
 	if (GCAT(unit) == CAT_G_ATTACK) {
 		ai->ah->AddUnit(unit);
 	}
-	else if (((ai->cb->GetCurrentFrame() < 20) || (ai->cb->GetUnitDef(unit)->speed <= 0))) {
-		// Add comm at begginning of game and factories when they are built
-		ai->uh->IdleUnitAdd(unit);
+	else if (frame < 20 || (udef && udef->speed <= 0.0f)) {
+		// Add commander at begginning of game
+		// and factories when they are built
+		ai->uh->IdleUnitAdd(unit, frame);
 	}
 
 	ai->uh->BuildTaskRemove(unit);
@@ -305,7 +307,6 @@ void CGlobalAI::UnitFinished(int unit) {
 
 void CGlobalAI::UnitDestroyed(int unit, int attacker) {
 	attacker = attacker;
-	// L("GlobalAI::UnitDestroyed is called on unit:" << unit <<". its groupid:" << GUG(unit));
 	ai->econTracker->UnitDestroyed(unit);
 
 	if (GUG(unit) != -1) {
@@ -316,12 +317,11 @@ void CGlobalAI::UnitDestroyed(int unit, int attacker) {
 }
 
 void CGlobalAI::UnitIdle(int unit) {
-	// attackhandler handles cat_g_attack units atm
+	// AttackHandler handles cat_g_attack units
 	if (GCAT(unit) == CAT_G_ATTACK && ai->MyUnits.at(unit)->groupID != -1) {
 		// attackHandler->UnitIdle(unit);
-	}
-	else {
-		ai->uh->IdleUnitAdd(unit);
+	} else {
+		ai->uh->IdleUnitAdd(unit, ai->cb->GetCurrentFrame());
 	}
 }
 
@@ -354,7 +354,7 @@ void CGlobalAI::EnemyLeaveRadar(int enemy) {
 }
 
 void CGlobalAI::EnemyDestroyed(int enemy, int attacker) {
-	((this->ai)->dgunController)->handleDestroyEvent(attacker, enemy);
+	ai->dgunController->handleDestroyEvent(attacker, enemy);
 }
 
 void CGlobalAI::EnemyDamaged(int damaged, int attacker, float damage, float3 dir) {
@@ -381,7 +381,7 @@ int CGlobalAI::HandleEvent(int msg, const void* data) {
 				// got a unit
 				UnitCreated(cte->unit);
 				UnitFinished(cte->unit);
-				ai->uh->IdleUnitAdd(cte->unit);
+				ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
 			}
 		} break;
 		case AI_EVENT_UNITCAPTURED: {
@@ -404,7 +404,7 @@ void CGlobalAI::Update() {
 	int frame = ai->cb->GetCurrentFrame();
 
 	// call economy tracker update routine
-	ai->econTracker->frameUpdate();
+	ai->econTracker->frameUpdate(frame);
 
 	if (frame == 1) {
 		// init defense matrix
@@ -412,13 +412,13 @@ void CGlobalAI::Update() {
 	}
 	if (frame > 80) {
 		// call buildup manager and unit handler (idle) update routine
-		ai->bu->Update();
-		ai->uh->IdleUnitUpdate();
+		ai->bu->Update(frame);
+		ai->uh->IdleUnitUpdate(frame);
 	}
 
-	((this->ai)->dgunController)->update(frame);
+	ai->dgunController->update(frame);
 
 	// call attack handler and unit handler (metal maker) update routines
-	ai->ah->Update();
-	ai->uh->MMakerUpdate();
+	ai->ah->Update(frame);
+	ai->uh->MMakerUpdate(frame);
 }

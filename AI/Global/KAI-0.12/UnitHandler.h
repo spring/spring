@@ -14,8 +14,8 @@ class CUnitHandler {
 		void UnitCreated(int unit);
 		void UnitDestroyed(int unit);
 
-		void IdleUnitUpdate();
-		void IdleUnitAdd(int unit);
+		void IdleUnitUpdate(int);
+		void IdleUnitAdd(int unit, int);
 		void IdleUnitRemove(int unit);
 		int GetIU(int category);
 		int NumIdleUnits(int category);
@@ -24,7 +24,7 @@ class CUnitHandler {
 
 		void MMakerAdd(int unit);
 		void MMakerRemove(int unit);
-		void MMakerUpdate();
+		void MMakerUpdate(int);
 
 		void BuildTaskCreate(int id);
 		void BuildTaskRemove(int id);

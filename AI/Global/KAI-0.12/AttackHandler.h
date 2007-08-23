@@ -13,7 +13,7 @@ class CAttackHandler {
 		virtual ~CAttackHandler(void);
 
 		void AddUnit(int unitID);
-		void Update(void);
+		void Update(int);
 		void UnitDestroyed(int unitID);
 
 		// the kmeans is placed here for now =)
@@ -31,14 +31,14 @@ class CAttackHandler {
 		float3 FindUnsafeArea(float3 pos);
 
 		void UpdateKMeans(void);
-		void UpdateAir(void);
+		void UpdateAir(int);
 
 		// nuke-related functions
-		void UpdateNukeSilos(void);
+		void UpdateNukeSilos(int);
 		int PickNukeSiloTarget(std::vector<std::pair<int, float> >&);
 		void GetNukeSiloTargets(std::vector<std::pair<int, float> >&);
 
-		void AssignTargets(void);
+		void AssignTargets(int);
 		void AssignTarget(CAttackGroup* group);
 
 		bool UnitGroundAttackFilter(int unit);

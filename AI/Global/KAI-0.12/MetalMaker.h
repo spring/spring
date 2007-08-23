@@ -19,7 +19,7 @@ class CMetalMaker {
 		virtual bool Add(int unit);
 		virtual bool Remove(int unit);
 		virtual bool AllAreOn();
-		virtual void Update();
+		virtual void Update(int);
 
 		struct UnitInfo {
 			CR_DECLARE_STRUCT(UnitInfo);

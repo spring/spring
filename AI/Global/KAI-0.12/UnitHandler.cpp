@@ -43,18 +43,19 @@ CUnitHandler::~CUnitHandler() {
 
 
 
-void CUnitHandler::IdleUnitUpdate() {
+void CUnitHandler::IdleUnitUpdate(int frame) {
 	list<integer2> limboremoveunits;
+
 	for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
 		if (i->y > 0) {
-			i->y = i->y - 1;
+			i->y--;
 		}
 		else {
 			if (ai->cb->GetUnitDef(i->x) == NULL) {
 				// ignore dead unit
-			}
-			else
+			} else {
 				IdleUnits[ai->ut->GetCategory(i->x)]->push_back(i->x);
+			}
 
 			limboremoveunits.push_back(*i);
 		}
@@ -67,7 +68,7 @@ void CUnitHandler::IdleUnitUpdate() {
 	}
 
 	// make sure that all the builders are in action (hack?)
-	if (ai->cb->GetCurrentFrame() % 15 == 0) {
+	if (frame % 15 == 0) {
 		for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 			// the new test
 			if ((*i)->idleStartFrame != -2) {
@@ -80,20 +81,18 @@ void CUnitHandler::IdleUnitUpdate() {
 					c = mycommands->front();
 
 				// two sec delay is ok
-				if (((*i)->commandOrderPushFrame + LAG_ACCEPTANCE) < ai->cb->GetCurrentFrame()) {
+				if (((*i)->commandOrderPushFrame + LAG_ACCEPTANCE) < frame) {
 					if (!ans) {
 						char text[512];
 						float3 pos = ai->cb->GetUnitPos((*i)->builderID);
 						sprintf(text, "builder %i VerifyOrder failed ", (*i)->builderID);
-						AIHCAddMapPoint amp;
-						amp.label = text;
-						amp.pos = pos;
 
 						ClearOrder(*i, false);
+
 						if (!mycommands->empty())
 							DecodeOrder(*i, true);
 						else
-							IdleUnitAdd((*i)->builderID);
+							IdleUnitAdd((*i)->builderID, frame);
 					}
 				}
 			}
@@ -197,8 +196,9 @@ void CUnitHandler::UnitDestroyed(int unit) {
 }
 
 
-void CUnitHandler::IdleUnitAdd(int unit) {
+void CUnitHandler::IdleUnitAdd(int unit, int frame) {
 	int category = ai->ut->GetCategory(unit);
+
 	if (category != -1) {
 		const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(unit);
 
@@ -216,8 +216,9 @@ void CUnitHandler::IdleUnitAdd(int unit) {
 				builderTracker->idleStartFrame = -2;
 
 				if (builderTracker->commandOrderPushFrame == -2) {
-					// make sure that if the unit was just built it will have some time to leave the factory
-					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame() + 30 * 3;
+					// make sure that if the unit was just built
+					// it will have some time to leave the factory
+					builderTracker->commandOrderPushFrame = frame + 30 * 3;
 				}
 			}
 
@@ -555,8 +556,8 @@ void CUnitHandler::MMakerRemove(int unit) {
 	metalMaker->Remove(unit);
 }
 
-void CUnitHandler::MMakerUpdate() {
-	metalMaker->Update();
+void CUnitHandler::MMakerUpdate(int frame) {
+	metalMaker->Update(frame);
 }
 
 
@@ -666,10 +667,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 							// add it to this task
 							BuildTaskAddBuilder(&bt, builderTracker);
-							sprintf(text, "Added builder %i: to buildTaskId: %i (human order?)", builderTracker->builderID, builderTracker->buildTaskId);
-							AIHCAddMapPoint amp2;
-							amp2.label = text;
-							amp2.pos = ai->cb->GetUnitPos(builderTracker->builderID);
+							sprintf(text, "Added builder %i to buildTaskId %i (human order?)", builderTracker->builderID, builderTracker->buildTaskId);
 						}
 					}
 				}
@@ -753,12 +751,13 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
 	assert(builderTracker->customOrderId == 0);
-	//list<BuildTask>::iterator killtask;
+	// list<BuildTask>::iterator killtask;
 	bool found = false;
 	bool found2 = false;
+
 	for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
 		if (i->id == builderTracker->buildTaskId){
-			//killtask = i;
+			// killtask = i;
 			assert(!found);
 			for (list<int>::iterator builder = i->builders.begin(); builder != i->builders.end(); builder++) {
 				if (builderTracker->builderID == *builder) {
@@ -984,7 +983,8 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 		if (found2) {
 			for (list<BuilderTracker*>::iterator i = killplan->builderTrackers.begin(); i != killplan->builderTrackers.end(); i++) {
 				if (builderTracker == *i) {
-					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame(); // Give it time to change command
+					// give it time to change command
+					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame();
 					killplan->builderTrackers.erase(i);
 					break;
 				}

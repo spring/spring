@@ -495,7 +495,7 @@ bool CAttackHandler::UnitReadyFilter(int unit) {
 
 
 
-void CAttackHandler::UpdateAir(void) {
+void CAttackHandler::UpdateAir(int currentFrame) {
 	if (airUnits.size() == 0)
 		return;
 
@@ -511,20 +511,22 @@ void CAttackHandler::UpdateAir(void) {
 	}
 
 	// 5 mins || 30 secs && 8+ units
-	if ((ai->cb->GetCurrentFrame() % (60 * 30 * 5) == 0) || ((ai->cb->GetCurrentFrame() % (30 * 30) == 0) && (airUnits.size() > 8))) {
+	if ((currentFrame % (60 * 30 * 5) == 0) || ((currentFrame % (30 * 30) == 0) && (airUnits.size() > 8))) {
 		int numOfEnemies = ai->cheat->GetEnemyUnits(unitArray);
 		int bestID = -1;
-		float bestFound = -1.0;
+		float bestFound = -1.0f;
 
 		for (int i = 0; i < numOfEnemies; i++) {
-			int enemy = unitArray[i];
-			if ((enemy != -1) && (ai->cheat->GetUnitDef(enemy) != NULL) && ((ai->cheat->GetUnitDef(enemy)->metalCost) > bestFound)) {
-				bestID = enemy;
-				bestFound = ai->cheat->GetUnitDef(enemy)->metalCost;
+			int enemyID = unitArray[i];
+			const UnitDef* udef = (enemyID >= 0)? ai->cheat->GetUnitDef(enemyID): 0;
+
+			if (udef && udef->metalCost > bestFound) {
+				bestID = enemyID;
+				bestFound = ai->cheat->GetUnitDef(enemyID)->metalCost;
 			}
 		}
 
-		if ((bestID != -1) && (ai->cheat->GetUnitDef(bestID))) {
+		if ((bestID != -1) && ai->cheat->GetUnitDef(bestID)) {
 			// give the order
 			for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
 				CUNIT* u = ai->MyUnits[*it];
@@ -537,13 +539,13 @@ void CAttackHandler::UpdateAir(void) {
 		}
 	}
 
-	if (ai->cb->GetCurrentFrame() % 1800 == 0) {
+	if (currentFrame % 1800 == 0) {
 		airPatrolOrdersGiven = false;
 	}
 
 	if (!airPatrolOrdersGiven && !airIsAttacking) {
-		// L("AH: updating air patrol routes");
-		// get and make up some outer base perimeter points
+		// get and make up some outer base perimeter
+		// points for air patrol route updates
 		vector<float3> outerMeans;
 		const int num = 3;
 		outerMeans.reserve(num);
@@ -587,8 +589,8 @@ void CAttackHandler::UpdateAir(void) {
 
 
 
-void CAttackHandler::UpdateNukeSilos(void) {
-	if ((ai->cb->GetCurrentFrame() % 300) == 0 && ai->uh->NukeSilos.size() > 0) {
+void CAttackHandler::UpdateNukeSilos(int currentFrame) {
+	if ((currentFrame % 300) == 0 && ai->uh->NukeSilos.size() > 0) {
 		std::vector<std::pair<int, float> > potentialTargets;
 		GetNukeSiloTargets(potentialTargets);
 
@@ -774,9 +776,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 }
 
 
-void CAttackHandler::AssignTargets(void) {
-	int frameNr = ai->cb->GetCurrentFrame();
-
+void CAttackHandler::AssignTargets(int frameNr) {
 	if (frameNr % 120 == 0) {
 		// for each attack-group check whether it needs new target, if so assign one
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
@@ -828,13 +828,12 @@ void CAttackHandler::CombineGroups(void) {
 
 
 
-void CAttackHandler::Update(void) {
-	int frameNr = ai->cb->GetCurrentFrame();
+void CAttackHandler::Update(int frameNr) {
 	int frameSpread = 300;
 
 	if (frameNr < 2)
 		UpdateKMeans();
-	
+
 	// set map data here so it doesn't have to be done
 	// in each group (movement map PATHTOUSE is hack)
 	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
@@ -924,12 +923,12 @@ void CAttackHandler::Update(void) {
 
 
 	// do basic attack group formation from defense units
-	UpdateAir();
-	UpdateNukeSilos();
-	AssignTargets();
+	UpdateAir(frameNr);
+	UpdateNukeSilos(frameNr);
+	AssignTargets(frameNr);
 
 	// update current groups
 	for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
-		it->Update();
+		it->Update(frameNr);
 	}
 }

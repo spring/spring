@@ -46,12 +46,10 @@ CEconomyTracker::~CEconomyTracker() {
 
 
 
-void CEconomyTracker::frameUpdate() {
+void CEconomyTracker::frameUpdate(int frame) {
 	if (trackerOff) {
 		return;
 	}
-
-	int frame = ai->cb->GetCurrentFrame();
 
 /*
 	// iterate over all the BuildTasks
@@ -130,8 +128,8 @@ void CEconomyTracker::frameUpdate() {
 
 	float energy = ai->cb->GetEnergy();
 	float metal = ai->cb->GetMetal();
-	float deltaEnergy = energy - oldEnergy + constructionEnergy;
-	float deltaMetal = metal - oldMetal + constructionMetal;
+	// float deltaEnergy = energy - oldEnergy + constructionEnergy;
+	// float deltaMetal = metal - oldMetal + constructionMetal;
 	myCalcEnergy -= constructionEnergy;
 	myCalcMetal -= constructionMetal;
 
@@ -177,7 +175,6 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 	// HACK: just iterate over all the non-dead EconomyUnitTrackers and
 	// add the usage from the BuildingTrackers too, until the stuff they
 	// make hits their ETA
-	bool printedStalingMessage = false;
 
 	for (int preFrame = frame; preFrame <= targetFrame; preFrame += 16) {
 		// do the BuildingTrackers
@@ -371,9 +368,9 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	// find the builders that work on this unit, and sum up their spending
 
 	int unitUnderConstruction = bt->unitUnderConstruction;
-	const UnitDef * unitDef = ai->cb->GetUnitDef(unitUnderConstruction);
+	const UnitDef* unitDef = ai->cb->GetUnitDef(unitUnderConstruction);
 	assert(unitDef != NULL);
-	int frame=ai->cb->GetCurrentFrame();
+	int frame = ai->cb->GetCurrentFrame();
 	bt->economyUnitTracker->buildingTracker = bt;
 	// make the builder list
 	list<int> * builderList;
@@ -426,7 +423,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		const UnitDef * unitDefBuilder = ai->cb->GetUnitDef(builder);
 
 		if (resourceInfo.metalUse > unitDefBuilder->metalUpkeep) {
- 			// is this needed?
+			// is this needed?
 			maxBuildPower += ai->cb->GetUnitDef(builder)->buildSpeed;
 		}
 	}
@@ -448,7 +445,8 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	float eNeed = unitDef->energyCost;
 	float mNeed = unitDef->metalCost;
 	float buildTime = unitDef->buildTime;
-	float builtRatio = (hp + bt->damage) / endHp; // The damage part needs testing
+	// NOTE: the damage part needs testing
+	float builtRatio = (hp + bt->damage) / endHp;
 //	float usedE = builtRatio * eNeed;
 //	float usedM = builtRatio * mNeed;
 //	float currentBuildPower = energyUsage / currentMaxE_usage;
@@ -482,7 +480,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		if (hp == endHp)
 			deltaHP += 0.1;
 
-		if (deltaHP <= 0) {
+		if (deltaHP <= 0.0f) {
 			// nanostalling
 			deltaHP = 0.0001;
 		}
@@ -521,7 +519,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 			float longDeltaHP = (hp + bt->damage) - bt->hpSomeTimeAgo;
 
 			if (longDeltaHP <= 0) {
- 				// builder must have been pushed away and Spring says it still builds
+				// builder must have been pushed away and Spring says it still builds
 				longDeltaHP = 0.000001;
 			}
 

@@ -8,7 +8,6 @@
 
 
 CMetalMaker::CMetalMaker(IAICallback* aicb) {
-//	lastUpdate = 0;
 	listIndex = 0;
 	lastEnergy = 0;
 	addedDelay = 0;
@@ -135,10 +134,9 @@ bool CMetalMaker::AllAreOn() {
 }
 
 
-void CMetalMaker::Update() {
+void CMetalMaker::Update(int frameNum) {
 	const int updateSpread = 33;
-	int frameNum = aicb->GetCurrentFrame();
-	int numUnits = (int)myUnits.size();
+	int numUnits = (int) myUnits.size();
 
 	if (frameNum % updateSpread == 0 && numUnits > 0 && addedDelay-- <= 0) {
 		// lastUpdate = frameNum;
@@ -230,9 +228,9 @@ void CMetalMaker::Update() {
 */
 	}
 
-	if ((aicb->GetCurrentFrame() % 1800) == 0) {
+	if ((frameNum % 1800) == 0) {
 		// HACK: once a minute, turn everything off and reset
-		for (int i = 0; i < (int)myUnits.size(); i++) {
+		for (int i = 0; i < (int) myUnits.size(); i++) {
 			Command c;
 			c.id = CMD_ONOFF;
 			c.params.push_back(0);
