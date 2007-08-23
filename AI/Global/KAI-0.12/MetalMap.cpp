@@ -42,39 +42,39 @@ CMetalMap::~CMetalMap() {
 float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 	float TempScore = 0.0f;
 	float MaxDivergence = 16.0f;
-	float distance;
-	float3 spotcoords = ERRORVECTOR;
-	float3 bestspot = ERRORVECTOR;
+	float3 spotCoords = ERRORVECTOR;
+	float3 bestSpot = ERRORVECTOR;
 
 	if (VectoredSpots.size()) {
-		int* temparray = new int [MAXUNITS];
+		int enemies[MAXUNITS];
 
 		for (unsigned int i = 0; i != VectoredSpots.size(); i++) {
-			spotcoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);
+			spotCoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);
 
-			if (spotcoords.x != -1) {
-				distance = spotcoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
-				float mythreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
-				float spotscore = VectoredSpots[i].y / distance / (mythreat + 10);
+			if (spotCoords.x >= 0.0f) {
+				float distance = spotCoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
+				float myThreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
+				float spotScore = VectoredSpots[i].y / distance / (myThreat + 10);
+				int numEnemies = ai->cheat->GetEnemyUnits(enemies, VectoredSpots[i], XtractorRadius * 2);
 
-				bool b1 = TempScore < spotscore;
-				bool b2 = ai->cheat->GetEnemyUnits(temparray, VectoredSpots[i], XtractorRadius);
-				bool b3 = mythreat <= (ai->tm->GetAverageThreat() * 1.5);
-				bool b4 = ai->uh->TaskPlanExist(spotcoords, extractor);
+				// NOTE: threat at VectoredSpots[i] is determined
+				// by presence of ARMED enemy units or buildings
+				bool b1 = (TempScore < spotScore);
+				bool b2 = (numEnemies == 0);
+				bool b3 = (myThreat <= (ai->tm->GetAverageThreat() * 1.5));
+				bool b4 = (ai->uh->TaskPlanExist(spotCoords, extractor));
 
-				if (b1 && !b2 && b3 && !b4) {
-					TempScore = spotscore;
-					bestspot = spotcoords;
-					bestspot.y = VectoredSpots[i].y;
+				if (b1 && b2 && b3 && !b4) {
+					TempScore = spotScore;
+					bestSpot = spotCoords;
+					bestSpot.y = VectoredSpots[i].y;
 				}
 			}
 		}
-
-		delete[] temparray;
 	}
 
 	// no spot found if TempScore is zero
-	return bestspot;
+	return bestSpot;
 }
 
 
