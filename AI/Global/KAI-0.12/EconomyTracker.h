@@ -26,7 +26,7 @@ struct BuildingTracker {
 	int factory;								// The factory, if it have one (cant use a pointer, as its inside a dynamic list ??)
 	EconomyUnitTracker* economyUnitTracker;		// A pointer to the planed EconomyUnitTracker for this unit, this pointer is stable
 
-	void clear() {
+	void clear(void) {
 		unitUnderConstruction		= 0;
 		category					= 0;
 		hpLastFrame					= 0;
@@ -70,7 +70,7 @@ struct EconomyUnitTracker {
 	float estimateEnergyChangeFromDefWhileOff;	// This is the sum change from unitDef *
 	float estimateMetalChangeFromDefWhileOff;	// This is the sum change from unitDef *
 
-	void clear() {
+	void clear(void) {
 		economyUnitId = 0;
 		createFrame = 0;
 		//BuildingTracker * buildingTracker;
@@ -179,7 +179,7 @@ class CEconomyTracker {
 		CR_DECLARE(CEconomyTracker);
 		CEconomyTracker(AIClasses* ai);
 		virtual ~CEconomyTracker();
-		void frameUpdate();
+		void frameUpdate(int);
 		void UnitCreated(int unit);
 		void UnitFinished(int unit);
 		void UnitDestroyed(int unit);
@@ -193,8 +193,8 @@ class CEconomyTracker {
 		list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
 
 		AIClasses* ai;
-		void updateUnitUnderConstruction(BuildingTracker * bt);
-		void SetUnitDefDataInTracker(EconomyUnitTracker * economyUnitTracker);
+		void updateUnitUnderConstruction(BuildingTracker* bt);
+		void SetUnitDefDataInTracker(EconomyUnitTracker* economyUnitTracker);
 		TotalEconomyState makePrediction(int targetFrame);
 
 		bool trackerOff;

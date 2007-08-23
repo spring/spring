@@ -11,7 +11,7 @@ class CAttackGroup {
 		virtual ~CAttackGroup();
 
 		void AddUnit(int unitID);
-		void Update();
+		void Update(int);
 		void MoveTo(float3 newPosition);
 		int Size();
 		int GetGroupID();
@@ -29,7 +29,7 @@ class CAttackGroup {
 		float3 attackPosition;
 		float attackRadius;
 		vector<float3> pathToTarget;
-		void FindDefenseTarget(float3 groupPosition);
+		void FindDefenseTarget(float3 groupPosition, int);
 
 		int GetWorstMoveType();
 

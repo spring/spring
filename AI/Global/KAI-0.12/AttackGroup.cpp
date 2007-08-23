@@ -270,10 +270,9 @@ void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radi
 
 
 // attack routine (the "find new enemy" part)
-void CAttackGroup::FindDefenseTarget(float3 groupPosition) {
-	int frameNr = ai->cb->GetCurrentFrame();
+void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 	char tx[512];
-	sprintf(tx, "AG:running find-new-target, group %i, frame %i, numUnits %i",
+	sprintf(tx, "AG: FindDefenseTarget(), group %i, frame %i, numUnits %i",
 		this->groupID, frameNr, this->units.size());
 
 	// KLOOTNOTE: numEnemies will be zero if no enemies in LOS or radar when
@@ -377,9 +376,8 @@ void CAttackGroup::ClearTarget() {
 
 
 // called from CAttackHandler::Update()
-void CAttackGroup::Update() {
+void CAttackGroup::Update(int frameNr) {
 	int frameSpread = 30;
-	int frameNr = ai->cb->GetCurrentFrame();
 	unsigned int numUnits = units.size();
 
 	if (!numUnits) {
@@ -425,7 +423,7 @@ void CAttackGroup::Update() {
 	} else {
 		// find something to attack within visual and radar LOS if AssignToTarget() wasn't called
 		if ((defending && !isShooting && !isMoving) && (frameNr % 60 == groupID % 60)) {
-			FindDefenseTarget(groupPosition);
+			FindDefenseTarget(groupPosition, frameNr);
 		}
 	}
 }

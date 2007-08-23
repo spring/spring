@@ -83,7 +83,7 @@ void DGunController::selectTarget(unsigned int currentFrame) {
 	float3 commanderPos = CALLOUT->GetUnitPos(commanderID);
 
 	// if our commander is dead then position will be (0, 0, 0)
-	if (commanderPos.x <= 0 && commanderPos.z <= 0) {
+	if (commanderPos.x <= 0.0f && commanderPos.z <= 0.0f) {
 		return;
 	}
 
@@ -100,7 +100,7 @@ void DGunController::selectTarget(unsigned int currentFrame) {
 				const UnitDef* attackerDef = CALLOUT->GetUnitDef(units[i]);
 
 				// don't directly pop enemy commanders
-				if (!attackerDef->isCommander && !attackerDef->canDGun) {
+				if (attackerDef && !attackerDef->isCommander && !attackerDef->canDGun) {
 					state.targetSelectionFrame = currentFrame;
 					state.targetID = units[i];
 					state.oldTargetPos = CALLOUT->GetUnitPos(units[i]);

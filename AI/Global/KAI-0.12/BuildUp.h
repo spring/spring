@@ -10,10 +10,10 @@ class CBuildUp {
 		CBuildUp(AIClasses* ai);
 		virtual ~CBuildUp();
 
-		void Update();
+		void Update(int);
 
 	private:
-		void Buildup();
+		void Buildup(void);
 		void FactoryCycle(void);
 		void NukeSiloCycle(void);
 		void FallbackBuild(int, int);

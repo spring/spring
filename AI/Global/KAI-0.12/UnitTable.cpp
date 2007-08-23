@@ -650,9 +650,14 @@ void CUnitTable::Init() {
 						me->category = CAT_FACTORY;
 					}
 					else {
-						if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile) {
-							ground_defences[me->side].push_back(i);
-							me->category = CAT_DEFENCE;
+						const WeaponDef* weapon = (me->def->weapons.empty())? 0: me->def->weapons.begin()->def;
+
+						if (weapon && !weapon->stockpile) {
+							if (!weapon->waterweapon) {
+								// filter out depth-charge launchers etc
+								ground_defences[me->side].push_back(i);
+								me->category = CAT_DEFENCE;
+							}
 						}
 
 						if (me->def->stockpileWeaponDef) {
@@ -681,7 +686,7 @@ void CUnitTable::Init() {
 						}
 						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
 							if (me->def->minWaterDepth <= 0 && !me->def->needGeo) {
-								// filter geothermals
+								// filter tidals and geothermals
 								ground_energy[me->side].push_back(i);
 								me->category = CAT_ENERGY;
 							}
