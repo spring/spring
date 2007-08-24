@@ -20,7 +20,7 @@ void CBuildUp::Update(int frame) {
 	if (frame % 15 == 0) {
 		// update current threat map
 		ai->tm->Create();
-		Buildup();
+		Buildup(frame);
 
 		bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * 0.9);
 		bool b2 = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.3);
@@ -41,7 +41,7 @@ void CBuildUp::Update(int frame) {
 
 
 
-void CBuildUp::Buildup() {
+void CBuildUp::Buildup(int frame) {
 	float mIncome = ai->cb->GetMetalIncome();
 	float eIncome = ai->cb->GetEnergyIncome();
 	float mLevel = ai->cb->GetMetal();
@@ -99,7 +99,7 @@ void CBuildUp::Buildup() {
 				return;
 			}
 
-			else if (builderDef->isCommander && (ai->cb->GetCurrentFrame() > 9000) && ai->uh->FactoryBuilderAdd(builder)) {
+			else if (builderDef->isCommander && (frame > 9000) && ai->uh->FactoryBuilderAdd(builder)) {
 				// add commander to factory so it doesn't wander around too much (works best if
 				// AI given bonus, otherwise initial expansion still mostly done by commander)
 				// note: 5 minutes should be enough to get the resource income needed for this,
@@ -417,25 +417,23 @@ bool CBuildUp::BuildUpgradeExtractor(int builder) {
 		if (mexPos != ERRORVECTOR) {
 			if (!ai->uh->BuildTaskAddBuilder(builder, CAT_MEX)) {
 				// build metal extractor
-				ai->MyUnits[builder]->Build(mexPos, mex, -1);
-				return true;
+				return (ai->MyUnits[builder]->Build(mexPos, mex, -1));
 			}
 		} else {
 			// upgrade existing mex (NOTE: GetNearestMetalSpot()
-			// very rarely returns an error-vector, needs work)
+			// very rarely returns an error-vector, needs more
+			// incentives)
 			int oldMexID = ai->uh->GetOldestMetalExtractor();
 			const UnitDef* oldMex = ai->cb->GetUnitDef(oldMexID);
 
 			if (oldMex) {
-				if ((mex->extractsMetal / oldMex->extractsMetal) > 2.0f) {
-					ai->MyUnits[builder]->Upgrade(oldMexID, mex);
-					return true;
+				if ((mex->extractsMetal / oldMex->extractsMetal) >= 2.0f) {
+					return (ai->MyUnits[builder]->Upgrade(oldMexID, mex));
 				}
 			}
 		}
 	}
 
-	// this builder cannot build a mex,
-	// so it cannot upgrade one either
+	// can't build or upgrade
 	return false;
 }
