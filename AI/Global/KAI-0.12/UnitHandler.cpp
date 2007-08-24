@@ -427,9 +427,10 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 
 			if (buildTask) {
 				BuildTaskAddBuilder(buildTask, builderTracker);
-			}
-			else // Make a new TaskPlan (or join an existing one)
+			} else {
+				// make a new TaskPlan (or join an existing one)
 				TaskPlanCreate(builderTracker->builderID, newUnitPos, newUnitDef);
+			}
 		}
 
 		if (c->id == CMD_REPAIR) {
@@ -507,7 +508,7 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 				// bad
 			}
 
- 			// update the order start frame
+			// update the order start frame
 			builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame();
 			// assert(builderTracker->buildTaskId == 0);
 			// assert(builderTracker->taskPlanId == 0);
@@ -918,22 +919,33 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 
 
 
-void  CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtdef) {
+void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtdef) {
 	int category = ai->ut->GetCategory(builtdef);
+
 	// HACK
 	if (category == -1)
 		return;
+
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
-	
+
 	// find this builder
-	BuilderTracker * builderTracker = GetBuilderTracker(builder);
+	BuilderTracker* builderTracker = GetBuilderTracker(builder);
+
 	// make sure this builder is free
-	assert(builderTracker->buildTaskId == 0);
-	assert(builderTracker->taskPlanId == 0);
-	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
-	
+	// KLOOTNOTE: no longer use assertions
+	// since new code for extractor upgrading
+	// (in CBuildUp) seems to trigger them?
+	bool b1 = (builderTracker->taskPlanId == 0);
+	bool b2 = (builderTracker->buildTaskId == 0);
+	bool b3 = (builderTracker->factoryId == 0);
+	bool b4 = (builderTracker->customOrderId == 0);
+
+	if (!b1 || !b2 || !b3 || !b4) {
+		return;
+	}
+
+
 	bool existingtp = false;
 	for (list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++) {
 		if (pos.distance2D(i->pos) < 20 && builtdef == i->def) {

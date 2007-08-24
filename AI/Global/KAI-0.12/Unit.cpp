@@ -411,8 +411,10 @@ bool CUNIT::Ressurect(int target) {
 
 
 bool CUNIT::Upgrade(int target, const UnitDef* newTarget) {
-	float3 pos = ai->cb->GetUnitPos(target);
 	int facing = ai->cb->GetBuildingFacing(target);
+	float3 pos = ai->cb->GetUnitPos(target) + float3(60.0f, 0.0f, 60.0f);
+
+	pos = ai->cb->ClosestBuildSite(newTarget, pos, 60.0f, 2, facing);
 
 	bool b1 = Reclaim(target);
 	bool b2 = BuildShift(pos, newTarget, facing);
