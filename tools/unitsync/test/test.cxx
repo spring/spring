@@ -1,8 +1,30 @@
-//
+#/*START
+#//##########################################################################//#
+
+file=test.cxx
+
+start=`grep -n '^#END' $file | grep -o '[^:]*'`
+start=`expr $start + 1`
+
+tail -n +$start $file > test.tmp.cxx
+
+g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
+
+./a.out Castles.smf BA561.sd7
+
+exit
+
+#//##########################################################################//#
+#END*/
+
+
+/******************************************************************************/
+/******************************************************************************/
 //  Simple file to help test unitsync, compile with:
 //
 //    g++ -I../../../rts/System test.cxx ../../../game/unitsync.so
 //
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,9 +125,9 @@ int main(int argc, char** argv)
 
   // load the mod archives
   AddAllArchives(mod.c_str());
-  ProcessUnits();
 
   // unit names
+  ProcessUnits();
   const int unitCount = GetUnitCount();
   for (int i = 0; i < unitCount; i++) {
     printf("Unit(%i) = %s  <%s>\n", i, GetUnitName(i), GetFullUnitName(i));
