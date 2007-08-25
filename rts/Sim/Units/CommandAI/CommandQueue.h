@@ -2,7 +2,7 @@
 #define __COMMAND_QUEUE_H__
 
 #include <deque>
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 
 // A wrapper class for  std::deque<Command>  to keep track of commands

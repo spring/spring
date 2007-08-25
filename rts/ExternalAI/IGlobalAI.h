@@ -2,7 +2,7 @@
 #define IGLOBALAI_H
 
 #include "aibase.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "float3.h"
 
 class IGlobalAICallback;

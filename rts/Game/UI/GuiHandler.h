@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <map>
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/GL/myGL.h"
 #include "KeySet.h"
 #include "KeyBindings.h"

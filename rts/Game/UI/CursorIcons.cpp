@@ -2,7 +2,7 @@
 #include "CursorIcons.h"
 #include "CommandColors.h"
 #include "MouseHandler.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/UI/OutlineFont.h"

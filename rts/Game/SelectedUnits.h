@@ -7,7 +7,7 @@
 #include "Object.h"
 #include <vector>
 #include <set>
-#include "command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitSet.h"
 class CFeature;
 

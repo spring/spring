@@ -1,7 +1,7 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
-#include "command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/Unit.h"
 #include "float3.h"
 #include <map>
@@ -10,7 +10,7 @@
 class CSelectedUnitsAI {
 public:
 	/* set<int> selUnits;
-	
+
 	void AddUnit(int unit); (And include update() in game.cpp to call every frame)
 	void RemoveUnit(int unit);
 	*/
@@ -38,7 +38,7 @@ private:
 	void SelectRectangleUnits(const float3& pos0, const float3& pos1,
 	                          vector<int>& units, int player);
 	float3 LastQueuePosition(CUnit* unit);
-	
+
 	float3 minCoor, maxCoor, centerCoor;
 	float minMaxSpeed;
 

@@ -31,7 +31,7 @@ using namespace std;
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
 #include "Game/CameraController.h"
 #include "Game/Game.h"

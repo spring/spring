@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "aibase.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 class IGroupAICallback;
 class IAICallback;

@@ -2,7 +2,7 @@
 #define IAICHEATS_H
 
 #include "aibase.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "float3.h"
 #include "IAICallback.h"
 struct UnitDef;

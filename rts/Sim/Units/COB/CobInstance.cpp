@@ -7,7 +7,7 @@
 #ifndef _CONSOLE
 
 #include "LogOutput.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Rendering/UnitModels/3DOParser.h"

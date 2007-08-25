@@ -1,35 +1,34 @@
 #include "StdAfx.h"
-#include "PreGame.h"
 #include <map>
-#include <set>
-#include "UI/MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header File For The GLu32 Library
-#include "Rendering/glFont.h"
-#include "Rendering/GL/glList.h"
-#include "Game.h"
-#include "StartScripts/ScriptHandler.h"
-#include "Platform/ConfigHandler.h"
-#include "UI/InfoConsole.h"
-#include "NetProtocol.h"
-#include "GameSetup.h"
-#include "command.h"
-#include "Team.h"
-#include "Rendering/Textures/TAPalette.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "GameVersion.h"
-#include "Platform/FileSystem.h"
-#include "Platform/errorhandler.h"
+#include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
-#include <SDL_keysym.h>
-#include "GameServer.h"
+#include <set>
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include "FPUCheck.h"
-#include "Platform/Clipboard.h"
-#include "mmgr.h"
+#include "Game.h"
+#include "GameServer.h"
+#include "GameSetup.h"
+#include "GameVersion.h"
 #include "LoadSaveHandler.h"
+#include "NetProtocol.h"
+#include "Platform/Clipboard.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/errorhandler.h"
+#include "Platform/FileSystem.h"
+#include "PreGame.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/glList.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/TAPalette.h"
+#include "Sim/Units/CommandAI/Command.h"
+#include "StartScripts/ScriptHandler.h"
+#include "Team.h"
+#include "UI/InfoConsole.h"
+#include "UI/MouseHandler.h"
+#include "mmgr.h"
 
 CPreGame* pregame=0;
 std::string CPreGame::mapName;
@@ -76,7 +75,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	if(server){
 		// create local client
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayer : 0);
-			
+
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
@@ -278,7 +277,7 @@ bool CPreGame::Draw()
 			sprintf(text,"Connecting to server .");
 		else
 			sprintf(text,"Connecting to server  ");
-					
+
 		glColor4f(1,1,1,1);
 		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
 		glScalef(0.03f,0.04f,0.1f);

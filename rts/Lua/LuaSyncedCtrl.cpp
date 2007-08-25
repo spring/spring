@@ -16,7 +16,7 @@
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"

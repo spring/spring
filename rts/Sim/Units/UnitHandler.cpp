@@ -27,7 +27,7 @@
 #include "UnitLoader.h"
 #include "Sync/SyncTracer.h"
 #include "Game/GameSetup.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Deque.h"

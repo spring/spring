@@ -28,7 +28,7 @@
 #include "LuaOpenGL.h"
 #include "LuaVFS.h"
 
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
 #include "Sim/Units/Unit.h"
