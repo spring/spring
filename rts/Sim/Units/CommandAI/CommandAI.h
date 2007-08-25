@@ -2,7 +2,7 @@
 #define __COMMAND_AI_H__
 
 #include "Object.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include <vector>
 #include <deque>
 #include <set>

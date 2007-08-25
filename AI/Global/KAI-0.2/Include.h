@@ -33,7 +33,6 @@ static inline void itoa(int i, char* buf, int size) {
 #include "./System/StdAfx.h"
 
 // Spring Engine
-#include "./Game/command.h"						// Commands
 #include "./Sim/Units/UnitDef.h"				// Unit Definitions
 #include "Sim/Units/CommandAI/CommandQueue.h"	// Unit Command Queues
 #include "./Sim/Misc/FeatureDef.h"				// Feature Definitions

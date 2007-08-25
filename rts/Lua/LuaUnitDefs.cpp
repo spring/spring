@@ -17,7 +17,7 @@
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"

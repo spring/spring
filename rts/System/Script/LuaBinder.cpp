@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "TdfParser.h"
 #include "LuaFunctions.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/Feature.h"

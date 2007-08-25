@@ -48,7 +48,7 @@
 	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #endif
 
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 

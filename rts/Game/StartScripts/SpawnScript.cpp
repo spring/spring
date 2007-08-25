@@ -7,7 +7,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Game/Team.h"
 #include <set>
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"

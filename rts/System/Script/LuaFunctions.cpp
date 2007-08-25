@@ -9,7 +9,7 @@
 #include "LogOutput.h"
 #include "TdfParser.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/StartScripts/Script.h"

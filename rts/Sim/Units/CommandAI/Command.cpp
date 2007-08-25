@@ -3,7 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "command.h"
+#include "Command.h"
 
 #include <string>
 #include <vector>
@@ -95,7 +95,7 @@ commandBindings[] = {
 };
 const int commandBindingsCount = sizeof(commandBindings) / sizeof(commandBindings[0]);
 
-/******************************************************************************/       
+/******************************************************************************/
 
 void CommandDescription::Init()
 {
@@ -109,7 +109,7 @@ void CommandDescription::Init()
 		idToAction[cb.id] = cb.action;
 	}
 
-	
+
 	CommandDescription c;
 
 	// common settings
@@ -127,7 +127,7 @@ void CommandDescription::Init()
 	c.tooltip = "Stop: Cancel the units current actions";
 	idToCommandDescription[c.id] = c;
 
-	// WAIT	
+	// WAIT
  	c.id=CMD_WAIT;
  	c.type=CMDTYPE_ICON;
 	c.action="wait";
@@ -145,7 +145,7 @@ void CommandDescription::Init()
 	c.hotkey = "m";
 	c.name = "Move";
 	c.tooltip = "Move: Order ready built units to move to a position";
-	
+
 	// PATROL
 	c.id=CMD_PATROL;
 	c.type=CMDTYPE_ICON_MAP;
@@ -155,7 +155,7 @@ void CommandDescription::Init()
 	c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
 	idToCommandDescription[c.id] = c;
 
-	// FIGHT	
+	// FIGHT
 	c.id = CMD_FIGHT;
 	c.type = CMDTYPE_ICON_MAP;
 	c.action="fight";
@@ -173,7 +173,7 @@ void CommandDescription::Init()
 	c.tooltip = "Attack: Attacks an unit or a position on the ground";
 	idToCommandDescription[c.id] = c;
 
-	// AREA_ATTACK	
+	// AREA_ATTACK
 	c.id=CMD_AREA_ATTACK;
 	c.type=CMDTYPE_ICON_AREA;
 	c.action="areaattack";
@@ -194,7 +194,7 @@ void CommandDescription::Init()
 	c.params.push_back("Loopback");
 	idToCommandDescription[c.id] = c;
 	c.params.clear();
-	
+
 	// GUARD
 	c.id=CMD_GUARD;
 	c.type=CMDTYPE_ICON_UNIT;
@@ -241,7 +241,7 @@ void CommandDescription::Init()
 	idToCommandDescription[c.id] = c;
 	c.params.clear();
 
-	// SELFD	
+	// SELFD
 	c.id=CMD_SELFD;
 	c.type=CMDTYPE_ICON;
 	c.action="selfd";
@@ -321,7 +321,7 @@ void CommandDescription::Init()
 	c.params.push_back("On");
 	idToCommandDescription[c.id] = c;
 	c.params.clear();
-	
+
 	// TRAJECTORY
 	c.id=CMD_TRAJECTORY;
 	c.type=CMDTYPE_ICON_MODE;
@@ -366,7 +366,7 @@ void CommandDescription::Init()
 	idToCommandDescription[c.id] = c;
 	c.params.clear();
 
-	// RESURRECT	
+	// RESURRECT
 	c.id=CMD_RESURRECT;
 	c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 	c.action="resurrect";
@@ -393,7 +393,7 @@ void CommandDescription::Init()
 	c.tooltip="Sets the transport to load a unit or units within an area";
 	idToCommandDescription[c.id] = c;
 
-	// UNLOAD_UNITS	
+	// UNLOAD_UNITS
 	c.id=CMD_UNLOAD_UNITS;
 	c.type=CMDTYPE_ICON_AREA;
 	c.action="unloadunits";
@@ -416,7 +416,7 @@ void CommandDescription::Init()
 	c.showUnique = false;
 	c.params.clear();
 
-	// GROUPCLEAR	
+	// GROUPCLEAR
 	c.id=CMD_GROUPCLEAR;
 	c.type=CMDTYPE_ICON;
 	c.action="groupclear";
@@ -425,7 +425,7 @@ void CommandDescription::Init()
 	c.tooltip="Removes the units from any group they belong to";
 	idToCommandDescription[c.id] = c;
 
-	// GROUPADD	
+	// GROUPADD
 	c.id=CMD_GROUPADD;
 	c.type=CMDTYPE_ICON;
 	c.action="groupadd";
@@ -434,7 +434,7 @@ void CommandDescription::Init()
 	c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
 	idToCommandDescription[c.id] = c;
 
-	// GROUPSELECT	
+	// GROUPSELECT
 	c.id=CMD_GROUPSELECT;
 	c.type=CMDTYPE_ICON;
 	c.action="groupselect";
@@ -494,7 +494,7 @@ bool CommandDescription::SetupCommandDefaults(int cmd)
 	onlyKey = false;
 	showUnique = false;
 	params.clear();
-	
+
 	map<int, CommandDescription>::const_iterator it =
 	  idToCommandDescription.find(cmd);
 	if (it == idToCommandDescription.end()) {
@@ -503,13 +503,13 @@ bool CommandDescription::SetupCommandDefaults(int cmd)
 		handleerror(0, "CommandDescription::Init()  missing entry: ", buf, 0);
 		return false;
 	}
-	
+
 	*this = it->second;
-	
+
 	return true;
 }
 
 
-/******************************************************************************/       
+/******************************************************************************/
 
 

@@ -11,7 +11,7 @@
 using namespace std;
 
 #include "Lua/LuaHandle.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 
 class CUnit;

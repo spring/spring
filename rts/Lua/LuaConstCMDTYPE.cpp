@@ -8,7 +8,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 
 /******************************************************************************/

@@ -8,7 +8,7 @@
 #include <deque>
 #include "aibase.h"
 #include "float3.h"
-#include "Game/command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 struct UnitDef;
 struct FeatureDef;
