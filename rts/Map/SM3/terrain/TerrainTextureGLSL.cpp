@@ -750,6 +750,12 @@ void GLSLShaderHandler::BeginTexturing()
 
 void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass)
 {
+	if (buffer) {
+		if ((buffer->width != gu->viewSizeX) || (buffer->height != gu->viewSizeY)) {
+			delete buffer;
+			buffer = SAFE_NEW BufferTexture;
+		}
+	}
 	if (buffer)
 	{
 		if (pass == 0) {
