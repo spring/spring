@@ -351,7 +351,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if(readmap->minheight>10)
+	if (readmap->minheight > 10 || readmap->voidWater)
 		return;
 
 	glDisable(GL_DEPTH_TEST);
