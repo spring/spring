@@ -227,8 +227,9 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if(readmap->minheight>10)
+	if (readmap->minheight > 10 || readmap->voidWater)
 		return;
+
 	glViewport(0,0,128,128);
 
 	glClearColor(0.0f,0.0f,0.0f,1);
