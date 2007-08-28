@@ -249,14 +249,29 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	tdfparser.GetDef(ud.windGenerator,  "0", "UNITINFO\\WindGenerator");
 	tdfparser.GetDef(ud.tidalGenerator, "0", "UNITINFO\\TidalGenerator");
 
+	ud.isCommander = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
+
 	ud.health        = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MaxDamage").c_str());
 	ud.metalUpkeep   = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalUse").c_str());
 	ud.energyUpkeep  = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyUse").c_str());
 	ud.metalMake     = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalMake").c_str());
 	ud.makesMetal    = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MakesMetal").c_str());
 	ud.energyMake    = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyMake").c_str());
-	ud.metalStorage  = atof(tdfparser.SGetValueDef("0", "UNITINFO\\MetalStorage").c_str());
-	ud.energyStorage = atof(tdfparser.SGetValueDef("0", "UNITINFO\\EnergyStorage").c_str());
+
+	std::string metalStorage = tdfparser.SGetValueDef("", "UNITINFO\\MetalStorage");
+	std::string energyStorage = tdfparser.SGetValueDef("", "UNITINFO\\EnergyStorage");
+
+	if (metalStorage.empty()) {
+		ud.metalStorage = (ud.isCommander && gameSetup) ? gameSetup->startMetal : 0;
+	} else {
+		ud.metalStorage = atof(metalStorage.c_str());
+	}
+
+	if (energyStorage.empty()) {
+		ud.energyStorage = (ud.isCommander && gameSetup) ? gameSetup->startEnergy : 0;
+	} else {
+		ud.energyStorage = atof(energyStorage.c_str());
+	}
 
 	ud.autoHeal     = atof(tdfparser.SGetValueDef("0",   "UNITINFO\\AutoHeal").c_str())*(16.0f/30.0f);
 	ud.idleAutoHeal = atof(tdfparser.SGetValueDef("10",  "UNITINFO\\IdleAutoHeal").c_str())*(16.0f/30.0f);
@@ -368,7 +383,6 @@ void CUnitDefHandler::ParseTAUnit(std::string file, int id)
 	ud.canResurrect   = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canResurrect").c_str());
 	ud.canCapture     = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\canCapture").c_str());
 	ud.hideDamage     = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\HideDamage").c_str());
-	ud.isCommander    = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\commander").c_str());
 	ud.showPlayerName = !!atoi(tdfparser.SGetValueDef("0", "UNITINFO\\showplayername").c_str());
 
 	ud.cloakCost=atof(tdfparser.SGetValueDef("-1", "UNITINFO\\CloakCost").c_str());

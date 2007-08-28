@@ -72,6 +72,9 @@ public:
 	int numDemoPlayers;
 
 	std::string saveName;
+
+	int startMetal;
+	int startEnergy;
 };
 
 extern CGameSetup* gameSetup;
