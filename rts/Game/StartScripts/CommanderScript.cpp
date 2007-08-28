@@ -60,9 +60,8 @@ void CCommanderScript::Update(void)
 			if (team->gaia) continue;
 
 			// remove the pre-existing storage except for a small amount
-			float ms=team->metalStorage,es=team->energyStorage;
-			team->metalStorage  = 20;
-			team->energyStorage  = 20;
+			team->metalStorage = 20;
+			team->energyStorage = 20;
 
 			// create a GlobalAI if required
 			if (!gameSetup->aiDlls[a].empty() &&
@@ -77,22 +76,10 @@ void CCommanderScript::Update(void)
 				const string cmdrType =
 					p.SGetValueDef("armcom", sideSection + "\\commander");
 
-				// make sure the commander has the right amount of storage
-//				UnitDef* ud = unitDefHandler->GetUnitByName(cmdrType);
-//				ud->metalStorage  = team->metalStorage;
-//				ud->energyStorage = team->energyStorage;
-
-				CUnit* unit =
-					unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
+				CUnit* unit = unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
 
 				team->lineageRoot = unit->id;
-				unit->SetMetalStorage(ms);
-				unit->SetEnergyStorage(es);
 			}
-
-			// now remove the pre-existing storage except for a small amount
-//			team->metalStorage  = (team->metalStorage  / 2) + 20;
-//			team->energyStorage = (team->energyStorage / 2) + 20;
 		}
 	}
 	else {

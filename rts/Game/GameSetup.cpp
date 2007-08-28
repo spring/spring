@@ -247,17 +247,14 @@ bool CGameSetup::Init(const char* buf, int size)
 		}
 	}
 
-	int metal,energy;
-	file.GetDef(metal,"1000","GAME\\StartMetal");
-	file.GetDef(energy,"1000","GAME\\StartEnergy");
-	for(int a=0;a<gs->activeTeams;++a){
-		gs->Team(a)->metal=metal;
-		gs->Team(a)->metalIncome=metal;	//for the endgame statistics
-		gs->Team(a)->metalStorage=metal;
+	file.GetDef(startMetal, "1000", "GAME\\StartMetal");
+	file.GetDef(startEnergy, "1000", "GAME\\StartEnergy");
+	for(int a = 0; a < gs->activeTeams; ++a) {
+		gs->Team(a)->metal = startMetal;
+		gs->Team(a)->metalIncome = startMetal; // for the endgame statistics
 
-		gs->Team(a)->energy=energy;
-		gs->Team(a)->energyIncome=energy;
-		gs->Team(a)->energyStorage=energy;
+		gs->Team(a)->energy = startEnergy;
+		gs->Team(a)->energyIncome = startEnergy;
 	}
 
 	// Read the unit restrictions
