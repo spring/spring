@@ -324,6 +324,8 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].visuals.scrollspeed, "5", weaponname + "\\scrollspeed");
 	sunparser->GetDef(weaponDefs[id].visuals.pulseSpeed, "1", weaponname + "\\pulseSpeed");
 	sunparser->GetDef(weaponDefs[id].largeBeamLaser, "0", weaponname + "\\largeBeamLaser");
+	sunparser->GetDef(weaponDefs[id].visuals.beamttl, "0", weaponname + "\\beamttl");
+	sunparser->GetDef(weaponDefs[id].visuals.beamdecay, "1", weaponname + "\\beamdecay");
 
 	std::string hmod = sunparser->SGetValueDef("", weaponname+"\\heightmod");
 	if (hmod == "") {

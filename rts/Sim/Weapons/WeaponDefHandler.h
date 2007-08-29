@@ -141,6 +141,8 @@ struct WeaponDef
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
+		int beamttl;
+		float beamdecay;
 
 		int stages;
 		float alphaDecay;

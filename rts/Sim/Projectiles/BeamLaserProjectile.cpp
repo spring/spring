@@ -7,7 +7,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(startPos),
@@ -19,17 +19,25 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(thickness),
 	CR_MEMBER(corethickness),
 	CR_MEMBER(flaresize),
+	CR_MEMBER(ttl),
+	CR_MEMBER(decay),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
 	));
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos, float startAlpha, float endAlpha, const float3& color, const float3& color2, CUnit* owner, float thickness, float corethickness, float flaresize, const WeaponDef* weaponDef)
-:	CWeaponProjectile((startPos+endPos)*0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false), //CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
+CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos,
+	float startAlpha, float endAlpha, const float3& color, const float3& color2,
+	CUnit* owner, float thickness, float corethickness, float flaresize,
+	const WeaponDef* weaponDef, int ttl, float decay):
+
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
 	corethickness(corethickness),
-	flaresize(flaresize)
+	flaresize(flaresize),
+	ttl(ttl),
+	decay(decay)
 {
 	checkCol=false;
 	useAirLos=true;
@@ -62,7 +70,16 @@ CBeamLaserProjectile::~CBeamLaserProjectile(void)
 
 void CBeamLaserProjectile::Update(void)
 {
-	deleteMe=true;
+	if (ttl <= 0) deleteMe=true;
+	else {
+		ttl--;
+		for (int i = 0; i < 3; i++) {
+			corecolstart[i] = (unsigned char) (corecolstart[i] * decay);
+			corecolend[i] = (unsigned char) (corecolend[i] * decay);
+			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
+			kocolend[i] = (unsigned char) (kocolend[i] * decay);
+		}
+	}
 }
 
 void CBeamLaserProjectile::Draw(void)

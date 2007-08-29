@@ -3,12 +3,14 @@
 
 #include "WeaponProjectile.h"
 
-class CBeamLaserProjectile :
-	public CWeaponProjectile
+class CBeamLaserProjectile: public CWeaponProjectile
 {
 	CR_DECLARE(CBeamLaserProjectile);
 public:
-	CBeamLaserProjectile(const float3& startPos, const float3& endPos, float startAlpha, float endAlpha, const float3& color, const float3& color2, CUnit* owner, float thickness, float corethickness, float flaresize, const WeaponDef* weaponDef);
+	CBeamLaserProjectile(const float3& startPos, const float3& endPos,
+		float startAlpha, float endAlpha, const float3& color, const float3& color2,
+		CUnit* owner, float thickness, float corethickness, float flaresize,
+		const WeaponDef* weaponDef, int ttl, float decay);
 	~CBeamLaserProjectile(void);
 
 	float3 startPos;
@@ -18,12 +20,13 @@ public:
 	unsigned char kocolstart[4];
 	unsigned char kocolend[4];
 
-	//float startAlpha;
-	//float endAlpha;
 	float thickness;
 	float corethickness;
 	float flaresize;
 	float midtexx;
+	
+	int ttl;
+	float decay;
 
 	void Update(void);
 	void Draw(void);
