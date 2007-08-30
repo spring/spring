@@ -582,9 +582,12 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 {
 	float3 wantedDir=(pos-this->pos).Normalize();
 	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
+	short int p=(short int) (asin(wantedDir.dot(updir))*(32768/PI));
+	short int pitch=(short int) (asin(frontdir.dot(updir))*(32768/PI));
 
 	std::vector<int> args;
 	args.push_back(short(h-heading));
+	args.push_back(short(p-pitch));
 	cob->Call("StartBuilding", args);
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();

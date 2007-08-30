@@ -10,6 +10,7 @@
 #include "BubbleProjectile.h"
 #include "ProjectileHandler.h"
 #include "mmgr.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CTorpedoProjectile, CTorpedoProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
 
@@ -82,14 +83,14 @@ void CTorpedoProjectile::Collision(CUnit *unit)
 
 void CTorpedoProjectile::Update(void)
 {
-	if(pos.y>-3){		//tracking etc only work when we have gotten underwater
+	if(!(weaponDef->submissile) && pos.y>-3){		//tracking etc only work when we have gotten underwater
 		speed.y+=gs->gravity;
 		if(dir.y>0)
 			dir.y=0;
 		dir=speed;
 		dir.Normalize();
 	} else {
-		if(pos.y-speed.y>-3){		//level out torpedo a bit when hitting water
+		if(!(weaponDef->submissile) && pos.y-speed.y>-3){		//level out torpedo a bit when hitting water
 			dir.y*=0.5f;
 			dir.Normalize();
 		}
@@ -103,7 +104,7 @@ void CTorpedoProjectile::Update(void)
 					targPos=target->midPos;
 				else
 					targPos=helper->GetUnitErrorPos(target,owner->allyteam);
-				if(targPos.y>0)
+				if(!(weaponDef->submissile) && targPos.y>0)
 					targPos.y=0;
 
 				float dist=targPos.distance(pos);

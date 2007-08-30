@@ -14,6 +14,7 @@ public:
 	void Update(void);
 	void Draw(void);
 	void Collision(CUnit* unit);
+	void Collision();
 	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	int ttl;

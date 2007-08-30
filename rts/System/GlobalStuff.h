@@ -20,7 +20,7 @@
  *
  * Defines the maximum world size as 1000000
  */
-#define MAX_WORLD_SIZE 1000000;
+#define MAX_WORLD_SIZE 1000000
 
 /**
  * @brief square size
@@ -260,42 +260,42 @@ public:
 
 	/**
 	 * @brief disable helper AIs
-	 * 
+	 *
 	 * Whether helper AIs are allow, including GroupAI and LuaUI control widgets
 	 */
 	bool noHelperAIs;
 
 	/**
 	 * @brief definition editing enabled
-	 * 
+	 *
 	 * Whether definition editing is enabled
 	 */
 	bool editDefsEnabled;
 
 	/**
 	 * @brief LuaRules control
-	 * 
+	 *
 	 * Whether or not LuaRules is enabled
 	 */
 	bool useLuaRules;
 
 	/**
 	 * @brief LuaGaia control
-	 * 
+	 *
 	 * Whether or not LuaGaia is enabled
 	 */
 	bool useLuaGaia;
 
 	/**
 	 * @brief gaia team
-	 * 
+	 *
 	 * gaia's team id
 	 */
 	int gaiaTeamID;
 
 	/**
 	 * @brief gaia team
-	 * 
+	 *
 	 * gaia's team id
 	 */
 	int gaiaAllyTeamID;

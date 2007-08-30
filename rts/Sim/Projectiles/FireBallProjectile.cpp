@@ -3,6 +3,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Map/Ground.h"
 #include "creg/STL_Deque.h"
 #include "ProjectileHandler.h"
 #include "mmgr.h"
@@ -125,8 +126,10 @@ void CFireBallProjectile::EmitSpark()
 
 void CFireBallProjectile::Collision()
 {
+	if(weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z)<pos.y) return; //make waterweapons not explode in water
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }
+
 
 

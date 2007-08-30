@@ -31,6 +31,7 @@ void CLightingCannon::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 		if(!onlyForward){
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
@@ -44,29 +45,31 @@ bool CLightingCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	if(!CWeapon::TryTarget(pos,userTarget,unit))
 		return false;
 
-	if(unit){
-		if(unit->isUnderWater)
-			return false;
-	} else {
-		if(pos.y<0)
-			return false;
+	if(!weaponDef->waterweapon) {
+		if(unit){
+			if(unit->isUnderWater)
+				return false;
+		} else {
+			if(pos.y<0)
+				return false;
+		}
 	}
 
-	float3 dir=pos-weaponPos;
+	float3 dir=pos-weaponMuzzlePos;
 	float length=dir.Length();
 	if(length==0)
 		return true;
 
 	dir/=length;
 
-	float g=ground->LineGroundCol(weaponPos,pos);
+	float g=ground->LineGroundCol(weaponMuzzlePos,pos);
 	if(g>0 && g<length*0.9f)
 		return false;
 
-	if(avoidFeature && helper->LineFeatureCol(weaponPos,dir,length))
+	if(avoidFeature && helper->LineFeatureCol(weaponMuzzlePos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -78,16 +81,16 @@ void CLightingCannon::Init(void)
 
 void CLightingCannon::Fire(void)
 {
-	float3 dir=targetPos-weaponPos;
+	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 	CUnit* u=0;
-	float r=helper->TraceRay(weaponPos,dir,range,0,owner,u);
+	float r=helper->TraceRay(weaponMuzzlePos,dir,range,0,owner,u);
 
 	float3 newDir;
 	CPlasmaRepulser* shieldHit;
-	float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,weaponPos,dir,range,newDir,shieldHit);
+	float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,weaponMuzzlePos,dir,range,newDir,shieldHit);
 	if(shieldLength<r){
 		r=shieldLength;
 		if(shieldHit) {
@@ -101,11 +104,11 @@ void CLightingCannon::Fire(void)
 	// Dynamic Damage
 	DamageArray dynDamages;
 	if (weaponDef->dynDamageExp > 0)
-		dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponPos, targetPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+		dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponMuzzlePos, targetPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
 
-	helper->Explosion(weaponPos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
+	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
 
-	SAFE_NEW CLightingProjectile(weaponPos,weaponPos+dir*(r+10),owner,color,weaponDef,10,this);
+	SAFE_NEW CLightingProjectile(weaponMuzzlePos,weaponMuzzlePos+dir*(r+10),owner,color,weaponDef,10,this);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 

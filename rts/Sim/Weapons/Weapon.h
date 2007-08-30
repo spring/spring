@@ -60,6 +60,11 @@ public:
 
 	float3 relWeaponPos;				//weaponpos relative to the unit
 	float3 weaponPos;						//absolute weapon pos
+
+	float3 relWeaponMuzzlePos;			//position of the firepoint
+	float3 weaponMuzzlePos;
+	float3 weaponDir;
+
 	float muzzleFlareSize;			//size of muzzle flare if drawn
 	int useWeaponPosForAim;			//sometimes weapon pos is better to use than aimpos
 	bool hasCloseTarget;					//might need to update weapon pos more often when enemy is near

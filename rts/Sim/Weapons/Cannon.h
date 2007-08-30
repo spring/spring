@@ -36,6 +36,8 @@ public:
 	bool highTrajectory;
 	/// burnblow tag. defines flakker-like behaviour
 	bool selfExplode;
+	/// projectile gravity
+	float gravity;
 
 	void SlowUpdate(void);
 	/// tells where to point the gun to hit the point at pos+diff

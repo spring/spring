@@ -7,6 +7,7 @@
 #include "ProjectileHandler.h"
 #include "SimpleParticleSystem.h"
 #include "mmgr.h"
+#include "Map/Ground.h"
 
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
 
@@ -104,6 +105,8 @@ void CLaserProjectile::Collision(CFeature* feature)
 
 void CLaserProjectile::Collision()
 {
+	if(weaponDef->waterweapon && ground->GetHeight2(pos.x,pos.z) < pos.y) 
+		return; //prevent impact on water if waterweapon is set
 	float3 oldPos=pos;
 	CWeaponProjectile::Collision();
 

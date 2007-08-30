@@ -70,6 +70,8 @@ void CPlasmaRepulser::Init(void)
 
 	if(weaponDef->shieldPower==0)
 		curPower=99999999999.0f;
+	else
+		curPower=weaponDef->shieldStartingPower;
 
 	CWeapon::Init();
 }

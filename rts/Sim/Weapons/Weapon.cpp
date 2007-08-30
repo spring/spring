@@ -57,8 +57,11 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(subClassReady),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(weaponPos),
+	CR_MEMBER(weaponMuzzlePos),
+	CR_MEMBER(weaponDir),
 	CR_MEMBER(lastRequest),
 	CR_MEMBER(relWeaponPos),
+	CR_MEMBER(relWeaponMuzzlePos),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(lastTargetRetry),
 	CR_MEMBER(areaOfEffect),
@@ -132,8 +135,11 @@ CWeapon::CWeapon(CUnit* owner)
 	subClassReady(true),
 	onlyForward(false),
 	weaponPos(0,0,0),
+	weaponMuzzlePos(0,0,0),
+	weaponDir(0,0,0),
 	lastRequest(0),
 	relWeaponPos(0,1,0),
+	relWeaponMuzzlePos(0,1,0),
 	muzzleFlareSize(1),
 	lastTargetRetry(-100),
 	areaOfEffect(1),
@@ -176,11 +182,14 @@ void CWeapon::Update()
 	if(hasCloseTarget){
 		std::vector<int> args;
 		args.push_back(0);
-		if(useWeaponPosForAim){
+		if(useWeaponPosForAim){ //if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
 			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 		} else {
 			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 		}
+		relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
+
+		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	}
 
@@ -258,16 +267,18 @@ void CWeapon::Update()
 	&& subClassReady
 	&& reloadStatus<=gs->frameNum
 	&& (!weaponDef->stockpile || numStockpiled)
-	&& (weaponDef->waterweapon || weaponPos.y>0)
+	&& (weaponDef->fireSubmersed || weaponMuzzlePos.y>0)
 	&& (owner->unitDef->maxFuel==0 || owner->currentFuel > 0)
 	){
 		if ((weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))) {
 			std::vector<int> args;
 			args.push_back(0);
 			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-			relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
-			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+			owner->localmodel->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 			useWeaponPosForAim=reloadTime/16+8;
+			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
+			weaponDir.Normalize();
 
 			if(TryTarget(targetPos,haveUserTarget,targetUnit)){
 				if(weaponDef->stockpile){
@@ -303,34 +314,51 @@ void CWeapon::Update()
 			}
 		}
 	}
-	if(salvoLeft && nextSalvo<=gs->frameNum){
+	if(salvoLeft && nextSalvo<=gs->frameNum ){
 		salvoLeft--;
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
 
-		// add to the commandShotCount if this is the last salvo,
-		// and it is being directed towards the current target
-		// (helps when deciding if a queued ground attack order has been completed)
-		if ((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
-		    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
-				((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
-			owner->commandShotCount++;
+		int projectiles = weaponDef->projectilespershot;
+
+		while(projectiles > 0) {
+			--projectiles;
+
+			// add to the commandShotCount if this is the last salvo,
+			// and it is being directed towards the current target
+			// (helps when deciding if a queued ground attack order has been completed)
+			if ((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
+			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
+					((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
+				owner->commandShotCount++;
+			}
+
+			std::vector<int> args;
+			args.push_back(0);
+
+			owner->cob->Call(COBFN_Shot+weaponNum,0);
+
+			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+			relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+
+			owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
+			owner->localmodel->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+
+			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+
+			weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
+			weaponDir.Normalize();
+
+	//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
+
+			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
+				owner->isCloaked = false;
+				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
+			}
+
+			Fire();
 		}
-
-		std::vector<int> args;
-		args.push_back(0);
-		owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum/*/COBFN_QueryPrimary+weaponNum/**/,args);
-		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-
-//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
-
-		if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
-			owner->isCloaked = false;
-			owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
-		}
-
-		Fire();
 
 		//Rock the unit in the direction of the fireing
 		float3 rockDir = wantedDir;
@@ -362,9 +390,9 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 
 	if(!weaponDef->waterweapon && pos.y<1)
 		pos.y=1;
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
+		weaponMuzzlePos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	if(!TryTarget(pos,userTarget,0))
 		return false;
@@ -387,8 +415,10 @@ bool CWeapon::AttackUnit(CUnit *unit, bool userTarget)
 
 	weaponPos= owner->pos + owner->frontdir * relWeaponPos.z
 		+ owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-	if(weaponPos.y < ground->GetHeight2(weaponPos.x, weaponPos.z))
-		weaponPos = owner->pos + UpVector * 10;
+	weaponMuzzlePos= owner->pos + owner->frontdir * relWeaponMuzzlePos.z
+		+ owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
+	if(weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z))
+		weaponMuzzlePos = owner->pos + UpVector * 10;
 	//hope that we are underground because we are a popup weapon and will come above ground later
 
 	if(!unit){
@@ -441,17 +471,22 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 #endif
 	std::vector<int> args;
 	args.push_back(0);
-	if(useWeaponPosForAim){
+	if(useWeaponPosForAim){ //If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
 		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
 		if(useWeaponPosForAim>1)
 			useWeaponPosForAim--;
 	} else {
 		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	}
+	relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+
+	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	if(weaponPos.y<ground->GetHeight2(weaponPos.x,weaponPos.z))
-		weaponPos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
+
+	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
+		weaponMuzzlePos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
 	predictSpeedMod=1+(gs->randFloat()-0.5f)*2*(1-owner->limExperience);
 
@@ -556,7 +591,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(weaponDef->stockpile && !numStockpiled)
 		return false;
 
-	float3 dif=pos-weaponPos;
+	float3 dif=pos-weaponMuzzlePos;
 	float heightDiff; // negative when target below owner
 
 	if (targetBorder != 0 && unit) {
@@ -628,11 +663,13 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	bool val = TryTarget(tempTargetPos,userTarget,unit);
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
 	owner->heading = tempHeadding;
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	return val;
 }
 
@@ -658,11 +695,13 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	bool val = TryTarget(pos, userTarget, 0);
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
 	owner->heading = tempHeadding;
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	return val;
 }
 
@@ -673,6 +712,10 @@ void CWeapon::Init(void)
 	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+
+	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+	relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
+	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 //	logOutput.Print("RelPos %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
 	if (range > owner->maxRange) {
