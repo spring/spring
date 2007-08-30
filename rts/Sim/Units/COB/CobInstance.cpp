@@ -665,15 +665,15 @@ void CCobInstance::EmitSfx(int type, int piece)
 				dir.Normalize();
 
 				float3 targetPos = unit->weapons[index]->targetPos;
-				float3 weaponPos = unit->weapons[index]->weaponPos;
+				float3 weaponMuzzlePos = unit->weapons[index]->weaponMuzzlePos;
 
 				unit->weapons[index]->targetPos = pos+dir;
-				unit->weapons[index]->weaponPos = pos;
+				unit->weapons[index]->weaponMuzzlePos = pos;
 
 				unit->weapons[index]->Fire();
 
 				unit->weapons[index]->targetPos = targetPos;
-				unit->weapons[index]->weaponPos = weaponPos;
+				unit->weapons[index]->weaponMuzzlePos = weaponMuzzlePos;
 			}
 			else if (type & 4096) {
 				unsigned index = type - 4096;
@@ -1240,6 +1240,15 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case MAX_SPEED: {
 			if(unit->moveType && param > 0){
+				// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
+				for (CCommandQueue::iterator it = unit->commandAI->commandQue.begin();
+						it != unit->commandAI->commandQue.end(); ++it) {
+					Command &c = *it;
+					if (c.id == CMD_SET_WANTED_MAX_SPEED && c.params[0] == unit->maxSpeed) {
+						c.params[0] = param/(float)COBSCALE;
+						break;
+					}
+				}
 				unit->moveType->SetMaxSpeed(param/(float)COBSCALE);
 				unit->maxSpeed = param/(float)COBSCALE;
 			}

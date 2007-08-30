@@ -44,6 +44,7 @@ CFlameProjectile::~CFlameProjectile(void)
 
 void CFlameProjectile::Collision(void)
 {
+	if(ground->GetHeight2(pos.x, pos.z) < pos.y && weaponDef->waterweapon) return; //prevent waterweapons from colliding with water
 	float3 norm=ground->GetNormal(pos.x,pos.z);
 	float ns=speed.dot(norm);
 	speed-=norm*ns*1;

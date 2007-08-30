@@ -67,6 +67,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	bool ballistic;
 	//bool twophase;
 	bool beamweapon;
+	bool manualBombSettings; //Allow the user to manually specify the burst and burstrate for his AircraftBomb
 	//bool guided;
 	//bool vlaunch;
 	int rendertype;
@@ -94,6 +95,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].minIntensity, "0", weaponname + "\\MinIntensity");
 
 	sunparser->GetDef(weaponDefs[id].dropped, "0", weaponname + "\\dropped");
+	sunparser->GetDef(manualBombSettings, "0", weaponname + "\\manualbombsettings");
 	sunparser->GetDef(lineofsight, "0", weaponname + "\\lineofsight");
 	sunparser->GetDef(ballistic, "0", weaponname + "\\ballistic");
 	sunparser->GetDef(weaponDefs[id].twophase, "0", weaponname + "\\twophase");
@@ -110,7 +112,10 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].noSelfDamage, "0", weaponname + "\\NoSelfDamage");
 
 	sunparser->GetDef(weaponDefs[id].waterweapon, "0", weaponname + "\\waterweapon");
+	sunparser->GetDef(weaponDefs[id].fireSubmersed, weaponDefs[id].waterweapon ? "1":"0", weaponname + "\\firesubmersed");
+	sunparser->GetDef(weaponDefs[id].submissile, "0", weaponname + "\\submissile");
 	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
+	sunparser->GetDef(weaponDefs[id].fixedLauncher, "0", weaponname + "\\FixedLauncher");
 	sunparser->GetDef(weaponDefs[id].noExplode, "0", weaponname + "\\NoExplode");
 	sunparser->GetDef(weaponDefs[id].maxvelocity, "0", weaponname + "\\weaponvelocity");
 	sunparser->GetDef(weaponDefs[id].isShield, "0", weaponname + "\\IsShield");
@@ -256,6 +261,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	weaponDefs[id].reload = atof(sunparser->SGetValueDef("1", weaponname + "\\reloadtime").c_str());
 	weaponDefs[id].salvodelay = atof(sunparser->SGetValueDef("0.1", weaponname + "\\burstrate").c_str());
 	sunparser->GetDef(weaponDefs[id].salvosize, "1", weaponname + "\\burst");
+	sunparser->GetDef(weaponDefs[id].projectilespershot, "1", weaponname + "\\projectiles");
 	weaponDefs[id].maxAngle = atof(sunparser->SGetValueDef("3000", weaponname + "\\tolerance").c_str()) * 180.0f / 0x7fff;
 	weaponDefs[id].restTime = 0.0f;
 	sunparser->GetDef(weaponDefs[id].metalcost, "0", weaponname + "\\metalpershot");
@@ -263,6 +269,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].selfExplode, "0", weaponname + "\\burnblow");
 	sunparser->GetDef(weaponDefs[id].sweepFire, "0", weaponname + "\\sweepfire");
 	sunparser->GetDef(weaponDefs[id].canAttackGround, "1", weaponname + "\\canattackground");
+	weaponDefs[id].myGravity = atof(sunparser->SGetValueDef("0", weaponname + "\\myGravity").c_str());
 
 	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01f;
 	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
@@ -292,6 +299,7 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	sunparser->GetDef(weaponDefs[id].shieldPower, "0", weaponname + "\\shieldpower");
 	sunparser->GetDef(weaponDefs[id].shieldPowerRegen, "0", weaponname + "\\shieldpowerregen");
 	sunparser->GetDef(weaponDefs[id].shieldPowerRegenEnergy, "0", weaponname + "\\shieldpowerregenenergy");
+	sunparser->GetDef(weaponDefs[id].shieldStartingPower, "0", weaponname + "\\shieldstartingpower");
 	sunparser->GetDef(weaponDefs[id].shieldInterceptType, "0", weaponname + "\\shieldintercepttype");
 	weaponDefs[id].shieldGoodColor=sunparser->GetFloat3(float3(0.5f,0.5f,1),weaponname + "\\shieldgoodcolor");
 	weaponDefs[id].shieldBadColor=sunparser->GetFloat3(float3(1,0.5f,0.5f),weaponname + "\\shieldbadcolor");
@@ -355,10 +363,11 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 		weaponDefs[id].visuals.color = tempCol;
 
 	weaponDefs[id].uptime = atof(sunparser->SGetValueDef("0", weaponname + "\\weapontimer").c_str());
+	weaponDefs[id].flighttime = atof(sunparser->SGetValueDef("0", weaponname + "\\flighttime").c_str()) * 32;
 
 	weaponDefs[id].turnrate = atof(sunparser->SGetValueDef("0", weaponname + "\\turnrate").c_str()) * PI / 0x7fff /30.0f;
 
-	if(weaponDefs[id].type=="AircraftBomb"){
+	if(weaponDefs[id].type=="AircraftBomb" && !manualBombSettings){
 		if(weaponDefs[id].reload<0.5f){
 			weaponDefs[id].salvodelay=min(0.2f,weaponDefs[id].reload);
 			weaponDefs[id].salvosize=(int)(1/weaponDefs[id].salvodelay)+1;

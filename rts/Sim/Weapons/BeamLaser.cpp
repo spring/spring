@@ -43,6 +43,7 @@ void CBeamLaser::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 		if(!onlyForward){
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
@@ -77,15 +78,17 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	if(!CWeapon::TryTarget(pos,userTarget,unit))
 		return false;
 
-	if(unit){
-		if(unit->isUnderWater)
-			return false;
-	} else {
-		if(pos.y<0)
-			return false;
+	if(!weaponDef->waterweapon) {
+		if(unit){
+			if(unit->isUnderWater)
+				return false;
+		} else {
+			if(pos.y<0)
+				return false;
+		}
 	}
 
-	float3 dir=pos-weaponPos;
+	float3 dir=pos-weaponMuzzlePos;
 
 	float length=dir.Length();
 	if(length==0)
@@ -94,14 +97,14 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	dir/=length;
 
 	if(!onlyForward){		//skip ground col testing for aircrafts
-		float g=ground->LineGroundCol(weaponPos,pos);
+		float g=ground->LineGroundCol(weaponMuzzlePos,pos);
 		if(g>0 && g<length*0.9f)
 			return false;
 	}
-	if(avoidFeature && helper->LineFeatureCol(weaponPos,dir,length))
+	if(avoidFeature && helper->LineFeatureCol(weaponMuzzlePos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -127,7 +130,7 @@ void CBeamLaser::Fire(void)
 		if(salvoLeft==salvoSize-1){
 			if(fireSoundId)
 				sound->PlaySample(fireSoundId,owner,fireSoundVolume);
-			dir=targetPos-weaponPos;
+			dir=targetPos-weaponMuzzlePos;
 			dir.Normalize();
 			oldDir=dir;
 		} else {
@@ -151,7 +154,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 	float maxLength=range*rangeMod;
 	float curLength=0;
-	float3 curPos=weaponPos;
+	float3 curPos=weaponMuzzlePos;
 	float3 hitPos;
 
 	bool tryAgain=true;
@@ -220,7 +223,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		// Dynamic Damage
 		DamageArray dynDamages;
 		if (weaponDef->dynDamageExp > 0)
-			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponPos, curPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponMuzzlePos, curPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
 		helper->Explosion(hitPos, weaponDef->dynDamageExp>0?dynDamages*(intensity*damageMul):weaponDef->damages*(intensity*damageMul), areaOfEffect, weaponDef->edgeEffectiveness, weaponDef->explosionSpeed,owner, true, 1.0f, false, weaponDef->explosionGenerator, hit, dir, weaponDef->id);
 	}
 

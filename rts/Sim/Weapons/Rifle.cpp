@@ -41,6 +41,7 @@ void CRifle::Update()
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 		wantedDir=targetPos-weaponPos;
 		wantedDir.Normalize();
 	}
@@ -60,18 +61,18 @@ bool CRifle::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 			return false;
 	}
 
-	float3 dir=pos-weaponPos;
+	float3 dir=pos-weaponMuzzlePos;
 	float length=dir.Length();
 	if(length==0)
 		return true;
 
 	dir/=length;
 
-	float g=ground->LineGroundCol(weaponPos,pos);
+	float g=ground->LineGroundCol(weaponMuzzlePos,pos);
 	if(g>0 && g<length*0.9f)
 		return false;
 
-	if(helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.9f),owner->allyteam,owner)){
+	if(helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.9f),owner->allyteam,owner)){
 		return false;
 	}
 	return true;
@@ -79,7 +80,7 @@ bool CRifle::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 
 void CRifle::Fire(void)
 {
-	float3 dir=targetPos-weaponPos;
+	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
@@ -88,13 +89,13 @@ void CRifle::Fire(void)
 	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 	CUnit* hit;
-	float length = helper->TraceRay(weaponPos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
-	if (hit) {
+	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
+	if(hit) {
 		hit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
-		SAFE_NEW CHeatCloudProjectile(weaponPos + dir * length, hit->speed * 0.9f, 30, 1, owner);
+		SAFE_NEW CHeatCloudProjectile(weaponMuzzlePos + dir * length, hit->speed*0.9f, 30, 1, owner);
 	}
-	SAFE_NEW CTracerProjectile(weaponPos,dir*projectileSpeed,length,owner);
-	SAFE_NEW CSmokeProjectile(weaponPos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
+	SAFE_NEW CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);
+	SAFE_NEW CSmokeProjectile(weaponMuzzlePos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
 	if(fireSoundId)
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

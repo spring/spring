@@ -349,7 +349,7 @@ float CAICallback::GetUnitSpeed(int unitid)				//the units max speed
 		if (unit) {
 			const int allyTeam = gs->AllyTeam(team);
 			if (gs->Ally(unit->allyteam, allyTeam)) {
-				return unit->unitDef->speed;
+				return unit->maxSpeed;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;

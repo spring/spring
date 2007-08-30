@@ -59,7 +59,7 @@ void CLightingProjectile::Update(void)
 	}
 
 	if(weapon){
-		pos=weapon->weaponPos;
+		pos=weapon->weaponMuzzlePos;
 	}
 	for(int a=1;a<10;++a)
 		displacements[a]+=(gs->randFloat()-0.5f)*0.3f;

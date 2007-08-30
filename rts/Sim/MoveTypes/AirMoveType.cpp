@@ -886,7 +886,7 @@ void CAirMoveType::UpdateLanding(void)
 	float dist = dif.Length();
 	dif /= dist;
 
-	float wsf = min(owner->unitDef->speed, dist / speedf * 1.8f * maxAcc);
+	float wsf = min(owner->maxSpeed, dist / speedf * 1.8f * maxAcc);
 	float3 wantedSpeed = dif * wsf;
 
 	float3 delta = wantedSpeed - speed;
@@ -1181,7 +1181,7 @@ void CAirMoveType::DependentDied(CObject* o)
 void CAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed=speed;
-	if(owner->unitDef->maxAcc!=0 && owner->unitDef->speed!=0){
+	if(owner->unitDef->maxAcc!=0 && owner->maxSpeed!=0){
 		float drag=1.0f/(maxSpeed/GAME_SPEED*1.1f/maxAcc) - wingAngle*wingAngle*wingDrag;		//meant to set the drag such that the maxspeed becomes what it should be
 		invDrag = 1-drag;
 	}

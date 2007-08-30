@@ -348,7 +348,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	} else if(weapondef->type=="MissileLauncher"){
 		weapon=SAFE_NEW CMissileLauncher(owner);
 	} else if(weapondef->type=="TorpedoLauncher"){
-		if(owner->unitDef->canfly){
+		if(owner->unitDef->canfly && !weapondef->submissile){
 			weapon=SAFE_NEW CBombDropper(owner,true);
 			if(weapondef->tracks)
 				((CBombDropper*)weapon)->tracking=weapondef->turnrate;
@@ -377,7 +377,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 			((CStarburstLauncher*)weapon)->tracking=weapondef->turnrate;
 		else
 			((CStarburstLauncher*)weapon)->tracking=0;
-		((CStarburstLauncher*)weapon)->uptime=weapondef->uptime*30;
+		((CStarburstLauncher*)weapon)->uptime=weapondef->uptime*GAME_SPEED;
 	}else {
 		logOutput << "Unknown weapon type " << weapondef->type.c_str() << "\n";
 		return 0;
@@ -459,5 +459,6 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
 }
+
 
 

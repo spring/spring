@@ -4,6 +4,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sync/SyncTracer.h"
 #include "ProjectileHandler.h"
+#include "Map/Ground.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -52,8 +53,12 @@ void CEmgProjectile::Update(void)
 void CEmgProjectile::Collision(CUnit* unit)
 {
 //	unit->DoDamage(damages,owner);
-
 	CWeaponProjectile::Collision(unit);
+}
+
+void CEmgProjectile::Collision() {
+	if (!(weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z) < pos.y))
+		CWeaponProjectile::Collision();
 }
 
 void CEmgProjectile::Draw(void)

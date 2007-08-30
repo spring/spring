@@ -30,6 +30,7 @@ public:
 	float3 dir;
 	float maxSpeed;
 	float curSpeed;
+	float acceleration;
 	int ttl;
 	int uptime;
 	float areaOfEffect;

@@ -32,6 +32,7 @@ void CStarburstLauncher::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 		wantedDir=(targetPos-weaponPos).Normalize();		//the aiming upward is apperently implicid so aim toward target
 	}
 	CWeapon::Update();
@@ -39,7 +40,17 @@ void CStarburstLauncher::Update(void)
 
 void CStarburstLauncher::Fire(void)
 {
-	CStarburstProjectile* p=SAFE_NEW CStarburstProjectile(weaponPos+float3(0,2,0),float3(0,0.01f,0),owner,targetPos,areaOfEffect,projectileSpeed,tracking,(int)uptime,targetUnit, weaponDef,interceptTarget,range);
+	float3 speed(0,weaponDef->startvelocity,0);
+	float maxrange;
+	if (weaponDef->fixedLauncher) {
+		speed = weaponDir * weaponDef->startvelocity;
+		maxrange = (float)MAX_WORLD_SIZE;
+	} else if (weaponDef->flighttime > 0) {
+		maxrange = (float)MAX_WORLD_SIZE;
+	} else {
+		maxrange = (float)range;
+	}
+	CStarburstProjectile* p=SAFE_NEW CStarburstProjectile(weaponMuzzlePos+float3(0,2,0),speed,owner,targetPos,areaOfEffect,projectileSpeed,tracking,(int)uptime,targetUnit, weaponDef,interceptTarget, maxrange);
 
 	if(weaponDef->targetable)
 		interceptHandler.AddInterceptTarget(p,targetPos);
@@ -54,14 +65,15 @@ bool CStarburstLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit
 		return false;
 
 	if(unit){
-		if(unit->isUnderWater)
+		if(unit->isUnderWater && !weaponDef->waterweapon)
 			return false;
 	} else {
-		if(pos.y<0)
+		if(pos.y<0 && !weaponDef->waterweapon)
 			return false;
 	}
 
-	if(avoidFriendly && helper->TestCone(weaponPos,UpVector,100,0,owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,
+			(weaponDef->fixedLauncher ? weaponDir : UpVector), 100, 0, owner->allyteam, owner))
 		return false;
 
 	return true;

@@ -30,7 +30,8 @@ void CLaserCannon::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		if(!onlyForward){		
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+		if(!onlyForward){
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
 		}
@@ -45,14 +46,14 @@ bool CLaserCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 		return false;
 
 	if(unit){
-		if(unit->isUnderWater)
+		if(unit->isUnderWater && !weaponDef->waterweapon)
 			return false;
 	} else {
-		if(pos.y<0)
+		if(pos.y<0 && !weaponDef->waterweapon)
 			return false;
 	}
 
-	float3 dir=pos-weaponPos;
+	float3 dir=pos-weaponMuzzlePos;
 	float length=dir.Length();
 	if(length==0)
 		return true;
@@ -60,14 +61,14 @@ bool CLaserCannon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	dir/=length;
 
 	if(!onlyForward){		//skip ground col testing for aircrafts
-		float g=ground->LineGroundCol(weaponPos,pos);
+		float g=ground->LineGroundCol(weaponMuzzlePos,pos);
 		if(g>0 && g<length*0.9f)
 			return false;
 	}
-	if(avoidFeature && helper->LineFeatureCol(weaponPos,dir,length))
+	if(avoidFeature && helper->LineFeatureCol(weaponMuzzlePos,dir,length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponPos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
+	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
 		return false;
 	return true;
 }
@@ -84,7 +85,7 @@ void CLaserCannon::Fire(void)
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
 		dir=owner->frontdir;
 	} else {
-		dir=targetPos-weaponPos;
+		dir=targetPos-weaponMuzzlePos;
 		dir.Normalize();
 	}
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7f);
@@ -96,10 +97,12 @@ void CLaserCannon::Fire(void)
 		fpsSub=6;
 #endif
 
-	SAFE_NEW CLaserProjectile(weaponPos, dir*projectileSpeed, owner, weaponDef->duration*weaponDef->maxvelocity, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)((weaponDef->range-fpsSub*4)/weaponDef->projectilespeed)-fpsSub);
+	SAFE_NEW CLaserProjectile(weaponMuzzlePos, dir*projectileSpeed, owner, weaponDef->duration*weaponDef->maxvelocity, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)((weaponDef->range-fpsSub*4)/weaponDef->projectilespeed)-fpsSub);
 
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
+
+
 
 

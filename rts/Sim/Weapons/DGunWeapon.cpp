@@ -27,7 +27,8 @@ void CDGunWeapon::Update(void)
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		if(!onlyForward){		
+		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+		if(!onlyForward){
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
 		}
@@ -46,13 +47,13 @@ void CDGunWeapon::Fire(void)
 	if(onlyForward){
 		dir=owner->frontdir;
 	} else {
-		dir=targetPos-weaponPos;
+		dir=targetPos-weaponMuzzlePos;
 		dir.Normalize();
 	}
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
-	SAFE_NEW CFireBallProjectile(weaponPos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
+	SAFE_NEW CFireBallProjectile(weaponMuzzlePos,dir*projectileSpeed,owner,0,targetPos,weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume*0.2f);
 }

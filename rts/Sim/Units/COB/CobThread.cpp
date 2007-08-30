@@ -15,7 +15,7 @@
 #endif
 
 CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
-: owner(owner), script(script) 
+: owner(owner), script(script)
 {
 	for (int i = 0; i < MAX_LUA_COB_ARGS; i++) {
 		luaArgs[i] = 0;
@@ -48,7 +48,7 @@ void CCobThread::SetCallback(CBCobThreadFinish cb, void *p1, void *p2)
 //This function sets the thread in motion. Should only be called once.
 //If schedule is false the thread is not added to the scheduler, and thus
 //it is expected that the starter is responsible for ticking it.
-void CCobThread::Start(int functionId, const vector<int> &args, bool schedule) 
+void CCobThread::Start(int functionId, const vector<int> &args, bool schedule)
 {
 	state = Run;
 	PC = script.scriptOffsets[functionId];
@@ -225,7 +225,7 @@ int CCobThread::Tick(int deltaTime)
 
 	while (state == Run) {
 		//int opcode = *(int *)&script.code[PC];
-		
+
 		//Disabling exec trace gives about a 50% speedup on vm-intensive code
 		//execTrace.push_back(PC);
 
@@ -282,7 +282,7 @@ int CCobThread::Tick(int deltaTime)
 					//Leave values intact on stack in case caller wants to check them
 					return -1;
 				}
-				
+
 				PC = callStack.back().returnAddr;
 				while (stack.size() > callStack.back().stackTop) {
 					stack.pop_back();
@@ -366,7 +366,7 @@ int CCobThread::Tick(int deltaTime)
 				for (r3 = 0; r3 < r2; ++r3) {
 					r4 = POP();
 					args.push_back(r4);
-				}		
+				}
 
 				thread = SAFE_NEW CCobThread(script, owner);
 				thread->Start(r1, args, true);
@@ -397,7 +397,7 @@ int CCobThread::Tick(int deltaTime)
 				ForceCommitAllAnims();			// getunitval could possibly read piece locations
 				r1 = owner->GetUnitVal(r1, 0, 0, 0, 0);
 				stack.push_back(r1);
-				break; 
+				break;
 			case JUMP_NOT_EQUAL:
 				r1 = GET_LONG_PC();
 				r2 = POP();
@@ -482,7 +482,7 @@ int CCobThread::Tick(int deltaTime)
 			case SET_LESS:
 				r2 = POP();
 				r1 = POP();
-				if (r1 < r2) 
+				if (r1 < r2)
 					stack.push_back(1);
 				else
 					stack.push_back(0);
@@ -604,7 +604,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-				
+
 				if (owner->smoothAnim) {
 					DelayedAnim a;
 					a.type = 1;
@@ -724,7 +724,7 @@ int CCobThread::Tick(int deltaTime)
 				return -1;
 				break;
 		}
-		
+
 	}
 
 	GCobEngine.SetCurThread(NULL);
@@ -736,7 +736,7 @@ void CCobThread::ShowError(const string& msg)
 {
 	if (callStack.size() == 0)
 		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
-	else 
+	else
 		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
 }
 
@@ -848,7 +848,7 @@ void CCobThread::CommitAnims(int deltaTime)
 	delayedAnims.clear();
 }
 
-void CCobThread::ForceCommitAnim(int type, int piece, int axis) 
+void CCobThread::ForceCommitAnim(int type, int piece, int axis)
 {
 	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
 		if ((anim->type == type) && (anim->piece == piece) && (anim->axis == axis)) {
@@ -868,7 +868,7 @@ void CCobThread::ForceCommitAnim(int type, int piece, int axis)
 	}
 }
 
-void CCobThread::ForceCommitAllAnims() 
+void CCobThread::ForceCommitAllAnims()
 {
 	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
 		switch (anim->type) {
@@ -918,7 +918,7 @@ void CCobThread::LuaCall()
 		return;
 	}
 	const LuaHashString& hs = script.luaScripts[r1];
-	
+
 #if COB_DEBUG > 0
 	if (COB_DEBUG_FILTER) {
 		logOutput.Print("Calling LuaCob %s", hs.GetString().c_str());

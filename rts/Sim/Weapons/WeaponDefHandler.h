@@ -68,17 +68,23 @@ struct WeaponDef
 	float restTime;
 
 	float uptime;
+	int flighttime;
 
 	float metalcost;
 	float energycost;
 	float supplycost;
+
+	int projectilespershot;
 
 	int id;
 	int tdfId;	//the id= tag in the tdf
 
 	bool turret;
 	bool onlyForward;
+	bool fixedLauncher;
 	bool waterweapon;
+	bool fireSubmersed;
+	bool submissile; //Lets a torpedo travel above water like it does below water
 	bool tracks;
 	bool dropped;
 	bool paralyzer;			//weapon will only paralyze not do real damage
@@ -103,6 +109,7 @@ struct WeaponDef
 
 	bool selfExplode;
 	bool gravityAffected;
+	float myGravity;
 	bool twophase;
 	bool guided;
 	bool vlaunch;
@@ -168,6 +175,7 @@ struct WeaponDef
 	float shieldPower;			//how much damage the shield can reflect (0=infinite)
 	float shieldPowerRegen;	//how fast the power regenerates per second
 	float shieldPowerRegenEnergy;	//how much energy is needed to regenerate power per second
+	float shieldStartingPower;	//how much power the shield has when first created
 	float3 shieldGoodColor;			//color when shield at full power
 	float3 shieldBadColor;			//color when shield is empty
 	float shieldAlpha;					//shield alpha value

@@ -56,14 +56,14 @@ void CBombDropper::Update()
 		if(weaponPos.y>targetPos.y){
 			float d=targetPos.y-weaponPos.y;
 			float s=-owner->speed.y;
-			float sq=(s-2*d)/-gs->gravity;
+			float sq=(s-2*d)/-(weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
 			if(sq>0)
-				predict=s/gs->gravity+sqrt(sq);
+				predict=s/(weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity))+sqrt(sq);
 			else
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
 			float speedf=owner->speed.Length();
-			if(hitpos.distance2D(targetPos)<(salvoSize-1)*speedf*salvoDelay*0.5f+bombMoveRange){
+			if(hitpos.distance2D(targetPos)<max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange){
 				subClassReady=true;
 			}
 		}
@@ -108,7 +108,7 @@ void CBombDropper::Fire(void)
 		float size=dif.Length();
 		if(size>1.0f)
 			dif/=size*1.0f;
-		SAFE_NEW CExplosiveProjectile(weaponPos,owner->speed+dif,owner, weaponDef, 1000,areaOfEffect);
+		SAFE_NEW CExplosiveProjectile(weaponPos,owner->speed+dif,owner, weaponDef, 1000,areaOfEffect,weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

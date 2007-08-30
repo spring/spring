@@ -18,18 +18,21 @@ CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_MEMBER(ttl),
-	CR_MEMBER(areaOfEffect)
+	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(gravity)
 	));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(const float3& pos, const float3& speed, CUnit* owner, const WeaponDef* weaponDef, int ttl, float areaOfEffect)
+CExplosiveProjectile::CExplosiveProjectile(const float3& pos, const float3& speed,
+		CUnit* owner, const WeaponDef *weaponDef, int ttl, float areaOfEffect, float gravity)
 : CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true),
 	ttl(ttl),
 	areaOfEffect(areaOfEffect),
-	curTime(0)
+	curTime(0),
+	gravity(gravity)
 {
 	useAirLos=true;
 
@@ -53,7 +56,7 @@ CExplosiveProjectile::~CExplosiveProjectile()
 void CExplosiveProjectile::Update()
 {
 	pos+=speed;
-	speed.y+=gs->gravity;
+	speed.y+=gravity;
 
 	if(!--ttl)
 		Collision();
@@ -74,6 +77,9 @@ void CExplosiveProjectile::Collision()
 		if(h>pos.y){
 			float3 n=ground->GetNormal(pos.x,pos.z);
 			pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
+		}
+		else if (weaponDef->waterweapon) {
+			return; //let waterweapons go underwater
 		}
 	}
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
