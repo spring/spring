@@ -323,11 +323,10 @@ int CNetProtocol::SendMapName(const uint checksum, const std::string& newMapName
 	return 0;
 }
 
-//  NETMSG_USER_SPEED       = 19, // float userSpeed;
-
-int CNetProtocol::SendUserSpeed(float userSpeed)
+//  NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
+int CNetProtocol::SendUserSpeed(uchar myPlayerNum, float userSpeed)
 {
-	return SendData<float> (NETMSG_USER_SPEED, userSpeed);
+	return SendData<uchar, float> (NETMSG_USER_SPEED, myPlayerNum, userSpeed);
 }
 
 //  NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
@@ -452,7 +451,6 @@ int CNetProtocol::SendStartPos(uchar myTeam, uchar ready, float x, float y, floa
 }
 
 //  NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
-
 int CNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
 	return SendData<uchar, float, int>(NETMSG_PLAYERINFO, myPlayerNum, cpuUsage, ping);
@@ -508,7 +506,11 @@ int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) 
 		case NETMSG_NEWFRAME:
 		case NETMSG_RANDSEED:
 		case NETMSG_INTERNAL_SPEED:
+			length = 5;
+			break;
 		case NETMSG_USER_SPEED:
+			length = 6;
+			break;
 		case NETMSG_CPU_USAGE:
 		case NETMSG_SYNCREQUEST:
 			length = 5;
