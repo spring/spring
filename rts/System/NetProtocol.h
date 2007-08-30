@@ -38,7 +38,7 @@ enum NETMSG {
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
-	NETMSG_USER_SPEED       = 19, // float userSpeed;
+	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
 	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
@@ -122,7 +122,7 @@ public:
 	int SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
 	int SendScript(const std::string& scriptName);
 	int SendMapName(const uint checksum, const std::string& mapName);
-	int SendUserSpeed(float userSpeed);
+	int SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	int SendInternalSpeed(float internalSpeed);
 	int SendCPUUsage(float cpuUsage);
 	int SendDirectControl(uchar myPlayerNum);

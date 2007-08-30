@@ -480,11 +480,13 @@ void CPreGame::UpdateClientNet()
 
 		case NETMSG_QUIT:
 			// net->connected=false;
-			globalQuit=true;
+			globalQuit = true;
 			inbufpos += 1;
 			return;
 
 		case NETMSG_USER_SPEED:
+			inbufpos += 6;
+			break;
 		case NETMSG_INTERNAL_SPEED:
 			inbufpos += 5;
 			break;
@@ -495,8 +497,8 @@ void CPreGame::UpdateClientNet()
 
 		default:
 			char txt[200];
-			sprintf(txt,"Unknown net msg in client %d",(int)inbuf[inbufpos]);
-			handleerror(0,txt,"Network error in CPreGame",0);
+			sprintf(txt, "Unknown net msg in client %d", (int) inbuf[inbufpos]);
+			handleerror(0, txt, "Network error in CPreGame", 0);
 			inbufpos++;
 			break;
 		}

@@ -293,7 +293,7 @@ def CheckHeadersAndLibraries(env, conf):
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
 	d += [Dependency(['python2.5', 'python25', 'python2.4', 'python24'], ['Python.h'])]
-	d += [Dependency([], ['jni.h'])]
+	## d += [Dependency([], ['jni.h'])]
 
 	if env['use_tcmalloc']:
 		d += [Dependency(['tcmalloc'], [])]
@@ -323,7 +323,7 @@ def configure(env, conf_dir):
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
 	check_python(env, conf)
-	check_java(env, conf)
+	## check_java(env, conf)
 	CheckHeadersAndLibraries(env, conf)
 	env = conf.Finish()
 	print "\nEverything seems OK.  Run `scons' now to build."

@@ -1225,42 +1225,45 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		sky->cloudDensity*=1.05f;
 		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
+
+
 	else if (cmd == "speedup") {
-		float speed=gs->userSpeedFactor;
-		if (speed<1) {
-			speed/=0.8f;
-			if (speed>0.99f) {
-				speed=1;
+		float speed = gs->userSpeedFactor;
+		if (speed < 1) {
+			speed /= 0.8f;
+			if (speed > 0.99f) {
+				speed = 1;
 			}
 		} else {
-			speed+=0.5f;
+			speed += 0.5f;
 		}
 		if (!net->IsDemoServer()) {
-			net->SendUserSpeed(speed);
+			net->SendUserSpeed(gu->myPlayerNum, speed);
 		} else {
-			gs->speedFactor=speed;
-			gs->userSpeedFactor=speed;
+			gs->speedFactor = speed;
+			gs->userSpeedFactor = speed;
 			logOutput << "Speed " << gs->speedFactor << "\n";
 		}
 	}
 	else if (cmd == "slowdown") {
-		float speed=gs->userSpeedFactor;
-		if (speed<=1) {
-			speed*=0.8f;
-			if (speed<0.1f) {
-				speed=0.1f;
+		float speed = gs->userSpeedFactor;
+		if (speed <= 1) {
+			speed *= 0.8f;
+			if (speed < 0.1f) {
+				speed = 0.1f;
 			}
 		} else {
-			speed-=0.5f;
+			speed -= 0.5f;
 		}
 		if (!net->IsDemoServer()) {
-			net->SendUserSpeed(speed);
+			net->SendUserSpeed(gu->myPlayerNum, speed);
 		} else {
-			gs->speedFactor=speed;
-			gs->userSpeedFactor=speed;
+			gs->speedFactor = speed;
+			gs->userSpeedFactor = speed;
 			logOutput << "Speed " << gs->speedFactor << "\n";
 		}
 	}
+
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	else if (cmd == "controlunit") {
@@ -2514,10 +2517,10 @@ bool CGame::ClientReadNet()
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 	while (inbufpos < inbuflength && (timeLeft > 0 || gameServer)) {
-		thisMsg=inbuf[inbufpos];
-		int lastLength=0;
+		thisMsg = inbuf[inbufpos];
+		int lastLength = 0;
 
-		switch (inbuf[inbufpos]){
+		switch (inbuf[inbufpos]) {
 
 		case NETMSG_ATTEMPTCONNECT:
 			lastLength=3;
@@ -2617,39 +2620,47 @@ bool CGame::ClientReadNet()
 			lastLength=3;
 			break;}
 
-		case NETMSG_INTERNAL_SPEED:{
-			if(!net->IsDemoServer())
-				gs->speedFactor=*((float*)&inbuf[inbufpos+1]);
-			lastLength=5;
-//			logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
-			break;}
 
-		case NETMSG_USER_SPEED:
+		case NETMSG_INTERNAL_SPEED: {
+			if (!net->IsDemoServer())
+				gs->speedFactor = *((float*) &inbuf[inbufpos + 1]);
+			lastLength = 5;
+//			logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
+			break; }
+
+
+		case NETMSG_USER_SPEED: {
 			if (!net->IsDemoServer()) {
-				gs->userSpeedFactor=*((float*)&inbuf[inbufpos+1]);
-				if(gs->userSpeedFactor>maxUserSpeed)
-					gs->userSpeedFactor=maxUserSpeed;
-				if(gs->userSpeedFactor<minUserSpeed)
-					gs->userSpeedFactor=minUserSpeed;
-				logOutput.Print("Speed set to %.1f",gs->userSpeedFactor);
+				gs->userSpeedFactor = *((float*) &inbuf[inbufpos + 2]);
+
+				if (gs->userSpeedFactor > maxUserSpeed)
+					gs->userSpeedFactor = maxUserSpeed;
+				if (gs->userSpeedFactor < minUserSpeed)
+					gs->userSpeedFactor = minUserSpeed;
+
+				unsigned char playerNum = *(unsigned char*) &inbuf[inbufpos + 1];
+				const char* playerName = gs->players[playerNum]->playerName.c_str();
+				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
 			}
-			lastLength=5;
-			break;
+			lastLength = 6;
+		} break;
+
 
 		case NETMSG_CPU_USAGE:
-			logOutput.Print("Game clients shouldnt get cpu usage msgs?");
+			logOutput.Print("Game clients shouldn't get cpu usage msgs?");
 			lastLength=5;
 			break;
 
-		case NETMSG_PLAYERINFO:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in playerinfo msg",player);
+		// header (1); uchar myPlayerNum (1); float cpuUsage (4); int ping (4): 10
+		case NETMSG_PLAYERINFO: {
+			int player = inbuf[inbufpos + 1];
+			if (player >= MAX_PLAYERS || player < 0) {
+				logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 			} else {
-				gs->players[player]->cpuUsage=*(float*)&inbuf[inbufpos+2];
-				gs->players[player]->ping=*(int*)&inbuf[inbufpos+6];
+				gs->players[player]->cpuUsage = *(float*) &inbuf[inbufpos + 2];
+				gs->players[player]->ping = *(int*) &inbuf[inbufpos + 6];
 			}
-			lastLength=10;
+			lastLength = 10;
 			break;}
 
 		case NETMSG_SETPLAYERNUM:
@@ -3015,7 +3026,7 @@ bool CGame::ClientReadNet()
 			if (!lastLength)
 #endif
 			{
-				logOutput.Print("Unknown net msg in client %d last %d", (int)inbuf[inbufpos], lastMsg);
+				logOutput.Print("Unknown net msg in client %d last %d", (int) inbuf[inbufpos], lastMsg);
 				lastLength=1;
 			}
 			break;

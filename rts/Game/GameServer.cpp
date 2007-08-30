@@ -357,24 +357,30 @@ bool CGameServer::ServerReadNet()
 				break;
 
 			case NETMSG_INTERNAL_SPEED:
-				logOutput.Print("Server shouldnt get internal speed msgs?");
+				logOutput.Print("Server shouldn't get internal speed msgs?");
 				lastLength=5;
 				break;
 
+
 			case NETMSG_USER_SPEED: {
-				float speed=*((float*)&inbuf[inbufpos+1]);
+				unsigned char playerNum = *((unsigned char*) &inbuf[inbufpos + 1]);
+				float speed = *((float*) &inbuf[inbufpos + 2]);
 				assert(game);
-				if(speed>game->maxUserSpeed)
-					speed=game->maxUserSpeed;
-				if(speed<game->minUserSpeed)
-					speed=game->minUserSpeed;
-				if(gs->userSpeedFactor!=speed){
-					if(gs->speedFactor==gs->userSpeedFactor || gs->speedFactor>speed)
+
+				if (speed>game->maxUserSpeed)
+					speed = game->maxUserSpeed;
+				if (speed<game->minUserSpeed)
+					speed = game->minUserSpeed;
+				if (gs->userSpeedFactor != speed) {
+					if (gs->speedFactor == gs->userSpeedFactor || gs->speedFactor>speed)
 						serverNet->SendInternalSpeed(speed);
-					serverNet->SendUserSpeed(speed); //forward data
+
+					// forward data
+					serverNet->SendUserSpeed(playerNum, speed);
 				}
-				lastLength=5;
-				break;}
+				lastLength = 6;
+			} break;
+
 
 			case NETMSG_CPU_USAGE:
 				ENTER_MIXED;
