@@ -34,6 +34,8 @@ typedef void (*LuaCobCallback)(int retCode, void* unitID, void* data);
 class CLuaHandle {
 	public:
 		const string& GetName() const { return name; }
+		int GetCallInErrors() const { return callinErrors; }
+		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
 		enum SpecialTeams {
@@ -178,7 +180,7 @@ class CLuaHandle {
 		CLuaDisplayLists displayLists;
 
 		vector<bool> watchWeapons; // for the Explosion call-in
-    
+
 		struct CobCallbackData {
 			CobCallbackData(int rc, int uid, float fd)
 			: retCode(rc), unitID(uid), floatData(fd) {}
@@ -187,6 +189,8 @@ class CLuaHandle {
 			float floatData;
 		};
 		vector<CobCallbackData> cobCallbackEntries;
+
+		int callinErrors;
 
 	protected: // call-outs
 		static int KillActiveHandle(lua_State* L);

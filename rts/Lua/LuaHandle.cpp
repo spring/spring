@@ -37,7 +37,8 @@ CLuaHandle::CLuaHandle(const string& _name, int _order,
   userMode   (_userMode),
   cobCallback(callback),
   killMe     (false),
-  synced     (false)
+  synced     (false),
+  callinErrors(0)
 {
 	L = lua_open();
 }
@@ -111,7 +112,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
+		logOutput.Print("Lua LoadCode loadbuffer error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
 		lua_settop(L, 0);
 		return false;
@@ -123,7 +124,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	SetActiveHandle(orig);
 
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
+		logOutput.Print("Lua LoadCode pcall error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
 		lua_settop(L, 0);
 		return false;
@@ -144,9 +145,11 @@ bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 	SetActiveHandle(orig);
 
 	if (error != 0) {
-		logOutput.Print("%s: error = %i, %s, %s\n", name.c_str(), error,
+		logOutput.Print("%s::RunCallIn: error = %i, %s, %s\n", name.c_str(), error,
 		                hs.GetString().c_str(), lua_tostring(L, -1));
 		lua_settop(L, 0);
+		// log only errors that lead to a crash
+		callinErrors += (error == 2);
 		return false;
 	}
 	return true;
@@ -728,7 +731,7 @@ void CLuaHandle::DrawScreen()
 		lua_settop(L, 0);
 		return;
 	}
-	
+
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
@@ -751,7 +754,7 @@ void CLuaHandle::DrawScreenEffects()
 		lua_settop(L, 0);
 		return;
 	}
-	
+
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
@@ -777,12 +780,12 @@ void CLuaHandle::DrawInMiniMap()
 
 	const int xSize = minimap->GetSizeX();
 	const int ySize = minimap->GetSizeY();
-	
+
 	if ((xSize < 1) || (ySize < 1)) {
 		lua_settop(L, 0);
 		return;
 	}
-	
+
 	lua_pushnumber(L, xSize);
 	lua_pushnumber(L, ySize);
 
@@ -815,8 +818,8 @@ bool CLuaHandle::AddBasicCalls()
 		HSTR_PUSH_CFUNC(L, "GetGlobal",       CallOutGetGlobal);
 		HSTR_PUSH_CFUNC(L, "GetRegistry",     CallOutGetRegistry);
 		// special team constants
-		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  NoAccessTeam);	
-		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", AllAccessTeam);	
+		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  NoAccessTeam);
+		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", AllAccessTeam);
 	}
 	lua_rawset(L, -3);
 
@@ -824,7 +827,7 @@ bool CLuaHandle::AddBasicCalls()
 	lua_getglobal(L, "math");
 	LuaBitOps::PushEntries(L);
 	lua_pop(L, 1);
-	return true;	
+	return true;
 }
 
 

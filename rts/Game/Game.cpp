@@ -1918,6 +1918,12 @@ bool CGame::Draw()
 	}
 
 	luaCallIns.Update();
+	// XXX ugly hack to minimize luaUI errors
+	if (luaUI && luaUI->GetCallInErrors() >= 5) {
+		logOutput << "5 errors deep in LuaUI, disabling...\n";
+		guihandler->RunLayoutCommand("disable");
+		logOutput << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+	}
 
 	if (!gu->active) {
 		guihandler->Update();
