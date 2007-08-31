@@ -22,6 +22,10 @@ public:
 	int transportShip;	//0 = all naval units cannot be transported, 1 = all naval units can be transported (mass and size restrictions still apply). Defaults to 0.
 	int transportAir;	//0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
 
+	//Fire on dying units behaviour
+	int fireAtKilled;	//1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
+	int fireAtCrashing;	//1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
+
 };
 
 extern CModInfo *modInfo;
