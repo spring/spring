@@ -211,9 +211,19 @@ void CFactory::Update()
 				if (newUnitCmds.empty()) {
 					SendToEmptySpot(curBuild);
 				} else {
-					CCommandQueue::const_iterator ci;
-					for (ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
-						curBuild->commandAI->GiveCommand(*ci);
+					// XXX the pathfinder sometimes... makes mistakes, try to hack around it
+					// XXX note this qualifies as HACK HACK HACK
+					float3 testpos = curBuild->pos + frontdir*(this->radius-1.f);
+					Command c;
+					c.id = CMD_MOVE;
+					c.params.push_back(testpos.x);
+					c.params.push_back(testpos.y);
+					c.params.push_back(testpos.z);
+					curBuild->commandAI->GiveCommand(c);
+					for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
+						c = *ci;
+						c.options |= SHIFT_KEY;
+						curBuild->commandAI->GiveCommand(c);
 					}
 				}
 				waitCommandsAI.AddLocalUnit(curBuild, this);
