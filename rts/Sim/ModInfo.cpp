@@ -43,6 +43,22 @@ CModInfo::CModInfo(const char* modname)
 		// Other optional mod rules MUST set their defaults...
 	}
 
+	// Get the fire-at-dead-units options
+	fireAtKilled = 0;
+	fireAtCrashing = 0;
+	// See if the mod overrides them
+	try
+	{
+		TdfParser fireAtDeadOptions("gamedata/modrules.tdf");
+		fireAtKilled = atoi(fireAtDeadOptions.SGetValueDef("0", "FIREATDEAD\\FireAtKilled").c_str());
+		fireAtCrashing = atoi(fireAtDeadOptions.SGetValueDef("0", "FIREATDEAD\\FireAtCrashing").c_str());
+	}
+	catch(content_error) // If the modrules.tdf isnt found
+	{
+		// We already set the defaults so we should be able to ignore this
+		// Other optional mod rules MUST set their defaults...
+	}
+
 	// Get the transportability options for the mod
 	transportGround = 1;
 	transportHover = 0;

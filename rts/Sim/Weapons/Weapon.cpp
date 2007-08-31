@@ -23,6 +23,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/ModInfo.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
 #include "float3.h"
@@ -585,7 +586,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if(unit && !(onlyTargetCategory&unit->category))
 		return false;
 
-	if(unit && (unit->isDead || unit->crashing))
+	if(unit && ((unit->isDead && (modInfo->fireAtKilled==0)) || (unit->crashing && (modInfo->fireAtCrashing==0))))
 		return false;
 
 	if(weaponDef->stockpile && !numStockpiled)

@@ -68,6 +68,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "transportShip",   modInfo->transportShip);
 	LuaPushNamedNumber(L, "transportHover",  modInfo->transportHover);
 	LuaPushNamedNumber(L, "transportGround", modInfo->transportGround);
+	LuaPushNamedNumber(L, "fireAtKilled", modInfo->fireAtKilled);
+	LuaPushNamedNumber(L, "fireAtCrashing", modInfo->fireAtCrashing);
 
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
