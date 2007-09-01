@@ -26,6 +26,19 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local CMD_ONOFF            = CMD.ONOFF
+local spGetMyTeamID        = Spring.GetMyTeamID
+local spGetTeamResources   = Spring.GetTeamResources
+local spGetTeamUnits       = Spring.GetTeamUnits
+local spGetUnitDefID       = Spring.GetUnitDefID
+local spGiveOrderToUnitMap = Spring.GiveOrderToUnitMap
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local  ON_METAL_LIMIT  = 0.8
 local OFF_METAL_LIMIT  = 0.9
 local  ON_ENERGY_LIMIT = 0.7
@@ -40,16 +53,16 @@ local currentState = true
 local function SetMetalMakers(state)
   currentState = state
   local numState = currentState and 1 or 0
-  Spring.GiveOrderToUnitMap(metalMakers, CMD.ONOFF, { numState }, {} )
+  spGiveOrderToUnitMap(metalMakers, CMD_ONOFF, { numState }, {} )
 end
 
 
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
-  local units = Spring.GetTeamUnits(Spring.GetMyTeamID())
+  local units = spGetTeamUnits(spGetMyTeamID())
   for _,uid in ipairs(units) do
-    local udid = Spring.GetUnitDefID(uid)
+    local udid = spGetUnitDefID(uid)
     local ud = UnitDefs[udid]
     if (ud.isMetalMaker) then
       metalMakers[uid] = true
@@ -61,8 +74,8 @@ end
 
 
 function widget:Update(deltaTime)
-  local mNow, mMax = Spring.GetTeamResources(Spring.GetMyTeamID(), "metal")
-  local eNow, eMax = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy")
+  local mNow, mMax = spGetTeamResources(spGetMyTeamID(), "metal")
+  local eNow, eMax = spGetTeamResources(spGetMyTeamID(), "energy")
   local mFrac = (mNow / mMax)
   local eFrac = (eNow / eMax)
   
@@ -79,7 +92,7 @@ end
 
 
 function widget:UnitFinished(unitID, unitDefID, unitTeam)
-  if (unitTeam ~= Spring.GetMyTeamID()) then
+  if (unitTeam ~= spGetMyTeamID()) then
     return
   end
   local ud = UnitDefs[unitDefID]

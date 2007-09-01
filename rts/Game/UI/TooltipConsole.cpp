@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "TooltipConsole.h"
+#include "LuaUI.h"
 #include "MouseHandler.h"
 #include "OutlineFont.h"
 #include "Rendering/GL/myGL.h"
@@ -183,6 +184,13 @@ static void GetDecoyResources(const CUnit* unit,
 
 std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 {
+	if (luaUI) {
+		string custom = luaUI->WorldTooltip(unit, NULL, NULL);
+		if (!custom.empty()) {
+			return custom;
+		}
+	}
+
 	std::string s;
 
 	const bool enemyUnit = (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
@@ -286,6 +294,13 @@ std::string CTooltipConsole::MakeUnitStatsString(
 
 std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 {
+	if (luaUI) {
+		string custom = luaUI->WorldTooltip(NULL, feature, NULL);
+		if (!custom.empty()) {
+			return custom;
+		}
+	}
+
 	std::string s;
 
 	if (feature->def->description == "") {
@@ -313,6 +328,13 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 
 std::string CTooltipConsole::MakeGroundString(const float3& pos)
 {
+	if (luaUI) {
+		string custom = luaUI->WorldTooltip(NULL, NULL, &pos);
+		if (!custom.empty()) {
+			return custom;
+		}
+	}
+
 	char tmp[512];
 	CReadMap::TerrainType* tt = &readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
 	string ttype = tt->name;

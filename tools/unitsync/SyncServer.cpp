@@ -43,10 +43,9 @@ void CSyncServer::AddClient(int id, const string& unitList)
 			map<string, Unit>::iterator curUnit = clientLists[clientId->first].find(i->first);
 			bool unitOk = false;
 			if (curUnit != clientLists[clientId->first].end()) {
-				if ((curUnit->second.fbi == i->second.fbi) &&
-					(curUnit->second.cob == i->second.cob) &&
-					(curUnit->second.model == i->second.model))
-				{
+				if ((curUnit->second.fbi   == i->second.fbi) &&
+				    (curUnit->second.cob   == i->second.cob) &&
+				    (curUnit->second.model == i->second.model)) {
 					unitOk = true;
 				}
 			}

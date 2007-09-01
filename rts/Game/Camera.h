@@ -37,6 +37,8 @@ public:
 	double billboard[16];
 	double modelviewInverse[16];
 	int viewport[4];
+
+	static unsigned int billboardList;
 };
 
 extern CCamera* camera;

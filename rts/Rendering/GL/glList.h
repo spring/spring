@@ -32,6 +32,8 @@ public:
 	std::vector<std::string> items;
 	std::string name;
 
+	std::string GetCurrentItem() const;
+
 	std::string lastChoosen;
 	ListSelectCallback callback;
 	// when attempting to cancel (by pressing escape, clicking outside a button)

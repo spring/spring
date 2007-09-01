@@ -37,10 +37,10 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index)
 	if (lua_isboolean(src, index)) {
 		lua_pushboolean(dst, lua_toboolean(src, index));
 	}
-	else if (lua_isnumber(src, index)) {
+	else if (lua_israwnumber(src, index)) {
 		lua_pushnumber(dst, lua_tonumber(src, index));
 	}
-	else if (lua_isstring(src, index)) {
+	else if (lua_israwstring(src, index)) {
 		lua_pushstring(dst, lua_tostring(src, index));
 	}
 	else if (lua_istable(src, index)) {
@@ -91,6 +91,50 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 	}
 
 	return count;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+static void PushCurrentFunc(lua_State* L, const char* caller)
+{
+	// get the current function
+	lua_Debug ar;
+	if (lua_getstack(L, 1, &ar) == 0) {
+		luaL_error(L, "%s() lua_getstack() error", caller);
+	}
+	if (lua_getinfo(L, "f", &ar) == 0) {
+		luaL_error(L, "%s() lua_getinfo() error", caller);
+	}
+	if (!lua_isfunction(L, -1)) {
+		luaL_error(L, "%s() invalid current function", caller);
+	}
+}
+
+
+static void PushFunctionEnv(lua_State* L, const char* caller, int funcIndex)
+{
+	lua_getfenv(L, funcIndex);
+	lua_pushliteral(L, "__fenv");
+	lua_rawget(L, -2);
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1); // there is no fenv proxy
+	} else {
+		lua_remove(L, -2); // remove the orig table, leave the proxy
+	}
+
+	if (!lua_istable(L, -1)) {
+		luaL_error(L, "%s() invalid fenv", caller);
+	}
+}
+
+
+void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
+{
+	PushCurrentFunc(L, caller);
+	PushFunctionEnv(L, caller, -1);
+	lua_remove(L, -2); // remove the function
 }
 
 

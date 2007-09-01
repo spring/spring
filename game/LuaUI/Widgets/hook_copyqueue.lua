@@ -28,32 +28,47 @@ end
 
 function widget:CommandNotify(id, params, options)
   -- GUARD + CTRL = copy command queue
-  if ((id == CMD.GUARD) and options.ctrl) then
-    local targetID = params[1];
-    local queue = Spring.GetCommandQueue(targetID);
-    if (queue ~= nil) then  --  might not be an ally
-      if (not options.shift) then
-        Spring.GiveOrder( CMD.STOP, {}, {} )
+  if ((id ~= CMD.GUARD) or (not options.ctrl)) then
+    return false
+  end
+
+  local targetID = params[1];
+  local queue = Spring.GetCommandQueue(targetID);
+  if (queue == nil) then
+    return false  --  might not be an ally
+  end
+
+  -- copy states
+  local states = Spring.GetUnitStates(targetID)
+  if (states ~= nil) then
+    Spring.GiveOrder(CMD.FIRE_STATE, { states.firestate }, 0)
+    Spring.GiveOrder(CMD.MOVE_STATE, { states.movestate }, 0)
+    Spring.GiveOrder(CMD.REPEAT,     { states['repeat']  and 1 or 0 }, 0)
+    Spring.GiveOrder(CMD.ONOFF,      { states.active     and 1 or 0 }, 0)
+    Spring.GiveOrder(CMD.CLOAK,      { states.cloak      and 1 or 0 }, 0)
+    Spring.GiveOrder(CMD.TRAJECTORY, { states.trajectory and 1 or 0 }, 0)
+  end
+
+  -- copy commands
+  local firstShift = false 
+  if (not options.shift) then
+    Spring.GiveOrder( CMD.STOP, {}, {} )
+    firstShift = true
+  end
+  for k,v in ipairs(queue) do  --  in order
+    local opts = v.options
+    if (not opts.internal) then
+      local newopts = {}
+      if (opts.alt)   then table.insert(newopts, "alt")   end
+      if (opts.ctrl)  then table.insert(newopts, "ctrl")  end
+      if (opts.right) then table.insert(newopts, "right") end
+      if (not firstShift) then
+        table.insert(newopts, "shift")
       end
-      local first = next(queue, nil)
-      for k,v in ipairs(queue) do  --  in order
-        local opts = v.options
-        if (not opts.internal) then
-          local newopts = {}
-          if (opts.alt)   then table.insert(newopts, "alt")   end
-          if (opts.ctrl)  then table.insert(newopts, "ctrl")  end
-          if (opts.shift) then table.insert(newopts, "shift") end
-          if (opts.right) then table.insert(newopts, "right") end
-          if (k == first) then
-            if (options.ctrl) then
-              table.insert(newopts, "shift")
-            end
-          end
-          Spring.GiveOrder( v.id, v.params, newopts )
-        end
-      end  
-      return true  --  do not add the original GUARD command
+      Spring.GiveOrder(v.id, v.params, opts.coded)
+      firstShift = false
     end
-  end  
-  return false
+  end
+
+  return true  --  do not add the original GUARD command
 end

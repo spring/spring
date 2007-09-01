@@ -95,6 +95,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.action="loadonto";
 	c.type=CMDTYPE_ICON_UNIT;
 	c.name="Load units";
+	c.mouseicon=c.name;
 	c.hotkey="";
 	c.tooltip="Sets the unit to load itself onto a transport";
 	c.onlyKey = true;
@@ -106,6 +107,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="move";
 		c.type=CMDTYPE_ICON_FRONT;
 		c.name="Move";
+		c.mouseicon=c.name;
 		c.hotkey="m";
 		c.tooltip="Move: Order the unit to move to a position";
 		c.params.push_back("1000000"); // max distance
@@ -118,6 +120,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="patrol";
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="Patrol";
+		c.mouseicon=c.name;
 		c.hotkey="p";
 		c.tooltip="Patrol: Order the unit to patrol to one or more waypoints";
 		possibleCommands.push_back(c);
@@ -129,6 +132,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="fight";
 		c.type = CMDTYPE_ICON_MAP;
 		c.name = "Fight";
+		c.mouseicon=c.name;
 		c.hotkey = "f";
 		c.tooltip = "Fight: Order the unit to take action while moving to a position";
 		possibleCommands.push_back(c);
@@ -139,6 +143,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="guard";
 		c.type=CMDTYPE_ICON_UNIT;
 		c.name="Guard";
+		c.mouseicon=c.name;
 		c.hotkey="g";
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
@@ -150,6 +155,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="autorepairlevel";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Repair level";
+		c.mouseicon=c.name;
 		c.params.push_back("1");
 		c.params.push_back("LandAt 0");
 		c.params.push_back("LandAt 30");
@@ -165,8 +171,9 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.action="idlemode";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Land mode";
+		c.mouseicon=c.name;
 		c.params.push_back("1");
-		c.params.push_back("Fly");
+		c.params.push_back(" Fly ");
 		c.params.push_back("Land");
 		c.tooltip="Land mode: Sets what aircraft will do on idle";
 		c.hotkey="";
@@ -234,8 +241,8 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 			airMT = (CTAAirMoveType*)owner->moveType;
 		}
 		switch((int)c.params[0]){
-			case 0: { airMT->AutoLand = false; break; }
-			case 1: { airMT->AutoLand = true; break; }
+			case 0: { airMT->autoLand = false; break; }
+			case 1: { airMT->autoLand = true; break; }
 		}
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){

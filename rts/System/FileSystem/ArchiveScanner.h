@@ -29,8 +29,11 @@ public:
 		string virtualPath;					// Where in the archive the map can be found
 	};
 	struct ModData {
-		string name;
-		string description;
+		string name;        // ex:  Original Total Annihilation v2.3
+		string shortName;   // ex:  OTA
+		string version;     // ex:  v2.3
+		string mutator;     // ex:  deployment
+		string description; // ex:  Little units blowing up other little units
 		int modType;
 		vector<string> dependencies;		// Archives it depends on
 		vector<string> replaces;			// This archive obsoletes these ones
@@ -41,7 +44,7 @@ public:
 	void WriteCacheData(const std::string& filename);
 	virtual ~CArchiveScanner(void);
 	void Scan(const string& curPath, bool checksum = false);
-	vector<ModData> GetPrimaryMods();
+	vector<ModData> GetPrimaryMods() const;
 	vector<string> GetArchives(const string& root);
 	vector<string> GetMaps();
 	vector<string> GetArchivesForMap(const string& mapName);
@@ -50,8 +53,11 @@ public:
 	unsigned int GetMapChecksum(const string& mapName);
 	void CheckMod(const string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
 	void CheckMap(const string& mapName, unsigned checksum);
-	std::string ModNameToModArchive(const std::string& s);
-	std::string ModArchiveToModName(const std::string& s);
+	std::string ModNameToModArchive(const std::string& s) const;
+	std::string ModArchiveToModName(const std::string& s) const;
+	const ModData* ModNameToModData(const std::string& s) const;
+	const ModData* ModArchiveToModData(const std::string& s) const;
+
 protected:
 	struct ArchiveInfo {
 		string path;

@@ -28,9 +28,10 @@
 bool LuaConstGame::PushEntries(lua_State* L)
 {
 	const float gravity = -(gs->gravity * GAME_SPEED * GAME_SPEED);
-	const bool limitDGun      = gameSetup ? gameSetup->limitDgun      : false;
-	const bool diminishingMMs = gameSetup ? gameSetup->diminishingMMs : false;
-	const int  startPosType   = gameSetup ? gameSetup->startPosType   : 0;
+	const bool limitDGun        = gameSetup ? gameSetup->limitDgun        : false;
+	const bool diminishingMMs   = gameSetup ? gameSetup->diminishingMMs   : false;
+	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
+	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
 
 	LuaPushNamedString(L, "version",       VERSION_STRING);
 
@@ -46,6 +47,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
+	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
 	LuaPushNamedString(L, "mapName",       readmap->mapName);
 	LuaPushNamedString(L, "mapHumanName",  readmap->mapHumanName);
@@ -59,8 +61,12 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedBool(L,   "mapWaterVoid",  readmap->voidWater);
 	LuaPushNamedBool(L,   "mapWaterPlane", readmap->hasWaterPlane);
 
-	LuaPushNamedString(L, "modName",         modInfo->name);
-	LuaPushNamedString(L, "modHumanName",    modInfo->humanName);
+	LuaPushNamedString(L, "modName",         modInfo->humanName);
+	LuaPushNamedString(L, "modShortName",    modInfo->shortName);
+	LuaPushNamedString(L, "modVersion",      modInfo->version);
+	LuaPushNamedString(L, "modMutator",      modInfo->mutator);
+	LuaPushNamedString(L, "modDesc",         modInfo->description);
+
 	LuaPushNamedBool(L,   "allowTeamColors", modInfo->allowTeamColors);
 	LuaPushNamedNumber(L, "multiReclaim",    modInfo->multiReclaim);
 	LuaPushNamedNumber(L, "reclaimMethod",   modInfo->reclaimMethod);
@@ -76,7 +82,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	         archiveScanner->GetMapChecksum(readmap->mapName));
 	LuaPushNamedString(L, "mapChecksum", buf);
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetModChecksum(modInfo->name));
+	         archiveScanner->GetModChecksum(modInfo->filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
 	const vector<string> cats =
@@ -93,7 +99,13 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
 	const int typeCount = (int)typeList.size();
 	for (int i = 0; i < typeCount; i++) {
-		LuaPushNamedNumber(L, typeList[i].c_str(), i);
+		// bidirectional map
+		lua_pushstring(L, typeList[i].c_str());
+		lua_pushnumber(L, i);
+		lua_rawset(L, -3);
+		lua_pushnumber(L, i);
+		lua_pushstring(L, typeList[i].c_str());
+		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
 

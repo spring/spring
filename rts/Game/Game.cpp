@@ -74,6 +74,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaParser.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -148,9 +149,10 @@ extern bool fullscreen;
 extern string stupidGlobalMapname;
 
 
-CGame* game = 0;
+CGame* game = NULL;
 
-CR_BIND(CGame,(false,std::string(""),std::string(""),NULL));
+
+CR_BIND(CGame, (false, std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 	CR_RESERVED(4),//r3927
@@ -189,7 +191,8 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(script),
 	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
-				));
+));
+
 
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
 {
@@ -292,6 +295,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	wind.LoadWind();
 	moveinfo=SAFE_NEW CMoveInfo();
 	groundDecals=SAFE_NEW CGroundDecalHandler();
+	ReColorTeams();
 
 	ENTER_UNSYNCED;
 
@@ -1109,7 +1113,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
 			ls.mapName = stupidGlobalMapname;
-			ls.modName = modInfo->name;
+			ls.modName = modInfo->filename;
 			ls.SaveGame("Saves/QuickSave.ssf");
 		}
 	}
@@ -1276,7 +1280,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 #endif
 
 	else if (cmd == "showshadowmap") {
-		shadowHandler->showShadowMap=!shadowHandler->showShadowMap;
+		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
 	}
 	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();
@@ -1455,8 +1459,9 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		configHandler.SetInt("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
 	else if (cmd == "techlevels") {
-		unitDefHandler->SaveTechLevels("", modInfo->name); // stdout
-		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->name);
+		unitDefHandler->SaveTechLevels("", modInfo->filename); // stdout
+		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->filename);
+		logOutput.Print("saved techlevels.txt");
 	}
 	else if (cmd == "cmdcolors") {
 		const string name = action.extra.empty() ? "cmdcolors.txt" : action.extra;
@@ -1977,10 +1982,14 @@ bool CGame::Draw()
 
 	if (doDrawWorld) {
 		START_TIME_PROFILE("Shadows/Reflect");
-		if(shadowHandler->drawShadows)
+		if (shadowHandler->drawShadows &&
+		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
+			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
 			shadowHandler->CreateShadows();
-		if (unitDrawer->advShading)
+		}
+		if (unitDrawer->advShading) {
 			unitDrawer->UpdateReflectTex();
+		}
 		END_TIME_PROFILE("Shadows/Reflect");
 	}
 
@@ -2684,7 +2693,7 @@ bool CGame::ClientReadNet()
 			break;
 
 		case NETMSG_MODNAME: {
-			std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->name);
+			std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
 			archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[inbufpos+2]));
 			lastLength = inbuf[inbufpos+1];
 			break;
@@ -3618,8 +3627,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const CUnit* unit = unitLoader.LoadUnit(unitDefHandler->unitDefs[a].name,
-				                                        pos2, team, false, 0, NULL);
+				const string& defName = unitDefHandler->unitDefs[a].name;
+				const CUnit* unit =
+					unitLoader.LoadUnit(defName, pos2, team, false, 0, NULL);
 
 				if (unit) {
 					unitLoader.FlattenGround(unit);
@@ -3937,7 +3947,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				logOutput.Print("Saving game to %s\n",savename.c_str());
 				CLoadSaveHandler ls;
 				ls.mapName = stupidGlobalMapname;
-				ls.modName = modInfo->name;
+				ls.modName = modInfo->filename;
 				ls.SaveGame(savename);
 			} else {
 				logOutput.Print("File %s allready exists(use .save -y to override)\n",savename.c_str());
@@ -4244,5 +4254,102 @@ void CGame::SelectCycle(const string& command)
 			}
 		}
 		selectedUnits.AddUnit(uh->units[lastID]);
+	}
+}
+
+
+static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char orig)
+{
+	const float fOrig = (float)orig / 255.0f;
+	float luaVal = tbl.GetFloat(channel, fOrig);
+	luaVal = max(0.0f, min(1.0f, luaVal));
+	return (unsigned char)(luaVal * 255.0f);
+}
+
+
+void CGame::ReColorTeams()
+{
+	for (int t = 0; t < MAX_TEAMS; t++) {
+		CTeam* team = gs->Team(t);
+		team->origColor[0] = team->color[0];
+		team->origColor[1] = team->color[1];
+		team->origColor[2] = team->color[2];
+		team->origColor[3] = team->color[3];
+	}
+
+	{
+		// scoped so that 'fh' disappears before luaParser uses the file
+		CFileHandler fh("teamcolors.lua", SPRING_VFS_RAW);
+		if (!fh.FileExists()) {
+			return;
+		}
+	}
+	
+	LuaParser luaParser("teamcolors.lua", SPRING_VFS_RAW, SPRING_VFS_RAW_FIRST);
+
+	luaParser.AddParam("myPlayer", gu->myPlayerNum);
+
+	luaParser.AddParam("modName",      modInfo->humanName);
+	luaParser.AddParam("modShortName", modInfo->shortName);
+	luaParser.AddParam("modVersion",   modInfo->version);
+
+	luaParser.AddParam("mapName",      readmap->mapName);
+	luaParser.AddParam("mapHumanName", readmap->mapHumanName);
+
+	luaParser.AddParam("gameMode",     gs->gameMode);
+
+	luaParser.NewTable("teams");
+	for(int t = 0; t < gs->activeTeams; ++t) {
+		luaParser.NewTable(t); {
+			const CTeam* team = gs->Team(t);
+			const unsigned char* color = gs->Team(t)->color;
+			luaParser.AddParam("allyTeam", gs->AllyTeam(t));
+			luaParser.AddParam("gaia",     team->gaia);
+			luaParser.AddParam("leader",   team->leader);
+			luaParser.AddParam("active",   team->active);
+			luaParser.AddParam("side",     team->side);
+			luaParser.NewTable("color"); {
+				luaParser.AddParam(1, float(color[0]) / 255.0f);
+				luaParser.AddParam(2, float(color[1]) / 255.0f);
+				luaParser.AddParam(3, float(color[2]) / 255.0f);
+				luaParser.AddParam(4, float(color[3]) / 255.0f);
+			}
+			luaParser.EndTable(); // color
+		}
+		luaParser.EndTable(); // team#
+	}
+	luaParser.EndTable(); // teams
+
+	luaParser.NewTable("players");
+	for(int p = 0; p < gs->activePlayers; ++p) {
+		luaParser.NewTable(p); {
+			const CPlayer* player = gs->players[p];
+			luaParser.AddParam("name",       player->playerName);
+			luaParser.AddParam("team",       player->team);
+			luaParser.AddParam("active",     player->active);
+			luaParser.AddParam("spectating", player->spectator);
+		}
+		luaParser.EndTable(); // player#
+	}
+	luaParser.EndTable(); // players
+
+	if (!luaParser.Execute()) {
+		printf("teamcolors.lua: luaParser.Execute() failed\n");
+		return;
+	}
+	LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		printf("teamcolors.lua: root table is not valid\n");
+	}
+	
+	for (int t = 0; t < gs->activeTeams; ++t) {
+		LuaTable teamTable = root.SubTable(t);
+		if (teamTable.IsValid()) {
+			unsigned char* color = gs->Team(t)->color;
+			color[0] = GetLuaColor(teamTable, 1, color[0]);
+			color[1] = GetLuaColor(teamTable, 2, color[1]);
+			color[2] = GetLuaColor(teamTable, 3, color[2]);
+			// do not adjust color[3] -- alpha
+		}
 	}
 }

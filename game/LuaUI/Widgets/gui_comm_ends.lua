@@ -26,6 +26,20 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local glPopMatrix      = gl.PopMatrix
+local glPushMatrix     = gl.PushMatrix
+local glRotate         = gl.Rotate
+local glScale          = gl.Scale
+local glText           = gl.Text
+local glTranslate      = gl.Translate
+local spGetGameSeconds = Spring.GetGameSeconds
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 include("colors.h.lua")
 
 local floor = math.floor
@@ -42,7 +56,7 @@ end
 
 
 function widget:DrawScreen()
-  if (Spring.GetGameSeconds() > 1) then
+  if (spGetGameSeconds() > 1) then
     widgetHandler:RemoveWidget()
   end
   if (Game.commEnds) then
@@ -55,17 +69,17 @@ function widget:DrawScreen()
     end
 
     local msg = colorStr .. "Commander Ends Game!!!"
-    gl.PushMatrix()
-    gl.Translate((vsx * 0.5), (vsy * 0.5) - 50, 0)
-    gl.Scale(1.5, 1.5, 1)
-    gl.Rotate(30 * math.sin(math.pi * 0.5 * timer), 0, 0, 1)
+    glPushMatrix()
+    glTranslate((vsx * 0.5), (vsy * 0.5) - 50, 0)
+    glScale(1.5, 1.5, 1)
+    glRotate(30 * math.sin(math.pi * 0.5 * timer), 0, 0, 1)
     if (fh) then
       fh = fontHandler.UseFont(font)
       fontHandler.DrawCentered(msg)
     else
-      gl.Text(msg, 0, 0, 24, "oc")
+      glText(msg, 0, 0, 24, "oc")
     end
-    gl.PopMatrix()
+    glPopMatrix()
   end
 end
 

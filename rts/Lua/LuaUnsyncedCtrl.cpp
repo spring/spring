@@ -17,6 +17,7 @@ using namespace std;
 #include "Game/Camera.h"
 #include "Game/CameraController.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/MouseHandler.h"
@@ -64,6 +65,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddWorldUnit);
 
 	REGISTER_LUA_CFUNC(DrawUnitCommands);
+
+	REGISTER_LUA_CFUNC(SetTeamColor);
 
 	REGISTER_LUA_CFUNC(AssignMouseCursor);
 	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
@@ -263,7 +266,7 @@ int LuaUnsyncedCtrl::Echo(lua_State* L)
 	bool first = true;
 	const int table = 1;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {  // only numeric keys
+		if (lua_israwnumber(L, -2)) {  // only numeric keys
 			const char *s;
 			lua_pushvalue(L, -3);     // function to be called
 			lua_pushvalue(L, -2	);    // value to print
@@ -392,7 +395,7 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 		const int unitArg = isMap ? -2 : -1;
 		const int table = 1;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isnumber(L, -2)) {
+			if (lua_israwnumber(L, -2)) {
 				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
 				if (unit != NULL) {
 					drawCmdQueueUnits.insert(unit);
@@ -511,7 +514,7 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 
 	const int table = 1;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {     // avoid 'n'
+		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {     // avoid 'n'
 			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -1); // the value
 			if (unit != NULL) {
 				selectedUnits.AddUnit(unit);
@@ -537,7 +540,7 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 
 	const int table = 1;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {
+		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -2); // the key
 			if (unit != NULL) {
 				selectedUnits.AddUnit(unit);
@@ -545,6 +548,30 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 		}
 	}
 
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
+{
+	// FIXME: doesn't work for 3DO team textures
+	//        doesn't play nicely with cached team color (in scripts, etc...)
+	const int teamID = (int)luaL_checknumber(L, 1);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		return 0;
+	}
+	CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	const float r = max(0.0f, min(1.0f, luaL_checknumber(L, 2)));
+	const float g = max(0.0f, min(1.0f, luaL_checknumber(L, 3)));
+	const float b = max(0.0f, min(1.0f, luaL_checknumber(L, 4)));
+	team->color[0] = (unsigned char)(r * 255.0f);
+	team->color[1] = (unsigned char)(g * 255.0f);
+	team->color[2] = (unsigned char)(b * 255.0f);
 	return 0;
 }
 

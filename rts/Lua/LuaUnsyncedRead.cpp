@@ -24,6 +24,7 @@ using namespace std;
 #include "Game/Player.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/ReadMap.h"
@@ -71,6 +72,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
 
 	REGISTER_LUA_CFUNC(GetPlayerRoster);
+
+	REGISTER_LUA_CFUNC(GetTeamColor);
+	REGISTER_LUA_CFUNC(GetTeamOrigColor);
 
 	REGISTER_LUA_CFUNC(GetLocalPlayerID);
 	REGISTER_LUA_CFUNC(GetLocalTeamID);
@@ -714,6 +718,46 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 	lua_rawset(L, -3);
 
 	return 1;
+}
+
+
+int LuaUnsyncedRead::GetTeamColor(lua_State* L)
+{
+	const int teamID = (int)luaL_checknumber(L, 1);
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return 0;
+	}
+	const CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, (float)team->color[0] / 255.0f);
+	lua_pushnumber(L, (float)team->color[1] / 255.0f);
+	lua_pushnumber(L, (float)team->color[2] / 255.0f);
+	lua_pushnumber(L, (float)team->color[3] / 255.0f);
+
+	return 4;
+}
+
+
+int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
+{
+	const int teamID = (int)luaL_checknumber(L, 1);
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return 0;
+	}
+	const CTeam* team = gs->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, (float)team->origColor[0] / 255.0f);
+	lua_pushnumber(L, (float)team->origColor[1] / 255.0f);
+	lua_pushnumber(L, (float)team->origColor[2] / 255.0f);
+	lua_pushnumber(L, (float)team->origColor[3] / 255.0f);
+
+	return 4;
 }
 
 

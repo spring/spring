@@ -17,7 +17,6 @@ public:
 	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0)=0;
 	virtual void DrawShadowPass(void);
 	virtual void Update()=0;
-	
 
 	virtual void IncreaseDetail()=0;
 	virtual void DecreaseDetail()=0;
@@ -68,6 +67,12 @@ public:
 
 	DrawMode drawMode;
 
+	int jamColor[3];
+	int losColor[3];
+	int radarColor[3];
+	int alwaysColor[3];
+	static const int losColorScale = 10000;
+	
 	bool highResLosTex;
 // 	bool smoothLosTex;
 };

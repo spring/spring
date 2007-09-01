@@ -657,9 +657,9 @@
       return self->get_flareReloadTime();
    }
 
-   double get_flareEfficieny()
+   double get_flareEfficiency()
    {
-      return self->get_flareEfficieny();
+      return self->get_flareEfficiency();
    }
 
    double get_flareDelay()

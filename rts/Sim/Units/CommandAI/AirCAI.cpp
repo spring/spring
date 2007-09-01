@@ -47,6 +47,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.action="move";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
+	c.mouseicon=c.name;
 	c.hotkey="m";
 	c.tooltip="Move: Commands the aircraft to fly to the location";
 	possibleCommands.push_back(c);
@@ -56,6 +57,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.action="patrol";
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="Patrol";
+		c.mouseicon=c.name;
 		c.hotkey="p";
 		c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
 		possibleCommands.push_back(c);
@@ -66,6 +68,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.action="fight";
 		c.type = CMDTYPE_ICON_MAP;
 		c.name = "Fight";
+		c.mouseicon=c.name;
 		c.hotkey = "f";
 		c.tooltip = "Fight: Order the aircraft to take action while moving to a position";
 		possibleCommands.push_back(c);
@@ -76,6 +79,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.action="areaattack";
 		c.type=CMDTYPE_ICON_AREA;
 		c.name="Area attack";
+		c.mouseicon=c.name;
 		c.hotkey="a";
 		c.tooltip="Sets the aircraft to attack enemy units within a circle";
 		possibleCommands.push_back(c);
@@ -86,6 +90,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.action="guard";
 		c.type=CMDTYPE_ICON_UNIT;
 		c.name="Guard";
+		c.mouseicon=c.name;
 		c.hotkey="g";
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
@@ -96,6 +101,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.action="autorepairlevel";
 	c.type=CMDTYPE_ICON_MODE;
 	c.name="Repair level";
+	c.mouseicon=c.name;
 	c.params.push_back("1");
 	c.params.push_back("LandAt 0");
 	c.params.push_back("LandAt 30");
@@ -112,6 +118,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.action="loopbackattack";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Loopback";
+		c.mouseicon=c.name;
 		c.params.push_back("0");
 		c.params.push_back("Normal");
 		c.params.push_back("Loopback");
@@ -188,8 +195,8 @@ void CAirCAI::GiveCommandReal(const Command &c)
 			airMT = (CAirMoveType*)owner->moveType;
 		}
 		switch((int)c.params[0]){
-			case 0: { airMT->AutoLand = false; break; }
-			case 1: { airMT->AutoLand = true;  break; }
+			case 0: { airMT->autoLand = false; break; }
+			case 1: { airMT->autoLand = true;  break; }
 		}
 		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi){
@@ -316,7 +323,7 @@ void CAirCAI::SlowUpdate()
 
 	if(commandQue.empty()){
 		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING
-			&& !owner->unitDef->DontLand() && myPlane->AutoLand){
+			&& !owner->unitDef->DontLand() && myPlane->autoLand){
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 		}
 
@@ -358,7 +365,7 @@ void CAirCAI::SlowUpdate()
 
 	if (c.id == CMD_WAIT) {
 		if ((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-		    && !owner->unitDef->DontLand() && myPlane->AutoLand) {
+		    && !owner->unitDef->DontLand() && myPlane->autoLand) {
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 		}
 		return;
@@ -792,7 +799,7 @@ void CAirCAI::StopMove()
 {
 	CAirMoveType* myPlane = (CAirMoveType*)owner->moveType;
 	if((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-	   && !owner->unitDef->DontLand() && myPlane->AutoLand) {
+	   && !owner->unitDef->DontLand() && myPlane->autoLand) {
 		myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 	}
 }

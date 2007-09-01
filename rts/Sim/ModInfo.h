@@ -8,8 +8,14 @@ public:
 	CModInfo(const char *modname);
 	~CModInfo();
 
-	std::string name;
+	std::string filename; // archive filename
+
 	std::string humanName;
+	std::string shortName;
+	std::string version;
+	std::string mutator;
+	std::string description;
+
 	bool allowTeamColors;
 
 	// Reclaim behaviour

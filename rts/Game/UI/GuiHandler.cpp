@@ -496,7 +496,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	const bool defCmd =
 		(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
 		 (defaultCmdMemory >= 0) && (inCommand < 0) &&
-		 ((mouse->activeReceiver == this) || (minimap->ProxyMode())));
+		 ((activeReceiver == this) || (minimap->ProxyMode())));
 
 	const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
 
@@ -983,8 +983,7 @@ void CGuiHandler::SetCursorIcon() const
 	}
 
 	const bool useMinimap =
-		(minimap->ProxyMode() ||
-		 ((mouse->activeReceiver != this) && (ir == minimap)));
+		(minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
 	if ((inCommand >= 0) && (inCommand<commands.size())) {
 		const CommandDescription& cmdDesc = commands[inCommand];
@@ -1014,7 +1013,7 @@ void CGuiHandler::SetCursorIcon() const
 	else if (!useMinimap || minimap->FullProxy()) {
 		int defcmd;
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
+				((activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
@@ -2053,8 +2052,9 @@ void CGuiHandler::MenuSelection(std::string s)
 
 void CGuiHandler::MenuChoice(string s)
 {
-	if (mouse->activeReceiver == list)
-		mouse->activeReceiver = 0;
+	if (activeReceiver == list) {
+		activeReceiver = NULL;
+	}
 
 	delete list;
 
@@ -3413,7 +3413,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	float3 tmpCamPos, tmpMouseDir;
 	const bool minimapCoords =
 		(minimap->ProxyMode() ||
-		 ((mouse->activeReceiver != this) && !game->hideInterface &&
+		 ((activeReceiver != this) && !game->hideInterface &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (minimapCoords) {
 		tmpCamPos = camera->pos;
@@ -3433,7 +3433,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			cmdIndex = inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-			    ((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
+			    ((activeReceiver == this) || (minimap->ProxyMode()))) {
 				cmdIndex = defaultCmdMemory;
 				button = SDL_BUTTON_RIGHT;
 			}
@@ -3846,7 +3846,7 @@ void CGuiHandler::DrawCentroidCursor()
 	} else {
 		int defcmd;
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((mouse->activeReceiver == this) || (minimap->ProxyMode()))) {
+				((activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);

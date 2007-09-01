@@ -175,15 +175,19 @@ struct UnitDef
 	bool useCSOffset;
 
 	struct UnitDefWeapon {
-		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif, unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
-			: name(name),
-				def(def),
-				slavedTo(slavedTo),
-				mainDir(mainDir),
-				maxAngleDif(maxAngleDif),
-				badTargetCat(badTargetCat),
-				onlyTargetCat(onlyTargetCat),
-				fuelUsage(fuelUse) {}
+		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
+		              float3 mainDir, float maxAngleDif,
+		              unsigned int badTargetCat, unsigned int onlyTargetCat,
+		              float fuelUse)
+		: name(name),
+		  def(def),
+		  slavedTo(slavedTo),
+		  mainDir(mainDir),
+		  maxAngleDif(maxAngleDif),
+		  badTargetCat(badTargetCat),
+		  onlyTargetCat(onlyTargetCat),
+		  fuelUsage(fuelUse)
+		{}
 
 		std::string name;
 		const WeaponDef* def;
@@ -328,7 +332,7 @@ struct UnitDef
 
 	bool canDropFlare;
 	float flareReloadTime;
-	float flareEfficieny;
+	float flareEfficiency;
 	float flareDelay;
 	float3 flareDropVector;
 	int flareTime;

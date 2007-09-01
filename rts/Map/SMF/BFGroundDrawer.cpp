@@ -844,13 +844,13 @@ void CBFGroundDrawer::DrawShadowPass(void)
 }
 
 
-void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrideVP)
+void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overrideVP)
 {
 	glColor4f(1,1,1,1);
-	if(DrawExtraTex()){
+	if (DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture ());
+		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
@@ -861,7 +861,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 			SetTexGen(0.02f,0.02f,-floor(camera->pos.x*0.02f),-floor(camera->pos.z*0.02f));
-		} else glDisable (GL_TEXTURE_2D);
+		} else {
+			glDisable (GL_TEXTURE_2D);
+		}
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -882,7 +884,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
  				glEnable(GL_ALPHA_TEST);
  			}
  		}
-	} else if(shadowHandler->drawShadows){
+	}
+	else if (shadowHandler->drawShadows) {
 		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, groundFPShadow );
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
 		float3 ac=map->ambientColor*(210.0f/255.0f);
@@ -893,10 +896,11 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		if (map->detailTex)
+		if (map->detailTex) {
 			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
-		else
+		} else {
 			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 		glBindTexture(GL_TEXTURE_2D,  shadowHandler->shadowTexture);
@@ -906,14 +910,15 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-		if(drawReflection){
+		if (drawReflection) {
 			glAlphaFunc(GL_GREATER,0.8f);
 			glEnable(GL_ALPHA_TEST);
 		}
-		if(overrideVP)
+		if (overrideVP) {
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, overrideVP );
-		else
+		} else {
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, groundVP );
+		}
 		glEnable( GL_VERTEX_PROGRAM_ARB );
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 1.0f/1024,1.0f/1024,0,1);
@@ -931,21 +936,23 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection,unsigned int overrid
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		if(map->detailTex) {
+		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D,  map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 			SetTexGen(0.02f,0.02f,-floor(camera->pos.x*0.02f),-floor(camera->pos.z*0.02f));
-		} else glDisable (GL_TEXTURE_2D);
-		if(overrideVP){
+		} else {
+			glDisable (GL_TEXTURE_2D);
+		}
+		if (overrideVP) {
  			glEnable( GL_VERTEX_PROGRAM_ARB );
  			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, overrideVP );
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,1);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 1.0f/1024,1.0f/1024,0,1);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, -floor(camera->pos.x*0.02f),-floor(camera->pos.z*0.02f),0,0);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, 0.02f,0.02f,0,1);
- 			if(drawReflection){
+ 			if (drawReflection) {
  				glAlphaFunc(GL_GREATER,0.9f);
  				glEnable(GL_ALPHA_TEST);
  			}

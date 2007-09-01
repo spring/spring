@@ -50,12 +50,17 @@ local yStep = fontSize + fontSpace
 local fh = (1 > 0)
 local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
 local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
+local entryFont  = "LuaUI/Fonts/mephisto_12"
+local entryFont  = "LuaUI/Fonts/VeraMoBd_12"
+local entryFont  = "LuaUI/Fonts/fragileb_16"
+local entryFont  = "LuaUI/Fonts/edenmb___16"
+local headerFont = "LuaUI/Fonts/abaddon_22"
 if (1 > 0) then
   entryFont  = ":n:" .. entryFont
   headerFont = ":n:" .. headerFont
 end
-fontHandler.UseDefaultFont()
-local entryFont = fontHandler.GetFontName()
+--fontHandler.UseDefaultFont()
+--local entryFont = fontHandler.GetFontName()
 
 if (fh) then
   fh = fontHandler.UseFont(headerFont) and

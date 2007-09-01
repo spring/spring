@@ -26,19 +26,34 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local CMD_MOVE_STATE    = CMD.MOVE_STATE
+local CMD_PATROL        = CMD.PATROL
+local CMD_STOP          = CMD.STOP
+local spGetMyTeamID     = Spring.GetMyTeamID
+local spGetTeamUnits    = Spring.GetTeamUnits
+local spGetUnitDefID    = Spring.GetUnitDefID
+local spGetUnitPosition = Spring.GetUnitPosition
+local spGiveOrderToUnit = Spring.GiveOrderToUnit
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local function SetupUnit(unitID)
   -- set immobile builders (nanotowers) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
-  local x, y, z = Spring.GetUnitPosition(unitID)
-  Spring.GiveOrderToUnit(unitID, CMD.STOP, {}, {})
-  Spring.GiveOrderToUnit(unitID, CMD.MOVE_STATE, { 2 }, {})
-  Spring.GiveOrderToUnit(unitID, CMD.PATROL, { x + 25, y, z - 25 }, {})
+  local x, y, z = spGetUnitPosition(unitID)
+  spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
+  spGiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
+  spGiveOrderToUnit(unitID, CMD_PATROL, { x + 25, y, z - 25 }, {})
 end
 
 
 function widget:Initialize()
-  for _,unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID())) do
-    local unitDefID = Spring.GetUnitDefID(unitID)
+  for _,unitID in ipairs(spGetTeamUnits(spGetMyTeamID())) do
+    local unitDefID = spGetUnitDefID(unitID)
     local ud = unitDefID and UnitDefs[unitDefID] or nil
     if (ud and ud.builder and not ud.canMove) then
       SetupUnit(unitID)
@@ -48,7 +63,7 @@ end
 
 
 function widget:UnitCreated(unitID, unitDefID, unitTeam)
-  if (unitTeam ~= Spring.GetMyTeamID()) then
+  if (unitTeam ~= spGetMyTeamID()) then
     return
   end
   local ud = UnitDefs[unitDefID]

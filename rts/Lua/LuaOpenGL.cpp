@@ -176,8 +176,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PointSize);
 	if (haveGL20) {
 		REGISTER_LUA_CFUNC(PointSprite);
-	}
-	if (haveGL20) {
 		REGISTER_LUA_CFUNC(PointParameter);
 	}
 
@@ -1679,7 +1677,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_istable(L, -1) || !lua_isstring(L, -2)) {
+		if (!lua_istable(L, -1) || !lua_israwstring(L, -2)) {
 			luaL_error(L, "gl.Shape: bad vertex data row");
 			lua_pop(L, 2); // pop the value and key
 			return false;
@@ -2273,7 +2271,7 @@ int LuaOpenGL::Material(lua_State* L)
 
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) { // the key
+		if (!lua_israwstring(L, -2)) { // the key
 			logOutput.Print("gl.Material: bad state type\n");
 			break;
 		}
@@ -3030,9 +3028,9 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 	if (lua_istable(L, 3)) {
 		const int table = 3;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2)) {
+			if (lua_israwstring(L, -2)) {
 				const string key = lua_tostring(L, -2);
-				if (lua_isnumber(L, -1)) {
+				if (lua_israwnumber(L, -1)) {
 					if (key == "target") {
 						tex.target = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "format") {
@@ -3641,6 +3639,7 @@ int LuaOpenGL::Billboard(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	glMultMatrixd(camera->billboard);
+	//glCallList(CCamera::billboardList);
 	return 0;
 }
 

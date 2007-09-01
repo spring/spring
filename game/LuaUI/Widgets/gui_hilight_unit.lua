@@ -30,6 +30,77 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local GL_BACK                   = GL.BACK
+local GL_EYE_LINEAR             = GL.EYE_LINEAR
+local GL_EYE_PLANE              = GL.EYE_PLANE
+local GL_FILL                   = GL.FILL
+local GL_FRONT                  = GL.FRONT
+local GL_FRONT_AND_BACK         = GL.FRONT_AND_BACK
+local GL_INVERT                 = GL.INVERT
+local GL_LINE                   = GL.LINE
+local GL_ONE                    = GL.ONE
+local GL_ONE_MINUS_SRC_ALPHA    = GL.ONE_MINUS_SRC_ALPHA
+local GL_POINT                  = GL.POINT
+local GL_QUAD_STRIP             = GL.QUAD_STRIP
+local GL_SRC_ALPHA              = GL.SRC_ALPHA
+local GL_T                      = GL.T
+local GL_TEXTURE_GEN_MODE       = GL.TEXTURE_GEN_MODE
+local GL_TRIANGLE_FAN           = GL.TRIANGLE_FAN
+local glBeginEnd                = gl.BeginEnd
+local glBlending                = gl.Blending
+local glCallList                = gl.CallList
+local glColor                   = gl.Color
+local glCreateList              = gl.CreateList
+local glCulling                 = gl.Culling
+local glDeleteList              = gl.DeleteList
+local glDeleteTexture           = gl.DeleteTexture
+local glDepthTest               = gl.DepthTest
+local glFeature                 = gl.Feature
+local glGetTextWidth            = gl.GetTextWidth
+local glLineWidth               = gl.LineWidth
+local glLogicOp                 = gl.LogicOp
+local glPointSize               = gl.PointSize
+local glPolygonMode             = gl.PolygonMode
+local glPolygonOffset           = gl.PolygonOffset
+local glPopMatrix               = gl.PopMatrix
+local glPushMatrix              = gl.PushMatrix
+local glScale                   = gl.Scale
+local glSmoothing               = gl.Smoothing
+local glTexCoord                = gl.TexCoord
+local glTexGen                  = gl.TexGen
+local glText                    = gl.Text
+local glTexture                 = gl.Texture
+local glTranslate               = gl.Translate
+local glUnit                    = gl.Unit
+local glVertex                  = gl.Vertex
+local spDrawUnitCommands        = Spring.DrawUnitCommands
+local spGetFeatureAllyTeam      = Spring.GetFeatureAllyTeam
+local spGetFeatureDefID         = Spring.GetFeatureDefID
+local spGetFeaturePosition      = Spring.GetFeaturePosition
+local spGetFeatureRadius        = Spring.GetFeatureRadius
+local spGetFeatureTeam          = Spring.GetFeatureTeam
+local spGetModKeyState          = Spring.GetModKeyState
+local spGetMouseState           = Spring.GetMouseState
+local spGetMyAllyTeamID         = Spring.GetMyAllyTeamID
+local spGetMyPlayerID           = Spring.GetMyPlayerID
+local spGetMyTeamID             = Spring.GetMyTeamID
+local spGetPlayerControlledUnit = Spring.GetPlayerControlledUnit
+local spGetPlayerInfo           = Spring.GetPlayerInfo
+local spGetTeamColor            = Spring.GetTeamColor
+local spGetTeamInfo             = Spring.GetTeamInfo
+local spGetUnitAllyTeam         = Spring.GetUnitAllyTeam
+local spGetUnitDefID            = Spring.GetUnitDefID
+local spGetUnitIsCloaked        = Spring.GetUnitIsCloaked
+local spGetUnitTeam             = Spring.GetUnitTeam
+local spIsCheatingEnabled       = Spring.IsCheatingEnabled
+local spTraceScreenRay          = Spring.TraceScreenRay
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 include("colors.h.lua")
 
 
@@ -50,18 +121,20 @@ function widget:ViewResize(viewSizeX, viewSizeY)
   vsy = viewSizeY
 end
 
+local smoothPolys = (glSmoothing ~= nil) and false
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
-  cylList = gl.CreateList(DrawCylinder, cylDivs)
+  cylList = glCreateList(DrawCylinder, cylDivs)
 end
 
 
 function widget:Shutdown()
-  gl.DeleteList(cylList)
-  gl.DeleteTexture(customTex)
+  glDeleteList(cylList)
+  glDeleteTexture(customTex)
 end
 
 
@@ -73,25 +146,25 @@ function DrawCylinder(divs)
   local sin = math.sin
   local divRads = (2.0 * math.pi) / divs
   -- top
-  gl.BeginEnd(GL.TRIANGLE_FAN, function()
+  glBeginEnd(GL_TRIANGLE_FAN, function()
     for i = 1, divs do
       local a = i * divRads
-      gl.Vertex(sin(a), 1.0, cos(a))
+      glVertex(sin(a), 1.0, cos(a))
     end
   end)
   -- bottom
-  gl.BeginEnd(GL.TRIANGLE_FAN, function()
+  glBeginEnd(GL_TRIANGLE_FAN, function()
     for i = 1, divs do
       local a = -i * divRads
-      gl.Vertex(sin(a), -1.0, cos(a))
+      glVertex(sin(a), -1.0, cos(a))
     end
   end)
   -- sides
-  gl.BeginEnd(GL.QUAD_STRIP, function()
+  glBeginEnd(GL_QUAD_STRIP, function()
     for i = 0, divs do
       local a = i * divRads
-      gl.Vertex(sin(a),  1.0, cos(a))
-      gl.Vertex(sin(a), -1.0, cos(a))
+      glVertex(sin(a),  1.0, cos(a))
+      glVertex(sin(a), -1.0, cos(a))
     end
   end)
 end
@@ -101,85 +174,93 @@ end
 --------------------------------------------------------------------------------
 
 local function HilightModel(drawFunc, drawData, outline)
-  gl.DepthTest(true)
-  gl.PolygonOffset(-2, -2)
-  gl.Blending(GL.SRC_ALPHA, GL.ONE)
+  glDepthTest(true)
+  glPolygonOffset(-2, -2)
+  glBlending(GL_SRC_ALPHA, GL_ONE)
+
+  if (smoothPolys) then
+    glSmoothing(nil, nil, true)
+  end
 
   local scale = 20
   local shift = (2 * widgetHandler:GetHourTimer()) % scale
-  gl.TexCoord(0, 0)
-  gl.TexGen(GL.T, GL.TEXTURE_GEN_MODE, GL.EYE_LINEAR)
-  gl.TexGen(GL.T, GL.EYE_PLANE, 0, (1 / scale), 0, shift)
-  gl.Texture(texName)
+  glTexCoord(0, 0)
+  glTexGen(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)
+  glTexGen(GL_T, GL_EYE_PLANE, 0, (1 / scale), 0, shift)
+  glTexture(texName)
 
   drawFunc(drawData)
 
-  gl.Texture(false)
-  gl.TexGen(GL.T, false)
+  glTexture(false)
+  glTexGen(GL_T, false)
 
   -- more edge highlighting
   if (outline) then
-    gl.LineWidth(outlineWidth)
-    gl.PointSize(outlineWidth)
-    gl.PolygonOffset(10, 100)
-    gl.PolygonMode(GL.FRONT_AND_BACK, GL.POINT)
+    glLineWidth(outlineWidth)
+    glPointSize(outlineWidth)
+    glPolygonOffset(10, 100)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT)
     drawFunc(drawData)
-    gl.PolygonMode(GL.FRONT_AND_BACK, GL.LINE)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
     drawFunc(drawData)
-    gl.PolygonMode(GL.FRONT_AND_BACK, GL.FILL)
-    gl.PointSize(1)
-    gl.LineWidth(1)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+    glPointSize(1)
+    glLineWidth(1)
   end
 
-  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
-  gl.PolygonOffset(false)
-  gl.DepthTest(false)
+  if (smoothPolys) then
+    glSmoothing(nil, nil, false)
+  end
+
+  glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+  glPolygonOffset(false)
+  glDepthTest(false)
 end
 
 
 --------------------------------------------------------------------------------
 
 local function SetUnitColor(unitID, alpha)
-  local teamID = Spring.GetUnitTeam(unitID)
+  local teamID = spGetUnitTeam(unitID)
   if (teamID == nil) then
-    gl.Color(1.0, 0.0, 0.0, alpha) -- red
-  elseif (teamID == Spring.GetMyTeamID()) then
-    gl.Color(0.0, 1.0, 1.0, alpha) -- cyan
-  elseif (Spring.GetUnitAllyTeam(unitID) == Spring.GetMyAllyTeamID()) then
-    gl.Color(0.0, 1.0, 0.0, alpha) -- green
+    glColor(1.0, 0.0, 0.0, alpha) -- red
+  elseif (teamID == spGetMyTeamID()) then
+    glColor(0.0, 1.0, 1.0, alpha) -- cyan
+  elseif (spGetUnitAllyTeam(unitID) == spGetMyAllyTeamID()) then
+    glColor(0.0, 1.0, 0.0, alpha) -- green
   else
-    gl.Color(1.0, 0.0, 0.0, alpha) -- red
+    glColor(1.0, 0.0, 0.0, alpha) -- red
   end
 end
 
 
 local function SetFeatureColor(featureID, alpha)
-  gl.Color(1.0, 0.0, 1.0, alpha) -- purple
+  glColor(1.0, 0.0, 1.0, alpha) -- purple
   do return end  -- FIXME -- wait for feature team/allyteam resolution
 
-  local allyTeamID = Spring.GetFeatureAllyTeam(featureID)
+  local allyTeamID = spGetFeatureAllyTeam(featureID)
   if ((allyTeamID == nil) or (allyTeamID < 0)) then
-    gl.Color(1.0, 1.0, 1.0, alpha) -- white
-  elseif (allyTeamID == Spring.GetMyAllyTeamID()) then
-    gl.Color(0.0, 1.0, 1.0, alpha) -- cyan
+    glColor(1.0, 1.0, 1.0, alpha) -- white
+  elseif (allyTeamID == spGetMyAllyTeamID()) then
+    glColor(0.0, 1.0, 1.0, alpha) -- cyan
   else
-    gl.Color(1.0, 0.0, 0.0, alpha) -- red
+    glColor(1.0, 0.0, 0.0, alpha) -- red
   end
 end
 
 
 local function UnitDrawFunc(unitID)
-  gl.Unit(unitID, true)
+  glUnit(unitID, true)
 end
 
 
 local function FeatureDrawFunc(featureID)
-  gl.Feature(featureID, true)
+  glFeature(featureID, true)
 end
 
 
 local function HilightUnit(unitID)
-  local outline = (Spring.GetUnitIsCloaked(unitID) ~= true)
+  local outline = (spGetUnitIsCloaked(unitID) ~= true)
   SetUnitColor(unitID, outline and 0.5 or 0.25)
   HilightModel(UnitDrawFunc, unitID, outline)
 end
@@ -192,7 +273,7 @@ end
 
 
 local function HilightFeature(featureID)
-  local fDefID = Spring.GetFeatureDefID(featureID)
+  local fDefID = spGetFeatureDefID(featureID)
   local fd = FeatureDefs[fDefID]
   if (fd == nil) then return end
 
@@ -201,43 +282,46 @@ local function HilightFeature(featureID)
     return
   end
 
-  local radius = fd.radius
+  local radius = spGetFeatureRadius(featureID)
+  if (radius == nil) then
+    return
+  end
 
-  local px, py, pz = Spring.GetFeaturePosition(featureID)
+  local px, py, pz = spGetFeaturePosition(featureID)
   if (px == nil) then return end
 
   local yScale = 4
-  gl.PushMatrix()
-  gl.Translate(px, py, pz)
-  gl.Scale(radius, yScale * radius, radius)
+  glPushMatrix()
+  glTranslate(px, py, pz)
+  glScale(radius, yScale * radius, radius)
   -- FIXME: needs an 'inside' check
 
-  gl.DepthTest(true)
-  gl.LogicOp(GL.INVERT)
+  glDepthTest(true)
+  glLogicOp(GL_INVERT)
 
-  gl.Culling(GL.FRONT)
-  gl.CallList(cylList)
+  glCulling(GL_FRONT)
+  glCallList(cylList)
 
-  gl.Culling(GL.BACK)
-  gl.CallList(cylList)
+  glCulling(GL_BACK)
+  glCallList(cylList)
 
-  gl.LogicOp(false)
-  gl.Culling(false)
-  gl.DepthTest(false)
+  glLogicOp(false)
+  glCulling(false)
+  glDepthTest(false)
 
-  gl.PopMatrix()
+  glPopMatrix()
 end
 
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local GetPlayerControlledUnit = Spring.GetPlayerControlledUnit
-local GetMyPlayerID           = Spring.GetMyPlayerID
-local TraceScreenRay          = Spring.TraceScreenRay
-local GetMouseState           = Spring.GetMouseState
-local GetUnitDefID            = Spring.GetUnitDefID
-local GetFeatureDefID         = Spring.GetFeatureDefID
+local GetPlayerControlledUnit = spGetPlayerControlledUnit
+local GetMyPlayerID           = spGetMyPlayerID
+local TraceScreenRay          = spTraceScreenRay
+local GetMouseState           = spGetMouseState
+local GetUnitDefID            = spGetUnitDefID
+local GetFeatureDefID         = spGetFeatureDefID
 
 
 --------------------------------------------------------------------------------
@@ -260,9 +344,9 @@ function widget:DrawWorld()
     if (data ~= unitID) then
       HilightUnit(data)
       -- also draw the unit's command queue
-      local a,c,m,s = Spring.GetModKeyState()
+      local a,c,m,s = spGetModKeyState()
       if (m) then
-        Spring.DrawUnitCommands(data)
+        spDrawUnitCommands(data)
       end
     end
   end
@@ -287,12 +371,12 @@ local function GetTeamName(teamID)
     return name
   end
 
-  local teamNum, teamLeader = Spring.GetTeamInfo(teamID)
+  local teamNum, teamLeader = spGetTeamInfo(teamID)
   if (teamLeader == nil) then
     return ''
   end
 
-  name = Spring.GetPlayerInfo(teamLeader)
+  name = spGetPlayerInfo(teamLeader)
   teamNames[teamID] = name
   return name
 end
@@ -311,7 +395,7 @@ local function GetTeamColorStr(teamID)
   end
 
   local outlineChar = ''
-  local _,_,_,_,_,_,r,g,b = Spring.GetTeamInfo(teamID)
+  local r,g,b = spGetTeamColor(teamID)
   if (r and g and b) then
     local function ColorChar(x)
       local c = math.floor(x * 255)
@@ -335,7 +419,7 @@ end
 --------------------------------------------------------------------------------
 
 function widget:DrawScreen()
-  local a,c,m,s = Spring.GetModKeyState()
+  local a,c,m,s = spGetModKeyState()
   if (not m) then
     return
   end
@@ -346,7 +430,7 @@ function widget:DrawScreen()
   local typeStr = ''
   local teamID = nil
 
-  local cheat  = Spring.IsCheatingEnabled()
+  local cheat  = spIsCheatingEnabled()
 
   if (type == 'unit') then
     local udid = GetUnitDefID(data)
@@ -355,9 +439,11 @@ function widget:DrawScreen()
     if (ud == nil) then return end
     typeStr = YellowStr .. ud.humanName -- .. ' ' .. CyanStr .. ud.tooltip
     if (cheat) then
-      typeStr = typeStr .. ' ' .. '\255\255\255\255#' .. data
+      typeStr = typeStr
+                .. ' \255\255\128\255(' .. ud.name
+                .. ') \255\255\255\255#' .. data
     end
-    teamID = Spring.GetUnitTeam(data)
+    teamID = spGetUnitTeam(data)
   elseif (type == 'feature') then
     local fdid = GetFeatureDefID(data)
     if (fdid == nil) then return end
@@ -365,9 +451,11 @@ function widget:DrawScreen()
     if (fd == nil) then return end
     typeStr = '\255\255\128\255' .. fd.tooltip
     if (cheat) then
-      typeStr = typeStr .. ' ' .. '\255\255\255\255#' .. data
+      typeStr = typeStr
+                .. ' \255\255\255\1(' .. fd.name
+                .. ') \255\255\255\255#' .. data
     end
-    teamID = Spring.GetFeatureTeam(data)
+    teamID = spGetFeatureTeam(data)
   end
 
   local pName = nil
@@ -386,21 +474,21 @@ function widget:DrawScreen()
   local gx = 16
   local gy = 8
 
-  local lt = f * gl.GetTextWidth(typeStr)
-  local lp = pName and (f * gl.GetTextWidth(pName)) or 0
+  local lt = f * glGetTextWidth(typeStr)
+  local lp = pName and (f * glGetTextWidth(pName)) or 0
   local lm = (lt > lp) and lt or lp  --  max len
 
   pName = pName and (colorStr .. pName)
 
   if ((mx + lm + gx) < vsx) then
-    gl.Text(typeStr, mx + gx, my + gy, f, 'o')
+    glText(typeStr, mx + gx, my + gy, f, 'o')
     if (pName) then
-      gl.Text(pName, mx + gx, my - gy - f, f, outlineChar)
+      glText(pName, mx + gx, my - gy - f, f, outlineChar)
     end
   else
-    gl.Text(typeStr, mx - gx, my + gy, f, 'or')
+    glText(typeStr, mx - gx, my + gy, f, 'or')
     if (pName) then
-      gl.Text(pName, mx - gx, my - gy - f, f, outlineChar .. 'r')
+      glText(pName, mx - gx, my - gy - f, f, outlineChar .. 'r')
     end
   end
 end

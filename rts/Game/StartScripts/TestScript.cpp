@@ -37,6 +37,7 @@ void CTestScript::Update()
 	switch(gs->frameNum){
 	case 0:
 		{
+		/* NOTE: wasn't doing anything anyways
 		for(int a=0;a<0000;++a){
 			float3 pos((gs->randFloat()+gs->randFloat())*2000,0,(gs->randFloat()+gs->randFloat())*2000);
 			pos.y=ground->GetHeight(pos.x,pos.z);
@@ -44,6 +45,7 @@ void CTestScript::Update()
 			string feature=featureHandler->GetWreckParser().GetSectionList("")[(int)(gs->randFloat()*num)];
 			featureHandler->CreateWreckage(pos,feature,0,0,1,-1,-1,false,"");
 		}
+		*/
  		for(int a=0;a<30;++a){
 			unitLoader.LoadUnit("ARM_FLASH",float3(2000+a*80,10,2900),0,false,0,NULL);
 			unitLoader.LoadUnit("ARM_ZEUS",float3(2000+a*80,10,2855),0,false,0,NULL);

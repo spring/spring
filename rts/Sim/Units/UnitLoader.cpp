@@ -87,32 +87,33 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
 	//unit = SAFE_NEW CUnit(pos, side);
-	if (side < 0)
-		side = MAX_TEAMS-1;
+	if (side < 0) {
+		side = MAX_TEAMS - 1;
+	}
 
-	if(type=="GroundUnit"){
-		unit=SAFE_NEW CUnit;
+	if (type == "GroundUnit"){
+		unit = SAFE_NEW CUnit;
 		blocking = true;
-	} else if (type=="Transport"){
-		unit=SAFE_NEW CTransportUnit;
+	} else if (type == "Transport"){
+		unit = SAFE_NEW CTransportUnit;
 		blocking = true;
-	} else if (type=="Building"){
-		unit=SAFE_NEW CBuilding;
+	} else if (type == "Building"){
+		unit = SAFE_NEW CBuilding;
 		blocking = true;
-	} else if (type=="Factory"){
-		unit=SAFE_NEW CFactory;
+	} else if (type == "Factory"){
+		unit = SAFE_NEW CFactory;
 		blocking = true;
-	} else if (type=="Builder"){
-		unit=SAFE_NEW CBuilder;
+	} else if (type == "Builder"){
+		unit = SAFE_NEW CBuilder;
 		blocking = true;
-	} else if (type=="Bomber" || type=="Fighter"){
-		unit=SAFE_NEW CUnit;
+	} else if (type == "Bomber" || type == "Fighter"){
+		unit = SAFE_NEW CUnit;
 	} else if (type == "MetalExtractor") {
 		unit = SAFE_NEW CExtractorBuilding;
 		blocking = true;
 	} else {
 		logOutput << "Unknown unit type " << type.c_str() << "\n";
-		return 0;
+		return NULL;
 	}
 
 	unit->UnitInit (ud, side, pos);
@@ -165,30 +166,38 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 		unit->ChangeLos((int)(ud->losRadius),(int)(ud->airLosRadius));
 	}
 
-	if(type=="GroundUnit"){
+	if (type == "GroundUnit") {
 		SAFE_NEW CMobileCAI(unit);
-	} else if(type=="Transport"){
+	}
+	else if (type == "Transport") {
 		SAFE_NEW CTransportCAI(unit);
-	} else if(type=="Factory"){
+	}
+	else if (type == "Factory") {
 		SAFE_NEW CFactoryCAI(unit);
-	} else if(type=="Builder"){
+	}
+	else if (type == "Builder") {
 		SAFE_NEW CBuilderCAI(unit);
-	} else if(type=="Bomber"){
-		if (ud->hoverAttack)
+	}
+	else if (type == "Bomber") {
+		if (ud->hoverAttack) {
 			SAFE_NEW CMobileCAI(unit);
-		else
+		} else {
 			SAFE_NEW CAirCAI(unit);
-	} else if(type=="Fighter"){
-		if (ud->hoverAttack)
+		}
+	}
+	else if(type == "Fighter"){
+		if (ud->hoverAttack) {
 			SAFE_NEW CMobileCAI(unit);
-		else
+		} else {
 			SAFE_NEW CAirCAI(unit);
-	} else {
+		}
+	}
+	else {
 		SAFE_NEW CCommandAI(unit);
 	}
 
 	if(ud->canmove && !ud->canfly && type!="Factory"){
-		CGroundMoveType* mt=SAFE_NEW CGroundMoveType(unit);
+		CGroundMoveType* mt = SAFE_NEW CGroundMoveType(unit);
 		mt->maxSpeed=ud->speed/GAME_SPEED;
 		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
 		mt->turnRate=ud->turnRate;

@@ -317,9 +317,10 @@ bool SpringApp::Initialize ()
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	// Initialize font
-	font = SAFE_NEW CglFont(configHandler.GetInt("FontCharFirst", 32),
-	                   configHandler.GetInt("FontCharLast", 223),
-	                   configHandler.GetString("FontFile", "Luxi.ttf").c_str());
+	const int charFirst = configHandler.GetInt("FontCharFirst", 32);
+	const int charLast  = configHandler.GetInt("FontCharLast", 255);
+	const string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
+	font = SAFE_NEW CglFont(charFirst, charLast, fontFile.c_str());
 
 	// Initialize GLEW
 	LoadExtensions();

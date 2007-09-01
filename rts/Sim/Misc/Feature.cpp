@@ -11,6 +11,7 @@
 #include "LogOutput.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/ModInfo.h"

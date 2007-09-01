@@ -27,6 +27,7 @@ CallInsList = {
   "GetTooltip",
   "AddConsoleLine",
   "GroupChanged",
+  "WorldTooltip",
 
   "GameOver",
   "TeamDied",

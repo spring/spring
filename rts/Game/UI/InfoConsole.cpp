@@ -4,11 +4,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "InfoConsole.h"
-#include "OutlineFont.h"
-#include "GuiHandler.h"
-#include "Rendering/GL/myGL.h"
 #include <fstream>
+#include "OutlineFont.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"

@@ -81,6 +81,7 @@ bool LuaConstCMD::PushEntries(lua_State* L)
 	PUSH_CMD(CAPTURE);
 	PUSH_CMD(AUTOREPAIRLEVEL);
 	PUSH_CMD(LOOPBACKATTACK);
+	PUSH_CMD(IDLEMODE);
 	
 	return true;
 }

@@ -10,31 +10,53 @@
 #include "Game/Camera.h"
 #include "Rendering/InMapDraw.h"
 
+
+CStartPosSelecter* CStartPosSelecter::selector = NULL;
+
+
 CStartPosSelecter::CStartPosSelecter(void)
 {
-	readyBox.x1=0.71f;
-	readyBox.y1=0.72f;
-	readyBox.x2=0.81f;
-	readyBox.y2=0.76f;
+	showReady = true;
+	selector = this;
+	readyBox.x1 = 0.71f;
+	readyBox.y1 = 0.72f;
+	readyBox.x2 = 0.81f;
+	readyBox.y2 = 0.76f;
 }
+
 
 CStartPosSelecter::~CStartPosSelecter(void)
 {
+	selector = NULL;
 }
+
+
+bool CStartPosSelecter::Ready()
+{
+	if (gs->Team(gu->myTeam)->startPos.y == -500) {
+		return false;
+	}
+	
+	gameSetup->readyTeams[gu->myTeam] = true;
+	net->SendStartPos(gu->myTeam, 1,
+	gs->Team(gu->myTeam)->startPos.x, /* why not a float3? */
+	gs->Team(gu->myTeam)->startPos.y,
+	gs->Team(gu->myTeam)->startPos.z);
+
+	delete this;
+
+	return true;
+}
+
 
 bool CStartPosSelecter::MousePress(int x, int y, int button)
 {
-	float mx=MouseX(x);
-	float my=MouseY(y);
-	if(InBox(mx,my,readyBox) && gs->Team(gu->myTeam)->startPos.y!=-500){
-		gameSetup->readyTeams[gu->myTeam]=true;
-		net->SendStartPos(gu->myTeam, 1,
-				gs->Team(gu->myTeam)->startPos.x, /* why not a float3? */
-				gs->Team(gu->myTeam)->startPos.y,
-				gs->Team(gu->myTeam)->startPos.z);
-		delete this;
-		return false;
+	float mx = MouseX(x);
+	float my = MouseY(y);
+	if (showReady && InBox(mx, my, readyBox)) {
+		return !Ready();
 	}
+
 	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 	if(dist<0)
 		return true;
@@ -143,11 +165,43 @@ void CStartPosSelecter::Draw()
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
-	if(InBox(mx,my,readyBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(readyBox);
+	if (!showReady) {
+		return;
 	}
-	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(readyBox.x1+0.025f,readyBox.y1+0.005f,1,"Ready");
+
+	if (InBox(mx, my, readyBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+	} else {
+		glColor4f(0.7f, 0.7f, 0.2f, guiAlpha);
+	}
+	DrawBox(readyBox);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (InBox(mx, my, readyBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+	} else {
+		glColor4f(0.7f, 0.7f, 0.2f, guiAlpha);
+	}
+	DrawBox(readyBox);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	const float width = font->CalcTextWidth("Ready");
+	const float yDiff = (readyBox.y2 - readyBox.y1);
+	const float xDiff = (readyBox.x2 - readyBox.x1);
+	const float yScale = 0.8f * yDiff;
+	const float xScale = 0.8f * (xDiff / width);
+	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
+	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
+	const float yPos = readyBox.y1 + (0.1f * yDiff);
+	const float xPos = readyBox.x1 + (0.1f * xDiff);
+
+	glPushMatrix();
+	glTranslatef(xPos, yPos, 0.0f);
+	glScalef(xScale, yScale, 1.0f);
+	const float dark[4]   = { 0.2f, 0.2f, 0.2f, 0.8f };
+	const float white[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+	font->glPrintOutlined("Ready", xPixel, yPixel, white, dark);
+	glPopMatrix();
 }

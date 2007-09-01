@@ -52,6 +52,7 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 	c.action="loadunits";
 	c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 	c.name="Load units";
+	c.mouseicon=c.name;
 	c.hotkey="l";
 	c.tooltip="Sets the transport to load a unit or units within an area";
 	possibleCommands.push_back(c);
@@ -60,6 +61,7 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 	c.action="unloadunits";
 	c.type=CMDTYPE_ICON_AREA;
 	c.name="Unload units";
+	c.mouseicon=c.name;
 	c.hotkey="u";
 	c.tooltip="Sets the transport to unload units in an area";
 	possibleCommands.push_back(c);
@@ -457,8 +459,10 @@ void CTransportCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_FIGHT:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				if (ci->params.size() >= 3) {
+					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				}
 				break;
 			}
 			case CMD_PATROL:{

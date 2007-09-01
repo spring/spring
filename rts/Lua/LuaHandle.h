@@ -24,6 +24,7 @@ using std::set;
 
 class CUnit;
 class CFeature;
+class CWeapon;
 struct LuaHashString;
 struct lua_State;
 
@@ -120,7 +121,12 @@ class CLuaHandle {
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
+		void StockpileChanged(const CUnit* owner,
+		                      const CWeapon* weapon, int oldCount);
+
 		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+
+		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		void DrawWorld();
 		void DrawWorldPreUnit();
@@ -156,7 +162,7 @@ class CLuaHandle {
 
 		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
-		bool LoadDrawCallIn(const LuaHashString& hs);
+		bool PushUnsyncedCallIn(const LuaHashString& hs);
 
 	protected:
 		lua_State* L;

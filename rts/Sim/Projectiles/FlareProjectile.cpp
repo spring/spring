@@ -69,7 +69,7 @@ void CFlareProjectile::Update(void)
 			lastSub=gs->frameNum;
 
 			for(std::list<CMissileProjectile*>::iterator mi=owner->incomingMissiles.begin();mi!=owner->incomingMissiles.end();++mi){
-				if(gs->randFloat()<owner->unitDef->flareEfficieny){
+				if(gs->randFloat()<owner->unitDef->flareEfficiency){
 					CMissileProjectile* missile=*mi;
 					missile->decoyTarget=this;
 					missile->AddDeathDependence(this);

@@ -26,6 +26,13 @@
 
 include("colors.h.lua")
 
+local langSuffix = Spring.GetConfigString('Language', 'fr')
+local l10nName = 'L10N/commands_' .. langSuffix .. '.lua'
+local success, translations = pcall(VFS.Include, l10nName)
+if (not success) then
+  translations = nil
+end
+
 
 -- for DefaultHandler
 local FrameTexture   = "bitmaps/icons/frame_slate_128x96.png"
@@ -151,9 +158,29 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
           reTextureCmds[cmdSlot] = FrameTexture
         else
           -- add a frame texture and buildpic
-          label = '#' .. (-cmd.id) .. ',0.099x0.132,' .. FrameTexture
+          local label = '#' .. (-cmd.id) .. ',0.099x0.132,' .. FrameTexture
           reTextureCmds[cmdSlot] = label
           table.insert(onlyTextureCmds, cmdSlot)
+          reNamedCmds[cmdSlot] = nil
+        end
+      end
+
+      if (translations) then
+        local trans = translations[cmd.id]
+        if (trans) then
+          reTooltipCmds[cmdSlot] = trans.desc
+          if (not trans.params) then
+            if (cmd.id ~= CMD.STOCKPILE) then
+              reNamedCmds[cmdSlot] = trans.name
+            end
+          else
+            local num = tonumber(cmd.params[1])
+            if (num) then
+              num = (num + 1)
+              cmd.params[num] = trans.params[num]
+              reParamsCmds[cmdSlot] = cmd.params
+            end
+          end
         end
       end
     end
@@ -259,7 +286,7 @@ local function DefaultHandler2(xIcons, yIcons, cmdCount, commands) -- FIXME
           reTextureCmds[cmdSlot] = FrameTexture
         else
           -- add a frame texture and buildpic
-          label = '#' .. (-cmd.id) .. ',0.099x0.132,' .. FrameTexture
+          local label = '#' .. (-cmd.id) .. ',0.099x0.132,' .. FrameTexture
           reTextureCmds[cmdSlot] = label
           table.insert(onlyTextureCmds, cmdSlot)
         end

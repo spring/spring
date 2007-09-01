@@ -62,7 +62,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(padStatus),
 	CR_MEMBER(oldGoalPos),
 
-	CR_MEMBER(AutoLand),
+	CR_MEMBER(autoLand),
 	CR_RESERVED(63)
 	));
 
@@ -100,7 +100,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	padStatus(0),
 	reservedPad(0),
 	currentPitch(0),
-	AutoLand(true)
+	autoLand(true)
 {
 	if (owner)
 		owner->dontUseWeapons=true;
@@ -284,7 +284,7 @@ void CTAAirMoveType::ExecuteStop()
 			if (owner->unitDef->DontLand()) {
 				goalPos = owner->pos;
 				SetState(AIRCRAFT_HOVERING);
-			} else if (dontLand || !AutoLand) {
+			} else if (dontLand || !autoLand) {
 				goalPos = owner->pos;
 				wantedSpeed = ZeroVector;
 			} else
@@ -390,7 +390,7 @@ void CTAAirMoveType::UpdateFlying()
 	if (closeToGoal) {		//pretty close
 		switch (flyState) {
 			case FLY_CRUISING:
-				if(dontLand || (++waitCounter<55 && dynamic_cast<CTransportUnit*>(owner)) || !AutoLand){		//transport aircrafts need some time to detect that they can pickup
+				if(dontLand || (++waitCounter<55 && dynamic_cast<CTransportUnit*>(owner)) || !autoLand){		//transport aircrafts need some time to detect that they can pickup
 					if (dynamic_cast<CTransportUnit*>(owner)) {
 						wantedSpeed=ZeroVector;
 						if(waitCounter>60){
@@ -965,7 +965,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 	if (dontLand)
 		return false;
 
-	if (!AutoLand)
+	if (!autoLand)
 		return false;
 
 	if(pos.x<0 || pos.z<0 || pos.x>float3::maxxpos || pos.z>float3::maxzpos)

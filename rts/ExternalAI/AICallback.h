@@ -145,6 +145,8 @@ public:
 
 	int GetFileSize (const char *name); // return -1 when the file doesn't exist
 	bool ReadFile (const char *name, void *buffer,int bufferLen); // returns false when file doesn't exist or buffer is too small
+	int GetFileSize (const char *name, const char* modes); // return -1 when the file doesn't exist
+	bool ReadFile (const char *name, const char* modes, void *buffer,int bufferLen); // returns false when file doesn't exist or buffer is too small
 
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);

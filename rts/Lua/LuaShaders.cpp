@@ -205,11 +205,11 @@ static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2)) {
+			if (lua_israwstring(L, -2)) {
 				const string name = lua_tostring(L, -2);
 				const GLint loc = glGetUniformLocation(progName, name.c_str());
 				if (loc >= 0) {
-					if (lua_isnumber(L, -1)) {
+					if (lua_israwnumber(L, -1)) {
 						const float value = (float)lua_tonumber(L, -1);
 						glUniform1f(loc, value);
 					}
@@ -239,11 +239,11 @@ static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2)) {
+			if (lua_israwstring(L, -2)) {
 				const string name = lua_tostring(L, -2);
 				const GLint loc = glGetUniformLocation(progName, name.c_str());
 				if (loc >= 0) {
-					if (lua_isnumber(L, -1)) {
+					if (lua_israwnumber(L, -1)) {
 						const int value = (int)lua_tonumber(L, -1);
 						glUniform1i(loc, value);
 					}
@@ -273,7 +273,7 @@ static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2)) {
+			if (lua_israwstring(L, -2)) {
 				const string name = lua_tostring(L, -2);
 				const GLint loc = glGetUniformLocation(progName, name.c_str());
 				if (loc >= 0) {
@@ -378,7 +378,7 @@ static bool ParseSources(lua_State* L, int table,
 	else if (lua_istable(L, -1)) {
 		const int table2 = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table2) != 0; lua_pop(L, 1)) {
-			if (!lua_isnumber(L, -2) || !lua_isstring(L, -1)) {
+			if (!lua_israwnumber(L, -2) || !lua_israwstring(L, -1)) {
 				continue;
 			}
 			const string src = lua_tostring(L, -1);

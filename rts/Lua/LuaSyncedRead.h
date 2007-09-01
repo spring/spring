@@ -89,6 +89,7 @@ class LuaSyncedRead {
 		static int GetUnitIsCloaked(lua_State* L);
 		static int GetUnitSelfDTime(lua_State* L);
 		static int GetUnitStockpile(lua_State* L);
+		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
@@ -128,11 +129,14 @@ class LuaSyncedRead {
 		static int GetFeatureTeam(lua_State* L);
 		static int GetFeatureAllyTeam(lua_State* L);
 		static int GetFeatureHealth(lua_State* L);
+		static int GetFeatureHeight(lua_State* L);
+		static int GetFeatureRadius(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
 		static int GetFeatureResources(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
+		static int GetFeatureResurrect(lua_State* L);
 
 		static int GetGroundHeight(lua_State* L);
 		static int GetGroundNormal(lua_State* L);

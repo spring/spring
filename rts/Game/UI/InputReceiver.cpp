@@ -3,7 +3,11 @@
 #include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
+
 float CInputReceiver::guiAlpha = 0.8f;
+
+CInputReceiver* CInputReceiver::activeReceiver = NULL;
+
 
 std::deque<CInputReceiver*>& GetInputReceivers()
 {
@@ -13,13 +17,16 @@ std::deque<CInputReceiver*>& GetInputReceivers()
 	return s_inputReceivers;
 }
 
-CInputReceiver::CInputReceiver(void)
+CInputReceiver::CInputReceiver()
 {
 	GetInputReceivers().push_front(this);
 }
 
-CInputReceiver::~CInputReceiver(void)
+CInputReceiver::~CInputReceiver()
 {
+	if (activeReceiver == this) {
+		activeReceiver = NULL;
+	}
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
@@ -32,7 +39,7 @@ CInputReceiver::~CInputReceiver(void)
 	}
 }
 
-void CInputReceiver::CollectGarbage(void)
+void CInputReceiver::CollectGarbage()
 {
 	// erase one NULL element each call (should be enough for now)
 	// called once every sec from CGame::Update

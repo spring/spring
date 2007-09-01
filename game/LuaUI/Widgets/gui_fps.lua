@@ -27,7 +27,6 @@ end
 --------------------------------------------------------------------------------
 
 include("colors.h.lua")
-include("tweakmode.lua")
 
 
 local floor = math.floor
@@ -44,6 +43,7 @@ local ypos   = yposf * vsy
 local sizef  = 0.015
 local size   = sizef * vsy
 local font   = "LuaUI/Fonts/FreeSansBold_14"
+local font   = "LuaUI/Fonts/Abaddon_30"
 local format = "orn"
 
 local fh = (font ~= nil)

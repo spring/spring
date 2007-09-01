@@ -167,6 +167,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsCloaked);
 	REGISTER_LUA_CFUNC(GetUnitSelfDTime);
 	REGISTER_LUA_CFUNC(GetUnitStockpile);
+	REGISTER_LUA_CFUNC(GetUnitHeight);
 	REGISTER_LUA_CFUNC(GetUnitRadius);
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitBasePosition);
@@ -204,11 +205,14 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureTeam);
 	REGISTER_LUA_CFUNC(GetFeatureAllyTeam);
 	REGISTER_LUA_CFUNC(GetFeatureHealth);
+	REGISTER_LUA_CFUNC(GetFeatureHeight);
+	REGISTER_LUA_CFUNC(GetFeatureRadius);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
 	REGISTER_LUA_CFUNC(GetFeatureResources);
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(GetFeatureResurrect);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundNormal);
@@ -437,20 +441,19 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 	if (!lua_istable(L, -1)) {
 		return -1;
 	}
-	int index = 0;
+	// FIXME: changed this, test GetUnitsInPlanes() ...
 	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -1)) {
-			logOutput.Print("LUA: error parsing numeric array\n");
-			lua_pop(L, 2); // pop the value and the key
-			return -1;
-		}
-		if (index < size) {
-			array[index] = (float)lua_tonumber(L, -1);
-			index++;
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = (float)lua_tonumber(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
 		}
 	}
-	return index;
+	return size;
 }
 
 
@@ -857,11 +860,7 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 
 int LuaSyncedRead::GetTeamInfo(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetTeamInfo(teamID)");
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
+	const int teamID = (int)luaL_checknumber(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		return 0;
 	}
@@ -881,13 +880,9 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, isAiTeam);
 	lua_pushstring(L, team->side.c_str());
-	lua_pushnumber(L, (float)team->color[0] / 255.0f);
-	lua_pushnumber(L, (float)team->color[1] / 255.0f);
-	lua_pushnumber(L, (float)team->color[2] / 255.0f);
-	lua_pushnumber(L, (float)team->color[3] / 255.0f);
 	lua_pushnumber(L, gs->AllyTeam(team->teamNum));
 
-	return 11;
+	return 7;
 }
 
 
@@ -1092,10 +1087,10 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	}
 
 	// no player names for synchronized scripts
-	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
-		lua_pushstring(L, player->playerName.c_str());
-	} else {
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NONAME");
+	} else {
+		lua_pushstring(L, player->playerName.c_str());
 	}
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
@@ -1106,8 +1101,9 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, pingSecs);
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushstring(L, player->countryCode.c_str());
+	lua_pushnumber(L, player->rank);
 
-	return 8;
+	return 9;
 }
 
 
@@ -2122,11 +2118,13 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 	if (mt) {
 		const CTAAirMoveType* taAirMove = dynamic_cast<const CTAAirMoveType*>(mt);
 		if (taAirMove) {
+			HSTR_PUSH_BOOL  (L, "autoland",        taAirMove->autoLand);
 			HSTR_PUSH_NUMBER(L, "autorepairlevel", taAirMove->repairBelowHealth);
 		}
 		else {
 			const CAirMoveType* airMove = dynamic_cast<const CAirMoveType*>(mt);
 			if (airMove) {
+				HSTR_PUSH_BOOL  (L, "autoland",        airMove->autoLand);
 				HSTR_PUSH_BOOL  (L, "loopbackattack",  airMove->loopbackAttack);
 				HSTR_PUSH_NUMBER(L, "autorepairlevel", airMove->repairBelowHealth);
 			}
@@ -2338,13 +2336,24 @@ int LuaSyncedRead::GetUnitExperience(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitHeight(lua_State* L)
+{
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->height);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitRadius(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->radius); // FIXME: decoy give-away?
+	lua_pushnumber(L, unit->radius);
 	return 1;
 }
 
@@ -3195,16 +3204,9 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 
 int LuaSyncedRead::GetFeatureList(lua_State* L)
 {
+	// NOTE: this is not really required now the all FeatureDefs are pre-loaded
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L); {
-		// push external feature names (-1 for IDs)
-		const TdfParser& wreckParser = featureHandler->GetWreckParser();
-		const vector<string> sections = wreckParser.GetSectionList("");
-		for (int i = 0; i < (int)sections.size(); i++) {
-			LuaPushNamedNumber(L, sections[i], -1);
-		}
-		// push loaded feature names with their IDs
-		// (this may overwrite some external entries)
 		const map<string, const FeatureDef*>& defs = featureHandler->GetFeatureDefs();
 		map<string, const FeatureDef*>::const_iterator it;
 		for (it = defs.begin(); it != defs.end(); ++it) {
@@ -3262,6 +3264,28 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 	lua_pushnumber(L, feature->def->maxHealth);
 	lua_pushnumber(L, feature->resurrectProgress);
 	return 3;
+}
+
+
+int LuaSyncedRead::GetFeatureHeight(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, feature->height);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetFeatureRadius(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, feature->radius);
+	return 1;
 }
 
 
@@ -3326,6 +3350,18 @@ int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 	}
 	lua_pushboolean(L, feature->noSelect);
 	return 1;
+}
+
+
+int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushstring(L, feature->createdFromUnit.c_str());
+	lua_pushnumber(L, feature->buildFacing);
+	return 2;
 }
 
 

@@ -4,30 +4,29 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Sim/Objects/SolidObject.h"
 #include <map>
 #include <vector>
 #include <string>
 #include <deque>
 #include "Lua/LuaUnitMaterial.h"
-#include "Sim/Misc/DamageArray.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
 #include "GlobalStuff.h"
-#include "UnitDef.h"
 
-class CWeapon;
-class CCommandAI;
-struct LosInstance;
-struct S3DOModel;
 class CCobInstance;
-struct LocalS3DOModel;
+class CCommandAI;
 class CGroup;
-struct UnitDef;
+class CLoadSaveInterface;
+class CMissileProjectile;
 class CMoveType;
 class CUnitAI;
-class CLoadSaveInterface;
+class CWeapon;
+struct DamageArray;
+struct LocalS3DOModel;
+struct LosInstance;
+struct S3DOModel;
+struct UnitDef;
 struct UnitTrackStruct;
-class CMissileProjectile;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	struct DirectControlStruct;

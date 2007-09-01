@@ -11,6 +11,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "TimeProfiler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GroundFlash.h"

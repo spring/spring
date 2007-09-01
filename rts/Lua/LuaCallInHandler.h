@@ -19,6 +19,10 @@ using std::map;
 #include "Sim/Misc/Feature.h"
 
 
+class CUnit;
+class CWeapon;
+
+
 class CLuaCallInHandler
 {
 	public:
@@ -66,10 +70,15 @@ class CLuaCallInHandler
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
+		void StockpileChanged(const CUnit* unit,
+		                      const CWeapon* weapon, int oldCount);
+	
 		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		// Unsynced
 		void Update();
+
+		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		void DrawWorld();
 		void DrawWorldPreUnit();
@@ -117,9 +126,13 @@ class CLuaCallInHandler
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
 
+		CallInList listStockpileChanged;
+
 		CallInList listExplosion;
 
 		CallInList listUpdate;
+
+		CallInList listDefaultCommand;
 
 		CallInList listDrawWorld;
 		CallInList listDrawWorldPreUnit;
@@ -324,6 +337,21 @@ inline void CLuaCallInHandler::FeatureDestroyed(const CFeature* feature)
 }
 
 
+inline void CLuaCallInHandler::StockpileChanged(const CUnit* unit,
+                                                const CWeapon* weapon,
+                                                int oldCount)
+{
+	const int count = listStockpileChanged.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listStockpileChanged[i];
+		const int lhAllyTeam = lh->GetReadAllyTeam();
+		if (lh->GetFullRead() || (lhAllyTeam == unit->allyteam)) {
+			lh->StockpileChanged(unit, weapon, oldCount);
+		}
+	}
+}
+
+
 inline bool CLuaCallInHandler::Explosion(int weaponID,
                                          const float3& pos, const CUnit* owner)
 {
@@ -336,6 +364,22 @@ inline bool CLuaCallInHandler::Explosion(int weaponID,
 		}
 	}
 	return noGfx;
+}
+
+
+inline bool CLuaCallInHandler::DefaultCommand(const CUnit* unit,
+                                              const CFeature* feature,
+                                              int& cmd)
+{
+	// reverse order, user has the override
+	const int count = listDefaultCommand.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listDefaultCommand[i];
+		if (lh->DefaultCommand(unit, feature, cmd)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 

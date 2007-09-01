@@ -48,12 +48,15 @@ public:
 	bool active;
 	bool isDead;
 	bool gaia;
-	unsigned char color[4];
 	int leader;
 	int lineageRoot;
 
 	float handicap;
 	std::string side;
+
+	// color info is unsynced
+	unsigned char color[4];
+	unsigned char origColor[4];
 
 	CUnitSet units;
 	float3 startPos;

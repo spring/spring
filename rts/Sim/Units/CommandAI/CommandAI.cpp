@@ -99,6 +99,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action="stop";
 	c.type=CMDTYPE_ICON;
 	c.name="Stop";
+	c.mouseicon=c.name;
 	c.hotkey="s";
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
@@ -108,6 +109,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="attack";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
 		c.name="Attack";
+		c.mouseicon=c.name;
 		c.hotkey="a";
 		c.tooltip="Attack: Attacks an unit or a position on the ground";
 		possibleCommands.push_back(c);
@@ -118,6 +120,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="dgun";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
 		c.name="DGun";
+		c.mouseicon=c.name;
 		c.hotkey="d";
 		c.tooltip="DGun: Attacks using the units special weapon";
 		possibleCommands.push_back(c);
@@ -127,6 +130,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action="wait";
  	c.type=CMDTYPE_ICON;
  	c.name="Wait";
+ 	c.mouseicon=c.name;
  	c.hotkey="w";
  	c.onlyKey=true;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
@@ -137,6 +141,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action = "timewait";
 	c.type = CMDTYPE_NUMBER;
 	c.name = "TimeWait";
+	c.mouseicon=c.name;
 	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "TimeWait: Wait for a period of time before continuing";
@@ -150,6 +155,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action = "deathwait";
 	c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 	c.name = "DeathWait";
+	c.mouseicon=c.name;
 	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "DeathWait: Wait until units die before continuing";
@@ -159,6 +165,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action = "squadwait";
 	c.type = CMDTYPE_NUMBER;
 	c.name = "SquadWait";
+	c.mouseicon=c.name;
 	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
@@ -171,6 +178,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action = "gatherwait";
 	c.type = CMDTYPE_ICON;
 	c.name = "GatherWait";
+	c.mouseicon=c.name;
 	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
@@ -180,6 +188,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.action="selfd";
 	c.type=CMDTYPE_ICON;
 	c.name="SelfD";
+	c.mouseicon=c.name;
 	c.hotkey="Ctrl+d";
 	c.onlyKey=true;
 	c.tooltip="SelfD: Tells the unit to self destruct";
@@ -195,6 +204,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 			c.action="firestate";
 			c.type=CMDTYPE_ICON_MODE;
 			c.name="Fire state";
+			c.mouseicon=c.name;
 			c.params.push_back("2");
 			c.params.push_back("Hold fire");
 			c.params.push_back("Return fire");
@@ -214,6 +224,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="movestate";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Move state";
+		c.mouseicon=c.name;
 		c.params.push_back("1");
 		c.params.push_back("Hold pos");
 		c.params.push_back("Maneuver");
@@ -234,6 +245,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="repeat";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Repeat";
+		c.mouseicon=c.name;
 		c.params.push_back("0");
 		c.params.push_back("Repeat off");
 		c.params.push_back("Repeat on");
@@ -248,6 +260,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="trajectory";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Trajectory";
+		c.mouseicon=c.name;
 		c.params.push_back("0");
 		c.params.push_back("Low traj");
 		c.params.push_back("High traj");
@@ -263,6 +276,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="onoff";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Active state";
+		c.mouseicon=c.name;
 		c.hotkey="x";
 		if(owner->unitDef->activateWhenBuilt)
 			c.params.push_back("1");
@@ -285,6 +299,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.action="cloak";
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Cloak state";
+		c.mouseicon=c.name;
 		c.hotkey="k";
 		if(owner->unitDef->startCloaked)
 			c.params.push_back("1");
@@ -1307,9 +1322,10 @@ void CCommandAI::UpdateStockpileIcon(void)
 	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
 		if(pci->id==CMD_STOCKPILE){
 			char name[50];
-			sprintf(name,"%i/%i",stockpileWeapon->numStockpiled,
-				stockpileWeapon->numStockpiled+stockpileWeapon->numStockpileQued);
-			pci->name=name;
+			sprintf(name, "%i/%i",
+			        stockpileWeapon->numStockpiled,
+			        stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
+			pci->name = name;
 			selectedUnits.PossibleCommandChange(owner);
 		}
 	}

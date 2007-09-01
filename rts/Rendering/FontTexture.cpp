@@ -525,7 +525,11 @@ Glyph::~Glyph()
 
 bool Glyph::SaveSpecs(FILE* f)
 {
-  fprintf(f, "glyphs[%i] = { --'%c'--\n", num, num);
+  if ((num >= ' ') && (num <= 255)) {
+    fprintf(f, "glyphs[%i] = { --'%c'--\n", num, num);
+  } else {
+    fprintf(f, "glyphs[%i] = {\n", num);
+  }
   fprintf(f, "  num = %i,\n", num);
   fprintf(f, "  adv = %i,\n", advance);
   fprintf(f, "  oxn = %4i, oyn = %4i, oxp = %4i, oyp = %4i,\n",

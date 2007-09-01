@@ -29,8 +29,6 @@ end
 include("colors.h.lua")
 
 
-centerGap = 20
-
 local vsx, vsy = widgetHandler:GetViewSizes()
 
 function widget:ViewResize(viewSizeX, viewSizeY)
@@ -38,6 +36,20 @@ function widget:ViewResize(viewSizeX, viewSizeY)
   vsy = viewSizeY
 end
 
+
+-------------------------------------------------------------------------------
+
+local GL_LINES           = GL.LINES
+local glBeginEnd         = gl.BeginEnd
+local glColor            = gl.Color
+local glVertex           = gl.Vertex
+local spGetActiveCommand = Spring.GetActiveCommand
+local spGetMouseState    = Spring.GetMouseState
+
+
+-------------------------------------------------------------------------------
+
+centerGap = 20
 
 centerColors = {
   [CMD.AREA_ATTACK] = { 1.0, 0.0, 0.0, 1.0 },
@@ -70,15 +82,17 @@ edgeColors = {
 }
 
 
+-------------------------------------------------------------------------------
+
 function widget:DrawScreen()
-  mx, my = Spring.GetMouseState()
+  mx, my = spGetMouseState()
   mx = mx + 0.5
   my = my + 0.5
 
   local cc = { 1.0, 1.0, 1.0, 1.0 } -- center color
   local ec = { 0.5, 0.5, 0.5, 1.0 } -- edge   color
   
-  local index, id, type, name = Spring.GetActiveCommand()
+  local index, id, type, name = spGetActiveCommand()
   if (index and id) then
     if (id < 0) then
       -- build colors
@@ -95,16 +109,19 @@ function widget:DrawScreen()
       else
         cc = { 0.0, 0.0, 0.0, 1.0 }
       end
-
     end
   end
   
   local gap = centerGap
 
-  gl.Shape(GL.LINES, {
-    { v = { mx, my - gap }, c = cc }, { v = { mx,   0 }, c = ec },
-    { v = { mx, my + gap }, c = cc }, { v = { mx, vsy }, c = ec },
-    { v = { mx - gap, my }, c = cc }, { v = {  0,  my }, c = ec },
-    { v = { mx + gap, my }, c = cc }, { v = { vsx, my }, c = ec },
-  })
+  gl.BeginEnd(GL_LINES, function()
+    glColor(cc); glVertex(mx, my - gap); glColor(ec); glVertex(mx,   0)
+    glColor(cc); glVertex(mx, my + gap); glColor(ec); glVertex(mx, vsy)
+    glColor(cc); glVertex(mx - gap, my); glColor(ec); glVertex(0,   my)
+    glColor(cc); glVertex(mx + gap, my); glColor(ec); glVertex(vsx, my)
+  end)
 end
+
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------

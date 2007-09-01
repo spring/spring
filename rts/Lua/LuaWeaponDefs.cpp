@@ -297,7 +297,6 @@ static int Pairs(lua_State* L)
 
 static int DamagesArray(lua_State* L, const void* data)
 {
-	// FIXME -- off by one?
 	const DamageArray& d = *((const DamageArray*)data);
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "impulseFactor",      d.impulseFactor);
@@ -306,14 +305,13 @@ static int DamagesArray(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "craterBoost",        d.craterBoost);
 	HSTR_PUSH_NUMBER(L, "paralyzeDamageTime", d.paralyzeDamageTime);
 
-	HSTR_PUSH(L, "damages");
-	lua_newtable(L);
-	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
-	const int typeCount = (int)typeList.size();
+	// damage values
+	const int typeCount = damageArrayHandler->GetNumTypes();
 	for (int i = 0; i < typeCount; i++) {
-		LuaPushNamedNumber(L, typeList[i].c_str(), d[i]);
+		lua_pushnumber(L, i);
+		lua_pushnumber(L, d[i]);
+		lua_rawset(L, -3);
 	}
-	lua_rawset(L, -3);
 
 	return 1;
 }

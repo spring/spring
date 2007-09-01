@@ -17,6 +17,7 @@
 CCamera* camera;
 CCamera* cam2;
 
+unsigned int CCamera::billboardList = 0;
 
 CCamera::CCamera()
 {
@@ -41,6 +42,10 @@ CCamera::CCamera()
 	billboard[3]  = billboard[7]  = billboard[11] = 0.0;
 	billboard[12] = billboard[13] = billboard[14] = 0.0;
 	billboard[15] = 1.0;
+
+	if (billboardList == 0) {
+		billboardList = glGenLists(1);
+	}
 }
 
 
@@ -218,6 +223,10 @@ void CCamera::Update(bool freeze)
 	billboard[8]  = modelview[2];
 	billboard[9]  = modelview[6];
 	billboard[10] = modelview[10];
+
+	glNewList(billboardList, GL_COMPILE);
+	glMultMatrixd(billboard);
+	glEndList();
 	
 	viewport[0] = 0;
 	viewport[1] = 0;

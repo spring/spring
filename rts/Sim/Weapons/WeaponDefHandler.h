@@ -24,8 +24,8 @@
 #define WEAPON_RENDERTYPE_PLASMA 3
 #define WEAPON_RENDERTYPE_FIREBALL 4
 
+class LuaTable;
 class CColorMap;
-class TdfParser;
 class CExplosionGenerator;
 struct AtlasedTexture;
 
@@ -38,6 +38,7 @@ struct WeaponDef
 	std::string name;
 	std::string type;
 	std::string description;
+	std::string filename;
 
 	GuiSoundSet firesound;
 	GuiSoundSet soundhit;
@@ -199,6 +200,8 @@ struct WeaponDef
 
 	bool canAttackGround;
 
+	float cameraShake;
+
 	float dynDamageExp;
 	float dynDamageMin;
 	float dynDamageRange;
@@ -209,25 +212,27 @@ struct WeaponDef
 class CExplosionGeneratorHandler;
 
 
-class CWeaponDefHandler
-{
-public:
-	WeaponDef *weaponDefs;
-	std::map<std::string, int> weaponID;
-	int numWeaponDefs;
+class CWeaponDefHandler {
+	public:
+		CWeaponDefHandler();
+		~CWeaponDefHandler();
 
-	CWeaponDefHandler();
-	~CWeaponDefHandler();
+		const WeaponDef* GetWeapon(const std::string weaponname);
 
-	const WeaponDef* GetWeapon(const std::string weaponname);
+		void LoadSound(const LuaTable&, GuiSoundSet&, const std::string& name);
 
-	void LoadSound(TdfParser*, GuiSoundSet&, int, std::string);
+		DamageArray DynamicDamages(DamageArray damages, float3 startPos,
+					   float3 curPos, float range, float exp,
+					   float damageMin, bool inverted);
 
-	DamageArray DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted);
+	public:
+		WeaponDef *weaponDefs;
+		std::map<std::string, int> weaponID;
+		int numWeaponDefs;
 
-private:
-	void ParseTAWeapon(TdfParser *sunparser, std::string weaponname, int id);
-	float3 hs2rgb(float h, float s);
+	private:
+		void ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd);
+		float3 hs2rgb(float h, float s);
 };
 
 
