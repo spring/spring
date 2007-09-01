@@ -555,7 +555,6 @@ int CLuaShaders::GetActiveUniforms(lua_State* L)
 	lua_newtable(L);
 
 	for (GLint i = 0; i < uniformCount; i++) {
-		GLsizei bufSize;
 		GLsizei length;
 		GLint size;
 		GLenum type;

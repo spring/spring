@@ -1,15 +1,15 @@
 #include "StdAfx.h"
-#include "ArchiveScanner.h"
-#include "ArchiveFactory.h"
 #include <algorithm>
-#include "TdfParser.h"
-#include "Rendering/GL/myGL.h"
-#include "FileHandler.h"
-#include "Platform/FileSystem.h"
-#include "LogOutput.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "ArchiveScanner.h"
+#include "ArchiveFactory.h"
+#include "CRC.h"
+#include "FileHandler.h"
+#include "LogOutput.h"
+#include "Platform/FileSystem.h"
+#include "Rendering/GL/myGL.h"
+#include "TdfParser.h"
 #include "mmgr.h"
 
 // fix for windows
@@ -33,7 +33,6 @@ CArchiveScanner* archiveScanner = NULL;
 CArchiveScanner::CArchiveScanner(void) :
 	isDirty(false)
 {
-	GenerateCRCTable();
 }
 
 CArchiveScanner::~CArchiveScanner(void)
@@ -254,68 +253,11 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	}
 }
 
-/* Code taken from http://paul.rutgers.edu/~rhoads/Code/crc-32b.c */
-
-void CArchiveScanner::GenerateCRCTable()
-{
-    unsigned int crc, poly;
-    int	i, j;
-
-    poly = 0xEDB88320L;
-    for (i = 0; i < 256; i++)
-        {
-        crc = i;
-        for (j = 8; j > 0; j--)
-            {
-            if (crc & 1)
-                crc = (crc >> 1) ^ poly;
-            else
-                crc >>= 1;
-            }
-        crcTable[i] = crc;
-        }
-}
-
-/** Update CRC over the data in buf. Use this to CRC filenames. */
-void CArchiveScanner::GetDataCRC(const string& buf, unsigned int& crc)
-{
-	crc ^= 0xFFFFFFFF;
-	size_t bytes = buf.size();
-	for (size_t i = 0; i < bytes; ++i)
-		crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];
-	crc ^= 0xFFFFFFFF;
-}
-
-/** Update CRC over the data in the specified file. (Can be used to get a
-single CRC of multiple files.) Returns true on success, false if file could
-not be opened. */
-bool CArchiveScanner::GetCRC(const string& filename, unsigned int& crc)
-{
-	FILE* fp = fopen(filename.c_str(), "rb");
-	if (!fp)
-		return false;
-
-	crc ^= 0xFFFFFFFF;
-	unsigned char* buf = SAFE_NEW unsigned char[100000];
-	size_t bytes;
-	do {
-		bytes = fread((void*)buf, 1, 100000, fp);
-		for (size_t i = 0; i < bytes; ++i)
-			crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];
-	} while (bytes == 100000);
-
-	delete[] buf;
-	fclose(fp);
-
-	crc ^= 0xFFFFFFFF;
-	return true;
-}
-
 /** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
 unsigned int CArchiveScanner::GetCRC(const string& filename)
 {
 	struct stat info;
-	unsigned int crc = 0;
+	unsigned int crc;
 
 	stat(filename.c_str(), &info);
 	if (S_ISDIR(info.st_mode)) {
@@ -324,8 +266,10 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 
 	} else {
 
-		if (!GetCRC(filename, crc))
+		CRC c;
+		if (!c.UpdateFile(filename))
 			return 0;
+		crc = c.GetCRC();
 
 	}
 
@@ -340,7 +284,7 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 /** Get combined CRC of all files and filenames in a directory (recursively). */
 unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
 {
-	unsigned int crc = 0;
+	CRC crc;
 
 	// recurse but don't include directories
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE);
@@ -355,16 +299,10 @@ unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
 		if (path.find("/.") != string::npos)
 			continue;
 
-		GetDataCRC(path, crc); // CRC the filename
-		GetCRC(path, crc);     // CRC the contents
+		crc.UpdateData(path); // CRC the filename
+		crc.UpdateFile(path); // CRC the contents
 	}
-
-	// A value of 0 is used to indicate no crc.. so never return that
-	// Shouldn't happen all that often
-	if (crc == 0)
-		return 4711;
-	else
-		return crc;
+	return crc.GetCRC();
 }
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)

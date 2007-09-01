@@ -47,17 +47,17 @@ CPlayer::CPlayer()
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	currentStats=SAFE_NEW Statistics;
-	memset(currentStats,0,sizeof(Statistics));
+	currentStats = SAFE_NEW Statistics;
+	memset(currentStats, 0, sizeof(Statistics));
 	POP_CODE_MODE;
 
-	active=false;
-	playerName="Player";
-	spectator=false;
-	team=0;
-	readyToStart=false;
-	cpuUsage=0;
-	ping=0;
+	active = false;
+	playerName = "Player";
+	spectator = false;
+	team = 0;
+	readyToStart = false;
+	cpuUsage = 0;
+	ping = 0;
 	rank=-1;
 
 

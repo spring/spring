@@ -260,6 +260,16 @@ int CNetProtocol::SendRandSeed(uint randSeed)
 	return SendData<uint>(NETMSG_RANDSEED, randSeed);
 }
 
+//  NETMSG_GAMEID           = 9,  // char gameID[16];
+
+int CNetProtocol::SendGameID(const uchar* buf)
+{
+	uchar data[17];
+	data[0] = NETMSG_GAMEID;
+	memcpy(&data[1], buf, 16);
+	return SendData(data, 17);
+}
+
 //  NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 
 int CNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
@@ -530,6 +540,9 @@ int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) 
 			break;
 		case NETMSG_STARTPOS:
 			length = 15;
+			break;
+		case NETMSG_GAMEID:
+			length = 17;
 			break;
 		case NETMSG_PLAYERSTAT:
 			length = sizeof(CPlayer::Statistics) + 2;

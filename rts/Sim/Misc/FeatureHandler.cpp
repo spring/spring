@@ -548,8 +548,9 @@ void CFeatureHandler::DrawShadowPass()
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 }
 
-struct CFeatureDrawer : CReadMap::IQuadDrawer
+class CFeatureDrawer : public CReadMap::IQuadDrawer
 {
+public:
 	void DrawQuad (int x,int y);
 
 	CFeatureHandler *fh;

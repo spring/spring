@@ -4,8 +4,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CCraft;
 #include <string>
+#include "Platform/byteorder.h"
 
 #ifdef DIRECT_CONTROL_ALLOWED
 class CPlayer;
@@ -46,14 +46,26 @@ public:
 	float cpuUsage;
 	int ping;
 
-	struct Statistics{
+	struct Statistics {
 		CR_DECLARE_STRUCT(Statistics);
-		int mousePixels;			//how many pixels the mouse has traversed in total
+		/// how many pixels the mouse has traversed in total
+		int mousePixels;
 		int mouseClicks;
 		int keyPresses;
 
 		int numCommands;
-		int unitCommands;			//total amount of units affected by commands (divide by numCommands for average units/command)
+		/// total amount of units affected by commands
+		/// (divide by numCommands for average units/command)
+		int unitCommands;
+
+		/// Change structure from host endian to little endian or vice versa.
+		void swab() {
+			mousePixels = swabdword(mousePixels);
+			mouseClicks = swabdword(mouseClicks);
+			keyPresses = swabdword(keyPresses);
+			numCommands = swabdword(numCommands);
+			unitCommands = swabdword(unitCommands);
+		}
 	};
 
 	Statistics* currentStats;

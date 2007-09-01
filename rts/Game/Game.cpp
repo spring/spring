@@ -855,7 +855,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		static bool canUse = unitDrawer->advShading;
 		if (canUse) {
 			if (!action.extra.empty()) {
-				unitDrawer->advShading = atoi(action.extra.c_str());
+				unitDrawer->advShading = !!atoi(action.extra.c_str());
 			} else {
 				unitDrawer->advShading = !unitDrawer->advShading;
 			}
@@ -2591,6 +2591,37 @@ bool CGame::ClientReadNet()
 				globalQuit = true;
 			} else {
 				SAFE_NEW CEndGameBox();
+				CDemoRecorder* record = net->GetDemoRecorder();
+				if (record != NULL) {
+					// Write CPlayer::Statistics and CTeam::Statistics to demo
+					int numPlayers;
+					// FIXME: ugh, there should be a better way to figure out number of players ...
+					if (gameSetup != NULL) {
+						numPlayers = gameSetup->numPlayers;
+					} else {
+						numPlayers = 0;
+						while (gs->players[numPlayers]->currentStats->mousePixels != 0)
+							++numPlayers;
+					}
+					int numTeams = gs->activeAllyTeams;
+					if (gs->useLuaGaia)
+						--numTeams;
+					// Figure out who won the game.
+					int winner = -1;
+					for (int i = 0; i < numTeams; ++i) {
+						if (!gs->Team(i)->isDead) {
+							winner = gs->AllyTeam(i);
+							break;
+						}
+					}
+					// Finally pass it on to the CDemoRecorder.
+					record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+					record->InitializeStats(numPlayers, numTeams, winner);
+					for (int i = 0; i < numPlayers; ++i)
+						record->SetPlayerStats(i, *gs->players[i]->currentStats);
+					for (int i = 0; i < numTeams; ++i)
+						record->SetTeamStats(i, gs->Team(i)->statHistory);
+				}
 			}
 			lastLength=1;
 			ENTER_SYNCED;
@@ -2613,7 +2644,12 @@ bool CGame::ClientReadNet()
 				lastLength=sizeof(CPlayer::Statistics)+2;
 				break;
 			}
-			*gs->players[player]->currentStats=*(CPlayer::Statistics*)&inbuf[inbufpos+2];
+			*gs->players[player]->currentStats = *(CPlayer::Statistics*)&inbuf[inbufpos+2];
+			if (gameOver) {
+				CDemoRecorder* record = net->GetDemoRecorder();
+				if (record != NULL)
+					record->SetPlayerStats(player, *gs->players[player]->currentStats);
+			}
 			lastLength=sizeof(CPlayer::Statistics)+2;
 			break;}
 
@@ -2744,8 +2780,21 @@ bool CGame::ClientReadNet()
 			break;}
 
 		case NETMSG_RANDSEED:
-			gs->randSeed=(*((unsigned int*)&inbuf[1]));
-			lastLength=5;
+			gs->randSeed = (*((unsigned int*)&inbuf[inbufpos+1]));
+			lastLength = 5;
+			break;
+
+		case NETMSG_GAMEID:
+			{
+				unsigned char* p = &inbuf[inbufpos+1];
+				CDemoRecorder* record = net->GetDemoRecorder();
+				if (record != NULL)
+					record->SetGameID(p);
+				logOutput.Print("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+					p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
+					p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
+				lastLength = 17;
+			}
 			break;
 
 		case NETMSG_NEWFRAME:

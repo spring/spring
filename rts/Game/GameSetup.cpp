@@ -331,7 +331,6 @@ void CGameSetup::Draw()
 		}
 	}
 
-	int x1, y1, x2, y2;
 	CStartPosSelecter* selector = CStartPosSelecter::selector;
 	bool ready = (selector == NULL);
 	if (luaUI && luaUI->GameSetup(state, ready, playerStates)) {

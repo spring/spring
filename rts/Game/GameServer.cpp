@@ -1,18 +1,18 @@
 #include "StdAfx.h"
-#include "GameServer.h"
-#include "NetProtocol.h"
-#include "Player.h"
-#include "Team.h"
-#include "LogOutput.h"
-#include "Game.h"
-#include "GameSetup.h"
-#include "StartScripts/ScriptHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "Platform/errorhandler.h"
-#include "Platform/ConfigHandler.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
+#include "FileSystem/ArchiveScanner.h"
+#include "Game.h"
+#include "GameServer.h"
+#include "GameSetup.h"
+#include "NetProtocol.h"
+#include "LogOutput.h"
+#include "Platform/errorhandler.h"
+#include "Platform/ConfigHandler.h"
+#include "Player.h"
+#include "Team.h"
+#include "StartScripts/ScriptHandler.h"
 
 #define SYNCCHECK_TIMEOUT 300 //frames
 #define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
@@ -312,6 +312,13 @@ bool CGameServer::ServerReadNet()
 					hostif->SendPlayerLeft(a, 0);
 				}
 			}
+
+			// Collect some entropy for the game ID
+			if (serverframenum == 0) {
+				unsigned int ticks = SDL_GetTicks();
+				entropy.UpdateData((const unsigned char*)&ticks, sizeof(ticks));
+				entropy.UpdateData(inbuf, inbuflength);
+			}
 		}
 
 		// dont bother handling anything if we are just sending a demo to
@@ -334,6 +341,11 @@ bool CGameServer::ServerReadNet()
 			case NETMSG_RANDSEED:
 				lastLength=5;
 				serverNet->SendRandSeed(inbuf[inbufpos+1]); //forward data
+				break;
+
+			case NETMSG_GAMEID:
+				lastLength = 17;
+				serverNet->SendGameID(&inbuf[inbufpos+1]); //forward data
 				break;
 
 			case NETMSG_NEWFRAME:
@@ -613,6 +625,52 @@ bool CGameServer::ServerReadNet()
 	return true;
 }
 
+// FIXME: move to separate file->make utility class of it and use it in GlobalStuff
+class CRandomNumberGenerator
+{
+public:
+	CRandomNumberGenerator() : randSeed(0) {}
+	void Seed(unsigned seed) { randSeed = seed; }
+	unsigned int operator()() {
+		randSeed = (randSeed * 214013L + 2531011L);
+		return randSeed & 0x7FFF;
+	}
+private:
+	unsigned randSeed;
+};
+
+/** @brief Generate a unique game identifier and sent it to all clients. */
+void CGameServer::GenerateAndSendGameID()
+{
+	CRandomNumberGenerator prand;
+	prand.Seed(SDL_GetTicks());
+
+	// This is where we'll store the ID temporarily.
+	union {
+		unsigned char charArray[16];
+		unsigned int intArray[4];
+	} gameID;
+
+	// First and second dword are time based (current time and load time).
+	gameID.intArray[0] = (unsigned) time(NULL);
+	for (int i = 4; i < 12; ++i)
+		gameID.charArray[i] = prand();
+
+	// Third dword is CRC of gameSetupText (if there is a gameSetup)
+	// or pseudo random bytes (if there is no gameSetup)
+	if (gameSetup != NULL) {
+		CRC crc;
+		crc.UpdateData((const unsigned char*)gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
+		gameID.intArray[2] = crc.GetCRC();
+	}
+
+	// Fourth dword is CRC of the network buffer, which should be pretty random.
+	// (depends on start positions, chat messages, user input, etc.)
+	gameID.intArray[3] = entropy.GetCRC();
+
+	serverNet->SendGameID(gameID.charArray);
+}
+
 void CGameServer::StartGame()
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
@@ -621,6 +679,8 @@ void CGameServer::StartGame()
 	// This should probably work now that I fixed a bug (netbuf->inbuf)
 	// in Game.cpp, in the code receiving NETMSG_RANDSEED. --tvo
 	//serverNet->SendRandSeed(gs->randSeed);
+
+	GenerateAndSendGameID();
 
 	for(unsigned a=0;a<gs->activePlayers;a++){
 		if(!gs->players[a]->active)

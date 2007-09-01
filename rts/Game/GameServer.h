@@ -8,8 +8,8 @@
 #include <ctime>
 #include <string>
 
-#include <Sim/Units/UnitHandler.h> // for CChecksum (should be moved somewhere else tho)
-#include <System/NetProtocol.h>
+#include "FileSystem/CRC.h"
+#include "System/NetProtocol.h"
 #include "System/AutohostInterface.h"
 
 
@@ -69,6 +69,9 @@ public:
 private:
 	CNetProtocol* serverNet;
 	AutohostInterface* hostif;
+	CRC entropy;
+
+	void GenerateAndSendGameID();
 };
 
 extern CGameServer* gameServer;

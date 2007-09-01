@@ -659,8 +659,6 @@ int LuaUnitRendering::GetModelPieceInfo(lua_State* L)
 	LocalS3DO& lp = localModel->pieces[piece];
 
 	float3 mins, maxs, offset;
-	bool isEmpty;
-	int childCount;
 
 	if (lp.originals3o) {
 		const SS3O& op = *lp.originals3o;
