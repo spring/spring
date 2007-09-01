@@ -185,6 +185,8 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	fd->myName = name;
 
+	fd->filename = fdTable.GetString("filename", "unknown");
+
 	fd->description = fdTable.GetString("description", "");
 
 	fd->blocking     = fdTable.GetBool("blocking",       true);
