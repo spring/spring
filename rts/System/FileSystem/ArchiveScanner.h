@@ -55,8 +55,8 @@ public:
 	void CheckMap(const string& mapName, unsigned checksum);
 	std::string ModNameToModArchive(const std::string& s) const;
 	std::string ModArchiveToModName(const std::string& s) const;
-	const ModData* ModNameToModData(const std::string& s) const;
-	const ModData* ModArchiveToModData(const std::string& s) const;
+	ModData ModNameToModData(const std::string& s) const;
+	ModData ModArchiveToModData(const std::string& s) const;
 
 protected:
 	struct ArchiveInfo {
