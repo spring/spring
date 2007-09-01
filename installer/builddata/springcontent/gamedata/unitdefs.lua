@@ -30,7 +30,7 @@ local system = VFS.Include('gamedata/system.lua')
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  Run a post-processing script if one exists
+--  Run a pre-processing script if one exists
 --
 
 if (VFS.FileExists(preProcFile)) then
