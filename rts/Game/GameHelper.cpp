@@ -202,8 +202,8 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit, int collisionFlags)
 {
 	float groundLength=ground->LineGroundCol(start,start+dir*length);
-	const bool ignoreAllies = collisionFlags & COLLISION_NOFRIENDLY;
-	const bool ignoreFeatures = collisionFlags & COLLISION_NOFEATURE;
+	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
+	const bool ignoreFeatures = !!(collisionFlags & COLLISION_NOFEATURE);
 
 //	logOutput.Print("gl %f",groundLength);
 	if(length>groundLength && groundLength>0)

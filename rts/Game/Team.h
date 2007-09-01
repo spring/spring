@@ -9,9 +9,8 @@
 #include <set>
 #include <map>
 #include <list>
+#include "Platform/byteorder.h"
 #include "Sim/Units/UnitSet.h"
-
-using namespace std;
 
 class CTeam
 {
@@ -102,6 +101,29 @@ public:
 		int unitsCaptured;				//units captured from enemy by us
 		int unitsOutCaptured;			//units captured from us by enemy
 		int unitsKilled;	//how many enemy units have been killed by this teams units
+
+		/// Change structure from host endian to little endian or vice versa.
+		void swab() {
+			metalUsed = swabfloat(metalUsed);
+			energyUsed = swabfloat(energyUsed);
+			metalProduced = swabfloat(metalProduced);
+			energyProduced = swabfloat(energyProduced);
+			metalExcess = swabfloat(metalExcess);
+			energyExcess = swabfloat(energyExcess);
+			metalReceived = swabfloat(metalReceived);
+			energyReceived = swabfloat(energyReceived);
+			metalSent = swabfloat(metalSent);
+			energySent = swabfloat(energySent);
+			damageDealt = swabfloat(damageDealt);
+			damageReceived = swabfloat(damageReceived);
+			unitsProduced = swabdword(unitsProduced);
+			unitsDied = swabdword(unitsDied);
+			unitsReceived = swabdword(unitsReceived);
+			unitsSent = swabdword(unitsSent);
+			unitsCaptured = swabdword(unitsCaptured);
+			unitsOutCaptured = swabdword(unitsOutCaptured);
+			unitsKilled = swabdword(unitsKilled);
+		}
 	};
 	Statistics currentStats;
 	static const int statsPeriod = 15; // every 15th second

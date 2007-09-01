@@ -28,6 +28,7 @@ enum NETMSG {
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
 	NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
+	NETMSG_GAMEID           = 9,  // uchar gameID[16];
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -115,6 +116,7 @@ public:
 	int SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	int SendChat(uchar myPlayerNum, const std::string& message);
 	int SendRandSeed(uint randSeed);
+	int SendGameID(const uchar* buf);
 	int SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	int SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	int SendPause(uchar myPlayerNum, uchar bPaused);
@@ -146,6 +148,8 @@ public:
 
 	int GetMessageLength(const unsigned char* inbuf, int inbuflength) const;
 	int ReadAhead(const unsigned char* inbuf, int inbuflength, int* que = NULL) const;
+
+	CDemoRecorder* GetDemoRecorder() const { return record; }
 
 private:
 	CDemoRecorder* record;
