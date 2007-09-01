@@ -336,7 +336,6 @@ int PackType(lua_State* L)
 	vector<T> vals;
 
 	if (lua_istable(L, 1)) {
-		const int table = 1;
 		for (int i = 1;
 		     lua_rawgeti(L, 1, i), lua_isnumber(L, -1);
 		     lua_pop(L, 1), i++) {
