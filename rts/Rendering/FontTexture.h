@@ -20,6 +20,7 @@ namespace FontTexture
   void Reset();
   bool Execute();
 
+  bool SetInData        (const std::string& data);
   bool SetInFileName    (const std::string& inFile);
   bool SetOutBaseName   (const std::string& baseName);
   bool SetFontHeight    (unsigned int height);

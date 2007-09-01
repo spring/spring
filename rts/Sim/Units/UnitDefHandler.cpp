@@ -244,9 +244,17 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 {
 	UnitDef& ud = unitDefs[id];
 
-	ud.humanName = udTable.GetString("name", ud.name);
+	ud.humanName = udTable.GetString("name", "");
+	if (ud.humanName.empty()) {
+		const string errmsg = "missing 'name' parameter for the" + unitName + " unitdef";
+		throw content_error(errmsg);
+	}
+	ud.filename  = udTable.GetString("filename", "");
+	if (ud.filename.empty()) {
+		const string errmsg = "missing 'filename' parameter for the" + unitName + " unitdef";
+		throw content_error(errmsg);
+	}
 	ud.tooltip   = udTable.GetString("description", ud.name);
-	ud.filename  = udTable.GetString("filename", "unknown");
 
 	const string decoy = udTable.GetString("decoyFor", "");
 	if (!decoy.empty()) {

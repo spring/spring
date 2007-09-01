@@ -39,6 +39,7 @@ typedef unsigned int   u32;
 /*******************************************************************************/
 /*******************************************************************************/
 
+static string inputData = "";
 static string inputFile = "";
 static string outputFileName = "";
 
@@ -96,6 +97,13 @@ class Glyph {
 
 /*******************************************************************************/
 /*******************************************************************************/
+
+bool FontTexture::SetInData(const std::string& inData)
+{
+  inputData = inData;
+  return true;
+}
+
 
 bool FontTexture::SetInFileName(const std::string& inFile)
 {
@@ -183,6 +191,7 @@ bool FontTexture::SetDebugLevel(unsigned int _debugLevel)
 
 void FontTexture::Reset()
 {
+  inputData = "";
   inputFile = "";
   outputFileName = "";
   minChar = 32;
@@ -225,7 +234,14 @@ bool FontTexture::Execute()
     return 1;
   }
 
-  error = FT_New_Face(library, inputFile.c_str(), 0, &face);
+  if (inputData.empty()) {
+    error = FT_New_Face(library, inputFile.c_str(), 0, &face);
+  } else {
+    error = FT_New_Memory_Face(library,
+                               (const FT_Byte*)inputData.c_str(),
+                               inputData.size(), 0, &face);
+  }
+  
   if (error == FT_Err_Unknown_File_Format) {
     printf("bad font file type\n");
     FT_Done_FreeType(library);
@@ -342,6 +358,10 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   }
 
   FILE* specFile = fopen(specsName.c_str(), "wt");
+  if (specFile == NULL) {
+    perror("fopen");
+    return false;
+  }
 
   u32 yStep;
   if (FT_IS_SCALABLE(face)) {
@@ -374,6 +394,7 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
   ilGenImages(1, &img);
   if (img == 0) {
     printf("ERROR: ilGenImages() == 0\n");
+    return false;
   }
   ilBindImage(img);
 
@@ -431,7 +452,7 @@ static bool ProcessFace(FT_Face& face, const string& filename, u32 fontHeight)
 
   ilDeleteImages(1, &img);
 
-  return 0;
+  return true;
 }
 
 

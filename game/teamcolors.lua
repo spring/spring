@@ -18,7 +18,7 @@
 --  Configuration
 --
 
-local disabled = true       --<< *** NOTE *** >>--   
+local disabled = true       --<<**  NOTE  **>>--   
 
 local debug = false
 
