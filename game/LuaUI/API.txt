@@ -899,11 +899,9 @@ GetTeamInfo(number teamID) ->
         number leader,
         boolean active,
         boolean isDead,
+        boolean isAiTeam,
         string  "side",
-        number  colorRed,
-        number  colorGreen,
-        number  colorBlue,
-        number  colorAlpha
+        number allyTeam
 
 GetTeamResources(number teamID, string "metal" | "energy") ->
   nil | number currentLevel,

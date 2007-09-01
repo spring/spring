@@ -11,6 +11,26 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+--
+-- 0.75b2 compatibilty
+--
+if (Spring.GetTeamColor == nil) then
+  local getTeamInfo = Spring.GetTeamInfo
+  Spring.GetTeamColor = function(teamID)
+    local _,_,_,_,_,_,r,g,b,a = getTeamInfo(teamID)
+    return r, g, b, a
+  end
+  Spring.GetTeamInfo = function(teamID)
+    local id, leader, active, isDead, isAi, side,
+          r, g, b, a, allyTeam = getTeamInfo(teamID)
+    return id, leader, active, isDead, isAi, side, allyTeam
+  end
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 Spring.SendCommands({"ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt"})
 
 VFS.Include(LUAUI_DIRNAME .. 'utils.lua', utilFile)
@@ -22,7 +42,6 @@ include("debug.lua")
 include("fonts.lua")
 include("layout.lua")   -- contains a simple LayoutButtons()
 include("widgets.lua")  -- the widget handler
-
 
 --------------------------------------------------------------------------------
 --

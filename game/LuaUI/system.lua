@@ -47,7 +47,7 @@ if (System == nil) then
     debug = debug,
     table = table,
     string = string,
-    packange = package,
+    package = package,
     coroutine = coroutine,
     
     --  
@@ -78,7 +78,6 @@ if (System == nil) then
     loadstring     = loadstring,
     require        = require,
 
-    
     getmetatable   = getmetatable,
     setmetatable   = setmetatable,
 

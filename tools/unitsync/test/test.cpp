@@ -6,9 +6,9 @@ file=test.cpp
 start=`grep -n '^#END' $file | grep -o '[^:]*'`
 start=`expr $start + 1`
 
-tail -n +$start $file > test.tmp.cpp
+tail -n +$start $file > test.tmp.cxx
 
-g++ -I../../../rts/System test.tmp.cpp ../../../game/unitsync.so
+g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
 ./a.out Castles.smf BA561.sd7
 

@@ -485,7 +485,7 @@ bool CLuaHandleSynced::LightCopyTable(int dstIndex, int srcIndex)
 	}
 
 	for (lua_pushnil(L); lua_next(L, srcIndex) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) { // key must be a string
+		if (!lua_israwstring(L, -2)) { // key must be a string
 			continue;
 		}
 		if (lua_isstring(L, -1)   ||
@@ -542,13 +542,13 @@ bool CLuaHandleSynced::LoadUnsyncedCode(const string& code, const string& debug)
 
 string CLuaHandleSynced::LoadFile(const string& filename) const
 {
-	CFileHandler::VFSmode vfsMode;
+	string vfsModes;
 	if (devMode) {
-		vfsMode = CFileHandler::AnyFS;
+		vfsModes = SPRING_VFS_RAW_FIRST;
 	} else {
-		vfsMode = CFileHandler::OnlyArchiveFS;
+		vfsModes = SPRING_VFS_ZIP;
 	}
-	CFileHandler f(filename, vfsMode);
+	CFileHandler f(filename, vfsModes);
 	string code;
 	if (!f.LoadStringData(code)) {
 		code.clear();
@@ -945,49 +945,6 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 /******************************************************************************/
 /******************************************************************************/
 
-static void PushCurrentFunc(lua_State* L, const char* caller)
-{
-	// get the current function
-	lua_Debug ar;
-	if (lua_getstack(L, 1, &ar) == 0) {
-		luaL_error(L, "%s() lua_getstack() error", caller);
-	}
-	if (lua_getinfo(L, "f", &ar) == 0) {
-		luaL_error(L, "%s() lua_getinfo() error", caller);
-	}
-	if (!lua_isfunction(L, -1)) {
-		luaL_error(L, "%s() invalid current function", caller);
-	}
-}
-
-
-static void PushFunctionEnv(lua_State* L, const char* caller, int funcIndex)
-{
-	lua_getfenv(L, funcIndex);
-	lua_pushliteral(L, "__fenv");
-	lua_rawget(L, -2);
-	if (lua_isnil(L, -1)) {
-		lua_pop(L, 1); // there is no fenv proxy
-	} else {
-		lua_remove(L, -2); // remove the orig table, leave the proxy
-	}
-
-	if (!lua_istable(L, -1)) {
-		luaL_error(L, "%s() invalid fenv", caller);
-	}
-}
-
-
-static void PushCurrentFuncEnv(lua_State* L, const char* caller)
-{
-	PushCurrentFunc(L, caller);
-	PushFunctionEnv(L, caller, -1);
-	lua_remove(L, -2); // remove the function
-}
-
-
-/******************************************************************************/
-
 int CLuaHandleSynced::SyncedRandom(lua_State* L)
 {
 	const int args = lua_gettop(L);
@@ -1035,7 +992,7 @@ int CLuaHandleSynced::LoadStringData(lua_State* L)
 	if (lua_istable(L, 3)) {
 		lua_pushvalue(L, 3);
 	} else {
-		PushCurrentFuncEnv(L, __FUNCTION__);
+		LuaUtils::PushCurrentFuncEnv(L, __FUNCTION__);
 	}
 	if (lua_setfenv(L, -2) == 0) {
 		luaL_error(L, "loadstring(): error with setfenv");
@@ -1103,7 +1060,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	else if (lua_istable(L, 1)) {
 		const int table = 1;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (!lua_isstring(L, -2) || !lua_isnumber(L, -1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
 				continue;
 			}
 			const string key = lua_tostring(L, -2);

@@ -26,8 +26,35 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-if (not gl.CreateShader) then
-  Spring.Echo("Hardware is incompatible with Xray shader requirements")
+-- Automatically generated local definitions
+
+local GL_ONE                 = GL.ONE
+local GL_ONE_MINUS_SRC_ALPHA = GL.ONE_MINUS_SRC_ALPHA
+local GL_SRC_ALPHA           = GL.SRC_ALPHA
+local glBlending             = gl.Blending
+local glColor                = gl.Color
+local glCreateShader         = gl.CreateShader
+local glDeleteShader         = gl.DeleteShader
+local glDepthTest            = gl.DepthTest
+local glFeature              = gl.Feature
+local glGetShaderLog         = gl.GetShaderLog
+local glPolygonOffset        = gl.PolygonOffset
+local glSmoothing            = gl.Smoothing
+local glUnit                 = gl.Unit
+local glUseShader            = gl.UseShader
+local spEcho                 = Spring.Echo
+local spGetAllFeatures       = Spring.GetAllFeatures
+local spGetTeamColor         = Spring.GetTeamColor
+local spGetTeamList          = Spring.GetTeamList
+local spGetTeamUnits         = Spring.GetTeamUnits
+local spIsUnitVisible        = Spring.IsUnitVisible
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+if (not glCreateShader) then
+  spEcho("Hardware is incompatible with Xray shader requirements")
   return false
 end
 
@@ -45,7 +72,7 @@ local doFeatures = false
 local featureColor = { 1, 0, 1 }
 
 -- looks a lot nicer, esp. without FSAA  (but eats into the FPS too much)
-local smoothPolys = false
+local smoothPolys = glSmoothing and true
 
 
 --------------------------------------------------------------------------------
@@ -55,13 +82,13 @@ local shader
 
 
 function widget:Shutdown()
-  gl.DeleteShader(shader)
+  glDeleteShader(shader)
 end
 
 
 function widget:Initialize()
 
-  shader = gl.CreateShader({
+  shader = glCreateShader({
 
     uniform = {
       edgeExponent = edgeExponent,
@@ -109,27 +136,11 @@ function widget:Initialize()
   })
 
   if (shader == nil) then
-    Spring.Echo(gl.GetShaderLog())
-    Spring.Echo("Xray shader compilation failed.")
+    spEcho(glGetShaderLog())
+    spEcho("Xray shader compilation failed.")
     widgetHandler:RemoveWidget()
   end
 end
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---
---  speed ups
---
-
-local GetTeamList    = Spring.GetTeamList
-local GetTeamUnits   = Spring.GetTeamUnits
-local GetAllFeatures = Spring.GetAllFeatures
-local IsUnitVisible  = Spring.IsUnitVisible
-
-local glColor   = gl.Color
-local glUnit    = gl.Unit
-local glFeature = gl.Feature
 
 
 --------------------------------------------------------------------------------
@@ -146,7 +157,7 @@ local function SetTeamColor(teamID)
     glColor(color)
     return
   end
-  local _,_,_,_,_,_,r,g,b = Spring.GetTeamInfo(teamID)
+  local r,g,b = spGetTeamColor(teamID)
   if (r and g and b) then
     color = { r, g, b }
     teamColors[teamID] = color
@@ -161,47 +172,47 @@ end
 
 function widget:DrawWorld()
   if (smoothPolys) then
-    gl.Smoothing(nil, nil, true)
+    glSmoothing(nil, nil, true)
   end
 
-  gl.Color(1, 1, 1, 1)
+  glColor(1, 1, 1, 1)
 
-  gl.UseShader(shader)
+  glUseShader(shader)
 
-  gl.DepthTest(true)
+  glDepthTest(true)
 
-  gl.Blending(GL.SRC_ALPHA, GL.ONE)
+  glBlending(GL_SRC_ALPHA, GL_ONE)
 
-  gl.PolygonOffset(-2, -2)
+  glPolygonOffset(-2, -2)
 
-  for _, teamID in ipairs(GetTeamList()) do
+  for _, teamID in ipairs(spGetTeamList()) do
     SetTeamColor(teamID)
-    for _, unitID in ipairs(GetTeamUnits(teamID)) do
-      if (IsUnitVisible(unitID)) then
+    for _, unitID in ipairs(spGetTeamUnits(teamID)) do
+      if (spIsUnitVisible(unitID)) then
         glUnit(unitID, true)
       end
     end
   end
 
   if (doFeatures) then
-    gl.Color(featureColor)
-    for _, featureID in ipairs(GetAllFeatures()) do
+    glColor(featureColor)
+    for _, featureID in ipairs(spGetAllFeatures()) do
       glFeature(featureID, true)
     end
   end
 
-  gl.PolygonOffset(false)
+  glPolygonOffset(false)
 
-  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+  glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-  gl.DepthTest(false)
+  glDepthTest(false)
 
-  gl.UseShader(0)
+  glUseShader(0)
 
-  gl.Color(1, 1, 1, 1)
+  glColor(1, 1, 1, 1)
 
   if (smoothPolys) then
-    gl.Smoothing(nil, nil, false)
+    glSmoothing(nil, nil, false)
   end
 end
               

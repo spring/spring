@@ -26,6 +26,18 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local glColor                 = gl.Color
+local glText                  = gl.Text
+local spGetCurrentTooltip     = Spring.GetCurrentTooltip
+local spGetSelectedUnitsCount = Spring.GetSelectedUnitsCount
+local spSendCommands          = Spring.SendCommands
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 include("colors.h.lua")
 
 
@@ -44,6 +56,7 @@ if (fh) then
   yStep     = fontHandler.GetFontYStep() + 2
 end
 
+local currentTooltip = ''
 
 --------------------------------------------------------------------------------
 
@@ -58,12 +71,38 @@ end
 --------------------------------------------------------------------------------
 
 function widget:Initialize()
-  Spring.SendCommands({"tooltip 0"})
+  spSendCommands({"tooltip 0"})
 end
 
 
 function widget:Shutdown()
-  Spring.SendCommands({"tooltip 1"})
+  spSendCommands({"tooltip 1"})
+end
+
+
+--------------------------------------------------------------------------------
+
+local magic = '\001'
+
+function widget:WorldTooltip(ttType, data1, data2, data3)
+--  do return end
+  if (ttType == 'unit') then
+    return magic .. 'unit #' .. data1
+  elseif (ttType == 'feature') then
+    return magic .. 'feature #' .. data1
+  elseif (ttType == 'ground') then
+    return magic .. string.format('ground @ %.1f %.1f %.1f',
+                                  data1, data2, data3)
+  elseif (ttType == 'selection') then
+    return magic .. 'selected ' .. spGetSelectedUnitsCount()
+  else
+    return 'WTF? ' .. '\'' .. tostring(ttType) .. '\''
+  end
+end
+
+
+if (true) then
+  widget.WorldTooltip = nil
 end
 
 
@@ -72,12 +111,17 @@ end
 function widget:DrawScreen()
   if (fh) then
     fh = fontHandler.UseFont(fontName)
-    gl.Color(1, 1, 1)
+    glColor(1, 1, 1)
   end
   local white = "\255\255\255\255"
   local bland = "\255\211\219\255"
   local mSub, eSub
-  local tooltip = Spring.GetCurrentTooltip()
+  local tooltip = spGetCurrentTooltip()
+
+  if (string.sub(tooltip, 1, #magic) == magic) then
+    tooltip = 'WORLD TOOLTIP:  ' .. tooltip
+  end
+
   tooltip, mSub = string.gsub(tooltip, bland.."Me",   "\255\1\255\255Me")
   tooltip, eSub = string.gsub(tooltip, bland.."En", "  \255\255\255\1En")
   tooltip = string.gsub(tooltip,
@@ -101,7 +145,7 @@ function widget:DrawScreen()
     if (fh) then
       fontHandler.Draw(line, gap, gap + (4 - i) * yStep)
     else
-      gl.Text(line, gap, gap + (4 - i) * yStep, fontSize, "o")
+      glText(line, gap, gap + (4 - i) * yStep, fontSize, "o")
     end
 
     i = i + 1

@@ -23,18 +23,54 @@ function widget:GetInfo()
   }
 end
 
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
---
---  Disabled for Spring versions older then 0.74b3 (no GetUnitDefDimensions())
---
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-function widget:Initialize()
-  if (Spring.GetUnitDefDimensions == nil) then
-    Spring.SendCommands({"echo Selection Buttons widget has been disabled"})
-    widgetHandler:RemoveWidget()
-  end
-end
+-- Automatically generated local definitions
+
+local GL_DEPTH_BUFFER_BIT      = GL.DEPTH_BUFFER_BIT
+local GL_FILL                  = GL.FILL
+local GL_FRONT_AND_BACK        = GL.FRONT_AND_BACK
+local GL_LINE                  = GL.LINE
+local GL_LINE_LOOP             = GL.LINE_LOOP
+local GL_ONE                   = GL.ONE
+local GL_ONE_MINUS_SRC_ALPHA   = GL.ONE_MINUS_SRC_ALPHA
+local GL_SRC_ALPHA             = GL.SRC_ALPHA
+local glBeginEnd               = gl.BeginEnd
+local glBlending               = gl.Blending
+local glClear                  = gl.Clear
+local glColor                  = gl.Color
+local glDepthMask              = gl.DepthMask
+local glDepthTest              = gl.DepthTest
+local glLighting               = gl.Lighting
+local glLineWidth              = gl.LineWidth
+local glMaterial               = gl.Material
+local glPolygonMode            = gl.PolygonMode
+local glPolygonOffset          = gl.PolygonOffset
+local glPopMatrix              = gl.PopMatrix
+local glPushMatrix             = gl.PushMatrix
+local glRect                   = gl.Rect
+local glRotate                 = gl.Rotate
+local glScale                  = gl.Scale
+local glScissor                = gl.Scissor
+local glTexRect                = gl.TexRect
+local glText                   = gl.Text
+local glTexture                = gl.Texture
+local glTranslate              = gl.Translate
+local glUnitDef                = gl.UnitDef
+local glUnitShape              = gl.UnitShape
+local glVertex                 = gl.Vertex
+local spGetModKeyState         = Spring.GetModKeyState
+local spGetMouseState          = Spring.GetMouseState
+local spGetMyTeamID            = Spring.GetMyTeamID
+local spGetSelectedUnits       = Spring.GetSelectedUnits
+local spGetSelectedUnitsCounts = Spring.GetSelectedUnitsCounts
+local spGetSelectedUnitsSorted = Spring.GetSelectedUnitsSorted
+local spGetTeamUnitsSorted     = Spring.GetTeamUnitsSorted
+local spGetUnitDefDimensions   = Spring.GetUnitDefDimensions
+local spSelectUnitArray        = Spring.SelectUnitArray
+local spSelectUnitMap          = Spring.SelectUnitMap
+local spSendCommands           = Spring.SendCommands
 
 
 -------------------------------------------------------------------------------
@@ -77,7 +113,7 @@ local rectMaxY = 0
 -------------------------------------------------------------------------------
 
 function widget:DrawScreen()
-  unitCounts = Spring.GetSelectedUnitsCounts()
+  unitCounts = spGetSelectedUnitsCounts()
   unitTypes = unitCounts.n;
   if (unitTypes <= 0) then
     countsTable = {}
@@ -89,9 +125,9 @@ function widget:DrawScreen()
   SetupDimensions(unitTypes)
 
   -- unit model rendering uses the depth-buffer
-  gl.Clear(GL.DEPTH_BUFFER_BIT)
+  glClear(GL_DEPTH_BUFFER_BIT)
 
-  local x,y,lb,mb,rb = Spring.GetMouseState()
+  local x,y,lb,mb,rb = spGetMouseState()
   local mouseIcon = MouseOverIcon(x, y)
 
   -- draw the buildpics
@@ -137,7 +173,7 @@ function CenterUnitDef(unitDefID)
     return
   end
   if (not ud.dimensions) then
-    ud.dimensions = Spring.GetUnitDefDimensions(unitDefID)
+    ud.dimensions = spGetUnitDefDimensions(unitDefID)
   end
   if (not ud.dimensions) then
     return
@@ -147,12 +183,6 @@ function CenterUnitDef(unitDefID)
   local xSize = (d.maxx - d.minx)
   local ySize = (d.maxy - d.miny)
   local zSize = (d.maxz - d.minz)
-  if (ud.name == 'corcomXXX') then -- FIXME
-    print(xSize, ySize, zSize)
-    print(d.minx, d.maxx)
-    print(d.miny, d.maxy)
-    print(d.minz, d.maxz)
-  end
 
   local hSize -- maximum horizontal dimension
   if (xSize > zSize) then hSize = xSize else hSize = zSize end
@@ -169,22 +199,22 @@ function CenterUnitDef(unitDefID)
     scale = (iconSizeY / ySize)
   end
   scale = scale * 0.8
-  gl.Scale(scale, scale, scale)
+  glScale(scale, scale, scale)
 
   -- translate to the unit's midpoint
   local xMid = 0.5 * (d.maxx + d.minx)
   local yMid = 0.5 * (d.maxy + d.miny)
   local zMid = 0.5 * (d.maxz + d.minz)
-  gl.Translate(-xMid, -yMid, -zMid)
+  glTranslate(-xMid, -yMid, -zMid)
 end
 
 
 local function SetupModelDrawing()
-  gl.DepthTest(true) 
-  gl.DepthMask(true)
-  gl.Lighting(true)
-  gl.Blending(false)
-  gl.Material({
+  glDepthTest(true) 
+  glDepthMask(true)
+  glLighting(true)
+  glBlending(false)
+  glMaterial({
     ambient  = { 0.2, 0.2, 0.2, 1.0 },
     diffuse  = { 1.0, 1.0, 1.0, 1.0 },
     emission = { 0.0, 0.0, 0.0, 1.0 },
@@ -195,23 +225,23 @@ end
 
 
 local function RevertModelDrawing()
-  gl.Blending(true)
-  gl.Lighting(false)
-  gl.DepthMask(false)
-  gl.DepthTest(false)
+  glBlending(true)
+  glLighting(false)
+  glDepthMask(false)
+  glDepthTest(false)
 end
 
 
 local function SetupBackgroundColor(ud)
   local alpha = 0.95
   if (ud.canFly) then
-    gl.Color(0.5, 0.5, 0.0, alpha)
+    glColor(0.5, 0.5, 0.0, alpha)
   elseif (ud.floater) then
-    gl.Color(0.0, 0.0, 0.5, alpha)
+    glColor(0.0, 0.0, 0.5, alpha)
   elseif (ud.builder) then
-    gl.Color(0.0, 0.5, 0.0, alpha)
+    glColor(0.0, 0.5, 0.0, alpha)
   else
-    gl.Color(.5, .5, .5, alpha)
+    glColor(.5, .5, .5, alpha)
   end
 end
 
@@ -229,61 +259,61 @@ function DrawUnitDefModel(unitDefID, iconPos, count)
   local ud = UnitDefs[unitDefID] 
 
   -- draw background quad
---  gl.Color(0.3, 0.3, 0.3, 1.0)
---  gl.Texture('#'..unitDefID)
-  gl.Texture(false)
+--  glColor(0.3, 0.3, 0.3, 1.0)
+--  glTexture('#'..unitDefID)
+  glTexture(false)
   SetupBackgroundColor(ud)
-  gl.Rect(xmin + 1, ymin + 1, xmax, ymax)
+  glRect(xmin + 1, ymin + 1, xmax, ymax)
 
 
   -- draw the 3D unit
 	SetupModelDrawing()
 
-  gl.PushMatrix()
-  gl.Scissor(xmin, ymin, xmax - xmin, ymax - ymin)
-  gl.Translate(xmid, ymid, 0)
-  gl.Rotate(15.0, 1, 0, 0)
+  glPushMatrix()
+  glScissor(xmin, ymin, xmax - xmin, ymax - ymin)
+  glTranslate(xmid, ymid, 0)
+  glRotate(15.0, 1, 0, 0)
   local timer = 1.5 * widgetHandler:GetHourTimer()
-  gl.Rotate(math.cos(0.5 * math.pi * timer) * 60.0, 0, 1, 0)
+  glRotate(math.cos(0.5 * math.pi * timer) * 60.0, 0, 1, 0)
 
   CenterUnitDef(unitDefID)
   
   local scribe = false
   if (scribe) then
-    gl.Lighting(false)
-    gl.Color(0,0,0,1)
+    glLighting(false)
+    glColor(0,0,0,1)
   end
 
-  gl.UnitShape(unitDefID, Spring.GetMyTeamID())
+  glUnitShape(unitDefID, spGetMyTeamID())
 
   if (scribe) then
---    gl.LineWidth(0.1)
-    gl.Lighting(false)
-    gl.DepthMask(false)
-    gl.Color(1,1,1,1)
-    gl.PolygonOffset(-4, -4)
-    gl.PolygonMode(GL.FRONT_AND_BACK, GL.LINE)
-    gl.UnitDef(unitDefID, Spring.GetMyTeamID())
-    gl.PolygonMode(GL.FRONT_AND_BACK, GL.FILL)
-    gl.PolygonOffset(false)
---    gl.LineWidth(1.0)
+--    glLineWidth(0.1)
+    glLighting(false)
+    glDepthMask(false)
+    glColor(1,1,1,1)
+    glPolygonOffset(-4, -4)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+    glUnitDef(unitDefID, spGetMyTeamID())
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+    glPolygonOffset(false)
+--    glLineWidth(1.0)
   end
 
-  gl.Scissor(false)
-  gl.PopMatrix()
+  glScissor(false)
+  glPopMatrix()
 
 	RevertModelDrawing()
 
   -- draw the count text
-  gl.Text(count, (xmin + xmax) * 0.5, ymax + 2, fontSize, "oc")
+  glText(count, (xmin + xmax) * 0.5, ymax + 2, fontSize, "oc")
 
   -- draw the border  (note the half pixel shift for drawing lines)
-  gl.Color(1, 1, 1)
-  gl.BeginEnd(GL.LINE_LOOP, function()
-    gl.Vertex(xmin + 0.5, ymin + 0.5)
-    gl.Vertex(xmax + 0.5, ymin + 0.5)
-    gl.Vertex(xmax + 0.5, ymax + 0.5)
-    gl.Vertex(xmin + 0.5, ymax + 0.5)
+  glColor(1, 1, 1)
+  glBeginEnd(GL_LINE_LOOP, function()
+    glVertex(xmin + 0.5, ymin + 0.5)
+    glVertex(xmax + 0.5, ymin + 0.5)
+    glVertex(xmax + 0.5, ymax + 0.5)
+    glVertex(xmin + 0.5, ymax + 0.5)
   end)
 end
 
@@ -300,20 +330,20 @@ function DrawUnitDefTexture(unitDefID, iconPos, count)
 
   local ud = UnitDefs[unitDefID] 
 
-  gl.Color(1, 1, 1)
-  gl.Texture('#' .. unitDefID)
-  gl.TexRect(xmin, ymin, xmax, ymax)
-  gl.Texture(false)
+  glColor(1, 1, 1)
+  glTexture('#' .. unitDefID)
+  glTexRect(xmin, ymin, xmax, ymax)
+  glTexture(false)
 
   -- draw the count text
-  gl.Text(count, (xmin + xmax) * 0.5, ymax + 2, fontSize, "oc")
+  glText(count, (xmin + xmax) * 0.5, ymax + 2, fontSize, "oc")
 
   -- draw the border  (note the half pixel shift for drawing lines)
-  gl.BeginEnd(GL.LINE_LOOP, function()
-    gl.Vertex(xmin + 0.5, ymin + 0.5)
-    gl.Vertex(xmax + 0.5, ymin + 0.5)
-    gl.Vertex(xmax + 0.5, ymax + 0.5)
-    gl.Vertex(xmin + 0.5, ymax + 0.5)
+  glBeginEnd(GL_LINE_LOOP, function()
+    glVertex(xmin + 0.5, ymin + 0.5)
+    glVertex(xmax + 0.5, ymin + 0.5)
+    glVertex(xmax + 0.5, ymax + 0.5)
+    glVertex(xmin + 0.5, ymax + 0.5)
   end)
 end
 
@@ -323,10 +353,10 @@ function DrawIconQuad(iconPos, color)
   local xmax = xmin + iconSizeX
   local ymin = rectMinY
   local ymax = rectMaxY
-  gl.Color(color)
-  gl.Blending(GL.SRC_ALPHA, GL.ONE)
-  gl.Rect(xmin, ymin, xmax, ymax)
-  gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+  glColor(color)
+  glBlending(GL_SRC_ALPHA, GL_ONE)
+  glRect(xmin, ymin, xmax, ymax)
+  glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 end
 
 
@@ -343,52 +373,52 @@ end
 -------------------------------------------------------------------------------
 
 local function LeftMouseButton(unitDefID, unitTable)
-  local alt, ctrl, meta, shift = Spring.GetModKeyState()
+  local alt, ctrl, meta, shift = spGetModKeyState()
   if (not ctrl) then
     -- select units of icon type
     if (alt or meta) then
-      Spring.SelectUnitArray({ unitTable[1] })  -- only 1
+      spSelectUnitArray({ unitTable[1] })  -- only 1
     else
-      Spring.SelectUnitArray(unitTable)
+      spSelectUnitArray(unitTable)
     end
   else
     -- select all units of the icon type
-    local sorted = Spring.GetTeamUnitsSorted(Spring.GetMyTeamID())
+    local sorted = spGetTeamUnitsSorted(spGetMyTeamID())
     local units = sorted[unitDefID]
     if (units) then
-      Spring.SelectUnitArray(units, shift)
+      spSelectUnitArray(units, shift)
     end
   end
 end
 
 
 local function MiddleMouseButton(unitDefID, unitTable)
-  local alt, ctrl, meta, shift = Spring.GetModKeyState()
+  local alt, ctrl, meta, shift = spGetModKeyState()
   -- center the view
   if (ctrl) then
     -- center the view on the entire selection
-    Spring.SendCommands({"viewselection"})
+    spSendCommands({"viewselection"})
   else
     -- center the view on this type on unit
-    local selUnits = Spring.GetSelectedUnits()
-    Spring.SelectUnitArray(unitTable)
-    Spring.SendCommands({"viewselection"})
-    Spring.SelectUnitArray(selUnits)
+    local selUnits = spGetSelectedUnits()
+    spSelectUnitArray(unitTable)
+    spSendCommands({"viewselection"})
+    spSelectUnitArray(selUnits)
   end
 end
 
 
 local function RightMouseButton(unitDefID, unitTable)
-  local alt, ctrl, meta, shift = Spring.GetModKeyState()
+  local alt, ctrl, meta, shift = spGetModKeyState()
   -- remove selected units of icon type
-  local selUnits = Spring.GetSelectedUnits()
+  local selUnits = spGetSelectedUnits()
   local map = {}
   for _,uid in ipairs(selUnits) do map[uid] = true end
   for _,uid in ipairs(unitTable) do
     map[uid] = nil
     if (ctrl) then break end -- only remove 1 unit
   end
-  Spring.SelectUnitMap(map)
+  spSelectUnitMap(map)
 end
 
 
@@ -401,7 +431,7 @@ function widget:MouseRelease(x, y, button)
   activePress = false
   local icon = MouseOverIcon(x, y)
 
-  local units = Spring.GetSelectedUnitsSorted()
+  local units = spGetSelectedUnitsSorted()
   if (units.n ~= unitTypes) then
     return -1  -- discard this click
   end
@@ -422,7 +452,7 @@ function widget:MouseRelease(x, y, button)
     return -1
   end
   
-  local alt, ctrl, meta, shift = Spring.GetModKeyState()
+  local alt, ctrl, meta, shift = spGetModKeyState()
   
   if (button == 1) then
     LeftMouseButton(unitDefID, unitTable)

@@ -21,6 +21,24 @@ local DefaultFontName = ":n:" .. LUAUI_DIRNAME .. "Fonts/FreeMonoBold_12"
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+-- Automatically generated local definitions
+
+local glCallList             = gl.CallList
+local glColor                = gl.Color
+local glCreateList           = gl.CreateList
+local glDeleteList           = gl.DeleteList
+local glDeleteTexture        = gl.DeleteTexture
+local glPopMatrix            = gl.PopMatrix
+local glPushMatrix           = gl.PushMatrix
+local glTexRect              = gl.TexRect
+local glTexture              = gl.Texture
+local glTranslate            = gl.Translate
+local spGetLastUpdateSeconds = Spring.GetLastUpdateSeconds
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --
 --  Local speedups
 --
@@ -59,13 +77,53 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local function HaveFontFiles(fontName)
+  if (VFS.FileExists(fontName .. '.lua') and
+      VFS.FileExists(fontName .. '.png')) then
+    return true
+  end
+  return false
+end
+
+
+local function CreateFontFiles(fontName)
+  local _, _, name, size = string.find(fontName, '^(.*)_(%d*)$')
+  if (name and size) then
+    local fullName
+    if (VFS.FileExists(name .. '.ttf', VFS.RAW_ONLY)) then
+      fullName = name .. '.ttf'
+    elseif (VFS.FileExists(name .. '.otf', VFS.RAW_ONLY)) then
+      fullName = name .. '.otf'
+    else
+      return
+    end
+    print('CreateFontFiles = ' .. fullName .. '.ttf, ' .. size)
+    Spring.MakeFont(fullName, {
+      height = tonumber(size),
+      minChar = 0,
+      maxChar = 255,
+    --[[
+      texWidth = 
+      outlineMode = 
+      outlineRadius = 
+      outlineWeight = 
+      padding = 
+      spacing = 
+      debug =
+    --]]
+    })
+  end
+  return
+end
+
+
 local function LoadFontSpecs(fontName)
   local specFile = fontName .. ".lua"
   local text = VFS.LoadFile(specFile)
   if (text == nil) then
     return nil
   end
-  local chunk = loadstring(text, specFile)
+  local chunk, err = loadstring(text, specFile)
   if (not chunk) then
     return nil
   end
@@ -91,11 +149,11 @@ local function MakeDisplayLists(fontSpecs)
   local xs = fontSpecs.xTexSize
   local ys = fontSpecs.yTexSize
   for _,gi in pairs(fontSpecs.glyphs) do
-    local list = gl.CreateList(function ()
-      gl.TexRect(gi.oxn, gi.oyn, gi.oxp, gi.oyp,
+    local list = glCreateList(function ()
+      glTexRect(gi.oxn, gi.oyn, gi.oxp, gi.oyp,
                  gi.txn / xs, 1.0 - (gi.tyn / ys),
                  gi.txp / xs, 1.0 - (gi.typ / ys))
-      gl.Translate(gi.adv, 0, 0)
+      glTranslate(gi.adv, 0, 0)
     end)
     lists[gi.num] = list
   end
@@ -116,24 +174,24 @@ local function MakeOutlineDisplayLists(fontSpecs)
     local txp = gi.xmax / tw
     local typ = gi.ymin / th
     
-    local list = gl.CreateList(function ()
-      gl.Translate(gi.initDist, 0, 0)
+    local list = glCreateList(function ()
+      glTranslate(gi.initDist, 0, 0)
 
-      gl.Color(0, 0, 0, 0.75)
+      glColor(0, 0, 0, 0.75)
       local o = 2
-      gl.TexRect( o,  o, w, h, txn, tyn, txp, typ)
-      gl.TexRect(-o,  o, w, h, txn, tyn, txp, typ)
-      gl.TexRect( o,  0, w, h, txn, tyn, txp, typ)
-      gl.TexRect(-o,  0, w, h, txn, tyn, txp, typ)
-      gl.TexRect( o, -o, w, h, txn, tyn, txp, typ)
-      gl.TexRect(-o, -o, w, h, txn, tyn, txp, typ)
-      gl.TexRect( 0,  o, w, h, txn, tyn, txp, typ)
-      gl.TexRect( 0, -o, w, h, txn, tyn, txp, typ)
+      glTexRect( o,  o, w, h, txn, tyn, txp, typ)
+      glTexRect(-o,  o, w, h, txn, tyn, txp, typ)
+      glTexRect( o,  0, w, h, txn, tyn, txp, typ)
+      glTexRect(-o,  0, w, h, txn, tyn, txp, typ)
+      glTexRect( o, -o, w, h, txn, tyn, txp, typ)
+      glTexRect(-o, -o, w, h, txn, tyn, txp, typ)
+      glTexRect( 0,  o, w, h, txn, tyn, txp, typ)
+      glTexRect( 0, -o, w, h, txn, tyn, txp, typ)
 
-      gl.Color(1, 1, 1, 1)
-      gl.TexRect( 0,  0, w, h, txn, tyn, txp, typ)
+      glColor(1, 1, 1, 1)
+      glTexRect( 0,  0, w, h, txn, tyn, txp, typ)
 
-      gl.Translate(gi.width + gi.whitespace, 0, 0)
+      glTranslate(gi.width + gi.whitespace, 0, 0)
     end)
 
     lists[gi.num] = list
@@ -201,9 +259,9 @@ local function RawDraw(text)
     local c = strbyte(text, i)
     local list = lists[c]
     if (list) then
-      gl.CallList(list)
+      glCallList(list)
     else
-      gl.CallList(lists[strbyte(" ", 1)])
+      glCallList(lists[strbyte(" ", 1)])
     end
   end
 end
@@ -215,7 +273,7 @@ local function RawColorDraw(text)
       RawDraw(txt)
     end
     if (strlen(color) == 4) then
-      gl.Color(strbyte(color, 2) / 255,
+      glColor(strbyte(color, 2) / 255,
                strbyte(color, 3) / 255,
                strbyte(color, 4) / 255)
     end
@@ -227,12 +285,12 @@ local function DrawNoCache(text, x, y)
   if (not x) then
     RawDraw(text)
   else
-    gl.PushMatrix()
-    gl.Translate(x, y, 0)
-    gl.Texture(activeFont.image)
+    glPushMatrix()
+    glTranslate(x, y, 0)
+    glTexture(activeFont.image)
     RawColorDraw(text)
-    gl.Texture(false)
-    gl.PopMatrix()
+    glTexture(false)
+    glPopMatrix()
   end
 end
 
@@ -245,10 +303,10 @@ local function Draw(text, x, y)
 
   local cacheTextData = activeFont.cache[text]
   if (not cacheTextData) then
-    local textList = gl.CreateList(function()
-      gl.Texture(activeFont.image)
+    local textList = glCreateList(function()
+      glTexture(activeFont.image)
       RawColorDraw(text)
-      gl.Texture(false)
+      glTexture(false)
     end)
     cacheTextData = { textList, timeStamp }  -- param [3] is the width
     activeFont.cache[text] = cacheTextData
@@ -257,16 +315,16 @@ local function Draw(text, x, y)
   end
 
   if (not x) then
-    gl.CallList(cacheTextData[1])
+    glCallList(cacheTextData[1])
   else
-    gl.PushMatrix()
+    glPushMatrix()
     if (useFloor) then
-      gl.Translate(floor(x), floor(y), 0)
+      glTranslate(floor(x), floor(y), 0)
     else
-      gl.Translate(x, y, 0)
+      glTranslate(x, y, 0)
     end
-    gl.CallList(cacheTextData[1])
-    gl.PopMatrix()
+    glCallList(cacheTextData[1])
+    glPopMatrix()
   end
 end
 
@@ -276,10 +334,10 @@ end
 
 local function DrawRight(text, x, y)
   local width = GetTextWidth(text)
-  gl.PushMatrix()
-  gl.Translate(-width, 0, 0)
+  glPushMatrix()
+  glTranslate(-width, 0, 0)
   Draw(text, x, y)
-  gl.PopMatrix()
+  glPopMatrix()
 end
 
 
@@ -291,10 +349,10 @@ local function DrawCentered(text, x, y)
   else
     halfWidth = width * 0.5
   end
-  gl.PushMatrix()
-  gl.Translate(-halfWidth, 0, 0)
+  glPushMatrix()
+  glTranslate(-halfWidth, 0, 0)
   Draw(text, x, y)
-  gl.PopMatrix()
+  glPopMatrix()
 end
 
 
@@ -302,6 +360,8 @@ end
 --------------------------------------------------------------------------------
 
 local function LoadFont(fontName)
+  print('LoadFont:' .. fontName)
+
   if (fonts[fontName]) then
     return nil  -- already loaded
   end
@@ -312,6 +372,10 @@ local function LoadFont(fontName)
     baseName = bn
   else
     options = ""
+  end
+
+  if (not HaveFontFiles(baseName)) then
+    CreateFontFiles(baseName)
   end
 
   local fontSpecs = LoadFontSpecs(baseName)
@@ -361,7 +425,7 @@ local function UseFont(fontName)
     print("Loaded font: " .. fontName)
     return true
   end
-  
+
   return false
 end
 
@@ -389,7 +453,7 @@ local function FreeCache(fontName)
     return
   end
   for text,data in pairs(font.cache) do
-    gl.DeleteList(data[1])
+    glDeleteList(data[1])
   end
 end
 
@@ -401,12 +465,12 @@ local function FreeFont(fontName)
   end
 
   for _,list in pairs(font.lists) do
-    gl.DeleteList(list)
+    glDeleteList(list)
   end
   for text,data in pairs(font.cache) do
-    gl.DeleteList(data[1])
+    glDeleteList(data[1])
   end
-  gl.DeleteTexture(font.image)
+  glDeleteTexture(font.image)
 
   fonts[font.name] = nil
 end
@@ -420,7 +484,7 @@ end
 
 
 local function Update()
-  timeStamp = timeStamp + Spring.GetLastUpdateSeconds()
+  timeStamp = timeStamp + spGetLastUpdateSeconds()
   if (timeStamp < (lastUpdate + 1.0)) then
     return  -- only update every 1.0 seconds
   end
@@ -430,7 +494,7 @@ local function Update()
     local killList = {}
     for text,data in pairs(font.cache) do
       if (data[2] < killTime) then
-        gl.DeleteList(data[1])
+        glDeleteList(data[1])
         table.insert(killList, text)
         print(fontName .. " removed string list(" .. data[1] .. ") " .. text)
       end

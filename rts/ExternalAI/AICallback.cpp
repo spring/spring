@@ -620,7 +620,7 @@ const char* CAICallback::GetMapName ()
 
 const char* CAICallback::GetModName()
 {
-	return modInfo->name.c_str();
+	return modInfo->filename.c_str();
 }
 
 float CAICallback::GetMaxMetal()
@@ -1230,6 +1230,7 @@ bool CAICallback::GetProperty(int unitid, int property, void *data)
 	return false;
 }
 
+
 int CAICallback::GetFileSize (const char *name)
 {
 	CFileHandler fh (name);
@@ -1240,9 +1241,34 @@ int CAICallback::GetFileSize (const char *name)
 	return fh.FileSize();
 }
 
+
+int CAICallback::GetFileSize (const char *name, const char* modes)
+{
+	CFileHandler fh (name, modes);
+
+	if (!fh.FileExists ())
+		return -1;
+
+	return fh.FileSize();
+}
+
+
 bool CAICallback::ReadFile (const char *name, void *buffer, int bufferLength)
 {
 	CFileHandler fh (name);
+	int fs;
+	if (!fh.FileExists() || bufferLength < (fs = fh.FileSize()))
+		return false;
+
+	fh.Read (buffer, fs);
+	return true;
+}
+
+
+bool CAICallback::ReadFile (const char *name, const char* modes,
+                            void *buffer, int bufferLength)
+{
+	CFileHandler fh (name, modes);
 	int fs;
 	if (!fh.FileExists() || bufferLength < (fs = fh.FileSize()))
 		return false;

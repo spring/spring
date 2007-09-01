@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include "WeaponDefHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "TdfParser.h"
+#include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "LogOutput.h"
@@ -20,36 +20,39 @@
 
 using namespace std;
 
+
 CR_BIND(WeaponDef, );
 
-CWeaponDefHandler* weaponDefHandler;
+
+CWeaponDefHandler* weaponDefHandler = NULL;
+
 
 CWeaponDefHandler::CWeaponDefHandler()
 {
-	std::vector<std::string> tafiles = CFileHandler::FindFiles("weapons/", "*.tdf");
-	//std::cout << " getting files from weapons/*.tdf ... " << std::endl;
-
-	TdfParser tasunparser;
-
-	for(unsigned int i=0; i<tafiles.size(); i++)
-	{
-		try {
-			tasunparser.LoadFile(tafiles[i]);
-		}catch( TdfParser::parse_error const& e) {
-			std::cout << "Exception:"  << e.what() << std::endl;
-		} catch(...) {
-			std::cout << "Unknown exception in parse process of " << tafiles[i] <<" caught." << std::endl;
-		}
+	LuaParser luaParser("gamedata/weapondefs.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!luaParser.Execute()) {
+		throw content_error(luaParser.GetErrorLog());
 	}
+	const LuaTable rootTable = luaParser.GetRoot();
+	
+	vector<string> weaponNames;
+	rootTable.GetKeys(weaponNames);
 
-	std::vector<std::string> weaponlist = tasunparser.GetSectionList("");
-
-	numWeaponDefs = weaponlist.size(); // FIXME: starting at 0, don't need the +1 ?
+	numWeaponDefs = weaponNames.size(); // FIXME: starting at 0, don't need the +1 ?
 	weaponDefs = SAFE_NEW WeaponDef[numWeaponDefs + 1];
-	for(std::size_t taid = 0; taid < weaponlist.size(); taid++) {
-		ParseTAWeapon(&tasunparser, weaponlist[taid], taid);
+
+	for (int wid = 0; wid < (int)weaponNames.size(); wid++) {
+		WeaponDef& wd = weaponDefs[wid];
+		wd.id = wid;
+		wd.name = weaponNames[wid];
+		weaponID[wd.name] = wid;
+
+		const LuaTable wdTable = rootTable.SubTable(wd.name);
+		ParseTAWeapon(wdTable, wd);
 	}
 }
+
 
 CWeaponDefHandler::~CWeaponDefHandler()
 {
@@ -57,12 +60,8 @@ CWeaponDefHandler::~CWeaponDefHandler()
 }
 
 
-
-
-void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponname, int id)
+void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
-	weaponDefs[id].name = weaponname;
-
 	bool lineofsight;
 	bool ballistic;
 	//bool twophase;
@@ -77,480 +76,521 @@ void CWeaponDefHandler::ParseTAWeapon(TdfParser* sunparser, std::string weaponna
 	//bool selfprop;
 	//bool turret;
 	//bool smokeTrail;
-	//std::string modelName;
+	//string modelName;
 
-	sunparser->GetDef(weaponDefs[id].tdfId, "0", weaponname + "\\id");
-	weaponDefs[id].description = sunparser->SGetValueDef("Weapon", weaponname + "\\name");
-	sunparser->GetDef(weaponDefs[id].avoidFriendly, "1", weaponname + "\\AvoidFriendly");
-	sunparser->GetDef(weaponDefs[id].avoidFeature, "1", weaponname + "\\AvoidFeature");
-	weaponDefs[id].collisionFlags=0;
-	bool collideFriendly, collideFeature;
-	sunparser->GetDef(collideFriendly, "1", weaponname + "\\CollideFriendly");
-	sunparser->GetDef(collideFeature, "1", weaponname + "\\CollideFeature");
-	if(!collideFriendly)
-		weaponDefs[id].collisionFlags+=COLLISION_NOFRIENDLY;
-	if(!collideFeature)
-		weaponDefs[id].collisionFlags+=COLLISION_NOFEATURE;
+	wd.tdfId = wdTable.GetInt("id", 0);
 
-	sunparser->GetDef(weaponDefs[id].minIntensity, "0", weaponname + "\\MinIntensity");
+	wd.description = wdTable.GetString("name", "Weapon");
 
-	sunparser->GetDef(weaponDefs[id].dropped, "0", weaponname + "\\dropped");
-	sunparser->GetDef(manualBombSettings, "0", weaponname + "\\manualbombsettings");
-	sunparser->GetDef(lineofsight, "0", weaponname + "\\lineofsight");
-	sunparser->GetDef(ballistic, "0", weaponname + "\\ballistic");
-	sunparser->GetDef(weaponDefs[id].twophase, "0", weaponname + "\\twophase");
-	sunparser->GetDef(beamweapon, "0", weaponname + "\\beamweapon");
-	sunparser->GetDef(weaponDefs[id].guided, "0", weaponname + "\\guidance");
-	sunparser->GetDef(rendertype, "0", weaponname + "\\rendertype");
-	sunparser->GetDef(color, "0", weaponname + "\\color");
-	sunparser->GetDef(beamlaser, "0", weaponname + "\\beamlaser");
-	sunparser->GetDef(weaponDefs[id].vlaunch, "0", weaponname + "\\vlaunch");
-	sunparser->GetDef(weaponDefs[id].selfprop, "0", weaponname + "\\selfprop");
-	sunparser->GetDef(weaponDefs[id].turret, "0", weaponname + "\\turret");
-	sunparser->GetDef(weaponDefs[id].visuals.modelName, "", weaponname + "\\model");
-	sunparser->GetDef(weaponDefs[id].visuals.smokeTrail, "0", weaponname + "\\smoketrail");
-	sunparser->GetDef(weaponDefs[id].noSelfDamage, "0", weaponname + "\\NoSelfDamage");
+	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
+	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
 
-	sunparser->GetDef(weaponDefs[id].waterweapon, "0", weaponname + "\\waterweapon");
-	sunparser->GetDef(weaponDefs[id].fireSubmersed, weaponDefs[id].waterweapon ? "1":"0", weaponname + "\\firesubmersed");
-	sunparser->GetDef(weaponDefs[id].submissile, "0", weaponname + "\\submissile");
-	sunparser->GetDef(weaponDefs[id].tracks, "0", weaponname + "\\tracks");
-	sunparser->GetDef(weaponDefs[id].fixedLauncher, "0", weaponname + "\\FixedLauncher");
-	sunparser->GetDef(weaponDefs[id].noExplode, "0", weaponname + "\\NoExplode");
-	sunparser->GetDef(weaponDefs[id].maxvelocity, "0", weaponname + "\\weaponvelocity");
-	sunparser->GetDef(weaponDefs[id].isShield, "0", weaponname + "\\IsShield");
-	sunparser->GetDef(weaponDefs[id].beamtime, "1", weaponname + "\\beamtime");
+	wd.collisionFlags = 0;
+	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
+	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
+	if (!collideFriendly) { wd.collisionFlags += COLLISION_NOFRIENDLY; }
+	if (!collideFeature)  { wd.collisionFlags += COLLISION_NOFEATURE;  }
 
-	sunparser->GetDef(weaponDefs[id].thickness, "2", weaponname + "\\thickness");
-	sunparser->GetDef(weaponDefs[id].corethickness, "0.25", weaponname + "\\corethickness");
-	sunparser->GetDef(weaponDefs[id].laserflaresize, "15", weaponname + "\\laserflaresize");
-	sunparser->GetDef(weaponDefs[id].intensity, "0.9", weaponname + "\\intensity");
-	sunparser->GetDef(weaponDefs[id].duration, "0.05", weaponname + "\\duration");
-	sunparser->GetDef(weaponDefs[id].lodDistance, "1000", weaponname + "\\lodDistance");
-	sunparser->GetDef(weaponDefs[id].falloffRate, "0.5", weaponname + "\\falloffRate");
+	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 
-	sunparser->GetDef(weaponDefs[id].visuals.sizeDecay,  "0", weaponname + "\\sizeDecay");
-	sunparser->GetDef(weaponDefs[id].visuals.alphaDecay, "1", weaponname + "\\alphaDecay");
-	sunparser->GetDef(weaponDefs[id].visuals.separation, "1", weaponname + "\\separation");
-	sunparser->GetDef(weaponDefs[id].visuals.noGap,      "1", weaponname + "\\noGap");
-	sunparser->GetDef(weaponDefs[id].visuals.stages,     "5", weaponname + "\\stages");
-	weaponDefs[id].visuals.stages = max(1, weaponDefs[id].visuals.stages);
+	wd.dropped  = wdTable.GetBool("dropped", false);
+	manualBombSettings = wdTable.GetBool("manualBombSettings", false);
+	lineofsight = wdTable.GetBool("lineOfSight", false);
+	ballistic   = wdTable.GetBool("ballistic",  false);
+	wd.twophase = wdTable.GetBool("twoPhase",   false);
+	beamweapon  = wdTable.GetBool("beamWeapon", false);
+	wd.guided   = wdTable.GetBool("guidance",   false);
+	rendertype  = wdTable.GetInt("renderType",  0);
+	color       = wdTable.GetInt("color",       0);
+	beamlaser   = wdTable.GetInt("beamlaser",   0);
+	wd.vlaunch  = wdTable.GetBool("vlaunch",    false);
+	wd.selfprop = wdTable.GetBool("selfprop",   false);
+	wd.turret   = wdTable.GetBool("turret",     false);
+	wd.noSelfDamage = wdTable.GetBool("noSelfDamage", false);
+	wd.visuals.modelName = wdTable.GetString("model", "");
+	wd.visuals.smokeTrail = wdTable.GetBool("smokeTrail", false);
 
-	if(weaponDefs[id].name.find("disintegrator")!=string::npos){	//fulhack
-		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_FIREBALL;}
-	else if(weaponDefs[id].visuals.modelName.compare("")!=0){
-		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_MODEL;}
-	else if(beamweapon){
-		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_LASER;}
-	else{
-		weaponDefs[id].visuals.renderType = WEAPON_RENDERTYPE_PLASMA;}
-	//else
-	//	weaponDefs[id].visuals.hasmodel = true;
+	wd.waterweapon   = wdTable.GetBool("waterWeapon",   false);
+	wd.fireSubmersed = wdTable.GetBool("fireSubmersed", wd.waterweapon);
+	wd.submissile    = wdTable.GetBool("submissile",    false);
+	wd.tracks        = wdTable.GetBool("tracks",        false);
+	wd.fixedLauncher = wdTable.GetBool("fixedLauncher", false);
+	wd.noExplode     = wdTable.GetBool("noExplode",     false);
+	wd.isShield      = wdTable.GetBool("isShield",      false);
+	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
+	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 
-	weaponDefs[id].gravityAffected = false;
-	if(weaponDefs[id].dropped || ballistic)
-		weaponDefs[id].gravityAffected = true;
+	wd.thickness      = wdTable.GetFloat("thickness",       2.0f);
+	wd.corethickness  = wdTable.GetFloat("coreThickness",   0.25f);
+	wd.laserflaresize = wdTable.GetFloat("laserFlareSize", 15.0f);
+	wd.intensity      = wdTable.GetFloat("intensity",       0.9f);
+	wd.duration       = wdTable.GetFloat("duration",        0.05f);
+	wd.falloffRate    = wdTable.GetFloat("fallOffRate",     0.5f);
+	wd.lodDistance    = wdTable.GetInt("lodDistance", 1000);
 
-	if(weaponDefs[id].dropped)	{
-		weaponDefs[id].type = "AircraftBomb";
+	wd.visuals.sizeDecay  = wdTable.GetFloat("sizeDecay",  0.0f);
+	wd.visuals.alphaDecay = wdTable.GetFloat("alphaDecay", 1.0f);
+	wd.visuals.separation = wdTable.GetFloat("separation", 1.0f);
+	wd.visuals.noGap  = wdTable.GetBool("noGap", true);
+	wd.visuals.stages = wdTable.GetInt("stages", 5);
 
-	}	else if(weaponDefs[id].vlaunch){
-		weaponDefs[id].type = "StarburstLauncher";
-
-	}	else if(beamlaser){
-		weaponDefs[id].type = "BeamLaser";
-
-	}	else if(weaponDefs[id].isShield){
-		weaponDefs[id].type = "Shield";
-
-	} else if(weaponDefs[id].waterweapon) {
-		weaponDefs[id].type = "TorpedoLauncher";
-
-	} else if(weaponDefs[id].name.find("disintegrator")!=string::npos) {
-		weaponDefs[id].type = "DGun";
-
-	} else if(lineofsight) {
-		if(rendertype==7)
-			weaponDefs[id].type = "LightingCannon";
-		else if(beamweapon)
-			weaponDefs[id].type = "LaserCannon";
-		else if(weaponDefs[id].visuals.modelName.find("laser")!=std::string::npos)
-			weaponDefs[id].type = "LaserCannon";		//swta fix
-		else if(/*selfprop && */weaponDefs[id].visuals.smokeTrail)
-			weaponDefs[id].type = "MissileLauncher";
-		else if(rendertype == 4 && color == 2)
-			weaponDefs[id].type = "EmgCannon";
-		else if(rendertype == 5)
-			weaponDefs[id].type = "Flame";
-	//	else if(rendertype == 1)
-	//		weaponDefs[id].type = "MissileLauncher";
-		else
-			weaponDefs[id].type = "Cannon";
-	}
-	else
-		weaponDefs[id].type = "Cannon";
-
-	std::string ttype;
-	sunparser->GetDef(ttype, "", weaponname + "\\WeaponType");
-	if(ttype!="")
-		weaponDefs[id].type = ttype;
-
-//	logOutput.Print("%s as %s",weaponname.c_str(),weaponDefs[id].type.c_str());
-
-	sunparser->GetDef(weaponDefs[id].targetBorder, (weaponDefs[id].type == "Melee"?"1":"0"), weaponname + "\\TargetBorder");
-	if (weaponDefs[id].targetBorder > 1.f) {
-		logOutput.Print("warning: targetBorder truncated to 1 (was %f)", weaponDefs[id].targetBorder);
-		weaponDefs[id].targetBorder = 1.f;
-	} else if (weaponDefs[id].targetBorder < -1.f) {
-		logOutput.Print("warning: targetBorder truncated to -1 (was %f)", weaponDefs[id].targetBorder);
-		weaponDefs[id].targetBorder = -1.f;
-	}
-	sunparser->GetDef(weaponDefs[id].cylinderTargetting, (weaponDefs[id].type == "Melee"?"1":"0"), weaponname + "\\CylinderTargetting");
-
-
-	weaponDefs[id].range = atof(sunparser->SGetValueDef("10", weaponname + "\\range").c_str());
-	float accuracy,sprayangle,movingAccuracy;
-	sunparser->GetDef(accuracy, "0", weaponname + "\\accuracy");
-	sunparser->GetDef(sprayangle, "0", weaponname + "\\sprayangle");
-	sunparser->GetDef(movingAccuracy, "-1", weaponname + "\\movingaccuracy");
-	if(movingAccuracy==-1)
-		movingAccuracy=accuracy;
-	weaponDefs[id].accuracy=sin((accuracy) * PI / 0xafff);		//should really be tan but TA seem to cap it somehow
-	weaponDefs[id].sprayangle=sin((sprayangle) * PI / 0xafff);		//should also be 7fff or ffff theoretically but neither seems good
-	weaponDefs[id].movingAccuracy=sin((movingAccuracy) * PI / 0xafff);
-
-	sunparser->GetDef(weaponDefs[id].targetMoveError, "0", weaponname + "\\targetMoveError");
-
-	for(int a = 0; a < damageArrayHandler->GetNumTypes(); ++a)
-	{
-		sunparser->GetDef(weaponDefs[id].damages[a], "0", weaponname + "\\DAMAGE\\default");
-		if(weaponDefs[id].damages[a]==0)		//avoid division by zeroes
-			weaponDefs[id].damages[a]=1;
-	}
-	const std::map<std::string, std::string>& damages=sunparser->GetAllValues(weaponname + "\\DAMAGE");
-	for(std::map<std::string, std::string>::const_iterator di=damages.begin();di!=damages.end();++di){
-		int type=damageArrayHandler->GetTypeFromName(di->first);
-		float damage=atof(di->second.c_str());
-		if(damage==0)
-			damage=1;
-		if(type!=0){
-			weaponDefs[id].damages[type]=damage;
-//			logOutput.Print("Weapon %s has damage %f against type %i",weaponname.c_str(),damage,type);
-		}
-	}
-
-	weaponDefs[id].damages.impulseFactor=atof(sunparser->SGetValueDef("1", weaponname + "\\impulsefactor").c_str());
-	weaponDefs[id].damages.impulseBoost=atof(sunparser->SGetValueDef("0", weaponname + "\\impulseboost").c_str());
-	std::string craterMult;
-	if (!sunparser->SGetValue(craterMult, weaponname + "\\cratermult")){
-		/* No entry given. Default: old behaviour. */
-		weaponDefs[id].damages.craterMult=weaponDefs[id].damages.impulseFactor;
+	if (wd.name.find("disintegrator") != string::npos) {	//fulhack
+		wd.visuals.renderType = WEAPON_RENDERTYPE_FIREBALL;
+	} else if (wd.visuals.modelName.compare("") != 0) {
+		wd.visuals.renderType = WEAPON_RENDERTYPE_MODEL;
+	} else if (beamweapon) {
+		wd.visuals.renderType = WEAPON_RENDERTYPE_LASER;
 	} else {
-		weaponDefs[id].damages.craterMult=atof(craterMult.c_str());
-	}
-	weaponDefs[id].damages.craterBoost=atof(sunparser->SGetValueDef("0", weaponname + "\\craterboost").c_str());
-
-	weaponDefs[id].areaOfEffect=atof(sunparser->SGetValueDef("8", weaponname + "\\areaofeffect").c_str())*0.5f;
-	weaponDefs[id].edgeEffectiveness=atof(sunparser->SGetValueDef("0", weaponname + "\\edgeEffectiveness").c_str());
-	// prevent 0/0 division in CGameHelper::Explosion
-	if (weaponDefs[id].edgeEffectiveness > 0.999f)
-		weaponDefs[id].edgeEffectiveness = 0.999f;
-	weaponDefs[id].projectilespeed = atof(sunparser->SGetValueDef("0", weaponname + "\\weaponvelocity").c_str())/GAME_SPEED;
-	weaponDefs[id].startvelocity = max(0.01f,(float)atof(sunparser->SGetValueDef("0", weaponname + "\\startvelocity").c_str())/GAME_SPEED);
-	weaponDefs[id].weaponacceleration = atof(sunparser->SGetValueDef("0", weaponname + "\\weaponacceleration").c_str())/GAME_SPEED/GAME_SPEED;
-	weaponDefs[id].reload = atof(sunparser->SGetValueDef("1", weaponname + "\\reloadtime").c_str());
-	weaponDefs[id].salvodelay = atof(sunparser->SGetValueDef("0.1", weaponname + "\\burstrate").c_str());
-	sunparser->GetDef(weaponDefs[id].salvosize, "1", weaponname + "\\burst");
-	sunparser->GetDef(weaponDefs[id].projectilespershot, "1", weaponname + "\\projectiles");
-	weaponDefs[id].maxAngle = atof(sunparser->SGetValueDef("3000", weaponname + "\\tolerance").c_str()) * 180.0f / 0x7fff;
-	weaponDefs[id].restTime = 0.0f;
-	sunparser->GetDef(weaponDefs[id].metalcost, "0", weaponname + "\\metalpershot");
-	sunparser->GetDef(weaponDefs[id].energycost, "0", weaponname + "\\energypershot");
-	sunparser->GetDef(weaponDefs[id].selfExplode, "0", weaponname + "\\burnblow");
-	sunparser->GetDef(weaponDefs[id].sweepFire, "0", weaponname + "\\sweepfire");
-	sunparser->GetDef(weaponDefs[id].canAttackGround, "1", weaponname + "\\canattackground");
-	weaponDefs[id].myGravity = atof(sunparser->SGetValueDef("0", weaponname + "\\myGravity").c_str());
-
-	weaponDefs[id].fireStarter=atof(sunparser->SGetValueDef("0", weaponname + "\\firestarter").c_str())*0.01f;
-	weaponDefs[id].paralyzer=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\paralyzer").c_str());
-	if(weaponDefs[id].paralyzer)
-		weaponDefs[id].damages.paralyzeDamageTime=atoi(sunparser->SGetValueDef("10", weaponname + "\\paralyzetime").c_str());
-	else
-		weaponDefs[id].damages.paralyzeDamageTime=0;
-	weaponDefs[id].soundTrigger=!!atoi(sunparser->SGetValueDef("0", weaponname + "\\SoundTrigger").c_str());
-
-	//sunparser->GetDef(weaponDefs[id].highTrajectory, "0", weaponname + "\\minbarrelangle");
-	sunparser->GetDef(weaponDefs[id].stockpile, "0", weaponname + "\\stockpile");
-	sunparser->GetDef(weaponDefs[id].interceptor, "0", weaponname + "\\interceptor");
-	sunparser->GetDef(weaponDefs[id].targetable, "0", weaponname + "\\targetable");
-	sunparser->GetDef(weaponDefs[id].manualfire, "0", weaponname + "\\commandfire");
-	sunparser->GetDef(weaponDefs[id].coverageRange, "0", weaponname + "\\coverage");
-
-	sunparser->GetDef(weaponDefs[id].shieldRepulser, "0", weaponname + "\\shieldrepulser");
-	sunparser->GetDef(weaponDefs[id].smartShield, "0", weaponname + "\\smartshield");
-	sunparser->GetDef(weaponDefs[id].exteriorShield, "0", weaponname + "\\exteriorshield");
-	sunparser->GetDef(weaponDefs[id].visibleShield, "0", weaponname + "\\visibleshield");
-	sunparser->GetDef(weaponDefs[id].visibleShieldRepulse, "0", weaponname + "\\visibleshieldrepulse");
-	sunparser->GetDef(weaponDefs[id].visibleShieldHitFrames, "0", weaponname + "\\visibleShieldHitFrames");
-	sunparser->GetDef(weaponDefs[id].shieldEnergyUse, "0", weaponname + "\\shieldenergyuse");
-	sunparser->GetDef(weaponDefs[id].shieldForce, "0", weaponname + "\\shieldforce");
-	sunparser->GetDef(weaponDefs[id].shieldRadius, "0", weaponname + "\\shieldradius");
-	sunparser->GetDef(weaponDefs[id].shieldMaxSpeed, "0", weaponname + "\\shieldmaxspeed");
-	sunparser->GetDef(weaponDefs[id].shieldPower, "0", weaponname + "\\shieldpower");
-	sunparser->GetDef(weaponDefs[id].shieldPowerRegen, "0", weaponname + "\\shieldpowerregen");
-	sunparser->GetDef(weaponDefs[id].shieldPowerRegenEnergy, "0", weaponname + "\\shieldpowerregenenergy");
-	sunparser->GetDef(weaponDefs[id].shieldStartingPower, "0", weaponname + "\\shieldstartingpower");
-	sunparser->GetDef(weaponDefs[id].shieldInterceptType, "0", weaponname + "\\shieldintercepttype");
-	weaponDefs[id].shieldGoodColor=sunparser->GetFloat3(float3(0.5f,0.5f,1),weaponname + "\\shieldgoodcolor");
-	weaponDefs[id].shieldBadColor=sunparser->GetFloat3(float3(1,0.5f,0.5f),weaponname + "\\shieldbadcolor");
-	sunparser->GetDef(weaponDefs[id].shieldAlpha, "0.2", weaponname + "\\shieldalpha");
-
-	int defInterceptType=0;
-	if(weaponDefs[id].type == "Cannon")
-		defInterceptType=1;
-	else if(weaponDefs[id].type == "LaserCannon" || weaponDefs[id].type == "BeamLaser")
-		defInterceptType=2;
-	else if(weaponDefs[id].type == "StarburstLauncher" || weaponDefs[id].type == "MissileLauncher")
-		defInterceptType=4;
-	char interceptChar[100];
-	sprintf(interceptChar,"%i",defInterceptType);
-	sunparser->GetDef(weaponDefs[id].interceptedByShieldType, interceptChar, weaponname + "\\interceptedbyshieldtype");
-
-	weaponDefs[id].wobble = atof(sunparser->SGetValueDef("0", weaponname + "\\wobble").c_str()) * PI / 0x7fff /30.0f;
-	sunparser->GetDef(weaponDefs[id].trajectoryHeight, "0", weaponname + "\\trajectoryheight");
-
-	weaponDefs[id].noAutoTarget= (weaponDefs[id].manualfire || weaponDefs[id].interceptor || weaponDefs[id].isShield);
-
-	weaponDefs[id].onlyTargetCategory=0xffffffff;
-	if(atoi(sunparser->SGetValueDef("0", weaponname + "\\toairweapon").c_str())){
-		weaponDefs[id].onlyTargetCategory=CCategoryHandler::Instance()->GetCategories("VTOL");	//fix if we sometime call aircrafts otherwise
-//		logOutput.Print("air only weapon %s %i",weaponname.c_str(),weaponDefs[id].onlyTargetCategory);
+		wd.visuals.renderType = WEAPON_RENDERTYPE_PLASMA;
 	}
 
-
-	sunparser->GetDef(weaponDefs[id].visuals.tilelength, "200", weaponname + "\\tilelength");
-	sunparser->GetDef(weaponDefs[id].visuals.scrollspeed, "5", weaponname + "\\scrollspeed");
-	sunparser->GetDef(weaponDefs[id].visuals.pulseSpeed, "1", weaponname + "\\pulseSpeed");
-	sunparser->GetDef(weaponDefs[id].largeBeamLaser, "0", weaponname + "\\largeBeamLaser");
-	sunparser->GetDef(weaponDefs[id].visuals.beamttl, "0", weaponname + "\\beamttl");
-	sunparser->GetDef(weaponDefs[id].visuals.beamdecay, "1", weaponname + "\\beamdecay");
-
-	std::string hmod = sunparser->SGetValueDef("", weaponname+"\\heightmod");
-	if (hmod == "") {
-		if(weaponDefs[id].type == "Cannon")
-			weaponDefs[id].heightmod = 0.8f;
-		else if (weaponDefs[id].type == "BeamLaser")
-			weaponDefs[id].heightmod = 1.0f;
-		else
-			weaponDefs[id].heightmod = 0.2f;
-	} else {
-		weaponDefs[id].heightmod = atof(hmod.c_str());
+	wd.gravityAffected = false;
+	if (wd.dropped || ballistic) {
+		wd.gravityAffected = true;
 	}
 
-	weaponDefs[id].supplycost = 0.0f;
+	if (wd.dropped) {
+		wd.type = "AircraftBomb";
 
-	weaponDefs[id].onlyForward=!weaponDefs[id].turret && weaponDefs[id].type != "StarburstLauncher";
+	}	else if (wd.vlaunch) {
+		wd.type = "StarburstLauncher";
 
-	int color2;
-	sunparser->GetDef(color2, "0", weaponname + "\\color2");
+	}	else if (beamlaser) {
+		wd.type = "BeamLaser";
 
-	float3 rgbcol = hs2rgb(color/float(255), color2/float(255));
-	weaponDefs[id].visuals.color = rgbcol;
-	weaponDefs[id].visuals.color2=sunparser->GetFloat3(float3(1,1.0f,1.0f),weaponname + "\\rgbcolor2");
+	}	else if (wd.isShield) {
+		wd.type = "Shield";
 
-	float3 tempCol=sunparser->GetFloat3(float3(-1,-1,-1),weaponname + "\\rgbcolor");
-	if(tempCol!=float3(-1,-1,-1))
-		weaponDefs[id].visuals.color = tempCol;
+	} else if (wd.waterweapon) {
+		wd.type = "TorpedoLauncher";
 
-	weaponDefs[id].uptime = atof(sunparser->SGetValueDef("0", weaponname + "\\weapontimer").c_str());
-	weaponDefs[id].flighttime = atof(sunparser->SGetValueDef("0", weaponname + "\\flighttime").c_str()) * 32;
+	} else if (wd.name.find("disintegrator") != string::npos) {
+		wd.type = "DGun";
 
-	weaponDefs[id].turnrate = atof(sunparser->SGetValueDef("0", weaponname + "\\turnrate").c_str()) * PI / 0x7fff /30.0f;
-
-	if(weaponDefs[id].type=="AircraftBomb" && !manualBombSettings){
-		if(weaponDefs[id].reload<0.5f){
-			weaponDefs[id].salvodelay=min(0.2f,weaponDefs[id].reload);
-			weaponDefs[id].salvosize=(int)(1/weaponDefs[id].salvodelay)+1;
-			weaponDefs[id].reload=5;
+	} else if (lineofsight) {
+		if (rendertype==7) {
+			wd.type = "LightingCannon";
+		} else if (beamweapon) {
+			wd.type = "LaserCannon";
+		} else if (wd.visuals.modelName.find("laser") != string::npos) {
+			wd.type = "LaserCannon";		//swta fix
+		} else if (/*selfprop && */wd.visuals.smokeTrail) {
+			wd.type = "MissileLauncher";
+		} else if (rendertype == 4 && color == 2) {
+			wd.type = "EmgCannon";
+		} else if (rendertype == 5) {
+			wd.type = "Flame";
+		//	} else if(rendertype == 1) {
+		//		wd.type = "MissileLauncher";
 		} else {
-			weaponDefs[id].salvodelay=min(0.4f,weaponDefs[id].reload);
-			weaponDefs[id].salvosize=2;
+			wd.type = "Cannon";
+		}
+	} else {
+		wd.type = "Cannon";
+	}
+
+	string ttype = wdTable.GetString("weaponType", "");
+	if (ttype != "") {
+		wd.type = ttype;
+	}
+
+//	logOutput.Print("%s as %s",weaponname.c_str(),wd.type.c_str());
+
+	const bool melee = (wd.type == "Melee");
+	wd.targetBorder = wdTable.GetFloat("targetBorder", melee ? 1.0f : 0.0f);
+	if (wd.targetBorder > 1.0f) {
+		logOutput.Print("warning: targetBorder truncated to 1 (was %f)", wd.targetBorder);
+		wd.targetBorder = 1.0f;
+	} else if (wd.targetBorder < -1.0f) {
+		logOutput.Print("warning: targetBorder truncated to -1 (was %f)", wd.targetBorder);
+		wd.targetBorder = -1.0f;
+	}
+	wd.cylinderTargetting = wdTable.GetFloat("cylinderTargetting", melee ? 1.0f : 0.0f);
+
+	wd.range = wdTable.GetFloat("range", 10.0f);
+	const float accuracy       = wdTable.GetFloat("accuracy",   0.0f);
+	const float sprayangle     = wdTable.GetFloat("sprayAngle", 0.0f);
+	const float movingAccuracy = wdTable.GetFloat("movingAccuracy", accuracy);
+	// should really be tan but TA seem to cap it somehow
+	// should also be 7fff or ffff theoretically but neither seems good
+	wd.accuracy       = sin((accuracy)       * PI / 0xafff);
+	wd.sprayangle     = sin((sprayangle)     * PI / 0xafff);
+	wd.movingAccuracy = sin((movingAccuracy) * PI / 0xafff);
+
+	wd.targetMoveError = wdTable.GetFloat("targetMoveError", 0.0f);
+
+	// setup the default damages
+	const LuaTable dmgTable = wdTable.SubTable("damage");
+	float defDamage = dmgTable.GetFloat("default", 0.0f);
+	if (defDamage == 0.0f) {
+		defDamage = 1.0f; //avoid division by zeroes
+	}
+	for (int a = 0; a < damageArrayHandler->GetNumTypes(); ++a) {
+		wd.damages[a] = defDamage;
+	}
+
+	map<string, float> damages;
+	dmgTable.GetMap(damages);
+	
+	map<string, float>::const_iterator di;
+	for (di = damages.begin(); di != damages.end(); ++di) {
+		const int type = damageArrayHandler->GetTypeFromName(di->first);
+		if (type != 0) {
+			float dmg = di->second;
+			if (dmg != 0.0f) {
+				wd.damages[type] = dmg;
+			} else {
+				wd.damages[type] = 1.0f;
+			}
 		}
 	}
-//	if(!weaponDefs[id].turret && weaponDefs[id].type!="TorpedoLauncher")
-//		weaponDefs[id].maxAngle*=0.4f;
+	
+	wd.damages.impulseFactor = wdTable.GetFloat("impulseFactor", 1.0f);
+	wd.damages.impulseBoost  = wdTable.GetFloat("impulseBoost",  0.0f);
+	wd.damages.craterMult    = wdTable.GetFloat("craterMult",  wd.damages.impulseFactor);
+	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost", 0.0f);
+
+	wd.areaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
+	wd.edgeEffectiveness = wdTable.GetFloat("edgeEffectiveness", 0.0f);
+	// prevent 0/0 division in CGameHelper::Explosion
+	if (wd.edgeEffectiveness > 0.999f) {
+		wd.edgeEffectiveness = 0.999f;
+	}
+
+	wd.projectilespeed = wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED;
+	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
+	wd.weaponacceleration = wdTable.GetFloat("weaponAacceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
+	wd.reload = wdTable.GetFloat("reloadtime", 1.0f);
+	wd.salvodelay = wdTable.GetFloat("burstrate", 0.1f);
+	wd.salvosize = wdTable.GetInt("burst", 1);
+	wd.projectilespershot = wdTable.GetInt("projectiles", 1);
+	wd.maxAngle = wdTable.GetFloat("tolerance", 3000.0f) * 180.0f / 0x7fff;
+	wd.restTime = 0.0f;
+	wd.metalcost = wdTable.GetFloat("metalpershot", 0.0f);
+	wd.energycost = wdTable.GetFloat("energypershot", 0.0f);
+	wd.selfExplode = wdTable.GetBool("burnblow", false);
+	wd.sweepFire = wdTable.GetBool("sweepfire", false);
+	wd.canAttackGround = wdTable.GetBool("canattackground", true);
+	wd.myGravity = wdTable.GetFloat("myGravity", 0.0f);
+
+	wd.cameraShake = wdTable.GetFloat("cameraShake", wd.damages.GetDefaultDamage());
+	wd.cameraShake = max(0.0f, wd.cameraShake);
+
+	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
+	wd.paralyzer = wdTable.GetBool("paralyzer", false);
+	if (wd.paralyzer) {
+		wd.damages.paralyzeDamageTime = wdTable.GetInt("paralyzeTime", 10);
+	} else {
+		wd.damages.paralyzeDamageTime = 0;
+	}
+
+	wd.soundTrigger = wdTable.GetBool("soundTrigger", false);
+
+	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
+	wd.stockpile     = wdTable.GetBool("stockpile", false);
+	wd.interceptor   = wdTable.GetInt("interceptor", 0);
+	wd.targetable    = wdTable.GetInt("targetable",  0);
+	wd.manualfire    = wdTable.GetBool("commandfire", false);
+	wd.coverageRange = wdTable.GetFloat("coverage", 0.0f);
+
+	// FIXME -- remove the old style ?
+	LuaTable shTable = wdTable.SubTable("shield");
+	const float3 shieldBadColor (1.0f, 0.5f, 0.5f);
+	const float3 shieldGoodColor(0.5f, 0.5f, 1.0f);
+	if (shTable.IsValid()) {
+		wd.shieldRepulser         = shTable.GetBool("repulser",       false);
+		wd.smartShield            = shTable.GetBool("smart",          false);
+		wd.exteriorShield         = shTable.GetBool("exterior",       false);
+		wd.visibleShield          = shTable.GetBool("visible",        false);
+		wd.visibleShieldRepulse   = shTable.GetBool("visibleRepulse", false);
+		wd.visibleShieldHitFrames = shTable.GetInt("visibleHitFrames", 0);
+		wd.shieldEnergyUse        = shTable.GetFloat("energyUse",        0.0f);
+		wd.shieldForce            = shTable.GetFloat("force",            0.0f);
+		wd.shieldRadius           = shTable.GetFloat("radius",           0.0f);
+		wd.shieldMaxSpeed         = shTable.GetFloat("maxSpeed",         0.0f);
+		wd.shieldPower            = shTable.GetFloat("power",            0.0f);
+		wd.shieldPowerRegen       = shTable.GetFloat("powerRegen",       0.0f);
+		wd.shieldPowerRegenEnergy = shTable.GetFloat("powerRegenEnergy", 0.0f);
+		wd.shieldStartingPower    = shTable.GetFloat("startingPower",    0.0f);
+		wd.shieldInterceptType    = shTable.GetInt("interceptType", 0);
+		wd.shieldBadColor         = shTable.GetFloat3("badColor",  shieldBadColor);
+		wd.shieldGoodColor        = shTable.GetFloat3("goodColor", shieldGoodColor);
+		wd.shieldAlpha            = shTable.GetFloat("alpha", 0.2f);
+	}
+	else {
+		wd.shieldRepulser         = wdTable.GetBool("shieldRepulser",       false);
+		wd.smartShield            = wdTable.GetBool("smartShield",          false);
+		wd.exteriorShield         = wdTable.GetBool("exteriorShield",       false);
+		wd.visibleShield          = wdTable.GetBool("visibleShield",        false);
+		wd.visibleShieldRepulse   = wdTable.GetBool("visibleShieldRepulse", false);
+		wd.visibleShieldHitFrames = wdTable.GetInt("visibleShieldHitFrames", 0);
+		wd.shieldEnergyUse        = wdTable.GetFloat("shieldEnergyUse",        0.0f);
+		wd.shieldForce            = wdTable.GetFloat("shieldForce",            0.0f);
+		wd.shieldRadius           = wdTable.GetFloat("shieldRadius",           0.0f);
+		wd.shieldMaxSpeed         = wdTable.GetFloat("shieldMaxSpeed",         0.0f);
+		wd.shieldPower            = wdTable.GetFloat("shieldPower",            0.0f);
+		wd.shieldPowerRegen       = wdTable.GetFloat("shieldPowerRegen",       0.0f);
+		wd.shieldPowerRegenEnergy = wdTable.GetFloat("shieldPowerRegenEnergy", 0.0f);
+		wd.shieldStartingPower    = wdTable.GetFloat("shieldStartingPower",    0.0f);
+		wd.shieldInterceptType    = wdTable.GetInt("shieldInterceptType", 0);
+		wd.shieldBadColor  = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);
+		wd.shieldGoodColor = wdTable.GetFloat3("shieldGoodColor", shieldGoodColor);
+		wd.shieldAlpha = wdTable.GetFloat("shieldAlpha", 0.2f);
+	}
+
+
+	int defInterceptType = 0;
+	if (wd.type == "Cannon") {
+		defInterceptType = 1;
+	} else if ((wd.type == "LaserCannon") || (wd.type == "BeamLaser")) {
+		defInterceptType = 2;
+	} else if ((wd.type == "StarburstLauncher") || (wd.type == "MissileLauncher")) {
+		defInterceptType = 4;
+	}
+	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
+
+	wd.wobble = wdTable.GetFloat("wobble", 0.0f) * PI / 0x7fff / 30.0f;
+	wd.trajectoryHeight = wdTable.GetFloat("trajectoryHeight", 0.0f);
+
+	wd.noAutoTarget = (wd.manualfire || wd.interceptor || wd.isShield);
+
+	wd.onlyTargetCategory = 0xffffffff;
+	if (wdTable.GetBool("toAirWeapon", false)) {
+		// fix if we sometime call aircrafts otherwise
+		wd.onlyTargetCategory = CCategoryHandler::Instance()->GetCategories("VTOL");
+		//logOutput.Print("air only weapon %s %i",weaponname.c_str(),wd.onlyTargetCategory);
+	}
+
+	wd.largeBeamLaser = wdTable.GetBool("largeBeamLaser", false);
+	wd.visuals.tilelength  = wdTable.GetFloat("tileLength", 200.0f);
+	wd.visuals.scrollspeed = wdTable.GetFloat("scrollSpeed",  5.0f);
+	wd.visuals.pulseSpeed  = wdTable.GetFloat("pulseSpeed",   1.0f);
+	wd.visuals.beamdecay   = wdTable.GetFloat("beamDecay",    1.0f);
+	wd.visuals.beamttl     = wdTable.GetInt("beamTTL", 0);
+
+	if (wd.type == "Cannon") {
+		wd.heightmod = wdTable.GetFloat("heightMod", 0.8f);
+	} else if (wd.type == "BeamLaser") {
+		wd.heightmod = wdTable.GetFloat("heightMod", 1.0f);
+	} else {
+		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
+	}
+
+	wd.supplycost = 0.0f;
+
+	wd.onlyForward = !wd.turret && (wd.type != "StarburstLauncher");
+
+	const int color2 = wdTable.GetInt("color2", 0);
+
+	const float3 rgbcol = hs2rgb(color / float(255), color2 / float(255));
+	wd.visuals.color  = wdTable.GetFloat3("rgbColor",  rgbcol);
+	wd.visuals.color2 = wdTable.GetFloat3("rgbColor2", float3(1.0f, 1.0f, 1.0f));
+
+	wd.uptime = wdTable.GetFloat("weaponTimer", 0.0f);
+	wd.flighttime = wdTable.GetInt("flightTime", 0) * 32;
+
+	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * PI / 0x7fff / 30.0f;
+
+	if ((wd.type == "AircraftBomb") && !manualBombSettings) {
+		if (wd.reload < 0.5f) {
+			wd.salvodelay = min(0.2f, wd.reload);
+			wd.salvosize = (int)(1 / wd.salvodelay) + 1;
+			wd.reload = 5;
+		} else {
+			wd.salvodelay = min(0.4f, wd.reload);
+			wd.salvosize = 2;
+		}
+	}
+	//if(!wd.turret && (wd.type != "TorpedoLauncher")) {
+	//	wd.maxAngle*=0.4f;
+	//}
 
 	//2+min(damages[0]*0.0025f,weaponDef->areaOfEffect*0.1f)
-	float tempsize = 2.0f+min(weaponDefs[id].damages[0]*0.0025f,weaponDefs[id].areaOfEffect*0.1f);
-	sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
-	sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.2", weaponname + "\\sizeGrowth");
-	sunparser->GetDef(weaponDefs[id].collisionSize, "0.05", weaponname + "\\CollisionSize");
+	const float tempsize = 2.0f + min(wd.damages[0] * 0.0025f, wd.areaOfEffect * 0.1f);
+	wd.size = wdTable.GetFloat("size", tempsize);
+	wd.sizeGrowth = wdTable.GetFloat("sizeGrowth", 0.2f);
+	wd.collisionSize = wdTable.GetFloat("collisionSize", 0.05f);
 
-	weaponDefs[id].visuals.colorMap = 0;
-	std::string colormap;
-	colormap = sunparser->SGetValueDef("", weaponname + "\\colormap");
-	if(colormap!="")
-	{
-		weaponDefs[id].visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+	wd.visuals.colorMap = 0;
+	const string colormap = wdTable.GetString("colormap", "");
+	if (colormap != "") {
+		wd.visuals.colorMap = CColorMap::LoadFromDefString(colormap);
 	}
 
-	sunparser->GetDef(weaponDefs[id].heightBoostFactor, "-1", weaponname + "\\HeightBoostFactor");
+	wd.heightBoostFactor = wdTable.GetFloat("heightBoostFactor", -1.0f);
 
-	//get some weapon specific defaults
-	if(weaponDefs[id].type=="Cannon"){
-		//CExplosiveProjectile
-		weaponDefs[id].visuals.texture1 = &ph->plasmatex;
-		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(1.0f,0.5f,0.0f),weaponname + "\\rgbcolor");
-		sunparser->GetDef(weaponDefs[id].intensity, "0.2", weaponname + "\\intensity");
-	} else if(weaponDefs[id].type=="Rifle"){
-		//...
-	} else if(weaponDefs[id].type=="Melee"){
-		//...
-	} else if(weaponDefs[id].type=="AircraftBomb"){
-		//CExplosiveProjectile or CTorpedoProjectile
-		weaponDefs[id].visuals.texture1 = &ph->plasmatex;
-	} else if(weaponDefs[id].type=="Shield"){
-		weaponDefs[id].visuals.texture1 = &ph->perlintex;
-	} else if(weaponDefs[id].type=="Flame"){
-		//CFlameProjectile
-		weaponDefs[id].visuals.texture1 = &ph->flametex;
-		sunparser->GetTDef(weaponDefs[id].size, tempsize , weaponname + "\\size");
-		sunparser->GetDef(weaponDefs[id].sizeGrowth, "0.5", weaponname + "\\sizeGrowth");
-		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
+	// get some weapon specific defaults
+	if (wd.type == "Cannon") {
+		// CExplosiveProjectile
+		wd.visuals.texture1 = &ph->plasmatex;
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f,0.5f,0.0f));
+		wd.intensity = wdTable.GetFloat("intensity", 0.2f);
+	} else if (wd.type == "Rifle") {
+		// ...
+	} else if (wd.type == "Melee") {
+		// ...
+	} else if (wd.type == "AircraftBomb") {
+		// CExplosiveProjectile or CTorpedoProjectile
+		wd.visuals.texture1 = &ph->plasmatex;
+	} else if (wd.type == "Shield") {
+		wd.visuals.texture1 = &ph->perlintex;
+	} else if (wd.type == "Flame") {
+		// CFlameProjectile
+		wd.visuals.texture1 = &ph->flametex;
+		wd.size          = wdTable.GetFloat("size",      tempsize);
+		wd.sizeGrowth    = wdTable.GetFloat("sizeGrowth",    0.5f);
+		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+		wd.duration      = wdTable.GetFloat("flameGfxTime",  1.2f);
 
-		sunparser->GetDef(weaponDefs[id].duration, "1.2", weaponname + "\\flamegfxtime");
-
-		if(weaponDefs[id].visuals.colorMap==0)
-		{
-			weaponDefs[id].visuals.colorMap = CColorMap::Load12f(1.0,1.0,1,0.1,
-													0.025,0.025,0.025,0.1,
-													0.00,0.00,0.0,0.0);
+		if (wd.visuals.colorMap == 0) {
+			wd.visuals.colorMap = CColorMap::Load12f(1.000f, 1.000f, 1.000f, 0.100f,
+			                                         0.025f, 0.025f, 0.025f, 0.100f,
+			                                         0.000f, 0.000f, 0.000f, 0.000f);
 		}
 
-	} else if(weaponDefs[id].type=="MissileLauncher"){
-		//CMissileProjectile
-		weaponDefs[id].visuals.texture1 = &ph->missileflaretex;
-		weaponDefs[id].visuals.texture2 = &ph->missiletrailtex;
-	} else if(weaponDefs[id].type=="TorpedoLauncher"){
-		//CExplosiveProjectile or CTorpedoProjectile
-		weaponDefs[id].visuals.texture1 = &ph->plasmatex;
-	} else if(weaponDefs[id].type=="LaserCannon"){
-		//CLaserProjectile
-		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
-		weaponDefs[id].visuals.texture2 = &ph->laserendtex;
-		sunparser->GetDef(weaponDefs[id].collisionSize, "0.5", weaponname + "\\CollisionSize");
-	} else if(weaponDefs[id].type=="BeamLaser"){
-		if(weaponDefs[id].largeBeamLaser)
-		{
-			weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
-			weaponDefs[id].visuals.texture2 = &ph->laserendtex;
-			weaponDefs[id].visuals.texture3 = ph->textureAtlas->GetTexturePtr("muzzleside");
-			weaponDefs[id].visuals.texture4 = &ph->beamlaserflaretex;
+	} else if (wd.type == "MissileLauncher") {
+		// CMissileProjectile
+		wd.visuals.texture1 = &ph->missileflaretex;
+		wd.visuals.texture2 = &ph->missiletrailtex;
+	} else if (wd.type == "TorpedoLauncher") {
+		// CExplosiveProjectile or CTorpedoProjectile
+		wd.visuals.texture1 = &ph->plasmatex;
+	} else if (wd.type == "LaserCannon") {
+		// CLaserProjectile
+		wd.visuals.texture1 = &ph->laserfallofftex;
+		wd.visuals.texture2 = &ph->laserendtex;
+		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+	} else if (wd.type == "BeamLaser") {
+		if (wd.largeBeamLaser) {
+			wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
+			wd.visuals.texture2 = &ph->laserendtex;
+			wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr("muzzleside");
+			wd.visuals.texture4 = &ph->beamlaserflaretex;
+		} else {
+			wd.visuals.texture1 = &ph->laserfallofftex;
+			wd.visuals.texture2 = &ph->laserendtex;
+			wd.visuals.texture3 = &ph->beamlaserflaretex;
 		}
-		else
-		{
-			weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
-			weaponDefs[id].visuals.texture2 = &ph->laserendtex;
-			weaponDefs[id].visuals.texture3 = &ph->beamlaserflaretex;
-		}
-	} else if(weaponDefs[id].type=="LightingCannon"){
-		weaponDefs[id].visuals.texture1 = &ph->laserfallofftex;
-		sunparser->GetDef(weaponDefs[id].thickness, "0.8", weaponname + "\\thickness");
-	} else if(weaponDefs[id].type=="EmgCannon"){
-		//CEmgProjectile
-		weaponDefs[id].visuals.texture1 = &ph->plasmatex;
-		weaponDefs[id].visuals.color=sunparser->GetFloat3(float3(0.9f,0.9f,0.2f),weaponname + "\\rgbcolor");
-		sunparser->GetDef(weaponDefs[id].size, "3", weaponname + "\\size");
-	} else if(weaponDefs[id].type=="DGun"){
-		//CFireBallProjectile
-		sunparser->GetDef(weaponDefs[id].collisionSize, "10", weaponname + "\\CollisionSize");
-	} else if(weaponDefs[id].type=="StarburstLauncher"){
-		//CStarburstProjectile
-		weaponDefs[id].visuals.texture1 = &ph->sbflaretex;
-		weaponDefs[id].visuals.texture2 = &ph->sbtrailtex;
-		weaponDefs[id].visuals.texture3 = &ph->explotex;
-	}else {
-		weaponDefs[id].visuals.texture1 = &ph->plasmatex;
-		weaponDefs[id].visuals.texture2 = &ph->plasmatex;
+	} else if (wd.type == "LightingCannon") {
+		wd.visuals.texture1 = &ph->laserfallofftex;
+		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
+	} else if (wd.type == "EmgCannon") {
+		// CEmgProjectile
+		wd.visuals.texture1 = &ph->plasmatex;
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f)); 
+		wd.size = wdTable.GetFloat("size", 3.0f);
+	} else if (wd.type == "DGun") {
+		// CFireBallProjectile
+		wd.collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
+	} else if (wd.type == "StarburstLauncher") {
+		// CStarburstProjectile
+		wd.visuals.texture1 = &ph->sbflaretex;
+		wd.visuals.texture2 = &ph->sbtrailtex;
+		wd.visuals.texture3 = &ph->explotex;
+	} else {
+		wd.visuals.texture1 = &ph->plasmatex;
+		wd.visuals.texture2 = &ph->plasmatex;
 	}
-	std::string tmp;
-	sunparser->GetDef(tmp, "", weaponname + "\\texture1");
-	if(tmp != "")
-		weaponDefs[id].visuals.texture1 = ph->textureAtlas->GetTexturePtr(tmp);
-	sunparser->GetDef(tmp, "", weaponname + "\\texture2");
-	if(tmp != "")
-		weaponDefs[id].visuals.texture2 = ph->textureAtlas->GetTexturePtr(tmp);
-	sunparser->GetDef(tmp, "", weaponname + "\\texture3");
-	if(tmp != "")
-		weaponDefs[id].visuals.texture3 = ph->textureAtlas->GetTexturePtr(tmp);
-	sunparser->GetDef(tmp, "", weaponname + "\\texture4");
-	if(tmp != "")
-		weaponDefs[id].visuals.texture4 = ph->textureAtlas->GetTexturePtr(tmp);
 
-	std::string explgentag = sunparser->SGetValueDef(std::string(), weaponname + "\\explosiongenerator");
-	weaponDefs[id].explosionGenerator = explgentag.empty() ? 0 : explGenHandler->LoadGenerator(explgentag);
+	// FIXME -- remove the 'textureN' format?
+	LuaTable texTable = wdTable.SubTable("textures");
+	string texName;
+	texName = wdTable.GetString("texture1", "");
+	texName = texTable.GetString(1, texName);
+	if (texName != "") {
+		wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr(texName);
+	}
+	texName = wdTable.GetString("texture2", "");
+	texName = texTable.GetString(2, texName);
+	if (texName != "") {
+		wd.visuals.texture2 = ph->textureAtlas->GetTexturePtr(texName);
+	}
+	texName = wdTable.GetString("texture3", "");
+	texName = texTable.GetString(3, texName);
+	if (texName != "") {
+		wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr(texName);
+	}
+	texName = wdTable.GetString("texture4", "");
+	texName = texTable.GetString(4, texName);
+	if (texName != "") {
+		wd.visuals.texture4 = ph->textureAtlas->GetTexturePtr(texName);
+	}
 
-	float gd=max(30.f,weaponDefs[id].damages[0]/20);
-	sunparser->GetTDef(weaponDefs[id].explosionSpeed, (8+gd*2.5f)/(9+sqrtf(gd)*0.7f)*0.5f , weaponname + "\\explosionSpeed");
+	const string expGenTag = wdTable.GetString("explosionGenerator", "");
+	if (expGenTag.empty()) {
+		wd.explosionGenerator = NULL;
+	} else {
+		wd.explosionGenerator = explGenHandler->LoadGenerator(expGenTag);
+	}
 
-
-	weaponDefs[id].id = id;
-	weaponID[weaponname] = id;
+	const float gd = max(30.0f, wd.damages[0] / 20.0f);
+	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrtf(gd) * 0.7f)) * 0.5f;
+	wd.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 
 	// Dynamic Damage
-	sunparser->GetDef(weaponDefs[id].dynDamageInverted, "0", weaponname + "\\dynDamageInverted");
-	weaponDefs[id].dynDamageExp = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageExp").c_str());
-	weaponDefs[id].dynDamageMin = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageMin").c_str());
-	weaponDefs[id].dynDamageRange = atof(sunparser->SGetValueDef("0", weaponname + "\\dynDamageRange").c_str());
+	wd.dynDamageInverted = wdTable.GetBool("dynDamageInverted", false);
+	wd.dynDamageExp      = wdTable.GetFloat("dynDamageExp",   0.0f);
+	wd.dynDamageMin      = wdTable.GetFloat("dynDamageMin",   0.0f);
+	wd.dynDamageRange    = wdTable.GetFloat("dynDamageRange", 0.0f);
 
+	LoadSound(wdTable, wd.firesound, "firesound");
+	LoadSound(wdTable, wd.soundhit,  "soundhit");
 
-	LoadSound(sunparser, weaponDefs[id].firesound, id, "firesound");
-	LoadSound(sunparser, weaponDefs[id].soundhit, id, "soundhit");
+	if ((wd.firesound.getVolume(0) == -1.0f) ||
+	    (wd.soundhit.getVolume(0)  == -1.0f)) {
+		// no volume (-1.0f) read from weapon definition, set it dynamically here
+		if (wd.damages[0] <= 50.0f) {
+			wd.soundhit.setVolume(0, 5.0f);
+			wd.firesound.setVolume(0, 5.0f);
+		}
+		else {
+			float soundVolume = sqrt(wd.damages[0] * 0.5f);
 
-	if (weaponDefs[id].firesound.getVolume(0) == -1 || weaponDefs[id].soundhit.getVolume(0) == -1) {
-		// no volume (-1) read from weapon definition, set it dynamically here
-		if (weaponDefs[id].damages[0] > 50) {
-			float soundVolume = sqrt(weaponDefs[id].damages[0] * 0.5f);
-
-			if (weaponDefs[id].type == "LaserCannon")
+			if (wd.type == "LaserCannon") {
 				soundVolume *= 0.5f;
+			}
 
 			float hitSoundVolume = soundVolume;
 
-			if ((weaponDefs[id].type == "MissileLauncher" || weaponDefs[id].type == "StarburstLauncher") && soundVolume > 100)
-				soundVolume = 10 * sqrt(soundVolume);
-			if (weaponDefs[id].firesound.getVolume(0) == -1)
-				weaponDefs[id].firesound.setVolume(0, soundVolume);
+			if ((soundVolume > 100.0f) &&
+			    ((wd.type == "MissileLauncher") ||
+			     (wd.type == "StarburstLauncher"))) {
+				soundVolume = 10.0f * sqrt(soundVolume);
+			}
+
+			if (wd.firesound.getVolume(0) == -1.0f) {
+				wd.firesound.setVolume(0, soundVolume);
+			}
 
 			soundVolume = hitSoundVolume;
 
-			if (weaponDefs[id].areaOfEffect > 8)
-				soundVolume *= 2;
-			if (weaponDefs[id].type == "DGun")
+			if (wd.areaOfEffect > 8.0f) {
+				soundVolume *= 2.0f;
+			}
+			if (wd.type == "DGun") {
 				soundVolume *= 0.15f;
-			if (weaponDefs[id].soundhit.getVolume(0) == -1)
-				weaponDefs[id].soundhit.setVolume(0, soundVolume);
-		}
-		else {
-			weaponDefs[id].soundhit.setVolume(0, 5.0f);
-			weaponDefs[id].firesound.setVolume(0, 5.0f);
+			}
+			if (wd.soundhit.getVolume(0) == -1.0f) {
+				wd.soundhit.setVolume(0, soundVolume);
+			}
 		}
 	}
 }
 
 
-
-void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSoundSet& gsound, int id, string soundCat)
+void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
+                                  GuiSoundSet& gsound, const string& soundCat)
 {
 	string name = "";
-	float volume = -1;
+	float volume = -1.0f;
 
 	if (soundCat == "firesound") {
-		sunparser->GetDef(name, "", weaponDefs[id].name + "\\soundstart");
-		sunparser->GetDef(volume, "-1", weaponDefs[id].name + "\\soundstartvolume");
-	} else if (soundCat == "soundhit") {
-		sunparser->GetDef(name, "", weaponDefs[id].name + "\\soundhit");
-		sunparser->GetDef(volume, "-1", weaponDefs[id].name + "\\soundhitvolume");
+		name   = wdTable.GetString("soundStart", "");
+		volume = wdTable.GetFloat("soundStartVolume", -1.0f);
+	}
+	else if (soundCat == "soundhit") {
+		name   = wdTable.GetString("soundHit", "");
+		volume = wdTable.GetFloat("soundHitVolume", -1.0f);
 	}
 
 	if (name != "") {
@@ -578,12 +618,11 @@ void CWeaponDefHandler::LoadSound(TdfParser* sunparser, GuiSoundSet& gsound, int
 }
 
 
-
-const WeaponDef *CWeaponDefHandler::GetWeapon(const std::string weaponname2)
+const WeaponDef *CWeaponDefHandler::GetWeapon(const string weaponname2)
 {
-	std::string weaponname(StringToLower(weaponname2));
+	string weaponname(StringToLower(weaponname2));
 
-	std::map<std::string,int>::iterator ii=weaponID.find(weaponname);
+	map<string,int>::iterator ii=weaponID.find(weaponname);
 	if(ii == weaponID.end())
 		return NULL;
 

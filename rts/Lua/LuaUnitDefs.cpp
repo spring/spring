@@ -600,6 +600,28 @@ TYPE_STRING_FUNC(GroundUnit);
 TYPE_STRING_FUNC(MetalExtractor);
 
 
+#define TYPE_MODEL_FUNC(name, param)                       \
+	static int Model ## name(lua_State* L, const void* data) \
+	{                                                        \
+		const UnitDef& ud = *((const UnitDef*)data);           \
+		const S3DOModel* model = ud.LoadModel(0);              \
+		lua_pushnumber(L, model -> param);                     \
+		return 1;                                              \
+	}
+
+TYPE_MODEL_FUNC(Height, height);
+TYPE_MODEL_FUNC(Radius, radius);
+TYPE_MODEL_FUNC(Minx,   minx);
+TYPE_MODEL_FUNC(Midx,   relMidPos.x);
+TYPE_MODEL_FUNC(Maxx,   maxx);
+TYPE_MODEL_FUNC(Miny,   miny);
+TYPE_MODEL_FUNC(Midy,   relMidPos.y);
+TYPE_MODEL_FUNC(Maxy,   maxy);
+TYPE_MODEL_FUNC(Minz,   minz);
+TYPE_MODEL_FUNC(Midz,   relMidPos.z);
+TYPE_MODEL_FUNC(Maxz,   maxz);
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -650,6 +672,17 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("isGroundUnit",     ud.type, IsGroundUnit);
 	ADD_FUNCTION("isMetalExtractor", ud.type, IsMetalExtractor);
 
+	ADD_FUNCTION("height",  ud, ModelHeight);
+	ADD_FUNCTION("radius",  ud, ModelRadius);
+	ADD_FUNCTION("minx",    ud, ModelMinx);
+	ADD_FUNCTION("midx",    ud, ModelMidx);
+	ADD_FUNCTION("maxx",    ud, ModelMaxx);
+	ADD_FUNCTION("miny",    ud, ModelMiny);
+	ADD_FUNCTION("midy",    ud, ModelMidy);
+	ADD_FUNCTION("maxy",    ud, ModelMaxy);
+	ADD_FUNCTION("minz",    ud, ModelMinz);
+	ADD_FUNCTION("midz",    ud, ModelMidz);
+	ADD_FUNCTION("maxz",    ud, ModelMaxz);
 
 	ADD_INT("id", ud.id);
 
@@ -657,24 +690,25 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("humanName", ud.humanName);
 	ADD_STRING("filename",  ud.filename);
 
-	ADD_STRING("buildpicname", ud.buildpicname);
-	ADD_INT("imageSizeX", ud.imageSizeX);
-	ADD_INT("imageSizeY", ud.imageSizeY);
+	ADD_STRING("tooltip", ud.tooltip);
+
+	ADD_STRING("type", ud.type);
 
 	ADD_STRING("gaia", ud.gaia);
 
-	ADD_INT("aihint",      ud.aihint);
-	ADD_INT("techLevel",   ud.techLevel);
-	ADD_INT("maxThisUnit", ud.maxThisUnit);
-
 	ADD_STRING("TEDClass", ud.TEDClassString);
-
-	ADD_STRING("type", ud.type);
-	ADD_STRING("tooltip", ud.tooltip);
 
 	ADD_STRING("wreckName", ud.wreckName);
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
+
+	ADD_STRING("buildpicname", ud.buildpicname);
+	ADD_INT("imageSizeX", ud.imageSizeX);
+	ADD_INT("imageSizeY", ud.imageSizeY);
+
+	ADD_INT("aihint",      ud.aihint);
+	ADD_INT("techLevel",   ud.techLevel);
+	ADD_INT("maxThisUnit", ud.maxThisUnit);
 
 	ADD_FLOAT("metalUpkeep",    ud.metalUpkeep);
 	ADD_FLOAT("energyUpkeep",   ud.energyUpkeep);
@@ -695,7 +729,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("power", ud.power);
 
-	ADD_FLOAT("health", ud.health);
+	ADD_FLOAT("health",       ud.health);
 	ADD_FLOAT("autoHeal",     ud.autoHeal);
 	ADD_FLOAT("idleAutoHeal", ud.idleAutoHeal);
 
@@ -721,7 +755,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("seismicSignature", ud.seismicSignature);
 
-	ADD_BOOL("stealth",           ud.stealth);
+	ADD_BOOL("stealth", ud.stealth);
 
 	ADD_FLOAT("mass", ud.mass);
 
@@ -866,7 +900,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL( "canDropFlare",     ud.canDropFlare);
 	ADD_FLOAT("flareReloadTime",  ud.flareReloadTime);
-	ADD_FLOAT("flareEfficieny",   ud.flareEfficieny);
+	ADD_FLOAT("flareEfficiency",   ud.flareEfficiency);
 	ADD_FLOAT("flareDelay",       ud.flareDelay);
 	ADD_FLOAT("flareDropVectorX", ud.flareDropVector.x);
 	ADD_FLOAT("flareDropVectorY", ud.flareDropVector.y);

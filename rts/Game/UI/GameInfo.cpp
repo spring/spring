@@ -50,9 +50,6 @@ CGameInfo::CGameInfo(void)
 CGameInfo::~CGameInfo(void)
 {
 	instance = NULL;
-	if (mouse->activeReceiver == this) {
-		mouse->activeReceiver = NULL;
-	}
 }
 
 
@@ -133,7 +130,7 @@ bool CGameInfo::MousePress(int x, int y, int button)
 
 void CGameInfo::MouseRelease(int x, int y, int button)
 {
-	if (mouse->activeReceiver == this) {
+	if (activeReceiver == this) {
 		if (IsAbove(x, y)) {
 			delete this;
 		}
@@ -199,7 +196,7 @@ void CGameInfo::Draw()
 	values.push_back(readmap->mapName.c_str());
 
 	labels.push_back("Mod Name:");
-	values.push_back(modInfo->name.c_str());
+	values.push_back(modInfo->filename.c_str());
 
 	if (gs->cheatEnabled) {
 		labels.push_back("CHEATS:");
@@ -254,12 +251,11 @@ void CGameInfo::Draw()
 	
 	glEnable(GL_TEXTURE_2D);
 
-	if ((mouse->activeReceiver == this) && IsAbove(mouse->lastx, mouse->lasty)) {
+	if ((activeReceiver == this) && IsAbove(mouse->lastx, mouse->lasty)) {
 		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	} else {
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
-	
 	
 	// draw the strings
 	for (i = 0; i < (int)labels.size(); i++) {

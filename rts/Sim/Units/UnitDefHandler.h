@@ -11,10 +11,11 @@
 
 class CUnitDefHandler;
 struct WeaponDef;
+class LuaTable;
 
-#define TA_UNIT 1
+
+#define TA_UNIT     1
 #define SPRING_UNIT 2
-
 
 
 //this class takes care of all the unit defenitions
@@ -42,18 +43,15 @@ public:
 	bool noCost;
 
 protected:
-	TdfParser soundcategory;
+	void ParseUnit(const LuaTable&, const std::string& name, int id);
+	void ParseTAUnit(const LuaTable&, const std::string& name, int id);
 
-	void ParseUnit(std::string file, int id);
-
-	void ParseTAUnit(std::string file, int id);
+	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
+	void LoadSound(GuiSoundSet&, const std::string& fileName);
 
 	void FindTABuildOpt();
 
 	void AssignTechLevel(UnitDef& ud, int level);
-
-	void LoadSounds(TdfParser&, GuiSoundSet&, std::string, int);
-	void LoadSound(TdfParser&, GuiSoundSet&, std::string, int);
 
 public:
 //	void CreateBlockingLevels(UnitDef *def,std::string yardmap);

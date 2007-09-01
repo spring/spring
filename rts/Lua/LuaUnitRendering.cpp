@@ -364,7 +364,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 
 	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) {
+		if (!lua_israwstring(L, -2)) {
 			continue;
 		}
 		const string key = StringToLower(lua_tostring(L, -2));
@@ -402,7 +402,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 	mat.type = matType;
 	const int table = index;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) {
+		if (!lua_israwstring(L, -2)) {
 			continue;
 		}
 		const string key = StringToLower(lua_tostring(L, -2));
@@ -416,7 +416,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 			if (lua_istable(L, -1)) {
 			  const int texTable = (int)lua_gettop(L);
 				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
-					if (lua_isnumber(L, -2)) {
+					if (lua_israwnumber(L, -2)) {
 						const int texUnit = (int)lua_tonumber(L, -2);
 						if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
 							ParseTexture(L, caller, -1, mat.textures[texUnit]);

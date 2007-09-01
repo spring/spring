@@ -18,6 +18,7 @@ CR_REG_METADATA(CPlayer, (
 				CR_MEMBER(active),
 				CR_MEMBER(playerName),
 				CR_MEMBER(countryCode),
+				CR_MEMBER(rank),
 				CR_MEMBER(spectator),
 				CR_MEMBER(team),
 //				CR_MEMBER(readyToStart),
@@ -57,6 +58,7 @@ CPlayer::CPlayer()
 	readyToStart=false;
 	cpuUsage=0;
 	ping=0;
+	rank=-1;
 
 
 #ifdef DIRECT_CONTROL_ALLOWED

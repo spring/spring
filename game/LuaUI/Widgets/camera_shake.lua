@@ -26,6 +26,15 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local spSetCameraOffset      = Spring.SetCameraOffset
+local spSetShockFrontFactors = Spring.SetShockFrontFactors
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local exps = 0
 local shake = 0
 
@@ -45,12 +54,12 @@ local distAdj  = 100
 function widget:Initialize()
   -- required for ShockFront() call-ins
   -- (threshold uses the 1/d^2 power)
-  Spring.SetShockFrontFactors(minArea, minPower, distAdj)
+  spSetShockFrontFactors(minArea, minPower, distAdj)
 end
 
 
 function widget:Shutdown()
-  Spring.SetCameraOffset()
+  spSetCameraOffset()
 end
 
 
@@ -79,7 +88,7 @@ function widget:Update(dt)
     birand(pShake),
     birand(tShake),
     birand(tShake)
-  Spring.SetCameraOffset(px, py, pz, tx, ty)
+  spSetCameraOffset(px, py, pz, tx, ty)
 
   local decay = (1 - (decayFactor * dt))
   if (decay < 0) then

@@ -6,6 +6,10 @@
 #include "TdfParser.h"
 #include "GlobalStuff.h"
 
+
+class CStartPosSelecter;
+
+
 class CGameSetup
 {
 public:

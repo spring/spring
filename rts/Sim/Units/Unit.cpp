@@ -1128,6 +1128,7 @@ void CUnit::DrawStats()
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
 	glMultMatrixd(camera->billboard);
+	//glCallList(CCamera::billboardList);
 
 	// black background for healthbar
 	glColor3f(0.0f, 0.0f, 0.0f);

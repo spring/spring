@@ -69,7 +69,13 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
                             const float3& impactDir, int weaponId)
 {
 	if (luaUI) {
-		luaUI->ShockFront(damages.GetDefaultDamage(), pos, radius);
+		if ((weaponId >= 0) && (weaponId <= weaponDefHandler->numWeaponDefs)) {
+			WeaponDef& wd = weaponDefHandler->weaponDefs[weaponId];
+			const float cameraShake = wd.cameraShake;
+			if (cameraShake > 0.0f) {
+				luaUI->ShockFront(cameraShake, pos, radius);
+			}
+		}
 	}
 	bool noGfx = luaCallIns.Explosion(weaponId, pos, owner);
 
@@ -386,7 +392,7 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 	return length;
 }
 
-void CGameHelper::GenerateTargets(CWeapon *weapon, CUnit* lastTarget,std::map<float,CUnit*> &targets)
+void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,std::map<float,CUnit*> &targets)
 {
 	CUnit* attacker=weapon->owner;
 	float radius=weapon->range;

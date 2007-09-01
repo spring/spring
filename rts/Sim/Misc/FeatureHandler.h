@@ -5,7 +5,6 @@
 #include <string>
 #include <list>
 #include <vector>
-#include "TdfParser.h"
 #include "creg/creg.h"
 #include "FeatureDef.h"
 #include "FeatureSet.h"
@@ -14,6 +13,7 @@ struct S3DOModel;
 class CFileHandler;
 class CLoadSaveInterface;
 class CVertexArray;
+class LuaTable;
 
 #define DRAW_QUAD_SIZE 32
 
@@ -48,15 +48,14 @@ public:
 	void DrawShadowPass();
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
 
-	const TdfParser& GetWreckParser() const { return wreckParser; }
 	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 private:
-	void LoadWreckFeatures();
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
+	const FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const string& name);	
 
-	TdfParser wreckParser;
+private:
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 

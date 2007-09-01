@@ -706,7 +706,7 @@ int CLuaRules::SetRulesInfoMap(lua_State* L)
 	infoMap.clear();
 	const int table = 1;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
+		if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
 			const string key = lua_tostring(L, -2);
 			const string value = lua_tostring(L, -1);
 			infoMap[key] = value;
@@ -777,7 +777,7 @@ void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 		else if (lua_istable(L, -1)) {
 			lua_pushnil(L);
 			if (lua_next(L, -2)) {
-				if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+				if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 					const string name = lua_tostring(L, -2);
 					const float value = lua_tonumber(L, -1);
 					paramsMap[name] = params.size();

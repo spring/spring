@@ -190,6 +190,7 @@ static int math_random (lua_State *L) {
   // SPRING
   // respect the original lua code that uses rand,
   // and rand is auto-seeded always with the same value
+#ifdef STREFLOP_H // unitsync is compiled without streflop
   if (lua_streflop_random_seed == 0) {
     lua_streflop_random_seed = 1;
     streflop::RandomInit(1);
@@ -197,6 +198,9 @@ static int math_random (lua_State *L) {
 
   lua_Number r =
     streflop::Random<true, false, lua_Number>(lua_Number(0.0), lua_Number(1.0));
+#else
+  lua_Number r = 0.0f;
+#endif
 
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
@@ -224,40 +228,43 @@ static int math_random (lua_State *L) {
 
 static int math_randomseed (lua_State *L) {
   /* SPRING srand(luaL_checkint(L, 1)); */
+
+#ifdef STREFLOP_H // unitsync is compiled without streflop
   streflop::RandomInit(luaL_checkint(L, 1));
+#endif
   return 0;
 }
 
 
 static const luaL_Reg mathlib[] = {
-  {"abs",   math_abs},
-  {"acos",  math_acos},
-  {"asin",  math_asin},
-  {"atan2", math_atan2},
-  {"atan",  math_atan},
-  {"ceil",  math_ceil},
-  {"cosh",   math_cosh},
-  {"cos",   math_cos},
-  {"deg",   math_deg},
-  {"exp",   math_exp},
-  {"floor", math_floor},
-  {"fmod",   math_fmod},
-  {"frexp", math_frexp},
-  {"ldexp", math_ldexp},
-  {"log10", math_log10},
-  {"log",   math_log},
-  {"max",   math_max},
-  {"min",   math_min},
-//FIXME  {"modf",   math_modf},
-  {"pow",   math_pow},
-  {"rad",   math_rad},
-  {"random",     math_random},
-  {"randomseed", math_randomseed},
-  {"sinh",   math_sinh},
-  {"sin",   math_sin},
-  {"sqrt",  math_sqrt},
-  {"tanh",   math_tanh},
-  {"tan",   math_tan},
+  {"abs",   math_abs   },
+  {"acos",  math_acos  },
+  {"asin",  math_asin  },
+  {"atan2", math_atan2 },
+  {"atan",  math_atan  },
+  {"ceil",  math_ceil  },
+  {"cosh",  math_cosh  },
+  {"cos",   math_cos   },
+  {"deg",   math_deg   },
+  {"exp",   math_exp   },
+  {"floor", math_floor },
+  {"fmod",  math_fmod  },
+  {"frexp", math_frexp },
+  {"ldexp", math_ldexp },
+  {"log10", math_log10 },
+  {"log",   math_log   },
+  {"max",   math_max   },
+  {"min",   math_min   },
+//{"modf",  math_modf  },  FIXME?
+  {"pow",   math_pow   },
+  {"rad",   math_rad   },
+  {"random",     math_random },
+  {"randomseed", math_randomseed },
+  {"sinh",  math_sinh  },
+  {"sin",   math_sin   },
+  {"sqrt",  math_sqrt  },
+  {"tanh",  math_tanh  },
+  {"tan",   math_tan   },
   {NULL, NULL}
 };
 
@@ -269,7 +276,11 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
+#ifdef STREFLOP_H // unitsync is compiled without streflop
   lua_pushnumber(L, streflop::SimplePositiveInfinity);
+#else
+  lua_pushnumber(L, HUGE_VAL);
+#endif
   lua_setfield(L, -2, "huge");
 #if defined(LUA_COMPAT_MOD)
   lua_getfield(L, -1, "fmod");

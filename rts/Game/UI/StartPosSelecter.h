@@ -13,6 +13,12 @@ public:
 	virtual bool MousePress(int x, int y, int button);
 	virtual void Draw();
 
+	bool Ready();
+	void ShowReady(bool value) { showReady = value; }
+
+	static CStartPosSelecter* selector;
+private:
+	bool showReady;
 	ContainerBox readyBox;
 };
 

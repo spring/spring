@@ -29,6 +29,9 @@
 using namespace std;
 
 
+#define TREE_RADIUS 20  // copied from Feature.cpp
+
+
 static ParamMap paramMap;
 
 static bool InitParamMap();
@@ -39,11 +42,6 @@ static void PushFeatureDef(lua_State* L,
 // iteration routines
 static int Next(lua_State* L);
 static int Pairs(lua_State* L);
-
-// FeatureDefs meta-table calls
-static int FeatureDefTableIndex(lua_State* L);
-static int FeatureDefTableNewIndex(lua_State* L);
-static int FeatureDefTableMetatable(lua_State* L);
 
 // FeatureDef
 static int FeatureDefIndex(lua_State* L);
@@ -64,12 +62,48 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	  InitParamMap();
 	}
 
-	lua_newtable(L); { // the metatable
-		HSTR_PUSH_CFUNC(L, "__index",     FeatureDefTableIndex);
-		HSTR_PUSH_CFUNC(L, "__newindex",  FeatureDefTableNewIndex);
-		HSTR_PUSH_CFUNC(L, "__metatable", FeatureDefTableMetatable);
+	const std::map<std::string, const FeatureDef*>& featureDefs =
+		featureHandler->GetFeatureDefs();
+	std::map<std::string, const FeatureDef*>::const_iterator fdIt;
+	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); fdIt++) {
+	  const FeatureDef* fd = fdIt->second;
+		if (fd == NULL) {
+	  	continue;
+		}
+		lua_pushnumber(L, fd->id);
+		lua_newtable(L); { // the proxy table
+
+			lua_newtable(L); { // the metatable
+
+				HSTR_PUSH(L, "__index");
+				lua_pushlightuserdata(L, (void*)fd);
+				lua_pushcclosure(L, FeatureDefIndex, 1);
+				lua_rawset(L, -3); // closure 
+
+				HSTR_PUSH(L, "__newindex");
+				lua_pushlightuserdata(L, (void*)fd);
+				lua_pushcclosure(L, FeatureDefNewIndex, 1);
+				lua_rawset(L, -3);
+
+				HSTR_PUSH(L, "__metatable");
+				lua_pushlightuserdata(L, (void*)fd);
+				lua_pushcclosure(L, FeatureDefMetatable, 1);
+				lua_rawset(L, -3);
+			}
+
+			lua_setmetatable(L, -2);
+		}
+
+		HSTR_PUSH(L, "pairs");
+		lua_pushcfunction(L, Pairs);
+		lua_rawset(L, -3);
+
+		HSTR_PUSH(L, "next");
+		lua_pushcfunction(L, Next);
+		lua_rawset(L, -3);
+
+		lua_rawset(L, -3); // proxy table into FeatureDefs
 	}
-	lua_setmetatable(L, -2);
 
 	return true;
 }
@@ -124,57 +158,6 @@ static void PushFeatureDef(lua_State* L, const FeatureDef* fd, int index)
 }
 
 
-static int FeatureDefTableIndex(lua_State* L)
-{
-	const FeatureDef* fd = NULL;
-	if (lua_isnumber(L, 2)) {
-		const int id = (int)lua_tonumber(L, 2);
-		lua_rawgeti(L, 1, id);
-		if (lua_istable(L, -1)) {
-			return 1; // already exists
-		} else {
-			lua_pop(L, 1);
-		}
-		fd = featureHandler->GetFeatureDefByID(id);
-	}
-	else if (lua_isstring(L, 2)) {
-		const string name = lua_tostring(L, 2);
-		fd = featureHandler->GetFeatureDef(name);
-		if (fd != NULL) {
-			lua_rawgeti(L, 1, fd->id);
-			if (lua_istable(L, -1)) {
-				return 1;
-			} else {
-				lua_pop(L, 1);
-			}
-		}
-	}
-
-	if (fd == NULL) {
-		return 0; // featureDef does not exist
-	}
-
-	// create a new table and return it
-	PushFeatureDef(L, fd, 1);
-	lua_rawgeti(L, 1, fd->id);
-	return 1;
-}
-
-
-static int FeatureDefTableNewIndex(lua_State* L)
-{
-	luaL_error(L, "ERROR: can not write to FeatureDefs");
-	return 0;
-}
-
-
-static int FeatureDefTableMetatable(lua_State* L)
-{
-	luaL_error(L, "ERROR: attempt to FeatureDefs metatable");
-	return 0;
-}
-
-
 /******************************************************************************/
 
 static int FeatureDefIndex(lua_State* L)
@@ -195,9 +178,9 @@ static int FeatureDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* ud = (const FeatureDef*)userData;
+	const FeatureDef* fd = (const FeatureDef*)userData;
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)ud) + elem.offset;
+	const char* p = ((const char*)fd) + elem.offset;
 	switch (elem.type) {
 		case READONLY_TYPE: {
 			lua_rawget(L, 1);
@@ -248,17 +231,17 @@ static int FeatureDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* ud = (const FeatureDef*)userData;
+	const FeatureDef* fd = (const FeatureDef*)userData;
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
-		luaL_error(L, "Attempt to write FeatureDefs[%d].%s", ud->id, name);
+		luaL_error(L, "Attempt to write FeatureDefs[%d].%s", fd->id, name);
 		return 0;
 	}
 
 	// Definition editing
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)ud) + elem.offset;
+	const char* p = ((const char*)fd) + elem.offset;
 
 	switch (elem.type) {
 		case FUNCTION_TYPE:
@@ -294,7 +277,7 @@ static int FeatureDefNewIndex(lua_State* L)
 static int FeatureDefMetatable(lua_State* L)
 {
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* ud = (const FeatureDef*)userData;
+	const FeatureDef* fd = (const FeatureDef*)userData;
 	return 0;
 }
 
@@ -379,14 +362,68 @@ static int DrawTypeString(lua_State* L, const void* data)
 
 static int FeatureDefToID(lua_State* L, const void* data)
 {
-	const FeatureDef* ud = *((const FeatureDef**)data);
-	if (ud == NULL) {
+	const FeatureDef* fd = *((const FeatureDef**)data);
+	if (fd == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, ud->id);
+	lua_pushnumber(L, fd->id);
 	return 1;
 }
 
+
+static int ModelHeight(lua_State* L, const void* data)
+{
+	const FeatureDef& fd = *((const FeatureDef*)data);
+	float height = 0.0f;
+	switch (fd.drawType) {
+		case DRAWTYPE_3DO:  { height = fd.LoadModel(0)->height; break; }
+		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;      break; }
+		case DRAWTYPE_NONE: { height = 0.0f;                    break; }
+		default:            { height = 0.0f;                    break; }
+	}
+	lua_pushnumber(L, height);
+	return 1;
+}
+
+
+static int ModelRadius(lua_State* L, const void* data)
+{
+	const FeatureDef& fd = *((const FeatureDef*)data);
+	float radius = 0.0f;
+	switch (fd.drawType) {
+		case DRAWTYPE_3DO:  { radius = fd.LoadModel(0)->radius; break; }
+		case DRAWTYPE_TREE: { radius = TREE_RADIUS;             break; }
+		case DRAWTYPE_NONE: { radius = 0.0f;                    break; }
+		default:            { radius = 0.0f;                    break; }
+	}
+	lua_pushnumber(L, radius);
+	return 1;
+}
+
+
+#define TYPE_MODEL_FUNC(name, param)                       \
+	static int Model ## name(lua_State* L, const void* data) \
+	{                                                        \
+		const FeatureDef& fd = *((const FeatureDef*)data);     \
+		if (fd.drawType == DRAWTYPE_3DO) {                     \
+			const S3DOModel* model = fd.LoadModel(0);            \
+			lua_pushnumber(L, model -> param);                   \
+			return 1;                                            \
+		}                                                      \
+		return 0;                                              \
+	}
+
+//TYPE_MODEL_FUNC(Height, height);
+//TYPE_MODEL_FUNC(Radius, radius);
+TYPE_MODEL_FUNC(Minx,   minx);
+TYPE_MODEL_FUNC(Midx,   relMidPos.x);
+TYPE_MODEL_FUNC(Maxx,   maxx);
+TYPE_MODEL_FUNC(Miny,   miny);
+TYPE_MODEL_FUNC(Midy,   relMidPos.y);
+TYPE_MODEL_FUNC(Maxy,   maxy);
+TYPE_MODEL_FUNC(Minz,   minz);
+TYPE_MODEL_FUNC(Midz,   relMidPos.z);
+TYPE_MODEL_FUNC(Maxz,   maxz);
 
 
 /******************************************************************************/
@@ -402,6 +439,18 @@ static bool InitParamMap()
 	const char* start = ADDRESS(fd);
 
 	ADD_FUNCTION("drawTypeString",  fd.drawType, DrawTypeString);
+
+	ADD_FUNCTION("height",  fd, ModelHeight);
+	ADD_FUNCTION("radius",  fd, ModelRadius);
+	ADD_FUNCTION("minx",    fd, ModelMinx);
+	ADD_FUNCTION("midx",    fd, ModelMidx);
+	ADD_FUNCTION("maxx",    fd, ModelMaxx);
+	ADD_FUNCTION("miny",    fd, ModelMiny);
+	ADD_FUNCTION("midy",    fd, ModelMidy);
+	ADD_FUNCTION("maxy",    fd, ModelMaxy);
+	ADD_FUNCTION("minz",    fd, ModelMinz);
+	ADD_FUNCTION("midz",    fd, ModelMidz);
+	ADD_FUNCTION("maxz",    fd, ModelMaxz);
 
 	ADD_INT("id", fd.id);
 
@@ -426,8 +475,6 @@ static bool InitParamMap()
 	ADD_INT("drawType",     fd.drawType);
 	ADD_INT("modelType",    fd.modelType);
 	ADD_STRING("modelname", fd.modelname);
-
-//FIXME	S3DOModel* model;      //used by 3do obects
 
 	ADD_BOOL("upright",      fd.upright);
 	ADD_BOOL("destructable", fd.destructable);

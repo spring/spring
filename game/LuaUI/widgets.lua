@@ -105,6 +105,9 @@ local flexCallIns = {
   'GameOver',
   'TeamDied',
   'ShockFront',
+  'WorldTooltip',
+  'GameSetup',
+  'DefaultCommand',
   'UnitCreated',
   'UnitFinished',
   'UnitFromFactory',
@@ -120,6 +123,8 @@ local flexCallIns = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'StockpileChanged',
+  'DrawWorld',
   'DrawWorld',
   'DrawWorldPreUnit',
   'DrawWorldShadow',
@@ -277,7 +282,7 @@ function widgetHandler:Initialize()
   self.autoModWidgets = (autoModWidgets ~= 0)
 
   -- create the "LuaUI/Config" directory
-  Spring.CreateDir('LuaUI/Config')
+  Spring.CreateDir(LUAUI_DIRNAME .. 'Config')
 
   local unsortedWidgets = {}
   
@@ -336,7 +341,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   local basename = Basename(filename)
   local text = VFS.LoadFile(filename)
   if (text == nil) then
-    Spring.Echo('Failed to load: ' .. basename)
+    Spring.Echo('Failed to load: ' .. basename .. '  (missing file: ' .. filename ..')')
     return nil
   end
   local chunk, err = loadstring(text, filename)
@@ -551,7 +556,8 @@ local function SafeWrapFuncNoGL(func, funcName)
         Spring.Echo('Error in Shutdown()')
       end
       local name = w.whInfo.name
-      Spring.Echo(r[2]) -- print the error
+      Spring.Echo(r[1])
+      Spring.Echo('Error in ' .. funcName ..'(): ' .. tostring(r[2]))
       Spring.Echo('Removed widget: ' .. name)
       return nil
     end
@@ -578,7 +584,7 @@ local function SafeWrapFuncGL(func, funcName)
         Spring.Echo('Error in Shutdown()')
       end
       local name = w.whInfo.name
-      Spring.Echo(r[2]) -- print the error
+      Spring.Echo('Error in ' .. funcName ..'(): ' .. tostring(r[2]))
       Spring.Echo('Removed widget: ' .. name)
       return nil
     end
@@ -700,7 +706,6 @@ function widgetHandler:UpdateCallIn(name)
   local listName = name .. 'List'
   if ((name == 'Update')     or
       (name == 'DrawScreen')) then
---      (name == 'DrawWorld')) then
     return
   end
 
@@ -1116,7 +1121,6 @@ function widgetHandler:ViewResize(vsx, vsy)
 end
 
 
-
 function widgetHandler:DrawScreen()
   if (self.tweakMode) then
     gl.Color(0, 0, 0, 0.5)
@@ -1271,6 +1275,10 @@ end
 function widgetHandler:MousePress(x, y, button)
   local mo = self.mouseOwner
   if (not self.tweakMode) then
+    if (mo) then
+      mo:MousePress(x, y, button)
+      return true  --  already have an active press
+    end
     for _,w in ipairs(self.MousePressList) do
       if (w:MousePress(x, y, button)) then
         self.mouseOwner = w
@@ -1311,7 +1319,11 @@ end
 
 function widgetHandler:MouseRelease(x, y, button)
   local mo = self.mouseOwner
-  self.mouseOwner = nil
+  local mx, my, lmb, mmb, rmb = Spring.GetMouseState()
+  if (not (lmb or mmb or rmb)) then
+    self.mouseOwner = nil
+  end
+
   if (not self.tweakMode) then
     if (mo and mo.MouseRelease) then
       return mo:MouseRelease(x, y, button)
@@ -1327,12 +1339,21 @@ end
 
 
 function widgetHandler:MouseWheel(up, value)
-  for _,w in ipairs(self.MouseWheelList) do
-    if (w:MouseWheel(up, value)) then
-      return true
+  if (not self.tweakMode) then
+    for _,w in ipairs(self.MouseWheelList) do
+      if (w:MouseWheel(up, value)) then
+        return true
+      end
     end
+    return false
+  else
+    for _,w in ipairs(self.TweakMouseWheelList) do
+      if (w:TweakMouseWheel(up, value)) then
+        return true
+      end
+    end
+    return false -- FIXME: always grab in tweakmode?
   end
-  return false
 end
 
 
@@ -1395,6 +1416,39 @@ function widgetHandler:ShockFront(power, dx, dy, dz)
     w:ShockFront(power, dx, dy, dz)
   end
   return
+end
+
+
+function widgetHandler:WorldTooltip(...)
+  for _,w in ipairs(self.WorldTooltipList) do
+    local tt = w:WorldTooltip(unpack(arg))
+    if (tt and (type(tt) == 'string') and (#tt > 0)) then
+      return tt
+    end
+  end
+  return
+end
+
+
+function widgetHandler:GameSetup(state, ready, playerStates)
+  for _,w in ipairs(self.GameSetupList) do
+    local success, newReady = w:GameSetup(state, ready, playerStates)
+    if (success) then
+      return true, newReady
+    end
+  end
+  return false
+end
+
+
+function widgetHandler:DefaultCommand(...)
+  for _,w in ripairs(self.DefaultCommandList) do
+    local result = w:DefaultCommand(unpack(arg))
+    if (type(result) == 'number') then
+      return result
+    end
+  end
+  return nil  --  not a number, use the default engine command
 end
 
 
@@ -1525,6 +1579,16 @@ function widgetHandler:UnitUnloaded(unitID, unitDefID, unitTeam,
   for _,w in ipairs(self.UnitUnloadedList) do
     w:UnitUnloaded(unitID, unitDefID, unitTeam,
                    transportID, transportTeam)
+  end
+  return
+end
+
+
+function widgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
+                                        weaponNum, oldCount, newCount)
+  for _,w in ipairs(self.StockpileChangedList) do
+    w:StockpileChanged(unitID, unitDefID, unitTeam,
+                       weaponNum, oldCount, newCount)
   end
   return
 end

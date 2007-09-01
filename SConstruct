@@ -77,44 +77,27 @@ uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
 for d in filelist.list_directories(uenv, 'rts'):
 	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
-unitsync_files = filelist.get_source(uenv, 'tools/unitsync');
-unitsync_extra_files = \
-	['rts/Game/GameVersion.cpp',
+unitsync_files          = filelist.get_source(uenv, 'tools/unitsync', 'test/test.cpp');
+unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/');
+unitsync_lua_files      = filelist.get_source(uenv, 'rts/lib/lua/src');
+unitsync_7zip_files     = filelist.get_source(uenv, 'rts/lib/7zip');
+unitsync_minizip_files  = filelist.get_source(uenv, 'rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
+unitsync_hpiutil2_files = filelist.get_source(uenv, 'rts/lib/hpiutil2');
+unitsync_extra_files = [
+	'rts/Game/GameVersion.cpp',
+	'rts/Lua/LuaParser.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/System/TdfParser.cpp',
-	'rts/System/FileSystem/Archive7Zip.cpp',
-	'rts/System/FileSystem/ArchiveBuffered.cpp',
-	'rts/System/FileSystem/ArchiveDir.cpp',
-	'rts/System/FileSystem/ArchiveFactory.cpp',
-	'rts/System/FileSystem/ArchiveHPI.cpp',
-	'rts/System/FileSystem/ArchiveScanner.cpp',
-	'rts/System/FileSystem/ArchiveZip.cpp',
-	'rts/System/FileSystem/FileHandler.cpp',
-	'rts/System/FileSystem/VFSHandler.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
-	'rts/lib/7zip/7zAlloc.c',
-	'rts/lib/7zip/7zBuffer.c',
-	'rts/lib/7zip/7zCrc.c',
-	'rts/lib/7zip/7zDecode.c',
-	'rts/lib/7zip/7zExtract.c',
-	'rts/lib/7zip/7zHeader.c',
-	'rts/lib/7zip/7zIn.c',
-	'rts/lib/7zip/7zItem.c',
-	'rts/lib/7zip/7zMethodID.c',
-	'rts/lib/7zip/LzmaDecode.c',
-	'rts/lib/hpiutil2/hpientry.cpp',
-	'rts/lib/hpiutil2/hpifile.cpp',
-	'rts/lib/hpiutil2/hpiutil.cpp',
-	'rts/lib/hpiutil2/scrambledfile.cpp',
-	'rts/lib/hpiutil2/sqshstream.cpp',
-	'rts/lib/hpiutil2/substream.cpp',
-	'rts/lib/minizip/ioapi.c',
-	'rts/lib/minizip/unzip.c',
-	'rts/lib/minizip/zip.c']
-for f in unitsync_extra_files:
-	unitsync_files += [os.path.join(uenv['builddir'], f)]
+]
+for f in unitsync_fs_files:       unitsync_files += f
+for f in unitsync_lua_files:      unitsync_files += f
+for f in unitsync_7zip_files:     unitsync_files += f
+for f in unitsync_minizip_files:  unitsync_files += f
+for f in unitsync_hpiutil2_files: unitsync_files += f
+for f in unitsync_extra_files:   unitsync_files += [os.path.join(uenv['builddir'], f)]
 
 if env['platform'] == 'windows':
 	for f in ['rts/lib/minizip/iowin32.c', 'rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:

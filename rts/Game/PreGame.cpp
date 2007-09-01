@@ -268,8 +268,9 @@ bool CPreGame::Draw()
 		glLoadIdentity();
 	}
 
-	if(showList)
+	if (showList) {
 		showList->Draw();
+	}
 
 	if(net && !net->Connected() && state > WAIT_ON_ADDRESS){
 		char text[400];

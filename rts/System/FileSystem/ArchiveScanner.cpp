@@ -54,11 +54,16 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 	ModData md;
 	md.name = "";
 
-	if (!p->SectionExist(section))
+	if (!p->SectionExist(section)) {
 		return md;
+	}
 
-	md.name = p->SGetValueDef("", (section + "\\Name").c_str());
+	md.name        = p->SGetValueDef("", (section + "\\Name").c_str());
+	md.shortName   = p->SGetValueDef("", (section + "\\ShortName").c_str());
+	md.version     = p->SGetValueDef("", (section + "\\Version").c_str());
+	md.mutator     = p->SGetValueDef("", (section + "\\Mutator").c_str());
 	md.description = p->SGetValueDef("", (section + "\\Description").c_str());
+
 	md.modType = atoi(p->SGetValueDef("0", (section + "\\ModType").c_str()).c_str());
 
 	int numDep = atoi(p->SGetValueDef("0", (section + "\\NumDependencies").c_str()).c_str());
@@ -491,11 +496,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	isDirty = false;
 }
 
-vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods()
+vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 {
 	vector<ModData> ret;
 
-	for (map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
+	for (map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.modData.name != "") {
 
 			if (i->second.modData.modType != 1)
@@ -654,7 +659,7 @@ void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 }
 
 /** Convert mod name to mod primary archive, e.g. ModNameToModArchive("XTA v8.1") returns "xtape.sd7". */
-std::string CArchiveScanner::ModNameToModArchive(const std::string& s)
+std::string CArchiveScanner::ModNameToModArchive(const std::string& s) const
 {
 	// Convert mod name to mod archive
 	std::vector<ModData> found = GetPrimaryMods();
@@ -666,7 +671,7 @@ std::string CArchiveScanner::ModNameToModArchive(const std::string& s)
 }
 
 /** The reverse of ModNameToModArchive() */
-std::string CArchiveScanner::ModArchiveToModName(const std::string& s)
+std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
 {
 	// Convert mod archive to mod name
 	std::vector<ModData> found = GetPrimaryMods();
@@ -676,4 +681,32 @@ std::string CArchiveScanner::ModArchiveToModName(const std::string& s)
 		}
 	}
 	return s;
+}
+
+/** Convert mod name to mod data struct, can return NULL */
+const CArchiveScanner::ModData* CArchiveScanner::ModNameToModData(const std::string& s) const
+{
+	// Convert mod name to mod archive
+	std::vector<ModData> found = GetPrimaryMods();
+	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		const ModData& md = *it;
+		if (md.name == s) {
+			return &md;
+		}
+	}
+	return NULL;
+}
+
+/** Convert mod archive to mod data struct, can return NULL */
+const CArchiveScanner::ModData* CArchiveScanner::ModArchiveToModData(const std::string& s) const
+{
+	// Convert mod archive to mod name
+	std::vector<ModData> found = GetPrimaryMods();
+	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+		const ModData& md = *it;
+		if (md.dependencies.front() == s) {
+			return &md;
+		}
+	}
+	return NULL;
 }

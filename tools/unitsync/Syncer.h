@@ -26,8 +26,7 @@ class CSyncer
 {
 protected:
 	bool populated;
-	vector<string> files;
-	map<string,Unit> units;
+	map<string, Unit> units;
 	map<string, DisabledUnit> disabledUnits;
 	vector<string> unitIds;
 	void RemoveClient(int id);

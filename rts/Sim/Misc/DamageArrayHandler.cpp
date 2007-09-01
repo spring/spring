@@ -3,11 +3,16 @@
 #include "DamageArray.h"
 #include "TdfParser.h"
 #include "LogOutput.h"
+#include "Lua/LuaParser.h"
+#include "System/FileSystem/FileHandler.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
 #include "creg/STL_Map.h"
 #include "mmgr.h"
+
+using namespace std;
+
 
 CR_BIND(CDamageArrayHandler, );
 
@@ -22,32 +27,47 @@ CDamageArrayHandler* damageArrayHandler;
 
 CDamageArrayHandler::CDamageArrayHandler(void)
 {
-	try
-	{
-		TdfParser p("Armor.txt");
+	try {
+		LuaParser luaParser("gamedata/armor.lua",
+		                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		if (!luaParser.Execute()) {
+			logOutput.Print(luaParser.GetErrorLog());
+			throw content_error(luaParser.GetErrorLog());
+		}
+		LuaTable root = luaParser.GetRoot();
 
-		typeList = p.GetSectionList("");
+		root.GetKeys(typeList);
 
 		numTypes = typeList.size() + 1;
+		typeList.insert(typeList.begin(), "default");
+		name2type["default"] = 0;
 
 		logOutput.Print(1, "Number of damage types: %d", numTypes);
-		int a=1;
-		for(std::vector<std::string>::iterator ti=typeList.begin();ti!=typeList.end();++a,++ti){
-			std::string s = StringToLower(*ti);
-			name2type[s]=a;
-	//		logOutput.Print("%s has type num %i",(*ti).c_str(),a);
-			const std::map<std::string, std::string>& units=p.GetAllValues(*ti);
 
-			for(std::map<std::string, std::string>::const_iterator ui=units.begin();ui!=units.end();++ui){
-				std::string s = StringToLower(ui->first);
-				name2type[s] = a;
-	//			logOutput.Print("unit %s has type num %i",ui->first.c_str(),a);
+		for (int armorID = 1; armorID < (int)typeList.size(); armorID++) {
+			const string armorName = StringToLower(typeList[armorID]);
+			if (armorName == "default") {
+				throw content_error("Tried to define the \"default\" armor type\n");
+			}
+			name2type[armorName] = armorID;
+
+			LuaTable armorTable = root.SubTable(typeList[armorID]);
+			vector<string> units; // the values are not used (afaict)
+			armorTable.GetKeys(units);
+
+			vector<string>::const_iterator ui;
+			for (ui = units.begin(); ui != units.end(); ++ui) {
+				const string unitName = StringToLower(*ui); // NOTE: not required
+				name2type[unitName] = armorID;
 			}
 		}
 	}
-	catch(content_error) // If the modrules.tdf isnt found
-	{
+	catch (content_error) {
 		numTypes = 1;
+		name2type.clear();
+		name2type["default"] = 0;
+		typeList.clear();
+		typeList.push_back("default");
 	}
 }
 
@@ -57,10 +77,11 @@ CDamageArrayHandler::~CDamageArrayHandler(void)
 }
 
 
-int CDamageArrayHandler::GetTypeFromName(std::string name)
+int CDamageArrayHandler::GetTypeFromName(string name)
 {
 	StringToLowerInPlace(name);
-	if(name2type.find(name)!=name2type.end())
+	if (name2type.find(name) != name2type.end()) {
 		return name2type[name];
-	return 0;
+	}
+	return 0; // 'default' armor index
 }

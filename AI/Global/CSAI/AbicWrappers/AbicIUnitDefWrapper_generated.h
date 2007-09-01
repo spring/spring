@@ -662,9 +662,9 @@
       return UnitDef_get_flareReloadTime( self );
    }
 
-   float get_flareEfficieny()
+   float get_flareEfficiency()
    {
-      return UnitDef_get_flareEfficieny( self );
+      return UnitDef_get_flareEfficiency( self );
    }
 
    float get_flareDelay()

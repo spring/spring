@@ -75,6 +75,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="r";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Repair";
+		c.mouseicon=c.name;
 		c.tooltip="Repair: Repairs another unit";
 		possibleCommands.push_back(c);
 	} else if(owner->unitDef->canAssist){
@@ -83,6 +84,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="r";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Assist";
+		c.mouseicon=c.name;
 		c.tooltip="Assist: Help build something";
 		possibleCommands.push_back(c);
 	}
@@ -93,6 +95,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="e";
 		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 		c.name="Reclaim";
+		c.mouseicon=c.name;
 		c.tooltip="Reclaim: Sucks in the metal/energy content of a unit/feature and add it to your storage";
 		possibleCommands.push_back(c);
 	}
@@ -103,6 +106,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="";
 		c.type=CMDTYPE_ICON_AREA;
 		c.name="Restore";
+		c.mouseicon=c.name;
 		c.tooltip="Restore: Restores an area of the map to its original height";
 		c.params.push_back("200");
 		possibleCommands.push_back(c);
@@ -115,6 +119,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 		c.name="Resurrect";
+		c.mouseicon=c.name;
 		c.tooltip="Resurrect: Resurrects a unit from a feature";
 		possibleCommands.push_back(c);
 	}
@@ -124,6 +129,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Capture";
+		c.mouseicon=c.name;
 		c.tooltip="Capture: Captures a unit from the enemy";
 		possibleCommands.push_back(c);
 	}
@@ -145,10 +151,11 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 		c.action="buildunit_" + StringToLower(ud->name);
 		c.type=CMDTYPE_ICON_BUILDING;
 		c.name=name;
+		c.mouseicon=c.name;
 
 		char tmp[500];
 		sprintf(tmp,"\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",ud->health,ud->metalCost,ud->energyCost,ud->buildTime);
-		c.tooltip=string("Build: ")+ud->humanName + " " + ud->tooltip+tmp;
+		c.tooltip = string("Build: ") + ud->humanName + " - " + ud->tooltip + tmp;
 
 		possibleCommands.push_back(c);
 		buildOptions[c.id]=name;
@@ -1007,40 +1014,72 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 			glVertexf3(bi.pos + float3(-xsize, 1, -ysize));
 			glVertexf3(bi.pos + float3(+xsize, 1, -ysize));
 			glEnd();
+			if (bi.pos.y < 0.0f) {
+				const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
+				const float e[4] = { 0.0f, 0.5f, 1.0f, 1.0f }; // end color
+
+				const float h = bi.pos.y;
+				const float x1 = bi.pos.x - xsize;
+				const float z1 = bi.pos.z - ysize;
+				const float x2 = bi.pos.x + xsize;
+				const float z2 = bi.pos.z + ysize;
+
+				glPushAttrib(GL_CURRENT_BIT);
+				glBegin(GL_LINES);
+				glColor4fv(s); glVertex3f(x1, h, z1); glColor4fv(e); glVertex3f(x1, 0.0f, z1);
+				glColor4fv(s); glVertex3f(x2, h, z1); glColor4fv(e); glVertex3f(x2, 0.0f, z1);
+				glColor4fv(s); glVertex3f(x1, h, z2); glColor4fv(e); glVertex3f(x1, 0.0f, z2);
+				glColor4fv(s); glVertex3f(x2, h, z2); glColor4fv(e); glVertex3f(x2, 0.0f, z2);
+				glEnd();
+				// using the last end color
+				glBegin(GL_LINE_LOOP);
+				glVertex3f(x1, 0.0f, z1);
+				glVertex3f(x1, 0.0f, z2);
+				glVertex3f(x2, 0.0f, z2);
+				glVertex3f(x2, 0.0f, z1);
+				glEnd();
+				glPopAttrib();
+			}
 		}
 	}
 }
 
 
-bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options, bool recAny)
+bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,
+                                                   unsigned char options,
+                                                   bool recAny)
 {
-	CFeature* best=0;
-	float bestDist=10000000;
-	std::vector<CFeature*> features=qf->GetFeaturesExact(pos,radius);
-	for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-		if((*fi)->def->reclaimable && (*fi)->allyteam!=owner->allyteam){
-			float dist=(*fi)->pos.distance2D(owner->pos);
-			if(dist<bestDist && (recAny
-			  ||((*fi)->def->energy > 0 && gs->Team(owner->team)->energy < gs->Team(owner->team)->energyStorage)
-			  ||((*fi)->def->metal > 0 && gs->Team(owner->team)->metal < gs->Team(owner->team)->metalStorage))){
-				bestDist=dist;
-				best=*fi;
+	const CFeature* best = NULL;
+	float bestDist = 10000000;
+	std::vector<CFeature*> features = qf->GetFeaturesExact(pos, radius);
+	const CTeam* team = gs->Team(owner->team);
+	for (std::vector<CFeature*>::iterator fi = features.begin(); fi != features.end(); ++fi) {
+		const CFeature* f = *fi;
+		if (f->def->reclaimable && (f->allyteam != owner->allyteam)) {
+			const float dist = f->pos.distance2D(owner->pos);
+			if ((dist < bestDist) &&
+			    (recAny ||
+			     ((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
+			     ((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
+				bestDist = dist;
+				best = f;
 			}
 		}
 	}
-	if(best){
-		Command c2;
-		if(!recAny){
+	if (best) {
+		Command cmd;
+		if (!recAny) {
 			PushOrUpdateReturnFight();
 		}
-		c2.options=options | INTERNAL_ORDER;
-		c2.id=CMD_RECLAIM;
-		c2.params.push_back(MAX_UNITS+best->id);
-		commandQue.push_front(c2);
+		cmd.options = options | INTERNAL_ORDER;
+		cmd.id = CMD_RECLAIM;
+		cmd.params.push_back(MAX_UNITS + best->id);
+		commandQue.push_front(cmd);
 		return true;
 	}
 	return false;
 }
+
 
 bool CBuilderCAI::FindResurrectableFeatureAndResurrect(float3 pos, float radius,unsigned char options)
 {

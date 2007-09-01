@@ -45,7 +45,11 @@ CLuaCallInHandler::CLuaCallInHandler()
 
 	callInMap["Explosion"]           = &listExplosion;
 
+	callInMap["StockpileChanged"]    = &listStockpileChanged;
+
 	callInMap["Update"]              = &listUpdate;
+
+	callInMap["DefaultCommand"]      = &listDefaultCommand;
 
 	callInMap["DrawWorld"]           = &listDrawWorld;
 	callInMap["DrawWorldPreUnit"]    = &listDrawWorldPreUnit;
@@ -100,7 +104,11 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 
 	ADDHANDLE(Explosion);
 
+	ADDHANDLE(StockpileChanged);
+
 	ADDHANDLE(Update);
+
+	ADDHANDLE(DefaultCommand);
 
 	ADDHANDLE(DrawWorld);
 	ADDHANDLE(DrawWorldPreUnit);
@@ -145,7 +153,11 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listExplosion, lh);
 
+	ListRemove(listStockpileChanged, lh);
+
 	ListRemove(listUpdate, lh);
+
+	ListRemove(listDefaultCommand, lh);
 
 	ListRemove(listDrawWorld, lh);
 	ListRemove(listDrawWorldPreUnit, lh);
@@ -170,6 +182,7 @@ bool CLuaCallInHandler::ManagedCallIn(const string& ciName)
 bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 {
 	if ((ciName == "Update")              ||
+	    (ciName == "DefaultCommand")      ||
 	    (ciName == "DrawWorld")           ||
 	    (ciName == "DrawWorldPreUnit")    ||
 	    (ciName == "DrawWorldShadow")     ||

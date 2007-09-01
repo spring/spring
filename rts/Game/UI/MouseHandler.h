@@ -16,6 +16,7 @@
 class CInputReceiver;
 class CCameraController;
 
+
 class CMouseHandler  
 {
 public:
@@ -68,7 +69,6 @@ public:
 	ButtonPress buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
 	float3 dir;
 
-	CInputReceiver* activeReceiver;
 	int activeButton;
 
 	unsigned int cursorTex;

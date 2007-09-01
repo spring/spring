@@ -15,6 +15,7 @@ using namespace std;
 
 
 class CUnit;
+class CFeature;
 struct Command;
 struct lua_State;
 struct CommandDescription;
@@ -79,6 +80,13 @@ class CLuaUI : public CLuaHandle {
 
 		void ShockFront(float power, const float3& pos, float areaOfEffect);
 
+		bool GameSetup(const string& state, bool& ready,
+		               const map<int, string>& playerStates);
+
+		string WorldTooltip(const CUnit* unit,
+		                     const CFeature* feature,
+		                     const float3* groundPos);
+
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
@@ -115,6 +123,8 @@ class CLuaUI : public CLuaHandle {
 		float shockFrontMinPower;
 		float shockFrontDistAdj;
 
+		bool haveWorldTooltip;
+
 	private: // call-outs
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
@@ -133,6 +143,8 @@ class CLuaUI : public CLuaHandle {
 		static int SetCameraOffset(lua_State* L);
 
 		static int SetShockFrontFactors(lua_State* L);
+
+		static int SetLosViewColors(lua_State* L);
 
 		static int SetMouseCursor(lua_State* L);
 		static int GetMouseCursor(lua_State* L);

@@ -129,7 +129,7 @@
    int get_trackType(){ return actualunitdef->trackType; }
    bool get_canDropFlare(){ return actualunitdef->canDropFlare; }
    double get_flareReloadTime(){ return actualunitdef->flareReloadTime; }
-   double get_flareEfficieny(){ return actualunitdef->flareEfficieny; }
+   double get_flareEfficiency(){ return actualunitdef->flareEfficiency; }
    double get_flareDelay(){ return actualunitdef->flareDelay; }
    int get_flareTime(){ return actualunitdef->flareTime; }
    int get_flareSalvoSize(){ return actualunitdef->flareSalvoSize; }

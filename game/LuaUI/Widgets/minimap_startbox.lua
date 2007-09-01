@@ -72,7 +72,7 @@ function widget:Initialize()
   -- get the gaia teamID and allyTeamID
   gaiaTeamID = Spring.GetGaiaTeamID()
   if (gaiaTeamID) then
-    local _,_,_,_,_,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
+    local _,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
     gaiaAllyTeamID = atid
   end
 
@@ -132,7 +132,7 @@ local function GetTeamColor(teamID)
   if (color) then
     return color
   end
-  local _,_,_,_,_,_,r,g,b = Spring.GetTeamInfo(teamID)
+  local r,g,b = Spring.GetTeamColor(teamID)
   
   color = { r, g, b }
   teamColors[teamID] = color
@@ -153,7 +153,7 @@ local function GetTeamColorStr(teamID)
   end
 
   local outlineChar = ''
-  local _,_,_,_,_,_,r,g,b = Spring.GetTeamInfo(teamID)
+  local r,g,b = Spring.GetTeamColor(teamID)
   if (r and g and b) then
     local function ColorChar(x)
       local c = math.floor(x * 255)
@@ -283,7 +283,7 @@ function widget:DrawInMiniMap(sx, sz)
   local gaiaAllyTeamID
   local gaiaTeamID = Spring.GetGaiaTeamID()
   if (gaiaTeamID) then
-    local _,_,_,_,_,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
+    local _,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
     gaiaAllyTeamID = atid
   end
 

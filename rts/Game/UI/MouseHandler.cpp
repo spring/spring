@@ -48,14 +48,14 @@
 extern bool	fullscreen;
 extern Uint8 *keys;
 
-bool mouseHandlerMayDoSelection=true;
 
-CMouseHandler* mouse=0;
+CMouseHandler* mouse = NULL;
+
+static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
 : locked(false),
-	activeReceiver(0),
 	cameraTime(0.0f),
 	cameraTimeLeft(0.0f),
 	preControlCamNum(0),
@@ -256,17 +256,22 @@ void CMouseHandler::MousePress(int x, int y, int button)
  	buttons[button].chorded = buttons[SDL_BUTTON_LEFT].pressed ||
  	                          buttons[SDL_BUTTON_RIGHT].pressed;
 	buttons[button].pressed = true;
-	buttons[button].time=gu->gameTime;
-	buttons[button].x=x;
-	buttons[button].y=y;
-	buttons[button].camPos=camera->pos;
-	buttons[button].dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
-	buttons[button].movement=0;
+	buttons[button].time = gu->gameTime;
+	buttons[button].x = x;
+	buttons[button].y = y;
+	buttons[button].camPos = camera->pos;
+	buttons[button].dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
+	buttons[button].movement = 0;
 
-	activeButton=button;
+	activeButton = button;
+
+	if (activeReceiver) {
+		activeReceiver->MousePress(x, y, button);
+		return;
+	}
 
 	if(inMapDrawer &&  inMapDrawer->keyPressed){
-		inMapDrawer->MousePress(x,y,button);
+		inMapDrawer->MousePress(x, y, button);
 		return;
 	}
 
@@ -280,6 +285,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 				}
 			}
 			if (guihandler != NULL) {
+				// this includes LuaUI
 				if (guihandler->MousePress(x, y, button)) {
 					activeReceiver = guihandler;
 					return;
@@ -321,7 +327,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
-		activeReceiver = 0;
+		int x, y;
+		const Uint8 buttons = SDL_GetMouseState(&x, &y);
+		const Uint8 mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
+		if ((buttons & mask) == 0) {
+			activeReceiver = NULL;
+		}
 		return;
 	}
 
@@ -341,7 +352,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 #endif
 
-	if (button==SDL_BUTTON_LEFT && !buttons[button].chorded && mouseHandlerMayDoSelection) {
+	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
 			selectedUnits.ClearSelected();
 		}
@@ -519,9 +530,9 @@ void CMouseHandler::Draw()
 		return;
 	}
 #endif
-	if(buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
+	if (buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
 	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
-	   mouseHandlerMayDoSelection && (!inMapDrawer || !inMapDrawer->keyPressed)){
+	   (!inMapDrawer || !inMapDrawer->keyPressed)) {
 
 		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
 		                                 buttons[SDL_BUTTON_LEFT].camPos

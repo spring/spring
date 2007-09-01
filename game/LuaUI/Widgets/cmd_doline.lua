@@ -14,12 +14,12 @@
 function widget:GetInfo()
   return {
     name      = "DoLine",
-    desc      = "Adds '/luaui doline ...' to run lua commands  (for devs)",
+    desc      = "Adds '/luaui <run|echo> ...' to run lua commands  (for devs)",
     author    = "trepan",
     date      = "Jan 8, 2007",
     license   = "GNU GPL, v2 or later",
     layer     = 0,
-    enabled   = false  --  loaded by default?
+    enabled   = true  --  loaded by default?
   }
 end
 

@@ -215,9 +215,9 @@ end
 
 
 local function SaveModPerm(state)
-  Spring.CreateDir(LUAUI_DIRNAME..'Config')
+  Spring.CreateDir(LUAUI_DIRNAME .. 'Config')
   local perms
-  local filename = LUAUI_DIRNAME..'Config/modui_list.lua'
+  local filename = LUAUI_DIRNAME .. 'Config/modui_list.lua'
   local chunk, err = loadfile(filename)
   if (chunk ~= nil) then
     local tmp = {}

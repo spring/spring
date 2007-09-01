@@ -47,6 +47,8 @@ using namespace std;
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
+#include "Map/ReadMap.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/FontTexture.h"
 #include "Sim/Misc/LosHandler.h"
@@ -124,6 +126,8 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
+	haveWorldTooltip = false;
+
 	const string code = LoadFile("gui.lua");
 	if (code.empty()) {
 		KillLua();
@@ -186,6 +190,9 @@ CLuaUI::CLuaUI()
 
 	// register for call-ins
 	luaCallIns.AddHandle(this);
+
+	// update extra call-ins
+	UnsyncedUpdateCallIn("WorldTooltip");
 }
 
 
@@ -209,7 +216,7 @@ void CLuaUI::KillLua()
 
 string CLuaUI::LoadFile(const string& filename) const
 {
-	CFileHandler f(filename, CFileHandler::OnlyRawFS);
+	CFileHandler f(filename, SPRING_VFS_RAW);
 
 	string code;
 	if (!f.LoadStringData(code)) {
@@ -242,9 +249,14 @@ bool CLuaUI::HasCallIn(const string& name)
 
 bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 {
-	// never allow these calls
+	// never allow this call-in
 	if (name == "Explosion") {
 		return false;
+	}
+
+	if (name == "WorldTooltip") {
+		haveWorldTooltip = HasCallIn(name);
+		return true;
 	}
 
 	if (HasCallIn(name)) {
@@ -309,6 +321,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
 	REGISTER_LUA_CFUNC(SetShockFrontFactors);
+
+	REGISTER_LUA_CFUNC(SetLosViewColors);
 
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
@@ -546,6 +560,99 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 	}
 
 	return;
+}
+
+
+string CLuaUI::WorldTooltip(const CUnit* unit,
+                             const CFeature* feature,
+                             const float3* groundPos)
+{
+	if (!haveWorldTooltip) {
+		return "";
+	}
+
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("WorldTooltip");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		haveWorldTooltip = false;
+		lua_settop(L, 0);
+		return ""; // the call is not defined
+	}
+
+	int args;
+	if (unit) {
+		HSTR_PUSH(L, "unit");
+		lua_pushnumber(L, unit->id);
+		args = 2;
+	}
+	else if (feature) {
+		HSTR_PUSH(L, "feature");
+		lua_pushnumber(L, feature->id);
+		args = 2;
+	}
+	else if (groundPos) {
+		HSTR_PUSH(L, "ground");
+		lua_pushnumber(L, groundPos->x);
+		lua_pushnumber(L, groundPos->y);
+		lua_pushnumber(L, groundPos->z);
+		args = 4;
+	}
+	else {
+		HSTR_PUSH(L, "selection");
+		args = 1;
+	}
+
+	// call the routinea
+	if (!RunCallIn(cmdStr, args, 1)) {
+		return "";
+	}
+
+	const int retArgs = lua_gettop(L);
+	if ((retArgs == 1) && lua_isstring(L, 1)) {
+		return lua_tostring(L, 1);
+	}
+
+	return "";
+}
+
+
+bool CLuaUI::GameSetup(const string& state, bool& ready,
+                       const map<int, string>& playerStates)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("GameSetup");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return false;
+	}
+
+	lua_pushstring(L, state.c_str());
+
+	lua_pushboolean(L, ready);
+
+	lua_newtable(L);
+	map<int, string>::const_iterator it;
+	for (it = playerStates.begin(); it != playerStates.end(); ++it) {
+		lua_pushnumber(L, it->first);
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+
+	// call the routinea
+	if (!RunCallIn(cmdStr, 3, 2)) {
+		return false;
+	}
+
+	if (lua_isboolean(L, 1)) {
+		if (lua_toboolean(L, 1)) {
+			if (lua_isboolean(L, 2)) {
+				ready = lua_toboolean(L, 2);
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -955,7 +1062,7 @@ bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
 		return false;
 	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -1) || !lua_isnumber(L, -2)) {
+		if (!lua_isnumber(L, -1) || !lua_israwnumber(L, -2)) {
 			lua_pop(L, 2);
 			return false;
 		}
@@ -996,7 +1103,7 @@ bool CLuaUI::GetLuaReStringList(lua_State* L, int index,
 	}
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -2) || !lua_isstring(L, -1)) {
+		if (!lua_israwnumber(L, -2) || !lua_isstring(L, -1)) {
 			lua_pop(L, 2);
 			return false;
 		}
@@ -1019,7 +1126,7 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 	}
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -2) || !lua_istable(L, -1)) {
+		if (!lua_israwnumber(L, -2) || !lua_istable(L, -1)) {
 			lua_pop(L, 2);
 			return false;
 		}
@@ -1027,7 +1134,7 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 		paramsPair.cmdIndex = (int)lua_tonumber(L, -2) - CMD_INDEX_OFFSET;
 		const int paramTable = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-			if (!lua_isnumber(L, -2) || !lua_isstring(L, -1)) {
+			if (!lua_israwnumber(L, -2) || !lua_isstring(L, -1)) {
 				lua_pop(L, 4);
 				return false;
 			}
@@ -1058,7 +1165,7 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 		cd.type = CMDTYPE_CUSTOM;
 		const int cmdDescTable = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, cmdDescTable) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
+			if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
 				const string key = StringToLower(lua_tostring(L, -2));
 				const string value = lua_tostring(L, -1);
 				if (key == "id") {
@@ -1641,6 +1748,54 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 }
 
 
+static int ParseFloatArray(lua_State* L, int index, float* array, int size)
+{
+	if (!lua_istable(L, index)) {
+		return -1;
+	}
+	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = (float)lua_tonumber(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+
+
+int CLuaUI::SetLosViewColors(lua_State* L)
+{
+	float red[4];
+	float green[4];
+	float blue[4];
+	if ((ParseFloatArray(L, 1, red,   4) != 4) ||
+	    (ParseFloatArray(L, 2, green, 4) != 4) ||
+	    (ParseFloatArray(L, 3, blue,  4) != 4)) {
+		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
+	}
+	const int scale = CBaseGroundDrawer::losColorScale;
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	gd->alwaysColor[0] = (int)(scale *   red[0]);
+	gd->alwaysColor[1] = (int)(scale * green[0]);
+	gd->alwaysColor[2] = (int)(scale *  blue[0]);
+	gd->losColor[0]    = (int)(scale *   red[1]);
+	gd->losColor[1]    = (int)(scale * green[1]);
+	gd->losColor[2]    = (int)(scale *  blue[1]);
+	gd->radarColor[0]  = (int)(scale *   red[2]);
+	gd->radarColor[1]  = (int)(scale * green[2]);
+	gd->radarColor[2]  = (int)(scale *  blue[2]);
+	gd->jamColor[0]    = (int)(scale *   red[3]);
+	gd->jamColor[1]    = (int)(scale * green[3]);
+	gd->jamColor[2]    = (int)(scale *  blue[3]);
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -1890,21 +2045,18 @@ int CLuaUI::SetConfigString(lua_State* L)
 
 int CLuaUI::MakeFont(lua_State* L)
 {
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.MakeFont()");
+		luaL_error(L, "Incorrect arguments to MakeFont()");
 	}
 	FontTexture::Reset();
 	FontTexture::SetInFileName(lua_tostring(L, 1));
 	if ((args >= 2) && lua_istable(L, 2)) {
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2)) {
+			if (lua_israwstring(L, -2)) {
 				const string key = lua_tostring(L, -2);
-				if (lua_isstring(L, -1)) {
+				if (lua_type(L, -1) == LUA_TSTRING) {//lua_isstring(L, -1)) {
 					if ((key == "outName") && lua_isstring(L, -1)) {
 						FontTexture::SetOutBaseName(lua_tostring(L, -1));
 					}
@@ -2268,7 +2420,7 @@ static void ParseCommandOptions(lua_State* L, const char* caller,
 	else if (lua_istable(L, index)) {
 		const int optionTable = index;
 		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-			if (lua_isnumber(L, -2)) { // avoid 'n'
+			if (lua_israwnumber(L, -2)) { // avoid 'n'
 				if (!lua_isstring(L, -1)) {
 					luaL_error(L, "%s(): bad option table entry", caller);
 				}
@@ -2306,7 +2458,7 @@ static void ParseCommand(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): bad param table", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
+		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
@@ -2340,7 +2492,7 @@ static void ParseCommandTable(lua_State* L, const char* caller,
 	}
 	const int paramTable = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
+		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
@@ -2383,7 +2535,7 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): error parsing unit map", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {
+		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -2); // the key
 			if (unit != NULL) {
 				unitIDs.push_back(unit->id);
@@ -2400,7 +2552,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): error parsing unit array", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
+		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -1); // the value
 			if (unit != NULL) {
 				unitIDs.push_back(unit->id);

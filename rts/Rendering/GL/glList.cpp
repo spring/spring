@@ -286,6 +286,14 @@ void CglList::Select()
 		callback((*filteredItems)[place]);
 }
 
+std::string CglList::GetCurrentItem() const
+{
+	if (!filteredItems->empty()) {
+		return ((*filteredItems)[place]);
+	}
+	return "";
+}
+
 bool CglList::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {

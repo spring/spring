@@ -99,7 +99,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
-	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 
@@ -563,7 +562,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		float energy = 0.0f;
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
 				const float value = max(0.0f, float(lua_tonumber(L, -1)));
 				if ((key == "m") || (key == "metal")) {
@@ -1033,7 +1032,7 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 	}
 	const int table = 2;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2) || !lua_isnumber(L, -1)) {
+		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
 			continue;
 		}
 		const string key = lua_tostring(L, -2);
@@ -1103,7 +1102,7 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 	else if ((args == 2) && lua_istable(L, 2)) {
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (!lua_isstring(L, -2) || !lua_isnumber(L, -1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
 				continue;
 			}
 			const string key = lua_tostring(L, -2);
@@ -1154,7 +1153,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 	else if (lua_istable(L, 2)) {
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
 				const float value = (float)lua_tonumber(L, -1);
 				if (key == "health") {
@@ -1683,7 +1682,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 		float energy = 0.0f;
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isstring(L, -2) && lua_isnumber(L, -1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
 				const float value = max(0.0f, float(lua_tonumber(L, -1)));
 				if ((key == "m") || (key == "metal")) {
@@ -1954,7 +1953,7 @@ static void ParseCommandOptions(lua_State* L, const char* caller,
 	else if (lua_istable(L, index)) {
 		const int optionTable = index;
 		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-			if (lua_isnumber(L, -2)) { // avoid 'n'
+			if (lua_israwnumber(L, -2)) { // avoid 'n'
 				if (!lua_isstring(L, -1)) {
 					luaL_error(L, "%s(): bad option table entry", caller);
 				}
@@ -1992,7 +1991,7 @@ static void ParseCommand(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): bad param table", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
+		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
@@ -2026,7 +2025,7 @@ static void ParseCommandTable(lua_State* L, const char* caller,
 	}
 	const int paramTable = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) { // avoid 'n'
+		if (lua_israwnumber(L, -2)) { // avoid 'n'
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
@@ -2066,7 +2065,7 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): error parsing unit map", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2)) {
+		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseUnit(L, __FUNCTION__, -2);
 			if (unit == NULL) {
 				continue; // bad pointer
@@ -2084,7 +2083,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): error parsing unit array", caller);
 	}
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) { // avoid 'n'
+		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) { // avoid 'n'
 			CUnit* unit = ParseUnit(L, __FUNCTION__, -1);
 			if (unit == NULL) {
 				continue; // bad pointer
@@ -2545,7 +2544,7 @@ static bool ParseCommandDescription(lua_State* L, int table,
 	}
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isstring(L, -2)) {
+		if (!lua_israwstring(L, -2)) {
 			continue;
 		}
 		const string key = lua_tostring(L, -2);

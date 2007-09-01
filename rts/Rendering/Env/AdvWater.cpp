@@ -142,10 +142,11 @@ void CAdvWater::Draw(bool useBlending)
 	col[2]=(unsigned char)(waterSurfaceColor.z*255);
 
 	glDisable(GL_ALPHA_TEST);
-	if(useBlending) {
+	if (useBlending) {
 		glEnable(GL_BLEND);
-	} else
+	} else {
 		glDisable(GL_BLEND);
+	}
 	glDepthMask(0);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glActiveTextureARB(GL_TEXTURE1_ARB);

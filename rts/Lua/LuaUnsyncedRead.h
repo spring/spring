@@ -28,6 +28,9 @@ class LuaUnsyncedRead {
 
 		static int GetPlayerRoster(lua_State* L);
 
+		static int GetTeamColor(lua_State* L);
+		static int GetTeamOrigColor(lua_State* L);
+
 		static int GetLocalPlayerID(lua_State* L);
 		static int GetLocalTeamID(lua_State* L);
 		static int GetLocalAllyTeamID(lua_State* L);

@@ -116,7 +116,7 @@ public:
 	CAirBaseHandler::LandingPad* reservedPad;
 	int padStatus;						//0 flying toward,1 landing at,2 landed
 
-	bool AutoLand;
+	bool autoLand;
 };
 
 #endif // __AIR_MOVE_TYPE_H__

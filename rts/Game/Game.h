@@ -134,6 +134,8 @@ protected:
 	void SelectUnits(const string& line);
 	void SelectCycle(const string& command);
 
+	void ReColorTeams();
+
 	void LogNetMsg(const string& msg, int player);
 	void ReloadCOB(const string& msg, int player);
 	void Skip(const string& msg, bool demoPlayer);

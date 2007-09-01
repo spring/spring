@@ -26,18 +26,34 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Automatically generated local definitions
+
+local CMD_GUARD            = CMD.GUARD
+local CMD_MOVE             = CMD.MOVE
+local spGetMyTeamID        = Spring.GetMyTeamID
+local spGetUnitBuildFacing = Spring.GetUnitBuildFacing
+local spGetUnitGroup       = Spring.GetUnitGroup
+local spGetUnitPosition    = Spring.GetUnitPosition
+local spGetUnitRadius      = Spring.GetUnitRadius
+local spGiveOrderToUnit    = Spring.GiveOrderToUnit
+local spSetUnitGroup       = Spring.SetUnitGroup
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local function ClearGroup(unitID, factID)
   -- clear the unit's group if it's the same as the factory's
-  local unitGroup = Spring.GetUnitGroup(unitID)
+  local unitGroup = spGetUnitGroup(unitID)
   if (not unitGroup) then
     return
   end
-  local factGroup = Spring.GetUnitGroup(factID)
+  local factGroup = spGetUnitGroup(factID)
   if (not factGroup) then
     return
   end
   if (unitGroup == factGroup) then
-    Spring.SetUnitGroup(unitID, -1)
+    spSetUnitGroup(unitID, -1)
   end
 end
 
@@ -55,18 +71,18 @@ local function GuardFactory(unitID, unitDefID, factID, factDefID)
     return
   end
 
-  local x, y, z = Spring.GetUnitPosition(factID)
+  local x, y, z = spGetUnitPosition(factID)
   if (not x) then
     return
   end
 
-  local radius = Spring.GetUnitRadius(factID)
+  local radius = spGetUnitRadius(factID)
   if (not radius) then
     return
   end
   local dist = radius * 2
 
-  local facing = Spring.GetUnitBuildFacing(factID)
+  local facing = spGetUnitBuildFacing(factID)
   if (not facing) then
     return
   end
@@ -92,11 +108,11 @@ local function GuardFactory(unitID, unitDefID, factID, factDefID)
     rx, rz =  0,  dist
   end
   
-  local OrderUnit = Spring.GiveOrderToUnit
+  local OrderUnit = spGiveOrderToUnit
 
-  OrderUnit(unitID, CMD.MOVE,  { x + dx, y, z + dz }, { "" })
-  OrderUnit(unitID, CMD.MOVE,  { x + rx, y, z + rz }, { "shift" })
-  OrderUnit(unitID, CMD.GUARD, { factID },            { "shift" })
+  OrderUnit(unitID, CMD_MOVE,  { x + dx, y, z + dz }, { "" })
+  OrderUnit(unitID, CMD_MOVE,  { x + rx, y, z + rz }, { "shift" })
+  OrderUnit(unitID, CMD_GUARD, { factID },            { "shift" })
 end
 
 
@@ -104,7 +120,7 @@ end
 
 function widget:UnitFromFactory(unitID, unitDefID, unitTeam,
                                 factID, factDefID, userOrders)
-  if (unitTeam ~= Spring.GetMyTeamID()) then
+  if (unitTeam ~= spGetMyTeamID()) then
     return -- not my unit
   end
   

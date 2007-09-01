@@ -131,7 +131,7 @@ AICALLBACK_API float UnitDef_get_trackStretch( const UnitDef *self );
 AICALLBACK_API int UnitDef_get_trackType( const UnitDef *self );
 AICALLBACK_API bool UnitDef_get_canDropFlare( const UnitDef *self );
 AICALLBACK_API float UnitDef_get_flareReloadTime( const UnitDef *self );
-AICALLBACK_API float UnitDef_get_flareEfficieny( const UnitDef *self );
+AICALLBACK_API float UnitDef_get_flareEfficiency( const UnitDef *self );
 AICALLBACK_API float UnitDef_get_flareDelay( const UnitDef *self );
 AICALLBACK_API int UnitDef_get_flareTime( const UnitDef *self );
 AICALLBACK_API int UnitDef_get_flareSalvoSize( const UnitDef *self );

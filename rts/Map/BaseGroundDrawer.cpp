@@ -42,13 +42,30 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 
 	highResLosTex = !!configHandler.GetInt("HighResLos", 0);
 // 	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
+
+  jamColor[0] = (int)(losColorScale * 0.25f);
+  jamColor[1] = (int)(losColorScale * 0.0f);
+  jamColor[2] = (int)(losColorScale * 0.0f);
+
+  losColor[0] = (int)(losColorScale * 0.15f);
+  losColor[1] = (int)(losColorScale * 0.05f);
+  losColor[2] = (int)(losColorScale * 0.40f);
+
+  radarColor[0] = (int)(losColorScale *  0.05f);
+  radarColor[1] = (int)(losColorScale *  0.15f);
+  radarColor[2] = (int)(losColorScale * -0.20f);
+
+  alwaysColor[0] = (int)(losColorScale * 0.25f);
+  alwaysColor[1] = (int)(losColorScale * 0.25f);
+  alwaysColor[2] = (int)(losColorScale * 0.25f);
 }
 
 CBaseGroundDrawer::~CBaseGroundDrawer(void)
 {
 	delete[] infoTexMem;
-	if(infoTex!=0)
-		glDeleteTextures(1,&infoTex);
+	if (infoTex!=0) {
+		glDeleteTextures(1, &infoTex);
+	}
 }
 
 void CBaseGroundDrawer::DrawShadowPass(void)
@@ -275,8 +292,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				int lowRes = highResInfoTexWanted ? 0 : -1;
 				int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
 				int pwr2mapx = gs->pwr2mapx >> (-lowRes);
-				const int rxsize = radarhandler->xsize;
-				const int rysize = radarhandler->ysize;
 				const int losSizeX = loshandler->losSizeX;
 				const int losSizeY = loshandler->losSizeY;
 				const int airSizeX = loshandler->airSizeX;
@@ -284,18 +299,24 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				const int losMipLevel = loshandler->losMipLevel;
 				const int airMipLevel = loshandler->airMipLevel;
 				if (drawRadarAndJammer) {
+					const int rxsize = radarhandler->xsize;
+					const int rysize = radarhandler->ysize;
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < endx; ++x) {
 							int a = (y * pwr2mapx) + x;
-							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 64, x, y);
-							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 64, x, y);
+							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 255, x, y);
+							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 255, x, y);
 							const int totalLos = (inLos + inAir) / 2;
+							const int inJam   = InterpolateLos(myJammer, rxsize, rysize, 3 + lowRes, 255, x, y);
+							const int inRadar = InterpolateLos(myRadar,  rxsize, rysize, 3 + lowRes, 255, x, y);
 							const int index = (a * 4);
-							const int inJam   = InterpolateLos(myJammer, rxsize, rysize, 3 + lowRes, 64, x, y);
-							const int inRadar = InterpolateLos(myRadar,  rxsize, rysize, 3 + lowRes, 64, x, y);
-							infoTexMem[index]     = 64 + ((totalLos * 3) / 4) + (inRadar  / 4) + inJam;
-							infoTexMem[index + 1] = 64 + ((inRadar  * 3) / 4) + (totalLos / 4);
-							infoTexMem[index + 2] = 64 + (totalLos * 2) - inRadar;
+							for (int c = 0; c < 3; c++) {
+								int val = alwaysColor[c] * 255;
+								val += (jamColor[c]   * inJam);
+								val += (losColor[c]   * totalLos);
+								val += (radarColor[c] * inRadar);
+								infoTexMem[index + c] = (val / losColorScale);
+							}
 						}
 					}
 				}

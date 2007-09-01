@@ -14,8 +14,10 @@
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "Lua/LuaCallInHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
+#include "UI/LuaUI.h"
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -577,9 +579,13 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 }
 
 
-int CSelectedUnits::GetDefaultCmd(CUnit *unit, CFeature* feature)
+int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 {
 	// NOTE: the unitDef->aihint value is being ignored
+	int luaCmd;
+	if (luaCallIns.DefaultCommand(unit, feature, luaCmd)) {
+		return luaCmd;
+	}
 
 	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
 		return grouphandlers[gu->myTeam]->groups[selectedGroup]->GetDefaultCmd(unit, feature);
@@ -684,8 +690,16 @@ std::string CSelectedUnits::GetTooltip(void)
 			s = (*selectedUnits.begin())->tooltip;
 		}
 	}
+
 	if (selectedUnits.empty()) {
 		return s;
+	}
+
+	if (luaUI) {
+		string custom = luaUI->WorldTooltip(NULL, NULL, NULL);
+		if (!custom.empty()) {
+			return custom;
+		}
 	}
 
 	char tmp[500];

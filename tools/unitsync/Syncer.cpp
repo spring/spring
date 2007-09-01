@@ -1,11 +1,12 @@
+
 #include "StdAfx.h"
 #include "Syncer.h"
 #include "FileSystem/FileHandler.h"
+#include "Lua/LuaParser.h"
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <sstream>
-#include "TdfParser.h"
 
 CSyncer::CSyncer(int id) :
 	populated(false)
@@ -19,8 +20,6 @@ CSyncer::~CSyncer(void)
 
 crc_t CSyncer::CalculateCRC(const string& fileName)
 {
-	//return 1;
-
 	CFileHandler file(fileName);
 	if (!file.FileExists()) {
 		return 0;
@@ -42,11 +41,7 @@ crc_t CSyncer::CalculateCRC(const string& fileName)
 
 void CSyncer::ParseUnit(const string& fileName)
 {
-	TdfParser *p = new TdfParser();
-
-	p->LoadFile(fileName);
-
-	delete p;
+	// FIXME - do nothing?
 }
 
 void CSyncer::MapUnitIds()
@@ -58,59 +53,54 @@ void CSyncer::MapUnitIds()
 
 int CSyncer::ProcessUnits(bool checksum)
 {
-	if (!populated) {
-		//Populate the list of unit files to consider
-		files = CFileHandler::FindFiles("units/", "*.fbi");
-		populated = true;
-	}
-
-	if (files.size() == 0) {
+	if (populated && units.empty()) {
 		return 0;
 	}
+	populated = true;
 
-	string curFile = files.back();
-	files.pop_back();
+	int count = 0;
 
-	size_t len = curFile.find_last_of("/")+1;
-	string unitName = curFile.substr(len, curFile.size() - 4 - len);
-	transform(unitName.begin(), unitName.end(), unitName.begin(), (int (*)(int))tolower);
-
-	string perror("");
-	TdfParser *parser = new TdfParser();
-	try {
-		parser->LoadFile("units/" + unitName + ".fbi");
-	} catch (TdfParser::parse_error& pe) {	
-		perror = unitName + " (" + string(pe.what()) + ")";
+	LuaParser luaParser("gamedata/unitdefs.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!luaParser.Execute()) {
+		return 0; // FIXME -- report this somehow?
 	}
 
-	Unit u;
+	LuaTable rootTable = luaParser.GetRoot();
+	if (!rootTable.IsValid()) {
+		return 0;
+	}
+	vector<string> unitDefNames;
+	rootTable.GetKeys(unitDefNames);
 
-	if (checksum) {
-		u.fbi = CalculateCRC("units/" + unitName + ".fbi");
-		u.cob = CalculateCRC("scripts/" + unitName + ".cob");
+	count = (int)unitDefNames.size();
 
-		//The model filenames has to be figured out from the fbi file
-		string modelName = parser->SGetValueDef(unitName, "unitinfo\\Objectname");
-		string deadName = parser->SGetValueDef(unitName + "_dead", "unitinfo\\Corpse");
+	for ( int i = 0; i < count; ++i) {
+		const string& udName =  unitDefNames[i];
+		LuaTable udTable = rootTable.SubTable(udName);
+		Unit u;
+		u.fullName = udName;
 
-		u.model = CalculateCRC("objects3d/" + modelName + ".3do");
-		u.model += CalculateCRC("objects3d/" + deadName + ".3do");
+		// FIXME -- only checksum the last unitDef?  (0.75b2 behaviour)
+		if (checksum) {
+			//The model filenames has to be figured out from the fbi file
+			const string fileName  = udTable.GetString("filename", "");
+			const string deadName  = udTable.GetString("corpse", udName + "_dead");
+			const string modelName = udTable.GetString("objectname", udName);
+
+			u.fbi    = CalculateCRC(fileName);
+			u.cob    = CalculateCRC("scripts/" + udName + ".cob");
+			u.model  = CalculateCRC("objects3d/" + modelName); // s3o ?
+			u.model += CalculateCRC("objects3d/" + modelName + ".3do");
+			u.model += CalculateCRC("objects3d/" +  deadName + ".3do");
+		}
+
+		units[udName] = u;
 	}
 
-	u.fullName = parser->SGetValueDef("unknown", "unitinfo\\Name");
-	if (perror.length() > 0)
-		u.fullName = perror;
+	MapUnitIds(); // if we are done, map id numbers to names
 
-	units[unitName] = u; 
-
-	delete parser;
-
-	//If we are done, map id numbers to names
-	if (files.size() == 0) {
-		MapUnitIds();
-	}
-
-	return (int)files.size();
+	return units.size();
 }
 
 string CSyncer::GetCurrentList()
@@ -188,7 +178,7 @@ string CSyncer::GetUnitName(int unit)
 
 string CSyncer::GetFullUnitName(int unit)
 {
-	string unitName = unitIds[unit];
+	const string& unitName = unitIds[unit];
 	return units[unitName].fullName;
 }
 

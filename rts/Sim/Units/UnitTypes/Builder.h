@@ -7,6 +7,7 @@
 
 #include <string>
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
 using namespace std;
 class CFeature;

@@ -14,6 +14,8 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -589,9 +591,33 @@ bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 }
 
 
+void CLuaHandle::StockpileChanged(const CUnit* unit,
+                                  const CWeapon* weapon, int oldCount)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("StockpileChanged");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		lua_settop(L, 0);
+		return;
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, weapon->weaponNum);
+	lua_pushnumber(L, oldCount);
+	lua_pushnumber(L, weapon->numStockpiled);
+
+	// call the routine
+	RunCallIn(cmdStr, 6, 0);
+
+	return;
+}
+
+
 /******************************************************************************/
 
-inline bool CLuaHandle::LoadDrawCallIn(const LuaHashString& hs)
+inline bool CLuaHandle::PushUnsyncedCallIn(const LuaHashString& hs)
 {
 	// LuaUI keeps these call-ins in the Global table,
 	// the synced handles keep them in the Registry table
@@ -607,7 +633,7 @@ void CLuaHandle::Update()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("Update");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -623,11 +649,64 @@ void CLuaHandle::Update()
 }
 
 
+bool CLuaHandle::DefaultCommand(const CUnit* unit,
+                                const CFeature* feature, int& cmd)
+{
+	lua_settop(L, 0);
+	static const LuaHashString cmdStr("DefaultCommand");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		lua_settop(L, 0);
+		return false;
+	}
+
+	int args = 0;
+	if (unit) {
+		HSTR_PUSH(L, "unit");
+		lua_pushnumber(L, unit->id);
+		args = 2;
+	}
+	else if (feature) {
+		HSTR_PUSH(L, "feature");
+		lua_pushnumber(L, feature->id);
+		args = 2;
+	}
+/*
+	else if (groundPos) {
+		HSTR_PUSH(L, "ground");
+		lua_pushnumber(L, groundPos->x);
+		lua_pushnumber(L, groundPos->y);
+		lua_pushnumber(L, groundPos->z);
+		args = 4;
+	}
+	else {
+		HSTR_PUSH(L, "selection");
+		args = 1;
+	}
+*/
+
+	synced = false;
+
+	// call the routine
+	RunCallIn(cmdStr, args, 1);
+
+	synced = !userMode;
+
+	if (!lua_isnumber(L, 1)) {
+		return false;
+	}
+
+	cmd = (int)lua_tonumber(L, 1);
+	return true;
+}
+
+
+
+
 void CLuaHandle::DrawWorld()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorld");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -647,7 +726,7 @@ void CLuaHandle::DrawWorldPreUnit()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorldPreUnit");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -667,7 +746,7 @@ void CLuaHandle::DrawWorldShadow()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorldShadow");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -687,7 +766,7 @@ void CLuaHandle::DrawWorldReflection()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorldReflection");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -707,7 +786,7 @@ void CLuaHandle::DrawWorldRefraction()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawWorldRefraction");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -727,7 +806,7 @@ void CLuaHandle::DrawScreen()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawScreen");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -750,7 +829,7 @@ void CLuaHandle::DrawScreenEffects()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawScreenEffects");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}
@@ -773,7 +852,7 @@ void CLuaHandle::DrawInMiniMap()
 {
 	lua_settop(L, 0);
 	static const LuaHashString cmdStr("DrawInMiniMap");
-	if (!LoadDrawCallIn(cmdStr)) {
+	if (!PushUnsyncedCallIn(cmdStr)) {
 		lua_settop(L, 0);
 		return;
 	}

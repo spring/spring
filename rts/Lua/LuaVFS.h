@@ -4,6 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <string>
+using std::string;
+
 struct lua_State;
 
 
@@ -12,16 +15,10 @@ class LuaVFS {
 		static bool PushSynced(lua_State* L);
 		static bool PushUnsynced(lua_State* L);
 
-		enum AccessMode {
-			RAW_ONLY  = 0,
-			ZIP_ONLY  = 1,
-			RAW_FIRST = 2,
-			ZIP_FIRST = 3,
-			LAST_MODE = ZIP_FIRST
-		};
-
 	private:
-		static AccessMode GetMode(lua_State* L, int index, bool synced);
+		static const string GetModes(lua_State* L, int index, bool synced);
+
+		static bool PushCommon(lua_State* L);
 
 		static int Include(lua_State* L, bool synced);
 		static int LoadFile(lua_State* L, bool synced);

@@ -74,7 +74,7 @@ void CCommanderScript::Update(void)
 			if (it != sideMap.end()) {
 				const string& sideSection = it->second;
 				const string cmdrType =
-					p.SGetValueDef("armcom", sideSection + "\\commander");
+					StringToLower(p.SGetValueDef("armcom", sideSection + "\\commander"));
 
 				CUnit* unit = unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
 
@@ -84,8 +84,10 @@ void CCommanderScript::Update(void)
 	}
 	else {
 		TdfParser p("gamedata/SIDEDATA.TDF");
-		const string s0 = p.SGetValueDef("armcom", "side0\\commander");
-		const string s1 = p.SGetValueDef("corcom", "side1\\commander");
+		const string s0 =
+			StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
+		const string s1 =
+			StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
 
 		TdfParser p2;
 		CReadMap::OpenTDF(stupidGlobalMapname, p2);

@@ -100,7 +100,7 @@ CKeyAutoBinder::~CKeyAutoBinder()
 
 string CKeyAutoBinder::LoadFile(const string& filename) const
 {
-	CFileHandler f(filename, CFileHandler::OnlyRawFS);
+	CFileHandler f(filename, SPRING_VFS_RAW);
 
 	string code;
 	if (!f.LoadStringData(code)) {

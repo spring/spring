@@ -25,11 +25,36 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+-- Automatically generated local definitions
+
+local GL_LINES           = GL.LINES
+local GL_POINTS          = GL.POINTS
+local glBeginEnd         = gl.BeginEnd
+local glColor            = gl.Color
+local glLineWidth        = gl.LineWidth
+local glPointSize        = gl.PointSize
+local glVertex           = gl.Vertex
+local spGetCameraState   = Spring.GetCameraState
+local spGetCameraVectors = Spring.GetCameraVectors
+local spGetModKeyState   = Spring.GetModKeyState
+local spGetMouseState    = Spring.GetMouseState
+local spSendCommands     = Spring.SendCommands
+local spSetCameraState   = Spring.SetCameraState
+local spSetMouseCursor   = Spring.SetMouseCursor
+local spWarpMouse        = Spring.WarpMouse
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --
 --  NOTES:
 --
 --  1. The GetCameraState() table is supposed to be opaque.
 --
+
+local blockModeSwitching = true
+
 
 local gl = gl
 
@@ -52,12 +77,12 @@ local active = false
 
 function widget:Update(dt)
   if (active) then
-    local x, y, lmb, mmb, rmb = Spring.GetMouseState()
-    local cs = Spring.GetCameraState()
+    local x, y, lmb, mmb, rmb = spGetMouseState()
+    local cs = spGetCameraState()
     local speed = dt * speedFactor
 
     if (cs.name == 'free') then
-      local a,c,m,s = Spring.GetModKeyState()
+      local a,c,m,s = spGetModKeyState()
       if (c) then
         return
       end
@@ -73,7 +98,7 @@ function widget:Update(dt)
       end
     else
       -- forward, up, right, top, bottom, left, right
-      local camVecs = Spring.GetCameraVectors()
+      local camVecs = spGetCameraVectors()
       local cf = camVecs.forward
       local len = math.sqrt((cf[1] * cf[1]) + (cf[3] * cf[3]))
       local dfx = cf[1] / len
@@ -87,9 +112,9 @@ function widget:Update(dt)
       cs[2] = cs[2] + (mxm * drx) + (mym * dfx)
       cs[4] = cs[4] + (mxm * drz) + (mym * dfz)
     end
-    Spring.SetCameraState(cs, 0)
+    spSetCameraState(cs, 0)
     if (mmb) then
-      Spring.SetMouseCursor("none")
+      spSetMouseCursor("none")
     end
   end
 end
@@ -99,24 +124,23 @@ function widget:MousePress(x, y, button)
   if (button ~= 2) then
     return false
   end
-  local cs = Spring.GetCameraState()
-  if ((cs.name ~= "ta") and (cs.name ~= "free")) then
---  if ((cs.name ~= "ta") and (cs.name ~= "rot") and (cs.name ~= "free")) then
-    local a,c,m,s = Spring.GetModKeyState()
+  local cs = spGetCameraState()
+  if (blockModeSwitching and (cs.name ~= "ta") and (cs.name ~= "free")) then
+    local a,c,m,s = spGetModKeyState()
     return (c or s)  --  block the mode toggling
   end
   if (cs.name == 'free') then
-    local a,c,m,s = Spring.GetModKeyState()
-    if (m) then
-      return
+    local a,c,m,s = spGetModKeyState()
+    if (m and (not (c or s))) then
+      return false
     end
   end
   active = not active
   if (active) then
     mx = vsx * 0.5
     my = vsy * 0.5
-    Spring.WarpMouse(mx, my)
-    Spring.SendCommands({"trackoff"})
+    spWarpMouse(mx, my)
+    spSendCommands({"trackoff"})
   end
   return true
 end
@@ -128,30 +152,34 @@ function widget:MouseRelease(x, y, button)
 end
 
 
+local function DrawPoint(x, y, c, s)
+  glPointSize(s)
+  glColor(c)
+  glBeginEnd(GL_POINTS, function(x, y)
+    glVertex(x, y)
+  end, x, y)
+end
+
+
 function widget:DrawScreen()
   if (active) then
-    local x, y = Spring.GetMouseState()
+    local x, y = spGetMouseState()
 
-    gl.Color(0, 0, 0)
-    gl.PointSize(14)
-    gl.Shape(GL.POINTS, { { v = { mx, my },  c = {0, 0, 0} } })
-    gl.PointSize(11)
-    gl.Shape(GL.POINTS, { { v = { mx, my },  c = {1, 1, 1} } })
-    gl.PointSize(8)
-    gl.Shape(GL.POINTS, { { v = { mx, my },  c = {0, 0, 0} } })
-    gl.PointSize(5)
-    gl.Shape(GL.POINTS, { { v = { mx, my },  c = {1, 0, 0} } })
+    DrawPoint(mx, my, { 0, 0, 0 }, 14)
+    DrawPoint(mx, my, { 1, 1, 1 }, 11)
+    DrawPoint(mx, my, { 0, 0, 0 },  8)
+    DrawPoint(mx, my, { 1, 0, 0 },  5)
 
-    gl.LineWidth(2)
-    gl.Shape(GL.LINES, {
-      { v = {  x,  y }, c = {0, 1, 0} },
-      { v = { mx, my }, c = {1, 0, 0} }
-    })
-    gl.LineWidth(1)
+    glLineWidth(2)
+    glBeginEnd(GL_LINES, function()
+      glColor(0, 1, 0); glVertex(x,  y)
+      glColor(1, 0, 0); glVertex(mx, my)
+    end)
+    glLineWidth(1)
 
-    gl.PointSize(5)
-    gl.Shape(GL.POINTS, { { v = {  x,  y},  c = {0, 1, 0} } })
-    gl.PointSize(1)
+    DrawPoint(x, y, { 0, 1, 0 },  5)
+
+    glPointSize(1)
   end
 end
 

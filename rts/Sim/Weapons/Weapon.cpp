@@ -14,6 +14,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Projectiles/WeaponProjectile.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -252,10 +253,12 @@ void CWeapon::Update()
 			gs->Team(owner->team)->metalPull += metalFireCost*p;
 		}
 		if(buildPercent>=1){
+			const int oldCount = numStockpiled;
 			buildPercent=0;
 			numStockpileQued--;
 			numStockpiled++;
 			owner->commandAI->StockpileChanged(this);
+			luaCallIns.StockpileChanged(owner, this, oldCount);
 		}
 	}
 
@@ -283,8 +286,10 @@ void CWeapon::Update()
 
 			if(TryTarget(targetPos,haveUserTarget,targetUnit)){
 				if(weaponDef->stockpile){
+					const int oldCount = numStockpiled;
 					numStockpiled--;
 					owner->commandAI->StockpileChanged(this);
+					luaCallIns.StockpileChanged(owner, this, oldCount);
 				} else {
 					owner->UseEnergy(energyFireCost);
 					owner->UseMetal(metalFireCost);
@@ -384,13 +389,17 @@ void CWeapon::Update()
 
 bool CWeapon::AttackGround(float3 pos, bool userTarget)
 {
-	if((!userTarget && weaponDef->noAutoTarget))
+	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
-	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff || !weaponDef->canAttackGround)
+	}
+	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
+	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
 		return false;
+	}
 
-	if(!weaponDef->waterweapon && pos.y<1)
-		pos.y=1;
+	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
+		pos.y = 1.0f;
+	}
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
 		weaponMuzzlePos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
@@ -527,7 +536,11 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 
 	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
-		if(owner->fireState==2 && !haveUserTarget && (targetType==Target_None || (targetType==Target_Unit && (targetUnit->category & badTargetCategory)) || gs->frameNum>lastTargetRetry+65)){
+		if (owner->fireState==2 && !haveUserTarget && 
+		    ((targetType == Target_None) ||
+		     ((targetType == Target_Unit) &&
+		      (targetUnit->category & badTargetCategory)) ||
+		     (gs->frameNum > lastTargetRetry + 65))) {
 			lastTargetRetry=gs->frameNum;
 			std::map<float,CUnit*> targets;
 			helper->GenerateTargets(this,targetUnit,targets);
@@ -583,14 +596,16 @@ void CWeapon::DependentDied(CObject *o)
 
 bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 {
-	if(unit && !(onlyTargetCategory&unit->category))
+	if (unit && !(onlyTargetCategory & unit->category)) {
 		return false;
+	}
 
-	if(unit && ((unit->isDead && (modInfo->fireAtKilled==0)) || (unit->crashing && (modInfo->fireAtCrashing==0))))
+	if(unit && ((unit->isDead && (modInfo->fireAtKilled==0)) || (unit->crashing && (modInfo->fireAtCrashing==0)))) {
 		return false;
-
-	if(weaponDef->stockpile && !numStockpiled)
+	}
+	if (weaponDef->stockpile && !numStockpiled) {
 		return false;
+	}
 
 	float3 dif=pos-weaponMuzzlePos;
 	float heightDiff; // negative when target below owner
@@ -678,8 +693,8 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
-	if(weaponDef->interceptor || weaponDef->onlyTargetCategory!=0xffffffff
-			|| !weaponDef->canAttackGround){
+	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
+	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
 		return false;
 	}
 

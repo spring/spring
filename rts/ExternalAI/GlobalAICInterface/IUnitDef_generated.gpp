@@ -776,9 +776,9 @@ AICALLBACK_API float UnitDef_get_flareReloadTime( const UnitDef *self )
 }
 
 
-AICALLBACK_API float UnitDef_get_flareEfficieny( const UnitDef *self )
+AICALLBACK_API float UnitDef_get_flareEfficiency( const UnitDef *self )
 {
-   return ( ( UnitDef *) self)->flareEfficieny;
+   return ( ( UnitDef *) self)->flareEfficiency;
 }
 
 

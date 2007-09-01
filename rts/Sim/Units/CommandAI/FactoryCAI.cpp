@@ -61,6 +61,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.action="move";
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
+	c.mouseicon=c.name;
 	c.hotkey="m";
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
@@ -70,6 +71,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.action="patrol";
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="Patrol";
+		c.mouseicon=c.name;
 		c.hotkey="p";
 		c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
 		possibleCommands.push_back(c);
@@ -80,6 +82,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.action="fight";
 		c.type = CMDTYPE_ICON_MAP;
 		c.name = "Fight";
+		c.mouseicon=c.name;
 		c.hotkey = "f";
 		c.tooltip = "Fight: Order ready built units to take action while moving to a position";
 		possibleCommands.push_back(c);
@@ -90,6 +93,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.action="guard";
 		c.type=CMDTYPE_ICON_UNIT;
 		c.name="Guard";
+		c.mouseicon=c.name;
 		c.hotkey="g";
 		c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
@@ -115,10 +119,11 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.action="buildunit_" + StringToLower(ud->name);
 		c.type=CMDTYPE_ICON;
 		c.name=name;
+		c.mouseicon=c.name;
 
 		char tmp[500];
 		sprintf(tmp,"\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",ud->health,ud->metalCost,ud->energyCost,ud->buildTime);
-		c.tooltip=string("Build: ")+ud->humanName + " " + ud->tooltip+tmp;
+		c.tooltip = string("Build: ") + ud->humanName + " - " + ud->tooltip + tmp;
 
 		possibleCommands.push_back(c);
 		BuildOption bo;
