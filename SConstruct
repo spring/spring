@@ -243,6 +243,12 @@ for shader in os.listdir('game/shaders'):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'shaders'), os.path.join('game/shaders', shader))
 		Alias('install', inst)
 
+# install fonts
+for font in os.listdir('game/fonts'):
+	if not os.path.isdir(os.path.join('game/fonts', font)):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('game/fonts', font))
+		Alias('install', inst)
+
 # install startscripts
 for f in os.listdir('game/startscripts'):
 	if not os.path.isdir(f):
@@ -250,7 +256,7 @@ for f in os.listdir('game/startscripts'):
 		Alias('install', inst)
 
 # install some files from root of datadir
-for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'Luxi.ttf', 'Vera.ttf']:
+for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt']:
 	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
 	Alias('install', inst)
 
