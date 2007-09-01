@@ -37,14 +37,8 @@
 #endif
 
 
-static string IntToString(int value);
-static string BoolToString(bool value);
-static string FloatToString(float value);
-static string SafeString(const string& text);
 static string StringReplace(const string& text,
                             const string& from, const string& to);
-static string GetCategoryTableFromBits(unsigned int bits);
-static string GetCategoryTableFromString(const string& text);
 
 
 // FIXME -- use 'em
@@ -406,40 +400,6 @@ bool CKeyAutoBinder::IsBetter(lua_State* L, int thisDefID, int thatDefID)
 
 /******************************************************************************/
 
-static string IntToString(int value)
-{
-	char buf[32];
-	SNPRINTF(buf, sizeof(buf), "%i", value);
-	return string(buf);
-}
-
-
-static string BoolToString(bool value)
-{
-	if (value) {
-		return string("true");
-	}
-	return string("false");
-}
-
-
-static string FloatToString(float value)
-{
-	char buf[32];
-	SNPRINTF(buf, sizeof(buf), "%f", value);
-	return string(buf);
-}
-
-
-static string SafeString(const string& text)
-{
-	const string noSlash =  StringReplace(text,    "\\", "\\\\");
-	const string noQuote =  StringReplace(noSlash, "\"", "\\\"");
-	const string quote = string("\"");
-	return (quote + noQuote + quote);
-}
-
-
 static string StringReplace(const string& text,
                             const string& from, const string& to)
 {
@@ -457,38 +417,6 @@ static string StringReplace(const string& text,
 		working = tmp;
 	}
 	return working;
-}
-
-
-static string GetCategoryTable(const vector<string> cats)
-{
-	string table = "{";
-	const int catCount = (int)cats.size();
-	for (int i = 0; i < catCount; i++) {
-		table += " ";
-		table += SafeString(StringToLower(cats[i]));
-		if (i != (catCount - 1)) {
-			table += ",";
-		} else {
-			table += " ";
-		}
-	}
-	table += "}";
-	return table;
-}
-
-
-static string GetCategoryTableFromBits(unsigned int bits)
-{
-	vector<string> cats = CCategoryHandler::Instance()->GetCategoryNames(bits);
-	return GetCategoryTable(cats);
-}
-
-
-static string GetCategoryTableFromString(const string& text)
-{
-	vector<string> cats = SimpleParser::Tokenize(text, 0);
-	return GetCategoryTable(cats);
 }
 
 
