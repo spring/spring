@@ -280,7 +280,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / 30.0f);
 	ud.idleTime     = udTable.GetInt("idleTime", 600);
 
-	ud.buildangle = udTable.GetInt("buildangle", 0);
+	ud.buildangle = udTable.GetInt("buildAngle", 0);
 
 	ud.isMetalMaker = (ud.makesMetal >= 1 && ud.energyUpkeep > ud.makesMetal * 40);
 
@@ -350,7 +350,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.waterline += 5.0f; // make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
 	}
 
-	ud.selfDCountdown = udTable.GetInt("selfdestructcountdown", 5);
+	ud.selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;
 	ud.maxAcc   = udTable.GetFloat("acceleration", 0.5f);
@@ -377,12 +377,12 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.sonarJamRadius = udTable.GetInt("sonarDistanceJam", 0);
 
 	ud.stealth        = udTable.GetBool("stealth",            false);
-	ud.targfac        = udTable.GetBool("istargetingupgrade", false);
+	ud.targfac        = udTable.GetBool("isTargetingUpgrade", false);
 	ud.isFeature      = udTable.GetBool("isFeature",          false);
 	ud.canResurrect   = udTable.GetBool("canResurrect",       false);
 	ud.canCapture     = udTable.GetBool("canCapture",         false);
 	ud.hideDamage     = udTable.GetBool("hideDamage",         false);
-	ud.showPlayerName = udTable.GetBool("showplayername",     false);
+	ud.showPlayerName = udTable.GetBool("showPlayerName",     false);
 
 	ud.cloakCost = udTable.GetFloat("cloakCost", -1.0f);
 	ud.cloakCostMoving = udTable.GetFloat("cloakCostMoving", -1.0f);
@@ -392,19 +392,19 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canCloak = (ud.cloakCost >= 0);
 
 	ud.startCloaked = udTable.GetBool("init_cloaked", false);
-	ud.decloakDistance = udTable.GetFloat("mincloakdistance", -1.0f);
+	ud.decloakDistance = udTable.GetFloat("minCloakDistance", -1.0f);
 	ud.decloakOnFire = udTable.GetBool("decloakOnFire", true);
 
 	ud.highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
 	ud.canKamikaze = udTable.GetBool("kamikaze", false);
-	ud.kamikazeDist = udTable.GetFloat("kamikazedistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
+	ud.kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
 
-	ud.showNanoFrame = udTable.GetBool("shownanoframe", true);
-	ud.showNanoSpray = udTable.GetBool("shownanospray", true);
-	ud.nanoColor = udTable.GetFloat3("nanocolor", float3(0.2f,0.7f,0.2f));
+	ud.showNanoFrame = udTable.GetBool("showNanoFrame", true);
+	ud.showNanoSpray = udTable.GetBool("showNanoSpray", true);
+	ud.nanoColor = udTable.GetFloat3("nanoColor", float3(0.2f,0.7f,0.2f));
 
-	ud.canhover = udTable.GetBool("canhover", false);
+	ud.canhover = udTable.GetBool("canHover", false);
 
 	ud.floater = (ud.waterline != 0.0f);
 	if (udTable.KeyExists("floater")) {
@@ -417,15 +417,15 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	}
 
 	ud.airStrafe     = udTable.GetBool("airStrafe", true);
-	ud.hoverAttack   = udTable.GetBool("hoverattack", false);
-	ud.wantedHeight  = udTable.GetFloat("cruisealt", 0.0f);
-	ud.dlHoverFactor = udTable.GetFloat("airhoverfactor", -1.0f);
+	ud.hoverAttack   = udTable.GetBool("hoverAttack", false);
+	ud.wantedHeight  = udTable.GetFloat("cruiseAlt", 0.0f);
+	ud.dlHoverFactor = udTable.GetFloat("airHoverFactor", -1.0f);
 
-	ud.transportSize     = udTable.GetInt("transportsize",     0);
-	ud.transportCapacity = udTable.GetInt("transportcapacity", 0);
-	ud.isfireplatform    = udTable.GetBool("isfireplatform",   false);
+	ud.transportSize     = udTable.GetInt("transportSize",     0);
+	ud.transportCapacity = udTable.GetInt("transportCapacity", 0);
+	ud.isfireplatform    = udTable.GetBool("isFirePlatform",   false);
 	ud.isAirBase         = udTable.GetBool("isAirBase",        false);
-	ud.loadingRadius     = udTable.GetFloat("loadingradius",   220.0f);
+	ud.loadingRadius     = udTable.GetFloat("loadingRadius",   220.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",   100000.0f);
 	ud.holdSteady        = udTable.GetBool("holdSteady",       true);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",      false);
@@ -446,9 +446,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis
 	ud.maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
 
-	ud.maxFuel = udTable.GetFloat("maxfuel", 0.0f); //max flight time in seconds before aircraft must return to base
-	ud.refuelTime = udTable.GetFloat("refueltime", 5.0f);
-	ud.minAirBasePower = udTable.GetFloat("minairbasepower", 0.0f);
+	ud.maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
+	ud.refuelTime = udTable.GetFloat("refuelTime", 5.0f);
+	ud.minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 
 	ud.maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	if (gameSetup) {
@@ -621,7 +621,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		          - (ud.wingAngle * ud.wingAngle * ud.wingDrag);
 	}
 
-	std::string objectname = udTable.GetString("objectname", "");
+	std::string objectname = udTable.GetString("objectName", "");
 	ud.model.modelpath = "objects3d/" + objectname;
 	ud.model.modelname = objectname;
 
@@ -649,7 +649,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.needGeo = false;
 	if ((ud.type == "Building") || (ud.type == "Factory")) {
-		CreateYardMap(&ud, udTable.GetString("YardMap", "c"));
+		CreateYardMap(&ud, udTable.GetString("yardMap", "c"));
 	} else {
 		for (int u = 0; u < 4; u++) {
 			ud.yardmaps[u] = 0;
