@@ -608,7 +608,7 @@ LuaTable& LuaTable::operator=(const LuaTable& tbl)
 {
 	if (parser && (refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
 		lua_settop(L, 0);
-		parser->currentRef == LUA_NOREF;
+		parser->currentRef = LUA_NOREF;
 	}
 
 	if (parser != tbl.parser) {
@@ -635,6 +635,8 @@ LuaTable& LuaTable::operator=(const LuaTable& tbl)
 	}	
 
 	isValid = (refnum != LUA_NOREF);
+
+	return *this;
 }
 
 
@@ -818,7 +820,7 @@ bool LuaTable::GetKeys(vector<int>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
 			const int value = (int)lua_tonumber(L, -2);
-			std::sort(data.begin(), data.end());
+			data.push_back(value);
 		}
 	}
 	std::sort(data.begin(), data.end());
