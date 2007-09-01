@@ -454,8 +454,9 @@ static bool InitParamMap()
 
 	ADD_INT("id", fd.id);
 
-	ADD_STRING("name",    fd.myName);
-	ADD_STRING("tooltip", fd.description);
+	ADD_STRING("name",     fd.myName);
+	ADD_STRING("tooltip",  fd.description);
+	ADD_STRING("filename", fd.filename);
 
 	ADD_FLOAT("metal",     fd.metal);
 	ADD_FLOAT("energy",    fd.energy);

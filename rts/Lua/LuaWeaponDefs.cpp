@@ -441,10 +441,11 @@ static bool InitParamMap()
 
 	ADD_INT("tdfId", wd.tdfId);
 
-	ADD_STRING("name", wd.name);
-	ADD_STRING("type", wd.type);
-
+	ADD_STRING("name",        wd.name);
+	ADD_STRING("filename",    wd.type);
 	ADD_STRING("description", wd.description);
+
+	ADD_STRING("type", wd.type);
 
 	ADD_FLOAT("range", wd.range);
 	ADD_FLOAT("heightMod", wd.heightmod);
