@@ -85,6 +85,7 @@ unitsync_minizip_files  = filelist.get_source(uenv, 'rts/lib/minizip', 'rts/lib/
 unitsync_hpiutil2_files = filelist.get_source(uenv, 'rts/lib/hpiutil2');
 unitsync_extra_files = [
 	'rts/Game/GameVersion.cpp',
+	'rts/Lua/LuaUtils.cpp',
 	'rts/Lua/LuaParser.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
