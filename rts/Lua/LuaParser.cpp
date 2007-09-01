@@ -973,11 +973,11 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 	}
 	else if (lua_isstring(L, index)) {
 		const string str = StringToLower(lua_tostring(L, index));
-		if ((str == "1") or (str == "true")) {
+		if ((str == "1") || (str == "true")) {
 			value = true;
 			return true;
 		}
-		if ((str == "0") or (str == "false")) {
+		if ((str == "0") || (str == "false")) {
 			value = false;
 			return true;
 		}

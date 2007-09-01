@@ -25,8 +25,6 @@
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "mmgr.h"
-#include <sys/time.h>//FIXME
-#include <time.h>//FIXME
 
 CR_BIND(UnitDef, );
 
@@ -36,10 +34,6 @@ CUnitDefHandler* unitDefHandler;
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	struct timeval tv;//FIXME
-	gettimeofday(&tv, NULL);//FIXME
-	uint64_t startTime = (tv.tv_sec * 1000000) + tv.tv_usec;//FIXME
-
 	PrintLoadMsg("Loading units and weapons");
 
 	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
@@ -49,10 +43,6 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	if (!luaParser.Execute()) {
 		throw content_error(luaParser.GetErrorLog());
 	}
-
-	gettimeofday(&tv, NULL);//FIXME
-	uint64_t execTime = (tv.tv_sec * 1000000) + tv.tv_usec;//FIXME
-	printf("UNITDEFHANDLER execute time = %.3f\n", double(execTime - startTime) * 1.0e-6);//FIXME
 
 	LuaTable rootTable = luaParser.GetRoot();
 	if (!rootTable.IsValid()) {
@@ -116,11 +106,6 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	ProcessDecoys();
 
 	AssignTechLevels();
-
-	gettimeofday(&tv, NULL);//FIXME
-	uint64_t endTime = (tv.tv_sec * 1000000) + tv.tv_usec;//FIXME
-	printf("UNITDEFHANDLER load time = %.3f\n", double(endTime - execTime) * 1.0e-6);//FIXME
-	printf("UNITDEFHANDLER full time = %.3f\n", double(endTime - startTime) * 1.0e-6);//FIXME
 }
 
 
@@ -348,8 +333,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxSlope = udTable.GetFloat("maxSlope", 0.0f);
 	ud.maxHeightDif = 40 * tan(ud.maxSlope * (PI / 180));
 	ud.maxSlope = cos(ud.maxSlope * (PI / 180));
-	ud.minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6);
-	ud.maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6);
+	ud.minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6f);
+	ud.maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6f);
 	ud.minCollisionSpeed = udTable.GetFloat("minCollisionSpeed", 1.0f);
 	ud.slideTolerance = udTable.GetFloat("slideTolerance", 0.0f); // disabled
 
@@ -528,7 +513,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
 		mainDir.Normalize();
 
-		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0));
+		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
 
 		const float fuelUse = wTable.GetFloat("fuelUsage", 0.0f);
 

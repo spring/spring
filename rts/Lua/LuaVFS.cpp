@@ -51,6 +51,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackS32", UnpackS32);
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
+	return true;
 }
 
 
