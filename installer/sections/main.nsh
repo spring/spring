@@ -32,7 +32,6 @@
   File "..\game\cmdcolors.txt"
   File "..\game\ctrlpanel.txt"
 
-  File "..\game\Luxi.ttf"
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
 
@@ -60,6 +59,8 @@
   File "..\game\shaders\*.vp"
   File "..\game\shaders\*.glsl"
 
+  SetOutPath "$INSTDIR\fonts"
+  File "..\game\fonts\Luxi.ttf"
 
 ; TODO: Fix the vc projects to use the same names.
   SetOutPath "$INSTDIR\AI\Helper-libs"
@@ -108,7 +109,6 @@
   ; Main files
   Delete "$INSTDIR\spring.exe"
   Delete "$INSTDIR\spring.def"
-  Delete "$INSTDIR\luxi.ttf"
   Delete "$INSTDIR\PALETTE.PAL"
   Delete "$INSTDIR\SelectionEditor.exe"
   Delete "$INSTDIR\selectkeys.txt"
@@ -133,6 +133,9 @@
   Delete "$INSTDIR\zlibwapi.dll"
 
   Delete "$INSTDIR\PALETTE.PAL"
+
+  ; Fonts
+  Delete "$INSTDIR\fonts\Luxi.ttf"
 
   ; Shaders
   Delete "$INSTDIR\shaders\*.fp"
