@@ -15,13 +15,12 @@ CModInfo::CModInfo(const char* modname)
 
 	humanName = archiveScanner->ModArchiveToModName(modname);
 
-	const CArchiveScanner::ModData* md = archiveScanner->ModArchiveToModData(modname);
-	if (md != NULL) {
-		shortName   = md->shortName;
-		version     = md->version;
-		mutator     = md->mutator;
-		description = md->description;
-	}
+	const CArchiveScanner::ModData md = archiveScanner->ModArchiveToModData(modname);
+
+	shortName   = md.shortName;
+	version     = md.version;
+	mutator     = md.mutator;
+	description = md.description;
 
 	// determine whether the modder allows the user to use team coloured nanospray
 	try {

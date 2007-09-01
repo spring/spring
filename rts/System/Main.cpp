@@ -52,8 +52,10 @@
 #ifdef __GNUC__
 	#include "Platform/Win/CrashHandler.h"
 #else
-	#include "CrashRpt.h"
-	#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
+	// FIXME either remove totally or reintegrate properly
+	// so it can be used on MinGW too?
+	//#include "CrashRpt.h"
+	//#pragma comment(lib,"../../../CrashRpt/lib/CrashRpt.lib")
 #endif
 	#include "Platform/Win/win32.h"
 	#include <winreg.h>
@@ -265,14 +267,14 @@ bool SpringApp::Initialize ()
 
 	// Initialize crash reporting
 #ifdef _WIN32
-#ifdef _CRASHRPT_H_
+#if defined(_CRASHRPT_H_)
 	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
 	if (!GetInstance())
 	{
 		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
 		return false;
 	}
-#else
+#elif defined(CRASHHANDLER_H)
 	CrashHandler::Install();
 #endif
 	InitializeSEH();

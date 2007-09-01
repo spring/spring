@@ -683,30 +683,30 @@ std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
 	return s;
 }
 
-/** Convert mod name to mod data struct, can return NULL */
-const CArchiveScanner::ModData* CArchiveScanner::ModNameToModData(const std::string& s) const
+/** Convert mod name to mod data struct, can return empty ModData */
+CArchiveScanner::ModData CArchiveScanner::ModNameToModData(const std::string& s) const
 {
 	// Convert mod name to mod archive
 	std::vector<ModData> found = GetPrimaryMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		const ModData& md = *it;
 		if (md.name == s) {
-			return &md;
+			return md;
 		}
 	}
-	return NULL;
+	return ModData();
 }
 
-/** Convert mod archive to mod data struct, can return NULL */
-const CArchiveScanner::ModData* CArchiveScanner::ModArchiveToModData(const std::string& s) const
+/** Convert mod archive to mod data struct, can return empty ModData */
+CArchiveScanner::ModData CArchiveScanner::ModArchiveToModData(const std::string& s) const
 {
 	// Convert mod archive to mod name
 	std::vector<ModData> found = GetPrimaryMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		const ModData& md = *it;
 		if (md.dependencies.front() == s) {
-			return &md;
+			return md;
 		}
 	}
-	return NULL;
+	return ModData();
 }
