@@ -11,7 +11,8 @@
 #include "TimeProfiler.h"
 #include "Sim/Units/Unit.h"
 #include "Game/UI/MouseHandler.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
+#include "Game/CameraHandler.h"
 #include "Platform/SharedLib.h"
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
@@ -190,7 +191,7 @@ void CGroupHandler::GroupCommand(int num)
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
-		mouse->currentCamController->SetPos(p);
+		cam->currentCamController->SetPos(p);
 	}
 
 	selectedUnits.SelectGroup(num);
@@ -244,7 +245,7 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
-		mouse->currentCamController->SetPos(p);
+		cam->currentCamController->SetPos(p);
 	}
 
 	selectedUnits.SelectGroup(num);

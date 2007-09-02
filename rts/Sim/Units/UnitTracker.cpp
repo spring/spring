@@ -2,10 +2,11 @@
 #include "UnitTracker.h"
 #include "Unit.h"
 #include "UnitHandler.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
+#include "Game/Camera/FPSController.h"
+#include "Game/CameraHandler.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
@@ -242,14 +243,14 @@ void CUnitTracker::SetCam()
 		lastFollowUnit=0;
 	}
 
-	CFPSController* fpsCamera = (CFPSController*) mouse->camControllers[0];
+	CFPSController* fpsCamera = (CFPSController*) cam->camControllers[0];
 
 	if(timeOut>0){
 		timeOut++;
 		camera->forward=oldCamDir;
 		camera->pos=oldCamPos;
-		fpsCamera->dir=oldCamDir;
-		fpsCamera->pos=oldCamPos;
+		fpsCamera->SetDir(oldCamDir);
+		fpsCamera->SetPos(oldCamPos);
 		if(timeOut>15){
 			timeOut=0;
 		}
@@ -257,7 +258,7 @@ void CUnitTracker::SetCam()
 	}
 
 	// non-FPS camera modes  (immediate positional tracking)
-	if (mouse->currentCamController != mouse->camControllers[0]) {
+	if (cam->currentCamController != cam->camControllers[0]) {
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
@@ -273,7 +274,7 @@ void CUnitTracker::SetCam()
 				break;
 			}
 		}
-		CCameraController* currentCam = mouse->currentCamController;
+		CCameraController* currentCam = cam->currentCamController;
 		currentCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
 		return;
 	}
@@ -292,13 +293,13 @@ void CUnitTracker::SetCam()
 	trackDir.Normalize();
 
 	camera->pos=trackPos;
-	fpsCamera->pos = trackPos;
+	fpsCamera->SetPos(trackPos);
 
 	camera->forward = u->pos + (u->speed * gu->timeOffset) - camera->pos;
 	camera->forward.Normalize();
 	camera->forward += trackDir;
 	camera->forward.Normalize();
-	fpsCamera->dir = camera->forward;
+	fpsCamera->SetDir(camera->forward);
 
 	if(doRoll){
 		oldUp[gs->frameNum%32] = u->updir;

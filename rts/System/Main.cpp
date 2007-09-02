@@ -16,7 +16,6 @@
 #include "NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
-#include "Game/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"

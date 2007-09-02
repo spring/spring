@@ -5,7 +5,9 @@
 #include "SelectionKeyHandler.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
+#include "Game/Camera/FPSController.h"
+#include "Game/CameraHandler.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
@@ -511,9 +513,9 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			return;
 
 		selectedUnits.AddUnit(sel);
-		mouse->CameraTransition(0.8f);
-		if(mouse->currentCamController!=mouse->camControllers[0]){
-			mouse->currentCamController->SetPos(sel->pos);
+		cam->CameraTransition(0.8f);
+		if(cam->currentCamController!=cam->camControllers[0]){
+			cam->currentCamController->SetPos(sel->pos);
 		} else {	//fps camera
 
 			if(camera->rot.x>-1)
@@ -525,7 +527,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			wantedCamDir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
 			wantedCamDir.Normalize();
 
-			((CFPSController*)mouse->camControllers[0])->pos=sel->pos - wantedCamDir*800;
+			((CFPSController*)cam->camControllers[0])->SetPos(sel->pos - wantedCamDir*800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

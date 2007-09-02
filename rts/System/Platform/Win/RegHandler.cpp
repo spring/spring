@@ -6,6 +6,7 @@
 #include "RegHandler.h"
 
 #include <SDL_types.h>
+#include <sstream>
 
 #include "mmgr.h"
 
@@ -37,6 +38,17 @@ int RegHandler::GetInt(string name, int def)
 		SetInt(name, def);
 		
 	return def;
+}
+
+float RegHandler::GetFloat(const std::string& name, const float def)
+{
+	std::ostringstream buf1;
+	buf1 << def;
+	
+	std::istringstream buffer(GetString(name, buf1.str()));
+	float val;
+	buffer >> val;
+	return val;
 }
 
 string RegHandler::GetString(string name, string def)

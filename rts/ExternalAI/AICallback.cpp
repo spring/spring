@@ -1,8 +1,9 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
@@ -1090,10 +1091,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = gu->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = mouse->currentCamController->GetDir();
+			*(float3*)data = cam->currentCamController->GetDir();
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = mouse->currentCamController->GetPos();
+			*(float3*)data = cam->currentCamController->GetPos();
 			return true;
 		}case AIVAL_SCRIPT_FILENAME_DEPRECATED:{
 			// Passing container objects across DLL boundaries is not safe on windows,

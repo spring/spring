@@ -59,6 +59,11 @@ public:
 	 * @return integer value
 	 */
 	virtual int GetInt(std::string name, int def) = 0;
+	
+	/**
+	@brief get float value
+	*/
+	virtual float GetFloat(const std::string& name, const float def) = 0;
 
 	/**
 	 * @brief get instance

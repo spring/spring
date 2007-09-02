@@ -21,7 +21,10 @@
 #include "Game.h"
 #include "float.h"
 #include "Camera.h"
-#include "CameraController.h"
+#include "Camera/CameraController.h"
+#include "Camera/FPSController.h"
+#include "Camera/OverheadController.h"
+#include "CameraHandler.h"
 #include "ConsoleHistory.h"
 #include "FPUCheck.h"
 #include "GameHelper.h"
@@ -275,6 +278,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	camera=SAFE_NEW CCamera();
 	cam2=SAFE_NEW CCamera();
 	mouse=SAFE_NEW CMouseHandler();
+	cam = new CCameraHandler();
 	selectionKeys=SAFE_NEW CSelectionKeyHandler();
 	tooltip=SAFE_NEW CTooltipConsole();
 
@@ -501,6 +505,7 @@ CGame::~CGame()
 	delete sound;              sound              = NULL;
 	delete selectionKeys;      selectionKeys      = NULL;
 	delete mouse;              mouse              = NULL;
+	delete cam;                cam                = NULL;
 	delete helper;             helper             = NULL;
 	delete shadowHandler;      shadowHandler      = NULL;
 	delete moveinfo;           moveinfo           = NULL;
@@ -898,29 +903,29 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewfps") {
-		mouse->SetCameraMode(0);
+		cam->SetCameraMode(0);
 	}
 	else if (cmd == "viewta") {
-		mouse->SetCameraMode(1);
+		cam->SetCameraMode(1);
 	}
 	else if (cmd == "viewtw") {
-		mouse->SetCameraMode(2);
+		cam->SetCameraMode(2);
 	}
 	else if (cmd == "viewrot") {
-		mouse->SetCameraMode(3);
+		cam->SetCameraMode(3);
 	}
 	else if (cmd == "viewfree") {
-		mouse->SetCameraMode(4);
+		cam->SetCameraMode(4);
 	}
 	else if (cmd == "viewov") {
-		mouse->SetCameraMode(5);
+		cam->SetCameraMode(5);
 	}
 	else if (cmd == "viewlua") {
-		mouse->SetCameraMode(6);
+		cam->SetCameraMode(6);
 	}
 	else if (cmd == "viewtaflip") {
 		COverheadController* taCam =
-			dynamic_cast<COverheadController*>(mouse->camControllers[1]);
+			dynamic_cast<COverheadController*>(cam->camControllers[1]);
 		if (taCam) {
 			if (!action.extra.empty()) {
 				taCam->flipped = !!atoi(action.extra.c_str());
@@ -930,10 +935,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "viewsave") {
-		mouse->SaveView(action.extra);
+		cam->SaveView(action.extra);
 	}
 	else if (cmd == "viewload") {
-		mouse->LoadView(action.extra);
+		cam->LoadView(action.extra);
 	}
 	else if (cmd == "viewselection") {
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -944,8 +949,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				pos += (*it)->midPos;
 			}
 			pos /= (float)selUnits.size();
-			mouse->currentCamController->SetPos(pos);
-			mouse->CameraTransition(0.6f);
+			cam->currentCamController->SetPos(pos);
+			cam->CameraTransition(0.6f);
 		}
 	}
 	else if (cmd == "moveforward") {
@@ -1031,8 +1036,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
-		mouse->currentCamController->SetPos(infoConsole->lastMsgPos);
-		mouse->CameraTransition(0.6f);
+		cam->currentCamController->SetPos(infoConsole->lastMsgPos);
+		cam->CameraTransition(0.6f);
 	}
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
@@ -1061,7 +1066,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		unitTracker.IncMode();
 	}
 	else if (cmd == "toggleoverview") {
-		mouse->ToggleOverviewCamera();
+		cam->ToggleOverviewCamera();
 	}
 	else if (cmd == "showhealthbars") {
 		if (action.extra.empty()) {
@@ -1692,7 +1697,10 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		mouse->ToggleState(keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]);
+		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
+			cam->ToggleState();
+		else
+			mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
 		CGameInfo::Disable();
@@ -1963,7 +1971,7 @@ bool CGame::Draw()
 	glDisable(GL_TEXTURE_2D);
 
 	//set camera
-	mouse->UpdateCam();
+	cam->UpdateCam();
 	mouse->UpdateCursors();
 
 	if(unitTracker.Enabled())
@@ -3039,11 +3047,9 @@ bool CGame::ClientReadNet()
 								mouse->locked = true;
 								mouse->HideMouse();
 							}
-							mouse->preControlCamNum = mouse->currentCamControllerNum;
-							mouse->currentCamControllerNum = 0;
-							mouse->currentCamController = mouse->camControllers[0];	//set fps mode
-							mouse->CameraTransition(1.0f);
-							((CFPSController*)mouse->camControllers[0])->pos = unit->midPos;
+							cam->PushMode();
+							cam->SetCameraMode(0);
+							((CFPSController*)cam->currentCamController)->SetPos(unit->midPos);
 							selectedUnits.ClearSelected();
 						}
 						ENTER_SYNCED;
@@ -3125,7 +3131,7 @@ void CGame::UpdateUI()
 		float3 pos=owner->pos+owner->frontdir*relPos.z+owner->updir*relPos.y+owner->rightdir*relPos.x;
 		pos+=UpVector*7;
 
-		((CFPSController*)mouse->camControllers[0])->pos=pos;
+		((CFPSController*)cam->camControllers[0])->SetPos(pos);
 	} else
 #endif
 	{
@@ -3156,7 +3162,7 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		CCameraController* camCtrl = mouse->currentCamController;
+		CCameraController* camCtrl = cam->currentCamController;
 		if (disableTracker && camCtrl->DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
@@ -3185,15 +3191,15 @@ void CGame::UpdateUI()
 			}
 		}
 		movement.z=cameraSpeed;
-		mouse->currentCamController->ScreenEdgeMove(movement);
+		cam->currentCamController->ScreenEdgeMove(movement);
 
 		if(camMove[4])
-			mouse->currentCamController->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			cam->currentCamController->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
 		if(camMove[5])
-			mouse->currentCamController->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+			cam->currentCamController->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
 	}
 
-	mouse->currentCamController->Update();
+	cam->currentCamController->Update();
 
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);

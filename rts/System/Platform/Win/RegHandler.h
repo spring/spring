@@ -22,6 +22,7 @@ public:
 	virtual void SetString(std::string name, std::string value);
 	virtual std::string GetString(std::string name, std::string def);
 	virtual int GetInt(std::string name, int def);
+	virtual float GetFloat(const std::string& name, const float def);
 protected:
 	HKEY regkey;
 };
