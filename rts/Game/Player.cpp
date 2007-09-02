@@ -6,8 +6,8 @@
 #include "Player.h"
 #ifdef DIRECT_CONTROL_ALLOWED
 #include "UI/MouseHandler.h"
+#include "CameraHandler.h"
 #include "Camera.h"
-#include "CameraController.h"
 #include <assert.h>
 #endif
 #include "mmgr.h"
@@ -93,10 +93,7 @@ void CPlayer::StopControllingUnit()
 		gu->directControl=0;
 
 		/* Switch back to the camera we were using before. */
-		mouse->currentCamController = mouse->camControllers[mouse->preControlCamNum];
-		mouse->currentCamControllerNum = mouse->preControlCamNum;
-		mouse->currentCamController->SetPos(camera->pos);
-		mouse->CameraTransition(1.0f);
+		cam->PopMode();
 		
 		if (mouse->locked && !mouse->wasLocked){
 			mouse->locked = false;

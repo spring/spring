@@ -33,7 +33,7 @@ using namespace std;
 #include "ExternalAI/GroupHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/PlayerRoster.h"

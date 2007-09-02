@@ -15,7 +15,8 @@ using namespace std;
 #include "LuaHashString.h"
 
 #include "Game/Camera.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
+#include "Game/CameraHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
@@ -435,8 +436,8 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 		transTime = (float)lua_tonumber(L, 4);
 	}
 
-	mouse->currentCamController->SetPos(pos);
-	mouse->CameraTransition(transTime);
+	cam->currentCamController->SetPos(pos);
+	cam->CameraTransition(transTime);
 
 	return 0;
 }
@@ -460,15 +461,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	lua_gettable(L, table);
 	if (lua_isnumber(L, -1)) {
 		const int camNum = (int)lua_tonumber(L, -1);
-		if ((camNum >= 0) && (camNum < mouse->camControllers.size())) {
-			const int oldNum = mouse->currentCamControllerNum;
-			const float3 dummy = mouse->currentCamController->SwitchFrom();
-			mouse->currentCamControllerNum = camNum;
-			mouse->currentCamController = mouse->camControllers[camNum];
-			const bool showMode = (oldNum != camNum);
-			mouse->currentCamController->SwitchTo(showMode);
-			mouse->CameraTransition(camTime);
-		}
+		cam->SetCameraMode(camNum);
 	}
 
 	vector<float> camState;
@@ -486,7 +479,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, mouse->currentCamController->SetState(camState));
+	lua_pushboolean(L, cam->currentCamController->SetState(camState));
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 1;

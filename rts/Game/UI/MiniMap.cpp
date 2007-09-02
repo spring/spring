@@ -14,10 +14,11 @@
 #include "GuiHandler.h"
 #include "InfoConsole.h"
 #include "MouseHandler.h"
+#include "Game/CameraHandler.h"
 #include "SimpleParser.h"
 #include "TooltipConsole.h"
 #include "ExternalAI/Group.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
@@ -640,7 +641,7 @@ void CMiniMap::MoveView(int x, int y)
 	float3 clickPos;
 	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
 	clickPos.z = (float(y - (gu->viewSizeY - ypos - height))) / height * gs->mapy * 8;
-	mouse->currentCamController->SetPos(clickPos);
+	cam->currentCamController->SetPos(clickPos);
 	unitTracker.Disable();
 }
 

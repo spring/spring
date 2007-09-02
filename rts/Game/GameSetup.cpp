@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cctype>
 #include <SDL.h>
-#include "CameraController.h"
+#include "CameraHandler.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "LogOutput.h"
@@ -22,7 +22,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "UI/LuaUI.h"
-#include "UI/MouseHandler.h"
 #include "UI/StartPosSelecter.h"
 
 CGameSetup* gameSetup=0;
@@ -415,10 +414,7 @@ bool CGameSetup::Update()
 	if(allReady){
 		if(readyTime==0 && !net->IsDemoServer()){
 			int mode=configHandler.GetInt("CamMode",1);
-			mouse->currentCamController=mouse->camControllers[mode];
-			mouse->currentCamControllerNum=mode;
-			mouse->currentCamController->SetPos(gs->Team(gu->myTeam)->startPos);
-			mouse->CameraTransition(1.0f);
+			cam->SetCameraMode(mode);
 			readyTime = SDL_GetTicks();
 		}
 	}

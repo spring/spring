@@ -17,15 +17,15 @@ using namespace std;
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "Game/Camera.h"
-#include "Game/CameraController.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
+#include "Game/CameraHandler.h"
 #include "Game/Team.h"
-#include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
@@ -508,9 +508,9 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	lua_newtable(L);
-	const int count = (int)mouse->camControllers.size();
+	const int count = (int)cam->camControllers.size();
 	for (int i = 0; i < count; i++) {
-		const CCameraController* camCtrl = mouse->camControllers[i];
+		const CCameraController* camCtrl = cam->camControllers[i];
 		lua_pushstring(L, camCtrl->GetName().c_str());
 		lua_pushnumber(L, camCtrl->num);
 		lua_rawset(L, -3);
@@ -527,15 +527,15 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	lua_newtable(L);
 
 	lua_pushstring(L, "mode");
-	lua_pushnumber(L, mouse->currentCamControllerNum);
+	lua_pushnumber(L, cam->currentCamController->num);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "name");
-	lua_pushstring(L, mouse->currentCamController->GetName().c_str());
+	lua_pushstring(L, cam->currentCamController->GetName().c_str());
 	lua_rawset(L, -3);
 
 
 	vector<float> camState;
-	mouse->currentCamController->GetState(camState);
+	cam->currentCamController->GetState(camState);
 	for (int i = 0; i < (int)camState.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, camState[i]);
