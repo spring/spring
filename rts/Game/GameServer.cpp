@@ -780,7 +780,6 @@ bool CGameServer::WaitsOnCon() const
 void CGameServer::KickPlayer(const int playerNum)
 {
 	if (playerNum != 0 && gs->players[playerNum]->active) {
-		unsigned char a = NETMSG_QUIT;
 		serverNet->SendPlayerLeft(playerNum, 2);
 		serverNet->SendQuit(playerNum);
 		serverNet->Kill(playerNum);

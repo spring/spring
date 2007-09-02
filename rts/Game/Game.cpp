@@ -3848,13 +3848,13 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("GroupAI and LuaUI control is %s",
 		                gs->noHelperAIs ? "disabled" : "enabled");
 	}
-	else if ((s.find(".setmaxspeed") == 0) && (player == 0)  && !net->localDemoPlayback) {
+	else if ((s.find(".setmaxspeed") == 0) && (player == 0) && !net->localDemoPlayback) {
 		maxUserSpeed = atof(s.substr(12).c_str());
 		if (gs->userSpeedFactor > maxUserSpeed) {
 			gs->userSpeedFactor = maxUserSpeed;
 		}
 	}
-	else if ((s.find(".setminspeed") == 0) && (player == 0)  && !net->localDemoPlayback) {
+	else if ((s.find(".setminspeed") == 0) && (player == 0) && !net->localDemoPlayback) {
 		minUserSpeed = atof(s.substr(12).c_str());
 		if (gs->userSpeedFactor < minUserSpeed) {
 			gs->userSpeedFactor = minUserSpeed;
@@ -3865,6 +3865,8 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			logOutput.Print(".skip only works in replay, and when cheating\n");
 		} else if (gs->frameNum < 1) {
 			logOutput.Print(".skip only works after the game has started\n");
+		} else if (s.size() <= 6) {
+			logOutput.Print("missing argument to .skip\n");
 		} else {
 			Skip(s, demoPlayer);
 		}
@@ -4080,6 +4082,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 		skipping = 0;
 	}
+
 	const string timeStr = msg.substr(6);
 	const int startFrame = gs->frameNum;
 	int endFrame;
