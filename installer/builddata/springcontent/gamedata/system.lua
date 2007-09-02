@@ -52,16 +52,20 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function reftable(tbl, ref)
+local function reftable(ref, tbl)
   local metaproxy = {}
   setmetatable(metaproxy, {
     __index = ref,
     __newindex = function(t, k, v)
-      error('Attempt to write "'..tostring(v)..'" to referenced definition')
+      error('Attempt to write "'..tostring(v)..'" in referenced definition')
     end,
     __metatable = function() error('Attempt to access system metatable') end,
   })
+  if (tbl == nil) then
+    tbl = {}
+  end
   setmetatable(tbl, { __index = metaproxy })
+  return tbl
 end
 
 
