@@ -68,7 +68,7 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	camera->rot.y = rads;
 
 	const float len2D = diff.Length2D();
-	if (fabs(len2D) <= 0.001f) {
+	if (fabsf(len2D) <= 0.001f) {
 		camera->rot.x = 0.0f;
 	} else {
 		camera->rot.x = atan2((trackPos.y - pos.y), len2D);
@@ -225,7 +225,7 @@ void CFreeController::Update()
 		if (pos.y < minHeight) {
 			pos.y = minHeight;
 			if (gndLock) {
-				vel.y = min(fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
+				vel.y = min(fabsf(scrollSpeed), ((minHeight - prevPos.y) / ft));
 			} else {
 				vel.y = 0.0f;
 			}
@@ -337,7 +337,7 @@ void CFreeController::SetPos(const float3& newPos)
 	pos.y = oldPosY;
 	if (gndOffset != 0.0f) {
 		const float h = ground->GetHeight2(pos.x, pos.z);
-		const float absH = h + fabs(gndOffset);
+		const float absH = h + fabsf(gndOffset);
 		if (pos.y < absH) {
 			pos.y = absH;
 		}
