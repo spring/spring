@@ -846,10 +846,16 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 			}
 		}
 
-		hIterator += 2;
+		if (!hStop)
+		{
+			hIterator += 2;
 
-		if(hCenter - hIterator < xStart || hCenter + hIterator > xEnd)
-			hStop = true;
+			if (hCenter - hIterator < xStart || hCenter + hIterator > xEnd)
+			{
+				hStop = true;
+				hIterator -= 2;
+			}
+		}
 
 		if(!hStop)
 		{
@@ -905,10 +911,16 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 			}
 		}
 
-		vIterator += 2;
+		if (!vStop)
+		{
+			vIterator += 2;
 
-		if(vCenter - vIterator < yStart || vCenter + vIterator > yEnd)
-			vStop = true;
+			if (vCenter - vIterator < yStart || vCenter + vIterator > yEnd)
+			{
+				vStop = true;
+				vIterator -= 2;
+			}
+		}
 	}
 
 	return ZeroVector;
