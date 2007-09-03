@@ -2,7 +2,6 @@
 #define EXPLOSION_GRAPHICS_H
 
 #include "Sim/Misc/DamageArray.h"
-#include "TdfParser.h"
 #include "Lua/LuaParser.h"
 #include "Sim/Objects/WorldObject.h"
 #include <map>
@@ -25,8 +24,7 @@ class ClassAliasList
 public:
 	ClassAliasList();
 
-	void Load(TdfParser& parser, const std::string& location);
-	void Load(const LuaParser& parser, const std::string& location);
+	void Load(const LuaTable&);
 	creg::Class* GetClass(const std::string& name);
 	std::string FindAlias(const std::string& className);
 protected:
@@ -39,14 +37,13 @@ public:
 	CExplosionGeneratorHandler ();
 
 	CExplosionGenerator* LoadGenerator(const std::string& tag);
-	TdfParser& GetParser() { return parser; }
 	const LuaTable& GetTable() { return luaTable; }
 
 	ClassAliasList projectileClasses, generatorClasses;
 protected:
 	std::map<std::string, CExplosionGenerator*> generators;
-	TdfParser parser;
-	LuaTable luaTable;
+	LuaParser luaParser;
+	LuaTable  luaTable;
 };
 
 

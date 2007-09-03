@@ -146,7 +146,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	if (!LoadFileWithModes(filename, code, modes)) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf),
-		         "Include() could not load '%s'\n", filename.c_str());
+		         "Include() could not load '%s'", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -154,7 +154,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
 		         error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
@@ -178,7 +178,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
 		         error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);

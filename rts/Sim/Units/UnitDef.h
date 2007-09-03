@@ -203,7 +203,7 @@ struct UnitDef
 	const WeaponDef* stockpileWeaponDef;
 	float maxWeaponRange;
 
-	std::map<int,std::string> buildOptions;
+	std::map<int, std::string> buildOptions;
 
 	std::string type;
 	std::string tooltip;

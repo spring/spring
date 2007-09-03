@@ -20,9 +20,6 @@ local postProcFile = 'gamedata/weapondefs_post.lua'
 
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
-TDF.AllowDuplicates(true)
-TDF.SetKeyFilter(string.lower)
-
 local system = VFS.Include('gamedata/system.lua')
 
 
@@ -69,14 +66,7 @@ end
 --  (these will override the TDF versions)
 --
 
-local luaFiles = {}
-do
-  luaFiles      = VFS.DirList('weapons/all worlds/', '*.lua')
-  local corpses = VFS.DirList('weapons/corpses/',    '*.lua')
-  for _, f in ipairs(corpses) do
-    table.insert(luaFiles, f)
-  end
-end
+local luaFiles = VFS.DirList('weapons/', '*.lua')
 
 for _, filename in ipairs(luaFiles) do
   local wdEnv = {}

@@ -79,7 +79,32 @@ end
 
 for _, type in ipairs(types) do
   parse_type(type)
+  print()
 end
+
+print('return {')
+for _, type in ipairs(types) do
+  local name = string.lower(type)..'Map'
+  print(string.format('  %-9s = %s,', name, name))
+end
+print('}')
+print()
+
+
+local function collect_subtables()
+  local array = {}
+  f:seek('set')
+  for text in f:lines() do
+    local s, e = string.find(text, 'SubTable')
+    if (s) then
+      print('-- SubTable: '..text)
+    end
+  end
+end
+
+
+collect_subtables()
+
 
 for _, type1 in ipairs(types) do
   for _, type2 in ipairs(types) do
@@ -87,7 +112,9 @@ for _, type1 in ipairs(types) do
       for name in pairs(maps[type1]) do
 --        print(type1, type2, name)
         if (type2[name] ~= nil) then
-          print(string.format('Type conflict: %s is both a %s and %s', name, type1, type2))
+          print(string.format(
+            'error("Type conflict: %s is both a %s and %s")',
+          name, type1, type2))
         end
       end
     end

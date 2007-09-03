@@ -124,16 +124,16 @@ void CFreeController::Update()
 	if (!tracking) {
 		if (goForward) {
 			const float3 tmpVel((camera->forward * vel.x) +
-					(UpVector        * vel.y) +
-					(camera->right   * vel.z));
+			                    (UpVector        * vel.y) +
+			                    (camera->right   * vel.z));
 			vel = tmpVel;
 		}
 		else {
 			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
 			forwardNoY.Normalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
-					(UpVector      * vel.y) +
-					(camera->right * vel.z));
+			                    (UpVector      * vel.y) +
+			                    (camera->right * vel.z));
 			vel = tmpVel;
 		}
 	}
@@ -206,9 +206,9 @@ void CFreeController::Update()
 		if (ctrlVelY > 0.0f) {
 			gndLock = false;
 		} else if ((gndOffset > 0.0f) && (ctrlVelY < 0.0f) &&
-						  (pos.y < (gndHeight + gndOffset))) {
-							  gndLock = true;
-						  }
+		           (pos.y < (gndHeight + gndOffset))) {
+			gndLock = true;
+		}
 	}
 
 	// positional clamps
