@@ -20,9 +20,7 @@ local postProcFile = 'gamedata/unitdefs_post.lua'
 
 local FBI = FBIparser or VFS.Include('gamedata/parse_fbi.lua')
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
-
-TDF.AllowDuplicates(true)
-TDF.SetKeyFilter(string.lower)
+local DownloadBuilds = VFS.Include('gamedata/download_builds.lua')
 
 local system = VFS.Include('gamedata/system.lua')
 
@@ -106,6 +104,15 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
+--  Insert the download build entries
+--
+
+DownloadBuilds.Execute(unitDefs)
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
 --  Run a post-processing script if one exists
 --
 
@@ -141,7 +148,30 @@ for name, def in pairs(unitDefs) do
         (not VFS.FileExists(objfile .. '.3do')) and
         (not VFS.FileExists(objfile .. '.s3o'))) then
       unitDefs[name] = nil
-      Spring.Echo('WARNING: removed ' .. name .. ' unitDef, missing model file')
+      Spring.Echo('WARNING: removed ' .. name
+                  .. ' unitDef, missing model file  (' .. obj .. ')')
+    end
+  end
+end
+
+
+for name, def in pairs(unitDefs) do
+  local badOptions = {}
+  local buildOptions = def.buildoptions
+  if (buildOptions) then
+    for i, option in ipairs(buildOptions) do
+      if (unitDefs[option] == nil) then
+        table.insert(badOptions, i)
+        Spring.Echo('WARNING: removed the "' .. option ..'" entry'
+                    .. ' from the "' .. name .. '" build menu')
+      end
+    end
+    if (#badOptions > 0) then
+      local removed = 0
+      for _, badIndex in ipairs(badOptions) do
+        table.remove(buildOptions, badIndex - removed)
+        removed = removed + 1
+      end
     end
   end
 end

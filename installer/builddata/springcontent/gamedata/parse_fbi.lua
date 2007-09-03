@@ -35,6 +35,47 @@ end
 
 
 --------------------------------------------------------------------------------
+
+local buildOptions = {}
+
+
+local buildOptions, err = TDF.Parse('gamedata/sidedata.tdf')
+if (buildOptions == nil) then
+  Spring.Echo('could not load buildOption data: ' .. err)
+end
+buildOptions = buildOptions or {}
+buildOptions = buildOptions['canbuild']
+buildOptions = buildOptions or {}
+
+do
+  local newBuildOptions = {}
+
+  local function AddBuildOptions(unitName, buildTable)
+    local sorted = {}
+    for buildID, buildName in pairs(buildTable) do
+      local idstr = string.lower(buildID)
+      local s, e, idnum = string.find(idstr, 'canbuild(%d+)')
+      idnum = tonumber(idnum)
+      if (idnum) then
+        table.insert(sorted, { idnum, string.lower(buildName) })
+      end
+    end
+    table.sort(sorted, function(a, b) return a[1] < b[1] end)
+    for i, buildName in ipairs(sorted) do
+      sorted[i] = sorted[i][2]
+    end
+    newBuildOptions[unitName] = sorted
+  end
+
+  for unitName, buildTable in pairs(buildOptions) do
+    AddBuildOptions(string.lower(unitName), buildTable)
+  end
+
+  buildOptions = newBuildOptions
+end
+
+
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 local function SetupWeapons(tdf)
@@ -122,6 +163,20 @@ end
 
 
 --------------------------------------------------------------------------------
+
+local function SetupBuildOptions(tdf)
+  if (tdf.unitname == nil) then
+    return
+  end
+  if (tdf.buildOptions) then
+    return
+  end
+  local name = string.lower(tdf.unitname)
+  tdf.buildoptions = buildOptions[name]
+end
+
+
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 local function ParseFBI(filename)
@@ -133,12 +188,19 @@ local function ParseFBI(filename)
     return nil, "no [UNITINFO] table"
   end
   tdf = tdf.unitinfo
+
+  -- override the unitname, 0.75b2 expects it to be filename derived
+  local lowername = string.lower(filename)
+  local s, e, basename = string.find(lowername, '([^\\/]+)%....$')
+  tdf.unitname = basename
   
   SetupWeapons(tdf)
 
   SetupSounds(tdf, soundTypes)
 
   SetupSpecialEffects(tdf)
+
+  SetupBuildOptions(tdf)
 
   return tdf
 end

@@ -101,7 +101,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	// set the real number of unitdefs
 	numUnitDefs = (id - 1);
 
-	FindTABuildOpt();
+	FindCommanders();
 
 	ProcessDecoys();
 
@@ -145,12 +145,12 @@ void CUnitDefHandler::ProcessDecoys()
 }
 
 
-void CUnitDefHandler::FindTABuildOpt()
+void CUnitDefHandler::FindCommanders()
 {
 	TdfParser tdfparser;
 	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
 
-	// get the commander IDs while SIDEDATA.TDF is open
+	// get the commander UnitDef IDs
 	commanderIDs.clear();
 	std::vector<std::string> sides = tdfparser.GetSectionList("");
 	for (unsigned int i=0; i<sides.size(); i++){
@@ -166,61 +166,6 @@ void CUnitDefHandler::FindTABuildOpt()
 				}
 			}
 		}
-	}
-
-	std::vector<std::string> sideunits = tdfparser.GetSectionList("CANBUILD");
-	for (unsigned int i=0; i<sideunits.size(); i++) {
-		std::map<std::string, std::string>::const_iterator it;
-
-		UnitDef *builder=NULL;
-		StringToLowerInPlace(sideunits[i]);
-		std::map<std::string, int>::iterator it1 = unitID.find(sideunits[i]);
-		if (it1!= unitID.end()) {
-			builder = &unitDefs[it1->second];
-		}
-
-		if (builder) {
-			const std::map<std::string, std::string>& buildoptlist = tdfparser.GetAllValues("CANBUILD\\" + sideunits[i]);
-			for (it=buildoptlist.begin(); it!=buildoptlist.end(); it++) {
-				std::string opt = StringToLower(it->second);
-
-				if(unitID.find(opt)!= unitID.end()){
-					int num = atoi(it->first.substr(8).c_str());
-					builder->buildOptions[num] = opt;
-				}
-			}
-		}
-	}
-
-	std::vector<std::string> files = CFileHandler::FindFiles("download/", "*.tdf");
-	for (unsigned int i=0; i<files.size(); i++) {
-		TdfParser dparser(files[i]);
-
-		std::vector<std::string> sectionlist = dparser.GetSectionList("");
-
-		for (unsigned int j = 0; j < sectionlist.size(); j++) {
-			const string& build = sectionlist[j];
-			UnitDef* builder = NULL;
-			std::string un1 = StringToLower(dparser.SGetValueDef("", build + "\\UNITMENU"));
-			std::map<std::string, int>::iterator it1 = unitID.find(un1);
-			if (it1!= unitID.end()) {
-				builder = &unitDefs[it1->second];
-			}
-
-			if (builder) {
-				string un2 = StringToLower(dparser.SGetValueDef("", build + "\\UNITNAME"));
-
-				if (unitID.find(un2) == unitID.end()) {
-					logOutput.Print("couldnt find unit %s", un2.c_str());
-				} else {
-					int menu = atoi(dparser.SGetValueDef("", build + "\\MENU").c_str());
-					int button = atoi(dparser.SGetValueDef("", build + "\\BUTTON").c_str());
-					int num = ((menu - 2) * 6) + button + 1;
-					builder->buildOptions[num] = un2;
-				}
-			}
-		}
-
 	}
 }
 
@@ -698,6 +643,17 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 			ud.seismicSignature = sqrt(ud.mass / 100.0f);
 		} else {
 			ud.seismicSignature = 0.0f;
+		}
+	}
+
+	LuaTable buildsTable = udTable.SubTable("buildOptions");
+	if (buildsTable.IsValid()) {
+		for (int bo = 1; true; bo++) {
+			const string order = buildsTable.GetString(bo, "");
+			if (order.empty()) {
+				break;
+			}
+			ud.buildOptions[bo] = order;
 		}
 	}
 

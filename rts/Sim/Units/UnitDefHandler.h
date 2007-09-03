@@ -49,7 +49,7 @@ protected:
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
 	void LoadSound(GuiSoundSet&, const std::string& fileName);
 
-	void FindTABuildOpt();
+	void FindCommanders();
 
 	void AssignTechLevel(UnitDef& ud, int level);
 

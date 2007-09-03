@@ -199,6 +199,11 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local function GetKeyFilter()
+  return keyFilter
+end
+
+
 local function SetKeyFilter(filter)
   if (type(filter) == 'function') then
     keyFilter = filter
@@ -220,6 +225,7 @@ end
 
 TDFparser = {
   Parse           = ParseTDF,
+  GetKeyFilter    = GetKeyFilter,
   SetKeyFilter    = SetKeyFilter,
   AllowDuplicates = AllowDuplicates,
 }

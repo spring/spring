@@ -20,9 +20,6 @@ local postProcFile = 'gamedata/featuredefs_post.lua'
 
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
-TDF.AllowDuplicates(true)
-TDF.SetKeyFilter(string.lower)
-
 local system = VFS.Include('gamedata/system.lua')
 
 

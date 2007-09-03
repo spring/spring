@@ -1171,7 +1171,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				delete aviGenerator;
 				aviGenerator=0;
 			} else {
-				logOutput.Print("Recording avi to %s size %i %i",name.c_str(), bih.biWidth, bih.biHeight);
+				logOutput.Print("Recording avi to %s size %li %li", name.c_str(),
+				                bih.biWidth, bih.biHeight);
 			}
 		}
 	}

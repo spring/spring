@@ -13,8 +13,6 @@
 
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
-TDF.AllowDuplicates(true)
-TDF.SetKeyFilter(string.lower)
 
 local armor, err = TDF.Parse('armor.txt')
 if (armor == nil) then
