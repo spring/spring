@@ -1366,24 +1366,30 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "decguiopacity") {
 		CInputReceiver::guiAlpha = max(CInputReceiver::guiAlpha-0.1f,0.0f);
 	}
+
 	else if (cmd == "screenshot") {
 		const char* ext = "jpg";
 		if (action.extra == "png") {
 			ext = "png";
 		}
+
 		if (filesystem.CreateDirectory("screenshots")) {
-			int x=gu->viewSizeX;
-			if(x%4)
-				x+=4-x%4;
-			unsigned char* buf=SAFE_NEW unsigned char[x*gu->viewSizeY*4];
-			glReadPixels(0,0,x,gu->viewSizeY,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-			CBitmap b(buf,x,gu->viewSizeY);
+			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
+
+			if (x % 4)
+				x += (4 - x % 4);
+
+			unsigned char* buf = SAFE_NEW unsigned char[x * gu->viewSizeY * 4];
+			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+			CBitmap b(buf, x, gu->viewSizeY);
 			b.ReverseYAxis();
+
 			char t[50];
-			for(int a=0;a<9999;++a){
-				sprintf(t,"screenshots/screen%03i.%s", a, ext);
+			for (int a = 0; a < 9999; ++a) {
+				sprintf(t, "screenshots/screen%03i.%s", a, ext);
 				CFileHandler ifs(t);
-				if(!ifs.FileExists())
+				if (!ifs.FileExists())
 					break;
 			}
 			b.Save(t);
@@ -1391,6 +1397,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			delete[] buf;
 		}
 	}
+
 	else if (cmd == "grabinput") {
 		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 		switch (mode) {
