@@ -22,7 +22,9 @@ public:
 	void GiveCommandReal(const Command& c);
 	void DrawQuedBuildingSquares(void);
 
-	bool FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options, bool recAny);
+	bool FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options,
+	                                      bool noResCheck,  // no resources check
+	                                      bool recAnyTeam); // allows self-reclamation
 	bool FindResurrectableFeatureAndResurrect(float3 pos, float radius,unsigned char options);
 	void FinishCommand(void);
 	bool FindRepairTargetAndRepair(float3 pos, float radius,unsigned char options,bool attackEnemy);
