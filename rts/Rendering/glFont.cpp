@@ -49,7 +49,8 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 		throw std::runtime_error(msg);
 	}
 
-	if (FT_New_Face(library, filesystem.LocateFile(fontfile).c_str(), 0, &face)) {
+	error = FT_New_Face(library, filesystem.LocateFile(fontfile).c_str(), 0, &face);
+	if (error) {
 		string msg = string(fontfile) + ": FT_New_Face failed: ";
 		msg += GetFTError(error);
 		throw content_error(msg);
