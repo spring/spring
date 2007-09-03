@@ -87,7 +87,7 @@ for _, filename in ipairs(luaFiles) do
   setmetatable(udEnv, { __index = system })
   local success, uds = pcall(VFS.Include, filename, udEnv)
   if (not success) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. ud)
+    Spring.Echo('Error parsing ' .. filename .. ': ' .. uds)
   elseif (uds == nil) then
     Spring.Echo('Missing return table from: ' .. filename)
   else
