@@ -561,7 +561,8 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 	} else if(c.params.size()==4){//area reclaim
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
-		if(FindReclaimableFeatureAndReclaim(pos,radius,c.options,true)){
+		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
+		if (FindReclaimableFeatureAndReclaim(pos, radius, c.options, true, recAnyTeam)) {
 			inCommand=false;
 			SlowUpdate();
 			return;
@@ -685,14 +686,14 @@ void CBuilderCAI::ExecuteFight(Command &c)
 		}
 	}
 	float3 pos(c.params[0],c.params[1],c.params[2]);
-	if(!inCommand){
+	if (!inCommand) {
 		inCommand = true;
 		commandPos2 = pos;
 	}
-	if(c.params.size() >= 6){
+	if (c.params.size() >= 6) {
 		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
-	if(pos!=goalPos){
+	if (pos!=goalPos) {
 		SetGoal(pos, owner->pos);
 	}
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
@@ -706,7 +707,8 @@ void CBuilderCAI::ExecuteFight(Command &c)
 		}
 		return;
 	}
-	if(owner->unitDef->canReclaim && FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false)){
+	if (owner->unitDef->canReclaim &&
+	    FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false, false)) {
 		tempOrder=true;
 		inCommand=false;
 		if(lastPC2!=gs->frameNum){	//avoid infinite loops
@@ -1047,7 +1049,8 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 
 bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,
                                                    unsigned char options,
-                                                   bool recAny)
+                                                   bool noResCheck,
+                                                   bool recAnyTeam)
 {
 	const CFeature* best = NULL;
 	float bestDist = 10000000;
@@ -1055,10 +1058,10 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,
 	const CTeam* team = gs->Team(owner->team);
 	for (std::vector<CFeature*>::iterator fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
-		if (f->def->reclaimable && (f->allyteam != owner->allyteam)) {
+		if (f->def->reclaimable && (recAnyTeam || (f->allyteam != owner->allyteam))) {
 			const float dist = f->pos.distance2D(owner->pos);
 			if ((dist < bestDist) &&
-			    (recAny ||
+			    (noResCheck ||
 			     ((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
 			     ((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
 				bestDist = dist;
@@ -1068,7 +1071,8 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(float3 pos, float radius,
 	}
 	if (best) {
 		Command cmd;
-		if (!recAny) {
+		if (!noResCheck) {
+			// FIGHT commands always resource check
 			PushOrUpdateReturnFight();
 		}
 		cmd.options = options | INTERNAL_ORDER;
