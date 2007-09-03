@@ -27,7 +27,6 @@ end
 
 
 local function Load()
---  print('download_builds.lua Load() start')
   dlBuilds = {}
   local files = VFS.DirList('download/', '*.tdf')
   for i, f in ipairs(files) do
@@ -38,12 +37,17 @@ local function Load()
       for menuEntry, menuTable in pairs(tdf) do
         if (type(menuTable) == 'table') then
           local unitMenu = SafeLower(menuTable.unitmenu)
-          local dlMenu = dlBuilds[unitMenu] or {}
+          
+          local dlMenu = dlBuilds[unitMenu]
+          if (dlMenu == nil) then
+            dlMenu = {}
+            dlBuilds[unitMenu] = dlMenu
+          end
           local unitName   = SafeLower(menuTable.unitname)
           local afterName  = SafeLower(menuTable.aftername)
           local beforeName = SafeLower(menuTable.beforename)
-          local menu       = tonumber(dlMenu.menu)
-          local button     = tonumber(dlMenu.button)
+          local menu       = tonumber(menuTable.menu)
+          local button     = tonumber(menuTable.button)
           if (unitName) then
             table.insert(dlMenu, {
               unitName   = unitName,
@@ -53,11 +57,11 @@ local function Load()
               button     = button,
             })
           end
+          local dlMenu = dlBuilds[unitMenu] or {}
         end
       end
     end
   end
---  print('download_builds.lua Load() end')
 end
 
 
@@ -74,21 +78,20 @@ end
 
 
 local function Execute(unitDefs)
---  print('download_builds.lua Execute() start')
   if (dlBuilds == nil) then
     Load()
   end
   for name, ud in pairs(unitDefs) do
     local dlMenu = dlBuilds[name]
     if (dlMenu) then
-      for _, entry in ipairs(entry) do
-        local buildOptions = ud.buildOptions or {}
+      for _, entry in ipairs(dlMenu) do
+        local buildOptions = ud.buildoptions or {}
         local index = nil
         if (entry.afterName) then
           index = FindNameIndex(entry.afterName, buildOptions)
           index = index and (index + 1) or nil
         elseif (entry.beforeName) then
-          index = FindNameIndex(entry.afterName, buildOptions)
+          index = FindNameIndex(entry.beforeName, buildOptions)
         end
 
         if (index == nil) then
@@ -99,13 +102,12 @@ local function Execute(unitDefs)
           end
         end
 
-        table.insert(buildOptions, index, unitName)
+        table.insert(buildOptions, index, entry.unitName)
 
-        ud.buildOptions = buildOptions
+        ud.buildoptions = buildOptions
       end
     end
   end
---  print('download_builds.lua Execute() end')
 end
 
 
