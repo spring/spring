@@ -857,11 +857,11 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-	mouseInput->Update ();
+	mouseInput->Update();
 
 	int ret = 1;
 	if (activeController) {
-		if (activeController->Update() == 0) {
+		if (!activeController->Update()) {
 			ret = 0;
 		} else {
 			ret = activeController->Draw();
