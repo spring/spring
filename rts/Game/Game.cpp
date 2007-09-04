@@ -91,7 +91,7 @@
 #include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
-#include "Sim/Projectiles/SmokeProjectile.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -4350,7 +4350,7 @@ void CGame::ReColorTeams()
 			return;
 		}
 	}
-	
+
 	LuaParser luaParser("teamcolors.lua", SPRING_VFS_RAW, SPRING_VFS_RAW_FIRST);
 
 	luaParser.AddParam("myPlayer", gu->myPlayerNum);
@@ -4407,7 +4407,7 @@ void CGame::ReColorTeams()
 	if (!root.IsValid()) {
 		printf("teamcolors.lua: root table is not valid\n");
 	}
-	
+
 	for (int t = 0; t < gs->activeTeams; ++t) {
 		LuaTable teamTable = root.SubTable(t);
 		if (teamTable.IsValid()) {

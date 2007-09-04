@@ -1,13 +1,13 @@
 #include "StdAfx.h"
 #include "FlareProjectile.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "MissileProjectile.h"
 #include "LogOutput.h"
 #include "ProjectileHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/Unit.h"
+#include "WeaponProjectiles/MissileProjectile.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));

@@ -1,22 +1,21 @@
-#include "StdAfx.h"
 // Cannon.cpp: implementation of the CCannon class.
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include "Cannon.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Projectiles/ExplosiveProjectile.h"
-#include "Sim/Projectiles/HeatCloudProjectile.h"
-#include "LogOutput.h"
-#include "Sim/Projectiles/SmokeProjectile.h"
-#include "Sync/SyncTracer.h"
-#include "Sound.h"
-#include "Map/Ground.h"
 #include "Game/GameHelper.h"
+#include "LogOutput.h"
+#include "Map/Ground.h"
 #include "myMath.h"
-#include "Sim/Projectiles/WeaponProjectile.h"
-#include "WeaponDefHandler.h"
 #include "Rendering/Env/BaseWater.h"
+#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
+#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sound.h"
+#include "Sync/SyncTracer.h"
+#include "WeaponDefHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, (NULL));

@@ -1,10 +1,10 @@
 #include "StdAfx.h"
+#include "creg/STL_Map.h"
 #include "GeometricObjects.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/GeoSquareProjectile.h"
 #include "LogOutput.h"
 #include "Map/ReadMap.h"
-#include "creg/STL_Map.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/GeoSquareProjectile.h"
 #include "mmgr.h"
 
 CR_BIND(CGeometricObjects, );

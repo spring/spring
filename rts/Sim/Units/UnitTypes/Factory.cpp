@@ -15,7 +15,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Projectiles/GfxProjectile.h"
+#include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

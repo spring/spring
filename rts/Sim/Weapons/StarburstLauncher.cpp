@@ -1,12 +1,12 @@
 #include "StdAfx.h"
-#include "StarburstLauncher.h"
-#include "Sound.h"
-#include "Sim/Projectiles/StarburstProjectile.h"
 #include "Game/GameHelper.h"
-#include "Sim/Units/Unit.h"
 #include "Map/Ground.h"
-#include "WeaponDefHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sound.h"
+#include "StarburstLauncher.h"
+#include "WeaponDefHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
