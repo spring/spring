@@ -3,18 +3,18 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "Rifle.h"
-#include "Sim/Projectiles/TracerProjectile.h"
-#include "Sim/Units/Unit.h"
 #include "Game/GameHelper.h"
-#include "Sim/Projectiles/SmokeProjectile.h"
-#include "Sync/SyncTracer.h"
-#include "Sound.h"
-#include "Map/Ground.h"
 #include "LogOutput.h"
-#include "Sim/Projectiles/HeatCloudProjectile.h"
+#include "Map/Ground.h"
 #include "myMath.h"
+#include "Rifle.h"
+#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
+#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
+#include "Sim/Projectiles/Unsynced/TracerProjectile.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sound.h"
+#include "Sync/SyncTracer.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL));

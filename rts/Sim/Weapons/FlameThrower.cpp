@@ -1,10 +1,10 @@
 #include "StdAfx.h"
 #include "FlameThrower.h"
+#include "Game/GameHelper.h"
+#include "Map/Ground.h"
+#include "Sim/Projectiles/WeaponProjectiles/FlameProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
-#include "Map/Ground.h"
-#include "Game/GameHelper.h"
-#include "Sim/Projectiles/FlameProjectile.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 

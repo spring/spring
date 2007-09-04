@@ -3,31 +3,31 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "Weapon.h"
-#include "Sim/Units/Unit.h"
+#include "creg/STL_List.h"
+#include "float3.h"
+#include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/Player.h"
 #include "Game/Team.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "myMath.h"
 #include "LogOutput.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Map/Ground.h"
+#include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/ModInfo.h"
+#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
-#include "Lua/LuaCallInHandler.h"
-#include "Sim/Projectiles/WeaponProjectile.h"
-#include "Sim/Misc/InterceptHandler.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-#include "Map/Ground.h"
-#include "Game/Camera.h"
-#include "Game/Player.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/ModInfo.h"
-#include "creg/STL_List.h"
+#include "Weapon.h"
 #include "mmgr.h"
-#include "float3.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -536,7 +536,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 
 	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
-		if (owner->fireState==2 && !haveUserTarget && 
+		if (owner->fireState==2 && !haveUserTarget &&
 		    ((targetType == Target_None) ||
 		     ((targetType == Target_Unit) &&
 		      (targetUnit->category & badTargetCategory)) ||

@@ -2,32 +2,32 @@
 #include <fstream>
 #include <stdexcept>
 #include <SDL_types.h>
-#include "ExplosionGenerator.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Projectiles/HeatCloudProjectile.h"
-#include "Sim/Projectiles/SmokeProjectile2.h"
-#include "Sim/Projectiles/WreckProjectile.h"
-#include "Rendering/GroundFlash.h"
-#include "Sim/Projectiles/SpherePartProjectile.h"
-#include "Sim/Projectiles/BubbleProjectile.h"
-#include "Sim/Projectiles/WakeProjectile.h"
-#include "Game/Camera.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Map/Ground.h"
-#include "Sim/Projectiles/DirtProjectile.h"
-#include "Sim/Projectiles/ExploSpikeProjectile.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
 #include "creg/VarTypes.h"
-#include "Rendering/Textures/ColorMap.h"
-#include "mmgr.h"
+#include "ExplosionGenerator.h"
+#include "FileSystem/FileHandler.h"
+#include "Game/Camera.h"
+#include "LogOutput.h"
+#include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GroundFlash.h"
+#include "Rendering/Textures/ColorMap.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
+#include "Sim/Projectiles/Unsynced/DirtProjectile.h"
+#include "Sim/Projectiles/Unsynced/ExploSpikeProjectile.h"
+#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
+#include "Sim/Projectiles/Unsynced/SmokeProjectile2.h"
+#include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
+#include "Sim/Projectiles/Unsynced/WakeProjectile.h"
+#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+#include "mmgr.h"
 
 using namespace std;
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 
-CR_REG_METADATA(CExpGenSpawnable, 
+CR_REG_METADATA(CExpGenSpawnable,
 );
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
@@ -531,14 +531,14 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
 {
-	
+
 	const LuaTable& root = h->GetTable();
 
 	const LuaTable expTable = root.SubTable(tag);
 	if (!expTable.IsValid()) {
 		throw content_error ("Explosion info for " + tag + " not found.");
 	}
-	
+
 	vector<string> spawns;
 	expTable.GetKeys(spawns);
 
@@ -557,8 +557,8 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string
 		projectileSpawn.push_back(psi);
 
 		const string className = spawnTable.GetString("class", spawnName);
-		
-		
+
+
 		psi->projectileClass = h->projectileClasses.GetClass(className);
 
 		unsigned int flags = 0;
@@ -591,7 +591,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string
 	const int ttl = gndTable.GetInt("ttl", 0);
 	if (ttl) {
 		groundFlash = SAFE_NEW GroundFlashInfo;
-		
+
 		groundFlash->circleAlpha  = gndTable.GetFloat("circleAlpha",  0.0f);
 		groundFlash->flashSize    = gndTable.GetFloat("flashSize",    0.0f);
 		groundFlash->flashAlpha   = gndTable.GetFloat("flashAlpha",   0.0f);

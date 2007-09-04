@@ -1,11 +1,11 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
-#include "Sim/Projectiles/FireBallProjectile.h"
+#include "Game/Team.h"
+#include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Game/Team.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));

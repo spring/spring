@@ -4,16 +4,16 @@
 
 #include "StdAfx.h"
 #include "bombdropper.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Projectiles/ExplosiveProjectile.h"
-#include "LogOutput.h"
-#include "Sound.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
-#include "Sim/Projectiles/WeaponProjectile.h"
-#include "WeaponDefHandler.h"
-#include "Sim/Projectiles/TorpedoProjectile.h"
+#include "LogOutput.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sound.h"
+#include "WeaponDefHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));

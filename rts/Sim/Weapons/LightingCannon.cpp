@@ -1,15 +1,14 @@
 #include "StdAfx.h"
-#include "LightingCannon.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Projectiles/TracerProjectile.h"
-#include "Sound.h"
 #include "Game/GameHelper.h"
-#include "Sim/Projectiles/LightingProjectile.h"
+#include "LightingCannon.h"
 #include "Map/Ground.h"
-#include "WeaponDefHandler.h"
-#include "Sim/Misc/InterceptHandler.h"
-#include "mmgr.h"
 #include "PlasmaRepulser.h"
+#include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Projectiles/WeaponProjectiles/LightingProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sound.h"
+#include "WeaponDefHandler.h"
+#include "mmgr.h"
 
 CR_BIND_DERIVED(CLightingCannon, CWeapon, (NULL));
 

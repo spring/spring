@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "InterceptHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sim/Projectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
