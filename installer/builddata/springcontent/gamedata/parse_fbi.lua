@@ -195,7 +195,7 @@ local function ParseFBI(filename)
   tdf.unitname = basename
 
   -- backwards compatible hack for non-standard parameter naming
-  if (tdf.init_cloaked) then
+  if (tdf.init_cloaked ~= nil) then
     if (tdf.initcloaked == nil) then
       tdf.initcloaked = tdf.init_cloaked
     end
