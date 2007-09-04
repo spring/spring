@@ -7,6 +7,7 @@
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/SelectedUnits.h"
+#include <SDL_keysym.h>
 
 int CShareBox::lastShareTeam=0;
 
