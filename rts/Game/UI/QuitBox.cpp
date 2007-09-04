@@ -9,6 +9,7 @@
 #include "Game/SelectedUnits.h"
 #include "InfoConsole.h"
 #include "Sim/Units/Unit.h"
+#include <SDL_keysym.h>
 
 extern bool globalQuit;
 

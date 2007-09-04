@@ -12,6 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
+#include <SDL_keysym.h>
 
 using namespace std;
 

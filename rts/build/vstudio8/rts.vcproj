@@ -508,11 +508,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\CameraController.cpp"
+				RelativePath="..\..\Game\CameraHandler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\CameraController.h"
+				RelativePath="..\..\Game\CameraHandler.h"
 				>
 			</File>
 			<File
@@ -936,6 +936,74 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\TestScript.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Camera"
+				>
+				<File
+					RelativePath="..\..\Game\Camera\CameraController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\CameraController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\FPSController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\FPSController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\FreeController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\FreeController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\LuaCameraCtrl.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\LuaCameraCtrl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\OverheadController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\OverheadController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\OverviewController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\OverviewController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\RotOverheadController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\RotOverheadController.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\TWController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Camera\TWController.h"
 					>
 				</File>
 			</Filter>
@@ -2449,6 +2517,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\mmgr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\MouseInput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\MouseInput.h"
 				>
 			</File>
 			<File
