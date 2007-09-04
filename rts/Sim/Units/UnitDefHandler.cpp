@@ -329,7 +329,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	}
 	ud.canCloak = (ud.cloakCost >= 0);
 
-	ud.startCloaked = udTable.GetBool("init_cloaked", false);
+	ud.startCloaked = udTable.GetBool("initCloaked", false);
 	ud.decloakDistance = udTable.GetFloat("minCloakDistance", -1.0f);
 	ud.decloakOnFire = udTable.GetBool("decloakOnFire", true);
 
