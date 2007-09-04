@@ -193,6 +193,14 @@ local function ParseFBI(filename)
   local lowername = string.lower(filename)
   local s, e, basename = string.find(lowername, '([^\\/]+)%....$')
   tdf.unitname = basename
+
+  -- backwards compatible hack for non-standard parameter naming
+  if (tdf.init_cloaked) then
+    if (tdf.initcloaked == nil) then
+      tdf.initcloaked = tdf.init_cloaked
+    end
+    tdf.init_cloaked = nil
+  end
   
   SetupWeapons(tdf)
 
