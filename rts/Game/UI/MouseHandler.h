@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <SDL_events.h>
 
 #include "MouseCursor.h"
 
@@ -29,7 +28,6 @@ public:
 	void MouseRelease(int x,int y,int button);
 	void MousePress(int x,int y,int button);
 	void MouseMove(int x,int y);
-	void HandleSDLMouseEvent(const SDL_Event& event);
 	void MouseWheel(bool up);
 	CMouseHandler();
 	virtual ~CMouseHandler();
@@ -92,8 +90,6 @@ public:
 	   so we can restore it when we return to normal. */
 	bool wasLocked;
 #endif
-private:
-	int2 mousepos;
 };
 
 extern CMouseHandler* mouse;

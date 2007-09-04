@@ -18,6 +18,7 @@
 #include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
+#include "MouseInput.h"
 #include "TooltipConsole.h"
 #include "ExternalAI/Group.h"
 #include "Game/Game.h"
@@ -179,32 +180,6 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 }
 
-void CMouseHandler::HandleSDLMouseEvent(const SDL_Event& event)
-{
-	switch (event.type) {
-		case SDL_MOUSEMOTION: {
-			mousepos = int2(event.motion.x, event.motion.y);
-			MouseMove(mousepos.x, mousepos.y);
-			break;
-		}
-		case SDL_MOUSEBUTTONDOWN: {
-			mousepos = int2(event.button.x, event.button.y);
-			if (event.button.button == SDL_BUTTON_WHEELUP) {
-				mouse->MouseWheel(true);
-			} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
-				mouse->MouseWheel(false);
-			} else {
-				mouse->MousePress(event.button.x, event.button.y, event.button.button);
-			}
-			break;
-		}
-		case SDL_MOUSEBUTTONUP: {
-			mousepos = int2(event.button.x, event.button.y);
-			mouse->MouseRelease(event.button.x, event.button.y, event.button.button);
-			break;
-		}
-	}
-}
 
 void CMouseHandler::MousePress(int x, int y, int button)
 {
@@ -573,9 +548,8 @@ void CMouseHandler::HideMouse()
 	if (!hide) {
 		lastx = gu->viewSizeX/2;
 		lasty = gu->viewSizeY/2;
-		SDL_ShowCursor(SDL_DISABLE);
-		mousepos = int2(lastx, lasty);
-		SDL_WarpMouse(mousepos.x, mousepos.y);
+    SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetPos(int2(lastx, lasty));
 		hide = true;
 	}
 }
@@ -596,8 +570,7 @@ void CMouseHandler::WarpMouse(int x, int y)
 	if (!locked) {
 		lastx = x;
 		lasty = y;
-		mousepos = int2(x, y);
-		SDL_WarpMouse(x, y);
+		mouseInput->SetPos(int2(x, y));
 	}
 }
 
@@ -677,8 +650,7 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	cam->currentCamController->MouseMove(move);
 
 	if (gu->active) {
-		mousepos = int2(lastx, lasty);
-		SDL_WarpMouse(mousepos.x, mousepos.y);
+		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
 
