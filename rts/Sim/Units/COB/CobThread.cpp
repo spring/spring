@@ -446,7 +446,7 @@ int CCobThread::Tick(int deltaTime)
 				break;
 			case BITWISE_NOT:
 				r1 = POP();
-				stack.push_back(!r1);
+				stack.push_back(~r1);
 				break;
 			case EXPLODE:
 				r1 = GET_LONG_PC();
