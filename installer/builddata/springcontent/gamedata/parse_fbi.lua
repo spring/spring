@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    unitdefs.lua
---  brief:   unitdef parser
+--  file:    parse_fbi.lua
+--  brief:   unitdef FBI parser
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.
@@ -107,7 +107,7 @@ local function SetupWeapons(tdf)
       weapon.slaveto     = tdf['weaponslaveto'   .. w]
       weapon.maindir     = tdf['weaponmaindir'   .. w]
       weapon.fuelusage   = tdf['weaponfuelusage' .. w]
-      weapon.maxangledir = tdf['maxangledif'     .. w]
+      weapon.maxangledif = tdf['maxangledif'     .. w]
 
       weapons[w] = weapon
     end
