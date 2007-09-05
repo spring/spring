@@ -88,8 +88,8 @@ for _, filename in ipairs(luaFiles) do
   local success, uds = pcall(VFS.Include, filename, udEnv)
   if (not success) then
     Spring.Echo('Error parsing ' .. filename .. ': ' .. uds)
-  elseif (uds == nil) then
-    Spring.Echo('Missing return table from: ' .. filename)
+  elseif (type(uds) ~= 'table') then
+    Spring.Echo('Bad return table from: ' .. filename)
   else
     for udName, ud in pairs(uds) do
       if ((type(udName) == 'string') and (type(ud) == 'table')) then

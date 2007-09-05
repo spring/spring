@@ -147,16 +147,17 @@ class LuaSyncedRead {
 		static int TestBuildOrder(lua_State* L);
 		static int Pos2BuildPos(lua_State* L);
 
-		static int TraceRay(lua_State* L); // not implemented
-		static int TraceRayUnits(lua_State* L); // not implemented
-		static int TraceRayFeatures(lua_State* L); // not implemented
-		static int TraceRayGround(lua_State* L); // not implemented
-
 		static int GetPositionLosState(lua_State* L);
+		static int GetClosestValidPosition(lua_State* L);
 
 		static int GetUnitPiecePosition(lua_State* L);
 		static int GetUnitPieceDirection(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);
+
+		static int TraceRay(lua_State* L); // not implemented
+		static int TraceRayUnits(lua_State* L); // not implemented
+		static int TraceRayFeatures(lua_State* L); // not implemented
+		static int TraceRayGround(lua_State* L); // not implemented
 };
 
 

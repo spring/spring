@@ -223,6 +223,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(GetPositionLosState);
+	REGISTER_LUA_CFUNC(GetClosestValidPosition);
 
 	REGISTER_LUA_CFUNC(GetUnitPiecePosition);
 	REGISTER_LUA_CFUNC(GetUnitPieceDirection);
@@ -3438,21 +3439,14 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			luaL_error(L, "Incorrect arguments to %s()", caller);
-		}
-		fx1 = fx2 = (float)lua_tonumber(L, 1);
-		fz1 = fz2 = (float)lua_tonumber(L, 2);
+		fx1 = fx2 = (float)luaL_checknumber(L, 1);
+		fz1 = fz2 = (float)luaL_checknumber(L, 2);
 	}
 	else if (args == 4) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-		    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-			luaL_error(L, "Incorrect arguments to %s()", caller);
-		}
-		fx1 = (float)lua_tonumber(L, 1);
-		fz1 = (float)lua_tonumber(L, 2);
-		fx2 = (float)lua_tonumber(L, 3);
-		fz2 = (float)lua_tonumber(L, 4);
+		fx1 = (float)luaL_checknumber(L, 1);
+		fz1 = (float)luaL_checknumber(L, 2);
+		fx2 = (float)luaL_checknumber(L, 3);
+		fz2 = (float)luaL_checknumber(L, 4);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
@@ -3483,8 +3477,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature) {
-				if (fullRead || (feature->allyteam < 0) ||
-				    loshandler->InLos(feature, readAllyTeam)) {
+				if (fullRead || loshandler->InLos(feature, readAllyTeam)) {
 					HSTR_PUSH(L, "feature");
 					lua_pushnumber(L, feature->id);
 					return 2;
@@ -3674,6 +3667,18 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	lua_pushboolean(L, radar);
 
 	return 3;
+}
+
+
+int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
+{
+	const int unitDefID = (int)luaL_checknumber(L, 1);
+	const float x     = (float)luaL_checknumber(L, 2);
+	const float z     = (float)luaL_checknumber(L, 3);
+	const float r     = (float)luaL_checknumber(L, 4);
+	const int mx = (int)max(0 , min(gs->mapx - 1, (int)(x / SQUARE_SIZE)));
+	const int mz = (int)max(0 , min(gs->mapy - 1, (int)(z / SQUARE_SIZE)));
+	return 0;
 }
 
 

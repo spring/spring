@@ -432,9 +432,17 @@ end
 
 function widgetHandler:NewWidget()
   local widget = {}
-  -- load the system calls into the widget table
-  for k,v in pairs(System) do
-    widget[k] = v
+  if (true) then
+    -- copy the system calls into the widget table
+    for k,v in pairs(System) do
+      widget[k] = v
+    end
+  else
+    -- use metatable redirection
+    setmetatable(widget, {
+      __index = System,
+      __metatable = true,
+    })
   end
   widget.WG = self.WG    -- the shared table
   widget.widget = widget -- easy self referencing

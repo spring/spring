@@ -138,7 +138,8 @@ local function ParseElement(text, pos)
     if (noDuplicates and current[k]) then
       return nil, 'duplicate entry: ' .. k
     end
-      
+
+    local _, _, v = string.find(v, '(.-)%s*$') -- remove trailing space
     current[k] = v
     if (debug) then
       pritn('  PAIR:  ' .. k .. ' = ' .. v,

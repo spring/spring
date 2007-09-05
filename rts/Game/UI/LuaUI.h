@@ -160,6 +160,9 @@ class CLuaUI : public CLuaHandle {
 		static int GetActiveCmdDesc(lua_State* L);
 		static int GetCmdDescIndex(lua_State* L);
 
+		static int GetBuildFacing(lua_State* L);
+		static int GetBuildSpacing(lua_State* L);
+
 		static int GetActivePage(lua_State* L);
 		static int ForceLayoutUpdate(lua_State* L);
 
