@@ -288,16 +288,30 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	helper=SAFE_NEW CGameHelper(this);
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
+
 	ENTER_SYNCED;
 	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
 	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!defsParser->Execute()) {
 		throw content_error(defsParser->GetErrorLog());
 	}
-	if (!defsParser->GetRoot().IsValid()) {
+	const LuaTable root = defsParser->GetRoot();
+	if (!root.IsValid()) {
 		throw content_error("Error loading definitions");
 	}
+	// bail now if any of these tables in invalid
+	// (makes searching for errors that much easier
+	if (!root.SubTable("UnitDefs").IsValid()) {
+		throw content_error("Error loading UnitDefs");
+	}
+	if (!root.SubTable("FeatureDefs").IsValid()) {
+		throw content_error("Error loading FeatureDefs");
+	}
+	if (!root.SubTable("WeaponDefs").IsValid()) {
+		throw content_error("Error loading WeaponDefs");
+	}
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
+
 	ENTER_UNSYNCED;
 	shadowHandler=SAFE_NEW CShadowHandler();
 
@@ -2716,16 +2730,22 @@ bool CGame::ClientReadNet()
 
 		case NETMSG_USER_SPEED: {
 			if (!net->IsDemoServer()) {
-				gs->userSpeedFactor = *((float*) &inbuf[inbufpos + 2]);
+				const unsigned char playerNum = *(unsigned char*) &inbuf[inbufpos + 1];
+				const CPlayer* player = gs->players[playerNum];
+				if (player->spectator && (playerNum != 0) && !gs->cheatEnabled) {
+					// the host can always change the game speed...
+					if (playerNum == gu->myPlayerNum) {
+						logOutput.Print("Spectators can not change the speed of normal games");
+					}
+				}
+				else {
+					float speed = *((float*) &inbuf[inbufpos + 2]);
+					speed = max(minUserSpeed, min(maxUserSpeed, speed));
+					gs->userSpeedFactor = speed;
 
-				if (gs->userSpeedFactor > maxUserSpeed)
-					gs->userSpeedFactor = maxUserSpeed;
-				if (gs->userSpeedFactor < minUserSpeed)
-					gs->userSpeedFactor = minUserSpeed;
-
-				unsigned char playerNum = *(unsigned char*) &inbuf[inbufpos + 1];
-				const char* playerName = gs->players[playerNum]->playerName.c_str();
-				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
+					const char* playerName = player->playerName.c_str();
+					logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
+				}
 			}
 			lastLength = 6;
 		} break;
