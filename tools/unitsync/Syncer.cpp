@@ -60,13 +60,13 @@ int CSyncer::ProcessUnits(bool checksum)
 
 	int count = 0;
 
-	LuaParser luaParser("gamedata/unitdefs.lua",
+	LuaParser luaParser("gamedata/defs.lua",
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!luaParser.Execute()) {
 		return 0; // FIXME -- report this somehow?
 	}
 
-	LuaTable rootTable = luaParser.GetRoot();
+	LuaTable rootTable = luaParser.GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
 		return 0;
 	}
