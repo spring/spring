@@ -312,6 +312,9 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActiveCmdDesc);
 	REGISTER_LUA_CFUNC(GetCmdDescIndex);
 
+	REGISTER_LUA_CFUNC(GetBuildFacing);
+	REGISTER_LUA_CFUNC(GetBuildSpacing);
+
 	REGISTER_LUA_CFUNC(GetActivePage);
 	REGISTER_LUA_CFUNC(ForceLayoutUpdate);
 
@@ -1617,6 +1620,30 @@ int CLuaUI::GetCmdDescIndex(lua_State* L)
 		}
 	}
 	return 0;
+}
+
+
+/******************************************************************************/
+
+int CLuaUI::GetBuildFacing(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, guihandler->buildFacing);
+	return 1;
+}
+
+
+int CLuaUI::GetBuildSpacing(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, guihandler->buildSpacing);
+	return 1;
 }
 
 

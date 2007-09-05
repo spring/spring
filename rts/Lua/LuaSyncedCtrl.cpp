@@ -128,6 +128,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
+	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -1471,6 +1472,27 @@ int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
 	}
 	if (lua_isnumber(L, 3)) {
 		unit->travelPeriod = (float)lua_tonumber(L, 3);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLineage(lua_State* L)
+{
+	if (!FullCtrl()) {
+		return 0;
+	}
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CTeam* team = ParseTeam(L, __FUNCTION__, 2);
+	if (team == NULL) {
+		return 0;
+	}
+	unit->lineage = team->teamNum;
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		team->lineageRoot = unit->id;
 	}
 	return 0;
 }
