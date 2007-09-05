@@ -245,11 +245,8 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("CommandFallback");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -285,15 +282,18 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
   // return 'true' to remove the command
-	return !!lua_toboolean(L, -1);
+  return retval;
 }
 
 
@@ -303,11 +303,8 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -343,14 +340,15 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
-
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -361,11 +359,8 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowUnitCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -385,14 +380,15 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
-
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -403,11 +399,8 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowUnitTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -424,14 +417,16 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -442,11 +437,8 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowUnitBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -466,11 +458,13 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -481,11 +475,8 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowFeatureCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -505,11 +496,13 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -520,11 +513,8 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowFeatureBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -544,11 +534,13 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -558,11 +550,8 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowResourceLevel");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -577,14 +566,16 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -595,11 +586,8 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowResourceTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -618,11 +606,13 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -632,11 +622,8 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 		return true; // the call is not defined
 	}
 
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("AllowDirectUnitControl");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -655,11 +642,13 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	if ((args != 1) || !lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return true;
 	}
 
-	return !!lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 

@@ -1669,20 +1669,22 @@ void CUnit::FinishedBuilding(void)
 		mass = unitDef->mass;		//set this now so that the unit is harder to move during build
 	}
 
-	ChangeLos(realLosRadius,realAirLosRadius);
+	ChangeLos(realLosRadius, realAirLosRadius);
 
 	if (unitDef->startCloaked) {
 		wantCloak = true;
 		isCloaked = true;
 	}
 
-	if (unitDef->windGenerator>0) {
+	if (unitDef->windGenerator > 0.0f) {
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
 			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength()       * 3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		cob->Call(COBFN_SetDirection,
+		          (int)GetHeadingFromVector(-wind.GetCurrentDirection().x,
+		                                    -wind.GetCurrentDirection().z));
 	}
 
 	if (unitDef->activateWhenBuilt) {

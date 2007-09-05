@@ -205,6 +205,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	script = NULL;
 
+	defsParser = NULL;
+
 	time(&starttime);
 	lastTick=clock();
 	consumeSpeed=1;
@@ -287,6 +289,14 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	helper=SAFE_NEW CGameHelper(this);
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 	ENTER_SYNCED;
+	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
+	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!defsParser->Execute()) {
+		throw content_error(defsParser->GetErrorLog());
+	}
+	if (!defsParser->GetRoot().IsValid()) {
+		throw content_error("Error loading definitions");
+	}
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 	ENTER_UNSYNCED;
 	shadowHandler=SAFE_NEW CShadowHandler();
@@ -347,6 +357,9 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
  	ENTER_SYNCED;
  	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
  	pathManager = SAFE_NEW CPathManager();
+
+ 	delete defsParser;
+	defsParser = NULL;
 
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
@@ -1931,6 +1944,11 @@ bool CGame::Draw()
 	const Uint64 currentTime = SDL_GetTicks();
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
+
+ 	if (luaUI)    { luaUI->CheckStack(); }
+	if (luaCob)   { luaCob->CheckStack(); }
+	if (luaGaia)  { luaGaia->CheckStack(); }
+	if (luaRules) { luaRules->CheckStack(); }
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 

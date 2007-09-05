@@ -625,11 +625,8 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(const string& name)
 
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("Initialize");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true;
 	}
 
@@ -641,13 +638,13 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		lua_pop(L, args);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
 		return true;
 	}
-
-	return lua_toboolean(L, -1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
@@ -655,11 +652,8 @@ string CLuaHandleSynced::GetSyncData()
 {
 	string syncData;
 	
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("GetSyncData");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return syncData;
 	}
 
@@ -670,16 +664,17 @@ string CLuaHandleSynced::GetSyncData()
 
 	// get the result
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		lua_pop(L, args);
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
 		return syncData;
 	}
-	const int len = lua_strlen(L, 1);
-	const char* c = lua_tostring(L, 1);
+	const int len = lua_strlen(L, -1);
+	const char* c = lua_tostring(L, -1);
 	syncData.resize(len);
 	for (int i = 0; i < len; i++) {
 		syncData[i] = c[i];
 	}
+	lua_pop(L, 1);
 
 	return syncData;
 }
@@ -691,7 +686,6 @@ void CLuaHandleSynced::SendCallbacks()
 	for (int cb = 0; cb < count; cb++) {
 		static const LuaHashString cmdStr("CobCallback");
 		if (!cmdStr.GetGlobalFunc(L)) {
-			lua_settop(L, 0);
 			return;
 		}
 		const CobCallbackData& cbd = cobCallbackEntries[cb];
@@ -700,7 +694,6 @@ void CLuaHandleSynced::SendCallbacks()
 		lua_pushnumber(L, cbd.floatData);
 		// call the routine
 		RunCallIn(cmdStr, 3, 0);
-		lua_settop(L, 0);
 	}
 	cobCallbackEntries.clear();
 }
@@ -718,10 +711,8 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 		return;
 	}
 
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return;
 	}
 
@@ -754,11 +745,8 @@ bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
-	lua_settop(L, 0);
-
 	static const LuaHashString cmdStr("GotChatMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
@@ -780,7 +768,6 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 {
 	static const LuaHashString cmdStr("RecvFromSynced");
 	if (!cmdStr.GetRegistryFunc(L)) {
-		lua_settop(L, 0);
 		return; // the call is not defined
 	}
 	lua_insert(L, 1); // place the function
@@ -861,7 +848,6 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			lua_settop(L, top);
 			return 0;
 		}
 		retCount = lua_gettop(L) - top;
@@ -875,7 +861,7 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 		}
 		retCount = lua_gettop(L) - top;
 
-		lua_settop(srcState, 0);
+		lua_settop(srcState, 0); // FIXME
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}
@@ -906,12 +892,12 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	lua_remove(L, -2); 
 
 	const bool prevSynced = synced;
+	synced = false;
 
 	int retCount;
 	if (!diffStates) {
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
-		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
 			synced = prevSynced;
 			lua_settop(L, top);
@@ -923,14 +909,14 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		LuaUtils::CopyData(L, srcState, argCount);
 
 		// call the function
-		synced = false;
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
 			synced = prevSynced;
+			lua_settop(L, top);
 			return 0;
 		}
 		retCount = lua_gettop(L) - top;
 
-		lua_settop(srcState, 0);
+		lua_settop(srcState, 0); // FIXME ?
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}

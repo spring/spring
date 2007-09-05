@@ -1,29 +1,30 @@
 #include "StdAfx.h"
 #include "UnitDefHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "TdfParser.h"
 #include <stdio.h>
 #include <algorithm>
 #include <iostream>
 #include <locale>
 #include <cctype>
+#include "UnitDef.h"
 #include "FileSystem/FileHandler.h"
+#include "Game/Game.h"
+#include "Game/GameSetup.h"
+#include "Game/Team.h"
 #include "Lua/LuaParser.h"
+#include "Map/ReadMap.h"
+#include "Platform/ConfigHandler.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
-#include "LogOutput.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "Sound.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "UnitDef.h"
-#include "Map/ReadMap.h"
-#include "Game/GameSetup.h"
-#include "Platform/ConfigHandler.h"
-#include "Game/Team.h"
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/LogOutput.h"
+#include "System/Sound.h"
+#include "System/TdfParser.h"
 #include "mmgr.h"
 
 CR_BIND(UnitDef, );
@@ -34,19 +35,13 @@ CUnitDefHandler* unitDefHandler;
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	PrintLoadMsg("Loading units and weapons");
-
 	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
 
-	LuaParser luaParser("gamedata/unitdefs.lua",
-	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!luaParser.Execute()) {
-		throw content_error(luaParser.GetErrorLog());
-	}
+	PrintLoadMsg("Loading unit definitions");
 
-	LuaTable rootTable = luaParser.GetRoot();
+	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
-		throw content_error("Error executing gamedata/unitdefs.lua");
+		throw content_error("Error loading UnitDefs");
 	}
 
 	vector<string> unitDefNames;

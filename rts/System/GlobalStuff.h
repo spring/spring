@@ -136,6 +136,7 @@ const float3 ZeroVector(0,0,0);
 class CTeam;
 class CUnit;
 class CPlayer;
+class LuaParser;
 
 /**
  * @brief Global synced stuff

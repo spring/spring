@@ -44,7 +44,11 @@ struct LuaHashString {
 		}
 		inline bool GetGlobalFunc(lua_State* L) const {
 			GetGlobal(L);
-			return lua_isfunction(L, -1);
+			if (lua_isfunction(L, -1)) {
+				return true;
+			}
+			lua_pop(L, 1);
+			return false;
 		}
 
 		inline void GetRegistry(lua_State* L) const {
@@ -53,7 +57,11 @@ struct LuaHashString {
 		}
 		inline bool GetRegistryFunc(lua_State* L) const {
 			GetRegistry(L);
-			return lua_isfunction(L, -1);
+			if (lua_isfunction(L, -1)) {
+				return true;
+			}
+			lua_pop(L, 1);
+			return false;
 		}
 
 		inline void PushBool(lua_State* L, bool value) const {

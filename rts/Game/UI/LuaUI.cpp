@@ -193,6 +193,8 @@ CLuaUI::CLuaUI()
 
 	// update extra call-ins
 	UnsyncedUpdateCallIn("WorldTooltip");
+
+	lua_settop(L, 0);
 }
 
 
@@ -380,32 +382,32 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 
 void CLuaUI::Shutdown()
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return;
 	}
 
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
 	return;
 }
 
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return true; // the call is not defined
 	}
 
 	lua_pushstring(L, command.c_str());
 
 	// call the routine
-	return RunCallIn(cmdStr, 1, 0);
+	if (!RunCallIn(cmdStr, 1, 0)) {
+		return false;
+	}
+	return true;
 }
 
 
@@ -423,10 +425,8 @@ bool CLuaUI::AddConsoleLines()
 	for (int i = 0; i < count; i++) {
 		const CInfoConsole::RawLine& rl = lines[i];
 
-		lua_settop(L, 0);
 		static const LuaHashString cmdStr("AddConsoleLine");
 		if (!cmdStr.GetGlobalFunc(L)) {
-			lua_settop(L, 0);
 			return true; // the call is not defined
 		}
 
@@ -437,8 +437,6 @@ bool CLuaUI::AddConsoleLines()
 		if (!RunCallIn(cmdStr, 2, 0)) {
 			return false;
 		}
-
-		lua_settop(L, 0);
 	}
 	return true;
 }
@@ -446,10 +444,8 @@ bool CLuaUI::AddConsoleLines()
 
 bool CLuaUI::CommandNotify(const Command& cmd)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("CommandNotify");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
 
@@ -479,22 +475,22 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, 1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("CommandNotify() bad return value (%i)\n", args);
-		lua_pop(L, args);
+		lua_pop(L, 1);
 		return false;
 	}
 
-	return !!lua_toboolean(L, 1);
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::GroupChanged(int groupID)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("GroupChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
 
@@ -532,11 +528,9 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 		return;
 	}
 
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("ShockFront");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false;
-		lua_settop(L, 0);
 		return; // the call is not defined
 	}
 
@@ -571,11 +565,9 @@ string CLuaUI::WorldTooltip(const CUnit* unit,
 		return "";
 	}
 
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("WorldTooltip");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveWorldTooltip = false;
-		lua_settop(L, 0);
 		return ""; // the call is not defined
 	}
 
@@ -607,22 +599,21 @@ string CLuaUI::WorldTooltip(const CUnit* unit,
 		return "";
 	}
 
-	const int retArgs = lua_gettop(L);
-	if ((retArgs == 1) && lua_isstring(L, 1)) {
-		return lua_tostring(L, 1);
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
+		return "";
 	}
-
-	return "";
+	const string retval = lua_tostring(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::GameSetup(const string& state, bool& ready,
                        const map<int, string>& playerStates)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("GameSetup");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false;
 	}
 
@@ -643,15 +634,16 @@ bool CLuaUI::GameSetup(const string& state, bool& ready,
 		return false;
 	}
 
-	if (lua_isboolean(L, 1)) {
-		if (lua_toboolean(L, 1)) {
-			if (lua_isboolean(L, 2)) {
-				ready = lua_toboolean(L, 2);
+	if (lua_isboolean(L, -2)) {
+		if (lua_toboolean(L, -2)) {
+			if (lua_isboolean(L, -1)) {
+				ready = lua_toboolean(L, -1);
 			}
+			lua_pop(L, 2);
 			return true;
 		}
 	}
-
+	lua_pop(L, 2);
 	return false;
 }
 
@@ -660,10 +652,8 @@ bool CLuaUI::GameSetup(const string& state, bool& ready,
 
 bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("KeyPress");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -686,20 +676,20 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 	}
 
 	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::KeyRelease(unsigned short key)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("KeyRelease");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -719,21 +709,20 @@ bool CLuaUI::KeyRelease(unsigned short key)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("MouseMove");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -748,21 +737,20 @@ bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, -1)) {
-		return !!lua_toboolean(L, -1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::MousePress(int x, int y, int button)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("MousePress");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -775,21 +763,20 @@ bool CLuaUI::MousePress(int x, int y, int button)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 int CLuaUI::MouseRelease(int x, int y, int button)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("MouseRelease");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -802,21 +789,20 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isnumber(L, 1)) {
-		return ((int)lua_tonumber(L, 1) - 1);
+	if (!lua_isnumber(L, -1)) {
+		lua_pop(L, 1);
+		return -1;
 	}
-
-	return -1;
+	const int retval = (int)lua_tonumber(L, -1) - 1;
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::MouseWheel(bool up, float value)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("MouseWheel");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined, do not take the event
 	}
 
@@ -828,21 +814,20 @@ bool CLuaUI::MouseWheel(bool up, float value)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::IsAbove(int x, int y)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("IsAbove");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
 
@@ -854,21 +839,20 @@ bool CLuaUI::IsAbove(int x, int y)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isboolean(L, 1)) {
-		return !!lua_toboolean(L, 1);
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
 	}
-
-	return false;
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 string CLuaUI::GetTooltip(int x, int y)
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("GetTooltip");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return ""; // the call is not defined
 	}
 
@@ -880,24 +864,23 @@ string CLuaUI::GetTooltip(int x, int y)
 		return "";
 	}
 
-	const int args = lua_gettop(L);
-	if ((args == 1) && lua_isstring(L, 1)) {
-		return string(lua_tostring(L, 1));
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
+		return "";
 	}
-
-	return "";
+	const string retval = lua_tostring(L, -1);
+	lua_pop(L, 1);
+	return retval;
 }
 
 
 bool CLuaUI::HasLayoutButtons()
 {
-	lua_settop(L, 0);
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false; // the call is not defined
 	}
-	lua_settop(L, 0);
+	lua_pop(L, 1);
 	return true;
 }
 
@@ -923,24 +906,25 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	lua_settop(L, 0);
+	const int top = lua_gettop(L);
+
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		return false;
 	}
-
+	
 	lua_pushnumber(L, xButtons);
 	lua_pushnumber(L, yButtons);
 	lua_pushnumber(L, cmds.size());
 
 	if (!BuildCmdDescTable(L, cmds)) {
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	// call the function
 	if (!RunCallIn(cmdStr, 4, LUA_MULTRET)) {
+		lua_settop(L, top);
 		return false;
 	}
 
@@ -949,24 +933,25 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 	if ((args == 1) && (lua_isstring(L, -1)) &&
 	    (string(lua_tostring(L, -1)) == "disabled")) {
+		lua_settop(L, top);
 		return false; // no warnings
 	}
 	else if (args != 11) {
 		logOutput.Print("LayoutButtons() bad number of return values (%i)\n", args);
-		lua_pop(L, args);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!lua_isstring(L, 1)) {
 		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
-		lua_pop(L, args);
+		lua_settop(L, top);
 		return false;
 	}
 	menuName = lua_tostring(L, 1);
 
 	if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
 		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
-		lua_pop(L, args);
+		lua_settop(L, top);
 		return false;
 	}
 	xButtons = (int)lua_tonumber(L, 2);
@@ -974,51 +959,53 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 	if (!GetLuaIntList(L, 4, removeCmds)) {
 		logOutput.Print("LayoutButtons() bad removeCommands table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaCmdDescList(L, 5, customCmds)) {
 		logOutput.Print("LayoutButtons() bad customCommands table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaIntList(L, 6, onlyTextureCmds)) {
 		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 7, reTextureCmds)) {
 		logOutput.Print("LayoutButtons() bad reTexture table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 8, reNamedCmds)) {
 		logOutput.Print("LayoutButtons() bad reNamed table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 9, reTooltipCmds)) {
 		logOutput.Print("LayoutButtons() bad reTooltip table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReParamsList(L, 10, reParamsCmds)) {
 		logOutput.Print("LayoutButtons() bad reParams table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaIntMap(L, 11, buttonList)) {
 		logOutput.Print("LayoutButtons() bad buttonList table\n");
-		lua_settop(L, 0);
+		lua_settop(L, top);
 		return false;
 	}
+
+	lua_settop(L, top);
 
 	return true;
 }
@@ -1252,7 +1239,6 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 	const LuaHashString cmdStr(funcName);
 	if (!cmdStr.GetGlobalFunc(L)) {
-		lua_pop(L, 1);
 		return 0;
 	}
 
@@ -1261,7 +1247,6 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
 		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			lua_settop(L, top);
 			return 0;
 		}
 		retCount = lua_gettop(L) - top;

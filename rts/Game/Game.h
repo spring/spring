@@ -28,6 +28,7 @@ class CConsoleHistory;
 class CWordCompletion;
 class CKeySet;
 class CInfoConsole;
+class LuaParser;
 
 class CGame : public CGameController
 {
@@ -50,6 +51,8 @@ public:
 
 	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
 	bool ActionReleased(const CKeyBindings::Action&);
+
+	LuaParser* defsParser;
 
 	int que;
 	unsigned int oldframenum;

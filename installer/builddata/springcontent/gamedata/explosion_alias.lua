@@ -11,12 +11,12 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- Specifies a list of alias names for spring C++ classes, allows the aliases
--- to have easier names and the C++ names to be changed independent of mods.
--- Projectile class names can change in the future, so mods should not change
--- this file. It is distributed with spring.
+--  Specifies a list of alias names for spring C++ classes, allows the aliases
+--  to have easier names and the C++ names to be changed independent of mods.
+--  Projectile class names can change in the future, so mods should not change
+--  this file. It is distributed with spring.
 
--- Syntax:  <alias> = <real name>
+--    Syntax:  <alias> = <real name>
 
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')

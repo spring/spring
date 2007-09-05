@@ -50,7 +50,7 @@ local function collect_names(type)
   for text in f:lines() do
     for caller, result in string.gfind(text, '([%a%d_]*).Get'..type..'%("([^"]*)"') do
       table.insert(array, { result, caller, text })
-      map[string.lower(result)] = true
+      map[result] = true
     end
   end
   table.sort(array, function(a, b) return a[1] < b[1] end)
@@ -66,7 +66,7 @@ local function print_names(type, array)
     local caller = d[2]
     local line   = string.gsub(d[3], '^%s*', '')
     print(string.format('  %-24s = true, -- %s -- %s --',
-                        string.lower(result), caller, result))
+                        result, caller, result))
   end
   print('}')
 end

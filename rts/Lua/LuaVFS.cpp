@@ -184,6 +184,8 @@ int LuaVFS::Include(lua_State* L, bool synced)
 		lua_error(L);
 	}
 
+	// FIXME -- adjust stack?
+
 	return lua_gettop(L) - paramTop;
 }
 
