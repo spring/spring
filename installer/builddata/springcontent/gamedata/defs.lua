@@ -23,7 +23,7 @@ DEFS = {}
 
 
 -- UnitDefs
-local success, unitDefs = Spring.TimeCheck('UNITDEFS', Include, 'gamedata/unitdefs.lua')
+local success, unitDefs = Include('gamedata/unitdefs.lua')
 if (not success) then
   Spring.Echo("Failed to load unit definitions")
   error(unitDefs)
