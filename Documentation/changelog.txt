@@ -1,5 +1,7 @@
 Spring change log
 
+- Added the CTRL modifier to area reclaims for reclaiming all features
+
 0.75b2
 
 - Fixed possible crash while waiting for connection to the host.

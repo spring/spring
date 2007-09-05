@@ -35,8 +35,10 @@ typedef void (*LuaCobCallback)(int retCode, void* unitID, void* data);
 class CLuaHandle {
 	public:
 		const string& GetName() const { return name; }
+		void CheckStack();
 		int GetCallInErrors() const { return callinErrors; }
 		void ResetCallinErrors() { callinErrors = 0; }
+		
 
 	public:
 		enum SpecialTeams {

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <boost/regex.hpp>
+#include <SDL/SDL_timer.h>
 
 #include "LuaInclude.h"
 
@@ -261,6 +262,7 @@ bool LuaParser::Execute()
 
 	NewTable("Spring");
 	AddFunc("Echo", Echo);
+	AddFunc("TimeCheck", TimeCheck);
 	EndTable();
 
 	NewTable("VFS");
@@ -392,6 +394,27 @@ int LuaParser::Echo(lua_State* L)
 	logOutput.Print(msg);
 
 	return 0;
+}
+
+
+int LuaParser::TimeCheck(lua_State* L)
+{	
+	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2)) {
+		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
+	}
+	const string name = lua_tostring(L, 1);
+	lua_remove(L, 1);
+	const Uint32 startTime = SDL_GetTicks();
+	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
+	if (error != 0) {
+		const string errmsg = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		luaL_error(L, errmsg.c_str());
+	}
+	const Uint32 endTime = SDL_GetTicks();
+	const float elapsed = 1.0e-3f * (float)(endTime - startTime);
+	logOutput.Print("%s %f", name.c_str(), elapsed);
+	return lua_gettop(L);
 }
 
 

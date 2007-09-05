@@ -4,18 +4,19 @@
 #include <iostream>
 #include <stdexcept>
 #include "WeaponDefHandler.h"
-#include "Rendering/GL/myGL.h"
+#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "LogOutput.h"
-#include "Sound.h"
+#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "Rendering/Textures/ColorMap.h"
+#include "System/LogOutput.h"
+#include "System/Sound.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -29,12 +30,12 @@ CWeaponDefHandler* weaponDefHandler = NULL;
 
 CWeaponDefHandler::CWeaponDefHandler()
 {
-	LuaParser luaParser("gamedata/weapondefs.lua",
-	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!luaParser.Execute()) {
-		throw content_error(luaParser.GetErrorLog());
+	PrintLoadMsg("Loading weapon definitions");
+
+	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("WeaponDefs");
+	if (!rootTable.IsValid()) {
+		throw content_error("Error loading WeaponDefs");
 	}
-	const LuaTable rootTable = luaParser.GetRoot();
 	
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);

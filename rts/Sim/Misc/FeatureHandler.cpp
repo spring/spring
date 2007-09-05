@@ -4,6 +4,7 @@
 #include "QuadField.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/Camera.h"
+#include "Game/Game.h"
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "LosHandler.h"
@@ -96,7 +97,7 @@ CR_REG_METADATA_SUB(CFeatureHandler,DrawQuad,(
 
 CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 {
-	PrintLoadMsg("Initializing map features");
+	PrintLoadMsg("Loading feature definitions");
 
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
@@ -104,16 +105,9 @@ CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
 	
-  LuaParser luaParser("gamedata/featuredefs.lua",
-                      SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	luaParser.Execute();
-	if (!luaParser.IsValid()) {
-		throw content_error(luaParser.GetErrorLog());
-	}	
-
-	const LuaTable rootTable = luaParser.GetRoot();
+	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("FeatureDefs");
 	if (!rootTable.IsValid()) {
-		throw content_error("Error executing gamedata/featuredefs.lua");
+		throw content_error("Error loading FeatureDefs");
 	}
 
 	// get most of the feature defs (missing trees and geovent from the map)
@@ -262,6 +256,8 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
+	PrintLoadMsg("Initializing map features");
+
 	int numType = readmap->GetNumFeatureTypes ();
 
 	for (int a = 0; a < numType; ++a) {
@@ -370,7 +366,9 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 }
 
 
-CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name, float rot, int facing, int iter, int team, int allyteam, bool emitSmoke,std::string fromUnit)
+CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name,
+                                          float rot, int facing, int iter, int team,
+                                          int allyteam, bool emitSmoke,std::string fromUnit)
 {
 	ASSERT_SYNCED_MODE;
 	if (name.empty()) {

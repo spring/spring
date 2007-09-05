@@ -111,7 +111,7 @@ CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	}
 
 	creg::Class *cls = generatorClasses.GetClass(klass);
-	if (!cls->IsSubclassOf (CExplosionGenerator::StaticClass())) {
+	if (!cls->IsSubclassOf(CExplosionGenerator::StaticClass())) {
 		throw content_error(klass + " is not a subclass of CExplosionGenerator");
 	}
 
@@ -155,7 +155,7 @@ CStdExplosionGenerator::~CStdExplosionGenerator()
 {}
 
 
-void CStdExplosionGenerator::Load (CExplosionGeneratorHandler *h, const string& tag)
+void CStdExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
 {}
 
 
@@ -325,7 +325,7 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 #define OP_STOREP 9 // store the pointer register into a void*
 #define OP_DIR	  10 //stor the float3 direction
 
-void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex,const float3 &dir)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float damage, char *instance, int spawnIndex,const float3 &dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -362,7 +362,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode (const char *code, float da
 				break;
 			}
 			case OP_RAND: {
-				val += gu->usRandFloat () * *(float*)code;
+				val += gu->usRandFloat() * *(float*)code;
 				code += 4;
 				break;
 			}
@@ -416,7 +416,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		//if the user uses a keyword assume he knows that it is put on the right datatype for now
 		code += OP_DIR;
 		Uint16 ofs = offset;
-		code.append ((char*)&ofs, (char*)&ofs + 2);
+		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type)) {
 		creg::BasicType *bt = (creg::BasicType*)type;
@@ -437,27 +437,27 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else if (c=='r') opcode = OP_RAND;
 			else if (c=='d') opcode = OP_DAMAGE;
 			else if (isdigit(c)||c=='.'||c=='-') { opcode = OP_ADD; p--; }
-			else throw content_error ("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
+			else throw content_error("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
 
 			char *endp;
 			float v = (float)strtod(&script[p], &endp);
 			p += endp - &script[p];
 			code += opcode;
-			code.append ((char*)&v, ((char*)&v) + 4);
+			code.append((char*)&v, ((char*)&v) + 4);
 		}
 
 		switch (bt->id) {
-			case creg::crInt: code.push_back (OP_STOREI); break;
-			case creg::crBool: code.push_back (OP_STOREI); break;
-			case creg::crFloat: code.push_back (OP_STOREF); break;
-			case creg::crUChar: code.push_back (OP_STOREC); break;
+			case creg::crInt: code.push_back(OP_STOREI); break;
+			case creg::crBool: code.push_back(OP_STOREI); break;
+			case creg::crFloat: code.push_back(OP_STOREF); break;
+			case creg::crUChar: code.push_back(OP_STOREC); break;
 			default:
-				throw content_error ("Explosion script variable is of unsupported type. "
+				throw content_error("Explosion script variable is of unsupported type. "
 					"Contact the Spring team to fix this.");
 					break;
 		}
 		Uint16 ofs = offset;
-		code.append ((char*)&ofs, (char*)&ofs + 2);
+		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
 	else if (dynamic_cast<creg::ObjectInstanceType*>(type)) {
 		creg::ObjectInstanceType *oit = (creg::ObjectInstanceType *)type;
@@ -493,7 +493,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
 			Uint16 ofs = offset;
-			code.append ((char*)&ofs, (char*)&ofs + 2);
+			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "GroundFXTexture*") {
 			string::size_type end = script.find(';', 0);
@@ -503,7 +503,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
 			Uint16 ofs = offset;
-			code.append ((char*)&ofs, (char*)&ofs + 2);
+			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "CColorMap*") {
 			string::size_type end = script.find(';', 0);
@@ -513,7 +513,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
 			code += OP_STOREP;
 			Uint16 ofs = offset;
-			code.append ((char*)&ofs, (char*)&ofs + 2);
+			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "CExplosionGenerator*") {
 			string::size_type end = script.find(';', 0);
@@ -523,7 +523,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code.append((char*)(&explgen), ((char*)(&explgen)) + sizeof(void*));
 			code += OP_STOREP;
 			Uint16 ofs = offset;
-			code.append ((char*)&ofs, (char*)&ofs + 2);
+			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 	}
 }
@@ -536,7 +536,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string
 
 	const LuaTable expTable = root.SubTable(tag);
 	if (!expTable.IsValid()) {
-		throw content_error ("Explosion info for " + tag + " not found.");
+		throw content_error("Explosion info for " + tag + " not found.");
 	}
 
 	vector<string> spawns;
@@ -635,9 +635,9 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 
 		for (int c=0;c<psi->count;c++)
 		{
-			CExpGenSpawnable *projectile = (CExpGenSpawnable*)psi->projectileClass->CreateInstance ();
+			CExpGenSpawnable *projectile = (CExpGenSpawnable*)psi->projectileClass->CreateInstance();
 
-			ExecuteExplosionCode (&psi->code[0], damage, (char*)projectile, c, dir);
+			ExecuteExplosionCode(&psi->code[0], damage, (char*)projectile, c, dir);
 			projectile->Init(pos, owner);
 		}
 	}
@@ -665,7 +665,7 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 			continue;
 
 		creg::Class *klass = *ci;
-		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias (klass->name) << endl;
+		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(klass->name) << endl;
 		for (;klass;klass=klass->base) {
 			for (unsigned int a=0;a<klass->members.size();a++)
 			{

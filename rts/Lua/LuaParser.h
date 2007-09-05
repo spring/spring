@@ -143,8 +143,12 @@ class LuaParser {
 		string errorLog;	
 		set<string> accessedFiles;
 
-	private: // call-outs
+	private:
+		// Spring call-outs
 		static int Echo(lua_State* L);
+		static int TimeCheck(lua_State* L);
+
+		// VFS call-outs
 		static int DirList(lua_State* L);
 		static int Include(lua_State* L);
 		static int LoadFile(lua_State* L);
