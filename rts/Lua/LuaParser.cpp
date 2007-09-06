@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <boost/regex.hpp>
-#include <SDL/SDL_timer.h>
+#include <SDL_timer.h>
 
 #include "LuaInclude.h"
 

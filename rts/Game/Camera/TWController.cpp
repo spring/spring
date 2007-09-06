@@ -1,3 +1,5 @@
+#include <SDL_keysym.h>
+#include <SDL_types.h>
 #include "TWController.h"
 
 #include "Platform/ConfigHandler.h"
@@ -5,7 +7,6 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
-#include <SDL_keysym.h>
 
 extern Uint8 *keys;
 

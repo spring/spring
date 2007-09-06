@@ -510,6 +510,38 @@
 			<File
 				RelativePath="..\..\Game\CameraHandler.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\CameraHandler.h"
@@ -945,6 +977,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\CameraController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\CameraController.h"
@@ -953,6 +1017,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\FPSController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\FPSController.h"
@@ -961,6 +1057,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\FreeController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\FreeController.h"
@@ -969,6 +1097,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\LuaCameraCtrl.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\LuaCameraCtrl.h"
@@ -977,6 +1137,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\OverheadController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\OverheadController.h"
@@ -985,6 +1177,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\OverviewController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\OverviewController.h"
@@ -993,6 +1217,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\RotOverheadController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\RotOverheadController.h"
@@ -1001,6 +1257,38 @@
 				<File
 					RelativePath="..\..\Game\Camera\TWController.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\TWController.h"
@@ -1663,11 +1951,51 @@
 				Name="Projectiles"
 				>
 				<File
+					RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\FireProjectile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\FlareProjectile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\PieceProjectile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\Projectile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\Projectile.h"
 					>
 				</File>
 				<File
@@ -1679,302 +2007,266 @@
 					>
 				</File>
 				<Filter
-					Name="Classes"
+					Name="Unsynced"
 					>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\BitmapMuzzleFlame.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BeamLaserProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\BitmapMuzzleFlame.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BitmapMuzzleFlame.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\BubbleProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BitmapMuzzleFlame.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\BubbleProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BubbleProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\DirtProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\BubbleProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\DirtProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\DirtProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ExploSpikeProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\DirtProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ExploSpikeProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\EmgProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GenericParticleProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\EmgProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GenericParticleProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GeoSquareProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExpGenSpawner.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GeoSquareProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GeoThermSmokeProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExplosiveProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GeoThermSmokeProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GfxProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ExploSpikeProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\GfxProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FireBallProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\HeatCloudProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FireBallProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\HeatCloudProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FireProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\MuzzleFlame.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FireProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\MuzzleFlame.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FlameProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\RepulseGfx.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FlameProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\RepulseGfx.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FlareProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\FlareProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GenericParticleProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SimpleParticleSystem.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GenericParticleProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SimpleParticleSystem.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GeoSquareProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeProjectile2.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GeoThermSmokeProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeProjectile2.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GfxProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeTrailProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\GfxProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SmokeTrailProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SpherePartProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\HeatCloudProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\SpherePartProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LargeBeamLaserProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\TracerProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LargeBeamLaserProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\TracerProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LaserProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\WakeProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LaserProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\WakeProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LightingProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\WreckProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\LightingProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\WreckProjectile.h"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="WeaponProjectiles"
+					>
 					<File
-						RelativePath="..\..\Sim\Projectiles\MissileProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\BeamLaserProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\MissileProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\BeamLaserProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\MuzzleFlame.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\EmgProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\MuzzleFlame.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\EmgProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\PieceProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\ExplosiveProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\PieceProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\ExplosiveProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Projectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\FireBallProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Projectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\FireBallProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\RepulseGfx.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\FlameProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\RepulseGfx.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\FlameProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LargeBeamLaserProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\ShieldPartProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LargeBeamLaserProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SimpleParticleSystem.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LaserProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SimpleParticleSystem.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LaserProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LightingProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\LightingProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\MissileProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeProjectile2.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\MissileProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\StarburstProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SmokeTrailProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\StarburstProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\TorpedoProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\SpherePartProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\TorpedoProjectile.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\StarburstProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\StarburstProjectile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\TorpedoProjectile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\TracerProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\TracerProjectile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WakeProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WakeProjectile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WeaponProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WeaponProjectile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WreckProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\WreckProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectile.h"
 						>
 					</File>
 				</Filter>
