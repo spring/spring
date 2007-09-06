@@ -238,7 +238,7 @@ Unit FBI tags:
   cause the unit to never start skidding due to slope. (default: 0)
 - Added float FBI tag MinCollisionSpeed, indicating the minimum net impact speed
   that will cause damage to a unit.
-- Added vector FBI tag CollsionSphereOffset
+- Added vector FBI tag CollisionSphereOffset
 - Added float FBI tag LoadingRadius
 - Added boolean FBI tag FullHealthFactory, controls whether or not a unit can
   leave the factory if it is not at full health. (default: 0)
