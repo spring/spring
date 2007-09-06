@@ -710,14 +710,20 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 	return pos;
 }
 
+
 void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
 {
-	std::vector<CUnit*> units=qf->GetUnitsExact(pos,radius+8);
-	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
-		if((*ui)!=exclude)
-			(*ui)->commandAI->BuggerOff(pos,radius+8);
+	std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius + 8);
+
+	for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (u != exclude && !u->unitDef->pushResistant) {
+			u->commandAI->BuggerOff(pos, radius + 8);
+		}
 	}
 }
+
 
 float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud)
 {

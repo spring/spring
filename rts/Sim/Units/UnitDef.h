@@ -157,6 +157,7 @@ struct UnitDef
 
 	float mass;
 
+	bool pushResistant;
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxSlope;
