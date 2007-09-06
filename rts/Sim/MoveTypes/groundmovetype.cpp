@@ -1258,10 +1258,10 @@ void CGroundMoveType::CheckCollision(void)
 		bool haveCollided = false;
 		int retest = 0;
 
-		const float zmove = (owner->mapPos.y + owner->ysize / 2) * SQUARE_SIZE;
-		const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
-
 		do {
+			const float zmove = (owner->mapPos.y + owner->ysize / 2) * SQUARE_SIZE;
+			const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
+
 			if (fabs(owner->frontdir.x) > fabs(owner->frontdir.z)) {
 				if (newmp.y < owner->mapPos.y) {
 					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
