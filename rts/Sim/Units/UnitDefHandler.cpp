@@ -277,10 +277,13 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6f);
 	ud.minCollisionSpeed = udTable.GetFloat("minCollisionSpeed", 1.0f);
 	ud.slideTolerance = udTable.GetFloat("slideTolerance", 0.0f); // disabled
+	ud.pushResistant = udTable.GetBool("pushResistant", false);
 
 	ud.waterline = udTable.GetFloat("waterline", 0.0f);
 	if ((ud.waterline > 8.0f) && ud.canmove) {
-		ud.waterline += 5.0f; // make subs travel at somewhat larger depths to reduce vulnerability to surface weapons
+		// make subs travel at somewhat larger depths
+		// to reduce vulnerability to surface weapons
+		ud.waterline += 5.0f;
 	}
 
 	ud.selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);

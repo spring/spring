@@ -886,9 +886,9 @@ void CMobileCAI::DrawCommands(void)
 
 void CMobileCAI::BuggerOff(float3 pos, float radius)
 {
-	lastBuggerOffTime=gs->frameNum;
-	buggerOffPos=pos;
-	buggerOffRadius=radius+owner->radius;
+	lastBuggerOffTime = gs->frameNum;
+	buggerOffPos = pos;
+	buggerOffRadius = radius + owner->radius;
 }
 
 void CMobileCAI::NonMoving(void)

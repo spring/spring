@@ -1247,90 +1247,116 @@ void CGroundMoveType::Fail()
 	ENTER_SYNCED;
 }
 
+
+
 void CGroundMoveType::CheckCollision(void)
 {
-	int2 newmp=owner->GetMapPos();
-	if(newmp.x!=owner->mapPos.x || newmp.y!=owner->mapPos.y){		//now make sure we dont overrun any other units
-		bool haveCollided=false;
-		int retest=0;
+	int2 newmp = owner->GetMapPos();
+
+	if (newmp.x != owner->mapPos.x || newmp.y != owner->mapPos.y) {
+		// now make sure we don't overrun any other units
+		bool haveCollided = false;
+		int retest = 0;
+
+		const float zmove = (owner->mapPos.y + owner->ysize / 2) * SQUARE_SIZE;
+		const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
+
 		do {
-			if(fabs(owner->frontdir.x)>fabs(owner->frontdir.z)){
-				if(newmp.y<owner->mapPos.y){
-					haveCollided|=CheckColV(newmp.y,newmp.x,newmp.x+owner->xsize-1,(owner->mapPos.y+owner->ysize/2)*SQUARE_SIZE-3.99f,owner->mapPos.y);
-					newmp=owner->GetMapPos();
-				} else if(newmp.y>owner->mapPos.y){
-					haveCollided|=CheckColV(newmp.y+owner->ysize-1,newmp.x,newmp.x+owner->xsize-1,(owner->mapPos.y+owner->ysize/2)*SQUARE_SIZE+3.99f,owner->mapPos.y+owner->ysize-1);
-					newmp=owner->GetMapPos();
+			if (fabs(owner->frontdir.x) > fabs(owner->frontdir.z)) {
+				if (newmp.y < owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
+					newmp = owner->GetMapPos();
+				} else if (newmp.y > owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y + owner->ysize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->ysize - 1);
+					newmp = owner->GetMapPos();
 				}
-				if(newmp.x<owner->mapPos.x){
-					haveCollided|=CheckColH(newmp.x,newmp.y,newmp.y+owner->ysize-1,(owner->mapPos.x+owner->xsize/2)*SQUARE_SIZE-3.99f,owner->mapPos.x);
-					newmp=owner->GetMapPos();
-				} else if(newmp.x>owner->mapPos.x){
-					haveCollided|=CheckColH(newmp.x+owner->xsize-1,newmp.y,newmp.y+owner->ysize-1,(owner->mapPos.x+owner->xsize/2)*SQUARE_SIZE+3.99f,owner->mapPos.x+owner->xsize-1);
-					newmp=owner->GetMapPos();
+				if (newmp.x < owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->ysize - 1,  xmove - 3.99f, owner->mapPos.x);
+					newmp = owner->GetMapPos();
+				} else if (newmp.x > owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->ysize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					newmp = owner->GetMapPos();
 				}
 			} else {
-				if(newmp.x<owner->mapPos.x){
-					haveCollided|=CheckColH(newmp.x,newmp.y,newmp.y+owner->ysize-1,(owner->mapPos.x+owner->xsize/2)*SQUARE_SIZE-3.99f,owner->mapPos.x);
-					newmp=owner->GetMapPos();
-				} else if(newmp.x>owner->mapPos.x){
-					haveCollided|=CheckColH(newmp.x+owner->xsize-1,newmp.y,newmp.y+owner->ysize-1,(owner->mapPos.x+owner->xsize/2)*SQUARE_SIZE+3.99f,owner->mapPos.x+owner->xsize-1);
-					newmp=owner->GetMapPos();
+				if (newmp.x < owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->ysize - 1,  xmove - 3.99f, owner->mapPos.x);
+					newmp = owner->GetMapPos();
+				} else if (newmp.x > owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->ysize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					newmp = owner->GetMapPos();
 				}
-				if(newmp.y<owner->mapPos.y){
-					haveCollided|=CheckColV(newmp.y,newmp.x,newmp.x+owner->xsize-1,(owner->mapPos.y+owner->ysize/2)*SQUARE_SIZE-3.99f,owner->mapPos.y);
-					newmp=owner->GetMapPos();
-				} else if(newmp.y>owner->mapPos.y){
-					haveCollided|=CheckColV(newmp.y+owner->ysize-1,newmp.x,newmp.x+owner->xsize-1,(owner->mapPos.y+owner->ysize/2)*SQUARE_SIZE+3.99f,owner->mapPos.y+owner->ysize-1);
-					newmp=owner->GetMapPos();
+				if (newmp.y < owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
+					newmp = owner->GetMapPos();
+				} else if (newmp.y > owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y + owner->ysize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->ysize - 1);
+					newmp = owner->GetMapPos();
 				}
 			}
 			++retest;
 		}
-		while(haveCollided && retest < 2);
+		while (haveCollided && retest < 2);
 
-		//owner->UnBlock();
+		// owner->UnBlock();
 		owner->Block();
 	}
+
 	return;
 }
 
+
 bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
-	for(int y=y1;y<=y2;++y){
-		CSolidObject* c=readmap->groundBlockingObjectMap[y*gs->mapx+x];
-		if(c!=0){
-			if(readmap->groundBlockingObjectMap[y*gs->mapx+squareTestX]!=0 && readmap->groundBlockingObjectMap[y*gs->mapx+squareTestX]!=owner){
+	for (int y = y1; y <= y2; ++y) {
+		CSolidObject* c = readmap->groundBlockingObjectMap[y * gs->mapx + x];
+
+		if (c) {
+			if (readmap->groundBlockingObjectMap[y * gs->mapx + squareTestX] != 0 &&
+				readmap->groundBlockingObjectMap[y * gs->mapx + squareTestX] != owner) {
 				continue;
 			}
-			if(c->mobility){		//if other part is mobile start to skuff it out of the way
-				float part=owner->mass/(owner->mass+c->mass*2);
-				float3 dif=c->pos-owner->pos;
-				float dl=dif.Length();
-				float colDepth=fabs(owner->pos.x-xmove);
-				dif*=colDepth/dl;
+			if (c->mobility) {
+				// if other party is mobile, start to skuff it out of the way
+				float part = owner->mass / (owner->mass + c->mass * 2);
+				float3 dif = c->pos - owner->pos;
+				float dl = dif.Length();
+				float colDepth = fabs(owner->pos.x - xmove);
+				dif *= colDepth / dl;
 
-				owner->pos-=dif*(1-part);
-				c->pos+=dif*(part);
-				CUnit* u=(CUnit*)c;		//only units can be mobile
-				u->midPos=u->pos+u->frontdir*u->relMidPos.z + u->updir*u->relMidPos.y + u->rightdir*u->relMidPos.x;
+				// adjust our own position a
+				// bit so we have to turn less
+				owner->pos -= dif * (1 - part);
+				// safe cast (only units can be mobile)
+				CUnit* u = (CUnit*) c;
 
-				if(!(gs->frameNum+owner->id & 31) && !owner->commandAI->unimportantMove){
-					helper->BuggerOff(owner->pos+owner->frontdir*owner->radius,owner->radius,owner);
+				if (!u->unitDef->pushResistant) {
+					// push the blocking unit out of the way
+					u->pos += dif * (part);
+					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+				}
+
+				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+					// if we (MT owner) are doing something important, tell units around us to bugger off
+					helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 				}
 			}
-			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
-			if (!m->moveMath->IsBlocking(*m,c)) {
-				float3 fix = owner->frontdir*currentSpeed*200;
+
+			MoveData* m = owner->mobility->moveData;
+
+			// if other party can be overrun then overrun it
+			if (!m->moveMath->IsBlocking(*m, c)) {
+				float3 fix = owner->frontdir * currentSpeed * 200;
 				c->Kill(fix);
 			}
-			if(readmap->groundBlockingObjectMap[y1*gs->mapx+x]==0)		//hack to make them find openings easier till the pathfinder can do it itself
-				owner->pos.z-=fabs(owner->pos.x-xmove)*0.5f;
-			if(readmap->groundBlockingObjectMap[y2*gs->mapx+x]==0)
-				owner->pos.z+=fabs(owner->pos.x-xmove)*0.5f;
 
-			owner->pos.x=xmove;
-			currentSpeed*=0.97f;
+			// hack to make units find openings easier until the pathfinder can do it itself
+			if (readmap->groundBlockingObjectMap[y1 * gs->mapx + x] == 0)
+				owner->pos.z -= fabs(owner->pos.x - xmove) * 0.5f;
+			if (readmap->groundBlockingObjectMap[y2 * gs->mapx + x] == 0)
+				owner->pos.z += fabs(owner->pos.x - xmove) * 0.5f;
+
+			owner->pos.x = xmove;
+			currentSpeed *= 0.97f;
 			return true;
 		}
 	}
@@ -1340,46 +1366,64 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
-	for(int x=x1;x<=x2;++x){
-		CSolidObject* c=readmap->groundBlockingObjectMap[y*gs->mapx+x];
-		if(c){
-			if(readmap->groundBlockingObjectMap[squareTestY*gs->mapx+x]!=0 && readmap->groundBlockingObjectMap[squareTestY*gs->mapx+x]!=owner){
+	for (int x = x1; x <= x2; ++x) {
+		CSolidObject* c = readmap->groundBlockingObjectMap[y * gs->mapx + x];
+
+		if (c) {
+			if (readmap->groundBlockingObjectMap[squareTestY * gs->mapx + x] != 0 &&
+				readmap->groundBlockingObjectMap[squareTestY * gs->mapx + x] != owner) {
 				continue;
 			}
-			if(c->mobility){		//if other part is mobile start to skuff it out of the way
-				float part=owner->mass/(owner->mass+c->mass*2);
-				float3 dif=c->pos-owner->pos;
-				float dl=dif.Length();
-				float colDepth=fabs(owner->pos.z-zmove);
-				dif*=colDepth/dl;
+			if (c->mobility) {
+				// if other party is mobile, start to skuff it out of the way
+				float part = owner->mass / (owner->mass + c->mass * 2);
+				float3 dif = c->pos - owner->pos;
+				float dl = dif.Length();
+				float colDepth = fabs(owner->pos.z - zmove);
+				dif *= colDepth / dl;
 
-				owner->pos-=dif*(1-part);
-				c->pos+=dif*(part);
-				CUnit* u=(CUnit*)c;		//only units can be mobile
-				u->midPos=u->pos+u->frontdir*u->relMidPos.z + u->updir*u->relMidPos.y + u->rightdir*u->relMidPos.x;
+				// adjust our own position a
+				// bit so we have to turn less
+				owner->pos -= dif * (1 - part);
+				// safe cast (only units can be mobile)
+				CUnit* u = (CUnit*) c;
 
-				if(!(gs->frameNum+owner->id & 31) && !owner->commandAI->unimportantMove){
-					helper->BuggerOff(owner->pos+owner->frontdir*owner->radius,owner->radius,owner);
+				if (!u->unitDef->pushResistant) {
+					// push the blocking unit out of the way
+					c->pos += dif * (part);
+					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+				}
+
+				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+					// if we (MT owner) are doing something important, tell units around us to bugger off
+					helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 				}
 			}
-			MoveData  *m=owner->mobility->moveData;		//if other part can be overrun then overrun it
-			if (!m->moveMath->IsBlocking(*m,c)) {
-				float3 fix = owner->frontdir*currentSpeed*200;
+
+			MoveData* m = owner->mobility->moveData;
+
+			// if other party can be overrun then overrun it
+			if (!m->moveMath->IsBlocking(*m, c)) {
+				float3 fix = owner->frontdir * currentSpeed * 200;
 				c->Kill(fix);
 			}
-			if(readmap->groundBlockingObjectMap[y*gs->mapx+x1]==0)		//hack to make them find openings easier till the pathfinder can do it itself
-				owner->pos.x-=fabs(owner->pos.z-zmove)*0.5f;
-			if(readmap->groundBlockingObjectMap[y*gs->mapx+x2]==0)
-				owner->pos.x+=fabs(owner->pos.z-zmove)*0.5f;
 
-			owner->pos.z=zmove;
-			currentSpeed*=0.97f;
+			// hack to make units find openings easier until the pathfinder can do it itself
+			if (readmap->groundBlockingObjectMap[y * gs->mapx + x1] == 0)
+				owner->pos.x -= fabs(owner->pos.z - zmove) * 0.5f;
+			if (readmap->groundBlockingObjectMap[y * gs->mapx + x2] == 0)
+				owner->pos.x += fabs(owner->pos.z - zmove) * 0.5f;
+
+			owner->pos.z = zmove;
+			currentSpeed *= 0.97f;
 			return true;
 		}
 	}
 
 	return false;
 }
+
+
 
 //creates the tables used to see if we should advance to next pathfinding waypoint
 void CGroundMoveType::CreateLineTable(void)
