@@ -1,10 +1,11 @@
+#include <SDL_keysym.h>
+#include <SDL_types.h>
 #include "FreeController.h"
 
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "SDL_keysym.h"
 
 using namespace std;
 extern Uint8 *keys;

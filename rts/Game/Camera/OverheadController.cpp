@@ -1,12 +1,14 @@
+#include <SDL_keysym.h>
+#include <SDL_types.h>
 #include "OverheadController.h"
 
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
+#include "Game/UI/MouseHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "SDL_keysym.h"
-#include "Game/UI/MouseHandler.h"
-#include "Game/CameraHandler.h"
+
 
 
 extern Uint8 *keys;
