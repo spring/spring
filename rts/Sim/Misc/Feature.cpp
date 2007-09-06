@@ -335,17 +335,28 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse)
 {
-	residualImpulse=impulse;
-	health-=damages[0];
-	if(health<=0 && def->destructable){
-		featureHandler->CreateWreckage(pos, def->deathFeature, heading,
-		                               buildFacing, 1, team, -1, false, "");
-		featureHandler->DeleteFeature(this);
-		blockHeightChanges=false;
+	residualImpulse = impulse;
+	health -= damages[0];
 
-		if(def->drawType==DRAWTYPE_TREE){
-			if(impulse.Length2D()>0.5f){
-				treeDrawer->AddFallingTree(pos,impulse,def->modelType);
+	if (health <= 0 && def->destructable) {
+		CFeature* deathFeature = featureHandler->CreateWreckage(
+			pos, def->deathFeature, heading,
+			buildFacing, 1, team, -1, false, ""
+		);
+
+		if (deathFeature) {
+			// if a partially reclaimed corpse got blasted,
+			// ensure its wreck is not worth the full amount
+			// (which might be more than the amount remaining)
+			deathFeature->reclaimLeft = reclaimLeft;
+		}
+
+		featureHandler->DeleteFeature(this);
+		blockHeightChanges = false;
+
+		if (def->drawType == DRAWTYPE_TREE) {
+			if (impulse.Length2D() > 0.5f) {
+				treeDrawer->AddFallingTree(pos, impulse, def->modelType);
 			}
 		}
 	}
@@ -550,13 +561,15 @@ int CFeature::ChunkNumber(float f)
 
 float CFeature::RemainingResource(float res) const
 {
-	// Old style - all reclaimed at the end
-	if(modInfo->reclaimMethod == 0)
-		return res * reclaimLeft;
-
 	// Gradual reclaim
-	if(modInfo->reclaimMethod == 1)
+	if (modInfo->reclaimMethod == 0) {
+		return res * reclaimLeft;
+	}
+
+	// Old style - all reclaimed at the end
+	if (modInfo->reclaimMethod == 1) {
 		return res;
+	}
 
 	// Otherwise we are doing chunk reclaiming
 	float chunkSize = res / modInfo->reclaimMethod; // resource/no_chunks
