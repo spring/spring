@@ -2593,6 +2593,9 @@ bool CGame::ClientReadNet()
 		case NETMSG_QUIT:
 			logOutput.Print("Server exited");
 			// net->connected=false;
+			lastLength = 1;
+			inbufpos += lastLength;
+			lastMsg = thisMsg;
 			POP_CODE_MODE;
 			return gameOver;
 
@@ -3147,12 +3150,12 @@ bool CGame::ClientReadNet()
 			}
 			break;
 		}
-		if(lastLength<=0){
-			logOutput.Print("Client readnet got packet type %i length %i pos %i??",thisMsg,lastLength,inbufpos);
-			lastLength=0;
+		if(lastLength <= 0) {
+			logOutput.Print("Client readnet got packet type %i length %i pos %i??", thisMsg, lastLength, inbufpos);
+			lastLength = 0;
 		}
-		inbufpos+=lastLength;
-		lastMsg=thisMsg;
+		inbufpos += lastLength;
+		lastMsg = thisMsg;
 	}
 	POP_CODE_MODE;
 	return true;
