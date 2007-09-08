@@ -262,7 +262,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.projectilespeed = wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED;
 	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
-	wd.weaponacceleration = wdTable.GetFloat("weaponAacceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
+	wd.weaponacceleration = wdTable.GetFloat("weaponAcceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
 	wd.reload = wdTable.GetFloat("reloadtime", 1.0f);
 	wd.salvodelay = wdTable.GetFloat("burstrate", 0.1f);
 	wd.salvosize = wdTable.GetInt("burst", 1);

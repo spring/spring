@@ -219,7 +219,7 @@ std::wstringstream& operator<<(std::wstringstream& str, const DemoFileHeader& he
 	str<<L"Magic: "<<header.magic<<endl;
 	str<<L"Version: "<<header.version<<endl;
 	str<<L"HeaderSize: "<<header.headerSize<<endl;
-	str<<L"VersionStr: "<<header.versionStr<<endl;
+	str<<L"VersionString: "<<header.versionString<<endl;
 	str<<L"GameID: "<<idbuf<<endl;
 	str<<L"UnixTime: "<<header.unixTime<<endl;
 	str<<L"ScriptPtr: "<<header.scriptPtr<<endl;
@@ -228,12 +228,14 @@ std::wstringstream& operator<<(std::wstringstream& str, const DemoFileHeader& he
 	str<<L"DemoStreamSize: "<<header.demoStreamSize<<endl;
 	str<<L"GameTime: "<<header.gameTime<<endl;
 	str<<L"WallclockTime: "<<header.wallclockTime<<endl;
-	str<<L"NumberOfPlayers: "<<header.numberOfPlayers<<endl;
+	str<<L"NumPlayers: "<<header.numPlayers<<endl;
 	str<<L"PlayerStatPtr: "<<header.playerStatPtr<<endl;
 	str<<L"PlayerStatSize: "<<header.playerStatSize<<endl;
-	str<<L"NumberOfTeams: "<<header.numberOfTeams<<endl;
+	str<<L"PlayerStatElemSize: "<<header.playerStatElemSize<<endl;
+	str<<L"NumTeams: "<<header.numTeams<<endl;
 	str<<L"TeamStatPtr: "<<header.teamStatPtr<<endl;
 	str<<L"TeamStatSize: "<<header.teamStatSize<<endl;
+	str<<L"TeamStatElemSize: "<<header.teamStatElemSize<<endl;
 	str<<L"TeamStatPeriod: "<<header.teamStatPeriod<<endl;
 	str<<L"WinningAllyTeam: "<<header.winningAllyTeam<<endl;
 	return str;
@@ -278,36 +280,60 @@ std::wstringstream& operator<<(std::wstringstream& str, const TeamStatistics& he
 
 static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 {
+	// Open the file for binary reading.
 	boost::filesystem::ifstream file(source_file, std::ios_base::binary);
+
+	// Allocate some space on the stack for our header and stat items.
 	DemoFileHeader fileHeader;
 	PlayerStatistics playerStats;
 	TeamStatistics teamStats;
 
+	// Start by reading the DemoFileHeader.
 	file.read((char*)&fileHeader, sizeof(fileHeader));
 
+	// Check whether the DemoFileHeader contains the right magic,
+	// is of the right version and the right size.
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) ||
 			fileHeader.version != DEMOFILE_VERSION ||
-			fileHeader.headerSize != sizeof(DemoFileHeader)) {
+			fileHeader.headerSize != sizeof(DemoFileHeader) ||
+			fileHeader.playerStatElemSize != sizeof(PlayerStatistics) ||
+			fileHeader.teamStatElemSize != sizeof(TeamStatistics)) {
 		throw demofile_exception(source_file, L"Corrupt demofile.");
 	}
 
+	// Write out the DemoFileHeader.
 	message<<fileHeader<<endl;
 
+	// Seek to the player statistics.
 	file.seekg(fileHeader.playerStatPtr);
 
-	for (int playerNum = 0; playerNum < fileHeader.numberOfPlayers; ++playerNum) {
+	// Loop through all players and read and output the statistics for each.
+	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		file.read((char*)&playerStats, sizeof(playerStats));
 		message<<L"-- Player statistics for player "<<playerNum<<L" --"<<endl;
 		message<<playerStats<<endl;
 	}
 
+	// Seek to the team statistics.
 	file.seekg(fileHeader.teamStatPtr);
 
-	for (int teamNum = 0; teamNum < fileHeader.numberOfTeams; ++teamNum) {
-		for (int time = 0; time < fileHeader.gameTime; time += fileHeader.teamStatPeriod) {
+	// Read the array containing the number of team stats for each team.
+	int* numStatsPerTeam = new int[fileHeader.numTeams];
+	file.read((char*)numStatsPerTeam, sizeof(int) * fileHeader.numTeams);
+
+	// Loop through all team stats for each team and read and output them.
+	// We keep track of the gametime while reading the stats for a team so we
+	// can output it too.
+	for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
+		int time = 0;
+		for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 			file.read((char*)&teamStats, sizeof(teamStats));
 			message<<L"-- Team statistics for team "<<teamNum<<L", game second "<<time<<L" --"<<endl;
 			message<<teamStats<<endl;
+			time += fileHeader.teamStatPeriod;
 		}
 	}
+
+	// Clean up.
+	delete[] numStatsPerTeam;
 }

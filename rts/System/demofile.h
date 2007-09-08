@@ -31,7 +31,11 @@ Demo file layout is like this:
 		- Startscript (scriptPtr, scriptSize)
 		- Demo stream (demoStreamPtr, demoStreamSize)
 		- Player statistics, one PlayerStatistic for each player
-		- Team statistics, gameTime/teamStatPeriod CTeam::Statistics for each player
+		- Team statistics, consisting of:
+			- Array of numTeams dwords indicating the number of
+			  CTeam::Statistics for each team.
+			- Array of all CTeam::Statistics (total number of items is the
+			  sum of the elements in the array of dwords).
 
 The header is designed to be extensible: it contains a version field and a
 headerSize field to support this. The version field is a major version number
@@ -44,26 +48,28 @@ can be assumed the demo stream continues until the end of the file.
 */
 struct DemoFileHeader
 {
-	char magic[16];      ///< DEMOFILE_MAGIC
-	int version;         ///< DEMOFILE_VERSION
-	int headerSize;      ///< Size of the DemoFileHeader, minor version number.
-	char versionStr[16]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
-	Uint8 gameID[16];    ///< Unique game identifier. Identical for each player of the game.
-	Uint64 unixTime;     ///< Unix time when game was started.
-	int scriptPtr;       ///< File offset to startscript.
-	int scriptSize;      ///< Size of startscript.
-	int demoStreamPtr;   ///< File offset to the demo stream.
-	int demoStreamSize;  ///< Size of the demo stream.
-	int gameTime;        ///< Total number of seconds game time.
-	int wallclockTime;   ///< Total number of seconds wallclock time.
-	int numberOfPlayers; ///< Number of players for which stats are saved.
-	int playerStatPtr;   ///< File offset to player stats, 0 if not available.
-	int playerStatSize;  ///< Size of the player statistics chunk.
-	int numberOfTeams;   ///< Number of teams for which stats are saved.
-	int teamStatPtr;     ///< File offset to team stats, 0 if not available.
-	int teamStatSize;    ///< Size of the team statistics chunk.
-	int teamStatPeriod;  ///< Interval (in seconds) between team stats.
-	int winningAllyTeam; ///< The ally team that won the game, -1 if unknown.
+	char magic[16];         ///< DEMOFILE_MAGIC
+	int version;            ///< DEMOFILE_VERSION
+	int headerSize;         ///< Size of the DemoFileHeader, minor version number.
+	char versionString[16]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
+	Uint8 gameID[16];       ///< Unique game identifier. Identical for each player of the game.
+	Uint64 unixTime;        ///< Unix time when game was started.
+	int scriptPtr;          ///< File offset to startscript.
+	int scriptSize;         ///< Size of startscript.
+	int demoStreamPtr;      ///< File offset to the demo stream.
+	int demoStreamSize;     ///< Size of the demo stream.
+	int gameTime;           ///< Total number of seconds game time.
+	int wallclockTime;      ///< Total number of seconds wallclock time.
+	int numPlayers;         ///< Number of players for which stats are saved.
+	int playerStatPtr;      ///< File offset to player stats, 0 if not available.
+	int playerStatSize;     ///< Size of the entire player statistics chunk.
+	int playerStatElemSize; ///< sizeof(CPlayer::Statistics)
+	int numTeams;           ///< Number of teams for which stats are saved.
+	int teamStatPtr;        ///< File offset to team stats, 0 if not available.
+	int teamStatSize;       ///< Size of the entire team statistics chunk.
+	int teamStatElemSize;   ///< sizeof(CTeam::Statistics)
+	int teamStatPeriod;     ///< Interval (in seconds) between team stats.
+	int winningAllyTeam;    ///< The ally team that won the game, -1 if unknown.
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
@@ -76,12 +82,14 @@ struct DemoFileHeader
 		demoStreamSize = swabdword(demoStreamSize);
 		gameTime = swabdword(gameTime);
 		wallclockTime = swabdword(wallclockTime);
-		numberOfPlayers = swabdword(numberOfPlayers);
+		numPlayers = swabdword(numPlayers);
 		playerStatPtr = swabdword(playerStatPtr);
 		playerStatSize = swabdword(playerStatSize);
-		numberOfTeams = swabdword(numberOfTeams);
+		playerStatElemSize = swabdword(playerStatElemSize);
+		numTeams = swabdword(numTeams);
 		teamStatPtr = swabdword(teamStatPtr);
 		teamStatSize = swabdword(teamStatSize);
+		teamStatElemSize = swabdword(teamStatElemSize);
 		teamStatPeriod = swabdword(teamStatPeriod);
 		winningAllyTeam = swabdword(winningAllyTeam);
 	}

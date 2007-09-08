@@ -49,7 +49,7 @@ CDemoRecorder::CDemoRecorder()
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	strcpy(fileHeader.versionStr, VERSION_STRING);
+	strcpy(fileHeader.versionString, VERSION_STRING);
 
 	__time64_t currtime;
 	_time64(&currtime);
@@ -71,6 +71,9 @@ CDemoRecorder::CDemoRecorder()
 		fileHeader.demoStreamPtr = fileHeader.headerSize;
 	}
 
+	fileHeader.playerStatElemSize = sizeof(CPlayer::Statistics);
+	fileHeader.teamStatElemSize = sizeof(CTeam::Statistics);
+	fileHeader.teamStatPeriod = CTeam::statsPeriod;
 	fileHeader.winningAllyTeam = -1;
 
 	WriteFileHeader();
@@ -149,9 +152,8 @@ void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
 
 void CDemoRecorder::InitializeStats(int numPlayers, int numTeams, int winningAllyTeam)
 {
-	fileHeader.numberOfPlayers = numPlayers;
-	fileHeader.numberOfTeams = numTeams;
-	fileHeader.teamStatPeriod = CTeam::statsPeriod;
+	fileHeader.numPlayers = numPlayers;
+	fileHeader.numTeams = numTeams;
 	fileHeader.winningAllyTeam = winningAllyTeam;
 
 	playerStats.resize(numPlayers);
@@ -197,7 +199,7 @@ void CDemoRecorder::WriteFileHeader()
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
 void CDemoRecorder::WritePlayerStats()
 {
-	if (fileHeader.numberOfPlayers == 0)
+	if (fileHeader.numPlayers == 0)
 		return;
 
 	fileHeader.playerStatPtr = recordDemo->tellp();
@@ -210,20 +212,23 @@ void CDemoRecorder::WritePlayerStats()
 	playerStats.clear();
 
 	fileHeader.playerStatSize = (int)recordDemo->tellp() - fileHeader.playerStatPtr;
-
-	int wanted = sizeof(CPlayer::Statistics) * fileHeader.numberOfPlayers;
-	if (fileHeader.playerStatSize != wanted)
-		logOutput.Print("Invalid playerStatSize in CDemoRecorder::WritePlayerStats (%d instead of %d)", fileHeader.playerStatSize, wanted);
 }
 
 /** @brief Write the CTeam::Statistics at the current position in the file. */
 void CDemoRecorder::WriteTeamStats()
 {
-	if (fileHeader.numberOfTeams == 0)
+	if (fileHeader.numTeams == 0)
 		return;
 
 	fileHeader.teamStatPtr = recordDemo->tellp();
 
+	// Write array of dwords indicating number of CTeam::Statistics per team. 
+	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
+		unsigned int c = swabdword(it->size());
+		recordDemo->write((char*)&c, sizeof(unsigned int));
+	}
+
+	// Write big array of CTeam::Statistics.
 	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		for (std::vector< CTeam::Statistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			CTeam::Statistics& stats = *it2;
@@ -234,11 +239,6 @@ void CDemoRecorder::WriteTeamStats()
 	teamStats.clear();
 
 	fileHeader.teamStatSize = (int)recordDemo->tellp() - fileHeader.teamStatPtr;
-
-	int wanted = sizeof(CTeam::Statistics) *
-		(1 + fileHeader.numberOfTeams * (fileHeader.gameTime / fileHeader.teamStatPeriod));
-	if (fileHeader.teamStatSize != wanted)
-		logOutput.Print("Invalid teamStatSize in CDemoRecorder::WriteTeamStats (%d instead of %d)", fileHeader.teamStatSize, wanted);
 }
 
 /////////////////////////////////////
@@ -271,7 +271,7 @@ CDemoReader::CDemoReader(const std::string& filename)
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) ||
 			fileHeader.version != DEMOFILE_VERSION ||
 			fileHeader.headerSize != sizeof(fileHeader) ||
-			strcmp(fileHeader.versionStr, VERSION_STRING)) {
+			strcmp(fileHeader.versionString, VERSION_STRING)) {
 		logOutput.Print("Demofile corrupt or created by a different version of Spring: %s", filename.c_str());
 		delete playbackDemo;
 		playbackDemo = NULL;
