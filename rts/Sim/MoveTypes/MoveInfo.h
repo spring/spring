@@ -41,8 +41,6 @@ public:
 	unsigned int moveInfoChecksum;
 
 	float terrainType2MoveFamilySpeed[256][4];
-protected:
-	//bool ClassExists(int num);
 };
 
 extern CMoveInfo* moveinfo;
