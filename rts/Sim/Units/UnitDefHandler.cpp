@@ -707,8 +707,8 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 			if (fileName.empty()) {
 				break;
 			}
+			LoadSound(gsound, fileName, 5.0f);
 		}
-		LoadSound(gsound, fileName, 5.0f);
 	}
 }
 
