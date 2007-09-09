@@ -77,7 +77,7 @@ end
 
 local function StripBlockComments(text)
 --  return string.gsub(text, '/%*.*%*/', '')
-  return string.gsub(text, '/%*.*%*/', ReplaceWithSpaces)
+  return string.gsub(text, '/%*.-%*/', ReplaceWithSpaces)
 end
 
 
