@@ -202,9 +202,6 @@ class CEconomyTracker {
 		float oldEnergy;
 		float oldMetal;
 
-		float myCalcEnergy;
-		float myCalcMetal;
-
 		float constructionEnergy;
 		float constructionMetal;
 

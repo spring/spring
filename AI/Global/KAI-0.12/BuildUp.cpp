@@ -22,11 +22,22 @@ void CBuildUp::Update(int frame) {
 		ai->tm->Create();
 		Buildup(frame);
 
-		bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * 0.9);
-		bool b2 = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.3);
-		bool b3 = (ai->cb->GetMetalIncome()) > (ai->cb->GetMetalUsage() * 1.3);
+		// KLOOTNOTE: b1 will be false if we
+		// have huge amounts of metal storage,
+		// so make multiplier variable (more
+		// or less assumes a starting storage
+		// capacity of 1000)
+		float m = 900.0f / (ai->cb->GetMetalStorage());
+		bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * m);
+		bool b2 = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.3f);
+		bool b3 = (ai->cb->GetMetalIncome()) > (ai->cb->GetMetalUsage() * 1.3f);
 
-		if (b1 && b2 && b3 && builderTimer > 0 && !(rand() % 3) && frame > 3600) {
+		if ((b1 && b2 && b3) && builderTimer > 0 && !(rand() % 3) && frame > 3600) {
+			// decrease builderTime iif we have more metal
+			// than 90% of our metal storage capacity and
+			// we are generating more than 130% the amount
+			// of M and E used (meaning we have excess M
+			// and are over-producing M and E)
 			builderTimer--;
 		}
 
@@ -50,14 +61,18 @@ void CBuildUp::Buildup(int frame) {
 	float eStorage = ai->cb->GetEnergyStorage();
 	float mUsage = ai->cb->GetMetalUsage();
 	float eUsage = ai->cb->GetEnergyUsage();
-	bool makersOn = ai->uh->metalMaker->AllAreOn();		// are all our metal makers active?
+	bool makersOn = ai->uh->metalMaker->AllAreOn();
 
-	bool mLevel50 = (mLevel) < (mStorage * 0.5f);		// is our current metal level less than 50% of our current metal storage capacity?
-	bool eLevel50 = (eLevel) > (eStorage * 0.5f);		// is our current energy level more than 50% of our current energy storage capacity?
-	bool eLevel80 = (eLevel) > (eStorage * 0.8f);		// is our current energy level more than 80% of our current energy storage capacity?
+	float m1 = 500.0f / mStorage;					// 0.5f
+	float m2 = 200.0f / mStorage;					// 0.2f
+	float e1 = 500.0f / eStorage;					// 0.5f
+	float e2 = 800.0f / eStorage;					// 0.8f
+	bool mLevel50 = (mLevel < (mStorage * m1));		// is our current metal level less than 50% of our current metal storage capacity?
+	bool eLevel50 = (eLevel > (eStorage * e1));		// is our current energy level more than 50% of our current energy storage capacity?
+	bool eLevel80 = (eLevel > (eStorage * e2));		// is our current energy level more than 80% of our current energy storage capacity?
 
-	bool mStall = (mIncome) < (mUsage * 1.3f);			// are we currently producing less metal than we are currently expending * 1.3?
-	bool eStall = (eIncome) < (eUsage * 1.6f);			// are we currently producing less energy than we are currently expending * 1.6?
+	bool mStall = (mIncome < (mUsage * 1.3f));		// are we currently producing less metal than we are currently expending * 1.3?
+	bool eStall = (eIncome < (eUsage * 1.6f));		// are we currently producing less energy than we are currently expending * 1.6?
 
 
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
@@ -74,7 +89,7 @@ void CBuildUp::Buildup(int frame) {
 		const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
 		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builder, CAT_FACTORY);
 
-		// KLOOTNOTE: check unit-limit before building something
+		// KLOOTNOTE TODO: check unit-limit before building something
 		// int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
 		// int factoriesOfTypeMax = factoryDef->maxThisUnit;
 
@@ -205,14 +220,16 @@ void CBuildUp::Buildup(int frame) {
 	}
 
 
-	bool b1 = ((eLevel > (eStorage * 0.8f)) || (eIncome > 6000.0f && eUsage < eIncome));
-	bool b2 = ((mLevel > (mStorage * 0.2f)) || (mIncome > 100.0f && mUsage < mIncome));
+	bool b1 = ((eLevel > (eStorage * e2)) || (eIncome > 6000.0f && eUsage < eIncome));
+	bool b2 = ((mLevel > (mStorage * m2)) || (mIncome > 100.0f && mUsage < mIncome));
 
-	if (b1 && b2)
+	if (b1 && b2) {
 		FactoryCycle();
+	}
 
-	if (buildNukeSilo)
+	if (buildNukeSilo) {
 		NukeSiloCycle();
+	}
 }
 
 

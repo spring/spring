@@ -9,8 +9,6 @@ CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 	constructionMetalSum = 0;
 	constructionEnergy = 0;
 	constructionMetal = 0;
-	myCalcEnergy = ai->cb->GetEnergy();
-	myCalcMetal = ai->cb->GetMetal();
 
 	for (int i = 0; i < LASTCATEGORY; i++) {
 		allTheBuildingTrackers[i] = new list<BuildingTracker>;
@@ -130,19 +128,8 @@ void CEconomyTracker::frameUpdate(int frame) {
 	float metal = ai->cb->GetMetal();
 	// float deltaEnergy = energy - oldEnergy + constructionEnergy;
 	// float deltaMetal = metal - oldMetal + constructionMetal;
-	myCalcEnergy -= constructionEnergy;
-	myCalcMetal -= constructionMetal;
 
 	if (frame % 16 == 0) {
-		// add the activeEconomyUnitTrackers change now
-		myCalcEnergy += energyProduction - energyUsage;
-		myCalcMetal += metalProduction - metalUsage;
-
-		if (myCalcEnergy > ai->cb->GetEnergyStorage())
-			myCalcEnergy = ai->cb->GetEnergyStorage();
-		if (myCalcMetal > ai->cb->GetMetalStorage())
-			myCalcMetal = ai->cb->GetMetalStorage();
-
 		makePrediction(frame + 320 + 160);
 	}
 
