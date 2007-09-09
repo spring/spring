@@ -90,7 +90,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	lua_pushstring(L, "springCategories");
 	lua_newtable(L);
 	for (int i = 0; i < (int)cats.size(); i++) {
-		LuaPushNamedBool(L, cats[i], true);
+		LuaPushNamedNumber(L, StringToLower(cats[i]), i);
 	}
 	lua_rawset(L, -3);
 

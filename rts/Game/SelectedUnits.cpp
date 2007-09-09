@@ -233,12 +233,13 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 //	logOutput.Print("Command given %i",c.id);
-	if(gu->spectating || selectedUnits.empty())
+	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
 		return;
+	}
 
-	if(fromUser){		//add some statistics
+	if (fromUser) {		//add some statistics
 		gs->players[gu->myPlayerNum]->currentStats->numCommands++;
-		if(selectedGroup!=-1){
+		if (selectedGroup!=-1) {
 			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
 		} else {
 			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=selectedUnits.size();
@@ -790,7 +791,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 {
 	// NOTE: does not check for invalid unitIDs
 
-	if (gu->spectating) {
+	if (gu->spectating && !gs->godMode) {
 		return; // don't waste bandwidth
 	}
 

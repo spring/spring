@@ -42,7 +42,7 @@ local spGiveOrderToUnit = Spring.GiveOrderToUnit
 --------------------------------------------------------------------------------
 
 local function SetupUnit(unitID)
-  -- set immobile builders (nanotowers) to the ROAM movestate,
+  -- set immobile builders (nanotowers?) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
   local x, y, z = spGetUnitPosition(unitID)
   spGiveOrderToUnit(unitID, CMD_STOP, {}, {})

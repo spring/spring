@@ -253,6 +253,13 @@ public:
 	int tempNum;
 
 	/**
+	 * @brief god mode
+	 *
+	 * Whether god mode is enabled, allows all players to control all units (even specs)
+	 */
+	bool godMode;
+
+	/**
 	 * @brief cheat enabled
 	 *
 	 * Whether cheating is enabled

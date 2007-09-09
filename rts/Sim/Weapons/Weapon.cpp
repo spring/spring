@@ -458,6 +458,7 @@ bool CWeapon::AttackUnit(CUnit *unit, bool userTarget)
 	return true;
 }
 
+
 void CWeapon::HoldFire()
 {
 	if(targetUnit){
@@ -468,10 +469,34 @@ void CWeapon::HoldFire()
 	haveUserTarget=false;
 }
 
+
 void CWeapon::SlowUpdate()
 {
 	SlowUpdate(false);
 }
+
+
+inline bool CWeapon::ShouldCheckForNewTarget() const
+{
+	if (weaponDef->noAutoTarget) { return false; }
+	if (owner->fireState < 2)    { return false; }
+	if (haveUserTarget)          { return false; }
+
+	if (targetType == Target_None) { return true; }
+
+	if (targetType == Target_Unit) {
+		if (targetUnit->category & badTargetCategory) {
+			return true;
+		}
+	}
+
+	if (gs->frameNum > (lastTargetRetry + 65)) {
+		return true;
+	}
+
+	return false;
+}
+
 
 void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 {
@@ -535,47 +560,55 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		return;
 	}
 
+/*		owner->fireState>=2 && !haveUserTarget &&
 	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
-		if (owner->fireState==2 && !haveUserTarget &&
 		    ((targetType == Target_None) ||
 		     ((targetType == Target_Unit) &&
-		      (targetUnit->category & badTargetCategory)) ||
+		      ((targetUnit->category & badTargetCategory) ||
+		       (targetUnit->neutral && (owner->fireState < 3)))) ||
 		     (gs->frameNum > lastTargetRetry + 65))) {
-			lastTargetRetry=gs->frameNum;
-			std::map<float,CUnit*> targets;
-			helper->GenerateTargets(this,targetUnit,targets);
+*/
+	if (!noAutoTargetOverride && ShouldCheckForNewTarget()) {
+		lastTargetRetry = gs->frameNum;
+		std::map<float, CUnit*> targets;
+		helper->GenerateTargets(this, targetUnit, targets);
 
-			for(std::map<float,CUnit*>::iterator ti=targets.begin();ti!=targets.end();++ti){
-				if(targetUnit && (ti->second->category & badTargetCategory))
-					continue;
-				float3 tp(ti->second->midPos);
-				tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0f-owner->limExperience));
-				float appHeight=ground->GetApproximateHeight(tp.x,tp.z)+2;
-				if(tp.y < appHeight)
-					tp.y=appHeight;
+		for (std::map<float,CUnit*>::iterator ti=targets.begin();ti!=targets.end();++ti) {
+			if (ti->second->neutral && (owner->fireState < 3)) {
+				continue;
+			}
+			if (targetUnit && (ti->second->category & badTargetCategory)) {
+				continue;
+			}
+			float3 tp(ti->second->midPos);
+			tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0f-owner->limExperience));
+			float appHeight=ground->GetApproximateHeight(tp.x,tp.z)+2;
+			if (tp.y < appHeight) {
+				tp.y = appHeight;
+			}
 
-				if(TryTarget(tp,false,ti->second)){
-					if(targetUnit){
-						DeleteDeathDependence(targetUnit);
-					}
-					targetType=Target_Unit;
-					targetUnit=ti->second;
-					targetPos=tp;
-					AddDeathDependence(targetUnit);
-					break;
+			if (TryTarget(tp, false, ti->second)) {
+				if (targetUnit) {
+					DeleteDeathDependence(targetUnit);
 				}
+				targetType = Target_Unit;
+				targetUnit = ti->second;
+				targetPos = tp;
+				AddDeathDependence(targetUnit);
+				break;
 			}
 		}
 	}
-	if(targetType!=Target_None){
-		owner->haveTarget=true;
-		if(haveUserTarget)
-			owner->haveUserTarget=true;
+	if (targetType != Target_None) {
+		owner->haveTarget = true;
+		if (haveUserTarget) {
+			owner->haveUserTarget = true;
+		}
 	} else {	//if we cant target anything try switching aim point
-		if(useWeaponPosForAim && useWeaponPosForAim==1){
-			useWeaponPosForAim=0;
+		if (useWeaponPosForAim && (useWeaponPosForAim == 1)) {
+			useWeaponPosForAim = 0;
 		} else {
-			useWeaponPosForAim=1;
+			useWeaponPosForAim = 1;
 		}
 	}
 }

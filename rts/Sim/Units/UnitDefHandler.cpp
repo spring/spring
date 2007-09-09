@@ -488,7 +488,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.TEDClassString = TEDClass;
 	ud.extractRange = 0;
 
-	if(ud.extractsMetal) {
+	if (ud.extractsMetal) {
 		ud.extractRange = readmap->extractorRadius;
 		ud.type = "MetalExtractor";
 	}
@@ -496,7 +496,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if (TEDClass!="PLANT") {
+		if (TEDClass != "PLANT") {
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";
@@ -521,7 +521,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.type = "Building";
 	}
 
-	ud.movedata=0;
+	ud.movedata = 0;
 	if (ud.canmove && !ud.canfly && (ud.type != "Factory")) {
 		string moveclass = udTable.GetString("movementClass", "");
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
@@ -609,13 +609,13 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.buildingDecalType = groundDecals->GetBuildingDecalType(udTable.GetString("buildingGroundDecalType", ""));
 	}
 
-	ud.canDropFlare = udTable.GetBool("canDropFlare", false);
-	ud.flareReloadTime = udTable.GetFloat("flareReload", 5.0f);
+	ud.canDropFlare    = udTable.GetBool("canDropFlare", false);
+	ud.flareReloadTime = udTable.GetFloat("flareReload",     5.0f);
+	ud.flareDelay      = udTable.GetFloat("flareDelay",      0.3f);
 	ud.flareEfficiency = udTable.GetFloat("flareEfficiency", 0.5f);
-	ud.flareDelay = udTable.GetFloat("flareDelay", 0.3f);
 	ud.flareDropVector = udTable.GetFloat3("flareDropVector", ZeroVector);
 	ud.flareTime       = udTable.GetInt("flareTime", 3) * 30;
-	ud.flareSalvoSize  = udTable.GetInt("flareSalvoSize", 4);
+	ud.flareSalvoSize  = udTable.GetInt("flareSalvoSize",  4);
 	ud.flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * 30;
 
 	ud.smoothAnim = udTable.GetBool("smoothAnim", false);
@@ -687,22 +687,34 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 {
 	string fileName = soundsTable.GetString(soundName, "");
 	if (!fileName.empty()) {
-		LoadSound(gsound, fileName);
+		LoadSound(gsound, fileName, 5.0f);
 		return;
 	}
 
 	LuaTable sndTable = soundsTable.SubTable(soundName);
 	for (int i = 1; true; i++) {
-		fileName = sndTable.GetString(i, "");
-		if (fileName.empty()) {
-			break;
+		LuaTable sndFileTable = sndTable.SubTable(i);
+		if (sndFileTable.IsValid()) {
+			fileName = sndFileTable.GetString("file", "");
+			if (!fileName.empty()) {
+				const float volume = sndFileTable.GetFloat("volume", 5.0f);
+				if (volume > 0.0f) {
+					LoadSound(gsound, fileName, volume);
+				}
+			}
+		} else {
+			fileName = sndTable.GetString(i, "");
+			if (fileName.empty()) {
+				break;
+			}
 		}
-		LoadSound(gsound, fileName);
+		LoadSound(gsound, fileName, 5.0f);
 	}
 }
 
 
-void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName)
+void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
+                                const string& fileName, float volume)
 {
 	const string soundFile = "sounds/" + fileName + ".wav";
 	CFileHandler fh(soundFile);
@@ -714,7 +726,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName)
 		const int id = sound->GetWaveId(soundFile);
 		POP_CODE_MODE;
 
-		GuiSoundSet::Data soundData(fileName, id, 5.0f);
+		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);
 	}
 }
@@ -732,16 +744,16 @@ void CUnitDefHandler::ParseUnit(const LuaTable& udTable, const string& unitName,
 	unitDefs[id].valid = true;
 
 	if (noCost) {
-		unitDefs[id].metalCost = 1;
-		unitDefs[id].energyCost = 1;
-		unitDefs[id].buildTime = 10;
-		unitDefs[id].metalUpkeep = 0;
+		unitDefs[id].metalCost    = 1;
+		unitDefs[id].energyCost   = 1;
+		unitDefs[id].buildTime    = 10;
+		unitDefs[id].metalUpkeep  = 0;
 		unitDefs[id].energyUpkeep = 0;
 	}
 }
 
 
-const UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
+const UnitDef* CUnitDefHandler::GetUnitByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
@@ -759,12 +771,12 @@ const UnitDef *CUnitDefHandler::GetUnitByName(std::string name)
 }
 
 
-const UnitDef *CUnitDefHandler::GetUnitByID(int id)
+const UnitDef* CUnitDefHandler::GetUnitByID(int id)
 {
 	if ((id <= 0) || (id > numUnitDefs)) {
 		return NULL;
 	}
-	UnitDef* ud = &unitDefs[id];
+	const UnitDef* ud = &unitDefs[id];
 	if (!ud->valid) {
 		return NULL;
 	}

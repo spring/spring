@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "MoveInfo.h"
 #include "FileSystem/FileHandler.h"
-#include "TdfParser.h"
+#include "Game/Game.h"
+#include "Lua/LuaParser.h"
 #include "LogOutput.h"
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
@@ -37,76 +38,102 @@ CR_REG_METADATA(CMoveInfo, (
 CMoveInfo* moveinfo;
 using namespace std;
 
+
+static float DegreesToMaxSlope(float degrees)
+{
+	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0));
+}
+
+
 CMoveInfo::CMoveInfo()
 {
-  TdfParser parser("gamedata/MOVEINFO.TDF");
-
-	moveInfoChecksum=0;
-
-  for(size_t num = 0;;++num) {
-    string class_name = "class" + boost::lexical_cast<std::string>(num);
-    if( ! parser.SectionExist( class_name ) )
-      break;
-	
-		MoveData* md=SAFE_NEW MoveData;
-		string name=parser.SGetValueDef("",class_name+"\\name");
-
-		md->maxSlope=1;
-		md->depth=0;
-		md->pathType=num;
-		md->crushStrength = atof(parser.SGetValueDef("10",class_name+"\\CrushStrength").c_str());
-		if(name.find("BOAT")!=string::npos || name.find("SHIP")!=string::npos){
-			md->moveType=MoveData::Ship_Move;
-			md->depth=atof(parser.SGetValueDef("10",class_name+"\\MinWaterDepth").c_str());
-//			logOutput.Print("class %i %s boat",num,name.c_str());
-			md->moveFamily=3;
-		} else if(name.find("HOVER")!=string::npos){
-			md->moveType=MoveData::Hover_Move;
-			md->maxSlope=1-cos((float)atof(parser.SGetValueDef("10",class_name+"\\MaxSlope").c_str())*1.5f*PI/180);
-			md->moveFamily=2;
-//			logOutput.Print("class %i %s hover",num,name.c_str());
-		} else {
-			md->moveType=MoveData::Ground_Move;	
-			md->depthMod=0.1f;
-			md->depth=atof(parser.SGetValueDef("0",class_name+"\\MaxWaterDepth").c_str());
-			md->maxSlope=1-cos((float)atof(parser.SGetValueDef("60",class_name+"\\MaxSlope").c_str())*1.5f*PI/180);
-//			logOutput.Print("class %i %s ground",num,name.c_str());
-			if(name.find("TANK")!=string::npos)
-				md->moveFamily=0;
-			else
-				md->moveFamily=1;
-		}
-		md->slopeMod=4/(md->maxSlope+0.001f);
-		md->size=max(2,min(8,atoi(parser.SGetValueDef("1", class_name+"\\FootprintX").c_str())*2));//ta has only half our res so multiply size with 2
-//		logOutput.Print("%f %i",md->slopeMod,md->size);
-		moveInfoChecksum+=md->size;
-		moveInfoChecksum^=*(unsigned int*)&md->slopeMod;
-		moveInfoChecksum+=*(unsigned int*)&md->depth;
-
-		moveData.push_back(md);
-		name2moveData[name]=md->pathType;
+	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("MoveDefs");
+	if (!rootTable.IsValid()) {
+		throw content_error("Error loading movement definitions");
 	}
 
-	for(int a=0;a<256;++a){
-		terrainType2MoveFamilySpeed[a][0]=readmap->terrainTypes[a].tankSpeed;
-		terrainType2MoveFamilySpeed[a][1]=readmap->terrainTypes[a].kbotSpeed;
-		terrainType2MoveFamilySpeed[a][2]=readmap->terrainTypes[a].hoverSpeed;
-		terrainType2MoveFamilySpeed[a][3]=readmap->terrainTypes[a].shipSpeed;
+	moveInfoChecksum = 0;
+
+  for (size_t num = 1; /* no test */; num++) {
+  	const LuaTable moveTable = rootTable.SubTable(num);
+  	if (!moveTable.IsValid()) {
+  		break;
+		}
+	
+		MoveData* md = SAFE_NEW MoveData;
+		const string name = moveTable.GetString("name", "");
+
+		md->pathType = (num - 1);
+		md->maxSlope = 1.0f;
+		md->depth = 0.0f;
+		md->crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
+
+		if ((name.find("BOAT") != string::npos) ||
+		    (name.find("SHIP") != string::npos)) {
+			md->moveType = MoveData::Ship_Move;
+			md->depth = moveTable.GetFloat("minWaterDepth", 10.0f);
+//			logOutput.Print("class %i %s boat", num, name.c_str());
+			md->moveFamily = 3;
+		}
+		else if (name.find("HOVER") != string::npos) {
+			md->moveType = MoveData::Hover_Move;
+//			md->maxSlope = 1.0 - cos(moveTable.GetFloat("maxSlope", 10.0f) * 1.5f * PI / 180);
+			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
+			md->moveFamily = 2;
+//			logOutput.Print("class %i %s hover", num, name.c_str());
+		}
+		else {
+			md->moveType = MoveData::Ground_Move;	
+			md->depthMod = 0.1f;
+			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
+//			md->maxSlope = 1 - cos(moveTable.GetFloat("maxSlope", 60.0f) * 1.5f * PI / 180);
+			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
+			
+//			logOutput.Print("class %i %s ground", num, name.c_str());
+			if (name.find("TANK") != string::npos) {
+				md->moveFamily = 0;
+			} else {
+				md->moveFamily = 1;
+			}
+		}
+
+		md->slopeMod = 4.0f / (md->maxSlope + 0.001f);
+
+		// TA has only half our res so multiply size with 2
+		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
+
+//		logOutput.Print("%f %i", md->slopeMod, md->size);
+		moveInfoChecksum += md->size;
+		moveInfoChecksum ^= *(unsigned int*)&md->slopeMod;
+		moveInfoChecksum += *(unsigned int*)&md->depth;
+
+		moveData.push_back(md);
+		name2moveData[name] = md->pathType;
+	}
+
+	for (int a = 0; a < 256; ++a) {
+		terrainType2MoveFamilySpeed[a][0] = readmap->terrainTypes[a].tankSpeed;
+		terrainType2MoveFamilySpeed[a][1] = readmap->terrainTypes[a].kbotSpeed;
+		terrainType2MoveFamilySpeed[a][2] = readmap->terrainTypes[a].hoverSpeed;
+		terrainType2MoveFamilySpeed[a][3] = readmap->terrainTypes[a].shipSpeed;
 	}
 }
 
+
 CMoveInfo::~CMoveInfo()
 {
-	while(!moveData.empty()){
+	while (!moveData.empty()) {
 		delete moveData.back();
 		moveData.pop_back();
 	}
 }
 
+
 MoveData* CMoveInfo::GetMoveDataFromName(std::string name)
 {
 	return moveData[name2moveData[name]];
 }
+
 
 /*bool CMoveInfo::ClassExists(int num)
 {

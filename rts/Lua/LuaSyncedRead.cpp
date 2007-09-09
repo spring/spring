@@ -158,6 +158,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
 	REGISTER_LUA_CFUNC(GetUnitLineage);
+	REGISTER_LUA_CFUNC(GetUnitNeutral);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
@@ -2272,6 +2273,17 @@ int LuaSyncedRead::GetUnitLineage(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitNeutral(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->neutral);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitHealth(lua_State* L)
 {
 	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
@@ -3672,6 +3684,7 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 
 int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 {
+	// FIXME -- finish this
 	const int unitDefID = (int)luaL_checknumber(L, 1);
 	const float x     = (float)luaL_checknumber(L, 2);
 	const float z     = (float)luaL_checknumber(L, 3);

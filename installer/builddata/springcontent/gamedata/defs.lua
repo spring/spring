@@ -11,42 +11,41 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local function Include(...)
-  return pcall(VFS.Include, ...)
-end
-
---------------------------------------------------------------------------------
-
 DEFS = {}
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-
--- UnitDefs
-local success, unitDefs = Include('gamedata/unitdefs.lua')
-if (not success) then
-  Spring.Echo("Failed to load unit definitions")
-  error(unitDefs)
+local function LoadDefs(name)
+  local filename = 'gamedata/' .. name .. '.lua'
+  local success, result = pcall(VFS.Include, filename)
+  if (not success) then
+    Spring.Echo('Failed to load ' .. name)
+    error(result)
+  end
+  if (result == nil) then
+    error('Missing lua table for ' .. name)
+  end
+  return result
 end
-DEFS.UnitDefs = unitDefs
 
 
--- FeatureDefs
-local success, featureDefs = Include('gamedata/featuredefs.lua')
-if (not success) then
-  Spring.Echo("Failed to load feature definitions")
-  error(featureDefs)
-end
-DEFS.FeatureDefs = featureDefs
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
+Spring.TimeCheck('Loading all definitions: ', function()
 
--- WeaponDefs
-local success, weaponDefs = Include('gamedata/weapondefs.lua')
-if (not success) then
-  Spring.Echo("Failed to load weapon definitions")
-  error(weaponDefs)
-end
-DEFS.WeaponDefs = weaponDefs
+  DEFS.unitDefs    = LoadDefs('unitDefs')
+
+  DEFS.featureDefs = LoadDefs('featureDefs')
+
+  DEFS.weaponDefs  = LoadDefs('weaponDefs')
+
+  DEFS.armorDefs   = LoadDefs('armorDefs')
+
+  DEFS.moveDefs    = LoadDefs('moveDefs')
+
+end)
 
 
 --------------------------------------------------------------------------------
@@ -56,9 +55,11 @@ DEFS.WeaponDefs = weaponDefs
 --
 
 return {
-  unitdefs    = unitDefs,
-  featuredefs = featureDefs,
-  weapondefs  = weaponDefs,
+  unitdefs    = DEFS.unitDefs,
+  featuredefs = DEFS.featureDefs,
+  weapondefs  = DEFS.weaponDefs,
+  armordefs   = DEFS.armorDefs,
+  movedefs    = DEFS.moveDefs,
 }
 
 --------------------------------------------------------------------------------

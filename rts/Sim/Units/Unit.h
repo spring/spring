@@ -158,6 +158,9 @@ public:
 	float limExperience;		//goes ->1 as experience go -> infinite
 	float logExperience;		//logharitm of experience
 
+	bool neutral;             // neutral allegiance, will not be automatically
+	                          // fired upon unless the fireState is set to >= 3
+
 	CUnit* soloBuilder;
 	bool beingBuilt;
 	int lastNanoAdd;					//if we arent built on for a while start decaying

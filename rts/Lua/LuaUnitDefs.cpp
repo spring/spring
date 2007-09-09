@@ -424,7 +424,8 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 static int CategorySetFromString(lua_State* L, const void* data)
 {
 	const string& str = *((const string*)data);
-	const vector<string> cats = SimpleParser::Tokenize(str, 0);
+	const string lower = StringToLower(str);
+	const vector<string> cats = SimpleParser::Tokenize(lower, 0);
 	return BuildCategorySet(L, cats);
 }
 

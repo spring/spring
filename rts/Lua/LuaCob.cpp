@@ -78,7 +78,7 @@ CLuaCob::CLuaCob()
 	readAllyTeam = AllAccessTeam;
 	selectTeam = AllAccessTeam;
 
-	Init(LuaCobSyncedFilename, LuaCobUnsyncedFilename);
+	Init(LuaCobSyncedFilename, LuaCobUnsyncedFilename, SPRING_VFS_MOD);
 }
 
 
@@ -144,13 +144,20 @@ void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
 		return;
 	}
 
-	lua_settop(L, 0);
+	if (!lua_checkstack(L, argsCount + 4)) {
+		logOutput.Print("CLuaCob::CallFunction() lua_checkstack() error: %s\n",
+		                name.GetString().c_str());
+		args[0] = 0; // failure
+		return;
+	}
+
+	const int top = lua_gettop(L);
 
 	if (!name.GetGlobalFunc(L)) {
-		lua_settop(L, 0);
 		logOutput.Print("CLuaCob::CallFunction() missing function: %s\n",
 		                name.GetString().c_str());
 		args[0] = 0; // failure
+		lua_settop(L, top);
 		return;
 	}
 
@@ -174,6 +181,7 @@ void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
 	// bail on error
 	if (error) {
 		args[0] = 0; // failure
+		lua_settop(L, top);
 		return;
 	}
 
@@ -204,6 +212,7 @@ void CLuaCob::CallFunction(const LuaHashString& name, const CUnit* unit,
 	}
 
 	args[0] = 1; // success
+	lua_settop(L, top);
 	return;
 }
 

@@ -95,6 +95,8 @@ for _, filename in ipairs(luaFiles) do
       if ((type(udName) == 'string') and (type(ud) == 'table')) then
         ud.filename = filename
         unitDefs[udName] = ud
+      else
+        Spring.Echo('Bad return table entry from: ' .. filename)
       end
     end
   end  

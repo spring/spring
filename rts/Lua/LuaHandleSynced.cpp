@@ -83,22 +83,9 @@ void CLuaHandleSynced::KillLua()
 
 /******************************************************************************/
 
-string CLuaHandleSynced::LoadMapFile(const string& filename) const
-{
-	return LoadFile(filename);
-}
-
-
-string CLuaHandleSynced::LoadModFile(const string& filename) const
-{
-	return LoadFile(filename);
-}
-
-
-/******************************************************************************/
-
 void CLuaHandleSynced::Init(const string& syncedFile,
-                            const string& unsyncedFile)
+                            const string& unsyncedFile,
+                            const string& modes)
 {
 	if (L == NULL) {
 		return;
@@ -111,8 +98,8 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		}
 	}
 	
-	const string syncedCode   = LoadFile(syncedFile);
-	const string unsyncedCode = LoadFile(unsyncedFile);
+	const string syncedCode   = LoadFile(syncedFile, modes);
+	const string unsyncedCode = LoadFile(unsyncedFile, modes);
 	if (syncedCode.empty() && unsyncedCode.empty()) {
 		KillLua();
 		return;
@@ -540,14 +527,14 @@ bool CLuaHandleSynced::LoadUnsyncedCode(const string& code, const string& debug)
 
 /******************************************************************************/
 
-string CLuaHandleSynced::LoadFile(const string& filename) const
+string CLuaHandleSynced::LoadFile(const string& filename,
+                                  const string& modes) const
 {
 	string vfsModes;
 	if (devMode) {
-		vfsModes = SPRING_VFS_RAW_FIRST;
-	} else {
-		vfsModes = SPRING_VFS_ZIP;
+		vfsModes = SPRING_VFS_RAW;
 	}
+	vfsModes += modes;
 	CFileHandler f(filename, vfsModes);
 	string code;
 	if (!f.LoadStringData(code)) {

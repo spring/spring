@@ -39,6 +39,7 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 				CR_MEMBER(userSpeedFactor),
 				CR_MEMBER(paused),
 				CR_MEMBER(tempNum),
+				CR_MEMBER(godMode),
 				CR_MEMBER(cheatEnabled),
 				CR_MEMBER(noHelperAIs),
 				CR_MEMBER(editDefsEnabled),
@@ -92,6 +93,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	speedFactor=1;
 	userSpeedFactor=1;
 	paused=false;
+	godMode=false;
 	cheatEnabled=false;
 	noHelperAIs=false;
 	editDefsEnabled=false;

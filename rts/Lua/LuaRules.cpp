@@ -99,7 +99,7 @@ CLuaRules::CLuaRules()
 	readAllyTeam = AllAccessTeam;
 	selectTeam = AllAccessTeam;
 
-	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename);
+	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
 
 	haveCommandFallback        = HasCallIn("CommandFallback");
 	haveAllowCommand           = HasCallIn("AllowCommand");
