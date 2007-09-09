@@ -72,24 +72,18 @@ CMoveInfo::CMoveInfo()
 		    (name.find("SHIP") != string::npos)) {
 			md->moveType = MoveData::Ship_Move;
 			md->depth = moveTable.GetFloat("minWaterDepth", 10.0f);
-//			logOutput.Print("class %i %s boat", num, name.c_str());
 			md->moveFamily = 3;
 		}
 		else if (name.find("HOVER") != string::npos) {
 			md->moveType = MoveData::Hover_Move;
-//			md->maxSlope = 1.0 - cos(moveTable.GetFloat("maxSlope", 10.0f) * 1.5f * PI / 180);
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = 2;
-//			logOutput.Print("class %i %s hover", num, name.c_str());
 		}
 		else {
 			md->moveType = MoveData::Ground_Move;	
 			md->depthMod = 0.1f;
 			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
-//			md->maxSlope = 1 - cos(moveTable.GetFloat("maxSlope", 60.0f) * 1.5f * PI / 180);
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
-			
-//			logOutput.Print("class %i %s ground", num, name.c_str());
 			if (name.find("TANK") != string::npos) {
 				md->moveFamily = 0;
 			} else {
@@ -102,7 +96,6 @@ CMoveInfo::CMoveInfo()
 		// TA has only half our res so multiply size with 2
 		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
 
-//		logOutput.Print("%f %i", md->slopeMod, md->size);
 		moveInfoChecksum += md->size;
 		moveInfoChecksum ^= *(unsigned int*)&md->slopeMod;
 		moveInfoChecksum += *(unsigned int*)&md->depth;
@@ -134,17 +127,3 @@ MoveData* CMoveInfo::GetMoveDataFromName(std::string name)
 	return moveData[name2moveData[name]];
 }
 
-
-/*bool CMoveInfo::ClassExists(int num)
-{
-	char class_name[100];
-	sprintf(class_name,"class%i",num);
-	
-	std::vector<string> sections=parser.GetSectionList("");
-	for(vector<string>::iterator si=sections.begin();si!=sections.end();++si){
-		if((*si)==class_name)
-			return true;
-	}
-	return false;
-}
-*/
