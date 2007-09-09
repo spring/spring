@@ -752,14 +752,16 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 	}
 
 	//pitch
-	if(speedf>0.8f){
-		if(lastColWarningType==2 && frontdir.dot(lastColWarning->midPos+lastColWarning->speed*20 - owner->midPos - owner->speed*20)<0){
+	if (speedf > 0.8f) {
+		float3 dir = lastColWarning->midPos - owner->midPos;
+		float3 sdir = lastColWarning->speed - owner->speed;
+		if (lastColWarningType == 2 && frontdir.dot(dir + sdir * 20) < 0) {
 /*			float pitchMod=updir.y>0?1:-1;
 			if(lastColWarning->pos.y>pos.y)
 				elevator=-pitchMod;
 			else
 				elevator=pitchMod;
-/*/			elevator=updir.dot(lastColWarning->midPos-owner->midPos)>0?-1:1;/**/
+/*/			elevator = updir.dot(dir) > 0 ? -1 : 1;/**/
 		} else {
 			float gHeight2=ground->GetHeight(pos.x+speed.x*40,pos.z+speed.z*40);
 			float hdif=max(gHeight,gHeight2)+wantedHeight-pos.y-frontdir.y*speedf*20;
