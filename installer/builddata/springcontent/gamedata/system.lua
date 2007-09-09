@@ -73,6 +73,9 @@ local system = {
   lowerkeys = lowerkeys,
   reftable = reftable,
 
+  --  Custom tables
+  DEFS = DEFS,
+
   --  Standard packages
   math = math,
   table = table,

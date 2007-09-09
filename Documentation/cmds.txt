@@ -28,7 +28,7 @@
 .luarules < "reload" | "disable" | <custom command> >
 .devlua   [0|1]  -- requires .cheat, allows loading non-archived scripts
 .editdefs [0|1]  -- requires .cheat,
-                 -- allows writing to UnitDefs, FeatureDefs, and WeaponDefs
+                 -- allows lua writing to UnitDefs, FeatureDefs, and WeaponDefs
 
 -- the following require .cheat
 .atm
