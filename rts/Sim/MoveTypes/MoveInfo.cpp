@@ -41,7 +41,7 @@ using namespace std;
 
 static float DegreesToMaxSlope(float degrees)
 {
-	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0));
+	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0f));
 }
 
 
