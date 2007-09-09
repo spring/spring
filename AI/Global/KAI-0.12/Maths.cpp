@@ -82,6 +82,7 @@ float CMaths::BuildTime(const UnitDef* builder,const UnitDef* built) {
 	return -1;
 }
 
+/*
 bool CMaths::FeasibleConstruction(const UnitDef* builder, const UnitDef* built, float MinMpc, float MinEpc) {
 	if (builder->buildSpeed) {
 		float buildtime = (built->buildTime) / (builder->buildSpeed);
@@ -100,12 +101,17 @@ bool CMaths::FeasibleConstruction(const UnitDef* builder, const UnitDef* built, 
 
 	return false;
 }
+*/
 
 bool CMaths::MFeasibleConstruction(const UnitDef* builder, const UnitDef* built, float MinMpc) {
 	if (builder->buildSpeed) {
 		float buildtime = (built->buildTime) / (builder->buildSpeed);
 		float Mchange = ((ai->cb->GetMetalIncome()) * ECONRATIO) - (ai->cb->GetMetalUsage()) - (built->metalCost / buildtime);
-		float ResultingRatio = (ai->cb->GetMetal()+(Mchange*buildtime)) / ai->cb->GetMetalStorage();
+		// KLOOTNOTE: dividing by actual metal storage
+		// means things become infeasible with greater
+		// M storage capacity
+		float denom = 1.0f; // ai->cb->GetMetalStorage();
+		float ResultingRatio = (ai->cb->GetMetal() + (Mchange * buildtime)) / denom;
 
 		if (ResultingRatio > MinMpc) {
 			return true;
@@ -119,7 +125,11 @@ bool CMaths::EFeasibleConstruction(const UnitDef* builder, const UnitDef* built,
 	if (builder->buildSpeed) {
 		float buildtime = (built->buildTime) / (builder->buildSpeed);
 		float Echange = ((ai->cb->GetEnergyIncome()) * ECONRATIO) - (ai->cb->GetEnergyUsage()) - (built->energyCost / buildtime);
-		float ResultingRatio = (ai->cb->GetEnergy() + (Echange * buildtime)) / (ai->cb->GetEnergyStorage());
+		// KLOOTNOTE: dividing by actual energy storage
+		// means things become infeasible with greater
+		// E storage capacity
+		float denom = 1.0f; // ai->cb->GetEnergyStorage();
+		float ResultingRatio = (ai->cb->GetEnergy() + (Echange * buildtime)) / denom;
 
 		if (ResultingRatio > MinEpc) {
 			return true;

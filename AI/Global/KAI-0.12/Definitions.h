@@ -1,8 +1,8 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-#define AI_NAME			"KAI-0.12 Unofficial"
-#define AI_DATE			"24/8/2007"
+#define AI_NAME			"KAIK 0.13 Unofficial"
+#define AI_DATE			"9/9/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
 #define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 
@@ -24,7 +24,7 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
-#define ROOTFOLDER		"AI/KAI012/"
+#define ROOTFOLDER		"AI/KAIK013/"
 
 #define LOGFOLDER		ROOTFOLDER"Logs/"
 #define METALFOLDER		ROOTFOLDER"Metal/"

@@ -747,7 +747,7 @@ void CUnitTable::CalcBuildTree(int unit) {
 		// unit has multiple ancestors at different depths
 		// in tree (eg. Adv. Vehicle Plants in XTA)
 		buildOptionType->builtByList.push_back(unit);
-		buildOptionType->techLevel = utype->techLevel + 1;
+		buildOptionType->techLevel = utype->techLevel; // + 1
 
 		if (buildOptionType->side == -1) {
 			// unit has not been checked yet, set side
