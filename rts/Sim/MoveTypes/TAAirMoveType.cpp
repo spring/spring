@@ -682,12 +682,14 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speed.z*=0.95f;
 	}
 
-	float wh=wantedHeight;
-	if(lastColWarningType==2 && speed.dot(lastColWarning->midPos+lastColWarning->speed*20-owner->midPos-speed*20)<0){
-		if(lastColWarning->midPos.y>owner->pos.y)
-			wh-=30;
+	float wh = wantedHeight;
+	float3 dir = lastColWarning->midPos - owner->midPos;
+	float3 sdir = lastColWarning->speed - speed;
+	if (lastColWarningType == 2 && speed.dot(dir + sdir * 20) < 0) {
+		if (lastColWarning->midPos.y > owner->pos.y)
+			wh -= 30;
 		else
-			wh+=50;
+			wh += 50;
 	}
 	float ws;
 	if (h < wh){

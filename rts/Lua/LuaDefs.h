@@ -43,6 +43,9 @@ struct DataElement {
 typedef map<string, DataElement> ParamMap;
 
 
+/* This is unused and does not compile on GCC 4.3 -- tvo 9/9/2007
+   "error: explicit template specialization cannot have a storage class"
+
 template<typename T> static DataType GetDataType(T) {
 	const bool valid_type = false;
 	assert(valid_type);
@@ -52,6 +55,7 @@ template<> static DataType GetDataType(int)    { return INT_TYPE; }
 template<> static DataType GetDataType(bool)   { return BOOL_TYPE; }
 template<> static DataType GetDataType(float)  { return FLOAT_TYPE; }
 template<> static DataType GetDataType(string) { return STRING_TYPE; }
+*/
 
 
 #define ADDRESS(name) ((const char *)&name)
