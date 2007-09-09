@@ -639,11 +639,12 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 void CTAAirMoveType::UpdateAirPhysics()
 {
-	float3& pos=owner->pos;
-	float3& speed=owner->speed;
+	float3& pos = owner->pos;
+	float3& speed = owner->speed;
 
-	if(!((gs->frameNum+owner->id)&3))
+	if (!((gs->frameNum + owner->id) & 3)) {
 		CheckForCollision();
+	}
 /*
 	if(lastColWarningType==1){
 		int g=geometricObjects->AddLine(owner->pos,lastColWarning->pos,10,1,1);
@@ -662,35 +663,43 @@ void CTAAirMoveType::UpdateAirPhysics()
 	float3 delta = wantedSpeed - speed;
 	float dl=delta.Length();
 
-	if(delta.dot(speed)>0){	//accelerate
-		if(dl<accRate)
-			speed=wantedSpeed;
-		else
-			speed+=delta/dl*accRate;
+	if (delta.dot(speed) > 0) {	//accelerate
+		if (dl < accRate) {
+			speed = wantedSpeed;
+		} else {
+			speed += delta / dl * accRate;
+		}
 	} else {											//break
-		if(dl<decRate)
-			speed=wantedSpeed;
-		else
-			speed+=delta/dl*decRate;
+		if (dl < decRate) {
+			speed = wantedSpeed;
+		} else {
+			speed += delta / dl * decRate;
+		}
 	}
 
-	speed.y=yspeed;
-	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),ground->GetHeight(pos.x+speed.x*40,pos.z+speed.z*40));
+	speed.y = yspeed;
+	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),
+	                      ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
 
-	if(h<4){
-		speed.x*=0.95f;
-		speed.z*=0.95f;
+	if (h < 4) {
+		speed.x *= 0.95f;
+		speed.z *= 0.95f;
 	}
 
 	float wh = wantedHeight;
-	float3 dir = lastColWarning->midPos - owner->midPos;
-	float3 sdir = lastColWarning->speed - speed;
-	if (lastColWarningType == 2 && speed.dot(dir + sdir * 20) < 0) {
-		if (lastColWarning->midPos.y > owner->pos.y)
-			wh -= 30;
-		else
-			wh += 50;
+
+	if (lastColWarningType == 2) {
+		float3 dir = lastColWarning->midPos - owner->midPos;
+		float3 sdir = lastColWarning->speed - speed;
+		if (speed.dot(dir + sdir * 20.0f) < 0.0f) {
+			if (lastColWarning->midPos.y > owner->pos.y) {
+				wh -= 30;
+			} else {
+				wh += 50;
+			}
+		}
 	}
+
 	float ws;
 	if (h < wh){
 		ws= altitudeRate;
@@ -701,10 +710,12 @@ void CTAAirMoveType::UpdateAirPhysics()
 		if(speed.y<0 && (wh-h)/speed.y*accRate*0.7f < -speed.y)
 			ws=0;
 	}
-	if(speed.y>ws)
+
+	if (speed.y>ws) {
 		speed.y=max(ws,speed.y-accRate*1.5f);
-	else
+	} else {
 		speed.y=min(ws,speed.y+accRate*(h<20?2.0f:0.7f));	//let them accelerate upward faster if close to ground
+	}
 
 	pos+=speed;
 }
