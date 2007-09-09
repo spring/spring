@@ -39,7 +39,7 @@ zip="spring_${version}_src.zip"
 include=" \
  $dir/AI/Group/ \
  $dir/AI/Global/AAI/ \
- $dir/AI/Global/KAI-0.12/ \
+ $dir/AI/Global/KAIK-0.13/ \
  $dir/AI/Global/TestGlobalAI/ \
  $dir/Documentation/ \
  $dir/Doxyfile \
