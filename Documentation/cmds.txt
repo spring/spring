@@ -36,7 +36,8 @@
 .spectator
 .nocost
 .reloadcob <unit_name>
-.give <[count] unit_name> | "all"
+.give [count] <unit_name | "all"> [team]   {{ @x,y,z }}
+.godmode [0|1]
 
 -- debugging
 .crash
