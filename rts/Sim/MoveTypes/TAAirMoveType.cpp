@@ -689,8 +689,8 @@ void CTAAirMoveType::UpdateAirPhysics()
 	float wh = wantedHeight;
 
 	if (lastColWarningType == 2) {
-		float3 dir = lastColWarning->midPos - owner->midPos;
-		float3 sdir = lastColWarning->speed - speed;
+		const float3 dir = lastColWarning->midPos - owner->midPos;
+		const float3 sdir = lastColWarning->speed - speed;
 		if (speed.dot(dir + sdir * 20.0f) < 0.0f) {
 			if (lastColWarning->midPos.y > owner->pos.y) {
 				wh -= 30;
