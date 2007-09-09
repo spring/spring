@@ -1501,9 +1501,6 @@ int LuaSyncedCtrl::SetUnitLineage(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 {
-	if (!FullCtrl()) {
-		return 0;
-	}
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
