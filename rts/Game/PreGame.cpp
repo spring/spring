@@ -409,102 +409,139 @@ bool CPreGame::Update()
 	return true;
 }
 
+
+
 void CPreGame::UpdateClientNet()
 {
-	int a;
-	if((a=net->GetData(&inbuf[inbuflength],15000-inbuflength,gameSetup ? gameSetup->myPlayer : 0))==-1){
-		globalQuit=true;
+	int a = net->GetData(&inbuf[inbuflength], 15000 - inbuflength, gameSetup? gameSetup->myPlayer: 0);
+
+	if (a == -1) {
+		globalQuit = true;
 		return;
 	}
-	inbuflength+=a;
 
-	while(inbufpos<inbuflength){
-		switch (inbuf[inbufpos]){
-		case NETMSG_SCRIPT:
-			if (!gameSetup) {
-				CScriptHandler::SelectScript((char*)(&inbuf[inbufpos+2]));
-				SelectScript((char*)(&inbuf[inbufpos+2]));
+	inbuflength += a;
+
+	while (inbufpos < inbuflength) {
+		switch (inbuf[inbufpos]) {
+			case NETMSG_SCRIPT: {
+				if (!gameSetup) {
+					CScriptHandler::SelectScript((char*) (&inbuf[inbufpos + 2]));
+					SelectScript((char*) (&inbuf[inbufpos + 2]));
+				}
+
+				if (mapName.empty()) {
+					state = WAIT_ON_MAP;
+				} else if (pregame->modName.empty()) {
+					state = WAIT_ON_MOD;
+				} else {
+					state = ALL_READY;
+				}
+
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+			case NETMSG_MAPNAME: {
+				if (!gameSetup) {
+					SelectMap((char*) (&inbuf[inbufpos + 6]));
+				}
+				archiveScanner->CheckMap(mapName, *(unsigned*) (&inbuf[inbufpos + 2]));
+
+				if (!CScriptHandler::Instance().chosenScript) {
+					state = WAIT_ON_SCRIPT;
+				} else if (pregame->modName.empty()) {
+					state = WAIT_ON_MOD;
+				} else {
+					state = ALL_READY;
+				}
+
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+			case NETMSG_MODNAME: {
+				if (!gameSetup) {
+					SelectMod((char*) (&inbuf[inbufpos + 6]));
+				}
+				archiveScanner->CheckMod(pregame->modArchive, *(unsigned*) (&inbuf[inbufpos + 2]));
+
+				if (!CScriptHandler::Instance().chosenScript) {
+					state = WAIT_ON_SCRIPT;
+				} else if (mapName.empty()) {
+					state = WAIT_ON_MAP;
+				} else {
+					state = ALL_READY;
+				}
+
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+			case NETMSG_MAPDRAW: {
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+
+			case NETMSG_SYSTEMMSG:
+			case NETMSG_CHAT: {
+				// int player = inbuf[inbufpos + 2];
+				string s = (char*) (&inbuf[inbufpos + 3]);
+				logOutput.Print(s);
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+			case NETMSG_STARTPOS: {
+				inbufpos += 15;
+			} break;
+
+			case NETMSG_SETPLAYERNUM: {
+				gu->myPlayerNum = inbuf[inbufpos + 1];
+				logOutput.Print("Became player %i", gu->myPlayerNum);
+				inbufpos += 2;
+			} break;
+
+			case NETMSG_PLAYERNAME: {
+				gs->players[inbuf[inbufpos + 2]]->playerName = (char*) (&inbuf[inbufpos + 3]);
+				gs->players[inbuf[inbufpos + 2]]->readyToStart = true;
+				gs->players[inbuf[inbufpos + 2]]->active = true;
+				inbufpos += inbuf[inbufpos + 1];
+			} break;
+
+			case NETMSG_QUIT: {
+				// net->connected = false;
+				globalQuit = true;
+				inbufpos += 1;
+				return;
 			}
-			if (mapName.empty()) state = WAIT_ON_MAP;
-			else if (pregame->modName.empty()) state = WAIT_ON_MOD;
-			else state = ALL_READY;
-			inbufpos += inbuf[inbufpos+1];
-			break;
 
-		case NETMSG_MAPNAME:
-			if (!gameSetup)
-				SelectMap((char*)(&inbuf[inbufpos+6]));
-			archiveScanner->CheckMap(mapName, *(unsigned*)(&inbuf[inbufpos+2]));
-			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
-			else if (pregame->modName.empty()) state = WAIT_ON_MOD;
-			else state = ALL_READY;
-			inbufpos += inbuf[inbufpos+1];
-			break;
+			case NETMSG_USER_SPEED: {
+				inbufpos += 6;
+			} break;
+			case NETMSG_INTERNAL_SPEED: {
+				inbufpos += 5;
+			} break;
 
-		case NETMSG_MODNAME:
-			if (!gameSetup)
-				SelectMod((char*)(&inbuf[inbufpos+6]));
-			archiveScanner->CheckMod(pregame->modArchive, *(unsigned*)(&inbuf[inbufpos+2]));
-			if (!CScriptHandler::Instance().chosenScript) state = WAIT_ON_SCRIPT;
-			else if (mapName.empty()) state = WAIT_ON_MAP;
-			else state = ALL_READY;
-			inbufpos += inbuf[inbufpos+1];
+			case NETMSG_SENDPLAYERSTAT: {
+				inbufpos += 1;
+			} break;
 
-		case NETMSG_MAPDRAW:
-			inbufpos += inbuf[inbufpos+1];
-			break;
+			case NETMSG_PAUSE: {
+				// these can get into the network stream here -- Kloot
+				int playerNum = (int) inbuf[inbufpos + 1];
+				bool paused = (bool) inbuf[inbufpos + 2];
+				logOutput.Print(paused? "player %i paused the game": "player %i unpaused the game", playerNum);
+				inbufpos += 3;
+			} break;
 
-		case NETMSG_SYSTEMMSG:
-		case NETMSG_CHAT:{
-			//int player=inbuf[inbufpos+2];
-			string s=(char*)(&inbuf[inbufpos+3]);
-			logOutput.Print(s);
-			inbufpos += inbuf[inbufpos+1];
-			break;}
-
-		case NETMSG_STARTPOS:{
-			inbufpos += 15;
-			break;}
-
-		case NETMSG_SETPLAYERNUM:
-			gu->myPlayerNum=inbuf[inbufpos+1];
-			logOutput.Print("Became player %i",gu->myPlayerNum);
-			inbufpos += 2;
-			break;
-
-		case NETMSG_PLAYERNAME:
-			gs->players[inbuf[inbufpos+2]]->playerName=(char*)(&inbuf[inbufpos+3]);
-			gs->players[inbuf[inbufpos+2]]->readyToStart=true;
-			gs->players[inbuf[inbufpos+2]]->active=true;
-			inbufpos += inbuf[inbufpos+1];
-			break;
-
-		case NETMSG_QUIT:
-			// net->connected=false;
-			globalQuit = true;
-			inbufpos += 1;
-			return;
-
-		case NETMSG_USER_SPEED:
-			inbufpos += 6;
-			break;
-		case NETMSG_INTERNAL_SPEED:
-			inbufpos += 5;
-			break;
-
-		case NETMSG_SENDPLAYERSTAT:
-			inbufpos += 1;
-			break;
-
-		default:
-			char txt[200];
-			sprintf(txt, "Unknown net msg in client %d", (int) inbuf[inbufpos]);
-			handleerror(0, txt, "Network error in CPreGame", 0);
-			inbufpos++;
-			break;
+			default: {
+				char txt[200];
+				sprintf(txt, "Unknown net-msg in client (header: %d)", (int) inbuf[inbufpos]);
+				handleerror(0, txt, "Network error in CPreGame", 0);
+				inbufpos++;
+			} break;
 		}
 	}
 }
+
+
 
 /** Called by the script-selecting CglList. */
 void CPreGame::SelectScript(std::string s)
