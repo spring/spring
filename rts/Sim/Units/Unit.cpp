@@ -87,6 +87,7 @@ CUnit::CUnit ()
 	experience(0),
 	logExperience(0),
 	limExperience(0),
+	neutral(false),
 	armorType(0),
 	soloBuilder(NULL),
 	beingBuilt(true),
@@ -652,7 +653,7 @@ void CUnit::SlowUpdate()
 	}
 
 	if(unitDef->canKamikaze){
-		if(fireState==2){
+		if(fireState>=2){
 			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam);
 			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
 				KillUnit(true,false,0);
@@ -2126,6 +2127,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(experience),
 				CR_MEMBER(limExperience),
 				CR_MEMBER(logExperience),
+				CR_MEMBER(neutral),
 				CR_MEMBER(soloBuilder),
 				CR_MEMBER(beingBuilt),
 				CR_MEMBER(lastNanoAdd),

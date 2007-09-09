@@ -513,14 +513,15 @@ void CMobileCAI::ExecuteFight(Command &c)
 		SetGoal(pos, owner->pos);
 	}
 
-	if(owner->unitDef->canAttack && owner->fireState==2){
+	if(owner->unitDef->canAttack && owner->fireState>=2){
 		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		CUnit* enemy=helper->GetClosestEnemyUnit(
 			curPosOnLine, owner->maxRange + 100 * owner->moveState * owner->moveState,
 			owner->allyteam);
 		if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
 				&& !(owner->unitDef->noChaseCategory & enemy->category)
-				&& !owner->weapons.empty()){
+				&& !owner->weapons.empty()
+				&& !enemy->neutral){
 			Command c2;
 			c2.id=CMD_FIGHT;
 			c2.options=c.options|INTERNAL_ORDER;
@@ -945,18 +946,19 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
-	if(owner->unitDef->canAttack && (gs->frameNum>=lastIdleCheck+10) && owner->moveState && owner->fireState==2 && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
-		if(!owner->unitDef->noAutoFire){
-			CUnit* u=helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
-			if(u && !(owner->unitDef->noChaseCategory & u->category)){
-				Command c;
-				c.id=CMD_ATTACK;
-				c.options=INTERNAL_ORDER;
-				c.params.push_back(u->id);
-				c.timeOut=gs->frameNum+140;
-				commandQue.push_front(c);
-				return;
-			}
+	if (owner->unitDef->canAttack && !owner->unitDef->noAutoFire &&
+	    (gs->frameNum >= lastIdleCheck+10) && owner->moveState &&
+	    owner->fireState>=2 && !owner->weapons.empty() &&
+	    (!owner->haveTarget || owner->weapons[0]->onlyForward)) {
+		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
+		if(u && !(owner->unitDef->noChaseCategory & u->category) && !u->neutral){
+			Command c;
+			c.id=CMD_ATTACK;
+			c.options=INTERNAL_ORDER;
+			c.params.push_back(u->id);
+			c.timeOut=gs->frameNum+140;
+			commandQue.push_front(c);
+			return;
 		}
 	}
 	if (owner->usingScriptMoveType) {

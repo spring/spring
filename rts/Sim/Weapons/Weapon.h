@@ -45,6 +45,8 @@ public:
 
 	void AimReady(int value);
 
+	bool ShouldCheckForNewTarget() const;
+
 	virtual void Fire(){};								//should be implemented by subclasses
 	void ScriptReady(void);
 

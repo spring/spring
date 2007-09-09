@@ -89,7 +89,7 @@ CLuaGaia::CLuaGaia()
 	readAllyTeam = gs->gaiaAllyTeamID;
 	selectTeam = gs->gaiaTeamID;
 
-	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename);
+	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
 }
 
 

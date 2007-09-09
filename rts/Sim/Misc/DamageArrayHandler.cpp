@@ -3,6 +3,7 @@
 #include "DamageArray.h"
 #include "TdfParser.h"
 #include "LogOutput.h"
+#include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "System/FileSystem/FileHandler.h"
 #include <algorithm>
@@ -28,15 +29,12 @@ CDamageArrayHandler* damageArrayHandler;
 CDamageArrayHandler::CDamageArrayHandler(void)
 {
 	try {
-		LuaParser luaParser("gamedata/armor.lua",
-		                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-		if (!luaParser.Execute()) {
-			logOutput.Print(luaParser.GetErrorLog());
-			throw content_error(luaParser.GetErrorLog());
+		const LuaTable rootTable = game->defsParser->GetRoot().SubTable("ArmorDefs");
+		if (!rootTable.IsValid()) {
+			throw content_error("Error loading ArmorDefs");
 		}
-		LuaTable root = luaParser.GetRoot();
 
-		root.GetKeys(typeList);
+		rootTable.GetKeys(typeList);
 
 		numTypes = typeList.size() + 1;
 		typeList.insert(typeList.begin(), "default");
@@ -51,7 +49,7 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 			}
 			name2type[armorName] = armorID;
 
-			LuaTable armorTable = root.SubTable(typeList[armorID]);
+			LuaTable armorTable = rootTable.SubTable(typeList[armorID]);
 			vector<string> units; // the values are not used (afaict)
 			armorTable.GetKeys(units);
 

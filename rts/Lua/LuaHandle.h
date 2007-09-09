@@ -79,8 +79,6 @@ class CLuaHandle {
 		CLuaTextures& GetTextures() { return textures; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
-		virtual string LoadFile(const string& filename) const = 0;
-
 	public:
 		const string name;
 		const int order;
@@ -139,7 +137,7 @@ class CLuaHandle {
 		void DrawScreen();
 		void DrawInMiniMap();
 
-	public: // custom call-in
+	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(const string& funcName) { return false; }
 		virtual int SyncedXCall(lua_State* srcState, const string& funcName) {

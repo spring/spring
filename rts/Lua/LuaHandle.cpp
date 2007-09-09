@@ -116,7 +116,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	if (error != 0) {
 		logOutput.Print("Lua LoadCode loadbuffer error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return false;
 	}
 
@@ -128,7 +128,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	if (error != 0) {
 		logOutput.Print("Lua LoadCode pcall error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
-		lua_settop(L, 0);
+		lua_pop(L, 1);
 		return false;
 	}
 

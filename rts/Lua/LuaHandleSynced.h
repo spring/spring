@@ -47,7 +47,8 @@ class CLuaHandleSynced : public CLuaHandle
 		                 const string& msgPrefix);
 		virtual ~CLuaHandleSynced();
 		void Init(const string& syncedFile,
-		          const string& unsyncedFile);
+		          const string& unsyncedFile,
+		          const string& modes);
 		bool SetupSynced(const string& code, const string& filename);
 		bool SetupUnsynced(const string& code, const string& filename);
 
@@ -55,9 +56,7 @@ class CLuaHandleSynced : public CLuaHandle
 		virtual bool AddSyncedCode() = 0;
 		virtual bool AddUnsyncedCode() = 0;
 
-		string LoadFile(const string& filename) const;
-		string LoadMapFile(const string& filename) const;
-		string LoadModFile(const string& filename) const;
+		string LoadFile(const string& filename, const string& modes) const;
 
 		bool CopyGlobalToUnsynced(const char* name);
 		bool SetupUnsyncedFunction(const char* funcName);

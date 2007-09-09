@@ -345,7 +345,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-	  wordCompletion->AddWord(uit->first, false, true, false);
+	  wordCompletion->AddWord(uit->first + " ", false, true, false);
 	}
 
 	geometricObjects=SAFE_NEW CGeometricObjects();
@@ -2903,10 +2903,12 @@ bool CGame::ClientReadNet()
 						lastLength=*((short int*)&inbuf[inbufpos+1]);
 						break;
 					}
-					if(uh->units[unitid] && uh->units[unitid]->team==gs->players[player]->team)
+					if (uh->units[unitid] &&
+					    (uh->units[unitid]->team == gs->players[player]->team) || gs->godMode) {
 						selected.push_back(unitid);
+					}
 				}
-				selectedUnits.NetSelect(selected,player);
+				selectedUnits.NetSelect(selected, player);
 			}
 			lastLength=*((short int*)&inbuf[inbufpos+1]);
 			break;}
@@ -3605,7 +3607,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 
-	if(s.find(".cheat")==0 && player==0){
+	if ((s.find(".cheat") == 0) && (player == 0)) {
 		SetBoolArg(gs->cheatEnabled, s, ".cheat");
 		if (gs->cheatEnabled) {
 			logOutput.Print("Cheating!");
@@ -3613,7 +3615,19 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			logOutput.Print("No more cheating");
 		}
 	}
-	else if(s.find(".nocost")==0 && player==0 && gs->cheatEnabled){
+	else if ((s.find(".godmode") == 0) && (player == 0)) {
+		if (!gs->cheatEnabled) {
+			logOutput.Print("godmode requires .cheat");
+		} else {
+			SetBoolArg(gs->godMode, s, ".godmode");
+			if (gs->godMode) {
+				logOutput.Print("God Mode Enabled");
+			} else {
+				logOutput.Print("God Mode Disabled");
+			}
+		}
+	}
+	else if ((s.find(".nocost") == 0) && (player == 0) && gs->cheatEnabled) {
 		for(int i=0; i<unitDefHandler->numUnitDefs; i++)
 		{
 			unitDefHandler->unitDefs[i].metalCost = 1;
@@ -3646,7 +3660,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if (s.find(".desync") == 0 && gs->cheatEnabled) {
+	else if ((s.find(".desync") == 0) && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (player == gu->myPlayerNum) {
@@ -3663,16 +3677,16 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
 #ifdef SYNCDEBUG
-	else if (s.find(".fakedesync") == 0 && gs->cheatEnabled && gameServer) {
+	else if ((s.find(".fakedesync") == 0) && gs->cheatEnabled && gameServer) {
 		gameServer->fakeDesync = true;
 		logOutput.Print("Fake desyncing.");
 	}
-	else if (s.find(".reset") == 0 && gs->cheatEnabled) {
+	else if ((s.find(".reset") == 0) && gs->cheatEnabled) {
 		CSyncDebugger::GetInstance()->Reset();
 		logOutput.Print("Resetting sync debugger.");
 	}
 #endif
-	else if(s==".spectator" && (gs->cheatEnabled || net->IsDemoServer())){
+	else if ((s == ".spectator") && (gs->cheatEnabled || net->IsDemoServer())) {
 		gs->players[player]->spectator=true;
 		if (player == gu->myPlayerNum) {
 			gu->spectating           = true;
@@ -3683,12 +3697,12 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			CLuaUI::UpdateTeams();
 		}
 	}
-	else if(s.find(".team")==0 && (gs->cheatEnabled || net->IsDemoServer())){
+	else if ((s.find(".team") == 0) && (gs->cheatEnabled || net->IsDemoServer())) {
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if ((team >= 0) && (team <gs->activeTeams)) {
 			gs->players[player]->team = team;
 			gs->players[player]->spectator = net->localDemoPlayback;
-			if(player == gu->myPlayerNum){
+			if (player == gu->myPlayerNum) {
 				gu->spectating           = net->localDemoPlayback;
 				gu->spectatingFullView   = net->localDemoPlayback;
 				gu->spectatingFullSelect = net->localDemoPlayback;
@@ -3700,23 +3714,70 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if(s.find(".atm")==0 && gs->cheatEnabled){
-		int team=gs->players[player]->team;
+	else if ((s.find(".atm") == 0) && gs->cheatEnabled) {
+		int team = gs->players[player]->team;
 		gs->Team(team)->AddMetal(1000);
 		gs->Team(team)->AddEnergy(1000);
 	}
 
-	else if (s.find(".give") == 0 && gs->cheatEnabled) {
-		int team = gs->players[player]->team;
-		int p1 = s.rfind(" @"), p2 = s.find(",", p1 + 1), p3 = s.find(",", p2 + 1);
+	else if ((s.find(".give") == 0) && gs->cheatEnabled) {
+		// .give [amount] <unitName> [team] <@x,y,z>
+		vector<string> args = SimpleParser::Tokenize(s, 0);
 
-		if (p1 == string::npos || p2 == string::npos || p3 == string::npos)
+
+		if (args.size() < 3) {
 			logOutput.Print("Someone is spoofing invalid .give messages!");
+			return;
+		}
 
-		float3 pos(atof(&s.c_str()[p1 + 2]), atof(&s.c_str()[p2 + 1]), atof(&s.c_str()[p3 + 1]));
-		s = s.substr(0, p1);
+		float3 pos;
+		if (sscanf(args[args.size() - 1].c_str(),
+		           "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
+			logOutput.Print("Someone is spoofing invalid .give messages!");
+			return;
+		}
 
-		if (s.find(" all") != string::npos) {
+		int amount = 1;
+		int team = gs->players[player]->team;
+
+		int amountArg = -1;
+		int teamArg = -1;
+
+		if (args.size() == 5) {
+			amountArg = 1;
+			teamArg = 3;
+		}
+		else if (args.size() == 4) {
+			if (args[1].find_first_not_of("0123456789") == string::npos) {
+				amountArg = 1;
+			} else {
+				teamArg = 2;
+			}
+		}
+
+		if (amountArg >= 0) {
+			const string& amountStr = args[amountArg];
+			amount = atoi(amountStr.c_str());
+			if ((amount < 0) ||
+			    (amountStr.find_first_not_of("0123456789") != string::npos)) {
+				logOutput.Print("Bad .give amount: %s", amountStr.c_str());
+				return;
+			}
+		}
+
+		if (teamArg >= 0) {
+			const string& teamStr = args[teamArg];
+			team = atoi(teamStr.c_str());
+			if ((team < 0) || (team >= gs->activeTeams) ||
+			    (teamStr.find_first_not_of("0123456789") != string::npos)) {
+				logOutput.Print("Bad .give team: %s", teamStr.c_str());
+				return;
+			}
+		}
+		
+		const string unitName = (amountArg >= 0) ? args[2] : args[1];
+	
+		if (unitName == "all") {
 			// player entered ".give all"
 			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
 			int currentNumUnits = gs->Team(team)->units.size();
@@ -3740,40 +3801,56 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				}
 			}
 		}
-		else if (((s.rfind(" ")) != string::npos) && ((s.length() - s.rfind(" ") - 1) > 0)) {
-			// player entered ".give <unitname>" or ".give <amount> <unitname>"
-			string unitName = s.substr(s.rfind(" ")+1,s.length() - s.rfind(" ") -1);
-			string tempUnitName = s.substr(s.find(" "), s.rfind(" ") + 1 - s.find(" "));
-			int i = tempUnitName.find_first_not_of(" ");
-
-			if (i != string::npos) {
-				tempUnitName = tempUnitName.substr(i, tempUnitName.find_last_not_of(" ") + 1 - i);
-			}
-
-			bool createNano = (tempUnitName.find("nano") != string::npos);
-			int numRequestedUnits = 1;
+		else if (!unitName.empty()) {
+			int numRequestedUnits = amount;
 			int currentNumUnits = gs->Team(team)->units.size();
 
-			if (currentNumUnits < uh->maxUnits) {
-				int j = tempUnitName.find_first_of("0123456789");
+			if (currentNumUnits >= uh->maxUnits) {
+				logOutput.Print("Unable to give any more units to team %i", team);
+				return;
+			}
 
-				if (j != string::npos) {
-					tempUnitName = tempUnitName.substr(j, tempUnitName.find_last_of("0123456789") + 1 - j);
-					numRequestedUnits = atoi(tempUnitName.c_str());
+			// make sure team unit-limit not exceeded
+			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
+				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			}
 
-					// make sure team unit-limit not exceeded
-					if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
-						numRequestedUnits = uh->maxUnits - currentNumUnits;
+			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+
+			if (unitDef != NULL) {
+				int xsize = unitDef->xsize;
+				int zsize = unitDef->ysize;
+				int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+				int total = numRequestedUnits;
+
+				float3 minpos = pos;
+				minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
+				minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
+
+				for (int z = 0; z < squareSize; ++z) {
+					for (int x = 0; x < squareSize && total > 0; ++x) {
+						float minposx = minpos.x + x * xsize * SQUARE_SIZE;
+						float minposz = minpos.z + z * zsize * SQUARE_SIZE;
+						const float3 upos(minposx, minpos.y, minposz);
+						const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, false, 0, NULL);
+
+						if (unit) {
+							unitLoader.FlattenGround(unit);
+						}
+						--total;
 					}
 				}
 
-				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
-
-				if (unitDef != NULL) {
-					int xsize = unitDef->xsize;
-					int zsize = unitDef->ysize;
+				logOutput.Print("Giving %i %s to team %i",
+				                numRequestedUnits, unitName.c_str(), team);
+			}
+			else {
+				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
+				if (featureDef) {
+					int xsize = featureDef->xsize;
+					int zsize = featureDef->ysize;
 					int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
-					int total = numRequestedUnits;
+					int total = amount; // FIXME -- feature count limit?
 
 					float3 minpos = pos;
 					minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
@@ -3783,69 +3860,40 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 						for (int x = 0; x < squareSize && total > 0; ++x) {
 							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
 							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-							const float3 upos(minposx, minpos.y, minposz);
-							const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, createNano, 0, NULL);
-
-							if (unit) {
-								unitLoader.FlattenGround(unit);
-							}
+							float minposy = ground->GetHeight2(minposx, minposz);
+							const float3 upos(minposx, minposy, minposz);
+							CFeature* feature = SAFE_NEW CFeature();
+							feature->Initialize(upos, featureDef, 0, 0, team, "");
 							--total;
 						}
 					}
 
-					logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
+					logOutput.Print("Giving %i %s (feature) to team %i",
+					                numRequestedUnits, unitName.c_str(), team);
 				}
 				else {
-					const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
-					if (featureDef) {
-						int xsize = featureDef->xsize;
-						int zsize = featureDef->ysize;
-						int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
-						int total = numRequestedUnits;
-
-						float3 minpos = pos;
-						minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
-						minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
-
-						for (int z = 0; z < squareSize; ++z) {
-							for (int x = 0; x < squareSize && total > 0; ++x) {
-								float minposx = minpos.x + x * xsize * SQUARE_SIZE;
-								float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-								float minposy = ground->GetHeight2(minposx, minposz);
-								const float3 upos(minposx, minposy, minposz);
-								CFeature* feature = SAFE_NEW CFeature();
-								feature->Initialize(upos, featureDef, 0, 0, team, "");
-								--total;
-							}
-						}
-
-						logOutput.Print("Giving %i %s (feature) to team %i", numRequestedUnits, unitName.c_str(), team);
-					}
-					else {
-						logOutput.Print(unitName + " is not a valid unitname");
-					}
+					logOutput.Print(unitName + " is not a valid unitname");
 				}
-			}
-			else {
-				logOutput.Print("Unable to give any more units to team %i", team);
 			}
 		}
 	}
 
-	else if(s.find(".take")==0 && (!gs->players[player]->spectator || gs->cheatEnabled)){
-		int sendTeam=gs->players[player]->team;
-		for(int a=0;a<gs->activeTeams;++a){
-			if(gs->AlliedTeams(a,sendTeam)){
-				bool hasPlayer=false;
-				for(int b=0;b<gs->activePlayers;++b){
-					if(gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator)
-						hasPlayer=true;
+	else if ((s.find(".take") == 0) && (!gs->players[player]->spectator || gs->cheatEnabled)) {
+		int sendTeam = gs->players[player]->team;
+		for (int a = 0; a < gs->activeTeams; ++a) {
+			if (gs->AlliedTeams(a, sendTeam)) {
+				bool hasPlayer = false;
+				for (int b = 0; b < gs->activePlayers; ++b) {
+					if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
+						hasPlayer = true;
+					}
 				}
-				if(!hasPlayer){
-					for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-						CUnit* unit=*ui;
-						if(unit->team == a && unit->selfDCountdown == 0)
-							unit->ChangeTeam(sendTeam,CUnit::ChangeGiven);
+				if (!hasPlayer) {
+					for (std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui) {
+						CUnit* unit = *ui;
+						if ((unit->team == a) && (unit->selfDCountdown == 0)) {
+							unit->ChangeTeam(sendTeam, CUnit::ChangeGiven);
+						}
 					}
 				}
 			}
@@ -3859,13 +3907,13 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	}
 	else if ((s.find(".kick") == 0) && (player == 0) && gameServer) {
 		if (s.length() >= 6) {
-			string name=s.substr(6,string::npos);
-			if (!name.empty()){
+			string name = s.substr(6, string::npos);
+			if (!name.empty()) {
 				StringToLowerInPlace(name);
-				for (int a=1;a<gs->activePlayers;++a){
-					if (gs->players[a]->active){
+				for (int a = 1; a < gs->activePlayers; ++a) {
+					if (gs->players[a]->active) {
 						string p = StringToLower(gs->players[a]->playerName);
-						if (p.find(name)==0){               //can kick on substrings of name
+						if (p.find(name) == 0) { // can kick on substrings of name
 							gameServer->KickPlayer(a);
 						}
 					}
@@ -3933,7 +3981,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			logOutput.Print("Lua devmode disabled");
 		}
 	}
-	else if (s.find(".editdefs")==0 && player==0 && gs->cheatEnabled){
+	else if ((s.find(".editdefs") == 0) && (player == 0) && gs->cheatEnabled) {
 		SetBoolArg(gs->editDefsEnabled, s, ".editdefs");
 		if (gs->editDefsEnabled) {
 			logOutput.Print("Definition Editing!");

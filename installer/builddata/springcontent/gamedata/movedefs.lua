@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    armor.lua
---  brief:   armor.txt lua parser
+--  file:    movedefs.lua
+--  brief:   moveinfo.tdf lua parser
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.
@@ -11,19 +11,35 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local moveInfo = {}
+
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
 
-local armor, err = TDF.Parse('armor.txt')
-if (armor == nil) then
-  error('Error parsing armor.txt: ' .. err)
+local moveTdf, err = TDF.Parse('gamedata/moveinfo.tdf')
+if (moveTdf == nil) then
+  error('Error parsing moveinfo.tdf: ' .. err)
 end
 
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-return armor
+local i = 0
+while (true) do
+  local move = moveTdf['class' .. i]
+  if (type(move) ~= 'table') then
+    break
+  end
+  i = i + 1
+  moveInfo[i] = move
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+return moveInfo
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

@@ -283,7 +283,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	SetupForUnitDrawing();
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	CUnit* excludeUnit = gu->directControl;
+	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
 	for(list<CUnit*>::iterator usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();++usi){

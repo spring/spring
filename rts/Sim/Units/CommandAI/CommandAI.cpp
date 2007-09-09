@@ -213,8 +213,8 @@ CCommandAI::CCommandAI(CUnit* owner)
 			possibleCommands.push_back(c);
 			nonQueingCommands.insert(CMD_FIRE_STATE);
 		}
-	} else{
-		owner->fireState=0;
+	} else {
+		owner->fireState = 0;
 	}
 
 	if(owner->unitDef->canmove || owner->unitDef->builder)

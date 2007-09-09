@@ -129,6 +129,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitLineage);
+	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -732,7 +733,7 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 		retval = 0;
 	}
 
-	lua_settop(L, 0);
+	lua_settop(L, 0); // FIXME - ok?
 	lua_pushnumber(L, retval);
 	for (int i = 0; i < retParams; i++) {
 		lua_pushnumber(L, cobArgs[i]);
@@ -787,7 +788,7 @@ int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 		retval = 0;
 	}
 
-	lua_settop(L, 0);
+	lua_settop(L, 0); // FIXME - ok?
 	lua_pushnumber(L, retval);
 	for (int i = 0; i < retParams; i++) {
 		lua_pushnumber(L, cobArgs[i]);
@@ -1498,6 +1499,22 @@ int LuaSyncedCtrl::SetUnitLineage(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
+{
+	if (!FullCtrl()) {
+		return 0;
+	}
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (lua_isboolean(L, 2)) {
+		unit->neutral = lua_toboolean(L, 2);
+	}
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1791,6 +1808,8 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	if (team < 0) {
 		team = -1; // default to global for AllAccessTeam
 	}
+
+	// FIXME -- separate teamcolor/allyteam arguments
 
 	if ((args >= 6) && lua_isnumber(L, 6)) {
 		team = (int)lua_tonumber(L, 6);

@@ -327,7 +327,7 @@ void CAirCAI::SlowUpdate()
 			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
 		}
 
-		if(owner->unitDef->canAttack && owner->fireState==2
+		if(owner->unitDef->canAttack && owner->fireState>=2
 				&& owner->moveState != 0 && owner->maxRange > 0){
 			if(myPlane->isFighter){
 				float testRad=1000 * owner->moveState;
@@ -408,7 +408,7 @@ void CAirCAI::ExecuteMove(Command &c){
 	commandPos2 = pos;
 	myPlane->goalPos = pos;// This is not what we want move to do
 	if(owner->unitDef->canAttack && !(c.options & CONTROL_KEY)){
-		if(owner->fireState == 2 && owner->moveState != 0 && owner->maxRange > 0){
+		if(owner->fireState >= 2 && owner->moveState != 0 && owner->maxRange > 0){
 			if(myPlane->isFighter){
 				float testRad = 500 * owner->moveState;
 				CUnit* enemy = helper->GetClosestEnemyAircraft(
@@ -498,7 +498,7 @@ void CAirCAI::ExecuteFight(Command &c)
 	}
 
 	// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
-	if (owner->unitDef->canAttack && owner->fireState == 2 && owner->moveState != 0 && owner->maxRange > 0) {
+	if (owner->unitDef->canAttack && owner->fireState >= 2 && owner->moveState != 0 && owner->maxRange > 0) {
 		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos+owner->speed*10);
 		float testRad=1000*owner->moveState;
 		CUnit* enemy = helper->GetClosestEnemyAircraft(curPosOnLine,testRad,owner->allyteam);
@@ -563,7 +563,7 @@ void CAirCAI::ExecuteAttack(Command &c)
 		}
 	}/* why was this block here? - ILMTitan
 	if(tempOrder && myPlane->isFighter && orderTarget){
-		if(owner->fireState == 2 && owner->moveState != 0){
+		if(owner->fireState >= 2 && owner->moveState != 0){
 			CUnit* enemy = helper->GetClosestEnemyAircraft(
 				owner->pos + (owner->speed * 50), 800, owner->allyteam);
 			if(enemy && (!orderTarget->unitDef->canfly
