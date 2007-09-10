@@ -9,7 +9,7 @@ class CUNIT {
 		CR_DECLARE(CUNIT);
 		CUNIT(void);
 		CUNIT(AIClasses* ai);
-		virtual ~CUNIT();
+		~CUNIT();
 		void PostLoad();
 
 		// misc. info

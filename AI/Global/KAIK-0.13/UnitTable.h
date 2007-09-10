@@ -8,7 +8,7 @@
 class CUnitTable {
 	public: 
 		CUnitTable(AIClasses* ai);
-		virtual ~CUnitTable();
+		~CUnitTable();
 
 		// Initialize all unit lists, categories etc
 		void Init();

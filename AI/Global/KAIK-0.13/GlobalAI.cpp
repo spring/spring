@@ -121,11 +121,11 @@ CR_REG_METADATA(ControllerState, (
 	CR_MEMBER(oldTargetPos)
 ));
 
-CREX_REG_STATE_COLLECTOR(KAI, CGlobalAI);
+CREX_REG_STATE_COLLECTOR(KAIK, CGlobalAI);
 
 // TODO: move to Containers.h
-void BuildTask::PostLoad(void) { def = KAIState->ai->cb->GetUnitDef(id); }
-void TaskPlan::PostLoad(void) { def = KAIState->ai->cb->GetUnitDef(id); }
+void BuildTask::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
+void TaskPlan::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
 
 
 
@@ -178,11 +178,11 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, c);
 	ai->LOGGER = new std::ofstream(c);
 
-	CREX_SC_LOAD(KAI, ifs);
+	CREX_SC_LOAD(KAIK, ifs);
 }
 
 void CGlobalAI::Save(std::ostream* ofs) {
-	CREX_SC_SAVE(KAI, ofs);
+	CREX_SC_SAVE(KAIK, ofs);
 }
 
 

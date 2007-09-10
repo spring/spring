@@ -10,13 +10,13 @@ class CAttackHandler {
 	public:
 		CR_DECLARE(CAttackHandler);
 		CAttackHandler(AIClasses* ai);
-		virtual ~CAttackHandler(void);
+		~CAttackHandler(void);
 
 		void AddUnit(int unitID);
 		void Update(int);
 		void UnitDestroyed(int unitID);
 
-		// the kmeans is placed here for now =)
+		// K-means functions are placed here for now
 		vector<float3> KMeansIteration(vector<float3> means, vector<float3> unitPositions, int newK);
 		float DistanceToBase(float3 pos);
 		float3 GetClosestBaseSpot(float3 pos);

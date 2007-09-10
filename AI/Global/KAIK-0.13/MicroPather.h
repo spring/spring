@@ -99,6 +99,7 @@ namespace NSMicroPather {
 		//	#ifndef WIN32
 		//	virtual ~Graph() = 0;
 		//	#endif
+			virtual ~Graph() {}
 
 			/*
 			 * This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
@@ -106,8 +107,8 @@ namespace NSMicroPather {
 			 * without an ending newline.
 			 * @note If you are using other grinning lizard utilities, you should use GLOUTPUT for output.
 			 */
-			virtual void PrintStateInfo(void* state) = 0;
-			virtual void PrintData(string s) = 0;
+		//	virtual void PrintStateInfo(void* state) = 0;
+		//	virtual void PrintData(string s) = 0;
 		};
 
 

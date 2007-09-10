@@ -16,7 +16,7 @@ class MTRand_int32 {
 		MTRand_int32(unsigned int s) {
 			seed(s); init = true;
 		}
-		~MTRand_int32() {
+		virtual ~MTRand_int32() {
 		}
 
 		// seed with 32 bit integer

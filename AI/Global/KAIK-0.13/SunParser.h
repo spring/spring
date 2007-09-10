@@ -7,7 +7,7 @@
 class CSunParser {
 	public:
 		CSunParser(AIClasses* ai);
-		virtual ~CSunParser();
+		~CSunParser();
 
 		void LoadVirtualFile(string filename);
 		void LoadRealFile(string filename);

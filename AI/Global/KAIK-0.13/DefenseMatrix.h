@@ -10,7 +10,7 @@ class CDefenseMatrix {
 	public:
 		CR_DECLARE(CDefenseMatrix);
 		CDefenseMatrix(AIClasses* ai);
-		virtual ~CDefenseMatrix();
+		~CDefenseMatrix();
 
 		void Init();
 		void AddDefense(float3 pos, const UnitDef* def);
