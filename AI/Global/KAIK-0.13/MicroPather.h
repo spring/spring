@@ -96,9 +96,7 @@ namespace NSMicroPather {
 			// Spring load-time error when AI compiled with gcc and link-time
 			// error when AI compiled with mingw32
 
-		//	#ifndef WIN32
 		//	virtual ~Graph() = 0;
-		//	#endif
 			virtual ~Graph() {}
 
 			/*

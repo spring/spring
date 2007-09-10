@@ -15,7 +15,7 @@ CMetalMaker::CMetalMaker(IAICallback* aicb) {
 }
 
 CMetalMaker::~CMetalMaker() {
-//	for(map<int,UnitInfo*>::iterator ui = myUnits.begin(); ui != myUnits.end(); ++ui)
+//	for (map<int,UnitInfo*>::iterator ui = myUnits.begin(); ui != myUnits.end(); ++ui)
 //		delete ui->second;
 	myUnits.clear();
 }

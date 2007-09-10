@@ -370,7 +370,7 @@ void CBuildUp::FallbackBuild(int builder, int failedCat) {
 // then find the best builder that there are least of
 const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 	int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
-	const UnitDef* leastBuiltBuilder;
+	const UnitDef* leastBuiltBuilder = 0;
 	int leastBuiltBuilderCount = 65536;
 	assert(factoryCount > 0);
 

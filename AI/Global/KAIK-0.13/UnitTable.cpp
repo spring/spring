@@ -170,13 +170,13 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;
 					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
-					float tohitprobability;
-					float impactarea;
-					float targetarea;
+					float tohitprobability = 0.0f;
+					float impactarea = 0.0f;
+					float targetarea = 0.0f;
 					float distancetravelled = 0.7f * unit->weapons[i].def->range;
-					float firingangle;
+					float firingangle = 0.0f;
 					float gravity = -(ai->cb->GetGravity() * 900);
-					float timetoarrive;
+					float timetoarrive = 0.0f;
 					float u = unit->weapons[i].def->projectilespeed * 30;
 
 					if (unit->weapons[i].def->type == string("Cannon")) {
@@ -480,9 +480,9 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 
 // operates in terms of GetScore()
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
-	vector<int>* templist;
+	vector<int>* templist = 0;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
-	const UnitDef* tempUnitDef;
+	const UnitDef* tempUnitDef = 0;
 	int side = GetSide(builderUnitID);
 	float tempscore = 0.0f;
 	float bestscore = 0.0f;

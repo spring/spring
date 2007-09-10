@@ -6,6 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <deque>
+#include <set>
 
 #include <iostream>
 #include <sstream>
@@ -36,18 +37,20 @@ static inline void itoa(int i, char* buf, int size) {
 #include "System/StdAfx.h"
 
 // Spring Component Registration System Headers
+#ifdef USE_CREG
 #include "creg/creg.h"
 #include "creg/cregex.h"
 #include "creg/Serializer.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
-
-// #undef CR_DECLARE
-// #undef CR_DECLARE_SUB
-// #undef CR_DECLARE_STRUCT
-// #define CR_DECLARE(s)
-// #define CR_DECLARE_SUB(s)
-// #define CR_DECLARE_STRUCT(s)
+#else
+#undef CR_DECLARE
+#undef CR_DECLARE_SUB
+#undef CR_DECLARE_STRUCT
+#define CR_DECLARE(s)
+#define CR_DECLARE_SUB(s)
+#define CR_DECLARE_STRUCT(s)
+#endif
 
 // Spring Engine Headers
 #include "Sim/Units/UnitDef.h"					// Unit Definitions

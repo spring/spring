@@ -32,10 +32,12 @@ class CGlobalAI: public IGlobalAI {
 
 		void Update();
 
+		#ifdef USE_CREG
 		void Load(IGlobalAICallback* callback, std::istream* ifs);
 		void Save(std::ostream* ofs);
 		void PostLoad(void);
 		void Serialize(creg::ISerializer* s);
+		#endif
 
 		AIClasses* ai;
 		std::vector<CUNIT> MyUnits;
