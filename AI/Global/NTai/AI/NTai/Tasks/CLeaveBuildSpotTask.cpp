@@ -23,11 +23,13 @@ void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
 
 bool CLeaveBuildSpotTask::Init(boost::shared_ptr<IModule> me){
 	this->me = me;
-	if(!G->UnitDefHelper->IsMobile(ud)){
-		End();
-		return false;
-	}
-	//G->L.iprint("CLeaveBuildSpotTask::Init");
+	if(G->UnitDefHelper->IsFactory(ud)){
+        if(!G->UnitDefHelper->IsMobile(ud)){
+            End();
+            return false;
+        }
+    }
+    //G->L.iprint("CLeaveBuildSpotTask::Init");
 
 	// register this modules listeners
 	G->RegisterMessageHandler("unitidle",me);
@@ -74,6 +76,9 @@ bool CLeaveBuildSpotTask::Init(boost::shared_ptr<IModule> me){
 	rvalue = G->Actions->Move(unit,pos+diff);
 	if (!rvalue){
 		End();
+	}
+	if(G->UnitDefHelper->IsFactory(ud)){
+	    End();
 	}
 	return rvalue;
 }

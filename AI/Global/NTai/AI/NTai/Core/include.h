@@ -8,7 +8,7 @@ class Global;
 // I'd need to test it
 #define slash "/"
 
-#define EXCEPTION
+//#define EXCEPTION
 // Exception handling
 
 #define TC_SOURCE

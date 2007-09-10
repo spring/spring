@@ -61,6 +61,8 @@ void CBuildingPlacer::RecieveMessage(CMessage &message){
                                 G->cb->DrawUnit("arm_peewee", pos, 1, 35, 0, true, false, 0);
                             }else if(G->GetUnitDef("urcspiderp2")!= 0){
                                 G->cb->DrawUnit("urcspiderp2", pos, 1, 35, 0, true, false, 0);
+                            }else if(G->GetUnitDef("bit")!= 0){
+                                G->cb->DrawUnit("bit", pos, 1, 35, 0, true, false, 0);
                             }
                             //G->cb->DrawUnit("armpw",pos,1,35,0,false,false,0);
                             //G->cb->DrawUnit("arm_peewee",pos,1,35,0,false,false,0);
@@ -144,6 +146,13 @@ class CBuildAlgorithm : public IModule{
                 if(!reciever->IsValid()) return;
                 float3 bestPosition = UpVector;
                 float bestDistance = 500000.0f;
+                if(G->L.IsVerbose()){
+                    AIHCAddMapPoint ac;
+                    ac.label=new char[11];
+                    ac.label="build algo";
+                    ac.pos = builderpos;
+                    G->cb->HandleCommand(AIHCAddMapPointId,&ac);
+                }
                 //float3 nbpos = ZeroVector;
                 //nbpos.x = (building->xsize*4);
                 //nbpos.z = (building->ysize*4);
@@ -457,16 +466,17 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         }else{
             fnum = G->cb->GetFeatures(f, 19999);
         }
-        NLOG("CBuildingPlacer::GetBuildPosMessage geomark 2#");
+        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 2#");
         float3 result = UpVector;
         if(fnum >0){
-            NLOG("CBuildingPlacer::GetBuildPosMessage geomark 3#");
+            //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 3#");
             float gsearchdistance=3000;
             float genemydist=600;
             G->Get_mod_tdf()->GetDef(gsearchdistance, "3000", "AI\\geotherm\\searchdistance");
             G->Get_mod_tdf()->GetDef(genemydist, "600", "AI\\geotherm\\noenemiesdistance");
             float nearest_dist = 10000000;
-            NLOG("CBuildingPlacer::GetBuildPosMessage geomark 4#");
+            //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 4#");
+            int* a = new int[5000];// temp array
             for(int i = 0; i < fnum; i++){
                 const FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
                 if(fd != 0){
@@ -482,20 +492,24 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                                     }
                                 }
                             }
+
+                            if(G->cb->GetFriendlyUnits(a,fpos,100)> 0){
+                                continue;
+                            }
                             if(fpos.distance2D(builderpos) < gsearchdistance){
-                                NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
-                                int* a = new int[5000];
+                                //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
+
                                 if(G->cb->CanBuildAt(building, fpos)&&(G->chcb->GetEnemyUnits(a, fpos, genemydist)<1)/*&&(G->cb->GetFriendlyUnits(a, fpos, 50)<1)*/){
                                     nearest_dist = t;
                                     result = fpos;
                                 }
-                                NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
-                                delete[] a;
+                                //NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
                             }
                         }
                     }
                 }
             }
+            delete[] a;
             NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5#");
         }
         CMessage m("buildposition");
@@ -593,6 +607,8 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      reciever->RecieveMessage(m);
      }*/
     //boost::shared_ptr<IModule>
+    //G->cb->
+
     CBuildAlgorithm cb/* = new CBuildAlgorithm*/(me, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
     //boost::shared_ptr<IModule> b = boost::shared_ptr<IModule>(cb);
     //

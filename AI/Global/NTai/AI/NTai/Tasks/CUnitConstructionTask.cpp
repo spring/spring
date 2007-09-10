@@ -21,7 +21,7 @@ CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit, const UnitDef
 	this->unit=unit;
 	this->builder = builder;
 	this->building = building;
-	G->L.print("CUnitConstructionTask::CUnitConstructionTask building :: "+building->name+" using builder::"+ builder->name);
+	G->L.print("CUnitConstructionTask::CUnitConstructionTask object created | params: building :: "+building->name+" using builder::"+ builder->name);
 }
 
 CUnitConstructionTask::~CUnitConstructionTask(){

@@ -11,19 +11,11 @@
 				<Option output="NTai.dll" prefix_auto="0" extension_auto="0" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option host_application="spring.exe" />
 				<Option createStaticLib="1" />
 				<Compiler>
-					<Add option="-fexpensive-optimizations" />
-					<Add option="-Os" />
-					<Add option="-O3" />
-					<Add option="-O2" />
-					<Add option="-O1" />
-					<Add option="-O" />
 					<Add option="-W" />
 				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
 			</Target>
 		</Build>
 		<VirtualTargets>
@@ -35,7 +27,9 @@
 			<Add directory="..\..\taspring\spring_folder\minglibs\mingwlibs\include" />
 		</Compiler>
 		<Linker>
+			<Add option="-s" />
 			<Add library="..\..\taspring\spring_folder\minglibs\mingwlibs\lib\libboost_thread-mt.a" />
+			<Add directory="..\..\taspring\spring_folder\minglibs\mingwlibs\lib" />
 		</Linker>
 		<Unit filename="NTai\Agents\Assigner.cpp" />
 		<Unit filename="NTai\Agents\Assigner.h" />
@@ -137,6 +131,8 @@
 		<Unit filename="NTai\Units\CUnit.h" />
 		<Extensions>
 			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
