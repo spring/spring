@@ -1,6 +1,7 @@
 #include "GlobalAI.h"
 #include "Unit.h"
 
+#ifdef USE_CREG
 // TODO: move to GlobalAI.h
 CR_BIND(CGlobalAI, );
 CR_REG_METADATA(CGlobalAI, (
@@ -126,7 +127,7 @@ CREX_REG_STATE_COLLECTOR(KAIK, CGlobalAI);
 // TODO: move to Containers.h
 void BuildTask::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
 void TaskPlan::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
-
+#endif
 
 
 
@@ -154,7 +155,7 @@ CGlobalAI::~CGlobalAI() {
 	delete ai;
 }
 
-
+#ifdef USE_CREG
 // called instead of InitAI() on load if IsLoadSupported() returns 1
 void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai = new AIClasses;
@@ -223,7 +224,7 @@ void CGlobalAI::Serialize(creg::ISerializer* s) {
 
 	s->SerializeObjectInstance(ai, ai->GetClass());
 }
-
+#endif
 
 
 

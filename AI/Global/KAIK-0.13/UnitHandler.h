@@ -5,6 +5,8 @@
 #include "GlobalAI.h"
 #include "MetalMaker.h"
 
+class CMetalMaker;
+
 class CUnitHandler {
 	public:
 		CR_DECLARE(CUnitHandler);

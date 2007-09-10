@@ -641,8 +641,6 @@ void CUnitHandler::BuildTaskCreate(int id) {
 							|| (c.id == CMD_REPAIR  && c.params[0] == id)  // at this unit (id)
 							|| (c.id == CMD_GUARD  && c.params[0] == id)) // at this unit (id)
 						{
-							bool hit = false;
-
 							if (builderTracker->buildTaskId != 0) {
 								BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
 

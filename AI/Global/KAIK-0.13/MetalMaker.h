@@ -2,10 +2,7 @@
 #define METALMAKER_H
 
 
-#include <map>
-#include <set>
-
-#include "ExternalAI/IGroupAI.h"
+#include "Include.h"
 
 class CMetalMaker {
 	public:
