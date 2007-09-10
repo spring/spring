@@ -8,7 +8,7 @@ class CBuildUp {
 	public:
 		CR_DECLARE(CBuildUp);
 		CBuildUp(AIClasses* ai);
-		virtual ~CBuildUp();
+		~CBuildUp();
 
 		void Update(int);
 

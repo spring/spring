@@ -9,7 +9,7 @@ using namespace NSMicroPather;
 class CPathFinder: public Graph {
 	public:
 		CPathFinder(AIClasses* ai);
-		virtual ~CPathFinder();
+		~CPathFinder();
 
 		void Init();
 		void* XY2Node(int x, int y);
@@ -21,14 +21,14 @@ class CPathFinder: public Graph {
 		unsigned Checksum();
 		float MakePath(vector<float3>* posPath, float3* startPos, float3* endPos, int radius);
 		float FindBestPath(vector<float3>* posPath, float3* startPos, float myMaxRange, vector<float3>* possibleTargets);
-		//added for convenience
+		// added for convenience
 		float FindBestPathToRadius(vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target);
 
 		void CreateDefenseMatrix();
 
-		virtual void PrintStateInfo(void* state) {
-			state = state;
-		}
+	//	virtual void PrintStateInfo(void* state) {
+	//		state = state;
+	//	}
 
 		void PrintData(string s);
 		MicroPather* micropather;

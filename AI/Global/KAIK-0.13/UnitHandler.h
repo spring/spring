@@ -9,7 +9,7 @@ class CUnitHandler {
 	public:
 		CR_DECLARE(CUnitHandler);
 		CUnitHandler(AIClasses* ai);
-		virtual ~CUnitHandler();
+		~CUnitHandler();
 
 		void UnitCreated(int unit);
 		void UnitDestroyed(int unit);

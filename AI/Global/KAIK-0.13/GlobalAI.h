@@ -9,7 +9,7 @@ class CGlobalAI: public IGlobalAI {
 	public:
 		CR_DECLARE(CGlobalAI);
 		CGlobalAI();
-		virtual ~CGlobalAI();
+		~CGlobalAI();
 
 		void InitAI(IGlobalAICallback* callback, int team);
 

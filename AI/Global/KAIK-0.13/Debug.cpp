@@ -2,7 +2,7 @@
 
 
 CDebug::CDebug(AIClasses* ai) {
-	this -> ai = ai;
+	this->ai = ai;
 }
 CDebug::~CDebug() {
 }

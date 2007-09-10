@@ -7,7 +7,7 @@
 class CDebug {
 	public:
 		CDebug(AIClasses* ai);
-		virtual ~CDebug();
+		~CDebug();
 
 		void MakeBWTGA(int* array, int xsize, int ysize, string filename, float curve = 1);
 		void MakeBWTGA(float* array, int xsize, int ysize, string filename, float curve = 1);

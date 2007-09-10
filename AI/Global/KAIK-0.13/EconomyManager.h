@@ -7,7 +7,7 @@
 class CEconomyManager {
 	public:
 		CEconomyManager(AIClasses* ai);
-		virtual ~CEconomyManager();
+		~CEconomyManager();
 
 		void Update();
 

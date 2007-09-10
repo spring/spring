@@ -8,7 +8,7 @@ class CThreatMap {
 	public:
 		CR_DECLARE(CThreatMap);
 		CThreatMap(AIClasses* ai);
-		virtual ~CThreatMap();
+		~CThreatMap();
 
 		void Create();
 		void AddEnemyUnit(int unitid);

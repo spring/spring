@@ -7,7 +7,7 @@
 class CMetalMap {
 	public:
 		CMetalMap(AIClasses* ai);
-		virtual ~CMetalMap();
+		~CMetalMap();
 
 		void Init();
 		int NumSpotsFound;

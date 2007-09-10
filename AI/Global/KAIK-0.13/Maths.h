@@ -7,7 +7,7 @@
 class CMaths {
 	public:
 		CMaths(AIClasses* ai);
-		virtual ~CMaths();
+		~CMaths();
 
 		// sets the float3 so it is inside the game area
 		void F3MapBound(float3* pos);

@@ -42,6 +42,13 @@ static inline void itoa(int i, char* buf, int size) {
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 
+// #undef CR_DECLARE
+// #undef CR_DECLARE_SUB
+// #undef CR_DECLARE_STRUCT
+// #define CR_DECLARE(s)
+// #define CR_DECLARE_SUB(s)
+// #define CR_DECLARE_STRUCT(s)
+
 // Spring Engine Headers
 #include "Sim/Units/UnitDef.h"					// Unit Definitions
 #include "Sim/Units/CommandAI/CommandQueue.h"	// Unit Command Queues
@@ -56,8 +63,8 @@ static inline void itoa(int i, char* buf, int size) {
 #include "ExternalAI/IGlobalAICallback.h"		// AI Interface
 #include "ExternalAI/IAICheats.h"				// AI Cheat Interface
 
-// KAI Headers
-#include "Containers.h"							// All KAI containers
+// KAIK Headers
+#include "Containers.h"							// All KAIK containers
 #include "Definitions.h"						// Definition declarations
 #include "MTRand.h"								// Mersenne Twister RNG
 #include "SpotFinder.h"

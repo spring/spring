@@ -7,19 +7,17 @@
 
 #include "ExternalAI/IGroupAI.h"
 
-using namespace std;
-
 class CMetalMaker {
 	public:
 		CR_DECLARE(CMetalMaker);
 		CR_DECLARE_SUB(UnitInfo);
 		CMetalMaker(IAICallback* aicb);
-		virtual ~CMetalMaker();
+		~CMetalMaker();
 
-		virtual bool Add(int unit);
-		virtual bool Remove(int unit);
-		virtual bool AllAreOn();
-		virtual void Update(int);
+		bool Add(int unit);
+		bool Remove(int unit);
+		bool AllAreOn();
+		void Update(int);
 
 		struct UnitInfo {
 			CR_DECLARE_STRUCT(UnitInfo);

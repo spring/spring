@@ -8,7 +8,7 @@ class CAttackGroup {
 	public:
 		CR_DECLARE(CAttackGroup);
 		CAttackGroup(AIClasses* ai, int groupID_in);
-		virtual ~CAttackGroup();
+		~CAttackGroup();
 
 		void AddUnit(int unitID);
 		void Update(int);

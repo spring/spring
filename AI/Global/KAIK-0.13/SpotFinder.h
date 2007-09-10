@@ -15,7 +15,7 @@ struct CachePoint {
 class CSpotFinder {
 	public:
 		CSpotFinder(AIClasses* ai, int height, int width);
-		virtual ~CSpotFinder();
+		~CSpotFinder();
 
 		void SetBackingArray(float* map, int height, int width);
 		float* GetSumMap();
@@ -26,7 +26,6 @@ class CSpotFinder {
 		CachePoint* GetBestCachePoint(int x, int y);
 
 	private:
-		//void GetMetalPoints();
 		float* MakeSumMap();
 		void MakeCachePoints();
 		void UpdateSumMapArea(int cacheX, int cacheY);
