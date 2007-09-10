@@ -1,7 +1,7 @@
 #include "GlobalAI.h"
 #include "Unit.h"
 
-#ifdef USE_CREG
+#ifndef USE_CREG
 // TODO: move to GlobalAI.h
 CR_BIND(CGlobalAI, );
 CR_REG_METADATA(CGlobalAI, (
@@ -155,7 +155,7 @@ CGlobalAI::~CGlobalAI() {
 	delete ai;
 }
 
-#ifdef USE_CREG
+#ifndef USE_CREG
 // called instead of InitAI() on load if IsLoadSupported() returns 1
 void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai = new AIClasses;
@@ -168,16 +168,15 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 
 	time_t now1;
 	time(&now1);
-	struct tm* now2;
-	now2 = localtime(&now1);
+	struct tm* now2 = localtime(&now1);
 
 	int team = ai->cb->GetMyTeam();
 
 	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, c);
-	ai->LOGGER = new std::ofstream(c);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
+	ai->LOGGER = new std::ofstream(this->c);
 
 	CREX_SC_LOAD(KAIK, ifs);
 }
@@ -305,7 +304,7 @@ void CGlobalAI::UnitFinished(int unit) {
 		ai->ah->AddUnit(unit);
 	}
 	else if (frame < 20 || (udef && udef->speed <= 0.0f)) {
-		// Add commander at begginning of game
+		// add commander at beginning of game
 		// and factories when they are built
 		ai->uh->IdleUnitAdd(unit, frame);
 	}
