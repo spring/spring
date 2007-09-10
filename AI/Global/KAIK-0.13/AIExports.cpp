@@ -12,7 +12,7 @@ DLL_EXPORT void GetAiName(char* name) {
 }
 
 DLL_EXPORT IGlobalAI* GetNewAI() {
-	#ifdef USE_CREG
+	#ifndef USE_CREG
 	if (ais.empty())
 		creg::System::InitializeClasses();
 	#endif
@@ -26,7 +26,7 @@ DLL_EXPORT void ReleaseAI(IGlobalAI* i) {
 	ais.erase(i);
 	delete (CGlobalAI*) i;
 
-	#ifdef USE_CREG
+	#ifndef USE_CREG
 	if (ais.empty())
 		creg::System::FreeClasses();
 	#endif
@@ -36,7 +36,7 @@ DLL_EXPORT int IsCInterface(void) {
 	return 0;
 }
 
-#ifdef USE_CREG
+#ifndef USE_CREG
 DLL_EXPORT int IsLoadSupported() {
 	return 1;
 }

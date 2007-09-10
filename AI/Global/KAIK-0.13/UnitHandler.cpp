@@ -235,9 +235,13 @@ void CUnitHandler::IdleUnitAdd(int unit, int frame) {
 		else {
 			// the unit has orders still
 			if (category == CAT_BUILDER) {
-				BuilderTracker* builderTracker = GetBuilderTracker(unit);
-				assert(false);
-				DecodeOrder(builderTracker, true);
+				if (false) {
+					// KLOOTNOTE: somehow we are now reaching this branch
+					// on initialization when USE_CREG is not defined,
+					// mycommands->size() returns garbage?
+					BuilderTracker* builderTracker = GetBuilderTracker(unit);
+					DecodeOrder(builderTracker, true);
+				}
 			}
 		}
 	}
@@ -398,10 +402,9 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 
 
 void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError) {
-	reportError = reportError;
-
 	// take a look and see what it's doing
 	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+
 	if (mycommands->size() > 0) {
 		// builder has orders
 		const Command* c = &mycommands->front();
@@ -411,8 +414,10 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			c = &mycommands->back();
 		}
 
-		char text[512];
-		sprintf(text, "builder %i: claimed idle, but has command c->id: %i, c->params[0]: %f", builderTracker->builderID, c->id, c->params[0]);
+		if (reportError) {
+			char text[512];
+			sprintf(text, "builder %i: claimed idle, but has command c->id: %i, c->params[0]: %f", builderTracker->builderID, c->id, c->params[0]);
+		}
 
 		if (c->id < 0) {
 			// it's building a unit
@@ -653,16 +658,13 @@ void CUnitHandler::BuildTaskCreate(int id) {
 							}
 
 							if (builderTracker->taskPlanId != 0) {
-								assert(!hit);
 								GetTaskPlan(builderTracker->taskPlanId);
 								TaskPlanRemove(builderTracker);
 							}
 							if (builderTracker->factoryId != 0) {
-								assert(!hit);
 								FactoryBuilderRemove(builderTracker);
 							}
 							if (builderTracker->customOrderId != 0) {
-								assert(!hit);
 								builderTracker->customOrderId = 0;
 							}
 
