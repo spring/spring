@@ -39,7 +39,7 @@ void Chaser::InitAI(Global* GLI){
 
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE);
     Grid.Initialize(mapdim, float3(1024, 0, 1024), true);
-    Grid.ApplyModifierOnUpdate(0.9f, (1 SECONDS));
+    Grid.ApplyModifierOnUpdate(0.9f, (15 SECONDS));
     Grid.SetDefaultGridValue(5.0f);
     Grid.SetMinimumValue(10.0f);
 
@@ -49,13 +49,13 @@ void Chaser::InitAI(Global* GLI){
     roam = bds::set_cont(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"));
     maneouvre = bds::set_cont(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"));
     hold_pos = bds::set_cont(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"));
-    if(G->Sc->start_pos.empty() == false){
+    /*if(G->Sc->start_pos.empty() == false){
         for(list<float3>::iterator i = G->Sc->start_pos.begin(); i != G->Sc->start_pos.end(); ++i){
             float3 tpos = *i;
             Grid.AddValueatMapPos(tpos, 60000.0f);
             G->Actions->AddPoint(tpos);
         }
-    }
+    }*/
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -311,15 +311,18 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
     if(Grid.ValidMapPos(final_dest)){
         if(atkgroup.empty() == false){
             //check target position has enemies
-            int enenum = G->GetEnemyUnits(garbage,final_dest,1000);
-            if(enenum < 1){
+            /*int enenum = G->chcb->GetEnemyUnits(garbage,final_dest,1000);
+            if(enenum < 5){
                 return false;
+            }*/
+
+            if(G->L.IsVerbose()){
+                AIHCAddMapPoint ac;
+                ac.label=new char[11];
+                ac.label="attack pos";
+                ac.pos = final_dest;
+                G->cb->HandleCommand(AIHCAddMapPointId,&ac);
             }
-            /*AIHCAddMapPoint ac;
-             ac.label=new char[11];
-             ac.label="attack pos";
-             ac.pos = final_dest;
-             G->cb->HandleCommand(AIHCAddMapPointId,&ac);*/
             //Grid.ApplyModifierAtMapPos(final_dest, 1.6f);
             G->L.print("attack position targetted sending units");
             for(set<int>::iterator aik = atkgroup.begin();aik != atkgroup.end();++aik){
@@ -402,11 +405,15 @@ void Chaser::UnitIdle(int unit){
                 temp_air_attack_units.erase(temp_air_attack_units.begin(), temp_air_attack_units.end());
                 temp_air_attack_units.clear();
             }else{
+
                 FindTarget(temp_attack_units, true);
                 temp.insert(temp_attack_units.begin(), temp_attack_units.end());
                 temp_attack_units.erase(temp_attack_units.begin(), temp_attack_units.end());
                 temp_attack_units.clear();
             }
+            /*threshold = int(threshold * thresh_percentage_incr);
+            threshold = int(threshold + thresh_increase);
+            threshold = min(threshold, max_threshold);*/
 
             this->attack_groups.push_back(temp);
         } else {
@@ -617,10 +624,10 @@ float Chaser::ApplyGrudge(int unit, float efficiency){
 void Chaser::EnemyDamaged(int damaged, int attacker, float damage, float3 dir){
     NLOG("Chaser::UnitDamaged");
     NO_GAIA(NA)
-    START_EXCEPTION_HANDLING
-    int ateam = G->chcb->GetUnitAllyTeam(attacker);
-    if(ateam != G->Cached->unitallyteam) allyteamGrudges[ateam] -= damage;
-    END_EXCEPTION_HANDLING("Chaser::UnitDamaged running away routine!!!!!!")
+    //START_EXCEPTION_HANDLING
+    /*int ateam = G->chcb->GetUnitAllyTeam(attacker);
+    if(ateam != G->Cached->unitallyteam) allyteamGrudges[ateam] -= damage;*/
+    //END_EXCEPTION_HANDLING("Chaser::UnitDamaged running away routine!!!!!!")
 }
 
 map<int, float> balances;

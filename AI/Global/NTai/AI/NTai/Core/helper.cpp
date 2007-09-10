@@ -505,7 +505,7 @@ bool Global::CanDGun(int uid){
 
 void Global::UnitMoveFailed(int unit){
 
-    START_EXCEPTION_HANDLING
+    /*START_EXCEPTION_HANDLING
     Sc->UnitMoveFailed(unit);
     END_EXCEPTION_HANDLING("Sc->UnitMoveFailed")
 
@@ -521,7 +521,7 @@ void Global::UnitMoveFailed(int unit){
     CMessage message("unitmovefailed");
     message.AddParameter(unit);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"unitmovefailed\"); FireEvent(message);")
+    END_EXCEPTION_HANDLING("CMessage message(\"unitmovefailed\"); FireEvent(message);")*/
 
 }
 
@@ -576,13 +576,11 @@ void Global::Crash(){
 
 void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     NLOG("Global::UnitDamaged");
-    if(!ValidUnitID(attacker)){
-        return;
-    }
+
+    if(!ValidUnitID(damaged)) return;
+    if(!ValidUnitID(attacker)) return;
 
     START_EXCEPTION_HANDLING
-    //if(damaged < 1) return;
-    //if(attacker < 1) return;
     if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)) return;
     END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
 

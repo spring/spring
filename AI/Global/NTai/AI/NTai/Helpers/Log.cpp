@@ -51,11 +51,21 @@ string Log::GameTime(){
     }
     stime += to_string(Seconds);
     stime += "]";
+
     return stime;
 }
 
 bool Log::FirstInstance(){
     return First;
+}
+
+string GetSysTime(){
+    time_t now1;
+    time(&now1);//struct
+    tm *now2;
+    now2 = localtime(&now1);
+    string s = string("|")+to_string(now2->tm_hour)+ string(":")+ to_string(now2->tm_min)+string(":")+ to_string(now2->tm_sec)+string("|");
+    return s;
 }
 
 void Log::Open(bool plain){
@@ -70,8 +80,9 @@ void Log::Open(bool plain){
         time_t now1;
         time(&now1);
         struct tm *now2;
-        string filename = G->info->datapath + slash + "Logs" + slash;
         now2 = localtime(&now1);
+        string filename = G->info->datapath + slash + "Logs" + slash;
+
         //             DDD MMM DD HH:MM:SS YYYY_X - NTAI.log
         filename += to_string(now2->tm_mon+1)+"-" +to_string(now2->tm_mday) + "-" +to_string(now2->tm_year + 1900) +"-" +to_string(now2->tm_hour) +"_" +to_string(now2->tm_min) +"["+to_string(G->Cached->team)+"]XE9.79.log";
         //sprintf(c, "%2.2d-%2.2d-%4.4d %2.2d%2.2d [%d]XE9.79.log",
@@ -159,7 +170,7 @@ void Log::print(string message){
     if(message.empty() == true) return;
     string gtime;
     if(plaintext == true){
-        gtime = GameTime() + FrameTime() + message + "\n";
+        gtime = GameTime() + GetSysTime() +FrameTime() + message + "\n";
     }else{
         gtime = "\n<tr><th width='8%' scope='row'><b>" + GameTime() + FrameTime() +"</b></th>\n<td width='92%'>" + message + "</td></tr>\n";
     }

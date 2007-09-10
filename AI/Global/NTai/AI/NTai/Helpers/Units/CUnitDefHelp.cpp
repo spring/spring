@@ -23,9 +23,11 @@ bool CUnitDefHelp::IsEnergy(const UnitDef* ud){
 bool CUnitDefHelp::IsMobile(const UnitDef* ud){
 	NLOG("CUnitDefHelp::IsMobile");
 	if(ud == 0) return false;
-	if(ud->speed<1) return false;
+	if(ud->speed>0) return true;
+	if(ud->canmove) return true;
 	if(ud->movedata != 0) return true;
 	if(ud->canfly == true) return true;
+	if(ud->canhover == true) return true;
 	return false;
 }
 
@@ -98,6 +100,7 @@ bool CUnitDefHelp::IsAttacker(const UnitDef* ud){
 			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 				string u = ud->name;
 				tolowercase(u);
+				trim(u);
 				string v = *vi;
 				tolowercase(v);
 				trim(v);
@@ -107,8 +110,8 @@ bool CUnitDefHelp::IsAttacker(const UnitDef* ud){
 				}
 			}
 		}
-		if(ud->builder == true) atk = false; // no builders either
-		if(!G->UnitDefHelper->IsMobile(ud)) atk = false; // no buildings
+		//if(ud->builder == true) atk = false; // no builders either
+		//if(!G->UnitDefHelper->IsMobile(ud)) atk = false; // no buildings
 	}else{
 		// determine dynamically if this is an attacker
 		atk =true;
@@ -121,5 +124,5 @@ bool CUnitDefHelp::IsAttacker(const UnitDef* ud){
 		if(ud->hoverAttack == true) atk = true; // obviously a gunship type thingymajig
 	}
 	return atk;
-	return false;
+//	return false;
 }
