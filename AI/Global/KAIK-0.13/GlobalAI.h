@@ -7,7 +7,10 @@
 class CAttackHandler;
 class CGlobalAI: public IGlobalAI {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CGlobalAI);
+		#endif
+
 		CGlobalAI();
 		~CGlobalAI();
 
@@ -32,12 +35,10 @@ class CGlobalAI: public IGlobalAI {
 
 		void Update();
 
-		#ifndef USE_CREG
 		void Load(IGlobalAICallback* callback, std::istream* ifs);
 		void Save(std::ostream* ofs);
 		void PostLoad(void);
 		void Serialize(creg::ISerializer* s);
-		#endif
 
 		AIClasses* ai;
 		std::vector<CUNIT> MyUnits;

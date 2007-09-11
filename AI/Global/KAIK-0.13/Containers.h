@@ -21,7 +21,9 @@ class CEconomyManager;
 class DGunController;
 
 struct AIClasses {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(AIClasses);
+	#endif
 
 	IAICallback*		cb;
 	IAICheats*			cheat;
@@ -60,7 +62,9 @@ struct UnitType {
 
 class integer2 {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE_STRUCT(integer2);
+		#endif
 
 		integer2(): x(0), y(0) {};
 		integer2(const int x,const int y): x(x), y(y) {}
@@ -83,7 +87,9 @@ class integer2 {
  * builder container: main task is to make sure that tracking builders is easy (making asserts and tests)
  */
 struct BuilderTracker {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(BuilderTracker);
+	#endif
 
 	int builderID;
 	// if not NULL then this worker belongs to this BuildTask.
@@ -117,8 +123,10 @@ struct BuilderTracker {
 };
 
 struct BuildTask {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(BuildTask);
 	void PostLoad(void);
+	#endif
 
 	int id;
 	int category;
@@ -135,8 +143,10 @@ struct BuildTask {
 };
 
 struct TaskPlan {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(TaskPlan);
 	void PostLoad(void);
+	#endif
 
 	// this will be some smart number (a counter?)
 	int id;
@@ -151,7 +161,9 @@ struct TaskPlan {
 };
 
 struct Factory {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(Factory);
+	#endif
 
 	int id;
 	// temp only, for compatibility (will be removed)
@@ -161,7 +173,9 @@ struct Factory {
 };
 
 struct NukeSilo {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(NukeSilo);
+	#endif
 
 	int id;
 	int numNukesReady;
@@ -169,7 +183,9 @@ struct NukeSilo {
 };
 
 struct MetalExtractor {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(MetalExtractor);
+	#endif
 
 	int id;
 	int buildFrame;

@@ -16,7 +16,10 @@
 
 
 struct ControllerState {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(ControllerState);
+	#endif
+
 	ControllerState(void) {
 		inited					= false;
 		targetID				= -1;
@@ -64,7 +67,10 @@ struct ControllerState {
 
 class DGunController {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(DGunController);
+		#endif
+
 		DGunController(IAICallback*);
 		~DGunController(void);
 

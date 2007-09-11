@@ -6,7 +6,10 @@
 
 class CThreatMap {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CThreatMap);
+		#endif
+
 		CThreatMap(AIClasses* ai);
 		~CThreatMap();
 
