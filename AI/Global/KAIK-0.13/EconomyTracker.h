@@ -7,7 +7,9 @@
 struct EconomyUnitTracker;
 
 struct BuildingTracker {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(BuildingTracker);
+	#endif
 
 	int unitUnderConstruction;
 	int category;
@@ -46,7 +48,9 @@ struct BuildingTracker {
 };
 
 struct EconomyUnitTracker {
+	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(EconomyUnitTracker);
+	#endif
 
 	int economyUnitId;							// Only economyUnitId and createFrame gives a correct ID
 	int createFrame;							// If the unit is under construction, this is the globally made ETA
@@ -172,7 +176,10 @@ struct EconomyBuildingPlan {
 
 class CEconomyTracker {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CEconomyTracker);
+		#endif
+
 		CEconomyTracker(AIClasses* ai);
 		~CEconomyTracker();
 		void frameUpdate(int);

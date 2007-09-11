@@ -8,7 +8,10 @@ class CAttackGroup;
 
 class CAttackHandler {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CAttackHandler);
+		#endif
+
 		CAttackHandler(AIClasses* ai);
 		~CAttackHandler(void);
 

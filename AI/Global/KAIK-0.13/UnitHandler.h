@@ -9,7 +9,10 @@ class CMetalMaker;
 
 class CUnitHandler {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CUnitHandler);
+		#endif
+
 		CUnitHandler(AIClasses* ai);
 		~CUnitHandler();
 

@@ -8,7 +8,10 @@ class CSpotFinder;
 
 class CDefenseMatrix {
 	public:
+		#ifdef USE_CREG
 		CR_DECLARE(CDefenseMatrix);
+		#endif
+
 		CDefenseMatrix(AIClasses* ai);
 		~CDefenseMatrix();
 
@@ -18,6 +21,7 @@ class CDefenseMatrix {
 		void UpdateChokePointArray();
 		float3 GetDefensePos(const UnitDef* def, float3 builderpos);
 		void MaskBadBuildSpot(float3 pos);
+
 		vector<float*> ChokeMapsByMovetype;
 		float* ChokePointArray;
 		int* BuildMaskArray;
