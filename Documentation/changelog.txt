@@ -1,5 +1,14 @@
 Spring change log
 
+- Removed the automatic 'userInputPrefix' tracking for incoming messages
+- Added some reasonable default keybindings for all/ally/spec chat messaging:
+            enter -> send to <last send type>
+       Ctrl+enter -> send to All
+        Alt+enter -> send to Allies
+      Shift+enter -> send to Spectators
+  (Note that the modifier versions can be used to
+   change the send mode ever while typing the message)
+
 - Added the CTRL modifier to area reclaims for reclaiming all features
 
 0.75b2
