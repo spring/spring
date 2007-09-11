@@ -1318,6 +1318,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	team = newteam;
 	allyteam = gs->AllyTeam(newteam);
 
+	neutral = false;
+
 	loshandler->MoveUnit(this,false);
 	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 	qf->MovedUnit(this);
