@@ -47,11 +47,11 @@ defaultBindings[] = {
 
 	{ "Any+i", "gameinfo" },
 
-	{ "Any+enter",   "chat"           },
-	{ "Ctrl+enter",  "chatall"        },
-	{ "Ctrl+enter",  "chatswitchall"  },
-	{ "Alt+enter",   "chatally"       },
-	{ "Alt+enter",   "chatswitchally" },
+	{   "Any+enter", "chat"           },
+	{  "Ctrl+enter", "chatall"        },
+	{  "Ctrl+enter", "chatswitchall"  },
+	{   "Alt+enter", "chatally"       },
+	{   "Alt+enter", "chatswitchally" },
 	{ "Shift+enter", "chatspec"       },
 	{ "Shift+enter", "chatswitchspec" },
 
