@@ -4125,19 +4125,16 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 
 	bool allyMsg = false;
 	bool specMsg = false;
-	userInputPrefix = "";
 
 	if ((s.length() >= 2) && (s[1] == ':')) {
 		const char lower = tolower(s[0]);
 		if (lower == 'a') {
 			allyMsg = true;
 			s = s.substr(2);
-			userInputPrefix = "a:";
 		}
 		else if (lower == 's') {
 			specMsg = true;
 			s = s.substr(2);
-			userInputPrefix = "s:";
 		}
 	}
 
