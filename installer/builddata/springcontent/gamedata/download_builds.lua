@@ -56,7 +56,6 @@ local function Load()
               menu       = menu,
               button     = button,
             })
-            print('ADDED ' .. unitName .. ' FOR ' .. unitMenu)
           end
           local dlMenu = dlBuilds[unitMenu] or {}
         end
