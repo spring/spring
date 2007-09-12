@@ -143,7 +143,9 @@ for name, def in pairs(unitDefs) do
   local obj = def.objectname
   if (obj == nil) then
     unitDefs[name] = nil
-    Spring.Echo('WARNING: removed ' .. name .. ' unitDef, missing model param')
+    Spring.Echo('WARNING: removed ' .. name ..
+                ' unitDef, missing objectname param')
+    for k,v in pairs(def) do print('',k,v) end
   else
     local objfile = 'objects3d/' .. obj
     if ((not VFS.FileExists(objfile))           and

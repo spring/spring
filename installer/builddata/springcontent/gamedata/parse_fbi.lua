@@ -109,6 +109,18 @@ local function SetupWeapons(tdf)
       weapon.fuelusage   = tdf['weaponfuelusage' .. w]
       weapon.maxangledif = tdf['maxangledif'     .. w]
 
+      -- clear the old style parameters
+      tdf['weapon' .. w]             = nil
+      tdf['badtargetcategory'  .. w] = nil
+      tdf['wpri_badtargetcategory']  = nil
+      tdf['wsec_badtargetcategory']  = nil
+      tdf['wspe_badtargetcategory']  = nil
+      tdf['onlytargetcategory' .. w] = nil
+      tdf['weaponslaveto'   .. w]    = nil
+      tdf['weaponmaindir'   .. w]    = nil
+      tdf['weaponfuelusage' .. w]    = nil
+      tdf['maxangledif'     .. w]    = nil
+
       weapons[w] = weapon
     end
   end
@@ -131,6 +143,7 @@ local function SetupSounds(tdf, soundTypes)
     if (soundTable) then
       tdf.sounds = soundTable
     end
+    tdf.soundcategory = nil -- clear the old style parameter
   end
   return tdf
 end
@@ -148,6 +161,7 @@ local function SetupSpecialEffects(tdf)
   local e = 0
   while (true) do
     local name = sfx['explosiongenerator' .. e]
+    sfx['explosiongenerator' .. e] = nil -- clear the old style parameter
     if (name) then
       e = e + 1
       exps[e] = name
