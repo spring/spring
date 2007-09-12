@@ -374,7 +374,7 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	// call the function
-	if (!RunCallIn(cmdStr, pos ? 6 : 4, 1)) {
+	if (!RunCallIn(cmdStr, pos ? 6 : 3, 1)) {
 		return true;
 	}
 
