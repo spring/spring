@@ -56,6 +56,7 @@ local function Load()
               menu       = menu,
               button     = button,
             })
+            print('ADDED ' .. unitName .. ' FOR ' .. unitMenu)
           end
           local dlMenu = dlBuilds[unitMenu] or {}
         end
@@ -77,15 +78,38 @@ local function FindNameIndex(unitName, buildOptions)
 end
 
 
+local function LinearArray(t)
+  if (t == nil) then
+    return nil
+  end
+  local sorted = {}
+  for k,v in pairs(t) do
+    if (type(k) == 'number') then
+      table.insert(sorted, { k, v })
+    end
+  end
+  table.sort(sorted, function(a, b) return a[1] < b[1] end)
+  local array = {}
+  for i, kv in ipairs(sorted) do
+    array[i] = kv[2]
+  end
+  return array
+end
+
+
 local function Execute(unitDefs)
   if (dlBuilds == nil) then
     Load()
   end
+
   for name, ud in pairs(unitDefs) do
     local dlMenu = dlBuilds[name]
     if (dlMenu) then
+
+      ud.buildoptions = ud.buildoptions or {}
       for _, entry in ipairs(dlMenu) do
-        local buildOptions = ud.buildoptions or {}
+        local buildOptions = ud.buildoptions
+
         local index = nil
         if (entry.afterName) then
           index = FindNameIndex(entry.afterName, buildOptions)
@@ -101,11 +125,10 @@ local function Execute(unitDefs)
             index = (#buildOptions + 1) -- the end
           end
         end
-
         table.insert(buildOptions, index, entry.unitName)
-
-        ud.buildoptions = buildOptions
       end
+      ud.buildoptions = LinearArray(ud.buildoptions)
+
     end
   end
 end
