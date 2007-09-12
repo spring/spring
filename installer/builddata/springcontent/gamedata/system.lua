@@ -25,19 +25,28 @@ do
     if (lowerMap[t]) then
       return  -- avoid recursion / repetition
     end
+
     lowerMap[t] = true
+
+    local changes = {}
     for k, v in pairs(t) do
       if (type(k) == 'string') then
         local l = string.lower(k)
-        if (t[l] == nil) then
-          t[l] = v
+        if (l ~= k) then
+          if (t[l] == nil) then
+            changes[l] = v
+          end
           t[k] = nil
-          k = l
         end
       end
       if (type(v) == 'table') then
         lowerkeys2(v)
       end
+    end
+
+    -- insert new keys outside of the pairs() loop
+    for k, v in pairs(changes) do
+      t[k] = v
     end
   end
 
