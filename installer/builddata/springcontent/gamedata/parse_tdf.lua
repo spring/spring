@@ -70,13 +70,11 @@ end
 
 
 local function StripLineComments(text)
---  return string.gsub(text, '//[^\n]*[\n]?', '')
   return string.gsub(text, '//[^\n]*[\n]?', ReplaceWithSpaces)
 end
 
 
 local function StripBlockComments(text)
---  return string.gsub(text, '/%*.*%*/', '')
   return string.gsub(text, '/%*.-%*/', ReplaceWithSpaces)
 end
 
