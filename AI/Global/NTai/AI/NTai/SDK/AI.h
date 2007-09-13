@@ -15,7 +15,19 @@ typedef unsigned short ushort;
 
 // Spring Engine
 
-#include "creg.h" //CREG
+
+#include "GlobalStuff.h" // Common definitions in spring
+#include "IGlobalAI.h" // Interface spring uses to make AI callouts
+#include "ExternalAI/IAICheats.h" // Cheat Interface
+#include "ExternalAI/AICallback.h" // AI Callback
+#include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
+#include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
+#include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Misc/FeatureDef.h" // Needed for FeatureDef
+
+
+/*#include "creg.h" //CREG
 #include "float3.h" // map positions
 #include "aibase.h" // Cheat Interface
 #include "CommandQueue.h"
@@ -26,3 +38,4 @@ typedef unsigned short ushort;
 #include "GlobalStuff.h" // Common definitions in spring
 #include "MoveInfo.h"
 #include "FeatureDef.h" // Needed for FeatureDef
+*/
