@@ -310,7 +310,7 @@ private:
 			// Log the exception and exit this thread
 			//try
 			//{
-				throw;
+			//	throw;
 			//}
 			//DG_CATCH_BASIC_LOG_STDERR
 		}

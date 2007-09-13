@@ -140,7 +140,7 @@ class CBuildAlgorithm : public IModule{
             G(G){ }
 
             void RecieveMessage(CMessage &message){}
-            bool Init(boost::shared_ptr<IModule> me){}
+            bool Init(boost::shared_ptr<IModule> me){ return true;}
             void operator()(){
                 //boost::mutex::scoped_lock lock(io_mutex[building->id]);
                 if(!reciever->IsValid()) return;
