@@ -104,9 +104,7 @@ namespace NTaiToolkit
             this.power_spacing = (decimal) parser1.RootSection.GetIntValue(6, @"AI\power_spacing");
             this.factory_spacing = (decimal) parser1.RootSection.GetIntValue(4, @"AI\factory_spacing");
             this.default_spacing = (decimal) parser1.RootSection.GetIntValue(5, @"AI\default_spacing");
-            this.dynamic_selection = this.inttobool(parser1.RootSection.GetIntValue(1, @"AI\dynamic_selection"));
             this.spacemod = this.inttobool(parser1.RootSection.GetIntValue(0, @"AI\spacemod"));
-            this.hard_target = this.inttobool(parser1.RootSection.GetIntValue(0, @"AI\hard_target"));
             this.Antistall = this.inttobool(parser1.RootSection.GetIntValue(1, @"AI\antistall"));
             this.StallTimeImMobile = (decimal) parser1.RootSection.GetIntValue(0, @"AI\MaxStallTimeImmobile");
             this.StallTimeMobile = (decimal) parser1.RootSection.GetIntValue(0, @"AI\MaxStallTimeMobile");
@@ -347,7 +345,7 @@ namespace NTaiToolkit
                 }
             }
             string text1 = "";
-            text1 = text1 + "[AI]\n{\n";
+            text1 += "[AI]\n{\n";
             text1 = text1 + "\tauthor=" + this.author + ";\n";
             text1 = text1 + "\tversion=" + this.version + ";\n";
             text1 = text1 + "\tmessage=" + this.message + ";\n\n";
@@ -359,28 +357,18 @@ namespace NTaiToolkit
             text1 = string.Concat(new object[] { obj2, "\tpower_spacing=", this.power_spacing, ";\n" });
             object obj3 = text1;
             text1 = string.Concat(new object[] { obj3, "\tfactory_spacing=", this.factory_spacing, ";\n" });
-            object obj4 = text1;
-            text1 = string.Concat(new object[] { obj4, "\tdefault_spacing=", this.default_spacing, ";\n\n" });
-            object obj5 = text1;
-            text1 = string.Concat(new object[] { obj5, "\tdynamic_selection=", this.booltoint(this.dynamic_selection), ";\n" });
-            object obj6 = text1;
-            text1 = string.Concat(new object[] { obj6, "\tspacemod=", this.booltoint(this.spacemod), ";\n" });
-            object obj7 = text1;
-            text1 = string.Concat(new object[] { obj7, "\thard_target=", this.booltoint(this.hard_target), ";\n\n" });
-            if (this.Antistall)
-            {
+            text1 += "\tdefault_spacing="+ default_spacing + ";\n\n";
+            text1 += "\tdynamic_selection=0;\n";
+            text1 += "\tspacemod=" + booltoint(spacemod) + ";\n";
+            text1 +="\thard_target=0;\n\n";
+            if (this.Antistall){
                 text1 = text1 + "\tantistall=3;\n";
-            }
-            else
-            {
+            } else {
                 text1 = text1 + "\tantistall=0;\n";
             }
-            if (this.interpolate)
-            {
+            if (this.interpolate){
                 text1 = text1 + "\tinterpolate_tag=b_rule_extreme_nofact;\n";
-            }
-            else
-            {
+            }else{
                 text1 = text1 + "\tinterpolate_tag=b_na;\n";
             }
             object obj8 = text1;
@@ -892,18 +880,6 @@ namespace NTaiToolkit
             }
         }
 
-        public bool dynamic_selection
-        {
-            get
-            {
-                return this.f.dynamic_selection.Checked;
-            }
-            set
-            {
-                this.f.dynamic_selection.Checked = value;
-            }
-        }
-
         public decimal energystorageRule
         {
             get
@@ -1009,18 +985,6 @@ namespace NTaiToolkit
             set
             {
                 this.f.factorymetalRuleEx.Value = value;
-            }
-        }
-
-        public bool hard_target
-        {
-            get
-            {
-                return this.f.hard_target.Checked;
-            }
-            set
-            {
-                this.f.hard_target.Checked = value;
             }
         }
 
