@@ -40,6 +40,11 @@ public:
 	float3 wobbleDir;
 	int wobbleTime;
 	float3 wobbleDif;
+	
+	bool isDancing;
+	int danceTime;
+	float3 danceMove;
+	float3 danceCenter;		// vector that points towards the center of the dance to keep the movement "coherent"
 
 	float extraHeight;
 	float extraHeightDecay;

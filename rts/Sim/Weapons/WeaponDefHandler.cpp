@@ -353,6 +353,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
 	wd.wobble = wdTable.GetFloat("wobble", 0.0f) * PI / 0x7fff / 30.0f;
+	wd.dance = wdTable.GetFloat("dance", 0.0f) / GAME_SPEED;
 	wd.trajectoryHeight = wdTable.GetFloat("trajectoryHeight", 0.0f);
 
 	wd.noAutoTarget = (wd.manualfire || wd.interceptor || wd.isShield);
