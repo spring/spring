@@ -40,6 +40,10 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(wobbleDir),
 	CR_MEMBER(wobbleTime),
 	CR_MEMBER(wobbleDif),
+	CR_MEMBER(danceMove),
+	CR_MEMBER(danceCenter),
+	CR_MEMBER(danceTime),
+	CR_MEMBER(isDancing),
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
 	CR_MEMBER(extraHeightTime),
@@ -60,9 +64,13 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 	decoyTarget(0),
 	targPos(targetPos),
 	wobbleTime(1),
-	wobbleDir(0,0,0),
-	wobbleDif(0,0,0),
-	isWobbling(weaponDef?weaponDef->wobble>0:false),
+	wobbleDir(0, 0, 0),
+	wobbleDif(0, 0, 0),
+	danceMove(0, 0, 0),
+	danceCenter(0, 0, 0),
+	danceTime(1),
+	isDancing(weaponDef? (weaponDef->dance > 0): false),
+	isWobbling(weaponDef? (weaponDef->wobble > 0): false),
 	extraHeightTime(0)
 {
 	curSpeed=speed.Length();
@@ -161,16 +169,26 @@ void CMissileProjectile::Update(void)
 			}
 		}
 
-		if(isWobbling){
+		if (isWobbling) {
 			--wobbleTime;
-			if(wobbleTime==0){
-				float3 newWob=gs->randVector();
-				wobbleDif=(newWob-wobbleDir)*(1.0f/16);
-				wobbleTime=16;
+			if (wobbleTime == 0) {
+				float3 newWob = gs->randVector();
+				wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
+				wobbleTime = 16;
 			}
-			wobbleDir+=wobbleDif;
-			dir+=wobbleDir*weaponDef->wobble*(owner?(1-owner->limExperience*0.5f):1);
+			wobbleDir += wobbleDif;
+			dir += wobbleDir * weaponDef->wobble * (owner? (1 - owner->limExperience * 0.5f): 1);
 			dir.Normalize();
+		}
+
+		if (isDancing) {
+			--danceTime;
+			if (danceTime <= 0) {
+				danceMove = gs->randVector() * weaponDef->dance - danceCenter;
+				danceCenter += danceMove;
+				danceTime = 8;
+			}
+			pos += danceMove;
 		}
 
 		float3 orgTargPos(targPos);
