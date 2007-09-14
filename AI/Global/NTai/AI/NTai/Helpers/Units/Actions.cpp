@@ -107,7 +107,7 @@ bool CActions::Repair(int uid, int unit){
                     if(!G->Manufacturer->BPlans->empty()){
                         for(deque<CBPlan>::iterator i = G->Manufacturer->BPlans->begin(); i != G->Manufacturer->BPlans->end(); ++i){
                             if(i->subject == unit){
-                                i->builders.insert(uid);
+								i->AddBuilder(uid);
                                 break;
                             }
                         }
@@ -401,8 +401,8 @@ bool CActions::DGunNearby(int uid){
                 delete [] en;
                 G->Manufacturer->WipePlansForBuilder(uid);
                 if(endi->canDGun){
-                    int r = G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
-                    int c = G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
+                    int r = (int)G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
+                    int c = (int)G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
                     if(r<(4 SECONDS) && r < c){
                         return Reclaim(uid, k);
                     }else{
@@ -419,8 +419,8 @@ bool CActions::DGunNearby(int uid){
                     if(G->GetDGunCost(ud->name)<G->cb->GetEnergy()){
                         return DGun(uid, k);
                     }else{
-                        int r = G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
-                        int c = G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
+                        int r = (int)G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
+                        int c = (int)G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
                         if(r<(4 SECONDS) && r < c){
                             return Reclaim(uid, k);
                         }else{

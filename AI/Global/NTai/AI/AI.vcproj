@@ -58,6 +58,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="..\..\..\..\game\AI\Bot-libs\$(ProjectName).dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				LargeAddressAware="2"
@@ -130,6 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\NTai-$(ConfigurationName).dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
@@ -366,6 +368,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\CSector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Helpers\CTokenizer.h"
 				>
 			</File>
 			<File

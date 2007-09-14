@@ -5,7 +5,8 @@
 void Planning::InitAI(){
 	NLOG("Planning::InitAI");
 	NLOG("filling antistall array");
-	NoAntiStall = bds::set_cont(NoAntiStall,G->Get_mod_tdf()->SGetValueMSG("AI\\NoAntiStall"));
+	CTokenizer<CIsComma>::Tokenize(NoAntiStall, G->Get_mod_tdf()->SGetValueMSG("AI\\NoAntiStall"), CIsComma());
+	//NoAntiStall = bds::set_cont(NoAntiStall,G->Get_mod_tdf()->SGetValueMSG("AI\\NoAntiStall"));
 	NLOG("filling antistall control values");
 	G->Get_mod_tdf()->GetDef(a, "1.3", "AI\\STALL_MULTIPLIERS\\metalIncome");
 	G->Get_mod_tdf()->GetDef(b, "1.3", "AI\\STALL_MULTIPLIERS\\metalstored");

@@ -1,14 +1,32 @@
 //New construction system
+class CManufacturer;
+class CBPlan{ // This is not used for factories building units.
+public:
+	CBPlan();
+	~CBPlan();
 
-struct CBPlan{ // This is not used for factories building units.
+	bool HasBuilder(int i);
+	void AddBuilder(int i);
+	bool HasBuilders();
+	void RemoveBuilder(int i);
+	void RemoveAllBuilders();
+	int GetBuilderCount();
+
+	void WipeBuilderPlans(boost::shared_ptr<IModule> m);
+
 	uint id;
-	set<int> builders; // the builder
+	
+	
 	int subject; // the thing being built
 	bool started; // has construction started?
 	float3 pos; // where is the unit being built? Used to tie the new unit to the plan
 	const UnitDef* ud;
 	float radius;
 	bool inFactory;
+private:
+	boost::mutex* plan_mutex;
+	set<int> builders; // the builder
+	
 };
 
 class SkyWrite{

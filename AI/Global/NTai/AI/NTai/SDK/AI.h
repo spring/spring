@@ -13,6 +13,10 @@ typedef unsigned short ushort;
 #include <deque>
 #include <list>
 
+#include <functional>
+#include <algorithm>
+#include <locale>
+
 // Spring Engine
 
 

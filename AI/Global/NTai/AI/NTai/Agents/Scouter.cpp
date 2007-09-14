@@ -36,7 +36,8 @@ void Scouter::UnitFinished(int unit){
 	if( ud == 0) return;
 	bool naset = false;
 	vector<string> v;
-	v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"));
+	CTokenizer<CIsComma>::Tokenize(v, G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"), CIsComma());
+	//v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"));
 	if(v.empty() == false){
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			if(*vi == ud->name){
@@ -103,7 +104,8 @@ void Scouter::UnitIdle(int unit){
 	if(ud == 0) return;
 	bool naset = false;
 	vector<string> v;
-	v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"));
+	CTokenizer<CIsComma>::Tokenize(v, G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"), CIsComma());
+	//v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\Scouters"));
 	if(v.empty() == false){
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			if(*vi == ud->name){

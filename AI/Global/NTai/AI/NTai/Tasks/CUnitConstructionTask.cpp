@@ -102,7 +102,7 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 				G->Manufacturer->WipePlansForBuilder(unit);
 				CBPlan Bplan;
 				Bplan.started = false;
-				Bplan.builders.insert(unit);
+				Bplan.AddBuilder(unit);
 				Bplan.subject = -1;
 				Bplan.pos = pos;
 				Bplan.ud=building;
