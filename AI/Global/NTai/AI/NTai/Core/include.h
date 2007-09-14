@@ -287,7 +287,6 @@ typedef TdfParser CSunParser;
 #include "../Agents/Planning.h" // Antistall algorithm and predictive targetting
 #include "../Agents/Assigner.h" // A port of the metalmaker AI designed for Skirmish AI's, also handles cloaked units
 #include "../Agents/Chaser.h" // Attack system.
-#include "../Agents/Scouter.h" // Scouting system
 
 enum EnumTdfErrors {
     semicolon_expected

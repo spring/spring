@@ -134,9 +134,6 @@ Global::Global(IGlobalAICallback* callback){
     As = new Assigner;
     L.print("Assigner constructed");
 
-    Sc = new Scouter;
-    L.print("Scouter constructed");
-
     Economy = new CEconomy(G);
     L.print("Economy constructed");
 
@@ -164,7 +161,6 @@ Global::~Global(){
     delete Actions;
     delete Map;
     delete Ch;
-    delete Sc;
     delete As;
     delete Pl;
     delete M;
@@ -468,10 +464,6 @@ void Global::UnitFinished(int unit){
     END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
 
     START_EXCEPTION_HANDLING
-    Sc->UnitFinished(unit);
-    END_EXCEPTION_HANDLING("Sc->UnitFinished")
-
-    START_EXCEPTION_HANDLING
     Ch->UnitFinished(unit);
     END_EXCEPTION_HANDLING("Ch->UnitFinished")
 
@@ -542,10 +534,6 @@ void Global::UnitIdle(int unit){
     END_EXCEPTION_HANDLING("CMessage message(\"unitidle\"); FireEvent(message);")
 
     //EXCEPTION_HANDLER(Manufacturer->UnitIdle(unit),"Manufacturer->UnitIdle",NA)
-
-    START_EXCEPTION_HANDLING
-    Sc->UnitIdle(unit);
-    END_EXCEPTION_HANDLING("Sc->UnitIdle")
 
     //EXCEPTION_HANDLER(Actions->UnitIdle(unit),"Actions->UnitIdle",NA)
 
@@ -729,11 +717,6 @@ void Global::GotChatMsg(const char* msg, int player){
                  ij = chcb->CreateUnit(ComName.c_str(), pos);
                  if(ij != 0){
                      Actions->RandomSpiral(ij);
-                     int s= max(int(Sc->start_pos.size()), 2);
-                     int i = G->GetCurrentFrame()%(s-1);
-                     float3 spos = Sc->GetStartPos(i);
-                     float3 newpos = pos + ((spos - pos)/2);
-                     Actions->Move(ij, newpos);
                  }
              }
          }else if(Cached->cheating == true){
@@ -793,7 +776,6 @@ void Global::UnitDestroyed(int unit, int attacker){
     Cached->enemies.erase(unit);
     As->UnitDestroyed(unit);
     Manufacturer->UnitDestroyed(unit);
-    Sc->UnitDestroyed(unit);
     Ch->UnitDestroyed(unit, attacker);
     OrderRouter->UnitDestroyed(unit);
 
@@ -979,9 +961,6 @@ void Global::InitAI(IAICallback* callback, int team){
     L.print("BuildingPlacement Init'd");
     Ch->InitAI(this);
     L.print("Chaser Init'd");
-    Sc->InitAI(this);
-    L.print("Scouter Init'd");
-
 }
 
 int Global::GetCurrentFrame(){

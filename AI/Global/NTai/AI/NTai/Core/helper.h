@@ -70,7 +70,6 @@ public:
 	IGlobalAICallback* gcb;// global AI engine callback interface
 
 	Assigner* As;// Assigner Agent, it's the equivalent of the metal maker AI but it handles moho mexes too
-	Scouter* Sc;// Scouter agent, this deals with scouting the map
 	Chaser* Ch;// Chaser Agent, deals with attacking and things such as kamikaze units/dgunning/stockpiling missiles/several attack unit behaviours
 	CUnitDefHelp* UnitDefHelper;
 	CUnitDefLoader* UnitDefLoader;

@@ -289,10 +289,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Agents\Scouter.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\TdfParser.cpp"
 				>
 			</File>
@@ -456,10 +452,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Core\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Agents\Scouter.h"
 				>
 			</File>
 			<File
