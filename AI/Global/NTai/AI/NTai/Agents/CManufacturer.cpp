@@ -606,10 +606,10 @@ void CManufacturer::WipePlansForBuilder(int unit){
 	if(!BPlans->empty()){
 		// go through plans and remove this unit from them and delete where appropriate......
 		for(deque<CBPlan>::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
-			if(!i->builders.empty()){
-				if(i->builders.find(unit) != i->builders.end()){
-					i->builders.erase(unit);
-					if(/*!i->started &&*/ i->builders.empty()){
+			if(i->HasBuilders()){
+				if(i->HasBuilder(unit)){
+					i->RemoveBuilder(unit);
+					if(/*!i->started &&*/ !i->HasBuilders()){
 						//G->BuildingPlacer->Block(G->GetUnitPos(uid),ud);
 						//G->BuildingPlacer->UnBlock(i->pos,i->ud);
 						BPlans->erase(i);
@@ -671,7 +671,8 @@ bool CManufacturer::Init(boost::shared_ptr<IModule> me){
 					se= j->second;
 					trim(se);
 					tolowercase(se);
-					vh = bds::set_cont(vh,se);
+					CTokenizer<CIsComma>::Tokenize(vh, se, CIsComma());
+					//vh = bds::set_cont(vh,se);
 					if(vh.empty()==false){
 						metatags[f]= vh;
 						G->L << "Meta tag :: " << f << " :: " << se <<endline;
@@ -874,13 +875,65 @@ void CManufacturer::UnitMoveFailed(int uid){
 	//}
 }
 
+CBPlan::CBPlan(){
+	plan_mutex = new boost::mutex();
+}
+
+CBPlan::~CBPlan(){
+	delete plan_mutex;
+}
+
+bool CBPlan::HasBuilder(int i){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	if(builders.empty()){
+		return false;
+	}
+	return (builders.find(i) != builders.end());
+}
+
+void CBPlan::AddBuilder(int i){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	builders.insert(i);
+}
+
+bool CBPlan::HasBuilders(){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	return (!builders.empty());
+}
+
+void CBPlan::RemoveBuilder(int i){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	builders.erase(i);
+}
+
+void CBPlan::RemoveAllBuilders(){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	if(!builders.empty()){
+		builders.erase(builders.begin(),builders.end());
+		builders.clear();
+	}
+}
+
+int CBPlan::GetBuilderCount(){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	return (int)builders.size();
+}
+
+void CBPlan::WipeBuilderPlans(boost::shared_ptr<IModule> m){
+	boost::mutex::scoped_lock lock(*plan_mutex);
+	for(set<int>::iterator j = builders.begin(); j != builders.end(); ++j){
+		IModule* i = m.get();
+        ((CManufacturer*)i)->WipePlansForBuilder(*j);
+    }
+}
+
 void CManufacturer::UnitIdle(int uid){
 	NLOG("CManufacturer::UnitIdle");
 	if(!ValidUnitID(uid)) return;
 	//if(builders.empty() == false){
 	if (!BPlans->empty()){
 		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->builders.find(uid) != i->builders.end()){
+			if(i->HasBuilder(uid)){
 				if(i->started){
                     G->Actions->Repair(uid,i->subject);
 					return;
@@ -937,9 +990,9 @@ void CManufacturer::UnitDestroyed(int uid){
 	//get rid of CBuilder, destroy plans needing this unit
 	if(BPlans->empty() == false){
 		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->builders.find(uid) != i->builders.end()){
-				i->builders.erase(uid);
-				if(!i->started && i->builders.empty()){
+			if(i->HasBuilder(uid)){
+				i->RemoveBuilder(uid);
+				if(!i->started && !i->HasBuilders()){
 					BPlans->erase(i);
 				}else	if(i->inFactory && i->started){
 					BPlans->erase(i);
@@ -974,9 +1027,9 @@ void CManufacturer::Update(){
 		// and keeping track of construction....
 		if(!BPlans->empty() && G->L.IsVerbose()){
 			for(deque<CBPlan>::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
-				if(!i->builders.empty()){
-					for(set<int>::iterator j = i->builders.begin(); j != i->builders.end(); ++j){
-						float3 bpos = G->GetUnitPos(*j);
+				if(i->HasBuilders()){
+					//for(set<int>::iterator j = i->builders.begin(); j != i->builders.end(); ++j){
+						float3 bpos = i->pos;//G->GetUnitPos(*j);
 						float3 upos = bpos + float3(0,100,0);
 						int q = G->cb->CreateLineFigure(upos,i->pos,15,1,30,0);
 						string s = "GAME\\TEAM" + to_string(G->Cached->team) + "\\RGBColor";
@@ -985,13 +1038,13 @@ void CManufacturer::Update(){
 						float3 r = G->L.startupscript->GetFloat3(ZeroVector,s.c_str());
 						G->cb->SetFigureColor(q,r.x,r.y,r.z,0.3f);
 						G->cb->DrawUnit(i->ud->name.c_str(),i->pos,0,30,G->Cached->team,true,true);
-						int w = (signed int)i->builders.size();
+						int w = i->GetBuilderCount();
 						SkyWrite k(G->cb);
 						float3 jpos = i->pos;
 						jpos.x+= i->radius/2 +10;
 						string v = to_string(w)+"::"+to_string(i->started);
 						k.Write(v,jpos,15,10,30,r.x,r.y,r.z);
-					}
+					//}
 				}
 			}
 		}
@@ -1297,8 +1350,9 @@ int CManufacturer::WhatIsUnitBuilding(int builder){
 	NLOG("WhatIsUnitBuilding");
 	if(builder < 0) return -1;
 	if (BPlans->empty()) return -1;
+
 	for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-		if(i->builders.find(builder) != i->builders.end()){
+		if(i->HasBuilder(builder)){
 			return i->subject;
 		}
 	}
@@ -1310,7 +1364,7 @@ bool CManufacturer::UnitTargetStartedBuilding(int builder){
 	if(builder < 0) return false;
 	if (BPlans->empty()) return false;
 	for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-		if(i->builders.find(builder) != i->builders.end()){
+		if(i->HasBuilder(builder)){
 			return i->started;
 		}
 	}

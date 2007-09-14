@@ -66,8 +66,10 @@ void CUnit::RecieveMessage(CMessage &message){
 				if(tasks.front()->IsValid()==false){
 					G->L.print("next task?");
 					tasks.erase(tasks.begin());
-					boost::shared_ptr<IModule> t = tasks.front();
-					t->Init(t);
+					if(tasks.empty()==false){
+						boost::shared_ptr<IModule> t = tasks.front();
+						t->Init(t);
+					}
 				}
 			}
 		}
@@ -164,7 +166,8 @@ bool CUnit::LoadTaskList(){
 	trim(sl);
 	string u = ud->name;
 	if(sl != string("")){
-		vl = bds::set_cont(vl,sl.c_str());
+		CTokenizer<CIsComma>::Tokenize(vl, sl, CIsComma());
+		//vl = bds::set_cont(vl,sl.c_str());
 		if(vl.empty() == false){
 			int randnum = G->mrand()%vl.size();
 			u = vl.at(min(randnum,max(int(vl.size()-1),1)));
@@ -181,7 +184,8 @@ bool CUnit::LoadTaskList(){
 
 	tolowercase(s);
 	trim(s);
-	v = bds::set_cont(v,s.c_str());
+	CTokenizer<CIsComma>::Tokenize(v, s, CIsComma());
+	//v = bds::set_cont(v,s.c_str());
 
 	if(v.empty() == false){
 		G->L.print("loading contents of  tasklist :: " + u + " :: filling tasklist with #" + to_string(v.size()) + " items");

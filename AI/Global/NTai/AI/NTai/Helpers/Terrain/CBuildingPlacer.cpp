@@ -383,13 +383,9 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                         if(i->ud->extractsMetal > building->extractsMetal){
                             //
                             if(!i->started){
-                                if(i->builders.empty()==false){
-                                    for(set<int>::iterator j = i->builders.begin(); j != i->builders.end(); ++j){
-                                        //G->Actions->ScheduleIdle(*j);
-                                        G->Manufacturer->WipePlansForBuilder(*j);
-                                    }
-                                    i->builders.erase(i->builders.begin(), i->builders.end());
-                                    i->builders.clear();
+								if(i->HasBuilders()){
+									i->WipeBuilderPlans(G->Manufacturer);
+									i->RemoveAllBuilders();
                                 }
                                 G->Manufacturer->BPlans->erase(i);
                                 CMessage m("buildposition");

@@ -918,7 +918,11 @@ void Global::InitAI(IAICallback* callback, int team){
 
     // solobuild
     set<std::string> solotemp;
-    bds::set_cont(solotemp, Get_mod_tdf()->SGetValueMSG("AI\\SoloBuild"));
+	string sb = Get_mod_tdf()->SGetValueMSG("AI\\SoloBuild");
+	CTokenizer<CIsComma>::Tokenize(solotemp, sb, CIsComma());
+	//if(sb.size() > 0){
+	//    bds::set_cont(solotemp, sb);
+	//}
     if(!solotemp.empty()){
         for(set<string>::iterator i = solotemp.begin(); i != solotemp.end(); ++i){
             string s = *i;
@@ -930,10 +934,15 @@ void Global::InitAI(IAICallback* callback, int team){
 
     Cached->unitallyteam = cb->GetMyAllyTeam();
 
-    Pl->AlwaysAntiStall = bds::set_cont(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"));
+	CTokenizer<CIsComma>::Tokenize(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"), CIsComma());
+    //Pl->AlwaysAntiStall = bds::set_cont(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"));
 
     vector<string> singlebuild;
-    singlebuild = bds::set_cont(singlebuild, Get_mod_tdf()->SGetValueMSG("AI\\SingleBuild"));
+	sb = Get_mod_tdf()->SGetValueMSG("AI\\SingleBuild");
+	CTokenizer<CIsComma>::Tokenize(singlebuild, sb);
+	//if(sb.size() > 0){
+	//    singlebuild = bds::set_cont(singlebuild, sb);
+	//}
     if(singlebuild.empty() == false){
         for(vector<string>::iterator i= singlebuild.begin(); i != singlebuild.end(); ++i){
             string s = *i;

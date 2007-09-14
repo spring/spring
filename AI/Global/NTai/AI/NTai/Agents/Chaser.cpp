@@ -24,7 +24,8 @@ void Chaser::InitAI(Global* GLI){
     tolowercase(contents);
     if(contents.empty() == false){
         vector<string> v;
-        v = bds::set_cont(v, contents);
+		CTokenizer<CIsComma>::Tokenize(v, contents, CIsComma());
+        //v = bds::set_cont(v, contents);
         if(v.empty() == false){
             for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
                 string h = *vi;
@@ -43,12 +44,20 @@ void Chaser::InitAI(Global* GLI){
     Grid.SetDefaultGridValue(5.0f);
     Grid.SetMinimumValue(10.0f);
 
-    fire_at_will = bds::set_cont(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"));
-    return_fire = bds::set_cont(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"));
-    hold_fire = bds::set_cont(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"));
-    roam = bds::set_cont(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"));
-    maneouvre = bds::set_cont(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"));
-    hold_pos = bds::set_cont(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"));
+	CTokenizer<CIsComma>::Tokenize(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"), CIsComma());
+	CTokenizer<CIsComma>::Tokenize(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"), CIsComma());
+	CTokenizer<CIsComma>::Tokenize(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"), CIsComma());
+	CTokenizer<CIsComma>::Tokenize(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"), CIsComma());
+	CTokenizer<CIsComma>::Tokenize(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"), CIsComma());
+	CTokenizer<CIsComma>::Tokenize(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"), CIsComma());
+
+
+    //fire_at_will = bds::set_cont(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"));
+    //return_fire = bds::set_cont(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"));
+    //hold_fire = bds::set_cont(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"));
+    //roam = bds::set_cont(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"));
+    //maneouvre = bds::set_cont(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"));
+    //hold_pos = bds::set_cont(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"));
     /*if(G->Sc->start_pos.empty() == false){
         for(list<float3>::iterator i = G->Sc->start_pos.begin(); i != G->Sc->start_pos.end(); ++i){
             float3 tpos = *i;
@@ -87,7 +96,7 @@ void Chaser::UnitDestroyed(int unit, int attacker){
             if(i->find(unit)!= i->end()){
                 i->erase(unit);
                 if(i->empty()) break;
-                if(i->size() < threshold/5){
+                if((int)i->size() < threshold/5){
                     // this group is now too small
                     // break it apart and put the units into the temporary unit group and retreat.
                     this->temp_attack_units.insert(i->begin(), i->end());
@@ -387,7 +396,7 @@ void Chaser::UnitIdle(int unit){
         bool target = false;
         if(G->UnitDefHelper->IsAirCraft(ud)){
             temp_air_attack_units.insert(unit);
-            if(temp_air_attack_units.size()>threshold){
+            if((int)temp_air_attack_units.size()>threshold){
                 target = true;
             }
         }else{
@@ -751,7 +760,7 @@ void Chaser::Update(){
     START_EXCEPTION_HANDLING
     if(EVERY_((2 MINUTES))){
         for(vector< set<int> >::iterator k = this->attack_groups.begin(); k != attack_groups.end(); ++k){
-            if(k->size()>threshold){
+            if((int)k->size()>threshold){
                 FindTarget(*k, false);
             }
         }

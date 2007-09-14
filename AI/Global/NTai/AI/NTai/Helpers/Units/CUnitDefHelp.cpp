@@ -95,7 +95,8 @@ bool CUnitDefHelp::IsAttacker(const UnitDef* ud){
 	bool atk = false;
 	if(G->info->dynamic_selection == false){
 		vector<string> v;
-		v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"));
+		CTokenizer<CIsComma>::Tokenize(v, G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"), CIsComma());
+		//v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"));
 		if(v.empty() == false){
 			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 				string u = ud->name;

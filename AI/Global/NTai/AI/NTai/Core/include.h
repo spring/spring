@@ -270,6 +270,7 @@ typedef TdfParser CSunParser;
 #include "../Helpers/Terrain/Map.h" // Common Map related procedures such as which corner of the mapare we in
 
 #include "../Helpers/Information.h" // Stores data from the mod.tdf and AI.tdf files
+#include "../Helpers/CTokenizer.h" // tokenizes a string based on a delimiter aka String.split() in java
 #include "../Helpers/InitUtil.h" // Seperates a string" a,b,c,d" in a vector<&T> {a,b,c,d}
 #include "../Helpers/Terrain/RadarHandler.h" // Spaces out radar tower placement so they cover more area and dont overlap
 #include "../Helpers/Terrain/DTHandler.h" // Manages creation and pacement of DT rings
