@@ -153,6 +153,28 @@
 //  bind          Shift+esc  quit
 //
 //  bind          Any+enter  chat
+//  bind          Alt+enter  chatally
+//  bind          Alt+enter  chatswitchally
+//  bind         Ctrl+enter  chatall
+//  bind         Ctrl+enter  chatswitchall
+//  bind        Shift+enter  chatspec
+//  bind        Shift+enter  chatswitchspec
+//
+//  bind          Any+enter  edit_return
+//  bind         Any+escape  edit_escape
+//  bind            Any+tab  edit_complete
+//  bind      Any+backspace  edit_backspace
+//  bind         Any+delete  edit_delete
+//  bind           Alt+left  edit_home
+//  bind           Any+home  edit_home
+//  bind          Alt+right  edit_end
+//  bind            Any+end  edit_end
+//  bind           Any+left  edit_prev_char
+//  bind          Any+right  edit_next_char
+//  bind          Ctrl+left  edit_prev_word
+//  bind         Ctrl+right  edit_next_word
+//  bind             Any+up  edit_prev_line
+//  bind           Any+down  edit_next_line
 //
 //  bind             Ctrl+v  pastetext
 //
