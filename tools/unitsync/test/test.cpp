@@ -110,6 +110,8 @@ int main(int argc, char** argv)
   Init(false, 0);
   InitArchiveScanner();
 
+  printf("GetSpringVersion() = %s\n", GetSpringVersion());
+
   // map names
   const int mapCount = GetMapCount();
   for (int i = 0; i < mapCount; i++) {
@@ -119,8 +121,10 @@ int main(int argc, char** argv)
   // mod names
   const int modCount = GetPrimaryModCount();
   for (int i = 0; i < modCount; i++) {
+    const string modName    = GetPrimaryModName(i);
+    const string modArchive = GetPrimaryModArchive(i);
     printf("  mod name (%i) = %s  <%s>\n", i,
-           GetPrimaryModName(i), GetPrimaryModArchive(i));
+           modName.c_str(), modArchive.c_str());
   }
 
   // load the mod archives
@@ -130,7 +134,10 @@ int main(int argc, char** argv)
   ProcessUnits();
   const int unitCount = GetUnitCount();
   for (int i = 0; i < unitCount; i++) {
-    printf("Unit(%i) = %s  <%s>\n", i, GetUnitName(i), GetFullUnitName(i));
+    const string unitName     = GetUnitName(i);
+    const string unitFullName = GetFullUnitName(i);
+    printf("Unit(%i) = %s  <%s>\n", i,
+           unitName.c_str(), unitFullName.c_str());
   }
 
   UnInit();
