@@ -126,6 +126,7 @@ const int ADD         = 0x10031000;
 const int SUB         = 0x10032000;
 const int MUL         = 0x10033000;
 const int DIV         = 0x10034000;
+const int MOD		  = 0x10034001;	// spring specific
 const int BITWISE_AND = 0x10035000;
 const int BITWISE_OR  = 0x10036000;
 const int BITWISE_XOR = 0x10037000;
@@ -572,6 +573,16 @@ int CCobThread::Tick(int deltaTime)
 					logOutput.Print("CobError: division by zero");
 				}
 				stack.push_back(r3);
+				break;
+			case MOD:
+				r2 = POP();
+				r1 = POP();
+				if (r2 != 0)
+					stack.push_back(r1 % r2);
+				else {
+					stack.push_back(0);
+					logOutput.Print("CobError: modulo division by zero");
+				}
 				break;
 			case MOVE:
 				r1 = GET_LONG_PC();
