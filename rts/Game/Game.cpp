@@ -606,10 +606,9 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	CKeySet ks(k, false);
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 
-	if (userWriting){
-
-		// convert to the appropriate prefix if we receive a chat switch action
-		for (int i = 0; i < (int)actionList.size(); i++) {
+	if (userWriting) {
+		int i;
+		for (i = 0; i < (int)actionList.size(); i++) {
 			const CKeyBindings::Action& action = actionList[i];
 
 			if (action.command == "edit_return") {
@@ -638,7 +637,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 						ActionPressed(fakeAction, ks, isRepeat);
 					}
 				}
-				return 0;
+				break;
 			}
 			else if ((action.command == "edit_escape") &&
 			         (chatting || inMapDrawer->wantLabel)) {
@@ -650,7 +649,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				inMapDrawer->wantLabel=false;
 				userInput="";
 				writingPos = 0;
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_complete") {
 				string head = userInput.substr(0, writingPos);
@@ -666,7 +665,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					}
 					logOutput.Print(msg);
 				}
-				return 0;
+				break;
 			}
 			else if (action.command == "chatswitchall") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
@@ -674,7 +673,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					writingPos = max(0, writingPos - 2);
 				}
 				userInputPrefix = "";
-				return 0;
+				break;
 			}
 			else if (action.command == "chatswitchally") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
@@ -684,7 +683,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					writingPos += 2;
 				}
 				userInputPrefix = "a:";
-				return 0;
+				break;
 			}
 			else if (action.command == "chatswitchspec") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
@@ -694,7 +693,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					writingPos += 2;
 				}
 				userInputPrefix = "s:";
-				return 0;
+				break;
 			}
 			else if (action.command == "pastetext") {
 				if (!action.extra.empty()) {
@@ -706,7 +705,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput.insert(writingPos, text);
 					writingPos += text.length();
 				}
-				return 0;
+				break;
 			}
 
 			else if (action.command == "edit_backspace") {
@@ -714,29 +713,29 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput.erase(writingPos - 1, 1);
 					writingPos--;
 				}
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_delete") {
 				if (!userInput.empty() && (writingPos < (int)userInput.size())) {
 					userInput.erase(writingPos, 1);
 				}
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_home") {
 				writingPos = 0;
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_end") {
 				writingPos = (int)userInput.length();
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_prev_char") {
 				writingPos = max(0, min((int)userInput.length(), writingPos - 1));
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_next_char") {
 				writingPos = max(0, min((int)userInput.length(), writingPos + 1));
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_prev_word") {
 				// prev word
@@ -745,7 +744,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				while ((p > 0) && !isalnum(s[p - 1])) { p--; }
 				while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
 				writingPos = p;
-				return 0;
+				break;
 			}
 			else if (action.command == "edit_next_word") {
 				const int len = (int)userInput.length();
@@ -754,18 +753,21 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				while ((p < len) && !isalnum(s[p])) { p++; }
 				while ((p < len) &&  isalnum(s[p])) { p++; }
 				writingPos = p;
-				return 0;
+				break;
 			}
 			else if ((action.command == "edit_prev_line") && chatting) {
 				userInput = consoleHistory->PrevLine(userInput);
 				writingPos = (int)userInput.length();
-				return 0;
+				break;
 			}
 			else if ((action.command == "edit_next_line") && chatting) {
 				userInput = consoleHistory->NextLine(userInput);
 				writingPos = (int)userInput.length();
-				return 0;
+				break;
 			}
+		}
+		if (i != actionList.size()) {
+			ignoreNextChar = true; // the key was used, do not print it  (ex: alt+a)
 		}
 		return 0;
 	}
