@@ -352,6 +352,7 @@ int CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Pop static var %d val %d", r1, r2);
 				break;
 			case POP_STACK:
+				POP();
 				break;
 			case START:
 				r1 = GET_LONG_PC();
