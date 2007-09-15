@@ -607,9 +607,9 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 
 	if (userWriting) {
-		int i;
-		for (i = 0; i < (int)actionList.size(); i++) {
-			const CKeyBindings::Action& action = actionList[i];
+		int actionIndex;
+		for (actionIndex = 0; actionIndex < (int)actionList.size(); actionIndex++) {
+			const CKeyBindings::Action& action = actionList[actionIndex];
 
 			if (action.command == "edit_return") {
 				userWriting=false;
@@ -766,9 +766,11 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				break;
 			}
 		}
-		if (i != actionList.size()) {
-			ignoreNextChar = true; // the key was used, do not print it  (ex: alt+a)
+
+		if (actionIndex != actionList.size()) {
+			ignoreNextChar = true; // the key was used, ignore it  (ex: alt+a)
 		}
+
 		return 0;
 	}
 
