@@ -611,7 +611,64 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		// convert to the appropriate prefix if we receive a chat switch action
 		for (int i = 0; i < (int)actionList.size(); i++) {
 			const CKeyBindings::Action& action = actionList[i];
-			if (action.command == "chatswitchall") {
+
+			if (action.command == "edit_return") {
+				userWriting=false;
+				writingPos = 0;
+				if (k == SDLK_RETURN) {
+					keys[k] = false; //prevent game start when server chats
+				}
+				if (chatting) {
+					string command;
+					if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+						command = userInput.substr(2);
+					} else {
+						command = userInput;
+					}
+					if ((command[0] == '/') && (command[1] != '/')) {
+						// execute an action
+						consoleHistory->AddLine(command);
+						const string actionLine = command.substr(1); // strip the '/'
+						chatting = false;
+						userInput = "";
+						writingPos = 0;
+						logOutput.Print(command);
+						CKeySet ks(k, false);
+						CKeyBindings::Action fakeAction(actionLine);
+						ActionPressed(fakeAction, ks, isRepeat);
+					}
+				}
+				return 0;
+			}
+			else if ((action.command == "edit_escape") &&
+			         (chatting || inMapDrawer->wantLabel)) {
+				if (chatting) {
+					consoleHistory->AddLine(userInput);
+				}
+				userWriting=false;
+				chatting=false;
+				inMapDrawer->wantLabel=false;
+				userInput="";
+				writingPos = 0;
+				return 0;
+			}
+			else if (action.command == "edit_complete") {
+				string head = userInput.substr(0, writingPos);
+				string tail = userInput.substr(writingPos);
+				vector<string> partials = wordCompletion->Complete(head);
+				userInput = head + tail;
+				writingPos = (int)head.length();
+				if (!partials.empty()) {
+					string msg;
+					for (int i = 0; i < partials.size(); i++) {
+						msg += "  ";
+						msg += partials[i];
+					}
+					logOutput.Print(msg);
+				}
+				return 0;
+			}
+			else if (action.command == "chatswitchall") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 					userInput = userInput.substr(2);
 					writingPos = max(0, writingPos - 2);
@@ -651,118 +708,63 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				}
 				return 0;
 			}
-		}
 
-		if (k == SDLK_BACKSPACE) {
-			if (!userInput.empty() && (writingPos > 0)) {
-				userInput.erase(writingPos - 1, 1);
-				writingPos--;
+			else if (action.command == "edit_backspace") {
+				if (!userInput.empty() && (writingPos > 0)) {
+					userInput.erase(writingPos - 1, 1);
+					writingPos--;
+				}
+				return 0;
 			}
-		}
-		else if (k == SDLK_DELETE) {
-			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, 1);
+			else if (action.command == "edit_delete") {
+				if (!userInput.empty() && (writingPos < (int)userInput.size())) {
+					userInput.erase(writingPos, 1);
+				}
+				return 0;
 			}
-		}
-		else if (k == SDLK_LEFT) {
-			if (keys[SDLK_LALT]) {
-				// home
+			else if (action.command == "edit_home") {
 				writingPos = 0;
+				return 0;
 			}
-			else if (keys[SDLK_LCTRL]) {
+			else if (action.command == "edit_end") {
+				writingPos = (int)userInput.length();
+				return 0;
+			}
+			else if (action.command == "edit_prev_char") {
+				writingPos = max(0, min((int)userInput.length(), writingPos - 1));
+				return 0;
+			}
+			else if (action.command == "edit_next_char") {
+				writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+				return 0;
+			}
+			else if (action.command == "edit_prev_word") {
 				// prev word
 				const char* s = userInput.c_str();
 				int p = writingPos;
 				while ((p > 0) && !isalnum(s[p - 1])) { p--; }
 				while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
 				writingPos = p;
+				return 0;
 			}
-			else {
-				// prev character
-				writingPos = max(0, min((int)userInput.length(), writingPos - 1));
-			}
-		}
-		else if (k == SDLK_RIGHT) {
-			if (keys[SDLK_LALT]) {
-				// end
-				writingPos = (int)userInput.length();
-			}
-			else if (keys[SDLK_LCTRL]) {
-				// next word
+			else if (action.command == "edit_next_word") {
 				const int len = (int)userInput.length();
 				const char* s = userInput.c_str();
 				int p = writingPos;
 				while ((p < len) && !isalnum(s[p])) { p++; }
 				while ((p < len) &&  isalnum(s[p])) { p++; }
 				writingPos = p;
+				return 0;
 			}
-			else {
-				// next character
-				writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+			else if ((action.command == "edit_prev_line") && chatting) {
+				userInput = consoleHistory->PrevLine(userInput);
+				writingPos = (int)userInput.length();
+				return 0;
 			}
-		}
-		else if (k == SDLK_HOME) {
-			writingPos = 0;
-		}
-		else if (k == SDLK_END) {
-			writingPos = (int)userInput.length();
-		}
-		else if (k == SDLK_RETURN){
-			userWriting=false;
-			writingPos = 0;
-			keys[k] = false;		//prevent game start when server chats
-			if (chatting) {
-				string command;
-				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-					command = userInput.substr(2);
-				} else {
-					command = userInput;
-				}
-				if ((command[0] == '/') && (command[1] != '/')) {
-					// execute an action
-					consoleHistory->AddLine(command);
-					const string actionLine = command.substr(1); // strip the '/'
-					chatting = false;
-					userInput = "";
-					writingPos = 0;
-					logOutput.Print(command);
-					CKeySet ks(k, false);
-					CKeyBindings::Action fakeAction(actionLine);
-					ActionPressed(fakeAction, ks, isRepeat);
-				}
-			}
-		}
-		else if ((k == SDLK_ESCAPE) && (chatting || inMapDrawer->wantLabel)) {
-			if (chatting) {
-				consoleHistory->AddLine(userInput);
-			}
-			userWriting=false;
-			chatting=false;
-			inMapDrawer->wantLabel=false;
-			userInput="";
-			writingPos = 0;
-		}
-		else if ((k == SDLK_UP) && chatting) {
-			userInput = consoleHistory->PrevLine(userInput);
-			writingPos = (int)userInput.length();
-		}
-		else if ((k == SDLK_DOWN) && chatting) {
-			userInput = consoleHistory->NextLine(userInput);
-			writingPos = (int)userInput.length();
-		}
-		else if (k == SDLK_TAB) {
-			string head = userInput.substr(0, writingPos);
-			string tail = userInput.substr(writingPos);
-			vector<string> partials = wordCompletion->Complete(head);
-			userInput = head + tail;
-			writingPos = (int)head.length();
-			if (!partials.empty()) {
-				string msg;
-				for (int i = 0; i < partials.size(); i++) {
-					msg += "  ";
-					msg += partials[i];
-				}
-				logOutput.Print(msg);
+			else if ((action.command == "edit_next_line") && chatting) {
+				userInput = consoleHistory->NextLine(userInput);
+				writingPos = (int)userInput.length();
+				return 0;
 			}
 		}
 		return 0;
