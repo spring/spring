@@ -20,11 +20,12 @@ typedef unsigned short ushort;
 // Spring Engine
 
 
-#include "GlobalStuff.h" // Common definitions in spring
+
 #include "IGlobalAI.h" // Interface spring uses to make AI callouts
-#include "ExternalAI/IAICheats.h" // Cheat Interface
-#include "ExternalAI/AICallback.h" // AI Callback
+#include "ExternalAI/IAICallback.h" // AI Callback
 #include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
+#include "ExternalAI/IAICheats.h" // Cheat Interface
+#include "GlobalStuff.h" // Common definitions in spring
 #include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
 #include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
 #include "Sim/MoveTypes/MoveInfo.h"

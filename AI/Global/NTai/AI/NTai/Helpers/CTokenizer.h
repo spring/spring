@@ -34,7 +34,7 @@ class CIsFromString : public unary_function<char, bool>
 {
 public:
   //Constructor specifying the separators
-  CIsFromString::CIsFromString(string const& rostr) : m_ostr(rostr) {}
+  CIsFromString(string const& rostr) : m_ostr(rostr) {}
   bool operator()(char c) const;
 
 private:
@@ -57,15 +57,15 @@ template <class Pred=CIsComma>
 class CTokenizer{
 public:
   //The predicate should evaluate to true when applied to a separator.
-  static void Tokenize(vector<string>& roResult, string const& rostr, 
+  static void Tokenize(vector<string>& roResult, string const& rostr,
                        Pred const& roPred=Pred());
-  static void Tokenize(set<string>& roResult, string const& rostr, 
+  static void Tokenize(set<string>& roResult, string const& rostr,
                        Pred const& roPred=Pred());
 };
 
 //The predicate should evaluate to true when applied to a separator.
 template <class Pred>
-inline void CTokenizer<Pred>::Tokenize(vector<string>& roResult, 
+inline void CTokenizer<Pred>::Tokenize(vector<string>& roResult,
                                             string const& rostr, Pred const& roPred)
 {
 	//First clear the results vector
@@ -93,7 +93,7 @@ inline void CTokenizer<Pred>::Tokenize(vector<string>& roResult,
 
 //The predicate should evaluate to true when applied to a separator.
 template <class Pred>
-inline void CTokenizer<Pred>::Tokenize(set<string>& roResult, 
+inline void CTokenizer<Pred>::Tokenize(set<string>& roResult,
                                             string const& rostr, Pred const& roPred)
 {
 	//First clear the results vector
@@ -148,7 +148,7 @@ cout << "Test CIsFromString() predicate:" << endl;
 //The Results Vector
 vector<string> oResult;
 //Call Tokeniker
-CTokenizer<CIsFromString>::Tokenize(oResult, ":wqd,;hgwh,:,sdhw,:;kwqo;dk,", 
+CTokenizer<CIsFromString>::Tokenize(oResult, ":wqd,;hgwh,:,sdhw,:;kwqo;dk,",
                                           CIsFromString(",;:"));
 //Display Results
 cout << "Display strings:" << endl;
