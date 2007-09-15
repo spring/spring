@@ -1012,6 +1012,7 @@ int SpringApp::Run (int argc, char *argv[])
 							}
 						}
 					}
+					activeController->ignoreNextChar = false;
 					break;
 				}
 				case SDL_KEYUP: {
