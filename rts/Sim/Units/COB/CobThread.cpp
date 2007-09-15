@@ -785,6 +785,7 @@ string CCobThread::GetOpcodeName(int opcode)
 		case SUB: return "sub";
 		case MUL: return "mul";
 		case DIV: return "div";
+		case MOD: return "mod";
 		case BITWISE_AND: return "and";
 		case BITWISE_OR: return "or";
 		case BITWISE_XOR: return "xor";
