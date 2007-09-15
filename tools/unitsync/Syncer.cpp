@@ -79,11 +79,10 @@ int CSyncer::ProcessUnits(bool checksum)
 		const string& udName =  unitDefNames[i];
 		LuaTable udTable = rootTable.SubTable(udName);
 		Unit u;
-		u.fullName = udName;
+		u.fullName = udTable.GetString("name", udName);
 
 		// FIXME -- only checksum the last unitDef?  (0.75b2 behaviour)
 		if (checksum) {
-			//The model filenames has to be figured out from the fbi file
 			const string fileName  = udTable.GetString("filename", "");
 			const string deadName  = udTable.GetString("corpse", udName + "_dead");
 			const string modelName = udTable.GetString("objectname", udName);
