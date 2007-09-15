@@ -24,11 +24,15 @@
 		<Compiler>
 			<Add option="-W" />
 			<Add option="-DBUILD_DLL" />
-			<Add directory="..\..\taspring\spring_folder\minglibs\mingwlibs\include" />
+			<Add directory="D:\media\documents\Development\taspring\spring_folder\minglibs\mingwlibs\include" />
+			<Add directory="..\..\..\..\rts" />
+			<Add directory="..\..\..\..\rts\ExternalAI" />
+			<Add directory="..\..\..\..\rts\Sim" />
+			<Add directory="..\..\..\..\rts\System" />
 		</Compiler>
 		<Linker>
 			<Add option="-s" />
-			<Add library="..\..\taspring\spring_folder\minglibs\mingwlibs\lib\libboost_thread-mt.a" />
+			<Add library="D:\media\documents\Development\taspring\spring_folder\minglibs\mingwlibs\lib\libboost_thread-mt.a" />
 			<Add directory="..\..\taspring\spring_folder\minglibs\mingwlibs\lib" />
 		</Linker>
 		<Unit filename="NTai\Agents\Assigner.cpp" />
@@ -39,8 +43,6 @@
 		<Unit filename="NTai\Agents\Chaser.h" />
 		<Unit filename="NTai\Agents\Planning.cpp" />
 		<Unit filename="NTai\Agents\Planning.h" />
-		<Unit filename="NTai\Agents\Scouter.cpp" />
-		<Unit filename="NTai\Agents\Scouter.h" />
 		<Unit filename="NTai\Core\CCached.h" />
 		<Unit filename="NTai\Core\CMessage.cpp" />
 		<Unit filename="NTai\Core\CMessage.h" />
@@ -49,9 +51,6 @@
 		<Unit filename="NTai\Core\IModule.cpp" />
 		<Unit filename="NTai\Core\IModule.h" />
 		<Unit filename="NTai\Core\Interface.cpp" />
-		<Unit filename="NTai\Core\NTAI.rc">
-			<Option compilerVar="WINDRES" />
-		</Unit>
 		<Unit filename="NTai\Core\helper.cpp" />
 		<Unit filename="NTai\Core\helper.h" />
 		<Unit filename="NTai\Core\include.h" />
@@ -62,9 +61,9 @@
 		<Unit filename="NTai\Helpers\CEconomy.cpp" />
 		<Unit filename="NTai\Helpers\CEconomy.h" />
 		<Unit filename="NTai\Helpers\CThreadManager.h" />
+		<Unit filename="NTai\Helpers\CTokenizer.h" />
 		<Unit filename="NTai\Helpers\CWorkerThread.h" />
 		<Unit filename="NTai\Helpers\Information.h" />
-		<Unit filename="NTai\Helpers\InitUtil.h" />
 		<Unit filename="NTai\Helpers\Log.cpp" />
 		<Unit filename="NTai\Helpers\Log.h" />
 		<Unit filename="NTai\Helpers\TdfParser.cpp" />
