@@ -610,10 +610,13 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	}
 
 	// window coordinates
-	const int wx = (int)lua_tonumber(L, 1) - gu->viewPosX;
-	const int wy = gu->viewSizeY - 1 - (int)lua_tonumber(L, 2);
-	if ((wx < gu->viewPosX) || (wx >= (gu->viewSizeX + gu->viewPosX)) ||
-	    (wy < gu->viewPosY) || (wy >= (gu->viewSizeY + gu->viewPosY))) {
+	const int mx = (int) lua_tonumber(L, 1);
+	const int my = (int) lua_tonumber(L, 2);
+	const int wx = mx + gu->viewPosX;
+	const int wy = gu->viewSizeY - 1 - my - gu->viewPosY;
+
+	if ((mx < 0) || (mx >= gu->viewSizeX) ||
+		(my < 0) || (my >= gu->viewSizeY)) {
 		return 0;
 	}
 
