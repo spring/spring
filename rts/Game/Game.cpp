@@ -1905,6 +1905,7 @@ bool CGame::DrawWorld()
 	if (camera->pos.y < 0.0f) {
 		const float3& cpos = camera->pos;
 		const float vr = gu->viewRange * 0.5f;
+		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
 		glBegin(GL_QUADS);
@@ -1925,6 +1926,7 @@ bool CGame::DrawWorld()
 		glVertex3f(cpos.x - vr, 0.0f, cpos.z - vr);
 		glVertex3f(cpos.x - vr,  -vr, cpos.z - vr);
 		glEnd();
+		glDepthMask(GL_TRUE);
 	}
 
 	glLoadIdentity();
