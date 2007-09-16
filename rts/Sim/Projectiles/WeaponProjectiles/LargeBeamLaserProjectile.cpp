@@ -28,7 +28,9 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef)
 :	CWeaponProjectile(startPos+(endPos-startPos)*0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false),//CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),
-	endPos(endPos)
+	endPos(endPos),
+	ttl(0),
+	decay(1.0f)
 	//thickness(thickness),
 	//corethickness(corethickness),
 	//flaresize(flaresize),
@@ -71,6 +73,8 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, con
 		tilelength = weaponDef->visuals.tilelength;
 		scrollspeed = weaponDef->visuals.scrollspeed;
 		pulseSpeed = weaponDef->visuals.pulseSpeed;
+		ttl = weaponDef->visuals.beamttl;
+		decay = weaponDef->visuals.beamdecay;
 	}
 
 	//tilelength = 200;
@@ -85,7 +89,16 @@ CLargeBeamLaserProjectile::~CLargeBeamLaserProjectile(void)
 
 void CLargeBeamLaserProjectile::Update(void)
 {
-	deleteMe=true;
+	if (ttl > 0) {
+		ttl--;
+		for (int i = 0; i < 3; i++) {
+			corecolstart[i] = (unsigned char) (corecolstart[i] * decay);
+			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
+		}
+	}
+	else {
+		deleteMe = true;
+	}
 }
 
 void CLargeBeamLaserProjectile::Draw(void)

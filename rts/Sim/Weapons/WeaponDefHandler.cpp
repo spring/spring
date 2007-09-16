@@ -113,15 +113,16 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.visuals.modelName = wdTable.GetString("model", "");
 	wd.visuals.smokeTrail = wdTable.GetBool("smokeTrail", false);
 
-	wd.waterweapon   = wdTable.GetBool("waterWeapon",   false);
-	wd.fireSubmersed = wdTable.GetBool("fireSubmersed", wd.waterweapon);
-	wd.submissile    = wdTable.GetBool("submissile",    false);
-	wd.tracks        = wdTable.GetBool("tracks",        false);
-	wd.fixedLauncher = wdTable.GetBool("fixedLauncher", false);
-	wd.noExplode     = wdTable.GetBool("noExplode",     false);
-	wd.isShield      = wdTable.GetBool("isShield",      false);
+	wd.waterweapon   = wdTable.GetBool("waterWeapon",     false);
+	wd.fireSubmersed = wdTable.GetBool("fireSubmersed",   wd.waterweapon);
+	wd.submissile    = wdTable.GetBool("submissile",      false);
+	wd.tracks        = wdTable.GetBool("tracks",          false);
+	wd.fixedLauncher = wdTable.GetBool("fixedLauncher",   false);
+	wd.noExplode     = wdTable.GetBool("noExplode",       false);
+	wd.isShield      = wdTable.GetBool("isShield",        false);
 	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
+	wd.beamburst     = wdTable.GetBool("beamburst",       false);
 
 	wd.thickness      = wdTable.GetFloat("thickness",       2.0f);
 	wd.corethickness  = wdTable.GetFloat("coreThickness",   0.25f);

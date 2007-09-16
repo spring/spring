@@ -467,6 +467,7 @@ static bool InitParamMap()
 	ADD_FLOAT("salvoDelay", wd.salvodelay);
 	ADD_FLOAT("reload",     wd.reload);
 	ADD_FLOAT("beamtime",   wd.beamtime);
+	ADD_BOOL("beamburst",   wd.beamburst);
 
 	ADD_FLOAT("maxAngle", wd.maxAngle);
 	ADD_FLOAT("restTime", wd.restTime);
