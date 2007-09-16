@@ -63,6 +63,7 @@ struct WeaponDef
 	float salvodelay;
 	float reload;
 	float beamtime;
+	bool beamburst;
 
 	float maxAngle;
 	float restTime;

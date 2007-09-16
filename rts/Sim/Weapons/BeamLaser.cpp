@@ -48,7 +48,13 @@ void CBeamLaser::Update(void)
 			wantedDir=targetPos-weaponPos;
 			wantedDir.Normalize();
 		}
-		predict=salvoSize/2;
+
+		if (!weaponDef->beamburst) {
+			predict = salvoSize / 2;
+		} else {
+ 			// beamburst tracks the target during the burst so there's no need to lead
+			predict = 0;
+		}
 	}
 	CWeapon::Update();
 
@@ -75,70 +81,92 @@ void CBeamLaser::Update(void)
 
 bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 {
-	if(!CWeapon::TryTarget(pos,userTarget,unit))
+	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if(!weaponDef->waterweapon) {
-		if(unit){
-			if(unit->isUnderWater)
+	if (!weaponDef->waterweapon) {
+		if (unit) {
+			if (unit->isUnderWater)
 				return false;
 		} else {
-			if(pos.y<0)
+			if (pos.y < 0)
 				return false;
 		}
 	}
 
-	float3 dir=pos-weaponMuzzlePos;
+	float3 dir = pos-weaponMuzzlePos;
+	float length = dir.Length();
 
-	float length=dir.Length();
-	if(length==0)
+	if (length == 0)
 		return true;
 
-	dir/=length;
+	dir /= length;
 
-	if(!onlyForward){		//skip ground col testing for aircrafts
-		float g=ground->LineGroundCol(weaponMuzzlePos,pos);
-		if(g>0 && g<length*0.9f)
+	if (!onlyForward) {
+		// skip ground col testing for aircraft
+		float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+		if (g > 0 && g < length * 0.9f)
 			return false;
 	}
-	if(avoidFeature && helper->LineFeatureCol(weaponMuzzlePos,dir,length))
+
+	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length))
 		return false;
 
-	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle)*(1-owner->limExperience*0.7f),owner->allyteam,owner))
-		return false;
+	if (avoidFriendly) {
+		float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.7f);
+		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
+			return false;
+	}
+
 	return true;
 }
 
 void CBeamLaser::Init(void)
 {
-	salvoDelay=0;
-	salvoSize=(int)(weaponDef->beamtime*30);
-	if (salvoSize <= 0) salvoSize = 1;
-	damageMul = 1.0f/(float)salvoSize;		//multiply damage with this on each shot so the total damage done is correct
+	if (!weaponDef->beamburst) {
+		salvoDelay = 0;
+		salvoSize = (int) (weaponDef->beamtime * 30);
+
+		if (salvoSize <= 0)
+			salvoSize = 1;
+
+		// multiply damage with this on each shot so the total damage done is correct
+		damageMul = 1.0f / (float) salvoSize;
+	}
+	else {
+		damageMul = 1.0f;
+	}
 
 	CWeapon::Init();
-
 	muzzleFlareSize = 0;
 }
 
 void CBeamLaser::Fire(void)
 {
 	float3 dir;
-	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype can't align itself properly, change back when that is fixed
-		dir=owner->frontdir;
+	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
+		// the taairmovetype can't align itself properly, change back when that is fixed
+		dir = owner->frontdir;
 	} else {
-		if(salvoLeft==salvoSize-1){
-			if(fireSoundId)
-				sound->PlaySample(fireSoundId,owner,fireSoundVolume);
-			dir=targetPos-weaponMuzzlePos;
+		if (salvoLeft == salvoSize - 1) {
+			if (fireSoundId)
+				sound->PlaySample(fireSoundId, owner, fireSoundVolume);
+
+			dir = targetPos - weaponMuzzlePos;
 			dir.Normalize();
-			oldDir=dir;
+			oldDir = dir;
+		} else if (weaponDef->beamburst) {
+			if (fireSoundId && !weaponDef->soundTrigger)
+				sound->PlaySample(fireSoundId, owner, fireSoundVolume);
+
+			dir = targetPos-weaponMuzzlePos;
+			dir.Normalize();
 		} else {
-			dir=oldDir;
+			dir = oldDir;
 		}
 	}
-	dir+=(salvoError)*(1-owner->limExperience*0.7f);
 
+	dir += (salvoError) * (1 - owner->limExperience * 0.7f);
 	dir.Normalize();
 
 	FireInternal(dir, false);
@@ -156,6 +184,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	float curLength=0;
 	float3 curPos=weaponMuzzlePos;
 	float3 hitPos;
+	dir += gs->randVector() * sprayangle * (1 - owner->limExperience * 0.7f);
+	dir.Normalize();
 
 	bool tryAgain=true;
 	CUnit* hit;

@@ -27,6 +27,8 @@ public:
 	float tilelength;
 	float scrollspeed;
 	float pulseSpeed;
+	float decay;
+	int ttl;
 
 	AtlasedTexture beamtex;
 	AtlasedTexture side;
