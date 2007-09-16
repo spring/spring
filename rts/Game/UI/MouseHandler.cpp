@@ -546,9 +546,9 @@ void CMouseHandler::ShowMouse()
 void CMouseHandler::HideMouse()
 {
 	if (!hide) {
-		lastx = gu->viewSizeX/2;
-		lasty = gu->viewSizeY/2;
-    SDL_ShowCursor(SDL_DISABLE);
+		lastx = gu->viewSizeX / 2 + gu->viewPosX;
+		lasty = gu->viewSizeY / 2 + gu->viewPosY;
+    	SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetPos(int2(lastx, lasty));
 		hide = true;
 	}
@@ -638,10 +638,10 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 		return;
 	}
 
-	int dx = lastx - gu->viewSizeX / 2;
-	int dy = lasty - gu->viewSizeY / 2;
-	lastx = gu->viewSizeX / 2;
-	lasty = gu->viewSizeY / 2;
+	int dx = lastx - (gu->viewSizeX / 2 + gu->viewPosX);
+	int dy = lasty - (gu->viewSizeY / 2 + gu->viewPosY);
+	lastx = gu->viewSizeX / 2 + gu->viewPosX;
+	lasty = gu->viewSizeY / 2 + gu->viewPosY;
 
 	float3 move;
 	move.x = dx;

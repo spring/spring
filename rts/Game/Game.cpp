@@ -237,9 +237,13 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	allReady=false;
 	hideInterface=false;
 	gameOver=false;
-	windowedEdgeMove=!!configHandler.GetInt("WindowedEdgeMove", 1);
-	showFPS   = !!configHandler.GetInt("ShowFPS",   0);
+
+	windowedEdgeMove = !!configHandler.GetInt("WindowedEdgeMove", 1);
+	fullscreenEdgeMove = !!configHandler.GetInt("FullscreenEdgeMove", 1);
+
+	showFPS = !!configHandler.GetInt("ShowFPS", 0);
 	showClock = !!configHandler.GetInt("ShowClock", 1);
+
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
 
@@ -3230,7 +3234,7 @@ void CGame::UpdateUI()
 
 		movement=float3(0,0,0);
 
-		if (fullscreen || windowedEdgeMove) {
+		if ((fullscreen && fullscreenEdgeMove) || windowedEdgeMove) {
 			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
