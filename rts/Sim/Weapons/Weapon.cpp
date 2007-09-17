@@ -664,7 +664,7 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 	if (!unit || cylinderTargetting < 0.01) {
 		r=GetRange2D(heightDiff*heightMod);
 	} else {
-		if (cylinderTargetting * unit->radius > fabs(heightDiff)*heightMod) {
+		if (cylinderTargetting * range > fabs(heightDiff)*heightMod) {
 			r = GetRange2D(0);
 		} else {
 			r = 0;
