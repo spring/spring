@@ -455,9 +455,10 @@ static bool InitParamMap()
 	ADD_STRING("tooltip",  fd.description);
 	ADD_STRING("filename", fd.filename);
 
-	ADD_FLOAT("metal",     fd.metal);
-	ADD_FLOAT("energy",    fd.energy);
-	ADD_FLOAT("maxHealth", fd.maxHealth);
+	ADD_FLOAT("metal",       fd.metal);
+	ADD_FLOAT("energy",      fd.energy);
+	ADD_FLOAT("maxHealth",   fd.maxHealth);
+	ADD_FLOAT("reclaimTime", fd.reclaimTime);
 
 	ADD_FLOAT("mass", fd.mass);
 

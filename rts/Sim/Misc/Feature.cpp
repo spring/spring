@@ -280,7 +280,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		}
 
-		const float part = (100 - amount) * 0.02f / max(10.0f, (def->metal + def->energy));
+		const float part = ((100 - amount) * 0.02f / max(10.0f, (def->reclaimTime)));
 
 		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, part)) {
 			return false;
