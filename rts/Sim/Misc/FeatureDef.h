@@ -18,7 +18,7 @@ struct FeatureDef
 		upright(false), drawType(0), modelType(0),
 		destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), geoThermal(false), noSelect(false),
-		xsize(0), ysize(0) {}
+		xsize(0), ysize(0), reclaimTime(0) {}
 
 	S3DOModel* LoadModel(int team) const;
 
@@ -31,6 +31,7 @@ struct FeatureDef
 	float metal;
 	float energy;
 	float maxHealth;
+	float reclaimTime;
 
 	/// used to see if the object can be overrun
 	float mass;

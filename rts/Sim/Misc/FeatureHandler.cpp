@@ -45,6 +45,7 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(id),
 		CR_MEMBER(energy),
 		CR_MEMBER(maxHealth),
+		CR_MEMBER(reclaimTime),
 		CR_MEMBER(mass),
 		CR_MEMBER(upright),
 		CR_MEMBER(drawType),
@@ -201,6 +202,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->metal     = fdTable.GetFloat("metal",  0.0f);
 	fd->energy    = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth = fdTable.GetFloat("damage", 0.0f);
+	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy));
 
 	fd->drawType = DRAWTYPE_3DO;
 	fd->modelname = fdTable.GetString("object", "");
