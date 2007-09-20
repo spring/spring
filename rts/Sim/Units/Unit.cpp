@@ -206,7 +206,8 @@ CUnit::CUnit ()
 	prevMoveType(NULL),
 	usingScriptMoveType(false),
 	lodCount(0),
-	currentLOD(0)
+	currentLOD(0),
+	alphaThreshold(0.1f)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl=0;
@@ -848,6 +849,7 @@ void CUnit::Kill(float3& impulse) {
 inline void CUnit::DrawModel()
 {
 	if (lodCount <= 0) {
+		glAlphaFunc(GL_GEQUAL, alphaThreshold);
 		localmodel->Draw();
 	} else {
 		localmodel->DrawLOD(currentLOD);
@@ -2275,6 +2277,8 @@ CR_REG_METADATA(CUnit, (
 
 				CR_MEMBER(lastTerrainType),
 				CR_MEMBER(curTerrainType),
+				
+				CR_MEMBER(alphaThreshold),
 
 				CR_MEMBER(selfDCountdown),
 				CR_RESERVED(16),

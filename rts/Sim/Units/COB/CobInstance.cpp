@@ -98,6 +98,7 @@
 #define CURRENT_FUEL             93 // set or get
 #define TRANSPORT_ID             94 // get
 #define SHIELD_POWER             95 // set or get
+#define ALPHA_THRESHOLD         103 // set or get
 
 // * NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
@@ -1120,6 +1121,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
 		return int(shield->curPower * float(COBSCALE));
 	}
+	case ALPHA_THRESHOLD: {
+		return int(unit->alphaThreshold * 255);
+	}
 	default:
 		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
 		                val, p1, p2, p3, p4);
@@ -1319,6 +1323,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
 				shield->curPower = max(0.0f, float(param) / float(COBSCALE));
 			}
+			break;
+		}
+		case ALPHA_THRESHOLD: {
+			unit->alphaThreshold = float(param) / 255.0f;
 			break;
 		}
 		default: {
