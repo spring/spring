@@ -347,6 +347,8 @@ public:
 	vector<float> lodLengths; // length-per-pixel
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
+	float alphaThreshold; //minimum alpha value for a texel to be drawn
+
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
