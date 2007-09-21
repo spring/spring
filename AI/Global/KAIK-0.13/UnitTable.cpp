@@ -9,7 +9,6 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	unitList = 0;
 
 	// get all sides and commanders
-	// KLOOTNOTE: might not work universally
 	string sideStr = "SIDE";
 	string errorString = "-1";
 	string valueString;
@@ -262,9 +261,9 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 
 			/*
 			if (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype > 0) {
-				// L("Score of them vs me: " << unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
 				currentscore -= (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
-			}*/
+			}
+			*/
 
 			score += currentscore;
 		}
@@ -578,12 +577,9 @@ void CUnitTable::Init() {
 	unitList = new const UnitDef*[numOfUnits];
 	ai->cb->GetUnitDefList(unitList);
 
-	for (int i = 1; i <= numOfUnits; i++) {
-		unittypearray[i].def = unitList[i - 1];
-	}
-
 	// add units to UnitTable
 	for (int i = 1; i <= numOfUnits; i++) {
+		unittypearray[i].def = unitList[i - 1];
 		// side has not been assigned - will be done later
 		unittypearray[i].side = -1;
 		unittypearray[i].category = -1;
@@ -777,10 +773,12 @@ void CUnitTable::DebugPrint() {
 	FILE* file = fopen(filename, "w");
 
 	for (int i = 1; i <= numOfUnits; i++) {
-		if (unittypearray[i].side != -1) {
+		int side = unittypearray[i].side;
+
+		if (side != -1) {
 			fprintf(file, "UnitDef ID: %i\n", i);
 			fprintf(file, "Name:       %s\n", unitList[i - 1]->humanName.c_str());
-			fprintf(file, "Side:       %s\n", sideNames[unittypearray[i].side].c_str());
+			fprintf(file, "Side:       %s (%d)\n", sideNames[side].c_str(), side);
 			fprintf(file, "Can Build:  ");
 
 			for (unsigned int j = 0; j != unittypearray[i].canBuildList.size(); j++) {
@@ -801,7 +799,7 @@ void CUnitTable::DebugPrint() {
 
 	for (int s = 0; s < numOfSides; s++) {
 		for (unsigned int l = 0; l != all_lists.size(); l++) {
-			fprintf(file, "\n\n%s units of category %s:\n", sideNames[s].c_str(), listCategoryNames[l]);
+			fprintf(file, "\n\n%s (side: %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
 				fprintf(file, "\t%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
