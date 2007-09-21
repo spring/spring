@@ -26,6 +26,7 @@ class CPieceProjectile : public CProjectile
 	float3 spinVec;
 	float spinSpeed;
 	float spinPos;
+	float alphaThreshold;
 
 	float3 oldSmoke,oldSmokeDir;
 //	CUnit* target;
