@@ -37,6 +37,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(spinPos),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
+	CR_MEMBER(alphaThreshold),
 //	CR_MEMBER(target),
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(curCallback),
@@ -61,7 +62,8 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 	oldSmoke(pos),
 	curCallback(0),
 	spinPos(0),
-	age(0)
+	age(0),
+	alphaThreshold(0.1f)
 {
 	checkCol=false;
 	if(owner){
@@ -71,6 +73,8 @@ CPieceProjectile::CPieceProjectile(const float3& pos,const float3& speed, LocalS
 		/* If we're part of an S3O unit, save this so we can
 		   draw with the right teamcolour. */
 		colorTeam=owner->team;
+		// copy the owner's alphaThreshold value
+		alphaThreshold = owner->alphaThreshold;
 	}
 
 	/* Don't store piece; owner may be a dying unit, so piece could be freed. */
@@ -347,6 +351,7 @@ void CPieceProjectile::Draw()
 
 void CPieceProjectile::DrawUnitPart(void)
 {
+	glAlphaFunc(GL_GEQUAL, alphaThreshold);
 	glPushMatrix();
 	glTranslatef(pos.x,pos.y,pos.z);
 	glRotatef(spinPos,spinVec.x,spinVec.y,spinVec.z);
