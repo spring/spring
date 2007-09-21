@@ -192,10 +192,10 @@ void CBuildUp::Buildup(int frame) {
 							// if we can't add this builder to some defense
 							// task then build something in CAT_DEFENCE
 							const UnitDef* building = ai->ut->GetUnitByScore(builder, CAT_DEFENCE);
-							float3 buildPos = ai->dm->GetDefensePos(building, ai->MyUnits[builder]->pos());
 							bool r = false;
 
 							if (building) {
+								float3 buildPos = ai->dm->GetDefensePos(building, ai->MyUnits[builder]->pos());
 								r = ai->MyUnits[builder]->Build_ClosestSite(building, buildPos, 2);
 							} else {
 								FallbackBuild(builder, CAT_DEFENCE);
