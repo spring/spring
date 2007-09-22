@@ -33,6 +33,8 @@ public:
 	void AttachUnit(CUnit* unit, int piece);
 	void DetachUnit(CUnit* unit);
 	bool CanTransport(CUnit* unit);
+	void DetachUnitFromAir(CUnit* unit,float3 pos); //moves to position after
+	void DetachUnitFromAir(CUnit* unit);
 };
 
 

@@ -219,3 +219,79 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 		}
 	}
 }
+
+void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
+
+	if(unit->transporter != this)
+		return;
+
+	for (list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
+		if (ti->unit==unit) {
+			this->DeleteDeathDependence(unit);
+			unit->DeleteDeathDependence(this);
+			unit->transporter=0;
+			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
+				unit->moveType->useHeading=true;	
+
+			unit->stunned=false; // de-stun in case it isfireplatform=0						
+			loshandler->MoveUnit(unit,false);
+								
+			//add an additional move command for after we land
+			Command c;			
+			c.id=CMD_MOVE;
+			c.params.push_back(pos.x);
+			c.params.push_back(pos.y);
+			c.params.push_back(pos.z);			
+			unit->commandAI->GiveCommand(c);
+
+			transportCapacityUsed-=ti->size;
+			transportMassUsed-=ti->mass;
+			transported.erase(ti);
+
+			unit->Drop(this->pos,this->frontdir,this);	
+			unit->moveType->LeaveTransport();
+			unit->CalculateTerrainType();
+			unit->UpdateTerrainType();
+			luaCallIns.UnitUnloaded(unit, this);
+
+			break;
+		}
+	}		
+					
+}
+
+void CTransportUnit::DetachUnitFromAir(CUnit* unit)
+{
+	if(unit->transporter != this)
+		return;
+
+	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
+		if(ti->unit==unit){
+			this->DeleteDeathDependence(unit);
+			unit->DeleteDeathDependence(this);
+			unit->transporter=0;
+			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
+				unit->moveType->useHeading=true;				
+			unit->stunned=false; // de-stun in case it isfireplatform=0
+			unit->Block();
+			
+			loshandler->MoveUnit(unit,false);		
+
+			Command c;			
+			c.id=CMD_STOP;
+			unit->commandAI->GiveCommand(c);
+
+			transportCapacityUsed-=ti->size;
+			transportMassUsed-=ti->mass;
+			transported.erase(ti);
+			
+			unit->Drop(this->pos,this->frontdir,this);	
+			unit->moveType->LeaveTransport();
+			unit->CalculateTerrainType();
+			unit->UpdateTerrainType();
+			luaCallIns.UnitUnloaded(unit, this);
+
+			break;
+		}
+	}
+}

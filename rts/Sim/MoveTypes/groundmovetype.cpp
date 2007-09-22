@@ -88,6 +88,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(skidding),
 		CR_MEMBER(flying),
 		CR_MEMBER(skidRotSpeed),
+		CR_MEMBER(dropSpeed),
+		CR_MEMBER(dropHeight),
 
 		CR_MEMBER(skidRotVector),
 		CR_MEMBER(skidRotSpeed2),
@@ -130,6 +132,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	deltaHeading(0),
 	skidding(false),
 	flying(false),
+	dropHeight(0),
 	skidRotSpeed(0),
 	floatOnWater(false),
 	skidRotVector(UpVector),
@@ -199,6 +202,12 @@ void CGroundMoveType::Update()
 
 	if(skidding){
 		UpdateSkid();
+		return;
+	}
+
+	//set drop height when we start to drop
+	if(owner->falling) {
+		UpdateControlledDrop();
 		return;
 	}
 
@@ -309,7 +318,10 @@ void CGroundMoveType::Update()
 		} else {
 			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 		}
-		owner->pos.y=wh;
+
+		//need this to stop jitter when falling
+		if (!(owner->falling || owner->Flying))
+			owner->pos.y=wh;
 	}
 
 	if(owner->pos!=oldPos){
@@ -323,7 +335,9 @@ void CGroundMoveType::Update()
 		} else {
 			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 		}
-		owner->pos.y=wh;
+
+		if (!(owner->falling || owner->Flying))
+			owner->pos.y=wh;
 
 		owner->speed=owner->pos-oldPos;
 		owner->midPos = owner->pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
@@ -378,7 +392,9 @@ void CGroundMoveType::SlowUpdate()
 	} else {
 		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 	}
-	owner->pos.y=wh;
+
+	if (!(owner->falling || owner->Flying))
+		owner->pos.y=wh;
 
 	if(!(owner->pos==oldSlowUpdatePos)){
 		oldSlowUpdatePos=owner->pos;
@@ -433,6 +449,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	progressState = Active;
 
 	//Starts the engine.
+	if (DEBUG_CONTROLLER)
+		logOutput << owner->id << ": StartMoving() starting engine.\n";
 	StartEngine();
 
 	ENTER_UNSYNCED;
@@ -549,7 +567,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 	owner->frontdir = GetVectorFromHeading(heading);
-	if(owner->upright){
+	if (owner->upright) {
 		owner->updir=UpVector;
 		owner->rightdir=owner->frontdir.cross(owner->updir);
 	} else {
@@ -711,6 +729,49 @@ void CGroundMoveType::UpdateSkid(void)
 			- owner->updir * owner->relMidPos.y
 			- owner->rightdir * owner->relMidPos.x;
 	CheckCollisionSkid();
+}
+
+void CGroundMoveType::UpdateControlledDrop(void)
+{
+	float3& speed=owner->speed;
+	float3& pos=owner->pos;
+	SyncedFloat3& midPos=owner->midPos;
+
+	if(owner->falling){
+		//set us upright
+		owner->cob->Call("Falling"); //start/continue parachute animation
+
+		speed.y += gs->gravity*owner->fallSpeed;
+
+		if(owner->speed.y > 0) //sometimes the dropped unit gets an upward force, still unsure where its coming from
+			owner->speed.y = 0;
+
+		midPos += speed;
+		pos = midPos - owner->frontdir * owner->relMidPos.z
+			- owner->updir * owner->relMidPos.y
+			- owner->rightdir * owner->relMidPos.x;
+
+		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+
+		if(midPos.y < 0)
+			speed*=0.90;
+
+		float wh;
+
+		if(floatOnWater)
+			wh = ground->GetHeight(midPos.x, midPos.z);
+		else
+			wh = ground->GetHeight2(midPos.x, midPos.z);
+
+		if(wh > midPos.y-owner->relMidPos.y){
+			owner->falling = false;
+			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
+			owner->cob->Call("Landed"); //stop parachute animation
+		}
+
+
+
+	}
 }
 
 void CGroundMoveType::CheckCollisionSkid(void)

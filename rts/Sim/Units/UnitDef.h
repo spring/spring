@@ -285,6 +285,9 @@ struct UnitDef
 	bool holdSteady;
 	bool releaseHeld;
 	bool transportByEnemy;
+	int transportUnloadMethod;	//0 - land unload, 1 - flyover drop, 2 - land flood
+	float fallSpeed;			//dictates fall speed of all transported units
+	float unitFallSpeed;		//sets the transported units fbi, overrides fallSpeed
 
 	bool canCloak;							//if the unit can cloak
 	bool startCloaked;					//if the units want to start out cloaked

@@ -366,6 +366,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.holdSteady        = udTable.GetBool("holdSteady",       true);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",      false);
 	ud.transportByEnemy  = udTable.GetBool("transportByEnemy", true);
+	ud.transportUnloadMethod	= udTable.GetInt("transportUnloadMethod" , 0);	//0 normal, 1 parachute drop, 2 land flood
+	ud.fallSpeed				= udTable.GetFloat("fallSpeed", 0.2);			//drop speed for all units dropped from this transport
+	ud.unitFallSpeed			= udTable.GetFloat("unitFallSpeed", 0);			//specific unit drop speed, overrides fallSpeed
 
 	ud.wingDrag     = udTable.GetFloat("wingDrag",     0.07f);  // drag caused by wings
 	ud.wingAngle    = udTable.GetFloat("wingAngle",    0.08f);  // angle between front and the wing plane

@@ -2,6 +2,12 @@
 #define TRANSPORTCAI_H
 
 #include "MobileCAI.h"
+#include "Sim/MoveTypes/TAAirMoveType.h"
+ 
+#define UNLOAD_LAND 0
+#define UNLOAD_DROP 1
+#define UNLOAD_LANDFLOOD 2
+#define UNLOAD_CRASHFLOOD 3
 
 class CTransportCAI :
 	public CMobileCAI
@@ -14,8 +20,11 @@ public:
 	void SlowUpdate(void);
 	void ScriptReady(void);
 
+	int unloadType;	
 	bool CanTransport(CUnit* unit);
 	bool FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload);
+	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots);
+	bool FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void DrawCommands(void);
@@ -29,6 +38,26 @@ public:
 	int toBeTransportedUnitId;
 	bool scriptReady;
 	int lastCall;
+
+private:	
+	void UnloadUnits_Land(Command& c, CTransportUnit* transport);
+	void UnloadUnits_Drop(Command& c, CTransportUnit* transport);	
+	void UnloadUnits_LandFlood(Command& c, CTransportUnit* transport);
+	void UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport); //incomplete
+	
+	void UnloadNormal(Command& c);
+	void UnloadLand(Command& c);
+	void UnloadDrop(Command& c);	//parachute drop units
+	void UnloadLandFlood(Command& c); //land and dispatch units all at once
+	void UnloadCrashFlood(Command& c); //slam into landscape abruptly and dispatch units all at once (incomplete)
+	
+	bool SpotIsClear(float3 pos, CUnit* u);
+	std::list<float3> dropSpots;		
+	bool isFirstIteration;
+	float3 startingDropPos;
+	float3 lastDropPos;
+	float3 approachVector; //direction from which we travel to drop point
+	float3 endDropPos;
 };
 
 
