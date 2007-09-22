@@ -186,7 +186,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	fd->blocking     = fdTable.GetBool("blocking",       true);
 	fd->burnable     = fdTable.GetBool("flammable",      false);
-	fd->destructable = fdTable.GetBool("indestructible", false);
+	fd->destructable = !fdTable.GetBool("indestructible", false);
 	fd->reclaimable  = fdTable.GetBool("reclaimable", fd->destructable);
 
 	//this seem to be the closest thing to floating that ta wreckage contains
