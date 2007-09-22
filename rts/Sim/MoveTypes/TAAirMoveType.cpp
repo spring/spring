@@ -15,6 +15,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Mobility.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 
 CR_BIND_DERIVED(CTAAirMoveType, CMoveType, (NULL));
 
@@ -357,10 +358,13 @@ void CTAAirMoveType::UpdateTakeoff()
 // Move the unit around a bit.. and when it gets too far away from goal position it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
-	float driftSpeed = owner->unitDef->dlHoverFactor;
-
-	// move towards goal position
+	float driftSpeed = owner->unitDef->dlHoverFactor;	
 	float3 dir = goalPos - owner->pos;
+
+	// move towards goal position if its not immediately behind us when we have more waypoints to get to
+	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands()  && dir.Length2D() < 120) && (goalPos - owner->pos).Normalize().distance(dir) > 1 )
+		dir = owner->frontdir;
+
 	wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
 
 	// damping
@@ -380,6 +384,10 @@ void CTAAirMoveType::UpdateFlying()
 	//Direction to where we would like to be
 	float3 dir = goalPos - pos;
 	owner->restTime=0;
+
+	//dont change direction for waypoints we just flew over and missed slightly
+	if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands()  && dir.Length2D() < 100) && (goalPos - pos).Normalize().distance(dir) < 1 )
+		dir = owner->frontdir;
 
 	//are we there yet?
 //	logOutput.Print("max drift %f %i %f %f",maxDrift,waitCounter,dir.Length2D(),fabs(ground->GetHeight(pos.x,pos.z)-pos.y+wantedHeight));
@@ -490,8 +498,11 @@ void CTAAirMoveType::UpdateFlying()
 	float dist=dir.Length2D();
 
 	//If we are close to our goal, we should go slow enough to be able to break in time
-	//if in attack mode dont slow down
-	if (flyState!=FLY_ATTACKING && dist < breakDistance) {
+	//new additional rule: 
+	//if in attack mode or have more this is an intermediate waypoint dont 
+	//slow down except if near ground level
+                    		
+	if ((flyState!=FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands() ) || (pos.y - ground->GetHeight(pos.x, pos.z) < orgWantedHeight/2)) {
 		realMax = dist/(speed.Length2D()+0.01f) * decRate;
 		//logOutput.Print("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
 	}
@@ -501,12 +512,17 @@ void CTAAirMoveType::UpdateFlying()
 	UpdateAirPhysics();
 
 
-	//Point toward goal or forward
+	//Point toward goal or forward - unless we just passed it to get to another goal
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
-	} else {
+	} 
+	else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands()  && dist < 120) && (goalPos - pos).Normalize().distance(dir) > 1 ) {
+		dir = owner->frontdir;
+	}
+	else {
 		dir = goalPos - pos;
 	}
+
 	if(dir.SqLength2D()>1)
 		wantedHeading = GetHeadingFromVector(dir.x, dir.z);
 }

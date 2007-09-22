@@ -106,6 +106,7 @@ protected:
 	void ChangeHeading(short wantedHeading);
 
 	void UpdateSkid(void);
+	void UpdateControlledDrop(void);
 	void CheckCollisionSkid(void);
 	float GetFlyTime(float3 pos, float3 speed);
 	void CalcSkidRot(void);
@@ -113,6 +114,8 @@ protected:
 	bool skidding;
 	bool flying;
 	float skidRotSpeed;
+	float dropSpeed;
+	float dropHeight;
 
 	float3 skidRotVector;
 	float skidRotSpeed2;

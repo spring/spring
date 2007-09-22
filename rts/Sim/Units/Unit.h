@@ -289,6 +289,8 @@ public:
 
 	bool crashing;
 	bool isDead;								//prevent damage from hitting an already dead unit (causing multi wreck etc)
+	bool	falling;	//for units being dropped from transports (parachute drops)
+	float	fallSpeed; 
 
 	float3 bonusShieldDir;			//units takes less damage when attacked from this dir (encourage flanking fire)
 	float bonusShieldSaved;			//how much the bonus shield can turn upon an attack(zeroed when attacked, slowly increase)
@@ -359,6 +361,7 @@ public:
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
+	void Drop(float3 parentPos,float3 parentDir,CUnit* parent); //start this unit in freefall from parent unit
 	virtual void DrawS3O(void);
 	void PostLoad();
 	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);

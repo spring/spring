@@ -107,6 +107,8 @@ CUnit::CUnit ()
 	rightdir(-1,0,0),
 	updir(0,1,0),
 	upright(true),
+	falling(false),
+	fallSpeed(0.2),
 	maxRange(0),
 	haveTarget(false),
 	lastAttacker(0),
@@ -356,6 +358,17 @@ void CUnit::ForcedSpin(const float3& newDir)
 }
 
 
+void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent) {
+	//drop unit from position
+	
+	this->fallSpeed = this->unitDef->unitFallSpeed > 0 ? this->unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
+	float landingHeight = ground->GetApproximateHeight(pos.x, pos.z);
+	falling = true;	
+	this->pos.y = parentPos.y - height;	
+	this->frontdir = parentDir;	
+	this->frontdir.y = 0;
+	this->speed.y = 0;
+}
 void CUnit::EnableScriptMoveType()
 {
 	if (usingScriptMoveType) {
@@ -2253,6 +2266,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(tooltip),
 				CR_MEMBER(crashing),
 				CR_MEMBER(isDead),
+				CR_MEMBER(falling),
+				CR_MEMBER(fallSpeed),
 
 				CR_MEMBER(bonusShieldDir),
 				CR_MEMBER(bonusShieldSaved),
@@ -2296,6 +2311,7 @@ CR_REG_METADATA(CUnit, (
 
 				CR_POSTLOAD(PostLoad)
 				));
+
 
 
 
