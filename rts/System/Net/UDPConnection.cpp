@@ -1,6 +1,6 @@
 #include "UDPConnection.h"
 
-#include <SDL/SDL_timer.h>
+#include <SDL_timer.h>
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
