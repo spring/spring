@@ -6,6 +6,7 @@
 #include "SDL_types.h"
 #include <ctime>
 #include <string>
+#include <map>
 
 #include "System/GlobalStuff.h"
 #include "FileSystem/CRC.h"
@@ -56,10 +57,6 @@ public:
 #ifdef SYNCDEBUG
 	volatile bool fakeDesync; // set in client on .fakedesync, read and reset in server
 #endif
-#ifdef SYNCCHECK
-	std::deque<int> outstandingSyncFrames;
-	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
-#endif
 	
 private:
 	/**
@@ -80,10 +77,6 @@ private:
 	void CheckSync();
 	void ServerReadNet();
 	void CheckForGameEnd();
-	
-	int syncErrorFrame;
-	int syncWarningFrame;
-	int delayedSyncResponseFrame;
 
 	/// Class for network communication
 	CNetProtocol* serverNet;
@@ -103,6 +96,15 @@ private:
 	float maxUserSpeed;
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
+	
+	// sync stuff
+#ifdef SYNCCHECK
+	std::deque<int> outstandingSyncFrames;
+	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
+#endif
+	int syncErrorFrame;
+	int syncWarningFrame;
+	int delayedSyncResponseFrame;
 };
 
 extern CGameServer* gameServer;
