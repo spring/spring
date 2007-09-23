@@ -4,15 +4,15 @@
 #include "Object.h"
 
 #include <list>
+#include <boost/noncopyable.hpp>
 
 class CWeapon;
 class CWeaponProjectile;
 class CPlasmaRepulser;
 class CProjectile;
 
-class CInterceptHandler
+class CInterceptHandler : public boost::noncopyable
 {
-	NO_COPY(CInterceptHandler);
 	CR_DECLARE(CInterceptHandler)
 
 public:

@@ -1,10 +1,11 @@
 #ifndef SENSORHANDLER_H
 #define SENSORHANDLER_H
 
+#include <boost/noncopyable.hpp>
+
 /// This class is responsible for reading the gamedata/sensors.tdf file and parsing relevant data.
-class CSensorHandler
+class CSensorHandler : public boost::noncopyable
 {
-	NO_COPY(CSensorHandler);
 	CR_DECLARE(CSensorHandler);
 
 public:

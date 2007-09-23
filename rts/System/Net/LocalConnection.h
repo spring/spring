@@ -2,9 +2,10 @@
 #define _LOCALCONNECTION
 
 #include <boost/thread/mutex.hpp>
+#include <queue>
 
 #include "Connection.h"
-#include "Net.h"
+#include "RawPacket.h"
 
 namespace netcode {
 
@@ -24,23 +25,23 @@ public:
 	@return The amount of data sent (will be length)
 	@throw network_error When data doesn't fit in the buffer
 	*/
-	virtual int SendData(const unsigned char *data, const unsigned length);
+	virtual void SendData(const unsigned char *data, const unsigned length);
 	
 	/**
 	@brief Get data
 	@return The amount of data read
-	@param length The maximum data length to copy
 	@throw network_error When the data doesnt fit in *buf
 	*/
-	virtual int GetData(unsigned char *buf, const unsigned length);
+	virtual unsigned GetData(unsigned char *buf);
 
 	/// does nothing
 	virtual void Flush(const bool forced = false);
+	
+	virtual bool CheckTimeout() const;
 
 private:
-	static unsigned char Data[2][NETWORK_BUFFER_SIZE];
+	static std::queue<RawPacket*> Data[2];
 	static boost::mutex Mutex[2];
-	static unsigned Length[2];
 
 	unsigned OtherInstance() const;
 

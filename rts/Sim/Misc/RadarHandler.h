@@ -1,14 +1,15 @@
 #ifndef RADARHANDLER_H
 #define RADARHANDLER_H
 
+#include <boost/noncopyable.hpp>
+
 #include "Object.h"
 #include "Sim/Units/Unit.h"
 
 #define RADAR_SIZE 8
 
-class CRadarHandler
+class CRadarHandler : public boost::noncopyable
 {
-	NO_COPY(CRadarHandler);
 	CR_DECLARE(CRadarHandler);
 
 public:

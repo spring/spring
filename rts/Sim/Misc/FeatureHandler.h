@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <boost/noncopyable.hpp>
 #include "creg/creg.h"
 #include "FeatureDef.h"
 #include "FeatureSet.h"
@@ -17,9 +18,8 @@ class LuaTable;
 
 #define DRAW_QUAD_SIZE 32
 
-class CFeatureHandler : public CObject
+class CFeatureHandler : public CObject, public boost::noncopyable
 {
-	NO_COPY(CFeatureHandler);
 	CR_DECLARE(CFeatureHandler);
 	CR_DECLARE_SUB(DrawQuad);
 

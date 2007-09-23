@@ -7,15 +7,15 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <boost/noncopyable.hpp>
 
 struct FeatureDef;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
 
-class CFeature : public CSolidObject
+class CFeature : public CSolidObject, public boost::noncopyable
 {
-	NO_COPY(CFeature);
 	CR_DECLARE(CFeature);
 
 public:

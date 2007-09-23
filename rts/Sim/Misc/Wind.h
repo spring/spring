@@ -1,11 +1,12 @@
 #ifndef WIND_H
 #define WIND_H
 
+#include <boost/noncopyable.hpp>
+
 #include "float3.h"
 
-class CWind
+class CWind : public boost::noncopyable
 {
-	NO_COPY(CWind);
 	CR_DECLARE(CWind);
 
 public:

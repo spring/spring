@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <boost/noncopyable.hpp>
 
-class CCategoryHandler
+class CCategoryHandler : public boost::noncopyable
 {
-	NO_COPY(CCategoryHandler);
 	CR_DECLARE(CCategoryHandler);
 
 public:

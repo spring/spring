@@ -517,15 +517,16 @@ bool SpringApp::SetSDLVideoMode ()
 
 
 // origin for our coordinates is the bottom left corner
-#ifndef _WIN32
 bool SpringApp::GetDisplayGeometry()
 {
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
+
 	if (!SDL_GetWMInfo(&info)) {
 		return false;
 	}
 
+#ifndef _WIN32
 	info.info.x11.lock_func();
 	{
 		Display* display = info.info.x11.display;
@@ -546,18 +547,7 @@ bool SpringApp::GetDisplayGeometry()
 		gu->winPosY = gu->screenSizeY - gu->winSizeY - yp;
 	}
 	info.info.x11.unlock_func();
-
-	return true;
-}
 #else
-bool SpringApp::GetDisplayGeometry()
-{
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	if (!SDL_GetWMInfo(&info)) {
-		return false;
-	}
-
 	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
 	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
 
@@ -576,10 +566,9 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 	gu->winPosX = rect.left;
 	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
-
+#endif // _WIN32
 	return true;
 }
-#endif // _WIN32
 
 
 void SpringApp::SetupViewportGeometry()

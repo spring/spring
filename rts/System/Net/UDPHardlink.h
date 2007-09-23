@@ -1,7 +1,7 @@
 #ifndef _UDPHARDLINK
 #define _UDPHARDLINK
 
-#include "Net/UDPSocket.h"
+#include "UDPSocket.h"
 
 namespace netcode {
 

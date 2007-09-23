@@ -1,6 +1,6 @@
 #include "UDPConnection.h"
 
-#include <SDL_timer.h>
+#include <SDL/SDL_timer.h>
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
@@ -8,14 +8,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
-
 #endif
 
-#include "boost/version.hpp"
-#include "LogOutput.h"
-#include "GlobalStuff.h"
-//#include "Sync/Syncify.h"
-#include "Platform/ConfigHandler.h"
+#include "ProtocolDef.h"
+#include <boost/version.hpp>
 
 namespace netcode {
 
@@ -29,28 +25,13 @@ namespace netcode {
 
 const unsigned UDPConnection::hsize = 9;
 
-UDPConnection::UDPConnection(UDPSocket* const NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
+UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr, const ProtocolDef* const myproto) : mySocket(NetSocket), proto(myproto)
 {
 	addr=MyAddr;
-	lastInOrder=-1;
-	waitingPackets.clear();
-	firstUnacked=0;
-	currentNum=0;
-	outgoingLength=0;
-	lastSendFrame=0;
-	lastNak=-1;
-	lastNakTime=0;
-	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
-	if (mtu < 50)
-	{
-		logOutput.Print("Your MaximumTransmissionUnit is to low (%i, minimum 50)", mtu);
-		mtu = 50;
-	}
-	fragmentedFlushes = 0;
-	resentPackets = 0;
+	Init();
 }
 
-UDPConnection::UDPConnection(UDPSocket* const NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
+UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port, const ProtocolDef* const myproto) : mySocket(NetSocket), proto(myproto)
 {
 	LPHOSTENT lpHostEntry;
 	
@@ -73,101 +54,50 @@ UDPConnection::UDPConnection(UDPSocket* const NetSocket, const std::string& addr
 			}
 			addr.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
 		}
-	
-	//TODO same code as in other constructor, merge together
-	lastInOrder=-1;
-	waitingPackets.clear();
-	firstUnacked=0;
-	currentNum=0;
-	outgoingLength=0;
-	lastSendFrame=0;
-	lastNak=-1;
-	lastNakTime=0;
-	mtu = configHandler.GetInt("MaximumTransmissionUnit", 512) - 9; // subtract spring header size
-	if (mtu < 50)
-	{
-		logOutput.Print("Your MaximumTransmissionUnit is to low (%i, minimum 50)", mtu);
-		mtu = 50;
-	}
-	fragmentedFlushes = 0;
-	resentPackets = 0;
+	Init();
 }
 
 UDPConnection::~UDPConnection()
 {
-	logOutput.Print("Network statistics for %s",inet_ntoa(addr.sin_addr));
-	logOutput.Print("Bytes send/received: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
-	logOutput.Print("Packets send/received: %i/%i (Lost: %i%%)", currentNum, lastInOrder, resentPackets * 100 / currentNum);
-	logOutput.Print("Flushes requiring fragmentation: %i", fragmentedFlushes);
+	if (fragmentBuffer)
+		delete fragmentBuffer;
 }
 
-int UDPConnection::SendData(const unsigned char *data, const unsigned length)
+void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	if(active){
-		if(outgoingLength+length>=NETWORK_BUFFER_SIZE){
-			logOutput.Print("Overflow when sending to remote connection %i %i %i",outgoingLength,length,NETWORK_BUFFER_SIZE);
-			return 0;
-		}
-		memcpy(&outgoingData[outgoingLength],data,length);
-		outgoingLength+=length;
+	if(outgoingLength+length>=NETWORK_BUFFER_SIZE){
+		throw network_error("Buffer overflow in UDPConnection (SendData)");
 	}
-	return 1;
+	memcpy(&outgoingData[outgoingLength],data,length);
+	outgoingLength+=length;
 }
 
-int UDPConnection::GetData(unsigned char *buf, const unsigned length)
+unsigned UDPConnection::GetData(unsigned char *buf)
 {
-	if(active){
-		unsigned readyLength = 0;
-
-		packetMap::iterator wpi;
-		//process all in order packets that we have waiting
-		while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
-#if (BOOST_VERSION >= 103400)
-			if (readyLength + wpi->second->length >= length) {
-#else
-			if (readyLength + (*wpi).length >= length) {
-#endif		
-				logOutput.Print("Overflow in incoming network buffer");
-				break;
-			}
-
-			lastInOrder++;
-
-#if (BOOST_VERSION >= 103400)
-			memcpy(buf+readyLength,wpi->second->data,wpi->second->length);
-			readyLength += (wpi->second)->length;
-#else
-			memcpy(buf + readyLength, (*wpi).data, (*wpi).length);
-			readyLength += (*wpi).length;
-#endif		
-
-			waitingPackets.erase(wpi);
-		}
-
-		return readyLength;
-	} else {
-		return -1;
+	if (!msgQueue.empty())
+	{
+		RawPacket* msg = msgQueue.front();
+		unsigned length = msg->length;
+		memcpy(buf, msg->data, length);
+		delete msg;
+		msgQueue.pop();
+		return length;
+	}
+	else
+	{
+		return 0;
 	}
 }
 
 void UDPConnection::Update()
 {
-	if (!active)
-		return;
-
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
 	bool force = false;	// should we force to send a packet?
 	
-	if(lastSendTime<curTime-1 && (dataRecv == 0)){		//server hasnt responded so try to send the connection attempt again
+	if((dataRecv == 0) && lastSendTime<curTime-1 && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
-		lastSendTime=curTime;
+		lastSendTime = curTime;
 		force = true;
-	}
-	
-	if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
-	{
-		active=false;
-		return;
 	}
 	
 	if (lastSendTime<curTime-5 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
@@ -177,18 +107,23 @@ void UDPConnection::Update()
 		force = true;
 	}
 	
-	if(outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f) || lastSendFrame < gs->frameNum-1)){
-		Flush(force);
+	if (outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f)))
+	{
+		force = true;
 	}
+	
+	Flush(force);
 }
 
 void UDPConnection::ProcessRawPacket(RawPacket* packet)
 {
 	lastReceiveTime=static_cast<float>(SDL_GetTicks())/1000.0f;
+	dataRecv += packet->length;
+	recvOverhead += hsize;
 
 	int packetNum = *(int*)packet->data;
 	int ack = *(int*)(packet->data+4);
-	unsigned char nak = *(unsigned char*)(packet->data+8);
+	unsigned char nak = packet->data[8];
 
 	AckPackets(ack);
 
@@ -207,18 +142,83 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 		}
 	}
 
-	if(!active || lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
+	if(lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
 	{
 		delete packet;
 		return;
 	}
 
-	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));
-
-	dataRecv += packet->length;
-	recvOverhead += hsize;
-	
+	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));	
 	delete packet;
+	
+	packetMap::iterator wpi;
+	//process all in order packets that we have waiting
+	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
+	{
+		unsigned char buf[8000];
+		unsigned bufLength = 0;
+		
+		if (fragmentBuffer)
+		{
+			// combine with fragment buffer
+			bufLength += fragmentBuffer->length;
+			memcpy(buf, fragmentBuffer->data, bufLength);
+			delete fragmentBuffer;
+			fragmentBuffer = 0;
+		}
+		
+		lastInOrder++;
+#if (BOOST_VERSION >= 103400)
+		memcpy(buf+bufLength,wpi->second->data,wpi->second->length);
+		bufLength += (wpi->second)->length;
+#else
+		memcpy(buf + bufLength, (*wpi).data, (*wpi).length);
+		bufLength += (*wpi).length;
+#endif		
+		waitingPackets.erase(wpi);
+		
+		for (unsigned pos = 0; pos < bufLength;)
+		{
+			char msgid = buf[pos];
+			if (proto->IsAllowed(msgid))
+			{
+				unsigned msglength = 0;
+				if (proto->HasFixedLength(msgid))
+				{
+					msglength = proto->GetLength(msgid);
+				}
+				else
+				{
+					int length_t = proto->GetLength(msgid);
+					if (length_t == -1)
+					{
+						msglength = buf[pos+1];
+					}
+					else if (length_t == -2)
+					{
+						msglength = *(short*)(buf+pos+1);
+					}
+				}
+				
+				if (bufLength >= pos + msglength)
+				{
+					msgQueue.push(new RawPacket(buf + pos, msglength));
+					pos += msglength;
+				}
+				else
+				{
+					fragmentBuffer = new RawPacket(buf + pos, bufLength-pos);
+					break;
+				}
+			}
+			else
+			{
+				// error
+				pos++;
+			}
+		}
+	}
+
 }
 
 void UDPConnection::Flush(const bool forced)
@@ -226,41 +226,68 @@ void UDPConnection::Flush(const bool forced)
 	if (outgoingLength <= 0 && !forced)
 		return;
 
-	lastSendFrame=gs->frameNum;
 	lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
 
-	// Manually fragment packets to respect configured MTU.
+	// Manually fragment packets to respect configured UDP_MTU.
 	// This is an attempt to fix the bug where players drop out of the game if
 	// someone in the game gives a large order.
 
-	if (outgoingLength > mtu)
+	if (outgoingLength > proto->UDP_MTU)
 		++fragmentedFlushes;
 
 	unsigned pos = 0;
 	do
 	{
-		int length = std::min(mtu, outgoingLength);
+		unsigned length = std::min(proto->UDP_MTU, outgoingLength);
 		SendRawPacket(outgoingData + pos, length, currentNum++);
 		unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
 		outgoingLength -= length;
-		pos += mtu;
+		pos += proto->UDP_MTU;
 	} while (outgoingLength != 0);
+}
+
+bool UDPConnection::CheckTimeout() const
+{
+	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+	if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
+	{
+		return true;
+	}
+	else
+		return false;
 }
 
 bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 {
-	if(active){
-		if(
+	if(
 #ifdef _WIN32
-			addr.sin_addr.S_un.S_addr==from.sin_addr.S_un.S_addr
+		addr.sin_addr.S_un.S_addr==from.sin_addr.S_un.S_addr
 #else
-			addr.sin_addr.s_addr==from.sin_addr.s_addr
+		addr.sin_addr.s_addr==from.sin_addr.s_addr
 #endif
-			&& addr.sin_port==from.sin_port){
-			return true;
-		}
+		&& addr.sin_port==from.sin_port){
+		return true;
 	}
-	return false;
+	else
+		return false;
+}
+
+void UDPConnection::Init()
+{
+	lastReceiveTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+	lastInOrder=-1;
+	waitingPackets.clear();
+	firstUnacked=0;
+	currentNum=0;
+	outgoingLength=0;
+	lastNak=-1;
+	lastNakTime=0;
+	lastSendTime=0;
+	sentOverhead = 0;
+	recvOverhead = 0;
+	fragmentedFlushes = 0;
+	fragmentBuffer = 0;
+	resentPackets = 0;
 }
 
 void UDPConnection::AckPackets(const int nextAck)
@@ -273,9 +300,6 @@ void UDPConnection::AckPackets(const int nextAck)
 
 void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
 {
-	if (!active)
-		return;
-
 	const unsigned hsize = 9;
 	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
 	*(int*)tempbuf = packetNum;
@@ -296,7 +320,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 		*(unsigned char*)(tempbuf+8) = 0;
 	}
 
-	memcpy(&tempbuf[hsize],data,length);
+	memcpy(tempbuf+hsize, data, length);
 
 	mySocket->SendTo(tempbuf, length+hsize, &addr);
 	

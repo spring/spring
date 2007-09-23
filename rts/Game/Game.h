@@ -70,12 +70,6 @@ public:
 	unsigned int lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 
-	unsigned char inbuf[40000*2];	//buffer space for incomming data	//should be NETWORK_BUFFER_SIZE*2
-	int inbufpos;								//where in the input buffer we are
-	int inbuflength;						//last byte in input buffer
-
-	bool bOneStep;						//do a single step while game is paused
-
 	int leastQue;
 
 	std::string userInputPrefix;
@@ -99,10 +93,6 @@ public:
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 	bool drawFpsHUD;
-
-	float maxUserSpeed;
-	float minUserSpeed;
-	bool gamePausable;
 
 	bool soundEnabled;
 	float gameSoundVolume;

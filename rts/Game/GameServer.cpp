@@ -1,17 +1,17 @@
-#include "StdAfx.h"
+//#include "StdAfx.h"
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
+
 #include "FileSystem/ArchiveScanner.h"
 #include "Game.h"
 #include "GameServer.h"
 #include "GameSetup.h"
-#include "NetProtocol.h"
+#include "System/NetProtocol.h"
+#include "System/AutohostInterface.h"
 #include "LogOutput.h"
-#include "Platform/errorhandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Player.h"
-#include "Team.h"
 #include "StartScripts/ScriptHandler.h"
 
 #define SYNCCHECK_TIMEOUT 300 //frames
@@ -33,7 +33,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	lastPlayerInfo = 0;
-	makeMemDump=true;
+// 	makeMemDump=true;
 	serverframenum=0;
 	timeLeft=0;
 	gameLoading=true;
@@ -43,13 +43,12 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	gameClientUpdated=false;
 	maxTimeLeft=2;
 
-	serverNet=SAFE_NEW CNetProtocol();
+	serverNet = new CNetProtocol();
 
 	if (!demoName.empty())
 	{
 		logOutput << "Initializing demo server...\n";
 		serverNet->InitServer(port,demoName);
-		net->InitLocalClient(gameSetup?gameSetup->myPlayer:0);
 	}
 	else // no demo, so set map and mod to send it to clients
 	{
@@ -75,6 +74,20 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	{
 		hostif = 0;
 	}
+	
+	if (gameSetup) {
+		maxUserSpeed = gameSetup->maxSpeed;
+		minUserSpeed = gameSetup->minSpeed;
+	}
+	else
+	{
+		maxUserSpeed=3;
+		minUserSpeed=0.3f;
+	}
+	
+	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
+	unsigned char buffer[128];
+	entropy.UpdateData(buffer, 128);
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thread = SAFE_NEW boost::thread(boost::bind(GameServerThreadProc,this));
@@ -201,7 +214,7 @@ void CGameServer::CheckSync()
 bool CGameServer::Update()
 {
 	if(serverNet->IsDemoServer())
-		gameServer->serverframenum=gs->frameNum;
+		serverframenum=gs->frameNum;
 
 	if(lastPlayerInfo<gu->gameTime-2){
 		lastPlayerInfo=gu->gameTime;
@@ -245,37 +258,9 @@ bool CGameServer::Update()
 		logOutput.Print("Server read net wanted quit");
 		return false;
 	}
-	if (game && game->playing && !serverNet->IsDemoServer()){
-		CheckSync();
-
-		// Send out new frame messages.
-		unsigned currentTick = SDL_GetTicks();
-		float timeElapsed=((float)(currentTick - lastTick))/1000.f;
-		if (timeElapsed>0.2) {
-			timeElapsed=0.2;
-		}
-		if(gameEndDetected)
-			gameEndTime+=timeElapsed;
-//		logOutput.Print("float value is %f",timeElapsed);
-
-		if(gameClientUpdated){
-			gameClientUpdated=false;
-			maxTimeLeft=2;
-		}
-		if(timeElapsed>maxTimeLeft)
-			timeElapsed=maxTimeLeft;
-		maxTimeLeft-=timeElapsed;
-
-		timeLeft+=GAME_SPEED*gs->speedFactor*timeElapsed;
-		lastTick=currentTick;
-
-		while((timeLeft>0) && (!gs->paused || game->bOneStep)){
-			if(!game->creatingVideo){
-				game->bOneStep=false;
-				CreateNewFrame(true);
-			}
-			timeLeft--;
-		}
+	if (game && game->playing && !serverNet->IsDemoServer())
+	{
+		CreateNewFrame(true);
 	}
 	serverNet->Update();
 
@@ -292,333 +277,274 @@ bool CGameServer::Update()
 
 bool CGameServer::ServerReadNet()
 {
-	static int lastMsg[MAX_PLAYERS],thisMsg=0;
+	for(unsigned a=0; a<MAX_PLAYERS; a++)
+	{
+		if (gs->players[a]->active && ((!net->localDemoPlayback && (!gameSetup || a>=gameSetup->numDemoPlayers)) || (net->localDemoPlayback && a == (gameSetup ? gameSetup->myPlayer : 0) )))
+		{
+			unsigned char inbuf[8000];
+			int ret = serverNet->GetData(inbuf, a);
+			while (ret > 0)
+			{
+				// dont bother handling anything if we are just sending a demo to
+				// localhost, this would result in double chat messages and server warnings..
+				if (net->localDemoPlayback)
+					continue;
+					
+				switch (inbuf[0]){
 
-	for(int a=0;a<gs->activePlayers;a++){
-		int inbufpos=0;
-		int inbuflength=0;
-		if (gs->players[a]->active &&
-				  ((!net->localDemoPlayback && (!gameSetup || a>=gameSetup->numDemoPlayers)) ||
-				  (net->localDemoPlayback && a == (gameSetup ? gameSetup->myPlayer : 0) ))) {
-			if((inbuflength=serverNet->GetData(inbuf,netcode::NETWORK_BUFFER_SIZE,a))==-1){
+					case NETMSG_ATTEMPTCONNECT: //handled directly in CNet
+						break;
+
+					case NETMSG_RANDSEED:
+						serverNet->SendRandSeed(inbuf[1]); //forward data
+						break;
+
+					case NETMSG_GAMEID:
+						serverNet->SendGameID(&inbuf[1]); //forward data
+						break;
+
+					case NETMSG_NEWFRAME:
+						gs->players[a]->ping=serverframenum-*(int*)&inbuf[1];
+						break;
+
+					case NETMSG_PAUSE:
+						if(inbuf[1]!=a){
+							logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							if (!inbuf[2])  // reset sync checker
+								syncErrorFrame = 0;
+							if(gamePausable || a==0) // allow host to pause even if nopause is set
+							{
+								timeLeft=0;
+								serverNet->SendPause(inbuf[1],inbuf[2]);
+							}
+						}
+						break;
+
+					case NETMSG_INTERNAL_SPEED:
+						break;
+
+
+					case NETMSG_USER_SPEED: {
+						unsigned char playerNum = inbuf[1];
+						float speed = *((float*) &inbuf[2]);
+
+						if (speed > maxUserSpeed)
+							speed = maxUserSpeed;
+						if (speed < minUserSpeed)
+							speed = minUserSpeed;
+						if (gs->userSpeedFactor != speed)
+						{
+							if (gs->speedFactor == gs->userSpeedFactor || gs->speedFactor>speed)
+								serverNet->SendInternalSpeed(speed);
+							// forward data
+							serverNet->SendUserSpeed(playerNum, speed);
+						}
+					} break;
+
+
+					case NETMSG_CPU_USAGE:
+						ENTER_MIXED;
+						gs->players[a]->cpuUsage=*((float*)&inbuf[1]);
+						ENTER_UNSYNCED;
+						break;
+
+					case NETMSG_QUIT: {
+						ENTER_MIXED;
+						gs->players[a]->active=false;
+						ENTER_UNSYNCED;
+						serverNet->SendPlayerLeft(a, 1);
+						serverNet->Kill(a);
+						if (hostif)
+						{
+							hostif->SendPlayerLeft(a, 1);
+						}
+						break;
+					}
+
+					case NETMSG_PLAYERNAME: {
+						unsigned char playerNum = inbuf[2];
+						if(playerNum!=a && a!=0){
+							SendSystemMsg("Server: Warning got playername msg from %i claiming to be from %i",a,playerNum);
+						} else {
+							ENTER_MIXED;
+							gs->players[playerNum]->playerName=(char*)(&inbuf[3]);
+							gs->players[playerNum]->readyToStart=true;
+							gs->players[playerNum]->active=true;
+							ENTER_UNSYNCED;
+
+							SendSystemMsg("Player %s joined as %i",&inbuf[3],playerNum);
+							serverNet->SendPlayerName(playerNum,gs->players[playerNum]->playerName);
+							if (hostif)
+							{
+								hostif->SendPlayerJoined(a, gs->players[playerNum]->playerName);
+							}
+						}
+						break;
+					}
+
+					case NETMSG_CHAT:
+						if(inbuf[2]!=a){
+							SendSystemMsg("Server: Warning got chat msg from %i claiming to be from %i",a,inbuf[2]);
+						} else {
+							GotChatMessage(std::string((char*)(inbuf+3)), inbuf[2]);
+						}
+						break;
+
+					case NETMSG_SYSTEMMSG:
+						if(inbuf[2]!=a){
+							logOutput.Print("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[2]);
+						} else {
+							serverNet->SendSystemMessage(inbuf[2], (char*)(&inbuf[3]));
+						}
+						break;
+
+					case NETMSG_STARTPOS:
+						if(inbuf[1]!=gs->players[a]->team && a!=0){
+							SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from team %i",a,inbuf[1]);
+						} else {
+							serverNet->SendStartPos(inbuf[1],inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7]), *((float*)&inbuf[11])); //forward data
+							if (hostif)
+							{
+								hostif->SendPlayerReady(a, inbuf[2]);
+							}
+						}
+						break;
+
+					case NETMSG_COMMAND:
+						if(inbuf[3]!=a){
+							SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[3]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+						}
+						break;
+
+					case NETMSG_SELECT:
+						if(inbuf[3]!=a){
+							SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[3]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+						}
+						break;
+
+					case NETMSG_AICOMMAND:
+						if(inbuf[3]!=a){
+							SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[3]);
+						}
+						else if (gs->noHelperAIs) {
+							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
+						}
+						else if(!serverNet->IsDemoServer()) {
+							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+						}
+						break;
+
+					case NETMSG_AICOMMANDS:
+						if(inbuf[3]!=a){
+							SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[3]);
+						}
+						else if (gs->noHelperAIs) {
+							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
+						}
+						else if(!serverNet->IsDemoServer()) {
+							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+						}
+						break;
+
+					case NETMSG_SYNCRESPONSE:
+#ifdef SYNCCHECK
+						if(inbuf[1]!=a){
+							SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							if(!serverNet->IsDemoServer()){
+								int frameNum = *(int*)&inbuf[2];
+								if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+									syncResponse[a][frameNum] = *(unsigned*)&inbuf[6];
+								else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
+									delayedSyncResponseFrame = serverframenum;
+									logOutput.Print("Delayed respone from %s for frame %d (current %d)",
+											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
+								}
+							}
+						}
+#endif
+						break;
+
+					case NETMSG_SHARE:
+						if(inbuf[1]!=a){
+							SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]));
+						}
+						break;
+
+					case NETMSG_SETSHARE:
+						if(inbuf[1]!=gs->players[a]->team){
+							SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[1]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->SendSetShare(inbuf[1], *((float*)&inbuf[2]), *((float*)&inbuf[6]));
+						}
+						break;
+
+					case NETMSG_PLAYERSTAT:
+						if(inbuf[1]!=a){
+							SendSystemMsg("Server: Warning got stat msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							serverNet->RawSend(inbuf,sizeof(CPlayer::Statistics)+2); //forward data
+						}
+						break;
+
+					case NETMSG_MAPDRAW:
+						serverNet->RawSend(inbuf,inbuf[1]); //forward data
+						break;
+
+#ifdef DIRECT_CONTROL_ALLOWED
+					case NETMSG_DIRECT_CONTROL:
+						if(inbuf[1]!=a){
+							SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->SendDirectControl(inbuf[1]);
+						}
+						break;
+
+					case NETMSG_DC_UPDATE:
+						if(inbuf[1]!=a){
+							SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[1]);
+						} else {
+							if(!serverNet->IsDemoServer())
+								serverNet->SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5]));
+						}
+						break;
+#endif
+					default:
+						{
+							logOutput.Print("Unknown net msg in server %d from %d", (int)inbuf[0], a);
+						}
+						break;
+				}
+				ret = serverNet->GetData(inbuf, a);
+			}
+			
+			if (ret == -1)
+			{
 				PUSH_CODE_MODE;		//this could lead to some nasty errors if the other thread switches code mode...
 				ENTER_MIXED;
 				gs->players[a]->active=false;
 				POP_CODE_MODE;
-				inbuflength=0;
 				serverNet->SendPlayerLeft(a, 0);
 				if (hostif)
 				{
 					hostif->SendPlayerLeft(a, 0);
 				}
 			}
-
-			// Collect some entropy for the game ID
-			if (serverframenum == 0) {
-				unsigned int ticks = SDL_GetTicks();
-				entropy.UpdateData((const unsigned char*)&ticks, sizeof(ticks));
-				entropy.UpdateData(inbuf, inbuflength);
-			}
-		}
-
-		// dont bother handling anything if we are just sending a demo to
-		// localhost, this would result in double chat messages and server warnings..
-		if (net->localDemoPlayback)
-			continue;
-
-		//		logOutput << serverNet->numConnected << "\n";
-
-		while(inbufpos<inbuflength){
-			thisMsg=inbuf[inbufpos];
-			int lastLength=0;
-			// TODO rearrange this in order of importance (most used to the front)
-			switch (inbuf[inbufpos]){
-
-			case NETMSG_ATTEMPTCONNECT: //handled directly in CNet
-				lastLength=3;
-				break;
-
-			case NETMSG_RANDSEED:
-				lastLength=5;
-				serverNet->SendRandSeed(inbuf[inbufpos+1]); //forward data
-				break;
-
-			case NETMSG_GAMEID:
-				lastLength = 17;
-				serverNet->SendGameID(&inbuf[inbufpos+1]); //forward data
-				break;
-
-			case NETMSG_NEWFRAME:
-				gs->players[a]->ping=serverframenum-*(int*)&inbuf[inbufpos+1];
-				lastLength=5;
-				break;
-
-			case NETMSG_PAUSE:
-				if(inbuf[inbufpos+1]!=a){
-					logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					if (!inbuf[inbufpos+2])  // reset sync checker
-						syncErrorFrame = 0;
-					assert(game);
-					if(game->gamePausable || a==0){
-						timeLeft=0;
-						serverNet->SendPause(inbuf[inbufpos+1],inbuf[inbufpos+2]);
-					}
-				}
-				lastLength=3;
-				break;
-
-			case NETMSG_INTERNAL_SPEED:
-				logOutput.Print("Server shouldn't get internal speed msgs?");
-				lastLength=5;
-				break;
-
-
-			case NETMSG_USER_SPEED: {
-				unsigned char playerNum = *((unsigned char*) &inbuf[inbufpos + 1]);
-				float speed = *((float*) &inbuf[inbufpos + 2]);
-				assert(game);
-
-				if (speed>game->maxUserSpeed)
-					speed = game->maxUserSpeed;
-				if (speed<game->minUserSpeed)
-					speed = game->minUserSpeed;
-				if (gs->userSpeedFactor != speed) {
-					if (gs->speedFactor == gs->userSpeedFactor || gs->speedFactor>speed)
-						serverNet->SendInternalSpeed(speed);
-
-					// forward data
-					serverNet->SendUserSpeed(playerNum, speed);
-				}
-				lastLength = 6;
-			} break;
-
-
-			case NETMSG_CPU_USAGE:
-				ENTER_MIXED;
-				gs->players[a]->cpuUsage=*((float*)&inbuf[inbufpos+1]);
-				ENTER_UNSYNCED;
-				lastLength=5;
-				break;
-
-			case NETMSG_QUIT: {
-				ENTER_MIXED;
-				gs->players[a]->active=false;
-				ENTER_UNSYNCED;
-				serverNet->SendPlayerLeft(a, 1);
-				serverNet->Kill(a);
-				lastLength=1;
-				if (hostif)
-				{
-					hostif->SendPlayerLeft(a, 1);
-				}
-				break;
-			}
-
-			case NETMSG_PLAYERNAME: {
-				unsigned char playerNum = inbuf[inbufpos+2];
-				if(playerNum!=a && a!=0){
-					SendSystemMsg("Server: Warning got playername msg from %i claiming to be from %i",a,playerNum);
-				} else {
-					ENTER_MIXED;
-					gs->players[playerNum]->playerName=(char*)(&inbuf[inbufpos+3]);
-					gs->players[playerNum]->readyToStart=true;
-					gs->players[playerNum]->active=true;
-					ENTER_UNSYNCED;
-
-					SendSystemMsg("Player %s joined as %i",&inbuf[inbufpos+3],playerNum);
-					serverNet->SendPlayerName(playerNum,gs->players[playerNum]->playerName);
-					if (hostif)
-					{
-						hostif->SendPlayerJoined(a, gs->players[playerNum]->playerName);
-					}
-				}
-				lastLength=inbuf[inbufpos+1];
-				break;
-			}
-
-			case NETMSG_CHAT:
-				if(inbuf[inbufpos+2]!=a){
-					SendSystemMsg("Server: Warning got chat msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
-				} else {
-					serverNet->SendChat(inbuf[inbufpos+2], (char*)(&inbuf[inbufpos+3]));
-					if (hostif)
-					{
-						hostif->SendPlayerChat(a, std::string((char*)(&inbuf[inbufpos+3])));
-					}
-				}
-				lastLength=inbuf[inbufpos+1];
-				break;
-
-			case NETMSG_SYSTEMMSG:
-				if(inbuf[inbufpos+2]!=a){
-					logOutput.Print("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[inbufpos+2]);
-				} else {
-					serverNet->SendSystemMessage(inbuf[inbufpos+2], (char*)(&inbuf[inbufpos+3]));
-				}
-				lastLength=inbuf[inbufpos+1];
-				break;
-
-			case NETMSG_STARTPOS:
-				if(inbuf[inbufpos+1]!=gs->players[a]->team && a!=0){
-					SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from team %i",a,inbuf[inbufpos+1]);
-				} else {
-					serverNet->SendStartPos(inbuf[inbufpos+1],inbuf[inbufpos+2], *((float*)&inbuf[inbufpos+3]), *((float*)&inbuf[inbufpos+7]), *((float*)&inbuf[inbufpos+11])); //forward data
-					if (hostif)
-					{
-						hostif->SendPlayerReady(a, inbuf[inbufpos+2]);
-					}
-				}
-				lastLength=15;
-				break;
-
-			case NETMSG_COMMAND:
-				if(inbuf[inbufpos+3]!=a){
-					SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->RawSend(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
-				}
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-
-			case NETMSG_SELECT:
-				if(inbuf[inbufpos+3]!=a){
-					SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->RawSend(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
-				}
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-
-			case NETMSG_AICOMMAND:
-				if(inbuf[inbufpos+3]!=a){
-					SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				}
-				else if (gs->noHelperAIs) {
-					SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
-				}
-				else if(!serverNet->IsDemoServer()) {
-					serverNet->RawSend(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
-				}
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-
-			case NETMSG_AICOMMANDS:
-				if(inbuf[inbufpos+3]!=a){
-					SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[inbufpos+3]);
-				}
-				else if (gs->noHelperAIs) {
-					SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
-				}
-				else if(!serverNet->IsDemoServer()) {
-					serverNet->RawSend(&inbuf[inbufpos],*((short int*)&inbuf[inbufpos+1])); //forward data
-				}
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-
-			case NETMSG_SYNCRESPONSE:
-#ifdef SYNCCHECK
-				if(inbuf[inbufpos+1]!=a){
-					SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					if(!serverNet->IsDemoServer()){
-						int frameNum = *(int*)&inbuf[inbufpos+2];
-						if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-							syncResponse[a][frameNum] = *(unsigned*)&inbuf[inbufpos+6];
-						else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
-							delayedSyncResponseFrame = serverframenum;
-							logOutput.Print("Delayed respone from %s for frame %d (current %d)",
-											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
-						}
-					}
-				}
-#endif
-				lastLength=10;
-				break;
-
-			case NETMSG_SHARE:
-				if(inbuf[inbufpos+1]!=a){
-					SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->SendShare(inbuf[inbufpos+1], inbuf[inbufpos+2], inbuf[inbufpos+3], *((float*)&inbuf[inbufpos+4]), *((float*)&inbuf[inbufpos+8]));
-				}
-				lastLength=12;
-				break;
-
-			case NETMSG_SETSHARE:
-				if(inbuf[inbufpos+1]!=gs->players[a]->team){
-					SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[inbufpos+1]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->SendSetShare(inbuf[inbufpos+1], *((float*)&inbuf[inbufpos+2]), *((float*)&inbuf[inbufpos+6]));
-				}
-				lastLength=10;
-				break;
-
-			case NETMSG_PLAYERSTAT:
-				if(inbuf[inbufpos+1]!=a){
-					SendSystemMsg("Server: Warning got stat msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					serverNet->RawSend(&inbuf[inbufpos],sizeof(CPlayer::Statistics)+2); //forward data
-				}
-				lastLength=sizeof(CPlayer::Statistics)+2;
-				break;
-
-			case NETMSG_MAPDRAW:
-				serverNet->RawSend(&inbuf[inbufpos],inbuf[inbufpos+1]); //forward data
-				lastLength=inbuf[inbufpos+1];
-				break;
-
-#ifdef DIRECT_CONTROL_ALLOWED
-			case NETMSG_DIRECT_CONTROL:
-				if(inbuf[inbufpos+1]!=a){
-					SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->SendDirectControl(inbuf[inbufpos+1]);
-				}
-				lastLength=2;
-				break;
-
-			case NETMSG_DC_UPDATE:
-				if(inbuf[inbufpos+1]!=a){
-					SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[inbufpos+1]);
-				} else {
-					if(!serverNet->IsDemoServer())
-						serverNet->SendDirectControlUpdate(inbuf[inbufpos+1], inbuf[inbufpos+2], *((short*)&inbuf[inbufpos+3]), *((short*)&inbuf[inbufpos+5]));
-				}
-				lastLength=7;
-				break;
-#endif
-			default:
-#ifdef SYNCDEBUG
-				// maybe something for the sync debugger?
-				lastLength = CSyncDebugger::GetInstance()->ServerReceived(&inbuf[inbufpos]);
-				if (!lastLength)
-#endif
-				{
-					logOutput.Print("Unknown net msg in server %d from %d pos %d last %d", (int)inbuf[inbufpos], a, inbufpos, lastMsg[a]);
-					lastLength=1;
-				}
-				break;
-			}
-			if(lastLength<=0){
-				logOutput.Print("Server readnet got packet type %i length %i pos %i from %i??",thisMsg,lastLength,inbufpos,a);
-				lastLength=1;
-			}
-			inbufpos+=lastLength;
-			lastMsg[a]=thisMsg;
-		}
-		if(inbufpos!=inbuflength){
-			char txt[200];
-			sprintf(txt,"Wrong packet length got %d from %d instead of %d",inbufpos,a,inbuflength);
-			logOutput.Print("%s", txt);
-			handleerror(0,txt,"Server network error",0);
 		}
 	}
+
 #ifdef SYNCDEBUG
 	CSyncDebugger::GetInstance()->ServerHandlePendingBlockRequests();
 #endif
@@ -692,12 +618,24 @@ void CGameServer::StartGame()
 			serverNet->SendStartPos(a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
+	
+	// make sure initial game speed is within allowed range and sent a new speed if not
+	if(gs->userSpeedFactor>maxUserSpeed)
+		serverNet->SendUserSpeed(0,maxUserSpeed);
+	if(gs->userSpeedFactor<minUserSpeed)
+		serverNet->SendUserSpeed(0,minUserSpeed);
+	
 	serverNet->SendStartPlaying();
 	if (hostif)
 	{
 		hostif->SendStartPlaying();
 	}
 	timeLeft=0;
+}
+
+void CGameServer::SetGamePausable(const bool arg)
+{
+	gamePausable = arg;
 }
 
 void CGameServer::CheckForGameEnd()
@@ -735,15 +673,42 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
-	serverframenum++;
-	if(serverNet->SendNewFrame(serverframenum) == -1){
-		logOutput.Print("Server net couldnt send new frame");
-		globalQuit=true;
+	CheckSync();
+
+	// Send out new frame messages.
+	unsigned currentTick = SDL_GetTicks();
+	float timeElapsed=((float)(currentTick - lastTick))/1000.f;
+	if (timeElapsed>0.2) {
+		timeElapsed=0.2;
 	}
+	if(gameEndDetected)
+		gameEndTime+=timeElapsed;
+	// logOutput.Print("float value is %f",timeElapsed);
+
+	if(gameClientUpdated){
+		gameClientUpdated=false;
+		maxTimeLeft=2;
+	}
+	if(timeElapsed>maxTimeLeft)
+		timeElapsed=maxTimeLeft;
+	maxTimeLeft-=timeElapsed;
+
+	timeLeft+=GAME_SPEED*gs->speedFactor*timeElapsed;
+	lastTick=currentTick;
+
+	while((timeLeft>0) && !gs->paused)
+	{
+		if(!game->creatingVideo)
+		{
+			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
+			serverframenum++;
+			serverNet->SendNewFrame(serverframenum);
 #ifdef SYNCCHECK
-	outstandingSyncFrames.push_back(serverframenum);
+			outstandingSyncFrames.push_back(serverframenum);
 #endif
+		}
+		timeLeft--;
+	}
 }
 
 void CGameServer::UpdateLoop()
@@ -812,4 +777,68 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 
 	std::string msg = text;
 	serverNet->SendSystemMessage(gu->myPlayerNum, msg);
+}
+
+void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
+{
+	//TODO: find better solution for the (player == 0) thingie
+	//TODO 2: migrate more stuff from CGame::HandleChatMessage here
+	if ((msg.find(".kickbynum") == 0) && (player == 0)) {
+		if (msg.length() >= 11) {
+			int playerNum = atoi(msg.substr(11, string::npos).c_str());
+			KickPlayer(playerNum);
+		}
+	}
+	else if ((msg.find(".kick") == 0) && (player == 0)) {
+		if (msg.length() >= 6) {
+			std::string name = msg.substr(6,string::npos);
+			if (!name.empty()){
+				StringToLowerInPlace(name);
+				for (unsigned a=1;a<gs->activePlayers;++a){
+					if (gs->players[a]->active){
+						std::string playerLower = StringToLower(gs->players[a]->playerName);
+						if (playerLower.find(name)==0){               //can kick on substrings of name
+							KickPlayer(a);
+						}
+					}
+				}
+			}
+		}
+	}
+	else if ((msg.find(".nopause") == 0) && (player == 0))
+	{
+		SetBoolArg(gamePausable, msg, ".nopause");
+	}
+	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
+		maxUserSpeed = atof(msg.substr(12).c_str());
+		if (gs->userSpeedFactor > maxUserSpeed) {
+			gs->userSpeedFactor = maxUserSpeed;
+		}
+	}
+	else if ((msg.find(".setminspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
+		minUserSpeed = atof(msg.substr(12).c_str());
+		if (gs->userSpeedFactor < minUserSpeed) {
+			gs->userSpeedFactor = minUserSpeed;
+		}
+	}
+	else
+	{
+		serverNet->SendChat(player, msg);
+		if (hostif)
+		{
+			hostif->SendPlayerChat(player, msg);
+		}
+	}
+}
+
+void CGameServer::SetBoolArg(bool& value, const std::string& str, const char* cmd)
+{
+	char* end;
+	const char* start = str.c_str() + strlen(cmd);
+	const int num = strtol(start, &end, 10);
+	if (end != start) {
+		value = (num != 0);
+	} else {
+		value = !value;
+	}
 }
