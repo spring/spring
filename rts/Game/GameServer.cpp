@@ -21,26 +21,21 @@ CGameServer* gameServer=0;
 
 extern bool globalQuit;
 
-static Uint32 GameServerThreadProc(void* lpParameter)
-{
-	((CGameServer*)lpParameter)->UpdateLoop();
-	return 0;
-}
-
 CGameServer::CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName)
 {
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	lastPlayerInfo = 0;
-// 	makeMemDump=true;
 	serverframenum=0;
 	timeLeft=0;
 	gameLoading=true;
 	gameEndDetected=false;
 	gameEndTime=0;
 	quitServer=false;
+#ifdef DEBUG
 	gameClientUpdated=false;
+#endif
 	maxTimeLeft=2;
 
 	serverNet = new CNetProtocol();
@@ -90,7 +85,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	entropy.UpdateData(buffer, 128);
 
 #ifndef SYNCIFY		//syncify doesnt really support multithreading...
-	thread = SAFE_NEW boost::thread(boost::bind(GameServerThreadProc,this));
+	thread = new boost::thread(boost::bind<void>(&CGameServer::UpdateLoop, this));
 #endif
 #ifdef SYNCDEBUG
 	fakeDesync = false;
@@ -219,7 +214,7 @@ bool CGameServer::Update()
 	if(lastPlayerInfo<gu->gameTime-2){
 		lastPlayerInfo=gu->gameTime;
 
-		if (game && game->playing) {
+		if (serverframenum > 0) {
 			int firstReal=0;
 			if(gameSetup)
 				firstReal=gameSetup->numDemoPlayers;
@@ -258,7 +253,7 @@ bool CGameServer::Update()
 		logOutput.Print("Server read net wanted quit");
 		return false;
 	}
-	if (game && game->playing && !serverNet->IsDemoServer())
+	if (serverframenum > 0 && !serverNet->IsDemoServer())
 	{
 		CreateNewFrame(true);
 	}
@@ -631,6 +626,7 @@ void CGameServer::StartGame()
 		hostif->SendStartPlaying();
 	}
 	timeLeft=0;
+	CreateNewFrame(true);
 }
 
 void CGameServer::SetGamePausable(const bool arg)
@@ -685,10 +681,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		gameEndTime+=timeElapsed;
 	// logOutput.Print("float value is %f",timeElapsed);
 
+#ifdef DEBUG	
 	if(gameClientUpdated){
 		gameClientUpdated=false;
 		maxTimeLeft=2;
 	}
+#else
+	maxTimeLeft=2;
+#endif
 	if(timeElapsed>maxTimeLeft)
 		timeElapsed=maxTimeLeft;
 	maxTimeLeft-=timeElapsed;
@@ -698,7 +698,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 	while((timeLeft>0) && !gs->paused)
 	{
-		if(!game->creatingVideo)
+		if(!game || !game->creatingVideo)
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 			serverframenum++;

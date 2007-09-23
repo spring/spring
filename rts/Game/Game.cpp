@@ -1797,8 +1797,10 @@ bool CGame::Update()
 	UpdateUI();
 	net->Update();
 
+#ifdef DEBUG
 	if(gameServer)
 		gameServer->gameClientUpdated=true;
+#endif
 
 #ifdef SYNCIFY		//syncify doesnt support multithreading ...
 	if (gameServer)

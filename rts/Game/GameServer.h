@@ -54,7 +54,9 @@ public:
 	boost::thread* thread;
 
 	bool quitServer;
+#ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
+#endif
 	float maxTimeLeft;
 	void SendSystemMsg(const char* fmt,...);
 #ifdef SYNCDEBUG
