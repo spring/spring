@@ -2559,7 +2559,7 @@ bool CGame::ClientReadNet()
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 
-	unsigned inbuflength = 8000;
+	const unsigned inbuflength = 8000;
 	unsigned char inbuf[inbuflength];
 	memset(inbuf, '\0', inbuflength);
 	unsigned ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
