@@ -312,6 +312,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 
+	net->Update();	// Prevent timeout while loading
 	ENTER_UNSYNCED;
 	shadowHandler=SAFE_NEW CShadowHandler();
 
@@ -325,6 +326,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	groundDecals=SAFE_NEW CGroundDecalHandler();
 	ReColorTeams();
 
+	net->Update();	// Prevent timeout while loading
 	ENTER_UNSYNCED;
 
 	guihandler=SAFE_NEW CGuiHandler();
@@ -337,6 +339,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	sensorHandler=SAFE_NEW CSensorHandler();
 	damageArrayHandler=SAFE_NEW CDamageArrayHandler();
 	unitDefHandler=SAFE_NEW CUnitDefHandler();
+	net->Update();	// Prevent timeout while loading
 
 	ENTER_UNSYNCED;
 	inMapDrawer=SAFE_NEW CInMapDraw();
@@ -360,6 +363,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	mapDamage=IMapDamage::GetMapDamage();
 	loshandler=SAFE_NEW CLosHandler();
 	radarhandler=SAFE_NEW CRadarHandler(false);
+	net->Update();	// Prevent timeout while loading
 
 	ENTER_MIXED;
 	uh=SAFE_NEW CUnitHandler();
@@ -383,6 +387,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	keyBindings=SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 
+	net->Update();	// Prevent timeout while loading
 	water=CBaseWater::GetWater();
 	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
@@ -411,7 +416,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 	logOutput.Print("Spring %s",VERSION_STRING);
-
+	
+	logOutput.Print("Ende...");
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
