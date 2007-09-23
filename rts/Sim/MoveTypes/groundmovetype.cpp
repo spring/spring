@@ -320,8 +320,9 @@ void CGroundMoveType::Update()
 		}
 
 		//need this to stop jitter when falling
-		if (!(owner->falling || owner->Flying))
+		if (!(owner->falling || flying)) {
 			owner->pos.y=wh;
+		}
 	}
 
 	if(owner->pos!=oldPos){
@@ -336,7 +337,7 @@ void CGroundMoveType::Update()
 			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 		}
 
-		if (!(owner->falling || owner->Flying))
+		if (!(owner->falling || flying))
 			owner->pos.y=wh;
 
 		owner->speed=owner->pos-oldPos;
@@ -393,7 +394,7 @@ void CGroundMoveType::SlowUpdate()
 		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 	}
 
-	if (!(owner->falling || owner->Flying))
+	if (!(owner->falling || flying))
 		owner->pos.y=wh;
 
 	if(!(owner->pos==oldSlowUpdatePos)){
