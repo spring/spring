@@ -14,7 +14,7 @@ CMetalMakerBehaviour::~CMetalMakerBehaviour(){
 bool CMetalMakerBehaviour::Init(boost::shared_ptr<IModule> me){
 	//
 	this->me = &me;
-	G->RegisterMessageHandler(me);
+	G->RegisterMessageHandler(this->me);
 //	G->RegisterMessageHandler("unitdestroyed",me);
 //	G->RegisterMessageHandler("update",me);
 	
