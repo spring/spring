@@ -3,11 +3,13 @@
 
 #include "Connection.h"
 #include "Net.h"
-#include "Net/UDPSocket.h"
-#include "Net/RawPacket.h"
+#include "UDPSocket.h"
+#include "RawPacket.h"
 
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <queue>
 
 namespace netcode {
 
@@ -25,21 +27,20 @@ How Spring protocolheader looks like (size in bytes):
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(UDPSocket* const NetSocket, const sockaddr_in& MyAddr);
-	UDPConnection(UDPSocket* const NetSocket, const std::string& address, const unsigned port);
+	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr, const ProtocolDef* const proto);
+	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port, const ProtocolDef* const proto);
 	virtual ~UDPConnection();
 
 	/// use this if you want data to be sent
-	virtual int SendData(const unsigned char *data, const unsigned length);
+	virtual void SendData(const unsigned char *data, const unsigned length);
 	
 	/**
 	@brief use this to recieve ready data
 	Will read all waiting in-order packages from waitingPackets, copy their  data to buf and deleting them
 	@return bytes of data read, or -1 on error
 	@param buf buffer to hold the data
-	@param length the free space in the buffer
 	*/
-	virtual int GetData(unsigned char *buf, const unsigned length);
+	virtual unsigned GetData(unsigned char *buf);
 
 	/**
 	@brief update internals
@@ -55,6 +56,8 @@ public:
 
 	/// send all data waiting in char outgoingData[]
 	virtual void Flush(const bool forced = false);
+	
+	virtual bool CheckTimeout() const;
 
 	/// do we have these address?
 	bool CheckAddress(const sockaddr_in&) const;
@@ -63,6 +66,11 @@ public:
 	static const unsigned hsize;
 
 private:
+	void Init();
+	
+	float lastSendTime;
+	float lastReceiveTime;
+	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	/// all packets with number <= nextAck arrived at the other end
 	void AckPackets(const int nextAck);
@@ -71,11 +79,9 @@ private:
 	/// address of the other end
 	sockaddr_in addr;
 
-	int lastSendFrame;
-
 	///outgoing stuff (pure data without header) waiting to be sended
 	unsigned char outgoingData[NETWORK_BUFFER_SIZE];
-	int outgoingLength;
+	unsigned outgoingLength;
 
 	/// packets the other side didn't ack'ed until now
 	boost::ptr_deque<RawPacket> unackedPackets;
@@ -87,21 +93,27 @@ private:
 	int lastInOrder;
 	int lastNak;
 	float lastNakTime;
+	std::queue<RawPacket*> msgQueue;
 
-	/** Our socket. Every CRemoteConnection uses the same socket, which is bad but
-	can't be circumvented since we don't want more than 1 listening UDP-Sockets. */
-	UDPSocket* const mySocket;
+	/** Our socket.
+	*/
+	boost::shared_ptr<UDPSocket> const mySocket;
 
 	/** Configurable Maximum Transmission Unit. This is enforced by Flush:
 	it only gives this much bytes to each SendRawPacket() call.
 	This is exclusive the Spring header of 9 bytes. */
 	int mtu;
+	
+	RawPacket* fragmentBuffer;
+	const ProtocolDef* const proto;
 
 	/// number of calls to Flush() that needed to sent multiple packets because of mtu
 	int fragmentedFlushes;
-
+	
 	/// packets that are resent
 	int resentPackets;
+	
+	unsigned sentOverhead, recvOverhead;
 };
 
 } //namespace netcode

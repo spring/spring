@@ -1,30 +1,20 @@
 #include "UDPListener.h"
 
+#include <boost/weak_ptr.hpp>
+#include <iostream>
+
 namespace netcode
 {
 
-UDPListener::UDPListener(int port)
+UDPListener::UDPListener(int port, const ProtocolDef* myproto) : proto(myproto)
 {
-	mySocket = new UDPSocket(port);
+	boost::shared_ptr<UDPSocket> temp(new UDPSocket(port));
+	mySocket = temp;
 	acceptNewConnections = true;
 }
 
 UDPListener::~UDPListener()
 {
-	
-	for (conn_list::iterator i = conn.begin(); i != conn.end(); ++i)
-	{
-		delete *i;
-		*i = 0;
-	}
-	
-	for (conn_list::iterator i = waitingConn.begin(); i != waitingConn.end(); ++i)
-	{
-		delete *i;
-		*i = 0;
-	}
-	
-	delete mySocket;
 }
 
 void UDPListener::Update()
@@ -41,16 +31,44 @@ void UDPListener::Update()
 		}
 		
 		RawPacket* data = new RawPacket(buffer, recieved);
-		conn_list::iterator connPos = ResolveConnection(fromAddr);
-		if (connPos != waitingConn.end())
+		bool interrupt = false;
+		for (std::list< boost::weak_ptr<UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 		{
-			(*connPos)->ProcessRawPacket(data);
+			if (i->expired())
+			{
+				i = conn.erase(i);
+				--i;
+			}
+			else
+			{
+				boost::shared_ptr<UDPConnection> locked(*i);
+				if (locked->CheckAddress(fromAddr))
+				{
+					locked->ProcessRawPacket(data);
+					interrupt=true;
+				}
+			}
 		}
-		else if (acceptNewConnections)
+		if (interrupt)
+			continue;
+	
+		for (std::list< boost::shared_ptr< UDPConnection> >::iterator i = waitingConn.begin(); i != waitingConn.end(); ++i)
+		{
+			if ((*i)->CheckAddress(fromAddr))
+			{
+				(*i)->ProcessRawPacket(data);
+				interrupt=true;
+			}
+		}
+		if (interrupt)
+			continue;
+		
+		if (acceptNewConnections)
 		{
 			// new client wants to connect
-			waitingConn.push_back(new UDPConnection(mySocket, fromAddr));
-			waitingConn.back()->ProcessRawPacket(data);
+			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr, proto));
+			incoming->ProcessRawPacket(data);
+			waitingConn.push_back(incoming);
 		}
 		else
 		{
@@ -60,40 +78,46 @@ void UDPListener::Update()
 		
 	} while (true);
 	
-	for (conn_list::iterator i = conn.begin(); i != conn.end(); ++i)
+	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 	{
-		(*i)->Update();
+		if (i->expired())
+		{
+			i = conn.erase(i);
+			--i;
+		}
+		else
+		{
+			boost::shared_ptr<UDPConnection> temp = i->lock();
+			temp->Update();
+		}
 	}
 }
 
-UDPConnection* UDPListener::SpawnConnection(const std::string& address, const unsigned port)
+boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& address, const unsigned port)
 {
-	conn.push_back(new UDPConnection(mySocket, address, port));
-	return conn.back();
+	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, address, port, proto));
+	conn.push_back(temp);
+	return temp;
 }
 
-UDPConnection* UDPListener::GetWaitingConnection() const
+bool UDPListener::HasWaitingConnection() const
 {
-	if (!waitingConn.empty())
+	return !waitingConn.empty();
+}
+
+boost::shared_ptr<UDPConnection> UDPListener::GetWaitingConnection()
+{
+	if (HasWaitingConnection())
 	{
-		return waitingConn.front();
+		boost::shared_ptr<UDPConnection> temp = waitingConn.front();
+		waitingConn.pop_front();
+		conn.push_back(temp);
+		return temp;
 	}
 	else
 	{
-		return 0;
+		throw std::runtime_error("UDPListener has no waiting Connections");
 	}
-}
-
-void UDPListener::AcceptWaitingConnection()
-{
-	conn.push_back(waitingConn.front());
-	waitingConn.pop_front();
-}
-
-void UDPListener::RejectWaitingConnection()
-{
-	delete waitingConn.front();
-	waitingConn.pop_front();
 }
 
 void UDPListener::SetWaitingForConnections(const bool state)
@@ -104,23 +128,6 @@ void UDPListener::SetWaitingForConnections(const bool state)
 bool UDPListener::GetWaitingForConnections() const
 {
 	return acceptNewConnections;
-}
-
-std::list<UDPConnection*>::iterator UDPListener::ResolveConnection(const sockaddr_in& addr)
-{
-	for (conn_list::iterator i = conn.begin(); i != conn.end(); ++i)
-	{
-		if ((*i)->CheckAddress(addr))
-			return i;
-	}
-	
-	for (conn_list::iterator i = waitingConn.begin(); i != waitingConn.end(); ++i)
-	{
-		if ((*i)->CheckAddress(addr))
-			return i;
-	}
-	
-	return waitingConn.end();
 }
 
 }

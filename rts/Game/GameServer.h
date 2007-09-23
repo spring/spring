@@ -4,15 +4,20 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include "SDL_types.h"
-
 #include <ctime>
 #include <string>
 
+#include "System/GlobalStuff.h"
 #include "FileSystem/CRC.h"
-#include "System/NetProtocol.h"
-#include "System/AutohostInterface.h"
 
+class CNetProtocol;
+class AutohostInterface;
 
+/**
+@brief Server class for game handling
+This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
+@TODO Make this class work without CGame to make dedicated hosting possible
+*/
 class CGameServer
 {
 public:
@@ -26,15 +31,12 @@ public:
 	void UpdateLoop();
 
 	bool WaitsOnCon() const;
-	/**
-	@brief kick the specified player from the battle
-	@todo in order to build a dedicated server, there should be some kind of rights system which allow some people to kick players or force a start, but currently only the host is able to do this
-	*/
-	void KickPlayer(const int playerNum);
+	
 	void PlayerDefeated(const int playerNum) const;
+	
+	void SetGamePausable(const bool arg);
 
-	bool makeMemDump;
-	unsigned char inbuf[netcode::NETWORK_BUFFER_SIZE];
+// 	bool makeMemDump;
 
 	unsigned lastTick;
 	float timeLeft;
@@ -62,16 +64,43 @@ public:
 	std::deque<int> outstandingSyncFrames;
 	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
 #endif
+	
+private:
+	/**
+	@brief catch commands from chat messages and handle them
+	Insert chat messages here. If it contains a command (e.g. .nopause) usefull for the server it get filtered out, otherwise it will forwarded to all clients.
+	@param msg The whole message
+	@param player The playernumber which sent the message
+	*/
+	void GotChatMessage(const std::string& msg, unsigned player);
+	
+	/**
+	@brief kick the specified player from the battle
+	*/
+	void KickPlayer(const int playerNum);
+	
 	int syncErrorFrame;
 	int syncWarningFrame;
 	int delayedSyncResponseFrame;
 
-private:
+	/// Class for network communication
 	CNetProtocol* serverNet;
+	
+	/// Inform 3. party programms about events
 	AutohostInterface* hostif;
 	CRC entropy;
 
 	void GenerateAndSendGameID();
+	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
+	
+	// game settings
+	/// Wheter the game is pausable for others than the host
+	bool gamePausable;
+	
+	/// The maximum speed users are allowed to set
+	float maxUserSpeed;
+	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
+	float minUserSpeed;
 };
 
 extern CGameServer* gameServer;

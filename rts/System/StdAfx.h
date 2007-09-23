@@ -51,13 +51,6 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	typedef int _compile_time_assertion_failed__ ## message [(condition) ? 1 : -1]
 
 
-/** @brief Declare a class as being uncopyable. */
-#define NO_COPY(TClass) \
-	private: \
-		TClass(const TClass&); \
-		TClass& operator=(const TClass&);
-
-
 // This reduces compile-time with precompiled headers on msvc
 // It increases compile-time with precompiled headers on gcc
 #ifdef _MSC_VER

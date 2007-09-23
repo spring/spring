@@ -15,7 +15,7 @@ public:
 	/**
 	@brief create a new packet and store data inside
 	@param data the data to store
-	@param length the length of the data (is safe even if its 0)
+	@param length the length of the data (is save even if its 0)
 	*/
 	RawPacket(const unsigned char* const data, const unsigned length);
 	

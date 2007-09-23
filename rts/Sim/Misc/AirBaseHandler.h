@@ -3,12 +3,12 @@
 
 #include "Object.h"
 #include <list>
+#include <boost/noncopyable.hpp>
 
 class CUnit;
 
-class CAirBaseHandler
+class CAirBaseHandler : public boost::noncopyable
 {
-	NO_COPY(CAirBaseHandler);
 	CR_DECLARE(CAirBaseHandler);
 	CR_DECLARE_SUB(LandingPad);
 	CR_DECLARE_SUB(AirBase);
@@ -17,9 +17,8 @@ private:
 	struct AirBase;
 
 public:
-
-	class LandingPad : public CObject {
-		NO_COPY(LandingPad);
+	
+	class LandingPad : public CObject,  public boost::noncopyable {
 		CR_DECLARE(LandingPad);
 
 	public:
@@ -38,8 +37,7 @@ public:
 
 private:
 
-	struct AirBase {
-		NO_COPY(AirBase);
+	struct AirBase  : public boost::noncopyable{
 		CR_DECLARE_STRUCT(AirBase);
 		AirBase(CUnit* u) : unit(u) {}
 		CUnit* unit;

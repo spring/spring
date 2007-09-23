@@ -10,6 +10,7 @@
 #include "Player.h"
 #include "TdfParser.h"
 #include "Team.h"
+#include "System/NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"

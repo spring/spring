@@ -13,18 +13,17 @@ public:
 	CConnection();
 	virtual ~CConnection();
 	
-	virtual int SendData(const unsigned char *data, const unsigned length)=0;
-	virtual int GetData(unsigned char *buf, const unsigned length)=0;
+	virtual void SendData(const unsigned char *data, const unsigned length)=0;
+	virtual unsigned GetData(unsigned char *buf)=0;
 
 	virtual void Flush(const bool forced = false)=0;
-
-	bool active;
-	float lastSendTime;
-	float lastReceiveTime;
+	virtual bool CheckTimeout() const = 0;
 	
-// protected:
-	unsigned dataSent, sentOverhead;
-	unsigned dataRecv, recvOverhead;
+	unsigned GetDataRecieved() const;
+
+protected:
+	unsigned dataSent;
+	unsigned dataRecv;
 };
 
 } // namespace netcode

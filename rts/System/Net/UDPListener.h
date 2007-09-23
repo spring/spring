@@ -1,10 +1,11 @@
 #ifndef _UDPLISTENER 
 #define _UDPLISTENER
 
-#include <boost/ptr_container/ptr_list.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <list>
 
-#include "Net/UDPSocket.h"
+#include "UDPSocket.h"
 #include "UDPConnection.h"
 
 namespace netcode
@@ -21,7 +22,7 @@ public:
 	/**
 	@brief Open a socket and make it ready for listening
 	*/
-	UDPListener(int port);
+	UDPListener(int port, const ProtocolDef* const proto);
 	
 	/**
 	@brief close the socket and DELETE all connections
@@ -38,25 +39,15 @@ public:
 	@brief Initiate a connection
 	Make a new connection to address:port. It will be pushed back in conn
 	*/
-	UDPConnection* SpawnConnection(const std::string& address, const unsigned port);
+	boost::shared_ptr<UDPConnection> SpawnConnection(const std::string& address, const unsigned port);
 	
+	bool HasWaitingConnection() const;
 	/**
 	@brief Get the first waiting incoming Connection
 	You can use this to recieve data from it without accepting. After this it can be Accept'ed or Reject'ed.
 	@return a UDPConnection or 0 if there are no, DO NOT DELETE IT
 	*/
-	UDPConnection* GetWaitingConnection() const;
-	
-	/**
-	@brief Accept the first waiting connection
-	Move it from waitingConn to conn
-	*/
-	void AcceptWaitingConnection();
-	
-	/**
-	@brief Reject the first waiting connection
-	*/
-	void RejectWaitingConnection();
+	boost::shared_ptr<UDPConnection> GetWaitingConnection();
 	
 	/**
 	@brief Set if we are going to accept new connections or drop all data from unconnected addresses
@@ -68,15 +59,13 @@ public:
 	*/
 	bool GetWaitingForConnections() const;
 	
-private:
-	typedef std::list<UDPConnection*> conn_list;
-	
+private:	
 	/**
 	@brief Check which Connection has the specified Address
 	IMPORTANT: also searches in waitingConn
 	@return an iterator pointing at the connection, or at waitingConn.end() if nothing matches
 	*/
-	conn_list::iterator ResolveConnection(const sockaddr_in& addr) ;
+	std::list< boost::weak_ptr< UDPConnection> >::iterator ResolveConnection(const sockaddr_in& addr) ;
 	
 	
 	/**
@@ -86,16 +75,13 @@ private:
 	bool acceptNewConnections;
 	
 	/// Our socket
-	UDPSocket* mySocket;
+	boost::shared_ptr<UDPSocket> mySocket;
 	
 	/// all connections
-	conn_list conn;
+	std::list< boost::weak_ptr< UDPConnection> > conn;
+	std::list< boost::shared_ptr< UDPConnection> > waitingConn;
 	
-	/**
-	@brief waiting connections
-	This is used to store packets from unknown senders.
-	*/
-	conn_list waitingConn;
+	const ProtocolDef* const proto;
 };
 
 }

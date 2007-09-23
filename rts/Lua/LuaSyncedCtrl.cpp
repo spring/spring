@@ -18,6 +18,7 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
+#include "Game/GameServer.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -2450,7 +2451,10 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 	if ((args < 1) || !lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetNoPause()");
 	}
-	game->gamePausable = !lua_toboolean(L, 1);
+	// Important: only works in server mode, has no effect in client mode	
+	if (gameServer)
+		gameServer->SetGamePausable(!lua_toboolean(L, 1));
+	
 	return 0;
 }
 

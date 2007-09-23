@@ -1,26 +1,23 @@
 #ifndef NET_H
 #define NET_H
-// Net.h: interface for the CNet class.
-//
-//////////////////////////////////////////////////////////////////////
-
 
 // general includes
 #include <string>
-#include <vector>
+#include <queue>
 #include <boost/scoped_array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
-// spring includes
-#include "GlobalStuff.h"
-#include "Sync/Syncify.h"
 
 namespace netcode {
 
 class CConnection;
 class UDPListener;
 class CLocalConnection;
+class ProtocolDef;
 
 const unsigned NETWORK_BUFFER_SIZE = 40000;
+const unsigned MAX_CONNECTIONS = 32;
 
 // If we switch to a networking lib and start using a bitstream, we might
 // as well remove this and use int as size type (because it'd be compressed anyway).
@@ -33,12 +30,45 @@ template<> struct is_string<std::string> {
 	enum { TrailingNull = 1 };
 };
 
-/** Low level network connection (basically a fast TCP-like layer on top of UDP)*/
+/**
+@brief Interface for low level networking
+Low level network connection (basically a fast TCP-like layer on top of UDP)
+*/
 class CNet
 {
 public:
 	CNet();
 	~CNet();
+	
+	/**
+	@brief Initialise server
+	*/
+	int InitServer(unsigned portnum);
+	
+	/**
+	@brief Initialise Client
+	Only do this when you cannot use a local connection, 'cuz they are somewhat faster.
+	*/
+	int InitClient(const char* server,unsigned portnum,unsigned sourceport, unsigned playerNum);
+	
+	/** 
+	@brief Init a local client
+	To increase performance, use this for local communication. This can be called in server and in client mode
+	*/
+	int InitLocalClient(const unsigned wantedNumber);
+	
+	/**
+	@brief register a new message type to the networking layer
+	Its not allowed to send unregistered messages. In this process you tell how big the files are.
+	@param id Message identifier (has to be unique)
+	@param length the length of the message (>0 if its fixed length, <0 means the next x bytes represent the length)
+	*/
+	void RegisterMessage(unsigned char id, int length);
+	
+	/**
+	@brief Maximum message size
+	*/
+	unsigned SetMTU(unsigned mtu = 500);
 	
 	/// Are we accepting new connections?
 	bool Listening();
@@ -53,24 +83,20 @@ public:
 	/// return true when local connected or already recieved data from remote
 	bool Connected() const;
 	
-	int GetData(unsigned char* buf, const unsigned length, const unsigned conNum);
-	
-protected:
-	int InitServer(unsigned portnum);
-	int InitClient(const char* server,unsigned portnum,unsigned sourceport, unsigned playerNum);
-	/** 
-	@brief Init a client when a server runs in the same process
-	To increase performance, use this shortcut to communicate with the server to rapidly increase performance
-	*/
-	int InitLocalClient(const unsigned wantedNumber);
+	int GetData(unsigned char* buf, const unsigned conNum);
 	
 	/** Broadcast data to all clients
 	*/
-	int SendData(const unsigned char* data,const unsigned length);
+	void SendData(const unsigned char* data,const unsigned length);
 	
-	/** Send data to one particular client
+	/** Send data to one client in particular
 	*/
-	int SendData(const unsigned char* data,const unsigned length, const unsigned playerNum);
+	void SendData(const unsigned char* data,const unsigned length, const unsigned playerNum);
+	
+	/**
+	@brief send all waiting data
+	*/
+	void FlushNet(void);
 	
 	/** 
 	@brief Do this from time to time
@@ -78,61 +104,57 @@ protected:
 	*/
 	void Update(void);
 	
-	/**
-	@brief send all waiting data
-	*/
-	void FlushNet(void);
-	
 	/// did someone tried to connect?
 	bool HasIncomingConnection() const;
 	
 	/// Recieve data to check if we allow him in our game
-	int GetData(unsigned char* buf, const unsigned length);
+	unsigned GetData(unsigned char* buf);
 	
 	/// everything seems fine, accept him
 	unsigned AcceptIncomingConnection(const unsigned wantedNumber=0);
 	
 	/// we dont want you in our game
 	void RejectIncomingConnection();
-
+	
+protected:
 	/** Send a net message without any parameters. */
-	int SendData(const unsigned char msg) {
-		return SendData(&msg, sizeof(msg));
+	void SendData(const unsigned char msg) {
+		SendData(&msg, sizeof(msg));
 	}
 
 	/** Send a net message with one parameter. */
 	template<typename A>
-	int SendData(const unsigned char msg, const A a) {
+	void SendData(const unsigned char msg, const A a) {
 		const int size = 1 + sizeof(A);
 		unsigned char buf[size];
 		buf[0] = msg;
 		*(A*)&buf[1] = a;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B>
-	int SendData(const unsigned char msg, const A a, const B b) {
+	void SendData(const unsigned char msg, const A a, const B b) {
 		const int size = 1 + sizeof(A) + sizeof(B);
 		unsigned char buf[size];
 		buf[0] = msg;
 		*(A*)&buf[1] = a;
 		*(B*)&buf[1 + sizeof(A)] = b;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B, typename C>
-	int SendData(const unsigned char msg, const A a, const B b, const C c) {
+	void SendData(const unsigned char msg, const A a, const B b, const C c) {
 		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C);
 		unsigned char buf[size];
 		buf[0] = msg;
 		*(A*)&buf[1] = a;
 		*(B*)&buf[1 + sizeof(A)] = b;
 		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B, typename C, typename D>
-	int SendData(const unsigned char msg, const A a, const B b, const C c, const D d) {
+	void SendData(const unsigned char msg, const A a, const B b, const C c, const D d) {
 		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D);
 		unsigned char buf[size];
 		buf[0] = msg;
@@ -140,11 +162,11 @@ protected:
 		*(B*)&buf[1 + sizeof(A)] = b;
 		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
 		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename E>
-	int SendData(const unsigned char msg, A a, B b, C c, D d, E e) {
+	void SendData(const unsigned char msg, A a, B b, C c, D d, E e) {
 		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E);
 		unsigned char buf[size];
 		buf[0] = msg;
@@ -153,11 +175,11 @@ protected:
 		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
 		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
 		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename E, typename F>
-	int SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f) {
+	void SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f) {
 		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F);
 		unsigned char buf[size];
 		buf[0] = msg;
@@ -167,11 +189,11 @@ protected:
 		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
 		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
 		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename E, typename F, typename G>
-	int SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f, G g) {
+	void SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f, G g) {
 		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F) + sizeof(G);
 		unsigned char buf[size];
 		buf[0] = msg;
@@ -182,13 +204,13 @@ protected:
 		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
 		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
 		*(G*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F)] = g;
-		return SendData(buf, size);
+		SendData(buf, size);
 	}
 
 	/** Send a net message without any fixed size parameter but with a variable sized
 	STL container parameter (e.g. std::string or std::vector). */
 	template<typename T>
-	int SendSTLData(const unsigned char msg, const T& s) {
+	void SendSTLData(const unsigned char msg, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
@@ -196,13 +218,13 @@ protected:
 		AssembleBuffer buf( msg, size );
 		buf.add_scalar(size).add_sequence(s );
 
-		return SendData(buf.get(), size);
+		SendData(buf.get(), size);
 	}
 
 	/** Send a net message with one fixed size parameter and a variable sized
 	STL container parameter (e.g. std::string or std::vector). */
 	template<typename A, typename T>
-	int SendSTLData(const unsigned char msg, const A a, const T& s) {
+	void SendSTLData(const unsigned char msg, const A a, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
@@ -211,11 +233,11 @@ protected:
 
 		buf.add_scalar(size).add_scalar(a).add_sequence(s);
 
-		return SendData(buf.get(), size);
+		SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename T>
-	int SendSTLData(const unsigned char msg, const A a, const B b, const T& s) {
+	void SendSTLData(const unsigned char msg, const A a, const B b, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
@@ -227,11 +249,11 @@ protected:
 				.add_scalar(b)
 				.add_sequence(s);
 
-		return SendData(buf.get(), size);
+		SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename C, typename T>
-	int SendSTLData(const unsigned char msg, A a, B b, C c, const T& s) {
+	void SendSTLData(const unsigned char msg, A a, B b, C c, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
@@ -244,11 +266,11 @@ protected:
 		.add_scalar(c)
 		.add_sequence(s);
 
-		return SendData(buf.get(), size);
+		SendData(buf.get(), size);
 	}
 
 	template<typename A, typename B, typename C, typename D, typename T>
-	int SendSTLData(const unsigned char msg, A a, B b, C c, D d, const T& s) {
+	void SendSTLData(const unsigned char msg, A a, B b, C c, D d, const T& s) {
 		typedef typename T::value_type value_type;
 		typedef typename is_string<T>::size_type size_type;
 
@@ -262,26 +284,39 @@ protected:
 		.add_scalar(d)
 		.add_sequence(s);
 
-		return SendData(buf.get(), size);
+		SendData(buf.get(), size);
 	}
 	
 private:
-		
-	/** Insert your Connection here to become connected
-	 */
-	unsigned InitNewConn(CConnection* newClient, const unsigned wantedNumber=0);
+	/**
+	@brief Insert your Connection here to become connected
+	@param newClient Connection to be inserted in the array
+	@param wantedNumber 
+	*/
+	unsigned InitNewConn(boost::shared_ptr<CConnection> newClient, const unsigned wantedNumber=0);
 
+	const ProtocolDef* GetProto() const;
 	
-	UDPListener* udplistener;
-	CLocalConnection* local;
-	CConnection* connections[MAX_PLAYERS];
+	/**
+	@brief Holds the UDPListener for networking
+	@TODO make it more generic to allow for different protocols like TCP
+	*/
+	boost::scoped_ptr<UDPListener> udplistener;
+	
+	/**
+	@brief All active connections
+	@TODO make it variable sized without performance penalty
+	*/
+	boost::shared_ptr<CConnection> connections[MAX_CONNECTIONS];
+	std::queue< boost::shared_ptr<CConnection> > waitingQueue;
+	ProtocolDef* proto;
 	
 	struct AssembleBuffer
 	{
 		boost::scoped_array<unsigned char> message_buffer;
 		size_t index;
 		AssembleBuffer( const unsigned char msg, size_t buffer_size )
-			: message_buffer( SAFE_NEW unsigned char[buffer_size] ), index(1)
+			: message_buffer( new unsigned char[buffer_size] ), index(1)
 		{ message_buffer[0] = msg; }
 
 		template<typename T>

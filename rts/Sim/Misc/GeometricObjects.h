@@ -3,13 +3,13 @@
 
 #include <map>
 #include <vector>
+#include <boost/noncopyable.hpp>
 
 
 class CGeoSquareProjectile;
 
-class CGeometricObjects
+class CGeometricObjects : public boost::noncopyable
 {
-	NO_COPY(CGeometricObjects);
 	CR_DECLARE(CGeometricObjects);
 	CR_DECLARE_SUB(GeoGroup);
 

@@ -14,11 +14,40 @@ CNetProtocol::CNetProtocol()
 	play = 0;
 	localDemoPlayback = false;
 	
-	for (unsigned i = 0; i < MAX_PLAYERS; i++)
-	{
-		fragbufLength[i] = 0;
-		memset(fragbuf[i], 0, sizeof(fragbuf[i]));
-	}
+	RegisterMessage(NETMSG_QUIT, 1);
+	RegisterMessage(NETMSG_NEWFRAME, 5);
+	RegisterMessage(NETMSG_STARTPLAYING, 1);
+	RegisterMessage(NETMSG_SETPLAYERNUM, 2);
+	RegisterMessage(NETMSG_PLAYERNAME, -1);
+	RegisterMessage(NETMSG_CHAT, -1);
+	RegisterMessage(NETMSG_RANDSEED, 5);
+	RegisterMessage(NETMSG_GAMEID, 17);
+	RegisterMessage(NETMSG_COMMAND, -2);
+	RegisterMessage(NETMSG_SELECT, -2);
+	RegisterMessage(NETMSG_PAUSE, 3);
+	RegisterMessage(NETMSG_AICOMMAND, -2);
+	RegisterMessage(NETMSG_AICOMMANDS, -2);
+	RegisterMessage(NETMSG_SCRIPT, -1);
+	RegisterMessage(NETMSG_MAPNAME, -1);
+	RegisterMessage(NETMSG_USER_SPEED, 6);
+	RegisterMessage(NETMSG_INTERNAL_SPEED, 5);
+	RegisterMessage(NETMSG_CPU_USAGE, 5);
+	RegisterMessage(NETMSG_DIRECT_CONTROL, 2);
+	RegisterMessage(NETMSG_DC_UPDATE, 7);
+	RegisterMessage(NETMSG_ATTEMPTCONNECT, 3);
+	RegisterMessage(NETMSG_SHARE, 12);
+	RegisterMessage(NETMSG_SETSHARE, 10);
+	RegisterMessage(NETMSG_SENDPLAYERSTAT, 1);
+	RegisterMessage(NETMSG_PLAYERSTAT, 2+sizeof(CPlayer::Statistics));
+	RegisterMessage(NETMSG_GAMEOVER, 1);
+	RegisterMessage(NETMSG_MAPDRAW, -1);
+	RegisterMessage(NETMSG_SYNCREQUEST, 5);
+	RegisterMessage(NETMSG_SYNCRESPONSE, 10);
+	RegisterMessage(NETMSG_SYSTEMMSG, -1);
+	RegisterMessage(NETMSG_STARTPOS, 15);
+	RegisterMessage(NETMSG_PLAYERINFO, 10);
+	RegisterMessage(NETMSG_PLAYERLEFT, 3);
+	RegisterMessage(NETMSG_MODNAME, -1);
 }
 
 CNetProtocol::~CNetProtocol()
@@ -79,13 +108,14 @@ int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 
 	int error = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
-	// logOutput.Print("Created local client with number %i", wantedNumber);
+	//logOutput.Print("Connected to local server using number %i", wantedNumber);
 	return error;
 }
 
 int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 {
 	int hisNewNumber = CNet::InitLocalClient(wantedNumber);
+	Update();
 
 	if (!IsDemoServer()) {
 	// send game data for demo recording
@@ -97,7 +127,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 			SendModName(modChecksum, modName);
 	}
 
-	logOutput.Print("Local client connected using number %i", hisNewNumber);
+	//logOutput.Print("Local client initialised using number %i", hisNewNumber);
 
 	return 1;
 }
@@ -115,19 +145,16 @@ void CNetProtocol::Update()
 
 	// call our CNet function
 	CNet::Update();
-
 	// handle new connections
 	while (HasIncomingConnection())
 	{
 		const unsigned inbuflength = 4096;
 		unsigned char inbuf[inbuflength];
 		
-		int ret = CNet::GetData(inbuf, inbuflength);
+		CNet::Update();
+		int ret = CNet::GetData(inbuf);
 		
-		uchar netmsg = inbuf[0];
-		uchar netversion = inbuf[2];
-		
-		if (ret >= 3 && netmsg == NETMSG_ATTEMPTCONNECT && netversion == NETWORK_VERSION)
+		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
 			unsigned hisNewNumber = AcceptIncomingConnection(inbuf[1]);
 			
@@ -158,7 +185,7 @@ void CNetProtocol::Update()
 		}
 		else
 		{
-			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i", netmsg, netversion);
+			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], ret);
 			RejectIncomingConnection();
 		}
 	}
@@ -174,128 +201,103 @@ void CNetProtocol::RawSend(const uchar* data,const unsigned length)
 	SendData(data, length);
 }
 
-int CNetProtocol::GetData(unsigned char* buf, const unsigned length, const unsigned conNum, int* que)
+int CNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
 {
-	// If we got the start of a fragmented message left,
-	// we insert it at the start of the buffer.
-	if (fragbufLength[conNum] != 0) {
-		if (fragbufLength[conNum] > length) {
-			logOutput.Print("Overflow in incoming network buffer");
-			return 0; // just return we read 0 bytes, it isn't too severe after all...
-		}
-		memcpy(buf, fragbuf[conNum], fragbufLength[conNum]);
-	}
-
-	int ret = CNet::GetData(buf + fragbufLength[conNum], length - fragbufLength[conNum], conNum);
-
-	if (ret <= 0) // error in CNet::GetData or 0 bytes read so nothing to do..
-		return ret;
-	ret += fragbufLength[conNum];
-
-	int readahead = ReadAhead(buf, ret, que);
-
-	// If we got a fragmented packet on end, store it for a later call to GetData.
-	fragbufLength[conNum] = ret - readahead;
-	if (fragbufLength[conNum] != 0)
-		memcpy(fragbuf[conNum], buf + readahead, fragbufLength[conNum]);
-
-	// We only return complete messages here (so use readahead instead of ret).
-	if (record != NULL && !imServer)
-		record->SaveToDemo(buf, readahead);
-	return readahead;
+	int ret = CNet::GetData(buf, conNum);
+	return ret;
 }
 
 //  NETMSG_QUIT             = 2,  //
 
-int CNetProtocol::SendQuit()
+void CNetProtocol::SendQuit()
 {
-	return SendData(NETMSG_QUIT);
+	SendData(NETMSG_QUIT);
 }
 
-int CNetProtocol::SendQuit(unsigned playerNum)
+void CNetProtocol::SendQuit(unsigned playerNum)
 {
 	unsigned char a = NETMSG_QUIT;
-	return SendData(&a, 1, playerNum);
+	SendData(&a, 1, playerNum);
 }
 
 //  NETMSG_NEWFRAME         = 3,  // int frameNum;
 
-int CNetProtocol::SendNewFrame(int frameNum)
+void CNetProtocol::SendNewFrame(int frameNum)
 {
-	return SendData<int>(NETMSG_NEWFRAME, frameNum);
+	SendData<int>(NETMSG_NEWFRAME, frameNum);
 }
 
 //  NETMSG_STARTPLAYING     = 4,  //
 
-int CNetProtocol::SendStartPlaying()
+void CNetProtocol::SendStartPlaying()
 {
-	return SendData(NETMSG_STARTPLAYING);
+	SendData(NETMSG_STARTPLAYING);
 }
 
 //  NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 
-int CNetProtocol::SendSetPlayerNum(uchar myPlayerNum)
+void CNetProtocol::SendSetPlayerNum(uchar myPlayerNum)
 {
-	return SendData<uchar>(NETMSG_SETPLAYERNUM, myPlayerNum);
+	SendData<uchar>(NETMSG_SETPLAYERNUM, myPlayerNum);
 }
 
 //  NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
 
-int CNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)
+void CNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)
 {
-	return SendSTLData<uchar, std::string>(NETMSG_PLAYERNAME, myPlayerNum, playerName);
+	SendSTLData<uchar, std::string>(NETMSG_PLAYERNAME, myPlayerNum, playerName);
 }
 
 //  NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
 
-int CNetProtocol::SendChat(uchar myPlayerNum, const std::string& message)
+void CNetProtocol::SendChat(uchar myPlayerNum, const std::string& message)
 {
-	return SendSTLData<uchar, std::string>(NETMSG_CHAT, myPlayerNum, message);
+	SendSTLData<uchar, std::string>(NETMSG_CHAT, myPlayerNum, message);
 }
 
 //  NETMSG_RANDSEED         = 8,  // uint randSeed;
 
-int CNetProtocol::SendRandSeed(uint randSeed)
+void CNetProtocol::SendRandSeed(uint randSeed)
 {
-	return SendData<uint>(NETMSG_RANDSEED, randSeed);
+	SendData<uint>(NETMSG_RANDSEED, randSeed);
 }
 
 //  NETMSG_GAMEID           = 9,  // char gameID[16];
 
-int CNetProtocol::SendGameID(const uchar* buf)
+void CNetProtocol::SendGameID(const uchar* buf)
 {
 	uchar data[17];
 	data[0] = NETMSG_GAMEID;
 	memcpy(&data[1], buf, 16);
-	return SendData(data, 17);
+	SendData(data, 17);
 }
 
 //  NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 
-int CNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
+void CNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
 {
-	return SendSTLData<uchar, int, uchar, std::vector<float> >(NETMSG_COMMAND, myPlayerNum, id, options, params);
+	SendSTLData<uchar, int, uchar, std::vector<float> >(NETMSG_COMMAND, myPlayerNum, id, options, params);
 }
 
 //  NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 
-int CNetProtocol::SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs)
+void CNetProtocol::SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs)
 {
-	return SendSTLData<uchar, std::vector<short> >(NETMSG_SELECT, myPlayerNum, selectedUnitIDs);
+	SendSTLData<uchar, std::vector<short> >(NETMSG_SELECT, myPlayerNum, selectedUnitIDs);
 }
 
 //  NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 
-int CNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
+void CNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
 {
-	return SendData<uchar, uchar>(NETMSG_PAUSE, myPlayerNum, bPaused);
+	SendData<uchar, uchar>(NETMSG_PAUSE, myPlayerNum, bPaused);
 }
 
 //  NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 
-int CNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params)
+void CNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params)
 {
-	return SendSTLData<uchar, short, int, uchar, std::vector<float> >(
+	SendSTLData<uchar, short, int, uchar, std::vector<float> >(
 			NETMSG_AICOMMAND, myPlayerNum, unitID, id, options, params);
 }
 
@@ -303,23 +305,22 @@ int CNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar o
 	                              // short unitIDCount;  unitIDCount X short(unitID)
 	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
 
-int CNetProtocol::SendAICommands(uchar myPlayerNum, short unitIDCount, ...)
+void CNetProtocol::SendAICommands(uchar myPlayerNum, short unitIDCount, ...)
 {
-	return 0;
 	//FIXME: needs special care; sits in CSelectedUnits::SendCommandsToUnits().
 }
 
 //  NETMSG_SCRIPT           = 16, // std::string scriptName;
 
-int CNetProtocol::SendScript(const std::string& newScriptName)
+void CNetProtocol::SendScript(const std::string& newScriptName)
 {
 	scriptName = newScriptName;
-	return SendSTLData<std::string> (NETMSG_SCRIPT, scriptName);
+	SendSTLData<std::string> (NETMSG_SCRIPT, scriptName);
 }
 
 //  NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
 
-int CNetProtocol::SendMapName(const uint checksum, const std::string& newMapName)
+void CNetProtocol::SendMapName(const uint checksum, const std::string& newMapName)
 {
 	//logOutput.Print("SendMapName: %s %d", newMapName.c_str(), checksum);
 	mapChecksum = checksum;
@@ -329,280 +330,153 @@ int CNetProtocol::SendMapName(const uint checksum, const std::string& newMapName
 
 	if (record)
 		record->SetName(newMapName);
-
-	return 0;
 }
 
 //  NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
-int CNetProtocol::SendUserSpeed(uchar myPlayerNum, float userSpeed)
+void CNetProtocol::SendUserSpeed(uchar myPlayerNum, float userSpeed)
 {
-	return SendData<uchar, float> (NETMSG_USER_SPEED, myPlayerNum, userSpeed);
+	SendData<uchar, float> (NETMSG_USER_SPEED, myPlayerNum, userSpeed);
 }
 
 //  NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 
-int CNetProtocol::SendInternalSpeed(float internalSpeed)
+void CNetProtocol::SendInternalSpeed(float internalSpeed)
 {
-	return SendData<float> (NETMSG_INTERNAL_SPEED, internalSpeed);
+	SendData<float> (NETMSG_INTERNAL_SPEED, internalSpeed);
 }
 
 //  NETMSG_CPU_USAGE        = 21, // float cpuUsage;
 
-int CNetProtocol::SendCPUUsage(float cpuUsage)
+void CNetProtocol::SendCPUUsage(float cpuUsage)
 {
-	return SendData<float> (NETMSG_CPU_USAGE, cpuUsage);
+	SendData<float> (NETMSG_CPU_USAGE, cpuUsage);
 }
 
 //  NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
 
-int CNetProtocol::SendDirectControl(uchar myPlayerNum)
+void CNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
-	return SendData<uchar> (NETMSG_DIRECT_CONTROL, myPlayerNum);
+	SendData<uchar> (NETMSG_DIRECT_CONTROL, myPlayerNum);
 }
 
 //  NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
 
-int CNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch)
+void CNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch)
 {
-	return SendData<uchar, uchar, short, short> (NETMSG_DC_UPDATE, myPlayerNum, status, heading, pitch);
+	SendData<uchar, uchar, short, short> (NETMSG_DC_UPDATE, myPlayerNum, status, heading, pitch);
 }
 
 //  NETMSG_ATTEMPTCONNECT   = 25, // uchar myPlayerNum, networkVersion;
 
-int CNetProtocol::SendAttemptConnect(uchar myPlayerNum, uchar networkVersion)
+void CNetProtocol::SendAttemptConnect(uchar myPlayerNum, uchar networkVersion)
 {
-	return SendData<uchar, uchar> (NETMSG_ATTEMPTCONNECT, myPlayerNum, networkVersion);
+	SendData<uchar, uchar> (NETMSG_ATTEMPTCONNECT, myPlayerNum, networkVersion);
 }
 
 //  NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
 
-int CNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy)
+void CNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy)
 {
-	return SendData<uchar, uchar, uchar, float, float> (
-			NETMSG_SHARE, myPlayerNum, shareTeam, bShareUnits, shareMetal, shareEnergy);
+	SendData<uchar, uchar, uchar, float, float> (NETMSG_SHARE, myPlayerNum, shareTeam, bShareUnits, shareMetal, shareEnergy);
 }
 
 //  NETMSG_SETSHARE         = 27, // uchar myTeam; float metalShareFraction, energyShareFraction;
 
-int CNetProtocol::SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction)
+void CNetProtocol::SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction)
 {
-	return SendData<uchar, float, float>(NETMSG_SETSHARE, myTeam, metalShareFraction, energyShareFraction);
+	SendData<uchar, float, float>(NETMSG_SETSHARE, myTeam, metalShareFraction, energyShareFraction);
 }
 
 //  NETMSG_SENDPLAYERSTAT   = 28, //
 
-int CNetProtocol::SendSendPlayerStat()
+void CNetProtocol::SendSendPlayerStat()
 {
-	return SendData(NETMSG_SENDPLAYERSTAT);
+	SendData(NETMSG_SENDPLAYERSTAT);
 }
 
 //  NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
 
-int CNetProtocol::SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats)
+void CNetProtocol::SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats)
 {
-	return SendData<uchar, CPlayer::Statistics>(NETMSG_PLAYERSTAT, myPlayerNum, currentStats);
+	SendData<uchar, CPlayer::Statistics>(NETMSG_PLAYERSTAT, myPlayerNum, currentStats);
 }
 
 //  NETMSG_GAMEOVER         = 30, //
 
-int CNetProtocol::SendGameOver()
+void CNetProtocol::SendGameOver()
 {
-	return SendData(NETMSG_GAMEOVER);
+	SendData(NETMSG_GAMEOVER);
 }
 
 //  NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
  // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
  // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
 
-int CNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
+void CNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
 {
-	return SendData<uchar, uchar, uchar, short, short>(
-	                NETMSG_MAPDRAW, 8, myPlayerNum, CInMapDraw::NET_ERASE, x, z);
+	SendData<uchar, uchar, uchar, short, short>(NETMSG_MAPDRAW, 8, myPlayerNum, CInMapDraw::NET_ERASE, x, z);
 }
 
-int CNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2)
+void CNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2)
 {
-	return SendData<uchar, uchar, uchar, short, short, short, short>(
-	                NETMSG_MAPDRAW, 12, myPlayerNum, CInMapDraw::NET_LINE, x1, z1, x2, z2);
+	SendData<uchar, uchar, uchar, short, short, short, short>(NETMSG_MAPDRAW, 12, myPlayerNum, CInMapDraw::NET_LINE, x1, z1, x2, z2);
 }
 
-int CNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
+void CNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
 {
-	return SendSTLData<uchar, uchar, short, short, std::string>(
-	                   NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
+	SendSTLData<uchar, uchar, short, short, std::string>(NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
 }
 
 //  NETMSG_SYNCREQUEST      = 32, // int frameNum;
 
-int CNetProtocol::SendSyncRequest(int frameNum)
+void CNetProtocol::SendSyncRequest(int frameNum)
 {
-	return SendData<int>(NETMSG_SYNCREQUEST, frameNum);
+	SendData<int>(NETMSG_SYNCREQUEST, frameNum);
 }
 
 //  NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 
-int CNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum)
+void CNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum)
 {
-	return SendData<uchar, int, uint>(NETMSG_SYNCRESPONSE, myPlayerNum, frameNum, checksum);
+	SendData<uchar, int, uint>(NETMSG_SYNCRESPONSE, myPlayerNum, frameNum, checksum);
 }
 
 //  NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
 
-int CNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
+void CNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
 {
-	return SendSTLData<uchar, std::string>(NETMSG_SYSTEMMSG, myPlayerNum, message);
+	SendSTLData<uchar, std::string>(NETMSG_SYSTEMMSG, myPlayerNum, message);
 }
 
 //  NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
 
-int CNetProtocol::SendStartPos(uchar myTeam, uchar ready, float x, float y, float z)
+void CNetProtocol::SendStartPos(uchar myTeam, uchar ready, float x, float y, float z)
 {
-	return SendData<uchar, uchar, float, float, float>(NETMSG_STARTPOS, myTeam, ready, x, y, z);
+	SendData<uchar, uchar, float, float, float>(NETMSG_STARTPOS, myTeam, ready, x, y, z);
 }
 
 //  NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
-int CNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
+void CNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
-	return SendData<uchar, float, int>(NETMSG_PLAYERINFO, myPlayerNum, cpuUsage, ping);
+	SendData<uchar, float, int>(NETMSG_PLAYERINFO, myPlayerNum, cpuUsage, ping);
 }
 
 //  NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left*/;
 
-int CNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
+void CNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 {
-	return SendData<uchar, uchar>(NETMSG_PLAYERLEFT, myPlayerNum, bIntended);
+	SendData<uchar, uchar>(NETMSG_PLAYERLEFT, myPlayerNum, bIntended);
 }
 
 //  NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
 
-int CNetProtocol::SendModName(const uint checksum, const std::string& newModName)
+void CNetProtocol::SendModName(const uint checksum, const std::string& newModName)
 {
 	//logOutput.Print("SendModName: %s %d", newModName.c_str(), checksum);
 	modChecksum = checksum;
 	modName = newModName;
 	if (imServer)
 		return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, modName);
-	return 0;
-}
-
-/** @brief Return the length (in bytes) of the first net message in inbuf.
-If the message doesn't fit in inbuf, it returns 0, so it can also be used to
-check whether a net buffer contains a complete message. */
-int CNetProtocol::GetMessageLength(const unsigned char* inbuf, int inbuflength) const
-{
-	if (inbuflength <= 0)
-		return 0;
-
-	int length = 0;
-	switch (inbuf[0]) {
-		case NETMSG_QUIT:
-		case NETMSG_STARTPLAYING:
-		case NETMSG_MEMDUMP:
-		case NETMSG_SENDPLAYERSTAT:
-		case NETMSG_GAMEOVER:
-			length = 1;
-			break;
-		case NETMSG_SETPLAYERNUM:
-#ifdef DIRECT_CONTROL_ALLOWED
-		case NETMSG_DIRECT_CONTROL:
-#endif
-			length = 2;
-			break;
-		case NETMSG_PAUSE:
-		case NETMSG_ATTEMPTCONNECT:
-		case NETMSG_PLAYERLEFT:
-			length = 3;
-			break;
-		case NETMSG_NEWFRAME:
-		case NETMSG_RANDSEED:
-		case NETMSG_INTERNAL_SPEED:
-			length = 5;
-			break;
-		case NETMSG_USER_SPEED:
-			length = 6;
-			break;
-		case NETMSG_CPU_USAGE:
-		case NETMSG_SYNCREQUEST:
-			length = 5;
-			break;
-#ifdef DIRECT_CONTROL_ALLOWED
-		case NETMSG_DC_UPDATE:
-			length = 7;
-			break;
-#endif
-		case NETMSG_SETSHARE:
-		case NETMSG_PLAYERINFO:
-		case NETMSG_SYNCRESPONSE:
-			length = 10;
-			break;
-		case NETMSG_SHARE:
-			length = 12;
-			break;
-		case NETMSG_STARTPOS:
-			length = 15;
-			break;
-		case NETMSG_GAMEID:
-			length = 17;
-			break;
-		case NETMSG_PLAYERSTAT:
-			length = sizeof(CPlayer::Statistics) + 2;
-			break;
-		case NETMSG_PLAYERNAME:
-		case NETMSG_CHAT:
-		case NETMSG_SYSTEMMSG:
-		case NETMSG_MAPNAME:
-		case NETMSG_MODNAME:
-		case NETMSG_SCRIPT:
-		case NETMSG_MAPDRAW:
-			if (2 > inbuflength) // there was no room for the size field
-				return 0;
-			length = inbuf[1];
-			break;
-		case NETMSG_COMMAND:
-		case NETMSG_SELECT:
-		case NETMSG_AICOMMAND:
-		case NETMSG_AICOMMANDS:
-			if (3 > inbuflength) // there was no room for the size field
-				return 0;
-			length = *((const short int*)&inbuf[1]);
-			break;
-		default:{
-#ifdef SYNCDEBUG
-			// maybe something for the sync debugger?
-			// FIXME fix sync debugger so it handles truncated messages correctly
-			length = CSyncDebugger::GetInstance()->GetMessageLength(inbuf);
-			if (length == 0)
-#endif
-			{
-				logOutput.Print("Unknown net msg in read ahead %i", inbuf[0]);
-				length = 1;
-			}
-			break;
-		}
-	}
-
-	if (length > inbuflength)
-		return 0;
-
-	return length;
-}
-
-/** @brief This performs a read ahead in the network buffer.
-It returns the position in inbuf on which the first fragmented message starts.
-If que is not null it is incremented for each NETMSG_NEWFRAME message in the
-buffer. */
-int CNetProtocol::ReadAhead(const unsigned char* inbuf, int inbuflength, int* que) const
-{
-	int pos = 0;
-	int lastLength;
-
-	while ((lastLength = GetMessageLength(inbuf + pos, inbuflength - pos)) != 0) {
-		if (inbuf[pos] == NETMSG_NEWFRAME && que != NULL)
-			++*que;
-		pos += lastLength;
-	}
-
-	return pos;
 }
 
 /* FIXME: add these:

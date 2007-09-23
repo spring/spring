@@ -41,9 +41,6 @@ public:
 	std::string demoFile;
 
 	void UpdateClientNet();
-	unsigned char inbuf[16000];	//buffer space for incomming data
-	int inbufpos;								//where in the input buffer we are
-	int inbuflength;						//last byte in input buffer
 
 	CLoadSaveHandler *savefile;
 private:

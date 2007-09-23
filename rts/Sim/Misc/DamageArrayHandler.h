@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <boost/noncopyable.hpp>
 
-class CDamageArrayHandler
+class CDamageArrayHandler : public boost::noncopyable
 {
-	NO_COPY(CDamageArrayHandler);
 	CR_DECLARE(CDamageArrayHandler);
 
 public:

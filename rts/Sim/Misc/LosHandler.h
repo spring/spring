@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <deque>
+#include <boost/noncopyable.hpp>
 #include "MemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
@@ -15,9 +16,8 @@
 
 #define MAX_LOS_TABLE 110
 
-struct LosInstance
+struct LosInstance : public boost::noncopyable
 {
-	NO_COPY(LosInstance);
 	CR_DECLARE_STRUCT(LosInstance);
  	std::vector<int> losSquares;
 	LosInstance() {} // default constructor for creg
@@ -47,9 +47,8 @@ struct LosInstance
 };
 
 
-class CLosHandler
+class CLosHandler : public boost::noncopyable
 {
-	NO_COPY(CLosHandler);
 	CR_DECLARE(CLosHandler);
 	CR_DECLARE_SUB(CPoint);
 	CR_DECLARE_SUB(DelayedInstance);

@@ -184,9 +184,10 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
 
-	CR_MEMBER(maxUserSpeed),
-	CR_MEMBER(minUserSpeed),
-	CR_MEMBER(gamePausable),
+	// FIXME move to CGameServer
+	//CR_MEMBER(maxUserSpeed),
+	//CR_MEMBER(minUserSpeed),
+	//CR_MEMBER(gamePausable),
 
 	CR_MEMBER(soundEnabled),
 	CR_MEMBER(gameSoundVolume),
@@ -229,7 +230,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	totalGameTime=0;
 	drawFpsHUD = true;
 
-	bOneStep=false;
 	creatingVideo=false;
 
 	skipping=0;
@@ -251,11 +251,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
-	gamePausable=true;
 	noSpectatorChat=false;
-
-	inbufpos=0;
-	inbuflength=0;
 
 	chatting=false;
 	userInput="";
@@ -415,21 +411,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 	logOutput.Print("Spring %s",VERSION_STRING);
-
-	if (gameSetup) {
-		maxUserSpeed = gameSetup->maxSpeed;
-		minUserSpeed = gameSetup->minSpeed;
-	}
-	else {
-		maxUserSpeed=3;
-		minUserSpeed=0.3f;
-	}
-
-	// make sure initial game speed is within allowed range
-	if(gs->userSpeedFactor>maxUserSpeed)
-		gs->userSpeedFactor=maxUserSpeed;
-	if(gs->userSpeedFactor<minUserSpeed)
-		gs->userSpeedFactor=minUserSpeed;
 
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
@@ -1127,7 +1108,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "singlestep") {
-		bOneStep = true;
+		gameServer->CreateNewFrame(false);
 	}
 	else if (cmd == "debug") {
 		gu->drawdebug = !gu->drawdebug;
@@ -2543,27 +2524,6 @@ void CGame::SimFrame()
 
 bool CGame::ClientReadNet()
 {
-	static int lastMsg=0,thisMsg=0;
-	int a;
-
-	if(inbufpos>inbuflength)
-		logOutput.Print("Too much data read");
-	if(inbufpos==inbuflength){
-		inbufpos=0;
-		inbuflength=0;
-	}
-	if (inbufpos > netcode::NETWORK_BUFFER_SIZE/2) {
-		for(a=inbufpos;a<inbuflength;a++)
-			inbuf[a-inbufpos]=inbuf[a];
-		inbuflength-=inbufpos;
-		inbufpos=0;
-	}
-
-	if ((a = net->GetData(&inbuf[inbuflength], netcode::NETWORK_BUFFER_SIZE*2-inbuflength, gameSetup ? gameSetup->myPlayer : 0, &que)) == -1) {
-		return gameOver;
-	}
-	inbuflength+=a;
-
 	// quick hack until better netcode is in place
 #ifdef PROFILE_TIME
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
@@ -2591,586 +2551,545 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	while (inbufpos < inbuflength && (timeLeft > 0 || gameServer)) {
-		thisMsg = inbuf[inbufpos];
-		int lastLength = 0;
 
-		switch (inbuf[inbufpos]) {
+	unsigned inbuflength = 8000;
+	unsigned char inbuf[inbuflength];
+	memset(inbuf, '\0', inbuflength);
+	unsigned ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+	
+	while (ret > 0)
+	{
+		switch (inbuf[0])
+		{
+			case NETMSG_ATTEMPTCONNECT:
+				logOutput.Print("Attempted connection to client?");
+				break;
 
-		case NETMSG_ATTEMPTCONNECT:
-			lastLength=3;
-			logOutput.Print("Attempted connection to client?");
-			break;
-
-		case NETMSG_QUIT:
-			logOutput.Print("Server exited");
-			// net->connected=false;
-			lastLength = 1;
-			inbufpos += lastLength;
-			lastMsg = thisMsg;
-			POP_CODE_MODE;
-			return gameOver;
-
-		case NETMSG_PLAYERLEFT:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in player left msg",player);
-			} else {
-				switch (inbuf[inbufpos+2]) {
-					case 1:
-						logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
-						break;
-					case 2:
-						logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
-						break;
-					default:
-						logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
-						break;
-				}
-				gs->players[player]->active=false;
-			}
-			lastLength=3;
-			break;}
-
-		case NETMSG_MEMDUMP:
-			MakeMemDump();
-			#ifdef TRACE_SYNC
-				tracefile.Commit();
-			#endif
-			lastLength=1;
-			break;
-
-		case NETMSG_STARTPLAYING:
-			StartPlaying();
-			lastLength=1;
-			break;
-
-		case NETMSG_GAMEOVER:
-			ENTER_MIXED;
-			gameOver=true;
-			luaCallIns.GameOver();
-			if (gu->autoQuit) {
-				logOutput.Print("Automatical quit enforced from commandline");
-				globalQuit = true;
-			} else {
-				SAFE_NEW CEndGameBox();
-				CDemoRecorder* record = net->GetDemoRecorder();
-				if (record != NULL) {
-					// Write CPlayer::Statistics and CTeam::Statistics to demo
-					int numPlayers;
-					// FIXME: ugh, there should be a better way to figure out number of players ...
-					if (gameSetup != NULL) {
-						numPlayers = gameSetup->numPlayers;
-					} else {
-						numPlayers = 0;
-						while (gs->players[numPlayers]->currentStats->mousePixels != 0)
-							++numPlayers;
-					}
-					int numTeams = gs->activeAllyTeams;
-					if (gs->useLuaGaia)
-						--numTeams;
-					// Figure out who won the game.
-					int winner = -1;
-					for (int i = 0; i < numTeams; ++i) {
-						if (!gs->Team(i)->isDead) {
-							winner = gs->AllyTeam(i);
+			case NETMSG_QUIT:
+				logOutput.Print("Server exited");
+				POP_CODE_MODE;
+				return gameOver;
+				
+			case NETMSG_PLAYERLEFT:
+			{
+				int player=inbuf[1];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in player left msg",player);
+				} else {
+					switch (inbuf[2]) {
+						case 1:
+							logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
 							break;
-						}
+						case 2:
+							logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
+							break;
+						default:
+							logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
+							break;
 					}
-					// Finally pass it on to the CDemoRecorder.
-					record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
-					record->InitializeStats(numPlayers, numTeams, winner);
-					for (int i = 0; i < numPlayers; ++i)
-						record->SetPlayerStats(i, *gs->players[i]->currentStats);
-					for (int i = 0; i < numTeams; ++i)
-						record->SetTeamStats(i, gs->Team(i)->statHistory);
+					gs->players[player]->active=false;
 				}
-			}
-			lastLength=1;
-			ENTER_SYNCED;
-			break;
-
-		case NETMSG_SENDPLAYERSTAT:
-			ENTER_MIXED;
-			logOutput.Print("Game over");
-			// Warning: using CPlayer::Statistics here may cause endianness problems
-			// once net->SendData is endian aware!
-			net->SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
-			lastLength=1;
-			ENTER_SYNCED;
-			break;
-
-		case NETMSG_PLAYERSTAT:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in playerstat msg",player);
-				lastLength=sizeof(CPlayer::Statistics)+2;
 				break;
 			}
-			*gs->players[player]->currentStats = *(CPlayer::Statistics*)&inbuf[inbufpos+2];
-			if (gameOver) {
-				CDemoRecorder* record = net->GetDemoRecorder();
-				if (record != NULL)
-					record->SetPlayerStats(player, *gs->players[player]->currentStats);
-			}
-			lastLength=sizeof(CPlayer::Statistics)+2;
-			break;}
 
-		case NETMSG_PAUSE:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in pause msg",player);
-			}
-			else if (!skipping) {
-				gs->paused=!!inbuf[inbufpos+2];
-				if(gs->paused){
-					logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
+			case NETMSG_MEMDUMP:
+				MakeMemDump();
+#ifdef TRACE_SYNC
+				tracefile.Commit();
+#endif
+				break;
+
+			case NETMSG_STARTPLAYING:
+				StartPlaying();
+				break;
+
+			case NETMSG_GAMEOVER:
+				ENTER_MIXED;
+				gameOver=true;
+				luaCallIns.GameOver();
+				if (gu->autoQuit) {
+					logOutput.Print("Automatical quit enforced from commandline");
+					globalQuit = true;
 				} else {
-					logOutput.Print("%s unpaused the game",gs->players[player]->playerName.c_str());
-				}
-				lastframe = SDL_GetTicks();
-				timeLeft=0;
-			}
-			lastLength=3;
-			break;}
-
-
-		case NETMSG_INTERNAL_SPEED: {
-			if (!net->IsDemoServer())
-				gs->speedFactor = *((float*) &inbuf[inbufpos + 1]);
-			lastLength = 5;
-//			logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
-			break; }
-
-
-		case NETMSG_USER_SPEED: {
-			if (!net->IsDemoServer()) {
-				const unsigned char playerNum = *(unsigned char*) &inbuf[inbufpos + 1];
-				const CPlayer* player = gs->players[playerNum];
-				if (player->spectator && (playerNum != 0) && !gs->cheatEnabled) {
-					// the host can always change the game speed...
-					if (playerNum == gu->myPlayerNum) {
-						logOutput.Print("Spectators can not change the speed of normal games");
+					SAFE_NEW CEndGameBox();
+					CDemoRecorder* record = net->GetDemoRecorder();
+					if (record != NULL) {
+					// Write CPlayer::Statistics and CTeam::Statistics to demo
+						int numPlayers;
+					// FIXME: ugh, there should be a better way to figure out number of players ...
+						if (gameSetup != NULL) {
+							numPlayers = gameSetup->numPlayers;
+						} else {
+							numPlayers = 0;
+							while (gs->players[numPlayers]->currentStats->mousePixels != 0)
+								++numPlayers;
+						}
+						int numTeams = gs->activeAllyTeams;
+						if (gs->useLuaGaia)
+							--numTeams;
+					// Figure out who won the game.
+						int winner = -1;
+						for (int i = 0; i < numTeams; ++i) {
+							if (!gs->Team(i)->isDead) {
+								winner = gs->AllyTeam(i);
+								break;
+							}
+						}
+					// Finally pass it on to the CDemoRecorder.
+						record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+						record->InitializeStats(numPlayers, numTeams, winner);
+						for (int i = 0; i < numPlayers; ++i)
+							record->SetPlayerStats(i, *gs->players[i]->currentStats);
+						for (int i = 0; i < numTeams; ++i)
+							record->SetTeamStats(i, gs->Team(i)->statHistory);
 					}
 				}
-				else {
-					float speed = *((float*) &inbuf[inbufpos + 2]);
-					speed = max(minUserSpeed, min(maxUserSpeed, speed));
-					gs->userSpeedFactor = speed;
+				ENTER_SYNCED;
+				break;
 
-					const char* playerName = player->playerName.c_str();
+			case NETMSG_SENDPLAYERSTAT:
+				ENTER_MIXED;
+				logOutput.Print("Game over");
+			// Warning: using CPlayer::Statistics here may cause endianness problems
+			// once net->SendData is endian aware!
+				net->SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
+				ENTER_SYNCED;
+				break;
+
+			case NETMSG_PLAYERSTAT:
+			{
+				int player=inbuf[1];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in playerstat msg",player);
+					break;
+				}
+				*gs->players[player]->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				if (gameOver) {
+					CDemoRecorder* record = net->GetDemoRecorder();
+					if (record != NULL)
+						record->SetPlayerStats(player, *gs->players[player]->currentStats);
+				}
+				break;
+			}
+
+			case NETMSG_PAUSE:
+			{
+				int player=inbuf[1];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in pause msg",player);
+				}
+				else if (!skipping) {
+					gs->paused=!!inbuf[2];
+					if(gs->paused){
+						logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
+					} else {
+						logOutput.Print("%s unpaused the game",gs->players[player]->playerName.c_str());
+					}
+					lastframe = SDL_GetTicks();
+					timeLeft=0;
+				}
+				break;
+			}
+
+
+			case NETMSG_INTERNAL_SPEED:
+			{
+				if (!net->IsDemoServer())
+					gs->speedFactor = *((float*) &inbuf[1]);
+				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
+				break;
+			}
+
+
+			case NETMSG_USER_SPEED:
+			{
+				if (!net->IsDemoServer()) {
+					gs->userSpeedFactor = *((float*) &inbuf[2]);
+
+					unsigned char playerNum = *(unsigned char*) &inbuf[1];
+					const char* playerName = gs->players[playerNum]->playerName.c_str();
 					logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
 				}
+				
+				break;
 			}
-			lastLength = 6;
-		} break;
 
 
-		case NETMSG_CPU_USAGE:
-			logOutput.Print("Game clients shouldn't get cpu usage msgs?");
-			lastLength=5;
-			break;
+			case NETMSG_CPU_USAGE:
+				logOutput.Print("Game clients shouldn't get cpu usage msgs?");
+				break;
 
 		// header (1); uchar myPlayerNum (1); float cpuUsage (4); int ping (4): 10
-		case NETMSG_PLAYERINFO: {
-			int player = inbuf[inbufpos + 1];
-			if (player >= MAX_PLAYERS || player < 0) {
-				logOutput.Print("Got invalid player num %i in playerinfo msg", player);
-			} else {
-				gs->players[player]->cpuUsage = *(float*) &inbuf[inbufpos + 2];
-				gs->players[player]->ping = *(int*) &inbuf[inbufpos + 6];
-			}
-			lastLength = 10;
-			break;}
-
-		case NETMSG_SETPLAYERNUM:
-			//logOutput.Print("Warning shouldnt receive NETMSG_SETPLAYERNUM in CGame");
-			lastLength=2;
-			break;
-
-		case NETMSG_SCRIPT:
-			lastLength = inbuf[inbufpos+1];
-			break;
-
-		case NETMSG_MAPNAME:
-			archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[inbufpos+2]));
-			lastLength = inbuf[inbufpos+1];
-			break;
-
-		case NETMSG_MODNAME: {
-			std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
-			archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[inbufpos+2]));
-			lastLength = inbuf[inbufpos+1];
-			break;
-		}
-
-		case NETMSG_PLAYERNAME:{
-			int player=inbuf[inbufpos+2];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in playername msg",player);
-			} else {
-				gs->players[player]->playerName=(char*)(&inbuf[inbufpos+3]);
-				gs->players[player]->readyToStart=true;
-				gs->players[player]->active=true;
-				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
-			}
-			lastLength=inbuf[inbufpos+1];
-			break;}
-
-		case NETMSG_CHAT:{
-			int player=inbuf[inbufpos+2];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in chat msg",player);
-			} else {
-				string s=(char*)(&inbuf[inbufpos+3]);
-				HandleChatMsg(s, player, false);
-			}
-			lastLength=inbuf[inbufpos+1];
-			break;}
-
-		case NETMSG_SYSTEMMSG:{
-			string s=(char*)(&inbuf[inbufpos+3]);
-			logOutput.Print(s);
-			lastLength=inbuf[inbufpos+1];
-			break;}
-
-		case NETMSG_STARTPOS:{
-			int team=inbuf[inbufpos+1];
-			if(team>=gs->activeTeams || team<0 || !gameSetup){
-				logOutput.Print("Got invalid team num %i in startpos msg",team);
-			} else {
-				if(inbuf[inbufpos+2]!=2)
-					gameSetup->readyTeams[team]=!!inbuf[inbufpos+2];
-				gs->Team(team)->startPos.x=*(float*)&inbuf[inbufpos+3];
-				gs->Team(team)->startPos.y=*(float*)&inbuf[inbufpos+7];
-				gs->Team(team)->startPos.z=*(float*)&inbuf[inbufpos+11];
-			}
-			lastLength=15;
-			break;}
-
-		case NETMSG_RANDSEED:
-			gs->randSeed = (*((unsigned int*)&inbuf[inbufpos+1]));
-			lastLength = 5;
-			break;
-
-		case NETMSG_GAMEID:
+			case NETMSG_PLAYERINFO:
 			{
-				unsigned char* p = &inbuf[inbufpos+1];
+				int player = inbuf[1];
+				if (player >= MAX_PLAYERS || player < 0) {
+					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
+				} else {
+					gs->players[player]->cpuUsage = *(float*) &inbuf[2];
+					gs->players[player]->ping = *(int*) &inbuf[6];
+				}
+				break;
+			}
+
+			case NETMSG_SETPLAYERNUM:
+				//logOutput.Print("Warning shouldnt receive NETMSG_SETPLAYERNUM in CGame");
+				break;
+
+			case NETMSG_SCRIPT:
+				break;
+
+			case NETMSG_MAPNAME:
+				archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[2]));
+				break;
+
+			case NETMSG_MODNAME: {
+				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
+				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
+				break;
+			}
+
+			case NETMSG_PLAYERNAME:{
+				int player=inbuf[2];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in playername msg",player);
+				} else {
+					gs->players[player]->playerName=(char*)(&inbuf[3]);
+					gs->players[player]->readyToStart=true;
+					gs->players[player]->active=true;
+					wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
+				}
+				break;}
+
+			case NETMSG_CHAT:{
+				int player=inbuf[2];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in chat msg",player);
+				} else {
+					string s=(char*)(&inbuf[3]);
+					HandleChatMsg(s, player, false);
+				}
+				break;}
+
+			case NETMSG_SYSTEMMSG:{
+				string s=(char*)(&inbuf[3]);
+				logOutput.Print(s);
+				break;}
+
+			case NETMSG_STARTPOS:{
+				int team=inbuf[1];
+				if(team>=gs->activeTeams || team<0 || !gameSetup){
+					logOutput.Print("Got invalid team num %i in startpos msg",team);
+				} else {
+					if(inbuf[2]!=2)
+						gameSetup->readyTeams[team]=!!inbuf[2];
+					gs->Team(team)->startPos.x=*(float*)&inbuf[3];
+					gs->Team(team)->startPos.y=*(float*)&inbuf[7];
+					gs->Team(team)->startPos.z=*(float*)&inbuf[11];
+				}
+				break;}
+
+			case NETMSG_RANDSEED:
+				gs->randSeed = (*((unsigned int*)&inbuf[1]));
+				break;
+
+			case NETMSG_GAMEID:
+			{
+				unsigned char* p = &inbuf[1];
 				CDemoRecorder* record = net->GetDemoRecorder();
 				if (record != NULL)
 					record->SetGameID(p);
-				logOutput.Print("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-					p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
-					p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
-				lastLength = 17;
+				logOutput.Print("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7], p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
 			}
 			break;
 
-		case NETMSG_NEWFRAME:
-			--que;
-			if(!gameServer)
-				timeLeft-=1;
-			net->SendNewFrame(gs->frameNum);
-			SimFrame();
+			case NETMSG_NEWFRAME:
+				--que;
+				if(!gameServer)
+					timeLeft-=1;
+				net->SendNewFrame(gs->frameNum);
+				SimFrame();
 #ifdef SYNCCHECK
-			if(!net->IsDemoServer()) {
-				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
-				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
-					CSyncChecker::NewFrame();
-			}
+				if(!net->IsDemoServer()) {
+					net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+					if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
+						CSyncChecker::NewFrame();
+				}
 #endif
 
-			if(creatingVideo && net->IsDemoServer()){
-				POP_CODE_MODE;
-				return true;
-			}
-			lastLength=5;
-			break;
+				if(creatingVideo && net->IsDemoServer()){
+					POP_CODE_MODE;
+					return true;
+				}
+				break;
 
-		case NETMSG_COMMAND:{
-			int player=inbuf[inbufpos+3];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in command msg",player);
-			} else {
+			case NETMSG_COMMAND:{
+				int player=inbuf[3];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in command msg",player);
+				} else {
+					Command c;
+					c.id=*((int*)&inbuf[4]);
+					c.options=inbuf[8];
+					for(int a=0;a<((*((short int*)&inbuf[1])-9)/4);++a)
+						c.params.push_back(*((float*)&inbuf[9+a*4]));
+					selectedUnits.NetOrder(c,player);
+				}
+				break;}
+
+			case NETMSG_SELECT:{
+				int player=inbuf[3];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in netselect msg",player);
+				} else {
+					vector<int> selected;
+					for(int a=0;a<((*((short int*)&inbuf[1])-4)/2);++a){
+						int unitid=*((short int*)&inbuf[4+a*2]);
+						if(unitid>=MAX_UNITS || unitid<0){
+							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
+							break;
+						}
+						if (uh->units[unitid] &&
+													(uh->units[unitid]->team == gs->players[player]->team) || gs->godMode) {
+							selected.push_back(unitid);
+													}
+					}
+					selectedUnits.NetSelect(selected, player);
+				}
+				break;}
+
+			case NETMSG_AICOMMAND:{
 				Command c;
-				c.id=*((int*)&inbuf[inbufpos+4]);
-				c.options=inbuf[inbufpos+8];
-				for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-9)/4);++a)
-					c.params.push_back(*((float*)&inbuf[inbufpos+9+a*4]));
-				selectedUnits.NetOrder(c,player);
-			}
-			lastLength=*((short int*)&inbuf[inbufpos+1]);
-			break;}
-
-		case NETMSG_SELECT:{
-			int player=inbuf[inbufpos+3];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in netselect msg",player);
-			} else {
-				vector<int> selected;
-				for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-4)/2);++a){
-					int unitid=*((short int*)&inbuf[inbufpos+4+a*2]);
-					if(unitid>=MAX_UNITS || unitid<0){
-						logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
-						lastLength=*((short int*)&inbuf[inbufpos+1]);
-						break;
-					}
-					if (uh->units[unitid] &&
-					    (uh->units[unitid]->team == gs->players[player]->team) || gs->godMode) {
-						selected.push_back(unitid);
-					}
+				int player=inbuf[3];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in aicommand msg",player);
+					break;
 				}
-				selectedUnits.NetSelect(selected, player);
-			}
-			lastLength=*((short int*)&inbuf[inbufpos+1]);
-			break;}
-
-		case NETMSG_AICOMMAND:{
-			Command c;
-			int player=inbuf[inbufpos+3];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in aicommand msg",player);
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-			}
-			int unitid=*((short int*)&inbuf[inbufpos+4]);
-			if(unitid>=MAX_UNITS || unitid<0){
-				logOutput.Print("Got invalid unitid %i in aicommand msg",unitid);
-				lastLength=*((short int*)&inbuf[inbufpos+1]);
-				break;
-			}
-			//if(uh->units[unitid] && uh->units[unitid]->team!=gs->players[player]->team)		//msgs from global ais can be for other teams
-			//	logOutput.Print("Warning player %i of team %i tried to send aiorder to unit from team %i",a,gs->players[player]->team,uh->units[unitid]->team);
-			c.id=*((int*)&inbuf[inbufpos+6]);
-			c.options=inbuf[inbufpos+10];
-			for(int a=0;a<((*((short int*)&inbuf[inbufpos+1])-11)/4);++a)
-				c.params.push_back(*((float*)&inbuf[inbufpos+11+a*4]));
-			selectedUnits.AiOrder(unitid,c);
-			lastLength=*((short int*)&inbuf[inbufpos+1]);
-			break;}
-
-		case NETMSG_AICOMMANDS:{
-			int u, c;
-			const int player = inbuf[inbufpos+3];
-			if (player>=MAX_PLAYERS || player<0) {
-				logOutput.Print("Got invalid player num %i in aicommands msg",player);
-				lastLength = *((short int*)&inbuf[inbufpos+1]);
-				break;
-			}
-
-			unsigned char* ptr = &inbuf[inbufpos + 4];
-
-// FIXME -- hackish
-#define UNPACK(type)  *((type*)ptr); ptr = ptr + sizeof(type);
-
-			// parse the unit list
-			vector<int> unitIDs;
-			const int unitCount = UNPACK(short);
-			for (u = 0; u < unitCount; u++) {
-				const int unitID = UNPACK(short);
-				unitIDs.push_back(unitID);
-			}
-			// parse the command list
-			vector<Command> commands;
-			const int commandCount = UNPACK(short);
-			for (c = 0; c < commandCount; c++) {
-				Command cmd;
-				cmd.id               = UNPACK(int);
-				cmd.options          = UNPACK(unsigned char);
-				const int paramCount = UNPACK(short);
-				for (int p = 0; p < paramCount; p++) {
-					const float param = UNPACK(float);
-					cmd.params.push_back(param);
+				int unitid=*((short int*)&inbuf[4]);
+				if(unitid>=MAX_UNITS || unitid<0){
+					logOutput.Print("Got invalid unitid %i in aicommand msg",unitid);
+					break;
 				}
-				commands.push_back(cmd);
-			}
-			// apply the commands
-			for (c = 0; c < commandCount; c++) {
+				//if(uh->units[unitid] && uh->units[unitid]->team!=gs->players[player]->team)		//msgs from global ais can be for other teams
+				//	logOutput.Print("Warning player %i of team %i tried to send aiorder to unit from team %i",a,gs->players[player]->team,uh->units[unitid]->team);
+				c.id=*((int*)&inbuf[6]);
+				c.options=inbuf[10];
+				for(int a=0;a<((*((short int*)&inbuf[1])-11)/4);++a)
+					c.params.push_back(*((float*)&inbuf[11+a*4]));
+				selectedUnits.AiOrder(unitid,c);
+				break;}
+
+			case NETMSG_AICOMMANDS:{
+				int u, c;
+				const int player = inbuf[3];
+				if (player>=MAX_PLAYERS || player<0) {
+					logOutput.Print("Got invalid player num %i in aicommands msg",player);
+					break;
+				}
+
+				unsigned char* ptr = &inbuf[4];
+
+				// FIXME -- hackish
+				#define UNPACK(type)  *((type*)ptr); ptr = ptr + sizeof(type);
+
+				// parse the unit list
+				vector<int> unitIDs;
+				const int unitCount = UNPACK(short);
 				for (u = 0; u < unitCount; u++) {
-					selectedUnits.AiOrder(unitIDs[u], commands[c]);
+					const int unitID = UNPACK(short);
+					unitIDs.push_back(unitID);
 				}
-			}
-			lastLength=*((short int*)&inbuf[inbufpos+1]);
-			break;}
-
-		case NETMSG_SYNCREQUEST:{
-			// TODO rename this net message, change error msg, etc.
-			ENTER_MIXED;
-			int frame=*((int*)&inbuf[inbufpos+1]);
-			if(frame!=gs->frameNum){
-				logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
-			}
-#ifdef PROFILE_TIME
-			net->SendCPUUsage(profiler.profile["Sim time"].percent);
-#else
-			net->SendCPUUsage(0.30f);
-#endif
-			lastLength=5;
-			ENTER_SYNCED;
-			break;}
-
-		case NETMSG_SHARE:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in share msg",player);
-				lastLength=12;
-				break;
-			}
-			int team1=gs->players[player]->team;
-			int team2=inbuf[inbufpos+2];
-			bool shareUnits=!!inbuf[inbufpos+3];
- 			float metalShare=min(*(float*)&inbuf[inbufpos+4],(float)gs->Team(team1)->metal);
- 			float energyShare=min(*(float*)&inbuf[inbufpos+8],(float)gs->Team(team1)->energy);
-
-			if (metalShare != 0.0f) {
-				if (!luaRules ||
-						luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
-					gs->Team(team1)->metal -= metalShare;
-					gs->Team(team2)->metal += metalShare;
+				// parse the command list
+				vector<Command> commands;
+				const int commandCount = UNPACK(short);
+				for (c = 0; c < commandCount; c++) {
+					Command cmd;
+					cmd.id               = UNPACK(int);
+					cmd.options          = UNPACK(unsigned char);
+					const int paramCount = UNPACK(short);
+					for (int p = 0; p < paramCount; p++) {
+						const float param = UNPACK(float);
+						cmd.params.push_back(param);
+					}
+					commands.push_back(cmd);
 				}
-			}
-			if (energyShare != 0.0f) {
-				if (!luaRules ||
-						luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
-					gs->Team(team1)->energy -= energyShare;
-					gs->Team(team2)->energy += energyShare;
-				}
-			}
-
-			if(shareUnits){
-				for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
-					if(uh->units[*ui] && uh->units[*ui]->team==team1 && !uh->units[*ui]->beingBuilt){
-						uh->units[*ui]->ChangeTeam(team2,CUnit::ChangeGiven);
+				// apply the commands
+				for (c = 0; c < commandCount; c++) {
+					for (u = 0; u < unitCount; u++) {
+						selectedUnits.AiOrder(unitIDs[u], commands[c]);
 					}
 				}
-				selectedUnits.netSelected[player].clear();
-			}
-			lastLength=12;
-			break;}
+				break;}
 
-		case NETMSG_SETSHARE:{
-			int team=inbuf[inbufpos+1];
-			if(team>=gs->activeTeams || team<0){
-				logOutput.Print("Got invalid team num %i in setshare msg",team);
-			} else {
-				float metalShare=*(float*)&inbuf[inbufpos+2];
-				float energyShare=*(float*)&inbuf[inbufpos+6];
-
-				if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
-					gs->Team(team)->metalShare  = metalShare;
+			case NETMSG_SYNCREQUEST:{
+				// TODO rename this net message, change error msg, etc.
+				ENTER_MIXED;
+				int frame=*((int*)&inbuf[1]);
+				if(frame!=gs->frameNum){
+					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 				}
-				if (!luaRules || luaRules->AllowResourceLevel(team, "e", energyShare)) {
-					gs->Team(team)->energyShare = energyShare;
-				}
-			}
-			lastLength=10;
-			break;}
+#ifdef PROFILE_TIME
+				net->SendCPUUsage(profiler.profile["Sim time"].percent);
+#else
+				net->SendCPUUsage(0.30f);
+#endif
+				ENTER_SYNCED;
+				break;}
 
-		case NETMSG_MAPDRAW:{
-			inMapDrawer->GotNetMsg(&inbuf[inbufpos]);
-			lastLength=inbuf[inbufpos+1];
-			break;}
+			case NETMSG_SHARE:{
+				int player=inbuf[1];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in share msg",player);
+					break;
+				}
+				int team1=gs->players[player]->team;
+				int team2=inbuf[2];
+				bool shareUnits=!!inbuf[3];
+				float metalShare=min(*(float*)&inbuf[4],(float)gs->Team(team1)->metal);
+				float energyShare=min(*(float*)&inbuf[8],(float)gs->Team(team1)->energy);
+
+				if (metalShare != 0.0f) {
+					if (!luaRules ||
+														luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
+						gs->Team(team1)->metal -= metalShare;
+						gs->Team(team2)->metal += metalShare;
+														}
+				}
+				if (energyShare != 0.0f) {
+					if (!luaRules ||
+														luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
+						gs->Team(team1)->energy -= energyShare;
+						gs->Team(team2)->energy += energyShare;
+														}
+				}
+
+				if(shareUnits){
+					for(vector<int>::iterator ui=selectedUnits.netSelected[player].begin();ui!=selectedUnits.netSelected[player].end();++ui){
+						if(uh->units[*ui] && uh->units[*ui]->team==team1 && !uh->units[*ui]->beingBuilt){
+							uh->units[*ui]->ChangeTeam(team2,CUnit::ChangeGiven);
+						}
+					}
+					selectedUnits.netSelected[player].clear();
+				}
+				break;}
+
+			case NETMSG_SETSHARE:{
+				int team=inbuf[1];
+				if(team>=gs->activeTeams || team<0){
+					logOutput.Print("Got invalid team num %i in setshare msg",team);
+				} else {
+					float metalShare=*(float*)&inbuf[2];
+					float energyShare=*(float*)&inbuf[6];
+
+					if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
+						gs->Team(team)->metalShare  = metalShare;
+					}
+					if (!luaRules || luaRules->AllowResourceLevel(team, "e", energyShare)) {
+						gs->Team(team)->energyShare = energyShare;
+					}
+				}
+				break;}
+
+			case NETMSG_MAPDRAW:{
+				inMapDrawer->GotNetMsg(&inbuf[0]);
+				break;}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-		case NETMSG_DIRECT_CONTROL:{
-			int player=inbuf[inbufpos+1];
+			case NETMSG_DIRECT_CONTROL:{
+				int player=inbuf[1];
 
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in direct control msg",player);
-				lastLength=2;
-				break;
-			}
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in direct control msg",player);
+					break;
+				}
 
-			CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
-			if (ctrlUnit) {
-				CUnit* unit=gs->players[player]->playerControlledUnit;
+				CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
+				if (ctrlUnit) {
+					CUnit* unit=gs->players[player]->playerControlledUnit;
 				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
 				unit->directControl=0;
 				unit->AttackUnit(0,true);
 				gs->players[player]->StopControllingUnit();
-			}
-			else {
-				if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
-					CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-					//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
-					if (unit->directControl) {
-						if (player == gu->myPlayerNum) {
-							logOutput.Print("Sorry someone already controls that unit");
-						}
-					}
-					else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-						unit->directControl=&gs->players[player]->myControl;
-						gs->players[player]->playerControlledUnit=unit;
-						ENTER_UNSYNCED;
-						if(player==gu->myPlayerNum){
-							gu->directControl=unit;
-							mouse->wasLocked = mouse->locked;
-							if(!mouse->locked){
-								mouse->locked = true;
-								mouse->HideMouse();
+				}
+				else {
+					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
+						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
+						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
+						if (unit->directControl) {
+							if (player == gu->myPlayerNum) {
+								logOutput.Print("Sorry someone already controls that unit");
 							}
-							cam->PushMode();
-							cam->SetCameraMode(0);
-							((CFPSController*)cam->currentCamController)->SetPos(unit->midPos);
-							selectedUnits.ClearSelected();
 						}
-						ENTER_SYNCED;
+						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
+							unit->directControl=&gs->players[player]->myControl;
+							gs->players[player]->playerControlledUnit=unit;
+							ENTER_UNSYNCED;
+							if(player==gu->myPlayerNum){
+								gu->directControl=unit;
+								mouse->wasLocked = mouse->locked;
+								if(!mouse->locked){
+									mouse->locked = true;
+									mouse->HideMouse();
+								}
+								cam->PushMode();
+								cam->SetCameraMode(0);
+								((CFPSController*)cam->currentCamController)->SetPos(unit->midPos);
+								selectedUnits.ClearSelected();
+							}
+							ENTER_SYNCED;
+						}
 					}
 				}
-			}
-			lastLength=2;
-			break;}
+				break;}
 
-		case NETMSG_DC_UPDATE:{
-			int player=inbuf[inbufpos+1];
-			if(player>=MAX_PLAYERS || player<0){
-				logOutput.Print("Got invalid player num %i in dc update msg",player);
-				lastLength=7;
-				break;
-			}
-			DirectControlStruct* dc=&gs->players[player]->myControl;
-			CUnit* unit=gs->players[player]->playerControlledUnit;
+			case NETMSG_DC_UPDATE:{
+				int player=inbuf[1];
+				if(player>=MAX_PLAYERS || player<0){
+					logOutput.Print("Got invalid player num %i in dc update msg",player);
+					break;
+				}
+				DirectControlStruct* dc=&gs->players[player]->myControl;
+				CUnit* unit=gs->players[player]->playerControlledUnit;
 
-			dc->forward=!!(inbuf[inbufpos+2] & 1);
-			dc->back=!!(inbuf[inbufpos+2] & 2);
-			dc->left=!!(inbuf[inbufpos+2] & 4);
-			dc->right=!!(inbuf[inbufpos+2] & 8);
-			dc->mouse1=!!(inbuf[inbufpos+2] & 16);
-			bool newMouse2=!!(inbuf[inbufpos+2] & 32);
-			if(!dc->mouse2 && newMouse2 && unit){
-				unit->AttackUnit(0,true);
-//				for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-//					(*wi)->HoldFire();
-			}
-			dc->mouse2=newMouse2;
+				dc->forward=!!(inbuf[2] & 1);
+				dc->back=!!(inbuf[2] & 2);
+				dc->left=!!(inbuf[2] & 4);
+				dc->right=!!(inbuf[2] & 8);
+				dc->mouse1=!!(inbuf[2] & 16);
+				bool newMouse2=!!(inbuf[2] & 32);
+				if(!dc->mouse2 && newMouse2 && unit){
+					unit->AttackUnit(0,true);
+				//	for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
+				//	(*wi)->HoldFire();
+				}
+				dc->mouse2=newMouse2;
 
-			short int h=*((short int*)&inbuf[inbufpos+3]);
-			short int p=*((short int*)&inbuf[inbufpos+5]);
-			dc->viewDir=GetVectorFromHAndPExact(h,p);
-
-			lastLength=7;
-			break;}
+				short int h=*((short int*)&inbuf[3]);
+				short int p=*((short int*)&inbuf[5]);
+				dc->viewDir=GetVectorFromHAndPExact(h,p);
+				break;}
 #endif
 
-		default:
+			default:
 #ifdef SYNCDEBUG
-			lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
-			if (!lastLength)
+				lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
+				if (!lastLength)
 #endif
-			{
-				logOutput.Print("Unknown net msg in client %d last %d", (int) inbuf[inbufpos], lastMsg);
-				lastLength=1;
-			}
-			break;
+				{
+					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
+				}
+				break;
 		}
-		if(lastLength <= 0) {
-			logOutput.Print("Client readnet got packet type %i length %i pos %i??", thisMsg, lastLength, inbufpos);
-			lastLength = 0;
-		}
-		inbufpos += lastLength;
-		lastMsg = thisMsg;
+		
+		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	}
+	
+	if (ret == -1)
+	{
+		return gameOver;
+	}
+	
 	POP_CODE_MODE;
 	return true;
 }
@@ -3640,7 +3559,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 	}
 	else if ((s.find(".nocost") == 0) && (player == 0) && gs->cheatEnabled) {
-		for(int i=0; i<unitDefHandler->numUnitDefs; i++)
+		for(unsigned i=0; i<unitDefHandler->numUnitDefs; i++)
 		{
 			unitDefHandler->unitDefs[i].metalCost = 1;
 			unitDefHandler->unitDefs[i].energyCost = 1;
@@ -3651,6 +3570,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		unitDefHandler->noCost=true;
 		logOutput.Print("Cheating!");
 	}
+#ifdef DEBUG
 	else if (s.find(".crash") == 0 && gs->cheatEnabled) {
 		int *a=0;
 		*a=0;
@@ -3661,16 +3581,6 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 	else if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
 		float a = 0;
 		logOutput.Print("Result: %f", 1.0f/a);
-	}
-	else if (s.find(".resync") == 0 && gs->cheatEnabled) {
-		CObject* o = CObject::GetSyncedObjects();
-		for (; o; o = o->GetNext()) {
-			creg::Class* c = o->GetClass();
-			logOutput.Print("%s\n", c->name.c_str());
-			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
-				logOutput.Print("  %s\n", (*m)->name);
-			}
-		}
 	}
 	else if ((s.find(".desync") == 0) && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
@@ -3687,6 +3597,17 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
+	}
+#endif
+	else if (s.find(".resync") == 0 && gs->cheatEnabled) {
+		CObject* o = CObject::GetSyncedObjects();
+		for (; o; o = o->GetNext()) {
+			creg::Class* c = o->GetClass();
+			logOutput.Print("%s\n", c->name.c_str());
+			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
+				logOutput.Print("  %s\n", (*m)->name);
+			}
+		}
 	}
 #ifdef SYNCDEBUG
 	else if ((s.find(".fakedesync") == 0) && gs->cheatEnabled && gameServer) {
@@ -3911,34 +3832,10 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			}
 		}
 	}
-	else if ((s.find(".kickbynum") == 0) && (player == 0) && gameServer) {
-		if (s.length() >= 11) {
-			int a = atoi(s.substr(11, string::npos).c_str());
-			gameServer->KickPlayer(a);
-		}
-	}
-	else if ((s.find(".kick") == 0) && (player == 0) && gameServer) {
-		if (s.length() >= 6) {
-			string name = s.substr(6, string::npos);
-			if (!name.empty()) {
-				StringToLowerInPlace(name);
-				for (int a = 1; a < gs->activePlayers; ++a) {
-					if (gs->players[a]->active) {
-						string p = StringToLower(gs->players[a]->playerName);
-						if (p.find(name) == 0) { // can kick on substrings of name
-							gameServer->KickPlayer(a);
-						}
-					}
-				}
-			}
-		}
-	}
+	// .kick, .kickbynum and .nopause moved to CGameServer
 	else if ((s.find(".nospectatorchat") == 0) && (player == 0)) {
 		SetBoolArg(noSpectatorChat, s, ".nospectatorchat");
 		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can" : "can not");
-	}
-	else if ((s.find(".nopause") == 0) && (player == 0)) {
-		SetBoolArg(gamePausable, s, ".nopause");
 	}
 	else if ((s.find(".nohelp") == 0) && (player == 0)) {
 		SetBoolArg(gs->noHelperAIs, s, ".nohelp");
@@ -3956,18 +3853,6 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		}
 		logOutput.Print("GroupAI and LuaUI control is %s",
 		                gs->noHelperAIs ? "disabled" : "enabled");
-	}
-	else if ((s.find(".setmaxspeed") == 0) && (player == 0) && !net->localDemoPlayback) {
-		maxUserSpeed = atof(s.substr(12).c_str());
-		if (gs->userSpeedFactor > maxUserSpeed) {
-			gs->userSpeedFactor = maxUserSpeed;
-		}
-	}
-	else if ((s.find(".setminspeed") == 0) && (player == 0) && !net->localDemoPlayback) {
-		minUserSpeed = atof(s.substr(12).c_str());
-		if (gs->userSpeedFactor < minUserSpeed) {
-			gs->userSpeedFactor = minUserSpeed;
-		}
 	}
 	else if (s.find(".skip") == 0) {
 		if (!demoPlayer && ((player != 0) || !gs->cheatEnabled)) {

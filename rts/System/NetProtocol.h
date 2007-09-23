@@ -106,48 +106,45 @@ public:
 	 */
 	void RawSend(const uchar* data,const unsigned length);
 
-	int GetData(unsigned char* buf,const unsigned length, const unsigned conNum, int* que = NULL);
+	int GetData(unsigned char* buf, const unsigned conNum);
 
-	int SendQuit();
-	int SendQuit(unsigned playerNum);
-	int SendNewFrame(int frameNum);
-	int SendStartPlaying();
-	int SendSetPlayerNum(uchar myPlayerNum);
-	int SendPlayerName(uchar myPlayerNum, const std::string& playerName);
-	int SendChat(uchar myPlayerNum, const std::string& message);
-	int SendRandSeed(uint randSeed);
-	int SendGameID(const uchar* buf);
-	int SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
-	int SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
-	int SendPause(uchar myPlayerNum, uchar bPaused);
-	int SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
-	int SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
-	int SendScript(const std::string& scriptName);
-	int SendMapName(const uint checksum, const std::string& mapName);
-	int SendUserSpeed(uchar myPlayerNum, float userSpeed);
-	int SendInternalSpeed(float internalSpeed);
-	int SendCPUUsage(float cpuUsage);
-	int SendDirectControl(uchar myPlayerNum);
-	int SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	int SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
-	int SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
-	int SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction);
-	int SendSendPlayerStat();
-	int SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
-	int SendGameOver();
-	int SendMapErase(uchar myPlayerNum, short x, short z);
-	int SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
-	int SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
-	int SendSyncRequest(int frameNum);
-	int SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
-	int SendSystemMessage(uchar myPlayerNum, const std::string& message);
-	int SendStartPos(uchar myTeam, uchar ready, float x, float y, float z);
-	int SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
-	int SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	int SendModName(const uint checksum, const std::string& modName);
-
-	int GetMessageLength(const unsigned char* inbuf, int inbuflength) const;
-	int ReadAhead(const unsigned char* inbuf, int inbuflength, int* que = NULL) const;
+	void SendQuit();
+	void SendQuit(unsigned playerNum);
+	void SendNewFrame(int frameNum);
+	void SendStartPlaying();
+	void SendSetPlayerNum(uchar myPlayerNum);
+	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
+	void SendChat(uchar myPlayerNum, const std::string& message);
+	void SendRandSeed(uint randSeed);
+	void SendGameID(const uchar* buf);
+	void SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
+	void SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
+	void SendPause(uchar myPlayerNum, uchar bPaused);
+	void SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
+	void SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
+	void SendScript(const std::string& scriptName);
+	void SendMapName(const uint checksum, const std::string& mapName);
+	void SendUserSpeed(uchar myPlayerNum, float userSpeed);
+	void SendInternalSpeed(float internalSpeed);
+	void SendCPUUsage(float cpuUsage);
+	void SendDirectControl(uchar myPlayerNum);
+	void SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
+	void SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
+	void SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
+	void SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction);
+	void SendSendPlayerStat();
+	void SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
+	void SendGameOver();
+	void SendMapErase(uchar myPlayerNum, short x, short z);
+	void SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
+	void SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
+	void SendSyncRequest(int frameNum);
+	void SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
+	void SendSystemMessage(uchar myPlayerNum, const std::string& message);
+	void SendStartPos(uchar myTeam, uchar ready, float x, float y, float z);
+	void SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
+	void SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
+	void SendModName(const uint checksum, const std::string& modName);
 
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 
@@ -162,10 +159,6 @@ private:
 	std::string modName;
 	
 	bool imServer;
-
-	/// Bytes that don't make a complete net message yet (fragmented message).
-	unsigned char fragbuf[MAX_PLAYERS][netcode::NETWORK_BUFFER_SIZE];
-	int fragbufLength[MAX_PLAYERS];
 };
 
 extern CNetProtocol* net;

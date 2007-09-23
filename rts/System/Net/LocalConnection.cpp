@@ -2,61 +2,74 @@
 
 #include <string.h>
 #include <stdexcept>
+//#include <iostream>
+
+#include "ProtocolDef.h"
+#include "UDPSocket.h"
 
 namespace netcode {
 
 // static stuff
 unsigned CLocalConnection::Instances = 0;
-unsigned char CLocalConnection::Data[2][NETWORK_BUFFER_SIZE];
+std::queue<RawPacket*> CLocalConnection::Data[2];
 boost::mutex CLocalConnection::Mutex[2];
-unsigned CLocalConnection::Length[2] = {0,0};
 
 CLocalConnection::CLocalConnection()
 {
-// TODO check and prevent further instances if we already have 2
+	if (Instances > 1)
+	{
+		throw network_error("Opening a third local connection is not allowed");
+	}
 	instance = Instances;
 	Instances++;
 }
 
 CLocalConnection::~CLocalConnection()
 {
-	// logOutput.Print("Network statistics for local Connection");
-	// logOutput.Print("Bytes send/recieved: %i/%i (Overhead: %i/%i)", dataSent, dataRecv, sentOverhead, recvOverhead);
-	// logOutput.Print("Deleting %i bytes unhandled data", Length[instance]);
-	Instances--; // not sure this is needed
+	Instances--;
+	while (!Data[instance].empty())
+	{
+		delete Data[instance].front();
+		Data[instance].pop();
+	}
 }
 
-int CLocalConnection::SendData(const unsigned char *data, const unsigned length)
+void CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
+	//std::cout << "Sending " << length << " bytes to " << OtherInstance() << std::endl;
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 	
-	if(Length[OtherInstance()]+length>=NETWORK_BUFFER_SIZE){
-		throw std::length_error("Buffer overflow in CLocalConnection::SendData");
-	}
-	memcpy(&Data[OtherInstance()][Length[OtherInstance()]],data,length);
-	Length[OtherInstance()]+=length;
+	Data[OtherInstance()].push(new RawPacket(data, length));
 	dataSent += length;
-	
-	return length;
 }
 
-int CLocalConnection::GetData(unsigned char *buf, const unsigned length)
+unsigned CLocalConnection::GetData(unsigned char *buf)
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-		
-	unsigned ret=Length[instance];
-	if(length<=ret) {
-		throw std::length_error("Buffer overflow in CLocalConnection::GetData");
-	}
-	dataRecv += Length[instance];
-	memcpy(buf,Data[instance],ret);
-	Length[instance]=0;
 	
-	return ret;
+	RawPacket* next = Data[instance].empty() ? 0 : Data[instance].front();
+	
+	if (next)
+	{
+		unsigned ret = next->length;
+		//std::cout << "Recieving " << ret << " bytes from " << instance << std::endl;
+		dataRecv += ret;
+		memcpy(buf,next->data,ret);
+		Data[instance].pop();
+		delete next;
+		return ret;
+	}
+	else
+		return 0;
 }
 
 void CLocalConnection::Flush(const bool forced)
 {
+}
+
+bool CLocalConnection::CheckTimeout() const
+{
+	return false;
 }
 
 unsigned CLocalConnection::OtherInstance() const

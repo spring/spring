@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <boost/noncopyable.hpp>
 
 class CUnit;
 class CWorldObject;
@@ -15,9 +16,8 @@ class CSolidObject;
 
 #define QUAD_SIZE 256
 
-class CQuadField
+class CQuadField : boost::noncopyable
 {
-	NO_COPY(CQuadField);
 	CR_DECLARE(CQuadField);
 	CR_DECLARE_SUB(Quad);
 

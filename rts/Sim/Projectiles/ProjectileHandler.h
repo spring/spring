@@ -16,6 +16,7 @@ struct SS3OVertex;
 #include <stack>
 #include "MemPool.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "float3.h"
 
 typedef std::list<CProjectile*> Projectile_List;
 
