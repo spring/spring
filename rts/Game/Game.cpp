@@ -417,7 +417,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	logOutput.Print("Spring %s",VERSION_STRING);
 	
-	logOutput.Print("Ende...");
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
