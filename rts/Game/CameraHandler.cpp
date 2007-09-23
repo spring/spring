@@ -143,10 +143,10 @@ void CCameraHandler::ToggleState()
 void CCameraHandler::ToggleOverviewCamera(void)
 {
 	const int ovCamNum = (int)camControllers.size() - 1;
-	CCameraController* ovCamCtrl = camControllers[ovCamNum];
 	if (controllerStack.empty())
 	{
 		PushMode();
+		SetCameraMode(ovCamNum);
 	}
 	else
 	{

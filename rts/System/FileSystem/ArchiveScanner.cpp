@@ -1,14 +1,14 @@
-#include "StdAfx.h"
+#include "ArchiveScanner.h"
+
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "ArchiveScanner.h"
+
 #include "ArchiveFactory.h"
 #include "CRC.h"
 #include "FileHandler.h"
 #include "LogOutput.h"
 #include "Platform/FileSystem.h"
-#include "Rendering/GL/myGL.h"
 #include "TdfParser.h"
 #include "mmgr.h"
 

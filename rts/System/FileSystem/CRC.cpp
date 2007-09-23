@@ -1,6 +1,6 @@
-#include "StdAfx.h"
-#include <stdio.h>
+
 #include "CRC.h"
+#include <stdio.h>
 
 
 unsigned int CRC::crcTable[256];
@@ -60,14 +60,13 @@ bool CRC::UpdateFile(const std::string& filename)
 	if (!fp)
 		return false;
 
-	unsigned char* buf = SAFE_NEW unsigned char[100000];
+	unsigned char buf[100000];
 	size_t bytes;
 	do {
 		bytes = fread((void*)buf, 1, 100000, fp);
 		UpdateData(buf, bytes);
 	} while (bytes == 100000);
 
-	delete[] buf;
 	fclose(fp);
 
 	return true;

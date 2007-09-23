@@ -2,7 +2,6 @@
 #include "NetProtocol.h"
 #include "Rendering/InMapDraw.h"
 #include "Game/GameSetup.h"
-#include "Game/Team.h"
 #include "LogOutput.h"
 
 const unsigned char NETWORK_VERSION = 1;
