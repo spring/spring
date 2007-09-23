@@ -10,6 +10,8 @@ class CMissileProjectile :
 	public CWeaponProjectile
 {
 	CR_DECLARE(CMissileProjectile);
+protected:
+	void UpdateGroundBounce();
 public:
 	CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos);
 	~CMissileProjectile(void);
@@ -26,7 +28,6 @@ public:
 	float3 dir;
 	float maxSpeed;
 	float curSpeed;
-	int ttl;
 	float areaOfEffect;
 	int age;
 	float3 oldSmoke,oldDir;

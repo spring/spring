@@ -31,7 +31,6 @@ public:
 	float maxSpeed;
 	float curSpeed;
 	float acceleration;
-	int ttl;
 	int uptime;
 	float areaOfEffect;
 	int age;

@@ -29,7 +29,6 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, con
 :	CWeaponProjectile(startPos+(endPos-startPos)*0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false),//CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
 	startPos(startPos),
 	endPos(endPos),
-	ttl(0),
 	decay(1.0f)
 	//thickness(thickness),
 	//corethickness(corethickness),

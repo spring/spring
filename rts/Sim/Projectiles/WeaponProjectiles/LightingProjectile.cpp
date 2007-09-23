@@ -10,7 +10,6 @@
 CR_BIND_DERIVED(CLightingProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
 
 CR_REG_METADATA(CLightingProjectile,(
-	CR_MEMBER(ttl),
 	CR_MEMBER(color),
 	CR_MEMBER(endPos),
 	CR_MEMBER(weapon),
@@ -19,9 +18,10 @@ CR_REG_METADATA(CLightingProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLightingProjectile::CLightingProjectile(const float3& pos,const float3& end,CUnit* owner,const float3& color, const WeaponDef *weaponDef,int ttl,CWeapon* weap)
-:	CWeaponProjectile(pos,ZeroVector, owner, 0, ZeroVector, weaponDef,0, true), //CProjectile(pos,ZeroVector,owner),
-	ttl(ttl),
+CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
+		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
+		int ttl,CWeapon* weap)
+:	CWeaponProjectile(pos,ZeroVector, owner, 0, ZeroVector, weaponDef,0, true, ttl), //CProjectile(pos,ZeroVector,owner),
 	color(color),
 	endPos(end),
 	weapon(weap)

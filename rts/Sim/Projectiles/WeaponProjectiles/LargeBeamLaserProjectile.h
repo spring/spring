@@ -28,7 +28,6 @@ public:
 	float scrollspeed;
 	float pulseSpeed;
 	float decay;
-	int ttl;
 
 	AtlasedTexture beamtex;
 	AtlasedTexture side;

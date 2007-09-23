@@ -13,7 +13,6 @@ public:
 	CLightingProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color, const WeaponDef *weaponDef, int ttl=10, CWeapon* weap=0);
 	~CLightingProjectile(void);
 
-	int ttl;
 	float3 color;
 	float3 endPos;
 	CWeapon* weapon;

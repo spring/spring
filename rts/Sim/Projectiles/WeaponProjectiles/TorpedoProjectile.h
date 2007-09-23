@@ -19,7 +19,6 @@ public:
 	float3 dir;
 	float maxSpeed;
 	float curSpeed;
-	int ttl;
 	float areaOfEffect;
 	CUnit* target;
 	int nextBubble;

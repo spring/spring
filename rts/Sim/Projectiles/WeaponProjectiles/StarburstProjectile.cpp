@@ -26,7 +26,6 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
-	CR_MEMBER(ttl),
 	CR_MEMBER(uptime),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
@@ -51,8 +50,8 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 }
 
 CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner, float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target, const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance)
-: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true),
-	ttl(200),
+: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef,
+		interceptTarget, true, 200),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
 	dir(speed),

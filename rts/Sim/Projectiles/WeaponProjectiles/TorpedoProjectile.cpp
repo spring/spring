@@ -19,7 +19,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
-	CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(target),
 	CR_MEMBER(nextBubble),
@@ -29,8 +28,7 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	));
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef *weaponDef)
-: CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true),
-	ttl(ttl),
+: CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true, ttl),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
 	target(target),
@@ -140,6 +138,8 @@ void CTorpedoProjectile::Update(void)
 			SAFE_NEW CBubbleProjectile(pos+gs->randVector(),pspeed,40+gs->randFloat()*30,1+gs->randFloat()*2,0.01f,owner,0.3f+gs->randFloat()*0.3f);
 		}
 	}
+	
+	UpdateGroundBounce();
 }
 
 void CTorpedoProjectile::Draw(void)

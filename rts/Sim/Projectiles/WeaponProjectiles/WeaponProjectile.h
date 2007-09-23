@@ -14,7 +14,9 @@ class CWeaponProjectile : public CProjectile
 	CR_DECLARE(CWeaponProjectile);
 public:
 	CWeaponProjectile();
-	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef *weaponDef, CWeaponProjectile* interceptTarget, bool synced);
+	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner,
+			CUnit* target, const float3 &targetPos, const WeaponDef *weaponDef,
+			CWeaponProjectile* interceptTarget, bool synced, int ttl = 1);
 	virtual ~CWeaponProjectile();
 
 	virtual void Collision();
@@ -38,6 +40,10 @@ protected:
 	int ttl;
 	int colorTeam;
 	unsigned int modelDispList;
+	int bounces;
+	
+	virtual void UpdateGroundBounce();
+	bool keepBouncing;
 
 	bool TraveledRange();
 	CWeaponProjectile* interceptTarget;

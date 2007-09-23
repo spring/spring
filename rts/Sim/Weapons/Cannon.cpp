@@ -179,8 +179,13 @@ void CCannon::Fire(void)
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
 	int predict = (int)ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gravity)
 			: sqrt(diff.SqLength2D() / sqSpeed2D));
-	if(selfExplode) {
+	if(weaponDef->flighttime > 0) {
+		ttl = weaponDef->flighttime;
+	} else if(selfExplode) {
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
+	} else if((weaponDef->groundBounce || weaponDef->waterBounce)
+			&& weaponDef->numBounce > 0) {
+		ttl = predict * (1 + numBounce * weaponDef->bounceRebound);
 	} else {
 		ttl=predict*2;
 	}

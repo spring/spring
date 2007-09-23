@@ -111,6 +111,7 @@ void CFireBallProjectile::Update()
 			sparks[i].pos += sparks[i].speed;
 		sparks[i].speed *= 0.95f;
 	}
+	UpdateGroundBounce();
 }
 
 void CFireBallProjectile::EmitSpark()

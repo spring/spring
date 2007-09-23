@@ -468,6 +468,12 @@ static bool InitParamMap()
 	ADD_FLOAT("reload",     wd.reload);
 	ADD_FLOAT("beamtime",   wd.beamtime);
 	ADD_BOOL("beamburst",   wd.beamburst);
+	
+	ADD_BOOL("waterbounce", wd.waterBounce);
+	ADD_BOOL("groundbounce", wd.groundBounce);
+	ADD_FLOAT("groundslip", wd.bounceSlip);
+	ADD_FLOAT("bouncerebound", wd.bounceRebound);
+	ADD_INT("numbounce", wd.numBounce);
 
 	ADD_FLOAT("maxAngle", wd.maxAngle);
 	ADD_FLOAT("restTime", wd.restTime);

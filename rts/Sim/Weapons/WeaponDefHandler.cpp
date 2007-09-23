@@ -123,6 +123,12 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
+		
+	wd.waterBounce = wdTable.GetBool("waterbounce", false);
+	wd.groundBounce = wdTable.GetBool("groundbounce", false);
+	wd.bounceSlip = wdTable.GetFloat("bounceslip", 1);
+	wd.bounceRebound = wdTable.GetFloat("bouncerebound", 1);
+	wd.numBounce = wdTable.GetInt("numbounce", -1);
 
 	wd.thickness      = wdTable.GetFloat("thickness",       2.0f);
 	wd.corethickness  = wdTable.GetFloat("coreThickness",   0.25f);

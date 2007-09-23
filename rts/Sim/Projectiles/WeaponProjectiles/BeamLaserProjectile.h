@@ -25,7 +25,6 @@ public:
 	float flaresize;
 	float midtexx;
 	
-	int ttl;
 	float decay;
 
 	void Update(void);

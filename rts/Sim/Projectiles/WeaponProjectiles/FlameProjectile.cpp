@@ -60,6 +60,7 @@ void CFlameProjectile::Collision(CUnit* unit)
 void CFlameProjectile::Update(void)
 {
 	pos+=speed;
+	UpdateGroundBounce();
 	speed+=spread;
 
 	radius = radius+weaponDef->sizeGrowth;
