@@ -185,7 +185,7 @@ void CCannon::Fire(void)
 		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
 	} else if((weaponDef->groundBounce || weaponDef->waterBounce)
 			&& weaponDef->numBounce > 0) {
-		ttl = predict * (1 + numBounce * weaponDef->bounceRebound);
+		ttl = predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound);
 	} else {
 		ttl=predict*2;
 	}
