@@ -32,7 +32,7 @@ public:
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);
 	void UnitMoveFailed(int unit);
 	void Update();
-        void Load(IGlobalAICallback* callback,std::istream *s){}
+    void Load(IGlobalAICallback* callback,std::istream *s){}
 	void Save(std::ostream *s){}
 	int HandleEvent (int msg, const void *data);
 	int tteam;

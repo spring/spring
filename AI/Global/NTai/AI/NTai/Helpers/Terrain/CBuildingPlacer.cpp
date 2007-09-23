@@ -77,13 +77,31 @@ void CBuildingPlacer::RecieveMessage(CMessage &message){
 }
 
 bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
-    this->me = me;
+    this->me = &me;
     const float* slope = G->cb->GetSlopeMap();
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE*2, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE*2);
 
     int smaxW = G->cb->GetMapWidth()/16;
     int smaxH = G->cb->GetMapHeight()/16;
 
+	int* f = new int[10000];
+    int fnum = 0;
+    fnum = G->cb->GetFeatures(f, 9999);
+	if(fnum > 0){
+		//
+		for(int i = 0; i < fnum; ++i){
+			//
+			const FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
+			if(fd != 0){
+				if(fd->geoThermal){
+					float3 fpos = G->cb->GetFeaturePos(f[i]);
+					if(G->Map->CheckFloat3(fpos)){
+						geolist.push_back(fpos);
+					}
+				}
+			}
+		}
+	}
     /*slopemap.Initialize(mapdim,float3(32,0,32),true);
      slopemap.SetDefaultGridValue(0);
      slopemap.SetMinimumValue(0);
@@ -107,11 +125,13 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
     blockingmap.SetDefaultGridValue(0);
     blockingmap.SetMinimumValue(1);
+	
+	G->RegisterMessageHandler(me);
 
-    G->RegisterMessageHandler("unitcreated", me);
+    /*G->RegisterMessageHandler("unitcreated", me);
     G->RegisterMessageHandler("unitdestroyed", me);
     G->RegisterMessageHandler("unitidle", me);
-    G->RegisterMessageHandler("update", me);
+    G->RegisterMessageHandler("update", me);*/
     return true;
 }
 
@@ -126,7 +146,7 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
 
 class CBuildAlgorithm : public IModule{
     public:
-        CBuildAlgorithm(boost::shared_ptr<IModule> buildalgorithm, boost::shared_ptr<IModule> reciever, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
+        CBuildAlgorithm(CBuildingPlacer* buildalgorithm, boost::shared_ptr<IModule> reciever, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
             buildalgorithm(buildalgorithm),
             reciever(reciever),
             builderpos(builderpos),
@@ -325,7 +345,7 @@ class CBuildAlgorithm : public IModule{
 
             bool valid;
             CGridManager* blockingmap;
-            boost::shared_ptr<IModule> buildalgorithm;
+            CBuildingPlacer* buildalgorithm;
             boost::shared_ptr<IModule> reciever;
             float3 builderpos;
             const UnitDef* builder;
@@ -376,8 +396,9 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         }
         if(!G->Manufacturer->BPlans->empty()){
             // find any plans for mexes very close to here.... If so change position to match if the same, if its a better mex then cancel existing plan and continue as normal.
-            for(deque<CBPlan>::iterator i = G->Manufacturer->BPlans->begin(); i != G->Manufacturer->BPlans->end(); ++i){
+            for(deque<CBPlan* >::iterator k = G->Manufacturer->BPlans->begin(); k != G->Manufacturer->BPlans->end(); ++k){
                 //
+				CBPlan* i = (*k);
                 if(G->UnitDefHelper->IsMex(i->ud)){
                     if(i->pos.distance2D(q) < (i->ud->extractRange+building->extractRange)*0.75f){
                         if(i->ud->extractsMetal > building->extractsMetal){
@@ -387,7 +408,8 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
 									i->WipeBuilderPlans(G->Manufacturer);
 									i->RemoveAllBuilders();
                                 }
-                                G->Manufacturer->BPlans->erase(i);
+								delete i;
+                                G->Manufacturer->BPlans->erase(k);
                                 CMessage m("buildposition");
                                 m.AddParameter(q);
                                 //if(reciever->IsValid()){
@@ -464,44 +486,35 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
         }
         //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 2#");
         float3 result = UpVector;
-        if(fnum >0){
-            //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 3#");
-            float gsearchdistance=3000;
-            float genemydist=600;
-            G->Get_mod_tdf()->GetDef(gsearchdistance, "3000", "AI\\geotherm\\searchdistance");
+		if(!geolist.empty()){
+			float gsearchdistance;
+            float genemydist;
+			G->Get_mod_tdf()->GetDef(gsearchdistance, "3000", "AI\\geotherm\\searchdistance");
             G->Get_mod_tdf()->GetDef(genemydist, "600", "AI\\geotherm\\noenemiesdistance");
-            float nearest_dist = 10000000;
-            //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 4#");
-            int* a = new int[5000];// temp array
-            for(int i = 0; i < fnum; i++){
-                const FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
-                if(fd != 0){
-                    //
-                    if(fd->geoThermal){
-                        float3 fpos = G->cb->GetFeaturePos(f[i]);
-                        float t = fpos.distance2D(builderpos);
-                        if(t < nearest_dist){
-                            if(tempgeo.empty()==false){
-                                for(map<int, float3>::iterator i = tempgeo.begin(); i != tempgeo.end(); ++i){
-                                    if(i->second.distance2D(fpos) < 100){
-                                        continue;
-                                    }
-                                }
-                            }
-
-                            if(G->cb->GetFriendlyUnits(a,fpos,100)> 0){
+			float nearest_dist = 10000000;
+			int* a = new int[20000];
+			for(vector<float3>::iterator it = geolist.begin(); it != geolist.end(); ++it){
+				float d = it->distance2D(builderpos);
+                if(d < nearest_dist){
+                    if(tempgeo.empty()==false){
+                        for(map<int, float3>::iterator i = tempgeo.begin(); i != tempgeo.end(); ++i){
+                            if(i->second.distance2D((*it)) < 100){
                                 continue;
                             }
-                            if(fpos.distance2D(builderpos) < gsearchdistance){
-                                //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
-
-                                if(G->cb->CanBuildAt(building, fpos)&&(G->chcb->GetEnemyUnits(a, fpos, genemydist)<1)/*&&(G->cb->GetFriendlyUnits(a, fpos, 50)<1)*/){
-                                    nearest_dist = t;
-                                    result = fpos;
-                                }
-                                //NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
-                            }
                         }
+                    }
+					
+                    if(G->cb->GetFriendlyUnits(a,*it,100)> 0){
+                        continue;
+                    }
+                    if(it->distance2D(builderpos) < gsearchdistance){
+                        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
+
+                        if(G->cb->CanBuildAt(building, *it)&&(G->chcb->GetEnemyUnits(a, *it, genemydist)<1)/*&&(G->cb->GetFriendlyUnits(a, fpos, 50)<1)*/){
+                            nearest_dist = d;
+                            result = *it;
+                        }
+                        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
                     }
                 }
             }
@@ -604,8 +617,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
      }*/
     //boost::shared_ptr<IModule>
     //G->cb->
-
-    CBuildAlgorithm cb/* = new CBuildAlgorithm*/(me, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
+    CBuildAlgorithm cb/* = new CBuildAlgorithm*me*/(this, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
     //boost::shared_ptr<IModule> b = boost::shared_ptr<IModule>(cb);
     //
     //b();

@@ -4,6 +4,7 @@ public:
 	CUnitDefHelp(Global* GL);
 	virtual ~CUnitDefHelp(){}
 	bool IsMex(const UnitDef* ud);
+	bool IsMetalMaker(const UnitDef* ud);
 	bool IsEnergy(const UnitDef* ud);
 	bool IsFactory(const UnitDef* ud);
 	bool IsHub(const UnitDef* ud);

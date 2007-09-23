@@ -105,9 +105,9 @@ bool CActions::Repair(int uid, int unit){
                 if(G->cb->UnitBeingBuilt(unit)){
                     // add this builder to the appropriate plan
                     if(!G->Manufacturer->BPlans->empty()){
-                        for(deque<CBPlan>::iterator i = G->Manufacturer->BPlans->begin(); i != G->Manufacturer->BPlans->end(); ++i){
-                            if(i->subject == unit){
-								i->AddBuilder(uid);
+                        for(deque<CBPlan* >::iterator i = G->Manufacturer->BPlans->begin(); i != G->Manufacturer->BPlans->end(); ++i){
+                            if((*i)->subject == unit){
+								(*i)->AddBuilder(uid);
                                 break;
                             }
                         }

@@ -27,20 +27,17 @@ public:
 	int GetAge();
 	bool AddTask(boost::shared_ptr<IModule> &t);
 	bool LoadTaskList();
+	bool LoadBehaviours();
 
 	bool doingplan;
 	uint curplan;
 protected:
 	bool under_construction;
-	bool executenext;
 	vector< boost::shared_ptr<IModule> > tasks;
+	vector< boost::shared_ptr<IBehaviour> > behaviours;
 	const UnitDef* ud;
 	int uid;
-	bool constring;
-	string con;
 	bool repeat;
 	int birth;
 	bool nolist;
-	bool killnext;
 };
-
