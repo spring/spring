@@ -17,7 +17,6 @@
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,1,0));
 
 CR_REG_METADATA(CExplosiveProjectile, (
-	CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(gravity)
 	));
@@ -26,10 +25,10 @@ CR_REG_METADATA(CExplosiveProjectile, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, const WeaponDef *weaponDef, int ttl, float areaOfEffect, float gravity)
-: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true),
-	ttl(ttl),
+CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
+		const float3& speed, CUnit* owner, const WeaponDef *weaponDef, int ttl,
+		float areaOfEffect, float gravity)
+: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true, ttl),
 	areaOfEffect(areaOfEffect),
 	curTime(0),
 	gravity(gravity)
@@ -59,15 +58,21 @@ void CExplosiveProjectile::Update()
 	speed.y+=gravity;
 
 	if(!--ttl)
+	{
 		Collision();
+	}
 
-	if(weaponDef->noExplode) {
+	if(weaponDef->noExplode)
+	{
 		if(TraveledRange())
 			CProjectile::Collision();
 	}
 	curTime+=invttl;
 	if(curTime>1)
+	{
 		curTime=1;
+	}
+	UpdateGroundBounce();
 }
 
 void CExplosiveProjectile::Collision()

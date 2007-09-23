@@ -21,7 +21,6 @@ public:
 	void Collision();
 	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
-	int ttl;
 	float areaOfEffect;
 	float invttl;
 	float curTime;

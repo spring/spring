@@ -64,6 +64,12 @@ struct WeaponDef
 	float reload;
 	float beamtime;
 	bool beamburst;
+	
+	bool waterBounce;
+	bool groundBounce;
+	float bounceRebound;
+	float bounceSlip;
+	int numBounce;
 
 	float maxAngle;
 	float restTime;

@@ -26,7 +26,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
-	CR_MEMBER(ttl),
+//	CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
@@ -51,8 +51,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	));
 
 CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos)
-: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true),
-	ttl(ttl),
+: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true, ttl),
 	maxSpeed(maxSpeed),
 	target(target),
 	dir(speed),
@@ -242,8 +241,18 @@ void CMissileProjectile::Update(void)
 			ENTER_SYNCED;
 		}
 	}
+	
+	UpdateGroundBounce();
+}
 
-	//CWeaponProjectile::Update();
+void CMissileProjectile::UpdateGroundBounce() {
+	float3 tempSpeed = speed;
+	CWeaponProjectile::UpdateGroundBounce();
+	if(tempSpeed != speed){
+		curSpeed = speed.Length();
+		dir = speed;
+		dir.Normalize();
+	}
 }
 
 void CMissileProjectile::Draw(void)

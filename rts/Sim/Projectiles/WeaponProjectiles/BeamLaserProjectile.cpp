@@ -7,7 +7,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
+		(float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(startPos),
@@ -19,7 +20,6 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(thickness),
 	CR_MEMBER(corethickness),
 	CR_MEMBER(flaresize),
-	CR_MEMBER(ttl),
 	CR_MEMBER(decay),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
@@ -30,13 +30,13 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	CUnit* owner, float thickness, float corethickness, float flaresize,
 	const WeaponDef* weaponDef, int ttl, float decay):
 
-	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false),
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0,
+			ZeroVector, weaponDef, 0, false, ttl),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
 	corethickness(corethickness),
 	flaresize(flaresize),
-	ttl(ttl),
 	decay(decay)
 {
 	checkCol=false;
@@ -44,8 +44,13 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 
 	SetRadius(pos.distance(endPos));
 
-	if (weaponDef) midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
-	else midtexx=0;
+	if (weaponDef) {
+		midtexx = weaponDef->visuals.texture2->xstart
+				+ (weaponDef->visuals.texture2->xend
+						- weaponDef->visuals.texture2->xstart) * 0.5f;
+	} else {
+		midtexx=0;
+	}
 	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
 	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
 	corecolstart[2]=(unsigned char)(color2.z*startAlpha);

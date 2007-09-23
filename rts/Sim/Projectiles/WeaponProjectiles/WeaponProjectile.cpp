@@ -9,12 +9,14 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/GameHelper.h"
+#include "Map/Ground.h"
 #include "LaserProjectile.h"
 #include "FireBallProjectile.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "System/LogOutput.h"
 #include "mmgr.h"
 
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -31,6 +33,8 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(modelDispList),
 	CR_MEMBER(colorTeam),
+	CR_MEMBER(bounces),
+	CR_MEMBER(keepBouncing),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 	));
@@ -44,9 +48,14 @@ CWeaponProjectile::CWeaponProjectile()
 	colorTeam=0;
 	modelDispList=0;
 	interceptTarget=0;
+	bounces = 0;
+	keepBouncing = true;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, bool synced) :
+CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
+		CUnit* owner, CUnit* target, const float3 &targetPos,
+		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
+		bool synced, int ttl) :
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef?weaponDef->name:std::string("")),
@@ -55,7 +64,10 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed, CUn
 	startpos(pos),
 	targeted(false),
 	interceptTarget(interceptTarget),
-	colorTeam(0)
+	colorTeam(0),
+	bounces(0),
+	keepBouncing(true),
+	ttl(ttl)
 {
 	if (owner) {
 		colorTeam = owner->team;
@@ -92,12 +104,17 @@ CWeaponProjectile::~CWeaponProjectile(void)
 {
 }
 
-CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef)
+CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,
+		const float3& speed, CUnit* owner, CUnit *target,
+		const float3 &targetPos, const WeaponDef* weaponDef)
 {
 	switch(weaponDef->visuals.renderType)
 	{
 	case WEAPON_RENDERTYPE_LASER:
-		return SAFE_NEW CLaserProjectile(pos, speed, owner, 30, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity, weaponDef, (int)(weaponDef->range/weaponDef->projectilespeed));
+		return SAFE_NEW CLaserProjectile(pos, speed, owner, 30,
+				weaponDef->visuals.color, weaponDef->visuals.color2,
+				weaponDef->intensity, weaponDef,
+				(int)(weaponDef->range/weaponDef->projectilespeed));
 		break;
 	case WEAPON_RENDERTYPE_PLASMA:
 		break;
@@ -120,20 +137,34 @@ void CWeaponProjectile::Collision()
 		// Dynamic Damage
 		DamageArray dynDamages;
 		if (weaponDef->dynDamageExp > 0)
-			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages,
+					startpos, pos, (weaponDef->dynDamageRange > 0)
+							? weaponDef->dynDamageRange
+							: weaponDef->range,
+					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+					weaponDef->dynDamageInverted);
 
-		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator,0,impactDir, weaponDef->id);
+		helper->Explosion(pos, (weaponDef->dynDamageExp>0)
+					? dynDamages : weaponDef->damages,
+				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
+				weaponDef->explosionSpeed, owner, true,
+				weaponDef->noExplode ? 0.3f : 1,
+				weaponDef->noExplode || weaponDef->noSelfDamage,
+				weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound->PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
+		sound->PlaySample(weaponDef->soundhit.getID(0), this,
+				weaponDef->soundhit.getVolume(0));
 	}
 
-	if (!weaponDef->noExplode)
+	if (!weaponDef->noExplode){
 		CProjectile::Collision();
-	else {
+	} else {
 		if (TraveledRange())
+		{
 			CProjectile::Collision();
+		}
 	}
 
 }
@@ -153,15 +184,31 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		impactDir.Normalize();
 
 		// Dynamic Damage
-		DamageArray dynDamages;
+		DamageArray damages;
 		if (weaponDef->dynDamageExp > 0)
-			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, startpos, pos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+		{
+			damages = weaponDefHandler->DynamicDamages(weaponDef->damages,
+					startpos, pos,
+					weaponDef->dynDamageRange>0 ?
+							weaponDef->dynDamageRange :
+							weaponDef->range,
+					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+					weaponDef->dynDamageInverted);
+		} else {
+			damages = weaponDef->damages;
+		}
 
-		helper->Explosion(pos,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,weaponDef->areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,weaponDef->noExplode? 0.3f:1,weaponDef->noExplode,weaponDef->explosionGenerator,unit,impactDir, weaponDef->id);
+		helper->Explosion(pos, damages,
+				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
+				weaponDef->explosionSpeed, owner, true,
+				weaponDef->noExplode ? 0.3f : 1,
+				weaponDef->noExplode, weaponDef->explosionGenerator, unit,
+				impactDir, weaponDef->id);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound->PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
+		sound->PlaySample(weaponDef->soundhit.getID(0), this,
+				weaponDef->soundhit.getVolume(0));
 	}
 
 	if(!weaponDef->noExplode)
@@ -190,6 +237,42 @@ void CWeaponProjectile::Update()
 	//	speed += dir*weaponDef->weaponacceleration
 
 	CProjectile::Update();
+	UpdateGroundBounce();
+}
+
+void CWeaponProjectile::UpdateGroundBounce()
+{
+	if((weaponDef->groundBounce || weaponDef->waterBounce)
+			&& (ttl > 0 || weaponDef->numBounce >= 0))
+	{
+		float wh = 0;
+		if(!weaponDef->waterBounce)
+		{
+			wh = ground->GetHeight2(pos.x, pos.z);
+		} else if(weaponDef->groundBounce)
+		{ 
+			wh = ground->GetHeight(pos.x, pos.z);
+		}
+		if(pos.y < wh)
+		{
+			bounces++;
+			if(!keepBouncing || (this->weaponDef->numBounce >= 0 
+							&& bounces > this->weaponDef->numBounce))
+			{
+				//Collision();
+				keepBouncing = false;
+			} else {
+				float3 tempPos = pos;
+				pos -= speed;
+				const float3& normal = ground->GetNormal(tempPos.x, tempPos.z);
+				float dot = speed.dot(normal);
+				speed -= (speed + normal*fabs(dot))*(1 - weaponDef->bounceSlip);
+				speed += (normal*(fabs(dot)))*(1 + weaponDef->bounceRebound);
+				pos += speed;
+			}
+		}
+	}
+	
 }
 
 bool CWeaponProjectile::TraveledRange()
@@ -258,9 +341,10 @@ void CWeaponProjectile::PostLoad()
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
+		S3DOModel* model = modelParser->Load3DO(
+				string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
 		if(model){
-			s3domodel=model;
+			s3domodel = model;
 			if(s3domodel->rootobject3do)
 				modelDispList= model->rootobject3do->displist;
 			else

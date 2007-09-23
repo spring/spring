@@ -13,7 +13,6 @@ CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(dir),
-	CR_MEMBER(ttl),
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
 	CR_MEMBER(color2),
@@ -25,9 +24,10 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLaserProjectile::CLaserProjectile(const float3& pos,const float3& speed,CUnit* owner,float length,const float3& color, const float3& color2, float intensity, const WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true),
-	ttl(ttl),
+CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
+		CUnit* owner, float length, const float3& color, const float3& color2,
+		float intensity, const WeaponDef *weaponDef, int ttl)
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true, ttl),
 	color(color),
 	color2(color2),
 	length(length),
@@ -74,6 +74,13 @@ void CLaserProjectile::Update(void)
 			deleteMe=true;
 			intensity=0;
 		}
+	}
+	
+	float3 tempSpeed = speed;
+	UpdateGroundBounce();
+	if(tempSpeed != speed){
+		dir = speed;
+		dir.Normalize();
 	}
 }
 
