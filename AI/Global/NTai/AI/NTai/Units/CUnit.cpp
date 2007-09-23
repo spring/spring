@@ -277,7 +277,7 @@ bool CUnit::LoadBehaviours(){
 			trim(s);
 			tolowercase(s);
 			if(s == "none"){
-				return;
+				return true;
 			} else if(s == "metalmaker"){
 				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
 				t->Init(t);
