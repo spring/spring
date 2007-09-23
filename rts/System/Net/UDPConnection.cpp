@@ -249,7 +249,7 @@ void UDPConnection::Flush(const bool forced)
 bool UDPConnection::CheckTimeout() const
 {
 	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-	if(lastReceiveTime < curTime-((dataRecv == 0) ? 40 : 30))
+	if(lastReceiveTime < curTime-((dataRecv == 0) ? 45 : 30))
 	{
 		return true;
 	}

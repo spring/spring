@@ -206,7 +206,7 @@ void CGameServer::CheckSync()
 #endif
 }
 
-bool CGameServer::Update()
+void CGameServer::Update()
 {
 	if(serverNet->IsDemoServer())
 		serverframenum=gs->frameNum;
@@ -249,10 +249,8 @@ bool CGameServer::Update()
 		}
 	}
 
-	if(!ServerReadNet()){
-		logOutput.Print("Server read net wanted quit");
-		return false;
-	}
+	ServerReadNet();
+	
 	if (serverframenum > 0 && !serverNet->IsDemoServer())
 	{
 		CreateNewFrame(true);
@@ -267,10 +265,9 @@ bool CGameServer::Update()
 			hostif->SendPlayerChat(gameSetup ? gameSetup->myPlayer : 0, msg);
 	}
 	CheckForGameEnd();
-	return true;
 }
 
-bool CGameServer::ServerReadNet()
+void CGameServer::ServerReadNet()
 {
 	for(unsigned a=0; a<MAX_PLAYERS; a++)
 	{
@@ -543,7 +540,6 @@ bool CGameServer::ServerReadNet()
 #ifdef SYNCDEBUG
 	CSyncDebugger::GetInstance()->ServerHandlePendingBlockRequests();
 #endif
-	return true;
 }
 
 // FIXME: move to separate file->make utility class of it and use it in GlobalStuff
@@ -728,10 +724,7 @@ void CGameServer::UpdateLoop()
 	{
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-			if(!Update()){
-				logOutput.Print("Game server experienced an error in update");
-				globalQuit=true;
-			}
+			Update();
 		}
 		SDL_Delay(10);
 	}

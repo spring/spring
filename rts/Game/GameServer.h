@@ -23,20 +23,14 @@ class CGameServer
 public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();
-	void CheckSync();
-	bool Update();
-	bool ServerReadNet();
-	void CheckForGameEnd();
+	
 	void CreateNewFrame(bool fromServerThread=false);
-	void UpdateLoop();
 
 	bool WaitsOnCon() const;
 	
 	void PlayerDefeated(const int playerNum) const;
 	
 	void SetGamePausable(const bool arg);
-
-// 	bool makeMemDump;
 
 	unsigned lastTick;
 	float timeLeft;
@@ -80,6 +74,12 @@ private:
 	@brief kick the specified player from the battle
 	*/
 	void KickPlayer(const int playerNum);
+	
+	void UpdateLoop();
+	void Update();
+	void CheckSync();
+	void ServerReadNet();
+	void CheckForGameEnd();
 	
 	int syncErrorFrame;
 	int syncWarningFrame;
