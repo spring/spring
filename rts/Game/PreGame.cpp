@@ -267,7 +267,7 @@ bool CPreGame::Draw()
 		showList->Draw();
 	}
 
-	if(net && !net->Connected() && state > WAIT_ON_ADDRESS){
+	if(net && !net->Connected() && state > WAIT_ON_ADDRESS && !server){
 		char text[400];
 		if ( ((SDL_GetTicks()/1000) % 2) == 0 )
 			sprintf(text,"Connecting to server .");
