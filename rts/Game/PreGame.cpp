@@ -502,7 +502,7 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_PAUSE: {
 				// these can get into the network stream here -- Kloot
 				int playerNum = (int) inbuf[1];
-				bool paused = (bool) inbuf[2];
+				bool paused = !!inbuf[2];
 				logOutput.Print(paused? "player %i paused the game": "player %i unpaused the game", playerNum);
 			} break;
 
