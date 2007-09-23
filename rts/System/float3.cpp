@@ -4,7 +4,7 @@
  *
  * Implementation of float3 class
  */
-#include "StdAfx.h"
+#include "float3.h"
 
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
