@@ -1,5 +1,5 @@
 #include "helper.h"
-#include "../Units/CUnit.h"
+
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 using namespace std;
@@ -377,7 +377,7 @@ void Global::UnitCreated(int unit){
     END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")
 
     START_EXCEPTION_HANDLING
-    boost::shared_ptr<IModule> Unit = boost::shared_ptr<IModule>(new CUnit(G, unit));
+    boost::shared_ptr<CUnit> Unit = boost::shared_ptr<CUnit>(new CUnit(G, unit));
     Unit->Init(Unit);
     CMessage message("unitcreated");
     message.AddParameter(unit);
@@ -430,6 +430,9 @@ void Global::UnitFinished(int unit){
     START_EXCEPTION_HANDLING
     const UnitDef* ud = GetUnitDef(unit);
     if(ud!=0){
+		if(ud->isCommander){
+			G->Cached->comID = unit;
+		}
         max_energy_use += ud->energyUpkeep;
 
         // prepare unitname
@@ -1528,60 +1531,34 @@ float3 Global::GetUnitPos(int unitid, int enemy){ // do 10 frame delays between 
      }*/
 }
 
-void Global::RegisterMessageHandler(string messagetype, boost::shared_ptr<IModule> handler){
-    if(handlers.find(messagetype) == handlers.end()){
-        set<boost::shared_ptr<IModule> > temp;
-        temp.insert(handler);
-        handlers[messagetype] = temp;
-    }else{
-        handlers[messagetype].insert(handler);
-    }
+void Global::RegisterMessageHandler(boost::shared_ptr<IModule> handler){
+    handlers.insert(handler);
 }
 
 void Global::FireEvent(CMessage &message){
     if(message.GetType() == string("")) return;
-    if(HasHandlers(message.GetType())){
-        map<string, set<boost::shared_ptr<IModule> > >::iterator i = handlers.find(message.GetType());
-        if(i == handlers.end()){
-            //G->L.iprint("i == handlers.end()");
-            return;
-        }
-        if(!i->second.empty()){
-            for(set<boost::shared_ptr<IModule> >::iterator k = i->second.begin(); k != i->second.end(); ++k){
-                //G->L.iprint("firing message");
-                if((*k)->IsValid()){
-                    (*k)->RecieveMessage(message);
-                }else{
-                    //(*k)->DestroyModule();
-                    //k = i->second.erase(k);
-                    //if(k == i->second.end()){
-                    //	break;
-                    //}
-                    // above wont compile in codeblocks
-                    RemoveHandler((*k));
-                }
+    if(!handlers.empty()){
+        for(set<boost::shared_ptr<IModule> >::iterator k = handlers.begin(); k != handlers.end(); ++k){
+            //G->L.iprint("firing message");
+            if((*k)->IsValid()){
+                (*k)->RecieveMessage(message);
+            }else{
+                //(*k)->DestroyModule();
+                //k = i->second.erase(k);
+                //if(k == i->second.end()){
+                //	break;
+                //}
+                // above wont compile in codeblocks
+                RemoveHandler((*k));
             }
         }
     }
 }
 
-bool Global::HasHandlers(string messagetype){
-    if(handlers.find(messagetype) != handlers.end()){
-        return (handlers[messagetype].empty()==false);
-    }
-    return false;
-}
-
 void Global::DestroyHandler(boost::shared_ptr<IModule> handler){
     handler->DestroyModule();
     if(!handlers.empty()){
-        for(map<string, set<boost::shared_ptr<IModule> > >::iterator i = handlers.begin(); i != handlers.end(); ++i){
-            //if(i->second.empty()){
-            //	continue;
-            //}else{
-            i->second.erase(handler);
-            //}
-        }
+		handlers.erase(handler);
     }
     return;
 }
