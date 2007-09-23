@@ -1,11 +1,15 @@
-//#include "StdAfx.h"
+#include "GameServer.h"
+
 #include <stdarg.h>
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
 
 #include "FileSystem/ArchiveScanner.h"
+
+#ifndef NO_AVI
 #include "Game.h"
-#include "GameServer.h"
+#endif
+
 #include "GameSetup.h"
 #include "System/NetProtocol.h"
 #include "System/AutohostInterface.h"
@@ -694,7 +698,9 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 	while((timeLeft>0) && !gs->paused)
 	{
+#ifndef NO_AVI
 		if(!game || !game->creatingVideo)
+#endif
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 			serverframenum++;

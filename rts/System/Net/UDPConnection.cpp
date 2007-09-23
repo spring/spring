@@ -107,11 +107,6 @@ void UDPConnection::Update()
 		force = true;
 	}
 	
-	if (outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f)))
-	{
-		force = true;
-	}
-	
 	Flush(force);
 }
 
@@ -223,27 +218,28 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 void UDPConnection::Flush(const bool forced)
 {
-	if (outgoingLength <= 0 && !forced)
-		return;
-
-	lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
-
-	// Manually fragment packets to respect configured UDP_MTU.
-	// This is an attempt to fix the bug where players drop out of the game if
-	// someone in the game gives a large order.
-
-	if (outgoingLength > proto->UDP_MTU)
-		++fragmentedFlushes;
-
-	unsigned pos = 0;
-	do
+	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+	if (forced || (outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f))))
 	{
-		unsigned length = std::min(proto->UDP_MTU, outgoingLength);
-		SendRawPacket(outgoingData + pos, length, currentNum++);
-		unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
-		outgoingLength -= length;
-		pos += proto->UDP_MTU;
-	} while (outgoingLength != 0);
+		lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
+
+		// Manually fragment packets to respect configured UDP_MTU.
+		// This is an attempt to fix the bug where players drop out of the game if
+		// someone in the game gives a large order.
+
+		if (outgoingLength > proto->UDP_MTU)
+			++fragmentedFlushes;
+
+		unsigned pos = 0;
+		do
+		{
+			unsigned length = std::min(proto->UDP_MTU, outgoingLength);
+			SendRawPacket(outgoingData + pos, length, currentNum++);
+			unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
+			outgoingLength -= length;
+			pos += proto->UDP_MTU;
+		} while (outgoingLength != 0);
+	}
 }
 
 bool UDPConnection::CheckTimeout() const

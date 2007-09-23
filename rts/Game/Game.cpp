@@ -2809,7 +2809,8 @@ bool CGame::ClientReadNet()
 				--que;
 				if(!gameServer)
 					timeLeft-=1;
-				net->SendNewFrame(gs->frameNum);
+				if (gs->frameNum%8 == 0)
+					net->SendNewFrame(gs->frameNum);
 				SimFrame();
 #ifdef SYNCCHECK
 				if(!net->IsDemoServer()) {
