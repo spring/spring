@@ -10,11 +10,9 @@ void Assigner::InitAI(Global* GLI){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Assigner::UnitFinished(int unit){
-	const UnitDef* ud=G->cb->GetUnitDef(unit);
+	/*const UnitDef* ud=G->cb->GetUnitDef(unit);
 	if(ud == 0) return;
-	if(ud->isCommander){
-		G->Cached->comID = unit;
-	}
+	
 	if((ud->energyUpkeep>20.0f && (ud->makesMetal>0.0f || ud->type == "MetalExtractor"))){
 		UnitInfo info;
 		info.turnedOn = G->cb->IsUnitActivated(unit);
@@ -24,7 +22,7 @@ void Assigner::UnitFinished(int unit){
 		if(ud->extractsMetal > 0.00000000f) info.efficiency += (ud->extractsMetal*10000)/min(ud->energyUpkeep,1.0f);
 		myUnits.push_back(info);
 		myUnits.sort();
-	}
+	}*/
 	/*if(ud->canCloak == true){
 		if(ud->movedata == 0){
 			if(ud->canfly == false){
@@ -48,17 +46,16 @@ void Assigner::UnitFinished(int unit){
 		CloakedUnits.push_back(info);
 		CloakedUnits.sort();
 	}*/
-	return;
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Assigner::Update(){
-	NLOG("Assigner::Update()");
+	//NLOG("Assigner::Update()");
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// Every second check our metal makers. (nearly the
 	// same code as that in the metal maker AI)
-	if(EVERY_((1 SECONDS))){
+	/*if(EVERY_((1 SECONDS))){
 		float energy=G->cb->GetEnergy();
 		float estore=G->cb->GetEnergyStorage();
 		float dif=energy-lastEnergy;
@@ -93,7 +90,7 @@ void Assigner::Update(){
 				}
 			}
 		}
-	}
+	}*/
 	/*if(EVERY_((2 SECONDS))){
 		if(G->GetCurrentFrame() < (2 MINUTES)){
 			return;
@@ -146,14 +143,14 @@ void Assigner::Update(){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Assigner::UnitDestroyed(int unit){
-	if(myUnits.empty() == false){
+	/*if(myUnits.empty() == false){
 		for(list<UnitInfo>::iterator i = myUnits.begin(); i != myUnits.end(); ++i){
 			if( i->unit == unit){
 				myUnits.erase(i);
 				break;
 			}
 		}
-	}
+	}*/
 // 	if(CloakedUnits.empty() == false){
 // 		for(list<CloakInfo>::iterator i = CloakedUnits.begin(); i != CloakedUnits.end(); ++i){
 // 			if( i->uid == unit){

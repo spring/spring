@@ -17,7 +17,7 @@ void CConsoleTask::RecieveMessage(CMessage &message){
 }
 
 bool CConsoleTask::Init(boost::shared_ptr<IModule> me){
-	this->me = me;
+	this->me = &me;
 	G->L.iprint(mymessage);
 	CMessage message(string("taskfinished"));
 	FireEventListener(message);

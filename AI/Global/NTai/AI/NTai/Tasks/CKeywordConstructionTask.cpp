@@ -19,7 +19,7 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			if((type == B_GUARDIAN)
 				||(type == B_GUARDIAN_MOBILES)
 				||(type == B_RULE_EXTREME_CARRY)){
-					Init(me);
+					Init(*me);
 			}else{
 				End();
 				return;
@@ -51,7 +51,7 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 		}
 		pos.y = G->cb->GetElevation(pos.x,pos.z);
 
-		deque<CBPlan>::iterator qi = G->Manufacturer->OverlappingPlans(pos,building);
+		deque<CBPlan* >::iterator qi = G->Manufacturer->OverlappingPlans(pos,building);
 		if(qi != G->Manufacturer->BPlans->end()){
 			NLOG("vector<CBPlan>::iterator qi = OverlappingPlans(pos,ud); :: WipePlansForBuilder");
 			/*if(qi->started){
@@ -61,9 +61,9 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			qi->builders.insert(unit);
 			return false;
 			}
-			}else*/ if (qi->ud == building){
+			}else*/ if ((*qi)->ud == building){
 			G->L.print("CKeywordConstructionTask::RecieveMessage overlapping plans that're the same item but not started, moving pos to make it build quicker");
-			pos = qi->pos;
+			pos = (*qi)->pos;
 			}/*else{
 				G->L.print("::Cbuild overlapping plans that are not the same item, no alternative action, cancelling task");
 				CMessage message(string("taskfinished"));
@@ -87,16 +87,16 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 				NLOG("CKeywordConstructionTask::RecieveMessage :: WipePlansForBuilder");
 				G->L.print("CKeywordConstructionTask::RecieveMessage wiping and creaiing the plan :: " + building->name);
 				G->Manufacturer->WipePlansForBuilder(unit);
-				CBPlan Bplan;
-				Bplan.started = false;
-				Bplan.AddBuilder(unit);
-				Bplan.subject = -1;
-				Bplan.pos = pos;
-				Bplan.ud=building;
+				CBPlan* Bplan = new CBPlan();
+				Bplan->started = false;
+				Bplan->AddBuilder(unit);
+				Bplan->subject = -1;
+				Bplan->pos = pos;
+				Bplan->ud=building;
 				G->Manufacturer->AddPlan();
-				Bplan.id = G->Manufacturer->getplans();
-				Bplan.radius = (float)max(building->xsize,building->ysize)*8.0f;
-				Bplan.inFactory = G->UnitDefHelper->IsFactory(building);
+				Bplan->id = G->Manufacturer->getplans();
+				Bplan->radius = (float)max(building->xsize,building->ysize)*8.0f;
+				Bplan->inFactory = G->UnitDefHelper->IsFactory(building);
 				G->Manufacturer->BPlans->push_back(Bplan);
 				G->BuildingPlacer->Block(pos,building);
 				//G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),ud);
@@ -274,14 +274,14 @@ void CKeywordConstructionTask::Build(){
 		delete [] funits;
 	}
         NLOG("CKeywordConstructionTask::Build  mark 4");
-	G->BuildingPlacer->GetBuildPosMessage(me,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(*me,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
         NLOG("CKeywordConstructionTask::Build  mark 5");
 }
 
 bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
 	NLOG(("CKeywordConstructionTask::Init"+G->Manufacturer->GetTaskName(type)));
 	G->L.print("CKeywordConstructionTask::Init "+G->Manufacturer->GetTaskName(type));
-	this->me = me;
+	this->me = &me;
 	//G->L.print("CKeywordConstructionTask::Init");
 	const UnitDef* ud2= G->GetUnitDef(unit);
 	if(ud2 == 0){
@@ -292,8 +292,9 @@ bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
     NLOG((string("tasktype: ")+G->Manufacturer->GetTaskName(type)));
 
 	// register this modules listeners
-	G->RegisterMessageHandler("unitidle",me);
-	G->RegisterMessageHandler("unitdestroyed",me);
+	G->RegisterMessageHandler(me);
+	//G->RegisterMessageHandler("unitidle",me);
+	//G->RegisterMessageHandler("unitdestroyed",me);
 
 	if(type == B_RANDMOVE){
 		if(G->Actions->RandomSpiral(unit)==false){

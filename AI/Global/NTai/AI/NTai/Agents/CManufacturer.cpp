@@ -1,6 +1,6 @@
 // CManufacturer
 #include "../Core/helper.h"
-map<int,deque<CBPlan>* > alliedplans;
+map<int,deque<CBPlan* >* > alliedplans;
 uint plancounter=1;
 map<string, vector<string> > metatags;
 map<string, float > r_ranges;
@@ -361,12 +361,12 @@ UnitDef::~UnitDef(void){
 	return pos;
 }*/
 
-deque<CBPlan>::iterator CManufacturer::OverlappingPlans(float3 pos,const UnitDef* ud){
+deque<CBPlan* >::iterator CManufacturer::OverlappingPlans(float3 pos,const UnitDef* ud){
 	NLOG("CManufacturer::OverlappingPlans");
 	if(!BPlans->empty()){
-		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->ud->name != ud->name){
-				if(pos.distance2D(i->pos) < i->radius+(max(ud->ysize,ud->xsize)*8)){
+		for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+			if((*i)->ud->name != ud->name){
+				if(pos.distance2D((*i)->pos) < (*i)->radius+(max(ud->ysize,ud->xsize)*8)){
 					return i;
 				}
 			}
@@ -605,13 +605,14 @@ void CManufacturer::WipePlansForBuilder(int unit){
 	}*/
 	if(!BPlans->empty()){
 		// go through plans and remove this unit from them and delete where appropriate......
-		for(deque<CBPlan>::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->HasBuilders()){
-				if(i->HasBuilder(unit)){
-					i->RemoveBuilder(unit);
-					if(/*!i->started &&*/ !i->HasBuilders()){
+		for(deque<CBPlan* >::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
+			if((*i)->HasBuilders()){
+				if((*i)->HasBuilder(unit)){
+					(*i)->RemoveBuilder(unit);
+					if(/*!i->started &&*/ !(*i)->HasBuilders()){
 						//G->BuildingPlacer->Block(G->GetUnitPos(uid),ud);
 						//G->BuildingPlacer->UnBlock(i->pos,i->ud);
+						delete (*i);
 						BPlans->erase(i);
 						return;
 					}/*else	if(i->inFactory && G->UnitDefHelper->IsFactory(ud)){
@@ -649,13 +650,14 @@ void CManufacturer::RecieveMessage(CMessage &message){
 bool CManufacturer::Init(boost::shared_ptr<IModule> me){
 	NLOG("CManufacturer::Init");
 	NLOG("Loading MetaTags");
-	this->me = me;
-	if(alliedplans.find(G->Cached->unitallyteam) != alliedplans.end()){
+	this->me = &me;
+	/*if(alliedplans.find(G->Cached->unitallyteam) != alliedplans.end()){
 		this->BPlans = alliedplans[G->Cached->unitallyteam];
 	}else{
-		BPlans = new deque<CBPlan>();
+		BPlans = new deque<CBPlan* >();
 		alliedplans[G->Cached->unitallyteam] = BPlans;
-	}
+	}*/
+	BPlans = new deque<CBPlan* >();
 	if(G->L.FirstInstance()){
 		if(G->Get_mod_tdf()->SectionExist("tags")==true){
 			const map<string, string> section = G->Get_mod_tdf()->GetAllValues("tags");
@@ -763,8 +765,9 @@ bool CManufacturer::Init(boost::shared_ptr<IModule> me){
 	//NLOG("Loading GlobalBuildTree");
 	//LoadGlobalTree();
 	NLOG("Registering message handler");
-	G->RegisterMessageHandler("update",me);
-	G->RegisterMessageHandler("unitidle",me);
+	G->RegisterMessageHandler(me);
+//	G->RegisterMessageHandler("update",me);
+//	G->RegisterMessageHandler("unitidle",me);
 	initialized = true;
 	NLOG("Manufacturer Init Done");
 	return true;
@@ -782,20 +785,22 @@ void CManufacturer::UnitCreated(int uid){
 		//
 		float3 upos = G->GetUnitPos(uid);
 		if(upos != UpVector){
-			for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end();++i){
-				if(i->pos.distance2D(upos)<i->radius*1.5f){
+			for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end();++i){
+				if((*i)->pos.distance2D(upos)<(*i)->radius*1.5f){
 					const UnitDef* ud = G->GetUnitDef(uid);
-					if(ud==i->ud){
-						i->pos = upos;
-						i->subject = uid;
-						i->started = true;
+					if(ud==(*i)->ud){
+						(*i)->pos = upos;
+						(*i)->subject = uid;
+						(*i)->started = true;
 						break;
 					}else{
+						(*i)->WipeBuilderPlans(*me);
 						/*if(!i->builders.empty()){
 							for(set<int>::iterator i2 = i->builders.begin(); i2 != i->builders.end(); ++i2){
 								WipePlansForBuilder(*i2);
 							}
 						}*/
+						delete (*i);
 						BPlans->erase(i);
 						break;
 					}
@@ -814,11 +819,12 @@ void CManufacturer::UnitFinished(int uid){
 	}
 
 	if(BPlans->empty() == false){
-		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->subject == uid){
-				if(!i->inFactory){
+		for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+			if((*i)->subject == uid){
+				if(!(*i)->inFactory){
 					G->Actions->ScheduleIdle(uid);
 				}
+				delete (*i);
 				BPlans->erase(i);
 				break;
 			}
@@ -876,15 +882,15 @@ void CManufacturer::UnitMoveFailed(int uid){
 }
 
 CBPlan::CBPlan(){
-	plan_mutex = new boost::mutex();
+	//plan_mutex = new boost::mutex();
 }
 
 CBPlan::~CBPlan(){
-	delete plan_mutex;
+	//delete plan_mutex;
 }
 
 bool CBPlan::HasBuilder(int i){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	if(builders.empty()){
 		return false;
 	}
@@ -892,22 +898,22 @@ bool CBPlan::HasBuilder(int i){
 }
 
 void CBPlan::AddBuilder(int i){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	builders.insert(i);
 }
 
 bool CBPlan::HasBuilders(){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	return (!builders.empty());
 }
 
 void CBPlan::RemoveBuilder(int i){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	builders.erase(i);
 }
 
 void CBPlan::RemoveAllBuilders(){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	if(!builders.empty()){
 		builders.erase(builders.begin(),builders.end());
 		builders.clear();
@@ -915,12 +921,12 @@ void CBPlan::RemoveAllBuilders(){
 }
 
 int CBPlan::GetBuilderCount(){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	return (int)builders.size();
 }
 
 void CBPlan::WipeBuilderPlans(boost::shared_ptr<IModule> m){
-	boost::mutex::scoped_lock lock(*plan_mutex);
+	boost::mutex::scoped_lock lock(plan_mutex);
 	for(set<int>::iterator j = builders.begin(); j != builders.end(); ++j){
 		IModule* i = m.get();
         ((CManufacturer*)i)->WipePlansForBuilder(*j);
@@ -932,10 +938,10 @@ void CManufacturer::UnitIdle(int uid){
 	if(!ValidUnitID(uid)) return;
 	//if(builders.empty() == false){
 	if (!BPlans->empty()){
-		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->HasBuilder(uid)){
-				if(i->started){
-                    G->Actions->Repair(uid,i->subject);
+		for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+			if((*i)->HasBuilder(uid)){
+				if((*i)->started){
+                    G->Actions->Repair(uid,(*i)->subject);
 					return;
 				}else{
 					WipePlansForBuilder(uid);
@@ -989,16 +995,19 @@ void CManufacturer::UnitDestroyed(int uid){
 	NLOG("CManufacturer::UnitDestroyed");
 	//get rid of CBuilder, destroy plans needing this unit
 	if(BPlans->empty() == false){
-		for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if(i->HasBuilder(uid)){
-				i->RemoveBuilder(uid);
-				if(!i->started && !i->HasBuilders()){
+		for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+			if((*i)->HasBuilder(uid)){
+				(*i)->RemoveBuilder(uid);
+				if(!(*i)->started && !(*i)->HasBuilders()){
+					delete (*i);
 					BPlans->erase(i);
-				}else	if(i->inFactory && i->started){
+				}else	if((*i)->inFactory && (*i)->started){
+					delete (*i);
 					BPlans->erase(i);
 				}
 				break;
-			}else if(i->subject == uid){
+			}else if((*i)->subject == uid){
+				delete (*i);
 				BPlans->erase(i);
 				break;
 			}
@@ -1026,23 +1035,23 @@ void CManufacturer::Update(){
 		// iterate through all the plans and print out their positions and helping builders to verify that the plan system is actually working
 		// and keeping track of construction....
 		if(!BPlans->empty() && G->L.IsVerbose()){
-			for(deque<CBPlan>::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
-				if(i->HasBuilders()){
+			for(deque<CBPlan* >::iterator i =  BPlans->begin(); i != BPlans->end(); ++i){
+				if((*i)->HasBuilders()){
 					//for(set<int>::iterator j = i->builders.begin(); j != i->builders.end(); ++j){
-						float3 bpos = i->pos;//G->GetUnitPos(*j);
+						float3 bpos = (*i)->pos;//G->GetUnitPos(*j);
 						float3 upos = bpos + float3(0,100,0);
-						int q = G->cb->CreateLineFigure(upos,i->pos,15,1,30,0);
+						int q = G->cb->CreateLineFigure(upos,(*i)->pos,15,1,30,0);
 						string s = "GAME\\TEAM" + to_string(G->Cached->team) + "\\RGBColor";
 						//char ck[60];
 						//sprintf(ck,"GAME\\TEAM%i\\RGBColor",G->Cached->team);
 						float3 r = G->L.startupscript->GetFloat3(ZeroVector,s.c_str());
 						G->cb->SetFigureColor(q,r.x,r.y,r.z,0.3f);
-						G->cb->DrawUnit(i->ud->name.c_str(),i->pos,0,30,G->Cached->team,true,true);
-						int w = i->GetBuilderCount();
+						G->cb->DrawUnit((*i)->ud->name.c_str(),(*i)->pos,0,30,G->Cached->team,true,true);
+						int w = (*i)->GetBuilderCount();
 						SkyWrite k(G->cb);
-						float3 jpos = i->pos;
-						jpos.x+= i->radius/2 +10;
-						string v = to_string(w)+"::"+to_string(i->started);
+						float3 jpos = (*i)->pos;
+						jpos.x+= (*i)->radius/2 +10;
+						string v = to_string(w)+"::"+to_string((*i)->started);
 						k.Write(v,jpos,15,10,30,r.x,r.y,r.z);
 					//}
 				}
@@ -1351,9 +1360,9 @@ int CManufacturer::WhatIsUnitBuilding(int builder){
 	if(builder < 0) return -1;
 	if (BPlans->empty()) return -1;
 
-	for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-		if(i->HasBuilder(builder)){
-			return i->subject;
+	for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+		if((*i)->HasBuilder(builder)){
+			return (*i)->subject;
 		}
 	}
 	return -1;
@@ -1363,9 +1372,9 @@ bool CManufacturer::UnitTargetStartedBuilding(int builder){
 	NLOG("UnitTargetStartedBuilding");
 	if(builder < 0) return false;
 	if (BPlans->empty()) return false;
-	for(deque<CBPlan>::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-		if(i->HasBuilder(builder)){
-			return i->started;
+	for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
+		if((*i)->HasBuilder(builder)){
+			return (*i)->started;
 		}
 	}
 	return false;

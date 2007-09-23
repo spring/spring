@@ -30,6 +30,6 @@ public:
 	Global* G;
 protected:
 	bool valid;
-	boost::shared_ptr<IModule> me;
+	const boost::shared_ptr<IModule>* me;
 	set<boost::shared_ptr<IModule> > listeners;
 };

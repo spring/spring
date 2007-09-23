@@ -1,6 +1,5 @@
 // CBuilder class
 #include "../Core/helper.h"
-#include "../Units/CUnit.h"
 // Tasks
 #include "../Tasks/CConsoleTask.h"
 #include "../Tasks/CUnitConstructionTask.h"
@@ -23,7 +22,6 @@ CUnit::CUnit(Global* GL, int uid){
 	}
 	doingplan=false;
 	curplan=0;
-	executenext=false;
 	birth = G->GetCurrentFrame();
 	nolist=false;
 	under_construction = true;
@@ -38,13 +36,14 @@ CUnit::~CUnit(){
 
 bool CUnit::Init(boost::shared_ptr<IModule> me){
     NLOG("CUnit::Init");
-	this->me = me;
+	this->me = &me;
 	//if(ud->builder){
-		G->RegisterMessageHandler("unitidle",me);
+	G->RegisterMessageHandler(me);
+		/*G->RegisterMessageHandler("unitidle",me);
 		G->RegisterMessageHandler("unitcreated",me);
 		G->RegisterMessageHandler("unitfinished",me);
 		G->RegisterMessageHandler("unitdestroyed",me);
-		G->RegisterMessageHandler("update",me);
+		G->RegisterMessageHandler("update",me);*/
 	//}
 
 	if((G->GetCurrentFrame() > 32)&&(G->UnitDefHelper->IsMobile(ud))){
@@ -52,8 +51,6 @@ bool CUnit::Init(boost::shared_ptr<IModule> me){
 		AddTask(t);
 		t->Init(t);
 	}
-	executenext=true;
-	killnext=false;
 	return true;
 }
 
@@ -88,6 +85,7 @@ void CUnit::RecieveMessage(CMessage &message){
 	}else if(message.GetType() == string("unitfinished")){
 		if(message.GetParameter(0) == this->uid){
 			this->under_construction = false;
+			//
 		}
 	}else if(message.GetType() == string("unitdestroyed")){
 		if(message.GetParameter(0) == this->uid){
@@ -97,6 +95,10 @@ void CUnit::RecieveMessage(CMessage &message){
 			if(!tasks.empty()){
 				tasks.erase(tasks.begin(),tasks.end());
 				tasks.clear();
+			}
+			if(!behaviours.empty()){
+				behaviours.erase(behaviours.begin(),behaviours.end());
+				behaviours.clear();
 			}
 			this->End();
 			return;
@@ -152,9 +154,7 @@ bool CUnit::AddTask(boost::shared_ptr<IModule> &t){
 bool CUnit::LoadTaskList(){
 	NLOG("CUnit::LoadTaskList");
 
-	//G->L.print("loading tasklist for "+ud->name);
 
-	// get the list of filenames
 	vector<string> vl;
 	string sl;
 	if(G->Cached->cheating){
@@ -174,8 +174,7 @@ bool CUnit::LoadTaskList(){
 		}
 	}
 	string s = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\LISTS\\")+u);
-	vector<string> v;
-	//string s = *buffer;
+
 	if(s.empty() == true){
 		G->L.print(" error loading tasklist :: " + u + " :: buffer empty, most likely because of an empty list");
 		nolist=true;
@@ -184,6 +183,7 @@ bool CUnit::LoadTaskList(){
 
 	tolowercase(s);
 	trim(s);
+	vector<string> v;
 	CTokenizer<CIsComma>::Tokenize(v, s, CIsComma());
 	//v = bds::set_cont(v,s.c_str());
 
@@ -203,14 +203,12 @@ bool CUnit::LoadTaskList(){
 
 		tasks.reserve(v.size());
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-			if(polation==true){
-				if(polate==true){
+			if(polation){
+				if(polate){
 					boost::shared_ptr<IModule> t(new CKeywordConstructionTask(G,uid,bt));
 					AddTask(t);
-					polate = false;
-				}else{
-					polate=true;
 				}
+				polate = !polate;
 			}
 			string q = *vi;
 			trim(q);
@@ -269,4 +267,36 @@ bool CUnit::LoadTaskList(){
 	}
 }
 
-
+bool CUnit::LoadBehaviours(){
+	string d = G->Get_mod_tdf()->SGetValueDef("auto","AI\\behaviours\\"+ud->name);
+	vector<string> v;
+	CTokenizer<CIsComma>::Tokenize(v, d, CIsComma());
+	if(!v.empty()){
+		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
+			string s = *vi;
+			trim(s);
+			tolowercase(s);
+			if(s == "metalmaker"){
+				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
+				t->Init(t);
+				behaviours.push_back(t);
+			} else if(s == "attacker"){
+				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
+				t->Init(t);
+				behaviours.push_back(t);
+			} else if(s == "auto"){
+				if(G->UnitDefHelper->IsAttacker(ud)){
+					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
+					t->Init(t);
+					behaviours.push_back(t);
+				}
+				if(G->UnitDefHelper->IsMetalMaker(ud)||(G->UnitDefHelper->IsMex(ud) && ud->onoffable ) ){
+					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
+					t->Init(t);
+					behaviours.push_back(t);
+				}
+			}
+		}
+	}
+	return true;
+}

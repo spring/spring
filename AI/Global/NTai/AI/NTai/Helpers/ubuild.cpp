@@ -47,11 +47,11 @@ bool CUBuild::OkBuildSelection(string name){
 			//G->L.print("Factor::CBuild  solobuild " + name);
 			return false;// One is already being built, change to a repair order to go help it!
 		}
-		deque<CBPlan>* b = G->Manufacturer->BPlans;
+		deque<CBPlan* >* b = G->Manufacturer->BPlans;
 		if(b->empty() == false){
 			//
-			for(deque<CBPlan>::iterator i = b->begin(); i != b->end(); ++i){
-				string s = i->ud->name;
+			for(deque<CBPlan* >::iterator i = b->begin(); i != b->end(); ++i){
+				string s = (*i)->ud->name;
 				tolowercase(s);
 				if(s == name){
 					return false;
@@ -66,11 +66,11 @@ bool CUBuild::OkBuildSelection(string name){
 			//G->L.print("Factor::CBuild  singlebuild " + name);
 			return false;
 		}
-		deque<CBPlan>* b = G->Manufacturer->BPlans;
+		deque<CBPlan* >* b = G->Manufacturer->BPlans;
 		if(b->empty() == false){
 			//
-			for(deque<CBPlan>::iterator i = b->begin(); i != b->end(); ++i){
-				string s = i->ud->name;
+			for(deque<CBPlan* >::iterator i = b->begin(); i != b->end(); ++i){
+				string s = (*i)->ud->name;
 				tolowercase(s);
 				if(s == name){
 					return false;

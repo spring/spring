@@ -177,14 +177,13 @@ public:
 	MTRand_int32 mrand;
 
 	// event handling
-	void RegisterMessageHandler(string messagetype, boost::shared_ptr<IModule> handler);
+	void RegisterMessageHandler(boost::shared_ptr<IModule> handler);
 	void FireEvent(CMessage &message);
-	bool HasHandlers(string messagetype);
 	void DestroyHandler(boost::shared_ptr<IModule> handler);
 	void RemoveHandler(boost::shared_ptr<IModule> handler);
 private:
 	set<boost::shared_ptr<IModule> > dead_handlers;
-	map<string, set<boost::shared_ptr<IModule> > > handlers;
+	set<boost::shared_ptr<IModule> > handlers;
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

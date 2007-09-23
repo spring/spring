@@ -52,6 +52,14 @@ bool CUnitDefHelp::IsMex(const UnitDef* ud){
 	return false;
 }
 
+bool CUnitDefHelp::IsMetalMaker(const UnitDef* ud){
+	if(ud == 0) return false;
+	if(!ud->onoffable){
+		return false;
+	}
+	return (ud->metalMake > 0.0f);
+}
+
 bool CUnitDefHelp::IsAirCraft(const UnitDef* ud){
 	if(ud == 0) return false;
 	if(ud->type == string("Fighter"))	return true;

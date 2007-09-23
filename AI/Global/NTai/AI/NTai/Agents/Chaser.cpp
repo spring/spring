@@ -437,10 +437,6 @@ void Chaser::UnitIdle(int unit){
     engaged.erase(unit);
     walking.erase(unit);
 
-    if(this->Attackers.find(unit) != Attackers.end()){
-        G->Actions->Retreat(unit);
-        //DoUnitStuff(unit);
-    }
     return;
 }
 
@@ -751,11 +747,11 @@ void Chaser::Update(){
     //if(EVERY_(919 FRAMES)){
     //	EXCEPTION_HANDLER(EvaluateTargets(),"Chaser::EvaluateTargets()",NA)
     //}
-    START_EXCEPTION_HANDLING
-    if(EVERY_(120 FRAMES)/*&&(G->enemies.empty() == false)*/){
+    /*START_EXCEPTION_HANDLING
+    if(EVERY_(120 FRAMES)/*&&(G->enemies.empty() == false)*//*){
         FireWeaponsNearby();
     }
-    END_EXCEPTION_HANDLING("Chaser::FireWeaponsNearby()")
+    END_EXCEPTION_HANDLING("Chaser::FireWeaponsNearby()")*/
 
     START_EXCEPTION_HANDLING
     if(EVERY_((2 MINUTES))){

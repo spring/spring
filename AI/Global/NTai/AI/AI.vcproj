@@ -131,7 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\NTai-$(ConfigurationName).dll"
+				OutputFile="..\..\..\..\game\AI\Bot-libs\$(ProjectName)-release.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
@@ -178,6 +178,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Agents\Assigner.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -273,6 +277,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\Terrain\MetalMap.cpp"
 				>
 			</File>
@@ -312,6 +320,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Agents\Assigner.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.h"
 				>
 			</File>
 			<File
@@ -415,10 +427,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Helpers\InitUtil.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Tasks\ITask.h"
 				>
 			</File>
@@ -432,6 +440,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\MetalHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.h"
 				>
 			</File>
 			<File

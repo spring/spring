@@ -1,10 +1,13 @@
 //New construction system
-class CManufacturer;
-class CBPlan{ // This is not used for factories building units.
+class CBPlan: public boost::noncopyable{ // This is not used for factories building units.
 public:
 	CBPlan();
+//	CBPlan();
 	~CBPlan();
 
+	bool IsValid(){
+		return valid;
+	}
 	bool HasBuilder(int i);
 	void AddBuilder(int i);
 	bool HasBuilders();
@@ -24,7 +27,8 @@ public:
 	float radius;
 	bool inFactory;
 private:
-	boost::mutex* plan_mutex;
+	bool valid;
+	boost::mutex plan_mutex;
 	set<int> builders; // the builder
 	
 };
@@ -66,11 +70,11 @@ public:
 	void RegisterTaskTypes();
 	string GetBuild(int uid, string tag, bool efficiency=true);
 	bool CanBuild(int uid,const UnitDef* ud, string name);
-	deque<CBPlan>* BPlans;
+	deque<CBPlan* >* BPlans;
 	void WipePlansForBuilder(int unit);
 	int WhatIsUnitBuilding(int builder);
 	bool UnitTargetStartedBuilding(int builder);
-	deque<CBPlan>::iterator OverlappingPlans(float3 pos,const UnitDef* ud);
+	deque<CBPlan* >::iterator OverlappingPlans(float3 pos,const UnitDef* ud);
 
 	uint getplans();
 	void AddPlan();

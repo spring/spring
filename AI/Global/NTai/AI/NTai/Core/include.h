@@ -255,6 +255,7 @@ typedef TdfParser CSunParser;
 #include "../Core/CMessage.h"
 #include "../Core/IModule.h"
 #include "../Units/IBehaviour.h"
+#include "../Units/CUnit.h"
 #include "../Helpers/Log.h" // Logging class
 #include "../Helpers/Units/CUnitDefLoader.h" // Loads unitdefs
 #include "../Helpers/Terrain/CSector.h" // Map Sector data structure
@@ -271,7 +272,6 @@ typedef TdfParser CSunParser;
 
 #include "../Helpers/Information.h" // Stores data from the mod.tdf and AI.tdf files
 #include "../Helpers/CTokenizer.h" // tokenizes a string based on a delimiter aka String.split() in java
-#include "../Helpers/InitUtil.h" // Seperates a string" a,b,c,d" in a vector<&T> {a,b,c,d}
 #include "../Helpers/Terrain/RadarHandler.h" // Spaces out radar tower placement so they cover more area and dont overlap
 #include "../Helpers/Terrain/DTHandler.h" // Manages creation and pacement of DT rings
 #include "../Helpers/Terrain/MetalMap.h" // Krogothes core metal spot fidner algorithm
@@ -287,6 +287,9 @@ typedef TdfParser CSunParser;
 #include "../Agents/Planning.h" // Antistall algorithm and predictive targetting
 #include "../Agents/Assigner.h" // A port of the metalmaker AI designed for Skirmish AI's, also handles cloaked units
 #include "../Agents/Chaser.h" // Attack system.
+
+#include "../Units/Behaviours/AttackBehaviour.h"
+#include "../Units/Behaviours/MetalMakerBehaviour.h"
 
 enum EnumTdfErrors {
     semicolon_expected
