@@ -118,7 +118,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	if(owner->unitDef->canDGun){
 		c.id=CMD_DGUN;
 		c.action="dgun";
-		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
+		c.type=CMDTYPE_ICON_MAP;
 		c.name="DGun";
 		c.mouseicon=c.name;
 		c.hotkey="d";
@@ -1253,12 +1253,32 @@ void CCommandAI::DrawCommands(void)
 				break;
 			}
 			default:{
+				DrawDefaultCommand(*ci);
 				break;
 			}
 		}
 	}
 
 	lineDrawer.FinishPath();
+}
+
+void CCommandAI::DrawDefaultCommand(const Command& c) const
+{
+	// TODO add Lua callin perhaps, for more elaborate needs?
+	CCommandColors::LineData* ld = cmdColors.GetCustomCmdLine(c.id);
+	if (!ld)
+		return;
+	if(c.params.size() == 1){
+		const CUnit* unit = uh->units[int(c.params[0])];
+		if((unit != NULL) && isTrackable(unit)) {
+			const float3 endPos =
+				helper->GetUnitErrorPos(unit, owner->allyteam);
+			lineDrawer.DrawLineAndIcon(ld->cmdIconID, endPos, ld->color);
+		}
+	} else {
+		const float3 endPos(c.params[0],c.params[1]+3,c.params[2]);
+		lineDrawer.DrawLineAndIcon(ld->cmdIconID, endPos, ld->color);
+	}
 }
 
 void CCommandAI::FinishCommand(void)

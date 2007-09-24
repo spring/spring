@@ -18,6 +18,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/DGunWeapon.h"
 #include "System/LogOutput.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -755,14 +756,29 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if we have at least one weapon then check if
 			// we can hit position with our first (meanest) one
 			CWeapon* w = owner->weapons.front();
-			const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-//			const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
-			if (inAngle) {
-				// if w->AttackGround() returned true then we are already
-				// in range with our biggest weapon so stop moving
-				StopMove();
-				owner->AttackGround(pos, c.id == CMD_DGUN);
-				owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+			// XXX hack - dgun overrides any checks
+			if (c.id == CMD_DGUN) {
+				float rr = owner->maxRange*owner->maxRange;
+				for(vector<CWeapon*>::iterator it =  owner->weapons.begin();
+						it != owner->weapons.end(); ++it) {
+					if (dynamic_cast<CDGunWeapon*>(*it))
+						rr = (*it)->range * (*it)->range;
+				}
+				if (diff.SqLength() < rr) {
+					StopMove();
+					owner->AttackGround(pos, c.id == CMD_DGUN);
+					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+				}
+			} else {
+				const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
+//				const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
+				if (inAngle) {
+					// if w->AttackGround() returned true then we are already
+					// in range with our biggest weapon so stop moving
+					StopMove();
+					owner->AttackGround(pos, c.id == CMD_DGUN);
+					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+				}
 			}
 		}
 
@@ -877,6 +893,10 @@ void CMobileCAI::DrawCommands(void)
 			}
 			case CMD_SELFD:{
 				lineDrawer.DrawIconAtLastPos(ci->id);
+				break;
+			}
+			default: {
+				DrawDefaultCommand(*ci);
 				break;
 			}
 		}

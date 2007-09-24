@@ -790,6 +790,9 @@ void CAirCAI::DrawCommands(void)
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
+			default:
+				DrawDefaultCommand(*ci);
+				break;
 		}
 	}
 	lineDrawer.FinishPath();
