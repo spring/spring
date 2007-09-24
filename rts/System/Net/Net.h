@@ -342,6 +342,8 @@ private:
 		}
 		unsigned char * get() const { return message_buffer.get(); };
 	};
+	
+	friend class UDPListener;
 };
 
 } // namespace netcode

@@ -1,8 +1,6 @@
 PROJECT(libnet CXX)
-SET(CMAKE_CXX_FLAGS "-g -O1 -Wall -I../")
-ADD_LIBRARY(net SHARED ../Net ../Connection ../LocalConnection ../ProtocolDef ../RawPacket ../TCPConnection ../TCPListener ../TCPSocket ../UDPConnection ../UDPHardlink ../UDPListener ../UDPSocket)
-TARGET_LINK_LIBRARIES(net SDL boost_thread)
+SET(CMAKE_CXX_FLAGS "-g -O1 -Wall")
+INCLUDE_DIRECTORIES(../ /usr/include/SDL)
 
-ADD_EXECUTABLE(UnitTest UnitTest)
-TARGET_LINK_LIBRARIES(UnitTest net)
-SET_TARGET_PROPERTIES(UnitTest PROPERTIES LINKER_LANGUAGE CXX)
+ADD_EXECUTABLE(UnitTest UnitTest ../Net ../Connection ../LocalConnection ../ProtocolDef ../RawPacket ../TCPConnection ../TCPListener ../TCPSocket ../UDPConnection ../UDPHardlink ../UDPListener ../UDPSocket)
+TARGET_LINK_LIBRARIES(UnitTest SDL boost_thread)

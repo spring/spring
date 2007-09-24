@@ -11,6 +11,8 @@
 namespace netcode
 {
 
+class CNet;
+
 /**
 @brief Class for handling Connections on an UDPSocket
 Use this class if you want to use a UDPSocket to connect to more than one other clients. You can Listen for new connections, initiate new ones and send/recieve data to/from them.
@@ -22,7 +24,7 @@ public:
 	/**
 	@brief Open a socket and make it ready for listening
 	*/
-	UDPListener(int port, const ProtocolDef* const proto);
+	UDPListener(int port, CNet* const proto);
 	
 	/**
 	@brief close the socket and DELETE all connections
@@ -41,14 +43,6 @@ public:
 	*/
 	boost::shared_ptr<UDPConnection> SpawnConnection(const std::string& address, const unsigned port);
 	
-	bool HasWaitingConnection() const;
-	/**
-	@brief Get the first waiting incoming Connection
-	You can use this to recieve data from it without accepting. After this it can be Accept'ed or Reject'ed.
-	@return a UDPConnection or 0 if there are no, DO NOT DELETE IT
-	*/
-	boost::shared_ptr<UDPConnection> GetWaitingConnection();
-	
 	/**
 	@brief Set if we are going to accept new connections or drop all data from unconnected addresses
 	*/
@@ -59,15 +53,7 @@ public:
 	*/
 	bool GetWaitingForConnections() const;
 	
-private:	
-	/**
-	@brief Check which Connection has the specified Address
-	IMPORTANT: also searches in waitingConn
-	@return an iterator pointing at the connection, or at waitingConn.end() if nothing matches
-	*/
-	std::list< boost::weak_ptr< UDPConnection> >::iterator ResolveConnection(const sockaddr_in& addr) ;
-	
-	
+private:
 	/**
 	@brief Do we accept packets from unknown sources?
 	If true, we will create a new connection, if false, it get dropped
@@ -79,9 +65,8 @@ private:
 	
 	/// all connections
 	std::list< boost::weak_ptr< UDPConnection> > conn;
-	std::list< boost::shared_ptr< UDPConnection> > waitingConn;
 	
-	const ProtocolDef* const proto;
+	CNet* const net;
 };
 
 }

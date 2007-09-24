@@ -91,14 +91,14 @@ unsigned CNet::SetMTU(unsigned mtu)
 
 int CNet::InitServer(unsigned portnum)
 {
-	udplistener.reset(new UDPListener(portnum, proto));
+	udplistener.reset(new UDPListener(portnum, this));
 
 	return 0;
 }
 
 int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
-	udplistener.reset(new UDPListener(sourceport, proto));
+	udplistener.reset(new UDPListener(sourceport, this));
 	boost::shared_ptr<UDPConnection> incoming(udplistener->SpawnConnection(std::string(server), portnum));
 
 	return InitNewConn(incoming, playerNum);
@@ -189,10 +189,6 @@ void CNet::Update(void)
 	if (udplistener)
 	{
 		udplistener->Update();
-		while (udplistener->HasWaitingConnection())
-		{
-			waitingQueue.push(udplistener->GetWaitingConnection());
-		}
 	}
 	
 	for (unsigned a=0;a<MAX_CONNECTIONS;a++)
