@@ -14,10 +14,13 @@
 
 #include "Syncer.h"
 #include "SyncServer.h"
+#include "unitsyncLogOutput.h"
 
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cstdio>
+#include <cstdarg>
 
 #define ASSERT(condition, message) \
 	do { \
@@ -32,24 +35,46 @@
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer *syncer = NULL;
 
-// And the following makes the hpihandler happy
-class CLogOutput {
-public:
-//	void AddLine(const char *, ...);
-	void Print(const string& text);
-	void Print(const char* fmt, ...);
-};
-
-CLogOutput logOutput;
-
 // I'd rather not include globalstuff
 #define SQUARE_SIZE 8
 
+// And the following makes the hpihandler happy
+CLogOutput logOutput;
+
+CLogOutput::CLogOutput()
+{
+	file = fopen("unitsync.log", "at");
+	ASSERT(file != NULL, "couldn't open logfile\n");
+	setbuf(file, NULL);
+}
+
+CLogOutput::~CLogOutput()
+{
+	fclose(file);
+}
+
 void CLogOutput::Print (const string& text)
-{}
+{
+	if (*text.rbegin() != '\n')
+		fprintf(file, "%s\n", text.c_str());
+	else
+		fprintf(file, "%s", text.c_str());
+	fflush(file);
+}
 
 void CLogOutput::Print(const char* fmt, ...)
-{}
+{
+	va_list ap;
+	va_start(ap, fmt);
+	if (fmt[strlen(fmt)-1] != '\n') {
+		char foo[strlen(fmt)];
+		sprintf(foo, "%s\n", fmt);
+		vfprintf(file, foo, ap);
+	} else {
+		vfprintf(file, fmt, ap);
+	}
+	va_end(ap);
+}
 
 void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
 	MessageBox(0,msg,capt,MB_OK);
@@ -60,7 +85,8 @@ void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
 BOOL __stdcall DllMain(HINSTANCE hInst,
                        DWORD dwReason,
                        LPVOID lpReserved) {
-   return TRUE;
+	logOutput.Print("----\nunitsync loaded\n");
+	return TRUE;
 }
 #endif
 
@@ -94,6 +120,7 @@ DLL_EXPORT void __stdcall UnInit()
 	{
 		delete syncer;
 		syncer = 0;
+		logOutput.Print("unitsync deinitialized\n----\n");
 	}
 
 	ConfigHandler::Deallocate();
@@ -102,15 +129,18 @@ DLL_EXPORT void __stdcall UnInit()
 DLL_EXPORT int __stdcall Init(bool isServer, int id)
 {
 	UnInit();
+	logOutput.Print("unitsync initialized\n");
 
 	try {
 		// first call to GetInstance() initializes the VFS
 		FileSystemHandler::Initialize(false);
 
 		if (isServer) {
+			logOutput.Print("unitsync: hosting\n");
 			syncer = new CSyncServer(id);
 		}
 		else {
+			logOutput.Print("unitsync: joining\n");
 			syncer = new CSyncer(id);
 		}
 	} catch (const std::exception& e) {
@@ -137,6 +167,7 @@ DLL_EXPORT int __stdcall InitArchiveScanner(void)
  */
 DLL_EXPORT int __stdcall ProcessUnits(void)
 {
+	logOutput.Print("syncer: process units\n");
 	return syncer->ProcessUnits();
 }
 
@@ -149,11 +180,13 @@ DLL_EXPORT int __stdcall ProcessUnits(void)
  */
 DLL_EXPORT int __stdcall ProcessUnitsNoChecksum(void)
 {
+	logOutput.Print("syncer: process units\n");
 	return syncer->ProcessUnits(false);
 }
 
 DLL_EXPORT const char * __stdcall GetCurrentList()
 {
+	logOutput.Print("syncer: get current list\n");
 	string tmp = syncer->GetCurrentList();
 /*	int tmpLen = (int)tmp.length();
 
@@ -173,29 +206,33 @@ DLL_EXPORT const char * __stdcall GetCurrentList()
 
 DLL_EXPORT void __stdcall AddClient(int id, const char *unitList)
 {
+	logOutput.Print("syncer: add client\n");
 	((CSyncServer *)syncer)->AddClient(id, unitList);
 }
 
 DLL_EXPORT void __stdcall RemoveClient(int id)
 {
+	logOutput.Print("syncer: remove client\n");
 	((CSyncServer *)syncer)->RemoveClient(id);
 }
 
 DLL_EXPORT const char * __stdcall GetClientDiff(int id)
 {
+	logOutput.Print("syncer: get client diff\n");
 	string tmp = ((CSyncServer *)syncer)->GetClientDiff(id);
 	return GetStr(tmp);
 }
 
 DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
 {
+	logOutput.Print("syncer: install client diff\n");
 	syncer->InstallClientDiff(diff);
 }
 
 /**
  * @brief returns the number of units
  * @return int number of units processed and available
- * 
+ *
  * Will return the number of units. Remember to call processUnits() beforehand untill it returns 0
  * As ProcessUnits is called the number of processed units goes up, and so will the value returned
  * by this function.
@@ -205,6 +242,7 @@ DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
  */
 DLL_EXPORT int __stdcall GetUnitCount()
 {
+	logOutput.Print("syncer: get unit count\n");
 	return syncer->GetUnitCount();
 }
 
@@ -212,12 +250,13 @@ DLL_EXPORT int __stdcall GetUnitCount()
  * @brief returns the units internal mod name
  * @param int the units id number
  * @return const char* The units internal modname
- * 
+ *
  * This function returns the units internal mod name. For example it would return armck and not
  * Arm Construction kbot.
  */
 DLL_EXPORT const char * __stdcall GetUnitName(int unit)
 {
+	logOutput.Print("syncer: get unit %d name\n", unit);
 	string tmp = syncer->GetUnitName(unit);
 	return GetStr(tmp);
 }
@@ -226,18 +265,20 @@ DLL_EXPORT const char * __stdcall GetUnitName(int unit)
  * @brief returns The units human readable name
  * @param int The units id number
  * @return const char* The Units human readable name
- * 
+ *
  * This function returns the units human name. For example it would return Arm Construction kbot
  * and not armck.
  */
 DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
 {
+	logOutput.Print("syncer: get full unit %d name\n", unit);
 	string tmp = syncer->GetFullUnitName(unit);
 	return GetStr(tmp);
 }
 
 DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
 {
+	logOutput.Print("syncer: is unit %d disabled\n", unit);
 	if (syncer->IsUnitDisabled(unit))
 		return 1;
 	else
@@ -246,6 +287,7 @@ DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
 
 DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
 {
+	logOutput.Print("syncer: is unit %d disabled by client %d\n", unit, clientId);
 	if (syncer->IsUnitDisabledByClient(unit, clientId))
 		return 1;
 	else
@@ -269,6 +311,7 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 	vector<string> ars = archiveScanner->GetArchives(root);
 //	Message(root);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+		logOutput.Print("adding archive: %s\n", i->c_str());
 		hpiHandler->AddArchive(*i, false);
 	}
 }
@@ -277,6 +320,7 @@ DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetArchiveChecksum.");
 	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchiveChecksum.");
+	logOutput.Print("archive checksum: %s\n", arname);
 	return archiveScanner->GetArchiveChecksum(arname);
 }
 
@@ -284,6 +328,7 @@ DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetArchivePath.");
 	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchivePath.");
+	logOutput.Print("archive path: %s\n", arname);
 	return archiveScanner->GetArchivePath(arname).c_str();
 }
 
@@ -726,6 +771,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchiveList.");
 	ASSERT((unsigned)arnr < primaryArchives.size(), "Array index out of bounds. Call GetPrimaryModArchiveCount before GetPrimaryModArchiveList.");
+	logOutput.Print("primary mod archive list: %s\n", primaryArchives[arnr].c_str());
 	return GetStr(primaryArchives[arnr]);
 }
 
@@ -762,9 +808,13 @@ DLL_EXPORT int __stdcall GetSideCount()
 	sideData.clear();
 
 	TdfParser p;
+
+	logOutput.Print("get side count: ");
+
 	try {
 		p.LoadFile("gamedata/sidedata.tdf");
 	} catch (const std::exception&) {
+		logOutput.Print("failed\n");
 		return 0;
 	}
 
@@ -799,6 +849,8 @@ static vector<string> curFindFiles;
 DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 {
 	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenFileVFS.");
+	logOutput.Print("openfilevfs: %s\n", name);
+
 	CFileHandler* fh = new CFileHandler(name);
 	if (!fh->FileExists()) {
 		delete fh;
@@ -814,6 +866,7 @@ DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 DLL_EXPORT void __stdcall CloseFileVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to CloseFileVFS.");
+	logOutput.Print("closefilevfs: %d\n", handle);
 	delete openFiles[handle];
 	openFiles.erase(handle);
 }
@@ -822,6 +875,7 @@ DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to ReadFileVFS.");
 	ASSERT(buf, "Don't pass a NULL pointer to ReadFileVFS.");
+	logOutput.Print("readfilevfs: %d\n", handle);
 	CFileHandler* fh = openFiles[handle];
 	fh->Read(buf, length);
 }
@@ -829,6 +883,7 @@ DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
 DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to FileSizeVFS.");
+	logOutput.Print("filesizevfs: %d\n", handle);
 	CFileHandler* fh = openFiles[handle];
 	return fh->FileSize();
 }
@@ -840,6 +895,7 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 {
 	std::string path = filesystem.GetDirectory(pattern);
 	std::string patt = filesystem.GetFilename(pattern);
+	logOutput.Print("initfindvfs: %s\n", pattern);
 	curFindFiles = CFileHandler::FindFiles(path, patt);
 	return 0;
 }
@@ -850,6 +906,7 @@ DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
 	ASSERT(size > 0, "Negative or zero buffer length doesn't make sense.");
+	logOutput.Print("findfilesvfs: %d\n", handle);
 	if (handle >= curFindFiles.size())
 		return 0;
 	strncpy(nameBuf, curFindFiles[handle].c_str(), size);
@@ -890,6 +947,8 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to FindFilesArchive.");
 	ASSERT(nameBuf && size, "Don't pass a NULL pointer to FindFilesArchive.");
 	CArchiveBase* a = openArchives[archive];
+
+	logOutput.Print("findfilesarchive: %d\n", archive);
 
 	string name;
 	int s;
