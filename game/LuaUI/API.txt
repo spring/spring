@@ -120,6 +120,8 @@
   GetMouseCursor()
   SetMouseCursor()
 
+  SetCustomCommandDrawLine()
+
   GetConsoleBuffer()
   GetCurrentTooltip()
 
@@ -577,6 +579,11 @@ GetMouseState()  ->
 GetMouseCursor() -> string "cursor", number scale
 
 SetMouseCursor(string "cursor"[, number scale]) -> nil
+
+
+SetCustomCommandDrawLine(int cmdID, int iconCmdID, table color { r, g, b, a})
+        -> nil
+        iconCmdID is the cmdID which icon is to be used
 
 
 GetConsoleBuffer([number maxLines]) ->
