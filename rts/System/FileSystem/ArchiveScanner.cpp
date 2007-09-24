@@ -536,6 +536,27 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	return aii->second.checksum;
 }
 
+std::string CArchiveScanner::GetArchivePath(const string& name)
+{
+	string lcname = name;
+
+	// Strip path-info if present
+	if (lcname.find_last_of('\\') != string::npos)
+		lcname = lcname.substr(lcname.find_last_of('\\') + 1);
+	if (lcname.find_last_of('/') != string::npos)
+		lcname = lcname.substr(lcname.find_last_of('/') + 1);
+
+	StringToLowerInPlace(lcname);
+
+	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	if (aii == archiveInfo.end()) {
+		logOutput.Print("GetArchivePath: Could not find archive \"%s\"", name.c_str());
+		return 0;
+	}
+
+	return aii->second.path;
+}
+
 /** Get checksum of all required archives depending on selected mod. */
 unsigned int CArchiveScanner::GetModChecksum(const string& root)
 {
