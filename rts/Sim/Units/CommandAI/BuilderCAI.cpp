@@ -912,6 +912,10 @@ void CBuilderCAI::DrawCommands(void)
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
+			default: {
+				DrawDefaultCommand(*ci);
+				break;
+			}
 		}
 
 		if (ci->id < 0) {

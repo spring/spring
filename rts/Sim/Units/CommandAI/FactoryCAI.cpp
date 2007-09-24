@@ -496,6 +496,9 @@ void CFactoryCAI::DrawCommands(void)
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
+			default:
+				DrawDefaultCommand(*ci);
+				break;
 		}
 
 		if ((ci->id < 0) && (ci->params.size() >= 3)) {

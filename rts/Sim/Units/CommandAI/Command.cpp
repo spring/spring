@@ -206,7 +206,7 @@ void CommandDescription::Init()
 
 	// DGUN
 	c.id = CMD_DGUN;
-	c.type = CMDTYPE_ICON_UNIT_OR_MAP;
+	c.type = CMDTYPE_ICON_MAP;
 	c.action = "dgun";
 	c.hotkey = "d";
 	c.name = "DGun";

@@ -18,7 +18,7 @@ class LuaUnsyncedCtrl {
 
 	private:
 		static CUnitSet drawCmdQueueUnits;
-		
+
 	private:
 		static int Echo(lua_State* L);
 
@@ -40,6 +40,8 @@ class LuaUnsyncedCtrl {
 
 		static int AssignMouseCursor(lua_State* L);
 		static int ReplaceMouseCursor(lua_State* L);
+
+		static int SetCustomCommandDrawLine(lua_State* L);
 };
 
 

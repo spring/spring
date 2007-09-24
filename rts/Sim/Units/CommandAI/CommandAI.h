@@ -52,7 +52,7 @@ public:
 
 	void SetCommandDescParam0(const Command& c);
 	bool ExecuteStateCommand(const Command& c);
-	
+
 	void ExecuteInsert(const Command& c);
 	void ExecuteRemove(const Command& c);
 
@@ -88,6 +88,7 @@ protected:
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);
 	void DrawWaitIcon(const Command& cmd) const;
+	void DrawDefaultCommand(const Command& c) const;
 
 private:
 	int targetLostTimer; // continously set to some non-zero value while target is in radar

@@ -81,6 +81,23 @@ class CCommandColors {
 		const float* rangeInterceptorOn;
 		const float* rangeInterceptorOff;
 
+
+		struct LineData {
+			int cmdIconID;
+			float color[4];
+
+			LineData(int cii, const float* c):cmdIconID(cii)
+			{
+				for (int i = 0; i<4; ++i) color[i] = c[i];
+			}
+		};
+
+		void SetCustomCmdLine(int cmdID, int cmdIconID, const float* color);
+		void ClearCustomCmdLine(int cmdID);
+		/// get custom command line parameters
+		/// @return NULL if no line defined, a pointer to a LineData otherwise
+		LineData *GetCustomCmdLine(int cmdID);
+
 	private:
 
 		std::map<std::string, int> colorNames;
@@ -153,6 +170,9 @@ class CCommandColors {
 		unsigned int mouseBoxBlendDst;
 
 		float unitBoxLineWidth;
+
+		typedef std::map<int, LineData> customCmds_type;
+		customCmds_type customCmds;
 };
 
 

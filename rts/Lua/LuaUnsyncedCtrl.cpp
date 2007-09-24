@@ -72,6 +72,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AssignMouseCursor);
 	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
 
+	REGISTER_LUA_CFUNC(SetCustomCommandDrawLine);
+
 	return true;
 }
 
@@ -214,7 +216,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 			unit->commandAI->DrawCommands();
 		}
 	}
-	
+
 	glLineWidth(1.0f);
 
 	glEnable(GL_DEPTH_TEST);
@@ -223,7 +225,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
-	drawCmdQueueUnits.clear();	
+	drawCmdQueueUnits.clear();
 }
 
 
@@ -623,6 +625,31 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 	return 1;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetCustomCommandDrawLine(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)
+			|| !lua_istable(L, 3)) {
+		luaL_error(L, "Incorrect arguments to SetCustomCommandLine()\n"
+					"Args are (cmdID, cmdIconID, lineColor)");
+	}
+
+	const int cmdID = (int)lua_tonumber(L, 1);
+	const int iconID = (int)lua_tonumber(L, 2);
+	const int table = 3;
+	float color[4] = {1.f, 1.f, 1.f, 1.f};
+	int i = 0;
+	for (lua_pushnil(L); lua_next(L, table) != 0 && i < 4; lua_pop(L, 1), ++i) {
+		color[i] = lua_tonumber(L, -1);
+	}
+
+	cmdColors.SetCustomCmdLine(cmdID, iconID, color);
+
+	lua_pushboolean(L, 1);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

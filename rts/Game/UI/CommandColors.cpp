@@ -57,7 +57,7 @@ CCommandColors::CCommandColors()
 	mouseBoxBlendDst = GL_ONE_MINUS_SRC_ALPHA;
 
 	unitBoxLineWidth = 1.49f;
-	
+
 #define SETUP_COLOR(name, r,g,b,a) \
 	colors[name ## _index][0] = r;   \
 	colors[name ## _index][1] = g;   \
@@ -210,17 +210,17 @@ bool CCommandColors::LoadConfig(const string& filename)
 	CFileHandler ifs(filename);
 
 	SimpleParser::Init();
-	
+
 	while (true) {
 		const string line = SimpleParser::GetCleanLine(ifs);
 		if (line.empty()) {
-			break;   
+			break;
 		}
 
 		vector<string> words = SimpleParser::Tokenize(line, 1);
-		
+
 		const string command = StringToLower(words[0]);
-		
+
 		if ((command == "alwaysdrawqueue") && (words.size() > 1)) {
 			alwaysDrawQueue = !!atoi(words[1].c_str());
 		}
@@ -322,6 +322,27 @@ bool CCommandColors::LoadConfig(const string& filename)
 		}
 	}
 	return true;
+}
+
+
+void CCommandColors::SetCustomCmdLine(int cmdID, int cmdIconID, const float* color)
+{
+	customCmds.insert(customCmds_type::value_type(cmdID,
+			LineData(cmdIconID, color)));
+}
+
+void CCommandColors::ClearCustomCmdLine(int cmdID)
+{
+	customCmds.erase(cmdID);
+}
+
+CCommandColors::LineData* CCommandColors::GetCustomCmdLine(int cmdID)
+{
+	customCmds_type::iterator it = customCmds.find(cmdID);
+	if (it == customCmds.end())
+		return NULL;
+	else
+		return &(it->second);
 }
 
 
