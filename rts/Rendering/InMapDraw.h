@@ -2,6 +2,7 @@
 #define INMAPDRAW_H
 
 #include <string>
+#include <list>
 
 class CInMapDraw
 {

@@ -16,6 +16,7 @@
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Player.h"
+#include "Team.h"
 #include "StartScripts/ScriptHandler.h"
 
 #define SYNCCHECK_TIMEOUT 300 //frames

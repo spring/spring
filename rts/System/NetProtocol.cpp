@@ -1,8 +1,8 @@
-#include "StdAfx.h"
 #include "NetProtocol.h"
 #include "Rendering/InMapDraw.h"
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
+#include "Demo.h"
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -78,9 +78,9 @@ int CNetProtocol::InitServer(const unsigned portnum, const std::string& demoName
 	return ret;
 }
 
-int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport)
+unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport)
 {
-	int error = CNet::InitClient(server, portnum, sourceport,gameSetup ? gameSetup->myPlayer : 0);
+	unsigned myNum = CNet::InitClient(server, portnum, sourceport,gameSetup ? gameSetup->myPlayer : 0);
 	SendAttemptConnect(gameSetup ? gameSetup->myPlayer : 0, NETWORK_VERSION);
 	FlushNet();
 	imServer = false;
@@ -89,13 +89,13 @@ int CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourc
 	{
 		record = new CDemoRecorder();
 	}
-	if (error == 1)
-		logOutput.Print("Connected to %s:%i using number %i", server, portnum, gameSetup ? gameSetup->myPlayer : 0);
+	
+	logOutput.Print("Connected to %s:%i using number %i", server, portnum, gameSetup ? gameSetup->myPlayer : 0);
 
-	return error;
+	return myNum;
 }
 
-int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
+unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
 	imServer = false;
 	if (!IsDemoServer())
@@ -105,13 +105,13 @@ int CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 			record->SetName(mapName);
 	}
 
-	int error = CNet::InitLocalClient(wantedNumber);
+	unsigned myNum = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
 	//logOutput.Print("Connected to local server using number %i", wantedNumber);
-	return error;
+	return myNum;
 }
 
-int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
+unsigned CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 {
 	int hisNewNumber = CNet::InitLocalClient(wantedNumber);
 	Update();
@@ -128,7 +128,7 @@ int CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 
 	//logOutput.Print("Local client initialised using number %i", hisNewNumber);
 
-	return 1;
+	return hisNewNumber;
 }
 
 void CNetProtocol::Update()
