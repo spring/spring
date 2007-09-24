@@ -3,8 +3,9 @@
 
 #include "Net/Net.h"
 #include "Game/Player.h"
-#include "Demo.h"
 
+class CDemoRecorder;
+class CDemoReader;
 
 /*
 Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -87,11 +88,11 @@ public:
 	This is the best way to see a demo, this should also be used when only one local client will watch this
 	*/
 	int InitServer(const unsigned portnum, const std::string& demoName);
-	int InitClient(const char* server,unsigned portnum,unsigned sourceport);
+	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport);
 	/// Initialise our client to listen to CLocalConnection
-	int InitLocalClient(const unsigned wantedNumber);
+	unsigned InitLocalClient(const unsigned wantedNumber);
 	/// This will tell our server that we have a CLocalConnection
-	int ServerInitLocalClient(const unsigned wantedNumber);
+	unsigned ServerInitLocalClient(const unsigned wantedNumber);
 
 	/// Check for new incoming data / connections
 	void Update();

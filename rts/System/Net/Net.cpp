@@ -96,7 +96,7 @@ int CNet::InitServer(unsigned portnum)
 	return 0;
 }
 
-int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
+unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
 	udplistener.reset(new UDPListener(sourceport, this));
 	boost::shared_ptr<UDPConnection> incoming(udplistener->SpawnConnection(std::string(server), portnum));
@@ -104,7 +104,7 @@ int CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, u
 	return InitNewConn(incoming, playerNum);
 }
 
-int CNet::InitLocalClient(const unsigned wantedNumber)
+unsigned CNet::InitLocalClient(const unsigned wantedNumber)
 {
 	boost::shared_ptr<CLocalConnection> conn(new CLocalConnection());
 	

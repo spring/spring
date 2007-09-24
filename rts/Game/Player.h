@@ -6,6 +6,7 @@
 
 #include <string>
 #include "Platform/byteorder.h"
+#include "float3.h"
 
 #ifdef DIRECT_CONTROL_ALLOWED
 class CPlayer;

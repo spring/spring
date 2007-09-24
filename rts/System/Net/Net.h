@@ -49,13 +49,13 @@ public:
 	@brief Initialise Client
 	Only do this when you cannot use a local connection, 'cuz they are somewhat faster.
 	*/
-	int InitClient(const char* server,unsigned portnum,unsigned sourceport, unsigned playerNum);
+	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, unsigned playerNum);
 	
 	/** 
 	@brief Init a local client
 	To increase performance, use this for local communication. This can be called in server and in client mode
 	*/
-	int InitLocalClient(const unsigned wantedNumber);
+	unsigned InitLocalClient(const unsigned wantedNumber);
 	
 	/**
 	@brief register a new message type to the networking layer

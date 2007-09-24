@@ -1,11 +1,9 @@
-#include "StdAfx.h"
 #include "VFSHandler.h"
 #ifdef _WIN32
 #include <io.h>
 #endif
 #include "ArchiveFactory.h"
 #include <algorithm>
-#include "Rendering/GL/myGL.h"
 #include "Platform/FileSystem.h"
 #include "mmgr.h"
 
