@@ -202,6 +202,7 @@ struct WeaponDef
 	unsigned int collisionFlags;
 
 	CExplosionGenerator* explosionGenerator;	// can be zero for default explosions
+	CExplosionGenerator* bounceExplosionGenerator; //called when a projectile bounces
 
 	bool sweepFire;
 	bool canAttackGround;

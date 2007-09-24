@@ -263,12 +263,16 @@ void CWeaponProjectile::UpdateGroundBounce()
 				keepBouncing = false;
 			} else {
 				float3 tempPos = pos;
+				const float3& normal = ground->GetNormal(pos.x, pos.z);
 				pos -= speed;
-				const float3& normal = ground->GetNormal(tempPos.x, tempPos.z);
 				float dot = speed.dot(normal);
 				speed -= (speed + normal*fabs(dot))*(1 - weaponDef->bounceSlip);
 				speed += (normal*(fabs(dot)))*(1 + weaponDef->bounceRebound);
 				pos += speed;
+				if(weaponDef->bounceExplosionGenerator) {
+					weaponDef->bounceExplosionGenerator->Explosion(pos,
+							speed.Length(), 1, owner, 1, NULL, normal);
+				}
 			}
 		}
 	}

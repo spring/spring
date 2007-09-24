@@ -85,8 +85,10 @@ bool CBombDropper::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 
 void CBombDropper::Fire(void)
 {
-	if(targetType==Target_Unit)
+	if(targetType==Target_Unit) {
 		targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
+	}
+
 	if(dropTorpedoes){
 		float3 speed=owner->speed;
 		if(dynamic_cast<CTAAirMoveType*>(owner->moveType)){
@@ -94,7 +96,14 @@ void CBombDropper::Fire(void)
 			speed.Normalize();
 			speed*=5;
 		}
-		SAFE_NEW CTorpedoProjectile(weaponPos,speed,owner,areaOfEffect,projectileSpeed,tracking,(int)(range/projectileSpeed+15+predict),targetUnit, weaponDef);
+		int ttl;
+		if(weaponDef->flighttime == 0) {
+			ttl = (int)(range/projectileSpeed+15+predict);
+		} else {
+			ttl = weaponDef->flighttime;
+		}
+		SAFE_NEW CTorpedoProjectile(weaponPos, speed, owner, areaOfEffect,
+				projectileSpeed, tracking, ttl, targetUnit, weaponDef);
 	} else {
 		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;
@@ -108,7 +117,15 @@ void CBombDropper::Fire(void)
 		float size=dif.Length();
 		if(size>1.0f)
 			dif/=size*1.0f;
-		SAFE_NEW CExplosiveProjectile(weaponPos,owner->speed+dif,owner, weaponDef, 1000,areaOfEffect,weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
+		int ttl;
+		if(weaponDef->flighttime == 0) {
+			ttl = 1000;
+		} else {
+			ttl = weaponDef->flighttime;
+		}
+		SAFE_NEW CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
+				weaponDef, 1000, areaOfEffect,
+				weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
