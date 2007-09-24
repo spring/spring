@@ -533,6 +533,12 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	} else {
 		wd.explosionGenerator = explGenHandler->LoadGenerator(expGenTag);
 	}
+	const string bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
+	if (bounceExpGenTag.empty()) {
+		wd.bounceExplosionGenerator = NULL;
+	} else {
+		wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(bounceExpGenTag);
+	}
 
 	const float gd = max(30.0f, wd.damages[0] / 20.0f);
 	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrtf(gd) * 0.7f)) * 0.5f;
