@@ -3,10 +3,12 @@
 #include <boost/weak_ptr.hpp>
 #include <iostream>
 
+#include "Net.h"
+
 namespace netcode
 {
 
-UDPListener::UDPListener(int port, const ProtocolDef* myproto) : proto(myproto)
+UDPListener::UDPListener(int port, CNet* const mynet) : net(mynet)
 {
 	boost::shared_ptr<UDPSocket> temp(new UDPSocket(port));
 	mySocket = temp;
@@ -19,6 +21,15 @@ UDPListener::~UDPListener()
 
 void UDPListener::Update()
 {
+	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
+	{
+		if (i->expired())
+		{
+			i = conn.erase(i);
+			--i;
+		}
+	}
+	
 	do 
 	{
 		unsigned char buffer[4096];
@@ -34,41 +45,24 @@ void UDPListener::Update()
 		bool interrupt = false;
 		for (std::list< boost::weak_ptr<UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 		{
-			if (i->expired())
+			boost::shared_ptr<UDPConnection> locked(*i);
+			if (locked->CheckAddress(fromAddr))
 			{
-				i = conn.erase(i);
-				--i;
-			}
-			else
-			{
-				boost::shared_ptr<UDPConnection> locked(*i);
-				if (locked->CheckAddress(fromAddr))
-				{
-					locked->ProcessRawPacket(data);
-					interrupt=true;
-				}
-			}
-		}
-		if (interrupt)
-			continue;
-	
-		for (std::list< boost::shared_ptr< UDPConnection> >::iterator i = waitingConn.begin(); i != waitingConn.end(); ++i)
-		{
-			if ((*i)->CheckAddress(fromAddr))
-			{
-				(*i)->ProcessRawPacket(data);
+				locked->ProcessRawPacket(data);
 				interrupt=true;
 			}
 		}
+		
 		if (interrupt)
 			continue;
 		
 		if (acceptNewConnections)
 		{
 			// new client wants to connect
-			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr, proto));
+			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr, net->GetProto()));
+			net->waitingQueue.push(incoming);
+			conn.push_back(incoming);
 			incoming->ProcessRawPacket(data);
-			waitingConn.push_back(incoming);
 		}
 		else
 		{
@@ -80,44 +74,16 @@ void UDPListener::Update()
 	
 	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 	{
-		if (i->expired())
-		{
-			i = conn.erase(i);
-			--i;
-		}
-		else
-		{
-			boost::shared_ptr<UDPConnection> temp = i->lock();
-			temp->Update();
-		}
+		boost::shared_ptr<UDPConnection> temp = i->lock();
+		temp->Update();
 	}
 }
 
 boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& address, const unsigned port)
 {
-	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, address, port, proto));
+	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, address, port, net->GetProto()));
 	conn.push_back(temp);
 	return temp;
-}
-
-bool UDPListener::HasWaitingConnection() const
-{
-	return !waitingConn.empty();
-}
-
-boost::shared_ptr<UDPConnection> UDPListener::GetWaitingConnection()
-{
-	if (HasWaitingConnection())
-	{
-		boost::shared_ptr<UDPConnection> temp = waitingConn.front();
-		waitingConn.pop_front();
-		conn.push_back(temp);
-		return temp;
-	}
-	else
-	{
-		throw std::runtime_error("UDPListener has no waiting Connections");
-	}
 }
 
 void UDPListener::SetWaitingForConnections(const bool state)
