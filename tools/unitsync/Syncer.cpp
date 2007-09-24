@@ -3,6 +3,7 @@
 #include "Syncer.h"
 #include "FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
+#include "unitsyncLogOutput.h"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -63,11 +64,13 @@ int CSyncer::ProcessUnits(bool checksum)
 	LuaParser luaParser("gamedata/defs.lua",
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!luaParser.Execute()) {
+		logOutput.Print("luaParser.Execute() failed");
 		return 0; // FIXME -- report this somehow?
 	}
 
 	LuaTable rootTable = luaParser.GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
+		logOutput.Print("root unitdef table invalid");
 		return 0;
 	}
 	vector<string> unitDefNames;
@@ -99,6 +102,7 @@ int CSyncer::ProcessUnits(bool checksum)
 
 	MapUnitIds(); // if we are done, map id numbers to names
 
+	logOutput.Print("found %d units\n", units.size());
 	return units.size();
 }
 
@@ -116,14 +120,14 @@ string CSyncer::GetCurrentList()
 	return s.str();
 }
 
-void CSyncer::InstallClientDiff(const string& diff) 
+void CSyncer::InstallClientDiff(const string& diff)
 {
 	istringstream i(diff);
 
 	int client;
 	string name;
 	bool wasRemove;
-	int count;	
+	int count;
 
 	while (i >> client) {
 		i >> wasRemove;
@@ -157,7 +161,7 @@ void CSyncer::RemoveClient(int id)
 		set<int>::iterator clientId = i->second.clients.find(id);
 		if (clientId != i->second.clients.end()) {
 			i->second.clients.erase(clientId);
-			
+
 			//could delete the unit from the map if the list is empty now
 			//the speed increase should be insignificant though I guess
 		}
@@ -194,12 +198,12 @@ bool CSyncer::IsUnitDisabled(int unit)
 bool CSyncer::IsUnitDisabledByClient(int unit, int clientId)
 {
 	string unitName = unitIds[unit];
-	
+
 	map<string, DisabledUnit>::iterator found = disabledUnits.find(unitName);
 	if (found == disabledUnits.end())
 		return false;
 
-	set<int> &clients = found->second.clients;	
+	set<int> &clients = found->second.clients;
 	set<int>::iterator foundId = clients.find(clientId);
 	return foundId != clients.end();
 }
