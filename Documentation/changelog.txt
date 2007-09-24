@@ -11,6 +11,8 @@ Spring change log
 
 - Added the CTRL modifier to area reclaims for reclaiming all features
 
+- Added GroundBounce, WaterBounce, NumBounce, BounceSlip, BounceRebound, and bounceExplosionGenerator tags.
+
 0.75b2
 
 - Fixed possible crash while waiting for connection to the host.
