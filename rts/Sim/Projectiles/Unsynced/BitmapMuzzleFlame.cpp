@@ -37,38 +37,36 @@ CBitmapMuzzleFlame::~CBitmapMuzzleFlame(void)
 
 void CBitmapMuzzleFlame::Draw(void)
 {
-	inArray=true;
-
-	life = (gs->frameNum-createTime+gu->timeOffset)*invttl;
+	inArray = true;
+	life = (gs->frameNum - createTime + gu->timeOffset) * invttl;
 
 	unsigned char col[4];
 	colorMap->GetColor(col, life);
 
-	float invlife = 1-life;
+	float invlife = 1 - life;
+	float igrowth = sizeGrowth * (1 - invlife * invlife);
+	float isize = size + size * igrowth;
+	float ilength = length + length * igrowth;
 
-	float igrowth = sizeGrowth*(1-invlife*invlife);
-	float isize = size + size*igrowth;
-	float ilength = length + length*igrowth;
+	float3 sidedir = dir.cross(float3(0, 1, 0)).Normalize();
+	float3 updir = dir.cross(sidedir).Normalize();
 
-	float3 sidedir = dir.cross(float3(0,1,0));
-	float3 updir = dir.cross(sidedir);
+	va->AddVertexTC(pos + updir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
+	va->AddVertexTC(pos + updir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
+	va->AddVertexTC(pos - updir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
+	va->AddVertexTC(pos - updir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
 
-	va->AddVertexTC(pos+updir*isize,sideTexture->xstart,sideTexture->ystart,col);
-	va->AddVertexTC(pos+updir*isize+dir*ilength,sideTexture->xend,sideTexture->ystart,col);
-	va->AddVertexTC(pos-updir*isize+dir*ilength,sideTexture->xend,sideTexture->yend,col);
-	va->AddVertexTC(pos-updir*isize,sideTexture->xstart,sideTexture->yend,col);
+	va->AddVertexTC(pos + sidedir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
+	va->AddVertexTC(pos + sidedir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);
+	va->AddVertexTC(pos - sidedir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col);
+	va->AddVertexTC(pos - sidedir * isize,                 sideTexture->xstart, sideTexture->yend,   col);
 
-	va->AddVertexTC(pos+sidedir*isize,sideTexture->xstart,sideTexture->ystart,col);
-	va->AddVertexTC(pos+sidedir*isize+dir*ilength,sideTexture->xend,sideTexture->ystart,col);
-	va->AddVertexTC(pos-sidedir*isize+dir*ilength,sideTexture->xend,sideTexture->yend,col);
-	va->AddVertexTC(pos-sidedir*isize,sideTexture->xstart,sideTexture->yend,col);
+	float3 frontpos = pos + dir * frontOffset * ilength;
 
-	float3 frontpos = pos + dir*frontOffset*ilength;
-
-	va->AddVertexTC(frontpos-sidedir*isize+updir*isize,frontTexture->xstart,frontTexture->ystart,col);
-	va->AddVertexTC(frontpos+sidedir*isize+updir*isize,frontTexture->xend,frontTexture->ystart,col);
-	va->AddVertexTC(frontpos+sidedir*isize-updir*isize,frontTexture->xend,frontTexture->yend,col);
-	va->AddVertexTC(frontpos-sidedir*isize-updir*isize,frontTexture->xstart,frontTexture->yend,col);
+	va->AddVertexTC(frontpos - sidedir * isize + updir * isize, frontTexture->xstart, frontTexture->ystart, col);
+	va->AddVertexTC(frontpos + sidedir * isize + updir * isize, frontTexture->xend,   frontTexture->ystart, col);
+	va->AddVertexTC(frontpos + sidedir * isize - updir * isize, frontTexture->xend,   frontTexture->yend,   col);
+	va->AddVertexTC(frontpos - sidedir * isize - updir * isize, frontTexture->xstart, frontTexture->yend,   col);
 
 }
 
