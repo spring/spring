@@ -282,7 +282,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 
 	// get the results
 	const int args = lua_gettop(L);
-	if (lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
 		lua_pop(L, 1);
@@ -292,8 +292,8 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 
-  // return 'true' to remove the command
-  return retval;
+	// return 'true' to remove the command
+	return retval;
 }
 
 
