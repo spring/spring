@@ -101,6 +101,10 @@ for f in unitsync_hpiutil2_files: unitsync_files += f
 for f in unitsync_extra_files:   unitsync_files += [os.path.join(uenv['builddir'], f)]
 
 if env['platform'] == 'windows':
+	# crosscompiles on buildbot need this, but native mingw builds fail
+	# during linking
+	if os.name != 'nt':
+		unitsync_files.append('rts/lib/minizip/iowin32.c')
 	for f in ['rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
 		unitsync_files += [os.path.join(uenv['builddir'], f)]
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
