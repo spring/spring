@@ -2816,7 +2816,10 @@ bool CGame::ClientReadNet()
 				if(!gameServer)
 					timeLeft-=1;
 				if (gs->frameNum%8 == 0)
+				{
+					// only answer every 8th newframe (~3 times per second are enought for ping calculation)
 					net->SendNewFrame(gs->frameNum);
+				}
 				SimFrame();
 #ifdef SYNCCHECK
 				if(!net->IsDemoServer()) {
@@ -3577,7 +3580,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			unitDefHandler->unitDefs[i].energyUpkeep = 0;
 		}
 		unitDefHandler->noCost=true;
-		logOutput.Print("Cheating!");
+		logOutput.Print("Everything is for free!");
 	}
 #ifdef DEBUG
 	else if (s.find(".crash") == 0 && gs->cheatEnabled) {

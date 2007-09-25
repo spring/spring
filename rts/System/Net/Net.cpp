@@ -66,6 +66,11 @@ bool CNet::Connected() const
 	return false;
 }
 
+bool CNet::IsActiveConnection(const unsigned number) const
+{
+	return connections[number];
+}
+
 int CNet::GetData(unsigned char *buf, const unsigned conNum)
 {
 	if (connections[conNum])

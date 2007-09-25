@@ -71,6 +71,10 @@ public:
 	*/
 	unsigned GetData(unsigned char *buf, const unsigned length);
 	
+	bool ReachedEnd() const;
+	
+	DemoFileHeader fileHeader;
+	
 private:
 	CFileHandler* playbackDemo;
 	float demoTimeOffset;

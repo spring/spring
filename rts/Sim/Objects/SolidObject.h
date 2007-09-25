@@ -4,6 +4,7 @@
 #include "WorldObject.h"
 #include "Sim/MoveTypes/Mobility.h"
 #include "GlobalStuff.h"
+#include "Sync/SyncedFloat3.h"
 
 class CUnit;
 struct DamageArray;

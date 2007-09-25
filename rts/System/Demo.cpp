@@ -263,8 +263,6 @@ CDemoReader::CDemoReader(const std::string& filename)
 		return;
 	}
 
-	DemoFileHeader fileHeader;
-
 	playbackDemo->Read((void*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
@@ -332,7 +330,7 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 	if(gs->paused)
 		return 0;
 
-	if (bytesRemaining <= 0 || playbackDemo->Eof())
+	if (ReachedEnd())
 		return 0;
 
 	unsigned ret = 0;
@@ -358,3 +356,12 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 	}
 	return ret;
 }
+
+bool CDemoReader::ReachedEnd() const
+{
+	if (bytesRemaining <= 0 || playbackDemo->Eof())
+		return true;
+	else
+		return false;
+}
+
