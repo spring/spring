@@ -82,6 +82,8 @@ public:
 
 	/// return true when local connected or already recieved data from remote
 	bool Connected() const;
+
+	bool IsActiveConnection(const unsigned number) const;
 	
 	int GetData(unsigned char* buf, const unsigned conNum);
 	
