@@ -3521,9 +3521,6 @@ void CGame::SendNetChat(const std::string& message)
 		msg.resize(128); // safety
 	}
 	net->SendChat(gu->myPlayerNum, msg);
-	if (net->IsDemoServer()) {
-		HandleChatMsg(msg, gu->myPlayerNum, true);
-	}
 }
 
 

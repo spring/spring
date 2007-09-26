@@ -204,6 +204,12 @@ void CNetProtocol::RawSend(const uchar* data,const unsigned length)
 int CNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
 {
 	int ret = CNet::GetData(buf, conNum);
+	
+	if (record)
+	{
+		record->SaveToDemo(buf, ret);
+	}
+	
 	return ret;
 }
 

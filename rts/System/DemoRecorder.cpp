@@ -1,5 +1,6 @@
 #include "DemoRecorder.h"
 
+#include <time.h>
 #ifdef _WIN32
 #include <io.h> // for _mktemp
 #endif
@@ -71,8 +72,6 @@ CDemoRecorder::CDemoRecorder()
 
 CDemoRecorder::~CDemoRecorder()
 {
-	fileHeader.demoStreamSize = (int)recordDemo->tellp() - fileHeader.demoStreamPtr;
-
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader();
@@ -99,6 +98,7 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf,const unsigned length)
 	chunkHeader.swab();
 	recordDemo->write((char*)&chunkHeader, sizeof(chunkHeader));
 	recordDemo->write((char*)buf, length);
+	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
 	recordDemo->flush();
 }
 
