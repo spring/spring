@@ -55,7 +55,7 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
-#include "Demo.h"
+#include "DemoRecorder.h"
 //#include "PhysicsEngine.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"

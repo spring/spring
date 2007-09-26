@@ -2,7 +2,8 @@
 #include "Rendering/InMapDraw.h"
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
-#include "Demo.h"
+#include "DemoRecorder.h"
+#include "DemoReader.h"
 
 const unsigned char NETWORK_VERSION = 1;
 
