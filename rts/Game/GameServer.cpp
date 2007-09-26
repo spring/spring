@@ -276,17 +276,12 @@ void CGameServer::ServerReadNet()
 {
 	for(unsigned a=0; a<MAX_PLAYERS; a++)
 	{
-		if (gs->players[a]->active && ((!net->localDemoPlayback && (!gameSetup || a>=gameSetup->numDemoPlayers)) || (net->localDemoPlayback && a == (gameSetup ? gameSetup->myPlayer : 0) )))
+		if (serverNet->IsActiveConnection(a))
 		{
 			unsigned char inbuf[8000];
 			int ret = serverNet->GetData(inbuf, a);
 			while (ret > 0)
 			{
-				// dont bother handling anything if we are just sending a demo to
-				// localhost, this would result in double chat messages and server warnings..
-				if (net->localDemoPlayback)
-					continue;
-					
 				switch (inbuf[0]){
 
 					case NETMSG_ATTEMPTCONNECT: //handled directly in CNet

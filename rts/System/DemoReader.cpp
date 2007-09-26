@@ -90,7 +90,7 @@ CDemoReader::CDemoReader(const std::string& filename)
 		   playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
 		   chunkHeader.swab();
 
-		   demoTimeOffset = gu->modGameTime - chunkHeader.modGameTime;
+		   demoTimeOffset = gu->modGameTime - chunkHeader.modGameTime - 0.1f;
 		   nextDemoRead = gu->modGameTime - 0.01f;
 		   bytesRemaining = fileHeader.demoStreamSize - sizeof(chunkHeader);
 }
@@ -98,20 +98,19 @@ CDemoReader::CDemoReader(const std::string& filename)
 unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 {
 	if(gs->paused)
+	{
 		return 0;
+	}
 
 	if (ReachedEnd())
+	{
 		return 0;
+	}
 
-	unsigned ret = 0;
-	while (nextDemoRead < gu->modGameTime) {
-		if (ret + chunkHeader.length >= length) {
-			logOutput.Print("Overflow in DemoReader");
-			break;
-		}
-
-		playbackDemo->Read((void*)(buf + ret), chunkHeader.length);
-		ret += chunkHeader.length;
+	
+	if (nextDemoRead < gu->modGameTime) {
+		playbackDemo->Read((void*)(buf), chunkHeader.length);
+		unsigned ret = chunkHeader.length;
 		bytesRemaining -= chunkHeader.length;
 
 		playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
@@ -121,10 +120,13 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 
 		if (bytesRemaining <= 0 || playbackDemo->Eof()) {
 			logOutput.Print("End of demo");
-			break;
 		}
+		return ret;
 	}
-	return ret;
+	else
+	{
+		return 0;
+	}
 }
 
 bool CDemoReader::ReachedEnd() const
