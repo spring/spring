@@ -103,7 +103,7 @@ int CSyncer::ProcessUnits(bool checksum)
 	MapUnitIds(); // if we are done, map id numbers to names
 
 	logOutput.Print("found %d units\n", units.size());
-	return units.size();
+	return 0;
 }
 
 string CSyncer::GetCurrentList()

@@ -813,8 +813,8 @@ DLL_EXPORT int __stdcall GetSideCount()
 
 	try {
 		p.LoadFile("gamedata/sidedata.tdf");
-	} catch (const std::exception&) {
-		logOutput.Print("failed\n");
+	} catch (const std::exception& e) {
+		logOutput.Print("failed: %s\n", e.what());
 		return 0;
 	}
 
@@ -828,6 +828,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 		} else break;
 	}
 
+	logOutput.Print("%d sides\n", sideData.size());
 	return sideData.size();
 }
 
