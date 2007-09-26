@@ -66,7 +66,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	int autohostport = configHandler.GetInt("Autohost", 0);
 	if (autohostport > 0)
 	{
-		logOutput.Print("Conencting to autohost on port %i", autohostport);
+		logOutput.Print("Connecting to autohost on port %i", autohostport);
 		hostif = new AutohostInterface(port+10, autohostport);
 		hostif->SendStart();
 	}
