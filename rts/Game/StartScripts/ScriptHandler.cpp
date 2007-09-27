@@ -103,6 +103,9 @@ void CScriptHandler::AddScript(string name, CScript *s)
 void CScriptHandler::SelectScript(std::string s)
 {
 	CScriptHandler::Instance().chosenName = s;
+	if (CScriptHandler::Instance().scripts.find(s) == CScriptHandler::Instance().scripts.end()) {
+		throw std::runtime_error("script not found: " + s);
+	}
 	CScriptHandler::Instance().chosenScript = CScriptHandler::Instance().scripts[s];
 	CScriptHandler::Instance().chosenScript->ScriptSelected();
 	if (CScriptHandler::Instance().callback)
