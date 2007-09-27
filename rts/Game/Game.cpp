@@ -1106,12 +1106,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			newPause = !!atoi(action.extra.c_str());
 		}
-		if (net->IsDemoServer()) {
-			gs->paused = newPause;
-		} else {
-			net->SendPause(gu->myPlayerNum, newPause);
-			lastframe = SDL_GetTicks(); // this required here?
-		}
+		net->SendPause(gu->myPlayerNum, newPause);
+		lastframe = SDL_GetTicks(); // this required here?
 	}
 	else if (cmd == "singlestep") {
 		gameServer->CreateNewFrame(false);
@@ -1271,13 +1267,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			speed += 0.5f;
 		}
-		if (!net->IsDemoServer()) {
-			net->SendUserSpeed(gu->myPlayerNum, speed);
-		} else {
-			gs->speedFactor = speed;
-			gs->userSpeedFactor = speed;
-			logOutput << "Speed " << gs->speedFactor << "\n";
-		}
+		net->SendUserSpeed(gu->myPlayerNum, speed);
 	}
 	else if (cmd == "slowdown") {
 		float speed = gs->userSpeedFactor;
@@ -1289,13 +1279,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		} else {
 			speed -= 0.5f;
 		}
-		if (!net->IsDemoServer()) {
-			net->SendUserSpeed(gu->myPlayerNum, speed);
-		} else {
-			gs->speedFactor = speed;
-			gs->userSpeedFactor = speed;
-			logOutput << "Speed " << gs->speedFactor << "\n";
-		}
+		net->SendUserSpeed(gu->myPlayerNum, speed);
 	}
 
 
@@ -2702,8 +2686,7 @@ bool CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED:
 			{
-				if (!net->IsDemoServer())
-					gs->speedFactor = *((float*) &inbuf[1]);
+				gs->speedFactor = *((float*) &inbuf[1]);
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 				break;
 			}
@@ -2711,14 +2694,11 @@ bool CGame::ClientReadNet()
 
 			case NETMSG_USER_SPEED:
 			{
-				if (!net->IsDemoServer()) {
-					gs->userSpeedFactor = *((float*) &inbuf[2]);
+				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
-					unsigned char playerNum = *(unsigned char*) &inbuf[1];
-					const char* playerName = gs->players[playerNum]->playerName.c_str();
-					logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
-				}
-				
+				unsigned char playerNum = *(unsigned char*) &inbuf[1];
+				const char* playerName = gs->players[playerNum]->playerName.c_str();
+				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
 				break;
 			}
 
@@ -4159,10 +4139,8 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 			}
 		}
 
-		if (!demoPlayer) {
-			gu->gameTime    += seconds;
-			gu->modGameTime += seconds;
-		}
+		gu->gameTime    += seconds;
+		gu->modGameTime += seconds;
 
 		gs->speedFactor     = oldSpeed;
 		gs->userSpeedFactor = oldUserSpeed;

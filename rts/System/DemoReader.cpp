@@ -97,18 +97,14 @@ CDemoReader::CDemoReader(const std::string& filename)
 
 unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 {
-	if(gs->paused)
-	{
-		return 0;
-	}
-
 	if (ReachedEnd())
 	{
 		return 0;
 	}
 
-	
-	if (nextDemoRead < gu->modGameTime) {
+	if (nextDemoRead < gu->modGameTime)
+		// when paused, modGameTime wont increase so no seperate check needed
+	{
 		playbackDemo->Read((void*)(buf), chunkHeader.length);
 		unsigned ret = chunkHeader.length;
 		bytesRemaining -= chunkHeader.length;
@@ -118,7 +114,7 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 		nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
 		bytesRemaining -= sizeof(chunkHeader);
 
-		if (bytesRemaining <= 0 || playbackDemo->Eof()) {
+		if (ReachedEnd()) {
 			logOutput.Print("End of demo");
 		}
 		return ret;
