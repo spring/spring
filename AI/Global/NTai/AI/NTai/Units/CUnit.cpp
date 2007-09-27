@@ -280,22 +280,22 @@ bool CUnit::LoadBehaviours(){
 				return true;
 			} else if(s == "metalmaker"){
 				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
-				t->Init(t);
 				behaviours.push_back(t);
+				t->Init(t);
 			} else if(s == "attacker"){
 				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
-				t->Init(t);
 				behaviours.push_back(t);
+				t->Init(t);
 			} else if(s == "auto"){
 				if(G->UnitDefHelper->IsAttacker(ud)){
 					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
-					t->Init(t);
 					behaviours.push_back(t);
+					t->Init(t);
 				}
 				if(G->UnitDefHelper->IsMetalMaker(ud)||(G->UnitDefHelper->IsMex(ud) && ud->onoffable ) ){
 					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
-					t->Init(t);
 					behaviours.push_back(t);
+					t->Init(t);
 				}
 			}
 		}
