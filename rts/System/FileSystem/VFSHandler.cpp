@@ -1,5 +1,5 @@
-#include "VFSHandler.h"
 #include "StdAfx.h"
+#include "VFSHandler.h"
 #ifdef _WIN32
 #include <io.h>
 #endif
