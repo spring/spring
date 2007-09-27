@@ -138,8 +138,10 @@ void CNetProtocol::Update()
 	if (play != 0 && imServer) {
 		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
-		if (length > 0) {
+		
+		while (length > 0) {
 			RawSend(demobuffer, length);
+			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		}
 	}
 
@@ -205,7 +207,7 @@ int CNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
 {
 	int ret = CNet::GetData(buf, conNum);
 	
-	if (record)
+	if (record && ret > 0)
 	{
 		record->SaveToDemo(buf, ret);
 	}
