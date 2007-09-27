@@ -303,10 +303,15 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) { //handle air transports differently
 		for (int a=0;a<100;++a) {
 			float3 delta(1,0,1);
-			while(delta.SqLength2D()>1){
+			float3 tmp;
+			do {
 				delta.x=(gs->randFloat()-0.5f)*2;
 				delta.z=(gs->randFloat()-0.5f)*2;
-			}
+				tmp = center + delta*radius;
+			} while(delta.SqLength2D() > 1
+					|| tmp.x < emptyRadius || tmp.z < emptyRadius
+					|| tmp.x >= gs->mapx*SQUARE_SIZE-emptyRadius
+					|| tmp.z >= gs->mapy*SQUARE_SIZE-emptyRadius);
 			float3 pos=center+delta*radius;
 			pos.y=ground->GetHeight(pos.x,pos.z);
 
@@ -325,13 +330,13 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius,
 			return true;
 		}
 	} else {
-		for(float y=max(0.0f,center.z-radius);y<min(float(gs->mapx*SQUARE_SIZE),center.z+radius);y+=SQUARE_SIZE){
+		for(float y=max(emptyRadius,center.z-radius);y<min(float(gs->mapx*SQUARE_SIZE-emptyRadius),center.z+radius);y+=SQUARE_SIZE){
 			float dy=y-center.z;
 			float rx=radius*radius-dy*dy;
-			if(rx<=0)
+			if(rx<=emptyRadius)
 				continue;
 			rx=sqrt(rx);
-			for(float x=max(0.0f,center.x-rx);x<min(float(gs->mapx*SQUARE_SIZE),center.x+rx);x+=SQUARE_SIZE){
+			for(float x=max(emptyRadius,center.x-rx);x<min(float(gs->mapx*SQUARE_SIZE-emptyRadius),center.x+rx);x+=SQUARE_SIZE){
 				float unloadPosHeight=ground->GetApproximateHeight(x,y);
 				if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
  					continue;
