@@ -61,6 +61,8 @@ using std::vector;
 
 static const int MAX_TEXTURE_UNITS = 32;
 
+/// count glPushMatrix and glPopMatrix calls from Lua scripts
+int LuaOpenGL::matrixPushes[3] = {0, 0, 0};
 
 // from Game.cpp
 extern GLfloat LightDiffuseLand[];
@@ -268,6 +270,28 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static inline int get_matrix_mode_idx()
+{
+	int i = 0;
+	glGetIntegerv(GL_MATRIX_MODE, &i);
+	switch(i) {
+	case GL_MODELVIEW: return 0;
+	case GL_PROJECTION: return 1;
+	case GL_TEXTURE: return 2;
+	default: assert(0 && "invalid matrix mode");
+	}
+}
+
+void LuaOpenGL::_incPush()
+{
+	++matrixPushes[get_matrix_mode_idx()];
+}
+
+void LuaOpenGL::_decPush()
+{
+	--matrixPushes[get_matrix_mode_idx()];
+}
+
 void LuaOpenGL::ClearMatrixStack()
 {
 	int i;
@@ -278,11 +302,12 @@ void LuaOpenGL::ClearMatrixStack()
 			break;
 		}
 	}
-	for (i = 0; i < 64; i++) {
+
+	for (i = 0; i<matrixPushes[get_matrix_mode_idx()]; ++i) {
 		glPopMatrix();
 		err = glGetError();
 		if (err != GL_NONE) {
-			break; // we're looking for GL_STACK_UNDERFLOW
+			break;
 		}
 	}
 }
@@ -762,6 +787,7 @@ void LuaOpenGL::RevertScreenMatrices()
 		ClearMatrixStack();
 		glLoadIdentity();
 	}
+	matrixPushes[0] = matrixPushes[1] = matrixPushes[2] = 0;
 }
 
 
@@ -3855,6 +3881,7 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
 	}
 
+	_incPush();
 	glPushMatrix();
 
 	return 0;
@@ -3871,6 +3898,7 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 	}
 
 	glPopMatrix();
+	_decPush();
 
 	return 0;
 }
