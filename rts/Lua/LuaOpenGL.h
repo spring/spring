@@ -103,6 +103,9 @@ class LuaOpenGL {
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
+		static int matrixPushes[3];
+		static inline void _incPush();
+		static inline void _decPush();
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -111,7 +114,7 @@ class LuaOpenGL {
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
-	
+
 		static int ConfigScreen(lua_State* L);
 
 		static int DrawMiniMap(lua_State* L);
@@ -168,7 +171,7 @@ class LuaOpenGL {
 		static int MultiTexCoord(lua_State* L);
 		static int SecondaryColor(lua_State* L);
 		static int FogCoord(lua_State* L);
-		
+
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 
