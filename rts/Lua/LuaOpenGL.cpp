@@ -61,8 +61,6 @@ using std::vector;
 
 static const int MAX_TEXTURE_UNITS = 32;
 
-/// count glPushMatrix and glPopMatrix calls from Lua scripts
-int LuaOpenGL::matrixPushes[3] = {0, 0, 0};
 
 // from Game.cpp
 extern GLfloat LightDiffuseLand[];
@@ -270,45 +268,21 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline int get_matrix_mode_idx()
+void LuaOpenGL::ClearMatrixStack(int stackDepthEnum)
 {
-	int i = 0;
-	glGetIntegerv(GL_MATRIX_MODE, &i);
-	switch(i) {
-	case GL_MODELVIEW: return 0;
-	case GL_PROJECTION: return 1;
-	case GL_TEXTURE: return 2;
-	default: assert(0 && "invalid matrix mode");
-	}
-}
-
-void LuaOpenGL::_incPush()
-{
-	++matrixPushes[get_matrix_mode_idx()];
-}
-
-void LuaOpenGL::_decPush()
-{
-	--matrixPushes[get_matrix_mode_idx()];
-}
-
-void LuaOpenGL::ClearMatrixStack()
-{
+	int depth = 0;
 	int i;
 	GLenum err;
+	glGetIntegerv(stackDepthEnum, &depth);
+
 	for (i = 0; i < 12345; i++) {
 		err = glGetError();
 		if (err == GL_NONE) {
 			break;
 		}
 	}
-
-	for (i = 0; i<matrixPushes[get_matrix_mode_idx()]; ++i) {
+	for (i = 0; i < depth - 1; i++) {
 		glPopMatrix();
-		err = glGetError();
-		if (err != GL_NONE) {
-			break;
-		}
 	}
 }
 
@@ -679,7 +653,7 @@ void LuaOpenGL::EnableDrawInMiniMap()
 	resetMatrixFunc = ResetMiniMapMatrices;
 	// CMiniMap::DrawForReal() does not setup the texture matrix
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW);
@@ -775,19 +749,18 @@ void LuaOpenGL::SetupScreenMatrices()
 void LuaOpenGL::RevertScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
-	matrixPushes[0] = matrixPushes[1] = matrixPushes[2] = 0;
 }
 
 
@@ -843,15 +816,15 @@ void LuaOpenGL::RevertScreenLighting()
 void LuaOpenGL::ResetWorldMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadMatrixd(camera->projection);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixd(camera->modelview);
 	}
 }
@@ -860,16 +833,16 @@ void LuaOpenGL::ResetWorldMatrices()
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, -1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 	}
 }
@@ -878,15 +851,15 @@ void LuaOpenGL::ResetWorldShadowMatrices()
 void LuaOpenGL::ResetScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	SetupScreenMatrices();
@@ -896,16 +869,16 @@ void LuaOpenGL::ResetScreenMatrices()
 void LuaOpenGL::ResetMiniMapMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		glOrtho(0.0, 1.0, 0.0, 1.0, -1.0e6, +1.0e6);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack();
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 		if (minimap) {
 			glScalef(1.0f / (float)minimap->GetSizeX(),
@@ -3881,7 +3854,6 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
 	}
 
-	_incPush();
 	glPushMatrix();
 
 	return 0;
@@ -3898,7 +3870,6 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 	}
 
 	glPopMatrix();
-	_decPush();
 
 	return 0;
 }
