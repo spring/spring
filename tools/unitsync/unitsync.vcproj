@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="unitsync"
 	ProjectGUID="{BCE5530D-8565-4C1D-B1C7-3ED8B79FEF06}"
+	RootNamespace="unitsync"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -276,6 +277,22 @@
 			<File
 				RelativePath="..\..\rts\System\FileSystem\CRC.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\exports.def"
@@ -459,6 +476,22 @@
 				<File
 					RelativePath="..\..\rts\System\FileSystem\ArchiveScanner.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\rts\System\FileSystem\ArchiveScanner.h"
