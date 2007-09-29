@@ -67,7 +67,7 @@ void CLogOutput::Print(const char* fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	if (fmt[strlen(fmt)-1] != '\n') {
-		char foo[strlen(fmt)];
+		char* foo = new char[strlen(fmt)];
 		sprintf(foo, "%s\n", fmt);
 		vfprintf(file, foo, ap);
 	} else {
