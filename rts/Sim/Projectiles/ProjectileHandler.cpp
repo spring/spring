@@ -320,7 +320,7 @@ void CProjectileHandler::SetMaxParticles(int value)
 
 void CProjectileHandler::Update()
 {
-	START_TIME_PROFILE("Projectile handler");
+	SCOPED_TIMER("Projectile handler");
 
 	Projectile_List::iterator psi=ps.begin();
 	while(psi!= ps.end()){
@@ -364,8 +364,6 @@ void CProjectileHandler::Update()
 			}
 		}
 	}
-
-	END_TIME_PROFILE("Projectile handler");
 }
 
 int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){

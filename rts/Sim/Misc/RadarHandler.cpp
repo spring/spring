@@ -72,7 +72,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 
 	if(newPos.x!=unit->oldRadarPos.x || newPos.y!=unit->oldRadarPos.y){
 		RemoveUnit(unit);
-		START_TIME_PROFILE("Radar");
+		SCOPED_TIMER("Radar");
 		if(unit->jammerRadius){
 			AddMapArea(newPos,unit->jammerRadius,jammerMaps[unit->allyteam],1);
 			AddMapArea(newPos,unit->jammerRadius,commonJammerMap,1);
@@ -93,13 +93,12 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 			AddMapArea(newPos,unit->seismicRadius,seismicMaps[unit->allyteam],1);
 		}
 		unit->oldRadarPos=newPos;
-		END_TIME_PROFILE("Radar");
 	}
 }
 
 void CRadarHandler::RemoveUnit(CUnit* unit)
 {
-	START_TIME_PROFILE("Radar");
+	SCOPED_TIMER("Radar");
 
 	if(unit->oldRadarPos.x>=0){
 		if(unit->jammerRadius){
@@ -126,8 +125,6 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 		}
 		unit->oldRadarPos.x=-1;
 	}
-
-	END_TIME_PROFILE("Radar");
 }
 
 void CRadarHandler::AddMapArea(int2 pos, int radius, std::vector<unsigned short>& map, int amount)

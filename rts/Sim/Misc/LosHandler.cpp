@@ -135,7 +135,7 @@ CLosHandler::~CLosHandler()
 
 void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 {
-	START_TIME_PROFILE("Los");
+	SCOPED_TIMER("Los");
 	float3 losPos=unit->pos;
 	losPos.CheckInBounds();
 
@@ -143,7 +143,6 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 	unit->lastLosUpdate=gs->frameNum;
 
 	if(unit->losRadius<=0){
-		END_TIME_PROFILE("Los");
 		return;
 	}
 	int xmap=(int)(losPos.x*invLosDiv);
@@ -155,7 +154,6 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 	LosInstance* instance;
 	if(redoCurrent){
 		if(!unit->los){
-			END_TIME_PROFILE("Los");
 			return;
 		}
 		instance=unit->los;
@@ -168,7 +166,6 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 		instance->baseAirSquare=baseAirSquare;
 	} else {
 		if(unit->los && unit->los->baseSquare==baseSquare){
-			END_TIME_PROFILE("Los");
 			return;
 		}
 		FreeInstance(unit->los);
@@ -178,7 +175,6 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 			if((*lii)->baseSquare==baseSquare && (*lii)->losSize==unit->losRadius && (*lii)->airLosSize==unit->airLosRadius && (*lii)->baseHeight==unit->losHeight && (*lii)->allyteam==allyteam){
 				AllocInstance(*lii);
 				unit->los=*lii;
-				END_TIME_PROFILE("Los");
 				return;
 			}
 		}
@@ -191,7 +187,6 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 		SafeLosAdd(instance,xmap,ymap);
 	else
 		LosAdd(instance);
-END_TIME_PROFILE("Los");
 }
 
 void CLosHandler::LosAdd(LosInstance* instance)

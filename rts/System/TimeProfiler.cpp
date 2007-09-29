@@ -14,6 +14,18 @@
 
 #ifdef PROFILE_TIME
 
+
+ScopedTimer::ScopedTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())
+{
+}
+
+ScopedTimer::~ScopedTimer()
+{
+	Uint64 stoptime = SDL_GetTicks();
+	profiler.AddTime(name, stoptime - starttime);
+}
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -27,7 +39,6 @@ CTimeProfiler::CTimeProfiler()
 
 CTimeProfiler::~CTimeProfiler()
 {
-
 }
 
 void CTimeProfiler::Draw()

@@ -197,7 +197,7 @@ void CUnitHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
 
-	START_TIME_PROFILE("Unit handler");
+	SCOPED_TIMER("Unit handler");
 
 	while(!toBeRemoved.empty()){
 		CUnit* delUnit=toBeRemoved.back();
@@ -246,28 +246,24 @@ void CUnitHandler::Update()
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 		(*usi)->Update();
 
-	START_TIME_PROFILE("Unit slow update");
-
-	if(!(gs->frameNum&15)){
-		slowUpdateIterator=activeUnits.begin();
-	}
-
-	int numToUpdate=activeUnits.size()/16+1;
-	for(;slowUpdateIterator!=activeUnits.end() && numToUpdate!=0;++slowUpdateIterator){
-		(*slowUpdateIterator)->SlowUpdate();
-		numToUpdate--;
-	}
-
-	END_TIME_PROFILE("Unit slow update");
+	{
+		SCOPED_TIMER("Unit slow update");
+		if(!(gs->frameNum&15)){
+			slowUpdateIterator=activeUnits.begin();
+		}
+	
+		int numToUpdate=activeUnits.size()/16+1;
+		for(;slowUpdateIterator!=activeUnits.end() && numToUpdate!=0;++slowUpdateIterator){
+			(*slowUpdateIterator)->SlowUpdate();
+			numToUpdate--;
+		}
+	} // for timer destruction
 
 	if(!(gs->frameNum&15)){
 		if(diminishingMetalMakers)
 			metalMakerEfficiency=8.0f/(8.0f+max(0.0f,sqrtf(metalMakerIncome/gs->activeTeams)-4));
 		metalMakerIncome=0;
 	}
-
-END_TIME_PROFILE("Unit handler");
-
 }
 
 float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)

@@ -336,7 +336,7 @@ void CAdvSky::Update()
 		return;
 
 
-START_TIME_PROFILE("Updating sky");
+	SCOPED_TIMER("Updating sky");
 
 	CreateDetailTex();
 
@@ -529,8 +529,6 @@ START_TIME_PROFILE("Updating sky");
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 		glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudTexMem);
 	}
-
-END_TIME_PROFILE("Updating sky");
 }
 
 void CAdvSky::CreateRandMatrix(int matrix[32][32],float mod)

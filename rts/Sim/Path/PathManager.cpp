@@ -115,7 +115,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 //	static int calls = 0;
 //	logOutput << "RequestPath() called: " << (++calls) << "\n";	//Debug
 
-	START_TIME_PROFILE("AI:PFS");
+	SCOPED_TIMER("AI:PFS");
 
 	//Creates a new multipath.
 	MultiPath* newPath = SAFE_NEW MultiPath(startPos, peDef, moveData);
@@ -191,7 +191,6 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	}
 	if(caller)
 		caller->Block();
-	END_TIME_PROFILE("AI:PFS");
 	return retValue;
 }
 
@@ -292,10 +291,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
 float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) {
-	#ifdef PROFILE_TIME
-		Uint64 starttime;
-		starttime = SDL_GetTicks();
-	#endif
+	SCOPED_TIMER("AI:PFS");
 
 	//0 indicate a no-path id.
 	if(pathId == 0)
@@ -348,13 +344,6 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		}
 	} while(callerPos.distance2D(waypoint) < minDistance && waypoint != multiPath->detailedPath.pathGoal);
 
-	//Return the result.
-	#ifdef PROFILE_TIME
-		Uint64 stop;
-		stop = SDL_GetTicks();
-		profiler.AddTime("AI:PFS",stop - starttime);
-	
-	#endif
 	return waypoint;
 }
 
@@ -402,12 +391,9 @@ Runned every 1/30sec during runtime.
 */
 void CPathManager::Update()
 {
-	START_TIME_PROFILE("AI:PFS:Update");
-
+	SCOPED_TIMER("AI:PFS:Update");
 	pe->Update();
 	pe2->Update();
-
-	END_TIME_PROFILE("AI:PFS:Update");
 }
 
 

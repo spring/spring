@@ -1835,7 +1835,7 @@ bool CGame::Update()
 
 bool CGame::DrawWorld()
 {
-	START_TIME_PROFILE("Draw world");
+	SCOPED_TIMER("Draw world");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
@@ -1931,8 +1931,6 @@ bool CGame::DrawWorld()
 		glRectf(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
-	END_TIME_PROFILE("Draw world");
-
 	return true;
 }
 
@@ -1985,9 +1983,7 @@ bool CGame::Draw()
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
 
-	START_TIME_PROFILE("Sky");
 	sky->Update();
-	END_TIME_PROFILE("Sky");
 
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2005,16 +2001,18 @@ bool CGame::Draw()
 	if(playing && (hideInterface || script->wantCameraControl))
 		script->SetCamera();
 
-	START_TIME_PROFILE("Ground");
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	gd->Update(); // let it update before shadows have to be drawn
-	END_TIME_PROFILE("Ground");
+	CBaseGroundDrawer* gd;
+	{
+		SCOPED_TIMER("Ground");
+		 gd = readmap->GetGroundDrawer();
+		gd->Update(); // let it update before shadows have to be drawn
+	}
 
 	const bool doDrawWorld =
 		hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
 	if (doDrawWorld) {
-		START_TIME_PROFILE("Shadows/Reflect");
+		SCOPED_TIMER("Shadows/Reflect");
 		if (shadowHandler->drawShadows &&
 		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
 			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
@@ -2023,14 +2021,14 @@ bool CGame::Draw()
 		if (unitDrawer->advShading) {
 			unitDrawer->UpdateReflectTex();
 		}
-		END_TIME_PROFILE("Shadows/Reflect");
 	}
 
 	camera->Update(false);
 
-	START_TIME_PROFILE("Water");
-	water->UpdateWater(this);
-	END_TIME_PROFILE("Water");
+	{
+		SCOPED_TIMER("Water");
+		water->UpdateWater(this);
+	}
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 

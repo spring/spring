@@ -69,11 +69,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 {
 	CUnit* unit;
 
-	START_TIME_PROFILE("Unit loader");
+	SCOPED_TIMER("Unit loader");
 
 	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
 	if(!ud) {
-		END_TIME_PROFILE("Unit loader");
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
@@ -325,8 +324,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 
 	if(!build)
 		unit->FinishedBuilding();
-
-	END_TIME_PROFILE("Unit loader");
 
 	return unit;
 }

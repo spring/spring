@@ -79,11 +79,10 @@ void CGroupHandler::Save(std::ostream *s)
 
 void CGroupHandler::Update()
 {
-	START_TIME_PROFILE("Group AI");
+	SCOPED_TIMER("Group AI");
 	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)!=0)
 			(*ai)->Update();
-	END_TIME_PROFILE("Group AI");
 }
 
 void CGroupHandler::DrawCommands()
