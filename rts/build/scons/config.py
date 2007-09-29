@@ -188,9 +188,9 @@ def check_python(env, conf):
 	print "Checking for Python 2.5...",
 	print ""
 	guess_include_path(env, conf, 'Python', 'python2.5')
-	#print "Checking for Python 2.4...",
-	#print ""
-	#guess_include_path(env, conf, 'Python', 'python2.4')
+	print "Checking for Python 2.4...",
+	print ""
+	guess_include_path(env, conf, 'Python', 'python2.4')
 
 
 def check_java(env, conf):
@@ -292,7 +292,7 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
-	d += [Dependency(['python2.5', 'python25'], ['Python.h'])] #, 'python2.4', 'python24'
+	d += [Dependency(['python2.5', 'python25', 'python2.4', 'python24'], ['Python.h'])] #
 	d += [Dependency([], ['jni.h'])]
 
 	if env['use_tcmalloc']:
