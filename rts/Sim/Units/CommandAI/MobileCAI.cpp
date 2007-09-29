@@ -131,7 +131,7 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	if (owner->unitDef->canFight) {
 		c.id = CMD_FIGHT;
 		c.action="fight";
-		c.type = CMDTYPE_ICON_MAP;
+		c.type = CMDTYPE_ICON_FRONT;
 		c.name = "Fight";
 		c.mouseicon=c.name;
 		c.hotkey = "f";
