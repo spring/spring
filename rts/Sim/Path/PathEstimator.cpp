@@ -357,7 +357,6 @@ void CPathEstimator::Update() {
 Storing data and doing some top-administration.
 */
 IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks) {
-//	START_TIME_PROFILE;
 	start.CheckInBounds();
 	//Clear path.
 	path.path.clear();
@@ -377,9 +376,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 //		logOutput.Print("Using cached path %i",BLOCK_SIZE);
 		path=ci->path;
 /*		if(BLOCK_SIZE==8){
-			END_TIME_PROFILE("Estimater 8");
 		}else{
-			END_TIME_PROFILE("Estimater 32");
 		}*/
 		return ci->result;
 	}
@@ -407,9 +404,7 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		}
 	}
 /*	if(BLOCK_SIZE==8){
-		END_TIME_PROFILE("Estimater 8");
 	}else{
-		END_TIME_PROFILE("Estimater 32");
 	}*/
 	return result;
 }

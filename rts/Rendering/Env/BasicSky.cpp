@@ -385,7 +385,7 @@ void CBasicSky::Update()
 	if(lastCloudUpdate>gs->frameNum-10 || !dynamicSky)
 		return;
 
-START_TIME_PROFILE("Drawing sky");
+	SCOPED_TIMER("Drawing sky");
 
 	lastCloudUpdate=gs->frameNum;
 
@@ -571,8 +571,6 @@ START_TIME_PROFILE("Drawing sky");
 /**/
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudThickness);
-
-END_TIME_PROFILE("Drawing sky");
 }
 
 void CBasicSky::CreateRandMatrix(int matrix[32][32],float mod)

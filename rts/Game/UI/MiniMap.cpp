@@ -964,7 +964,7 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal()
 {
-	START_TIME_PROFILE("Draw minimap");
+	SCOPED_TIMER("Draw minimap");
 
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
@@ -980,7 +980,6 @@ void CMiniMap::DrawForReal()
 		}
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
-		END_TIME_PROFILE("Draw minimap");
 		return;
 	}
 
@@ -1206,7 +1205,6 @@ void CMiniMap::DrawForReal()
 
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
-	END_TIME_PROFILE("Draw minimap");
 }
 
 

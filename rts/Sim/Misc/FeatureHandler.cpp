@@ -407,7 +407,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 void CFeatureHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
-	START_TIME_PROFILE("Feature::Update");
+	SCOPED_TIMER("Feature::Update");
 
 	if ((gs->frameNum & 31) == 0)	// let all areareclaimers choose a target with a different id
 		freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
@@ -444,7 +444,6 @@ void CFeatureHandler::Update()
 			updateFeatures.erase(feature);
 		}
 	}
-	END_TIME_PROFILE("Feature::Update");
 }
 
 

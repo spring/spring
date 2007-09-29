@@ -14,6 +14,7 @@
 #ifdef _CONSOLE
 #define START_TIME_PROFILE(a) {}
 #define END_TIME_PROFILE(a) {}
+#define SCOPED_TIMER(a) {}
 #endif
 
 CCobEngine GCobEngine;
@@ -96,7 +97,7 @@ void CCobEngine::RemoveInstance(CCobInstance *instance)
 
 void CCobEngine::Tick(int deltaTime)
 {
-START_TIME_PROFILE("Scripts");
+	SCOPED_TIMER("Scripts");
 
 	GCurrentTime += deltaTime;
 
@@ -169,7 +170,6 @@ START_TIME_PROFILE("Scripts");
 		if ((*curit)->Tick(deltaTime) == -1)
 			animating.erase(curit);		
 	}
-END_TIME_PROFILE("Scripts");
 }
 
 // Threads call this when they start executing in Tick

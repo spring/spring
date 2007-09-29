@@ -110,13 +110,12 @@ void CGlobalAIHandler::Save(std::ostream *s)
 
 void CGlobalAIHandler::Update(void)
 {
-	START_TIME_PROFILE("Global AI")
+	SCOPED_TIMER("Global AI")
 	try {
 		for(int a=0;a<gs->activeTeams;++a)
 			if(ais[a])
 				ais[a]->Update();
 	} HANDLE_EXCEPTION;
-	END_TIME_PROFILE("Global AI")
 }
 
 void CGlobalAIHandler::PreDestroy ()
