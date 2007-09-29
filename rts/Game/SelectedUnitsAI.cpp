@@ -116,17 +116,13 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 
 	if (nbrOfSelectedUnits < 1) {
 		// no units to command
-		return;
 	}
-
-	if ((c.id == CMD_ATTACK) &&
+	else if ((c.id == CMD_ATTACK) &&
 			((c.params.size() == 6) ||
 			 ((c.params.size() == 4) && (c.params[3] > 0.001f)))) {
 		SelectAttack(c, player);
-		return;
 	}
-
-	if (nbrOfSelectedUnits == 1) {
+	else if (nbrOfSelectedUnits == 1) {
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
@@ -143,7 +139,6 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				POP_CODE_MODE
 			}
 		}
-		return;
 	}
 
 	// User Move Front Command:
@@ -162,7 +157,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 	//   ALT+CTRL:  Group Locked       command  (maintain relative positions)
 	//
 
-	if ((c.id == CMD_MOVE) && (c.params.size() == 6)) {
+	else if (((c.id == CMD_MOVE) || (c.id == CMD_FIGHT)) && (c.params.size() == 6)) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		MakeFrontMove(&c, player);
@@ -358,7 +353,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	CreateUnitOrder(orderedUnits,player);
 
 	for(multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){
-		nextPos = MoveToPos(oi->second, nextPos, sd, c->options);
+		nextPos = MoveToPos(oi->second, nextPos, sd, c);
 	}
 }
 
@@ -380,7 +375,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 }
 
 
-float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, unsigned char options)
+float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command)
 {
 	//int lineNum=posNum/numColumns;
 	//int colNum=posNum-lineNum*numColumns;
@@ -404,11 +399,11 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, u
 	pos.y = ground->GetHeight(pos.x, pos.z);
 
 	Command c;
-	c.id = CMD_MOVE;
+	c.id = command->id;
 	c.params.push_back(pos.x);
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
-	c.options = options;
+	c.options = command->options;
 
 	uh->units[unit]->commandAI->GiveCommand(c);
 	return retPos;

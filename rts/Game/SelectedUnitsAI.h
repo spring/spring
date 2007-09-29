@@ -29,7 +29,7 @@ private:
 	void CalculateGroupData(int player, bool queueing);
 	void MakeFrontMove(Command* c,int player);
 	void CreateUnitOrder(std::multimap<float,int>& out,int player);
-	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir,unsigned char options);
+	float3 MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command);
 	void AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	void AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options);
 	void SelectAttack(const Command& cmd, int player);
