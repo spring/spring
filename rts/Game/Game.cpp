@@ -4361,7 +4361,7 @@ void CGame::ReColorTeams()
 bool CGame::HasLag() const
 {
 	Uint32 timeNow = SDL_GetTicks();
-	if (!gs->paused && timeNow > lastFrameTime + 500)
+	if (!gs->paused && timeNow > lastFrameTime + 500.0f / gs->speedFactor)
 	{
 		return true;
 	}

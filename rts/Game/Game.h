@@ -51,6 +51,8 @@ public:
 
 	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
 	bool ActionReleased(const CKeyBindings::Action&);
+	
+	bool HasLag() const;
 
 	LuaParser* defsParser;
 
@@ -128,7 +130,6 @@ protected:
 	void LogNetMsg(const string& msg, int player);
 	void ReloadCOB(const string& msg, int player);
 	void Skip(const string& msg, bool demoPlayer);
-	bool HasLag() const;
 
 protected:
 	std::string hotBinding;

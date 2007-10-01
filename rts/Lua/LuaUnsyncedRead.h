@@ -16,6 +16,7 @@ class LuaUnsyncedRead {
 
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
+		static int GetHasLag(lua_State* L);
 
 		static int IsAABBInView(lua_State* L);
 		static int IsSphereInView(lua_State* L);

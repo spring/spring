@@ -31,10 +31,6 @@
 #include "mmgr.h"
 
 CPreGame* pregame=0;
-std::string CPreGame::mapName;
-std::string CPreGame::modName;
-std::string CPreGame::modArchive;
-std::string CPreGame::scriptName;
 
 extern Uint8 *keys;
 extern bool globalQuit;
@@ -115,7 +111,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				net->localDemoPlayback = true;
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = SAFE_NEW CGameServer(8452, pregame->mapName, pregame->modArchive, pregame->scriptName, demoFile);
+				gameServer = SAFE_NEW CGameServer(8452, mapName, modArchive, scriptName, demoFile);
 				net->InitLocalClient(gameSetup ? gameSetup->myPlayer : 0);
 				good_fpu_control_registers("after CGameServer creation");
 				if (gameSetup) {	// we read a gameSetup from the demofiles
@@ -326,11 +322,11 @@ bool CPreGame::Update()
 			if (showList || !server)
 				break;
 
-			pregame->modName = CScriptHandler::Instance().chosenScript->GetModName();
-			if (pregame->modName == "")
+			modName = CScriptHandler::Instance().chosenScript->GetModName();
+			if (modName == "")
 				ShowModList();
 			else
-				SelectMod(pregame->modName);
+				SelectMod(modName);
 			state = WAIT_ON_MOD;
 			// fall through
 
@@ -345,19 +341,19 @@ bool CPreGame::Update()
 			ENTER_MIXED;
 
 			// Map all required archives depending on selected mod(s)
-			vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
+			vector<string> ars = archiveScanner->GetArchives(modArchive);
 			if (ars.empty())
-				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modArchive.c_str());
+				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", modArchive.c_str());
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 				if (!hpiHandler->AddArchive(*i, false))
 					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 
 			// Determine if the map is inside an archive, and possibly map needed archives
-			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + pregame->mapName);
+			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 			if (!f->FileExists()) {
-				vector<string> ars = archiveScanner->GetArchivesForMap(pregame->mapName);
+				vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 				if (ars.empty())
-					logOutput.Print("Warning: map archive \"%s\" is missing?\n", pregame->mapName.c_str());
+					logOutput.Print("Warning: map archive \"%s\" is missing?\n", mapName.c_str());
 				for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 					if (!hpiHandler->AddArchive(*i, false))
 						logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
@@ -375,12 +371,12 @@ bool CPreGame::Update()
 			// create GameServer here where we can ensure to know which map and mod we are using
 			if (server) {
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, pregame->mapName, pregame->modArchive, pregame->scriptName, demoFile);
+				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
 				// net->InitLocalClient(gameSetup?gameSetup->myPlayer:0); dont create twice
 				good_fpu_control_registers("after CGameServer creation");
 			}
 
-			game = SAFE_NEW CGame(server, pregame->mapName, pregame->modArchive, infoConsole);
+			game = SAFE_NEW CGame(server, mapName, modArchive, infoConsole);
 
 			if (savefile) {
 				savefile->LoadGame();
@@ -398,7 +394,7 @@ bool CPreGame::Update()
 			break;
 	}
 
-	if(!server && state != WAIT_ON_ADDRESS){
+	if(state != WAIT_ON_ADDRESS){
 		net->Update();
 		UpdateClientNet();
 	}
@@ -424,7 +420,7 @@ void CPreGame::UpdateClientNet()
 
 				if (mapName.empty()) {
 					state = WAIT_ON_MAP;
-				} else if (pregame->modName.empty()) {
+				} else if (modName.empty()) {
 					state = WAIT_ON_MOD;
 				} else {
 					state = ALL_READY;
@@ -439,7 +435,7 @@ void CPreGame::UpdateClientNet()
 
 				if (!CScriptHandler::Instance().chosenScript) {
 					state = WAIT_ON_SCRIPT;
-				} else if (pregame->modName.empty()) {
+				} else if (modName.empty()) {
 					state = WAIT_ON_MOD;
 				} else {
 					state = ALL_READY;
@@ -450,7 +446,7 @@ void CPreGame::UpdateClientNet()
 				if (!gameSetup) {
 					SelectMod((char*) (inbuf + 6));
 				}
-				archiveScanner->CheckMod(pregame->modArchive, *(unsigned*) (inbuf + 2));
+				archiveScanner->CheckMod(modArchive, *(unsigned*) (inbuf + 2));
 
 				if (!CScriptHandler::Instance().chosenScript) {
 					state = WAIT_ON_SCRIPT;
@@ -590,7 +586,7 @@ void CPreGame::SelectMod(std::string s)
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
 		const string& modName = pregame->showList->items[index];
-		pregame->modArchive = archiveScanner->ModNameToModArchive(modName);
+		pregame->modArchive = archiveScanner->ModNameToModArchive(pregame->modName);
 	} else {
 		pregame->modArchive = archiveScanner->ModNameToModArchive(s);
 	}

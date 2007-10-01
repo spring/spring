@@ -13,7 +13,6 @@
 #include "LogOutput.h"
 #include "FPUCheck.h"
 #include <SDL.h>
-#include "NetProtocol.h"
 #include "mmgr.h"
 
 #include "IFramebuffer.h"
@@ -174,8 +173,6 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	}
 
 	good_fpu_control_registers(text);
-
-	net->Update();	//prevent timing out during load
 
 	// Draw loading screen & print load msg.
 	ENTER_UNSYNCED;
