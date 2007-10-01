@@ -14,6 +14,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "TdfParser.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
@@ -84,6 +85,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	memcpy(gameSetupText,buf,size);
 	gameSetupTextLength=size;
 
+	TdfParser file;
 	file.LoadBuffer(buf,size);
 
 	if(!file.SectionExist("GAME"))
