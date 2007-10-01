@@ -84,8 +84,8 @@ void CUnit::RecieveMessage(CMessage &message){
 		return;
 	}else if(message.GetType() == string("unitfinished")){
 		if(message.GetParameter(0) == this->uid){
-			this->under_construction = false;
-			//
+			under_construction = false;
+			LoadBehaviours();
 		}
 	}else if(message.GetType() == string("unitdestroyed")){
 		if(message.GetParameter(0) == this->uid){
