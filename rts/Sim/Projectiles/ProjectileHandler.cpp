@@ -651,7 +651,7 @@ void CProjectileHandler::CheckUnitCol()
 							if(readmap->groundBlockingObjectMap[square]!=(*fi))
 								continue;
 						}
-						p->Collision();
+						p->Collision(*fi);
 						break;
 					}
 				}
