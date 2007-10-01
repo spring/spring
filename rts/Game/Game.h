@@ -54,7 +54,6 @@ public:
 
 	LuaParser* defsParser;
 
-	int que;
 	unsigned int oldframenum;
 	unsigned int fps;
 	unsigned int thisFps;
@@ -70,13 +69,9 @@ public:
 	unsigned int lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 
-	int leastQue;
-
 	std::string userInputPrefix;
 
 	int lastTick;
-	float timeLeft;
-	float consumeSpeed;
 	int chatSound;
 
 	int skipping;
@@ -133,6 +128,7 @@ protected:
 	void LogNetMsg(const string& msg, int player);
 	void ReloadCOB(const string& msg, int player);
 	void Skip(const string& msg, bool demoPlayer);
+	bool HasLag() const;
 
 protected:
 	std::string hotBinding;
@@ -141,6 +137,8 @@ protected:
 	float inputTextSizeX;
 	float inputTextSizeY;
 	float lastCpuUsageTime;
+	
+	Uint32 lastFrameTime;
 };
 
 

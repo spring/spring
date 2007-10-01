@@ -170,13 +170,10 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(lastframe),
 
 	CR_MEMBER(totalGameTime),
-	CR_MEMBER(leastQue),
 
 	CR_MEMBER(userInputPrefix),
 
 	CR_MEMBER(lastTick),
-	CR_MEMBER(timeLeft),
-	CR_MEMBER(consumeSpeed),
 	CR_MEMBER(chatSound),
 
 	CR_MEMBER(hideInterface),
@@ -199,7 +196,7 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
+CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic) : lastFrameTime(0)
 {
 	game = this;
 
@@ -211,11 +208,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	time(&starttime);
 	lastTick=clock();
-	consumeSpeed=1;
-	leastQue=0;
-	timeLeft=0.0f;
 
-	que = 0;
 	oldframenum=0;
 	if(server)
 		gs->players[0]->readyToStart=true;
@@ -548,7 +541,6 @@ void CGame::PostLoad()
 {
 	if (gameServer) {
 		gameServer -> lastTick        = lastTick      ;
-		gameServer -> timeLeft        = timeLeft      ;
 		gameServer -> serverframenum  = gs->frameNum  ;
 		gameServer -> gameEndDetected = gameOver      ;
 		gameServer -> gameEndTime     = 0             ;
@@ -1768,12 +1760,6 @@ bool CGame::Update()
 		fps=thisFps;
 		thisFps=0;
 
-		consumeSpeed=((float)(GAME_SPEED+leastQue-2));
-		leastQue=10000;
-		if (!gameServer) {
-			timeLeft = 0.0f;
-		}
-
 		starttime=fpstimer;
 		oldframenum=gs->frameNum;
 
@@ -1801,13 +1787,9 @@ bool CGame::Update()
 		gameServer->CreateNewFrame();
 	}
 
-	//listen to network
-	// if(net->Connected())
-	{
-		if(!ClientReadNet()){
-			logOutput.Print("Client read net wanted quit");
-			return false;
-		}
+	if(!ClientReadNet()){
+		logOutput.Print("Client read net wanted quit");
+		return false;
 	}
 
 	if(gameSetup && !playing) {
@@ -1968,7 +1950,7 @@ bool CGame::Draw()
 	}
 
 //	logOutput << mouse->lastx << "\n";
-	if(!gs->paused && gs->frameNum>1 && !creatingVideo){
+	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
 		Uint64 startDraw;
 		startDraw = SDL_GetTicks();
 		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
@@ -2354,6 +2336,8 @@ void CGame::SimFrame()
 	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 #endif
 	good_fpu_control_registers("CGame::SimFrame");
+	
+	lastFrameTime = SDL_GetTicks();
 
 	ASSERT_SYNCED_MODE;
 //	logOutput.Print("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
@@ -2526,17 +2510,7 @@ bool CGame::ClientReadNet()
 		unsigned int currentFrame;
 		currentFrame = SDL_GetTicks();
 
-		if (timeLeft > 1.0f) {
-			timeLeft = timeLeft - 1.0f;
-		}
-		timeLeft+=consumeSpeed*((float)(currentFrame - lastframe)/1000.f);
-		if (skipping) {
-			timeLeft = 0.01f;
-		}
 		lastframe=currentFrame;
-
-		if(que<leastQue)
-			leastQue=que;
 	}
 
 	PUSH_CODE_MODE;
@@ -2676,7 +2650,6 @@ bool CGame::ClientReadNet()
 						logOutput.Print("%s unpaused the game",gs->players[player]->playerName.c_str());
 					}
 					lastframe = SDL_GetTicks();
-					timeLeft=0;
 				}
 				break;
 			}
@@ -2790,9 +2763,6 @@ bool CGame::ClientReadNet()
 			break;
 
 			case NETMSG_NEWFRAME:
-				--que;
-				if(!gameServer)
-					timeLeft-=1;
 				if (gs->frameNum%8 == 0)
 				{
 					// only answer every 8th newframe (~3 times per second are enought for ping calculation)
@@ -4385,5 +4355,18 @@ void CGame::ReColorTeams()
 			color[2] = GetLuaColor(teamTable, 3, color[2]);
 			// do not adjust color[3] -- alpha
 		}
+	}
+}
+
+bool CGame::HasLag() const
+{
+	Uint32 timeNow = SDL_GetTicks();
+	if (!gs->paused && timeNow > lastFrameTime + 500)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
