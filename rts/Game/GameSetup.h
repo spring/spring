@@ -3,7 +3,6 @@
 
 #include <string>
 #include <map>
-#include "TdfParser.h"
 #include "GlobalStuff.h"
 
 
@@ -29,7 +28,6 @@ public:
 	void Draw();
 	bool Update();
 
-	TdfParser file;
 	std::string setupFileName;
 	int myPlayer;
 	int numPlayers;				//the expected amount of players

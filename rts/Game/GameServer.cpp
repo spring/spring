@@ -11,8 +11,10 @@
 #endif
 
 #include "GameSetup.h"
+#include "System/StdAfx.h"
 #include "System/NetProtocol.h"
 #include "System/AutohostInterface.h"
+#include "System/Sync/Syncify.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Player.h"
