@@ -171,7 +171,7 @@ void CWeaponProjectile::Collision()
 
 void CWeaponProjectile::Collision(CFeature* feature)
 {
-	if(gs->randFloat()>weaponDef->fireStarter)
+	if(gs->randFloat() < weaponDef->fireStarter)
 		feature->StartFire();
 
 	Collision();

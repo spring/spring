@@ -170,9 +170,6 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 			feature->DoDamage(damages * mod, owner,
 			                  dif * (damages.impulseFactor * mod / dist * (damages[0] + damages.impulseBoost)));
 		}
-		if (gs->randFloat() > 0.7f) {
-			feature->StartFire();
-		}
 	}
 
 	if (damageGround && !mapDamage->disabled &&
