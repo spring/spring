@@ -34,10 +34,10 @@ public:
 
 	bool hasDemo,hasSave;
 
-	static std::string mapName;
-	static std::string modName;
-	static std::string modArchive;
-	static std::string scriptName;
+	std::string mapName;
+	std::string modName;
+	std::string modArchive;
+	std::string scriptName;
 	std::string demoFile;
 
 	void UpdateClientNet();

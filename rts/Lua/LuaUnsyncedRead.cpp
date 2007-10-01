@@ -61,6 +61,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
+	REGISTER_LUA_CFUNC(GetHasLag);
 
 	REGISTER_LUA_CFUNC(IsAABBInView);
 	REGISTER_LUA_CFUNC(IsSphereInView);
@@ -180,6 +181,12 @@ int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 	return 1;
 }
 
+int LuaUnsyncedRead::GetHasLag(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushboolean(L, game ? game->HasLag() : false);
+	return 1;
+}
 
 int LuaUnsyncedRead::IsAABBInView(lua_State* L)
 {
