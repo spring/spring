@@ -126,6 +126,8 @@
 		<Unit filename="NTai\Tasks\CUnitConstructionTask.cpp" />
 		<Unit filename="NTai\Tasks\CUnitConstructionTask.h" />
 		<Unit filename="NTai\Tasks\ITask.h" />
+		<Unit filename="NTai\Units\Behaviours\AttackBehaviour.cpp" />
+		<Unit filename="NTai\Units\Behaviours\MetalMakerBehaviour.cpp" />
 		<Unit filename="NTai\Units\CUnit.cpp" />
 		<Unit filename="NTai\Units\CUnit.h" />
 		<Extensions>
