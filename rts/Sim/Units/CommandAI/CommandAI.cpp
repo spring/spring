@@ -358,6 +358,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 	switch (c.id) {
 		case CMD_MOVE:
 		case CMD_ATTACK:
+		case CMD_AREA_ATTACK:
 		case CMD_RECLAIM:
 		case CMD_REPAIR:
 		case CMD_RESURRECT:
@@ -365,6 +366,8 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		case CMD_RESTORE:
 		case CMD_FIGHT:
 		case CMD_DGUN:
+		case CMD_UNLOAD_UNIT:
+		case CMD_UNLOAD_UNITS:
 			if (!isCommandInMap(c)) return false;
 			break;
 		default:
