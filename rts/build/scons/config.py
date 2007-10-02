@@ -302,11 +302,9 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['SDLmain'],  [])]
 	else:
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
-
-	if (env['platform'] != 'windows'):
-		d += [Dependency(['ogg'], ['ogg/ogg.h'])]
-		d += [Dependency(['vorbis'], [])]
-		d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
+		## d += [Dependency(['ogg'], ['ogg/ogg.h'])]
+		## d += [Dependency(['vorbis'], [])]
+		## d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
 	d += [Dependency(['python2.5', 'python25', 'python2.4', 'python24'], ['Python.h'])] #
@@ -340,8 +338,8 @@ def configure(env, conf_dir):
 
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
-		check_ogg(env, conf)
-		check_vorbis(env, conf)
+		## check_ogg(env, conf)
+		## check_vorbis(env, conf)
 
 	check_python(env, conf)
 	check_java(env, conf)
