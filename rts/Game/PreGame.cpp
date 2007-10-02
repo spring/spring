@@ -94,7 +94,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport)==-1){
+			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayer)==-1){
 				handleerror(0,"Client couldn't connect","PreGame error",0);
 				exit(-1);
 			}
@@ -297,7 +297,7 @@ bool CPreGame::Update()
 
 			if (saveAddress)
 				configHandler.SetString("address",userInput);
-			if(net->InitClient(userInput.c_str(),8452,0)==-1){
+			if(net->InitClient(userInput.c_str(),8452,0, gameSetup? gameSetup->myPlayer : 0)==-1){
 				logOutput.Print("Client couldn't connect");
 				return false;
 			}
