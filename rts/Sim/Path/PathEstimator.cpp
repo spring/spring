@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #endif
 #include "Map/Ground.h"
-#include "NetProtocol.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"

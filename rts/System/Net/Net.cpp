@@ -31,7 +31,7 @@ void CNet::Listening(const bool state)
 {
 	if (udplistener)
 	{
-		udplistener->SetWaitingForConnections(false);
+		udplistener->SetWaitingForConnections(state);
 	}
 }
 

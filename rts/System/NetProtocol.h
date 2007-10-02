@@ -88,7 +88,7 @@ public:
 	This is the best way to see a demo, this should also be used when only one local client will watch this
 	*/
 	int InitServer(const unsigned portnum, const std::string& demoName);
-	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport);
+	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
 	/// Initialise our client to listen to CLocalConnection
 	unsigned InitLocalClient(const unsigned wantedNumber);
 	/// This will tell our server that we have a CLocalConnection
@@ -158,8 +158,6 @@ private:
 	std::string mapName;
 	uint modChecksum;
 	std::string modName;
-	
-	bool imServer;
 };
 
 extern CNetProtocol* net;
