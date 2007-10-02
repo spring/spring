@@ -184,6 +184,18 @@ def check_openal(env, conf):
 		guess_include_path(env, conf, 'OpenAL', 'AL')
 
 
+def check_ogg(env, conf):
+	print "Checking for Ogg headers..."
+	if (env['platform'] != 'windows'):
+		guess_include_path(env, conf, 'ogg', 'ogg')
+	return
+def check_vorbis(env, conf):
+	print "Checking for Vorbis(-file) headers..."
+	if (env['platform'] != 'windows'):
+		guess_include_path(env, conf, 'vorbisfile', 'vorbis')
+	return
+
+
 def check_python(env, conf):
 	print "Checking for Python 2.5...",
 	print ""
@@ -291,6 +303,11 @@ def CheckHeadersAndLibraries(env, conf):
 	else:
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
+	if (env['platform'] != 'windows'):
+		d += [Dependency(['ogg'], ['ogg/ogg.h'])]
+		d += [Dependency(['vorbis'], [])]
+		d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
+
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
 	d += [Dependency(['python2.5', 'python25', 'python2.4', 'python24'], ['Python.h'])] #
 	d += [Dependency([], ['jni.h'])]
@@ -320,8 +337,12 @@ def configure(env, conf_dir):
 	check_debian_powerpc(env, conf)
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
+
 	if env['platform'] != 'windows':
 		check_openal(env, conf)
+		check_ogg(env, conf)
+		check_vorbis(env, conf)
+
 	check_python(env, conf)
 	check_java(env, conf)
 	CheckHeadersAndLibraries(env, conf)
