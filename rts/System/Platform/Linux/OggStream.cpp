@@ -1,3 +1,5 @@
+#ifdef OGGSTREAM_PLAYBACK
+
 #include "LogOutput.h"
 #include "OggStream.h"
 
@@ -240,3 +242,5 @@ std::string COggStream::errorString(int code) {
 			return std::string("Unknown Ogg error.");
 	}
 }
+
+#endif
