@@ -357,15 +357,18 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.wantedHeight  = udTable.GetFloat("cruiseAlt", 0.0f);
 	ud.dlHoverFactor = udTable.GetFloat("airHoverFactor", -1.0f);
 
-	ud.transportSize     = udTable.GetInt("transportSize",     0);
-	ud.transportCapacity = udTable.GetInt("transportCapacity", 0);
-	ud.isfireplatform    = udTable.GetBool("isFirePlatform",   false);
-	ud.isAirBase         = udTable.GetBool("isAirBase",        false);
-	ud.loadingRadius     = udTable.GetFloat("loadingRadius",   220.0f);
-	ud.transportMass     = udTable.GetFloat("transportMass",   100000.0f);
-	ud.holdSteady        = udTable.GetBool("holdSteady",       true);
-	ud.releaseHeld       = udTable.GetBool("releaseHeld",      false);
-	ud.transportByEnemy  = udTable.GetBool("transportByEnemy", true);
+	ud.transportSize     = udTable.GetInt("transportSize",      0);
+	ud.minTransportSize  = udTable.GetInt("minTransportSize",   0);
+	ud.transportCapacity = udTable.GetInt("transportCapacity",  0);
+	ud.isfireplatform    = udTable.GetBool("isFirePlatform",    false);
+	ud.isAirBase         = udTable.GetBool("isAirBase",         false);
+	ud.loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
+	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
+	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
+	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
+	ud.releaseHeld       = udTable.GetBool("releaseHeld",       false);
+	ud.cantBeTransported = udTable.GetBool("cantBeTransported", false);
+	ud.transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	ud.transportUnloadMethod	= udTable.GetInt("transportUnloadMethod" , 0);	//0 normal, 1 parachute drop, 2 land flood
 	ud.fallSpeed				= udTable.GetFloat("fallSpeed", 0.2);			//drop speed for all units dropped from this transport
 	ud.unitFallSpeed			= udTable.GetFloat("unitFallSpeed", 0);			//specific unit drop speed, overrides fallSpeed

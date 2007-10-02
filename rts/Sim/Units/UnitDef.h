@@ -280,10 +280,13 @@ struct UnitDef
 	float loadingRadius;	//for transports
 	int transportCapacity;
 	int transportSize;
+	int minTransportSize;
 	bool isAirBase;
 	float transportMass;
+	float minTransportMass;
 	bool holdSteady;
 	bool releaseHeld;
+	bool cantBeTransported;
 	bool transportByEnemy;
 	int transportUnloadMethod;	//0 - land unload, 1 - flyover drop, 2 - land flood
 	float fallSpeed;			//dictates fall speed of all transported units

@@ -68,13 +68,11 @@ void CTransportUnit::Update()
 		ti->unit->midPos = ti->unit->pos + (ti->unit->frontdir * ti->unit->relMidPos.z) +
 		                                   (ti->unit->updir    * ti->unit->relMidPos.y) +
 		                                   (ti->unit->rightdir * ti->unit->relMidPos.x);
-		if (dynamic_cast<CTAAirMoveType*>(moveType)) {
-			if (unitDef->holdSteady) {
-				ti->unit->heading  = heading;
-				ti->unit->updir    = updir;
-				ti->unit->frontdir = frontdir;
-				ti->unit->rightdir = rightdir;
-			}
+		if (unitDef->holdSteady) {
+			ti->unit->heading  = heading;
+			ti->unit->updir    = updir;
+			ti->unit->frontdir = frontdir;
+			ti->unit->rightdir = rightdir;
 		}
 	}
 }
@@ -128,7 +126,7 @@ bool CTransportUnit::CanTransport (CUnit *unit)
 	if (unit->transporter) {
 		return false;
 	}
-
+	
 	if (!unit->unitDef->transportByEnemy && !gs->AlliedTeams(unit->team, team)) {
 		return false;
 	}

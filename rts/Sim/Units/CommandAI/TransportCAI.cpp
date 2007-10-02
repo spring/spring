@@ -273,6 +273,8 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 {
 	CTransportUnit* transport=(CTransportUnit*)owner;
 
+	if (unit->unitDef->cantBeTransported)
+		return false;
 	if(unit->mass>=100000 || unit->beingBuilt)
 		return false;
 	// don't transport cloaked enemies
@@ -288,6 +290,10 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	if(!unit->unitDef->canhover && !unit->unitDef->floater && !unit->unitDef->canfly && (modInfo->transportGround==0))
 		return false;
 	if(unit->xsize > owner->unitDef->transportSize*2)
+		return false;
+	if(unit->xsize < owner->unitDef->minTransportSize*2)
+		return false;
+	if(unit->mass < owner->unitDef->minTransportMass)
 		return false;
 	if(!transport->CanTransport(unit))
 		return false;
