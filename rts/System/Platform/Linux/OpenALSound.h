@@ -10,6 +10,9 @@
 #include <AL/alc.h>
 #include "SDL_types.h"
 
+#include "OggStream.h"
+
+
 using namespace std;
 class COpenALSound : public CSound
 {
@@ -42,7 +45,10 @@ private:
 	
 	map<string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
-	ALuint *Sources;
+	ALuint* Sources;
+
+	// Ogg-Vorbis audio stream object
+	COggStream oggStream;
 };
 
 

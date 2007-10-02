@@ -17,6 +17,7 @@
 #include "mmgr.h"
 
 
+
 COpenALSound::COpenALSound()
 {
 	Sources = NULL;
@@ -107,10 +108,9 @@ static bool CheckError(const char* msg)
 }
 
 
-// FIXME -- implement OGG Vorbis streaming
-void COpenALSound::PlayStream(const std::string& path, float volume,
-                              const float3* pos, bool loop)
+void COpenALSound::PlayStream(const std::string& path, float volume, const float3* pos, bool loop)
 {
+/*
 	if (volume <= 0.0f) {
 		return;
 	}
@@ -130,7 +130,7 @@ void COpenALSound::PlayStream(const std::string& path, float volume,
 		// The Linux port of OpenAL generates an "Illegal call" error
 		// if we delete a playing source, so we must stop it first. -- tvo
 		alSourceStop(Sources[cur]);
-		alDeleteSources(1,&Sources[cur]);
+		alDeleteSources(1, &Sources[cur]);
 	}
 	Sources[cur++] = source;
 	if (cur == maxSounds) {
@@ -153,7 +153,12 @@ void COpenALSound::PlayStream(const std::string& path, float volume,
 	alSourcei(source, AL_SOURCE_RELATIVE, pos == NULL);
 	alSourcePlay(source);
 	CheckError("COpenALSound::PlaySample");
+*/
+
+	// ignore volume and position for now
+	oggStream.play(path);
 }
+
 
 
 void COpenALSound::SetVolume (float v)
@@ -171,13 +176,13 @@ void COpenALSound::PlaySample(int id, float volume)
 }
 
 
-void COpenALSound::PlaySample(int id,const float3& p,float volume)
+void COpenALSound::PlaySample(int id, const float3& p, float volume)
 {
 	PlaySample(id, p, volume, false);
 }
 
 
-void COpenALSound::PlaySample(int id,const float3& p,float volume,bool relative)
+void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relative)
 {
 	assert(volume >= 0.0f);
 
@@ -215,22 +220,27 @@ void COpenALSound::PlaySample(int id,const float3& p,float volume,bool relative)
 }
 
 
+
 void COpenALSound::Update()
 {
-	for (int a=0;a<maxSounds;a++) {
+	oggStream.update();
+
+	for (int a = 0; a < maxSounds; a++) {
 		if (Sources[a]) {
 			ALint state;
-			alGetSourcei(Sources[a],AL_SOURCE_STATE, &state);
+			alGetSourcei(Sources[a], AL_SOURCE_STATE, &state);
+
 			if (state == AL_STOPPED) {
-				alDeleteSources(1,&Sources[a]);
-				Sources[a]=0;
+				alDeleteSources(1, &Sources[a]);
+				Sources[a] = 0;
 			}
 		}
 	}
-	CheckError("COpenALSound::Update");
 
+	CheckError("COpenALSound::Update");
 	UpdateListener();
 }
+
 
 
 void COpenALSound::UpdateListener()
@@ -241,7 +251,7 @@ void COpenALSound::UpdateListener()
 	float3 pos = camera->pos * posScale;
 	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
 	alListener3f(AL_VELOCITY,0.0f,0.0f,0.0f);
-	ALfloat ListenerOri[] = {camera->forward.x,camera->forward.y,camera->forward.z,camera->up.x,camera->up.y,camera->up.z};
+	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
 	alListenerfv(AL_ORIENTATION,ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);
 	CheckError("COpenALSound::UpdateListener");
