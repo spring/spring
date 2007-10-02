@@ -48,7 +48,9 @@ private:
 	ALuint* Sources;
 
 	// Ogg-Vorbis audio stream object
+	#ifdef OGGSTREAM_PLAYBACK
 	COggStream oggStream;
+	#endif
 };
 
 

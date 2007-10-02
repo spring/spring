@@ -156,7 +156,9 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 */
 
 	// ignore volume and position for now
+	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.play(path);
+	#endif
 }
 
 
@@ -223,7 +225,9 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 
 void COpenALSound::Update()
 {
+	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.update();
+	#endif
 
 	for (int a = 0; a < maxSounds; a++) {
 		if (Sources[a]) {

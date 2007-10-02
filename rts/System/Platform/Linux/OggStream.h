@@ -1,6 +1,8 @@
 #ifndef OGGSTREAM_H
 #define OGGSTREAM_H
 
+#ifdef OGGSTREAM_PLAYBACK
+
 #include <iostream>
 #include <string>
 
@@ -43,5 +45,7 @@ class COggStream {
 		bool stopped;
 };
 
+
+#endif
 
 #endif
