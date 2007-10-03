@@ -269,7 +269,7 @@ void CGameServer::Update()
 		std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty())
-			hostif->SendPlayerChat(gameSetup ? gameSetup->myPlayer : 0, msg);
+			GotChatMessage(msg, gameSetup ? gameSetup->myPlayer : 0);
 	}
 	CheckForGameEnd();
 }
@@ -344,9 +344,6 @@ void CGameServer::ServerReadNet()
 						break;
 
 					case NETMSG_QUIT: {
-						ENTER_MIXED;
-						gs->players[a]->active=false;
-						ENTER_UNSYNCED;
 						serverNet->SendPlayerLeft(a, 1);
 						serverNet->Kill(a);
 						if (hostif)
@@ -361,12 +358,6 @@ void CGameServer::ServerReadNet()
 						if(playerNum!=a && a!=0){
 							SendSystemMsg("Server: Warning got playername msg from %i claiming to be from %i",a,playerNum);
 						} else {
-							ENTER_MIXED;
-							gs->players[playerNum]->playerName=(char*)(&inbuf[3]);
-							gs->players[playerNum]->readyToStart=true;
-							gs->players[playerNum]->active=true;
-							ENTER_UNSYNCED;
-
 							SendSystemMsg("Player %s joined as %i",&inbuf[3],playerNum);
 							serverNet->SendPlayerName(playerNum,gs->players[playerNum]->playerName);
 							if (hostif)
@@ -526,10 +517,6 @@ void CGameServer::ServerReadNet()
 			
 			if (ret == -1)
 			{
-				PUSH_CODE_MODE;		//this could lead to some nasty errors if the other thread switches code mode...
-				ENTER_MIXED;
-				gs->players[a]->active=false;
-				POP_CODE_MODE;
 				serverNet->SendPlayerLeft(a, 0);
 				if (hostif)
 				{
