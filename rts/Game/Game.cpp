@@ -2506,12 +2506,7 @@ bool CGame::ClientReadNet()
 	}
 #endif
 
-	if(!gameServer){
-		unsigned int currentFrame;
-		currentFrame = SDL_GetTicks();
-
-		lastframe=currentFrame;
-	}
+	lastframe = SDL_GetTicks();
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
@@ -2547,9 +2542,11 @@ bool CGame::ClientReadNet()
 						case 2:
 							logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
 							break;
-						default:
+						case 0:
 							logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
 							break;
+						default:
+							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->playerName.c_str(), inbuf[2]);
 					}
 					gs->players[player]->active=false;
 				}
