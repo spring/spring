@@ -5,6 +5,7 @@
 #ifndef __BASIC_SKY_H__
 #define __BASIC_SKY_H__
 
+#include <GL/glew.h>
 #include "BaseSky.h"
 
 class CBasicSky : public CBaseSky
@@ -26,13 +27,13 @@ public:
 	CBasicSky();
 	virtual ~CBasicSky();
 
-	unsigned int skyTex;
-	unsigned int skyDot3Tex;
-	unsigned int cloudDot3Tex;
+	GLuint skyTex;
+	GLuint skyDot3Tex;
+	GLuint cloudDot3Tex;
 	unsigned int displist;
 
-	unsigned int sunTex;
-	unsigned int sunFlareTex;
+	GLuint sunTex;
+	GLuint sunFlareTex;
 	unsigned int sunFlareList;
 
 	int randMatrix[16][32][32];

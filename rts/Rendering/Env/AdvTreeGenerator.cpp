@@ -51,7 +51,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	//bm.Save("baseleaf.bmp");
 	bm.Renormalize(float3(0.22f,0.43f,0.18f)*1.0f);
 //	bm.Save("baseleaf2.bmp");
-	unsigned int leafTex;
+	GLuint leafTex;
 	glGenTextures(1, &leafTex);
 	glBindTexture(GL_TEXTURE_2D, leafTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
