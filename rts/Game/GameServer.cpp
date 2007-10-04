@@ -91,9 +91,8 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	unsigned char buffer[128];
 	entropy.UpdateData(buffer, 128);
 
-#ifndef SYNCIFY		//syncify doesnt really support multithreading...
 	thread = new boost::thread(boost::bind<void>(&CGameServer::UpdateLoop, this));
-#endif
+	
 #ifdef SYNCDEBUG
 	fakeDesync = false;
 #endif
@@ -285,18 +284,6 @@ void CGameServer::ServerReadNet()
 			while (ret > 0)
 			{
 				switch (inbuf[0]){
-
-					case NETMSG_ATTEMPTCONNECT: //handled directly in CNet
-						break;
-
-					case NETMSG_RANDSEED:
-						serverNet->SendRandSeed(inbuf[1]); //forward data
-						break;
-
-					case NETMSG_GAMEID:
-						serverNet->SendGameID(&inbuf[1]); //forward data
-						break;
-
 					case NETMSG_NEWFRAME:
 						gs->players[a]->ping=serverframenum-*(int*)&inbuf[1];
 						break;
@@ -314,10 +301,6 @@ void CGameServer::ServerReadNet()
 							}
 						}
 						break;
-
-					case NETMSG_INTERNAL_SPEED:
-						break;
-
 
 					case NETMSG_USER_SPEED: {
 						unsigned char playerNum = inbuf[1];
@@ -506,9 +489,17 @@ void CGameServer::ServerReadNet()
 						}
 						break;
 #endif
+
+					// CGameServer should never get these messages
+					case NETMSG_RANDSEED:
+					case NETMSG_GAMEID:
+					case NETMSG_INTERNAL_SPEED:
+					case NETMSG_ATTEMPTCONNECT:
+					case NETMSG_MAPNAME:
+						break;
 					default:
 						{
-							logOutput.Print("Unknown net msg in server %d from %d", (int)inbuf[0], a);
+							logOutput.Print("Unhandled net msg (%d) in server from %d", (int)inbuf[0], a);
 						}
 						break;
 				}
@@ -584,7 +575,7 @@ void CGameServer::StartGame()
 
 	// This should probably work now that I fixed a bug (netbuf->inbuf)
 	// in Game.cpp, in the code receiving NETMSG_RANDSEED. --tvo
-	//serverNet->SendRandSeed(gs->randSeed);
+	serverNet->SendRandSeed(gs->randSeed);
 
 	GenerateAndSendGameID();
 
@@ -602,7 +593,7 @@ void CGameServer::StartGame()
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(gs->userSpeedFactor>maxUserSpeed)
 		serverNet->SendUserSpeed(0,maxUserSpeed);
-	if(gs->userSpeedFactor<minUserSpeed)
+	else if(gs->userSpeedFactor<minUserSpeed)
 		serverNet->SendUserSpeed(0,minUserSpeed);
 	
 	serverNet->SendStartPlaying();
