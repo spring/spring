@@ -12,6 +12,8 @@
 #ifndef FBO_H
 #define FBO_H
 
+#include "Rendering/GL/myGL.h"
+
 /**
  * @brief FBO
  *

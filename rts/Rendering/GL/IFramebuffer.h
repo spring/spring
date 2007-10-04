@@ -6,7 +6,6 @@
 #ifndef _IFRAMEBUFFER_H
 #define _IFRAMEBUFFER_H
 
-#include <GL/glew.h>
 enum FramebufferAttachType
 {
 	FBO_ATTACH_COLOR = 1,
