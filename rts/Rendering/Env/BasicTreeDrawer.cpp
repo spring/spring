@@ -370,7 +370,7 @@ void CBasicTreeDrawer::Update()
 
 }
 
-void CBasicTreeDrawer::CreateTreeTex(unsigned int& texnum, unsigned char *data, int xsize, int ysize)
+void CBasicTreeDrawer::CreateTreeTex(GLuint& texnum, unsigned char *data, int xsize, int ysize)
 {
 	glGenTextures(1, &texnum);
 	glBindTexture(GL_TEXTURE_2D, texnum);

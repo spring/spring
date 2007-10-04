@@ -6,6 +6,7 @@
 #define __BASIC_TREE_DRAWER_H__
 
 #include <map>
+#include <GL/glew.h>
 #include "BaseTreeDrawer.h"
 
 #define MAX_TREE_HEIGHT 60
@@ -18,11 +19,11 @@ public:
 
 	void Draw(float treeDistance,bool drawReflection);
 	void Update();
-	void CreateTreeTex(unsigned int& texnum,unsigned char* data,int xsize,int ysize);
+	void CreateTreeTex(GLuint& texnum,unsigned char* data,int xsize,int ysize);
 	void AddTree(int type, float3 pos, float size);
 	void DeleteTree(float3 pos);
 
-	unsigned int treetex;
+	GLuint treetex;
 	int lastListClean;
 
 	struct TreeStruct{

@@ -22,7 +22,7 @@ CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td;
 	if(GLEW_ARB_vertex_program && configHandler.GetInt("3DTrees",1)){
-		int maxTexel;
+		GLint maxTexel;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&maxTexel);
 		if(maxTexel>=4){
 			td=SAFE_NEW CAdvTreeDrawer;

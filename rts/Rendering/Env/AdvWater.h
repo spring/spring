@@ -5,6 +5,7 @@
 #ifndef __ADV_WATER_H__
 #define __ADV_WATER_H__
 
+#include <GL/glew.h>
 #include "BaseWater.h"
 
 class CAdvWater : public CBaseWater
@@ -17,9 +18,9 @@ public:
 	virtual ~CAdvWater();
 	virtual int GetID() const { return 1; }
 
-	unsigned int reflectTexture;
-	unsigned int bumpTexture;
-	unsigned int rawBumpTexture[4];
+	GLuint reflectTexture;
+	GLuint bumpTexture;
+	GLuint rawBumpTexture[4];
 	float3 waterSurfaceColor;
 
 	unsigned int waterFP;

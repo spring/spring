@@ -5,6 +5,7 @@
 #ifndef __BASIC_WATER_H__
 #define __BASIC_WATER_H__
 
+#include <GL/glew.h>
 #include "BaseWater.h"
 
 class CBasicWater : public CBaseWater
@@ -16,7 +17,7 @@ public:
 	virtual ~CBasicWater();
 	int GetID() const { return 0; }
 
-	unsigned int texture;
+	GLuint texture;
 	unsigned int displist;
 	int textureWidth;
 	int textureHeight;

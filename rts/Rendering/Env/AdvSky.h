@@ -5,6 +5,7 @@
 #ifndef __ADV_SKY_H__
 #define __ADV_SKY_H__
 
+#include <GL/glew.h>
 #include "BaseSky.h"
 
 class CAdvSky : public CBaseSky
@@ -27,15 +28,15 @@ public:
 	float3 GetCoord(int x,int y);
 	void CreateDetailTex(void);
 
-	unsigned int skyTex;
-	unsigned int skyDot3Tex;
-	unsigned int cloudDot3Tex;
+	GLuint skyTex;
+	GLuint skyDot3Tex;
+	GLuint cloudDot3Tex;
 	unsigned int displist;
 
-	unsigned int sunTex;
-	unsigned int sunFlareTex;
+	GLuint sunTex;
+	GLuint sunFlareTex;
 	unsigned int sunFlareList;
-	unsigned int cdtex;
+	GLuint cdtex;
 
 	unsigned int cloudFP;
 
@@ -48,7 +49,7 @@ public:
 	bool cloudDown[10];
 	bool drawFlare;
 
-	unsigned int detailTextures[12];
+	GLuint detailTextures[12];
 	bool cloudDetailDown[5];
 
 	unsigned char *cloudThickness2;

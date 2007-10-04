@@ -5,6 +5,9 @@
 #ifndef __ADV_TREE_GENERATOR_H__
 #define __ADV_TREE_GENERATOR_H__
 
+#include <GL/glew.h>
+
+
 class CVertexArray;
 
 #define MAX_TREE_HEIGHT 60
@@ -16,8 +19,8 @@ public:
 	CAdvTreeGenerator();
 	virtual ~CAdvTreeGenerator();
 
-	unsigned int barkTex;
-	unsigned int farTex[2];
+	GLuint barkTex;
+	GLuint farTex[2];
 	unsigned int leafDL;
 	unsigned int pineDL;
 
