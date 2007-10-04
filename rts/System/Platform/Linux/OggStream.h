@@ -12,8 +12,8 @@
 #include <ogg/ogg.h>
 #include <vorbis/vorbisfile.h>
 
-// 128KB buffer
-#define BUFFER_SIZE (4096 * 32)
+// 256KB buffer
+#define BUFFER_SIZE (4096 * 64)
 
 class COggStream {
 	public:
@@ -24,6 +24,7 @@ class COggStream {
 		void display();
 		bool playback();
 		bool playing();
+		void stop();
 		bool updateBuffers();
 		void update();
 

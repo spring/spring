@@ -160,6 +160,13 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	#endif
 }
 
+void COpenALSound::StopStream()
+{
+	#ifdef OGGSTREAM_PLAYBACK
+	oggStream.stop();
+	#endif
+}
+
 
 
 void COpenALSound::SetVolume(float v)

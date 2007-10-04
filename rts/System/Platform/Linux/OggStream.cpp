@@ -13,15 +13,22 @@ COggStream::COggStream() {
 
 // open an Ogg stream from a given file and start playing it
 void COggStream::play(const std::string& path, const float3& pos, float volume) {
+	if (!stopped) {
+		// we're already playing another stream
+		return;
+	}
+
 	int result = 0;
 
 	if (!(oggFile = fopen(path.c_str(), "rb"))) {
 		logOutput.Print("Could not open Ogg file.");
+		return;
 	}
 
 	if ((result = ov_open(oggFile, &oggStream, NULL, 0)) < 0) {
 		fclose(oggFile);
 		logOutput.Print("Could not open Ogg stream (reason: %s).", errorString(result).c_str());
+		return;
 	}
 
 	vorbisInfo = ov_info(&oggStream, -1);
@@ -57,17 +64,19 @@ void COggStream::play(const std::string& path, const float3& pos, float volume) 
 
 // display Ogg info and comments
 void COggStream::display() {
-	// logOutput.Print("version:           %d", vorbisInfo->version);
-	// logOutput.Print("channels:          %d", vorbisInfo->channels);
-	// logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
-	// logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
-	// logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
-	// logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
-	// logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
-	// logOutput.Print("vendor:            %s", vorbisComment->vendor);
+	if (vorbisInfo && vorbisComment) {
+		// logOutput.Print("version:           %d", vorbisInfo->version);
+		// logOutput.Print("channels:          %d", vorbisInfo->channels);
+		// logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
+		// logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
+		// logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
+		// logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
+		// logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
+		// logOutput.Print("vendor:            %s", vorbisComment->vendor);
 
-	for (int i = 0; i < vorbisComment->comments; i++) {
-		logOutput.Print("%s", vorbisComment->user_comments[i]);
+		for (int i = 0; i < vorbisComment->comments; i++) {
+			logOutput.Print("%s", vorbisComment->user_comments[i]);
+		}
 	}
 }
 
@@ -113,6 +122,13 @@ bool COggStream::playing() {
 	return (state == AL_PLAYING);
 }
 
+// stops the currently playing stream
+void COggStream::stop() {
+	if (playing()) {
+		stopped = true;
+		release();
+	}
+}
 
 
 // pop the processed buffers from the queue,
@@ -128,7 +144,7 @@ bool COggStream::updateBuffers() {
 		alSourceUnqueueBuffers(source, 1, &buffer);
 		check();
 
-		// false if we have reached end of stream
+		// false if we've reached end of stream
 		active = stream(buffer);
 
 		alSourceQueueBuffers(source, 1, &buffer);

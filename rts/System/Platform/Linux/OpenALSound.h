@@ -23,6 +23,7 @@ public:
 	void PlaySample(int id,const float3& p,float volume);
 	void PlayStream(const std::string& path, float volume = 1.0f,
 					const float3& pos = ZeroVector, bool loop = false);
+	void StopStream();
 	void SetVolume(float v);
 
 	COpenALSound();

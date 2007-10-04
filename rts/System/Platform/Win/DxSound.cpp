@@ -116,10 +116,18 @@ CDxSound::~CDxSound()
 }
 
 
+
 void CDxSound::PlayStream(const std::string& path, float volume,
-                          const float3& pos, bool loop)
+							const float3& pos, bool loop)
 {
+	// TODO
 }
+
+void CDxSound::StopStream()
+{
+	// TODO
+}
+
 
 
 int CDxSound::InitFile(const string& name)
