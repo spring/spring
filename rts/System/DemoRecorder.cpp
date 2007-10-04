@@ -1,5 +1,6 @@
 #include "DemoRecorder.h"
 
+#include <assert.h>
 #include <time.h>
 #ifdef _WIN32
 #include <io.h> // for _mktemp
