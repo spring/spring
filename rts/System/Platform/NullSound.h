@@ -15,7 +15,8 @@ public:
 	void PlaySample(int id, float volume=1) { return; }
 	void PlaySample(int id,const float3& p,float volume=1) { return; }
 	void PlayStream(const std::string& path, float volume,
-	                const float3& pos, bool loop)  { return; }
+					const float3& pos, bool loop)  { return; }
+	void StopStream() { return; }
 	void SetVolume (float vol) { return; }
 };
 
