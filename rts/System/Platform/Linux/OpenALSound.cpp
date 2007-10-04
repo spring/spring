@@ -108,7 +108,7 @@ static bool CheckError(const char* msg)
 }
 
 
-void COpenALSound::PlayStream(const std::string& path, float volume, const float3* pos, bool loop)
+void COpenALSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
 /*
 	if (volume <= 0.0f) {
@@ -155,15 +155,14 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	CheckError("COpenALSound::PlaySample");
 */
 
-	// ignore volume and position for now
 	#ifdef OGGSTREAM_PLAYBACK
-	oggStream.play(path);
+	oggStream.play(path, pos * posScale, volume);
 	#endif
 }
 
 
 
-void COpenALSound::SetVolume (float v)
+void COpenALSound::SetVolume(float v)
 {
 	globalVolume = v;
 }
