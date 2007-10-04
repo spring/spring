@@ -29,7 +29,7 @@
 #ifndef TERRAIN_BASE_H
 #define TERRAIN_BASE_H
 
-
+#define GLEW_STATIC
 #include <GL/glew.h>
 
 #include "../Frustum.h"

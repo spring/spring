@@ -5,7 +5,7 @@
 #ifndef __ADV_SKY_H__
 #define __ADV_SKY_H__
 
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 #include "BaseSky.h"
 
 class CAdvSky : public CBaseSky

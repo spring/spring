@@ -5,7 +5,7 @@
 #ifndef __ADV_WATER_H__
 #define __ADV_WATER_H__
 
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 #include "BaseWater.h"
 
 class CAdvWater : public CBaseWater

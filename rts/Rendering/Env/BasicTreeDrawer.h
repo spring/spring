@@ -6,8 +6,8 @@
 #define __BASIC_TREE_DRAWER_H__
 
 #include <map>
-#include <GL/glew.h>
 #include "BaseTreeDrawer.h"
+#include "Rendering/GL/myGL.h"
 
 #define MAX_TREE_HEIGHT 60
 

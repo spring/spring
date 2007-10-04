@@ -5,8 +5,7 @@
 #ifndef __ADV_TREE_GENERATOR_H__
 #define __ADV_TREE_GENERATOR_H__
 
-#include <GL/glew.h>
-
+#include "Rendering/GL/myGL.h"
 
 class CVertexArray;
 
