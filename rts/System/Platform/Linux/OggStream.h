@@ -3,6 +3,8 @@
 
 #ifdef OGGSTREAM_PLAYBACK
 
+#include "StdAfx.h"
+
 #include <iostream>
 #include <string>
 
@@ -17,8 +19,7 @@ class COggStream {
 	public:
 		COggStream();
 
-		void play(const std::string& path);
-		void open(const std::string& path);
+		void play(const std::string& path, const float3& pos, float volume);
 		void release();
 		void display();
 		bool playback();

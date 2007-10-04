@@ -11,21 +11,8 @@ COggStream::COggStream() {
 	stopped = true;
 }
 
-// start playing an Ogg-Vorbis audio file
-void COggStream::play(const std::string& path) {
-	open(path);
-	display();
-
-	if (!playback()) {
-		release();
-	}
-
-	stopped = false;
-}
-
-
-// open an Ogg stream from a given file
-void COggStream::open(const std::string& path) {
+// open an Ogg stream from a given file and start playing it
+void COggStream::play(const std::string& path, const float3& pos, float volume) {
 	int result = 0;
 
 	if (!(oggFile = fopen(path.c_str(), "rb"))) {
@@ -51,11 +38,20 @@ void COggStream::open(const std::string& path) {
 	alGenSources(1, &source);
 	check();
 
-	alSource3f(source, AL_POSITION,        0.0, 0.0, 0.0);
-	alSource3f(source, AL_VELOCITY,        0.0, 0.0, 0.0);
-	alSource3f(source, AL_DIRECTION,       0.0, 0.0, 0.0);
-	alSourcef (source, AL_ROLLOFF_FACTOR,  0.0          );
-	alSourcei (source, AL_SOURCE_RELATIVE, AL_TRUE      );
+	alSource3f(source, AL_POSITION,        pos.x, pos.y, pos.z);
+	alSource3f(source, AL_VELOCITY,        0.0f,  0.0f,  0.0f );
+	alSource3f(source, AL_DIRECTION,       0.0f,  0.0f,  0.0f );
+	alSourcef (source, AL_ROLLOFF_FACTOR,  0.0f               );
+	alSourcef (source, AL_GAIN,            volume             );
+	alSourcei( source, AL_SOURCE_RELATIVE, pos != ZeroVector  );
+
+	display();
+
+	if (!playback()) {
+		release();
+	} else {
+		stopped = false;
+	}
 }
 
 

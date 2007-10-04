@@ -22,7 +22,7 @@ public:
 	void PlaySample(int id, float volume);
 	void PlaySample(int id,const float3& p,float volume);
 	void PlayStream(const std::string& path, float volume = 1.0f,
-	                const float3* pos = NULL, bool loop = false);
+					const float3& pos = ZeroVector, bool loop = false);
 	void SetVolume(float v);
 
 	COpenALSound();
@@ -48,6 +48,7 @@ private:
 	ALuint* Sources;
 
 	// Ogg-Vorbis audio stream object
+	// TODO: make this respect MAX_SOUNDS, etc
 	#ifdef OGGSTREAM_PLAYBACK
 	COggStream oggStream;
 	#endif
