@@ -13,9 +13,6 @@ class CEconomyManager {
 
 	private:
 		void CreateResourceTask();
-		// const UnitDef* GetUnitByScore(int category);
-		// float GetScore(const UnitDef* unit);
-
 		AIClasses* ai;
 };
 

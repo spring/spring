@@ -320,6 +320,16 @@ void CUnitTable::UpdateChokePointArray() {
 
 
 float CUnitTable::GetScore(const UnitDef* udef) {
+	int m = (ai->uh->AllUnitsByType[udef->id])->size();
+	int n = udef->maxThisUnit;
+
+	if (m >= n) {
+		// if we've hit the build-limit for this
+		// type of unit, make sure GetUnitByScore()
+		// won't pick it for construction anyway
+		return 0.0f;
+	}
+
 	float Cost = ((udef->metalCost * METAL2ENERGY) + udef->energyCost) + 0.1f;
 	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
 	float Hitpoints = udef->health;
@@ -479,57 +489,57 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 
 // operates in terms of GetScore()
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
-	vector<int>* templist = 0;
+	vector<int>* tempList = 0;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
 	const UnitDef* tempUnitDef = 0;
 	int side = GetSide(builderUnitID);
-	float tempscore = 0.0f;
-	float bestscore = 0.0f;
+	float tempScore = 0.0f;
+	float bestScore = 0.0f;
 
 	switch (category) {
 		case CAT_ENERGY:
-			templist = ground_energy;
+			tempList = ground_energy;
 			break;
 		case CAT_MEX:
-			templist = metal_extractors;
+			tempList = metal_extractors;
 			break;
 		case CAT_MMAKER:
-			templist = metal_makers;
+			tempList = metal_makers;
 			break;
 		case CAT_G_ATTACK:
-			templist = ground_attackers;
+			tempList = ground_attackers;
 			break;
 		case CAT_DEFENCE:
-			templist = ground_defences;
+			tempList = ground_defences;
 			break;
 		case CAT_BUILDER:
-			templist = ground_builders;
+			tempList = ground_builders;
 			break;
 		case CAT_FACTORY:
-			templist = ground_factories;
+			tempList = ground_factories;
 			break;
 		case CAT_MSTOR:
-			templist = metal_storages;
+			tempList = metal_storages;
 			break;
 		case CAT_ESTOR:
-			templist = energy_storages;
+			tempList = energy_storages;
 			break;
 		case CAT_NUKE:
-			templist = nuke_silos;
+			tempList = nuke_silos;
 			break;
 	}
 
-	// iterate over all units for <side> in templist (eg. Core ground_defences)
-	for (unsigned int i = 0; i != templist[side].size(); i++) {
-		int tempUnitDefID = templist[side][i];
+	// iterate over all units for <side> in tempList (eg. Core ground_defences)
+	for (unsigned int i = 0; i != tempList[side].size(); i++) {
+		int tempUnitDefID = tempList[side][i];
 
 		// if our builder can build the i-th unit
 		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
 			// get the unit's heuristic score (based on current income)
-			tempscore = GetScore(unittypearray[tempUnitDefID].def);
+			tempScore = GetScore(unittypearray[tempUnitDefID].def);
 
-			if (tempscore > bestscore) {
-				bestscore = tempscore;
+			if (tempScore > bestScore) {
+				bestScore = tempScore;
 				tempUnitDef = unittypearray[tempUnitDefID].def;
 			}
 		}
