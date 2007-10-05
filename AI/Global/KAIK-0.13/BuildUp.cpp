@@ -89,10 +89,6 @@ void CBuildUp::Buildup(int frame) {
 		const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
 		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builder, CAT_FACTORY);
 
-		// KLOOTNOTE TODO: check unit-limit before building something
-		// int factoriesOfTypeDef = ((ai->uh)->AllUnitsByType[factoryDef->id])->size();
-		// int factoriesOfTypeMax = factoryDef->maxThisUnit;
-
 		// if this builder cannot build any factories, pretend it's feasible
 		bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
 		bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
