@@ -549,7 +549,7 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	// if builder has no build-option matching this category)
 	// then return NULL instead of first option on build menu
 	// (to prevent radar farms and other bizarro side-effects)
-	return ((bestscore > 0.0f)? tempUnitDef: NULL);
+	return ((bestScore > 0.0f)? tempUnitDef: NULL);
 }
 
 
