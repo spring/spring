@@ -588,7 +588,3 @@ float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);
 }
-
-
-FeatureDef::~FeatureDef() {
-}

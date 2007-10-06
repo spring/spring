@@ -76,7 +76,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	{
 		hostif = 0;
 	}
-	
+
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
@@ -86,13 +86,13 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 		maxUserSpeed=3;
 		minUserSpeed=0.3f;
 	}
-	
+
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
 	unsigned char buffer[128];
 	entropy.UpdateData(buffer, 128);
 
-	thread = new boost::thread(boost::bind<void>(&CGameServer::UpdateLoop, this));
-	
+	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
+
 #ifdef SYNCDEBUG
 	fakeDesync = false;
 #endif
@@ -256,7 +256,7 @@ void CGameServer::Update()
 	}
 
 	ServerReadNet();
-	
+
 	if (serverframenum > 0 && !serverNet->IsDemoServer())
 	{
 		CreateNewFrame(true);
@@ -505,7 +505,7 @@ void CGameServer::ServerReadNet()
 				}
 				ret = serverNet->GetData(inbuf, a);
 			}
-			
+
 			if (ret == -1)
 			{
 				serverNet->SendPlayerLeft(a, 0);
@@ -589,13 +589,13 @@ void CGameServer::StartGame()
 			serverNet->SendStartPos(a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
-	
+
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(gs->userSpeedFactor>maxUserSpeed)
 		serverNet->SendUserSpeed(0,maxUserSpeed);
 	else if(gs->userSpeedFactor<minUserSpeed)
 		serverNet->SendUserSpeed(0,minUserSpeed);
-	
+
 	serverNet->SendStartPlaying();
 	if (hostif)
 	{
@@ -657,7 +657,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		gameEndTime+=timeElapsed;
 	// logOutput.Print("float value is %f",timeElapsed);
 
-#ifdef DEBUG	
+#ifdef DEBUG
 	if(gameClientUpdated){
 		gameClientUpdated=false;
 		maxTimeLeft=2;
