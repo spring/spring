@@ -94,11 +94,9 @@ unsigned CNet::SetMTU(unsigned mtu)
 	return mtu;
 }
 
-int CNet::InitServer(unsigned portnum)
+void CNet::InitServer(unsigned portnum)
 {
 	udplistener.reset(new UDPListener(portnum, this));
-
-	return 0;
 }
 
 unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)

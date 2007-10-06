@@ -60,7 +60,7 @@ CDemoReader::CDemoReader(const std::string& filename)
 
 		   } else {
 
-			   logOutput.Print("Demo file does not contain fileHeader data");
+			   logOutput.Print("Demo file does not contain GameSetup data");
 				// Didn't get a CGameSetup script
 				// FIXME: duplicated in Main.cpp
 			   const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");

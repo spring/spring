@@ -13,6 +13,7 @@
 #include "GameSetup.h"
 #include "System/StdAfx.h"
 #include "System/NetProtocol.h"
+#include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Sync/Syncify.h"
 #include "LogOutput.h"
@@ -44,17 +45,19 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	gameClientUpdated=false;
 #endif
 	maxTimeLeft=2;
+	play = 0;
 
 	serverNet = new CNetProtocol();
 
+	serverNet->InitServer(port);
 	if (!demoName.empty())
 	{
 		logOutput << "Initializing demo server...\n";
-		serverNet->InitServer(port,demoName);
+		play = new CDemoReader(demoName);
+		gameLoading = false;
 	}
 	else // no demo, so set map and mod to send it to clients
 	{
-		serverNet->InitServer(port);
 		serverNet->SendMapName(archiveScanner->GetMapChecksum(mapName), mapName);
 		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
 		serverNet->SendModName(archiveScanner->GetModChecksum(modArchive), modName);
@@ -109,6 +112,9 @@ CGameServer::~CGameServer()
 {
 	quitServer=true;
 	thread->join();
+	if (play)
+		delete play;
+	
 	delete serverNet;
 	serverNet=0;
 	if (hostif)
@@ -214,7 +220,7 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if(serverNet->IsDemoServer())
+	if(play)
 		serverframenum=gs->frameNum;
 
 	if(lastPlayerInfo<gu->gameTime-2){
@@ -255,9 +261,20 @@ void CGameServer::Update()
 		}
 	}
 
+	// when hosting a demo, read from file and broadcast data
+	if (play != 0) {
+		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
+		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
+		
+		while (length > 0) {
+			serverNet->RawSend(demobuffer, length);
+			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
+		}
+	}
+	
 	ServerReadNet();
 
-	if (serverframenum > 0 && !serverNet->IsDemoServer())
+	if (serverframenum > 0 && !play)
 	{
 		CreateNewFrame(true);
 	}
@@ -383,7 +400,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[3]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -392,7 +409,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[3]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -404,7 +421,7 @@ void CGameServer::ServerReadNet()
 						else if (gs->noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
 						}
-						else if(!serverNet->IsDemoServer()) {
+						else if(!play) {
 							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -416,7 +433,7 @@ void CGameServer::ServerReadNet()
 						else if (gs->noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
 						}
-						else if(!serverNet->IsDemoServer()) {
+						else if(!play) {
 							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -426,7 +443,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!serverNet->IsDemoServer()){
+							if(!play){
 								int frameNum = *(int*)&inbuf[2];
 								if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 									syncResponse[a][frameNum] = *(unsigned*)&inbuf[6];
@@ -444,7 +461,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]));
 						}
 						break;
@@ -453,7 +470,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=gs->players[a]->team){
 							SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[1]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->SendSetShare(inbuf[1], *((float*)&inbuf[2]), *((float*)&inbuf[6]));
 						}
 						break;
@@ -475,7 +492,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->SendDirectControl(inbuf[1]);
 						}
 						break;
@@ -484,7 +501,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!serverNet->IsDemoServer())
+							if(!play)
 								serverNet->SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5]));
 						}
 						break;
@@ -573,8 +590,6 @@ void CGameServer::StartGame()
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->Listening(false);
 
-	// This should probably work now that I fixed a bug (netbuf->inbuf)
-	// in Game.cpp, in the code receiving NETMSG_RANDSEED. --tvo
 	serverNet->SendRandSeed(gs->randSeed);
 
 	GenerateAndSendGameID();
@@ -787,13 +802,13 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
 		if (gs->userSpeedFactor > maxUserSpeed) {
-			gs->userSpeedFactor = maxUserSpeed;
+			serverNet->SendUserSpeed(player, maxUserSpeed);
 		}
 	}
 	else if ((msg.find(".setminspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
 		minUserSpeed = atof(msg.substr(12).c_str());
 		if (gs->userSpeedFactor < minUserSpeed) {
-			gs->userSpeedFactor = minUserSpeed;
+			serverNet->SendUserSpeed(player, minUserSpeed);
 		}
 	}
 	else

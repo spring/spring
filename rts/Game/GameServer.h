@@ -12,6 +12,7 @@
 #include "FileSystem/CRC.h"
 
 class CNetProtocol;
+class CDemoReader;
 class AutohostInterface;
 
 /**
@@ -77,6 +78,8 @@ private:
 
 	/// Class for network communication
 	CNetProtocol* serverNet;
+	
+	CDemoReader* play;
 	
 	/// Inform 3. party programms about events
 	AutohostInterface* hostif;
