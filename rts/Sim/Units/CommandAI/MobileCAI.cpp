@@ -87,9 +87,10 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	lastPC(-1),
 	cancelDistance(1024),
 	lastCloseInTry(-1),
-	slowGuard(false)
+	slowGuard(false),
+	moveDir(gs->randFloat() > 0.5),
+	lastUserGoal(owner->pos)
 {
-	lastUserGoal=owner->pos;
 	CommandDescription c;
 
 	c.id=CMD_LOAD_ONTO;
@@ -162,7 +163,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 		c.params.push_back("LandAt 30");
 		c.params.push_back("LandAt 50");
 		c.params.push_back("LandAt 80");
-		c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
+		c.tooltip=
+			"Repair level: Sets at which health level an aircraft will try to find a repair pad";
 		c.hotkey="";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
@@ -276,7 +278,8 @@ void CMobileCAI::SlowUpdate()
 				owner->userAttackGround=false;
 				owner->userTarget=0;
 				inCommand=false;
-				CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,owner->unitDef->minAirBasePower);
+				CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,
+						owner->unitDef->minAirBasePower);
 				if(lp){
 					myPlane->AddDeathDependence(lp);
 					myPlane->reservedPad=lp;
@@ -284,7 +287,8 @@ void CMobileCAI::SlowUpdate()
 					myPlane->oldGoalPos=myPlane->goalPos;
 					return;
 				}
-				float3 landingPos = airBaseHandler->FindClosestAirBasePos(owner,owner->unitDef->minAirBasePower);
+				float3 landingPos = airBaseHandler->FindClosestAirBasePos(owner,
+						owner->unitDef->minAirBasePower);
 				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
 					inCommand=false;
 					StopMove();
@@ -297,7 +301,8 @@ void CMobileCAI::SlowUpdate()
 			}
 			if(owner->currentFuel < myPlane->repairBelowHealth*owner->unitDef->maxFuel){
 				if(commandQue.empty() || commandQue.front().id==CMD_PATROL){
-					CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,owner->unitDef->minAirBasePower);
+					CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,
+							owner->unitDef->minAirBasePower);
 					if(lp){
 						StopMove();
 						owner->userAttackGround=false;
@@ -707,6 +712,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			edgeFactor = fabs(w->targetBorder);
 		}
 
+		float3 diff = owner->pos - orderTarget->pos;
+		
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
 		// also make sure that we're not locked in close-in/in-range state loop
@@ -717,25 +724,41 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// FIXME kill magic frame number
 			if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
 				owner->moveType->KeepPointingTo(orderTarget,
-					min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
+					min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f),
+					true);
 			}
 		}
-
-		// if (((first weapon range minus first weapon length greater than distance to target
-		// or our movetype has type TAAirMoveType) and length of 2D vector from us to target
+		// if ((our movetype has type TAAirMoveType and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
 		// less than 1024) then we are close enough
-		else if (((b3
-				|| dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				&& (owner->pos - orderTarget->pos).Length2D() < (owner->maxRange * 0.9f))
-				|| (owner->pos - orderTarget->pos).SqLength2D() < 1024) {
+		else if ((dynamic_cast<CTAAirMoveType*>(owner->moveType)
+				&& diff.Length2D() < (owner->maxRange * 0.9f))
+				|| diff.SqLength2D() < 1024)
+		{
 			StopMove();
 			owner->moveType->KeepPointingTo(orderTarget,
 				min((float) (owner->losRadius * SQUARE_SIZE * 2), owner->maxRange * 0.9f), true);
 		}
 
-		// if 2D distance of (target position plus attacker error vector times 128) to goal position
-		// greater than (10 plus 20% of 2D distance between attacker and target) then we need to close
+		// if (((first weapon range minus first weapon length greater than distance to target)
+		// and length of 2D vector from us to target less than 90% of our maximum range)
+		// then we are close enough, but need to move sideways to get a shot.
+		else if (b3 && diff.Length2D() < (owner->maxRange * 0.9f))
+		{
+			moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
+			float sin = moveDir ? 3.0/5 : -3.0/5;
+			float cos = 4.0/5;
+			float3 goalDiff(0, 0, 0);
+			goalDiff.x = diff.dot(float3(cos, 0, -sin));
+			goalDiff.z = diff.dot(float3(sin, 0, cos));
+			goalDiff *= (diff.Length2D() < (owner->maxRange * 0.3f)) ? 1/cos : cos;
+			goalDiff += orderTarget->pos;
+			SetGoal(goalDiff, owner->pos);
+		}
+
+		// if 2D distance of (target position plus attacker error vector times 128)
+		// to goal position greater than
+		// (10 plus 20% of 2D distance between attacker and target) then we need to close
 		// in on target more
 		else if ((orderTarget->pos + owner->posErrorVector * 128).distance2D(goalPos)
 				> (10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
@@ -951,8 +974,10 @@ void CMobileCAI::FinishCommand(void)
 
 void CMobileCAI::IdleCheck(void)
 {
-	if(owner->unitDef->canAttack && owner->moveState && owner->fireState && !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
-		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
+	if(owner->unitDef->canAttack && owner->moveState && owner->fireState
+			&& !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
+		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
+				&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
 			float3 apos=owner->lastAttacker->pos;
 			float dist=apos.distance2D(owner->pos);
 			if(dist<owner->maxRange+200*owner->moveState*owner->moveState){
@@ -970,8 +995,9 @@ void CMobileCAI::IdleCheck(void)
 	    (gs->frameNum >= lastIdleCheck+10) && owner->moveState &&
 	    owner->fireState>=2 && !owner->weapons.empty() &&
 	    (!owner->haveTarget || owner->weapons[0]->onlyForward)) {
-		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,owner->maxRange+150*owner->moveState*owner->moveState,owner->allyteam);
-		if(u && !(owner->unitDef->noChaseCategory & u->category) && !u->neutral){
+		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,
+				owner->maxRange + 150 * owner->moveState * owner->moveState, owner->allyteam);
+		if(u && !(owner->unitDef->noChaseCategory & u->category) && !u->neutral) {
 			Command c;
 			c.id=CMD_ATTACK;
 			c.options=INTERNAL_ORDER;
@@ -987,9 +1013,11 @@ void CMobileCAI::IdleCheck(void)
 	lastIdleCheck = gs->frameNum;
 	if (((owner->pos - lastUserGoal).SqLength2D() > 10000.0f) &&
 	    !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		//note that this is not internal order so that we dont keep generating
+		//new orders if we cant get to that pos
 		Command c;
 		c.id=CMD_MOVE;
-		c.options=0;		//note that this is not internal order so that we dont keep generating new orders if we cant get to that pos
+		c.options=0;
 		c.params.push_back(lastUserGoal.x);
 		c.params.push_back(lastUserGoal.y);
 		c.params.push_back(lastUserGoal.z);
