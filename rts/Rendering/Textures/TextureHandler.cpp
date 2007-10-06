@@ -4,21 +4,23 @@
 
 #include "StdAfx.h"
 #include "TextureHandler.h"
-#include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header file for the gLu32 library
-#include "LogOutput.h"
-#include <vector>
-#include "Rendering/Textures/Bitmap.h"
-#include "TAPalette.h"
-#include "FileSystem/FileHandler.h"
+
 #include <algorithm>
 #include <cctype>
-#include "Platform/ConfigHandler.h"
 #include <set>
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/ShadowHandler.h"
-#include "Platform/errorhandler.h"
+#include <sstream>
+
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
 #include "Game/Team.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/errorhandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "TAPalette.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -29,7 +31,7 @@ CTextureHandler* texturehandler=0;
 
 struct TexFile {
 	CBitmap tex;
-	string name;
+	std::string name;
 };
 
 static int CompareTatex2( const void *arg1, const void *arg2 ){
@@ -43,52 +45,49 @@ CTextureHandler::CTextureHandler()
 	PrintLoadMsg("Creating unit textures");
 
 	CFileHandler file("unittextures/tatex/teamtex.txt");
+	CSimpleParser parser(file);
 
-	set<string> teamTexes;
-	while(!file.Eof())
-	{
-		string s = StringToLower(GetLine(file));
-		char slask;
-		teamTexes.insert(s);
-		file.Read(&slask, 1);
+	std::set<std::string> teamTexes;
+	while(!file.Eof()) {
+		teamTexes.insert(StringToLower(parser.GetCleanLine()));
 	}
 
 	TexFile* texfiles[10000];
 
-	int numfiles=0;
-	int totalSize=0;
+	int numfiles = 0;
+	int totalSize = 0;
 
-	std::vector<std::string> files2=CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
-	std::vector<std::string> files=CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
+	std::vector<std::string> files2 = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	std::vector<std::string> files = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 
-	for(std::vector<string>::iterator fi=files2.begin();fi!=files2.end();++fi){
+	for(std::vector<std::string>::iterator fi = files2.begin(); fi != files2.end(); ++fi) {
 		files.push_back(*fi);
 	}
 
 	set<string> usedNames;
 
-	for(vector<string>::iterator fi=files.begin();fi!=files.end();++fi){
-		string s=std::string(*fi);
+	for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
+		std::string s = std::string(*fi);
+		std::string s2 = s;
 
-		string s2=s;
-		s2.erase(0,s2.find_last_of('/')+1);
-		s2 = StringToLower(s2.substr(0,s2.find_last_of('.')));
+		s2.erase(0, s2.find_last_of('/') + 1);
+		s2 = StringToLower(s2.substr(0, s2.find_last_of('.')));
 
-		if(usedNames.find(s2)!=usedNames.end())		//avoid duplicate names and give tga images priority
+		if(usedNames.find(s2)!=usedNames.end()) //avoid duplicate names and give tga images priority
 			continue;
 		usedNames.insert(s2);
 
-		if(teamTexes.find(s2)==teamTexes.end()){
-			TexFile* tex=SAFE_NEW TexFile;
+		if(teamTexes.find(s2) == teamTexes.end()){
+			TexFile* tex = SAFE_NEW TexFile;
 			tex->tex.Load(s,30);
-			tex->name=s2;
-			texfiles[numfiles++]=tex;
-			totalSize+=tex->tex.xsize*tex->tex.ysize;
+			tex->name = s2;
+			texfiles[numfiles++] = tex;
+			totalSize += tex->tex.xsize * tex->tex.ysize;
 		} else {
-			for(int a=0;a<gs->activeTeams;++a){
-				TexFile* tex=CreateTeamTex(s,s2,a);
-				texfiles[numfiles++]=tex;
-				totalSize+=tex->tex.xsize*tex->tex.ysize;
+			for(int a = 0; a < gs->activeTeams; ++a){
+				TexFile* tex = CreateTeamTex(s, s2, a);
+				texfiles[numfiles++] = tex;
+				totalSize += tex->tex.xsize * tex->tex.ysize;
 			}
 		}
 	}
@@ -243,7 +242,7 @@ CTextureHandler::~CTextureHandler()
 	glDeleteTextures (1, &(globalTex));
 }
 
-CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name,int team,int teamTex)
+CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(std::string name, int team, int teamTex)
 {
 	if(teamTex){
 		char c[50];
@@ -261,7 +260,7 @@ CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name,int team
 	return textures[" "];
 }
 
-CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(string name)
+CTextureHandler::UnitTexture* CTextureHandler::GetTATexture(const std::string& name)
 {
 	std::map<std::string,UnitTexture*>::iterator tti;
 	if((tti=textures.find(name))!=textures.end()){
@@ -277,7 +276,7 @@ void CTextureHandler::SetTATexture()
 	glBindTexture(GL_TEXTURE_2D, globalTex);
 }
 
-int CTextureHandler::LoadS3OTexture(string tex1, string tex2)
+int CTextureHandler::LoadS3OTexture(const std::string& tex1, const std::string& tex2)
 {
 	string totalName=tex1+tex2;
 
@@ -330,21 +329,7 @@ void CTextureHandler::SetS3oTexture(int num)
 	}
 }
 
-string CTextureHandler::GetLine(CFileHandler& fh)
-{
-	string s="";
-	char a;
-	fh.Read(&a,1);
-	while(a!='\xd' && a!='\xa'){
-		s+=a;
-		fh.Read(&a,1);
-		if(fh.Eof())
-			break;
-	}
-	return s;
-}
-
-TexFile* CTextureHandler::CreateTeamTex(string name, string name2,int team)
+TexFile* CTextureHandler::CreateTeamTex(const std::string& name, const std::string& name2, int team)
 {
 	TexFile* tex=SAFE_NEW TexFile;
 	tex->tex.Load(name,30);

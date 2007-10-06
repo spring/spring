@@ -17,12 +17,12 @@
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Game/UI/SimpleParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 
 using namespace std;
@@ -391,7 +391,7 @@ static int CategorySetFromString(lua_State* L, const void* data)
 {
 	const string& str = *((const string*)data);
 	const string lower = StringToLower(str);
-	const vector<string> cats = SimpleParser::Tokenize(lower, 0);
+	const vector<string> cats = CSimpleParser::Tokenize(lower, 0);
 	return BuildCategorySet(L, cats);
 }
 
@@ -468,7 +468,7 @@ static bool InitParamMap()
 	ADD_FLOAT("reload",     wd.reload);
 	ADD_FLOAT("beamtime",   wd.beamtime);
 	ADD_BOOL("beamburst",   wd.beamburst);
-	
+
 	ADD_BOOL("waterbounce", wd.waterBounce);
 	ADD_BOOL("groundbounce", wd.groundBounce);
 	ADD_FLOAT("groundslip", wd.bounceSlip);

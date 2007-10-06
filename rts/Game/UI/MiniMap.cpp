@@ -34,7 +34,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "SimpleParser.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -52,6 +51,7 @@
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Sound.h"
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
@@ -311,9 +311,9 @@ void CMiniMap::SetSlaveMode(bool newMode)
 
 void CMiniMap::ConfigCommand(const std::string& line)
 {
-  const vector<string> words = SimpleParser::Tokenize(line, 1);
-  if (words.empty()) {
-  	return;
+	const vector<string> words = CSimpleParser::Tokenize(line, 1);
+	if (words.empty()) {
+		return;
 	}
 	const string command = StringToLower(words[0]);
 

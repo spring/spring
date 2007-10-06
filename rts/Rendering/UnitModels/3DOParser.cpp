@@ -12,6 +12,7 @@
 #include "FileSystem/VFSHandler.h"
 #include <set>
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
 #include "Rendering/FartextureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
@@ -121,13 +122,10 @@ C3DOParser::C3DOParser()
 	scaleFactor=400000.0f;
 
 	CFileHandler file("unittextures/tatex/teamtex.txt");
+	CSimpleParser parser(file);
 
-	while(!file.Eof())
-	{
-		string s = StringToLower(GetLine(file));
-		char slask;
-		teamtex.insert(s);
-		file.Read(&slask, 1);
+	while(!file.Eof()) {
+		teamtex.insert(StringToLower(parser.GetLine()));
 	}
 }
 
@@ -596,21 +594,6 @@ float C3DOParser::FindHeight(S3DO* object,float3 offset)
 	}
 	return height;
 }
-
-string C3DOParser::GetLine(CFileHandler& fh)
-{
-	string s="";
-	char a;
-	fh.Read(&a,1);
-	while(a!='\xd' && a!='\xa'){
-		s+=a;
-		fh.Read(&a,1);
-		if(fh.Eof())
-			break;
-	}
-	return s;
-}
-
 
 void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum)
 {

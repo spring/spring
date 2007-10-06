@@ -1,9 +1,9 @@
 #include "StdAfx.h"
 #include "MouseCursor.h"
 #include "CommandColors.h"
-#include "InfoConsole.h"
-#include "SimpleParser.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "InfoConsole.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "myMath.h"
@@ -22,7 +22,7 @@ CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 		delete c;
 		return NULL;
 	}
-	return c;	
+	return c;
 }
 
 
@@ -34,28 +34,28 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	if (!BuildFromSpecFile(name)) {
 		BuildFromFileNames(name, 123456);
 	}
-	
+
 	if (frames.size() <= 0) {
 		return;
 	}
-	
+
 	animTime = 0.0f;
 	animPeriod = 0.0f;
 	currentFrame = 0;
 	xmaxsize = 0;
 	ymaxsize = 0;
-	
+
 	for (int f = 0; f < (int)frames.size(); f++) {
 		FrameData& frame = frames[f];
 		frame.startTime = animPeriod;
 		animPeriod += frame.length;
 		frame.endTime = animPeriod;
-		xmaxsize = max(frame.image.xOrigSize, xmaxsize); 
-		ymaxsize = max(frame.image.yOrigSize, ymaxsize); 
+		xmaxsize = max(frame.image.xOrigSize, xmaxsize);
+		ymaxsize = max(frame.image.yOrigSize, ymaxsize);
 	}
 
-	if (hotSpot == TopLeft) {	
-		xofs = 0; 
+	if (hotSpot == TopLeft) {
+		xofs = 0;
 		yofs = 0;
 	} else {
 		xofs = xmaxsize / 2;
@@ -81,18 +81,16 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 		return false;
 	}
 
-	SimpleParser::Init();
-
+	CSimpleParser parser(specFH);
 	int lastFrame = 123456;
-
 	map<string, int> imageIndexMap;
-	
+
 	while (true) {
-		const string line = SimpleParser::GetCleanLine(specFH);
+		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
-		const vector<string> words = SimpleParser::Tokenize(line, 2);
+		const vector<string> words = parser.Tokenize(line, 2);
 		const string command = StringToLower(words[0]);
 
 		if ((command == "frame") && (words.size() >= 2)) {
@@ -149,7 +147,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		logOutput.Print("CMouseCursor: Long name %s", name.c_str());
 		return false;
 	}
-	
+
 	// find the image file type to use
 	const char* ext = "";
 	const char* exts[] = { "png", "tga", "bmp" };
@@ -178,7 +176,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		frames.push_back(frame);
 	}
 
-	return true;	
+	return true;
 }
 
 
@@ -198,7 +196,7 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	b.ReverseYAxis();
 
 	CBitmap* final = getAlignedBitmap(b);
-	
+
 	// coded bmp transparency mask
 	if ((name.size() >= 3) &&
 	    (StringToLower(name.substr(name.size() - 3)) == "bmp")) {
@@ -258,7 +256,7 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 		for(int x=0;x<bm.xsize;++x){
 			if ((bm.mem[(y*bm.xsize+x)*4 + 0] == r) &&
 			    (bm.mem[(y*bm.xsize+x)*4 + 1] == g) &&
-			    (bm.mem[(y*bm.xsize+x)*4 + 2] == b)) 
+			    (bm.mem[(y*bm.xsize+x)*4 + 2] == b))
 			{
 				bm.mem[(y*bm.xsize+x)*4 + 3] = 0;
 			}
@@ -270,8 +268,8 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 void CMouseCursor::Draw(int x, int y, float scale)
 {
 	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);  
-	const int ys = int(float(frame.image.yAlignedSize) * scale);  
+	const int xs = int(float(frame.image.xAlignedSize) * scale);
+	const int ys = int(float(frame.image.yAlignedSize) * scale);
 
 	//Center on hotspot
 	const int xp = int(float(x) - (float(xofs) * scale));
@@ -303,8 +301,8 @@ void CMouseCursor::DrawQuad(int x, int y)
 	const float scale = cmdColors.QueueIconScale();
 
 	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);  
-	const int ys = int(float(frame.image.yAlignedSize) * scale);                      
+	const int xs = int(float(frame.image.xAlignedSize) * scale);
+	const int ys = int(float(frame.image.yAlignedSize) * scale);
 
 	//Center on hotspot
 	const int xp = int(float(x) - (float(xofs) * scale));
