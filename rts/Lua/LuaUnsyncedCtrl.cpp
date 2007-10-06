@@ -54,6 +54,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Echo);
 
 	REGISTER_LUA_CFUNC(PlaySoundFile);
+	REGISTER_LUA_CFUNC(PlaySoundStream);
+	REGISTER_LUA_CFUNC(StopSoundStream);
 
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraTarget);
@@ -305,10 +307,10 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		if (args >= 2) {
 			volume = (float)lua_tonumber(L, 2);
 		}
+
 		if (args < 5) {
 			sound->PlaySample(soundID, volume);
-		}
-		else {
+		} else {
 			const float3 pos((float)lua_tonumber(L, 3),
 			                 (float)lua_tonumber(L, 4),
 			                 (float)lua_tonumber(L, 5));
@@ -325,6 +327,40 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		return 0;
 	}
 }
+
+
+int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
+{
+	const int args = lua_gettop(L);
+
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to PlaySoundStream()");
+	}
+
+	const string soundFile = lua_tostring(L, 1);
+	float volume = (args >= 2)? (float) lua_tonumber(L, 2): 1.0f;
+
+	if (args < 5) {
+		sound->PlayStream(soundFile, volume);
+	} else {
+		const float3 pos((float) lua_tonumber(L, 3),
+						 (float) lua_tonumber(L, 4),
+						 (float) lua_tonumber(L, 5));
+		sound->PlayStream(soundFile, volume, pos);
+	}
+
+	// .ogg files don't have sound ID's generated
+	// for them (yet), so we always succeed here
+	lua_pushboolean(L, 1);
+	return (CLuaHandle::GetActiveHandle()->GetUserMode());
+}
+
+int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
+{
+	sound->StopStream();
+	return (CLuaHandle::GetActiveHandle()->GetUserMode());
+}
+
 
 
 /******************************************************************************/
