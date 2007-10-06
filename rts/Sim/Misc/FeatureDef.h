@@ -11,8 +11,6 @@ struct FeatureDef
 {
 	CR_DECLARE(FeatureDef);
 
-	~FeatureDef();
-
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), mass(0),
 		upright(false), drawType(0), modelType(0),

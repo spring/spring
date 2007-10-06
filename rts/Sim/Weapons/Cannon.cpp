@@ -182,10 +182,10 @@ void CCannon::Fire(void)
 	if(weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
 	} else if(selfExplode) {
-		ttl=(int)(predict+gs->randFloat()*2.5f-0.5f);
+		ttl = (int)(predict + gs->randFloat() * 2.5f - 0.5f);
 	} else if((weaponDef->groundBounce || weaponDef->waterBounce)
 			&& weaponDef->numBounce > 0) {
-		ttl = predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound);
+		ttl = (int)(predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound));
 	} else {
 		ttl=predict*2;
 	}
