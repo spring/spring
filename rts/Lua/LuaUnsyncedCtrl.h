@@ -23,6 +23,8 @@ class LuaUnsyncedCtrl {
 		static int Echo(lua_State* L);
 
 		static int PlaySoundFile(lua_State* L);
+		static int PlaySoundStream(lua_State* L);
+		static int StopSoundStream(lua_State* L);
 
 		static int SetCameraState(lua_State* L);
 		static int SetCameraTarget(lua_State* L);
