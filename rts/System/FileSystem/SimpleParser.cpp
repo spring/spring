@@ -1,55 +1,54 @@
 #include "StdAfx.h"
-// SimpleParser.cxx: implementation of the SimpleParser namespace.
+// SimpleParser.cpp: implementation of the SimpleParser class.
 //
 //////////////////////////////////////////////////////////////////////
 #include "SimpleParser.h"
+#include <sstream>
+
+using namespace std;
 
 
 /******************************************************************************/
 
-static int lineNumber = 0;
-static bool inComment = false; // /* text */ comments are not implemented
-
-
-/******************************************************************************/
-
-void SimpleParser::Init()
+/** call this before using GetLine() or GetCleanLine() */
+CSimpleParser::CSimpleParser(CFileHandler& fh) : file(fh)
 {
 	lineNumber = 0;
-	inComment = false;
+	inComment = false; // /* text */ comments are not implemented
 }
 
 
-int SimpleParser::GetLineNumber()
+/** returns the current line number */
+int CSimpleParser::GetLineNumber()
 {
 	return lineNumber;
 }
 
 
-// returns next line (without newlines)
-string SimpleParser::GetLine(CFileHandler& fh)
+/** returns next line (without newlines) */
+string CSimpleParser::GetLine()
 {
 	lineNumber++;
 	char a;
-	string s = "";
-	while (!fh.Eof()) {
-		fh.Read(&a, 1);
+	stringstream s;
+	while (!file.Eof()) {
+		file.Read(&a, 1);
 		if (a == '\n') { break; }
-		if (a != '\r') { s += a; }
+		if (a != '\r') { s << a; }
 	}
-	return s;
+	return s.str();
 }
 
 
-// returns next non-blank line (without newlines or comments)
-string SimpleParser::GetCleanLine(CFileHandler& fh)
+/** returns next non-blank line (without newlines or comments) */
+string CSimpleParser::GetCleanLine()
 {
 	string::size_type pos;
 	while (true) {
-		if (fh.Eof()) {
+		if (file.Eof()) {
 			return ""; // end of file
 		}
-		string line = GetLine(fh);
+		string line = GetLine();
 
 		pos = line.find_first_not_of(" \t");
 		if (pos == string::npos) {
@@ -70,7 +69,8 @@ string SimpleParser::GetCleanLine(CFileHandler& fh)
 }
 
 
-vector<string> SimpleParser::Tokenize(const string& line, int minWords)
+/** splits a string based on white space */
+vector<string> CSimpleParser::Tokenize(const string& line, int minWords)
 {
 	vector<string> words;
 	string::size_type start;

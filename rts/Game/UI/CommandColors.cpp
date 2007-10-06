@@ -9,9 +9,9 @@
 #include <map>
 using namespace std;
 
-#include "SimpleParser.h"
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 
 
 /******************************************************************************/
@@ -208,16 +208,15 @@ static bool SafeAtoI(unsigned int& var, const string& value)
 bool CCommandColors::LoadConfig(const string& filename)
 {
 	CFileHandler ifs(filename);
-
-	SimpleParser::Init();
+	CSimpleParser parser(ifs);
 
 	while (true) {
-		const string line = SimpleParser::GetCleanLine(ifs);
+		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
 
-		vector<string> words = SimpleParser::Tokenize(line, 1);
+		vector<string> words = parser.Tokenize(line, 1);
 
 		const string command = StringToLower(words[0]);
 

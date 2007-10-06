@@ -110,7 +110,6 @@ private:
 	std::string GetText(int pos);
 	bool ReadChild(int pos,S3DO* root,int side, int *numobj);
 	void DrawSub(S3DO* o);
-	string GetLine(CFileHandler& fh);
 	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum);
 
 	map<string,S3DOModel*> units;

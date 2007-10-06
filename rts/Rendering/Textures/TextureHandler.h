@@ -10,8 +10,6 @@
 struct TexFile;
 class CFileHandler;
 
-using namespace std;
-
 class CTextureHandler
 {
 public:
@@ -35,10 +33,10 @@ public:
 	virtual ~CTextureHandler();
 
 	void SetTATexture();
-	UnitTexture* GetTATexture(string name,int team,int teamTex);
-	UnitTexture* GetTATexture(string name);
+	UnitTexture* GetTATexture(std::string name, int team, int teamTex);
+	UnitTexture* GetTATexture(const std::string& name);
 
-	int LoadS3OTexture(string tex1, string tex2);
+	int LoadS3OTexture(const std::string& tex1, const std::string& tex2);
 	void SetS3oTexture(int num);
 
 	const S3oTex* GetS3oTex(int num) {
@@ -51,19 +49,18 @@ public:
 	unsigned int GetGlobalTexID() const  { return globalTex; }
 	unsigned int GetGlobalTexSizeX() const { return bigTexX; }
 	unsigned int GetGlobalTexSizeY() const { return bigTexY; }
-	const map<string, UnitTexture*>& GetGlobalTextures() const { return textures; }
+	const std::map<std::string, UnitTexture*>& GetGlobalTextures() const { return textures; }
 
 private:
-	map<string,UnitTexture*> textures;
+	std::map<std::string, UnitTexture*> textures;
 	unsigned int globalTex;
 	int bigTexX;
 	int bigTexY;
 
-	map<string,int> s3oTextureNames;
-	vector<S3oTex> s3oTextures;
+	std::map<std::string, int> s3oTextureNames;
+	std::vector<S3oTex> s3oTextures;
 
-	string GetLine(CFileHandler& fh);
-	TexFile* CreateTeamTex(string name, string name2,int team);
+	TexFile* CreateTeamTex(const std::string& name, const std::string& name2, int team);
 };
 
 extern CTextureHandler* texturehandler;

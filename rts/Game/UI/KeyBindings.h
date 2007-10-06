@@ -15,6 +15,7 @@ using namespace std;
 
 class CUnit;
 class CFileHandler;
+class CSimpleParser;
 
 
 class CKeyBindings
@@ -62,7 +63,7 @@ class CKeyBindings
 		bool SetFakeMetaKey(const string& keystring);
 		bool AddKeySymbol(const string& keysym, const string& code);
 		bool AddNamedKeySet(const string& name, const string& keyset);
-		bool ParseTypeBind(CFileHandler& file, const string& line);
+		bool ParseTypeBind(CSimpleParser& parser, const string& line);
 
 		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
 		bool RemoveCommandFromList(ActionList& al, const string& command);

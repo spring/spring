@@ -103,6 +103,7 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Sound.h"
 #include "System/Platform/NullSound.h"
 #include "Platform/Clipboard.h"
@@ -122,7 +123,6 @@
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
 #include "UI/ShareBox.h"
-#include "UI/SimpleParser.h"
 #include "UI/TooltipConsole.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -410,7 +410,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 	logOutput.Print("Spring %s",VERSION_STRING);
-	
+
 	CPlayer* p=gs->players[gu->myPlayerNum];
 	if(!gameSetup)
 		p->playerName=configHandler.GetString("name","");
@@ -1632,7 +1632,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "lodscale") {
 		if (!action.extra.empty()) {
-			vector<string> args = SimpleParser::Tokenize(action.extra, 0);
+			vector<string> args = CSimpleParser::Tokenize(action.extra, 0);
 			if (args.size() == 1) {
 				const float value = (float)atof(args[0].c_str());
 				unitDrawer->LODScale = value;
@@ -2336,7 +2336,7 @@ void CGame::SimFrame()
 	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
 #endif
 	good_fpu_control_registers("CGame::SimFrame");
-	
+
 	lastFrameTime = SDL_GetTicks();
 
 	ASSERT_SYNCED_MODE;
@@ -2515,7 +2515,7 @@ bool CGame::ClientReadNet()
 	unsigned char inbuf[inbuflength];
 	memset(inbuf, '\0', inbuflength);
 	unsigned ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
-	
+
 	while (ret > 0)
 	{
 		switch (inbuf[0])
@@ -2528,7 +2528,7 @@ bool CGame::ClientReadNet()
 				logOutput.Print("Server exited");
 				POP_CODE_MODE;
 				return gameOver;
-				
+
 			case NETMSG_PLAYERLEFT:
 			{
 				int player=inbuf[1];
@@ -3038,15 +3038,15 @@ bool CGame::ClientReadNet()
 				}
 				break;
 		}
-		
+
 		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	}
-	
+
 	if (ret == -1)
 	{
 		return gameOver;
 	}
-	
+
 	POP_CODE_MODE;
 	return true;
 }
@@ -3609,7 +3609,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 
 	else if ((s.find(".give") == 0) && gs->cheatEnabled) {
 		// .give [amount] <unitName> [team] <@x,y,z>
-		vector<string> args = SimpleParser::Tokenize(s, 0);
+		vector<string> args = CSimpleParser::Tokenize(s, 0);
 
 
 		if (args.size() < 3) {
@@ -3661,9 +3661,9 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				return;
 			}
 		}
-		
+
 		const string unitName = (amountArg >= 0) ? args[2] : args[1];
-	
+
 		if (unitName == "all") {
 			// player entered ".give all"
 			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
@@ -4157,7 +4157,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 
 void CGame::SelectUnits(const string& line)
 {
-	vector<string> args = SimpleParser::Tokenize(line, 0);
+	vector<string> args = CSimpleParser::Tokenize(line, 0);
 	for (int i = 0; i < (int)args.size(); i++) {
 		const string& arg = args[i];
 		if (arg == "clear") {

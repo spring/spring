@@ -17,7 +17,6 @@
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "OutlineFont.h"
-#include "SimpleParser.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
@@ -43,6 +42,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
@@ -173,8 +173,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	LoadDefaults();
 
 	CFileHandler ifs(filename);
-
-	SimpleParser::Init();
+	CSimpleParser parser(ifs);
 
 	string deadStr = "";
 	string prevStr = "";
@@ -182,12 +181,12 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	string fillOrderStr = "";
 
 	while (true) {
-		const string line = SimpleParser::GetCleanLine(ifs);
+		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
 
-		vector<string> words = SimpleParser::Tokenize(line, 1);
+		vector<string> words = parser.Tokenize(line, 1);
 
 		const string command = StringToLower(words[0]);
 
@@ -359,7 +358,7 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 	}
 
 	// split the string into slot names
-	std::vector<std::string> slotNames = SimpleParser::Tokenize(text, 0);
+	std::vector<std::string> slotNames = CSimpleParser::Tokenize(text, 0);
 	if ((int)slotNames.size() != iconsPerPage) {
 		return;
 	}

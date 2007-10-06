@@ -10,11 +10,11 @@
 #include "KeyCodes.h"
 #include "KeySet.h"
 #include "KeyAutoBinder.h"
-#include "SimpleParser.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "InfoConsole.h"
 
@@ -233,7 +233,7 @@ CKeyBindings::Action::Action(const string& line)
 	rawline = line;
 	command = "";
 	extra = "";
-	vector<string> words = SimpleParser::Tokenize(line, 1);
+	vector<string> words = CSimpleParser::Tokenize(line, 1);
 	if (words.size() > 0) {
 		command = StringToLower(words[0]);
 	}
@@ -560,7 +560,7 @@ void CKeyBindings::LoadDefaults()
 
 bool CKeyBindings::Command(const string& line)
 {
-	const vector<string> words = SimpleParser::Tokenize(line, 2);
+	const vector<string> words = CSimpleParser::Tokenize(line, 2);
 
 	if (words.size() <= 0) {
 		return false;
@@ -618,20 +618,19 @@ bool CKeyBindings::Load(const string& filename)
 {
 //	inComment = false;
 	CFileHandler ifs(filename);
-
-	SimpleParser::Init();
+	CSimpleParser parser(ifs);
 
 	userCommand = false; // temporarily disable Sanitize() calls
 
 	LoadDefaults();
 
 	while (true) {
-		const string line = SimpleParser::GetCleanLine(ifs);
+		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
 		if (!Command(line)) {
-			ParseTypeBind(ifs, line);
+			ParseTypeBind(parser, line);
 		}
 	}
 
@@ -643,11 +642,11 @@ bool CKeyBindings::Load(const string& filename)
 }
 
 
-bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line)
+bool CKeyBindings::ParseTypeBind(CSimpleParser& parser, const string& line)
 {
 	BuildTypeBinding btb;
 
-	const vector<string> words = SimpleParser::Tokenize(line, 2);
+	const vector<string> words = parser.Tokenize(line, 2);
 	if ((words.size() == 3) &&
 			(words[2] == "{") && (StringToLower(words[0]) == "bindbuildtype")) {
 		btb.keystr = words[1];
@@ -656,12 +655,12 @@ bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line)
 	}
 
 	while (true) {
-		const string line = SimpleParser::GetCleanLine(ifs);
+		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			return false;
 		}
 
-		const vector<string> words = SimpleParser::Tokenize(line, 1);
+		const vector<string> words = parser.Tokenize(line, 1);
 		if ((words.size() == 1) && (words[0] == "}")) {
 			break;
 		}
@@ -680,7 +679,7 @@ bool CKeyBindings::ParseTypeBind(CFileHandler& ifs, const string& line)
 		}
 		else if (command == "chords") {
 			// split them up, tack them on  (in order)
-			const vector<string> chords = SimpleParser::Tokenize(line, 0);
+			const vector<string> chords = parser.Tokenize(line, 0);
 			for (int i = 1; i < (int)chords.size(); i++) {
 				btb.chords.push_back(chords[i]);
 			}

@@ -10,7 +10,6 @@
 #include "LuaInclude.h"
 
 #include "KeyBindings.h"
-#include "SimpleParser.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Lua/LuaConstGame.h"
@@ -25,6 +24,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 
 
@@ -33,7 +33,7 @@
 #else
 #  define LUA_OPEN_LIB(L, lib) \
      lua_pushcfunction((L), lib); \
-     lua_pcall((L), 0, 0, 0); 
+     lua_pcall((L), 0, 0, 0);
 #endif
 
 
@@ -127,7 +127,7 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 		lua_pop(L, 1);
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -158,7 +158,7 @@ bool CKeyAutoBinder::LoadCompareFunc()
 	if (!LoadCode(code, "Compare()")) {
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -186,13 +186,13 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	if (L == NULL) {
 		return false;
 	}
-	
+
 	lua_settop(L, 0);
 
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);
 
-	if (keyBindings->GetDebug() > 1) {  
+	if (keyBindings->GetDebug() > 1) {
 		logOutput.Print("--reqCall(%s):\n", keystr.c_str());
 		logOutput.Print(reqCall);
 		logOutput.Print("--sortCall(%s):\n", keystr.c_str());
@@ -206,7 +206,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 
 	vector<UnitDefHolder> defs;
 
-	// find the unit definitions that meet the requirements	
+	// find the unit definitions that meet the requirements
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
@@ -259,7 +259,7 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 {
 	string result;
 	const char* end = text.c_str();
-	
+
 	while (end[0] != 0) {
 		const char* c = end;
 		while ((c[0] != 0) && !isalpha(c[0]) && (c[0] != '_')) { c++; }
@@ -279,7 +279,7 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 		}
 		end = c;
 	}
-		
+
 	return result;
 }
 
@@ -289,9 +289,9 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 	string code = "";
 
 	code += "function HasReqs(thisID)" + endlStr;
-	
+
 	const int count = (int)requirements.size();
-	
+
 	if (count <= 0) {
 		code += "return false" + endlStr;
 		code += "end" + endlStr;
@@ -299,7 +299,7 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 	}
 
 	code += "local this = UnitDefs[thisID]" + endlStr;
-	
+
 	if (StringToLower(requirements[0]) == "rawlua") {
 		for (int i = 1; i < count; i++) {
 			code += requirements[i] + endlStr;
@@ -307,7 +307,7 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 		code += "end" + endlStr;
 		return code;
 	}
-	
+
 	code += "return ";
 	const int lastReq = (count - 1);
 	for (int i = 0; i < count; i++) {
@@ -319,7 +319,7 @@ string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 		}
 	}
 	code += endlStr + "end" + endlStr;
-	
+
 	return ConvertBooleanSymbols(AddUnitDefPrefix(code, "this"));
 }
 
@@ -329,7 +329,7 @@ string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 	string code = "";
 
 	code += "function IsBetter(thisID, thatID)" + endlStr;
-	
+
 	const int count = (int)sortCriteria.size();
 
 	if (count <= 0) {
@@ -348,7 +348,7 @@ string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 		code += "end" + endlStr;
 		return code;
 	}
-	
+
 	for (int i = 0; i < count; i++) {
 		const string natural = ConvertBooleanSymbols(sortCriteria[i]);
 		const string thisStr = AddUnitDefPrefix(natural, "this");
@@ -358,7 +358,7 @@ string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 	}
 	code += "return false" + endlStr;
 	code += "end" + endlStr;
-	
+
 	return ConvertBooleanSymbols(code);
 }
 
