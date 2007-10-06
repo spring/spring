@@ -5,7 +5,6 @@
 #include "Game/Player.h"
 
 class CDemoRecorder;
-class CDemoReader;
 
 /*
 Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -72,7 +71,8 @@ enum NETMSG {
 
 /**
 @brief High level network code layer
-@TODO drop Send-commands if we are client from a demo host
+@TODO improve behavior when in demo mode
+Provides protocoldependent functions over our CNet-Class. It handles incoming and outgoing connections and has functions for every message which could be usefull for the engine.
 */
 class CNetProtocol : public netcode::CNet {
 public:
@@ -82,19 +82,35 @@ public:
 	CNetProtocol();
 	~CNetProtocol();
 
-	int InitServer(const unsigned portnum);
 	/**
-	@brief use this if you want to host a demo file
-	This is the best way to see a demo, this should also be used when only one local client will watch this
+	@brief Initialise in servermode
+	@param portnum Portnumber to use
+	@throw network_error If phailed (port already used or invalid)
+	@return always 0
 	*/
-	int InitServer(const unsigned portnum, const std::string& demoName);
+	int InitServer(const unsigned portnum);
+	
+	/**
+	@brief Initialise in client mode (remote server)
+	*/
 	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
-	/// Initialise our client to listen to CLocalConnection
+	
+	/**
+	@brief Initialise in client mode (local server)
+	 */
 	unsigned InitLocalClient(const unsigned wantedNumber);
-	/// This will tell our server that we have a CLocalConnection
+	
+	/**
+	@brief Connect a local client
+	@todo Merge with incoming connection handling for UDPConnections
+	 */
 	unsigned ServerInitLocalClient(const unsigned wantedNumber);
 
-	/// Check for new incoming data / connections
+	/**
+	@brief Update all internals
+	1. Updates our CNet
+	2. Check for incoming connections, accept them when they are valid and send some information
+	*/
 	void Update();
 
 	bool IsDemoServer() const;
@@ -107,6 +123,12 @@ public:
 	 */
 	void RawSend(const uchar* data,const unsigned length);
 
+	/**
+	@brief Recieve data from Client
+	@return The amount of data recieved, or -1 if connection did not exists
+	@todo Throw exceptions
+	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
+	*/
 	int GetData(unsigned char* buf, const unsigned conNum);
 
 	void SendQuit();
@@ -151,8 +173,9 @@ public:
 
 private:
 	CDemoRecorder* record;
-	CDemoReader* play;
 
+	// Game settings (only important for the server)
+	//TODO move to CGameServer
 	std::string scriptName;
 	uint mapChecksum;
 	std::string mapName;

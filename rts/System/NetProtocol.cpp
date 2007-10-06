@@ -3,7 +3,6 @@
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
-#include "DemoReader.h"
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -11,7 +10,6 @@ const unsigned char NETWORK_VERSION = 1;
 CNetProtocol::CNetProtocol()
 {
 	record = 0;
-	play = 0;
 	localDemoPlayback = false;
 	
 	RegisterMessage(NETMSG_QUIT, 1);
@@ -57,24 +55,15 @@ CNetProtocol::~CNetProtocol()
 
 	if (record != 0)
 		delete record;
-	if (play != 0)
-		delete play;
 }
 
 int CNetProtocol::InitServer(const unsigned portnum)
 {
-	int ret = CNet::InitServer(portnum);
+	CNet::InitServer(portnum);
 	logOutput.Print("Created server on port %i", portnum);
 
 	//TODO demo recording support for server
-	return ret;
-}
-
-int CNetProtocol::InitServer(const unsigned portnum, const std::string& demoName)
-{
-	int ret = InitServer(portnum);
-	play = new CDemoReader(demoName);
-	return ret;
+	return 0;
 }
 
 unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
@@ -115,15 +104,13 @@ unsigned CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 	int hisNewNumber = CNet::InitLocalClient(wantedNumber);
 	Update();
 
-	if (!IsDemoServer()) {
 	// send game data for demo recording
-		if (!scriptName.empty())
-			SendScript(scriptName);
-		if (!mapName.empty())
-			SendMapName(mapChecksum, mapName);
-		if (!modName.empty())
-			SendModName(modChecksum, modName);
-	}
+	if (!scriptName.empty())
+		SendScript(scriptName);
+	if (!mapName.empty())
+		SendMapName(mapChecksum, mapName);
+	if (!modName.empty())
+		SendModName(modChecksum, modName);
 
 	//logOutput.Print("Local client initialised using number %i", hisNewNumber);
 
@@ -132,17 +119,6 @@ unsigned CNetProtocol::ServerInitLocalClient(const unsigned wantedNumber)
 
 void CNetProtocol::Update()
 {
-	// when hosting a demo, read from file and broadcast data
-	if (play != 0) {
-		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
-		
-		while (length > 0) {
-			RawSend(demobuffer, length);
-			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
-		}
-	}
-
 	// call our CNet function
 	CNet::Update();
 	// handle new connections
@@ -189,7 +165,7 @@ void CNetProtocol::Update()
 
 bool CNetProtocol::IsDemoServer() const
 {
-	return (play != NULL || localDemoPlayback);
+	return (localDemoPlayback);
 }
 
 void CNetProtocol::RawSend(const uchar* data,const unsigned length)

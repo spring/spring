@@ -42,31 +42,34 @@ public:
 	
 	/**
 	@brief Initialise server
+	@throw network_error If portnum not valid, used or other errors
 	*/
-	int InitServer(unsigned portnum);
+	void InitServer(unsigned portnum);
 	
 	/**
 	@brief Initialise Client
+	@return The number the new connection was assigned to
 	Only do this when you cannot use a local connection, 'cuz they are somewhat faster.
 	*/
 	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, unsigned playerNum);
 	
 	/** 
 	@brief Init a local client
+	@return The number the new connection was assigned to
 	To increase performance, use this for local communication. This can be called in server and in client mode
 	*/
 	unsigned InitLocalClient(const unsigned wantedNumber);
 	
 	/**
 	@brief register a new message type to the networking layer
-	Its not allowed to send unregistered messages. In this process you tell how big the files are.
+	Its not allowed to send unregistered messages. In this process you tell how big the messages are.
 	@param id Message identifier (has to be unique)
 	@param length the length of the message (>0 if its fixed length, <0 means the next x bytes represent the length)
 	*/
 	void RegisterMessage(unsigned char id, int length);
 	
 	/**
-	@brief Maximum message size
+	@brief Set maximum message size
 	*/
 	unsigned SetMTU(unsigned mtu = 500);
 	
@@ -76,15 +79,24 @@ public:
 	/// Set Listening state
 	void Listening(const bool state);
 	
-	/** Flush and deactivate a connection
+	/**
+	@brief Kill a client
+	Forced flush and deactivate (delete) a connection
 	*/
 	void Kill(const unsigned connNumber);
 
 	/// return true when local connected or already recieved data from remote
 	bool Connected() const;
 
+	/**
+	@brief Check if it is a valid connenction
+	@return true when its valid, false when not
+	*/
 	bool IsActiveConnection(const unsigned number) const;
 	
+	/**
+	@brief Recieve data from a client
+	*/
 	int GetData(unsigned char* buf, const unsigned conNum);
 	
 	/** Broadcast data to all clients
@@ -109,7 +121,7 @@ public:
 	/// did someone tried to connect?
 	bool HasIncomingConnection() const;
 	
-	/// Recieve data to check if we allow him in our game
+	/// Recieve data from first unbound connection to check if we allow him in our game
 	unsigned GetData(unsigned char* buf);
 	
 	/// everything seems fine, accept him
