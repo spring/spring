@@ -926,13 +926,16 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
+	if (uh->unitsType[team][unitDef->id] >= unitDef->maxThisUnit) {
+		return 0; // unit limit reached
+	}
+
+	// FIXME -- allow specifying the 'build' and 'builder' parameters?
+
 	if (inCreateUnit) {
 		luaL_error(L, "CreateUnit() recursion is not permitted");
 	}
-
-	// name, pos, team, build, facing
 	inCreateUnit = true;
-	// FIXME -- allow specifying builder unit?
 	CUnit* unit = unitLoader.LoadUnit(defName, pos, team, false, facing, NULL);
 	inCreateUnit = false;
 
@@ -972,7 +975,6 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	if (inDestroyUnit) {
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
 	}
-
 	inDestroyUnit = true;
 	unit->KillUnit(selfd, reclaimed, attacker);
 	inDestroyUnit = false;
@@ -1012,7 +1014,6 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	if (inTransferUnit) {
 		luaL_error(L, "TransferUnit() recursion is not permitted");
 	}
-
 	inTransferUnit = true;
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven : CUnit::ChangeCaptured);
 	inTransferUnit = false;
@@ -1841,7 +1842,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 int LuaSyncedCtrl::DestroyFeature(lua_State* L)
 {
-	CheckAllowGameChanges(L); // FIXME -- recursion protection
+	CheckAllowGameChanges(L);
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
 	if (feature == NULL) {
 		return 0;

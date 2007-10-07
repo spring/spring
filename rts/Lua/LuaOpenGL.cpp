@@ -146,6 +146,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
+	REGISTER_LUA_CFUNC(GetViewSizes);
+
 	REGISTER_LUA_CFUNC(DrawMiniMap);
 	REGISTER_LUA_CFUNC(SlaveMiniMap);
 	REGISTER_LUA_CFUNC(ConfigMiniMap);
@@ -270,18 +272,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 void LuaOpenGL::ClearMatrixStack(int stackDepthEnum)
 {
-	int depth = 0;
-	int i;
-	GLenum err;
+	GLint depth = 0;
+
 	glGetIntegerv(stackDepthEnum, &depth);
 
-	for (i = 0; i < 12345; i++) {
-		err = glGetError();
-		if (err == GL_NONE) {
-			break;
-		}
-	}
-	for (i = 0; i < depth - 1; i++) {
+	for (int i = 0; i < depth - 1; i++) {
 		glPopMatrix();
 	}
 }
@@ -947,6 +942,14 @@ int LuaOpenGL::ConfigScreen(lua_State* L)
 	screenWidth = (float)lua_tonumber(L, 1);
 	screenDistance = (float)lua_tonumber(L, 2);
 	return 0;
+}
+
+
+int LuaOpenGL::GetViewSizes(lua_State* L)
+{
+	lua_pushnumber(L, gu->viewSizeX);
+	lua_pushnumber(L, gu->viewSizeY);
+	return 2;
 }
 
 

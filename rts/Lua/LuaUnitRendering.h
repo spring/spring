@@ -29,9 +29,6 @@ class LuaUnitRendering {
 		static int CreateUnitUniforms(lua_State* L);
 		static int SetUnitUniform(lua_State* L);
 
-		static int GetModelPieceList(lua_State* L);
-		static int GetModelPieceInfo(lua_State* L);
-
 		static int Debug(lua_State* L);
 };
 

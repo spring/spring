@@ -138,6 +138,8 @@ class CLuaUI : public CLuaHandle {
 		static int GetFPS(lua_State* L);
 
 		static int GetMouseState(lua_State* L);
+		static int GetMouseMiniMapState(lua_State* L);
+		static int GetMouseStartPosition(lua_State* L);
 		static int WarpMouse(lua_State* L);
 
 		static int SetCameraOffset(lua_State* L);
@@ -152,6 +154,7 @@ class CLuaUI : public CLuaHandle {
 		static int GetKeyState(lua_State* L);
 		static int GetModKeyState(lua_State* L);
 		static int GetPressedKeys(lua_State* L);
+		static int GetInvertQueueKey(lua_State* L);
 
 		static int SetActiveCommand(lua_State* L);
 		static int GetActiveCommand(lua_State* L);
@@ -159,6 +162,8 @@ class CLuaUI : public CLuaHandle {
 		static int GetActiveCmdDescs(lua_State* L);
 		static int GetActiveCmdDesc(lua_State* L);
 		static int GetCmdDescIndex(lua_State* L);
+
+		static int GetGatherMode(lua_State* L);
 
 		static int GetBuildFacing(lua_State* L);
 		static int GetBuildSpacing(lua_State* L);

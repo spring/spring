@@ -15,6 +15,7 @@ class LuaSyncedRead {
 
 	private:
 		static int IsCheatingEnabled(lua_State* L);
+		static int IsGodModeEnabled(lua_State* L);
 		static int IsDevLuaEnabled(lua_State* L);
 		static int IsEditDefsEnabled(lua_State* L);
 		static int AreHelperAIsEnabled(lua_State* L);
@@ -151,6 +152,8 @@ class LuaSyncedRead {
 		static int GetPositionLosState(lua_State* L);
 		static int GetClosestValidPosition(lua_State* L);
 
+		static int GetUnitPieceList(lua_State* L);
+		static int GetUnitPieceInfo(lua_State* L);
 		static int GetUnitPiecePosition(lua_State* L);
 		static int GetUnitPieceDirection(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);

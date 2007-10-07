@@ -114,6 +114,8 @@ class LuaOpenGL {
 	
 		static int ConfigScreen(lua_State* L);
 
+		static int GetViewSizes(lua_State* L);
+
 		static int DrawMiniMap(lua_State* L);
 		static int SlaveMiniMap(lua_State* L);
 		static int ConfigMiniMap(lua_State* L);

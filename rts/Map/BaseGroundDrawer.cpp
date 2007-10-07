@@ -259,11 +259,14 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				break;
 			}
 			case drawMetal: {
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->hmapx;++x){
-						int a=y*gs->pwr2mapx/2+x;
-						if(myAirLos[((y*2)>>loshandler->airMipLevel)*loshandler->airSizeX+((x*2)>>loshandler->airMipLevel)]) {
-							float extractDepth = extractDepthMap[y*gs->hmapx+x];
+				for (int y = starty; y < endy; ++y) {
+					for (int x = 0; x < gs->hmapx; ++x) {
+						int a = (y * gs->pwr2mapx) / 2 + x;
+						const int alx = ((x * 2) >> loshandler->airMipLevel);
+						const int aly = ((y * 2) >> loshandler->airMipLevel);
+						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
+							float extractDepth = extractDepthMap[(y * gs->hmapx) + x];
+							// a single pow(x, 0.25) call would be faster?
 							infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
 						} else {
 							infoTexMem[a*4]=0;
