@@ -21,6 +21,10 @@ public:
 	unsigned char metalPal[768];
 	std::vector<float> extractionMap;
 	float metalscale;
+
+	int GetSizeX() const { return sizex; }
+	int GetSizeZ() const { return sizez; }
+
 protected:
 	int sizex;
 	int sizez;

@@ -10,13 +10,14 @@
 #include <locale>
 
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header File For The GLu32 Library
+#include <GL/glu.h>
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <SDL_events.h>
+#include <SDL_video.h>
 
 #include "Game.h"
 #include "float.h"
@@ -232,7 +233,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	hideInterface=false;
 	gameOver=false;
 
-	windowedEdgeMove = !!configHandler.GetInt("WindowedEdgeMove", 1);
+	windowedEdgeMove   = !!configHandler.GetInt("WindowedEdgeMove",   1);
 	fullscreenEdgeMove = !!configHandler.GetInt("FullscreenEdgeMove", 1);
 
 	showFPS = !!configHandler.GetInt("ShowFPS", 0);
@@ -1004,8 +1005,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if ((cmd == "specfullview") && gu->spectating) {
 		if (!action.extra.empty()) {
 			const int mode = atoi(action.extra.c_str());
-			gu->spectatingFullView   = (mode >= 1);
-			gu->spectatingFullSelect = (mode >= 2);
+			gu->spectatingFullView   = (mode & 1);
+			gu->spectatingFullSelect = (mode & 2);
 		} else {
 			gu->spectatingFullView = !gu->spectatingFullView;
 			gu->spectatingFullSelect = gu->spectatingFullView;
@@ -1654,6 +1655,21 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gd->wireframe = !gd->wireframe;
 		} else {
 			gd->wireframe = !atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "setgamma") {
+		float r, g, b;
+		const int count = sscanf(action.extra.c_str(), "%f %f %f", &r, &g, &b);
+		if (count == 1) {
+			SDL_SetGamma(r, r, r);
+			logOutput.Print("Set gamma value");
+		}
+		else if (count == 3) {
+			SDL_SetGamma(r, g, b);
+			logOutput.Print("Set gamma values");
+		}
+		else {
+			logOutput.Print("Unknown gamma format");
 		}
 	}
 	else {
@@ -3110,7 +3126,8 @@ void CGame::UpdateUI()
 
 		movement=float3(0,0,0);
 
-		if ((fullscreen && fullscreenEdgeMove) || windowedEdgeMove) {
+		if (( fullscreen && fullscreenEdgeMove) ||
+		    (!fullscreen && windowedEdgeMove)) {
 			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
@@ -3510,6 +3527,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			} else {
 				logOutput.Print("God Mode Disabled");
 			}
+			CLuaUI::UpdateTeams();
 		}
 	}
 	else if ((s.find(".nocost") == 0) && (player == 0) && gs->cheatEnabled) {

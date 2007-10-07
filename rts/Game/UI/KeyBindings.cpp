@@ -40,7 +40,7 @@ defaultBindings[] = {
 	{ "Any+l", "togglelos"            },
 	{ "Any+;", "toggleradarandjammer" },
 
-	{ "Any+tab", "toggleoverview"       },
+	{ "Any+tab", "toggleoverview" },
 
 	{ "Any+j",         "mouse2" },
 	{ "Any+backspace", "mousestate" },

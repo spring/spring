@@ -46,6 +46,7 @@ using namespace std;
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
+#include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -273,9 +274,10 @@ bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 void CLuaUI::UpdateTeams()
 {
 	if (luaUI) {
-		luaUI->fullCtrl = false;
+		luaUI->fullCtrl = gs->godMode;
+		luaUI->ctrlTeam = gs->godMode ? AllAccessTeam :
+		                  (gu->spectating ? NoAccessTeam : gu->myTeam);
 		luaUI->fullRead = gu->spectatingFullView;
-		luaUI->ctrlTeam = gu->spectating ? NoAccessTeam : gu->myTeam;
 		luaUI->readTeam = luaUI->fullRead ? AllAccessTeam : gu->myTeam;
 		luaUI->readAllyTeam = luaUI->fullRead ? AllAccessTeam : gu->myAllyTeam;
 		luaUI->selectTeam = gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam;
@@ -315,10 +317,14 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetBuildFacing);
 	REGISTER_LUA_CFUNC(GetBuildSpacing);
 
+	REGISTER_LUA_CFUNC(GetGatherMode);
+
 	REGISTER_LUA_CFUNC(GetActivePage);
 	REGISTER_LUA_CFUNC(ForceLayoutUpdate);
 
 	REGISTER_LUA_CFUNC(GetMouseState);
+	REGISTER_LUA_CFUNC(GetMouseMiniMapState);
+	REGISTER_LUA_CFUNC(GetMouseStartPosition);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 	REGISTER_LUA_CFUNC(SetMouseCursor);
 	REGISTER_LUA_CFUNC(WarpMouse);
@@ -332,6 +338,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyState);
 	REGISTER_LUA_CFUNC(GetModKeyState);
 	REGISTER_LUA_CFUNC(GetPressedKeys);
+	REGISTER_LUA_CFUNC(GetInvertQueueKey);
 
 	REGISTER_LUA_CFUNC(GetKeyCode);
 	REGISTER_LUA_CFUNC(GetKeySymbol);
@@ -1647,6 +1654,17 @@ int CLuaUI::GetBuildSpacing(lua_State* L)
 }
 
 
+int CLuaUI::GetGatherMode(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, guihandler->GetGatherMode());
+	return 1;
+}
+
+
 /******************************************************************************/
 
 int CLuaUI::GetActivePage(lua_State* L)
@@ -1680,7 +1698,25 @@ int CLuaUI::GetMouseState(lua_State* L)
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
+	if (minimap) {
+		
+	}
 	return 5;
+}
+
+
+int CLuaUI::GetMouseMiniMapState(lua_State* L)
+{
+	if (minimap == NULL) {
+		return 0;
+	}
+	return 0;
+}
+
+
+int CLuaUI::GetMouseStartPosition(lua_State* L)
+{
+	return 0;
 }
 
 
@@ -1857,6 +1893,19 @@ int CLuaUI::GetPressedKeys(lua_State* L)
 	return 1;
 }
 
+
+int CLuaUI::GetInvertQueueKey(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (guihandler == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, guihandler->GetInvertQueueKey());
+	return 1;
+}
+
+
+/******************************************************************************/
 
 int CLuaUI::GetConsoleBuffer(lua_State* L)
 {
@@ -2577,10 +2626,24 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 /******************************************************************************/
 
+static bool CanGiveOrders()
+{
+	if (gu->spectating && !gs->godMode) {
+		return false;
+	}
+	if (gs->noHelperAIs) {
+		return false;
+	}
+	if (gs->frameNum <= 0) {
+		return false;
+	}
+	return true;
+}
+
+
 int CLuaUI::GiveOrder(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
-		lua_pushboolean(L, false);
+	if (!CanGiveOrders()) {
 		return 1;
 	}
 
@@ -2597,7 +2660,7 @@ int CLuaUI::GiveOrder(lua_State* L)
 
 int CLuaUI::GiveOrderToUnit(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+	if (!CanGiveOrders()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2621,7 +2684,7 @@ int CLuaUI::GiveOrderToUnit(lua_State* L)
 
 int CLuaUI::GiveOrderToUnitMap(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+	if (!CanGiveOrders()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2650,7 +2713,7 @@ int CLuaUI::GiveOrderToUnitMap(lua_State* L)
 
 int CLuaUI::GiveOrderToUnitArray(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+	if (!CanGiveOrders()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2679,7 +2742,7 @@ int CLuaUI::GiveOrderToUnitArray(lua_State* L)
 
 int CLuaUI::GiveOrderArrayToUnitMap(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+	if (!CanGiveOrders()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2706,7 +2769,7 @@ int CLuaUI::GiveOrderArrayToUnitMap(lua_State* L)
 
 int CLuaUI::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+	if (!CanGiveOrders()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}

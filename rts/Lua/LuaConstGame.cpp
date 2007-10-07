@@ -49,17 +49,18 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
-	LuaPushNamedString(L, "mapName",       readmap->mapName);
-	LuaPushNamedString(L, "mapHumanName",  readmap->mapHumanName);
-	LuaPushNamedNumber(L, "mapX",          readmap->width  / 64);
-	LuaPushNamedNumber(L, "mapY",          readmap->height / 64);
-	LuaPushNamedNumber(L, "gravity",       gravity);
-	LuaPushNamedNumber(L, "tidal",         readmap->tidalStrength);
-	LuaPushNamedNumber(L, "windMin",       wind.GetMinWind());
-	LuaPushNamedNumber(L, "windMax",       wind.GetMaxWind());
-	LuaPushNamedBool(L,   "mapDamage",     !mapDamage->disabled);
-	LuaPushNamedBool(L,   "mapWaterVoid",  readmap->voidWater);
-	LuaPushNamedBool(L,   "mapWaterPlane", readmap->hasWaterPlane);
+	LuaPushNamedString(L, "mapName",         readmap->mapName);
+	LuaPushNamedString(L, "mapHumanName",    readmap->mapHumanName);
+	LuaPushNamedNumber(L, "mapX",            readmap->width  / 64);
+	LuaPushNamedNumber(L, "mapY",            readmap->height / 64);
+	LuaPushNamedBool(L,   "mapDamage",       !mapDamage->disabled);
+	LuaPushNamedBool(L,   "mapWaterVoid",    readmap->voidWater);
+	LuaPushNamedBool(L,   "mapWaterPlane",   readmap->hasWaterPlane);
+	LuaPushNamedNumber(L, "extractorRadius", readmap->extractorRadius);
+	LuaPushNamedNumber(L, "gravity",         gravity);
+	LuaPushNamedNumber(L, "tidal",           readmap->tidalStrength);
+	LuaPushNamedNumber(L, "windMin",         wind.GetMinWind());
+	LuaPushNamedNumber(L, "windMax",         wind.GetMaxWind());
 
 	LuaPushNamedString(L, "modName",         modInfo->humanName);
 	LuaPushNamedString(L, "modShortName",    modInfo->shortName);

@@ -523,7 +523,8 @@ static bool InitParamMap()
 	ADD_FLOAT("explosionSpeed", wd.explosionSpeed);
 
 	ADD_FLOAT("wobble", wd.wobble);
-	ADD_FLOAT("dance", wd.dance);
+	ADD_FLOAT("dance",  wd.dance);
+
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
