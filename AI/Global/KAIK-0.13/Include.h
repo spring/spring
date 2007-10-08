@@ -63,7 +63,7 @@ static inline void itoa(int i, char* buf, int size) {
 
 // KAIK Headers
 #include "Containers.h"							// All KAIK containers
-#include "Definitions.h"						// Definition declarations
+#include "Defines.h"							// Definition declarations
 #include "MTRand.h"								// Mersenne Twister RNG
 #include "SpotFinder.h"
 #include "MicroPather.h"

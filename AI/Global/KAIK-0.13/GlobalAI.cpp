@@ -193,7 +193,7 @@ void CGlobalAI::Save(std::ostream* ofs) {
 
 
 void CGlobalAI::PostLoad(void) {
-	// init non-serialized objects
+	// init non-serialized objects after Load()
 	ai->debug	= new CDebug(ai);
 	ai->math	= new CMaths(ai);
 	ai->parser	= new CSunParser(ai);
