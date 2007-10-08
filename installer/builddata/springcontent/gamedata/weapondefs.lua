@@ -107,6 +107,26 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+--
+--  Basic checks to remove invalid weapons
+--
+
+for name, def in pairs(weaponDefs) do
+  local model = def.model
+  if ((type(model) == 'string') and (#model > 0)) then
+    local modelFile = 'objects3d/' .. model
+    if ((not VFS.FileExists(modelFile))           and
+        (not VFS.FileExists(modelFile .. '.3do')) and
+        (not VFS.FileExists(modelFile .. '.s3o'))) then
+      weaponDefs[name] = nil
+      Spring.Echo('WARNING: removed ' .. name .. ' weaponDef, missing model')
+    end
+  end
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 return weaponDefs
 
