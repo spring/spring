@@ -702,24 +702,10 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
 	if(tempTargetPos.y < appHeight){
 		tempTargetPos.y=appHeight;
 	}
-	float3 tempfrontdir(owner->frontdir);
-	float3 temprightdir(owner->rightdir);
-	short tempHeadding = owner->heading;
 	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
 	short enemyHeadding = GetHeadingFromVector(
 		tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
-	owner->heading = enemyHeadding - weaponHeadding;
-	owner->frontdir = GetVectorFromHeading(owner->heading);
-	owner->rightdir = owner->frontdir.cross(owner->updir);
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-	bool val = TryTarget(tempTargetPos,userTarget,unit);
-	owner->frontdir = tempfrontdir;
-	owner->rightdir = temprightdir;
-	owner->heading = tempHeadding;
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-	return val;
+	return TryTargetHeading(enemyHeadding - weaponHeadding, tempTargetPos,userTarget, unit);
 }
 
 bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
@@ -734,13 +720,17 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	if(!weaponDef->waterweapon && pos.y<1){
 		pos.y=1;
 	}
-	float3 tempfrontdir(owner->frontdir);
-	float3 temprightdir(owner->rightdir);
-	short tempHeadding = owner->heading;
 	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
 	short enemyHeadding = GetHeadingFromVector(
 		pos.x - weaponPos.x, pos.z - weaponPos.z);
-	owner->heading = enemyHeadding - weaponHeadding;
+	return TryTargetHeading(enemyHeadding - weaponHeadding, pos, userTarget, 0);
+}
+
+bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit) {
+	float3 tempfrontdir(owner->frontdir);
+	float3 temprightdir(owner->rightdir);
+	short tempHeadding = owner->heading;
+	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
@@ -752,6 +742,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	return val;
+	
 }
 
 void CWeapon::Init(void)

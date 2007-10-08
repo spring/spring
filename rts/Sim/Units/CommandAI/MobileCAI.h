@@ -14,6 +14,7 @@ public:
 
 	void StopMove();
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
+	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
 	void GiveCommandReal(const Command &c);
