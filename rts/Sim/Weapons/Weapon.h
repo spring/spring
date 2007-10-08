@@ -34,6 +34,7 @@ public:
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
+	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
 	void SlowUpdate(bool noAutoTargetOverride);
 	virtual void SlowUpdate();
 	virtual void Update();
