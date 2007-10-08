@@ -222,6 +222,7 @@ string CLuaUI::LoadFile(const string& filename) const
 	const char* accessMode = SPRING_VFS_RAW; 
 	CFileHandler lockFile("gamedata/lockluaui.txt", SPRING_VFS_MOD);
 	if (lockFile.FileExists()) {
+		logOutput.Print("This mod has locked LuaUI access");
 		accessMode = SPRING_VFS_MOD;
 	}
 
