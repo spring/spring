@@ -219,7 +219,13 @@ void CLuaUI::KillLua()
 
 string CLuaUI::LoadFile(const string& filename) const
 {
-	CFileHandler f(filename, SPRING_VFS_RAW);
+	const char* accessMode = SPRING_VFS_RAW; 
+	CFileHandler lockFile("gamedata/lockluaui.txt", SPRING_VFS_MOD);
+	if (lockFile.FileExists()) {
+		accessMode = SPRING_VFS_MOD;
+	}
+
+	CFileHandler f(filename, accessMode);
 
 	string code;
 	if (!f.LoadStringData(code)) {
@@ -1698,9 +1704,6 @@ int CLuaUI::GetMouseState(lua_State* L)
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
-	if (minimap) {
-		
-	}
 	return 5;
 }
 
