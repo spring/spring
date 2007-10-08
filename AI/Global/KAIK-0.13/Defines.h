@@ -1,8 +1,8 @@
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#ifndef DEFINES_H
+#define DEFINES_H
 
 #define AI_NAME			"KAIK 0.13 Unofficial"
-#define AI_DATE			"5/10/2007"
+#define AI_DATE			"8/10/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
 #define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 

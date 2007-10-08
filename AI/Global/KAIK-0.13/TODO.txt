@@ -1,5 +1,3 @@
-unit-limit checking when building stuff
-
 better support for mods with dgun-less
 commanders (less aggressive expansion eg.)
 

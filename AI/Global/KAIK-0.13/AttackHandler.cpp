@@ -17,6 +17,7 @@ CAttackHandler::CAttackHandler(AIClasses* ai) {
 	float mapWidth = ai->cb->GetMapWidth() * 8.0f;
 	float mapHeight = ai->cb->GetMapHeight() * 8.0f;
 	newGroupID = GROUND_GROUP_ID_START;
+
 	this->kMeansK = 1;
 	this->kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
 	this->kMeansEnemyK = 1;
@@ -153,7 +154,7 @@ bool CAttackHandler::IsSafeBuildSpot(float3 mypos) {
 
 
 // returns a safe spot from k-means, adjacent to myPos, safety params are (0..1).
-// change to: decide on the random float 0...1 first, then find it. waaaay easier.
+// change to: decide on the random float 0...1 first, then find it (easier)
 float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafety) {
 	// find a safe spot
 	myPos = myPos;
@@ -199,10 +200,11 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 
 	// then find a position on one of the lines between those points (pather)
 	int whichPath;
-	if (subset.size() > 1)
+	if (subset.size() > 1) {
 		whichPath = (RANDINT % (int) subset.size());
-	else
+	} else {
 		whichPath = 0;
+	}
 
 	assert(whichPath < (int) subset.size());
 	assert(subset.size() > 0);
@@ -215,31 +217,23 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 
 		float dist = ai->pather->MakePath(&posPath, &subset[whichPath], &subset[whichPath + 1], THREATRES * 8);
 		float3 res;
+
 		if (dist > 0) {
 			// L("attackhandler:findsafespot #1 dist > 0 from path, using res from pather. dist:" << dist);
 			int whichPos = RANDINT % (int) posPath.size();
 			res = posPath[whichPos];
-		}
-		else {
+		} else {
 			// L("attackhandler:findsafespot #2 dist == 0 from path, using first point. dist:" << dist);
 			res = subset[whichPath];
 		}
 
 		sprintf(text, "AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1", minSafety, maxSafety, res.x, res.y, res.z);
-		AIHCAddMapPoint amp;
-		amp.label = text;
-		amp.pos = res;
-
 		return res;
 	}
 	else {
 		assert(whichPath < (int) subset.size());
 		float3 res = subset[whichPath];
 		sprintf(text, "AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f", minSafety, maxSafety, res.x, res.y, res.z);
-
-		AIHCAddMapPoint amp;
-		amp.label = text;
-		amp.pos = res;
 		return res;
 	}
 }
@@ -351,7 +345,7 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 
 	for (int i = 0; i < numUnits; i++) {
 		int meanIndex = unitsClosestMeanID[i];
-		 // dont want to divide by 0
+		 // don't divide by 0
 		float num = max(1, numUnitsAssignedToMean[meanIndex]);
 		newMeans[meanIndex] += unitPositions[i] / num;
 	}
@@ -363,7 +357,7 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 			newMeans[i] = newMeansPosition;
 		}
 		else {
-			//get the proper elevation for the y coord
+			// get the proper elevation for the y-coord
 			newMeans[i].y = ai->cb->GetElevation(newMeans[i].x, newMeans[i].z) + K_MEANS_ELEVATION;
 		}
 	}
@@ -407,8 +401,8 @@ void CAttackHandler::UpdateKMeans(void) {
 		this->kMeansBase = KMeansIteration(this->kMeansBase, friendlyPositions, this->kMeansK);
 	}
 	
-	//update enemy position k-means
-	//get positions of all enemy units and put them in a vector (completed buildings only)
+	// update enemy position k-means
+	// get positions of all enemy units and put them in a vector (completed buildings only)
 	int numEnemies = 0;
 	vector<float3> enemyPositions;
 	int enemies[MAXUNITS];
@@ -470,7 +464,8 @@ void CAttackHandler::UpdateKMeans(void) {
 		}
 	}
 
-	// okay, so now we have a kMeans list sorted by distance to enemies, 0 being risky and k being safest.
+	// now we have a kMeans list sorted by distance
+	// to enemies, 0 being risky and k being safest
 }
 
 
@@ -614,7 +609,7 @@ void CAttackHandler::UpdateNukeSilos(int currentFrame) {
 // from the full size of the vector)
 int CAttackHandler::PickNukeSiloTarget(std::vector<std::pair<int, float> >& potentialTargets) {
 	int s = potentialTargets.size();
-	int n = ((s > MAX_NUKE_SILOS)? MAX_NUKE_SILOS: s);
+	int n = ((s > (MAX_NUKE_SILOS >> 1))? (MAX_NUKE_SILOS >> 1): s);
 	return ((s > 0)? potentialTargets[RANDINT % n].first: -1);
 }
 

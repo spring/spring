@@ -31,7 +31,7 @@ class CGlobalAI: public IGlobalAI {
 		void EnemyDestroyed(int enemy, int attacker);
 
 		void GotChatMsg(const char* msg, int player);
-		int HandleEvent (int msg, const void* data);
+		int HandleEvent(int msg, const void* data);
 
 		void Update();
 
