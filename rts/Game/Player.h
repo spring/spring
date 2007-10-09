@@ -33,7 +33,7 @@ public:
 	CR_DECLARE(CPlayer);
 	CR_DECLARE_SUB(Statistics);
 	CPlayer();
-	virtual ~CPlayer();
+	~CPlayer();
 
 	bool active;
 	std::string playerName;
