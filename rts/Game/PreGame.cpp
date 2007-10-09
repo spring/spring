@@ -503,6 +503,9 @@ void CPreGame::UpdateClientNet()
 				logOutput.Print(paused? "player %i paused the game": "player %i unpaused the game", playerNum);
 			} break;
 
+			case NETMSG_PLAYERINFO:
+				break;
+				
 			default: {
 				char txt[200];
 				sprintf(txt, "Unknown net-msg in client (header: %d)", (int) inbuf[0]);

@@ -7,7 +7,6 @@
 #include "ArchiveFactory.h"
 #include "CRC.h"
 #include "FileHandler.h"
-#include "LogOutput.h"
 #include "Platform/FileSystem.h"
 #include "TdfParser.h"
 #include "mmgr.h"
@@ -529,7 +528,6 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
-		logOutput.Print("GetArchiveChecksum: Could not find archive \"%s\"", name.c_str());
 		return 0;
 	}
 
@@ -550,7 +548,6 @@ std::string CArchiveScanner::GetArchivePath(const string& name)
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
-		logOutput.Print("GetArchivePath: Could not find archive \"%s\"", name.c_str());
 		return 0;
 	}
 
@@ -590,8 +587,6 @@ void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 {
 	unsigned local = GetModChecksum(root);
 	if (local != checksum) {
-		logOutput.Print("Mod checksums differ: local: %u; remote: %u (%s)\n",
-							 local, checksum, root.c_str());
 		throw content_error(
 				"Your mod differs from the host's mod. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"
@@ -606,8 +601,6 @@ void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 {
 	unsigned local = GetMapChecksum(mapName);
 	if (local != checksum) {
-		logOutput.Print("Map checksums differ: local: %u; remote: %u (%s)\n",
-							 local, checksum, mapName.c_str());
 		throw content_error(
 				"Your map differs from the host's map. This may be caused by a\n"
 				"missing archive, a corrupted download, or there may even be\n"
