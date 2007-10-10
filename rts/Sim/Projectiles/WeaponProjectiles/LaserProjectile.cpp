@@ -173,12 +173,12 @@ void CLaserProjectile::Draw(void)
 
 		va->AddVertexTC(pos1-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    col);
 		va->AddVertexTC(pos1+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,col);
-		va->AddVertexTC(pos1+dir1*size-dir2*size, weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture2->yend,col);
-		va->AddVertexTC(pos1-dir1*size-dir2*size, weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture2->ystart,col);
+		va->AddVertexTC(pos1+dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col);
+		va->AddVertexTC(pos1-dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col);
 		va->AddVertexTC(pos1-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    col2);
 		va->AddVertexTC(pos1+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,col2);
-		va->AddVertexTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture2->yend,col2);
-		va->AddVertexTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture2->ystart,col2);
+		va->AddVertexTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col2);
+		va->AddVertexTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col2);
 
 		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		col);
 		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			col);
