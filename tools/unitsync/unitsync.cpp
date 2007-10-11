@@ -516,6 +516,12 @@ DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
 	return archiveScanner->GetMapChecksum(mapNames[index]);
 }
 
+DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetMapChecksumFromName.");
+	return archiveScanner->GetMapChecksum(mapName);
+}
+
 #define RM	0x0000F800
 #define GM  0x000007E0
 #define BM  0x0000001F
@@ -792,6 +798,12 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModChecksum.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModChecksum.");
 	return archiveScanner->GetModChecksum(GetPrimaryModArchive(index));
+}
+
+DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModChecksumFromName.");
+	return archiveScanner->GetModChecksum(archiveScanner->ModNameToModArchive(name));
 }
 
 //////////////////////////
