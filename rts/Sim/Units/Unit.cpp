@@ -684,21 +684,7 @@ void CUnit::SlowUpdate()
 
 		// aircraft and ScriptMoveType do not want this
 		if (moveType->useHeading) {
-			frontdir=GetVectorFromHeading(heading);
-			if(transporter && transporter->unitDef->holdSteady) {
-				updir = transporter->updir;
-				rightdir=frontdir.cross(updir);
-				rightdir.Normalize();
-				frontdir=updir.cross(rightdir);
-			} else if(upright || !unitDef->canmove){
-				updir=UpVector;
-				rightdir=frontdir.cross(updir);
-			} else  {
-				updir=ground->GetNormal(pos.x,pos.z);
-				rightdir=frontdir.cross(updir);
-				rightdir.Normalize();
-				frontdir=updir.cross(rightdir);
-			}
+			SetDirectionFromHeading();
 		}
 
 		if(!dontFire){
@@ -726,6 +712,25 @@ void CUnit::SlowUpdate()
 	CalculateTerrainType();
 	UpdateTerrainType();
 }
+
+void CUnit::SetDirectionFromHeading(void)
+{
+	frontdir=GetVectorFromHeading(heading);
+	if(transporter && transporter->unitDef->holdSteady) {
+		updir = transporter->updir;
+		rightdir=frontdir.cross(updir);
+		rightdir.Normalize();
+		frontdir=updir.cross(rightdir);
+	} else if(upright || !unitDef->canmove){
+		updir=UpVector;
+		rightdir=frontdir.cross(updir);
+	} else  {
+		updir=ground->GetNormal(pos.x,pos.z);
+		rightdir=frontdir.cross(updir);
+		rightdir.Normalize();
+		frontdir=updir.cross(rightdir);
+	}
+}	
 
 void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
@@ -2311,6 +2316,7 @@ CR_REG_METADATA(CUnit, (
 
 				CR_POSTLOAD(PostLoad)
 				));
+
 
 
 

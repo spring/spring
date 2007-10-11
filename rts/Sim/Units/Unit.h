@@ -93,6 +93,7 @@ public:
 	void DrawBeingBuilt();
 	void DrawWithLists(unsigned int preList, unsigned int postList);
 	void DrawRawWithLists(unsigned int preList, unsigned int postList);
+	void SetDirectionFromHeading();
 
 	void ApplyTransformMatrix() const;
 	void GetTransformMatrix(CMatrix44f& matrix) const;

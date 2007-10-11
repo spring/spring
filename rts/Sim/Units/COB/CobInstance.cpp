@@ -1272,6 +1272,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case HEADING: {
 			unit->heading = param % COBSCALE;
+			unit->SetDirectionFromHeading();
 			break;
 		}
 		case LOS_RADIUS: {
