@@ -344,23 +344,23 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 		sound->PlayStream(soundFile, volume);
 	} else {
 		const float3 pos((float) lua_tonumber(L, 3),
-						 (float) lua_tonumber(L, 4),
-						 (float) lua_tonumber(L, 5));
+		                 (float) lua_tonumber(L, 4),
+		                 (float) lua_tonumber(L, 5));
 		sound->PlayStream(soundFile, volume, pos);
 	}
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
 	lua_pushboolean(L, 1);
-	return (CLuaHandle::GetActiveHandle()->GetUserMode());
+	return 1;
 }
+
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
 	sound->StopStream();
-	return (CLuaHandle::GetActiveHandle()->GetUserMode());
+	return 0;
 }
-
 
 
 /******************************************************************************/
