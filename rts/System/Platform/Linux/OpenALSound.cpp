@@ -17,6 +17,12 @@
 #include "mmgr.h"
 
 
+// Ogg-Vorbis audio stream object
+// TODO: make this respect MAX_SOUNDS, etc
+#ifdef OGGSTREAM_PLAYBACK
+COggStream oggStream;
+#endif
+
 
 COpenALSound::COpenALSound()
 {

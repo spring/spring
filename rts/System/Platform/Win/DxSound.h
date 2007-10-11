@@ -10,16 +10,19 @@
 #else
 	#include <dsound.h>
 #endif
+
 #include <string>
 #include <vector>
 #include <map>
 #include <deque>
 #include <SDL_types.h>
 
-class CWorldObject;
+#include "OggStream.h"
 
+class CWorldObject;
 using namespace std;
-class CDxSound : public CSound
+
+class CDxSound: public CSound
 {
 public:
 	CDxSound();

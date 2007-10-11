@@ -4,48 +4,42 @@
 #ifdef OGGSTREAM_PLAYBACK
 
 #include "StdAfx.h"
+#include "DxSound.h"
 
-#include <AL/al.h>
 #include <ogg/ogg.h>
+#include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
 #include <string>
 
 // 256KB buffer
-#define BUFFER_SIZE (4096 * 64)
+#define BUFSIZE (4096 * 64)
 
 class COggStream {
 	public:
 		COggStream();
 
-		void play(const std::string& path, const float3& pos, float volume);
-		void release();
-		void display();
-		bool playback();
-		bool playing();
-		void stop();
-		bool updateBuffers();
-		void update();
+		inline void setDSoundObject(LPDIRECTSOUND _DS) { DS = _DS; }
 
-    protected:
-		bool stream(ALuint buffer);
-		void empty();
-		void check();
-		std::string errorString(int code);
+		void play(const std::string& path, float volume = 1.0f, const float3& position = ZeroVector);
+		void release();
+		void stop();
+		void update();
+		void display();
 
 	private:
+		LPDIRECTSOUND DS;
+		LPDIRECTSOUNDBUFFER DSB;
+
 		FILE* oggFile;
 		OggVorbis_File oggStream;
 		vorbis_info* vorbisInfo;
 		vorbis_comment* vorbisComment;
 
-		ALuint buffers[2];
-		ALuint source;
-		ALenum format;
-
+		int curSection;
+		int lastSection;
 		bool stopped;
 };
-
 
 #endif
 

@@ -14,6 +14,7 @@
 
 
 using namespace std;
+
 class COpenALSound : public CSound
 {
 public:
@@ -47,12 +48,6 @@ private:
 	map<string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
 	ALuint* Sources;
-
-	// Ogg-Vorbis audio stream object
-	// TODO: make this respect MAX_SOUNDS, etc
-	#ifdef OGGSTREAM_PLAYBACK
-	COggStream oggStream;
-	#endif
 };
 
 

@@ -33,6 +33,7 @@ void COggStream::play(const std::string& path, const float3& pos, float volume) 
 
 	vorbisInfo = ov_info(&oggStream, -1);
 	vorbisComment = ov_comment(&oggStream, -1);
+	display();
 
 	if (vorbisInfo->channels == 1) {
 		format = AL_FORMAT_MONO16;
@@ -51,8 +52,6 @@ void COggStream::play(const std::string& path, const float3& pos, float volume) 
 	alSourcef (source, AL_ROLLOFF_FACTOR,  0.0f               );
 	alSourcef (source, AL_GAIN,            volume             );
 	alSourcei( source, AL_SOURCE_RELATIVE, pos != ZeroVector  );
-
-	display();
 
 	if (!playback()) {
 		release();
