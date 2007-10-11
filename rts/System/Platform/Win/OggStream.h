@@ -21,7 +21,7 @@ class COggStream {
 
 		inline void setDSoundObject(LPDIRECTSOUND _DS) { DS = _DS; }
 
-		void play(const std::string& path, float volume = 1.0f, const float3& position = ZeroVector);
+		void play(const std::string& path, float volume, const float3& position);
 		void release();
 		void stop();
 		void update();

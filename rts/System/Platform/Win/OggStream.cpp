@@ -35,7 +35,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	vorbisComment = ov_comment(&oggStream, -1);
 	display();
 
-    // set the wave format
+	// set the wave format
 	WAVEFORMATEX wfm;
 	memset(&wfm, 0, sizeof(wfm));
 
@@ -67,6 +67,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 
 	char* buf;
 	DSB->Lock(0, size, (LPVOID*) &buf, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
+	DSB->SetVolume(int(DSBVOLUME_MIN * volume));
 
 	// read in the stream bits
 	while (ret && pos < size) {
