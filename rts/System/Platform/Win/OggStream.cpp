@@ -85,18 +85,15 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 }
 
 
+// stops the currently playing stream
+// and cleans up the associated buffer
 void COggStream::stop() {
-	if (DSB && !stopped) {
+	if (!stopped) {
+		stopped = true;
 		DSB->Stop();
-	}
-}
-
-void COggStream::release() {
-	if (DSB) {
 		DSB->Release();
 	}
 }
-
 
 
 void COggStream::update() {
@@ -131,9 +128,7 @@ void COggStream::update() {
 				*(buf + pos) = 0; pos++;
 			}
 
-			stopped = true;
 			stop();
-			release();
 		} else {
 			DSB->Unlock(buf, size, NULL, 0);
 			lastSection = curSection;
