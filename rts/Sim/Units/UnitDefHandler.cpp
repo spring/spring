@@ -55,7 +55,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
 
-	unsigned int id = 1;  // Start at unit id 1
+	unsigned int id = 1;  // Start at unitdef id 1
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 
@@ -232,7 +232,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	if (ud.buildTime < 1.0f) {
 		ud.buildTime = 1.0f; //avoid some nasty divide by 0 etc
 	}
+
 	ud.aihint = id; // FIXME? (as noted in SelectedUnits.cpp, aihint is ignored)
+	ud.cobID = udTable.GetInt("cobID", -1);
 
 	ud.losRadius = udTable.GetFloat("sightDistance", 0.0f) * sensorHandler->losMul / (SQUARE_SIZE * (1 << sensorHandler->losMipLevel));
 	ud.airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
