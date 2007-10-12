@@ -690,7 +690,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 	while((timeLeft>0) && !gs->paused)
 	{
 #ifndef NO_AVI
-		if(!game || !game->creatingVideo)
+		if((!game || !game->creatingVideo) || !fromServerThread)
 #endif
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
