@@ -103,6 +103,8 @@ struct UnitDef
 	const UnitDef* decoyDef;
 
 	int aihint;
+	int cobID;  // associated with the COB <GET COB_ID unitID> call 
+
 	int techLevel;
 	std::string gaia;
 
