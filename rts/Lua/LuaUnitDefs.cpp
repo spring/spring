@@ -707,7 +707,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("imageSizeX", ud.imageSizeX);
 	ADD_INT("imageSizeY", ud.imageSizeY);
 
-	ADD_INT("aihint",      ud.aihint);
+	ADD_INT("aihint", ud.aihint);
+	ADD_INT("cobID",  ud.cobID);
+
 	ADD_INT("techLevel",   ud.techLevel);
 	ADD_INT("maxThisUnit", ud.maxThisUnit);
 
