@@ -344,10 +344,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.canhover = udTable.GetBool("canHover", false);
 
-	ud.floater = (ud.waterline != 0.0f);
-	if (udTable.KeyExists("floater")) {
-		ud.floater = udTable.GetBool("floater", false);
-	}
+	ud.floater = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	ud.builder = udTable.GetBool("builder", false);
 	if (ud.builder && !ud.buildSpeed) { // core anti is flagged as builder for some reason
@@ -435,7 +432,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 				break;
 			}
 		}
-		
+
 		while (ud.weapons.size() < w) {
 			if (!noWeaponDef) {
 				logOutput.Print("Error: Spring requires a NOWEAPON weapon type "
