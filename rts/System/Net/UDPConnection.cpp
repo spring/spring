@@ -91,19 +91,19 @@ unsigned UDPConnection::GetData(unsigned char *buf)
 
 void UDPConnection::Update()
 {
-	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+	const unsigned curTime = SDL_GetTicks();
 	bool force = false;	// should we force to send a packet?
 	
-	if((dataRecv == 0) && lastSendTime<curTime-1 && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
+	if((dataRecv == 0) && lastSendTime < curTime-1000 && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime = curTime;
 		force = true;
 	}
 	
-	if (lastSendTime<curTime-5 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
+	if (lastSendTime<curTime-5000 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
 		force = true;
 	}
-	else if(lastSendTime<curTime-0.2f && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+	else if(lastSendTime<curTime-200 && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		force = true;
 	}
 	
@@ -112,7 +112,7 @@ void UDPConnection::Update()
 
 void UDPConnection::ProcessRawPacket(RawPacket* packet)
 {
-	lastReceiveTime=static_cast<float>(SDL_GetTicks())/1000.0f;
+	lastReceiveTime=SDL_GetTicks();
 	dataRecv += packet->length;
 	recvOverhead += hsize;
 
@@ -125,7 +125,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	if (nak > 0)	// we have lost $nak packets
 	{
 		int nak_abs = nak + firstUnacked - 1;
-		if (nak_abs!=lastNak || lastNakTime < lastReceiveTime-0.1f)
+		if (nak_abs!=lastNak || lastNakTime < lastReceiveTime-100)
 		{
 			// resend all packets from firstUnacked till nak_abs
 			lastNak=nak_abs;
@@ -218,10 +218,10 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 void UDPConnection::Flush(const bool forced)
 {
-	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-	if (forced || (outgoingLength>0 && (lastSendTime < (curTime-0.2f+outgoingLength*0.01f))))
+	const float curTime = SDL_GetTicks();
+	if (forced || (outgoingLength>0 && (lastSendTime < (curTime-200+outgoingLength*10))))
 	{
-		lastSendTime=static_cast<float>(SDL_GetTicks())/1000.0f;
+		lastSendTime=SDL_GetTicks();
 
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
@@ -244,8 +244,8 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout() const
 {
-	const float curTime = static_cast<float>(SDL_GetTicks())/1000.0f;
-	if(lastReceiveTime < curTime-((dataRecv == 0) ? 45 : 30))
+	const float curTime = SDL_GetTicks();
+	if(lastReceiveTime < curTime-((dataRecv == 0) ? 45000 : 30000))
 	{
 		return true;
 	}
@@ -270,7 +270,7 @@ bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 
 void UDPConnection::Init()
 {
-	lastReceiveTime = static_cast<float>(SDL_GetTicks())/1000.0f;
+	lastReceiveTime = SDL_GetTicks();
 	lastInOrder=-1;
 	waitingPackets.clear();
 	firstUnacked=0;
