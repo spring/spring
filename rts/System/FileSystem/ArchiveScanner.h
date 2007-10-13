@@ -31,6 +31,8 @@ public:
 	struct ModData {
 		string name;        // ex:  Original Total Annihilation v2.3
 		string shortName;   // ex:  OTA
+		string game;        // ex:  Total Annihilation
+		string shortGame;   // ex:  TA
 		string version;     // ex:  v2.3
 		string mutator;     // ex:  deployment
 		string description; // ex:  Little units blowing up other little units
