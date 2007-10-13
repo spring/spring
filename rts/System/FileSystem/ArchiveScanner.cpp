@@ -58,6 +58,8 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 
 	md.name        = p->SGetValueDef("", (section + "\\Name").c_str());
 	md.shortName   = p->SGetValueDef("", (section + "\\ShortName").c_str());
+	md.game        = p->SGetValueDef("", (section + "\\Game").c_str());
+	md.shortGame   = p->SGetValueDef("", (section + "\\ShortGame").c_str());
 	md.version     = p->SGetValueDef("", (section + "\\Version").c_str());
 	md.mutator     = p->SGetValueDef("", (section + "\\Mutator").c_str());
 	md.description = p->SGetValueDef("", (section + "\\Description").c_str());

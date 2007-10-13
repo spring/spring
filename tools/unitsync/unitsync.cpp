@@ -151,9 +151,10 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 	return 1;
 }
 
-/* Deprecated function, DO NOT USE! Temporarily readded to make buildbot'
-generated unitsync.dll work with TASClient.exe from Spring 0.74b3.
-FIXME: Should be removed just after 0.75 release! */
+/* @brief Deprecated function, DO NOT USE! Temporarily readded to make buildbot'
+ * generated unitsync.dll work with TASClient.exe from Spring 0.74b3.
+ * FIXME: Should be removed just after 0.75 release!
+ */
 DLL_EXPORT int __stdcall InitArchiveScanner(void)
 {
 	return 1;
@@ -736,6 +737,13 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 
 vector<CArchiveScanner::ModData> modData;
 
+/*
+ * @brief Retrieves the name of this mod
+ * @return int The number of mods
+ *
+ * Returns the name of the mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
 DLL_EXPORT int __stdcall GetPrimaryModCount()
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModCount.");
@@ -743,6 +751,14 @@ DLL_EXPORT int __stdcall GetPrimaryModCount()
 	return modData.size();
 }
 
+/*
+ * @brief Retrieves the name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods name
+ *
+ * Returns the name of the mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
 DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModName.");
@@ -750,6 +766,87 @@ DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 	string x = modData[index].name;
 	return GetStr(x);
 }
+
+/*
+ * @brief Retrieves the shortened name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods abbrieviated name
+ *
+ * Returns the shortened name of the mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModShortName.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortName.");
+	string x = modData[index].shortName;
+	return GetStr(x);
+}
+
+/*
+ * @brief Retrieves the game name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods game
+ *
+ * Returns the name of the game this mod belongs to usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModName.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
+	string x = modData[index].game;
+	return GetStr(x);
+}
+
+/*
+ * @brief Retrieves the short game name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods abbrieviated game name
+ *
+ * Returns the abbrieviated name of the game this mod belongs to usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModShortGame.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortGame.");
+	string x = modData[index].shortGame;
+	return GetStr(x);
+}
+
+/*
+ * @brief Retrieves the mutator name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods mutator name
+ *
+ * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModMutator.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
+	string x = modData[index].mutator;
+	return GetStr(x);
+}
+
+/*
+ * @brief Retrieves the description of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods description
+ *
+ * Returns a description for the specified mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModDescription(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModDescription.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModDescription.");
+	string x = modData[index].description;
+	return GetStr(x);
+}
+
 
 DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
 {
@@ -765,6 +862,11 @@ DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
  */
 vector<string> primaryArchives;
 
+/* @brief Retrieves the number of archives a mod requires
+ * @param index int The index of the mod
+ *
+ * Returns the number of archives this mod depends on.
+ */
 DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchiveCount.");
