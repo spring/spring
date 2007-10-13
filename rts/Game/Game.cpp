@@ -2074,16 +2074,15 @@ bool CGame::Draw()
 
 	glEnable(GL_TEXTURE_2D);
 
-	START_TIME_PROFILE("Interface draw");
 	{
+		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
 			guihandler->Update();
 		}
 		else {
 			minimap->Draw();
-
 			infoConsole->Draw();
-
+			
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 			if (!inputReceivers.empty()) {
 				std::deque<CInputReceiver*>::reverse_iterator ri;
@@ -2094,14 +2093,12 @@ bool CGame::Draw()
 					}
 				}
 			}
-
 		}
 
 		if (!hideInterface) {
 			luaCallIns.DrawScreen();
 		}
 	}
-	END_TIME_PROFILE("Interface draw");
 
 	glEnable(GL_TEXTURE_2D);
 

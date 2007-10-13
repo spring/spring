@@ -3,13 +3,11 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include "SDL_types.h"
 #include <ctime>
 #include <string>
 #include <map>
 
 #include "System/GlobalStuff.h"
-#include "FileSystem/CRC.h"
 
 class CNetProtocol;
 class CDemoReader;
@@ -83,7 +81,6 @@ private:
 	
 	/// Inform 3. party programms about events
 	AutohostInterface* hostif;
-	CRC entropy;
 
 	void GenerateAndSendGameID();
 	void SetBoolArg(bool& value, const std::string& str, const char* cmd);

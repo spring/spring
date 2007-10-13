@@ -7,7 +7,6 @@
 #include "NetProtocol.h"
 #include "mmgr.h"
 
-
 CResourceBar* resourceBar=0;
 
 
