@@ -68,8 +68,8 @@ public:
 private:
 	void Init();
 	
-	float lastSendTime;
-	float lastReceiveTime;
+	unsigned lastSendTime;
+	unsigned lastReceiveTime;
 	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	/// all packets with number <= nextAck arrived at the other end
@@ -92,7 +92,7 @@ private:
 	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
-	float lastNakTime;
+	unsigned lastNakTime;
 	std::queue<RawPacket*> msgQueue;
 
 	/** Our socket.
