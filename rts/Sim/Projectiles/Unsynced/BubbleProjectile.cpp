@@ -12,7 +12,8 @@ CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(alpha),
 	CR_MEMBER(size),
 	CR_MEMBER(startSize),
-	CR_MEMBER(sizeExpansion)
+	CR_MEMBER(sizeExpansion),
+	CR_RESERVED(8)
 	));
 
 

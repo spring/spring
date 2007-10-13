@@ -16,7 +16,8 @@ CR_REG_METADATA(CTracerProjectile,
 	CR_MEMBER(dir),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(length),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

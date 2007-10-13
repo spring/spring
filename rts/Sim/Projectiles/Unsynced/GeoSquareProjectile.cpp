@@ -17,7 +17,8 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(r),
 	CR_MEMBER(g),
 	CR_MEMBER(b),
-	CR_MEMBER(a)
+	CR_MEMBER(a),
+	CR_RESERVED(8)
 	));
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2)

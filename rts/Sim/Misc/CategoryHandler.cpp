@@ -10,7 +10,9 @@ CR_BIND(CCategoryHandler, );
 
 CR_REG_METADATA(CCategoryHandler, (
 		CR_MEMBER(categories),
-		CR_MEMBER(firstUnused)));
+		CR_MEMBER(firstUnused),
+		CR_RESERVED(8)
+		));
 
 CCategoryHandler* CCategoryHandler::instance;
 

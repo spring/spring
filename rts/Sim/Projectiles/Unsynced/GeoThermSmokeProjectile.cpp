@@ -4,6 +4,13 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "mmgr.h"
 
+CR_BIND_DERIVED(CGeoThermSmokeProjectile,CSmokeProjectile,(float3(),float3(),1,0));
+
+CR_REG_METADATA(CGeoThermSmokeProjectile, (
+	CR_MEMBER(geo),
+	CR_RESERVED(8)
+	));
+
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl, CFeature* geo)
 : CSmokeProjectile(pos,speed,ttl,6,0.35f,0,0.8f), geo(geo)
 {}
@@ -51,4 +58,5 @@ void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 		}
 	}
 }
+
 

@@ -21,7 +21,8 @@ CR_REG_METADATA(CSpherePartProjectile,(
 	CR_MEMBER(age),
 	CR_MEMBER(ttl),
 	CR_MEMBER(texx),
-	CR_MEMBER(texy)
+	CR_MEMBER(texy),
+	CR_RESERVED(16)
 	));
 
 CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color)

@@ -23,8 +23,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(synced),
 
 	CR_MEMBER_BEGINFLAG(CM_Config),
-	CR_MEMBER(speed),
-	CR_MEMBER_ENDFLAG(CM_Config)
+		CR_MEMBER(speed),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

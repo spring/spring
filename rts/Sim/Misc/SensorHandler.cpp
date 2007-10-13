@@ -8,7 +8,9 @@ CR_REG_METADATA(CSensorHandler, (
 		CR_MEMBER(losMipLevel),
 		CR_MEMBER(airMipLevel),
 		CR_MEMBER(losMul),
-		CR_MEMBER(airLosMul)));
+		CR_MEMBER(airLosMul),
+		CR_RESERVED(16)
+		));
 
 
 CSensorHandler* sensorHandler;

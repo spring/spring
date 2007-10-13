@@ -32,7 +32,8 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawSegmented),
 	CR_MEMBER(firstSegment),
 	CR_MEMBER(lastSegment),
-	CR_MEMBER(drawCallbacker)
+	CR_MEMBER(drawCallbacker),
+	CR_RESERVED(8)
 	));
 
 //////////////////////////////////////////////////////////////////////

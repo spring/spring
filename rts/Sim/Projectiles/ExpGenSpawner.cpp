@@ -11,7 +11,8 @@ CR_REG_METADATA(CExpGenSpawner,
 		CR_MEMBER(dir),
 		CR_MEMBER(damage),
 		CR_MEMBER(explosionGenerator),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 CExpGenSpawner::CExpGenSpawner(void) :

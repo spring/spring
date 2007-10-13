@@ -20,7 +20,8 @@ CR_REG_METADATA(CFlareProjectile,(
 				CR_MEMBER(lastSub),
 				CR_MEMBER(subPos),
 				CR_MEMBER(subSpeed),
-				CR_MEMBER(alphaFalloff)
+				CR_MEMBER(alphaFalloff),
+				CR_RESERVED(8)
 				));
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)

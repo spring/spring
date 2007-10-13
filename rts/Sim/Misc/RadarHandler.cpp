@@ -14,7 +14,8 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(baseRadarErrorSize),
 	CR_MEMBER(xsize),
 	CR_MEMBER(ysize),
-	CR_MEMBER(targFacEffect)
+	CR_MEMBER(targFacEffect),
+	CR_RESERVED(32)
 ));
 
 

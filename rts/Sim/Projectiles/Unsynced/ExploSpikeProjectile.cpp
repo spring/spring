@@ -17,7 +17,8 @@ CR_REG_METADATA(CExploSpikeProjectile,
 		CR_MEMBER(lengthGrowth),
 		CR_MEMBER(dir),
 		CR_MEMBER(color),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 CExploSpikeProjectile::CExploSpikeProjectile()

@@ -20,7 +20,9 @@ CR_BIND(CDamageArrayHandler, );
 CR_REG_METADATA(CDamageArrayHandler, (
 		CR_MEMBER(numTypes),
 		CR_MEMBER(name2type),
-		CR_MEMBER(typeList)));
+		CR_MEMBER(typeList),
+		CR_RESERVED(16)
+		));
 
 
 CDamageArrayHandler* damageArrayHandler;

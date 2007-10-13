@@ -12,7 +12,8 @@ CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),
 
 CR_REG_METADATA(CEmgProjectile,(
     CR_MEMBER(intensity),
-    CR_MEMBER(color)
+    CR_MEMBER(color),
+    CR_RESERVED(8)
     ));
 
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
