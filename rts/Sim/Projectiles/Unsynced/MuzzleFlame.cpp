@@ -14,7 +14,8 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
 	CR_MEMBER(numSmoke),
-	CR_MEMBER(randSmokeDir)
+	CR_MEMBER(randSmokeDir),
+	CR_RESERVED(8)
 	));
 
 void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
@@ -98,4 +99,5 @@ void CMuzzleFlame::Draw(void)
 		}
 	}
 }
+
 

@@ -17,7 +17,8 @@ CR_REG_METADATA(CGfxProjectile,
 		CR_MEMBER(creationTime),
 		CR_MEMBER(lifeTime),
 		CR_MEMBER(color),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

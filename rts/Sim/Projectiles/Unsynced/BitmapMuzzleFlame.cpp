@@ -20,7 +20,8 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
 		CR_MEMBER(frontOffset),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame(void)

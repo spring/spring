@@ -10,7 +10,11 @@
 #include "mmgr.h"
 
 CR_BIND(CInterceptHandler, )
-CR_REG_METADATA(CInterceptHandler, (CR_MEMBER(interceptors), CR_MEMBER(plasmaRepulsors)));
+CR_REG_METADATA(CInterceptHandler, (
+	CR_MEMBER(interceptors),
+	CR_MEMBER(plasmaRepulsors),
+	CR_RESERVED(8)
+	));
 
 
 CInterceptHandler interceptHandler;

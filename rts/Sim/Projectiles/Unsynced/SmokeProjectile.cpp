@@ -22,7 +22,8 @@ CR_REG_METADATA(CSmokeProjectile,
 		CR_MEMBER(sizeExpansion),
 		CR_MEMBER(ageSpeed),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_MEMBER(age)
+	CR_MEMBER(age),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

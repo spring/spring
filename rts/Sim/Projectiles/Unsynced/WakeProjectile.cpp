@@ -17,7 +17,8 @@ CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(size),
 	CR_MEMBER(sizeExpansion),
 	CR_MEMBER(rotation),
-	CR_MEMBER(rotSpeed)
+	CR_MEMBER(rotSpeed),
+	CR_RESERVED(8)
 	));
 
 //////////////////////////////////////////////////////////////////////

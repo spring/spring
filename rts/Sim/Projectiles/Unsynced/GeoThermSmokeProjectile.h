@@ -7,6 +7,7 @@ class CFeature;
 
 class CGeoThermSmokeProjectile : public CSmokeProjectile
 {
+	CR_DECLARE(CGeoThermSmokeProjectile)
 public:
 	CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl,CFeature *geo);
 	void Update();

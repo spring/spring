@@ -19,7 +19,8 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(size),
 	CR_MEMBER(airdrag),
 	CR_MEMBER(sizeGrowth),
-	CR_MEMBER(sizeMod)
+	CR_MEMBER(sizeMod),
+	CR_RESERVED(8)
 	));
 
 CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner) :

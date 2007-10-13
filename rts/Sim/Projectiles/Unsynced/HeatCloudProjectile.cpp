@@ -22,7 +22,8 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(sizemod),
 		CR_MEMBER(sizemodmod),
 		CR_MEMBER(texture),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

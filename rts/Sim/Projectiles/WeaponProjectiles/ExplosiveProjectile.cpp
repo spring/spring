@@ -18,7 +18,8 @@ CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_MEMBER(areaOfEffect),
-	CR_MEMBER(gravity)
+	CR_MEMBER(gravity),
+	CR_RESERVED(16)
 	));
 
 //////////////////////////////////////////////////////////////////////

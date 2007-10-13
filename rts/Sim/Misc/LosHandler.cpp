@@ -33,7 +33,9 @@ CR_REG_METADATA(LosInstance,(
 		CR_MEMBER(baseAirSquare),
 		CR_MEMBER(hashNum),
 		CR_MEMBER(baseHeight),
-		CR_MEMBER(toBeDeleted)));
+		CR_MEMBER(toBeDeleted),
+		CR_RESERVED(16)
+		));
 
 void CLosHandler::PostLoad()
 {
@@ -63,17 +65,18 @@ CR_REG_METADATA(CLosHandler,(
 //		CR_MEMBER(Points),
 		CR_MEMBER(terrainHeight),
 //		CR_MEMBER(lostables)
+		CR_RESERVED(32),
 		CR_POSTLOAD(PostLoad)
 		));
 
 CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
 		CR_MEMBER(instance),
 		CR_MEMBER(timeoutTime)));
-
+/*
 CR_REG_METADATA_SUB(CLosHandler,CPoint,(
 		CR_MEMBER(x),
 		CR_MEMBER(y)));
-
+*/
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

@@ -25,7 +25,8 @@ CR_REG_METADATA(CSmokeProjectile2,
 		CR_MEMBER(glowFalloff),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(age),
-	CR_MEMBER(textureNum)
+	CR_MEMBER(textureNum),
+	CR_RESERVED(8)
 ));
 
 //////////////////////////////////////////////////////////////////////

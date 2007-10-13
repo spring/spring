@@ -17,6 +17,7 @@ CR_REG_METADATA(CQuadField, (
 		CR_MEMBER(numQuadsX),
 		CR_MEMBER(numQuadsZ),
 //		CR_MEMBER(baseQuads),
+		CR_RESERVED(8),
 		CR_SERIALIZER(Serialize)
 		));
 
