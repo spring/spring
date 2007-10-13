@@ -46,6 +46,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 #endif
 	maxTimeLeft=2;
 	play = 0;
+	IsPaused = false;
 
 	serverNet = new CNetProtocol();
 
@@ -83,11 +84,15 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
+		userSpeedFactor = gs->userSpeedFactor;
+		internalSpeed = gs->speedFactor;
 	}
 	else
 	{
 		maxUserSpeed=3;
 		minUserSpeed=0.3f;
+		userSpeedFactor = 1.0f;
+		internalSpeed = 1.0f;
 	}
 
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
@@ -124,7 +129,7 @@ CGameServer::~CGameServer()
 	}
 }
 
-static std::string GetPlayerNames(const std::vector<int>& indices)
+std::string CGameServer::GetPlayerNames(const std::vector<int>& indices)
 {
 	std::string players;
 	std::vector<int>::const_iterator p = indices.begin();
@@ -246,16 +251,16 @@ void CGameServer::Update()
 			}
 
 			if (maxCpu != 0) {
-				float wantedCpu=0.35f+(1-gs->speedFactor/gs->userSpeedFactor)*0.5f;
+				float wantedCpu=0.35f+(1-internalSpeed/userSpeedFactor)*0.5f;
 				//float speedMod=1+wantedCpu-maxCpu;
-				float newSpeed=gs->speedFactor*wantedCpu/maxCpu;
+				float newSpeed=internalSpeed*wantedCpu/maxCpu;
 				//logOutput.Print("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed=(newSpeed+gs->speedFactor)*0.5f;
-				if(newSpeed>gs->userSpeedFactor)
-					newSpeed=gs->userSpeedFactor;
+				newSpeed=(newSpeed+internalSpeed)*0.5f;
+				if(newSpeed>userSpeedFactor)
+					newSpeed=userSpeedFactor;
 				if(newSpeed<0.1f)
 					newSpeed=0.1f;
-				if(newSpeed!=gs->speedFactor)
+				if(newSpeed!=internalSpeed)
 					serverNet->SendInternalSpeed(newSpeed);
 			}
 		}
@@ -314,6 +319,7 @@ void CGameServer::ServerReadNet()
 							if(gamePausable || a==0) // allow host to pause even if nopause is set
 							{
 								timeLeft=0;
+								IsPaused ? IsPaused = false : IsPaused = true;
 								serverNet->SendPause(inbuf[1],inbuf[2]);
 							}
 						}
@@ -327,12 +333,16 @@ void CGameServer::ServerReadNet()
 							speed = maxUserSpeed;
 						if (speed < minUserSpeed)
 							speed = minUserSpeed;
-						if (gs->userSpeedFactor != speed)
+						if (userSpeedFactor != speed)
 						{
-							if (gs->speedFactor == gs->userSpeedFactor || gs->speedFactor>speed)
+							if (internalSpeed == userSpeedFactor || internalSpeed>speed)
+							{
 								serverNet->SendInternalSpeed(speed);
+								internalSpeed = speed;
+							}
 							// forward data
 							serverNet->SendUserSpeed(playerNum, speed);
+							userSpeedFactor = speed;
 						}
 					} break;
 
@@ -606,10 +616,16 @@ void CGameServer::StartGame()
 	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
-	if(gs->userSpeedFactor>maxUserSpeed)
+	if(userSpeedFactor>maxUserSpeed)
+	{
 		serverNet->SendUserSpeed(0,maxUserSpeed);
-	else if(gs->userSpeedFactor<minUserSpeed)
+		userSpeedFactor = maxUserSpeed;
+	}
+	else if(userSpeedFactor<minUserSpeed)
+	{
 		serverNet->SendUserSpeed(0,minUserSpeed);
+		userSpeedFactor = minUserSpeed;
+	}
 
 	serverNet->SendStartPlaying();
 	if (hostif)
@@ -684,10 +700,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		timeElapsed=maxTimeLeft;
 	maxTimeLeft-=timeElapsed;
 
-	timeLeft+=GAME_SPEED*gs->speedFactor*timeElapsed;
+	timeLeft+=GAME_SPEED*internalSpeed*timeElapsed;
 	lastTick=currentTick;
 
-	while((timeLeft>0) && !gs->paused)
+	while((timeLeft>0) && !IsPaused)
 	{
 #ifndef NO_AVI
 		if((!game || !game->creatingVideo) || !fromServerThread)
@@ -801,14 +817,26 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	}
 	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
-		if (gs->userSpeedFactor > maxUserSpeed) {
+		if (userSpeedFactor > maxUserSpeed) {
 			serverNet->SendUserSpeed(player, maxUserSpeed);
+			userSpeedFactor = maxUserSpeed;
+			if (internalSpeed > maxUserSpeed)
+			{
+				serverNet->SendInternalSpeed(userSpeedFactor);
+				internalSpeed = userSpeedFactor;
+			}
 		}
 	}
 	else if ((msg.find(".setminspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
 		minUserSpeed = atof(msg.substr(12).c_str());
-		if (gs->userSpeedFactor < minUserSpeed) {
+		if (userSpeedFactor < minUserSpeed) {
 			serverNet->SendUserSpeed(player, minUserSpeed);
+			userSpeedFactor = minUserSpeed;
+			if (internalSpeed < minUserSpeed)
+			{
+				serverNet->SendInternalSpeed(userSpeedFactor);
+				internalSpeed = userSpeedFactor;
+			}
 		}
 	}
 	else
