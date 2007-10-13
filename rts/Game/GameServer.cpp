@@ -18,6 +18,7 @@
 #include "System/Sync/Syncify.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
+#include "FileSystem/CRC.h"
 #include "Player.h"
 #include "Team.h"
 #include "StartScripts/ScriptHandler.h"
@@ -94,10 +95,6 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 		userSpeedFactor = 1.0f;
 		internalSpeed = 1.0f;
 	}
-
-	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
-	unsigned char buffer[128];
-	entropy.UpdateData(buffer, 128);
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -580,6 +577,11 @@ void CGameServer::GenerateAndSendGameID()
 	for (int i = 4; i < 12; ++i)
 		gameID.charArray[i] = prand();
 
+	CRC entropy;
+	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
+	unsigned char buffer[128];	// uninitialised bytes (should be very random)
+	entropy.UpdateData(buffer, 128);
+	
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
 	if (gameSetup != NULL) {

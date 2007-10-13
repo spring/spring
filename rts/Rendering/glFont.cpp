@@ -304,6 +304,7 @@ void CglFont::glPrintOutlined(const char* text,
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	const float twiceY = shiftY*2;
 	for (int i = 0; i < strlen(text); i++) {
 		i = SkipColorCodes(text, i);
 		if (i < 0) {
@@ -314,14 +315,10 @@ void CglFont::glPrintOutlined(const char* text,
 			glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
 			const GLuint nsList = (ch - charstart) + listbaseNoshift;
 			glColor4fv(outlineColor);
-			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
-			glTranslatef(+shiftX, 0.0f, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, -shiftY, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, -shiftY, 0.0f); glCallList(nsList);
-			glTranslatef(-shiftX, 0.0f, 0.0f); glCallList(nsList);
-			glTranslatef(-shiftX, 0.0f, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, +shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(+shiftX, +shiftY, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, -twiceY, 0.0f); glCallList(nsList);
+			glTranslatef(-(shiftX*2), 0.0f, 0.0f); glCallList(nsList);
+			glTranslatef(0.0f, +twiceY, 0.0f); glCallList(nsList);
 			glTranslatef(+shiftX, -shiftY, 0.0f);
 			glColor4fv(normalColor);
 			glCallList((ch - charstart) + listbase);
