@@ -328,12 +328,12 @@ bool SpringApp::Initialize ()
 	try {
 		font = SAFE_NEW CglFont(charFirst, charLast, fontFile.c_str());
 	} catch(content_error&) {
-		// If the standard location fails, retry in fonts directory.
-		if (fontFile.substr(0, 6) == "fonts/") throw;
-		fontFile = "fonts/" + fontFile;
+		// If the standard location fails, retry in fonts directory or vice versa.
+		if (fontFile.substr(0, 6) == "fonts/")
+			fontFile = fontFile.substr(6);
+		else
+			fontFile = "fonts/" + fontFile;
 		font = SAFE_NEW CglFont(charFirst, charLast, fontFile.c_str());
-		// If this succeeds, modify the configuration.
-		configHandler.SetString("FontFile", fontFile);
 	}
 
 	// Initialize GLEW
