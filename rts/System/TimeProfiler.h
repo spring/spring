@@ -34,8 +34,6 @@
 
 #include "Game/UI/InputReceiver.h"
 
-using namespace std;
-
 /**
 @brief Time profiling is now easy
 @author Karl-Robert Ernst
@@ -55,15 +53,15 @@ public:
 	~ScopedTimer();
 	
 private:
-	const char* const name;
-	const Uint64 starttime;
+	const std::string name;
+	const unsigned starttime;
 };
 
 class CTimeProfiler : public CInputReceiver
 {
 	struct TimeRecord{
-		Uint64 total;
-		Uint64 current;
+		unsigned total;
+		unsigned current;
 		Uint64 frames[128];
 		float percent;
 		float3 color;
@@ -73,7 +71,7 @@ public:
 	void StartTimer(const char* name);
 	void EndTimer(const char* name=0);
 
-	void AddTime(string name,Sint64 time);
+	void AddTime(const std::string& name, unsigned time);
 	void Update();
 	void Draw();
 	CTimeProfiler();
@@ -82,16 +80,14 @@ public:
 	virtual bool MousePress(int x, int y, int button);
 	virtual bool IsAbove(int x, int y);	
 	
-	map<string,TimeRecord> profile;
+	std::map<std::string,TimeRecord> profile;
 	
 private:
 	float lastBigUpdate;
 	
-	Uint64 startTimes[1000];
+	unsigned startTimes[1000];
 	const char* startNames[1000];
-	int startTimeNum;
-	
-	friend class ScopedTimer;
+	unsigned startTimeNum;
 };
 
 extern CTimeProfiler profiler;

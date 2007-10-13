@@ -21,7 +21,7 @@ ScopedTimer::ScopedTimer(const char* const myname) : name(myname), starttime(SDL
 
 ScopedTimer::~ScopedTimer()
 {
-	Uint64 stoptime = SDL_GetTicks();
+	unsigned stoptime = SDL_GetTicks();
 	profiler.AddTime(name, stoptime - starttime);
 }
 
@@ -61,7 +61,7 @@ void CTimeProfiler::Draw()
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	map<string,TimeRecord>::iterator pi;
+	std::map<std::string,TimeRecord>::iterator pi;
 
 	int y=0;
 	for(pi=profile.begin();pi!=profile.end();++pi,y++)
@@ -110,14 +110,14 @@ void CTimeProfiler::Draw()
 
 void CTimeProfiler::Update()
 {
-	map<string,TimeRecord>::iterator pi;
+	std::map<std::string,TimeRecord>::iterator pi;
 	for(pi=profile.begin();pi!=profile.end();++pi){
 	  pi->second.frames[(gs->frameNum+1)&127]=0;
 	}
 
 	if(lastBigUpdate<gu->gameTime-1){
 		lastBigUpdate=gu->gameTime;
-		map<string,TimeRecord>::iterator pi;
+		std::map<std::string,TimeRecord>::iterator pi;
 		for(pi=profile.begin();pi!=profile.end();++pi){
 			pi->second.percent=((float)pi->second.current)/1000.f;
 			pi->second.current=0;
@@ -126,9 +126,9 @@ void CTimeProfiler::Update()
 	}
 }
 
-void CTimeProfiler::AddTime(string name, Sint64 time)
+void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 {
-	map<string,TimeRecord>::iterator pi;
+	std::map<std::string,TimeRecord>::iterator pi;
 	if((pi=profile.find(name))!=profile.end()){
 		pi->second.total+=time;
 		pi->second.current+=time;
@@ -139,7 +139,7 @@ void CTimeProfiler::AddTime(string name, Sint64 time)
 		profile[name].total=time;
 		profile[name].current=time;
 		profile[name].percent=0;
-		for(int a=0;a<128;++a)
+		for(unsigned a=0;a<128;++a)
 		  profile[name].frames[a]=0;
 		profile[name].color.x=gu->usRandFloat();
 		profile[name].color.y=gu->usRandFloat();
@@ -155,9 +155,7 @@ void CTimeProfiler::StartTimer(const char* name)
 		logOutput.Print("Too many timers");
 		return;
 	}
-	Uint64 starttime;
-	starttime = SDL_GetTicks();
-	startTimes[startTimeNum] = (starttime);
+	startTimes[startTimeNum] = SDL_GetTicks();
 	startNames[startTimeNum] = name;
 	startTimeNum++;
 }
@@ -175,8 +173,7 @@ void CTimeProfiler::EndTimer(const char* name)
 	                  startTimes[startTimeNum], name);
 	}
 */
-	Uint64 stop;
-	stop = SDL_GetTicks();
+	unsigned stop = SDL_GetTicks();
 	AddTime(name,stop - startTimes[startTimeNum]);
 }
 
@@ -202,7 +199,7 @@ bool CTimeProfiler::MousePress(int x, int y, int button)
 	int num=(int) ((0.99f-my)/0.024f);
 
 	int a=0;
-	map<string,TimeRecord>::iterator pi;
+	std::map<std::string,TimeRecord>::iterator pi;
 	for(pi=profile.begin();pi!=profile.end() && a!=num;++pi,a++){
 	}
 	if(pi!=profile.end())
