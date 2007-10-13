@@ -407,7 +407,7 @@ bool CPreGame::Update()
 void CPreGame::UpdateClientNet()
 {
 	unsigned char inbuf[8000];
-	
+
 	int ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 
 	while (ret > 0) {
@@ -505,7 +505,7 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_PLAYERINFO:
 				break;
-				
+
 			default: {
 				char txt[200];
 				sprintf(txt, "Unknown net-msg in client (header: %d)", (int) inbuf[0]);
@@ -514,7 +514,7 @@ void CPreGame::UpdateClientNet()
 		}
 		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	}
-	
+
 	if (ret == -1)
 	{
 		globalQuit = true;
@@ -589,7 +589,7 @@ void CPreGame::SelectMod(std::string s)
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
 		const string& modName = pregame->showList->items[index];
-		pregame->modArchive = archiveScanner->ModNameToModArchive(pregame->modName);
+		pregame->modArchive = archiveScanner->ModNameToModArchive(modName);
 	} else {
 		pregame->modArchive = archiveScanner->ModNameToModArchive(s);
 	}
