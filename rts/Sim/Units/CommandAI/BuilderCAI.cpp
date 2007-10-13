@@ -20,6 +20,7 @@
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -48,6 +49,9 @@ CR_REG_METADATA(CBuilderCAI , (
 				CR_RESERVED(16),
 				CR_POSTLOAD(PostLoad)
 				));
+
+// not adding to members, should repopulate itself
+CUnitSet CBuilderCAI::reclaimers;
 
 CBuilderCAI::CBuilderCAI()
 : CMobileCAI(),
@@ -165,6 +169,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 
 CBuilderCAI::~CBuilderCAI()
 {
+	RemoveUnitFromReclaimers(owner);
 	uh->RemoveBuilderCAI(this);
 }
 
@@ -481,6 +486,8 @@ void CBuilderCAI::ExecuteGuard(Command &c)
 				return;
 			}
 		}
+		if (IsUnitBeingReclaimedByFriend(guarded))
+			return;
 		float3 curPos=owner->pos;
 		float3 dif=guarded->pos-curPos;
 		dif.Normalize();
@@ -546,6 +553,7 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 				StopMove();
 				FinishCommand();
 			}
+			RemoveUnitFromReclaimers(owner);
 
 		} else {                   //reclaim unit
 			CUnit* unit=uh->units[id];
@@ -553,8 +561,11 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 				if(!ReclaimObject(unit)){
 					StopMove();
 					FinishCommand();
+				} else {
+					AddUnitToReclaimers(owner);
 				}
 			} else {
+				RemoveUnitFromReclaimers(owner);
 				FinishCommand();
 			}
 		}
@@ -562,6 +573,7 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
+		RemoveUnitFromReclaimers(owner);
 		if (FindReclaimableFeatureAndReclaim(pos, radius, c.options, true, recAnyTeam)) {
 			inCommand=false;
 			SlowUpdate();
@@ -571,6 +583,7 @@ void CBuilderCAI::ExecuteReclaim(Command &c)
 			FinishCommand();
 		}
 	} else {	//wrong number of parameters
+		RemoveUnitFromReclaimers(owner);
 		FinishCommand();
 	}
 	return;
@@ -1122,6 +1135,51 @@ void CBuilderCAI::FinishCommand(void)
 	CMobileCAI::FinishCommand();
 }
 
+void CBuilderCAI::AddUnitToReclaimers(CUnit* unit)
+{
+	reclaimers.insert(unit);
+}
+
+void CBuilderCAI::RemoveUnitFromReclaimers(CUnit* unit)
+{
+	reclaimers.erase(unit);
+}
+
+/** check if a unit is being reclaimed by a friendly con.
+
+we assume that there won't be a lot of reclaimers because performance would suck
+if there were. ideally reclaimers should be assigned on a per-unit basis, but
+this requires tracking of deaths, which albeit already done isn't exactly simple
+to follow. */
+bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
+{
+	bool retval = false;
+	std::list<CUnit*> rm;
+
+	for (CUnitSet::iterator it = reclaimers.begin(); it != reclaimers.end(); ++it) {
+		// check wheter reclaimers are valid
+		assert(*it);
+		assert((*it)->commandAI);
+		Command &c = (*it)->commandAI->commandQue.front();
+		if (c.id != CMD_RECLAIM || c.params.size() != 1) {
+			rm.push_back(*it);
+			continue;
+		}
+
+		// we may have run out of reclaimers
+		if (it == reclaimers.end())
+			break;
+		const int cmdUnitId = (int)c.params[0];
+		if (cmdUnitId == unit->id && gs->Ally(unit->team, (*it)->team)) {
+			retval = true;
+			break;
+		}
+	}
+	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
+		RemoveUnitFromReclaimers(*it);
+	return retval;
+}
+
 bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned char options, bool attackEnemy)
 {
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
@@ -1148,6 +1206,10 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 				continue;
 			}
 			if (unit->soloBuilder && (unit->soloBuilder != owner)) {
+				continue;
+			}
+			// don't repair stuff that's being reclaimed
+			if (IsUnitBeingReclaimedByFriend(unit)) {
 				continue;
 			}
 			Command nc;
