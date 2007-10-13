@@ -58,9 +58,23 @@ CShareBox::CShareBox(void)
 	shareUnits=false;
 	moveBox=false;
 
-	shareTeam=lastShareTeam;
-	if(gu->myTeam==0 && shareTeam==0)
-		shareTeam++;
+	// find a default team to share to that is not gu->myTeam and is not dead.
+	shareTeam = lastShareTeam;
+
+	while (shareTeam == gu->myTeam || gs->Team(shareTeam)->isDead) {
+		++shareTeam;
+
+		// wrap around
+		if (shareTeam >= gs->activeTeams)
+			shareTeam = 0;
+
+		// we're back at the start, so there are no teams alive...
+		// (except possibly gu->myTeam)
+		if (shareTeam == lastShareTeam) {
+			shareTeam = -1;
+			break;
+		}
+	}
 }
 
 CShareBox::~CShareBox(void)
@@ -176,7 +190,7 @@ void CShareBox::Draw(void)
 		}
 
 		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
-		
+
 		string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
 			ally = " <Ally>";
@@ -267,7 +281,8 @@ void CShareBox::MouseRelease(int x, int y, int button)
 	if (InBox(mx, my, box + unitBox)) {
 		shareUnits = !shareUnits;
 	}
-	if (InBox(mx, my, box + okBox) || InBox(mx, my, box + applyBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead) {
+	if ((InBox(mx, my, box + okBox) || InBox(mx, my, box + applyBox)) &&
+			 shareTeam != -1 && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead) {
 		if (shareUnits) {
 			Command c;
 			c.id = CMD_STOP;
