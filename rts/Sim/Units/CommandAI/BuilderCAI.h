@@ -6,6 +6,8 @@
 #include "../UnitDef.h"
 #include "../../Objects/SolidObject.h"
 
+class CUnitSet;
+
 class CBuilderCAI :
 	public CMobileCAI
 {
@@ -41,7 +43,7 @@ public:
 	virtual void ExecuteRestore(Command &c);
 
 	bool ReclaimObject(CSolidObject* o);
-	
+
 	map<int,string> buildOptions;
 	bool building;
 	BuildInfo build;
@@ -58,6 +60,12 @@ public:
 private:
 
 	void CancelRestrictedUnit(const std::string& buildOption);
+
+	// fix for patrolling cons repairing stuff that's being reclaimed
+	static CUnitSet reclaimers;
+	static void AddUnitToReclaimers(CUnit*);
+	static void RemoveUnitFromReclaimers(CUnit*);
+	static bool IsUnitBeingReclaimedByFriend(CUnit*);
 };
 
 #endif // __BUILDER_CAI_H__

@@ -249,9 +249,9 @@ CUnit::~CUnit()
 	SetEnergyStorage(0);
 //	}
 
-	delete commandAI;
-	delete moveType;
-	delete prevMoveType;
+	delete commandAI; commandAI = 0;
+	delete moveType; moveType = 0;
+	delete prevMoveType; prevMoveType = 0;
 
 	if(group)
 		group->RemoveUnit(this);
@@ -360,12 +360,12 @@ void CUnit::ForcedSpin(const float3& newDir)
 
 void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent) {
 	//drop unit from position
-	
+
 	this->fallSpeed = this->unitDef->unitFallSpeed > 0 ? this->unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
 	float landingHeight = ground->GetApproximateHeight(pos.x, pos.z);
-	falling = true;	
-	this->pos.y = parentPos.y - height;	
-	this->frontdir = parentDir;	
+	falling = true;
+	this->pos.y = parentPos.y - height;
+	this->frontdir = parentDir;
 	this->frontdir.y = 0;
 	this->speed.y = 0;
 }
@@ -730,7 +730,7 @@ void CUnit::SetDirectionFromHeading(void)
 		rightdir.Normalize();
 		frontdir=updir.cross(rightdir);
 	}
-}	
+}
 
 void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
@@ -2297,7 +2297,7 @@ CR_REG_METADATA(CUnit, (
 
 				CR_MEMBER(lastTerrainType),
 				CR_MEMBER(curTerrainType),
-				
+
 				CR_MEMBER(alphaThreshold),
 
 				CR_MEMBER(selfDCountdown),
