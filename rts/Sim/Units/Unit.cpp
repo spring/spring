@@ -566,6 +566,7 @@ void CUnit::SlowUpdate()
 			AddMetal(metalCost/(buildTime*0.03f));
 			if(health<0)
 				KillUnit(false,true,0);
+			UpdateResources();
 		}
 		return;
 	}
@@ -2316,6 +2317,7 @@ CR_REG_METADATA(CUnit, (
 
 				CR_POSTLOAD(PostLoad)
 				));
+
 
 
 
