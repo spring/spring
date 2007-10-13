@@ -98,7 +98,8 @@ CR_REG_METADATA(CGroundMoveType, (
 
 		CR_MEMBER(mainHeadingPos),
 		CR_MEMBER(useMainHeading),
-		CR_RESERVED(64)
+		CR_RESERVED(64),
+		CR_POSTLOAD(PostLoad)
 		));
 
 
@@ -184,6 +185,14 @@ CGroundMoveType::~CGroundMoveType()
 
 	if(owner->myTrack)
 		groundDecals->RemoveUnit(owner);
+}
+
+void CGroundMoveType::PostLoad()
+{
+	//HACK:Initializing path after load
+	if (pathId) {
+		pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goal, goalRadius,owner);
+	}
 }
 
 void CGroundMoveType::Update()
