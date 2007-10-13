@@ -87,17 +87,24 @@ private:
 
 	void GenerateAndSendGameID();
 	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
+	std::string GetPlayerNames(const std::vector<int>& indices);
 	
-	// game settings
+	/////////////////// game status variables ///////////////////
+	bool IsPaused;
+	float userSpeedFactor;
+	float internalSpeed;
+	
+	/////////////////// game settings ///////////////////
 	/// Wheter the game is pausable for others than the host
 	bool gamePausable;
 	
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
+	
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 	
-	// sync stuff
+	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
 	std::deque<int> outstandingSyncFrames;
 	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
