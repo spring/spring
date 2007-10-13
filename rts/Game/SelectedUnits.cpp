@@ -114,22 +114,24 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	if (!gs->noHelperAIs) {
 		//create a new group
 		if (foundGroup != -2) {
-			CommandDescription c;
-			c.id=CMD_AISELECT;
-			c.action="aiselect";
-			c.type=CMDTYPE_COMBO_BOX;
-			c.name="Select AI";
-			c.tooltip="Create a new group using the selected units and with the ai selected";
-			c.hotkey="Ctrl+q";
+			map<AIKey, string>::iterator aai;
+			map<AIKey, string> suitedAis = grouphandlers[gu->myTeam]->GetSuitedAis(selectedUnits);
+			if (suitedAis.size() >= 2) { // default doesn't count
+				CommandDescription c;
+				c.id      = CMD_AISELECT;
+				c.action  = "aiselect";
+				c.type    = CMDTYPE_COMBO_BOX;
+				c.name    = "Select AI";
+				c.tooltip = "Create a new group using the selected units and with the ai selected";
+				c.hotkey  = "Ctrl+q";
 
-			c.params.push_back("0");
-			c.params.push_back("None");
-			map<AIKey,string>::iterator aai;
-			map<AIKey,string> suitedAis = grouphandlers[gu->myTeam]->GetSuitedAis(selectedUnits);
-			for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
-				c.params.push_back((aai->second).c_str());
+				c.params.push_back("0");
+				c.params.push_back("None");
+				for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
+					c.params.push_back((aai->second).c_str());
+				}
+				groupCommands.push_back(c);
 			}
-			groupCommands.push_back(c);
 		}
 
 		// add the selected units to a previous group (that at least one unit is also selected from)
