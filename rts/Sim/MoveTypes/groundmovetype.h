@@ -14,6 +14,8 @@ public:
 	CGroundMoveType(CUnit* owner);
 	~CGroundMoveType(void);
 
+	void PostLoad();
+
 	void Update();
 	void SlowUpdate();
 
