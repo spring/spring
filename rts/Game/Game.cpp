@@ -389,13 +389,17 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 //	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
 	globalAI=SAFE_NEW CGlobalAIHandler();
 
+	PrintLoadMsg("Loading LuaCOB");
 	CLuaCob::LoadHandler();
 	if (gs->useLuaRules) {
+		PrintLoadMsg("Loading LuaRules");
 		CLuaRules::LoadHandler();
 	}
 	if (gs->useLuaGaia) {
+		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
+	PrintLoadMsg("Finalizing...");
 
 	ENTER_MIXED;
 	if(true || !shadowHandler->drawShadows){ // FIXME ?
@@ -2082,7 +2086,7 @@ bool CGame::Draw()
 		else {
 			minimap->Draw();
 			infoConsole->Draw();
-			
+
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 			if (!inputReceivers.empty()) {
 				std::deque<CInputReceiver*>::reverse_iterator ri;
