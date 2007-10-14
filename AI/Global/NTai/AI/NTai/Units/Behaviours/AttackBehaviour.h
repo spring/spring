@@ -1,8 +1,8 @@
 class CAttackBehaviour : public IBehaviour{
 public:
-	CAttackBehaviour(Global* GL, boost::shared_ptr<IModule> unit);
+	CAttackBehaviour(Global* GL, int uid);
 	virtual ~CAttackBehaviour();
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	void RecieveMessage(CMessage &message);
 private:
 	bool engaged;

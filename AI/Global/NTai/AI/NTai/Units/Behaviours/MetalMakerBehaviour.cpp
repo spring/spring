@@ -1,9 +1,9 @@
 #include "../../Core/helper.h"
 
-CMetalMakerBehaviour::CMetalMakerBehaviour(Global* GL, boost::shared_ptr<IModule> unit){
+CMetalMakerBehaviour::CMetalMakerBehaviour(Global* GL, int uid){
 	//
 	G = GL;
-	unit = unit;
+	unit = G->GetUnit(uid);
 	turnedOn = false;
 }
 
@@ -11,13 +11,11 @@ CMetalMakerBehaviour::~CMetalMakerBehaviour(){
 	//
 }
 
-bool CMetalMakerBehaviour::Init(boost::shared_ptr<IModule> me){
+bool CMetalMakerBehaviour::Init(){
 	//
-	this->me = &me;
-	G->RegisterMessageHandler(me);
 //	G->RegisterMessageHandler("unitdestroyed",me);
 //	G->RegisterMessageHandler("update",me);
-	
+
 	turnedOn = G->cb->IsUnitActivated(((CUnit*)unit.get())->GetID());
 	energyUse=min(((CUnit*)unit.get())->GetUnitDef()->energyUpkeep,1.0f);
 	return true;

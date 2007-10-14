@@ -1,4 +1,7 @@
 //New construction system
+
+class CManufacturer;
+
 class CBPlan: public boost::noncopyable{ // This is not used for factories building units.
 public:
 	CBPlan();
@@ -15,11 +18,11 @@ public:
 	void RemoveAllBuilders();
 	int GetBuilderCount();
 
-	void WipeBuilderPlans(boost::shared_ptr<IModule> m);
+	void WipeBuilderPlans(CManufacturer* m);
 
 	uint id;
-	
-	
+
+
 	int subject; // the thing being built
 	bool started; // has construction started?
 	float3 pos; // where is the unit being built? Used to tie the new unit to the plan
@@ -30,7 +33,7 @@ private:
 	bool valid;
 	boost::mutex plan_mutex;
 	set<int> builders; // the builder
-	
+
 };
 
 class SkyWrite{
@@ -45,7 +48,7 @@ class CManufacturer : public IModule {
 public:
 	CManufacturer(Global* GL);
 	virtual ~CManufacturer();
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	void RecieveMessage(CMessage &message);
 	void UnitCreated(int uid);
 	void UnitFinished(int uid);
@@ -84,7 +87,7 @@ public:
 private:
 	map<int,bool> factorytechlevels;
 	map<int,vector<float3> > techfactorypositions;
-	
+
 	//map<int,CBuilder> builders;
 	Global* G;
 	bool initialized;

@@ -76,8 +76,7 @@ void CBuildingPlacer::RecieveMessage(CMessage &message){
     }
 }
 
-bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
-    this->me = &me;
+bool CBuildingPlacer::Init(){
     const float* slope = G->cb->GetSlopeMap();
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE*2, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE*2);
 
@@ -125,8 +124,6 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
     blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
     blockingmap.SetDefaultGridValue(0);
     blockingmap.SetMinimumValue(1);
-	
-	G->RegisterMessageHandler(me);
 
     /*G->RegisterMessageHandler("unitcreated", me);
     G->RegisterMessageHandler("unitdestroyed", me);
@@ -146,7 +143,7 @@ bool CBuildingPlacer::Init(boost::shared_ptr<IModule> me){
 
 class CBuildAlgorithm : public IModule{
     public:
-        CBuildAlgorithm(CBuildingPlacer* buildalgorithm, boost::shared_ptr<IModule> reciever, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
+        CBuildAlgorithm(CBuildingPlacer* buildalgorithm, IModule* reciever, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
             buildalgorithm(buildalgorithm),
             reciever(reciever),
             builderpos(builderpos),
@@ -160,7 +157,7 @@ class CBuildAlgorithm : public IModule{
             G(G){ }
 
             void RecieveMessage(CMessage &message){}
-            bool Init(boost::shared_ptr<IModule> me){ return true;}
+            bool Init(){ return true;}
             void operator()(){
                 //boost::mutex::scoped_lock lock(io_mutex[building->id]);
                 if(!reciever->IsValid()) return;
@@ -346,14 +343,14 @@ class CBuildAlgorithm : public IModule{
             bool valid;
             CGridManager* blockingmap;
             CBuildingPlacer* buildalgorithm;
-            boost::shared_ptr<IModule> reciever;
+            IModule* reciever;
             float3 builderpos;
             const UnitDef* builder;
             const UnitDef* building;
             float freespace;
 };
 
-void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, int builderID, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
+void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
     /*if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
      if(G->UnitDefHelper->IsMobile(building)){
      CMessage m("buildposition");
@@ -405,7 +402,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                             //
                             if(!i->started){
 								if(i->HasBuilders()){
-									i->WipeBuilderPlans(G->Manufacturer);
+									i->WipeBuilderPlans(G->Manufacturer.get());
 									i->RemoveAllBuilders();
                                 }
 								delete i;
@@ -503,7 +500,7 @@ void CBuildingPlacer::GetBuildPosMessage(boost::shared_ptr<IModule> reciever, in
                             }
                         }
                     }
-					
+
                     if(G->cb->GetFriendlyUnits(a,*it,100)> 0){
                         continue;
                     }

@@ -131,8 +131,6 @@ Global::Global(IGlobalAICallback* callback){
     Pl = new Planning(G);
     L.print("Planning constructed");
 
-    As = new Assigner;
-    L.print("Assigner constructed");
 
     Economy = new CEconomy(G);
     L.print("Economy constructed");
@@ -161,7 +159,6 @@ Global::~Global(){
     delete Actions;
     delete Map;
     delete Ch;
-    delete As;
     delete Pl;
     delete M;
     delete info->mod_tdf;
@@ -282,10 +279,6 @@ void Global::Update(){
     END_EXCEPTION_HANDLING("Actions->Update()")
 
     START_EXCEPTION_HANDLING
-    As->Update();
-    END_EXCEPTION_HANDLING("As->Update()")
-
-    START_EXCEPTION_HANDLING
     CMessage message("update");
     FireEvent(message);
     END_EXCEPTION_HANDLING("CMessage message(\"update\"); FireEvent(message);")
@@ -378,7 +371,9 @@ void Global::UnitCreated(int unit){
 
     START_EXCEPTION_HANDLING
     boost::shared_ptr<CUnit> Unit = boost::shared_ptr<CUnit>(new CUnit(G, unit));
-    Unit->Init(Unit);
+    Unit->Init();
+    units[unit] = Unit;
+    RegisterMessageHandler(Unit);
     CMessage message("unitcreated");
     message.AddParameter(unit);
     FireEvent(message);
@@ -457,10 +452,6 @@ void Global::UnitFinished(int unit){
         }
     }
     END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
-
-    START_EXCEPTION_HANDLING
-    As->UnitFinished(unit);
-    END_EXCEPTION_HANDLING("As->UnitFinished")
 
     START_EXCEPTION_HANDLING
     Manufacturer->UnitFinished(unit);
@@ -738,6 +729,7 @@ void Global::GotChatMsg(const char* msg, int player){
 //
 void Global::UnitDestroyed(int unit, int attacker){
 
+    units.erase(unit);
     float3 p = GetUnitPos(unit);
     if(G->Map->CheckFloat3(p)){
         M->UnitDestroyed(p);
@@ -777,11 +769,10 @@ void Global::UnitDestroyed(int unit, int attacker){
 
     //Actions->UnitDestroyed(unit);
     Cached->enemies.erase(unit);
-    As->UnitDestroyed(unit);
     Manufacturer->UnitDestroyed(unit);
     Ch->UnitDestroyed(unit, attacker);
     OrderRouter->UnitDestroyed(unit);
-
+    units.erase(unit);
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -953,15 +944,19 @@ void Global::InitAI(IAICallback* callback, int team){
         L.print("Unit data loaded");
     }
 
+	L << " :: " << cb->GetMapName() << endline << " :: " << cb->GetModName() << endline << " :: map size " << cb->GetMapWidth()/64 << " x "  << cb->GetMapHeight()/64 << endline;
 
-    As->InitAI(this);
-    L.print("Assigner Init'd");
     Pl->InitAI();
     L.print("Planner Init'd");
-    Manufacturer->Init(Manufacturer);
+
+    Manufacturer->Init();
+    RegisterMessageHandler(Manufacturer);
     L.print("Manufacturer Init'd");
-    BuildingPlacer->Init(BuildingPlacer);
+
+    BuildingPlacer->Init();
+    RegisterMessageHandler(BuildingPlacer);
     L.print("BuildingPlacement Init'd");
+
     Ch->InitAI(this);
     L.print("Chaser Init'd");
 }
@@ -1529,6 +1524,19 @@ float3 Global::GetUnitPos(int unitid, int enemy){ // do 10 frame delays between 
      }else{
      return p;
      }*/
+}
+
+bool Global::HasUnit(int unit){
+    return (units.find(unit) != units.end());
+}
+
+boost::shared_ptr<IModule> Global::GetUnit(int unit){
+    if(HasUnit(unit)==false){
+        IModule* a = 0;
+        boost::shared_ptr<IModule> t(a);
+        return t;
+    }
+    return units[unit];
 }
 
 void Global::RegisterMessageHandler(boost::shared_ptr<IModule> handler){

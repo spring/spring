@@ -2,7 +2,7 @@ class CKeywordConstructionTask : public IModule {
 public:
 	CKeywordConstructionTask(Global* GL, int unit, btype type);
 	void RecieveMessage(CMessage &message);
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	void Build();
 	void End();
 protected:

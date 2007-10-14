@@ -285,7 +285,6 @@ typedef TdfParser CSunParser;
 
 #include "../Agents/CManufacturer.h" // Loads buildtrees and drives construction processes through the Task Cycle
 #include "../Agents/Planning.h" // Antistall algorithm and predictive targetting
-#include "../Agents/Assigner.h" // A port of the metalmaker AI designed for Skirmish AI's, also handles cloaked units
 #include "../Agents/Chaser.h" // Attack system.
 
 #include "../Units/Behaviours/AttackBehaviour.h"

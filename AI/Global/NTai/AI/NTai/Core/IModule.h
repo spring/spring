@@ -11,7 +11,7 @@ public:
 	IModule(Global* GL);
 	virtual ~IModule();
 	virtual void RecieveMessage(CMessage &message)=0;
-	virtual bool Init(boost::shared_ptr<IModule> me)=0;
+	virtual bool Init()=0;//boost::shared_ptr<IModule> me
 	void End(){}
 	bool IsValid(){
 		return valid;
@@ -21,15 +21,10 @@ public:
 		return valid;
 	}
 
-	void AddListener(boost::shared_ptr<IModule> module);
-	void RemoveListener(boost::shared_ptr<IModule> module);
-	void FireEventListener(CMessage &message);
 	void DestroyModule();
 
 	void operator()(){}
 	Global* G;
 protected:
 	bool valid;
-	const boost::shared_ptr<IModule>* me;
-	set<boost::shared_ptr<IModule> > listeners;
 };

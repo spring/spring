@@ -2,7 +2,7 @@
 AF 2007
 */
 
-// boost::shared_ptr<IModule> 
+// boost::shared_ptr<IModule>
 class CUnit : public IModule{
 public:
 	CUnit(){
@@ -12,9 +12,9 @@ public:
 	CUnit(Global* GL);
 	CUnit(Global* GL, int uid);
 	virtual ~CUnit();
-	
+
 	void RecieveMessage(CMessage &message);
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	const UnitDef* GetUnitDef();
 	bool operator==(int unit);
 	int GetID();

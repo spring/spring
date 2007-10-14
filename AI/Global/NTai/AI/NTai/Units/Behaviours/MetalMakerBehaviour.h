@@ -1,8 +1,8 @@
 class CMetalMakerBehaviour : public IBehaviour{
 public:
-	CMetalMakerBehaviour(Global* GL, boost::shared_ptr<IModule> unit);
+	CMetalMakerBehaviour(Global* GL, int uid);
 	virtual ~CMetalMakerBehaviour();
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	void RecieveMessage(CMessage &message);
 private:
 	bool turnedOn;

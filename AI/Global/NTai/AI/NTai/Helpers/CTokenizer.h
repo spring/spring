@@ -44,7 +44,7 @@ private:
 inline bool CIsFromString::operator()(char c) const
 {
   int iFind = m_ostr.find(c);
-  if(iFind != string::npos)
+  if(iFind != int(string::npos))
     return true;
   else
     return false;
