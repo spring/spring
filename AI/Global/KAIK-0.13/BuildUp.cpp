@@ -1,6 +1,17 @@
 #include "BuildUp.h"
 
 
+CR_BIND(CBuildUp, (NULL));
+CR_REG_METADATA(CBuildUp, (
+	CR_MEMBER(ai),
+	CR_MEMBER(factoryTimer),
+	CR_MEMBER(builderTimer),
+	CR_MEMBER(storageTimer),
+	CR_MEMBER(nukeSiloTimer),
+	CR_RESERVED(16)
+));
+
+
 CBuildUp::CBuildUp(AIClasses* ai) {
 	this->ai = ai;
 
@@ -171,8 +182,8 @@ void CBuildUp::Buildup(int frame) {
 			else {
 				bool mOverflow = (mStorage / (mIncome + 0.01)) < (STORAGETIME * 2);
 				bool numMStorage = ai->ut->metal_storages->size();
-				int numDefenses = ai->uh->AllUnitsByCat[CAT_DEFENCE]->size();
-				int numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
+				int numDefenses = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
+				int numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 
 				// do we have more factories than defense?
 				if (numFactories > (numDefenses / DEFENSEFACTORYRATIO)) {
@@ -365,12 +376,12 @@ void CBuildUp::FallbackBuild(int builder, int failedCat) {
 // look at all online factories and their best builders,
 // then find the best builder that there are least of
 const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
-	int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY]->size();
+	int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 	const UnitDef* leastBuiltBuilder = 0;
 	int leastBuiltBuilderCount = 65536;
 	assert(factoryCount > 0);
 
-	for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY]->begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY]->end(); j++) {
+	for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY].begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY].end(); j++) {
 		// get factory unitID
 		int factoryToLookAt = *j;
 
@@ -379,7 +390,7 @@ const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 			const UnitDef* bestBuilder = ai->ut->GetUnitByScore(factoryToLookAt, CAT_BUILDER);
 
 			if (bestBuilder) {
-				int bestBuilderCount = ai->uh->AllUnitsByType[bestBuilder->id]->size();
+				int bestBuilderCount = ai->uh->AllUnitsByType[bestBuilder->id].size();
 
 				if (bestBuilderCount < leastBuiltBuilderCount) {
 					leastBuiltBuilderCount = bestBuilderCount;

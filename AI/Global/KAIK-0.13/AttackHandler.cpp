@@ -11,19 +11,49 @@
 #define KMEANS_BASE_MAX_K 32
 #define KMEANS_MINIMUM_LINE_LENGTH (8 * THREATRES)
 
+
+
+CR_BIND(CAttackHandler, (NULL));
+CR_REG_METADATA(CAttackHandler, (
+	CR_MEMBER(ai),
+
+	CR_MEMBER(units),
+	CR_MEMBER(stuckUnits),
+	CR_MEMBER(airUnits),
+
+	CR_MEMBER(airIsAttacking),
+	CR_MEMBER(airPatrolOrdersGiven),
+	CR_MEMBER(airTarget),
+
+	CR_MEMBER(newGroupID),
+	CR_MEMBER(attackGroups),
+	// CR_MEMBER(defenseGroups),
+
+	CR_MEMBER(kMeansBase),
+	CR_MEMBER(kMeansK),
+	CR_MEMBER(kMeansEnemyBase),
+	CR_MEMBER(kMeansEnemyK),
+	CR_RESERVED(16)
+));
+
+
+
 CAttackHandler::CAttackHandler(AIClasses* ai) {
 	this->ai = ai;
-	// setting a position to the middle of the map
-	float mapWidth = ai->cb->GetMapWidth() * 8.0f;
-	float mapHeight = ai->cb->GetMapHeight() * 8.0f;
-	newGroupID = GROUND_GROUP_ID_START;
 
-	this->kMeansK = 1;
-	this->kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
-	this->kMeansEnemyK = 1;
-	this->kMeansEnemyBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
+	if (ai) {
+		// setting a position to the middle of the map
+		float mapWidth = ai->cb->GetMapWidth() * 8.0f;
+		float mapHeight = ai->cb->GetMapHeight() * 8.0f;
+		newGroupID = GROUND_GROUP_ID_START;
 
-	UpdateKMeans();
+		this->kMeansK = 1;
+		this->kMeansBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
+		this->kMeansEnemyK = 1;
+		this->kMeansEnemyBase.push_back(float3(mapWidth / 2.0f, K_MEANS_ELEVATION, mapHeight / 2.0f));
+
+		UpdateKMeans();
+	}
 
 	airIsAttacking = false;
 	airPatrolOrdersGiven = false;
@@ -604,8 +634,8 @@ void CAttackHandler::UpdateNukeSilos(int currentFrame) {
 }
 
 // pick a nuke-silo target from a vector of potential ones
-// (if there are more than MAX_NUKE_SILOS targets to choose
-// from, pick one of the first <MAX_NUKE_SILOS>, else pick
+// (if there are more than MAX_NUKE_SILOS/2 targets to choose
+// from, pick one of the first <MAX_NUKE_SILOS/2>, else pick
 // from the full size of the vector)
 int CAttackHandler::PickNukeSiloTarget(std::vector<std::pair<int, float> >& potentialTargets) {
 	int s = potentialTargets.size();
@@ -734,7 +764,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		float3 groupPos = group_in->GetGroupPos();
 
 		ai->pather->micropather->SetMapData(ai->pather->MoveArrays[group_in->GetWorstMoveType()],
-											ai->tm->ThreatArray,
+											&ai->tm->ThreatArray.front(),
 											ai->tm->ThreatMapWidth,
 											ai->tm->ThreatMapHeight);
 
@@ -831,8 +861,8 @@ void CAttackHandler::Update(int frameNr) {
 
 	// set map data here so it doesn't have to be done
 	// in each group (movement map PATHTOUSE is hack)
-	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], ai->tm->ThreatArray, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
-	
+	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], &ai->tm->ThreatArray.front(), ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
+
 	// calculate and draw k-means for the base perimeters every 10 seconds
 	if (frameNr % frameSpread == 0) {
 		UpdateKMeans();

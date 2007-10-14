@@ -22,6 +22,38 @@
 #define GROUP_DESTINATION_SLACK THREATRES * 8
 #define GROUP_MEDIAN_UNIT_SELECTION_SLACK 10.0f
 
+
+
+CR_BIND(CAttackGroup, (NULL, 0));
+CR_REG_METADATA(CAttackGroup, (
+	CR_MEMBER(ai),
+	CR_MEMBER(units),
+	CR_MEMBER(groupID),
+	CR_MEMBER(isMoving),
+	CR_MEMBER(pathIterator),
+	CR_MEMBER(lowestAttackRange),
+	CR_MEMBER(highestAttackRange),
+	CR_MEMBER(isShooting),
+	CR_MEMBER(movementCounterForStuckChecking),
+	CR_RESERVED(16)
+));
+
+
+
+CAttackGroup::CAttackGroup() {
+	this->ai = NULL;
+	this->groupID = 0;
+	this->pathIterator = 0;
+	this->lowestAttackRange = 100000;
+	this->highestAttackRange = 1;
+	this->movementCounterForStuckChecking = 0;
+	this->defending = false;
+	this->isMoving = false;
+	this->isShooting = false;
+	this->attackPosition = ZEROVECTOR;
+	this->attackRadius = 1;
+}
+
 CAttackGroup::CAttackGroup(AIClasses* ai, int groupID_in) {
 	this->ai = ai;
 	this->groupID = groupID_in;

@@ -1,18 +1,92 @@
 #include "EconomyTracker.h"
 
+
+
+CR_BIND(BuildingTracker, )
+CR_REG_METADATA(BuildingTracker, (
+	CR_MEMBER(unitUnderConstruction),
+	CR_MEMBER(category),
+	CR_MEMBER(hpLastFrame),
+	CR_MEMBER(damage),
+	CR_MEMBER(hpSomeTimeAgo),
+	CR_MEMBER(damageSomeTimeAgo),
+	CR_MEMBER(startedRealBuildingFrame),
+	CR_MEMBER(etaFrame),
+	CR_MEMBER(maxTotalBuildPower),
+	CR_MEMBER(assignedTotalBuildPower),
+	CR_MEMBER(energyUsage),
+	CR_MEMBER(metalUsage),
+
+	CR_MEMBER(buildTask),
+	CR_MEMBER(factory),
+	CR_MEMBER(economyUnitTracker),
+	CR_RESERVED(16)
+));
+
+CR_BIND(EconomyUnitTracker, )
+CR_REG_METADATA(EconomyUnitTracker, (
+	CR_MEMBER(economyUnitId),
+	CR_MEMBER(createFrame),
+	CR_MEMBER(buildingTracker),
+	CR_MEMBER(alive),
+	CR_MEMBER(dieFrame),
+	CR_MEMBER(category),
+	CR_MEMBER(totalEnergyMake),
+	CR_MEMBER(totalMetalMake),
+	CR_MEMBER(totalEnergyUsage),
+	CR_MEMBER(totalMetalUsage),
+	CR_MEMBER(lastUpdateEnergyMake),
+	CR_MEMBER(lastUpdateMetalMake),
+	CR_MEMBER(lastUpdateEnergyUsage),
+	CR_MEMBER(lastUpdateMetalUsage),
+	CR_MEMBER(dynamicChangingUsage),
+	CR_MEMBER(nonEconomicUnit),
+	CR_MEMBER(estimateEnergyChangeFromDefWhileOn),
+	CR_MEMBER(estimateMetalChangeFromDefWhileOn),
+	CR_MEMBER(estimateEnergyChangeFromDefWhileOff),
+	CR_MEMBER(estimateMetalChangeFromDefWhileOff),
+	CR_RESERVED(16),
+	CR_POSTLOAD(PostLoad)
+));
+
+CR_BIND(CEconomyTracker, (NULL));
+CR_REG_METADATA(CEconomyTracker, (
+	CR_MEMBER(allTheBuildingTrackers),
+	CR_MEMBER(deadEconomyUnitTrackers),
+	CR_MEMBER(newEconomyUnitTrackers),
+	CR_MEMBER(activeEconomyUnitTrackers),
+	CR_MEMBER(underConstructionEconomyUnitTrackers),
+
+	CR_MEMBER(ai),
+
+	CR_MEMBER(trackerOff),
+
+	CR_MEMBER(constructionEnergy),
+	CR_MEMBER(constructionMetal),
+
+	CR_MEMBER(constructionEnergySum),
+	CR_MEMBER(constructionMetalSum),
+	CR_RESERVED(16)
+));
+
+
+
 CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 	this->ai = ai;
 	allTheBuildingTrackers.resize(LASTCATEGORY);
-	oldEnergy = ai->cb->GetEnergy();
-	oldMetal = ai->cb->GetMetal();
+
+	if (ai) {
+		oldEnergy = ai->cb->GetEnergy();
+		oldMetal = ai->cb->GetMetal();
+	}
+
 	constructionEnergySum = 0;
 	constructionMetalSum = 0;
 	constructionEnergy = 0;
 	constructionMetal = 0;
 
 	for (int i = 0; i < LASTCATEGORY; i++) {
-		allTheBuildingTrackers[i] = new list<BuildingTracker>;
-		allTheBuildingTrackers[i]->clear();
+		allTheBuildingTrackers[i].clear();
 	}
 
 	// deadEconomyUnitTrackers.reserve(5000);
@@ -25,9 +99,6 @@ CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 }
 
 CEconomyTracker::~CEconomyTracker() {
-	for (int i = 0; i < LASTCATEGORY; i++) {
-		delete allTheBuildingTrackers[i];
-	}
 	for (list<EconomyUnitTracker*>::iterator i = deadEconomyUnitTrackers.begin(); i != deadEconomyUnitTrackers.end(); i++) {
 		delete *i;
 	}
@@ -60,7 +131,7 @@ void CEconomyTracker::frameUpdate(int frame) {
 */
 
 	for (int category = 0; category < LASTCATEGORY; category++) {
-		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 			BuildingTracker* bt = &(*i);
 			updateUnitUnderConstruction(bt);
 		}
@@ -169,7 +240,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		float constructionMetal = 0;
 
 		for (int category = 0; category < LASTCATEGORY; category++ ) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker* bt = &*i;
 
 				// using the "semi-useless" GetCurrentFrame() stats only
@@ -301,7 +372,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 			float constructionMetal = 0;
 
 			for (int category = 0; category < LASTCATEGORY; category++) {
-				for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+				for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 					BuildingTracker* bt = &*i;
 
 					// HACK: using the "semi-useless" GetCurrentFrame() stats only
@@ -364,7 +435,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 
 	if (bt->buildTask) {
 		bool found = false;
-		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[bt->category]->begin(); i != ai->uh->BuildTasks[bt->category]->end(); i++) {
+		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[bt->category].begin(); i != ai->uh->BuildTasks[bt->category].end(); i++) {
 			if (i->id == unitUnderConstruction) {
 				builderList = &i->builders;
 				found = true;
@@ -556,7 +627,7 @@ void CEconomyTracker::UnitCreated(int unit) {
 	// find it (slow++)
 	bool found = false;
 	for (int category = 0; category < LASTCATEGORY; category++ ) {
-		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[category]->begin(); i != ai->uh->BuildTasks[category]->end(); i++) {
+		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[category].begin(); i != ai->uh->BuildTasks[category].end(); i++) {
 			BuildTask bt = *i;
 
 			if (bt.id == unit) {
@@ -567,7 +638,7 @@ void CEconomyTracker::UnitCreated(int unit) {
 				tracker.buildTask = true;
 				tracker.category = category;
 				tracker.unitUnderConstruction = unit;
-				allTheBuildingTrackers[category]->push_front(tracker);
+				allTheBuildingTrackers[category].push_front(tracker);
 				found = true;
 				break;
 			}
@@ -593,7 +664,7 @@ void CEconomyTracker::UnitCreated(int unit) {
 				tracker.category = category;
 				tracker.unitUnderConstruction = unit;
 				tracker.factory = factoryId;
-				allTheBuildingTrackers[category]->push_front(tracker);
+				allTheBuildingTrackers[category].push_front(tracker);
 				found = true;
 				break;
 			}
@@ -710,12 +781,12 @@ void CEconomyTracker::UnitFinished(int unit) {
 	found = false;
 
 	if (category != -1) {
-		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 			BuildingTracker* bt = &*i;
 			if (bt->unitUnderConstruction == unit) {
 				updateUnitUnderConstruction(bt);
 				found = true;
-				allTheBuildingTrackers[category]->erase(i);
+				allTheBuildingTrackers[category].erase(i);
 				break;
 			}
 		}
@@ -787,13 +858,13 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 		bool found = false;
 
 		if (category != -1) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker *bt = &*i;
 				if (bt->unitUnderConstruction == unit) {
 					// hp will be negative if this re-enabled
 					// updateUnitUnderConstruction(bt);
 					found = true;
-					allTheBuildingTrackers[category]->erase(i);
+					allTheBuildingTrackers[category].erase(i);
 					break;
 				}
 			}
@@ -815,7 +886,7 @@ void CEconomyTracker::UnitDamaged(int unit, float damage) {
 		bool found = false;
 
 		if (category != -1) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category]->begin(); i != allTheBuildingTrackers[category]->end(); i++) {
+			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker *bt = &*i;
 				if (bt->unitUnderConstruction == unit) {
 					bt->damage += damage;

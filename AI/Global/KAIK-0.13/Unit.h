@@ -6,9 +6,7 @@
 
 class CUNIT {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CUNIT);
-		#endif
 
 		CUNIT(void);
 		CUNIT(AIClasses* ai);

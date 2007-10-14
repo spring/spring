@@ -6,12 +6,12 @@
 
 class CThreatMap {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CThreatMap);
-		#endif
 
 		CThreatMap(AIClasses* ai);
 		~CThreatMap();
+
+		void PostLoad();
 
 		void Create();
 		void AddEnemyUnit(int unitid);
@@ -20,7 +20,7 @@ class CThreatMap {
 
 		float GetAverageThreat();
 		float ThreatAtThisPoint(float3 pos);
-		float* ThreatArray;
+		vector<float> ThreatArray;
 		int ThreatMapHeight;
 		int ThreatMapWidth;
 		int ThreatResolution;

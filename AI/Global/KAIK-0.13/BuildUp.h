@@ -6,9 +6,7 @@
 
 class CBuildUp {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CBuildUp);
-		#endif
 
 		CBuildUp(AIClasses* ai);
 		~CBuildUp();

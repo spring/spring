@@ -1,17 +1,39 @@
 #include "ThreatMap.h"
 
 
+
+CR_BIND(CThreatMap, (NULL))
+CR_REG_METADATA(CThreatMap, (
+	CR_MEMBER(ThreatArray),
+	// CR_MEMBER(xend),
+	CR_MEMBER(ai),
+	CR_RESERVED(8),
+	CR_POSTLOAD(PostLoad)
+));
+
+
+
 CThreatMap::CThreatMap(AIClasses* ai) {
 	this->ai = ai;
 	// divide map resolution by this much (8x8 standard Spring resolution)
 	ThreatResolution = THREATRES;
+
+	if (ai) {
+		ThreatMapWidth = ai->cb->GetMapWidth() / ThreatResolution;
+		ThreatMapHeight = ai->cb->GetMapHeight() / ThreatResolution;
+		TotalCells = ThreatMapWidth * ThreatMapHeight;
+		ThreatArray.resize(TotalCells);
+	}
+}
+
+CThreatMap::~CThreatMap() {
+}
+
+
+void CThreatMap::PostLoad() {
 	ThreatMapWidth = ai->cb->GetMapWidth() / ThreatResolution;
 	ThreatMapHeight = ai->cb->GetMapHeight() / ThreatResolution;
 	TotalCells = ThreatMapWidth * ThreatMapHeight;
-	ThreatArray = new float[TotalCells];
-}
-CThreatMap::~CThreatMap() {
-	delete[] ThreatArray;
 }
 
 

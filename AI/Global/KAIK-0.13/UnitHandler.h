@@ -9,9 +9,7 @@ class CMetalMaker;
 
 class CUnitHandler {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CUnitHandler);
-		#endif
 
 		CUnitHandler(AIClasses* ai);
 		~CUnitHandler();
@@ -66,12 +64,11 @@ class CUnitHandler {
 		void ClearOrder(BuilderTracker* builderTracker, bool reportError);
 		void DecodeOrder(BuilderTracker* builderTracker, bool reportError);
 
-		vector<list<int>*> IdleUnits;
-
-		vector<list<BuildTask>*> BuildTasks;
-		vector<list<TaskPlan>*> TaskPlans;
-		vector<list<int>*> AllUnitsByCat;
-		vector<list<int>*> AllUnitsByType;
+		vector<list<int> > IdleUnits;
+		vector<list<BuildTask> > BuildTasks;
+		vector<list<TaskPlan> > TaskPlans;
+		vector<list<int> > AllUnitsByCat;
+		vector<list<int> > AllUnitsByType;
 
 		list<Factory> Factories;
 		list<NukeSilo> NukeSilos;

@@ -187,14 +187,14 @@ void CPathFinder::CreateDefenseMatrix() {
 			enemyposes[i] = ai->cheat->GetUnitPos(enemycomms[i]);
 		}
 
-		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER]->front());
+		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER].front());
+		ai->dm->ChokeMapsByMovetype[m].resize(totalcells);
 		int reruns = 35;
-		ai->dm->ChokeMapsByMovetype[m] = new float[totalcells];
 		char k[10];
 		itoa(m, k, 10);
 
-		micropather->SetMapData(MoveArrays[m], ai->dm->ChokeMapsByMovetype[m], PathMapXSize, PathMapYSize);
-		double pathCostSum = 0;
+		micropather->SetMapData(MoveArrays[m], &ai->dm->ChokeMapsByMovetype[m][0], PathMapXSize, PathMapYSize);
+		double pathCostSum = 0.0;
 
 		for (int i = 0; i < totalcells; i++) {
 			ai->dm->ChokeMapsByMovetype[m][i] = 1;
@@ -205,7 +205,6 @@ void CPathFinder::CreateDefenseMatrix() {
 		// HACK
 		if (numberofenemyplayers > 0 && m == PATHTOUSE) {
 			for (int r = 0; r < reruns; r++) {
-				// L("reruns: " << r);
 				for (int startpos = 0; startpos < numberofenemyplayers; startpos++) {
 					if (micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) == MicroPather::SOLVED) {
 						for (int i = 12; i < int(path.size() - 12); i++) {

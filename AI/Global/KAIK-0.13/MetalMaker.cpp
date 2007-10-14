@@ -1,5 +1,3 @@
-// implementation of the logic in a metal maker class
-
 #include "MetalMaker.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
@@ -7,15 +5,39 @@
 
 
 
-CMetalMaker::CMetalMaker(IAICallback* aicb) {
+CR_BIND(CMetalMaker, (NULL))
+CR_REG_METADATA(CMetalMaker, (
+	CR_MEMBER(myUnits),
+	CR_MEMBER(lastEnergy),
+	CR_MEMBER(ai),
+	CR_MEMBER(listIndex),
+	CR_MEMBER(addedDelay),
+	CR_RESERVED(16)
+));
+
+CR_BIND(CMetalMaker::UnitInfo, )
+CR_REG_METADATA_SUB(CMetalMaker, UnitInfo, (
+	CR_MEMBER(id),
+	CR_MEMBER(energyUse),
+	CR_MEMBER(metalPerEnergy),
+	CR_MEMBER(turnedOn),
+	CR_RESERVED(8)
+));
+
+
+
+CMetalMaker::CMetalMaker(AIClasses* ai) {
 	listIndex = 0;
 	lastEnergy = 0;
 	addedDelay = 0;
-	this->aicb = aicb;
+	this->ai = ai;
+
+	if (ai)
+		this->aicb = ai->cb;
 }
 
 CMetalMaker::~CMetalMaker() {
-//	for (map<int,UnitInfo*>::iterator ui = myUnits.begin(); ui != myUnits.end(); ++ui)
+//	for (map<int, UnitInfo*>::iterator ui = myUnits.begin(); ui != myUnits.end(); ++ui)
 //		delete ui->second;
 	myUnits.clear();
 }

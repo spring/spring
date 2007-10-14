@@ -16,9 +16,7 @@
 
 
 struct ControllerState {
-	#ifdef USE_CREG
 	CR_DECLARE_STRUCT(ControllerState);
-	#endif
 
 	ControllerState(void) {
 		inited					= false;
@@ -67,11 +65,10 @@ struct ControllerState {
 
 class DGunController {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(DGunController);
-		#endif
+		void PostLoad();
 
-		DGunController(IAICallback*);
+		DGunController(AIClasses*);
 		~DGunController(void);
 
 		void init(int);
@@ -89,6 +86,7 @@ class DGunController {
 		void setFireState(int);
 
 		IAICallback* gAICallback;
+		AIClasses* ai;
 		const UnitDef* commanderUD;
 		const WeaponDef* commanderWD;
 		int* units;

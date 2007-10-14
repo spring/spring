@@ -2,28 +2,13 @@
 #include "Unit.h"
 
 
-#ifdef USE_CREG
+
 // TODO: move to GlobalAI.h
 CR_BIND(CGlobalAI, );
 CR_REG_METADATA(CGlobalAI, (
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
-
-// TODO: REG_METADATA for each of these...
-CR_BIND(CAttackGroup, (NULL, 0));
-CR_BIND(CAttackHandler, (NULL));
-CR_BIND(CBuildUp, (NULL));
-CR_BIND(CDefenseMatrix, (NULL));
-CR_BIND(DGunController, (NULL));
-CR_BIND(CEconomyTracker, (NULL));
-CR_BIND(BuildingTracker, );
-CR_BIND(EconomyUnitTracker, );
-CR_BIND(CMetalMaker, (NULL));
-CR_BIND(CMetalMaker::UnitInfo, );
-CR_BIND(CThreatMap, (NULL));
-CR_BIND(CUNIT, );
-CR_BIND(CUnitHandler, (NULL));
 
 
 
@@ -36,7 +21,8 @@ CR_REG_METADATA(AIClasses, (
 	CR_MEMBER(uh),
 	CR_MEMBER(dm),
 	CR_MEMBER(ah),
-	CR_MEMBER(dgunController)
+	CR_MEMBER(dgunController),
+	CR_RESERVED(16)
 ));
 
 // TODO: move to Containers.h
@@ -61,7 +47,8 @@ CR_REG_METADATA(BuilderTracker, (
 	CR_MEMBER(estimateRealStartFrame),
 	CR_MEMBER(estimateFramesForNanoBuildActivation),
 	CR_MEMBER(estimateETAforMoveingToBuildSite),
-	CR_MEMBER(distanceToSiteBeforeItCanStartBuilding)
+	CR_MEMBER(distanceToSiteBeforeItCanStartBuilding),
+	CR_RESERVED(16)
 ));
 
 // TODO: move to Containers.h
@@ -74,6 +61,7 @@ CR_REG_METADATA(BuildTask, (
 	CR_MEMBER(currentBuildPower),
 	// CR_MEMBER(def),
 	CR_MEMBER(pos),
+	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -85,7 +73,9 @@ CR_REG_METADATA(TaskPlan, (
 	CR_MEMBER(builderTrackers),
 	CR_MEMBER(currentBuildPower),
 	// CR_MEMBER(def),
+	CR_MEMBER(defName),
 	CR_MEMBER(pos),
+	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -94,7 +84,8 @@ CR_BIND(Factory, );
 CR_REG_METADATA(Factory, (
 	CR_MEMBER(id),
 	CR_MEMBER(supportbuilders),
-	CR_MEMBER(supportBuilderTrackers)
+	CR_MEMBER(supportBuilderTrackers),
+	CR_RESERVED(8)
 ));
 
 // TODO: move to Containers.h
@@ -102,34 +93,27 @@ CR_BIND(NukeSilo, );
 CR_REG_METADATA(NukeSilo, (
 	CR_MEMBER(id),
 	CR_MEMBER(numNukesReady),
-	CR_MEMBER(numNukesQueued)
+	CR_MEMBER(numNukesQueued),
+	CR_RESERVED(8)
 ));
 
 // TODO: move to Containers.h
 CR_BIND(MetalExtractor, );
 CR_REG_METADATA(MetalExtractor, (
 	CR_MEMBER(id),
-	CR_MEMBER(buildFrame)
+	CR_MEMBER(buildFrame),
+	CR_RESERVED(8)
 ));
 
-// TODO: move to DGunController.hpp
-CR_BIND(ControllerState, );
-CR_REG_METADATA(ControllerState, (
-	CR_MEMBER(inited),
-	CR_MEMBER(dgunOrderFrame),
-	CR_MEMBER(reclaimOrderFrame),
-	CR_MEMBER(targetSelectionFrame),
-	CR_MEMBER(targetID),
-	CR_MEMBER(oldTargetPos)
-));
+
 
 CREX_REG_STATE_COLLECTOR(KAIK, CGlobalAI);
 
 
 // TODO: move to Containers.h
 void BuildTask::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
-void TaskPlan::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
-#endif
+void TaskPlan::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(defName.c_str()); }
+void EconomyUnitTracker::PostLoad() { unitDef = KAIKState->ai->cb->GetUnitDef(economyUnitId); }
 
 
 
@@ -160,7 +144,7 @@ CGlobalAI::~CGlobalAI() {
 
 
 
-#ifdef USE_CREG
+
 // called instead of InitAI() on load if IsLoadSupported() returns 1
 void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai = new AIClasses;
@@ -228,12 +212,8 @@ void CGlobalAI::Serialize(creg::ISerializer* s) {
 
 	s->SerializeObjectInstance(ai, ai->GetClass());
 }
-#else
-void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {}
-void CGlobalAI::Save(std::ostream* ofs) {}
-void CGlobalAI::PostLoad(void) {}
-void CGlobalAI::Serialize(creg::ISerializer* s) {}
-#endif
+
+
 
 
 
@@ -282,7 +262,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->econTracker		= new CEconomyTracker(ai);
 	ai->bu				= new CBuildUp(ai);
 	ai->ah				= new CAttackHandler(ai);
-	ai->dgunController	= new DGunController(ai->cb);
+	ai->dgunController	= new DGunController(ai);
 
 	ai->mm->Init();
 	ai->ut->Init();

@@ -320,7 +320,7 @@ void CUnitTable::UpdateChokePointArray() {
 
 
 float CUnitTable::GetScore(const UnitDef* udef) {
-	int m = (ai->uh->AllUnitsByType[udef->id])->size();
+	int m = (ai->uh->AllUnitsByType[udef->id]).size();
 	int n = udef->maxThisUnit;
 
 	if (m >= n) {
@@ -445,9 +445,9 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 					unitcounter++;
 				}
 			}
-		
+
 			if (unitcounter > 0) {
-				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id]->size() + 1), 3.0f));
+				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id].size() + 1), 3.0f));
 			} else {
 				Benefit = 0.0f;
 			}
