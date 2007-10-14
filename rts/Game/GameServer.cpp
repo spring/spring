@@ -174,7 +174,7 @@ void CGameServer::CheckSync()
 				syncWarningFrame = *f;
 
 				std::string players = GetPlayerNames(noSyncResponse);
-				logOutput.Print("No response from %s for frame %d", players.c_str(), *f);
+				SendSystemMsg("No response from %s for frame %d", players.c_str(), *f);
 			}
 		}
 
@@ -309,7 +309,7 @@ void CGameServer::ServerReadNet()
 
 					case NETMSG_PAUSE:
 						if(inbuf[1]!=a){
-							logOutput.Print("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[1]);
+							SendSystemMsg("Server: Warning got pause msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
 							if (!inbuf[2])  // reset sync checker
 								syncErrorFrame = 0;
@@ -385,7 +385,7 @@ void CGameServer::ServerReadNet()
 
 					case NETMSG_SYSTEMMSG:
 						if(inbuf[2]!=a){
-							logOutput.Print("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[2]);
+							SendSystemMsg("Server: Warning got system msg from %i claiming to be from %i",a,inbuf[2]);
 						} else {
 							serverNet->SendSystemMessage(inbuf[2], (char*)(&inbuf[3]));
 						}
@@ -456,7 +456,7 @@ void CGameServer::ServerReadNet()
 									syncResponse[a][frameNum] = *(unsigned*)&inbuf[6];
 								else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
 									delayedSyncResponseFrame = serverframenum;
-									logOutput.Print("Delayed respone from %s for frame %d (current %d)",
+									SendSystemMsg("Delayed respone from %s for frame %d (current %d)",
 											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
 								}
 							}
@@ -523,7 +523,7 @@ void CGameServer::ServerReadNet()
 						break;
 					default:
 						{
-							logOutput.Print("Unhandled net msg (%d) in server from %d", (int)inbuf[0], a);
+							SendSystemMsg("Unhandled net msg (%d) in server from %d", (int)inbuf[0], a);
 						}
 						break;
 				}
