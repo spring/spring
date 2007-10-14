@@ -57,12 +57,12 @@ public:
 	int lastPC1; //helps avoid infinite loops
 	int lastPC2;
 
+	static CUnitSet reclaimers;
 private:
 
 	void CancelRestrictedUnit(const std::string& buildOption);
 
 	// fix for patrolling cons repairing stuff that's being reclaimed
-	static CUnitSet reclaimers;
 	static void AddUnitToReclaimers(CUnit*);
 	static void RemoveUnitFromReclaimers(CUnit*);
 	static bool IsUnitBeingReclaimedByFriend(CUnit*);
