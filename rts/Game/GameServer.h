@@ -6,6 +6,7 @@
 #include <ctime>
 #include <string>
 #include <map>
+#include <deque>
 
 #include "System/GlobalStuff.h"
 
