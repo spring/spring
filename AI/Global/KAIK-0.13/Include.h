@@ -38,13 +38,11 @@ static inline void itoa(int i, char* buf, int size) {
 
 
 // Spring Component Registration System Headers
-#ifdef USE_CREG
 #include "creg/creg.h"
 #include "creg/cregex.h"
 #include "creg/Serializer.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
-#endif
 
 
 // Spring Engine Headers

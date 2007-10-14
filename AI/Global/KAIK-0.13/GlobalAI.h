@@ -7,9 +7,7 @@
 class CAttackHandler;
 class CGlobalAI: public IGlobalAI {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CGlobalAI);
-		#endif
 
 		CGlobalAI();
 		~CGlobalAI();

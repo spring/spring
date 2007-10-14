@@ -2,41 +2,45 @@
 #include "MetalMaker.h"
 
 
+CR_BIND(CUnitHandler, (NULL));
+CR_REG_METADATA(CUnitHandler, (
+	CR_MEMBER(IdleUnits),
+	CR_MEMBER(BuildTasks),
+	CR_MEMBER(TaskPlans),
+	CR_MEMBER(AllUnitsByCat),
+	CR_MEMBER(AllUnitsByType),
+
+	CR_MEMBER(Factories),
+	CR_MEMBER(NukeSilos),
+	CR_MEMBER(MetalExtractors),
+
+	CR_MEMBER(Limbo),
+	CR_MEMBER(BuilderTrackers),
+
+	CR_MEMBER(metalMaker),
+
+	CR_MEMBER(ai),
+	CR_MEMBER(taskPlanCounter),
+	CR_RESERVED(16)
+));
+
+
 CUnitHandler::CUnitHandler(AIClasses* ai) {
 	this->ai = ai;
+	taskPlanCounter = 1;
 	IdleUnits.resize(LASTCATEGORY);
 	BuildTasks.resize(LASTCATEGORY);
 	TaskPlans.resize(LASTCATEGORY);
 	AllUnitsByCat.resize(LASTCATEGORY);
-	AllUnitsByType.resize(ai->cb->GetNumUnitDefs() + 1);
 
-	for (int i = 0; i <= ai->cb->GetNumUnitDefs(); i++) {
-		AllUnitsByType[i] = new list<int>;
+	if (ai) {
+		AllUnitsByType.resize(ai->cb->GetNumUnitDefs() + 1);
+		metalMaker = new CMetalMaker(ai);
 	}
-	for (int i = 0; i < LASTCATEGORY; i++) {
-		IdleUnits[i] = new list<int>;
-		BuildTasks[i] = new list<BuildTask>;
-		TaskPlans[i] = new list<TaskPlan>;
-		AllUnitsByCat[i] = new list<int>;
-	}
-
-	taskPlanCounter = 1;
-	metalMaker = new CMetalMaker(ai->cb);
 }
 
 CUnitHandler::~CUnitHandler() {
-	for (int i = 0; i < LASTCATEGORY; i++){
-		delete IdleUnits[i];
-		delete BuildTasks[i];
-		delete TaskPlans[i];
-		delete AllUnitsByCat[i];
-	}
-
-	for (int i = 0; i <= ai->ut->numOfUnits; i++){
-		delete AllUnitsByType[i];
-	}
-
-	for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++){
+	for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 		delete *i;
 	}
 }
@@ -54,7 +58,7 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 			if (ai->cb->GetUnitDef(i->x) == NULL) {
 				// ignore dead unit
 			} else {
-				IdleUnits[ai->ut->GetCategory(i->x)]->push_back(i->x);
+				IdleUnits[ai->ut->GetCategory(i->x)].push_back(i->x);
 			}
 
 			limboremoveunits.push_back(*i);
@@ -114,8 +118,8 @@ void CUnitHandler::UnitCreated(int unit) {
 	const UnitDef* newUnitDef = ai->cb->GetUnitDef(unit);
 
 	if (category != -1) {
-		AllUnitsByCat[category]->push_back(unit);
-		AllUnitsByType[newUnitDef->id]->push_back(unit);
+		AllUnitsByCat[category].push_back(unit);
+		AllUnitsByType[newUnitDef->id].push_back(unit);
 
 		if (category == CAT_FACTORY) {
 			FactoryAdd(unit);
@@ -158,8 +162,8 @@ void CUnitHandler::UnitDestroyed(int unit) {
 	const UnitDef* unitDef = ai->cb->GetUnitDef(unit);
 
 	if (category != -1) {
-		AllUnitsByType[unitDef->id]->remove(unit);
-		AllUnitsByCat[category]->remove(unit);
+		AllUnitsByType[unitDef->id].remove(unit);
+		AllUnitsByCat[category].remove(unit);
 		IdleUnitRemove(unit);
 		BuildTaskRemove(unit);
 
@@ -448,7 +452,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			if (category == -1)
 				return;
 
-			for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+			for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 				if (i->id == guardingID) {
 					// whatever the old order was, update it now
 					bool hit = false;
@@ -503,7 +507,7 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 	int category = ai->ut->GetCategory(unit);
 
 	if (category != -1) {
-		IdleUnits[category]->remove(unit);
+		IdleUnits[category].remove(unit);
 
 		if (category == CAT_BUILDER) {
 			BuilderTracker* builderTracker = GetBuilderTracker(unit);
@@ -538,24 +542,24 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 
 int CUnitHandler::GetIU(int category) {
 	assert(IdleUnits[category]->size() > 0);
-	int unitID = IdleUnits[category]->front();
+	int unitID = IdleUnits[category].front();
 
 	// move the returned unitID to the back
 	// of the list, so CBuildUp::FactoryCycle()
 	// doesn't keep examining the same factory
 	// if a build order fails and we have more
 	// than one idle factory
-	IdleUnits[category]->pop_front();
-	IdleUnits[category]->push_back(unitID);
+	IdleUnits[category].pop_front();
+	IdleUnits[category].push_back(unitID);
 
 	return unitID;
 }
 
 int CUnitHandler::NumIdleUnits(int category) {
 	assert(category >= 0 && category < LASTCATEGORY);
-	IdleUnits[category]->sort();
-	IdleUnits[category]->unique();
-	return IdleUnits[category]->size();
+	IdleUnits[category].sort();
+	IdleUnits[category].unique();
+	return IdleUnits[category].size();
 }
 
 
@@ -592,7 +596,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 		bt.id = -1;
 
 		redo:
-		for(list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++){
+		for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 			if(pos.distance2D(i->pos) < 1 && newUnitDef == i->def){
 				assert(bt.id == -1); // There can not be more than one TaskPlan that is found;
 				bt.category = category;
@@ -681,13 +685,13 @@ void CUnitHandler::BuildTaskCreate(int id) {
 			}
 
 			// add the task anyway
-			BuildTasks[category]->push_back(bt);
+			BuildTasks[category].push_back(bt);
 		}
 		else {
 			if (category == CAT_DEFENCE)
 				ai->dm->AddDefense(pos,newUnitDef);
 
-			BuildTasks[category]->push_back(bt);
+			BuildTasks[category].push_back(bt);
 		}
 	}
 }
@@ -706,7 +710,7 @@ void CUnitHandler::BuildTaskRemove(int id) {
 		list<BuildTask>::iterator killtask;
 		bool found = false;
 
-		for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+		for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 			if (i->id == id) {
 				killtask = i;
 				assert(!found);
@@ -723,7 +727,7 @@ void CUnitHandler::BuildTaskRemove(int id) {
 				BuildTaskRemove(*builder);
 			}
 
-			BuildTasks[category]->erase(killtask);
+			BuildTasks[category].erase(killtask);
 		}
 	}
 }
@@ -762,7 +766,7 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 	bool found = false;
 	bool found2 = false;
 
-	for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+	for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 		if (i->id == builderTracker->buildTaskId){
 			// killtask = i;
 			assert(!found);
@@ -808,7 +812,7 @@ void CUnitHandler::BuildTaskAddBuilder(BuildTask* buildTask, BuilderTracker* bui
 
 BuildTask* CUnitHandler::GetBuildTask(int buildTaskId) {
 	for (int k = 0; k < LASTCATEGORY; k++) {
-		for (list<BuildTask>::iterator i = BuildTasks[k]->begin(); i != BuildTasks[k]->end(); i++) {
+		for (list<BuildTask>::iterator i = BuildTasks[k].begin(); i != BuildTasks[k].end(); i++) {
 			if (i->id == buildTaskId)
 				return  &*i;
 		}
@@ -830,7 +834,7 @@ BuildTask* CUnitHandler::BuildTaskExist(float3 pos, const UnitDef* builtdef) {
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
 
-	for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+	for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 		if (i->pos.distance2D(pos) < 1 && ai->ut->GetCategory(i->def) == category) {
 			return &*i;
 		}
@@ -861,11 +865,11 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 	}
 
 	// see if there are any BuildTasks that it can join
-	if (BuildTasks[category]->size()) {
+	if (BuildTasks[category].size()) {
 		float largestime = 0;
 		list<BuildTask>::iterator besttask;
 
-		for (list<BuildTask>::iterator i = BuildTasks[category]->begin(); i != BuildTasks[category]->end(); i++) {
+		for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 			float timebuilding = ai->math->ETT(*i) - ai->math->ETA(builder, ai->cb->GetUnitPos(i->id));
 			if (timebuilding > largestime) {
 				largestime = timebuilding;
@@ -880,11 +884,11 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 		}
 	}
 
-	if (TaskPlans[category]->size()) {
+	if (TaskPlans[category].size()) {
 			float largestime = 0;
 			list<TaskPlan>::iterator besttask;
 
-			for (list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++) {
+			for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 				float timebuilding = (i->def->buildTime / i->currentBuildPower) - ai->math->ETA(builder, i->pos);
 
 				// must test if this builder can make this unit/building too
@@ -947,7 +951,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 
 
 	bool existingtp = false;
-	for (list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++) {
+	for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 		if (pos.distance2D(i->pos) < 20 && builtdef == i->def) {
 			// make sure there are no other TaskPlans
 			assert(!existingtp);
@@ -959,6 +963,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 		TaskPlan tp;
 		tp.pos = pos;
 		tp.def = builtdef;
+		tp.defName = builtdef->name;
 		tp.currentBuildPower = 0;
 		tp.id = taskPlanCounter++;
 		TaskPlanAdd(&tp, builderTracker);
@@ -966,7 +971,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 		if (category == CAT_DEFENCE)
 			ai->dm->AddDefense(pos,builtdef);
 
-		TaskPlans[category]->push_back(tp);
+		TaskPlans[category].push_back(tp);
 	}
 }
 
@@ -995,7 +1000,7 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 	bool found2 = false;
 
 	for (int k = 0; k < LASTCATEGORY;k++) {
-		for (list<TaskPlan>::iterator i = TaskPlans[k]->begin(); i != TaskPlans[k]->end(); i++) {
+		for (list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
 			for (list<int>::iterator j = i->builders.begin(); j != i->builders.end(); j++) {
 				if (*j == builder) {
 					killplan = i;
@@ -1017,11 +1022,13 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 			}
 
 			killplan->builders.erase(killBuilder);
+
 			if (killplan->builders.size() == 0) {
 				// TaskPlan lost all its workers, remove
 				if (ai->ut->GetCategory(killplan->def) == CAT_DEFENCE)
-					ai->dm->RemoveDefense(killplan->pos,killplan->def);
-				TaskPlans[k]->erase(killplan);
+					ai->dm->RemoveDefense(killplan->pos, killplan->def);
+
+				TaskPlans[k].erase(killplan);
 			}
 
 			found2 = false;
@@ -1035,7 +1042,7 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 
 TaskPlan* CUnitHandler::GetTaskPlan(int taskPlanId) {
 	for (int k = 0; k < LASTCATEGORY;k++) {
-		for (list<TaskPlan>::iterator i = TaskPlans[k]->begin(); i != TaskPlans[k]->end(); i++) {
+		for (list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
 			if (i->id == taskPlanId)
 				return  &*i;
 		}
@@ -1058,7 +1065,7 @@ bool CUnitHandler::TaskPlanExist(float3 pos, const UnitDef* builtdef) {
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
 
-	for (list<TaskPlan>::iterator i = TaskPlans[category]->begin(); i != TaskPlans[category]->end(); i++) {
+	for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 		if (i->pos.distance2D(pos) < 100 && ai->ut->GetCategory(i->def) == category) {
 			return true;
 		}

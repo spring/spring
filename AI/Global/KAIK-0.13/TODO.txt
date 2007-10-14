@@ -12,5 +12,3 @@ energy?
 
 better L2 economy handling (no solars when
 +6000E, not just light fusions, etc)
-
-state serialization

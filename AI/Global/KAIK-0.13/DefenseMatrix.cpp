@@ -1,29 +1,43 @@
 #include "DefenseMatrix.h"
 
+
+CR_BIND(CDefenseMatrix, (NULL));
+CR_REG_METADATA(CDefenseMatrix, (
+	CR_MEMBER(ChokeMapsByMovetype),
+	CR_MEMBER(ChokePointArray),
+	CR_MEMBER(BuildMaskArray),
+
+	// CR_MEMBER(spotFinder),
+	CR_MEMBER(ThreatMapXSize),
+	CR_MEMBER(ThreatMapYSize),
+	CR_MEMBER(TotalCells),
+	CR_MEMBER(ai),
+	CR_RESERVED(16),
+	CR_POSTLOAD(PostLoad)
+));
+
+
 CDefenseMatrix::CDefenseMatrix(AIClasses *ai) {
 	this->ai = ai;
 }
 CDefenseMatrix::~CDefenseMatrix() {
-	for (unsigned int i = 0; i != ChokeMapsByMovetype.size(); i++) {
-		delete [] ChokeMapsByMovetype[i];
-	}
-
-	delete[] ChokePointArray;
-	delete[] BuildMaskArray;
 }
 
-void CDefenseMatrix::Init() {
-	ChokePointArray = new float[ai->pather->totalcells];
-	// temp only, will be used to mask bad spots that workers can't build at
-	BuildMaskArray = new int[ai->pather->totalcells];
+void CDefenseMatrix::PostLoad() {
+	spotFinder = new CSpotFinder(ai, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+	spotFinder->SetBackingArray(&ChokePointArray.front(), ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+}
 
-	for (int i = 0; i < ai->pather->totalcells; i++)
-		BuildMaskArray[i] = 0;
+
+void CDefenseMatrix::Init() {
+	ChokePointArray.resize(ai->pather->totalcells);
+	// temp only, will be used to mask bad spots that workers can't build at
+	BuildMaskArray.resize(ai->pather->totalcells,0);
 
 	ai->pather->CreateDefenseMatrix();
 
 	spotFinder = new CSpotFinder(ai, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
-	spotFinder->SetBackingArray(ChokePointArray, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
+	spotFinder->SetBackingArray(&ChokePointArray.front(), ai->pather->PathMapYSize, ai->pather->PathMapXSize);
 }
 
 void CDefenseMatrix::MaskBadBuildSpot(float3 pos) {

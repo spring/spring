@@ -1,5 +1,18 @@
 #include "Unit.h"
 
+
+CR_BIND(CUNIT, )
+CR_REG_METADATA(CUNIT, (
+	CR_MEMBER(myid),
+	CR_MEMBER(groupID),
+	CR_MEMBER(stuckCounter),
+	CR_MEMBER(maneuverCounter),
+	CR_MEMBER(ai),
+	CR_RESERVED(8),
+	CR_POSTLOAD(PostLoad)
+));
+
+
 CUNIT::CUNIT(void) {
 	this->ai = 0;
 	// added for attackgroup usage

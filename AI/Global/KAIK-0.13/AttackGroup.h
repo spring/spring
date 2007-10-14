@@ -6,10 +6,9 @@
 
 class CAttackGroup {
 	public:
-		#ifdef USE_CREG
 		CR_DECLARE(CAttackGroup);
-		#endif
 
+		CAttackGroup();
 		CAttackGroup(AIClasses* ai, int groupID_in);
 		~CAttackGroup();
 

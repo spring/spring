@@ -3,14 +3,47 @@
 
 #include "DGunController.hpp"
 
-DGunController::DGunController(IAICallback* gAICallback) {
-	CALLOUT = gAICallback;
+
+CR_BIND(DGunController, (NULL));
+CR_REG_METADATA(DGunController, (
+	CR_MEMBER(ai),
+	CR_MEMBER(state),
+	CR_MEMBER(commanderID),
+	CR_RESERVED(16),
+	CR_POSTLOAD(PostLoad)
+));
+
+CR_BIND(ControllerState, );
+CR_REG_METADATA(ControllerState, (
+	CR_MEMBER(inited),
+	CR_MEMBER(dgunOrderFrame),
+	CR_MEMBER(reclaimOrderFrame),
+	CR_MEMBER(targetSelectionFrame),
+	CR_MEMBER(targetID),
+	CR_MEMBER(oldTargetPos),
+	CR_RESERVED(16)
+));
+
+
+
+DGunController::DGunController(AIClasses* ai) {
+	this->ai = ai;
+
+	if (ai)
+		CALLOUT = ai->cb;
+
 	units = (int*) calloc(MAX_UNITS, sizeof(int));
 	srand((unsigned) time(0));
 }
+
 DGunController::~DGunController(void) {
 	free(units);
 }
+
+void DGunController::PostLoad() {
+	CALLOUT = ai->cb;
+}
+
 
 void DGunController::init(int commID) {
 	commanderID		= commID;
@@ -61,7 +94,7 @@ void DGunController::trackAttackTarget(unsigned int currentFrame) {
 		float maxRange = CALLOUT->GetUnitMaxRange(commanderID);
 		// CALLOUT->CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
 
-		if ((commanderPos - attackPos).Length() < maxRange * 0.9) {
+		if ((commanderPos - attackPos).Length() < maxRange * 0.9f) {
 			// multiply by 0.9 to ensure commander does not have to walk
 			if ((CALLOUT->GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
 				state.dgunOrderFrame = currentFrame;
@@ -89,7 +122,7 @@ void DGunController::selectTarget(unsigned int currentFrame) {
 
 	// get all units within immediate (non-walking) dgun range
 	float maxRange = CALLOUT->GetUnitMaxRange(commanderID);
-	int numUnits = CALLOUT->GetEnemyUnits(units, commanderPos, maxRange * 0.9);
+	int numUnits = CALLOUT->GetEnemyUnits(units, commanderPos, maxRange * 0.9f);
 
 	for (int i = 0; i < numUnits; i++) {
 		// if enemy unit with valid ID found in array
