@@ -21,8 +21,7 @@ void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
 	}
 }
 
-bool CLeaveBuildSpotTask::Init(boost::shared_ptr<IModule> me){
-	this->me = &me;
+bool CLeaveBuildSpotTask::Init(){
 	if(G->UnitDefHelper->IsFactory(ud)){
         if(!G->UnitDefHelper->IsMobile(ud)){
             End();
@@ -32,7 +31,6 @@ bool CLeaveBuildSpotTask::Init(boost::shared_ptr<IModule> me){
     //G->L.iprint("CLeaveBuildSpotTask::Init");
 
 	// register this modules listeners
-	G->RegisterMessageHandler(me);
 	//	G->RegisterMessageHandler("unitidle",me);
 
 	float3 pos = G->GetUnitPos(unit);

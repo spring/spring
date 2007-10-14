@@ -3,7 +3,7 @@ public:
 	CUnitConstructionTask(Global* GL, int unit, const UnitDef* builder, const UnitDef* building);
 	virtual ~CUnitConstructionTask();
 	void RecieveMessage(CMessage &message);
-	bool Init(boost::shared_ptr<IModule> me);
+	bool Init();
 	void End();
 protected:
 	string mymessage;

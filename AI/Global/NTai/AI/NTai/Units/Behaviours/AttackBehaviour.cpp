@@ -1,10 +1,10 @@
 #include "../../Core/helper.h"
 
-CAttackBehaviour::CAttackBehaviour(Global* GL, boost::shared_ptr<IModule> unit){
+CAttackBehaviour::CAttackBehaviour(Global* GL, int uid){
 	//
 	G = GL;
-	unit = unit;
 	engaged = false;
+	unit = G->GetUnit(uid);
 	uid = ((CUnit*)unit.get())->GetID();
 }
 
@@ -12,9 +12,7 @@ CAttackBehaviour::~CAttackBehaviour(){
 	//
 }
 
-bool CAttackBehaviour::Init(boost::shared_ptr<IModule> me){
-	//
-	this->me = &me;
+bool CAttackBehaviour::Init(){
 	return true;
 }
 

@@ -19,7 +19,7 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			if((type == B_GUARDIAN)
 				||(type == B_GUARDIAN_MOBILES)
 				||(type == B_RULE_EXTREME_CARRY)){
-					Init(*me);
+					Init();
 			}else{
 				End();
 				return;
@@ -274,14 +274,14 @@ void CKeywordConstructionTask::Build(){
 		delete [] funits;
 	}
         NLOG("CKeywordConstructionTask::Build  mark 4");
-	G->BuildingPlacer->GetBuildPosMessage(*me,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
         NLOG("CKeywordConstructionTask::Build  mark 5");
 }
 
-bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
+bool CKeywordConstructionTask::Init(){
 	NLOG(("CKeywordConstructionTask::Init"+G->Manufacturer->GetTaskName(type)));
 	G->L.print("CKeywordConstructionTask::Init "+G->Manufacturer->GetTaskName(type));
-	this->me = &me;
+
 	//G->L.print("CKeywordConstructionTask::Init");
 	const UnitDef* ud2= G->GetUnitDef(unit);
 	if(ud2 == 0){
@@ -292,7 +292,6 @@ bool CKeywordConstructionTask::Init(boost::shared_ptr<IModule> me){
     NLOG((string("tasktype: ")+G->Manufacturer->GetTaskName(type)));
 
 	// register this modules listeners
-	G->RegisterMessageHandler(me);
 	//G->RegisterMessageHandler("unitidle",me);
 	//G->RegisterMessageHandler("unitdestroyed",me);
 

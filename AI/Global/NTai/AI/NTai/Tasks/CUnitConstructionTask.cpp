@@ -123,12 +123,10 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 	}
 }
 
-bool CUnitConstructionTask::Init(boost::shared_ptr<IModule> me){
-	this->me = &me;
+bool CUnitConstructionTask::Init(){
 	G->L.print("CUnitConstructionTask::Init :: "+building->name);
 
 	// register this modules listeners
-	G->RegisterMessageHandler(me);
 	//G->RegisterMessageHandler("unitidle",me);
 	//G->RegisterMessageHandler("unitdestroyed",me);
 
@@ -306,7 +304,7 @@ bool CUnitConstructionTask::Init(boost::shared_ptr<IModule> me){
 		delete [] funits;
 	}
 
-	G->BuildingPlacer->GetBuildPosMessage(me,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
 	return true;
 	/////////////
 	/*if(G->Manufacturer->CBuild(ud->name,unit,G->Manufacturer->GetSpacing(ud))){

@@ -139,12 +139,12 @@ float3 CManufacturer::GetBuildPos(int builder, const UnitDef* target, const Unit
 		return true;
 	}
 }*/
-creg::Class *UnitDef::GetClass(void){
+/*creg::Class *UnitDef::GetClass(void){
 	return NULL;
 }
 UnitDef::~UnitDef(void){
 	//
-}
+}*/
 
 /*float3 CManufacturer::GetBuildPlacement(int unit,float3 unitpos,const UnitDef* builder, const UnitDef* ud, int spacing){
 	NLOG("CManufacturer::GetBuildPlacement");
@@ -647,10 +647,9 @@ void CManufacturer::RecieveMessage(CMessage &message){
 	}
 }
 
-bool CManufacturer::Init(boost::shared_ptr<IModule> me){
+bool CManufacturer::Init(){
 	NLOG("CManufacturer::Init");
 	NLOG("Loading MetaTags");
-	this->me = &me;
 	/*if(alliedplans.find(G->Cached->unitallyteam) != alliedplans.end()){
 		this->BPlans = alliedplans[G->Cached->unitallyteam];
 	}else{
@@ -764,8 +763,6 @@ bool CManufacturer::Init(boost::shared_ptr<IModule> me){
 	RegisterTaskTypes();
 	//NLOG("Loading GlobalBuildTree");
 	//LoadGlobalTree();
-	NLOG("Registering message handler");
-	G->RegisterMessageHandler(me);
 //	G->RegisterMessageHandler("update",me);
 //	G->RegisterMessageHandler("unitidle",me);
 	initialized = true;
@@ -794,7 +791,7 @@ void CManufacturer::UnitCreated(int uid){
 						(*i)->started = true;
 						break;
 					}else{
-						(*i)->WipeBuilderPlans(*me);
+						(*i)->WipeBuilderPlans(this);
 						/*if(!i->builders.empty()){
 							for(set<int>::iterator i2 = i->builders.begin(); i2 != i->builders.end(); ++i2){
 								WipePlansForBuilder(*i2);
@@ -925,11 +922,10 @@ int CBPlan::GetBuilderCount(){
 	return (int)builders.size();
 }
 
-void CBPlan::WipeBuilderPlans(boost::shared_ptr<IModule> m){
+void CBPlan::WipeBuilderPlans(CManufacturer* m){
 	boost::mutex::scoped_lock lock(plan_mutex);
 	for(set<int>::iterator j = builders.begin(); j != builders.end(); ++j){
-		IModule* i = m.get();
-        ((CManufacturer*)i)->WipePlansForBuilder(*j);
+        m->WipePlansForBuilder(*j);
     }
 }
 
@@ -1948,7 +1944,7 @@ void SkyWrite::Write(string Text, float3 loc, float Height, float Width, int Dur
 					GS->SetFigureColor(bGroup,0,0,0,0.5f);
 					break;
 				}
-			case '¬':// the lightning power symbol
+			case 'Â¬':// the lightning power symbol
 				{
 					Group = GS->CreateLineFigure(
 						float3(loc.x + pos+(Width*0.3f), loc.y, loc.z+(Height*0.1f)),

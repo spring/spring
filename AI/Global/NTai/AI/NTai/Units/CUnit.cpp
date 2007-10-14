@@ -34,11 +34,9 @@ CUnit::~CUnit(){
 	//G->RemoveHandler(me);
 }
 
-bool CUnit::Init(boost::shared_ptr<IModule> me){
+bool CUnit::Init(){
     NLOG("CUnit::Init");
-	this->me = &me;
 	//if(ud->builder){
-	G->RegisterMessageHandler(me);
 		/*G->RegisterMessageHandler("unitidle",me);
 		G->RegisterMessageHandler("unitcreated",me);
 		G->RegisterMessageHandler("unitfinished",me);
@@ -49,7 +47,8 @@ bool CUnit::Init(boost::shared_ptr<IModule> me){
 	if((G->GetCurrentFrame() > 32)&&(G->UnitDefHelper->IsMobile(ud))){
 		boost::shared_ptr<IModule> t(new CLeaveBuildSpotTask(G,this->uid,ud));
 		AddTask(t);
-		t->Init(t);
+		t->Init();
+		G->RegisterMessageHandler(t);
 	}
 	return true;
 }
@@ -65,7 +64,8 @@ void CUnit::RecieveMessage(CMessage &message){
 					tasks.erase(tasks.begin());
 					if(tasks.empty()==false){
 						boost::shared_ptr<IModule> t = tasks.front();
-						t->Init(t);
+						t->Init();
+						G->RegisterMessageHandler(t);
 					}
 				}
 			}
@@ -109,7 +109,8 @@ void CUnit::RecieveMessage(CMessage &message){
 		if(tasks.empty()){
 			if(LoadTaskList()){
 				boost::shared_ptr<IModule> t = tasks.front();
-				t->Init(t);
+				t->Init();
+				G->RegisterMessageHandler(t);
 			}
 			//executenext = !tasks.empty();
 		}
@@ -279,23 +280,31 @@ bool CUnit::LoadBehaviours(){
 			if(s == "none"){
 				return true;
 			} else if(s == "metalmaker"){
-				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
+				CMetalMakerBehaviour* m = new CMetalMakerBehaviour(G, GetID());
+				boost::shared_ptr<IBehaviour> t(m);
+				G->RegisterMessageHandler(t);
 				behaviours.push_back(t);
-				t->Init(t);
+				t->Init();
 			} else if(s == "attacker"){
-				boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
+				CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
+				boost::shared_ptr<IBehaviour> t(a);
+				G->RegisterMessageHandler(t);
 				behaviours.push_back(t);
-				t->Init(t);
+				t->Init();
 			} else if(s == "auto"){
 				if(G->UnitDefHelper->IsAttacker(ud)){
-					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CAttackBehaviour(G, *me));
+					CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
+					boost::shared_ptr<IBehaviour> t(a);
 					behaviours.push_back(t);
-					t->Init(t);
+					G->RegisterMessageHandler(t);
+					t->Init();
 				}
 				if(G->UnitDefHelper->IsMetalMaker(ud)||(G->UnitDefHelper->IsMex(ud) && ud->onoffable ) ){
-					boost::shared_ptr<IBehaviour> t = boost::shared_ptr<IBehaviour>(new CMetalMakerBehaviour(G, *me));
+					CMetalMakerBehaviour* m = new CMetalMakerBehaviour(G, GetID());
+					boost::shared_ptr<IBehaviour> t(m);
 					behaviours.push_back(t);
-					t->Init(t);
+					G->RegisterMessageHandler(t);
+					t->Init();
 				}
 			}
 		}

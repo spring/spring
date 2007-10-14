@@ -2,9 +2,9 @@
 class IBehaviour : public IModule{
 public:
 	IBehaviour(){}
-	IBehaviour(Global* GL, boost::shared_ptr<IModule> unit){}
+	IBehaviour(Global* GL, int uid){}
 	virtual ~IBehaviour(){}
-	virtual bool Init(boost::shared_ptr<IModule> me){ return false;}
+	virtual bool Init(){ return false;}
 	virtual void RecieveMessage(CMessage &message){}
 	inline bool IsActive(){
 		return active;
