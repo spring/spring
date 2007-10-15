@@ -38,7 +38,7 @@ CRC::CRC() : crc(0xFFFFFFFF)
 
 
 /** @brief Update CRC over the data in buf. */
-void CRC::UpdateData(const unsigned char* buf, int bytes)
+void CRC::UpdateData(const unsigned char* buf, unsigned bytes)
 {
 	for (size_t i = 0; i < bytes; ++i)
 		crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];

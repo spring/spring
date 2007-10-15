@@ -9,7 +9,7 @@ class CRC
 public:
 	CRC();
 
-	void UpdateData(const unsigned char* buf, int bytes);
+	void UpdateData(const unsigned char* buf, unsigned bytes);
 	void UpdateData(const std::string& buf);
 	bool UpdateFile(const std::string& filename);
 

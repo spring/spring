@@ -887,7 +887,7 @@ DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModIndex.");
 	string n(name);
-	for (int i = 0; i < modData.size(); ++i) {
+	for (unsigned i = 0; i < modData.size(); ++i) {
 		if (modData[i].name == n)
 			return i;
 	}
@@ -1022,7 +1022,7 @@ DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
 	ASSERT(size > 0, "Negative or zero buffer length doesn't make sense.");
 	logOutput.Print("findfilesvfs: %d\n", handle);
-	if (handle >= curFindFiles.size())
+	if ((unsigned)handle >= curFindFiles.size())
 		return 0;
 	strncpy(nameBuf, curFindFiles[handle].c_str(), size);
 	return handle + 1;
