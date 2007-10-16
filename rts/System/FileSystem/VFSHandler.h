@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "ArchiveBase.h"
+class CArchiveBase;
 
 using namespace std;
 
@@ -18,12 +18,9 @@ protected:
 	};
 	map<string, FileData> files; 
 	map<string, CArchiveBase*> archives;
-	void FindArchives(const string& pattern, const string& path);
 public:
-	CVFSHandler(bool mapArchives = true);
+	CVFSHandler();
 	virtual ~CVFSHandler();
-
-	void MapArchives(const string& taDir);
 
 	int LoadFile(string name, void* buffer);
 	int GetFileSize(string name);

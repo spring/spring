@@ -28,7 +28,7 @@
 /**
  * @brief Creates the archive scanner and vfs handler
  */
-WinFileSystemHandler::WinFileSystemHandler(bool verbose, bool mapArchives) : FileSystemHandler('\\')
+WinFileSystemHandler::WinFileSystemHandler(bool verbose) : FileSystemHandler('\\')
 {
 	//  (same code as originally in CSpringApp::InitVFS())
 
@@ -39,7 +39,7 @@ WinFileSystemHandler::WinFileSystemHandler(bool verbose, bool mapArchives) : Fil
 	archiveScanner->Scan("./base", true);
 	archiveScanner->Scan("./mods", true);
 	archiveScanner->WriteCacheData(archiveScanner->GetFilename());
-	hpiHandler = new CVFSHandler(mapArchives);
+	hpiHandler = new CVFSHandler();
 }
 
 WinFileSystemHandler::~WinFileSystemHandler()

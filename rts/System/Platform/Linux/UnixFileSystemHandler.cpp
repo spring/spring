@@ -230,13 +230,8 @@ void UnixFileSystemHandler::LocateDataDirs()
  * only occur once in all data directories. If a name is found more then once,
  * then higher priority datadirs override lower priority datadirs and per
  * datadir the 'mods' subdir overrides 'base' which overrides 'maps'.
- *
- * Basically the same applies to the VFS handler. It maps the contents of all
- * archives (see CVFSHandler::MapArchives()) in the root of each datadir to
- * the virtual filesystem. Files in archives in higher priority datadirs
- * override files in archives in lower priority datadirs.
  */
-void UnixFileSystemHandler::InitVFS(bool mapArchives) const
+void UnixFileSystemHandler::InitVFS() const
 {
 	archiveScanner = new CArchiveScanner();
 	archiveScanner->ReadCacheData(writedir->path + archiveScanner->GetFilename());
@@ -249,14 +244,7 @@ void UnixFileSystemHandler::InitVFS(bool mapArchives) const
 	}
 	archiveScanner->WriteCacheData(writedir->path + archiveScanner->GetFilename());
 
-	hpiHandler = new CVFSHandler(false);
-	if (mapArchives) {
-		for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-			if (d->readable) {
-				hpiHandler->MapArchives(d->path);
-			}
-		}
-	}
+	hpiHandler = new CVFSHandler();
 }
 
 /**
@@ -264,10 +252,10 @@ void UnixFileSystemHandler::InitVFS(bool mapArchives) const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool mapArchives)
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose)
 {
 	LocateDataDirs();
-	InitVFS(mapArchives);
+	InitVFS();
 
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->readable) {
