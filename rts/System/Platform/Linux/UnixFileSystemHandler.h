@@ -24,7 +24,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~UnixFileSystemHandler();
-		UnixFileSystemHandler(bool verbose, bool mapArchives);
+		UnixFileSystemHandler(bool verbose);
 
 		virtual bool mkdir(const std::string& dir) const;
 
@@ -47,7 +47,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 		void AddDirs(const std::string& in);
 		void DeterminePermissions(int start_at = 0);
 		void LocateDataDirs();
-		void InitVFS(bool mapArchives = true) const;
+		void InitVFS() const;
 		void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
 
 		std::vector<DataDir> datadirs;

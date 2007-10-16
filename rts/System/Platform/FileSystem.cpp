@@ -23,7 +23,6 @@
 #endif
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
-#include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 
@@ -54,13 +53,11 @@ FileSystemHandler& FileSystemHandler::GetInstance()
  */
 void FileSystemHandler::Initialize(bool verbose)
 {
-	bool mapArchives = !!configHandler.GetInt("MapArchives", 1);
-
 	if (!instance) {
 #ifdef WIN32
-		instance = new WinFileSystemHandler(verbose, mapArchives);
+		instance = new WinFileSystemHandler(verbose);
 #else
-		instance = new UnixFileSystemHandler(verbose, mapArchives);
+		instance = new UnixFileSystemHandler(verbose);
 #endif
 	}
 }

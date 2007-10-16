@@ -382,7 +382,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 		if (!f.FileExists()) {
 			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 
-			hpiHandler = new CVFSHandler(false);
+			hpiHandler = new CVFSHandler();
 			for (vector<string>::iterator it = ars.begin(); it != ars.end(); ++it)
 				hpiHandler->AddArchive(*it, false);
 		}
@@ -712,7 +712,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 			if (ars.empty())
 				return NULL;
 
-			hpiHandler = new CVFSHandler(false);
+			hpiHandler = new CVFSHandler();
 			hpiHandler->AddArchive(ars[0], false);
 		}
 	}

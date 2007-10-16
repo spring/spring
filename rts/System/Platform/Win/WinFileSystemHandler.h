@@ -24,7 +24,7 @@ class WinFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~WinFileSystemHandler();
-		WinFileSystemHandler(bool verbose, bool mapArchives);
+		WinFileSystemHandler(bool verbose);
 
 		virtual bool mkdir(const std::string& dir) const;
 
