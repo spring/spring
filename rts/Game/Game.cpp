@@ -1754,10 +1754,9 @@ bool CGame::Update()
 	assert(script);
 	thisFps++;
 
-	Uint64 timeNow;
-	timeNow = SDL_GetTicks();
+	unsigned timeNow = SDL_GetTicks();
 
-	const Uint64 difTime = (timeNow - lastModGameTimeMeasure);
+	const unsigned difTime = (timeNow - lastModGameTimeMeasure);
 	const float dif = skipping ? 0.010f : (float)difTime * 0.001f;
 
 	if (!gs->paused) {
@@ -1940,7 +1939,7 @@ bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
 
-	const Uint64 currentTime = SDL_GetTicks();
+	const unsigned currentTime = SDL_GetTicks();
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
 
@@ -1971,10 +1970,9 @@ bool CGame::Draw()
 
 //	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		Uint64 startDraw;
-		startDraw = SDL_GetTicks();
+		unsigned startDraw = SDL_GetTicks();
 		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
-		                 * (GAME_SPEED * gs->speedFactor);
+		                 * (float)(GAME_SPEED * gs->speedFactor);
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -4376,7 +4374,7 @@ void CGame::ReColorTeams()
 
 bool CGame::HasLag() const
 {
-	Uint32 timeNow = SDL_GetTicks();
+	unsigned timeNow = SDL_GetTicks();
 	if (!gs->paused && timeNow > lastFrameTime + 500.0f / gs->speedFactor)
 	{
 		return true;
