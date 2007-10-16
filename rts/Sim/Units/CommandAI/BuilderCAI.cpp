@@ -1150,7 +1150,10 @@ void CBuilderCAI::RemoveUnitFromReclaimers(CUnit* unit)
 we assume that there won't be a lot of reclaimers because performance would suck
 if there were. ideally reclaimers should be assigned on a per-unit basis, but
 this requires tracking of deaths, which albeit already done isn't exactly simple
-to follow. */
+to follow.
+
+TODO easy: store reclaiming units per allyteam
+TODO harder: update reclaimers as they start/finish reclaims and/or die */
 bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 {
 	bool retval = false;
@@ -1160,15 +1163,17 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 		// check wheter reclaimers are valid
 		assert(*it);
 		assert((*it)->commandAI);
-		Command &c = (*it)->commandAI->commandQue.front();
+		assert((*it)->commandAI->commandQue);
+		if ((*it)->commandAI->commandQue.empty()) {
+			rm.push_back(*it);
+			continue;
+		}
+		const Command &c = (*it)->commandAI->commandQue.front();
 		if (c.id != CMD_RECLAIM || c.params.size() != 1) {
 			rm.push_back(*it);
 			continue;
 		}
 
-		// we may have run out of reclaimers
-		if (it == reclaimers.end())
-			break;
 		const int cmdUnitId = (int)c.params[0];
 		if (cmdUnitId == unit->id && gs->Ally(unit->team, (*it)->team)) {
 			retval = true;
