@@ -1163,7 +1163,6 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 		// check wheter reclaimers are valid
 		assert(*it);
 		assert((*it)->commandAI);
-		assert((*it)->commandAI->commandQue);
 		if ((*it)->commandAI->commandQue.empty()) {
 			rm.push_back(*it);
 			continue;
