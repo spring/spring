@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "Rendering/GL/myGL.h"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ class CMouseCursor {
 
 	protected:	
 		struct ImageData {
-			unsigned int texture;
+			GLuint texture;
 			int xOrigSize;
 			int yOrigSize;
 			int xAlignedSize;

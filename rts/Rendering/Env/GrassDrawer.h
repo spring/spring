@@ -1,6 +1,8 @@
 #ifndef GRASSDRAWER_H
 #define GRASSDRAWER_H
 
+#include "Rendering/GL/myGL.h"
+
 class CAdvTreeDrawer;
 class CVertexArray;
 
@@ -44,8 +46,8 @@ protected:
 	int blocksY;
 
 	unsigned int grassDL;
-	unsigned int grassBladeTex;
-	unsigned int farTex;
+	GLuint grassBladeTex;
+	GLuint farTex;
 
 	unsigned int grassVP;
 	unsigned int grassFarVP;

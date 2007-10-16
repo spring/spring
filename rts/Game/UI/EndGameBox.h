@@ -4,6 +4,7 @@
 #include "InputReceiver.h"
 #include <list>
 #include <vector>
+#include "Rendering/GL/myGL.h"
 
 class CEndGameBox :
 	public CInputReceiver
@@ -60,7 +61,7 @@ protected:
 	};
 
 	std::vector<Stat> stats;
-	unsigned int graphTex;
+	GLuint graphTex;
 };
 
 #endif // __END_GAME_BOX_H__

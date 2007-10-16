@@ -7,6 +7,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "Rendering/GL/myGL.h"
+
 struct TexFile;
 class CFileHandler;
 
@@ -21,10 +23,10 @@ public:
 	};
 	struct S3oTex {
 		int num;
-		unsigned int tex1;
+		GLuint tex1;
 		unsigned int tex1SizeX;
 		unsigned int tex1SizeY;
-		unsigned int tex2;
+		GLuint tex2;
 		unsigned int tex2SizeX;
 		unsigned int tex2SizeY;
 	};
@@ -53,7 +55,7 @@ public:
 
 private:
 	std::map<std::string, UnitTexture*> textures;
-	unsigned int globalTex;
+	GLuint globalTex;
 	int bigTexX;
 	int bigTexY;
 

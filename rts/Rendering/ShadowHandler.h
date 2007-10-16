@@ -15,7 +15,7 @@ public:
 	void CreateShadows(void);
 
 	int shadowMapSize;
-	unsigned int shadowTexture;
+	GLuint shadowTexture;
 
 	static bool canUseShadows;
 	static bool useFPShadows;

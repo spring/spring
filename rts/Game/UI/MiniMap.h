@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "InputReceiver.h"
+#include "Rendering/GL/myGL.h"
 
 class CUnit;
 class CIcon;
@@ -128,7 +129,7 @@ class CMiniMap : public CInputReceiver {
 		unsigned char allyColor[4];
 		unsigned char enemyColor[4];
 
-		unsigned int buttonsTexture;
+		GLuint buttonsTexture;
 		unsigned int circleLists; // 8 - 256 divs
 		static const int circleListsCount = 6;
 				

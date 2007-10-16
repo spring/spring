@@ -7,6 +7,7 @@
 #include <stack>
 #include <string>
 #include <map>
+#include "Rendering/GL/myGL.h"
 
 class CVertexArray;
 struct S3DOModel;
@@ -62,17 +63,17 @@ public:
 	unsigned int unitShadowS3oFP;    // fragment program for S3O, shadows enabled
 	unsigned int unitShadowGenVP;    // vertex program for shadow pass (both 3DO and S3O)
 
-	unsigned int boxtex;
+	GLuint boxtex;
 	unsigned int reflTexSize;
 
-	unsigned int specularTex;
+	GLuint specularTex;
 	unsigned int specTexSize;
 
 	float unitDrawDist;
 	float unitIconDist;
 	float iconLength;
 
-	unsigned int whiteTex;
+	GLuint whiteTex;
 
 	int updateFace;
 
