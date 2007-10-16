@@ -61,14 +61,14 @@ public:
 	unsigned int thisFps;
 
 	time_t fpstimer, starttime;
-	Uint64 lastUpdate;
-	Uint64 lastMoveUpdate;
-	Uint64 lastModGameTimeMeasure;
+	unsigned lastUpdate;
+	unsigned lastMoveUpdate;
+	unsigned lastModGameTimeMeasure;
 
-	Uint64 lastUpdateRaw;
+	unsigned lastUpdateRaw;
 	float updateDeltaSeconds;
 
-	unsigned int lastframe;
+	unsigned lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 
 	std::string userInputPrefix;
@@ -139,7 +139,7 @@ protected:
 	float inputTextSizeY;
 	float lastCpuUsageTime;
 	
-	Uint32 lastFrameTime;
+	unsigned lastFrameTime;
 };
 
 
