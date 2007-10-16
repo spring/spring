@@ -24,7 +24,7 @@ static CVertexArray* vertexArray1 = 0;
 static CVertexArray* vertexArray2 = 0;
 static CVertexArray* currentVertexArray = 0;
 
-static unsigned int startupTexture = 0;
+static GLuint startupTexture = 0;
 
 
 /******************************************************************************/
@@ -220,7 +220,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 bool ProgramStringIsNative(GLenum target, const char* filename)
 {
-	unsigned int tempProg;
+	GLuint tempProg;
 	GLint errorPos, isNative;
 
 	if(!GLEW_ARB_vertex_program)
@@ -292,7 +292,7 @@ static void CheckParseErrors(const char * program_type, const char * filename, c
 
 static unsigned int LoadProgram(GLenum target, const char* filename, const char * program_type)
 {
-	unsigned int ret = 0;
+	GLuint ret = 0;
 	if (!GLEW_ARB_vertex_program) {
 		return 0;
 	}

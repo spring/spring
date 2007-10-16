@@ -5,6 +5,9 @@
 #ifndef __CAMERA_H__
 #define __CAMERA_H__
 
+#include "Rendering/GL/myGL.h"
+
+
 class CCamera  
 {
 public:
@@ -32,11 +35,11 @@ public:
 	float fov;
 	float oldFov;
 	float lppScale; // length-per-pixel scale
-	double modelview[16];
-	double projection[16];
-	double billboard[16];
-	double modelviewInverse[16];
-	int viewport[4];
+	GLdouble modelview[16];
+	GLdouble projection[16];
+	GLdouble billboard[16];
+	GLdouble modelviewInverse[16];
+	GLint viewport[4];
 
 	static unsigned int billboardList;
 };

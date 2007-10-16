@@ -16,6 +16,7 @@ struct SS3OVertex;
 #include <stack>
 #include "MemPool.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Rendering/GL/myGL.h"
 #include "float3.h"
 
 typedef std::list<CProjectile*> Projectile_List;
@@ -132,7 +133,7 @@ private:
 	// flyings3oPieces[textureType][team]
 	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces;
 
-	unsigned int perlinTex[8];
+	GLuint perlinTex[8];
 	float perlinBlend[4];
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;

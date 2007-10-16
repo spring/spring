@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/GL/myGL.h"
 
 class CUnit;
 class CBuilding;
@@ -59,20 +60,20 @@ public:
 	void RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb);
 	int GetBuildingDecalType(std::string name);
 
-	unsigned int scarTex;
+	GLuint scarTex;
 	int decalLevel;
 
 	struct TrackType {
 		std::string name;
 		std::set<UnitTrackStruct*> tracks;
-		unsigned int texture;
+		GLuint texture;
 	};
 	std::vector<TrackType*> trackTypes;
 
 	struct BuildingDecalType {
 		std::string name;
 		std::set<BuildingGroundDecal*> buildingDecals;
-		unsigned int texture;
+		GLuint texture;
 	};
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 

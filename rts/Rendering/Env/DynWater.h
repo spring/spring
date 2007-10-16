@@ -3,6 +3,7 @@
 
 #include "BaseWater.h"
 #include <vector>
+#include "Rendering/GL/myGL.h"
 
 class CDynWater :
 	public CBaseWater
@@ -30,20 +31,20 @@ public:
 	void DrawSingleUpdateSquare(float startx,float starty,float endx,float endy);
 
 	int refractSize;
-	unsigned int reflectTexture;
-	unsigned int refractTexture;
-	unsigned int rawBumpTexture[3];
-	unsigned int detailNormalTex;
-	unsigned int foamTex;
+	GLuint reflectTexture;
+	GLuint refractTexture;
+	GLuint rawBumpTexture[3];
+	GLuint detailNormalTex;
+	GLuint foamTex;
 	float3 waterSurfaceColor;
 
-	unsigned int waveHeight32;
-	unsigned int waveTex1;
-	unsigned int waveTex2;
-	unsigned int waveTex3;
-	unsigned int frameBuffer;
-	unsigned int zeroTex;
-	unsigned int fixedUpTex;
+	GLuint waveHeight32;
+	GLuint waveTex1;
+	GLuint waveTex2;
+	GLuint waveTex3;
+	GLuint frameBuffer;
+	GLuint zeroTex;
+	GLuint fixedUpTex;
 
 	unsigned int waveFP;
 	unsigned int waveVP;
@@ -60,9 +61,9 @@ public:
 	unsigned int dwAddSplashVP;
 	unsigned int dwAddSplashFP;
 
-	unsigned int splashTex;
-	unsigned int boatShape;
-	unsigned int hoverShape;
+	GLuint splashTex;
+	GLuint boatShape;
+	GLuint hoverShape;
 
 	int lastWaveFrame;
 	bool firstDraw;

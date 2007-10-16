@@ -1,12 +1,14 @@
 #ifndef __FARTEXTURE_HANDLER_H__
 #define __FARTEXTURE_HANDLER_H__
 
+#include "Rendering/GL/myGL.h"
+
 struct S3DOModel;
 
 class CFartextureHandler
 {
 public:
-	unsigned int farTexture;
+	GLuint farTexture;
 
 	CFartextureHandler(void);
 	~CFartextureHandler(void);

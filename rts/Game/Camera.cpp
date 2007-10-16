@@ -304,7 +304,7 @@ float3 CCamera::CalcPixelDir(int x, int y)
 float3 CCamera::CalcWindowCoordinates(const float3& objPos)
 {
 	double winPos[3];
-	gluProject((double)objPos.x, (double)objPos.y, (double)objPos.z,
+	gluProject((GLdouble)objPos.x, (GLdouble)objPos.y, (GLdouble)objPos.z,
 	           modelview, projection, viewport,
 	           &winPos[0], &winPos[1], &winPos[2]);
 	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);

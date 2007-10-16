@@ -3,6 +3,8 @@
 
 #include <string>
 #include <list>
+#include "Rendering/GL/myGL.h"
+
 
 class CInMapDraw
 {
@@ -50,7 +52,7 @@ public:
 		NET_LINE
 	};
 
-	unsigned int texture;
+	GLuint texture;
 	float lastLeftClickTime;
 	float lastLineTime;
 	float3 lastPos;

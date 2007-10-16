@@ -13,13 +13,13 @@ UserDefsHandler::~UserDefsHandler()
 	[[NSUserDefaults standardUserDefaults] synchronize];
 }
 
-void UserDefsHandler::SetInt(std::string name, unsigned int value)
+void UserDefsHandler::SetInt(std::string name, int value)
 {
 	NSNumber *number;
 	NSString *key;
 	
 	key = [NSString stringWithCString:name.c_str() encoding:NSASCIIStringEncoding];
-	number = [NSNumber numberWithUnsignedInt:value];
+	number = [NSNumber numberWithInt:value];
 	
 	[[NSUserDefaults standardUserDefaults] setObject:number forKey:key];
 }
@@ -50,7 +50,7 @@ std::string UserDefsHandler::GetString(std::string name, std::string def)
 	return [value cStringUsingEncoding:NSASCIIStringEncoding];
 }
 
-unsigned int UserDefsHandler::GetInt(std::string name, unsigned int def)
+int UserDefsHandler::GetInt(std::string name, int def)
 {
 	NSString *key;
 	NSNumber *number;
@@ -63,5 +63,21 @@ unsigned int UserDefsHandler::GetInt(std::string name, unsigned int def)
 		return def;
 	}
 	
-	return [number unsignedIntValue];
+	return [number intValue];
+}
+
+float UserDefsHandler::GetFloat(const std::string& name, const float def)
+{
+	NSString *key;
+	NSNumber *number;
+	
+	key = [NSString stringWithCString:name.c_str() encoding:NSASCIIStringEncoding];
+	
+	number = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+	
+	if (number == nil) {
+		return def;
+	}
+	
+	return [number floatValue];
 }

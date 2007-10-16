@@ -6,6 +6,8 @@
 #ifndef _IFRAMEBUFFER_H
 #define _IFRAMEBUFFER_H
 
+#include "Rendering/GL/myGL.h"
+
 enum FramebufferAttachType
 {
 	FBO_ATTACH_COLOR = 1,
@@ -18,7 +20,7 @@ public:
 	virtual ~IFramebuffer();
 
 	virtual bool checkFBOStatus(void) = 0;
-	virtual void attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype) = 0;
+	virtual void attachTexture(const GLuint tex, const unsigned int textype, FramebufferAttachType attachtype) = 0;
 	virtual void select(void) = 0;
 	virtual void deselect(void) = 0;
 	virtual bool valid(void) = 0;

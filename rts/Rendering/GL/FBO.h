@@ -44,7 +44,7 @@ public:
 	 * @param textype type of texture
 	 * @param attachtype what kind of target to attach as
 	 */
-	void attachTexture(const unsigned int tex, const unsigned int textype, FramebufferAttachType attachtype);
+	void attachTexture(const GLuint tex, const unsigned int textype, FramebufferAttachType attachtype);
 
 	/**
 	 * @brief select
