@@ -287,7 +287,7 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 			assert(!hit);
 			hit = true;
 			TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
-			
+
 			if (c->id == -taskPlan->def->id && c->params[0] == taskPlan->pos.x && c->params[2] == taskPlan->pos.z)
 				commandFound = true;
 			else
@@ -541,7 +541,7 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 
 
 int CUnitHandler::GetIU(int category) {
-	assert(IdleUnits[category]->size() > 0);
+	assert(IdleUnits[category].size() > 0);
 	int unitID = IdleUnits[category].front();
 
 	// move the returned unitID to the back
@@ -705,7 +705,7 @@ void CUnitHandler::BuildTaskRemove(int id) {
 
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
-	
+
 	if (category != -1) {
 		list<BuildTask>::iterator killtask;
 		bool found = false;
@@ -790,7 +790,7 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 					break;
 				}
 			}
-			
+
 		}
 	}
 
