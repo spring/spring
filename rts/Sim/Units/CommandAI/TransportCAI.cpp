@@ -443,7 +443,8 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
 	float3 found;
 	//((CTransportUnit*)owner)->transported
 
-	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius,found,((CTransportUnit*)owner)->transported.front().unit);
+	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius * ((CTransportUnit*)owner)->unitDef->unloadSpread,
+								 found,((CTransportUnit*)owner)->transported.front().unit);
 	if(canUnload){
 		Command c2;
 		c2.id=CMD_UNLOAD_UNIT;
@@ -532,7 +533,8 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 	float3 found;
 	//((CTransportUnit*)owner)->transported
 
-	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius,found,((CTransportUnit*)owner)->transported.front().unit);
+	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius  * ((CTransportUnit*)owner)->unitDef->unloadSpread,
+								found,((CTransportUnit*)owner)->transported.front().unit);
 	if(canUnload){
 
 		Command c2;

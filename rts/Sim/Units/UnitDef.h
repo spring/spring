@@ -281,6 +281,7 @@ struct UnitDef
 	int buildangle;
 
 	float loadingRadius;	//for transports
+	float unloadSpread;
 	int transportCapacity;
 	int transportSize;
 	int minTransportSize;
