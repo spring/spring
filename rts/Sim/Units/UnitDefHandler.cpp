@@ -362,6 +362,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.isfireplatform    = udTable.GetBool("isFirePlatform",    false);
 	ud.isAirBase         = udTable.GetBool("isAirBase",         false);
 	ud.loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
+	ud.unloadSpread		 = udTable.GetFloat("unloadSpread",		1.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
