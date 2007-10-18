@@ -138,7 +138,6 @@ void CFactory::Update()
 		}
 	}
 
-	const CCommandQueue& queue = commandAI->commandQue;
 
 	if (curBuild && !beingBuilt) {
 		lastBuild = gs->frameNum;
@@ -155,6 +154,8 @@ void CFactory::Update()
 			curBuild->pos.y -= curBuild->unitDef->waterline;
 		}
 		curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
+
+		const CCommandQueue& queue = commandAI->commandQue;
 
 		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
 			if (curBuild->AddBuildPower(buildSpeed,this)) {
