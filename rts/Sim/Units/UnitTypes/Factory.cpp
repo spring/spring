@@ -140,8 +140,7 @@ void CFactory::Update()
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
-	if (curBuild && !beingBuilt &&
-	    (queue.empty() || (queue.front().id != CMD_WAIT))) {
+	if (curBuild && !beingBuilt) {
 		lastBuild = gs->frameNum;
 
 		const int buildPiece = GetBuildPiece();
@@ -157,28 +156,30 @@ void CFactory::Update()
 		}
 		curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
 
-		if (curBuild->AddBuildPower(buildSpeed,this)) {
-			std::vector<int> args;
-			args.push_back(0);
-			cob->Call("QueryNanoPiece",args);
+		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
+			if (curBuild->AddBuildPower(buildSpeed,this)) {
+				std::vector<int> args;
+				args.push_back(0);
+				cob->Call("QueryNanoPiece",args);
 
-			if (unitDef->showNanoSpray) {
-				const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
-				const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
-				                             + (updir    * relWeaponFirePos.y)
-				                             + (rightdir * relWeaponFirePos.x);
-				float3 dif = (curBuild->midPos - weaponPos);
-				const float l = dif.Length();
-				dif /= l;
-				dif += gs->randVector() * 0.15f;
-				float3 color = unitDef->nanoColor;
-				if (gu->teamNanospray) {
-					unsigned char* tcol = gs->Team(team)->color;
-					color = float3(tcol[0] * (1.0f / 255.0f),
-					               tcol[1] * (1.0f / 255.0f),
-					               tcol[2] * (1.0f / 255.0f));
+				if (unitDef->showNanoSpray) {
+					const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+					const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
+																			 + (updir    * relWeaponFirePos.y)
+																			 + (rightdir * relWeaponFirePos.x);
+					float3 dif = (curBuild->midPos - weaponPos);
+					const float l = dif.Length();
+					dif /= l;
+					dif += gs->randVector() * 0.15f;
+					float3 color = unitDef->nanoColor;
+					if (gu->teamNanospray) {
+						unsigned char* tcol = gs->Team(team)->color;
+						color = float3(tcol[0] * (1.0f / 255.0f),
+													 tcol[1] * (1.0f / 255.0f),
+													 tcol[2] * (1.0f / 255.0f));
+					}
+					SAFE_NEW CGfxProjectile(weaponPos, dif, (int)l, color);
 				}
-				SAFE_NEW CGfxProjectile(weaponPos, dif, (int)l, color);
 			}
 		}
 
