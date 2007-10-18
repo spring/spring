@@ -18,7 +18,7 @@ public:
 	CR_DECLARE(CTeam);
 	CR_DECLARE_SUB(Statistics);
 	CTeam();
-	virtual ~CTeam();
+	~CTeam();
 	void SlowUpdate();
 
 	void AddMetal(float amount);
