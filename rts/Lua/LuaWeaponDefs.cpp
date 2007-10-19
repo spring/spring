@@ -335,11 +335,13 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "tileLength",  v.tilelength);
 	HSTR_PUSH_NUMBER(L, "scrollSpeed", v.scrollspeed);
 	HSTR_PUSH_NUMBER(L, "pulseSpeed",  v.pulseSpeed);
-	HSTR_PUSH_NUMBER(L, "noGap",       v.noGap);
+	HSTR_PUSH_NUMBER(L, "beamTTL",     v.beamttl);
+	HSTR_PUSH_NUMBER(L, "beamDecay",   v.beamdecay);
 	HSTR_PUSH_NUMBER(L, "stages",      v.stages);
 	HSTR_PUSH_NUMBER(L, "sizeDecay",   v.sizeDecay);
 	HSTR_PUSH_NUMBER(L, "alphaDecay",  v.alphaDecay);
 	HSTR_PUSH_NUMBER(L, "separation",  v.separation);
+	HSTR_PUSH_BOOL  (L, "noGap",       v.noGap);
 	return 1;
 //	CColorMap *colorMap;
 //	AtlasedTexture *texture1;
