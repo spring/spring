@@ -35,7 +35,7 @@ Spring.SendCommands({"ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt"})
 
 VFS.Include(LUAUI_DIRNAME .. 'utils.lua', utilFile)
 
-include("unitdefs.lua") -- process some custom UnitDefs parameters
+include("setupdefs.lua")
 include("savetable.lua")
 
 include("debug.lua")

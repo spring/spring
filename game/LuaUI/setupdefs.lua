@@ -1,8 +1,9 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    unitdefs.lua
---  brief:   setup some custom UnitDefs parameters
+--  file:    setupdefs.lua
+--  brief:   setup some custom UnitDefs parameters,
+--           and UnitDefNames, FeatureDefNames, WeaponDefNames
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.
