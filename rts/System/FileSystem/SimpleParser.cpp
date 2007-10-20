@@ -29,9 +29,9 @@ int CSimpleParser::GetLineNumber()
 string CSimpleParser::GetLine()
 {
 	lineNumber++;
-	char a;
 	stringstream s;
 	while (!file.Eof()) {
+		char a = '\n'; // break if this is not overwritten
 		file.Read(&a, 1);
 		if (a == '\n') { break; }
 		if (a != '\r') { s << a; }
