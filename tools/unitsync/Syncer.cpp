@@ -9,15 +9,18 @@
 #include <algorithm>
 #include <sstream>
 
-CSyncer::CSyncer(int id) :
-	populated(false)
+
+CSyncer::CSyncer(int id)
+: unitsLeft(-1)
 {
 	localId = id;
 }
 
+
 CSyncer::~CSyncer(void)
 {
 }
+
 
 crc_t CSyncer::CalculateCRC(const string& fileName)
 {
@@ -40,51 +43,37 @@ crc_t CSyncer::CalculateCRC(const string& fileName)
 	return cur;
 }
 
-void CSyncer::ParseUnit(const string& fileName)
-{
-	// FIXME - do nothing?
-}
 
-void CSyncer::MapUnitIds()
+void CSyncer::LoadUnits(bool checksum)
 {
-	for (map<string, Unit>::iterator i = units.begin(); i != units.end(); ++i) {
-		unitIds.push_back(i->first);
-	}
-}
-
-int CSyncer::ProcessUnits(bool checksum)
-{
-	if (populated && units.empty()) {
-		return 0;
-	}
-	populated = true;
-
-	int count = 0;
+	unitsLeft = 0;
 
 	LuaParser luaParser("gamedata/defs.lua",
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!luaParser.Execute()) {
 		logOutput.Print("luaParser.Execute() failed");
-		return 0; // FIXME -- report this somehow?
+		return;
 	}
 
 	LuaTable rootTable = luaParser.GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
 		logOutput.Print("root unitdef table invalid");
-		return 0;
+		return;
 	}
+
 	vector<string> unitDefNames;
 	rootTable.GetKeys(unitDefNames);
 
-	count = (int)unitDefNames.size();
+	const int count = (int)unitDefNames.size();
 
-	for ( int i = 0; i < count; ++i) {
+	for (int i = 0; i < count; ++i) {
 		const string& udName =  unitDefNames[i];
 		LuaTable udTable = rootTable.SubTable(udName);
+
 		Unit u;
+
 		u.fullName = udTable.GetString("name", udName);
 
-		// FIXME -- only checksum the last unitDef?  (0.75b2 behaviour)
 		if (checksum) {
 			const string fileName  = udTable.GetString("filename", "");
 			const string deadName  = udTable.GetString("corpse", udName + "_dead");
@@ -100,11 +89,33 @@ int CSyncer::ProcessUnits(bool checksum)
 		units[udName] = u;
 	}
 
-	MapUnitIds(); // if we are done, map id numbers to names
+	// map the unitIds
+	map<string, Unit>::iterator mit;
+	for (mit = units.begin(); mit != units.end(); ++mit) {
+		unitIds.push_back(mit->first);
+	}
 
-	logOutput.Print("found %d units\n", units.size());
-	return 0;
+	unitsLeft = count;
+
+	return;
 }
+
+
+int CSyncer::ProcessUnits(bool checksum)
+{
+	if (unitsLeft < 0) {
+		LoadUnits(checksum);
+	}
+
+	if (unitsLeft <= 0) {
+		return 0;
+	}
+
+	unitsLeft--;
+
+	return unitsLeft;
+}
+
 
 string CSyncer::GetCurrentList()
 {
@@ -119,6 +130,7 @@ string CSyncer::GetCurrentList()
 
 	return s.str();
 }
+
 
 void CSyncer::InstallClientDiff(const string& diff)
 {
@@ -155,6 +167,7 @@ void CSyncer::InstallClientDiff(const string& diff)
 	}
 }
 
+
 void CSyncer::RemoveClient(int id)
 {
 	for (map<string, DisabledUnit>::iterator i = disabledUnits.begin(); i != disabledUnits.end(); ++i) {
@@ -168,10 +181,12 @@ void CSyncer::RemoveClient(int id)
 	}
 }
 
+
 int CSyncer::GetUnitCount()
 {
 	return units.size();
 }
+
 
 string CSyncer::GetUnitName(int unit)
 {
@@ -179,11 +194,13 @@ string CSyncer::GetUnitName(int unit)
 	return unitName;
 }
 
+
 string CSyncer::GetFullUnitName(int unit)
 {
 	const string& unitName = unitIds[unit];
 	return units[unitName].fullName;
 }
+
 
 bool CSyncer::IsUnitDisabled(int unit)
 {
@@ -194,6 +211,7 @@ bool CSyncer::IsUnitDisabled(int unit)
 	else
 		return false;
 }
+
 
 bool CSyncer::IsUnitDisabledByClient(int unit, int clientId)
 {

@@ -6,6 +6,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Game/GameVersion.h"
+#include "Lua/LuaParser.h"
 #include "Map/SMF/mapfile.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
@@ -907,6 +908,48 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModChecksumFromName.");
 	return archiveScanner->GetModChecksum(archiveScanner->ModNameToModArchive(name));
 }
+
+
+//////////////////////////
+//////////////////////////
+
+vector<string> luaAIOptions;
+
+static vector<string> GetLuaAIOptions()
+{
+	vector<string> options;
+
+	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
+		return options;
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		return options;
+	}
+
+	root.GetKeys(options);
+
+	return options;
+}
+
+
+DLL_EXPORT int __stdcall GetLuaAICount()
+{
+	luaAIOptions = GetLuaAIOptions();
+	return luaAIOptions.size();
+}
+
+
+DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
+{
+	if ((aiIndex < 0) || (aiIndex >= luaAIOptions.size())) {
+		return NULL;
+	}
+	return GetStr(luaAIOptions[aiIndex]);
+}
+
 
 //////////////////////////
 //////////////////////////
