@@ -108,7 +108,6 @@ void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 		else {
 			ti->unit->stunned = (ti->unit->paralyzeDamage > ti->unit->health);
 			if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(ti->unit->moveType)) {
-				mt->StartSkidding();
 				mt->StartFlying();
 			}
 			ti->unit->speed = speed;
@@ -126,7 +125,7 @@ bool CTransportUnit::CanTransport (CUnit *unit)
 	if (unit->transporter) {
 		return false;
 	}
-	
+
 	if (!unit->unitDef->transportByEnemy && !gs->AlliedTeams(unit->team, team)) {
 		return false;
 	}
@@ -228,25 +227,25 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
 			unit->transporter=0;
-			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
-				unit->moveType->useHeading=true;	
+			if (dynamic_cast<CTAAirMoveType*>(moveType))
+				unit->moveType->useHeading=true;
 
-			unit->stunned=false; // de-stun in case it isfireplatform=0						
+			unit->stunned=false; // de-stun in case it isfireplatform=0
 			loshandler->MoveUnit(unit,false);
-								
+
 			//add an additional move command for after we land
-			Command c;			
+			Command c;
 			c.id=CMD_MOVE;
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);			
+			c.params.push_back(pos.z);
 			unit->commandAI->GiveCommand(c);
 
 			transportCapacityUsed-=ti->size;
 			transportMassUsed-=ti->mass;
 			transported.erase(ti);
 
-			unit->Drop(this->pos,this->frontdir,this);	
+			unit->Drop(this->pos,this->frontdir,this);
 			unit->moveType->LeaveTransport();
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
@@ -254,8 +253,8 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 
 			break;
 		}
-	}		
-					
+	}
+
 }
 
 void CTransportUnit::DetachUnitFromAir(CUnit* unit)
@@ -268,22 +267,22 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit)
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
 			unit->transporter=0;
-			if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(moveType))
-				unit->moveType->useHeading=true;				
+			if (dynamic_cast<CTAAirMoveType*>(moveType))
+				unit->moveType->useHeading=true;
 			unit->stunned=false; // de-stun in case it isfireplatform=0
 			unit->Block();
-			
-			loshandler->MoveUnit(unit,false);		
 
-			Command c;			
+			loshandler->MoveUnit(unit,false);
+
+			Command c;
 			c.id=CMD_STOP;
 			unit->commandAI->GiveCommand(c);
 
 			transportCapacityUsed-=ti->size;
 			transportMassUsed-=ti->mass;
 			transported.erase(ti);
-			
-			unit->Drop(this->pos,this->frontdir,this);	
+
+			unit->Drop(this->pos,this->frontdir,this);
 			unit->moveType->LeaveTransport();
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();

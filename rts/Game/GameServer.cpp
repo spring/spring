@@ -116,7 +116,7 @@ CGameServer::~CGameServer()
 	thread->join();
 	if (play)
 		delete play;
-	
+
 	delete serverNet;
 	serverNet=0;
 	if (hostif)
@@ -267,13 +267,13 @@ void CGameServer::Update()
 	if (play != 0) {
 		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
-		
+
 		while (length > 0) {
 			serverNet->RawSend(demobuffer, length);
 			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		}
 	}
-	
+
 	ServerReadNet();
 
 	if (serverframenum > 0 && !play)
@@ -456,7 +456,7 @@ void CGameServer::ServerReadNet()
 									syncResponse[a][frameNum] = *(unsigned*)&inbuf[6];
 								else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
 									delayedSyncResponseFrame = serverframenum;
-									SendSystemMsg("Delayed respone from %s for frame %d (current %d)",
+									SendSystemMsg("Delayed response from %s for frame %d (current %d)",
 											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
 								}
 							}
@@ -581,7 +581,7 @@ void CGameServer::GenerateAndSendGameID()
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
 	unsigned char buffer[128];	// uninitialised bytes (should be very random)
 	entropy.UpdateData(buffer, 128);
-	
+
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
 	if (gameSetup != NULL) {

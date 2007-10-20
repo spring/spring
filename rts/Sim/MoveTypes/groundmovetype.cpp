@@ -674,8 +674,8 @@ void CGroundMoveType::UpdateSkid(void)
 		bool onSlope = (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
 			owner->unitDef->movedata->maxSlope)
 			&& (!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0);
-		if(speedf<speedReduction && !onSlope)
-		{		//stop skidding
+		if (speedf < speedReduction && !onSlope) {
+			//stop skidding
 			currentSpeed=0;
 			speed=ZeroVector;
 			skidding=false;
@@ -685,19 +685,15 @@ void CGroundMoveType::UpdateSkid(void)
 			float rp=floor(skidRotPos2+skidRotSpeed2+0.5f);
 			skidRotSpeed2=(rp-skidRotPos2)*0.5f;
 			ChangeHeading(owner->heading);
-		}
-		else
-		{
-			if (onSlope)
-			{
+		} else {
+			if (onSlope) {
 				float3 dir = ground->GetNormal(midPos.x, midPos.z);
 				float3 normalForce = dir*dir.dot(UpVector*gs->gravity);
 				float3 newForce = UpVector*gs->gravity - normalForce;
 				speed+=newForce;
 				speedf = speed.Length();
 				speed *= 1 - (.1*dir.y);
-			} else
-			{
+			} else {
 				speed*=(speedf-speedReduction)/speedf;
 			}
 
@@ -719,7 +715,8 @@ void CGroundMoveType::UpdateSkid(void)
 
 		if(wh-pos.y < speed.y + gs->gravity){
 			speed.y += gs->gravity;
-			flying=true;
+			skidding = true; // flying requires skidding
+			flying = true;
 		} else if(wh-pos.y > speed.y){
 			const float3& normal = ground->GetNormal(pos.x, pos.z);
 			float dot = speed.dot(normal);
@@ -1815,5 +1812,6 @@ void CGroundMoveType::StartSkidding(){
 }
 
 void CGroundMoveType::StartFlying() {
+	skidding = true; // flying requires skidding
 	flying = true;
 }
