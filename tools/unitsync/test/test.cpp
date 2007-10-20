@@ -3,14 +3,14 @@
 
 file=test.cpp
 
-start=`grep -n '^#END' $file | grep -o '[^:]*'`
+start=`grep -n '^#END' $file | grep -o '^[^:]*'`
 start=`expr $start + 1`
 
 tail -n +$start $file > test.tmp.cxx
 
 g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
-./a.out Castles.smf BA561.sd7
+./a.out Castles.smf ba52.sdd
 
 exit
 
@@ -76,6 +76,8 @@ DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
 DLL_EXPORT int          __stdcall GetPrimaryModIndex(const char* name);
 DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
+DLL_EXPORT int          __stdcall GetLuaAICount();
+DLL_EXPORT const char*  __stdcall GetLuaAIName(int aiIndex);
 DLL_EXPORT int          __stdcall GetSideCount();
 DLL_EXPORT const char*  __stdcall GetSideName(int side);
 DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
@@ -134,7 +136,14 @@ int main(int argc, char** argv)
   AddAllArchives(mod.c_str());
 
   // unit names
-  ProcessUnits();
+  while (true) {
+  //const int left = ProcessUnits();
+    const int left = ProcessUnitsNoChecksum();
+  //printf("unitsLeft = %i\n", left);
+    if (left <= 0) {
+      break;
+    }
+  }
   printf("  UNITS\n");
   const int unitCount = GetUnitCount();
   for (int i = 0; i < unitCount; i++) {
@@ -142,6 +151,13 @@ int main(int argc, char** argv)
     const string unitFullName = GetFullUnitName(i);
     printf("    [unit %3i]   %-16s  <%s>\n", i,
            unitName.c_str(), unitFullName.c_str());
+  }
+
+  // LuaAI options
+  printf("  LuaAI\n");
+  const int luaAICount = GetLuaAICount();
+  for (int i = 0; i < luaAICount; i++) {
+    printf("    %s\n", GetLuaAIName(i));
   }
 
   UnInit();
