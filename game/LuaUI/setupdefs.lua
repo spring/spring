@@ -12,15 +12,7 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-
--- Global table to map unitDef names to unitDef tables
-UnitDefNames = {}
-
-
 for _,ud in pairs(UnitDefs) do
-
-  -- add to the name map
-  UnitDefNames[ud.name] = ud
 
   -- set the cost value  (same as shown in the tooltip)
   ud.cost = ud.metalCost + (ud.energyCost / 60.0)
@@ -45,20 +37,31 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-FeatureDefNames = {}
-
-for _, fd in pairs(FeatureDefs) do
-  FeatureDefNames[fd.name] = fd
+-- setup the UnitDefNames{} table
+do
+  local tbl = {}
+  for _,def in pairs(UnitDefs) do
+    tbl[def.name] = def
+  end
+  UnitDefNames = tbl
 end
 
+-- setup the FeatureDefNames{} table
+do
+  local tbl = {}
+  for _,def in pairs(FeatureDefs) do
+    tbl[def.name] = def
+  end
+  FeatureDefNames = tbl
+end
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-WeaponDefNames = {}
-
-for _, wd in pairs(WeaponDefs) do
-  WeaponDefNames[wd.name] = wd
+-- setup the WeaponDefNames{} table
+do
+  local tbl = {}
+  for _,def in pairs(WeaponDefs) do
+    tbl[def.name] = def
+  end
+  WeaponDefNames = tbl
 end
 
 
