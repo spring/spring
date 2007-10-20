@@ -33,10 +33,12 @@ if (System == nil) then
     CMD = CMD,
     CMDTYPE = CMDTYPE,
     
-    UnitDefs     = UnitDefs,
-    UnitDefNames = UnitDefNames,
-    FeatureDefs  = FeatureDefs,
-    WeaponDefs   = WeaponDefs,
+    UnitDefs        = UnitDefs,
+    UnitDefNames    = UnitDefNames,
+    FeatureDefs     = FeatureDefs,
+    FeatureDefNames = FeatureDefNames,
+    WeaponDefs      = WeaponDefs,
+    WeaponDefNames  = WeaponDefNames,
 
     --
     --  Standard libraries
