@@ -54,7 +54,7 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	serverNet->InitServer(port);
 	if (!demoName.empty())
 	{
-		logOutput << "Initializing demo server...\n";
+		SendSystemMsg("Playing demo %s", demoName.c_str());
 		play = new CDemoReader(demoName);
 		gameLoading = false;
 	}
@@ -271,6 +271,13 @@ void CGameServer::Update()
 		while (length > 0) {
 			serverNet->RawSend(demobuffer, length);
 			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
+		}
+		
+		if (play->ReachedEnd())
+		{
+			delete play;
+			play=0;
+			SendSystemMsg("End of demo reached");
 		}
 	}
 
