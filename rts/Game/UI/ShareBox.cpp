@@ -181,26 +181,26 @@ void CShareBox::Draw(void)
 		if (team >= gu->myTeam) {
 			actualTeam++;
 		}
-		if (gs->Team(actualTeam)->gaia) continue;
+		//if (gs->Team(actualTeam)->gaia) continue;
 
-		if (shareTeam == actualTeam) {
-			glColor4f(1,1,1,0.8f);
-		} else {
-			glColor4f(1,1,1,0.4f);
-		}
+		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
 
 		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
 
 		string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
+			glColor4f(0.5f, 1.0f, 0.5f, alpha);
 			ally = " <Ally>";
 		} else {
+			glColor4f(1.0f, 0.5f, 0.5f, alpha);
 			ally = " <Enemy>";
 		}
 		if (gs->Team(actualTeam)->isDead) {
+			glColor4f(0.5f, 0.5f, 1.0f, alpha);
 			dead = " <Dead>";
 		}
 		if (actualTeam == gs->gaiaTeamID) {
+			glColor4f(0.8f, 0.8f, 0.8f, alpha);
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
