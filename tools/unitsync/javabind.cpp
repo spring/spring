@@ -20,7 +20,7 @@
 
 #define NAMEBUF_SIZE 4096
 
-#define JNI_BINDINGS_VERSION 2
+#define JNI_BINDINGS_VERSION 3
 
 // JNIEXPORT doesn't define default visibility
 #ifdef __GNUC__
@@ -56,6 +56,11 @@ DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
 DLL_EXPORT int          __stdcall GetPrimaryModCount();
 DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModShortName(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModGame(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModShortGame(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModMutator(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModDescription(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
 DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
@@ -378,6 +383,36 @@ extern "C" {
 			const char* c = GetPrimaryModName(index);
 			return env->NewStringUTF(c);
 		}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModShortName
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModShortName(index);
+			return env->NewStringUTF(c);
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModGame
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModGame(index);
+			return env->NewStringUTF(c);
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModShortGame
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModShortGame(index);
+			return env->NewStringUTF(c);
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModMutator
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModMutator(index);
+			return env->NewStringUTF(c);
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModDescription
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModDescription(index);
+			return env->NewStringUTF(c);
+	}
 
 	/*
 	* Class:     aflobby_CUnitSyncJNIBindings
