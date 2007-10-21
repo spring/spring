@@ -12,6 +12,7 @@ class CDemoReader : public CDemo
 public:
 	/**
 	@brief Open a demofile for reading
+	@throw std::runtime_error Demofile not found / header corrupt / outdated
 	*/
 	CDemoReader(const std::string& filename);
 	

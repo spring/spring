@@ -9,6 +9,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "FPUCheck.h"
 #include "Game.h"
+#include "Team.h"
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
@@ -25,10 +26,12 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "StartScripts/ScriptHandler.h"
-#include "Team.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "mmgr.h"
+#include "Lua/LuaGaia.h" // FIXME: should not be here
+#include "Lua/LuaRules.h"
+
 
 CPreGame* pregame=0;
 
@@ -107,7 +110,12 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			if (hasDemo) {
 				/*
 				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
+				Default settings: spectating
 				*/
+				gu->spectating           = true;
+				gu->spectatingFullView   = true;
+				gu->spectatingFullSelect = true;
+				
 				net->localDemoPlayback = true;
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
@@ -121,6 +129,29 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 					CScriptHandler::SelectScript(gameSetup->scriptName);
 					SelectScript(gameSetup->scriptName);
 					state = ALL_READY;
+				}
+				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
+				{
+					logOutput.Print("Demo file does not contain GameSetup data");
+					// Didn't get a CGameSetup script
+					// FIXME: duplicated in Main.cpp
+					const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
+					const string luaRulesStr = configHandler.GetString("LuaRules", "1");
+					gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+					gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
+					if (gs->useLuaGaia) {
+						gs->gaiaTeamID = gs->activeTeams;
+						gs->gaiaAllyTeamID = gs->activeAllyTeams;
+						gs->activeTeams++;
+						gs->activeAllyTeams++;
+						CTeam* team = gs->Team(gs->gaiaTeamID);
+						team->color[0] = 255;
+						team->color[1] = 255;
+						team->color[2] = 255;
+						team->color[3] = 255;
+						team->gaia = true;
+						gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
+					}
 				}
 			}
 			else {
