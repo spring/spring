@@ -13,33 +13,6 @@
 
 AAISector::AAISector()
 {
-	this->ai = ai;
-	left = right = top = bottom = 0;
-	x = y = 0;
-	freeMetalSpots = false;
-	interior = false;
-	distance_to_base = -1;
-	last_scout = 1;
-	map = 0;
-
-	// nothing sighted in that sector
-	enemy_structures = 0;
-	own_structures = 0;
-	allied_structures = 0;
-	threat = 0;
-	failed_defences = 0;
-	
-	for(int i = 0; i < 4; i++)
-	{
-		defCoverage[i].direction = (Direction) i;
-		defCoverage[i].defence = 0;
-	}
-
-	for(int i = 0; i <= (int)MOBILE_CONSTRUCTOR; i++)
-	{
-		enemyUnitsOfType[i] = 0;
-		unitsOfType[i] = 0;
-	}
 }
 
 AAISector::~AAISector(void)
@@ -58,12 +31,34 @@ AAISector::~AAISector(void)
 	lost_units.clear();
 }
 
-void AAISector::SetAI(AAI *ai)
+void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bottom)
 {
 	this->ai = ai;
 	this->ut = ai->ut;
+	this->map = ai->map;
+
+	// set coordinates of the corners
+	this->x = x;
+	this->y = y;
+
+	this->left = left;
+	this->right = right;
+	this->top = top;
+	this->bottom = bottom;
 
 	// init all kind of stuff
+	freeMetalSpots = false;
+	interior = false;
+	distance_to_base = -1;
+	last_scout = 1;
+	
+	// nothing sighted in that sector
+	enemy_structures = 0;
+	own_structures = 0;
+	allied_structures = 0;
+	threat = 0;
+	failed_defences = 0;
+	
 	int categories = ai->bt->assault_categories.size();
 
 	combats_learned.resize(categories, 0);
@@ -74,24 +69,13 @@ void AAISector::SetAI(AAI *ai)
 	attacked_by_this_game.resize(categories, 0);
 	attacked_by_learned.resize(categories, 0);
 
-	lost_units.resize(MOBILE_CONSTRUCTOR-COMMANDER+1, 0);
+	lost_units.resize((int)MOBILE_CONSTRUCTOR-(int)COMMANDER + 1, 0);
+
+	enemyUnitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
+	unitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
 
 	stat_combat_power.resize(categories, 0);
 	mobile_combat_power.resize(categories+1, 0);
-}
-
-void AAISector::SetGridLocation(int x, int y)
-{
-	this->x = x;
-	this->y = y;
-}
-
-void AAISector::SetCoordinates(int left, int right, int top, int bottom)
-{
-	this->left = left;
-	this->right = right;
-	this->top = top;
-	this->bottom = bottom;
 }
 
 void AAISector::AddMetalSpot(AAIMetalSpot *spot)
@@ -105,14 +89,21 @@ int AAISector::GetNumberOfMetalSpots()
 	return metalSpots.size();
 }
 
-void AAISector::SetBase(bool base)
+bool AAISector::SetBase(bool base)
 {
 	if(base)
 	{
-		this->distance_to_base = 0;
+		// check if already occupied (may happen if two coms start in same sector)
+		if(map->team_sector_map[x][y] >= 0)
+		{
+			fprintf(ai->file, "\nTeam %i could not add sector %i,%i to base, already occupied by ally team %i!\n\n",ai->cb->GetMyTeam(), x, y, map->team_sector_map[x][y]);
+			return false;
+		}
+
+		distance_to_base = 0;
 
 		// if free metal spots in this sectors, base has free spots
-		for(list<AAIMetalSpot*>::iterator spot = metalSpots.begin(); spot != metalSpots.end(); spot++)
+		for(list<AAIMetalSpot*>::iterator spot = metalSpots.begin(); spot != metalSpots.end(); ++spot)
 		{
 			if(!(*spot)->occupied)
 			{
@@ -122,10 +113,22 @@ void AAISector::SetBase(bool base)
 		}
 
 		// increase importance
-		++importance_this_game;
+		importance_this_game += 1;
+
+		map->team_sector_map[x][y] = ai->cb->GetMyAllyTeam();
 
 		if(importance_this_game > cfg->MAX_SECTOR_IMPORTANCE)
 			importance_this_game = cfg->MAX_SECTOR_IMPORTANCE;
+
+		return true;
+	}
+	else	// remove from base
+	{
+		distance_to_base = 1;
+
+		map->team_sector_map[x][y] = -1;
+
+		return true;
 	}
 }
 
@@ -135,7 +138,7 @@ void AAISector::Update()
 	//ground_threat *= 0.995;
 	//air_threat *= 0.995;
 	for(int i = 0; i < MOBILE_CONSTRUCTOR-COMMANDER; ++i)
-		lost_units[i] *= 0.92;
+		lost_units[i] *= 0.92f;
 }
 
 // return null pointer if no empty spot found
@@ -259,141 +262,99 @@ float3 AAISector::GetBuildsite(int building, bool water)
 	return map->GetBuildSiteInRect(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
 }
 
-float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, bool water)
+float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float terrain_modifier, bool water)
 {
-	float3 pos;
+	float3 best_pos = ZeroVector, pos;
 	const UnitDef *def = ai->bt->unitList[building-1];
 
+	int my_team = ai->cb->GetMyAllyTeam();
+
+	float my_rating, best_rating = -10000;
+
 	list<Direction> directions;
-	list<AAISector*> neighbours;
 
 	// get possible directions 
-	
-	// filter out frontiers to other base sectors
-	if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 300)
-		directions.push_back(WEST);
-	
-	if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 300)
-		directions.push_back(EAST);
-
-	if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 300)
-		directions.push_back(NORTH);
-	
-	if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 300)
-		directions.push_back(SOUTH);
-	
-	// determine weakest direction
-	Direction weakest_dir = NO_DIRECTION;
-	
-	// build anti air defence in the center of the sector
-	if(category == AIR_ASSAULT || distance_to_base > 0)
+	if(category == AIR_ASSAULT && !cfg->AIR_ONLY_MOD)
 	{
-		weakest_dir = CENTER;
+		directions.push_back(CENTER);
 	}
 	else
 	{
-		for(int i = 0; i < 4; i++)
-			defCoverage[i].defence = 0;
-
-		// determine which direction is defended against category how much 
-		for(list<AAIDefence>::iterator def = defences.begin(); def != defences.end(); def++)
+		if(distance_to_base > 0)
+			directions.push_back(CENTER);
+		else
 		{
-			if(def->direction != CENTER)
-				defCoverage[def->direction].defence += ai->bt->GetEfficiencyAgainst(def->def_id, category);
-		}
-
-		// get weakest direction
-		float weakest = 0, current;
+			// filter out frontiers to other base sectors
+			if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 100 && map->team_sector_map[x-1][y] != my_team )
+				directions.push_back(WEST);
 	
-		for(list<Direction>::iterator dir = directions.begin(); dir != directions.end(); dir++)
-		{	
-			if(defCoverage[(int)(*dir)].defence != 0)
-			{
-				current = GetMapBorderDist() * 100.0 / defCoverage[(int)(*dir)].defence;
+			if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 100 && map->team_sector_map[x+1][y] != my_team)
+				directions.push_back(EAST);
 
-				if(current > weakest)
-				{
-					weakest = current;
-					weakest_dir = *dir;
-				}
-			}
-			else	// no defence in that direction yet
-			{
-				weakest_dir = *dir;
-				break;
-			}
+			if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 100 && map->team_sector_map[x][y-1] != my_team)
+				directions.push_back(NORTH);
+	
+			if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 100 && map->team_sector_map[x][y+1] != my_team)
+				directions.push_back(SOUTH);
 		}
 	}
+	
+	int xStart = 0;
+	int xEnd = 0; 
+	int yStart = 0;
+	int yEnd = 0;
 
-	// now we know where the building should be placed, find suitable spot
-	if(weakest_dir != NO_DIRECTION)
+	// check possible directions
+	for(list<Direction>::iterator dir =directions.begin(); dir != directions.end(); ++dir)
 	{
-		int xStart = 0;
-		int xEnd = 0; 
-
-		int yStart = 0;
-		int yEnd = 0; 
-
-		// calculate size of building
-		int xSize = def->xsize;
-		int ySize = def->ysize;
-
-		if(weakest_dir == CENTER)
-		{
-			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
-			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f; 
-
-			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f;
-			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f; 
-		}
-		else if(weakest_dir == WEST)
+		// get area to perform search 
+		if(*dir == CENTER)
 		{
 			xStart = x * map->xSectorSizeMap;
-			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
-
+			xEnd = (x+1) * map->xSectorSizeMap; 
 			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f; 
-		}
-		else if(weakest_dir == EAST)
-		{
-			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f;
-			xEnd = (x+1) * map->xSectorSizeMap;
-
-			yStart = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f;
 			yEnd = (y+1) * map->ySectorSizeMap; 
 		}
-		else if(weakest_dir == NORTH)
+		else if(*dir == WEST)
 		{
-			xStart = x * map->xSectorSizeMap + map->xSectorSizeMap/8.0f;
-			xEnd = (x+1) * map->xSectorSizeMap;
-
+			xStart = x * map->xSectorSizeMap;
+			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/4.0f; 
 			yStart = y * map->ySectorSizeMap;
-			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/8.0f; 
+			yEnd = (y+1) * map->ySectorSizeMap; 
 		}
-		else if(weakest_dir == SOUTH)
+		else if(*dir == EAST)
+		{
+			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/4.0f;
+			xEnd = (x+1) * map->xSectorSizeMap;
+			yStart = y * map->ySectorSizeMap;
+			yEnd = (y+1) * map->ySectorSizeMap; 
+		}
+		else if(*dir == NORTH)
+		{
+			xStart = x * map->xSectorSizeMap;
+			xEnd = (x+1) * map->xSectorSizeMap;
+			yStart = y * map->ySectorSizeMap;
+			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/4.0f; 
+		}
+		else if(*dir == SOUTH)
 		{
 			xStart = x * map->xSectorSizeMap ;
-			xEnd = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/8.0f;
-
-			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/8.0f;
+			xEnd = (x+1) * map->xSectorSizeMap;
+			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/4.0f;
 			yEnd = (y+1) * map->ySectorSizeMap; 
 		}
 
-		if(!xStart || !xEnd || !yStart || !yEnd)
-			return ZeroVector;
+		// 
+		my_rating = map->GetDefenceBuildsite(&pos, def, xStart, xEnd, yStart, yEnd, category, terrain_modifier, water);
 
-		// try to find random pos first
-		pos = map->GetRandomBuildsite(def, xStart, xEnd, yStart, yEnd, 50, water);
-
-		// otherwise get pos in rect
-		if(!pos.x)
-			pos = map->GetBuildSiteInRect(def, xStart, xEnd, yStart, yEnd, water);
-		
-		return pos;	
+		if(my_rating > best_rating)
+		{
+			best_pos = pos;
+			best_rating = my_rating;
+		}
 	}
 
-	// entire sector checked, no free site found
-	return ZeroVector;
+	return best_pos;
 }
 
 float3 AAISector::GetCenterBuildsite(int building, bool water)
@@ -639,7 +600,7 @@ float AAISector::GetWaterRatio()
 		for(int yPos = y * map->ySectorSizeMap; yPos < (y+1) * map->ySectorSizeMap; ++yPos)
 		{
 			if(map->buildmap[xPos + yPos * map->xMapSize] == 4)
-				++water_ratio;
+				water_ratio +=1;
 		}
 	}
 
@@ -680,7 +641,7 @@ void AAISector::UpdateThreatValues(UnitCategory unit, UnitCategory attacker)
 		float change;
 
 		if(this->interior)
-			change = 0.3;
+			change = 0.3f;
 		else
 			change = 1;
 

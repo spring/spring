@@ -178,6 +178,25 @@ void AAIConfig::LoadConfig(AAI *ai)
 					}
 				}
 			}
+			else if(!strcmp(keyword, "ATTACKERS"))
+			{
+				// get number of attackers
+				fscanf(file, "%i", &ival);
+
+				for(int i = 0; i < ival; i++)
+				{
+					fscanf(file, "%s", filename);
+					if(ai->cb->GetUnitDef(filename))
+						ATTACKERS.push_back(ai->cb->GetUnitDef(filename)->id);
+					else 
+					{
+						fprintf(ai->file, "ERROR: loading attackers - could not find unit %s\n", filename);
+						error = true;
+						break;
+					}
+				}
+			}
+
 			else if(!strcmp(keyword,"SECTOR_SIZE"))
 			{
 				fscanf(file, "%f", &fval);

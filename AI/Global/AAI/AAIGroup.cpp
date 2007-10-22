@@ -230,7 +230,7 @@ void AAIGroup::GiveOrder(Command *c, float importance, UnitTask task)
 
 void AAIGroup::Update()
 {
-	task_importance *= 0.96;
+	task_importance *= 0.96f;
 
 	// attacking groups recheck target
 	if(task == GROUP_ATTACKING && target_sector)
@@ -342,7 +342,7 @@ void AAIGroup::Defend(int unit, float3 enemy_pos, int importance)
 
 		GiveOrder(&cmd, importance, DEFENDING);
 
-		target_sector = ai->map->GetSectorOfPos(enemy_pos);
+		target_sector = ai->map->GetSectorOfPos(&enemy_pos);
 	}
 	else
 	{
@@ -351,21 +351,23 @@ void AAIGroup::Defend(int unit, float3 enemy_pos, int importance)
 			
 		GiveOrder(&cmd, importance, GUARDING);
 
-		target_sector = ai->map->GetSectorOfPos(cb->GetUnitPos(unit));
+		float3 pos = cb->GetUnitPos(unit);
+
+		target_sector = ai->map->GetSectorOfPos(&pos);
 	}
 
 	task = GROUP_DEFENDING;
 }
 
-void AAIGroup::Retreat(float3 pos)
+void AAIGroup::Retreat(float3 *pos)
 {
 	this->task = GROUP_RETREATING;
 
 	Command c;
 	c.id = CMD_MOVE;
-	c.params.push_back(pos.x);
-	c.params.push_back(pos.y);
-	c.params.push_back(pos.z);
+	c.params.push_back(pos->x);
+	c.params.push_back(pos->y);
+	c.params.push_back(pos->z);
 
 	GiveOrder(&c, 105, MOVING);
 
@@ -438,7 +440,7 @@ void AAIGroup::UnitIdle(int unit)
 		//check if idle unit is in target sector
 		float3 pos = cb->GetUnitPos(unit);
 
-		AAISector *temp = ai->map->GetSectorOfPos(pos);
+		AAISector *temp = ai->map->GetSectorOfPos(&pos);
 
 		if(temp == target_sector || !target_sector)
 		{
@@ -474,7 +476,7 @@ void AAIGroup::UnitIdle(int unit)
 		//check if retreating units is in target sector
 		float3 pos = cb->GetUnitPos(unit);
 
-		AAISector *temp = ai->map->GetSectorOfPos(pos);
+		AAISector *temp = ai->map->GetSectorOfPos(&pos);
 
 		if(temp == target_sector || !target_sector)
 			task = GROUP_IDLE;
@@ -484,7 +486,7 @@ void AAIGroup::UnitIdle(int unit)
 		//check if retreating units is in target sector
 		float3 pos = cb->GetUnitPos(unit);
 
-		AAISector *temp = ai->map->GetSectorOfPos(pos);
+		AAISector *temp = ai->map->GetSectorOfPos(&pos);
 
 		if(temp == target_sector || !target_sector)
 			task = GROUP_IDLE;

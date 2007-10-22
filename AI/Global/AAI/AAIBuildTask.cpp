@@ -62,7 +62,7 @@ void AAIBuildTask::BuilderDestroyed()
 void AAIBuildTask::BuildtaskFailed()
 {
 	// cleanup buildmap etc.
-	ai->execute->ConstructionFailed(unit_id, build_pos, def_id);
+	ai->execute->ConstructionFailed(build_pos, def_id);
 	
 	// tell builder to stop construction (and release assisters) (if still alive)
 	if(builder_id >= 0 && ai->ut->units[builder_id].cons)

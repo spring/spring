@@ -158,7 +158,6 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// create unit groups
 //	group_list = new list<AAIGroup*>[MOBILE_CONSTRUCTOR+1];
 	group_list.resize(MOBILE_CONSTRUCTOR+1);
-
 	// init airforce manager
 	af = new AAIAirForceManager(this, cb, bt);
 
@@ -209,19 +208,20 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 			
 			if(att_cat >= GROUND_ASSAULT && att_cat <= SUBMARINE_ASSAULT)
 			{
-				AAISector *sector = map->GetSectorOfPos(cb->GetUnitPos(attacker));
+				float3 pos = cb->GetUnitPos(attacker);
+				AAISector *sector = map->GetSectorOfPos(&pos);
 
-				if(sector && !am->SufficientDefencePowerAt(sector, 1.2))
+				if(sector && !am->SufficientDefencePowerAt(sector, 1.2f))
 				{
 					// building has been attacked
 					if(cat <= METAL_MAKER)
-						execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 115);
+						execute->DefendUnitVS(damaged, def, att_cat, pos, 115);
 					// builder
 					else if(ut->IsBuilder(damaged))
-						execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 110);
+						execute->DefendUnitVS(damaged, def, att_cat, pos, 110);
 					// normal units
 					else 
-						execute->DefendUnitVS(damaged, def, att_cat, cb->GetUnitPos(attacker), 105);
+						execute->DefendUnitVS(damaged, def, att_cat, pos, 105);
 				}
 			}
 		}
@@ -293,16 +293,23 @@ void AAI::UnitCreated(int unit)
 			x = map->xSectors-1;
 		if(y >= map->ySectors)
 			y = map->ySectors-1;
-
-		brain->AddSector(&map->sector[x][y]);
-		brain->start_pos = pos;
 		
 		// set sector as part of the base
-		map->sector[x][y].SetBase(true);
-		map->sector[x][y].importance_this_game += 1;
+		if(map->sector[x][y].SetBase(true))
+		{
+			brain->AddSector(&map->sector[x][y]);
+			brain->start_pos = pos;
+			brain->UpdateNeighbouringSectors();
+			brain->UpdateBaseCenter();
+		}
+		else
+		{
+			// sector already occupied by another aai team (coms starting too close to each other)
+			// choose next free sector
+			execute->ChooseDifferentStartingSector(x, y);
+		}
 
-		brain->UpdateNeighbouringSectors();
-		brain->UpdateBaseCenter();
+	
 
 		if(map->mapType == WATER_MAP)
 			brain->ExpandBase(WATER_SECTOR);
@@ -432,6 +439,9 @@ void AAI::UnitDestroyed(int unit, int attacker)
 					break;
 				}
 			}
+
+			if(bt->units_static[def->id].category == STATIONARY_DEF && validSector)
+				map->sector[x][y].RemoveDefence(unit);
 		}
 		// unfinished unit
 		else
@@ -458,8 +468,8 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	}
 	else	// finished unit/building has been killed
 	{
-		--activeUnits[category];
-		--bt->units_dynamic[def->id].active;
+		activeUnits[category] -= 1;
+		bt->units_dynamic[def->id].active -= 1;
 		
 		// update buildtable
 		if(attacker)
@@ -491,7 +501,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			// decrease number of units of that category in the target sector
 			if(validSector)
 			{
-				--map->sector[x][y].unitsOfType[category];
+				map->sector[x][y].unitsOfType[category] -= 1;
 				map->sector[x][y].own_structures -= bt->units_static[def->id].cost;
 			}
 
@@ -501,6 +511,9 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			{
 				if(validSector)
 					map->sector[x][y].RemoveDefence(unit);	
+
+				// remove defence from map				
+				map->RemoveDefence(&pos, def->id); 
 			}
 			else if(category == EXTRACTOR)
 			{
@@ -665,8 +678,8 @@ void AAI::UnitFinished(int unit)
 	int side = bt->GetSideByID(def->id)-1;
 
 	UnitCategory category = bt->units_static[def->id].category;
-	--futureUnits[category];
-	++activeUnits[category];
+	futureUnits[category] -= 1;
+	activeUnits[category] += 1;
 	
 	bt->units_dynamic[def->id].requested -= 1;
 	bt->units_dynamic[def->id].active += 1;
@@ -826,7 +839,7 @@ void AAI::UnitMoveFailed(int unit)
 				--futureUnits[builder->construction_category];
 
 				// clear up buildmap etc.
-				execute->ConstructionFailed(-1, builder->build_pos, builder->construction_def_id);
+				execute->ConstructionFailed(builder->build_pos, builder->construction_def_id);
 
 				// free builder
 				builder->ConstructionFinished();
@@ -934,7 +947,7 @@ void AAI::Update()
 	}
 
 	// update income 
-	if(!(tick%59))
+	if(!(tick%45))
 	{
 		execute->UpdateRessources();
 	}

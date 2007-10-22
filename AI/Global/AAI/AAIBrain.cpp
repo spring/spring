@@ -151,7 +151,7 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 				}
 				else if(water && sector->water_ratio > 0.65)
 				{
-					dist = sqrt( pow((float)sector->x - current_sector->x, 2) + pow((float)sector->y - current_sector->y , 2) );
+					dist = sqrt( pow((float)(sector->x - current_sector->x), 2) + pow((float)(sector->y - current_sector->y), 2) );
 
 					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
 					my_rating /= (1 + dist);
@@ -285,7 +285,8 @@ bool AAIBrain::RessourcesForConstr(int unit, int wokertime)
 void AAIBrain::AddSector(AAISector *sector)
 {
 	sectors[0].push_back(sector);
-	sector->distance_to_base = 0;
+	
+	sector->SetBase(true);
 }
 
 void AAIBrain::DefendCommander(int attacker)
@@ -340,7 +341,7 @@ void AAIBrain::UpdateNeighbouringSectors()
 		}
 	}
 
-	for(int i = 1; i < max_distance; i++)
+	for(int i = 1; i < max_distance; ++i)
 	{
 		// delete old sectors
 		sectors[i].clear();
@@ -386,9 +387,9 @@ void AAIBrain::UpdateNeighbouringSectors()
 	}
 
 	// determine interior sectors
-	for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
-	{
-	}
+	//for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
+	//{
+	//}
 
 	fprintf(ai->file, "Base has now %i direct neighbouring sectors\n", sectors[1].size());
 
@@ -435,44 +436,42 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		int spots;
 		float dist;
 
-		for(list<AAISector*>::iterator t = sectors[1].begin(); t != sectors[1].end(); t++)
+		for(list<AAISector*>::iterator t = sectors[1].begin(); t != sectors[1].end(); ++t)
 		{
-			// dont expand if enemy structures in sector
-			if((*t)->enemy_structures < 100)
+			// dont expand if enemy structures in sector && check for allied buildings 
+			if((*t)->enemy_structures <= 0 && (*t)->allied_structures < 200 && map->team_sector_map[(*t)->x][(*t)->y] == -1)
 			{
 				// rate current sector
 				spots = (*t)->GetNumberOfMetalSpots();
 			
-				my_rating = 2 + spots/2.0;
+				my_rating = 2.0f + (float)spots / 2.0f;
 
-				my_rating += 3.0f / (*t)->GetMapBorderDist();
+				my_rating += 4.0f / (*t)->GetMapBorderDist();
 			
 				// minmize distance between sectors
-				dist = 0.1;
+				dist = 0.1f;
 
-				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); sector++)
-					dist += 3.0 * sqrt(pow((float)(*t)->x - (*sector)->x , 2) + pow((float)(*t)->y - (*sector)->y , 2));
+				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
+					dist += sqrt( pow( (float)((*t)->x - (*sector)->x) , 2) + pow( (float)((*t)->y - (*sector)->y) , 2)  );
 				
-
+				dist *= 3.0f;
+				
 				if(sectorType = LAND_SECTOR)
 				{
 					// prefer flat sectors without water
-					my_rating += ((*t)->flat_ratio - (*t)->water_ratio) * 8;
+					my_rating += ((*t)->flat_ratio - (*t)->water_ratio) * 8.0f;
 					my_rating /= dist;
 				}
 				else if(sectorType == WATER_SECTOR)
 				{
-					my_rating += 8 * (*t)->water_ratio;
+					my_rating += 8.0f * (*t)->water_ratio;
 					my_rating /= dist;
 				}
 				else
 					my_rating = 0;
 
-				// check for allied buildings (to prevent aai from expanding to sectors which are part of the base of another player)
-				my_rating /= sqrt(10 + (*t)->allied_structures);
-
-				if((*t)->allied_structures > 700)
-					my_rating = 0;
+				
+				
 			
 				// choose higher rated sector
 				if(my_rating > best_rating)
@@ -487,7 +486,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		{
 			// add this sector to base
 			AddSector(best_sector);
-			best_sector->SetBase(true);
+
 			// debug purposes:
 			if(sectorType == LAND_SECTOR)
 				fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n", best_sector->x, best_sector->y, sectors[0].size());
@@ -511,12 +510,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 	return false;
 }
 
-void AAIBrain::UpdateMaxCombatUnitsSpotted(vector<float> &units_spotted)
+void AAIBrain::UpdateMaxCombatUnitsSpotted(vector<float>& units_spotted)
 {
 	for(int i = 0; i < bt->combat_categories; ++i)
 	{
 		// decrease old values
-		max_units_spotted[i] *= 0.996;
+		max_units_spotted[i] *= 0.996f;
 	
 		// check for new max values
 		if(units_spotted[i] > max_units_spotted[i])
@@ -528,7 +527,7 @@ void AAIBrain::UpdateAttackedByValues()
 {
 	for(int i = 0; i < bt->combat_categories; ++i)
 	{
-		attacked_by[i] *= 0.96;
+		attacked_by[i] *= 0.96f;
 	}
 }
 
@@ -1048,7 +1047,7 @@ void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float grou
 				speed = 2;
 		}
 		else
-			speed = 0.1;
+			speed = 0.1f;
 
 		if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 		{
@@ -1057,12 +1056,12 @@ void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float grou
 			if(t == 1)
 				range = 0.75;
 			else if(t == 2)
-				range = 1.3;
+				range = 1.3f;
 			else 
-				t = 1.7;
+				t = 1.7f;
 		}
 		else
-			range = 0.1;
+			range = 0.1f;
 
 		if(rand()%3 == 1)
 			power = 4;

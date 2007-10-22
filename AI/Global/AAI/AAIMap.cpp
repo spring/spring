@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-//
+
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -11,6 +11,35 @@
 #include "AAI.h"
 #include "AAISector.h"
 #include "AAIBuildTable.h"
+
+// all the static vars
+int AAIMap::aai_instances = 0;
+int AAIMap::xMapSize;
+int AAIMap::yMapSize;				
+int AAIMap::xDefMapSize;
+int AAIMap::yDefMapSize;		
+int AAIMap::xSectors;
+int AAIMap::ySectors;				
+int AAIMap::xSectorSize; 
+int AAIMap::ySectorSize;		
+int AAIMap::xSectorSizeMap; 
+int AAIMap::ySectorSizeMap;
+
+list<AAIMetalSpot>  AAIMap::metal_spots;
+
+bool AAIMap::metalMap;
+MapType AAIMap::mapType;	
+
+vector< vector<int> > AAIMap::team_sector_map;
+vector<int> AAIMap::buildmap;	
+vector<int> AAIMap::blockmap;	
+vector<float> AAIMap::plateau_map;
+
+list<UnitCategory> AAIMap::map_categories;
+list<int> AAIMap::map_categories_id;
+vector<vector<float> > AAIMap::map_usefulness;
+
+
 
 AAIMap::AAIMap(AAI *ai)
 {
@@ -21,176 +50,209 @@ AAIMap::AAIMap(AAI *ai)
 	bt = ai->bt;
 	cb = ai->cb;
 
-//	sector = 0;
-	xSectors = ySectors = 0;
-
 	initialized = false;
 
-//	blockmap = 0;
-//	buildmap = 0;
-	mapType = LAND_MAP;
-
-//	unitsInLos = new int[cfg->MAX_UNITS];
 	unitsInLos.resize(cfg->MAX_UNITS);
 
 	// set all values to 0 (to be able to detect num. of enemies in los later
 	for(int i = 0; i < cfg->MAX_UNITS; i++)
 		unitsInLos[i] = 0;
 
-//	map_usefulness = new float*[bt->assault_categories.size()];
-	map_usefulness.resize(bt->assault_categories.size());
+	/*map_usefulness.resize(bt->assault_categories.size());
 
 	for(int i = 0; i < bt->assault_categories.size(); ++i)
-//		map_usefulness[i] = new float[cfg->SIDES];
-		map_usefulness[i].resize(cfg->SIDES);
+		map_usefulness[i].resize(cfg->SIDES);*/
 
-//	units_spotted = new float[bt->combat_categories];
 	units_spotted.resize(bt->combat_categories);
 }
 
 AAIMap::~AAIMap(void)
 {
-//	delete [] unitsInLos;
-//	delete [] unitsInSector;
-//	delete [] units_spotted;
+	--aai_instances;
 
-	Learn();
-
-	// save map data
-	char filename[500];
-	char buffer[500];
-	strcpy(buffer, MAIN_PATH);
-	strcat(buffer, MAP_LEARN_PATH);
-	strcat(buffer, cb->GetMapName());
-	ReplaceExtension(buffer, filename, sizeof(filename), "_");
-	strcat(filename, cb->GetModName());
-	ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
-
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
-
-	FILE *save_file = fopen(buffer, "w+");
-
-	fprintf(save_file, "%s \n",MAP_FILE_VERSION);
-
-	// save map type
-	fprintf(save_file, "%s \n", GetMapTypeString(mapType));
-
-	// save units map_usefulness
-	float sum;
-
-	for(int i = 0; i < cfg->SIDES; ++i)
+	// delete common data only if last aai instace has gone
+	if(aai_instances == 0)
 	{
-		// rebalance map_usefulness
-		if(mapType == LAND_MAP)
-		{
-			sum = map_usefulness[0][i] + map_usefulness[2][i];
-			map_usefulness[0][i] *= (100.0/sum);
-			map_usefulness[2][i] *= (100.0/sum);
-		}
-		else if(mapType == LAND_WATER_MAP)
-		{
-			sum = map_usefulness[0][i] + map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
-			map_usefulness[0][i] *= (100.0/sum);
-			map_usefulness[2][i] *= (100.0/sum);
-			map_usefulness[3][i] *= (100.0/sum);
-			map_usefulness[4][i] *= (100.0/sum);
-		}
-		else if(mapType == WATER_MAP)
-		{
-			sum = map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
-			map_usefulness[2][i] *= (100.0/sum);
-			map_usefulness[3][i] *= (100.0/sum);
-			map_usefulness[4][i] *= (100.0/sum);
-		}
+		Learn();
 
-		// save
-		for(int j = 0; j < bt->assault_categories.size(); ++j)
-			fprintf(save_file, "%f ", map_usefulness[j][i]);
-	}
+		// save map data
+		char filename[500];
+		char buffer[500];
+		strcpy(buffer, MAIN_PATH);
+		strcat(buffer, MAP_LEARN_PATH);
+		strcat(buffer, cb->GetMapName());
+		ReplaceExtension(buffer, filename, sizeof(filename), "_");
+		strcat(filename, cb->GetModName());
+		ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
 
-	fprintf(save_file, "\n");
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+	
+		FILE *save_file = fopen(buffer, "w+");
 
-	for(int y = 0; y < ySectors; y++)
-	{
-		for(int x = 0; x < xSectors; x++)
+		fprintf(save_file, "%s \n",MAP_FILE_VERSION);
+
+		// save map type
+		fprintf(save_file, "%s \n", GetMapTypeString(mapType));
+
+		// save units map_usefulness
+		float sum;
+
+		for(int i = 0; i < cfg->SIDES; ++i)
 		{
-			// save sector data
-			fprintf(save_file, "%f %f %f", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
-			// save combat data
-			for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
-				fprintf(save_file, "%f %f ", sector[x][y].attacked_by_this_game[cat], sector[x][y].combats_this_game[cat]);
+			// rebalance map_usefulness
+			if(mapType == LAND_MAP)
+			{
+				sum = map_usefulness[0][i] + map_usefulness[2][i];
+				map_usefulness[0][i] *= (100.0/sum);
+				map_usefulness[2][i] *= (100.0/sum);
+			}
+			else if(mapType == LAND_WATER_MAP)
+			{
+				sum = map_usefulness[0][i] + map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
+				map_usefulness[0][i] *= (100.0/sum);
+				map_usefulness[2][i] *= (100.0/sum);
+				map_usefulness[3][i] *= (100.0/sum);
+				map_usefulness[4][i] *= (100.0/sum);
+			}
+			else if(mapType == WATER_MAP)
+			{
+				sum = map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
+				map_usefulness[2][i] *= (100.0/sum);
+				map_usefulness[3][i] *= (100.0/sum);
+				map_usefulness[4][i] *= (100.0/sum);
+			}
+
+			// save
+			for(int j = 0; j < bt->assault_categories.size(); ++j)
+				fprintf(save_file, "%f ", map_usefulness[j][i]);
 		}
 
 		fprintf(save_file, "\n");
+
+		for(int y = 0; y < ySectors; y++)
+		{
+			for(int x = 0; x < xSectors; x++)
+			{
+				// save sector data
+				fprintf(save_file, "%f %f %f", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
+				// save combat data
+				for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+					fprintf(save_file, "%f %f ", sector[x][y].attacked_by_this_game[cat], sector[x][y].combats_this_game[cat]);
+			}
+
+			fprintf(save_file, "\n");
+		}
+
+		fclose(save_file);
+
+		buildmap.clear();
+		blockmap.clear();
+		defence_map.clear();
+		air_defence_map.clear();
+		plateau_map.clear();
 	}
-
-	fclose(save_file);
-
-	// clean up sectors..
-//	if(sector)
-//	{
-//		for(int i = 0; i < xSectors; i++)
-//			delete [] sector[i];
-
-//		delete [] sector;
-//	}
-
-	// clean up buildmap
-//	if(buildmap)
-//		delete [] buildmap;
-
-//	if(blockmap)
-//		delete [] blockmap;
-
-//	for(int i = 0; i < bt->assault_categories.size(); ++i)
-//		delete [] map_usefulness[i];
-
-//	delete [] map_usefulness;
 }
 
 void AAIMap::Init()
 {
-	// get size
-	xMapSize = cb->GetMapWidth();
-	yMapSize = cb->GetMapHeight();
+	++aai_instances;
 
-	// calculate number of sectors
-	xSectors = floor(0.5 + ((float) xMapSize)/cfg->SECTOR_SIZE);
-	ySectors = floor(0.5 + ((float) yMapSize)/cfg->SECTOR_SIZE);
-
-	// calculate effective sector size
-	xSectorSizeMap = floor( ((float) xMapSize) / ((float) xSectors) );
-	ySectorSizeMap = floor( ((float) yMapSize) / ((float) ySectors) );
-
-	xSectorSize = 8 * xSectorSizeMap;
-	ySectorSize = 8 * ySectorSizeMap;
-
-	// create field of sectors
-//	sector = new AAISector*[xSectors];
-	sector.resize(xSectors);
-
-	for(int x = 0; x < xSectors; x++)
-//		sector[x] = new AAISector[ySectors];
-		sector[x].resize(ySectors);
-
-	// for scouting
-//	unitsInSector = new int[xSectors*ySectors];
-	unitsInSector.resize(xSectors*ySectors);
-
-	// create buildmap
-//	buildmap = new char[xMapSize*yMapSize];
-	buildmap.resize(xMapSize*yMapSize);
-
-	// create blockmap
-//	blockmap = new char[xMapSize*yMapSize];
-	blockmap.resize(xMapSize*yMapSize);
-
-	for(int i = 0; i < xMapSize*yMapSize; i++)
+	// all static vars are only initialized by the first aai instance 
+	if(aai_instances == 1)
 	{
-		buildmap[i] = 0;
-		blockmap[i] = 0;
+		// get size
+		xMapSize = cb->GetMapWidth();
+		yMapSize = cb->GetMapHeight();
+
+		xDefMapSize = xMapSize / 2;
+		yDefMapSize = yMapSize / 2;
+
+		// calculate number of sectors
+		xSectors = floor(0.5f + ((float) xMapSize)/cfg->SECTOR_SIZE);
+		ySectors = floor(0.5f + ((float) yMapSize)/cfg->SECTOR_SIZE);
+
+		// calculate effective sector size
+		xSectorSizeMap = floor( ((float) xMapSize) / ((float) xSectors) );
+		ySectorSizeMap = floor( ((float) yMapSize) / ((float) ySectors) );
+
+		xSectorSize = 8 * xSectorSizeMap;
+		ySectorSize = 8 * ySectorSizeMap;
+
+		blockmap.resize(xMapSize*yMapSize, 0);
+		plateau_map.resize(xMapSize*yMapSize / 4, 0);
+		
+		// create map that stores which aai player has occupied which sector (visible to all aai players)
+		team_sector_map.resize(xSectors);
+
+		for(int x = 0; x < xSectors; ++x)
+			team_sector_map[x].resize(ySectors, -1);
+
+		ReadCacheFile();
 	}
 
+	// create field of sectors
+	sector.resize(xSectors);
+
+	for(int x = 0; x < xSectors; ++x)
+		sector[x].resize(ySectors);
+
+	for(int j = 0; j < ySectors; ++j)
+	{
+		for(int i = 0; i < xSectors; ++i)
+			// provide ai callback to sectors & set coordinates of the sectors
+			sector[i][j].Init(ai, i, j, xSectorSize*i, xSectorSize*(i+1), ySectorSize * j, ySectorSize * (j+1));
+	}
+
+	// add metalspots to their sectors
+	int k, l;
+	for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); ++spot)
+	{
+		k = spot->pos.x/xSectorSize;
+		l = spot->pos.z/ySectorSize;
+
+		if(k < xSectors && l < ySectors)
+			sector[k][l].AddMetalSpot(&(*spot));
+	}
+
+	ReadMapLearnFile(true);
+
+	// for scouting
+	unitsInSector.resize(xSectors*ySectors);
+
+	// create defence
+	defence_map.resize(xDefMapSize*yDefMapSize, 0);
+	air_defence_map.resize(xDefMapSize*yDefMapSize, 0); 
+
+	initialized = true;
+
+	// for log file
+	fprintf(ai->file, "Map: %s\n",cb->GetMapName());
+	fprintf(ai->file, "Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
+	fprintf(ai->file, "%i sectors in x direction\n", xSectors);
+	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
+	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
+	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
+	fprintf(ai->file, "%i metal spots found \n \n",metal_spots.size());
+
+	//debug
+	/*float3 my_pos;
+	for(int x = 0; x < xMapSize; x+=2)
+	{
+		for(int y = 0; y < yMapSize; y+=2)
+		{
+			if(buildmap[x + y*xMapSize] == 1 || buildmap[x + y*xMapSize] == 5)
+			{
+				my_pos.x = x * 8;
+				my_pos.z = y * 8;
+				my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
+				cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, cb->GetMyAllyTeam(), true, true);
+			}
+		}
+	}*/
+}
+
+void AAIMap::ReadCacheFile()
+{
 	// try to read cache file
 	bool loaded = false;
 	char filename[500];
@@ -217,20 +279,33 @@ void AAIMap::Init()
 		else
 		{
 			int temp;
+			float temp_float;
 
 			// load if its a metal map
 			fscanf(file, "%i ", &temp);
 			metalMap = (bool)temp;
 
-			// load buildmap first
-			fread(&(buildmap.front()), sizeof(char), xMapSize*yMapSize, file);
+			// load buildmap 
+			for(int i = 0; i < xMapSize*yMapSize; ++i)
+			{
+				//fread(&temp, sizeof(int), 1, file);
+				fscanf(file, "%i ", &temp); 
+				buildmap.push_back(temp);
+			}
+		
+			// load plateau map
+			for(int i = 0; i < xMapSize*yMapSize/4; ++i)
+			{
+				//fread(&temp_float, sizeof(float), 1, file);
+				fscanf(file, "%f ", &temp_float); 
+				buildmap.push_back(temp_float);
+			}
 
 			AAIMetalSpot spot;
-			int spots;
-			fscanf(file, "%i ", &spots);
+			fscanf(file, "%i ", &temp);
 
 			// load mex spots
-			for(int i = 0; i < spots; i++)
+			for(int i = 0; i < temp; ++i)
 			{
 				fscanf(file, "%f %f %f %f ", &(spot.pos.x), &(spot.pos.y), &(spot.pos.z), &(spot.amount));
 				spot.occupied = false;
@@ -246,14 +321,12 @@ void AAIMap::Init()
 	}
 	if(!loaded)  // create new map data
 	{
+		buildmap.resize(xMapSize*yMapSize, 0);
+
 		// look for metalspots
 		SearchMetalSpots();
-
-		// scan buildmap for cliffs
-		DetectCliffs();
-
-		// scan for water
-		DetectWater();
+	
+		AnalyseMap();
 
 		strcpy(buffer, MAIN_PATH);
 		strcat(buffer, MAP_CACHE_PATH);
@@ -271,14 +344,20 @@ void AAIMap::Init()
 		fprintf(file, "%i\n", (int)metalMap);
 
 		// save buildmap
-		fwrite(&(buildmap.front()), sizeof(char), xMapSize*yMapSize, file);
+		for(int i = 0; i < xMapSize*yMapSize; ++i)
+		//	fwrite(&buildmap[i], sizeof(int), 1, file);
+			fprintf(file, "%i ", buildmap[i]); 
+		
+		// save plateau map
+		for(int i = 0; i < xMapSize*yMapSize/4; ++i)
+		//	fwrite(&plateau_map[i], sizeof(float), 1, file);
+			fprintf(file, "%f ", plateau_map[i]); 
 
 		// save mex spots
-		fprintf(file, " %i \n", metal_spots.size());
+		fprintf(file, "\n %i \n", metal_spots.size());
 
 		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); spot++)
 			fprintf(file, "%f %f %f %f \n", spot->pos.x, spot->pos.y, spot->pos.z, spot->amount);
-
 
 		fclose(file);
 
@@ -346,9 +425,9 @@ void AAIMap::Init()
 
 		water_ratio = water_ratio / ((float)(xMapSize*yMapSize));
 
-		if(water_ratio > 0.80)
+		if(water_ratio > 0.80f)
 			this->mapType = WATER_MAP;
-		else if(water_ratio > 0.25)
+		else if(water_ratio > 0.25f)
 			this->mapType = LAND_WATER_MAP;
 		else
 			this->mapType = LAND_MAP;
@@ -373,20 +452,6 @@ void AAIMap::Init()
 		fprintf(file, "%s\n", GetMapTypeString(this->mapType));
 		fclose(file);
 	}
-
-	// add metalspots to their sectors
-	int k, l;
-	for(list<AAIMetalSpot>::iterator i = metal_spots.begin(); i != metal_spots.end(); i++)
-	{
-		k = i->pos.x/xSectorSize;
-		l = i->pos.z/ySectorSize;
-
-		if(k < xSectors && l < ySectors)
-			sector[k][l].AddMetalSpot(&(*i));
-	}
-
-	// read data from learning file
-	ReadMapLearnFile(true);
 
 	// determine important unit categories on this map
 	if(cfg->AIR_ONLY_MOD)
@@ -446,34 +511,6 @@ void AAIMap::Init()
 			map_categories_id.push_back(1);
 		}
 	}
-
-
-	initialized = true;
-
-	// for log file
-	fprintf(ai->file, "Map: %s\n",cb->GetMapName());
-	fprintf(ai->file, "Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
-	fprintf(ai->file, "%i sectors in x direction\n", xSectors);
-	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
-	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
-	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
-	fprintf(ai->file, "%i metal spots found \n \n",metal_spots.size());
-
-	//debug
-	/*float3 my_pos;
-	for(int x = 0; x < xMapSize; x+=2)
-	{
-		for(int y = 0; y < yMapSize; y+=2)
-		{
-			if(buildmap[x + y*xMapSize] == 1 || buildmap[x + y*xMapSize] == 5)
-			{
-				my_pos.x = x * 8;
-				my_pos.z = y * 8;
-				my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-				cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, cb->GetMyAllyTeam(), true, true);
-			}
-		}
-	}*/
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)
@@ -521,8 +558,13 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			}
 			else
 			{
-				if(auto_set)
+				if(auto_set && aai_instances == 1)
 				{
+					map_usefulness.resize(bt->assault_categories.size());
+
+					for(int i = 0; i < bt->assault_categories.size(); ++i)
+						map_usefulness[i].resize(cfg->SIDES);
+
 					// load units map_usefulness
 					for(int i = 0; i < cfg->SIDES; ++i)
 					{
@@ -545,8 +587,13 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 		}
 	}
 
-	if(!load_file)
+	if(!load_file && aai_instances == 1)
 	{
+		map_usefulness.resize(bt->assault_categories.size());
+
+		for(int i = 0; i < bt->assault_categories.size(); ++i)
+			map_usefulness[i].resize(cfg->SIDES);
+
 		for(int i = 0; i < cfg->SIDES; ++i)
 		{
 			for(int j = 0; j < bt->assault_categories.size(); ++j)
@@ -554,48 +601,55 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 		}
 	}
 
-	for(int j = 0; j < ySectors; ++j)
+	// load sector data from file or init with default values
+	if(load_file)
 	{
-		for(int i = 0; i < xSectors; ++i)
+		for(int j = 0; j < ySectors; ++j)
 		{
-			if(auto_set)
-			{
-				// set coordinates of the sectors
-				sector[i][j].SetCoordinates(xSectorSize*i, xSectorSize*(i+1), ySectorSize * j, ySectorSize * (j+1));
-				sector[i][j].SetGridLocation(i,j);
-				// provide ai callback to sectors
-				sector[i][j].SetAI(ai);
-				sector[i][j].map = this;
-			}
-
-			// load sector data from file or init with default values
-			if(load_file)
+			for(int i = 0; i < xSectors; ++i)
 			{
 				// load sector data
 				fscanf(load_file, "%f %f %f", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
+
+				if(sector[i][j].importance_learned <= 1)
+					sector[i][j].importance_learned += (rand()%5)/20.0;
 
 				// load combat data
 				for(int cat = 0; cat < bt->assault_categories.size(); cat++)
 					fscanf(load_file, "%f %f ", &sector[i][j].attacked_by_learned[cat], &sector[i][j].combats_learned[cat]);
 
-				if(sector[i][j].importance_learned <= 1)
-					sector[i][j].importance_learned += (rand()%5)/20.0;
+				if(auto_set)
+				{
+					sector[i][j].importance_this_game = sector[i][j].importance_learned;
+
+					for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+					{
+						sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
+						sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
+					}
+				}
 			}
-			else
+		}
+	}
+	else
+	{
+		for(int j = 0; j < ySectors; ++j)
+		{
+			for(int i = 0; i < xSectors; ++i)
 			{
 				sector[i][j].importance_learned = 1 + (rand()%5)/20.0;
 				sector[i][j].flat_ratio = sector[i][j].GetFlatRatio();
 				sector[i][j].water_ratio = sector[i][j].GetWaterRatio();
-			}
 
-			if(auto_set)
-			{
-				sector[i][j].importance_this_game = sector[i][j].importance_learned;
-
-				for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+				if(auto_set)
 				{
-					sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
-					sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
+					sector[i][j].importance_this_game = sector[i][j].importance_learned;
+
+					for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+					{
+						sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
+						sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
+					}
 				}
 			}
 		}
@@ -911,16 +965,10 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 			}
 		}
 
-		if (!vStop)
-		{
-			vIterator += 2;
+		vIterator += 2;
 
-			if (vCenter - vIterator < yStart || vCenter + vIterator > yEnd)
-			{
-				vStop = true;
-				vIterator -= 2;
-			}
-		}
+		if(vCenter - vIterator < yStart || vCenter + vIterator > yEnd)
+			vStop = true;
 	}
 
 	return ZeroVector;
@@ -1323,7 +1371,7 @@ int AAIMap::GetCliffyCells(int xPos, int yPos, int xSize, int ySize)
 		for(int y = yPos; y < yPos + ySize; y++)
 		{
 			if(buildmap[x+y*xMapSize] == 3)
-				cliffs++;
+				++cliffs;
 		}
 	}
 
@@ -1350,7 +1398,7 @@ int AAIMap::GetCliffyCellsInSector(AAISector *sector)
 	return cliffs;
 }
 
-void AAIMap::DetectCliffs()
+void AAIMap::AnalyseMap()
 {
 	float3 my_pos;
 
@@ -1358,51 +1406,79 @@ void AAIMap::DetectCliffs()
 
 	const float *height_map = cb->GetHeightMap();
 
-	for(int x = 0; x < (xMapSize-4); x++)
+	for(int x = 0; x < xMapSize; ++x)
 	{
-		for(int y = 0; y < (yMapSize-4); y++)
+		for(int y = 0; y < yMapSize; ++y)
 		{
-			slope = (height_map[y * xMapSize + x] - height_map[y * xMapSize + x + 4])/64.0;
-
-			// check x-direction
-			if(slope > cfg->CLIFF_SLOPE || -slope > cfg->CLIFF_SLOPE)
-				buildmap[x+y*xMapSize] = 3;
-
-			else	// check y-direction
+			// check for water
+			if(height_map[y * xMapSize + x] < 0)
+				buildmap[x+y*xMapSize] = 4;
+			else if(x < xMapSize - 4 && y < yMapSize - 4)
+			// check slope 
 			{
-				slope = (height_map[y * xMapSize + x] - height_map[(y+4) * xMapSize + x])/64.0;
+				slope = (height_map[y * xMapSize + x] - height_map[y * xMapSize + x + 4])/64.0;
 
+				// check x-direction
 				if(slope > cfg->CLIFF_SLOPE || -slope > cfg->CLIFF_SLOPE)
 					buildmap[x+y*xMapSize] = 3;
+				else	// check y-direction
+				{
+					slope = (height_map[y * xMapSize + x] - height_map[(y+4) * xMapSize + x])/64.0;
+
+					if(slope > cfg->CLIFF_SLOPE || -slope > cfg->CLIFF_SLOPE)
+						buildmap[x+y*xMapSize] = 3;
+				}
 			}
 		}
 	}
-}
 
-void AAIMap::DetectWater()
-{
-	float3 my_pos;
+	int xSize = xMapSize/2;
+	int ySize = yMapSize/2;
 
-	const float *height_map = cb->GetHeightMap();
+	int TERRAIN_DETECTION_RANGE = 10;
+	float my_height, diff;
 
-	for(int x = 0; x < xMapSize; x++)
+	for(int x = TERRAIN_DETECTION_RANGE; x < xSize - TERRAIN_DETECTION_RANGE; ++x)
 	{
-		for(int y = 0; y < yMapSize; y++)
+		for(int y = TERRAIN_DETECTION_RANGE; y < ySize - TERRAIN_DETECTION_RANGE; ++y)
 		{
-			// check heighth
-			if(height_map[y * xMapSize + x] < 0)
-			{
-				buildmap[x+y*xMapSize] = 4;
+			my_height = height_map[2 * x + 4 * y * xSize];
 
-				// debug
-				/*if(x%2 == 0 && y%2 == 0)
+			for(int i = x - TERRAIN_DETECTION_RANGE; i < x + TERRAIN_DETECTION_RANGE; ++i)
+			{
+				for(int j = y - TERRAIN_DETECTION_RANGE; j < y + TERRAIN_DETECTION_RANGE; ++j)
 				{
-					my_pos.x = x * 8;
-					my_pos.z = y * 8;
-					my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-					cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
-				}*/
+					 diff = (height_map[2 * i + 4 * j * xSize] - my_height);
+
+					 if(diff > 0)
+					 {
+						 if(buildmap[2 * i + 4 * j * xSize] != 3)
+							 plateau_map[i + j * xSize] += diff;
+					 }
+					 else
+						 plateau_map[i + j * xSize] += diff;
+				}
 			}
+		}
+	}
+
+	for(int x = 0; x < xSize; ++x)
+	{
+		for(int y = 0; y < yMapSize/2; ++y)
+		{
+			if(plateau_map[x + y * xSize] >= 0)
+				plateau_map[x + y * xSize] = sqrt(plateau_map[x + y * xSize]);
+			else
+				plateau_map[x + y * xSize] = -1.0f * sqrt((-1.0f) * plateau_map[x + y * xSize]);
+			
+			// debug 
+			//if(plateau_map[x + y * xSize] >= 0)
+			//{
+			//	my_pos.x = x * 16;
+			//	my_pos.z = y * 16;
+			//	my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
+			//	cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), false, true);
+			//}
 		}
 	}
 }
@@ -1606,7 +1682,7 @@ void AAIMap::GetMapData()
 void AAIMap::UpdateRecon()
 {
 	const UnitDef *def;
-	int myTeam = cb->GetMyAllyTeam();
+	int team, my_team = cb->GetMyAllyTeam();
 	float3 pos;
 	int x, y;
 	AAIAirTarget target;
@@ -1626,17 +1702,16 @@ void AAIMap::UpdateRecon()
 
 			for(int i = 0; i < bt->combat_categories; ++i)
 			{
-				this->sector[x][y].mobile_combat_power[i] *= 0.98;
+				this->sector[x][y].mobile_combat_power[i] *= 0.98f;
 
-				if(this->sector[x][y].mobile_combat_power[i] < 0.5)
+				if(this->sector[x][y].mobile_combat_power[i] < 0.5f)
 					this->sector[x][y].mobile_combat_power[i] = 0;
 			}
 		}
 	}
 
 	// reset spotted units
-	for(int i = 0; i < bt->combat_categories; ++i)
-		units_spotted[i] = 0;
+	fill(units_spotted.begin(), units_spotted.end(), 0);
 
 	// first update all sectors with friendly units
 	cb->GetFriendlyUnits(&(unitsInLos.front()));
@@ -1660,33 +1735,32 @@ void AAIMap::UpdateRecon()
 					sector = &this->sector[x][y];
 
 					// we have a unit in that sector, reset values if not already done
-					if(!unitsInSector[x+y*xSectors])
+					if(unitsInSector[x+y*xSectors] == 0)
 					{
 						++unitsInSector[x+y*xSectors];
-						sector->enemy_structures = 0;
-
-						for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
-							sector->enemyUnitsOfType[i] = 0;
-
-						for(int i = 0; i < bt->ass_categories; ++i)
-						{
-							sector->stat_combat_power[i] = 0;
-							sector->mobile_combat_power[i] = 0;
-						}
-
-						// vs buildings
-						sector->mobile_combat_power[bt->ass_categories] = 0;
-
+						
+						fill(sector->enemyUnitsOfType.begin(), sector->enemyUnitsOfType.end(), 0);
+						fill(sector->stat_combat_power.begin(), sector->stat_combat_power.end(), 0);
+						fill(sector->mobile_combat_power.begin(), sector->mobile_combat_power.end(), 0);
+				
 						sector->threat = 0;
-
 						sector->allied_structures = 0;
+						sector->enemy_structures = 0;
+						sector->own_structures = 0;
 					}
 
-					// check if allied building
+					// check if building
 					def = cb->GetUnitDef(unitsInLos[i]);
 
 					if(def && bt->units_static[def->id].category <= METAL_MAKER)
-						sector->allied_structures += bt->units_static[def->id].cost;
+					{
+						team = cb->GetUnitTeam(unitsInLos[i]);
+
+						if(team == my_team)
+							sector->own_structures += bt->units_static[def->id].cost;
+						else
+							sector->allied_structures += bt->units_static[def->id].cost;
+					}
 				}
 			}
 
@@ -1708,7 +1782,7 @@ void AAIMap::UpdateRecon()
 			pos = cb->GetUnitPos(unitsInLos[i]);
 
 			// calculate in which sector unit is located
-			sector = GetSectorOfPos(pos);
+			sector = GetSectorOfPos(&pos);
 
 			if(sector)
 			{
@@ -1718,13 +1792,13 @@ void AAIMap::UpdateRecon()
 					cat = bt->units_static[def->id].category;
 					combat_category_id = (int) bt->GetIDOfAssaultCategory(cat);
 
-					++sector->enemyUnitsOfType[(int)cat];
+					sector->enemyUnitsOfType[(int)cat] += 1;
 
 					// check if combat unit
 					if(combat_category_id >= 0)
 					{
 						sector->threat += 1;
-						++units_spotted[combat_category_id];
+						units_spotted[combat_category_id] += 1;
 
 						// count combat power of combat units
 						for(int i = 0; i < bt->combat_categories; ++i)
@@ -1736,7 +1810,7 @@ void AAIMap::UpdateRecon()
 						if(targets_checked < 3 && ( cat == STATIONARY_ARTY || cat == STATIONARY_LAUNCHER || cat == COMMANDER) )
 						{
 							ai->af->CheckTarget(unitsInLos[i], def);
-							++targets_checked;
+							targets_checked += 1;
 						}
 
 						// count combat power of stat defences
@@ -1787,7 +1861,7 @@ void AAIMap::UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, con
 	if(change > 4)
 		change = 4;
 	else if(change < 0.2)
-		change = 0.2;
+		change = 0.2f;
 
 	if(killer < 5)
 	{
@@ -1846,13 +1920,282 @@ bool AAIMap::ValidSector(int x, int y)
 		return false;
 }
 
-AAISector* AAIMap::GetSectorOfPos(float3 pos)
+AAISector* AAIMap::GetSectorOfPos(float3 *pos)
 {
-	int x = pos.x/xSectorSize;
-	int y = pos.z/ySectorSize;
+	int x = pos->x/xSectorSize;
+	int y = pos->z/ySectorSize;
 
 	if(ValidSector(x,y))
 		return &(sector[x][y]);
 	else
 		return 0;
+}
+
+void AAIMap::AddDefence(float3 *pos, int defence)
+{
+	int range = bt->units_static[defence].range / 16;
+	int cell;
+
+	float power;
+	float air_power;
+
+	if(cfg->AIR_ONLY_MOD)
+	{
+		power = bt->fixed_eff[defence][0] + bt->fixed_eff[defence][1];
+		air_power = bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3];
+	}
+	else
+	{
+		if(bt->unitList[defence-1]->minWaterDepth > 0)
+			power = bt->fixed_eff[defence][3] + bt->fixed_eff[defence][4];
+		else
+			power = bt->fixed_eff[defence][0];
+		
+		air_power = bt->fixed_eff[defence][1];
+	}
+
+	int xPos = pos->x / 16;
+	int yPos = pos->z / 16;
+
+	// x range will change from line to line 
+	int xStart;
+	int xEnd;
+	int xRange;
+
+	// y range is const
+	int yStart = yPos - range;
+	int yEnd = yPos + range;
+
+	if(yStart < 0)
+		yStart = 0;
+	if(yEnd >= yDefMapSize)
+		yEnd = yDefMapSize-1;
+
+	for(int y = yStart; y <= yEnd; ++y)
+	{
+		// determine x-range
+		xRange = (int) floor( sqrt( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		
+		xStart = xPos - xRange;
+		xEnd = xPos + xRange;
+
+		if(xStart < 0)
+			xStart = 0;
+		if(xEnd > xDefMapSize)
+			xEnd = xDefMapSize;
+
+		for(int x = xStart; x < xEnd; ++x)
+		{
+			cell = x + xDefMapSize*y;
+
+			defence_map[cell] += power;
+			air_defence_map[cell] += air_power;
+		}	
+	}
+
+	// further increase values close around the bulding (to prevent aai from packing buildings too close together)
+	// y range is const
+	yStart = yPos - 6;
+	yEnd = yPos + 6;
+
+	if(yStart < 0)
+		yStart = 0;
+	if(yEnd >= yDefMapSize)
+		yEnd = yDefMapSize-1;
+
+	for(int y = yStart; y <= yEnd; ++y)
+	{
+		// determine x-range
+		xRange = (int) floor( sqrt( (float) ( 36 - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		
+		xStart = xPos - xRange;
+		xEnd = xPos + xRange;
+
+		if(xStart < 0)
+			xStart = 0;
+		if(xEnd > xDefMapSize)
+			xEnd = xDefMapSize;
+
+		for(int x = xStart; x < xEnd; ++x)
+		{
+			cell = x + xDefMapSize*y;
+			
+			defence_map[cell] += 32.0f;
+			air_defence_map[cell] += 32.0f;
+		}
+	}
+}
+
+void AAIMap::RemoveDefence(float3 *pos, int defence)
+{
+	int cell;
+	int range = bt->units_static[defence].range / 16;
+
+	float power;
+	float air_power;
+
+	if(cfg->AIR_ONLY_MOD)
+	{
+		power = bt->fixed_eff[defence][0] + bt->fixed_eff[defence][1];
+		air_power = bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3];
+	}
+	else
+	{
+		if(bt->unitList[defence-1]->minWaterDepth > 0)
+			power = bt->fixed_eff[defence][3] + bt->fixed_eff[defence][4];
+		else
+			power = bt->fixed_eff[defence][0];
+		
+		air_power = bt->fixed_eff[defence][1];
+	}
+	
+	int xPos = pos->x / 16;
+	int yPos = pos->z / 16;
+
+	// x range will change from line to line 
+	int xStart;
+	int xEnd;
+	int xRange;
+
+	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
+	// y range is const
+	int yStart = yPos - 6;
+	int yEnd = yPos + 8;
+
+	if(yStart < 0)
+		yStart = 0;
+	if(yEnd >= yDefMapSize)
+		yEnd = yDefMapSize-1;
+
+	for(int y = yStart; y <= yEnd; ++y)
+	{
+		// determine x-range
+		xRange = (int) floor( sqrt( (float) ( 36 - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		
+		xStart = xPos - xRange;
+		xEnd = xPos + xRange;
+
+		if(xStart < 0)
+			xStart = 0;
+		if(xEnd > xDefMapSize)
+			xEnd = xDefMapSize;
+
+		for(int x = xStart; x < xEnd; ++x)
+		{
+			cell= x + xDefMapSize*y;
+			
+			defence_map[cell] -= 32.0f;
+			air_defence_map[cell] -= 32.0f;
+		}
+	}
+
+	// y range is const
+	yStart = yPos - range;
+	yEnd = yPos + range;
+
+	if(yStart < 0)
+		yStart = 0;
+	if(yEnd >= yDefMapSize)
+		yEnd = yDefMapSize-1;
+
+	for(int y = yStart; y <= yEnd; ++y)
+	{
+		// determine x-range
+		xRange = (int) floor( sqrt( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		
+		xStart = xPos - xRange;
+		xEnd = xPos + xRange;
+
+		if(xStart < 0)
+			xStart = 0;
+		if(xEnd > xDefMapSize)
+			xEnd = xDefMapSize;
+
+		for(int x = xStart; x < xEnd; ++x)
+		{
+			cell= x + xDefMapSize*y;
+			
+			defence_map[cell] -= power;
+			air_defence_map[cell] -= air_power;
+
+			if(defence_map[cell] < 0)
+				defence_map[cell] = 0;
+			
+			if(air_defence_map[cell] < 0)
+				air_defence_map[cell] = 0;
+		}
+	}
+}
+
+float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xStart, int xEnd, int yStart, int yEnd, UnitCategory category, float terrain_modifier, bool water)
+{
+	float3 pos;
+	*best_pos = ZeroVector;
+	float my_rating, best_rating = -10000;
+	int edge_distance;
+
+	// get required cell-size of the building
+	int xSize, ySize, xPos, yPos, cell;
+	GetSize(def, &xSize, &ySize);
+
+	vector<float> *map = &defence_map;
+
+	if(cfg->AIR_ONLY_MOD)
+	{
+		if(category == HOVER_ASSAULT || category == SEA_ASSAULT)
+			map = &air_defence_map;
+	}
+	else if(category == AIR_ASSAULT)
+		map = &air_defence_map;
+
+	// check rect
+	for(yPos = yStart; yPos < yEnd; yPos += 4)
+	{
+		for(xPos = xStart; xPos < xEnd; xPos += 4)
+		{
+			// check if buildmap allows construction
+			if(CanBuildAt(xPos, yPos, xSize, ySize, water))
+			{
+				cell = xPos/2 + xDefMapSize * (yPos/2);
+
+				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.15f * ((float) (rand()%20));
+
+				// determine minimum distance from buildpos to the edges of the map
+				edge_distance = xPos;
+
+				if(xMapSize - xPos < edge_distance)
+					edge_distance = xMapSize - xPos;
+
+				if(yPos < edge_distance)
+					edge_distance = yPos;
+
+				if(yMapSize - yPos < edge_distance)
+					edge_distance = yMapSize - yPos;
+
+				double range =  bt->units_static[def->id].range / 12.0;
+
+				// prevent aai from building defences too close to the edges of the map
+				if( (float)edge_distance < range)
+					my_rating -= 20.0f;
+
+				if(my_rating > best_rating)
+				{
+					pos.x = xPos;
+					pos.z = yPos;
+
+					// buildmap allows construction, now check if otherwise blocked
+					BuildMapPos2Pos(&pos, def);
+					Pos2FinalBuildPos(&pos, def);
+
+					if(cb->CanBuildAt(def, pos))
+					{
+						*best_pos = pos;
+						best_rating = my_rating;
+					}
+				}
+			}
+		}
+	}
+
+	return best_rating;
 }
