@@ -3,7 +3,6 @@
 #define SERIALIZER_IMPL_H
 
 #include "ISerializer.h"
-#include SPRING_HASH_MAP_H
 #include <map>
 #include <vector>
 #include <list>

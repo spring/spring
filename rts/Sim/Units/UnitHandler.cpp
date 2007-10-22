@@ -544,7 +544,7 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
-	ListErase(CBuilderCAI*,builderCAIs,b);
+	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
 
 void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
