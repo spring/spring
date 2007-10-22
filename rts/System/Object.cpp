@@ -39,10 +39,10 @@ CObject::~CObject()
 	std::list<CObject*>::iterator di;
 	for(di=listeners.begin();di!=listeners.end();++di){
 		(*di)->DependentDied(this);
-		ListErase(CObject*,(*di)->listening,this);
+		ListErase<CObject*>((*di)->listening, this);
 	}
 	for(di=listening.begin();di!=listening.end();++di){
-		ListErase(CObject*,(*di)->listeners,this);
+		ListErase<CObject*>((*di)->listeners, this);
 	}
 
 	// remove from list of synced objects
@@ -101,6 +101,6 @@ void CObject::AddDeathDependence(CObject *o)
 void CObject::DeleteDeathDependence(CObject *o)
 {
 	//note that we can be listening to a single object from several different places (like curreclaim in CBuilder and lastAttacker in CUnit, grr) so we should only remove one of them
-	ListErase(CObject*,listening,o);
-	ListErase(CObject*,o->listeners,this);
+	ListErase<CObject*>(listening, o);
+	ListErase<CObject*>(o->listeners, this);
 }

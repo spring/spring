@@ -4,14 +4,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <list>
 #include "creg/creg.h"
 
-#define ListErase(type,_where,what) \
-	for (std::list<type>::iterator i=_where.begin();i!=_where.end();i++)\
-		if (*i==what) {\
-			_where.erase(i);\
-			break;\
+template<typename T>
+void ListErase(std::list<T>& list, const T& what)
+{
+	for (std::list<T>::iterator it = list.begin(); it != list.end(); ++it) {
+		if (*it == what) {
+			list.erase(it);
+			break;
 		}
+	}
+}
 
 class CObject
 {
