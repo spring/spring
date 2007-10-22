@@ -47,7 +47,7 @@ public:
 	void UpdateBaseCenter();
 
 	// updates max units spotted
-	void UpdateMaxCombatUnitsSpotted(vector<float> &units_spotted);
+	void UpdateMaxCombatUnitsSpotted(vector<float>& units_spotted);
 
 	void UpdateAttackedByValues();
 	void AttackedBy(int combat_category_id);

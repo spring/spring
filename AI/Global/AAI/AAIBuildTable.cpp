@@ -40,6 +40,7 @@ vector< vector< vector<float> > > AAIBuildTable::avg_eff;
 vector< vector< vector<float> > > AAIBuildTable::max_eff;
 vector< vector< vector<float> > > AAIBuildTable::min_eff;
 vector< vector< vector<float> > > AAIBuildTable::total_eff;
+vector< vector<float> > AAIBuildTable::fixed_eff;
 
 AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 {
@@ -48,12 +49,9 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 
 	initialized = false;
 	numOfUnits = 0;
-//	units_dynamic = 0;
 
 	numOfSides = cfg->SIDES;
-//	startUnits = new int[numOfSides];
 	startUnits.resize(numOfSides);
-//	sideNames = new string[numOfSides+1];
 	sideNames.resize(numOfSides+1);
 	sideNames[0] = "Neutral";
 	
@@ -85,8 +83,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 	assault_categories.push_back(SEA_ASSAULT);
 	assault_categories.push_back(SUBMARINE_ASSAULT);
 
-	ass_categories = (int)assault_categories.size();
-	combat_categories = ass_categories + 1;
+	//ass_categories = (int)assault_categories.size();
+	//combat_categories = ass_categories + 1;
 
 	// one more instance
 	++aai_instances;
@@ -182,33 +180,9 @@ AAIBuildTable::~AAIBuildTable(void)
 	// one instance less
 	--aai_instances;
 
-//	if(units_dynamic)
-//	{
-//		delete [] units_dynamic;
-//	}
-
 	// delete common data only if last aai instace has gone
 	if(aai_instances == 0)
 	{	
-//		if(def_power)
-//		{
-//			for(int s = 0; s < numOfSides; ++s)
-//				delete [] def_power[s];
-
-//			delete [] def_power;
-//		}
-
-//		if(max_pplant_eff)
-//			delete [] max_pplant_eff;
-
-//		if(units_static)
-//		{
-			// delete eff. first 
-//			for(int i = 1; i <= numOfUnits; ++i)
-//				delete [] units_static[i].efficiency;
-
-//			delete [] units_static;
-//		}
 
 		delete [] unitList;
 
@@ -266,9 +240,6 @@ AAIBuildTable::~AAIBuildTable(void)
 		min_eff.clear();
 		total_eff.clear();
 	}
-
-//	delete [] sideNames;
-//	delete [] startUnits;
 }
 
 void AAIBuildTable::Init()
@@ -282,7 +253,6 @@ void AAIBuildTable::Init()
 	numOfUnits = cb->GetNumUnitDefs();
 
 	// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array) 
-//	units_dynamic = new UnitTypeDynamic[numOfUnits+1];
 	units_dynamic.resize(numOfUnits+1);
 
 	for(int i = 0; i <= numOfUnits; i++)
@@ -304,9 +274,9 @@ void AAIBuildTable::Init()
 	if(!LoadBuildTable())
 	{	
 		// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array) 
-//		units_static = new UnitTypeStatic[numOfUnits+1];
 		units_static.resize(numOfUnits+1);
-
+		fixed_eff.resize(numOfUnits+1, vector<float>(combat_categories));
+		
 		// temporary list to sort air unit in air only mods
 		list<int> *temp_list;
 		temp_list = new list<int>[numOfSides];
@@ -315,7 +285,7 @@ void AAIBuildTable::Init()
 		units_static[0].side = 0;
 
 		// add units to buildtable
-		for(int i = 1; i <= numOfUnits; i++)
+		for(int i = 1; i <= numOfUnits; ++i)
 		{
 			// get id 
 			units_static[i].def_id = unitList[i-1]->id;
@@ -334,6 +304,8 @@ void AAIBuildTable::Init()
 			units_static[i].range = 0;
 			
 			units_static[i].category = UNKNOWN;
+
+			units_static[i].unit_type = 0;
 		
 			// get build options
 			for(map<int, string>::const_iterator j = unitList[i-1]->buildOptions.begin(); j != unitList[i-1]->buildOptions.end(); ++j)
@@ -366,7 +338,10 @@ void AAIBuildTable::Init()
 				eff = 5 + 25 * (units_static[i].cost - min_cost)/(max_cost - min_cost);
 				
 				for(int k = 0; k < combat_categories; ++k)
+				{
 					units_static[i].efficiency[k] = eff;
+					fixed_eff[i][k] = eff;
+				}
 			}
 			else
 			{
@@ -462,7 +437,7 @@ void AAIBuildTable::Init()
 				}
 			}
 			// check if builder or factory
-			else if(unitList[i-1]->buildOptions.size() > 0)
+			else if(unitList[i-1]->buildOptions.size() > 0 && !IsAttacker(i))
 			{
 				// stationary constructors
 				if(units_static[i].movement_type & MOVE_TYPE_STATIC)
@@ -568,7 +543,7 @@ void AAIBuildTable::Init()
 				if(unitList[i-1]->movedata->moveType == MoveData::Ground_Move || unitList[i-1]->movedata->moveType == MoveData::Hover_Move)
 				{
 					// units with weapons
-					if(!unitList[i-1]->weapons.empty() && GetMaxDamage(i) > 1 )
+					if(!unitList[i-1]->weapons.empty() && GetMaxDamage(i) > 1 || IsAttacker(i))
 					{
 						if(IsMissileLauncher(i))
 						{
@@ -632,7 +607,7 @@ void AAIBuildTable::Init()
 							units_of_category[MOBILE_LAUNCHER][units_static[i].side-1].push_back(unitList[i-1]->id);
 							units_static[i].category = MOBILE_LAUNCHER;
 						}
-						else if(GetMaxDamage(unitList[i-1]->id) > 1)
+						else if(GetMaxDamage(unitList[i-1]->id) > 1 || IsAttacker(i))
 						{
 							if(unitList[i-1]->categoryString.find("UNDERWATER") != string::npos)
 							{
@@ -672,7 +647,7 @@ void AAIBuildTable::Init()
 			// aircraft
 			else if(unitList[i-1]->canfly)
 			{
-				if(!unitList[i-1]->weapons.empty() && GetMaxDamage(unitList[i-1]->id) > 1)
+				if(!unitList[i-1]->weapons.empty() && GetMaxDamage(unitList[i-1]->id) > 1 || IsAttacker(i))
 				{
 					if(unitList[i-1]->weapons.begin()->def->stockpile)
 					{
@@ -2722,12 +2697,12 @@ bool AAIBuildTable::LoadBuildTable()
 			}
 
 			// load attacked_by table
-			for(int cat2 = 0; cat2 < combat_categories; ++cat2)
+			for(int category = 0; category < combat_categories; ++category)
 			{
 				for(int t = 0; t < 4; ++t)
 				{
-					attacked_by_category[0][cat2][t] = 0;
-					fscanf(load_file, "%f ", &attacked_by_category[1][cat2][t]);
+					attacked_by_category[0][category][t] = 0;
+					fscanf(load_file, "%f ", &attacked_by_category[1][category][t]);
 				}
 			}
 
@@ -2735,6 +2710,7 @@ bool AAIBuildTable::LoadBuildTable()
 			units_static.resize(numOfUnits+1);
 //			units_dynamic = new UnitTypeDynamic[numOfUnits+1];
 			units_dynamic.resize(numOfUnits+1);
+			fixed_eff.resize(numOfUnits+1, vector<float>(combat_categories));
 
 			units_static[0].def_id = 0;
 			units_static[0].side = 0;
@@ -2752,7 +2728,10 @@ bool AAIBuildTable::LoadBuildTable()
 
 				// load eff
 				for(int k = 0; k < combat_categories; ++k)
+				{
 					fscanf(load_file, "%f ", &units_static[i].efficiency[k]);
+					fixed_eff[i][k] = units_static[i].efficiency[k];
+				}
 			
 				units_static[i].category = (UnitCategory) cat;
 
@@ -3576,7 +3555,7 @@ void AAIBuildTable::AddBuilder(int building_id)
 		if(ai->execute->AddUnitToBuildque(builder))
 		{
 			units_dynamic[builder].requested += 1;
-			ai->futureBuilders ++;
+			ai->futureBuilders += 1;
 
 			// set all its buildoptions buildable
 			for(list<int>::iterator j = units_static[builder].canBuildList.begin(); j != units_static[builder].canBuildList.end(); j++)
@@ -3717,6 +3696,16 @@ bool AAIBuildTable::IsScout(int id)
 		}
 	}
 
+	return false;
+}
+
+bool AAIBuildTable::IsAttacker(int id)
+{
+	for(list<int>::iterator i = cfg->ATTACKERS.begin(); i != cfg->ATTACKERS.end(); i++)
+	{
+		if(*i == id)
+			return true;
+	}
 	return false;
 }
 

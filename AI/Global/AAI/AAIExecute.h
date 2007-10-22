@@ -43,22 +43,26 @@ public:
 	float GetEnergyStorageUrgency();
 	float GetMetalStorageUrgency();
 
-	// upgrades
+	// checks if buildings of that type could be replaced with more efficient one (e.g. mex -> moho)
 	void CheckMexUpgrade();
 	void CheckRadarUpgrade();
 	void CheckJammerUpgrade();
 
-	// checks which building is most important to be constructed
+	// checks which building type is most important to be constructed and tries to start construction
 	void CheckConstruction();
+
+	// the following functions determine how urgent it is to build a further building of the specified type
 	void CheckFactories();
 	void CheckAirBase();
-	// checks radar and jammers
 	void CheckRecon(); 
 	void CheckJammer();
+	void CheckStationaryArty();
+
 	// checks length of buildques and adjusts rate of unit production
 	void CheckBuildques();
+
+	//
 	void CheckDefences();
-	void CheckStationaryArty();
 
 	// builds all kind of buildings
 	bool BuildFactory();
@@ -74,7 +78,7 @@ public:
 	bool BuildAirBase();
 
 	// called when building has been finished / contruction failed
-	void ConstructionFailed(int unit_id, float3 build_pos, int def_id);
+	void ConstructionFailed(float3 build_pos, int def_id);
 	void ConstructionFinished();
 
 	// builds defences around mex spot if necessary
@@ -87,7 +91,7 @@ public:
 	// tries to call support vs air (returns true if succesful)
 	void DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 enemy_pos, int importance);
 
-	// returns true if succesfully assisting power plant construction
+	// returns true if succesfully assisting construction
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
 
 	// adds a unit to the correct wishlist
@@ -101,6 +105,9 @@ public:
 
 	// returns the the total air defence power of all units
 	float GetTotalAirPower();
+	
+	// chooses a stzarting sector close to specified sector
+	void ChooseDifferentStartingSector(int x, int y);
 
 	// 
 	AAIGroup* GetClosestGroupOfCategory(UnitCategory category, UnitType type, float3 pos, int importance); 
@@ -177,5 +184,5 @@ private:
 
 	// stores which buildque belongs to what kind of factory
 	vector<int> factory_table;
-	
+
 };

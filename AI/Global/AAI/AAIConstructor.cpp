@@ -65,7 +65,7 @@ void AAIConstructor::Idle()
 				--ai->futureUnits[construction_category];
 
 				// clear up buildmap etc.
-				ai->execute->ConstructionFailed(-1, build_pos, construction_def_id);
+				ai->execute->ConstructionFailed(build_pos, construction_def_id);
 
 				// free builder
 				ConstructionFinished();
@@ -165,7 +165,7 @@ void AAIConstructor::Update()
 					ai->futureUnits[construction_category] -= 1;
 	
 					// clear up buildmap etc.
-					ai->execute->ConstructionFailed(-1, build_pos, construction_def_id);
+					ai->execute->ConstructionFailed(build_pos, construction_def_id);
 
 					// free builder
 					ConstructionFinished();
@@ -188,7 +188,22 @@ void AAIConstructor::Update()
 						pos = ai->map->sector[x][y].GetCenter();
 
 						Command c;
-						c.id = CMD_RECLAIM;
+						const UnitDef *def;
+
+						def = cb->GetUnitDef(unit_id);
+						// can this thing resurrect? If so, maybe we should raise the corpses instead of consuming them?
+						if(def->canResurrect)
+						{
+							if(rand()%2 == 1)
+							{
+								c.id = CMD_RESURRECT;
+							} else
+							{
+								c.id = CMD_RECLAIM;
+							}
+						} else {
+							c.id = CMD_RECLAIM;
+						}
 						c.params.resize(4);
 						c.params[0] = pos.x;
 						c.params[1] = cb->GetElevation(pos.x, pos.z);
@@ -429,7 +444,16 @@ void AAIConstructor::AssistConstruction(int constructor, int target_unit)
 	if(target_unit == -1)
 	{
 		Command c;
-		c.id = CMD_GUARD;
+		// Check if the target can be assisted at all. If not, try to repair it instead
+		const UnitDef *def;
+		def = cb->GetUnitDef(constructor);
+		if(def->canBeAssisted)
+		{
+			c.id = CMD_GUARD;
+		} else
+		{
+			c.id = CMD_REPAIR;
+		}
 		c.params.push_back(constructor);
 		cb->GiveOrder(unit_id, &c);
 
@@ -539,7 +563,7 @@ void AAIConstructor::Killed()
 					ai->map->sector[x][y].lost_units[MOBILE_CONSTRUCTOR-COMMANDER] += 1;
 	
 				// clear up buildmap etc.
-				ai->execute->ConstructionFailed(-1, build_pos, construction_def_id);
+				ai->execute->ConstructionFailed(build_pos, construction_def_id);
 			}
 			// building has begun
 			else

@@ -60,6 +60,7 @@ public:
 	char **START_UNITS;
 	char **SIDE_NAMES;
 	list<int> SCOUTS;
+	list<int> ATTACKERS;
 	float METAL_ENERGY_RATIO;
 	int MAX_DEFENCES;
 	float MIN_SECTOR_THREAT;

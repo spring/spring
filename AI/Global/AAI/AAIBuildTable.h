@@ -125,6 +125,9 @@ public:
 	bool IsScout(int id);
 	bool IsScout(UnitCategory category);
 
+	// returns true if the unit is marked as attacker (so that it won't be classed as something else even if it can build etc.)
+	bool IsAttacker(int id);
+
 	bool IsMissileLauncher(int def_id);
 
 	bool IsDeflectionShieldEmitter(int def_id);
@@ -168,12 +171,6 @@ public:
 	// number of unit definitions
 	int numOfUnits;
 
-	// number of assault categories
-	int ass_categories;
-
-	// number of assault cat + arty & stat defences
-	int combat_categories;
-
 	vector<float> combat_eff;
 
 	// true if initialized correctly
@@ -181,7 +178,13 @@ public:
 
 	//
 	// these data are shared by several instances of aai
-	// 
+	//
+
+	// number of assault categories
+	static const int ass_categories = 5;
+
+	// number of assault cat + arty & stat defences
+	static const int combat_categories = 6;
 
 	// usefulness of unit category of side 
 	static float ***mod_usefulness;
@@ -233,6 +236,10 @@ public:
 	static vector< vector< vector<float> > > min_eff;
 	static vector< vector< vector<float> > > total_eff;
 
+	// stores the combat eff. of units at the beginning of the game. due to learning these values will change during the game
+	// however for some purposes its necessary to have constant values (e.g. adding and subtracting stationary defences to/from the defense map)
+	static vector< vector<float> > fixed_eff;
+
 	//
 	//	non static variales
 	//
@@ -246,9 +253,6 @@ public:
 
 	// all assault unit categories
 	list<UnitCategory> assault_categories;
-
-	
-
 
 	void SaveBuildTable();
 

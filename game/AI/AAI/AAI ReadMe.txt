@@ -85,11 +85,12 @@ Limitations:	  to buildings/objects)
 
 
 Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
-		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions 
+		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions
+		  and coding contributions (since AAI v0.83) 
 
 		- TA Spring devs for creating the best open source rts game I know
 
-		- Jelmer 'Zaphod' Cnossen for some functions and a lot of helpful discussions
+		- Jelmer 'JC' Cnossen for some functions and a lot of helpful discussions
 
 		- Krogothe for his mex spot algorithm
 
@@ -105,6 +106,30 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 
 
 
+AAI v0.83 	- Completly redone defence building placement (AAI will now take terrain into account as well as already existing 
+		  defences) It should give much better results now especially on maps that dont have rather flat terrain
+		  
+		- AAI will take allied structures into account when looking for rally points for its combat units (helps to
+		  better prevent AAI from blocking allied bases with its units)
+
+		- Different instances of AAI now share several kind of map information (saves ram space) and do not expand to 
+		  sectors occupied by allied AAIs anymore
+
+		- Added ATTACKERS keyword to mod cfg file to force AAI to use specified units as combat units despite all other 
+		  capabilities of the unit (e.g. buildoptions)  (implemented by Yuritch)
+
+		- Resurrectors now may ressurect corpses instead of reclaiming them (however ressurectors chase newly resurrected 
+		  units trying to repair them - needs some work) (implemented by Yuritch)
+
+		- Improved mex and power plant building rules a bit
+
+		- Fixed a few potential crash bugs
+
+
+AAI v0.81	- AAI will upgrade the least effective metal extractors first (only important if a mod has more than two metal 
+		  extractors with different efficiencies)
+
+		- Better prevention from sending builders to potentially dangerous buildsites outside of the main base
 
 
 AAI v0.80	- Improved/tweaked/fixed attack behaviour, AAI will try to withdraw when facing much stronger enemy forces

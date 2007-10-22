@@ -25,7 +25,7 @@ public:
 	void Defend(int unit, float3 enemy_pos, int importance);
 
 	// retreat combat groups to pos
-	void Retreat(float3 pos);
+	void Retreat(float3 *pos);
 
 	int GetRandomUnit();
 

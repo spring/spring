@@ -24,8 +24,11 @@ public:
 	AAIMetalSpot* GetFreeMetalSpot(float3 pos);
 	AAIMetalSpot* GetFreeMetalSpot();
 	void FreeMetalSpot(float3 pos, const UnitDef *extractor);
-	void SetAI(AAI *ai);
-	void SetBase(bool base);
+	void Init(AAI *ai, int x, int y, int left, int right, int top, int bottom);
+	
+	// adds/removes the sector from base sectors; returns true if succesful
+	bool SetBase(bool base);
+	
 	int GetNumberOfMetalSpots();
 	void Update();
 
@@ -36,7 +39,7 @@ public:
 	float3 GetBuildsite(int building, bool water = false);	
 	
 	// returns a buildsite for a defence building
-	float3 GetDefenceBuildsite(int building, UnitCategory category, bool water = false);
+	float3 GetDefenceBuildsite(int building, UnitCategory category, float terrain_modifier, bool water);
 	float3 GetRandomBuildsite(int building, int tries, bool water = false);
 	float3 GetCenterBuildsite(int building, bool water = false);
 	float3 GetHighestBuildsite(int building);
@@ -97,13 +100,13 @@ public:
 	int failed_defences; // how many times aai tried to build defences and couldnt find possible constrcutionsite
 
 	// units in the sector
-	int enemyUnitsOfType[(int)MOBILE_CONSTRUCTOR+1];
-	int unitsOfType[(int)MOBILE_CONSTRUCTOR+1];
+	vector<int> enemyUnitsOfType;
+	vector<int> unitsOfType;
 
 	// how many times the sector was not scouted 
 	float last_scout;
 	
-	// importance of teh sector
+	// importance of the sector
 	float importance_this_game;
 	float importance_learned;
 	
@@ -142,7 +145,4 @@ public:
 
 	int distance_to_base;	// 0 = base, 1 = neighbour to base 
 	bool interior;			// true if sector is no inner sector
-
-	// internal for def. placement
-	DefenceCoverage defCoverage[4];
 };
