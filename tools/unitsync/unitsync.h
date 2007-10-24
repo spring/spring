@@ -6,11 +6,13 @@
 
 #define STRBUF_SIZE 100000
 
+
 struct StartPos
 {
 	int x;
 	int z;
 };
+
 
 struct MapInfo
 {
@@ -32,7 +34,18 @@ struct MapInfo
 	char *author; // max 200 chars
 };
 
+
+enum OptionType {
+	opt_error  = 0,
+	opt_bool   = 1,
+	opt_list   = 2,
+	opt_number = 3,
+	opt_string = 4
+};
+
+
 const char *GetStr(std::string str);
+
 
 #ifdef WIN32
 #define DLL_EXPORT extern "C" __declspec(dllexport)
