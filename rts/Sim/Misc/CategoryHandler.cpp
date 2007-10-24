@@ -55,7 +55,7 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 		 || name.find("torp") != std::string::npos)
 			return 0;
 		if(firstUnused > 31) {
-			logOutput.Print("Warning to many unit categories %i missed %s", firstUnused + 1, name.c_str());
+			logOutput.Print("WARNING: too many unit categories %i missed %s", firstUnused + 1, name.c_str());
 			return 0;
 		}
 		categories[name] = (1 << (firstUnused++));
