@@ -198,11 +198,11 @@ void CSyncServer::InitMasterList()
 
 int CSyncServer::ProcessUnits()
 {
-	int ret = CSyncer::ProcessUnits();
+	int unitsLeft = CSyncer::ProcessUnits();
 
-	if (ret == 0) {
+	if (unitsLeft == 0) {
 		InitMasterList();
 	}
 
-	return ret;
+	return unitsLeft;
 }

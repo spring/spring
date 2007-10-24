@@ -5,8 +5,8 @@ file=test.cpp
 
 start=`grep -n '^#END' $file | grep -o '^[^:]*'`
 start=`expr $start + 1`
-
 tail -n +$start $file > test.tmp.cxx
+echo Clipped $start lines
 
 g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
@@ -42,25 +42,33 @@ using namespace std;
 //
 
 DLL_EXPORT const char*  __stdcall GetSpringVersion();
+
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
+
 DLL_EXPORT void         __stdcall UnInit();
 DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT int          __stdcall InitArchiveScanner(void);
+
 DLL_EXPORT int          __stdcall ProcessUnits(void);
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
 DLL_EXPORT const char*  __stdcall GetCurrentList();
+
 DLL_EXPORT void         __stdcall AddClient(int id, const char *unitList);
 DLL_EXPORT void         __stdcall RemoveClient(int id);
+
 DLL_EXPORT const char*  __stdcall GetClientDiff(int id);
 DLL_EXPORT void         __stdcall InstallClientDiff(const char *diff);
+
 DLL_EXPORT int          __stdcall GetUnitCount();
 DLL_EXPORT const char*  __stdcall GetUnitName(int unit);
 DLL_EXPORT const char*  __stdcall GetFullUnitName(int unit);
 DLL_EXPORT int          __stdcall IsUnitDisabled(int unit);
 DLL_EXPORT int          __stdcall IsUnitDisabledByClient(int unit, int clientId);
+
 DLL_EXPORT void         __stdcall AddArchive(const char* name);
 DLL_EXPORT void         __stdcall AddAllArchives(const char* root);
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
+
 DLL_EXPORT int          __stdcall GetMapCount();
 DLL_EXPORT const char*  __stdcall GetMapName(int index);
 DLL_EXPORT int          __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
@@ -69,6 +77,7 @@ DLL_EXPORT int          __stdcall GetMapArchiveCount(const char* mapName);
 DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
 DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel);
+
 DLL_EXPORT int          __stdcall GetPrimaryModCount();
 DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
@@ -76,16 +85,39 @@ DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
 DLL_EXPORT int          __stdcall GetPrimaryModIndex(const char* name);
 DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
-DLL_EXPORT int          __stdcall GetLuaAICount();
-DLL_EXPORT const char*  __stdcall GetLuaAIName(int aiIndex);
+
 DLL_EXPORT int          __stdcall GetSideCount();
 DLL_EXPORT const char*  __stdcall GetSideName(int side);
+
+DLL_EXPORT int          __stdcall GetLuaAICount();
+DLL_EXPORT const char*  __stdcall GetLuaAIName(int aiIndex);
+
+DLL_EXPORT int          __stdcall GetMapOptionCount();
+DLL_EXPORT int          __stdcall GetModOptionCount();
+DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
+DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
+DLL_EXPORT int          __stdcall GetOptionBoolDef(int optIndex);
+DLL_EXPORT float        __stdcall GetOptionNumberDef(int optIndex);
+DLL_EXPORT float        __stdcall GetOptionNumberMin(int optIndex);
+DLL_EXPORT float        __stdcall GetOptionNumberMax(int optIndex);
+DLL_EXPORT float        __stdcall GetOptionNumberStep(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionStringDef(int optIndex);
+DLL_EXPORT int          __stdcall GetOptionStringMaxLen(int optIndex);
+DLL_EXPORT int          __stdcall GetOptionListCount(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionListDef(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionListItemKey(int optIndex, int itemIndex);
+DLL_EXPORT const char*  __stdcall GetOptionListItemName(int optIndex, int itemIndex);
+DLL_EXPORT const char*  __stdcall GetOptionListItemDesc(int optIndex, int itemIndex);
+
 DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
 DLL_EXPORT void         __stdcall CloseFileVFS(int handle);
 DLL_EXPORT void         __stdcall ReadFileVFS(int handle, void* buf, int length);
 DLL_EXPORT int          __stdcall FileSizeVFS(int handle);
 DLL_EXPORT int          __stdcall InitFindVFS(const char* pattern);
 DLL_EXPORT int          __stdcall FindFilesVFS(int handle, char* nameBuf, int size);
+
 DLL_EXPORT int          __stdcall OpenArchive(const char* name);
 DLL_EXPORT void         __stdcall CloseArchive(int archive);
 DLL_EXPORT int          __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
@@ -93,6 +125,12 @@ DLL_EXPORT int          __stdcall OpenArchiveFile(int archive, const char* name)
 DLL_EXPORT int          __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
 DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+static void DisplayOptions(int optionCount);
 
 
 /******************************************************************************/
@@ -160,9 +198,81 @@ int main(int argc, char** argv)
     printf("    %s\n", GetLuaAIName(i));
   }
 
+  // MapOptions
+  printf("  MapOptions\n");
+  const int mapOptCount = GetMapOptionCount();
+  DisplayOptions(mapOptCount);
+
+  // ModOptions
+  printf("  ModOptions\n");
+  const int modOptCount = GetModOptionCount();
+  DisplayOptions(modOptCount);
+
+  
+//  Init(true,  1);
+//  Init(false, 1);
+//  Init(true,  2);
+//  Init(false, 2);
+
   UnInit();
 
   return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+static void DisplayOptions(int optionCount)
+{
+  for (int i = 0; i < optionCount; i++) {
+    printf("    Option #%i\n", i);
+    printf("      key  = %s\n", GetOptionKey(i));
+    printf("      name = %s\n", GetOptionName(i));
+    printf("      desc = %s\n", GetOptionDesc(i));
+    printf("      type = %i\n", GetOptionType(i));
+
+    const int type = GetOptionType(i);
+
+    if (type == opt_error) {
+      printf("      BAD OPTION\n");
+    }
+    else if (type == opt_bool) {
+      printf("      BOOL: def = %s\n",
+             GetOptionBoolDef(i) ? "true" : "false");
+    }
+    else if (type == opt_string) {
+      printf("      STRING: def = %s, maxlen = %i\n",
+             GetOptionStringDef(i),
+             GetOptionStringMaxLen(i));
+    }
+    else if (type == opt_number) {
+      printf("      NUMBER: def = %f, min = %f, max = %f, step = %f\n",
+             GetOptionNumberDef(i),
+             GetOptionNumberMin(i),
+             GetOptionNumberMax(i),
+             GetOptionNumberStep(i));
+    }
+    else if (type == opt_list) {
+      printf("      LIST: def = %s\n",
+             GetOptionListDef(i));
+
+      const int listCount = GetOptionListCount(i);
+      for (int li = 0; li < listCount; li++) {
+/*
+        const string key  = GetOptionListItemKey(i, li);
+        const string name = GetOptionListItemName(i, li);
+        const string desc = GetOptionListItemDesc(i, li);
+        printf("      %i:  key = %s,  name = %s,  desc = %s\n", li,
+               key.c_str(), name.c_str(), desc.c_str());
+*/
+        printf("      %3i: key  = %s\n", li,
+                                         GetOptionListItemKey(i, li));
+        printf("           name = %s\n", GetOptionListItemName(i, li));
+        printf("           desc = %s\n", GetOptionListItemDesc(i, li));
+      }
+    }
+  }
 }
 
 
