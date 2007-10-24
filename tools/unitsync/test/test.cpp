@@ -10,7 +10,7 @@ echo Clipped $start lines
 
 g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
-./a.out Castles.smf ba52.sdd
+./a.out CastlesSDD.smf ba52.sdd
 
 exit
 
@@ -91,10 +91,10 @@ DLL_EXPORT const char*  __stdcall GetSideName(int side);
 
 DLL_EXPORT int          __stdcall GetLuaAICount();
 DLL_EXPORT const char*  __stdcall GetLuaAIName(int aiIndex);
+DLL_EXPORT const char*  __stdcall GetLuaAIDesc(int aiIndex);
 
-DLL_EXPORT int          __stdcall GetMapOptionCount();
+DLL_EXPORT int          __stdcall GetMapOptionCount(const char* name);
 DLL_EXPORT int          __stdcall GetModOptionCount();
-DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
@@ -107,7 +107,6 @@ DLL_EXPORT const char*  __stdcall GetOptionStringDef(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionStringMaxLen(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionListCount(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListDef(int optIndex);
-DLL_EXPORT const char*  __stdcall GetOptionListItemKey(int optIndex, int itemIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListItemName(int optIndex, int itemIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListItemDesc(int optIndex, int itemIndex);
 
@@ -195,12 +194,13 @@ int main(int argc, char** argv)
   printf("  LuaAI\n");
   const int luaAICount = GetLuaAICount();
   for (int i = 0; i < luaAICount; i++) {
-    printf("    %s\n", GetLuaAIName(i));
+    printf("    %i: name = %s\n", i, GetLuaAIName(i));
+    printf("       desc = %s\n",     GetLuaAIDesc(i));
   }
 
   // MapOptions
   printf("  MapOptions\n");
-  const int mapOptCount = GetMapOptionCount();
+  const int mapOptCount = GetMapOptionCount(map.c_str());
   DisplayOptions(mapOptCount);
 
   // ModOptions
@@ -227,7 +227,6 @@ static void DisplayOptions(int optionCount)
 {
   for (int i = 0; i < optionCount; i++) {
     printf("    Option #%i\n", i);
-    printf("      key  = %s\n", GetOptionKey(i));
     printf("      name = %s\n", GetOptionName(i));
     printf("      desc = %s\n", GetOptionDesc(i));
     printf("      type = %i\n", GetOptionType(i));
@@ -266,9 +265,8 @@ static void DisplayOptions(int optionCount)
         printf("      %i:  key = %s,  name = %s,  desc = %s\n", li,
                key.c_str(), name.c_str(), desc.c_str());
 */
-        printf("      %3i: key  = %s\n", li,
-                                         GetOptionListItemKey(i, li));
-        printf("           name = %s\n", GetOptionListItemName(i, li));
+        printf("      %3i: name = %s\n", li,
+                                         GetOptionListItemName(i, li));
         printf("           desc = %s\n", GetOptionListItemDesc(i, li));
       }
     }
