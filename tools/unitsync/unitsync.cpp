@@ -91,6 +91,38 @@ BOOL __stdcall DllMain(HINSTANCE hInst,
 }
 #endif
 
+
+// Helper class for loading a map archive temporarily
+
+class ScopedMapLoader {
+	public:
+		ScopedMapLoader(const string& mapName) : oldHandler(hpiHandler) {
+			CFileHandler f("maps/" + mapName);
+			if (f.FileExists()) {
+				return;
+			}
+
+			hpiHandler = new CVFSHandler();
+
+			const vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+			vector<string>::const_iterator it;
+			for (it = ars.begin(); it != ars.end(); ++it) {
+				hpiHandler->AddArchive(*it, false);
+			}
+		}
+
+		~ScopedMapLoader() {
+			if (hpiHandler != oldHandler) {
+				delete hpiHandler;
+				hpiHandler = oldHandler;
+			}
+		}
+
+	private:
+		CVFSHandler* oldHandler;
+};
+
+
 /**
  * @brief returns the version fo spring this was compiled with
  *
@@ -374,27 +406,18 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetMapInfo.");
 	ASSERT(name && *name && outInfo, "Don't pass a NULL pointer or an empty string to GetMapInfo.");
 
-	// Determine if the map is found in an archive
-	string mapName = name;
-	CVFSHandler *oh = hpiHandler;
+	const string mapName = name;
+	ScopedMapLoader mapLoader(mapName);
 
-	{
-		CFileHandler f("maps/" + mapName);
-		if (!f.FileExists()) {
-			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-
-			hpiHandler = new CVFSHandler();
-			for (vector<string>::iterator it = ars.begin(); it != ars.end(); ++it)
-				hpiHandler->AddArchive(*it, false);
-		}
-	}
+	const string extension = mapName.substr(mapName.length() - 3);
 
 	TdfParser parser;
-	string extension = mapName.substr(mapName.length()-3), maptdf;
-	if (extension == "smf")
-		maptdf = string("maps/")+mapName.substr(0,mapName.find_last_of('.'))+".smd";
-	else if(extension == "sm3")
-		maptdf = string("maps/")+mapName;
+	string maptdf;
+	if (extension == "smf") {
+		maptdf = string("maps/") + mapName.substr(0, mapName.find_last_of('.')) + ".smd";
+	} else if(extension == "sm3") {
+		maptdf = string("maps/") + mapName;
+	}
 
 	string err("");
 	try {
@@ -404,8 +427,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	}
 
 	// Retrieve the map header as well
-	if (extension == "smf")
-	{
+	if (extension == "smf") {
 		MapHeader mh;
 		string origName = name;
 		mh.mapx = -1;
@@ -417,14 +439,8 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 		}
 		outInfo->width = mh.mapx * SQUARE_SIZE;
 		outInfo->height = mh.mapy * SQUARE_SIZE;
-
-		if (hpiHandler != oh) {
-			delete hpiHandler;
-			hpiHandler = oh;
-		}
 	}
-	else
-	{
+	else {
 		int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
 		int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
 
@@ -445,11 +461,12 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	}
 
 	// Make sure we found stuff in both the smd and the header
-	if ( !parser.SectionExist("MAP") ) {
+	if (!parser.SectionExist("MAP")) {
 		return 0;
 	}
-	if (outInfo->width < 0)
+	if (outInfo->width < 0) {
 		return 0;
+	}
 
 	map<string, string> values = parser.GetAllValues("MAP");
 
@@ -700,34 +717,17 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	ASSERT(filename && *filename, "Don't pass a NULL pointer or an empty string to GetMinimap.");
 	ASSERT(miplevel >= 0 && miplevel <= 10, "Miplevel must be between 0 and 10 (inclusive) in GetMinimap.");
 
-	// Determine if the map is found in an archive
-	string mapName = filename;
-	string extension = mapName.substr(mapName.length()-3);
-	CVFSHandler *oh = hpiHandler; // original handler, so hpiHandler can be restored later
+	const string mapName = filename;
+	ScopedMapLoader mapLoader(mapName);
 
-	{
-		CFileHandler f("maps/" + mapName);
-		if (!f.FileExists()) {
-			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+	const string extension = mapName.substr(mapName.length() - 3);
 
-			if (ars.empty())
-				return NULL;
+	void* ret = NULL;
 
-			hpiHandler = new CVFSHandler();
-			hpiHandler->AddArchive(ars[0], false);
-		}
-	}
-
-	void *ret = 0;
-	if (extension == "smf")
+	if (extension == "smf") {
 		ret = GetMinimapSMF(mapName, miplevel);
-	else if (extension == "sm3")
+	} else if (extension == "sm3") {
 		ret = GetMinimapSM3(mapName, miplevel);
-
-	// Restore VFS
-	if (hpiHandler != oh) {
-		delete hpiHandler;
-		hpiHandler = oh;
 	}
 
 	return ret;
@@ -958,7 +958,14 @@ DLL_EXPORT const char* __stdcall GetSideName(int side)
 //////////////////////////
 //////////////////////////
 
-vector<string> luaAIOptions;
+struct LuaAIData {
+	string name;
+	string desc;
+};
+
+
+vector<LuaAIData> luaAIOptions;
+
 
 static void GetLuaAIOptions()
 {
@@ -974,7 +981,29 @@ static void GetLuaAIOptions()
 		return;
 	}
 
-	root.GetKeys(luaAIOptions);
+	for (int i = 1; root.KeyExists(i); i++) {
+		LuaAIData aiData;
+
+		// string format
+		aiData.name = root.GetString(i, "");
+		if (!aiData.name.empty()) {
+			aiData.desc = aiData.name;
+			luaAIOptions.push_back(aiData);
+			continue;
+		}
+
+		// table format  (name & desc)
+		const LuaTable& optTbl = root.SubTable(i);
+		if (!optTbl.IsValid()) {
+			continue;
+		}
+		aiData.name = optTbl.GetString("name", "");
+		if (aiData.name.empty()) {
+			continue;
+		}
+		aiData.desc = optTbl.GetString("desc", aiData.name);
+		luaAIOptions.push_back(aiData);
+	}
 
 	return;
 }
@@ -992,7 +1021,16 @@ DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
 	if ((aiIndex < 0) || (aiIndex >= luaAIOptions.size())) {
 		return NULL;
 	}
-	return GetStr(luaAIOptions[aiIndex]);
+	return GetStr(luaAIOptions[aiIndex].name);
+}
+
+
+DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
+{
+	if ((aiIndex < 0) || (aiIndex >= luaAIOptions.size())) {
+		return NULL;
+	}
+	return GetStr(luaAIOptions[aiIndex].desc);
 }
 
 
@@ -1000,7 +1038,6 @@ DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
 //////////////////////////
 
 struct ListItem {
-	string key;
 	string name;
 	string desc;
 };
@@ -1009,10 +1046,10 @@ struct ListItem {
 struct CustomOption {
 	CustomOption() : typeCode(opt_error) {}
 
-	string key;
 	string name;
 	string desc;
-	string type; // bool, number, string, list
+
+	string type; // "bool", "number", "string", "list"
 
 	OptionType typeCode;
 
@@ -1042,11 +1079,10 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 	}
 
 	// common options properties
-	opt.key = optTbl.GetString("key", "");
-	if (opt.key.empty()) {
+	opt.name = optTbl.GetString("name", "");
+	if (opt.name.empty()) {
 		return false;
 	}
-	opt.name = optTbl.GetString("name", opt.key);
 	opt.desc = optTbl.GetString("desc", opt.name);
 	opt.type = optTbl.GetString("type", "");
 
@@ -1078,16 +1114,25 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 		}
 
 		for (int i = 1; listTbl.KeyExists(i); i++) {
+			ListItem item;
+
+			// string format
+			item.name = listTbl.GetString(i, "");
+			if (!item.name.empty()) {
+				item.desc = item.name;
+				opt.list.push_back(item);
+				continue;
+			}
+				
+			// table format  (name & desc)
 			const LuaTable& itemTbl = listTbl.SubTable(i);
 			if (!itemTbl.IsValid()) {
 				break;
 			}
-			ListItem item;
-			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty()) {
+			item.name = itemTbl.GetString("name", "");
+			if (item.name.empty()) {
 				return false;
 			}
-			item.name = itemTbl.GetString("name", item.key);
 			item.desc = itemTbl.GetString("desc", item.name);
 			opt.list.push_back(item);
 		}
@@ -1096,7 +1141,7 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 			return false; // no empty lists
 		}
 
-		opt.listDef = optTbl.GetString("def", opt.list[0].key);
+		opt.listDef = optTbl.GetString("def", opt.list[0].name);
 	}
 	else {
 		return false; // unknown type
@@ -1154,9 +1199,17 @@ static bool WrongOptionType(int optIndex, int type)
 }
 
 
-DLL_EXPORT int __stdcall GetMapOptionCount()
+DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 {
+	ASSERT(archiveScanner && hpiHandler,
+	       "Call InitArchiveScanner before GetMapOptionCount.");
+	ASSERT(name && *name,
+				 "Don't pass a NULL pointer or an empty string to GetMapOptionCount.");
+
+	ScopedMapLoader mapLoader(name);
+
 	ParseCustomOptions("CustomMapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP);
+
 	return (int)customOptions.size();
 }
 
@@ -1169,15 +1222,6 @@ DLL_EXPORT int __stdcall GetModOptionCount()
 
 
 // Common Parameters
-
-DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
-{
-	if (InvalidOptionIndex(optIndex)) {
-		return NULL;
-	}
-	return GetStr(customOptions[optIndex].key);
-}
-
 
 DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
 {
@@ -1292,19 +1336,6 @@ DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
 		return 0;
 	}
 	return GetStr(customOptions[optIndex].listDef);
-}
-
-
-DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemIndex)
-{
-	if (WrongOptionType(optIndex, opt_list)) {
-		return NULL;
-	}
-	const vector<ListItem>& list = customOptions[optIndex].list;
-	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
-		return NULL;
-	}
-	return GetStr(list[itemIndex].key);
 }
 
 
