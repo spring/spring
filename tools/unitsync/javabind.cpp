@@ -83,7 +83,7 @@ DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
 
 // lua custom lobby settings
-DLL_EXPORT int			__stdcall GetMapOptionCount();
+DLL_EXPORT int			__stdcall GetMapOptionCount(const char* name);
 DLL_EXPORT int			__stdcall GetModOptionCount();
 
 DLL_EXPORT const char*	__stdcall GetOptionKey(int optIndex);
@@ -791,18 +791,16 @@ extern "C" {
 			
 		// lua custom lobby settings
 		JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_GetMapOptionCount
-			(JNIEnv *env, jclass myobject){
-				return GetMapOptionCount();
+			(JNIEnv *env, jclass myobject, jstring mapName){
+				const char* c = env->GetStringUTFChars(mapName,0);
+				int i = GetMapOptionCount(c);
+				env->ReleaseStringUTFChars(mapName,c);
+				return i;
 		}
 
 		JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_GetModOptionCount
 			(JNIEnv *env, jclass myobject){
 				return GetModOptionCount();
-		}
-
-		JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionKey
-			(JNIEnv *env, jclass myobject, jint optIndex){
-				return env->NewStringUTF(GetOptionKey(optIndex));
 		}
 
 		JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionName
@@ -869,11 +867,6 @@ extern "C" {
 		JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListDef
 			(JNIEnv *env, jclass myobject, jint optIndex){
 				return env->NewStringUTF(GetOptionListDef(optIndex));
-		}
-
-		JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListItemKey
-			(JNIEnv *env, jclass myobject, jint optIndex, jint itemIndex){
-				return env->NewStringUTF(GetOptionListItemKey(optIndex,itemIndex));
 		}
 
 		JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListItemName
