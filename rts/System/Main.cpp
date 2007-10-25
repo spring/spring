@@ -48,6 +48,9 @@
 #include <SDL_main.h>
 #include <SDL_syswm.h>
 
+#include <assert.h>
+#include <signal.h>
+
 #ifdef WIN32
 #ifdef __GNUC__
 	#include "Platform/Win/CrashHandler.h"
@@ -193,7 +196,18 @@ protected:
 	bool FSAA;
 
 	int2 prevMousePos;
+private:
+	static void SigAbrtHandler(int unused);
 };
+
+void SpringApp::SigAbrtHandler(int unused)
+{
+	// cause an exception if on windows
+	// TODO FIXME do a proper stacktrace dump here
+	#ifdef WIN32
+	*((int*)(0)) = 0;
+	#endif
+}
 
 /**
  * Initializes SpringApp variables
@@ -206,6 +220,8 @@ SpringApp::SpringApp ()
 
 	fullscreen = true;
 	FSAA = false;
+
+	signal(SIGABRT, SigAbrtHandler);
 }
 
 /**
