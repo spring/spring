@@ -1097,14 +1097,17 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "pause") {
-		bool newPause;
-		if (action.extra.empty()) {
-			newPause = !gs->paused;
-		} else {
-			newPause = !!atoi(action.extra.c_str());
+		// disallow pausing prior to start of game proper
+		if (playing) {
+			bool newPause;
+			if (action.extra.empty()) {
+				newPause = !gs->paused;
+			} else {
+				newPause = !!atoi(action.extra.c_str());
+			}
+			net->SendPause(gu->myPlayerNum, newPause);
+			lastframe = SDL_GetTicks(); // this required here?
 		}
-		net->SendPause(gu->myPlayerNum, newPause);
-		lastframe = SDL_GetTicks(); // this required here?
 	}
 	else if (cmd == "singlestep") {
 		gameServer->CreateNewFrame(false);
