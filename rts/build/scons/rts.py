@@ -343,7 +343,7 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
-		bool_opt('strip', True)
+		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
