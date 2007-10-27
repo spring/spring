@@ -40,7 +40,6 @@ CLuaRules* luaRules = NULL;
 
 string CLuaRules::configString;
 
-static const char* LuaRulesDir              = "LuaRules";
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 

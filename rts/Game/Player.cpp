@@ -93,7 +93,7 @@ void CPlayer::StopControllingUnit()
 		gu->directControl=0;
 
 		/* Switch back to the camera we were using before. */
-		cam->PopMode();
+		camHandler->PopMode();
 		
 		if (mouse->locked && !mouse->wasLocked){
 			mouse->locked = false;

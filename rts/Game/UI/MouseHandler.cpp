@@ -174,7 +174,7 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 
 	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL)) {
-		cam->currentCamController->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
+		camHandler->currCamCtrl->MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		unitTracker.Disable();
 		return;
 	}
@@ -290,7 +290,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f)) {
 			if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-				cam->ToggleState();
+				camHandler->ToggleState();
 			else
 				ToggleState();
 		}
@@ -465,7 +465,7 @@ void CMouseHandler::MouseWheel(bool up)
 	if (luaUI && luaUI->MouseWheel(up, value)) {
 		return;
 	}
-	cam->currentCamController->MouseWheelMove(value);
+	camHandler->currCamCtrl->MouseWheelMove(value);
 }
 
 
@@ -647,7 +647,7 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	move.x = dx;
 	move.y = dy;
 	move.z = invertMouse? -1.0f : 1.0f;
-	cam->currentCamController->MouseMove(move);
+	camHandler->currCamCtrl->MouseMove(move);
 
 	if (gu->active) {
 		mouseInput->SetPos(int2(lastx, lasty));

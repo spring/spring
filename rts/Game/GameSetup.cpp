@@ -428,7 +428,7 @@ bool CGameSetup::Update()
 	if(allReady){
 		if(readyTime==0 && !net->IsDemoServer()){
 			int mode=configHandler.GetInt("CamMode",1);
-			cam->SetCameraMode(mode);
+			camHandler->SetCameraMode(mode);
 			readyTime = SDL_GetTicks();
 		}
 	}

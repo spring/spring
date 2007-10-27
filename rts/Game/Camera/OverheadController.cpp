@@ -102,7 +102,7 @@ void COverheadController::MouseWheelMove(float move)
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
 		if (keys[SDLK_LALT]) {
 			zscale = 0.5f;
-			cam->CameraTransition(1.0f);
+			camHandler->CameraTransition(1.0f);
 		} else {
 			changeAltHeight = true;
 		}

@@ -243,7 +243,7 @@ void CUnitTracker::SetCam()
 		lastFollowUnit=0;
 	}
 
-	CFPSController* fpsCamera = (CFPSController*) cam->camControllers[0];
+	CFPSController* fpsCamera = (CFPSController*) camHandler->camControllers[0];
 
 	if(timeOut>0){
 		timeOut++;
@@ -258,7 +258,7 @@ void CUnitTracker::SetCam()
 	}
 
 	// non-FPS camera modes  (immediate positional tracking)
-	if (cam->currentCamController != cam->camControllers[0]) {
+	if (camHandler->currCamCtrl != camHandler->camControllers[0]) {
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
@@ -274,7 +274,7 @@ void CUnitTracker::SetCam()
 				break;
 			}
 		}
-		CCameraController* currentCam = cam->currentCamController;
+		CCameraController* currentCam = camHandler->currCamCtrl;
 		currentCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
 		return;
 	}

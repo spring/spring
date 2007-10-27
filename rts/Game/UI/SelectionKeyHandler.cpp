@@ -513,9 +513,9 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			return;
 
 		selectedUnits.AddUnit(sel);
-		cam->CameraTransition(0.8f);
-		if(cam->currentCamController!=cam->camControllers[0]){
-			cam->currentCamController->SetPos(sel->pos);
+		camHandler->CameraTransition(0.8f);
+		if(camHandler->currCamCtrl!=camHandler->camControllers[0]){
+			camHandler->currCamCtrl->SetPos(sel->pos);
 		} else {	//fps camera
 
 			if(camera->rot.x>-1)
@@ -527,7 +527,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			wantedCamDir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
 			wantedCamDir.Normalize();
 
-			((CFPSController*)cam->camControllers[0])->SetPos(sel->pos - wantedCamDir*800);
+			((CFPSController*)camHandler->camControllers[0])->SetPos(sel->pos - wantedCamDir*800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

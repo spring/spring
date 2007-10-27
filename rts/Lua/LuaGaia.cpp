@@ -30,7 +30,6 @@ CLuaGaia* luaGaia = NULL;
 
 string CLuaGaia::configString;
 
-static const char* LuaGaiaDir              = "LuaGaia";
 static const char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
 static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 

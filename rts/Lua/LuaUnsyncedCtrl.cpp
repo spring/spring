@@ -480,8 +480,8 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 		transTime = (float)lua_tonumber(L, 4);
 	}
 
-	cam->currentCamController->SetPos(pos);
-	cam->CameraTransition(transTime);
+	camHandler->currCamCtrl->SetPos(pos);
+	camHandler->CameraTransition(transTime);
 
 	return 0;
 }
@@ -505,7 +505,8 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	lua_gettable(L, table);
 	if (lua_isnumber(L, -1)) {
 		const int camNum = (int)lua_tonumber(L, -1);
-		cam->SetCameraMode(camNum);
+		camHandler->SetCameraMode(camNum);
+		camHandler->CameraTransition(camTime);
 	}
 
 	vector<float> camState;
@@ -523,7 +524,8 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, cam->currentCamController->SetState(camState));
+	lua_pushboolean(L, camHandler->currCamCtrl->SetState(camState));
+	camHandler->CameraTransition(camTime);
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 1;
@@ -705,6 +707,7 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawSky()");
 	}
 	game->drawSky = !!lua_toboolean(L, 1);
+	return 0;
 }
 
 
@@ -717,6 +720,7 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawWater()");
 	}
 	game->drawWater = !!lua_toboolean(L, 1);
+	return 0;
 }
 
 
@@ -729,6 +733,7 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawGround()");
 	}
 	game->drawGround = !!lua_toboolean(L, 1);
+	return 0;
 }
 
 

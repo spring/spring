@@ -29,7 +29,6 @@
 
 CLuaCob* luaCob = NULL;
 
-static const char* LuaCobDir              = "LuaCob";
 static const char* LuaCobSyncedFilename   = "LuaCob/main.lua";
 static const char* LuaCobUnsyncedFilename = "LuaCob/draw.lua";
 
