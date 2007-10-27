@@ -21,6 +21,7 @@ public:
 		float3 pathGoal;
 		std::list<float3> path;
 		float pathCost;
+		float pathTime;
 	};
 };
 

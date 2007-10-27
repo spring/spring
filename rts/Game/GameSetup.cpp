@@ -131,9 +131,9 @@ bool CGameSetup::Init(const char* buf, int size)
 	delete f;
 
 	file.GetDef(myPlayer,"0","GAME\\MyPlayerNum");
-	gu->myPlayerNum=myPlayer;
-	file.GetDef(numPlayers,"2","GAME\\NumPlayers");
-	file.GetDef(gs->activeTeams,"2","GAME\\NumTeams");
+	gu->myPlayerNum = myPlayer;
+	file.GetDef(numPlayers,         "2","GAME\\NumPlayers");
+	file.GetDef(gs->activeTeams,    "2","GAME\\NumTeams");
 	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
 
 	int startPosTypeInt;
@@ -206,13 +206,20 @@ bool CGameSetup::Init(const char* buf, int size)
 
  		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
  		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
- 		gs->Team(a)->side = StringToLower(file.SGetValueDef("arm",s+"side").c_str());
+ 		gs->Team(a)->side=StringToLower(file.SGetValueDef("arm",s+"side").c_str());
  		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
 
-		if (demoName.empty())
-			aiDlls[a]=file.SGetValueDef("",s+"aidll");
-		else
-			aiDlls[a]="";
+ 		const string aiDll = file.SGetValueDef("", s + "aidll");
+    if (aiDll.substr(0, 6) == "LuaAI:") {
+    	gs->Team(a)->luaAI = aiDll.substr(6);
+		}
+		else {
+			if (demoName.empty()) {
+				aiDlls[a] = aiDll;
+			} else {
+				aiDlls[a] = "";
+			}
+		}
 
 		float x,z;
 		char teamName[50];
@@ -277,6 +284,10 @@ bool CGameSetup::Init(const char* buf, int size)
 
 		restrictedUnits[resName] = resLimit;
 	}
+
+	// read the custom map / mod options
+	customMapOptions = file.GetAllValues("GAME\\MapOptions");
+	customModOptions = file.GetAllValues("GAME\\ModOptions");
 
 	// setup the gaia team
 	if (gs->useLuaGaia) {

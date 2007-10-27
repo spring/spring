@@ -86,13 +86,16 @@ public:
 
 	virtual void SlowUpdate();
 	virtual void Update();
+
 	virtual void Draw();
 	void DrawRaw();
 	void DrawModel();
+	void DrawRawModel();
 	void DrawDebug();
 	void DrawBeingBuilt();
 	void DrawWithLists(unsigned int preList, unsigned int postList);
 	void DrawRawWithLists(unsigned int preList, unsigned int postList);
+
 	void SetDirectionFromHeading();
 
 	void ApplyTransformMatrix() const;
@@ -293,8 +296,9 @@ public:
 	bool	falling;	//for units being dropped from transports (parachute drops)
 	float	fallSpeed; 
 
-	float3 bonusShieldDir;			//units takes less damage when attacked from this dir (encourage flanking fire)
+	float bonusShieldEnabled;		//defaults to true in UnitDefHandler
 	float bonusShieldSaved;			//how much the bonus shield can turn upon an attack(zeroed when attacked, slowly increase)
+	float3 bonusShieldDir;			//units takes less damage when attacked from this dir (encourage flanking fire)
 
 	bool armoredState;
 	float armoredMultiple;
@@ -329,6 +333,7 @@ public:
 
 	float currentFuel;
 
+	bool luaDraw;
 	bool noDraw;
 	bool noSelect;
 	bool noMinimap;

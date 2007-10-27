@@ -166,7 +166,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 
 	//Map common function names to indicies
-	scriptIndex.resize(COBFN_Last + COB_MaxWeapons * 6);
+	scriptIndex.resize(COBFN_Last + COB_MaxWeapons * 7);
 	scriptIndex[COBFN_Create] = getFunctionId("Create");
 	scriptIndex[COBFN_StartMoving] = getFunctionId("StartMoving");
 	scriptIndex[COBFN_StopMoving] = getFunctionId("StopMoving");
@@ -198,6 +198,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		scriptIndex[COBFN_FirePrimary + i] = getFunctionId("Fire" + weapon);
 		scriptIndex[COBFN_EndBurst + i] = getFunctionId("EndBurst" + weap);
 		scriptIndex[COBFN_Shot + i] = getFunctionId("Shot" + weap);
+		scriptIndex[COBFN_BlockShot + i] = getFunctionId("BlockShot" + weap);
 
 		// If new-naming functions are not found, we need to support the old naming scheme
 		if (i > 2)

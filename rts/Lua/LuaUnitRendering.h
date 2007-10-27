@@ -29,6 +29,8 @@ class LuaUnitRendering {
 		static int CreateUnitUniforms(lua_State* L);
 		static int SetUnitUniform(lua_State* L);
 
+		static int SetUnitLuaDraw(lua_State* L);
+
 		static int Debug(lua_State* L);
 };
 

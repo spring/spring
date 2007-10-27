@@ -26,7 +26,9 @@ CR_REG_METADATA(MoveData, (
 		CR_MEMBER(pathType),
 		CR_MEMBER(moveMath),
 		CR_MEMBER(crushStrength),
-		CR_MEMBER(moveFamily)));
+		CR_MEMBER(moveFamily),
+
+		CR_MEMBER(name)));
 
 CR_REG_METADATA(CMoveInfo, (
 		CR_MEMBER(moveData),
@@ -62,6 +64,8 @@ CMoveInfo::CMoveInfo()
 	
 		MoveData* md = SAFE_NEW MoveData;
 		const string name = moveTable.GetString("name", "");
+
+		md->name = name;
 
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
@@ -122,8 +126,18 @@ CMoveInfo::~CMoveInfo()
 }
 
 
-MoveData* CMoveInfo::GetMoveDataFromName(std::string name)
+MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name, bool exactMatch)
 {
+	if (!exactMatch) {
+		return moveData[name2moveData[name]];
+	}
+	else {
+		map<string, int>::const_iterator it = name2moveData.find(name);
+		if (it == name2moveData.end()) {
+			return NULL;
+		}
+		return moveData[it->second];
+	}
 	return moveData[name2moveData[name]];
 }
 

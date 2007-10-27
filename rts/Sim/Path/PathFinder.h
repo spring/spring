@@ -56,12 +56,16 @@ public:
 			The maximum number of nodes/squares the search are allowed to analyze.
 			This restriction could be used in cases where CPU-consumption are critical.
 	*/
-	SearchResult GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath = false, unsigned int maxSearchedNodes = 10000,bool needPath=true);
+	SearchResult GetPath(const MoveData& moveData, const float3 startPos,
+	                     const CPathFinderDef& pfDef, Path& path,
+	                     bool testMobile, bool exactPath = false,
+	                     unsigned int maxSearchedNodes = 10000, bool needPath = true);
 
-	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path);
+	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
+	                     const CPathFinderDef& pfDef, Path& path);
 	
 	//Minimum distance between two waypoints.
-	enum { PATH_RESOLUTION = 2*SQUARE_SIZE };
+	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
 
 private:  
 	enum { MAX_SEARCHED_SQUARES = 10000 };

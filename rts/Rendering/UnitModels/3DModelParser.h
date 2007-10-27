@@ -5,12 +5,33 @@
 #include <string>
 #include "Matrix44f.h"
 
+using namespace std;
+
+
 struct S3DO;
 struct SS3O;
 class	C3DOParser;
 class	CS3OParser;
+struct S3DOModel;
+struct LocalS3DOModel;
 
-using namespace std;
+
+class C3DModelParser
+{
+public:
+	C3DModelParser(void);
+	~C3DModelParser(void);
+
+	S3DOModel* Load3DO(string name,float scale=1,int side=1);
+	S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);	
+	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
+
+	C3DOParser* unit3doparser;
+	CS3OParser* units3oparser;
+};
+
+extern C3DModelParser* modelParser;
+
 
 struct S3DOModel
 {
@@ -30,6 +51,7 @@ struct S3DOModel
 
 };
 
+
 struct PieceInfo;
 
 struct LocalS3DO
@@ -45,9 +67,11 @@ struct LocalS3DO
 	PieceInfo *anim;
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
-	void GetPiecePosIter(CMatrix44f* mat) const;
 	void SetLODCount(unsigned int count);
+	void ApplyTransform() const;
+	void GetPiecePosIter(CMatrix44f* mat) const;
 };
+
 
 struct LocalS3DOModel
 {	
@@ -59,33 +83,109 @@ struct LocalS3DOModel
 
 	LocalS3DOModel() : lodCount(0) {};
 	~LocalS3DOModel();
+
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
-	bool PieceExists(int piecenum) const;
-	float3 GetPiecePos(int piecenum) const;
-	CMatrix44f GetPieceMatrix(int piecenum) const;
-	float3 GetPieceDirection(int piecenum) const;
-	int GetPieceVertCount(int piecenum) const;
-
-	//helper function for emit-sfx, get position and direction for a specific piece
-	void GetEmitDirPos(int piecenum, float3 &pos, float3 &dir) const;
 	void SetLODCount(unsigned int count);
+
+	int ScriptToArray(int piecenum) const;
+
+	bool PieceExists(int scriptnum) const;
+
+	void ApplyPieceTransform(int scriptnum) const;
+	float3 GetPiecePos(int scriptnum) const;
+	CMatrix44f GetPieceMatrix(int scriptnum) const;
+	float3 GetPieceDirection(int scriptnum) const;
+	int GetPieceVertCount(int scriptnum) const;
+	void GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const;
+
+	// raw forms, the piecenum must be valid
+	void ApplyRawPieceTransform(int piecenum) const;
+	float3 GetRawPiecePos(int piecenum) const;
+	CMatrix44f GetRawPieceMatrix(int piecenum) const;
+	float3 GetRawPieceDirection(int piecenum) const;
+	int GetRawPieceVertCount(int piecenum) const;
+	void GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const;
 };
 
-class C3DModelParser
+
+inline int LocalS3DOModel::ScriptToArray(int scriptnum) const
 {
-public:
-	C3DModelParser(void);
-	~C3DModelParser(void);
+	if ((scriptnum < 0) || (scriptnum >= numpieces)) {
+		return -1;
+	}
+	return scritoa[scriptnum];
+}
 
-	S3DOModel* Load3DO(string name,float scale=1,int side=1);
-	S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);	
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
 
-	C3DOParser* unit3doparser;
-	CS3OParser* units3oparser;
-};
+inline bool LocalS3DOModel::PieceExists(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return false;
+	}
+	return true;
+}
 
-extern C3DModelParser* modelParser;
+
+inline void LocalS3DOModel::ApplyPieceTransform(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return;
+	}
+	ApplyRawPieceTransform(p);
+}
+
+
+inline float3 LocalS3DOModel::GetPiecePos(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return ZeroVector;
+	}
+	return GetRawPiecePos(p);
+}
+
+
+inline CMatrix44f LocalS3DOModel::GetPieceMatrix(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return CMatrix44f();
+	}
+	return GetRawPieceMatrix(p);
+}
+
+
+inline float3 LocalS3DOModel::GetPieceDirection(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return float3(1.0f, 1.0f, 1.0f);
+	}
+	return GetRawPieceDirection(p);
+}
+
+
+inline int LocalS3DOModel::GetPieceVertCount(int scriptnum) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return 0;
+	}
+	return GetRawPieceVertCount(p);
+}
+
+
+inline void LocalS3DOModel::GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const
+{
+	const int p = ScriptToArray(scriptnum);
+	if (p < 0) {
+		return;
+	}
+	return GetRawEmitDirPos(p, pos, dir);
+}
+
 
 #endif /* SPRING_3DMODELPARSER_H */

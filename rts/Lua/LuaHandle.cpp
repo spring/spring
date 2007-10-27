@@ -6,10 +6,16 @@
 #include "LuaHandle.h"
 #include <string>
 
+#include "Game/UI/LuaUI.h"
+#include "Lua/LuaCob.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
+
 #include "LuaCallInHandler.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
+#include "Game/Player.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -351,7 +357,7 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 
 
 void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
-                             float damage, bool paralyzer)
+                             float damage, int weaponID, bool paralyzer)
 {
 	static const LuaHashString cmdStr("UnitDamaged");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -364,11 +370,15 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (fullRead && (attacker != NULL)) {
-		lua_pushnumber(L, attacker->id);
-		lua_pushnumber(L, attacker->unitDef->id);
-		lua_pushnumber(L, attacker->team);
-		argCount += 3;
+	if (fullRead) {
+		lua_pushnumber(L, weaponID);
+		argCount += 1;
+		if (attacker != NULL) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, attacker->team);
+			argCount += 3;
+		}
 	}
 
 	// call the routine
@@ -590,6 +600,79 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 	return;
 }
 
+
+bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
+{
+	static const LuaHashString cmdStr("RecvLuaMsg");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return false;
+	}
+
+	lua_pushlstring(L, msg.data(), msg.size()); // allow embedded 0's
+	lua_pushnumber(L, playerID);
+
+	// call the routine
+	if (!RunCallIn(cmdStr, 2, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+/******************************************************************************/
+
+void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
+                              const string& msg)
+{
+	if (script == LUA_HANDLE_ORDER_UI) {
+		if (luaUI) {
+			bool sendMsg = false;
+			if (mode == 0) {
+				sendMsg = true;
+			}
+			else if (mode == 's') {
+				sendMsg = gu->spectating;
+			}
+			else if (mode == 'a') {
+				const CPlayer* player = gs->players[playerID];
+				if (player == NULL) {
+					return;
+				}
+				if (player->spectator) {
+					sendMsg = gu->spectating;
+				} else {
+					const int msgAllyTeam = gs->AllyTeam(player->team);
+					sendMsg = gs->Ally(msgAllyTeam, gu->myAllyTeam);
+				}
+			}
+			if (sendMsg) {
+				luaUI->RecvLuaMsg(msg, playerID);
+			}
+		}
+	}
+	else if (script == LUA_HANDLE_ORDER_COB) {
+		if (luaCob) {
+			luaCob->RecvLuaMsg(msg, playerID);
+		}
+	}
+	else if (script == LUA_HANDLE_ORDER_GAIA) {
+		if (luaGaia) {
+			luaGaia->RecvLuaMsg(msg, playerID);
+		}
+	}
+	else if (script == LUA_HANDLE_ORDER_RULES) {
+		if (luaRules) {
+			luaRules->RecvLuaMsg(msg, playerID);
+		}
+	}
+}
+	
 
 /******************************************************************************/
 
@@ -860,7 +943,7 @@ bool CLuaHandle::AddBasicCalls()
 	}
 	lua_rawset(L, -3);
 
-	// boolean operations
+	// extra math utilities
 	lua_getglobal(L, "math");
 	LuaBitOps::PushEntries(L);
 	lua_pop(L, 1);

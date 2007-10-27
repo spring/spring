@@ -452,6 +452,15 @@ void CGameServer::ServerReadNet()
 						}
 						break;
 
+					case NETMSG_LUAMSG:
+						if(inbuf[3]!=a){
+							SendSystemMsg("Server: Warning got LuaMsg from %i claiming to be from %i",a,inbuf[3]);
+						}
+						else if(!play) {
+							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+						}
+						break;
+
 					case NETMSG_SYNCRESPONSE:
 #ifdef SYNCCHECK
 						if(inbuf[1]!=a){
@@ -812,7 +821,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 				for (unsigned a=1;a<gs->activePlayers;++a){
 					if (gs->players[a]->active){
 						std::string playerLower = StringToLower(gs->players[a]->playerName);
-						if (playerLower.find(name)==0){               //can kick on substrings of name
+						if (playerLower.find(name)==0) {               //can kick on substrings of name
 							KickPlayer(a);
 						}
 					}
@@ -820,8 +829,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".nopause") == 0) && (player == 0))
-	{
+	else if ((msg.find(".nopause") == 0) && (player == 0)) {
 		SetBoolArg(gamePausable, msg, ".nopause");
 	}
 	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
@@ -829,8 +837,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 		if (userSpeedFactor > maxUserSpeed) {
 			serverNet->SendUserSpeed(player, maxUserSpeed);
 			userSpeedFactor = maxUserSpeed;
-			if (internalSpeed > maxUserSpeed)
-			{
+			if (internalSpeed > maxUserSpeed) {
 				serverNet->SendInternalSpeed(userSpeedFactor);
 				internalSpeed = userSpeedFactor;
 			}
@@ -841,18 +848,15 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 		if (userSpeedFactor < minUserSpeed) {
 			serverNet->SendUserSpeed(player, minUserSpeed);
 			userSpeedFactor = minUserSpeed;
-			if (internalSpeed < minUserSpeed)
-			{
+			if (internalSpeed < minUserSpeed) {
 				serverNet->SendInternalSpeed(userSpeedFactor);
 				internalSpeed = userSpeedFactor;
 			}
 		}
 	}
-	else
-	{
+	else {
 		serverNet->SendChat(player, msg);
-		if (hostif)
-		{
+		if (hostif) {
 			hostif->SendPlayerChat(player, msg);
 		}
 	}

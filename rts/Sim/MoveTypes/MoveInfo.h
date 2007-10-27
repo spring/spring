@@ -26,6 +26,8 @@ struct MoveData{
 	CMoveMath* moveMath;
 	float crushStrength;
 	int moveFamily;				//0=tank,1=kbot,2=hover,3=ship
+
+	std::string name;
 };
 
 class CMoveInfo
@@ -37,7 +39,7 @@ public:
 
 	std::vector<MoveData*> moveData;
 	std::map<std::string,int> name2moveData;
-	MoveData* GetMoveDataFromName(std::string name);
+	MoveData* GetMoveDataFromName(const std::string& name, bool exactMatch = false);
 	unsigned int moveInfoChecksum;
 
 	float terrainType2MoveFamilySpeed[256][4];

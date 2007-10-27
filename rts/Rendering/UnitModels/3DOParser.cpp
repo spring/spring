@@ -31,6 +31,7 @@
 
 using namespace std;
 
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -67,6 +68,7 @@ do {								\
 	(o).OffsetToChildObject = (int)swabdword(__tmp);	\
 } while (0)
 
+
 #define READ_VERTEX(v)					\
 do {							\
 	unsigned int __tmp;				\
@@ -78,6 +80,7 @@ do {							\
 	SimStreamRead(&__tmp,__isize);			\
 	(v).z = (int)swabdword(__tmp);			\
 } while (0)
+
 
 #define READ_PRIMITIVE(p)					\
 do {								\
@@ -112,10 +115,12 @@ void S3DO::DrawStatic()
 	glPopMatrix();
 }
 
+
 S3DO::~S3DO()
 {
 	glDeleteLists(displist, 1);
 }
+
 
 C3DOParser::C3DOParser()
 {
@@ -128,6 +133,7 @@ C3DOParser::C3DOParser()
 		teamtex.insert(StringToLower(parser.GetLine()));
 	}
 }
+
 
 C3DOParser::~C3DOParser()
 {
@@ -146,6 +152,7 @@ void C3DOParser::DeleteS3DO(S3DO *o)
 	}
 	delete o;
 }
+
 
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 {
@@ -246,6 +253,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	return model;
 }
 
+
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& offsets)
 {
 	S3DOModel *model = C3DOParser::Load3DO(name, scale, team);
@@ -256,6 +264,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& of
 
 	return model;
 }
+
 
 void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
 {
@@ -273,6 +282,7 @@ void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
 		object->vertices.push_back(vertex);
 	}
 }
+
 
 void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int excludePrim,int side)
 {
@@ -375,6 +385,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 	}
 }
 
+
 void C3DOParser::CalcNormals(S3DO *o)
 {
 	for(std::vector<S3DOPrimitive>::iterator ps=o->prims.begin();ps!=o->prims.end();ps++){
@@ -391,6 +402,7 @@ void C3DOParser::CalcNormals(S3DO *o)
 	}
 }
 
+
 std::string C3DOParser::GetText(int pos)
 {
 //	ifs->seekg(pos);
@@ -406,6 +418,7 @@ std::string C3DOParser::GetText(int pos)
 	}
 	return s;
 }
+
 
 bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 {
@@ -448,6 +461,7 @@ bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 	return ret;
 }
 
+
 void C3DOParser::DrawSub(S3DO* o)
 {
 	CVertexArray* va=GetVertexArray();
@@ -484,6 +498,7 @@ void C3DOParser::DrawSub(S3DO* o)
 		va2->DrawArrayTN(GL_TRIANGLES);
 }
 
+
 void C3DOParser::CreateLists(S3DO *o)
 {
 	o->displist = glGenLists(1);
@@ -498,6 +513,7 @@ void C3DOParser::CreateLists(S3DO *o)
 		CreateLists(*bs);
 	}
 }
+
 
 void C3DOParser::SimStreamRead(void *buf, int length)
 {
@@ -555,6 +571,7 @@ void C3DOParser::FindCenter(S3DO *object)
 	object->radius=maxSize;
 }
 
+
 float C3DOParser::FindRadius(S3DO *object,float3 offset)
 {
 	float maxSize=0;
@@ -576,6 +593,7 @@ float C3DOParser::FindRadius(S3DO *object,float3 offset)
 	return maxSize*0.8f;
 }
 
+
 float C3DOParser::FindHeight(S3DO* object,float3 offset)
 {
 	float height=0;
@@ -595,6 +613,7 @@ float C3DOParser::FindHeight(S3DO* object,float3 offset)
 	return height;
 }
 
+
 void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum)
 {
 	PUSH_CODE_MODE;
@@ -609,9 +628,11 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 	unsigned int cur;
 
 	//Map this piecename to an index in the script's pieceinfo
-	for(cur=0; cur<pieces->size(); cur++)
-        if(lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0)
+	for (cur = 0; cur < pieces->size(); cur++) {
+		if (lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0) {
 			break;
+		}
+	}
 
 	//Not found? Try again with partial matching
 	if (cur == pieces->size()) {
@@ -621,8 +642,9 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 			int maxcompare = min(s1.size(), s2.size());
 			int j;
 			for (j = 0; j < maxcompare; ++j) {
-				if (s1[j] != s2[j])
+				if (s1[j] != s2[j]) {
 					break;
+				}
 			}
 			//Match now?
 			if (j == maxcompare) {
@@ -652,6 +674,7 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 	POP_CODE_MODE;
 }
 
+
 LocalS3DOModel *C3DOParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
 {
 	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
@@ -670,305 +693,3 @@ LocalS3DOModel *C3DOParser::CreateLocalModel(S3DOModel *model, vector<struct Pie
 }
 
 
-LocalS3DOModel::~LocalS3DOModel()
-{
-	delete [] pieces;
-	delete [] scritoa;
-}
-
-
-static const float CORDDIV = 65536.0f;
-static const float ANGDIV  = 182.0f;
-
-
-void LocalS3DO::Draw() const
-{
-	//detta kan v� optimeras lite kanske.. men tills vidare
-	glPushMatrix();
-	glTranslatef(offset.x,offset.y,offset.z);
-	if(anim)
-	{
-		glTranslatef(-anim->coords[0]/CORDDIV, anim->coords[1]/CORDDIV, anim->coords[2]/CORDDIV);
-		if(anim->rot[1])
-			glRotatef(anim->rot[1]/ANGDIV, 0, 1, 0);
-		if(anim->rot[0])
-			glRotatef(anim->rot[0]/ANGDIV, 1, 0, 0);
-		if(anim->rot[2])
-			glRotatef(-anim->rot[2]/ANGDIV, 0, 0, 1);
-
-		if(anim->visible)
-			glCallList(displist);
-	}
-	else
-		glCallList(displist);
-
-	for(unsigned int i=0; i<childs.size(); i++)
-		childs[i]->Draw();
-	glPopMatrix();
-}
-
-
-void LocalS3DO::DrawLOD(unsigned int lod) const
-{
-	const	unsigned int lodDispList = lodDispLists[lod];
-
-	//detta kan v� optimeras lite kanske.. men tills vidare
-	glPushMatrix();
-	glTranslatef(offset.x, offset.y, offset.z);
-
-	if (!anim) {
-		glCallList(lodDispList);
-	} else {
-		glTranslatef(-anim->coords[0] / CORDDIV,
-		              anim->coords[1] / CORDDIV,
-		              anim->coords[2] / CORDDIV);
-		if (anim->rot[1]) { glRotatef( anim->rot[1] / ANGDIV, 0.0f, 1.0f, 0.0f); }
-		if (anim->rot[0]) { glRotatef( anim->rot[0] / ANGDIV, 1.0f, 0.0f, 0.0f); }
-		if (anim->rot[2]) { glRotatef(-anim->rot[2] / ANGDIV, 0.0f, 0.0f, 1.0f); }
-		if (anim->visible) {
-			glCallList(lodDispList);
-		}
-	}
-
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->DrawLOD(lod);
-	}
-
-	glPopMatrix();
-}
-
-
-void LocalS3DO::SetLODCount(unsigned int count)
-{
-	const unsigned int oldCount = lodDispLists.size();
-
-	lodDispLists.resize(count);
-	for (unsigned int i = oldCount; i < count; i++) {
-		lodDispLists[i] = 0;
-	}
-
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->SetLODCount(count);
-	}
-}
-
-
-void LocalS3DOModel::Draw() const
-{
-	//glPushMatrix();
-	//glRotatef(180, 0, 1, 0);
-	pieces->Draw();
-	//glPopMatrix();
-}
-
-
-void LocalS3DOModel::DrawLOD(unsigned int lod) const
-{
-	if (lod > lodCount) {
-		return;
-	}
-	pieces->DrawLOD(lod);
-}
-
-
-void LocalS3DOModel::SetLODCount(unsigned int count)
-{
-	lodCount = count;
-	pieces->SetLODCount(count);
-}
-
-
-bool LocalS3DOModel::PieceExists(int piecenum) const
-{
-	if(piecenum>=numpieces || piecenum<0)
-		return false;
-
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return false;
-
-	return true;
-}
-
-float3 LocalS3DOModel::GetPiecePos(int piecenum) const
-{
-	if(piecenum>=numpieces || piecenum<0)
-		return ZeroVector;
-
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return ZeroVector;
-
-	CMatrix44f mat;
-	pieces[p].GetPiecePosIter(&mat);
-	if(pieces[p].original3do && pieces[p].original3do->vertices.size()==2){		//stupid fix for valkyres
-		if(pieces[p].original3do->vertices[0].pos.y > pieces[p].original3do->vertices[1].pos.y)
-			mat.Translate(pieces[p].original3do->vertices[0].pos.x, pieces[p].original3do->vertices[0].pos.y, -pieces[p].original3do->vertices[0].pos.z);
-		else
-			mat.Translate(pieces[p].original3do->vertices[1].pos.x, pieces[p].original3do->vertices[1].pos.y, -pieces[p].original3do->vertices[1].pos.z);
-	}
-
-/*
-	logOutput.Print("%f %f %f %f",mat[0],mat[4],mat[8],mat[12]);
-	logOutput.Print("%f %f %f %f",mat[1],mat[5],mat[9],mat[13]);
-	logOutput.Print("%f %f %f %f",mat[2],mat[6],mat[10],mat[14]);
-	logOutput.Print("%f %f %f %f",mat[3],mat[7],mat[11],mat[15]);/**/
-	float3 pos=mat.GetPos();
-	pos.z*=-1;
-	pos.x*=-1;
-
-	return pos;
-	//return UpVector;
-}
-
-CMatrix44f LocalS3DOModel::GetPieceMatrix(int piecenum) const
-{
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return CMatrix44f();
-
-	CMatrix44f mat;
-	pieces[p].GetPiecePosIter(&mat);
-
-	return mat;
-}
-
-//gets the number of vertices in the piece
-int LocalS3DOModel::GetPieceVertCount(int piecenum) const
-{
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return 0;
-
-	if(pieces[p].original3do){
-		S3DO &orig = *pieces[p].original3do;
-		return orig.vertices.size();
-
-	} else {
-		SS3O &orig = *pieces[p].originals3o;
-		return orig.vertices.size();
-	}
-}
-
-void LocalS3DOModel::GetEmitDirPos(int piecenum, float3 &pos, float3 &dir) const
-
-{
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return;
-
-	CMatrix44f mat;
-	pieces[p].GetPiecePosIter(&mat);
-
-	//hm...
-	static const float3 invAxis(-1, 1, -1);
-	static const float3 invVertAxis(1, 1, -1);
-
-	if(pieces[p].original3do){
-		S3DO &orig = *pieces[p].original3do;
-
-		if(orig.vertices.size()==0)
-		{
-			pos = mat.GetPos()*invAxis;
-			dir = mat.Mul(float3(0,0,-1))*invAxis - pos;
-		}
-		else if(orig.vertices.size()==1)
-		{
-			pos = mat.GetPos()*invAxis;
-			dir = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis - pos;
-
-		}
-		else
-		{
-			float3 p1 = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis;
-
-			float3 p2 = mat.Mul(orig.vertices[1].pos*invVertAxis)*invAxis;
-
-			pos = p1;
-			dir = p2-p1;
-		}
-
-	} else {
-		SS3O &orig = *pieces[p].originals3o;
-
-		if(orig.vertices.size()==0)
-		{
-			pos = mat.GetPos()*invAxis;
-			dir = mat.Mul(float3(0,0,-1))*invAxis - pos;
-		}
-		else if(orig.vertices.size()==1)
-		{
-			pos = mat.GetPos()*invAxis;
-			dir = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis - pos;
-
-		}
-		else
-		{
-
-			float3 p1 = mat.Mul(orig.vertices[0].pos*invVertAxis)*invAxis;
-
-			float3 p2 = mat.Mul(orig.vertices[1].pos*invVertAxis)*invAxis;
-
-			pos = p1;
-			dir = p2-p1;
-		}
-	}
-}
-
-//Only useful for special pieces used for emit-sfx
-float3 LocalS3DOModel::GetPieceDirection(int piecenum) const
-{
-	int p=scritoa[piecenum];
-
-	if(p==-1)
-		return float3(1,1,1);
-
-	if(pieces[p].original3do){
-		S3DO &orig = *pieces[p].original3do;
-		if (orig.vertices.size() < 2) {
-			//logOutput.Print("Use of GetPieceDir on strange piece (%d vertices)", orig.vertices.size());
-			return float3(1,1,1);
-		}
-		else if (orig.vertices.size() > 2) {
-			//this is strange too, but probably caused by an incorrect 3rd party unit
-		}
-		//logOutput.Print("Vertexes %f %f %f", orig.vertices[0].pos.x, orig.vertices[0].pos.y, orig.vertices[0].pos.z);
-		//logOutput.Print("Vertexes %f %f %f", orig.vertices[1].pos.x, orig.vertices[1].pos.y, orig.vertices[1].pos.z);
-		return orig.vertices[0].pos - orig.vertices[1].pos;
-	} else {
-		SS3O &orig = *pieces[p].originals3o;
-		if (orig.vertices.size() < 2) {
-			return float3(1,1,1);
-		}
-		else if (orig.vertices.size() > 2) {
-			//this is strange too, but probably caused by an incorrect 3rd party unit
-		}
-		return orig.vertices[0].pos - orig.vertices[1].pos;
-	}
-
-}
-
-void LocalS3DO::GetPiecePosIter(CMatrix44f* mat) const
-{
-	if(parent)
-		parent->GetPiecePosIter(mat);
-
-	mat->Translate(offset.x,offset.y,-offset.z);
-//	logOutput.Print("RelPosSub %f %f %f",offset.x,offset.y,offset.z);
-
-	if(anim)
-	{
-		mat->Translate(-anim->coords[0]/CORDDIV, anim->coords[1]/CORDDIV, -anim->coords[2]/CORDDIV);
-		if(anim->rot[1])
-			mat->RotateY(anim->rot[1]*(PI/32768));
-		if(anim->rot[0])
-			mat->RotateX(anim->rot[0]*(PI/32768));
-		if(anim->rot[2])
-			mat->RotateZ(anim->rot[2]*(PI/32768));
-	}
-}

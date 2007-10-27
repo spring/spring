@@ -10,6 +10,7 @@
 #include <string>
 #include <deque>
 #include <set>
+#include <map>
 #include "SDL_types.h"
 
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -54,6 +55,17 @@ public:
 	
 	bool HasLag() const;
 
+	enum DrawMode {
+		notDrawing     = 0,
+		normalDraw     = 1,
+		shadowDraw     = 2,
+		reflectionDraw = 3,
+		refractionDraw = 4
+	};
+	DrawMode drawMode;
+	inline void     SetDrawMode(DrawMode mode) { drawMode = mode; }
+	inline DrawMode GetDrawMode() const { return drawMode; }
+
 	LuaParser* defsParser;
 
 	unsigned int oldframenum;
@@ -90,6 +102,10 @@ public:
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 	bool drawFpsHUD;
+
+	bool drawSky;
+	bool drawWater;
+	bool drawGround;
 
 	bool soundEnabled;
 	float gameSoundVolume;
@@ -140,6 +156,20 @@ protected:
 	float lastCpuUsageTime;
 	
 	unsigned lastFrameTime;
+
+public:
+	struct PlayerTrafficInfo {
+		PlayerTrafficInfo() : total(0) {}
+		int total;
+		std::map<int, int> packets;
+	};
+	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
+		return playerTraffic;
+	}
+protected:
+	void AddTraffic(int playerID, int packetCode, int length);
+	// <playerID, <packetCode, total bytes> >
+	std::map<int, PlayerTrafficInfo> playerTraffic;
 };
 
 

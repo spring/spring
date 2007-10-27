@@ -98,6 +98,7 @@
 #define CURRENT_FUEL             93 // set or get
 #define TRANSPORT_ID             94 // get
 #define SHIELD_POWER             95 // set or get
+#define STEALTH                  96 // set or get
 #define COB_ID                  100 // get
 #define ALPHA_THRESHOLD         103 // set or get
 
@@ -493,10 +494,6 @@ void CCobInstance::Spin(int piece, int axis, int speed, int accel)
 	ai = FindAnim(ASpin, piece, axis);
 
 	//logOutput.Print("Spin called %d %d %d %d", piece, axis, speed, accel);
-
-	//Test of default acceleration
-	if (accel == 0)
-		accel = 1000;
 
 	//If we are already spinning, we may have to decelerate to the new speed
 	if (ai) {
@@ -1122,6 +1119,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
 		return int(shield->curPower * float(COBSCALE));
 	}
+	case STEALTH: {
+		return unit->stealth ? 1 : 0;
+	}
 	case ALPHA_THRESHOLD: {
 		return int(unit->alphaThreshold * 255);
 	}
@@ -1333,6 +1333,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
 				shield->curPower = max(0.0f, float(param) / float(COBSCALE));
 			}
+			break;
+		}
+		case STEALTH: {
+			unit->stealth = !!param;
 			break;
 		}
 		case ALPHA_THRESHOLD: {

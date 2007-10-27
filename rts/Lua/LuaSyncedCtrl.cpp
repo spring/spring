@@ -896,7 +896,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	CheckAllowGameChanges(L);
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 5) ||
-	    !lua_isstring(L, 1) || // name, pos, facing[, team]
+	    !lua_isstring(L, 1) || // name, pos, facing[, teamID]
 	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !(lua_isnumber(L, 5) || lua_isstring(L, 5))) {
 		luaL_error(L, "Incorrect arguments to CreateUnit()");
@@ -913,20 +913,27 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	                 (float)lua_tonumber(L, 4));
 	const int facing = ParseFacing(L, __FUNCTION__, 5);
 
-	int team = CtrlTeam();
+	int teamID = CtrlTeam();
 	if ((args >= 6) && lua_isnumber(L, 6)) {
-		team = (int)lua_tonumber(L, 6);
+		teamID = (int)lua_tonumber(L, 6);
 	}
-	if ((team < 0) || (team >= MAX_TEAMS)) {
-		luaL_error(L, "CreateUnit(): bad team number: %i", team);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		luaL_error(L, "CreateUnit(): bad team number: %i", teamID);
 	}
 
-	if (!FullCtrl() && (CtrlTeam() != team)) {
-		luaL_error(L, "Error in CreateUnit(), bad team %i", team);
+	if (gs->AllyTeam(teamID) >= gs->activeAllyTeams) {
+		// FIXME: there's a segv in CLosHandler::LosAddAir,
+		//        this is a dirty hack to avoid it
+		luaL_error(L, "CreateUnit(): inactive team: %i", teamID);
+	}
+		
+
+	if (!FullCtrl() && (CtrlTeam() != teamID)) {
+		luaL_error(L, "Error in CreateUnit(), bad team %i", teamID);
 		return 0;
 	}
 
-	if (uh->unitsType[team][unitDef->id] >= unitDef->maxThisUnit) {
+	if (uh->unitsByDefs[teamID][unitDef->id].size() >= unitDef->maxThisUnit) {
 		return 0; // unit limit reached
 	}
 
@@ -936,7 +943,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "CreateUnit() recursion is not permitted");
 	}
 	inCreateUnit = true;
-	CUnit* unit = unitLoader.LoadUnit(defName, pos, team, false, facing, NULL);
+	CUnit* unit = unitLoader.LoadUnit(defName, pos, teamID, false, facing, NULL);
 	inCreateUnit = false;
 
 	if (unit) {

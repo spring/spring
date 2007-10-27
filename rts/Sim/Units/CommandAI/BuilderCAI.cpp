@@ -246,7 +246,7 @@ void CBuilderCAI::SlowUpdate()
 				}
 				// This can only be true if two builders started building
 				// the restricted unit in the same simulation frame
-				else if(uh->unitsType[owner->team][build.def->id]>build.def->maxThisUnit){ //unit restricted
+				else if(uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit){ //unit restricted
 					CBuilder* fac=(CBuilder*)owner;
 					building=false;
 					fac->StopBuild();
@@ -261,7 +261,7 @@ void CBuilderCAI::SlowUpdate()
 					if(luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 						FinishCommand();
 					}
-					else if(uh->unitsType[owner->team][build.def->id]>=build.def->maxThisUnit){ //unit restricted
+					else if(uh->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit){ //unit restricted
 						CancelRestrictedUnit(boi->second);
 					}
 					else if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){ //max unitlimit reached

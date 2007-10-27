@@ -51,6 +51,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(targetPos),
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
+	CR_MEMBER(cobHasBlockShot),
 	CR_MEMBER(angleGood),
 	CR_MEMBER(maxAngleDif),
 	CR_MEMBER(wantedDir),
@@ -129,6 +130,7 @@ CWeapon::CWeapon(CUnit* owner)
 	targetPos(1,1,1),
 	fireSoundId(0),
 	fireSoundVolume(0),
+	cobHasBlockShot(false),
 	angleGood(false),
 	maxAngleDif(0),
 	wantedDir(0,1,0),
@@ -173,11 +175,42 @@ CWeapon::CWeapon(CUnit* owner)
 {
 }
 
+
 CWeapon::~CWeapon()
 {
 	if(weaponDef->interceptor)
 		interceptHandler.RemoveInterceptorWeapon(this);
 }
+
+
+void CWeapon::SetWeaponNum(int num)
+{
+	weaponNum = num;
+
+	cobHasBlockShot = owner->cob->FunctionExist(COBFN_BlockShot + weaponNum);
+}
+
+
+inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
+{
+	if (!cobHasBlockShot) {
+		return false;
+	}
+
+
+	const int unitID = targetUnit ? targetUnit->id : 0;
+
+	std::vector<int> args;
+
+	args.push_back(unitID);
+	args.push_back(0); // arg[1], for the return value
+	                   // the default is to not block the shot
+
+	owner->cob->Call(COBFN_BlockShot + weaponNum, args);
+
+	return !!args[1];
+}
+
 
 void CWeapon::Update()
 {
@@ -262,29 +295,37 @@ void CWeapon::Update()
 		}
 	}
 
-	if(salvoLeft==0
+	if ((salvoLeft == 0)
 #ifdef DIRECT_CONTROL_ALLOWED
-	&& (!owner->directControl || owner->directControl->mouse1 || owner->directControl->mouse2)
+	    && (!owner->directControl || owner->directControl->mouse1
+	                              || owner->directControl->mouse2)
 #endif
-	&& targetType!=Target_None
-	&& angleGood
-	&& subClassReady
-	&& reloadStatus<=gs->frameNum
-	&& (!weaponDef->stockpile || numStockpiled)
-	&& (weaponDef->fireSubmersed || weaponMuzzlePos.y>0)
-	&& (owner->unitDef->maxFuel==0 || owner->currentFuel > 0)
-	){
-		if ((weaponDef->stockpile || (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost))) {
+	    && (targetType != Target_None)
+	    && angleGood
+	    && subClassReady
+	    && (reloadStatus <= gs->frameNum)
+	    && (!weaponDef->stockpile || numStockpiled)
+	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
+	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0))
+	   )
+	{
+		if ((weaponDef->stockpile ||
+		     (gs->Team(owner->team)->metal >= metalFireCost &&
+		      gs->Team(owner->team)->energy >= energyFireCost))) {
 			std::vector<int> args;
 			args.push_back(0);
-			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
 			owner->localmodel->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
-			weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-			useWeaponPosForAim=reloadTime/16+8;
-			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
+			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
+			                               owner->updir    * relWeaponMuzzlePos.y +
+			                               owner->rightdir * relWeaponMuzzlePos.x;
+			useWeaponPosForAim = reloadTime / 16 + 8;
+			weaponDir = owner->frontdir * weaponDir.z +
+			            owner->updir    * weaponDir.y +
+			            owner->rightdir * weaponDir.x;
 			weaponDir.Normalize();
 
-			if(TryTarget(targetPos,haveUserTarget,targetUnit)){
+			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !CobBlockShot(targetUnit)) {
 				if(weaponDef->stockpile){
 					const int oldCount = numStockpiled;
 					numStockpiled--;
@@ -311,6 +352,7 @@ void CWeapon::Update()
 				owner->cob->Call(COBFN_FirePrimary+weaponNum);
 			}
 		} else {
+			// FIXME  -- never reached?
 			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
 				// update the energy and metal required counts
 				const int minPeriod = max(1, (int)(reloadTime / owner->reloadSpeed));

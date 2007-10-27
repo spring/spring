@@ -17,7 +17,6 @@
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
@@ -38,6 +37,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -565,6 +565,8 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthMod);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
+	HSTR_PUSH_STRING(L, "name", md->name);
+
 	return 1;
 }
 
@@ -771,6 +773,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("armorType",         ud.armorType);
 	ADD_FLOAT("armoredMultiple", ud.armoredMultiple);
 
+	ADD_BOOL("bonusShieldEnabled", ud.bonusShieldEnabled);
+
 	ADD_FLOAT("hitSphereScale",   ud.collisionSphereScale);
 	ADD_FLOAT("hitSphereOffsetX", ud.collisionSphereOffset.x);
 	ADD_FLOAT("hitSphereOffsetY", ud.collisionSphereOffset.y);
@@ -876,11 +880,12 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT( "fallSpeed",			ud.fallSpeed);
 	ADD_FLOAT( "unitFallSpeed",		ud.unitFallSpeed);
 
-	ADD_BOOL( "startCloaked",    ud.startCloaked);
-	ADD_FLOAT("cloakCost",       ud.cloakCost);
-	ADD_FLOAT("cloakCostMoving", ud.cloakCostMoving);
-	ADD_FLOAT("decloakDistance", ud.decloakDistance);
-	ADD_BOOL( "decloakOnFire",   ud.decloakOnFire);
+	ADD_BOOL( "startCloaked",     ud.startCloaked);
+	ADD_FLOAT("cloakCost",        ud.cloakCost);
+	ADD_FLOAT("cloakCostMoving",  ud.cloakCostMoving);
+	ADD_FLOAT("decloakDistance",  ud.decloakDistance);
+	ADD_BOOL( "decloakSpherical", ud.decloakSpherical);
+	ADD_BOOL( "decloakOnFire",    ud.decloakOnFire);
 
 	ADD_BOOL( "canKamikaze",   ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);

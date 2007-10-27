@@ -47,6 +47,7 @@ const int COBFN_AimFromPrimary = COBFN_AimPrimary + COB_MaxWeapons;
 const int COBFN_FirePrimary = COBFN_AimFromPrimary + COB_MaxWeapons;
 const int COBFN_EndBurst = COBFN_FirePrimary + COB_MaxWeapons;
 const int COBFN_Shot = COBFN_EndBurst + COB_MaxWeapons;
+const int COBFN_BlockShot = COBFN_Shot + COB_MaxWeapons;
 
 class CCobFile
 {

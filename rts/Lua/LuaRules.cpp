@@ -19,6 +19,7 @@
 #include "LuaOpenGL.h"
 
 #include "Sim/Units/CommandAI/Command.h"
+#include "Game/Game.h"
 #include "Game/Team.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -101,6 +102,10 @@ CLuaRules::CLuaRules()
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
 
+	if (L == NULL) {
+		return;
+	}
+
 	haveCommandFallback        = HasCallIn("CommandFallback");
 	haveAllowCommand           = HasCallIn("AllowCommand");
 	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
@@ -111,6 +116,11 @@ CLuaRules::CLuaRules()
 	haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
 	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
 	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
+	haveDrawUnit               = HasCallIn("DrawUnit");
+	haveAICallIn               = HasCallIn("AICallIn");
+
+	SetupUnsyncedFunction("DrawUnit");
+	SetupUnsyncedFunction("AICallIn");
 }
 
 
@@ -235,6 +245,12 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 
 bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 {
+	if (name == "DrawUnit") {
+		haveDrawUnit = HasCallIn("DrawUnit");
+	}
+	else if (name == "AICallIn") {
+		haveAICallIn = HasCallIn("AICallIn");
+	}
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
 }
 
@@ -649,6 +665,86 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return retval;
+}
+
+
+/******************************************************************************/
+
+bool CLuaRules::DrawUnit(int unitID)
+{
+	if (!haveDrawUnit) {
+		return false;
+	}
+	static const LuaHashString cmdStr("DrawUnit");
+	if (!cmdStr.GetRegistryFunc(L)) {
+		return false;
+	}
+
+	const bool oldGLState = LuaOpenGL::IsDrawingEnabled();
+	LuaOpenGL::SetDrawingEnabled(true);
+
+	lua_pushnumber(L, unitID);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(cmdStr, 2, 1);
+
+	LuaOpenGL::SetDrawingEnabled(oldGLState);
+
+	if (!success) {
+		return false;
+	}
+
+	const int args = lua_gettop(L);
+	if ((args != 1) || !lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+	
+
+const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
+{
+	if (!haveAICallIn) {
+		return NULL;
+	}
+	static const LuaHashString cmdStr("AICallIn");
+	if (!cmdStr.GetRegistryFunc(L)) {
+		return NULL;
+	}
+
+	int argCount = 0;
+	if (data != NULL) {
+		if (inSize < 0) {
+			inSize = strlen(data);
+		}
+		lua_pushlstring(L, data, inSize);
+		argCount = 1;
+	}
+
+	if (!RunCallIn(cmdStr, argCount, 1)) {
+		return NULL;
+	}
+
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
+		return NULL;
+	}
+
+	size_t len;
+	const char* outData = lua_tolstring(L, -1, &len);
+	if (outSize != NULL) {
+		*outSize = len;
+	}
+
+	lua_pop(L, 1);
+	
+	return outData;	
 }
 
 

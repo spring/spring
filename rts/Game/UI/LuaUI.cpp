@@ -317,6 +317,11 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
 
+	REGISTER_LUA_CFUNC(SendLuaUIMsg);
+	REGISTER_LUA_CFUNC(SendLuaCobMsg);
+	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
+	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
+
 	REGISTER_LUA_CFUNC(GetFPS);
 
 	REGISTER_LUA_CFUNC(SetActiveCommand);
@@ -393,6 +398,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(MarkerAddLine);
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
 
+	REGISTER_LUA_CFUNC(GetPlayerTraffic);
+
 	lua_setglobal(L, "Spring");
 
 	return true;
@@ -411,6 +418,22 @@ void CLuaUI::Shutdown()
 
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
+
+	return;
+}
+
+
+void CLuaUI::GameFrame(int frameNumber)
+{
+	static const LuaHashString cmdStr("GameFrame");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return;
+	}
+
+	lua_pushnumber(L, frameNumber);
+
+	// call the routine
+	RunCallIn(cmdStr, 1, 0);
 
 	return;
 }
@@ -1044,7 +1067,8 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "id",       cmds[i].id);
 			HSTR_PUSH_NUMBER(L, "type",     cmds[i].type);
-			HSTR_PUSH_STRING(L, "action",   cmds[i].action.c_str());
+			HSTR_PUSH_STRING(L, "action",   cmds[i].action);
+			HSTR_PUSH_STRING(L, "texture",  cmds[i].iconname);
 			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].onlyKey);
 			HSTR_PUSH_BOOL(L,   "disabled", cmds[i].disabled);
 
@@ -1185,9 +1209,9 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 					cd.name = value;
 				} else if (key == "action") {
 					cd.action = value;
-				} else if (key == "iconname") {
+				} else if (key == "texture") {
 					cd.iconname = value;
-				} else if (key == "mouseicon") {
+				} else if (key == "cursor") {
 					cd.mouseicon = value;
 				} else if (key == "tooltip") {
 					cd.tooltip = value;
@@ -1714,7 +1738,7 @@ int CLuaUI::GetMouseState(lua_State* L)
 }
 
 
-int CLuaUI::GetMouseMiniMapState(lua_State* L)
+int CLuaUI::GetMouseMiniMapState(lua_State* L) //FIXME
 {
 	if (minimap == NULL) {
 		return 0;
@@ -1723,7 +1747,7 @@ int CLuaUI::GetMouseMiniMapState(lua_State* L)
 }
 
 
-int CLuaUI::GetMouseStartPosition(lua_State* L)
+int CLuaUI::GetMouseStartPosition(lua_State* L) //FIXME
 {
 	return 0;
 }
@@ -2183,20 +2207,22 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 	ud->iconType = lua_tostring(L, 2);
 
 	// set decoys to the same icon
-	const map<UnitDef*, set<UnitDef*> >& decoyMap = unitDefHandler->decoyMap;
-	map<UnitDef*, set<UnitDef*> >::const_iterator fit;
+	map<int, set<int> >::const_iterator fit;
+
 	if (ud->decoyDef) {
 		// more HACK HACK (see above)
-		fit = decoyMap.find(const_cast<UnitDef*>(ud->decoyDef));
 		const_cast<UnitDef*>(ud->decoyDef)->iconType = ud->iconType;
+		fit = unitDefHandler->decoyMap.find(ud->decoyDef->id);
 	} else {
-		fit = decoyMap.find(ud);
+		fit = unitDefHandler->decoyMap.find(ud->id);
 	}
-	if (fit != decoyMap.end()) {
-		const set<UnitDef*>& decoySet = fit->second;
-		set<UnitDef*>::const_iterator dit;
+	if (fit != unitDefHandler->decoyMap.end()) {
+		const set<int>& decoySet = fit->second;
+		set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-			(*dit)->iconType = ud->iconType;
+  		// more HACK HACK (see above)
+  		const UnitDef* constDef = unitDefHandler->GetUnitByID(*dit);
+			const_cast<UnitDef*>(constDef)->iconType = ud->iconType;
 		}
 	}
 
@@ -2805,6 +2831,63 @@ int CLuaUI::GiveOrderArrayToUnitArray(lua_State* L)
 
 /******************************************************************************/
 
+static string GetRawMsg(lua_State* L, const char* caller, int index)
+{
+	if (!lua_israwstring(L, index)) {
+		luaL_error(L, "Incorrect arguments to %s", caller);
+	}
+	size_t len;
+	const char* str = lua_tolstring(L, index, &len);
+	const string tmpMsg(str, len);
+	return tmpMsg;
+}
+
+
+int CLuaUI::SendLuaUIMsg(lua_State* L)
+{
+	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	const string mode = luaL_optstring(L, 2, "");
+	unsigned char modeNum = 0;
+	if ((mode == "s") || (mode == "specs")) {
+		modeNum = 's';
+	}
+	else if ((mode == "a") || (mode == "allies")) {
+		modeNum = 'a';
+	}
+	else if (!mode.empty()) {
+		luaL_error(L, "Unknown SendLuaUIMsg() mode");
+	}
+	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, msg);
+	return 0;
+}
+
+
+int CLuaUI::SendLuaCobMsg(lua_State* L)
+{
+	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_COB, 0, msg);
+	return 0;
+}
+
+
+int CLuaUI::SendLuaGaiaMsg(lua_State* L)
+{
+	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, msg);
+	return 0;
+}
+
+
+int CLuaUI::SendLuaRulesMsg(lua_State* L)
+{
+	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, msg);
+	return 0;
+}
+
+
+/******************************************************************************/
+
 int CLuaUI::SetShareLevel(lua_State* L)
 {
 	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
@@ -2949,5 +3032,47 @@ int CLuaUI::MarkerErasePosition(lua_State* L)
 
 /******************************************************************************/
 
+int CLuaUI::GetPlayerTraffic(lua_State* L)
+{
+	const int playerID = (int)luaL_checknumber(L, 1);
+	const int packetID =   (int)luaL_optnumber(L, 2, -1);
+
+	const std::map<int, CGame::PlayerTrafficInfo>& traffic
+		= game->GetPlayerTraffic();
+	std::map<int, CGame::PlayerTrafficInfo>::const_iterator it;
+	it = traffic.find(playerID);
+	if (it == traffic.end()) {
+		lua_pushnumber(L, -1);
+		return 1;
+	}
+
+	// only allow viewing stats for specific packet types
+	if ((playerID != -1) &&              // all system counts can be read
+	    (playerID != gu->myPlayerNum) && // all  self  counts can be read
+	    (packetID != -1) &&
+	    (packetID != NETMSG_CHAT)     &&
+	    (packetID != NETMSG_PAUSE)    &&
+	    (packetID != NETMSG_LUAMSG)   &&
+	    (packetID != NETMSG_STARTPOS) &&
+	    (packetID != NETMSG_USER_SPEED)) {
+    lua_pushnumber(L, -1);
+    return 1;
+  }
+
+	const CGame::PlayerTrafficInfo& pti = it->second;
+	if (packetID == -1) {
+		lua_pushnumber(L, pti.total);
+		return 1;
+	}
+	std::map<int, int>::const_iterator pit = pti.packets.find(packetID);
+	if (pit == pti.packets.end()) {
+		lua_pushnumber(L, -1);
+		return 1;
+	}
+	lua_pushnumber(L, pit->second);
+	return 1;
+}
+
+ 
 /******************************************************************************/
 /******************************************************************************/

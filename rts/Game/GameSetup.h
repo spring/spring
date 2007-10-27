@@ -59,6 +59,9 @@ public:
 	
 	std::string aiDlls[MAX_TEAMS];
 
+	std::map<std::string, std::string> customMapOptions;
+	std::map<std::string, std::string> customModOptions;
+
 	int maxUnits;
 
 	bool ghostedBuildings;

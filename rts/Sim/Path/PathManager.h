@@ -67,6 +67,20 @@ public:
 
 
 	/*
+	Returns current estimated waypoints sorted by estimation levels
+	Param:
+		pathId
+			The path-id returned by RequestPath.
+		points
+			The list of estimated waypoints.
+		starts
+			The list of starting indices for the different estimation levels
+	*/
+	void GetEstimatedPath(unsigned int pathId,
+	                        vector<float3>& points, vector<int>& starts) const;
+
+
+	/*
 	When a path are no longer used, please call this function to release it from memory.
 	Param:
 		pathId

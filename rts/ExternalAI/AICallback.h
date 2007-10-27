@@ -163,32 +163,14 @@ public:
 
 	bool CanBuildUnit(int unitDefID);  //return false if a unit cannot currently be created
 
-	// LuaRules state
-	bool IsLuaRulesEnabled();
-
-	// LuaRules info  (return false if the information is not available)
-	bool GetGameRulesParam(            int param,         float& value);
-	bool GetGameRulesParam(            const char* param, float& value);
-	bool GetTeamRulesParam(int teamID, int param,         float& value);
-	bool GetTeamRulesParam(int teamID, const char* param, float& value);
-	bool GetUnitRulesParam(int unitID, int param,         float& value);
-	bool GetUnitRulesParam(int unitID, const char* param, float& value);
-
-	// Lua Script unsynced call
-	enum LuaCallState {
-		LUACALL_SUCCESS     = 0,
-		LUACALL_NOT_RUNNING = 1,
-		LUACALL_UNDEFINED   = 2,
-		LUACALL_ERROR       = 3
-	};
-	//
-	// The 'args' array size must be at least:  max(inArgs, outArgs)
-	//
-	LuaCallState CallLuaRules(const char* name,
-	                          float* args, int argSize, int inArgs, int& outArgs);
-	LuaCallState CallLuaRules(const char* name,
-	                          char* data, int dataSize, int inSize, int& outSize);
 	virtual const float3 *GetStartPos();
+
+	// NOTES:
+	// 1. 'data' can be NULL to skip passing in a string
+	// 2. if inSize is less than 0, the data size is calculated using strlen()
+	// 3. the return data is subject to lua garbage collection,
+	//    copy it if you wish to continue using it
+	const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
 };
 
 #endif /* AICALLBACK_H */

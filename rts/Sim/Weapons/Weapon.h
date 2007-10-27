@@ -28,6 +28,8 @@ public:
 	virtual ~CWeapon();
 	virtual void Init(void);
 
+	void SetWeaponNum(int);
+
 	void DependentDied(CObject* o);
 
 	virtual bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
@@ -35,6 +37,7 @@ public:
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
+	bool CobBlockShot(const CUnit* unit);
 	void SlowUpdate(bool noAutoTargetOverride);
 	virtual void SlowUpdate();
 	virtual void Update();
@@ -102,6 +105,7 @@ public:
 	int fireSoundId;
 	float fireSoundVolume;
 
+	bool cobHasBlockShot;							//set when the script has a BlockShot() function for this weapon
 	bool angleGood;										//set when script indicated ready to fire
 	bool subClassReady;								//set to false if the subclassed weapon cant fire for some reason
 	bool onlyForward;									//can only fire in the forward direction of the unit (for aircrafts mostly?)

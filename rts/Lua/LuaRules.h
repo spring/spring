@@ -55,6 +55,10 @@ class CLuaRules : public CLuaHandleSynced
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 
+		// unsynced
+		bool DrawUnit(int unitID);
+		const char* AICallIn(const char* data, int inSize, int* outSize);
+
 	private:
 		CLuaRules();
 		~CLuaRules();
@@ -100,6 +104,8 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowResourceLevel;
 		bool haveAllowResourceTransfer;
 		bool haveAllowDirectUnitControl;
+		bool haveDrawUnit;
+		bool haveAICallIn;
 
 		map<string, string> infoMap;
 

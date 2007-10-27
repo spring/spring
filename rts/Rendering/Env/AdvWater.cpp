@@ -332,6 +332,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClearColor(0.2f,0.4f,0.2f,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	game->SetDrawMode(CGame::reflectionDraw);
 
 	sky->Draw();
 
@@ -345,6 +346,8 @@ void CAdvWater::UpdateWater(CGame* game)
 	featureHandler->Draw();
 	ph->Draw(true);
 	luaCallIns.DrawWorldReflection();
+
+	game->SetDrawMode(CGame::normalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);

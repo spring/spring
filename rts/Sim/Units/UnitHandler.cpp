@@ -95,7 +95,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(morphUnitToFeature),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(builderCAIs),
-	CR_MEMBER(unitsType),
+	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 	));
@@ -122,37 +122,38 @@ CUnitHandler::CUnitHandler(bool serializing)
 	morphUnitToFeature(true)
 {
 	//unitModelLoader=SAFE_NEW CUnit3DLoader;
-	for(int a=1;a<MAX_UNITS;a++){
+	for (int a = 1; a < MAX_UNITS; a++) {
 		freeIDs.push_back(a);
-		units[a]=0;
+		units[a] = 0;
 	}
-	units[0]=0;
+	units[0] = 0;
 
-	slowUpdateIterator=activeUnits.end();
+	slowUpdateIterator = activeUnits.end();
 
 	waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str())*(16.0f/30.0f);
 
-	if(gameSetup)
-		maxUnits=gameSetup->maxUnits;
-	if(maxUnits>MAX_UNITS/gs->activeTeams-5)
-		maxUnits=MAX_UNITS/gs->activeTeams-5;
-
-	if(gameSetup){
-		if(gameSetup->limitDgun){
-			limitDgun=true;
-			dgunRadius=gs->mapx*3;
-		}
-		if(gameSetup->diminishingMMs)
-			diminishingMetalMakers=true;
+	if (gameSetup) {
+		maxUnits = gameSetup->maxUnits;
+	}
+	if (maxUnits > ((MAX_UNITS / gs->activeTeams) - 5)) {
+		maxUnits = (MAX_UNITS / gs->activeTeams) -5;
 	}
 
-	if (!serializing)
-	{
-		airBaseHandler=SAFE_NEW CAirBaseHandler;
+	if (gameSetup) {
+		if (gameSetup->limitDgun) {
+			limitDgun = true;
+			dgunRadius = gs->mapx * 3;
+		}
+		if (gameSetup->diminishingMMs) {
+			diminishingMetalMakers = true;
+		}
+	}
 
-		for(int i=0; i<MAX_TEAMS; i++)
-		{
-			unitsType[i].resize(unitDefHandler->numUnitDefs+1,0);
+	if (!serializing) {
+		airBaseHandler = SAFE_NEW CAirBaseHandler;
+
+		for (int i = 0; i < MAX_TEAMS; i++) {
+			unitsByDefs[i].resize(unitDefHandler->numUnitDefs + 1);
 		}
 	}
 }
@@ -161,8 +162,9 @@ CUnitHandler::CUnitHandler(bool serializing)
 CUnitHandler::~CUnitHandler()
 {
 	list<CUnit*>::iterator usi;
-	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
 		delete (*usi);
+	}
 
 	delete airBaseHandler;
 
@@ -183,7 +185,8 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	units[unit->id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
-	unitsType[unit->team][unit->unitDef->id]++;
+	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
+
 	return unit->id;
 }
 
@@ -211,31 +214,26 @@ void CUnitHandler::Update()
 				if (slowUpdateIterator!=activeUnits.end() && *usi==*slowUpdateIterator) {
 					slowUpdateIterator++;
 				}
-				activeUnits.erase(usi);
-				units[delUnit->id]=0;
-				freeIDs.push_back(delUnit->id);
-				gs->Team(delUnit->team)->RemoveUnit(delUnit,CTeam::RemoveDied);
 				delTeam = delUnit->team;
 				delType = delUnit->unitDef->id;
-				if (unitsType[delTeam][delType] > 0) {
-					unitsType[delTeam][delType]--;
-				} else {
-					logOutput.Print("CUnitHandler::Update() unitsType underflow\n");
-				}
+
+				activeUnits.erase(usi);
+				units[delUnit->id] = 0;
+				freeIDs.push_back(delUnit->id);
+				gs->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+
+				unitsByDefs[delTeam][delType].erase(delUnit);
+
 				delete delUnit;
+
 				break;
 			}
 		}
 		//debug
-		for(usi=activeUnits.begin();usi!=activeUnits.end();){
-			if(*usi==delUnit){
+		for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
+			if (*usi == delUnit){
 				logOutput.Print("Error: Duplicated unit found in active units on erase");
-				usi=activeUnits.erase(usi);
-				if (unitsType[delTeam][delType] > 0) {
-					unitsType[delTeam][delType]--;
-				} else {
-					logOutput.Print("CUnitHandler::Update() unitsType underflow\n");
-				}
+				usi = activeUnits.erase(usi);
 			} else {
 				++usi;
 			}
@@ -243,12 +241,13 @@ void CUnitHandler::Update()
 	}
 
 	list<CUnit*>::iterator usi;
-	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
 		(*usi)->Update();
+	}
 
 	{
 		SCOPED_TIMER("Unit slow update");
-		if(!(gs->frameNum&15)){
+		if (!(gs->frameNum & 15)) {
 			slowUpdateIterator=activeUnits.begin();
 		}
 	
@@ -626,10 +625,12 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
-	if(gs->Team(team)->units.size()>=uh->maxUnits)
+	if (gs->Team(team)->units.size() >= uh->maxUnits) {
 		return false;
-	if(unitsType[team][unitdef->id]>=unitdef->maxThisUnit)
+	}
+	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {
 		return false;
+	}
 
 	return true;
 }

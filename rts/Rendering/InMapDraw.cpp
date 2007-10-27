@@ -245,7 +245,14 @@ float3 CInMapDraw::GetMouseMapPos(void)
 
 void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
-	const CPlayer* sender = gs->players[msg[2]];
+	const int playerID = msg[2];
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		return;
+	}
+	const CPlayer* sender = gs->players[playerID];
+	if (sender == NULL) {
+		return;
+	}
 	const int team = sender->team;
 	const int allyteam = gs->AllyTeam(team);
 

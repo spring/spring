@@ -5,10 +5,6 @@
 --  brief:   local team recoloring
 --  author:  Dave Rodgers
 --
---  notes:
---    This script can be used to configure the local
---    client's team colors before the game starts.
---
 --  Copyright (C) 2007.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
@@ -18,9 +14,9 @@
 --  Configuration
 --
 
-local disabled = true       --<<**  NOTE  **>>--   
+local disabled = true       --<< *** NOTE *** >>--   
 
-local debug = false
+local debug = true and false
 
 
 --------------------------------------------------------------------------------

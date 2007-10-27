@@ -45,6 +45,8 @@ class CLuaUI : public CLuaHandle {
 		bool HasCallIn(const string& name);
 		bool UnsyncedUpdateCallIn(const string& name);
 
+		void GameFrame(int frameNum);
+
 		void Shutdown();
 
 		bool HasLayoutButtons();
@@ -208,9 +210,16 @@ class CLuaUI : public CLuaHandle {
 		static int GiveOrderArrayToUnitMap(lua_State* L);
 		static int GiveOrderArrayToUnitArray(lua_State* L);
 
+		static int SendLuaUIMsg(lua_State* L);
+		static int SendLuaCobMsg(lua_State* L);
+		static int SendLuaGaiaMsg(lua_State* L);
+		static int SendLuaRulesMsg(lua_State* L);
+
 		static int MarkerAddPoint(lua_State* L);
 		static int MarkerAddLine(lua_State* L);
 		static int MarkerErasePosition(lua_State* L);
+
+		static int GetPlayerTraffic(lua_State* L);
 };
 
 

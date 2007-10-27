@@ -54,6 +54,8 @@ bool LuaUnitRendering::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetUnitUniform);
 
+	REGISTER_LUA_CFUNC(SetUnitLuaDraw);
+
 	REGISTER_LUA_CFUNC(Debug);
 
 	return true;
@@ -613,6 +615,28 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 	for (int i = 3; i <= lastArg; i++) {
 
 	}
+	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
+{
+	const int unitID = (int)luaL_checknumber(L, 1);
+	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		return 0;
+	}
+	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if (!lua_isboolean(L, 2)) {
+		return 0;
+	}
+	unit->luaDraw = lua_toboolean(L, 2);
 	return 0;
 }
 

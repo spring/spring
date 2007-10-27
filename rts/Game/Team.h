@@ -52,12 +52,14 @@ public:
 
 	float handicap;
 	std::string side;
+	std::string luaAI;
 
 	// color info is unsynced
 	unsigned char color[4];
 	unsigned char origColor[4];
 
 	CUnitSet units;
+
 	float3 startPos;
 
 	SyncedFloat metal;

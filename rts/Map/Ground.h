@@ -24,6 +24,7 @@ public:
 	float GetSlope(float x,float y);
 	float GetHeight(float x,float y);
 	float GetHeight2(float x,float y);
+	float GetOrigHeight(float x,float y);
 	float3& GetNormal(float x,float y);
 	float3 GetSmoothNormal(float x,float y);
 	float LineGroundCol(float3 from,float3 to);

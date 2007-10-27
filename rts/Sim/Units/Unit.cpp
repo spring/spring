@@ -124,8 +124,9 @@ CUnit::CUnit ()
 	userAttackPos(0,0,0),
 	crashing(false),
 	cob(0),
-	bonusShieldDir(1,0,0),
+	bonusShieldEnabled(true),
 	bonusShieldSaved(10),
+	bonusShieldDir(1,0,0),
 	group(0),
 	lastDamage(-100),
 	lastFireWeapon(0),
@@ -200,6 +201,7 @@ CUnit::CUnit ()
 	deathScriptFinished(false),
 	dontUseWeapons(false),
 	currentFuel(0),
+	luaDraw(false),
 	noDraw(false),
 	noSelect(false),
 	noMinimap(false),
@@ -636,8 +638,9 @@ void CUnit::SlowUpdate()
 		isCloaked = true;
 	}
 	else if (wantCloak || (scriptCloak >= 1)) {
-		if (helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->decloakDistance, allyteam)) {
-			curCloakTimeout = gs->frameNum+cloakTimeout;
+		if (helper->GetClosestEnemyUnitNoLosTest(midPos, unitDef->decloakDistance,
+		                                         allyteam, unitDef->decloakSpherical)) {
+			curCloakTimeout = gs->frameNum + cloakTimeout;
 			isCloaked = false;
 		}
 		if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
@@ -669,7 +672,7 @@ void CUnit::SlowUpdate()
 
 	if(unitDef->canKamikaze){
 		if(fireState>=2){
-			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam);
+			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam,false);
 			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
 				KillUnit(true,false,0);
 		}
@@ -748,15 +751,15 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		return;
 	}
 
-	if(attacker){
+	if (attacker) {
 		SetLastAttacker(attacker);
-		float3 adir=attacker->pos-pos;
-		adir.Normalize();
-		bonusShieldDir+=adir*bonusShieldSaved;		//not the best way to do it(but fast)
-		bonusShieldDir.Normalize();
-//		logOutput.Print("shield mult %f %f %i %i", 2-adir.dot(bonusShieldDir),bonusShieldSaved,id,attacker->id);
-		bonusShieldSaved=0;
-		damage*=1.4f-adir.dot(bonusShieldDir)*0.5f;
+		if (bonusShieldEnabled) {
+			const float3 adir = (attacker->pos - pos).Normalize();
+			bonusShieldDir += (adir * bonusShieldSaved);  //not the best way to do it(but fast)
+			bonusShieldDir.Normalize();
+			bonusShieldSaved = 0.0f;
+			damage *= (1.4f - (0.5f * adir.dot(bonusShieldDir)));
+		}
 	}
 
 	damage*=curArmorMultiple;
@@ -840,7 +843,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		ENTER_SYNCED;
 	}
 
-	luaCallIns.UnitDamaged(this, attacker, damage, !!damages.paralyzeDamageTime);
+	luaCallIns.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
 	globalAI->UnitDamaged(this, attacker, damage);
 
 	if(health<=0){
@@ -865,10 +868,29 @@ void CUnit::Kill(float3& impulse) {
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Drawing routines
+//
+
 inline void CUnit::DrawModel()
 {
+	if (luaDraw && luaRules && luaRules->DrawUnit(id)) {
+		return;
+	}
+
 	if (lodCount <= 0) {
-		glAlphaFunc(GL_GEQUAL, alphaThreshold);
+		localmodel->Draw();
+	} else {
+		localmodel->DrawLOD(currentLOD);
+	}
+}
+
+
+void CUnit::DrawRawModel()
+{
+	if (lodCount <= 0) {
 		localmodel->Draw();
 	} else {
 		localmodel->DrawLOD(currentLOD);
@@ -894,6 +916,8 @@ inline void CUnit::DrawDebug()
 
 void CUnit::Draw()
 {
+	glAlphaFunc(GL_GEQUAL, alphaThreshold);
+
 	glPushMatrix();
 
 	ApplyTransformMatrix();
@@ -1219,6 +1243,9 @@ void CUnit::DrawStats()
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
 void CUnit::ExperienceChange()
 {
 	logExperience=log(experience+1);
@@ -1272,7 +1299,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (uh->unitsType[newteam][unitDef->id] >= unitDef->maxThisUnit) {
+	if (uh->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
 		return false;
 	}
 
@@ -1293,13 +1320,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	if (!gs->AlliedTeams(oldteam, newteam)) {
 		ChangeTeamReset();
 	}
-
-	if (uh->unitsType[oldteam][unitDef->id] > 0) {
-		uh->unitsType[oldteam][unitDef->id]--;
-	} else {
-		logOutput.Print("CUnit::ChangeTeam() unitsType underflow\n");
-	}
-	uh->unitsType[newteam][unitDef->id]++;
 
 	qf->RemoveUnit(this);
 	quads.clear();
@@ -1336,8 +1356,12 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		gs->Team(newteam)->energyStorage += energyStorage;
 	}
 
+
 	team = newteam;
 	allyteam = gs->AllyTeam(newteam);
+
+	uh->unitsByDefs[oldteam][unitDef->id].erase(this);
+	uh->unitsByDefs[newteam][unitDef->id].insert(this);
 
 	neutral = false;
 
@@ -2136,6 +2160,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(upright),
 				CR_MEMBER(relMidPos),
 				CR_MEMBER(power),
+				CR_MEMBER(luaDraw),
 				CR_MEMBER(noDraw),
 				CR_MEMBER(noSelect),
 				CR_MEMBER(noMinimap),
@@ -2275,8 +2300,9 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(falling),
 				CR_MEMBER(fallSpeed),
 
-				CR_MEMBER(bonusShieldDir),
+				CR_MEMBER(bonusShieldEnabled),
 				CR_MEMBER(bonusShieldSaved),
+				CR_MEMBER(bonusShieldDir),
 
 				CR_MEMBER(armoredState),
 				CR_MEMBER(armoredMultiple),

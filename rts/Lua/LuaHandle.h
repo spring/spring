@@ -13,6 +13,9 @@ using std::set;
 
 #include "LuaShaders.h"
 #include "LuaTextures.h"
+//FIXME-BO: #include "LuaVBOs.h"
+//FIXME-BO: #include "LuaFBOs.h"
+//FIXME-BO: #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
 
 
@@ -77,6 +80,9 @@ class CLuaHandle {
 
 		CLuaShaders& GetShaders() { return shaders; }
 		CLuaTextures& GetTextures() { return textures; }
+//FIXME-BO: 		CLuaVBOs& GetVBOs() { return vbos; }
+//FIXME-BO:  		CLuaFBOs& GetFBOs() { return fbos; }
+//FIXME-BO: 		CLuaRBOs& GetRBOs() { return rbos; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 	public:
@@ -106,7 +112,7 @@ class CLuaHandle {
 
 		void UnitIdle(const CUnit* unit);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                 float damage, bool paralyzer);
+		                 float damage, int weaponID, bool paralyzer);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
@@ -125,6 +131,9 @@ class CLuaHandle {
 		                      const CWeapon* weapon, int oldCount);
 
 		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+
+		// LuaHandleSynced wraps this to set allowChanges
+		virtual bool RecvLuaMsg(const string& msg, int playerID);
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
@@ -183,6 +192,9 @@ class CLuaHandle {
 
 		CLuaShaders shaders;
 		CLuaTextures textures;
+//FIXME-BO: 		CLuaVBOs vbos;
+//FIXME-BO: 		CLuaFBOs fbos;
+//FIXME-BO:  		CLuaRBOs rbos;
 		CLuaDisplayLists displayLists;
 
 		vector<bool> watchWeapons; // for the Explosion call-in
@@ -228,12 +240,11 @@ class CLuaHandle {
 		static const LuaCobCallback GetActiveCallback() {
 			return activeHandle->cobCallback;
 		}
-		static CLuaShaders& GetActiveShaders() {
-			return activeHandle->shaders;
-		}
-		static CLuaTextures& GetActiveTextures() {
-			return activeHandle->textures;
-		}
+		static CLuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
+		static CLuaTextures& GetActiveTextures() { return activeHandle->textures; }
+//FIXME-BO: 		static CLuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
+//FIXME-BO:  		static CLuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
+//FIXME-BO: 		static CLuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
 		static CLuaDisplayLists& GetActiveDisplayLists() {
 			return activeHandle->displayLists;
 		}
@@ -241,6 +252,8 @@ class CLuaHandle {
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
+		static void HandleLuaMsg(int playerID, int script, int mode,
+		                         const string& msg);
 
 	protected: // static
 		static CLuaHandle* activeHandle;

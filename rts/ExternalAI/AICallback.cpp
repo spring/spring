@@ -11,6 +11,7 @@
 #include "Game/Team.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
+#include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
@@ -1349,10 +1350,12 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 	return a;
 }
 
+
 const WeaponDef* CAICallback::GetWeapon(const char* weaponname)
 {
 	return weaponDefHandler->GetWeapon(weaponname);
 }
+
 
 bool CAICallback::CanBuildUnit(int unitDefID)
 {
@@ -1363,9 +1366,20 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 	return uh->CanBuildUnit(ud, team);
 }
 
+
 const float3 *CAICallback::GetStartPos()
 {
 	return &gs->Team(team)->startPos;
 }
 
+
+const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize)
+{
+	if (luaRules == NULL) {
+		return NULL;
+	}
+	return luaRules->AICallIn(data, inSize, outSize);
+}
+
+   
 IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())

@@ -12,6 +12,7 @@ class CUnit;
 #include <string>
 
 #include "UnitDef.h"
+#include "UnitSet.h"
 #include "Sim/Units/CommandAI/Command.h"
 
 class CBuilderCAI;
@@ -51,7 +52,7 @@ public:
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
 	Command GetBuildCommand(float3 pos, float3 dir);
 
-	vector<unsigned int> unitsType[MAX_TEAMS];  //how many units of each type exist currently in game for each player
+	vector<CUnitSet> unitsByDefs[MAX_TEAMS]; // units sorted by team and unitDef
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::deque<int> freeIDs;

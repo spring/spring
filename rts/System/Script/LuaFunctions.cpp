@@ -43,10 +43,10 @@ namespace luafunctions
 		luaCallIns.GameOver();
 	}
 
-    void CreateGlobalAI( int teamnumber, std::string dllname )
-    {
-        globalAI->CreateGlobalAI( teamnumber, dllname.c_str() );
-    }
+	void CreateGlobalAI( int teamnumber, std::string dllname )
+	{
+			globalAI->CreateGlobalAI( teamnumber, dllname.c_str() );
+	}
 
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)
 	{

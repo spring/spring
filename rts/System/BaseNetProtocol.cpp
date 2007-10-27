@@ -39,6 +39,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_PLAYERINFO, 10);
 	RegisterMessage(NETMSG_PLAYERLEFT, 3);
 	RegisterMessage(NETMSG_MODNAME, -1);
+	RegisterMessage(NETMSG_LUAMSG, -2);
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()
@@ -317,6 +318,25 @@ void CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 void CBaseNetProtocol::SendModName(const uint checksum, const std::string& newModName)
 {
 	return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, newModName);
+}
+
+//  NETMSG_LUAMSG          = 40, // uchar myPlayerNum; std::string modName;   (e.g. `custom msg')
+
+void CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
+                                  const std::string& msg)
+{
+  // avoid the trailing '\0' processing
+  const unsigned short msgLen = msg.size() + 6;
+  const char* msgPtr = (char*)&msgLen;
+  std::string data;
+  data.push_back((char)NETMSG_LUAMSG);
+  data.push_back(msgPtr[0]);
+  data.push_back(msgPtr[1]);
+  data.push_back(myPlayerNum);
+  data.push_back(script);
+  data.push_back(mode);
+  data.append(msg);
+  return SendData((const unsigned char*)data.data(), msgLen);    
 }
 
 /* FIXME: add these:

@@ -512,7 +512,7 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 	return closeUnit;
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,int searchAllyteam,bool sphere)
 {
 	float closeDist=radius*radius;
 	CUnit* closeUnit=0;
@@ -520,15 +520,32 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 
 	int tempNum=gs->tempNum++;
 	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
-				(*ui)->tempNum=tempNum;
-				float sqDist=(pos-(*ui)->midPos).SqLength2D();
-				if(sqDist <= closeDist){
-					closeDist=sqDist;
-					closeUnit=*ui;
+	if (sphere) {
+		for(qi=quads.begin();qi!=quads.end();++qi){
+			list<CUnit*>::iterator ui;
+			for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
+				if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
+					(*ui)->tempNum=tempNum;
+					float sqDist=(pos - (*ui)->midPos).SqLength();
+					if(sqDist <= closeDist){
+						closeDist=sqDist;
+						closeUnit=*ui;
+					}
+				}
+			}
+		}
+	}
+	else { // cylinder
+		for(qi=quads.begin();qi!=quads.end();++qi){
+			list<CUnit*>::iterator ui;
+			for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
+				if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
+					(*ui)->tempNum=tempNum;
+					float sqDist=(pos-(*ui)->midPos).SqLength2D();
+					if(sqDist <= closeDist){
+						closeDist=sqDist;
+						closeUnit=*ui;
+					}
 				}
 			}
 		}

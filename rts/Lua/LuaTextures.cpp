@@ -104,7 +104,7 @@ string CLuaTextures::Create(const Texture& tex)
 		}
 
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-		                          GL_TEXTURE_2D, texID, 0);
+		                          tex.target, texID, 0);
 
 		const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 		if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {

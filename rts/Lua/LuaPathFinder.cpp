@@ -1,0 +1,218 @@
+#include "StdAfx.h"
+// LuaPathFinder.cpp: implementation of the LuaPathFinder class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include "LuaPathFinder.h"
+
+#include <stdlib.h>
+#include <algorithm>
+
+using namespace std;
+
+#include "LuaInclude.h"
+
+#include "LuaHandle.h"
+#include "LuaUtils.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Path/PathManager.h"
+
+
+static void CreatePathMetatable(lua_State* L);
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool LuaPathFinder::PushEntries(lua_State* L)
+{
+	CreatePathMetatable(L);	
+
+#define REGISTER_LUA_CFUNC(x) \
+	lua_pushstring(L, #x);      \
+	lua_pushcfunction(L, x);    \
+	lua_rawset(L, -3)
+                        
+	REGISTER_LUA_CFUNC(RequestPath);
+
+	return true;	
+}
+
+
+/******************************************************************************/
+
+static int path_next(lua_State* L)
+{
+	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
+	const int pathID = *idPtr;
+	if (pathID == 0) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L);
+
+	float3 callerPos = ZeroVector;
+	if (args >= 4) {
+		callerPos.x = (float)luaL_checknumber(L, 2);
+		callerPos.y = (float)luaL_checknumber(L, 3);
+		callerPos.z = (float)luaL_checknumber(L, 4);
+	}
+
+	const float minDist = (float)luaL_optnumber(L, 5, 0.0f);
+
+	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist);
+
+	if ((point.x == -1.0f) &&
+	    (point.y == -1.0f) &&
+	    (point.z == -1.0f)) {
+		return 0;
+	}
+
+	lua_pushnumber(L, point.x);		
+	lua_pushnumber(L, point.y);		
+	lua_pushnumber(L, point.z);		
+
+	return 3;
+}
+
+
+static int path_estimates(lua_State* L)
+{
+	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
+	const int pathID = *idPtr;
+	if (pathID == 0) {
+		return 0;
+	}
+
+	vector<float3> points;
+	vector<int>    starts;
+	pathManager->GetEstimatedPath(pathID, points, starts);
+
+	const int pointCount = (int)points.size();
+
+	lua_newtable(L);
+	for (int i = 0; i < pointCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_newtable(L); {
+			const float3& p = points[i];
+			lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
+			lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
+			lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
+		}
+		lua_rawset(L, -3);
+	}
+
+	const int startCount = (int)starts.size();
+
+	lua_newtable(L);
+	for (int i = 0; i < startCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushnumber(L, starts[i] + 1);
+		lua_rawset(L, -3);
+	}
+
+	return 2;
+}
+
+
+static int path_index(lua_State* L)
+{
+	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
+	const int pathID = *idPtr;
+	if (pathID == 0) {
+		return 0;
+	}
+	const string key = luaL_checkstring(L, 2);
+	if (key == "Next") {
+		lua_pushcfunction(L, path_next);
+		return 1;
+	}
+	else if (key == "GetEstimatedPath") {
+		lua_pushcfunction(L, path_estimates);
+		return 1;
+	}
+	return 0;
+}
+
+
+static int path_newindex(lua_State* L)
+{
+	return 0;
+}
+
+
+static int path_gc(lua_State* L)
+{
+	int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
+	const int pathID = *idPtr;
+	if (pathID == 0) {
+		return 0;
+	}
+	pathManager->DeletePath(*idPtr);
+	*idPtr = 0;
+	return 0;
+}
+
+
+static void CreatePathMetatable(lua_State* L) 
+{
+	luaL_newmetatable(L, "Path");
+	HSTR_PUSH_CFUNC(L, "__gc",       path_gc);
+	HSTR_PUSH_CFUNC(L, "__index",    path_index);
+	HSTR_PUSH_CFUNC(L, "__newindex", path_newindex);
+	lua_pop(L, 1);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaPathFinder::RequestPath(lua_State* L)
+{
+	const MoveData* moveData = NULL;
+	
+	if (lua_israwstring(L, 1)) {
+		const string moveName = lua_tostring(L, 1);
+		moveData = moveinfo->GetMoveDataFromName(moveName, true);
+	}
+	else {
+		const int moveID = (int)luaL_checknumber(L, 1);
+		if ((moveID < 0) || (moveID >= moveinfo->moveData.size())) {
+			luaL_error(L, "Invalid moveID passed to RequestPath");
+		}
+		moveData = moveinfo->moveData[moveID];
+	}
+
+	if (moveData == NULL) {
+		return 0;
+	}
+
+	const float3 start((float)luaL_checknumber(L, 2),
+	                   (float)luaL_checknumber(L, 3),
+	                   (float)luaL_checknumber(L, 4));
+
+	const float3   end((float)luaL_checknumber(L, 5),
+	                   (float)luaL_checknumber(L, 6),
+	                   (float)luaL_checknumber(L, 7));
+
+	const float radius = (float)luaL_optnumber(L, 8, 8.0f);
+
+	const int pathID =
+		pathManager->RequestPath(moveData, start, end, radius, NULL);
+
+	if (pathID == 0) {
+		return 0;
+	}
+	
+	int* idPtr = (int*)lua_newuserdata(L, sizeof(int));
+	luaL_getmetatable(L, "Path");
+	lua_setmetatable(L, -2);
+
+	*idPtr = pathID;
+
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
