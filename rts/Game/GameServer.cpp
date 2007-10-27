@@ -50,7 +50,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
-	
+
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
@@ -61,11 +61,11 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		SendSystemMsg("Starting server on port %i", port);
 		mapName = newMapName;
 		mapChecksum = archiveScanner->GetMapChecksum(mapName);
-		
+
 		modName = newModName;
 		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
 		modChecksum = archiveScanner->GetModChecksum(modArchive);
-		
+
 		scriptName = newScriptName;
 	}
 
@@ -73,11 +73,10 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		// initialise a local client
 		//TODO make local connecting like from remote (and make it possible to have no local conn)
 		int wantedNumber = (gameSetup ? gameSetup->myPlayer : 0 );
+
 		if (play)
-		{
-			wantedNumber = std::max(wantedNumber, play->fileHeader.numPlayers);
-		}
-		
+			wantedNumber = std::max(wantedNumber, play->GetFileHeader().numPlayers);
+
 		int hisNewNumber = ((netcode::CNet*)serverNet)->InitLocalClient(wantedNumber);
 		serverNet->Update();
 
@@ -295,7 +294,7 @@ void CGameServer::Update()
 			serverNet->RawSend(demobuffer, length);
 			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		}
-		
+
 		if (play->ReachedEnd())
 		{
 			delete play;
@@ -330,11 +329,11 @@ void CGameServer::ServerReadNet()
 		const unsigned inbuflength = 4096;
 		unsigned char inbuf[inbuflength];
 		int ret = ((netcode::CNet*)serverNet)->GetData(inbuf);
-		
+
 		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
 			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(inbuf[1]);
-			
+
 			serverNet->SendSetPlayerNum(hisNewNumber);
 
 			if (!scriptName.empty())
@@ -363,7 +362,7 @@ void CGameServer::ServerReadNet()
 			serverNet->RejectIncomingConnection();
 		}
 	}
-	
+
 	for(unsigned a=0; a<MAX_PLAYERS; a++)
 	{
 		if (serverNet->IsActiveConnection(a))

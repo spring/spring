@@ -62,13 +62,14 @@ CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
 CAICallback::~CAICallback(void)
 {}
 
-void CAICallback::SendTextMsg(const char* text,int priority)
+void CAICallback::SendTextMsg(const char* text, int zone)
 {
 	if (group)
-		logOutput.Print(priority, "Group%i: %s",group->id,text);
+		logOutput.Print(zone, "Group%i: %s", group->id, text);
 	else
-        logOutput.Print(priority, "GlobalAI%i: %s",team,text);
+		logOutput.Print(zone, "GlobalAI%i: %s", team, text);
 }
+
 void CAICallback::SetLastMsgPos(float3 pos)
 {
 	logOutput.SetLastMsgPos(pos);
@@ -78,6 +79,7 @@ void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
 {
 	minimap->AddNotification(pos,color,alpha);
 }
+
 bool CAICallback::PosInCamera(float3 pos, float radius)
 {
 	return camera->InView(pos,radius);
@@ -1381,5 +1383,5 @@ const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize
 	return luaRules->AICallIn(data, inSize, outSize);
 }
 
-   
+
 IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())

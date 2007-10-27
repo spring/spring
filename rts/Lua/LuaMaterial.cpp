@@ -79,12 +79,12 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 {
 	delete[] customData;
 	customData = NULL;
-	
+
 	haveUniforms = u.haveUniforms;
-	speedLoc     = u.speedLoc;	
-	healthLoc    = u.healthLoc;	
-	unitIDLoc    = u.unitIDLoc;	
-	teamIDLoc    = u.teamIDLoc;	
+	speedLoc     = u.speedLoc;
+	healthLoc    = u.healthLoc;
+	unitIDLoc    = u.unitIDLoc;
+	teamIDLoc    = u.teamIDLoc;
 	customLoc    = u.customLoc;
 	customCount  = u.customCount;
 
@@ -205,7 +205,6 @@ void LuaMatShader::Print(const string& indent) const
 
 void LuaMatTexture::Finalize()
 {
-	int maxTex = 0;
 	for (int t = 0; t < maxTexUnits; t++) {
 		if ((type == LUATEX_GL) && (openglID == 0)) {
 			type = LUATEX_NONE;
@@ -268,7 +267,7 @@ void LuaMatTexture::Execute(const LuaMatTexture& prev) const
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}
-	}  
+	}
 }
 
 
@@ -357,7 +356,7 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.type != b.type) {
 		return (a.type < b.type) ? -1 : +1;  // should not happen
 	}
-	
+
 	if (a.order != b.order) {
 		return (a.order < b.order) ? -1 : +1;
 	}
@@ -576,7 +575,7 @@ void LuaMatHandler::ClearBins(LuaMatType type)
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
 		bin->Clear();
-	}	
+	}
 }
 
 

@@ -104,8 +104,6 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 
 bool CGroupAI::AddUnit(int unit)
 {
-	const UnitDef* ud=aicb->GetUnitDef(unit);
-
 	UnitInfo* info=new UnitInfo;
 	info->maxExtractsMetal 	= 0;
 	info->status			= idle;

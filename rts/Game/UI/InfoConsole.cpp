@@ -12,7 +12,7 @@
 #ifdef WIN32
 #include "Platform/Win/win32.h"
 #endif
- 
+
 #include "Sync/SyncTracer.h"
 #include "Platform/ConfigHandler.h"
 #include "InputReceiver.h"
@@ -79,7 +79,7 @@ void CInfoConsole::Draw()
 
 	const float xScale = 0.015f;
 	const float yScale = 0.020f;
-	
+
 	glTranslatef(xpos + 0.01f, ypos - 0.026f, 0.0f);
 	glScalef(xScale, yScale, 1.0f);
 
@@ -150,19 +150,15 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(int priority, const char *text)
+void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 {
-	if (priority > verboseLevel) {
-		return;
-	}
-	
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	RawLine rl;
 	rl.text = text;
-	rl.priority = priority;
+	rl.zone = zone;
 	rl.time = 0; // filled in later
 	rl.id = rawId;
 	rawId++;
@@ -212,7 +208,7 @@ void CInfoConsole::NotifyLogMsg(int priority, const char *text)
 		data.back().time=lifetime-lastTime;
 		lastTime=lifetime;
 	}
-	
+
 	POP_CODE_MODE;
 }
 

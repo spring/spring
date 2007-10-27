@@ -21,7 +21,7 @@ class ILogSubscriber
 {
 public:
 	// Notification of log messages to subscriber
-	virtual void NotifyLogMsg(int priority, const char *str) = 0;
+	virtual void NotifyLogMsg(int zone, const char *str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
 };
 
@@ -31,10 +31,10 @@ public:
 	CLogOutput();
 	~CLogOutput();
 
-	void Print(int priority, const char *fmt, ...) FORMATSTRING(3);
-	void Print(const char *fmt, ...) FORMATSTRING(2); // priority 0
+	void Print(int zone, const char *fmt, ...) FORMATSTRING(3);
+	void Print(const char *fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
-	void Print(int priority, const std::string& text);
+	void Print(int zone, const std::string& text);
 
 	CLogOutput& operator<<(const int i);
 	CLogOutput& operator<<(const float f);
@@ -55,7 +55,7 @@ public:
 	void SetMirrorToStdout(bool);
 
 protected:
-	void Output(int priority, const char *str);
+	void Output(int zone, const char *str);
 
 	std::vector<ILogSubscriber*> subscribers;
 };

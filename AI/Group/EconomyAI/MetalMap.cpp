@@ -454,7 +454,7 @@ bool CMetalMap::LoadMetalMap()
 
 	FILE *load_file;
 	// load Spots if file exists 
-	if(load_file = fopen(buffer, "rb"))
+	if((load_file = fopen(buffer, "rb")))
 	{
 		fread(&NumSpotsFound, sizeof(int), 1, load_file);
 		VectoredSpots.resize(NumSpotsFound);

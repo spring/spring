@@ -12,8 +12,12 @@ Subclass other demo stuff from this
 class CDemo
 {
 public:
-	DemoFileHeader fileHeader; //TODO should be const
+	CDemo();
+
+	const DemoFileHeader& GetFileHeader() { return fileHeader; }
+
 protected:
+	DemoFileHeader fileHeader;
 	std::string demoName;
 };
 
