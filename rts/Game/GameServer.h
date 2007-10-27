@@ -10,7 +10,7 @@
 
 #include "System/GlobalStuff.h"
 
-class CNetProtocol;
+class CBaseNetProtocol;
 class CDemoReader;
 class AutohostInterface;
 
@@ -39,7 +39,6 @@ public:
 	int serverframenum;
 	void StartGame();
 
-	bool gameLoading;
 	bool gameEndDetected;
 	float gameEndTime;					//how long has gone by since the game end was detected
 
@@ -76,7 +75,7 @@ private:
 	void CheckForGameEnd();
 
 	/// Class for network communication
-	CNetProtocol* serverNet;
+	CBaseNetProtocol* serverNet;
 	
 	CDemoReader* play;
 	
@@ -101,6 +100,13 @@ private:
 	
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
+	
+	std::string scriptName;
+	unsigned int mapChecksum;
+	std::string mapName;
+	unsigned int modChecksum;
+	std::string modName;
+	
 	
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK

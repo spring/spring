@@ -12,7 +12,7 @@
 
 #include "GameSetup.h"
 #include "System/StdAfx.h"
-#include "System/NetProtocol.h"
+#include "System/BaseNetProtocol.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Sync/Syncify.h"
@@ -30,7 +30,7 @@ CGameServer* gameServer=0;
 
 extern bool globalQuit;
 
-CGameServer::CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName)
+CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
 {
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
@@ -38,7 +38,6 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	lastPlayerInfo = 0;
 	serverframenum=0;
 	timeLeft=0;
-	gameLoading=true;
 	gameEndDetected=false;
 	gameEndTime=0;
 	quitServer=false;
@@ -49,24 +48,48 @@ CGameServer::CGameServer(int port, const std::string& mapName, const std::string
 	play = 0;
 	IsPaused = false;
 
-	serverNet = new CNetProtocol();
-
+	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
+	
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
 		play = new CDemoReader(demoName);
-		gameLoading = false;
 	}
-	else // no demo, so set map and mod to send it to clients
+	else // no demo, so set map and mod and calculate checksums
 	{
-		serverNet->SendMapName(archiveScanner->GetMapChecksum(mapName), mapName);
+		SendSystemMsg("Starting server on port %i", port);
+		mapName = newMapName;
+		mapChecksum = archiveScanner->GetMapChecksum(mapName);
+		
+		modName = newModName;
 		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
-		serverNet->SendModName(archiveScanner->GetModChecksum(modArchive), modName);
-		serverNet->SendScript(scriptName);
+		modChecksum = archiveScanner->GetModChecksum(modArchive);
+		
+		scriptName = newScriptName;
 	}
 
-	serverNet->ServerInitLocalClient( gameSetup ? gameSetup->myPlayer : 0 );
+	{
+		// initialise a local client
+		//TODO make local connecting like from remote (and make it possible to have no local conn)
+		int wantedNumber = (gameSetup ? gameSetup->myPlayer : 0 );
+		if (play)
+		{
+			wantedNumber = std::max(wantedNumber, play->fileHeader.numPlayers);
+		}
+		
+		int hisNewNumber = ((netcode::CNet*)serverNet)->InitLocalClient(wantedNumber);
+		serverNet->Update();
+
+		serverNet->SendSetPlayerNum(hisNewNumber);
+		// send game data for demo recording
+		if (!scriptName.empty())
+			serverNet->SendScript(scriptName);
+		if (!mapName.empty())
+			serverNet->SendMapName(mapChecksum, mapName);
+		if (!modName.empty())
+			serverNet->SendModName(modChecksum, modName);
+	}
 
 	lastTick = SDL_GetTicks();
 
@@ -301,6 +324,46 @@ void CGameServer::Update()
 
 void CGameServer::ServerReadNet()
 {
+	// handle new connections
+	while (serverNet->HasIncomingConnection())
+	{
+		const unsigned inbuflength = 4096;
+		unsigned char inbuf[inbuflength];
+		int ret = ((netcode::CNet*)serverNet)->GetData(inbuf);
+		
+		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
+		{
+			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(inbuf[1]);
+			
+			serverNet->SendSetPlayerNum(hisNewNumber);
+
+			if (!scriptName.empty())
+				serverNet->SendScript(scriptName);
+			if (!mapName.empty())
+				serverNet->SendMapName(mapChecksum, mapName);
+			if (!modName.empty())
+				serverNet->SendModName(modChecksum, modName);
+
+			for(unsigned a=0;a<gs->activePlayers;a++){
+				if(!gs->players[a]->readyToStart)
+					continue;
+				serverNet->SendPlayerName(a, gs->players[a]->playerName);
+			}
+			if(gameSetup){
+				for(unsigned a=0;a<gs->activeTeams;a++){
+					serverNet->SendStartPos(a, 2, gs->Team(a)->startPos.x,
+								 gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+				}
+			}
+			serverNet->FlushNet();
+		}
+		else
+		{
+			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], ret);
+			serverNet->RejectIncomingConnection();
+		}
+	}
+	
 	for(unsigned a=0; a<MAX_PLAYERS; a++)
 	{
 		if (serverNet->IsActiveConnection(a))
@@ -740,11 +803,6 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 void CGameServer::UpdateLoop()
 {
-	while(gameLoading){		//avoid timing out while loading (esp if calculating path data)
-		SDL_Delay(100);
-		serverNet->Update();
-	}
-	SDL_Delay(100);		//we might crash if game hasnt finished initializing within this time
 	/*
 	 * Need a better solution than this for starvation.
 	 * Decreasing thread priority (making it more important)
