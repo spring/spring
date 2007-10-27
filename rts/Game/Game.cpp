@@ -280,7 +280,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	camera=SAFE_NEW CCamera();
 	cam2=SAFE_NEW CCamera();
 	mouse=SAFE_NEW CMouseHandler();
-	cam = new CCameraHandler();
+	camHandler = new CCameraHandler();
 	selectionKeys=SAFE_NEW CSelectionKeyHandler();
 	tooltip=SAFE_NEW CTooltipConsole();
 
@@ -526,7 +526,7 @@ CGame::~CGame()
 	delete sound;              sound              = NULL;
 	delete selectionKeys;      selectionKeys      = NULL;
 	delete mouse;              mouse              = NULL;
-	delete cam;                cam                = NULL;
+	delete camHandler;         camHandler         = NULL;
 	delete helper;             helper             = NULL;
 	delete shadowHandler;      shadowHandler      = NULL;
 	delete moveinfo;           moveinfo           = NULL;
@@ -929,29 +929,29 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewfps") {
-		cam->SetCameraMode(0);
+		camHandler->SetCameraMode(0);
 	}
 	else if (cmd == "viewta") {
-		cam->SetCameraMode(1);
+		camHandler->SetCameraMode(1);
 	}
 	else if (cmd == "viewtw") {
-		cam->SetCameraMode(2);
+		camHandler->SetCameraMode(2);
 	}
 	else if (cmd == "viewrot") {
-		cam->SetCameraMode(3);
+		camHandler->SetCameraMode(3);
 	}
 	else if (cmd == "viewfree") {
-		cam->SetCameraMode(4);
+		camHandler->SetCameraMode(4);
 	}
 	else if (cmd == "viewov") {
-		cam->SetCameraMode(5);
+		camHandler->SetCameraMode(5);
 	}
 	else if (cmd == "viewlua") {
-		cam->SetCameraMode(6);
+		camHandler->SetCameraMode(6);
 	}
 	else if (cmd == "viewtaflip") {
 		COverheadController* taCam =
-			dynamic_cast<COverheadController*>(cam->camControllers[1]);
+			dynamic_cast<COverheadController*>(camHandler->camControllers[1]);
 		if (taCam) {
 			if (!action.extra.empty()) {
 				taCam->flipped = !!atoi(action.extra.c_str());
@@ -961,10 +961,10 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "viewsave") {
-		cam->SaveView(action.extra);
+		camHandler->SaveView(action.extra);
 	}
 	else if (cmd == "viewload") {
-		cam->LoadView(action.extra);
+		camHandler->LoadView(action.extra);
 	}
 	else if (cmd == "viewselection") {
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -975,8 +975,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				pos += (*it)->midPos;
 			}
 			pos /= (float)selUnits.size();
-			cam->currentCamController->SetPos(pos);
-			cam->CameraTransition(0.6f);
+			camHandler->currCamCtrl->SetPos(pos);
+			camHandler->CameraTransition(0.6f);
 		}
 	}
 	else if (cmd == "moveforward") {
@@ -1062,8 +1062,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
-		cam->currentCamController->SetPos(infoConsole->lastMsgPos);
-		cam->CameraTransition(0.6f);
+		camHandler->currCamCtrl->SetPos(infoConsole->lastMsgPos);
+		camHandler->CameraTransition(0.6f);
 	}
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
@@ -1092,7 +1092,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		unitTracker.IncMode();
 	}
 	else if (cmd == "toggleoverview") {
-		cam->ToggleOverviewCamera();
+		camHandler->ToggleOverviewCamera();
 	}
 	else if (cmd == "showhealthbars") {
 		if (action.extra.empty()) {
@@ -1756,7 +1756,7 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 	}
 	else if (cmd == "mousestate") {
 		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-			cam->ToggleState();
+			camHandler->ToggleState();
 		else
 			mouse->ToggleState();
 	}
@@ -2040,7 +2040,7 @@ bool CGame::Draw()
 	glDisable(GL_TEXTURE_2D);
 
 	//set camera
-	cam->UpdateCam();
+	camHandler->UpdateCam();
 	mouse->UpdateCursors();
 
 	if(unitTracker.Enabled())
@@ -3142,9 +3142,9 @@ bool CGame::ClientReadNet()
 									mouse->locked = true;
 									mouse->HideMouse();
 								}
-								cam->PushMode();
-								cam->SetCameraMode(0);
-								((CFPSController*)cam->currentCamController)->SetPos(unit->midPos);
+								camHandler->PushMode();
+								camHandler->SetCameraMode(0);
+								((CFPSController*)camHandler->currCamCtrl)->SetPos(unit->midPos);
 								selectedUnits.ClearSelected();
 							}
 							ENTER_SYNCED;
@@ -3228,7 +3228,7 @@ void CGame::UpdateUI()
 		float3 pos=owner->pos+owner->frontdir*relPos.z+owner->updir*relPos.y+owner->rightdir*relPos.x;
 		pos+=UpVector*7;
 
-		((CFPSController*)cam->camControllers[0])->SetPos(pos);
+		((CFPSController*)camHandler->camControllers[0])->SetPos(pos);
 	} else
 #endif
 	{
@@ -3259,7 +3259,7 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		CCameraController* camCtrl = cam->currentCamController;
+		CCameraController* camCtrl = camHandler->currCamCtrl;
 		if (disableTracker && camCtrl->DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
@@ -3289,15 +3289,15 @@ void CGame::UpdateUI()
 			}
 		}
 		movement.z=cameraSpeed;
-		cam->currentCamController->ScreenEdgeMove(movement);
+		camHandler->currCamCtrl->ScreenEdgeMove(movement);
 
 		if(camMove[4])
-			cam->currentCamController->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			camHandler->currCamCtrl->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
 		if(camMove[5])
-			cam->currentCamController->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+			camHandler->currCamCtrl->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
 	}
 
-	cam->currentCamController->Update();
+	camHandler->currCamCtrl->Update();
 
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);

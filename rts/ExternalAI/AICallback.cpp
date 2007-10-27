@@ -1092,10 +1092,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = gu->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = cam->currentCamController->GetDir();
+			*(float3*)data = camHandler->currCamCtrl->GetDir();
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = cam->currentCamController->GetPos();
+			*(float3*)data = camHandler->currCamCtrl->GetPos();
 			return true;
 		}case AIVAL_SCRIPT_FILENAME_DEPRECATED:{
 			// Passing container objects across DLL boundaries is not safe on windows,

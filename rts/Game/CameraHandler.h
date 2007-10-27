@@ -6,7 +6,9 @@
 #include <string>
 #include <stack>
 
+
 class CCameraController;
+
 
 class CCameraHandler
 {
@@ -26,12 +28,12 @@ public:
 	void SaveView(const std::string& name);
 	bool LoadView(const std::string& name);
 	
-	CCameraController* currentCamController;
+	CCameraController* currCamCtrl;
 	std::vector<CCameraController*> camControllers;
 	
 private:
 	std::stack<unsigned> controllerStack;
-	int currentCamControllerNum;
+	int currCamCtrlNum;
 	int preControlCamNum;
 	CCameraController* overviewController;
 	
@@ -52,6 +54,10 @@ private:
 	std::map<std::string, ViewData> views;
 };
 
-extern CCameraHandler* cam;
+
+extern CCameraHandler* camHandler;
+
+extern CCameraController* camCtrl;
+
 
 #endif

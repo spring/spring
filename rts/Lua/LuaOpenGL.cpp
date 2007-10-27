@@ -4014,7 +4014,6 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (!lua_isfunction(L, arg)) {
 		luaL_error(L, "Incorrect arguments to gl.PushPopMatrix()");
 	}
-	const GLuint primMode = (GLuint)lua_tonumber(L, 1);
 
 	if (arg == 1) {
 		glPushMatrix();

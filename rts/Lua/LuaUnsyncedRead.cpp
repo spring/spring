@@ -192,7 +192,6 @@ int LuaUnsyncedRead::GetHasLag(lua_State* L)
 
 int LuaUnsyncedRead::IsAABBInView(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
 	float3 mins = float3((float)luaL_checknumber(L, 1),
 	                     (float)luaL_checknumber(L, 2),
 	                     (float)luaL_checknumber(L, 3));
@@ -517,9 +516,9 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	lua_newtable(L);
-	const int count = (int)cam->camControllers.size();
+	const int count = (int)camHandler->camControllers.size();
 	for (int i = 0; i < count; i++) {
-		const CCameraController* camCtrl = cam->camControllers[i];
+		const CCameraController* camCtrl = camHandler->camControllers[i];
 		lua_pushstring(L, camCtrl->GetName().c_str());
 		lua_pushnumber(L, camCtrl->num);
 		lua_rawset(L, -3);
@@ -536,15 +535,15 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	lua_newtable(L);
 
 	lua_pushstring(L, "mode");
-	lua_pushnumber(L, cam->currentCamController->num);
+	lua_pushnumber(L, camHandler->currCamCtrl->num);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "name");
-	lua_pushstring(L, cam->currentCamController->GetName().c_str());
+	lua_pushstring(L, camHandler->currCamCtrl->GetName().c_str());
 	lua_rawset(L, -3);
 
 
 	vector<float> camState;
-	cam->currentCamController->GetState(camState);
+	camHandler->currCamCtrl->GetState(camState);
 	for (int i = 0; i < (int)camState.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, camState[i]);
