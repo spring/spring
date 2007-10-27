@@ -173,6 +173,8 @@ struct UnitDef
 	float armoredMultiple;
 	int armorType;
 
+	bool bonusShieldEnabled;	// FIXME: remove this if the improved shield patch by ??? is committed
+
 	UnitModelDef model;
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
@@ -301,6 +303,7 @@ struct UnitDef
 	float cloakCost;						//energy cost per second to stay cloaked when stationary
 	float cloakCostMoving;			//energy cost per second when moving
 	float decloakDistance;			//if enemy unit come within this range decloaking is forced
+	bool decloakSpherical;			//use a spherical test instead of a cylindrical test?
 	bool decloakOnFire;					//should the unit decloak upon firing
 
 	bool canKamikaze;						//self destruct if enemy come to close

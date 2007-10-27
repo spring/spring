@@ -17,6 +17,7 @@ using namespace std;
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
+#include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
@@ -76,6 +77,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetCustomCommandDrawLine);
 
+	REGISTER_LUA_CFUNC(SetDrawSky);
+	REGISTER_LUA_CFUNC(SetDrawWater);
+	REGISTER_LUA_CFUNC(SetDrawGround);
+            
 	return true;
 }
 
@@ -300,6 +305,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	if ((args < 1) || !lua_isstring(L, 1)) {
 		luaL_error(L, "Incorrect arguments to PlaySoundFile()");
 	}
+	bool success = false;
 	const string soundFile = lua_tostring(L, 1);
 	const unsigned int soundID = sound->GetWaveId(soundFile, false);
 	if (soundID > 0) {
@@ -316,12 +322,11 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			                 (float)lua_tonumber(L, 5));
 			sound->PlaySample(soundID, pos, volume);
 		}
-		lua_pushboolean(L, 1);
-	} else {
-		lua_pushboolean(L, 0);
+		success = true;
 	}
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, success);
 		return 1;
 	} else {
 		return 0;
@@ -333,16 +338,13 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
 	const int args = lua_gettop(L);
 
-	if ((args < 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to PlaySoundStream()");
-	}
-
-	const string soundFile = lua_tostring(L, 1);
-	float volume = (args >= 2)? (float) lua_tonumber(L, 2): 1.0f;
+	const string soundFile = luaL_checkstring(L, 1);
+	const float volume     =   luaL_optnumber(L, 2, 1.0f);
 
 	if (args < 5) {
 		sound->PlayStream(soundFile, volume);
-	} else {
+	}
+	else {
 		const float3 pos((float) lua_tonumber(L, 3),
 		                 (float) lua_tonumber(L, 4),
 		                 (float) lua_tonumber(L, 5));
@@ -351,8 +353,12 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
-	lua_pushboolean(L, 1);
-	return 1;
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, true);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 
@@ -686,6 +692,45 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawLine(lua_State* L)
 	lua_pushboolean(L, 1);
 	return 1;
 }
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
+{
+	if (game == NULL) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDrawSky()");
+	}
+	game->drawSky = !!lua_toboolean(L, 1);
+}
+
+
+int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
+{
+	if (game == NULL) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDrawWater()");
+	}
+	game->drawWater = !!lua_toboolean(L, 1);
+}
+
+
+int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
+{
+	if (game == NULL) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDrawGround()");
+	}
+	game->drawGround = !!lua_toboolean(L, 1);
+}
+
 
 /******************************************************************************/
 /******************************************************************************/

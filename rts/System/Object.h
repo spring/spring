@@ -10,7 +10,8 @@
 template<typename T>
 void ListErase(std::list<T>& list, const T& what)
 {
-	for (typename std::list<T>::iterator it = list.begin(); it != list.end(); ++it) {
+	typename std::list<T>::iterator it;
+	for (it = list.begin(); it != list.end(); ++it) {
 		if (*it == what) {
 			list.erase(it);
 			break;

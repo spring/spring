@@ -1403,15 +1403,24 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 
 void CMiniMap::DrawUnit(CUnit* unit)
 {
+	// the simplest test
+	if (unit->noMinimap) {
+		return;
+	}
+
 	// blink for damages within the past 3 game seconds
 	if ((unit->lastDamage > (gs->frameNum - 3 * GAME_SPEED)) && (gs->frameNum & 8)) {
 		return;
 	}
 
-	if (unit->noMinimap) {
+	// includes the visibility check
+	float iconScale;
+	CIcon* icon = GetUnitIcon(unit, iconScale);
+	if (icon == NULL) {
 		return;
 	}
 
+	// get the position
 	float3 pos;
 	if (gu->spectatingFullView) {
 		pos = unit->midPos;
@@ -1419,12 +1428,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
 
-	float iconScale;
-	CIcon* icon = GetUnitIcon(unit, iconScale);
-	if (icon == NULL) {
-		return;
-	}
-
+	// set the color
 	if (unit->commandAI->selected) {
 		glColor3f(1.0f, 1.0f, 1.0f);
 	} else {

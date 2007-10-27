@@ -448,6 +448,44 @@ void CPathManager::Draw() {
 	pe2->Draw();
 }
 
+
+void CPathManager::GetEstimatedPath(unsigned int pathId,
+                                      vector<float3>& points,
+                                      vector<int>& starts) const
+{
+	points.clear();
+	starts.clear();
+
+	map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	if (pi == pathMap.end()) {
+		return;
+	}
+	const MultiPath* path = pi->second;
+
+	list<float3>::const_reverse_iterator pvi;
+	const list<float3>* pointSet;
+
+	starts.push_back(points.size());	
+	const list<float3>& dtlPoints = path->detailedPath.path;
+	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
+		points.push_back(*pvi);
+	}
+
+	starts.push_back(points.size());	
+	const list<float3>& estPoints = path->estimatedPath.path;
+	for (pvi = estPoints.rbegin(); pvi != estPoints.rend(); pvi++) {
+		points.push_back(*pvi);
+	}
+
+	starts.push_back(points.size());	
+	const list<float3>& est2Points = path->estimatedPath2.path;
+	for (pvi = est2Points.rbegin(); pvi != est2Points.rend(); pvi++) {
+		points.push_back(*pvi);
+	}
+
+	return;
+}
+
 CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData) :
 	start(start),
 	peDef(peDef),

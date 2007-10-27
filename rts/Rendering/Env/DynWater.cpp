@@ -420,6 +420,8 @@ void CDynWater::DrawReflection(CGame* game)
 	glClearColor(0.5f,0.6f,0.8f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	game->SetDrawMode(CGame::reflectionDraw);
+
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
@@ -445,6 +447,8 @@ void CDynWater::DrawReflection(CGame* game)
 	luaCallIns.DrawWorldReflection();
 
 	sky->DrawSun();
+
+	game->SetDrawMode(CGame::normalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
@@ -480,6 +484,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	unitDrawer->unitSunColor*=float3(0.5f,0.7f,0.9f);
 	unitDrawer->unitAmbientColor*=float3(0.6f,0.8f,1.0f);
 
+	game->SetDrawMode(CGame::refractionDraw);
+
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
 	gd->Draw(false,false,dwGroundRefractVP);
 
@@ -493,6 +499,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	ph->Draw(false,true);
 	luaCallIns.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
+
+	game->SetDrawMode(CGame::normalDraw);
 
 	drawRefraction=false;
 

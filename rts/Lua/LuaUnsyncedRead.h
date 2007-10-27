@@ -51,6 +51,8 @@ class LuaUnsyncedRead {
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);
 		static int GetCameraPosition(lua_State* L);
+		static int GetCameraDirection(lua_State* L);
+		static int GetCameraFOV(lua_State* L);
 		static int GetCameraVectors(lua_State* L);
 		static int WorldToScreenCoords(lua_State* L);
 		static int TraceScreenRay(lua_State* L);

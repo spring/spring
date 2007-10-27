@@ -289,6 +289,37 @@ float CGround::GetHeight2(float x, float y)
 	return r;
 }
 
+float CGround::GetOrigHeight(float x, float y)
+{
+	if(x<1)
+		x=1;
+	else if(x>float3::maxxpos)
+		x=float3::maxxpos;
+
+	if(y<1)
+		y=1;
+	else if(y>float3::maxzpos)
+		y=float3::maxzpos;
+
+	float r;
+	int sx=(int) (x/SQUARE_SIZE);
+	int sy=(int) (y/SQUARE_SIZE);
+	float dx=(x-sx*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
+	float dy=(y-sy*SQUARE_SIZE)*(1.0f/SQUARE_SIZE);
+	int hs=sx+sy*(gs->mapx+1);
+	float* heightmap = readmap->orgheightmap;
+	if(dx+dy<1){
+		float xdif=(dx)*(heightmap[hs+1]-heightmap[hs]);
+		float ydif=(dy)*(heightmap[hs+gs->mapx+1]-heightmap[hs]);
+		r=heightmap[hs]+xdif+ydif;
+	} else {
+		float xdif=(1-dx)*(heightmap[hs+gs->mapx+1]-heightmap[hs+1+1+gs->mapx]);
+		float ydif=(1-dy)*(heightmap[hs+1]-heightmap[hs+1+1+gs->mapx]);
+		r=heightmap[hs+1+1+gs->mapx]+xdif+ydif;
+	}
+	return r;
+}
+
 float3& CGround::GetNormal(float x, float y)
 {
 	if(x<1)

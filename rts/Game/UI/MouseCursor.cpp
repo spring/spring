@@ -82,7 +82,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 	}
 
 	CSimpleParser parser(specFH);
-	int lastFrame = 123456;
+	int lastFrame = 123456789;
 	map<string, int> imageIndexMap;
 
 	while (true) {

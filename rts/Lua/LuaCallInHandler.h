@@ -55,7 +55,7 @@ class CLuaCallInHandler
 
 		void UnitIdle(const CUnit* unit);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                 float damage, bool paralyzer);
+		                 float damage, int weaponID, bool paralyzer);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
@@ -249,14 +249,15 @@ inline void CLuaCallInHandler::UnitDestroyed(const CUnit* unit,
 
 inline void CLuaCallInHandler::UnitDamaged(const CUnit* unit,
                                            const CUnit* attacker,
-                                           float damage, bool paralyzer)
+                                           float damage, int weaponID,
+                                           bool paralyzer)
 {
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDamaged.size();
 	for (int i = 0; i < count; i++) {
 		CLuaHandle* lh = listUnitDamaged[i];
 		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == unitAllyTeam)) {
-			lh->UnitDamaged(unit, attacker, damage, paralyzer);
+			lh->UnitDamaged(unit, attacker, damage, weaponID, paralyzer);
 		}
 	}
 }

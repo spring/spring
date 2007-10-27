@@ -29,6 +29,9 @@ class LuaSyncedRead {
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
 
+		static int GetCustomMapOptions(lua_State* L);
+		static int GetCustomModOptions(lua_State* L);
+
 		static int GetGameRulesParam(lua_State* L);
 		static int GetGameRulesParams(lua_State* L);
 
@@ -53,6 +56,7 @@ class LuaSyncedRead {
 		static int GetTeamRulesParam(lua_State* L);
 		static int GetTeamRulesParams(lua_State* L);
 		static int GetTeamStatsHistory(lua_State* L);
+		static int GetTeamLuaAI(lua_State* L);
 
 		static int AreTeamsAllied(lua_State* L);
 		static int ArePlayersAllied(lua_State* L);
@@ -105,6 +109,7 @@ class LuaSyncedRead {
 		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
+		static int GetUnitEstimatedPath(lua_State* L);
 
 		static int GetUnitCommands(lua_State* L);
 		static int GetFactoryCounts(lua_State* L);
@@ -141,6 +146,7 @@ class LuaSyncedRead {
 		static int GetFeatureResurrect(lua_State* L);
 
 		static int GetGroundHeight(lua_State* L);
+		static int GetGroundOrigHeight(lua_State* L);
 		static int GetGroundNormal(lua_State* L);
 		static int GetGroundInfo(lua_State* L);
 		static int GetGroundBlocked(lua_State* L);
@@ -157,11 +163,13 @@ class LuaSyncedRead {
 		static int GetUnitPiecePosition(lua_State* L);
 		static int GetUnitPieceDirection(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);
-
-		static int TraceRay(lua_State* L); // not implemented
-		static int TraceRayUnits(lua_State* L); // not implemented
+		static int GetUnitScriptPiece(lua_State* L);
+		static int GetUnitScriptNames(lua_State* L);
+	
+		static int TraceRay(lua_State* L);         // not implemented
+		static int TraceRayUnits(lua_State* L);    // not implemented
 		static int TraceRayFeatures(lua_State* L); // not implemented
-		static int TraceRayGround(lua_State* L); // not implemented
+		static int TraceRayGround(lua_State* L);   // not implemented
 };
 
 

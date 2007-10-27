@@ -197,7 +197,12 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic) : lastFrameTime(0)
+CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
+: lastFrameTime(0),
+  drawMode(notDrawing),
+  drawSky(true),
+  drawWater(true),
+  drawGround(true)
 {
 	game = this;
 
@@ -1345,27 +1350,38 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		//  * If he's a spectator.
 		//  * If there are other active players on his team.
 		//  * If there are no other players
-		if(!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating) {
-			userMayQuit=true;
-		}else{
+		if (!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating) {
+			userMayQuit = true;
+		}
+		else {
 			// Check if there are more active players on his team.
-			for(int a=0;a<MAX_PLAYERS;++a){
-				if(gs->players[a]->active && gs->players[a]->team==gu->myTeam && a!=gu->myPlayerNum){
-					userMayQuit=true;
-					break;
+			bool onlyActive = true;
+			for (int a = 0;a < MAX_PLAYERS; ++a) {
+				if (a != gu->myPlayerNum) {
+					if (gs->players[a]->active) {
+						onlyActive = false;
+						if (gs->players[a]->team == gu->myTeam) {
+							userMayQuit = true;
+							break;
+						}
+					}
 				}
 			}
-		} // .. if(!playing||isDead||spectating)
+			// If you are the only remaining active player, you can quit immediately
+			if (onlyActive) {
+				userMayQuit = true;
+			}
+		}
 
 		// User may not quit if he is the only player in his still active team.
 		// Present him with the options given in CQuitBox.
-		if(!userMayQuit){
-			if(!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front())==0){
+		if (!userMayQuit) {
+			if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
 				SAFE_NEW CQuitBox();
 			}
 		} else {
 			logOutput.Print("User exited");
-			globalQuit=true;
+			globalQuit = true;
 		}
 	}
 	else if (cmd == "incguiopacity") {
@@ -1407,13 +1423,24 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 
 	else if (cmd == "grabinput") {
-		SDL_GrabMode mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
-		switch (mode) {
-			default: // make compiler happy
-			case SDL_GRAB_OFF: mode = SDL_GRAB_ON; break;
-			case SDL_GRAB_ON: mode = SDL_GRAB_OFF; break;
+		SDL_GrabMode newMode;
+		if (action.extra.empty()) {
+			const SDL_GrabMode curMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+			switch (curMode) {
+				default: // make compiler happy
+				case SDL_GRAB_OFF: newMode = SDL_GRAB_ON;  break;
+				case SDL_GRAB_ON:  newMode = SDL_GRAB_OFF; break;
+			}
+		} else {
+			if (atoi(action.extra.c_str())) {
+				newMode = SDL_GRAB_ON;
+			} else {
+				newMode = SDL_GRAB_OFF;
+			}
 		}
-		SDL_WM_GrabInput(mode);
+		SDL_WM_GrabInput(newMode);
+		logOutput.Print("Input grabbing %s",
+		                (newMode == SDL_GRAB_ON) ? "enabled" : "disabled");
 	}
 	else if ((cmd == "bind")         ||
 	         (cmd == "unbind")       ||
@@ -1843,25 +1870,41 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	sky->Draw();
-	gd->UpdateExtraTexture();
-	gd->Draw();
-	if(!readmap->voidWater && water->drawSolid)
- 		water->Draw();
+	if (drawSky) {
+		sky->Draw();
+	}
+	if (drawGround) {
+		gd->UpdateExtraTexture();
+		gd->Draw();
+	}
+	if (drawWater) {
+		if (!readmap->voidWater && water->drawSolid) {
+			water->Draw();
+		}
+	}
 
 	selectedUnits.Draw();
 	luaCallIns.DrawWorldPreUnit();
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
-	if(gu->drawdebug && gs->cheatEnabled)
+
+	if (gu->drawdebug && gs->cheatEnabled) {
 		pathManager->Draw();
+	}
+
 	//transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	if(treeDrawer->drawTrees)
-		treeDrawer->DrawGrass();
-	if(!readmap->voidWater && !water->drawSolid)
-		water->Draw();
+	if (drawGround) {
+		if (treeDrawer->drawTrees) {
+			treeDrawer->DrawGrass();
+		}
+	}
+	if (drawWater) {
+		if (!readmap->voidWater && !water->drawSolid) {
+			water->Draw();
+		}
+	}
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 	sky->DrawSun();
@@ -1942,6 +1985,8 @@ bool CGame::Draw()
 {
 	ASSERT_UNSYNCED_MODE;
 
+	SetDrawMode(normalDraw);
+
 	const unsigned currentTime = SDL_GetTicks();
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
@@ -2007,7 +2052,7 @@ bool CGame::Draw()
 	CBaseGroundDrawer* gd;
 	{
 		SCOPED_TIMER("Ground");
-		 gd = readmap->GetGroundDrawer();
+		gd = readmap->GetGroundDrawer();
 		gd->Update(); // let it update before shadows have to be drawn
 	}
 
@@ -2019,7 +2064,9 @@ bool CGame::Draw()
 		if (shadowHandler->drawShadows &&
 		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
 			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+			SetDrawMode(shadowDraw);
 			shadowHandler->CreateShadows();
+			SetDrawMode(normalDraw);
 		}
 		if (unitDrawer->advShading) {
 			unitDrawer->UpdateReflectTex();
@@ -2264,6 +2311,8 @@ bool CGame::Draw()
 	}
 #endif
 
+	SetDrawMode(notDrawing);
+
 	return true;
 }
 
@@ -2371,6 +2420,7 @@ void CGame::SimFrame()
 
 	script->Update();
 
+	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
 	if (luaCob)   { luaCob->GameFrame(gs->frameNum); }
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
@@ -2514,6 +2564,26 @@ void CGame::SimFrame()
 #endif
 }
 
+
+void CGame::AddTraffic(int playerID, int packetCode, int length)
+{
+	std::map<int, PlayerTrafficInfo>::iterator it = playerTraffic.find(playerID);
+	if (it == playerTraffic.end()) {
+		playerTraffic[playerID] = PlayerTrafficInfo();
+		it = playerTraffic.find(playerID);
+	}
+	PlayerTrafficInfo& pti = it->second;
+	pti.total += length;
+	
+	std::map<int, int>::iterator cit = pti.packets.find(packetCode);
+	if (cit == pti.packets.end()) {
+		pti.packets[packetCode] = length;
+	} else {
+		cit->second += length;
+	}
+}
+
+
 bool CGame::ClientReadNet()
 {
 	// quick hack until better netcode is in place
@@ -2532,20 +2602,27 @@ bool CGame::ClientReadNet()
 	const unsigned inbuflength = 8000;
 	unsigned char inbuf[inbuflength];
 	memset(inbuf, '\0', inbuflength);
-	unsigned ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+	unsigned dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 
-	while (ret > 0)
-	{
-		switch (inbuf[0])
-		{
-			case NETMSG_ATTEMPTCONNECT:
+
+	while (dataLength > 0) {
+
+		const unsigned char packetCode = inbuf[0];
+
+		switch (inbuf[0]){
+
+			case NETMSG_ATTEMPTCONNECT: {
 				logOutput.Print("Attempted connection to client?");
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_QUIT:
+			case NETMSG_QUIT: {
 				logOutput.Print("Server exited");
 				POP_CODE_MODE;
+				AddTraffic(-1, packetCode, dataLength);
 				return gameOver;
+			}
 
 			case NETMSG_PLAYERLEFT:
 			{
@@ -2568,21 +2645,26 @@ bool CGame::ClientReadNet()
 					}
 					gs->players[player]->active=false;
 				}
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
-			case NETMSG_MEMDUMP:
+			case NETMSG_MEMDUMP: {
 				MakeMemDump();
 #ifdef TRACE_SYNC
 				tracefile.Commit();
 #endif
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_STARTPLAYING:
+			case NETMSG_STARTPLAYING: {
 				StartPlaying();
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_GAMEOVER:
+			case NETMSG_GAMEOVER: {
 				ENTER_MIXED;
 				gameOver=true;
 				luaCallIns.GameOver();
@@ -2624,19 +2706,22 @@ bool CGame::ClientReadNet()
 					}
 				}
 				ENTER_SYNCED;
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_SENDPLAYERSTAT:
+			case NETMSG_SENDPLAYERSTAT: {
 				ENTER_MIXED;
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
 				net->SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
 				ENTER_SYNCED;
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_PLAYERSTAT:
-			{
+			case NETMSG_PLAYERSTAT: {
 				int player=inbuf[1];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
@@ -2648,11 +2733,11 @@ bool CGame::ClientReadNet()
 					if (record != NULL)
 						record->SetPlayerStats(player, *gs->players[player]->currentStats);
 				}
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
-			case NETMSG_PAUSE:
-			{
+			case NETMSG_PAUSE: {
 				int player=inbuf[1];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in pause msg",player);
@@ -2666,36 +2751,35 @@ bool CGame::ClientReadNet()
 					}
 					lastframe = SDL_GetTicks();
 				}
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
-
-			case NETMSG_INTERNAL_SPEED:
-			{
+			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
+				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
-
-			case NETMSG_USER_SPEED:
-			{
+			case NETMSG_USER_SPEED: {
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				unsigned char playerNum = *(unsigned char*) &inbuf[1];
 				const char* playerName = gs->players[playerNum]->playerName.c_str();
 				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
+				AddTraffic(playerNum, packetCode, dataLength);
 				break;
 			}
 
-
-			case NETMSG_CPU_USAGE:
+			case NETMSG_CPU_USAGE: {
 				logOutput.Print("Game clients shouldn't get cpu usage msgs?");
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
 		// header (1); uchar myPlayerNum (1); float cpuUsage (4); int ping (4): 10
-			case NETMSG_PLAYERINFO:
-			{
+			case NETMSG_PLAYERINFO: {
 				int player = inbuf[1];
 				if (player >= MAX_PLAYERS || player < 0) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
@@ -2703,27 +2787,35 @@ bool CGame::ClientReadNet()
 					gs->players[player]->cpuUsage = *(float*) &inbuf[2];
 					gs->players[player]->ping = *(int*) &inbuf[6];
 				}
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
-			case NETMSG_SETPLAYERNUM:
+			case NETMSG_SETPLAYERNUM: {
 				//logOutput.Print("Warning shouldnt receive NETMSG_SETPLAYERNUM in CGame");
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_SCRIPT:
+			case NETMSG_SCRIPT: {
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
-			case NETMSG_MAPNAME:
+			case NETMSG_MAPNAME: {
 				archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[2]));
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 
 			case NETMSG_MODNAME: {
 				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
 				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
+				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
-			case NETMSG_PLAYERNAME:{
+			case NETMSG_PLAYERNAME: {
 				int player=inbuf[2];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in playername msg",player);
@@ -2733,9 +2825,11 @@ bool CGame::ClientReadNet()
 					gs->players[player]->active=true;
 					wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_CHAT:{
+			case NETMSG_CHAT: {
 				int player=inbuf[2];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in chat msg",player);
@@ -2743,12 +2837,16 @@ bool CGame::ClientReadNet()
 					string s=(char*)(&inbuf[3]);
 					HandleChatMsg(s, player, false);
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
 			case NETMSG_SYSTEMMSG:{
 				string s=(char*)(&inbuf[3]);
 				logOutput.Print(s);
-				break;}
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
 
 			case NETMSG_STARTPOS:{
 				int team=inbuf[1];
@@ -2761,44 +2859,52 @@ bool CGame::ClientReadNet()
 					gs->Team(team)->startPos.y=*(float*)&inbuf[7];
 					gs->Team(team)->startPos.z=*(float*)&inbuf[11];
 				}
-				break;}
-
-			case NETMSG_RANDSEED:
-				gs->randSeed = (*((unsigned int*)&inbuf[1]));
+				AddTraffic(-1000 - team, packetCode, dataLength); // NOTE: team code
 				break;
+			}
 
-			case NETMSG_GAMEID:
-			{
+			case NETMSG_RANDSEED: {
+				gs->randSeed = (*((unsigned int*)&inbuf[1]));
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
+
+			case NETMSG_GAMEID: {
 				unsigned char* p = &inbuf[1];
 				CDemoRecorder* record = net->GetDemoRecorder();
 				if (record != NULL)
 					record->SetGameID(p);
-				logOutput.Print("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7], p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
+				logOutput.Print(
+				  "GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+				  p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
+				  p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
+				AddTraffic(-1, packetCode, dataLength);
+				break;
 			}
-			break;
 
-			case NETMSG_NEWFRAME:
-				if (gs->frameNum%8 == 0)
-				{
+			case NETMSG_NEWFRAME: {
+				if ((gs->frameNum % 8) == 0) {
 					// only answer every 8th newframe (~3 times per second are enought for ping calculation)
 					net->SendNewFrame(gs->frameNum);
 				}
 				SimFrame();
 #ifdef SYNCCHECK
-				if(!net->IsDemoServer()) {
+				if (!net->IsDemoServer()) {
 					net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 					if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 						CSyncChecker::NewFrame();
 				}
 #endif
+				AddTraffic(-1, packetCode, dataLength);
 
 				if(creatingVideo && net->IsDemoServer()){
 					POP_CODE_MODE;
 					return true;
 				}
 				break;
+			}
 
-			case NETMSG_COMMAND:{
+			case NETMSG_COMMAND: {
 				int player=inbuf[3];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in command msg",player);
@@ -2810,9 +2916,11 @@ bool CGame::ClientReadNet()
 						c.params.push_back(*((float*)&inbuf[9+a*4]));
 					selectedUnits.NetOrder(c,player);
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_SELECT:{
+			case NETMSG_SELECT: {
 				int player=inbuf[3];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in netselect msg",player);
@@ -2831,7 +2939,9 @@ bool CGame::ClientReadNet()
 					}
 					selectedUnits.NetSelect(selected, player);
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
 			case NETMSG_AICOMMAND:{
 				Command c;
@@ -2852,7 +2962,9 @@ bool CGame::ClientReadNet()
 				for(int a=0;a<((*((short int*)&inbuf[1])-11)/4);++a)
 					c.params.push_back(*((float*)&inbuf[11+a*4]));
 				selectedUnits.AiOrder(unitid,c);
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
 			case NETMSG_AICOMMANDS:{
 				int u, c;
@@ -2894,9 +3006,25 @@ bool CGame::ClientReadNet()
 						selectedUnits.AiOrder(unitIDs[u], commands[c]);
 					}
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_SYNCREQUEST:{
+			case NETMSG_LUAMSG: {
+				const int player = inbuf[3];
+				if ((player < 0) || (player >= MAX_PLAYERS)) {
+					logOutput.Print("Got invalid player num %i in LuaMsg", player);
+				}
+				const int script = inbuf[4];
+				const int mode = inbuf[5];
+				const int msglen = *((short*)(inbuf + 1)) - 6;
+				const string msg((char*)&inbuf[6], msglen); // allow embedded 0's
+				CLuaHandle::HandleLuaMsg(player, script, mode, msg);
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
+
+			case NETMSG_SYNCREQUEST: {
 				// TODO rename this net message, change error msg, etc.
 				ENTER_MIXED;
 				int frame=*((int*)&inbuf[1]);
@@ -2909,9 +3037,11 @@ bool CGame::ClientReadNet()
 				net->SendCPUUsage(0.30f);
 #endif
 				ENTER_SYNCED;
-				break;}
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_SHARE:{
+			case NETMSG_SHARE: {
 				int player=inbuf[1];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in share msg",player);
@@ -2946,9 +3076,11 @@ bool CGame::ClientReadNet()
 					}
 					selectedUnits.netSelected[player].clear();
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_SETSHARE:{
+			case NETMSG_SETSHARE: {
 				int team=inbuf[1];
 				if(team>=gs->activeTeams || team<0){
 					logOutput.Print("Got invalid team num %i in setshare msg",team);
@@ -2963,14 +3095,17 @@ bool CGame::ClientReadNet()
 						gs->Team(team)->energyShare = energyShare;
 					}
 				}
-				break;}
-
+				AddTraffic(-1000 - team, packetCode, dataLength); // NOTE: team code
+				break;
+			}
 			case NETMSG_MAPDRAW:{
 				inMapDrawer->GotNetMsg(&inbuf[0]);
-				break;}
+				AddTraffic(inbuf[2], packetCode, dataLength);
+				break;
+			}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-			case NETMSG_DIRECT_CONTROL:{
+			case NETMSG_DIRECT_CONTROL: {
 				int player=inbuf[1];
 
 				if(player>=MAX_PLAYERS || player<0){
@@ -2983,9 +3118,9 @@ bool CGame::ClientReadNet()
 					CUnit* unit=gs->players[player]->playerControlledUnit;
 				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
-				unit->directControl=0;
-				unit->AttackUnit(0,true);
-				gs->players[player]->StopControllingUnit();
+					unit->directControl=0;
+					unit->AttackUnit(0,true);
+					gs->players[player]->StopControllingUnit();
 				}
 				else {
 					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
@@ -3016,9 +3151,11 @@ bool CGame::ClientReadNet()
 						}
 					}
 				}
-				break;}
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 
-			case NETMSG_DC_UPDATE:{
+			case NETMSG_DC_UPDATE: {
 				int player=inbuf[1];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in dc update msg",player);
@@ -3027,26 +3164,28 @@ bool CGame::ClientReadNet()
 				DirectControlStruct* dc=&gs->players[player]->myControl;
 				CUnit* unit=gs->players[player]->playerControlledUnit;
 
-				dc->forward=!!(inbuf[2] & 1);
-				dc->back=!!(inbuf[2] & 2);
-				dc->left=!!(inbuf[2] & 4);
-				dc->right=!!(inbuf[2] & 8);
-				dc->mouse1=!!(inbuf[2] & 16);
-				bool newMouse2=!!(inbuf[2] & 32);
-				if(!dc->mouse2 && newMouse2 && unit){
-					unit->AttackUnit(0,true);
-				//	for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-				//	(*wi)->HoldFire();
+				dc->forward    = !!(inbuf[2] & (1 << 0));
+				dc->back       = !!(inbuf[2] & (1 << 1));
+				dc->left       = !!(inbuf[2] & (1 << 2));
+				dc->right      = !!(inbuf[2] & (1 << 3));
+				dc->mouse1     = !!(inbuf[2] & (1 << 4));
+				bool newMouse2 = !!(inbuf[2] & (1 << 5));
+				if (!dc->mouse2 && newMouse2 && unit) {
+					unit->AttackUnit(0, true);
+					//	for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
+					//	(*wi)->HoldFire();
 				}
-				dc->mouse2=newMouse2;
+				dc->mouse2 = newMouse2;
 
-				short int h=*((short int*)&inbuf[3]);
-				short int p=*((short int*)&inbuf[5]);
-				dc->viewDir=GetVectorFromHAndPExact(h,p);
-				break;}
-#endif
+				short int h = *((short int*)&inbuf[3]);
+				short int p = *((short int*)&inbuf[5]);
+				dc->viewDir = GetVectorFromHAndPExact(h, p);
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
+#endif // DIRECT_CONTROL_ALLOWED
 
-			default:
+			default: {
 #ifdef SYNCDEBUG
 				lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
 				if (!lastLength)
@@ -3054,14 +3193,15 @@ bool CGame::ClientReadNet()
 				{
 					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
 				}
+				AddTraffic(-1, packetCode, dataLength);
 				break;
+			}
 		}
 
-		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+		dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	}
 
-	if (ret == -1)
-	{
+	if (dataLength == -1) {
 		return gameOver;
 	}
 

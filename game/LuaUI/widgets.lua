@@ -104,6 +104,7 @@ widgetHandler = {
 local flexCallIns = {
   'GameOver',
   'TeamDied',
+  'GameFrame',
   'ShockFront',
   'WorldTooltip',
   'GameSetup',
@@ -123,6 +124,7 @@ local flexCallIns = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'RecvLuaMsg',
   'StockpileChanged',
   'DrawWorld',
   'DrawWorld',
@@ -1419,6 +1421,14 @@ function widgetHandler:TeamDied(teamID)
 end
 
 
+function widgetHandler:GameFrame(frameNum)
+  for _,w in ipairs(self.GameFrameList) do
+    w:GameFrame(frameNum)
+  end
+  return
+end
+
+
 function widgetHandler:ShockFront(power, dx, dy, dz)
   for _,w in ipairs(self.ShockFrontList) do
     w:ShockFront(power, dx, dy, dz)
@@ -1589,6 +1599,17 @@ function widgetHandler:UnitUnloaded(unitID, unitDefID, unitTeam,
                    transportID, transportTeam)
   end
   return
+end
+
+
+function widgetHandler:RecvLuaMsg(msg, playerID)
+  local retval = false
+  for _,w in ipairs(self.RecvLuaMsgList) do
+    if (w:RecvLuaMsg(msg, playerID)) then
+      retval = true
+    end
+  end
+  return retval  --  FIXME  --  another actionHandler type?
 end
 
 

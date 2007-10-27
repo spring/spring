@@ -25,6 +25,9 @@
 #include "LuaHashString.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
+//FIXME-BO: #include "LuaVBOs.h"
+//FIXME-BO: #include "LuaFBOs.h"
+//FIXME-BO: #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
@@ -207,6 +210,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MultiTexCoord);
 	REGISTER_LUA_CFUNC(SecondaryColor);
 	REGISTER_LUA_CFUNC(FogCoord);
+	REGISTER_LUA_CFUNC(EdgeFlag);
 
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
@@ -215,9 +219,12 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTextWidth);
 
 	REGISTER_LUA_CFUNC(Unit);
+	REGISTER_LUA_CFUNC(UnitRaw);
 	REGISTER_LUA_CFUNC(UnitShape);
+	REGISTER_LUA_CFUNC(UnitMultMatrix);
 	REGISTER_LUA_CFUNC(UnitPiece);
 	REGISTER_LUA_CFUNC(UnitPieceMatrix);
+	REGISTER_LUA_CFUNC(UnitPieceMultMatrix);
 	REGISTER_LUA_CFUNC(Feature);
 	REGISTER_LUA_CFUNC(FeatureShape);
 	REGISTER_LUA_CFUNC(DrawListAtUnit);
@@ -262,6 +269,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	if (canUseShaders) {
 		CLuaShaders::PushEntries(L);
 	}
+
+//FIXME-BO: 	CLuaVBOs::PushEntries(L);
+//FIXME-BO: 	CLuaFBOs::PushEntries(L);
+//FIXME-BO:  	CLuaRBOs::PushEntries(L);
 
 	return true;
 }
@@ -1175,7 +1186,7 @@ int LuaOpenGL::Unit(lua_State* L)
 			if (tmpLod < 0) {
 				useLOD = false;
 			} else {
-				lod = min(unit->lodCount, (unsigned int)tmpLod);
+				lod = min(unit->lodCount - 1, (unsigned int)tmpLod);
 			}
 		}
 		unit->currentLOD = lod;
@@ -1210,6 +1221,69 @@ int LuaOpenGL::Unit(lua_State* L)
 }
 
 
+int LuaOpenGL::UnitRaw(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const bool rawDraw = lua_isboolean(L, 2) && lua_toboolean(L, 2);
+
+	bool useLOD = true;
+	if (unit->lodCount <= 0) {
+		useLOD = false;
+	}
+	else {
+		unsigned int lod;
+		if (!lua_isnumber(L, 3)) {
+			const LuaMatType matType =
+				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+			lod = unit->CalcLOD(unit->luaMats[matType].GetLastLOD());
+		} else {
+			int tmpLod = (int)lua_tonumber(L, 3);
+			if (tmpLod < 0) {
+				useLOD = false;
+			} else {
+				lod = min(unit->lodCount - 1, (unsigned int)tmpLod);
+			}
+		}
+		unit->currentLOD = lod;
+	}
+
+	glPushAttrib(GL_ENABLE_BIT);
+
+	if (rawDraw) {
+		if (useLOD) {
+			unit->DrawRawModel();
+		} else {
+			const unsigned int origLodCount = unit->lodCount;
+			unit->lodCount = 0;
+			unit->DrawRawModel(); // transformation is not applied
+			unit->lodCount = origLodCount;
+		}
+	}
+	else {
+/*
+		if (useLOD) {
+			unitDrawer->DrawIndividual(unit);
+		} else {
+			const unsigned int origLodCount = unit->lodCount;
+			unit->lodCount = 0;
+			unitDrawer->DrawIndividual(unit);
+			unit->lodCount = origLodCount;
+		}
+*/
+	}
+
+	glPopAttrib();
+
+	return 0;
+}
+
+
 int LuaOpenGL::UnitShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -1230,6 +1304,19 @@ int LuaOpenGL::UnitShape(lua_State* L)
 
 	unitDrawer->DrawUnitDef(ud, teamID);
 
+	return 0;
+}
+
+
+int LuaOpenGL::UnitMultMatrix(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	unit->ApplyTransformMatrix();
 	return 0;
 }
 
@@ -1271,6 +1358,30 @@ int LuaOpenGL::UnitPieceMatrix(lua_State* L)
 
 	CMatrix44f matrix = localModel->GetPieceMatrix(piece);
 	glMultMatrixf(matrix.m);
+
+	return 0;
+}
+
+
+int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const LocalS3DOModel* localModel = unit->localmodel;
+	if (localModel == NULL) {
+		return 0;
+	}
+	const int piece = (int)luaL_checknumber(L, 2) - 1;
+	if ((piece < 0) || (piece >= localModel->numpieces)) {
+		return 0;
+	}
+
+	localModel->ApplyPieceTransform(piece);
 
 	return 0;
 }
@@ -2119,6 +2230,17 @@ int LuaOpenGL::FogCoord(lua_State* L)
 
 	const float value = (float)luaL_checknumber(L, 1);
 	glFogCoordf(value);
+	return 0;
+}
+
+
+int LuaOpenGL::EdgeFlag(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	if (lua_isboolean(L, 1)) {
+		glEdgeFlag(lua_toboolean(L, 1));
+	}
 	return 0;
 }
 

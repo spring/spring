@@ -96,6 +96,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(GetCameraPosition);
+	REGISTER_LUA_CFUNC(GetCameraDirection);
+	REGISTER_LUA_CFUNC(GetCameraFOV);
 	REGISTER_LUA_CFUNC(GetCameraVectors);
 	REGISTER_LUA_CFUNC(WorldToScreenCoords);
 	REGISTER_LUA_CFUNC(TraceScreenRay);
@@ -560,6 +562,24 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 	lua_pushnumber(L, camera->pos.y);
 	lua_pushnumber(L, camera->pos.z);
 	return 3;
+}
+
+
+int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, camera->forward.x);
+	lua_pushnumber(L, camera->forward.y);
+	lua_pushnumber(L, camera->forward.z);
+	return 3;
+}
+
+
+int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_pushnumber(L, camera->fov);
+	return 1;
 }
 
 

@@ -551,7 +551,9 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 	}
 
 	int tableIndex;
-	if ((name != "RecvFromSynced") &&
+	if ((name != "DrawUnit") &&
+	    (name != "AICallIn") &&
+	    (name != "RecvFromSynced") &&
 	    !luaCallIns.UnsyncedCallIn(name)) {
 		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
 	} else {
@@ -574,8 +576,8 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 bool CLuaHandleSynced::SyncedUpdateCallIn(const string& name)
 {
 	if ((name == "RecvFromSynced") ||
-		  luaCallIns.UnsyncedCallIn(name)) {
-		  return false;
+	    luaCallIns.UnsyncedCallIn(name)) {
+		return false;
 	}
 	if (HasCallIn(name)) {
 		luaCallIns.InsertCallIn(this, name);
@@ -770,6 +772,19 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	allowChanges = prevAllowChanges;
 
 	return;
+}
+
+
+bool CLuaHandleSynced::RecvLuaMsg(const string& msg, int playerID)
+{
+	const bool prevAllowChanges = allowChanges;
+	allowChanges = false;
+
+	const bool retval = CLuaHandle::RecvLuaMsg(msg, playerID);
+
+	allowChanges = prevAllowChanges;
+
+	return retval;
 }
 
 

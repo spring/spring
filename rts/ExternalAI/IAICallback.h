@@ -258,6 +258,14 @@ public:
 	virtual const WeaponDef* GetWeapon(const char* weaponname) = 0;
 
 	virtual const float3 *GetStartPos() = 0;
+
+	// NOTES:
+	// 1. 'data' can be setup to NULL to skip passing in a string
+	// 2. if inSize is less than 0, the data size is calculated using strlen()
+	// 3. the return data is subject to lua garbage collection,
+	//    copy it if you wish to continue using it
+	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
+          
 	DECLARE_PURE_VIRTUAL(~IAICallback())
 };
 

@@ -27,7 +27,7 @@ public:
 	UnitDef *unitDefs;
 	int numUnitDefs;
 	std::map<std::string, int> unitID;
-	std::map<UnitDef*, std::set<UnitDef*> > decoyMap;
+	std::map<int, std::set<int> > decoyMap;
 	std::set<int> commanderIDs;
 
 	CUnitDefHandler(void);

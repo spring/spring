@@ -1,14 +1,15 @@
 #include "StdAfx.h"
 #include "GlobalAIHandler.h"
 #include "GlobalAI.h"
-#include "Sim/Units/Unit.h"
 #include "IGlobalAI.h"
-#include "LogOutput.h"
 #include "Game/GameHelper.h"
-#include "TimeProfiler.h"
-#include "Platform/errorhandler.h"
 #include "Game/Player.h"
+#include "Game/Team.h"
+#include "Sim/Units/Unit.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
 #include "System/NetProtocol.h"
+#include "System/Platform/errorhandler.h"
 #include "mmgr.h"
 
 CGlobalAIHandler* globalAI=0;
@@ -215,22 +216,36 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 	}
 }
 
-bool CGlobalAIHandler::CreateGlobalAI(int team, const char* dll)
+bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 {
-	try {
-		if(team>=gs->activeTeams || net->IsDemoServer())
-			return false;
+	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+		return false;
+	}
 
-		if(ais[team]){
-			delete ais[team];
-			ais[team]=0;
+	if (strncmp(dll, "LuaAI:", 6) == 0) {
+		CTeam* team = gs->Team(teamID);
+		if (team != NULL) { 
+			team->luaAI = (dll + 6);
+			return true;
+		}
+		return false;
+	}
+
+	try {
+		if (net->IsDemoServer()) {
+			return false;
 		}
 
-		ais[team]=SAFE_NEW CGlobalAI(team,dll);
+		if(ais[teamID]){
+			delete ais[teamID];
+			ais[teamID]=0;
+		}
 
-		if(!ais[team]->ai){
-			delete ais[team];
-			ais[team]=0;
+		ais[teamID]=SAFE_NEW CGlobalAI(teamID,dll);
+
+		if(!ais[teamID]->ai){
+			delete ais[teamID];
+			ais[teamID]=0;
 			return false;
 		}
 		hasAI=true;

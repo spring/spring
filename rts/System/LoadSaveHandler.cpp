@@ -101,7 +101,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 //	s.Serialize()
 }
 
-void PrintSize(char *txt,int size)
+void PrintSize(const char *txt, int size)
 {
 	if (size>1024*1024*1024) logOutput.Print("%s %.1f GB",txt,size/(1024.0f*1024*1024)); else
 	if (size>     1024*1024) logOutput.Print("%s %.1f MB",txt,size/(1024.0f*1024     )); else

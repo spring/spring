@@ -32,6 +32,7 @@ class LuaOpenGL {
 		static void CalcFontHeight();
 
 		static bool IsDrawingEnabled() { return drawingEnabled; }
+		static void SetDrawingEnabled(bool value) { drawingEnabled = value; }
 
 		static bool CanUseShaders() { return canUseShaders; }
 
@@ -170,6 +171,7 @@ class LuaOpenGL {
 		static int MultiTexCoord(lua_State* L);
 		static int SecondaryColor(lua_State* L);
 		static int FogCoord(lua_State* L);
+		static int EdgeFlag(lua_State* L);
 		
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
@@ -177,10 +179,24 @@ class LuaOpenGL {
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 
+		//static int Map1(lua_State* L);
+		//static int Map2(lua_State* L);
+		//static int MapGrid1(lua_State* L);
+		//static int MapGrid2(lua_State* L);
+		//static int EvalMesh1(lua_State* L);
+		//static int EvalMesh2(lua_State* L);
+		//static int EvalCoord1(lua_State* L);
+		//static int EvalCoord2(lua_State* L);
+		//static int EvalPoint1(lua_State* L);
+		//static int EvalPoint2(lua_State* L);
+
 		static int Unit(lua_State* L);
+		static int UnitRaw(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitMultMatrix(lua_State* L);
 		static int UnitPiece(lua_State* L);
 		static int UnitPieceMatrix(lua_State* L);
+		static int UnitPieceMultMatrix(lua_State* L);
 		static int Feature(lua_State* L);
 		static int FeatureShape(lua_State* L);
 		static int DrawListAtUnit(lua_State* L);

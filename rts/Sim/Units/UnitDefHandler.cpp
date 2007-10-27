@@ -133,7 +133,7 @@ void CUnitDefHandler::ProcessDecoys()
 			UnitDef* fake = &unitDefs[fakeIt->second];
 			UnitDef* real = &unitDefs[realIt->second];
 			fake->decoyDef = real;
-			decoyMap[real].insert(fake);
+			decoyMap[real->id].insert(fake->id);
 		}
 	}
 	decoyNameMap.clear();
@@ -309,6 +309,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
 //	logOutput.Print("unit %s has armor %i",ud.name.c_str(),ud.armorType);
 
+	ud.bonusShieldEnabled = udTable.GetBool("bonusShieldEnabled", true);
+
 	ud.radarRadius    = udTable.GetInt("radarDistance",    0);
 	ud.sonarRadius    = udTable.GetInt("sonarDistance",    0);
 	ud.jammerRadius   = udTable.GetInt("radarDistanceJam", 0);
@@ -329,9 +331,10 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	}
 	ud.canCloak = (ud.cloakCost >= 0);
 
-	ud.startCloaked = udTable.GetBool("initCloaked", false);
-	ud.decloakDistance = udTable.GetFloat("minCloakDistance", -1.0f);
-	ud.decloakOnFire = udTable.GetBool("decloakOnFire", true);
+	ud.startCloaked     = udTable.GetBool("initCloaked", false);
+	ud.decloakDistance  = udTable.GetFloat("minCloakDistance", -1.0f);
+	ud.decloakSpherical = udTable.GetBool("decloakSpherical", true);
+	ud.decloakOnFire    = udTable.GetBool("decloakOnFire",    true);
 
 	ud.highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 

@@ -190,7 +190,9 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 	    (ciName == "DrawWorldRefraction") ||
 	    (ciName == "DrawScreenEffects")   ||
 	    (ciName == "DrawScreen")          ||
-	    (ciName == "DrawInMiniMap")) {
+	    (ciName == "DrawInMiniMap")       ||
+	    (ciName == "DrawUnit")            ||
+	    (ciName == "AICallIn")) {
 		return true;
 	}
 	return false;

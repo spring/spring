@@ -2677,93 +2677,135 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 }
 
 
+static inline bool ParseTextures(const string& texString,
+                                 string& tex1, string& tex2,
+                                 float& xscale, float& yscale)
+{
+	// format:  "&<xscale>x<yscale>&<tex>1&<tex2>"  --  <>'s are not included
+
+	char* endPtr;
+
+	const char* c = texString.c_str() + 1;
+	xscale = strtod(c, &endPtr);
+	if ((endPtr == c) || (endPtr[0] != 'x')) { return false; }
+	c = endPtr + 1; 
+	yscale = strtod(c, &endPtr);
+	if ((endPtr == c) || (endPtr[0] != '&')) { return false; }
+	c = endPtr + 1; 
+	const char* tex1Start = c;
+	while ((c[0] != 0) && (c[0] != '&')) { c++; }
+	if (c[0] != '&') { return false; }
+	const int tex1Len = c - tex1Start;
+	c++;
+	tex1 = c; // draw 'tex2' first
+	tex2 = string(tex1Start, tex1Len);
+
+	return true;
+}
+
+
+static inline bool BindUnitTexByString(const string& str)
+{
+	char* endPtr;
+	const char* startPtr = str.c_str() + 1; // skip the '#'
+	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	if (endPtr == startPtr) {
+		return false; // bad unitID spec
+	}
+	// UnitDefHandler's array size is (numUnitDefs + 1)
+	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
+		return false;
+	}
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return false;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+
+	return true;
+}
+
+
+static bool BindTextureString(const string& str)
+{
+	if (str[0] == '#') {
+		return BindUnitTexByString(str);
+	} else {
+		return CNamedTextures::Bind(str);
+	}
+}
+
+
 bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 {
 	if (texName.empty()) {
 		return false;
 	}
 
-	// plain texture
-	if (texName[0] != '#') {
-		if (CNamedTextures::Bind(texName)) {
-			const Box& b = icon.visual;
-			glEnable(GL_TEXTURE_2D);
-			glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
-			glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
-			glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
-			glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
-			glEnd();
-			return true;
-		}
-		return false;
-	}
-
-	// unit build picture
-	char* endPtr;
-	const char* startPtr = texName.c_str() + 1; // skip the '#'
-	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-	if (endPtr == startPtr) {
-		return false; // bad unitID spec
-	}
-	if (endPtr[0] == '\0') {
-		return DrawUnitBuildIcon(icon, unitDefID);
-	}
-
-	// texture and unit build picture
-	if (endPtr[0] != ',') {
-		return false;
-	}
-	startPtr = endPtr + 1; // skip the ','
-	const float xscale = (float)strtod(startPtr, &endPtr);
-	if (endPtr == startPtr) {
-		return false;
-	}
-
+	string tex1;
+	string tex2;
+	float xscale;
 	float yscale;
-	if (endPtr[0] == ',') {
-		endPtr++; // setup for the texture name
-		yscale = xscale;
-	}
-	else if (endPtr[0] != 'x') {
-		return false;
-	}
-	else {
-		startPtr = endPtr + 1;
-		yscale = (float)strtod(startPtr, &endPtr);
-		if ((endPtr == startPtr) || (endPtr[0] != ',')) {
+
+	// double texture?
+	if (texName[0] == '&') {
+		if (!ParseTextures(texName, tex1, tex2, xscale, yscale)) {
 			return false;
 		}
-		endPtr++; // setup for the texture name
+	} else {
+		tex1 = texName;
 	}
 
-	const Box& iv = icon.visual;
-	IconInfo tmpIcon;
-	Box& tv = tmpIcon.visual;
-	tv.x1 = iv.x1 + (xIconSize * xscale);
-	tv.x2 = iv.x2 - (xIconSize * xscale);
-	tv.y1 = iv.y1 - (yIconSize * yscale);
-	tv.y2 = iv.y2 + (yIconSize * yscale);
-
-	if (!CNamedTextures::Bind(endPtr)) {
-		return DrawUnitBuildIcon(icon, unitDefID);
+	// bind the texture for the full size quad	
+	if (!BindTextureString(tex1)) {
+		if (tex2.empty()) {
+			return false;
+		} else {
+			if (!BindTextureString(tex2)) {
+				return false;
+			} else {
+				tex2.clear(); // cancel the scaled draw
+			}
+		}
 	}
-	else {
-		const Box& b = icon.visual;
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
-		glEnd();
+			
+	glEnable(GL_TEXTURE_2D);
+	glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
 
-		return DrawUnitBuildIcon(tmpIcon, unitDefID);
+	// draw the full size quad
+	const Box& b = icon.visual;
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
+	glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
+	glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
+	glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
+	glEnd();
+
+	if (tex2.empty()) {
+		return true; // success, no second texture to draw
 	}
 
-	return false; // safety
+	// bind the texture for the scaled quad	
+	if (!BindTextureString(tex2)) {
+		return false;
+	}
+
+	// calculate the scaled quad
+	const float x1 = b.x1 + (xIconSize * xscale);
+	const float x2 = b.x2 - (xIconSize * xscale);
+	const float y1 = b.y1 - (yIconSize * yscale);
+	const float y2 = b.y2 + (yIconSize * yscale);
+
+	// draw the scaled quad
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex2f(x1, y1);
+	glTexCoord2f(1.0f, 0.0f); glVertex2f(x2, y1);
+	glTexCoord2f(1.0f, 1.0f); glVertex2f(x2, y2);
+	glTexCoord2f(0.0f, 1.0f); glVertex2f(x1, y2);
+	glEnd();
+
+	return true;
 }
 
 

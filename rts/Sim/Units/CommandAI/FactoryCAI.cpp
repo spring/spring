@@ -355,7 +355,7 @@ void CFactoryCAI::SlowUpdate()
 				}
 				// This can only be true if two factories started building
 				// the restricted unit in the same simulation frame
-				else if(uh->unitsType[owner->team][def->id]>def->maxThisUnit){ //unit restricted?
+				else if(uh->unitsByDefs[owner->team][def->id].size() > def->maxThisUnit){ //unit restricted?
 					CFactory* fac=(CFactory*)owner;
 					building = false;
 					fac->StopBuild();
@@ -370,7 +370,7 @@ void CFactoryCAI::SlowUpdate()
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
 				}
-				else if(uh->unitsType[owner->team][def->id]>=def->maxThisUnit){ //unit restricted?
+				else if(uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit){ //unit restricted?
 					CancelRestrictedUnit(c, boi->second);
 				}
 				else if(uh->maxUnits>gs->Team(owner->team)->units.size()){  //max unitlimit reached?

@@ -1,5 +1,4 @@
 
-- OGG
 - Regex word completion
 - Resync helpers
 - Add UnitDefTracker and use it
@@ -26,11 +25,13 @@
 - Finish AICallback/Lua
 - Fix "luaui reload"
 + __lll_mutex_lock  (test dynamic mutex'ing?)
-- DrawFunctionAtUnit() (and a billboard setup?)
 
 - COB test gadget
 
 - GL_TEXTURE_ENV_MODE control for multitex (for non shaders, worth the bother?)
 
+- Custom Uniforms
+- VBOs/DrawArrays/DrawElement/etc...
+- Faster call-in setup (app-specific table or reg, fixed ids)
 
 

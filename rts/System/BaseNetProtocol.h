@@ -1,3 +1,4 @@
+
 #ifndef BASENETPROTOCOL_H
 #define BASENETPROTOCOL_H
 
@@ -35,8 +36,8 @@ enum NETMSG {
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
-									// short unitIDCount;  unitIDCount X short(unitID)
-									// short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
+	                              // short unitIDCount;  unitIDCount X short(unitID)
+	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
 	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
@@ -52,8 +53,8 @@ enum NETMSG {
 	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
 	NETMSG_GAMEOVER         = 30, //
 	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
-									// uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
-									// /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
+	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
+	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
 	NETMSG_SYNCREQUEST      = 32, // int frameNum;
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum; std::string message;
@@ -68,6 +69,7 @@ enum NETMSG {
 	NETMSG_SD_BLKRESPONSE   = 44,
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
+	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg					
 };
 
 /**
@@ -135,6 +137,7 @@ public:
 	void SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	void SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	void SendModName(const uint checksum, const std::string& modName);
+	void SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
 
 private:
 };

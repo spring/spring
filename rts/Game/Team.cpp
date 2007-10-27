@@ -30,6 +30,7 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(lineageRoot),
 				CR_MEMBER(handicap),
 				CR_MEMBER(side),
+				CR_MEMBER(luaAI),
 				CR_MEMBER(units),
 				CR_MEMBER(startPos),
 				CR_MEMBER(metal),
@@ -122,6 +123,7 @@ CTeam::CTeam()
 	energySent(0),
 	energyReceived(0),
 	side("arm"),
+	luaAI(""),
 	startPos(100,100,100),
 	handicap(1),
 	leader(0),
@@ -311,34 +313,41 @@ void CTeam::SlowUpdate()
 void CTeam::AddUnit(CUnit* unit,AddType type)
 {
 	units.insert(unit);
-	switch(type){
-	case AddBuilt:
-		currentStats.unitsProduced++;
-		break;
-	case AddGiven:
-		currentStats.unitsReceived++;
-		break;
-	case AddCaptured:
-		currentStats.unitsCaptured++;
-		break;
+	switch (type) {
+		case AddBuilt: {
+			currentStats.unitsProduced++;
+			break;
+		}
+		case AddGiven: {
+			currentStats.unitsReceived++;
+			break;
+		}
+		case AddCaptured: {
+			currentStats.unitsCaptured++;
+			break;
+		}	
 	}
-	if(unit->unitDef->isCommander)
+	if (unit->unitDef->isCommander) {
 		numCommanders++;
+	}
 }
 
 void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 {
 	units.erase(unit);
-	switch(type){
-	case RemoveDied:
-		currentStats.unitsDied++;
-		break;
-	case RemoveGiven:
-		currentStats.unitsSent++;
-		break;
-	case RemoveCaptured:
-		currentStats.unitsOutCaptured++;
-		break;
+	switch (type) {
+		case RemoveDied: {
+			currentStats.unitsDied++;
+			break;
+		}
+		case RemoveGiven: {
+			currentStats.unitsSent++;
+			break;
+		}
+		case RemoveCaptured: {
+			currentStats.unitsOutCaptured++;
+			break;
+		}
 	}
 
 	if(units.empty() && !gaia){

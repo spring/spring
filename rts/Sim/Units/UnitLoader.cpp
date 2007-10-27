@@ -151,6 +151,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->armorType=ud->armorType;
 	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
 	unit->maxSpeed = ud->speed/30.0;
+	unit->bonusShieldEnabled = ud->bonusShieldEnabled;
 
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
@@ -420,7 +421,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	else
 		weapon->maxAngleDif = cos(weapondef->maxAngle / 180 * PI);
 
-	weapon->weaponNum=owner->weapons.size();
+	weapon->SetWeaponNum(owner->weapons.size());
 
 	weapon->badTargetCategory=udw->badTargetCat;
 	weapon->onlyTargetCategory=weapondef->onlyTargetCategory & udw->onlyTargetCat;
