@@ -28,6 +28,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/3DModelParser.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
@@ -49,6 +50,7 @@
 #include "Sim/Units/UnitTypes/ExtractorBuilding.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 
@@ -136,6 +138,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
 
+	REGISTER_LUA_CFUNC(AddUnitDamage);
 	REGISTER_LUA_CFUNC(AddUnitImpulse);
 
 	REGISTER_LUA_CFUNC(AddUnitResource);
@@ -1646,6 +1649,45 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	           (float)lua_tonumber(L, 3),
 	           (float)lua_tonumber(L, 4));
 	unit->speed = dir;
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const float damage   = (float)luaL_checknumber(L, 2);
+	const float paralyze = (float)luaL_optnumber(L, 3, 0.0f);
+	const int attackerID =   (int)luaL_optnumber(L, 4, -1);
+	const int weaponID   =   (int)luaL_optnumber(L, 5, -1);
+	const float3 impulse = float3((float)luaL_optnumber(L, 6, 0.0f),
+	                              (float)luaL_optnumber(L, 7, 0.0f),
+	                              (float)luaL_optnumber(L, 8, 0.0f));
+
+	CUnit* attacker = NULL;
+	if (attackerID >= 0) {
+		if (attackerID >= MAX_UNITS) {
+			return 0;
+		}
+		attacker = uh->units[attackerID];
+	}
+
+	// numWeaponDefs has an extra slot
+	if (weaponID > weaponDefHandler->numWeaponDefs) {
+		return 0;
+	}
+		
+	DamageArray damages;
+	damages[unit->armorType] = damage;
+	if (paralyze) {
+		damages.paralyzeDamageTime = paralyze;
+	}
+
+	unit->DoDamage(damages, attacker, impulse, weaponID);
+
 	return 0;
 }
 
