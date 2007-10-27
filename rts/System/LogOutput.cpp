@@ -42,7 +42,7 @@ void CLogOutput::SetMirrorToStdout(bool value)
 	stdoutDebug = value;
 }
 
-void CLogOutput::Output(int priority, const char *str)
+void CLogOutput::Output(int zone, const char *str)
 {
 	if (!initialized) {
 		filelog = new std::ofstream("infolog.txt");
@@ -51,7 +51,7 @@ void CLogOutput::Output(int priority, const char *str)
 
 	// Output to subscribers
 	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
-		(*lsi)->NotifyLogMsg(priority, str);
+		(*lsi)->NotifyLogMsg(zone, str);
 
 	int nl = strlen(str) - 1;
 
@@ -102,7 +102,7 @@ void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 // Printing functions
 // ----------------------------------------------------------------------
 
-void CLogOutput::Print(int priority, const char *fmt, ...)
+void CLogOutput::Print(int zone, const char *fmt, ...)
 {
 	char text[bufferSize];
 	va_list	ap;
@@ -111,13 +111,13 @@ void CLogOutput::Print(int priority, const char *fmt, ...)
 	VSNPRINTF(text, sizeof(text), fmt, ap);
 	va_end(ap);
 
-	Output (priority,text);
+	Output (zone, text);
 }
 
 void CLogOutput::Print(const char *fmt, ...)
 {
 	char text[bufferSize];
-	va_list	ap;	
+	va_list	ap;
 
 	va_start(ap, fmt);
 	VSNPRINTF(text, sizeof(text), fmt, ap);
@@ -132,9 +132,9 @@ void CLogOutput::Print(const std::string& text)
 }
 
 
-void CLogOutput::Print(int priority, const std::string& text)
+void CLogOutput::Print(int zone, const std::string& text)
 {
-	Output(priority, text.c_str());
+	Output(zone, text.c_str());
 }
 
 
@@ -171,7 +171,7 @@ CLogOutput& CLogOutput::operator<< (const char* c)
 			Output(0, tempstr.c_str());
 			tempstr.clear();
 			break;
-		} else 
+		} else
 			tempstr += c[a];
 	}
 	return *this;

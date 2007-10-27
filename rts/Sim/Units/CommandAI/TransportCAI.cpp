@@ -246,7 +246,6 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c)
 
 void CTransportCAI::ExecuteUnloadUnit(Command &c)
 {
-	CTransportUnit* transport = (CTransportUnit*)owner;
 	//new methods
 	switch (unloadType) {
 		case UNLOAD_LAND: UnloadLand(c); break;
@@ -402,13 +401,13 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	}
 
 	//remaining spots
-	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){
-		while (ti!=transport->transported.end() && startpos.distance(nextPos) < startpos.distance(endpos)) {
+	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		while (ti != transport->transported.end() && startpos.distance(nextPos) < startpos.distance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
-			nextPos.y=ground->GetHeight(nextPos.x,nextPos.z);
+			nextPos.y = ground->GetHeight(nextPos.x, nextPos.z);
 
 			//check landing spot is ok for landing on
-			if(!SpotIsClear(nextPos,ti->unit))
+			if (!SpotIsClear(nextPos,ti->unit))
 				continue;
 
 			dropSpots.push_front(nextPos);
@@ -420,7 +419,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 		}
 		return true;
 	}
-		return false;
+	return false;
 }
 
 bool CTransportCAI::FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs) {

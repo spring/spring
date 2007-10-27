@@ -2033,7 +2033,7 @@ int AAIBuildTable::GetBuilder(int unit_id, UnitMoveType moveType)
 				return *builder;
 		}
 	}
-	else if(moveType = HOVER)
+	else if(moveType == HOVER)
 	{
 		for(list<int>::iterator builder = units_static[unit_id].builtByList.begin(); builder != units_static[unit_id].builtByList.end(); builder++)
 		{
@@ -2675,7 +2675,7 @@ bool AAIBuildTable::LoadBuildTable()
 		int tmp = 0, bo = 0, bb = 0, cat = 0;
 	
 		// load units if file exists 
-		if(load_file = fopen(filename, "r"))
+		if((load_file = fopen(filename, "r")))
 		{
 			// check if correct version
 			fscanf(load_file, "%s", buffer);

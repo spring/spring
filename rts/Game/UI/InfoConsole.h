@@ -22,9 +22,9 @@ public:
 	void Draw();
 
 	// ILogSubscriber interface implementation
-	void NotifyLogMsg(int priority, const char* txt);
+	void NotifyLogMsg(int zone, const char* txt);
 	void SetLastMsgPos(const float3& pos);
-	
+
 
 	int lifetime;
 	float xpos;
@@ -35,12 +35,12 @@ public:
 	bool disabled;
 
 	float3 lastMsgPos;
-	
+
 public:
 	static const int maxRawLines;
 	struct RawLine {
 		std::string text;
-		int priority;
+		int zone;
 		int id;
 		Uint32 time;
 	};
@@ -58,11 +58,11 @@ private:
 	};
 	int lastTime;
 	std::deque<InfoLine> data;
-	
+
 	std::string tempstring;
 	int verboseLevel;
 
-	void AddLineHelper (int priority, const char *text);
+	void AddLineHelper (int zone, const char *text);
 	mutable boost::recursive_mutex infoConsoleMutex;
 };
 

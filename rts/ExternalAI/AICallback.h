@@ -19,7 +19,7 @@ public:
 
 	void verify ();
 
-	void SendTextMsg(const char* text,int priority);
+	void SendTextMsg(const char* text, int zone);
 	void SetLastMsgPos(float3 pos);
 	void AddNotification(float3 pos, float3 color, float alpha);
 	bool PosInCamera(float3 pos, float radius);

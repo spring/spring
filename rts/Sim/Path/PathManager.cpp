@@ -198,7 +198,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 /*
 Store a new multipath into the pathmap.
 */
-unsigned int CPathManager::Store(MultiPath* path) 
+unsigned int CPathManager::Store(MultiPath* path)
 {
 	//Store the path.
 	pathMap[++nextPathId] = path;
@@ -305,7 +305,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 	if(pi == pathMap.end())
 		return float3(-1,-1,-1);
 	MultiPath* multiPath = pi->second;
-	
+
 	if(callerPos==ZeroVector){
 		if(!multiPath->detailedPath.path.empty())
 			callerPos=multiPath->detailedPath.path.back();
@@ -336,7 +336,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		if(multiPath->detailedPath.path.empty()) {
 			if(multiPath->estimatedPath2.path.empty() && multiPath->estimatedPath.path.empty())
 				return multiPath->finalGoal;
-			else 
+			else
 				return NextWaypoint(pathId,callerPos,minDistance,numRetries+1);
 		} else {
 			waypoint = multiPath->detailedPath.path.back();
@@ -408,7 +408,7 @@ void CPathManager::Draw() {
 	for(pi = pathMap.begin(); pi != pathMap.end(); pi++) {
 		MultiPath* path = pi->second;
 		list<float3>::iterator pvi;
-		
+
 		//Start drawing a line.
 		glBegin(GL_LINE_STRIP);
 
@@ -463,21 +463,20 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 	const MultiPath* path = pi->second;
 
 	list<float3>::const_reverse_iterator pvi;
-	const list<float3>* pointSet;
 
-	starts.push_back(points.size());	
+	starts.push_back(points.size());
 	const list<float3>& dtlPoints = path->detailedPath.path;
 	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
-	starts.push_back(points.size());	
+	starts.push_back(points.size());
 	const list<float3>& estPoints = path->estimatedPath.path;
 	for (pvi = estPoints.rbegin(); pvi != estPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
-	starts.push_back(points.size());	
+	starts.push_back(points.size());
 	const list<float3>& est2Points = path->estimatedPath2.path;
 	for (pvi = est2Points.rbegin(); pvi != est2Points.rend(); pvi++) {
 		points.push_back(*pvi);
@@ -489,7 +488,7 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData) :
 	start(start),
 	peDef(peDef),
-	moveData(moveData) 
+	moveData(moveData)
 {
 }
 

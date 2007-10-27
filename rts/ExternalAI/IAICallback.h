@@ -88,7 +88,7 @@ struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
 class SPRING_API IAICallback
 {
 public:
-	virtual void SendTextMsg(const char* text,int priority) = 0;
+	virtual void SendTextMsg(const char* text, int zone) = 0;
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
 	virtual bool PosInCamera(float3 pos, float radius) = 0;	// checks if pos is within view of the current camera, using radius as a margin
@@ -265,7 +265,7 @@ public:
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
-          
+
 	DECLARE_PURE_VIRTUAL(~IAICallback())
 };
 

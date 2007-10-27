@@ -219,7 +219,7 @@ void CLuaUI::KillLua()
 
 string CLuaUI::LoadFile(const string& filename) const
 {
-	const char* accessMode = SPRING_VFS_RAW; 
+	const char* accessMode = SPRING_VFS_RAW;
 	CFileHandler lockFile("gamedata/lockluaui.txt", SPRING_VFS_MOD);
 	if (lockFile.FileExists()) {
 		if (!CLuaHandle::GetDevMode()) {
@@ -476,7 +476,7 @@ bool CLuaUI::AddConsoleLines()
 		}
 
 		lua_pushstring(L, rl.text.c_str());
-		lua_pushnumber(L, rl.priority);
+		lua_pushnumber(L, rl.zone);
 
 		// call the function
 		if (!RunCallIn(cmdStr, 2, 0)) {
@@ -957,7 +957,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;
 	}
-	
+
 	lua_pushnumber(L, xButtons);
 	lua_pushnumber(L, yButtons);
 	lua_pushnumber(L, cmds.size());
@@ -1964,7 +1964,7 @@ int CLuaUI::GetConsoleBuffer(lua_State* L)
 		}
 	}
 
-	// table = { [1] = { text = string, priority = number}, etc... }
+	// table = { [1] = { text = string, zone = number}, etc... }
 	lua_newtable(L);
 	int count = 0;
 	for (int i = start; i < lineCount; i++) {
@@ -1974,8 +1974,9 @@ int CLuaUI::GetConsoleBuffer(lua_State* L)
 			lua_pushstring(L, "text");
 			lua_pushstring(L, lines[i].text.c_str());
 			lua_rawset(L, -3);
+			// FIXME: how to migrate 'priority' to 'zone', will it break widgets?
 			lua_pushstring(L, "priority");
-			lua_pushnumber(L, lines[i].priority);
+			lua_pushnumber(L, lines[i].zone);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
@@ -2845,7 +2846,7 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 
 int CLuaUI::SendLuaUIMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
 	if ((mode == "s") || (mode == "specs")) {
@@ -2864,7 +2865,7 @@ int CLuaUI::SendLuaUIMsg(lua_State* L)
 
 int CLuaUI::SendLuaCobMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_COB, 0, msg);
 	return 0;
 }
@@ -2872,7 +2873,7 @@ int CLuaUI::SendLuaCobMsg(lua_State* L)
 
 int CLuaUI::SendLuaGaiaMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, msg);
 	return 0;
 }
@@ -2880,7 +2881,7 @@ int CLuaUI::SendLuaGaiaMsg(lua_State* L)
 
 int CLuaUI::SendLuaRulesMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1); 
+	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, msg);
 	return 0;
 }
@@ -3073,6 +3074,6 @@ int CLuaUI::GetPlayerTraffic(lua_State* L)
 	return 1;
 }
 
- 
+
 /******************************************************************************/
 /******************************************************************************/
