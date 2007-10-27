@@ -972,7 +972,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 				pos += (*it)->midPos;
 			}
 			pos /= (float)selUnits.size();
-			camHandler->currCamCtrl->SetPos(pos);
+			camCtrl->SetPos(pos);
 			camHandler->CameraTransition(0.6f);
 		}
 	}
@@ -1059,7 +1059,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
-		camHandler->currCamCtrl->SetPos(infoConsole->lastMsgPos);
+		camCtrl->SetPos(infoConsole->lastMsgPos);
 		camHandler->CameraTransition(0.6f);
 	}
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
@@ -3142,7 +3142,7 @@ bool CGame::ClientReadNet()
 								}
 								camHandler->PushMode();
 								camHandler->SetCameraMode(0);
-								((CFPSController*)camHandler->currCamCtrl)->SetPos(unit->midPos);
+								((CFPSController*)camCtrl)->SetPos(unit->midPos);
 								selectedUnits.ClearSelected();
 							}
 							ENTER_SYNCED;
@@ -3257,7 +3257,7 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		CCameraController* camCtrl = camHandler->currCamCtrl;
+//		CCameraController* camCtrl = camCtrl;
 		if (disableTracker && camCtrl->DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
@@ -3287,15 +3287,15 @@ void CGame::UpdateUI()
 			}
 		}
 		movement.z=cameraSpeed;
-		camHandler->currCamCtrl->ScreenEdgeMove(movement);
+		camCtrl->ScreenEdgeMove(movement);
 
 		if(camMove[4])
-			camHandler->currCamCtrl->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			camCtrl->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
 		if(camMove[5])
-			camHandler->currCamCtrl->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+			camCtrl->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
 	}
 
-	camHandler->currCamCtrl->Update();
+	camCtrl->Update();
 
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);

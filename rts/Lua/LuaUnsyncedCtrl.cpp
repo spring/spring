@@ -480,7 +480,7 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 		transTime = (float)lua_tonumber(L, 4);
 	}
 
-	camHandler->currCamCtrl->SetPos(pos);
+	camCtrl->SetPos(pos);
 	camHandler->CameraTransition(transTime);
 
 	return 0;
@@ -524,7 +524,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, camHandler->currCamCtrl->SetState(camState));
+	lua_pushboolean(L, camCtrl->SetState(camState));
 	camHandler->CameraTransition(camTime);
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {

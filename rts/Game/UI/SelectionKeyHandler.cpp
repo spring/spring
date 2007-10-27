@@ -514,8 +514,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		selectedUnits.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
-		if(camHandler->currCamCtrl!=camHandler->camControllers[0]){
-			camHandler->currCamCtrl->SetPos(sel->pos);
+		if(camCtrl!=camHandler->camControllers[0]){
+			camCtrl->SetPos(sel->pos);
 		} else {	//fps camera
 
 			if(camera->rot.x>-1)

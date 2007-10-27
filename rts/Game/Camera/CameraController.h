@@ -48,4 +48,8 @@ protected:
 	float3 pos;
 };
 
+
+extern CCameraController* camCtrl;
+
+
 #endif // __CAMERA_CONTROLLER_H__
