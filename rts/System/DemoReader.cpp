@@ -31,16 +31,14 @@ CDemoReader::CDemoReader(const std::string& filename)
 	playbackDemo->Read((void*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
-	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) || fileHeader.version != DEMOFILE_VERSION || fileHeader.headerSize != sizeof(fileHeader) || strcmp(fileHeader.versionString, VERSION_STRING))
-	{
+	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) || fileHeader.version != DEMOFILE_VERSION || fileHeader.headerSize != sizeof(fileHeader) || strcmp(fileHeader.versionString, VERSION_STRING)) {
 		delete playbackDemo;
 		playbackDemo = NULL;
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
 	}
-	
-	if (fileHeader.scriptPtr != 0) {
+
+	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
-		playbackDemo->Seek(fileHeader.scriptPtr);
 		playbackDemo->Read(buf, fileHeader.scriptSize);
 
 		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
@@ -50,7 +48,6 @@ CDemoReader::CDemoReader(const std::string& filename)
 		delete[] buf;
 	}
 
-	playbackDemo->Seek(fileHeader.demoStreamPtr);
 	playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 
@@ -62,13 +59,10 @@ CDemoReader::CDemoReader(const std::string& filename)
 unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 {
 	if (ReachedEnd())
-	{
 		return 0;
-	}
 
-	if (nextDemoRead < gu->modGameTime)
-		// when paused, modGameTime wont increase so no seperate check needed
-	{
+	// when paused, modGameTime wont increase so no seperate check needed
+	if (nextDemoRead < gu->modGameTime) {
 		playbackDemo->Read((void*)(buf), chunkHeader.length);
 		unsigned ret = chunkHeader.length;
 		bytesRemaining -= chunkHeader.length;
@@ -79,9 +73,7 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
 		bytesRemaining -= sizeof(chunkHeader);
 
 		return ret;
-	}
-	else
-	{
+	} else {
 		return 0;
 	}
 }
