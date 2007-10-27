@@ -86,6 +86,10 @@ function widget:Update(dt)
       if (c) then
         return
       end
+      -- clear the velocities
+      for p = 23,28 do
+        cs[p] = 0
+      end
     end
     if (cs.name == "ta") then
       local flip = -cs[10]

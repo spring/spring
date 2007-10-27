@@ -518,9 +518,9 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	lua_newtable(L);
 	const int count = (int)camHandler->camControllers.size();
 	for (int i = 0; i < count; i++) {
-		const CCameraController* camCtrl = camHandler->camControllers[i];
-		lua_pushstring(L, camCtrl->GetName().c_str());
-		lua_pushnumber(L, camCtrl->num);
+		const CCameraController* cc = camHandler->camControllers[i];
+		lua_pushstring(L, cc->GetName().c_str());
+		lua_pushnumber(L, cc->num);
 		lua_rawset(L, -3);
 	}
 
@@ -535,15 +535,15 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	lua_newtable(L);
 
 	lua_pushstring(L, "mode");
-	lua_pushnumber(L, camHandler->currCamCtrl->num);
+	lua_pushnumber(L, camCtrl->num);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "name");
-	lua_pushstring(L, camHandler->currCamCtrl->GetName().c_str());
+	lua_pushstring(L, camCtrl->GetName().c_str());
 	lua_rawset(L, -3);
 
 
 	vector<float> camState;
-	camHandler->currCamCtrl->GetState(camState);
+	camCtrl->GetState(camState);
 	for (int i = 0; i < (int)camState.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, camState[i]);

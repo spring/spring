@@ -407,12 +407,19 @@ void CFreeController::GetState(std::vector<float>& fv) const
 	fv.push_back(/* 19 */ goForward ? 1.0f : -1.0f);
 	fv.push_back(/* 20 */ invertAlt ? 1.0f : -1.0f);
 	fv.push_back(/* 21 */ gndLock   ? 1.0f : -1.0f);
+
+	fv.push_back(/* 22 */ prevVel.x);
+	fv.push_back(/* 23 */ prevVel.y);
+	fv.push_back(/* 24 */ prevVel.z);
+	fv.push_back(/* 25 */ prevAvel.x);
+	fv.push_back(/* 26 */ prevAvel.y);
+	fv.push_back(/* 27 */ prevAvel.z);
 }
 
 
 bool CFreeController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 22) || (fv[0] != (float)num)) {
+	if ((fv.size() != 28) || (fv[0] != (float)num)) {
 		return false;
 	}
 	pos.x = fv[1];
@@ -437,6 +444,12 @@ bool CFreeController::SetState(const std::vector<float>& fv)
 	goForward   = (fv[19] > 0.0f);
 	invertAlt   = (fv[20] > 0.0f);
 	gndLock     = (fv[21] > 0.0f);
+	prevVel.x   =  fv[22];
+	prevVel.y   =  fv[23];
+	prevVel.z   =  fv[24];
+	prevAvel.x  =  fv[25];
+	prevAvel.y  =  fv[26];
+	prevAvel.z  =  fv[27];
 
 	return true;
 }

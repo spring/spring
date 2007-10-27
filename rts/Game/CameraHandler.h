@@ -28,7 +28,7 @@ public:
 	void SaveView(const std::string& name);
 	bool LoadView(const std::string& name);
 	
-	CCameraController* currCamCtrl;
+	CCameraController* &currCamCtrl;
 	std::vector<CCameraController*> camControllers;
 	
 private:
@@ -56,8 +56,6 @@ private:
 
 
 extern CCameraHandler* camHandler;
-
-extern CCameraController* camCtrl;
 
 
 #endif

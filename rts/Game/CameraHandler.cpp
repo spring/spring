@@ -15,7 +15,7 @@
 CCameraHandler* camHandler = NULL;
 
 
-CCameraHandler::CCameraHandler()
+CCameraHandler::CCameraHandler() : currCamCtrl(camCtrl)
 {
 	cameraTime=0.0f;
 	cameraTimeLeft=0.0f;
@@ -49,6 +49,7 @@ CCameraHandler::~CCameraHandler()
 		delete camControllers.back();
 		camControllers.pop_back();
 	}
+	camCtrl = NULL;
 }
 
 

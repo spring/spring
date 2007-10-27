@@ -91,6 +91,12 @@ local function GetCamereTable()
     ct.goForward   = 20
     ct.invertAlt   = 21
     ct.gndLock     = 22
+    ct.vx          = 23
+    ct.vy          = 24
+    ct.vz          = 25
+    ct.avx         = 26
+    ct.avy         = 27
+    ct.avz         = 28
   end
   return ct, cs
 end

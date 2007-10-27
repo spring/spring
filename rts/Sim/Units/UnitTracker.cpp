@@ -258,7 +258,7 @@ void CUnitTracker::SetCam()
 	}
 
 	// non-FPS camera modes  (immediate positional tracking)
-	if (camHandler->currCamCtrl != camHandler->camControllers[0]) {
+	if (camCtrl != camHandler->camControllers[0]) {
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
@@ -274,7 +274,7 @@ void CUnitTracker::SetCam()
 				break;
 			}
 		}
-		CCameraController* currentCam = camHandler->currCamCtrl;
+		CCameraController* currentCam = camCtrl;
 		currentCam->SetTrackingInfo(pos, u->radius * 2.7182818f);
 		return;
 	}
