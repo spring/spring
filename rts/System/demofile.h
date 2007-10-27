@@ -19,7 +19,7 @@ may change every Spring release without notice).
 
 /** The current demofile version. Only change on major modifications for which
 appending stuff to DemoFileHeader is not sufficient. */
-#define DEMOFILE_VERSION 1
+#define DEMOFILE_VERSION 2
 
 /**
 @brief Spring demo file main header
@@ -28,8 +28,8 @@ Demo file layout is like this:
 
 	- DemoFileHeader
 	- Data chunks:
-		- Startscript (scriptPtr, scriptSize)
-		- Demo stream (demoStreamPtr, demoStreamSize)
+		- Startscript (scriptSize)
+		- Demo stream (demoStreamSize)
 		- Player statistics, one PlayerStatistic for each player
 		- Team statistics, consisting of:
 			- Array of numTeams dwords indicating the number of
@@ -54,18 +54,14 @@ struct DemoFileHeader
 	char versionString[16]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
 	Uint8 gameID[16];       ///< Unique game identifier. Identical for each player of the game.
 	Uint64 unixTime;        ///< Unix time when game was started.
-	int scriptPtr;          ///< File offset to startscript.
 	int scriptSize;         ///< Size of startscript.
-	int demoStreamPtr;      ///< File offset to the demo stream.
 	int demoStreamSize;     ///< Size of the demo stream.
 	int gameTime;           ///< Total number of seconds game time.
 	int wallclockTime;      ///< Total number of seconds wallclock time.
 	int numPlayers;         ///< Number of players for which stats are saved.
-	int playerStatPtr;      ///< File offset to player stats, 0 if not available.
 	int playerStatSize;     ///< Size of the entire player statistics chunk.
 	int playerStatElemSize; ///< sizeof(CPlayer::Statistics)
 	int numTeams;           ///< Number of teams for which stats are saved.
-	int teamStatPtr;        ///< File offset to team stats, 0 if not available.
 	int teamStatSize;       ///< Size of the entire team statistics chunk.
 	int teamStatElemSize;   ///< sizeof(CTeam::Statistics)
 	int teamStatPeriod;     ///< Interval (in seconds) between team stats.
@@ -76,18 +72,14 @@ struct DemoFileHeader
 		version = swabdword(version);
 		headerSize = swabdword(headerSize);
 		// FIXME endian: unixTime = swabqword(unixTime);
-		scriptPtr = swabdword(scriptPtr);
 		scriptSize = swabdword(scriptSize);
-		demoStreamPtr = swabdword(demoStreamPtr);
 		demoStreamSize = swabdword(demoStreamSize);
 		gameTime = swabdword(gameTime);
 		wallclockTime = swabdword(wallclockTime);
 		numPlayers = swabdword(numPlayers);
-		playerStatPtr = swabdword(playerStatPtr);
 		playerStatSize = swabdword(playerStatSize);
 		playerStatElemSize = swabdword(playerStatElemSize);
 		numTeams = swabdword(numTeams);
-		teamStatPtr = swabdword(teamStatPtr);
 		teamStatSize = swabdword(teamStatSize);
 		teamStatElemSize = swabdword(teamStatElemSize);
 		teamStatPeriod = swabdword(teamStatPeriod);

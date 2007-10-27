@@ -11,6 +11,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
+#include "System/LogOutput.h"
 
 #ifdef __GNUC__
 #define __time64_t time_t
@@ -46,20 +47,17 @@ CDemoRecorder::CDemoRecorder()
 	_time64(&currtime);
 	fileHeader.unixTime = currtime;
 
+	//recordDemo->seekp(fileHeader.headerSize);
+	recordDemo->write((char*)&fileHeader, sizeof(fileHeader));
+
 	if (gameSetup) {
 		// strip trailing null termination characters
 		int length = gameSetup->gameSetupTextLength;
 		while (gameSetup->gameSetupText[length - 1] == '\0')
 			--length;
 
-		fileHeader.scriptPtr = fileHeader.headerSize;
 		fileHeader.scriptSize = length;
-		fileHeader.demoStreamPtr = fileHeader.scriptPtr + length;
-
-		recordDemo->seekp(fileHeader.scriptPtr);
 		recordDemo->write(gameSetup->gameSetupText, length);
-	} else {
-		fileHeader.demoStreamPtr = fileHeader.headerSize;
 	}
 
 	fileHeader.playerStatElemSize = sizeof(CPlayer::Statistics);
@@ -68,7 +66,6 @@ CDemoRecorder::CDemoRecorder()
 	fileHeader.winningAllyTeam = -1;
 
 	WriteFileHeader();
-	recordDemo->seekp(fileHeader.demoStreamPtr);
 }
 
 CDemoRecorder::~CDemoRecorder()
@@ -90,7 +87,7 @@ CDemoRecorder::~CDemoRecorder()
 	}
 }
 
-void CDemoRecorder::SaveToDemo(const unsigned char* buf,const unsigned length)
+void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)
 {
 	DemoStreamChunkHeader chunkHeader;
 
@@ -111,17 +108,17 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	newtime = _localtime64(&long_time); /* Convert to local time. */
 
 	char buf[500];
-	sprintf(buf,"%02i%02i%02i",newtime->tm_year%100,newtime->tm_mon+1,newtime->tm_mday);
-	std::string name=std::string(buf)+"-"+mapname.substr(0,mapname.find_first_of("."));
-	name+=std::string("-")+VERSION_STRING;
+	sprintf(buf, "%02i%02i%02i", newtime->tm_year % 100, newtime->tm_mon + 1, newtime->tm_mday);
+	std::string name = std::string(buf) + "-" + mapname.substr(0, mapname.find_first_of("."));
+	name += std::string("-") + VERSION_STRING;
 
-	sprintf(buf,"demos/%s.sdf",name.c_str());
+	sprintf(buf,"demos/%s.sdf", name.c_str());
 	CFileHandler ifs(buf);
-	if(ifs.FileExists()){
-		for(int a=0;a<9999;++a){
-			sprintf(buf,"demos/%s-%i.sdf",name.c_str(),a);
+	if (ifs.FileExists()) {
+		for (int a = 0; a < 9999; ++a) {
+			sprintf(buf,"demos/%s-%i.sdf", name.c_str(), a);
 			CFileHandler ifs(buf);
-			if(!ifs.FileExists())
+			if (!ifs.FileExists())
 				break;
 		}
 	}
@@ -175,7 +172,7 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 void CDemoRecorder::WriteFileHeader()
 {
-	std::ofstream::pos_type pos = recordDemo->tellp();
+	int pos = recordDemo->tellp();
 
 	recordDemo->seekp(0);
 
@@ -192,7 +189,7 @@ void CDemoRecorder::WritePlayerStats()
 	if (fileHeader.numPlayers == 0)
 		return;
 
-	fileHeader.playerStatPtr = recordDemo->tellp();
+	int pos = recordDemo->tellp();
 
 	for (std::vector< CPlayer::Statistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		CPlayer::Statistics& stats = *it;
@@ -201,7 +198,7 @@ void CDemoRecorder::WritePlayerStats()
 	}
 	playerStats.clear();
 
-	fileHeader.playerStatSize = (int)recordDemo->tellp() - fileHeader.playerStatPtr;
+	fileHeader.playerStatSize = (int)recordDemo->tellp() - pos;
 }
 
 /** @brief Write the CTeam::Statistics at the current position in the file. */
@@ -210,9 +207,9 @@ void CDemoRecorder::WriteTeamStats()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	fileHeader.teamStatPtr = recordDemo->tellp();
+	int pos = recordDemo->tellp();
 
-	// Write array of dwords indicating number of CTeam::Statistics per team. 
+	// Write array of dwords indicating number of CTeam::Statistics per team.
 	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabdword(it->size());
 		recordDemo->write((char*)&c, sizeof(unsigned int));
@@ -228,5 +225,5 @@ void CDemoRecorder::WriteTeamStats()
 	}
 	teamStats.clear();
 
-	fileHeader.teamStatSize = (int)recordDemo->tellp() - fileHeader.teamStatPtr;
+	fileHeader.teamStatSize = (int)recordDemo->tellp() - pos;
 }
