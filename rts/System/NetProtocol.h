@@ -19,14 +19,6 @@ public:
 	~CNetProtocol();
 
 	/**
-	@brief Initialise in servermode
-	@param portnum Portnumber to use
-	@throw network_error If phailed (port already used or invalid)
-	@return always 0
-	*/
-	int InitServer(const unsigned portnum);
-	
-	/**
 	@brief Initialise in client mode (remote server)
 	*/
 	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
@@ -35,19 +27,6 @@ public:
 	@brief Initialise in client mode (local server)
 	 */
 	unsigned InitLocalClient(const unsigned wantedNumber);
-	
-	/**
-	@brief Connect a local client
-	@todo Merge with incoming connection handling for UDPConnections
-	 */
-	unsigned ServerInitLocalClient(const unsigned wantedNumber);
-
-	/**
-	@brief Update all internals
-	1. Updates our CNet
-	2. Check for incoming connections, accept them when they are valid and send some information
-	*/
-	void Update();
 
 	bool IsDemoServer() const;
 	bool localDemoPlayback;
@@ -60,22 +39,10 @@ public:
 	 */
 	int GetData(unsigned char* buf, const unsigned conNum);
 	
-	void SendScript(const std::string& scriptName);
-	void SendMapName(const uint checksum, const std::string& mapName);
-	void SendModName(const uint checksum, const std::string& modName);
-
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 
 private:
 	CDemoRecorder* record;
-
-	// Game settings (only important for the server)
-	//TODO move to CGameServer
-	std::string scriptName;
-	uint mapChecksum;
-	std::string mapName;
-	uint modChecksum;
-	std::string modName;
 };
 
 extern CNetProtocol* net;

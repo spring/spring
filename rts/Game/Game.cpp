@@ -455,9 +455,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	chatSound=sound->GetWaveId("sounds/beep4.wav");
 
-	if(gameServer)
-		gameServer->gameLoading=false;
-
 	UnloadStartPicture();
 
 	lastCpuUsageTime = gu->gameTime + 10;
@@ -2804,6 +2801,7 @@ bool CGame::ClientReadNet()
 
 			case NETMSG_MAPNAME: {
 				archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[2]));
+				net->GetDemoRecorder()->SetName(stupidGlobalMapname); //TODO use name from NETMSG
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
