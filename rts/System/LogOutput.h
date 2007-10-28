@@ -39,9 +39,9 @@ public:
 	CLogOutput& operator<<(const int i);
 	CLogOutput& operator<<(const float f);
 	CLogOutput& operator<<(const char* c);
-	CLogOutput& operator<<(const float3 f);
+	CLogOutput& operator<<(const float3& f);
 
-	void SetLastMsgPos(float3 pos);
+	void SetLastMsgPos(const float3& pos);
 
 	// In case the InfoConsole and other in game subscribers
 	// should not be used anymore (SDL shutdown)

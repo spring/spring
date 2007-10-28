@@ -77,7 +77,7 @@ void CLogOutput::Output(int zone, const char *str)
 	}
 }
 
-void CLogOutput::SetLastMsgPos(float3 pos)
+void CLogOutput::SetLastMsgPos(const float3& pos)
 {
 	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
 		(*lsi)->SetLastMsgPos(pos);
@@ -157,7 +157,7 @@ CLogOutput& CLogOutput::operator<< (const float f)
 	return *this;
 }
 
-CLogOutput& CLogOutput::operator<< (const float3 f)
+CLogOutput& CLogOutput::operator<< (const float3& f)
 {
 	return *this << f.x << " " << f.y << " " << f.z;
 }

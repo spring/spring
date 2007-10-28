@@ -1,7 +1,6 @@
 #ifndef NET_H
 #define NET_H
 
-// general includes
 #include <string>
 #include <queue>
 #include <boost/scoped_array.hpp>
@@ -313,13 +312,13 @@ private:
 	
 	/**
 	@brief Holds the UDPListener for networking
-	@TODO make it more generic to allow for different protocols like TCP
+	@todo make it more generic to allow for different protocols like TCP
 	*/
 	boost::scoped_ptr<UDPListener> udplistener;
 	
 	/**
 	@brief All active connections
-	@TODO make it variable sized without performance penalty
+	@todo make it variable sized without performance penalty
 	*/
 	boost::shared_ptr<CConnection> connections[MAX_CONNECTIONS];
 	std::queue< boost::shared_ptr<CConnection> > waitingQueue;

@@ -74,7 +74,6 @@ enum NETMSG {
 
 /**
 @brief High level network code layer
-@TODO improve behavior when in demo mode
 Provides protocoldependent functions over our CNet-Class. It includes all functions needed to send stuff without handling with the internals.
  */
 class CBaseNetProtocol : public netcode::CNet {
@@ -88,7 +87,7 @@ public:
 	/**
 	@brief  Broadcast raw data to all clients
 	Should not be used. Use Send*(...) instead, only redirects to CNet::SendData(char*, int);
-	@TODO make everything use the Send* functions
+	@todo make everything use the Send* functions
 	*/
 	void RawSend(const uchar* data,const unsigned length);
 

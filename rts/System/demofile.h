@@ -101,7 +101,7 @@ The demo stream layout is as follows:
 struct DemoStreamChunkHeader
 {
 	float modGameTime;   ///< Gametime at which this chunk was written/should be read.
-	int length;          ///< Length of the chunk of data following this header.
+	unsigned length;          ///< Length of the chunk of data following this header.
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
