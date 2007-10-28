@@ -65,10 +65,6 @@ void CMissileLauncher::Fire(void)
 
 	dir += (gs->randVector() * sprayangle + salvoError) * (1 - owner->limExperience * 0.5f);
 	dir.Normalize();
-	// KLOOTNOTE: when dir = {0, 1, 0} projectiles are NOT
-	// influenced by gravity until TTL <= 0, but otherwise
-	// they are even when TTL still > 0?
-	// dir = float3(0, 1, 0);
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
 	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
@@ -77,7 +73,7 @@ void CMissileLauncher::Fire(void)
 	SAFE_NEW CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
 			projectileSpeed,
 			weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
-			targetUnit, weaponDef, targetPos, "");
+			targetUnit, weaponDef, targetPos, weaponDef->cegTag);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
