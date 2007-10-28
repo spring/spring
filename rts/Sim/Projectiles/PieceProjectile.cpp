@@ -162,7 +162,7 @@ void CPieceProjectile::Collision()
 		if(flags & PP_Smoke){
 			float3 dir=speed;
 			dir.Normalize();
-			CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.5f,drawTrail);
+			CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.5f,drawTrail,0,&ph->smoketrailtex);
 			tp->creationTime+=8-((age)&7);
 		}
 		CProjectile::Collision();
@@ -180,7 +180,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if(flags & PP_Smoke){
 		float3 dir=speed;
 		dir.Normalize();
-		CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.5f,drawTrail);
+		CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.5f,drawTrail,0,&ph->smoketrailtex);
 		tp->creationTime+=8-((age)&7);
 	}
 	CProjectile::Collision(unit);
@@ -256,7 +256,7 @@ void CPieceProjectile::Update()
 		dir.Normalize();
 		if(curCallback)
 			curCallback->drawCallbacker=0;
-		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,14,Smoke_Time,0.5f,drawTrail,this);
+		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,14,Smoke_Time,0.5f,drawTrail,this,&ph->smoketrailtex);
 		useAirLos=curCallback->useAirLos;
 		oldSmoke=pos;
 		oldSmokeDir=dir;

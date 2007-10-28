@@ -120,7 +120,7 @@ void CStarburstProjectile::Collision()
 	if(h>pos.y)
 		pos+=speed*(h-pos.y)/speed.y;
 	if (weaponDef->visuals.smokeTrail)
-		SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+		SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail,0,weaponDef->visuals.texture2);
 	oldSmokeDir=dir;
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
@@ -130,7 +130,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit *unit)
 {
 	if (weaponDef->visuals.smokeTrail)
-		SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail);
+		SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,false,true,7,Smoke_Time,0.7f,drawTrail,0,weaponDef->visuals.texture2);
 	oldSmokeDir=dir;
 //	unit->DoDamage(damages,owner);
 //	helper->Explosion(pos,damages,areaOfEffect,owner);
@@ -219,7 +219,7 @@ void CStarburstProjectile::Update(void)
 	if(weaponDef->visuals.smokeTrail && !(age&7)){
 		if(curCallback)
 			curCallback->drawCallbacker=0;
-		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,7,Smoke_Time,0.7f,drawTrail,this);
+		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,7,Smoke_Time,0.7f,drawTrail,this,weaponDef->visuals.texture2);
 		oldSmoke=pos;
 		oldSmokeDir=dir;
 		numParts=0;
