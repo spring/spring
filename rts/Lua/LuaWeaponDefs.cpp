@@ -448,6 +448,7 @@ static bool InitParamMap()
 	ADD_STRING("name",        wd.name);
 	ADD_STRING("filename",    wd.type);
 	ADD_STRING("description", wd.description);
+	ADD_STRING("cegTag",      wd.cegTag);
 
 	ADD_STRING("type", wd.type);
 

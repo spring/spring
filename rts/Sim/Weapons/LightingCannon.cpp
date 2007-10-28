@@ -107,9 +107,11 @@ void CLightingCannon::Fire(void)
 
 	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
 
-	SAFE_NEW CLightingProjectile(weaponMuzzlePos,weaponMuzzlePos+dir*(r+10),owner,color,weaponDef,10,this, "");
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
+	SAFE_NEW CLightingProjectile(weaponMuzzlePos,
+		weaponMuzzlePos + dir * (r + 10), owner, color, weaponDef, 10, this, weaponDef->cegTag);
+
+	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 
 }
 

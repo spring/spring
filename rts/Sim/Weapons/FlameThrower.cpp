@@ -32,9 +32,12 @@ void CFlameThrower::Fire(void)
 	float3 spread=(gs->randVector()*sprayangle+salvoError)*0.2f;
 	spread-=dir*0.001f;
 
-	SAFE_NEW CFlameProjectile(weaponMuzzlePos,dir*projectileSpeed,spread,owner,weaponDef,(int)(range/projectileSpeed*weaponDef->duration), "");
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
+	SAFE_NEW CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
+		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration),
+		weaponDef->cegTag);
+
+	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CFlameThrower::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)

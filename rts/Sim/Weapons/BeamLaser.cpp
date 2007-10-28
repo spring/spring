@@ -231,14 +231,19 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		float startAlpha=(1-curLength/(range*1.3f))*baseAlpha;
 		float endAlpha=(1-(curLength+length)/(range*1.3f))*baseAlpha;
 
-		if(weaponDef->largeBeamLaser)
-			SAFE_NEW CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner,weaponDef, "");
+		if (weaponDef->largeBeamLaser)
+			SAFE_NEW CLargeBeamLaserProjectile(curPos, hitPos, color,
+			weaponDef->visuals.color2, owner, weaponDef, weaponDef->cegTag);
 		else
-			SAFE_NEW CBeamLaserProjectile(curPos,hitPos,startAlpha,endAlpha,color,weaponDef->visuals.color2, owner,weaponDef->thickness,weaponDef->corethickness, weaponDef->laserflaresize, weaponDef, weaponDef->visuals.beamttl, weaponDef->visuals.beamdecay, "");
+			SAFE_NEW CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha,
+				color, weaponDef->visuals.color2, owner, weaponDef->thickness,
+				weaponDef->corethickness, weaponDef->laserflaresize, weaponDef,
+				weaponDef->visuals.beamttl, weaponDef->visuals.beamdecay,
+				weaponDef->cegTag);
 
-		curPos=hitPos;
-		curLength+=length;
-		dir=newDir;
+		curPos = hitPos;
+		curLength += length;
+		dir = newDir;
 	}
 
 	// fix negative damage when hitting big spheres
