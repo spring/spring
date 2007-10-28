@@ -1186,12 +1186,12 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 
 bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned char options, bool attackEnemy)
 {
+	bool trySelfRepair = false;
 	std::vector<CUnit*> cu=qf->GetUnits(pos,radius);
 	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (gs->Ally(owner->allyteam, unit->allyteam) &&
-		    (unit->health < unit->maxHealth) &&
-		    ((unit != owner) || owner->unitDef->canSelfRepair)) {
+		    (unit->health < unit->maxHealth)) {
 			// dont lock-on to units outside of our reach (for immobile builders)
 			if (!owner->unitDef->canmove) {
 				const CBuilder* builder = (CBuilder*)owner;
@@ -1216,6 +1216,10 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 			if (IsUnitBeingReclaimedByFriend(unit)) {
 				continue;
 			}
+			if (unit == owner) {
+				trySelfRepair = true;
+				continue;
+			}
 			Command nc;
 			if(attackEnemy){
 				PushOrUpdateReturnFight();
@@ -1225,7 +1229,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 			nc.params.push_back(unit->id);
 			commandQue.push_front(nc);
 			return true;
-		} else if(attackEnemy && owner->unitDef->canAttack && owner->maxRange>0 &&
+		}
+		else if(attackEnemy && owner->unitDef->canAttack && owner->maxRange>0 &&
 		          !gs->Ally(owner->allyteam,unit->allyteam)){
 			Command nc;
 			PushOrUpdateReturnFight();
@@ -1236,6 +1241,20 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 			return true;
 		}
 	}
+
+	if (trySelfRepair &&
+			owner->unitDef->canSelfRepair && (owner->health < owner->maxHealth)) {
+		Command nc;
+		if (attackEnemy) {
+			PushOrUpdateReturnFight();
+		}
+		nc.id = CMD_REPAIR;
+		nc.options = options | INTERNAL_ORDER;
+		nc.params.push_back(owner->id);
+		commandQue.push_front(nc);
+		return true;
+	}
+
 	return false;
 }
 
