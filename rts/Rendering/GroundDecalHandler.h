@@ -100,7 +100,13 @@ public:
 	
 	int lastTest;
 	float maxOverlap;
+
+	bool GetDrawDecals() const { return drawDecals; }
+	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
+
 protected:
+	bool drawDecals;
+
 	std::set<Scar*>* scarField;
 	int scarFieldX;
 	int scarFieldY;

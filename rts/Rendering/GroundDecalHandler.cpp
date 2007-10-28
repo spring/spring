@@ -21,10 +21,14 @@ using namespace std;
 
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
-	decalLevel=configHandler.GetInt("GroundDecals",1);
+	drawDecals = false;
+	decalLevel = configHandler.GetInt("GroundDecals",1);
 
-	if(decalLevel==0)
+	if (decalLevel == 0) {
 		return;
+	}
+
+	drawDecals = true;
 
 	unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
@@ -94,8 +98,9 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 
 void CGroundDecalHandler::Draw(void)
 {
-	if (decalLevel == 0)
+	if (!drawDecals) {
 		return;
+	}
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);

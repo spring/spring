@@ -830,7 +830,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				if (soundIdx >= 0) {
 					sound->PlaySample(
 						unitDef->sounds.underattack.getID(soundIdx),
-						unitDef->isCommander? 4: 2);
+						unitDef->isCommander? 4 : 2);
 				}
 			}
 

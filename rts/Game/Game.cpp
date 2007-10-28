@@ -1621,6 +1621,17 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			minimap->ConfigCommand(action.extra);
 		}
 	}
+	else if (cmd == "grounddecals") {
+		if (groundDecals) {
+			if (action.extra.empty()) {
+				groundDecals->SetDrawDecals(!groundDecals->GetDrawDecals());
+			} else {
+				groundDecals->SetDrawDecals(!!atoi(action.extra.c_str()));
+			}
+		}
+		logOutput.Print("Ground decals are %s",
+		                groundDecals->GetDrawDecals() ? "enabled" : "disabled");
+	}
 	else if (cmd == "maxparticles") {
 		if (ph && !action.extra.empty()) {
 			const int value = max(1, atoi(action.extra.c_str()));

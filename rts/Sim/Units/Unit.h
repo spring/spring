@@ -69,7 +69,8 @@ public:
 	bool AttackUnit(CUnit* unit,bool dgun);
 
 	virtual void DrawStats();
-	virtual void DoDamage(const DamageArray& damages,CUnit* attacker,const float3& impulse, int weaponId = -1);
+	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
+	                      const float3& impulse, int weaponId = -1);
 	virtual void Kill(float3& impulse);
 	virtual void FinishedBuilding(void);
 	void ChangeLos(int l,int airlos);
