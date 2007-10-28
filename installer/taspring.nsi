@@ -150,17 +150,16 @@ Function CheckVersion
 ;  IntCmp $1 3031040 Done             ; 0.66b1
 ;  IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
 ;  IntCmp $1 2633728 Done             ; 0.70b1
-;  IntCmp $1 2650112 Done	      ; 0.70b2
-;  IntCmp $1 2707456 Done	      ; 0.70b3
-  IntCmp $1 5438464 Done              ; 0.74b1
-  IntCmp $1 5487104 Done              ; 0.74b2
-  IntCmp $1 5478912 Done              ; 0.74b3
+;  IntCmp $1 2650112 Done             ; 0.70b2
+;  IntCmp $1 2707456 Done             ; 0.70b3
+;  IntCmp $1 5438464 Done             ; 0.74b1
+;  IntCmp $1 5487104 Done             ; 0.74b2
+;  IntCmp $1 5478912 Done             ; 0.74b3
   IntCmp $1 7470080 Done              ; 0.75b1
-  IntCmp $1 7470592 Done              ; 0.75b1+svn3976 - 0.75b1+svn3997
-  IntCmp $1 7471104 Done              ; 0.75b1+svn3998 - 0.75b1+svn4009
+  IntCmp $1 7471104 Done              ; 0.75b2
 Fail:
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.74. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.74b1, 0.74b2, 0.74b3 or 0.75b1 not found.."
+  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.75. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
+  Abort "Unable to upgrade, version 0.75b1 or 0.75b2 not found.."
   Goto done
 
 Done:
@@ -250,11 +249,13 @@ Section -Post
 SectionEnd
 
 Function un.onUninstSuccess
+  IfSilent +3
   HideWindow
   MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) was successfully removed from your computer."
 FunctionEnd
 
 Function un.onInit
+  IfSilent +3
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2
   Abort
 FunctionEnd
