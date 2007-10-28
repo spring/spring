@@ -1243,7 +1243,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(float3 pos, float radius, unsigned c
 	}
 
 	if (trySelfRepair &&
-			owner->unitDef->canSelfRepair && (owner->health < owner->maxHealth)) {
+	    owner->unitDef->canSelfRepair && (owner->health < owner->maxHealth)) {
 		Command nc;
 		if (attackEnemy) {
 			PushOrUpdateReturnFight();
