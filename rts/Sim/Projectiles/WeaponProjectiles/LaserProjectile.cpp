@@ -82,7 +82,7 @@ void CLaserProjectile::Update(void)
 
 	if (ttl > 0) {
 		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed.Normalize());
+			ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed);
 		}
 	}
 	

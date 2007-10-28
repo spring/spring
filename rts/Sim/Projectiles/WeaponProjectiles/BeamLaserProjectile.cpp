@@ -67,7 +67,6 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;
 
-	cegTag = cegTag;
 	if (cegTag.size() > 0) {
 		ceg.Load(explGenHandler, cegTag);
 	}
