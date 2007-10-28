@@ -1,6 +1,6 @@
 //
-//  DEFAULT UIKEYS.TXT FOR SPRING (0.73)
-//  ------------------------------------
+//  DEFAULT UIKEYS.TXT FOR SPRING
+//  -----------------------------
 //
 
 
@@ -322,7 +322,7 @@
 //  bind             Any+f7  dynamicSky
 //  bind             Any+f8  savegame
 //  bind             Any+f9  showhealthbars
-//  bind            Any+f10  createvideo
+//  bind           Ctrl+f10  createvideo
 //  bind            Any+f11  screenshot
 //  bind            Any+f12  screenshot
 //
