@@ -222,18 +222,14 @@ std::wstringstream& operator<<(std::wstringstream& str, const DemoFileHeader& he
 	str<<L"VersionString: "<<header.versionString<<endl;
 	str<<L"GameID: "<<idbuf<<endl;
 	str<<L"UnixTime: "<<header.unixTime<<endl;
-	str<<L"ScriptPtr: "<<header.scriptPtr<<endl;
 	str<<L"ScriptSize: "<<header.scriptSize<<endl;
-	str<<L"DemoStreamPtr: "<<header.demoStreamPtr<<endl;
 	str<<L"DemoStreamSize: "<<header.demoStreamSize<<endl;
 	str<<L"GameTime: "<<header.gameTime<<endl;
 	str<<L"WallclockTime: "<<header.wallclockTime<<endl;
 	str<<L"NumPlayers: "<<header.numPlayers<<endl;
-	str<<L"PlayerStatPtr: "<<header.playerStatPtr<<endl;
 	str<<L"PlayerStatSize: "<<header.playerStatSize<<endl;
 	str<<L"PlayerStatElemSize: "<<header.playerStatElemSize<<endl;
 	str<<L"NumTeams: "<<header.numTeams<<endl;
-	str<<L"TeamStatPtr: "<<header.teamStatPtr<<endl;
 	str<<L"TeamStatSize: "<<header.teamStatSize<<endl;
 	str<<L"TeamStatElemSize: "<<header.teamStatElemSize<<endl;
 	str<<L"TeamStatPeriod: "<<header.teamStatPeriod<<endl;
@@ -304,8 +300,8 @@ static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 	// Write out the DemoFileHeader.
 	message<<fileHeader<<endl;
 
-	// Seek to the player statistics.
-	file.seekg(fileHeader.playerStatPtr);
+	// Seek to the player statistics (by skipping over earlier chunks)
+	file.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 
 	// Loop through all players and read and output the statistics for each.
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
@@ -314,8 +310,7 @@ static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 		message<<playerStats<<endl;
 	}
 
-	// Seek to the team statistics.
-	file.seekg(fileHeader.teamStatPtr);
+	// Team statistics follow player statistics.
 
 	// Read the array containing the number of team stats for each team.
 	int* numStatsPerTeam = new int[fileHeader.numTeams];

@@ -329,8 +329,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	net->Update();	// Prevent timeout while loading
 	ENTER_UNSYNCED;
 
-	guihandler=SAFE_NEW CGuiHandler();
 	minimap=SAFE_NEW CMiniMap();
+	guihandler=SAFE_NEW CGuiHandler();
 
 	ENTER_MIXED;
 	ph=SAFE_NEW CProjectileHandler();
@@ -2140,7 +2140,6 @@ bool CGame::Draw()
 			guihandler->Update();
 		}
 		else {
-			minimap->Draw();
 			infoConsole->Draw();
 
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
@@ -2148,7 +2147,7 @@ bool CGame::Draw()
 				std::deque<CInputReceiver*>::reverse_iterator ri;
 				for(ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 					CInputReceiver* rcvr = *ri;
-					if (rcvr && (rcvr != minimap)) {
+					if (rcvr) {
 						rcvr->Draw();
 					}
 				}
