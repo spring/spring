@@ -13,7 +13,7 @@
 #include "SmokeTrailProjectile.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL,NULL));
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -33,14 +33,15 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(firstSegment),
 	CR_MEMBER(lastSegment),
 	CR_MEMBER(drawCallbacker),
-	CR_RESERVED(8)
+	CR_MEMBER(texture),
+	CR_RESERVED(4)
 	));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback)
+CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback,AtlasedTexture* texture)
 : CProjectile((pos1+pos2)*0.5f,ZeroVector,owner, false),
 	pos1(pos1),
 	pos2(pos2),
@@ -54,10 +55,17 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& po
 	drawSegmented(false),
 	drawCallbacker(drawCallback),
 	firstSegment(firstSegment),
-	lastSegment(lastSegment)
+	lastSegment(lastSegment),
+	texture(texture)
 {
 	checkCol=false;
 	castShadow=true;
+
+	//if no custom texture is defined, use the default texture
+	//Note that this will crash anyway (no idea why) so never have a null texture!
+	if (texture==0) {
+		texture = &ph->smoketrailtex;
+	}
 
 	if(!drawTrail){
 		float dist=pos1.distance(pos2);
@@ -139,22 +147,22 @@ void CSmokeTrailProjectile::Draw()
 			col3[2]=(unsigned char) (color*alpha);
 			col3[3]=(unsigned char)alpha;
 
-			float midtexx = ph->smoketrailtex.xstart + (ph->smoketrailtex.xend - ph->smoketrailtex.xstart)*0.5f;
+			float midtexx = texture->xstart + (texture->xend - texture->xstart)*0.5f;
 
-			va->AddVertexTC(pos1-odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.ystart,col);
-			va->AddVertexTC(pos1+odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.yend,col);
-			va->AddVertexTC(midpos+odir3*size3,midtexx,ph->smoketrailtex.yend,col3);
-			va->AddVertexTC(midpos-odir3*size3,midtexx,ph->smoketrailtex.ystart,col3);
+			va->AddVertexTC(pos1-odir1*size,texture->xstart,texture->ystart,col);
+			va->AddVertexTC(pos1+odir1*size,texture->xstart,texture->yend,col);
+			va->AddVertexTC(midpos+odir3*size3,midtexx,texture->yend,col3);
+			va->AddVertexTC(midpos-odir3*size3,midtexx,texture->ystart,col3);
 
-			va->AddVertexTC(midpos-odir3*size3,midtexx,ph->smoketrailtex.ystart,col3);
-			va->AddVertexTC(midpos+odir3*size3,midtexx,ph->smoketrailtex.yend,col3);
-			va->AddVertexTC(pos2+odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.yend,col2);
-			va->AddVertexTC(pos2-odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.ystart,col2);
+			va->AddVertexTC(midpos-odir3*size3,midtexx,texture->ystart,col3);
+			va->AddVertexTC(midpos+odir3*size3,midtexx,texture->yend,col3);
+			va->AddVertexTC(pos2+odir2*size2,texture->xend,texture->yend,col2);
+			va->AddVertexTC(pos2-odir2*size2,texture->xend,texture->ystart,col2);
 		} else {
-			va->AddVertexTC(pos1-odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.ystart,col);
-			va->AddVertexTC(pos1+odir1*size,ph->smoketrailtex.xstart,ph->smoketrailtex.yend,col);
-			va->AddVertexTC(pos2+odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.yend,col2);
-			va->AddVertexTC(pos2-odir2*size2,ph->smoketrailtex.xend,ph->smoketrailtex.ystart,col2);
+			va->AddVertexTC(pos1-odir1*size,texture->xstart,texture->ystart,col);
+			va->AddVertexTC(pos1+odir1*size,texture->xstart,texture->yend,col);
+			va->AddVertexTC(pos2+odir2*size2,texture->xend,texture->yend,col2);
+			va->AddVertexTC(pos2-odir2*size2,texture->xend,texture->ystart,col2);
 		}
 	} else {	//draw as particles
 		unsigned char col[4];
