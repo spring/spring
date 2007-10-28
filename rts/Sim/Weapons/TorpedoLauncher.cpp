@@ -66,13 +66,12 @@ void CTorpedoLauncher::Fire(void)
 
 //	if(onlyForward)
 //		startSpeed+=owner->speed*0.5f;
-	SAFE_NEW CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
-			projectileSpeed, tracking,
-			weaponDef->flighttime == 0 ? (int)(range/projectileSpeed+25)
-					: weaponDef->flighttime,
-			targetUnit, weaponDef);
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
+	SAFE_NEW CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
+		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
+		targetUnit, weaponDef, "");
+
+	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CTorpedoLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)

@@ -10,7 +10,8 @@ class CLightingProjectile :
 {
 	CR_DECLARE(CLightingProjectile);
 public:
-	CLightingProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color, const WeaponDef *weaponDef, int ttl=10, CWeapon* weap=0);
+	CLightingProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color,
+		const WeaponDef *weaponDef, int ttl = 10, CWeapon* weap = 0, std::string cegTag = "");
 	~CLightingProjectile(void);
 
 	float3 color;

@@ -27,8 +27,8 @@ CR_REG_METADATA(CLaserProjectile,(
 
 CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, float length, const float3& color, const float3& color2,
-		float intensity, const WeaponDef *weaponDef, int ttl)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true, ttl),
+		float intensity, const WeaponDef *weaponDef, int ttl, std::string cegTag)
+: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true,  ttl, cegTag),
 	color(color),
 	color2(color2),
 	length(length),
@@ -48,6 +48,10 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CLaserProjectile::~CLaserProjectile(void)
@@ -56,43 +60,57 @@ CLaserProjectile::~CLaserProjectile(void)
 
 void CLaserProjectile::Update(void)
 {
-	pos+=speed;
-	if(checkCol){	//normal;
-		curLength+=speedf;
-		if(curLength>length)
-			curLength=length;
-	} else {	//fading out after hit
+	pos += speed;
+	if (checkCol) {
+		// normal
+		curLength += speedf;
+		if (curLength > length)
+			curLength = length;
+	} else {
+		// fading out after hit
 		if (stayTime <= 0)
-			curLength-=speedf;
+			curLength -= speedf;
 		else
 			stayTime--;
-		if(curLength<=0){
-			deleteMe=true;
-			curLength=0;
+		if (curLength <= 0) {
+			deleteMe = true;
+			curLength = 0;
 		}
 	}
+
 	ttl--;
+
+	if (ttl > 0) {
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed.Normalize());
+		}
+	}
 	
-	if(weaponDef->visuals.hardStop) {
-		if(ttl==0 && checkCol){
-			checkCol=false;
-			speed=ZeroVector;
-			if (curLength < length) //if the laser wasn't fully extended yet
-				stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+	if (weaponDef->visuals.hardStop) {
+		if (ttl == 0 && checkCol) {
+			checkCol = false;
+			speed = ZeroVector;
+			if (curLength < length) {
+				// if the laser wasn't fully extended yet,
+	 			// remember how long until it would have been
+				// fully extended
+				stayTime = int(1 + (length - curLength) / speedf);
+			}
 		}
 	} else {
-		if(ttl<5 && checkCol){
-			intensity-=intensityFalloff*0.2f;
-			if(intensity<=0){
-				deleteMe=true;
-				intensity=0;
+		if (ttl < 5 && checkCol) {
+			intensity -= intensityFalloff * 0.2f;
+			if (intensity <= 0) {
+				deleteMe = true;
+				intensity = 0;
 			}
 		}
 	}
 
 	float3 tempSpeed = speed;
 	UpdateGroundBounce();
-	if(tempSpeed != speed){
+
+	if (tempSpeed != speed) {
 		dir = speed;
 		dir.Normalize();
 	}
@@ -105,12 +123,16 @@ void CLaserProjectile::Collision(CUnit* unit)
 
 	deleteMe=false;	//we will fade out over some time
 	if (!weaponDef->noExplode) {
-		checkCol=false;
-		speed=ZeroVector;
-		pos=oldPos;
-		if (curLength < length) { //if the laser wasn't fully extended yet
-			curLength+=speedf; //was too short for some reason
-			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+		checkCol = false;
+		speed = ZeroVector;
+		pos = oldPos;
+		if (curLength < length) {
+			// if the laser wasn't fully extended yet
+			// and was too short for some reason,
+			// remember how long until it would have
+			// been fully extended
+			curLength += speedf;
+			stayTime = int(1 + (length - curLength) / speedf);
 		}
 	}
 }
@@ -120,30 +142,42 @@ void CLaserProjectile::Collision(CFeature* feature)
 	float3 oldPos=pos;
 	CWeaponProjectile::Collision(feature);
 
-	deleteMe=false;	//we will fade out over some time
+	// we will fade out over some time
+	deleteMe = false;
 	if (!weaponDef->noExplode) {
-		checkCol=false;
-		speed=ZeroVector;
-		pos=oldPos;
-		if (curLength < length) //if the laser wasn't fully extended yet
-			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+		checkCol = false;
+		speed = ZeroVector;
+		pos = oldPos;
+		if (curLength < length) {
+			// if the laser wasn't fully extended yet,
+			// remember how long until it would have been
+			// fully extended
+			stayTime = int(1 + (length - curLength) / speedf);
+		}
 	}
 }
 
 void CLaserProjectile::Collision()
 {
-	if(weaponDef->waterweapon && ground->GetHeight2(pos.x,pos.z) < pos.y)
-		return; //prevent impact on water if waterweapon is set
-	float3 oldPos=pos;
+	if (weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z) < pos.y) {
+		// prevent impact on water if waterweapon is set
+		return;
+	}
+	float3 oldPos = pos;
 	CWeaponProjectile::Collision();
 
-	deleteMe=false;	//we will fade out over some time
+	// we will fade out over some time
+	deleteMe = false;
 	if (!weaponDef->noExplode) {
-		checkCol=false;
-		speed=ZeroVector;
-		pos=oldPos;
-		if (curLength < length) //if the laser wasn't fully extended yet
-			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+		checkCol = false;
+		speed = ZeroVector;
+		pos = oldPos;
+		if (curLength < length) {
+			// if the laser wasn't fully extended yet,
+			// remember how long until it would have been
+			// fully extended
+			stayTime = int(1 + (length - curLength) / speedf);
+		}
 	}
 
 	//CSimpleParticleSystem *ps = SAFE_NEW CSimpleParticleSystem();

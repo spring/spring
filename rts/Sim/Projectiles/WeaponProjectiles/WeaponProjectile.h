@@ -16,7 +16,8 @@ public:
 	CWeaponProjectile();
 	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner,
 			CUnit* target, const float3 &targetPos, const WeaponDef *weaponDef,
-			CWeaponProjectile* interceptTarget, bool synced, int ttl = 1);
+			CWeaponProjectile* interceptTarget, bool synced, int ttl = 1,
+			std::string cegTag = "");
 	virtual ~CWeaponProjectile();
 
 	virtual void Collision();
@@ -34,7 +35,10 @@ public:
 	std::string weaponDefName;
 	CUnit *target;
 	float3 targetPos;
-	//DamageArray damages;
+
+	CCustomExplosionGenerator ceg;
+	std::string cegTag;
+
 protected:
 	float3 startpos;
 	int ttl;

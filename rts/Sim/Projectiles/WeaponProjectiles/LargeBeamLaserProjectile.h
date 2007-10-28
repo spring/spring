@@ -8,7 +8,8 @@ class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLargeBeamLaserProjectile);
 public:
-	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef);
+	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2,
+		CUnit* owner, const WeaponDef* weaponDef, std::string cegTag = "");
 	~CLargeBeamLaserProjectile(void);
 
 	float3 startPos;

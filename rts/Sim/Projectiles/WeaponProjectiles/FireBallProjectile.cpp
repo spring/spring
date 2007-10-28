@@ -24,12 +24,18 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_RESERVED(8)
 	));
 
-CFireBallProjectile::CFireBallProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef)
-	: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true)
+CFireBallProjectile::CFireBallProjectile(const float3& pos, const float3& speed,
+		CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef,
+		std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  1, cegTag)
 {
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
 		drawRadius=weaponDef->size;
+	}
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
 	}
 }
 
@@ -78,39 +84,40 @@ void CFireBallProjectile::Draw()
 
 void CFireBallProjectile::Update()
 {
-	if(checkCol)
-	{
-		pos+=speed;
+	if (checkCol) {
+		pos += speed;
 
-		if(weaponDef->gravityAffected)
-			speed.y+=gs->gravity;
+		if (weaponDef->gravityAffected)
+			speed.y += gs->gravity;
 
-		//g�ra om till ttl sedan kanske
-		if(weaponDef->noExplode)
-		{
-			if(TraveledRange())
-				checkCol=false;
+		// g�ra om till ttl sedan kanske
+		if (weaponDef->noExplode) {
+			if (TraveledRange())
+				checkCol = false;
 		}
 
 		EmitSpark();
 	}
-	else
-	{
-		if(sparks.size()==0)
+	else {
+		if (sparks.size() == 0)
 			deleteMe = true;
 	}
 
-	for(unsigned int i=0; i<sparks.size(); i++)
-	{
+	for (unsigned int i = 0; i < sparks.size(); i++) {
 		sparks[i].ttl--;
-		if(sparks[i].ttl==0){
+		if (sparks[i].ttl == 0) {
 			sparks.pop_back();
 			break;
 		}
-		if(checkCol)
+		if (checkCol)
 			sparks[i].pos += sparks[i].speed;
 		sparks[i].speed *= 0.95f;
 	}
+
+	if (cegTag.size() > 0) {
+		ceg.Explosion(pos, 0.0f, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed.Normalize());
+	}
+
 	UpdateGroundBounce();
 }
 
