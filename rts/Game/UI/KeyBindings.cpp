@@ -189,7 +189,7 @@ defaultBindings[] = {
 	{ "Any+f7",  "dynamicSky"     },
 	{ "Any+f8",  "savegame"       },
 	{ "Any+f9",  "showhealthbars" },
-	{ "Any+f10", "createvideo"    },
+	{ "Ctrl+f10","createvideo"    },
 	{ "Any+f11", "screenshot"     },
 	{ "Any+f12", "screenshot"     },
 
