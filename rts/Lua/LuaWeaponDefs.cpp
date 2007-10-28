@@ -332,6 +332,7 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "color2B",     v.color2.z);
 	HSTR_PUSH_BOOL  (L, "smokeTrail",  v.smokeTrail);
 	HSTR_PUSH_BOOL  (L, "beamWeapon",  v.beamweapon);
+	HSTR_PUSH_BOOL	(L, "hardStop",    v.hardStop);
 	HSTR_PUSH_NUMBER(L, "tileLength",  v.tilelength);
 	HSTR_PUSH_NUMBER(L, "scrollSpeed", v.scrollspeed);
 	HSTR_PUSH_NUMBER(L, "pulseSpeed",  v.pulseSpeed);

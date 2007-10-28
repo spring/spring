@@ -148,6 +148,7 @@ struct WeaponDef
 
 		bool smokeTrail;
 		bool beamweapon;
+		bool hardStop;	//whether the shot should fade out or stop and contract at max range
 
 		AtlasedTexture *texture1;
 		AtlasedTexture *texture2;
