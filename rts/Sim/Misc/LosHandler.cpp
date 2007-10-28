@@ -194,6 +194,10 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 
 void CLosHandler::LosAdd(LosInstance* instance)
 {
+	assert(instance);
+	assert(instance->allyteam < gs->activeAllyTeams);
+	assert(instance->allyteam >= 0);
+
 	int allyteam=instance->allyteam;
 	int mapSquare=instance->baseSquare;
 
