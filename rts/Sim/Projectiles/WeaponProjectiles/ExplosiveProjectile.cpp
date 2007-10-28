@@ -65,7 +65,7 @@ void CExplosiveProjectile::Update()
 
 	if (!--ttl) {
 		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed.Normalize());
+			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed);
 		}
 		Collision();
 	}

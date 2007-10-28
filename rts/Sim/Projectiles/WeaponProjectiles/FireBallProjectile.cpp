@@ -115,7 +115,7 @@ void CFireBallProjectile::Update()
 	}
 
 	if (cegTag.size() > 0) {
-		ceg.Explosion(pos, 0.0f, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed.Normalize());
+		ceg.Explosion(pos, 0.0f, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed);
 	}
 
 	UpdateGroundBounce();

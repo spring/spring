@@ -73,7 +73,7 @@ void CFlameProjectile::Update(void)
 	drawRadius = radius * weaponDef->collisionSize;
 
 	curTime += invttl;
-	if (curTime>physLife)
+	if (curTime > physLife)
 		checkCol = false;
 	if (curTime > 1) {
 		curTime = 1;
@@ -81,7 +81,7 @@ void CFlameProjectile::Update(void)
 	}
 
 	if (cegTag.size() > 0) {
-		ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed.Normalize());
+		ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed);
 	}
 }
 
