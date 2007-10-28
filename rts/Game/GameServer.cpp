@@ -16,7 +16,6 @@
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Sync/Syncify.h"
-#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
@@ -27,8 +26,6 @@
 #define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
 
 CGameServer* gameServer=0;
-
-extern bool globalQuit;
 
 CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
 {
@@ -95,7 +92,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	int autohostport = configHandler.GetInt("Autohost", 0);
 	if (autohostport > 0)
 	{
-		logOutput.Print("Connecting to autohost on port %i", autohostport);
+		SendSystemMsg("Connecting to autohost on port %i", autohostport);
 		hostif = new AutohostInterface(port+10, autohostport);
 		hostif->SendStart();
 	}
@@ -358,7 +355,7 @@ void CGameServer::ServerReadNet()
 		}
 		else
 		{
-			logOutput.Print("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], ret);
+			SendSystemMsg("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], ret);
 			serverNet->RejectIncomingConnection();
 		}
 	}

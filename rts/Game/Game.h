@@ -5,7 +5,6 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-//#include <winsock2.h>
 #include <time.h>
 #include <string>
 #include <deque>

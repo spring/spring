@@ -7,7 +7,7 @@ class CDemoRecorder;
 
 /**
 @brief Even higher level network code layer
-@TODO remove this since its mostly specific to other classes, not to network
+@todo remove this since its mostly specific to other classes, not to network
 The top of the networking stack.
 */
 class CNetProtocol : public CBaseNetProtocol {
