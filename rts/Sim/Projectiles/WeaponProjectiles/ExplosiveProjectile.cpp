@@ -28,8 +28,8 @@ CR_REG_METADATA(CExplosiveProjectile, (
 
 CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 		const float3& speed, CUnit* owner, const WeaponDef *weaponDef, int ttl,
-		float areaOfEffect, float gravity)
-: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true, ttl),
+		float areaOfEffect, float gravity, std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
 	areaOfEffect(areaOfEffect),
 	curTime(0),
 	gravity(gravity)
@@ -46,6 +46,11 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
+
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CExplosiveProjectile::~CExplosiveProjectile()
@@ -55,23 +60,24 @@ CExplosiveProjectile::~CExplosiveProjectile()
 
 void CExplosiveProjectile::Update()
 {
-	pos+=speed;
-	speed.y+=gravity;
+	pos += speed;
+	speed.y += gravity;
 
-	if(!--ttl)
-	{
+	if (!--ttl) {
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed.Normalize());
+		}
 		Collision();
 	}
 
-	if(weaponDef->noExplode)
-	{
-		if(TraveledRange())
+	if (weaponDef->noExplode) {
+		if (TraveledRange())
 			CProjectile::Collision();
 	}
-	curTime+=invttl;
-	if(curTime>1)
-	{
-		curTime=1;
+
+	curTime += invttl;
+	if (curTime > 1) {
+		curTime = 1;
 	}
 	UpdateGroundBounce();
 }

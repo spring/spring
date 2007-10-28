@@ -49,9 +49,10 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner, float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target, const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance)
-: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef,
-		interceptTarget, true, 200),
+CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
+		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
+		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200, cegTag),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
 	dir(speed),
@@ -101,6 +102,9 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CStarburstProjectile::~CStarburstProjectile(void)
@@ -144,95 +148,105 @@ void CStarburstProjectile::Update(void)
 	ttl--;
 	uptime--;
 	missileAge++;
-	if(target && weaponDef->tracks && owner){
-		targetPos=helper->GetUnitErrorPos(target,owner->allyteam);
+	if (target && weaponDef->tracks && owner) {
+		targetPos = helper->GetUnitErrorPos(target, owner->allyteam);
 	}
-	if(interceptTarget){
-		targetPos=interceptTarget->pos;
-		if(targetPos.distance(pos)<areaOfEffect*2){
+	if (interceptTarget) {
+		targetPos = interceptTarget->pos;
+		if (targetPos.distance(pos) < areaOfEffect * 2) {
 			interceptTarget->Collision();
 			Collision();
 		}
 	}
-	if(uptime>0){
-		if(curSpeed<maxSpeed)
-			curSpeed+=weaponDef->weaponacceleration;
-		speed=dir*curSpeed;
-	} else if(doturn && ttl>0 && distanceToTravel>0) {
+	if (uptime > 0) {
+		if (curSpeed < maxSpeed)
+			curSpeed += weaponDef->weaponacceleration;
+		speed = dir * curSpeed;
+	} else if (doturn && ttl > 0 && distanceToTravel > 0) {
 		float3 dif(targetPos-pos);
 		dif.Normalize();
-		if(dif.dot(dir)>0.99f){
-			dir=dif;
-			doturn=false;
+		if (dif.dot(dir) > 0.99f) {
+			dir = dif;
+			doturn = false;
 		} else {
-			dif=dif-dir;
-			dif-=dir*(dif.dot(dir));
+			dif = dif - dir;
+			dif -= dir * (dif.dot(dir));
 			dif.Normalize();
 			if (weaponDef->turnrate != 0) {
-				dir+=dif*weaponDef->turnrate;
+				dir += dif * weaponDef->turnrate;
 			}
 			else {
-				dir+=dif*0.06;
+				dir += dif * 0.06;
 			}
 			dir.Normalize();
 		}
-		speed=dir*curSpeed;
+		speed = dir * curSpeed;
 		if (distanceToTravel != MAX_WORLD_SIZE)
-			distanceToTravel-=speed.Length2D();
-	} else if(ttl>0 && distanceToTravel>0) {
-		if(curSpeed<maxSpeed)
-			curSpeed+=weaponDef->weaponacceleration;
-		float3 dif(targetPos-pos);
+			distanceToTravel -= speed.Length2D();
+	} else if (ttl > 0 && distanceToTravel > 0) {
+		if (curSpeed < maxSpeed)
+			curSpeed += weaponDef->weaponacceleration;
+		float3 dif(targetPos - pos);
 		dif.Normalize();
-		if(dif.dot(dir)>maxGoodDif){
-			dir=dif;
+		if (dif.dot(dir) > maxGoodDif) {
+			dir = dif;
 		} else {
-			dif=dif-dir;
-			dif-=dir*(dif.dot(dir));
+			dif = dif - dir;
+			dif -= dir * (dif.dot(dir));
 			dif.Normalize();
-			dir+=dif*tracking;
+			dir += dif * tracking;
 			dir.Normalize();
 		}
-		speed=dir*curSpeed;
+		speed = dir * curSpeed;
 		if (distanceToTravel != MAX_WORLD_SIZE)
-			distanceToTravel-=speed.Length2D();
+			distanceToTravel -= speed.Length2D();
 	} else {
-		dir.y+=gs->gravity;
+		dir.y += gs->gravity;
 		dir.Normalize();
-		curSpeed+=-gs->gravity;
-		speed=dir*curSpeed;
+		curSpeed += -gs->gravity;
+		speed = dir * curSpeed;
 	}
-	pos+=speed;
+
+	pos += speed;
+
+	if (ttl > 0) {
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, dir);
+		}
+	}
 
 	OldInfo* tempOldInfo=oldInfos[4];
-	for(int a=3;a>=0;--a){
-		oldInfos[a+1]=oldInfos[a];
+	for (int a = 3; a >= 0; --a) {
+		oldInfos[a + 1] = oldInfos[a];
 	}
-	oldInfos[0]=tempOldInfo;
-	oldInfos[0]->pos=pos;
-	oldInfos[0]->dir=dir;
-	oldInfos[0]->speedf=curSpeed;
+	oldInfos[0] = tempOldInfo;
+	oldInfos[0]->pos = pos;
+	oldInfos[0]->dir = dir;
+	oldInfos[0]->speedf = curSpeed;
 	oldInfos[0]->ageMods.clear();
 
 	age++;
 	numParts++;
-	if(weaponDef->visuals.smokeTrail && !(age&7)){
-		if(curCallback)
-			curCallback->drawCallbacker=0;
-		curCallback=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner,age==8,false,7,Smoke_Time,0.7f,drawTrail,this,weaponDef->visuals.texture2);
-		oldSmoke=pos;
-		oldSmokeDir=dir;
-		numParts=0;
-		useAirLos=curCallback->useAirLos;
-		if(!drawTrail){
+
+	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
+		if (curCallback)
+			curCallback->drawCallbacker = 0;
+		curCallback = SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner, age == 8,
+			false, 7, Smoke_Time, 0.7f, drawTrail, this, weaponDef->visuals.texture2);
+		oldSmoke = pos;
+		oldSmokeDir = dir;
+		numParts = 0;
+		useAirLos = curCallback->useAirLos;
+		if (!drawTrail) {
 			ENTER_MIXED;
-			float3 camDir=(pos-camera->pos).Normalize();
-			if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 > 300)
-				drawTrail=true;
+			float3 camDir = (pos - camera->pos).Normalize();
+			if (camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000 > 300)
+				drawTrail = true;
 			ENTER_SYNCED;
 		}
 	}
-	*numCallback=0;
+
+	*numCallback = 0;
 }
 
 void CStarburstProjectile::Draw(void)

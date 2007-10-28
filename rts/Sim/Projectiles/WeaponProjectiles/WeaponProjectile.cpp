@@ -35,27 +35,30 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(colorTeam),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
+	CR_MEMBER(ceg),
+	CR_MEMBER(cegTag),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 	));
 
 CWeaponProjectile::CWeaponProjectile()
 {
-	targeted=false;				//if we are a nuke and a anti is on the way
-	weaponDef=0;
-	target=0;
-	ttl=0;
-	colorTeam=0;
-	modelDispList=0;
-	interceptTarget=0;
+	targeted = false;				//if we are a nuke and a anti is on the way
+	weaponDef = 0;
+	target = 0;
+	ttl = 0;
+	colorTeam = 0;
+	modelDispList = 0;
+	interceptTarget = 0;
 	bounces = 0;
 	keepBouncing = true;
+	cegTag = "";
 }
 
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool synced, int ttl) :
+		bool synced, int ttl, std::string cegTag):
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef?weaponDef->name:std::string("")),
@@ -67,7 +70,8 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	colorTeam(0),
 	bounces(0),
 	keepBouncing(true),
-	ttl(ttl)
+	ttl(ttl),
+	cegTag(cegTag)
 {
 	if (owner) {
 		colorTeam = owner->team;

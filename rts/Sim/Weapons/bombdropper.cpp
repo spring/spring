@@ -103,7 +103,7 @@ void CBombDropper::Fire(void)
 			ttl = weaponDef->flighttime;
 		}
 		SAFE_NEW CTorpedoProjectile(weaponPos, speed, owner, areaOfEffect,
-				projectileSpeed, tracking, ttl, targetUnit, weaponDef);
+				projectileSpeed, tracking, ttl, targetUnit, weaponDef, "");
 	} else {
 		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		dif.y=0;
@@ -125,7 +125,7 @@ void CBombDropper::Fire(void)
 		}
 		SAFE_NEW CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
 				weaponDef, 1000, areaOfEffect,
-				weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
+				weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity), "");
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

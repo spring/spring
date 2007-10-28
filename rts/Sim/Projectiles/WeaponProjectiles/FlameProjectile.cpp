@@ -22,19 +22,24 @@ CR_REG_METADATA(CFlameProjectile,(
 	));
 
 
-CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread, CUnit* owner, const WeaponDef* weaponDef, int ttl)
-: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true),
+CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread,
+		CUnit* owner, const WeaponDef* weaponDef, int ttl, std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
 	color(color),
 	color2(color2),
 	intensity(intensity),
 	spread(spread),
 	curTime(0)
 {
-	invttl=1.0f/ttl;
+	invttl = 1.0f / ttl;
 	if (weaponDef) {
 		SetRadius(weaponDef->size*weaponDef->collisionSize);
-		drawRadius=weaponDef->size;
-		physLife = 1.0f/weaponDef->duration;
+		drawRadius = weaponDef->size;
+		physLife = 1.0f / weaponDef->duration;
+	}
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
 	}
 }
 
@@ -59,20 +64,24 @@ void CFlameProjectile::Collision(CUnit* unit)
 
 void CFlameProjectile::Update(void)
 {
-	pos+=speed;
+	pos += speed;
 	UpdateGroundBounce();
-	speed+=spread;
+	speed += spread;
 
-	radius = radius+weaponDef->sizeGrowth;
-	sqRadius = radius*radius;
-	drawRadius = radius*weaponDef->collisionSize;
+	radius = radius + weaponDef->sizeGrowth;
+	sqRadius = radius * radius;
+	drawRadius = radius * weaponDef->collisionSize;
 
-	curTime+=invttl;
-	if(curTime>physLife)
+	curTime += invttl;
+	if (curTime>physLife)
 		checkCol = false;
-	if(curTime>1){
-		curTime=1;
-		deleteMe=true;
+	if (curTime > 1) {
+		curTime = 1;
+		deleteMe = true;
+	}
+
+	if (cegTag.size() > 0) {
+		ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed.Normalize());
 	}
 }
 

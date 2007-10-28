@@ -13,7 +13,9 @@ class CMissileProjectile :
 protected:
 	void UpdateGroundBounce();
 public:
-	CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos);
+	CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect,
+		float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos,
+		std::string cegTag = "");
 	~CMissileProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);

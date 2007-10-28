@@ -25,8 +25,10 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef)
-:	CWeaponProjectile(startPos+(endPos-startPos)*0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false),//CProjectile((startPos+endPos)*0.5f,ZeroVector,owner),
+CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos,
+		const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef,
+		std::string cegTag):
+	CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  1, cegTag),
 	startPos(startPos),
 	endPos(endPos),
 	decay(1.0f)
@@ -76,9 +78,12 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, con
 		decay = weaponDef->visuals.beamdecay;
 	}
 
-	//tilelength = 200;
-	//scrollspeed = 5;
-	//pulseSpeed = 1;
+	// tilelength = 200;
+	// scrollspeed = 5;
+	// pulseSpeed = 1;
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CLargeBeamLaserProjectile::~CLargeBeamLaserProjectile(void)
@@ -93,6 +98,10 @@ void CLargeBeamLaserProjectile::Update(void)
 		for (int i = 0; i < 3; i++) {
 			corecolstart[i] = (unsigned char) (corecolstart[i] * decay);
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
+		}
+
+		if (cegTag.size() > 0) {
+			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 		}
 	}
 	else {

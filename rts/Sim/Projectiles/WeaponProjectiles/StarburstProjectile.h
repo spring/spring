@@ -16,7 +16,8 @@ public:
 	CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 			float3 targetPos,float areaOfEffect, float maxSpeed,float tracking,
 			int uptime, CUnit* target, const WeaponDef* weaponDef,
-			CWeaponProjectile* interceptTarget, float maxdistance);
+			CWeaponProjectile* interceptTarget, float maxdistance,
+			std::string cegTag = "");
 	~CStarburstProjectile(void);
 	void Collision(CUnit* unit);
 	void Collision();

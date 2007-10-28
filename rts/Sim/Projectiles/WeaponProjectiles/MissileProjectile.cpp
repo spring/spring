@@ -50,8 +50,10 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_RESERVED(16)
 	));
 
-CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos)
-: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true, ttl),
+CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner,
+		float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef,
+		float3 targetPos, std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  ttl, cegTag),
 	maxSpeed(maxSpeed),
 	target(target),
 	dir(speed),
@@ -108,6 +110,11 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 		extraHeightTime=(int)(dist/*+pos.distance(targPos+UpVector*dist))*0.5f*//maxSpeed);
 		extraHeightDecay=extraHeight/extraHeightTime;
 	}
+
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CMissileProjectile::~CMissileProjectile(void)
@@ -116,10 +123,10 @@ CMissileProjectile::~CMissileProjectile(void)
 
 void CMissileProjectile::DependentDied(CObject* o)
 {
-	if(o==target)
-		target=0;
-	if(o==decoyTarget)
-		decoyTarget=0;
+	if (o == target)
+		target = 0;
+	if (o == decoyTarget)
+		decoyTarget = 0;
 	CWeaponProjectile::DependentDied(o);
 }
 
@@ -147,26 +154,29 @@ void CMissileProjectile::Collision(CUnit *unit)
 	oldSmoke=pos;
 }
 
+
 void CMissileProjectile::Update(void)
 {
 	ttl--;
-	if(ttl>0){
-		if(curSpeed<maxSpeed)
-			curSpeed+=weaponDef->weaponacceleration;
+	if (ttl > 0) {
+		if (curSpeed < maxSpeed)
+			curSpeed += weaponDef->weaponacceleration;
 
-		float3 targSpeed(0,0,0);
-		if(weaponDef->tracks && (decoyTarget || target)){
-			if(decoyTarget){
-				targPos=decoyTarget->pos;
-				targSpeed=decoyTarget->speed;
+		float3 targSpeed(0, 0, 0);
+
+		if (weaponDef->tracks && (decoyTarget || target)) {
+			if (decoyTarget) {
+				targPos = decoyTarget->pos;
+				targSpeed = decoyTarget->speed;
 			} else {
-				targSpeed=target->speed;
-				if((target->physicalState==CSolidObject::Flying && (target->midPos-pos).SqLength()<150*150) || !owner)
-					targPos=target->midPos;
+				targSpeed = target->speed;
+				if ((target->physicalState == CSolidObject::Flying && (target->midPos-pos).SqLength() < 150 * 150) || !owner)
+					targPos = target->midPos;
 				else
-					targPos=helper->GetUnitErrorPos(target,owner->allyteam);
+					targPos = helper->GetUnitErrorPos(target, owner->allyteam);
 			}
 		}
+
 
 		if (isWobbling) {
 			--wobbleTime;
@@ -190,44 +200,58 @@ void CMissileProjectile::Update(void)
 			pos += danceMove;
 		}
 
+
 		float3 orgTargPos(targPos);
-		float dist=targPos.distance(pos);
-		if(dist==0)
-			dist=0.1f;
-		if(extraHeightTime){
-			extraHeight-=extraHeightDecay;
+		float dist = targPos.distance(pos);
+		if (dist == 0)
+			dist = 0.1f;
+
+
+		if (extraHeightTime) {
+			extraHeight -= extraHeightDecay;
 			--extraHeightTime;
-			targPos.y+=extraHeight;
-			dir.y-=extraHeightDecay/dist;
-			//geometricObjects->AddLine(pos,targPos,3,1,1);
+
+			// forces projectile down when TTL still > 0
+			targPos.y += extraHeight;
+			dir.y -= (extraHeightDecay / dist);
 		}
-		float3 dif(targPos + targSpeed*(dist/maxSpeed)*0.7f - pos);
+
+
+		float3 dif(targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos);
 		dif.Normalize();
-		float3 dif2=dif-dir;
-		float tracking=weaponDef->turnrate;
-		if(dif2.Length()<tracking){
-			dir=dif;
+		float3 dif2 = dif - dir;
+		float tracking = weaponDef->turnrate;
+
+		if (dif2.Length() < tracking) {
+			dir = dif;
 		} else {
-			dif2-=dir*(dif2.dot(dir));
+			dif2 -= (dir * (dif2.dot(dir)));
 			dif2.Normalize();
-			dir+=dif2*tracking;
+			dir += (dif2 * tracking);
 			dir.Normalize();
 		}
 
-		speed=dir*curSpeed;
+		speed = dir * curSpeed;
+		targPos = orgTargPos;
 
-		targPos=orgTargPos;
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, dir);
+		}
 	} else {
-		speed*=0.995f;
-		speed.y+=gs->gravity;
-		dir=speed;
+		// only when TTL <= 0 do projectiles
+		// get influenced by gravity and drag
+		speed *= 0.995f;
+		speed.y += gs->gravity;
+		dir = speed;
 		dir.Normalize();
 	}
-	pos+=speed;
 
+	pos += speed;
 	age++;
 	numParts++;
-	if(weaponDef->visuals.smokeTrail && !(age&7)){
+
+
+	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp=SAFE_NEW CSmokeTrailProjectile(pos,oldSmoke,dir,oldDir,owner,age==8,false,7,Smoke_Time,0.6f,drawTrail,0,weaponDef->visuals.texture2);
 		oldSmoke=pos;
 		oldDir=dir;

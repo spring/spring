@@ -18,8 +18,8 @@ CR_REG_METADATA(CEmgProjectile,(
 
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, const float3& color, float intensity, int ttl,
-		const WeaponDef* weaponDef)
-: CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true, ttl),
+		const WeaponDef* weaponDef, std::string cegTag):
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
 	color(color),
 	intensity(intensity)
 {
@@ -31,6 +31,11 @@ CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 	tracefile << "New emg: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
+
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CEmgProjectile::~CEmgProjectile(void)
@@ -39,14 +44,19 @@ CEmgProjectile::~CEmgProjectile(void)
 
 void CEmgProjectile::Update(void)
 {
-	pos+=speed;
+	pos += speed;
 	ttl--;
 
-	if(ttl<0){
-		intensity-=0.1f;
-		if(intensity<=0){
-			deleteMe=true;
-			intensity=0;
+	if (ttl < 0) {
+		intensity -= 0.1f;
+		if (intensity <= 0){
+			deleteMe = true;
+			intensity = 0;
+		}
+	}
+	else {
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed.Normalize());
 		}
 	}
 	UpdateGroundBounce();
@@ -54,7 +64,6 @@ void CEmgProjectile::Update(void)
 
 void CEmgProjectile::Collision(CUnit* unit)
 {
-//	unit->DoDamage(damages,owner);
 	CWeaponProjectile::Collision(unit);
 }
 

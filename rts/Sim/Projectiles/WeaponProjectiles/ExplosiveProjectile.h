@@ -13,7 +13,8 @@ class CExplosiveProjectile : public CWeaponProjectile
 	CR_DECLARE(CExplosiveProjectile);
 public:
 	CExplosiveProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		const WeaponDef *weaponDef, int ttl=100000, float areaOfEffect=8, float gravity=0);
+		const WeaponDef *weaponDef, int ttl = 100000, float areaOfEffect = 8,
+		float gravity = 0, std::string cegTag = "");
 	virtual ~CExplosiveProjectile();
 	virtual void Update();
 	void Draw(void);

@@ -28,10 +28,9 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos,
 	float startAlpha, float endAlpha, const float3& color, const float3& color2,
 	CUnit* owner, float thickness, float corethickness, float flaresize,
-	const WeaponDef* weaponDef, int ttl, float decay):
+	const WeaponDef* weaponDef, int ttl, float decay, std::string cegTag):
 
-	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0,
-			ZeroVector, weaponDef, 0, false, ttl),
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  ttl, cegTag),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
@@ -67,6 +66,11 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	kocolend[1]=(unsigned char)(color.y*endAlpha);
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;
+
+	cegTag = cegTag;
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CBeamLaserProjectile::~CBeamLaserProjectile(void)
@@ -75,7 +79,8 @@ CBeamLaserProjectile::~CBeamLaserProjectile(void)
 
 void CBeamLaserProjectile::Update(void)
 {
-	if (ttl <= 0) deleteMe=true;
+	if (ttl <= 0)
+		deleteMe = true;
 	else {
 		ttl--;
 		for (int i = 0; i < 3; i++) {
@@ -83,6 +88,10 @@ void CBeamLaserProjectile::Update(void)
 			corecolend[i] = (unsigned char) (corecolend[i] * decay);
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
 			kocolend[i] = (unsigned char) (kocolend[i] * decay);
+		}
+
+		if (cegTag.size() > 0) {
+			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 		}
 	}
 }

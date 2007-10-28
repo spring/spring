@@ -20,8 +20,8 @@ CR_REG_METADATA(CLightingProjectile,(
 
 CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
 		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
-		int ttl,CWeapon* weap)
-:	CWeaponProjectile(pos,ZeroVector, owner, 0, ZeroVector, weaponDef,0, true, ttl), //CProjectile(pos,ZeroVector,owner),
+		int ttl, CWeapon* weap, std::string cegTag):
+	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
 	color(color),
 	endPos(end),
 	weapon(weap)
@@ -44,6 +44,10 @@ CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
 	tracefile << "New lighting: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
+
+	if (cegTag.size() > 0) {
+		ceg.Load(explGenHandler, cegTag);
+	}
 }
 
 CLightingProjectile::~CLightingProjectile(void)
@@ -54,17 +58,21 @@ void CLightingProjectile::Update(void)
 {
 	ttl--;
 
-	if(ttl<0){
-		deleteMe=true;
+	if (ttl <= 0) {
+		deleteMe = true;
+	} else {
+		if (cegTag.size() > 0) {
+			ceg.Explosion(pos + ((endPos - pos) / ttl), 0.0f, displacements[0], 0x0, 0.0f, 0x0, endPos - pos);
+		}
 	}
 
-	if(weapon){
-		pos=weapon->weaponMuzzlePos;
+	if (weapon) {
+		pos = weapon->weaponMuzzlePos;
 	}
-	for(int a=1;a<10;++a)
-		displacements[a]+=(gs->randFloat()-0.5f)*0.3f;
-	for(int a=1;a<10;++a)
-		displacements2[a]+=(gs->randFloat()-0.5f)*0.3f;
+	for (int a = 1; a < 10; ++a) {
+		displacements[a] += (gs->randFloat() - 0.5f) * 0.3f;
+		displacements2[a] += (gs->randFloat() - 0.5f) * 0.3f;
+	}
 }
 
 void CLightingProjectile::Draw(void)
