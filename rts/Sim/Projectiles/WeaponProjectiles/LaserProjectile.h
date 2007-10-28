@@ -27,6 +27,8 @@ public:
 	float speedf;
 	float intensityFalloff;
 	float midtexx;
+	int stayTime;		//number of frames the laser had left to expand if it impacted before reaching full length
+
 
 };
 

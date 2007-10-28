@@ -470,6 +470,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		// CLaserProjectile
 		wd.visuals.texture1 = &ph->laserfallofftex;
 		wd.visuals.texture2 = &ph->laserendtex;
+		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
 	} else if (wd.type == "BeamLaser") {
 		if (wd.largeBeamLaser) {

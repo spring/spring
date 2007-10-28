@@ -19,6 +19,7 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(length),
 	CR_MEMBER(curLength),
 	CR_MEMBER(speedf),
+	CR_MEMBER(stayTime),
 	CR_MEMBER(intensityFalloff),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
@@ -32,6 +33,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	color2(color2),
 	length(length),
 	curLength(0),
+	stayTime(0),
 	intensity(intensity),
 	intensityFalloff(intensity*weaponDef->falloffRate)
 {
@@ -60,22 +62,34 @@ void CLaserProjectile::Update(void)
 		if(curLength>length)
 			curLength=length;
 	} else {	//fading out after hit
-		curLength-=speedf;
+		if (stayTime <= 0)
+			curLength-=speedf;
+		else
+			stayTime--;
 		if(curLength<=0){
 			deleteMe=true;
 			curLength=0;
 		}
 	}
 	ttl--;
-
-	if(ttl<5){
-		intensity-=intensityFalloff*0.2f;
-		if(intensity<=0){
-			deleteMe=true;
-			intensity=0;
+	
+	if(weaponDef->visuals.hardStop) {
+		if(ttl==0 && checkCol){
+			checkCol=false;
+			speed=ZeroVector;
+			if (curLength < length) //if the laser wasn't fully extended yet
+				stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+		}
+	} else {
+		if(ttl<5 && checkCol){
+			intensity-=intensityFalloff*0.2f;
+			if(intensity<=0){
+				deleteMe=true;
+				intensity=0;
+			}
 		}
 	}
-	
+
 	float3 tempSpeed = speed;
 	UpdateGroundBounce();
 	if(tempSpeed != speed){
@@ -94,6 +108,10 @@ void CLaserProjectile::Collision(CUnit* unit)
 		checkCol=false;
 		speed=ZeroVector;
 		pos=oldPos;
+		if (curLength < length) { //if the laser wasn't fully extended yet
+			curLength+=speedf; //was too short for some reason
+			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
+		}
 	}
 }
 
@@ -107,6 +125,8 @@ void CLaserProjectile::Collision(CFeature* feature)
 		checkCol=false;
 		speed=ZeroVector;
 		pos=oldPos;
+		if (curLength < length) //if the laser wasn't fully extended yet
+			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
 	}
 }
 
@@ -122,6 +142,8 @@ void CLaserProjectile::Collision()
 		checkCol=false;
 		speed=ZeroVector;
 		pos=oldPos;
+		if (curLength < length) //if the laser wasn't fully extended yet
+			stayTime = 1 + (length - curLength) / speedf; //remember how long until it would have been fully extended
 	}
 
 	//CSimpleParticleSystem *ps = SAFE_NEW CSimpleParticleSystem();
@@ -170,6 +192,16 @@ void CLaserProjectile::Draw(void)
 	if(camDist<weaponDef->lodDistance){
 		float3 pos1=pos+speed*gu->timeOffset;
 		float3 pos2=pos1-dir*curLength;
+		float texStartOffset;
+		float texEndOffset;
+		if (checkCol) { //expanding or contracting?
+			texStartOffset=0;
+			texEndOffset=(1.0f - curLength/length)*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+		}
+		else {
+			texStartOffset=(-1.0f + curLength/length + ((float)stayTime * speedf/length))*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset= ((float)stayTime * speedf/length)*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+		}
 
 		va->AddVertexTC(pos1-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    col);
 		va->AddVertexTC(pos1+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,col);
@@ -180,14 +212,14 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col2);
 		va->AddVertexTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col2);
 
-		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		col);
-		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			col);
-		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			col);
-		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			col);
-		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	col2);
-		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	col2);
-		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		col2);
-		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		col2);
+		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,		col);
+		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,			col);
+		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,			col);
+		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,			col);
+		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,	col2);
+		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,	col2);
+		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,		col2);
+		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,		col2);
 
 		va->AddVertexTC(pos2-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    col);
 		va->AddVertexTC(pos2+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,col);
@@ -200,15 +232,25 @@ void CLaserProjectile::Draw(void)
 	} else {
 		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5f);
 		float3 pos2=pos1-dir*(curLength+size);
+		float texStartOffset;
+		float texEndOffset;
+		if (checkCol) { //expanding or contracting?
+			texStartOffset=0;
+			texEndOffset=(1.0f - curLength/length)*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+		}
+		else {
+			texStartOffset=(-1.0f + curLength/length + ((float)stayTime * speedf/length))*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+			texEndOffset= ((float)stayTime * speedf/length)*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
+		}
 
-		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		col);
-		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			col);
-		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			col);
-		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			col);
-		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	col2);
-		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	col2);
-		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		col2);
-		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		col2);
+		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,		col);
+		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,			col);
+		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,			col);
+		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,			col);
+		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,	col2);
+		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,	col2);
+		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,		col2);
+		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,		col2);
 	}
 }
 
