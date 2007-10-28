@@ -5320,6 +5320,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Lua\LuaPathFinder.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaPathFinder.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lua\LuaRules.cpp"
 				>
 			</File>
