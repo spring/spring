@@ -7,7 +7,7 @@
 
 #include "creg/creg.h"
 
-//Class for combining multiple bitmaps into one large singel bitmap.
+/** @brief Class for combining multiple bitmaps into one large single bitmap. */
 struct AtlasedTexture
 {
 public:
@@ -20,7 +20,9 @@ public:
 	int ixstart,iystart;
 };
 
-struct GroundFXTexture : public AtlasedTexture //same as AtlasedTexture but diferent name so the explosiongenerator can diferentiate between diferent altases
+/** @brief Same as AtlasedTexture but different name so the explosiongenerator
+can differentiate between different atlases. */
+struct GroundFXTexture : public AtlasedTexture
 {
 public:
 	CR_DECLARE_STRUCT(AtlasedTexture);
@@ -30,7 +32,7 @@ class CTextureAtlas
 {
 public:
 
-	// set to true to write finalized texture atlas to disk
+	/// set to true to write finalized texture atlas to disk
 	static bool debug;
 
 	unsigned int gltex;
@@ -46,8 +48,6 @@ public:
 
 	//Add a texture from a file, returns -1 if failed.
 	int AddTexFromFile(std::string name, std::string file);
-
-	void Update(std::string name, void  *data);
 
 	//Creates the atlas containing all the specified textures.
 	//return true if suceeded, false if all textures didn't fit into the specified maxsize.

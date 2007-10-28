@@ -16,15 +16,6 @@
   ; azerty/qwerty for non-chat input.
   File "..\game\SDL.dll"
 
-  ; ILU.dll and python25.dll are new since 0.75b1
-  File "..\mingwlibs\dll\ILU.dll"
-  File "..\mingwlibs\dll\python25.dll"
-
-  ; zlibwapi.dll and MSVCP71.dll is removed since 0.75b1
-  ; unsafe.... hotfixing them in again
-  ; Delete "$INSTDIR\zlibwapi.dll"
-  ; Delete "$INSTDIR\MSVCP71.dll"
-
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
   File "..\game\selectkeys.txt"
@@ -40,6 +31,8 @@
   File "..\game\MSVCP71.dll"
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\glew32.dll"
+  File "..\mingwlibs\dll\ILU.dll"
+  File "..\mingwlibs\dll\python25.dll"
   File "..\mingwlibs\dll\zlib1.dll"
   File "..\game\zlibwapi.dll"
 
@@ -76,11 +69,11 @@
   SetOutPath "$INSTDIR\AI\Bot-libs"
   File "..\game\AI\Bot-libs\TestGlobalAI.dll"
 
-!ifndef SP_UPDATE
-
 ; Default content
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
+
+!ifndef SP_UPDATE
 
 !ifndef NO_TOTALA
   File "..\game\base\tatextures_v062.sdz"
@@ -88,9 +81,13 @@
   File "..\game\base\tacontent_v2.sdz"
 !endif
 
+!endif ; SP_UPDATE
+
   File "..\game\base\springcontent.sdz"
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
+
+!ifndef SP_UPDATE
 
 ; Default mod
 !ifndef NO_TOTALA
@@ -98,11 +95,11 @@
   File "..\game\mods\XTAPE.sdz"
 !endif
 
-!endif ; SP_UPDATE
-
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC
+
+!endif ; SP_UPDATE
 
 !else
 
@@ -136,12 +133,13 @@
 
   ; Fonts
   Delete "$INSTDIR\fonts\Luxi.ttf"
+  RmDir "$INSTDIR\fonts"
 
   ; Shaders
   Delete "$INSTDIR\shaders\*.fp"
   Delete "$INSTDIR\shaders\*.vp"
   Delete "$INSTDIR\shaders\*.glsl"
-  RMDir "$INSTDIR\shaders"
+  RmDir "$INSTDIR\shaders"
   
   ; AI Bot dlls
   Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
