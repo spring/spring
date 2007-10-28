@@ -236,6 +236,7 @@ buffertext <text>  -- inserts the text into the console history
 
 techlevels
 
+grounddecals [0|1]
 maxparticles <number>
 
 aiselect [ai_name]  -- ai_name required if used as a slash command

@@ -153,7 +153,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
       iconList[pos] = cmdSlot
       pos = pos + 1
 
-      local cmdTex = cmd.texture
+      local cmdTex = cmd.texture or "" -- FIXME 0.75b2 compatibility
       if (#cmdTex > 0) then
         if (cmdTex:byte(1) ~= 38) then  --  '&' == 38
           reTexCmds[cmdSlot] = FrameScale..cmdTex..'&'..FrameTex
