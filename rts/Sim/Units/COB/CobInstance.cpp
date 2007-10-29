@@ -13,6 +13,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -99,6 +100,7 @@
 #define TRANSPORT_ID             94 // get
 #define SHIELD_POWER             95 // set or get
 #define STEALTH                  96 // set or get
+#define CRASHING                 97 // set or get, returns whether aircraft isCrashing state
 #define COB_ID                  100 // get
 #define ALPHA_THRESHOLD         103 // set or get
 
@@ -1122,6 +1124,8 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case STEALTH: {
 		return unit->stealth ? 1 : 0;
 	}
+	case CRASHING:
+		return !!unit->crashing;
 	case ALPHA_THRESHOLD: {
 		return int(unit->alphaThreshold * 255);
 	}
@@ -1337,6 +1341,17 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case STEALTH: {
 			unit->stealth = !!param;
+			break;
+		}
+		case CRASHING: {
+			if(dynamic_cast<CAirMoveType*>(unit->moveType)){
+				if(!!param){
+					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_CRASHING);
+				} else {
+					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
+					unit->crashing=false;
+				}
+			}
 			break;
 		}
 		case ALPHA_THRESHOLD: {
