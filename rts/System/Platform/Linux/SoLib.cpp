@@ -28,7 +28,8 @@ SoLib::SoLib(const char *filename)
  */
 SoLib::~SoLib()
 {
-	dlclose(so);
+	if (so != NULL)
+		dlclose(so);
 }
 
 /**
@@ -36,8 +37,11 @@ SoLib::~SoLib()
  */
 void *SoLib::FindAddress(const char *symbol)
 {
-	void* p = dlsym(so,symbol);
-	if (p == NULL)
-		logOutput.Print("%s:%d: SoLib::FindAddress: %s", __FILE__, __LINE__, dlerror());
-	return p;
+	if (so != NULL) {
+		void* p = dlsym(so, symbol);
+		if (p == NULL)
+			logOutput.Print("%s:%d: SoLib::FindAddress: %s", __FILE__, __LINE__, dlerror());
+		return p;
+	}
+	return NULL;
 }
