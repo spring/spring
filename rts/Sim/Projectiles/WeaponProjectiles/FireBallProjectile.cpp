@@ -25,9 +25,8 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	));
 
 CFireBallProjectile::CFireBallProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef,
-		std::string cegTag):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  1, cegTag)
+		CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  1)
 {
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);

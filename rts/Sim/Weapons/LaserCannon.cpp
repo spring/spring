@@ -100,8 +100,7 @@ void CLaserCannon::Fire(void)
 		weaponDef->duration * weaponDef->maxvelocity,
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
-		(int) ((weaponDef->range - fpsSub * 4) / weaponDef->projectilespeed) - fpsSub,
-		weaponDef->cegTag);
+		(int) ((weaponDef->range - fpsSub * 4) / weaponDef->projectilespeed) - fpsSub);
 
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);

@@ -20,8 +20,8 @@ CR_REG_METADATA(CLightingProjectile,(
 
 CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
 		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
-		int ttl, CWeapon* weap, std::string cegTag):
-	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
+		int ttl, CWeapon* weap):
+	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl),
 	color(color),
 	endPos(end),
 	weapon(weap)

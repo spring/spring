@@ -33,8 +33,7 @@ void CFlameThrower::Fire(void)
 	spread-=dir*0.001f;
 
 	SAFE_NEW CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
-		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration),
-		weaponDef->cegTag);
+		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration));
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
