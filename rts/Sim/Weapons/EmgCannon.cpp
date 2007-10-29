@@ -97,7 +97,7 @@ void CEmgCannon::Fire(void)
 
 	SAFE_NEW CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
-		weaponDef, weaponDef->cegTag);
+		weaponDef);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);

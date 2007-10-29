@@ -18,8 +18,8 @@ CR_REG_METADATA(CEmgProjectile,(
 
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, const float3& color, float intensity, int ttl,
-		const WeaponDef* weaponDef, std::string cegTag):
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl, cegTag),
+		const WeaponDef* weaponDef):
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl),
 	color(color),
 	intensity(intensity)
 {

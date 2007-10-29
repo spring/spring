@@ -233,13 +233,12 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 		if (weaponDef->largeBeamLaser)
 			SAFE_NEW CLargeBeamLaserProjectile(curPos, hitPos, color,
-			weaponDef->visuals.color2, owner, weaponDef, weaponDef->cegTag);
+			weaponDef->visuals.color2, owner, weaponDef);
 		else
 			SAFE_NEW CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha,
 				color, weaponDef->visuals.color2, owner, weaponDef->thickness,
 				weaponDef->corethickness, weaponDef->laserflaresize, weaponDef,
-				weaponDef->visuals.beamttl, weaponDef->visuals.beamdecay,
-				weaponDef->cegTag);
+				weaponDef->visuals.beamttl, weaponDef->visuals.beamdecay);
 
 		curPos = hitPos;
 		curLength += length;

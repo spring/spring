@@ -73,7 +73,7 @@ void CMissileLauncher::Fire(void)
 	SAFE_NEW CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
 			projectileSpeed,
 			weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
-			targetUnit, weaponDef, targetPos, weaponDef->cegTag);
+			targetUnit, weaponDef, targetPos);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);

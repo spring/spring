@@ -28,9 +28,9 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos,
 	float startAlpha, float endAlpha, const float3& color, const float3& color2,
 	CUnit* owner, float thickness, float corethickness, float flaresize,
-	const WeaponDef* weaponDef, int ttl, float decay, std::string cegTag):
+	const WeaponDef* weaponDef, int ttl, float decay):
 
-	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  ttl, cegTag),
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  ttl),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),

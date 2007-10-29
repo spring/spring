@@ -58,10 +58,10 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool synced, int ttl, std::string cegTag):
+		bool synced, int ttl):
 	CProjectile(pos,speed,owner, synced),
 	weaponDef(weaponDef),
-	weaponDefName(weaponDef?weaponDef->name:std::string("")),
+	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
 	targetPos(targetPos),
 	startpos(pos),
@@ -71,7 +71,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	bounces(0),
 	keepBouncing(true),
 	ttl(ttl),
-	cegTag(cegTag)
+	cegTag(weaponDef? weaponDef->cegTag: std::string(""))
 {
 	if (owner) {
 		colorTeam = owner->team;
