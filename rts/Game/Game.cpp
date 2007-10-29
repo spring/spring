@@ -2020,9 +2020,13 @@ bool CGame::Draw()
 	luaCallIns.Update();
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
-		logOutput << "5 errors deep in LuaUI, disabling...\n";
+		// FIXME: trepan -- I want error reports, make this verbose and annoying
+		for (int annoy = 0; annoy < 32; annoy++) {
+			logOutput << "5 errors deep in LuaUI, disabling...\n";
+		}
 		guihandler->RunLayoutCommand("disable");
 		logOutput << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+		logOutput << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
 	if (!gu->active) {
