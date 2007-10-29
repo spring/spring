@@ -35,15 +35,14 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	lastPlayerInfo = 0;
 	serverframenum=0;
 	timeLeft=0;
-	gameEndDetected=false;
 	gameEndTime=0;
 	quitServer=false;
 #ifdef DEBUG
 	gameClientUpdated=false;
 #endif
-	maxTimeLeft=2;
 	play = 0;
 	IsPaused = false;
+	sentGameOverMsg = false;
 
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
@@ -117,10 +116,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
-#ifdef SYNCDEBUG
-	fakeDesync = false;
-#endif
-
 #ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word
 	// maybe the threading, or something in CNet::InitServer() ??
@@ -143,6 +138,17 @@ CGameServer::~CGameServer()
 		hostif->SendQuit();
 		delete hostif;
 	}
+}
+
+void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
+{
+	lastTick = newlastTick;
+	serverframenum = newserverframenum;
+}
+
+void CGameServer::SkipTo(int targetframe)
+{
+	serverframenum = targetframe;
 }
 
 std::string CGameServer::GetPlayerNames(const std::vector<int>& indices)
@@ -720,14 +726,14 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::CheckForGameEnd()
 {
-	if(gameEndDetected){
-		if(gameEndTime>2 && gameEndTime<500){
+	if(gameEndTime > 0){
+		if(gameEndTime < SDL_GetTicks()-2000 && !sentGameOverMsg){
 			serverNet->SendGameOver();
-			gameEndTime=600;
 			if (hostif)
 			{
 				hostif->SendGameOver();
 			}
+			sentGameOverMsg = true;
 		}
 		return;
 	}
@@ -745,8 +751,7 @@ void CGameServer::CheckForGameEnd()
 			++numActiveAllyTeams;
 
 	if (numActiveAllyTeams <= 1) {
-		gameEndDetected=true;
-		gameEndTime=0;
+		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}
 }
@@ -757,27 +762,18 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 	// Send out new frame messages.
 	unsigned currentTick = SDL_GetTicks();
-	float timeElapsed=((float)(currentTick - lastTick))/1000.f;
-	if (timeElapsed>0.2) {
-		timeElapsed=0.2;
+	unsigned timeElapsed = currentTick - lastTick;
+	if (timeElapsed>200) {
+		timeElapsed=200;
 	}
-	if(gameEndDetected)
-		gameEndTime+=timeElapsed;
-	// logOutput.Print("float value is %f",timeElapsed);
 
 #ifdef DEBUG
 	if(gameClientUpdated){
 		gameClientUpdated=false;
-		maxTimeLeft=2;
 	}
-#else
-	maxTimeLeft=2;
 #endif
-	if(timeElapsed>maxTimeLeft)
-		timeElapsed=maxTimeLeft;
-	maxTimeLeft-=timeElapsed;
 
-	timeLeft+=GAME_SPEED*internalSpeed*timeElapsed;
+	timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
 	lastTick=currentTick;
 
 	while((timeLeft>0) && !IsPaused)
@@ -886,7 +882,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	else if ((msg.find(".nopause") == 0) && (player == 0)) {
 		SetBoolArg(gamePausable, msg, ".nopause");
 	}
-	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
+	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor > maxUserSpeed) {
 			serverNet->SendUserSpeed(player, maxUserSpeed);
@@ -897,7 +893,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".setminspeed") == 0) && (player == 0)  /*&& !net->localDemoPlayback*/) {
+	else if ((msg.find(".setminspeed") == 0) && (player == 0)) {
 		minUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor < minUserSpeed) {
 			serverNet->SendUserSpeed(player, minUserSpeed);
