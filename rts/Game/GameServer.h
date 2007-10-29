@@ -25,6 +25,19 @@ public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();
 	
+	/**
+	@brief Set frame after loading
+	WARNING! No checks are done, so be carefull
+	*/
+	void PostLoad(unsigned lastTick, int serverframenum);
+	
+	/**
+	@brief skip frames
+	@todo skipping is buggy and could need some improvements
+	Currently only sets serverframenum
+	*/
+	void SkipTo(int targetframe);
+	
 	void CreateNewFrame(bool fromServerThread=false);
 
 	bool WaitsOnCon() const;
@@ -33,25 +46,10 @@ public:
 	
 	void SetGamePausable(const bool arg);
 
-	unsigned lastTick;
-	float timeLeft;
-
-	int serverframenum;
 	void StartGame();
-
-	bool gameEndDetected;
-	float gameEndTime;					//how long has gone by since the game end was detected
-
-	float lastPlayerInfo;
-
-	bool quitServer;
+	
 #ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
-#endif
-	float maxTimeLeft;
-	void SendSystemMsg(const char* fmt,...);
-#ifdef SYNCDEBUG
-	volatile bool fakeDesync; // set in client on .fakedesync, read and reset in server
 #endif
 	
 private:
@@ -62,6 +60,8 @@ private:
 	@param player The playernumber which sent the message
 	*/
 	void GotChatMessage(const std::string& msg, unsigned player);
+	
+	void SendSystemMsg(const char* fmt,...);
 	
 	/**
 	@brief kick the specified player from the battle
@@ -87,6 +87,16 @@ private:
 	std::string GetPlayerNames(const std::vector<int>& indices);
 	
 	/////////////////// game status variables ///////////////////
+	
+	bool quitServer;
+	int serverframenum;
+	
+	unsigned gameEndTime;	//Tick when game end was detected
+	bool sentGameOverMsg;
+	unsigned lastTick;
+	float timeLeft;
+	float lastPlayerInfo;
+	
 	bool IsPaused;
 	float userSpeedFactor;
 	float internalSpeed;

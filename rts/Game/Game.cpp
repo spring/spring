@@ -554,13 +554,7 @@ CGame::~CGame()
 void CGame::PostLoad()
 {
 	if (gameServer) {
-		gameServer -> lastTick        = lastTick      ;
-		gameServer -> serverframenum  = gs->frameNum  ;
-		gameServer -> gameEndDetected = gameOver      ;
-		gameServer -> gameEndTime     = 0             ;
-//		gameServer -> syncErrorFrame  = ;
-//		gameServer ->       =       ;
-//		gameServer ->       =       ;
+		gameServer->PostLoad(lastTick, gs->frameNum);
 	}
 }
 
@@ -4251,7 +4245,7 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 			} else {
 				SimFrame();
 				if (gameServer) {
-					gameServer->serverframenum = gs->frameNum;
+					gameServer->SkipTo(gs->frameNum);
 				}
 			}
 			// draw something so that users don't file bug reports
