@@ -213,35 +213,40 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	defsParser = NULL;
 
 	time(&starttime);
-	lastTick=clock();
+	lastTick = clock();
 
-	oldframenum=0;
-	if(server)
-		gs->players[0]->readyToStart=true;
-	gs->players[0]->active=true;
+	oldframenum = 0;
 
-	for(int a=0;a<8;++a)
-		camMove[a]=false;
-	for(int a=0;a<4;++a)
-		camRot[a]=false;
+	if (server) {
+		gs->players[0]->readyToStart = true;
+	}
+	gs->players[0]->active = true;
 
-	fps=0;
-	thisFps=0;
-	totalGameTime=0;
+	for(int a = 0; a < 8; ++a) {
+		camMove[a] = false;
+	}
+	for(int a = 0; a < 4; ++a) {
+		camRot[a] = false;
+	}
+
+	fps = 0;
+	thisFps = 0;
+	totalGameTime = 0;
+
+	creatingVideo = false;
+
+	playing  = false;
+	gameOver = false;
+	allReady = false;
+	skipping = 0;
+
 	drawFpsHUD = true;
-
-	creatingVideo=false;
-
-	skipping=0;
-	playing=false;
-	allReady=false;
-	hideInterface=false;
-	gameOver=false;
+	hideInterface = false;
 
 	windowedEdgeMove   = !!configHandler.GetInt("WindowedEdgeMove",   1);
 	fullscreenEdgeMove = !!configHandler.GetInt("FullscreenEdgeMove", 1);
 
-	showFPS = !!configHandler.GetInt("ShowFPS", 0);
+	showFPS   = !!configHandler.GetInt("ShowFPS",   0);
 	showClock = !!configHandler.GetInt("ShowClock", 1);
 
 	playerRoster.SetSortTypeByCode(
@@ -251,12 +256,12 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
-	noSpectatorChat=false;
+	noSpectatorChat = false;
 
-	chatting=false;
-	userInput="";
+	chatting   = false;
+	userInput  = "";
 	writingPos = 0;
-	userPrompt="";
+	userPrompt = "";
 
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
@@ -265,28 +270,28 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	oldPitch=0;
-	oldHeading=0;
-	oldStatus=255;
+	oldPitch   = 0;
+	oldHeading = 0;
+	oldStatus  = 255;
 #endif
 
 	ENTER_UNSYNCED;
-	sound=CSound::GetSoundSystem();
-	gameSoundVolume=configHandler.GetInt("SoundVolume", 60)*0.01f;
-	soundEnabled=true;
+	sound = CSound::GetSoundSystem();
+	gameSoundVolume = configHandler.GetInt("SoundVolume", 60) * 0.01f;
+	soundEnabled = true;
 	sound->SetVolume(gameSoundVolume);
-	sound->SetUnitReplyVolume (configHandler.GetInt ("UnitReplySoundVolume",80)*0.01f);
+	sound->SetUnitReplyVolume(configHandler.GetInt ("UnitReplySoundVolume", 80) * 0.01f);
 
-	camera=SAFE_NEW CCamera();
-	cam2=SAFE_NEW CCamera();
-	mouse=SAFE_NEW CMouseHandler();
-	camHandler = new CCameraHandler();
-	selectionKeys=SAFE_NEW CSelectionKeyHandler();
-	tooltip=SAFE_NEW CTooltipConsole();
+	camera = SAFE_NEW CCamera();
+	cam2 = SAFE_NEW CCamera();
+	mouse = SAFE_NEW CMouseHandler();
+	camHandler = SAFE_NEW CCameraHandler();
+	selectionKeys = SAFE_NEW CSelectionKeyHandler();
+	tooltip = SAFE_NEW CTooltipConsole();
 
 	ENTER_MIXED;
 
-	helper=SAFE_NEW CGameHelper(this);
+	helper = SAFE_NEW CGameHelper(this);
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 
 	ENTER_SYNCED;
@@ -312,37 +317,37 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	}
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 
-	net->Update();	// Prevent timeout while loading
+	net->Update();  // Prevent timeout while loading
 	ENTER_UNSYNCED;
-	shadowHandler=SAFE_NEW CShadowHandler();
+	shadowHandler = SAFE_NEW CShadowHandler();
 
-	modInfo=SAFE_NEW CModInfo(modName.c_str());
+	modInfo = SAFE_NEW CModInfo(modName.c_str());
 
 	ENTER_SYNCED;
-	ground=SAFE_NEW CGround();
+	ground = SAFE_NEW CGround();
 	readmap = CReadMap::LoadMap (mapname);
 	wind.LoadWind();
-	moveinfo=SAFE_NEW CMoveInfo();
-	groundDecals=SAFE_NEW CGroundDecalHandler();
+	moveinfo = SAFE_NEW CMoveInfo();
+	groundDecals = SAFE_NEW CGroundDecalHandler();
 	ReColorTeams();
 
-	net->Update();	// Prevent timeout while loading
+	net->Update();  // Prevent timeout while loading
 	ENTER_UNSYNCED;
 
-	minimap=SAFE_NEW CMiniMap();
-	guihandler=SAFE_NEW CGuiHandler();
+	guihandler = SAFE_NEW CGuiHandler();
+	minimap = SAFE_NEW CMiniMap();
 
 	ENTER_MIXED;
-	ph=SAFE_NEW CProjectileHandler();
+	ph = SAFE_NEW CProjectileHandler();
 
 	ENTER_SYNCED;
-	sensorHandler=SAFE_NEW CSensorHandler();
-	damageArrayHandler=SAFE_NEW CDamageArrayHandler();
-	unitDefHandler=SAFE_NEW CUnitDefHandler();
-	net->Update();	// Prevent timeout while loading
+	sensorHandler = SAFE_NEW CSensorHandler();
+	damageArrayHandler = SAFE_NEW CDamageArrayHandler();
+	unitDefHandler = SAFE_NEW CUnitDefHandler();
+	net->Update();  // Prevent timeout while loading
 
 	ENTER_UNSYNCED;
-	inMapDrawer=SAFE_NEW CInMapDraw();
+	inMapDrawer = SAFE_NEW CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
@@ -351,24 +356,24 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	  wordCompletion->AddWord(uit->first + " ", false, true, false);
 	}
 
-	geometricObjects=SAFE_NEW CGeometricObjects();
+	geometricObjects = SAFE_NEW CGeometricObjects();
 
 	ENTER_SYNCED;
-	qf=SAFE_NEW CQuadField();
+	qf = SAFE_NEW CQuadField();
 
 	ENTER_MIXED;
-	featureHandler=SAFE_NEW CFeatureHandler();
+	featureHandler = SAFE_NEW CFeatureHandler();
 
 	ENTER_SYNCED;
-	mapDamage=IMapDamage::GetMapDamage();
-	loshandler=SAFE_NEW CLosHandler();
-	radarhandler=SAFE_NEW CRadarHandler(false);
-	net->Update();	// Prevent timeout while loading
+	mapDamage = IMapDamage::GetMapDamage();
+	loshandler = SAFE_NEW CLosHandler();
+	radarhandler = SAFE_NEW CRadarHandler(false);
+	net->Update();  // Prevent timeout while loading
 
 	ENTER_MIXED;
-	uh=SAFE_NEW CUnitHandler();
-	iconHandler=SAFE_NEW CIconHandler();
-	unitDrawer=SAFE_NEW CUnitDrawer();
+	uh = SAFE_NEW CUnitHandler();
+	iconHandler = SAFE_NEW CIconHandler();
+	unitDrawer = SAFE_NEW CUnitDrawer();
 	fartextureHandler = SAFE_NEW CFartextureHandler();
 	modelParser = SAFE_NEW C3DModelParser();
 
@@ -382,17 +387,17 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	ENTER_UNSYNCED;
 	sky=CBaseSky::GetSky();
 
-	resourceBar=SAFE_NEW CResourceBar();
-	keyCodes=SAFE_NEW CKeyCodes();
-	keyBindings=SAFE_NEW CKeyBindings();
+	resourceBar = SAFE_NEW CResourceBar();
+	keyCodes = SAFE_NEW CKeyCodes();
+	keyBindings = SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 
-	net->Update();	// Prevent timeout while loading
+	net->Update();  // Prevent timeout while loading
 	water=CBaseWater::GetWater();
 	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
-//	grouphandler=SAFE_NEW CGroupHandler(gu->myTeam);
-	globalAI=SAFE_NEW CGlobalAIHandler();
+//	grouphandler = SAFE_NEW CGroupHandler(gu->myTeam);
+	globalAI = SAFE_NEW CGlobalAIHandler();
 
 	PrintLoadMsg("Loading LuaCOB");
 	CLuaCob::LoadHandler();
@@ -407,10 +412,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	PrintLoadMsg("Finalizing...");
 
 	ENTER_MIXED;
-	if(true || !shadowHandler->drawShadows){ // FIXME ?
-		for(int a=0;a<3;++a){
-			LightAmbientLand[a]=unitDrawer->unitAmbientColor[a];
-			LightDiffuseLand[a]=unitDrawer->unitSunColor[a];
+	if (true || !shadowHandler->drawShadows) { // FIXME ?
+		for(int a = 0; a < 3; ++a) {
+			LightAmbientLand[a] = unitDrawer->unitAmbientColor[a];
+			LightDiffuseLand[a] = unitDrawer->unitSunColor[a];
 		}
 		glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand);		// Setup The Ambient Light
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand);		// Setup The Diffuse Light
@@ -421,9 +426,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 
 	logOutput.Print("Spring %s",VERSION_STRING);
 
-	CPlayer* p=gs->players[gu->myPlayerNum];
-	if(!gameSetup)
-		p->playerName=configHandler.GetString("name","");
+	CPlayer* p = gs->players[gu->myPlayerNum];
+	if(!gameSetup) {
+		p->playerName = configHandler.GetString("name", "");
+	}
 	//sending your playername to the server indicates that you are finished loading
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
@@ -435,12 +441,12 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	updateDeltaSeconds = 0.0f;
 
 	glFogfv(GL_FOG_COLOR,FogLand);
-	glFogf(GL_FOG_START,0);
-	glFogf(GL_FOG_END,gu->viewRange*0.98f);
-	glFogf(GL_FOG_DENSITY,1.0f);
+	glFogf(GL_FOG_START, 0.0f);
+	glFogf(GL_FOG_END, gu->viewRange * 0.98f);
+	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
+	glClearColor(FogLand[0], FogLand[1], FogLand[2], 0.0f);
 #ifdef TRACE_SYNC
 	tracefile.NewInterval();
 	tracefile.NewInterval();
@@ -451,9 +457,10 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	tracefile.NewInterval();
 	tracefile.NewInterval();
 #endif
-	activeController=this;
 
-	chatSound=sound->GetWaveId("sounds/beep4.wav");
+	activeController = this;
+
+	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
 	UnloadStartPicture();
 
