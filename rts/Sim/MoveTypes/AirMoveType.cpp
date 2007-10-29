@@ -1038,7 +1038,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 void CAirMoveType::SetState(CAirMoveType::AircraftState state)
 {
-	if(aircraftState==AIRCRAFT_CRASHING || state==aircraftState)
+	if(/*aircraftState==AIRCRAFT_CRASHING || */state==aircraftState)
 		return;
 
 /*	if (state == AIRCRAFT_LANDING)
