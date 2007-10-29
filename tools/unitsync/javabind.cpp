@@ -789,7 +789,7 @@ extern "C" {
 		(JNIEnv *env, jclass myobject, jstring mapName){
 			jcharArray a = env->NewCharArray(1024*1024*2);
 			const char* c = env->GetStringUTFChars(mapName,0);
-			env->SetCharArrayRegion(a,0,1024*1024*2,(const jchar*)GetMinimap(c,0));
+			env->SetCharArrayRegion(a,0,1024*1024*2,(jchar*)GetMinimap(c,0));
 			env->ReleaseStringUTFChars(mapName,c);
 			return a;
 	}
