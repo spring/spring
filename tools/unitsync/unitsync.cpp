@@ -1058,7 +1058,7 @@ struct CustomOption {
 	float  numberDef;
 	float  numberMin;
 	float  numberMax;
-	float  numberStep; // starting from numMin
+	float  numberStep; // aligned to numberDef
                                 
 	string stringDef;
 	int    stringMaxLen;
