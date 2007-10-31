@@ -258,13 +258,6 @@ static void DisplayOptions(int optionCount)
 
       const int listCount = GetOptionListCount(i);
       for (int li = 0; li < listCount; li++) {
-/*
-        const string key  = GetOptionListItemKey(i, li);
-        const string name = GetOptionListItemName(i, li);
-        const string desc = GetOptionListItemDesc(i, li);
-        printf("      %i:  key = %s,  name = %s,  desc = %s\n", li,
-               key.c_str(), name.c_str(), desc.c_str());
-*/
         printf("      %3i: name = %s\n", li,
                                          GetOptionListItemName(i, li));
         printf("           desc = %s\n", GetOptionListItemDesc(i, li));
