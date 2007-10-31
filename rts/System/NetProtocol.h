@@ -10,11 +10,9 @@ class CDemoRecorder;
 @todo remove this since its mostly specific to other classes, not to network
 The top of the networking stack.
 */
-class CNetProtocol : public CBaseNetProtocol {
+class CNetProtocol : public CBaseNetProtocol
+{
 public:
-	typedef unsigned char uchar;
-	typedef unsigned int uint;
-
 	CNetProtocol();
 	~CNetProtocol();
 
@@ -28,7 +26,6 @@ public:
 	 */
 	unsigned InitLocalClient(const unsigned wantedNumber);
 
-	bool IsDemoServer() const;
 	bool localDemoPlayback;
 
 	/**

@@ -1,4 +1,3 @@
-
 #ifndef BASENETPROTOCOL_H
 #define BASENETPROTOCOL_H
 

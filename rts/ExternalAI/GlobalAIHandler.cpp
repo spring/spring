@@ -232,7 +232,7 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 	}
 
 	try {
-		if (net->IsDemoServer()) {
+		if (net->localDemoPlayback) {
 			return false;
 		}
 

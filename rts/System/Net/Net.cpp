@@ -23,7 +23,8 @@ CNet::CNet()
 }
 
 CNet::~CNet()
-{	
+{
+	FlushNet();
 	delete proto;
 }
 
@@ -187,7 +188,7 @@ void CNet::SendData(const unsigned char* data,const unsigned length, const unsig
 	}
 }
 
-void CNet::Update(void)
+void CNet::Update()
 {
 	if (udplistener)
 	{
@@ -203,11 +204,11 @@ void CNet::Update(void)
 	}
 }
 
-void CNet::FlushNet(void)
+void CNet::FlushNet()
 {
 	for (unsigned a=0;a<MAX_CONNECTIONS;a++){
 		if(connections[a]){
-			connections[a]->Flush();
+			connections[a]->Flush(true);
 		}
 	}
 }

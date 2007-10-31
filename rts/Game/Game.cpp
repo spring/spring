@@ -49,7 +49,6 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-//#include "HpiHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -57,7 +56,6 @@
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
-//#include "PhysicsEngine.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Env/BaseSky.h"
@@ -2622,13 +2620,6 @@ bool CGame::ClientReadNet()
 		const unsigned char packetCode = inbuf[0];
 
 		switch (inbuf[0]){
-
-			case NETMSG_ATTEMPTCONNECT: {
-				logOutput.Print("Attempted connection to client?");
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_QUIT: {
 				logOutput.Print("Server exited");
 				POP_CODE_MODE;
@@ -2803,17 +2794,6 @@ bool CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_SETPLAYERNUM: {
-				//logOutput.Print("Warning shouldnt receive NETMSG_SETPLAYERNUM in CGame");
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_SCRIPT: {
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_MAPNAME: {
 				archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[2]));
 				net->GetDemoRecorder()->SetName(stupidGlobalMapname); //TODO use name from NETMSG
@@ -2902,7 +2882,7 @@ bool CGame::ClientReadNet()
 				}
 				SimFrame();
 #ifdef SYNCCHECK
-				if (!net->IsDemoServer()) {
+				if (!net->localDemoPlayback) {
 					net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 					if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 						CSyncChecker::NewFrame();
@@ -2910,7 +2890,7 @@ bool CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if(creatingVideo && net->IsDemoServer()){
+				if(creatingVideo && net->localDemoPlayback){
 					POP_CODE_MODE;
 					return true;
 				}
@@ -3197,7 +3177,13 @@ bool CGame::ClientReadNet()
 				break;
 			}
 #endif // DIRECT_CONTROL_ALLOWED
-
+			
+			case NETMSG_SETPLAYERNUM:
+			case NETMSG_ATTEMPTCONNECT:
+			case NETMSG_SCRIPT: {
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
 			default: {
 #ifdef SYNCDEBUG
 				lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
@@ -3746,7 +3732,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		logOutput.Print("Resetting sync debugger.");
 	}
 #endif
-	else if ((s == ".spectator") && (gs->cheatEnabled || net->IsDemoServer())) {
+	else if ((s == ".spectator") && (gs->cheatEnabled || net->localDemoPlayback)) {
 		gs->players[player]->spectator=true;
 		if (player == gu->myPlayerNum) {
 			gu->spectating           = true;
@@ -3757,7 +3743,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 			CLuaUI::UpdateTeams();
 		}
 	}
-	else if ((s.find(".team") == 0) && (gs->cheatEnabled || net->IsDemoServer())) {
+	else if ((s.find(".team") == 0) && (gs->cheatEnabled || net->localDemoPlayback)) {
 		int team=atoi(&s.c_str()[s.find(" ")]);
 		if ((team >= 0) && (team <gs->activeTeams)) {
 			gs->players[player]->team = team;

@@ -109,13 +109,13 @@ public:
 	/**
 	@brief send all waiting data
 	*/
-	void FlushNet(void);
+	void FlushNet();
 	
 	/** 
 	@brief Do this from time to time
 	Updates the UDPlistener (you cant recieve data without doing this)
 	*/
-	void Update(void);
+	void Update();
 	
 	/// did someone tried to connect?
 	bool HasIncomingConnection() const;

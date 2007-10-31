@@ -35,21 +35,15 @@ unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned 
 
 unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
-	if (!IsDemoServer())
+	if (!localDemoPlayback)
 	{
 		record = new CDemoRecorder();
 	}
 
 	unsigned myNum = CNet::InitLocalClient(wantedNumber);
-	Listening(false);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
 	//logOutput.Print("Connected to local server using number %i", wantedNumber);
 	return myNum;
-}
-
-bool CNetProtocol::IsDemoServer() const
-{
-	return (localDemoPlayback);
 }
 
 int CNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
