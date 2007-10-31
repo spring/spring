@@ -390,7 +390,6 @@ void CGameSetup::Draw()
 		} else {
 			name  = gs->players[a]->playerName.c_str();
 		}
-		const float width = font->CalcTextWidth(name);
 		const float yScale = 0.028f;
 		const float xScale = yScale / gu->aspectRatio;
 		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
@@ -426,7 +425,7 @@ bool CGameSetup::Update()
 	if(forceReady)
 		allReady=true;
 	if(allReady){
-		if(readyTime==0 && !net->IsDemoServer()){
+		if(readyTime==0 && !net->localDemoPlayback){
 			int mode=configHandler.GetInt("CamMode",1);
 			camHandler->SetCameraMode(mode);
 			readyTime = SDL_GetTicks();

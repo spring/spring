@@ -45,7 +45,6 @@ CBaseNetProtocol::CBaseNetProtocol()
 CBaseNetProtocol::~CBaseNetProtocol()
 {
 	SendQuit();
-	FlushNet();
 }
 
 void CBaseNetProtocol::RawSend(const uchar* data,const unsigned length)
