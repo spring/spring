@@ -33,6 +33,7 @@ class CAttackHandler {
 
 		void UpdateKMeans(void);
 		void UpdateAir(int);
+		void UpdateSea(int);
 
 		// nuke-related functions
 		void UpdateNukeSilos(int);
@@ -53,7 +54,9 @@ class CAttackHandler {
 
 		list<int> units;
 		list< pair<int, float3> > stuckUnits;
-		list<int> airUnits;
+		// TODO: should be sets
+		list<int> unarmedAirUnits;
+		list<int> armedAirUnits;
 
 		bool airIsAttacking;
 		bool airPatrolOrdersGiven;

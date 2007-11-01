@@ -46,6 +46,7 @@ struct AIClasses {
 struct UnitType {
 	// 1 means arm, 2 core; 0 if side has not been set
 	// NOTE: CUNIT does not know about this structure
+	// NOTE: category used here not UnitDef::category!
 	int side;
 	vector<int> canBuildList;
 	vector<int> builtByList;

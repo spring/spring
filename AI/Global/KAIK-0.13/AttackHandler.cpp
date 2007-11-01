@@ -19,7 +19,8 @@ CR_REG_METADATA(CAttackHandler, (
 
 	CR_MEMBER(units),
 	CR_MEMBER(stuckUnits),
-	CR_MEMBER(airUnits),
+	CR_MEMBER(unarmedAirUnits),
+	CR_MEMBER(armedAirUnits),
 
 	CR_MEMBER(airIsAttacking),
 	CR_MEMBER(airPatrolOrdersGiven),
@@ -70,8 +71,14 @@ void CAttackHandler::AddUnit(int unitID) {
 		ai->MyUnits[unitID]->groupID = AIR_GROUP_ID;
 		// this might be a new unit with the same id as an older dead unit
 		ai->MyUnits[unitID]->stuckCounter = 0;
+
 		// do some checking then essentially add it to defense group
-		airUnits.push_back(unitID);
+		if ((ai->MyUnits[unitID]->def())->weapons.size() == 0) {
+			unarmedAirUnits.push_back(unitID);
+		} else {
+			armedAirUnits.push_back(unitID);
+		}
+
 		// patrol orders need to be updated
 		airPatrolOrdersGiven = false;
 	}
@@ -104,8 +111,9 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		}
 		assert(found_dead_unit_in_attackHandler);
 	}
+
 	else if (attackGroupID >= GROUND_GROUP_ID_START) {
-		// it's in an attack group
+		// unit in an attack-group died
 		bool foundGroup = false;
 		bool removedDeadUnit = false;
 		list<CAttackGroup>::iterator it;
@@ -122,28 +130,38 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		assert(removedDeadUnit);
 
 		// check if the group is now empty
-		int groupSize = it->Size();
-
-		if (groupSize == 0) {
+		if (it->Size() == 0) {
 			attackGroups.erase(it);
 		}
 	}
+
 	else if (attackGroupID == AIR_GROUP_ID) {
-		// unit in air group
-		bool found_dead_unit_in_airUnits = false;
-		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
-			if (*it == unitID) {
-				airUnits.erase(it);
-				found_dead_unit_in_airUnits = true;
+		// unit in air-group died
+		bool armed = true;
+		list<int>::iterator unarmedAirIt = unarmedAirUnits.begin();
+		list<int>::iterator armedAirIt = armedAirUnits.begin();
+
+		for (; unarmedAirIt != unarmedAirUnits.end(); unarmedAirIt++) {
+			if (unitID == *unarmedAirIt) {
+				unarmedAirUnits.erase(unarmedAirIt);
+				armed = false;
 				break;
 			}
 		}
-		assert(found_dead_unit_in_airUnits);
+		if (armed) {
+			for (; armedAirIt != armedAirUnits.end(); armedAirIt++) {
+				if (unitID == *armedAirIt) {
+					armedAirUnits.erase(armedAirIt);
+					break;
+				}
+			}
+		}
 	}
+
 	else {
 		// unit in stuck-units group
 		bool found_dead_in_stuck_units = false;
-		list<pair<int,float3> >::iterator it;
+		list<pair<int, float3> >::iterator it;
 
 		for (it = stuckUnits.begin(); it != stuckUnits.end(); it++) {
 			if (it->first == unitID) {
@@ -521,88 +539,101 @@ bool CAttackHandler::UnitReadyFilter(int unit) {
 
 
 void CAttackHandler::UpdateAir(int currentFrame) {
-	if (airUnits.size() == 0)
+	if (armedAirUnits.size() == 0)
 		return;
 
-	/*
-	 * if enemy is dead, attacking = false
-	 * every blue moon, do an air raid on most valuable thingy
-	 */
-	assert(!(airIsAttacking && airTarget == -1));
-
-	if (airIsAttacking && (airUnits.size() == 0 || ai->cheat->GetUnitDef(airTarget) == NULL)) {
-		airTarget = -1;
-		airIsAttacking = false;
+	if (airIsAttacking) {
+		if (airTarget == -1) {
+			// we are attacking an invalid target
+			airIsAttacking = false;
+		} else {
+			// if we are attacking but have no armed planes left (or if our target is dead)
+			if (armedAirUnits.size() == 0 || ai->cheat->GetUnitDef(airTarget) == NULL) {
+				airIsAttacking = false;
+				airTarget = -1;
+			}
+		}
 	}
 
-	// 5 mins || 30 secs && 8+ units
-	if ((currentFrame % (60 * 30 * 5) == 0) || ((currentFrame % (30 * 30) == 0) && (airUnits.size() > 8))) {
-		int numOfEnemies = ai->cheat->GetEnemyUnits(unitArray);
-		int bestID = -1;
-		float bestFound = -1.0f;
+	// repeat every 30 secs if we have 16
+	// or more armed planes and no target
+	if (!airIsAttacking && (currentFrame % (30 * 30) == 0) && (armedAirUnits.size() >= 16)) {
+		int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+		int bestTargetID = -1;
+		float bestTargetCost = -1.0f;
 
-		for (int i = 0; i < numOfEnemies; i++) {
+		for (int i = 0; i < numEnemies; i++) {
 			int enemyID = unitArray[i];
 			const UnitDef* udef = (enemyID >= 0)? ai->cheat->GetUnitDef(enemyID): 0;
 
-			if (udef && udef->metalCost > bestFound) {
-				bestID = enemyID;
-				bestFound = ai->cheat->GetUnitDef(enemyID)->metalCost;
+			if (udef) {
+				float mCost = udef->metalCost;
+				float eCost = udef->energyCost;
+				float baseCost = mCost + eCost * 0.1f;
+				bool isStaticTarget = (udef->speed < 0.1f);
+				float targetCost = isStaticTarget? baseCost: baseCost * 0.01f;
+
+				if (targetCost > bestTargetCost) {
+					bestTargetID = enemyID;
+					bestTargetCost = targetCost;
+				}
 			}
 		}
 
-		if ((bestID != -1) && ai->cheat->GetUnitDef(bestID)) {
-			// give the order
-			for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
+		if (bestTargetID != -1) {
+			// attack en-masse, regardless of AA
+			for (list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
 				CUNIT* u = ai->MyUnits[*it];
-				u->Attack(bestID);
+				u->Attack(bestTargetID);
 			}
 
 			airIsAttacking = true;
-			airTarget = bestID;
-			// ai->cb->SendTextMsg("AH: air group is attacking", 0);
+			airTarget = bestTargetID;
 		}
 	}
 
+
 	if (currentFrame % 1800 == 0) {
+		// clear patrol orders every 60 seconds
 		airPatrolOrdersGiven = false;
 	}
 
 	if (!airPatrolOrdersGiven && !airIsAttacking) {
 		// get and make up some outer base perimeter
-		// points for air patrol route updates
+		// points for air patrol route updates (if we
+		// aren't attacking)
 		vector<float3> outerMeans;
-		const int num = 3;
-		outerMeans.reserve(num);
+		const int numClusters = 3;
+		outerMeans.reserve(numClusters);
 
 		if (kMeansK > 1) {
-			int counter = 0;
-			// offsetting the outermost one
-			counter += kMeansK / 8;
+			// offset the outermost one
+			int counter = (kMeansK / 8);
 
-			for (int i = 0; i < num; i++) {
+			for (int i = 0; i < numClusters; i++) {
 				outerMeans.push_back(kMeansBase[counter]);
 
 				if (counter < kMeansK - 1)
 					counter++;
 			}
-		}
-		else {
+		} else {
 			// there is just 1 k-means cluster and we need three
-			for (int i = 0; i < num; i++) {
+			for (int i = 0; i < numClusters; i++) {
 				outerMeans.push_back(kMeansBase[0] + float3(250 * i, 0, 0));
 			}
 		}
 
-		assert(outerMeans.size() == (unsigned int) num);
+		if (outerMeans.size() < numClusters) {
+			// there were two kMeansK clusters?
+			return;
+		}
 
-		// give the patrol orders to the outer means
-		for (list<int>::iterator it = airUnits.begin(); it != airUnits.end(); it++) {
+		for (list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
 			CUNIT* u = ai->MyUnits[*it];
-			// do this first in case they are in the enemy base
+			// do this first in case we are in the enemy base
 			u->Move(outerMeans[0] + float3(0, 50, 0));
 
-			for (int i = 0; i < num; i++) {
+			for (int i = 0; i < numClusters; i++) {
 				u->PatrolShift(outerMeans[i]);
 			}
 		}
@@ -611,6 +642,9 @@ void CAttackHandler::UpdateAir(int currentFrame) {
 	}
 }
 
+void CAttackHandler::UpdateSea(int currentFrame) {
+	// TODO
+}
 
 
 
@@ -949,6 +983,7 @@ void CAttackHandler::Update(int frameNr) {
 
 	// do basic attack group formation from defense units
 	UpdateAir(frameNr);
+	UpdateSea(frameNr);
 	UpdateNukeSilos(frameNr);
 	AssignTargets(frameNr);
 

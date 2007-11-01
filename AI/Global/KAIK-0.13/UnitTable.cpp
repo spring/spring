@@ -239,7 +239,7 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
 	float score = 0.01f;
-	float totalcost=0.01f;
+	float totalcost = 0.01f;
 	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < numofenemies; i++) {
@@ -330,11 +330,12 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 		return 0.0f;
 	}
 
+	int frame = ai->cb->GetCurrentFrame();
 	float Cost = ((udef->metalCost * METAL2ENERGY) + udef->energyCost) + 0.1f;
-	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + ai->cb->GetCurrentFrame() / 2;
+	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + frame / 2;
 	float Hitpoints = udef->health;
 	float buildTime = udef->buildTime + 0.1f;
-	float Benefit = 0.0f;
+	float benefit = 0.0f;
 	float dps = 0.0f;
 	int unitcounter = 0;
 	bool candevelop = false;
@@ -347,34 +348,35 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 		case CAT_ENERGY: {
 			// KLOOTNOTE: factor build-time into this as well
 			// (so benefit values generally lie closer together)
-			// Benefit = (udef->energyMake - udef->energyUpkeep);
-			// Benefit = (udef->energyMake - udef->energyUpkeep) * randMult;
-			Benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
+			// benefit = (udef->energyMake - udef->energyUpkeep);
+			// benefit = (udef->energyMake - udef->energyUpkeep) * randMult;
+			benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
 
 			if (udef->windGenerator) {
-				Benefit += ai->cb->GetMinWind();
+				benefit += ai->cb->GetMinWind();
 			}
 			if (udef->tidalGenerator) {
-				Benefit += ai->cb->GetTidalStrength();
+				benefit += ai->cb->GetTidalStrength();
 			}
 
 			// filter geothermals
 			if (udef->needGeo)
-				Benefit = 0.0f;
+				benefit = 0.0f;
 
 			// KLOOTNOTE: dividing by cost here as well means
 			// benefit is inversely proportional to square of
 			// cost, so expensive generators are quadratically
 			// less likely to be built if original calculation
 			// of score is used
-			// Benefit /= Cost;
+			// benefit /= Cost;
 		} break;
 
 		case CAT_MEX: {
-			Benefit = pow(udef->extractsMetal, 4.0f);
+			benefit = pow(udef->extractsMetal, 4.0f);
 		} break;
 		case CAT_MMAKER: {
-			Benefit = (udef->metalMake - udef->metalUpkeep) / udef->energyUpkeep + 0.01;
+			// benefit = ((udef->metalMake - udef->metalUpkeep) / udef->energyUpkeep) + 0.01f;
+			benefit = (udef->metalMake - udef->metalUpkeep) / (udef->energyUpkeep + 0.01f);
 		} break;
 
 		case CAT_G_ATTACK: {
@@ -386,7 +388,7 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 				dps /= 6;
 			}
 
-			Benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+			benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
 					* pow(GetMaxRange(udef) + 200, 1.5f)
 					* pow(dps, 1.0f)
 					* pow(udef->speed + 40, 1.0f)
@@ -395,14 +397,15 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 					* pow(Cost, -0.5f);
 
 			if (udef->canfly || udef->canhover) {
-				// AA hack: slight reduction to the feasability of aircraft
-				// general hack: should mostly prefer real L2 units to hovers
-				Benefit *= 0.01;
+				// general hack: reduce feasibility of aircraft for 20 mins
+				// and that of hovercraft permanently, should mostly prefer
+				// real L2 units to hovers
+				benefit = (udef->canfly && frame >= (30 * 60 * 20))? benefit: benefit * 0.01f;
 			}
 		} break;
 
 		case CAT_DEFENCE: {
-			Benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+			benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
 					* pow(GetMaxRange(udef), 2.0f)
 					* pow(GetCurrentDamageScore(udef), 1.5f)
 					* pow(Hitpoints, 0.5f)
@@ -423,9 +426,9 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 			// (they might have other uses though, eg.
 			// nano-towers)
 			if (!candevelop) {
-				Benefit = 0.0f;
+				benefit = 0.0f;
 			} else {
-				Benefit = pow(udef->buildSpeed, 1.0f)
+				benefit = pow(udef->buildSpeed, 1.0f)
 						* pow(udef->speed, 0.5f)
 						* pow(Hitpoints, 0.3f)
 						* pow(RandNum, 0.4f);
@@ -441,23 +444,23 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 				int buildOptionCategory = unittypearray[buildOption].category;
 
 				if (buildOptionCategory == CAT_G_ATTACK || buildOptionCategory == CAT_FACTORY) {
-					Benefit += GetScore(unittypearray[buildOption].def);
+					benefit += GetScore(unittypearray[buildOption].def);
 					unitcounter++;
 				}
 			}
 
 			if (unitcounter > 0) {
-				Benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id].size() + 1), 3.0f));
+				benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id].size() + 1), 3.0f));
 			} else {
-				Benefit = 0.0f;
+				benefit = 0.0f;
 			}
 		} break;
 
 		case CAT_MSTOR: {
-			Benefit = pow((udef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
+			benefit = pow((udef->metalStorage), 1.0f) * pow(Hitpoints, 1.0f);
 		} break;
 		case CAT_ESTOR: {
-			Benefit = pow((udef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
+			benefit = pow((udef->energyStorage), 1.0f) * pow(Hitpoints, 1.0f);
 		} break;
 		case CAT_NUKE: {
 			// KLOOTNOTE: should factor damage into this as well
@@ -466,23 +469,23 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 			float supplycost = udef->stockpileWeaponDef->supplycost;
 			float denom = metalcost + energycost + supplycost + 1.0f;
 			float range = udef->stockpileWeaponDef->range;
-			Benefit = (udef->stockpileWeaponDef->areaOfEffect + range) / denom;
+			benefit = (udef->stockpileWeaponDef->areaOfEffect + range) / denom;
 		} break;
 		/*
 		case CAT_ANTINUKE: {
-			Benefit = udef->stockpileWeaponDef->coverageRange;
+			benefit = udef->stockpileWeaponDef->coverageRange;
 		} break;
 		case CAT_SHIELD: {
-			Benefit = udef->shieldWeaponDef->shieldRadius;
+			benefit = udef->shieldWeaponDef->shieldRadius;
 		} break;
 		*/
 		default:
-			Benefit = 0.0f;
+			benefit = 0.0f;
 	}
 
-	// return (Benefit / (CurrentIncome + Cost));
-	// return ((Benefit / Cost) * CurrentIncome);
-	return ((CurrentIncome / Cost) * Benefit);
+	// return (benefit / (CurrentIncome + Cost));
+	// return ((benefit / Cost) * CurrentIncome);
+	return ((CurrentIncome / Cost) * benefit);
 }
 
 
