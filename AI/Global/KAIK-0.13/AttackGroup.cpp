@@ -198,15 +198,7 @@ int CAttackGroup::PopStuckUnit() {
 			// mark it
 			char text[512];
 			sprintf(text, "stuck %i: %i, dropping from group: %i. isMoving = %i", id, ai->MyUnits[*it]->stuckCounter, groupID, isMoving);
-
-			AIHCAddMapPoint amp;
-			amp.label = text;
-			amp.pos = ai->cb->GetUnitPos(id);
-
 			sprintf(text, "humanName: %s", ai->MyUnits[*it]->def()->humanName.c_str());
-
-			amp.label = text;
-			amp.pos = ai->cb->GetUnitPos(id) + float3(0, 0, 30);
 
 			ai->MyUnits[*it]->stuckCounter = 0;
 			units.erase(it);
