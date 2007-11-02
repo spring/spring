@@ -229,9 +229,9 @@ static void DisplayOptions(int optionCount)
 {
   for (int i = 0; i < optionCount; i++) {
     printf("    Option #%i\n", i);
-    printf("      key  = %s\n", GetOptionKey(i));
-    printf("      name = %s\n", GetOptionName(i));
-    printf("      desc = %s\n", GetOptionDesc(i));
+    printf("      key  = '%s'\n", GetOptionKey(i));
+    printf("      name = '%s'\n", GetOptionName(i));
+    printf("      desc = '%s'\n", GetOptionDesc(i));
     printf("      type = %i\n", GetOptionType(i));
 
     const int type = GetOptionType(i);
@@ -244,7 +244,7 @@ static void DisplayOptions(int optionCount)
              GetOptionBoolDef(i) ? "true" : "false");
     }
     else if (type == opt_string) {
-      printf("      STRING: def = %s, maxlen = %i\n",
+      printf("      STRING: def = '%s', maxlen = %i\n",
              GetOptionStringDef(i),
              GetOptionStringMaxLen(i));
     }
@@ -256,15 +256,15 @@ static void DisplayOptions(int optionCount)
              GetOptionNumberStep(i));
     }
     else if (type == opt_list) {
-      printf("      LIST: def = %s\n",
+      printf("      LIST: def = '%s'\n",
              GetOptionListDef(i));
 
       const int listCount = GetOptionListCount(i);
       for (int li = 0; li < listCount; li++) {
-        printf("      %3i: key  = %s\n", li,
+        printf("      %3i: key  = '%s'\n", li,
                                          GetOptionListItemKey(i, li));
-        printf("           name = %s\n", GetOptionListItemName(i, li));
-        printf("           desc = %s\n", GetOptionListItemDesc(i, li));
+        printf("           name = '%s'\n", GetOptionListItemName(i, li));
+        printf("           desc = '%s'\n", GetOptionListItemDesc(i, li));
       }
     }
   }
