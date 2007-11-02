@@ -86,6 +86,7 @@ DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall GetMapOptionCount(const char* name);
 DLL_EXPORT int          __stdcall GetModOptionCount();
 
+DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
@@ -106,6 +107,7 @@ DLL_EXPORT int          __stdcall GetOptionStringMaxLen(int optIndex);
 // List Options
 DLL_EXPORT int          __stdcall GetOptionListCount(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListDef(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionListItemKey(int optIndex, int itemIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListItemName(int optIndex, int itemIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListItemDesc(int optIndex, int itemIndex);
 
@@ -808,6 +810,11 @@ extern "C" {
 			return GetModOptionCount();
 	}
 
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionKey
+		(JNIEnv *env, jclass myobject, jint optIndex){
+			return env->NewStringUTF(GetOptionKey(optIndex));
+	}
+
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionName
 		(JNIEnv *env, jclass myobject, jint optIndex){
 			return env->NewStringUTF(GetOptionName(optIndex));
@@ -872,6 +879,11 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListDef
 		(JNIEnv *env, jclass myobject, jint optIndex){
 			return env->NewStringUTF(GetOptionListDef(optIndex));
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListItemKey
+		(JNIEnv *env, jclass myobject, jint optIndex, jint itemIndex){
+			return env->NewStringUTF(GetOptionListItemKey(optIndex, itemIndex));
 	}
 
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetOptionListItemName
