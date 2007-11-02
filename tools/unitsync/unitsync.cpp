@@ -1038,6 +1038,7 @@ DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
 //////////////////////////
 
 struct ListItem {
+	string key;
 	string name;
 	string desc;
 };
@@ -1046,6 +1047,7 @@ struct ListItem {
 struct CustomOption {
 	CustomOption() : typeCode(opt_error) {}
 
+	string key;
 	string name;
 	string desc;
 
@@ -1079,10 +1081,11 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 	}
 
 	// common options properties
-	opt.name = optTbl.GetString("name", "");
-	if (opt.name.empty()) {
+	opt.key = optTbl.GetString("key", ""); // FIXME -- check for valid chars
+	if (opt.key.empty()) {
 		return false;
 	}
+	opt.name = optTbl.GetString("name", opt.key);
 	opt.desc = optTbl.GetString("desc", opt.name);
 	opt.type = optTbl.GetString("type", "");
 
@@ -1129,10 +1132,11 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 			if (!itemTbl.IsValid()) {
 				break;
 			}
-			item.name = itemTbl.GetString("name", "");
-			if (item.name.empty()) {
+			item.key = itemTbl.GetString("key", "");
+			if (item.key.empty()) { // FIXME -- check for valid chars
 				return false;
 			}
+			item.name = itemTbl.GetString("name", "");
 			item.desc = itemTbl.GetString("desc", item.name);
 			opt.list.push_back(item);
 		}
@@ -1222,6 +1226,15 @@ DLL_EXPORT int __stdcall GetModOptionCount()
 
 
 // Common Parameters
+
+DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
+{
+	if (InvalidOptionIndex(optIndex)) {
+		return NULL;
+	}
+	return GetStr(customOptions[optIndex].key);
+}
+
 
 DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
 {
@@ -1336,6 +1349,19 @@ DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
 		return 0;
 	}
 	return GetStr(customOptions[optIndex].listDef);
+}
+
+
+DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemIndex)
+{
+	if (WrongOptionType(optIndex, opt_list)) {
+		return NULL;
+	}
+	const vector<ListItem>& list = customOptions[optIndex].list;
+	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
+		return NULL;
+	}
+	return GetStr(list[itemIndex].key);
 }
 
 
