@@ -626,8 +626,7 @@ void CAttackHandler::UpdateAir(int currentFrame) {
 			// we are attacking an invalid target
 			airIsAttacking = false;
 		} else {
-			// if we are attacking but have no armed
-			// planes left (or if our target is dead)
+			// if we are attacking but our target is dead
 			if (ai->cheat->GetUnitHealth(airTarget) <= 0.0f) {
 				airIsAttacking = false;
 				airTarget = -1;
@@ -640,7 +639,6 @@ void CAttackHandler::UpdateAir(int currentFrame) {
 			// start or continue attacking
 			// if we have 16 or more armed
 			// planes and no target
-
 			AirAttack(currentFrame);
 		} else {
 			// return to base
