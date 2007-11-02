@@ -34,13 +34,14 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 	curTime(0),
 	gravity(gravity)
 {
-	useAirLos=true;
+	useAirLos = true;
 
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
-		drawRadius=weaponDef->size;
+		drawRadius = weaponDef->size;
 	}
-	invttl=1.0f/ttl;
+
+	invttl = 1.0f / ttl;
 
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";
@@ -62,12 +63,16 @@ void CExplosiveProjectile::Update()
 {
 	pos += speed;
 	speed.y += gravity;
+	ttl--;
 
-	if (!--ttl) {
-		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed);
-		}
+	if (ttl == 0) {
 		Collision();
+	} else {
+		if (ttl > 0) {
+			if (cegTag.size() > 0) {
+				ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+			}
+		}
 	}
 
 	if (weaponDef->noExplode) {
