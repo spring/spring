@@ -1090,8 +1090,8 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 		return false;
 	}
 	opt.desc = optTbl.GetString("desc", opt.name);
-	opt.type = optTbl.GetString("type", "");
 
+	opt.type = optTbl.GetString("type", "");
 	opt.type = StringToLower(opt.type);
 
 	// option type specific properties
