@@ -1086,6 +1086,9 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 		return false;
 	}
 	opt.name = optTbl.GetString("name", opt.key);
+	if (opt.name.empty()) {
+		return false;
+	}
 	opt.desc = optTbl.GetString("desc", opt.name);
 	opt.type = optTbl.GetString("type", "");
 
@@ -1137,7 +1140,10 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 			if (item.key.empty() || (item.key.find_first_of(" =") != string::npos)) {
 				return false;
 			}
-			item.name = itemTbl.GetString("name", "");
+			item.name = itemTbl.GetString("name", item.key);
+			if (item.name.empty()) {
+				return false;
+			}
 			item.desc = itemTbl.GetString("desc", item.name);
 			opt.list.push_back(item);
 		}
