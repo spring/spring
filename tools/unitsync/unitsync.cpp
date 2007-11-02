@@ -1120,8 +1120,9 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 			ListItem item;
 
 			// string format
-			item.name = listTbl.GetString(i, "");
-			if (!item.name.empty()) {
+			item.key = listTbl.GetString(i, "");
+			if (item.key.empty() || (item.key.find_first_of(" =") != string::npos)) {
+				item.name = item.key;
 				item.desc = item.name;
 				opt.list.push_back(item);
 				continue;
