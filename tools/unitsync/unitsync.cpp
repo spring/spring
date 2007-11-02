@@ -1081,8 +1081,8 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 	}
 
 	// common options properties
-	opt.key = optTbl.GetString("key", ""); // FIXME -- check for valid chars
-	if (opt.key.empty()) {
+	opt.key = optTbl.GetString("key", "");
+	if (opt.key.empty() || (opt.key.find_first_of(" =") != string::npos)) {
 		return false;
 	}
 	opt.name = optTbl.GetString("name", opt.key);
@@ -1133,7 +1133,7 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 				break;
 			}
 			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty()) { // FIXME -- check for valid chars
+			if (item.key.empty() || (item.key.find_first_of(" =") != string::npos)) {
 				return false;
 			}
 			item.name = itemTbl.GetString("name", "");
