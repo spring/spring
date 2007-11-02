@@ -31,6 +31,9 @@ class CAttackHandler {
 		float3 FindVerySafeArea(float3 pos);
 		float3 FindUnsafeArea(float3 pos);
 
+		void AirAttack(int);
+		void AirPatrol(int);
+
 		void UpdateKMeans(void);
 		void UpdateAir(int);
 		void UpdateSea(int);
