@@ -47,7 +47,7 @@ public:
 	virtual ~CArchiveScanner(void);
 	void Scan(const string& curPath, bool checksum = false);
 	vector<ModData> GetPrimaryMods() const;
-	vector<string> GetArchives(const string& root);
+	vector<string> GetArchives(const string& root, int depth = 0);
 	vector<string> GetMaps();
 	vector<string> GetArchivesForMap(const string& mapName);
 	unsigned int GetArchiveChecksum(const string& name);
@@ -72,7 +72,7 @@ protected:
 		bool updated;
 		string replaced;					// If not empty, use that archive instead
 	};
-	map<string, ArchiveInfo> archiveInfo;	
+	map<string, ArchiveInfo> archiveInfo;
 	ModData GetModData(TdfParser* p, const string& section);
 	unsigned int GetCRC(const string& filename);
 	unsigned int GetDirectoryCRC(const string& curPath);

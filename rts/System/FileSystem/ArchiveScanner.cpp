@@ -267,11 +267,9 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	UInt32 crc;
 	UInt32 digest = 0;
 	CArchiveBase* ar;
-	unsigned char buffer[65536];
 	list<string> files;
 	string innerName;
 	string lowerName;
-	int handle;
 	int innerSize;
 	int cur = 0;
 
@@ -296,7 +294,7 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 		digest = CrcCalculateDigest(i->data(), i->size());
 		CrcUpdateUInt32(&crc, digest);
 		CrcUpdateUInt32(&crc, ar->GetCrc32(*i));
-	}                
+	}
 	delete ar;
 
 	digest = CrcGetDigest(&crc);
@@ -458,8 +456,14 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 	return ret;
 }
 
-vector<string> CArchiveScanner::GetArchives(const string& root)
+vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 {
+	// Protect against circular dependencies
+	// (worst case depth is if all archives form one huge dependency chain)
+	if (depth > archiveInfo.size()) {
+		throw content_error("Circular dependency");
+	}
+
 	vector<string> ret;
 
 	string lcname = StringToLower(root);
@@ -482,7 +486,7 @@ vector<string> CArchiveScanner::GetArchives(const string& root)
 
 	// add depth-first
 	for (vector<string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
-		vector<string> dep = GetArchives(*i);
+		vector<string> dep = GetArchives(*i, depth + 1);
 		for (vector<string>::iterator j = dep.begin(); j != dep.end(); ++j) {
 			ret.push_back(*j);
 		}
