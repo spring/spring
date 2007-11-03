@@ -706,8 +706,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
 
 	ADD_STRING("buildpicname", ud.buildpicname);
-	ADD_INT("imageSizeX", ud.imageSizeX);
-	ADD_INT("imageSizeY", ud.imageSizeY);
 
 	ADD_INT("aihint", ud.aihint);
 	ADD_INT("cobID",  ud.cobID);
@@ -752,11 +750,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("airLosRadius",  ud.airLosRadius);
 	ADD_FLOAT("controlRadius", ud.controlRadius);
 
-	ADD_INT("radarRadius",        ud.radarRadius);
-	ADD_INT("sonarRadius",        ud.sonarRadius);
-	ADD_INT("jammerRadius",       ud.jammerRadius);
-	ADD_INT("sonarJamRadius",     ud.sonarJamRadius);
-	ADD_INT("seismicRadius",      ud.seismicRadius);
+	ADD_INT("radarRadius",    ud.radarRadius);
+	ADD_INT("sonarRadius",    ud.sonarRadius);
+	ADD_INT("jammerRadius",   ud.jammerRadius);
+	ADD_INT("sonarJamRadius", ud.sonarJamRadius);
+	ADD_INT("seismicRadius",  ud.seismicRadius);
 
 	ADD_FLOAT("seismicSignature", ud.seismicSignature);
 
@@ -867,18 +865,18 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("buildangle", ud.buildangle);
 
 	// transport stuff
-	ADD_INT(  "transportCapacity", ud.transportCapacity);
-	ADD_INT(  "transportSize",     ud.transportSize);
-	ADD_FLOAT("transportMass",     ud.transportMass);
-	ADD_FLOAT("loadingRadius",     ud.loadingRadius);
-	ADD_BOOL( "isAirBase",         ud.isAirBase);
-	ADD_BOOL( "isFirePlatform",    ud.isfireplatform);
-	ADD_BOOL( "holdSteady",        ud.holdSteady);
-	ADD_BOOL( "releaseHeld",       ud.releaseHeld);
-	ADD_BOOL( "transportByEnemy",  ud.transportByEnemy);
-	ADD_INT("transportUnloadMethod",ud.transportUnloadMethod);
-	ADD_FLOAT( "fallSpeed",			ud.fallSpeed);
-	ADD_FLOAT( "unitFallSpeed",		ud.unitFallSpeed);
+	ADD_INT(  "transportCapacity",     ud.transportCapacity);
+	ADD_INT(  "transportSize",         ud.transportSize);
+	ADD_FLOAT("transportMass",         ud.transportMass);
+	ADD_FLOAT("loadingRadius",         ud.loadingRadius);
+	ADD_BOOL( "isAirBase",             ud.isAirBase);
+	ADD_BOOL( "isFirePlatform",        ud.isfireplatform);
+	ADD_BOOL( "holdSteady",            ud.holdSteady);
+	ADD_BOOL( "releaseHeld",           ud.releaseHeld);
+	ADD_BOOL( "transportByEnemy",      ud.transportByEnemy);
+	ADD_INT(  "transportUnloadMethod", ud.transportUnloadMethod);
+	ADD_FLOAT("fallSpeed",			       ud.fallSpeed);
+	ADD_FLOAT("unitFallSpeed",		     ud.unitFallSpeed);
 
 	ADD_BOOL( "startCloaked",     ud.startCloaked);
 	ADD_FLOAT("cloakCost",        ud.cloakCost);
@@ -911,7 +909,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL( "canDropFlare",     ud.canDropFlare);
 	ADD_FLOAT("flareReloadTime",  ud.flareReloadTime);
-	ADD_FLOAT("flareEfficiency",   ud.flareEfficiency);
+	ADD_FLOAT("flareEfficiency",  ud.flareEfficiency);
 	ADD_FLOAT("flareDelay",       ud.flareDelay);
 	ADD_FLOAT("flareDropVectorX", ud.flareDropVector.x);
 	ADD_FLOAT("flareDropVectorY", ud.flareDropVector.y);
