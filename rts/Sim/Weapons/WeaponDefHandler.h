@@ -200,6 +200,7 @@ struct WeaponDef
 	float cylinderTargetting;					// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
 	float minIntensity;							// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;					// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float proximityPriority;					// multiplier for the distance to the target for priority calculations
 
 	unsigned int collisionFlags;
 

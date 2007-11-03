@@ -429,6 +429,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 	wd.heightBoostFactor = wdTable.GetFloat("heightBoostFactor", -1.0f);
+	wd.proximityPriority = wdTable.GetFloat("proximityPriority", 1.0f);
 
 	// get some weapon specific defaults
 	if (wd.type == "Cannon") {
