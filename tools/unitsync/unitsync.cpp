@@ -67,14 +67,11 @@ void CLogOutput::Print(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	if (fmt[strlen(fmt)-1] != '\n') {
-		char* foo = new char[strlen(fmt)];
-		sprintf(foo, "%s\n", fmt);
-		vfprintf(file, foo, ap);
-	} else {
-		vfprintf(file, fmt, ap);
-	}
+	vfprintf(file, fmt, ap);
 	va_end(ap);
+	if (fmt[strlen(fmt)-1] != '\n') {
+		fputc('\n', file);
+	}
 }
 
 void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
@@ -1056,15 +1053,15 @@ struct CustomOption {
 	OptionType typeCode;
 
 	bool   boolDef;
-                        
+
 	float  numberDef;
 	float  numberMin;
 	float  numberMax;
 	float  numberStep; // aligned to numberDef
-                                
+
 	string stringDef;
 	int    stringMaxLen;
-                                    
+
 	string listDef;
 	vector<ListItem> list;
 };
@@ -1130,7 +1127,7 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 				opt.list.push_back(item);
 				continue;
 			}
-				
+
 			// table format  (name & desc)
 			const LuaTable& itemTbl = listTbl.SubTable(i);
 			if (!itemTbl.IsValid()) {
@@ -1156,7 +1153,7 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 	}
 	else {
 		return false; // unknown type
-	}	
+	}
 
 	return true;
 }
