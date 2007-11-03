@@ -716,7 +716,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b3 = (w->range - (w->relWeaponPos).Length())
 					> (orderTarget->pos.distance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z),
-					orderTarget->pos, orderTarget);
+					orderTarget->pos, orderTarget != NULL);
 			edgeFactor = fabs(w->targetBorder);
 		}
 

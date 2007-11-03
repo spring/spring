@@ -1010,8 +1010,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if ((cmd == "specfullview") && gu->spectating) {
 		if (!action.extra.empty()) {
 			const int mode = atoi(action.extra.c_str());
-			gu->spectatingFullView   = (mode & 1);
-			gu->spectatingFullSelect = (mode & 2);
+			gu->spectatingFullView   = !!(mode & 1);
+			gu->spectatingFullSelect = !!(mode & 2);
 		} else {
 			gu->spectatingFullView = !gu->spectatingFullView;
 			gu->spectatingFullSelect = gu->spectatingFullView;
