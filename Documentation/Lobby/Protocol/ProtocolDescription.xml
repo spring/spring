@@ -1757,18 +1757,40 @@
 
     <Command Name="SCRIPTEND" Source="client">
       <Description>
-      Seny by client indicating he has finished sending us the game script from the battle replay
+      Sent by client indicating he has finished sending us the game script from the battle replay
       (also see comments for SCRIPTSTART command).
       </Description>
     </Command>
 
     <Command Name="SCRIPTEND" Source="server">
       <Description>
-      Seny by server indicating he has finished sending the game script from the battle replay
+      Sent by server indicating he has finished sending the game script from the battle replay
       (also see comments for SCRIPTSTART command).
       </Description>
     </Command>
     
+    <Command Name="SETSCRIPTTAG" Source="client">
+      <Arguments>
+        <Argument Name="key"   Optional="no" Sentence="no" />
+        <Argument Name="value" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      Sent by client (battle host), to set script tags in script.txt.
+      Keys may not contain spaces, and are expected to use the '/'
+      character to separate tables, ex:  "SETSCRIPTTAG GAME/MODOPTIONS/TEST true"
+      </Description>
+    </Command>
+
+    <Command Name="SETSCRIPTTAG" Source="server">
+      <Arguments>
+        <Argument Name="key"   Optional="no" Sentence="no" />
+        <Argument Name="value" Optional="no" Sentence="yes" />
+      </Arguments>
+      <Description>
+      Cached and relayed from client SETSCRIPTTAG messages.
+      </Description>
+    </Command>
+
     <Command Name="TESTLOGIN" Source="client">
       <Arguments>
         <Argument Name="username" Optional="no" Sentence="no" />
