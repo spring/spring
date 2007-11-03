@@ -5,7 +5,6 @@
 #include <vector>
 #include <map>
 
-#include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
 
@@ -96,7 +95,7 @@ struct UnitDef
 	std::string humanName;
 	std::string filename;
 	int id;                 //unique id for this type of unit
-	GLuint unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
+	unsigned int unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
 	int imageSizeX;
 	int imageSizeY;
 	std::string buildpicname;
