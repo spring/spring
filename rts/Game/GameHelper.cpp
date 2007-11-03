@@ -428,7 +428,10 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,std::
 					float modRange=radius+(aHeight-targPos.y)*heightMod;
 					if((pos-targPos).SqLength2D() <= modRange*modRange){
 						float dist2d=(pos-targPos).Length2D();
-						value*=(secDamage+(*ui)->health)*(dist2d+modRange*0.4f+100)*(0.01f+(*ui)->crashing)/(weapon->weaponDef->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
+						value*=(secDamage+(*ui)->health)
+							*(dist2d*weapon->weaponDef->proximityPriority+modRange*0.4f+100)
+							*(0.01f+(*ui)->crashing)
+							/(weapon->weaponDef->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
 						if((*ui)==lastTarget)
 							value*=0.4f;
 						if((*ui)->category & weapon->badTargetCategory)

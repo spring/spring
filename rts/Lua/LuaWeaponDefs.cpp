@@ -563,6 +563,7 @@ static bool InitParamMap()
 	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
 	ADD_FLOAT("minIntensity", wd.minIntensity);
 	ADD_FLOAT("heightBoostFactor", wd.heightBoostFactor);
+	ADD_FLOAT("proximityPriority", wd.proximityPriority);
 
 //	CExplosionGenerator *explosionGenerator;
 
