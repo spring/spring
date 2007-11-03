@@ -19,6 +19,7 @@ protected:
 		unz_file_pos fp;
 		int size;
 		string origName;
+		unsigned int crc;
 	};
 	unzFile zip;
 	map<string, FileData> fileData;		// using unzLocateFile is quite slow
@@ -32,6 +33,7 @@ public:
 	virtual ~CArchiveZip(void);
 	virtual bool IsOpen();
 	virtual int FindFiles(int cur, string* name, int* size);
+	virtual unsigned int GetCrc32 (const string& fileName);
 };
 
 #endif

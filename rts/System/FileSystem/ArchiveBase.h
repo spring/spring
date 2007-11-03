@@ -21,6 +21,7 @@ public:
 	virtual bool Eof(int handle) = 0;
 	virtual int FileSize(int handle) = 0;
 	virtual int FindFiles(int cur, string* name, int* size) = 0;
+	virtual unsigned int GetCrc32 (const string& fileName);
 };
 
 #endif

@@ -63,6 +63,7 @@ CArchive7Zip::CArchive7Zip(const string& name) :
 			fd.origName = name;
 			fd.fp = i;
 			fd.size = fi->Size;
+			fd.crc = fi->FileCRC;
 
 			StringToLowerInPlace(name);
 			fileData[name] = fd;
@@ -76,6 +77,13 @@ CArchive7Zip::~CArchive7Zip(void)
 		SzArDbExFree(&db, allocImp.Free);
 		fclose(archiveStream.File);
 	}
+}
+
+unsigned int CArchive7Zip::GetCrc32 (const string& fileName)
+{
+	string lower = StringToLower(fileName);
+	FileData fd = fileData[lower];
+	return fd.crc;
 }
 
 ABOpenFile_t* CArchive7Zip::GetEntireFile(const string& fName)
