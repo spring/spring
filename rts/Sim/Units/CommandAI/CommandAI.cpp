@@ -1153,8 +1153,8 @@ void CCommandAI::SlowUpdate()
 	switch(c.id){
 		case CMD_WAIT:{
 			return;
-    }
-  	case CMD_SELFD:{
+		}
+		case CMD_SELFD:{
 			if (owner->selfDCountdown != 0) {
 				owner->selfDCountdown = 0;
 			} else {
@@ -1166,15 +1166,15 @@ void CCommandAI::SlowUpdate()
 		case CMD_STOP:{
 			ExecuteStop(c);
 			return;
-    }
+		}
 		case CMD_ATTACK:{
 			ExecuteAttack(c);
 			return;
-    }
+		}
 		case CMD_DGUN:{
 			ExecuteDGun(c);
 			return;
-    }
+		}
 	}
 	if (ExecuteStateCommand(c)) {
 		FinishCommand();
