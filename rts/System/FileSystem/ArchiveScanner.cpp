@@ -5,11 +5,16 @@
 #include <sys/stat.h>
 
 #include "ArchiveFactory.h"
+#include "ArchiveBuffered.h"
 #include "CRC.h"
 #include "FileHandler.h"
 #include "Platform/FileSystem.h"
 #include "TdfParser.h"
 #include "mmgr.h"
+
+extern "C" {
+#include "lib/7zip/7zCrc.h"
+};
 
 // fix for windows
 #ifndef S_ISDIR
@@ -25,7 +30,7 @@
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	4
+#define INTERNAL_VER	5
 
 CArchiveScanner* archiveScanner = NULL;
 
@@ -89,6 +94,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
 	struct stat info;
+	InitCrcTable();
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
 		stat(it->c_str(),&info);
 
@@ -255,55 +261,52 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 }
 
 /** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
+
 unsigned int CArchiveScanner::GetCRC(const string& filename)
 {
-	struct stat info;
-	unsigned int crc;
+	UInt32 crc;
+	UInt32 digest = 0;
+	CArchiveBase* ar;
+	unsigned char buffer[65536];
+	list<string> files;
+	string innerName;
+	string lowerName;
+	int handle;
+	int innerSize;
+	int cur = 0;
 
-	stat(filename.c_str(), &info);
-	if (S_ISDIR(info.st_mode)) {
+	CrcInit(&crc);
 
-		crc = GetDirectoryCRC(filename);
+	// Try to open an archive
+	ar = CArchiveFactory::OpenArchive(filename);
+	if (!ar)
+		return 0; // It wasn't an archive
 
-	} else {
-
-		CRC c;
-		if (!c.UpdateFile(filename))
-			return 0;
-		crc = c.GetCRC();
-
+	// Sort all file paths for deterministic behaviour
+	while (true) {
+		cur = ar->FindFiles(cur, &innerName, &innerSize);
+		if (cur == 0) break;
+		lowerName = StringToLower(innerName); // case insensitive hash
+		files.push_back(lowerName);
 	}
+	files.sort();
+
+	// Add all files in sorted order
+	for (list<string>::iterator i = files.begin(); i != files.end(); i++ ) {
+		digest = CrcCalculateDigest(i->data(), i->size());
+		CrcUpdateUInt32(&crc, digest);
+		CrcUpdateUInt32(&crc, ar->GetCrc32(*i));
+	}                
+	delete ar;
+
+	digest = CrcGetDigest(&crc);
 
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
-	if (crc == 0)
+	if (digest == 0)
 		return 4711;
 	else
-		return crc;
-}
-
-/** Get combined CRC of all files and filenames in a directory (recursively). */
-unsigned int CArchiveScanner::GetDirectoryCRC(const string& curPath)
-{
-	CRC crc;
-
-	// recurse but don't include directories
-	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE);
-
-	// sort because order in which find_files finds them is undetermined
-	std::sort(found.begin(), found.end());
-
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
-		const std::string& path(*it);
-
-		// Don't CRC hidden files (starting with a dot).
-		if (path.find("/.") != string::npos)
-			continue;
-
-		crc.UpdateData(path); // CRC the filename
-		crc.UpdateFile(path); // CRC the contents
-	}
-	return crc.GetCRC();
+		return digest;
 }
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
@@ -562,15 +565,8 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 	unsigned int checksum = 0;
 	vector<string> ars = GetArchives(root);
 
-	// Do not include dependencies in base in the checksum:
-	// it conflicts badly with the auto-updated default content files,
-	// because .sdz files store timestamps too, which may differ
-	// each time the file is generated.
-
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-		if (i->find("base") == std::string::npos)
-			checksum ^= GetArchiveChecksum(*i);
-	}
+	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+		checksum ^= GetArchiveChecksum(*i);
 	return checksum;
 }
 
@@ -579,6 +575,7 @@ unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 {
 	unsigned int checksum = 0;
 	vector<string> ars = GetArchivesForMap(mapName);
+
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 		checksum ^= GetArchiveChecksum(*i);
 	return checksum;

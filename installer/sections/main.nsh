@@ -189,6 +189,7 @@
 
   ; Generated stuff from running spring
   Delete "$INSTDIR\ArchiveCacheV4.txt"
+  Delete "$INSTDIR\ArchiveCacheV5.txt"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
   Delete "$INSTDIR\demos\test.sdf"

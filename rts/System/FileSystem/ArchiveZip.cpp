@@ -33,6 +33,7 @@ CArchiveZip::CArchiveZip(const string& name) :
 			unzGetFilePos(zip, &fd.fp);
 			fd.size = info.uncompressed_size;
 			fd.origName = fname;
+			fd.crc = info.crc;
 //			SetSlashesForwardToBack(fd.origName);
 
 			fileData[name] = fd;
@@ -44,6 +45,13 @@ CArchiveZip::~CArchiveZip(void)
 {
 	if (zip)
 		unzClose(zip);
+}
+
+unsigned int CArchiveZip::GetCrc32 (const string& fileName)
+{
+	string lower = StringToLower(fileName);
+	FileData fd = fileData[lower];
+	return fd.crc;
 }
 
 bool CArchiveZip::IsOpen()

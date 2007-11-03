@@ -28,7 +28,7 @@ class CFileHandler {
 		             const std::string& modes = SPRING_VFS_RAW_FIRST);
 		~CFileHandler(void);
 		
-		void Read(void* buf,int length);
+		int Read(void* buf,int length);
 		void Seek(int pos);
 
 		bool FileExists() const;

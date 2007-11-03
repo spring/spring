@@ -41,7 +41,7 @@ void pfDealloc(void *p,size_t n)
 	delete[] ((char*)p);
 }
 
-/*
+/**
 Constructor.
 Building tables and precalculating data.
 */
@@ -107,7 +107,7 @@ CPathFinder::CPathFinder()
 }
 
 
-/*
+/**
 Destructor.
 Free used memory.
 */
@@ -118,7 +118,7 @@ CPathFinder::~CPathFinder()
 }
 
 
-/*
+/**
 Search with several start positions
 */
 IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path) {
@@ -189,7 +189,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 	return result;
 }
 
-/*
+/**
 Store som data and doing some basic top-administration.
 */
 IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath, unsigned int maxNodes,bool needPath) {
@@ -238,7 +238,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 }
 
 
-/*
+/**
 Setting up the starting point of the search.
 */
 IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
@@ -289,7 +289,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 }
 
 
-/*
+/**
 Performs the actual search.
 */
 IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
@@ -351,7 +351,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 }
 
 
-/*
+/**
 Test the availability and value of a square,
 and possibly add it to the queue of open squares.
 */
@@ -438,7 +438,7 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 }
 
 
-/*
+/**
 Recreates the path found by pathfinder.
 Starting at goalSquare and tracking backwards.
 */
@@ -475,7 +475,7 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 }
 
 
-/*
+/**
 Clear things up from last search.
 */
 void CPathFinder::ResetSearch() {
@@ -497,7 +497,7 @@ void CPathFinder::ResetSearch() {
 // CPathFinderDef //
 ////////////////////
 
-/*
+/**
 Constructor.
 */
 CPathFinderDef::CPathFinderDef(float3 goalCenter, float goalRadius) :
@@ -512,7 +512,7 @@ sqGoalRadius(goalRadius)
 }
 
 
-/*
+/**
 Tells whenever the goal is in range.
 */
 bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
@@ -520,7 +520,7 @@ bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
 }
 
 
-/*
+/**
 Distance to goal center in mapsquares.
 */
 float CPathFinderDef::Heuristic(int xSquare, int zSquare) const
@@ -536,7 +536,7 @@ float CPathFinderDef::Heuristic(int xSquare, int zSquare) const
 }
 
 
-/*
+/**
 Tells if the goal are is unaccessable.
 If the goal area is small and blocked then it's considered blocked, else not.
 */
@@ -556,7 +556,7 @@ int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {
 	return offset;
 }
 
-/*
+/**
 Draw a circle around the goal, indicating the goal area.
 */
 void CPathFinderDef::Draw() const {
@@ -599,7 +599,7 @@ void CPathFinder::Draw(void)
 // CRangedGoalWithCircularConstraintPFD //
 //////////////////////////////////////////
 
-/*
+/**
 Constructor
 Calculating the center and radius of the constrainted area.
 */
@@ -622,7 +622,7 @@ CPathFinderDef(goal, goalRadius)
 }
 
 
-/*
+/**
 Tests if a square is inside is the circular constrainted area.
 */
 bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const

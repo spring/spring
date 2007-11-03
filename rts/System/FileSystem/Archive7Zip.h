@@ -23,6 +23,7 @@ protected:
 		int fp;
 		int size;
 		string origName;
+		unsigned int crc;
 	};
 	map<string, FileData> fileData;
 
@@ -42,6 +43,7 @@ public:
 	virtual ~CArchive7Zip(void);
 	virtual bool IsOpen();
 	virtual int FindFiles(int cur, string* name, int* size);
+	virtual unsigned int GetCrc32 (const string& fileName);
 };
 
 #endif

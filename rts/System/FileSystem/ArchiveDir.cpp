@@ -63,8 +63,7 @@ int CArchiveDir::OpenFile(const std::string& fileName)
 int CArchiveDir::ReadFile(int handle, void* buffer, int numBytes)
 {
 	CFileHandler* f = GetFileHandler(handle);
-	f->Read(buffer, numBytes);
-	return 0;
+	return f->Read(buffer, numBytes);
 }
 
 void CArchiveDir::CloseFile(int handle)

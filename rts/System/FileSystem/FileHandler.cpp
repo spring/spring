@@ -115,10 +115,11 @@ bool CFileHandler::FileExists() const
 }
 
 
-void CFileHandler::Read(void* buf,int length)
+int CFileHandler::Read(void* buf,int length)
 {
 	if (ifs) {
 		ifs->read((char*)buf, length);
+		return ifs->gcount ();
 	}
 	else if (hpiFileBuffer) {
 		if ((length + hpiOffset) > hpiLength) {
@@ -128,7 +129,10 @@ void CFileHandler::Read(void* buf,int length)
 			memcpy(buf, &hpiFileBuffer[hpiOffset], length);
 			hpiOffset += length;
 		}
+		return length;
 	}
+
+	return 0;
 }
 
 

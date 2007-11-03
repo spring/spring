@@ -21,7 +21,7 @@ public:
 	void* operator new(size_t size){return pfAlloc(size);};
 	inline void operator delete(void* p,size_t size){pfDealloc(p,size);};
 
-	/*
+	/**
 	Gives a detailed path from given starting location to target defined in CPathFinderDef,
 	whenever any such are available.
 	If no complete path was found, any path leading as "close" to target as possible will be
