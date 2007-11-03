@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -114,11 +114,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
 				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -177,15 +177,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Agents\Assigner.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Helpers\CConfigData.cpp"
 				>
 			</File>
 			<File
@@ -335,6 +335,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Helpers\CConfigData.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Tasks\CConsoleTask.h"
 				>
 			</File>
@@ -420,10 +424,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Core\include.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Helpers\Information.h"
 				>
 			</File>
 			<File

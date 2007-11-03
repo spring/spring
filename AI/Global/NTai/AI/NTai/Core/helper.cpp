@@ -58,41 +58,54 @@ Global::Global(IGlobalAICallback* callback){
     CLOG("getting team value");
     Cached->team = cb->GetMyTeam();
 
-    CLOG("Creating Info class");
-    info = new CInfo(G);
+    CLOG("Creating Config holder class");
+    info = new CConfigData(G);
 
     CLOG("Setting the Logger class");
     L.Set(this);
+
     CLOG("Loading AI.tdf with TdfParser");
     TdfParser cs(G);
     cs.LoadFile("AI/AI.tdf");
+
     CLOG("Retrieving datapath value");
     info->datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
+
     CLOG("Opening logfile in plaintext");
     L.Open(true);
     //L.Verbose();
+
     CLOG("Logging class Opened");
     L.print("logging started");
+
     CLOG("Loading modinfo.tdf");
     TdfParser sf(G);
     sf.LoadFile("modinfo.tdf");
+
     CLOG("Getting tdfpath value");
     info->tdfpath =  sf.SGetValueDef(string(cb->GetModName()), "MOD\\NTAI\\tdfpath");
+
     CLOG("Retrieving cheat interface");
     chcb = callback->GetCheatInterface();
+
     CLOG("cheat interface retrieved");
     Cached->cheating = false;
     Cached->encache = new int[6001];
+
     CLOG("Getting LOS pointer");
     Cached->losmap = cb->GetLosMap();
+
     CLOG("initialising enemy cache elements to zero");
     for(int i = 0; i< 6000; i++){
         Cached->encache[i] = 0;
     }
+
     CLOG("Creating Actions class");
     Actions = new CActions(G);
+
     CLOG("Creating Map class");
     Map = new CMap(G);
+
     CLOG("Map class created");
     if(L.FirstInstance() == true){
         CLOG("First Instance == true");
@@ -101,18 +114,21 @@ Global::Global(IGlobalAICallback* callback){
         iterations = 0;
         saved = false;
     }
+
     CLOG("Creating MetalHandler class");
     M = new CMetalHandler(G);
+
     CLOG("Loading Metal cache");
     M->loadState();
+
     CLOG("View The NTai Log file from here on");
     /*if(M->hotspot.empty() == false){
-     for(vector<float3>::iterator hs = M->hotspot.begin(); hs != M->hotspot.end(); ++hs){
-     float3 tpos = *hs;
-     tpos.y = cb->GetElevation(tpos.x,tpos.z);
-     ctri triangle = Tri(tpos);
-     triangles.push_back(triangle);
-     }
+		 for(vector<float3>::iterator hs = M->hotspot.begin(); hs != M->hotspot.end(); ++hs){
+			 float3 tpos = *hs;
+			 tpos.y = cb->GetElevation(tpos.x,tpos.z);
+			 ctri triangle = Tri(tpos);
+			 triangles.push_back(triangle);
+		 }
      }*/
     //if(L.FirstInstance() == true){
     L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
@@ -151,7 +167,7 @@ Global::Global(IGlobalAICallback* callback){
 Global::~Global(){
     SaveUnitData();
     L.Close();
-    delete [] Cached->encache;
+    delete[] Cached->encache;
     delete info;
     delete DTHandler;
     delete Economy;
@@ -161,7 +177,6 @@ Global::~Global(){
     delete Ch;
     delete Pl;
     delete M;
-    delete info->mod_tdf;
     delete Cached;
     delete OrderRouter;
     delete UnitDefHelper;
@@ -801,19 +816,19 @@ void Global::InitAI(IAICallback* callback, int team){
     L.print("Initialisising");
     mrand.seed(uint(time(NULL)*team));
     string filename = info->datapath + slash + string("NTai.tdf");
-    //if(cb->GetFileSize(filename.c_str())==-1){
-    //	G->L.iprint("error, ntai.tdf doesnt exist, therefore the NTai data required to run NTai probably doesnt exist. Please check "+info->datapath+"/NTai/ has NTai.tdf and other AI data and folders....");
-    //}
-    filename = info->datapath + slash +  info->tdfpath + string(".tdf");
-    string* buffer = new string;
+
+    filename = info->datapath + "/" +  info->tdfpath + string(".tdf");
+    string* buffer = new string();
     TdfParser* q = new TdfParser(this);
+
     if(cb->GetFileSize(filename.c_str())!=-1){
         q->LoadFile(filename);
         L.print("Mod TDF loaded");
-        filename = info->datapath + slash + q->SGetValueDef("configs/default.tdf", "NTai\\modconfig");
+        filename = info->datapath + "/" + q->SGetValueDef("configs/default.tdf", "NTai\\modconfig");
     } else {/////////////////
+
         TdfParser* w = new TdfParser(this, "modinfo.tdf");
-        info->abstract = true;
+        info->_abstract = true;
         L.header(" :: mod.tdf failed to load, assuming default values");
         L.header(endline);
         // must write out a config and put in it the default stuff......
@@ -849,26 +864,20 @@ void Global::InitAI(IAICallback* callback, int team){
         L.print("Mod TDF loaded");
     } else {/////////////////
 
-        info->abstract = true;
+        info->_abstract = true;
         L.header(" :: mod.tdf failed to load, assuming default values");
         L.header(endline);
     }
     delete buffer;
+
     //load all the mod.tdf settings!
-    info->gaia = false;
-    Get_mod_tdf()->GetDef(info->abstract, "1", "AI\\abstract");
-    Get_mod_tdf()->GetDef(info->gaia, "0", "AI\\GAIA");
-    Get_mod_tdf()->GetDef(info->spacemod, "0", "AI\\spacemod");
-    Get_mod_tdf()->GetDef(info->mexfirst, "0", "AI\\first_attack_mexraid");
-    Get_mod_tdf()->GetDef(info->hardtarget, "0", "AI\\hard_target");
-    Get_mod_tdf()->GetDef(info->mexscouting, "1", "AI\\mexscouting");
-    Get_mod_tdf()->GetDef(info->dynamic_selection, "1", "AI\\dynamic_selection");
-    Get_mod_tdf()->GetDef(info->use_modabstracts, "0", "AI\\use_mod_default");
-    Get_mod_tdf()->GetDef(info->absent_abstract, "1", "AI\\use_mod_default_if_absent");
-    Get_mod_tdf()->GetDef(info->rule_extreme_interpolate, "1", "AI\\rule_extreme_interpolate");
-    info->antistall = atoi(Get_mod_tdf()->SGetValueDef("4", "AI\\antistall").c_str());
-    info->Max_Stall_TimeMobile = (float)atof(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime").c_str());
-    info->Max_Stall_TimeIMMobile = (float)atof(Get_mod_tdf()->SGetValueDef(Get_mod_tdf()->SGetValueDef("0", "AI\\MaxStallTime"), "AI\\MaxStallTimeimmobile").c_str());
+	info->Load();
+	
+	if(info->_abstract == true){
+        L.print("abstract == true");
+    }
+
+	L.print("values filled");
 
     // initial handicap
     float x = 0;
@@ -876,21 +885,7 @@ void Global::InitAI(IAICallback* callback, int team){
     chcb = G->gcb->GetCheatInterface();
     chcb->SetMyHandicap(x);
 
-    // cheat events
-    //chcb->EnableCheatEvents(true);
-
-    //Get_mod_tdf()->GetDef(send_to_web, "1", "AI\\web_contribute");
-    //Get_mod_tdf()->GetDef(get_from_web, "1", "AI\\web_recieve");
-    //Get_mod_tdf()->GetDef(update_NTAI, "1", "AI\\NTAI_update");
-    info->fire_state_commanders = atoi(Get_mod_tdf()->SGetValueDef("0", "AI\\fire_state_commanders").c_str());
-    info->move_state_commanders = atoi(Get_mod_tdf()->SGetValueDef("0", "AI\\move_state_commanders").c_str());
-    info->scout_speed = (float)atof(Get_mod_tdf()->SGetValueDef("50", "AI\\scout_speed").c_str());
-    if(info->abstract == true) info->dynamic_selection = true;
-    if(info->use_modabstracts == true) info->abstract = false;
-    if(info->abstract == true){
-        L.print("abstract == true");
-    }
-    L.print("values filled");
+    
 
     // solobuild
     set<std::string> solotemp;
@@ -929,7 +924,7 @@ void Global::InitAI(IAICallback* callback, int team){
     }
 
     L.print("Arrays filled");
-    if(info->abstract == true){
+    if(info->_abstract == true){
         L.header(" :: Using abstract buildtree");
         L.header(endline);
     }

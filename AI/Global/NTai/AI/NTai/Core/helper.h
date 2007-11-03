@@ -7,45 +7,6 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 using namespace std;
 
-/*struct STGA{
-	STGA(){
-		data = (unsigned char*)0;
-		width = 0;
-		height = 0;
-		byteCount = 0;
-	}
-	~STGA(){
-		delete[] data;
-		data = 0;
-	}
-
-	void destroy(){
-		delete[] data;
-		data = 0;
-	}
-
-	int width;
-	int height;
-	unsigned char byteCount;
-	unsigned char* data;
-};
-class ctri { // structure used to store data on triangle markers
-public:
-	int creation;
-	int lifetime;
-	float3 position;
-	float3 a;
-	float3 b;
-	float3 c;
-	int d;
-	int fade;
-	float alpha;
-	ARGB colour;
-	float speed;
-	bool bad;
-	bool flashy;
-};*/
-
 void trim(string &str);
 void tolowercase(string &str);
 bool ValidUnitID(int id);
@@ -78,10 +39,13 @@ public:
 	boost::shared_ptr<CBuildingPlacer> BuildingPlacer; // Building placement algorithm
 	CEconomy* Economy; // Construction rules (AAI/OTAI/JCAI style building selection)
 	COrderRouter* OrderRouter; // Handles the caching of orders sent to the engine, aswell as a few other things like delayed orders etc...
-	CCached* Cached;
+	
 	CMap* Map;
 	CActions* Actions;
-	CInfo* info;
+	
+	CCached* Cached; // cached data or other data used across the AI at runtime
+	CConfigData* info; // stuff loaded from configs that ideally should not change
+
 	CDTHandler* DTHandler; // handles dragon teeth rings
 	CRadarHandler* RadarHandler;
 	//CTaskFactory* TaskFactory;

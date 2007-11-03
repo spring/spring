@@ -202,7 +202,7 @@ bool CUnit::LoadTaskList(){
 
 		// TASKS LOADING
 
-		tasks.reserve(v.size());
+		//tasks.reserve(v.size());
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			if(polation){
 				if(polate){
@@ -273,6 +273,7 @@ bool CUnit::LoadBehaviours(){
 	vector<string> v;
 	CTokenizer<CIsComma>::Tokenize(v, d, CIsComma());
 	if(!v.empty()){
+		///behaviours.reserve(v.size()+1);
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			string s = *vi;
 			trim(s);
