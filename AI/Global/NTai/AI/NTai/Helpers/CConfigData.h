@@ -1,19 +1,11 @@
-class CInfo {
+class CConfigData {
 public:
-	CInfo(Global* G){
-		abstract = true;
-		gaia = false;
-		spacemod = false;
-		dynamic_selection = true;
-		use_modabstracts = false;
-		absent_abstract = false;
-		fire_state_commanders = 0;
-		move_state_commanders = 0;
-		scout_speed = 60;
-		rule_extreme_interpolate= true;
-		mod_tdf = new TdfParser(G);
-	}
-	bool abstract;
+	CConfigData(Global* G);
+	~CConfigData();
+
+	void Load();
+
+	bool _abstract;
 	bool mexfirst;
 	bool mexscouting;
 	bool gaia;

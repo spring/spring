@@ -33,8 +33,8 @@ public:
 	uint curplan;
 protected:
 	bool under_construction;
-	vector< boost::shared_ptr<IModule> > tasks;
-	vector< boost::shared_ptr<IBehaviour> > behaviours;
+	list< boost::shared_ptr<IModule> > tasks;
+	list< boost::shared_ptr<IBehaviour> > behaviours;
 	const UnitDef* ud;
 	int uid;
 	bool repeat;
