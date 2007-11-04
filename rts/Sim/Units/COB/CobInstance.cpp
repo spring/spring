@@ -1349,8 +1349,9 @@ void CCobInstance::SetUnitVal(int val, int param)
 				if(!!param){
 					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_CRASHING);
 				} else {
-					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 					unit->crashing=false;
+					((CAirMoveType*)unit->moveType)->aircraftState=CAirMoveType::AIRCRAFT_TAKEOFF;
+					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
 			break;
