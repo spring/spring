@@ -91,6 +91,14 @@
   <RecentChanges>
   <p>
 
+  <b><u>Version 0.36:</u></b><br />
+  <ul>
+    <li>Added SETSCRIPTTAG command. These commands should replace UPDATEBATTLEDETAILS command.</li>
+    <li>New startpos type added: "choose before battle" (type 3). These change affects following commands:
+        OPENBATTLE, JOINBATTLE, UPDATEBATTLEDETAILS.</li>
+    <li>Added two more in-game ranks, one at 300h, the other at 1000h.</li>
+  </ul>
+
   <b><u>Version 0.35:</u></b><br />
   <ul>
     <li>New 'servermode' argument has been added to TASSERVER command.</li>
@@ -883,7 +891,7 @@
         <Argument Name="startingenergy" Optional="no" Sentence="no"/>
         <Argument Name="maxunits" Optional="no" Sentence="no"/>
         <Argument Name="startpos" Optional="no" Sentence="no">
-        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        Can only be 0, 1, 2 or 3 (0=fixed, 1=random, 2=choose in-game, 3=choose before game).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
         Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
@@ -1110,7 +1118,7 @@
         Must be between 10 and 5000.
         </Argument>
         <Argument Name="startpos" Optional="no" Sentence="no">
-        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        Can only be 0, 1, 2 or 3 (0=fixed, 1=random, 2=choose in-game, 3=choose before game).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
         Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
@@ -1137,7 +1145,7 @@
         Must be between 10 and 5000.
         </Argument>
         <Argument Name="startpos" Optional="no" Sentence="no">
-        Can only be 0, 1 or 2 (0=fixed, 1=random, 2=choose).
+        Can only be 0, 1, 2 or 3 (0=fixed, 1=random, 2=choose in-game, 3=choose before game).
         </Argument>
         <Argument Name="gameendcondition" Optional="no" Sentence="no">
         Can only be 0, 1 or 2 (0=game continues, 1=game ends if commander dies, 2=lineage mode).
@@ -1771,24 +1779,32 @@
     
     <Command Name="SETSCRIPTTAG" Source="client">
       <Arguments>
-        <Argument Name="key"   Optional="no" Sentence="no" />
-        <Argument Name="value" Optional="no" Sentence="yes" />
+        <Argument Name="key" Optional="no" Sentence="no" />
+        <Argument Name="value" Optional="no" Sentence="no" />
       </Arguments>
       <Description>
       Sent by client (battle host), to set script tags in script.txt.
       Keys may not contain spaces, and are expected to use the '/'
-      character to separate tables, ex:  "SETSCRIPTTAG GAME/MODOPTIONS/TEST true"
+      character to separate tables (see example).
       </Description>
+      <Examples>
+        <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
+      </Examples>      
     </Command>
 
     <Command Name="SETSCRIPTTAG" Source="server">
       <Arguments>
-        <Argument Name="key"   Optional="no" Sentence="no" />
-        <Argument Name="value" Optional="no" Sentence="yes" />
+        <Argument Name="key" Optional="no" Sentence="no" />
+        <Argument Name="value" Optional="no" Sentence="no" />
       </Arguments>
       <Description>
-      Cached and relayed from client SETSCRIPTTAG messages.
+      Relayed from battle host's <clink name="SETSCRIPTTAG:client"/> message.
+      Lobby program must cache and process these tags and apply them accordingly
+      when creating "script.txt" file.
       </Description>
+      <Examples>
+        <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
+      </Examples>      
     </Command>
 
     <Command Name="TESTLOGIN" Source="client">
