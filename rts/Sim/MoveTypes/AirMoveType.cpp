@@ -397,7 +397,7 @@ void CAirMoveType::SlowUpdate(void)
 	if(aircraftState!=AIRCRAFT_LANDED && owner->unitDef->maxFuel>0)
 		owner->currentFuel = max (0.f, owner->currentFuel - (16.f/GAME_SPEED));
 
-	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth){
+	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth && !owner->crashing){
 		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,owner->unitDef->minAirBasePower);
 		if(lp){
 			AddDeathDependence(lp);
@@ -1038,7 +1038,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 void CAirMoveType::SetState(CAirMoveType::AircraftState state)
 {
-	if(/*aircraftState==AIRCRAFT_CRASHING || */state==aircraftState)
+	if(aircraftState==AIRCRAFT_CRASHING || state==aircraftState)
 		return;
 
 /*	if (state == AIRCRAFT_LANDING)
