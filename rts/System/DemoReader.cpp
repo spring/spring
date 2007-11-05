@@ -1,5 +1,6 @@
 #include "DemoReader.h"
 
+#include <limits.h>
 #include <stdexcept>
 
 #include "Sync/Syncify.h"
