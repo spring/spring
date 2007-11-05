@@ -1,10 +1,7 @@
 !ifdef INSTALL
 
-  ; these are deleted since 0.75
-  ; (this can be overwritten with next generation of this file)
-  Delete "LuaUI\Config\README.txt"
-  Delete "LuaUI\Headers\opengl.h.lua"
-  Delete "LuaUI\Headers\spring.h.lua"
+  ; Purge old file from 0.75 install.
+  Delete "LuaUI\unitdefs.lua"
 
   SetOutPath "$INSTDIR"
   File "..\game\gui.lua"

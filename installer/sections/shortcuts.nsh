@@ -9,9 +9,9 @@
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\Settings.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 
-  WriteIniStr "$INSTDIR\${PRODUCT_NAME}.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
+  WriteIniStr "$INSTDIR\Spring.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   WriteIniStr "$INSTDIR\unknown-files.url" "InternetShortcut" "URL" "http://spring.unknown-files.net"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\${PRODUCT_NAME}.url"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\Spring.url"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\unknown-files.url"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 !else
@@ -32,7 +32,7 @@
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 
   ; delete the .url files
-  Delete "$INSTDIR\${PRODUCT_NAME}.url"
+  Delete "$INSTDIR\Spring.url"
   Delete "$INSTDIR\unknown-files.url"
 
   ; delete the folders
