@@ -242,12 +242,6 @@ Alias('install', inst)
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)
 
-# install shaders
-for shader in os.listdir('game/shaders'):
-	if not os.path.isdir(os.path.join('game/shaders', shader)):
-		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'shaders'), os.path.join('game/shaders', shader))
-		Alias('install', inst)
-
 # install fonts
 for font in os.listdir('game/fonts'):
 	if not os.path.isdir(os.path.join('game/fonts', font)):
