@@ -15,6 +15,7 @@ cd builddata
 echo Creating springcontent.sdz
 del /Q ..\..\base\springcontent.sdz
 cd springcontent
+..\..\pkzip -add -dir=current ..\..\_temp.zip shaders\*
 ..\..\pkzip -add -dir=current ..\..\_temp.zip gamedata\*
 ..\..\pkzip -add -dir=current ..\..\_temp.zip bitmaps\*
 ..\..\pkzip -add -dir=current ..\..\_temp.zip anims\*
