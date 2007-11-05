@@ -53,7 +53,13 @@ CDemoReader::CDemoReader(const std::string& filename)
 
 	demoTimeOffset = gu->modGameTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoRead = gu->modGameTime - 0.01f;
-	bytesRemaining = fileHeader.demoStreamSize - sizeof(chunkHeader);
+
+	if (fileHeader.demoStreamSize != 0) {
+		bytesRemaining = fileHeader.demoStreamSize - sizeof(chunkHeader);
+	} else {
+		// Spring crashed while recording the demo: replay until EOF.
+		bytesRemaining = INT_MAX;
+	}
 }
 
 unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)

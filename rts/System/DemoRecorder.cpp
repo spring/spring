@@ -2,9 +2,6 @@
 
 #include <assert.h>
 #include <time.h>
-#ifdef _WIN32
-#include <io.h> // for _mktemp
-#endif
 
 #include "Sync/Syncify.h"
 #include "Platform/FileSystem.h"
@@ -25,14 +22,7 @@ CDemoRecorder::CDemoRecorder()
 	if (!filesystem.CreateDirectory("demos"))
 		return;
 
-	char buf[500] = "demos/XXXXXX";
-#ifndef _WIN32
-	mkstemp(buf);
-#else
-	_mktemp(buf);
-#endif
-
-	demoName = wantedName = buf;
+	wantedName = demoName = "demos/unnamed.sdf";
 
 	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
 	recordDemo = SAFE_NEW std::ofstream(filename.c_str(), std::ios::out | std::ios::binary);
@@ -47,7 +37,6 @@ CDemoRecorder::CDemoRecorder()
 	_time64(&currtime);
 	fileHeader.unixTime = currtime;
 
-	//recordDemo->seekp(fileHeader.headerSize);
 	recordDemo->write((char*)&fileHeader, sizeof(fileHeader));
 
 	if (gameSetup) {
@@ -76,12 +65,9 @@ CDemoRecorder::~CDemoRecorder()
 
 	delete recordDemo;
 
-	if (demoName != wantedName)
-	{
+	if (demoName != wantedName) {
 		rename(demoName.c_str(), wantedName.c_str());
-	}
-	else
-	{
+	} else {
 		remove("demos/unnamed.sdf");
 		rename(demoName.c_str(), "demos/unnamed.sdf");
 	}
