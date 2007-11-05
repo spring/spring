@@ -94,13 +94,13 @@
   <b><u>Version 0.35:</u></b><br />
   <ul>
     <li>New 'servermode' argument has been added to TASSERVER command.</li>
-    <li>Added SETSCRIPTTAG command. These command replaces UPDATEBATTLEDETAILS command.</li>
+    <li>Added SETSCRIPTTAGS command. These command replaces UPDATEBATTLEDETAILS command.</li>
     <li>New startpos type added: "choose before battle" (type 3). These change affects following commands:
         OPENBATTLE, JOINBATTLE.</li>
     <li>Added two more in-game ranks, one at 300h, the other at 1000h.</li>
-    <li>Removed UPDATEBATTLEDETAILS command as it is no longer needed (use SETSCRIPTTAG instead).
+    <li>Removed UPDATEBATTLEDETAILS command as it is no longer needed (use SETSCRIPTTAGS instead).
         Also removed several arguments from JOINBATTLE and OPENBATTLE commands (all these
-        arguments are handled via SETSCRIPTTAG command now). See descriptions of these commands for more info.</li>
+        arguments are handled via SETSCRIPTTAGS command now). See descriptions of these commands for more info.</li>
   </ul>
 
   <b><u>Version 0.34:</u></b><br />
@@ -984,8 +984,7 @@
       <Description>
       Sent by server telling the client that he has just joined the battle successfully.
       Server will also send a series of CLIENTBATTLESTATUS commands after this command,
-      so that user will get the battle statuses of all the clients in the battle. A series
-      of <clink name="SETSCRIPTTAG:server" /> commands will also be sent.
+      so that user will get the battle statuses of all the clients in the battle.
       </Description>
     </Command>
 
@@ -1056,7 +1055,7 @@
       Sent by server to all registered clients telling them
       some of the parameters of the battle changed. Battle's inside
       changes, like starting metal, energy, starting position etc., are sent only to clients
-      participating in the battle via <clink name="SETSCRIPTTAG:server"/> commands.
+      participating in the battle via <clink name="SETSCRIPTTAGS:server"/> command.
       </Description>
     </Command>
 
@@ -1694,46 +1693,59 @@
       </Description>
     </Command>
     
-    <Command Name="SETSCRIPTTAG" Source="client">
+    <Command Name="SETSCRIPTTAGS" Source="client">
       <Arguments>
-        <Argument Name="key" Optional="no" Sentence="no" />
-        <Argument Name="value" Optional="no" Sentence="no" />
+        <Argument Name="key1" Optional="no" Sentence="no"/>
+        <Argument Name="value1" Optional="no" Sentence="yes" />
+        <Argument Name="key2" Optional="no" Sentence="no"/>
+        <Argument Name="value2" Optional="no" Sentence="yes" />
+        <Argument Name="..." Optional="no" Sentence="no"/>
       </Arguments>
       <Description>
       Sent by client (battle host), to set script tags in script.txt.
       Keys may not contain spaces, and are expected to use the '/'
       character to separate tables (see example).
       In version 0.35 of TASServer command UPDATEBATTLEDETAILS was
-      completely replaced by a series of SETSCRIPTTAG commands. The list
+      completely replaced by this command. The list
       of attributes that were replaced (with example usage):
       <ul>
-        <li>SETSCRIPTTAG GAME/StartMetal 1000</li>
-        <li>SETSCRIPTTAG GAME/StartEnergy 1000</li>
-        <li>SETSCRIPTTAG GAME/MaxUnits 500</li>
-        <li>SETSCRIPTTAG GAME/StartPosType 1</li>
-        <li>SETSCRIPTTAG GAME/GameMode 0</li>
-        <li>SETSCRIPTTAG GAME/LimitDGun 1</li>
-        <li>SETSCRIPTTAG GAME/DiminishingMMs 0</li>
-        <li>SETSCRIPTTAG GAME/GhostedBuildings 1</li>
+        <li>SETSCRIPTTAGS GAME/StartMetal 1000</li>
+        <li>SETSCRIPTTAGS GAME/StartEnergy 1000</li>
+        <li>SETSCRIPTTAGS GAME/MaxUnits 500</li>
+        <li>SETSCRIPTTAGS GAME/StartPosType 1</li>
+        <li>SETSCRIPTTAGS GAME/GameMode 0</li>
+        <li>SETSCRIPTTAGS GAME/LimitDGun 1</li>
+        <li>SETSCRIPTTAGS GAME/DiminishingMMs 0</li>
+        <li>SETSCRIPTTAGS GAME/GhostedBuildings 1</li>
       </ul>
+      Though in reality all tags are joined together in a single SETSCRIPTTAGS command.
+      Note that when specifying multiple key+value pairs, they must be separated by TAB
+      characters. See the examples bellow.
       </Description>
       <Examples>
         <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
+        <Example>SETSCRIPTTAG GAME/StartMetal 1000	GAME/StartEnergy 1000</Example>
+        <Example>See whitespaces: SETSCRIPTTAG GAME/StartMetal<b>[SPACE]</b>1000<b>[TAB]</b>GAME/StartEnergy<b>[SPACE]</b>1000</Example>
       </Examples>      
     </Command>
 
-    <Command Name="SETSCRIPTTAG" Source="server">
+    <Command Name="SETSCRIPTTAGS" Source="server">
       <Arguments>
-        <Argument Name="key" Optional="no" Sentence="no" />
-        <Argument Name="value" Optional="no" Sentence="no" />
+        <Argument Name="key1" Optional="no" Sentence="no"/>
+        <Argument Name="value1" Optional="no" Sentence="yes" />
+        <Argument Name="key2" Optional="no" Sentence="no"/>
+        <Argument Name="value2" Optional="no" Sentence="yes" />
+        <Argument Name="..." Optional="no" Sentence="no"/>
       </Arguments>
       <Description>
-      Relayed from battle host's <clink name="SETSCRIPTTAG:client"/> message.
+      Relayed from battle host's <clink name="SETSCRIPTTAGS:client"/> message.
       Lobby program must cache and process these tags and apply them accordingly
       when creating "script.txt" file.
       </Description>
       <Examples>
         <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
+        <Example>SETSCRIPTTAG GAME/StartMetal 1000	GAME/StartEnergy 1000</Example>
+        <Example>See whitespaces: SETSCRIPTTAG GAME/StartMetal<b>[SPACE]</b>1000<b>[TAB]</b>GAME/StartEnergy<b>[SPACE]</b>1000</Example>
       </Examples>      
     </Command>
 
