@@ -1,7 +1,7 @@
 !ifdef INSTALL
 
   ; Purge old file from 0.75 install.
-  Delete "LuaUI\unitdefs.lua"
+  Delete "$INSTDIR\LuaUI\unitdefs.lua"
 
   SetOutPath "$INSTDIR"
   File "..\game\gui.lua"
