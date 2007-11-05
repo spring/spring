@@ -47,13 +47,17 @@
   SetOutPath "$INSTDIR\startscripts"
   File "..\game\startscripts\*.lua"
 
-  SetOutPath "$INSTDIR\shaders"
-  File "..\game\shaders\*.fp"
-  File "..\game\shaders\*.vp"
-  File "..\game\shaders\*.glsl"
+  ; Remove shaders, they are now in springcontent.sdz
+  Delete "$INSTDIR\shaders\*.fp"
+  Delete "$INSTDIR\shaders\*.vp"
+  Delete "$INSTDIR\shaders\*.glsl"
+  RmDir "$INSTDIR\shaders"
 
   SetOutPath "$INSTDIR\fonts"
   File "..\game\fonts\Luxi.ttf"
+
+  ; Remove Luxi.ttf, it has been moved to fonts/Luxi.ttf
+  Delete "$INSTDIR\Luxi.ttf"
 
 ; TODO: Fix the vc projects to use the same names.
   SetOutPath "$INSTDIR\AI\Helper-libs"
@@ -134,12 +138,6 @@
   ; Fonts
   Delete "$INSTDIR\fonts\Luxi.ttf"
   RmDir "$INSTDIR\fonts"
-
-  ; Shaders
-  Delete "$INSTDIR\shaders\*.fp"
-  Delete "$INSTDIR\shaders\*.vp"
-  Delete "$INSTDIR\shaders\*.glsl"
-  RmDir "$INSTDIR\shaders"
   
   ; AI Bot dlls
   Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
