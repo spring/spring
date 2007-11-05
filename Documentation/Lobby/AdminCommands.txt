@@ -51,6 +51,8 @@ saveaccounts
 changeaccountpass <username> <new password>
   changes password to "new password". Note that TASClient encodes password with md5 and sends
   base64 representation of md5 hash rather than raw password.
+getaccountaccess <username>
+  gets the access code. See Account.java and server documentation for more info on this one.
 changeaccountaccess <username> <new access code>
   changes access code. See Account.java and server documentation for more info on this one. 
   Misuse of this command may reset user's in-game time!
