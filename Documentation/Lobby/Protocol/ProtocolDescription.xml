@@ -1695,19 +1695,16 @@
     
     <Command Name="SETSCRIPTTAGS" Source="client">
       <Arguments>
-        <Argument Name="key1" Optional="no" Sentence="no"/>
-        <Argument Name="value1" Optional="no" Sentence="yes" />
-        <Argument Name="key2" Optional="no" Sentence="no"/>
-        <Argument Name="value2" Optional="no" Sentence="yes" />
-        <Argument Name="..." Optional="no" Sentence="no"/>
+        <Argument Name="pair1" Optional="no" Sentence="yes"/>
+        <Argument Name="pair2" Optional="no" Sentence="yes" />
+        <Argument Name="..."   Optional="no" Sentence="no"/>
       </Arguments>
       <Description>
-      Sent by client (battle host), to set script tags in script.txt.
-      Keys may not contain spaces, and are expected to use the '/'
-      character to separate tables (see example).
-      In version 0.35 of TASServer command UPDATEBATTLEDETAILS was
-      completely replaced by this command. The list
-      of attributes that were replaced (with example usage):
+      Sent by client (battle host), to set script tags in script.txt. The [pair] format is
+      "key=value can have spaces". Keys may not contain spaces, and are expected to use the
+      '/' character to separate tables (see example). In version 0.35 of TASServer command
+      UPDATEBATTLEDETAILS was completely replaced by this command. The list of attributes
+      that were replaced (with example usage):
       <ul>
         <li>SETSCRIPTTAGS GAME/StartMetal 1000</li>
         <li>SETSCRIPTTAGS GAME/StartEnergy 1000</li>
