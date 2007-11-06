@@ -35,4 +35,5 @@ zip -qu ../../../game/base/springcontent.sdz gamedata/*/*
 zip -qu ../../../game/base/springcontent.sdz bitmaps/*
 zip -qu ../../../game/base/springcontent.sdz bitmaps/*/*
 zip -qu ../../../game/base/springcontent.sdz anims/*
+zip -qu ../../../game/base/springcontent.sdz shaders/*
 cd ../../..
