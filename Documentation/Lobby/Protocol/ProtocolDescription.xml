@@ -95,6 +95,7 @@
   <ul>
     <li>New 'servermode' argument has been added to TASSERVER command.</li>
     <li>Added SETSCRIPTTAGS command. This command replaces UPDATEBATTLEDETAILS command.</li>
+    <li>Added REMOVESCRIPTTAGS command, companion to SETSCRIPTTAGS.</li>
     <li>New startpos type added: "choose before battle" (type 3). These change affects following commands:
         OPENBATTLE, JOINBATTLE.</li>
     <li>Added two more in-game ranks, one at 300h, the other at 1000h.</li>
@@ -1695,9 +1696,10 @@
     
     <Command Name="SETSCRIPTTAGS" Source="client">
       <Arguments>
-        <Argument Name="pair1" Optional="no" Sentence="yes"/>
-        <Argument Name="pair2" Optional="no" Sentence="yes" />
-        <Argument Name="..."   Optional="no" Sentence="no"/>
+        <Argument Name="pair1" Optional="no"  Sentence="yes"/>
+        <Argument Name="pair2" Optional="yes" Sentence="yes"/>
+        <Argument Name="pair3" Optional="yes" Sentence="yes"/>
+        <Argument Name="..."   Optional="yes" Sentence="yes"/>
       </Arguments>
       <Description>
       Sent by client (battle host), to set script tags in script.txt. The [pair] format is
@@ -1706,33 +1708,32 @@
       UPDATEBATTLEDETAILS was completely replaced by this command. The list of attributes
       that were replaced (with example usage):
       <ul>
-        <li>SETSCRIPTTAGS GAME/StartMetal 1000</li>
-        <li>SETSCRIPTTAGS GAME/StartEnergy 1000</li>
-        <li>SETSCRIPTTAGS GAME/MaxUnits 500</li>
-        <li>SETSCRIPTTAGS GAME/StartPosType 1</li>
-        <li>SETSCRIPTTAGS GAME/GameMode 0</li>
-        <li>SETSCRIPTTAGS GAME/LimitDGun 1</li>
-        <li>SETSCRIPTTAGS GAME/DiminishingMMs 0</li>
-        <li>SETSCRIPTTAGS GAME/GhostedBuildings 1</li>
+        <li>SETSCRIPTTAGS GAME/StartMetal=1000</li>
+        <li>SETSCRIPTTAGS GAME/StartEnergy=1000</li>
+        <li>SETSCRIPTTAGS GAME/MaxUnits=500</li>
+        <li>SETSCRIPTTAGS GAME/StartPosType=1</li>
+        <li>SETSCRIPTTAGS GAME/GameMode=0</li>
+        <li>SETSCRIPTTAGS GAME/LimitDGun=1</li>
+        <li>SETSCRIPTTAGS GAME/DiminishingMMs=0</li>
+        <li>SETSCRIPTTAGS GAME/GhostedBuildings=1</li>
       </ul>
       Though in reality all tags are joined together in a single SETSCRIPTTAGS command.
       Note that when specifying multiple key+value pairs, they must be separated by TAB
       characters. See the examples bellow.
       </Description>
       <Examples>
-        <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
-        <Example>SETSCRIPTTAG GAME/StartMetal 1000	GAME/StartEnergy 1000</Example>
-        <Example>See whitespaces: SETSCRIPTTAG GAME/StartMetal<b>[SPACE]</b>1000<b>[TAB]</b>GAME/StartEnergy<b>[SPACE]</b>1000</Example>
+        <Example>SETSCRIPTTAGS GAME/MODOPTIONS/TEST=true</Example>
+        <Example>SETSCRIPTTAGS GAME/StartMetal=1000	GAME/StartEnergy=1000</Example>
+        <Example>See whitespaces: SETSCRIPTTAGS GAME/StartMetal=1000<b>[TAB]</b>GAME/StartEnergy=1000</Example>
       </Examples>      
     </Command>
 
     <Command Name="SETSCRIPTTAGS" Source="server">
       <Arguments>
-        <Argument Name="key1" Optional="no" Sentence="no"/>
-        <Argument Name="value1" Optional="no" Sentence="yes" />
-        <Argument Name="key2" Optional="no" Sentence="no"/>
-        <Argument Name="value2" Optional="no" Sentence="yes" />
-        <Argument Name="..." Optional="no" Sentence="no"/>
+        <Argument Name="pair1" Optional="no"  Sentence="yes"/>
+        <Argument Name="pair2" Optional="yes" Sentence="yes"/>
+        <Argument Name="pair3" Optional="yes" Sentence="yes"/>
+        <Argument Name="..."   Optional="yes" Sentence="yes"/>
       </Arguments>
       <Description>
       Relayed from battle host's <clink name="SETSCRIPTTAGS:client"/> message.
@@ -1740,9 +1741,40 @@
       when creating "script.txt" file.
       </Description>
       <Examples>
-        <Example>SETSCRIPTTAG GAME/MODOPTIONS/TEST true</Example>
-        <Example>SETSCRIPTTAG GAME/StartMetal 1000	GAME/StartEnergy 1000</Example>
-        <Example>See whitespaces: SETSCRIPTTAG GAME/StartMetal<b>[SPACE]</b>1000<b>[TAB]</b>GAME/StartEnergy<b>[SPACE]</b>1000</Example>
+        <Example>SETSCRIPTTAGS GAME/MODOPTIONS/TEST=true</Example>
+        <Example>SETSCRIPTTAGS GAME/StartMetal=1000	GAME/StartEnergy=1000</Example>
+        <Example>See whitespaces: SETSCRIPTTAGS GAME/StartMetal=1000<b>[TAB]</b>GAME/StartEnergy=1000</Example>
+      </Examples>      
+    </Command>
+
+    <Command Name="REMOVESCRIPTTAGS" Source="client">
+      <Arguments>
+        <Argument Name="key1" Optional="no"  Sentence="no"/>
+        <Argument Name="key2" Optional="yes" Sentence="no"/>
+        <Argument Name="key3" Optional="yes" Sentence="no"/>
+        <Argument Name="..."  Optional="yes" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Sent by client (battle host), to remove script tags in script.txt.
+      </Description>
+      <Examples>
+        <Example>REMOVESCRIPTTAGS GAME/MODOPTIONS/TEST1 GAME/MODOPTIONS/TEST2</Example>
+      </Examples>      
+    </Command>
+
+    <Command Name="REMOVESCRIPTTAGS" Source="server">
+      <Arguments>
+        <Argument Name="key1" Optional="no"  Sentence="no"/>
+        <Argument Name="key2" Optional="yes" Sentence="no"/>
+        <Argument Name="key3" Optional="yes" Sentence="no"/>
+        <Argument Name="..."  Optional="yes" Sentence="no"/>
+      </Arguments>
+      <Description>
+      Relayed from battle host's <clink name="REMOVESCRIPTTAGS:client"/> message.
+      Lobby program must remove these tags from its cached script tags database.
+      </Description>
+      <Examples>
+        <Example>REMOVESCRIPTTAGS GAME/MODOPTIONS/TEST1 GAME/MODOPTIONS/TEST2</Example>
       </Examples>      
     </Command>
 
