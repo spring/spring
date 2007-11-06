@@ -94,7 +94,7 @@
   <b><u>Version 0.35:</u></b><br />
   <ul>
     <li>New 'servermode' argument has been added to TASSERVER command.</li>
-    <li>Added SETSCRIPTTAGS command. These command replaces UPDATEBATTLEDETAILS command.</li>
+    <li>Added SETSCRIPTTAGS command. This command replaces UPDATEBATTLEDETAILS command.</li>
     <li>New startpos type added: "choose before battle" (type 3). These change affects following commands:
         OPENBATTLE, JOINBATTLE.</li>
     <li>Added two more in-game ranks, one at 300h, the other at 1000h.</li>
