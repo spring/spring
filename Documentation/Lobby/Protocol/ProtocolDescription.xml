@@ -83,6 +83,7 @@
     <li>{} {} ... = two or more sentences. They are separated by TAB characters.</li>
     <li>words are always separated by space characters.</li>
     <li>| = separates choices ("OR")</li>
+    <li>[] = denotes an optional argument</li>
   </ul>
   </p>
   
