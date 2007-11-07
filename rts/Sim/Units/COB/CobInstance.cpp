@@ -106,6 +106,22 @@
 
 // * NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
+// Codes:   1024 - 2303
+//
+// Memory:  4 * (1024 + (2 * (17 * 128))) bytes  =  21504 bytes
+//
+#define GLOBAL_VAR_START       1024 // set or get, 1024 vars
+#define GLOBAL_VAR_END         2047
+#define TEAM_VAR_START         2048 // set or get, 128 vars
+#define TEAM_VAR_END           2175
+#define ALLY_VAR_START         2176 // set or get, 128 vars
+#define ALLY_VAR_END           2303
+
+static int globalVars         [GLOBAL_VAR_END - GLOBAL_VAR_START + 1] = { 0 };
+static int teamVars[MAX_TEAMS][  TEAM_VAR_END -   TEAM_VAR_START + 1] = { 0 };
+static int allyVars[MAX_TEAMS][  ALLY_VAR_END -   ALLY_VAR_START + 1] = { 0 };
+
+
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script)
 {
@@ -1138,8 +1154,19 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	default:
-		logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
-		                val, p1, p2, p3, p4);
+		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
+			return globalVars[val - GLOBAL_VAR_START];
+		}
+		else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
+			return teamVars[unit->team][val - TEAM_VAR_START];
+		}
+		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
+			return allyVars[unit->allyteam][val - ALLY_VAR_START];
+		}
+		else {
+			logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
+			                val, p1, p2, p3, p4);
+		}
 	}
 #endif
 
@@ -1361,7 +1388,18 @@ void CCobInstance::SetUnitVal(int val, int param)
 			break;
 		}
 		default: {
-			logOutput.Print("CobError: Unknown set constant %d", val);
+			if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
+				globalVars[val - GLOBAL_VAR_START] = param;
+			}
+			else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
+				teamVars[unit->team][val - TEAM_VAR_START] = param;
+			}
+			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
+				allyVars[unit->allyteam][val - ALLY_VAR_START] = param;
+			}
+			else {
+				logOutput.Print("CobError: Unknown set constant %d", val);
+			}
 		}
 	}
 #endif
