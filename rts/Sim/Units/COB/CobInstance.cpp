@@ -1174,6 +1174,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 				if (u != NULL) {
 					u->cob->unitVars[varID] = p2;
+					return 1;
 				}
 				return 0;
 			}
