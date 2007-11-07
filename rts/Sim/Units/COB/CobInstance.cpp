@@ -104,22 +104,13 @@
 #define COB_ID                  100 // get
 #define ALPHA_THRESHOLD         103 // set or get
 
-// * NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
+// NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
-// Codes:   1024 - 2303
-//
-// Memory:  4 * (1024 + (2 * (17 * 128))) bytes  =  21504 bytes
-//
-#define GLOBAL_VAR_START       1024 // set or get, 1024 vars
-#define GLOBAL_VAR_END         2047
-#define TEAM_VAR_START         2048 // set or get, 128 vars
-#define TEAM_VAR_END           2175
-#define ALLY_VAR_START         2176 // set or get, 128 vars
-#define ALLY_VAR_END           2303
+// NOTE: shared variables use codes [1024 - 5119]
 
-static int globalVars         [GLOBAL_VAR_END - GLOBAL_VAR_START + 1] = { 0 };
-static int teamVars[MAX_TEAMS][  TEAM_VAR_END -   TEAM_VAR_START + 1] = { 0 };
-static int allyVars[MAX_TEAMS][  ALLY_VAR_END -   ALLY_VAR_START + 1] = { 0 };
+int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {0};
+int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {0};
+int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        = {0};
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
@@ -139,6 +130,10 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 		pi.visible = true;
 
 		pieces.push_back(pi);
+	}
+
+	for (int i = 0; i < UNIT_VAR_COUNT; i++) {
+		unitVars[i] = 0;
 	}
 
 	unit = _unit;
@@ -988,7 +983,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * COBSCALE);}
 	case UNIT_XZ: {
-		if (p1 == 0)
+		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
@@ -997,7 +992,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return PACKXZ(u->pos.x, u->pos.z);}
 	case UNIT_Y: {
 		//logOutput.Print("Unit-y %d", p1);
-		if (p1 == 0)
+		if (p1 <= 0)
 			return (int)(unit->pos.y * COBSCALE);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
@@ -1005,7 +1000,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return (int)(u->pos.y * COBSCALE);}
 	case UNIT_HEIGHT:{
-		if (p1 == 0)
+		if (p1 <= 0)
 			return (int)(unit->radius * COBSCALE);
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
@@ -1080,7 +1075,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
 	case HEADING: {
-		if (p1 == 0)
+		if (p1 <= 0)
 			return unit->heading;
 		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 		if (u == NULL)
@@ -1146,7 +1141,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int(unit->alphaThreshold * 255);
 	}
 	case COB_ID: {
-		if (p1 == 0) {
+		if (p1 <= 0) {
 			return unit->unitDef->cobID;
 		} else {
 			const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
@@ -1162,6 +1157,26 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
 			return allyVars[unit->allyteam][val - ALLY_VAR_START];
+		}
+		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
+			const int varID = val - UNIT_VAR_START;
+			if (p1 == 0) {
+				return unitVars[varID];
+			}
+			else if (p1 > 0) {
+				// get the unit var for another unit
+				const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+				return (u == NULL) ? 0 : u->cob->unitVars[varID];
+			}
+			else {
+				// set the unit var for another unit
+				p1 = -p1;
+				const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+				if (u != NULL) {
+					u->cob->unitVars[varID] = p2;
+				}
+				return 0;
+			}
 		}
 		else {
 			logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
@@ -1396,6 +1411,9 @@ void CCobInstance::SetUnitVal(int val, int param)
 			}
 			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
 				allyVars[unit->allyteam][val - ALLY_VAR_START] = param;
+			}
+			else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
+				unitVars[val - UNIT_VAR_START] = param;
 			}
 			else {
 				logOutput.Print("CobError: Unknown set constant %d", val);
