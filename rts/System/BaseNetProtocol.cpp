@@ -93,6 +93,12 @@ void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum)
 	SendData<uchar>(NETMSG_SETPLAYERNUM, myPlayerNum);
 }
 
+void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum, uchar connNumber)
+{
+	uchar msg[2] = {NETMSG_SETPLAYERNUM, myPlayerNum};
+	SendData(msg, 2, connNumber);
+}
+
 //  NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
 
 void CBaseNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)

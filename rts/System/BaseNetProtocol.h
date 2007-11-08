@@ -68,7 +68,7 @@ enum NETMSG {
 	NETMSG_SD_BLKRESPONSE   = 44,
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
-	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg					
+	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg
 };
 
 /**
@@ -103,6 +103,7 @@ public:
 	void SendNewFrame(int frameNum);
 	void SendStartPlaying();
 	void SendSetPlayerNum(uchar myPlayerNum);
+	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	void SendChat(uchar myPlayerNum, const std::string& message);
 	void SendRandSeed(uint randSeed);

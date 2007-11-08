@@ -1,4 +1,4 @@
-// Game.cpp: implementation of the CGame class.
+// // Game.cpp: implementation of the CGame class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -2794,30 +2794,12 @@ bool CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_MAPNAME: {
-				archiveScanner->CheckMap(stupidGlobalMapname, *(unsigned*)(&inbuf[2]));
-				net->GetDemoRecorder()->SetName(stupidGlobalMapname); //TODO use name from NETMSG
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_MODNAME: {
-				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
-				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_PLAYERNAME: {
-				int player=inbuf[2];
-				if(player>=MAX_PLAYERS || player<0){
-					logOutput.Print("Got invalid player num %i in playername msg",player);
-				} else {
-					gs->players[player]->playerName=(char*)(&inbuf[3]);
-					gs->players[player]->readyToStart=true;
-					gs->players[player]->active=true;
-					wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
-				}
+				int player = inbuf[2];
+				gs->players[player]->playerName=(char*)(&inbuf[3]);
+				gs->players[player]->readyToStart=true;
+				gs->players[player]->active=true;
+				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -3177,6 +3159,26 @@ bool CGame::ClientReadNet()
 				break;
 			}
 #endif // DIRECT_CONTROL_ALLOWED
+			
+			//TODO CGame should not recieve this (handle in CPreGame)
+			case NETMSG_MAPNAME: {
+				const std::string mapname = std::string((char*) (inbuf + 6));
+				if (mapname != stupidGlobalMapname)
+				{
+					logOutput.Print("Warning: mapname differs from host's");
+				}
+				archiveScanner->CheckMap(mapname, *(unsigned*)(&inbuf[2]));
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
+
+			//TODO same here
+			case NETMSG_MODNAME: {
+				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
+				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
+				AddTraffic(-1, packetCode, dataLength);
+				break;
+			}
 			
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_ATTEMPTCONNECT:
