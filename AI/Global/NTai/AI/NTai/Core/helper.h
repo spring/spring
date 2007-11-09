@@ -30,9 +30,7 @@ public:
 	IAICallback* cb;// engine callback interface
 	IGlobalAICallback* gcb;// global AI engine callback interface
 
-	//Assigner* As;// Assigner Agent, it's the equivalent of the metal maker AI but it handles moho mexes too
 	Chaser* Ch;// Chaser Agent, deals with attacking and things such as kamikaze units/dgunning/stockpiling missiles/several attack unit behaviours
-	CUnitDefHelp* UnitDefHelper;
 	CUnitDefLoader* UnitDefLoader;
 
 	boost::shared_ptr<CManufacturer> Manufacturer; // Construction helper
@@ -129,12 +127,7 @@ public:
 		return UnitDefLoader->GetUnitDef(s);
 		//return cb->GetUnitDef(s.c_str());
 	}
-	/*struct temp_pos{
-		float3 pos;
-		int last_update;
-		bool enemy;
-		string name;
-	};*/
+
 	//map<int,temp_pos> positions;
 	float3 GetUnitPos(int unitid,int enemy=0);// 1 = true, 2 = false, 0 = find out for us/wedunno
 	float GetDGunCost(string s);

@@ -158,7 +158,6 @@ Global::Global(IGlobalAICallback* callback){
     L.print("BuildingPlacer constructed");
 
     Ch = new Chaser;
-    UnitDefHelper = new CUnitDefHelp(G);
     L.print("Chaser constructed");
 }
 
@@ -179,7 +178,6 @@ Global::~Global(){
     delete M;
     delete Cached;
     delete OrderRouter;
-    delete UnitDefHelper;
     delete UnitDefLoader;
 }
 
@@ -378,8 +376,9 @@ void Global::UnitCreated(int unit){
     START_EXCEPTION_HANDLING
     const UnitDef* udf = GetUnitDef(unit);
     if(udf){
-        if(!UnitDefHelper->IsMobile(udf)){
-            BuildingPlacer->Block(G->GetUnitPos(unit), udf);
+		shared_ptr<CUnitTypeData> utd = UnitDefLoader->GetUnitTypeDataByName(udf->name).lock();
+        if(!utd->IsMobile()){
+            BuildingPlacer->Block(G->GetUnitPos(unit), utd);
         }
     }
     END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")

@@ -169,37 +169,50 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 
 void Chaser::UnitFinished(int unit){
     NLOG("Chaser::UnitFinished");
-    NO_GAIA(NA)
-    const UnitDef* ud = G->GetUnitDef(unit);
-    if(ud == 0){
-        G->L.print("UnitDef call filled, was this unit blown up as soon as it was created?");
-        return;
-    }
+
+	if(!ValidUnitID(unit)){
+		return;
+	}
+
+    NO_GAIA(NA);
+
+	shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
+
     NLOG("stockpile/dgun");
-    if(ud->canDGun){
+
+	if(utd->GetUnitDef()->canDGun){
         dgunners.insert(unit);
     }
-    if(ud->weapons.empty() == false){
-        for(vector<UnitDef::UnitDefWeapon>::const_iterator i = ud->weapons.begin(); i!= ud->weapons.end(); ++i){
-            if(i->def->stockpile == true){
+
+    if(utd->GetUnitDef()->weapons.empty() == false){
+
+        for(vector<UnitDef::UnitDefWeapon>::const_iterator i = utd->GetUnitDef()->weapons.begin(); i!= utd->GetUnitDef()->weapons.end(); ++i){
+            
+			if(i->def->stockpile){
+
                 TCommand tc(unit, "chaser::unitfinished stockpile");
                 tc.c.timeOut = G->cb->GetCurrentFrame() + (20 MINUTES);
                 tc.ID(CMD_STOCKPILE);
+
                 for(int i = 0;i<110;i++){
                     G->OrderRouter->GiveOrder(tc, false);
                 }
+
                 sweap.insert(unit);
+
             }
         }
     }
-    if((ud->movedata == 0) && (ud->canfly == false)&&(sweap.find(unit) == sweap.end()) && (ud->weapons.empty() == false)){
+
+    if((utd->GetUnitDef()->movedata == 0) && (!utd->GetUnitDef()->canfly)&&(sweap.find(unit) == sweap.end()) && (!utd->GetUnitDef()->weapons.empty())){
         defences.insert(unit);
         return;
     }
-    if(maneouvre.empty() == false){
+
+    if(!maneouvre.empty()){
         for(vector<string>::iterator i = maneouvre.begin(); i != maneouvre.end(); ++i){
             //
-            if(*i == ud->name){
+            if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/move state");
                 tc.ID(CMD_MOVE_STATE);
                 tc.Push(1);
@@ -207,11 +220,13 @@ void Chaser::UnitFinished(int unit){
                 break;
             }
         }
+
     }
-    if(hold_pos.empty() == false){
+
+    if(!hold_pos.empty()){
         for(vector<string>::iterator i = hold_pos.begin(); i != hold_pos.end(); ++i){
             //
-            if(*i == ud->name){
+            if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/movestate");
                 tc.ID(CMD_MOVE_STATE);
                 tc.Push(0);
@@ -220,10 +235,11 @@ void Chaser::UnitFinished(int unit){
             }
         }
     }
+
     if(roam.empty() == false){
         for(vector<string>::iterator i = roam.begin(); i != roam.end(); ++i){
             //
-            if(*i == ud->name){
+            if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/movestate");
                 tc.ID(CMD_MOVE_STATE);
                 tc.Push(2);
@@ -232,10 +248,11 @@ void Chaser::UnitFinished(int unit){
             }
         }
     }
+
     if(fire_at_will.empty() == false){
         for(vector<string>::iterator i = fire_at_will.begin(); i != fire_at_will.end(); ++i){
             //
-            if(*i == ud->name){
+            if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/movestate");
                 tc.ID(CMD_FIRE_STATE);
                 tc.Push(2);
@@ -244,10 +261,11 @@ void Chaser::UnitFinished(int unit){
             }
         }
     }
+
     if(return_fire.empty() == false){
         for(vector<string>::iterator i = return_fire.begin(); i != return_fire.end(); ++i){
             //
-            if(*i == ud->name){
+			if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/movestate");
                 tc.ID(CMD_FIRE_STATE);
                 tc.Push(1);
@@ -256,10 +274,11 @@ void Chaser::UnitFinished(int unit){
             }
         }
     }
+
     if(hold_fire.empty() == false){
         for(vector<string>::iterator i = hold_fire.begin(); i != hold_fire.end(); ++i){
             //
-            if(*i == ud->name){
+            if(*i == utd->GetName()){
                 TCommand tc(unit, "setting firing state/movestate");
                 tc.ID(CMD_FIRE_STATE);
                 tc.Push(0);
@@ -269,18 +288,18 @@ void Chaser::UnitFinished(int unit){
         }
     }
 
-    if(G->UnitDefHelper->IsAttacker(ud)){
+    if(utd->IsAttacker()){
         unit_to_initialize.insert(unit);
     }
+
     NLOG("kamikaze");
+
     if(sd_proxim.empty() == false){
-        string sh = ud->name;
-        trim(sh);
-        tolowercase(sh);
-        if(sd_proxim.find(sh) != sd_proxim.end()){
+		if(sd_proxim.find(utd->GetName()) != sd_proxim.end()){
             kamikaze_units.insert(unit);
         }
     }
+
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -387,53 +406,74 @@ void Chaser::UnitMoveFailed(int unit){
 
 void Chaser::UnitIdle(int unit){
     NLOG("Chaser::UnitIdle");
-    NO_GAIA(NA)
+	
+	if(!ValidUnitID(unit)){
+		return;
+	}
+
+    NO_GAIA(NA);
     if(this->unit_to_initialize.find(unit) != this->unit_to_initialize.end()){
         unit_to_initialize.erase(unit);
-        const UnitDef* ud = G->GetUnitDef(unit);
-        if(ud == 0) return;
+
+		shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
+
         Add(unit);
-        bool target = false;
-        if(G->UnitDefHelper->IsAirCraft(ud)){
+        
+		bool target = false;
+
+        if(utd->IsAirCraft()){
             temp_air_attack_units.insert(unit);
+
             if((int)temp_air_attack_units.size()>threshold){
                 target = true;
             }
-        }else{
+
+        } else {
             temp_attack_units.insert(unit);
-            if((int)temp_attack_units.size()>threshold){
+            
+			if((int)temp_attack_units.size()>threshold){
                 target = true;
             }
+
         }
-        G->L.print(string("new attacker added :: ") + ud->name + string(" target?:")+to_string(target)+string(" threshold:")+to_string(threshold));
-        if(target){
+
+		G->L.print(string("new attacker added :: ") + utd->GetName() + string(" target?:")+to_string(target)+string(" threshold:")+to_string(threshold));
+        
+		if(target){
+
             set<int> temp;
-            if(G->UnitDefHelper->IsAirCraft(ud)){
+
+            if(utd->IsAirCraft()){
+
                 FindTarget(temp_air_attack_units, true);
                 temp.insert(temp_air_attack_units.begin(), temp_air_attack_units.end());
                 temp_air_attack_units.erase(temp_air_attack_units.begin(), temp_air_attack_units.end());
                 temp_air_attack_units.clear();
+
             }else{
 
                 FindTarget(temp_attack_units, true);
                 temp.insert(temp_attack_units.begin(), temp_attack_units.end());
                 temp_attack_units.erase(temp_attack_units.begin(), temp_attack_units.end());
                 temp_attack_units.clear();
-            }
-            /*threshold = int(threshold * thresh_percentage_incr);
-            threshold = int(threshold + thresh_increase);
-            threshold = min(threshold, max_threshold);*/
 
-            this->attack_groups.push_back(temp);
+            }
+
+
+            attack_groups.push_back(temp);
+
         } else {
             DoUnitStuff(unit);
+
         }
+
         return;
     }
 
     if(dgunning.empty() == false){
         dgunning.erase(unit);
     }
+
     engaged.erase(unit);
     walking.erase(unit);
 

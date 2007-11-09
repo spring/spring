@@ -8,6 +8,7 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 	G = GL;
 	this->unit=unit;
 	this->type = type;
+	this->utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
 }
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){
@@ -35,23 +36,26 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 	}else	if(message.GetType() == string("buildposition")){
 		// continue construction
 		//
+
 		TCommand tc(unit,"CBuild");
-		tc.ID(-building->id);
+		tc.ID(-building->GetUnitDef()->id);
 		float3 pos = message.GetFloat3();
-		if(G->UnitDefHelper->IsMobile(building)==false){
+
+		if(building->IsMobile()==false){
 			if(pos==UpVector){
 				G->L.print("CKeywordConstructionTask::RecieveMessage BuildPlacement returned UpVector or some other nasty position");
 				End();
 				return;
-			}else if (G->cb->CanBuildAt(building,pos,0)==false){
+			}else if (G->cb->CanBuildAt(building->GetUnitDef(),pos,0)==false){
 				G->L.print("CKeywordConstructionTask::RecieveMessage BuildPlacement returned a position that cant eb built upon");
 				End();
 				return;
 			}
 		}
+
 		pos.y = G->cb->GetElevation(pos.x,pos.z);
 
-		deque<CBPlan* >::iterator qi = G->Manufacturer->OverlappingPlans(pos,building);
+		deque<CBPlan* >::iterator qi = G->Manufacturer->OverlappingPlans(pos,building->GetUnitDef());
 		if(qi != G->Manufacturer->BPlans->end()){
 			NLOG("vector<CBPlan>::iterator qi = OverlappingPlans(pos,ud); :: WipePlansForBuilder");
 			/*if(qi->started){
@@ -61,44 +65,46 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			qi->builders.insert(unit);
 			return false;
 			}
-			}else*/ if ((*qi)->ud == building){
+			}else*/ if ((*qi)->utd == building){
 			G->L.print("CKeywordConstructionTask::RecieveMessage overlapping plans that're the same item but not started, moving pos to make it build quicker");
 			pos = (*qi)->pos;
-			}/*else{
-				G->L.print("::Cbuild overlapping plans that are not the same item, no alternative action, cancelling task");
-				CMessage message(string("taskfinished"));
-				FireEventListener(message);
-				return;
-			}*/
+			}
 		}
+
 		tc.PushFloat3(pos);
 		tc.Push(0);
-		tc.c.timeOut = int(building->buildTime/5) + G->cb->GetCurrentFrame();
+		tc.c.timeOut = int(building->GetUnitDef()->buildTime/5) + G->cb->GetCurrentFrame();
 		tc.created = G->cb->GetCurrentFrame();
 		tc.delay=0;
-		if(G->OrderRouter->GiveOrder(tc)== false){
-			G->L.print("CKeywordConstructionTask::RecieveMessage Failed Order G->OrderRouter->GiveOrder(tc)== false:: " + building->name);
+
+		if(!G->OrderRouter->GiveOrder(tc)){
+			G->L.print("CKeywordConstructionTask::RecieveMessage Failed Order G->OrderRouter->GiveOrder(tc)== false:: " + building->GetUnitDef()->name);
 			End();
 			return;
+
 		}else{
 			// create a plan
-			G->L.print("CKeywordConstructionTask::RecieveMessage G->OrderRouter->GiveOrder(tc)== true :: " + building->name);
+			G->L.print("CKeywordConstructionTask::RecieveMessage G->OrderRouter->GiveOrder(tc)== true :: " + building->GetUnitDef()->name);
+
 			if(qi == G->Manufacturer->BPlans->end()){
 				NLOG("CKeywordConstructionTask::RecieveMessage :: WipePlansForBuilder");
-				G->L.print("CKeywordConstructionTask::RecieveMessage wiping and creaiing the plan :: " + building->name);
+				G->L.print("CKeywordConstructionTask::RecieveMessage wiping and creaiing the plan :: " + building->GetUnitDef()->name);
 				G->Manufacturer->WipePlansForBuilder(unit);
+
 				CBPlan* Bplan = new CBPlan();
 				Bplan->started = false;
 				Bplan->AddBuilder(unit);
 				Bplan->subject = -1;
 				Bplan->pos = pos;
-				Bplan->ud=building;
+				Bplan->utd=building;
 				G->Manufacturer->AddPlan();
 				Bplan->id = G->Manufacturer->getplans();
-				Bplan->radius = (float)max(building->xsize,building->ysize)*8.0f;
-				Bplan->inFactory = G->UnitDefHelper->IsFactory(building);
+				Bplan->radius = (float)max(building->GetUnitDef()->xsize,building->GetUnitDef()->ysize)*8.0f;
+				Bplan->inFactory = building->IsFactory();
+
 				G->Manufacturer->BPlans->push_back(Bplan);
 				G->BuildingPlacer->Block(pos,building);
+
 				//G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),ud);
 				//builders[unit].curplan = plancounter;
 				//builders[unit].doingplan = true;
@@ -109,96 +115,94 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 }
 
 void CKeywordConstructionTask::Build(){
-	G->L.print("CKeywordConstructionTask::Build() :: " + building->name);
-	const UnitDef* builder = G->GetUnitDef(unit);
+	G->L.print("CKeywordConstructionTask::Build() :: " + building->GetUnitDef()->name);
 
-	/////////////
 
-	if(builder == 0){
-		G->L.print("error: a problem occurred loading this units unit definition unitid= "+to_string(unit)+" building=" +building->name);
-		End();
-		return;
-	}
 	if(G->Pl->AlwaysAntiStall.empty() == false){ // Sort out the stuff that's setup to ALWAYS be under the antistall algorithm
 		NLOG("CKeywordConstructionTask::Build G->Pl->AlwaysAntiStall.empty() == false");
 		for(vector<string>::iterator i = G->Pl->AlwaysAntiStall.begin(); i != G->Pl->AlwaysAntiStall.end(); ++i){
-			if(*i == building->name){
-				NLOG("CKeywordConstructionTask::Build *i == name :: "+building->name);
-				if(G->Pl->feasable(building,builder) == false){
-					G->L.print("unfeasable " + building->name);
+			if(*i == building->GetName()){
+				NLOG("CKeywordConstructionTask::Build *i == name :: "+building->GetUnitDef()->name);
+				if(!G->Pl->feasable(weak_ptr<CUnitTypeData>(building),weak_ptr<CUnitTypeData>(utd))){
+					G->L.print("unfeasable " + building->GetUnitDef()->name);
 					End();
 					return;
 				}else{
-					NLOG("CKeywordConstructionTask::Build  "+building->name+" is feasable");
+					NLOG("CKeywordConstructionTask::Build  "+building->GetUnitDef()->name+" is feasable");
 					break;
 				}
 			}
 		}
 	}
-	string t = "";
+
+
 	NLOG("CKeywordConstructionTask::Build  Resource\\MaxEnergy\\");
 	float emax=1000000000;
+
 	string key = "Resource\\MaxEnergy\\";
-	t = building->name;
-	trim(t);
-	tolowercase(t);
-	key += t;
+	key += building->GetName();
 	G->Get_mod_tdf()->GetDef(emax,"3000000",key);// +300k energy per tick by default/**/
-	if(emax ==0) emax = 30000000;
+
+	if(emax ==0){
+		emax = 30000000;
+	}
+
 	if(G->Pl->GetEnergyIncome() > emax){
-		G->L.print("CKeywordConstructionTask::Build  emax " + building->name);
+		G->L.print("CKeywordConstructionTask::Build  emax " + building->GetUnitDef()->name);
 		End();
 		return;
 	}
 
 	NLOG("CKeywordConstructionTask::Build  Resource\\MinEnergy\\");
 	float emin=0;
+
 	key = "Resource\\MinEnergy\\";
-	t = building->name;
-	trim(t);
-	tolowercase(t);
-	key += t;
+	key += building->GetName();
+
 	G->Get_mod_tdf()->GetDef(emin,"0",key);// +0k energy per tick by default/**/
+
 	if(G->Pl->GetEnergyIncome() < emin){
-		G->L.print("CKeywordConstructionTask::Build  emin " + building->name);
+		G->L.print("CKeywordConstructionTask::Build  emin " + building->GetUnitDef()->name);
 		End();
 		return;
 	}
 
 
 	// Now sort out stuff that can only be built one at a time
-	t = building->name;
-	trim(t);
-	tolowercase(t);
-	if(G->Cached->solobuilds.find(t)!= G->Cached->solobuilds.end()){
+
+	if(G->Cached->solobuilds.find(building->GetName())!= G->Cached->solobuilds.end()){
 		NLOG("CKeywordConstructionTask::Build  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
-		G->L.print("CKeywordConstructionTask::Build  solobuild " + building->name);
-		if(G->Actions->Repair(unit,G->Cached->solobuilds[t])){// One is already being built, change to a repair order to go help it!
+
+		G->L.print("CKeywordConstructionTask::Build  solobuild " + building->GetUnitDef()->name);
+		
+		// One is already being built, change to a repair order to go help it!
+		if(G->Actions->Repair(unit,G->Cached->solobuilds[building->GetName()])){
 			End();
 			return;
 		}
+
 	}
 
 	// Now sort out if it's one of those things that can only be built once
-	if(G->Cached->singlebuilds.find(t) != G->Cached->singlebuilds.end()){
+	if(G->Cached->singlebuilds.find(building->GetName()) != G->Cached->singlebuilds.end()){
 		NLOG("CKeywordConstructionTask::Build  G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()");
-		if(G->Cached->singlebuilds[t] == true){
-			G->L.print("CKeywordConstructionTask::Build  singlebuild " + building->name);
+
+		if(G->Cached->singlebuilds[building->GetName()]){
+			G->L.print("CKeywordConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
 			End();
 			return;
 		}
 	}
-	//if(G->Pl->feasable(name,unit)==false){
-	//	return false;
-	//}
-	// If Antistall == 2/3 then we always do this
 
 	if(G->info->antistall>1){
 		NLOG("CKeywordConstructionTask::Build  G->info->antistall>1");
-		bool fk = G->Pl->feasable(building,builder);
+
+		bool fk = G->Pl->feasable(building,utd);
+
 		NLOG("CKeywordConstructionTask::Build  feasable called");
-		if(fk == false){
-			G->L.print("CKeywordConstructionTask::Build  unfeasable " + building->name);
+
+		if(!fk){
+			G->L.print("CKeywordConstructionTask::Build  unfeasable " + building->GetUnitDef()->name);
 			End();
 			return;
 		}
@@ -206,26 +210,30 @@ void CKeywordConstructionTask::Build(){
 
 	float3 unitpos = G->GetUnitPos(unit);
 	float3 pos=unitpos;
+
 	if(G->Map->CheckFloat3(unitpos) == false){
 		NLOG("CKeywordConstructionTask::Build  mark 2# bad float exit");
 		End();
 		return;
 	}
-	string hj = building->name;
-	trim(hj);
-	tolowercase(hj);
-	float rmax = G->Manufacturer->getRranges(hj);
+	
+
+	float rmax = G->Manufacturer->getRranges(building->GetName());
+
 	if(rmax > 10){
 		NLOG("CKeywordConstructionTask::Build  rmax > 10");
+
 		int* funits = new int[5000];
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
-				const UnitDef* udf = G->GetUnitDef(funits[i]);
-				if(udf == 0) continue;
-				if(udf == building){
+				shared_ptr<CUnitTypeData> ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
+
+				if(ufdt == building){
 					NLOG("CKeywordConstructionTask::Build  mark 2b#");
+
 					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < rmax){
 						if(G->cb->UnitBeingBuilt(funits[i])==true){
 							delete [] funits;
@@ -236,26 +244,36 @@ void CKeywordConstructionTask::Build(){
 						}
 					}
 				}
+
 			}
 		}
+
 		delete [] funits;
 	}
+
 	NLOG("CKeywordConstructionTask::Build  mark 3#");
 	////////
-	float exrange = G->Manufacturer->getexclusion(hj);
+	float exrange = G->Manufacturer->getexclusion(building->GetName());
+
 	if(exrange > 10){
+
 		int* funits = new int[5000];
+
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
-				const UnitDef* udf = G->GetUnitDef(funits[i]);
-				if(udf == 0) continue;
-				if(udf == building){
+				shared_ptr<CUnitTypeData> ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
+
+				if(ufdt == building){
+
 					NLOG("CKeywordConstructionTask::Build  mark 3a#");
+
 					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < exrange){
 						int kj = funits[i];
 						delete [] funits;
+
 						if(G->cb->UnitBeingBuilt(kj)==true){
 							NLOG("CKeywordConstructionTask::Build  exit on repair");
 							if(!G->Actions->Repair(unit,kj)){
@@ -267,15 +285,20 @@ void CKeywordConstructionTask::Build(){
 							End();
 							return;
 						}
+
 					}
+
 				}
 			}
 		}
 		delete [] funits;
 	}
-        NLOG("CKeywordConstructionTask::Build  mark 4");
-	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
-        NLOG("CKeywordConstructionTask::Build  mark 5");
+
+    NLOG("CKeywordConstructionTask::Build  mark 4");
+
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,weak_ptr<CUnitTypeData>(utd),weak_ptr<CUnitTypeData>(building),G->Manufacturer->GetSpacing(weak_ptr<CUnitTypeData>(building))*1.4f);
+
+    NLOG("CKeywordConstructionTask::Build  mark 5");
 }
 
 bool CKeywordConstructionTask::Init(){
@@ -283,11 +306,7 @@ bool CKeywordConstructionTask::Init(){
 	G->L.print("CKeywordConstructionTask::Init "+G->Manufacturer->GetTaskName(type));
 
 	//G->L.print("CKeywordConstructionTask::Init");
-	const UnitDef* ud2= G->GetUnitDef(unit);
-	if(ud2 == 0){
-		End();
-		return false;
-	}
+
     NLOG("1");
     NLOG((string("tasktype: ")+G->Manufacturer->GetTaskName(type)));
 
@@ -340,17 +359,12 @@ bool CKeywordConstructionTask::Init(){
 		}
 
 		CUBuild b;
-        b.Init(G,ud2,unit);
+		b.Init(G,weak_ptr<CUnitTypeData>(utd),unit);
 		string targ = b(type);
 		G->L.print("gotten targ value of " + targ + " for RULE");
 		if (targ != string("")){
-			const UnitDef* udk = G->GetUnitDef(targ);
-			if(udk == 0){
-				End();
-				return false;
-			}
 
-			building = udk;
+			building = G->UnitDefLoader->GetUnitTypeDataByName(targ).lock();
 			Build();
 			return true;
 		}else{
@@ -458,7 +472,7 @@ bool CKeywordConstructionTask::Init(){
 				}else{
 					float q = upos.distance2D(rpos);
 					if(q < d){
-						const UnitDef* rd = G->GetUnitDef(funits[i]);
+						shared_ptr<CUnitTypeData> rd = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
 						if(rd == building){
 							d = q;
 							closest = funits[i];
@@ -484,7 +498,7 @@ bool CKeywordConstructionTask::Init(){
 		delete [] funits;
 	}else{// if(type != B_NA){
 		CUBuild b;
-		b.Init(G,ud2,unit);
+		b.Init(G,weak_ptr<CUnitTypeData>(utd),unit);
 		b.SetWater(G->info->spacemod);
 		//if(b.ud->floater==true){
 		//	b.SetWater(true);
@@ -495,12 +509,10 @@ bool CKeywordConstructionTask::Init(){
 			End();
 			return false;
 		}else{
-			const UnitDef* udk = G->GetUnitDef(targ);
-			if(udk != 0){
-				building = udk;
-				Build();
-				return true;
-			}
+			shared_ptr<CUnitTypeData> udk = G->UnitDefLoader->GetUnitTypeDataByName(targ).lock();
+			building = udk;
+			Build();
+			return true;
 		}
 	}
 	End();

@@ -8,18 +8,30 @@
 
 CUnit::CUnit(Global* GL, int uid){
 	G = GL;
+	
 	NLOG("CUnit::CUnit");
+	
 	valid = true;
-	if(!ValidUnitID(uid)) valid = false;
+	
+	if(!ValidUnitID(uid)){
+		valid = false;
+	}
+	
 	this->uid = uid;
-	ud = G->GetUnitDef(uid);
+	
+	const UnitDef* ud = G->GetUnitDef(uid);
+	
 	if(ud == 0){
 		valid = false;
 		return;
 	}
-	if(G->UnitDefHelper->IsMobile(ud)==false){
-		G->BuildingPlacer->Block(G->GetUnitPos(uid),ud);
+	
+	utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id).lock();
+	
+	if(!utd->IsMobile()){
+		G->BuildingPlacer->Block(G->GetUnitPos(uid),utd);
 	}
+	
 	doingplan=false;
 	curplan=0;
 	birth = G->GetCurrentFrame();
@@ -28,24 +40,15 @@ CUnit::CUnit(Global* GL, int uid){
 }
 
 CUnit::~CUnit(){
-	/*if(G->UnitDefHelper->IsMobile(ud)==false){
-		G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),ud);
-	}*/
-	//G->RemoveHandler(me);
+	//
 }
 
 bool CUnit::Init(){
-    NLOG("CUnit::Init");
-	//if(ud->builder){
-		/*G->RegisterMessageHandler("unitidle",me);
-		G->RegisterMessageHandler("unitcreated",me);
-		G->RegisterMessageHandler("unitfinished",me);
-		G->RegisterMessageHandler("unitdestroyed",me);
-		G->RegisterMessageHandler("update",me);*/
-	//}
 
-	if((G->GetCurrentFrame() > 32)&&(G->UnitDefHelper->IsMobile(ud))){
-		boost::shared_ptr<IModule> t(new CLeaveBuildSpotTask(G,this->uid,ud));
+    NLOG("CUnit::Init");
+
+	if((G->GetCurrentFrame() > 32)&&utd->IsMobile()){
+		boost::shared_ptr<IModule> t(new CLeaveBuildSpotTask(G,uid,utd));
 		AddTask(t);
 		t->Init();
 		G->RegisterMessageHandler(t);
@@ -88,9 +91,9 @@ void CUnit::RecieveMessage(CMessage &message){
 			LoadBehaviours();
 		}
 	}else if(message.GetType() == string("unitdestroyed")){
-		if(message.GetParameter(0) == this->uid){
-			if(G->UnitDefHelper->IsMobile(ud)==false){
-				G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),ud);
+		if(message.GetParameter(0) == uid){
+			if(!utd->IsMobile()){
+				G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),utd);
 			}
 			if(!tasks.empty()){
 				tasks.erase(tasks.begin(),tasks.end());
@@ -122,9 +125,9 @@ int CUnit::GetAge(){
 	return G->GetCurrentFrame()-birth;
 }
 
-const UnitDef* CUnit::GetUnitDef(){
-	NLOG("CBuilder::GetUnitDef");
-	return ud;
+weak_ptr<CUnitTypeData> CUnit::GetUnitDataType(){
+	NLOG("CBuilder::GetUnitDataType");
+	return utd;
 }
 
 bool CUnit::operator==(int unit){
@@ -159,13 +162,13 @@ bool CUnit::LoadTaskList(){
 	vector<string> vl;
 	string sl;
 	if(G->Cached->cheating){
-		sl= G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\CHEAT\\")+ud->name);
+		sl= G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\CHEAT\\")+utd->GetName());
 	}else{
-		sl = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\NORMAL\\")+ud->name);
+		sl = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\NORMAL\\")+utd->GetName());
 	}
 	tolowercase(sl);
 	trim(sl);
-	string u = ud->name;
+	string u = utd->GetName();
 	if(sl != string("")){
 		CTokenizer<CIsComma>::Tokenize(vl, sl, CIsComma());
 		//vl = bds::set_cont(vl,sl.c_str());
@@ -193,16 +196,16 @@ bool CUnit::LoadTaskList(){
 		bool polate=false;
 		bool polation = G->info->rule_extreme_interpolate;
 		btype bt = G->Manufacturer->GetTaskType(G->Get_mod_tdf()->SGetValueDef("b_na","AI\\interpolate_tag"));
-		if(G->UnitDefHelper->IsFactory(ud)){
+		if(utd->IsFactory()){
 			polation = false;
 		}
 		if(bt == B_NA){
 			polation = false;
 		}
 
-		// TASKS LOADING
 
-		//tasks.reserve(v.size());
+		// TASKS LOADING
+		
 		for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 			if(polation){
 				if(polate){
@@ -215,8 +218,9 @@ bool CUnit::LoadTaskList(){
 			trim(q);
 			tolowercase(q);
 			const UnitDef* building = G->GetUnitDef(q);
-			if(building != 0){
-				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,this->ud,building));
+			if(G->UnitDefLoader->HasUnit(q)){
+				weak_ptr<CUnitTypeData> wb = G->UnitDefLoader->GetUnitTypeDataByName(building->name);
+				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,weak_ptr<CUnitTypeData>(utd),wb));
 				AddTask(t);
 			}else if(q == string("")){
 				continue;
@@ -257,11 +261,12 @@ bool CUnit::LoadTaskList(){
 			}
 
 		}
-		if(ud->isCommander == true)	 G->Map->basepos = G->GetUnitPos(GetID());
-		//if((ud->isCommander== true)||(ui->GetRole() == R_FACTORY))	G->Map->base_positions.push_back(G->GetUnitPos(GetID()));
+		if(utd->GetUnitDef()->isCommander){
+			G->Map->basepos = G->GetUnitPos(GetID());
+		}
+
 		G->L.print("loaded contents of  tasklist :: " + u + " :: loaded tasklist at " + to_string(tasks.size()) + " items");
 		return !tasks.empty();
-		//G->Actions->ScheduleIdle(GetID());
 	} else{
 		G->L.print(" error loading contents of  tasklist :: " + u + " :: buffer empty, most likely because of an empty tasklist");
 		return false;
@@ -269,7 +274,7 @@ bool CUnit::LoadTaskList(){
 }
 
 bool CUnit::LoadBehaviours(){
-	string d = G->Get_mod_tdf()->SGetValueDef("auto","AI\\behaviours\\"+ud->name);
+	string d = G->Get_mod_tdf()->SGetValueDef("auto","AI\\behaviours\\"+utd->GetName());
 	vector<string> v;
 	CTokenizer<CIsComma>::Tokenize(v, d, CIsComma());
 	if(!v.empty()){
@@ -293,14 +298,14 @@ bool CUnit::LoadBehaviours(){
 				behaviours.push_back(t);
 				t->Init();
 			} else if(s == "auto"){
-				if(G->UnitDefHelper->IsAttacker(ud)){
+				if(utd->IsAttacker()){
 					CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(a);
 					behaviours.push_back(t);
 					G->RegisterMessageHandler(t);
 					t->Init();
 				}
-				if(G->UnitDefHelper->IsMetalMaker(ud)||(G->UnitDefHelper->IsMex(ud) && ud->onoffable ) ){
+				if(utd->IsMetalMaker()||(utd->IsMex() && utd->GetUnitDef()->onoffable ) ){
 					CMetalMakerBehaviour* m = new CMetalMakerBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(m);
 					behaviours.push_back(t);

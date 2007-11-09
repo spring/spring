@@ -212,7 +212,7 @@ enum cdgun {// dont think this is actually used anymore
 #include <algorithm>
 #include <cctype>
 #include <stdexcept>
-#include <boost/spirit/error_handling.hpp>
+
 
 #include <map>
 #include <set>
@@ -231,9 +231,12 @@ enum cdgun {// dont think this is actually used anymore
 #include <cctype>
 #include <stdexcept>
 
+#include <boost/spirit/error_handling.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-
+#include <boost/shared_array.hpp>
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
 
 
 
@@ -243,6 +246,7 @@ typedef boost::mutex::scoped_lock scoped_lock;
 // random number generator
 #include "../Helpers/mtrand.h"
 
+// engine includes
 #include "../SDK/AI.h"
 
 #include "../Helpers/grid/CGridManager.h"
@@ -251,21 +255,24 @@ typedef boost::mutex::scoped_lock scoped_lock;
 
 // helpers
 typedef TdfParser CSunParser;
+using namespace boost;
+//typedef boost::weak_ptr<class T> weak_ptr<class T>;
+//typedef boost::shared_ptr shared_ptr;
 
+#include "../Units/CUnitTypeData.h"
 #include "../Core/CMessage.h"
 #include "../Core/IModule.h"
 #include "../Units/IBehaviour.h"
 #include "../Units/CUnit.h"
-#include "../Helpers/Log.h" // Logging class
-#include "../Helpers/Units/CUnitDefLoader.h" // Loads unitdefs
-#include "../Helpers/Terrain/CSector.h" // Map Sector data structure
-#include "../Engine/TCommand.h" // Unit cached command data structure
+#include "../Helpers/Log.h"						// Logging class
+#include "../Helpers/Units/CUnitDefLoader.h"	// Loads unitdefs
+#include "../Helpers/Terrain/CSector.h"			// Map Sector data structure
+#include "../Engine/TCommand.h"					// Unit cached command data structure
 #include "../Helpers/CWorkerThread.h"
 //#include "../Helpers/CThreadManager.h"
 
 #include "../Core/CCached.h"// Cached data storage class
 #include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message
-#include "../Helpers/Units/CUnitDefHelp.h" // Helps in identifying types of Units aka Is this a mex or a tidal generator or a factory?
 #include "../Helpers/CEconomy.h" // Construction rules
 
 #include "../Helpers/Terrain/Map.h" // Common Map related procedures such as which corner of the mapare we in

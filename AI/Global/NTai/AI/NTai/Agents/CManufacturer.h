@@ -23,16 +23,16 @@ public:
 	uint id;
 
 
-	int subject; // the thing being built
-	bool started; // has construction started?
-	float3 pos; // where is the unit being built? Used to tie the new unit to the plan
-	const UnitDef* ud;
+	int subject;					// the thing being built
+	bool started;					// has construction started?
+	float3 pos;						// where is the unit being built? Used to tie the new unit to the plan
+	shared_ptr<CUnitTypeData> utd;
 	float radius;
 	bool inFactory;
 private:
 	bool valid;
 	boost::mutex plan_mutex;
-	set<int> builders; // the builder
+	set<int> builders;				// the builder
 
 };
 
@@ -62,7 +62,7 @@ public:
 	//bool TaskCycle(CBuilder* i);
 	//bool CBuild(string name, int unit, int spacing);
 
-	int GetSpacing(const UnitDef* ud);
+	int GetSpacing(weak_ptr<CUnitTypeData> u);
 
 	//bool LoadTaskList(CBuilder* ui);
 	map<string,btype> types;

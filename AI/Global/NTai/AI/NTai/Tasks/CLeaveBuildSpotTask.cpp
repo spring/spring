@@ -2,11 +2,11 @@
 // Tasks
 #include "../Tasks/CLeaveBuildSpotTask.h"
 
-CLeaveBuildSpotTask::CLeaveBuildSpotTask(Global* GL, int unit, const UnitDef* ud){
+CLeaveBuildSpotTask::CLeaveBuildSpotTask(Global* GL, int unit, weak_ptr<CUnitTypeData> ud){
 	valid=true;
 	G = GL;
 	this->unit=unit;
-	this->ud = ud;
+	utd = ud.lock();
 }
 
 void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
@@ -22,8 +22,8 @@ void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
 }
 
 bool CLeaveBuildSpotTask::Init(){
-	if(G->UnitDefHelper->IsFactory(ud)){
-        if(!G->UnitDefHelper->IsMobile(ud)){
+	if(utd->IsFactory()){
+        if(!utd->IsMobile()){
             End();
             return false;
         }
@@ -34,6 +34,7 @@ bool CLeaveBuildSpotTask::Init(){
 	//	G->RegisterMessageHandler("unitidle",me);
 
 	float3 pos = G->GetUnitPos(unit);
+
 	if(!G->Map->CheckFloat3(pos)){
 		End();
 		return false;
@@ -41,19 +42,23 @@ bool CLeaveBuildSpotTask::Init(){
 
 	bool rvalue=false;
 	int facing = -1;
+
 	int* a = new int[100];
+
 	int n = G->cb->GetFriendlyUnits(a,pos,10);
+
 	if(n > 1){
 		for(int i = 0; i <n; i++){
 			if( a[i] == unit) continue;
-			const UnitDef* ud2 = G->GetUnitDef(a[i]);
-			if(G->UnitDefHelper->IsFactory(ud2)){
+			shared_ptr<CUnitTypeData> ud2 = G->UnitDefLoader->GetUnitTypeDataByUnitId(a[i]).lock();
+			if(ud2->IsFactory()){
 				facing = G->cb->GetBuildingFacing(a[i]);
 				break;
 			}
 		}
 	}
 	delete[] a;
+
 	float3 diff;
 	diff.z = 110;
 	if(facing != -1){
@@ -72,11 +77,14 @@ bool CLeaveBuildSpotTask::Init(){
 			diff.x = 140;
 		}
 	}
+
 	rvalue = G->Actions->Move(unit,pos+diff);
+
 	if (!rvalue){
 		End();
 	}
-	if(G->UnitDefHelper->IsFactory(ud)){
+
+	if(utd->IsFactory()){
 	    End();
 	}
 	return rvalue;

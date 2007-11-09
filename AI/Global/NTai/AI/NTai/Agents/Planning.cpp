@@ -33,6 +33,7 @@ bool Planning::EnergyForConstr(const UnitDef* ud, int workertime){
 	return true;
 	//return (energy > bt->unitList[unit-1]->energyCost);
 }
+
 Planning::Planning(Global* GLI){
 	G = GLI;
 	fnum = 1;
@@ -47,6 +48,7 @@ float Planning::GetEnergyIncome(){
 // 	}
 // 	return e_cache;
 }
+
 float Planning::GetMetalIncome(){
 	return G->cb->GetMetalIncome();
 // 	if(G->GetCurrentFrame() - lMupdate > 8){
@@ -55,9 +57,10 @@ float Planning::GetMetalIncome(){
 // 	}
 // 	return m_cache;
 }
-void Planning::Update(){
+
+/*void Planning::Update(){
 	NLOG("Planning::Update");
-	/*if(EVERY_((1 MINUTE))){
+	if(EVERY_((1 MINUTE))){
 		int* fx = new int[6000];
 		fnum = G->cb->GetFriendlyUnits(fx);
 		delete [] fx;
@@ -88,12 +91,13 @@ void Planning::Update(){
 				}
 			}
 		}
-	}*/
-}
-float3 Planning::GetDirVector(int enemy,float3 unit, const WeaponDef* def){
+	}
+}*/
+
+/*float3 Planning::GetDirVector(int enemy,float3 unit, const WeaponDef* def){
 	NLOG("Planning::GetDirVector");
 	return UpVector;
-	/*const UnitDef* ed = G->GetUnitDef(enemy);
+	const UnitDef* ed = G->GetUnitDef(enemy);
 	if(ed == 0){
 		return UpVector;
 	}
@@ -158,25 +162,19 @@ float3 Planning::GetDirVector(int enemy,float3 unit, const WeaponDef* def){
 		float3 tpos = e.now;
 		tpos += (apos-e.now)*0.5;
 		return tpos;
-	}*/
-}
+	}
+}*/
 
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 bool Planning::feasable(string s, int builder){
-	const UnitDef* uud = G->GetUnitDef(s);
-	if(uud == 0){
-		G->L.print("Feasable##:: "+s);
-		return true;
-	}
-	const UnitDef* pud = G->GetUnitDef(builder);
-	if(pud == 0){
-		G->L.print("Feasable##:: "+s);
-		return true;
-	}
-	return feasable(uud,pud);
+
+	weak_ptr<CUnitTypeData> wbuilder = G->UnitDefLoader->GetUnitTypeDataByUnitId(builder);
+	weak_ptr<CUnitTypeData> wbuilding = G->UnitDefLoader->GetUnitTypeDataByName(s);
+	return feasable(wbuilding,wbuilder);
 }
+
 float Planning::FramesTillZeroRes(float in, float out, float starting, float maxres, float mtime, float minRes){
 	//
 	float r = starting;
@@ -201,122 +199,155 @@ bool Planning::equalsIgnoreCase(string a ,string b){
 	return (c == d);
 }
 
-bool Planning::feasable(const UnitDef* uud, const UnitDef* pud){
+bool Planning::feasable(weak_ptr<CUnitTypeData> wbuilding, weak_ptr<CUnitTypeData> wbuilder){
 	NLOG("Planning::feasable");
+	shared_ptr<CUnitTypeData> building = wbuilding.lock();
+	shared_ptr<CUnitTypeData> builder = wbuilder.lock();
+
 	if(NoAntiStall.empty() == false){
-		string n2 = uud->name;
-		trim(n2);
-		tolowercase(n2);
 		for(vector<string>::iterator i = NoAntiStall.begin(); i != NoAntiStall.end(); ++i){
-			string i2 = *i;
-			trim(i2);
-			tolowercase(i2);
-			if(i2 == n2){
-				G->L.print("Feasable:: "+uud->name);
+			string ti = *i;
+			if(ti == building->GetName()){
+				G->L.print("Feasable:: "+building->GetName());
 				return true;
 			}
 		}
 	}
-	if(G->info->antistall==4){ // KAI RATIO BASED ANTISTALL ALGORITHM (KAI 0.2 CMATH class)
-		return FeasibleConstruction(uud,pud);
-	}
+
+	//if(G->info->antistall==4){ // KAI RATIO BASED ANTISTALL ALGORITHM (KAI 0.2 CMATH class)
+	//	return FeasibleConstruction(uud,pud);
+	//}
+
 	float Max_Stall_Time = G->info->Max_Stall_TimeIMMobile;
-	if(G->UnitDefHelper->IsMobile(pud)){
-		Max_Stall_Time = G->info->Max_Stall_TimeIMMobile;
+
+	if(building->IsMobile()){
+		Max_Stall_Time = G->info->Max_Stall_TimeMobile;
 	}
+
 	int t = 43;
 	G->Get_mod_tdf()->GetDef(t,"43","AI\\antistallwindow");
 	if(G->GetCurrentFrame() < ( t SECONDS)){
 		//G->L.print("Given the go ahead :: "+uud->name);
 		return true;
 	}
+
 	if(G->info->antistall==7){ // SIMULATIVE ANTISTALL ALGORITHM V7
-		float ti = (uud->buildTime/max(pud->buildSpeed,0.1f) + Max_Stall_Time)*(32/30);
+		float ti = (building->GetUnitDef()->buildTime/max(builder->GetUnitDef()->buildSpeed,0.1f) + Max_Stall_Time)*(32/30);
+
 		// Energy Cost/Second
-		float e_usage = G->cb->GetEnergyUsage()+( uud->energyCost/ti);
+		float e_usage = G->cb->GetEnergyUsage()+( building->GetUnitDef()->energyCost/ti);
 		float t;
 		t = FramesTillZeroRes(GetEnergyIncome(),e_usage,G->cb->GetEnergy(),G->cb->GetEnergyStorage(),ti,200.0f);
+		
 		if(t < ti){
-			G->L << "(7) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+			G->L << "(7) insufficient energy to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 			return false;
 		}
-		float m_usage = G->cb->GetMetalUsage()+( uud->metalCost/t);;
+
+		float m_usage = G->cb->GetMetalUsage()+( building->GetUnitDef()->metalCost/t);;
 		ti = FramesTillZeroRes(GetMetalIncome(),m_usage,G->cb->GetMetal(),G->cb->GetMetalStorage(),ti,150.0f);
+		
 		if(t < ti){
-			G->L << "(7) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+			G->L << "(7) insufficient metal to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 			return false;
 		}
 	}
+
 	if(G->info->antistall==2){// XE8 ANTISTALL ALGORITHM V2
 
-		float BuildTime = uud->buildTime / max(pud->buildSpeed,0.1f);
+		float BuildTime = building->GetUnitDef()->buildTime / max(builder->GetUnitDef()->buildSpeed,0.1f);
+
 		// Energy Cost/Second
-		float EPerS = (uud->energyCost*0.9f) / BuildTime;
+		float EPerS = (building->GetUnitDef()->energyCost*0.9f) / BuildTime;
+
 		if (G->cb->GetEnergy() + BuildTime * (G->cb->GetEnergyIncome() - (G->cb->GetEnergyUsage() + EPerS)) < 0.0f){
 			//insufficient energy
-			G->L << "(2) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+			G->L << "(2) insufficient energy to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 			return false;
 		}
-		float MPerS = (uud->metalCost*0.9f) / BuildTime;
+
+		float MPerS = (building->GetUnitDef()->metalCost*0.9f) / BuildTime;
+
 		if (G->cb->GetMetal() + BuildTime * (G->cb->GetMetalIncome() - G->cb->GetMetalUsage() - MPerS) < 0.0f){
 			// insufficient metal
-			G->L << "(2) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+			G->L << "(2) insufficient metal to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 			return false;
 		}
+
 	}
+
 	if((G->info->antistall == 3)||(G->info->antistall == 5)){ // ANTISTALL ALGORITHM V3+5
 		NLOG("ANTISTALL ALGORITHM V3+5");
-		float t = (uud->buildTime/max(pud->buildSpeed,0.1f) + Max_Stall_Time)*(32/30);
+
+		float t = (building->GetUnitDef()->buildTime/max(builder->GetUnitDef()->buildSpeed,0.1f) + Max_Stall_Time)*(32/30);
 		t = max(t,0.1f);
-		if(uud->energyCost > 100.0f){
-			if(G->Economy->BuildPower(true)&&(G->UnitDefHelper->IsEnergy(uud)==false)){
+
+		if(building->GetUnitDef()->energyCost > 100.0f){
+
+			if(G->Economy->BuildPower(true)&&(!building->IsEnergy())){
 				return false;
 			}
+
 			NLOG("ANTISTALL mk2");
-			float e_usage = G->cb->GetEnergyUsage()+( uud->energyCost/t);
+			float e_usage = G->cb->GetEnergyUsage()+(building->GetUnitDef()->energyCost/t);
+
 			if(GetEnergyIncome() < e_usage){
 				if(G->info->antistall == 5){
 					//ENERGY STALL
-					G->L << "(5) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+					G->L << "(5) insufficient energy to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 					return false;
 				}
 			}
+
 			NLOG("ANTISTALL mk3");
 
 			if((G->cb->GetEnergy()+ (t*GetEnergyIncome()))< (30/32)*t*e_usage){
 				//ENERGY STALL
-				G->L << "(5) insufficient energy to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+				G->L << "(5) insufficient energy to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 				return false;
 			}
+
 			NLOG("ANTISTALL mk4");
 		}
-		if(uud->metalCost>50){
+
+		if(building->GetUnitDef()->metalCost>50){
 			NLOG("ANTISTALL mk5");
-			if(G->Economy->BuildMex(true)&& (G->UnitDefHelper->IsMex(uud)==false)){
+			
+			if(G->Economy->BuildMex(true)&& (!building->IsMex())){
 				return false;
 			}
+
 			NLOG("ANTISTALL mk6");
-			float m_usage = G->cb->GetMetalUsage()+( uud->metalCost/t);//G->cb->GetMetalUsage()+( (uud->metalCost*GetRealValue(pud->buildSpeed))/uud->buildTime);
+			
+			float m_usage = G->cb->GetMetalUsage()+( building->GetUnitDef()->metalCost/t);
+			//G->cb->GetMetalUsage()+( (uud->metalCost*GetRealValue(pud->buildSpeed))/uud->buildTime);
+			
 			NLOG("ANTISTALL mk7");
+			
 			if(GetMetalIncome()<m_usage){
 				if(G->info->antistall == 5){
 					//METAL STALL
-					G->L << "(3) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+					G->L << "(3) insufficient metal to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
 					return false;
 				}
 			}
+
 			NLOG("ANTISTALL mk8");
+
 			if(G->cb->GetMetal() +(t*GetMetalIncome())< (30/32)*t*m_usage){
 				//METAL STALL
-				G->L << "(3) insufficient metal to build " << uud->name << ", a stall is anticipated if construction is started" << endline;
+				G->L << "(3) insufficient metal to build " << building->GetUnitDef()->name << ", a stall is anticipated if construction is started" << endline;
+				
 				return false;
 			}
+
 			NLOG("ANTISTALL mk9");
 		}
-		G->L.print("Given the go ahead :: "+uud->name);
+
+		G->L.print("Given the go ahead :: "+building->GetUnitDef()->name);
 		return true;
 	}
-	G->L.print("Feasable:: "+uud->name);
+	G->L.print("Feasable:: "+building->GetUnitDef()->name);
 	return true;
 }
 

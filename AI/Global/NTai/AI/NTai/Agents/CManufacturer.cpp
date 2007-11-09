@@ -365,7 +365,7 @@ deque<CBPlan* >::iterator CManufacturer::OverlappingPlans(float3 pos,const UnitD
 	NLOG("CManufacturer::OverlappingPlans");
 	if(!BPlans->empty()){
 		for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
-			if((*i)->ud->name != ud->name){
+			if((*i)->utd->GetUnitDef()->name != ud->name){
 				if(pos.distance2D((*i)->pos) < (*i)->radius+(max(ud->ysize,ud->xsize)*8)){
 					return i;
 				}
@@ -785,7 +785,7 @@ void CManufacturer::UnitCreated(int uid){
 			for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end();++i){
 				if((*i)->pos.distance2D(upos)<(*i)->radius*1.5f){
 					const UnitDef* ud = G->GetUnitDef(uid);
-					if(ud==(*i)->ud){
+					if(ud==(*i)->utd->GetUnitDef()){
 						(*i)->pos = upos;
 						(*i)->subject = uid;
 						(*i)->started = true;
@@ -966,23 +966,22 @@ void CManufacturer::UnitIdle(int uid){
 	}*/
 }
 
-int CManufacturer::GetSpacing(const UnitDef* ud){
+int CManufacturer::GetSpacing(weak_ptr<CUnitTypeData> u){
+	shared_ptr<CUnitTypeData> utd = u.lock();
 	int f = 4;
-	if(ud == 0 ){
-		return 4;
-	}
-	if(G->UnitDefHelper->IsMobile(ud)){
+
+	if(utd->IsMobile()){
 		f = 1;
-	}else 	if(G->UnitDefHelper->IsFactory(ud)){
+	} else if(utd->IsFactory()){
 		G->Get_mod_tdf()->GetDef(f,"4", "AI\\factory_spacing");
-	} else if (!G->UnitDefHelper->IsMobile(ud) && !ud->weapons.empty()){
+	} else if (!utd->IsMobile() && !utd->GetUnitDef()->weapons.empty()){
 		G->Get_mod_tdf()->GetDef(f,"4", "AI\\defence_spacing");
-	} else if (G->UnitDefHelper->IsEnergy(ud)){
+	} else if (utd->IsEnergy()){
 		G->Get_mod_tdf()->GetDef(f,"3", "AI\\power_spacing");
 	}else{
 		G->Get_mod_tdf()->GetDef(f,"1", "AI\\default_spacing");
 	}
-	float r = sqrt(pow((float)ud->xsize*8,2)+pow((float)ud->ysize*8,2))/2;
+	float r = sqrt(pow((float)utd->GetUnitDef()->xsize*8,2)+pow((float)utd->GetUnitDef()->ysize*8,2))/2;
 	r += (f*8);
 	return (int)r;
 }
@@ -1042,7 +1041,7 @@ void CManufacturer::Update(){
 						//sprintf(ck,"GAME\\TEAM%i\\RGBColor",G->Cached->team);
 						float3 r = G->L.startupscript->GetFloat3(ZeroVector,s.c_str());
 						G->cb->SetFigureColor(q,r.x,r.y,r.z,0.3f);
-						G->cb->DrawUnit((*i)->ud->name.c_str(),(*i)->pos,0,30,G->Cached->team,true,true);
+						G->cb->DrawUnit((*i)->utd->GetUnitDef()->name.c_str(),(*i)->pos,0,30,G->Cached->team,true,true);
 						int w = (*i)->GetBuilderCount();
 						SkyWrite k(G->cb);
 						float3 jpos = (*i)->pos;

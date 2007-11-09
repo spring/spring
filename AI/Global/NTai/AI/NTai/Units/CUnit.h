@@ -15,7 +15,7 @@ public:
 
 	void RecieveMessage(CMessage &message);
 	bool Init();
-	const UnitDef* GetUnitDef();
+	weak_ptr<CUnitTypeData> GetUnitDataType();
 	bool operator==(int unit);
 	int GetID();
 	void SetRepeat(bool n){
@@ -35,7 +35,7 @@ protected:
 	bool under_construction;
 	list< boost::shared_ptr<IModule> > tasks;
 	list< boost::shared_ptr<IBehaviour> > behaviours;
-	const UnitDef* ud;
+	shared_ptr<CUnitTypeData> utd;
 	int uid;
 	bool repeat;
 	int birth;
