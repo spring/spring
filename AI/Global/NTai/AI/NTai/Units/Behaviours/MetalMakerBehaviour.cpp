@@ -13,11 +13,9 @@ CMetalMakerBehaviour::~CMetalMakerBehaviour(){
 
 bool CMetalMakerBehaviour::Init(){
 	//
-//	G->RegisterMessageHandler("unitdestroyed",me);
-//	G->RegisterMessageHandler("update",me);
 
 	turnedOn = G->cb->IsUnitActivated(((CUnit*)unit.get())->GetID());
-	energyUse=min(((CUnit*)unit.get())->GetUnitDef()->energyUpkeep,1.0f);
+	energyUse=min(((CUnit*)unit.get())->GetUnitDataType().lock()->GetUnitDef()->energyUpkeep,1.0f);
 	return true;
 }
 

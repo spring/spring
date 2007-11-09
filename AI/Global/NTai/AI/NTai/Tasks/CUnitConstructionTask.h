@@ -1,6 +1,6 @@
 class CUnitConstructionTask : public IModule {
 public:
-	CUnitConstructionTask(Global* GL, int unit, const UnitDef* builder, const UnitDef* building);
+	CUnitConstructionTask(Global* GL, int unit, weak_ptr<CUnitTypeData> builder, weak_ptr<CUnitTypeData> building);
 	virtual ~CUnitConstructionTask();
 	void RecieveMessage(CMessage &message);
 	bool Init();
@@ -8,6 +8,6 @@ public:
 protected:
 	string mymessage;
 	int unit;
-	const UnitDef* builder;
-	const UnitDef* building;
+	shared_ptr<CUnitTypeData> builder;
+	shared_ptr<CUnitTypeData> building;
 };

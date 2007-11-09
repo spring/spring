@@ -278,6 +278,7 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
     NLOG("CActions::AttackNear");
     const UnitDef* ud = G->GetUnitDef(unit);
     if(ud == 0) return false;
+	shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id).lock();
     int* en = new int[5000];
     int e = G->GetEnemyUnits(en, G->GetUnitPos(unit), max(G->cb->GetUnitMaxRange(unit), ud->losRadius)*LOSmultiplier);
     if(e>0){
@@ -291,13 +292,16 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
             if(endi == 0){
                 continue;
             }else{
+				shared_ptr<CUnitTypeData> etd = G->UnitDefLoader->GetUnitTypeDataById(endi->id).lock();
                 bool tmobile = false;
                 tempscore = G->GetTargettingWeight(ud->name, endi->name);
-                tempscore = G->Ch->ApplyGrudge(en[i], tempscore);
-                if(G->UnitDefHelper->IsMobile(endi)){
-                    if(G->info->hardtarget == false) tempscore = tempscore/4;
+                //tempscore = G->Ch->ApplyGrudge(en[i], tempscore);
+                if(etd->IsMobile()){
+					if(!G->info->hardtarget){
+						tempscore = tempscore/4;
+					}
                     tmobile = true;
-                }else if(endi->weapons.empty()==false){
+                }else if(!endi->weapons.empty()){
                     tempscore /= 2;
                 }
                 if(tempscore > best_score){
@@ -390,49 +394,54 @@ bool CActions::DGunNearby(int uid){
     if(e>0){
         for(int i = 0; i < e; i++){
             if(::ValidUnitID(en[i])==false) continue;
-            const UnitDef* endi = G->GetUnitDef(en[i]);
-            if(endi){
-                //if(endi->isCommander == true) continue; // no dgunning enemy commanders!
-                // no dgunning enemy commanders is commented out because now if the enemy is a commander the CMD_DGUN is
-                // changed to CMD_RECLAIM, allowing the enemy commander to be eliminated without causing a wild goose chase of
-                // building dgunned building dgunned, commander in the way of building dgunned, BANG, both commanders bye bye
-                if(G->UnitDefHelper->IsAirCraft(endi)&&(endi->speed<3)) continue; // attempting to dgun an aircraft without predictive dgunning leads to a goose chase
-                int k = en[i];
-                delete [] en;
-                G->Manufacturer->WipePlansForBuilder(uid);
-                if(endi->canDGun){
-                    int r = (int)G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
-                    int c = (int)G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
+			shared_ptr<CUnitTypeData> edt = G->UnitDefLoader->GetUnitTypeDataByUnitId(en[i]).lock();
+
+            //if(endi->isCommander == true) continue; // no dgunning enemy commanders!
+
+            // no dgunning enemy commanders is commented out because now if the enemy is a commander the CMD_DGUN is
+            // changed to CMD_RECLAIM, allowing the enemy commander to be eliminated without causing a wild goose chase of
+            // building dgunned building dgunned, commander in the way of building dgunned, BANG, both commanders bye bye
+
+			if(edt->IsAirCraft()&&(edt->GetUnitDef()->speed<3)){
+				continue;// attempting to dgun an aircraft without predictive dgunning leads to a goose chase
+			}
+
+            int k = en[i];
+            delete [] en;
+
+            G->Manufacturer->WipePlansForBuilder(uid);
+            if(edt->GetUnitDef()->canDGun){
+                int r = (int)G->Pl->ReclaimTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                int c = (int)G->Pl->CaptureTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                if(r<(4 SECONDS) && r < c){
+                    return Reclaim(uid, k);
+                }else{
+                    if(c<(4 SECONDS)){
+                        return Capture(uid, k);
+                    }else if(!G->Ch->defences.empty()){
+                        return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
+                    }else{
+                        NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
+                        return MoveToStrike(uid, G->Map->nbasepos(compos), false);
+                    }
+                }
+            }else{
+                if(G->GetDGunCost(ud->name)<G->cb->GetEnergy()){
+                    return DGun(uid, k);
+                }else{
+                    int r = (int)G->Pl->ReclaimTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                    int c = (int)G->Pl->CaptureTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
                     if(r<(4 SECONDS) && r < c){
                         return Reclaim(uid, k);
                     }else{
                         if(c<(4 SECONDS)){
                             return Capture(uid, k);
-                        }else if(!G->Ch->defences.empty()){
-                            return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
                         }else{
-                            NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                            return MoveToStrike(uid, G->Map->nbasepos(compos), false);
-                        }
-                    }
-                }else{
-                    if(G->GetDGunCost(ud->name)<G->cb->GetEnergy()){
-                        return DGun(uid, k);
-                    }else{
-                        int r = (int)G->Pl->ReclaimTime(ud, endi, G->chcb->GetUnitHealth(k));
-                        int c = (int)G->Pl->CaptureTime(ud, endi, G->chcb->GetUnitHealth(k));
-                        if(r<(4 SECONDS) && r < c){
-                            return Reclaim(uid, k);
-                        }else{
-                            if(c<(4 SECONDS)){
-                                return Capture(uid, k);
+                            if(!G->Ch->defences.empty()){
+                                return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
                             }else{
-                                if(!G->Ch->defences.empty()){
-                                    return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-                                }else{
-                                    NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                                    return MoveToStrike(uid, G->Map->nbasepos(compos), false);
-                                }
+                                NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
+                                return MoveToStrike(uid, G->Map->nbasepos(compos), false);
                             }
                         }
                     }
@@ -631,42 +640,67 @@ bool CActions::RepairNearbyUnfinishedMobileUnits(int uid, float radius){
     int h = G->cb->GetFriendlyUnits(hn, pos, radius);
     if( h>0){
         for( int i = 0; i<h; i++){
+
             if(G->cb->UnitBeingBuilt(hn[i]) == true){
-                const UnitDef* bud = G->GetUnitDef(hn[i]);
-                if(bud == 0) continue;
-                if(G->UnitDefHelper->IsMobile(bud) == false) continue;
+				shared_ptr<CUnitTypeData> btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]).lock();
+
+				if(!btd->IsMobile()){
+					continue;
+				}
+
                 float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
-                float RemainingTime = bud->buildTime / udi->buildSpeed * Remainder;
-                if (RemainingTime < 30.0f) continue;
-                float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
-                float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-                if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
-                    if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
+                float RemainingTime = btd->GetUnitDef()->buildTime / udi->buildSpeed * Remainder;
+
+				if (RemainingTime < 30.0f){
+					continue;
+				}
+
+				float EPerS = btd->GetUnitDef()->energyCost / (btd->GetUnitDef()->buildTime / udi->buildSpeed);
+                float MPerS = btd->GetUnitDef()->metalCost / (btd->GetUnitDef()->buildTime / udi->buildSpeed);
+
+                if (G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0 && G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0){
+					
+					if (RemainingTime > 120.0f || btd->GetUnitDef()->buildSpeed > 0){
                         int target = hn[i];
                         delete [] hn;
                         return Repair(uid, target);
                     }
+
                 }
+
             }
         }
+
     }else{
         h = G->cb->GetFriendlyUnits(hn);
-        if(h <1) return false;
+
+		if(h <1){
+			return false;
+		}
+
         for( int i = 0; i<h; i++){
-            if(((G->cb->UnitBeingBuilt(hn[i]) == true)||(G->cb->GetUnitMaxHealth(hn[i])*0.6f > G->cb->GetUnitHealth(hn[i])))&&(G->cb->GetUnitTeam(hn[i]) == G->Cached->team)){
-                const UnitDef* bud = G->GetUnitDef(hn[i]);
-                float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
-                float RemainingTime = bud->buildTime / udi->buildSpeed * Remainder;
-                if (RemainingTime < 30.0f) continue;
-                float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
-                float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-                if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
-                    if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
+
+            if((G->cb->UnitBeingBuilt(hn[i])||(G->cb->GetUnitMaxHealth(hn[i])*0.6f > G->cb->GetUnitHealth(hn[i])))&&(G->cb->GetUnitTeam(hn[i]) == G->Cached->team)){
+                shared_ptr<CUnitTypeData> btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]).lock();
+                
+				float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
+                float RemainingTime = btd->GetUnitDef()->buildTime / udi->buildSpeed * Remainder;
+				
+				if (RemainingTime < 30.0f){
+					continue;
+				}
+
+                float EPerS = btd->GetUnitDef()->energyCost / (btd->GetUnitDef()->buildTime / udi->buildSpeed);
+                float MPerS = btd->GetUnitDef()->metalCost / (btd->GetUnitDef()->buildTime / udi->buildSpeed);
+
+                if (G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+                    if (RemainingTime > 120.0f || btd->GetUnitDef()->buildSpeed > 0)	{
                         int target = hn[i];
                         delete [] hn;
                         return Repair(uid, target);
                     }
                 }
+
             }
         }
     }
@@ -675,41 +709,56 @@ bool CActions::RepairNearbyUnfinishedMobileUnits(int uid, float radius){
 }
 
 bool CActions::RandomSpiral(int unit, bool water){
-    NLOG("CActions::RandomSpiral");
-    G->L.print("issuing random move");
-    const UnitDef* ud = G->GetUnitDef(unit);
-    if(ud == 0) return false;
+    
+	NLOG("CActions::RandomSpiral");
+    
+	G->L.print("issuing random move");
+    
+	const UnitDef* ud = G->GetUnitDef(unit);
+	
+	if(ud == 0){
+		return false;
+	}
+
     float3 upos = G->GetUnitPos(unit);
+
     if(G->Map->CheckFloat3(upos) == false){
-        G->L.print("issuing random move failed (upos given as UpVector)");
+		G->L.print("issuing random move failed (upos given as UpVector)");
         return false;
-    }else{
+    } else {
+
         float angle = float(rand()%320);
         float3 epos = upos;
         epos.x -= ud->losRadius*1.5f;
         upos = G->Map->Rotate(epos, angle, upos);
+
         if(upos.x > G->cb->GetMapWidth() * SQUARE_SIZE){
             upos.x = (G->cb->GetMapWidth() * SQUARE_SIZE)-(upos.x-(G->cb->GetMapWidth() * SQUARE_SIZE));
             upos.x -= 900;
         }
+
         if(upos.z > G->cb->GetMapHeight() * SQUARE_SIZE){
             upos.z = (G->cb->GetMapHeight() * SQUARE_SIZE)-(upos.z-(G->cb->GetMapHeight() * SQUARE_SIZE));
             upos.z -= 900;
         }
+
         if(upos.x < 0){
             upos.x *= (-1);
             upos.x += 900;
         }
+
         if(upos.z <0){
             upos.z *= (-1);
             upos.z += 500;
         }
+
         return Move(unit, upos);
     }
 }
 
 bool CActions::SeekOutLastAssault(int unit){
     NLOG("CActions::SeekOutLastAssault");
+
     if(G->Map->CheckFloat3(last_attack) ==false){
         return false;
     }else{
@@ -719,69 +768,119 @@ bool CActions::SeekOutLastAssault(int unit){
 
 bool CActions::SeekOutNearestInterest(int unit){
     NLOG("CActions::SeekOutNearestInterest");
-    if(unit < 1) return false;
-    if(points.empty() == true) return false;
+
+	if(unit < 1){
+		return false;
+	}
+
+	if(points.empty()){
+		return false;
+	}
+
     float3 pos = G->GetUnitPos(unit);
-    if(G->Map->CheckFloat3(pos) == false) return false;
-    if(points.empty() == false){
+
+	if(!G->Map->CheckFloat3(pos)){
+		return false;
+	}
+
+    if(!points.empty()){
+
         float3 destination = UpVector;
         float shortest = 2000000.0f;
+
         for(vector<float3>::iterator i = points.begin(); i != points.end(); ++i){
             if(pos.distance2D(*i) < shortest){
                 destination = *i;
             }
+
         }
+
         if(G->Map->CheckFloat3(destination)==true){
             return Move(unit, destination);
         }
+
     }
+
     return false;
 }
 
 bool CActions::SeekOutInterest(int unit, float range){
     NLOG("CActions::SeekOutInterest");
-    if(unit < 1) return false;
-    if(range < 200.0f) return false; // cant have a range that'll get us absolutely no results...
-    if(points.empty() == true) return false;
-    float3 pos = G->GetUnitPos(unit);
-    if(G->Map->CheckFloat3(pos) == false) return false;
+
+	if(!ValidUnitID(unit)){
+		return false;
+	}
+    
+	if(range < 200.0f){
+		// cant have a range that'll get us absolutely no results...
+		return false;
+	}
+    
+	if(points.empty()){
+		return false;
+	}
+    
+	float3 pos = G->GetUnitPos(unit);
+	
+	if(!G->Map->CheckFloat3(pos)){
+		return false;
+	}
+
     vector<float3> in_range;
+
     for(vector<float3>::iterator i = points.begin(); i != points.end(); ++i){
         if(pos.distance2D(*i) < range){
             in_range.push_back(*i);
+
         }
+
     }
-    if(in_range.empty() == false){
+
+    if(!in_range.empty()){
         //
         float3 destination = UpVector;
+
         float shortest = 2000000.0f;
+
         for(vector<float3>::iterator i = in_range.begin(); i != in_range.end(); ++i){
             if(pos.distance2D(*i) < shortest){
                 destination = *i;
             }
         }
+
         if(G->Map->CheckFloat3(destination) == false){
             return false;
         }
+
         return Move(unit, destination);
     }else{
         return false;
     }
+
 }
 
 bool CActions::AddPoint(float3 pos){
     NLOG("CActions::AddPoint");
-    if(G->Map->CheckFloat3(pos) == false) return false;
+
+	if(G->Map->CheckFloat3(pos) == false){
+		return false;
+	}
+
     points.push_back(pos);
-    return true;
+    
+	return true;
 }
 
 void CActions::Update(){
     NLOG("CActions::Update");
+
     if(EVERY_((15 FRAMES))){
-        if(points.empty()==false){
+
+        if(!points.empty()){
             NLOG("CActions::Update points");
+
             int* ef = new int[10000];
+
             for(vector<float3>::iterator i = points.begin(); i!=points.end(); ++i){
                 if(G->InLOS(*i)==true){
                     int ecount = G->GetEnemyUnits(ef, *i, 300);
@@ -791,39 +890,35 @@ void CActions::Update(){
                     }
                 }
             }
+
             delete [] ef;
+
         }
     }
+
     NLOG("CActions::Update points done");
-    /*if(G->GetCurrentFrame()== (20 SECONDS)){
-     if(G->M->m->NumSpotsFound > 0){
-     vector<float3>* spots = G->M->getHotSpots();
-     if(spots!=0){
-     if(spots->empty() == false){
-     for(vector<float3>::iterator i = spots->begin(); i != spots->end(); ++i){
-     float3 q = *i;
-     q.y=G->cb->GetElevation(q.x,q.z);
-     AddPoint(q);
-     }
-     }
-     }
-     }
-     }*/
+
 }
 
 bool CActions::Retreat(int uid){
     NLOG("CActions::Retreat");
+
     float3 pos = G->GetUnitPos(uid);
+
     if(G->Map->CheckFloat3(pos)==true){
         float3 bpos =G->Map->nbasepos(pos);
+
         if(bpos.distance2D(pos) < 900){
             return false;
         }
+
         pos = G->Map->distfrom(pos, bpos, 900);
         return Move(uid, pos);
     }else{
+
         return false;
     }
+
 }
 
 bool CActions::CopyAttack(int unit, set<int> tocopy){

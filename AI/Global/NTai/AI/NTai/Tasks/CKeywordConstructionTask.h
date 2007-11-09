@@ -9,5 +9,6 @@ protected:
 	string mymessage;
 	int unit;
 	btype type;
-	const UnitDef* building;
+	shared_ptr<CUnitTypeData> building;
+	shared_ptr<CUnitTypeData> utd;
 };
