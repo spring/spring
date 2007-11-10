@@ -30,7 +30,7 @@ extern "C" {
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	5
+#define INTERNAL_VER	6
 
 CArchiveScanner* archiveScanner = NULL;
 
@@ -61,17 +61,17 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 		return md;
 	}
 
-	md.name        = p->SGetValueDef("", (section + "\\Name").c_str());
-	md.shortName   = p->SGetValueDef("", (section + "\\ShortName").c_str());
-	md.game        = p->SGetValueDef("", (section + "\\Game").c_str());
-	md.shortGame   = p->SGetValueDef("", (section + "\\ShortGame").c_str());
-	md.version     = p->SGetValueDef("", (section + "\\Version").c_str());
-	md.mutator     = p->SGetValueDef("", (section + "\\Mutator").c_str());
-	md.description = p->SGetValueDef("", (section + "\\Description").c_str());
+	md.name        = p->SGetValueDef("", section + "\\Name");
+	md.shortName   = p->SGetValueDef("", section + "\\ShortName");
+	md.version     = p->SGetValueDef("", section + "\\Version");
+	md.mutator     = p->SGetValueDef("", section + "\\Mutator");
+	md.game        = p->SGetValueDef("", section + "\\Game");
+	md.shortGame   = p->SGetValueDef("", section + "\\ShortGame");
+	md.description = p->SGetValueDef("", section + "\\Description");
 
-	md.modType = atoi(p->SGetValueDef("0", (section + "\\ModType").c_str()).c_str());
+	md.modType = atoi(p->SGetValueDef("0", section + "\\ModType").c_str());
 
-	int numDep = atoi(p->SGetValueDef("0", (section + "\\NumDependencies").c_str()).c_str());
+	int numDep = atoi(p->SGetValueDef("0", section + "\\NumDependencies").c_str());
 	for (int dep = 0; dep < numDep; ++dep) {
 		char key[100];
 		sprintf(key, "%s\\Depend%d", section.c_str(), dep);
@@ -406,10 +406,30 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 		// Any mod info? or just a map archive?
 		if (i->second.modData.name != "") {
+			const ModData& md = i->second.modData;
 			fprintf(out, "\t\t[MOD]\n\t\t{\n");
-			fprintf(out, "\t\t\tName=%s;\n", i->second.modData.name.c_str());
-			fprintf(out, "\t\t\tDescription=%s;\n", i->second.modData.description.c_str());
-			fprintf(out, "\t\t\tModType=%d;\n", i->second.modData.modType);
+			fprintf(out, "\t\t\tName=%s;\n",          md.name.c_str());
+
+			if (!md.shortName.empty()) {
+				fprintf(out, "\t\t\tShortName=%s;\n",   md.shortName.c_str());
+			}
+			if (!md.version.empty()) {
+				fprintf(out, "\t\t\tVersion=%s;\n",     md.version.c_str());
+			}
+			if (!md.mutator.empty()) {
+				fprintf(out, "\t\t\tMutator=%s;\n",     md.mutator.c_str());
+			}
+			if (!md.game.empty()) {
+				fprintf(out, "\t\t\tGame=%s;\n",        md.game.c_str());
+			}
+			if (!md.shortGame.empty()) {
+				fprintf(out, "\t\t\tShortGame=%s;\n",   md.shortGame.c_str());
+			}
+			if (!md.description.empty()) {
+				fprintf(out, "\t\t\tDescription=%s;\n", md.description.c_str());
+			}
+
+			fprintf(out, "\t\t\tModType=%d;\n",     md.modType);
 
 			fprintf(out, "\t\t\tNumDependencies=%d;\n", i->second.modData.dependencies.size());
 			int curdep = 0;
