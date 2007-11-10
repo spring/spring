@@ -13,25 +13,25 @@ pause > nul
 call make_gamedata_arch
 
 echo Creating normal installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW taspring.nsi 
+"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW spring.nsi 
 
 echo Creating GPL installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DNO_TOTALA taspring.nsi 
+"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DNO_TOTALA spring.nsi 
 
 echo Creating update installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DSP_UPDATE taspring.nsi  
+"C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW /DSP_UPDATE spring.nsi  
 
 rem echo Creating patch installer
-rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_PATCH taspring.nsi
+rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_PATCH spring.nsi
 
 rem echo Creating installer without cavedog content
-rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_ALLMAPS taspring.nsi 
+rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_ALLMAPS spring.nsi 
 
 rem echo Creating small installer without cavedog content
-rem "C:\Program Files\NSIS\makensis.exe" /V3 taspring.nsi 
+rem "C:\Program Files\NSIS\makensis.exe" /V3 spring.nsi 
 
 rem echo Creating core only installer
-rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_CORE taspring.nsi 
+rem "C:\Program Files\NSIS\makensis.exe" /V3 /DSP_CORE spring.nsi 
 
 echo All done.. 
 echo If this is a public release, make sure to save this and tag CVS etc..

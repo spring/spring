@@ -13,10 +13,10 @@ pause > nul
 call make_gamedata_arch
 
 echo Creating test installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DTEST_BUILD /DREVISION=3779 taspring.nsi
+"C:\Program Files\NSIS\makensis.exe" /V3 /DTEST_BUILD /DREVISION=3779 spring.nsi
 
 echo Creating updating test installer
-"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_UPDATE /DTEST_BUILD /DREVISION=3779 taspring.nsi
+"C:\Program Files\NSIS\makensis.exe" /V3 /DSP_UPDATE /DTEST_BUILD /DREVISION=3779 spring.nsi
 
 echo All done.. 
 echo If this is a public release, make sure to save this and tag CVS etc..
