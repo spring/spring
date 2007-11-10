@@ -33,14 +33,14 @@ echo "Creating installers for revision $REVISION"
 
 if grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+(svn[0-9]+)?' rts/Game/GameVersion.cpp >/dev/null; then
 	echo "Creating test installer"
-	makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi
+	makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/spring.nsi
 
 	echo "Creating updating test installer"
-	makensis -V3 -DSP_UPDATE -DTEST_BUILD -DREVISION=$REVISION installer/taspring.nsi
+	makensis -V3 -DSP_UPDATE -DTEST_BUILD -DREVISION=$REVISION installer/spring.nsi
 else
 	echo "Creating installer"
-	makensis -V3 installer/taspring.nsi
+	makensis -V3 installer/spring.nsi
 
 	echo "Creating updating installer"
-	makensis -V3 -DSP_UPDATE installer/taspring.nsi
+	makensis -V3 -DSP_UPDATE installer/spring.nsi
 fi
