@@ -76,7 +76,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		int hisNewNumber = ((netcode::CNet*)serverNet)->InitLocalClient(wantedNumber);
 		serverNet->Update();
 
-		serverNet->SendSetPlayerNum(hisNewNumber);
+		serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
 		// send game data for demo recording
 		if (!scriptName.empty())
 			serverNet->SendScript(scriptName);
@@ -337,7 +337,7 @@ void CGameServer::ServerReadNet()
 		{
 			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(inbuf[1]);
 
-			serverNet->SendSetPlayerNum(hisNewNumber);
+			serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
 
 			if (!scriptName.empty())
 				serverNet->SendScript(scriptName);
