@@ -730,10 +730,12 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 	return ret;
 }
 
+
 //////////////////////////
 //////////////////////////
 
 vector<CArchiveScanner::ModData> modData;
+
 
 /*
  * @brief Retrieves the name of this mod
@@ -748,6 +750,7 @@ DLL_EXPORT int __stdcall GetPrimaryModCount()
 	modData = archiveScanner->GetPrimaryMods();
 	return modData.size();
 }
+
 
 /*
  * @brief Retrieves the name of this mod
@@ -765,6 +768,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 	return GetStr(x);
 }
 
+
 /*
  * @brief Retrieves the shortened name of this mod
  * @param index in The mods index/id
@@ -780,6 +784,41 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
 	string x = modData[index].shortName;
 	return GetStr(x);
 }
+
+
+/*
+ * @brief Retrieves the version string of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods version string
+ *
+ * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModVersion.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
+	string x = modData[index].version;
+	return GetStr(x);
+}
+
+
+/*
+ * @brief Retrieves the mutator name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods mutator name
+ *
+ * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
+DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
+{
+	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModMutator.");
+	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
+	string x = modData[index].mutator;
+	return GetStr(x);
+}
+
 
 /*
  * @brief Retrieves the game name of this mod
@@ -797,6 +836,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
 	return GetStr(x);
 }
 
+
 /*
  * @brief Retrieves the short game name of this mod
  * @param index in The mods index/id
@@ -813,21 +853,6 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
 	return GetStr(x);
 }
 
-/*
- * @brief Retrieves the mutator name of this mod
- * @param index in The mods index/id
- * @return const char* The mods mutator name
- *
- * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
-{
-	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModMutator.");
-	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
-	string x = modData[index].mutator;
-	return GetStr(x);
-}
 
 /*
  * @brief Retrieves the description of this mod
@@ -1034,6 +1059,9 @@ DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
 //////////////////////////
 //////////////////////////
 
+static const char* badKeyChars = " =;\r\n\t";
+
+
 struct ListItem {
 	string key;
 	string name;
@@ -1041,8 +1069,8 @@ struct ListItem {
 };
 
 
-struct CustomOption {
-	CustomOption() : typeCode(opt_error) {}
+struct Option {
+	Option() : typeCode(opt_error) {}
 
 	string key;
 	string name;
@@ -1067,10 +1095,10 @@ struct CustomOption {
 };
 
 
-static vector<CustomOption> customOptions;
+static vector<Option> options;
 
 
-static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt)
+static bool ParseOption(const LuaTable& root, int index, Option& opt)
 {
 	const LuaTable& optTbl = root.SubTable(index);
 	if (!optTbl.IsValid()) {
@@ -1079,9 +1107,11 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 
 	// common options properties
 	opt.key = optTbl.GetString("key", "");
-	if (opt.key.empty() || (opt.key.find_first_of(" =") != string::npos)) {
+	if (opt.key.empty() ||
+	    (opt.key.find_first_of(badKeyChars) != string::npos)) {
 		return false;
 	}
+	opt.key = StringToLower(opt.key);
 	opt.name = optTbl.GetString("name", opt.key);
 	if (opt.name.empty()) {
 		return false;
@@ -1121,7 +1151,8 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 
 			// string format
 			item.key = listTbl.GetString(i, "");
-			if (!item.key.empty() && (item.key.find_first_of(" =") == string::npos)) {
+			if (!item.key.empty() &&
+			    (item.key.find_first_of(badKeyChars) == string::npos)) {
 				item.name = item.key;
 				item.desc = item.name;
 				opt.list.push_back(item);
@@ -1134,9 +1165,11 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 				break;
 			}
 			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty() || (item.key.find_first_of(" =") != string::npos)) {
+			if (item.key.empty() ||
+			    (item.key.find_first_of(badKeyChars) != string::npos)) {
 				return false;
 			}
+			item.key = StringToLower(item.key);
 			item.name = itemTbl.GetString("name", item.key);
 			if (item.name.empty()) {
 				return false;
@@ -1159,11 +1192,11 @@ static bool ParseCustomOption(const LuaTable& root, int index, CustomOption& opt
 }
 
 
-static void ParseCustomOptions(const string& fileName,
-                               const string& fileModes,
-															 const string& accessModes)
+static void ParseOptions(const string& fileName,
+                         const string& fileModes,
+                         const string& accessModes)
 {
-	customOptions.clear();
+	options.clear();
 
 	LuaParser luaParser(fileName, fileModes, accessModes);
 	if (!luaParser.Execute()) {
@@ -1176,9 +1209,9 @@ static void ParseCustomOptions(const string& fileName,
 	}
 
 	for (int index = 1; root.KeyExists(index); index++) {
-		CustomOption opt;
-		if (ParseCustomOption(root, index, opt)) {
-			customOptions.push_back(opt);
+		Option opt;
+		if (ParseOption(root, index, opt)) {
+			options.push_back(opt);
 		}
 	}
 
@@ -1188,7 +1221,7 @@ static void ParseCustomOptions(const string& fileName,
 
 static bool InvalidOptionIndex(int optIndex)
 {
-	if ((optIndex < 0) || (optIndex >= (int)customOptions.size())) {
+	if ((optIndex < 0) || (optIndex >= (int)options.size())) {
 		return true;
 	}
 	return false;
@@ -1200,7 +1233,7 @@ static bool WrongOptionType(int optIndex, int type)
 	if (InvalidOptionIndex(optIndex)) {
 		return true;
 	}
-	if (customOptions[optIndex].typeCode != type) {
+	if (options[optIndex].typeCode != type) {
 		return true;
 	}
 	return false;
@@ -1216,16 +1249,16 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 	ScopedMapLoader mapLoader(name);
 
-	ParseCustomOptions("CustomMapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP);
+	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP);
 
-	return (int)customOptions.size();
+	return (int)options.size();
 }
 
 
 DLL_EXPORT int __stdcall GetModOptionCount()
 {
-	ParseCustomOptions("CustomModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
-	return (int)customOptions.size();
+	ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+	return (int)options.size();
 }
 
 
@@ -1236,7 +1269,7 @@ DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
 	}
-	return GetStr(customOptions[optIndex].key);
+	return GetStr(options[optIndex].key);
 }
 
 
@@ -1245,7 +1278,7 @@ DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
 	}
-	return GetStr(customOptions[optIndex].name);
+	return GetStr(options[optIndex].name);
 }
 
 
@@ -1254,7 +1287,7 @@ DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
 	}
-	return GetStr(customOptions[optIndex].desc);
+	return GetStr(options[optIndex].desc);
 }
 
 
@@ -1263,7 +1296,7 @@ DLL_EXPORT int __stdcall GetOptionType(int optIndex)
 	if (InvalidOptionIndex(optIndex)) {
 		return 0;
 	}
-	return customOptions[optIndex].typeCode;
+	return options[optIndex].typeCode;
 }
 
 
@@ -1274,7 +1307,7 @@ DLL_EXPORT int __stdcall GetOptionBoolDef(int optIndex)
 	if (WrongOptionType(optIndex, opt_bool)) {
 		return 0;
 	}
-	return customOptions[optIndex].boolDef ? 1 : 0;
+	return options[optIndex].boolDef ? 1 : 0;
 }
 
 
@@ -1285,7 +1318,7 @@ DLL_EXPORT float __stdcall GetOptionNumberDef(int optIndex)
 	if (WrongOptionType(optIndex, opt_number)) {
 		return 0.0f;
 	}
-	return customOptions[optIndex].numberDef;
+	return options[optIndex].numberDef;
 }
 
 
@@ -1294,7 +1327,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMin(int optIndex)
 	if (WrongOptionType(optIndex, opt_number)) {
 		return -1.0e30f; // FIXME ?
 	}
-	return customOptions[optIndex].numberMin;
+	return options[optIndex].numberMin;
 }
 
 
@@ -1303,7 +1336,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMax(int optIndex)
 	if (WrongOptionType(optIndex, opt_number)) {
 		return +1.0e30f; // FIXME ?
 	}
-	return customOptions[optIndex].numberMax;
+	return options[optIndex].numberMax;
 }
 
 
@@ -1312,7 +1345,7 @@ DLL_EXPORT float __stdcall GetOptionNumberStep(int optIndex)
 	if (WrongOptionType(optIndex, opt_number)) {
 		return 0.0f;
 	}
-	return customOptions[optIndex].numberStep;
+	return options[optIndex].numberStep;
 }
 
 
@@ -1323,7 +1356,7 @@ DLL_EXPORT const char* __stdcall GetOptionStringDef(int optIndex)
 	if (WrongOptionType(optIndex, opt_string)) {
 		return NULL;
 	}
-	return GetStr(customOptions[optIndex].stringDef);
+	return GetStr(options[optIndex].stringDef);
 }
 
 
@@ -1332,7 +1365,7 @@ DLL_EXPORT int __stdcall GetOptionStringMaxLen(int optIndex)
 	if (WrongOptionType(optIndex, opt_string)) {
 		return 0;
 	}
-	return customOptions[optIndex].stringMaxLen;
+	return options[optIndex].stringMaxLen;
 }
 
 
@@ -1343,7 +1376,7 @@ DLL_EXPORT int __stdcall GetOptionListCount(int optIndex)
 	if (WrongOptionType(optIndex, opt_list)) {
 		return 0;
 	}
-	return customOptions[optIndex].list.size();
+	return options[optIndex].list.size();
 }
 
 
@@ -1352,7 +1385,7 @@ DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
 	if (WrongOptionType(optIndex, opt_list)) {
 		return 0;
 	}
-	return GetStr(customOptions[optIndex].listDef);
+	return GetStr(options[optIndex].listDef);
 }
 
 
@@ -1361,7 +1394,7 @@ DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemInde
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = customOptions[optIndex].list;
+	const vector<ListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
 		return NULL;
 	}
@@ -1374,7 +1407,7 @@ DLL_EXPORT const char* __stdcall GetOptionListItemName(int optIndex, int itemInd
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = customOptions[optIndex].list;
+	const vector<ListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
 		return NULL;
 	}
@@ -1387,7 +1420,7 @@ DLL_EXPORT const char* __stdcall GetOptionListItemDesc(int optIndex, int itemInd
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = customOptions[optIndex].list;
+	const vector<ListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
 		return NULL;
 	}
