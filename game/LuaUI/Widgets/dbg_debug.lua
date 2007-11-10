@@ -228,6 +228,13 @@ function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
 end
 
 
+function widget:UnitSeismicPing(x, y, z, strength)
+  print('DEBUG (UnitSeismicPing) '..x..' '..y..' '..z..' '..strength)
+  Spring.PlaySoundFile('LuaUI/Sounds/message_admin.wav', strength * 0.25, x, y, z)
+  return
+end
+
+
 function widget:UnitLoaded(unitID, unitDefID, unitTeam,
                            transportID, transportTeam)
   print('DEBUG (UnitLoaded) '
