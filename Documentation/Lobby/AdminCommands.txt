@@ -140,3 +140,5 @@ getuserid username
   will retrieve last userID of user <username>
 killall [reason]
   will disconnect all clients from the server
+retrievelatestbanlist
+  forces server to retrieve latest ban list from the database
