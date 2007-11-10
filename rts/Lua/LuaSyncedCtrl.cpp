@@ -258,7 +258,7 @@ static inline bool CanControlFeature(const CFeature* feature)
 //  Parsing helpers
 //
 
-static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
+static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad unitID", caller);
@@ -268,6 +268,16 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
+	if (unit == NULL) {
+		return NULL;
+	}
+	return unit;
+}
+
+
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -849,8 +859,8 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 	for (int a = 0; a < 4; a++, arg++) {
 		if (lua_istable(L, arg)) {
 			int x, z;
-			lua_rawgeti(L, -1, 1); x = (int)luaL_checknumber(L, -1); lua_pop(L, 1);
-			lua_rawgeti(L, -1, 2); z = (int)luaL_checknumber(L, -1); lua_pop(L, 1);
+			lua_rawgeti(L, arg, 1); x = luaL_checkint(L, -1); lua_pop(L, 1);
+			lua_rawgeti(L, arg, 2); z = luaL_checkint(L, -1); lua_pop(L, 1);
 			p[a] = PACKXZ(x, z);
 		}
 		else {
