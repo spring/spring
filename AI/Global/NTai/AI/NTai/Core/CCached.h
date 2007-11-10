@@ -12,7 +12,7 @@ public:
 	//vector<ctri> triangles; // contains all the triangle markers being displayed on map
 	set<string> solobuild;
 	map<string,int> solobuilds;
-	map<string,bool> singlebuilds; // bool = true if built false if not built
+	//map<string,bool> singlebuilds; // bool = true if built false if not built
 
 	bool cheating;
 

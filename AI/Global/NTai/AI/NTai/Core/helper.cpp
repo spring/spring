@@ -335,14 +335,13 @@ void Global::Update(){
 void Global::SortSolobuilds(int unit){
     Cached->enemies.erase(unit);
     if(endefs.find(unit) != endefs.end()) endefs.erase(unit);
-    /*if(positions.empty()==false){
-     map<int,temp_pos>::iterator q = positions.find(unit);
-     if(q != positions.end()){
-     positions.erase(q);
-     }
-     }*/
-    const UnitDef* ud = GetUnitDef(unit);
-    if(ud != 0){
+
+	weak_ptr<CUnitTypeData> wu = UnitDefLoader->GetUnitTypeDataByUnitId(unit);
+	shared_ptr<CUnitTypeData> u = wu.lock();
+
+	const UnitDef* ud = u->GetUnitDef();
+    
+	if(ud != 0){
         bool found = false;
         string s  = ud->name;
         trim(s);
@@ -353,8 +352,8 @@ void Global::SortSolobuilds(int unit){
                 break;
             }
         }
-        if(Cached->singlebuilds.find(s)!= Cached->singlebuilds.end()){
-            Cached->singlebuilds[s] = true;
+		if(u->GetSingleBuild()){
+			u->SetSingleBuildActive(true);
         }
         if(found == true)	Cached->solobuilds[s] = unit;
     }
@@ -750,13 +749,18 @@ void Global::UnitDestroyed(int unit, int attacker){
     }
 
     idlenextframe.erase(unit);
-    const UnitDef* udu = GetUnitDef(unit);
+
+	weak_ptr<CUnitTypeData> wu =G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
+	shared_ptr<CUnitTypeData> u = wu.lock();
+
+    const UnitDef* udu = u->GetUnitDef();
     if(udu != 0){
         max_energy_use -= udu->energyUpkeep;
-        if(Cached->singlebuilds.find(udu->name) != Cached->singlebuilds.end()){
-            Cached->singlebuilds[udu->name] = false;
+		if(u->GetSingleBuild()){
+			u->SetSingleBuildActive(false);
         }
     }
+
     if(ValidUnitID(attacker)){
         const UnitDef* uda = GetUnitDef(attacker);
         if((uda != 0)&&(udu != 0)){
@@ -813,6 +817,7 @@ void Global::UnitDestroyed(int unit, int attacker){
  }*/
 void Global::InitAI(IAICallback* callback, int team){
     L.print("Initialisising");
+
     mrand.seed(uint(time(NULL)*team));
     string filename = info->datapath + slash + string("NTai.tdf");
 
@@ -821,9 +826,11 @@ void Global::InitAI(IAICallback* callback, int team){
     TdfParser* q = new TdfParser(this);
 
     if(cb->GetFileSize(filename.c_str())!=-1){
+
         q->LoadFile(filename);
         L.print("Mod TDF loaded");
         filename = info->datapath + "/" + q->SGetValueDef("configs/default.tdf", "NTai\\modconfig");
+
     } else {/////////////////
 
         TdfParser* w = new TdfParser(this, "modinfo.tdf");
@@ -857,10 +864,12 @@ void Global::InitAI(IAICallback* callback, int team){
         delete w;
     }
     delete q;
+
     //
     if(cb->GetFileSize(filename.c_str())!=-1){
         Get_mod_tdf()->LoadFile(filename);
         L.print("Mod TDF loaded");
+
     } else {/////////////////
 
         info->_abstract = true;
@@ -890,9 +899,8 @@ void Global::InitAI(IAICallback* callback, int team){
     set<std::string> solotemp;
 	string sb = Get_mod_tdf()->SGetValueMSG("AI\\SoloBuild");
 	CTokenizer<CIsComma>::Tokenize(solotemp, sb, CIsComma());
-	//if(sb.size() > 0){
-	//    bds::set_cont(solotemp, sb);
-	//}
+
+
     if(!solotemp.empty()){
         for(set<string>::iterator i = solotemp.begin(); i != solotemp.end(); ++i){
             string s = *i;
@@ -910,15 +918,17 @@ void Global::InitAI(IAICallback* callback, int team){
     vector<string> singlebuild;
 	sb = Get_mod_tdf()->SGetValueMSG("AI\\SingleBuild");
 	CTokenizer<CIsComma>::Tokenize(singlebuild, sb);
-	//if(sb.size() > 0){
-	//    singlebuild = bds::set_cont(singlebuild, sb);
-	//}
+
     if(singlebuild.empty() == false){
         for(vector<string>::iterator i= singlebuild.begin(); i != singlebuild.end(); ++i){
             string s = *i;
             trim(s);
             tolowercase(s);
-            Cached->singlebuilds[s] = false;
+
+			weak_ptr<CUnitTypeData> wu = this->UnitDefLoader->GetUnitTypeDataByName(s);
+			shared_ptr<CUnitTypeData> u = wu.lock();
+
+			u->SetSingleBuild(true);
         }
     }
 
@@ -927,10 +937,12 @@ void Global::InitAI(IAICallback* callback, int team){
         L.header(" :: Using abstract buildtree");
         L.header(endline);
     }
+
     if(info->gaia){
         L.header(" :: GAIA AI On");
         L.header(endline);
     }
+
     L.header(endline);
     if(loaded == false){
         L.print("Loading unit data");
