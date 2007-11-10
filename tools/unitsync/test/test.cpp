@@ -80,6 +80,9 @@ DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel)
 
 DLL_EXPORT int          __stdcall GetPrimaryModCount();
 DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModShortName(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModVersion(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModMutator(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
 DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
@@ -165,10 +168,14 @@ int main(int argc, char** argv)
   printf("  MODS\n");
   const int modCount = GetPrimaryModCount();
   for (int i = 0; i < modCount; i++) {
-    const string modName    = GetPrimaryModName(i);
+    const string modName      = GetPrimaryModName(i);
+    const string modShortName = GetPrimaryModShortName(i);
+    const string modVersion   = GetPrimaryModVersion(i);
+    const string modMutator   = GetPrimaryModMutator(i);
     const string modArchive = GetPrimaryModArchive(i);
-    printf("    [mod %3i]   %-32s  <%s>\n", i,
-           modName.c_str(), modArchive.c_str());
+    printf("    [mod %3i]   %-32s  <%s> %s %s %s\n", i,
+           modName.c_str(), modArchive.c_str(),
+           modShortName.c_str(), modVersion.c_str(), modMutator.c_str());
   }
 
   // load the mod archives
