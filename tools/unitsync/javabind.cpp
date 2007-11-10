@@ -59,6 +59,7 @@ DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
 DLL_EXPORT const char*	__stdcall GetPrimaryModShortName(int index);
 DLL_EXPORT const char*	__stdcall GetPrimaryModGame(int index);
 DLL_EXPORT const char*	__stdcall GetPrimaryModShortGame(int index);
+DLL_EXPORT const char*	__stdcall GetPrimaryModVersion(int index);
 DLL_EXPORT const char*	__stdcall GetPrimaryModMutator(int index);
 DLL_EXPORT const char*	__stdcall GetPrimaryModDescription(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
@@ -428,6 +429,12 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModShortGame
 		(JNIEnv *env, jclass myobject, jint index){
 			const char* c = GetPrimaryModShortGame(index);
+			return env->NewStringUTF(c);
+	}
+
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModVersion
+		(JNIEnv *env, jclass myobject, jint index){
+			const char* c = GetPrimaryModVersion(index);
 			return env->NewStringUTF(c);
 	}
 
