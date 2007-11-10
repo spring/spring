@@ -411,6 +411,10 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
                                  const float3& pos, float strength)
 {
+	if ((readAllyTeam >= 0) && (unit->losStatus[readAllyTeam] & LOS_INLOS)) {
+		return; // don't need to see this ping
+	}
+
 	static const LuaHashString cmdStr("UnitSeismicPing");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return; // the call is not defined
