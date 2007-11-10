@@ -88,11 +88,6 @@ void CBaseNetProtocol::SendStartPlaying()
 
 //  NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 
-void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum)
-{
-	SendData<uchar>(NETMSG_SETPLAYERNUM, myPlayerNum);
-}
-
 void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum, uchar connNumber)
 {
 	uchar msg[2] = {NETMSG_SETPLAYERNUM, myPlayerNum};

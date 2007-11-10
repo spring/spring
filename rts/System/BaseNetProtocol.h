@@ -102,7 +102,6 @@ public:
 	void SendQuit(unsigned playerNum);
 	void SendNewFrame(int frameNum);
 	void SendStartPlaying();
-	void SendSetPlayerNum(uchar myPlayerNum);
 	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	void SendChat(uchar myPlayerNum, const std::string& message);
