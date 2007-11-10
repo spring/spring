@@ -333,6 +333,16 @@ void CFreeController::MouseWheelMove(float move)
 
 void CFreeController::SetPos(const float3& newPos)
 {
+	const float h = ground->GetHeight2(newPos.x, newPos.z);
+	const float3 target = float3(newPos.x, h, newPos.z);
+//	const float3 target = newPos;
+	const float yDiff = pos.y - target.y;
+	if ((yDiff * dir.y) >= 0.0f) {
+		pos = float3(newPos.x, h, newPos.z);
+	} else {
+		pos = target - (dir * fabsf(yDiff / dir.y));
+	} // FIXME
+/*
 	const float oldPosY = pos.y;
 	CCameraController::SetPos(newPos);
 	pos.y = oldPosY;
@@ -343,6 +353,7 @@ void CFreeController::SetPos(const float3& newPos)
 			pos.y = absH;
 		}
 	}
+*/
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;
 }

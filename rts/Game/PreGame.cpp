@@ -1,36 +1,35 @@
 #include "StdAfx.h"
+#include "PreGame.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "FPUCheck.h"
 #include "Game.h"
 #include "Team.h"
+#include "FPUCheck.h"
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
-#include "LoadSaveHandler.h"
 #include "NetProtocol.h"
+#include "LoadSaveHandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Platform/Clipboard.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
-#include "PreGame.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glList.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "mmgr.h"
-#include "Lua/LuaGaia.h" // FIXME: should not be here
-#include "Lua/LuaRules.h"
 
 
 CPreGame* pregame=0;
@@ -49,7 +48,6 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
   savefile(NULL)
 {
 	demoFile = gameSetup? gameSetup->demoName : demo;
-	CommandDescription::Init();
 
 	infoConsole = SAFE_NEW CInfoConsole;
 

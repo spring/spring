@@ -246,6 +246,20 @@ function widget:UnitUnloaded(unitID, unitDefID, unitTeam,
 end
 
 
+function widget:UnitCloaked(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitCloaked) '
+        ..unitID..' '..unitDefID..' '..unitTeam)
+  return
+end
+
+
+function widget:UnitDecloaked(unitID, unitDefID, unitTeam)
+  print('DEBUG (UnitDecloaked) '
+        ..unitID..' '..unitDefID..' '..unitTeam)
+  return
+end
+
+
 function widget:TweakDrawScreen()
   if (printTweakDrawScreen) then
     printTweakDrawScreen = false

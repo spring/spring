@@ -28,6 +28,7 @@ using namespace std;
 #include "Game/Team.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/ReadMap.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -71,6 +72,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsUnitVisible);
 	REGISTER_LUA_CFUNC(IsUnitSelected);
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
+
+	REGISTER_LUA_CFUNC(GetVisibleUnits);
 
 	REGISTER_LUA_CFUNC(GetPlayerRoster);
 
@@ -305,6 +308,73 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
 	return 3;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
+{
+	// FIXME: implement ALL_UNITS / ENEMY_UNITS / ALLY_UNITS / MY_UNITS
+	const int teamID = luaL_optint(L, 1, -1);
+
+	bool fixedRadius = false;
+	float radius = 30.0f; // value from UnitDrawer.cpp
+	if (lua_israwnumber(L, 2)) {
+		radius = (float)lua_tonumber(L, 2);
+		if (radius < 0.0f) {
+			fixedRadius = true;
+			radius = -radius;
+		}
+	}
+
+	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
+
+	const float iconLength = unitDrawer->iconLength;
+
+	int count = 0;
+	lua_newtable(L);
+
+	list<CUnit*>::iterator usi;
+	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+		const CUnit* unit = *usi;
+
+		if (unit->noDraw) {
+			continue;
+		}
+
+		if ((teamID >= 0) && (unit->team != teamID)) {
+			continue;
+		}
+
+		if (!gs->Ally(unit->allyteam, gu->myAllyTeam) &&
+			  !(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
+				!gu->spectatingFullView) {
+			continue;
+		}
+
+		if (noIcons) {
+			const float sqDist = (unit->pos - camera->pos).SqLength();
+			const float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+			const float realIconLength = iconLength * (iconDistMult * iconDistMult);
+			if (sqDist > realIconLength) {
+				continue;
+			}
+		}
+
+		const float testRadius = fixedRadius ? radius : (unit->radius + radius); 
+		if (!camera->InView(unit->midPos, testRadius)) {
+			continue;
+		}
+
+		// add the unit
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, unit->id);
+		lua_rawset(L, -3);
+	}
+	return 1;
 }
 
 

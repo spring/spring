@@ -108,9 +108,9 @@
 
 // NOTE: shared variables use codes [1024 - 5119]
 
-int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {0};
-int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {0};
-int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        = {0};
+int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = { 0 };
+int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = { 0 };
+int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        = { 0 };
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)

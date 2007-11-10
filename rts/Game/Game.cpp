@@ -195,6 +195,23 @@ CR_REG_METADATA(CGame,(
 ));
 
 
+static int GetModOptions(lua_State* L)
+{
+	lua_newtable(L);
+	if (gameSetup == NULL) {
+		return 1;
+	}
+	const map<string, string>& modOpts = gameSetup->modOptions;
+	map<string, string>::const_iterator it;
+	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
+
 CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
 : lastFrameTime(0),
   drawMode(notDrawing),
@@ -293,8 +310,14 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 
 	ENTER_SYNCED;
+
 	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
 	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	// customize the defs environment
+	defsParser->GetTable("Spring");
+	defsParser->AddFunc("GetModOptions", GetModOptions);
+	defsParser->EndTable();
+	// run the parser
 	if (!defsParser->Execute()) {
 		throw content_error(defsParser->GetErrorLog());
 	}
@@ -313,6 +336,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	if (!root.SubTable("WeaponDefs").IsValid()) {
 		throw content_error("Error loading WeaponDefs");
 	}
+
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 
 	net->Update();  // Prevent timeout while loading
@@ -4460,9 +4484,9 @@ void CGame::ReColorTeams()
 
 	luaParser.AddParam("gameMode",     gs->gameMode);
 
-	luaParser.NewTable("teams");
+	luaParser.GetTable("teams");
 	for(int t = 0; t < gs->activeTeams; ++t) {
-		luaParser.NewTable(t); {
+		luaParser.GetTable(t); {
 			const CTeam* team = gs->Team(t);
 			const unsigned char* color = gs->Team(t)->color;
 			luaParser.AddParam("allyTeam", gs->AllyTeam(t));
@@ -4470,7 +4494,7 @@ void CGame::ReColorTeams()
 			luaParser.AddParam("leader",   team->leader);
 			luaParser.AddParam("active",   team->active);
 			luaParser.AddParam("side",     team->side);
-			luaParser.NewTable("color"); {
+			luaParser.GetTable("color"); {
 				luaParser.AddParam(1, float(color[0]) / 255.0f);
 				luaParser.AddParam(2, float(color[1]) / 255.0f);
 				luaParser.AddParam(3, float(color[2]) / 255.0f);
@@ -4482,9 +4506,9 @@ void CGame::ReColorTeams()
 	}
 	luaParser.EndTable(); // teams
 
-	luaParser.NewTable("players");
+	luaParser.GetTable("players");
 	for(int p = 0; p < gs->activePlayers; ++p) {
-		luaParser.NewTable(p); {
+		luaParser.GetTable(p); {
 			const CPlayer* player = gs->players[p];
 			luaParser.AddParam("name",       player->playerName);
 			luaParser.AddParam("team",       player->team);

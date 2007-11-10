@@ -44,7 +44,7 @@ public:
 
 	bool ReclaimObject(CSolidObject* o);
 
-	map<int,string> buildOptions;
+	std::map<int, std::string> buildOptions;
 	bool building;
 	BuildInfo build;
 

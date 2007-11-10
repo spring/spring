@@ -59,8 +59,8 @@ public:
 	
 	std::string aiDlls[MAX_TEAMS];
 
-	std::map<std::string, std::string> customMapOptions;
-	std::map<std::string, std::string> customModOptions;
+	std::map<std::string, std::string> mapOptions;
+	std::map<std::string, std::string> modOptions;
 
 	int maxUnits;
 

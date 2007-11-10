@@ -107,6 +107,7 @@ local flexCallIns = {
   'GameFrame',
   'ShockFront',
   'WorldTooltip',
+  'MapDrawCmd',
   'GameSetup',
   'DefaultCommand',
   'UnitCreated',
@@ -116,6 +117,7 @@ local flexCallIns = {
   'UnitTaken',
   'UnitGiven',
   'UnitIdle',
+  'UnitCmdDone',
   'UnitDamaged',
   'UnitEnteredRadar',
   'UnitEnteredLos',
@@ -124,6 +126,8 @@ local flexCallIns = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'UnitCloaked',
+  'UnitDecloaked',
   'RecvLuaMsg',
   'StockpileChanged',
   'DrawWorld',
@@ -1437,14 +1441,26 @@ function widgetHandler:ShockFront(power, dx, dy, dz)
 end
 
 
-function widgetHandler:WorldTooltip(...)
+function widgetHandler:WorldTooltip(ttType, ...)
   for _,w in ipairs(self.WorldTooltipList) do
-    local tt = w:WorldTooltip(unpack(arg))
-    if (tt and (type(tt) == 'string') and (#tt > 0)) then
+    local tt = w:WorldTooltip(ttType, ...)
+    if ((type(tt) == 'string') and (#tt > 0)) then
       return tt
     end
   end
   return
+end
+
+
+function widgetHandler:MapDrawCmd(playerID, cmdType, px, py, pz, ...)
+  local retval = false
+  for _,w in ipairs(self.MapDrawCmdList) do
+    local takeEvent = w:MapDrawCmd(playerID, cmdType, px, py, pz, ...)
+    if (takeEvent) then
+      retval = true
+    end
+  end
+  return retval
 end
 
 
@@ -1533,6 +1549,14 @@ function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
+function widgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+  for _,w in ipairs(self.UnitCmdDoneList) do
+    w:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+  end
+  return
+end
+
+
 function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
                                    damage, paralyzer)
   for _,w in ipairs(self.UnitDamagedList) do
@@ -1597,6 +1621,22 @@ function widgetHandler:UnitUnloaded(unitID, unitDefID, unitTeam,
   for _,w in ipairs(self.UnitUnloadedList) do
     w:UnitUnloaded(unitID, unitDefID, unitTeam,
                    transportID, transportTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitCloaked(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitCloakedList) do
+    w:UnitCloaked(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitDecloaked(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitDecloakedList) do
+    w:UnitDecloaked(unitID, unitDefID, unitTeam)
   end
   return
 end

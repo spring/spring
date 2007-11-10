@@ -3618,9 +3618,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				                  unit->weapons[0], 40);
 			}
 			// draw decloak distance
-			if (unitdef->decloakDistance > 0) {
+			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
-				glSurfaceCircle(unit->pos, unitdef->decloakDistance, 40);
+				glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 			}
 			// draw self destruct and damage distance
 			if (unitdef->kamikazeDist > 0) {

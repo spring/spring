@@ -115,7 +115,7 @@ public:
 
 	virtual int GiveOrder(int unitid,Command* c) = 0;
 
-	virtual const vector<CommandDescription>* GetUnitCommands(int unitid) = 0;
+	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitid) = 0;
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid) = 0;
 
 	virtual int GetUnitAiHint(int unitid) = 0;				//integer telling something about the units main function, not implemented yet

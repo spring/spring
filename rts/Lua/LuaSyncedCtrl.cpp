@@ -929,7 +929,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		//        this is a dirty hack to avoid it
 		luaL_error(L, "CreateUnit(): inactive team: %i", teamID);
 	}
-		
+
 
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
 		luaL_error(L, "Error in CreateUnit(), bad team %i", teamID);
@@ -1276,9 +1276,22 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 		unit->scriptCloak = lua_toboolean(L, 2) ? 1 : 0;
 	} else if (lua_isnumber(L, 2)) {
 		unit->scriptCloak = (int)lua_tonumber(L, 2);
-	} else {
+	} else if (!lua_isnil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
 	}
+
+	if (lua_israwnumber(L, 3)) {
+		unit->decloakDistance = (float)lua_tonumber(L, 3);
+	}
+	else if (lua_isboolean(L, 3)) {
+		const float defDist = unit->unitDef->decloakDistance;
+		if (lua_toboolean(L, 3)) {
+			unit->decloakDistance = fabsf(defDist);
+		} else {
+			unit->decloakDistance = defDist;
+		}
+	}
+
 	return 0;
 }
 
@@ -2378,7 +2391,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 static void ParseMapParams(lua_State* L, const char* caller, float& factor,
                            int& x1, int& z1, int& x2, int& z2)
 {
-	float fx1 = 0, fz1 = 0, fx2 = 0, fz2 = 0;
+	float fx1 = 0.0f;
+	float fz1 = 0.0f;
+	float fx2 = 0.0f;
+	float fz2 = 0.0f;
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 3) {
@@ -2387,17 +2403,17 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 		}
 		fx1 = fx2 = (float)lua_tonumber(L, 1);
 		fz1 = fz2 = (float)lua_tonumber(L, 2);
-		factor = (float)lua_tonumber(L, 3);
+		factor    = (float)lua_tonumber(L, 3);
 	}
 	else if (args == 5) {
 		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
 		    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
 			luaL_error(L, "Incorrect arguments to %s()", caller);
 		}
-		fx1 = (float)lua_tonumber(L, 1);
-		fz1 = (float)lua_tonumber(L, 2);
-		fx2 = (float)lua_tonumber(L, 3);
-		fz2 = (float)lua_tonumber(L, 4);
+		fx1    = (float)lua_tonumber(L, 1);
+		fz1    = (float)lua_tonumber(L, 2);
+		fx2    = (float)lua_tonumber(L, 3);
+		fz2    = (float)lua_tonumber(L, 4);
 		factor = (float)lua_tonumber(L, 5);
 	}
 	else {
@@ -2406,8 +2422,8 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 
 	// quantize and clamp
 	x1 = (int)max(0 , min(gs->mapx, (int)(fx1 / SQUARE_SIZE)));
-	x2 = (int)max(0 , min(gs->mapx, (int)(fx2 / SQUARE_SIZE)));
 	z1 = (int)max(0 , min(gs->mapy, (int)(fz1 / SQUARE_SIZE)));
+	x2 = (int)max(0 , min(gs->mapx, (int)(fx2 / SQUARE_SIZE)));
 	z2 = (int)max(0 , min(gs->mapy, (int)(fz2 / SQUARE_SIZE)));
 
 	return;
@@ -2424,8 +2440,8 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
 	float* heightMap = readmap->GetHeightmap();
-	for(int z = z1; z <= z2; z++){
-		for(int x = x1; x <= x2; x++){
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
 			const int index = (z * (gs->mapx + 1)) + x;
 			heightMap[index] = height;
 		}
@@ -2445,8 +2461,8 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
 	float* heightMap = readmap->GetHeightmap();
-	for(int z = z1; z <= z2; z++){
-		for(int x = x1; x <= x2; x++){
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
 			const int index = (z * (gs->mapx + 1)) + x;
 			heightMap[index] += height;
 		}
@@ -2468,16 +2484,17 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	float* origMap = readmap->orgheightmap;
 	float* currMap = readmap->GetHeightmap();
 	if (origFactor == 1.0f) {
-		for(int z = z1; z <= z2; z++){
-			for(int x = x1; x <= x2; x++){
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
 				const int index = (z * (gs->mapx + 1)) + x;
 				currMap[index] = origMap[index];
 			}
 		}
-	} else {
+	}
+	else {
 		const float currFactor = (1.0f - origFactor);
-		for(int z = z1; z <= z2; z++){
-			for(int x = x1; x <= x2; x++){
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
 				const int index = (z * (gs->mapx + 1)) + x;
 				currMap[index] = (origFactor * origMap[index]) +
 				                 (currFactor * currMap[index]);

@@ -133,15 +133,14 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
 	float* heightmap = readmap->GetHeightmap();
-	for(int y=y1;y<y2;y++)
-	{
-		for(int x=x1;x<x2;x++)
-		{
-			float height=heightmap[(y)*(gs->mapx+1)+x];
-			height+=heightmap[(y)*(gs->mapx+1)+x+1];
-			height+=heightmap[(y+1)*(gs->mapx+1)+x];
-			height+=heightmap[(y+1)*(gs->mapx+1)+x+1];
-			readmap->centerheightmap[y*gs->mapx+x]=height*0.25f;
+	float* centerheightmap = readmap->centerheightmap;
+	for (int y = y1; y < y2; y++) {
+		for (int x = x1; x < x2; x++) {
+			const float height = heightmap[((y)     * (gs->mapx + 1)) + (x)    ]
+			                   + heightmap[((y)     * (gs->mapx + 1)) + (x + 1)]
+			                   + heightmap[((y + 1) * (gs->mapx + 1)) + (x)    ]
+			                   + heightmap[((y + 1) * (gs->mapx + 1)) + (x + 1)];
+			centerheightmap[(y * gs->mapx) + x] = height * 0.25f;
 		}
 	}
 

@@ -29,8 +29,8 @@ class LuaSyncedRead {
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
 
-		static int GetCustomMapOptions(lua_State* L);
-		static int GetCustomModOptions(lua_State* L);
+		static int GetMapOptions(lua_State* L);
+		static int GetModOptions(lua_State* L);
 
 		static int GetGameRulesParam(lua_State* L);
 		static int GetGameRulesParams(lua_State* L);

@@ -224,7 +224,7 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	const int luaType = lua_type(L, index);
 	if (luaType == LUA_TNUMBER) {
 		const unsigned int ishdr = (unsigned int)luaL_checknumber(L, index);
-		const CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 		const unsigned int id = shaders.GetProgramName(ishdr);
 		if (id == 0) {
 			shader.openglID = 0;
@@ -303,10 +303,10 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 		}
 		texID = unitDefHandler->GetUnitImage(ud);
 	}
-	else if (image[0] == CLuaTextures::prefix) {
+	else if (image[0] == LuaTextures::prefix) {
 		// dynamic texture
-		CLuaTextures& textures = CLuaHandle::GetActiveTextures();
-		const CLuaTextures::Texture* texInfo = textures.GetInfo(image);
+		LuaTextures& textures = CLuaHandle::GetActiveTextures();
+		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
 		if (texInfo != NULL) {
 			texID = texInfo->id;
 		}
@@ -479,7 +479,6 @@ int LuaUnitRendering::GetMaterial(lua_State* L)
 
 static int material_index(lua_State* L)
 {
-//FIXME	printf("material_index\n");
 	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
 	const string key = luaL_checkstring(L, 2);
 	const LuaMatBin* bin = (*matRef)->GetBin();
@@ -495,7 +494,6 @@ static int material_index(lua_State* L)
 
 static int material_newindex(lua_State* L)
 {
-//FIXME	printf("material_newindex\n");
 	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
 	return 0;
 }
@@ -503,7 +501,6 @@ static int material_newindex(lua_State* L)
 
 static int material_gc(lua_State* L)
 {
-//FIXME	printf("material_gc\n");
 	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
 
 	delete *matRef;

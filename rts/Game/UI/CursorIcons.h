@@ -1,6 +1,7 @@
 #ifndef CURSORICONS_H
 #define CURSORICONS_H
 
+#include <map>
 #include <set>
 #include <string>
 using std::string;
@@ -19,6 +20,8 @@ class CCursorIcons
 		inline void AddIcon(int cmd, const float3& pos);
 		inline void AddIconText(const string& text, const float3& pos);
 		inline void AddBuildIcon(int cmd, const float3& pos, int team, int facing);
+
+		void SetCustomType(int cmdID, const string& cursor);
 
 		void Draw();
 
@@ -106,6 +109,8 @@ class CCursorIcons
 		std::set<Icon> icons;
 		std::set<IconText> texts;
 		std::set<BuildIcon> buildIcons;
+
+		std::map<int, string> customTypes;
 };
 
 

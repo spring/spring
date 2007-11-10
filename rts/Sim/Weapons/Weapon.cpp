@@ -401,7 +401,10 @@ void CWeapon::Update()
 	//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
-				owner->isCloaked = false;
+				if (owner->isCloaked) {
+					owner->isCloaked = false;
+					luaCallIns.UnitDecloaked(owner);
+				}
 				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 			}
 

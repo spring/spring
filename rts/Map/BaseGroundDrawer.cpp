@@ -188,10 +188,10 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 	if(drawMode == drawNormal)
 		return true;
 
-	unsigned short* myLos=&loshandler->losMap[gu->myAllyTeam].front();
-	unsigned short* myAirLos=&loshandler->airLosMap[gu->myAllyTeam].front();
-	unsigned short* myRadar=&radarhandler->radarMaps[gu->myAllyTeam].front();
-	unsigned short* myJammer=&radarhandler->jammerMaps[gu->myAllyTeam].front();
+	unsigned short* myLos    = &loshandler->losMap[gu->myAllyTeam].front();
+	unsigned short* myAirLos = &loshandler->airLosMap[gu->myAllyTeam].front();
+	unsigned short* myRadar  = &radarhandler->radarMaps[gu->myAllyTeam].front();
+	unsigned short* myJammer = &radarhandler->jammerMaps[gu->myAllyTeam].front();
 	if(updateTextureState<50){
 		int starty;
 		int endy;
@@ -278,15 +278,15 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				break;
 			}
 			case drawHeight: {
-				extraTexPal=readmap->heightLinePal;
-				for(int y=starty;y<endy;++y){
-					for(int x=0;x<gs->mapx;++x){
-						int a=y*gs->pwr2mapx+x;
-						float height=readmap->centerheightmap[y*gs->mapx+x];
-						unsigned char value=(unsigned char)(height*8);
-						infoTexMem[a*4]=64+(extraTexPal[value*3]>>1);
-						infoTexMem[a*4+1]=64+(extraTexPal[value*3+1]>>1);
-						infoTexMem[a*4+2]=64+(extraTexPal[value*3+2]>>1);
+				extraTexPal = readmap->heightLinePal;
+				for (int y = starty; y < endy; ++y) {
+					for (int x = 0; x  < gs->mapx; ++x){
+						const float height = readmap->centerheightmap[(y * gs->mapx) + x];
+						const unsigned char value = (unsigned char)(height * 8);
+						const int i = 4 * ((y * gs->pwr2mapx) + x);
+						infoTexMem[i]     = 64 + (extraTexPal[value * 3]     >> 1);
+						infoTexMem[i + 1] = 64 + (extraTexPal[value * 3 + 1] >> 1);
+						infoTexMem[i + 2] = 64 + (extraTexPal[value * 3 + 2] >> 1);
 					}
 				}
 				break;

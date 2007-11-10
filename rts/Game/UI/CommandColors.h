@@ -41,6 +41,15 @@ class CCommandColors {
 
 		float        UnitBoxLineWidth()  const { return unitBoxLineWidth;  }
 
+		// custom command queue rendering
+		struct DrawData;
+		void SetCustomCmdData(int cmdID, int cmdIconID,
+		                      const float color[4], bool showArea);
+		void ClearCustomCmdData(int cmdID);
+		/// get custom command line parameters
+		/// @return NULL if no line defined, a pointer to a DrawData otherwise
+		const DrawData *GetCustomCmdData(int cmdID) const;
+
 		// the colors
 		const float* unitBox;
 		const float* buildBox;
@@ -81,25 +90,26 @@ class CCommandColors {
 		const float* rangeInterceptorOn;
 		const float* rangeInterceptorOff;
 
-
-		struct LineData {
+	public:
+		struct DrawData {
 			int cmdIconID;
 			float color[4];
+			bool showArea;
 
-			LineData(int cii, const float* c):cmdIconID(cii)
+			DrawData()
+			: cmdIconID(0), showArea(false)
 			{
-				for (int i = 0; i<4; ++i) color[i] = c[i];
+				for (int i = 0; i<4; ++i) { color[i] = 1.0f; }
+			}
+
+			DrawData(int cii, const float c[4], bool area)
+			: cmdIconID(cii), showArea(area)
+			{
+				for (int i = 0; i<4; ++i) { color[i] = c[i]; }
 			}
 		};
 
-		void SetCustomCmdLine(int cmdID, int cmdIconID, const float* color);
-		void ClearCustomCmdLine(int cmdID);
-		/// get custom command line parameters
-		/// @return NULL if no line defined, a pointer to a LineData otherwise
-		LineData *GetCustomCmdLine(int cmdID);
-
 	private:
-
 		std::map<std::string, int> colorNames;
 
 		enum ColorIndices {
@@ -171,7 +181,7 @@ class CCommandColors {
 
 		float unitBoxLineWidth;
 
-		typedef std::map<int, LineData> customCmds_type;
+		typedef std::map<int, DrawData> customCmds_type;
 		customCmds_type customCmds;
 };
 

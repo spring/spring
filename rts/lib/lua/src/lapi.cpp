@@ -409,6 +409,16 @@ LUA_API const void *lua_topointer (lua_State *L, int idx) {
 }
 
 
+LUA_API const void *lua_metapointer (lua_State *L, int idx) {
+  StkId o = index2adr(L, idx);
+  switch (ttype(o)) {
+    case LUA_TTABLE:    return hvalue(o)->metatable;
+    case LUA_TUSERDATA: return uvalue(o)->metatable;
+    default: return NULL;
+  }
+}
+
+
 
 /*
 ** push functions (C -> stack)

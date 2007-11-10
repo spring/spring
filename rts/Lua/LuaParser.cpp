@@ -83,6 +83,22 @@ LuaParser::LuaParser(const string& _fileName,
   currentRef(LUA_NOREF)
 {
 	L = lua_open();
+
+	if (L != NULL) {
+		SetupStdLibs(L);
+
+		GetTable("Spring");
+		AddFunc("Echo", Echo);
+		AddFunc("TimeCheck", TimeCheck);
+		EndTable();
+
+		GetTable("VFS");
+		AddFunc("DirList",    DirList);
+		AddFunc("Include",    Include);
+		AddFunc("LoadFile",   LoadFile);
+		AddFunc("FileExists", FileExists);
+		EndTable();
+	}
 }
 
 
@@ -106,7 +122,7 @@ LuaParser::~LuaParser()
 
 void LuaParser::PushParam()
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	if (initDepth > 0) {
 		lua_rawset(L, -3);
 	} else {
@@ -115,27 +131,53 @@ void LuaParser::PushParam()
 }
 
 
-void LuaParser::NewTable(const string& name)
+void LuaParser::GetTable(const string& name, bool overwrite)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
+
 	lua_pushstring(L, name.c_str());
-	lua_newtable(L);
+
+	if (overwrite) {
+		lua_newtable(L);
+	}
+	else {
+		lua_pushstring(L, name.c_str());
+		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
+		if (!lua_istable(L, -1)) {
+			lua_pop(L, 1);
+			lua_newtable(L);
+		}
+	}
+
 	initDepth++;
 }
 
 
-void LuaParser::NewTable(int index)
+void LuaParser::GetTable(int index, bool overwrite)
 {
-	if (L == NULL) { return; }
-	lua_pushnumber(L, index);
-	lua_newtable(L);
+	if ((L == NULL) || (initDepth < 0)) { return; }
+
+	lua_pushnumber(L, index); 
+
+	if (overwrite) {
+		lua_newtable(L);
+	}
+	else {
+		lua_pushnumber(L, index);
+		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
+		if (!lua_istable(L, -1)) {
+			lua_pop(L, 1);
+			lua_newtable(L);
+		}
+	}
+
 	initDepth++;
 }
 
 
 void LuaParser::EndTable()
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	assert(initDepth > 0);
 	initDepth--;
 	PushParam();
@@ -146,7 +188,7 @@ void LuaParser::EndTable()
 
 void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 {
-	if (L == NULL)    { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	if (func == NULL) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushcfunction(L, func);
@@ -156,7 +198,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 
 void LuaParser::AddParam(const string& key, const string& value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushstring(L, value.c_str());
 	PushParam();
@@ -165,7 +207,7 @@ void LuaParser::AddParam(const string& key, const string& value)
 
 void LuaParser::AddParam(const string& key, float value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, value);
 	PushParam();
@@ -174,7 +216,7 @@ void LuaParser::AddParam(const string& key, float value)
 
 void LuaParser::AddParam(const string& key, int value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, value);
 	PushParam();
@@ -183,7 +225,7 @@ void LuaParser::AddParam(const string& key, int value)
 
 void LuaParser::AddParam(const string& key, bool value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushboolean(L, value);
 	PushParam();
@@ -194,7 +236,7 @@ void LuaParser::AddParam(const string& key, bool value)
 
 void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 {
-	if (L == NULL)    { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	if (func == NULL) { return; }
 	lua_pushnumber(L, key);
 	lua_pushcfunction(L, func);
@@ -204,7 +246,7 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 
 void LuaParser::AddParam(int key, const string& value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushstring(L, value.c_str());
 	PushParam();
@@ -213,7 +255,7 @@ void LuaParser::AddParam(int key, const string& value)
 
 void LuaParser::AddParam(int key, float value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -222,7 +264,7 @@ void LuaParser::AddParam(int key, float value)
 
 void LuaParser::AddParam(int key, int value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -231,7 +273,7 @@ void LuaParser::AddParam(int key, int value)
 
 void LuaParser::AddParam(int key, bool value)
 {
-	if (L == NULL) { return; }
+	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -248,6 +290,7 @@ bool LuaParser::Execute()
 	}
 
 	assert(initDepth == 0);
+	initDepth = -1;
 
 	string code;
 	CFileHandler fh(fileName, fileModes);
@@ -257,20 +300,6 @@ bool LuaParser::Execute()
 		L = NULL;
 		return false;
 	}
-
-	SetupStdLibs(L);
-
-	NewTable("Spring");
-	AddFunc("Echo", Echo);
-	AddFunc("TimeCheck", TimeCheck);
-	EndTable();
-
-	NewTable("VFS");
-	AddFunc("DirList",    DirList);
-	AddFunc("Include",    Include);
-	AddFunc("LoadFile",   LoadFile);
-	AddFunc("FileExists", FileExists);
-	EndTable();
 
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), fileName.c_str());

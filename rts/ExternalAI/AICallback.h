@@ -45,7 +45,7 @@ public:
 	int GiveGroupOrder(int unitid, Command* c);
 
 	int GiveOrder(int unitid,Command* c);
-	const vector<CommandDescription>* GetUnitCommands(int unitid);
+	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
 	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
 	int GetUnitAiHint(int unitid);				//integer telling something about the units main function, not implemented yet

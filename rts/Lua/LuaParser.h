@@ -106,8 +106,8 @@ class LuaParser {
 		const set<string>& GetAccessedFiles() const { return accessedFiles; }
 
 		// for setting up the initial params table
-		void NewTable(const string& name);
-		void NewTable(int index);
+		void GetTable(int index,          bool overwrite = false);
+		void GetTable(const string& name, bool overwrite = false);
 		void EndTable();
 		void AddFunc(int key, int (*func)(lua_State*));
 		void AddParam(int key, const string& value);

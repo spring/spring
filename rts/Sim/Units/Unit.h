@@ -318,6 +318,7 @@ public:
 	int cloakTimeout;						//the minimum time between decloaking and cloaking again
 	int curCloakTimeout;				//the earliest frame the unit can cloak again
 	bool isCloaked;							//true if the unit is currently cloaked (has enough energy etc)
+	float decloakDistance;
 
 	int lastTerrainType;
 	int curTerrainType;					// Used for calling setSFXoccupy which TA scripts want
