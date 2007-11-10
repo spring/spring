@@ -12,6 +12,10 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 	// Set up the values that need the passed parameters
 	this->ud = ud;
 	this->G = G;
+	string n = ud->name;
+	trim(n);
+	tolowercase(n);
+	this->unit_name = n;
 }
 
 const UnitDef* CUnitTypeData::GetUnitDef(){
