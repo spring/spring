@@ -34,8 +34,18 @@ public:
 
 	bool IsAttacker();
 	
+	bool GetSingleBuild();// is this unit type subject to the single build behaviour?
+	void SetSingleBuild(bool value);
+
+	bool GetSingleBuildActive();// is this behaviour currently active? (is one of these being built atm?)
+	void SetSingleBuildActive(bool value);
+
+	bool CanBuild();
 private:
 	Global* G;
 	const UnitDef* ud;
 	string unit_name; // the name of the unit trimmed in lowercase
+
+	bool singleBuild;
+	bool singleBuildActive;
 };

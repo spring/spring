@@ -184,14 +184,10 @@ void CKeywordConstructionTask::Build(){
 	}
 
 	// Now sort out if it's one of those things that can only be built once
-	if(G->Cached->singlebuilds.find(building->GetName()) != G->Cached->singlebuilds.end()){
-		NLOG("CKeywordConstructionTask::Build  G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()");
-
-		if(G->Cached->singlebuilds[building->GetName()]){
-			G->L.print("CKeywordConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
-			End();
-			return;
-		}
+	if(building->GetSingleBuildActive()){
+		G->L.print("CKeywordConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
+		End();
+		return;
 	}
 
 	if(G->info->antistall>1){

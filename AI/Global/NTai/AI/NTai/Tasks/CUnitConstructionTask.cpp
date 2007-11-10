@@ -194,13 +194,10 @@ bool CUnitConstructionTask::Init(){
 	}
 
 	// Now sort out if it's one of those things that can only be built once
-	if(G->Cached->singlebuilds.find(building->GetName()) != G->Cached->singlebuilds.end()){
-		NLOG("CUnitConstructionTask::Build  G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()");
-		if(G->Cached->singlebuilds[building->GetName()] == true){
-			G->L.print("CUnitConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
-			End();
-			return true;
-		}
+	if(building->GetSingleBuildActive()){
+		G->L.print("CUnitConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
+		End();
+		return true;
 	}
 
 

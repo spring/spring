@@ -15,7 +15,11 @@ CUBuild::~CUBuild(){
 }
 
 bool CUBuild::OkBuildSelection(string name){
-	//NLOG("CManufacturer::CBuild  Resource\\MaxEnergy\\");
+
+	weak_ptr<CUnitTypeData> wu =G->UnitDefLoader->GetUnitTypeDataByName(name);
+	shared_ptr<CUnitTypeData> u = wu.lock();
+
+
 	float emax=1000000000;
 	string key = "Resource\\MaxEnergy\\";
 	key += name;
@@ -52,13 +56,14 @@ bool CUBuild::OkBuildSelection(string name){
 			}
 		}
 	}
+
 	// Now sort out if it's one of those things that can only be built once
-	if(G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()){
-		//NLOG("CManufacturer::CBuild  G->Cached->singlebuilds.find(name) != G->Cached->singlebuilds.end()");
-		if(G->Cached->singlebuilds[name] == true){
-			//G->L.print("Factor::CBuild  singlebuild " + name);
+	if(u->GetSingleBuild()){
+
+		if(u->GetSingleBuildActive()){
 			return false;
 		}
+
 		deque<CBPlan* >* b = G->Manufacturer->BPlans;
 		if(b->empty() == false){
 			//

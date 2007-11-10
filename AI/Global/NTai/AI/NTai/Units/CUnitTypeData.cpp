@@ -154,3 +154,25 @@ bool CUnitTypeData::IsAttacker(){
 	return atk;
 //	return false;
 }
+
+bool CUnitTypeData::GetSingleBuild(){
+	//
+	return this->singleBuild;
+}
+
+void CUnitTypeData::SetSingleBuild(bool value){
+	//
+	singleBuild = value;
+}
+
+bool CUnitTypeData::GetSingleBuildActive(){
+	//
+	return singleBuildActive;
+}
+
+void CUnitTypeData::SetSingleBuildActive(bool value){
+	//
+	singleBuildActive = value;
+}
+
+
