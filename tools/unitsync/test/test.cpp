@@ -217,12 +217,6 @@ int main(int argc, char** argv)
   const int modOptCount = GetModOptionCount();
   DisplayOptions(modOptCount);
 
-  
-//  Init(true,  1);
-//  Init(false, 1);
-//  Init(true,  2);
-//  Init(false, 2);
-
   UnInit();
 
   return 0;
