@@ -93,6 +93,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/COB/CobEngine.h"
+#include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -133,7 +134,6 @@
 #ifdef DIRECT_CONTROL_ALLOWED
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Units/COB/CobFile.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #endif
