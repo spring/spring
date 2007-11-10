@@ -15,12 +15,12 @@ using std::vector;
 struct lua_State;
 
 
-class CLuaShaders {
+class LuaShaders {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		CLuaShaders();
-		~CLuaShaders();
+		LuaShaders();
+		~LuaShaders();
 
 		string errorLog;
 

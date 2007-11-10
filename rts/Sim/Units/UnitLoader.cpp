@@ -152,6 +152,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
 	unit->maxSpeed = ud->speed/30.0;
 	unit->bonusShieldEnabled = ud->bonusShieldEnabled;
+	unit->decloakDistance = ud->decloakDistance;
 
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
@@ -426,8 +427,13 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	weapon->badTargetCategory=udw->badTargetCat;
 	weapon->onlyTargetCategory=weapondef->onlyTargetCategory & udw->onlyTargetCat;
 
-	if(udw->slavedTo)
-		weapon->slavedTo=owner->weapons[udw->slavedTo-1];
+	if (udw->slavedTo) {
+		const int index = (udw->slavedTo - 1);
+		if ((index < 0) || (index >= owner->weapons.size())) {
+			throw content_error("Bad weapon slave in " + owner->unitDef->name);
+		}
+		weapon->slavedTo = owner->weapons[index];
+	}
 
 	weapon->mainDir=udw->mainDir;
 	weapon->maxMainDirAngleDif=udw->maxAngleDif;

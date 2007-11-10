@@ -30,6 +30,7 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["UnitGiven"]           = &listUnitGiven;
 
 	callInMap["UnitIdle"]            = &listUnitIdle;
+	callInMap["UnitCmdDone"]         = &listUnitCmdDone;
 	callInMap["UnitDamaged"]         = &listUnitDamaged;
 	callInMap["UnitSeismicPing"]     = &listUnitSeismicPing;
 	callInMap["UnitEnteredRadar"]    = &listUnitEnteredRadar;
@@ -39,6 +40,9 @@ CLuaCallInHandler::CLuaCallInHandler()
 
 	callInMap["UnitLoaded"]          = &listUnitLoaded;
 	callInMap["UnitUnloaded"]        = &listUnitUnloaded;
+
+	callInMap["UnitCloaked"]         = &listUnitCloaked;
+	callInMap["UnitDecloaked"]       = &listUnitDecloaked;
 
 	callInMap["FeatureCreated"]      = &listFeatureCreated;
 	callInMap["FeatureDestroyed"]    = &listFeatureDestroyed;
@@ -88,6 +92,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(UnitGiven);
 
 	ADDHANDLE(UnitIdle);
+	ADDHANDLE(UnitCmdDone);
 	ADDHANDLE(UnitDamaged);
 
 	ADDHANDLE(UnitSeismicPing);
@@ -98,6 +103,9 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 
 	ADDHANDLE(UnitLoaded);
 	ADDHANDLE(UnitUnloaded);
+
+	ADDHANDLE(UnitCloaked);
+	ADDHANDLE(UnitDecloaked);
 
 	ADDHANDLE(FeatureCreated);
 	ADDHANDLE(FeatureDestroyed);
@@ -137,6 +145,7 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listUnitGiven, lh);
 
 	ListRemove(listUnitIdle, lh);
+	ListRemove(listUnitCmdDone, lh);
 	ListRemove(listUnitDamaged, lh);
 
 	ListRemove(listUnitSeismicPing, lh);
@@ -147,6 +156,9 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listUnitLoaded, lh);
 	ListRemove(listUnitUnloaded, lh);
+
+	ListRemove(listUnitCloaked, lh);
+	ListRemove(listUnitDecloaked, lh);
 
 	ListRemove(listFeatureCreated, lh);
 	ListRemove(listFeatureDestroyed, lh);

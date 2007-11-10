@@ -1,25 +1,29 @@
 #include "StdAfx.h"
 #include "InMapDraw.h"
-#include "NetProtocol.h"
-#include "Map/Ground.h"
-#include "Game/Camera.h"
-#include "Game/UI/MouseHandler.h"
-#include "Game/Team.h"
-#include "Game/Player.h"
+#include "glFont.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
-#include "glFont.h"
-#include "Map/BaseGroundDrawer.h"
+#include "Game/Camera.h"
 #include "Game/Game.h"
+#include "Game/Player.h"
+#include "Game/Team.h"
+#include "Game/UI/LuaUI.h"
+#include "Game/UI/MiniMap.h"
+#include "Game/UI/MouseHandler.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
+#include "NetProtocol.h"
 #include "LogOutput.h"
 #include "Sound.h"
-#include "Game/UI/MiniMap.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
 
-CInMapDraw* inMapDrawer;
 
 #define DRAW_QUAD_SIZE 32
+
+
+CInMapDraw* inMapDrawer = NULL;
+
 
 CInMapDraw::CInMapDraw(void)
 {
@@ -77,16 +81,18 @@ CInMapDraw::CInMapDraw(void)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
 	blippSound=sound->GetWaveId("sounds/beep6.wav");
 }
+
 
 CInMapDraw::~CInMapDraw(void)
 {
 	delete[] drawQuads;
 	glDeleteTextures (1, &texture);
 }
+
 
 struct InMapDraw_QuadDrawer : public CReadMap::IQuadDrawer
 {
@@ -96,6 +102,7 @@ struct InMapDraw_QuadDrawer : public CReadMap::IQuadDrawer
 
 	void DrawQuad (int x,int y);
 };
+
 
 void InMapDraw_QuadDrawer::DrawQuad (int x,int y)
 {
@@ -155,6 +162,7 @@ void InMapDraw_QuadDrawer::DrawQuad (int x,int y)
 	}
 }
 
+
 void CInMapDraw::Draw(void)
 {
 	glDepthMask(0);
@@ -188,6 +196,7 @@ void CInMapDraw::Draw(void)
 	glDepthMask(1);
 }
 
+
 void CInMapDraw::MousePress(int x, int y, int button)
 {
 	float3 pos=GetMouseMapPos();
@@ -211,10 +220,12 @@ void CInMapDraw::MousePress(int x, int y, int button)
 	lastPos=pos;
 }
 
+
 void CInMapDraw::MouseRelease(int x,int y,int button)
 {
 
 }
+
 
 void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 {
@@ -232,6 +243,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 }
 
+
 float3 CInMapDraw::GetMouseMapPos(void)
 {
 	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
@@ -242,6 +254,7 @@ float3 CInMapDraw::GetMouseMapPos(void)
 	pos.CheckInBounds();
 	return pos;
 }
+
 
 void CInMapDraw::GotNetMsg(unsigned char* msg)
 {
@@ -263,72 +276,106 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 		return;
 	}
 
-	switch(msg[3]){
-	case NET_POINT:{
-		float3 pos(*(short*)&msg[4],0,*(short*)&msg[6]);
-		pos.CheckInBounds();
-		pos.y=ground->GetHeight(pos.x,pos.z)+2;
-		MapPoint p;
-		p.pos=pos;
-		p.color=gs->Team(team)->color;
-		p.label=(char*)&msg[8];
+	const float quadScale = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
 
-		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
-		drawQuads[quad].points.push_back(p);
+	switch (msg[3]) {
+		case NET_POINT: {
+			float3 pos(*(short*)&msg[4], 0, *(short*)&msg[6]);
+			pos.CheckInBounds();
+			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-		logOutput.Print("%s added point: %s", sender->playerName.c_str(), p.label.c_str());
-		logOutput.SetLastMsgPos(pos);
-		sound->PlaySample(blippSound);
-		minimap->AddNotification(pos,float3(1,1,1),1);	//todo: make compatible with new gui
-		break;}
-	case NET_ERASE:{
-		float3 pos(*(short*)&msg[4],0,*(short*)&msg[6]);
-		pos.CheckInBounds();
-		for(int y=(int)max(0.f,(pos.z-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);y<=min(float(drawQuadsY-1),(pos.z+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++y){
-			for(int x=(int)max(0.f,(pos.x-100)/DRAW_QUAD_SIZE/SQUARE_SIZE);x<=min(float(drawQuadsX-1),(pos.x+100)/DRAW_QUAD_SIZE/SQUARE_SIZE);++x){
-				DrawQuad* dq=&drawQuads[y*drawQuadsX+x];
-				for(std::list<MapPoint>::iterator pi=dq->points.begin();pi!=dq->points.end();){
-					if(pi->pos.distance2D(pos)<100)
-						pi=dq->points.erase(pi);
-					else
-						++pi;
-				}
-				for(std::list<MapLine>::iterator li=dq->lines.begin();li!=dq->lines.end();){
-					if(li->pos.distance2D(pos)<100)
-						li=dq->lines.erase(li);
-					else
-						++li;
+			const string label = (char*)&msg[8];
+			if (luaUI && luaUI->MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+				return;
+			}
+
+			MapPoint p;
+			p.pos = pos;
+			p.color = gs->Team(team)->color;
+			p.label = label;
+
+			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
+			drawQuads[quad].points.push_back(p);
+
+			logOutput.Print("%s added point: %s", sender->playerName.c_str(), p.label.c_str());
+			logOutput.SetLastMsgPos(pos);
+			sound->PlaySample(blippSound);
+			minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
+			break;
+		}
+		case NET_ERASE: {
+			float3 pos(*(short*)&msg[4], 0, *(short*)&msg[6]);
+			pos.CheckInBounds();
+			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+			if (luaUI && luaUI->MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+				return;
+			}
+
+			const float radius = 100.0f;
+			const int maxY = drawQuadsY - 1;
+			const int maxX = drawQuadsX - 1;
+			const int yStart = (int)max(0,    (int)((pos.z - radius) * quadScale));
+			const int xStart = (int)max(0,    (int)((pos.x - radius) * quadScale));
+			const int yEnd   = (int)min(maxY, (int)((pos.z + radius) * quadScale));
+			const int xEnd   = (int)min(maxX, (int)((pos.x + radius) * quadScale));
+
+			for (int y = yStart; y <= yEnd; ++y) {
+				for (int x = xStart; x <= xEnd; ++x) {
+					DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
+					std::list<MapPoint>::iterator pi;
+					for (pi = dq->points.begin(); pi != dq->points.end(); /* none */){
+						if (pi->pos.distance2D(pos) < radius) {
+							pi = dq->points.erase(pi);
+						} else {
+							++pi;
+						}
+					}
+					std::list<MapLine>::iterator li;
+					for (li = dq->lines.begin(); li != dq->lines.end(); /* none */){
+						if (li->pos.distance2D(pos) < radius) {
+							li = dq->lines.erase(li);
+						} else {
+							++li;
+						}
+					}
 				}
 			}
+			break;
 		}
-		break;}
-	case NET_LINE:{
-		float3 pos(*(short*)&msg[4],0,*(short*)&msg[6]);
-		pos.CheckInBounds();
-		float3 pos2(*(short*)&msg[8],0,*(short*)&msg[10]);
-		pos2.CheckInBounds();
-		pos.y=ground->GetHeight(pos.x,pos.z)+2;
-		pos2.y=ground->GetHeight(pos2.x,pos2.z)+2;
-		MapLine l;
-		l.pos=pos;
-		l.pos2=pos2;
-		l.color=gs->Team(team)->color;
+		case NET_LINE: {
+			float3 pos(*(short*)&msg[4], 0, *(short*)&msg[6]);
+			float3 pos2(*(short*)&msg[8], 0, *(short*)&msg[10]);
+			pos.CheckInBounds();
+			pos2.CheckInBounds();
+			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+			pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
+			if (luaUI && luaUI->MapDrawCmd(playerID, NET_LINE, &pos, &pos2, NULL)) {
+				return;
+			}
+			MapLine l;
+			l.pos = pos;
+			l.pos2 = pos2;
+			l.color = gs->Team(team)->color;
 
-		int quad=int(pos.z/DRAW_QUAD_SIZE/SQUARE_SIZE)*drawQuadsX+int(pos.x/DRAW_QUAD_SIZE/SQUARE_SIZE);
-		drawQuads[quad].lines.push_back(l);
-		break;}
+			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
+			drawQuads[quad].lines.push_back(l);
+			break;
+		}
 	}
 }
+
 
 void CInMapDraw::ErasePos(float3 pos)
 {
 	net->SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z);
 }
 
+
 void CInMapDraw::CreatePoint(float3 pos, std::string label)
 {
 	net->SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label);
 }
+
 
 void CInMapDraw::AddLine(float3 pos, float3 pos2)
 {

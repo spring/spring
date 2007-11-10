@@ -89,6 +89,11 @@ class CLuaUI : public CLuaHandle {
 		                     const CFeature* feature,
 		                     const float3* groundPos);
 
+		bool MapDrawCmd(int playerID, int type,
+		                const float3* pos0,
+		                const float3* pos1,
+		                const string* labe);
+
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
@@ -126,6 +131,7 @@ class CLuaUI : public CLuaHandle {
 		float shockFrontDistAdj;
 
 		bool haveWorldTooltip;
+		bool haveMapDrawCmd;
 
 	private: // call-outs
 		static int GetConfigInt(lua_State* L);

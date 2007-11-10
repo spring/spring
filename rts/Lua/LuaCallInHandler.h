@@ -54,6 +54,7 @@ class CLuaCallInHandler
 		void UnitGiven(const CUnit* unit, int oldTeam);
 
 		void UnitIdle(const CUnit* unit);
+		void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		                 float damage, int weaponID, bool paralyzer);
 
@@ -66,6 +67,9 @@ class CLuaCallInHandler
 
 		void UnitLoaded(const CUnit* unit, const CUnit* transport);
 		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+
+		void UnitCloaked(const CUnit* unit);
+		void UnitDecloaked(const CUnit* unit);
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
@@ -112,6 +116,7 @@ class CLuaCallInHandler
 		CallInList listUnitGiven;
 
 		CallInList listUnitIdle;
+		CallInList listUnitCmdDone;
 		CallInList listUnitDamaged;
 
 		CallInList listUnitSeismicPing;
@@ -122,6 +127,9 @@ class CLuaCallInHandler
 
 		CallInList listUnitLoaded;
 		CallInList listUnitUnloaded;
+
+		CallInList listUnitCloaked;
+		CallInList listUnitDecloaked;
 
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
@@ -181,6 +189,8 @@ inline void CLuaCallInHandler::UnitCreated(const CUnit* unit,
 
 UNIT_CALLIN_NO_PARAM(Finished)
 UNIT_CALLIN_NO_PARAM(Idle)
+UNIT_CALLIN_NO_PARAM(Cloaked)
+UNIT_CALLIN_NO_PARAM(Decloaked)
 
 
 #define UNIT_CALLIN_INT_PARAM(name)                                       \
@@ -242,6 +252,20 @@ inline void CLuaCallInHandler::UnitDestroyed(const CUnit* unit,
 		CLuaHandle* lh = listUnitDestroyed[i];
 		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == unitAllyTeam)) {
 			lh->UnitDestroyed(unit, attacker);
+		}
+	}
+}
+
+
+inline void CLuaCallInHandler::UnitCmdDone(const CUnit* unit,
+                                           int cmdID, int cmdTag)
+{
+	const int unitAllyTeam = unit->allyteam;
+	const int count = listUnitCmdDone.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listUnitCmdDone[i];
+		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == unitAllyTeam)) {
+			lh->UnitCmdDone(unit, cmdID, cmdTag);
 		}
 	}
 }

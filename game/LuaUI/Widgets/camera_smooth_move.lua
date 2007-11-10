@@ -87,8 +87,10 @@ function widget:Update(dt)
         return
       end
       -- clear the velocities
-      for p = 23,28 do
-        cs[p] = 0
+      if cs[23] then -- FIXME (remove this line & end)-- 0.75b2 compatibility
+        for p = 23,28 do
+          cs[p] = 0
+        end
       end
     end
     if (cs.name == "ta") then

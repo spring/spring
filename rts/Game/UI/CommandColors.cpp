@@ -324,24 +324,28 @@ bool CCommandColors::LoadConfig(const string& filename)
 }
 
 
-void CCommandColors::SetCustomCmdLine(int cmdID, int cmdIconID, const float* color)
+void CCommandColors::SetCustomCmdData(int cmdID, int cmdIconID,
+                                      const float color[4], bool showArea)
 {
-	customCmds.insert(customCmds_type::value_type(cmdID,
-			LineData(cmdIconID, color)));
+	customCmds[cmdID] = DrawData(cmdIconID, color, showArea);
 }
 
-void CCommandColors::ClearCustomCmdLine(int cmdID)
+
+void CCommandColors::ClearCustomCmdData(int cmdID)
 {
 	customCmds.erase(cmdID);
 }
 
-CCommandColors::LineData* CCommandColors::GetCustomCmdLine(int cmdID)
+
+const CCommandColors::DrawData*
+	CCommandColors::GetCustomCmdData(int cmdID) const
 {
-	customCmds_type::iterator it = customCmds.find(cmdID);
-	if (it == customCmds.end())
+	customCmds_type::const_iterator it = customCmds.find(cmdID);
+	if (it == customCmds.end()) {
 		return NULL;
-	else
+	} else {
 		return &(it->second);
+	};
 }
 
 

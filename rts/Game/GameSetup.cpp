@@ -285,9 +285,9 @@ bool CGameSetup::Init(const char* buf, int size)
 		restrictedUnits[resName] = resLimit;
 	}
 
-	// read the custom map / mod options
-	customMapOptions = file.GetAllValues("GAME\\MapOptions");
-	customModOptions = file.GetAllValues("GAME\\ModOptions");
+	// read the map & mod options
+	mapOptions = file.GetAllValues("GAME\\MapOptions");
+	modOptions = file.GetAllValues("GAME\\ModOptions");
 
 	// setup the gaia team
 	if (gs->useLuaGaia) {

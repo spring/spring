@@ -28,7 +28,7 @@ public:
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c);
-	virtual vector<CommandDescription>& GetPossibleCommands();
+	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void DrawCommands(void);
 	virtual void FinishCommand(void);
 	virtual void WeaponFired(CWeapon* weapon);
@@ -61,9 +61,9 @@ public:
 	void UpdateStockpileIcon(void);
 	CWeapon* stockpileWeapon;
 
-	vector<CommandDescription> possibleCommands;
+	std::vector<CommandDescription> possibleCommands;
 	CCommandQueue commandQue;
-	set<int> nonQueingCommands;			//commands that wont go into the command que (and therefore not reseting it if given without shift
+	std::set<int> nonQueingCommands;			//commands that wont go into the command que (and therefore not reseting it if given without shift
 	int lastUserCommand;
 	int selfDCountdown;
 	int lastFinishCommand;

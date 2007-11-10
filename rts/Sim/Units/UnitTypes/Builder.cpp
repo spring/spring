@@ -10,6 +10,7 @@
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "myMath.h"
@@ -221,8 +222,11 @@ void CBuilder::Update()
 				curBuild->AddBuildPower(0.001f, this); //prevent building timing out
 			} else {
 				if (scriptCloak <= 2) {
-  				isCloaked = false;
-	  			curCloakTimeout = gs->frameNum + cloakTimeout;
+					if (isCloaked) {
+						isCloaked = false;
+						luaCallIns.UnitDecloaked(this);
+					}
+					curCloakTimeout = gs->frameNum + cloakTimeout;
 				}
 
   			float adjBuildSpeed; // adjusted build speed
@@ -244,11 +248,14 @@ void CBuilder::Update()
 	}
 	else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
 		if (scriptCloak <= 2) {
-			isCloaked=false;
-			curCloakTimeout=gs->frameNum+cloakTimeout;
+			if (isCloaked) {
+				isCloaked = false;
+				luaCallIns.UnitDecloaked(this);
+			}
+			curCloakTimeout = gs->frameNum + cloakTimeout;
 		}
-		if(curReclaim->AddBuildPower(-reclaimSpeed, this)){
-			CreateNanoParticle(curReclaim->midPos,curReclaim->radius*0.7f,true);
+		if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
+			CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
 		}
 	}
 	else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){

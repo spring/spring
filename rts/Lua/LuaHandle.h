@@ -78,11 +78,11 @@ class CLuaHandle {
 
 		const LuaCobCallback  GetCallback() { return cobCallback; }
 
-		CLuaShaders& GetShaders() { return shaders; }
-		CLuaTextures& GetTextures() { return textures; }
-//FIXME-BO: 		CLuaVBOs& GetVBOs() { return vbos; }
-//FIXME-BO:  		CLuaFBOs& GetFBOs() { return fbos; }
-//FIXME-BO: 		CLuaRBOs& GetRBOs() { return rbos; }
+		LuaShaders& GetShaders() { return shaders; }
+		LuaTextures& GetTextures() { return textures; }
+//FIXME-BO: 		LuaVBOs& GetVBOs() { return vbos; }
+//FIXME-BO: 		LuaFBOs& GetFBOs() { return fbos; }
+//FIXME-BO: 		LuaRBOs& GetRBOs() { return rbos; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 	public:
@@ -111,6 +111,7 @@ class CLuaHandle {
 		void UnitGiven(const CUnit* unit, int oldTeam);
 
 		void UnitIdle(const CUnit* unit);
+		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		                 float damage, int weaponID, bool paralyzer);
 
@@ -123,6 +124,9 @@ class CLuaHandle {
 
 		void UnitLoaded(const CUnit* unit, const CUnit* transport);
 		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+
+		void UnitCloaked(const CUnit* unit);
+		void UnitDecloaked(const CUnit* unit);
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
@@ -190,11 +194,11 @@ class CLuaHandle {
 
 		LuaCobCallback cobCallback;
 
-		CLuaShaders shaders;
-		CLuaTextures textures;
-//FIXME-BO: 		CLuaVBOs vbos;
-//FIXME-BO: 		CLuaFBOs fbos;
-//FIXME-BO:  		CLuaRBOs rbos;
+		LuaShaders shaders;
+		LuaTextures textures;
+//FIXME-BO: 		LuaVBOs vbos;
+//FIXME-BO: 		LuaFBOs fbos;
+//FIXME-BO: 		LuaRBOs rbos;
 		CLuaDisplayLists displayLists;
 
 		vector<bool> watchWeapons; // for the Explosion call-in
@@ -240,11 +244,11 @@ class CLuaHandle {
 		static const LuaCobCallback GetActiveCallback() {
 			return activeHandle->cobCallback;
 		}
-		static CLuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
-		static CLuaTextures& GetActiveTextures() { return activeHandle->textures; }
-//FIXME-BO: 		static CLuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
-//FIXME-BO:  		static CLuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
-//FIXME-BO: 		static CLuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
+		static LuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
+		static LuaTextures& GetActiveTextures() { return activeHandle->textures; }
+//FIXME-BO: 		static LuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
+//FIXME-BO: 		static LuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
+//FIXME-BO: 		static LuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
 		static CLuaDisplayLists& GetActiveDisplayLists() {
 			return activeHandle->displayLists;
 		}

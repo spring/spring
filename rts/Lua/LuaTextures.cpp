@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-// LuaTextures.cpp: implementation of the CLuaTextures class.
+// LuaTextures.cpp: implementation of the LuaTextures class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -11,13 +11,13 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaTextures::CLuaTextures()
+LuaTextures::LuaTextures()
 {
 	lastCode = 0;
 }
 
 
-CLuaTextures::~CLuaTextures()
+LuaTextures::~LuaTextures()
 {
 	map<string, Texture>::iterator it;
 	for (it = textures.begin(); it != textures.end(); ++it) {
@@ -32,7 +32,7 @@ CLuaTextures::~CLuaTextures()
 }
 
 
-string CLuaTextures::Create(const Texture& tex)
+string LuaTextures::Create(const Texture& tex)
 {	
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
@@ -132,7 +132,7 @@ string CLuaTextures::Create(const Texture& tex)
 }
 
 
-bool CLuaTextures::Bind(const string& name) const
+bool LuaTextures::Bind(const string& name) const
 {	
 	map<string, Texture>::const_iterator it = textures.find(name);
 	if (it != textures.end()) {
@@ -144,7 +144,7 @@ bool CLuaTextures::Bind(const string& name) const
 }
 
 
-bool CLuaTextures::Free(const string& name)
+bool LuaTextures::Free(const string& name)
 {
 	map<string, Texture>::iterator it = textures.find(name);
 	if (it != textures.end()) {
@@ -161,7 +161,7 @@ bool CLuaTextures::Free(const string& name)
 }
 
 
-bool CLuaTextures::FreeFBO(const string& name)
+bool LuaTextures::FreeFBO(const string& name)
 {
 	if (!GLEW_EXT_framebuffer_object) {
 		return false;
@@ -179,7 +179,7 @@ bool CLuaTextures::FreeFBO(const string& name)
 }
 
 
-void CLuaTextures::FreeAll()
+void LuaTextures::FreeAll()
 {
 	map<string, Texture>::iterator it;
 	for (it = textures.begin(); it != textures.end(); ++it) {
@@ -194,7 +194,7 @@ void CLuaTextures::FreeAll()
 }
 
 
-bool CLuaTextures::GenerateMipmap(const string& name)
+bool LuaTextures::GenerateMipmap(const string& name)
 {
 	if (!glGenerateMipmapEXT) {
 		return false;
@@ -213,7 +213,7 @@ bool CLuaTextures::GenerateMipmap(const string& name)
 }
 
 
-const CLuaTextures::Texture* CLuaTextures::GetInfo(const string& name) const
+const LuaTextures::Texture* LuaTextures::GetInfo(const string& name) const
 {
 	map<string, Texture>::const_iterator it = textures.find(name);
 	if (it != textures.end()) {

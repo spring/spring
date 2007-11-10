@@ -153,6 +153,7 @@ CUnit::CUnit ()
 	isCloaked(false),
 	wantCloak(false),
 	scriptCloak(0),
+	decloakDistance(0.0f),
 	shieldWeapon(0),
 	stockpileWeapon(0),
 	haveDGunRequest(false),
@@ -533,10 +534,18 @@ void CUnit::SlowUpdate()
 	}
 
 	if (stunned) {
+		const bool oldCloak = isCloaked;
 		if (!isDead && (scriptCloak >= 4)) {
 			isCloaked = true;
 		} else {
 			isCloaked = false;
+		}
+		if (oldCloak != isCloaked) {
+			if (isCloaked) {
+				luaCallIns.UnitCloaked(this);
+			} else {
+				luaCallIns.UnitDecloaked(this);
+			}
 		}
 		UpdateResources();
 		return;
@@ -634,11 +643,13 @@ void CUnit::SlowUpdate()
 	bonusShieldSaved += 0.05f;
 	residualImpulse *= 0.6f;
 
+	const bool oldCloak = isCloaked;
+
 	if (scriptCloak >= 3) {
 		isCloaked = true;
 	}
 	else if (wantCloak || (scriptCloak >= 1)) {
-		if (helper->GetClosestEnemyUnitNoLosTest(midPos, unitDef->decloakDistance,
+		if (helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
 		                                         allyteam, unitDef->decloakSpherical)) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 			isCloaked = false;
@@ -665,6 +676,13 @@ void CUnit::SlowUpdate()
 		isCloaked = false;
 	}
 
+	if (oldCloak != isCloaked) {
+		if (isCloaked) {
+			luaCallIns.UnitCloaked(this);
+		} else {
+			luaCallIns.UnitDecloaked(this);
+		}
+	}
 
 	if(uh->waterDamage && (physicalState==CSolidObject::Floating || (physicalState==CSolidObject::OnGround && pos.y<=-3 && readmap->mipHeightmap[1][int((pos.z/(SQUARE_SIZE*2))*gs->hmapx+(pos.x/(SQUARE_SIZE*2)))]<-1))){
 		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector, -1);
@@ -1173,8 +1191,8 @@ void CUnit::DrawStats()
 	// setup the billboard transformation
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glMultMatrixd(camera->billboard);
-	//glCallList(CCamera::billboardList);
+	//glMultMatrixd(camera->billboard);
+	glCallList(CCamera::billboardList);
 
 	// black background for healthbar
 	glColor3f(0.0f, 0.0f, 0.0f);
@@ -1719,6 +1737,7 @@ void CUnit::FinishedBuilding(void)
 
 	ChangeLos(realLosRadius, realAirLosRadius);
 
+	const bool oldCloak = isCloaked;
 	if (unitDef->startCloaked) {
 		wantCloak = true;
 		isCloaked = true;
@@ -1751,6 +1770,10 @@ void CUnit::FinishedBuilding(void)
 	luaCallIns.UnitFinished(this);
 	globalAI->UnitFinished(this);
 
+	if (oldCloak != isCloaked) {
+		luaCallIns.UnitCloaked(this); // do this after the UnitFinished call-in
+	}
+		
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
 		CFeature* f =
@@ -2321,6 +2344,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(cloakTimeout),
 				CR_MEMBER(curCloakTimeout),
 				CR_MEMBER(isCloaked),
+				CR_MEMBER(decloakDistance),
 
 				CR_MEMBER(lastTerrainType),
 				CR_MEMBER(curTerrainType),

@@ -434,6 +434,7 @@ static int WeaponsTable(lua_State* L, const void* data)
 {
 	const vector<UnitDef::UnitDefWeapon>& weapons =
 		*((const vector<UnitDef::UnitDefWeapon>*)data);
+
 	const int weaponCount = (int)weapons.size();
 
 	lua_newtable(L);
@@ -447,6 +448,9 @@ static int WeaponsTable(lua_State* L, const void* data)
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxAngleDif);
 			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
+			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
+			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);
+			HSTR_PUSH_NUMBER(L, "mainDirZ",    udw.mainDir.z);
 
 			HSTR_PUSH(L, "badTargets");
 			CategorySetFromBits(L, &udw.badTargetCat);
@@ -459,6 +463,7 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_rawset(L, -3);
 	}
 	HSTR_PUSH_NUMBER(L, "n", weaponCount);
+
 	return 1;
 }
 
@@ -603,26 +608,26 @@ TYPE_STRING_FUNC(GroundUnit);
 TYPE_STRING_FUNC(MetalExtractor);
 
 
-#define TYPE_MODEL_FUNC(name, param)                       \
-	static int Model ## name(lua_State* L, const void* data) \
-	{                                                        \
-		const UnitDef& ud = *((const UnitDef*)data);           \
-		const S3DOModel* model = ud.LoadModel(0);              \
-		lua_pushnumber(L, model -> param);                     \
-		return 1;                                              \
+#define TYPE_MODEL_FUNC(name, param)              \
+	static int name(lua_State* L, const void* data) \
+	{                                               \
+		const UnitDef& ud = *((const UnitDef*)data);  \
+		const S3DOModel* model = ud.LoadModel(0);     \
+		lua_pushnumber(L, model -> param);            \
+		return 1;                                     \
 	}
 
-TYPE_MODEL_FUNC(Height, height);
-TYPE_MODEL_FUNC(Radius, radius);
-TYPE_MODEL_FUNC(Minx,   minx);
-TYPE_MODEL_FUNC(Midx,   relMidPos.x);
-TYPE_MODEL_FUNC(Maxx,   maxx);
-TYPE_MODEL_FUNC(Miny,   miny);
-TYPE_MODEL_FUNC(Midy,   relMidPos.y);
-TYPE_MODEL_FUNC(Maxy,   maxy);
-TYPE_MODEL_FUNC(Minz,   minz);
-TYPE_MODEL_FUNC(Midz,   relMidPos.z);
-TYPE_MODEL_FUNC(Maxz,   maxz);
+TYPE_MODEL_FUNC(ModelHeight, height);
+TYPE_MODEL_FUNC(ModelRadius, radius);
+TYPE_MODEL_FUNC(ModelMinx,   minx);
+TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x);
+TYPE_MODEL_FUNC(ModelMaxx,   maxx);
+TYPE_MODEL_FUNC(ModelMiny,   miny);
+TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y);
+TYPE_MODEL_FUNC(ModelMaxy,   maxy);
+TYPE_MODEL_FUNC(ModelMinz,   minz);
+TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
+TYPE_MODEL_FUNC(ModelMaxz,   maxz);
 
 
 /******************************************************************************/

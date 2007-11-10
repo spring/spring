@@ -27,6 +27,8 @@ class LuaUnsyncedRead {
 		static int IsUnitSelected(lua_State* L);
 		static int GetUnitViewPosition(lua_State* L);
 
+		static int GetVisibleUnits(lua_State* L);
+
 		static int GetPlayerRoster(lua_State* L);
 
 		static int GetTeamColor(lua_State* L);

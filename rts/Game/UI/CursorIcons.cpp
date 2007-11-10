@@ -43,6 +43,16 @@ void CCursorIcons::Clear()
 }
 
 
+void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
+{
+	if (cursor.empty()) {
+		customTypes.erase(cmdID);
+	} else {
+		customTypes[cmdID] = cursor;
+	}
+}
+
+
 void CCursorIcons::Draw()
 {
 	glEnable(GL_TEXTURE_2D);
@@ -208,7 +218,13 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_TRAJECTORY:
 		case CMD_AUTOREPAIRLEVEL:
 */
-		default: return NULL;
+		default: {
+			map<int, string>::const_iterator it = customTypes.find(cmd);
+			if (it == customTypes.end()) {
+				return NULL;
+			}
+			cursorName = it->second;
+		}
 	}
 
 	map<std::string, CMouseCursor *>::const_iterator it;

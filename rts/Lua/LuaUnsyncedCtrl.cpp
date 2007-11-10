@@ -75,7 +75,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AssignMouseCursor);
 	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
 
-	REGISTER_LUA_CFUNC(SetCustomCommandDrawLine);
+	REGISTER_LUA_CFUNC(SetCustomCommandDrawData);
 
 	REGISTER_LUA_CFUNC(SetDrawSky);
 	REGISTER_LUA_CFUNC(SetDrawWater);
@@ -671,29 +671,53 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 
 /******************************************************************************/
 
-int LuaUnsyncedCtrl::SetCustomCommandDrawLine(lua_State* L)
+int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)
-			|| !lua_istable(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetCustomCommandLine()\n"
-					"Args are (cmdID, cmdIconID, lineColor)");
-	}
+	const int cmdID = (int)luaL_checknumber(L, 1);
 
-	const int cmdID = (int)lua_tonumber(L, 1);
-	const int iconID = (int)lua_tonumber(L, 2);
+	
+
+	int iconID = 0;
+	if (lua_israwnumber(L, 2)) {
+		iconID = (int)lua_tonumber(L, 2);
+	}
+	else if (lua_israwstring(L, 2)) {
+		iconID = cmdID;
+		const string icon = lua_tostring(L, 2);
+		cursorIcons.SetCustomType(cmdID, icon);
+	}
+	else if (lua_isnil(L, 2)) {
+		cursorIcons.SetCustomType(cmdID, "");
+		cmdColors.ClearCustomCmdData(cmdID);
+		return 0;
+	}
+	else {
+		luaL_error(L, "Incorrect arguments to SetCustomCommandDrawData");
+	}
+	
+	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
 	const int table = 3;
-	float color[4] = {1.f, 1.f, 1.f, 1.f};
-	int i = 0;
-	for (lua_pushnil(L); lua_next(L, table) != 0 && i < 4; lua_pop(L, 1), ++i) {
-		color[i] = lua_tonumber(L, -1);
+	if (lua_istable(L, table)) {
+		for (int i = 0; i < 4; i++) {
+			lua_rawgeti(L, table, i + 1);
+			if (lua_israwnumber(L, -1)) {
+				color[i] = (float)lua_tonumber(L, -1);
+				lua_pop(L, 1);
+			} else {
+				lua_pop(L, 1);
+				break;
+			}
+		}
 	}
 
-	cmdColors.SetCustomCmdLine(cmdID, iconID, color);
+	const bool showArea = lua_isboolean(L, 4) && lua_toboolean(L, 4);
 
-	lua_pushboolean(L, 1);
-	return 1;
+	cmdColors.SetCustomCmdData(cmdID, iconID, color, showArea);
+
+	return 0;
 }
+
 
 /******************************************************************************/
 /******************************************************************************/

@@ -10,6 +10,7 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/Feature.h"
@@ -817,9 +818,11 @@ void CCommandAI::ExecuteInsert(const Command& c)
 		targetDied = false;
 		unimportantMove = false;
 		orderTarget = NULL;
+		const Command& cmd = commandQue.front();
 		if (owner->group) {
-			owner->group->CommandFinished(owner->id, commandQue.front().id);
+			owner->group->CommandFinished(owner->id, cmd.id);
 		}
+		luaCallIns.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}
 
 	queue->insert(insertIt, newCmd);
@@ -1176,13 +1179,16 @@ void CCommandAI::SlowUpdate()
 			return;
 		}
 	}
+
 	if (ExecuteStateCommand(c)) {
 		FinishCommand();
 		return;
 	}
+
 	if (luaRules && !luaRules->CommandFallback(owner, c)) {
 		return; // luaRules wants the command to stay at the front
 	}
+
 	FinishCommand();
 }
 
@@ -1265,45 +1271,72 @@ void CCommandAI::DrawCommands(void)
 	lineDrawer.FinishPath();
 }
 
+
 void CCommandAI::DrawDefaultCommand(const Command& c) const
 {
 	// TODO add Lua callin perhaps, for more elaborate needs?
-	CCommandColors::LineData* ld = cmdColors.GetCustomCmdLine(c.id);
-	if (!ld)
+	const CCommandColors::DrawData* dd = cmdColors.GetCustomCmdData(c.id);
+	if (dd == NULL) {
 		return;
-	if(c.params.size() == 1){
-		const CUnit* unit = uh->units[int(c.params[0])];
-		if((unit != NULL) && isTrackable(unit)) {
-			const float3 endPos =
-				helper->GetUnitErrorPos(unit, owner->allyteam);
-			lineDrawer.DrawLineAndIcon(ld->cmdIconID, endPos, ld->color);
+	}
+	const int paramsCount = c.params.size();
+
+	if (paramsCount == 1) {
+		const int unitID = int(c.params[0]);
+		if ((unitID >= 0) && (unitID < MAX_UNITS)) {
+			const CUnit* unit = uh->units[unitID];
+			if((unit != NULL) && isTrackable(unit)) {
+				const float3 endPos =
+					helper->GetUnitErrorPos(unit, owner->allyteam);
+				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+			}
 		}
-	} else {
-		const float3 endPos(c.params[0],c.params[1]+3,c.params[2]);
-		lineDrawer.DrawLineAndIcon(ld->cmdIconID, endPos, ld->color);
+		return;
+	}
+
+	if (paramsCount < 3) {
+		return;
+	}
+
+	const float3 endPos(c.params[0], c.params[1] + 3.0f, c.params[2]);
+
+	if (!dd->showArea || (paramsCount < 4)) {
+		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+	}
+	else {
+		const float radius = c.params[3];
+		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+		lineDrawer.Break(endPos, dd->color);
+		glSurfaceCircle(endPos, radius, 20);
+		lineDrawer.RestartSameColor();
 	}
 }
 
+
 void CCommandAI::FinishCommand(void)
 {
-	const int type = commandQue.front().id;
-	const bool dontrepeat = commandQue.front().options & DONT_REPEAT
-			|| commandQue.front().options & INTERNAL_ORDER;
+	const Command& cmd = commandQue.front();
+	const int cmdID  = cmd.id;  // save 
+	const int cmdTag = cmd.tag; // save
+	const bool dontrepeat = (cmd.options & DONT_REPEAT) ||
+	                        (cmd.options & INTERNAL_ORDER);
 	if (repeatOrders
-		&& !dontrepeat
-	    && (type != CMD_STOP)
-	    && (type != CMD_PATROL)
-	    && (type != CMD_SET_WANTED_MAX_SPEED)){
+	    && !dontrepeat
+	    && (cmdID != CMD_STOP)
+	    && (cmdID != CMD_PATROL)
+	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){
 		commandQue.push_back(commandQue.front());
 	}
+
 	commandQue.pop_front();
-	inCommand=false;
-	targetDied=false;
-	unimportantMove=false;
-	orderTarget=0;
+	inCommand = false;
+	targetDied = false;
+	unimportantMove = false;
+	orderTarget = 0;
 	if (owner->group) {
-		owner->group->CommandFinished(owner->id,type);
+		owner->group->CommandFinished(owner->id, cmdID);
 	}
+	luaCallIns.UnitCmdDone(owner, cmdID, cmdTag);
 
 	if (commandQue.empty()) {
 		if (!owner->group) {
@@ -1426,16 +1459,17 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 bool CCommandAI::HasMoreMoveCommands()
 {
 	if (!commandQue.empty()) {
-		for(CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); i++) {
-			int id = i->id;
-			if(id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
-				|| id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
-				|| id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
-				|| id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
+		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); i++) {
+			const int id = i->id;
+			if (id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
+			 || id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
+			 || id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
+			 || id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
 			{
 				return true;
-			} else if(id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
-				|| id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
+			}
+			else if (id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
+				    || id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
 			{
 				return false;
 			}

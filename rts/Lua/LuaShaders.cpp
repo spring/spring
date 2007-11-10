@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-// LuaShaders.cpp: implementation of the CLuaShaders class.
+// LuaShaders.cpp: implementation of the LuaShaders class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -24,7 +24,7 @@ using std::vector;
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaShaders::PushEntries(lua_State* L)
+bool LuaShaders::PushEntries(lua_State* L)
 {
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
@@ -50,7 +50,7 @@ bool CLuaShaders::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaShaders::CLuaShaders()
+LuaShaders::LuaShaders()
 {
 	Program p;
 	p.id = 0;
@@ -58,7 +58,7 @@ CLuaShaders::CLuaShaders()
 }
 
 
-CLuaShaders::~CLuaShaders()
+LuaShaders::~LuaShaders()
 {
 	for (int p = 0; p < (int)programs.size(); p++) {
 		DeleteProgram(programs[p]);
@@ -82,7 +82,7 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
-GLuint CLuaShaders::GetProgramName(unsigned int progID) const
+GLuint LuaShaders::GetProgramName(unsigned int progID) const
 {
 	if ((progID <= 0) || (progID >= (int)programs.size())) {
 		return 0;
@@ -91,7 +91,7 @@ GLuint CLuaShaders::GetProgramName(unsigned int progID) const
 }
 
 
-GLuint CLuaShaders::GetProgramName(lua_State* L, int index) const
+GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 {
 	const int progID = (GLuint)luaL_checknumber(L, 1);
 	if ((progID <= 0) || (progID >= (int)programs.size())) {
@@ -101,7 +101,7 @@ GLuint CLuaShaders::GetProgramName(lua_State* L, int index) const
 }
 
 
-unsigned int CLuaShaders::AddProgram(const Program& p)
+unsigned int LuaShaders::AddProgram(const Program& p)
 {
 	if (!unused.empty()) {
 		const unsigned int index = unused[unused.size() - 1];
@@ -114,7 +114,7 @@ unsigned int CLuaShaders::AddProgram(const Program& p)
 }
 
 
-void CLuaShaders::RemoveProgram(unsigned int progID)
+void LuaShaders::RemoveProgram(unsigned int progID)
 {
 	if ((progID <= 0) || (progID >= (int)programs.size())) {
 		return;
@@ -126,7 +126,7 @@ void CLuaShaders::RemoveProgram(unsigned int progID)
 }
 
 
-void CLuaShaders::DeleteProgram(Program& p)
+void LuaShaders::DeleteProgram(Program& p)
 {
 	if (p.id == 0) {
 		return;
@@ -147,9 +147,9 @@ void CLuaShaders::DeleteProgram(Program& p)
 /******************************************************************************/
 /******************************************************************************/
 
-int CLuaShaders::GetShaderLog(lua_State* L)
+int LuaShaders::GetShaderLog(lua_State* L)
 {
-	const CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	lua_pushstring(L, shaders.errorLog.c_str());
 	return 1;
 }
@@ -345,7 +345,7 @@ static GLuint CompileObject(const vector<string>& sources, GLenum type,
 		GLsizei logSize = sizeof(log);
 		glGetShaderInfoLog(obj, logSize, &logSize, log);
 		
-		CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 		shaders.errorLog = log;
 		
 		glDeleteShader(obj);
@@ -397,7 +397,7 @@ static bool ParseSources(lua_State* L, int table,
 }
 
 
-int CLuaShaders::CreateShader(lua_State* L)
+int LuaShaders::CreateShader(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	if ((args != 1) || !lua_istable(L, 1)) {
@@ -441,7 +441,7 @@ int CLuaShaders::CreateShader(lua_State* L)
 
 	glLinkProgram(prog);
 
-	CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 
 	GLint result;
 	glGetProgramiv(prog, GL_LINK_STATUS, &result);
@@ -466,19 +466,19 @@ int CLuaShaders::CreateShader(lua_State* L)
 }
 
 
-int CLuaShaders::DeleteShader(lua_State* L)
+int LuaShaders::DeleteShader(lua_State* L)
 {
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
 	const int progID = (int)luaL_checknumber(L, 1);
-	CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	shaders.RemoveProgram(progID);
 	return 0;
 }
 
 
-int CLuaShaders::UseShader(lua_State* L)
+int LuaShaders::UseShader(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
@@ -489,7 +489,7 @@ int CLuaShaders::UseShader(lua_State* L)
 		return 1;
 	}
 		
-	CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	const GLuint progName = shaders.GetProgramName(progID);
 	if (progName == 0) {
 		lua_pushboolean(L, false);
@@ -541,9 +541,9 @@ static const char* UniformTypeString(GLenum type)
 }
 
 
-int CLuaShaders::GetActiveUniforms(lua_State* L)
+int LuaShaders::GetActiveUniforms(lua_State* L)
 {
-	const CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	const GLuint progName = shaders.GetProgramName(L, 1);
 	if (progName == 0) {
 		return 0;
@@ -576,9 +576,9 @@ int CLuaShaders::GetActiveUniforms(lua_State* L)
 }
 
 
-int CLuaShaders::GetUniformLocation(lua_State* L)
+int LuaShaders::GetUniformLocation(lua_State* L)
 {
-	const CLuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	const GLuint progName = shaders.GetProgramName(L, 1);
 	if (progName == 0) {
 		return 0;
@@ -595,7 +595,7 @@ int CLuaShaders::GetUniformLocation(lua_State* L)
 
 /******************************************************************************/
 
-int CLuaShaders::Uniform(lua_State* L)
+int LuaShaders::Uniform(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
@@ -636,7 +636,7 @@ int CLuaShaders::Uniform(lua_State* L)
 }
 
 
-int CLuaShaders::UniformInt(lua_State* L)
+int LuaShaders::UniformInt(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
@@ -687,7 +687,7 @@ static void UniformMatrix4dv(GLint location, const double dm[16])
 }
 
 
-int CLuaShaders::UniformMatrix(lua_State* L)
+int LuaShaders::UniformMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);

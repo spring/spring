@@ -6,7 +6,9 @@
 #include <limits.h> // for INT_MAX
 #include "creg/creg.h"
 
-using namespace std;
+
+using namespace std; // FIXME -- should not have this in an external interface?
+
 
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -92,12 +94,16 @@ using namespace std;
 
 struct Command {
 	CR_DECLARE_STRUCT(Command);
+
 	Command()
-	: timeOut(INT_MAX), options(0), tag(0) {};
-	int id;
-	vector<float> params;
-	unsigned char options;
-	unsigned int tag;
+	: options(0), tag(0), timeOut(INT_MAX) {};
+
+	int id;                     // CMD_xxx code  (custom codes can also be used)
+	unsigned char options;      // option bits
+	std::vector<float> params;  // command parameters
+
+	unsigned int tag;  // unique id within a CCommandQueue
+
 	int timeOut;  // remove this command after this frame
 	              // can only be set locally, not sent over net
 	              // (used for temporary orders)
@@ -106,33 +112,29 @@ struct Command {
 
 struct CommandDescription {
 	CR_DECLARE_STRUCT(CommandDescription)
+
 	CommandDescription()
 	: showUnique(false),
 	  onlyKey(false),
 	  onlyTexture(false),
 	  disabled(false) {}
 
-	bool SetupCommandDefaults(int id);
+	int id;    // CMD_xxx     code  (custom codes can also be used)
+	int type;  // CMDTYPE_xxx code 
 
-	static void Init();
-	static bool GetId(const string& a, int& id);
-	static bool GetAction(int id, string& a);
-
-	int id;
-	int type;
-	string action;     // the associated command action binding name
-	string hotkey;     // suggested hotkey
-	string name;
-	string iconname;
-	string mouseicon;
-	string tooltip;
+	std::string name;       // command name
+	std::string action;     // the associated command action binding name
+	std::string hotkey;     // suggested hotkey  (not currently used?)
+	std::string iconname;   // button texture
+	std::string mouseicon;  // mouse cursor
+	std::string tooltip;    // tooltip text
 
 	bool showUnique;   // command only applies to single units
 	bool onlyKey;      // if true dont show a button for the command
 	bool onlyTexture;  // do not draw the name if the texture is available
-	bool disabled;
+	bool disabled;     // for greying-out commands
 
-	vector<string> params;
+	std::vector<std::string> params;
 };
 
 

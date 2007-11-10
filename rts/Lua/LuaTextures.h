@@ -1,6 +1,6 @@
 #ifndef LUA_TEXTURES_H
 #define LUA_TEXTURES_H
-// LuaTextures.h: interface for the CLuaTextures class.
+// LuaTextures.h: interface for the LuaTextures class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -12,12 +12,12 @@ using std::map;
 #include "Rendering/GL/myGL.h"
 
 
-class CLuaTextures {
+class LuaTextures {
 	public:
 		static const char prefix = '!';
 
-		CLuaTextures();
-		~CLuaTextures();
+		LuaTextures();
+		~LuaTextures();
 
 		struct Texture {
 			Texture()

@@ -356,6 +356,25 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 }
 
 
+void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
+{
+	static const LuaHashString cmdStr("UnitCmdDone");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, cmdID);
+	lua_pushnumber(L, cmdTag);
+
+	// call the routine
+	RunCallIn(cmdStr, 5, 0);
+	return;
+}
+
+
 void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
                              float damage, int weaponID, bool paralyzer)
 {
@@ -499,6 +518,42 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 
 	// call the routine
 	RunCallIn(cmdStr, 5, 0);
+	return;
+}
+
+
+/******************************************************************************/
+
+void CLuaHandle::UnitCloaked(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitCloaked");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	RunCallIn(cmdStr, 3, 0);
+	return;
+}
+
+
+void CLuaHandle::UnitDecloaked(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitDecloaked");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	RunCallIn(cmdStr, 3, 0);
 	return;
 }
 

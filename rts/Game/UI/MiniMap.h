@@ -46,6 +46,8 @@ class CMiniMap : public CInputReceiver {
 
 		bool GetMaximized() const { return maximized; }
 
+		inline int GetPosX()  const { return xpos; }
+		inline int GetPosY()  const { return ypos; }
 		inline int GetSizeX() const { return width; }
 		inline int GetSizeY() const { return height; }
 

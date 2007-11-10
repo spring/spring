@@ -128,6 +128,7 @@ CLuaUI::CLuaUI()
 	shockFrontDistAdj  = 100.0f;
 
 	haveWorldTooltip = false;
+	haveMapDrawCmd = false;
 
 	const string code = LoadFile("gui.lua");
 	if (code.empty()) {
@@ -194,6 +195,7 @@ CLuaUI::CLuaUI()
 
 	// update extra call-ins
 	UnsyncedUpdateCallIn("WorldTooltip");
+	UnsyncedUpdateCallIn("MapDrawCmd");
 
 	lua_settop(L, 0);
 }
@@ -271,6 +273,11 @@ bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 
 	if (name == "WorldTooltip") {
 		haveWorldTooltip = HasCallIn(name);
+		return true;
+	}
+
+	if (name == "MapDrawCmd") {
+		haveMapDrawCmd = HasCallIn(name);
 		return true;
 	}
 
@@ -649,6 +656,73 @@ string CLuaUI::WorldTooltip(const CUnit* unit,
 		return "";
 	}
 	const string retval = lua_tostring(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaUI::MapDrawCmd(int playerID, int type,
+                        const float3* pos0,
+                        const float3* pos1,
+                        const string* label)
+{
+	if (!haveMapDrawCmd) {
+		return false;
+	}
+
+	static const LuaHashString cmdStr("MapDrawCmd");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		haveMapDrawCmd = false;
+		return false; // the call is not defined
+	}
+
+	int args;
+
+	lua_pushnumber(L, playerID);
+
+	if (type == CInMapDraw::NET_POINT) {
+		HSTR_PUSH(L, "point");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushstring(L, label->c_str());
+		args = 6;
+	}
+	else if (type == CInMapDraw::NET_LINE) {
+		HSTR_PUSH(L, "line");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushnumber(L, pos1->x);
+		lua_pushnumber(L, pos1->y);
+		lua_pushnumber(L, pos1->z);
+		args = 8;
+	}
+	else if (type == CInMapDraw::NET_ERASE) {
+		HSTR_PUSH(L, "erase");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushnumber(L, 100.0f);  // radius
+		args = 6;
+	}
+	else {
+		logOutput.Print("Unknown MapDrawCmd() type");
+		lua_pop(L, 2); // pop the function and playerID
+		return false;
+	}
+
+	// call the routine
+	if (!RunCallIn(cmdStr, args, 1)) {
+		return false;
+	}
+
+	// take the event?
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return retval;
 }
@@ -1743,13 +1817,35 @@ int CLuaUI::GetMouseMiniMapState(lua_State* L) //FIXME
 	if (minimap == NULL) {
 		return 0;
 	}
-	return 0;
+	lua_pushnumber(L, minimap->GetPosX());
+	lua_pushnumber(L, minimap->GetPosY());
+	lua_pushnumber(L, minimap->GetSizeX());
+	lua_pushnumber(L, minimap->GetSizeY());
+	lua_pushboolean(L, minimap->GetMinimized());
+	lua_pushboolean(L, minimap->GetMaximized());
+	return 6;
 }
 
 
 int CLuaUI::GetMouseStartPosition(lua_State* L) //FIXME
 {
-	return 0;
+	if (mouse == NULL) {
+		return 0;
+	}
+	const int button = luaL_checkint(L, 1);
+	if ((button <= 0) || (button > NUM_BUTTONS)) {
+		return 0;
+	}
+	const CMouseHandler::ButtonPress& bp = mouse->buttons[button];
+	lua_pushnumber(L, bp.x);
+	lua_pushnumber(L, bp.y);
+	lua_pushnumber(L, bp.camPos.x);
+	lua_pushnumber(L, bp.camPos.y);
+	lua_pushnumber(L, bp.camPos.z);
+	lua_pushnumber(L, bp.dir.x);
+	lua_pushnumber(L, bp.dir.y);
+	lua_pushnumber(L, bp.dir.z);
+	return 8;
 }
 
 

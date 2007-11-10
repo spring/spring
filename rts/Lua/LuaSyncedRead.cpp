@@ -116,8 +116,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGameRulesParam);
 	REGISTER_LUA_CFUNC(GetGameRulesParams);
 
-	REGISTER_LUA_CFUNC(GetCustomMapOptions);
-	REGISTER_LUA_CFUNC(GetCustomModOptions);
+	REGISTER_LUA_CFUNC(GetMapOptions);
+	REGISTER_LUA_CFUNC(GetModOptions);
 
 	REGISTER_LUA_CFUNC(GetWind);
 
@@ -708,13 +708,13 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 
 /******************************************************************************/
 
-int LuaSyncedRead::GetCustomMapOptions(lua_State* L)
+int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
-	if (gameSetup == NULL) {
-		return 0;
-	}
 	lua_newtable(L);
-	const map<string, string>& mapOpts = gameSetup->customMapOptions;
+	if (gameSetup == NULL) {
+		return 1;
+	}
+	const map<string, string>& mapOpts = gameSetup->mapOptions;
 	map<string, string>::const_iterator it;
 	for (it = mapOpts.begin(); it != mapOpts.end(); ++it) {
 		lua_pushstring(L, it->first.c_str());
@@ -725,13 +725,13 @@ int LuaSyncedRead::GetCustomMapOptions(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetCustomModOptions(lua_State* L)
+int LuaSyncedRead::GetModOptions(lua_State* L)
 {
-	if (gameSetup == NULL) {
-		return 0;
-	}
 	lua_newtable(L);
-	const map<string, string>& modOpts = gameSetup->customModOptions;
+	if (gameSetup == NULL) {
+		return 1;
+	}
+	const map<string, string>& modOpts = gameSetup->modOptions;
 	map<string, string>::const_iterator it;
 	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
 		lua_pushstring(L, it->first.c_str());
@@ -4098,7 +4098,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 
 	const int scriptPiece = (int)lua_tonumber(L, 2);
 	const int piece = localModel->ScriptToArray(scriptPiece);
-	if (piece == -1) {
+	if (piece < 0) {
 		return 0;
 	}
 
