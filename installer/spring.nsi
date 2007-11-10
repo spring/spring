@@ -182,7 +182,7 @@ SectionEnd
 
 Section "Multiplayer battleroom" SEC_BATTLEROOM
   !define INSTALL
-  !include "sections\battleroom.nsh"
+  !include "sections\tasclient.nsh"
   !undef INSTALL
 SectionEnd
 
@@ -270,7 +270,7 @@ Section Uninstall
   !include "sections\archivemover.nsh"
   !include "sections\aai.nsh"
   !include "sections\kai.nsh"
-  !include "sections\battleroom.nsh"
+  !include "sections\tasclient.nsh"
   !include "sections\luaui.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} Spring battleroom.lnk"
