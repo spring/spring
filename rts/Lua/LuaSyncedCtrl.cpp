@@ -1239,18 +1239,21 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitStockpile()");
-	}
+
 	CWeapon* w = unit->stockpileWeapon;
 	if (w == NULL) {
 		return 0;
 	}
 
-	w->numStockpiled = max(0, (int)lua_tonumber(L, 2));
+	if (lua_isnumber(L, 2)) {
+		w->numStockpiled = max(0, luaL_checkint(L, 2));
+		unit->commandAI->UpdateStockpileIcon();
+	}
 
-	unit->commandAI->UpdateStockpileIcon();
+	if (lua_isnumber(L, 3)) {
+		const float percent = max(0.0f, min(1.0f, (float)lua_tonumber(L, 3)));
+		unit->stockpileWeapon->buildPercent = percent;
+	}
 
 	return 0;
 }
