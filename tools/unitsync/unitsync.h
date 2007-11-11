@@ -1,7 +1,6 @@
 #ifndef UNITSYNC_H
 #define UNITSYNC_H
 
-#include "resource.h"
 #include <string>
 
 #define STRBUF_SIZE 100000

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="unitsync"
 	ProjectGUID="{BCE5530D-8565-4C1D-B1C7-3ED8B79FEF06}"
 	RootNamespace="unitsync"
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;..\..\vclibs\Boost\include;..\..\vclibs\DevIL\include;..\..\rts\lib\lua\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY"
+				PreprocessorDefinitions="WIN32;_WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;BITMAP_NO_OPENGL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -50,6 +50,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -62,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib"
+				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
 				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
@@ -123,12 +124,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;..\..\vclibs\Boost\include;..\..\vclibs\DevIL\include;..\..\rts\lib\lua\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;BITMAP_NO_OPENGL"
+				PreprocessorDefinitions="WIN32;_WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;BITMAP_NO_OPENGL"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -141,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib"
+				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
 				OutputFile="../../game/unitsync.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
@@ -203,12 +205,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\rts\System;..\..\rts;..\..\rts\lib\7zip;..\..\rts\System\FileSystem;..\..\vclibs\glew\include;..\..\vclibs\zlibwapi\include;&quot;..\..\vclibs\SDL-1.2.9\include&quot;;..\..\vclibs\Boost\include;..\..\vclibs\DevIL\include;..\..\rts\lib\lua\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;BITMAP_NO_OPENGL"
+				PreprocessorDefinitions="WIN32;_WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;BITMAP_NO_OPENGL"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -221,7 +224,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib"
+				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
 				OutputFile="../../game/unitsync-python.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
@@ -436,6 +439,34 @@
 				<File
 					RelativePath="..\..\rts\System\FileSystem\Archive7Zip.h"
 					>
+				</File>
+				<File
+					RelativePath="..\..\rts\System\FileSystem\ArchiveBase.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with python binding|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\rts\System\FileSystem\ArchiveBase.h"
