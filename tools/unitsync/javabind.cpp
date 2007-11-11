@@ -53,6 +53,7 @@ DLL_EXPORT int          __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel);
 DLL_EXPORT int          __stdcall GetMapArchiveCount(const char* mapName);
 DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
+DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName);
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
 DLL_EXPORT int          __stdcall GetPrimaryModCount();
 DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
@@ -67,6 +68,7 @@ DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
 DLL_EXPORT int          __stdcall GetPrimaryModIndex(const char* name);
 DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
+DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name);
 DLL_EXPORT int          __stdcall GetSideCount();
 DLL_EXPORT const char*  __stdcall GetSideName(int side);
 DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
@@ -393,6 +395,21 @@ extern "C" {
 			return env->NewStringUTF((const char*)c);
 		}
 
+	
+	/*
+	* Class:     aflobby_CUnitSyncJNIBindings
+	* Method:    GetMapChecksumFromName
+	* Signature: (I)I
+	*/
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetMapChecksumFromName
+		(JNIEnv *env, jclass myobject, jstring name){
+			char* c = new char[15];
+			const char* cname = env->GetStringUTFChars(name,0);
+			unsigned int i = GetMapChecksumFromName(cname);
+			sprintf(c,"%u",i);
+			return env->NewStringUTF((const char*)c);
+		}
+
 	/*
 	* Class:     aflobby_CUnitSyncJNIBindings
 	* Method:    GetPrimaryModCount
@@ -503,8 +520,22 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModChecksum
 		(JNIEnv *env, jclass myobject, jint index){
 			char* c = new char[15];
-			int i = GetPrimaryModChecksum(index);
+			unsigned int i = GetPrimaryModChecksum(index);
 			sprintf(c,"%i",i);
+			return env->NewStringUTF((const char*)c);
+		}
+
+	/*
+	* Class:     aflobby_CUnitSyncJNIBindings
+	* Method:    GetPrimaryModChecksumFromName
+	* Signature: (I)I
+	*/
+	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModChecksumFromName
+		(JNIEnv *env, jclass myobject, jstring name){
+			char* c = new char[15];
+			const char* cname = env->GetStringUTFChars(name,0);
+			unsigned int i = GetPrimaryModChecksumFromName(cname);
+			sprintf(c,"%u",i);
 			return env->NewStringUTF((const char*)c);
 		}
 
