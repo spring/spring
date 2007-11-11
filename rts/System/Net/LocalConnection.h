@@ -17,26 +17,27 @@ IMPORTANT: You must not have more than two instances of this
 class CLocalConnection : public CConnection
 {
 public:
+	/**
+	@brief Constructor
+	@throw network_error When there already 2 instances
+	*/
 	CLocalConnection();
 	virtual ~CLocalConnection();
 	
 	/**
 	@brief Send data to other instance
-	@return The amount of data sent (will be length)
-	@throw network_error When data doesn't fit in the buffer
 	*/
 	virtual void SendData(const unsigned char *data, const unsigned length);
 	
 	/**
 	@brief Get data
-	@return The amount of data read
-	@throw network_error When the data doesnt fit in *buf
 	*/
-	virtual unsigned GetData(unsigned char *buf);
+	virtual RawPacket* GetData();
 
 	/// does nothing
 	virtual void Flush(const bool forced = false);
 	
+	/// is always false
 	virtual bool CheckTimeout() const;
 
 private:

@@ -1,13 +1,15 @@
-#include "UDPSocket.h" 
-#include <string>
+#include "UDPSocket.h"
 
+#include <string>
 #ifdef _WIN32
-#include <direct.h>
-#include <io.h>
+ #include <direct.h>
+ #include <io.h>
 #else
-#include <fcntl.h>
-#include <errno.h>
+ #include <fcntl.h>
+ #include <errno.h>
 #endif
+
+#include "Exception.h"
 
 namespace netcode {
 

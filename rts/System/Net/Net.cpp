@@ -11,6 +11,8 @@
 #include "UDPListener.h"
 #include "LocalConnection.h"
 #include "ProtocolDef.h"
+#include "RawPacket.h"
+#include "Exception.h"
 
 #include <boost/format.hpp>
 
@@ -18,14 +20,12 @@ namespace netcode {
 
 CNet::CNet()
 {
-	proto = new ProtocolDef();
-	proto->UDP_MTU = 500;
+	ProtocolDef::instance()->UDP_MTU = 500;
 }
 
 CNet::~CNet()
 {
 	FlushNet();
-	delete proto;
 }
 
 void CNet::Listening(const bool state)
@@ -50,15 +50,24 @@ bool CNet::Listening()
 
 void CNet::Kill(const unsigned connNumber)
 {
+	if (int(connNumber) > MaxConnectionID() || !connections[connNumber])
+		throw network_error("Wrong connection ID in CNet::Kill()");
+	
 	connections[connNumber]->Flush(true);
 	connections[connNumber].reset();
+	
+	if (int(connNumber) == MaxConnectionID())
+	{
+		//TODO remove other connections when neccesary
+		connections.pop_back();
+	}
 }
 
 bool CNet::Connected() const
 {
-	for (unsigned i = 0; i < MAX_CONNECTIONS; ++i)
+	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
 	{
-		if (connections[i] && (connections[i]->GetDataRecieved() > 0))
+		if ((*i) && (*i)->GetDataRecieved() > 0)
 		{
 			return true;
 		}
@@ -67,42 +76,61 @@ bool CNet::Connected() const
 	return false;
 }
 
+int CNet::MaxConnectionID() const
+{
+	return connections.size()-1;
+}
+
 bool CNet::IsActiveConnection(const unsigned number) const
 {
+	if (int(number) > MaxConnectionID())
+		throw network_error("Wrong connection ID in CNet::IsActiveConnection()");
+	
 	return connections[number];
 }
 
 int CNet::GetData(unsigned char *buf, const unsigned conNum)
 {
-	if (connections[conNum])
+	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
 	{
-		return connections[conNum]->GetData(buf);
+		///TODO make the engine take RawPackets to avoid the memcpy'ing
+		RawPacket* data = connections[conNum]->GetData();
+		if (data)
+		{
+			int length = data->length;
+			memcpy(buf, data->data, length);
+			delete data;
+			return length;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 	else
 	{
-		return -1;
+		throw network_error(str( boost::format("Wrong connection ID in CNet::GetData(): %1%") %conNum ));
 	}
 }
 
 void CNet::RegisterMessage(unsigned char id, int length)
 {
-	proto->AddType(id, length);
+	ProtocolDef::instance()->AddType(id, length);
 }
 
-unsigned CNet::SetMTU(unsigned mtu)
+void CNet::SetMTU(unsigned mtu)
 {
-	proto->UDP_MTU = mtu;
-	return mtu;
+	ProtocolDef::instance()->UDP_MTU = mtu;
 }
 
 void CNet::InitServer(unsigned portnum)
 {
-	udplistener.reset(new UDPListener(portnum, this));
+	udplistener.reset(new UDPListener(portnum));
 }
 
 unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
-	udplistener.reset(new UDPListener(sourceport, this));
+	udplistener.reset(new UDPListener(sourceport));
 	boost::shared_ptr<UDPConnection> incoming(udplistener->SpawnConnection(std::string(server), portnum));
 
 	return InitNewConn(incoming, playerNum);
@@ -115,26 +143,33 @@ unsigned CNet::InitLocalClient(const unsigned wantedNumber)
 	return InitNewConn(conn, wantedNumber);
 }
 
-unsigned CNet::InitNewConn(boost::shared_ptr<CConnection> newClient, const unsigned wantedNumber)
+unsigned CNet::InitNewConn(const connPtr& newClient, const unsigned wantedNumber)
 {
-	unsigned freeConn = 0;
+	unsigned freeConn = wantedNumber;
 	
-	if(wantedNumber>=MAX_CONNECTIONS){
-	}
-	else if(connections[wantedNumber]){
-	}
-	else
+	if(int(wantedNumber) <= MaxConnectionID() && connections[wantedNumber])
 	{
-		freeConn = wantedNumber;
-	}	
+		// ID is already in use
+		freeConn = 0;
+	}
 
-	if (freeConn == 0)
-		for(freeConn=0;freeConn<MAX_CONNECTIONS;++freeConn){
+	if (freeConn == 0) // look for first free ID
+	{
+		for(freeConn = 0; int(freeConn) <= MaxConnectionID(); ++freeConn)
+		{
 			if(!connections[freeConn])
+			{
 				break;
+			}
 		}
-
-	connections[freeConn]= newClient;
+	}
+	
+	if (int(freeConn) > MaxConnectionID())
+	{
+		// expand the vector
+		connections.resize(freeConn+1);
+	}
+	connections[freeConn] = newClient;
 
 	return freeConn;
 }
@@ -145,13 +180,14 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 	{
 		unsigned msglength = 0;
 		unsigned char msgid = data[0];
-		if (GetProto()->HasFixedLength(msgid))
+		ProtocolDef* proto = ProtocolDef::instance();
+		if (proto->HasFixedLength(msgid))
 		{
-			msglength = GetProto()->GetLength(msgid);
+			msglength = proto->GetLength(msgid);
 		}
 		else
 		{
-			int length_t = GetProto()->GetLength(msgid);
+			int length_t = proto->GetLength(msgid);
 			if (length_t == -1)
 			{
 				msglength = (unsigned)data[1];
@@ -169,7 +205,8 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 	}
 #endif
 
-	for (unsigned a=0;a<MAX_CONNECTIONS;a++){	//improve: dont check every connection
+	for (unsigned a = 0; int(a) <= MaxConnectionID(); ++a)
+	{
 		if(connections[a]){
 			SendData(data,length, a);
 		}
@@ -178,7 +215,7 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 
 void CNet::SendData(const unsigned char* data,const unsigned length, const unsigned playerNum)
 {
-	if (connections[playerNum])
+	if (int(playerNum) <= MaxConnectionID() && connections[playerNum])
 	{
 		connections[playerNum]->SendData(data,length);
 	}
@@ -192,23 +229,24 @@ void CNet::Update()
 {
 	if (udplistener)
 	{
-		udplistener->Update();
+		udplistener->Update(waitingQueue);
 	}
 	
-	for (unsigned a=0;a<MAX_CONNECTIONS;a++)
+	for (connVec::iterator  i = connections.begin(); i < connections.end(); ++i)
 	{
-		if(connections[a] && connections[a]->CheckTimeout()){
-			//delete connections[a];
-			connections[a].reset();
+		if((*i) && (*i)->CheckTimeout())
+		{
+			i->reset();
 		}
 	}
 }
 
 void CNet::FlushNet()
 {
-	for (unsigned a=0;a<MAX_CONNECTIONS;a++){
-		if(connections[a]){
-			connections[a]->Flush(true);
+	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
+	{
+		if((*i)){
+			(*i)->Flush(true);
 		}
 	}
 }
@@ -222,11 +260,22 @@ unsigned CNet::GetData(unsigned char* buf)
 {
 	if (HasIncomingConnection())
 	{
-		return waitingQueue.front()->GetData(buf);
+		RawPacket* data = waitingQueue.front()->GetData();
+		if (data)
+		{
+			int length = data->length;
+			memcpy(buf, data->data, length);
+			delete data;
+			return length;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 	else
 	{
-		throw std::runtime_error("No Connection waiting (no data recieved)");
+		throw network_error("No Connection waiting (no data recieved)");
 	}
 }
 
@@ -254,11 +303,6 @@ void CNet::RejectIncomingConnection()
 	{
 		throw network_error("No connection found to reject");
 	}
-}
-
-const ProtocolDef* CNet::GetProto() const
-{
-	return proto;
 }
 
 } // namespace netcode

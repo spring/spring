@@ -74,7 +74,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 			wantedNumber = std::max(wantedNumber, play->GetFileHeader().numPlayers);
 
 		int hisNewNumber = ((netcode::CNet*)serverNet)->InitLocalClient(wantedNumber);
-		serverNet->Update();
 
 		serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
 		// send game data for demo recording
@@ -151,7 +150,7 @@ void CGameServer::SkipTo(int targetframe)
 	serverframenum = targetframe;
 }
 
-std::string CGameServer::GetPlayerNames(const std::vector<int>& indices)
+std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 {
 	std::string players;
 	std::vector<int>::const_iterator p = indices.begin();
@@ -353,8 +352,7 @@ void CGameServer::ServerReadNet()
 			}
 			if(gameSetup){
 				for(unsigned a=0;a<gs->activeTeams;a++){
-					serverNet->SendStartPos(a, 2, gs->Team(a)->startPos.x,
-								 gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+					serverNet->SendStartPos(a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 				}
 			}
 			serverNet->FlushNet();
@@ -366,7 +364,7 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	for(unsigned a=0; a<MAX_PLAYERS; a++)
+	for(unsigned a=0; a <= serverNet->MaxConnectionID(); a++)
 	{
 		if (serverNet->IsActiveConnection(a))
 		{

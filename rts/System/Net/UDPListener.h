@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <list>
+#include <queue>
 
 #include "UDPSocket.h"
 #include "UDPConnection.h"
@@ -11,7 +12,6 @@
 namespace netcode
 {
 
-class CNet;
 
 /**
 @brief Class for handling Connections on an UDPSocket
@@ -24,7 +24,7 @@ public:
 	/**
 	@brief Open a socket and make it ready for listening
 	*/
-	UDPListener(int port, CNet* const proto);
+	UDPListener(int port);
 	
 	/**
 	@brief close the socket and DELETE all connections
@@ -35,7 +35,7 @@ public:
 	@brief Run this from time to time
 	This does: recieve data from the socket and hand it to the associated UDPConnection, or open a new UDPConnection. It also Updates all of its connections
 	*/
-	void Update();
+	void Update(std::queue< boost::shared_ptr<CConnection> >& waitingQueue);
 	
 	/**
 	@brief Initiate a connection
@@ -65,8 +65,6 @@ private:
 	
 	/// all connections
 	std::list< boost::weak_ptr< UDPConnection> > conn;
-	
-	CNet* const net;
 };
 
 }

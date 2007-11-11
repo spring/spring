@@ -27,8 +27,8 @@ How Spring protocolheader looks like (size in bytes):
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr, const ProtocolDef* const proto);
-	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port, const ProtocolDef* const proto);
+	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr);
+	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port);
 	virtual ~UDPConnection();
 
 	/// use this if you want data to be sent
@@ -40,7 +40,7 @@ public:
 	@return bytes of data read, or -1 on error
 	@param buf buffer to hold the data
 	*/
-	virtual unsigned GetData(unsigned char *buf);
+	virtual RawPacket* GetData();
 
 	/**
 	@brief update internals
@@ -98,15 +98,10 @@ private:
 	/** Our socket.
 	*/
 	boost::shared_ptr<UDPSocket> const mySocket;
-
-	/** Configurable Maximum Transmission Unit. This is enforced by Flush:
-	it only gives this much bytes to each SendRawPacket() call.
-	This is exclusive the Spring header of 9 bytes. */
-	int mtu;
 	
 	RawPacket* fragmentBuffer;
-	const ProtocolDef* const proto;
 
+	// Traffic statistics and stuff //
 	/// number of calls to Flush() that needed to sent multiple packets because of mtu
 	int fragmentedFlushes;
 	

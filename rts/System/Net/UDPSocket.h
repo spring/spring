@@ -1,8 +1,8 @@
 #ifndef _UDPSOCKET
 #define _UDPSOCKET
 
-#include <stdexcept>
 #include <boost/noncopyable.hpp>
+#include <string>
 
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
@@ -18,24 +18,13 @@ namespace netcode {
 
 
 /**
-* network_error
-* thrown when network error occured
-*/
-class network_error : public std::runtime_error
-{
-public:
-	network_error(const std::string& msg) :
-	std::runtime_error(msg) {};
-};
-
-/**
 @brief Wrapper class over BSD-style UDP-sockets
 Provides easy to use access to network sockets: just construct this with a given portnum and you will have an valid, local bound UDP-Socket where you can sendto / recvfrom. If it gets deleted, the socket is closed automagically for you (this means you are not able to copy this class).
 @author Karl-Robert Ernst
 */
 class UDPSocket : public boost::noncopyable
 {
-	public:
+public:
 	/**
 	@brief perform initialisations
 	@param port The port to bind our socket

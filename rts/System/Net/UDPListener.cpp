@@ -3,12 +3,12 @@
 #include <boost/weak_ptr.hpp>
 #include <iostream>
 
-#include "Net.h"
+#include "ProtocolDef.h"
 
 namespace netcode
 {
 
-UDPListener::UDPListener(int port, CNet* const mynet) : net(mynet)
+UDPListener::UDPListener(int port)
 {
 	boost::shared_ptr<UDPSocket> temp(new UDPSocket(port));
 	mySocket = temp;
@@ -19,7 +19,7 @@ UDPListener::~UDPListener()
 {
 }
 
-void UDPListener::Update()
+void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQueue)
 {
 	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 	{
@@ -59,8 +59,8 @@ void UDPListener::Update()
 		if (acceptNewConnections)
 		{
 			// new client wants to connect
-			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr, net->GetProto()));
-			net->waitingQueue.push(incoming);
+			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr));
+			waitingQueue.push(incoming);
 			conn.push_back(incoming);
 			incoming->ProcessRawPacket(data);
 		}
@@ -81,7 +81,7 @@ void UDPListener::Update()
 
 boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& address, const unsigned port)
 {
-	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, address, port, net->GetProto()));
+	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, address, port));
 	conn.push_back(temp);
 	return temp;
 }

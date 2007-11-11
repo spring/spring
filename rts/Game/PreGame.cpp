@@ -30,6 +30,7 @@
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "mmgr.h"
+#include "DemoRecorder.h"
 
 
 CPreGame* pregame=0;
@@ -95,10 +96,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			if(net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayer)==-1){
-				handleerror(0,"Client couldn't connect","PreGame error",0);
-				exit(-1);
-			}
+			unsigned myPlayerNum = net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayer);
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapname);
@@ -320,20 +318,16 @@ bool CPreGame::Update()
 			logOutput.Print("Internal error in CPreGame");
 			return false;
 
-		case WAIT_ON_ADDRESS:
+		case WAIT_ON_ADDRESS: {
 			if (userWriting)
 				break;
 
 			if (saveAddress)
 				configHandler.SetString("address",userInput);
-			if(net->InitClient(userInput.c_str(),8452,0, gameSetup? gameSetup->myPlayer : 0)==-1){
-				logOutput.Print("Client couldn't connect");
-				return false;
-			}
-			{
-				state = WAIT_ON_SCRIPT;
-				// fall trough
-			}
+			net->InitClient(userInput.c_str(),8452,0, gameSetup? gameSetup->myPlayer : 0);
+			state = WAIT_ON_SCRIPT;
+			// fall trough
+		}
 
 		case WAIT_ON_SCRIPT:
 			if (showList || !server)
@@ -369,30 +363,6 @@ bool CPreGame::Update()
 		case ALL_READY: {
 			ENTER_MIXED;
 
-			// Map all required archives depending on selected mod(s)
-			vector<string> ars = archiveScanner->GetArchives(modArchive);
-			if (ars.empty())
-				logOutput.Print("Warning: mod archive \"%s\" is missing?\n", modArchive.c_str());
-			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-				if (!hpiHandler->AddArchive(*i, false))
-					logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
-
-			// Determine if the map is inside an archive, and possibly map needed archives
-			CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
-			if (!f->FileExists()) {
-				vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-				if (ars.empty())
-					logOutput.Print("Warning: map archive \"%s\" is missing?\n", mapName.c_str());
-				for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-					if (!hpiHandler->AddArchive(*i, false))
-						logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
-				}
-			}
-			delete f;
-
-			// always load springcontent.sdz
-			hpiHandler->AddArchive("base/springcontent.sdz", false);
-
 			const int teamID = gs->players[gu->myPlayerNum]->team;
 			const CTeam* team = gs->Team(teamID);
 			LoadStartPicture(team->side);
@@ -423,7 +393,7 @@ bool CPreGame::Update()
 			break;
 	}
 
-	if(state != WAIT_ON_ADDRESS){
+	if(state > WAIT_ON_ADDRESS){
 		net->Update();
 		UpdateClientNet();
 	}
@@ -512,7 +482,6 @@ void CPreGame::UpdateClientNet()
 			} break;
 
 			case NETMSG_QUIT: {
-				// net->connected = false;
 				globalQuit = true;
 				return;
 			}
@@ -536,10 +505,9 @@ void CPreGame::UpdateClientNet()
 				break;
 
 			default: {
-				char txt[200];
-				sprintf(txt, "Unknown net-msg in client (header: %d)", (int) inbuf[0]);
-				handleerror(0, txt, "Network error in CPreGame", 0);
-			} break;
+				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(inbuf[0]));
+				break;
+			}
 		}
 		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	}
@@ -580,9 +548,22 @@ void CPreGame::SelectMap(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
+	
+	// Determine if the map is inside an archive, and possibly map needed archives
+	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + s);
+	if (!f->FileExists()) {
+		vector<string> ars = archiveScanner->GetArchivesForMap(s);
+		if (ars.empty())
+			logOutput.Print("Warning: map archive \"%s\" is missing?\n", s.c_str());
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+			if (!hpiHandler->AddArchive(*i, false))
+				logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
+		}
+	}
+	delete f;
+	
 	if (net)
-		// inform CNetProtocol about our map (for demo writing)
-		net->SendMapName(archiveScanner->GetMapChecksum(pregame->mapName), pregame->mapName);
+		net->GetDemoRecorder()->SetName(s);
 }
 
 /** Create a CglList for selecting the map. */
@@ -626,6 +607,17 @@ void CPreGame::SelectMod(std::string s)
 	pregame->showList = 0;
 	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modArchive.c_str() << "\n";
 	pregame->modName = s;
+	
+	// Map all required archives depending on selected mod(s)
+	vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
+	if (ars.empty())
+		logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modArchive.c_str());
+	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+		if (!hpiHandler->AddArchive(*i, false))
+			logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
+	
+	// always load springcontent.sdz
+	hpiHandler->AddArchive("base/springcontent.sdz", false);
 }
 
 /** Create a CglList for selecting the mod. */

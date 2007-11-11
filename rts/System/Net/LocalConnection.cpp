@@ -1,11 +1,8 @@
 #include "LocalConnection.h"
 
 #include <string.h>
-#include <stdexcept>
-//#include <iostream>
 
-#include "ProtocolDef.h"
-#include "UDPSocket.h"
+#include "Exception.h"
 
 namespace netcode {
 
@@ -36,28 +33,21 @@ CLocalConnection::~CLocalConnection()
 
 void CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	//std::cout << "Sending " << length << " bytes to " << OtherInstance() << std::endl;
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 	
 	Data[OtherInstance()].push(new RawPacket(data, length));
 	dataSent += length;
 }
 
-unsigned CLocalConnection::GetData(unsigned char *buf)
+RawPacket* CLocalConnection::GetData()
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
 	
-	RawPacket* next = Data[instance].empty() ? 0 : Data[instance].front();
-	
-	if (next)
+	if (!Data[instance].empty())
 	{
-		unsigned ret = next->length;
-		//std::cout << "Recieving " << ret << " bytes from " << instance << std::endl;
-		dataRecv += ret;
-		memcpy(buf,next->data,ret);
+		RawPacket* next = Data[instance].front();
 		Data[instance].pop();
-		delete next;
-		return ret;
+		return next;
 	}
 	else
 		return 0;

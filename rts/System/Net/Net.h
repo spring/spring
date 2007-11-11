@@ -12,11 +12,8 @@ namespace netcode {
 
 class CConnection;
 class UDPListener;
-class CLocalConnection;
-class ProtocolDef;
 
 const unsigned NETWORK_BUFFER_SIZE = 40000;
-const unsigned MAX_CONNECTIONS = 32;
 
 // If we switch to a networking lib and start using a bitstream, we might
 // as well remove this and use int as size type (because it'd be compressed anyway).
@@ -70,7 +67,7 @@ public:
 	/**
 	@brief Set maximum message size
 	*/
-	unsigned SetMTU(unsigned mtu = 500);
+	void SetMTU(unsigned mtu = 500);
 	
 	/// Are we accepting new connections?
 	bool Listening();
@@ -87,6 +84,7 @@ public:
 	/// return true when local connected or already recieved data from remote
 	bool Connected() const;
 
+	int MaxConnectionID() const;
 	/**
 	@brief Check if it is a valid connenction
 	@return true when its valid, false when not
@@ -301,14 +299,15 @@ protected:
 	}
 	
 private:
+	typedef boost::shared_ptr<CConnection> connPtr;
+	typedef std::vector< connPtr > connVec;
+	
 	/**
 	@brief Insert your Connection here to become connected
 	@param newClient Connection to be inserted in the array
 	@param wantedNumber 
 	*/
-	unsigned InitNewConn(boost::shared_ptr<CConnection> newClient, const unsigned wantedNumber=0);
-
-	const ProtocolDef* GetProto() const;
+	unsigned InitNewConn(const connPtr& newClient, const unsigned wantedNumber=0);
 	
 	/**
 	@brief Holds the UDPListener for networking
@@ -318,11 +317,9 @@ private:
 	
 	/**
 	@brief All active connections
-	@todo make it variable sized without performance penalty
 	*/
-	boost::shared_ptr<CConnection> connections[MAX_CONNECTIONS];
-	std::queue< boost::shared_ptr<CConnection> > waitingQueue;
-	ProtocolDef* proto;
+	connVec connections;
+	std::queue< connPtr > waitingQueue;
 	
 	struct AssembleBuffer
 	{
@@ -355,8 +352,6 @@ private:
 		}
 		unsigned char * get() const { return message_buffer.get(); };
 	};
-	
-	friend class UDPListener;
 };
 
 } // namespace netcode

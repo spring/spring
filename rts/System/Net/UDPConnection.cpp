@@ -1,17 +1,18 @@
 #include "UDPConnection.h"
 
 #include <SDL_timer.h>
+#include <boost/version.hpp>
 
 #ifdef _WIN32
-#include "Platform/Win/win32.h"
+ #include "Platform/Win/win32.h"
 #else
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
+ #include <arpa/inet.h>
+ #include <sys/socket.h>
+ #include <netdb.h>
 #endif
 
 #include "ProtocolDef.h"
-#include <boost/version.hpp>
+#include "Exception.h"
 
 namespace netcode {
 
@@ -25,13 +26,13 @@ namespace netcode {
 
 const unsigned UDPConnection::hsize = 9;
 
-UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr, const ProtocolDef* const myproto) : mySocket(NetSocket), proto(myproto)
+UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
 {
 	addr=MyAddr;
 	Init();
 }
 
-UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port, const ProtocolDef* const myproto) : mySocket(NetSocket), proto(myproto)
+UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
 {
 	LPHOSTENT lpHostEntry;
 	
@@ -72,16 +73,13 @@ void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 	outgoingLength+=length;
 }
 
-unsigned UDPConnection::GetData(unsigned char *buf)
+RawPacket* UDPConnection::GetData()
 {
 	if (!msgQueue.empty())
 	{
 		RawPacket* msg = msgQueue.front();
-		unsigned length = msg->length;
-		memcpy(buf, msg->data, length);
-		delete msg;
 		msgQueue.pop();
-		return length;
+		return msg;
 	}
 	else
 	{
@@ -175,6 +173,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 		for (unsigned pos = 0; pos < bufLength;)
 		{
 			char msgid = buf[pos];
+			ProtocolDef* proto = ProtocolDef::instance();
 			if (proto->IsAllowed(msgid))
 			{
 				unsigned msglength = 0;
@@ -213,7 +212,6 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 			}
 		}
 	}
-
 }
 
 void UDPConnection::Flush(const bool forced)
@@ -221,6 +219,7 @@ void UDPConnection::Flush(const bool forced)
 	const float curTime = SDL_GetTicks();
 	if (forced || (outgoingLength>0 && (lastSendTime < (curTime-200+outgoingLength*10))))
 	{
+		ProtocolDef* proto = ProtocolDef::instance();
 		lastSendTime=SDL_GetTicks();
 
 		// Manually fragment packets to respect configured UDP_MTU.
@@ -244,8 +243,9 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout() const
 {
-	const float curTime = SDL_GetTicks();
-	if(lastReceiveTime < curTime-((dataRecv == 0) ? 45000 : 30000))
+	const unsigned curTime = SDL_GetTicks();
+	const unsigned timeout = ((dataRecv == 0) ? 45000 : 30000);
+	if((lastReceiveTime+timeout) < curTime)
 	{
 		return true;
 	}
@@ -296,8 +296,7 @@ void UDPConnection::AckPackets(const int nextAck)
 
 void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
 {
-	const unsigned hsize = 9;
-	unsigned char tempbuf[NETWORK_BUFFER_SIZE];
+	unsigned char* tempbuf = new unsigned char[hsize+length];
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
@@ -323,8 +322,6 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	dataSent += length;
 	sentOverhead += hsize;
 }
-
-
 
 
 } // namespace netcode

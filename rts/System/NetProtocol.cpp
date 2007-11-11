@@ -28,7 +28,7 @@ unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned 
 		record = new CDemoRecorder();
 	}
 	
-	logOutput.Print("Connected to %s:%i using number %i", server, portnum, wantedNumber);
+	logOutput.Print("Connected to %s:%i using number %i", server, portnum, myNum);
 
 	return myNum;
 }
