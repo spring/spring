@@ -1,12 +1,13 @@
 #ifndef _PROTO_DEF
 #define _PROTO_DEF
 
+
 namespace netcode {
 	
 class ProtocolDef
 {
 public:
-	ProtocolDef();
+	static ProtocolDef* instance();
 	
 	void AddType(const unsigned char id, const int MsgLength);
 	bool HasFixedLength(const unsigned char id) const;
@@ -17,12 +18,16 @@ public:
 
 	unsigned UDP_MTU;
 private:
+	ProtocolDef();
+	ProtocolDef( const ProtocolDef& );
+	
 	struct MsgType
 	{
 		int Length;
 	};
 	
 	MsgType msg[256];
+	static ProtocolDef* instance_ptr;
 };
 
 }

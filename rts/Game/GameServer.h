@@ -84,7 +84,7 @@ private:
 
 	void GenerateAndSendGameID();
 	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
-	std::string GetPlayerNames(const std::vector<int>& indices);
+	std::string GetPlayerNames(const std::vector<int>& indices) const;
 	
 	/////////////////// game status variables ///////////////////
 	

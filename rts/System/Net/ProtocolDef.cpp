@@ -1,9 +1,21 @@
 #include "ProtocolDef.h"
 
 #include <string.h>
-#include <stdexcept>
+
+#include "Exception.h"
 
 namespace netcode {
+
+ProtocolDef* ProtocolDef::instance_ptr = 0;
+
+ProtocolDef* ProtocolDef::instance()
+{
+	if (!instance_ptr)
+	{
+		instance_ptr = new ProtocolDef();
+	}
+	return instance_ptr;
+}
 
 ProtocolDef::ProtocolDef()
 {
@@ -23,7 +35,7 @@ bool ProtocolDef::HasFixedLength(const unsigned char id) const
 		return false;
 	else
 	{
-		throw std::runtime_error("Unbound Message Type");
+		throw network_error("Unbound Message Type");
 	}
 }
 

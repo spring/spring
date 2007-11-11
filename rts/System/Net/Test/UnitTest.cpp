@@ -23,6 +23,7 @@ bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 	buffer[0] = 0;
 	buffer[1] = 6;
 	localclient->SendData(buffer, 10);
+	localclient->FlushNet();
 	server->Update();
 	localclient->Update();
 	unsigned char recvbuffer[4096];
@@ -43,6 +44,7 @@ bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 	}
 	
 	delete localclient;
+	server->Kill(freeNumber);
 	
 	std::cout << "Test passed" << std::endl;
 	return true;
@@ -107,6 +109,7 @@ int main()
 	
 	// 1 means true, 0 means false
 	std::cout << "Server: Connected() = " << server->Connected() << std::endl;
+	std::cout << "Client: Connected() = " << client->Connected() << std::endl;
 	
 	std::cout << "Deleting server and client..." << std::endl;
 	delete server;

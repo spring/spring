@@ -9,6 +9,8 @@
 #include <sys/socket.h>
 #endif
 
+#include "Exception.h"
+
 namespace netcode
 {
 
@@ -31,7 +33,7 @@ UDPHardlink::UDPHardlink(const char* const server, const unsigned remoteport, co
 #ifdef _WIN32
 	unsigned long ul;
 	if((ul=inet_addr(server))!=INADDR_NONE){
-		remoteAddr.sin_addr.S_un.S_addr = 	ul;
+		remoteAddr.sin_addr.S_un.S_addr = ul;
 	} else
 #else
 		if(inet_aton(server,&(remoteAddr.sin_addr))==0)
