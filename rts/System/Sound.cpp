@@ -69,8 +69,6 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 		   we aren't deafened by the construction horde, or the metalmaker
 		   horde. */
 
-		std::set<unsigned int>::iterator played;
-		
 		/* If we've already played the sound this frame, don't play it again. */
 		if (repliesPlayed.find(id) != repliesPlayed.end()) {
 			return;
