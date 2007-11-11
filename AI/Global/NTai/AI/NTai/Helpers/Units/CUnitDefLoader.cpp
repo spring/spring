@@ -45,14 +45,20 @@ CUnitDefLoader::CUnitDefLoader(Global* GL){
 		// retrieve the units definition
 		const UnitDef* pud = UnitDefList[n];
 
-		// initialize a UnitTypeData object and add it into the main array
-		type_info[n] = shared_ptr<CUnitTypeData>(new CUnitTypeData());
-
+		// initialize a UnitTypeData object
+		CUnitTypeData* cutd = new CUnitTypeData();
+		
 		// now initialize the newly added object with the unit definition
+		cutd->Init(G,pud);
+		
+		// add it into the main array
+		type_info[n] = shared_ptr<CUnitTypeData>(cutd);
+
+		
 		type_info[n]->Init(G,pud);
 
 		// check if the unit definition is zero, if so skip
-		if(pud == 0) continue;
+		//if(pud == 0) continue;
 
 		// make sure the name is in the correct format and add it to the map container
 		string na = pud->name.c_str();
@@ -91,7 +97,8 @@ weak_ptr<CUnitTypeData> CUnitDefLoader::GetUnitTypeDataByUnitId(int uid){
 	//
 	const UnitDef* ud = G->cb->GetUnitDef(uid);
 	if(ud == 0){
-		return weak_ptr<CUnitTypeData>();
+		weak_ptr<CUnitTypeData> w;
+		return w;
 	}else{
 		return this->GetUnitTypeDataById(ud->id);
 	}
@@ -102,7 +109,7 @@ weak_ptr<CUnitTypeData> CUnitDefLoader::GetUnitTypeDataById(int id){
 	if((id <0)||(id > unum)){
 		return weak_ptr<CUnitTypeData>();
 	}else{
-		return this->type_info[id];
+		return weak_ptr<CUnitTypeData>(type_info[id]);
 	}
 }
 

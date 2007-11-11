@@ -19,17 +19,42 @@ CUnit::CUnit(Global* GL, int uid){
 	
 	this->uid = uid;
 	
+	
+	
+	weak_ptr<CUnitTypeData> wutd = G->UnitDefLoader->GetUnitTypeDataByUnitId(uid);
+	
+	if(wutd.px == 0){
+		//
+		G->L.eprint("ERROR IN CUNIT :: WUTD.PX == 0, this unit has been passed an invalid weak_ptr to its unit data type object. This unit will fail to load any behaviours or tasks.");
+		valid = false;
+	}
+
+	if(wutd.expired()){
+		//
+		G->L.eprint("ERROR IN CUNIT :: WUTD.EXPLIRED() == TRUE, this unit has been passed an expired weak_ptr to its unit data type object. This unit will fail to load any behaviours or tasks.");
+		valid = false;
+	}
+
+	utd = wutd.lock();
+
+	if(utd->GetUnitDef()==0){
+		//
+		G->L.eprint("ERROR IN CUNIT :: UTD->GetUnitDef() == 0, ntai failed to retrieve the units unitdef object, something has gone wrong somewhere.");
+		valid = false;
+	}
+
 	const UnitDef* ud = G->GetUnitDef(uid);
 	
 	if(ud == 0){
+		G->L.eprint("ERROR IN CUNIT :: UD == 0, ntai failed to retrieve the units unitdef object, something has gone wrong somewhere.");
 		valid = false;
-		return;
 	}
 	
-	utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id).lock();
-	
+	if(!valid){
+		return;
+	}
 	if(!utd->IsMobile()){
-		G->BuildingPlacer->Block(G->GetUnitPos(uid),utd);
+		G->BuildingPlacer->Block(G->GetUnitPos(uid),wutd);
 	}
 	
 	doingplan=false;
@@ -166,6 +191,7 @@ bool CUnit::LoadTaskList(){
 	}else{
 		sl = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\NORMAL\\")+utd->GetName());
 	}
+
 	tolowercase(sl);
 	trim(sl);
 	string u = utd->GetName();
@@ -177,17 +203,20 @@ bool CUnit::LoadTaskList(){
 			u = vl.at(min(randnum,max(int(vl.size()-1),1)));
 		}
 	}
+
 	string s = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\LISTS\\")+u);
 
 	if(s.empty() == true){
-		G->L.print(" error loading tasklist :: " + u + " :: buffer empty, most likely because of an empty list");
+		G->L.print(" error loading tasklist for unit :: \"" + u + "\" :: buffer empty, most likely because of an empty list");
 		nolist=true;
 		return false;
 	}
 
 	tolowercase(s);
 	trim(s);
+
 	vector<string> v;
+
 	CTokenizer<CIsComma>::Tokenize(v, s, CIsComma());
 	//v = bds::set_cont(v,s.c_str());
 

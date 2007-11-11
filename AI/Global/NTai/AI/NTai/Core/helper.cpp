@@ -134,6 +134,7 @@ Global::Global(IGlobalAICallback* callback){
     L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
     //}
     UnitDefLoader = new CUnitDefLoader(G);
+	L.print("Unitdef loader constructed");
 
     OrderRouter = new COrderRouter(G);
     L.print("Order Router constructed");
