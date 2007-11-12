@@ -207,7 +207,7 @@ bool COggStream::stream(ALuint buffer) {
 	alBufferData(buffer, format, pcm, size, vorbisInfo->rate);
 	check();
 
-    return true;
+	return true;
 }
 
 

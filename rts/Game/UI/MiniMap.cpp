@@ -1431,11 +1431,12 @@ void CMiniMap::DrawUnit(CUnit* unit)
 	// set the color
 	if (unit->commandAI->selected) {
 		glColor3f(1.0f, 1.0f, 1.0f);
-	} else {
+	}
+	else {
 		if (simpleColors) {
-			if(unit->team==gu->myTeam) {
+			if (unit->team==gu->myTeam) {
 				glColor3ubv(myColor);
-			} else if (gs->Ally(gu->myAllyTeam,unit->allyteam)){
+			} else if (gs->Ally(gu->myAllyTeam, unit->allyteam)) {
 				glColor3ubv(allyColor);
 			} else {
 				glColor3ubv(enemyColor);

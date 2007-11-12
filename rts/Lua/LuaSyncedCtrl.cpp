@@ -122,9 +122,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitCloak);
 	REGISTER_LUA_CFUNC(SetUnitStealth);
-	REGISTER_LUA_CFUNC(SetUnitNoDraw);
-	REGISTER_LUA_CFUNC(SetUnitNoSelect);
-	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
@@ -133,6 +130,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
+	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -1324,62 +1322,6 @@ int LuaSyncedCtrl::SetUnitStealth(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitNoDraw(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoSelect()");
-	}
-	unit->noDraw = lua_toboolean(L, 2);
-	return 0;
-}
-
-
-int LuaSyncedCtrl::SetUnitNoSelect(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoSelect()");
-	}
-	unit->noSelect = lua_toboolean(L, 2);
-
-	// deselect the unit if it's selected and shouldn't be
-	if (unit->noSelect) {
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
-		if (selUnits.find(unit) != selUnits.end()) {
-			selectedUnits.RemoveUnit(unit);
-		}
-		POP_CODE_MODE;
-	}
-	return 0;
-}
-
-
-int LuaSyncedCtrl::SetUnitNoMinimap(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitNoMinimap()");
-	}
-	unit->noMinimap = lua_toboolean(L, 2);
-	return 0;
-}
-
-
 int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1545,6 +1487,29 @@ int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 	}
 	if (lua_isboolean(L, 2)) {
 		unit->neutral = lua_toboolean(L, 2);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L);
+	if (args >= 4) {
+		const float3 pos((float)lua_tonumber(L, 2),
+		                 (float)lua_tonumber(L, 3),
+		                 (float)lua_tonumber(L, 4));
+		const bool dgun = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+		unit->AttackGround(pos, dgun);
+	}
+	else if (args >= 2) {
+		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
+		const bool dgun = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+		unit->AttackUnit(target, dgun);
 	}
 	return 0;
 }

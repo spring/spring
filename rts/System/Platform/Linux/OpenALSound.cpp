@@ -380,7 +380,7 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
-	bool success=ReadWAV (path.c_str(), buf, file.FileSize(), buffer);
+	const bool success = ReadWAV (path.c_str(), buf, file.FileSize(), buffer);
 	delete[] buf;
 
 	if (!success) {
