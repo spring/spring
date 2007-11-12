@@ -80,6 +80,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawSky);
 	REGISTER_LUA_CFUNC(SetDrawWater);
 	REGISTER_LUA_CFUNC(SetDrawGround);
+
+	REGISTER_LUA_CFUNC(SetUnitNoDraw);
+	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
+	REGISTER_LUA_CFUNC(SetUnitNoSelect);
             
 	return true;
 }
@@ -170,6 +174,17 @@ static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
 		return fullRead ? unit : NULL;
 	}
 	return (unit->allyteam == readAllyTeam) ? unit : NULL;
+}
+
+
+static inline CUnit* ParseCtrlUnit(lua_State* L,
+                                     const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+	if (unit == NULL) {
+		return NULL;
+	}
+	return (CanCtrlTeam(unit->team) ? unit : NULL);
 }
 
 
@@ -757,6 +772,73 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawGround()");
 	}
 	game->drawGround = !!lua_toboolean(L, 1);
+	return 0;
+}
+
+
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
+{
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitNoDraw()");
+	}
+	unit->noDraw = lua_toboolean(L, 2);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
+{
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitNoMinimap()");
+	}
+	unit->noMinimap = lua_toboolean(L, 2);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
+{
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitNoSelect()");
+	}
+	unit->noSelect = lua_toboolean(L, 2);
+
+	// deselect the unit if it's selected and shouldn't be
+	if (unit->noSelect) {
+		PUSH_CODE_MODE;
+		ENTER_MIXED;
+		const CUnitSet& selUnits = selectedUnits.selectedUnits;
+		if (selUnits.find(unit) != selUnits.end()) {
+			selectedUnits.RemoveUnit(unit);
+		}
+		POP_CODE_MODE;
+	}
 	return 0;
 }
 

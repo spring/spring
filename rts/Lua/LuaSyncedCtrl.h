@@ -63,9 +63,6 @@ class LuaSyncedCtrl {
 		static int SetUnitExperience(lua_State* L);
 		static int SetUnitCloak(lua_State* L);
 		static int SetUnitStealth(lua_State* L);
-		static int SetUnitNoDraw(lua_State* L);
-		static int SetUnitNoSelect(lua_State* L);
-		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitAlwaysVisible(lua_State* L);
 		static int SetUnitMetalExtraction(lua_State* L);
 		static int SetUnitBuildSpeed(lua_State* L);
@@ -74,6 +71,7 @@ class LuaSyncedCtrl {
 		static int SetUnitTravel(lua_State* L);
 		static int SetUnitLineage(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
+		static int SetUnitTarget(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);

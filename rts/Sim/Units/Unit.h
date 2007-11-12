@@ -335,6 +335,7 @@ public:
 
 	float currentFuel;
 
+	// 4 unsynced vars
 	bool luaDraw;
 	bool noDraw;
 	bool noSelect;

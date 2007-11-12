@@ -73,36 +73,38 @@
 #define VETERAN_LEVEL       32
 #define ON_ROAD             34
 
-#define MAX_ID                   70
-#define MY_ID                    71
-#define UNIT_TEAM                72
-#define UNIT_BUILD_PERCENT_LEFT  73
-#define UNIT_ALLIED              74
-#define MAX_SPEED                75
-#define CLOAKED                  76
-#define WANT_CLOAK               77
-#define GROUND_WATER_HEIGHT      78 // get land height, negative if below water
-#define UPRIGHT                  79 // set or get
-#define	POW                      80 // get
-#define PRINT                    81 // get, so multiple args can be passed
-#define HEADING                  82 // get
-#define TARGET_ID                83 // get
-#define LAST_ATTACKER_ID         84 // get
-#define LOS_RADIUS               85 // set or get
-#define AIR_LOS_RADIUS           86 // set or get
-#define RADAR_RADIUS             87 // set or get
-#define JAMMER_RADIUS            88 // set or get
-#define SONAR_RADIUS             89 // set or get
-#define SONAR_JAM_RADIUS         90 // set or get
-#define SEISMIC_RADIUS           91 // set or get
-#define DO_SEISMIC_PING          92 // get
-#define CURRENT_FUEL             93 // set or get
-#define TRANSPORT_ID             94 // get
-#define SHIELD_POWER             95 // set or get
-#define STEALTH                  96 // set or get
-#define CRASHING                 97 // set or get, returns whether aircraft isCrashing state
-#define COB_ID                  100 // get
-#define ALPHA_THRESHOLD         103 // set or get
+#define MAX_ID                    70
+#define MY_ID                     71
+#define UNIT_TEAM                 72
+#define UNIT_BUILD_PERCENT_LEFT   73
+#define UNIT_ALLIED               74
+#define MAX_SPEED                 75
+#define CLOAKED                   76
+#define WANT_CLOAK                77
+#define GROUND_WATER_HEIGHT       78 // get land height, negative if below water
+#define UPRIGHT                   79 // set or get
+#define	POW                       80 // get
+#define PRINT                     81 // get, so multiple args can be passed
+#define HEADING                   82 // get
+#define TARGET_ID                 83 // get
+#define LAST_ATTACKER_ID          84 // get
+#define LOS_RADIUS                85 // set or get
+#define AIR_LOS_RADIUS            86 // set or get
+#define RADAR_RADIUS              87 // set or get
+#define JAMMER_RADIUS             88 // set or get
+#define SONAR_RADIUS              89 // set or get
+#define SONAR_JAM_RADIUS          90 // set or get
+#define SEISMIC_RADIUS            91 // set or get
+#define DO_SEISMIC_PING           92 // get
+#define CURRENT_FUEL              93 // set or get
+#define TRANSPORT_ID              94 // get
+#define SHIELD_POWER              95 // set or get
+#define STEALTH                   96 // set or get
+#define CRASHING                  97 // set or get, returns whether aircraft isCrashing state
+#define COB_ID                   100 // get
+#define ALPHA_THRESHOLD          103 // set or get
+#define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
+#define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
 
 // NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
@@ -1147,6 +1149,36 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
 			return (u == NULL) ? -1 : u->unitDef->cobID;
 		}
+	}
+	case SET_WEAPON_UNIT_TARGET: {
+		const int weaponID = p1 - 1;
+		const int targetID = p2;
+		const bool userTarget = !!p3;
+		printf("SET_WEAPON_UNIT_TARGET: %i %i %i\n", weaponID, targetID, p3);		 // FIXME
+		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
+			return 0;
+		}
+		CWeapon* weapon = unit->weapons[weaponID];
+		if (weapon == NULL) { return 0; }
+		if ((targetID < 0) || (targetID >= MAX_UNITS)) { return 0; } 
+		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
+		printf("SET_WEAPON_UNIT_TARGET2\n");		 // FIXME
+		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
+	}
+	case SET_WEAPON_GROUND_TARGET: {
+		const int weaponID = p1 - 1;
+		const float3 pos = float3(float(UNPACKX(p2)),
+		                          float(p3) / float(COBSCALE),
+		                          float(UNPACKZ(p2)));
+		const bool userTarget = !!p4;
+		printf("SET_WEAPON_GROUND_TARGET: %i %f %f %f\n", weaponID, pos.x, pos.y, pos.z);//FIXME
+		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
+			return 0;
+		}
+		CWeapon* weapon = unit->weapons[weaponID];
+		if (weapon == NULL) { return 0; }
+		 
+		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
 	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {

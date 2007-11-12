@@ -464,9 +464,10 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		const int tz1 = (int)max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
 		const int tx2 = min(gs->mapx, tx1 + bi.GetXSize());
 		const int tz2 = min(gs->mapy, tz1 + bi.GetYSize());
+		float* heightmap = readmap->GetHeightmap();
 		for(int z = tz1; z <= tz2; z++){
 			for(int x = tx1; x <= tx2; x++){
-				readmap->GetHeightmap()[z * (gs->mapx + 1) + x] = bi.pos.y;
+				heightmap[z * (gs->mapx + 1) + x] = bi.pos.y;
 			}
 		}
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
