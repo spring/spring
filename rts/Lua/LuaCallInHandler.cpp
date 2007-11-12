@@ -32,6 +32,7 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["UnitIdle"]            = &listUnitIdle;
 	callInMap["UnitCmdDone"]         = &listUnitCmdDone;
 	callInMap["UnitDamaged"]         = &listUnitDamaged;
+	callInMap["UnitExperience"]      = &listUnitExperience;
 	callInMap["UnitSeismicPing"]     = &listUnitSeismicPing;
 	callInMap["UnitEnteredRadar"]    = &listUnitEnteredRadar;
 	callInMap["UnitEnteredLos"]      = &listUnitEnteredLos;
@@ -94,6 +95,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(UnitIdle);
 	ADDHANDLE(UnitCmdDone);
 	ADDHANDLE(UnitDamaged);
+	ADDHANDLE(UnitExperience);
 
 	ADDHANDLE(UnitSeismicPing);
 	ADDHANDLE(UnitEnteredRadar);
@@ -147,6 +149,7 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listUnitIdle, lh);
 	ListRemove(listUnitCmdDone, lh);
 	ListRemove(listUnitDamaged, lh);
+	ListRemove(listUnitExperience, lh);
 
 	ListRemove(listUnitSeismicPing, lh);
 	ListRemove(listUnitEnteredRadar, lh);

@@ -57,6 +57,7 @@ class CLuaCallInHandler
 		void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		                 float damage, int weaponID, bool paralyzer);
+		void UnitExperience(const CUnit* unit, float oldExperience);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);
@@ -118,6 +119,7 @@ class CLuaCallInHandler
 		CallInList listUnitIdle;
 		CallInList listUnitCmdDone;
 		CallInList listUnitDamaged;
+		CallInList listUnitExperience;
 
 		CallInList listUnitSeismicPing;
 		CallInList listUnitEnteredRadar;
@@ -282,6 +284,20 @@ inline void CLuaCallInHandler::UnitDamaged(const CUnit* unit,
 		CLuaHandle* lh = listUnitDamaged[i];
 		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == unitAllyTeam)) {
 			lh->UnitDamaged(unit, attacker, damage, weaponID, paralyzer);
+		}
+	}
+}
+
+
+inline void CLuaCallInHandler::UnitExperience(const CUnit* unit,
+                                              float oldExperience)
+{
+	const int unitAllyTeam = unit->allyteam;
+	const int count = listUnitExperience.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listUnitExperience[i];
+		if (lh->GetFullRead() || (lh->GetReadAllyTeam() == unitAllyTeam)) {
+			lh->UnitExperience(unit, oldExperience);
 		}
 	}
 }

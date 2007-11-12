@@ -166,22 +166,22 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 
 	//Map common function names to indicies
-	scriptIndex.resize(COBFN_Last + COB_MaxWeapons * 7);
-	scriptIndex[COBFN_Create] = getFunctionId("Create");
-	scriptIndex[COBFN_StartMoving] = getFunctionId("StartMoving");
-	scriptIndex[COBFN_StopMoving] = getFunctionId("StopMoving");
-	scriptIndex[COBFN_Activate] = getFunctionId("Activate");
-	scriptIndex[COBFN_Killed] = getFunctionId("Killed");
-	scriptIndex[COBFN_Deactivate] = getFunctionId("Deactivate");
-	scriptIndex[COBFN_SetDirection] = getFunctionId("SetDirection");
-	scriptIndex[COBFN_SetSpeed] = getFunctionId("SetSpeed");
-	scriptIndex[COBFN_RockUnit] = getFunctionId("RockUnit");
-	scriptIndex[COBFN_HitByWeapon] = getFunctionId("HitByWeapon");
-	scriptIndex[COBFN_MoveRate0] = getFunctionId("MoveRate0");
-	scriptIndex[COBFN_MoveRate1] = getFunctionId("MoveRate1");
-	scriptIndex[COBFN_MoveRate2] = getFunctionId("MoveRate2");
-	scriptIndex[COBFN_MoveRate3] = getFunctionId("MoveRate3");
-	scriptIndex[COBFN_SetSFXOccupy] = getFunctionId("setSFXoccupy");
+	scriptIndex.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
+	scriptIndex[COBFN_Create]        = getFunctionId("Create");
+	scriptIndex[COBFN_StartMoving]   = getFunctionId("StartMoving");
+	scriptIndex[COBFN_StopMoving]    = getFunctionId("StopMoving");
+	scriptIndex[COBFN_Activate]      = getFunctionId("Activate");
+	scriptIndex[COBFN_Killed]        = getFunctionId("Killed");
+	scriptIndex[COBFN_Deactivate]    = getFunctionId("Deactivate");
+	scriptIndex[COBFN_SetDirection]  = getFunctionId("SetDirection");
+	scriptIndex[COBFN_SetSpeed]      = getFunctionId("SetSpeed");
+	scriptIndex[COBFN_RockUnit]      = getFunctionId("RockUnit");
+	scriptIndex[COBFN_HitByWeapon]   = getFunctionId("HitByWeapon");
+	scriptIndex[COBFN_MoveRate0]     = getFunctionId("MoveRate0");
+	scriptIndex[COBFN_MoveRate1]     = getFunctionId("MoveRate1");
+	scriptIndex[COBFN_MoveRate2]     = getFunctionId("MoveRate2");
+	scriptIndex[COBFN_MoveRate3]     = getFunctionId("MoveRate3");
+	scriptIndex[COBFN_SetSFXOccupy]  = getFunctionId("setSFXoccupy");
 	scriptIndex[COBFN_HitByWeaponId] = getFunctionId("HitByWeaponId");
 
 
@@ -192,21 +192,22 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		string weapon(buf);
 		sprintf(buf, "%d", i + 1);
 		string weap(buf);
-		scriptIndex[COBFN_QueryPrimary + i] = getFunctionId("Query" + weapon);
-		scriptIndex[COBFN_AimPrimary + i] = getFunctionId("Aim" + weapon);
+		scriptIndex[COBFN_QueryPrimary   + i] = getFunctionId("Query"   + weapon);
+		scriptIndex[COBFN_AimPrimary     + i] = getFunctionId("Aim"     + weapon);
 		scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
-		scriptIndex[COBFN_FirePrimary + i] = getFunctionId("Fire" + weapon);
-		scriptIndex[COBFN_EndBurst + i] = getFunctionId("EndBurst" + weap);
-		scriptIndex[COBFN_Shot + i] = getFunctionId("Shot" + weap);
-		scriptIndex[COBFN_BlockShot + i] = getFunctionId("BlockShot" + weap);
+		scriptIndex[COBFN_FirePrimary    + i] = getFunctionId("Fire"    + weapon);
+		scriptIndex[COBFN_EndBurst       + i] = getFunctionId("EndBurst"  + weap);
+		scriptIndex[COBFN_Shot           + i] = getFunctionId("Shot"      + weap);
+		scriptIndex[COBFN_BlockShot      + i] = getFunctionId("BlockShot" + weap);
 
 		// If new-naming functions are not found, we need to support the old naming scheme
-		if (i > 2)
+		if (i > 2) {
 			continue;
+		}
 		switch (i) {
-			case 0: weapon = "Primary"; break;
-			case 1: weapon = "Secondary"; break;
-			case 2: weapon = "Tertiary"; break;
+			case 0: { weapon = "Primary";   break; }
+			case 1: { weapon = "Secondary"; break; }
+			case 2: { weapon = "Tertiary";  break; }
 		}
 
 		if (scriptIndex[COBFN_QueryPrimary + i] == -1)

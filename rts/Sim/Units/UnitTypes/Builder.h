@@ -16,6 +16,21 @@ class CBuilder : public CUnit
 {
 private:
 	void UnitInit (const UnitDef* def, int team, const float3& position);
+	static bool use2D;
+
+public:
+	static inline float f3Dist(const float3& a, const float3& b) {
+		return use2D ? a.distance2D(b) : a.distance(b);
+	}
+	static inline float f3Len(const float3& a) {
+		return use2D ? a.Length2D() : a.Length();
+	}
+	static inline float f3SqLen(const float3& a) {
+		return use2D ? a.SqLength2D() : a.SqLength();
+	}
+	static void Use2DDistances(bool value) { use2D = value; }
+	static inline bool GetUse2D(bool value) { return use2D; }
+	
 public:
 	CR_DECLARE(CBuilder);
 
@@ -35,6 +50,12 @@ public:
 	void StartRestore(float3 centerPos, float radius);
 	void SetBuildStanceToward(float3 pos);
 
+	void HelpTerraform(CBuilder* unit);
+	void CreateNanoParticle(float3 goal, float radius, bool inverse);
+	void SetResurrectTarget(CFeature* feature);
+	void SetCaptureTarget(CUnit* unit);
+
+public:
 	float buildDistance;
 	float buildSpeed;
 	float repairSpeed;
@@ -63,10 +84,6 @@ public:
 
 	string nextBuildType;
 	float3 nextBuildPos;
-	void HelpTerraform(CBuilder* unit);
-	void CreateNanoParticle(float3 goal, float radius, bool inverse);
-	void SetResurrectTarget(CFeature* feature);
-	void SetCaptureTarget(CUnit* unit);
 };
 
 #endif // __BUILDER_H__
