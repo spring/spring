@@ -181,11 +181,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
 
-	// FIXME move to CGameServer
-	//CR_MEMBER(maxUserSpeed),
-	//CR_MEMBER(minUserSpeed),
-	//CR_MEMBER(gamePausable),
-
 	CR_MEMBER(soundEnabled),
 	CR_MEMBER(gameSoundVolume),
 
