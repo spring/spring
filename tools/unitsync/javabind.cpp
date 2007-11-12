@@ -390,7 +390,7 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetMapChecksum
 		(JNIEnv *env, jclass myobject, jint index){
 			char* c = new char[15];
-			unsigned int i = GetMapChecksum(index);
+			int i = GetMapChecksum(index);
 			sprintf(c,"%u",i);
 			return env->NewStringUTF((const char*)c);
 		}
@@ -405,7 +405,7 @@ extern "C" {
 		(JNIEnv *env, jclass myobject, jstring name){
 			char* c = new char[15];
 			const char* cname = env->GetStringUTFChars(name,0);
-			unsigned int i = GetMapChecksumFromName(cname);
+			int i = GetMapChecksumFromName(cname);
 			sprintf(c,"%u",i);
 			return env->NewStringUTF((const char*)c);
 		}
@@ -520,7 +520,7 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetPrimaryModChecksum
 		(JNIEnv *env, jclass myobject, jint index){
 			char* c = new char[15];
-			unsigned int i = GetPrimaryModChecksum(index);
+			int i = GetPrimaryModChecksum(index);
 			sprintf(c,"%i",i);
 			return env->NewStringUTF((const char*)c);
 		}
@@ -534,7 +534,7 @@ extern "C" {
 		(JNIEnv *env, jclass myobject, jstring name){
 			char* c = new char[15];
 			const char* cname = env->GetStringUTFChars(name,0);
-			unsigned int i = GetPrimaryModChecksumFromName(cname);
+			int i = GetPrimaryModChecksumFromName(cname);
 			sprintf(c,"%u",i);
 			return env->NewStringUTF((const char*)c);
 		}
