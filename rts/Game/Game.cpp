@@ -3917,6 +3917,10 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				                numRequestedUnits, unitName.c_str(), team);
 			}
 			else {
+				if (teamArg < 0) {
+					team = -1; // default to world features
+				}
+
 				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
 				if (featureDef) {
 					int xsize = featureDef->xsize;
