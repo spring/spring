@@ -76,6 +76,12 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+float CUnit::expGrade = 0.0f;
+float CUnit::expPowerScale  = 1.0f;
+float CUnit::expHealthScale = 0.7f;
+float CUnit::expReloadScale = 0.4f;
+                
+
 CUnit::CUnit ()
 :	unitDef(0),
 	team(0),
@@ -85,7 +91,6 @@ CUnit::CUnit ()
 	travelPeriod(0.0f),
 	power(100),
 	experience(0),
-	logExperience(0),
 	limExperience(0),
 	neutral(false),
 	armorType(0),
@@ -275,6 +280,7 @@ CUnit::~CUnit()
 	delete localmodel;
 }
 
+
 void CUnit::SetMetalStorage(float newStorage)
 {
 	gs->Team(team)->metalStorage-=metalStorage;
@@ -282,12 +288,14 @@ void CUnit::SetMetalStorage(float newStorage)
 	gs->Team(team)->metalStorage+=metalStorage;
 }
 
+
 void CUnit::SetEnergyStorage(float newStorage)
 {
 	gs->Team(team)->energyStorage-=energyStorage;
 	energyStorage = newStorage;
 	gs->Team(team)->energyStorage+=energyStorage;
 }
+
 
 void CUnit::UnitInit (const UnitDef* def, int Team, const float3& position)
 {
@@ -832,10 +840,10 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 	recentDamage+=damage;
 
-	if(attacker!=0 && !gs->Ally(allyteam,attacker->allyteam)){
-//		logOutput.Print("%s has %f/%f h attacker %s do %f d",tooltip.c_str(),health,maxHealth,attacker->tooltip.c_str(),damage);
-		attacker->experience+=0.1f*power/attacker->power*(damage+min(0.f,health))/maxHealth*experienceMod;
-		attacker->ExperienceChange();
+	if (attacker != 0 && !gs->Ally(allyteam, attacker->allyteam)) {
+		attacker->AddExperience(0.1f * experienceMod
+		                             * (power / attacker->power)
+		                             * (damage + min(0.0f, health)) / maxHealth);
 		ENTER_UNSYNCED;
 		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) ||
 		     (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))
@@ -867,7 +875,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	if(health<=0){
 		KillUnit(false,false,attacker);
 		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
-			attacker->experience+=0.1f*power/attacker->power;
+			attacker->AddExperience(0.1f * (power / attacker->power));
 			gs->Team(attacker->team)->currentStats.unitsKilled++;
 		}
 	}
@@ -1264,18 +1272,35 @@ void CUnit::DrawStats()
 /******************************************************************************/
 /******************************************************************************/
 
-void CUnit::ExperienceChange()
+void CUnit::AddExperience(float exp)
 {
-	logExperience=log(experience+1);
-	limExperience=1-(1/(experience+1));
+	const float oldExp = experience;
+	experience += exp;
 
-	power=unitDef->power*(1+limExperience);
-	reloadSpeed=(1+limExperience*0.4f);
+	const float oldLimExp = limExperience;
+	limExperience = experience / (experience + 1.0f);
 
-	float oldMaxHealth=maxHealth;
-	maxHealth=unitDef->health*(1+limExperience*0.7f);
-	health+=(maxHealth-oldMaxHealth)*(health/oldMaxHealth);
+	if (expGrade != 0.0f) {
+		const int oldGrade = (int)(oldLimExp     / expGrade);
+		const int newGrade = (int)(limExperience / expGrade);
+		if (oldGrade != newGrade) {
+			luaCallIns.UnitExperience(this, oldExp);
+		}
+	}
+
+	if (expPowerScale > 0.0f) {
+		power = unitDef->power * (1.0f + (limExperience * expPowerScale));
+	}
+	if (expReloadScale > 0.0f) { 
+		reloadSpeed = (1.0f + (limExperience * expReloadScale));
+	}	
+	if (expHealthScale > 0.0f) { 
+		const float oldMaxHealth = maxHealth;
+		maxHealth = unitDef->health * (1.0f + (limExperience * expHealthScale));
+		health = health * (maxHealth / oldMaxHealth);
+	}
 }
+
 
 void CUnit::DoSeismicPing(float pingSize)
 {
@@ -1980,8 +2005,12 @@ void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 	file->lsFloat(buildProgress);
 	file->lsFloat(health);
 	file->lsFloat(experience);
-	if(loading)
-		ExperienceChange();
+	if (loading) {
+		const float exp = experience;
+		experience = 0.0f;
+		limExperience = 0.0f;
+		AddExperience(exp);
+	}
 	file->lsInt(moveState);
 	file->lsInt(fireState);
 	file->lsBool(isCloaked);
@@ -2197,7 +2226,6 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(captureProgress),
 				CR_MEMBER(experience),
 				CR_MEMBER(limExperience),
-				CR_MEMBER(logExperience),
 				CR_MEMBER(neutral),
 				CR_MEMBER(soloBuilder),
 				CR_MEMBER(beingBuilt),

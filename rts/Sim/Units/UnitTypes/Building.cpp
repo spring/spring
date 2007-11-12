@@ -34,50 +34,73 @@ CBuilding::CBuilding()
 	immobile=true;
 }
 
+// FIXME -- adjust decals for decoys? gets weird?
 CBuilding::~CBuilding()
 {
-	CUnitDrawer::GhostBuilding* mygb=0;
-	if(!gameSetup || gameSetup->ghostedBuildings) {
-		if(!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView){
-			CUnitDrawer::GhostBuilding* gb=SAFE_NEW CUnitDrawer::GhostBuilding;
-			gb->pos=pos;
-			gb->model=model;
-			gb->decal=buildingDecal;
-			gb->facing=buildFacing;
-			gb->team=team;
-			if(model->textureType) //S3O
-				unitDrawer->ghostBuildingsS3O.push_back(gb);
-			else // 3DO
-				unitDrawer->ghostBuildings.push_back(gb);
-			mygb=gb;
+	CUnitDrawer::GhostBuilding* gb = NULL;
+
+	if (!gameSetup || gameSetup->ghostedBuildings) {
+		if (!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
+		     (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
+		    !gu->spectatingFullView) {
+
+			S3DOModel* gbModel = model;
+
+			const UnitDef* decoyDef = unitDef->decoyDef;
+			if (decoyDef != NULL) {
+				if (decoyDef->type != "Building") {
+					gbModel = NULL; // not ghosted
+				} else {
+					gbModel = decoyDef->LoadModel(team);
+				}
+			}
+
+			if (gbModel) {			
+				gb = SAFE_NEW CUnitDrawer::GhostBuilding;
+				gb->pos    = pos;
+				gb->model  = gbModel;
+				gb->decal  = buildingDecal;
+				gb->facing = buildFacing;
+				gb->team   = team;
+				if (gbModel->textureType) {
+					unitDrawer->ghostBuildingsS3O.push_back(gb); // S3O
+				} else {
+					unitDrawer->ghostBuildings.push_back(gb);    // 3DO
+				}
+			}
 		}
 	}
 
-	if(buildingDecal)
-		groundDecals->RemoveBuilding(this,mygb);
+	if (buildingDecal) {
+		groundDecals->RemoveBuilding(this, gb);
+	}
 }
+
 
 void CBuilding::Init(const CUnit* builder)
 {
-	mass=100000;
+	mass = 100000.0f;
 	physicalState = OnGround;
 
-	if(unitDef->useBuildingGroundDecal){
+	if (unitDef->useBuildingGroundDecal) {
 		groundDecals->AddBuilding(this);
 	}
 	CUnit::Init(builder);
 }
 
+
 void CBuilding::PostLoad()
 {
-	if(unitDef->useBuildingGroundDecal){
+	if (unitDef->useBuildingGroundDecal) {
 		groundDecals->AddBuilding(this);
 	}
 }
 
+
 void CBuilding::UnitInit (const UnitDef* def, int team, const float3& position)
 {
-	if(def->levelGround)
-		blockHeightChanges=true;
-	CUnit::UnitInit(def,team,position);
+	if (def->levelGround) {
+		blockHeightChanges = true;
+	}
+	CUnit::UnitInit(def, team, position);
 }

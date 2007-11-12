@@ -116,7 +116,8 @@ public:
 	void SetMetalStorage(float newStorage);
 	void SetEnergyStorage(float newStorage);
 
-	void ExperienceChange();
+	void AddExperience(float exp);
+
 	void DoSeismicPing(float pingSize);
 
 	void CalculateTerrainType();
@@ -161,7 +162,6 @@ public:
 	float captureProgress;	//how close this unit is to being captured
 	float experience;
 	float limExperience;		//goes ->1 as experience go -> infinite
-	float logExperience;		//logharitm of experience
 
 	bool neutral;             // neutral allegiance, will not be automatically
 	                          // fired upon unless the fireState is set to >= 3
@@ -377,8 +377,23 @@ public:
 
 public:
 	static void SetLODFactor(float);
+
+	static void  SetExpGrade(float value) { expGrade = value; }
+	static float GetExpGrade()     { return expGrade; }
+	static void  SetExpPowerScale(bool value) { expPowerScale = value; }
+	static float GetExpPowerScale()    { return expPowerScale; }
+	static void  SetExpHealthScale(float value) { expHealthScale = value; }
+	static float GetExpHealthScale()     { return expHealthScale; }
+	static void  SetExpReloadScale(float value) { expReloadScale = value; }
+	static float GetExpReloadScale()     { return expReloadScale; }
+
 private:
 	static float lodFactor; // unsynced
+
+	static float expGrade;
+	static float expPowerScale;
+	static float expHealthScale;
+	static float expReloadScale;
 };
 
 #endif /* UNIT_H */

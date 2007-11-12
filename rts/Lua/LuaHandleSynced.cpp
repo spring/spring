@@ -863,7 +863,7 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 		}
 		retCount = lua_gettop(L) - top;
 
-		lua_settop(srcState, 0); // FIXME
+		lua_settop(srcState, 0); // FIXME -- lua_checkstack() ?
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}
@@ -918,7 +918,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		}
 		retCount = lua_gettop(L) - top;
 
-		lua_settop(srcState, 0); // FIXME ?
+		lua_settop(srcState, 0); // FIXME ? -- lua_checkstack() ?
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}

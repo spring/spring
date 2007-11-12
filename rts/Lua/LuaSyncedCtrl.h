@@ -104,6 +104,7 @@ class LuaSyncedCtrl {
 
 		static int SetNoPause(lua_State* L);
 		static int SetUnitToFeature(lua_State* L);
+		static int SetExperienceGrade(lua_State* L);
 };
 
 

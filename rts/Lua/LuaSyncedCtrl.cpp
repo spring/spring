@@ -174,6 +174,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetNoPause);
 	REGISTER_LUA_CFUNC(SetUnitToFeature);
+	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
 		return false;
@@ -1215,11 +1216,7 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitMaxHealth()");
-	}
-	unit->maxHealth = (float)lua_tonumber(L, 2);
+	unit->maxHealth = (float)luaL_checknumber(L, 2);
 	if (unit->maxHealth <= 0.0f) {
 		unit->maxHealth = 1.0f;
 	}
@@ -1263,12 +1260,8 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitExperience()");
-	}
-	unit->experience = max(0.0f, (float)lua_tonumber(L, 2));
-	unit->ExperienceChange();
+	const float experience = max(0.0f, (float)luaL_checknumber(L, 2));
+	unit->AddExperience(experience - unit->experience);
 	return 0;
 }
 
@@ -2514,6 +2507,30 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
 	}
 	uh->morphUnitToFeature = lua_toboolean(L, 1);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
+{
+	if (!FullCtrl()) {
+		return 0;
+	}
+	const float expGrade = (float)luaL_checknumber(L, 1);
+	CUnit::SetExpGrade(expGrade);
+
+	// NOTE: for testing, should be using modrules.tdf
+	if (gs->cheatEnabled) {
+		if (lua_isnumber(L, 2)) {
+			CUnit::SetExpPowerScale((float)lua_tonumber(L, 2));
+		}
+		if (lua_isnumber(L, 3)) {
+			CUnit::SetExpHealthScale((float)lua_tonumber(L, 3));
+		}
+		if (lua_isnumber(L, 4)) {
+			CUnit::SetExpReloadScale((float)lua_tonumber(L, 4));
+		}
+	}
 	return 0;
 }
 

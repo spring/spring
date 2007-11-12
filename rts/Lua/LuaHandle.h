@@ -114,6 +114,7 @@ class CLuaHandle {
 		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		                 float damage, int weaponID, bool paralyzer);
+		void UnitExperience(const CUnit* unit, float oldExperience);
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
 		                     const float3& pos, float strength);

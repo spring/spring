@@ -62,6 +62,9 @@ CR_REG_METADATA(CBuilder, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+bool CBuilder::use2D = false;
+
+
 CBuilder::CBuilder()
 :	buildDistance(16),
   buildSpeed(100),
@@ -214,7 +217,7 @@ void CBuilder::Update()
 			StopBuild(true);
 		}
 	}
-	else if (curBuild && curBuild->pos.distance2D(pos) < buildDistance + curBuild->radius) {
+	else if (curBuild && f3Dist(curBuild->pos, pos) < buildDistance + curBuild->radius) {
 		if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
 			StopBuild();
 		} else {
@@ -246,7 +249,7 @@ void CBuilder::Update()
 			}
 		}
 	}
-	else if(curReclaim && curReclaim->pos.distance2D(pos)<buildDistance+curReclaim->radius && inBuildStance){
+	else if(curReclaim && f3Dist(curReclaim->pos, pos)<buildDistance+curReclaim->radius && inBuildStance){
 		if (scriptCloak <= 2) {
 			if (isCloaked) {
 				isCloaked = false;
@@ -258,7 +261,7 @@ void CBuilder::Update()
 			CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
 		}
 	}
-	else if(curResurrect && curResurrect->pos.distance2D(pos)<buildDistance+curResurrect->radius && inBuildStance){
+	else if(curResurrect && f3Dist(curResurrect->pos, pos)<buildDistance+curResurrect->radius && inBuildStance){
 		const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
 			if ((modInfo->reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
@@ -292,7 +295,7 @@ void CBuilder::Update()
 			StopBuild(true);
 		}
 	}
-	else if(curCapture && curCapture->pos.distance2D(pos)<buildDistance+curCapture->radius && inBuildStance){
+	else if(curCapture && f3Dist(curCapture->pos, pos)<buildDistance+curCapture->radius && inBuildStance){
 		if(curCapture->team!=team){
 			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
 			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);

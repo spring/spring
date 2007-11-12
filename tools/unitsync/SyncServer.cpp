@@ -198,7 +198,7 @@ void CSyncServer::InitMasterList()
 
 int CSyncServer::ProcessUnits()
 {
-	int unitsLeft = CSyncer::ProcessUnits();
+	const int unitsLeft = CSyncer::ProcessUnits();
 
 	if (unitsLeft == 0) {
 		InitMasterList();

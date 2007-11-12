@@ -406,6 +406,25 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 }
 
 
+void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
+{
+	static const LuaHashString cmdStr("UnitExperience");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, unit->experience);
+	lua_pushnumber(L, oldExperience);
+
+	// call the routine
+	RunCallIn(cmdStr, 5, 0);
+	return;
+}
+
+
 /******************************************************************************/
 
 void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
