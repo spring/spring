@@ -44,29 +44,20 @@ CBuilding::~CBuilding()
 		     (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
 		    !gu->spectatingFullView) {
 
-			S3DOModel* gbModel = model;
-
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef != NULL) {
-				if (decoyDef->type != "Building") {
-					gbModel = NULL; // not ghosted
-				} else {
-					gbModel = decoyDef->LoadModel(team);
-				}
-			}
+			S3DOModel* gbModel =
+				(decoyDef == NULL) ? model : decoyDef->LoadModel(team);
 
-			if (gbModel) {			
-				gb = SAFE_NEW CUnitDrawer::GhostBuilding;
-				gb->pos    = pos;
-				gb->model  = gbModel;
-				gb->decal  = buildingDecal;
-				gb->facing = buildFacing;
-				gb->team   = team;
-				if (gbModel->textureType) {
-					unitDrawer->ghostBuildingsS3O.push_back(gb); // S3O
-				} else {
-					unitDrawer->ghostBuildings.push_back(gb);    // 3DO
-				}
+			gb = SAFE_NEW CUnitDrawer::GhostBuilding;
+			gb->pos    = pos;
+			gb->model  = gbModel;
+			gb->decal  = buildingDecal;
+			gb->facing = buildFacing;
+			gb->team   = team;
+			if (gbModel->textureType) {
+				unitDrawer->ghostBuildingsS3O.push_back(gb); // S3O
+			} else {
+				unitDrawer->ghostBuildings.push_back(gb);    // 3DO
 			}
 		}
 	}
