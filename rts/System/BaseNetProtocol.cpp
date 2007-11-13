@@ -295,9 +295,9 @@ void CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& m
 
 //  NETMSG_STARTPOS         = 36, // uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
 
-void CBaseNetProtocol::SendStartPos(uchar myTeam, uchar ready, float x, float y, float z)
+void CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar ready, float x, float y, float z)
 {
-	SendData<uchar, uchar, float, float, float>(NETMSG_STARTPOS, myTeam, ready, x, y, z);
+	SendData<uchar, uchar, float, float, float>(NETMSG_STARTPOS, myPlayerNum, ready, x, y, z);
 }
 
 //  NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
