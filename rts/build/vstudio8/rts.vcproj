@@ -3938,14 +3938,6 @@
 				Name="Platform"
 				>
 				<File
-					RelativePath="..\..\System\Platform\BackgroundReader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\BackgroundReader.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\BaseCmd.cpp"
 					>
 					<FileConfiguration
