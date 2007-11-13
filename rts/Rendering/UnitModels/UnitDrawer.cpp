@@ -840,6 +840,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 			}
 			unit->Draw();
 		} else {
+			// ghosted enemy units
 			if (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
 				glColor4f(0.9f, 0.9f, 0.9f, 0.5f);
 			else
@@ -849,12 +850,23 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
+			// check for decoy models
+			const int unitTeam = unit->team;
+			const UnitDef* decoyDef = unit->unitDef->decoyDef;
+			S3DOModel* model;
+			if (decoyDef == NULL) {
+				model = unit->model;
+			} else {
+				model = decoyDef->LoadModel(unitTeam);
+				is_s3o = (model->rootobjects3o != NULL);
+			}				
+
 			if (is_s3o) {
-				SetBasicS3OTeamColour(unit->team);
-				texturehandler->SetS3oTexture(unit->model->textureType);
+				SetBasicS3OTeamColour(unitTeam);
+				texturehandler->SetS3oTexture(model->textureType);
 			}
 
-			unit->model->DrawStatic();
+			model->DrawStatic();
 			glPopMatrix();
 		}
 	}
