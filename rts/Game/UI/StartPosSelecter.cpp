@@ -38,7 +38,7 @@ bool CStartPosSelecter::Ready()
 	}
 	
 	gameSetup->readyTeams[gu->myTeam] = true;
-	net->SendStartPos(gu->myTeam, 1,
+	net->SendStartPos(gu->myPlayerNum, 1,
 	gs->Team(gu->myTeam)->startPos.x, /* why not a float3? */
 	gs->Team(gu->myTeam)->startPos.y,
 	gs->Team(gu->myTeam)->startPos.z);
@@ -76,7 +76,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 
 	inMapDrawer->ErasePos(gs->Team(gu->myTeam)->startPos);
 
-	net->SendStartPos(gu->myTeam, 0, pos.x, pos.y, pos.z);
+	net->SendStartPos(gu->myPlayerNum, 0, pos.x, pos.y, pos.z);
 
 	char t[500];
 	sprintf(t,"Start %i",gu->myTeam);
