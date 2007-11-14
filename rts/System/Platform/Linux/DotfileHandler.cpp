@@ -128,17 +128,6 @@ int DotfileHandler::GetInt(const string name, const int def)
 	return atoi(pos->second.c_str());
 }
 
-float DotfileHandler::GetFloat(const std::string& name, const float def)
-{
-	std::ostringstream buf1;
-	buf1 << def;
-	
-	std::istringstream buffer(GetString(name, buf1.str()));
-	float val;
-	buffer >> val;
-	return val;
-}
-
 /**
  * @brief Gets string value from config
  *

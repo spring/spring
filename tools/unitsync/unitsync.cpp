@@ -1604,3 +1604,71 @@ const char *GetStr(string str)
 void PrintLoadMsg(const char* text)
 {
 }
+
+
+//////////////////////////
+//////////////////////////
+
+/**
+ * @brief get string from Spring configuration
+ * @param name name of key to get
+ * @param defvalue default string value to use if key is not found, may not be NULL
+ * @return string value
+ */
+DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const char* defvalue )
+{
+	std::string res = configHandler.GetString( name, defvalue );
+	return GetStr(res);
+}
+
+/**
+ * @brief get integer from Spring configuration
+ * @param name name of key to get
+ * @param defvalue default integer value to use if key is not found
+ * @return integer value
+ */
+DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalue )
+{
+	return configHandler.GetInt( name, defvalue );
+}
+
+/**
+ * @brief get float from Spring configuration
+ * @param name name of key to get
+ * @param defvalue default float value to use if key is not found
+ * @return float value
+ */
+DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float defvalue )
+{
+	return configHandler.GetFloat( name, defvalue );
+}
+
+/**
+ * @brief set string in Spring configuration
+ * @param name name of key to set
+ * @param value string value to set
+ */
+DLL_EXPORT void __stdcall SetSpringConfigString( const char* name, const char* value )
+{
+	configHandler.SetString( name, value );
+}
+
+/**
+ * @brief set integer in Spring configuration
+ * @param name name of key to set
+ * @param value integer value to set
+ */
+DLL_EXPORT void __stdcall SetSpringConfigInt( const char* name, const int value )
+{
+	configHandler.SetInt( name, value );
+}
+
+/**
+ * @brief set float in Spring configuration
+ * @param name name of key to set
+ * @param value float value to set
+ */
+DLL_EXPORT void __stdcall SetSpringConfigFloat( const char* name, const float value )
+{
+	configHandler.SetFloat( name, value );
+}

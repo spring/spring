@@ -380,7 +380,7 @@ public:
 
 	static void  SetExpGrade(float value) { expGrade = value; }
 	static float GetExpGrade()     { return expGrade; }
-	static void  SetExpPowerScale(bool value) { expPowerScale = value; }
+	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static float GetExpPowerScale()    { return expPowerScale; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
 	static float GetExpHealthScale()     { return expHealthScale; }

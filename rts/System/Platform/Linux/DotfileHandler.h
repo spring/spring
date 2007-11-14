@@ -84,8 +84,6 @@ public:
 	 * @return integer value
 	 */
 	virtual int GetInt(std::string name, int def);
-	
-	virtual float GetFloat(const std::string& name, const float def);
 
 private:
 

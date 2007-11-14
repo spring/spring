@@ -17,6 +17,8 @@ extern "C" void PreInitMac();
 #else
 #include "Linux/DotfileHandler.h"
 #endif
+#include <sstream>
+
 
 /**
  * @brief instance
@@ -52,8 +54,28 @@ void ConfigHandler::Deallocate()
 {
 	if (instance)
 		delete instance;
-	instance=0;
+	instance = 0;
 }
 
-ConfigHandler::~ConfigHandler() {
+ConfigHandler::~ConfigHandler()
+{
+}
+
+float ConfigHandler::GetFloat(const std::string& name, const float def)
+{
+	std::ostringstream buf1;
+	buf1 << def;
+	
+	std::istringstream buffer(GetString(name, buf1.str()));
+	float val;
+	buffer >> val;
+	return val;
+}
+
+void ConfigHandler::SetFloat(const std::string& name, float value)
+{
+	std::ostringstream buffer;
+	buffer << value;
+
+	SetString(name, buffer.str());
 }
