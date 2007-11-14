@@ -1,6 +1,52 @@
 Spring change log
 
-- Removed the automatic 'userInputPrefix' tracking for incoming messages
+- A lot of networking code was refactored.
+- Exposed unit->maxSpeed to the AI interface
+- Reintroduced heightMod to TryTarget.
+- New aircraft command CMD_IDLEMODE - it switches between landing when idle and not landing.
+- Unitsync Java bindings now have a version number.
+- Added ArchiveMover by zizu. Automatically moves .sdz and .sd7 files to the correct place (Spring\maps\ or Spring\mods\)
+- Add new installer SideBanner, Spring icon and ArchiveMover icon all contributed by AF. 
+- Cache input and output of GetWantedDir to save a lot of expensive calculations for a little loss of accuracy
+- Tiny speedups in LosAdd and SafeLosAdd
+- Optimized unnecessary sqrt in GuiTraceRay
+- Added new start positions mode Choose Before Game. Useful for AIs, you can select the starting position of players from the client.
+- Make the replay format better:
+ - It has a proper header now with version field instead of the entire file being just a data blob.
+ - The header has made the gameSetup script.txt modifications redundant: the UnixTime and Spring Version are in the header, and the gameSetup script is stored unmodified now.
+ - It stores a game ID, this can be used to match
+   replays of the same game together.
+ - It stores the winning ally team, if any.
+ - It stores player stats.
+ - It stores team stats.
+ - It stores game duration, both in game time and wallclock time. 
+- Added .godmode [0|1]  --  allows all players (even specs) to control all units 
+- Added a team parameter to .give: .give [amount] <unitName> [team] @x,y,z 
+- .kick and .kickbynum messages are filtered
+- Small messages are once again send together in one packet 
+- Stop animations when network lags (timeout set to 0.5 sec) 
+- Added some OGGVorbis sound support.
+- Replacement Bark, bleaf and foam images. 
+- Added behavior to mobile units so that they will start chasing when the target is running away, but before the target exits weapons range, allowing the unit to fire continuously at the retreating unit, instead of the cycles of firing, then running to catch up that existed prevously.
+- Moved to Satirik's lobby, huge amount of changes.
+
+User Interface:
+- Added the CTRL modifier to area reclaims to allow reclaiming your own wrecks 
+- Removed some hard-coded key bindings and replaced them with:
+   edit_return
+   edit_escape
+   edit_complete
+   edit_backspace
+   edit_delete
+   edit_home
+   edit_end
+   edit_prev_line
+   edit_next_line
+   edit_prev_char
+   edit_next_char
+   edit_prev_word
+   edit_next_word 
+- Added the 'Any+' prefix, and updated the default uikeys.txt 
 - Added some reasonable default keybindings for all/ally/spec chat messaging:
             enter -> send to <last send type>
        Ctrl+enter -> send to All
@@ -10,8 +56,250 @@ Spring change log
    change the send mode ever while typing the message)
 
 - Added the CTRL modifier to area reclaims for reclaiming all features
+-/specfullview 2 is the new default for spectating and watching demos (can select all units)
+- Added the ctrlpanel.txt "frontByEnds" option (let's you use the endpoints to define a front instead of the midpoint and one of the ends) 
+- When a factory is set on repeat, alt+build-click inserts the order as a no-repeat and right after the currently built unit. Behavior is unchanged if repeat is off.
+- Added water lines while placing unit builds.
+- Moved the clock and fps indicators to the upper right hand corner (the default setup results in overlaps with the player info text) 
+- Modified the LOS view to better show the los-only and radar-only conditions
+   dark  = no los, no radar
+   white = los + radar
+   blue  = los-only
+   green = radar-only
+   red   = jammed area 
+- Disabled shadow generation when using LOS viewmode (would be better to add shadows in LOS mode, but might as well avoid the shadow generation overhead until the shadows are added)
+- Make Fight be able to be given a line command, like move already can be.
+- Only add the SelectAI button if the current selection has valid GroupAIs 
 
+TDF and FBI tags:
+
+- Added heightBoostFactor - a float tag that gives control of cannon height range boost (more than 1 means increased range, 0 means the cannon has fixed range regardless of height difference to target. default is a magic value calculated on weapon init, based on range tag and theoretical max range.) 
+- Added heightMod tag (height difference is multiplied by this value before checking range), default 0.8 for Cannon weapon type, 0.2 for everything else (i.e. stays as it was). Beamlasers have heightmod=1 by default so they use pure spherical targeting.
 - Added GroundBounce, WaterBounce, NumBounce, BounceSlip, BounceRebound, and bounceExplosionGenerator tags.
+- The TDF tags MetalStorage and EnergyStorage now override the StartMetal and StartEnergy specified in the startscript, instead of the other way round. If MetalStorage or EnergyStorage isn't specified the default values for commander units are StartMetal and StartEnergy. For other units the default remains 0.
+- New tags beamttl (default: 0) and beamdecay (default: 1) for the beamlaser. Beamttl defines the time (in frames) the beam will stay after being fired and beamdecay defines the speed of the fadeout (each frame the beam's intensity is multiplied with that value). This applies to the single-frame beams the weapon emits, if it has a beamtime it will emit one such beam every frame, which is only useful if the source of the beam moves a lot (gives a cool trail effect). It's primarily intended for beams with a beamtime of one frame (which often simulate very fast shots instead of constant streams, e.g. railguns) so they don't disappear immediately.
+- Allow for the modder to define whether the crashing planes (and/or units running long Killed() scripts) can be fired on via modrules.tdf new section: 
+[FIREATDEAD]
+{
+ fireAtKilled=0;
+ fireAtCrashing=0;
+} 
+The defaults are to disallow both (Spring 0.75 behaviour, both variables set to 0). Spring 0.74 behaviour (allow both) can be emulated by setting both variables to 1.
+- Added fixedLauncher tag (bool) for missiles, starburst missiles and torpedoes, this makes the projectile spawn with the orientation of the shooting piece instead of their normal orientation. The weapon will not properly check if allies are in the way so make sure you align the launchers in a way that won't hammer right into your own forces and perhaps use collideFriendly=0. FixedLauncher conflicts with trajectoryHeight and IMO combining them is pointless anyway so don't use both on a weapon. 
+- Added projectiles tag (int), each time a weapon fires this many projectiles are spawned (on the same frame). Make sure you put them on different trajectories somehow (sprayangle or different firepoints) because otherwise they'll all be clumped in one shot. Can be set to 0 as well for script trigger weapons and can be combined with burst. 
+- Missiles and starburst missiles now obey smoketrail, set it to 0 to disable the smoke. To get a missile without smoketrail you have to define the weapon as a missile with WeaponType=MissileLauncher in the tdf. 
+- Missiles, starburst missiles and torpedoes now use flighttime if present instead of the hardcoded formula (which is still used if flighttime is not present) 
+- Added SubMissile tag (bool) for TorpedoLaunchers, if set to 1 the torpedo will travel like a missile outside of water. It will not emit a smoketrail, though. When fired from a plane it will behave the same way but the plane will probably be considered a fighter, not a bomber. 
+- Added fireSubmersed tag (bool), defaults to the value of waterweapon. If set the weapon can fire underwater, if not then not. Use it for weapons that cannot fire underwater but can hit underwater targets. Works even for torpedoes. 
+- Starburst missiles now obey turnrate for the turn at the peak of their flight (if supplied, otherwise the old value is used). 
+- All weapons (save for the Rifle which noone uses anyway) can now attack underwater targets if they have waterweapon=1 set. 
+- Bombs can use manually defined burst and burstrate values instead of autogenerated ones by using the new manualBombSettings tag (bool). Keep in mind that (roughly) burst*burstrate defines the area in which the bomber is willing to drop the bomb so if you make it too small the bomber might miss the drop area and not drop any bomb. 
+- Added myGravity tag (float) for ballistic weapons (Cannon and Bomb), it overrides the map gravity if used. Regular map gravity is around 0.2. 
+- Bombs now obey Accuracy and SprayAngle. 
+- Added ShieldStartingPower tag (float) for shields, if set the shield starts with this much power instead of 0. 
+- Renamed flareEfficency -> flareEfficiency 
+- Added modinfo.tdf 'version', 'mutator', and 'shortName' tags 
+- Added the weaponDef 'cameraShake' tag 
+- Moved the buildOptions definitions into the unitDef definitions, LuaParser handles backwards compatibility.
+- Changed init_cloaked to initcloaked.
+- Add a tag 'pushResistant' to UnitDef. If set to true, a unit will not be pushed out of the way by another when their footprints overlap, nor will it respond to BuggerOff directives when the other party has an important move order. Defaults to false. 
+- Added a per-soundfile volume control format for unitdefs
+ sounds = {
+   ok = 'oksound',
+   cancel = {
+     'cancel1',
+     'cancel2',
+   },
+   select = {
+     { file = 'selsound1', volume = 2.0 },
+     { file = 'selsound2', volume = 2.5 },
+     etc...
+   },
+ } 
+- Added the dance tag for missilelaunchers that makes the missile move around randomly. Unlike wobble it doesn't rotate the missile and it prevents the missile from going too far off course so a dancing swarm will remain coherent.
+- Beamlasers ignore beamtime if new tag "beamburst" is set (for emulating weapons that do damage in bursts)
+- Features have new tag "reclaimTime" defining how long they take to reclaim, default is metal+energy.
+-Added tags:
+transportUnloadMethod = <integer>;
+   0 - land unload, 1 - flyover drop, 2 - land flood
+fallSpeed = <float>
+unitFallSpeed = <float>
+
+These dictate the speed of units being dropped from the transport.
+fallSpeed is used on the transports fbi file, to dictate the speed of all units it drops, unitFallSpeed is used on each transported unit to override fallSpeed. 
+- New weapon FBI tags:
+        WaterBounce and GroundBounce: Boolean to allow a projectile to bounce off of a surface. defaults to false.
+        BounceSlip: Amount of lateral speed kept by the projectile after it bounces. defaults to 1.
+        BounceRebound: Amount of vertical speed keeps and reverses. defaults to 1.
+        NumBounce: The number of bounces a weapon will make. -1 indicates no limit. defaults to -1. 
+- Added the ability to bounce for Torpedos, Missiles, Lasers, Cannons, and Emgs.
+- Added flighttime functionality to cannons. 
+- Added bounceExplosionGenerator tag, which defines an explosion generator to run when a projectile bounces.
+- Added flighttime to bombdroppers. 
+- Added FBI tag cantBeTransported=0|1, if set to 1 no transport can load this unit
+- Added FBI tag minTransportSize=int, determines the smallest size footprint that the transport can load
+- Added FBI tag minTransportMass=float, determines the smallest mass unit that the transport can load
+- Removed the check for Air movetype for holdSteady FBI tag, so now ground transports can use it too 
+- Restore old default value of floater FBI tag: Default to true if WaterLine FBI tag exists, false if it does not exist. (It was: default to true if WaterLine != 0) 
+-New FBI tag for transports; float unloadSpread: Controls the spacing between units in an area unload command, works as a multiple, default is 1.
+
+Bugfixes:
+
+- Fixed cannons not able to shoot as far from high ground as they should
+- Fixed infinite lower cylinder when cylindertargetting is active
+- Loaded air transports no longer land on stop command 
+- Fixes in glBallisticCircle (use heightmod also in drawing range circles.) 
+- Spring now returns 0 when started with -V, -h or -p 
+- Fix random start positions (positions are handed out before gaia team is added)
+- CMD_REMOVE also works for idle factories (with move/patrol queues) 
+- Changed Cannon::GetRange2D so it uses something closer to real-world physics.
+- Fixed Melee weapon always aiming west
+- Do not allow commands with out-of-map destinations.
+- "Connecting to server" message now does not pop up when starting without startscript 
+- Commandline is now parsed before the filesystemhandler starts up (speedup starting with arguments like -V or -h) 
+- Fixed builders with area reclaim sometimes going out of their designated circle 
+- Bombs now obey Accuracy and SprayAngle. 
+- Fixed lightning weapons having a hardcoded inaccuracy, made it obey accuracy and sprayangle tag instead. 
+- Fixed Lightning weapons not doing damage to shields.
+- Possible fix for the disappearing healthbars
+- Fixed crashbug when exiting the GroupAI, sharing and quit boxes in an unusual way.
+- Fixed starburst missiles so they stop their engines after they travel out of range.
+- Fixed a possible load/save bug.
+- Fixed crash in DamageArray() copying constructor
+- Don't say 'content error' if modrules.tdf isn't found
+- Improved error reporting in GetTDFName and LoadMap
+- Fixed replays.
+- Fixed savefiles on non-Windows OSes 
+- Fixed the run-time Spring.MakeFont() call-out 
+- Fixed beamlasers so they don't ignore CollideFriendly
+- Fixed both CollideFeature and CollideFriendly for weapontype=Rifle
+- Fixed unloading of aircraft
+- Fixed crash when sharing units with a GroupAI other player doesn't have.
+- Fixed .team, .setminspeed and .setmaxspeed when playing a demo locally
+- Fix groundscars turning white after using LOS overlays or enabling shadows
+- Better error reporting in case of global AI version mismatch
+- Fix SM3 when resizing windows 
+- Don't profile the water renderer on voidwater maps
+- Weapons now use AimFromWeapon to determine the part to aim from, this prevents waggling and failing to aim at close ranges. To simulate the old behaviour make AimFromWeapon return the same piece as QueryWeapon does. 
+- Melee weapon now reports a proper angle to AimWeapon. 
+- Made starburst missiles obey startvelocity and weaponacceleration.
+- Try to minimize damage caused by LuaUI crashes until cause is found by disabling LuaUI after several errors happen
+- Hackish fix for units sometimes not going to factory designated rally point
+- Install the game/fonts/*.ttf files to fonts/ 
+- Handle a missing argument to .skip a little better
+- Fix error message for missing font
+- Take screenshot of entire window (rather than left half only) in dual-screen mode
+- Lua stack was changed to fix some segfaults.
+- Prohibit spectators (except for the host) from changing the gamespeed unless cheating is enabled. 
+- Fix an exploit where partially reclaimed corpses that are turned into wreckage end up being worth more than the remaining value of the corpse itself 
+- Fix weaponAcceleration typo causing major bugs with nukes and vlaunch weapons et al. 
+- Fix two "unknown net msg" errors in CPreGame when playing certain demos.
+- Fixed a crash bug  (lastColWarning == NULL) in TAAirMoveType.
+- Fixed a crash in AirMoveType.cpp 
+- Removed the automatic 'userInputPrefix' tracking for incoming messages 
+- Fixed the unitsync GetUnitFullName() 
+- Ignore used writing keypresses  (for bindings like:  'bind a+u edit_next_word')
+- fixes a bug in LuaUnsyncedRead::TraceScreenRay() when using dualscreen mode and minimap is on left 
+- Unit pieces inherit alpha threshold from owner 
+- Fixed jittery falling units.
+- Fix timeout while loading / pathing 
+- CommandFallback was broken wrt return values, fixed.
+- Improved dgun responsiveness (still not perfect, but at least shoots through features now) 
+- Construct a proper orthonormal basis for muzzle-flame bitmaps
+- Gracefully handle missing script failure
+- Fixed speed and pause in replay 
+- Fix for teleporting units when area-unloading out of map
+- Fix for uadded tracking of PushMatrix and PopMatrix Lua call-ins to reduce number of gl errors
+- Fix ghosted buildings always being drawn with default facing
+- Fixed weapon TDF 'fireStarter' tag, for all weapon types 
+- Units, when they are within range, but unable to hit the target of an attack command, will move sideways.
+- Fixed the bug where laserprojectiles had weird garbage on the front if the projectile was within lod distance.
+- Fixed set HEADING COB variable so it updates unit direction.
+- Fixed giving commands while recording a video 
+- Fixed bug where after load all moving ground units stops with message "Can't reach destination".
+- Fix for patrolling builders repairing stuff that's being reclaimed 
+- In the tooltip displayed on mouseover, deconstructing nanoframes didn't show how much metal they are producing on mouseover. 
+- Don't set the default shareTeam to a dead team ever. 
+- Fixed random mod. 
+- Made glPrintOutlined() almost 50% faster.
+- Reclaimers list is now saved.
+- Now error messages are broadcast to all clients.
+- Paralyzers no longer damage features 
+- Fixed the wait/teleport factory bug
+- Fix flying/underground units bug.
+- Unhide the gaia team, and colorize by allegiance 
+
+Lua:
+- Added call-in gl.Smoothing(point, line, polygon)
+- Added Spring.GetViewSizes() to LuaOpenGL 
+- Added call-in SetLosViewColors() 
+- Added the StockpileChanged()   call-in
+- Added the DefaultCommand()     call-in
+- Added the LuaUI WorldTooltip() call-in
+- Added the LuaUI GameSetup()    call-in 
+- Added GetUnitHeight()       call-out
+- Added GetFeatureHeight()    call-out
+- Added GetFeatureRadius()    call-out
+- Added GetFeatureResurrect() call-out
+- Added SetTeamColor()        call-out
+- Added GetTeamColor()        call-out
+- Added GetTeamOrigColor()    call-out 
+- Added unit count protection to Spring.CreateUnit() 
+- Added LuaUI Spring.GetGatherMode()
+- Added LuaUI Spring.GetInvertQueueKey() 
+- Added Spring.SetUnitLineage(unitID, teamID[, bool isRoot])
+- Added Spring.GetBuildFacing() for LuaUI
+- Added Spring.GetBuildSpacing() for LuaUI 
+- Removed the color info from GetTeamInfo() 
+- Added GetHasLag(), returns true if currently lagging behind host.
+- Added PlaySoundStream and StopSoundStream for OggVorbis audio.
+- Added the rank parameter to GetPlayerInfo()  (arg 7) 
+- Added 'autoland' to GetUnitStates() 
+- Added the following to both UnitDefs[] and FeatureDefs[]
+   height, radius
+   minx, midx, maxx
+   miny, midy, maxy
+   minz, midz, maxz
+- Disabled the lua DrawScreen() call-in when the interface is hidden (note that the DrawScreenEffects() call-in remains active)
+- The majority of mod files are now loaded via LuaParsers, which can be edited to load different types of files. The default LuaParsers simply load the normal style files with improved error checking and speed.
+- Game.armorTypes[] was changed to a bidirectional map
+- WeaponDefs[x].damages.damages[] was replaced with WeaponDefs[x].damages[index]
+ (starts at 0 for the default armorType) 
+- Added the 'teamcolors.lua' local team recoloring LuaParser script 
+- Added the gui_game_setup.lua GameSetup widget
+- Added 'ghostedBuildings' to Game[] 
+- Changed Game.modName to use the humanName value 
+- UnitDef names are always lower case now
+- Added on-the-fly lua font texture / specfile generation 
+- Added localization support in the lua tooltips and ctrlpanel 
+- Generated local speed-ups for some of the installed widgets 
+- Created FeatureDefNames and WeaponDefNames for LuaUI 
+- Added Spring.SetUnitNeutral(unitID, bool) and Spring.GetUnitNeutral(unitID)
+ - neutral units (mainly for gaia and fake features), will not be attacked
+   automatic when the attacker to be has its fireState set to "Fire At Will"
+ - added a hidden fourth fireState level (3) that will shoot at neutrals 
+- Added SetCustomCommandDrawLine(int cmdID, int iconCmdID, table color {r, g, b, a}) -> nil 
+- Added 'extractorRadius' to the LUA Game table 
+- Added Spring.IsGodModeEnabled() to LuaSyncedRead
+- Added the "gamedata/lockluaui.txt" check for LuaUI. If this file exists in the mod, then LuaUI can only load its gui.lua" file from the archive filesystem, thus putting the mod in full control of what LuaUI can be used to do  (including disabling all user widgets).  
+- LuaAI is now supported.
+
+COB
+- Give a COB error instead of crashing for invalid explosion generator indices or weapon indices in emit-sfx. #
+- Added COB call to "ShotX" that happens shortly before weaponX uses QueryWeaponX, use this for switching firepoints in bursts or when using multiple projectiles. 
+- StartBuilding now supplies the pitch as the second parameter to help with custom build FX. 
+- Fixed cob bitwise not operator (was logical not.)
+- Added a MOD COB opcode for modulo division
+- Introduces the COB get/set variable 103, ALPHA_THRESHOLD. It ranges from 0-255 and changes the glAlphaFunc to use that alpha value as its minimum. In practice this allows disintegration-style effects or the reverse for build animations.
+-Transport AI now calls the cob function 'StartUnload' which is called once when transport starts to lower during land flood method. 
+- Dropped units call the cob functions 'falling' and 'landed' so that you may start and stop a parachute animation. 
+- Added the 'cobID' unitDef tag, and the COB_ID (100) COB GET type 
+
+TASServer/Protocol
+- Don't crash on quit if helpUDPsrvr == null.
+- Better error reporting. 
+- Added 'servermode' argument to TASSERVER command (1 for LAN mode, 0 normal)
+- Fix LOADARGS commandline argument. 
 
 0.75b2
 
