@@ -4,20 +4,19 @@
 
 #include "StdAfx.h"
 #include "RegHandler.h"
-
 #include <SDL_types.h>
-#include <sstream>
-
 #include "mmgr.h"
+
+using std::string;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-RegHandler::RegHandler(string keyname,HKEY key)
+RegHandler::RegHandler(string keyname, HKEY key)
 {
-	if(RegCreateKey(key,keyname.c_str(),&regkey)!=ERROR_SUCCESS)
-		MessageBox(0,"Failed to crete registry key","Registry error",0);
+	if (RegCreateKey(key, keyname.c_str(), &regkey) != ERROR_SUCCESS)
+		MessageBox(0, "Failed to create registry key", "Registry error", 0);
 }
 
 RegHandler::~RegHandler()
@@ -38,17 +37,6 @@ int RegHandler::GetInt(string name, int def)
 		SetInt(name, def);
 		
 	return def;
-}
-
-float RegHandler::GetFloat(const std::string& name, const float def)
-{
-	std::ostringstream buf1;
-	buf1 << def;
-	
-	std::istringstream buffer(GetString(name, buf1.str()));
-	float val;
-	buffer >> val;
-	return val;
 }
 
 string RegHandler::GetString(string name, string def)

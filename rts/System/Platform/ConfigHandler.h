@@ -63,7 +63,12 @@ public:
 	/**
 	@brief get float value
 	*/
-	virtual float GetFloat(const std::string& name, const float def) = 0;
+	virtual float GetFloat(const std::string& name, const float def);
+
+	/**
+	@brief set float value
+	*/
+	virtual void SetFloat(const std::string& name, float value);
 
 	/**
 	 * @brief get instance
