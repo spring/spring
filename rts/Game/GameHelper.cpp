@@ -433,13 +433,15 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,std::
 							*(0.01f+(*ui)->crashing)
 							/(weapon->weaponDef->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
 						if((*ui)==lastTarget)
-							value*=0.4f;
+							value*=weapon->avoidTarget ? 10.0f : 0.4f;
 						if((*ui)->category & weapon->badTargetCategory)
 							value*=100;
 						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09f)
 							value*=4;
 						if((*ui)->crashing)
 							value*=10;
+						if(weapon->hasTargetWeight)
+							value*=weapon->TargetWeight(*ui);
 						targets.insert(pair<float,CUnit*>(value,*ui));
 					}
 				}
