@@ -312,14 +312,7 @@ void CGameSetup::Draw()
 {
 	float xshift = 0.0f;
 	string state = "Unknown state.";
-
-	if (!gameServer && !net->Connected()) {
-		if (((SDL_GetTicks() / 1000) % 2) == 0) {
-			state = "Connecting to server .";
-		} else {
-			state = "Connecting to server  ";
-		}
-	} else if (readyTime > 0) {
+	if (readyTime > 0) {
 		char buf[256];
 		SNPRINTF(buf, sizeof(buf), "Starting in %i",
 		         3 - (SDL_GetTicks() - readyTime) / 1000);

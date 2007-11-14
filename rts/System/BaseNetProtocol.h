@@ -90,14 +90,6 @@ public:
 	*/
 	void RawSend(const uchar* data,const unsigned length);
 
-	/**
-	@brief Recieve data from Client
-	@return The amount of data recieved, or -1 if connection did not exists
-	@todo Throw exceptions
-	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
-	*/
-	int GetData(unsigned char* buf, const unsigned conNum);
-
 	void SendQuit();
 	void SendQuit(unsigned playerNum);
 	void SendNewFrame(int frameNum);
