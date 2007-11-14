@@ -389,72 +389,88 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 	return length;
 }
 
-void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,std::map<float,CUnit*> &targets)
+void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
+                                  std::map<float,CUnit*> &targets)
 {
-	CUnit* attacker=weapon->owner;
-	float radius=weapon->range;
-	float3 pos=attacker->pos;
-	float heightMod=weapon->heightMod;
-	float aHeight=pos.y;
-	float secDamage=weapon->weaponDef->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
-	bool paralyzer=!!weapon->weaponDef->damages.paralyzeDamageTime;
+	CUnit* attacker = weapon->owner;
+	float radius = weapon->range;
+	float3 pos = attacker->pos;
+	float heightMod = weapon->heightMod;
+	float aHeight = pos.y;
+	float secDamage = weapon->weaponDef->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
+	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
 
-	vector<int> quads=qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
+	vector<int> quads = qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
 
-	int tempNum=gs->tempNum++;
+	int tempNum = gs->tempNum++;
 	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(int t=0;t<gs->activeAllyTeams;++t){
-			if(gs->Ally(attacker->allyteam,t))
+	for(qi = quads.begin(); qi != quads.end(); ++qi) {
+		for(int t = 0; t < gs->activeAllyTeams; ++t) {
+			if (gs->Ally(attacker->allyteam, t)) {
 				continue;
-			for(ui=qf->baseQuads[*qi].teamUnits[t].begin();ui!=qf->baseQuads[*qi].teamUnits[t].end();++ui){
-				if((*ui)->tempNum!=tempNum && ((*ui)->category&weapon->onlyTargetCategory)){
-					(*ui)->tempNum=tempNum;
-					if((*ui)->isUnderWater && !weapon->weaponDef->waterweapon)
+			}
+			list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& allyTeamUnits = qf->baseQuads[*qi].teamUnits[t];
+			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
+				CUnit* unit = *ui;
+				if (unit->tempNum != tempNum && (unit->category & weapon->onlyTargetCategory)) {
+					unit->tempNum = tempNum;
+					if (unit->isUnderWater && !weapon->weaponDef->waterweapon) {
 						continue;
-					if((*ui)->isDead)
+					}
+					if (unit->isDead) {
 						continue;
+					}
 					float3 targPos;
-					float value=1;
-					if(((*ui)->losStatus[attacker->allyteam] & LOS_INLOS)){
-						targPos=(*ui)->midPos;
-					} else if(((*ui)->losStatus[attacker->allyteam] & LOS_INRADAR)){
-						targPos=(*ui)->midPos+(*ui)->posErrorVector*radarhandler->radarErrorSize[attacker->allyteam];
-						value*=10;
+					float value = 1.0f;
+					if (unit->losStatus[attacker->allyteam] & LOS_INLOS) {
+						targPos = unit->midPos;
+					} else if (unit->losStatus[attacker->allyteam] & LOS_INRADAR) {
+						const float radErr = radarhandler->radarErrorSize[attacker->allyteam];
+						targPos = unit->midPos + (unit->posErrorVector * radErr);
+						value *= 10.0f;
 					} else {
 						continue;
 					}
-					float modRange=radius+(aHeight-targPos.y)*heightMod;
-					if((pos-targPos).SqLength2D() <= modRange*modRange){
-						float dist2d=(pos-targPos).Length2D();
-						value*=(secDamage+(*ui)->health)
-							*(dist2d*weapon->weaponDef->proximityPriority+modRange*0.4f+100)
-							*(0.01f+(*ui)->crashing)
-							/(weapon->weaponDef->damages[(*ui)->armorType]*(*ui)->curArmorMultiple*(*ui)->power*(0.7f+gs->randFloat()*0.6f));
-						if((*ui)==lastTarget)
-							value*=weapon->avoidTarget ? 10.0f : 0.4f;
-						if((*ui)->category & weapon->badTargetCategory)
-							value*=100;
-						if(paralyzer && (*ui)->health-(*ui)->paralyzeDamage<(*ui)->maxHealth*0.09f)
-							value*=4;
-						if((*ui)->crashing)
-							value*=10;
-						if(weapon->hasTargetWeight)
-							value*=weapon->TargetWeight(*ui);
-						targets.insert(pair<float,CUnit*>(value,*ui));
+					const float modRange = radius + (aHeight - targPos.y) * heightMod;
+					if ((pos - targPos).SqLength2D() <= modRange * modRange){
+						float dist2d = (pos - targPos).Length2D();
+						value *= (secDamage + unit->health);
+						value *= (dist2d * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+						value *= (0.01f + unit->crashing);
+						value /= weapon->weaponDef->damages[unit->armorType]
+										 * unit->curArmorMultiple
+						         * unit->power * (0.7f + gs->randFloat() * 0.6f);
+						if (unit == lastTarget) {
+							value *= weapon->avoidTarget ? 10.0f : 0.4f;
+						}
+						if (unit->category & weapon->badTargetCategory) {
+							value *= 100.0f;
+						}
+						if (paralyzer && unit->health-unit->paralyzeDamage < unit->maxHealth * 0.09f) {
+							value *= 4.0f;
+						}
+						if (unit->crashing) {
+							value *= 10.0f;
+						}
+						if (weapon->hasTargetWeight) {
+							value *= weapon->TargetWeight(unit);
+						}
+						targets.insert(pair<float, CUnit*>(value, unit));
 					}
 				}
 			}
 		}
-	}/*
+	}
+/*
 #ifdef TRACE_SYNC
 	tracefile << "TargetList: " << attacker->id << " " << radius << " ";
 	std::map<float,CUnit*>::iterator ti;
 	for(ti=targets.begin();ti!=targets.end();++ti)
 		tracefile << (ti->first) <<  " " << (ti->second)->id <<  " ";
 	tracefile << "\n";
-#endif*/
+#endif
+*/
 }
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
