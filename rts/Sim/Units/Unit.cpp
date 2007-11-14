@@ -1095,12 +1095,15 @@ void CUnit::ApplyTransformMatrix() const
 		interPos = pos + (transporter->speed * gu->timeOffset);
 	}
 
-	if (usingScriptMoveType ||
-	    ((physicalState == Flying) && unitDef->canmove)) {
+	if (!beingBuilt && (usingScriptMoveType ||
+	    ((physicalState == Flying) && unitDef->canmove))) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
+		// note: (CAirMoveType) aircraft under construction should not
+		// use this matrix, or their nanoframes won't spin on pad
 		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
 		glMultMatrixf(&transMatrix[0]);
 	}
+
 	else if (transporter && transporter->unitDef->holdSteady) {
 		//making local copies of vectors
 		float3 frontDir = GetVectorFromHeading(heading);
@@ -1120,7 +1123,7 @@ void CUnit::ApplyTransformMatrix() const
 	else {
 		//making local copies of vectors
 		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = ground->GetSmoothNormal(pos.x,pos.z);
+		float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
 		float3 rightDir = frontDir.cross(upDir);
 		rightDir.Normalize();
 		frontDir = upDir.cross(rightDir);
@@ -1769,6 +1772,7 @@ void CUnit::FinishedBuilding(void)
 	}
 
 	if (unitDef->windGenerator > 0.0f) {
+		// start pointing in direction of wind
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
 			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
@@ -1785,8 +1789,9 @@ void CUnit::FinishedBuilding(void)
 	SetMetalStorage(unitDef->metalStorage);
 	SetEnergyStorage(unitDef->energyStorage);
 
-	//Sets the frontdir in sync with heading.
-	frontdir = GetVectorFromHeading(heading) + float3(0,frontdir.y,0);
+
+	// Sets the frontdir in sync with heading.
+	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
