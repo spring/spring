@@ -155,7 +155,7 @@ extern string stupidGlobalMapname;
 CGame* game = NULL;
 
 
-CR_BIND(CGame, (false, std::string(""), std::string(""), NULL));
+CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 	CR_RESERVED(4),//r3927
@@ -207,7 +207,7 @@ static int GetModOptions(lua_State* L)
 }
 
 
-CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole *ic)
+CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 : lastFrameTime(0),
   drawMode(notDrawing),
   drawSky(true),
@@ -226,11 +226,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	lastTick = clock();
 
 	oldframenum = 0;
-
-	if (server) {
-		gs->players[0]->readyToStart = true;
-	}
-	gs->players[0]->active = true;
 
 	for(int a = 0; a < 8; ++a) {
 		camMove[a] = false;
@@ -413,7 +408,7 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	water=CBaseWater::GetWater();
 	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
-//	grouphandler = SAFE_NEW CGroupHandler(gu->myTeam);
+
 	globalAI = SAFE_NEW CGlobalAIHandler();
 
 	PrintLoadMsg("Loading LuaCOB");
@@ -447,8 +442,6 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	if(!gameSetup) {
 		p->playerName = configHandler.GetString("name", "");
 	}
-	//sending your playername to the server indicates that you are finished loading
-	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
 	lastModGameTimeMeasure = SDL_GetTicks();
 	lastframe = SDL_GetTicks();
@@ -480,6 +473,8 @@ CGame::CGame(bool server,std::string mapname, std::string modName, CInfoConsole 
 	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
 	UnloadStartPicture();
+	//sending your playername to the server indicates that you are finished loading
+	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
 	lastCpuUsageTime = gu->gameTime + 10;
 }

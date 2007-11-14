@@ -12,6 +12,7 @@
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "NetProtocol.h"
+#include "DemoRecorder.h"
 #include "LoadSaveHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
@@ -80,7 +81,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			}
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
-			state = ALL_READY;
+			state = WAIT_CONNECTING;
 		} else if (hasSave) {
 			savefile = new CLoadSaveHandler();
 			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
@@ -88,7 +89,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			SelectScript("Commanders");
 			SelectMap(savefile->mapName);
 			SelectMod(savefile->modName);
-			state = ALL_READY;
+			state = WAIT_CONNECTING;
 		} else {
 			ShowScriptList();
 			state = WAIT_ON_SCRIPT;
@@ -101,7 +102,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapname);
 			SelectMod(gameSetup->baseMod);
-			state = ALL_READY;
+			state = WAIT_CONNECTING;
 		} else {
 			if (hasDemo) {
 				/*
@@ -124,7 +125,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 					SelectMod(gameSetup->baseMod);
 					CScriptHandler::SelectScript(gameSetup->scriptName);
 					SelectScript(gameSetup->scriptName);
-					state = ALL_READY;
+					state = WAIT_CONNECTING;
 				}
 				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 				{
@@ -244,6 +245,21 @@ bool CPreGame::Draw()
 			case WAIT_ON_MOD:
 				PrintLoadMsg("Waiting on mod", false);
 				break;
+			case WAIT_CONNECTING:
+			{
+				char text[400];
+				if ( ((SDL_GetTicks()/1000) % 2) == 0 )
+					sprintf(text,"Connecting to server .");
+				else
+					sprintf(text,"Connecting to server  ");
+
+				glColor4f(1,1,1,1);
+				glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
+				glScalef(0.03f,0.04f,0.1f);
+				font->glPrintRaw(text);
+				glLoadIdentity();
+			}
+				break;
 			case UNKNOWN:
 			case WAIT_ON_ADDRESS:
 			case ALL_READY:
@@ -291,19 +307,6 @@ bool CPreGame::Draw()
 		showList->Draw();
 	}
 
-	if(net && !net->Connected() && state > WAIT_ON_ADDRESS && !server){
-		char text[400];
-		if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-			sprintf(text,"Connecting to server .");
-		else
-			sprintf(text,"Connecting to server  ");
-
-		glColor4f(1,1,1,1);
-		glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
-		glScalef(0.03f,0.04f,0.1f);
-		font->glPrintRaw(text);
-		glLoadIdentity();
-	}
 	return true;
 }
 
@@ -357,9 +360,21 @@ bool CPreGame::Update()
 			if (showList || !server)
 				break;
 
-			state = ALL_READY;
+			state = WAIT_CONNECTING;
 			// fall through
 
+		case WAIT_CONNECTING:
+			if (server && !gameServer) {
+				good_fpu_control_registers("before CGameServer creation");
+				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
+				good_fpu_control_registers("after CGameServer creation");
+			}
+			
+			if (net->Connected())
+				state = ALL_READY; // fall through
+			else
+				break; // abort
+			
 		case ALL_READY: {
 			ENTER_MIXED;
 
@@ -367,15 +382,7 @@ bool CPreGame::Update()
 			const CTeam* team = gs->Team(teamID);
 			LoadStartPicture(team->side);
 
-			// create GameServer here where we can ensure to know which map and mod we are using
-			if (server) {
-				good_fpu_control_registers("before CGameServer creation");
-				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
-				// net->InitLocalClient(gameSetup?gameSetup->myPlayer:0); dont create twice
-				good_fpu_control_registers("after CGameServer creation");
-			}
-
-			game = SAFE_NEW CGame(server, mapName, modArchive, infoConsole);
+			game = SAFE_NEW CGame(mapName, modArchive, infoConsole);
 
 			if (savefile) {
 				savefile->LoadGame();
@@ -407,8 +414,14 @@ void CPreGame::UpdateClientNet()
 {
 	unsigned char inbuf[8000];
 
-	int ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+	if (!net->IsActiveConnection(gameSetup ? gameSetup->myPlayer : 0))
+	{
+		logOutput.Print("Server not reachable");
+		globalQuit = true;
+		return;
+	}
 
+	int ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
 	while (ret > 0) {
 		switch (inbuf[0]) {
 			case NETMSG_SCRIPT: {
@@ -422,7 +435,7 @@ void CPreGame::UpdateClientNet()
 				} else if (modName.empty()) {
 					state = WAIT_ON_MOD;
 				} else {
-					state = ALL_READY;
+					state = WAIT_CONNECTING;
 				}
 			} break;
 
@@ -437,7 +450,7 @@ void CPreGame::UpdateClientNet()
 				} else if (modName.empty()) {
 					state = WAIT_ON_MOD;
 				} else {
-					state = ALL_READY;
+					state = WAIT_CONNECTING;
 				}
 			} break;
 
@@ -452,7 +465,7 @@ void CPreGame::UpdateClientNet()
 				} else if (mapName.empty()) {
 					state = WAIT_ON_MAP;
 				} else {
-					state = ALL_READY;
+					state = WAIT_CONNECTING;
 				}
 			} break;
 
@@ -527,8 +540,7 @@ void CPreGame::SelectScript(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Using script " << s.c_str() << "\n";
-	if (pregame->server)
-		pregame->scriptName = s;
+	pregame->scriptName = s;
 }
 
 /** Create a CglList for selecting the script. */
@@ -548,7 +560,7 @@ void CPreGame::SelectMap(std::string s)
 	delete pregame->showList;
 	pregame->showList = 0;
 	logOutput << "Map: " << s.c_str() << "\n";
-	
+
 	// Determine if the map is inside an archive, and possibly map needed archives
 	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + s);
 	if (!f->FileExists()) {

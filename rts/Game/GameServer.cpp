@@ -73,7 +73,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		if (play)
 			wantedNumber = std::max(wantedNumber, play->GetFileHeader().numPlayers);
 
-		int hisNewNumber = ((netcode::CNet*)serverNet)->InitLocalClient(wantedNumber);
+		int hisNewNumber = serverNet->InitLocalClient(wantedNumber);
 
 		serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
 		// send game data for demo recording
@@ -369,8 +369,9 @@ void CGameServer::ServerReadNet()
 		if (serverNet->IsActiveConnection(a))
 		{
 			unsigned char inbuf[8000];
-			int ret = serverNet->GetData(inbuf, a);
-			while (ret > 0)
+			int ret = 0;
+			bool quit = false;
+			while (!quit && (ret = serverNet->GetData(inbuf, a)) > 0)
 			{
 				switch (inbuf[0]){
 					case NETMSG_NEWFRAME:
@@ -423,6 +424,7 @@ void CGameServer::ServerReadNet()
 					case NETMSG_QUIT: {
 						serverNet->SendPlayerLeft(a, 1);
 						serverNet->Kill(a);
+						quit = true;
 						if (hostif)
 						{
 							hostif->SendPlayerLeft(a, 1);
@@ -606,16 +608,30 @@ void CGameServer::ServerReadNet()
 						}
 						break;
 				}
-				ret = serverNet->GetData(inbuf, a);
 			}
-
-			if (ret == -1)
+		}
+		else if (gs->players[a]->active)
+		{
+			//BAD: server should keep its own list of players
+			gs->players[a]->active = false;
+			serverNet->SendPlayerLeft(a, 0);
+			if (hostif)
 			{
-				serverNet->SendPlayerLeft(a, 0);
-				if (hostif)
-				{
-					hostif->SendPlayerLeft(a, 0);
-				}
+				hostif->SendPlayerLeft(a, 0);
+			}
+		}
+	}
+	
+	for (int a = (serverNet->MaxConnectionID() + 1); a < gs->activePlayers; a++)
+	{
+		//HACK check if we lost connection to the last player(s)
+		if (gs->players[a]->active)
+		{
+			gs->players[a]->active = false;
+			serverNet->SendPlayerLeft(a, 0);
+			if (hostif)
+			{
+				hostif->SendPlayerLeft(a, 0);
 			}
 		}
 	}

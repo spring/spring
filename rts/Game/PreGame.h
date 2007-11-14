@@ -17,6 +17,7 @@ public:
 		WAIT_ON_SCRIPT,
 		WAIT_ON_MAP,
 		WAIT_ON_MOD,
+		WAIT_CONNECTING,
 		ALL_READY,
 	};
 	CPreGame(bool server, const std::string& demo, const std::string& save);

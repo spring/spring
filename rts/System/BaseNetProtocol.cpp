@@ -52,13 +52,6 @@ void CBaseNetProtocol::RawSend(const uchar* data,const unsigned length)
 	SendData(data, length);
 }
 
-int CBaseNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
-{
-	int ret = CNet::GetData(buf, conNum);
-	
-	return ret;
-}
-
 //  NETMSG_QUIT             = 2,  //
 
 void CBaseNetProtocol::SendQuit()

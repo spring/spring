@@ -34,7 +34,8 @@ CLocalConnection::~CLocalConnection()
 void CLocalConnection::SendData(const unsigned char *data, const unsigned length)
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
-	
+
+	dataSent += length;
 	Data[OtherInstance()].push(new RawPacket(data, length));
 	dataSent += length;
 }
@@ -47,6 +48,7 @@ RawPacket* CLocalConnection::GetData()
 	{
 		RawPacket* next = Data[instance].front();
 		Data[instance].pop();
+		dataRecv += next->length;
 		return next;
 	}
 	else

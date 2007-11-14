@@ -42,7 +42,6 @@ unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 
 	unsigned myNum = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
-	//logOutput.Print("Connected to local server using number %i", wantedNumber);
 	return myNum;
 }
 
