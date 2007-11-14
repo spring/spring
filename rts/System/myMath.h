@@ -9,44 +9,55 @@
 
 extern float2 headingToVectorTable[1024];
 
-inline short int GetHeadingFromVector(float dx,float dz)
+inline short int GetHeadingFromFacing(int facing)
+{
+	switch (facing) {
+		case 0: return 0;		// south
+		case 1: return 16384;	// east
+		case 2: return  32767;	// north == -32768
+		case 3: return -16384;	// west
+		default: return 0;
+	}
+}
+
+inline short int GetHeadingFromVector(float dx, float dz)
 {
 	float h;
-	//printf("(%.2f,%.2f)\n",dx,dz);
-	if(dz!=0){
-		float d=dx/dz;
-		if(d > 1){
-			h=(PI/2) - d/(d*d + 0.28f);
-		} else if (d < -1){
-			h=-(PI/2) - d/(d*d + 0.28f);
-		}else{
-			h=d/(1 + 0.28f * d*d);
-		}
-		if (dz<0) {
-		  if (dx>0)
-		    h+=PI;
-		  else
-		    h-=PI;
+	if (dz != 0) {
+		float d = dx / dz;
+
+		if (d > 1) {
+			h = (PI / 2) - d / (d * d + 0.28f);
+		} else if (d < -1) {
+			h = -(PI / 2) - d / (d * d + 0.28f);
+		} else {
+			h = d / (1 + 0.28f * d * d);
 		}
 
+		if (dz < 0) {
+			if (dx > 0)
+				h += PI;
+			else
+				h -= PI;
+		}
 	} else {
-		if(dx>0)
-			h=PI/2;
+		if (dx > 0)
+			h = PI / 2;
 		else
-			h=-PI/2;
+			h = -PI / 2;
 	}
 
-	h*=SHORTINT_MAXVALUE/PI;
+	h *= SHORTINT_MAXVALUE / PI;
 
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following 
+	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 //	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
 //	return (short int) h;
 
 	int ih = (int) h;
 	ih %= SHORTINT_MAXVALUE;
-	return (short int)ih;
+	return (short int) ih;
 
 /*
 	float wantedHeading;

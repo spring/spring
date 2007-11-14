@@ -74,7 +74,8 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	wantedHeight(80),
 	altitudeRate(3.0f),
 	currentBank(0),
-	wantedHeading(0),
+	// we want to take off in direction of factory facing
+	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	wantToStop(false),
 	forceHeading(false),
 	dontCheckCol(false),
@@ -87,15 +88,15 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	circlingPos(ZeroVector),
 	decRate(1),
 	flyState(FLY_CRUISING),
-	forceHeadingTo(0),
+	forceHeadingTo(wantedHeading),
 	goalDistance(1),
-	goalPos(owner?owner->pos:float3(0,0,0)),
-	oldGoalPos(owner?owner->pos:float3(0,0,0)),
+	goalPos(owner? owner->pos:float3(0, 0, 0)),
+	oldGoalPos(owner? owner->pos:float3(0, 0, 0)),
 	turnRate(1),
 	wantedSpeed(ZeroVector),
 	lastColWarning(0),
 	lastColWarningType(0),
-	reservedLandingPos(-1,-1,-1),
+	reservedLandingPos(-1, -1, -1),
 	maxDrift(1),
 	repairBelowHealth(0.30f),
 	padStatus(0),
@@ -103,8 +104,9 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	currentPitch(0),
 	autoLand(true)
 {
-	if (owner)
-		owner->dontUseWeapons=true;
+	if (owner) {
+		owner->dontUseWeapons = true;
+	}
 }
 
 CTAAirMoveType::~CTAAirMoveType(void)
@@ -498,10 +500,10 @@ void CTAAirMoveType::UpdateFlying()
 	float dist=dir.Length2D();
 
 	//If we are close to our goal, we should go slow enough to be able to break in time
-	//new additional rule: 
-	//if in attack mode or have more this is an intermediate waypoint dont 
+	//new additional rule:
+	//if in attack mode or have more this is an intermediate waypoint dont
 	//slow down except if near ground level
-                    		
+
 	if ((flyState!=FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands() ) || (pos.y - ground->GetHeight(pos.x, pos.z) < orgWantedHeight/2)) {
 		realMax = dist/(speed.Length2D()+0.01f) * decRate;
 		//logOutput.Print("Break! %f %f %f", maxSpeed, dir.Length2D(), realMax);
@@ -523,8 +525,10 @@ void CTAAirMoveType::UpdateFlying()
 		dir = goalPos - pos;
 	}
 
-	if(dir.SqLength2D()>1)
-		wantedHeading = GetHeadingFromVector(dir.x, dir.z);
+	if (dir.SqLength2D() > 1) {
+		int h = GetHeadingFromVector(dir.x, dir.z);
+		wantedHeading = (h == 0)? wantedHeading: h;
+	}
 }
 
 
@@ -600,14 +604,14 @@ void CTAAirMoveType::UpdateLanding()
 
 void CTAAirMoveType::UpdateHeading()
 {
-	short& heading=owner->heading;
-
+	short& heading = owner->heading;
 	short deltaHeading = wantedHeading - heading;
 
-	if(forceHeading)
-		deltaHeading= forceHeadingTo - heading;
+	if (forceHeading) {
+		deltaHeading = forceHeadingTo - heading;
+	}
 
-	if(deltaHeading > 0){
+	if (deltaHeading > 0) {
 		heading += deltaHeading > (short int)turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
 	} else {
 		heading += deltaHeading > (short int)(-turnRate) ? deltaHeading : (short int)(-turnRate);  //max(-turnRate, deltaHeading);
