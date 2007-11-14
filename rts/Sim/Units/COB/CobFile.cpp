@@ -199,6 +199,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		scriptIndex[COBFN_EndBurst       + i] = getFunctionId("EndBurst"  + weap);
 		scriptIndex[COBFN_Shot           + i] = getFunctionId("Shot"      + weap);
 		scriptIndex[COBFN_BlockShot      + i] = getFunctionId("BlockShot" + weap);
+		scriptIndex[COBFN_TargetWeight + i] = getFunctionId("TargetWeight" + weap);
 
 		// If new-naming functions are not found, we need to support the old naming scheme
 		if (i > 2) {

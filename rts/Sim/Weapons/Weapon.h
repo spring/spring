@@ -38,6 +38,7 @@ public:
 	bool TryTargetRotate(float3 pos, bool userTarget);
 	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
 	bool CobBlockShot(const CUnit* unit);
+	float TargetWeight(const CUnit* unit) const;
 	void SlowUpdate(bool noAutoTargetOverride);
 	virtual void SlowUpdate();
 	virtual void Update();
@@ -106,7 +107,9 @@ public:
 	float fireSoundVolume;
 
 	bool cobHasBlockShot;							//set when the script has a BlockShot() function for this weapon
+	bool hasTargetWeight;                            //set when there's a TargetWeight() function for this weapon
 	bool angleGood;										//set when script indicated ready to fire
+	bool avoidTarget;								//set when the script wants the weapon to pick a new target, reset once one has been chosen
 	bool subClassReady;								//set to false if the subclassed weapon cant fire for some reason
 	bool onlyForward;									//can only fire in the forward direction of the unit (for aircrafts mostly?)
 

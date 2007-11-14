@@ -101,6 +101,7 @@
 #define SHIELD_POWER              95 // set or get
 #define STEALTH                   96 // set or get
 #define CRASHING                  97 // set or get, returns whether aircraft isCrashing state
+#define CHANGE_TARGET             98 // set, the value it's set to determines the affected weapon
 #define COB_ID                   100 // get
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
@@ -1429,6 +1430,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
+			break;
+		}
+		case CHANGE_TARGET: {
+			unit->weapons[param - 1]->avoidTarget = true;
 			break;
 		}
 		case ALPHA_THRESHOLD: {

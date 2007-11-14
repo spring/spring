@@ -52,7 +52,9 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(cobHasBlockShot),
+	CR_MEMBER(hasTargetWeight),
 	CR_MEMBER(angleGood),
+	CR_MEMBER(avoidTarget),
 	CR_MEMBER(maxAngleDif),
 	CR_MEMBER(wantedDir),
 	CR_MEMBER(lastRequestedDir),
@@ -131,7 +133,9 @@ CWeapon::CWeapon(CUnit* owner)
 	fireSoundId(0),
 	fireSoundVolume(0),
 	cobHasBlockShot(false),
+	hasTargetWeight(false),
 	angleGood(false),
+	avoidTarget(false),
 	maxAngleDif(0),
 	wantedDir(0,1,0),
 	lastRequestedDir(0,-1,0),
@@ -188,6 +192,7 @@ void CWeapon::SetWeaponNum(int num)
 	weaponNum = num;
 
 	cobHasBlockShot = owner->cob->FunctionExist(COBFN_BlockShot + weaponNum);
+	hasTargetWeight = owner->cob->FunctionExist(COBFN_TargetWeight + weaponNum);
 }
 
 
@@ -209,6 +214,22 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 	owner->cob->Call(COBFN_BlockShot + weaponNum, args);
 
 	return !!args[1];
+}
+
+
+float CWeapon::TargetWeight(const CUnit* targetUnit) const
+{
+	const int unitID = targetUnit ? targetUnit->id : 0;
+
+	std::vector<int> args;
+
+	args.push_back(unitID);
+	args.push_back(COBSCALE); // arg[1], for the return value
+	                          // the default is 1.0
+
+	owner->cob->Call(COBFN_TargetWeight + weaponNum, args);
+
+	return (float)args[1] / (float)COBSCALE;
 }
 
 
@@ -500,6 +521,7 @@ bool CWeapon::AttackUnit(CUnit *unit, bool userTarget)
 	targetUnit=unit;
 	targetPos=tempTargetPos;
 	AddDeathDependence(targetUnit);
+	avoidTarget=false;
 	return true;
 }
 
@@ -528,6 +550,8 @@ inline bool CWeapon::ShouldCheckForNewTarget() const
 	if (haveUserTarget)          { return false; }
 
 	if (targetType == Target_None) { return true; }
+	
+	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
 		if (targetUnit->category & badTargetCategory) {
