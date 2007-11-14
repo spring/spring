@@ -157,7 +157,6 @@ void CFactory::Update()
 		const int h = GetHeadingFromVector(mat[2], mat[10]);
 
 		// rotate unit nanoframe with platform
-		// curBuild->heading = (h + (buildFacing * 16 * 1024)) & 65535;
 		curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;
 
 		const float3 buildPos = CalcBuildPos(buildPiece);
@@ -233,7 +232,6 @@ void CFactory::Update()
 					// XXX the pathfinder sometimes... makes mistakes, try to hack around it
 					// XXX note this qualifies as HACK HACK HACK
 					float3 testpos = curBuild->pos + frontdir * (this->radius - 1.0f);
-					// float3 testpos = curBuild->pos + GetVectorFromHeading(curBuild->heading) * 10.0f;
 					Command c;
 					c.id = CMD_MOVE;
 					c.params.push_back(testpos.x);
