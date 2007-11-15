@@ -631,7 +631,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 
-		// limit how far away we fly
+	// limit how far away we fly
 	if (tempOrder && (owner->moveState < 2) && orderTarget
 			&& LinePointDist(ClosestPointOnLine(commandPos1, commandPos2, owner->pos),
 					commandPos2, orderTarget->pos)
@@ -799,16 +799,21 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		if (owner->weapons.size() > 0) {
 			// if we have at least one weapon then check if
-			// we can hit position with our first (meanest) one
+			// we can hit position with our first (assumed
+			// to be meanest) one
 			CWeapon* w = owner->weapons.front();
+
 			// XXX hack - dgun overrides any checks
 			if (c.id == CMD_DGUN) {
-				float rr = owner->maxRange*owner->maxRange;
-				for(vector<CWeapon*>::iterator it =  owner->weapons.begin();
+				float rr = owner->maxRange * owner->maxRange;
+
+				for (vector<CWeapon*>::iterator it = owner->weapons.begin();
 						it != owner->weapons.end(); ++it) {
+
 					if (dynamic_cast<CDGunWeapon*>(*it))
 						rr = (*it)->range * (*it)->range;
 				}
+
 				if (diff.SqLength() < rr) {
 					StopMove();
 					owner->AttackGround(pos, c.id == CMD_DGUN);
@@ -816,10 +821,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			} else {
 				const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-//				const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
-				if (inAngle) {
-					// if w->AttackGround() returned true then we are already
-					// in range with our biggest weapon so stop moving
+				const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
+
+				if (inAngle || inRange) {
 					StopMove();
 					owner->AttackGround(pos, c.id == CMD_DGUN);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
@@ -863,7 +867,7 @@ int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius)
 {
-	if(pos == goalPos)
+	if (pos == goalPos)
 		return;
 	goalPos = pos;
 	owner->moveType->StartMoving(pos, goalRadius);

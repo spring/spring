@@ -105,7 +105,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
-	if(owner->unitDef->canAttack && isAttackCapable()) {
+	if (isAttackCapable()) {
 		c.id=CMD_ATTACK;
 		c.action="attack";
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
@@ -116,7 +116,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		possibleCommands.push_back(c);
 	}
 
-	if(owner->unitDef->canDGun){
+	if (owner->unitDef->canDGun) {
 		c.id=CMD_DGUN;
 		c.action="dgun";
 		c.type=CMDTYPE_ICON_MAP;
@@ -199,7 +199,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.onlyKey=false;
 	c.hotkey="";
 
-	if(!owner->unitDef->noAutoFire){
+	if (!owner->unitDef->noAutoFire) {
 		if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
 			c.id=CMD_FIRE_STATE;
 			c.action="firestate";
@@ -218,8 +218,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		owner->fireState = 0;
 	}
 
-	if(owner->unitDef->canmove || owner->unitDef->builder)
-	{
+	if (owner->unitDef->canmove || owner->unitDef->builder) {
 		c.params.clear();
 		c.id=CMD_MOVE_STATE;
 		c.action="movestate";
@@ -234,9 +233,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		possibleCommands.push_back(c);
 		owner->moveState=1;
 		nonQueingCommands.insert(CMD_MOVE_STATE);
-	}
-	else
-	{
+	} else {
 		owner->moveState=0;
 	}
 
@@ -255,7 +252,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		nonQueingCommands.insert(CMD_REPEAT);
 	}
 
-	if(owner->unitDef->highTrajectoryType>1){
+	if (owner->unitDef->highTrajectoryType>1) {
 		c.params.clear();
 		c.id=CMD_TRAJECTORY;
 		c.action="trajectory";
@@ -270,8 +267,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		nonQueingCommands.insert(CMD_TRAJECTORY);
 	}
 
-	if(owner->unitDef->onoffable)
-	{
+	if (owner->unitDef->onoffable) {
 		c.params.clear();
 		c.id=CMD_ONOFF;
 		c.action="onoff";
@@ -279,10 +275,12 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.name="Active state";
 		c.mouseicon=c.name;
 		c.hotkey="x";
-		if(owner->unitDef->activateWhenBuilt)
+
+		if (owner->unitDef->activateWhenBuilt) {
 			c.params.push_back("1");
-		else
+		} else {
 			c.params.push_back("0");
+		}
 
 		c.params.push_back(" Off ");
 		c.params.push_back(" On ");
@@ -293,8 +291,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.hotkey="";
 	}
 
-	if(owner->unitDef->canCloak)
-	{
+	if (owner->unitDef->canCloak) {
 		c.params.clear();
 		c.id=CMD_CLOAK;
 		c.action="cloak";
@@ -302,10 +299,12 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.name="Cloak state";
 		c.mouseicon=c.name;
 		c.hotkey="k";
-		if(owner->unitDef->startCloaked)
+
+		if (owner->unitDef->startCloaked) {
 			c.params.push_back("1");
-		else
+		} else {
 			c.params.push_back("0");
+		}
 
 		c.params.push_back("UnCloaked");
 		c.params.push_back("Cloaked");
@@ -339,7 +338,7 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 bool CCommandAI::isAttackCapable() const
 {
 	const UnitDef* ud = owner->unitDef;
-	return (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory"));
+	return (!ud->weapons.empty() || ud->canKamikaze || ud->canAttack || (ud->type == "Factory"));
 }
 
 
@@ -384,7 +383,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		case CMD_ATTACK:
 			maxHeightDiff = 10;
 		case CMD_DGUN: {
-			if (!ud->canAttack || !isAttackCapable())
+			if (!isAttackCapable())
 				return false;
 
 			if (c.params.size() == 3) {
@@ -430,7 +429,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 			return false;
 	}
 
-	if (c.id == CMD_FIRE_STATE && (c.params.empty() || ud->noAutoFire || (ud->weapons.empty() && ud->type!="Factory")))
+	if (c.id == CMD_FIRE_STATE && (c.params.empty() || ud->noAutoFire || (ud->weapons.empty() && ud->type != "Factory")))
 		return false;
 	if (c.id == CMD_MOVE_STATE && (c.params.empty() || (!ud->canmove && !ud->builder)))
 		return false;
@@ -442,7 +441,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		return false;
 	if (c.id == CMD_CLOAK && (c.params.empty() || !ud->canCloak))
 		return false;
-	if(c.id == CMD_STOCKPILE && !stockpileWeapon)
+	if (c.id == CMD_STOCKPILE && !stockpileWeapon)
 		return false;
 
 	return true;
@@ -463,6 +462,7 @@ void CCommandAI::GiveCommandReal(const Command& c)
 	if (!AllowedCommand(c)) {
 		return;
 	}
+
 	GiveAllowedCommand(c);
 }
 
@@ -562,15 +562,15 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 				}
 			}
 			else {
-	  		if (commandQue.back().id == CMD_SELFD) {
-  				commandQue.pop_back();
+			if (commandQue.back().id == CMD_SELFD) {
+				commandQue.pop_back();
 				} else {
-	  			commandQue.push_back(c);
+					commandQue.push_back(c);
 				}
 			}
 			return;
 		}
-	  case CMD_SET_WANTED_MAX_SPEED: {
+		case CMD_SET_WANTED_MAX_SPEED: {
 			if (CanSetMaxSpeed() &&
 			    (commandQue.empty() ||
 			     (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED))) {
@@ -582,9 +582,9 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			}
 			return;
 		}
-	  case CMD_WAIT: {
-	  	GiveWaitCommand(c);
-	  	return;
+		case CMD_WAIT: {
+			GiveWaitCommand(c);
+			return;
 		}
 		case CMD_INSERT: {
 			ExecuteInsert(c);
@@ -597,14 +597,14 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 	}
 
 	// flush the queue for immediate commands
-	if(!(c.options & SHIFT_KEY)) {
+	if (!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
 			if ((commandQue.front().id == CMD_DGUN)      ||
 			    (commandQue.front().id == CMD_ATTACK)    ||
 			    (commandQue.front().id == CMD_AREA_ATTACK)) {
 				owner->AttackUnit(0,true);
 			}
- 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
+			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			commandQue.clear();
 		}
 		inCommand=false;
@@ -614,7 +614,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 		}
 	}
 
-	if(c.id == CMD_PATROL){
+	if (c.id == CMD_PATROL) {
 		CCommandQueue::iterator ci = commandQue.begin();
 		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
 		if(ci==commandQue.end()){
@@ -679,7 +679,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 
 	commandQue.push_back(c);
 
-	if (commandQue.size()==1 && !owner->beingBuilt && !owner->stunned) {
+	if (commandQue.size() == 1 && !owner->beingBuilt && !owner->stunned) {
 		SlowUpdate();
 	}
 }
@@ -1087,8 +1087,9 @@ int CCommandAI::UpdateTargetLostTimer(int unitid)
 void CCommandAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
-	if(inCommand){
-		if(targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
+
+	if (inCommand) {
+		if (targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 			FinishCommand();
 			return;
 		}
@@ -1103,11 +1104,14 @@ void CCommandAI::ExecuteAttack(Command &c)
 	}
 	else {
 		owner->commandShotCount = -1;
-		if(c.params.size()==1){
-			if(uh->units[int(c.params[0])]!=0 && uh->units[int(c.params[0])]!=owner){
-				owner->AttackUnit(uh->units[int(c.params[0])], c.id==CMD_DGUN);
-				if(orderTarget)
+
+		if (c.params.size() == 1) {
+			if (uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner) {
+				owner->AttackUnit(uh->units[int(c.params[0])], c.id == CMD_DGUN);
+
+				if (orderTarget)
 					DeleteDeathDependence(orderTarget);
+
 				orderTarget=uh->units[int(c.params[0])];
 				AddDeathDependence(orderTarget);
 				inCommand=true;
@@ -1154,10 +1158,10 @@ void CCommandAI::SlowUpdate()
 	Command& c = commandQue.front();
 
 	switch(c.id){
-		case CMD_WAIT:{
+		case CMD_WAIT: {
 			return;
 		}
-		case CMD_SELFD:{
+		case CMD_SELFD: {
 			if (owner->selfDCountdown != 0) {
 				owner->selfDCountdown = 0;
 			} else {
@@ -1166,15 +1170,15 @@ void CCommandAI::SlowUpdate()
 			FinishCommand();
 			return;
 		}
-		case CMD_STOP:{
+		case CMD_STOP: {
 			ExecuteStop(c);
 			return;
 		}
-		case CMD_ATTACK:{
+		case CMD_ATTACK: {
 			ExecuteAttack(c);
 			return;
 		}
-		case CMD_DGUN:{
+		case CMD_DGUN: {
 			ExecuteDGun(c);
 			return;
 		}
@@ -1197,7 +1201,7 @@ int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
 		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (owner->unitDef->canAttack && isAttackCapable()) {
+			if (isAttackCapable()) {
 				return CMD_ATTACK;
 			}
 		}
