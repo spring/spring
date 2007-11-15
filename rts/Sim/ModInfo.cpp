@@ -4,6 +4,7 @@
 #include "ModInfo.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
+#include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "System/LogOutput.h"
@@ -33,7 +34,7 @@ void CModInfo::Init(const char* modname)
 	                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	parser.GetTable("Spring");
-	parser.AddFunc("GetModOptions", LuaParser::GetModOptions);
+	parser.AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
 	parser.EndTable();
 	parser.Execute();
 	if (!parser.IsValid()) {

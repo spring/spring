@@ -369,16 +369,24 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.isfireplatform    = udTable.GetBool("isFirePlatform",    false);
 	ud.isAirBase         = udTable.GetBool("isAirBase",         false);
 	ud.loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
-	ud.unloadSpread		 = udTable.GetFloat("unloadSpread",		1.0f);
+	ud.unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	ud.cantBeTransported = udTable.GetBool("cantBeTransported", false);
 	ud.transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
-	ud.transportUnloadMethod	= udTable.GetInt("transportUnloadMethod" , 0);	//0 normal, 1 parachute drop, 2 land flood
-	ud.fallSpeed				= udTable.GetFloat("fallSpeed", 0.2);			//drop speed for all units dropped from this transport
-	ud.unitFallSpeed			= udTable.GetFloat("unitFallSpeed", 0);			//specific unit drop speed, overrides fallSpeed
+	ud.fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
+	ud.unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
+	ud.transportUnloadMethod	= udTable.GetInt("transportUnloadMethod" , 0);
+
+	// modrules transport settings
+	if ((!modInfo.transportAir    && ud.canfly)   ||
+	    (!modInfo.transportShip   && ud.floater)  ||
+	    (!modInfo.transportHover  && ud.canhover) ||
+	    (!modInfo.transportGround && !ud.canhover && !ud.floater && !ud.canfly)) {
+ 		ud.cantBeTransported = true;
+	}
 
 	ud.wingDrag     = udTable.GetFloat("wingDrag",     0.07f);  // drag caused by wings
 	ud.wingAngle    = udTable.GetFloat("wingAngle",    0.08f);  // angle between front and the wing plane
@@ -655,15 +663,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		} else {
 			ud.seismicSignature = 0.0f;
 		}
-	}
-
-	// setup transport options
-
-	if ((!modInfo.transportAir    && ud.canfly)   ||
-	    (!modInfo.transportShip   && ud.floater)  ||
-	    (!modInfo.transportHover  && ud.canhover) ||
-	    (!modInfo.transportGround && !ud.canhover && !ud.floater && !ud.canfly)) {
- 		ud.cantBeTransported = true;
 	}
 
 	LuaTable buildsTable = udTable.SubTable("buildOptions");
