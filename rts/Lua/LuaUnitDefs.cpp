@@ -773,10 +773,16 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("waterline",     ud.waterline);
 	ADD_FLOAT("maxWaterDepth", ud.maxWaterDepth);
 
+	ADD_INT("flankingBonusMode",   ud.flankingBonusMode);
+	ADD_FLOAT("flankingBonusMax",  ud.flankingBonusMax);
+	ADD_FLOAT("flankingBonusMin",  ud.flankingBonusMin);
+	ADD_FLOAT("flankingBonusDirX", ud.flankingBonusDir.x);
+	ADD_FLOAT("flankingBonusDirY", ud.flankingBonusDir.y);
+	ADD_FLOAT("flankingBonusDirZ", ud.flankingBonusDir.z);
+	ADD_FLOAT("flankingBonusMobilityAdd", ud.flankingBonusMobilityAdd);
+
 	ADD_INT("armorType",         ud.armorType);
 	ADD_FLOAT("armoredMultiple", ud.armoredMultiple);
-
-	ADD_BOOL("bonusShieldEnabled", ud.bonusShieldEnabled);
 
 	ADD_FLOAT("hitSphereScale",   ud.collisionSphereScale);
 	ADD_FLOAT("hitSphereOffsetX", ud.collisionSphereOffset.x);
