@@ -78,12 +78,14 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
                                                          unsigned char options)
 {
 	// sets the wanted speed of this unit to the group minimum
+	// (note: was being divided by GAME_SPEED, but minMaxSpeed
+	// is in units per second)
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
 		Command c;
 		c.id = CMD_SET_WANTED_MAX_SPEED;
 		c.options = options;
-		c.params.push_back(minMaxSpeed / 30.0f);
+		c.params.push_back(minMaxSpeed);
 		cai->GiveCommand(c);
 	}
 }
@@ -211,6 +213,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
+
 		for (ui = netSelected.begin(); ui != netSelected.end(); ++ui) {
 			CUnit* unit = uh->units[*ui];
 			if (unit) {
@@ -226,6 +229,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				uc.params[CMDPARAM_MOVE_Y] += midPos.y - centerCoor.y;
 				uc.params[CMDPARAM_MOVE_Z] += midPos.z - centerCoor.z;
 				unit->commandAI->GiveCommand(uc);
+
 				if (groupSpeed) {
 					AddGroupSetMaxSpeedCommand(unit, c.options);
 				} else {
