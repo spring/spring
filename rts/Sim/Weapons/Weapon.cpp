@@ -787,13 +787,15 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 		return false;
 	}
 
-	if(!weaponDef->waterweapon && pos.y<1){
-		pos.y=1;
+	if (!weaponDef->waterweapon && pos.y < 1) {
+		pos.y = 1;
 	}
-	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
-	short enemyHeadding = GetHeadingFromVector(
+
+	short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
+	short enemyHeading = GetHeadingFromVector(
 		pos.x - weaponPos.x, pos.z - weaponPos.z);
-	return TryTargetHeading(enemyHeadding - weaponHeadding, pos, userTarget, 0);
+
+	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
 }
 
 bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit) {
