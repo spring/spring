@@ -143,6 +143,11 @@ class LuaParser {
 		string errorLog;	
 		set<string> accessedFiles;
 
+	public:
+		// optional routines for clients
+		static int GetMapOptions(lua_State* L);
+		static int GetModOptions(lua_State* L);
+
 	private:
 		// Spring call-outs
 		static int Echo(lua_State* L);

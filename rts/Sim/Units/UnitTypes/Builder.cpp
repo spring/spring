@@ -264,7 +264,7 @@ void CBuilder::Update()
 	else if(curResurrect && f3Dist(curResurrect->pos, pos)<buildDistance+curResurrect->radius && inBuildStance){
 		const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 		if(ud){
-			if ((modInfo->reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
+			if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 				// This corpse has been reclaimed a little, need to restore the resources
 				// before we can let the player resurrect it.
 				curResurrect->AddBuildPower(repairSpeed, this);

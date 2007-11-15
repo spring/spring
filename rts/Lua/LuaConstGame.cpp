@@ -62,28 +62,28 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "windMin",         wind.GetMinWind());
 	LuaPushNamedNumber(L, "windMax",         wind.GetMaxWind());
 
-	LuaPushNamedString(L, "modName",         modInfo->humanName);
-	LuaPushNamedString(L, "modShortName",    modInfo->shortName);
-	LuaPushNamedString(L, "modVersion",      modInfo->version);
-	LuaPushNamedString(L, "modMutator",      modInfo->mutator);
-	LuaPushNamedString(L, "modDesc",         modInfo->description);
+	LuaPushNamedString(L, "modName",         modInfo.humanName);
+	LuaPushNamedString(L, "modShortName",    modInfo.shortName);
+	LuaPushNamedString(L, "modVersion",      modInfo.version);
+	LuaPushNamedString(L, "modMutator",      modInfo.mutator);
+	LuaPushNamedString(L, "modDesc",         modInfo.description);
 
-	LuaPushNamedBool(L,   "allowTeamColors", modInfo->allowTeamColors);
-	LuaPushNamedNumber(L, "multiReclaim",    modInfo->multiReclaim);
-	LuaPushNamedNumber(L, "reclaimMethod",   modInfo->reclaimMethod);
-	LuaPushNamedNumber(L, "transportAir",    modInfo->transportAir);
-	LuaPushNamedNumber(L, "transportShip",   modInfo->transportShip);
-	LuaPushNamedNumber(L, "transportHover",  modInfo->transportHover);
-	LuaPushNamedNumber(L, "transportGround", modInfo->transportGround);
-	LuaPushNamedNumber(L, "fireAtKilled", modInfo->fireAtKilled);
-	LuaPushNamedNumber(L, "fireAtCrashing", modInfo->fireAtCrashing);
+	LuaPushNamedBool(L,   "allowTeamColors", modInfo.allowTeamColors);
+	LuaPushNamedNumber(L, "multiReclaim",    modInfo.multiReclaim);
+	LuaPushNamedNumber(L, "reclaimMethod",   modInfo.reclaimMethod);
+	LuaPushNamedNumber(L, "transportAir",    modInfo.transportAir);
+	LuaPushNamedNumber(L, "transportShip",   modInfo.transportShip);
+	LuaPushNamedNumber(L, "transportHover",  modInfo.transportHover);
+	LuaPushNamedNumber(L, "transportGround", modInfo.transportGround);
+	LuaPushNamedNumber(L, "fireAtKilled",    modInfo.fireAtKilled);
+	LuaPushNamedNumber(L, "fireAtCrashing",  modInfo.fireAtCrashing);
 
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
 	         archiveScanner->GetMapChecksum(readmap->mapName));
 	LuaPushNamedString(L, "mapChecksum", buf);
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetModChecksum(modInfo->filename));
+	         archiveScanner->GetModChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
 	const vector<string> cats =

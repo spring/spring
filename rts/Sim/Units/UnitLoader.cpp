@@ -151,7 +151,12 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->armorType=ud->armorType;
 	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
 	unit->maxSpeed = ud->speed/30.0;
-	unit->bonusShieldEnabled = ud->bonusShieldEnabled;
+	unit->flankingBonusMode = ud->flankingBonusMode;
+	unit->flankingBonusDir = ud->flankingBonusDir;
+	unit->flankingBonusMobility = ud->flankingBonusMobilityAdd * 1000;
+	unit->flankingBonusMobilityAdd = ud->flankingBonusMobilityAdd;
+	unit->flankingBonusAvgDamage = (ud->flankingBonusMax + ud->flankingBonusMin) * 0.5f;
+	unit->flankingBonusDifDamage = (ud->flankingBonusMax - ud->flankingBonusMin) * 0.5f;
 	unit->decloakDistance = ud->decloakDistance;
 
 	if(ud->highTrajectoryType==1)

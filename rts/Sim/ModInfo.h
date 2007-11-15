@@ -5,8 +5,10 @@
 class CModInfo
 {
 public:
-	CModInfo(const char *modname);
-	~CModInfo();
+	CModInfo() {};
+	~CModInfo() {};
+
+	void Init(const char* modname);
 
 	std::string filename; // archive filename
 
@@ -32,9 +34,10 @@ public:
 	int fireAtKilled;	//1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
 	int fireAtCrashing;	//1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
 
+	int flankingBonusModeDefault;	//0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
 };
 
-extern CModInfo *modInfo;
+extern CModInfo modInfo;
 
 
 #endif

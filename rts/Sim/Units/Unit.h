@@ -35,11 +35,13 @@ struct UnitTrackStruct;
 class CTransportUnit;
 using namespace std;
 
-#define LOS_INLOS 1				//the unit is currently in the los of the allyteam
-#define LOS_INRADAR 2			//the unit is currently in radar from the allyteam
-#define LOS_PREVLOS 4			//the unit has previously been in los from the allyteam
-#define LOS_CONTRADAR 8		//the unit has continously been in radar since it was last inlos by the allyteam
-#define LOS_INTEAM 16			//the unit is part of this allyteam
+
+// LOS state bits
+#define LOS_INLOS      (1 << 0)  // the unit is currently in the los of the allyteam
+#define LOS_INRADAR    (1 << 1)  // the unit is currently in radar from the allyteam
+#define LOS_PREVLOS    (1 << 2)  // the unit has previously been in los from the allyteam
+#define LOS_CONTRADAR  (1 << 3)  // the unit has continously been in radar since it was last inlos by the allyteam
+#define LOS_INTEAM     (1 << 4)  // the unit is part of this allyteam
 
 
 enum ScriptCloakBits {
@@ -293,13 +295,19 @@ public:
 	std::string tooltip;
 
 	bool crashing;
-	bool isDead;								//prevent damage from hitting an already dead unit (causing multi wreck etc)
-	bool	falling;	//for units being dropped from transports (parachute drops)
+	bool isDead;    // prevent damage from hitting an already dead unit (causing multi wreck etc)
+	bool	falling;  // for units being dropped from transports (parachute drops)
 	float	fallSpeed; 
 
-	float bonusShieldEnabled;		//defaults to true in UnitDefHandler
-	float bonusShieldSaved;			//how much the bonus shield can turn upon an attack(zeroed when attacked, slowly increase)
-	float3 bonusShieldDir;			//units takes less damage when attacked from this dir (encourage flanking fire)
+	int flankingBonusMode;  // 0 = no flanking bonus
+	                        // 1 = global coords, mobile
+	                        // 2 = unit coords, mobile
+	                        // 3 = unit coords, locked
+	float3 flankingBonusDir;         // units takes less damage when attacked from this dir (encourage flanking fire)
+	float  flankingBonusMobility;    // how much the lowest damage direction of the flanking bonus can turn upon an attack (zeroed when attacked, slowly increases)
+	float  flankingBonusMobilityAdd; // how much ability of the flanking bonus direction to move builds up each frame
+	float  flankingBonusAvgDamage;   // average factor to multiply damage by
+	float  flankingBonusDifDamage;   // (max damage - min damage) / 2
 
 	bool armoredState;
 	float armoredMultiple;
@@ -378,22 +386,25 @@ public:
 public:
 	static void SetLODFactor(float);
 
-	static void  SetExpGrade(float value) { expGrade = value; }
-	static float GetExpGrade()     { return expGrade; }
+	static void  SetExpMultiplier(float value) { expMultiplier = value; }
+	static float GetExpMultiplier()     { return expMultiplier; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static float GetExpPowerScale()    { return expPowerScale; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
 	static float GetExpHealthScale()     { return expHealthScale; }
 	static void  SetExpReloadScale(float value) { expReloadScale = value; }
 	static float GetExpReloadScale()     { return expReloadScale; }
+	static void  SetExpGrade(float value) { expGrade = value; }
+	static float GetExpGrade()     { return expGrade; }
 
 private:
 	static float lodFactor; // unsynced
 
-	static float expGrade;
+	static float expMultiplier;
 	static float expPowerScale;
 	static float expHealthScale;
 	static float expReloadScale;
+	static float expGrade;
 };
 
 #endif /* UNIT_H */

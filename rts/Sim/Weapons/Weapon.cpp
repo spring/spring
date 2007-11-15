@@ -702,7 +702,8 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 		return false;
 	}
 
-	if(unit && ((unit->isDead && (modInfo->fireAtKilled==0)) || (unit->crashing && (modInfo->fireAtCrashing==0)))) {
+	if(unit && ((unit->isDead   && (modInfo.fireAtKilled==0)) ||
+	            (unit->crashing && (modInfo.fireAtCrashing==0)))) {
 		return false;
 	}
 	if (weaponDef->stockpile && !numStockpiled) {

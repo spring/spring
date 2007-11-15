@@ -279,15 +279,6 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	// don't transport cloaked enemies
 	if (unit->isCloaked && !gs->AlliedTeams(unit->team, owner->team))
 		return false;
-	if(unit->unitDef->canhover && (modInfo->transportHover==0))
- 		return false;
-	if(unit->unitDef->floater && (modInfo->transportShip==0))
-		return false;
-	if(unit->unitDef->canfly && (modInfo->transportAir==0))
-		return false;
-	// if not a hover, not a floater and not a flier, then it's probably ground unit
-	if(!unit->unitDef->canhover && !unit->unitDef->floater && !unit->unitDef->canfly && (modInfo->transportGround==0))
-		return false;
 	if(unit->xsize > owner->unitDef->transportSize*2)
 		return false;
 	if(unit->xsize < owner->unitDef->minTransportSize*2)

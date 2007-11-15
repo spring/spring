@@ -20,6 +20,7 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/SensorHandler.h"
+#include "Sim/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
@@ -305,11 +306,14 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.captureSpeed   = udTable.GetFloat("captureSpeed",   ud.buildSpeed);
 	ud.terraformSpeed = udTable.GetFloat("terraformSpeed", ud.buildSpeed);
 
-	ud.armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
-	ud.armorType=damageArrayHandler->GetTypeFromName(ud.name);
-//	logOutput.Print("unit %s has armor %i",ud.name.c_str(),ud.armorType);
+	ud.flankingBonusMode = udTable.GetFloat("flankingBonusMode", modInfo.flankingBonusModeDefault);
+	ud.flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
+	ud.flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
+	ud.flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", float3(0.0f, 0.0f, 1.0f));
+	ud.flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
-	ud.bonusShieldEnabled = udTable.GetBool("bonusShieldEnabled", true);
+	ud.armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
+	ud.armorType = damageArrayHandler->GetTypeFromName(ud.name);
 
 	ud.radarRadius    = udTable.GetInt("radarDistance",    0);
 	ud.sonarRadius    = udTable.GetInt("sonarDistance",    0);
@@ -651,6 +655,15 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		} else {
 			ud.seismicSignature = 0.0f;
 		}
+	}
+
+	// setup transport options
+
+	if ((!modInfo.transportAir    && ud.canfly)   ||
+	    (!modInfo.transportShip   && ud.floater)  ||
+	    (!modInfo.transportHover  && ud.canhover) ||
+	    (!modInfo.transportGround && !ud.canhover && !ud.floater && !ud.canfly)) {
+ 		ud.cantBeTransported = true;
 	}
 
 	LuaTable buildsTable = udTable.SubTable("buildOptions");
