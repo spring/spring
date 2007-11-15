@@ -29,6 +29,20 @@ Spring change log
 - Replacement Bark, bleaf and foam images. 
 - Added behavior to mobile units so that they will start chasing when the target is running away, but before the target exits weapons range, allowing the unit to fire continuously at the retreating unit, instead of the cycles of firing, then running to catch up that existed prevously.
 - Moved to Satirik's lobby, huge amount of changes.
+- Changed '/grabinput' to '/grabinput [0|1]', and added state reporting 
+- Added client side network traffic tallying (per packet type) 
+- Added CallLuaRules() to CAICallback 
+- Added 'AIDLL=LuaAI:' -> CTeam::luaAI handling for LuaAI
+- Added the "/grounddecals [0|1]" command 
+- Put springcontent.sdz and bitmaps.sdz in upgrading installer. 
+- Lasers no longer use their full texture on shots that hit before their full length.
+- Checksum is now read from 7z/zip archive header instead of checksumming entire file, making things like map list reloading faster by a huge amount.
+- Move shaders into springcontent.sdz 
+- GadgetHandler added to springcontent.sdz
+- Added GetPrimaryModVersion() to unitsync 
+- Bumped to ArchiveCache version to 6 ... ArchiveCacheV6.txt 
+- Support for up to 2^31 players 
+- Negative damage now allowed.
 
 User Interface:
 - Added the CTRL modifier to area reclaims to allow reclaiming your own wrecks 
@@ -70,6 +84,9 @@ User Interface:
 - Disabled shadow generation when using LOS viewmode (would be better to add shadows in LOS mode, but might as well avoid the shadow generation overhead until the shadows are added)
 - Make Fight be able to be given a line command, like move already can be.
 - Only add the SelectAI button if the current selection has valid GroupAIs 
+- Change default keybinding for createvideo to Ctrl+Shift+F10 (was Any+F10), so it is less easy to accidentally hit it.
+- Change savegame default keybinding from Any+F8 to Ctrl+Shift+F8, for the same reason as the createvideo keybind change.
+- Improved view centering for the Free Camera mode 
 
 TDF and FBI tags:
 
@@ -141,7 +158,36 @@ fallSpeed is used on the transports fbi file, to dictate the speed of all units 
 - Added FBI tag minTransportMass=float, determines the smallest mass unit that the transport can load
 - Removed the check for Air movetype for holdSteady FBI tag, so now ground transports can use it too 
 - Restore old default value of floater FBI tag: Default to true if WaterLine FBI tag exists, false if it does not exist. (It was: default to true if WaterLine != 0) 
--New FBI tag for transports; float unloadSpread: Controls the spacing between units in an area unload command, works as a multiple, default is 1.
+- New FBI tag for transports; float unloadSpread: Controls the spacing between units in an area unload command, works as a multiple, default is 1.
+- Added the 'decloakSpherical' unitDef tag  (defaults to true) 
+- Added the tag "hardStop" (bool, default 0) which, if used, makes the laser not fade if it doesn't hit before hitting its range limit and instead has the laser stop immediately and contract, as if it had hit something. This looks better with really long lasers, especially those that are longer than their range. 
+- Weapon projectiles can now spawn a CEG at their position every frame using the cegTag weapon tag.
+- ProximityPriority tag - acts as a multiplier for the distance to the target in the priority calculation. Note that negative values make weapons prefer distant targets.
+- Added the following to modrules.tdf (default values shown):
+   [DISTANCE] {
+     builderUse2D=0;
+   }
+   [EXPERIENCE] {
+     powerScale=1.0;
+     healthScale=0.7;
+     reloadScale=0.4;
+   }
+- Added optional 3D ranging for all builder operations (build, repair, reclaim, etc...) 
+- adds [experience] { experienceMult = 1.0; } to modrules
+- adds [flankingBonus] { defaultMode = 1; }   to modrules
+- replaces the old bonus shield system with flanking bonus
+- new unitDef parameters:
+     int    flankingBonusMode
+     float  flankingBonusMax
+     float  flankingBonusMin
+     float  flankingBonusMobilityAdd
+     float3 flankingBonusDir
+- new COB GET/SETS
+     FLANK_B_MODE         120 // set or get
+     FLANK_B_DIR          121 // set or get, set is through get for multiple args
+     FLANK_B_MOBILITY_ADD 122 // set or get
+     FLANK_B_MAX_DAMAGE   123 // set or get
+     FLANK_B_MIN_DAMAGE   124 // set or get
 
 Bugfixes:
 
@@ -228,6 +274,20 @@ Bugfixes:
 - Fixed the wait/teleport factory bug
 - Fix flying/underground units bug.
 - Unhide the gaia team, and colorize by allegiance 
+- Made demo not found / demo corrupt / format outdated exceptions instead of logOutput-warnings 
+- /quit will now quit immediately if you are the only active player 
+- Fixed a 'bad team' segv in Spring.CreateUnit() 
+- Added the ScopedMapLoader helper to unitsync 
+- Paralyzers no longer shake the camera.
+- Fixed the missile and starburst texture2 only applying to the first segment of the smoketrail (the segment that's still part of the projectile, not a CSmokeTrailProjectile). Now the entire trail uses the texture.
+- Fix possible segmentation faults after loading a shared object failed. 
+- Fixed bug where server dont send remaining data (including NETMSG_QUIT) to server 
+- Set ACTIVATION issues CMD_ONOFF instead of activating/deactivating, fixing issues with on/off not showing correct state.
+- Added a check for weapon 'slavedTo' values  (content_error) 
+- Fixed some bugs in gl.TexEnv / gl.MultiTexEnv / gl.TexGen / gl.MultiTexGen 
+- Used the decoyDef ghost building models when appropriate 
+- Fixed CAirMoveType planes not rotating on factory pads 
+- Fixed CTAAirMoveType planes always taking off from labs facing south.
 
 Lua:
 - Added call-in gl.Smoothing(point, line, polygon)
@@ -244,7 +304,28 @@ Lua:
 - Added SetTeamColor()        call-out
 - Added GetTeamColor()        call-out
 - Added GetTeamOrigColor()    call-out 
+- Added the Spring.SetDrawSky()   lua call-out
+- Added the Spring.SetDrawWater() lua call-out
+- Added the Spring.SetDrawGroud() lua call-out
+- Added the gl.UnitMultMatrix() lua call-out
+- Added the GetLuaAIDesc() call 
+* Added the Spring.AddUnitDamage(
+   number unitID,
+   number damage,
+   number paralyzeTime,
+   number attackerID,
+   number weaponID,
+   number impulseX, number impulseXY, number impulseZ) lua call-out 
+- Added the gl.UnitPieceMultMatrix() lua call-out
+- Added the gl.EdgeFlag() lua call-out
+- Added the Spring.GetCameraFOV()       lua call-out
+- Added the Spring.GetCameraDirection() lua call-out 
 - Added unit count protection to Spring.CreateUnit() 
+- Added the DrawUnit() LuaRules unsynced call-in  (for SetUnitLuaDraw())
+- Added the Spring.SetUnitLuaDraw() LuaRules call-out
+- Added the GameFrame() call-in to LuaUI
+- Added the AICallIn() LuaRules unsynced call-in  (for CallLuaRules())   
+- Added the Spring.GetTeamLuaAI() lua call-out
 - Added LuaUI Spring.GetGatherMode()
 - Added LuaUI Spring.GetInvertQueueKey() 
 - Added Spring.SetUnitLineage(unitID, teamID[, bool isRoot])
@@ -255,11 +336,17 @@ Lua:
 - Added PlaySoundStream and StopSoundStream for OggVorbis audio.
 - Added the rank parameter to GetPlayerInfo()  (arg 7) 
 - Added 'autoland' to GetUnitStates() 
+- Added the UnitCmdDone()   call-in
+- Added the UnitCloaked()   call-in
+- Added the UnitDecloaked() call-in
+- Adedd the MapDrawCmd()    call-in  (only for LuaUI) 
+- Added the unsynced Spring.GetVisibleUnits([teamID] [,radius] [,useIcons]) call-out 
 - Added the following to both UnitDefs[] and FeatureDefs[]
    height, radius
    minx, midx, maxx
    miny, midy, maxy
    minz, midz, maxz
+- Added mainDirX / mainDirY / mainDirZ to the lua UnitDef.weapons[#] tables 
 - Disabled the lua DrawScreen() call-in when the interface is hidden (note that the DrawScreenEffects() call-in remains active)
 - The majority of mod files are now loaded via LuaParsers, which can be edited to load different types of files. The default LuaParsers simply load the normal style files with improved error checking and speed.
 - Game.armorTypes[] was changed to a bidirectional map
@@ -278,11 +365,47 @@ Lua:
  - neutral units (mainly for gaia and fake features), will not be attacked
    automatic when the attacker to be has its fireState set to "Fire At Will"
  - added a hidden fourth fireState level (3) that will shoot at neutrals 
-- Added SetCustomCommandDrawLine(int cmdID, int iconCmdID, table color {r, g, b, a}) -> nil 
+- Added SetCustomCommandDrawData
 - Added 'extractorRadius' to the LUA Game table 
 - Added Spring.IsGodModeEnabled() to LuaSyncedRead
 - Added the "gamedata/lockluaui.txt" check for LuaUI. If this file exists in the mod, then LuaUI can only load its gui.lua" file from the archive filesystem, thus putting the mod in full control of what LuaUI can be used to do  (including disabling all user widgets).  
 - LuaAI is now supported.
+- Added custom mod / map options via Lua
+ - MapOptions.lua is to be used with LuaGaia, and belongs in the map archive
+ - ModOptions.lua is to be used with LuaRules, and belongs in the mod archive 
+- Renamed cmdDesc  iconname  -> texture  for LuaUI LayoutButtons() input
+- Renamed cmdDesc  mouseicon -> cursor   for LuaUI LayoutButtons() input
+- Changed the cmdDesc double texture format to:
+   '&<xscale>x<yscale>&<tex1>&<tex2>'
+ (both textures can use either the named textures or '#<unitDefID>' format) 
+- * Added the Spring.RequestPath() lua call-out
+ - RequestPath(<number moveID | string moveName>,
+     startX, startY, startZ, endX, endY, endZ [, goalRadius]) -> nil | path
+ - it returns a lua userdata or nil
+ - the userdata has the following calls:
+   path:Next([currX, currY, currZ[, minDist]]) -> nil | x, y, z
+   path:GetEstimatedPath() ->
+                        {[1] = {x,y,z}, [2] = {x,y,z}, etc... }, -- waypoints
+     {[1] = index,   [2] = index,   etc... }  -- resolution start points
+- Added Spring.GetUnitEstimatedPath() -- same return as path:GetEstimatedPath()
+- Added GetEstimatedPoints() to CPathManager
+- Added the NETMSG_LUAMSG net packet type
+- Added the following calls to LuaUI:
+   Spring.SendLuaUIMsg(msg [,mode = ''|'a'|'allies'|'s'|'specs'])
+   Spring.SendLuaCobMsg(msg)                    
+   Spring.SendLuaGaiaMsg(msg)
+   Spring.SendLuaRulesMsg(msg)
+- Added the RecvLuaMsg(msg, playerID) call-in to all lua scripts 
+- Added the weaponID to the lua UnitDamaged() for fullRead scripts 
+- Removed imageSizeX and imageSizeY  (potential desync). The gl.TextureInfo() call can be used instead 
+- Made decloakDistance a per-unit property, and made it accessible to
+synced lua scripts as the third parameter to SetUnitCloak() 
+- Added GetModOptions() and GetMapOptions()
+- Added UnitSeismicPing()  (with a sound) 
+- Added the ability to set the stockpile percent 
+- Added the Spring.SetUnitTarget(unitID, targetID | <x,y,z>, bool userTarget) call-out 
+- Added the Spring.SetExperienceGrade(number) call-out (sets the experience steps that will trigger the UnitExperience() call-in, based on the limExperience varible value  (exp / (exp + 1)))
+- Added the UnitExperience() lua call-in 
 
 COB
 - Give a COB error instead of crashing for invalid explosion generator indices or weapon indices in emit-sfx. #
@@ -294,12 +417,31 @@ COB
 -Transport AI now calls the cob function 'StartUnload' which is called once when transport starts to lower during land flood method. 
 - Dropped units call the cob functions 'falling' and 'landed' so that you may start and stop a parachute animation. 
 - Added the 'cobID' unitDef tag, and the COB_ID (100) COB GET type 
+- Added the BlockShot#(unitID, block) COB call-in  - set block to non-zero to block the unit firing at unitID
+- Added the cob GET/SET STEALTH command  (96) 
+- Added CRASHING (97) get/set constant to COB. Can be used to get/set whether an aircraft is crashing. Is ignored for non-CAirMoveType units (including CTAAirMoveType aircraft). 
+- Added global, team, and ally GET/SET variables to COB scripts
+ 1024 - 2047:  1024 global variables
+ 2048 - 2175:  128  variables per team      (the COB script unit's team)
+ 2176 - 2303:  128  variables per allyteam  (the COB script unit's allyteam)
+- Added 8 shared per-unit variables   (example:  GET  UNIT_VAR_START  -unitID  value)
+- Added the  SET_WEAPON_UNIT_TARGET (106)  and  SET_WEAPON_GROUND_TARGET (107) COB GET codes  (used GET because of its extra parameters)
+   -  GET  SET_WEAPON_UNIT_TARGET    weaponID  unitID          userTarget
+   -  GET  SET_WEAPON_GROUND_TARGET  weaponID  xzCoord yCoord  userTarget 
+- Added TargetWeightX COB call-in and CHANGE_TARGET cob set var. COB call-in TargetWeightX(targetID, weight), weight defaults to 65536 which represents 1.0 and is multiplied with the target's value to determine priorities. Set CHANGE_TARGET to Y makes weaponY pick a new target.
 
 TASServer/Protocol
 - Don't crash on quit if helpUDPsrvr == null.
 - Better error reporting. 
 - Added 'servermode' argument to TASSERVER command (1 for LAN mode, 0 normal)
 - Fix LOADARGS commandline argument. 
+- Added the "SETSCRIPTTAGS <key> <value>" protocol command. Multiple tags are separated by tabs.
+- Allow startpos type 3 
+- Removed UPDATEBATTLEDETAILS command, also removed several arguments from JOINBATTLE and OPENBATTLE commands. All this attributes will now be handled via SETSCRIPTTAG commands.
+- Added the REMOVESCRIPTTAGS commands:  REMOVESCRIPTTAGS key1 key2 key3 ... 
+- Added protection against brute force attacks on accounts
+- New ban system using MySQL	
+- No more autoban on flooding - just a kick
 
 0.75b2
 
