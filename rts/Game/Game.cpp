@@ -78,6 +78,7 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaParser.h"
+#include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -290,7 +291,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	defsParser->GetTable("Spring");
-	defsParser->AddFunc("GetModOptions", LuaParser::GetModOptions);
+	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
 	defsParser->EndTable();
 	// run the parser
 	if (!defsParser->Execute()) {

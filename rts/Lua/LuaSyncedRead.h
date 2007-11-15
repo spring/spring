@@ -13,6 +13,10 @@ class LuaSyncedRead {
 
 		static void AllowGameChanges(bool value);
 
+	public: // also used with LuaParser clients
+		static int GetMapOptions(lua_State* L);
+		static int GetModOptions(lua_State* L);
+
 	private:
 		static int IsCheatingEnabled(lua_State* L);
 		static int IsGodModeEnabled(lua_State* L);
@@ -28,9 +32,6 @@ class LuaSyncedRead {
 		static int GetGameSpeed(lua_State* L);
 		static int GetGameFrame(lua_State* L);
 		static int GetGameSeconds(lua_State* L);
-
-		static int GetMapOptions(lua_State* L);
-		static int GetModOptions(lua_State* L);
 
 		static int GetGameRulesParam(lua_State* L);
 		static int GetGameRulesParams(lua_State* L);
