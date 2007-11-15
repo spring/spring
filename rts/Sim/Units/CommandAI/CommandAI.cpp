@@ -1489,8 +1489,8 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 	if (!w->weaponDef->paralyzer) {
 		return false;
 	}
-	if ((orderTarget->losStatus[owner->allyteam] & LOS_INLOS) && // visible
-			(orderTarget->paralyzeDamage > orderTarget->health)) {  // stunned
+	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && // visible
+			(target->paralyzeDamage > target->health)) {  // stunned
 		if ((commandQue.size() > 2) ||
 				((commandQue.size() == 2) &&
 				 (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED))) {

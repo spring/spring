@@ -13,6 +13,8 @@
 
 #include "LuaUtils.h"
 
+#include "Game/GameSetup.h"
+
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -288,6 +290,8 @@ bool LuaParser::Execute()
 		errorLog = "could not initialize LUA library";
 		return false;
 	}
+
+	rootRef = LUA_NOREF;
 
 	assert(initDepth == 0);
 	initDepth = -1;
@@ -618,7 +622,7 @@ LuaTable::LuaTable(LuaParser* _parser)
 {
 	assert(_parser != NULL);
 
-	isValid = true;
+	isValid = _parser->IsValid();
 	path    = "ROOT";
 	parser  = _parser;
   L       = parser->L;
@@ -1197,6 +1201,43 @@ string LuaTable::GetString(int key, const string& def) const
 	const string value = lua_tostring(L, -1);
 	lua_pop(L, 1);
 	return value;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaParser::GetMapOptions(lua_State* L)
+{
+	lua_newtable(L);
+	if (gameSetup == NULL) {
+		return 1;
+	}
+	const map<string, string>& mapOpts = gameSetup->mapOptions;
+	map<string, string>::const_iterator it;
+	for (it = mapOpts.begin(); it != mapOpts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
+
+int LuaParser::GetModOptions(lua_State* L)
+{
+	lua_newtable(L);
+	if (gameSetup == NULL) {
+		return 1;
+	}
+	const map<string, string>& modOpts = gameSetup->modOptions;
+	map<string, string>::const_iterator it;
+	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
 }
 
 

@@ -191,15 +191,15 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		sprintf(buf, "Weapon%d", i + 1);
 		string weapon(buf);
 		sprintf(buf, "%d", i + 1);
-		string weap(buf);
+		string weapnum(buf);
 		scriptIndex[COBFN_QueryPrimary   + i] = getFunctionId("Query"   + weapon);
 		scriptIndex[COBFN_AimPrimary     + i] = getFunctionId("Aim"     + weapon);
 		scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
 		scriptIndex[COBFN_FirePrimary    + i] = getFunctionId("Fire"    + weapon);
-		scriptIndex[COBFN_EndBurst       + i] = getFunctionId("EndBurst"  + weap);
-		scriptIndex[COBFN_Shot           + i] = getFunctionId("Shot"      + weap);
-		scriptIndex[COBFN_BlockShot      + i] = getFunctionId("BlockShot" + weap);
-		scriptIndex[COBFN_TargetWeight + i] = getFunctionId("TargetWeight" + weap);
+		scriptIndex[COBFN_EndBurst       + i] = getFunctionId("EndBurst"     + weapnum);
+		scriptIndex[COBFN_Shot           + i] = getFunctionId("Shot"         + weapnum);
+		scriptIndex[COBFN_BlockShot      + i] = getFunctionId("BlockShot"    + weapnum);
+		scriptIndex[COBFN_TargetWeight   + i] = getFunctionId("TargetWeight" + weapnum);
 
 		// If new-naming functions are not found, we need to support the old naming scheme
 		if (i > 2) {

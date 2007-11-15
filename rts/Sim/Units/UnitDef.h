@@ -172,7 +172,11 @@ struct UnitDef
 	float armoredMultiple;
 	int armorType;
 
-	bool bonusShieldEnabled;	// FIXME: remove this if the improved shield patch by ??? is committed
+	int flankingBonusMode;				//0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
+	float3 flankingBonusDir;			//units takes less damage when attacked from this dir (encourage flanking fire)
+	float flankingBonusMax;				//damage factor for the least protected direction
+	float flankingBonusMin;				//damage factor for the most protected direction
+	float flankingBonusMobilityAdd;		//how much the ability of the flanking bonus direction to move builds up each frame
 
 	UnitModelDef model;
 	float collisionSphereScale;

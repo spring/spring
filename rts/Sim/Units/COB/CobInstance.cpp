@@ -109,6 +109,13 @@
 
 // NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
+#define FLANK_B_MODE             120 // set or get
+#define FLANK_B_DIR              121 // set or get, set is through get for multiple args
+#define FLANK_B_MOBILITY_ADD     122 // set or get
+#define FLANK_B_MAX_DAMAGE       123 // set or get
+#define FLANK_B_MIN_DAMAGE       124 // set or get
+
+
 // NOTE: shared variables use codes [1024 - 5119]
 
 int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = { 0 };
@@ -1181,6 +1188,25 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		 
 		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
 	}
+	case FLANK_B_MODE:
+		return unit->flankingBonusMode;
+	case FLANK_B_DIR:
+		switch(p1){
+			case 1: return int(unit->flankingBonusDir.x * COBSCALE);
+			case 2: return int(unit->flankingBonusDir.y * COBSCALE);
+			case 3: return int(unit->flankingBonusDir.z * COBSCALE);
+			case 4: unit->flankingBonusDir.x = (p2/(float)COBSCALE); return 0;
+			case 5: unit->flankingBonusDir.y = (p2/(float)COBSCALE); return 0;
+			case 6: unit->flankingBonusDir.z = (p2/(float)COBSCALE); return 0;
+			case 7: unit->flankingBonusDir = float3(p2/(float)COBSCALE, p3/(float)COBSCALE, p4/(float)COBSCALE).Normalize(); return 0;
+			default: return(-1);
+		}
+	case FLANK_B_MOBILITY_ADD:
+		return int(unit->flankingBonusMobilityAdd * COBSCALE);
+	case FLANK_B_MAX_DAMAGE:
+		return int((unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage) * COBSCALE);
+	case FLANK_B_MIN_DAMAGE:
+		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
 			return globalVars[val - GLOBAL_VAR_START];
@@ -1438,6 +1464,24 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case ALPHA_THRESHOLD: {
 			unit->alphaThreshold = float(param) / 255.0f;
+			break;
+		}
+		case FLANK_B_MODE:
+			unit->flankingBonusMode = param;
+			break;
+		case FLANK_B_MOBILITY_ADD:
+			unit->flankingBonusMobilityAdd = (param / (float)COBSCALE);
+			break;
+		case FLANK_B_MAX_DAMAGE: {
+			float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage)*0.5f;
+			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage)*0.5f;
+			break;
+		 }
+		case FLANK_B_MIN_DAMAGE: {
+			float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE)*0.5f;
+			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE)*0.5f;
 			break;
 		}
 		default: {

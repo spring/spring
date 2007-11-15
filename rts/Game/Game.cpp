@@ -190,23 +190,6 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-static int GetModOptions(lua_State* L)
-{
-	lua_newtable(L);
-	if (gameSetup == NULL) {
-		return 1;
-	}
-	const map<string, string>& modOpts = gameSetup->modOptions;
-	map<string, string>::const_iterator it;
-	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
-		lua_pushstring(L, it->first.c_str());
-		lua_pushstring(L, it->second.c_str());
-		lua_rawset(L, -3);
-	}
-	return 1;
-}
-
-
 CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 : lastFrameTime(0),
   drawMode(notDrawing),
@@ -301,11 +284,13 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	ENTER_SYNCED;
 
+	modInfo.Init(modName.c_str());
+
 	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
 	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	defsParser->GetTable("Spring");
-	defsParser->AddFunc("GetModOptions", GetModOptions);
+	defsParser->AddFunc("GetModOptions", LuaParser::GetModOptions);
 	defsParser->EndTable();
 	// run the parser
 	if (!defsParser->Execute()) {
@@ -326,14 +311,18 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	if (!root.SubTable("WeaponDefs").IsValid()) {
 		throw content_error("Error loading WeaponDefs");
 	}
+	if (!root.SubTable("ArmorDefs").IsValid()) {
+		throw content_error("Error loading ArmorDefs");
+	}
+	if (!root.SubTable("MoveDefs").IsValid()) {
+		throw content_error("Error loading MoveDefs");
+	}
 
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 
 	net->Update();  // Prevent timeout while loading
 	ENTER_UNSYNCED;
 	shadowHandler = SAFE_NEW CShadowHandler();
-
-	modInfo = SAFE_NEW CModInfo(modName.c_str());
 
 	ENTER_SYNCED;
 	ground = SAFE_NEW CGround();
@@ -552,7 +541,6 @@ CGame::~CGame()
 	delete archiveScanner;     archiveScanner     = NULL;
 	delete modelParser;        modelParser        = NULL;
 	delete fartextureHandler;  fartextureHandler  = NULL;
-	delete modInfo;            modInfo            = NULL;
 	delete camera;             camera             = NULL;
 	delete cam2;               cam2               = NULL;
 	delete infoConsole;        infoConsole        = NULL;
@@ -1153,7 +1141,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
 			ls.mapName = stupidGlobalMapname;
-			ls.modName = modInfo->filename;
+			ls.modName = modInfo.filename;
 			ls.SaveGame("Saves/QuickSave.ssf");
 		}
 	}
@@ -1517,8 +1505,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		configHandler.SetInt("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
 	else if (cmd == "techlevels") {
-		unitDefHandler->SaveTechLevels("", modInfo->filename); // stdout
-		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo->filename);
+		unitDefHandler->SaveTechLevels("", modInfo.filename); // stdout
+		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo.filename);
 		logOutput.Print("saved techlevels.txt");
 	}
 	else if (cmd == "cmdcolors") {
@@ -3189,7 +3177,7 @@ bool CGame::ClientReadNet()
 
 			//TODO same here
 			case NETMSG_MODNAME: {
-				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo->filename);
+				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo.filename);
 				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -4132,7 +4120,7 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 				logOutput.Print("Saving game to %s\n",savename.c_str());
 				CLoadSaveHandler ls;
 				ls.mapName = stupidGlobalMapname;
-				ls.modName = modInfo->filename;
+				ls.modName = modInfo.filename;
 				ls.SaveGame(savename);
 			} else {
 				logOutput.Print("File %s allready exists(use .save -y to override)\n",savename.c_str());
@@ -4470,9 +4458,9 @@ void CGame::ReColorTeams()
 
 	luaParser.AddParam("myPlayer", gu->myPlayerNum);
 
-	luaParser.AddParam("modName",      modInfo->humanName);
-	luaParser.AddParam("modShortName", modInfo->shortName);
-	luaParser.AddParam("modVersion",   modInfo->version);
+	luaParser.AddParam("modName",      modInfo.humanName);
+	luaParser.AddParam("modShortName", modInfo.shortName);
+	luaParser.AddParam("modVersion",   modInfo.version);
 
 	luaParser.AddParam("mapName",      readmap->mapName);
 	luaParser.AddParam("mapHumanName", readmap->mapHumanName);

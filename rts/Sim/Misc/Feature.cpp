@@ -271,12 +271,12 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		}
 
 		// don't let them exploit chunk reclaim
-		if (isRepairingBeforeResurrect && (modInfo->reclaimMethod > 1)) {
+		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1)) {
 			return false;
 		}
 
 		// make sure several units cant reclaim at once on a single feature
-		if ((modInfo->multiReclaim == 0) && (lastReclaim == gs->frameNum)) {
+		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum)) {
 			return true;
 		}
 
@@ -295,19 +295,19 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 		const float fractionReclaimed = oldReclaimLeft - reclaimLeft;
 
-		if ((modInfo->reclaimMethod == 1) && (reclaimLeft == 0)) {
+		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0)) {
 			// All-at-end method
 			builder->AddMetal(def->metal);
 			builder->AddEnergy(def->energy);
 		}
-		else if (modInfo->reclaimMethod == 0) {
+		else if (modInfo.reclaimMethod == 0) {
 			// Gradual reclaim
 			builder->AddMetal(def->metal * fractionReclaimed);
 			builder->AddEnergy(def->energy * fractionReclaimed);
 		}
 		else {
 			// Chunky reclaiming, work out how many chunk boundaries we crossed
-			const float chunkSize = 1.0f / modInfo->reclaimMethod;
+			const float chunkSize = 1.0f / modInfo.reclaimMethod;
 			const int oldChunk = ChunkNumber(oldReclaimLeft);
 			const int newChunk = ChunkNumber(reclaimLeft);
 			if (oldChunk != newChunk) {
@@ -559,25 +559,25 @@ void CFeature::DrawS3O()
 
 int CFeature::ChunkNumber(float f)
 {
-	return (int) ceil(f * modInfo->reclaimMethod);
+	return (int) ceil(f * modInfo.reclaimMethod);
 }
 
 
 float CFeature::RemainingResource(float res) const
 {
 	// Gradual reclaim
-	if (modInfo->reclaimMethod == 0) {
+	if (modInfo.reclaimMethod == 0) {
 		return res * reclaimLeft;
 	}
 
 	// Old style - all reclaimed at the end
-	if (modInfo->reclaimMethod == 1) {
+	if (modInfo.reclaimMethod == 1) {
 		return res;
 	}
 
 	// Otherwise we are doing chunk reclaiming
-	float chunkSize = res / modInfo->reclaimMethod; // resource/no_chunks
-	float chunksLeft = ceil(reclaimLeft * modInfo->reclaimMethod);
+	float chunkSize = res / modInfo.reclaimMethod; // resource/no_chunks
+	float chunksLeft = ceil(reclaimLeft * modInfo.reclaimMethod);
 	return chunkSize * chunksLeft;
 }
 

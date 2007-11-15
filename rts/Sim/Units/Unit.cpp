@@ -37,6 +37,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
@@ -76,10 +77,11 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-float CUnit::expGrade = 0.0f;
+float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
+float CUnit::expGrade = 0.0f;
                 
 
 CUnit::CUnit ()
@@ -129,9 +131,12 @@ CUnit::CUnit ()
 	userAttackPos(0,0,0),
 	crashing(false),
 	cob(0),
-	bonusShieldEnabled(true),
-	bonusShieldSaved(10),
-	bonusShieldDir(1,0,0),
+	flankingBonusMode(0),
+	flankingBonusDir(1.0f, 0.0f, 0.0f),
+	flankingBonusAvgDamage(1.4f),
+	flankingBonusDifDamage(0.5f),
+	flankingBonusMobility(10.0f),
+	flankingBonusMobilityAdd(0.01f),
 	group(0),
 	lastDamage(-100),
 	lastFireWeapon(0),
@@ -416,21 +421,23 @@ void CUnit::DisableScriptMoveType()
 
 void CUnit::Update()
 {
-	posErrorVector+=posErrorDelta;
+	posErrorVector += posErrorDelta;
 
-	if(deathCountdown){
+	if (deathCountdown) {
 		--deathCountdown;
-		if(!deathCountdown){
-			if(deathScriptFinished)
+		if (!deathCountdown) {
+			if (deathScriptFinished) {
 				uh->DeleteUnit(this);
-			else
-				deathCountdown=1;
+			} else {
+				deathCountdown = 1;
+			}
 		}
 		return;
 	}
 
-	if(beingBuilt)
+	if (beingBuilt) {
 		return;
+	}
 
 	moveType->Update();
 
@@ -439,18 +446,20 @@ void CUnit::Update()
 		travel = fmodf(travel, travelPeriod);
 	}
 
-	recentDamage*=0.9f;
-	bonusShieldSaved+=0.005f;
+	recentDamage *= 0.9f;
+	flankingBonusMobility += flankingBonusMobilityAdd;
 
-	if(stunned)
+	if (stunned) {
 		return;
+	}
 
 	restTime++;
 
-	if(!dontUseWeapons){
+	if (!dontUseWeapons) {
 		std::vector<CWeapon*>::iterator wi;
-		for(wi=weapons.begin();wi!=weapons.end();++wi)
+		for (wi = weapons.begin();wi != weapons.end(); ++wi) {
 			(*wi)->Update();
+		}
 	}
 }
 
@@ -467,7 +476,7 @@ void CUnit::UpdateResources()
 	energyMakeold = energyMakeI;
 	energyUseold  = energyUseI;
 
-	metalMakeI = metalUseI = energyMakeI = energyUseI = 0;
+	metalMakeI = metalUseI = energyMakeI = energyUseI = 0.0f;
 }
 
 
@@ -475,22 +484,23 @@ void CUnit::UpdateResources()
 void CUnit::SlowUpdate()
 {
 	--nextPosErrorUpdate;
-	if(nextPosErrorUpdate==0){
+	if (nextPosErrorUpdate == 0) {
 		float3 newPosError(gs->randVector());
-		newPosError.y*=0.2f;
-		if(posErrorVector.dot(newPosError)<0)
-			newPosError=-newPosError;
-		posErrorDelta=(newPosError-posErrorVector)*(1.0f/256);
-		nextPosErrorUpdate=16;
+		newPosError.y *= 0.2f;
+		if (posErrorVector.dot(newPosError) < 0.0f) {
+			newPosError = -newPosError;
+		}
+		posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
+		nextPosErrorUpdate = 16;
 	}
 
 	for (int a = 0; a < gs->activeAllyTeams; ++a) {
-		if (losStatus[a] & LOS_INTEAM) {
+		const int prevLosStatus = losStatus[a];
+		if (prevLosStatus & LOS_INTEAM) {
 			continue; // allied, no need to update
 		}
 		else if (loshandler->InLos(this, a)) {
-			if (!(losStatus[a] & LOS_INLOS)) {
-				int prevLosStatus = losStatus[a];
+			if (!(prevLosStatus & LOS_INLOS)) {
 
 				if (beingBuilt) {
 					losStatus[a] |= (LOS_INLOS | LOS_INRADAR);
@@ -498,26 +508,29 @@ void CUnit::SlowUpdate()
 					losStatus[a] |= (LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
 				}
 
-				if(!(prevLosStatus&LOS_INRADAR)){
+				if (!(prevLosStatus & LOS_INRADAR)) {
 					luaCallIns.UnitEnteredRadar(this, a);
 					globalAI->UnitEnteredRadar(this, a);
 				}
 				luaCallIns.UnitEnteredLos(this, a);
 				globalAI->UnitEnteredLos(this, a);
 			}
-		} else if (radarhandler->InRadar(this, a)) {
-			if ((losStatus[a] & LOS_INLOS)) {
+		}
+		else if (radarhandler->InRadar(this, a)) {
+			if ((prevLosStatus & LOS_INLOS)) {
 				luaCallIns.UnitLeftLos(this, a);
 				globalAI->UnitLeftLos(this, a);
 				losStatus[a] &= ~LOS_INLOS;
-			} else if (!(losStatus[a] & LOS_INRADAR)) {
-				losStatus[a] |= LOS_INRADAR;
+			}
+			else if (!(prevLosStatus & LOS_INRADAR)) {
 				luaCallIns.UnitEnteredRadar(this, a);
 				globalAI->UnitEnteredRadar(this, a);
+				losStatus[a] |= LOS_INRADAR;
 			}
-		} else {
-			if ((losStatus[a] & LOS_INRADAR)) {
-				if ((losStatus[a] & LOS_INLOS)) {
+		}
+		else {
+			if ((prevLosStatus & LOS_INRADAR)) {
+				if ((prevLosStatus & LOS_INLOS)) {
 					luaCallIns.UnitLeftLos(this, a);
 					luaCallIns.UnitLeftRadar(this, a);
 					globalAI->UnitLeftLos(this, a);
@@ -563,9 +576,9 @@ void CUnit::SlowUpdate()
 		selfDCountdown--;
 		if (selfDCountdown <= 1) {
 			if (!beingBuilt) {
-				KillUnit(true, false, 0);
+				KillUnit(true, false, NULL);
 			} else {
-				KillUnit(false, true, 0);	//avoid unfinished buildings making an explosion
+				KillUnit(false, true, NULL);	//avoid unfinished buildings making an explosion
 			}
 			selfDCountdown = 0;
 			return;
@@ -578,13 +591,15 @@ void CUnit::SlowUpdate()
 		ENTER_SYNCED;
 	}
 
-	if(beingBuilt){
-		if(lastNanoAdd<gs->frameNum-200){
-			health-=maxHealth/(buildTime*0.03f);
-			buildProgress-=1/(buildTime*0.03f);
-			AddMetal(metalCost/(buildTime*0.03f));
-			if(health<0)
-				KillUnit(false,true,0);
+	if (beingBuilt) {
+		if (lastNanoAdd < gs->frameNum - 200) {
+			const float buildDecay = 1.0f / (buildTime * 0.03f);
+			health -= maxHealth * buildDecay;
+			buildProgress -= buildDecay;
+			AddMetal(metalCost * buildDecay);
+			if (health < 0.0f) {
+				KillUnit(false, true, NULL);
+			}
 			UpdateResources();
 		}
 		return;
@@ -648,7 +663,6 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	bonusShieldSaved += 0.05f;
 	residualImpulse *= 0.6f;
 
 	const bool oldCloak = isCloaked;
@@ -700,12 +714,12 @@ void CUnit::SlowUpdate()
 		if(fireState>=2){
 			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam,false);
 			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
-				KillUnit(true,false,0);
+				KillUnit(true, false, NULL);
 		}
 		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
-			KillUnit(true,false,0);
+			KillUnit(true, false, NULL);
 		if(userAttackGround && userAttackPos.distance(pos)<unitDef->kamikazeDist)
-			KillUnit(true,false,0);
+			KillUnit(true, false, NULL);
 	}
 
 	if(!weapons.empty()){
@@ -764,117 +778,151 @@ void CUnit::SetDirectionFromHeading(void)
 
 void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
-	if(isDead)
+	if (isDead) {
 		return;
+	}
 
-	residualImpulse+=impulse/mass;
+	residualImpulse += impulse / mass;
 	moveType->ImpulseAdded();
 
-	float damage=damages[armorType];
+	float damage = damages[armorType];
 
-	if(damage<0){
-//		logOutput.Print("Negative damage");
-		return;
-	}
-
-	if (attacker) {
-		SetLastAttacker(attacker);
-		if (bonusShieldEnabled) {
-			const float3 adir = (attacker->pos - pos).Normalize();
-			bonusShieldDir += (adir * bonusShieldSaved);  //not the best way to do it(but fast)
-			bonusShieldDir.Normalize();
-			bonusShieldSaved = 0.0f;
-			damage *= (1.4f - (0.5f * adir.dot(bonusShieldDir)));
+	if (damage > 0.0f) {
+		if (attacker) {
+			SetLastAttacker(attacker);
+			if (flankingBonusMode) {
+				const float3 adir = (attacker->pos - pos).Normalize(); // FIXME -- not the impulse direction?
+				if (flankingBonusMode == 1) {		// mode 1 = global coordinates, mobile
+					flankingBonusDir += adir * flankingBonusMobility;
+					flankingBonusDir.Normalize();
+					flankingBonusMobility = 0.0f;
+					damage *= flankingBonusAvgDamage - adir.dot(flankingBonusDir) * flankingBonusDifDamage;
+				}
+				else {
+					float3 adirRelative;
+					adirRelative.x = adir.dot(rightdir);
+					adirRelative.y = adir.dot(updir);
+					adirRelative.z = adir.dot(frontdir);
+					if (flankingBonusMode == 2) {	// mode 2 = unit coordinates, mobile
+						flankingBonusDir += adirRelative * flankingBonusMobility;
+						flankingBonusDir.Normalize();
+						flankingBonusMobility = 0.0f;
+					}
+					// modes 2 and 3 both use this; 3 is unit coordinates, immobile
+					damage *= flankingBonusAvgDamage - adirRelative.dot(flankingBonusDir) * flankingBonusDifDamage;
+				}
+			}
 		}
+		damage *= curArmorMultiple;
 	}
-
-	damage*=curArmorMultiple;
 
 	float3 hitDir = impulse;
-	hitDir.y = 0;
+	hitDir.y = 0.0f;
 	hitDir = -hitDir.Normalize();
 	std::vector<int> cobargs;
 
 	cobargs.push_back((int)(500 * hitDir.z));
 	cobargs.push_back((int)(500 * hitDir.x));
 
-	if(cob->FunctionExist(COBFN_HitByWeaponId))
-	{
-		if(weaponId!=-1)
+	if (cob->FunctionExist(COBFN_HitByWeaponId)) {
+		if (weaponId != -1) {
 			cobargs.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
-		else
+		} else {
 			cobargs.push_back(-1);
-
+		}
 		cobargs.push_back((int)(100 * damage));
 		weaponHitMod = 1.0f;
 		cob->Call(COBFN_HitByWeaponId, cobargs, hitByWeaponIdCallback, this, NULL);
 		damage = damage * weaponHitMod;//weaponHitMod gets set in callback function
 	}
-	else
-	{
+	else {
 		cob->Call(COBFN_HitByWeapon, cobargs);
 	}
 
-	restTime=0;
+	restTime = 0;
 
-	float experienceMod=1;
+	float experienceMod = expMultiplier;
 
-	if(damages.paralyzeDamageTime){
-		paralyzeDamage+=damage;
-		experienceMod=0.1f;		//reduce experience for paralyzers
-		if(health-paralyzeDamage<0){
-			if(stunned)
-				experienceMod=0;	//dont get any experience for paralyzing paralyzed enemy
-			stunned=true;
-			if(paralyzeDamage>health+(maxHealth*0.025f*damages.paralyzeDamageTime)){
-				paralyzeDamage=health+(maxHealth*0.025f*damages.paralyzeDamageTime);
+	if (damages.paralyzeDamageTime == 0) {
+		if (damage > 0.0f) {
+			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
+			const float statsdamage = std::min(health, damage);
+			if (attacker) {
+				gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
 			}
+			gs->Team(team)->currentStats.damageReceived += statsdamage;
 		}
-	} else {
-		// Dont log overkill damage (so dguns/nukes etc dont inflate values)
-		float statsdamage = std::min(health, damage);
-		if (attacker)
-			gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
-		gs->Team(team)->currentStats.damageReceived += statsdamage;
-		health-=damage;
+		health -= damage;
 	}
-	recentDamage+=damage;
-
-	if (attacker != 0 && !gs->Ally(allyteam, attacker->allyteam)) {
-		attacker->AddExperience(0.1f * experienceMod
-		                             * (power / attacker->power)
-		                             * (damage + min(0.0f, health)) / maxHealth);
-		ENTER_UNSYNCED;
-		if (((!unitDef->isCommander && uh->lastDamageWarning+100<gs->frameNum) ||
-		     (unitDef->isCommander && uh->lastCmdDamageWarning+100<gs->frameNum))
-		    && (team == gu->myTeam) && !camera->InView(midPos,radius+50) && !gu->spectatingFullView) {
-			logOutput.Print("%s is being attacked",unitDef->humanName.c_str());
-			logOutput.SetLastMsgPos(pos);
-
-			if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
-				int soundIdx = unitDef->sounds.underattack.getRandomIdx();
-				if (soundIdx >= 0) {
-					sound->PlaySample(
-						unitDef->sounds.underattack.getID(soundIdx),
-						unitDef->isCommander? 4 : 2);
+	else {
+		// paralyzing damage
+		if (damages.paralyzeDamageTime > 0) {
+			if (paralyzeDamage > health) {
+				// can not just do the min(), or a weak paralysis weapon could undo a strong one
+				const float maxParaDmg = health + (maxHealth * 0.025f * damages.paralyzeDamageTime);
+				if (paralyzeDamage < maxParaDmg) {
+					paralyzeDamage = min((paralyzeDamage + damage), maxParaDmg);
+					experienceMod *= 0.0f;  // no experience for extra paralysis
+				}
+			} else {
+				paralyzeDamage += damage;
+				experienceMod *= 0.1f;    // reduce experience for paralyzers
+				if (paralyzeDamage < health) {
+					stunned = false;
 				}
 			}
-
-			minimap->AddNotification(pos,float3(1,0.3f,0.3f),unitDef->isCommander? 1: 0.5f);	//todo: make compatible with new gui
-
-			uh->lastDamageWarning=gs->frameNum;
-			if(unitDef->isCommander)
-				uh->lastCmdDamageWarning=gs->frameNum;
+		} else {
+			if (paralyzeDamage == 0) {
+				experienceMod *= 0.0f;  // no experience when not healing
+			} else {
+				paralyzeDamage = max(0.0f, paralyzeDamage + damage);
+				experienceMod *= 0.1f;
+			}
 		}
-		ENTER_SYNCED;
+	}
+
+	if (damage > 0.0f) {
+		recentDamage += damage;
+		if ((attacker != NULL) && !gs->Ally(allyteam, attacker->allyteam)) {
+			attacker->AddExperience(0.1f * experienceMod
+			                             * (power / attacker->power)
+			                             * (damage + min(0.0f, health)) / maxHealth);
+			ENTER_UNSYNCED;
+			const int warnFrame = (gs->frameNum - 100);
+			if ((team == gu->myTeam)
+			    && ((!unitDef->isCommander && (uh->lastDamageWarning < warnFrame)) ||
+			        ( unitDef->isCommander && (uh->lastCmdDamageWarning < warnFrame)))
+					&& !camera->InView(midPos, radius + 50) && !gu->spectatingFullView) {
+				logOutput.Print("%s is being attacked", unitDef->humanName.c_str());
+				logOutput.SetLastMsgPos(pos);
+
+				if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
+					const int soundIdx = unitDef->sounds.underattack.getRandomIdx();
+					if (soundIdx >= 0) {
+						sound->PlaySample(
+							unitDef->sounds.underattack.getID(soundIdx),
+							unitDef->isCommander ? 4 : 2);
+					}
+				}
+
+				minimap->AddNotification(pos, float3(1.0f, 0.3f, 0.3f), unitDef->isCommander? 1: 0.5f);
+
+				uh->lastDamageWarning = gs->frameNum;
+				if (unitDef->isCommander) {
+					uh->lastCmdDamageWarning = gs->frameNum;
+				}
+			}
+			ENTER_SYNCED;
+		}
 	}
 
 	luaCallIns.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
 	globalAI->UnitDamaged(this, attacker, damage);
 
-	if(health<=0){
-		KillUnit(false,false,attacker);
-		if(isDead && attacker!=0 && !gs->Ally(allyteam,attacker->allyteam) && !beingBuilt){
+	if (health <= 0.0f) {
+		KillUnit(false, false, attacker);
+		if (isDead && (attacker != 0) &&
+		    !gs->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
 			attacker->AddExperience(0.1f * (power / attacker->power));
 			gs->Team(attacker->team)->currentStats.unitsKilled++;
 		}
@@ -890,7 +938,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 void CUnit::Kill(float3& impulse) {
 	DamageArray da;
-	DoDamage(da*(health/da[armorType]), 0, impulse, -1);
+	DoDamage(da * (health / da[armorType]), 0, impulse, -1);
 }
 
 
@@ -1734,13 +1782,13 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			builder->AddMetal(metalCost*-part);
 			buildProgress+=part;
 			if(buildProgress<0 || health<0){
-				KillUnit(false,true,0);
+				KillUnit(false, true, NULL);
 				return false;
 			}
 		} else {
 			if (health < 0) {
 				builder->AddMetal(metalCost);
-				KillUnit(false, true, 0);
+				KillUnit(false, true, NULL);
 				return false;
 			}
 		}
@@ -1812,7 +1860,7 @@ void CUnit::FinishedBuilding(void)
 		if (f) {
 			f->blockHeightChanges = true;
 		}
-		KillUnit(false, true, 0);
+		KillUnit(false, true, NULL);
 	}
 }
 
@@ -1824,7 +1872,7 @@ static void CUnitKilledCB(int retCode, void* p1, void* p2)
 	self->delayedWreckLevel = retCode;
 }
 
-void CUnit::KillUnit(bool selfDestruct,bool reclaimed,CUnit *attacker)
+void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 {
 	if(isDead)
 		return;
@@ -2356,9 +2404,12 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(falling),
 				CR_MEMBER(fallSpeed),
 
-				CR_MEMBER(bonusShieldEnabled),
-				CR_MEMBER(bonusShieldSaved),
-				CR_MEMBER(bonusShieldDir),
+				CR_MEMBER(flankingBonusMode),
+				CR_MEMBER(flankingBonusDir),
+				CR_MEMBER(flankingBonusAvgDamage),
+				CR_MEMBER(flankingBonusDifDamage),
+				CR_MEMBER(flankingBonusMobility),
+				CR_MEMBER(flankingBonusMobilityAdd),
 
 				CR_MEMBER(armoredState),
 				CR_MEMBER(armoredMultiple),

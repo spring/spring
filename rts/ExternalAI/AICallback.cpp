@@ -624,7 +624,7 @@ const char* CAICallback::GetMapName ()
 
 const char* CAICallback::GetModName()
 {
-	return modInfo->filename.c_str();
+	return modInfo.filename.c_str();
 }
 
 float CAICallback::GetMaxMetal()

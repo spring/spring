@@ -4,6 +4,7 @@
 --  file:    defs.lua
 --  brief:   entry point for unitdefs, featuredefs, and weapondefs parsing
 --  author:  Dave Rodgers
+--  notes:   Spring.GetModOptions() is available
 --
 --  Copyright (C) 2007.
 --  Licensed under the terms of the GNU GPL, v2 or later.
