@@ -79,7 +79,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 {
 	// sets the wanted speed of this unit to the group minimum
 	// (note: was being divided by GAME_SPEED, but minMaxSpeed
-	// is in units per second)
+	// is already in units per frame)
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
 		Command c;
