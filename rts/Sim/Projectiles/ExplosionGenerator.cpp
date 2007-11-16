@@ -156,7 +156,8 @@ CStdExplosionGenerator::~CStdExplosionGenerator()
 
 
 void CStdExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
-{}
+{
+}
 
 
 void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir)
@@ -531,7 +532,6 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
 {
-
 	const LuaTable& root = h->GetTable();
 
 	const LuaTable expTable = root.SubTable(tag);
@@ -616,25 +616,24 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string
 
 void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir)
 {
-	float h2=ground->GetHeight2(pos.x,pos.z);
-
+	float h2 = ground->GetHeight2(pos.x, pos.z);
 	unsigned int flags = 0;
-	if (h2<-3) flags = SPW_WATER;
-	else if (pos.y<-15) flags = SPW_UNDERWATER;
-	else if (pos.y-max((float)0,h2)>20) flags = SPW_AIR;
-	else flags = SPW_GROUND;
-	if (hit) flags |= SPW_UNIT;
-	else flags |= SPW_NO_UNIT;
 
-	for (int a=0;a<projectileSpawn.size();a++)
-	{
+	if (pos.y - max(0.0f, h2) > 20) flags = SPW_AIR;
+	else if (h2 < -3)               flags = SPW_WATER;
+	else if (pos.y < -15)           flags = SPW_UNDERWATER;
+	else                            flags = SPW_GROUND;
+
+	if (hit) flags |= SPW_UNIT;
+	else     flags |= SPW_NO_UNIT;
+
+	for (int a = 0; a < projectileSpawn.size(); a++) {
 		ProjectileSpawnInfo *psi = projectileSpawn[a];
 
 		if (!(psi->flags & flags))
 			continue;
 
-		for (int c=0;c<psi->count;c++)
-		{
+		for (int c = 0; c < psi->count; c++) {
 			CExpGenSpawnable *projectile = (CExpGenSpawnable*)psi->projectileClass->CreateInstance();
 
 			ExecuteExplosionCode(&psi->code[0], damage, (char*)projectile, c, dir);
