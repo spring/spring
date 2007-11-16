@@ -193,7 +193,13 @@ extern "C" {
 	*/
 	JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_ProcessUnits
 		(JNIEnv *env, jclass myobject){
-			return ProcessUnits();
+			while (true) {
+				const int left = ProcessUnits();
+				if (left <= 0){
+					break;
+				}
+			}
+			return 0;
 		}
 
 	/*
@@ -203,7 +209,13 @@ extern "C" {
 	*/
 	JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_ProcessUnitsNoChecksum
 		(JNIEnv *env, jclass myobject){
-			return ProcessUnitsNoChecksum();
+			while (true) {
+				const int left = ProcessUnitsNoChecksum();
+				if (left <= 0){
+					break;
+				}
+			}
+			return 0;
 		}
 
 	/*
