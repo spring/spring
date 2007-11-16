@@ -338,7 +338,7 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 bool CCommandAI::isAttackCapable() const
 {
 	const UnitDef* ud = owner->unitDef;
-	return (!ud->weapons.empty() || ud->canKamikaze || ud->canAttack || (ud->type == "Factory"));
+	return (ud->canAttack && (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory")));
 }
 
 
