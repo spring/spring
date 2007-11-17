@@ -15,7 +15,7 @@ bool CMetalMakerBehaviour::Init(){
 	//
 
 	turnedOn = G->cb->IsUnitActivated(((CUnit*)unit.get())->GetID());
-	energyUse=min(((CUnit*)unit.get())->GetUnitDataType().lock()->GetUnitDef()->energyUpkeep,1.0f);
+	energyUse=min(((CUnit*)unit.get())->GetUnitDataType()->GetUnitDef()->energyUpkeep,1.0f);
 	return true;
 }
 

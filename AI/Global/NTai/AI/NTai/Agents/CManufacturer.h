@@ -26,7 +26,7 @@ public:
 	int subject;					// the thing being built
 	bool started;					// has construction started?
 	float3 pos;						// where is the unit being built? Used to tie the new unit to the plan
-	shared_ptr<CUnitTypeData> utd;
+	CUnitTypeData* utd;
 	float radius;
 	bool inFactory;
 private:
@@ -62,11 +62,12 @@ public:
 	//bool TaskCycle(CBuilder* i);
 	//bool CBuild(string name, int unit, int spacing);
 
-	int GetSpacing(weak_ptr<CUnitTypeData> u);
+	int GetSpacing(CUnitTypeData* u);
 
 	//bool LoadTaskList(CBuilder* ui);
 	map<string,btype> types;
 	map<btype,string> typenames;
+
 	btype GetTaskType(string s); // retrieves the associated tasktype
 	string GetTaskName(btype type); // retrieves the associated taskname
 	void RegisterTaskPair(string name, btype type); // registers this pair so it can be logged and used in the tasklists

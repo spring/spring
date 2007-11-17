@@ -278,7 +278,7 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
     NLOG("CActions::AttackNear");
     const UnitDef* ud = G->GetUnitDef(unit);
     if(ud == 0) return false;
-	shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id).lock();
+	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id);
     int* en = new int[5000];
     int e = G->GetEnemyUnits(en, G->GetUnitPos(unit), max(G->cb->GetUnitMaxRange(unit), ud->losRadius)*LOSmultiplier);
     if(e>0){
@@ -292,7 +292,7 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
             if(endi == 0){
                 continue;
             }else{
-				shared_ptr<CUnitTypeData> etd = G->UnitDefLoader->GetUnitTypeDataById(endi->id).lock();
+				CUnitTypeData* etd = G->UnitDefLoader->GetUnitTypeDataById(endi->id);
                 bool tmobile = false;
                 tempscore = G->GetTargettingWeight(ud->name, endi->name);
                 //tempscore = G->Ch->ApplyGrudge(en[i], tempscore);
@@ -394,7 +394,7 @@ bool CActions::DGunNearby(int uid){
     if(e>0){
         for(int i = 0; i < e; i++){
             if(::ValidUnitID(en[i])==false) continue;
-			shared_ptr<CUnitTypeData> edt = G->UnitDefLoader->GetUnitTypeDataByUnitId(en[i]).lock();
+			CUnitTypeData* edt = G->UnitDefLoader->GetUnitTypeDataByUnitId(en[i]);
 
             //if(endi->isCommander == true) continue; // no dgunning enemy commanders!
 
@@ -642,7 +642,7 @@ bool CActions::RepairNearbyUnfinishedMobileUnits(int uid, float radius){
         for( int i = 0; i<h; i++){
 
             if(G->cb->UnitBeingBuilt(hn[i]) == true){
-				shared_ptr<CUnitTypeData> btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]).lock();
+				CUnitTypeData* btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]);
 
 				if(!btd->IsMobile()){
 					continue;
@@ -681,7 +681,7 @@ bool CActions::RepairNearbyUnfinishedMobileUnits(int uid, float radius){
         for( int i = 0; i<h; i++){
 
             if((G->cb->UnitBeingBuilt(hn[i])||(G->cb->GetUnitMaxHealth(hn[i])*0.6f > G->cb->GetUnitHealth(hn[i])))&&(G->cb->GetUnitTeam(hn[i]) == G->Cached->team)){
-                shared_ptr<CUnitTypeData> btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]).lock();
+                CUnitTypeData* btd = G->UnitDefLoader->GetUnitTypeDataByUnitId(hn[i]);
                 
 				float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
                 float RemainingTime = btd->GetUnitDef()->buildTime / udi->buildSpeed * Remainder;

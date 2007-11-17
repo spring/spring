@@ -30,12 +30,6 @@ CUnitDefLoader::CUnitDefLoader(Global* GL){
 	// The unitdeflist array will be passed to the engine where it will be filled with pointers
 	UnitDefList = new const UnitDef*[unum];
 
-	// Create an array of UnitTypeData shared_ptr objects
-	shared_ptr<CUnitTypeData>* types = new shared_ptr<CUnitTypeData>[unum];
-
-	// initialize boost::shared_array
-	type_info.reset(types);
-
 	// retrieve the list of unit definition pointers from the engine
 	G->cb->GetUnitDefList(UnitDefList);
 
@@ -50,18 +44,19 @@ CUnitDefLoader::CUnitDefLoader(Global* GL){
 		
 		// now initialize the newly added object with the unit definition
 		cutd->Init(G,pud);
-		
-		// add it into the main array
-		type_info[n] = shared_ptr<CUnitTypeData>(cutd);
 
 		
-		type_info[n]->Init(G,pud);
+		
+
+		// add it into the main array
+		type_data[pud->id] = cutd;
+
 
 		// check if the unit definition is zero, if so skip
 		//if(pud == 0) continue;
 
 		// make sure the name is in the correct format and add it to the map container
-		string na = pud->name.c_str();
+		string na = pud->name;
 		trim(na);
 		tolowercase(na);
 		defs[na] = pud->id;
@@ -93,32 +88,31 @@ const UnitDef* CUnitDefLoader::GetUnitDef(string name){
 	return 0;
 }
 
-weak_ptr<CUnitTypeData> CUnitDefLoader::GetUnitTypeDataByUnitId(int uid){
+CUnitTypeData* CUnitDefLoader::GetUnitTypeDataByUnitId(int uid){
 	//
-	const UnitDef* ud = G->cb->GetUnitDef(uid);
+	const UnitDef* ud = G->GetUnitDef(uid);
 	if(ud == 0){
-		weak_ptr<CUnitTypeData> w;
-		return w;
+		return 0;
 	}else{
 		return this->GetUnitTypeDataById(ud->id);
 	}
 }
 
-weak_ptr<CUnitTypeData> CUnitDefLoader::GetUnitTypeDataById(int id){
+CUnitTypeData* CUnitDefLoader::GetUnitTypeDataById(int id){
 	//
 	if((id <0)||(id > unum)){
-		return weak_ptr<CUnitTypeData>();
+		return 0;
 	}else{
-		return weak_ptr<CUnitTypeData>(type_info[id]);
+		return this->type_data[id];
 	}
 }
 
-weak_ptr<CUnitTypeData> CUnitDefLoader::GetUnitTypeDataByName(string name){
+CUnitTypeData* CUnitDefLoader::GetUnitTypeDataByName(string name){
 
 	//
 
 	int id = GetIdByName(name);
-	return this->GetUnitTypeDataById(id);
+	return GetUnitTypeDataById(id);
 
 
 }

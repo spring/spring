@@ -3,10 +3,9 @@
 CUBuild::CUBuild(){
 }
 
-void CUBuild::Init(Global* GL, weak_ptr<CUnitTypeData> wu, int uid){
+void CUBuild::Init(Global* GL, CUnitTypeData* wu, int uid){
 	G = GL;
-	wutd = wu;
-	utd = wu.lock();
+	utd = wu;
 	water = utd->GetUnitDef()->floater;
 	this->uid = uid;
 }
@@ -16,13 +15,12 @@ CUBuild::~CUBuild(){
 
 bool CUBuild::OkBuildSelection(string name){
 
-	weak_ptr<CUnitTypeData> wu =G->UnitDefLoader->GetUnitTypeDataByName(name);
-	shared_ptr<CUnitTypeData> u = wu.lock();
+	CUnitTypeData* u =G->UnitDefLoader->GetUnitTypeDataByName(name);
 
 
 	float emax=1000000000;
 	string key = "Resource\\MaxEnergy\\";
-	key += name;
+	key += u->GetName();
 	G->Get_mod_tdf()->GetDef(emax,"3000000",key);// +300k energy per tick by default/**/
 	if(G->Pl->GetEnergyIncome() > emax){
 		//G->L.print("Factor::CBuild  emax " + name);
@@ -31,7 +29,7 @@ bool CUBuild::OkBuildSelection(string name){
 	//NLOG("CManufacturer::CBuild  Resource\\MinEnergy\\");
 	float emin=1;
 	key = "Resource\\MinEnergy\\";
-	key += name;
+	key += u->GetName();
 	G->Get_mod_tdf()->GetDef(emin,"0",key);// +0k energy per tick by default/**/
 	if(G->Pl->GetEnergyIncome() < emin){
 		//G->L.print("Factor::CBuild  emin " + name);
@@ -39,8 +37,8 @@ bool CUBuild::OkBuildSelection(string name){
 	}
 	// Now sort out stuff that can only be built one at a time
 
-	if(G->Cached->solobuild.find(name)!= G->Cached->solobuild.end()){
-		if(G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()){
+	if(G->Cached->solobuild.find(u->GetName())!= G->Cached->solobuild.end()){
+		if(G->Cached->solobuilds.find(u->GetName())!= G->Cached->solobuilds.end()){
 			//NLOG("CManufacturer::CBuild  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
 			//G->L.print("Factor::CBuild  solobuild " + name);
 			return false;// One is already being built, change to a repair order to go help it!
@@ -79,13 +77,12 @@ bool CUBuild::OkBuildSelection(string name){
 	return true;
 }
 
-bool CUBuild::Useless(weak_ptr<CUnitTypeData> wu){
+bool CUBuild::Useless(CUnitTypeData* u){
 	NLOG("CUBuild::Useless");
 
-	shared_ptr<CUnitTypeData> u = wu.lock();
 
 	//TODO: Finish CUBuild::Useless()
-	if(G->Pl->feasable(weak_ptr<CUnitTypeData>(utd),wu)==false){
+	if(G->Pl->feasable(utd,u)==false){
 		return false;
 	}
 
@@ -244,11 +241,11 @@ string CUBuild::operator() (btype build,float3 pos){// CBuild c; string s = c(bt
 			return GetAIRSUPPORT();
 			break;
 		}default:{
-			return string("nought");
+			return string("");
 			break;
 		}
 	}
-	return string("nought");
+	return string("");
 }
 
 string CUBuild::GetMEX(){
@@ -258,11 +255,10 @@ string CUBuild::GetMEX(){
 	string highest="";
 	for(map<int,string>::const_iterator is = utd->GetUnitDef()->buildOptions.begin(); is != utd->GetUnitDef()->buildOptions.end();++is){
 
-		weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->second);
-		shared_ptr<CUnitTypeData> p = wp.lock();
+		CUnitTypeData* p = G->UnitDefLoader->GetUnitTypeDataByName(is->second);
 
 		if(p->IsMex()){
-			if(Useless(wp)){
+			if(Useless(p)){
 				continue;
 			}
 
@@ -312,7 +308,7 @@ string CUBuild::GetPOWER(){
 	list<const UnitDef*> possibles_u;
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
-			shared_ptr<CUnitTypeData> p = G->UnitDefLoader->GetUnitTypeDataByName(is->name).lock();
+			CUnitTypeData* p = G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			if(p->IsEnergy()) possibles_u.push_back(p->GetUnitDef());
 		}
 	}
@@ -347,10 +343,9 @@ string CUBuild::GetRAND_ASSAULT(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,weak_ptr<CUnitTypeData>(utd))==false) continue;
+			if(G->Pl->feasable(p,utd)==false) continue;
 			if(p->IsAttacker()){
 				possibles.push_back(p->GetName());
 				defnum++;
@@ -382,10 +377,11 @@ string CUBuild::GetASSAULT(){
 	string best = "";
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p = G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,weak_ptr<CUnitTypeData>(utd))==false) continue;
+			if(G->Pl->feasable(p,utd)==false){
+				continue;
+			}
 			if(p->IsAttacker()){
 				float temp = G->GetEfficiency(p->GetName());
 				temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
@@ -413,10 +409,9 @@ string CUBuild::GetBOMBER(){
 	string best = "";
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,weak_ptr<CUnitTypeData>(utd))==false) continue;
+			if(G->Pl->feasable(p,utd)==false) continue;
 			if(p->IsBomber()){
 				float temp = G->GetEfficiency(p->GetName());
 				temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
@@ -441,10 +436,9 @@ string CUBuild::GetFIGHTER(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,wutd)==false) continue;
+			if(G->Pl->feasable(p,utd)==false) continue;
 			if(p->IsFighter()){
 				float temp = G->GetEfficiency(p->GetName());
 				temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
@@ -469,10 +463,9 @@ string CUBuild::GetGUNSHIP(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,wutd)==false) continue;
+			if(G->Pl->feasable(p,utd)==false) continue;
 			if(p->IsGunship()){
 				float temp = G->GetEfficiency(p->GetName());
 				temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
@@ -497,8 +490,7 @@ string CUBuild::GetMISSILE_UNIT(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
 			if(p->GetUnitDef()->metalCost+p->GetUnitDef()->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
 			bool good = true;
@@ -541,11 +533,10 @@ string CUBuild::GetSHIELD(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
 
-			if(G->Pl->feasable(wp,utd)) continue;
+			if(G->Pl->feasable(p,utd)) continue;
 
 			if(p->GetUnitDef()->metalCost+p->GetUnitDef()->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
 
@@ -582,13 +573,11 @@ string CUBuild::GetFACTORY(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
-
+			CUnitTypeData* p = G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			
 			if(p->IsFactory()){
 
-				if(!G->Pl->feasable(wp,wutd)) continue;
+				if(!G->Pl->feasable(p,utd)) continue;
 				if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
 
 				float temp = G->GetEfficiency(p->GetName());
@@ -616,12 +605,11 @@ string CUBuild::GetBUILDER(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 			
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
 
 			if(p->GetUnitDef()->builder&&((p->GetUnitDef()->movedata !=0)||p->GetUnitDef()->canfly)){
-				if(G->Pl->feasable(wp,wutd)==false) continue;
+				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->GetUnitDef()->floater){
 					if(G->info->spacemod||water){
 						float temp = G->GetEfficiency(p->GetUnitDef()->name);
@@ -657,10 +645,9 @@ string CUBuild::GetGEO(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
-			if(G->Pl->feasable(wp,wutd)==false) continue;
+			if(G->Pl->feasable(p,utd)==false) continue;
 			if(p->GetUnitDef()->needGeo&&(p->GetUnitDef()->builder == false)) possibles.push_back(p->GetName());
 		}
 	}
@@ -684,8 +671,7 @@ string CUBuild::GetSCOUT(){
 	for(vector<CommandDescription>::const_iterator is = di->begin(); is != di->end();++is){
 		if(is->id<0){
 
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 
 
 			//if(Useless(ud)) continue;
@@ -711,11 +697,10 @@ string CUBuild::GetRANDOM(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			
 			// no mine fields
-			if(p->GetUnitDef()->canKamikaze&&((!p->GetUnitDef()->canfly)&&(p->GetUnitDef()->movedata == 0))){
+			if(p->GetUnitDef()->canKamikaze &&((!p->GetUnitDef()->canfly)&&(p->GetUnitDef()->movedata == 0))){
 				// IT'S AN EXPLOSIVE MINE!!!!
 				// We dont want nonblocking mines built ontop of eachother next to the factory!!!!!!!!!!!
 				continue;
@@ -737,14 +722,14 @@ string CUBuild::GetRANDOM(){
 			}
 			
 			// remove 'useless' or 'irrelevant' items
-			if(Useless(wp)){
+			if(Useless(p)){
 				continue;
 			}
 			
 			if((p->GetUnitDef()->metalCost+p->GetUnitDef()->energyCost < (G->cb->GetEnergy()+G->cb->GetMetal())*0.9)&&(((!p->GetUnitDef()->floater)&&(!water)&&(!G->info->spacemod))||(G->info->spacemod||water))){
 				
 				// check the antistall algorithm if it's ok
-				if(!G->Pl->feasable(wp,wutd)){
+				if(!G->Pl->feasable(p,utd)){
 					continue;
 				}
 				
@@ -790,19 +775,18 @@ string CUBuild::GetDEFENCE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
-			if(Useless(wp)) continue;
+			if(Useless(p)) continue;
 
 			if((p->GetUnitDef()->weapons.empty() == false)&&(!p->GetUnitDef()->isFeature)&&(!p->IsMobile())){
 				if((G->info->spacemod == true)||(water == true)){
-					if(G->Pl->feasable(wp,wutd)==false) continue;
+					if(G->Pl->feasable(p,utd)==false) continue;
 					possibles.push_back(p->GetName());
 					defnum++;
 				} else if (pd->floater == false){
-					if(G->Pl->feasable(wp,wutd)==false) continue;
+					if(G->Pl->feasable(p,utd)==false) continue;
 					possibles.push_back(p->GetName());
 					defnum++;
 				}
@@ -837,12 +821,11 @@ string CUBuild::GetRADAR(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd == 0) continue;
-			if(Useless(wp)) continue;
+			if(Useless(p)) continue;
 			if((pd->radarRadius >10)&&(pd->floater == false)&&(pd->builder == false)){
 				possibles.push_back(pd->name);
 				randnum++;
@@ -879,8 +862,7 @@ string CUBuild::GetESTORE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->energyStorage >100){
@@ -927,13 +909,12 @@ string CUBuild::GetMSTORE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->metalStorage >100){
 
-				if(G->Pl->feasable(wp,wutd)==false) continue;
+				if(G->Pl->feasable(p,utd)==false) continue;
 
 				if(pd->floater){
 					if(G->info->spacemod||water){
@@ -976,8 +957,7 @@ string CUBuild::GetSILO(){
 		if(is->id<0){
 			
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->weapons.empty() != true){
@@ -1020,8 +1000,7 @@ string CUBuild::GetJAMMER(){
 		if(is->id<0){
 			
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if((pd->jammerRadius >10)&&(pd->floater == false)&&(pd->builder == false)){
@@ -1061,8 +1040,7 @@ string CUBuild::GetSONAR(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if((pd->sonarRadius >10)&&(pd->floater == false)&&(pd->builder == false)){
@@ -1102,8 +1080,7 @@ string CUBuild::GetANTIMISSILE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->weapons.empty() != true){
@@ -1153,8 +1130,7 @@ string CUBuild::GetTARG(){
 		if(is->id<0){
 			
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->targfac == true){
@@ -1200,8 +1176,7 @@ string CUBuild::GetFOCAL_MINE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->canKamikaze&&((pd->canfly == false)&&(pd->movedata == 0))){
@@ -1268,8 +1243,7 @@ string CUBuild::GetMINE(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 
@@ -1315,8 +1289,7 @@ string CUBuild::GetCARRIER(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(pd->isAirBase == true){
@@ -1361,8 +1334,7 @@ string CUBuild::GetMETAL_MAKER(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if((pd->isMetalMaker == true)&&(pd->floater == false)){
@@ -1402,8 +1374,7 @@ string CUBuild::GetFORTIFICATION(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(G->DTHandler->IsDragonsTeeth(pd)){
@@ -1441,12 +1412,12 @@ string CUBuild::GetHUB(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
+
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(p->IsHub()==true){
-				if(G->Pl->feasable(wp,wutd)==false) continue;
+				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
 				float temp = G->GetEfficiency(pd->name);
 				temp /= (pd->energyCost+(pd->metalCost*45));
@@ -1475,12 +1446,11 @@ string CUBuild::GetAIRSUPPORT(){
 		if(is->id<0){
 
 			// retrieve the unit type information
-			weak_ptr<CUnitTypeData> wp =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
-			shared_ptr<CUnitTypeData> p = wp.lock();
+			CUnitTypeData* p =G->UnitDefLoader->GetUnitTypeDataByName(is->name);
 			const UnitDef* pd = p->GetUnitDef();
 
 			if(p->IsHub()){
-				if(G->Pl->feasable(wp,wutd)==false) continue;
+				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
 				float temp = G->GetEfficiency(pd->name);
 				temp /= (pd->energyCost+(pd->metalCost*45));

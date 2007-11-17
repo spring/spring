@@ -21,40 +21,20 @@ CUnit::CUnit(Global* GL, int uid){
 	
 	
 	
-	weak_ptr<CUnitTypeData> wutd = G->UnitDefLoader->GetUnitTypeDataByUnitId(uid);
-	
-	if(wutd.px == 0){
+	utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(uid);
+
+	if(utd==0){
 		//
-		G->L.eprint("ERROR IN CUNIT :: WUTD.PX == 0, this unit has been passed an invalid weak_ptr to its unit data type object. This unit will fail to load any behaviours or tasks.");
-		valid = false;
-	}
-
-	if(wutd.expired()){
-		//
-		G->L.eprint("ERROR IN CUNIT :: WUTD.EXPLIRED() == TRUE, this unit has been passed an expired weak_ptr to its unit data type object. This unit will fail to load any behaviours or tasks.");
-		valid = false;
-	}
-
-	utd = wutd.lock();
-
-	if(utd->GetUnitDef()==0){
-		//
-		G->L.eprint("ERROR IN CUNIT :: UTD->GetUnitDef() == 0, ntai failed to retrieve the units unitdef object, something has gone wrong somewhere.");
-		valid = false;
-	}
-
-	const UnitDef* ud = G->GetUnitDef(uid);
-	
-	if(ud == 0){
-		G->L.eprint("ERROR IN CUNIT :: UD == 0, ntai failed to retrieve the units unitdef object, something has gone wrong somewhere.");
+		G->L.eprint("ERROR IN CUNIT :: UTD == 0, ntai failed to retrieve the units unitdef object, something has gone wrong somewhere.");
 		valid = false;
 	}
 	
 	if(!valid){
 		return;
 	}
+
 	if(!utd->IsMobile()){
-		G->BuildingPlacer->Block(G->GetUnitPos(uid),wutd);
+		G->BuildingPlacer->Block(G->GetUnitPos(uid),utd);
 	}
 	
 	doingplan=false;
@@ -150,7 +130,7 @@ int CUnit::GetAge(){
 	return G->GetCurrentFrame()-birth;
 }
 
-weak_ptr<CUnitTypeData> CUnit::GetUnitDataType(){
+CUnitTypeData* CUnit::GetUnitDataType(){
 	NLOG("CBuilder::GetUnitDataType");
 	return utd;
 }
@@ -248,8 +228,8 @@ bool CUnit::LoadTaskList(){
 			tolowercase(q);
 			const UnitDef* building = G->GetUnitDef(q);
 			if(G->UnitDefLoader->HasUnit(q)){
-				weak_ptr<CUnitTypeData> wb = G->UnitDefLoader->GetUnitTypeDataByName(building->name);
-				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,weak_ptr<CUnitTypeData>(utd),wb));
+				CUnitTypeData* wb = G->UnitDefLoader->GetUnitTypeDataByName(building->name);
+				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,utd,wb));
 				AddTask(t);
 			}else if(q == string("")){
 				continue;
@@ -317,15 +297,17 @@ bool CUnit::LoadBehaviours(){
 			} else if(s == "metalmaker"){
 				CMetalMakerBehaviour* m = new CMetalMakerBehaviour(G, GetID());
 				boost::shared_ptr<IBehaviour> t(m);
-				G->RegisterMessageHandler(t);
+				
 				behaviours.push_back(t);
 				t->Init();
+				G->RegisterMessageHandler(t);
 			} else if(s == "attacker"){
 				CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
 				boost::shared_ptr<IBehaviour> t(a);
-				G->RegisterMessageHandler(t);
+				
 				behaviours.push_back(t);
 				t->Init();
+				G->RegisterMessageHandler(t);
 			} else if(s == "auto"){
 				if(utd->IsAttacker()){
 					CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
