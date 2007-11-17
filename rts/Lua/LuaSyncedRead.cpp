@@ -247,6 +247,11 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitScriptPiece);
 	REGISTER_LUA_CFUNC(GetUnitScriptNames);
 
+	REGISTER_LUA_CFUNC(GetCOBUnitVar);
+	REGISTER_LUA_CFUNC(GetCOBTeamVar);
+	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
+	REGISTER_LUA_CFUNC(GetCOBGlobalVar);
+
 //FIXME	LuaMetalMap::PushEntries(L);
 	LuaPathFinder::PushEntries(L);
 
@@ -4125,6 +4130,99 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 		lua_rawset(L, -3);
 	}
 
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->cob == NULL) {
+		return 0;
+	}
+	const int varID = luaL_checkint(L, 2);
+	if ((varID < 0) || (varID >= CCobInstance::UNIT_VAR_COUNT)) {
+		return 0;
+	}
+	const int value = unit->cob->GetUnitVars()[varID];
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, UNPACKX(value));
+		lua_pushnumber(L, UNPACKZ(value));
+		return 2;
+	}
+	lua_pushnumber(L, value);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
+{
+	const int teamID = luaL_checkint(L, 1);
+	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+		return 0;
+	}
+	if (!IsAlliedTeam(teamID)) {
+		return 0;
+	}
+	const int varID = luaL_checkint(L, 2);
+	if ((varID < 0) || (varID >= CCobInstance::TEAM_VAR_COUNT)) {
+		return 0;
+	}
+	const int value = CCobInstance::GetTeamVars(teamID)[varID];
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, UNPACKX(value));
+		lua_pushnumber(L, UNPACKZ(value));
+		return 2;
+	}
+	lua_pushnumber(L, value);
+	return 1;
+	 		
+}
+
+
+int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
+{
+	const int allyTeamID = luaL_checkint(L, 1);
+	if ((allyTeamID < 0) || (allyTeamID >= MAX_TEAMS)) {
+		return 0;
+	}
+	if (!IsAlliedAllyTeam(allyTeamID)) {
+		return 0;
+	}
+	const int varID = luaL_checkint(L, 2);
+	if ((varID < 0) || (varID >= CCobInstance::ALLY_VAR_COUNT)) {
+		return 0;
+	}
+	const int value = CCobInstance::GetAllyVars(allyTeamID)[varID];
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, UNPACKX(value));
+		lua_pushnumber(L, UNPACKZ(value));
+		return 2;
+	}
+	lua_pushnumber(L, value);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetCOBGlobalVar(lua_State* L)
+{
+	const int varID = luaL_checkint(L, 1);
+	if ((varID < 0) || (varID >= CCobInstance::GLOBAL_VAR_COUNT)) {
+		return 0;
+	}
+	const int value = CCobInstance::GetGlobalVars()[varID];
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
+		lua_pushnumber(L, UNPACKX(value));
+		lua_pushnumber(L, UNPACKZ(value));
+		return 2;
+	}
+	lua_pushnumber(L, value);
 	return 1;
 }
 

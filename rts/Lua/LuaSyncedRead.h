@@ -171,6 +171,11 @@ class LuaSyncedRead {
 		static int TraceRayUnits(lua_State* L);    // not implemented
 		static int TraceRayFeatures(lua_State* L); // not implemented
 		static int TraceRayGround(lua_State* L);   // not implemented
+
+		static int GetCOBUnitVar(lua_State* L);
+		static int GetCOBTeamVar(lua_State* L);
+		static int GetCOBAllyTeamVar(lua_State* L);
+		static int GetCOBGlobalVar(lua_State* L);
 };
 
 
