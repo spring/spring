@@ -337,16 +337,13 @@ void Global::SortSolobuilds(int unit){
     Cached->enemies.erase(unit);
     if(endefs.find(unit) != endefs.end()) endefs.erase(unit);
 
-	weak_ptr<CUnitTypeData> wu = UnitDefLoader->GetUnitTypeDataByUnitId(unit);
-	shared_ptr<CUnitTypeData> u = wu.lock();
+	CUnitTypeData* u = UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 
 	const UnitDef* ud = u->GetUnitDef();
     
 	if(ud != 0){
         bool found = false;
-        string s  = ud->name;
-        trim(s);
-        tolowercase(s);
+		string s  = u->GetName();
         for(set<string>::iterator vi = Cached->solobuild.begin(); vi != Cached->solobuild.end(); ++vi){
             if(*vi == s){
                 found = true;
@@ -356,7 +353,9 @@ void Global::SortSolobuilds(int unit){
 		if(u->GetSingleBuild()){
 			u->SetSingleBuildActive(true);
         }
-        if(found == true)	Cached->solobuilds[s] = unit;
+		if(found == true){
+			Cached->solobuilds[s] = unit;
+		}
     }
 }
 
@@ -376,7 +375,7 @@ void Global::UnitCreated(int unit){
     START_EXCEPTION_HANDLING
     const UnitDef* udf = GetUnitDef(unit);
     if(udf){
-		shared_ptr<CUnitTypeData> utd = UnitDefLoader->GetUnitTypeDataByName(udf->name).lock();
+		CUnitTypeData* utd = UnitDefLoader->GetUnitTypeDataById(udf->id);
         if(!utd->IsMobile()){
             BuildingPlacer->Block(G->GetUnitPos(unit), utd);
         }
@@ -751,8 +750,7 @@ void Global::UnitDestroyed(int unit, int attacker){
 
     idlenextframe.erase(unit);
 
-	weak_ptr<CUnitTypeData> wu =G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
-	shared_ptr<CUnitTypeData> u = wu.lock();
+	CUnitTypeData* u = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 
     const UnitDef* udu = u->GetUnitDef();
     if(udu != 0){
@@ -763,10 +761,13 @@ void Global::UnitDestroyed(int unit, int attacker){
     }
 
     if(ValidUnitID(attacker)){
-        const UnitDef* uda = GetUnitDef(attacker);
+		CUnitTypeData* atd = G->UnitDefLoader->GetUnitTypeDataByUnitId(attacker);
+        const UnitDef* uda = atd->GetUnitDef();
         if((uda != 0)&&(udu != 0)){
-            map<string, int>::iterator k = Cached->solobuilds.find(udu->name);
-            if(k != Cached->solobuilds.end()) Cached->solobuilds.erase(k);
+            map<string, int>::iterator k = Cached->solobuilds.find(atd->GetName());
+			if(k != Cached->solobuilds.end()){
+				Cached->solobuilds.erase(k);
+			}
             if(efficiency.find(uda->name) != efficiency.end()){
                 efficiency[uda->name] += 20000/udu->metalCost;
             }else{
@@ -926,8 +927,7 @@ void Global::InitAI(IAICallback* callback, int team){
             trim(s);
             tolowercase(s);
 
-			weak_ptr<CUnitTypeData> wu = this->UnitDefLoader->GetUnitTypeDataByName(s);
-			shared_ptr<CUnitTypeData> u = wu.lock();
+			CUnitTypeData* u = UnitDefLoader->GetUnitTypeDataByName(s);
 
 			u->SetSingleBuild(true);
         }

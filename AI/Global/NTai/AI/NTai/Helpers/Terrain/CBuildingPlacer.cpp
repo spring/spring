@@ -143,12 +143,12 @@ bool CBuildingPlacer::Init(){
 
 class CBuildAlgorithm : public IModule{
 public:
-    CBuildAlgorithm(CBuildingPlacer* buildalgorithm, IModule* reciever, float3 builderpos, weak_ptr<CUnitTypeData> wbuilder, weak_ptr<CUnitTypeData> wbuilding, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
+    CBuildAlgorithm(CBuildingPlacer* buildalgorithm, IModule* reciever, float3 builderpos, CUnitTypeData* wbuilder, CUnitTypeData* wbuilding, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
         buildalgorithm(buildalgorithm),
         reciever(reciever),
         builderpos(builderpos),
-		builder(wbuilder.lock()),
-        building(wbuilding.lock()),
+		builder(wbuilder),
+        building(wbuilding),
         freespace(freespace),
         blockingmap(blockingmap),
         heightmap(heightmap),
@@ -298,12 +298,12 @@ public:
     CBuildingPlacer* buildalgorithm;
     IModule* reciever;
     float3 builderpos;
-    shared_ptr<CUnitTypeData> builder;
-    shared_ptr<CUnitTypeData> building;
+    CUnitTypeData* builder;
+    CUnitTypeData* building;
     float freespace;
 };
 
-void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, weak_ptr<CUnitTypeData> wbuilder, weak_ptr<CUnitTypeData> wbuilding, float freespace){
+void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, CUnitTypeData* builder, CUnitTypeData* building, float freespace){
     /*if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
      if(G->UnitDefHelper->IsMobile(building)){
      CMessage m("buildposition");
@@ -322,8 +322,7 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
         return;
     }
 
-	shared_ptr<CUnitTypeData> builder = wbuilder.lock();
-	shared_ptr<CUnitTypeData> building = wbuilding.lock();
+
 
 
     float3 q = UpVector;
@@ -592,7 +591,7 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
     return fipos;
 }*/
 
-void CBuildingPlacer::Block(float3 pos, weak_ptr<CUnitTypeData> utd){
+void CBuildingPlacer::Block(float3 pos, CUnitTypeData* utd){
     int r = G->Manufacturer->GetSpacing(utd);
     //pos.x -= (ud->xsize);//*4);
     //pos.z -= (ud->ysize);//*4);
@@ -607,7 +606,7 @@ void CBuildingPlacer::Block(float3 pos, float radius){
     blockingmap.SetCellsInRadius(pos, radius, 3);
 }
 
-void CBuildingPlacer::UnBlock(float3 pos, weak_ptr<CUnitTypeData> utd){
+void CBuildingPlacer::UnBlock(float3 pos, CUnitTypeData* utd){
     int r = G->Manufacturer->GetSpacing(utd);
     //pos.x -= (ud->xsize);//*4);
     //pos.z -= (ud->ysize);//*4);

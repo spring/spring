@@ -966,22 +966,21 @@ void CManufacturer::UnitIdle(int uid){
 	}*/
 }
 
-int CManufacturer::GetSpacing(weak_ptr<CUnitTypeData> u){
-	shared_ptr<CUnitTypeData> utd = u.lock();
+int CManufacturer::GetSpacing(CUnitTypeData* u){
 	int f = 4;
 
-	if(utd->IsMobile()){
+	if(u->IsMobile()){
 		f = 1;
-	} else if(utd->IsFactory()){
+	} else if(u->IsFactory()){
 		G->Get_mod_tdf()->GetDef(f,"4", "AI\\factory_spacing");
-	} else if (!utd->IsMobile() && !utd->GetUnitDef()->weapons.empty()){
+	} else if (!u->IsMobile() && !u->GetUnitDef()->weapons.empty()){
 		G->Get_mod_tdf()->GetDef(f,"4", "AI\\defence_spacing");
-	} else if (utd->IsEnergy()){
+	} else if (u->IsEnergy()){
 		G->Get_mod_tdf()->GetDef(f,"3", "AI\\power_spacing");
 	}else{
 		G->Get_mod_tdf()->GetDef(f,"1", "AI\\default_spacing");
 	}
-	float r = sqrt(pow((float)utd->GetUnitDef()->xsize*8,2)+pow((float)utd->GetUnitDef()->ysize*8,2))/2;
+	float r = sqrt(pow((float)u->GetUnitDef()->xsize*8,2)+pow((float)u->GetUnitDef()->ysize*8,2))/2;
 	r += (f*8);
 	return (int)r;
 }

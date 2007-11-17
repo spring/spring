@@ -2,6 +2,8 @@
 
 CUnitTypeData::CUnitTypeData(){
 	//
+	this->singleBuild = false;
+	this->singleBuildActive = false;
 }
 
 CUnitTypeData::~CUnitTypeData(){

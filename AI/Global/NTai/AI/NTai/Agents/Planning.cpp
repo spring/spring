@@ -170,8 +170,8 @@ float Planning::GetMetalIncome(){
 
 bool Planning::feasable(string s, int builder){
 
-	weak_ptr<CUnitTypeData> wbuilder = G->UnitDefLoader->GetUnitTypeDataByUnitId(builder);
-	weak_ptr<CUnitTypeData> wbuilding = G->UnitDefLoader->GetUnitTypeDataByName(s);
+	CUnitTypeData* wbuilder = G->UnitDefLoader->GetUnitTypeDataByUnitId(builder);
+	CUnitTypeData* wbuilding = G->UnitDefLoader->GetUnitTypeDataByName(s);
 	return feasable(wbuilding,wbuilder);
 }
 
@@ -199,10 +199,9 @@ bool Planning::equalsIgnoreCase(string a ,string b){
 	return (c == d);
 }
 
-bool Planning::feasable(weak_ptr<CUnitTypeData> wbuilding, weak_ptr<CUnitTypeData> wbuilder){
+bool Planning::feasable(CUnitTypeData* building, CUnitTypeData* builder){
 	NLOG("Planning::feasable");
-	shared_ptr<CUnitTypeData> building = wbuilding.lock();
-	shared_ptr<CUnitTypeData> builder = wbuilder.lock();
+
 
 	if(NoAntiStall.empty() == false){
 		for(vector<string>::iterator i = NoAntiStall.begin(); i != NoAntiStall.end(); ++i){

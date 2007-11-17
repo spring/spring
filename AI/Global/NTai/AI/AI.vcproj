@@ -58,7 +58,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\..\..\game\AI\Bot-libs\$(ProjectName).dll"
+				OutputFile="..\..\..\..\game\AI\Bot-libs\$(ProjectName)-debug.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				LargeAddressAware="2"

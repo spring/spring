@@ -2,7 +2,7 @@
 // Tasks
 #include "../Tasks/CUnitConstructionTask.h"
 
-CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit, weak_ptr<CUnitTypeData> builder, weak_ptr<CUnitTypeData> building){
+CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit,CUnitTypeData* builder, CUnitTypeData* building){
 	valid=ValidUnitID(unit);
 	if(!valid){
 		End();
@@ -11,8 +11,8 @@ CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit, weak_ptr<CUni
 
 	G = GL;
 	this->unit=unit;
-	this->builder = builder.lock();
-	this->building = building.lock();
+	this->builder = builder;
+	this->building = building;
 	G->L.print("CUnitConstructionTask::CUnitConstructionTask object created | params: building :: "+this->building->GetUnitDef()->name+" using builder::"+ this->builder->GetUnitDef()->name);
 }
 
@@ -107,7 +107,7 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 				Bplan->inFactory = builder->IsFactory();
 				G->Manufacturer->BPlans->push_back(Bplan);
 				if((builder->IsFactory()&&building->IsMobile())==false){
-					G->BuildingPlacer->Block(pos,weak_ptr<CUnitTypeData>(building));
+					G->BuildingPlacer->Block(pos,building);
 				}
 
 			}
@@ -132,7 +132,7 @@ bool CUnitConstructionTask::Init(){
 
 				NLOG("CUnitConstructionTask::Init *i == name :: "+building->GetUnitDef()->name);
 
-				if(G->Pl->feasable(weak_ptr<CUnitTypeData>(building),weak_ptr<CUnitTypeData>(builder)) == false){
+				if(G->Pl->feasable(building,builder) == false){
 					
 					G->L.print("CUnitConstructionTask::Init  unfeasable " + building->GetUnitDef()->name);
 					
@@ -208,7 +208,7 @@ bool CUnitConstructionTask::Init(){
 
 	if(G->info->antistall>1){
 		NLOG("CUnitConstructionTask::Init  G->info->antistall>1");
-		bool fk = G->Pl->feasable(weak_ptr<CUnitTypeData>(building),weak_ptr<CUnitTypeData>(builder));
+		bool fk = G->Pl->feasable(building,builder);
 		NLOG("CUnitConstructionTask::Init  feasable called");
 		if(fk == false){
 			G->L.print("CUnitConstructionTask::Init  unfeasable " + building->GetUnitDef()->name);
@@ -295,7 +295,7 @@ bool CUnitConstructionTask::Init(){
 		delete [] funits;
 	}
 
-	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,weak_ptr<CUnitTypeData>(builder),weak_ptr<CUnitTypeData>(building),G->Manufacturer->GetSpacing(weak_ptr<CUnitTypeData>(building))*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
 	return true;
 }
 

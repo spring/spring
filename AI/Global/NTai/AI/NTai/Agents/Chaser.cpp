@@ -176,7 +176,7 @@ void Chaser::UnitFinished(int unit){
 
     NO_GAIA(NA);
 
-	shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
+	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 
     NLOG("stockpile/dgun");
 
@@ -415,7 +415,7 @@ void Chaser::UnitIdle(int unit){
     if(this->unit_to_initialize.find(unit) != this->unit_to_initialize.end()){
         unit_to_initialize.erase(unit);
 
-		shared_ptr<CUnitTypeData> utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
+		CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 
         Add(unit);
         

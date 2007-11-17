@@ -8,7 +8,7 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 	G = GL;
 	this->unit=unit;
 	this->type = type;
-	this->utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit).lock();
+	this->utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 }
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){
@@ -123,7 +123,7 @@ void CKeywordConstructionTask::Build(){
 		for(vector<string>::iterator i = G->Pl->AlwaysAntiStall.begin(); i != G->Pl->AlwaysAntiStall.end(); ++i){
 			if(*i == building->GetName()){
 				NLOG("CKeywordConstructionTask::Build *i == name :: "+building->GetUnitDef()->name);
-				if(!G->Pl->feasable(weak_ptr<CUnitTypeData>(building),weak_ptr<CUnitTypeData>(utd))){
+				if(!G->Pl->feasable(building,utd)){
 					G->L.print("unfeasable " + building->GetUnitDef()->name);
 					End();
 					return;
@@ -225,7 +225,7 @@ void CKeywordConstructionTask::Build(){
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
-				shared_ptr<CUnitTypeData> ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
+				CUnitTypeData* ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]);
 
 				if(ufdt == building){
 					NLOG("CKeywordConstructionTask::Build  mark 2b#");
@@ -260,7 +260,7 @@ void CKeywordConstructionTask::Build(){
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
-				shared_ptr<CUnitTypeData> ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
+				CUnitTypeData* ufdt = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]);
 
 				if(ufdt == building){
 
@@ -292,7 +292,7 @@ void CKeywordConstructionTask::Build(){
 
     NLOG("CKeywordConstructionTask::Build  mark 4");
 
-	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,weak_ptr<CUnitTypeData>(utd),weak_ptr<CUnitTypeData>(building),G->Manufacturer->GetSpacing(weak_ptr<CUnitTypeData>(building))*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,utd,building,G->Manufacturer->GetSpacing(building)*1.4f);
 
     NLOG("CKeywordConstructionTask::Build  mark 5");
 }
@@ -355,12 +355,12 @@ bool CKeywordConstructionTask::Init(){
 		}
 
 		CUBuild b;
-		b.Init(G,weak_ptr<CUnitTypeData>(utd),unit);
+		b.Init(G,utd,unit);
 		string targ = b(type);
 		G->L.print("gotten targ value of " + targ + " for RULE");
 		if (targ != string("")){
 
-			building = G->UnitDefLoader->GetUnitTypeDataByName(targ).lock();
+			building = G->UnitDefLoader->GetUnitTypeDataByName(targ);
 			Build();
 			return true;
 		}else{
@@ -468,7 +468,7 @@ bool CKeywordConstructionTask::Init(){
 				}else{
 					float q = upos.distance2D(rpos);
 					if(q < d){
-						shared_ptr<CUnitTypeData> rd = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]).lock();
+						CUnitTypeData* rd = G->UnitDefLoader->GetUnitTypeDataByUnitId(funits[i]);
 						if(rd == building){
 							d = q;
 							closest = funits[i];
@@ -494,7 +494,7 @@ bool CKeywordConstructionTask::Init(){
 		delete [] funits;
 	}else{// if(type != B_NA){
 		CUBuild b;
-		b.Init(G,weak_ptr<CUnitTypeData>(utd),unit);
+		b.Init(G,utd,unit);
 		b.SetWater(G->info->spacemod);
 		//if(b.ud->floater==true){
 		//	b.SetWater(true);
@@ -505,7 +505,7 @@ bool CKeywordConstructionTask::Init(){
 			End();
 			return false;
 		}else{
-			shared_ptr<CUnitTypeData> udk = G->UnitDefLoader->GetUnitTypeDataByName(targ).lock();
+			CUnitTypeData* udk = G->UnitDefLoader->GetUnitTypeDataByName(targ);
 			building = udk;
 			Build();
 			return true;

@@ -9,7 +9,7 @@ public:
 
 	bool OkBuildSelection(string name);
 
-	void Init(Global* GL, weak_ptr<CUnitTypeData> wu, int uid); // Initialize object
+	void Init(Global* GL, CUnitTypeData* wu, int uid); // Initialize object
 	void SetWater(bool w);
 	string operator() (btype build,float3 pos=ZeroVector); // () operator, allows it to be called like this, Object(build); rather than something like object->getbuild(build);
 
@@ -47,11 +47,10 @@ public:
 	string GetHUB();
 	string GetAIRSUPPORT();
 
-	bool Useless(weak_ptr<CUnitTypeData> wu); // To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist (things made by bananas!)
+	bool Useless(CUnitTypeData* u); // To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist (things made by bananas!)
 	bool antistall;
 	Global* G;
 	int uid;
-	shared_ptr<CUnitTypeData> utd;
-	weak_ptr<CUnitTypeData> wutd;
+	CUnitTypeData* utd;
 	bool water;
 };;

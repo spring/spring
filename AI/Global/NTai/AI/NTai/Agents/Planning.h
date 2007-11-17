@@ -8,7 +8,7 @@ public:
 	virtual ~Planning(){}
 	void InitAI();
 	bool feasable(string s, int builder); // Antistall algorithm
-	bool feasable(weak_ptr<CUnitTypeData> wbuilding, weak_ptr<CUnitTypeData> wbuilder); // Antistall algorithm
+	bool feasable(CUnitTypeData* building, CUnitTypeData* builder); // Antistall algorithm
 	void Update();
 
 	bool equalsIgnoreCase(string a ,string b);

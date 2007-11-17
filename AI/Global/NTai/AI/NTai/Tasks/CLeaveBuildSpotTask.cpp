@@ -2,11 +2,11 @@
 // Tasks
 #include "../Tasks/CLeaveBuildSpotTask.h"
 
-CLeaveBuildSpotTask::CLeaveBuildSpotTask(Global* GL, int unit, weak_ptr<CUnitTypeData> ud){
+CLeaveBuildSpotTask::CLeaveBuildSpotTask(Global* GL, int unit, CUnitTypeData* ud){
 	valid=true;
 	G = GL;
 	this->unit=unit;
-	utd = ud.lock();
+	utd = ud;
 }
 
 void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
@@ -50,7 +50,7 @@ bool CLeaveBuildSpotTask::Init(){
 	if(n > 1){
 		for(int i = 0; i <n; i++){
 			if( a[i] == unit) continue;
-			shared_ptr<CUnitTypeData> ud2 = G->UnitDefLoader->GetUnitTypeDataByUnitId(a[i]).lock();
+			CUnitTypeData* ud2 = G->UnitDefLoader->GetUnitTypeDataByUnitId(a[i]);
 			if(ud2->IsFactory()){
 				facing = G->cb->GetBuildingFacing(a[i]);
 				break;
