@@ -42,8 +42,10 @@ ScopedFileLock::ScopedFileLock(int fd, bool write) : filedes(fd)
 	lock.l_whence = SEEK_SET;
 	lock.l_start = 0;
 	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock))
-		handleerror(0, "Could not lock config file", "DotfileHandler", 0);
+	if (fcntl(filedes, F_SETLKW, &lock)) {
+		// not a fatal error
+		//handleerror(0, "Could not lock config file", "DotfileHandler", 0);
+	}
 }
 
 /**
@@ -56,8 +58,10 @@ ScopedFileLock::~ScopedFileLock()
 	lock.l_whence = SEEK_SET;
 	lock.l_start = 0;
 	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock))
-		handleerror(0, "Could not unlock config file", "DotfileHandler", 0);
+	if (fcntl(filedes, F_SETLKW, &lock)) {
+		// not a fatal error
+		//handleerror(0, "Could not unlock config file", "DotfileHandler", 0);
+	}
 }
 
 /**
@@ -105,7 +109,7 @@ DotfileHandler::DotfileHandler(const std::string& fname) : filename(fname)
 		ScopedFileLock scoped_lock(fileno(file), false);
 		Read(file);
 	} else {
-		if (!(file = fopen(fname.c_str(), "w")))
+		if (!(file = fopen(fname.c_str(), "a")))
 			handleerror(0, "Could not write to config file", "DotfileHandler", 0);
 	}
 	fclose(file);

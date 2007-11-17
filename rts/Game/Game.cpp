@@ -2587,7 +2587,7 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 	}
 	PlayerTrafficInfo& pti = it->second;
 	pti.total += length;
-	
+
 	std::map<int, int>::iterator cit = pti.packets.find(packetCode);
 	if (cit == pti.packets.end()) {
 		pti.packets[packetCode] = length;
@@ -2615,7 +2615,7 @@ bool CGame::ClientReadNet()
 	const unsigned inbuflength = 8000;
 	unsigned char inbuf[inbuflength];
 	memset(inbuf, '\0', inbuflength);
-	unsigned dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+	unsigned dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
 
 
 	while (dataLength > 0) {
@@ -3163,7 +3163,7 @@ bool CGame::ClientReadNet()
 				break;
 			}
 #endif // DIRECT_CONTROL_ALLOWED
-			
+
 			//TODO CGame should not recieve this (handle in CPreGame)
 			case NETMSG_MAPNAME: {
 				const std::string mapname = std::string((char*) (inbuf + 6));
@@ -3183,7 +3183,7 @@ bool CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
-			
+
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_ATTEMPTCONNECT:
 			case NETMSG_SCRIPT: {
@@ -3203,7 +3203,7 @@ bool CGame::ClientReadNet()
 			}
 		}
 
-		dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayer : 0);
+		dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
 	}
 
 	if (dataLength == -1) {

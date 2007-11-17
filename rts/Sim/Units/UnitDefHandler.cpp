@@ -306,7 +306,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.captureSpeed   = udTable.GetFloat("captureSpeed",   ud.buildSpeed);
 	ud.terraformSpeed = udTable.GetFloat("terraformSpeed", ud.buildSpeed);
 
-	ud.flankingBonusMode = udTable.GetFloat("flankingBonusMode", modInfo.flankingBonusModeDefault);
+	ud.flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	ud.flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
 	ud.flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
 	ud.flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", float3(0.0f, 0.0f, 1.0f));
