@@ -76,6 +76,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "LoadFile",   UnsyncLoadFile);
 	HSTR_PUSH_CFUNC(L, "FileExists", UnsyncFileExists);
 	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
+	HSTR_PUSH_CFUNC(L, "UseArchive", UseArchive);
 
 	return true;
 }
@@ -324,6 +325,52 @@ int LuaVFS::SyncDirList(lua_State* L)
 int LuaVFS::UnsyncDirList(lua_State* L)
 {
 	return DirList(L, false);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaVFS::UseArchive(lua_State* L)
+{
+	const string filename = luaL_checkstring(L, 1);
+
+	int funcIndex = 2;
+	string modes = SPRING_VFS_ALL;
+	if (lua_israwstring(L, 2)) {
+		modes = lua_tostring(L, 2);
+		funcIndex = 3;
+	}
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
+		return 0;
+		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
+	}
+
+	if (!lua_isfunction(L, funcIndex)) {
+		return 0;
+	}		
+
+	string fileData;
+	CFileHandler f(filename, SPRING_VFS_RAW);
+	if (!f.FileExists()) {
+		return 0;
+	}
+
+	CVFSHandler* oldHandler = hpiHandler;
+	hpiHandler = SAFE_NEW CVFSHandler;
+	hpiHandler->AddArchive(filename, false);
+
+	const int args = lua_gettop(L);
+	const int error = lua_pcall(L, args - funcIndex, LUA_MULTRET, 0);
+
+	delete hpiHandler;
+	hpiHandler = oldHandler;
+
+	if (error != 0) {
+		lua_error(L);
+	}
+
+	return lua_gettop(L) - funcIndex + 1;
 }
 
 
