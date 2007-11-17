@@ -68,7 +68,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	{
 		// initialise a local client
 		//TODO make local connecting like from remote (and make it possible to have no local conn)
-		int wantedNumber = (gameSetup ? gameSetup->myPlayer : 0 );
+		int wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
 
 		if (play)
 			wantedNumber = std::max(wantedNumber, play->GetFileHeader().numPlayers);
@@ -318,7 +318,7 @@ void CGameServer::Update()
 		std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty())
-			GotChatMessage(msg, gameSetup ? gameSetup->myPlayer : 0);
+			GotChatMessage(msg, gameSetup ? gameSetup->myPlayerNum : 0);
 	}
 	CheckForGameEnd();
 }
@@ -621,7 +621,7 @@ void CGameServer::ServerReadNet()
 			}
 		}
 	}
-	
+
 	for (int a = (serverNet->MaxConnectionID() + 1); a < gs->activePlayers; a++)
 	{
 		//HACK check if we lost connection to the last player(s)

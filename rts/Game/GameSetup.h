@@ -7,6 +7,7 @@
 
 
 class CStartPosSelecter;
+class TdfParser;
 
 
 class CGameSetup
@@ -29,15 +30,19 @@ public:
 	bool Update();
 
 	std::string setupFileName;
-	int myPlayer;
-	int numPlayers;				//the expected amount of players
-	std::string mapname;
+	int myPlayerNum;
+	int numPlayers; //the expected amount of players
+	int numTeams;
+	int numAllyTeams;
+	std::string mapName;
 	std::string baseMod;
 	std::string scriptName;
+	std::string luaGaiaStr;
+	std::string luaRulesStr;
 
 	std::string hostip;
 	int hostport;
-	int sourceport;			//the port clients will try to connect from
+	int sourceport; //the port clients will try to connect from
 
 	int readyTime;
 	bool forceReady;
@@ -56,7 +61,7 @@ public:
 	float startRectRight[MAX_TEAMS];
 
 	std::map<std::string, int> restrictedUnits;
-	
+
 	std::string aiDlls[MAX_TEAMS];
 
 	std::map<std::string, std::string> mapOptions;
@@ -80,6 +85,20 @@ public:
 
 	int startMetal;
 	int startEnergy;
+
+	int gameMode;
+	int noHelperAIs;
+
+private:
+
+	void LoadMap();
+	void LoadStartPositionsFromMap();
+
+	void LoadStartPositions(const TdfParser& file);
+	void LoadUnitRestrictions(const TdfParser& file);
+	void LoadPlayers(const TdfParser& file);
+	void LoadTeams(const TdfParser& file);
+	void LoadAllyTeams(const TdfParser& file);
 };
 
 extern CGameSetup* gameSetup;

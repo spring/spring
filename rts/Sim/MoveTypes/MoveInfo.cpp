@@ -56,12 +56,12 @@ CMoveInfo::CMoveInfo()
 
 	moveInfoChecksum = 0;
 
-  for (size_t num = 1; /* no test */; num++) {
-  	const LuaTable moveTable = rootTable.SubTable(num);
-  	if (!moveTable.IsValid()) {
-  		break;
+	for (size_t num = 1; /* no test */; num++) {
+		const LuaTable moveTable = rootTable.SubTable(num);
+		if (!moveTable.IsValid()) {
+			break;
 		}
-	
+
 		MoveData* md = SAFE_NEW MoveData;
 		const string name = moveTable.GetString("name", "");
 
@@ -84,7 +84,7 @@ CMoveInfo::CMoveInfo()
 			md->moveFamily = 2;
 		}
 		else {
-			md->moveType = MoveData::Ground_Move;	
+			md->moveType = MoveData::Ground_Move;
 			md->depthMod = 0.1f;
 			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));

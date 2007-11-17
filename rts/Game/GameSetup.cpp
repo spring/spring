@@ -75,98 +75,119 @@ struct UnsyncedRandomNumberGenerator {
 	}
 };
 
-bool CGameSetup::Init(const char* buf, int size)
+/**
+@brief Determine if the map is inside an archive, and possibly map needed archives
+@pre mapName initialized
+@post map archives (if any) have been mapped into the VFS
+ */
+void CGameSetup::LoadMap()
 {
-	for(int a=0;a<MAX_PLAYERS;a++){
-		gs->players[a]->team=0;					//needed in case one tries to spec a game with only one team
-	}
-
-	gameSetupText=SAFE_NEW char[size];
-	memcpy(gameSetupText,buf,size);
-	gameSetupTextLength=size;
-
-	TdfParser file;
-	file.LoadBuffer(buf,size);
-
-	if(!file.SectionExist("GAME"))
-		return false;
-
-	mapname=file.SGetValueDef("","GAME\\mapname");
-	scriptName=file.SGetValueDef("Commanders","GAME\\scriptname");
-	baseMod=archiveScanner->ModArchiveToModName(file.SGetValueDef("","GAME\\Gametype"));
-	file.GetDef(hostip,          "0",   "GAME\\HostIP");
-	file.GetDef(hostport,        "0",   "GAME\\HostPort");
-	file.GetDef(maxUnits,        "500", "GAME\\MaxUnits");
-	file.GetDef(gs->gameMode,    "0",   "GAME\\GameMode");
-	file.GetDef(gs->noHelperAIs, "0",   "GAME\\NoHelperAIs");
-	file.GetDef(sourceport,      "0",   "GAME\\SourcePort");
-	file.GetDef(limitDgun,       "0",   "GAME\\LimitDgun");
-	file.GetDef(diminishingMMs,  "0",   "GAME\\DiminishingMMs");
-	file.GetDef(disableMapDamage,"0",   "GAME\\DisableMapDamage");
-
-	const string luaGaiaStr  = file.SGetValueDef("GAME\\LuaGaia",  "1");
-	const string luaRulesStr = file.SGetValueDef("GAME\\LuaRules", "1");
-	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-
-	demoName = file.SGetValueDef("","GAME\\Demofile");
-	if (!demoName.empty()) {
-		hostDemo = true;
-	}
-	saveName = file.SGetValueDef("","GAME\\Savefile");
-	file.GetDef(ghostedBuildings,"1","GAME\\GhostedBuildings");
-
-	file.GetDef(maxSpeed, "3.0", "GAME\\MaxSpeed");
-	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
-
-	// Determine if the map is inside an archive, and possibly map needed archives
-	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapname);
+	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 	if (!f->FileExists()) {
-		vector<string> ars = archiveScanner->GetArchivesForMap(mapname);
+		vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 			if (!hpiHandler->AddArchive(*i, false))
 				logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
 		}
 	}
 	delete f;
+}
 
-	file.GetDef(myPlayer,"0","GAME\\MyPlayerNum");
-	gu->myPlayerNum = myPlayer;
-	file.GetDef(numPlayers,         "2","GAME\\NumPlayers");
-	file.GetDef(gs->activeTeams,    "2","GAME\\NumTeams");
-	file.GetDef(gs->activeAllyTeams,"2","GAME\\NumAllyTeams");
+/**
+@brief Load unit restrictions
+@post restrictedUnits initialized
+ */
+void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
+{
+	int numRestrictions;
+	file.GetDef(numRestrictions, "0", "GAME\\NumRestrictions");
 
-	int startPosTypeInt;
-	file.GetDef(startPosTypeInt,"0","GAME\\StartPosType");
-	if (startPosTypeInt < 0 || startPosTypeInt > StartPos_Last)
-		startPosTypeInt = 0;
-	startPosType = (StartPosType)startPosTypeInt;
+	for (int i = 0; i < numRestrictions; ++i) {
+		char key[100];
+		sprintf(key, "GAME\\RESTRICT\\Unit%d", i);
+		string resName = file.SGetValueDef("", key);
+		sprintf(key, "GAME\\RESTRICT\\Limit%d", i);
+		int resLimit;
+		file.GetDef(resLimit, "0", key);
 
-	for (int a = 0; a < gs->activeTeams; ++a) {
-		// ready up automatically unless startPosType is choose in game
+		restrictedUnits[resName] = resLimit;
+	}
+}
+
+/**
+@brief Load startpositions from map
+@pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+@todo don't store in global variables directly
+ */
+void CGameSetup::LoadStartPositionsFromMap()
+{
+	TdfParser p2;
+	CReadMap::OpenTDF (mapName, p2);
+
+	for(int a=0;a<numTeams;++a){
+		float x,z;
+		char teamName[50];
+		sprintf(teamName, "TEAM%i", teamStartNum[a]);
+		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
+		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
+		gs->Team(a)->startPos = float3(x, 100, z);
+	}
+}
+
+/**
+@brief Load startpositions from map/script
+@pre numTeams and startPosType initialized
+@post readyTeams, teamStartNum and team start positions initialized
+@todo don't store in global variables directly
+ */
+void CGameSetup::LoadStartPositions(const TdfParser& file)
+{
+	for (int a=0; a<numTeams; ++a) {
+		// Ready up automatically unless startPosType is choose in game
 		readyTeams[a] = (startPosType != StartPos_ChooseInGame);
 		teamStartNum[a] = a;
 	}
 
 	if (startPosType == StartPos_Random) {
-		//server syncs these later, so we can use unsynced rng
+		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRandomNumberGenerator rng;
-		std::random_shuffle(&teamStartNum[0], &teamStartNum[gs->activeTeams], rng);
+		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
 	}
 
+	LoadStartPositionsFromMap();
+
+	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
-		SAFE_NEW CStartPosSelecter();
+		for(int a=0;a<numTeams;++a)
+			gs->Team(a)->startPos.y=-500;
 	}
 
-	// gaia adjustments
-	if (gs->useLuaGaia) {
-		gs->gaiaTeamID = gs->activeTeams;
-		gs->gaiaAllyTeamID = gs->activeAllyTeams;
-		gs->activeTeams++;
-		gs->activeAllyTeams++;
-		teamStartNum[gs->gaiaTeamID] = gs->gaiaTeamID;
+	// Load start position from gameSetup script
+	if (startPosType == StartPos_ChooseBeforeGame) {
+		for(int a=0;a<numTeams;++a) {
+			char section[50];
+			sprintf(section, "GAME\\TEAM%i\\", a);
+			string s(section);
+			std::string xpos = file.SGetValueDef("", s + "StartPosX");
+			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
+			if (!xpos.empty()) gs->Team(a)->startPos.x = atoi(xpos.c_str());
+			if (!zpos.empty()) gs->Team(a)->startPos.z = atoi(zpos.c_str());
+		}
 	}
+}
 
+/**
+@brief Load players
+@pre numPlayers initialized
+@post players loaded, numDemoPlayers initialized
+@todo don't store in global variables directly
+ */
+void CGameSetup::LoadPlayers(const TdfParser& file)
+{
+	numDemoPlayers=0;
+	for(int a=0;a<MAX_PLAYERS;a++){
+		gs->players[a]->team=0; //needed in case one tries to spec a game with only one team
+	}
 	for(int a=0;a<numPlayers;++a){
 		char section[50];
 		sprintf(section,"GAME\\PLAYER%i\\",a);
@@ -183,65 +204,62 @@ bool CGameSetup::Init(const char* buf, int size)
 		if(fromDemo)
 			numDemoPlayers++;
 	}
-	gu->spectating = gs->players[myPlayer]->spectator;
-	gu->spectatingFullView   = gu->spectating;
-	gu->spectatingFullSelect = gu->spectating;
+}
 
-	TdfParser p2;
-	CReadMap::OpenTDF (mapname, p2);
-
-	for(int a=0;a<gs->activeTeams;++a){
+/**
+@brief Load teams
+@pre numTeams, hostDemo initialized
+@post teams loaded
+@todo don't store in global variables directly
+ */
+void CGameSetup::LoadTeams(const TdfParser& file)
+{
+	for(int a=0;a<numTeams;++a){
 		char section[50];
-		sprintf(section,"GAME\\TEAM%i\\",a);
+		sprintf(section, "GAME\\TEAM%i\\", a);
 		string s(section);
 
-		int colorNum=atoi(file.SGetValueDef("0",s+"color").c_str());
-		colorNum%=palette.NumTeamColors();
-		float3 defaultCol(palette.teamColor[colorNum][0]/255.0f,palette.teamColor[colorNum][1]/255.0f,palette.teamColor[colorNum][2]/255.0f);
-		float3 color=file.GetFloat3(defaultCol,s+"rgbcolor");
+		// Get default color from palette (based on "color" tag)
+		int colorNum = atoi(file.SGetValueDef("0", s + "color").c_str());
+		colorNum %= palette.NumTeamColors();
+		float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
+
+		// Read RGBColor, this overrides color if both had been set.
+		float3 color = file.GetFloat3(defaultCol, s + "rgbcolor");
 		for(int b=0;b<3;++b){
-			gs->Team(a)->color[b]=int(color[b]*255);
+			gs->Team(a)->color[b] = int(color[b] * 255);
 		}
 		gs->Team(a)->color[3]=255;
 
- 		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
- 		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
- 		gs->Team(a)->side=StringToLower(file.SGetValueDef("arm",s+"side").c_str());
- 		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
+		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
+		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
+		gs->Team(a)->side=StringToLower(file.SGetValueDef("arm",s+"side").c_str());
+		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
 
- 		const string aiDll = file.SGetValueDef("", s + "aidll");
-    if (aiDll.substr(0, 6) == "LuaAI:") {
-    	gs->Team(a)->luaAI = aiDll.substr(6);
-		}
-		else {
-			if (demoName.empty()) {
-				aiDlls[a] = aiDll;
-			} else {
+		// Is this team (Lua) AI controlled?
+		// If this is a demo replay, non-Lua AIs aren't loaded.
+		const string aiDll = file.SGetValueDef("", s + "aidll");
+		if (aiDll.substr(0, 6) == "LuaAI:") {
+			gs->Team(a)->luaAI = aiDll.substr(6);
+		} else {
+			if (hostDemo) {
 				aiDlls[a] = "";
+			} else {
+				aiDlls[a] = aiDll;
 			}
 		}
-
-		float x,z;
-		char teamName[50];
-		sprintf(teamName, "TEAM%i", teamStartNum[a]);
-		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
-		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
-		gs->Team(a)->startPos = float3(x, 100, z);
-
-		if (startPosType == StartPos_ChooseInGame)
-			gs->Team(a)->startPos.y=-500;	//show that we havent selected start pos yet
-
-		if (startPosType == StartPos_ChooseBeforeGame) {
-			std::string xpos = file.SGetValueDef("", s + "StartPosX");
-			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
-			if (!xpos.empty()) gs->Team(a)->startPos.x = atoi(xpos.c_str());
-			if (!zpos.empty()) gs->Team(a)->startPos.z = atoi(zpos.c_str());
-		}
 	}
-	gu->myTeam=gs->players[myPlayer]->team;
-	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
+}
 
-	for(int a=0;a<gs->activeAllyTeams;++a){
+/**
+@brief Load allyteams
+@pre numAllyTeams initialized
+@post allyteams loaded
+@todo don't store in global variables directly
+*/
+void CGameSetup::LoadAllyTeams(const TdfParser& file)
+{
+	for(int a=0;a<numAllyTeams;++a){
 		char section[50];
 		sprintf(section,"GAME\\ALLYTEAM%i\\",a);
 		string s(section);
@@ -259,38 +277,104 @@ bool CGameSetup::Init(const char* buf, int size)
 			gs->SetAlly(a,other, true);
 		}
 	}
+}
 
-	file.GetDef(startMetal, "1000", "GAME\\StartMetal");
-	file.GetDef(startEnergy, "1000", "GAME\\StartEnergy");
-	for(int a = 0; a < gs->activeTeams; ++a) {
-		gs->Team(a)->metal = startMetal;
-		gs->Team(a)->metalIncome = startMetal; // for the endgame statistics
+bool CGameSetup::Init(const char* buf, int size)
+{
+	// Copy buffer contents
+	gameSetupText = SAFE_NEW char[size];
+	memcpy(gameSetupText, buf, size);
+	gameSetupTextLength = size;
 
-		gs->Team(a)->energy = startEnergy;
-		gs->Team(a)->energyIncome = startEnergy;
-	}
+	// Parse
+	TdfParser file;
+	file.LoadBuffer(buf, size);
 
-	// Read the unit restrictions
-	int numRestrictions;
-	file.GetDef(numRestrictions, "0", "GAME\\NumRestrictions");
+	if(!file.SectionExist("GAME"))
+		return false;
 
-	for (int i = 0; i < numRestrictions; ++i) {
-		char key[100];
-		sprintf(key, "GAME\\RESTRICT\\Unit%d", i);
-		string resName = file.SGetValueDef("", key);
-		sprintf(key, "GAME\\RESTRICT\\Limit%d", i);
-		int resLimit;
-		file.GetDef(resLimit, "0", key);
+	// Technical parameters
+	file.GetDef(hostip,     "0", "GAME\\HostIP");
+	file.GetDef(hostport,   "0", "GAME\\HostPort");
+	file.GetDef(sourceport, "0", "GAME\\SourcePort");
 
-		restrictedUnits[resName] = resLimit;
-	}
+	// Game parameters
+	scriptName  = file.SGetValueDef("Commanders", "GAME\\ScriptName");
+	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
+	mapName     = file.SGetValueDef("",  "GAME\\MapName");
+	luaGaiaStr  = file.SGetValueDef("1", "GAME\\LuaGaia");
+	luaRulesStr = file.SGetValueDef("1", "GAME\\LuaRules");
+	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
+	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
+	hostDemo    = !demoName.empty();
 
-	// read the map & mod options
+	file.GetDef(gameMode,         "0", "GAME\\GameMode");
+	file.GetDef(noHelperAIs,      "0", "GAME\\NoHelperAIs");
+	file.GetDef(maxUnits,       "500", "GAME\\MaxUnits");
+	file.GetDef(limitDgun,        "0", "GAME\\LimitDgun");
+	file.GetDef(diminishingMMs,   "0", "GAME\\DiminishingMMs");
+	file.GetDef(disableMapDamage, "0", "GAME\\DisableMapDamage");
+	file.GetDef(ghostedBuildings, "1", "GAME\\GhostedBuildings");
+	file.GetDef(startMetal,    "1000", "GAME\\StartMetal");
+	file.GetDef(startEnergy,   "1000", "GAME\\StartEnergy");
+
+	file.GetDef(maxSpeed, "3.0", "GAME\\MaxSpeed");
+	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
+
+	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
+	file.GetDef(numPlayers,   "2", "GAME\\NumPlayers");
+	file.GetDef(numTeams,     "2", "GAME\\NumTeams");
+	file.GetDef(numAllyTeams, "2", "GAME\\NumAllyTeams");
+
+	// Read the map & mod options
 	mapOptions = file.GetAllValues("GAME\\MapOptions");
 	modOptions = file.GetAllValues("GAME\\ModOptions");
 
-	// setup the gaia team
+	// Read startPosType (with clamping)
+	int startPosTypeInt;
+	file.GetDef(startPosTypeInt, "0", "GAME\\StartPosType");
+	if (startPosTypeInt < 0 || startPosTypeInt > StartPos_Last)
+		startPosTypeInt = 0;
+	startPosType = (StartPosType)startPosTypeInt;
+
+	// Read subsections
+	LoadPlayers(file);
+	LoadTeams(file);
+	LoadAllyTeams(file);
+	LoadUnitRestrictions(file);
+
+	LoadMap();
+	LoadStartPositions(file);
+
+	// Postprocessing
+	baseMod = archiveScanner->ModArchiveToModName(baseMod);
+
+	gu->myPlayerNum = myPlayerNum;
+	gu->myTeam = gs->players[myPlayerNum]->team;
+	gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+
+	gu->spectating = gs->players[myPlayerNum]->spectator;
+	gu->spectatingFullView   = gu->spectating;
+	gu->spectatingFullSelect = gu->spectating;
+
+	gs->gameMode = gameMode;
+	gs->noHelperAIs = noHelperAIs;
+
+	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
+
+	gs->activeTeams = numTeams;
+	gs->activeAllyTeams = numAllyTeams;
+
 	if (gs->useLuaGaia) {
+		// Gaia adjustments
+		gs->gaiaTeamID = gs->activeTeams;
+		gs->gaiaAllyTeamID = gs->activeAllyTeams;
+		gs->activeTeams++;
+		gs->activeAllyTeams++;
+		teamStartNum[gs->gaiaTeamID] = gs->gaiaTeamID;
+
+		// Setup the gaia team
 		CTeam* team = gs->Team(gs->gaiaTeamID);
 		team->color[0] = 255;
 		team->color[1] = 255;
@@ -299,6 +383,18 @@ bool CGameSetup::Init(const char* buf, int size)
 		team->gaia = true;
 		readyTeams[gs->gaiaTeamID] = true;
 		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
+	}
+
+	for(int a = 0; a < gs->activeTeams; ++a) {
+		gs->Team(a)->metal = startMetal;
+		gs->Team(a)->metalIncome = startMetal; // for the endgame statistics
+
+		gs->Team(a)->energy = startEnergy;
+		gs->Team(a)->energyIncome = startEnergy;
+	}
+
+	if (startPosType == StartPos_ChooseInGame) {
+		SAFE_NEW CStartPosSelecter();
 	}
 
 	assert(gs->activeTeams <= MAX_TEAMS);
@@ -376,7 +472,7 @@ void CGameSetup::Draw()
 		} else {
 			color = green;
 		}
-		
+
 		const char* name;
 		if (a == numPlayers) {
 			name = "Players:";
