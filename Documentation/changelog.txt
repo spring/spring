@@ -133,18 +133,18 @@ Unit / Weapon / Feature Definition Tags:
 - Changed init_cloaked to initcloaked.
 - Add a tag 'pushResistant' to UnitDef. If set to true, a unit will not be pushed out of the way by another when their footprints overlap, nor will it respond to BuggerOff directives when the other party has an important move order. Defaults to false. 
 - Added a per-soundfile volume control format for unitdefs
- sounds = {
-   ok = 'oksound',
-   cancel = {
-     'cancel1',
-     'cancel2',
-   },
-   select = {
-     { file = 'selsound1', volume = 2.0 },
-     { file = 'selsound2', volume = 2.5 },
-     etc...
-   },
- } 
+    sounds = {
+      ok = 'oksound',
+      cancel = {
+        'cancel1',
+        'cancel2',
+      },
+      select = {
+        { file = 'selsound1', volume = 2.0 },
+        { file = 'selsound2', volume = 2.5 },
+        etc...
+      },
+    } 
 - Added the dance tag for missilelaunchers that makes the missile move around randomly. Unlike wobble it doesn't rotate the missile and it prevents the missile from going too far off course so a dancing swarm will remain coherent.
 - Beamlasers ignore beamtime if new tag "beamburst" is set (for emulating weapons that do damage in bursts)
 - Features have new tag "reclaimTime" defining how long they take to reclaim, default is metal+energy.
@@ -370,7 +370,6 @@ Lua:
 - Adedd the MapDrawCmd()    call-in  (only for LuaUI) 
 - Added the unsynced Spring.GetVisibleUnits([teamID] [,radius] [,useIcons]) call-out 
 - Added the following to both UnitDefs[] and FeatureDefs[]
-<<<<<<< .mine
     height, radius
     minx, midx, maxx
     miny, midy, maxy
@@ -380,15 +379,6 @@ Lua:
 - The majority of mod files are now loaded via LuaParsers, which can be edited
   to load different types of files. The default LuaParsers simply load the
   normal style files with improved error checking and speed.
-=======
-   height, radius
-   minx, midx, maxx
-   miny, midy, maxy
-   minz, midz, maxz
-- Added mainDirX / mainDirY / mainDirZ to the lua UnitDef.weapons[#] tables 
-- Disabled the lua DrawScreen() call-in when the interface is hidden (note that the DrawScreenEffects() call-in remains active)
-- The majority of mod files are now loaded via LuaParsers, which can be edited to load different types of files. The default LuaParsers simply load the normal style files with improved error checking and speed.
->>>>>>> .r4800
 - Game.armorTypes[] was changed to a bidirectional map
 - WeaponDefs[x].damages.damages[] was replaced with WeaponDefs[x].damages[index]
   (starts at 0 for the default armorType) 
