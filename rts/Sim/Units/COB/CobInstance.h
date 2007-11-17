@@ -38,6 +38,22 @@ struct PieceInfo {
 
 class CCobInstance : public CObject
 {
+public:
+	static const int UNIT_VAR_COUNT   = 8;
+	static const int TEAM_VAR_COUNT   = 64;
+	static const int ALLY_VAR_COUNT   = 64;
+	static const int GLOBAL_VAR_COUNT = 4096;
+
+	static const int UNIT_VAR_START   = 1024;
+	static const int TEAM_VAR_START   = 2048;
+	static const int ALLY_VAR_START   = 3072;
+	static const int GLOBAL_VAR_START = 4096;
+
+	static const int UNIT_VAR_END   = UNIT_VAR_START   + UNIT_VAR_COUNT   - 1;
+	static const int TEAM_VAR_END   = TEAM_VAR_START   + TEAM_VAR_COUNT   - 1;
+	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
+	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
+
 protected:
 	CCobFile& script;
 	enum AnimType {ATurn, ASpin, AMove};
@@ -56,21 +72,6 @@ protected:
 	bool yardOpen;
 	void UnblockAll(struct AnimInfo * anim);
 
-	static const int UNIT_VAR_COUNT   = 8;
-	static const int TEAM_VAR_COUNT   = 64;
-	static const int ALLY_VAR_COUNT   = 64;
-	static const int GLOBAL_VAR_COUNT = 1024;
-
-	static const int UNIT_VAR_START   = 1024;
-	static const int TEAM_VAR_START   = 2048;
-	static const int ALLY_VAR_START   = 3072;
-	static const int GLOBAL_VAR_START = 4096;
-
-	static const int UNIT_VAR_END   = UNIT_VAR_START   + UNIT_VAR_COUNT   - 1;
-	static const int TEAM_VAR_END   = TEAM_VAR_START   + TEAM_VAR_COUNT   - 1;
-	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
-	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
-
 	static int teamVars[MAX_TEAMS][TEAM_VAR_COUNT];
 	static int allyVars[MAX_TEAMS][ALLY_VAR_COUNT];
 	static int globalVars[GLOBAL_VAR_COUNT];
@@ -84,7 +85,14 @@ public:
 	vector<struct PieceInfo> pieces;	
 	bool smoothAnim;
 	const CCobFile* GetScriptAddr() const { return &script; }
-	
+
+	const int* GetUnitVars() const { return unitVars; };
+
+public:
+	static const int* GetTeamVars(int team) { return teamVars[team]; }
+	static const int* GetAllyVars(int ally) { return allyVars[ally]; }
+	static const int* GetGlobalVars()       { return globalVars; }
+
 public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	~CCobInstance(void);
