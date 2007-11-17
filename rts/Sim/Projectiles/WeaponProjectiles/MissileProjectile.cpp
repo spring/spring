@@ -241,9 +241,11 @@ void CMissileProjectile::Update(void)
 				// missile has reached apex, smoothly transition
 				// to targetDir (can still overshoot when target
 				// is too close or height difference too large)
-				float diffDirY = fabsf(targetDir.y - dir.y);
-				float c = curSpeed / 20.0f;
-				dir.y -= (diffDirY * c);
+				const float horDiff = (targPos - pos).Length2D() + 0.01f;
+				const float verDiff = (targPos.y - pos.y) + 0.01f;
+				const float dirDiff = fabsf(targetDir.y - dir.y);
+				const float ratio = fabsf(verDiff / horDiff);
+				dir.y -= (dirDiff * ratio);
 			} else {
 				// missile is still ascending
 				dir.y -= (extraHeightDecay / dist);
