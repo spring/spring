@@ -35,6 +35,8 @@ class LuaVFS {
 		static int UnsyncFileExists(lua_State* L);
 		static int UnsyncDirList(lua_State* L);
 
+		static int UseArchive(lua_State* L);
+
 		// string packing utilities
 		static int PackU8(lua_State* L);
 		static int PackU16(lua_State* L);
