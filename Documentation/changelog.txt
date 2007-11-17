@@ -5,7 +5,8 @@ Spring change log
 - A lot of networking code was refactored.
 - Exposed unit->maxSpeed to the AI interface
 - Reintroduced heightMod to TryTarget.
-- New aircraft command CMD_IDLEMODE - it switches between landing when idle and not landing.
+- New aircraft command CMD_IDLEMODE,
+  it switches between landing when idle and not landing.
 - Unitsync Java bindings now have a version number.
 - Added ArchiveMover by zizu. Automatically moves .sdz and .sd7 files to the
   correct place (Spring\maps\ or Spring\mods\)
@@ -17,8 +18,11 @@ Spring change log
 - Added new start positions mode Choose Before Game. Useful for AIs, you can
   select the starting position of players from the client.
 - Make the replay format better:
-  - It has a proper header now with version field instead of the entire file being just a data blob.
-  - The header has made the gameSetup script.txt modifications redundant: the UnixTime and Spring Version are in the header, and the gameSetup script is stored unmodified now.
+  - It has a proper header now with version field instead of the entire file
+    being just a data blob.
+  - The header has made the gameSetup script.txt modifications redundant: the
+    UnixTime and Spring Version are in the header, and the gameSetup script is
+    stored unmodified now.
   - It stores a game ID, this can be used to match replays of the same game together.
   - It stores the winning ally team, if any.
   - It stores player stats.
@@ -43,7 +47,8 @@ Spring change log
 - Added the "/grounddecals [0|1]" command 
 - Put springcontent.sdz and bitmaps.sdz in upgrading installer. 
 - Lasers no longer use their full texture on shots that hit before their full length.
-- Checksum is now read from 7z/zip archive header instead of checksumming entire file, making things like map list reloading faster by a huge amount.
+- Checksum is now read from 7z/zip archive header instead of checksumming entire
+  file, making things like map list reloading faster by a huge amount.
 - Move shaders into springcontent.sdz 
 - GadgetHandler added to springcontent.sdz
 - Added GetPrimaryModVersion() to unitsync 
@@ -96,42 +101,97 @@ User Interface:
   until the shadows are added)
 - Make Fight be able to be given a line command, like move already can be.
 - Only add the SelectAI button if the current selection has valid GroupAIs 
-- Change default keybinding for createvideo to Ctrl+Shift+F10 (was Any+F10), so it is less easy to accidentally hit it.
-- Change savegame default keybinding from Any+F8 to Ctrl+Shift+F8, for the same reason as the createvideo keybind change.
+- Change default keybinding for createvideo to Ctrl+Shift+F10 (was Any+F10),
+  so it is less easy to accidentally hit it.
+- Change savegame default keybinding from Any+F8 to Ctrl+Shift+F8,
+  for the same reason as the createvideo keybind change.
 - Improved view centering for the Free Camera mode 
 
 Unit / Weapon / Feature Definition Tags:
 
-- Added heightBoostFactor - a float tag that gives control of cannon height range boost (more than 1 means increased range, 0 means the cannon has fixed range regardless of height difference to target. default is a magic value calculated on weapon init, based on range tag and theoretical max range.) 
-- Added heightMod tag (height difference is multiplied by this value before checking range), default 0.8 for Cannon weapon type, 0.2 for everything else (i.e. stays as it was). Beamlasers have heightmod=1 by default so they use pure spherical targeting.
-- Added GroundBounce, WaterBounce, NumBounce, BounceSlip, BounceRebound, and bounceExplosionGenerator tags.
-- The TDF tags MetalStorage and EnergyStorage now override the StartMetal and StartEnergy specified in the startscript, instead of the other way round. If MetalStorage or EnergyStorage isn't specified the default values for commander units are StartMetal and StartEnergy. For other units the default remains 0.
-- New tags beamttl (default: 0) and beamdecay (default: 1) for the beamlaser. Beamttl defines the time (in frames) the beam will stay after being fired and beamdecay defines the speed of the fadeout (each frame the beam's intensity is multiplied with that value). This applies to the single-frame beams the weapon emits, if it has a beamtime it will emit one such beam every frame, which is only useful if the source of the beam moves a lot (gives a cool trail effect). It's primarily intended for beams with a beamtime of one frame (which often simulate very fast shots instead of constant streams, e.g. railguns) so they don't disappear immediately.
-- Allow for the modder to define whether the crashing planes (and/or units running long Killed() scripts) can be fired on via modrules.tdf new section: 
+- Added heightBoostFactor - a float tag that gives control of cannon height
+  range boost (more than 1 means increased range, 0 means the cannon has fixed
+  range regardless of height difference to target. default is a magic value
+  calculated on weapon init, based on range tag and theoretical max range.) 
+- Added heightMod tag (height difference is multiplied by this value before
+  checking range), default 0.8 for Cannon weapon type, 0.2 for everything else
+  (i.e. stays as it was). Beamlasers have heightmod=1 by default so they use
+  pure spherical targeting.
+- Added GroundBounce, WaterBounce, NumBounce, BounceSlip, BounceRebound, and
+  bounceExplosionGenerator tags.
+- The TDF tags MetalStorage and EnergyStorage now override the StartMetal and
+  StartEnergy specified in the startscript, instead of the other way round. If
+  MetalStorage or EnergyStorage isn't specified the default values for commander
+  units are StartMetal and StartEnergy. For other units the default remains 0.
+- New tags beamttl (default: 0) and beamdecay (default: 1) for the beamlaser.
+  Beamttl defines the time (in frames) the beam will stay after being fired and
+  beamdecay defines the speed of the fadeout (each frame the beam's intensity is
+  multiplied with that value). This applies to the single-frame beams the weapon
+  emits, if it has a beamtime it will emit one such beam every frame, which is
+  only useful if the source of the beam moves a lot (gives a cool trail effect).
+  It's primarily intended for beams with a beamtime of one frame (which often
+  simulate very fast shots instead of constant streams, e.g. railguns) so they
+  don't disappear immediately.
+- Allow for the modder to define whether the crashing planes (and/or units
+  running long Killed() scripts) can be fired on via modrules.tdf new section: 
     [FIREATDEAD]
     {
       fireAtKilled=0;
       fireAtCrashing=0;
     } 
-  The defaults are to disallow both (Spring 0.75 behaviour, both variables set to 0). Spring 0.74 behaviour (allow both) can be emulated by setting both variables to 1.
-- Added fixedLauncher tag (bool) for missiles, starburst missiles and torpedoes, this makes the projectile spawn with the orientation of the shooting piece instead of their normal orientation. The weapon will not properly check if allies are in the way so make sure you align the launchers in a way that won't hammer right into your own forces and perhaps use collideFriendly=0. FixedLauncher conflicts with trajectoryHeight and IMO combining them is pointless anyway so don't use both on a weapon. 
-- Added projectiles tag (int), each time a weapon fires this many projectiles are spawned (on the same frame). Make sure you put them on different trajectories somehow (sprayangle or different firepoints) because otherwise they'll all be clumped in one shot. Can be set to 0 as well for script trigger weapons and can be combined with burst. 
-- Missiles and starburst missiles now obey smoketrail, set it to 0 to disable the smoke. To get a missile without smoketrail you have to define the weapon as a missile with WeaponType=MissileLauncher in the tdf. 
-- Missiles, starburst missiles and torpedoes now use flighttime if present instead of the hardcoded formula (which is still used if flighttime is not present) 
-- Added SubMissile tag (bool) for TorpedoLaunchers, if set to 1 the torpedo will travel like a missile outside of water. It will not emit a smoketrail, though. When fired from a plane it will behave the same way but the plane will probably be considered a fighter, not a bomber. 
-- Added fireSubmersed tag (bool), defaults to the value of waterweapon. If set the weapon can fire underwater, if not then not. Use it for weapons that cannot fire underwater but can hit underwater targets. Works even for torpedoes. 
-- Starburst missiles now obey turnrate for the turn at the peak of their flight (if supplied, otherwise the old value is used). 
-- All weapons (save for the Rifle which noone uses anyway) can now attack underwater targets if they have waterweapon=1 set. 
-- Bombs can use manually defined burst and burstrate values instead of autogenerated ones by using the new manualBombSettings tag (bool). Keep in mind that (roughly) burst*burstrate defines the area in which the bomber is willing to drop the bomb so if you make it too small the bomber might miss the drop area and not drop any bomb. 
-- Added myGravity tag (float) for ballistic weapons (Cannon and Bomb), it overrides the map gravity if used. Regular map gravity is around 0.2. 
+  The defaults are to disallow both (Spring 0.75 behaviour, both variables set
+  to 0). Spring 0.74 behaviour (allow both) can be emulated by setting both
+  variables to 1.
+- Added fixedLauncher tag (bool) for missiles, starburst missiles and torpedoes,
+  this makes the projectile spawn with the orientation of the shooting piece
+  instead of their normal orientation. The weapon will not properly check if
+  allies are in the way so make sure you align the launchers in a way that
+  won't hammer right into your own forces and perhaps use collideFriendly=0.
+  FixedLauncher conflicts with trajectoryHeight and IMO combining them is
+  pointless anyway so don't use both on a weapon. 
+- Added projectiles tag (int), each time a weapon fires this many projectiles
+  are spawned (on the same frame). Make sure you put them on different
+  trajectories somehow (sprayangle or different firepoints) because otherwise
+  they'll all be clumped in one shot. Can be set to 0 as well for script trigger
+  weapons and can be combined with burst. 
+- Missiles and starburst missiles now obey smoketrail, set it to 0 to disable
+  the smoke. To get a missile without smoketrail you have to define the weapon
+  as a missile with WeaponType=MissileLauncher in the tdf. 
+- Missiles, starburst missiles and torpedoes now use flighttime if present
+  instead of the hardcoded formula (which is still used if flighttime is not
+  present) 
+- Added SubMissile tag (bool) for TorpedoLaunchers, if set to 1 the torpedo will
+  travel like a missile outside of water. It will not emit a smoketrail, though.
+  When fired from a plane it will behave the same way but the plane will
+  probably be considered a fighter, not a bomber. 
+- Added fireSubmersed tag (bool), defaults to the value of waterweapon. If set
+  the weapon can fire underwater, if not then not. Use it for weapons that
+  cannot fire underwater but can hit underwater targets. Works even for
+  torpedoes.
+- Starburst missiles now obey turnrate for the turn at the peak of their flight
+  (if supplied, otherwise the old value is used). 
+- All weapons (save for the Rifle which noone uses anyway) can now attack
+  underwater targets if they have waterweapon=1 set. 
+- Bombs can use manually defined burst and burstrate values instead of
+  autogenerated ones by using the new manualBombSettings tag (bool). Keep in
+  mind that (roughly) burst*burstrate defines the area in which the bomber is
+  willing to drop the bomb so if you make it too small the bomber might miss
+  the drop area and not drop any bomb. 
+- Added myGravity tag (float) for ballistic weapons (Cannon and Bomb), it
+  overrides the map gravity if used. Regular map gravity is around 0.2. 
 - Bombs now obey Accuracy and SprayAngle. 
-- Added ShieldStartingPower tag (float) for shields, if set the shield starts with this much power instead of 0. 
+- Added ShieldStartingPower tag (float) for shields, if set the shield starts
+  with this much power instead of 0. 
 - Renamed flareEfficency -> flareEfficiency 
 - Added modinfo.tdf 'version', 'mutator', and 'shortName' tags 
 - Added the weaponDef 'cameraShake' tag 
-- Moved the buildOptions definitions into the unitDef definitions, LuaParser handles backwards compatibility.
+- Moved the buildOptions definitions into the unitDef definitions, LuaParser
+  handles backwards compatibility.
 - Changed init_cloaked to initcloaked.
-- Add a tag 'pushResistant' to UnitDef. If set to true, a unit will not be pushed out of the way by another when their footprints overlap, nor will it respond to BuggerOff directives when the other party has an important move order. Defaults to false. 
+- Add a tag 'pushResistant' to UnitDef. If set to true, a unit will not be
+  pushed out of the way by another when their footprints overlap, nor will
+  it respond to BuggerOff directives when the other party has an important
+  move order. Defaults to false. 
 - Added a per-soundfile volume control format for unitdefs
     sounds = {
       ok = 'oksound',
