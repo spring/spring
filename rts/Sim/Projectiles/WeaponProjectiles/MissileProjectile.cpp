@@ -242,7 +242,8 @@ void CMissileProjectile::Update(void)
 				// to targetDir (can still overshoot when target
 				// is too close or height difference too large)
 				float diffDirY = fabsf(targetDir.y - dir.y);
-				dir.y -= (diffDirY * 0.1f);
+				float c = curSpeed / 20.0f;
+				dir.y -= (diffDirY * c);
 			} else {
 				// missile is still ascending
 				dir.y -= (extraHeightDecay / dist);
