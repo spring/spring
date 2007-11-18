@@ -102,6 +102,7 @@
 #define STEALTH                   96 // set or get
 #define CRASHING                  97 // set or get, returns whether aircraft isCrashing state
 #define CHANGE_TARGET             98 // set, the value it's set to determines the affected weapon
+#define CEG_DAMAGE                99 // set
 #define COB_ID                   100 // get
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
@@ -672,7 +673,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 				//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
-				unit->unitDef->sfxExplGens[index]->Explosion(pos, 1, 1, unit, 0, 0, dir);
+				unit->unitDef->sfxExplGens[index]->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
 			else if (type & 2048)  //make a weapon fire from the piece
 			{
@@ -1464,6 +1465,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case ALPHA_THRESHOLD: {
 			unit->alphaThreshold = float(param) / 255.0f;
+			break;
+		}
+		case CEG_DAMAGE: {
+			unit->cegDamage = param;
 			break;
 		}
 		case FLANK_B_MODE:

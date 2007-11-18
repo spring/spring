@@ -366,7 +366,8 @@ public:
 	vector<float> lodLengths; // length-per-pixel
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
-	float alphaThreshold; //minimum alpha value for a texel to be drawn
+	float alphaThreshold;	// minimum alpha value for a texel to be drawn
+	int cegDamage;			// the damage value passed to CEGs spawned by this unit's script
 
 protected:
 	void ChangeTeamReset();

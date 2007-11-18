@@ -314,19 +314,22 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 }
 
 
-#define OP_END    0
-#define OP_STOREI 1 // int
-#define OP_STOREF 2 // float
-#define OP_STOREC 3 // char
-#define OP_ADD    4
-#define OP_RAND   5
-#define OP_DAMAGE 6
-#define OP_INDEX  7
-#define OP_LOADP  8 // load a void* into the pointer register
-#define OP_STOREP 9 // store the pointer register into a void*
-#define OP_DIR	  10 //stor the float3 direction
+#define OP_END		 0
+#define OP_STOREI	 1 // int
+#define OP_STOREF	 2 // float
+#define OP_STOREC	 3 // char
+#define OP_ADD		 4
+#define OP_RAND		 5
+#define OP_DAMAGE	 6
+#define OP_INDEX	 7
+#define OP_LOADP	 8 // load a void* into the pointer register
+#define OP_STOREP	 9 // store the pointer register into a void*
+#define OP_DIR		10 // store the float3 direction
+#define OP_SAWTOOTH	11 // Performs a modulo to create a sawtooth wave
+#define OP_DISCRETE	12 // Floors the value to a multiple of its parameter
+#define OP_SINE		13 // Uses val as the phase of a sine wave
 
-void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float damage, char *instance, int spawnIndex,const float3 &dir)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float damage, char *instance, int spawnIndex, const float3 &dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -337,62 +340,78 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				Uint16 offset = *(Uint16*)code;
+				Uint16 offset = *(Uint16*) code;
 				code += 2;
-				*(int*)(instance + offset) = (int) val;
+				*(int*) (instance + offset) = (int) val;
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				Uint16 offset = *(Uint16*)code;
+				Uint16 offset = *(Uint16*) code;
 				code += 2;
-				*(float*)(instance + offset) = val;
+				*(float*) (instance + offset) = val;
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREC: {
-				Uint16 offset = *(Uint16*)code;
+				Uint16 offset = *(Uint16*) code;
 				code += 2;
-				*(unsigned char*)(instance + offset) = (int) val;
+				*(unsigned char*) (instance + offset) = (int) val;
 				val = 0.0f;
 				break;
 			}
 			case OP_ADD: {
-				val += *(float*)code;
+				val += *(float*) code;
 				code += 4;
 				break;
 			}
 			case OP_RAND: {
-				val += gu->usRandFloat() * *(float*)code;
+				val += gu->usRandFloat() * (*(float*) code);
 				code += 4;
 				break;
 			}
 			case OP_DAMAGE: {
-				val += damage * *(float*)code;
+				val += damage * (*(float*) code);
 				code += 4;
 				break;
 			}
 			case OP_INDEX: {
-				val += spawnIndex * *(float*)code;
+				val += spawnIndex * (*(float*) code);
 				code += 4;
 				break;
 			}
 			case OP_LOADP: {
-				ptr = *(void**)code;
+				ptr = *(void**) code;
 				code += sizeof(void*);
 				break;
 			}
 			case OP_STOREP: {
-				Uint16 offset = *(Uint16*)code;
+				Uint16 offset = *(Uint16*) code;
 				code += 2;
-				*(void**)(instance + offset) = ptr;
+				*(void**) (instance + offset) = ptr;
 				ptr = NULL;
 				break;
 			}
 			case OP_DIR: {
-				Uint16 offset = *(Uint16*)code;
+				Uint16 offset = *(Uint16*) code;
 				code += 2;
-				*(float3*)(instance + offset) = dir;
+				*(float3*) (instance + offset) = dir;
+				break;
+			}
+			case OP_SAWTOOTH: {
+				// this translates to modulo except it works with floats
+				val -= (*(float*) code) * floor(val / (*(float*) code));
+				code += 4;
+				break;
+			}
+			case OP_DISCRETE: {
+				val = (*(float*) code) * floor(val / (*(float*) code));
+				code += 4;
+				break;
+			}
+			case OP_SINE: {
+				val = (*(float*) code) * sin(val);
+				code += 4;
 				break;
 			}
 			default: {
@@ -417,34 +436,36 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		//if the user uses a keyword assume he knows that it is put on the right datatype for now
 		code += OP_DIR;
 		Uint16 ofs = offset;
-		code.append((char*)&ofs, (char*)&ofs + 2);
+		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type)) {
 		creg::BasicType *bt = (creg::BasicType*)type;
 
-		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool)
-		{
+		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool) {
 			throw content_error("Projectile properties other than int, float and uchar, are not supported (" + script + ")");
 			return;
 		}
 
 		int p = 0;
-		while (p < script.length())
-		{
+		while (p < script.length()) {
 			char opcode;
 			char c;
 			do { c = script[p++]; } while(c == ' ');
-			if (c=='i')	opcode = OP_INDEX;
-			else if (c=='r') opcode = OP_RAND;
-			else if (c=='d') opcode = OP_DAMAGE;
-			else if (isdigit(c)||c=='.'||c=='-') { opcode = OP_ADD; p--; }
+
+			if (c == 'i')      opcode = OP_INDEX;
+			else if (c == 'r') opcode = OP_RAND;
+			else if (c == 'd') opcode = OP_DAMAGE;
+			else if (c == 'm') opcode = OP_SAWTOOTH;
+			else if (c == 'k') opcode = OP_DISCRETE;
+			else if (c == 's') opcode = OP_SINE;
+			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else throw content_error("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
 
-			char *endp;
+			char* endp;
 			float v = (float)strtod(&script[p], &endp);
 			p += endp - &script[p];
 			code += opcode;
-			code.append((char*)&v, ((char*)&v) + 4);
+			code.append((char*) &v, ((char*) &v) + 4);
 		}
 
 		switch (bt->id) {

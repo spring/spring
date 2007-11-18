@@ -70,7 +70,7 @@ void CExplosiveProjectile::Update()
 	} else {
 		if (ttl > 0) {
 			if (cegTag.size() > 0) {
-				ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
 			}
 		}
 	}

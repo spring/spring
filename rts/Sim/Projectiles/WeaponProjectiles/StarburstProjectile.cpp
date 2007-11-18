@@ -211,11 +211,11 @@ void CStarburstProjectile::Update(void)
 
 	if (ttl > 0) {
 		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, dir);
+			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
 		}
 	}
 
-	OldInfo* tempOldInfo=oldInfos[4];
+	OldInfo* tempOldInfo = oldInfos[4];
 	for (int a = 3; a >= 0; --a) {
 		oldInfos[a + 1] = oldInfos[a];
 	}

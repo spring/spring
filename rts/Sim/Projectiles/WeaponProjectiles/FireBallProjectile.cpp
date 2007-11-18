@@ -114,7 +114,7 @@ void CFireBallProjectile::Update()
 	}
 
 	if (cegTag.size() > 0) {
-		ceg.Explosion(pos, 0.0f, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed);
+		ceg.Explosion(pos, ttl, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed);
 	}
 
 	UpdateGroundBounce();
@@ -123,8 +123,11 @@ void CFireBallProjectile::Update()
 void CFireBallProjectile::EmitSpark()
 {
 	Spark spark;
-	spark.speed = speed*0.95f + float3(rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f, rand()/(float)RAND_MAX*1.0f-0.5f);
-	spark.pos = pos-speed*(rand()/(float)RAND_MAX*1.0f+3)+spark.speed*3;
+	const float x = (rand() / (float) RAND_MAX) - 0.5f;
+	const float y = (rand() / (float) RAND_MAX) - 0.5f;
+	const float z = (rand() / (float) RAND_MAX) - 0.5f;
+	spark.speed = (speed * 0.95f) + float3(x, y, z);
+	spark.pos = pos - speed * (rand() / (float) RAND_MAX + 3) + spark.speed * 3;
 	spark.size = 5.0f;
 	spark.ttl = 15;
 
@@ -133,7 +136,11 @@ void CFireBallProjectile::EmitSpark()
 
 void CFireBallProjectile::Collision()
 {
-	if(weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z)<pos.y) return; //make waterweapons not explode in water
+	if (weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z) < pos.y) {
+		// make waterweapons not explode in water
+		return;
+	}
+
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }

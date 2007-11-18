@@ -49,12 +49,15 @@ CFlameProjectile::~CFlameProjectile(void)
 
 void CFlameProjectile::Collision(void)
 {
-	if(ground->GetHeight2(pos.x, pos.z) < pos.y && weaponDef->waterweapon) return; //prevent waterweapons from colliding with water
-	float3 norm=ground->GetNormal(pos.x,pos.z);
-	float ns=speed.dot(norm);
-	speed-=norm*ns*1;
-	pos.y+=0.05f;
-	curTime+=0.05f;
+	if (ground->GetHeight2(pos.x, pos.z) < pos.y && weaponDef->waterweapon) {
+		// prevent waterweapons from colliding with water
+		return;
+	}
+	float3 norm = ground->GetNormal(pos.x, pos.z);
+	float ns = speed.dot(norm);
+	speed -= (norm * ns);
+	pos.y += 0.05f;
+	curTime += 0.05f;
 }
 
 void CFlameProjectile::Collision(CUnit* unit)
@@ -81,22 +84,21 @@ void CFlameProjectile::Update(void)
 	}
 
 	if (cegTag.size() > 0) {
-		ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed);
+		ceg.Explosion(pos, curTime, intensity, 0x0, 0.0f, 0x0, speed);
 	}
 }
 
 void CFlameProjectile::Draw(void)
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-
 	weaponDef->visuals.colorMap->GetColor(col, curTime);
+	float3 interPos = pos + speed * gu->timeOffset;
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->ystart ,col);
-	va->AddVertexTC(interPos+camera->right*radius-camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->ystart ,col);
-	va->AddVertexTC(interPos+camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xend ,weaponDef->visuals.texture1->yend ,col);
-	va->AddVertexTC(interPos-camera->right*radius+camera->up*radius,weaponDef->visuals.texture1->xstart ,weaponDef->visuals.texture1->yend ,col);
+	va->AddVertexTC(interPos - camera->right * radius - camera->up * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexTC(interPos + camera->right * radius - camera->up * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexTC(interPos + camera->right * radius + camera->up * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexTC(interPos - camera->right * radius + camera->up * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
