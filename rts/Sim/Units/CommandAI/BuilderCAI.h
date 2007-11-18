@@ -66,6 +66,7 @@ private:
 
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool ObjInBuildRange(const CWorldObject* obj) const;
+	bool OutOfImmobileRange(const Command& cmd) const;
 
 	// fix for patrolling cons repairing stuff that's being reclaimed
 	static void AddUnitToReclaimers(CUnit*);
