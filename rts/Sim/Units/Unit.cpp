@@ -222,12 +222,12 @@ CUnit::CUnit ()
 	usingScriptMoveType(false),
 	lodCount(0),
 	currentLOD(0),
-	alphaThreshold(0.1f)
+	alphaThreshold(0.1f),
+	cegDamage(1)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
-	directControl=0;
+	directControl = 0;
 #endif
-
 	activated = false;
 }
 

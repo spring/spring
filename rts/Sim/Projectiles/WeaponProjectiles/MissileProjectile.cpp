@@ -271,7 +271,7 @@ void CMissileProjectile::Update(void)
 		targPos = orgTargPos;
 
 		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, areaOfEffect, 0x0, 0.0f, 0x0, dir);
+			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
 		}
 	} else {
 		// only when TTL <= 0 do projectiles

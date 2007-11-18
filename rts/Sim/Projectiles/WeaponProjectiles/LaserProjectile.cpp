@@ -80,9 +80,9 @@ void CLaserProjectile::Update(void)
 
 	ttl--;
 
-	if (ttl > 0) {
+	if (ttl > 0 && checkCol) {
 		if (cegTag.size() > 0) {
-			ceg.Explosion(pos, 0.0f, intensity, 0x0, 0.0f, 0x0, speed);
+			ceg.Explosion(pos, ttl, intensity, 0x0, 0.0f, 0x0, speed);
 		}
 	}
 	
