@@ -1199,7 +1199,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 			if (attackEnemy && owner->unitDef->canAttack && (owner->maxRange > 0)) {
 				const float dist = f3Dist(unit->pos, owner->pos);
 				if ((dist < bestDist) || !haveEnemy) {
-					if (!owner->unitDef->canmove && (dist > owner->maxRange)) {
+					if (!owner->unitDef->canmove &&
+					    ((dist - unit->radius) > owner->maxRange)) {
 						continue;
 					}
 					best = unit;
