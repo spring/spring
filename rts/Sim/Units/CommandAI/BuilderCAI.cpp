@@ -1029,6 +1029,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 			}
 		}
 	}
+
 	if (best) {
 		Command cmd;
 		if (!noResCheck) {
@@ -1041,6 +1042,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 		commandQue.push_front(cmd);
 		return true;
 	}
+
 	return false;
 }
 
@@ -1069,6 +1071,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 			}
 		}
 	}
+
 	if (best) {
 		Command c2;
 		c2.options = options | INTERNAL_ORDER;
@@ -1077,6 +1080,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 		commandQue.push_front(c2);
 		return true;
 	}
+
 	return false;
 }
 
@@ -1106,13 +1110,16 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 			}
 		}
 	}
+
 	if (best) {
 		Command nc;
 		nc.id = CMD_CAPTURE;
 		nc.options = options | INTERNAL_ORDER;
 		nc.params.push_back(best->id);
 		commandQue.push_front(nc);
+		return true;
 	}
+
 	return false;
 }
 
