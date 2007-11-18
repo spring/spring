@@ -208,6 +208,50 @@ inline bool CBuilderCAI::ObjInBuildRange(const CWorldObject* obj) const
 }
 
 
+inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
+{
+	if (owner->unitDef->canmove) {
+		return false; // unit can move
+	}
+	if (((cmd.options & INTERNAL_ORDER) == 0) || (cmd.params.size() != 1)) {
+		return false; // not an internal object targetted command
+	}
+
+	const int id = (int)cmd.params[0];
+	CWorldObject* obj = NULL;
+	if (id < 0) {
+		return false;
+	}
+	else if (id < MAX_UNITS) {
+		obj = uh->units[id];
+	}
+	else {
+		// features don't move, but maybe the unit was transported?
+		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+		CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+		if (it != fset.end()) {
+			obj = *it;
+		}
+	}
+	if (obj == NULL) {
+		return false;
+	}
+	
+	switch (cmd.id) {
+		case CMD_REPAIR:
+		case CMD_RECLAIM:
+		case CMD_RESURRECT:
+		case CMD_CAPTURE: {
+			if (!ObjInBuildRange(obj)) {
+				return true;
+			}
+			break;
+		}
+	}
+	return false;
+}
+
+
 float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
 {
 	float radius;
@@ -308,27 +352,8 @@ void CBuilderCAI::SlowUpdate()
 	CBuilder* fac = (CBuilder*)owner;
 	Command& c = commandQue.front();
 
-	if (!owner->unitDef->canmove &&
-	    (c.options & INTERNAL_ORDER) && (c.params.size() == 1)) {
-
-		const int id = (int)c.params[0];
-		CWorldObject* obj = NULL;
-		if (id >= MAX_UNITS) {
-			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
-			if (it != fset.end()) {
-				obj = *it;
-			}
-		}
-		else if (id >= 0) {
-			obj = uh->units[id];
-		}
-
-		if (obj != NULL) {				
-			if (!ObjInBuildRange(obj)) {
-				FinishCommand();
-			}
-		}
+	if (OutOfImmobileRange(c)) {
+		FinishCommand();
 	}
 
 	map<int, string>::iterator boi = buildOptions.find(c.id);
@@ -834,20 +859,20 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) &&
 	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8,c.options,true)){
-		tempOrder=true;
-		inCommand=false;
-		if(lastPC1!=gs->frameNum){	//avoid infinite loops
-			lastPC1=gs->frameNum;
+		tempOrder = true;
+		inCommand = false;
+		if (lastPC1 != gs->frameNum) {  //avoid infinite loops
+			lastPC1 = gs->frameNum;
 			SlowUpdate();
 		}
 		return;
 	}
 	if (owner->unitDef->canReclaim &&
 	    FindReclaimableFeatureAndReclaim(curPosOnLine,300,c.options,false, false)) {
-		tempOrder=true;
-		inCommand=false;
-		if(lastPC2!=gs->frameNum){	//avoid infinite loops
-			lastPC2=gs->frameNum;
+		tempOrder = true;
+		inCommand = false;
+		if (lastPC2 != gs->frameNum) {  //avoid infinite loops
+			lastPC2 = gs->frameNum;
 			SlowUpdate();
 		}
 		return;
@@ -1133,48 +1158,54 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 	const CUnit* best = NULL;
 	float bestDist = 1.0e30f;
+	bool haveEnemy = false;
 	bool trySelfRepair = false;
 
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
-		if (gs->Ally(owner->allyteam, unit->allyteam) &&
-		    (unit->health < unit->maxHealth)) {
-			// dont lock-on to units outside of our reach (for immobile builders)
-			if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
-				continue;
-			}
-			// dont help factories produce units unless set on roam
-			if (unit->beingBuilt && unit->mobility && (owner->moveState < 2)) {
-				continue;
-			}
-			if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
-			    !(!unit->beingBuilt && owner->unitDef->canRepair)) {
-				continue;
-			}
-			if (unit->soloBuilder && (unit->soloBuilder != owner)) {
-				continue;
-			}
-			// don't repair stuff that's being reclaimed
-			if (IsUnitBeingReclaimedByFriend(unit)) {
-				continue;
-			}
-			if (unit == owner) {
-				trySelfRepair = true;
-				continue;
-			}
-			const float dist = f3Dist(unit->pos, owner->pos);
-			if (dist < bestDist) {
-				bestDist = dist;
-				best = unit;
+		if (gs->Ally(owner->allyteam, unit->allyteam)) {
+			if (!haveEnemy && (unit->health < unit->maxHealth)) {
+				// dont lock-on to units outside of our reach (for immobile builders)
+				if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
+					continue;
+				}
+				// dont help factories produce units unless set on roam
+				if (unit->beingBuilt && unit->mobility && (owner->moveState < 2)) {
+					continue;
+				}
+				if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
+						!(!unit->beingBuilt && owner->unitDef->canRepair)) {
+					continue;
+				}
+				if (unit->soloBuilder && (unit->soloBuilder != owner)) {
+					continue;
+				}
+				// don't repair stuff that's being reclaimed
+				if (IsUnitBeingReclaimedByFriend(unit)) {
+					continue;
+				}
+				if (unit == owner) {
+					trySelfRepair = true;
+					continue;
+				}
+				const float dist = f3Dist(unit->pos, owner->pos);
+				if (dist < bestDist) {
+					bestDist = dist;
+					best = unit;
+				}
 			}
 		}
-		else if (attackEnemy && owner->unitDef->canAttack && owner->maxRange > 0 &&
-		         !gs->Ally(owner->allyteam, unit->allyteam)) {
-			const float attackFactor = 10.0f;
-			const float dist = attackFactor * f3Dist(unit->pos, owner->pos);
-			if (dist < bestDist) {
-				best = unit;
-				bestDist = dist;
+		else {
+			if (attackEnemy && owner->unitDef->canAttack && (owner->maxRange > 0)) {
+				const float dist = f3Dist(unit->pos, owner->pos);
+				if ((dist < bestDist) || !haveEnemy) {
+					if (!owner->unitDef->canmove && (dist > owner->maxRange)) {
+						continue;
+					}
+					best = unit;
+					bestDist = dist;
+					haveEnemy = true;
+				}
 			}
 		}
 	}
@@ -1189,7 +1220,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		}
 	}
 
-	if (gs->Ally(owner->allyteam, best->allyteam)) {
+	if (!haveEnemy) {
 		Command cmd;
 		if (attackEnemy) {
 			PushOrUpdateReturnFight();
@@ -1201,7 +1232,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	}
 	else {
 		Command cmd;
-		PushOrUpdateReturnFight();
+		PushOrUpdateReturnFight(); // attackEnemy must be true
 		cmd.id = CMD_ATTACK;
 		cmd.options = options | INTERNAL_ORDER;
 		cmd.params.push_back(best->id);
