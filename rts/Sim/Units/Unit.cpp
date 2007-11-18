@@ -814,6 +814,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			}
 		}
 		damage *= curArmorMultiple;
+		restTime = 0; // bleeding != resting
 	}
 
 	float3 hitDir = impulse;
@@ -839,44 +840,58 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		cob->Call(COBFN_HitByWeapon, cobargs);
 	}
 
-	restTime = 0;
-
 	float experienceMod = expMultiplier;
 
-	if (damages.paralyzeDamageTime == 0) {
+	const int paralyzeTime = damages.paralyzeDamageTime;
+
+	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
-			const float statsdamage = std::min(health, damage);
+			const float statsdamage = std::min(maxHealth, damage);
 			if (attacker) {
 				gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
 			}
 			gs->Team(team)->currentStats.damageReceived += statsdamage;
+			health -= damage;
 		}
-		health -= damage;
-	}
-	else {
-		// paralyzing damage
-		if (damages.paralyzeDamageTime > 0) {
-			if (paralyzeDamage > health) {
-				// can not just do the min(), or a weak paralysis weapon could undo a strong one
-				const float maxParaDmg = health + (maxHealth * 0.025f * damages.paralyzeDamageTime);
-				if (paralyzeDamage < maxParaDmg) {
-					paralyzeDamage = min((paralyzeDamage + damage), maxParaDmg);
-					experienceMod *= 0.0f;  // no experience for extra paralysis
-				}
-			} else {
-				paralyzeDamage += damage;
-				experienceMod *= 0.1f;    // reduce experience for paralyzers
-				if (paralyzeDamage < health) {
-					stunned = false;
-				}
+		else { // healing
+			health -= damage;
+			if (health > maxHealth) {
+				health = maxHealth;
 			}
-		} else {
-			if (paralyzeDamage == 0) {
-				experienceMod *= 0.0f;  // no experience when not healing
-			} else {
-				paralyzeDamage = max(0.0f, paralyzeDamage + damage);
-				experienceMod *= 0.1f;
+			if (health > paralyzeDamage) {
+				stunned = false;
+			}
+		}			
+	}
+	else { // paralyzation
+		experienceMod *= 0.1f; // reduced experience
+		if (damage > 0.0f) {
+			const float maxParaDmg = health + (maxHealth * 0.025f * (float)paralyzeTime);
+			if (paralyzeDamage >= maxParaDmg) {
+				experienceMod = 0.0f;
+			}
+			else {
+				if (stunned) {
+					experienceMod = 0.0f;
+				}
+				paralyzeDamage += damage;
+				if (paralyzeDamage > health) {
+					stunned = true;
+				}
+				paralyzeDamage = min(paralyzeDamage, maxParaDmg);
+			}
+		}
+		else { // paralyzation healing
+			if (paralyzeDamage <= 0.0f) {
+				experienceMod = 0.0f;
+			}
+			paralyzeDamage += damage;
+			if (paralyzeDamage < health) {
+				stunned = false;
+				if (paralyzeDamage < 0.0f) {
+					paralyzeDamage = 0.0f;
+				}
 			}
 		}
 	}
@@ -905,7 +920,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 					}
 				}
 
-				minimap->AddNotification(pos, float3(1.0f, 0.3f, 0.3f), unitDef->isCommander? 1: 0.5f);
+				minimap->AddNotification(pos, float3(1.0f, 0.3f, 0.3f),
+				                         unitDef->isCommander ? 1.0f : 0.5f);
 
 				uh->lastDamageWarning = gs->frameNum;
 				if (unitDef->isCommander) {
