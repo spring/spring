@@ -24,13 +24,17 @@ public:
 	void GiveCommandReal(const Command& c);
 	void DrawQuedBuildingSquares(void);
 
-	bool FindReclaimableFeatureAndReclaim(float3 pos, float radius,unsigned char options,
+	bool FindReclaimableFeatureAndReclaim(const float3& pos, float radius,
+	                                      unsigned char options,
 	                                      bool noResCheck,  // no resources check
 	                                      bool recAnyTeam); // allows self-reclamation
-	bool FindResurrectableFeatureAndResurrect(float3 pos, float radius,unsigned char options);
+	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
+	                                          unsigned char options);
 	void FinishCommand(void);
-	bool FindRepairTargetAndRepair(float3 pos, float radius,unsigned char options,bool attackEnemy);
-	bool FindCaptureTargetAndCapture(float3 pos, float radius,unsigned char options);
+	bool FindRepairTargetAndRepair(const float3& pos, float radius,
+	                               unsigned char options, bool attackEnemy);
+	bool FindCaptureTargetAndCapture(const float3& pos, float radius,
+	                                 unsigned char options);
 
 	void ExecutePatrol(Command &c);
 	void ExecuteFight(Command &c);
@@ -50,7 +54,7 @@ public:
 
 	int cachedRadiusId;
 	float cachedRadius;
-	float GetUnitRadius(const UnitDef* unitdef, int cmdId);
+	float GetUnitDefRadius(const UnitDef* unitdef, int cmdId);
 
 	int buildRetries;
 
@@ -61,6 +65,7 @@ public:
 private:
 
 	void CancelRestrictedUnit(const std::string& buildOption);
+	bool ObjInBuildRange(const CWorldObject* obj) const;
 
 	// fix for patrolling cons repairing stuff that's being reclaimed
 	static void AddUnitToReclaimers(CUnit*);
