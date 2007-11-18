@@ -289,7 +289,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
 	wd.paralyzer = wdTable.GetBool("paralyzer", false);
 	if (wd.paralyzer) {
-		wd.damages.paralyzeDamageTime = wdTable.GetInt("paralyzeTime", 10);
+		wd.damages.paralyzeDamageTime = max(0, wdTable.GetInt("paralyzeTime", 10));
 	} else {
 		wd.damages.paralyzeDamageTime = 0;
 	}
