@@ -743,6 +743,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("idleTime", ud.idleTime);
 
+	ADD_BOOL("canSelfD", ud.canSelfD);
 	ADD_INT("selfDCountdown", ud.selfDCountdown);
 
 	ADD_INT("moveType",   ud.moveType);

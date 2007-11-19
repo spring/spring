@@ -185,15 +185,17 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
 	possibleCommands.push_back(c);
 
-	c.id=CMD_SELFD;
-	c.action="selfd";
-	c.type=CMDTYPE_ICON;
-	c.name="SelfD";
-	c.mouseicon=c.name;
-	c.hotkey="Ctrl+d";
-	c.onlyKey=true;
-	c.tooltip="SelfD: Tells the unit to self destruct";
-	possibleCommands.push_back(c);
+	if (owner->unitDef->canSelfD) {
+		c.id = CMD_SELFD;
+		c.action = "selfd";
+		c.type = CMDTYPE_ICON;
+		c.name = "SelfD";
+		c.mouseicon = c.name;
+		c.hotkey = "Ctrl+d";
+		c.onlyKey = true;
+		c.tooltip = "SelfD: Tells the unit to self destruct";
+		possibleCommands.push_back(c);
+	}
 //	nonQueingCommands.insert(CMD_SELFD);
 
 	c.onlyKey=false;
@@ -554,18 +556,20 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 
 	switch (c.id) {
 		case CMD_SELFD: {
-			if (!(c.options & SHIFT_KEY) || commandQue.empty()) {
-				if (owner->selfDCountdown != 0) {
-					owner->selfDCountdown = 0;
-				} else {
-					owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+			if (owner->unitDef->canSelfD) {
+				if (!(c.options & SHIFT_KEY) || commandQue.empty()) {
+					if (owner->selfDCountdown != 0) {
+						owner->selfDCountdown = 0;
+					} else {
+						owner->selfDCountdown = owner->unitDef->selfDCountdown*2+1;
+					}
 				}
-			}
-			else {
-			if (commandQue.back().id == CMD_SELFD) {
-				commandQue.pop_back();
-				} else {
-					commandQue.push_back(c);
+				else {
+				if (commandQue.back().id == CMD_SELFD) {
+					commandQue.pop_back();
+					} else {
+						commandQue.push_back(c);
+					}
 				}
 			}
 			return;
@@ -1162,7 +1166,7 @@ void CCommandAI::SlowUpdate()
 			return;
 		}
 		case CMD_SELFD: {
-			if (owner->selfDCountdown != 0) {
+			if ((owner->selfDCountdown != 0) || !owner->unitDef->canSelfD) {
 				owner->selfDCountdown = 0;
 			} else {
 				owner->selfDCountdown = (owner->unitDef->selfDCountdown * 2) + 1;
