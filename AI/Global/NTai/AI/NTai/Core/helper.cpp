@@ -700,17 +700,17 @@ void Global::GotChatMsg(const char* msg, int player){
              chcb->SetMyHandicap(1000.0f);
              if(L.FirstInstance() == true) L.iprint("Make sure you've typed .cheat for full cheating!");
              // Spawn 4 commanders around the starting position
-             const UnitDef* ud = GetUnitDef(ComName.c_str());
+			 CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(ComName);
              if(ud != 0){
                  float3 pos = Map->basepos;
-                 pos = cb->ClosestBuildSite(ud, pos, 1000.0f, 0);
+				 pos = cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000.0f, 0);
                  int ij = chcb->CreateUnit(ComName.c_str(), pos);
                  if(ij != 0) Actions->RandomSpiral(ij);
                  float3 epos = pos;
                  epos.z -= 1300.0f;
                  float angle = float(mrand()%320);
                  pos = G->Map->Rotate(epos, angle, pos);
-                 pos =  cb->ClosestBuildSite(ud, pos, 1000, 300, 1);
+                 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 1);
                  ///float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing);
                  ij = chcb->CreateUnit(ComName.c_str(), pos);
                  if(ij != 0) Actions->RandomSpiral(ij);
@@ -719,7 +719,7 @@ void Global::GotChatMsg(const char* msg, int player){
 
                  angle = float(mrand()%320);
                  pos = G->Map->Rotate(epos, angle, pos);
-                 pos =  cb->ClosestBuildSite(ud, pos, 1000, 300, 0);
+                 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 0);
                  ///
                  ij = chcb->CreateUnit(ComName.c_str(), pos);
                  if(ij != 0){
@@ -762,23 +762,25 @@ void Global::UnitDestroyed(int unit, int attacker){
 
     if(ValidUnitID(attacker)){
 		CUnitTypeData* atd = G->UnitDefLoader->GetUnitTypeDataByUnitId(attacker);
-        const UnitDef* uda = atd->GetUnitDef();
-        if((uda != 0)&&(udu != 0)){
-            map<string, int>::iterator k = Cached->solobuilds.find(atd->GetName());
-			if(k != Cached->solobuilds.end()){
-				Cached->solobuilds.erase(k);
+		if(atd != 0){
+			const UnitDef* uda = atd->GetUnitDef();
+			if((uda != 0)&&(udu != 0)){
+				map<string, int>::iterator k = Cached->solobuilds.find(atd->GetName());
+				if(k != Cached->solobuilds.end()){
+					Cached->solobuilds.erase(k);
+				}
+				if(efficiency.find(uda->name) != efficiency.end()){
+					efficiency[uda->name] += 20000/udu->metalCost;
+				}else{
+					efficiency[uda->name] = 500;
+				}
+				if(efficiency.find(udu->name) != efficiency.end()){
+					efficiency[udu->name] -= 10000/uda->metalCost;
+				}else{
+					efficiency[udu->name] = 500;
+				}
 			}
-            if(efficiency.find(uda->name) != efficiency.end()){
-                efficiency[uda->name] += 20000/udu->metalCost;
-            }else{
-                efficiency[uda->name] = 500;
-            }
-            if(efficiency.find(udu->name) != efficiency.end()){
-                efficiency[udu->name] -= 10000/uda->metalCost;
-            }else{
-                efficiency[udu->name] = 500;
-            }
-        }
+		}
     }
 
     START_EXCEPTION_HANDLING
@@ -1135,12 +1137,12 @@ float Global::GetEfficiency(string s, float def_value){
                 }
             }
             float e = efficiency[s];
-            const UnitDef* ud = G->GetUnitDef(s);
+			CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
             if(ud){
                 set<string> alreadydone;
                 alreadydone.insert(s);
-                if(!ud->buildOptions.empty()){
-                    for(map<int, string>::const_iterator i = ud->buildOptions.begin();i != ud->buildOptions.end(); ++i){
+                if(!ud->GetUnitDef()->buildOptions.empty()){
+					for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
                         alreadydone.insert(i->second);
                         e += efficiency[s];//GetEfficiency(i->second,alreadydone,ud->techLevel);
                     }
@@ -1177,22 +1179,22 @@ float Global::GetEfficiency(string s, set<string>& doneconstructors, int techlev
                 }
             }
             float e = efficiency[s];
-            const UnitDef* ud = G->GetUnitDef(s);
+			CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
             if(ud){
                 doneconstructors.insert(s);
-                for(map<int, string>::const_iterator i = ud->buildOptions.begin();i != ud->buildOptions.end(); ++i){
-                    const UnitDef* ud2 = G->GetUnitDef(i->second);
+                for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
+					CUnitTypeData* ud2 = UnitDefLoader->GetUnitTypeDataByName(i->second);
                     if(doneconstructors.find(s)==doneconstructors.end()){
                         doneconstructors.insert(i->second);
-                        if (ud2->techLevel<techlevel){
+                        if (ud2->GetUnitDef()->techLevel<techlevel){
                             e+=1.0f;
-                        }else 	if(ud2->techLevel != techlevel){
-                            e+= efficiency[i->second]*pow(0.6f, (ud2->techLevel-techlevel));
+                        }else 	if(ud2->GetUnitDef()->techLevel != techlevel){
+                            e+= efficiency[i->second]*pow(0.6f, (ud2->GetUnitDef()->techLevel-techlevel));
                         }else{
                             e+= efficiency[i->second];
                         }
                     }else{
-                        if(ud2->techLevel > ud->techLevel){
+						if(ud2->GetUnitDef()->techLevel > ud->GetUnitDef()->techLevel){
                             e+= 1.0f;
                         }
                         e += builderefficiency[i->second];
@@ -1206,12 +1208,12 @@ float Global::GetEfficiency(string s, set<string>& doneconstructors, int techlev
             builderefficiency[s] = e;
             return e;
         }else{
-            const UnitDef* ud = G->GetUnitDef(s);
+            CUnitTypeData* ud = UnitDefLoader->GetUnitTypeDataByName(s);
             if(ud){
-                if(ud->techLevel < techlevel){
+				if(ud->GetUnitDef()->techLevel < techlevel){
                     return 1.0f;
-                }else 	if(ud->techLevel > techlevel){
-                    return efficiency[s]*pow(0.6f, (ud->techLevel-techlevel));
+                }else  if(ud->GetUnitDef()->techLevel > techlevel){
+                    return efficiency[s]*pow(0.6f, (ud->GetUnitDef()->techLevel-techlevel));
                 }
             }
             return efficiency[s];
@@ -1305,9 +1307,9 @@ bool Global::LoadUnitData(){
                 L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful of throwing the same units at it over and over again");
                 firstload = false;
                 for(map<string, float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-                    const UnitDef* uda = GetUnitDef(i->first);
+					CUnitTypeData* uda = UnitDefLoader->GetUnitTypeDataByName(i->first);
                     if(uda){
-                        i->second += uda->health;
+						i->second += uda->GetUnitDef()->health;
                     }
                 }
                 /*for(map<string,float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){

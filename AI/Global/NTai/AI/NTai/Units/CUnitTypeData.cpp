@@ -18,6 +18,45 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 	trim(n);
 	tolowercase(n);
 	this->unit_name = n;
+
+	// precalc wether this unit type is an attacker
+
+	if(G->info->dynamic_selection == false){
+		attacker = false;
+		vector<string> v;
+		CTokenizer<CIsComma>::Tokenize(v, G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"), CIsComma());
+		//v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"));
+		if(v.empty() == false){
+			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
+				string v = *vi;
+				tolowercase(v);
+				trim(v);
+				if(v == GetName()){
+					attacker = true;
+					break;
+				}
+			}
+		}
+
+	}else{
+		// determine dynamically if this is an attacker
+		attacker =true;
+		if(ud->speed > G->info->scout_speed){
+			attacker = false; // cant be a scout either
+		} else if(ud->isCommander){
+			attacker = false; //no commanders
+		} else if(ud->builder){
+			attacker = false; // no builders either
+		} else if(ud->weapons.empty()){
+			attacker = false; // has to have a weapon
+		} else if((ud->canfly == false)&&(ud->movedata == 0)){
+			attacker = false; // no buildings
+		} else if(ud->transportCapacity != 0){
+			attacker = false; // no armed transports
+		} else if(ud->hoverAttack){
+			attacker = true; // obviously a gunship type thingymajig
+		}
+	}
 }
 
 const UnitDef* CUnitTypeData::GetUnitDef(){
@@ -125,39 +164,7 @@ bool CUnitTypeData::IsAIRSUPPORT(){
 
 bool CUnitTypeData::IsAttacker(){
 	NLOG("CUnitTypeData::IsAttacker");
-	bool atk = false;
-	if(G->info->dynamic_selection == false){
-		vector<string> v;
-		CTokenizer<CIsComma>::Tokenize(v, G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"), CIsComma());
-		//v = bds::set_cont(v,G->Get_mod_tdf()->SGetValueMSG("AI\\attackers"));
-		if(v.empty() == false){
-			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-				string u = ud->name;
-				tolowercase(u);
-				trim(u);
-				string v = *vi;
-				tolowercase(v);
-				trim(v);
-				if(v == u){
-					atk = true;
-					break;
-				}
-			}
-		}
-		//if(ud->builder == true) atk = false; // no builders either
-		//if(!G->UnitDefHelper->IsMobile(ud)) atk = false; // no buildings
-	}else{
-		// determine dynamically if this is an attacker
-		atk =true;
-		if(ud->speed > G->info->scout_speed) atk = false; // cant be a scout either
-		if(ud->isCommander == true) atk = false; //no commanders
-		if(ud->builder == true) atk = false; // no builders either
-		if(ud->weapons.empty() == true) atk = false; // has to have a weapon
-		if((ud->canfly == false)&&(ud->movedata == 0)) atk = false; // no buildings
-		if(ud->transportCapacity != 0) atk = false; // no armed transports
-		if(ud->hoverAttack == true) atk = true; // obviously a gunship type thingymajig
-	}
-	return atk;
+	return attacker;
 //	return false;
 }
 

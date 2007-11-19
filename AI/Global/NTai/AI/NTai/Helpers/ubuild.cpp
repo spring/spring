@@ -142,110 +142,113 @@ void CUBuild::SetWater(bool w){
 
 string CUBuild::operator() (btype build,float3 pos){// CBuild c; string s = c(btype build);
 	NLOG("CUBuild::operator()");
-	if(utd->GetUnitDef()->buildOptions.empty()) return string("");
+	string s = "";
+	if(utd->GetUnitDef()->buildOptions.empty()){
+		s;
+	}
 	switch(build){
 		case B_MEX :{
-			return GetMEX();
+			s = GetMEX();
 			break;
 		}case B_POWER:{
-			return GetPOWER();
+			s = GetPOWER();
 			break;
 		}case B_RAND_ASSAULT:{
-			return GetRAND_ASSAULT();
+			s = GetRAND_ASSAULT();
 			break;
 		}case B_ASSAULT:{
-			return GetASSAULT();
+			s = GetASSAULT();
 			break;
 		}case B_FACTORY:{
-			return GetFACTORY();
+			s = GetFACTORY();
 			break;
 		}case B_BUILDER:{
-			return GetBUILDER();
+			s = GetBUILDER();
 			break;
 		}case B_GEO:{
-			return GetGEO();
+			s = GetGEO();
 			break;
 		}case B_SCOUT:{
-			return GetSCOUT();
+			s = GetSCOUT();
 			break;
 		}case B_RANDOM:{
-			return GetRANDOM();
+			s = GetRANDOM();
 			break;
 		}case B_DEFENCE:{
-			return GetDEFENCE();
+			s = GetDEFENCE();
             break;
 		}case B_RADAR:{
-			return GetRADAR();
+			s = GetRADAR();
 			break;
 		}case B_ESTORE:{
-			return GetESTORE();
+			s = GetESTORE();
 			break;
 		}case B_MSTORE:{
-			return GetMSTORE();
+			s = GetMSTORE();
 			break;
 		}case B_SILO:{
-			return GetSILO();
+			s = GetSILO();
 			break;
 		}case B_JAMMER:{
-			return GetJAMMER();
+			s = GetJAMMER();
 			break;
 		}case B_SONAR:{
-			return GetSONAR();
+			s = GetSONAR();
 			break;
 		}case B_ANTIMISSILE:{
-			return GetANTIMISSILE();
+			s = GetANTIMISSILE();
 			break;
 		}case B_ARTILLERY:{
-			return GetARTILLERY();
+			s = GetARTILLERY();
 			break;
 		}case B_FOCAL_MINE:{
-			return GetFOCAL_MINE();
+			s = GetFOCAL_MINE();
 			break;
 		}case B_SUB : {
-			return GetSUB();
+			s = GetSUB();
 			break;
 		}case B_AMPHIB: {
-			return GetAMPHIB();
+			s = GetAMPHIB();
 			break;
 		}case B_MINE:{
-			return GetMINE();
+			s = GetMINE();
 			break;
 		}case B_CARRIER:{
-			return GetCARRIER();
+			s = GetCARRIER();
 			break;
 		}case B_METAL_MAKER:{
-			return GetMETAL_MAKER();
+			s = GetMETAL_MAKER();
 			break;
 		}case B_FORTIFICATION:{
-			return GetFORTIFICATION();
+			s = GetFORTIFICATION();
 			break;
 		}case B_BOMBER:{
-			return GetBOMBER();
+			s = GetBOMBER();
 			break;
 		}case B_FIGHTER:{
-			return GetFIGHTER();
+			s = GetFIGHTER();
 			break;
 		}case B_GUNSHIP:{
-			return GetGUNSHIP();
+			s = GetGUNSHIP();
 			break;
 		}case B_SHIELD:{
-			return GetSHIELD();
+			s = GetSHIELD();
 			break;
 		}case B_MISSILE_UNIT:{
-			return GetMISSILE_UNIT();
+			s = GetMISSILE_UNIT();
 			break;
 		}case B_HUB:{
-			return GetHUB();
+			s = GetHUB();
 			break;
 		}case B_AIRSUPPORT:{
-			return GetAIRSUPPORT();
+			s = GetAIRSUPPORT();
 			break;
-		}default:{
+		}/*default:{
 			return string("");
 			break;
-		}
+		}*/
 	}
-	return string("");
+	return s;
 }
 
 string CUBuild::GetMEX(){

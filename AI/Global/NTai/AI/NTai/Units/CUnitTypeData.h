@@ -46,6 +46,8 @@ private:
 	const UnitDef* ud;
 	string unit_name; // the name of the unit trimmed in lowercase
 
+	bool attacker;
+
 	bool singleBuild;
 	bool singleBuildActive;
 };
