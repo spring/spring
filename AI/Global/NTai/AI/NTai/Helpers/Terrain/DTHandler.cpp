@@ -141,8 +141,8 @@ bool CDTHandler::IsDragonsTeeth(const char* FeatureName){
 }
 
 bool CDTHandler::IsDragonsTeeth(const string FeatureName){
-	const UnitDef* ud = G->GetUnitDef(FeatureName);
-    return IsDragonsTeeth(ud);
+	CUnitTypeData* ud = G->UnitDefLoader->GetUnitTypeDataByName(FeatureName);
+    return IsDragonsTeeth(ud->GetUnitDef());
 }
 bool CDTHandler::IsDragonsTeeth(const UnitDef* ud){
 	if(ud == 0) return false;

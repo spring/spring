@@ -123,10 +123,10 @@ public:
 			return cb->GetUnitDef(unitid);
 		}*/
 	}
-	const UnitDef* GetUnitDef(string s){
-		return UnitDefLoader->GetUnitDef(s);
+	//const UnitDef* GetUnitDef(string s){
+	//	return UnitDefLoader->GetUnitDef(s);
 		//return cb->GetUnitDef(s.c_str());
-	}
+	//}
 
 	//map<int,temp_pos> positions;
 	float3 GetUnitPos(int unitid,int enemy=0);// 1 = true, 2 = false, 0 = find out for us/wedunno

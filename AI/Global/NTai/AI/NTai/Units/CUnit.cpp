@@ -226,10 +226,9 @@ bool CUnit::LoadTaskList(){
 			string q = *vi;
 			trim(q);
 			tolowercase(q);
-			const UnitDef* building = G->GetUnitDef(q);
-			if(G->UnitDefLoader->HasUnit(q)){
-				CUnitTypeData* wb = G->UnitDefLoader->GetUnitTypeDataByName(building->name);
-				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,utd,wb));
+			CUnitTypeData* b = G->UnitDefLoader->GetUnitTypeDataByName(q);
+			if(b != 0){
+				boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,utd,b));
 				AddTask(t);
 			}else if(q == string("")){
 				continue;
