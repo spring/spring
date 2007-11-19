@@ -3620,7 +3620,19 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
-				glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
+				if (unit->unitDef->decloakSpherical && gu->drawdebug) {
+					glPushMatrix();
+					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
+					glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+					GLUquadricObj* q = gluNewQuadric();
+					gluQuadricDrawStyle(q, GLU_LINE);
+					gluSphere(q, unit->decloakDistance, 10, 10);
+					gluDeleteQuadric(q);
+					glPopMatrix();
+				}
+				else { // cylindrical
+					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
+				}
 			}
 			// draw self destruct and damage distance
 			if (unitdef->kamikazeDist > 0) {
