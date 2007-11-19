@@ -671,7 +671,8 @@ void CUnit::SlowUpdate()
 		isCloaked = true;
 	}
 	else if (wantCloak || (scriptCloak >= 1)) {
-		if (helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
+		if ((decloakDistance > 0.0f) &&
+		    helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
 		                                         allyteam, unitDef->decloakSpherical)) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 			isCloaked = false;
