@@ -289,6 +289,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.waterline += 5.0f;
 	}
 
+	ud.canSelfD = udTable.GetBool("canSelfDestruct", true);
 	ud.selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;

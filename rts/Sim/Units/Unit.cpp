@@ -834,7 +834,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		cobargs.push_back((int)(100 * damage));
 		weaponHitMod = 1.0f;
 		cob->Call(COBFN_HitByWeaponId, cobargs, hitByWeaponIdCallback, this, NULL);
-		damage = damage * weaponHitMod;//weaponHitMod gets set in callback function
+		damage = damage * weaponHitMod; // weaponHitMod gets set in callback function
 	}
 	else {
 		cob->Call(COBFN_HitByWeapon, cobargs);
@@ -847,7 +847,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
-			const float statsdamage = std::min(maxHealth, damage);
+			const float statsdamage = max(0.0f, min(maxHealth - health, damage));
 			if (attacker) {
 				gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
 			}
