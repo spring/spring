@@ -68,6 +68,8 @@ public:
 
 	int maxUnits;			//max units per team
 
+	float maxUnitRadius; // largest radius seen so far
+
 	int lastDamageWarning;
 	int lastCmdDamageWarning;
 
