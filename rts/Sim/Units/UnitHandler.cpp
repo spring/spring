@@ -84,6 +84,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(waterDamage),
 	CR_MEMBER(maxUnits),
+	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(lastDamageWarning),
 	CR_MEMBER(lastCmdDamageWarning),
 	CR_MEMBER(limitDgun),
@@ -113,6 +114,7 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler(bool serializing)
 :
 	maxUnits(500),
+	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
 	metalMakerIncome(0),
@@ -186,6 +188,8 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	units[unit->id]=unit;
 	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
+
+	maxUnitRadius = max(unit->radius, maxUnitRadius);
 
 	return unit->id;
 }

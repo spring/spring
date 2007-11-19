@@ -533,39 +533,50 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 	return closeUnit;
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,int searchAllyteam,bool sphere)
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,
+                                                 int searchAllyteam, bool sphere)
 {
-	float closeDist=radius*radius;
-	CUnit* closeUnit=0;
-	vector<int> quads=qf->GetQuads(pos,radius);
+	const int tempNum = gs->tempNum++;
 
-	int tempNum=gs->tempNum++;
-	vector<int>::iterator qi;
-	if (sphere) {
-		for(qi=quads.begin();qi!=quads.end();++qi){
-			list<CUnit*>::iterator ui;
-			for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-				if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
-					(*ui)->tempNum=tempNum;
-					float sqDist=(pos - (*ui)->midPos).SqLength();
-					if(sqDist <= closeDist){
-						closeDist=sqDist;
-						closeUnit=*ui;
+	CUnit* closeUnit = NULL;
+
+	if (sphere) {  // includes target radius
+		float closeDist = radius;
+		vector<int> quads = qf->GetQuads(pos, radius + uh->maxUnitRadius);
+		vector<int>::const_iterator qi;
+		for (qi = quads.begin(); qi != quads.end(); ++qi) {
+			const list<CUnit*>& quadUnits = qf->baseQuads[*qi].units;
+			list<CUnit*>::const_iterator ui;
+			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
+				CUnit* unit = *ui;
+				if (unit->tempNum != tempNum &&
+				    !gs->Ally(searchAllyteam, unit->allyteam)) {
+					unit->tempNum = tempNum;
+					const float dist = (pos - unit->midPos).Length() - unit->radius;
+					if (dist <= closeDist){
+						closeDist = dist;
+						closeUnit = unit;
 					}
 				}
 			}
 		}
 	}
-	else { // cylinder
-		for(qi=quads.begin();qi!=quads.end();++qi){
-			list<CUnit*>::iterator ui;
-			for(ui=qf->baseQuads[*qi].units.begin();ui!=qf->baseQuads[*qi].units.end();++ui){
-				if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam)){
-					(*ui)->tempNum=tempNum;
-					float sqDist=(pos-(*ui)->midPos).SqLength2D();
-					if(sqDist <= closeDist){
-						closeDist=sqDist;
-						closeUnit=*ui;
+	else { // cylinder  (doesn't included target radius)
+		float closeDistSq = radius * radius;
+		vector<int> quads = qf->GetQuads(pos, radius);
+		vector<int>::const_iterator qi;
+		for (qi = quads.begin(); qi != quads.end(); ++qi) {
+			const list<CUnit*>& quadUnits = qf->baseQuads[*qi].units;
+			list<CUnit*>::const_iterator ui;
+			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
+				CUnit* unit = *ui;
+				if (unit->tempNum != tempNum &&
+				    !gs->Ally(searchAllyteam, unit->allyteam)) {
+					unit->tempNum = tempNum;
+					const float sqDist = (pos - unit->midPos).SqLength2D();
+					if (sqDist <= closeDistSq){
+						closeDistSq = sqDist;
+						closeUnit = unit;
 					}
 				}
 			}
