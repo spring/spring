@@ -87,396 +87,494 @@ inline void CBFGroundDrawer::EndStrip()
 void CBFGroundDrawer::DrawGroundVertexArray()
 {
 	va->DrawArray0(GL_TRIANGLE_STRIP);
-
-	va=GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 }
 
 
 
-void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
+void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	drawWater=drawWaterReflection;
+	drawWater = drawWaterReflection;
+	int baseViewRadius = max(4, viewRadius);
 
-	int baseViewRadius=max(4,viewRadius);
-	if(drawUnitReflection)
-		viewRadius=(viewRadius/2)&0xfffffe;
-	float zoom=45/camera->fov;
-	viewRadius=(int)(viewRadius*sqrt(zoom));
-	viewRadius+=viewRadius%2;
+	if (drawUnitReflection)
+		viewRadius = (viewRadius / 2) & 0xfffffe;
 
-	va=GetVertexArray();
+	float zoom = 45 / camera->fov;
+	viewRadius = (int) (viewRadius * sqrt(zoom));
+	viewRadius += viewRadius % 2;
+
+	va = GetVertexArray();
 	va->Initialize();
-
 	textures->DrawUpdate();
 
-	int x,y;
+	int x, y;
+	const int maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
+	#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
-	int neededLod=int(gu->viewRange/8/viewRadius*2);
+	int neededLod = int(gu->viewRange / 8 / viewRadius * 2);
 	UpdateCamRestraints();
 
-	invMapSizeX=1.0f/gs->mapx;
-	invMapSizeY=1.0f/gs->mapy;
+	invMapSizeX = 1.0f / gs->mapx;
+	invMapSizeY = 1.0f / gs->mapy;
 
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
-	if(!overrideVP)
+
+	if (!overrideVP)
 		glEnable(GL_CULL_FACE);
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupTextureUnits(drawWaterReflection,overrideVP);
-	bool inStrip=false;
+	bool inStrip = false;
 
-	if(map->voidWater && !drawWater){
+	if (map->voidWater && !drawWater) {
 		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER,0.9f);
+		glAlphaFunc(GL_GREATER, 0.9f);
 	}
 
-  float camxpart=0,oldcamxpart;
-	float camypart=0,oldcamypart;
+	float camxpart = 0, oldcamxpart;
+	float camypart = 0, oldcamypart;
 
-	for(int bty=0;bty<numBigTexY;++bty){			//loop over the big texture squares (128 squares)
-		bigtexsuby=bty;
+	for (int bty = 0; bty < numBigTexY; ++bty) {
+		// loop over the big texture squares (128 squares)
+		bigtexsuby = bty;
 
-		//only process the necessary big squares in the x direction
-		int sx=0;
-		int ex=numBigTexX;
-		float xtest,xtest2;
-		const int bigSquareSize=128;
+		// only process the necessary big squares in the x direction
+		int sx = 0;
+		int ex = numBigTexX;
+		float xtest, xtest2;
+		const int bigSquareSize = 128;
 		std::vector<fline>::iterator fli;
-		for(fli=left.begin();fli!=left.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(bty*bigSquareSize)));
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((bty*bigSquareSize)+bigSquareSize)));
-			if(xtest>xtest2)
-				xtest=xtest2;
-			xtest=xtest/bigSquareSize;
-			if(xtest>sx)
-				sx=(int) xtest;
+
+		for (fli = left.begin(); fli != left.end(); fli++) {
+			xtest  = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 ));
+			xtest2 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize)));
+
+			if (xtest > xtest2)
+				xtest = xtest2;
+
+			xtest = xtest / bigSquareSize;
+
+			if (xtest > sx)
+				sx = (int) xtest;
 		}
-		for(fli=right.begin();fli!=right.end();fli++){
-			xtest=((fli->base/SQUARE_SIZE+fli->dir*(bty*bigSquareSize)))+bigSquareSize;
-			xtest2=((fli->base/SQUARE_SIZE+fli->dir*((bty*bigSquareSize)+bigSquareSize)))+bigSquareSize;
-			if(xtest<xtest2)
-				xtest=xtest2;
-			xtest=xtest/bigSquareSize;
-			if(xtest<ex)
-				ex=(int) xtest;
+
+		for (fli = right.begin(); fli != right.end(); fli++) {
+			xtest  = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 )) + bigSquareSize;
+			xtest2 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize))) + bigSquareSize;
+
+			if (xtest < xtest2)
+				xtest = xtest2;
+
+			xtest = xtest / bigSquareSize;
+
+			if (xtest < ex)
+				ex = (int) xtest;
 		}
-//		logOutput.Print("%i %i",sx,ex);
-		for(int btx=sx;btx<ex;++btx){
-			bigtexsubx=btx;
+
+		for (int btx = sx; btx < ex; ++btx) {
+			bigtexsubx = btx;
 
 			// must be in drawLos mode or shadows must be off
 			if (DrawExtraTex() || !shadowHandler->drawShadows) {
 				textures->SetTexture(btx, bty);
 				SetTexGen(1.0f / 1024, 1.0f / 1024, -btx, -bty);
 				if (overrideVP) {
- 					glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
- 				}
+					glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
+				}
 			} else {
-				textures->SetTexture(btx,bty);
-				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, -btx,-bty,0,0);
+				textures->SetTexture(btx, bty);
+				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
 			}
-			for(int lod=1;lod<neededLod;lod*=2){
-				int cx=(int)(cam2->pos.x/(SQUARE_SIZE));
-				int cy=(int)(cam2->pos.z/(SQUARE_SIZE));
+			for (int lod = 1; lod < neededLod; lod *= 2) {
+				int cx = (int) (cam2->pos.x / (SQUARE_SIZE));
+				int cy = (int) (cam2->pos.z / (SQUARE_SIZE));
 
-				cx=(cx/lod)*lod;
-				cy=(cy/lod)*lod;
-				int hlod=lod>>1;
-				int ysquaremod=((cy)%(2*lod))/lod;
-				int xsquaremod=((cx)%(2*lod))/lod;
+				cx = (cx / lod) * lod;
+				cy = (cy / lod) * lod;
+				int hlod = lod >> 1;
+				int ysquaremod = ((cy) % (2 * lod)) / lod;
+				int xsquaremod = ((cx) % (2 * lod)) / lod;
 
-				oldcamxpart=camxpart;
-				float cx2=(cx/(2*lod))*lod*2;
-				camxpart=(cam2->pos.x/(SQUARE_SIZE)-cx2)/(lod*2);
+				oldcamxpart = camxpart;
+				float cx2 = (cx / (2 * lod)) * lod * 2;
+				camxpart = (cam2->pos.x / (SQUARE_SIZE) - cx2) / (lod * 2);
 
-				oldcamypart=camypart;
-				float cy2=(cy/(2*lod))*lod*2;
-				camypart=(cam2->pos.z/(SQUARE_SIZE)-cy2)/(lod*2);
+				oldcamypart = camypart;
+				float cy2 = (cy / (2 * lod)) * lod * 2;
+				camypart = (cam2->pos.z / (SQUARE_SIZE) - cy2) / (lod * 2);
 
-				int minty=bty*128;
-				int maxty=(bty+1)*128;
-				int mintx=btx*128;
-				int maxtx=(btx+1)*128;
+				int minty =  bty      * 128;
+				int maxty = (bty + 1) * 128;
+				int mintx =  btx      * 128;
+				int maxtx = (btx + 1) * 128;
 
-				int minly=cy+(-viewRadius+3-ysquaremod)*lod;
-				int maxly=cy+(viewRadius-1-ysquaremod)*lod;
-				int minlx=cx+(-viewRadius+3-xsquaremod)*lod;
-				int maxlx=cx+(viewRadius-1-xsquaremod)*lod;
+				int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
+				int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
+				int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
+				int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
 
-				int xstart=max(minlx,mintx);
-				int xend=min(maxlx,maxtx);
-				int ystart=max(minly,minty);
-				int yend=min(maxly,maxty);
+				int xstart = max(minlx, mintx);
+				int xend   = min(maxlx, maxtx);
+				int ystart = max(minly, minty);
+				int yend   = min(maxly, maxty);
 
-				for(y=ystart;y<yend;y+=lod){
-					int xs=xstart;
-					int xe=xend;
-					int xtest,xtest2;
+				for (y = ystart; y < yend; y += lod) {
+					int xs = xstart;
+					int xe = xend;
+					int xtest, xtest2;
 					std::vector<fline>::iterator fli;
-					for(fli=left.begin();fli!=left.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod-lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod-lod;
-						if(xtest>xtest2)
-							xtest=xtest2;
-						if(xtest>xs)
-							xs=xtest;
+
+					for (fli = left.begin(); fli != left.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+						if (xtest > xtest2)
+							xtest = xtest2;
+						if (xtest > xs)
+							xs = xtest;
 					}
-					for(fli=right.begin();fli!=right.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod+lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod+lod;
-						if(xtest<xtest2)
-							xtest=xtest2;
-						if(xtest<xe)
-							xe=xtest;
+					for (fli = right.begin(); fli != right.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+						if (xtest < xtest2)
+							xtest = xtest2;
+						if (xtest < xe)
+							xe = xtest;
 					}
 
-					for(x=xs;x<xe;x+=lod){
-						if((lod==1) ||
-							(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-							(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terr�g
-								if(!inStrip){
-									DrawVertexA(x,y);
-									DrawVertexA(x,y+lod);
-									inStrip=true;
+					for (x = xs; x < xe; x += lod) {
+						if ((lod == 1) ||
+							(x > (cx) + viewRadius * hlod) || (x < (cx) - viewRadius * hlod) ||
+							(y > (cy) + viewRadius * hlod) || (y < (cy) - viewRadius * hlod)) {
+								// normal terrain
+								if (!inStrip) {
+									DrawVertexA(x, y      );
+									DrawVertexA(x, y + lod);
+									inStrip = true;
 								}
-								DrawVertexA(x+lod,y);
-								DrawVertexA(x+lod,y+lod);
-							} else {  //inre begr�sning mot f�eg�nde lod
-								if((x>=(cx)+viewRadius*hlod)){
-									float h1=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x]*(oldcamxpart);
-									float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(oldcamxpart);
-									float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x+hlod]*(oldcamxpart);
-									float h4=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y+lod)*heightDataX+x+hlod]*(oldcamxpart);
 
-									if(inStrip){
-										EndStrip();
-										inStrip=false;
-									}
-									DrawVertexA(x,y);
-									DrawVertexA(x,y+hlod,h1);
-									DrawVertexA(x+hlod,y,h2);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									EndStrip();
-									DrawVertexA(x,y+hlod,h1);
-									DrawVertexA(x,y+lod);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+hlod,y+lod,h4);
-									EndStrip();
-									DrawVertexA(x+hlod,y+lod,h4);
-									DrawVertexA(x+lod,y+lod);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+lod,y);
-									DrawVertexA(x+hlod,y,h2);
-									EndStrip();
-								}
-								if((x<=(cx)-viewRadius*hlod)){
-									float h1=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamxpart);
-									float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(1-oldcamxpart);
-									float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+hlod]*(1-oldcamxpart);
-									float h4=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamxpart);
+								DrawVertexA(x + lod, y      );
+								DrawVertexA(x + lod, y + lod);
+						} else {
+							// inre begr�sning mot f�eg�nde lod
+							if ((x >= (cx) + viewRadius * hlod)) {
+								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+								int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+								int idx3 = CLAMP((y + hlod) * heightDataX + x),                              idx3HLOD = CLAMP(idx3 + hlod);
+								float h1 = (heightData[idx1] + heightData[idx2   ]) * 0.5f * (1 - oldcamxpart) + heightData[idx3       ] * (oldcamxpart);
+								float h2 = (heightData[idx1] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx1HLOD] * (oldcamxpart);
+								float h3 = (heightData[idx2] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx3HLOD] * (oldcamxpart);
+								float h4 = (heightData[idx2] + heightData[idx2LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx2HLOD] * (oldcamxpart);
 
-									if(inStrip){
-										EndStrip();
-										inStrip=false;
-									}
-									DrawVertexA(x+lod,y+hlod,h1);
-									DrawVertexA(x+lod,y);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+hlod,y,h2);
+								if (inStrip) {
 									EndStrip();
-									DrawVertexA(x+lod,y+lod);
-									DrawVertexA(x+lod,y+hlod,h1);
-									DrawVertexA(x+hlod,y+lod,h4);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									EndStrip();
-									DrawVertexA(x+hlod,y,h2);
-									DrawVertexA(x,y);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x,y+lod);
-									DrawVertexA(x+hlod,y+lod,h4);
-									EndStrip();
+									inStrip = false;
 								}
-								if((y>=(cy)+viewRadius*hlod)){
-									float h1=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y)*heightDataX+x+hlod]*(oldcamypart);
-									float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(oldcamypart);
-									float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x+hlod]*(oldcamypart);
-									float h4=(heightData[(y+lod)*heightDataX+x+lod]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x+lod]*(oldcamypart);
 
-									if(inStrip){
-										EndStrip();
-										inStrip=false;
-									}
-									DrawVertexA(x,y);
-									DrawVertexA(x,y+hlod,h2);
-									DrawVertexA(x+hlod,y,h1);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+lod,y);
-									DrawVertexA(x+lod,y+hlod,h4);
-									EndStrip();
-									DrawVertexA(x,y+hlod,h2);
-									DrawVertexA(x,y+lod);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+lod,y+lod);
-									DrawVertexA(x+lod,y+hlod,h4);
-									EndStrip();
-								}
-								if((y<=(cy)-viewRadius*hlod)){
-									float h1=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamypart);
-									float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(1-oldcamypart);
-									float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x+hlod]*(1-oldcamypart);
-									float h4=(heightData[(y+lod)*heightDataX+x+lod]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamypart);
-
-									if(inStrip){
-										EndStrip();
-										inStrip=false;
-									}
-									DrawVertexA(x,y+hlod,h2);
-									DrawVertexA(x,y+lod);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x+hlod,y+lod,h1);
-									DrawVertexA(x+lod,y+hlod,h4);
-									DrawVertexA(x+lod,y+lod);
-									EndStrip();
-									DrawVertexA(x+lod,y+hlod,h4);
-									DrawVertexA(x+lod,y);
-									DrawVertexA(x+hlod,y+hlod,h3);
-									DrawVertexA(x,y);
-									DrawVertexA(x,y+hlod,h2);
-									EndStrip();
-								}
+								DrawVertexA(x,        y           );
+								DrawVertexA(x,        y + hlod, h1);
+								DrawVertexA(x + hlod, y,        h2);
+								DrawVertexA(x + hlod, y + hlod, h3);
+								EndStrip();
+								DrawVertexA(x,        y + hlod, h1);
+								DrawVertexA(x,        y +  lod    );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x + hlod, y +  lod, h4);
+								EndStrip();
+								DrawVertexA(x + hlod, y +  lod, h4);
+								DrawVertexA(x +  lod, y +  lod    );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x +  lod, y           );
+								DrawVertexA(x + hlod, y,        h2);
+								EndStrip();
 							}
-					}
-					if(inStrip){
-						EndStrip();
-						inStrip=false;
-					}
-				}
-				//rita yttre begr�snings yta mot n�ta lod
-				if(maxlx<maxtx && maxlx>=mintx){
-					x=maxlx;
-					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
-						DrawVertexA(x,y);
-						DrawVertexA(x,y+lod);
-						if(y%(lod*2)){
-							float h=((heightData[(y-lod)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f)*(1-camxpart)+heightData[(y)*heightDataX+x+lod]*(camxpart);
-							DrawVertexA(x+lod,y,h);
-							DrawVertexA(x+lod,y+lod);
-						} else {
-							DrawVertexA(x+lod,y);
-							float h=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod*2)*heightDataX+x+lod])*0.5f*(1-camxpart)+heightData[(y+lod)*heightDataX+x+lod]*(camxpart);
-							DrawVertexA(x+lod,y+lod,h);
-						}
-						EndStrip();
-					}
-				}
-				if(minlx>mintx && minlx<maxtx){
-					x=minlx-lod;
-					for(y=max(ystart-lod,minty);y<min(yend+lod,maxty);y+=lod){
-						if(y%(lod*2)){
-							float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
-							DrawVertexA(x,y,h);
-							DrawVertexA(x,y+lod);
-						} else {
-							DrawVertexA(x,y);
-							float h=(heightData[(y)*heightDataX+x]+heightData[(y+lod*2)*heightDataX+x])*0.5f*(camxpart)+heightData[(y+lod)*heightDataX+x]*(1-camxpart);
-							DrawVertexA(x,y+lod,h);
-						}
-						DrawVertexA(x+lod,y);
-						DrawVertexA(x+lod,y+lod);
-						EndStrip();
-					}
-				}
-				if(maxly<maxty && maxly>minty){
-					y=maxly;
-					int xs=max(xstart-lod,mintx);
-					int xe=min(xend+lod,maxtx);
-					int xtest,xtest2;
-					std::vector<fline>::iterator fli;
-					for(fli=left.begin();fli!=left.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod-lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod-lod;
-						if(xtest>xtest2)
-							xtest=xtest2;
-						if(xtest>xs)
-							xs=xtest;
-					}
-					for(fli=right.begin();fli!=right.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod+lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod+lod;
-						if(xtest<xtest2)
-							xtest=xtest2;
-						if(xtest<xe)
-							xe=xtest;
-					}
-					if(xs<xe){
-						x=xs;
-						if(x%(lod*2)){
-							DrawVertexA(x,y);
-							float h=((heightData[(y+lod)*heightDataX+x-lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f)*(1-camypart)+heightData[(y+lod)*heightDataX+x]*(camypart);
-							DrawVertexA(x,y+lod,h);
-						} else {
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+lod);
-						}
-						for(x=xs;x<xe;x+=lod){
-							if(x%(lod*2)){
-								DrawVertexA(x+lod,y);
-								DrawVertexA(x+lod,y+lod);
-							} else {
-								DrawVertexA(x+lod,y);
-								float h=(heightData[(y+lod)*heightDataX+x+2*lod]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-camypart)+heightData[(y+lod)*heightDataX+x+lod]*(camypart);
-								DrawVertexA(x+lod,y+lod,h);
+							if ((x <= (cx) - viewRadius * hlod)) {
+								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+								int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+								int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+								float h1 = (heightData[idx1LOD] + heightData[idx2LOD]) * 0.5f * (oldcamxpart) + heightData[idx3LOD ] * (1 - oldcamxpart);
+								float h2 = (heightData[idx1   ] + heightData[idx1LOD]) * 0.5f * (oldcamxpart) + heightData[idx1HLOD] * (1 - oldcamxpart);
+								float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (oldcamxpart) + heightData[idx3HLOD] * (1 - oldcamxpart);
+								float h4 = (heightData[idx2   ] + heightData[idx2LOD]) * 0.5f * (oldcamxpart) + heightData[idx2HLOD] * (1 - oldcamxpart);
+
+								if (inStrip) {
+									EndStrip();
+									inStrip = false;
+								}
+
+								DrawVertexA(x +  lod, y + hlod, h1);
+								DrawVertexA(x +  lod, y           );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x + hlod, y,        h2);
+								EndStrip();
+								DrawVertexA(x +  lod, y +  lod    );
+								DrawVertexA(x +  lod, y + hlod, h1);
+								DrawVertexA(x + hlod, y +  lod, h4);
+								DrawVertexA(x + hlod, y + hlod, h3);
+								EndStrip();
+								DrawVertexA(x + hlod, y,        h2);
+								DrawVertexA(x,        y           );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x,        y +  lod    );
+								DrawVertexA(x + hlod, y +  lod, h4);
+								EndStrip();
+							}
+							if ((y >= (cy) + viewRadius * hlod)) {
+								int idx1 = (y       ) * heightDataX + x, idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+								int idx2 = (y +  lod) * heightDataX + x, idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+								int idx3 = (y + hlod) * heightDataX + x, idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+								float h1 = (heightData[idx1   ] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx1HLOD] * (oldcamypart);
+								float h2 = (heightData[idx1   ] + heightData[idx2   ]) * 0.5f * (1 - oldcamypart) + heightData[idx3    ] * (oldcamypart);
+								float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx3HLOD] * (oldcamypart);
+								float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx3LOD ] * (oldcamypart);
+
+								if (inStrip) {
+									EndStrip();
+									inStrip = false;
+								}
+
+								DrawVertexA(x,        y           );
+								DrawVertexA(x,        y + hlod, h2);
+								DrawVertexA(x + hlod, y,        h1);
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x +  lod, y           );
+								DrawVertexA(x +  lod, y + hlod, h4);
+								EndStrip();
+								DrawVertexA(x,        y + hlod, h2);
+								DrawVertexA(x,        y +  lod    );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x +  lod, y +  lod    );
+								DrawVertexA(x +  lod, y + hlod, h4);
+								EndStrip();
+							}
+							if ((y <= (cy) - viewRadius * hlod)) {
+								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+								int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+								int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+								float h1 = (heightData[idx2   ] + heightData[idx2LOD]) * 0.5f * (oldcamypart) + heightData[idx2HLOD] * (1 - oldcamypart);
+								float h2 = (heightData[idx1   ] + heightData[idx2   ]) * 0.5f * (oldcamypart) + heightData[idx3    ] * (1 - oldcamypart);
+								float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (oldcamypart) + heightData[idx3HLOD] * (1 - oldcamypart);
+								float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * 0.5f * (oldcamypart) + heightData[idx3LOD ] * (1 - oldcamypart);
+
+								if (inStrip) {
+									EndStrip();
+									inStrip = false;
+								}
+
+								DrawVertexA(x,        y + hlod, h2);
+								DrawVertexA(x,        y +  lod    );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x + hlod, y +  lod, h1);
+								DrawVertexA(x +  lod, y + hlod, h4);
+								DrawVertexA(x +  lod, y +  lod    );
+								EndStrip();
+								DrawVertexA(x +  lod, y + hlod, h4);
+								DrawVertexA(x +  lod, y           );
+								DrawVertexA(x + hlod, y + hlod, h3);
+								DrawVertexA(x,        y           );
+								DrawVertexA(x,        y + hlod, h2);
+								EndStrip();
 							}
 						}
+					}
+
+					if (inStrip) {
+						EndStrip();
+						inStrip = false;
+					}
+				}
+
+				// rita yttre begr�snings yta mot n�ta lod
+				if (maxlx < maxtx && maxlx >= mintx) {
+					x = maxlx;
+					for (y = max(ystart - lod, minty); y < min(yend + lod, maxty); y += lod) {
+						DrawVertexA(x, y      );
+						DrawVertexA(x, y + lod);
+
+						if (y % (lod * 2)) {
+							int idx1 = CLAMP((y      ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
+							int idx2 = CLAMP((y + lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
+							int idx3 = CLAMP((y - lod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
+							float h = ((heightData[idx3LOD] +
+										heightData[idx2LOD]) * 0.5f) * (1 - camxpart) +
+										heightData[idx1LOD] * (camxpart);
+
+							DrawVertexA(x + lod, y,       h);
+							DrawVertexA(x + lod, y + lod   );
+						} else {
+							int idx1 = CLAMP((y          ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
+							int idx2 = CLAMP((y + lod    ) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
+							int idx3 = CLAMP((y + lod * 2) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
+							float h = (heightData[idx1LOD] +
+									   heightData[idx3LOD]) * 0.5f * (1 - camxpart) +
+									   heightData[idx2LOD] * (camxpart);
+
+							DrawVertexA(x + lod, y);
+							DrawVertexA(x + lod, y + lod, h);
+						}
 						EndStrip();
 					}
 				}
-				if(minly>minty && minly<maxty){
-					y=minly-lod;
-					int xs=max(xstart-lod,mintx);
-					int xe=min(xend+lod,maxtx);
-					int xtest,xtest2;
-					std::vector<fline>::iterator fli;
-					for(fli=left.begin();fli!=left.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod-lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod-lod;
-						if(xtest>xtest2)
-							xtest=xtest2;
-						if(xtest>xs)
-							xs=xtest;
-					}
-					for(fli=right.begin();fli!=right.end();fli++){
-						xtest=((int)(fli->base/(SQUARE_SIZE)+fli->dir*y))/lod*lod+lod;
-						xtest2=((int)(fli->base/(SQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod+lod;
-						if(xtest<xtest2)
-							xtest=xtest2;
-						if(xtest<xe)
-							xe=xtest;
-					}
-					if(xs<xe){
-						x=xs;
-						if(x%(lod*2)){
-							float h=((heightData[(y)*heightDataX+x-lod]+heightData[(y)*heightDataX+x+lod])*0.5f)*(camypart)+heightData[(y)*heightDataX+x]*(1-camypart);
-							DrawVertexA(x,y,h);
-							DrawVertexA(x,y+lod);
+
+				if (minlx > mintx && minlx < maxtx) {
+					x = minlx - lod;
+					for (y = max(ystart - lod, minty); y < min(yend + lod, maxty); y += lod) {
+						if (y % (lod * 2)) {
+							int idx1 = CLAMP((y      ) * heightDataX + x);
+							int idx2 = CLAMP((y + lod) * heightDataX + x);
+							int idx3 = CLAMP((y - lod) * heightDataX + x);
+							float h = ((heightData[idx3] +
+										heightData[idx2]) * 0.5f) * (camxpart) +
+										heightData[idx1] * (1 - camxpart);
+
+							DrawVertexA(x, y,       h);
+							DrawVertexA(x, y + lod   );
 						} else {
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+lod);
+							int idx1 = CLAMP((y          ) * heightDataX + x);
+							int idx2 = CLAMP((y + lod    ) * heightDataX + x);
+							int idx3 = CLAMP((y + lod * 2) * heightDataX + x);
+							float h = (heightData[idx1] +
+									   heightData[idx3]) * 0.5f * (camxpart) +
+									   heightData[idx2] * (1 - camxpart);
+
+							DrawVertexA(x, y);
+							DrawVertexA(x, y + lod, h);
 						}
-						for(x=xs;x<xe;x+=lod){
-							if(x%(lod*2)){
-								DrawVertexA(x+lod,y);
-								DrawVertexA(x+lod,y+lod);
+						DrawVertexA(x + lod, y      );
+						DrawVertexA(x + lod, y + lod);
+						EndStrip();
+					}
+				}
+
+				if (maxly < maxty && maxly > minty) {
+					y = maxly;
+					int xs = max(xstart - lod, mintx);
+					int xe = min(xend + lod,   maxtx);
+					int xtest, xtest2;
+					std::vector<fline>::iterator fli;
+
+					for (fli = left.begin(); fli != left.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+						if (xtest > xtest2)
+							xtest = xtest2;
+						if (xtest > xs)
+							xs = xtest;
+					}
+					for (fli = right.begin(); fli != right.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+						if (xtest < xtest2)
+							xtest = xtest2;
+						if (xtest < xe)
+							xe = xtest;
+					}
+
+					if (xs < xe) {
+						x = xs;
+						if (x % (lod * 2)) {
+							int idx2     = CLAMP((y + lod) * heightDataX + x),
+								idx2PLOD = CLAMP(idx2 + lod),
+								idx2MLOD = CLAMP(idx2 - lod);
+							float h = ((heightData[idx2MLOD] +
+										heightData[idx2PLOD]) * 0.5f) * (1 - camypart) +
+										heightData[idx2    ] * (camypart);
+
+							DrawVertexA(x, y);
+							DrawVertexA(x, y + lod, h);
+						} else {
+							DrawVertexA(x, y      );
+							DrawVertexA(x, y + lod);
+						}
+						for (x = xs; x < xe; x += lod) {
+							if (x % (lod * 2)) {
+								DrawVertexA(x + lod, y      );
+								DrawVertexA(x + lod, y + lod);
 							} else {
-								float h=(heightData[(y)*heightDataX+x+2*lod]+heightData[(y)*heightDataX+x])*0.5f*(camypart)+heightData[(y)*heightDataX+x+lod]*(1-camypart);
-								DrawVertexA(x+lod,y,h);
-								DrawVertexA(x+lod,y+lod);
+								int idx2      = CLAMP((y + lod) * heightDataX + x),
+									idx2PLOD  = CLAMP(idx2 +     lod),
+									idx2PLOD2 = CLAMP(idx2 + 2 * lod);
+								float h = (heightData[idx2PLOD2] +
+										   heightData[idx2     ]) * 0.5f * (1 - camypart) +
+										   heightData[idx2PLOD ] * (camypart);
+
+								DrawVertexA(x + lod, y);
+								DrawVertexA(x + lod, y + lod, h);
+							}
+						}
+						EndStrip();
+					}
+				}
+
+				if (minly > minty && minly < maxty) {
+					y = minly - lod;
+					int xs = max(xstart - lod, mintx);
+					int xe = min(xend + lod,   maxtx);
+					int xtest, xtest2;
+					std::vector<fline>::iterator fli;
+
+					for (fli = left.begin(); fli != left.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+						if (xtest > xtest2)
+							xtest = xtest2;
+						if (xtest > xs)
+							xs = xtest;
+					}
+					for (fli = right.begin(); fli != right.end(); fli++) {
+						xtest  = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+						xtest2 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+						if (xtest < xtest2)
+							xtest = xtest2;
+						if (xtest < xe)
+							xe = xtest;
+					}
+
+					if (xs < xe) {
+						x = xs;
+						if (x % (lod * 2)) {
+
+							int idx1     = CLAMP((y) * heightDataX + x),
+								idx1PLOD = CLAMP(idx1 + lod),
+								idx1MLOD = CLAMP(idx1 - lod);
+							float h = ((heightData[idx1MLOD] +
+										heightData[idx1PLOD]) * 0.5f) * (camypart) +
+										heightData[idx1    ] * (1 - camypart);
+
+							DrawVertexA(x, y,       h);
+							DrawVertexA(x, y + lod   );
+						} else {
+							DrawVertexA(x, y      );
+							DrawVertexA(x, y + lod);
+						}
+
+						for (x = xs; x < xe; x+= lod) {
+							if (x % (lod * 2)) {
+								DrawVertexA(x + lod, y      );
+								DrawVertexA(x + lod, y + lod);
+							} else {
+								int idx1      = CLAMP((y) * heightDataX + x),
+									idx1PLOD  = CLAMP(idx1 +     lod),
+									idx1PLOD2 = CLAMP(idx1 + 2 * lod);
+								float h = (heightData[idx1PLOD2] +
+										   heightData[idx1     ]) * 0.5f * (camypart) +
+										   heightData[idx1PLOD ] * (1 - camypart);
+
+								DrawVertexA(x + lod, y,       h);
+								DrawVertexA(x + lod, y + lod   );
 							}
 						}
 						EndStrip();
@@ -486,6 +584,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 			DrawGroundVertexArray();
 		}
 	}
+
 	ResetTextureUnits(drawWaterReflection,overrideVP);
 	glDisable(GL_CULL_FACE);
 
@@ -501,17 +600,21 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 		glDisable(GL_TEXTURE_2D);
 		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
 		glBegin(GL_QUADS);//water color edge of map <0
-		if(!drawWaterReflection){
-			float xsize=gs->mapx*SQUARE_SIZE/4;
-			float ysize=gs->mapy*SQUARE_SIZE/4;
-			for(y=-4;y<8;++y)
-				for(int x=-4;x<8;++x)
-					if(x>3 || x<0 || y>3 || y<0 || camera->pos.x<0 || camera->pos.z<0 || camera->pos.x>float3::maxxpos || camera->pos.z>float3::maxzpos){
-							glVertex3f(x*xsize,-200,y*ysize);
-							glVertex3f((x+1)*xsize,-200,y*ysize);
-							glVertex3f((x+1)*xsize,-200,(y+1)*ysize);
-							glVertex3f(x*xsize,-200,(y+1)*ysize);
+
+		if (!drawWaterReflection) {
+			float xsize = gs->mapx * SQUARE_SIZE / 4;
+			float ysize = gs->mapy * SQUARE_SIZE / 4;
+
+			for (y = -4; y < 8; ++y) {
+				for (int x = -4; x < 8; ++x) {
+					if (x > 3 || x < 0 || y > 3 || y < 0 || camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos) {
+						glVertex3f( x      * xsize, -200,  y      * ysize);
+						glVertex3f((x + 1) * xsize, -200,  y      * ysize);
+						glVertex3f((x + 1) * xsize, -200, (y + 1) * ysize);
+						glVertex3f( x      * xsize, -200, (y + 1) * ysize);
 					}
+				}
+			}
 		}
 		glEnd();
 	}
@@ -526,7 +629,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 	glEnable(GL_BLEND);
 
 //	sky->SetCloudShadow(1);
-//	if(drawWaterReflection)
+//	if (drawWaterReflection)
 //		treeDistance *= 0.5f;
 
 	ph->DrawGroundFlashes();
@@ -573,7 +676,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsi
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
-	va=GetVertexArray();
+	va = GetVertexArray();
 	va->Initialize();
 
 //	glEnable(GL_CULL_FACE);
