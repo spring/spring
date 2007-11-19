@@ -27,7 +27,7 @@ CR_REG_METADATA(CFlareProjectile,(
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame)
 :	CProjectile(pos,speed,owner, true),
 	activateFrame(activateFrame),
-	deathFrame(activateFrame+owner?owner->unitDef->flareTime:1),
+	deathFrame(activateFrame+(owner?owner->unitDef->flareTime:1)),
 	numSub(0),
 	lastSub(0)
 {

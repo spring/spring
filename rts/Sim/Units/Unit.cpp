@@ -939,7 +939,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		KillUnit(false, false, attacker);
 		if (isDead && (attacker != 0) &&
 		    !gs->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
-			attacker->AddExperience(0.1f * (power / attacker->power));
+			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
 			gs->Team(attacker->team)->currentStats.unitsKilled++;
 		}
 	}
