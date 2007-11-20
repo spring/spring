@@ -33,22 +33,12 @@
 #include "creg/STL_Map.h"
 
 
-static inline float f3Dist(const float3& a, const float3& b) {
-	return CBuilder::f3Dist(a, b);
-}
-static inline float f3Len(const float3& a) {
-	return CBuilder::f3Len(a);
-}
-static inline float f3SqLen(const float3& a) {
-	return CBuilder::f3SqLen(a);
-}
-
-
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
 
 CR_REG_METADATA(CBuilderCAI , (
 				CR_MEMBER(buildOptions),
 				CR_MEMBER(building),
+				CR_MEMBER(range3D),
 //				CR_MEMBER(build),
 
 				CR_MEMBER(cachedRadiusId),
@@ -65,9 +55,11 @@ CR_REG_METADATA(CBuilderCAI , (
 // not adding to members, should repopulate itself
 CUnitSet CBuilderCAI::reclaimers;
 
+
 CBuilderCAI::CBuilderCAI()
 : CMobileCAI(),
 	building(false),
+	range3D(true),
 	cachedRadius(0),
 	cachedRadiusId(0),
 	buildRetries(0),
@@ -75,9 +67,11 @@ CBuilderCAI::CBuilderCAI()
 	lastPC2(-1)
 {}
 
+
 CBuilderCAI::CBuilderCAI(CUnit* owner)
 : CMobileCAI(owner),
 	building(false),
+	range3D(owner->unitDef->buildRange3D),
 	cachedRadius(0),
 	cachedRadiusId(0),
 	buildRetries(0),
