@@ -28,8 +28,8 @@ public:
 	static inline float f3SqLen(const float3& a) {
 		return use2D ? a.SqLength2D() : a.SqLength();
 	}
-	static void Use2DDistances(bool value) { use2D = value; }
-	static inline bool GetUse2D(bool value) { return use2D; }
+	static inline void SetUse2D(bool value) { use2D = value; }
+	static inline bool GetUse2D()    { return use2D; }
 	
 public:
 	CR_DECLARE(CBuilder);

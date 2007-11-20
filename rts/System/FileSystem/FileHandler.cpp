@@ -205,10 +205,12 @@ bool CFileHandler::LoadStringData(string& data)
 
 /******************************************************************************/
 
-vector<string> CFileHandler::FindFiles(const string& path, const string& pattern)
+vector<string> CFileHandler::FindFiles(const string& path,
+                                       const string& pattern)
 {
 	vector<string> found = filesystem.FindFiles(path, pattern);
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	                          boost::regex::icase);
 	vector<string> f;
 
 	if (hpiHandler) {
@@ -223,6 +225,8 @@ vector<string> CFileHandler::FindFiles(const string& path, const string& pattern
 	return found;
 }
 
+
+/******************************************************************************/
 
 vector<string> CFileHandler::DirList(const string& path,
                                      const string& pattern,
@@ -252,7 +256,8 @@ bool CFileHandler::InsertRawFiles(set<string>& fileSet,
                                   const string& path,
                                   const string& pattern)
 {
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	                          boost::regex::icase);
 
 	vector<string> found = filesystem.FindFiles(path, pattern);
 	vector<string>::const_iterator fi;
@@ -308,6 +313,101 @@ bool CFileHandler::InsertBaseFiles(set<string>& fileSet,
 	return InsertModFiles(fileSet, path, pattern); // FIXME
 }
 
+
+/******************************************************************************/
+
+vector<string> CFileHandler::SubDirs(const string& path,
+                                     const string& pattern,
+                                     const string& modes)
+{
+	const string pat = pattern.empty() ? "*" : pattern;
+
+	set<string> dirSet;
+	const char* c = modes.c_str();
+	while (c[0] != 0) {
+		if (c[0] == SPRING_VFS_RAW[0])  { InsertRawDirs(dirSet, path, pat);  }
+		if (c[0] == SPRING_VFS_MOD[0])  { InsertModDirs(dirSet, path, pat);  }
+		if (c[0] == SPRING_VFS_MAP[0])  { InsertMapDirs(dirSet, path, pat);  }
+		if (c[0] == SPRING_VFS_BASE[0]) { InsertBaseDirs(dirSet, path, pat); }
+		c++;
+	}
+	vector<string> dirVec;
+	set<string>::const_iterator it;
+	for (it = dirSet.begin(); it != dirSet.end(); ++it) {
+		dirVec.push_back(*it);
+	}
+	return dirVec;	
+}
+
+
+bool CFileHandler::InsertRawDirs(set<string>& dirSet,
+                                 const string& path,
+                                 const string& pattern)
+{
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	                          boost::regex::icase);
+
+	vector<string> found = filesystem.FindFiles(path, pattern,
+	                                            FileSystem::INCLUDE_DIRS);
+	vector<string>::const_iterator fi;
+	for (fi = found.begin(); fi != found.end(); ++fi) {
+		const string& dir = *fi;
+		const string::size_type slash = dir.find_last_of("/\\");
+		if (slash == (dir.size() - 1)) { 
+			if (boost::regex_match(dir, regexpattern)) {
+				dirSet.insert(dir);
+			}
+		}
+	}
+
+	return true;
+}
+
+
+bool CFileHandler::InsertModDirs(set<string>& dirSet,
+                                 const string& path,
+                                 const string& pattern)
+{
+	if (!hpiHandler) {
+		return false;
+	}
+
+	string prefix = path;
+	if (path.find_last_of("\\/") != (path.size() - 1)) {
+		prefix += '/';
+	}
+
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
+
+	vector<string> found = hpiHandler->GetDirsInDir(path);
+	vector<string>::const_iterator fi;
+	for (fi = found.begin(); fi != found.end(); ++fi) {
+		if (boost::regex_match(*fi, regexpattern)) {
+			dirSet.insert(prefix + *fi);
+		}
+	}
+
+	return true;
+}
+
+
+bool CFileHandler::InsertMapDirs(set<string>& dirSet,
+                                  const string& path,
+                                  const string& pattern)
+{
+	return InsertModDirs(dirSet, path, pattern); // FIXME
+}
+
+
+bool CFileHandler::InsertBaseDirs(set<string>& dirSet,
+                                   const string& path,
+                                   const string& pattern)
+{
+	return InsertModDirs(dirSet, path, pattern); // FIXME
+}
+
+
+/******************************************************************************/
 
 string CFileHandler::AllowModes(const string& modes, const string& allowed)
 {

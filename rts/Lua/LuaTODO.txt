@@ -1,34 +1,26 @@
 
+- Auto-updated texture for the ground heightmap / normalmap  (lots of uses)
+
 - Regex word completion
 - Resync helpers
-- Add UnitDefTracker and use it
-- NETMSG_LUAxxx
 
-- Better reentrancy handling
-- Add userdata handle for gl states?
+- Add userdata handle for gl states? (new ones do)
 - UserData for units, unit sets, dlists, textures, shaders, sounds, etc...
-- GetNearestUnit(pos, limit)
-- GetNearestTeamUnit(pos, team, limit)
 - Fix WarpMouse()
-- GameSetup.cpp tdf file access for unsynced side of scripts
 
 - SCRIPT_CLOAK bits
 - Better share_delayed.lua visual indicators
 
-- Cursor in minimap kills some DrawWorld() rendering
 - AddLayout Button
 - Implement ScriptMoveType stops
 - Fix SetFeatureDirection()
 + SetUnitRotation() y is backwards (clean-up rotation / heading in general)
 - Split Outlines and fontHandler usability
 - Make obj2lua callable
-- Finish AICallback/Lua
 - Fix "luaui reload"
 + __lll_mutex_lock  (test dynamic mutex'ing?)
 
 - COB test gadget
-
-- GL_TEXTURE_ENV_MODE control for multitex (for non shaders, worth the bother?)
 
 - Custom Uniforms
 - VBOs/DrawArrays/DrawElement/etc...

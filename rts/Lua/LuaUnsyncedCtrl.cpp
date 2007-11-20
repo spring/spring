@@ -54,6 +54,12 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Echo);
 
+	REGISTER_LUA_CFUNC(SendMessage);
+	REGISTER_LUA_CFUNC(SendMessageToPlayer);
+	REGISTER_LUA_CFUNC(SendMessageToTeam);
+	REGISTER_LUA_CFUNC(SendMessageToAllyTeam);
+	REGISTER_LUA_CFUNC(SendMessageToSpectators);
+
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
@@ -313,6 +319,109 @@ int LuaUnsyncedCtrl::Echo(lua_State* L)
 	return 0;
 }
 
+
+static string ParseMessage(lua_State* L, const string& msg)
+{
+	string::size_type start = msg.find("<PLAYER");
+	if (start == string::npos) {
+		return msg;
+	}
+
+	const char* number = msg.c_str() + start + strlen("<PLAYER");
+	char* endPtr;
+	const int playerID = (int)strtol(number, &endPtr, 10);
+	if ((endPtr == number) || (*endPtr != '>')) {
+		luaL_error(L, "Bad message format: %s", msg.c_str());
+	}
+
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		luaL_error(L, "Invalid message playerID: %i", playerID);
+	}
+	const CPlayer* player = gs->players[playerID];
+	if ((player == NULL) || !player->active || player->playerName.empty()) {
+		luaL_error(L, "Invalid message playerID: %i", playerID);
+	}
+
+	const string head = msg.substr(0, start);
+	const string tail = msg.substr(endPtr - msg.c_str() + 1);
+
+	return head + player->playerName + ParseMessage(L, tail);
+}
+
+
+static void PrintMessage(lua_State* L, const string& msg)
+{
+	logOutput.Print(ParseMessage(L, msg));
+}
+
+
+int LuaUnsyncedCtrl::SendMessage(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SendMessage()");
+	}
+	PrintMessage(L, lua_tostring(L, 1));
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SendMessageToSpectators(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SendMessageToSpectators()");
+	}
+	if (gu->spectating) {
+		PrintMessage(L, lua_tostring(L, 1));
+	}
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SendMessageToPlayer()");
+	}
+	const int playerID = (int)lua_tonumber(L, 1);
+	if (playerID == gu->myPlayerNum) {
+		PrintMessage(L, lua_tostring(L, 2));
+	}
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SendMessageToTeam()");
+	}
+	const int teamID = (int)lua_tonumber(L, 1);
+	if (teamID == gu->myTeam) {
+		PrintMessage(L, lua_tostring(L, 2));
+	}
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SendMessageToAllyTeam()");
+	}
+	const int allyTeamID = (int)lua_tonumber(L, 1);
+	if (allyTeamID == gu->myAllyTeam) {
+		PrintMessage(L, lua_tostring(L, 2));
+	}
+	return 0;
+}
+
+
+/******************************************************************************/
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {

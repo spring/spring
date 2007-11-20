@@ -33,6 +33,8 @@ class LuaUtils {
 		                            vector<float>& vec);
 		static int ParseStringVector(lua_State* L, int tableIndex,
 		                             vector<string>& vec);
+
+		static void* GetUserData(lua_State* L, int index, const string& type);
 };
 
 

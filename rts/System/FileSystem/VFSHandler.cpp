@@ -6,6 +6,7 @@
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include <algorithm>
+#include <set>
 #include "Platform/FileSystem.h"
 #include "mmgr.h"
 
@@ -117,6 +118,54 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 			}
 		}
 		filesStart++;
+	}
+
+	return ret;
+}
+
+
+// Returns all the sub-directories in the given (virtual) directory without the preceeding pathname
+vector<string> CVFSHandler::GetDirsInDir(string dir)
+{
+	vector<string> ret;
+	StringToLowerInPlace(dir);
+	filesystem.ForwardSlashes(dir);
+
+	map<string, FileData>::const_iterator filesStart = files.begin();
+	map<string, FileData>::const_iterator filesEnd   = files.end();
+
+	// Non-empty directories to look in should have a trailing backslash
+	if (!dir.empty()) {
+		string::size_type dirLast = (dir.length() - 1);
+		if (dir[dirLast] != '/') {
+			dir += "/";
+			dirLast++;
+		}
+		// limit the iterator range
+		string dirEnd = dir;
+		dirEnd[dirLast] = dirEnd[dirLast] + 1;
+		filesStart = files.lower_bound(dir);
+		filesEnd   = files.upper_bound(dirEnd);
+	}
+
+	set<string> dirs;
+	
+	while (filesStart != filesEnd) {
+		const string path = filesystem.GetDirectory(filesStart->first);
+		// Test to see if this file start with the dir path
+		if (path.compare(0, dir.length(), dir) == 0) {
+			// Strip pathname
+			const string name = filesStart->first.substr(dir.length());
+			const string::size_type slash = name.find_first_of("/\\");
+			if (slash != string::npos) {			
+				dirs.insert(name.substr(0, slash + 1));
+			}
+		}
+		filesStart++;
+	}
+
+	for (set<string>::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
+		ret.push_back(*it);
 	}
 
 	return ret;

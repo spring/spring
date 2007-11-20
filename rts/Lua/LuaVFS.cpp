@@ -63,6 +63,7 @@ bool LuaVFS::PushSynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "LoadFile",   SyncLoadFile);
 	HSTR_PUSH_CFUNC(L, "FileExists", SyncFileExists);
 	HSTR_PUSH_CFUNC(L, "DirList",    SyncDirList);
+	HSTR_PUSH_CFUNC(L, "SubDirs",    SyncSubDirs);
 
 	return true;
 }
@@ -76,6 +77,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "LoadFile",   UnsyncLoadFile);
 	HSTR_PUSH_CFUNC(L, "FileExists", UnsyncFileExists);
 	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
+	HSTR_PUSH_CFUNC(L, "SubDirs",    UnsyncSubDirs);
 	HSTR_PUSH_CFUNC(L, "UseArchive", UseArchive);
 
 	return true;
@@ -299,7 +301,6 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 		}
 	}
 
-	// FIXME -- options?
 	const vector<string> filenames = CFileHandler::DirList(dir, pattern, modes);
 
 	lua_newtable(L);
@@ -325,6 +326,65 @@ int LuaVFS::SyncDirList(lua_State* L)
 int LuaVFS::UnsyncDirList(lua_State* L)
 {
 	return DirList(L, false);
+}
+
+
+/******************************************************************************/
+
+int LuaVFS::SubDirs(lua_State* L, bool synced)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1) ||
+	    ((args >= 2) && !lua_isstring(L, 2)) ||
+	    ((args >= 4) && !lua_isstring(L, 4))) {
+		luaL_error(L, "Incorrect arguments to SubDirs()");
+	}
+
+	const string dir = lua_tostring(L, 1);
+	// keep searches within the Spring directory
+	if ((dir[0] == '/') || (dir[0] == '\\') ||
+	    ((dir.size() >= 2) && (dir[1] == ':'))) {
+		return 0;
+	}
+	const string pattern = luaL_optstring(L, 2, "*");
+	const string modes = GetModes(L, 3, synced);
+
+	int options = 0;
+	if (args >= 4) {
+		const string optstr = lua_tostring(L, 4);
+		if (strstr(optstr.c_str(), "r") != NULL) {
+			options |= FileSystem::RECURSE;
+		}
+		if (strstr(optstr.c_str(), "d") != NULL) {
+			options |= FileSystem::INCLUDE_DIRS;
+		}
+	}
+
+	const vector<string> filenames = CFileHandler::SubDirs(dir, pattern, modes);
+
+	lua_newtable(L);
+	for (int i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, filenames[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, filenames.size());
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+
+int LuaVFS::SyncSubDirs(lua_State* L)
+{
+	return SubDirs(L, true);
+}
+
+
+int LuaVFS::UnsyncSubDirs(lua_State* L)
+{
+	return SubDirs(L, false);
 }
 
 
@@ -360,8 +420,7 @@ int LuaVFS::UseArchive(lua_State* L)
 	hpiHandler = SAFE_NEW CVFSHandler;
 	hpiHandler->AddArchive(filename, false);
 
-	const int args = lua_gettop(L);
-	const int error = lua_pcall(L, args - funcIndex, LUA_MULTRET, 0);
+	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
 	delete hpiHandler;
 	hpiHandler = oldHandler;

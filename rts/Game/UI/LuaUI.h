@@ -102,8 +102,6 @@ class CLuaUI : public CLuaHandle {
 		CLuaUI();
 		~CLuaUI();
 
-		void KillLua();
-
 		string LoadFile(const string& filename) const;
 
 		bool LoadCFunctions(lua_State* L);

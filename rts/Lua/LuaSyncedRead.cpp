@@ -527,10 +527,10 @@ static int GetRulesParam(lua_State* L, const char* caller, int index,
 {
 	int pIndex = -1;
 
-	if (lua_isnumber(L, index)) {
+	if (lua_israwnumber(L, index)) {
 		pIndex = (int)lua_tonumber(L, index) - 1;
 	}
-	else if (lua_isstring(L, index)) {
+	else if (lua_israwstring(L, index)) {
 		const string pName = lua_tostring(L, index);
 		map<string, int>::const_iterator it = paramsMap.find(pName);
 		if (it != paramsMap.end()) {

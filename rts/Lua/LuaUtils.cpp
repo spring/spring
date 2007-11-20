@@ -140,3 +140,24 @@ void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
 
 /******************************************************************************/
 /******************************************************************************/
+
+// copied from lua/src/lauxlib.cpp:luaL_checkudata()
+void* LuaUtils::GetUserData(lua_State* L, int index, const string& type)
+{
+	const char* tname = type.c_str();
+	void *p = lua_touserdata(L, index);
+	if (p != NULL) {                               // value is a userdata?
+		if (lua_getmetatable(L, index)) {            // does it have a metatable?
+			lua_getfield(L, LUA_REGISTRYINDEX, tname); // get correct metatable
+			if (lua_rawequal(L, -1, -2)) {             // the correct mt?
+				lua_pop(L, 2);                           // remove both metatables
+				return p;
+			}
+		}
+	}
+	return NULL;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/

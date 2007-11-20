@@ -46,6 +46,10 @@ class CFileHandler {
 																						const std::string& pattern,
 																						const std::string& modes);
 
+		static std::vector<std::string> SubDirs(const std::string& path,
+																						const std::string& pattern,
+																						const std::string& modes);
+
 		static std::string AllowModes(const std::string& modes,
 		                              const std::string& allowed);
 		static std::string ForbidModes(const std::string& modes,
@@ -72,6 +76,19 @@ class CFileHandler {
 		static bool InsertBaseFiles(std::set<std::string>& fileSet,
 																const std::string& path,
 																const std::string& pattern);
+
+		static bool InsertRawDirs(std::set<std::string>& dirSet,
+															const std::string& path,
+															const std::string& pattern);
+		static bool InsertModDirs(std::set<std::string>& dirSet,
+															const std::string& path,
+															const std::string& pattern);
+		static bool InsertMapDirs(std::set<std::string>& dirSet,
+															const std::string& path,
+															const std::string& pattern);
+		static bool InsertBaseDirs(std::set<std::string>& dirSet,
+															const std::string& path,
+															const std::string& pattern);
 
 	private:
 		std::ifstream* ifs;

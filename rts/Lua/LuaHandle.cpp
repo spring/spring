@@ -57,16 +57,25 @@ CLuaHandle::~CLuaHandle()
 	luaCallIns.RemoveHandle(this);
 
 	// free the lua state
-	if (L != NULL) {
-		lua_close(L);
-		L = NULL;
-	}
+	KillLua();
 
 	if (this == activeHandle) {
 		activeHandle = NULL;
 	}
 }
 
+
+void CLuaHandle::KillLua()
+{
+	if (L != NULL) {
+		CLuaHandle* orig = activeHandle;
+		SetActiveHandle();
+		lua_close(L);
+		SetActiveHandle(orig);
+	}
+	L = NULL;
+}
+		
 
 /******************************************************************************/
 /******************************************************************************/

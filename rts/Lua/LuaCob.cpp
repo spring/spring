@@ -85,6 +85,7 @@ CLuaCob::~CLuaCob()
 {
 	if (L != NULL) {
 		Shutdown();
+		KillLua();
 	}
 	luaCob = NULL;
 }

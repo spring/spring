@@ -14,8 +14,8 @@ using std::set;
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 //FIXME-BO: #include "LuaVBOs.h"
-//FIXME-BO: #include "LuaFBOs.h"
-//FIXME-BO: #include "LuaRBOs.h"
+#include "LuaFBOs.h"
+#include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
 
 
@@ -81,8 +81,8 @@ class CLuaHandle {
 		LuaShaders& GetShaders() { return shaders; }
 		LuaTextures& GetTextures() { return textures; }
 //FIXME-BO: 		LuaVBOs& GetVBOs() { return vbos; }
-//FIXME-BO: 		LuaFBOs& GetFBOs() { return fbos; }
-//FIXME-BO: 		LuaRBOs& GetRBOs() { return rbos; }
+		LuaFBOs& GetFBOs() { return fbos; }
+		LuaRBOs& GetRBOs() { return rbos; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 	public:
@@ -166,6 +166,8 @@ class CLuaHandle {
 		           bool userMode, LuaCobCallback callback);
 		virtual ~CLuaHandle();
 
+		void KillLua();
+
 		void SetActiveHandle();
 		void SetActiveHandle(CLuaHandle*);
 
@@ -198,8 +200,8 @@ class CLuaHandle {
 		LuaShaders shaders;
 		LuaTextures textures;
 //FIXME-BO: 		LuaVBOs vbos;
-//FIXME-BO: 		LuaFBOs fbos;
-//FIXME-BO: 		LuaRBOs rbos;
+		LuaFBOs fbos;
+		LuaRBOs rbos;
 		CLuaDisplayLists displayLists;
 
 		vector<bool> watchWeapons; // for the Explosion call-in
@@ -248,8 +250,8 @@ class CLuaHandle {
 		static LuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
 		static LuaTextures& GetActiveTextures() { return activeHandle->textures; }
 //FIXME-BO: 		static LuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
-//FIXME-BO: 		static LuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
-//FIXME-BO: 		static LuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
+		static LuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
+		static LuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
 		static CLuaDisplayLists& GetActiveDisplayLists() {
 			return activeHandle->displayLists;
 		}

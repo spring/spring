@@ -22,6 +22,12 @@ class LuaUnsyncedCtrl {
 	private:
 		static int Echo(lua_State* L);
 
+		static int SendMessage(lua_State* L);
+		static int SendMessageToPlayer(lua_State* L);
+		static int SendMessageToTeam(lua_State* L);
+		static int SendMessageToAllyTeam(lua_State* L);
+		static int SendMessageToSpectators(lua_State* L);
+
 		static int PlaySoundFile(lua_State* L);
 		static int PlaySoundStream(lua_State* L);
 		static int StopSoundStream(lua_State* L);
