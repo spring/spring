@@ -16,20 +16,17 @@ class CBuilder : public CUnit
 {
 private:
 	void UnitInit (const UnitDef* def, int team, const float3& position);
-	static bool use2D;
 
 public:
-	static inline float f3Dist(const float3& a, const float3& b) {
-		return use2D ? a.distance2D(b) : a.distance(b);
+	inline float f3Dist(const float3& a, const float3& b) const {
+		return range3D ? a.distance(b) : a.distance2D(b);
 	}
-	static inline float f3Len(const float3& a) {
-		return use2D ? a.Length2D() : a.Length();
+	inline float f3Len(const float3& a) const {
+		return range3D ? a.Length() : a.Length2D();
 	}
-	static inline float f3SqLen(const float3& a) {
-		return use2D ? a.SqLength2D() : a.SqLength();
+	inline float f3SqLen(const float3& a) const {
+		return range3D ? a.SqLength() : a.SqLength2D();
 	}
-	static inline void SetUse2D(bool value) { use2D = value; }
-	static inline bool GetUse2D()    { return use2D; }
 	
 public:
 	CR_DECLARE(CBuilder);
@@ -56,6 +53,8 @@ public:
 	void SetCaptureTarget(CUnit* unit);
 
 public:
+	bool range3D; // spheres instead of infinite cylinders for range tests
+
 	float buildDistance;
 	float buildSpeed;
 	float repairSpeed;

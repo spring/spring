@@ -61,7 +61,21 @@ public:
 	int lastPC1; //helps avoid infinite loops
 	int lastPC2;
 
+	bool range3D;
+
+	inline float f3Dist(const float3& a, const float3& b) const {
+		return range3D ? a.distance(b) : a.distance2D(b);
+	}
+	inline float f3Len(const float3& a) const {
+		return range3D ? a.Length() : a.Length2D();
+	}
+	inline float f3SqLen(const float3& a) const {
+		return range3D ? a.SqLength() : a.SqLength2D();
+	}
+
+public:
 	static CUnitSet reclaimers;
+
 private:
 
 	void CancelRestrictedUnit(const std::string& buildOption);

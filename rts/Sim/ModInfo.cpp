@@ -68,10 +68,6 @@ void CModInfo::Init(const char* modname)
 	transportHover  = transportTbl.GetInt("transportHover", false);
 	transportGround = transportTbl.GetInt("transportGround", true);
 
-	// distance
-	const LuaTable distanceTbl = root.SubTable("distance");
-	CBuilder::SetUse2D(distanceTbl.GetBool("builderUse2D", false));
-
 	// experience
 	const LuaTable experienceTbl = root.SubTable("experience");
 	CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));

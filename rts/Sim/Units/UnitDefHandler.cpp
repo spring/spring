@@ -297,6 +297,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxDec   = udTable.GetFloat("brakeRate",    0.5f) * 0.1f;
 	ud.turnRate = udTable.GetFloat("turnRate",     0.0f);
 
+	ud.buildRange3D = udTable.GetBool("buildRange3D", true);
 	ud.buildDistance = udTable.GetFloat("buildDistance", 128.0f);
 	ud.buildDistance = std::max(128.0f, ud.buildDistance);
 	ud.buildSpeed = udTable.GetFloat("workerTime", 0.0f);

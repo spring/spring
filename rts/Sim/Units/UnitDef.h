@@ -149,6 +149,7 @@ struct UnitDef
 	float seismicSignature;
 	bool stealth;
 
+	bool  buildRange3D;
 	float buildDistance;
 	float buildSpeed;
 	float reclaimSpeed;

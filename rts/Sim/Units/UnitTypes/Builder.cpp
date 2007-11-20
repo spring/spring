@@ -32,6 +32,7 @@ using namespace std;
 CR_BIND_DERIVED(CBuilder, CUnit, );
 
 CR_REG_METADATA(CBuilder, (
+				CR_MEMBER(range3D),
 				CR_MEMBER(buildDistance),
 				CR_MEMBER(buildSpeed),
 				CR_MEMBER(repairSpeed),
@@ -62,11 +63,9 @@ CR_REG_METADATA(CBuilder, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-bool CBuilder::use2D = false;
-
-
 CBuilder::CBuilder()
-:	buildDistance(16),
+:	range3D(true),
+  buildDistance(16),
   buildSpeed(100),
   repairSpeed(100),
   reclaimSpeed(100),
@@ -100,17 +99,18 @@ CBuilder::~CBuilder()
 
 void CBuilder::PostLoad()
 {
-	if (curResurrect) SetBuildStanceToward(curResurrect->pos);
-	if (curBuild) SetBuildStanceToward(curBuild->pos);
-	if (curCapture) SetBuildStanceToward(curCapture->pos);
-	if (curReclaim) SetBuildStanceToward(curReclaim->pos);
-	if (terraforming) SetBuildStanceToward(terraformCenter);
+	if (curResurrect)  SetBuildStanceToward(curResurrect->pos);
+	if (curBuild)      SetBuildStanceToward(curBuild->pos);
+	if (curCapture)    SetBuildStanceToward(curCapture->pos);
+	if (curReclaim)    SetBuildStanceToward(curReclaim->pos);
+	if (terraforming)  SetBuildStanceToward(terraformCenter);
 	if (helpTerraform) SetBuildStanceToward(helpTerraform->terraformCenter);
 }
 
 
 void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 {
+	range3D = def->buildRange3D;
 	buildDistance  = def->buildDistance;
 
 	const float scale = (1.0f / 32.0f);
