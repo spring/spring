@@ -283,9 +283,6 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.canAttackGround = wdTable.GetBool("canattackground", true);
 	wd.myGravity = wdTable.GetFloat("myGravity", 0.0f);
 
-	wd.cameraShake = wdTable.GetFloat("cameraShake", wd.damages.GetDefaultDamage());
-	wd.cameraShake = max(0.0f, wd.cameraShake);
-
 	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
 	wd.paralyzer = wdTable.GetBool("paralyzer", false);
 	if (wd.paralyzer) {
@@ -293,6 +290,10 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	} else {
 		wd.damages.paralyzeDamageTime = 0;
 	}
+
+	const float defShake = wd.paralyzer ? 0.0f : wd.damages.GetDefaultDamage();
+	wd.cameraShake = wdTable.GetFloat("cameraShake", defShake);
+	wd.cameraShake = max(0.0f, wd.cameraShake);
 
 	wd.soundTrigger = wdTable.GetBool("soundTrigger", false);
 

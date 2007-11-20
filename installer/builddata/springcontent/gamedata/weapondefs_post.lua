@@ -2,10 +2,7 @@
 --------------------------------------------------------------------------------
 
 for name, wd in pairs(WeaponDefs) do
-  if (wd.paralyzer and (not wd.camerashake)) then
-    -- paralyzers do not shake the camera
-    wd.camerashake = 0
-  end
+  -- do your stuff here
 end
 
 --------------------------------------------------------------------------------
