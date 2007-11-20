@@ -55,7 +55,7 @@ bool LuaFBOs::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(CreateFBO);
 	REGISTER_LUA_CFUNC(DeleteFBO);
 	REGISTER_LUA_CFUNC(IsValidFBO);
-	REGISTER_LUA_CFUNC(UseFBO);
+	REGISTER_LUA_CFUNC(ActiveFBO);
 	REGISTER_LUA_CFUNC(UnsafeSetFBO);
 	if (GLEW_EXT_framebuffer_blit) {
 		REGISTER_LUA_CFUNC(BlitFBO);
@@ -470,7 +470,7 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 }
 
 
-int LuaFBOs::UseFBO(lua_State* L)
+int LuaFBOs::ActiveFBO(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	
@@ -494,7 +494,7 @@ int LuaFBOs::UseFBO(lua_State* L)
 	}
 		
 	if (!lua_isfunction(L, funcIndex)) {
-		luaL_error(L, "Incorrect arguments to gl.UseFBO()");
+		luaL_error(L, "Incorrect arguments to gl.ActiveFBO()");
 	}
 	const int args = lua_gettop(L);
 
@@ -523,7 +523,7 @@ int LuaFBOs::UseFBO(lua_State* L)
 	glPopAttrib();
 
 	if (error != 0) {
-		logOutput.Print("gl.UseFBO: error(%i) = %s\n",
+		logOutput.Print("gl.ActiveFBO: error(%i) = %s\n",
 		                error, lua_tostring(L, -1));
 		lua_error(L);
 	}
