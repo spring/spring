@@ -64,7 +64,7 @@ class LuaFBOs {
 		static int CreateFBO(lua_State* L);
 		static int DeleteFBO(lua_State* L);
 		static int IsValidFBO(lua_State* L);
-		static int UseFBO(lua_State* L);
+		static int ActiveFBO(lua_State* L);
 		static int UnsafeSetFBO(lua_State* L); // unsafe
 		static int BlitFBO(lua_State* L);
 };
