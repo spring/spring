@@ -26,6 +26,7 @@ public:
 	int GetFileSize(string name);
 
 	vector<string> GetFilesInDir(string dir);
+	vector<string> GetDirsInDir(string dir);
 
 	bool AddArchive(string arName, bool override);
 };

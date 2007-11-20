@@ -24,16 +24,19 @@ class LuaVFS {
 		static int LoadFile(lua_State* L, bool synced);
 		static int FileExists(lua_State* L, bool synced);
 		static int DirList(lua_State* L, bool synced);
+		static int SubDirs(lua_State* L, bool synced);
 
 		static int SyncInclude(lua_State* L);
 		static int SyncLoadFile(lua_State* L);
 		static int SyncFileExists(lua_State* L);
 		static int SyncDirList(lua_State* L);
+		static int SyncSubDirs(lua_State* L);
 
 		static int UnsyncInclude(lua_State* L);
 		static int UnsyncLoadFile(lua_State* L);
 		static int UnsyncFileExists(lua_State* L);
 		static int UnsyncDirList(lua_State* L);
+		static int UnsyncSubDirs(lua_State* L);
 
 		static int UseArchive(lua_State* L);
 

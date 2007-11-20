@@ -127,6 +127,7 @@ CLuaRules::~CLuaRules()
 {
 	if (L != NULL) {
 		Shutdown();
+		KillLua();		
 	}
 	luaRules = NULL;
 
@@ -811,14 +812,20 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 	const int valIndex = offset + 2;
 	int pIndex = -1;
 
-	if (lua_isnumber(L, index)) {
+	if (lua_israwnumber(L, index)) {
 		pIndex = (int)lua_tonumber(L, index) - 1;
 	}
-	else if (lua_isstring(L, index)) {
+	else if (lua_israwstring(L, index)) {
 		const string pName = lua_tostring(L, index);
 		map<string, int>::const_iterator it = paramsMap.find(pName);
 		if (it != paramsMap.end()) {
 			pIndex = it->second;
+		}
+		else {
+			// create a new parameter
+			pIndex = params.size();
+			paramsMap[pName] = params.size();
+			params.push_back(0.0f); // dummy value
 		}
 	}
 	else {
@@ -852,9 +859,10 @@ void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 	for (int i = 1; /* no test */; i++) {
 		lua_rawgeti(L, table, i);
 		if (lua_isnil(L, -1)) {
+			lua_pop(L, 1);
 			return;
 		}
-		else if (lua_isnumber(L, -1)) {
+		else if (lua_israwnumber(L, -1)) {
 			const float value = (float)lua_tonumber(L, -1);
 			params.push_back(value);
 		}

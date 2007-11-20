@@ -26,6 +26,7 @@ using namespace std;
 #include "Lua/LuaFeatureDefs.h"
 #include "Lua/LuaUnitDefs.h"
 #include "Lua/LuaWeaponDefs.h"
+#include "Lua/LuaScream.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFS.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -171,6 +172,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
@@ -205,24 +207,16 @@ CLuaUI::~CLuaUI()
 {
 	if (L != NULL) {
 		Shutdown();
+		KillLua();
 	}
 	luaUI = NULL;
-}
-
-
-void CLuaUI::KillLua()
-{
-	if (L != NULL) {
-		lua_close(L);
-		L = NULL;
-	}
 }
 
 
 string CLuaUI::LoadFile(const string& filename) const
 {
 	const char* accessMode = SPRING_VFS_RAW;
-	CFileHandler lockFile("gamedata/lockluaui.txt", SPRING_VFS_MOD);
+	CFileHandler lockFile("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	if (lockFile.FileExists()) {
 		if (!CLuaHandle::GetDevMode()) {
 			logOutput.Print("This mod has locked LuaUI access");

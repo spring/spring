@@ -119,45 +119,51 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 
 	unit->beingBuilt=build;
 
-	unit->xsize = (facing&1)==0 ? ud->xsize : ud->ysize;
-	unit->ysize = (facing&1)==1 ? ud->xsize : ud->ysize;
+	unit->xsize = ((facing & 1) == 0) ? ud->xsize : ud->ysize;
+	unit->ysize = ((facing & 1) == 1) ? ud->xsize : ud->ysize;
 	unit->buildFacing = facing;
-	unit->power=ud->power;
-	unit->maxHealth=ud->health;
-	unit->health=ud->health;
-	//unit->metalUpkeep=ud->metalUpkeep*16.0f/GAME_SPEED;
-	//unit->energyUpkeep=ud->energyUpkeep*16.0f/GAME_SPEED;
-	unit->controlRadius=(int)(ud->controlRadius/SQUARE_SIZE);
-	unit->losHeight=ud->losHeight;
-	unit->metalCost=ud->metalCost;
-	unit->energyCost=ud->energyCost;
-	unit->buildTime=ud->buildTime;
-	unit->aihint=ud->aihint;
-	unit->tooltip=ud->humanName + " - " + ud->tooltip;
-	unit->armoredMultiple=max(0.0001f,ud->armoredMultiple);		//armored multiple of 0 will crash spring
-	unit->wreckName=ud->wreckName;
-	unit->realLosRadius=(int) (ud->losRadius);
-	unit->realAirLosRadius=(int) (ud->airLosRadius);
-	unit->upright=ud->upright;
-	unit->radarRadius=ud->radarRadius/(SQUARE_SIZE*8);
-	unit->sonarRadius=ud->sonarRadius/(SQUARE_SIZE*8);
-	unit->jammerRadius=ud->jammerRadius/(SQUARE_SIZE*8);
-	unit->sonarJamRadius=ud->sonarJamRadius/(SQUARE_SIZE*8);
-	unit->seismicRadius = ud->seismicRadius /(SQUARE_SIZE*8);
+	unit->power = ud->power;
+	unit->maxHealth = ud->health;
+	unit->health = ud->health;
+	//unit->metalUpkeep = ud->metalUpkeep*16.0f/GAME_SPEED;
+	//unit->energyUpkeep = ud->energyUpkeep*16.0f/GAME_SPEED;
+	unit->controlRadius = (int)(ud->controlRadius / SQUARE_SIZE);
+	unit->losHeight = ud->losHeight;
+	unit->metalCost = ud->metalCost;
+	unit->energyCost = ud->energyCost;
+	unit->buildTime = ud->buildTime;
+	unit->aihint = ud->aihint;
+	unit->tooltip = ud->humanName + " - " + ud->tooltip;
+	unit->armoredMultiple = max(0.0001f, ud->armoredMultiple);		//armored multiple of 0 will crash spring
+	unit->wreckName = ud->wreckName;
+	unit->realLosRadius = (int) (ud->losRadius);
+	unit->realAirLosRadius = (int) (ud->airLosRadius);
+	unit->upright = ud->upright;
+	unit->radarRadius      = ud->radarRadius    / (SQUARE_SIZE * 8);
+	unit->sonarRadius      = ud->sonarRadius    / (SQUARE_SIZE * 8);
+	unit->jammerRadius     = ud->jammerRadius   / (SQUARE_SIZE * 8);
+	unit->sonarJamRadius   = ud->sonarJamRadius / (SQUARE_SIZE * 8);
+	unit->seismicRadius    = ud->seismicRadius  / (SQUARE_SIZE * 8);
 	unit->seismicSignature = ud->seismicSignature;
-	unit->hasRadarCapacity=unit->radarRadius || unit->sonarRadius || unit->jammerRadius || unit->sonarJamRadius || unit->seismicRadius;
-	unit->stealth=ud->stealth;
-	unit->category=ud->category;
-	unit->armorType=ud->armorType;
-	unit->floatOnWater = ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) || (ud->movedata->moveType == MoveData::Ship_Move)));
-	unit->maxSpeed = ud->speed/30.0;
-	unit->flankingBonusMode = ud->flankingBonusMode;
-	unit->flankingBonusDir = ud->flankingBonusDir;
-	unit->flankingBonusMobility = ud->flankingBonusMobilityAdd * 1000;
+	unit->hasRadarCapacity = unit->radarRadius  || unit->sonarRadius    ||
+	                         unit->jammerRadius || unit->sonarJamRadius ||
+	                         unit->seismicRadius;
+	unit->stealth = ud->stealth;
+	unit->category = ud->category;
+	unit->armorType = ud->armorType;
+	unit->floatOnWater =
+		ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) ||
+		                                 (ud->movedata->moveType == MoveData::Ship_Move)));
+	unit->maxSpeed = ud->speed / 30.0f;
+	unit->decloakDistance = ud->decloakDistance;
+
+	unit->flankingBonusMode        = ud->flankingBonusMode;
+	unit->flankingBonusDir         = ud->flankingBonusDir;
+	unit->flankingBonusMobility    = ud->flankingBonusMobilityAdd * 1000;
 	unit->flankingBonusMobilityAdd = ud->flankingBonusMobilityAdd;
 	unit->flankingBonusAvgDamage = (ud->flankingBonusMax + ud->flankingBonusMin) * 0.5f;
 	unit->flankingBonusDifDamage = (ud->flankingBonusMax - ud->flankingBonusMin) * 0.5f;
-	unit->decloakDistance = ud->decloakDistance;
+
 
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
@@ -202,7 +208,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 		SAFE_NEW CCommandAI(unit);
 	}
 
-	if(ud->canmove && !ud->canfly && type!="Factory"){
+	if (ud->canmove && !ud->canfly && type!="Factory") {
 		CGroundMoveType* mt = SAFE_NEW CGroundMoveType(unit);
 		mt->maxSpeed=ud->speed/GAME_SPEED;
 		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
@@ -228,7 +234,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 		unit->mobility->maxTurnRate = (short int) ud->turnRate;
 		unit->mobility->moveData = ud->movedata;
 
-	} else if(ud->canfly){
+	} else if(ud->canfly) {
 		//Air-mobility
 		unit->mobility = SAFE_NEW CMobility();
 		unit->mobility->canFly = true;
@@ -299,8 +305,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
-	for(unsigned int i=0; i< ud->weapons.size(); i++)
-		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def,unit,&ud->weapons[i]));
+	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
+		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
+	}
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

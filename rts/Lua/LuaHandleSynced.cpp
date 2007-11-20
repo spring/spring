@@ -25,6 +25,7 @@
 #include "LuaFeatureDefs.h"
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
+#include "LuaScream.h"
 #include "LuaOpenGL.h"
 #include "LuaVFS.h"
 
@@ -69,15 +70,6 @@ CLuaHandleSynced::CLuaHandleSynced(const string& name, int order,
 
 CLuaHandleSynced::~CLuaHandleSynced()
 {
-}
-
-
-void CLuaHandleSynced::KillLua()
-{
-	if (L != NULL) {
-		lua_close(L);
-		L = NULL;
-	}
 }
 
 
@@ -271,6 +263,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||

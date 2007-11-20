@@ -79,7 +79,6 @@ class CLuaHandleSynced : public CLuaHandle
 		map<string, string> textCommands; // name, help
 
 	private:
-		void KillLua();
 		void SendCallbacks();
 
 	private: // call-outs

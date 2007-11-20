@@ -282,6 +282,9 @@ local function HilightFeature(featureID)
     return
   end
 
+  -- 0.75b2 compatibility
+  if (not spGetFeatureRadius) then return end
+
   local radius = spGetFeatureRadius(featureID)
   if (radius == nil) then
     return

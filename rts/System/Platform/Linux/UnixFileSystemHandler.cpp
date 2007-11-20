@@ -383,14 +383,20 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 			struct stat info;
 			if (stat((dir + ep->d_name).c_str(), &info) == 0) {
 				if (!S_ISDIR(info.st_mode)) {
-					if (boost::regex_match(ep->d_name, regexpattern))
+					if (boost::regex_match(ep->d_name, regexpattern)) {
 						matches.push_back(dir + ep->d_name);
+					}
 				}
-				// or a directory?
-				else if (flags & FileSystem::RECURSE) {
-					if ((flags & FileSystem::INCLUDE_DIRS) && boost::regex_match(ep->d_name, regexpattern))
-						matches.push_back(dir + ep->d_name);
-					FindFiles(matches, dir + ep->d_name + '/', regexpattern, flags);
+				else {
+					// or a directory?
+					if (flags & FileSystem::INCLUDE_DIRS) {
+						if (boost::regex_match(ep->d_name, regexpattern)) {
+							matches.push_back(dir + ep->d_name + '/');
+						}
+					}
+					if (flags & FileSystem::RECURSE) {
+						FindFiles(matches, dir + ep->d_name + '/', regexpattern, flags);
+					}
 				}
 			}
 		}

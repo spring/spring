@@ -50,7 +50,6 @@ Spring change log
 - Checksum is now read from 7z/zip archive header instead of checksumming entire
   file, making things like map list reloading faster by a huge amount.
 - Move shaders into springcontent.sdz 
-- GadgetHandler added to springcontent.sdz
 - Added GetPrimaryModVersion() to unitsync 
 - Bumped to ArchiveCache version to 6 ... ArchiveCacheV6.txt 
 - Support for up to 2^31 players 

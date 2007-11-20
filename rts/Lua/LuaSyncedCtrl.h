@@ -23,12 +23,6 @@ class LuaSyncedCtrl {
 
 	private:
 		// all LuaHandleSynced
-		static int SendMessage(lua_State* L);
-		static int SendMessageToPlayer(lua_State* L);
-		static int SendMessageToTeam(lua_State* L);
-		static int SendMessageToAllyTeam(lua_State* L);
-		static int SendMessageToSpectators(lua_State* L);
-
 		static int AddTeamResource(lua_State* L);
 		static int UseTeamResource(lua_State* L);
 		static int SetTeamResource(lua_State* L);

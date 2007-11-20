@@ -194,25 +194,6 @@ void LuaTextures::FreeAll()
 }
 
 
-bool LuaTextures::GenerateMipmap(const string& name)
-{
-	if (!glGenerateMipmapEXT) {
-		return false;
-	}
-	map<string, Texture>::const_iterator it = textures.find(name);
-	if (it == textures.end()) {
-		return false;
-	}
-	const Texture& tex = it->second;
-	GLint currentBinding;
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
-	glBindTexture(GL_TEXTURE_2D, tex.id);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, currentBinding);
-	return true;
-}
-
-
 const LuaTextures::Texture* LuaTextures::GetInfo(const string& name) const
 {
 	map<string, Texture>::const_iterator it = textures.find(name);

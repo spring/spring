@@ -26,8 +26,8 @@
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 //FIXME-BO: #include "LuaVBOs.h"
-//FIXME-BO: #include "LuaFBOs.h"
-//FIXME-BO: #include "LuaRBOs.h"
+#include "LuaFBOs.h"
+#include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
@@ -271,8 +271,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	}
 
 	if (GLEW_EXT_framebuffer_object) {
-//FIXME-BO: 	 	LuaFBOs::PushEntries(L);
-//FIXME-BO: 	 	LuaRBOs::PushEntries(L);
+	 	LuaFBOs::PushEntries(L);
+	 	LuaRBOs::PushEntries(L);
 	}
 
 //FIXME-BO: 	LuaVBOs::PushEntries(L);
@@ -1865,7 +1865,7 @@ int LuaOpenGL::Shape(lua_State* L)
 	int i = 1;
 	for (lua_rawgeti(L, table, i);
 	     lua_istable(L, -1);
-       lua_pop(L, 1), i++, lua_rawgeti(L, table, i)) {
+	     lua_pop(L, 1), i++, lua_rawgeti(L, table, i)) {
 		VertexData vd;
 		if (!ParseVertexData(L, vd)) {
 			luaL_error(L, "Shape: bad vertex data");
@@ -3441,10 +3441,22 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 
 int LuaOpenGL::GenerateMipmap(lua_State* L)
 {
-	const string texture = luaL_checkstring(L, 1);
+	//CheckDrawingEnabled(L, __FUNCTION__);
+	const string& texStr = luaL_checkstring(L, 1);
+	if (texStr[0] != LuaTextures::prefix) {
+		return 0;
+	}
 	LuaTextures& textures = CLuaHandle::GetActiveTextures();
-	lua_pushboolean(L, textures.GenerateMipmap(texture));
-	return 1;
+	const LuaTextures::Texture* tex = textures.GetInfo(texStr);
+	if (tex == NULL) {
+		return 0;
+	}
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+	glBindTexture(GL_TEXTURE_2D, tex->id);
+	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, currentBinding);
+	return 0;
 }
 
 

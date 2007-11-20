@@ -58,7 +58,6 @@ class LuaTextures {
 		bool Free(const string& name);
 		bool FreeFBO(const string& name);
 		void FreeAll();
-		bool GenerateMipmap(const string& name);
 		const Texture* GetInfo(const string& name) const;
 
 	private:

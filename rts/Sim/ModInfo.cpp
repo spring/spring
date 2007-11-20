@@ -70,7 +70,7 @@ void CModInfo::Init(const char* modname)
 
 	// distance
 	const LuaTable distanceTbl = root.SubTable("distance");
-	CBuilder::Use2DDistances(distanceTbl.GetBool("builderUse2D", false));
+	CBuilder::SetUse2D(distanceTbl.GetBool("builderUse2D", false));
 
 	// experience
 	const LuaTable experienceTbl = root.SubTable("experience");
