@@ -119,8 +119,8 @@
 
 // NOTE: shared variables use codes [1024 - 5119]
 
-int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = { 0 };
-int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = { 0 };
+int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {{ 0 }};
+int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {{ 0 }};
 int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        = { 0 };
 
 
@@ -1169,7 +1169,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
-		if ((targetID < 0) || (targetID >= MAX_UNITS)) { return 0; } 
+		if ((targetID < 0) || (targetID >= MAX_UNITS)) { return 0; }
 		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
 		printf("SET_WEAPON_UNIT_TARGET2\n");		 // FIXME
 		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
@@ -1186,7 +1186,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
-		 
+
 		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
 	}
 	case FLANK_B_MODE:

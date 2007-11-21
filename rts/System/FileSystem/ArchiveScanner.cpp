@@ -90,15 +90,20 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 
 void CArchiveScanner::Scan(const string& curPath, bool checksum)
 {
+	InitCrcTable();
 	isDirty = true;
 
-	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
-	struct stat info;
-	InitCrcTable();
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
-		stat(it->c_str(),&info);
+	// FIXME: remove recursive directory traversal altogether after moving bitmaps.sdz
+	int flags = FileSystem::INCLUDE_DIRS | (curPath.find("base") != string::npos ? FileSystem::RECURSE : 0);
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
 
+	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
 		string fullName = *it;
+
+		// Strip
+		if (fullName[fullName.size() - 1] == '/' || fullName[fullName.size() - 1] == '\\')
+			fullName = fullName.substr(0, fullName.size() - 1);
+
 		string fn = filesystem.GetFilename(fullName);
 		string fpath = filesystem.GetDirectory(fullName);
 		string lcfn = StringToLower(fn);
@@ -111,6 +116,9 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 		// Is this an archive we should look into?
 		if (CArchiveFactory::IsArchive(fullName)) {
+			struct stat info;
+
+			stat(fullName.c_str(), &info);
 
 			// Determine whether to rely on the cached info or not
 			bool cached = false;
@@ -122,7 +130,17 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 				if (aii->second.replaced.length() > 0)
 					continue;
 
-				if (S_ISDIR(info.st_mode)) {
+				/*
+					For truely correct updating of .sdd archives, this code should
+					be enabled. Unfortunately it has as side effect that all files
+					in all .sdd's always need to be stat()'ed, which really slows
+					down program startup.
+
+					An update can be forced anyway by removing ArchiveCacheV*.txt
+					or renaming the archive.
+				*/
+
+				/*if (S_ISDIR(info.st_mode)) {
 					struct stat info2;
 					std::vector<std::string> sddfiles = filesystem.FindFiles(fpath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
 					for (std::vector<std::string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
@@ -131,7 +149,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 							info.st_mtime = info2.st_mtime;
 						}
 					}
-				}
+				}*/
 
 				if (info.st_mtime == aii->second.modified && fpath == aii->second.path) {
 					cached = true;

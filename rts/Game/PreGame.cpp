@@ -97,7 +97,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			unsigned myPlayerNum = net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayerNum);
+			net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayerNum);
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
 			SelectMap(gameSetup->mapName);
