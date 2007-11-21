@@ -358,7 +358,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	gu->spectatingFullSelect = gu->spectating;
 
 	gs->gameMode = gameMode;
-	gs->noHelperAIs = noHelperAIs;
+	gs->noHelperAIs = !!noHelperAIs;
 
 	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
 	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
