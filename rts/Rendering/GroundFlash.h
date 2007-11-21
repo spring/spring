@@ -31,7 +31,7 @@ public:
 	CR_DECLARE(CStandardGroundFlash);
 
 	CStandardGroundFlash();
-	CStandardGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 color=float3(1.0f,1.0f,0.7f));
+	CStandardGroundFlash(const float3& pos, float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& color=float3(1.0f,1.0f,0.7f));
 	~CStandardGroundFlash();
 	void Draw();
 	bool Update(); // returns false when it should be deleted
@@ -58,7 +58,7 @@ class CSeismicGroundFlash : public CGroundFlash
 public:
 	CR_DECLARE(CSeismicGroundFlash);
 	~CSeismicGroundFlash();
-	CSeismicGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col);
+	CSeismicGroundFlash(const float3& pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col);
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 

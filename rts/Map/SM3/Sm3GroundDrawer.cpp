@@ -72,19 +72,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	if(drawUnitReflection || drawWaterReflection)
 		return;
 
-	terrain::RenderContext *currc;
-	if (drawWaterReflection)
-	{
-		if (!reflectrc)
-		{
-			reflectrc = tr->AddRenderContext(&reflectCam, true);
-			tr->Update();
-		}
-
-		SpringCamToTerrainCam(*camera, reflectCam);
-		currc = reflectrc;
-	} else 
-		currc = rc;
+	terrain::RenderContext *currc = rc;
 
 	tr->SetShaderParams(gs->sunVector, currc->cam->pos);
 
@@ -111,13 +99,17 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION,gs->sunVector4);
 	float d[4]={0.0f,0.0f,0.0f,1.0f};
-	for (int a=0;a<3;a++) d[a]=map->sunColor[a];
+	for (int a=0;a<3;a++)
+		d[a]=map->sunColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
-	for (int a=0;a<3;a++) d[a]=map->ambientColor[a];
+	for (int a=0;a<3;a++)
+		d[a]=map->ambientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
-	for (int a=0;a<3;a++) d[a]=map->specularColor[a];
+	for (int a=0;a<3;a++)
+		d[a]=map->specularColor[a];
 	glLightfv (GL_LIGHT0, GL_SPECULAR, d);
-	for (int a=0;a<4;a++) d[a]=0.0f;
+	for (int a=0;a<4;a++)
+		d[a]=0.0f;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, d);
 	const float zero[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	glLightModelfv (GL_LIGHT_MODEL_AMBIENT, zero);

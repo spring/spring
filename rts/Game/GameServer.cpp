@@ -249,8 +249,8 @@ void CGameServer::Update()
 	if(play)
 		serverframenum=gs->frameNum;
 
-	if(lastPlayerInfo<gu->gameTime-2){
-		lastPlayerInfo=gu->gameTime;
+	if(lastPlayerInfo < (SDL_GetTicks() - 2000)){
+		lastPlayerInfo = SDL_GetTicks();
 
 		if (serverframenum > 0) {
 			int firstReal=0;
@@ -809,12 +809,6 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 void CGameServer::UpdateLoop()
 {
-	/*
-	 * Need a better solution than this for starvation.
-	 * Decreasing thread priority (making it more important)
-	 * requires root privileges on POSIX systems
-	 */
-	//SetThreadPriority(thisThread,THREAD_PRIORITY_ABOVE_NORMAL);		//we want the server to continue running smoothly even if the game client is struggling
 	while(!quitServer)
 	{
 		{
@@ -864,7 +858,7 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 	va_end(ap);											// Results Are Stored In Text
 
 	std::string msg = text;
-	serverNet->SendSystemMessage(gu->myPlayerNum, msg);
+	serverNet->SendSystemMessage((unsigned char)SERVER_TEAM, msg);
 }
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)

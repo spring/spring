@@ -14,6 +14,8 @@ class CBaseNetProtocol;
 class CDemoReader;
 class AutohostInterface;
 
+const unsigned SERVER_TEAM = 255;
+
 /**
 @brief Server class for game handling
 This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
@@ -95,7 +97,7 @@ private:
 	bool sentGameOverMsg;
 	unsigned lastTick;
 	float timeLeft;
-	float lastPlayerInfo;
+	unsigned lastPlayerInfo;
 	
 	bool IsPaused;
 	float userSpeedFactor;
