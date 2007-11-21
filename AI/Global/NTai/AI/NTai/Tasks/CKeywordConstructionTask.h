@@ -6,7 +6,6 @@ public:
 	void Build();
 	void End();
 protected:
-	string mymessage;
 	int unit;
 	btype type;
 	CUnitTypeData* building;

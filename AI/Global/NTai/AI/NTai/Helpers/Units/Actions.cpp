@@ -8,7 +8,7 @@ CActions::CActions(Global* GL){
 
 bool CActions::Attack(int uid, float3 pos){
     NLOG("CActions::Attack Position");
-    if(uid < 1) return false;
+	if(!ValidUnitID(uid)) return false;
     if(G->Map->CheckFloat3(pos)==false) return false;
     TCommand tc(uid, "Attack Pos CActions");
     tc.ID(CMD_ATTACK);

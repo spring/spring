@@ -203,7 +203,7 @@ const UnitDef* Global::GetEnemyDef(int enemy){
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::EnemyDamaged(int damaged, int attacker, float damage, float3 dir){
-    Ch->EnemyDamaged(damaged, attacker, damage, dir);
+    /*Ch->EnemyDamaged(damaged, attacker, damage, dir);
     START_EXCEPTION_HANDLING
     CMessage message("enemydamaged");
     message.AddParameter(damaged);
@@ -211,7 +211,7 @@ void Global::EnemyDamaged(int damaged, int attacker, float damage, float3 dir){
     message.AddParameter(damage);
     message.AddParameter(dir);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"enemydamaged\"); FireEvent(message);")
+    END_EXCEPTION_HANDLING("CMessage message(\"enemydamaged\"); FireEvent(message);")*/
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
