@@ -9,6 +9,7 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 	this->unit=unit;
 	this->type = type;
 	this->utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
+	assert(utd != 0);
 }
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){

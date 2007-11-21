@@ -395,12 +395,12 @@ bool Chaser::FindTarget(set<int> atkgroup, bool upthresh){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-void Chaser::UnitMoveFailed(int unit){
+/*void Chaser::UnitMoveFailed(int unit){
     NLOG("Chaser::UnitMoveFailed");
     NO_GAIA(NA)
 
     this->UnitIdle(unit);
-}
+}*/
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -664,15 +664,6 @@ float Chaser::ApplyGrudge(int unit, float efficiency){
      return e*percentage;
      }
      return e;*/
-}
-
-void Chaser::EnemyDamaged(int damaged, int attacker, float damage, float3 dir){
-    NLOG("Chaser::UnitDamaged");
-    NO_GAIA(NA)
-    //START_EXCEPTION_HANDLING
-    /*int ateam = G->chcb->GetUnitAllyTeam(attacker);
-    if(ateam != G->Cached->unitallyteam) allyteamGrudges[ateam] -= damage;*/
-    //END_EXCEPTION_HANDLING("Chaser::UnitDamaged running away routine!!!!!!")
 }
 
 map<int, float> balances;

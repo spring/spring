@@ -23,9 +23,8 @@ public:
 	void EnemyDestroyed(int enemy, int attacker);
 	bool FindTarget(set<int> atkgroup, bool upthresh=true);
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir);
-	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);
 	void UnitIdle(int unit);
-	void UnitMoveFailed(int unit);
+	//void UnitMoveFailed(int unit);
 	void Update();
 	void FireSilos();
 	void MakeTGA();

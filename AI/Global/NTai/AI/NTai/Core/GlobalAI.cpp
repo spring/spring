@@ -222,9 +222,9 @@ void CNTai::EnemyLeaveRadar(int enemy){
 
 void CNTai::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {
 	if(Good == false) return;
-START_EXCEPTION_HANDLING
+//START_EXCEPTION_HANDLING
 		G->EnemyDamaged(damaged,attacker,damage,dir);
-END_EXCEPTION_HANDLING("G->enemyleaveradar")
+//END_EXCEPTION_HANDLING("G->enemyleaveradar")
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
