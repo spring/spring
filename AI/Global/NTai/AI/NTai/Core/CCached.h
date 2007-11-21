@@ -11,11 +11,10 @@ public:
 	const unsigned short* losmap;
 	set<int> enemies; // enemies in LOS
 	//vector<ctri> triangles; // contains all the triangle markers being displayed on map
-	//map<string,int> solobuilds;
 
 	bool cheating;
 
-	int unitallyteam; // the number of this unit ally team
+	int allyteam; // the number of this unit ally team
 	int team; // the number of this specific team
 	unsigned int comID; // the ID of the commander
 

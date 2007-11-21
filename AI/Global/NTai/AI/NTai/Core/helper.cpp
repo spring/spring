@@ -902,7 +902,7 @@ void Global::InitAI(IAICallback* callback, int team){
         }
     }
 
-    Cached->unitallyteam = cb->GetMyAllyTeam();
+    Cached->allyteam = cb->GetMyAllyTeam();
 
 	CTokenizer<CIsComma>::Tokenize(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"), CIsComma());
     //Pl->AlwaysAntiStall = bds::set_cont(Pl->AlwaysAntiStall, Get_mod_tdf()->SGetValueMSG("AI\\AlwaysAntiStall"));
