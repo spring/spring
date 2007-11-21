@@ -193,6 +193,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 				textures->SetTexture(btx, bty);
 				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
 			}
+			/// for (int lod = 1; (lod * 2) < neededLod; lod *= 2) {
 			for (int lod = 1; lod < neededLod; lod *= 2) {
 				int cx = (int) (cam2->pos.x / (SQUARE_SIZE));
 				int cy = (int) (cam2->pos.z / (SQUARE_SIZE));
@@ -226,6 +227,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 				int ystart = max(minly, minty);
 				int yend   = min(maxly, maxty);
 
+				/// for (y = ystart; (y + lod) < yend; y += lod) {
 				for (y = ystart; y < yend; y += lod) {
 					int xs = xstart;
 					int xe = xend;
@@ -251,6 +253,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 							xe = xtest;
 					}
 
+					/// for (x = xs; (x + lod) < xe; x += lod) {
 					for (x = xs; x < xe; x += lod) {
 						if ((lod == 1) ||
 							(x > (cx) + viewRadius * hlod) || (x < (cx) - viewRadius * hlod) ||
@@ -270,7 +273,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 								int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 								int idx3 = CLAMP((y + hlod) * heightDataX + x),                              idx3HLOD = CLAMP(idx3 + hlod);
-								float h1 = (heightData[idx1] + heightData[idx2   ]) * 0.5f * (1 - oldcamxpart) + heightData[idx3       ] * (oldcamxpart);
+								float h1 = (heightData[idx1] + heightData[idx2   ]) * 0.5f * (1 - oldcamxpart) + heightData[idx3    ] * (oldcamxpart);
 								float h2 = (heightData[idx1] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx1HLOD] * (oldcamxpart);
 								float h3 = (heightData[idx2] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx3HLOD] * (oldcamxpart);
 								float h4 = (heightData[idx2] + heightData[idx2LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx2HLOD] * (oldcamxpart);
@@ -330,7 +333,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 							}
 							if ((y >= (cy) + viewRadius * hlod)) {
 								int idx1 = (y       ) * heightDataX + x, idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
-								int idx2 = (y +  lod) * heightDataX + x, idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+								int idx2 = (y +  lod) * heightDataX + x, idx2LOD = CLAMP(idx2 + lod);
 								int idx3 = (y + hlod) * heightDataX + x, idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
 								float h1 = (heightData[idx1   ] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx1HLOD] * (oldcamypart);
 								float h2 = (heightData[idx1   ] + heightData[idx2   ]) * 0.5f * (1 - oldcamypart) + heightData[idx3    ] * (oldcamypart);
@@ -357,7 +360,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 								EndStrip();
 							}
 							if ((y <= (cy) - viewRadius * hlod)) {
-								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+								int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
 								int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 								int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
 								float h1 = (heightData[idx2   ] + heightData[idx2LOD]) * 0.5f * (oldcamypart) + heightData[idx2HLOD] * (1 - oldcamypart);
@@ -585,7 +588,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		}
 	}
 
-	ResetTextureUnits(drawWaterReflection,overrideVP);
+	ResetTextureUnits(drawWaterReflection, overrideVP);
 	glDisable(GL_CULL_FACE);
 
 	if (wireframe) {
@@ -599,7 +602,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	if (map->hasWaterPlane) {
 		glDisable(GL_TEXTURE_2D);
 		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
-		glBegin(GL_QUADS);//water color edge of map <0
+		glBegin(GL_QUADS); // water color edge of map <0
 
 		if (!drawWaterReflection) {
 			float xsize = gs->mapx * SQUARE_SIZE / 4;
