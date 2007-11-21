@@ -1534,7 +1534,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		return 0;
 	}
 	const float damage   = (float)luaL_checknumber(L, 2);
-	const float paralyze = (float)luaL_optnumber(L, 3, 0.0f);
+	const int paralyze   =   (int)luaL_optnumber(L, 3, 0);
 	const int attackerID =   (int)luaL_optnumber(L, 4, -1);
 	const int weaponID   =   (int)luaL_optnumber(L, 5, -1);
 	const float3 impulse = float3((float)luaL_optnumber(L, 6, 0.0f),
@@ -1553,7 +1553,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	if (weaponID > weaponDefHandler->numWeaponDefs) {
 		return 0;
 	}
-		
+
 	DamageArray damages;
 	damages[unit->armorType] = damage;
 	if (paralyze) {
@@ -2379,10 +2379,10 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 	if ((args < 1) || !lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetNoPause()");
 	}
-	// Important: only works in server mode, has no effect in client mode	
+	// Important: only works in server mode, has no effect in client mode
 	if (gameServer)
 		gameServer->SetGamePausable(!lua_toboolean(L, 1));
-	
+
 	return 0;
 }
 

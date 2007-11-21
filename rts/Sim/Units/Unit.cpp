@@ -82,7 +82,7 @@ float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade = 0.0f;
-                
+
 
 CUnit::CUnit ()
 :	unitDef(0),
@@ -374,17 +374,18 @@ void CUnit::ForcedSpin(const float3& newDir)
 }
 
 
-void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent) {
+void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
+{
 	//drop unit from position
-
-	this->fallSpeed = this->unitDef->unitFallSpeed > 0 ? this->unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
-	float landingHeight = ground->GetApproximateHeight(pos.x, pos.z);
+	fallSpeed = unitDef->unitFallSpeed > 0 ? unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
 	falling = true;
-	this->pos.y = parentPos.y - height;
-	this->frontdir = parentDir;
-	this->frontdir.y = 0;
-	this->speed.y = 0;
+	pos.y = parentPos.y - height;
+	frontdir = parentDir;
+	frontdir.y = 0;
+	speed.y = 0;
 }
+
+
 void CUnit::EnableScriptMoveType()
 {
 	if (usingScriptMoveType) {
@@ -863,7 +864,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (health > paralyzeDamage) {
 				stunned = false;
 			}
-		}			
+		}
 	}
 	else { // paralyzation
 		experienceMod *= 0.1f; // reduced experience
@@ -1359,10 +1360,10 @@ void CUnit::AddExperience(float exp)
 	if (expPowerScale > 0.0f) {
 		power = unitDef->power * (1.0f + (limExperience * expPowerScale));
 	}
-	if (expReloadScale > 0.0f) { 
+	if (expReloadScale > 0.0f) {
 		reloadSpeed = (1.0f + (limExperience * expReloadScale));
-	}	
-	if (expHealthScale > 0.0f) { 
+	}
+	if (expHealthScale > 0.0f) {
 		const float oldMaxHealth = maxHealth;
 		maxHealth = unitDef->health * (1.0f + (limExperience * expHealthScale));
 		health = health * (maxHealth / oldMaxHealth);
@@ -1868,7 +1869,7 @@ void CUnit::FinishedBuilding(void)
 	if (oldCloak != isCloaked) {
 		luaCallIns.UnitCloaked(this); // do this after the UnitFinished call-in
 	}
-		
+
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
 		CFeature* f =
