@@ -67,8 +67,8 @@ CStandardGroundFlash::CStandardGroundFlash()
 {
 }
 
-CStandardGroundFlash::CStandardGroundFlash(float3 pos,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, float3 col)
-	: CGroundFlash(pos),
+CStandardGroundFlash::CStandardGroundFlash(const float3& p,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& col)
+	: CGroundFlash(p),
 	circleAlpha(circleAlpha),
 	flashAlpha(flashAlpha),
 	flashSize(flashSize),
@@ -83,25 +83,23 @@ CStandardGroundFlash::CStandardGroundFlash(float3 pos,float circleAlpha,float fl
 		color[a] = (unsigned char)(col[a]*255.0f);
 
 	float3 fw = camera->forward*-1000.0f;
-	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
-	float3 p1(pos.x+flashSize,0,pos.z);
+	this->pos.y=ground->GetHeight2(p.x,p.z)+1;
+	float3 p1(p.x+flashSize,0,p.z);
 	p1.y=ground->GetApproximateHeight(p1.x,p1.z);
 	p1 += fw;
-	float3 p2(pos.x-flashSize,0,pos.z);
+	float3 p2(p.x-flashSize,0,p.z);
 	p2.y=ground->GetApproximateHeight(p2.x,p2.z);
 	p2 += fw;
-	float3 p3(pos.x,0,pos.z+flashSize);
+	float3 p3(p.x,0,p.z+flashSize);
 	p3.y=ground->GetApproximateHeight(p3.x,p3.z);
 	p3 += fw;
-	float3 p4(pos.x,0,pos.z-flashSize);
+	float3 p4(p.x,0,p.z-flashSize);
 	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
 	p4 += fw;
 	float3 n1((p3-p1).cross(p4-p1));
 	n1.Normalize();
 	float3 n2((p4-p2).cross(p3-p2));
 	n2.Normalize();
-
-	pos += fw;
 
 	float3 normal=n1+n2;
 	normal.Normalize();
@@ -175,8 +173,8 @@ void CStandardGroundFlash::Draw()
 	}
 }
 
-CSeismicGroundFlash::CSeismicGroundFlash(float3 pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, float3 col)
-	: CGroundFlash(pos),
+CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col)
+	: CGroundFlash(p),
 	sizeGrowth(sizeGrowth),
 	size(size),
 	texture(texture),
@@ -192,25 +190,23 @@ CSeismicGroundFlash::CSeismicGroundFlash(float3 pos, AtlasedTexture texture, int
 	float flashsize = size+sizeGrowth*ttl;
 
 	float3 fw = camera->forward*-1000.0f;
-	this->pos.y=ground->GetHeight2(pos.x,pos.z)+1;
-	float3 p1(pos.x+flashsize,0,pos.z);
+	this->pos.y=ground->GetHeight2(p.x,p.z)+1;
+	float3 p1(p.x+flashsize,0,p.z);
 	p1.y=ground->GetApproximateHeight(p1.x,p1.z);
 	p1 += fw;
-	float3 p2(pos.x-flashsize,0,pos.z);
+	float3 p2(p.x-flashsize,0,p.z);
 	p2.y=ground->GetApproximateHeight(p2.x,p2.z);
 	p2 += fw;
-	float3 p3(pos.x,0,pos.z+flashsize);
+	float3 p3(p.x,0,p.z+flashsize);
 	p3.y=ground->GetApproximateHeight(p3.x,p3.z);
 	p3 += fw;
-	float3 p4(pos.x,0,pos.z-flashsize);
+	float3 p4(p.x,0,p.z-flashsize);
 	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
 	p4 += fw;
 	float3 n1((p3-p1).cross(p4-p1));
 	n1.Normalize();
 	float3 n2((p4-p2).cross(p3-p2));
 	n2.Normalize();
-
-	pos += fw;
 
 	float3 normal=n1+n2;
 	normal.Normalize();

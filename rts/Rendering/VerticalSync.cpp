@@ -73,7 +73,7 @@ void CVerticalSync::Delay()
 	if (frames > 0) {
 		if (!GLXEW_SGI_video_sync) {
 			frames = 0; // disable
-	} else {
+		} else {
 			GLuint frameCount;
 			if (glXGetVideoSyncSGI(&frameCount) == 0) {
 				glXWaitVideoSyncSGI(frames, frameCount % frames, &frameCount);
