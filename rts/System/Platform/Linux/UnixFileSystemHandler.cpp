@@ -391,7 +391,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 					// or a directory?
 					if (flags & FileSystem::INCLUDE_DIRS) {
 						if (boost::regex_match(ep->d_name, regexpattern)) {
-							matches.push_back(dir + ep->d_name + '/');
+							matches.push_back(dir + ep->d_name);//FIXME + '/');
 						}
 					}
 					if (flags & FileSystem::RECURSE) {

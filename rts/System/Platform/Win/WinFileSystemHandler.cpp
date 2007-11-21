@@ -90,7 +90,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 			else {
 				if (flags & FileSystem::INCLUDE_DIRS) {
 					if (boost::regex_match(files.name, regexpattern)) {
-						matches.push_back(dir + files.name + '\\');
+						matches.push_back(dir + files.name);//FIXME + '\\');
 					}
 				}					
 				if (flags & FileSystem::RECURSE) {
