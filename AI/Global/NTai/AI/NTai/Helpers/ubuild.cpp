@@ -37,18 +37,17 @@ bool CUBuild::OkBuildSelection(string name){
 	}
 	// Now sort out stuff that can only be built one at a time
 
-	if(G->Cached->solobuild.find(u->GetName())!= G->Cached->solobuild.end()){
-		if(G->Cached->solobuilds.find(u->GetName())!= G->Cached->solobuilds.end()){
-			//NLOG("CManufacturer::CBuild  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
-			//G->L.print("Factor::CBuild  solobuild " + name);
-			return false;// One is already being built, change to a repair order to go help it!
+	if(u->GetSoloBuild()){
+		if(u->GetSoloBuildActive()){
+			// One is already being built! We're not supposed to build more than one at any one time.
+			return false;
 		}
 		deque<CBPlan* >* b = G->Manufacturer->BPlans;
 		if(b->empty() == false){
 			//
 			for(deque<CBPlan* >::iterator i = b->begin(); i != b->end(); ++i){
 				string s = (*i)->utd->GetName();
-				if(s == name){
+				if(s == u->GetName()){
 					return false;
 				}
 			}

@@ -4,6 +4,8 @@ CUnitTypeData::CUnitTypeData(){
 	//
 	this->singleBuild = false;
 	this->singleBuildActive = false;
+	this->soloBuild = false;
+	this->soloBuildActive = false;
 }
 
 CUnitTypeData::~CUnitTypeData(){
@@ -186,6 +188,26 @@ bool CUnitTypeData::GetSingleBuildActive(){
 void CUnitTypeData::SetSingleBuildActive(bool value){
 	//
 	singleBuildActive = value;
+}
+
+bool CUnitTypeData::GetSoloBuild(){
+	//
+	return this->singleBuild;
+}
+
+void CUnitTypeData::SetSoloBuild(bool value){
+	//
+	soloBuild = value;
+}
+
+bool CUnitTypeData::GetSoloBuildActive(){
+	//
+	return soloBuildActive;
+}
+
+void CUnitTypeData::SetSoloBuildActive(bool value){
+	//
+	soloBuildActive = value;
 }
 
 

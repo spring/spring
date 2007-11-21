@@ -170,17 +170,10 @@ void CKeywordConstructionTask::Build(){
 
 	// Now sort out stuff that can only be built one at a time
 
-	if(G->Cached->solobuilds.find(building->GetName())!= G->Cached->solobuilds.end()){
+	if(building->GetSoloBuildActive()){
 		NLOG("CKeywordConstructionTask::Build  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
-
-		G->L.print("CKeywordConstructionTask::Build  solobuild " + building->GetUnitDef()->name);
-		
-		// One is already being built, change to a repair order to go help it!
-		if(G->Actions->Repair(unit,G->Cached->solobuilds[building->GetName()])){
-			End();
-			return;
-		}
-
+		End();
+		return;
 	}
 
 	// Now sort out if it's one of those things that can only be built once
