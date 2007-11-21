@@ -184,13 +184,10 @@ bool CUnitConstructionTask::Init(){
 
 
 	// Now sort out stuff that can only be built one at a time
-	if(G->Cached->solobuilds.find(building->GetName())!= G->Cached->solobuilds.end()){
+	if(building->GetSoloBuildActive()){
 		NLOG("CUnitConstructionTask::Build  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
-		G->L.print("CUnitConstructionTask::Build  solobuild " + building->GetUnitDef()->name);
-		if(G->Actions->Repair(unit,G->Cached->solobuilds[building->GetName()])){// One is already being built, change to a repair order to go help it!
-			End();
-			return true;
-		}
+		End();
+		return false;
 	}
 
 	// Now sort out if it's one of those things that can only be built once

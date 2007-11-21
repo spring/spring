@@ -344,17 +344,13 @@ void Global::SortSolobuilds(int unit){
 	if(ud != 0){
         bool found = false;
 		string s  = u->GetName();
-        for(set<string>::iterator vi = Cached->solobuild.begin(); vi != Cached->solobuild.end(); ++vi){
-            if(*vi == s){
-                found = true;
-                break;
-            }
-        }
+
 		if(u->GetSingleBuild()){
 			u->SetSingleBuildActive(true);
         }
-		if(found == true){
-			Cached->solobuilds[s] = unit;
+
+		if(u->GetSoloBuild()){
+			u->SetSoloBuildActive(true);
 		}
     }
 }
@@ -435,8 +431,12 @@ void Global::EnemyDestroyed(int enemy, int attacker){
 
 void Global::UnitFinished(int unit){
 
-    START_EXCEPTION_HANDLING
-    const UnitDef* ud = GetUnitDef(unit);
+    //START_EXCEPTION_HANDLING
+	CUnitTypeData* u = this->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
+	if(u ==0){
+		return;
+	}
+    const UnitDef* ud = u->GetUnitDef();
     if(ud!=0){
 		if(ud->isCommander){
 			G->Cached->comID = unit;
@@ -444,17 +444,17 @@ void Global::UnitFinished(int unit){
         max_energy_use += ud->energyUpkeep;
 
         // prepare unitname
-        string t = ud->name;
-        trim(t);
-        tolowercase(t);
+        string t = u->GetName();
 
         // solo build cleanup
-        map<string, int>::iterator k = Cached->solobuilds.find(t);
-        if(k != Cached->solobuilds.end()) Cached->solobuilds.erase(k);
+
+		// Regardless of wether the unit is subject to this behaviour the value of
+		// solobuildactive will always be false, so why bother running a check?
+		u->SetSoloBuildActive(false);
 
         if(ud->movedata == 0){
-            if(ud->canfly == false){
-                if(ud->builder == true){
+            if(!ud->canfly){
+                if(!ud->builder){
                     float3 upos = GetUnitPos(unit);
                     if(upos != UpVector){
                         DTHandler->AddRing(upos, 500.0f, float(PI_2) / 6.0f);
@@ -464,30 +464,21 @@ void Global::UnitFinished(int unit){
             }
         }
     }
-    END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
+    //END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
 
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     Manufacturer->UnitFinished(unit);
-    END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
+    //END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
 
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     Ch->UnitFinished(unit);
-    END_EXCEPTION_HANDLING("Ch->UnitFinished")
+    //END_EXCEPTION_HANDLING("Ch->UnitFinished")
 
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     CMessage message("unitfinished");
     message.AddParameter(unit);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"unitfinished\");")
-
-    /*START_EXCEPTION_HANDLING
-     const UnitDef* udf = GetUnitDef(unit);
-     if(udf){
-     if(!UnitDefHelper->IsMobile(udf)){
-     BuildingPlacer->Block(G->GetUnitPos(unit),udf);
-     }
-     }
-     END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")*/
+    //END_EXCEPTION_HANDLING("CMessage message(\"unitfinished\");")
 
 }
 
@@ -755,9 +746,8 @@ void Global::UnitDestroyed(int unit, int attacker){
     const UnitDef* udu = u->GetUnitDef();
     if(udu != 0){
         max_energy_use -= udu->energyUpkeep;
-		if(u->GetSingleBuild()){
-			u->SetSingleBuildActive(false);
-        }
+		u->SetSingleBuildActive(false);
+		u->SetSoloBuildActive(false);
     }
 
     if(ValidUnitID(attacker)){
@@ -765,10 +755,8 @@ void Global::UnitDestroyed(int unit, int attacker){
 		if(atd != 0){
 			const UnitDef* uda = atd->GetUnitDef();
 			if((uda != 0)&&(udu != 0)){
-				map<string, int>::iterator k = Cached->solobuilds.find(atd->GetName());
-				if(k != Cached->solobuilds.end()){
-					Cached->solobuilds.erase(k);
-				}
+				
+
 				if(efficiency.find(uda->name) != efficiency.end()){
 					efficiency[uda->name] += 20000/udu->metalCost;
 				}else{
@@ -907,10 +895,10 @@ void Global::InitAI(IAICallback* callback, int team){
 
     if(!solotemp.empty()){
         for(set<string>::iterator i = solotemp.begin(); i != solotemp.end(); ++i){
-            string s = *i;
-            trim(s);
-            tolowercase(s);
-            Cached->solobuild.insert(s);
+			CUnitTypeData* u = this->UnitDefLoader->GetUnitTypeDataByName(*i);
+			if(u){
+				u->SetSoloBuild(true);
+			}
         }
     }
 

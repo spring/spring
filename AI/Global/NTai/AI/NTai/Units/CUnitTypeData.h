@@ -40,6 +40,12 @@ public:
 	bool GetSingleBuildActive();// is this behaviour currently active? (is one of these being built atm?)
 	void SetSingleBuildActive(bool value);
 
+	bool GetSoloBuild();// is this unit type subject to the single build behaviour?
+	void SetSoloBuild(bool value);
+
+	bool GetSoloBuildActive();// is this behaviour currently active? (is one of these being built atm?)
+	void SetSoloBuildActive(bool value);
+
 	bool CanBuild();
 private:
 	Global* G;
@@ -47,6 +53,9 @@ private:
 	string unit_name; // the name of the unit trimmed in lowercase
 
 	bool attacker;
+	
+	bool soloBuild;
+	bool soloBuildActive;
 
 	bool singleBuild;
 	bool singleBuildActive;
