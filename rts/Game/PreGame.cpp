@@ -574,7 +574,7 @@ void CPreGame::SelectMap(std::string s)
 	}
 	delete f;
 
-	if (net)
+	if (net && net->GetDemoRecorder())
 		net->GetDemoRecorder()->SetName(s);
 }
 
