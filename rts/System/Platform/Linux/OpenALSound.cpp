@@ -50,7 +50,8 @@ COpenALSound::COpenALSound()
 		}
 	}
 
-	logOutput.Print("OpenAL: %s", (const char*)alGetString(AL_EXTENSIONS));
+	logOutput.Print("OpenAL: %s\n", (const char*)alGetString(AL_VERSION));
+	logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
 
 	// Generate sound sources
 	Sources = SAFE_NEW ALuint[maxSounds];

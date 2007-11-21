@@ -47,6 +47,16 @@ void LoadExtensions()
 {
 	glewInit();
 
+	// log some useful version info
+	logOutput.Print("SDL:  %d.%d.%d\n",
+		SDL_Linked_Version()->major,
+		SDL_Linked_Version()->minor,
+		SDL_Linked_Version()->patch);
+	logOutput.Print("GL:   %s\n", glGetString(GL_VERSION));
+	logOutput.Print("GL:   %s\n", glGetString(GL_VENDOR));
+	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
+	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
+
 	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
 		handleerror(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
 		exit(0);
