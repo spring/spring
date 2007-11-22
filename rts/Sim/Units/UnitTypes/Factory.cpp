@@ -106,6 +106,12 @@ void CFactory::Update()
 		return;
 	}
 
+	if (quedBuild && !opening && !stunned) {
+		cob->Call(COBFN_Activate);
+		readmap->OpenBlockingYard(this, yardMap);
+		opening = true;
+	}
+
 	if (quedBuild && inBuildStance && !stunned) {
 		// start building a unit
 		float3 buildPos = CalcBuildPos();
@@ -146,7 +152,7 @@ void CFactory::Update()
 	}
 
 
-	if (curBuild && !beingBuilt) {
+	if (curBuild && !beingBuilt && !stunned) {
 		// factory not under construction and
 		// nanolathing unit: continue building
 		lastBuild = gs->frameNum;
@@ -253,7 +259,7 @@ void CFactory::Update()
 		}
 	}
 
-	if (((lastBuild + 200) < gs->frameNum) &&
+	if (((lastBuild + 200) < gs->frameNum) && !stunned &&
 	    !quedBuild && opening && uh->CanCloseYard(this)) {
 		// close the factory after inactivity
 		readmap->CloseBlockingYard(this);
@@ -281,7 +287,7 @@ void CFactory::StartBuild(string type)
 	quedBuild = true;
 	nextBuild = type;
 
-	if (!opening) {
+	if (!opening && !stunned) {
 		cob->Call(COBFN_Activate);
 		readmap->OpenBlockingYard(this, yardMap);
 		opening = true;
