@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/GL/myGL.h"
 #include "float3.h"
 
 class CBaseGroundDrawer
@@ -51,7 +52,7 @@ public:
 	bool wireframe;
 
 	int striptype;
-	unsigned int infoTex;
+	GLuint infoTex;
 
 	unsigned char* infoTexMem;
 	bool highResInfoTex;

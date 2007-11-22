@@ -55,7 +55,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 	try {
 		string lmsg = "Loading " + string(mapname);
 		PrintLoadMsg(lmsg.c_str());
-		int tu;
+		GLint tu;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
 		renderer = SAFE_NEW terrain::Terrain;
