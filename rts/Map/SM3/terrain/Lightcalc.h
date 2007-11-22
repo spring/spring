@@ -43,7 +43,7 @@ namespace terrain
 	protected:
 		void CalculateShadows (uchar *dst, int dstw, float lightX,float lightY, float lightH, float *centerhm, int hmw, int hmscale, bool directional);
 
-		uint shadowTex, shadingTex;
+		GLuint shadowTex, shadingTex;
 	};
 
 	class Shadowmap : public BaseTexture

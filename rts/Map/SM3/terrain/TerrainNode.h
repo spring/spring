@@ -96,7 +96,7 @@ namespace terrain
 		int2 sqPos; // square position (position on highest detail heightmap)
 		int depth, width;
 		RenderSetupCollection *textureSetup;
-		uint cacheTexture;
+		GLuint cacheTexture;
 		float maxLodValue; 		 /** maximum of the LOD values calculated for each render contexts
 			 used for determining if the QuadRenderData can be marked as free (see RenderDataManager::FreeUnused) */
 
@@ -140,7 +140,7 @@ namespace terrain
 
 		// renderdata: normalmap + vertex buffer
 		// normalmap for detail preservation
-		uint normalMap;
+		GLuint normalMap;
 		uint normalMapW, normalMapTexWidth;
 
 		VertexBuffer vertexBuffer;

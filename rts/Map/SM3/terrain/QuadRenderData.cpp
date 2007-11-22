@@ -240,7 +240,7 @@ namespace terrain {
 		while (texw < w) texw*=2;
 
 		// if not yet created, create a texture for it
-		uint texture;
+		GLuint texture;
 
 		if (rd->normalMap && rd->normalMapW == w && rd->normalMapTexWidth == texw) {
 			texture = rd->normalMap;

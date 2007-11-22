@@ -86,7 +86,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 		hm = orghm->GetLevel(-level);
 		w=hm->w-1;
 
-		int maxw;
+		GLint maxw;
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxw);
 
 		if (w > maxw) level ++;
