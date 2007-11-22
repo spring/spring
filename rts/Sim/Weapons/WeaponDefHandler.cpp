@@ -112,6 +112,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.noSelfDamage = wdTable.GetBool("noSelfDamage", false);
 	wd.visuals.modelName = wdTable.GetString("model", "");
 	wd.visuals.smokeTrail = wdTable.GetBool("smokeTrail", false);
+	wd.visuals.alwaysVisible = wdTable.GetBool("alwaysVisible", false);
 
 	wd.waterweapon   = wdTable.GetBool("waterWeapon",     false);
 	wd.fireSubmersed = wdTable.GetBool("fireSubmersed",   wd.waterweapon);

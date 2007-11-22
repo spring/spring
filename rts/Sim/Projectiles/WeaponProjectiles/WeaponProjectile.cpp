@@ -89,6 +89,8 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		if(weaponDef->interceptedByShieldType) {
 			interceptHandler.AddShieldInterceptableProjectile(this);
 		}
+		
+		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
 		if(!weaponDef->visuals.modelName.empty()){
 			S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);

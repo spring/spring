@@ -343,6 +343,7 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "alphaDecay",  v.alphaDecay);
 	HSTR_PUSH_NUMBER(L, "separation",  v.separation);
 	HSTR_PUSH_BOOL  (L, "noGap",       v.noGap);
+	HSTR_PUSH_BOOL  (L, "alwaysVisible",v.alwaysVisible);
 	return 1;
 //	CColorMap *colorMap;
 //	AtlasedTexture *texture1;
