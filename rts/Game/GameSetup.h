@@ -6,9 +6,7 @@
 #include "GlobalStuff.h"
 
 
-class CStartPosSelecter;
 class TdfParser;
-
 
 class CGameSetup
 {
@@ -26,7 +24,6 @@ public:
 	CGameSetup();
 	~CGameSetup();
 	bool Init(std::string setupFile);
-	void Draw();
 	bool Update();
 
 	std::string setupFileName;

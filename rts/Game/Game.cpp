@@ -112,6 +112,7 @@
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
+#include "UI/GameSetupDrawer.h"
 #include "UI/GuiHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/KeyBindings.h"
@@ -431,6 +432,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	CPlayer* p = gs->players[gu->myPlayerNum];
 	if(!gameSetup) {
 		p->playerName = configHandler.GetString("name", "");
+	}
+	else
+	{
+		GameSetupDrawer::Enable();
 	}
 
 	lastModGameTimeMeasure = SDL_GetTicks();
@@ -2186,9 +2191,7 @@ bool CGame::Draw()
 		}
 	}
 
-	if(gameSetup && !playing){
-		gameSetup->Draw();
-	} else if( gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback){
+	if( gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback){
 		if (allReady) {
 			glColor3f(1.0f, 1.0f, 1.0f);
 			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
@@ -2398,6 +2401,7 @@ void CGame::DrawInputText()
 void CGame::StartPlaying()
 {
 	playing=true;
+	GameSetupDrawer::Disable();
 	lastTick=clock();
 	lastframe = SDL_GetTicks();
 	ENTER_MIXED;

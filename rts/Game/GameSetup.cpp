@@ -20,11 +20,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
-#include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "UI/LuaUI.h"
-#include "UI/StartPosSelecter.h"
 
 CGameSetup* gameSetup=0;
 
@@ -393,106 +389,11 @@ bool CGameSetup::Init(const char* buf, int size)
 		gs->Team(a)->energyIncome = startEnergy;
 	}
 
-	if (startPosType == StartPos_ChooseInGame) {
-		SAFE_NEW CStartPosSelecter();
-	}
-
 	assert(gs->activeTeams <= MAX_TEAMS);
 	assert(gs->activeAllyTeams <= MAX_TEAMS);
 
 	return true;
 }
-
-
-void CGameSetup::Draw()
-{
-	float xshift = 0.0f;
-	string state = "Unknown state.";
-	if (readyTime > 0) {
-		char buf[256];
-		SNPRINTF(buf, sizeof(buf), "Starting in %i",
-		         3 - (SDL_GetTicks() - readyTime) / 1000);
-		state = buf;
-	} else if (!readyTeams[gu->myTeam]) {
-		state = "Choose start pos";
-	} else if (gu->myPlayerNum==0) {
-		state = "Waiting for players, Ctrl+Return to force start";
-	} else {
-		state = "Waiting for players";
-	}
-
-	// not the most efficent way to do this, but who cares?
-	map<int, string> playerStates;
-	for (int a = 0; a < numPlayers; a++) {
-		if (!gs->players[a]->readyToStart) {
-			playerStates[a] = "missing";
-		} else if (!readyTeams[gs->players[a]->team]) {
-			playerStates[a] = "notready";
-		} else {
-			playerStates[a] = "ready";
-		}
-	}
-
-	CStartPosSelecter* selector = CStartPosSelecter::selector;
-	bool ready = (selector == NULL);
-	if (luaUI && luaUI->GameSetup(state, ready, playerStates)) {
-		if (selector) {
-			selector->ShowReady(false);
-			if (ready) {
-				selector->Ready();
-			}
-		}
-		return; // LuaUI says it will do the rendering
-	}
-	if (selector) {
-		selector->ShowReady(true);
-	}
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glPushMatrix();
-	glTranslatef(0.3f, 0.7f, 0.0f);
-	glScalef(0.03f, 0.04f, 0.1f);
-	glTranslatef(xshift, 0.0f, 0.0f);
-	font->glPrint(state.c_str());
-	glPopMatrix();
-
-	for (int a = 0; a <= numPlayers; a++) {
-		const float* color;
-		const float red[4]    = { 1.0f ,0.2f, 0.2f, 1.0f };
-		const float green[4]  = { 0.2f, 1.0f, 0.2f, 1.0f };
-		const float yellow[4] = { 0.8f, 0.8f, 0.2f, 1.0f };
-		const float dark[4]   = { 0.2f, 0.2f, 0.2f, 0.8f };
-		const float white[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-		if (a == numPlayers) {
-			color = white; //blue;
-		} else if (!gs->players[a]->readyToStart) {
-			color = red;
-		} else if (!readyTeams[gs->players[a]->team]) {
-			color = yellow;
-		} else {
-			color = green;
-		}
-
-		const char* name;
-		if (a == numPlayers) {
-			name = "Players:";
-		} else {
-			name  = gs->players[a]->playerName.c_str();
-		}
-		const float yScale = 0.028f;
-		const float xScale = yScale / gu->aspectRatio;
-		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-		const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * (float)a);
-		const float xPos = xScale;
-		glPushMatrix();
-		glTranslatef(xPos, yPos, 0.0f);
-		glScalef(xScale, yScale, 1.0f);
-		font->glPrintOutlined(name, xPixel, yPixel, color, dark);
-		glPopMatrix();
-	}
-}
-
 
 bool CGameSetup::Update()
 {
@@ -508,9 +409,7 @@ bool CGameSetup::Update()
 			break;
 		}
 	}
-	if(gu->myPlayerNum==0 && keys[SDLK_RETURN] && keys[SDLK_LCTRL]){
-		forceReady=true;
-	}
+
 	if(forceReady)
 		allReady=true;
 	if(allReady){
