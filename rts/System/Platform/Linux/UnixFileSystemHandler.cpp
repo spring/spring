@@ -383,15 +383,17 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 			struct stat info;
 			if (stat((dir + ep->d_name).c_str(), &info) == 0) {
 				if (!S_ISDIR(info.st_mode)) {
-					if (boost::regex_match(ep->d_name, regexpattern)) {
-						matches.push_back(dir + ep->d_name);
+					if ((flags & FileSystem::ONLY_DIRS) == 0) {
+						if (boost::regex_match(ep->d_name, regexpattern)) {
+							matches.push_back(dir + ep->d_name);
+						}
 					}
 				}
 				else {
 					// or a directory?
 					if (flags & FileSystem::INCLUDE_DIRS) {
 						if (boost::regex_match(ep->d_name, regexpattern)) {
-							matches.push_back(dir + ep->d_name);//FIXME + '/');
+							matches.push_back(dir + ep->d_name + '/');
 						}
 					}
 					if (flags & FileSystem::RECURSE) {
@@ -403,6 +405,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 	}
 	closedir(dp);
 }
+
 
 /**
  * @brief internal find-files-in-a-single-datadir-function

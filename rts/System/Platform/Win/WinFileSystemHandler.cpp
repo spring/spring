@@ -82,15 +82,17 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 		if (files.name[0] != '.' && !(files.attrib & (_A_HIDDEN | _A_SYSTEM))) {
 			// is it a file?
 			if (!(files.attrib & _A_SUBDIR)) {
-				if (boost::regex_match(files.name, regexpattern)) {
-					matches.push_back(dir + files.name);
+				if ((flags & FileSystem::ONLY_DIRS) == 0) {
+					if (boost::regex_match(files.name, regexpattern)) {
+						matches.push_back(dir + files.name);
+					}
 				}
 			}
 			// or a directory?
 			else {
 				if (flags & FileSystem::INCLUDE_DIRS) {
 					if (boost::regex_match(files.name, regexpattern)) {
-						matches.push_back(dir + files.name);//FIXME + '\\');
+						matches.push_back(dir + files.name + '\\');
 					}
 				}					
 				if (flags & FileSystem::RECURSE) {

@@ -87,7 +87,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 
 	//unit = SAFE_NEW CUnit(pos, side);
 	if (side < 0) {
-		side = MAX_TEAMS - 1;
+		side = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
 	}
 
 	if (type == "GroundUnit"){

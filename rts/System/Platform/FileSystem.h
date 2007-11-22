@@ -55,16 +55,19 @@ class FileSystemHandler
 class FileSystem
 {
 	public:
-
-		enum {
-			// flags for FindFiles
-			RECURSE = 1,
-			INCLUDE_DIRS = 2,
-			// flags for LocateFile
-			WRITE = 1,
-			CREATE_DIRS = 2,
+		// flags for FindFiles
+		enum FindFilesBits {
+			RECURSE      = (1 << 0),
+			INCLUDE_DIRS = (1 << 1),
+			ONLY_DIRS    = (1 << 2),
+		};
+		// flags for LocateFile
+		enum LocateFileBits {
+			WRITE       = (1 << 0),
+			CREATE_DIRS = (1 << 1),
 		};
 
+	public:
 		FileSystem() {}
 
 		// generic functions
@@ -88,7 +91,6 @@ class FileSystem
 		std::string& ForwardSlashes(std::string& path) const;
 
 	private:
-
 		bool CheckFile(const std::string& file) const;
 		bool CheckDir(const std::string& dir) const;
 		bool CheckMode(const char* mode) const;

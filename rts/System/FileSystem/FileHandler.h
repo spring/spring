@@ -65,30 +65,30 @@ class CFileHandler {
 
 	private:
 		static bool InsertRawFiles(std::set<std::string>& fileSet,
-															 const std::string& path,
-															 const std::string& pattern);
+		                           const std::string& path,
+		                           const std::string& pattern);
 		static bool InsertModFiles(std::set<std::string>& fileSet,
-															 const std::string& path,
-															 const std::string& pattern);
+		                           const std::string& path,
+		                           const std::string& pattern);
 		static bool InsertMapFiles(std::set<std::string>& fileSet,
-															 const std::string& path,
-															 const std::string& pattern);
+		                           const std::string& path,
+		                           const std::string& pattern);
 		static bool InsertBaseFiles(std::set<std::string>& fileSet,
-																const std::string& path,
-																const std::string& pattern);
+		                            const std::string& path,
+		                            const std::string& pattern);
 
 		static bool InsertRawDirs(std::set<std::string>& dirSet,
-															const std::string& path,
-															const std::string& pattern);
+		                          const std::string& path,
+		                          const std::string& pattern);
 		static bool InsertModDirs(std::set<std::string>& dirSet,
-															const std::string& path,
-															const std::string& pattern);
+		                          const std::string& path,
+		                          const std::string& pattern);
 		static bool InsertMapDirs(std::set<std::string>& dirSet,
-															const std::string& path,
-															const std::string& pattern);
+		                          const std::string& path,
+		                          const std::string& pattern);
 		static bool InsertBaseDirs(std::set<std::string>& dirSet,
-															const std::string& path,
-															const std::string& pattern);
+		                           const std::string& path,
+		                           const std::string& pattern);
 
 	private:
 		std::ifstream* ifs;
