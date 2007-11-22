@@ -566,11 +566,13 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     if(!ValidUnitID(damaged)) return;
     if(!ValidUnitID(attacker)) return;
 
-    START_EXCEPTION_HANDLING
-    if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)) return;
-    END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
+    //START_EXCEPTION_HANDLING
+	if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)){
+		return;
+	}
+    //END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
 
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     if(!ValidUnitID(attacker)){
         const UnitDef* uda = GetUnitDef(attacker);
 
@@ -597,22 +599,22 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
             }*/
         }
     }
-    END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
+    //END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
 
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     Actions->UnitDamaged(damaged, attacker, damage, dir);
-    END_EXCEPTION_HANDLING("Actions->UnitDamaged()")
+    //END_EXCEPTION_HANDLING("Actions->UnitDamaged()")
 
     Ch->UnitDamaged(damaged, attacker, damage, dir);
 
-    START_EXCEPTION_HANDLING
+    /*START_EXCEPTION_HANDLING
     CMessage message("unitdamaged");
     message.AddParameter(damaged);
     message.AddParameter(attacker);
     message.AddParameter(damage);
     message.AddParameter(dir);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")
+    END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
 }
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 void Global::GotChatMsg(const char* msg, int player){

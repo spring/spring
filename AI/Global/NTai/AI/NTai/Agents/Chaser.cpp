@@ -801,7 +801,7 @@ void Chaser::Update(){
     END_EXCEPTION_HANDLING("Chaser::FireDefences()")
 
     START_EXCEPTION_HANDLING
-    if(EVERY_(33 FRAMES)){
+    if(EVERY_(66 FRAMES)){
         FireDgunsNearby();
     }
     END_EXCEPTION_HANDLING("Chaser::FireDgunsNearby()")

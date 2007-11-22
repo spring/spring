@@ -924,9 +924,13 @@ int CBPlan::GetBuilderCount(){
 
 void CBPlan::WipeBuilderPlans(CManufacturer* m){
 	boost::mutex::scoped_lock lock(plan_mutex);
-	for(set<int>::iterator j = builders.begin(); j != builders.end(); ++j){
-        m->WipePlansForBuilder(*j);
-    }
+	if(!builders.empty()){
+		set<int> temp;
+		temp.insert(builders.begin(),builders.end());
+		for(set<int>::iterator j = temp.begin(); j != temp.end(); ++j){
+			m->WipePlansForBuilder(*j);
+		}
+	}
 }
 
 void CManufacturer::UnitIdle(int uid){

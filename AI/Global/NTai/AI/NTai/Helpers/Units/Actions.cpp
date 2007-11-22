@@ -502,7 +502,7 @@ bool CActions::DGunNearby(int uid){
                     return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
                 }else{
                     NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                    return MoveToStrike(uid, G->Map->nbasepos(compos), false);
+                    return MoveToStrike(uid, G->Map->nbasepos(compos), true);
                 }
             }
         }
