@@ -166,6 +166,8 @@ struct WeaponDef
 		float sizeDecay;
 		float separation;
 		bool noGap;
+		
+		bool alwaysVisible;
 	};
 	Visuals visuals;
 
