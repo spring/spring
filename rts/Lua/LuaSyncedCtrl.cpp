@@ -1534,9 +1534,9 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		return 0;
 	}
 	const float damage   = (float)luaL_checknumber(L, 2);
-	const int paralyze   =   (int)luaL_optnumber(L, 3, 0);
-	const int attackerID =   (int)luaL_optnumber(L, 4, -1);
-	const int weaponID   =   (int)luaL_optnumber(L, 5, -1);
+	const int paralyze   = luaL_optint(L, 3, 0);
+	const int attackerID = luaL_optint(L, 4, -1);
+	const int weaponID   = luaL_optint(L, 5, -1);
 	const float3 impulse = float3((float)luaL_optnumber(L, 6, 0.0f),
 	                              (float)luaL_optnumber(L, 7, 0.0f),
 	                              (float)luaL_optnumber(L, 8, 0.0f));

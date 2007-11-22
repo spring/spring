@@ -168,6 +168,7 @@ void CLuaHandle::CheckStack()
 
 bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
+//	printf("RunCallIn: %s %s\n", hs.GetString().c_str(), name.c_str());fflush(stdout);//FIXME
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
 	const int error = lua_pcall(L, inArgs, outArgs, 0);

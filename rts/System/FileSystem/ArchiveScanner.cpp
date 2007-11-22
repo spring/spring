@@ -94,7 +94,9 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	isDirty = true;
 
 	// FIXME: remove recursive directory traversal altogether after moving bitmaps.sdz
-	int flags = FileSystem::INCLUDE_DIRS | (curPath.find("base") != string::npos ? FileSystem::RECURSE : 0);
+	const string curLower = StringToLower(curPath); // FIXME -- necessary?
+	const bool canRecurse = (curLower.find(".sdd") == string::npos);
+	const int flags = FileSystem::INCLUDE_DIRS | (canRecurse ? FileSystem::RECURSE : 0);
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
 
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {

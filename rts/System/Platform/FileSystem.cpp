@@ -237,6 +237,7 @@ bool FileSystem::CreateDirectory(std::string dir) const
 	return fs.mkdir(dir);
 }
 
+
 /**
  * @brief find files
  *
@@ -251,15 +252,29 @@ bool FileSystem::CreateDirectory(std::string dir) const
  */
 std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::string& pattern, int flags) const
 {
-	if (!CheckFile(dir))
+	if (!CheckFile(dir)) {
 		return std::vector<std::string>();
-	if (dir.empty())
+	}
+
+	if (dir.empty()) {
 		dir = "./";
-	if (dir[dir.length() - 1] != '/' && dir[dir.length() - 1] != '\\')
-		dir += '/';
+	}
+	else {
+		const char lastChar = dir[dir.length() - 1];
+		if ((lastChar != '/') && (lastChar != '\\')) {
+			dir += '/';
+		}
+	}
+
 	FixSlashes(dir);
+
+	if (flags & ONLY_DIRS) {
+		flags |= INCLUDE_DIRS;
+	}
+
 	return fs.FindFiles(dir, pattern, flags);
 }
+
 
 /**
  * @brief get the directory part of a path

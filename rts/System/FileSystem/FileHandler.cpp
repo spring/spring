@@ -348,15 +348,12 @@ bool CFileHandler::InsertRawDirs(set<string>& dirSet,
 	                          boost::regex::icase);
 
 	vector<string> found = filesystem.FindFiles(path, pattern,
-	                                            FileSystem::INCLUDE_DIRS);
+	                                            FileSystem::ONLY_DIRS);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		const string& dir = *fi;
-		const string::size_type slash = dir.find_last_of("/\\");
-		if (slash == (dir.size() - 1)) { 
-			if (boost::regex_match(dir, regexpattern)) {
-				dirSet.insert(dir);
-			}
+		if (boost::regex_match(dir, regexpattern)) {
+			dirSet.insert(dir);
 		}
 	}
 

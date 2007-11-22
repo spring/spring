@@ -313,7 +313,7 @@ void CBaseNetProtocol::SendModName(const uint checksum, const std::string& newMo
 	return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, newModName);
 }
 
-//  NETMSG_LUAMSG          = 40, // uchar myPlayerNum; std::string modName;   (e.g. `custom msg')
+//  NETMSG_LUAMSG          = 50, // uchar myPlayerNum; std::string modName;   (e.g. `custom msg')
 
 void CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
                                   const std::string& msg)

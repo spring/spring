@@ -3,6 +3,7 @@
 
 for name, wd in pairs(WeaponDefs) do
   -- do your stuff here
+  -- remember that keys are expected to be lower case
 end
 
 --------------------------------------------------------------------------------
