@@ -89,7 +89,11 @@ const UnitDef* CUnitDefLoader::GetUnitDef(string name){
 }
 
 CUnitTypeData* CUnitDefLoader::GetUnitTypeDataByUnitId(int uid){
-	//
+
+	if(!ValidUnitID(uid)){
+		return 0;
+	}
+
 	const UnitDef* ud = G->GetUnitDef(uid);
 	if(ud == 0){
 		return 0;
