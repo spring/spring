@@ -24,10 +24,8 @@
 
 
 // Ogg-Vorbis audio stream object
-// TODO: make this respect MAX_SOUNDS, etc
-#ifdef OGGSTREAM_PLAYBACK
 COggStream oggStream;
-#endif
+
 
 CDxSound::CDxSound()
 {
@@ -125,17 +123,13 @@ CDxSound::~CDxSound()
 void CDxSound::PlayStream(const std::string& path, float volume,
 							const float3& pos, bool loop)
 {
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.setDSoundObject(m_pDS);
 	oggStream.play(path, volume, pos);
-	#endif
 }
 
 void CDxSound::StopStream()
 {
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.stop();
-	#endif
 }
 
 
@@ -474,9 +468,7 @@ HRESULT CDxSound::RestoreBuffers(int num)
 
 void CDxSound::Update()
 {
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.update();
-	#endif
 
 	float total=wantedSounds*0.5f;
 	for(std::list<PlayingSound>::iterator pi=playingSounds.begin();pi!=playingSounds.end();){
