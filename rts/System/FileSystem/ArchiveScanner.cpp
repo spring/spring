@@ -93,27 +93,33 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	InitCrcTable();
 	isDirty = true;
 
-	const string curLower = StringToLower(curPath);
-	const bool canRecurse = (curLower.find(".sdd") == string::npos);
-	const int flags = FileSystem::INCLUDE_DIRS | (canRecurse ? FileSystem::RECURSE : 0);
+	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
 
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
 		string fullName = *it;
 
 		// Strip
-		if (fullName[fullName.size() - 1] == '/' || fullName[fullName.size() - 1] == '\\')
+		const char lastFullChar = fullName[fullName.size() - 1];
+		if ((lastFullChar == '/') || (lastFullChar == '\\')) {
 			fullName = fullName.substr(0, fullName.size() - 1);
+		}
 
-		string fn = filesystem.GetFilename(fullName);
-		string fpath = filesystem.GetDirectory(fullName);
-		string lcfn = StringToLower(fn);
-		string lcfpath = StringToLower(fpath);
+		const string fn    = filesystem.GetFilename(fullName);
+		const string fpath = filesystem.GetDirectory(fullName);
+		const string lcfn    = StringToLower(fn);
+		const string lcfpath = StringToLower(fpath);
 
-		// Exclude archivefiles found inside directory (.sdd) archives.
-		string::size_type sdd = lcfpath.find(".sdd");
-		if (sdd != string::npos)
+		// Exclude archivefiles found inside directory archives (.sdd)
+		if (lcfpath.find(".sdd") != string::npos) {
 			continue;
+		}
+
+		// Exclude archivefiles found inside hidden directories
+		if ((lcfpath.find("/hidden/")   != string::npos) ||
+		    (lcfpath.find("\\hidden\\") != string::npos)) {
+			continue;
+		}
 
 		// Is this an archive we should look into?
 		if (CArchiveFactory::IsArchive(fullName)) {
@@ -167,6 +173,9 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 			// Time to parse the info we are interested in
 			if (!cached) {
+
+				printf("scanning archive: %s\n", fullName.c_str());
+
 				CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
 				if (ar) {
 					int cur;
