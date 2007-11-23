@@ -1,5 +1,3 @@
-#ifdef OGGSTREAM_PLAYBACK
-
 #include "OggStream.h"
 #include "LogOutput.h"
 
@@ -33,7 +31,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 
 	vorbisInfo = ov_info(&oggStream, -1);
 	vorbisComment = ov_comment(&oggStream, -1);
-	display();
+	// display();
 
 	// set the wave format
 	WAVEFORMATEX wfm;
@@ -139,20 +137,16 @@ void COggStream::update() {
 
 // display Ogg info and comments
 void COggStream::display() {
-	if (vorbisInfo && vorbisComment) {
-		// logOutput.Print("version:           %d", vorbisInfo->version);
-		// logOutput.Print("channels:          %d", vorbisInfo->channels);
-		// logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
-		// logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
-		// logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
-		// logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
-		// logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
-		// logOutput.Print("vendor:            %s", vorbisComment->vendor);
+	logOutput.Print("version:           %d", vorbisInfo->version);
+	logOutput.Print("channels:          %d", vorbisInfo->channels);
+	logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
+	logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
+	logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
+	logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
+	logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
+	logOutput.Print("vendor:            %s", vorbisComment->vendor);
 
-		for (int i = 0; i < vorbisComment->comments; i++) {
-			logOutput.Print("%s", vorbisComment->user_comments[i]);
-		}
+	for (int i = 0; i < vorbisComment->comments; i++) {
+		logOutput.Print("%s", vorbisComment->user_comments[i]);
 	}
 }
-
-#endif

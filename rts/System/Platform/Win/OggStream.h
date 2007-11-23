@@ -1,8 +1,6 @@
 #ifndef OGGSTREAM_H
 #define OGGSTREAM_H
 
-#ifdef OGGSTREAM_PLAYBACK
-
 #include "StdAfx.h"
 #include "DxSound.h"
 
@@ -12,8 +10,8 @@
 
 #include <string>
 
-// 256KB buffer
-#define BUFSIZE (4096 * 64)
+// 512KB buffer
+#define BUFSIZE (4096 * 128)
 
 class COggStream {
 	public:
@@ -39,7 +37,5 @@ class COggStream {
 		int lastSection;
 		bool stopped;
 };
-
-#endif
 
 #endif

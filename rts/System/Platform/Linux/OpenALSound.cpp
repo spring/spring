@@ -18,10 +18,7 @@
 
 
 // Ogg-Vorbis audio stream object
-// TODO: make this respect MAX_SOUNDS, etc
-#ifdef OGGSTREAM_PLAYBACK
 COggStream oggStream;
-#endif
 
 
 COpenALSound::COpenALSound()
@@ -162,16 +159,12 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	CheckError("COpenALSound::PlaySample");
 */
 
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.play(path, pos * posScale, volume);
-	#endif
 }
 
 void COpenALSound::StopStream()
 {
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.stop();
-	#endif
 }
 
 
@@ -238,9 +231,7 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 
 void COpenALSound::Update()
 {
-	#ifdef OGGSTREAM_PLAYBACK
 	oggStream.update();
-	#endif
 
 	for (int a = 0; a < maxSounds; a++) {
 		if (Sources[a]) {
