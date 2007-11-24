@@ -22,6 +22,9 @@ class GameParticipant
 public:
 	GameParticipant(bool willHaveRights) {hasRights = willHaveRights;}
 	bool hasRights;
+#ifdef SYNCCHECK
+	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
+#endif
 };
 
 /**
@@ -133,7 +136,6 @@ private:
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
 	std::deque<int> outstandingSyncFrames;
-	std::map<int, unsigned> syncResponse[MAX_PLAYERS]; // syncResponse[player][frameNum] = checksum
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
