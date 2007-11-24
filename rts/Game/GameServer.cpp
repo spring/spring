@@ -68,14 +68,15 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	{
 		// initialise a local client
 		//TODO make local connecting like from remote (and make it possible to have no local conn)
-		int wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
-
+		unsigned wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
+		
 		if (play)
-			wantedNumber = std::max(wantedNumber, play->GetFileHeader().numPlayers);
-
+		{
+			wantedNumber = std::max(wantedNumber, play->GetFileHeader().maxPlayerNum+1);
+		}
 		int hisNewNumber = serverNet->InitLocalClient(wantedNumber);
 
-		serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
+		serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 		// send game data for demo recording
 		if (!scriptName.empty())
 			serverNet->SendScript(scriptName);
@@ -83,6 +84,10 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 			serverNet->SendMapName(mapChecksum, mapName);
 		if (!modName.empty())
 			serverNet->SendModName(modChecksum, modName);
+		
+		players[hisNewNumber].reset(new GameParticipant());
+		
+		SendSystemMsg("Local client initialised on number %i", hisNewNumber);
 	}
 
 	lastTick = SDL_GetTicks();
@@ -293,7 +298,8 @@ void CGameServer::Update()
 		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 
 		while (length > 0) {
-			serverNet->RawSend(demobuffer, length);
+			if (demobuffer[0] != NETMSG_SETPLAYERNUM) // client may get confused
+				serverNet->RawSend(demobuffer, length);
 			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		}
 
@@ -334,7 +340,12 @@ void CGameServer::ServerReadNet()
 
 		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
-			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(inbuf[1]);
+			unsigned wantedNumber = inbuf[1];
+			if (play)
+			{
+				wantedNumber = std::max(wantedNumber, play->GetFileHeader().maxPlayerNum+1);
+			}
+			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
 
 			serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
 
@@ -344,6 +355,8 @@ void CGameServer::ServerReadNet()
 				serverNet->SendMapName(mapChecksum, mapName);
 			if (!modName.empty())
 				serverNet->SendModName(modChecksum, modName);
+			
+			players[hisNewNumber].reset(new GameParticipant());
 
 			for(unsigned a=0;a<gs->activePlayers;a++){
 				if(!gs->players[a]->readyToStart)
@@ -610,10 +623,9 @@ void CGameServer::ServerReadNet()
 				}
 			}
 		}
-		else if (gs->players[a]->active)
+		else if (players[a])
 		{
-			//BAD: server should keep its own list of players
-			gs->players[a]->active = false;
+			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
 			if (hostif)
 			{

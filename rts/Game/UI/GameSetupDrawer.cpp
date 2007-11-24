@@ -6,6 +6,7 @@
 #include <SDL_keysym.h>
 
 #include "../Player.h"
+#include "../GameSetup.h"
 #include "StartPosSelecter.h"
 #include "LuaUI.h"
 #include "Rendering/glFont.h"

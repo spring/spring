@@ -3,6 +3,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <ctime>
 #include <string>
 #include <map>
@@ -15,6 +16,11 @@ class CDemoReader;
 class AutohostInterface;
 
 const unsigned SERVER_TEAM = 255;
+
+class GameParticipant
+{
+public:
+};
 
 /**
 @brief Server class for game handling
@@ -102,6 +108,8 @@ private:
 	bool IsPaused;
 	float userSpeedFactor;
 	float internalSpeed;
+	
+	boost::scoped_ptr<GameParticipant> players[MAX_PLAYERS];
 	
 	/////////////////// game settings ///////////////////
 	/// Wheter the game is pausable for others than the host

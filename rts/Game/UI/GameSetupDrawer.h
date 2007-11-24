@@ -1,7 +1,6 @@
 #ifndef GAME_SETUP_DRAWER
 #define GAME_SETUP_DRAWER
 
-#include "../GameSetup.h"
 #include "InputReceiver.h"
 
 class GameSetupDrawer : public CInputReceiver

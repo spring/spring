@@ -2806,6 +2806,8 @@ bool CGame::ClientReadNet()
 				gs->players[player]->playerName=(char*)(&inbuf[3]);
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
+				if (net->GetDemoRecorder())
+					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
 				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;

@@ -1,9 +1,11 @@
 #ifndef INPUTRECEIVER_H
 #define INPUTRECEIVER_H
 
-#include "Object.h"
 #include <deque>
 #include <string>
+
+#include "Object.h"
+#include "GlobalStuff.h"
 
 class CInputReceiver :
 	public CObject
