@@ -30,7 +30,7 @@ public:
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
 	
-	void SetMaxPlayerNum(unsigned MaxPlayerNum);
+	void SetMaxPlayerNum(int maxPlayerNum);
 
 	void InitializeStats(int numPlayers, int numTeams, int winningAllyTeam);
 	void SetPlayerStats(int playerNum, const CPlayer::Statistics& stats);

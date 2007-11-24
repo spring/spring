@@ -72,7 +72,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		
 		if (play)
 		{
-			wantedNumber = std::max(wantedNumber, play->GetFileHeader().maxPlayerNum+1);
+			wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
 		}
 		int hisNewNumber = serverNet->InitLocalClient(wantedNumber);
 
@@ -343,7 +343,7 @@ void CGameServer::ServerReadNet()
 			unsigned wantedNumber = inbuf[1];
 			if (play)
 			{
-				wantedNumber = std::max(wantedNumber, play->GetFileHeader().maxPlayerNum+1);
+				wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
 			}
 			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
 

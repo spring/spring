@@ -19,7 +19,7 @@ may change every Spring release without notice).
 
 /** The current demofile version. Only change on major modifications for which
 appending stuff to DemoFileHeader is not sufficient. */
-#define DEMOFILE_VERSION 2
+#define DEMOFILE_VERSION 3
 
 /**
 @brief Spring demo file main header
@@ -58,7 +58,7 @@ struct DemoFileHeader
 	int demoStreamSize;     ///< Size of the demo stream.
 	int gameTime;           ///< Total number of seconds game time.
 	int wallclockTime;      ///< Total number of seconds wallclock time.
-	unsigned maxPlayerNum;  ///< Maximum player number which was used in this game.
+	int maxPlayerNum;       ///< Maximum player number which was used in this game.
 	int numPlayers;         ///< Number of players for which stats are saved.
 	int playerStatSize;     ///< Size of the entire player statistics chunk.
 	int playerStatElemSize; ///< sizeof(CPlayer::Statistics)
