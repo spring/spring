@@ -179,11 +179,11 @@ void CGameServer::CheckSync()
 		bool bComplete = true;
 		bool bGotCorrectChecksum = false;
 		unsigned correctChecksum = 0;
-		for (int a = 0; a < MAX_PLAYERS; ++a) {
-			if (!gs->players[a]->active)
+		for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
+			if (!players[a])
 				continue;
-			std::map<int, unsigned>::iterator it = syncResponse[a].find(*f);
-			if (it == syncResponse[a].end()) {
+			std::map<int, unsigned>::iterator it = players[a]->syncResponse.find(*f);
+			if (it == players[a]->syncResponse.end()) {
 				if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
 					bComplete = false;
 				else
@@ -232,9 +232,9 @@ void CGameServer::CheckSync()
 		if (bComplete) {
 // 			if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
 // 				logOutput.Print("Succesfully purged outstanding sync frame %d from the deque", *f);
-			for (int a = 0; a < MAX_PLAYERS; ++a) {
-				if (gs->players[a]->active)
-					syncResponse[a].erase(*f);
+			for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
+				if (players[a])
+					players[a]->syncResponse.erase(*f);
 			}
 			f = outstandingSyncFrames.erase(f);
 		} else
@@ -547,7 +547,7 @@ void CGameServer::ServerReadNet()
 							if(!play){
 								int frameNum = *(int*)&inbuf[2];
 								if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-									syncResponse[a][frameNum] = *(unsigned*)&inbuf[6];
+									players[a]->syncResponse[frameNum] = *(unsigned*)&inbuf[6];
 								else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
 									delayedSyncResponseFrame = serverframenum;
 									SendSystemMsg("Delayed response from %s for frame %d (current %d)",
@@ -634,12 +634,12 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	for (int a = (serverNet->MaxConnectionID() + 1); a < gs->activePlayers; a++)
+	for (int a = (serverNet->MaxConnectionID() + 1); a < MAX_PLAYERS; ++a)
 	{
 		//HACK check if we lost connection to the last player(s)
-		if (gs->players[a]->active)
+		if (players[a])
 		{
-			gs->players[a]->active = false;
+			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
 			if (hostif)
 			{
