@@ -174,7 +174,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			// Time to parse the info we are interested in
 			if (!cached) {
 
-				printf("scanning archive: %s\n", fullName.c_str());
+				//printf("scanning archive: %s\n", fullName.c_str());
 
 				CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
 				if (ar) {
