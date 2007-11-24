@@ -20,6 +20,8 @@ const unsigned SERVER_TEAM = 255;
 class GameParticipant
 {
 public:
+	GameParticipant(bool willHaveRights) {hasRights = willHaveRights;}
+	bool hasRights;
 };
 
 /**

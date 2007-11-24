@@ -85,7 +85,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		if (!modName.empty())
 			serverNet->SendModName(modChecksum, modName);
 		
-		players[hisNewNumber].reset(new GameParticipant());
+		players[hisNewNumber].reset(new GameParticipant(true)); // give him rights to change speed, kick players etc
 		
 		SendSystemMsg("Local client initialised on number %i", hisNewNumber);
 	}
@@ -298,7 +298,7 @@ void CGameServer::Update()
 		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 
 		while (length > 0) {
-			if (demobuffer[0] != NETMSG_SETPLAYERNUM) // client may get confused
+			if (demobuffer[0] != NETMSG_SETPLAYERNUM && demobuffer[0] != NETMSG_USER_SPEED && demobuffer[0] != NETMSG_INTERNAL_SPEED && demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
 				serverNet->RawSend(demobuffer, length);
 			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
 		}
@@ -356,7 +356,7 @@ void CGameServer::ServerReadNet()
 			if (!modName.empty())
 				serverNet->SendModName(modChecksum, modName);
 			
-			players[hisNewNumber].reset(new GameParticipant());
+			players[hisNewNumber].reset(new GameParticipant(false)); // remote players can't kick others etc
 
 			for(unsigned a=0;a<gs->activePlayers;a++){
 				if(!gs->players[a]->readyToStart)
@@ -877,13 +877,13 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 {
 	//TODO: find better solution for the (player == 0) thingie
 	//TODO 2: migrate more stuff from CGame::HandleChatMessage here
-	if ((msg.find(".kickbynum") == 0) && (player == 0)) {
+	if ((msg.find(".kickbynum") == 0) && (players[player]->hasRights)) {
 		if (msg.length() >= 11) {
 			int playerNum = atoi(msg.substr(11, string::npos).c_str());
 			KickPlayer(playerNum);
 		}
 	}
-	else if ((msg.find(".kick") == 0) && (player == 0)) {
+	else if ((msg.find(".kick") == 0) && (players[player]->hasRights)) {
 		if (msg.length() >= 6) {
 			std::string name = msg.substr(6,string::npos);
 			if (!name.empty()){
@@ -899,10 +899,10 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".nopause") == 0) && (player == 0)) {
+	else if ((msg.find(".nopause") == 0) && (players[player]->hasRights)) {
 		SetBoolArg(gamePausable, msg, ".nopause");
 	}
-	else if ((msg.find(".setmaxspeed") == 0) && (player == 0)) {
+	else if ((msg.find(".setmaxspeed") == 0) && (players[player]->hasRights)) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor > maxUserSpeed) {
 			serverNet->SendUserSpeed(player, maxUserSpeed);
@@ -913,7 +913,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".setminspeed") == 0) && (player == 0)) {
+	else if ((msg.find(".setminspeed") == 0) && (players[player]->hasRights)) {
 		minUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor < minUserSpeed) {
 			serverNet->SendUserSpeed(player, minUserSpeed);
