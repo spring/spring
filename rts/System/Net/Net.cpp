@@ -3,9 +3,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-// #include "StdAfx.h"
 
 #include "Net.h"
+
+#include <boost/format.hpp>
+
 #include "Connection.h"
 #include "UDPConnection.h"
 #include "UDPListener.h"
@@ -14,13 +16,12 @@
 #include "RawPacket.h"
 #include "Exception.h"
 
-#include <boost/format.hpp>
 
 namespace netcode {
 
 CNet::CNet()
 {
-	ProtocolDef::instance()->UDP_MTU = 500;
+	SetMTU();
 }
 
 CNet::~CNet()
@@ -28,12 +29,34 @@ CNet::~CNet()
 	FlushNet();
 }
 
-void CNet::Listening(const bool state)
+void CNet::InitServer(unsigned portnum)
 {
-	if (udplistener)
-	{
-		udplistener->SetWaitingForConnections(state);
-	}
+	udplistener.reset(new UDPListener(portnum));
+}
+
+unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
+{
+	udplistener.reset(new UDPListener(sourceport));
+	boost::shared_ptr<UDPConnection> incoming(udplistener->SpawnConnection(std::string(server), portnum));
+
+	return InitNewConn(incoming, playerNum);
+}
+
+unsigned CNet::InitLocalClient(const unsigned wantedNumber)
+{
+	boost::shared_ptr<CLocalConnection> conn(new CLocalConnection());
+	
+	return InitNewConn(conn, wantedNumber);
+}
+
+void CNet::RegisterMessage(unsigned char id, int length)
+{
+	ProtocolDef::instance()->AddType(id, length);
+}
+
+void CNet::SetMTU(unsigned mtu)
+{
+	ProtocolDef::instance()->UDP_MTU = mtu;
 }
 
 bool CNet::Listening()
@@ -45,6 +68,14 @@ bool CNet::Listening()
 	else
 	{
 		return false;
+	}
+}
+
+void CNet::Listening(const bool state)
+{
+	if (udplistener)
+	{
+		udplistener->SetWaitingForConnections(state);
 	}
 }
 
@@ -113,67 +144,6 @@ int CNet::GetData(unsigned char *buf, const unsigned conNum)
 	}
 }
 
-void CNet::RegisterMessage(unsigned char id, int length)
-{
-	ProtocolDef::instance()->AddType(id, length);
-}
-
-void CNet::SetMTU(unsigned mtu)
-{
-	ProtocolDef::instance()->UDP_MTU = mtu;
-}
-
-void CNet::InitServer(unsigned portnum)
-{
-	udplistener.reset(new UDPListener(portnum));
-}
-
-unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
-{
-	udplistener.reset(new UDPListener(sourceport));
-	boost::shared_ptr<UDPConnection> incoming(udplistener->SpawnConnection(std::string(server), portnum));
-
-	return InitNewConn(incoming, playerNum);
-}
-
-unsigned CNet::InitLocalClient(const unsigned wantedNumber)
-{
-	boost::shared_ptr<CLocalConnection> conn(new CLocalConnection());
-	
-	return InitNewConn(conn, wantedNumber);
-}
-
-unsigned CNet::InitNewConn(const connPtr& newClient, const unsigned wantedNumber)
-{
-	unsigned freeConn = wantedNumber;
-	
-	if(int(wantedNumber) <= MaxConnectionID() && connections[wantedNumber])
-	{
-		// ID is already in use
-		freeConn = 0;
-	}
-
-	if (freeConn == 0) // look for first free ID
-	{
-		for(freeConn = 0; int(freeConn) <= MaxConnectionID(); ++freeConn)
-		{
-			if(!connections[freeConn])
-			{
-				break;
-			}
-		}
-	}
-	
-	if (int(freeConn) > MaxConnectionID())
-	{
-		// expand the vector
-		connections.resize(freeConn+1);
-	}
-	connections[freeConn] = newClient;
-
-	return freeConn;
-}
-
 void CNet::SendData(const unsigned char *data, const unsigned length)
 {
 #ifdef DEBUG
@@ -225,6 +195,16 @@ void CNet::SendData(const unsigned char* data,const unsigned length, const unsig
 	}
 }
 
+void CNet::FlushNet()
+{
+	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
+	{
+		if((*i)){
+			(*i)->Flush(true);
+		}
+	}
+}
+
 void CNet::Update()
 {
 	if (udplistener)
@@ -241,14 +221,35 @@ void CNet::Update()
 	}
 }
 
-void CNet::FlushNet()
+unsigned CNet::InitNewConn(const connPtr& newClient, const unsigned wantedNumber)
 {
-	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
+	unsigned freeConn = wantedNumber;
+	
+	if(int(wantedNumber) <= MaxConnectionID() && connections[wantedNumber])
 	{
-		if((*i)){
-			(*i)->Flush(true);
+		// ID is already in use
+		freeConn = 0;
+	}
+
+	if (freeConn == 0) // look for first free ID
+	{
+		for(freeConn = 0; int(freeConn) <= MaxConnectionID(); ++freeConn)
+		{
+			if(!connections[freeConn])
+			{
+				break;
+			}
 		}
 	}
+	
+	if (int(freeConn) > MaxConnectionID())
+	{
+		// expand the vector
+		connections.resize(freeConn+1);
+	}
+	connections[freeConn] = newClient;
+
+	return freeConn;
 }
 
 bool CNet::HasIncomingConnection() const
