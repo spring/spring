@@ -112,8 +112,8 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				gu->spectating           = true;
 				gu->spectatingFullView   = true;
 				gu->spectatingFullSelect = true;
-
 				net->localDemoPlayback = true;
+				
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
 				gameServer = SAFE_NEW CGameServer(8452, mapName, modArchive, scriptName, demoFile);
@@ -380,6 +380,8 @@ bool CPreGame::Update()
 
 			const int teamID = gs->players[gu->myPlayerNum]->team;
 			const CTeam* team = gs->Team(teamID);
+			if (net->localDemoPlayback)
+				gs->players[gu->myPlayerNum]->spectator = true;
 			LoadStartPicture(team->side);
 
 			game = SAFE_NEW CGame(mapName, modArchive, infoConsole);
@@ -492,6 +494,8 @@ void CPreGame::UpdateClientNet()
 				gs->players[inbuf[2]]->playerName = (char*) (inbuf + 3);
 				gs->players[inbuf[2]]->readyToStart = true;
 				gs->players[inbuf[2]]->active = true;
+				if (net->GetDemoRecorder())
+					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
 			} break;
 
 			case NETMSG_QUIT: {

@@ -1,6 +1,7 @@
 #include "ProtocolDef.h"
 
 #include <string.h>
+#include <boost/format.hpp>
 
 #include "Exception.h"
 
@@ -35,7 +36,7 @@ bool ProtocolDef::HasFixedLength(const unsigned char id) const
 		return false;
 	else
 	{
-		throw network_error("Unbound Message Type");
+		throw network_error(str( boost::format("Unbound Message Type: %1%") %(unsigned int)id ));
 	}
 }
 
