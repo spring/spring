@@ -18,7 +18,7 @@ void GameSetupDrawer::Enable()
 {
 	assert(instance == 0);
 	assert(gameSetup);
-	
+
 	instance = new GameSetupDrawer();
 }
 
@@ -61,7 +61,7 @@ void GameSetupDrawer::Draw()
 	for (int a = 0; a < gameSetup->numPlayers; a++) {
 		if (!gs->players[a]->readyToStart) {
 			playerStates[a] = "missing";
-		} else if (!readyTeams[gs->players[a]->team]) {
+		} else if (!gameSetup->readyTeams[gs->players[a]->team]) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
