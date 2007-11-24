@@ -123,10 +123,10 @@ void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
 	fileHeader.wallclockTime = wallclockTime;
 }
 
-void CDemoRecorder::SetMaxPlayerNum(unsigned MaxPlayerNum)
+void CDemoRecorder::SetMaxPlayerNum(int maxPlayerNum)
 {
-	if (fileHeader.maxPlayerNum < MaxPlayerNum)
-		fileHeader.maxPlayerNum = MaxPlayerNum;
+	if (fileHeader.maxPlayerNum < maxPlayerNum)
+		fileHeader.maxPlayerNum = maxPlayerNum;
 }
 
 void CDemoRecorder::InitializeStats(int numPlayers, int numTeams, int winningAllyTeam)
