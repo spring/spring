@@ -185,30 +185,36 @@ void CCamera::Update(bool freeze)
 	oldFov = fov;
 	const float gndHeight = ground->GetHeight(pos.x, pos.z);
 	const float rangemod = 1.0f + max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
+	const float aspect = (GLfloat) gu->viewSizeX / (GLfloat) gu->viewSizeY;
+	const float zNear = (NEAR_PLANE * rangemod);
 	gu->viewRange = MAX_VIEW_RANGE * rangemod;
 
 	glMatrixMode(GL_PROJECTION); // Select the Projection Matrix
 	glLoadIdentity();            // Reset  the Projection Matrix
-	gluPerspective(fov,
-	               (GLfloat)gu->viewSizeX / (GLfloat)gu->viewSizeY,
-	               NEAR_PLANE * rangemod, gu->viewRange);
 
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	// apply and store the transform, should be faster
+	// than calling glGetDoublev(GL_PROJECTION_MATRIX)
+	// right after gluPerspective()
+	myGluPerspective(fov, aspect, zNear, gu->viewRange);
+
 
 	glMatrixMode(GL_MODELVIEW);  // Select the Modelview Matrix
 	glLoadIdentity();
 
 	// FIXME: should be applying the offsets to pos/up/right/forward/etc,
 	//        but without affecting the real positions (need an intermediary)
-	const float3 camPos = pos + posOffset;
 	float3 fShake = (forward * (1.0f + tiltOffset.z)) +
 	                (right   * tiltOffset.x) +
 	                (up      * tiltOffset.y);
+
+	const float3 camPos = pos + posOffset;
 	const float3 center = camPos + fShake.Normalize();
-	gluLookAt(camPos.x, camPos.y, camPos.z,
-	          center.x, center.y, center.z,
-	          up.x, up.y, up.z);
-	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+
+	// apply and store the transform, should be faster
+	// than calling glGetDoublev(GL_MODELVIEW_MATRIX)
+	// right after gluLookAt()
+	myGluLookAt(camPos, center, up);
+
 
 	// the inverse modelview matrix (handy for shaders to have)
 	CalculateInverse4x4((double(*)[4])modelview, (double(*)[4])modelviewInverse);
@@ -308,4 +314,66 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos)
 	           modelview, projection, viewport,
 	           &winPos[0], &winPos[1], &winPos[2]);
 	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
+}
+
+
+
+inline void CCamera::myGluPerspective(float fov, float aspect, float zNear, float zFar) {
+	GLdouble t = zNear * tan(fov * 0.008726646f);
+	GLdouble b = -t;
+	GLdouble l = b * aspect;
+	GLdouble r = t * aspect;
+
+	projection[ 0] = (2.0f * zNear) / (r - l);
+	projection[ 1] = 0.0f;
+	projection[ 2] = 0.0f;
+	projection[ 3] = 0.0f;
+
+	projection[ 4] = 0.0f;
+	projection[ 5] = (2.0f * zNear) / (t - b);
+	projection[ 6] = 0.0f;
+	projection[ 7] = 0.0f;
+
+	projection[ 8] = (r + l) / (r - l);
+	projection[ 9] = (t + b) / (t - b);
+	projection[10] = -(zFar + zNear) / (zFar - zNear);
+	projection[11] = -1.0f;
+
+	projection[12] = 0.0f;
+	projection[13] = 0.0f;
+	projection[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
+	projection[15] = 0.0f;
+
+	glMultMatrixd(projection);
+}
+
+inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const float3& up) {
+	float3 f = (center - eye).Normalize();
+	float3 u = float3(up).Normalize();
+	float3 s = f.cross(u);
+
+	u = s.cross(f);
+
+	modelview[ 0] =  s.x;
+	modelview[ 1] =  u.x;
+	modelview[ 2] = -f.x;
+	modelview[ 3] =  0.0f;
+
+	modelview[ 4] =  s.y;
+	modelview[ 5] =  u.y;
+	modelview[ 6] = -f.y;
+	modelview[ 7] =  0.0f;
+
+	modelview[ 8] =  s.z;
+	modelview[ 9] =  u.z;
+	modelview[10] = -f.z;
+	modelview[11] =  0.0f;
+
+	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
+	modelview[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
+	modelview[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
+	modelview[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
+	modelview[15] = 1.0f;
+
+	glMultMatrixd(modelview);
 }
