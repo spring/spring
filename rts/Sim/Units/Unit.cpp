@@ -992,11 +992,12 @@ void CUnit::DrawRawModel()
 
 inline void CUnit::DrawDebug()
 {
+	// draw the collision sphere
 	if (gu->drawdebug) {
 		glPushMatrix();
 		glTranslatef3((frontdir * relMidPos.z) +
-		              (updir    * relMidPos.y) +
-									(rightdir * relMidPos.x));
+					   (updir    * relMidPos.y) +
+					   (rightdir * relMidPos.x));
 		GLUquadricObj* q = gluNewQuadric();
 		gluQuadricDrawStyle(q, GLU_LINE);
 		gluSphere(q, radius, 10, 10);
@@ -1011,7 +1012,6 @@ void CUnit::Draw()
 	glAlphaFunc(GL_GEQUAL, alphaThreshold);
 
 	glPushMatrix();
-
 	ApplyTransformMatrix();
 
 	if (!beingBuilt || !unitDef->showNanoFrame) {
@@ -1021,7 +1021,6 @@ void CUnit::Draw()
 	}
 
 	DrawDebug();
-
 	glPopMatrix();
 }
 
@@ -1029,11 +1028,8 @@ void CUnit::Draw()
 void CUnit::DrawRaw()
 {
 	glPushMatrix();
-
 	ApplyTransformMatrix();
-
 	DrawModel();
-
 	glPopMatrix();
 }
 
@@ -1041,7 +1037,6 @@ void CUnit::DrawRaw()
 void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
 {
 	glPushMatrix();
-
 	ApplyTransformMatrix();
 
 	if (preList != 0) {
@@ -1059,7 +1054,6 @@ void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
 	}
 
 	DrawDebug();
-
 	glPopMatrix();
 }
 
@@ -1067,7 +1061,6 @@ void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
 void CUnit::DrawRawWithLists(unsigned int preList, unsigned int postList)
 {
 	glPushMatrix();
-
 	ApplyTransformMatrix();
 
 	if (preList != 0) {
@@ -1154,48 +1147,9 @@ void CUnit::DrawBeingBuilt()
 
 void CUnit::ApplyTransformMatrix() const
 {
-	float3 interPos;
-	if (!transporter) {
-		interPos = pos + (speed * gu->timeOffset);
-	} else {
-		interPos = pos + (transporter->speed * gu->timeOffset);
-	}
-
-	if (!beingBuilt && (usingScriptMoveType ||
-	    ((physicalState == Flying) && unitDef->canmove))) {
-		// aircraft, skidding ground unit, or active ScriptMoveType
-		// note: (CAirMoveType) aircraft under construction should not
-		// use this matrix, or their nanoframes won't spin on pad
-		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
-		glMultMatrixf(&transMatrix[0]);
-	}
-
-	else if (transporter && transporter->unitDef->holdSteady) {
-		//making local copies of vectors
-		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = updir;
-		float3 rightDir = frontDir.cross(upDir);
-		rightDir.Normalize();
-		frontDir = upDir.cross(rightDir);
-		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
-		glMultMatrixf(&transMatrix[0]);
-	}
-	else if (upright || !unitDef->canmove) {
-		glTranslatef3(interPos);
-		if (heading != 0) {
-			glRotatef(heading*(180.0f/32768.0f),0,1,0);
-		}
-	}
-	else {
-		//making local copies of vectors
-		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
-		float3 rightDir = frontDir.cross(upDir);
-		rightDir.Normalize();
-		frontDir = upDir.cross(rightDir);
-		CMatrix44f transMatrix(interPos,-rightDir,upDir,frontDir);
-		glMultMatrixf(&transMatrix[0]);
-	}
+	CMatrix44f m;
+	GetTransformMatrix(m);
+	glMultMatrixf(&m[0]);
 }
 
 
@@ -1208,7 +1162,7 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 		interPos = pos + (transporter->speed * gu->timeOffset);
 	}
 
-	if (usingScriptMoveType || ((physicalState == Flying) && unitDef->canmove)) {
+	if (!beingBuilt && (usingScriptMoveType || ((physicalState == Flying) && unitDef->canmove))) {
 		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
 		matrix = transMatrix;
 	}
@@ -2086,31 +2040,31 @@ void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 	file->lsInt(fireState);
 	file->lsBool(isCloaked);
 	file->lsBool(wantCloak);
-	commandAI->LoadSave(file,loading);
+	commandAI->LoadSave(file, loading);
 }
 
 void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
-	if(unitDef->canDropFlare){
+	if (unitDef->canDropFlare) {
 		incomingMissiles.push_back(missile);
 		AddDeathDependence(missile);
 
-		if(lastFlareDrop < gs->frameNum - unitDef->flareReloadTime*30){
-			SAFE_NEW CFlareProjectile(pos,speed,this,(int)(gs->frameNum+unitDef->flareDelay*(1+gs->randFloat())*15));
-			lastFlareDrop=gs->frameNum;
+		if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * 30)) {
+			SAFE_NEW CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
+			lastFlareDrop = gs->frameNum;
 		}
 	}
 }
 
 void CUnit::TempHoldFire(void)
 {
-	dontFire=true;
-	AttackUnit(0,true);
+	dontFire = true;
+	AttackUnit(0, true);
 }
 
 void CUnit::ReleaseTempHoldFire(void)
 {
-	dontFire=false;
+	dontFire = false;
 }
 
 void CUnit::DrawS3O(void)
