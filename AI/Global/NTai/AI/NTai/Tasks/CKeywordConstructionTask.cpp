@@ -208,13 +208,12 @@ void CKeywordConstructionTask::Build(){
 	}
 	
 
-	float rmax = G->Manufacturer->getRranges(building->GetName());
 
-	if(rmax > 10){
+	if(building->GetDeferRepairRange() > 10){
 		NLOG("CKeywordConstructionTask::Build  rmax > 10");
 
 		int* funits = new int[5000];
-		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetDeferRepairRange());
 
 		if(fnum > 1){
 			//
@@ -224,7 +223,7 @@ void CKeywordConstructionTask::Build(){
 				if(ufdt == building){
 					NLOG("CKeywordConstructionTask::Build  mark 2b#");
 
-					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < rmax){
+					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < building->GetDeferRepairRange()){
 						if(G->cb->UnitBeingBuilt(funits[i])==true){
 							delete [] funits;
 							NLOG("CKeywordConstructionTask::Build  exit on repair");
@@ -243,13 +242,12 @@ void CKeywordConstructionTask::Build(){
 
 	NLOG("CKeywordConstructionTask::Build  mark 3#");
 	////////
-	float exrange = G->Manufacturer->getexclusion(building->GetName());
 
-	if(exrange > 10){
+	if(building->GetExclusionRange() > 10){
 
 		int* funits = new int[5000];
 
-		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetExclusionRange());
 
 		if(fnum > 1){
 			//
@@ -260,7 +258,7 @@ void CKeywordConstructionTask::Build(){
 
 					NLOG("CKeywordConstructionTask::Build  mark 3a#");
 
-					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < exrange){
+					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < building->GetExclusionRange()){
 						int kj = funits[i];
 						delete [] funits;
 

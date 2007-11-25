@@ -222,11 +222,10 @@ bool CUnitConstructionTask::Init(){
 		return false;
 	}
 
-	float rmax = G->Manufacturer->getRranges(building->GetName());
-	if(rmax > 10){
+	if(building->GetDeferRepairRange() > 10){
 		NLOG("CUnitConstructionTask::Init  rmax > 10");
 		int* funits = new int[5000];
-		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetDeferRepairRange());
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
@@ -234,8 +233,8 @@ bool CUnitConstructionTask::Init(){
 				if(udf == 0) continue;
 				if(udf == building->GetUnitDef()){
 					NLOG("CUnitConstructionTask::Init  mark 2b#");
-					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < rmax){
-						if(G->cb->UnitBeingBuilt(funits[i])==true){
+					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < building->GetDeferRepairRange()){
+						if(G->cb->UnitBeingBuilt(funits[i])){
 							delete [] funits;
 							NLOG("CUnitConstructionTask::Init  exit on repair");
 							if(!G->Actions->Repair(unit,funits[i])){
@@ -255,10 +254,10 @@ bool CUnitConstructionTask::Init(){
 
 	NLOG("CUnitConstructionTask::Init  mark 3#");
 	////////
-	float exrange = G->Manufacturer->getexclusion(building->GetName());
-	if(exrange > 10){
+
+	if(building->GetExclusionRange() > 10){
 		int* funits = new int[5000];
-		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetDeferRepairRange());
 		if(fnum > 1){
 			//
 			for(int i = 0; i < fnum; i++){
@@ -268,7 +267,7 @@ bool CUnitConstructionTask::Init(){
 				}
 				if(udf == building->GetUnitDef()){
 					NLOG("CUnitConstructionTask::Init  mark 3a#");
-					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < exrange){
+					if(G->GetUnitPos(funits[i]).distance2D(unitpos) < building->GetExclusionRange()){
 						int kj = funits[i];
 						delete [] funits;
 						if(G->cb->UnitBeingBuilt(kj)==true){

@@ -3,29 +3,9 @@
 map<int,deque<CBPlan* >* > alliedplans;
 uint plancounter=1;
 map<string, vector<string> > metatags;
-map<string, float > r_ranges;
-map<string, float > exclusion_ranges;
+//map<string, float > r_ranges;
 
 
-float CManufacturer::getRranges(string unit){
-	trim(unit);
-	tolowercase(unit);
-	if(r_ranges.find(unit) != r_ranges.end()){
-		return r_ranges[unit];
-	}else{
-		return 1;
-	}
-}
-
-float CManufacturer::getexclusion(string unit){
-	trim(unit);
-	tolowercase(unit);
-	if(exclusion_ranges.find(unit) != exclusion_ranges.end()){
-		return exclusion_ranges[unit];
-	}else{
-		return 1;
-	}
-}
 
 uint CManufacturer::getplans(){
 	return plancounter;
@@ -682,7 +662,7 @@ bool CManufacturer::Init(){
 					}
 				}
 			}
-			const map<string, string> section2 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionRepairRanges\\");
+			/*const map<string, string> section2 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionRepairRanges\\");
 			if(section2.empty()==false){
 				//
 				G->L << "Meta Tags :::" <<endline;
@@ -697,7 +677,7 @@ bool CManufacturer::Init(){
 					G->Get_mod_tdf()->GetDef(rmax,"5",key);
 					r_ranges[f] = rmax;
 				}
-			}/*else{
+			}else{
 				// Generate the values automatically!!!!!!!!
 				// err, figure out a method of doing this automatically....
 				int unum = G->cb->GetNumUnitDefs();
@@ -711,7 +691,7 @@ bool CManufacturer::Init(){
 				}
 			}*/
 			/* jjjj*/
-			const map<string, string> section3 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionExclusionRange\\");
+			/*const map<string, string> section3 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionExclusionRange\\");
 			if(section3.empty()==false){
 				//
 				G->L << "Meta Tags :::" <<endline;
@@ -726,7 +706,7 @@ bool CManufacturer::Init(){
 					G->Get_mod_tdf()->GetDef(rmax,"5",key);
 					exclusion_ranges[f] = rmax;
 				}
-			}/*else{
+			}*//*else{
 				// Generate the values automatically!!!!!!!!
 				// err, figure out a method of doing this automatically....
 				int unum = G->cb->GetNumUnitDefs();

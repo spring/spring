@@ -60,15 +60,12 @@ class Global;
 // Used to give end lines to the logger as endl cannot be passed to it
 #define endline "\n"
 
-// used to set B_IDLE as the type of a command
-#define CMD_IDLE 86
-
 // used to debug functions, functions log there names when called and the function that crashed the AI is the last one in the log listed
 // CLOG is used before the logging class is initialized
 // NLOG is used afterwards.
 // CLOG relies on SendTxtMsg and is logged into infolog.txt and visible to the user
 // NLOG only prints to the Log file
-// Uncomment #defien TNLOG further up to enable this extensive logging
+// Uncomment #define TNLOG further up to enable this extensive logging
 #ifdef TNLOG
 #define NLOG(a) (G->L.print(string("<")+to_string(G->Cached->team)+string(">")+string("function :: ") + a + string(endline)))
 #define CLOG(a) {cb->SendTextMsg(a,1);}
@@ -92,25 +89,7 @@ class Global;
 // The max n# of orders sent on each cycle by the command cache
 #define BUFFERMAX 8
 
-
-
-/*enum Ttarg{
-	// Helps define targetting and random moves, but not used yet
-	TARG_LAND,
-	TARG_SEA,
-	TARG_MIXED
-};
-
-enum Land_Type{
-	// A vital part of the new terrain analysis and building placement system
-	FLAT_LAND,
-	WATER,
-	METAL_PATCH,
-	GEO_PATCH,
-	UNBUILDABLE_LAND,
-	PATHWAY_LAND,
-	COAST
-};*/
+#define CMD_IDLE 23456
 
 enum btype {
 	// The universal build tags, this helps define what a task is aka what it does. Very important
@@ -238,8 +217,6 @@ enum cdgun {// dont think this is actually used anymore
 #include "boost/shared_ptr.hpp"
 #include "boost/weak_ptr.hpp"
 
-
-
 typedef boost::mutex mutex;
 typedef boost::mutex::scoped_lock scoped_lock;
 
@@ -256,8 +233,7 @@ typedef boost::mutex::scoped_lock scoped_lock;
 // helpers
 typedef TdfParser CSunParser;
 using namespace boost;
-//typedef boost::weak_ptr<class T> weak_ptr<class T>;
-//typedef boost::shared_ptr shared_ptr;
+
 
 #include "../Units/CUnitTypeData.h"
 #include "../Core/CMessage.h"
@@ -269,32 +245,32 @@ using namespace boost;
 #include "../Helpers/Terrain/CSector.h"			// Map Sector data structure
 #include "../Engine/TCommand.h"					// Unit cached command data structure
 #include "../Helpers/CWorkerThread.h"
-//#include "../Helpers/CThreadManager.h"
 
-#include "../Core/CCached.h"// Cached data storage class
-#include "../Engine/COrderRouter.h"// Caches orders and issues them so the engine doesnt give an overflow message
-#include "../Helpers/CEconomy.h" // Construction rules
+#include "../Core/CCached.h"					// Cached data storage class
+#include "../Engine/COrderRouter.h"				// Caches orders and issues them so the engine doesnt give an overflow message
+#include "../Helpers/CEconomy.h"				// Construction rules
 
-#include "../Helpers/Terrain/Map.h" // Common Map related procedures such as which corner of the mapare we in
+#include "../Helpers/Terrain/Map.h"				// Common Map related procedures such as which corner of the mapare we in
 
-#include "../Helpers/CConfigData.h" // Stores data from the mod.tdf and AI.tdf files
-#include "../Helpers/CTokenizer.h" // tokenizes a string based on a delimiter aka String.split() in java
-#include "../Helpers/Terrain/RadarHandler.h" // Spaces out radar tower placement so they cover more area and dont overlap
-#include "../Helpers/Terrain/DTHandler.h" // Manages creation and pacement of DT rings
-#include "../Helpers/Terrain/MetalMap.h" // Krogothes core metal spot fidner algorithm
-#include "../Helpers/Terrain/MetalHandler.h" // Handles metal spots and choices
-#include "../Helpers/Units/Actions.h" // Common actions in a useful class
-#include "../Helpers/ubuild.h" // Universal Build Routines
-#include "../Helpers/Terrain/CBuildingPlacer.h" // Building placement algorithm
+#include "../Helpers/CConfigData.h"				// Stores data from the mod.tdf and AI.tdf files
+#include "../Helpers/CTokenizer.h"				// Tokenizes a string based on a delimiter aka String.split() in java
+#include "../Helpers/Terrain/RadarHandler.h"	// Spaces out radar tower placement so they cover more area and dont overlap
+#include "../Helpers/Terrain/DTHandler.h"		// Manages creation and pacement of DT rings
+#include "../Helpers/Terrain/MetalMap.h"		// Krogothes core metal spot fidner algorithm
+#include "../Helpers/Terrain/MetalHandler.h"	// Handles metal spots and choices
+#include "../Helpers/Units/Actions.h"			// Common actions in a useful class
+#include "../Helpers/ubuild.h"					// Universal Build Routines
+#include "../Helpers/Terrain/CBuildingPlacer.h"	// Building placement algorithm
 
 
 // Agents
 
-#include "../Agents/CManufacturer.h" // Loads buildtrees and drives construction processes through the Task Cycle
-#include "../Agents/Planning.h" // Antistall algorithm and predictive targetting
-#include "../Agents/Chaser.h" // Attack system.
+#include "../Agents/CManufacturer.h"			// Loads buildtrees and drives construction processes through the Task Cycle
+#include "../Agents/Planning.h"					// Antistall algorithm and predictive targetting
+#include "../Agents/Chaser.h"					// Attack system.
 
 #include "../Units/Behaviours/AttackBehaviour.h"
+#include "../Units/Behaviours/CDGunBehaviour.h"
 #include "../Units/Behaviours/MetalMakerBehaviour.h"
 
 enum EnumTdfErrors {

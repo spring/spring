@@ -83,8 +83,8 @@ public:
 	uint getplans();
 	void AddPlan();
 	void RemovePlan();
-	float getRranges(string unit);
-	float getexclusion(string unit);
+	//float getRranges(string unit);
+
 private:
 	map<int,bool> factorytechlevels;
 	map<int,vector<float3> > techfactorypositions;
