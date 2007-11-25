@@ -68,16 +68,7 @@ void CUnit::RecieveMessage(CMessage &message){
 	}
 	if(message.GetType() == string("update")){
 		if(under_construction) return;
-		if(!nolist){
-			if(tasks.empty()){
-				if(LoadTaskList()){
-					boost::shared_ptr<IModule> t = tasks.front();
-					t->Init();
-					G->RegisterMessageHandler(t);
-				}
-				//executenext = !tasks.empty();
-			}
-		}else if(EVERY_((GetAge()%16+17))){
+		if(EVERY_((GetAge()%16+17))){
 			if(!tasks.empty()){
 				if(tasks.front()->IsValid()==false){
 					G->L.print("next task?");
@@ -124,7 +115,17 @@ void CUnit::RecieveMessage(CMessage &message){
 			return;
 		}
 	}
-	
+	if(under_construction) return;
+	if(!nolist){
+		if(tasks.empty()){
+			if(LoadTaskList()){
+				boost::shared_ptr<IModule> t = tasks.front();
+				t->Init();
+				G->RegisterMessageHandler(t);
+			}
+			//executenext = !tasks.empty();
+		}
+	}
 }
 
 int CUnit::GetAge(){

@@ -46,6 +46,12 @@ public:
 	bool GetSoloBuildActive();// is this behaviour currently active? (is one of these being built atm?)
 	void SetSoloBuildActive(bool value);
 
+	void SetExclusionRange(int value);
+	int GetExclusionRange();
+
+	void SetDeferRepairRange(float value);
+	float GetDeferRepairRange();
+
 	bool CanBuild();
 private:
 	Global* G;
@@ -59,4 +65,7 @@ private:
 
 	bool singleBuild;
 	bool singleBuildActive;
+
+	int exclusionRange;
+	float repairDeferRange;
 };

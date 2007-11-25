@@ -24,5 +24,5 @@ public:
 	int* encache;// cached enemy positions to speed up the process of calling the callback interface for the same data so many times
 	unsigned int enemy_number; // the number of cached enemy positions
 	int lastcacheupdate; // when the cached enemy positions where last updated
-	set<int> cloaked_units;
+	//set<int> cloaked_units;
 };

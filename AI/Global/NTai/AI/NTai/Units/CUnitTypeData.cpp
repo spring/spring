@@ -6,6 +6,8 @@ CUnitTypeData::CUnitTypeData(){
 	this->singleBuildActive = false;
 	this->soloBuild = false;
 	this->soloBuildActive = false;
+	exclusionRange=0;
+	repairDeferRange=0;
 }
 
 CUnitTypeData::~CUnitTypeData(){
@@ -20,7 +22,10 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 	trim(n);
 	tolowercase(n);
 	this->unit_name = n;
+	
+	G->Get_mod_tdf()->GetDef(repairDeferRange,"0","Resource\\ConstructionRepairRanges\\"+unit_name);
 
+	G->Get_mod_tdf()->GetDef(exclusionRange,"0","Resource\\ConstructionExclusionRanges\\"+unit_name);
 	// precalc wether this unit type is an attacker
 
 	if(G->info->dynamic_selection == false){
@@ -210,4 +215,22 @@ void CUnitTypeData::SetSoloBuildActive(bool value){
 	soloBuildActive = value;
 }
 
+void CUnitTypeData::SetExclusionRange(int value){
+	//
+	exclusionRange = value;
+}
 
+int CUnitTypeData::GetExclusionRange(){
+	//
+	return exclusionRange;
+}
+
+void CUnitTypeData::SetDeferRepairRange(float value){
+	//
+	repairDeferRange = value;
+}
+
+float CUnitTypeData::GetDeferRepairRange(){
+	//
+	return repairDeferRange;
+}
