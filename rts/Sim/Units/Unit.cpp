@@ -1163,11 +1163,14 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 	}
 
 	if (!beingBuilt && (usingScriptMoveType || ((physicalState == Flying) && unitDef->canmove))) {
+		// aircraft, skidding ground unit, or active ScriptMoveType
+		// note: (CAirMoveType) aircraft under construction should not
+		// use this matrix, or their nanoframes won't spin on pad
 		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
 		matrix = transMatrix;
 	}
 	else if (transporter && transporter->unitDef->holdSteady) {
-		//making local copies of vectors
+		// making local copies of vectors
 		float3 frontDir = GetVectorFromHeading(heading);
 		float3 upDir    = updir;
 		float3 rightDir = frontDir.cross(upDir);
@@ -1181,7 +1184,7 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 			matrix.LoadIdentity();
 			matrix.Translate(interPos);
 		} else {
-			//making local copies of vectors
+			// making local copies of vectors
 			float3 frontDir = GetVectorFromHeading(heading);
 			float3 upDir    = updir;
 			float3 rightDir = frontDir.cross(upDir);
@@ -1192,7 +1195,7 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 		}
 	}
 	else {
-		//making local copies of vectors
+		// making local copies of vectors
 		float3 frontDir = GetVectorFromHeading(heading);
 		float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
 		float3 rightDir = frontDir.cross(upDir);
