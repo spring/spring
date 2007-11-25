@@ -31,7 +31,7 @@ void CTWController::KeyMove(float3 move)
 void CTWController::MouseMove(float3 move)
 {
 	float dist=-camera->rot.x*1500;
-	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->viewSizeY*dist*2;
+	float pixelsize=camera->GetTanHalfFov()*2/gu->viewSizeY*dist*2;
 	move*=(1+keys[SDLK_LSHIFT]*3)*pixelsize;
 	float3 flatForward=camera->forward;
 	flatForward.y=0;

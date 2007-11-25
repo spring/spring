@@ -45,7 +45,7 @@ CSm3GroundDrawer::~CSm3GroundDrawer()
 static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 {
 	// Copy camera settings
-	tc.fov = sc.fov;
+	tc.fov = sc.GetFov();
 	tc.front = sc.forward;
 	tc.right = sc.right;
 	tc.up = sc.up;
@@ -168,7 +168,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	if (!shadowrc)
 		return;
 
-	shadowCam.fov = PI * camera->fov / 180.0f;
+	shadowCam.fov = camera->GetHalfFov()*2.0f; // Why *2?
 	shadowCam.front = camera->forward;
 	shadowCam.right = camera->right;
 	shadowCam.up = camera->up;

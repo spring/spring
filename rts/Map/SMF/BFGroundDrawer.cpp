@@ -105,7 +105,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	if (drawUnitReflection)
 		viewRadius = (viewRadius / 2) & 0xfffffe;
 
-	float zoom = 45 / camera->fov;
+	float zoom = 45 / camera->GetFov();
 	viewRadius = (int) (viewRadius * sqrt(zoom));
 	viewRadius += viewRadius % 2;
 

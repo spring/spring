@@ -18,12 +18,9 @@ public:
 	bool InView(const float3& mins, const float3& maxs);
 	void Update(bool freeze);
 
-	void myGluPerspective(float, float, float, float);
-	void myGluLookAt(const float3&, const float3&, const float3&);
-
 	CCamera();
-	virtual ~CCamera();
-	void operator=(const CCamera& c);
+	~CCamera();
+	
 	float3 pos;
 	float3 pos2;		//use this for calculating orthodirections (might differ from pos when calcing shadows)
 	float3 rot;			//varning inte alltid uppdaterad
@@ -36,16 +33,35 @@ public:
 	float3 leftside;
 	float3 posOffset;
 	float3 tiltOffset;
-	float fov;
-	float oldFov;
+	
 	float lppScale; // length-per-pixel scale
-	GLdouble modelview[16];
-	GLdouble projection[16];
-	GLdouble billboard[16];
 	GLdouble modelviewInverse[16];
 	GLint viewport[4];
 
+	const GLdouble* GetProjection() const;
+	const GLdouble* GetModelview() const;
+	const GLdouble* GetBillboard() const;
+	
 	static unsigned int billboardList;
+	
+	float GetFov() const;
+	float GetHalfFov() const;
+	float GetTanHalfFov() const;
+	void SetFov(float fov); // in degree
+	
+private:
+	void myGluPerspective(float, float, float);
+	void myGluLookAt(const float3&, const float3&, const float3&);
+	
+	GLdouble projection[16];
+	GLdouble modelview[16];
+	GLdouble billboard[16];
+
+	float fov; // in degree
+	float halfFov; // half the fov in radiant
+	float tanHalfFov; // tan(halfFov)
+	
+	void operator=(const CCamera& c) {}; // don't use this
 };
 
 extern CCamera* camera;

@@ -34,7 +34,7 @@ void COverheadController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 	move*=sqrt(move.z)*200;
-	float pixelsize=tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
+	float pixelsize= camera->GetTanHalfFov()*2/gu->viewSizeY*height*2;
 	pos.x+=move.x*pixelsize*2*scrollSpeed;
 	pos.z-=move.y*pixelsize*2*scrollSpeed;
 }
@@ -45,7 +45,7 @@ void COverheadController::MouseMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	float pixelsize=100*mouseScale*tan(camera->fov/180/2*PI)*2/gu->viewSizeY*height*2;
+	float pixelsize=100*mouseScale* camera->GetTanHalfFov() *2/gu->viewSizeY*height*2;
 	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
 }

@@ -297,8 +297,8 @@ void CDynWater::Draw()
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waterVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float dx=float(gu->viewSizeX)/gu->viewSizeY*tan(camera->fov/180/2*PI);
-	float dy=float(gu->viewSizeY)/gu->viewSizeY*tan(camera->fov/180/2*PI);
+	float dx=float(gu->viewSizeX)/gu->viewSizeY * camera->GetTanHalfFov();
+	float dy=float(gu->viewSizeY)/gu->viewSizeY * camera->GetTanHalfFov();
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256),1.0f/(W_SIZE*256), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f+0.5f,-camPosZ/256.0f+0.5f, 0, 0);
@@ -402,7 +402,8 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
-	CCamera realCam=*camera;
+	CCamera *realCam = camera;
+	camera = new CCamera(*realCam);
 
 	camera->up.x=0;
 	camera->up.y=1;
@@ -460,7 +461,8 @@ void CDynWater::DrawReflection(CGame* game)
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
-	*camera=realCam;
+	delete camera;
+	camera = realCam;
 	camera->Update(false);
 }
 
