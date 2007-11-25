@@ -7,14 +7,15 @@
   File "..\game\spring.exe"
   File "..\game\spring.def"
 
-  ; Devil.dll has been upgraded to 1.6.8rc2
-  ; (even though the DLL properties say 1.6.5, this is a Devil bug...)
-  File "..\mingwlibs\dll\DevIL.dll"
-
-  ; SDL is downgraded
-  ; grab SDL 1.2.10 from game directory, the one in mingwlibs (1.2.11) breaks
-  ; azerty/qwerty for non-chat input.
-  File "..\game\SDL.dll"
+  ; DLLs (updated in mingwlibs-v8)
+  File "..\mingwlibs\dll\freetype6.dll"
+  File "..\mingwlibs\dll\glew32.dll"
+  File "..\mingwlibs\dll\libogg-cs.dll"
+  File "..\mingwlibs\dll\libvorbis-cs.dll"
+  File "..\mingwlibs\dll\libvorbisfile-cs.dll"
+  File "..\mingwlibs\dll\python25.dll"
+  File "..\mingwlibs\dll\SDL.dll"
+  File "..\mingwlibs\dll\zlib1.dll"
 
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
@@ -29,11 +30,8 @@
   ; DLLs
   File "..\game\MSVCR71.dll"
   File "..\game\MSVCP71.dll"
-  File "..\mingwlibs\dll\freetype6.dll"
-  File "..\mingwlibs\dll\glew32.dll"
+  File "..\mingwlibs\dll\DevIL.dll"
   File "..\mingwlibs\dll\ILU.dll"
-  File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\zlib1.dll"
   File "..\game\zlibwapi.dll"
 
   File "..\game\PALETTE.PAL"
