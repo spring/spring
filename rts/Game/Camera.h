@@ -17,6 +17,10 @@ public:
 	bool InView(const float3& p,float radius=0);
 	bool InView(const float3& mins, const float3& maxs);
 	void Update(bool freeze);
+
+	void myGluPerspective(float, float, float, float);
+	void myGluLookAt(const float3&, const float3&, const float3&);
+
 	CCamera();
 	virtual ~CCamera();
 	void operator=(const CCamera& c);
