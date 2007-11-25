@@ -818,7 +818,10 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 
 void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 {
-	CCamera c = *camera;
+	// is this really needed?
+	CCamera *c = camera;
+	camera = new CCamera(*c);
+	
 	const float3 tmpMouseDir = mouse->dir;
 
 	float3 mapPos = GetMapPosition(x, y);
@@ -839,7 +842,8 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 	guihandler->MouseRelease(x, y, -button);
 
 	mouse->dir = tmpMouseDir;
-	*camera = c;
+	delete camera;
+	camera = c;
 }
 
 

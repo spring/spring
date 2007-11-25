@@ -31,10 +31,8 @@ static void BoxPlaneVerts (const Vector3& min, const Vector3& max, const Vector3
 	else { close.z = max.z; far.z = min.z; }
 }
 
-void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, Vector3* cfront, float fov, float aspect)
+void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, Vector3* cfront, float tanHalfFov, float aspect)
 {
-	float sf = tan((PI * fov / 180.0f) / 2);
-
 	planes.resize(5);
 	planes[0].SetVec (*cfront);
 	planes[0].CalcDist (*cbase + *cfront);
@@ -42,8 +40,8 @@ void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, V
 	float m = 200.0f;
 	base = *cbase + *cfront * m;
 	up = *cup , right = *cright;
-	up *= sf * m;
-	right *= sf * m * aspect;
+	up *= tanHalfFov * m;
+	right *= tanHalfFov * m * aspect;
 	front = *cfront;
 
 	pos [0] = base + right + up; // rightup

@@ -787,7 +787,7 @@ void LuaOpenGL::SetupScreenLighting()
 
 	// sun light -- needs the camera transformation
 	glPushMatrix();
-	glLoadMatrixd(camera->modelview);
+	glLoadMatrixd(camera->GetModelview());
 	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
 
 	const float sunFactor = 1.0f;
@@ -830,11 +830,11 @@ void LuaOpenGL::ResetWorldMatrices()
 	}
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
-		glLoadMatrixd(camera->projection);
+		glLoadMatrixd(camera->GetProjection());
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
-		glLoadMatrixd(camera->modelview);
+		glLoadMatrixd(camera->GetModelview());
 	}
 }
 
@@ -3903,7 +3903,7 @@ int LuaOpenGL::LoadIdentity(lua_State* L)
 }
 
 
-static double* GetNamedMatrix(const string& name)
+static const double* GetNamedMatrix(const string& name)
 {
 	if (name == "shadow") {
 		static double mat[16];
@@ -3913,16 +3913,16 @@ static double* GetNamedMatrix(const string& name)
 		return mat;
 	}
 	else if (name == "camera") {
-		return camera->modelview;
+		return camera->GetModelview();
 	}
 	else if (name == "caminv") {
 		return camera->modelviewInverse;
 	}
 	else if (name == "camprj") {
-		return camera->projection;
+		return camera->GetProjection();
 	}
 	else if (name == "billboard") {
-		return camera->billboard;
+		return camera->GetBillboard();
 	}
 	return NULL;
 }

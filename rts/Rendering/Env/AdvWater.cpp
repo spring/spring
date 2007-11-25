@@ -318,7 +318,8 @@ void CAdvWater::UpdateWater(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, bumpTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,128,128);
 
-	CCamera realCam=*camera;
+	CCamera *realCam = camera;
+	camera = new CCamera(*realCam);
 
 	camera->up.x=0;
 	camera->up.y=1;
@@ -359,6 +360,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
 
-	*camera=realCam;
+	delete camera;
+	camera = realCam;
 	camera->Update(false);
 }

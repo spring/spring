@@ -1427,8 +1427,9 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
 	glViewport(0, 0, reflTexSize, reflTexSize);
 
-	CCamera realCam = *camera;
-	camera->fov = 90;
+	CCamera *realCam = camera;
+	camera = new CCamera(*realCam);
+	camera->SetFov(90);
 	camera->forward = camdir;
 	camera->up = -UpVector;
 
@@ -1455,8 +1456,8 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
-	(*camera) = realCam;
-	camera->Update(false);
+	delete camera;
+	camera = realCam;
 }
 
 

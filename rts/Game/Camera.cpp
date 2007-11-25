@@ -5,8 +5,6 @@
 
 #include "Camera.h"
 
-#include "Rendering/GL/myGL.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "mmgr.h"
 
@@ -19,35 +17,38 @@ CCamera* cam2;
 
 unsigned int CCamera::billboardList = 0;
 
-CCamera::CCamera()
+CCamera::CCamera() : forward(1.0f, 0.0f, 0.0f), rot(0.0f, 0.0f, 0.0f), pos(2000.0f, 70.0f, 1800.0f), posOffset(0.0f, 0.0f, 0.0f), tiltOffset(0.0f, 0.0f, 0.0f), lppScale(0.0f)
 {
-	fov    = 45.0f;
-	oldFov = 0.0f;
-
-	up      = UpVector;
-	forward = float3(1.0f, 0.0f, 0.0f);
-	rot     = float3(0.0f, 0.0f, 0.0f);
-
-	rot.y = 0.0f;
-	rot.x = 0.0f;
-	pos.x = 2000.0f;
-	pos.y = 70.0f;
-	pos.z = 1800.0f;
-
-	posOffset = float3(0.0f, 0.0f, 0.0f);
-	tiltOffset = float3(0.0f, 0.0f, 0.0f);
-
-	lppScale = 0.0f;
-
+	// stuff that wont change can be initialised here, it doesn't need to be reinitialised every update
+	modelview[ 3] =  0.0f;
+	modelview[ 7] =  0.0f;
+	modelview[11] =  0.0f;
+	modelview[15] =  1.0f;
+	
+	projection[ 1] = 0.0f;
+	projection[ 2] = 0.0f;
+	projection[ 3] = 0.0f;
+	
+	projection[ 4] = 0.0f;
+	projection[ 6] = 0.0f;
+	projection[ 7] = 0.0f;
+	
+	projection[12] = 0.0f;
+	projection[13] = 0.0f;	
+	projection[15] = 0.0f;
+	
 	billboard[3]  = billboard[7]  = billboard[11] = 0.0;
 	billboard[12] = billboard[13] = billboard[14] = 0.0;
 	billboard[15] = 1.0;
+	
+	SetFov(45.0f);
+
+	up      = UpVector;
 
 	if (billboardList == 0) {
 		billboardList = glGenLists(1);
 	}
 }
-
 
 CCamera::~CCamera()
 {
@@ -120,28 +121,9 @@ static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
 }
 
 
-void CCamera::operator=(const CCamera& c)
-{
-	pos       = c.pos;
-	pos2      = pos;
-	rot       = c.rot;	
-	forward   = c.forward;
-	right     = c.right;
-	up        = c.up;
-	top       = c.top;
-	bottom    = c.bottom;
-	rightside = c.rightside;
-	leftside  = c.leftside;
-	fov       = c.fov;
-	oldFov    = c.oldFov;
-	lppScale  = c.lppScale;
-}
-
-
 void CCamera::Update(bool freeze)
 {
 	pos2 = pos;
-//	fov=60;
 	up.Normalize();
 
 	right = forward.cross(up);
@@ -150,13 +132,13 @@ void CCamera::Update(bool freeze)
 	up = right.cross(forward);
 	up.Normalize();
 
-	const float viewx = (float)tanf(float(gu->viewSizeX)/gu->viewSizeY * PI / 4 * fov / 90);
-	const float viewy = (float)tanf(PI / 4 * fov / 90);
+	const float viewx = (float)tanf(float(gu->viewSizeX)/gu->viewSizeY * halfFov);
+	const float viewy = tanHalfFov;
 
 	if (gu->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
-		const float span = 2.0f * (float)tanf((PI / 180.0) * (fov * 0.5f));
+		const float span = 2.0f * tanHalfFov;
 		lppScale = span / (float)gu->viewSizeY;
 	}
 
@@ -182,7 +164,6 @@ void CCamera::Update(bool freeze)
 		cam2->lppScale  = lppScale;
 	}
 
-	oldFov = fov;
 	const float gndHeight = ground->GetHeight(pos.x, pos.z);
 	const float rangemod = 1.0f + max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
 	const float aspect = (GLfloat) gu->viewSizeX / (GLfloat) gu->viewSizeY;
@@ -195,7 +176,7 @@ void CCamera::Update(bool freeze)
 	// apply and store the transform, should be faster
 	// than calling glGetDoublev(GL_PROJECTION_MATRIX)
 	// right after gluPerspective()
-	myGluPerspective(fov, aspect, zNear, gu->viewRange);
+	myGluPerspective(aspect, zNear, gu->viewRange);
 
 
 	glMatrixMode(GL_MODELVIEW);  // Select the Modelview Matrix
@@ -299,8 +280,8 @@ void CCamera::UpdateForward()
 
 float3 CCamera::CalcPixelDir(int x, int y)
 {
-	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY*tanf(fov/180/2*PI)*2;
-	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY*tanf(fov/180/2*PI)*2;
+	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY * tanHalfFov * 2;
+	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY * tanHalfFov * 2;
 	float3 dir = camera->forward-camera->up*dy+camera->right*dx;
 	dir.Normalize();
 	return dir;
@@ -316,33 +297,22 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos)
 	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
 }
 
-
-
-inline void CCamera::myGluPerspective(float fov, float aspect, float zNear, float zFar) {
-	GLdouble t = zNear * tan(fov * 0.008726646f);
+inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
+	GLdouble t = zNear * tanHalfFov;
 	GLdouble b = -t;
 	GLdouble l = b * aspect;
 	GLdouble r = t * aspect;
 
 	projection[ 0] = (2.0f * zNear) / (r - l);
-	projection[ 1] = 0.0f;
-	projection[ 2] = 0.0f;
-	projection[ 3] = 0.0f;
 
-	projection[ 4] = 0.0f;
 	projection[ 5] = (2.0f * zNear) / (t - b);
-	projection[ 6] = 0.0f;
-	projection[ 7] = 0.0f;
 
 	projection[ 8] = (r + l) / (r - l);
 	projection[ 9] = (t + b) / (t - b);
 	projection[10] = -(zFar + zNear) / (zFar - zNear);
 	projection[11] = -1.0f;
 
-	projection[12] = 0.0f;
-	projection[13] = 0.0f;
 	projection[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
-	projection[15] = 0.0f;
 
 	glMultMatrixd(projection);
 }
@@ -357,23 +327,58 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	modelview[ 0] =  s.x;
 	modelview[ 1] =  u.x;
 	modelview[ 2] = -f.x;
-	modelview[ 3] =  0.0f;
+	
 
 	modelview[ 4] =  s.y;
 	modelview[ 5] =  u.y;
 	modelview[ 6] = -f.y;
-	modelview[ 7] =  0.0f;
 
 	modelview[ 8] =  s.z;
 	modelview[ 9] =  u.z;
 	modelview[10] = -f.z;
-	modelview[11] =  0.0f;
 
 	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
 	modelview[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
 	modelview[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
 	modelview[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
-	modelview[15] = 1.0f;
 
 	glMultMatrixd(modelview);
 }
+
+const GLdouble* CCamera::GetProjection() const
+{
+	return projection;
+}
+
+const GLdouble* CCamera::GetModelview() const
+{
+	return modelview;
+}
+
+const GLdouble* CCamera::GetBillboard() const
+{
+	return billboard;
+}
+
+float CCamera::GetFov() const
+{
+	return fov;
+}
+
+float CCamera::GetHalfFov() const
+{
+	return halfFov;
+}
+
+float CCamera::GetTanHalfFov() const
+{
+	return tanHalfFov;
+}
+
+void CCamera::SetFov(float myfov)
+{
+	fov = myfov;
+	halfFov = fov * 0.008726646f;
+	tanHalfFov = tanf(halfFov);
+}
+

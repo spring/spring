@@ -44,7 +44,7 @@ void CBaseTreeDrawer::DrawShadowPass(void)
 
 void CBaseTreeDrawer::Draw (bool drawReflection)
 {
-	float zoom=45/camera->fov;
+	float zoom=45/camera->GetFov();
 	float treeDistance=baseTreeDistance*sqrt((zoom));
 	if(treeDistance>MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE))
 		treeDistance=MAX_VIEW_RANGE/(SQUARE_SIZE*TREE_SQUARE_SIZE);

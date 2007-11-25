@@ -66,7 +66,8 @@ void CCameraHandler::UpdateCam()
 	if (cameraTimeLeft <= 0.0f) {
 		camera->pos = wantedCamPos;
 		camera->forward = wantedCamDir;
-		camera->fov = wantedCamFOV;
+		if (wantedCamFOV != camera->GetFov())
+			camera->SetFov(wantedCamFOV);
 	}
 	else {
 		const float currTime = cameraTimeLeft;
@@ -75,10 +76,10 @@ void CCameraHandler::UpdateCam()
 		const float exp = cameraTimeExponent;
 		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
 
-		const float  deltaFOV = wantedCamFOV - camera->fov;
+		const float  deltaFOV = wantedCamFOV - camera->GetFov();
 		const float3 deltaPos = wantedCamPos - camera->pos;
 		const float3 deltaDir = wantedCamDir - camera->forward;
-		camera->fov     += deltaFOV * ratio;
+		camera->SetFov(camera->GetFov() + (deltaFOV * ratio));
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();

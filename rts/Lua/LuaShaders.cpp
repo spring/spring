@@ -706,13 +706,13 @@ int LuaShaders::UniformMatrix(lua_State* L)
 				}
 			}
 			else if (matName == "camera") {
-				UniformMatrix4dv(location, camera->modelview);
+				UniformMatrix4dv(location, camera->GetModelview());
 			}
 			else if (matName == "caminv") {
 				UniformMatrix4dv(location, camera->modelviewInverse);
 			}
 			else if (matName == "camprj") {
-				UniformMatrix4dv(location, camera->projection);
+				UniformMatrix4dv(location, camera->GetProjection());
 			}
 			else {
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");

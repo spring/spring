@@ -324,8 +324,9 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	if (cameraLoc) {
 		// FIXME: this is happening too much, just use floats?
 		GLfloat array[16];
+		const GLdouble* modelview = camera->GetModelview();
 		for (int i = 0; i < 16; i++) {
-			array[i] = (GLfloat)camera->modelview[i];
+			array[i] = (GLfloat)modelview[i];
 		}
 		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
 	}
