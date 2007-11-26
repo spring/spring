@@ -52,13 +52,13 @@ CDxSound::CDxSound()
 		throw "DxSound: Could not get window from SDL";
 	}
 	m_hWnd = wmInfo.window;
-	
+
 	// Initialize COM
 	hr = CoInitialize( NULL );
-	if( hr!=S_OK && hr!=S_FALSE){
+	if (hr != S_OK && hr != S_FALSE && hr != RPC_E_CHANGED_MODE) {
 		throw "DxSound: Could not initialize com";
 	}
-	
+
 	// Create IDirectSound using the primary sound device
 	if( FAILED( hr = DirectSoundCreate( NULL, &m_pDS, NULL ) ) ){
 		throw "DxSound: Could not create direct sound object";
