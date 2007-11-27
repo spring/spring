@@ -5,7 +5,6 @@ int* garbage = 0;
 
 Chaser::Chaser(){
     G = 0;
-    lock = false;
     if(garbage == 0){
         garbage = new int[10000];
     }
@@ -845,15 +844,6 @@ void Chaser::DoUnitStuff(int aa){
      engaged.insert(aa);
      Beacon(pos,1000);
      }*/
-}
-
-void Chaser::FireWeaponsNearby(){
-    NLOG("Chaser::Update :: make attackers attack nearby targets");
-    if(Attackers.empty() == false){
-        for(set<int>::iterator aa = Attackers.begin(); aa != Attackers.end();++aa){
-            DoUnitStuff(*aa);
-        }
-    }
 }
 
 void Chaser::FireDefences(){
