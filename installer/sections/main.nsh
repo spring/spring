@@ -8,7 +8,6 @@
   File "..\game\spring.def"
 
   ; DLLs (updated in mingwlibs-v8)
-  File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\libogg-cs.dll"
   File "..\mingwlibs\dll\libvorbis-cs.dll"
@@ -31,6 +30,7 @@
   File "..\game\MSVCR71.dll"
   File "..\game\MSVCP71.dll"
   File "..\mingwlibs\dll\DevIL.dll"
+  File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\ILU.dll"
   File "..\game\zlibwapi.dll"
 
