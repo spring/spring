@@ -309,8 +309,18 @@ bool CUnit::LoadBehaviours(){
 				
 				behaviours.push_back(t);
 				t->Init();
+
+				G->RegisterMessageHandler(t);
+			} else if(s == "dgun"){
+				CDGunBehaviour* a = new CDGunBehaviour(G, GetID());
+				boost::shared_ptr<IBehaviour> t(a);
+				
+				behaviours.push_back(t);
+				t->Init();
+
 				G->RegisterMessageHandler(t);
 			} else if(s == "auto"){
+
 				if(utd->IsAttacker()){
 					CAttackBehaviour* a = new CAttackBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(a);
@@ -318,12 +328,23 @@ bool CUnit::LoadBehaviours(){
 					G->RegisterMessageHandler(t);
 					t->Init();
 				}
+
 				if(utd->IsMetalMaker()||(utd->IsMex() && utd->GetUnitDef()->onoffable ) ){
 					CMetalMakerBehaviour* m = new CMetalMakerBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(m);
 					behaviours.push_back(t);
 					G->RegisterMessageHandler(t);
 					t->Init();
+				}
+				
+				if(utd->CanDGun()){
+					CDGunBehaviour* a = new CDGunBehaviour(G, GetID());
+					boost::shared_ptr<IBehaviour> t(a);
+					
+					behaviours.push_back(t);
+					t->Init();
+
+					G->RegisterMessageHandler(t);
 				}
 			}
 		}

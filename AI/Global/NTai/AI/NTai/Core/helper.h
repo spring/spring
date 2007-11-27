@@ -49,16 +49,14 @@ public:
 	//CTaskFactory* TaskFactory;
 
 
-	map<string,string> unit_names; //unitname -> human name
-	map<string,string> unit_descriptions; //unitname -> human name
+	std::map<std::string,std::string> unit_names; //unitname -> human name
+	std::map<std::string,std::string> unit_descriptions; //unitname -> human name
 
 
 	float max_energy_use;
 
-	//bool DrawTGA(string filename,float3 position);
 
-	//bool LoadTGA(const char *filename, STGA& tgaFile);
-	set<int> idlenextframe;
+	std::set<int> idlenextframe;
 	// Interface functions
 	void InitAI(IAICallback* callback, int team); // initialize the AI
 	void UnitCreated(int unit); // a unit has been created, but this is currently not used.....
@@ -77,7 +75,7 @@ public:
 	void Update();// called every frame (usually 30 frames per second)
 	void SortSolobuilds(int unit);
 
-	string ComName;
+	std::string ComName;
 	void Crash();// Used to crash NTAI when the user types the ".crash" command
 
 	bool InLOS(float3 pos);
@@ -85,36 +83,25 @@ public:
 	int GetEnemyUnits(int* units, const float3 &pos, float radius);
 	int GetEnemyUnits(int* units);
 	int GetEnemyUnitsInRadarAndLos(int* units);
-	set<int> LOSGetEnemy(){// returns enemies in LOS (faster than the callback function)
+	std::set<int> LOSGetEnemy(){// returns enemies in LOS (faster than the callback function)
 		return Cached->enemies;
 	}
 	bool ReadFile(string filename, string* buffer); // reads a file in from the given path and shoves it in the buffer string provided
 	TdfParser* Get_mod_tdf();// returns a TdfParser object loaded with the contents of mod.tdf
 
-	//Triangle & marker stuff
-	//void Draw(ctri triangle); // draws a triangle marker structure on the map
-	//ctri Tri(float3 pos, int size=20, float speed=6, int lifetime=900, int fade=3, int creation=1); // initializes a triangle marker structure
-	//void Increment(vector<ctri>::iterator triangle, int frame); // rotates and fades a triangle
-
-	bool CanDGun(int uid);
-
 	//learning stuff
 	void SetEfficiency(std::string s, float e);
-	float GetEfficiency(string s, float def_value=500.0f); // returns the efficiency of the unit with name s.
-	float GetEfficiency(string s,set<string>& doneconstructors,int techlevel=1); // returns the efficiency of the unit with name s, but not including those in the vector constructors if it's a builder to prevent recursive loops
-	float GetTargettingWeight(string unit, string target);
+	float GetEfficiency(std::string s, float def_value=500.0f); // returns the efficiency of the unit with name s.
+	float GetEfficiency(std::string s,std::set<std::string>& doneconstructors,int techlevel=1); // returns the efficiency of the unit with name s, but not including those in the vector constructors if it's a builder to prevent recursive loops
+	float GetTargettingWeight(std::string unit, std::string target);
 	bool LoadUnitData(); // loads unit efficiency data from the learning file
 	bool SaveUnitData(); // saves unit efficiency data back to file
 
 	int GetCurrentFrame();
 	const UnitDef* GetEnemyDef(int enemy);
-	//int GiveOrder(TCommand c, bool newer=true);// Command cache
 
 	const UnitDef* GetUnitDef(int unitid){
-		if(unitid < 0){
-			return 0;
-		}
-		if(unitid > MAX_UNITS-1){
+		if(!ValidUnitID(unitid)){
 			return 0;
 		}
 		//if(Cached->cheating){
@@ -123,14 +110,9 @@ public:
 			return cb->GetUnitDef(unitid);
 		}*/
 	}
-	//const UnitDef* GetUnitDef(string s){
-	//	return UnitDefLoader->GetUnitDef(s);
-		//return cb->GetUnitDef(s.c_str());
-	//}
 
-	//map<int,temp_pos> positions;
 	float3 GetUnitPos(int unitid,int enemy=0);// 1 = true, 2 = false, 0 = find out for us/wedunno
-	float GetDGunCost(string s);
+
 	MTRand_int32 mrand;
 
     bool HasUnit(int unit);
@@ -141,9 +123,9 @@ public:
 	void DestroyHandler(boost::shared_ptr<IModule> handler);
 	void RemoveHandler(boost::shared_ptr<IModule> handler);
 private:
-	set<boost::shared_ptr<IModule> > dead_handlers;
-	set<boost::shared_ptr<IModule> > handlers;
-	map<int,boost::shared_ptr<IModule> > units;
+	std::set<boost::shared_ptr<IModule> > dead_handlers;
+	std::set<boost::shared_ptr<IModule> > handlers;
+	std::map<int,boost::shared_ptr<IModule> > units;
 };
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

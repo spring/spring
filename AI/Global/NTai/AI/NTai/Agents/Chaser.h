@@ -32,7 +32,7 @@ public:
 	void UpdateSites();
 	void UpdateMatrixEnemies();
 	void CheckKamikaze();
-	void FireDgunsNearby();
+
 	void FireWeaponsNearby();
 	void FireDefences();
 	void DoUnitStuff(int aa);
@@ -45,11 +45,11 @@ public:
 	int max_threshold;
 	set<int> Attackers;
 	set<int> sweap;
-	set<int> dgunning;
+	//set<int> dgunning;
 	set<int> defences;
-	set<int> dgunners;
+
 	float3 swtarget;
-	map<string,bool> can_dgun;
+
 	bool lock;
 //	int acknum;
 	Global* G;
