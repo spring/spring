@@ -33,7 +33,6 @@ public:
 	void UpdateMatrixEnemies();
 	void CheckKamikaze();
 
-	void FireWeaponsNearby();
 	void FireDefences();
 	void DoUnitStuff(int aa);
 	set<int> engaged;
@@ -45,13 +44,12 @@ public:
 	int max_threshold;
 	set<int> Attackers;
 	set<int> sweap;
-	//set<int> dgunning;
+
 	set<int> defences;
 
 	float3 swtarget;
 
-	bool lock;
-//	int acknum;
+
 	Global* G;
 	set<int> temp_attack_units; // used for storing attackers while forming a group
 	set<int> temp_air_attack_units; // used for storing air attackers while forming a group
