@@ -64,6 +64,18 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 			attacker = true; // obviously a gunship type thingymajig
 		}
 	}
+
+
+	// dgun stuff
+	canDGun = ud->canDGun;
+	if(canDGun){
+		for(vector<UnitDef::UnitDefWeapon>::const_iterator k = ud->weapons.begin();k != ud->weapons.end();++k){
+			if(k->def->manualfire){
+				dgunCost = k->def->energycost;
+				break;
+			}
+		}
+	}
 }
 
 const UnitDef* CUnitTypeData::GetUnitDef(){
@@ -233,4 +245,13 @@ void CUnitTypeData::SetDeferRepairRange(float value){
 float CUnitTypeData::GetDeferRepairRange(){
 	//
 	return repairDeferRange;
+}
+
+float CUnitTypeData::GetDGunCost(){
+	//
+	return dgunCost;
+}
+
+bool CUnitTypeData::CanDGun(){
+	return canDGun;
 }

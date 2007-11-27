@@ -81,9 +81,9 @@ void Chaser::Add(int unit, bool aircraft){
 void Chaser::UnitDestroyed(int unit, int attacker){
     NLOG("Chaser::UnitDestroyed");
     NO_GAIA(NA)
-    dgunning.erase(unit);
+
     defences.erase(unit);
-    dgunners.erase(unit);
+
     engaged.erase(unit);
     walking.erase(unit);
     //	attack_units.erase(unit);
@@ -115,7 +115,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     NLOG("Chaser::UnitDamaged");
 
     NO_GAIA(NA)
-    START_EXCEPTION_HANDLING
+    //START_EXCEPTION_HANDLING
     float3 dpos = G->GetUnitPos(damaged);
     if(G->Map->CheckFloat3(dpos) == false) return;
     if(attacker<0) return;
@@ -142,7 +142,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
         }
     }else{
         allyteamGrudges[ateam] = damage;
-    }*/
+    }
     if(dgunners.find(damaged) != dgunners.end()){
         //
         if(dgunning.find(damaged) == dgunning.end()){
@@ -160,8 +160,8 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
                 }
             }
         }
-    }
-    END_EXCEPTION_HANDLING("Chaser::UnitDamaged running away routine!!!!!!")
+    }*/
+    //END_EXCEPTION_HANDLING("Chaser::UnitDamaged running away routine!!!!!!")
     //EXCEPTION_HANDLER(G->Actions->DGunNearby(damaged),"G->Actions->DGunNearby INSIDE Chaser::UnitDamaged",NA) // make the unit attack nearby enemies with the dgun, the attacker being the one most likely to be the nearest....
 }
 
@@ -179,10 +179,6 @@ void Chaser::UnitFinished(int unit){
 	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
 
     NLOG("stockpile/dgun");
-
-	if(utd->GetUnitDef()->canDGun){
-        dgunners.insert(unit);
-    }
 
     if(utd->GetUnitDef()->weapons.empty() == false){
 
@@ -470,9 +466,6 @@ void Chaser::UnitIdle(int unit){
         return;
     }
 
-    if(dgunning.empty() == false){
-        dgunning.erase(unit);
-    }
 
     engaged.erase(unit);
     walking.erase(unit);
@@ -800,12 +793,6 @@ void Chaser::Update(){
     }
     END_EXCEPTION_HANDLING("Chaser::FireDefences()")
 
-    START_EXCEPTION_HANDLING
-    if(EVERY_(66 FRAMES)){
-        FireDgunsNearby();
-    }
-    END_EXCEPTION_HANDLING("Chaser::FireDgunsNearby()")
-
     NLOG("Chaser::Update :: DONE");
 }
 
@@ -865,15 +852,6 @@ void Chaser::FireWeaponsNearby(){
     if(Attackers.empty() == false){
         for(set<int>::iterator aa = Attackers.begin(); aa != Attackers.end();++aa){
             DoUnitStuff(*aa);
-        }
-    }
-}
-
-void Chaser::FireDgunsNearby(){
-    NLOG("Chaser::Update :: make units dgun nearby enemies nearby targets");
-    if(dgunners.empty() == false){
-        for(set<int>::iterator aa = dgunners.begin(); aa != dgunners.end();++aa){
-            G->Actions->DGunNearby(*aa);
         }
     }
 }

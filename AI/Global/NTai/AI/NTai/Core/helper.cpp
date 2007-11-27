@@ -14,7 +14,6 @@ map<string, float> efficiency;
 map<string, float> builderefficiency;
 map<string, int> lastbuilderefficiencyupdate;
 set<string> constructors; // Units with buildmenus
-map<string, float> dguncost;
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -482,15 +481,6 @@ void Global::UnitFinished(int unit){
 
 }
 
-bool Global::CanDGun(int uid){
-    const UnitDef* ud = GetUnitDef(uid);
-    if(ud!=0){
-        return ud->canDGun;
-    }else{
-        return false;
-    }
-}
-
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Global::UnitMoveFailed(int unit){
@@ -607,14 +597,14 @@ void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 
     Ch->UnitDamaged(damaged, attacker, damage, dir);
 
-    /*START_EXCEPTION_HANDLING
+    /*START_EXCEPTION_HANDLING*/
     CMessage message("unitdamaged");
     message.AddParameter(damaged);
     message.AddParameter(attacker);
     message.AddParameter(damage);
     message.AddParameter(dir);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
+    /*END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
 }
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 void Global::GotChatMsg(const char* msg, int player){
@@ -789,26 +779,6 @@ void Global::UnitDestroyed(int unit, int attacker){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-/*bool Global::DrawTGA(string filename,float3 position){
- STGA tga;
- if(LoadTGA(filename.c_str(),tga)==true){
- L.print(" :: the loading of logo.TGA worked!!!");
- for(int y= 0; y< tga.height; y++){
- for(int x = 0; x< tga.width; x++){
- float3 tpos = float3(x*1.0f,500,y*1.0f);
- tpos += position;
- float3 pos2 = tpos;
- pos2.y += 4;
- int group = cb->CreateLineFigure(tpos,pos2,2.0f,0,600,0);
- cb->SetFigureColor(group,tga.data[tga.width*3*y+x*3+2],tga.data[tga.width*3*y+x*3+1],tga.data[tga.width*3*y+x*3+3],1.0f);
- }
- }
- return true;
- }else{
- L.print(string(" :: ERROR!!!! the loading of ") + filename + string(" failed!!!"));
- return false;
- }
- }*/
 void Global::InitAI(IAICallback* callback, int team){
     L.print("Initialisising");
 
@@ -1214,12 +1184,6 @@ float Global::GetEfficiency(string s, set<string>& doneconstructors, int techlev
     }
 }
 
-float Global::GetDGunCost(string s){
-    map<string, float>::iterator i = dguncost.find(s);
-    if(i != dguncost.end()) return i->second;
-    return 0;
-}
-
 bool Global::LoadUnitData(){
     if(G->L.FirstInstance()){
         int unum = cb->GetNumUnitDefs();
@@ -1264,14 +1228,6 @@ bool Global::LoadUnitData(){
             efficiency[eu] = ef;
             unit_names[eu] = pud->humanName;
             unit_descriptions[eu] = pud->tooltip;
-            if(pud->canDGun){
-                for(vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
-                    if(k->def->manualfire){
-                        dguncost[pud->name] = k->def->energycost;
-                        break;
-                    }
-                }
-            }
         }
         string filename = info->datapath;
         filename += slash;

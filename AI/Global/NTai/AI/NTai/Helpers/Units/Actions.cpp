@@ -340,6 +340,7 @@ void CActions::ScheduleIdle(int unit){
 }
 bool CActions::DGun(int uid, int enemy){
     NLOG("CActions::DGun");
+
     TCommand tc(uid, "cmd_attack chaser::update every 4 secs");
     tc.ID(CMD_DGUN);
     tc.Push(enemy);
@@ -347,11 +348,10 @@ bool CActions::DGun(int uid, int enemy){
 
     tc.created = G->cb->GetCurrentFrame();
     if(G->OrderRouter->GiveOrder(tc, true)==false){
-        return false; // GiveOrder returned an error
+		// GiveOrder returned an error
+        return false; 
     }else{
-        G->Ch->dgunning.insert(uid);
-        // Command successful, This unit is now dgunning, so add it to this container so that next time it
-        // dguns we can prevent it from doing so because it's already dgunning
+        // Command successful, This unit is now dgunning
         return true;
     }
 }
@@ -376,24 +376,34 @@ bool CActions::AreaReclaim(int uid, float3 pos, int radius){
 
 bool CActions::DGunNearby(int uid){
     NLOG("CActions::DGunNearby");
-    const UnitDef* ud = G->cb->GetUnitDef(uid);
-    if(ud == 0 ){
-        G->L.print("Dgunning failed, ud == 0");
+	
+	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(uid);
+    
+	if(utd == 0 ){
+        G->L.print("Dgunning failed, utd == 0");
         return false;
     }
-    if(G->CanDGun(uid)==false){
-        G->L.print("Dgunning failed, canDGun == false");
+	
+	if(!utd->CanDGun()){
         return false;
     }
+
     float3 compos = G->GetUnitPos(uid);
     if(G->Map->CheckFloat3(compos)==false){
         return false;
     }
-    int* en = new int[5000];
+    
+	int* en = new int[5000];
+
     int e = G->GetEnemyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
-    if(e>0){
+    
+	if(e>0){
         for(int i = 0; i < e; i++){
-            if(::ValidUnitID(en[i])==false) continue;
+            
+			if(ValidUnitID(en[i])==false){
+				continue;
+			}
+
 			CUnitTypeData* edt = G->UnitDefLoader->GetUnitTypeDataByUnitId(en[i]);
 
             //if(endi->isCommander == true) continue; // no dgunning enemy commanders!
@@ -401,6 +411,7 @@ bool CActions::DGunNearby(int uid){
             // no dgunning enemy commanders is commented out because now if the enemy is a commander the CMD_DGUN is
             // changed to CMD_RECLAIM, allowing the enemy commander to be eliminated without causing a wild goose chase of
             // building dgunned building dgunned, commander in the way of building dgunned, BANG, both commanders bye bye
+			// that and the line needs fiddling anyway due to the CUnitTypeData refactor
 
 			if(edt->IsAirCraft()&&(edt->GetUnitDef()->speed<3)){
 				continue;// attempting to dgun an aircraft without predictive dgunning leads to a goose chase
@@ -410,93 +421,132 @@ bool CActions::DGunNearby(int uid){
             delete [] en;
 
             G->Manufacturer->WipePlansForBuilder(uid);
+
             if(edt->GetUnitDef()->canDGun){
-                int r = (int)G->Pl->ReclaimTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
-                int c = (int)G->Pl->CaptureTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
-                if(r<(4 SECONDS) && r < c){
+
+                int r = (int)G->Pl->ReclaimTime(utd->GetUnitDef(), edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                int c = (int)G->Pl->CaptureTime(utd->GetUnitDef(), edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+
+                if (r<(4 SECONDS) && r < c){
                     return Reclaim(uid, k);
-                }else{
-                    if(c<(4 SECONDS)){
+                } else {
+
+                    if (c<(4 SECONDS)){
                         return Capture(uid, k);
-                    }else if(!G->Ch->defences.empty()){
+                    } else if (!G->Ch->defences.empty()){
                         return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-                    }else{
+                    } else {
                         NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
                         return MoveToStrike(uid, G->Map->nbasepos(compos), false);
                     }
                 }
-            }else{
-                if(G->GetDGunCost(ud->name)<G->cb->GetEnergy()){
+
+            } else {
+
+                if (utd->GetDGunCost()<G->cb->GetEnergy()){
                     return DGun(uid, k);
-                }else{
-                    int r = (int)G->Pl->ReclaimTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
-                    int c = (int)G->Pl->CaptureTime(ud, edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                } else {
+
+                    int r = (int)G->Pl->ReclaimTime(utd->GetUnitDef(), edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+                    int c = (int)G->Pl->CaptureTime(utd->GetUnitDef(), edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
+
                     if(r<(4 SECONDS) && r < c){
                         return Reclaim(uid, k);
-                    }else{
-                        if(c<(4 SECONDS)){
+                    } else {
+                        if (c<(4 SECONDS)){
                             return Capture(uid, k);
-                        }else{
-                            if(!G->Ch->defences.empty()){
+                        } else {
+                            if (!G->Ch->defences.empty()){
                                 return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-                            }else{
+                            } else {
                                 NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
                                 return MoveToStrike(uid, G->Map->nbasepos(compos), false);
                             }
+
                         }
+
                     }
+
                 }
             }
         }
     }else{
+
         // we aint got enemies within immediate range, however this doesnt mean we're safe.
         // check fi there are nearby enemy groups
         // check the surrounding units and repair them if necessary.
         // if none need repairing then retreat, this may be an enemy base or an incoming army
+
         e = G->GetEnemyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*2.5f); // get all enemy units within weapons range atm
+
         if(e > 0){
             float total_enemy_power = 0;
             float total_allied_power = 0;
+
             for(int i = 0; i < e; i++){
-                if(::ValidUnitID(en[i])==false) continue;
+				if(!ValidUnitID(en[i])){
+					continue;
+				}
+
                 const UnitDef* endi = G->GetUnitDef(en[i]);
+
                 if(endi){
                     total_enemy_power += endi->power;
                 }
             }
+
             e = G->cb->GetFriendlyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*2.5f);
+
             for(int i = 0; i < e; i++){
-                if(ValidUnitID(en[i])==false) continue; // filter out bad unit id's
+				if(!ValidUnitID(en[i])){
+					continue; // filter out bad unit id's
+				}
+
                 const UnitDef* endi = G->GetUnitDef(en[i]);
                 if(endi){
                     total_allied_power += endi->power;
                 }
             }
+
             float ratio = total_allied_power/total_enemy_power;
+
             if((ratio<0.9f)&&(ratio > 0.4f)){
                 // repair nearby units
                 int r_uid = -1;
                 float best_r = 0;
+
                 e = G->cb->GetFriendlyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*2.5f);
+
                 for(int i = 0; i < e; i++){
-                    if(ValidUnitID(en[i])==false) continue; // filter out bad unit id's
-                    if(en[i] == uid) continue; // we cant repair ourself!!
-                    const UnitDef* endi = G->GetUnitDef(en[i]);
+					if(!ValidUnitID(en[i])){
+						continue; // filter out bad unit id's
+					}
+
+					if(en[i] == uid){
+						continue; // we cant repair ourself!!
+					}
+                    
+					const UnitDef* endi = G->GetUnitDef(en[i]);
                     if(endi){
                         float ratio = G->cb->GetUnitHealth(en[i])/G->cb->GetUnitMaxHealth(en[i]);
                         ratio = endi->power*ratio;
+
                         if( ratio > best_r){
                             best_r = ratio;
                             r_uid = en[i];
                         }
                     }
                 }
+
                 delete[] en;
+
                 if(ValidUnitID(r_uid)){
                     return Repair(uid, r_uid);
                 }
+
             }else{
                 delete[] en;
+
                 // runaway!!!!!!!!!!!!!!!!!!
                 if(!G->Ch->defences.empty()){
                     return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
@@ -504,6 +554,7 @@ bool CActions::DGunNearby(int uid){
                     NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
                     return MoveToStrike(uid, G->Map->nbasepos(compos), true);
                 }
+
             }
         }
     }
@@ -514,20 +565,25 @@ bool CActions::DGunNearby(int uid){
 
 bool CActions::OffensiveRepairRetreat(int uid, float radius){
     NLOG("CActions::OffensiveRepairRetreat");
+
     const UnitDef* ud = G->cb->GetUnitDef(uid);
     if(ud == 0 ){
         G->L.print("OffensiveRepairRetreat: ud == 0");
         return false;
     }
+
     float3 compos = G->GetUnitPos(uid);
     if(G->Map->CheckFloat3(compos)==false){
         return false;
     }
+
     int* en = new int[5000];
     int e = G->GetEnemyUnits(en, compos, radius); // get all enemy units within weapons range atm
+
     if(e>0){
         float total_enemy_power = 0;
         float total_allied_power = 0;
+
         for(int i = 0; i < e; i++){
             if(::ValidUnitID(en[i])==false) continue;
             const UnitDef* endi = G->GetUnitDef(en[i]);
@@ -535,7 +591,9 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
                 total_enemy_power += endi->power;
             }
         }
+
         e = G->cb->GetFriendlyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*2.5f);
+
         for(int i = 0; i < e; i++){
             if(ValidUnitID(en[i])==false) continue; // filter out bad unit id's
             const UnitDef* endi = G->GetUnitDef(en[i]);
@@ -543,12 +601,15 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
                 total_allied_power += endi->power;
             }
         }
+
         float ratio = total_allied_power/total_enemy_power;
+
         if((ratio<0.9f)&&(ratio > 0.4f)){
             // repair nearby units
             int r_uid = -1;
             float best_r = 0;
             e = G->cb->GetFriendlyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*2.5f);
+
             for(int i = 0; i < e; i++){
                 if(ValidUnitID(en[i])==false) continue; // filter out bad unit id's
                 if(en[i] == uid) continue; // we cant repair ourself!!
@@ -562,12 +623,16 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
                     }
                 }
             }
+
             delete[] en;
+
             if(ValidUnitID(r_uid)){
                 return Repair(uid, r_uid);
             }
+
         }else{
             delete[] en;
+
             // runaway!!!!!!!!!!!!!!!!!!
             if(!G->Ch->defences.empty()){
                 return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
@@ -584,23 +649,37 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
 bool CActions::RepairNearby(int uid, float radius){
     NLOG("CActions::RepairNearby");
     const UnitDef* udi = G->cb->GetUnitDef(uid);
-    if(udi == 0) return false;
+	if(udi == 0){
+		return false;
+	}
+
     float3 pos = G->GetUnitPos(uid);
+
     int* hn = new int[5000];
+
     int h = G->cb->GetFriendlyUnits(hn, pos, radius);
-    if( h>0){
+
+    if(h>0){
+
         for( int i = 0; i<h; i++){
             if(((G->cb->UnitBeingBuilt(hn[i]) == true)||(G->cb->GetUnitMaxHealth(hn[i])*0.6f > G->cb->GetUnitHealth(hn[i])))&&(G->cb->GetUnitTeam(hn[i]) == G->Cached->team)){
                 const UnitDef* bud = G->GetUnitDef(hn[i]);
                 float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
                 float RemainingTime = bud->buildTime / udi->buildSpeed * Remainder;
-                if (RemainingTime < 30.0f) continue;
+
+				if (RemainingTime < 30.0f){
+					continue;
+				}
+
                 float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
                 float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-                if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
-                    if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
+
+                if (G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+                    if (RemainingTime > 120.0f || bud->buildSpeed > 0){
                         int target = hn[i];
+
                         delete [] hn;
+
                         return Repair(uid, target);
                     }
                 }
@@ -608,16 +687,26 @@ bool CActions::RepairNearby(int uid, float radius){
         }
     }else{
         h = G->cb->GetFriendlyUnits(hn);
-        if(h <1) return false;
+
+		if(h <1){
+			return false;
+		}
+
         for( int i = 0; i<h; i++){
             if(((G->cb->UnitBeingBuilt(hn[i]) == true)||(G->cb->GetUnitMaxHealth(hn[i])*0.6f > G->cb->GetUnitHealth(hn[i])))&&(G->cb->GetUnitTeam(hn[i]) == G->Cached->team)){
                 const UnitDef* bud = G->GetUnitDef(hn[i]);
+
                 float Remainder = 1.0f - G->cb->GetUnitHealth(hn[i]) / G->cb->GetUnitMaxHealth(hn[i]);
                 float RemainingTime = bud->buildTime / udi->buildSpeed * Remainder;
-                if (RemainingTime < 30.0f) continue;
+
+				if (RemainingTime < 30.0f){
+					continue;
+				}
+
                 float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
                 float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-                if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+
+                if (G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
                     if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
                         int target = hn[i];
                         delete [] hn;
@@ -627,6 +716,7 @@ bool CActions::RepairNearby(int uid, float radius){
             }
         }
     }
+
     delete [] hn;
     return false;
 }

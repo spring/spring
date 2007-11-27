@@ -53,6 +53,9 @@ public:
 	float GetDeferRepairRange();
 
 	bool CanBuild();
+
+	float GetDGunCost();
+	bool CanDGun();
 private:
 	Global* G;
 	const UnitDef* ud;
@@ -68,4 +71,7 @@ private:
 
 	int exclusionRange;
 	float repairDeferRange;
+
+	float dgunCost;
+	bool canDGun;
 };
