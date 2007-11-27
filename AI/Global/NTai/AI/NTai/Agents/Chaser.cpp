@@ -116,7 +116,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 
     NO_GAIA(NA)
     //START_EXCEPTION_HANDLING
-    float3 dpos = G->GetUnitPos(damaged);
+    /*float3 dpos = G->GetUnitPos(damaged);
     if(G->Map->CheckFloat3(dpos) == false) return;
     if(attacker<0) return;
 
@@ -131,7 +131,7 @@ void Chaser::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
                 G->Actions->Retreat(damaged);
             }
         }
-    }
+    }*/
 
     /*int ateam = G->chcb->GetUnitAllyTeam(attacker);
     if(allyteamGrudges.empty()==false){

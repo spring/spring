@@ -319,6 +319,14 @@ bool CUnit::LoadBehaviours(){
 				t->Init();
 
 				G->RegisterMessageHandler(t);
+			} else if(s == "retreat"){
+				CRetreatBehaviour* a = new CRetreatBehaviour(G, GetID());
+				boost::shared_ptr<IBehaviour> t(a);
+				
+				behaviours.push_back(t);
+				t->Init();
+
+				G->RegisterMessageHandler(t);
 			} else if(s == "auto"){
 
 				if(utd->IsAttacker()){
@@ -339,6 +347,16 @@ bool CUnit::LoadBehaviours(){
 				
 				if(utd->CanDGun()){
 					CDGunBehaviour* a = new CDGunBehaviour(G, GetID());
+					boost::shared_ptr<IBehaviour> t(a);
+					
+					behaviours.push_back(t);
+					t->Init();
+
+					G->RegisterMessageHandler(t);
+				}
+
+				if(utd->GetUnitDef()->canmove || utd->GetUnitDef()->canfly){
+					CRetreatBehaviour* a = new CRetreatBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(a);
 					
 					behaviours.push_back(t);
