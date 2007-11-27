@@ -193,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\CEconomy.cpp"
 				>
 			</File>
@@ -226,6 +230,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Engine\COrderRouter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -339,6 +347,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\CEconomy.h"
 				>
 			</File>
@@ -372,6 +384,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Engine\COrderRouter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.h"
 				>
 			</File>
 			<File

@@ -28,5 +28,9 @@ void CDGunBehaviour::RecieveMessage(CMessage &message){
 			End();
 			return;
 		}
+	}else if(message.GetType() == string("unitidle")){
+		if(message.GetParameter(0)== uid){
+			active=false;
+		}
 	}
 }

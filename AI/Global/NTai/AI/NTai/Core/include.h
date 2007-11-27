@@ -272,6 +272,7 @@ using namespace boost;
 #include "../Units/Behaviours/AttackBehaviour.h"
 #include "../Units/Behaviours/CDGunBehaviour.h"
 #include "../Units/Behaviours/MetalMakerBehaviour.h"
+#include "../Units/Behaviours/CRetreatBehaviour.h"
 
 enum EnumTdfErrors {
     semicolon_expected
