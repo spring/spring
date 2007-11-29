@@ -1,11 +1,9 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-// Helper class implementation.
-
-#include "include.h"
+// Global class implementation.
 
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-using namespace std;
+//using namespace std;
 
 void trim(string &str);
 void tolowercase(string &str);

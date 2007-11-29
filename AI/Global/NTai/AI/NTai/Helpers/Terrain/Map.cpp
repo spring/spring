@@ -1,5 +1,5 @@
 // Map
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
 
 CMap::CMap(Global* GL){
 	G = GL;

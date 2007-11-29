@@ -1,6 +1,8 @@
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
+
 ThreadPool* pool=0;
 extern ThreadPool* pool;
+
 CBuildingPlacer::CBuildingPlacer(Global* GL){
     G=GL;
     valid=true;

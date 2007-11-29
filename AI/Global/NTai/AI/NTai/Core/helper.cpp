@@ -1,4 +1,4 @@
-#include "helper.h"
+#include "include.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -726,10 +726,6 @@ void Global::GotChatMsg(const char* msg, int player){
 void Global::UnitDestroyed(int unit, int attacker){
 
     units.erase(unit);
-    float3 p = GetUnitPos(unit);
-    if(G->Map->CheckFloat3(p)){
-        M->UnitDestroyed(p);
-    }
 
     idlenextframe.erase(unit);
 

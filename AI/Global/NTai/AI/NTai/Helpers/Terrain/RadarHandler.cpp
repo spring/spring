@@ -1,7 +1,13 @@
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
+
+// this class is courtesy fo the OTAI project.
+// Written by Veylon, slightly modified by AF.
+// Distributed under GPL V2
+
 int mandist(int x1, int y1, int x2, int y2){
 	return abs(x1 - x2) + abs(y1 - y2);
 }
+
 int RevDist(int X1, int Y1, int X2, int Y2, int Max, int Increment){
 	int dist = mandist(X1, Y1, X2, Y2);
 	if(dist * Increment > Max)
@@ -9,12 +15,15 @@ int RevDist(int X1, int Y1, int X2, int Y2, int Max, int Increment){
 	else
 		return Max - dist * Increment;
 }
+
 float Dist(float x1, float y1, float x2, float y2){
 	return (float)hypot(fabs(x1 - x2), fabs(y1-y2));
 }
+
 float F3Dist(float3 A, float3 B){
 	return (float)hypot(fabs(A.x - B.x), fabs(A.z - A.z));
 }
+
 CRadarHandler::CRadarHandler(Global*_gs):
 G(_gs),
 RadMap(NULL){

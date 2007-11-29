@@ -1,4 +1,4 @@
-#include "../Core/helper.h"
+#include "../Core/include.h"
 
 int* garbage = 0;
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -313,10 +313,6 @@ void Chaser::EnemyDestroyed(int enemy, int attacker){
     float3 dir = G->GetUnitPos(enemy);
     if(G->Map->CheckFloat3(dir) == true){
         Grid.ApplyModifierAtMapPos(dir, 0.7f);
-        const UnitDef* def = G->GetEnemyDef(enemy);
-        if(def){
-            if(def->extractsMetal > 0) G->M->EnemyExtractorDead(dir, enemy);
-        }
     }
 }
 
@@ -634,89 +630,40 @@ void Chaser::UpdateSites(){
      }*/
 }
 
-float Chaser::ApplyGrudge(int unit, float efficiency){
-    return efficiency;
-    /*
-     if(allyteamGrudges.empty()) return efficiency;
-     float e = efficiency;
-     int ateam = G->chcb->GetUnitAllyTeam(unit);
-     if(allyteamGrudges.find(ateam) == allyteamGrudges.end()) allyteamGrudges[ateam]=1;
-     // calculate the average grudge value
-     int n=0;
-     float total=0;
-     float average = 1;
-     if(!allyteamGrudges.empty()){
-     for(map<int,float>::iterator i = allyteamGrudges.begin(); i != allyteamGrudges.end();++i){
-     n++;
-     total+=i->second;
-     }
-     if(n == 0) return e;
-     average = total/n;
-     float percentage = allyteamGrudges[ateam]/min(average,1.0f);
-     return e*percentage;
-     }
-     return e;*/
-}
 
-map<int, float> balances;
-float average=1;
 void Chaser::UpdateMatrixEnemies(){
     NLOG("Chaser::Update :: update threat matrix enemy targets");
-    float3 pos = UpVector;
+	float3 pos = UpVector;
+
     // get all enemies in los
     int* en = new int[5000];
-    int unum = G->chcb->GetEnemyUnits(en);//GetEnemyUnits(en);
+    int unum = G->chcb->GetEnemyUnits(en);
 
-    //map<int,float> balances2;
     // go through the list
     if(unum > 0){
         for(int i = 0; i < unum; i++){
             if(ValidUnitID(en[i])){
-                //if(G->cb->GetUnitAllyTeam(en[i]) == G->Cached->unitallyteam) continue;
+
                 pos = G->GetUnitPos(en[i]);
 
                 if(Grid.ValidMapPos(pos) == false) continue;
-                //Grid.AddValueatMapPos(pos,30000);
+
                 const UnitDef* def = G->GetUnitDef(en[i]);
                 if(def){
-                    //G->cb->DrawUnit(def->name.c_str(),pos,0,40,2,true,true,0);
-                    if(def->extractsMetal > 0.0f) G->M->EnemyExtractor(pos, en[i]);
 
                     float e = G->GetEfficiency(def->name);//def->power;
-                    //float3 nbpos =
-
-                    // Apply grudge modifiers
-                    //e = ApplyGrudge(en[i],e);
 
                     // manipulate the value to make threats bigger as they get closer to the AI base.
-                    e /= (pos.distance2D(G->Map->nbasepos(pos))/2);
-                    //e /= 10;
-                    //int team = G->chcb->GetUnitTeam(en[i]);
-                    //if(balances.empty()==false) e*= balances[team]/max(average,1.0f);
+                    e /= (pos.distance2D(G->Map->nbasepos(pos))/4);
 
-                    //e *=5;
-                    //e *= 10;
-                    // Help maintain consistency by inflating the value of this location
+                    // Update the Threat Map
                     Grid.AddValueatMapPos(pos, e);
 
-                    //balances2[team] += e;
                 }
-                //G->Actions->AddPoint(pos);
             }
         }
     }
-    /*if(balances2.empty()==false){
-     float total=1;
-     int n=0;
-     for(map<int,float>::iterator i = balances2.begin(); i != balances2.end(); ++i){
-     total += i->second;
-     n++;
-     }
-     average=total/n;
-     balances.erase(balances.begin(),balances.end());
-     balances.clear();
-     balances.insert(balances2.begin(),balances2.end());
-     }*/
+
     delete [] en;
 }
 //

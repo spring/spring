@@ -1,9 +1,8 @@
 // CManufacturer
-#include "../Core/helper.h"
+#include "../Core/include.h"
 map<int,deque<CBPlan* >* > alliedplans;
 uint plancounter=1;
 map<string, vector<string> > metatags;
-//map<string, float > r_ranges;
 
 
 

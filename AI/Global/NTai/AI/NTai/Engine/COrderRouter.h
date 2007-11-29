@@ -1,5 +1,4 @@
 
-
 class COrderRouter{
 public:
 	COrderRouter(Global* GL);
@@ -15,5 +14,4 @@ public:
 private:
 	Global* G;
 	vector<TCommand> CommandCache;// Command cache
-	//vector<TCommand> OtherCached;
 };

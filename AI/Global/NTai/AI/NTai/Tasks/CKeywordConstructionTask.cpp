@@ -1,6 +1,4 @@
-#include "../Core/helper.h"
-// Tasks
-#include "../Tasks/CKeywordConstructionTask.h"
+#include "../Core/include.h"
 
 
 CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype type){
