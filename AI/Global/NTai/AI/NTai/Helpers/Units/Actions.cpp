@@ -1,5 +1,5 @@
 // Actions
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
 
 CActions::CActions(Global* GL){
     G = GL;

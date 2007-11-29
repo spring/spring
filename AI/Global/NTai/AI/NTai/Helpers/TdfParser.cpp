@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/spirit/utility/confix.hpp>
-#include "../Core/helper.h"
+#include "../Core/include.h"
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
 

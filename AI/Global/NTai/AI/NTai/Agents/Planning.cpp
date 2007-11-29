@@ -1,17 +1,20 @@
-#include "../Core/helper.h"
+#include "../Core/include.h"
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 void Planning::InitAI(){
 	NLOG("Planning::InitAI");
 	NLOG("filling antistall array");
+
 	CTokenizer<CIsComma>::Tokenize(NoAntiStall, G->Get_mod_tdf()->SGetValueMSG("AI\\NoAntiStall"), CIsComma());
-	//NoAntiStall = bds::set_cont(NoAntiStall,G->Get_mod_tdf()->SGetValueMSG("AI\\NoAntiStall"));
+
 	NLOG("filling antistall control values");
+
 	G->Get_mod_tdf()->GetDef(a, "1.3", "AI\\STALL_MULTIPLIERS\\metalIncome");
 	G->Get_mod_tdf()->GetDef(b, "1.3", "AI\\STALL_MULTIPLIERS\\metalstored");
 	G->Get_mod_tdf()->GetDef(c, "1.3", "AI\\STALL_MULTIPLIERS\\energyIncome");
 	G->Get_mod_tdf()->GetDef(d, "1.3", "AI\\STALL_MULTIPLIERS\\energyStored");
+
 	NLOG("Planning::Init complete");
 }
 

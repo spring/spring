@@ -1,12 +1,21 @@
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
 
+// Class originally written by krogothe
+// Heavily optimized and tweaked by Tournesol and Firenu for KAI
+// Adapted for general use under GPL V2
+// Slightly Modified by AF
 
 CMetalMap::CMetalMap(Global* ai){
 	this->ai=ai;
-	MinMetalForSpot = 30;	// from 0-255, the minimum percentage of metal a spot needs to have
-							//from the maximum to be saved. Prevents crappier spots in between taken spaces.
-							//They are still perfectly valid and will generate metal mind you!
-	MaxSpots = 5000; //If more spots than that are found the map is considered a metalmap, tweak this as needed
+
+	// from 0-255, the minimum percentage of metal a spot needs to have
+	//from the maximum to be saved. Prevents crappier spots in between taken spaces.
+	//They are still perfectly valid and will generate metal mind you!
+	MinMetalForSpot = 30;	
+							
+							
+
+	MaxSpots = 5000;		//If more spots than that are found the map is considered a metalmap, tweak this as needed
 
 
 	MetalMapHeight =ai->cb->GetMapHeight() / 2; //metal map has 1/2 resolution of normal map

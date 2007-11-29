@@ -1,4 +1,4 @@
-#include "../../Core/helper.h"
+#include "../../Core/include.h"
 
 CAttackBehaviour::CAttackBehaviour(Global* GL, int uid){
 	//

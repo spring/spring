@@ -2,7 +2,7 @@
 AF 2007
 */
 
-#include "../Core/helper.h"
+#include "../Core/include.h"
 
 CMessage::CMessage(string my_type){
 	message_type = my_type;

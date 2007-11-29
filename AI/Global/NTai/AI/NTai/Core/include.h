@@ -233,7 +233,9 @@ typedef boost::mutex::scoped_lock scoped_lock;
 // helpers
 typedef TdfParser CSunParser;
 using namespace boost;
+using namespace std;
 
+class Global;
 
 #include "../Units/CUnitTypeData.h"
 #include "../Core/CMessage.h"
@@ -269,17 +271,30 @@ using namespace boost;
 #include "../Agents/Planning.h"					// Antistall algorithm and predictive targetting
 #include "../Agents/Chaser.h"					// Attack system.
 
+// Unit Tasks
+
+#include "../Tasks/CUnitConstructionTask.h"
+#include "../Tasks/CConsoleTask.h"
+#include "../Tasks/CKeywordConstructionTask.h"
+
+// Unit behaviours
+
 #include "../Units/Behaviours/AttackBehaviour.h"
 #include "../Units/Behaviours/CDGunBehaviour.h"
 #include "../Units/Behaviours/MetalMakerBehaviour.h"
 #include "../Units/Behaviours/CRetreatBehaviour.h"
 
-enum EnumTdfErrors {
+
+// global class that holds everything together
+// (the root object representing the AI itself)
+#include "helper.h"
+
+/*enum EnumTdfErrors {
     semicolon_expected
       , equals_sign_expected
       , square_bracket_expected
       , brace_expected
-};
+};*/
 // Exception handling macros
 #ifdef EXCEPTION
     #define START_EXCEPTION_HANDLING try{
@@ -333,10 +348,6 @@ enum EnumTdfErrors {
         }
 
 #else
-
-    //#define EXCEPTION_HANDLER(a,b,c) a;
-    //#define EXCEPTION_MULTILINE_HANDLER(a,b,c) a
-
     #define START_EXCEPTION_HANDLING /* */
     #define END_EXCEPTION_HANDLING_AND(b,c) /* */
     #define END_EXCEPTION_HANDLING(b) /* */

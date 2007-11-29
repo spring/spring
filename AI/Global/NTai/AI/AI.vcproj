@@ -367,6 +367,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.h"
 				>
 			</File>
@@ -392,6 +396,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\CSector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.h"
 				>
 			</File>
 			<File

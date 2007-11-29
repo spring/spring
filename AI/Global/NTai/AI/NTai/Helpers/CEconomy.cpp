@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-#include "../Core/helper.h"
+#include "../Core/include.h"
 
 CEconomy::CEconomy(Global* GL){
 	G = GL;

@@ -1,8 +1,9 @@
-#include "../Core/helper.h"
-// Tasks
-#include "../Tasks/CConsoleTask.h"
+#include "../Core/include.h"
 
-CConsoleTask::CConsoleTask(Global* GL){}
+CConsoleTask::CConsoleTask(Global* GL){
+	//
+	valid = false;
+}
 
 CConsoleTask::CConsoleTask(Global* GL, string message){
 	valid=true;
@@ -11,9 +12,6 @@ CConsoleTask::CConsoleTask(Global* GL, string message){
 }
 
 void CConsoleTask::RecieveMessage(CMessage &message){
-	if(message.GetType() == string("killme")){
-		//G->RemoveHandler(me);
-	}
 }
 
 bool CConsoleTask::Init(){

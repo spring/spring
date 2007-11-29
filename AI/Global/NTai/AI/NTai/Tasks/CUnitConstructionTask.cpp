@@ -1,6 +1,4 @@
-#include "../Core/helper.h"
-// Tasks
-#include "../Tasks/CUnitConstructionTask.h"
+#include "../Core/include.h"
 
 CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit,CUnitTypeData* builder, CUnitTypeData* building){
 	valid=ValidUnitID(unit);

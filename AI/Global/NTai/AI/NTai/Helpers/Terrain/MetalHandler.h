@@ -1,38 +1,21 @@
 #ifndef METALHANDLER_H
 #define METALHANDLER_H
-//#include <vector>
-//#include <set>
-//#include "float3.h"
-//#include "ExternalAI/AICallback.h"
-//#include "Sim/Units/UnitDef.h"
 
-
-class CMetalHandler{	
-	//std::vector<float3> *parseMap();
-	Global* G;
-	IAICallback *cb;
-	float getMetalAmount(int x, int z);
+class CMetalHandler{
 public:
-	map<int,float3> infesters;
+	CMetalHandler(Global* GLI);
+	~CMetalHandler(void);
+
 	CMetalMap* m;
+
 	bool Viable();
 	float getExtractionRanged(float x, float z);
-	std::vector<float3>metalpatch;
+
+	std::vector<float3> metalpatch;
 	std::vector<float3> hotspot;
 	std::vector<int> mex;
+
 	void loadState();
-	CMetalHandler(Global* GLI);
-	virtual ~CMetalHandler(void);
-	map<int,float3> inf_index;
-	map<int,float> infestations; // Does this mex spot infested with enemy rodents?!
-	map<int, float3> rodents;
-	struct s_warning{
-		float3 pos;
-		int time;
-	};
-	vector<s_warning> warnings;
-	
-	void UnitDestroyed(float3 pos);
 
 	/**
 	*	Return best zone to extract metal, where there
@@ -90,8 +73,6 @@ public:
 	void addExtractor(int unit) {
 		mex.push_back(unit);
 	};
-	void EnemyExtractor(float3 position, int mex);
-	void EnemyExtractorDead(float3 position, int mex);
 
 	/**
 	*	Used to notify the metal handler that a metal unit
@@ -110,6 +91,10 @@ public:
 		}
 	};
 
+private:
+	Global* G;
+	IAICallback *cb;
+	float getMetalAmount(int x, int z);
 };
 
 #endif
