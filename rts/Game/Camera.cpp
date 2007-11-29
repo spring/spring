@@ -120,7 +120,6 @@ static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
 	return true;
 }
 
-
 void CCamera::Update(bool freeze)
 {
 	pos2 = pos;
@@ -128,11 +127,12 @@ void CCamera::Update(bool freeze)
 
 	right = forward.cross(up);
 	right.Normalize();
-
+	
 	up = right.cross(forward);
 	up.Normalize();
 
-	const float viewx = (float)tanf(float(gu->viewSizeX)/gu->viewSizeY * halfFov);
+	const float aspect = (float) gu->viewSizeX / (float) gu->viewSizeY;
+	const float viewx = aspect * tanHalfFov;
 	const float viewy = tanHalfFov;
 
 	if (gu->viewSizeY <= 0) {
@@ -142,13 +142,16 @@ void CCamera::Update(bool freeze)
 		lppScale = span / (float)gu->viewSizeY;
 	}
 
-	top    = (-forward * viewy) + up;
+	const float3 forwardy = (-forward * viewy);
+	top    = forwardy + up;
 	top.Normalize();
-	bottom = (-forward * viewy) - up;
+	bottom = forwardy - up;
 	bottom.Normalize();
-	rightside = (-forward * viewx) + right;
+	
+	const float3 forwardx = (-forward * viewx);
+	rightside = forwardx + right;
 	rightside.Normalize();
-	leftside  = (-forward * viewx) - right;
+	leftside  = forwardx - right;
 	leftside.Normalize();
 
 	if (!freeze) {
@@ -166,7 +169,6 @@ void CCamera::Update(bool freeze)
 
 	const float gndHeight = ground->GetHeight(pos.x, pos.z);
 	const float rangemod = 1.0f + max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
-	const float aspect = (GLfloat) gu->viewSizeX / (GLfloat) gu->viewSizeY;
 	const float zNear = (NEAR_PLANE * rangemod);
 	gu->viewRange = MAX_VIEW_RANGE * rangemod;
 
@@ -245,7 +247,6 @@ bool CCamera::InView(const float3& mins, const float3& maxs)
 	return false;
 }
 
-
 bool CCamera::InView(const float3 &p, float radius)
 {
 	const float3 t = (p - pos);
@@ -271,9 +272,9 @@ bool CCamera::InView(const float3 &p, float radius)
 
 void CCamera::UpdateForward()
 {
-	forward.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
-	forward.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
-	forward.y = (float)(sin(camera->rot.x));
+	forward.z = cosf(rot.y) * cosf(rot.x);
+	forward.x = sinf(rot.y) * cosf(rot.x);
+	forward.y = sinf(rot.x);
 	forward.Normalize();
 }
 
@@ -282,7 +283,7 @@ float3 CCamera::CalcPixelDir(int x, int y)
 {
 	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY * tanHalfFov * 2;
 	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY * tanHalfFov * 2;
-	float3 dir = camera->forward-camera->up*dy+camera->right*dx;
+	float3 dir = forward - up * dy + right * dx;
 	dir.Normalize();
 	return dir;
 }
@@ -319,10 +320,8 @@ inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
 
 inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const float3& up) {
 	float3 f = (center - eye).Normalize();
-	float3 u = float3(up).Normalize();
-	float3 s = f.cross(u);
-
-	u = s.cross(f);
+	float3 s = f.cross(up);
+	float3 u = s.cross(f);
 
 	modelview[ 0] =  s.x;
 	modelview[ 1] =  u.x;
