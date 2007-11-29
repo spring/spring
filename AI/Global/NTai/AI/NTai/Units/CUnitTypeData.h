@@ -56,6 +56,8 @@ public:
 
 	float GetDGunCost();
 	bool CanDGun();
+
+	bool CanConstruct();
 private:
 	Global* G;
 	const UnitDef* ud;
@@ -74,4 +76,7 @@ private:
 
 	float dgunCost;
 	bool canDGun;
+
+	bool canConstruct;
+
 };

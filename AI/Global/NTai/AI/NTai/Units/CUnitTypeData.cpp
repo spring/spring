@@ -26,8 +26,11 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 	G->Get_mod_tdf()->GetDef(repairDeferRange,"0","Resource\\ConstructionRepairRanges\\"+unit_name);
 
 	G->Get_mod_tdf()->GetDef(exclusionRange,"0","Resource\\ConstructionExclusionRanges\\"+unit_name);
-	// precalc wether this unit type is an attacker
 
+	canConstruct = (ud->buildOptions.empty()==false);
+
+
+	// precalc wether this unit type is an attacker
 	if(G->info->dynamic_selection == false){
 		attacker = false;
 		vector<string> v;
@@ -76,6 +79,7 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 			}
 		}
 	}
+
 }
 
 const UnitDef* CUnitTypeData::GetUnitDef(){
@@ -254,4 +258,8 @@ float CUnitTypeData::GetDGunCost(){
 
 bool CUnitTypeData::CanDGun(){
 	return canDGun;
+}
+
+bool CUnitTypeData::CanConstruct(){
+	return canConstruct;
 }

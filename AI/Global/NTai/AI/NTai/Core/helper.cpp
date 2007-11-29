@@ -13,7 +13,6 @@ bool saved=false;
 map<string, float> efficiency;
 map<string, float> builderefficiency;
 map<string, int> lastbuilderefficiencyupdate;
-set<string> constructors; // Units with buildmenus
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -722,7 +721,7 @@ void Global::GotChatMsg(const char* msg, int player){
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-//
+
 void Global::UnitDestroyed(int unit, int attacker){
 
     units.erase(unit);
@@ -1082,40 +1081,47 @@ int Global::GetEnemyUnits(int* units){
 
 
 float Global::GetEfficiency(string s, float def_value){
-    tolowercase(s);
-    trim(s);
-    if(efficiency.find(s) != efficiency.end()){
-        if(constructors.find(s)!= constructors.end()){
-            if(builderefficiency.find(s) != builderefficiency.end()){
-                int i = lastbuilderefficiencyupdate[s];
+
+    CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
+	if(ud == 0){
+		return def_value;
+	}
+
+	if(efficiency.find(ud->GetName()) != efficiency.end()){
+        if(ud->CanConstruct()){
+
+            if(builderefficiency.find(ud->GetName()) != builderefficiency.end()){
+                int i = lastbuilderefficiencyupdate[ud->GetName()];
                 if(GetCurrentFrame()-(5 MINUTES) < i){
-                    return builderefficiency[s];
+                    return builderefficiency[ud->GetName()];
                 }
             }
-            float e = efficiency[s];
-			CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
-            if(ud){
-                set<string> alreadydone;
-                alreadydone.insert(s);
-                if(!ud->GetUnitDef()->buildOptions.empty()){
-					for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
-                        alreadydone.insert(i->second);
-                        e += efficiency[s];//GetEfficiency(i->second,alreadydone,ud->techLevel);
-                    }
+
+            float e = efficiency[ud->GetName()];
+			
+            set<string> alreadydone;
+            alreadydone.insert(ud->GetName());
+
+            if(!ud->GetUnitDef()->buildOptions.empty()){
+				for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
+                    alreadydone.insert(i->second);
+                    e += efficiency[s];
                 }
-            }else{
-                e = builderefficiency[s];
             }
-            lastbuilderefficiencyupdate[s] = GetCurrentFrame();
-            builderefficiency[s] = e;
+
+            lastbuilderefficiencyupdate[ud->GetName()] = GetCurrentFrame();
+            builderefficiency[ud->GetName()] = e;
+
             return e;
         }else{
-            return efficiency[s];
+            return efficiency[ud->GetName()];
         }
+
     }else{
-        L.print("error ::   " + s + " is missing from the efficiency array");
+        L.print("error ::   " + ud->GetName() + " is missing from the efficiency array");
         return def_value;
     }
+
 }
 
 void Global::SetEfficiency(std::string s, float e){
@@ -1124,59 +1130,69 @@ void Global::SetEfficiency(std::string s, float e){
     efficiency[s] = e;
     //
 }
-//float GetEfficiency(string s);
+
 float Global::GetEfficiency(string s, set<string>& doneconstructors, int techlevel){
-    if(efficiency.find(s) != efficiency.end()){
-        if((constructors.find(s)!= constructors.end())&&(doneconstructors.find(s)==doneconstructors.end())){
+
+	CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
+
+	if(ud == 0){
+		return 0;
+	}
+
+    if(efficiency.find(ud->GetName()) != efficiency.end()){
+        if(ud->CanConstruct()&&(doneconstructors.find(ud->GetName())==doneconstructors.end())){
+
             if(builderefficiency.find(s) != builderefficiency.end()){
-                int i = lastbuilderefficiencyupdate[s];
+                int i = lastbuilderefficiencyupdate[ud->GetName()];
                 if(GetCurrentFrame()-(5 MINUTES) < i){
-                    return builderefficiency[s];
+                    return builderefficiency[ud->GetName()];
                 }
             }
-            float e = efficiency[s];
-			CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(s);
-            if(ud){
-                doneconstructors.insert(s);
-                for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
-					CUnitTypeData* ud2 = UnitDefLoader->GetUnitTypeDataByName(i->second);
-                    if(doneconstructors.find(s)==doneconstructors.end()){
-                        doneconstructors.insert(i->second);
-                        if (ud2->GetUnitDef()->techLevel<techlevel){
-                            e+=1.0f;
-                        }else 	if(ud2->GetUnitDef()->techLevel != techlevel){
-                            e+= efficiency[i->second]*pow(0.6f, (ud2->GetUnitDef()->techLevel-techlevel));
-                        }else{
-                            e+= efficiency[i->second];
-                        }
-                    }else{
-						if(ud2->GetUnitDef()->techLevel > ud->GetUnitDef()->techLevel){
-                            e+= 1.0f;
-                        }
-                        e += builderefficiency[i->second];
-                    }
-                }
-            }else{
-                lastbuilderefficiencyupdate[s] = GetCurrentFrame();
-                return efficiency[s];
+
+            float e = efficiency[ud->GetName()];
+			
+			doneconstructors.insert(ud->GetName());
+
+			for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
+				CUnitTypeData* ud2 = UnitDefLoader->GetUnitTypeDataByName(i->second);
+
+				if(doneconstructors.find(i->second)==doneconstructors.end()){
+					doneconstructors.insert(i->second);
+
+					if (ud2->GetUnitDef()->techLevel<techlevel){
+						e+=1.0f;
+					} else if (ud2->GetUnitDef()->techLevel != techlevel){
+						e+= efficiency[i->second]*pow(0.6f, (ud2->GetUnitDef()->techLevel-techlevel));
+					} else {
+						e+= efficiency[i->second];
+					}
+				}else{
+
+					if(ud2->GetUnitDef()->techLevel > ud->GetUnitDef()->techLevel){
+						e+= 1.0f;
+					}
+
+					e += builderefficiency[i->second];
+				}
+
             }
-            lastbuilderefficiencyupdate[s] = GetCurrentFrame();
-            builderefficiency[s] = e;
+
+            lastbuilderefficiencyupdate[ud->GetName()] = GetCurrentFrame();
+            builderefficiency[ud->GetName()] = e;
+
             return e;
         }else{
-            CUnitTypeData* ud = UnitDefLoader->GetUnitTypeDataByName(s);
-            if(ud){
-				if(ud->GetUnitDef()->techLevel < techlevel){
-                    return 1.0f;
-                }else  if(ud->GetUnitDef()->techLevel > techlevel){
-                    return efficiency[s]*pow(0.6f, (ud->GetUnitDef()->techLevel-techlevel));
-                }
+			if(ud->GetUnitDef()->techLevel < techlevel){
+                return 1.0f;
+            }else  if(ud->GetUnitDef()->techLevel > techlevel){
+                return efficiency[ud->GetName()]*pow(0.6f, (ud->GetUnitDef()->techLevel-techlevel));
             }
-            return efficiency[s];
+
+            return efficiency[ud->GetName()];
         }
     }else{
-        L.print("error ::   " + s + " is missing from the efficiency array");
-        return 200.0f;
+        L.print("error ::   " + ud->GetName() + " is missing from the efficiency array");
+        return 0.0f;
     }
 }
 
@@ -1187,23 +1203,24 @@ bool Global::LoadUnitData(){
         cb->GetUnitDefList(ulist);
         for(int i = 0; i < unum; i++){
             const UnitDef* pud = ulist[i];
+
             if(pud == 0){
-                //int a = 3;
                 continue;
-            }/*else{
-             G->L.iprint("id:: "+to_string(i)+"of "+to_string(unum)+" : "+ pud->name);
-             }*/
+            }
+
             string eu = pud->name;
+
             tolowercase(eu);
             trim(eu);
-            if(!pud->buildOptions.empty()){
-                constructors.insert(pud->name);
-            }
+
             float ef = pud->energyMake + pud->metalMake;
+
             if(pud->energyCost < 0){
                 ef += -pud->energyCost;
             }
+
             ef *= 2;
+
             if(pud->weapons.empty() == false){
                 for(vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
                     //ef += k->def->
@@ -1220,48 +1237,59 @@ bool Global::LoadUnitData(){
                     ef += av;
                 }
             }
+
             ef += pud->power;
+
             efficiency[eu] = ef;
             unit_names[eu] = pud->humanName;
             unit_descriptions[eu] = pud->tooltip;
         }
+
         string filename = info->datapath;
         filename += slash;
         filename += "learn";
         filename += slash;
         filename += info->tdfpath;
         filename += ".tdf";
+
         string* buffer = new string;
-        if(ReadFile(filename, buffer) == true){
+
+        if(ReadFile(filename, buffer)){
+
             TdfParser cq(this);
+
             cq.LoadBuffer(buffer->c_str(), buffer->size());
             iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
+
             for(map<string, float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
                 string s = "AI\\";
                 s += i->first;
                 float ank = (float)atof(cq.SGetValueDef("14", s.c_str()).c_str());
                 if(ank > i->second) i->second = ank;
             }
+
             iterations = atoi(cq.SGetValueDef("1", "AI\\iterations").c_str());
             iterations++;
+
             cq.GetDef(firstload, "1", "AI\\firstload");
+
             if(firstload == true){
                 L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful of throwing the same units at it over and over again");
                 firstload = false;
+
                 for(map<string, float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
 					CUnitTypeData* uda = UnitDefLoader->GetUnitTypeDataByName(i->first);
                     if(uda){
 						i->second += uda->GetUnitDef()->health;
                     }
                 }
-                /*for(map<string,float>::iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-                 GetEfficiency(i->first);
-                 }*/
+
             }
 
             loaded = true;
             return true;
         } else{
+
             for(int i = 0; i < unum; i++){
                 float ts = 500;
                 if(ulist[i]->weapons.empty()){
@@ -1275,8 +1303,11 @@ bool Global::LoadUnitData(){
                 trim(eu);
                 efficiency[eu] = ts;
             }
+
             SaveUnitData();
+
             G->L.print("failed to load :" + filename);
+
             return false;
         }
     }
@@ -1285,42 +1316,52 @@ bool Global::LoadUnitData(){
 
 bool Global::SaveUnitData(){
     NLOG("Global::SaveUnitData()");
+
     if(L.FirstInstance() == true){
         ofstream off;
+
         string filename = info->datapath;
         filename += slash;
         filename += "learn";
         filename += slash;
         filename += info->tdfpath;
         filename += ".tdf";
+
         off.open(filename.c_str());
+
         if(off.is_open() == true){
-            off << "[AI]" << endl << "{" << endl << "    // NTai XE9.79 AF :: unit efficiency cache file" << endl << endl;
-            // put stuff in here;
-            int first = firstload;
+            off << "[AI]" << endl << "{" << endl << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl << endl;
+
             off << "    version=XE9.79;" << endl;
-            off << "    firstload=" << first << ";" << endl;
+            off << "    firstload=" << firstload << ";" << endl;
             off << "    modname=" << G->cb->GetModName() << ";" << endl;
             off << "    iterations=" << iterations << ";" << endl;
             off << endl;
+
             off << "    [VALUES]" << endl << "    {" << endl;
+
             for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
                 off << "        "<< i->first << "=" << i->second << ";    // " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<<endl;
             }
             off << "    }" << endl;
             off << "    [NAMES]" << endl << "    {"<< endl;
+
             for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
                 off << "        "<< i->first << "=" << unit_names[i->first] << ";" <<endl;
             }
+
             off << "    }" << endl;
 
             off << "    [DESCRIPTIONS]" << endl << "    {"<< endl;
+
             for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
                 off << "        "<< i->first << "=" << unit_descriptions[i->first] << ";"<<endl;
             }
+
             off << "    }" << endl;
             off << "}" << endl;
             off.close();
+
             saved = true;
             return true;
         }else{
@@ -1334,79 +1375,34 @@ bool Global::SaveUnitData(){
 
 float Global::GetTargettingWeight(string unit, string target){
     float tempscore = 0;
+
     if(info->hardtarget == false){
         tempscore = GetEfficiency(target);
     }else{
         string fh = unit + "\\target_weights\\" + target;
         string fg = unit + "\\target_weights\\undefined";
+
         float fz = GetEfficiency(target);
         string tempdef = Get_mod_tdf()->SGetValueDef(to_string(fz), fg.c_str());
         tempscore = (float)atof(Get_mod_tdf()->SGetValueDef(tempdef, fh).c_str()); // load "unitname\\target_weights\\enemyunitname" to retirieve targetting weights
     }
+
     return tempscore;
 }
 
-/*bool Global::LoadTGA(const char *filename, STGA& tgaFile){
- char buffer[1000];
- FILE *file;
- unsigned char type[4];
- unsigned char Tinfo[6];
-
- strcpy(buffer, filename);
- cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
-
- file = fopen(buffer, "rb");
-
- if (!file){
- L.print(":: TGA file couldn't be loaded");
- return false;
- }
-
- fread (&type, sizeof (char), 3, file);
- fseek (file, 12, SEEK_SET);
- fread (&Tinfo, sizeof (char), 6, file);
-
- //image type either 2 (color) or 3 (greyscale)
- if (type[1] != 0 || (type[2] != 2 && type[2] != 3)){
- L.print(":: TGA file couldn't be loaded(2)");
- fclose(file);
- return false;
- }
-
- tgaFile.width = Tinfo[0] + Tinfo[1] * 256;
- tgaFile.height = Tinfo[2] + Tinfo[3] * 256;
- tgaFile.byteCount = Tinfo[4] / 8;
-
- if (tgaFile.byteCount != 3 && tgaFile.byteCount != 4) {
- L.print(":: TGA file couldn't be loaded(3)");
- fclose(file);
- return false;
- }
-
- long imageSize = tgaFile.width * tgaFile.height
- * tgaFile.width * tgaFile.byteCount;
-
- //allocate memory for image data
- tgaFile.data = new unsigned char[imageSize];
-
- //read in image data
- fread(tgaFile.data, sizeof(unsigned char), imageSize, file);
-
- //close file
- fclose(file);
-
- return true;
- }*/
 
 void Global::EnemyEnterLOS(int enemy){ // an enemy has entered LOS
     Cached->enemies.insert(enemy);
 }
+
 void Global::EnemyLeaveLOS(int enemy){ // An enemy has left LOS
     Cached->enemies.erase(enemy);
 }
+
 void Global::EnemyEnterRadar(int enemy){ // an enemy has entered radar
     Cached->enemies.insert(enemy);
 }
+
 void Global::EnemyLeaveRadar(int enemy){ // an enemy has left radar
     Cached->enemies.erase(enemy);
 }
@@ -1414,67 +1410,16 @@ void Global::EnemyLeaveRadar(int enemy){ // an enemy has left radar
 float3 Global::GetUnitPos(int unitid, int enemy){ // do 10 frame delays between updates fo different units
     if(!ValidUnitID(unitid)){
         return UpVector;
-    }/*
-     bool mine = true;
-     if(enemy==1){
-     mine=false;
-     }else if (enemy==0){
-     if(G->cb->GetUnitAllyTeam(unitid)!=G->cb->GetMyAllyTeam()){
-     mine=false;
-     }
-     }*/
+    }
 
-    /*if(positions.empty()==false){
-     map<int,temp_pos>::iterator i = positions.find(unitid);
-     if(i!=positions.end()){
-     temp_pos k = i->second;
-     if(GetCurrentFrame()-k.last_update > 10){*/
-    /*float3 p = cb->GetUnitPos(unitid);
-     if(Map->CheckFloat3(p)==false){
-     if(Cached->cheating==false){
-     return UpVector;
-     }else{*/
     float3 p = chcb->GetUnitPos(unitid);
+
     if(Map->CheckFloat3(p)==false){
         return UpVector;
     }else{
-        //							k.pos = p;
-        //							k.last_update=GetCurrentFrame();
         return p;
     }
-    /*}
-     }else{
-     k.pos = p;
-     k.last_update=GetCurrentFrame();
-     return p;
-     }*/
-    /*			}else{
-                                return k.pos;
-                        }
-                }
-        }*/
-    /*float3 p = cb->GetUnitPos(unitid);
-     if(Map->CheckFloat3(p)==false){
-     if(Cached->cheating==false){
-     return UpVector;
-     }else{
-     float3 p = chcb->GetUnitPos(unitid);
-     if(Map->CheckFloat3(p)==false){
-     return UpVector;
-     }
-     return p;*/
-    /*else{
-     temp_pos k;
-     k.enemy=!mine;
-     k.pos = p;
-     k.last_update=GetCurrentFrame();
-     positions[unitid]=k;
-     return p;
-     }*/
-    /*}
-     }else{
-     return p;
-     }*/
+
 }
 
 bool Global::HasUnit(int unit){
@@ -1487,6 +1432,7 @@ boost::shared_ptr<IModule> Global::GetUnit(int unit){
         boost::shared_ptr<IModule> t(a);
         return t;
     }
+
     return units[unit];
 }
 
@@ -1495,19 +1441,15 @@ void Global::RegisterMessageHandler(boost::shared_ptr<IModule> handler){
 }
 
 void Global::FireEvent(CMessage &message){
-    if(message.GetType() == string("")) return;
+	if(message.GetType() == string("")){
+		return;
+	}
+
     if(!handlers.empty()){
         for(set<boost::shared_ptr<IModule> >::iterator k = handlers.begin(); k != handlers.end(); ++k){
-            //G->L.iprint("firing message");
             if((*k)->IsValid()){
                 (*k)->RecieveMessage(message);
             }else{
-                //(*k)->DestroyModule();
-                //k = i->second.erase(k);
-                //if(k == i->second.end()){
-                //	break;
-                //}
-                // above wont compile in codeblocks
                 RemoveHandler((*k));
             }
         }
@@ -1516,9 +1458,11 @@ void Global::FireEvent(CMessage &message){
 
 void Global::DestroyHandler(boost::shared_ptr<IModule> handler){
     handler->DestroyModule();
+
     if(!handlers.empty()){
 		handlers.erase(handler);
     }
+
     return;
 }
 
@@ -1529,7 +1473,8 @@ void Global::RemoveHandler(boost::shared_ptr<IModule> handler){
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-/** unitdef->type
+/** Random note
+unitdef->type can be one of the following:
  MetalExtractor
  Transport
  Builder
@@ -1539,4 +1484,3 @@ void Global::RemoveHandler(boost::shared_ptr<IModule> handler){
  GroundUnit
  Building
  **/
-
