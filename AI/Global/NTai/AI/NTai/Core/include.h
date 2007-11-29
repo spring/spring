@@ -21,20 +21,16 @@ class Global;
 
 // Standard libraries
 
-#include <algorithm>
 #include <cctype>
 #include <stdexcept>
 
-#include <map>
 #include <set>
-#include <vector>
 #include <ctime>		// Time
 #include <fstream>		// File Streams
 
 #include <deque>
 #include <sstream>
 #include <stdarg.h>
-#include <functional>
 
 #include <stdio.h>
 #include <assert.h>		// Assertions
@@ -55,70 +51,70 @@ using namespace std;
 
 
 // engine includes
-#include "../SDK/AI.h"									// AI interface includes
+#include "../SDK/AI.h"										// AI interface includes
 
 
 // helpers
 
-#include "../Helpers/grid/CGridManager.h"				// Grid values/map class
-#include "../Helpers/TdfParser.h"						// Parses TDF files
-#include "../Helpers/mtrand.h"							// random number generator
+#include "../Helpers/grid/CGridManager.h"					// Grid values/map class
+#include "../Helpers/TdfParser.h"							// Parses TDF files
+#include "../Helpers/mtrand.h"								// random number generator
 
-#include "../Units/CUnitTypeData.h"						// Holder for unit type specific data
-#include "../Core/CMessage.h"							// generic event message class
-#include "../Core/IModule.h"							// Base class for AI objects
-#include "../Units/IBehaviour.h"						// Behaviour base class
+#include "../Units/CUnitTypeData.h"							// Holder for unit type specific data
+#include "../Core/CMessage.h"								// generic event message class
+#include "../Core/IModule.h"								// Base class for AI objects
+#include "../Units/IBehaviour.h"							// Behaviour base class
 
 #include "../Units/CUnit.h"
-#include "../Helpers/Log.h"								// Logging class
-#include "../Helpers/Units/CUnitDefLoader.h"			// Loads unitdefs
-#include "../Engine/TCommand.h"							// Unit cached command data structure
-#include "../Helpers/CWorkerThread.h"					// Some threading stuff
+#include "../Helpers/Log.h"									// Logging class
+#include "../Helpers/Units/CUnitDefLoader.h"				// Loads unitdefs
+#include "../Engine/TCommand.h"								// Unit cached command data structure
+#include "../Helpers/CWorkerThread.h"						// Some threading stuff
 
-#include "../Core/CCached.h"							// Cached data storage class
-#include "../Engine/COrderRouter.h"						// Caches orders and issues them so the engine doesnt give an overflow message
-#include "../Helpers/CEconomy.h"						// Economy Construction rules
+#include "../Core/CCached.h"								// Cached data storage class
+#include "../Engine/COrderRouter.h"							// Caches orders and issues them so the engine doesnt give an overflow message
+#include "../Helpers/CEconomy.h"							// Economy Construction rules
 
-#include "../Helpers/Terrain/Map.h"						// Common Map related procedures such as which corner of the mapare we in
+#include "../Helpers/Terrain/Map.h"							// Common Map related procedures such as which corner of the mapare we in
 
-#include "../Helpers/CConfigData.h"						// Stores data from the mod.tdf and AI.tdf files
-#include "../Helpers/CTokenizer.h"						// Tokenizes a string based on a delimiter aka String.split() in java
-#include "../Helpers/Terrain/RadarHandler.h"			// Spaces out radar tower placement so they cover more area and dont overlap
-#include "../Helpers/Terrain/DTHandler.h"				// Manages creation and pacement of DT rings
-#include "../Helpers/Terrain/MetalMap.h"				// Krogothes core metal spot fidner algorithm
-#include "../Helpers/Terrain/MetalHandler.h"			// Handles metal spots and choices
-#include "../Helpers/Units/Actions.h"					// Common actions in a useful class
-#include "../Helpers/ubuild.h"							// Universal Build Routines
-#include "../Helpers/Terrain/CBuildingPlacer.h"			// Building placement algorithm
+#include "../Helpers/CConfigData.h"							// Stores data from the mod.tdf and AI.tdf files
+#include "../Helpers/CTokenizer.h"							// Tokenizes a string based on a delimiter aka String.split() in java
+#include "../Helpers/Terrain/RadarHandler.h"				// Spaces out radar tower placement so they cover more area and dont overlap
+#include "../Helpers/Terrain/DTHandler.h"					// Manages creation and pacement of DT rings
+#include "../Helpers/Terrain/MetalMap.h"					// Krogothes core metal spot fidner algorithm
+#include "../Helpers/Terrain/MetalHandler.h"				// Handles metal spots and choices
+#include "../Helpers/Units/Actions.h"						// Common actions in a useful class
+#include "../Helpers/ubuild.h"								// Universal Build Routines
+#include "../Helpers/Terrain/CBuildingPlacer.h"				// Building placement algorithm
 
 
 // Agents
 
-#include "../Agents/CManufacturer.h"					// Loads buildtrees and drives construction processes through the Task Cycle
-#include "../Agents/Planning.h"							// Antistall algorithm and predictive targetting
-#include "../Agents/Chaser.h"							// Attack system.
+#include "../Agents/CManufacturer.h"						// Loads buildtrees and drives construction processes through the Task Cycle
+#include "../Agents/Planning.h"								// Antistall algorithm and predictive targetting
+#include "../Agents/Chaser.h"								// Attack system.
 
 
 // Unit Tasks
 
-#include "../Tasks/CUnitConstructionTask.h"				// A task for building things by name
-#include "../Tasks/CConsoleTask.h"						// Outputs a message to the chat console
-#include "../Tasks/CKeywordConstructionTask.h"			// Handles a universal build keyword/action
+#include "../Tasks/CUnitConstructionTask.h"					// A task for building things by name
+#include "../Tasks/CConsoleTask.h"							// Outputs a message to the chat console
+#include "../Tasks/CKeywordConstructionTask.h"				// Handles a universal build keyword/action
 
 
 // Unit behaviours
 
-#include "../Units/Behaviours/AttackBehaviour.h"		// Attack nearby enemies
-#include "../Units/Behaviours/CDGunBehaviour.h"			// DGun routines
-#include "../Units/Behaviours/MetalMakerBehaviour.h"	// Metal maker efficiency routines
-#include "../Units/Behaviours/CRetreatBehaviour.h"		// Retreat when damaged
-#include "../Units/Behaviours/CKamikazeBehaviour.h"		// Self destruct when near to enemies
-#include "../Units/Behaviours/CStaticDefenceBehaviour.h"// Attack units within firing range
-
+#include "../Units/Behaviours/AttackBehaviour.h"			// Attack nearby enemies
+#include "../Units/Behaviours/CDGunBehaviour.h"				// DGun routines
+#include "../Units/Behaviours/MetalMakerBehaviour.h"		// Metal maker efficiency routines
+#include "../Units/Behaviours/CRetreatBehaviour.h"			// Retreat when damaged
+#include "../Units/Behaviours/CKamikazeBehaviour.h"			// Self destruct when near to enemies
+#include "../Units/Behaviours/CStaticDefenceBehaviour.h"	// Attack units within firing range
+#include "../Units/Behaviours/CMoveFailReclaimBehaviour.h"	// Issue an area reclaim command when stuck
 
 // Global classes
 
-#include "helper.h"										// (the root object representing the AI itself)
+#include "Global.h"											// (the root object representing the AI itself)
 
 // The name NTAI gives to the spring engine.
 const char AI_NAME[]= {"NTai XE9.79+"};

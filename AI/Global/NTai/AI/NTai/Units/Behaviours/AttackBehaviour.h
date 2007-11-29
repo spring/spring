@@ -6,5 +6,4 @@ public:
 	void RecieveMessage(CMessage &message);
 private:
 	bool engaged;
-	int uid;
 };

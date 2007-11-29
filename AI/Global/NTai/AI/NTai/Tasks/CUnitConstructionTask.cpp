@@ -289,7 +289,7 @@ bool CUnitConstructionTask::Init(){
 		delete [] funits;
 	}
 
-	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,G->Manufacturer->GetSpacing(building)*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,builder,building,building->GetSpacing()*1.4f);
 	return true;
 }
 

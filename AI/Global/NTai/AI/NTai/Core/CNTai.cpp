@@ -1,19 +1,19 @@
-// GroupAI.cpp: implementation of the agent and CGroupAI classes.
-// TAI Base template, Redstar & Co
-//////////////////////////////////////////////////////////////////////
-// Subject to GPL  liscence
-//////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// NTai
+// Copyright 2004-2007 AF
+// Released under GPL 2 license
+//-------------------------------------------------------------------------
 
-// This class is the root of NTAI. It is not holding any code, all it does
-// is initialize NTAI, catch exceptions, and acts as a buffer between
-// NTAI and the engine.
+// This class is the intermediary of NTAI. It is not holding any code,
+// all it does is initialize NTAI, catch exceptions, and acts as a buffer
+// between NTAI and the engine.
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-// Includes
 
-#include "GlobalAI.h"
- // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
- using namespace std;
+
+#include "CNTai.h"
+
+
  // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // CNTai class
 

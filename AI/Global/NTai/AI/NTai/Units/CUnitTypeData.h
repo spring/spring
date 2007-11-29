@@ -58,6 +58,8 @@ public:
 	bool CanDGun();
 
 	bool CanConstruct();
+
+	float GetSpacing();
 private:
 	Global* G;
 	const UnitDef* ud;
@@ -78,5 +80,7 @@ private:
 	bool canDGun;
 
 	bool canConstruct;
+
+	float buildSpacing;
 
 };

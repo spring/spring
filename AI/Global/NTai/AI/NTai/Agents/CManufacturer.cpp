@@ -1,20 +1,27 @@
+//-------------------------------------------------------------------------
+// NTai
+// Copyright 2004-2007 AF
+// Released under GPL 2 license
+//-------------------------------------------------------------------------
+
 // CManufacturer
 #include "../Core/include.h"
 map<int,deque<CBPlan* >* > alliedplans;
 uint plancounter=1;
-map<string, vector<string> > metatags;
-
 
 
 uint CManufacturer::getplans(){
 	return plancounter;
 }
+
 void CManufacturer::AddPlan(){
 	plancounter++;
 }
+
 void CManufacturer::RemovePlan(){
 	plancounter--;
 }
+
 float3 CManufacturer::GetBuildPos(int builder, const UnitDef* target, const UnitDef* builderdef, float3 unitpos){
 	NLOG("CManufacturer::GetBuildPos");
 	// Find the least congested sector
@@ -618,7 +625,6 @@ CManufacturer::~CManufacturer(){
 void CManufacturer::RecieveMessage(CMessage &message){
 	//G->L.iprint("RecievedMessage");
 	if(message.GetType() == string("update")){
-		//G->L.iprint("RecievedupdateMessage");
 		Update();
 	}else if(message.GetType() == string("unitidle")){
 		//G->L.iprint("RecievedupdateMessage");
@@ -629,134 +635,22 @@ void CManufacturer::RecieveMessage(CMessage &message){
 bool CManufacturer::Init(){
 	NLOG("CManufacturer::Init");
 	NLOG("Loading MetaTags");
-	/*if(alliedplans.find(G->Cached->unitallyteam) != alliedplans.end()){
-		this->BPlans = alliedplans[G->Cached->unitallyteam];
-	}else{
-		BPlans = new deque<CBPlan* >();
-		alliedplans[G->Cached->unitallyteam] = BPlans;
-	}*/
-	BPlans = new deque<CBPlan* >();
-	if(G->L.FirstInstance()){
-		if(G->Get_mod_tdf()->SectionExist("tags")==true){
-			const map<string, string> section = G->Get_mod_tdf()->GetAllValues("tags");
-			if(section.empty()==false){
-				//
-				G->L << "Meta Tags :::" <<endline;
-				for(map<string,string>::const_iterator j = section.begin(); j != section.end(); ++j){
-					vector<string> vh;
-					string f,se;
-					f = j->first;
-					trim(f);
-					tolowercase(f);
-					se= j->second;
-					trim(se);
-					tolowercase(se);
-					CTokenizer<CIsComma>::Tokenize(vh, se, CIsComma());
-					//vh = bds::set_cont(vh,se);
-					if(vh.empty()==false){
-						metatags[f]= vh;
-						G->L << "Meta tag :: " << f << " :: " << se <<endline;
-					}else{
-						G->L << "Meta tag empty?? :: " << f << " :: " << se <<endline;
-					}
-				}
-			}
-			/*const map<string, string> section2 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionRepairRanges\\");
-			if(section2.empty()==false){
-				//
-				G->L << "Meta Tags :::" <<endline;
-				for(map<string,string>::const_iterator j = section2.begin(); j != section2.end(); ++j){
-					string f,se;
-					f = j->first;
-					trim(f);
-					tolowercase(f);
-					float rmax;
-					string key = "Resource\\ConstructionRepairRanges\\";
-					key += f;
-					G->Get_mod_tdf()->GetDef(rmax,"5",key);
-					r_ranges[f] = rmax;
-				}
-			}else{
-				// Generate the values automatically!!!!!!!!
-				// err, figure out a method of doing this automatically....
-				int unum = G->cb->GetNumUnitDefs();
-				const UnitDef** ulist = new const UnitDef*[unum];
-				G->cb->GetUnitDefList(ulist);
-				for(int i = 0; i < unum; i++){
-					string eu = ulist[i]->name;
-					tolowercase(eu);
-					trim(eu);
-					r_ranges[eu] = ulist[i]->health/2;
-				}
-			}*/
-			/* jjjj*/
-			/*const map<string, string> section3 = G->Get_mod_tdf()->GetAllValues("Resource\\ConstructionExclusionRange\\");
-			if(section3.empty()==false){
-				//
-				G->L << "Meta Tags :::" <<endline;
-				for(map<string,string>::const_iterator j = section3.begin(); j != section3.end(); ++j){
-					string f,se;
-					f = j->first;
-					trim(f);
-					tolowercase(f);
-					float rmax;
-					string key = "Resource\\ConstructionExclusionRanges\\";
-					key += j->first;
-					G->Get_mod_tdf()->GetDef(rmax,"5",key);
-					exclusion_ranges[f] = rmax;
-				}
-			}*//*else{
-				// Generate the values automatically!!!!!!!!
-				// err, figure out a method of doing this automatically....
-				int unum = G->cb->GetNumUnitDefs();
-				const UnitDef** ulist = new const UnitDef*[unum];
-				G->cb->GetUnitDefList(ulist);
-				for(int i = 0; i < unum; i++){
-					string eu = ulist[i]->name;
-					tolowercase(eu);
-					trim(eu);
-					if(G->UnitDefHelper->IsFactory(ulist[i])) exclusion_ranges[eu] = ulist[i]->health*0.6f;
-					if(!G->UnitDefHelper->IsMobile(ulist[i]) && (ulist[i]->radarRadius > 1000)) exclusion_ranges[eu] = (float)ulist[i]->radarRadius;
-					if(G->UnitDefHelper->IsHub(ulist[i])) exclusion_ranges[eu] = ulist[i]->buildDistance;
-				}
-			}*/
-		}else{
-			G->L << "No MetaTags where defined" << endline;
-		}
-	}
-	/*if(contents != string("")){
-	vector<string> v;
-	v = bds::set_cont(v,contents.c_str());
-	if(v.empty() == false){
-	for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-	string sdg = "TAGS\\";
-	sdg += *vi;
 
-	if(vh.empty()==false){
-	metatags[*vi]= vh;
-	}
-	}
-	}
-	}*/
+	BPlans = new deque<CBPlan* >();
+
 	NLOG("Registering TaskTypes");
 	RegisterTaskTypes();
-	//NLOG("Loading GlobalBuildTree");
-	//LoadGlobalTree();
-//	G->RegisterMessageHandler("update",me);
-//	G->RegisterMessageHandler("unitidle",me);
+
+
 	initialized = true;
 	NLOG("Manufacturer Init Done");
 	return true;
-	//	if(G->L.FirstInstance() == true){
-	//
-	//		G->DrawTGA("logo.tga",ZeroVector);
-	//	}
+
 }
 
 void CManufacturer::UnitCreated(int uid){
 	NLOG("CManufacturer::UnitCreated");
 	// sort out the plans
-	// update congestion matrix
 	if(BPlans->empty() == false){
 		//
 		float3 upos = G->GetUnitPos(uid);
@@ -838,23 +732,6 @@ void CManufacturer::UnitFinished(int uid){
 	}else{
 		G->L.print("cbuilder->valid() == false");
 	}*/
-}
-
-void CManufacturer::UnitMoveFailed(int uid){
-	NLOG("CManufacturer::UnitIdle");
-	if(!ValidUnitID(uid)) return;
-	//if(builders.find(uid) != builders.end()){
-		int* f = new int[2];
-		int i = G->cb->GetFeatures(f,1,G->GetUnitPos(uid),100.0f);
-		delete [] f;
-		if(i > 0){
-			if(!G->Actions->AreaReclaim(uid,G->GetUnitPos(uid),100)){
-				UnitIdle(uid);
-			}
-		}//else{
-		//	UnitIdle(uid);
-		//}
-	//}
 }
 
 CBPlan::CBPlan(){
@@ -949,25 +826,6 @@ void CManufacturer::UnitIdle(int uid){
 	}*/
 }
 
-int CManufacturer::GetSpacing(CUnitTypeData* u){
-	int f = 4;
-
-	if(u->IsMobile()){
-		f = 1;
-	} else if(u->IsFactory()){
-		G->Get_mod_tdf()->GetDef(f,"4", "AI\\factory_spacing");
-	} else if (!u->IsMobile() && !u->GetUnitDef()->weapons.empty()){
-		G->Get_mod_tdf()->GetDef(f,"4", "AI\\defence_spacing");
-	} else if (u->IsEnergy()){
-		G->Get_mod_tdf()->GetDef(f,"3", "AI\\power_spacing");
-	}else{
-		G->Get_mod_tdf()->GetDef(f,"1", "AI\\default_spacing");
-	}
-	float r = sqrt(pow((float)u->GetUnitDef()->xsize*8,2)+pow((float)u->GetUnitDef()->ysize*8,2))/2;
-	r += (f*8);
-	return (int)r;
-}
-
 void CManufacturer::UnitDestroyed(int uid){
 	NLOG("CManufacturer::UnitDestroyed");
 	//get rid of CBuilder, destroy plans needing this unit
@@ -1039,18 +897,16 @@ void CManufacturer::Update(){
 
 }
 
-void CManufacturer::EnemyDestroyed(int eid){
-	NLOG("CManufacturer::EnemyDestroyed");
-}
-
 //af CManufacturer::RegisterTaskPair
 void CManufacturer::RegisterTaskPair(string name, btype type){
 	types[name] = type;
 	typenames[type] = name;
 }
+
 void CManufacturer::RegisterTaskTypes(){
 	NLOG("CManufacturer::RegisterTaskTypes");
-	if(types.empty()==true){
+	if(types.empty()){
+
 		RegisterTaskPair("b_metatag_failed", B_METAFAILED);
 		RegisterTaskPair("b_solar", B_POWER);
 		RegisterTaskPair("b_power",B_POWER);
@@ -1116,9 +972,6 @@ void CManufacturer::RegisterTaskTypes(){
 		RegisterTaskPair("b_airsupport", B_AIRSUPPORT);
 		RegisterTaskPair("b_offensive_repair_retreat", B_OFFENSIVE_REPAIR_RETREAT);
 		RegisterTaskPair("b_guardian_mobiles", B_GUARDIAN_MOBILES);
-		//,
-		//	,
-		//	RegisterTaskPair("")] = ;
 	}
 }
 
@@ -1126,6 +979,7 @@ btype CManufacturer::GetTaskType(string s){
 	NLOG("CManufacturer::GetTaskType");
 	trim(s);
 	tolowercase(s);
+
 	if(types.empty()==false){
 		if(types.find(s) != types.end()){
 			return types[s];
@@ -1166,50 +1020,6 @@ bool CManufacturer::CanBuild(int uid, const UnitDef* ud, string name){
 			}
 		}
 		return false;
-	}
-}
-
-string CManufacturer::GetBuild(int uid, string tag, bool efficiency){
-	NLOG("CManufacturer::GetBuild");
-	G->L << "CManufacturer::GetBuild("<<uid<<","<<tag<<","<< efficiency<<")"<<endline;
-	if(metatags.empty()){
-		return string("b_metatag_failed");
-	}
-	const UnitDef* ud = G->GetUnitDef(uid);
-	if(ud == 0){
-		G->L.print("GetBuild metatag error with Builder not getting a unit def");
-		return string("b_metatag_failed");
-	}else{
-		map<string, vector<string> >::const_iterator ik = metatags.find(tag);
-		if(ik == metatags.end()){
-			G->L.print("Meta tag error in GetBuild ik == metatags.end() for "+tag);
-			return string("b_metatag_failed");
-		}
-		vector<string> v = ik->second;
-		float best_score = 0;
-		string best = "b_metatag_failed";
-		if(v.empty() == false){
-			for(vector<string>::const_iterator is = v.begin(); is != v.end();++is){
-				string w = *is;
-				trim(w);
-				if(w == string("")) continue;
-				if(CanBuild(uid,ud,w)==false){
-					G->L.print("hmm canbuild() == false for \""+w+"\" on the "+ud->name);
-					continue;
-				}else{
-					float temp = G->GetEfficiency(w);
-					G->L << "canbuild \""<< w << "\" efficiency == "<< temp<< endline;
-					if(temp > best_score){
-						best_score = temp;
-						best = w;
-					}
-				}
-			}
-			G->L << "returning \"" << best << "\""<< endline;
-			return best;
-		}else{
-			return "b_metatag_failed";
-		}
 	}
 }
 
