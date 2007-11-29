@@ -177,10 +177,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.cpp"
 				>
 			</File>
@@ -190,10 +186,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Tasks\CConsoleTask.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -213,10 +205,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.cpp"
 				>
 			</File>
@@ -233,15 +221,11 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Core\CNTai.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Engine\COrderRouter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -265,11 +249,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\GlobalAI.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\helper.cpp"
+				RelativePath=".\NTai\Core\Global.cpp"
 				>
 			</File>
 			<File
@@ -290,10 +270,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\MetalHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -320,6 +296,42 @@
 				RelativePath=".\NTai\Helpers\ubuild.cpp"
 				>
 			</File>
+			<Filter
+				Name="Units"
+				>
+				<Filter
+					Name="Behaviours"
+					>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CMoveFailReclaimBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.cpp"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -335,15 +347,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\CCached.h"
 				>
 			</File>
 			<File
@@ -352,10 +356,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Tasks\CConsoleTask.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.h"
 				>
 			</File>
 			<File
@@ -375,10 +375,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.h"
 				>
 			</File>
@@ -391,19 +387,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\CMessage.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Engine\COrderRouter.h"
 				>
 			</File>
 			<File
 				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.h"
 				>
 			</File>
 			<File
@@ -435,18 +423,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\enums.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\GlobalAI.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\helper.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Core\IModule.h"
 				>
 			</File>
@@ -463,19 +439,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\macros.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\Terrain\Map.h"
 				>
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\MetalHandler.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.h"
 				>
 			</File>
 			<File
@@ -514,6 +482,70 @@
 				RelativePath=".\NTai\Helpers\ubuild.h"
 				>
 			</File>
+			<Filter
+				Name="units"
+				>
+				<Filter
+					Name="behaviours"
+					>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\AttackBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CDGunBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CMoveFailReclaimBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\IBehaviour.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Units\Behaviours\MetalMakerBehaviour.h"
+						>
+					</File>
+				</Filter>
+			</Filter>
+			<Filter
+				Name="Core"
+				>
+				<File
+					RelativePath=".\NTai\Core\CCached.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\CMessage.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\CNTai.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\enums.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\Global.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\macros.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
