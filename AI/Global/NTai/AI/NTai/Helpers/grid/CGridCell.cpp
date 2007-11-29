@@ -9,7 +9,6 @@ CGridCell::~CGridCell(){
 }
 
 void CGridCell::Initialize(int Index){
-	
 	this->Index=Index;
 }
 

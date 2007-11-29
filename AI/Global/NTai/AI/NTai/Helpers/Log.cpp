@@ -272,3 +272,16 @@ Log& Log::operator<< (float3 f){
     header(to_string(f.x)+","+to_string(f.y)+","+to_string(f.z));
     return *this;
 }
+
+bool Log::Verbose(){
+	if(verbose == true){
+		verbose = false;
+	}else{
+		verbose = true;
+	}
+	return verbose;
+}
+
+bool Log::IsVerbose(){
+	return verbose;
+}

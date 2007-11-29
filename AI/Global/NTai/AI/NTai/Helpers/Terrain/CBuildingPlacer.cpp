@@ -416,8 +416,9 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
         CMessage m("buildposition");
         m.AddParameter(q);
         reciever->RecieveMessage(m);
+
         return;
-	} else if((building->GetUnitDef()->type == string("Building"))&&(building->GetUnitDef()->builder == false)&&(building->GetUnitDef()->weapons.empty() == true)&&(building->GetUnitDef()->radarRadius > 100)){ // Radar!
+	} else if((building->GetUnitDef()->type == string("Building"))&&(!building->GetUnitDef()->builder)&&building->GetUnitDef()->weapons.empty()&&(building->GetUnitDef()->radarRadius > 100)){ // Radar!
         
 		if(builder->IsHub()){
             q = G->RadarHandler->NextSite(builderpos, building->GetUnitDef(), (int)builder->GetUnitDef()->buildDistance);
@@ -427,24 +428,28 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
 
         if(G->Map->CheckFloat3(q) == false){
             G->L.print(string("zero radar placement co-ordinates intercepted  :: ")+ to_string(q.x) + string(",")+to_string(q.y)+string(",")+to_string(q.z));
-            q = UpVector;
+            
+			q = UpVector;
+
             CMessage m("buildposition");
             m.AddParameter(q);
             reciever->RecieveMessage(m);
+
             return;
         }
 
     }else if(building->GetUnitDef()->needGeo){
 
-        NLOG("CBuildingPlacer::GetBuildPosMessage geomark 1#");
+        NLOG("CBuildingPlacer::GetBuildPosMessage geo");
         int* f = new int[20000];
         int fnum = 0;
+
         if(builder->IsHub()){
             fnum = G->cb->GetFeatures(f, 19999, builderpos, builder->GetUnitDef()->buildDistance);
         }else{
             fnum = G->cb->GetFeatures(f, 19999);
         }
-        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 2#");
+
         float3 result = UpVector;
 
 		if(!geolist.empty()){
@@ -472,14 +477,14 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
                     if(G->cb->GetFriendlyUnits(a,*it,100)> 0){
                         continue;
                     }
+
                     if(it->distance2D(builderpos) < gsearchdistance){
-                        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark 5a#");
 
                         if(G->cb->CanBuildAt(building->GetUnitDef(), *it)&&(G->chcb->GetEnemyUnits(a, *it, genemydist)<1)){
                             nearest_dist = d;
                             result = *it;
                         }
-                        //NLOG("CBuildingPlacer::GetBuildPosMessage geomark b#");
+
                     }
                 }
             }
@@ -498,7 +503,6 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
         return;
     }
 
-
     if(!builder->IsHub()){
 
         if(!builder->IsMobile()){
@@ -510,12 +514,9 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
     }
 
     
-    CBuildAlgorithm cb (this, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3(G->cb->GetMapWidth(), 0, G->cb->GetMapHeight()), G);
-    //boost::shared_ptr<IModule> b = boost::shared_ptr<IModule>(cb);
-    //
-    //b();
-    pool->invoke(cb);
+    CBuildAlgorithm cb (this, reciever, builderpos, builder, building, freespace, &blockingmap, G->cb->GetHeightMap(), float3((float)G->cb->GetMapWidth(), 0, (float)G->cb->GetMapHeight()), G);
 
+    pool->invoke(cb);
 }
 
 /*float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, float buildingradius, float searchradius){

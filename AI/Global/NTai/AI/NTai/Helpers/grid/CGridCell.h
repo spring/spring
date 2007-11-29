@@ -1,9 +1,5 @@
-#include "../../SDK/AI.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-
-//typdef boost::mutex mutex;
-//typedef boost::mutex::scoped_lock scoped_lock;
 
 class CGridCell{
 public:

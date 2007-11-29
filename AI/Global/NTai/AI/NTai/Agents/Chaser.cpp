@@ -18,24 +18,6 @@ void Chaser::InitAI(Global* GLI){
     G->Get_mod_tdf()->GetDef(thresh_increase, "1", "AI\\increase_threshold_value");
     G->Get_mod_tdf()->GetDef(thresh_percentage_incr, "1", "AI\\increase_threshold_percentage");
     G->Get_mod_tdf()->GetDef(max_threshold, "1", "AI\\maximum_attack_group_size");
-    string contents = G->Get_mod_tdf()->SGetValueMSG("AI\\kamikaze");
-    trim(contents);
-    tolowercase(contents);
-    if(contents.empty() == false){
-        vector<string> v;
-		CTokenizer<CIsComma>::Tokenize(v, contents, CIsComma());
-        //v = bds::set_cont(v, contents);
-        if(v.empty() == false){
-            for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-                string h = *vi;
-                trim(h);
-                tolowercase(h);
-                if(h != string("")){
-                    sd_proxim[h] = true;
-                }
-            }
-        }
-    }
 
     float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE);
     Grid.Initialize(mapdim, float3(1024, 0, 1024), true);
@@ -50,20 +32,6 @@ void Chaser::InitAI(Global* GLI){
 	CTokenizer<CIsComma>::Tokenize(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"), CIsComma());
 	CTokenizer<CIsComma>::Tokenize(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"), CIsComma());
 
-
-    //fire_at_will = bds::set_cont(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"));
-    //return_fire = bds::set_cont(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"));
-    //hold_fire = bds::set_cont(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"));
-    //roam = bds::set_cont(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"));
-    //maneouvre = bds::set_cont(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"));
-    //hold_pos = bds::set_cont(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"));
-    /*if(G->Sc->start_pos.empty() == false){
-        for(list<float3>::iterator i = G->Sc->start_pos.begin(); i != G->Sc->start_pos.end(); ++i){
-            float3 tpos = *i;
-            Grid.AddValueatMapPos(tpos, 60000.0f);
-            G->Actions->AddPoint(tpos);
-        }
-    }*/
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -72,7 +40,6 @@ void Chaser::Add(int unit, bool aircraft){
     NO_GAIA(NA)
     G->L.print("Chaser::Add()");
     Attackers.insert(unit);
-    //	attack_units.insert(unit);
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -81,13 +48,13 @@ void Chaser::UnitDestroyed(int unit, int attacker){
     NLOG("Chaser::UnitDestroyed");
     NO_GAIA(NA)
 
-    defences.erase(unit);
+
 
     engaged.erase(unit);
     walking.erase(unit);
-    //	attack_units.erase(unit);
+
     sweap.erase(unit);
-    kamikaze_units.erase(unit);
+
     Attackers.erase(unit);
     if(!attack_groups.empty()){
         // remove from atatck groups
@@ -199,10 +166,6 @@ void Chaser::UnitFinished(int unit){
         }
     }
 
-    if((utd->GetUnitDef()->movedata == 0) && (!utd->GetUnitDef()->canfly)&&(sweap.find(unit) == sweap.end()) && (!utd->GetUnitDef()->weapons.empty())){
-        defences.insert(unit);
-        return;
-    }
 
     if(!maneouvre.empty()){
         for(vector<string>::iterator i = maneouvre.begin(); i != maneouvre.end(); ++i){
@@ -285,14 +248,6 @@ void Chaser::UnitFinished(int unit){
 
     if(utd->IsAttacker()){
         unit_to_initialize.insert(unit);
-    }
-
-    NLOG("kamikaze");
-
-    if(sd_proxim.empty() == false){
-		if(sd_proxim.find(utd->GetName()) != sd_proxim.end()){
-            kamikaze_units.insert(unit);
-        }
     }
 
 }
@@ -606,23 +561,7 @@ void Chaser::UpdateMatrixFriendlyUnits(){
         delete [] funits;
     }
 }
-//
-void Chaser::CheckKamikaze(){
-    if((kamikaze_units.empty() == false)&&(G->Cached->enemies.empty() == false)){
-        for(set<int>::iterator i = kamikaze_units.begin(); i != kamikaze_units.end(); ++i){
-            int* funits = new int [G->Cached->enemies.size()];
-            int fu = G->GetEnemyUnits(funits, G->GetUnitPos(*i), G->cb->GetUnitMaxRange(*i));
-            if(fu > 0 ){
-                TCommand tc(*i, "chaser::update selfd");
-                tc.ID(CMD_SELFD);
-                G->OrderRouter->GiveOrder(tc);
-            }
-            delete [] funits;
-        }
-    }
-}
-//
-//
+
 void Chaser::UpdateSites(){
     //if(!gridmaintainer) return;
     /*for(vector<float3>::iterator i = G->Actions->points.begin(); i != G->Actions->points.end(); ++i){
@@ -690,12 +629,6 @@ void Chaser::Update(){
     END_EXCEPTION_HANDLING("Chaser::Update :: firing silos")
 
     START_EXCEPTION_HANDLING
-    if(EVERY_((3 SECONDS))){
-        CheckKamikaze();
-    }
-    END_EXCEPTION_HANDLING("Chaser::CheckKamikaze()")
-
-    START_EXCEPTION_HANDLING
     if((EVERY_((11 FRAMES)))&&(G->Actions->points.empty() == false)){
         UpdateSites();
     }
@@ -732,12 +665,6 @@ void Chaser::Update(){
         }
     }
     END_EXCEPTION_HANDLING("Chaser::Update :: re-assigning targets")
-
-    START_EXCEPTION_HANDLING
-    if(EVERY_(120 FRAMES)&&(G->Cached->enemies.empty() == false)){
-        FireDefences();
-    }
-    END_EXCEPTION_HANDLING("Chaser::FireDefences()")
 
     NLOG("Chaser::Update :: DONE");
 }
@@ -791,15 +718,6 @@ void Chaser::DoUnitStuff(int aa){
      engaged.insert(aa);
      Beacon(pos,1000);
      }*/
-}
-
-void Chaser::FireDefences(){
-    NLOG("Chaser::Update :: make defences attack nearby targets");
-    if(defences.empty() == false){
-        for(set<int>::iterator aa = defences.begin(); aa != defences.end();++aa){
-            G->Actions->AttackNear(*aa, 1.0f);
-        }
-    }
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

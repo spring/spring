@@ -24,9 +24,7 @@ public:
 	void UpdateMatrixFriendlyUnits();
 	void UpdateSites();
 	void UpdateMatrixEnemies();
-	void CheckKamikaze();
 
-	void FireDefences();
 	void DoUnitStuff(int aa);
 	set<int> engaged;
 	set<int> walking;
@@ -37,8 +35,6 @@ public:
 	int max_threshold;
 	set<int> Attackers;
 	set<int> sweap;
-
-	set<int> defences;
 
 	float3 swtarget;
 
@@ -61,9 +57,6 @@ public:
 	vector<string> fire_at_will;
 
 	CGridManager Grid;
-
-	set<int> kamikaze_units;
-	map<string,bool> sd_proxim;
 
 };
 

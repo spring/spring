@@ -8,33 +8,46 @@ CActions::CActions(Global* GL){
 
 bool CActions::Attack(int uid, float3 pos){
     NLOG("CActions::Attack Position");
-	if(!ValidUnitID(uid)) return false;
-    if(G->Map->CheckFloat3(pos)==false) return false;
+	
+	if(!ValidUnitID(uid)){
+		return false;
+	}
+	
+	if(G->Map->CheckFloat3(pos)==false){
+		return false;
+	}
+
     TCommand tc(uid, "Attack Pos CActions");
     tc.ID(CMD_ATTACK);
     tc.PushFloat3(pos);
     tc.created = G->cb->GetCurrentFrame();
-    return G->OrderRouter->GiveOrder(tc, true);
+    
+	return G->OrderRouter->GiveOrder(tc, true);
 }
 
 bool CActions::Trajectory(int unit, int traj){
     NLOG("CActions::Trajectory");
+
     TCommand tc(unit, "Trajectory CAction");
     tc.c.timeOut = 400+(G->cb->GetCurrentFrame()%600) + G->cb->GetCurrentFrame();
     tc.Priority = tc_low;
     tc.ID(CMD_TRAJECTORY);
     tc.Push(traj);
+
     return G->OrderRouter->GiveOrder(tc);
 }
 
 void CActions::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
     NLOG("CActions::UnitDamaged");
+
     float3 pos = G->GetUnitPos(attacker);
+
     if(G->Map->CheckFloat3(pos)==true){
         last_attack=pos;
     }else{
         pos = G->GetUnitPos(damaged);
-        if(G->Map->CheckFloat3(pos)==true){
+
+        if(G->Map->CheckFloat3(pos)){
             last_attack=pos;
         }
     }
@@ -42,67 +55,95 @@ void CActions::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 
 bool CActions::Attack(int unit, int target, bool mobile){
     NLOG("CActions::Attack Target");
-    if(unit < 1) return false;
-    if(target < 1) return false;
+
+	if(!ValidUnitID(unit)){
+		return false;
+	}
+
+	if(!ValidUnitID(target)){
+		return false;
+	}
+
     float3 pos = G->GetUnitPos(target);
-    if(G->Map->CheckFloat3(pos)==true){
+
+    if(G->Map->CheckFloat3(pos)){
         last_attack=pos;
     }else{
         pos = G->GetUnitPos(unit);
-        if(G->Map->CheckFloat3(pos)==true){
+        if(G->Map->CheckFloat3(pos)){
             last_attack=pos;
         }
     }
+
     TCommand tc(unit, "attack target CActions");
     tc.ID(CMD_ATTACK);
     tc.Push(target);
     tc.created = G->cb->GetCurrentFrame();
     return G->OrderRouter->GiveOrder(tc, true);
-    //if(G->OrderRouter->GiveOrder(tc,true)==true){
-    //if(mobile==true) attackers.insert(unit);
-    //	return true;
-    //}else{
-    //	return false;
-    //}
 }
 
 bool CActions::Capture(int uid, int enemy){
     NLOG("CActions::Capture");
-    if(((-1<uid)&&(uid<MAX_UNITS-1))==false) return false;
-    if(((-1<enemy)&&(enemy<MAX_UNITS-1))==false) return false;
+
+	if(!ValidUnitID(uid)){
+		return false;
+	}
+
+	if(!ValidUnitID(enemy)){
+		return false;
+	}
+
     TCommand tc(uid, "capture CActions");
     tc.ID(CMD_CAPTURE);
     tc.PushUnit(enemy);
     tc.created = G->GetCurrentFrame();
+
     return G->OrderRouter->GiveOrder(tc, true);
 }
 
 bool CActions::Repair(int uid, int unit){
     NLOG("CActions::Repair");
-    if(((-1<uid)&&(uid<MAX_UNITS-1))==false) return false;
-    if(((-1<unit)&&(unit<MAX_UNITS-1))==false) return false;
+
+	if(!ValidUnitID(uid)){
+		return false;
+	}
+
+	if(!ValidUnitID(unit)){
+		return false;
+	}
+
     const UnitDef* udi = G->GetUnitDef(uid);
     if(udi == 0) return false;
+
     const UnitDef* bud = G->GetUnitDef(unit);
     if(bud == 0) return false;
+
     if(!udi->builder) return false;
+
     float uhealth, umhealth;
     uhealth = G->cb->GetUnitHealth(unit);
     umhealth = G->cb->GetUnitMaxHealth(unit);
+
     if(umhealth == 0) return false;
+
     float Remainder = 1.0f - uhealth / umhealth;
     float RemainingTime = udi->buildTime / max(bud->buildSpeed, 0.1f) * Remainder;
+
     if (RemainingTime < 30.0f) return false;
+
     float EPerS = bud->energyCost / (bud->buildTime / udi->buildSpeed);
     float MPerS = bud->metalCost / (bud->buildTime / udi->buildSpeed);
-    if (	G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
+
+    if ( G->cb->GetMetal() + (G->Pl->GetMetalIncome() - MPerS) * RemainingTime > 0	&& G->cb->GetEnergy() + (G->Pl->GetEnergyIncome() - EPerS) * RemainingTime > 0	){
         if (RemainingTime > 120.0f || bud->buildSpeed > 0)	{
             TCommand tc(uid, "repair CActions");
             tc.ID(CMD_REPAIR);
             tc.PushUnit(unit);
             tc.created = G->cb->GetCurrentFrame();
+
             if(G->OrderRouter->GiveOrder(tc, true)){
                 if(G->cb->UnitBeingBuilt(unit)){
+
                     // add this builder to the appropriate plan
                     if(!G->Manufacturer->BPlans->empty()){
                         for(deque<CBPlan* >::iterator i = G->Manufacturer->BPlans->begin(); i != G->Manufacturer->BPlans->end(); ++i){
@@ -112,6 +153,7 @@ bool CActions::Repair(int uid, int unit){
                             }
                         }
                     }
+
                 }
                 return true;
             }else{
@@ -127,7 +169,11 @@ bool CActions::Repair(int uid, int unit){
 
 bool CActions::MoveToStrike(int unit, float3 pos, bool overwrite){
     NLOG("CActions::MoveToStrike");
-    if(unit < 0) return false;
+
+    if(!ValidUnitID(unit)){
+		return false;
+	}
+
     if(G->Map->CheckFloat3(pos)==false) return false;
     float3 npos = G->Map->distfrom(G->GetUnitPos(unit), pos, G->cb->GetUnitMaxRange(unit)*0.95f);
     npos.y = 0;
@@ -136,7 +182,11 @@ bool CActions::MoveToStrike(int unit, float3 pos, bool overwrite){
 
 bool CActions::Move(int unit, float3 pos, bool overwrite){
     NLOG("CActions::Move");
-    if(!ValidUnitID(unit)) return false;
+
+    if(!ValidUnitID(unit)){
+		return false;
+	}
+
     if(G->Map->CheckFloat3(pos)==false) return false;
     TCommand tc(unit, "move CActions");
     tc.ID(CMD_MOVE);
@@ -147,53 +197,36 @@ bool CActions::Move(int unit, float3 pos, bool overwrite){
 
 bool CActions::Guard(int unit, int guarded){
     NLOG("CActions::Guard");
-    if(unit < 1) return false;
-    if(guarded < 1) return false;
+
+    if(!ValidUnitID(unit)){
+		return false;
+	}
+
+    if(!ValidUnitID(guarded)){
+		return false;
+	}
+
     TCommand tc(unit, "Guard CActions");
     tc.ID(CMD_GUARD);
     tc.Push(guarded);
     tc.created = G->cb->GetCurrentFrame();
+
     return G->OrderRouter->GiveOrder(tc, true);
 }
 
 bool CActions::ReclaimNearby(int uid, float radius){
     NLOG("CActions::ReclaimNearby");
-    float3 upos = G->GetUnitPos(uid);
+	
+	if(!ValidUnitID(uid)){
+		return false;
+	}
+    
+	float3 upos = G->GetUnitPos(uid);
+
     if(G->Map->CheckFloat3(upos)){
         return AreaReclaim(uid, upos, (int)radius);
     }
     return false;
-
-
-
-    // old implementation. I gues soen needs to stop ti differentiating features
-    // wrongly as units, because those untis might eb allied units, aka
-    // reclaiming commander bug
-    /*    int* f = new int[100];
-        int fc = G->cb->GetFeatures(f, 99, upos, 700);
-        if(fc >0){
-            float smallest = 800;
-            int fid = -1;
-            for(int i = 0; i < fc; i++){
-                float3 fpos = G->cb->GetFeaturePos(f[i]);
-                if(fpos == UpVector) continue;
-                float tdist = fpos.distance2D(upos);
-                if(tdist < smallest){
-                    smallest = tdist;
-                    fid = f[i];
-                }
-            }
-            delete [] f;
-            if(fid != -1){
-                // do stuff
-                return Reclaim(uid, fid);
-            }
-        }else{
-            delete [] f;
-            return false;
-        }
-    }
-    return false;*/
 }
 
 bool CActions::RessurectNearby(int uid){
@@ -276,26 +309,37 @@ bool CActions::AttackNearest(int unit){ // Attack nearby enemies...
 }
 bool CActions::AttackNear(int unit, float LOSmultiplier){
     NLOG("CActions::AttackNear");
+
     const UnitDef* ud = G->GetUnitDef(unit);
     if(ud == 0) return false;
+
 	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id);
+
     int* en = new int[5000];
     int e = G->GetEnemyUnits(en, G->GetUnitPos(unit), max(G->cb->GetUnitMaxRange(unit), ud->losRadius)*LOSmultiplier);
+
     if(e>0){
         float best_score = 0;
         int best_target = 0;
         float tempscore = 0;
         bool mobile = true;
+
         for(int i = 0; i < e; i++){
             if(en[i] < 1) continue;
+
             const UnitDef* endi = G->GetEnemyDef(en[i]);
+
             if(endi == 0){
                 continue;
             }else{
 				CUnitTypeData* etd = G->UnitDefLoader->GetUnitTypeDataById(endi->id);
+
                 bool tmobile = false;
+
                 tempscore = G->GetTargettingWeight(ud->name, endi->name);
+
                 //tempscore = G->Ch->ApplyGrudge(en[i], tempscore);
+
                 if(etd->IsMobile()){
 					if(!G->info->hardtarget){
 						tempscore = tempscore/4;
@@ -304,21 +348,26 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
                 }else if(!endi->weapons.empty()){
                     tempscore /= 2;
                 }
+
                 if(tempscore > best_score){
                     best_score = tempscore;
                     best_target = en[i];
                     mobile = tmobile;
                 }
+
                 tempscore = 0;
             }
         }
+
         if(ud->highTrajectoryType == 2){
             Trajectory(unit, (int)mobile);
         }
+
         if(best_target > 0){
             delete [] en;
             return Attack(unit, best_target, mobile);
         }
+
         delete [] en;
         return true;
     }else{
@@ -433,8 +482,6 @@ bool CActions::DGunNearby(int uid){
 
                     if (c<(4 SECONDS)){
                         return Capture(uid, k);
-                    } else if (!G->Ch->defences.empty()){
-                        return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
                     } else {
                         NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
                         return MoveToStrike(uid, G->Map->nbasepos(compos), false);
@@ -454,15 +501,9 @@ bool CActions::DGunNearby(int uid){
                         return Reclaim(uid, k);
                     } else {
                         if (c<(4 SECONDS)){
-                            return Capture(uid, k);
-                        } else {
-                            if (!G->Ch->defences.empty()){
-                                return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-                            } else {
-                                NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                                return MoveToStrike(uid, G->Map->nbasepos(compos), false);
-                            }
-
+							return Capture(uid, k);
+						} else {
+							return MoveToStrike(uid, G->Map->nbasepos(compos), false);
                         }
 
                     }
@@ -548,13 +589,7 @@ bool CActions::DGunNearby(int uid){
                 delete[] en;
 
                 // runaway!!!!!!!!!!!!!!!!!!
-                if(!G->Ch->defences.empty()){
-                    return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-                }else{
-                    NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                    return MoveToStrike(uid, G->Map->nbasepos(compos), true);
-                }
-
+				return MoveToStrike(uid, G->Map->nbasepos(compos), true);
             }
         }
     }
@@ -634,12 +669,7 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
             delete[] en;
 
             // runaway!!!!!!!!!!!!!!!!!!
-            if(!G->Ch->defences.empty()){
-                return IfNobodyNearMoveToNearest(uid, G->Ch->defences);
-            }else{
-                NLOG("CActions::IfNobodyNearMoveToNearest :: WipePlansForBuilder");
-                return MoveToStrike(uid, G->Map->nbasepos(compos), false);
-            }
+			return MoveToStrike(uid, G->Map->nbasepos(compos), false);
         }
     }
 

@@ -213,6 +213,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Units\Behaviours\CKamikazeBehaviour.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.cpp"
 				>
 			</File>
@@ -234,6 +238,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.cpp"
 				>
 			</File>
 			<File
@@ -395,10 +403,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Helpers\Terrain\CSector.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.h"
 				>
 			</File>
@@ -431,6 +435,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Core\enums.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Core\GlobalAI.h"
 				>
 			</File>
@@ -452,6 +460,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Log.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Core\macros.h"
 				>
 			</File>
 			<File

@@ -163,33 +163,6 @@ float CMap::GetBuildHeight(float3 pos, const UnitDef* unitdef){
 
 	return h;
 }
-void CMap::GenerateTerrainTypes(){
-	/*yMapSize=(int)G->cb->GetMapHeight()*SQUARE_SIZE/16;
-	xMapSize=(int)G->cb->GetMapWidth()*SQUARE_SIZE/16;
-	float3 df = float3(8,0,8);
-	float3 du = float3(16,0,16);
-	float3 pos = float3(0,0,0);
-	for(int y = 0; y < yMapSize;y++){
-		for(int x = 0; x < xMapSize;x++){
-			//
-			CSector c;
-			c.ucorner = pos;
-			c.lcorner = pos + du;
-			c.centre = pos + df;
-			c.csect = float3((float)x,0,(float)y);
-			c.slope = (c.ucorner.x-c.lcorner.x)/(c.ucorner.y-c.lcorner.y);
-			if(c.slope < 0){
-				c.slope *= -1;
-			}
-			float3 tpos;
-			buildmap[x][y] = c;
-			pos.x += 16;
-
-		}
-		pos.y += 16;
-	}*/
-	//for(int i)
-}
 
 float3 CMap::Pos2BuildPos(float3 pos, const UnitDef* ud){
 	NLOG("CMap::Pos2BuildPos");
@@ -232,27 +205,6 @@ vector<SearchOffset> CMap::GetSearchOffsetTable(int radius){
 	return searchOffsets;
 }
 
-float3 CMap::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist){
-	NLOG("CMap::ClosestBuildSite");
-	return pos;
-	/*int endr = (int)(searchRadius / (SQUARE_SIZE*2));
-	const vector<SearchOffset>& ofs = GetSearchOffsetTable (endr);
-	for(vector<SearchOffset>::const_iterator i = ofs.begin(); i != ofs.end(); ++i){
-		//
-		float3 p(pos.x+i->dx,pos.y,pos.z + i->dy);
-		int* e = new int[200];
-		int enumber = G->cb->GetFriendlyUnits(e,p,5);
-		if (enumber == 0){
-			delete [] e;
-			return p;
-		}else{
-			delete [] e;
-			continue;
-		}
-	}
-
-	return UpVector;	*/
-}
 
 bool CMap::CheckFloat3(float3 pos){
 	NLOG("CMap::CheckFloat3");
