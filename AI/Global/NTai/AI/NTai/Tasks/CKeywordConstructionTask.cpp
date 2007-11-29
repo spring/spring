@@ -282,7 +282,7 @@ void CKeywordConstructionTask::Build(){
 
     NLOG("CKeywordConstructionTask::Build  mark 4");
 
-	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,utd,building,G->Manufacturer->GetSpacing(building)*1.4f);
+	G->BuildingPlacer->GetBuildPosMessage(this,unit,unitpos,utd,building,building->GetSpacing()*1.4f);
 
     NLOG("CKeywordConstructionTask::Build  mark 5");
 }

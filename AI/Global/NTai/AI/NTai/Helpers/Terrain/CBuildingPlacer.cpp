@@ -595,10 +595,7 @@ void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float
 }*/
 
 void CBuildingPlacer::Block(float3 pos, CUnitTypeData* utd){
-    int r = G->Manufacturer->GetSpacing(utd);
-    //pos.x -= (ud->xsize);//*4);
-    //pos.z -= (ud->ysize);//*4);
-    Block(pos, (float)r);
+    Block(pos, utd->GetSpacing());
 }
 
 void CBuildingPlacer::Block(float3 pos){
@@ -610,10 +607,7 @@ void CBuildingPlacer::Block(float3 pos, float radius){
 }
 
 void CBuildingPlacer::UnBlock(float3 pos, CUnitTypeData* utd){
-    int r = G->Manufacturer->GetSpacing(utd);
-    //pos.x -= (ud->xsize);//*4);
-    //pos.z -= (ud->ysize);//*4);
-    UnBlock(pos, (float)r);
+    UnBlock(pos, utd->GetSpacing());
 }
 
 void CBuildingPlacer::UnBlock(float3 pos){

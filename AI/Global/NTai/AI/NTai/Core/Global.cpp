@@ -1,10 +1,11 @@
+//-------------------------------------------------------------------------
+// NTai
+// Copyright 2004-2007 AF
+// Released under GPL 2 license
+//-------------------------------------------------------------------------
+
 #include "include.h"
 
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-using namespace std;
-
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 int iterations=0;
 bool loaded=false;
@@ -216,36 +217,32 @@ void Global::EnemyDamaged(int damaged, int attacker, float damage, float3 dir){
 
 void Global::Update(){
     bool paused = false;
-    /*START_EXCEPTION_HANDLING
-     if(!dead_handlers.empty()){
-     for(set<boost::shared_ptr<IModule> >::iterator i = dead_handlers.begin(); i != dead_handlers.end(); ++i){
-     DestroyHandler(*i);
-     }
-     dead_handlers.erase(dead_handlers.begin(),dead_handlers.end());
-     dead_handlers.clear();
-     }
-     END_EXCEPTION_HANDLING("Update() Nuking dead handlers")*/
+
     NLOG("Global::Update()");
     cb->GetValue(AIVAL_GAME_PAUSED, &paused);
     if(paused) return;
     START_EXCEPTION_HANDLING
+
     if(cb->GetCurrentFrame() == (1 SECOND)){
         NLOG("STARTUP BANNER IN Global::Update()");
-        if(L.FirstInstance() == true){
-            cb->SendTextMsg(":: NTai XE9.79 by AF", 0);
+
+        if(L.FirstInstance()){
+			string s = string(":: ") + AI_NAME + string(" by AF");
+			cb->SendTextMsg(s.c_str(), 0);
             cb->SendTextMsg(":: Copyright (C) 2006 AF", 0);
-            string s = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
-            if(s != string("")){
-                cb->SendTextMsg(s.c_str(), 0);
+            string q = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
+            if(q != string("")){
+                cb->SendTextMsg(q.c_str(), 0);
             }
-            cb->SendTextMsg("Please check Darkstars.co.uk for updates", 0);
+            cb->SendTextMsg("Please check www.darkstars.co.uk for updates", 0);
         }
+
         int* ax = new int[5000];
         int anum =cb->GetFriendlyUnits(ax);
-        if(anum ==0){
-            ComName = string("");
-        }else{
-            ComName = string("");
+		
+		ComName = string("");
+        
+		if(anum !=0){
             for(int a = 0; a<anum; a++){
                 if(cb->GetUnitTeam(ax[a]) == cb->GetMyTeam()){
                     const UnitDef* ud = GetUnitDef(ax[a]);
@@ -298,35 +295,6 @@ void Global::Update(){
     //EXCEPTION_HANDLER(Manufacturer->Update(),"Manufacturer->Update()",NA)
     Ch->Update();
 
-    /*	if(EVERY_(1 SECOND)){
-                if(triangles.empty() == false){
-                        NLOG("triangles.empty() == false");
-                        if((L.FirstInstance() == true)&&(EVERY_( 3 FRAMES))){
-                                int tricount = 0;
-                                for(vector<ctri>::iterator ti = triangles.begin(); ti != triangles.end(); ++ti){
-                                        if(ti->bad == true){
-                                                tricount++;
-                                                continue;
-                                        }
-                                        Increment(ti, G->cb->GetCurrentFrame());
-                                        if((ti->lifetime+ti->creation+1)>cb->GetCurrentFrame()){
-                                                Draw(*ti);
-                                        }else{
-                                                ti->bad = true;
-                                        }
-                                }
-                                for(int gk = 0; gk < tricount; gk++){
-                                        for(vector<ctri>::iterator ti = triangles.begin(); ti != triangles.end(); ++ti){
-                                                if(ti->bad == true){
-                                                        triangles.erase(ti);
-                                                        break;
-                                                }
-                                        }
-                                }
-                        }
-                }
-        }*/
-    //NLOG("Global::Update :: done");
 }
 
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -484,9 +452,7 @@ void Global::UnitFinished(int unit){
 
 void Global::UnitMoveFailed(int unit){
 
-    /*START_EXCEPTION_HANDLING
-    Sc->UnitMoveFailed(unit);
-    END_EXCEPTION_HANDLING("Sc->UnitMoveFailed")
+    /*
 
     START_EXCEPTION_HANDLING
     Manufacturer->UnitMoveFailed(unit);
@@ -494,13 +460,13 @@ void Global::UnitMoveFailed(int unit){
 
     START_EXCEPTION_HANDLING
     Ch->UnitMoveFailed(unit);
-    END_EXCEPTION_HANDLING("Ch->UnitIdle in UnitMoveFailed")
+    END_EXCEPTION_HANDLING("Ch->UnitIdle in UnitMoveFailed")*/
 
     START_EXCEPTION_HANDLING
     CMessage message("unitmovefailed");
     message.AddParameter(unit);
     FireEvent(message);
-    END_EXCEPTION_HANDLING("CMessage message(\"unitmovefailed\"); FireEvent(message);")*/
+    END_EXCEPTION_HANDLING("CMessage message(\"unitmovefailed\"); FireEvent(message);")
 
 }
 

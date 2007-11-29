@@ -343,6 +343,14 @@ bool CUnit::LoadBehaviours(){
 				t->Init();
 
 				G->RegisterMessageHandler(t);
+			} else if(s == "movefailreclaim"){
+				CMoveFailReclaimBehaviour* a = new CMoveFailReclaimBehaviour(G, GetID());
+				boost::shared_ptr<IBehaviour> t(a);
+				
+				behaviours.push_back(t);
+				t->Init();
+
+				G->RegisterMessageHandler(t);
 			} else if(s == "auto"){
 				// we have to decide what this units behaviours should be automatically
 				// check each type of unit for pre-requisites and then assign the behaviour
@@ -379,6 +387,8 @@ bool CUnit::LoadBehaviours(){
 					G->RegisterMessageHandler(t);
 				}
 
+				
+
 				if(utd->GetUnitDef()->canmove || utd->GetUnitDef()->canfly){
 					CRetreatBehaviour* a = new CRetreatBehaviour(G, GetID());
 					boost::shared_ptr<IBehaviour> t(a);
@@ -387,6 +397,17 @@ bool CUnit::LoadBehaviours(){
 					t->Init();
 
 					G->RegisterMessageHandler(t);
+
+					if(utd->GetUnitDef()->canReclaim){
+						CMoveFailReclaimBehaviour* a = new CMoveFailReclaimBehaviour(G, GetID());
+						boost::shared_ptr<IBehaviour> t(a);
+						
+						behaviours.push_back(t);
+						t->Init();
+
+						G->RegisterMessageHandler(t);
+					}
+
 				}else{
 					// this unit can't move, if it can fire a weapon though give it
 					// the static defence behaviour

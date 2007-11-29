@@ -80,6 +80,23 @@ void CUnitTypeData::Init(Global* G, const UnitDef* ud){
 		}
 	}
 
+	buildSpacing = 4;
+
+	if(IsMobile()){
+		buildSpacing = 1;
+	} else if(IsFactory()){
+		G->Get_mod_tdf()->GetDef(buildSpacing,"4", "AI\\factory_spacing");
+	} else if (!IsMobile() && !ud->weapons.empty()){
+		G->Get_mod_tdf()->GetDef(buildSpacing,"4", "AI\\defence_spacing");
+	} else if (IsEnergy()){
+		G->Get_mod_tdf()->GetDef(buildSpacing,"3", "AI\\power_spacing");
+	}else{
+		G->Get_mod_tdf()->GetDef(buildSpacing,"1", "AI\\default_spacing");
+	}
+	float r = sqrt(pow((float)ud->xsize*8,2)+pow((float)ud->ysize*8,2))/2;
+	r += (buildSpacing*8);
+	buildSpacing = r;
+
 }
 
 const UnitDef* CUnitTypeData::GetUnitDef(){
@@ -262,4 +279,8 @@ bool CUnitTypeData::CanDGun(){
 
 bool CUnitTypeData::CanConstruct(){
 	return canConstruct;
+}
+
+float CUnitTypeData::GetSpacing(){
+	return buildSpacing;
 }

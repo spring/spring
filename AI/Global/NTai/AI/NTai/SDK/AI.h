@@ -1,4 +1,8 @@
-
+//-------------------------------------------------------------------------
+// NTai
+// Copyright 2004-2007 AF
+// Released under GPL 2 license
+//-------------------------------------------------------------------------
 
 // typedefs to shorten these
 typedef unsigned char uchar;
@@ -17,9 +21,8 @@ typedef unsigned short ushort;
 #include <algorithm>
 #include <locale>
 
+
 // Spring Engine
-
-
 
 #include "IGlobalAI.h" // Interface spring uses to make AI callouts
 #include "ExternalAI/IAICallback.h" // AI Callback
