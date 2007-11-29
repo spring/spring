@@ -1,4 +1,6 @@
-// muhahahahahhahahahaa
+// Grid class written by AF
+// GPL 2
+#include "../../SDK/AI.h"
 #include "CGridManager.h"
 
 
@@ -14,16 +16,17 @@ CGridManager::CGridManager() {
 CGridManager::~CGridManager() {
 }
 
-// template<typename T>
-// void CGridManager::UseArray(const T* a,int size){
-// 	for(int i = 0; i < size; i++){
-// 		std::stringstream stream;
-// 		stream << a[i];
-// 		float v;
-// 		stream >> v;
-// 		SetValuebyIndex(i,v);
-// 	}
-//}
+/*
+template<typename T>
+ void CGridManager::UseArray(const T* a,int size){
+ 	for(int i = 0; i < size; i++){
+ 		std::stringstream stream;
+ 		stream << a[i];
+ 		float v;
+ 		stream >> v;
+ 		SetValuebyIndex(i,v);
+ 	}
+}*/
 
 void CGridManager::ApplyModifierOnUpdate(float Modifier){
 	UpdateModifier = Modifier;
@@ -43,7 +46,6 @@ int CGridManager::GetModifierOnUpdateInterval(){
 }
 
 void CGridManager::Update() {
-
 	GameFrame++;
 	if((UpdateModifierInterval!=0)&&(UpdateModifier!=1)&&(UpdateModifier!=0)){
 		if(GameFrame%UpdateModifierInterval==0){
@@ -108,9 +110,6 @@ int CGridManager::GetIndex(float3 Gridpos) {
 
 float3 CGridManager::IndextoGrid(int Index) {
 	if(ValidIndex(Index)){
-		/*float z = floor(float(Index/GetGridWidth()));
-		float x = (float)Index-z;
-		return float3(x,0,z);*/
 		int x = 0;
 		int z=0;
 		x = Index%GetGridWidth();
@@ -148,10 +147,10 @@ int CGridManager::MaptoIndex(float3 Mappos) {
 float3 CGridManager::GridtoMap(float3 Gridpos) {
 	float3 finalpos=UpVector;
 	if(ValidGridPos(Gridpos)){
-		finalpos.z=Gridpos.z*GetCellHeight();
+		finalpos.z = Gridpos.z*GetCellHeight();
 		finalpos.z += GetCellHeight()/2;
-		finalpos.x=Gridpos.x*GetCellWidth();
-		finalpos.x+= GetCellWidth()/2;
+		finalpos.x = Gridpos.x*GetCellWidth();
+		finalpos.x += GetCellWidth()/2;
 	}
 	return finalpos;
 }

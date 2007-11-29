@@ -245,7 +245,7 @@ void CKeywordConstructionTask::Build(){
 
 		int* funits = new int[5000];
 
-		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetExclusionRange());
+		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,(float)building->GetExclusionRange());
 
 		if(fnum > 1){
 			//

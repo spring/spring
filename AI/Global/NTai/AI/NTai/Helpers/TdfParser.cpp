@@ -1,16 +1,18 @@
-// SunParser.cpp: implementation of the TdfParser class.
-//
 //////////////////////////////////////////////////////////////////////
-#include <algorithm>
-#include <cctype>
-#include <stdexcept>
+
+// TDFParser class, written for the Spring Engine as a replacement for
+// SJ's SunParser class by Tobi. Slightly modified by AF for AI usage.
+// Uses the GPL V2 licence
+
 #include <boost/spirit.hpp>
+#include <boost/spirit/error_handling.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/spirit/utility/confix.hpp>
+
 #include "../Core/include.h"
-#include "TdfParser.h"
+
 #include "tdf_grammar.hpp"
 
 using boost::spirit::parse;
@@ -105,6 +107,7 @@ TdfParser::TdfParser(Global* G, char const* buf, std::size_t size) {
 	this->G = G;
 	LoadBuffer( buf, size );
 }
+
 void TdfParser::LoadBuffer( char const* buf, std::size_t size){
 	this->filename = "buffer";
 	std::list<std::string> junk_data;
@@ -116,33 +119,32 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size){
 
 	boost::spirit::parse_info<char const*> info;
 	try {
-	info = parse(
-		buf
-		, buf + size
-		, grammar
-		, space_p
-		|  comment_p("/*", "*/")           // rule for C-comments
-		|  comment_p("//")
-		) ;
+		info = parse(
+			buf
+			, buf + size
+			, grammar
+			, space_p
+			|  comment_p("/*", "*/")           // rule for C-comments
+			|  comment_p("//")
+			) ;
+	}catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) {
+		// thrown by assertion parsers in tdf_grammar
+
+		switch(e.descriptor) {
+			case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
+			case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
+			case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
+			case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
+		};
+
+
+		for( size_t  i = 0;i != size;  ++i,++error_it );
+
 	}
-	catch( boost::spirit::parser_error<tdf_grammar::Errors, char *> & e ) { // thrown by assertion parsers in tdf_grammar
-
-	switch(e.descriptor) {
-		case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;
-		case tdf_grammar::equals_sign_expected: message = "equals sign in name value pair expected"; break;
-		case tdf_grammar::square_bracket_expected: message = "square bracket to close section name expected"; break;
-		case tdf_grammar::brace_expected: message = "brace or further name value pairs expected"; break;
-	};
 
 
-	for( size_t  i = 0;i != size;  ++i,++error_it );
-
-	}
-
-
-	for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end();
-		it !=e ; ++it ){
-	std::string temp = boost::trim_copy( *it );
+	for(list<string>::const_iterator it = junk_data.begin(), e = junk_data.end(); it !=e ; ++it ){
+		std::string temp = boost::trim_copy( *it );
 		if( ! temp.empty() ) {
 			G->L.eprint("Junk in "+ filename +  " :" + temp);
 		}
@@ -151,6 +153,7 @@ void TdfParser::LoadBuffer( char const* buf, std::size_t size){
 	if(!message.empty())
 	G->L.eprint(message + " in " +filename);
 	//throw parse_error( , error_it.get_currentline(), error_it.get_position().line, error_it.get_position().column, filename );
+	
 	if(!info.full){
 		boost::spirit::position_iterator2<char const*> error_it( buf, buf + size, filename );
 		for( size_t i = 0; i != size; ++i,++error_it );
@@ -233,6 +236,7 @@ bool TdfParser::SGetValue(std::string &value, std::string const& location){
 	std::string lowerd = location;
 	std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), static_cast<int (*)(int)>(std::tolower));
 	std::string searchpath; //for errormessages
+
 	//split the location string
 	std::vector<std::string> loclist = GetLocationVector(lowerd);
 	if(root_section.sections.find(loclist[0]) == root_section.sections.end()){
