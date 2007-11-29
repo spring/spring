@@ -353,3 +353,6 @@ class Global;
     #define END_EXCEPTION_HANDLING(b) /* */
 
 #endif
+
+// The name NTAI gives to the spring engine.
+const char AI_NAME[]= {"NTai XE9.79+"};
