@@ -2044,7 +2044,6 @@ bool CGame::Draw()
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
-	std::string tempstring;
 
 	ph->UpdateTextures();
 
@@ -2308,8 +2307,7 @@ bool CGame::Draw()
 	glEnable(GL_DEPTH_TEST );
 	glLoadIdentity();
 
-	Uint64 start;
-	start = SDL_GetTicks();
+	unsigned start = SDL_GetTicks();
 	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
 	lastMoveUpdate = start;
 
@@ -2511,12 +2509,7 @@ void CGame::SimFrame()
 	}
 //	CPathFinder::Instance()->Update();
 
-	Uint64 stopPhysics;
-	stopPhysics = SDL_GetTicks();
-
 	END_TIME_PROFILE("Sim time")
-
-	lastUpdate=stopPhysics;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 
@@ -3270,7 +3263,6 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-//		CCameraController* camCtrl = camCtrl;
 		if (disableTracker && camCtrl->DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
@@ -3340,42 +3332,6 @@ void CGame::UpdateUI()
 		ignoreChar=0;
 	}
 }
-
-
-/*
-unsigned int crcTable[256];
-
-unsigned int Calculate_CRC(char *first,char *last)
-{  int length = ((int) (last - first));  unsigned int crc = 0xFFFFFFFF;
-  for(int i=0; i<length; i++)
-    {
-    crc = (crc>>8) & 0x00FFFFFF ^ crcTable[(crc^first[i]) & 0xFF];
-    }  return(crc);}
-
-
-
-void InitCRCTable()
-{
-  unsigned int crc;
-  for (int i=0; i<256; i++)
-    {
-    crc = i;
-    for(int j=8; j>0; j--)
-      {
-      if (crc&1)
-        {
-        crc = (crc >> 1) ^ 0xEDB88320;
-        }
-      else
-        {
-        crc >>= 1;
-        }
-     }
-     crcTable[i] = crc;
-   }
-  }
-
-  */
 
 void CGame::MakeMemDump(void)
 {
