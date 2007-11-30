@@ -2511,6 +2511,8 @@ void CGame::SimFrame()
 
 	END_TIME_PROFILE("Sim time")
 
+	lastUpdate = SDL_GetTicks();
+
 #ifdef DIRECT_CONTROL_ALLOWED
 
 	for(int a=0;a<gs->activePlayers;++a){
@@ -3332,6 +3334,8 @@ void CGame::UpdateUI()
 		ignoreChar=0;
 	}
 }
+
+
 
 void CGame::MakeMemDump(void)
 {
