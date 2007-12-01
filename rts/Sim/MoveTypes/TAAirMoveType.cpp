@@ -75,7 +75,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	altitudeRate(3.0f),
 	currentBank(0),
 	// we want to take off in direction of factory facing
-	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
+	wantedHeading(owner?GetHeadingFromFacing(owner->buildFacing):0),
 	wantToStop(false),
 	forceHeading(false),
 	dontCheckCol(false),

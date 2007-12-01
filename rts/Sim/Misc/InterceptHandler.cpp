@@ -44,13 +44,13 @@ void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
 
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 destination)
 {
-	int targTeam=0;
+	int targTeam=-1;
 	if(target->owner)
 		targTeam=target->owner->allyteam;
 
 	for(std::list<CWeapon*>::iterator wi=interceptors.begin();wi!=interceptors.end();++wi){
 		CWeapon* w=*wi;
-		if(!gs->Ally(w->owner->allyteam,targTeam) && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.distance2D(destination) < w->weaponDef->coverageRange){
+		if ((targTeam==-1 || !gs->Ally(w->owner->allyteam,targTeam)) && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.distance2D(destination) < w->weaponDef->coverageRange){
 			w->incoming.push_back(target);
 			w->AddDeathDependence(target);
 		}
