@@ -68,13 +68,14 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	distanceToTravel(maxdistance)
 {
 	this->uptime=uptime;
-	if (weaponDef->flighttime == 0) {
-		ttl=(int)min(3000.f,uptime+(weaponDef?weaponDef->range:0)/maxSpeed+100);
+	if (weaponDef) {
+		if (weaponDef->flighttime == 0) {
+			ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
+		}
+		else {
+			ttl=weaponDef->flighttime;
+		}
 	}
-	else {
-		ttl=weaponDef->flighttime;
-	}
-
 	maxGoodDif=cos(tracking*0.6f);
 	curSpeed=speed.Length();
 	dir.Normalize();
