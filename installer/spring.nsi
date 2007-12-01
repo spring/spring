@@ -7,6 +7,7 @@
 SetCompressor lzma
 
 !include "springsettings.nsh"
+!include "LogicLib.nsh"
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -80,46 +81,6 @@ ShowUnInstDetails show
 
 !include fileassoc.nsh
 
-; Used to make sure that the desktop icon to the battleroom cannot be installed without the battleroom itself
-Function .onSelChange
-  Push $0
-  Push $1
-
-  ; Determine which section to affect (since UPDATE do not have a map section)
-!ifdef SP_UPDATE
-  Push 3
-!else
-  Push 4
-!endif
-  Pop $1
-  
-  SectionGetFlags 1 $0
-  IntOp $0 $0 & 1
-  IntCmp $0 0 NoBattle Battle Battle
-  
-  ; Battleroom is enabled
-  Battle:
-    SectionGetFlags $1 $0
-    IntOp $0 $0 & 15
-    SectionSetFlags $1 $0
-    
-    Goto Done
-
-  ; Battleroom is disabled
-  NoBattle:
-    SectionGetFlags $1 $0
-    IntOp $0 $0 & 14
-    IntOp $0 $0 | 16
-    SectionSetFlags $1 $0
-    Goto Done
-
-  ; Done doing battleroom stuff
-  Done:
-  
-  Pop $1
-  Pop $0
-FunctionEnd
-
 Function .onInit
   Push $0
 
@@ -133,7 +94,7 @@ Function .onInit
 
 FunctionEnd
 
-; Only allow installation if spring.exe is from version 0.74
+; Only allow installation if spring.exe is from version 0.75
 Function CheckVersion
   ClearErrors
   FileOpen $0 "$INSTDIR\spring.exe" r
@@ -167,6 +128,53 @@ Done:
 
 FunctionEnd
 
+;Three functions which check to make sure OTA Content is installed before installing Mods that depend on it.
+Function CheckTATextures
+  ClearErrors
+  FileOpen $0 "$INSTDIR\base\tatextures_v062.sdz" r
+  IfErrors Fail
+  FileSeek $0 0 END $1
+
+  IntCmp $1 1245637 Done              
+Fail:
+  inetc::get \
+             "http://buildbot.no-ip.org/~lordmatt/base/tatextures_v062.sdz" "$INSTDIR\base\tatextures_v062.sdz" 
+Done:
+  FileClose $0
+
+FunctionEnd
+
+Function CheckOTAContent
+  ClearErrors
+  FileOpen $0 "$INSTDIR\base\otacontent.sdz" r
+  IfErrors Fail
+  FileSeek $0 0 END $1
+
+  IntCmp $1 7421640 Done              
+Fail:
+  inetc::get \
+             "http://buildbot.no-ip.org/~lordmatt/base/otacontent.sdz" "$INSTDIR\base\otacontent.sdz" 
+Done:
+  FileClose $0
+
+FunctionEnd
+
+Function CheckTAContent
+  ClearErrors
+  FileOpen $0 "$INSTDIR\base\tacontent_v2.sdz" r
+  IfErrors Fail
+  FileSeek $0 0 END $1
+
+  IntCmp $1 284 Done              
+Fail:
+  inetc::get \
+             "http://buildbot.no-ip.org/~lordmatt/base/tacontent_v2.sdz" "$INSTDIR\base\tacontent_v2.sdz"
+Done:
+  FileClose $0
+
+FunctionEnd
+
+
 Section "Main application (req)" SEC_MAIN
 !ifdef SP_UPDATE
 !ifndef TEST_BUILD
@@ -195,15 +203,37 @@ Section "Maps" SEC_MAPS
 SectionEnd
 !endif
 
+SectionGroup "Mods (The Games You Can Play)"
+	Section "Balanced Annihilation (BA)" SEC_BA
+	!define INSTALL
+        Call CheckTATextures
+        Call CheckOTAContent
+        Call CheckTAContent
+	!include "sections\ba.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "XTA" SEC_XTA
+	!define INSTALL
+        Call CheckTATextures
+        Call CheckOTAContent
+        Call CheckTAContent
+	!include "sections\xta.nsh"
+	!undef INSTALL
+	SectionEnd
+SectionGroupEnd
+
 Section "Start menu shortcuts" SEC_START
   !define INSTALL
   !include "sections\shortcuts.nsh"
   !undef INSTALL
 SectionEnd
 
-Section /o "Desktop shortcut" SEC_DESKTOP
+Section "Desktop shortcut" SEC_DESKTOP
+${If} ${SectionIsSelected} ${SEC_BATTLEROOM}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
+${EndIf}
 SectionEnd
 
 Section "Easy content installation" SEC_ARCHIVEMOVER
@@ -212,7 +242,6 @@ Section "Easy content installation" SEC_ARCHIVEMOVER
   !undef INSTALL
 SectionEnd
 
-;!ifndef SP_UPDATE
 SectionGroup "AI opponent plugins (Bots)"
 	Section "AAI" SEC_AAI
 	!define INSTALL
@@ -226,7 +255,6 @@ SectionGroup "AI opponent plugins (Bots)"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
-;!endif
 
 !include "sections\sectiondesc.nsh"
 
@@ -273,7 +301,10 @@ Section Uninstall
   !include "sections\tasclient.nsh"
   !include "sections\luaui.nsh"
 
-  Delete "$DESKTOP\${PRODUCT_NAME} Spring battleroom.lnk"
+  !include "sections\BA.nsh"
+  !include "sections\XTA.nsh"
+
+  Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
 
   ; All done
   RMDir "$INSTDIR"

@@ -35,10 +35,6 @@
   File "..\game\zlibwapi.dll"
 
   File "..\game\PALETTE.PAL"
-  
-  ; Gamedata - stored in springcontent.sdz now. If it's stored on disk then mods can't override it
-  Delete "$INSTDIR\gamedata\*.tdf"
-  RmDir "$INSTDIR\gamedata"
 
 !endif ; SP_UPDATE
 
@@ -75,31 +71,15 @@
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-!ifndef SP_UPDATE
-
-!ifndef NO_TOTALA
-  File "..\game\base\tatextures_v062.sdz"
-  File "..\game\base\otacontent.sdz"
-  File "..\game\base\tacontent_v2.sdz"
-!endif
-
-!endif ; SP_UPDATE
-
   File "..\game\base\springcontent.sdz"
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
 
 !ifndef SP_UPDATE
 
-; Default mod
-!ifndef NO_TOTALA
-  SetOutPath "$INSTDIR\mods"
-  File "..\game\mods\XTAPE.sdz"
-!endif
-
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
-  !insertmacro UPDATEFILEASSOC
+  !insertmacro UPDATEFILEASSOC 
 
 !endif ; SP_UPDATE
 
@@ -165,22 +145,11 @@
   RmDir "$INSTDIR\startscripts"
 
   ; base content
-!ifndef NO_TOTALA
-  Delete "$INSTDIR\base\tatextures_v062.sdz"
-  Delete "$INSTDIR\base\tacontent_v2.sdz"
-  Delete "$INSTDIR\base\otacontent.sdz"
-!endif
 
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
-
-  ; default mod
-!ifndef NO_TOTALA
-  Delete "$INSTDIR\mods\XTAPE.sdz"
-  RmDir "$INSTDIR\mods"
-!endif
 
   ; Generated stuff from the installer
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
