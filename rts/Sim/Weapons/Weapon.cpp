@@ -694,6 +694,8 @@ void CWeapon::DependentDied(CObject *o)
 	if(weaponDef->interceptor){
 		incoming.remove((CWeaponProjectile*)o);
 	}
+	if (o==interceptTarget)
+		interceptTarget = 0;
 }
 
 bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
