@@ -147,7 +147,8 @@ CGameServer::~CGameServer()
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
 	lastTick = newlastTick;
-	serverframenum = newserverframenum;
+//	serverframenum = newserverframenum;
+	nextserverframenum = newserverframenum+1;
 }
 
 void CGameServer::SkipTo(int targetframe)
@@ -744,6 +745,7 @@ void CGameServer::StartGame()
 		hostif->SendStartPlaying();
 	}
 	timeLeft=0;
+	lastTick = SDL_GetTicks()-1;
 	CreateNewFrame(true);
 }
 
@@ -811,7 +813,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 #endif
 		{
 			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
-			serverframenum++;
+			if (nextserverframenum!=0) {
+				serverframenum = nextserverframenum;
+				nextserverframenum = 0;
+			} else
+				serverframenum++;
 			serverNet->SendNewFrame(serverframenum);
 #ifdef SYNCCHECK
 			outstandingSyncFrames.push_back(serverframenum);

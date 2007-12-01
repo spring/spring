@@ -197,11 +197,10 @@ void CLoadSaveHandler::LoadGame()
 			globalAI->ais[a] = 0;
 		}
 	}
-	gs->paused = true;
+	gs->paused = false;
 	if (gameServer) {
-		gameServer->IsPaused = true;
+		gameServer->IsPaused = false;
 		gameServer->syncErrorFrame = 0;
-		gameServer->timeLeft = 0;
 	}
 	UnloadStartPicture();
 }
