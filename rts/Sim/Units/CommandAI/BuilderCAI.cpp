@@ -188,6 +188,7 @@ void CBuilderCAI::PostLoad()
 		map<int, string>::iterator boi = buildOptions.find(c.id);
 		if (boi != buildOptions.end()) {
 			build.Parse(c);
+			build.pos = helper->Pos2BuildPos(build);
 		}
 	}
 }
@@ -376,6 +377,7 @@ void CBuilderCAI::SlowUpdate()
 				}
 			} else {
 				build.Parse(c);
+				build.pos = helper->Pos2BuildPos(build);
 				const float dist = f3Dist(build.pos, fac->pos);
 				if ((dist < (fac->buildDistance * 0.6f + radius)) ||
 				    (!owner->unitDef->canmove && (dist <= (fac->buildDistance+radius-8.0f)))) {
@@ -894,6 +896,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		}
 	} else if(owner->unitDef->canRestore){
 		float3 pos(c.params[0],c.params[1],c.params[2]);
+		pos.y = ground->GetHeight2(pos.x,pos.y);
 		float radius(c.params[3]);
 		if (f3Dist(fac->pos, pos) < fac->buildDistance-1) {
 			StopMove();
