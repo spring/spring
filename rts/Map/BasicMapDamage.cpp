@@ -242,6 +242,7 @@ void CBasicMapDamage::Update(void)
 
 	for(ei=explosions.begin();ei!=explosions.end();++ei){
 		Explo* e=*ei;
+		if (e->ttl<0) continue;
 		--e->ttl;
 
 		int x1=e->x1;
