@@ -16,6 +16,7 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
+#include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
 
 CR_BIND(CTeam,);
@@ -367,6 +368,10 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 					gameServer->PlayerDefeated(a);
 				}
 			}
+		}
+		if (globalAI->ais[teamNum]) {
+			delete globalAI->ais[teamNum];
+			globalAI->ais[teamNum] = 0;
 		}
 	}
 }

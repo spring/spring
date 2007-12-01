@@ -837,6 +837,7 @@ const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing)
 {
+	if (!unitdef) return float3(-1.0f,0.0f,0.0f);
 	CFeature* feature;
 	int allyteam=gs->AllyTeam(team);
 

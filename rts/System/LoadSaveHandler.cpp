@@ -24,6 +24,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "mmgr.h"
+#include "Game/GameServer.h"
 
 extern std::string stupidGlobalMapname;
 
@@ -190,7 +191,18 @@ void CLoadSaveHandler::LoadGame()
 		grouphandlers[a]->Load(ifs);
 	globalAI->Load(ifs);
 	delete ifs;
-	gs->paused = false;
+	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
+		if (gs->Team(a)->isDead && globalAI->ais[a]) {
+			delete globalAI->ais[a];
+			globalAI->ais[a] = 0;
+		}
+	}
+	gs->paused = true;
+	if (gameServer) {
+		gameServer->IsPaused = true;
+		gameServer->syncErrorFrame = 0;
+		gameServer->timeLeft = 0;
+	}
 	UnloadStartPicture();
 }
 

@@ -34,6 +34,7 @@ This class represents a gameserver. It is responsible for recieving, checking an
 */
 class CGameServer
 {
+	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();

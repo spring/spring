@@ -400,7 +400,9 @@ void CGameServer::ServerReadNet()
 							if(gamePausable || a==0) // allow host to pause even if nopause is set
 							{
 								timeLeft=0;
-								IsPaused ? IsPaused = false : IsPaused = true;
+								if (IsPaused!=!!inbuf[2]) {
+									IsPaused ? IsPaused = false : IsPaused = true;
+								}
 								serverNet->SendPause(inbuf[1],inbuf[2]);
 							}
 						}
