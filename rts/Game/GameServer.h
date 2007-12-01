@@ -104,6 +104,7 @@ private:
 	
 	bool quitServer;
 	int serverframenum;
+	int nextserverframenum; //For loading game
 	
 	unsigned gameEndTime;	//Tick when game end was detected
 	bool sentGameOverMsg;
