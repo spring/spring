@@ -7,6 +7,7 @@
 #include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
 #include <stdlib.h>
+#include <string>
 //#include <ostream>
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"
@@ -27,7 +28,6 @@
 #include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
 #include "System/TdfParser.h"
-#include <string>
 #include "mmgr.h"
 
 using namespace std;
@@ -167,7 +167,7 @@ void CReadMap::Serialize(creg::ISerializer& s)
 	s.Serialize(hm, 4 * (gs->mapx+1) * (gs->mapy+1));
 
 	if (!s.IsWriting())
-		CalcHeightfieldData();
+		mapDamage->RecalcArea(2,gs->mapx-3,2,gs->mapy-3);
 }
 
 void CReadMap::Initialize()
