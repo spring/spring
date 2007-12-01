@@ -3,8 +3,10 @@
   SetOutPath "$INSTDIR"
   ; Main shortcuts
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+  ${If} ${SectionIsSelected} ${SEC_BATTLEROOM}
+    CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+  ${EndIf}
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\Settings.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
