@@ -38,7 +38,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ceg),
 	CR_MEMBER(cegTag),
 	CR_MEMBER(interceptTarget),
-	CR_RESERVED(12),
+	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 	));
 
