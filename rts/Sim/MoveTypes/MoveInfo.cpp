@@ -28,13 +28,17 @@ CR_REG_METADATA(MoveData, (
 		CR_MEMBER(crushStrength),
 		CR_MEMBER(moveFamily),
 
-		CR_MEMBER(name)));
+		CR_MEMBER(name),
+		CR_RESERVED(16)
+		));
 
 CR_REG_METADATA(CMoveInfo, (
 		CR_MEMBER(moveData),
 		CR_MEMBER(name2moveData),
 		CR_MEMBER(moveInfoChecksum),
-		CR_MEMBER(terrainType2MoveFamilySpeed)));
+		CR_MEMBER(terrainType2MoveFamilySpeed),
+		CR_RESERVED(16)
+		));
 
 
 CMoveInfo* moveinfo;
