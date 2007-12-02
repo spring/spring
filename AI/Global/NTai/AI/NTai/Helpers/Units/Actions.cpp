@@ -1,6 +1,8 @@
 // Actions
 #include "../../Core/include.h"
 
+using namespace ntai;
+
 CActions::CActions(Global* GL){
     G = GL;
     last_attack = UpVector;

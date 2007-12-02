@@ -1,86 +1,89 @@
-class CUnitTypeData{
-public:
-	//
-	CUnitTypeData();
-	~CUnitTypeData();
-	void Init(Global* G, const UnitDef* ud);
 
-	const UnitDef* GetUnitDef();
-	string GetName();
+namespace ntai {
+	class CUnitTypeData{
+	public:
+		//
+		CUnitTypeData();
+		~CUnitTypeData();
+		void Init(Global* G, const UnitDef* ud);
 
-	bool IsMex();
-	bool IsMetalMaker();
-	bool IsEnergy();
-	bool IsFactory();
-	bool IsHub();
+		const UnitDef* GetUnitDef();
+		string GetName();
 
-	bool IsAirCraft();
-	bool IsGunship();
-	bool IsFighter();
-	bool IsBomber();
+		bool IsMex();
+		bool IsMetalMaker();
+		bool IsEnergy();
+		bool IsFactory();
+		bool IsHub();
 
-	bool IsUWCapable(){
-		return IsUWStructure()||IsShip()||IsSub();
-	}
-	bool IsUWStructure(){ return false;}
-	bool IsHovercraft(){ return false;}
-	bool IsAmphib(){ return false;}
-	bool IsShip(){ return false;}
-	bool IsSub(){ return false;}
+		bool IsAirCraft();
+		bool IsGunship();
+		bool IsFighter();
+		bool IsBomber();
 
-	bool IsMobile();
+		bool IsUWCapable(){
+			return IsUWStructure()||IsShip()||IsSub();
+		}
+		bool IsUWStructure(){ return false;}
+		bool IsHovercraft(){ return false;}
+		bool IsAmphib(){ return false;}
+		bool IsShip(){ return false;}
+		bool IsSub(){ return false;}
 
-	bool IsAIRSUPPORT();
+		bool IsMobile();
 
-	bool IsAttacker();
-	
-	bool GetSingleBuild();// is this unit type subject to the single build behaviour?
-	void SetSingleBuild(bool value);
+		bool IsAIRSUPPORT();
 
-	bool GetSingleBuildActive();// is this behaviour currently active? (is one of these being built atm?)
-	void SetSingleBuildActive(bool value);
+		bool IsAttacker();
+		
+		bool GetSingleBuild();// is this unit type subject to the single build behaviour?
+		void SetSingleBuild(bool value);
 
-	bool GetSoloBuild();// is this unit type subject to the single build behaviour?
-	void SetSoloBuild(bool value);
+		bool GetSingleBuildActive();// is this behaviour currently active? (is one of these being built atm?)
+		void SetSingleBuildActive(bool value);
 
-	bool GetSoloBuildActive();// is this behaviour currently active? (is one of these being built atm?)
-	void SetSoloBuildActive(bool value);
+		bool GetSoloBuild();// is this unit type subject to the single build behaviour?
+		void SetSoloBuild(bool value);
 
-	void SetExclusionRange(int value);
-	int GetExclusionRange();
+		bool GetSoloBuildActive();// is this behaviour currently active? (is one of these being built atm?)
+		void SetSoloBuildActive(bool value);
 
-	void SetDeferRepairRange(float value);
-	float GetDeferRepairRange();
+		void SetExclusionRange(int value);
+		int GetExclusionRange();
 
-	bool CanBuild();
+		void SetDeferRepairRange(float value);
+		float GetDeferRepairRange();
 
-	float GetDGunCost();
-	bool CanDGun();
+		bool CanBuild();
 
-	bool CanConstruct();
+		float GetDGunCost();
+		bool CanDGun();
 
-	float GetSpacing();
-private:
-	Global* G;
-	const UnitDef* ud;
-	string unit_name; // the name of the unit trimmed in lowercase
+		bool CanConstruct();
 
-	bool attacker;
-	
-	bool soloBuild;
-	bool soloBuildActive;
+		float GetSpacing();
+	private:
+		Global* G;
+		const UnitDef* ud;
+		string unit_name; // the name of the unit trimmed in lowercase
 
-	bool singleBuild;
-	bool singleBuildActive;
+		bool attacker;
+		
+		bool soloBuild;
+		bool soloBuildActive;
 
-	int exclusionRange;
-	float repairDeferRange;
+		bool singleBuild;
+		bool singleBuildActive;
 
-	float dgunCost;
-	bool canDGun;
+		int exclusionRange;
+		float repairDeferRange;
 
-	bool canConstruct;
+		float dgunCost;
+		bool canDGun;
 
-	float buildSpacing;
+		bool canConstruct;
 
-};
+		float buildSpacing;
+
+	};
+}

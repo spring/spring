@@ -7,43 +7,66 @@ CMap::CMap(Global* GL){
 
 float3 CMap::distfrom(float3 Start, float3 Target, float distance){
 	NLOG("CMap::distfrom");
-	if(CheckFloat3(Start)==false) return UpVector;
-	if(CheckFloat3(Target) == false) return UpVector;
-	//float3 direction = (Target - Start);
-	//return Start + direction * (Target / direction.SqLength2D());
-	
+
+	if(!CheckFloat3(Start)){
+		return UpVector;
+	}
+
+	if(!CheckFloat3(Target)){
+		return UpVector;
+	}
+
 	float p = distance/Start.distance2D(Target);
 	if(p < 0) p *= -1;
+
 	float dx = Start.x-Target.x;
 	if(dx < 0) dx *= -1;
+
 	float dz = Start.z-Target.z;
 	if(dz < 0) dz *= -1;
+
 	dz *= p;
 	dx *= p;
+
 	float x = Target.x;
+
 	if(Start.x > Target.x){
 		x += dx;
 	} else{
 		x -= dx;
 	}
+
 	float z = Target.z;
+
 	if(Start.z > Target.z){
 		z += dz;
 	}else{
 		z -= dz;
 	}
+
 	return float3(x,0,z);
-	/*float c = Target.distance(Start);
-	return float3(Target.x + ((distance*(Start.z - Target.z))/c),0,Target.z + ((distance*(Start.x - Target.x))/c));*/
+
 }
 
 t_direction CMap::WhichCorner(float3 pos){
 	NLOG("CMap::WhichCorner");
-	// 1= NW, 2=NE,  3= SW, 4=SE
-	if ((pos.x<(G->cb->GetMapWidth()*4))&&(pos.z<(G->cb->GetMapHeight()*SQUARE_SIZE*4))) return t_NW;
-	if ((pos.x>(G->cb->GetMapWidth()*4))&&(pos.z<(G->cb->GetMapHeight()*SQUARE_SIZE*4))) return t_NE;
-	if ((pos.x<(G->cb->GetMapWidth()*4))&&(pos.z>(G->cb->GetMapHeight()*SQUARE_SIZE*4))) return t_SW;
-	if ((pos.x>(G->cb->GetMapWidth()*4))&&(pos.z>(G->cb->GetMapHeight()*SQUARE_SIZE*4))) return t_SE;
+
+	if ((pos.x<(G->cb->GetMapWidth()*4))&&(pos.z<(G->cb->GetMapHeight()*SQUARE_SIZE*4))){
+		return t_NW;
+	}
+
+	if ((pos.x>(G->cb->GetMapWidth()*4))&&(pos.z<(G->cb->GetMapHeight()*SQUARE_SIZE*4))){
+		return t_NE;
+	}
+
+	if ((pos.x<(G->cb->GetMapWidth()*4))&&(pos.z>(G->cb->GetMapHeight()*SQUARE_SIZE*4))){
+		return t_SW;
+	}
+
+	if ((pos.x>(G->cb->GetMapWidth()*4))&&(pos.z>(G->cb->GetMapHeight()*SQUARE_SIZE*4))){
+		return t_SE;
+	}
+
 	return t_NA;
 }
 
