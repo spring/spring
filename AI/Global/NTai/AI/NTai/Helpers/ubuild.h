@@ -1,56 +1,142 @@
 // Universal build.h
 
-class Tunit;
+namespace ntai {
 
-class CUBuild{
-public:
-	CUBuild();
-	virtual ~CUBuild();
+	class Tunit;
 
-	bool OkBuildSelection(string name);
+	class CUBuild{
+	public:
+		CUBuild();
+		virtual ~CUBuild();
 
-	void Init(Global* GL, CUnitTypeData* wu, int uid); // Initialize object
-	void SetWater(bool w);
-	string operator() (btype build,float3 pos=ZeroVector); // () operator, allows it to be called like this, Object(build); rather than something like object->getbuild(build);
+		bool OkBuildSelection(string name);
 
-	string GetMEX(); // metal extractor
-	string GetPOWER(); // energy producer
-	string GetRAND_ASSAULT(); // random attack unit
-	string GetASSAULT(); // most efficient attack unit (give or take a percentage)
-	string GetFACTORY(); // factory
-	string GetBUILDER(); // builders
-	string GetGEO(); // geothermal plant
-	string GetSCOUT(); // scouter
-	string GetRANDOM(); // random unit (no mines)
-	string GetDEFENCE(); // random defense
-	string GetRADAR(); // radar towers
-	string GetESTORE(); // energy storage
-	string GetMSTORE(); // metal storage
-	string GetSILO(); // missile silos
-	string GetJAMMER(); // radar jammers
-	string GetSONAR(); // sonar
-	string GetANTIMISSILE(); // antimissile units
-	string GetARTILLERY(); // artillery units
-	string GetFOCAL_MINE(); // focal mines
-	string GetSUB(); // submarines
-	string GetAMPHIB(); // amphibious units (pelican/gimp/triton etc
-	string GetMINE(); // mines
-	string GetCARRIER(); // units with air repair pads that floats
-	string GetMETAL_MAKER(); // metal makers
-	string GetFORTIFICATION(); // walls etc
-	string GetTARG(); // Targeting facility type buildings
-	string GetBOMBER(); // Bomber planes
-	string GetSHIELD(); // units with shields
-	string GetMISSILE_UNIT(); // units that launch missiles, such as the Merl or diplomat or dominator
-	string GetFIGHTER();
-	string GetGUNSHIP();
-	string GetHUB();
-	string GetAIRSUPPORT();
+		/* Initialize object */
+		void Init(Global* GL, CUnitTypeData* wu, int uid);
 
-	bool Useless(CUnitTypeData* u); // To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist (things made by bananas!)
-	bool antistall;
-	Global* G;
-	int uid;
-	CUnitTypeData* utd;
-	bool water;
-};;
+		void SetWater(bool w);
+
+		/* () operator, allows it to be called like this, Object(build); rather than something like object->getbuild(build); */
+		string operator() (btype build,float3 pos=ZeroVector);
+		
+		/* metal extractor*/
+		string GetMEX(); 
+
+		/* energy producer */
+		string GetPOWER();
+
+		/* random attack unit */
+		string GetRAND_ASSAULT();
+		
+		/* most efficient attack unit (give or take a percentage) */
+		string GetASSAULT();
+		
+		/* factory */
+		string GetFACTORY();
+		
+
+		/* builders */
+		string GetBUILDER();
+		
+		/* geothermal plant */
+		string GetGEO();
+		
+		/* scouter */
+		string GetSCOUT();
+		
+		/* random unit (no mines) */
+		string GetRANDOM();
+		
+		/* random defense */
+		string GetDEFENCE();
+		
+		/* radar towers */
+		string GetRADAR();
+		
+		/* energy storage */
+		string GetESTORE();
+		
+		/* metal storage */
+		string GetMSTORE();
+		
+		/* missile silos */
+		string GetSILO();
+		
+		/* radar jammers */
+		string GetJAMMER();
+		
+		/* sonar */
+		string GetSONAR();
+		
+		/* antimissile units */
+		string GetANTIMISSILE();
+		
+		/* artillery units */
+		string GetARTILLERY();
+		
+		/* focal mines */
+		string GetFOCAL_MINE();
+		
+		/* submarines */
+		string GetSUB();
+		
+		/* amphibious units (pelican/gimp/triton etc) */
+		string GetAMPHIB();
+		
+		/* mines */
+		string GetMINE();
+
+		/* units with air repair pads that floats */
+		string GetCARRIER();
+		
+		/* metal makers */
+		string GetMETAL_MAKER();
+		
+		/* walls etc */
+		string GetFORTIFICATION();
+		
+		/* Targeting facility type buildings */
+		string GetTARG();
+		
+		/* Bomber planes */
+		string GetBOMBER();
+		
+		/* units with shields */
+		string GetSHIELD();
+		
+		/* units that launch missiles, such as the Merl or diplomat or dominator */
+		string GetMISSILE_UNIT();
+		
+		/*  */
+		string GetFIGHTER();
+		
+		/*  */
+		string GetGUNSHIP();
+		
+		/*  */
+		string GetHUB();
+		
+		/*  */
+		string GetAIRSUPPORT();
+
+		/* To filter out things like dragons eye in AA, things that serve no purpose other than to simply exist */
+		bool Useless(CUnitTypeData* u);
+
+	protected:
+		
+		/*  */
+		bool antistall;
+
+		/*  */
+		Global* G;
+
+		/*  */
+		int uid;
+
+		/*  */
+		CUnitTypeData* utd;
+		
+		/*  */
+		bool water;
+	};
+}

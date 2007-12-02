@@ -6,7 +6,11 @@
 	#pragma warning(disable: 4267  ) // signed/unsigned and loss of precision...4018,4244
 #endif
 
-class Global;
+namespace ntai{
+	class Global;
+}
+
+using namespace ntai;
 
 // C++ headers
 
@@ -52,7 +56,6 @@ using namespace std;
 
 // engine includes
 #include "../SDK/AI.h"										// AI interface includes
-
 
 // helpers
 
@@ -100,7 +103,7 @@ using namespace std;
 #include "../Tasks/CUnitConstructionTask.h"					// A task for building things by name
 #include "../Tasks/CConsoleTask.h"							// Outputs a message to the chat console
 #include "../Tasks/CKeywordConstructionTask.h"				// Handles a universal build keyword/action
-
+#include "../Tasks/CLeaveBuildSpotTask.h"					// Makes units walk forward out of factories
 
 // Unit behaviours
 

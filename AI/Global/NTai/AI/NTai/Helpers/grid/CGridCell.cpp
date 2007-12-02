@@ -1,59 +1,62 @@
 #include "CGridCell.h"
 
-CGridCell::CGridCell(){
-	
-}
+namespace ntai {
 
-CGridCell::~CGridCell(){
-	
-}
+	CGridCell::CGridCell(){
+		
+	}
 
-void CGridCell::Initialize(int Index){
-	this->Index=Index;
-}
+	CGridCell::~CGridCell(){
+		
+	}
 
-bool CGridCell::IsValid(){
-	return (Index != -1);
-}
-std::string CGridCell::toString() {
-	return "";
-}
+	void CGridCell::Initialize(int Index){
+		this->Index=Index;
+	}
 
-void CGridCell::FromString(std::string s) {
-	//
-}
+	bool CGridCell::IsValid(){
+		return (Index != -1);
+	}
+	std::string CGridCell::toString() {
+		return "";
+	}
 
-float CGridCell::GetValue(){
-	boost::mutex::scoped_lock lock(cell_mutex);
-	return CellValue;
-}
+	void CGridCell::FromString(std::string s) {
+		//
+	}
 
-int CGridCell::GetIndex(){
-	return Index;
-}
+	float CGridCell::GetValue(){
+		boost::mutex::scoped_lock lock(cell_mutex);
+		return CellValue;
+	}
 
-void CGridCell::SetValue(float Value){
-	boost::mutex::scoped_lock lock(cell_mutex);
-	CellValue=Value;
-}
+	int CGridCell::GetIndex(){
+		return Index;
+	}
 
-void CGridCell::SetIndex(int i){
-	Index = i;
-}
+	void CGridCell::SetValue(float Value){
+		boost::mutex::scoped_lock lock(cell_mutex);
+		CellValue=Value;
+	}
 
-int CGridCell::GetLastChangeTime(){
-	boost::mutex::scoped_lock lock(cell_mutex);
-	return ChangeTime;
-}
+	void CGridCell::SetIndex(int i){
+		Index = i;
+	}
 
-bool CGridCell::SetLastChangeTime(int TimeFrame){
-	boost::mutex::scoped_lock lock(cell_mutex);
-	ChangeTime=TimeFrame;
-	return true;
-}
+	int CGridCell::GetLastChangeTime(){
+		boost::mutex::scoped_lock lock(cell_mutex);
+		return ChangeTime;
+	}
 
-void CGridCell::ApplyModifier(float Modifier){
-	boost::mutex::scoped_lock lock(cell_mutex);
-	CellValue *= Modifier;
-}
+	bool CGridCell::SetLastChangeTime(int TimeFrame){
+		boost::mutex::scoped_lock lock(cell_mutex);
+		ChangeTime=TimeFrame;
+		return true;
+	}
 
+	void CGridCell::ApplyModifier(float Modifier){
+		boost::mutex::scoped_lock lock(cell_mutex);
+		CellValue *= Modifier;
+	}
+
+}
