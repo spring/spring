@@ -132,14 +132,15 @@ void CCamera::Update(bool freeze)
 	up.Normalize();
 
 	const float aspect = (float) gu->viewSizeX / (float) gu->viewSizeY;
-	const float viewx = aspect * tanHalfFov;
+	const float viewx = tanf(aspect * halfFov);
+	// const float viewx = aspect * tanHalfFov;
 	const float viewy = tanHalfFov;
 
 	if (gu->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
 		const float span = 2.0f * tanHalfFov;
-		lppScale = span / (float)gu->viewSizeY;
+		lppScale = span / (float) gu->viewSizeY;
 	}
 
 	const float3 forwardy = (-forward * viewy);
@@ -344,35 +345,13 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	glMultMatrixd(modelview);
 }
 
-const GLdouble* CCamera::GetProjection() const
-{
-	return projection;
-}
+const GLdouble* CCamera::GetProjection() const { return projection; }
+const GLdouble* CCamera::GetModelview() const { return modelview; }
+const GLdouble* CCamera::GetBillboard() const { return billboard; }
 
-const GLdouble* CCamera::GetModelview() const
-{
-	return modelview;
-}
-
-const GLdouble* CCamera::GetBillboard() const
-{
-	return billboard;
-}
-
-float CCamera::GetFov() const
-{
-	return fov;
-}
-
-float CCamera::GetHalfFov() const
-{
-	return halfFov;
-}
-
-float CCamera::GetTanHalfFov() const
-{
-	return tanHalfFov;
-}
+float CCamera::GetFov() const { return fov; }
+float CCamera::GetHalfFov() const { return halfFov; }
+float CCamera::GetTanHalfFov() const { return tanHalfFov; }
 
 void CCamera::SetFov(float myfov)
 {
@@ -380,4 +359,3 @@ void CCamera::SetFov(float myfov)
 	halfFov = fov * 0.008726646f;
 	tanHalfFov = tanf(halfFov);
 }
-
