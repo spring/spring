@@ -43,6 +43,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	play = 0;
 	IsPaused = false;
 	sentGameOverMsg = false;
+	nextserverframenum = 0;
 
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
