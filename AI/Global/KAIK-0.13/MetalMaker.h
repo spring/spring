@@ -11,6 +11,7 @@ class CMetalMaker {
 
 		CMetalMaker(AIClasses* ai);
 		~CMetalMaker();
+		void PostLoad();
 
 		bool Add(int unit);
 		bool Remove(int unit);

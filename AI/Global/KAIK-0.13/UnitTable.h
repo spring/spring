@@ -64,7 +64,7 @@ class CUnitTable {
 
 		// all the unit defs
 		const UnitDef** unitList;
-		UnitType* unittypearray;
+		UnitType* unitTypes;
 		int numOfUnits;
 
 	private:

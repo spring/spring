@@ -56,7 +56,7 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 }
 
 CUnitTable::~CUnitTable() {
-	delete[] unittypearray;
+	delete[] unitTypes;
 	delete[] unitList;
 
 	delete[] ground_factories;
@@ -75,17 +75,17 @@ CUnitTable::~CUnitTable() {
 
 int CUnitTable::GetSide(int unit) {
 	assert(ai->cb->GetUnitDef(unit) != NULL);
-	return unittypearray[ai->cb->GetUnitDef(unit)->id].side;
+	return unitTypes[ai->cb->GetUnitDef(unit)->id].side;
 }
 
 int CUnitTable::GetCategory(const UnitDef* unitdef) {
-	return unittypearray[unitdef->id].category;
+	return unitTypes[unitdef->id].category;
 }
 
 int CUnitTable::GetCategory(int unit) {
 	assert(ai->cb->GetUnitDef(unit) != NULL);
 
-	return (unittypearray[ai->cb->GetUnitDef(unit)->id].category);
+	return (unitTypes[ai->cb->GetUnitDef(unit)->id].category);
 }
 
 
@@ -133,7 +133,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
 			if (!unit->weapons[i].def->paralyzer) {
-				targetcat = unittypearray[unit->id].TargetCategories[i];
+				targetcat = unitTypes[unit->id].TargetCategories[i];
 
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// what the weapon can target
@@ -236,32 +236,31 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int enemies[MAXUNITS];
-	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
+	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
 	float score = 0.01f;
 	float totalcost = 0.01f;
 	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
-	for (int i = 0; i < numofenemies; i++) {
+	for (int i = 0; i < numEnemies; i++) {
 		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
 	}
 
 	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
-		bool b1 = unittypearray[i].def->builder;
+		bool b1 = unitTypes[i].def->builder;
 		bool b2 = enemyunitsoftype[i] > 0;
-		bool b3 = unittypearray[i].side != -1;
-	//	bool b4 = (!unit->speed && !unittypearray[i].def->speed);
+		bool b3 = unitTypes[i].side != -1;
+	//	bool b4 = (!unit->speed && !unitTypes[i].def->speed);
 
-	//	if (!b1 && b2 && b3 && !b4) {
-		if (!b1 && b2 && b3) {
+		if (!b1 && b2 && b3 /* && !b4 */) {
 			float currentscore = 0.0f;
-			float costofenemiesofthistype = ((unittypearray[i].def->metalCost * METAL2ENERGY) + unittypearray[i].def->energyCost) * enemyunitsoftype[i];
-			currentscore = unittypearray[unit->id].DPSvsUnit[i] * costofenemiesofthistype;
+			float costofenemiesofthistype = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * enemyunitsoftype[i];
+			currentscore = unitTypes[unit->id].DPSvsUnit[i] * costofenemiesofthistype;
 			totalcost += costofenemiesofthistype;
 
 			/*
-			if (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype > 0) {
-				currentscore -= (unittypearray[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
+			if (unitTypes[i].DPSvsUnit[unit->id] * costofenemiesofthistype > 0) {
+				currentscore -= (unitTypes[i].DPSvsUnit[unit->id] * costofenemiesofthistype);
 			}
 			*/
 
@@ -272,7 +271,7 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	if (totalcost <= 0)
 		return 0.0f;
 
-	return score / totalcost;
+	return (score / totalcost);
 }
 
 
@@ -284,7 +283,7 @@ void CUnitTable::UpdateChokePointArray() {
 	vector<int> enemyunitsoftype;
 	float totalcosts = 1;
 	int enemies[MAXUNITS];
-	int numofenemies = ai->cheat->GetEnemyUnits(enemies);
+	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
 	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < ai->pather->totalcells; i++) {
@@ -293,14 +292,14 @@ void CUnitTable::UpdateChokePointArray() {
 	for (int i = 0; i < ai->pather->NumOfMoveTypes; i++) {
 		EnemyCostsByMoveType[i] = 0;
 	}
-	for (int i = 0; i < numofenemies; i++) {
+	for (int i = 0; i < numEnemies; i++) {
 		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
 	}
 
 	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
-		if (unittypearray[i].side != -1 && !unittypearray[i].def->canfly && unittypearray[i].def->speed > 0) {
-			float currentcosts = ((unittypearray[i].def->metalCost * METAL2ENERGY) + unittypearray[i].def->energyCost) * (enemyunitsoftype[i]);
-			EnemyCostsByMoveType[unittypearray[i].def->moveType] += currentcosts;
+		if (unitTypes[i].side != -1 && !unitTypes[i].def->canfly && unitTypes[i].def->speed > 0) {
+			float currentcosts = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * (enemyunitsoftype[i]);
+			EnemyCostsByMoveType[unitTypes[i].def->moveType] += currentcosts;
 			totalcosts += currentcosts;
 		}
 	}
@@ -414,8 +413,8 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 		} break;
 
 		case CAT_BUILDER: {
-			for (unsigned int i = 0; i != unittypearray[udef->id].canBuildList.size(); i++) {
-				if (unittypearray[unittypearray[udef->id].canBuildList[i]].category == CAT_FACTORY) {
+			for (unsigned int i = 0; i != unitTypes[udef->id].canBuildList.size(); i++) {
+				if (unitTypes[unitTypes[udef->id].canBuildList[i]].category == CAT_FACTORY) {
 					candevelop = true;
 				}
 			}
@@ -439,12 +438,12 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 			// benefit of a factory is dependant on the kind of
 			// offensive units it can build, but EE-hubs are only
 			// capable of building other buildings
-			for (unsigned int i = 0; i != unittypearray[udef->id].canBuildList.size(); i++) {
-				int buildOption = unittypearray[udef->id].canBuildList[i];
-				int buildOptionCategory = unittypearray[buildOption].category;
+			for (unsigned int i = 0; i != unitTypes[udef->id].canBuildList.size(); i++) {
+				int buildOption = unitTypes[udef->id].canBuildList[i];
+				int buildOptionCategory = unitTypes[buildOption].category;
 
 				if (buildOptionCategory == CAT_G_ATTACK || buildOptionCategory == CAT_FACTORY) {
-					benefit += GetScore(unittypearray[buildOption].def);
+					benefit += GetScore(unitTypes[buildOption].def);
 					unitcounter++;
 				}
 			}
@@ -539,11 +538,11 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 		// if our builder can build the i-th unit
 		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
 			// get the unit's heuristic score (based on current income)
-			tempScore = GetScore(unittypearray[tempUnitDefID].def);
+			tempScore = GetScore(unitTypes[tempUnitDefID].def);
 
 			if (tempScore > bestScore) {
 				bestScore = tempScore;
-				tempUnitDef = unittypearray[tempUnitDefID].def;
+				tempUnitDef = unitTypes[tempUnitDefID].def;
 			}
 		}
 	}
@@ -583,23 +582,23 @@ void CUnitTable::Init() {
 
 	// one more than needed because 0 is dummy object (so
 	// UnitDef->id can be used to adress that unit in array)
-	unittypearray = new UnitType[numOfUnits + 1];
-	unittypearray[0].side = -1;
+	unitTypes = new UnitType[numOfUnits + 1];
+	unitTypes[0].side = -1;
 
-	// get unit defs from game and stick them in the unittypearray[] array
+	// get unit defs from game and stick them in the unitTypes[] array
 	unitList = new const UnitDef*[numOfUnits];
 	ai->cb->GetUnitDefList(unitList);
 
 	// add units to UnitTable
 	for (int i = 1; i <= numOfUnits; i++) {
-		unittypearray[i].def = unitList[i - 1];
+		unitTypes[i].def = unitList[i - 1];
 		// side has not been assigned - will be done later
-		unittypearray[i].side = -1;
-		unittypearray[i].category = -1;
+		unitTypes[i].side = -1;
+		unitTypes[i].category = -1;
 
 		// get build options
-		for (map<int, string>::const_iterator j = unittypearray[i].def->buildOptions.begin(); j != unittypearray[i].def->buildOptions.end(); j++) {
-			unittypearray[i].canBuildList.push_back(ai->cb->GetUnitDef(j->second.c_str())->id);
+		for (map<int, string>::const_iterator j = unitTypes[i].def->buildOptions.begin(); j != unitTypes[i].def->buildOptions.end(); j++) {
+			unitTypes[i].canBuildList.push_back(ai->cb->GetUnitDef(j->second.c_str())->id);
 		}
 	}
 
@@ -607,8 +606,8 @@ void CUnitTable::Init() {
 	// now set sides and create buildtree for each
 	for (int s = 0; s < numOfSides; s++) {
 		// set side of start unit (eg. commander) and continue recursively
-		unittypearray[startUnits[s]].side = s;
-		unittypearray[startUnits[s]].techLevel = 0;
+		unitTypes[startUnits[s]].side = s;
+		unitTypes[startUnits[s]].techLevel = 0;
 
 		CalcBuildTree(startUnits[s]);
 	}
@@ -616,30 +615,28 @@ void CUnitTable::Init() {
 
 	// add unit to different groups
 	for (int i = 1; i <= numOfUnits; i++) {
-		UnitType* me = &unittypearray[i];
+		UnitType* me = &unitTypes[i];
 
 		// filter out neutral units
 		if (me->side != -1) {
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 
-			CSunParser* attackerparser = new CSunParser(ai);
+			CSunParser attackerParser(ai);
 			char weaponnumber[10] = "";
 
-			attackerparser->LoadVirtualFile(me->def->filename.c_str());
+			attackerParser.LoadVirtualFile(me->def->filename.c_str());
 			me->TargetCategories.resize(me->def->weapons.size());
 
 			for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
 				itoa(w, weaponnumber, 10);
-				string ans;
-				attackerparser->GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
+				attackerParser.GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
 			}
 
-			delete attackerparser;
 			me->DPSvsUnit.resize(numOfUnits + 1);
 
 			// calculate this unit type's DPS against all other unit types
 			for (int v = 1; v <= numOfUnits; v++) {
-				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unittypearray[v].def);
+				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unitTypes[v].def);
 			}
 
 			if (me->def->speed && me->def->minWaterDepth <= 0) {
@@ -733,8 +730,8 @@ void CUnitTable::Init() {
 
 bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 	// look in build options of builder for unit
-	for (unsigned int i = 0; i != unittypearray[id_builder].canBuildList.size(); i++) {
-		if (unittypearray[id_builder].canBuildList[i] == id_unit)
+	for (unsigned int i = 0; i != unitTypes[id_builder].canBuildList.size(); i++) {
+		if (unitTypes[id_builder].canBuildList[i] == id_unit)
 			return true;
 	}
 
@@ -742,21 +739,22 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 	return false;
 }
 
-// determines sides of unittypearray by recursion
+// determines sides of unitTypes by recursion
 void CUnitTable::CalcBuildTree(int unit) {
-	UnitType* utype = &unittypearray[unit];
+	UnitType* utype = &unitTypes[unit];
 
 	// go through all possible build options and set side if necessary
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
 		// add this unit to target's built-by list
 		int buildOptionIndex = utype->canBuildList[i];
-		UnitType* buildOptionType = &unittypearray[buildOptionIndex];
+		UnitType* buildOptionType = &unitTypes[buildOptionIndex];
 
 		// KLOOTNOTE: techLevel will not make much sense if
 		// unit has multiple ancestors at different depths
 		// in tree (eg. Adv. Vehicle Plants in XTA)
 		buildOptionType->builtByList.push_back(unit);
-		buildOptionType->techLevel = utype->techLevel; // + 1
+		buildOptionType->techLevel = utype->techLevel;
+		/// buildOptionType->techLevel = utype->def->techLevel;
 
 		if (buildOptionType->side == -1) {
 			// unit has not been checked yet, set side
@@ -786,7 +784,7 @@ void CUnitTable::DebugPrint() {
 	FILE* file = fopen(filename, "w");
 
 	for (int i = 1; i <= numOfUnits; i++) {
-		int side = unittypearray[i].side;
+		int side = unitTypes[i].side;
 
 		if (side != -1) {
 			fprintf(file, "UnitDef ID: %i\n", i);
@@ -794,18 +792,18 @@ void CUnitTable::DebugPrint() {
 			fprintf(file, "Side:       %s (%d)\n", sideNames[side].c_str(), side);
 			fprintf(file, "Can Build:  ");
 
-			for (unsigned int j = 0; j != unittypearray[i].canBuildList.size(); j++) {
-				fprintf(file, "'%s' ", unittypearray[unittypearray[i].canBuildList[j]].def->humanName.c_str());
+			for (unsigned int j = 0; j != unitTypes[i].canBuildList.size(); j++) {
+				fprintf(file, "'%s' ", unitTypes[unitTypes[i].canBuildList[j]].def->humanName.c_str());
 			}
 
 			fprintf(file, "\n");
 			fprintf(file, "Built by:   ");
 
-			for (unsigned int k = 0; k != unittypearray[i].builtByList.size(); k++) {
-				fprintf(file, "'%s' ", unittypearray[unittypearray[i].builtByList[k]].def->humanName.c_str());
+			for (unsigned int k = 0; k != unitTypes[i].builtByList.size(); k++) {
+				fprintf(file, "'%s' ", unitTypes[unitTypes[i].builtByList[k]].def->humanName.c_str());
 			}
 
-			fprintf(file, "\nTech-Level: %d", unittypearray[i].techLevel);
+			fprintf(file, "\nTech-Level: %d", unitTypes[i].techLevel);
 			fprintf(file, "\n\n");
 		}
 	}
@@ -815,7 +813,7 @@ void CUnitTable::DebugPrint() {
 			fprintf(file, "\n\n%s (side: %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
-				fprintf(file, "\t%s\n", unittypearray[all_lists[l][s][i]].def->humanName.c_str());
+				fprintf(file, "\t%s\n", unitTypes[all_lists[l][s][i]].def->humanName.c_str());
 		}
 	}
 

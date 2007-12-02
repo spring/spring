@@ -12,7 +12,8 @@ CR_REG_METADATA(CMetalMaker, (
 	CR_MEMBER(ai),
 	CR_MEMBER(listIndex),
 	CR_MEMBER(addedDelay),
-	CR_RESERVED(16)
+	CR_RESERVED(16),
+	CR_POSTLOAD(PostLoad)
 ));
 
 CR_BIND(CMetalMaker::UnitInfo, )
@@ -40,6 +41,10 @@ CMetalMaker::~CMetalMaker() {
 //	for (map<int, UnitInfo*>::iterator ui = myUnits.begin(); ui != myUnits.end(); ++ui)
 //		delete ui->second;
 	myUnits.clear();
+}
+
+void CMetalMaker::PostLoad() {
+	 this->aicb = ai->cb;
 }
 
 
