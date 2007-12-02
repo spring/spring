@@ -430,7 +430,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			newUnitPos.y = c->params[1];
 			newUnitPos.z = c->params[2];
 			// c.id == -newUnitDef->id
-			const UnitDef* newUnitDef = ai->ut->unittypearray[-c->id].def;
+			const UnitDef* newUnitDef = ai->ut->unitTypes[-c->id].def;
 			// make sure that no BuildTasks exists there
 			BuildTask* buildTask = BuildTaskExist(newUnitPos, newUnitDef);
 
@@ -894,7 +894,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 				// must test if this builder can make this unit/building too
 				if (timebuilding > largestime) {
 					const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
-					vector<int>* canBuildList = &ai->ut->unittypearray[builderDef->id].canBuildList;
+					vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
 					int size = canBuildList->size();
 					int thisBuildingID = i->def->id;
 

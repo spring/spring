@@ -407,7 +407,7 @@ void CGlobalAI::Update() {
 		// init defense matrix
 		ai->dm->Init();
 	}
-	if (frame > 80) {
+	if (frame > 60) {
 		// call buildup manager and unit handler (idle) update routine
 		ai->bu->Update(frame);
 		ai->uh->IdleUnitUpdate(frame);

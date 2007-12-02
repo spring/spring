@@ -43,7 +43,7 @@ void CUNIT::PostLoad(void) {
 bool CUNIT::isHub(void) {
 	// look up the type of this unit via its unitdef ID,
 	// then check if it has been flagged as a hub or not
-	return (ai->ut->unittypearray[this->def()->id]).isHub;
+	return (ai->ut->unitTypes[this->def()->id]).isHub;
 }
 
 const UnitDef* CUNIT::def() {
@@ -90,7 +90,7 @@ bool CUNIT::CanAttack(int otherUnit) {
 		assert(otherUnit != 0);
 
 		// float dps = this->ai->ut->GetDPSvsUnit(ud_mine, ud_other);
-		float dps = ai->ut->unittypearray[ud_mine->id].DPSvsUnit[ud_other->id];
+		float dps = ai->ut->unitTypes[ud_mine->id].DPSvsUnit[ud_other->id];
 		return (dps > 5.0f);
 	}
 
