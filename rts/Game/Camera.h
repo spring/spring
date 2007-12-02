@@ -57,8 +57,8 @@ private:
 	GLdouble modelview[16];
 	GLdouble billboard[16];
 
-	float fov; // in degree
-	float halfFov; // half the fov in radiant
+	float fov; // in degrees
+	float halfFov; // half the fov in radians
 	float tanHalfFov; // tan(halfFov)
 	
 	void operator=(const CCamera& c) {}; // don't use this
