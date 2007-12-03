@@ -370,11 +370,11 @@ bool CCommandAI::AllowedCommand(const Command& c)
 		case CMD_DGUN:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS:
-			if (!isCommandInMap(c)) return false;
+			if (!isCommandInMap(c)) { return false; }
 			break;
 		default:
 			// build commands
-			if (c.id < 0 && !isCommandInMap(c)) return false;
+			if (c.id < 0 && !isCommandInMap(c)) { return false; }
 			break;
 	}
 

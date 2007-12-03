@@ -293,59 +293,72 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	return true;
 }
 
-bool CTransportCAI::FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload)
+// FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
+bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
 {
-//	std::vector<CUnit*> units=qf->GetUnitsExact(center,radius);
-	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) { //handle air transports differently
-		for (int a=0;a<100;++a) {
-			float3 delta(1,0,1);
+	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		// handle air transports differently
+		for (int a = 0; a < 100; ++a) {
+			float3 delta(1, 0, 1);
 			float3 tmp;
 			do {
-				delta.x=(gs->randFloat()-0.5f)*2;
-				delta.z=(gs->randFloat()-0.5f)*2;
-				tmp = center + delta*radius;
-			} while(delta.SqLength2D() > 1
+				delta.x = (gs->randFloat() - 0.5f) * 2;
+				delta.z = (gs->randFloat() - 0.5f) * 2;
+				tmp = center + delta * radius;
+			} while (delta.SqLength2D() > 1
 					|| tmp.x < emptyRadius || tmp.z < emptyRadius
-					|| tmp.x >= gs->mapx*SQUARE_SIZE-emptyRadius
-					|| tmp.z >= gs->mapy*SQUARE_SIZE-emptyRadius);
-			float3 pos=center+delta*radius;
-			pos.y=ground->GetHeight(pos.x,pos.z);
+					|| tmp.x >= gs->mapx * SQUARE_SIZE - emptyRadius
+					|| tmp.z >= gs->mapy * SQUARE_SIZE - emptyRadius);
 
-			float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
-			if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
+			float3 pos = center + delta * radius;
+			pos.y = ground->GetHeight(pos.x, pos.z);
+
+			float unloadPosHeight = ground->GetApproximateHeight(pos.x, pos.z);
+
+			if (unloadPosHeight < (0 - unitToUnload->unitDef->maxWaterDepth))
  				continue;
-			if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
+			if (unloadPosHeight > (0 - unitToUnload->unitDef->minWaterDepth))
 				continue;
-			//Don't unload anything on slopes
-			if(unitToUnload->unitDef->movedata
-					&& ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
+
+			// Don't unload anything on slopes
+			if (unitToUnload->unitDef->movedata
+					&& ground->GetSlope(pos.x, pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 				continue;
-			if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
+			if (!qf->GetUnitsExact(pos, emptyRadius + 8).empty())
 				continue;
-			found=pos;
+
+			found = pos;
 			return true;
 		}
 	} else {
-		for(float y=max(emptyRadius,center.z-radius);y<min(float(gs->mapx*SQUARE_SIZE-emptyRadius),center.z+radius);y+=SQUARE_SIZE){
-			float dy=y-center.z;
-			float rx=radius*radius-dy*dy;
-			if(rx<=emptyRadius)
+		for (float y = max(emptyRadius, center.z - radius); y < min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius); y += SQUARE_SIZE) {
+			float dy = y - center.z;
+			float rx = radius * radius - dy * dy;
+
+			if (rx <= emptyRadius)
 				continue;
-			rx=sqrt(rx);
-			for(float x=max(emptyRadius,center.x-rx);x<min(float(gs->mapx*SQUARE_SIZE-emptyRadius),center.x+rx);x+=SQUARE_SIZE){
-				float unloadPosHeight=ground->GetApproximateHeight(x,y);
-				if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
+
+			rx = sqrt(rx);
+
+			for (float x = max(emptyRadius, center.x - rx); x < min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
+				float unloadPosHeight = ground->GetApproximateHeight(x, y);
+
+				if (unloadPosHeight < (0 - unitToUnload->unitDef->maxWaterDepth))
  					continue;
-				if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
+				if (unloadPosHeight > (0 - unitToUnload->unitDef->minWaterDepth))
 					continue;
-				//Don't unload anything on slopes
-				if(unitToUnload->unitDef->movedata
-						&& ground->GetSlope(x,y) > unitToUnload->unitDef->movedata->maxSlope)
+
+				// Don't unload anything on slopes
+				if (unitToUnload->unitDef->movedata
+						&& ground->GetSlope(x, y) > unitToUnload->unitDef->movedata->maxSlope)
 					continue;
-				float3 pos(x,ground->GetApproximateHeight(x,y),y);
-				if(!qf->GetUnitsExact(pos,emptyRadius+8).empty())
+
+				float3 pos(x, ground->GetApproximateHeight(x, y), y);
+
+				if (!qf->GetUnitsExact(pos, emptyRadius + 8).empty())
 					continue;
-				found=pos;
+
+				found = pos;
 				return true;
 			}
 		}
@@ -414,34 +427,38 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 }
 
 bool CTransportCAI::FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs) {
-//select suitable spots according to directions we are allowed to exit transport from
-	//TODO
+	// TODO: select suitable spots according to directions we are allowed to exit transport from
 	return false;
 }
-//
-//
+
 void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
-	if(lastCall==gs->frameNum)	//avoid infinite loops
+	if (lastCall == gs->frameNum) {
+		// avoid infinite loops
 		return;
-	lastCall=gs->frameNum;
-	if(((CTransportUnit*)owner)->transported.empty()){
+	}
+
+	lastCall = gs->frameNum;
+
+	if (((CTransportUnit*) owner)->transported.empty()) {
 		FinishCommand();
 		return;
 	}
-	float3 pos(c.params[0],c.params[1],c.params[2]);
-	float radius=c.params[3];
-	float3 found;
-	//((CTransportUnit*)owner)->transported
 
-	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius * ((CTransportUnit*)owner)->unitDef->unloadSpread,
-								 found,((CTransportUnit*)owner)->transported.front().unit);
-	if(canUnload){
+	CUnit* u = ((CTransportUnit*) owner)->transported.front().unit;
+	float3 pos(c.params[0],c.params[1],c.params[2]);
+	float radius = c.params[3];
+	float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
+	float3 found;
+
+	bool canUnload = FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
+
+	if (canUnload) {
 		Command c2;
-		c2.id=CMD_UNLOAD_UNIT;
+		c2.id = CMD_UNLOAD_UNIT;
 		c2.params.push_back(found.x);
 		c2.params.push_back(found.y);
 		c2.params.push_back(found.z);
-		c2.options=c.options | INTERNAL_ORDER;
+		c2.options = c.options | INTERNAL_ORDER;
 		commandQue.push_front(c2);
 		SlowUpdate();
 		return;
