@@ -145,6 +145,7 @@ void CAirCAI::GiveCommandReal(const Command &c)
 	// take care not to allow aircraft to be ordered to move out of the map
 	if (c.id != CMD_MOVE && !AllowedCommand(c))
 		return;
+
 	else if (c.id == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.f || c.params[2] < 0.f
 			 || c.params[0] > gs->mapx*SQUARE_SIZE
@@ -238,13 +239,13 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		return;
 	}
 
-	if(!(c.options & SHIFT_KEY)
-			&& nonQueingCommands.find(c.id) == nonQueingCommands.end()){
+	if (!(c.options & SHIFT_KEY)
+			&& nonQueingCommands.find(c.id) == nonQueingCommands.end()) {
 		activeCommand=0;
 		tempOrder=false;
 	}
 
-	if(c.id == CMD_AREA_ATTACK && c.params.size() < 4){
+	if (c.id == CMD_AREA_ATTACK && c.params.size() < 4){
 		Command c2 = c;
 		c2.id = CMD_ATTACK;
 		CCommandAI::GiveAllowedCommand(c2);
@@ -555,7 +556,8 @@ void CAirCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 	targetAge++;
-	if(tempOrder && owner->moveState == 1){		//limit how far away we fly
+
+	if (tempOrder && owner->moveState == 1){		//limit how far away we fly
 		if(orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500){
 			owner->SetUserTarget(0);
 			FinishCommand();
