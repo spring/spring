@@ -268,6 +268,7 @@ def CheckHeadersAndLibraries(env, conf):
 	boost_common = Dependency([], ['boost/cstdint.hpp'])
 	boost_thread = Dependency(['boost_thread'], ['boost/thread.hpp'])
 	boost_regex  = Dependency(['boost_regex'],   ['boost/regex.hpp'])
+	boost_serial = Dependency([], ['boost/serialization/split_member.hpp'])
 
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
@@ -277,7 +278,7 @@ def CheckHeadersAndLibraries(env, conf):
 		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
 		else:   boost.libraries = [l+'-mt', l]
 
-	d = [boost_common, boost_thread, boost_regex]
+	d = [boost_common, boost_thread, boost_regex, boost_serial]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'],   ['GL/glu.h'])]
