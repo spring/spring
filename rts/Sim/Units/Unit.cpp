@@ -550,12 +550,13 @@ void CUnit::SlowUpdate()
 		if (paralyzeDamage < 0) {
 			paralyzeDamage = 0;
 		}
-		if (paralyzeDamage < health) {
-			stunned = false;
-		}
 	}
 
 	if (stunned) {
+		// de-stun only if we are not (still) inside a non-firebase transport
+		if (paralyzeDamage < health && !(transporter && !transporter->unitDef->isfireplatform) ) {
+			stunned = false;
+		}
 		const bool oldCloak = isCloaked;
 		if (!isDead && (scriptCloak >= 4)) {
 			isCloaked = true;
