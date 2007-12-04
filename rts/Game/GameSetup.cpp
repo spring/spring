@@ -138,7 +138,7 @@ void CGameSetup::LoadStartPositionsFromMap()
  */
 void CGameSetup::LoadStartPositions(const TdfParser& file)
 {
-	for (int a=0; a<numTeams; ++a) {
+	for (int a = 0; a < numTeams; ++a) {
 		// Ready up automatically unless startPosType is choose in game
 		readyTeams[a] = (startPosType != StartPos_ChooseInGame);
 		teamStartNum[a] = a;
@@ -154,13 +154,13 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
-		for(int a=0;a<numTeams;++a)
-			gs->Team(a)->startPos.y=-500;
+		for (int a = 0; a < numTeams; ++a)
+			gs->Team(a)->startPos.y = -500;
 	}
 
 	// Load start position from gameSetup script
 	if (startPosType == StartPos_ChooseBeforeGame) {
-		for(int a=0;a<numTeams;++a) {
+		for (int a = 0; a < numTeams; ++a) {
 			char section[50];
 			sprintf(section, "GAME\\TEAM%i\\", a);
 			string s(section);
@@ -180,15 +180,16 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
  */
 void CGameSetup::LoadPlayers(const TdfParser& file)
 {
-	numDemoPlayers=0;
-	for(int a=0;a<MAX_PLAYERS;a++){
-		gs->players[a]->team=0; //needed in case one tries to spec a game with only one team
+	numDemoPlayers = 0;
+	for (int a = 0; a < MAX_PLAYERS; a++) {
+		gs->players[a]->team = 0; //needed in case one tries to spec a game with only one team
 	}
-	for(int a=0;a<numPlayers;++a){
+	for (int a = 0; a < numPlayers; ++a) {
 		char section[50];
-		sprintf(section,"GAME\\PLAYER%i\\",a);
+		sprintf(section, "GAME\\PLAYER%i\\", a);
 		string s(section);
 
+		// expects lines of form team=x rather than team=TEAMx
 		gs->players[a]->team = atoi(file.SGetValueDef("0",   s + "team").c_str());
 		gs->players[a]->rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
 		gs->players[a]->playerName  = file.SGetValueDef("0", s + "name");
@@ -196,8 +197,8 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		gs->players[a]->spectator = !!atoi(file.SGetValueDef("0", s + "spectator").c_str());
 
 		int fromDemo;
-		file.GetDef(fromDemo,"0",s+"IsFromDemo");
-		if(fromDemo)
+		file.GetDef(fromDemo, "0", s + "IsFromDemo");
+		if (fromDemo)
 			numDemoPlayers++;
 	}
 }
@@ -210,7 +211,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
  */
 void CGameSetup::LoadTeams(const TdfParser& file)
 {
-	for(int a=0;a<numTeams;++a){
+	for (int a = 0; a < numTeams; ++a) {
 		char section[50];
 		sprintf(section, "GAME\\TEAM%i\\", a);
 		string s(section);
@@ -222,15 +223,15 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 		// Read RGBColor, this overrides color if both had been set.
 		float3 color = file.GetFloat3(defaultCol, s + "rgbcolor");
-		for(int b=0;b<3;++b){
+		for (int b = 0; b < 3; ++b) {
 			gs->Team(a)->color[b] = int(color[b] * 255);
 		}
-		gs->Team(a)->color[3]=255;
+		gs->Team(a)->color[3] = 255;
 
-		gs->Team(a)->handicap=atof(file.SGetValueDef("0",s+"handicap").c_str())/100+1;
-		gs->Team(a)->leader=atoi(file.SGetValueDef("0",s+"teamleader").c_str());
-		gs->Team(a)->side=StringToLower(file.SGetValueDef("arm",s+"side").c_str());
-		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0",s+"allyteam").c_str()));
+		gs->Team(a)->handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
+		gs->Team(a)->leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
+		gs->Team(a)->side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
+		gs->SetAllyTeam(a, atoi(file.SGetValueDef("0", s + "allyteam").c_str()));
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
@@ -255,22 +256,23 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 */
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
 {
-	for(int a=0;a<numAllyTeams;++a){
+	for (int a = 0; a < numAllyTeams; ++a) {
 		char section[50];
 		sprintf(section,"GAME\\ALLYTEAM%i\\",a);
 		string s(section);
 
-		startRectTop[a]=atof(file.SGetValueDef("0",s+"StartRectTop").c_str());
-		startRectBottom[a]=atof(file.SGetValueDef("1",s+"StartRectBottom").c_str());
-		startRectLeft[a]=atof(file.SGetValueDef("0",s+"StartRectLeft").c_str());
-		startRectRight[a]=atof(file.SGetValueDef("1",s+"StartRectRight").c_str());
+		startRectTop[a]    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
+		startRectBottom[a] = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
+		startRectLeft[a]   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
+		startRectRight[a]  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
 
-		int numAllies=atoi(file.SGetValueDef("0",s+"NumAllies").c_str());
-		for(int b=0;b<numAllies;++b){
+		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
+
+		for (int b = 0; b < numAllies; ++b) {
 			char key[100];
-			sprintf(key,"GAME\\ALLYTEAM%i\\Ally%i",a,b);
-			int other=atoi(file.SGetValueDef("0",key).c_str());
-			gs->SetAlly(a,other, true);
+			sprintf(key, "GAME\\ALLYTEAM%i\\Ally%i", a, b);
+			int other = atoi(file.SGetValueDef("0",key).c_str());
+			gs->SetAlly(a, other, true);
 		}
 	}
 }
@@ -378,6 +380,7 @@ bool CGameSetup::Init(const char* buf, int size)
 		team->color[3] = 255;
 		team->gaia = true;
 		readyTeams[gs->gaiaTeamID] = true;
+		gs->players[numPlayers]->team = gs->gaiaTeamID;
 		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 	}
 
@@ -397,27 +400,27 @@ bool CGameSetup::Init(const char* buf, int size)
 
 bool CGameSetup::Update()
 {
-	bool allReady=true;
-	if(!gameServer && net->Connected())
+	bool allReady = true;
+	if (!gameServer && net->Connected())
 		return false;
-	for(int a=0;a<numPlayers;a++){
-		if(!gs->players[a]->readyToStart){
-			allReady=false;
+	for (int a = 0; a < numPlayers; a++) {
+		if (!gs->players[a]->readyToStart) {
+			allReady = false;
 			break;
-		} else if(!readyTeams[gs->players[a]->team]){
-			allReady=false;
+		} else if (!readyTeams[gs->players[a]->team]) {
+			allReady = false;
 			break;
 		}
 	}
 
-	if(forceReady)
-		allReady=true;
-	if(allReady){
-		if(readyTime==0 && !net->localDemoPlayback){
-			int mode=configHandler.GetInt("CamMode",1);
+	if (forceReady)
+		allReady = true;
+	if (allReady) {
+		if (readyTime == 0 && !net->localDemoPlayback) {
+			int mode = configHandler.GetInt("CamMode", 1);
 			camHandler->SetCameraMode(mode);
 			readyTime = SDL_GetTicks();
 		}
 	}
-	return readyTime && (SDL_GetTicks() - readyTime) > 3000;
+	return (readyTime && (SDL_GetTicks() - readyTime) > 3000);
 }
