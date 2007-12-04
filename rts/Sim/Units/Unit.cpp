@@ -709,15 +709,26 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(uh->waterDamage && (physicalState==CSolidObject::Floating || (physicalState==CSolidObject::OnGround && pos.y<=-3 && readmap->mipHeightmap[1][int((pos.z/(SQUARE_SIZE*2))*gs->hmapx+(pos.x/(SQUARE_SIZE*2)))]<-1))){
-		DoDamage(DamageArray()*uh->waterDamage,0,ZeroVector, -1);
+	if (uh->waterDamage) {
+		bool inWater = (pos.y <= -3);
+		bool isFloating = (physicalState == CSolidObject::Floating);
+		bool onGround = (physicalState == CSolidObject::OnGround);
+		bool waterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
+
+		// old: "floating or (on ground and height < -3 and mapheight < -1)"
+		// new: "height < -3 and (floating or on ground) and mapheight < -1"
+		if (inWater && (isFloating || onGround) && waterSquare) {
+			DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+		}
 	}
 
-	if(unitDef->canKamikaze){
-		if(fireState>=2){
-			CUnit* u=helper->GetClosestEnemyUnitNoLosTest(pos,unitDef->kamikazeDist,allyteam,false);
-			if(u && u->physicalState!=CSolidObject::Flying && u->speed.dot(pos - u->pos)<=0)		//self destruct when unit start moving away from mine, should maximize damage
+	if (unitDef->canKamikaze) {
+		if (fireState >= 2) {
+			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false);
+			if (u && u->physicalState != CSolidObject::Flying && u->speed.dot(pos - u->pos) <= 0) {
+				// self destruct when unit start moving away from mine, should maximize damage
 				KillUnit(true, false, NULL);
+			}
 		}
 		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
 			KillUnit(true, false, NULL);
