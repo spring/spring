@@ -2621,7 +2621,7 @@ bool CGame::ClientReadNet()
 
 		const unsigned char packetCode = inbuf[0];
 
-		switch (inbuf[0]){
+		switch (inbuf[0]) {
 			case NETMSG_QUIT: {
 				logOutput.Print("Server exited");
 				POP_CODE_MODE;
@@ -2629,16 +2629,20 @@ bool CGame::ClientReadNet()
 				return gameOver;
 			}
 
-			case NETMSG_PLAYERLEFT:
-			{
-				int player=inbuf[1];
-				if(player>=MAX_PLAYERS || player<0){
-					logOutput.Print("Got invalid player num %i in player left msg",player);
+			case NETMSG_PLAYERLEFT: {
+				int player = inbuf[1];
+				if (player >= MAX_PLAYERS || player < 0) {
+					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					switch (inbuf[2]) {
-						case 1:
-							logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
+						case 1: {
+							if (gs->players[player]->spectator) {
+								logOutput.Print("Spectator %s left", gs->players[player]->playerName.c_str());
+							} else {
+								logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
+							}
 							break;
+						}
 						case 2:
 							logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
 							break;
@@ -2648,7 +2652,7 @@ bool CGame::ClientReadNet()
 						default:
 							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->playerName.c_str(), inbuf[2]);
 					}
-					gs->players[player]->active=false;
+					gs->players[player]->active = false;
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
