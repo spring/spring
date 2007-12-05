@@ -24,16 +24,6 @@ class FBO : public IFramebuffer
 {
 public:
 	/**
-	 * @brief Constructor
-	 */
-	FBO(int requires, int w, int h);
-
-	/**
-	 * @brief Destructor
-	 */
-	~FBO();
-
-	/**
 	 * @brief check FBO status
 	 */
 	bool checkFBOStatus(void);
@@ -64,6 +54,16 @@ public:
 
 private:
 	/**
+	 * @brief Constructor
+	 */
+	FBO(int requires, int w, int h);
+
+	/**
+	 * @brief Destructor
+	 */
+	~FBO();
+
+	/**
 	 * @brief framebuffer
 	 *
 	 * GLuint pointing to the current framebuffer
@@ -71,6 +71,9 @@ private:
 	GLuint frameBuffer;
 	GLuint depthRenderBuffer;
 	int requires;
+
+	// instantiate_fb is the only code where new FBOs may be created
+	friend IFramebuffer* instantiate_fb(const int w, const int h, const int requires);
 };
 
 #endif /* FBO_H */
