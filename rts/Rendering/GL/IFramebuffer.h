@@ -33,6 +33,6 @@ enum FramebufferProperties
 	FBO_NEED_COLOR = 4
 };
 
-IFramebuffer* instantiate_fb(const int w, const int h, int requires);
+IFramebuffer* instantiate_fb(const int w, const int h, const int requires);
 
 #endif /* _IFRAMEBUFFER_H */

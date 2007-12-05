@@ -15,7 +15,12 @@
 #include "LogOutput.h"
 
 
-IFramebuffer* instantiate_fb(const int w, const int h, int requires)
+IFramebuffer::~IFramebuffer()
+{
+}
+
+
+IFramebuffer* instantiate_fb(const int w, const int h, const int requires)
 {
 	if (GLEW_EXT_framebuffer_object) {
 		//logOutput.Print("Using EXT_framebuffer_object");
@@ -30,14 +35,8 @@ IFramebuffer* instantiate_fb(const int w, const int h, int requires)
  * Tests for support of the EXT_framebuffer_object
  * extension, and generates a framebuffer if supported
  */
-FBO::FBO(int requires, int w, int h)
+FBO::FBO(int requires, int w, int h) : frameBuffer(0), depthRenderBuffer(0), requires(requires)
 {
-	this->requires = requires;
-	frameBuffer = 0;
-	depthRenderBuffer = 0;
-	if (!GLEW_EXT_framebuffer_object)
-		return;
-	assert(glGenFramebuffersEXT != 0);
 	glGenFramebuffersEXT(1,&frameBuffer);
 	select();
 	// Is a depth renderbuffer needed?
