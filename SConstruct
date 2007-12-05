@@ -132,7 +132,8 @@ if env['platform'] != 'windows':
 	Default(unitsync)
 
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
-aienv = env.Copy(LIBS=[], LIBPATH=[])
+# TODO: make separate SConstructs for AIs
+aienv = env.Copy()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
 
 # Use subst() to substitute $installprefix in datadir.
@@ -164,7 +165,7 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']), 'AI/Bot-libs')
 
 #Build GlobalAIs
-for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'NTai', 'CSAI', 'TestABICAI','AbicWrappersTestAI']):
+for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI']):
 	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), aiobjs + filelist.get_globalAI_source(aienv, f))
 	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
 	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
