@@ -19,8 +19,7 @@ namespace ntai {
 		void RemoveBuilder(int i);
 		void RemoveAllBuilders();
 		int GetBuilderCount();
-
-		void WipeBuilderPlans(CManufacturer* m);
+		int* GetBuilders();
 
 		uint id;
 

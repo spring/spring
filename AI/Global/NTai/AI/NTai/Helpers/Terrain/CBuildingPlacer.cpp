@@ -358,7 +358,11 @@ namespace ntai {
 								if(!i->started){
 
 									if(i->HasBuilders()){
-										i->WipeBuilderPlans(G->Manufacturer.get());
+										int* a = i->GetBuilders();
+										for(int j = 0; j < i->GetBuilderCount(); j++){
+											G->Manufacturer->WipePlansForBuilder(a[j]);
+										}
+										delete [] a;
 										i->RemoveAllBuilders();
 									}
 									delete i;
