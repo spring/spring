@@ -83,6 +83,8 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 			snprintf(buf, size + 7, "%s%d", tag, num);
 			cegTag = std::string(buf);
 			ceg.Load(explGenHandler, cegTag);
+		} else {
+			cegTag = "";
 		}
 
 		/* If we're an S3O unit, this is where ProjectileHandler
