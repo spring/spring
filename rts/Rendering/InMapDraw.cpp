@@ -365,25 +365,25 @@ void CInMapDraw::GotNetMsg(unsigned char* msg)
 }
 
 
-void CInMapDraw::ErasePos(float3 pos)
+void CInMapDraw::ErasePos(const float3& pos)
 {
 	net->SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z);
 }
 
 
-void CInMapDraw::CreatePoint(float3 pos, std::string label)
+void CInMapDraw::CreatePoint(const float3& pos, std::string label)
 {
 	net->SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label);
 }
 
 
-void CInMapDraw::AddLine(float3 pos, float3 pos2)
+void CInMapDraw::AddLine(const float3& pos, const float3& pos2)
 {
 	net->SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
 }
 
 
-void CInMapDraw::PromptLabel (float3 pos)
+void CInMapDraw::PromptLabel (const float3& pos)
 {
 	waitingPoint=pos;
 	game->userWriting=true;

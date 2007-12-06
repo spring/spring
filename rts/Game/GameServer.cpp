@@ -367,7 +367,7 @@ void CGameServer::ServerReadNet()
 			}
 			if(gameSetup){
 				for(unsigned a=0;a<gs->activeTeams;a++){
-					serverNet->SendStartPos(a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+					serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 				}
 			}
 			serverNet->FlushNet();
@@ -484,10 +484,10 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1] != a){
 							SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							serverNet->SendStartPos(inbuf[1],inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7]), *((float*)&inbuf[11])); //forward data
+							serverNet->SendStartPos(inbuf[1],inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])); //forward data
 							if (hostif)
 							{
-								hostif->SendPlayerReady(a, inbuf[2]);
+								hostif->SendPlayerReady(a, inbuf[3]);
 							}
 						}
 						break;
@@ -724,7 +724,7 @@ void CGameServer::StartGame()
 	}
 	if(gameSetup){
 		for(unsigned a=0;a<gs->activeTeams;a++){
-			serverNet->SendStartPos(a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
 
@@ -879,7 +879,7 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 	va_end(ap);											// Results Are Stored In Text
 
 	std::string msg = text;
-	serverNet->SendSystemMessage((unsigned char)SERVER_TEAM, msg);
+	serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
 }
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)

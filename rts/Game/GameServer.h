@@ -15,7 +15,7 @@ class CBaseNetProtocol;
 class CDemoReader;
 class AutohostInterface;
 
-const unsigned SERVER_TEAM = 255;
+const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
 
 class GameParticipant
 {
