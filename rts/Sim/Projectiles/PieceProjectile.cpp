@@ -79,8 +79,9 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		const char* tag = owner->unitDef->pieceTrailCEGTag.c_str();
 
 		if (size > 0) {
-			char buf[size + 8];
-			snprintf(buf, size + 7, "%s%d", tag, num);
+			char buf[1024];
+			SNPRINTF(buf, sizeof(buf) - 1, "%s%d", tag, num);
+			buf[1023] = 0;
 			cegTag = std::string(buf);
 			ceg.Load(explGenHandler, cegTag);
 		} else {

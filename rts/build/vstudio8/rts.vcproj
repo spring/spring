@@ -771,6 +771,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\UI\GameSetupDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\GameSetupDrawer.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\GuiHandler.cpp"
 					>
 				</File>
