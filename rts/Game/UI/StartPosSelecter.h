@@ -2,6 +2,7 @@
 #define STARTPOSSELECTER_H
 
 #include "InputReceiver.h"
+#include "float3.h"
 
 class CStartPosSelecter :
 	public CInputReceiver
@@ -17,9 +18,13 @@ public:
 	void ShowReady(bool value) { showReady = value; }
 
 	static CStartPosSelecter* selector;
+
 private:
 	bool showReady;
 	ContainerBox readyBox;
+
+	bool startPosSet;
+	float3 startPos;
 };
 
 
