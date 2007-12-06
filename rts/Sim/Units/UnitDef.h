@@ -374,8 +374,8 @@ struct UnitDef
 	float buildingDecalDecaySpeed;
 	bool isfireplatform;							// should the carried units still be able to shoot?
 
-	bool showNanoFrame;								// Does the nano frame animation get shown during cosntruction?
-	bool showNanoSpray;								// Does nano spray get shown at all
+	bool showNanoFrame;								// Does the nano frame animation get shown during construction?
+	bool showNanoSpray;								// Does nano spray get shown at all?
 	float3 nanoColor;								// If nano spray is displayed what color is it?
 
 	float maxFuel;									// max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
@@ -383,8 +383,8 @@ struct UnitDef
 	float minAirBasePower;							// min build power for airbases that this aircraft can land on
 
 	std::vector<CExplosionGenerator*> sfxExplGens;	// list of explosion generators for use in scripts
-	std::string pieceTrailCEGTag;					// base CEG tag used by unit pieces to leave a trail
-	int pieceTrailCEGRange;							// how many possible piece trail CEGs are used
+	std::string pieceTrailCEGTag;					// base tag (eg. "flame") of CEG attached to pieces of exploding units
+	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 
 	int maxThisUnit;								// number of units of this type allowed simultaneously in the game
 
