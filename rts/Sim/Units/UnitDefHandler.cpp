@@ -689,6 +689,11 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		}
 	}
 
+	// we use range in a modulo operation, so it needs to be >= 1
+	ud.pieceTrailCEGTag = udTable.GetString("pieceTrailCEGTag", "");
+	ud.pieceTrailCEGRange = udTable.GetInt("pieceTrailCEGRange", 1);
+	ud.pieceTrailCEGRange = std::max(ud.pieceTrailCEGRange, 1);
+
 	LuaTable soundsTable = udTable.SubTable("sounds");
 
 	LoadSounds(soundsTable, ud.sounds.ok,          "ok");      // eg. "ok1", "ok2", ...

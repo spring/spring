@@ -5,7 +5,7 @@
 #include "Sim/Misc/DamageArray.h"
 
 const int PP_Fall = 1;
-const int PP_Smoke = 2;		//smoke and fire is turned off when there is to many projectiles so make sure they are unsycned
+const int PP_Smoke = 2;		// smoke and fire is turned off when there are too many projectiles so make sure they are unsycned
 const int PP_Fire = 4;
 const int PP_Explode = 8;
 class CSmokeTrailProjectile;
@@ -13,7 +13,7 @@ struct LocalS3DO;
 struct S3DO;
 struct SS3O;
 
-class CPieceProjectile : public CProjectile
+class CPieceProjectile: public CProjectile
 {
 	CR_DECLARE(CPieceProjectile);
 
@@ -28,23 +28,24 @@ class CPieceProjectile : public CProjectile
 	float spinPos;
 	float alphaThreshold;
 
-	float3 oldSmoke,oldSmokeDir;
-//	CUnit* target;
+	float3 oldSmoke, oldSmokeDir;
 	bool drawTrail;
 	CSmokeTrailProjectile* curCallback;
 	int* numCallback;
 	int age;
 
-	struct OldInfo{
+	CCustomExplosionGenerator ceg;
+	std::string cegTag;
+
+	struct OldInfo {
 		float3 pos;
 		float size;
 	};
 	OldInfo* oldInfos[8];
-
 	int colorTeam;
 	
 public:
-	CPieceProjectile(const float3& pos,const float3& speed, LocalS3DO* piece, int flags,CUnit* owner,float radius);
+	CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int flags, CUnit* owner, float radius);
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();
