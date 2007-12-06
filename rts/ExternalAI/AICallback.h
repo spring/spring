@@ -19,6 +19,7 @@ public:
 
 	void verify ();
 
+	void SendStartPos(bool ready, const float3& pos);
 	void SendTextMsg(const char* text, int zone);
 	void SetLastMsgPos(float3 pos);
 	void AddNotification(float3 pos, float3 color, float alpha);
