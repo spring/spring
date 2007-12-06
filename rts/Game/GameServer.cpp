@@ -20,7 +20,6 @@
 #include "FileSystem/CRC.h"
 #include "Player.h"
 #include "Team.h"
-#include "StartScripts/ScriptHandler.h"
 
 #define SYNCCHECK_TIMEOUT 300 //frames
 #define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam

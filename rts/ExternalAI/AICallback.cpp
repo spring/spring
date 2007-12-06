@@ -62,6 +62,12 @@ CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
 CAICallback::~CAICallback(void)
 {}
 
+void CAICallback::SendStartPos(bool ready, const float3& pos)
+{
+	unsigned char readyness = ready ? 1 : 0;
+	net->SendStartPos(gu->myPlayerNum, team, readyness, pos.x, pos.y, pos.z);
+}
+
 void CAICallback::SendTextMsg(const char* text, int zone)
 {
 	if (group)
