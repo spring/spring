@@ -34,6 +34,13 @@ void CNet::InitServer(unsigned portnum)
 	udplistener.reset(new UDPListener(portnum));
 }
 
+void CNet::InitServer(unsigned portnum, unsigned localClientNumber)
+{
+	udplistener.reset(new UDPListener(portnum));
+	boost::shared_ptr<CLocalConnection> conn(new CLocalConnection());
+	waitingQueue.push(conn);
+}
+
 unsigned CNet::InitClient(const char *server, unsigned portnum,unsigned sourceport, unsigned playerNum)
 {
 	udplistener.reset(new UDPListener(sourceport));

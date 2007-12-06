@@ -52,6 +52,8 @@ public:
 	*/
 	void InitServer(unsigned portnum);
 	
+	void InitServer(unsigned portnum, unsigned localClientNumber);
+	
 	/**
 	@brief Initialise Client
 	@param server Address of the server, either IP or hostname
@@ -161,7 +163,7 @@ public:
 	/** 
 	@brief Do this from time to time
 	
-	Updates the UDPlistener to recieve data from UDP and check for new conenctions. It also removes connections which are timed out.
+	Updates the UDPlistener to recieve data from UDP and check for new connections. It also removes connections which are timed out.
 	*/
 	void Update();
 	

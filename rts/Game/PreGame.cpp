@@ -484,18 +484,19 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_STARTPOS: {
 				// copied from CGame
-				unsigned player = inbuf[1];
-				int team = gs->players[player]->team;
+				// unsigned player = inbuf[1];
+				int team = inbuf[2];
 				if(team>=gs->activeTeams || team<0 || !gameSetup){
 					logOutput.Print("Got invalid team num %i in startpos msg",team);
 				} else {
-					if(inbuf[2]!=2)
-						gameSetup->readyTeams[team]=!!inbuf[2];
-					gs->Team(team)->startPos.x=*(float*)&inbuf[3];
-					gs->Team(team)->startPos.y=*(float*)&inbuf[7];
-					gs->Team(team)->startPos.z=*(float*)&inbuf[11];
+					if(inbuf[3]!=2)
+						gameSetup->readyTeams[team]=!!inbuf[3];
+					gs->Team(team)->startPos.x=*(float*)&inbuf[4];
+					gs->Team(team)->startPos.y=*(float*)&inbuf[8];
+					gs->Team(team)->startPos.z=*(float*)&inbuf[12];
 				}
-			} break;
+				break;
+			}
 
 			case NETMSG_SETPLAYERNUM: {
 				gu->myPlayerNum = inbuf[1];

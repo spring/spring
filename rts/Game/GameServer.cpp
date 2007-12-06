@@ -44,9 +44,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
 
-	serverNet = new CBaseNetProtocol();
-	serverNet->InitServer(port);
-
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
@@ -63,31 +60,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		modChecksum = archiveScanner->GetModChecksum(modArchive);
 
 		scriptName = newScriptName;
-	}
-
-	{
-		// initialise a local client
-		//TODO make local connecting like from remote (and make it possible to have no local conn)
-		unsigned wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
-		
-		if (play)
-		{
-			wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
-		}
-		int hisNewNumber = serverNet->InitLocalClient(wantedNumber);
-
-		serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
-		// send game data for demo recording
-		if (!scriptName.empty())
-			serverNet->SendScript(scriptName);
-		if (!mapName.empty())
-			serverNet->SendMapName(mapChecksum, mapName);
-		if (!modName.empty())
-			serverNet->SendModName(modChecksum, modName);
-		
-		players[hisNewNumber].reset(new GameParticipant(true)); // give him rights to change speed, kick players etc
-		
-		SendSystemMsg("Local client initialised on number %i", hisNewNumber);
 	}
 
 	lastTick = SDL_GetTicks();
@@ -116,6 +88,15 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		minUserSpeed=0.3f;
 		userSpeedFactor = 1.0f;
 		internalSpeed = 1.0f;
+	}
+
+	serverNet = new CBaseNetProtocol();
+	{
+		// initialise a local client
+		//TODO make local connecting like from remote (and make it possible to have no local conn)
+		unsigned wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
+		serverNet->InitServer(port, wantedNumber);
+		BindConnection(wantedNumber, true);
 	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
@@ -337,39 +318,12 @@ void CGameServer::ServerReadNet()
 	{
 		const unsigned inbuflength = 4096;
 		unsigned char inbuf[inbuflength];
-		int ret = ((netcode::CNet*)serverNet)->GetData(inbuf);
+		int ret = serverNet->GetData(inbuf);
 
 		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
 			unsigned wantedNumber = inbuf[1];
-			if (play)
-			{
-				wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
-			}
-			unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
-
-			serverNet->SendSetPlayerNum(hisNewNumber, hisNewNumber);
-
-			if (!scriptName.empty())
-				serverNet->SendScript(scriptName);
-			if (!mapName.empty())
-				serverNet->SendMapName(mapChecksum, mapName);
-			if (!modName.empty())
-				serverNet->SendModName(modChecksum, modName);
-			
-			players[hisNewNumber].reset(new GameParticipant(false)); // remote players can't kick others etc
-
-			for(unsigned a=0;a<gs->activePlayers;a++){
-				if(!gs->players[a]->readyToStart)
-					continue;
-				serverNet->SendPlayerName(a, gs->players[a]->playerName);
-			}
-			if(gameSetup){
-				for(unsigned a=0;a<gs->activeTeams;a++){
-					serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-				}
-			}
-			serverNet->FlushNet();
+			BindConnection(wantedNumber);
 		}
 		else
 		{
@@ -857,6 +811,38 @@ void CGameServer::KickPlayer(const int playerNum)
 	}
 }
 
+void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
+{
+	if (play)
+	{
+		wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
+	}
+	unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
+	
+	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
+		// send game data for demo recording
+	if (!scriptName.empty())
+		serverNet->SendScript(scriptName);
+	if (!mapName.empty())
+		serverNet->SendMapName(mapChecksum, mapName);
+	if (!modName.empty())
+		serverNet->SendModName(modChecksum, modName);
+	
+	for(unsigned a=0;a<gs->activePlayers;a++){
+		if(!gs->players[a]->readyToStart)
+			continue;
+		serverNet->SendPlayerName(a, gs->players[a]->playerName);
+	}
+	if(gameSetup){
+		for(unsigned a=0;a<gs->activeTeams;a++){
+			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+		}
+	}
+	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
+	SendSystemMsg("Client initialised on number %i", hisNewNumber);
+	serverNet->FlushNet();
+}
+
 void CGameServer::PlayerDefeated(const int playerNum) const
 {
 	if (hostif)
@@ -878,13 +864,13 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 	va_end(ap);											// Results Are Stored In Text
 
 	std::string msg = text;
-	serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
+	if (serverNet)
+		serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
 }
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 {
-	//TODO: find better solution for the (player == 0) thingie
-	//TODO 2: migrate more stuff from CGame::HandleChatMessage here
+	//TODO: migrate more stuff from CGame::HandleChatMessage here
 	if ((msg.find(".kickbynum") == 0) && (players[player]->hasRights)) {
 		if (msg.length() >= 11) {
 			int playerNum = atoi(msg.substr(11, string::npos).c_str());

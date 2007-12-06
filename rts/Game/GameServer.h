@@ -82,6 +82,8 @@ private:
 	*/
 	void KickPlayer(const int playerNum);
 	
+	void BindConnection(unsigned wantedNumber, bool grantRights=false);
+	
 	void UpdateLoop();
 	void Update();
 	void CheckSync();
