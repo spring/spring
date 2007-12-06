@@ -664,7 +664,12 @@ void CManufacturer::UnitCreated(int uid){
 						(*i)->started = true;
 						break;
 					}else{
-						(*i)->WipeBuilderPlans(this);
+						int* a = (*i)->GetBuilders();
+						for(int j = 0; j < (*i)->GetBuilderCount(); j++){
+							WipePlansForBuilder(a[j]);
+						}
+						delete [] a;
+
 						/*if(!i->builders.empty()){
 							for(set<int>::iterator i2 = i->builders.begin(); i2 != i->builders.end(); ++i2){
 								WipePlansForBuilder(*i2);
@@ -778,14 +783,18 @@ int CBPlan::GetBuilderCount(){
 	return (int)builders.size();
 }
 
-void CBPlan::WipeBuilderPlans(CManufacturer* m){
+int* CBPlan::GetBuilders(){
 	boost::mutex::scoped_lock lock(plan_mutex);
-	if(!builders.empty()){
-		set<int> temp;
-		temp.insert(builders.begin(),builders.end());
-		for(set<int>::iterator j = temp.begin(); j != temp.end(); ++j){
-			m->WipePlansForBuilder(*j);
+	if(HasBuilders()){
+		int* a = new int[GetBuilderCount()];
+		int i = 0;
+		for(set<int>::iterator j = builders.begin(); j != builders.end(); ++j){
+			//
+			a[i++] = *j;
 		}
+		return a;
+	}else{
+		return 0;
 	}
 }
 
