@@ -2832,7 +2832,7 @@ bool CGame::ClientReadNet()
 			}
 
 			case NETMSG_STARTPOS:{
-				int player = inbuf[1];
+				unsigned player = inbuf[1];
 				int team = gs->players[player]->team;
 				if(team>=gs->activeTeams || team<0 || !gameSetup){
 					logOutput.Print("Got invalid team num %i in startpos msg",team);
@@ -2842,8 +2842,10 @@ bool CGame::ClientReadNet()
 					gs->Team(team)->startPos.x=*(float*)&inbuf[3];
 					gs->Team(team)->startPos.y=*(float*)&inbuf[7];
 					gs->Team(team)->startPos.z=*(float*)&inbuf[11];
+					
+					logOutput.Print("%f %f %f", gs->Team(team)->startPos.x, gs->Team(team)->startPos.y, gs->Team(team)->startPos.z);
 				}
-				AddTraffic(player, packetCode, dataLength); // NOTE: team code
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 

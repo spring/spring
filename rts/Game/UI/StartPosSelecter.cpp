@@ -17,6 +17,7 @@ CStartPosSelecter* CStartPosSelecter::selector = NULL;
 CStartPosSelecter::CStartPosSelecter(void)
 {
 	showReady = true;
+	startPosSet = false;
 	selector = this;
 	readyBox.x1 = 0.71f;
 	readyBox.y1 = 0.72f;
@@ -33,18 +34,12 @@ CStartPosSelecter::~CStartPosSelecter(void)
 
 bool CStartPosSelecter::Ready()
 {
-	if (gs->Team(gu->myTeam)->startPos.y == -500) {
+	if (!startPosSet) // Player doesn't set startpos yet, so don't let him ready up
 		return false;
-	}
-	
-	gameSetup->readyTeams[gu->myTeam] = true;
-	net->SendStartPos(gu->myPlayerNum, 1,
-	gs->Team(gu->myTeam)->startPos.x, /* why not a float3? */
-	gs->Team(gu->myTeam)->startPos.y,
-	gs->Team(gu->myTeam)->startPos.z);
+
+	net->SendStartPos(gu->myPlayerNum, 1, startPos.x, startPos.y, startPos.z);
 
 	delete this;
-
 	return true;
 }
 
@@ -60,27 +55,28 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
 	if(dist<0)
 		return true;
-	float3 pos=camera->pos+mouse->dir*dist;
 
-	if(pos.z<gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8)
-		pos.z=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
+	startPosSet = true;
+	inMapDrawer->ErasePos(startPos);
+	startPos = camera->pos + mouse->dir * dist;
 
-	if(pos.z>gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8)
-		pos.z=gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8;
+	if(startPos.z<gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8)
+		startPos.z=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
 
-	if(pos.x<gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8)
-		pos.x=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
+	if(startPos.z>gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8)
+		startPos.z=gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8;
 
-	if(pos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
-		pos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
+	if(startPos.x<gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8)
+		startPos.x=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
 
-	inMapDrawer->ErasePos(gs->Team(gu->myTeam)->startPos);
+	if(startPos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
+		startPos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
 
-	net->SendStartPos(gu->myPlayerNum, 0, pos.x, pos.y, pos.z);
+	net->SendStartPos(gu->myPlayerNum, 0, startPos.x, startPos.y, startPos.z);
 
-	char t[500];
+	char t[128];
 	sprintf(t,"Start %i",gu->myTeam);
-	inMapDrawer->CreatePoint(pos,t);
+	inMapDrawer->CreatePoint(startPos,t);
 
 	return true;
 }
@@ -96,8 +92,6 @@ void CStartPosSelecter::Draw()
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
-
-	camera->Update(true);
 
 	glColor4f(0.2f,0.8f,0.2f,0.5f);
 	glDisable(GL_TEXTURE_2D);
