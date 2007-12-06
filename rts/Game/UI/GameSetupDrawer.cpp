@@ -1,5 +1,6 @@
 #include "GameSetupDrawer.h"
 
+#include <assert.h>
 #include <string>
 #include <map>
 #include <SDL_timer.h>
