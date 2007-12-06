@@ -362,29 +362,31 @@ struct UnitDef
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool smoothAnim;			// True if the unit should use interpolated animation
+	bool smoothAnim;								// True if the unit should use interpolated animation
 	bool isMetalMaker;
-	bool canLoopbackAttack;		//only matters for fighter aircrafts
-	bool levelGround;			//only matters for buildings
+	bool canLoopbackAttack;							// only matters for fighter aircraft
+	bool levelGround;								// only matters for buildings
 
 	bool useBuildingGroundDecal;
 	int buildingDecalType;
 	int buildingDecalSizeX;
 	int buildingDecalSizeY;
 	float buildingDecalDecaySpeed;
-	bool isfireplatform;// should the carried units still be able to shoot?
+	bool isfireplatform;							// should the carried units still be able to shoot?
 
-	bool showNanoFrame; // Does the nano frame animation get shown during cosntruction?
-	bool showNanoSpray; // Does nano spray get shown at all
-	float3 nanoColor; // If nano spray is displayed what color is it?
+	bool showNanoFrame;								// Does the nano frame animation get shown during cosntruction?
+	bool showNanoSpray;								// Does nano spray get shown at all
+	float3 nanoColor;								// If nano spray is displayed what color is it?
 
-	float maxFuel;					//max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
-	float refuelTime;				//time to fully refuel unit
-	float minAirBasePower;	//min build power for airbases that this aircraft can land on
+	float maxFuel;									// max flight time in seconds before the aircraft needs to return to a air repair bay to refuel
+	float refuelTime;								// time to fully refuel unit
+	float minAirBasePower;							// min build power for airbases that this aircraft can land on
 
-	std::vector<CExplosionGenerator*>  sfxExplGens;  //list of explosiongenerators for use in scripts
+	std::vector<CExplosionGenerator*> sfxExplGens;	// list of explosion generators for use in scripts
+	std::string pieceTrailCEGTag;					// base CEG tag used by unit pieces to leave a trail
+	int pieceTrailCEGRange;							// how many possible piece trail CEGs are used
 
-	int maxThisUnit;	//number of units of this type allowed simultaniously in the game
+	int maxThisUnit;								// number of units of this type allowed simultaneously in the game
 
 	std::map<std::string, std::string> customParams;
 };
