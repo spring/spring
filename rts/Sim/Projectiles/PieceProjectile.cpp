@@ -30,22 +30,21 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
 	// TODO what to do with the next two fields
-	//CR_MEMBER(piece3do),
-	//CR_MEMBER(pieces3o),
+	// CR_MEMBER(piece3do),
+	// CR_MEMBER(pieces3o),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
 	CR_MEMBER(spinPos),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
 	CR_MEMBER(alphaThreshold),
-//	CR_MEMBER(target),
+	// CR_MEMBER(target),
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(curCallback),
 	CR_MEMBER(age),
 	CR_MEMBER(colorTeam),
 	CR_MEMBER(ceg),
-	CR_MEMBER(cegTag),
-	CR_RESERVED(24)
+	CR_RESERVED(28)
 	));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
@@ -73,19 +72,18 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		// choose a (synced) random tag-postfix string k from the
 		// range given in UnitDef and stick it onto pieceTrailCEGTag
 		// (assumes all possible "tag + k" CEG identifiers are valid)
-		const int size = owner->unitDef->pieceTrailCEGTag.size();
-		const int range = owner->unitDef->pieceTrailCEGRange;
-		const int num = gs->randInt() % range;
-		const char* tag = owner->unitDef->pieceTrailCEGTag.c_str();
+		if (flags & PP_CEGTrail) {
+			const int size = owner->unitDef->pieceTrailCEGTag.size();
+			const int range = owner->unitDef->pieceTrailCEGRange;
+			const int num = gs->randInt() % range;
+			const char* tag = owner->unitDef->pieceTrailCEGTag.c_str();
 
-		if (size > 0) {
-			char buf[1024];
-			SNPRINTF(buf, sizeof(buf) - 1, "%s%d", tag, num);
-			buf[1023] = 0;
-			cegTag = std::string(buf);
-			ceg.Load(explGenHandler, cegTag);
-		} else {
-			cegTag = "";
+			if (size > 0) {
+				char cegTag[1024];
+				SNPRINTF(cegTag, sizeof(cegTag) - 1, "%s%d", tag, num);
+				cegTag[1023] = 0;
+				ceg.Load(explGenHandler, cegTag);
+			}
 		}
 
 		/* If we're an S3O unit, this is where ProjectileHandler
@@ -152,6 +150,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 	SetRadius(radius);
 	drawRadius = 32;
+
 #ifdef TRACE_SYNC
 	tracefile << "New pieceexplosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -187,8 +186,10 @@ void CPieceProjectile::Collision()
 			float3 dir = speed;
 			dir.Normalize();
 
-			if (cegTag.size() == 0) {
-				CSmokeTrailProjectile* tp = SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner, false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
+			if (flags & PP_CEGTrail == 0) {
+				CSmokeTrailProjectile* tp =
+					SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 				tp->creationTime += (8 - ((age) & 7));
 			}
 		}
@@ -209,8 +210,10 @@ void CPieceProjectile::Collision(CUnit* unit)
 		float3 dir = speed;
 		dir.Normalize();
 
-		if (cegTag.size() == 0) {
-			CSmokeTrailProjectile* tp = SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner, false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
+		if (flags & PP_CEGTrail == 0) {
+			CSmokeTrailProjectile* tp =
+				SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 			tp->creationTime += (8 - ((age) & 7));
 		}
 	}
@@ -283,7 +286,7 @@ void CPieceProjectile::Update()
 
 	age++;
 
-	if (cegTag.size() == 0) {
+	if (flags & PP_CEGTrail == 0) {
 		if (!(age & 7) && (flags & PP_Smoke)) {
 			float3 dir = speed;
 			dir.Normalize();
@@ -291,7 +294,9 @@ void CPieceProjectile::Update()
 			if (curCallback)
 				curCallback->drawCallbacker = 0;
 
-			curCallback = SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner, age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, &ph->smoketrailtex);
+			curCallback =
+				SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, &ph->smoketrailtex);
 			useAirLos = curCallback->useAirLos;
 
 			oldSmoke = pos;
@@ -316,54 +321,52 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if (cegTag.size() == 0) {
+	if (flags & PP_CEGTrail == 0) {
 		if (flags & PP_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			float3 interPos = pos + speed * gu->timeOffset;
 			inArray = true;
 			float age2 = (age & 7) + gu->timeOffset;
-	
 			float color = 0.5f;
 			unsigned char col[4];
-	
+
 			float3 dir = speed;
 			dir.Normalize();
-	
+
 			if (drawTrail) {
 				// draw the trail as a single quad if camera close enough
-				float3 dif(interPos-camera->pos);
+				float3 dif(interPos - camera->pos);
 				dif.Normalize();
 				float3 dir1(dif.cross(dir));
 				dir1.Normalize();
-				float3 dif2(oldSmoke-camera->pos);
+				float3 dif2(oldSmoke - camera->pos);
 				dif2.Normalize();
 				float3 dir2(dif2.cross(oldSmokeDir));
 				dir2.Normalize();
-	
-	
+
 				float a1 = ((1 - 0.0f / (Smoke_Time)) * 255) * (0.7f + fabs(dif.dot(dir)));
 				float alpha = min(255.0f, max(0.f, a1));
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
 				col[2] = (unsigned char) (color * alpha);
 				col[3] = (unsigned char) (alpha);
-	
+
 				unsigned char col2[4];
 				float a2 = ((1 - float(age2) / (Smoke_Time)) * 255) * (0.7f + fabs(dif2.dot(oldSmokeDir)));
-	
+
 				if (age < 8)
 					a2 = 0;
-	
+
 				alpha = min(255.0f, max(0.f, a2));
 				col2[0] = (unsigned char) (color * alpha);
 				col2[1] = (unsigned char) (color * alpha);
 				col2[2] = (unsigned char) (color * alpha);
 				col2[3] = (unsigned char) (alpha);
-	
+
 				float size = 1.0f;
 				float size2 = 1 + (age2 * (1 / Smoke_Time)) * 14;
 				float txs = ph->smoketrailtex.xstart - (ph->smoketrailtex.xend - ph->smoketrailtex.xstart) * (age2 / 8.0f);
-	
+
 				va->AddVertexTC(interPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
 				va->AddVertexTC(interPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
 				va->AddVertexTC(oldSmoke + dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend,   col2);
@@ -383,7 +386,7 @@ void CPieceProjectile::Draw()
 					col[3] = (unsigned char) (alpha);
 					float size = 1 + ((a) * (1 / Smoke_Time)) * 14;
 					float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
-	
+
 					va->AddVertexTC(pos1 + ( camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 					va->AddVertexTC(pos1 + ( camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
 					va->AddVertexTC(pos1 + (-camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
