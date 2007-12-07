@@ -4,10 +4,12 @@
 #include "Projectile.h"
 #include "Sim/Misc/DamageArray.h"
 
-const int PP_Fall = 1;
-const int PP_Smoke = 2;		// smoke and fire is turned off when there are too many projectiles so make sure they are unsycned
-const int PP_Fire = 4;
-const int PP_Explode = 8;
+const int PP_Fall     = (1 << 0);
+const int PP_Smoke    = (1 << 1);	// smoke and fire is turned off when there are too many projectiles so make sure they are unsynced
+const int PP_Fire     = (1 << 2);
+const int PP_Explode  = (1 << 3);
+const int PP_CEGTrail = (1 << 4);
+
 class CSmokeTrailProjectile;
 struct LocalS3DO;
 struct S3DO;
@@ -35,7 +37,6 @@ class CPieceProjectile: public CProjectile
 	int age;
 
 	CCustomExplosionGenerator ceg;
-	std::string cegTag;
 
 	struct OldInfo {
 		float3 pos;
