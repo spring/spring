@@ -66,6 +66,7 @@ struct LineMarker {
 #define AIHCAddMapPointId 1
 #define AIHCAddMapLineId 2
 #define AIHCRemoveMapPointId 3
+#define AIHCSendStartPosId 4
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -82,6 +83,12 @@ struct AIHCAddMapLine ///< result of HandleCommand is 1 - ok supported
 struct AIHCRemoveMapPoint ///< result of HandleCommand is 1 - ok supported
 {
 	float3 pos; ///< remove map points and lines near this point (100 distance)
+};
+
+struct AIHCSendStartPos ///< result of HandleCommand is 1 - ok supported
+{
+	bool ready;
+	float3 pos;
 };
 
 
