@@ -1155,6 +1155,9 @@ int CAICallback::HandleCommand (int commandId, void *data)
 		net->SendMapErase(team,
 			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
 		return 1;
+	case AIHCSendStartPosId:
+		SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
+		return 1;
 	default:
 		return 0;
 	}
