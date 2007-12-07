@@ -83,6 +83,8 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 				SNPRINTF(cegTag, sizeof(cegTag) - 1, "%s%d", tag, num);
 				cegTag[1023] = 0;
 				ceg.Load(explGenHandler, cegTag);
+			} else {
+				flags &= ~PP_CEGTrail;
 			}
 		}
 
