@@ -898,6 +898,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		pos.y = ground->GetHeight2(pos.x,pos.y);
 		float radius(c.params[3]);
+		if (radius>200) radius = 200;
 		if (f3Dist(fac->pos, pos) < fac->buildDistance-1) {
 			StopMove();
 			fac->StartRestore(pos,radius);

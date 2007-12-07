@@ -2171,27 +2171,6 @@ void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitByName(unitDefName);
-/*	if(unitDef->type=="GroundUnit"){
-		SAFE_NEW CMobileCAI(this);
-	} else if(unitDef->type=="Transport"){
-		SAFE_NEW CTransportCAI(this);
-	} else if(unitDef->type=="Factory"){
-		SAFE_NEW CFactoryCAI(this);
-	} else if(unitDef->type=="Builder"){
-		SAFE_NEW CBuilderCAI(this);
-	} else if(unitDef->type=="Bomber"){
-		if (unitDef->hoverAttack)
-			SAFE_NEW CMobileCAI(this);
-		else
-			SAFE_NEW CAirCAI(this);
-	} else if(unitDef->type=="Fighter"){
-		if (unitDef->hoverAttack)
-			SAFE_NEW CMobileCAI(this);
-		else
-			SAFE_NEW CAirCAI(this);
-	} else {
-		SAFE_NEW CCommandAI(this);
-	}*/
 
 	yardMap = unitDef->yardmaps[buildFacing];
 	model = unitDef->LoadModel(team);
