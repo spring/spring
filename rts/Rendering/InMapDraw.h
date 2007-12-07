@@ -8,10 +8,15 @@
 
 class CInMapDraw
 {
+	CR_DECLARE(CInMapDraw);
+	CR_DECLARE_SUB(MapPoint);
+	CR_DECLARE_SUB(MapLine);
+	CR_DECLARE_SUB(DrawQuad);
 public:
 	CInMapDraw(void);
 	~CInMapDraw(void);
 	void Draw(void);
+	void PostLoad();
 
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
@@ -24,23 +29,28 @@ public:
 	bool keyPressed;
 
 	struct MapPoint {
+		CR_DECLARE_STRUCT(MapPoint);
+		void Serialize(creg::ISerializer &s);
 		float3 pos;
 		unsigned char* color;
 		std::string label;
 	};
 
 	struct MapLine {
+		CR_DECLARE_STRUCT(MapLine);
+		void Serialize(creg::ISerializer &s);
 		float3 pos;
 		float3 pos2;
 		unsigned char* color;
 	};
 
 	struct DrawQuad {
+		CR_DECLARE_STRUCT(DrawQuad);
 		std::list<MapPoint> points;
 		std::list<MapLine> lines;
 	};
 
-	DrawQuad* drawQuads;
+	std::vector<DrawQuad> drawQuads;
 
 	int drawQuadsX;
 	int drawQuadsY;

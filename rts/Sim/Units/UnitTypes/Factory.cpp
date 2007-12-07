@@ -69,7 +69,6 @@ void CFactory::PostLoad()
 {
 	if(opening){
 		cob->Call(COBFN_Activate);
-		readmap->OpenBlockingYard(this, yardMap);
 	}
 	if (curBuild) {
 		cob->Call("StartBuilding");

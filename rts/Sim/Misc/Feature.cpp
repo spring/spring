@@ -115,10 +115,6 @@ void CFeature::PostLoad()
 	else {
 		midPos = pos;
 	}
-	if (blocking) {
-		Block();
-	}
-
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->AddTree(def->modelType, pos, 1);
 	}

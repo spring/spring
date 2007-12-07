@@ -18,7 +18,7 @@ CR_REG_METADATA(CWind, (
 	CR_MEMBER(newWind),
 	CR_MEMBER(oldWind),
 	CR_MEMBER(status),
-	CR_RESERVED(16)
+	CR_RESERVED(12)
 	));
 
 

@@ -45,7 +45,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(colorTeam),
 	CR_MEMBER(ceg),
 	CR_MEMBER(cegTag),
-	CR_RESERVED(32)
+	CR_RESERVED(24)
 	));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)

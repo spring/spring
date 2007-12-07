@@ -17,13 +17,45 @@
 #include "Sound.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
+#include "creg/STL_List.h"
 
 
 #define DRAW_QUAD_SIZE 32
 
-
 CInMapDraw* inMapDrawer = NULL;
 
+CR_BIND(CInMapDraw, );
+
+CR_REG_METADATA(CInMapDraw,(
+				CR_MEMBER(drawQuads),
+				CR_RESERVED(4)
+				));
+
+CR_BIND(CInMapDraw::MapPoint, );
+
+CR_REG_METADATA_SUB(CInMapDraw,MapPoint,(
+					CR_MEMBER(pos),
+					CR_MEMBER(label),
+					CR_RESERVED(4),
+					CR_SERIALIZER(Serialize)
+					));
+
+CR_BIND(CInMapDraw::MapLine, );
+
+CR_REG_METADATA_SUB(CInMapDraw,MapLine,(
+					CR_MEMBER(pos),
+					CR_MEMBER(pos2),
+					CR_RESERVED(4),
+					CR_SERIALIZER(Serialize)
+					));
+
+CR_BIND(CInMapDraw::DrawQuad, );
+
+CR_REG_METADATA_SUB(CInMapDraw,DrawQuad,(
+					CR_MEMBER(points),
+					CR_MEMBER(lines),
+					CR_RESERVED(4)
+					));
 
 CInMapDraw::CInMapDraw(void)
 {
@@ -36,7 +68,7 @@ CInMapDraw::CInMapDraw(void)
 	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
 	numQuads=drawQuadsX*drawQuadsY;
-	drawQuads=SAFE_NEW DrawQuad[numQuads];
+	drawQuads.resize(numQuads);
 
 	unsigned char tex[64][128][4];
 	for(int y=0;y<64;y++){
@@ -89,10 +121,57 @@ CInMapDraw::CInMapDraw(void)
 
 CInMapDraw::~CInMapDraw(void)
 {
-	delete[] drawQuads;
 	glDeleteTextures (1, &texture);
 }
 
+void CInMapDraw::PostLoad()
+{
+	if (drawQuads.size()!=numQuads)//For old savegames
+		drawQuads.resize(numQuads);
+}
+
+unsigned char DefaultColor[4] = {0,0,0,255};
+
+void SerializeColor(creg::ISerializer &s,unsigned char **color)
+{
+	if (s.IsWriting()) {
+		char ColorType = 0;
+		char ColorId = 0;
+		if (!ColorType) for (int a=0;a<MAX_TEAMS;a++) 
+			if (*color==gs->Team(a)->color) {
+				ColorType = 1;
+				ColorId = a;
+				break;
+			}
+		s.Serialize(&ColorId,sizeof(ColorId));
+		s.Serialize(&ColorType,sizeof(ColorType));
+	} else {
+		char ColorType;
+		char ColorId;
+		s.Serialize(&ColorId,sizeof(ColorId));
+		s.Serialize(&ColorType,sizeof(ColorType));
+		switch (ColorType) {
+			case 0:{
+				*color = DefaultColor;
+				break;
+			}
+			case 1:{
+				*color = gs->Team(ColorId)->color;
+				break;
+			}
+		}
+	}
+}
+
+void CInMapDraw::MapPoint::Serialize(creg::ISerializer &s)
+{
+	SerializeColor(s,&color);
+}
+
+void CInMapDraw::MapLine::Serialize(creg::ISerializer &s)
+{
+	SerializeColor(s,&color);
+}
 
 struct InMapDraw_QuadDrawer : public CReadMap::IQuadDrawer
 {

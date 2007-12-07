@@ -328,8 +328,10 @@ void CInputStreamSerializer::SerializeObjectInstance (void *inst, creg::Class *c
 	stream->read((char*)&id, sizeof(int));
 
 //	printf ("readpos of embedded %s (%d): %d\n", cls->name.c_str(), id, ((int)stream->tellg())-4);
-
 	StoredObject& o = objects[swabdword(id)];
+	if (id==0 && o.obj) {	
+		return; // this is old save game and it has not this object - skip it
+	}
 	assert (!o.obj);
 	assert (o.isEmbedded);
 
