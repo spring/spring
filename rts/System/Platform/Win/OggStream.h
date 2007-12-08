@@ -36,7 +36,7 @@ class COggStream {
 		int curSection;
 		int lastSection;
 		bool stopped;
-		bool lastSection;
+		bool isLastSection;
 		bool reachedEOS;
 };
 
