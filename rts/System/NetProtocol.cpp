@@ -45,13 +45,13 @@ unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 	return myNum;
 }
 
-int CNetProtocol::GetData(unsigned char* buf, const unsigned conNum)
+RawPacket* CNetProtocol::GetData(const unsigned conNum)
 {
-	int ret = CBaseNetProtocol::GetData(buf, conNum);
+	RawPacket* ret = CBaseNetProtocol::GetData(conNum);
 	
-	if (record && ret > 0)
+	if (record && ret)
 	{
-		record->SaveToDemo(buf, ret);
+		record->SaveToDemo(ret->data, ret->length);
 	}
 	
 	return ret;

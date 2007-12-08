@@ -316,18 +316,17 @@ void CGameServer::ServerReadNet()
 	// handle new connections
 	while (serverNet->HasIncomingConnection())
 	{
-		const unsigned inbuflength = 4096;
-		unsigned char inbuf[inbuflength];
-		int ret = serverNet->GetData(inbuf);
+		RawPacket* packet = serverNet->GetData();
+		const unsigned char* inbuf = packet->data;
 
-		if (ret >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
+		if (packet->length >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
-			unsigned wantedNumber = inbuf[1];
+			const unsigned wantedNumber = inbuf[1];
 			BindConnection(wantedNumber);
 		}
 		else
 		{
-			SendSystemMsg("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], ret);
+			SendSystemMsg("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], packet->length);
 			serverNet->RejectIncomingConnection();
 		}
 	}
@@ -336,11 +335,11 @@ void CGameServer::ServerReadNet()
 	{
 		if (serverNet->IsActiveConnection(a))
 		{
-			unsigned char inbuf[8000];
-			int ret = 0;
+			RawPacket* packet = 0;
 			bool quit = false;
-			while (!quit && (ret = serverNet->GetData(inbuf, a)) > 0)
+			while (!quit && (packet = serverNet->GetData(a)))
 			{
+				const unsigned char* inbuf = packet->data;
 				switch (inbuf[0]){
 					case NETMSG_NEWFRAME:
 						gs->players[a]->ping=serverframenum-*(int*)&inbuf[1];
@@ -578,6 +577,7 @@ void CGameServer::ServerReadNet()
 						}
 						break;
 				}
+				delete packet;
 			}
 		}
 		else if (players[a])

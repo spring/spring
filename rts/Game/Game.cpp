@@ -2413,16 +2413,10 @@ void CGame::StartPlaying()
 
 void CGame::SimFrame()
 {
-	// Enable trapping of NaNs and divisions by zero to make debugging easier.
-#ifdef DEBUG
-	//feraiseexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
-#endif
 	good_fpu_control_registers("CGame::SimFrame");
-
 	lastFrameTime = SDL_GetTicks();
-
 	ASSERT_SYNCED_MODE;
-//	logOutput.Print("New frame %i %i %i",gs->frameNum,gs->randInt(),uh->CreateChecksum());
+
 #ifdef TRACE_SYNC
 	uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
@@ -2610,18 +2604,19 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-
-	const unsigned inbuflength = 8000;
-	unsigned char inbuf[inbuflength];
-	memset(inbuf, '\0', inbuflength);
-	unsigned dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
-
-
-	while (dataLength > 0) {
-
+	
+	const unsigned myPlayerNum = gameSetup ? (unsigned)gameSetup->myPlayerNum : 0;
+	if (!net->IsActiveConnection(myPlayerNum))
+		return gameOver;
+	
+	RawPacket* packet = 0;
+	while ((packet = net->GetData(myPlayerNum)))
+	{
+		const unsigned char* inbuf = packet->data;
+		const unsigned dataLength = packet->length;
 		const unsigned char packetCode = inbuf[0];
 
-		switch (inbuf[0]) {
+		switch (packetCode) {
 			case NETMSG_QUIT: {
 				logOutput.Print("Server exited");
 				POP_CODE_MODE;
@@ -2854,7 +2849,7 @@ bool CGame::ClientReadNet()
 			}
 
 			case NETMSG_GAMEID: {
-				unsigned char* p = &inbuf[1];
+				const unsigned char* p = &inbuf[1];
 				CDemoRecorder* record = net->GetDemoRecorder();
 				if (record != NULL)
 					record->SetGameID(p);
@@ -2958,7 +2953,7 @@ bool CGame::ClientReadNet()
 					break;
 				}
 
-				unsigned char* ptr = &inbuf[4];
+				const unsigned char* ptr = &inbuf[4];
 
 				// FIXME -- hackish
 				#define UNPACK(type)  *((type*)ptr); ptr = ptr + sizeof(type);
@@ -3083,7 +3078,7 @@ bool CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_MAPDRAW:{
-				inMapDrawer->GotNetMsg(&inbuf[0]);
+				inMapDrawer->GotNetMsg(inbuf);
 				AddTraffic(inbuf[2], packetCode, dataLength);
 				break;
 			}
@@ -3207,12 +3202,7 @@ bool CGame::ClientReadNet()
 				break;
 			}
 		}
-
-		dataLength = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
-	}
-
-	if (dataLength == -1) {
-		return gameOver;
+		delete packet;
 	}
 
 	POP_CODE_MODE;

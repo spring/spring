@@ -4,7 +4,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <ctime>
 #include <string>
 #include <map>
 #include <deque>

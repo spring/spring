@@ -34,7 +34,7 @@ public:
 	@todo Throw exceptions
 	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
-	int GetData(unsigned char* buf, const unsigned conNum);
+	RawPacket* GetData(const unsigned conNum);
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 

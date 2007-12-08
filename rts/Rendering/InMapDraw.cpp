@@ -335,7 +335,7 @@ float3 CInMapDraw::GetMouseMapPos(void)
 }
 
 
-void CInMapDraw::GotNetMsg(unsigned char* msg)
+void CInMapDraw::GotNetMsg(const unsigned char* msg)
 {
 	const int playerID = msg[2];
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {

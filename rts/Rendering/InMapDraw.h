@@ -21,7 +21,7 @@ public:
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
-	void GotNetMsg(unsigned char* msg);
+	void GotNetMsg(const unsigned char* msg);
 
 	float3 GetMouseMapPos(void);
 	void ErasePos(const float3& pos);
