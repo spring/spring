@@ -9,7 +9,7 @@ COggStream::COggStream() {
 	vorbisInfo = 0;
 	vorbisComment = 0;
 	stopped = true;
-	lastSection = true;
+	isLastSection = true;
 	reachedEOS = true;
 }
 
@@ -83,7 +83,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	curSection = 0;
 	lastSection = 0;
 	stopped = false;
-	lastSection = false;
+	isLastSection = false;
 	reachedEOS = false;
 }
 
@@ -114,7 +114,7 @@ void COggStream::update() {
 			stop();
 			return;
 		}
-		if (lastSection) {
+		if (isLastSection) {
 			reachedEOS = true;
 		}
 
@@ -140,7 +140,7 @@ void COggStream::update() {
 			}
 
 			// only this buffer section to go
-			lastSection = true;
+			isLastSection = true;
 		}
 
 		DSB->Unlock(buf, size, NULL, 0);
