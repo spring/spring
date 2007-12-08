@@ -807,34 +807,41 @@ void CCobInstance::Explode(int piece, int flags)
 	//Do an explosion at the location first
 	SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
-	//If this is true, no stuff should fly off
-	if (flags & 32)
-		return;
+	// If this is true, no stuff should fly off
+	if (flags & 32) return;
 
-	//This means that we are going to do a full fledged piece exlosion!
+	// This means that we are going to do a full fledged piece explosion!
+	// TODO: equalize the bitflags with those in PieceProjectile.h
 	int newflags = 0;
-	if (flags & 2)
-		newflags |= PP_Explode;
-//	if (flags & 4)
-		newflags |= PP_Fall;	//if they dont fall they could live forever
-	if ((flags & 8) && ph->particleSaturation<1)
-		newflags |= PP_Smoke;
-	if ((flags & 16) && ph->particleSaturation<0.95f)
-		newflags |= PP_Fire;
+	if (flags & 2) newflags |= PP_Explode;
+//	if (flags & 4) newflags |= PP_Fall; // if they dont fall they could live forever
+	if ((flags & 8) && ph->particleSaturation < 1) newflags |= PP_Smoke;
+	if ((flags & 16) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
+	if (flags & PP_CEGTrail) newflags |= PP_CEGTrail;
 
-	float3 baseSpeed=unit->speed+unit->residualImpulse*0.5f;
-	float l=baseSpeed.Length();
-	if(l>3){
-		float l2=3+sqrt(l-3);
-		baseSpeed*=(l2/l);
+/*
+	int newflags = 0;
+	if (flags & PP_Explode) newflags |= PP_Explode;
+	if (flags & PP_Fall) newflags |= PP_Fall;	// if they dont fall they could live forever
+	if ((flags & PP_Smoke) && ph->particleSaturation < 1) newflags |= PP_Smoke;
+	if ((flags & PP_Fire) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
+	if ( flags & PP_CEGTrail) newflags |= PP_CEGTrail;
+*/
+
+	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
+	float l = baseSpeed.Length();
+
+	if (l > 3) {
+		float l2 = 3 + sqrt(l - 3);
+		baseSpeed *= (l2 / l);
 	}
 	float3 speed((0.5f-gs->randFloat())*6.0f,1.2f+gs->randFloat()*5.0f,(0.5f-gs->randFloat())*6.0f);
 	if(unit->pos.y - ground->GetApproximateHeight(unit->pos.x,unit->pos.z) > 15){
 		speed.y=(0.5f-gs->randFloat())*6.0f;
 	}
-	speed+=baseSpeed;
-	if(speed.Length()>12)
-		speed=speed.Normalize()*12;
+	speed += baseSpeed;
+	if (speed.Length() > 12)
+		speed = speed.Normalize() * 12;
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
