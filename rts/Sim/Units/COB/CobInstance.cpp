@@ -813,11 +813,11 @@ void CCobInstance::Explode(int piece, int flags)
 	// This means that we are going to do a full fledged piece explosion!
 	// TODO: equalize the bitflags with those in PieceProjectile.h
 	int newflags = 0;
-	if (flags & 2) newflags |= PP_Explode;
-//	if (flags & 4) newflags |= PP_Fall;
-	if ((flags & 8) && ph->particleSaturation < 1) newflags |= PP_Smoke;
-	if ((flags & 16) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
-	if (flags & PP_NoCEGTrail) newflags |= PP_NoCEGTrail;
+	if (flags & 2) { newflags |= PP_Explode; } newflags |= PP_Fall;
+//	if (flags & 4) { newflags |= PP_Fall; }
+	if ((flags & 8) && ph->particleSaturation < 1) { newflags |= PP_Smoke; }
+	if ((flags & 16) && ph->particleSaturation < 0.95f) { newflags |= PP_Fire; }
+	if (flags & PP_NoCEGTrail) { newflags |= PP_NoCEGTrail; }
 
 /*
 	int newflags = 0;
