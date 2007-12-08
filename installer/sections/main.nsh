@@ -14,11 +14,12 @@
   File "..\mingwlibs\dll\zlib1.dll"
   
   ; Old DLLs, not needed anymore
-  ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
+  ; (python upgraded to 25, MSVC*71.dll and zlibwapi were only needed by MSVC compiled unitsync.dll)
   Delete "$INSTDIR\python24.dll"
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
-  
+  Delete "$INSTDIR\zlibwapi.dll"
+
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
   File "..\game\selectkeys.txt"
@@ -35,7 +36,6 @@
   File "..\mingwlibs\dll\DevIL.dll"
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\ILU.dll"
-  File "..\game\zlibwapi.dll"
 
   File "..\game\PALETTE.PAL"
 
@@ -109,7 +109,6 @@
   Delete "$INSTDIR\python25.dll"
   Delete "$INSTDIR\SDL.dll"
   Delete "$INSTDIR\zlib1.dll"
-  Delete "$INSTDIR\zlibwapi.dll"
 
   Delete "$INSTDIR\PALETTE.PAL"
 
