@@ -1,6 +1,7 @@
 #include "OggStream.h"
 #include "LogOutput.h"
 
+
 COggStream::COggStream() {
 	DS = 0;
 	DSB = 0;
@@ -8,6 +9,8 @@ COggStream::COggStream() {
 	vorbisInfo = 0;
 	vorbisComment = 0;
 	stopped = true;
+	lastSection = true;
+	reachedEOS = true;
 }
 
 
@@ -64,6 +67,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	DWORD size = BUFSIZE * 2;
 
 	char* buf;
+	// offset to lock start, lock size, address of first lock part, size of first part, 0, 0, flag
 	DSB->Lock(0, size, (LPVOID*) &buf, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
 	DSB->SetVolume(int(DSBVOLUME_MIN * volume));
 
@@ -74,12 +78,13 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	}
 
 	DSB->Unlock(buf, size, NULL, 0);
-	curSection = lastSection = 0;
-
-
 	DSB->Play(0, 0, DSBPLAY_LOOPING);
 
+	curSection = 0;
+	lastSection = 0;
 	stopped = false;
+	lastSection = false;
+	reachedEOS = false;
 }
 
 
@@ -105,6 +110,14 @@ void COggStream::update() {
 
 	// buffer section changed?
 	if (curSection != lastSection) {
+		if (reachedEOS) {
+			stop();
+			return;
+		}
+		if (lastSection) {
+			reachedEOS = true;
+		}
+
 		DWORD size = BUFSIZE;
 		char* buf;
 
@@ -123,14 +136,15 @@ void COggStream::update() {
 		if (!ret) {
 			// EOS reached, zero rest of buffer
 			while (pos < size) {
-				*(buf + pos) = 0; pos++;
+				*(buf + pos++) = 0;
 			}
 
-			stop();
-		} else {
-			DSB->Unlock(buf, size, NULL, 0);
-			lastSection = curSection;
+			// only this buffer section to go
+			lastSection = true;
 		}
+
+		DSB->Unlock(buf, size, NULL, 0);
+		lastSection = curSection;
 	}
 }
 
