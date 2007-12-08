@@ -9,13 +9,16 @@
 
   ; DLLs (updated in mingwlibs-v8)
   File "..\mingwlibs\dll\glew32.dll"
-  File "..\mingwlibs\dll\libogg-cs.dll"
-  File "..\mingwlibs\dll\libvorbis-cs.dll"
-  File "..\mingwlibs\dll\libvorbisfile-cs.dll"
   File "..\mingwlibs\dll\python25.dll"
   File "..\mingwlibs\dll\SDL.dll"
   File "..\mingwlibs\dll\zlib1.dll"
-
+  
+  ; Old DLLs, not needed anymore
+  ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
+  Delete "$INSTDIR\python24.dll"
+  Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\MSVCR71.dll"
+  
 !ifndef SP_UPDATE
   File "..\game\settings.exe"
   File "..\game\selectkeys.txt"
@@ -103,14 +106,8 @@
   Delete "$INSTDIR\glew32.dll"
   Delete "$INSTDIR\ILU.dll"
   Delete "$INSTDIR\ILUT.dll"
-  Delete "$INSTDIR\libogg-cs.dll"
-  Delete "$INSTDIR\libvorbis-cs.dll"
-  Delete "$INSTDIR\libvorbisfile-cs.dll"
-  Delete "$INSTDIR\python24.dll"
   Delete "$INSTDIR\python25.dll"
   Delete "$INSTDIR\SDL.dll"
-  Delete "$INSTDIR\MSVCP71.dll"
-  Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\zlib1.dll"
   Delete "$INSTDIR\zlibwapi.dll"
 
