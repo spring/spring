@@ -804,7 +804,7 @@ void CCobInstance::Explode(int piece, int flags)
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << piece << " " << flags << "\n";
 #endif
 
-	//Do an explosion at the location first
+	// Do an explosion at the location first
 	SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	// If this is true, no stuff should fly off
@@ -814,18 +814,18 @@ void CCobInstance::Explode(int piece, int flags)
 	// TODO: equalize the bitflags with those in PieceProjectile.h
 	int newflags = 0;
 	if (flags & 2) newflags |= PP_Explode;
-//	if (flags & 4) newflags |= PP_Fall; // if they dont fall they could live forever
+//	if (flags & 4) newflags |= PP_Fall;
 	if ((flags & 8) && ph->particleSaturation < 1) newflags |= PP_Smoke;
 	if ((flags & 16) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
-	if (flags & PP_CEGTrail) newflags |= PP_CEGTrail;
+	if (flags & PP_NoCEGTrail) newflags |= PP_NoCEGTrail;
 
 /*
 	int newflags = 0;
 	if (flags & PP_Explode) newflags |= PP_Explode;
-	if (flags & PP_Fall) newflags |= PP_Fall;	// if they dont fall they could live forever
+	if (flags & PP_Fall) newflags |= PP_Fall;
 	if ((flags & PP_Smoke) && ph->particleSaturation < 1) newflags |= PP_Smoke;
 	if ((flags & PP_Fire) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
-	if ( flags & PP_CEGTrail) newflags |= PP_CEGTrail;
+	if (flags & PP_NoCEGTrail) newflags |= PP_NoCEGTrail;
 */
 
 	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
@@ -835,9 +835,9 @@ void CCobInstance::Explode(int piece, int flags)
 		float l2 = 3 + sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	float3 speed((0.5f-gs->randFloat())*6.0f,1.2f+gs->randFloat()*5.0f,(0.5f-gs->randFloat())*6.0f);
-	if(unit->pos.y - ground->GetApproximateHeight(unit->pos.x,unit->pos.z) > 15){
-		speed.y=(0.5f-gs->randFloat())*6.0f;
+	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
+	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+		speed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 	speed += baseSpeed;
 	if (speed.Length() > 12)

@@ -72,7 +72,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		// choose a (synced) random tag-postfix string k from the
 		// range given in UnitDef and stick it onto pieceTrailCEGTag
 		// (assumes all possible "tag + k" CEG identifiers are valid)
-		if (flags & PP_CEGTrail) {
+		if (flags & PP_NoCEGTrail == 0) {
 			const int size = owner->unitDef->pieceTrailCEGTag.size();
 			const int range = owner->unitDef->pieceTrailCEGRange;
 			const int num = gs->randInt() % range;
@@ -84,7 +84,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 				cegTag[1023] = 0;
 				ceg.Load(explGenHandler, cegTag);
 			} else {
-				flags &= ~PP_CEGTrail;
+				flags |= PP_NoCEGTrail;
 			}
 		}
 
@@ -185,10 +185,10 @@ void CPieceProjectile::Collision()
 			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, 0, 0, ZeroVector, -1);
 		}
 		if (flags & PP_Smoke) {
-			float3 dir = speed;
-			dir.Normalize();
+			if (flags & PP_NoCEGTrail == 1) {
+				float3 dir = speed;
+				dir.Normalize();
 
-			if (flags & PP_CEGTrail == 0) {
 				CSmokeTrailProjectile* tp =
 					SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
 					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
@@ -209,10 +209,10 @@ void CPieceProjectile::Collision(CUnit* unit)
 		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, 0, unit, ZeroVector, -1);
 	}
 	if (flags & PP_Smoke) {
-		float3 dir = speed;
-		dir.Normalize();
+		if (flags & PP_NoCEGTrail == 1) {
+			float3 dir = speed;
+			dir.Normalize();
 
-		if (flags & PP_CEGTrail == 0) {
 			CSmokeTrailProjectile* tp =
 				SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
 				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
@@ -288,7 +288,7 @@ void CPieceProjectile::Update()
 
 	age++;
 
-	if (flags & PP_CEGTrail == 0) {
+	if (flags & PP_NoCEGTrail == 1) {
 		if (!(age & 7) && (flags & PP_Smoke)) {
 			float3 dir = speed;
 			dir.Normalize();
@@ -323,7 +323,7 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if (flags & PP_CEGTrail == 0) {
+	if (flags & PP_NoCEGTrail == 1) {
 		if (flags & PP_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			float3 interPos = pos + speed * gu->timeOffset;

@@ -4,11 +4,11 @@
 #include "Projectile.h"
 #include "Sim/Misc/DamageArray.h"
 
-const int PP_Fall     = (1 << 0); // 1
-const int PP_Smoke    = (1 << 1); // 2, smoke and fire is turned off when there are too many projectiles so make sure they are unsynced
-const int PP_Fire     = (1 << 2); // 4
-const int PP_Explode  = (1 << 3); // 8
-const int PP_CEGTrail = (1 << 6); // 64  FIXME: should be 16
+const int PP_Fall       = (1 << 0); // 1, if they dont fall they could live forever
+const int PP_Smoke      = (1 << 1); // 2, smoke and fire is turned off when there are too many projectiles so make sure they are unsynced
+const int PP_Fire       = (1 << 2); // 4
+const int PP_Explode    = (1 << 3); // 8
+const int PP_NoCEGTrail = (1 << 6); // 64, TODO should be 16
 
 class CSmokeTrailProjectile;
 struct LocalS3DO;
