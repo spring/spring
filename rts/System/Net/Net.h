@@ -7,6 +7,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "RawPacket.h"
+
+typedef netcode::RawPacket RawPacket;
 
 namespace netcode {
 
@@ -134,12 +137,11 @@ public:
 	
 	/**
 	@brief Recieve data from a client
-	@param buf The buffer the data will be filled into
 	@param conNum The number to recieve from
-	@return the amount of data recieved (so 0 means no data)
+	@return a RawPacket* with the data inside (or 0 when there is no data) (YOU! need to delete it after using)
 	@throw network_error When conNum is not a valid connection ID
 	*/
-	int GetData(unsigned char* buf, const unsigned conNum);
+	RawPacket* GetData(const unsigned conNum);
 	
 	/**
 	@brief Broadcast data to all clients
@@ -171,7 +173,7 @@ public:
 	bool HasIncomingConnection() const;
 	
 	/// Recieve data from first unbound connection to check if we allow him in our game
-	unsigned GetData(unsigned char* buf);
+	RawPacket* GetData();
 	
 	/// everything seems fine, accept him
 	unsigned AcceptIncomingConnection(const unsigned wantedNumber=0);

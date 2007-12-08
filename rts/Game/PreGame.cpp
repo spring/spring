@@ -414,8 +414,6 @@ bool CPreGame::Update()
 
 void CPreGame::UpdateClientNet()
 {
-	unsigned char inbuf[8000];
-
 	if (!net->IsActiveConnection(gameSetup ? gameSetup->myPlayerNum : 0))
 	{
 		logOutput.Print("Server not reachable");
@@ -423,8 +421,10 @@ void CPreGame::UpdateClientNet()
 		return;
 	}
 
-	int ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
-	while (ret > 0) {
+	RawPacket* packet = 0;
+	while ((packet = net->GetData(gameSetup ? gameSetup->myPlayerNum : 0)))
+	{
+		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_SCRIPT: {
 				if (!gameSetup) {
@@ -513,7 +513,7 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_QUIT: {
 				globalQuit = true;
-				return;
+				break;
 			}
 
 			case NETMSG_USER_SPEED: {
@@ -539,13 +539,7 @@ void CPreGame::UpdateClientNet()
 				break;
 			}
 		}
-		ret = net->GetData(inbuf, gameSetup ? gameSetup->myPlayerNum : 0);
-	}
-
-	if (ret == -1)
-	{
-		globalQuit = true;
-		return;
+		delete packet;
 	}
 }
 

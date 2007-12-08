@@ -127,23 +127,13 @@ bool CNet::IsActiveConnection(const unsigned number) const
 	return connections[number];
 }
 
-int CNet::GetData(unsigned char *buf, const unsigned conNum)
+RawPacket* CNet::GetData(const unsigned conNum)
 {
 	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
 	{
 		///TODO make the engine take RawPackets to avoid the memcpy'ing
 		RawPacket* data = connections[conNum]->GetData();
-		if (data)
-		{
-			int length = data->length;
-			memcpy(buf, data->data, length);
-			delete data;
-			return length;
-		}
-		else
-		{
-			return 0;
-		}
+		return data;
 	}
 	else
 	{
@@ -264,22 +254,12 @@ bool CNet::HasIncomingConnection() const
 	return !waitingQueue.empty();
 }
 
-unsigned CNet::GetData(unsigned char* buf)
+RawPacket* CNet::GetData()
 {
 	if (HasIncomingConnection())
 	{
 		RawPacket* data = waitingQueue.front()->GetData();
-		if (data)
-		{
-			int length = data->length;
-			memcpy(buf, data->data, length);
-			delete data;
-			return length;
-		}
-		else
-		{
-			return 0;
-		}
+		return data;
 	}
 	else
 	{
