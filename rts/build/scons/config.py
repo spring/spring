@@ -278,7 +278,7 @@ def CheckHeadersAndLibraries(env, conf):
 		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
 		else:   boost.libraries = [l+'-mt', l]
 
-	d = [boost_common, boost_thread, boost_regex, boost_serial]
+	d = [boost_common, boost_regex, boost_serial, boost_thread]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'],   ['GL/glu.h'])]
@@ -302,9 +302,9 @@ def CheckHeadersAndLibraries(env, conf):
 	else:
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 
-	d += [Dependency(['ogg'], ['ogg/ogg.h'])]
-	d += [Dependency(['vorbis'], [])]
 	d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
+	d += [Dependency(['vorbis'], [])]
+	d += [Dependency(['ogg'], ['ogg/ogg.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
 	d += [Dependency(['python2.5', 'python25', 'python2.4', 'python24'], ['Python.h'])]
@@ -313,7 +313,6 @@ def CheckHeadersAndLibraries(env, conf):
 	if env['use_tcmalloc']:
 		d += [Dependency(['tcmalloc'], [])]
 
-	d.sort()
 	all_succes = True
 
 	for c in d:
