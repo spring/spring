@@ -316,8 +316,8 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	}
 
 	memcpy(tempbuf+hsize, data, length);
-
 	mySocket->SendTo(tempbuf, length+hsize, &addr);
+	delete[] tempbuf;
 	
 	dataSent += length;
 	sentOverhead += hsize;

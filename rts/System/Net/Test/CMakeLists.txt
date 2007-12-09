@@ -1,4 +1,4 @@
-PROJECT(libnet CXX)
+PROJECT(UnitTester)
 SET(CMAKE_CXX_FLAGS "-g -O1 -Wall")
 INCLUDE_DIRECTORIES(../ /usr/include/SDL)
 
