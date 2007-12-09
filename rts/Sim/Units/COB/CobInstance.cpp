@@ -12,6 +12,7 @@
 #include "Map/Ground.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -104,6 +105,7 @@
 #define CHANGE_TARGET             98 // set, the value it's set to determines the affected weapon
 #define CEG_DAMAGE                99 // set
 #define COB_ID                   100 // get
+#define PLAY_SOUND				 101 // get, so multiple args can be passed
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
 #define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
@@ -975,8 +977,15 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case STANDINGFIREORDERS:
 		return unit->fireState;
 		break;
-	case HEALTH:
-		return (int) ((unit->health/unit->maxHealth)*100.0f);
+	case HEALTH:{
+		if (p1 <= 0)
+			return (int) ((unit->health/unit->maxHealth)*100.0f);
+		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		if (u == NULL)
+			return 0;
+		else
+			return (int) ((u->health/u->maxHealth)*100.0f);
+		}
 	case INBUILDSTANCE:
 		if (unit->inBuildStance)
 			return 1;
@@ -1166,6 +1175,39 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return (u == NULL) ? -1 : u->unitDef->cobID;
 		}
 	}
+ 	case PLAY_SOUND:
+		switch(p3) {	//who hears the sound
+			case 0:		//ALOS
+				if (!loshandler->InAirLos(unit->pos,gu->myAllyTeam)) {return 0;}
+				break;
+			case 1:		//LOS
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) {return 0;}
+				break;
+			case 2:		//ALOS or radar
+				if (!(loshandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) {return 0;}
+				break;
+			case 3:		//LOS or radar
+				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) {return 0;}
+				break;
+			case 4:		//everyone
+				break;
+			case 5:		//allies
+				if (unit->allyteam != gu->myAllyTeam) {return 0;}
+				break;
+			case 6:		//team
+				if (unit->team != gu->myTeam) {return 0;}
+				break;
+			case 7:		//enemies
+				if (unit->allyteam == gu->myAllyTeam) {return 0;}
+				break;
+		}
+		if ((p1 + 1 > script.sounds.size()) || p1 < 0) { return 1;}
+		if (p4 == 0) {
+			sound->PlaySample(script.sounds[p1], unit->pos, float(p2) / COBSCALE);
+		}else{
+			sound->PlaySample(script.sounds[p1], float(p2) / COBSCALE);
+		}
+		return 0;
 	case SET_WEAPON_UNIT_TARGET: {
 		const int weaponID = p1 - 1;
 		const int targetID = p2;
