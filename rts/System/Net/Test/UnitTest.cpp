@@ -54,11 +54,12 @@ int main()
 {
 	// prepare test packets:
 	unsigned char buffer[10];
-	buffer[0] = 0;
+	memset(buffer, 0, 10);
 	buffer[1] = 6;
 	data1 = new RawPacket(buffer, 10);
 	
 	unsigned char bigbuffer[1000];
+	memset(bigbuffer, 0, 1000);
 	bigbuffer[0]=2;
 	data2 = new RawPacket(bigbuffer, 1000);
 	
@@ -138,5 +139,6 @@ int main()
 	delete server;
 	delete client;
 	
+	delete data1; delete data2; // so valgrind doesn't complain
 	return 0;
 }
