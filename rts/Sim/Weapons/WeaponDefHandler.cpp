@@ -229,6 +229,8 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.movingAccuracy = sin((movingAccuracy) * PI / 0xafff);
 
 	wd.targetMoveError = wdTable.GetFloat("targetMoveError", 0.0f);
+	wd.leadLimit = wdTable.GetFloat("leadLimit", -1.0f);
+	wd.leadBonus = wdTable.GetFloat("leadBonus", 0.0f);
 
 	// setup the default damages
 	const LuaTable dmgTable = wdTable.SubTable("damage");
@@ -280,6 +282,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.metalcost = wdTable.GetFloat("metalpershot", 0.0f);
 	wd.energycost = wdTable.GetFloat("energypershot", 0.0f);
 	wd.selfExplode = wdTable.GetBool("burnblow", false);
+	wd.predictBoost = wdTable.GetFloat("predictBoost", wd.selfExplode ? 0.5f : 0.0f);
 	wd.sweepFire = wdTable.GetBool("sweepfire", false);
 	wd.canAttackGround = wdTable.GetBool("canattackground", true);
 	wd.myGravity = wdTable.GetFloat("myGravity", 0.0f);

@@ -459,6 +459,9 @@ static bool InitParamMap()
 	ADD_FLOAT("sprayAngle", wd.sprayangle);
 	ADD_FLOAT("movingAccuracy", wd.movingAccuracy);
 	ADD_FLOAT("targetMoveError", wd.targetMoveError);
+	ADD_FLOAT("leadLimit", wd.leadLimit);
+	ADD_FLOAT("leadBonus", wd.leadBonus);
+	ADD_FLOAT("predictBoost", wd.predictBoost);
 
 	ADD_BOOL("noSelfDamage", wd.noSelfDamage);
 	ADD_FLOAT("areaOfEffect", wd.areaOfEffect);
