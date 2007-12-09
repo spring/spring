@@ -4272,6 +4272,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 				delete unit->localmodel;
 				unit->localmodel =
 					modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+				unit->cob->Call("Create");
 			}
 		}
 	}
