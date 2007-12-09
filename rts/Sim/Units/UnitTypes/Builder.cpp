@@ -18,7 +18,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/ModInfo.h"
-#include "Sim/Projectiles/ProjectileHandler.h" ///
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -643,7 +643,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 dif = goal - weaponPos;
 		float l = dif.Length();
 		dif /= l;
-		float3 error = gs->randVector() * (radius / l);
+		float3 error = gu->usRandVector() * (radius / l);
 		float3 color = unitDef->nanoColor;
 
 		if (gu->teamNanospray) {
