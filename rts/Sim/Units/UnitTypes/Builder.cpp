@@ -18,6 +18,7 @@
 #include "Sim/Misc/Feature.h"
 #include "Sim/Misc/FeatureHandler.h"
 #include "Sim/ModInfo.h"
+#include "Sim/Projectiles/ProjectileHandler.h" ///
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -626,29 +627,36 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
-	std::vector<int> args;
-	args.push_back(0);
-	cob->Call("QueryNanoPiece",args);
+	ENTER_UNSYNCED;
 
-	if(!unitDef->showNanoSpray)
-        return;
+	if (ph->currentParticles < ph->maxParticles) {
+		std::vector<int> args;
+		args.push_back(0);
+		cob->Call("QueryNanoPiece", args);
 
-	float3 relWeaponFirePos=localmodel->GetPiecePos(args[0]);
-	float3 weaponPos=pos + frontdir*relWeaponFirePos.z + updir*relWeaponFirePos.y + rightdir*relWeaponFirePos.x;
+		if (!unitDef->showNanoSpray)
+			return;
 
-	float3 dif=goal-weaponPos;
-	float l=dif.Length();
-	dif/=l;
-	float3 error=gs->randVector()*(radius/l);
+		float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
-	float3 color= unitDef->nanoColor;
-	if(gu->teamNanospray){
-		unsigned char* tcol=gs->Team(team)->color;
-		color = float3(tcol[0]*(1.f/255.f),tcol[1]*(1.f/255.f),tcol[2]*(1.f/255.f));
+		float3 dif = goal - weaponPos;
+		float l = dif.Length();
+		dif /= l;
+		float3 error = gs->randVector() * (radius / l);
+		float3 color = unitDef->nanoColor;
+
+		if (gu->teamNanospray) {
+			unsigned char* tcol = gs->Team(team)->color;
+			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
+		}
+
+		if (inverse) {
+			SAFE_NEW CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+		} else {
+			SAFE_NEW CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
+		}
 	}
 
-	if(inverse)
-		SAFE_NEW CGfxProjectile(weaponPos+(dif+error)*l,-(dif+error)*3,(int)(l/3),color);
-	else
-		SAFE_NEW CGfxProjectile(weaponPos,(dif+error)*3,(int)(l/3),color);
+	ENTER_SYNCED;
 }
