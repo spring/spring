@@ -328,11 +328,17 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 #define OP_SAWTOOTH	11 // Performs a modulo to create a sawtooth wave
 #define OP_DISCRETE	12 // Floors the value to a multiple of its parameter
 #define OP_SINE		13 // Uses val as the phase of a sine wave
+#define OP_YANK     14 // Moves the input value into a buffer, returns zero
+#define OP_MULTIPLY 15 // Multiplies with buffer value
+#define OP_ADDBUFF  16 // Adds buffer value
+#define OP_POW      17 // Power with code as exponent
+#define OP_POWBUFF  18 // Power with buffer as exponent
 
 void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float damage, char *instance, int spawnIndex, const float3 &dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
+	float buffer[16];
 
 	for (;;) {
 		switch (*(code++)) {
@@ -414,6 +420,32 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float dam
 				code += 4;
 				break;
 			}
+			case OP_YANK: {
+				buffer[(*(int*) code)] = val;
+				val = 0;
+				code += 4;
+				break;
+			}
+			case OP_MULTIPLY: {
+				val *= buffer[(*(int*) code)];
+				code += 4;
+				break;
+			}
+			case OP_ADDBUFF: {
+				val += buffer[(*(int*) code)];
+				code += 4;
+				break;
+			}
+			case OP_POW: {
+				val = pow(val, (*(float*) code));
+				code += 4;
+				break;
+			}
+			case OP_POWBUFF: {
+				val = pow(val, buffer[(*(int*) code)]);
+				code += 4;
+				break;
+			}
 			default: {
 				assert(false);
 				break;
@@ -452,20 +484,36 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			char c;
 			do { c = script[p++]; } while(c == ' ');
 
+			bool useInt=false;
+
 			if (c == 'i')      opcode = OP_INDEX;
 			else if (c == 'r') opcode = OP_RAND;
 			else if (c == 'd') opcode = OP_DAMAGE;
 			else if (c == 'm') opcode = OP_SAWTOOTH;
 			else if (c == 'k') opcode = OP_DISCRETE;
 			else if (c == 's') opcode = OP_SINE;
+			else if (c == 'y') {opcode = OP_YANK; useInt=true;}
+			else if (c == 'x') {opcode = OP_MULTIPLY; useInt=true;}
+			else if (c == 'a') {opcode = OP_ADDBUFF; useInt=true;}
+			else if (c == 'p') opcode = OP_POW;
+			else if (c == 'q') {opcode = OP_POWBUFF; useInt=true;}
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else throw content_error("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
 
 			char* endp;
-			float v = (float)strtod(&script[p], &endp);
-			p += endp - &script[p];
-			code += opcode;
-			code.append((char*) &v, ((char*) &v) + 4);
+			if(!useInt) {
+				float v = (float)strtod(&script[p], &endp);
+				p += endp - &script[p];
+				code += opcode;
+				code.append((char*) &v, ((char*) &v) + 4);
+			}
+			else {
+				int v = (int)strtol(&script[p], &endp, 10);
+				if (v < 0 || v > 16) throw content_error("Explosion script error: \"" + script + "\"  : Buffer index is out of bounds.");
+				p += endp - &script[p];
+				code += opcode;
+				code.append((char*) &v, ((char*) &v) + 4);
+			}
 		}
 
 		switch (bt->id) {
