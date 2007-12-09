@@ -127,12 +127,11 @@ public:
 	unsigned char oldStatus;
 #endif
 
-	void HandleChatMsg(std::string msg, int player, bool demoPlayer);
-
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 protected:
 	void SendNetChat(const string& message);
+	void HandleChatMsg(std::string msg, int player);
 
 	void DrawInputText();
 	void ParseInputTextGeometry(const string& geo);
@@ -144,9 +143,8 @@ protected:
 
 	void LogNetMsg(const string& msg, int player);
 	void ReloadCOB(const string& msg, int player);
-	void Skip(const string& msg, bool demoPlayer);
+	void Skip(const string& msg);
 
-protected:
 	std::string hotBinding;
 	float inputTextPosX;
 	float inputTextPosY;
