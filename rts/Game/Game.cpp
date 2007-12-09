@@ -282,7 +282,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	ENTER_MIXED;
 
 	helper = SAFE_NEW CGameHelper(this);
-	//	physicsEngine = SAFE_NEW CPhysicsEngine();
 
 	ENTER_SYNCED;
 
@@ -2813,7 +2812,7 @@ bool CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in chat msg",player);
 				} else {
 					string s=(char*)(&inbuf[3]);
-					HandleChatMsg(s, player, false);
+					HandleChatMsg(s, player);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3606,7 +3605,7 @@ static void SetBoolArg(bool& value, const std::string& str, const char* cmd)
 }
 
 
-void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
+void CGame::HandleChatMsg(std::string s, int player)
 {
 	// Player chat messages
 	if (!noSpectatorChat || !gs->players[player]->spectator || !gu->spectating) {
@@ -3938,14 +3937,14 @@ void CGame::HandleChatMsg(std::string s, int player, bool demoPlayer)
 		                gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (s.find(".skip") == 0) {
-		if (!demoPlayer && ((player != 0) || !gs->cheatEnabled)) {
+		if (((player != 0) || !gs->cheatEnabled)) {
 			logOutput.Print(".skip only works in replay, and when cheating\n");
 		} else if (gs->frameNum < 1) {
 			logOutput.Print(".skip only works after the game has started\n");
 		} else if (s.size() <= 6) {
 			logOutput.Print("missing argument to .skip\n");
 		} else {
-			Skip(s, demoPlayer);
+			Skip(s);
 		}
 	}
 	else if ((s.find(".reloadcob") == 0) && gs->cheatEnabled && (player == 0)) {
@@ -4150,7 +4149,7 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 }
 
 
-void CGame::Skip(const std::string& msg, bool demoPlayer)
+void CGame::Skip(const std::string& msg)
 {
 	if ((skipping < 0) || (skipping > 2)) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
@@ -4196,13 +4195,9 @@ void CGame::Skip(const std::string& msg, bool demoPlayer)
 		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
 
 		while (endFrame > gs->frameNum) {
-			if (demoPlayer) {
-				Update();
-			} else {
-				SimFrame();
-				if (gameServer) {
-					gameServer->SkipTo(gs->frameNum);
-				}
+			SimFrame();
+			if (gameServer) {
+				gameServer->SkipTo(gs->frameNum);
 			}
 			// draw something so that users don't file bug reports
 			const Uint32 gfxTime = SDL_GetTicks();

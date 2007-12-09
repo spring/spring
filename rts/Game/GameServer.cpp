@@ -43,6 +43,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	IsPaused = false;
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
+	serverNet = new CBaseNetProtocol();
 
 	if (!demoName.empty())
 	{
@@ -90,7 +91,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		internalSpeed = 1.0f;
 	}
 
-	serverNet = new CBaseNetProtocol();
 	{
 		// initialise a local client
 		//TODO make local connecting like from remote (and make it possible to have no local conn)
@@ -864,8 +864,7 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 	va_end(ap);											// Results Are Stored In Text
 
 	std::string msg = text;
-	if (serverNet)
-		serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
+	serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
 }
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
