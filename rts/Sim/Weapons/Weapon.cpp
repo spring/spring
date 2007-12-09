@@ -260,11 +260,12 @@ void CWeapon::Update()
 			/* to prevent runaway prediction (happens sometimes when a missile is moving *away* from it's target), we may need to disable missiles in case they fly around too long */
 			predict = 50000;
 		}
-		if(weaponDef->selfExplode){	//assumes that only flakker like units that need to hit aircrafts has this,change to a separate tag later
-			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*(0.5f+predictSpeedMod*0.5f)*predict;
-		} else {
-			targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+targetUnit->speed*predictSpeedMod*predict;
+		float3 lead = targetUnit->speed*(weaponDef->predictBoost+predictSpeedMod*(1.0f - weaponDef->predictBoost))*predict;
+		if (weaponDef->leadLimit >= 0.0f && lead.Length() > weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) {
+			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / lead.Length();
 		}
+
+		targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+lead;
 		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0f-owner->limExperience));
 		float appHeight=ground->GetApproximateHeight(targetPos.x,targetPos.z)+2;
 		if(targetPos.y < appHeight)

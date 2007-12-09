@@ -50,6 +50,9 @@ struct WeaponDef
 	float sprayangle;						// inaccuracy of individual shots inside burst
 	float movingAccuracy;					// inaccuracy while owner moving
 	float targetMoveError;					// fraction of targets move speed that is used as error offset
+	float leadLimit;                        // maximum distance the weapon will lead the target
+	float leadBonus;                        // factor for increasing the leadLimit with experience
+	float predictBoost;                     // replaces hardcoded behaviour for burnblow cannons
 
 	DamageArray damages;
 	float areaOfEffect;
