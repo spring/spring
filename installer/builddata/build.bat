@@ -19,6 +19,7 @@ cd springcontent
 ..\..\pkzip -add -dir=current ..\..\_temp.zip gamedata\*
 ..\..\pkzip -add -dir=current ..\..\_temp.zip bitmaps\*
 ..\..\pkzip -add -dir=current ..\..\_temp.zip anims\*
+..\..\pkzip -add -dir=current ..\..\_temp.zip LuaRules\*
 cd ..\..
 pkzip -add _temp.zip builddata\springcontent\modinfo.tdf
 rename _temp.zip springcontent.sdz
