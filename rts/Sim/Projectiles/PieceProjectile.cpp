@@ -55,9 +55,8 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int flags, CUnit* owner, float radius):
+CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int f, CUnit* owner, float radius):
 	CProjectile(pos, speed, owner, true),
-	flags(flags),
 	dispList(piece? piece->displist: 0),
 	drawTrail(true),
 	oldSmoke(pos),
@@ -66,13 +65,15 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	age(0),
 	alphaThreshold(0.1f)
 {
+	flags = f;
 	checkCol = false;
 
 	if (owner) {
 		// choose a (synced) random tag-postfix string k from the
 		// range given in UnitDef and stick it onto pieceTrailCEGTag
 		// (assumes all possible "tag + k" CEG identifiers are valid)
-		if (flags & PP_NoCEGTrail == 0) {
+		// if this piece does not override the FBI and wants a trail
+		if ((flags & PP_NoCEGTrail) == 0) {
 			const int size = owner->unitDef->pieceTrailCEGTag.size();
 			const int range = owner->unitDef->pieceTrailCEGRange;
 			const int num = gs->randInt() % range;
@@ -126,8 +127,9 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 	castShadow = true;
 
-	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10)
+	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10) {
 		useAirLos = true;
+	}
 
 	ENTER_MIXED;
 	numCallback = SAFE_NEW int;
@@ -136,8 +138,9 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	oldSmokeDir.Normalize();
 	float3 camDir = (pos-camera->pos).Normalize();
 
-	if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(oldSmokeDir))) * 3000 < 200)
+	if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
 		drawTrail = false;
+	}
 
 	spinVec = gu->usRandVector();
 	spinVec.Normalize();
@@ -185,7 +188,7 @@ void CPieceProjectile::Collision()
 			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, 0, 0, ZeroVector, -1);
 		}
 		if (flags & PP_Smoke) {
-			if (flags & PP_NoCEGTrail == 1) {
+			if (flags & PP_NoCEGTrail) {
 				float3 dir = speed;
 				dir.Normalize();
 
@@ -209,7 +212,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, 0, unit, ZeroVector, -1);
 	}
 	if (flags & PP_Smoke) {
-		if (flags & PP_NoCEGTrail == 1) {
+		if (flags & PP_NoCEGTrail) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -260,8 +263,9 @@ float3 CPieceProjectile::RandomVertexPos(void)
 
 void CPieceProjectile::Update()
 {
-	if (flags & PP_Fall)
+	if (flags & PP_Fall) {
 		speed.y += gs->gravity;
+	}
 
 	speed *= 0.997f;
 	pos += speed;
@@ -288,7 +292,7 @@ void CPieceProjectile::Update()
 
 	age++;
 
-	if (flags & PP_NoCEGTrail == 1) {
+	if (flags & PP_NoCEGTrail) {
 		if (!(age & 7) && (flags & PP_Smoke)) {
 			float3 dir = speed;
 			dir.Normalize();
@@ -306,8 +310,9 @@ void CPieceProjectile::Update()
 
 			if (!drawTrail) {
 				float3 camDir = (pos - camera->pos).Normalize();
-				if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(dir))) * 3000 > 300)
+				if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(dir))) * 3000 > 300) {
 					drawTrail = true;
+				}
 			}
 		}
 	} else {
@@ -323,7 +328,7 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if (flags & PP_NoCEGTrail == 1) {
+	if (flags & PP_NoCEGTrail) {
 		if (flags & PP_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			float3 interPos = pos + speed * gu->timeOffset;
