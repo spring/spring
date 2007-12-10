@@ -606,6 +606,13 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	if(targetType==Target_Unit && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
 		HoldFire();
 
+	if (targetType==Target_Unit && !haveUserTarget && targetUnit->neutral && owner->fireState < 3)
+		HoldFire();
+
+	//happens if the target or the unit has switched teams
+	if (targetType==Target_Unit && !haveUserTarget && targetUnit->allyteam == owner->allyteam)
+		HoldFire();
+
 	if(slavedTo){	//use targets from the thing we are slaved to
 		if(targetUnit){
 			DeleteDeathDependence(targetUnit);
