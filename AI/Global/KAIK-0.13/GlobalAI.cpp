@@ -193,9 +193,9 @@ void CGlobalAI::PostLoad(void) {
 
 void CGlobalAI::Serialize(creg::ISerializer* s) {
 	if (!s->IsWriting())
-		MyUnits.resize(MAXUNITS, CUNIT(ai));
+		MyUnits.resize(MAX_UNITS, CUNIT(ai));
 
-	for (int i = 0; i < MAXUNITS; i++) {
+	for (int i = 0; i < MAX_UNITS; i++) {
 		if (ai->cheat->GetUnitDef(i)) {
 			// do not save non-existing units
 			s->SerializeObjectInstance(&(MyUnits[i]), MyUnits[i].GetClass());
@@ -237,11 +237,11 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->cheat = callback->GetCheatInterface();
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
 
-	MyUnits.reserve(MAXUNITS);
-	ai->MyUnits.reserve(MAXUNITS);
+	MyUnits.reserve(MAX_UNITS);
+	ai->MyUnits.reserve(MAX_UNITS);
 
-	// initialize 5000 CUNIT objects
-	for (int i = 0; i < MAXUNITS; i++) {
+	// initialize MAX_UNITS CUNIT objects
+	for (int i = 0; i < MAX_UNITS; i++) {
 		MyUnits.push_back(CUNIT(ai));
 		MyUnits[i].myid = i;
 		MyUnits[i].groupID = -1;

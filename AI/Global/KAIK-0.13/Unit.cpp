@@ -207,7 +207,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	// CPU usage reduction hack, force
 	// a hub to stay idle if the area
 	// around it is too crowded
-	int friends[MAXUNITS];
+	int friends[MAX_UNITS];
 	int numFriends = ai->cb->GetFriendlyUnits(friends, hubPos, maxRadius);
 
 	if (numFriends > 16)

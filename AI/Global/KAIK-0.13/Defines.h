@@ -70,8 +70,6 @@ enum {
 #define FEASIBLEMSTORRATIO		0.3
 #define FEASIBLEESTORRATIO		0.6
 
-// Maximum units in a game
-#define MAXUNITS				5000
 // Time idle units stay in limbo mode (in frames)
 #define LIMBOTIME				40
 // Income multiplier for tech tree advancement

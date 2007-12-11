@@ -39,7 +39,7 @@ void CThreatMap::PostLoad() {
 
 void CThreatMap::Create() {
 	Clear();
-	int Enemies[MAXUNITS];
+	int Enemies[MAX_UNITS];
 	double totalthreat = 0;
 	int numEnemies = ai->cheat->GetEnemyUnits(Enemies);
 

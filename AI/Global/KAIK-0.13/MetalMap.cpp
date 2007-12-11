@@ -46,7 +46,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 	float3 bestSpot = ERRORVECTOR;
 
 	if (VectoredSpots.size()) {
-		int enemies[MAXUNITS];
+		int enemies[MAX_UNITS];
 
 		for (unsigned int i = 0; i != VectoredSpots.size(); i++) {
 			spotCoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);

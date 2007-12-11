@@ -3,9 +3,6 @@
 
 #include "Include.h"
 
-// NOTE: MAX_UNITS IS 5000 IN UNITDEF.H BUT TASCLIENT GOES UP TO 10K?
-#define MAX_UNITS	5000
-
 #define FRAMERATE 30
 #define CALLOUT (this->gAICallback)
 
