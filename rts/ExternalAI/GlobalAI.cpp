@@ -210,7 +210,7 @@ void CGlobalAI::PostLoad()
 		}
 	}
 	if (!IsLoadSupported) {
-		for (int a=0;a<5000;a++) {
+		for (int a = 0; a < MAX_UNITS; a++) {
 			if (!uh->units[a]) continue;
 			if (uh->units[a]->team==team) {
 				try {
