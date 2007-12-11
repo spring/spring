@@ -46,6 +46,7 @@ do
   UnitDefNames = tbl
 end
 
+
 -- setup the FeatureDefNames{} table
 do
   local tbl = {}
@@ -54,6 +55,7 @@ do
   end
   FeatureDefNames = tbl
 end
+
 
 -- setup the WeaponDefNames{} table
 do
