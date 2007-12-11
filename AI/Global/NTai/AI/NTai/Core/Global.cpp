@@ -238,7 +238,7 @@ namespace ntai {
 				cb->SendTextMsg("Please check www.darkstars.co.uk for updates", 0);
 			}
 
-			int* ax = new int[5000];
+			int* ax = new int[10000];
 			int anum =cb->GetFriendlyUnits(ax);
 			
 			ComName = string("");

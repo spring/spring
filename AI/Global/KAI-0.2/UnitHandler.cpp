@@ -1176,7 +1176,7 @@ bool CUnitHandler::BuildTaskAddBuilder (int builder, int category)
 			L("TaskPlans[category]->size()");
 			float largestime = 0;
 			list<TaskPlan*>::iterator besttask;
-			int units[5000];
+			int units[10000];
 			//redo:
 			for(list<TaskPlan*>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++){
 				float timebuilding = ((*i)->def->buildTime / (*i)->currentBuildPower ) - ai->math->ETA(builder,(*i)->pos);

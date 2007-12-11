@@ -222,7 +222,7 @@ bool CUnitConstructionTask::Init(){
 
 	if(building->GetDeferRepairRange() > 10){
 		NLOG("CUnitConstructionTask::Init  rmax > 10");
-		int* funits = new int[5000];
+		int* funits = new int[10000];
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetDeferRepairRange());
 		if(fnum > 1){
 			//
@@ -254,7 +254,7 @@ bool CUnitConstructionTask::Init(){
 	////////
 
 	if(building->GetExclusionRange() > 10){
-		int* funits = new int[5000];
+		int* funits = new int[10000];
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,building->GetDeferRepairRange());
 		if(fnum > 1){
 			//

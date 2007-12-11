@@ -317,7 +317,7 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
 
 	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataById(ud->id);
 
-    int* en = new int[5000];
+    int* en = new int[10000];
     int e = G->GetEnemyUnits(en, G->GetUnitPos(unit), max(G->cb->GetUnitMaxRange(unit), ud->losRadius)*LOSmultiplier);
 
     if(e>0){
@@ -444,7 +444,7 @@ bool CActions::DGunNearby(int uid){
         return false;
     }
     
-	int* en = new int[5000];
+	int* en = new int[10000];
 
     int e = G->GetEnemyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
     
@@ -614,7 +614,7 @@ bool CActions::OffensiveRepairRetreat(int uid, float radius){
         return false;
     }
 
-    int* en = new int[5000];
+    int* en = new int[10000];
     int e = G->GetEnemyUnits(en, compos, radius); // get all enemy units within weapons range atm
 
     if(e>0){
@@ -687,7 +687,7 @@ bool CActions::RepairNearby(int uid, float radius){
 
     float3 pos = G->GetUnitPos(uid);
 
-    int* hn = new int[5000];
+    int* hn = new int[10000];
 
     int h = G->cb->GetFriendlyUnits(hn, pos, radius);
 
@@ -758,7 +758,7 @@ bool CActions::RepairNearbyUnfinishedMobileUnits(int uid, float radius){
     const UnitDef* udi = G->cb->GetUnitDef(uid);
     if(udi == 0) return false;
     float3 pos = G->GetUnitPos(uid);
-    int* hn = new int[5000];
+    int* hn = new int[10000];
     int h = G->cb->GetFriendlyUnits(hn, pos, radius);
     if( h>0){
         for( int i = 0; i<h; i++){
