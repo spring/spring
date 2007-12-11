@@ -23,15 +23,6 @@ local SAFEWRAP = 0
 -- 2: always enabled
 
 
--- setup the UnitDefNames{} table
-local udn = {}
-for _,ud in pairs(UnitDefs) do
-  udn[ud.name] = ud
-end
-UnitDefNames = udn
-udn = nil
-
-
 local HANDLER_DIR = 'LuaGadgets/'
 local GADGETS_DIR = Script.GetName() .. '/Gadgets/'
 
@@ -42,8 +33,9 @@ if (Spring.IsDevLuaEnabled()) then
 end
 
 
-VFS.Include(HANDLER_DIR .. 'system.lua',  nil, VFSMODE)
-VFS.Include(HANDLER_DIR .. 'callins.lua', nil, VFSMODE)
+VFS.Include(HANDLER_DIR .. 'setupdefs.lua', nil, VFSMODE)
+VFS.Include(HANDLER_DIR .. 'system.lua',    nil, VFSMODE)
+VFS.Include(HANDLER_DIR .. 'callins.lua',   nil, VFSMODE)
 
 local actionHandler = VFS.Include(HANDLER_DIR .. 'actions.lua', nil, VFSMODE)
 
