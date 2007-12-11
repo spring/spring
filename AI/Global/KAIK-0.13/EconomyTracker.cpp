@@ -89,13 +89,7 @@ CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 		allTheBuildingTrackers[i].clear();
 	}
 
-	// deadEconomyUnitTrackers.reserve(5000);
-	// newEconomyUnitTrackers.reserve(50);
-	// activeEconomyUnitTrackers.reserve(5000);
-	// underConstructionEconomyUnitTrackers.reserve(100);
-
 	trackerOff = true;
-	
 }
 
 CEconomyTracker::~CEconomyTracker() {

@@ -235,7 +235,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
-	int enemies[MAXUNITS];
+	int enemies[MAX_UNITS];
 	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
 	vector<int> enemyunitsoftype;
 	float score = 0.01f;
@@ -282,7 +282,7 @@ void CUnitTable::UpdateChokePointArray() {
 	EnemyCostsByMoveType.resize(ai->pather->NumOfMoveTypes);
 	vector<int> enemyunitsoftype;
 	float totalcosts = 1;
-	int enemies[MAXUNITS];
+	int enemies[MAX_UNITS];
 	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
 	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 

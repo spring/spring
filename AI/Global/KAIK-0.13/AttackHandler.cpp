@@ -420,7 +420,7 @@ void CAttackHandler::UpdateKMeans(void) {
 		// get positions of all friendly units and put them in a vector (completed buildings only)
 		int numFriendlies = 0;
 		vector<float3> friendlyPositions;
-		int friendlies[MAXUNITS];
+		int friendlies[MAX_UNITS];
 		numFriendlies = ai->cb->GetFriendlyUnits(friendlies);
 
 		for (int i = 0; i < numFriendlies; i++) {
@@ -453,7 +453,7 @@ void CAttackHandler::UpdateKMeans(void) {
 	// get positions of all enemy units and put them in a vector (completed buildings only)
 	int numEnemies = 0;
 	vector<float3> enemyPositions;
-	int enemies[MAXUNITS];
+	int enemies[MAX_UNITS];
 	numEnemies = ai->cheat->GetEnemyUnits(enemies);
 
 	for (int i = 0; i < numEnemies; i++) {

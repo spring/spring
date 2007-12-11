@@ -58,7 +58,7 @@ class CAttackGroup {
 		float lowestAttackRange;
 		float highestAttackRange;
 		bool isShooting;
-		int unitArray[MAXUNITS];
+		int unitArray[MAX_UNITS];
 
 		int movementCounterForStuckChecking;
 };

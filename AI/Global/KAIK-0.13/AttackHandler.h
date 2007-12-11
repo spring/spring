@@ -70,7 +70,7 @@ class CAttackHandler {
 		list<CAttackGroup> attackGroups;
 	//	list<CAttackGroup> defenseGroups;
 
-		int unitArray[MAXUNITS];
+		int unitArray[MAX_UNITS];
 
 		vector<float3> kMeansBase;
 		int kMeansK;
