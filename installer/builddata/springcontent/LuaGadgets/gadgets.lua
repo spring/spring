@@ -32,8 +32,8 @@ UnitDefNames = udn
 udn = nil
 
 
-local SCRIPT_DIR = Script.GetName() .. '/'
-local GADGET_DIR = SCRIPT_DIR .. 'Gadgets/'
+local HANDLER_DIR = 'LuaGadgets/'
+local GADGETS_DIR = Script.GetName() .. '/Gadgets/'
 
 
 local VFSMODE = VFS.ZIP_ONLY -- FIXME: ZIP_FIRST ?
@@ -42,10 +42,10 @@ if (Spring.IsDevLuaEnabled()) then
 end
 
 
-VFS.Include(SCRIPT_DIR .. 'system.lua', nil, VFSMODE)
-VFS.Include(SCRIPT_DIR .. 'callins.lua', nil, VFSMODE)
+VFS.Include(HANDLER_DIR .. 'system.lua',  nil, VFSMODE)
+VFS.Include(HANDLER_DIR .. 'callins.lua', nil, VFSMODE)
 
-local actionHandler = VFS.Include(SCRIPT_DIR .. 'actions.lua', nil, VFSMODE)
+local actionHandler = VFS.Include(HANDLER_DIR .. 'actions.lua', nil, VFSMODE)
 
 
 --------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ function gadgetHandler:Initialize()
   local unsortedGadgets = {}
 
   -- get the gadget names
-  local gadgetFiles = VFS.DirList(GADGET_DIR, "*.lua", VFSMODE)
+  local gadgetFiles = VFS.DirList(GADGETS_DIR, "*.lua", VFSMODE)
 --  table.sort(gadgetFiles)
 
   for k,gf in ipairs(gadgetFiles) do
