@@ -570,7 +570,7 @@ namespace ntai {
 		float3 pos = UpVector;
 
 		// get all enemies in los
-		int* en = new int[5000];
+		int* en = new int[10000];
 		int unum = G->chcb->GetEnemyUnits(en);
 
 		// go through the list

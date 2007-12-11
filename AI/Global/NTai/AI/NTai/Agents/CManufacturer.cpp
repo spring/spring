@@ -457,7 +457,7 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 	float rmax = r_ranges[hj];
 	if(rmax > 10){
 		NLOG("CManufacturer::CBuild  rmax > 10");
-		int* funits = new int[5000];
+		int* funits = new int[10000];
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
 		if(fnum > 1){
 			//
@@ -482,7 +482,7 @@ bool CManufacturer::CBuild(string name, int unit, int spacing){
 	////////
 	float exrange = exclusion_ranges[hj];
 	if(exrange > 10){
-		int* funits = new int[5000];
+		int* funits = new int[10000];
 		int fnum = G->cb->GetFriendlyUnits(funits,unitpos,rmax);
 		if(fnum > 1){
 			//

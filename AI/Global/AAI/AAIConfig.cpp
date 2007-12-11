@@ -15,7 +15,7 @@ AAIConfig::AAIConfig(void)
 	SIDES = 2;
 	SECTOR_SIZE = 100.0;
 	MIN_ENERGY = 18;  // min energy make value to be considered beeing a power plant 
-	MAX_UNITS = 5000;
+	MAX_UNITS = 10000;
 	MAX_SCOUTS = 4;
 	MAX_SECTOR_IMPORTANCE = 6;
 	MAX_XROW = 8;
