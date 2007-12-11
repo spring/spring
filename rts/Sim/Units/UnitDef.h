@@ -14,7 +14,7 @@ struct WeaponDef;
 struct S3DOModel;
 class CExplosionGenerator;
 
-const int MAX_UNITS = 5000;
+const int MAX_UNITS = 10000;
 
 
 struct GuiSoundSet
