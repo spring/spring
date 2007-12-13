@@ -20,6 +20,9 @@ class GameParticipant
 {
 public:
 	GameParticipant(bool willHaveRights) {hasRights = willHaveRights;}
+	float cpuUsage;
+	int ping;
+	
 	bool hasRights;
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum

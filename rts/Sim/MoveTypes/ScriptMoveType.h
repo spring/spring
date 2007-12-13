@@ -27,16 +27,16 @@ class CScriptMoveType : public CMoveType
 		void SetNoBlocking(bool state);
 		
 	public: // null'ed virtuals
-		void StartMoving(float3 pos, float goalRadius) {};
-		void StartMoving(float3 pos, float goalRadius, float speed) {};
-		void KeepPointingTo(float3 pos, float distance, bool aggressive) {};
+		void StartMoving(const float3&, float goalRadius) {};
+		void StartMoving(const float3&, float goalRadius, float speed) {};
+		void KeepPointingTo(const float3&, float distance, bool aggressive) {};
 		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {};
 		void StopMoving() {};
 		void Idle(unsigned int frames) {};
 		void Idle() {};
 		void DeIdle() {};
 		void ImpulseAdded() {};
-		void SetGoal(float3 pos) {};
+		void SetGoal(const float3& pos) {};
 		void SetMaxSpeed(float speed) {};
 		void SetWantedMaxSpeed(float speed) {};
 		void LeaveTransport(void) {};

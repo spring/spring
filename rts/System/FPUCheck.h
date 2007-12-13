@@ -64,7 +64,7 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
-static inline bool good_fpu_control_registers(const char* text)
+static inline void good_fpu_control_registers(const char* text)
 {
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
@@ -79,7 +79,6 @@ static inline bool good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	}
-	return ret;
 #elif defined(STREFLOP_X87)
 	fenv_t fenv;
 	fegetenv(&fenv);
@@ -89,7 +88,6 @@ static inline bool good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	}
-	return ret;
 #endif
 }
 

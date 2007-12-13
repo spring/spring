@@ -240,21 +240,14 @@ void CGameServer::Update()
 		lastPlayerInfo = SDL_GetTicks();
 
 		if (serverframenum > 0) {
-			int firstReal=0;
-			if(gameSetup)
-				firstReal=gameSetup->numDemoPlayers;
 			//send info about the players
-			for(int a=firstReal;a<gs->activePlayers;++a){
-				if(gs->players[a]->active){
-					serverNet->SendPlayerInfo(a, gs->players[a]->cpuUsage, gs->players[a]->ping);
-				}
-			}
-
-			//decide new internal speed
 			float maxCpu=0;
-			for(int a=0;a<gs->activePlayers;++a){
-				if(gs->players[a]->cpuUsage>maxCpu && gs->players[a]->active){
-					maxCpu=gs->players[a]->cpuUsage;
+			for(int a = 0; a < MAX_PLAYERS; ++a){
+				if(players[a]){
+					serverNet->SendPlayerInfo(a, players[a]->cpuUsage, players[a]->ping);
+					if(players[a]->cpuUsage > maxCpu){
+						maxCpu = players[a]->cpuUsage;
+					}
 				}
 			}
 
@@ -342,7 +335,7 @@ void CGameServer::ServerReadNet()
 				const unsigned char* inbuf = packet->data;
 				switch (inbuf[0]){
 					case NETMSG_NEWFRAME:
-						gs->players[a]->ping=serverframenum-*(int*)&inbuf[1];
+						players[a]->ping = serverframenum-*(int*)&inbuf[1];
 						break;
 
 					case NETMSG_PAUSE:
@@ -385,9 +378,7 @@ void CGameServer::ServerReadNet()
 
 
 					case NETMSG_CPU_USAGE:
-						ENTER_MIXED;
-						gs->players[a]->cpuUsage=*((float*)&inbuf[1]);
-						ENTER_UNSYNCED;
+						players[a]->cpuUsage = *((float*)&inbuf[1]);
 						break;
 
 					case NETMSG_QUIT: {
@@ -800,7 +791,7 @@ bool CGameServer::WaitsOnCon() const
 
 void CGameServer::KickPlayer(const int playerNum)
 {
-	if (playerNum != 0 && gs->players[playerNum]->active) {
+	if (playerNum != 0 && players[playerNum]) {
 		serverNet->SendPlayerLeft(playerNum, 2);
 		serverNet->SendQuit(playerNum);
 		serverNet->Kill(playerNum);
@@ -829,9 +820,8 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		serverNet->SendModName(modChecksum, modName);
 	
 	for(unsigned a=0;a<gs->activePlayers;a++){
-		if(!gs->players[a]->readyToStart)
-			continue;
-		serverNet->SendPlayerName(a, gs->players[a]->playerName);
+		if(gs->players[a]->readyToStart)
+			serverNet->SendPlayerName(a, gs->players[a]->playerName);
 	}
 	if(gameSetup){
 		for(unsigned a=0;a<gs->activeTeams;a++){
