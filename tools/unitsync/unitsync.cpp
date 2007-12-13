@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <cstdio>
 #include <cstdarg>
@@ -1096,6 +1097,7 @@ struct Option {
 
 
 static vector<Option> options;
+static set<string> optionsSet;
 
 
 static bool ParseOption(const LuaTable& root, int index, Option& opt)
@@ -1112,6 +1114,9 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 		return false;
 	}
 	opt.key = StringToLower(opt.key);
+	if (optionsSet.find(opt.key) != optionsSet.end()) {
+		return false;
+	}
 	opt.name = optTbl.GetString("name", opt.key);
 	if (opt.name.empty()) {
 		return false;
@@ -1188,6 +1193,8 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 		return false; // unknown type
 	}
 
+	optionsSet.insert(opt.key);
+
 	return true;
 }
 
@@ -1197,6 +1204,7 @@ static void ParseOptions(const string& fileName,
                          const string& accessModes)
 {
 	options.clear();
+	optionsSet.clear();
 
 	LuaParser luaParser(fileName, fileModes, accessModes);
 	if (!luaParser.Execute()) {
@@ -1214,6 +1222,8 @@ static void ParseOptions(const string& fileName,
 			options.push_back(opt);
 		}
 	}
+
+	optionsSet.clear();
 
 	return;
 };
