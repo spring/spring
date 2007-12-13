@@ -123,7 +123,7 @@
 
 int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {{ 0 }};
 int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {{ 0 }};
-int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        = { 0 };
+int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        =  { 0 };
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
@@ -1175,39 +1175,42 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return (u == NULL) ? -1 : u->unitDef->cobID;
 		}
 	}
- 	case PLAY_SOUND:
-		switch(p3) {	//who hears the sound
+ 	case PLAY_SOUND: {
+		if ((p1 < 0) || (p1 >= script.sounds.size())) {
+			return 1;
+		}
+		switch (p3) {	//who hears the sound
 			case 0:		//ALOS
-				if (!loshandler->InAirLos(unit->pos,gu->myAllyTeam)) {return 0;}
+				if (!loshandler->InAirLos(unit->pos,gu->myAllyTeam)) { return 0; }
 				break;
 			case 1:		//LOS
-				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) {return 0;}
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
 				break;
 			case 2:		//ALOS or radar
-				if (!(loshandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) {return 0;}
+				if (!(loshandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
 				break;
 			case 3:		//LOS or radar
-				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) {return 0;}
+				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }
 				break;
 			case 4:		//everyone
 				break;
 			case 5:		//allies
-				if (unit->allyteam != gu->myAllyTeam) {return 0;}
+				if (unit->allyteam != gu->myAllyTeam) { return 0; }
 				break;
 			case 6:		//team
-				if (unit->team != gu->myTeam) {return 0;}
+				if (unit->team != gu->myTeam) { return 0; }
 				break;
 			case 7:		//enemies
-				if (unit->allyteam == gu->myAllyTeam) {return 0;}
+				if (unit->allyteam == gu->myAllyTeam) { return 0; }
 				break;
 		}
-		if ((p1 + 1 > script.sounds.size()) || p1 < 0) { return 1;}
 		if (p4 == 0) {
 			sound->PlaySample(script.sounds[p1], unit->pos, float(p2) / COBSCALE);
-		}else{
+		} else {
 			sound->PlaySample(script.sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
+	}
 	case SET_WEAPON_UNIT_TARGET: {
 		const int weaponID = p1 - 1;
 		const int targetID = p2;
