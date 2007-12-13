@@ -116,25 +116,8 @@ CTAAirMoveType::~CTAAirMoveType(void)
 		reservedPad=0;
 	}
 }
-/*
-float globalForce=15;
-extern float globalArf;
-float3 marfmurf(1,2,1);
-void arfurf()
-{
-	float3 murf=UpVector*globalForce;
-	globalForce=globalForce+23*globalForce+murf.y;
-	globalForce=globalArf;
-}
 
-void TestDenormal(float f)
-{
-	if(f>globalArf)
-		globalForce=globalArf;
-	arfurf();
-}
-*/
-void CTAAirMoveType::SetGoal(float3 newPos, float distance)
+void CTAAirMoveType::SetGoal(const float3& newPos, float distance)
 {
 	maxDrift=max(16.0f,distance);	//aircrafts need some marginals to avoid uber stacking when lots of them are ordered to one place
 
@@ -203,7 +186,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	waitCounter = 0;
 }
 
-void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
+void CTAAirMoveType::StartMoving(const float3& pos, float goalRadius)
 {
 	wantToStop = false;
 	owner->isMoving=true;
@@ -237,13 +220,13 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 	breakDistance = ((maxSpeed * maxSpeed) / decRate);
 }
 
-void CTAAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
+void CTAAirMoveType::StartMoving(const float3& pos, float goalRadius, float speed)
 {
 	//logOutput.Print("airmove: Ignoring startmoving speed");
 	StartMoving(pos, goalRadius);
 }
 
-void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
+void CTAAirMoveType::KeepPointingTo(const float3& pos, float distance, bool aggressive)
 {
 	wantToStop = false;
 	forceHeading=false;
@@ -465,7 +448,6 @@ void CTAAirMoveType::UpdateFlying()
 				if (!CanLandAt(pos)) {
 					//Check the surrounding area for a suitable position
 					float3 newPos;
-					bool found = FindLandingSpot(pos, newPos);
 					if (found) {
 						SetState(AIRCRAFT_FLYING);
 						logOutput.Print("Found a landingspot when cruising around");
@@ -993,7 +975,7 @@ void CTAAirMoveType::SlowUpdate(void)
 }
 
 //Returns true if indicated position is a suitable landing spot
-bool CTAAirMoveType::CanLandAt(float3 pos)
+bool CTAAirMoveType::CanLandAt(const float3& pos)
 {
 	if (dontLand)
 		return false;
@@ -1021,12 +1003,6 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 		}
 	}
 	return true;
-}
-
-//Returns true and sets newPos to a suitable landing spot near curPos if possible, otherwise returns false
-bool CTAAirMoveType::FindLandingSpot(float3 curPos, float3 &newPos)
-{
-	return false;
 }
 
 void CTAAirMoveType::ForceHeading(short h)
