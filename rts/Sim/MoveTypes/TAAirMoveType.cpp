@@ -117,7 +117,7 @@ CTAAirMoveType::~CTAAirMoveType(void)
 	}
 }
 
-void CTAAirMoveType::SetGoal(const float3& newPos, float distance)
+void CTAAirMoveType::SetGoal(float3 newPos, float distance)
 {
 	maxDrift=max(16.0f,distance);	//aircrafts need some marginals to avoid uber stacking when lots of them are ordered to one place
 
@@ -186,7 +186,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	waitCounter = 0;
 }
 
-void CTAAirMoveType::StartMoving(const float3& pos, float goalRadius)
+void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 {
 	wantToStop = false;
 	owner->isMoving=true;
@@ -220,13 +220,13 @@ void CTAAirMoveType::StartMoving(const float3& pos, float goalRadius)
 	breakDistance = ((maxSpeed * maxSpeed) / decRate);
 }
 
-void CTAAirMoveType::StartMoving(const float3& pos, float goalRadius, float speed)
+void CTAAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 {
 	//logOutput.Print("airmove: Ignoring startmoving speed");
 	StartMoving(pos, goalRadius);
 }
 
-void CTAAirMoveType::KeepPointingTo(const float3& pos, float distance, bool aggressive)
+void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 {
 	wantToStop = false;
 	forceHeading=false;
