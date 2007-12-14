@@ -975,7 +975,7 @@ void CTAAirMoveType::SlowUpdate(void)
 }
 
 //Returns true if indicated position is a suitable landing spot
-bool CTAAirMoveType::CanLandAt(const float3& pos)
+bool CTAAirMoveType::CanLandAt(float3 pos)
 {
 	if (dontLand)
 		return false;
