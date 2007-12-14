@@ -220,145 +220,152 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	if(owner->stunned){
+	if (owner->stunned) {
 		owner->cob->Call(COBFN_StopMoving);
-		owner->speed=ZeroVector;
-		return;
+		owner->speed = ZeroVector;
 	}
 
+
+	if (!owner->stunned) {
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(owner->directControl){
-		waypoint=owner->pos+owner->frontdir*100;
-		waypoint.CheckInBounds();
-		if(owner->directControl->forward){
-			wantedSpeed=maxSpeed*2;
-			SetDeltaSpeed();
-			owner->isMoving = true;
-			owner->cob->Call(COBFN_StartMoving);
-		} else {
-			wantedSpeed=0;
-			SetDeltaSpeed();
-			owner->isMoving = false;
-			owner->cob->Call(COBFN_StopMoving);
-		}
-		short deltaHeading=0;
-		if(owner->directControl->left){
-			deltaHeading+=(short)turnRate;
-		}
-		if(owner->directControl->right){
-			deltaHeading-=(short)turnRate;
-		}
+		if (owner->directControl) {
+			waypoint = owner->pos+owner->frontdir * 100;
+			waypoint.CheckInBounds();
 
-		ENTER_UNSYNCED;
-		if(gu->directControl==owner)
-			camera->rot.y+=deltaHeading*PI/32768;
-		ENTER_SYNCED;
-
-		ChangeHeading(owner->heading+deltaHeading);
-	} else
-#endif
-	if(pathId || currentSpeed > 0.0f) {	//TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-		//Initial calculations.
-		currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
-
-		if(pathId && !atGoal && gs->frameNum > etaWaypoint) {
-			etaFailures+=10;
-			etaWaypoint= INT_MAX;
-			if(DEBUG_CONTROLLER)
-				logOutput.Print("eta failure %i %i %i %i %i",owner->id,pathId, !atGoal,currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
-		}
-		if(pathId && !atGoal && gs->frameNum > etaWaypoint2) {
-			if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
-				etaWaypoint2+=100;
+			if (owner->directControl->forward) {
+				wantedSpeed = maxSpeed * 2;
+				SetDeltaSpeed();
+				owner->isMoving = true;
+				owner->cob->Call(COBFN_StartMoving);
 			} else {
-				if(DEBUG_CONTROLLER)
-					logOutput.Print("Goal clogged up2 %i",owner->id);
-				Fail();
+				wantedSpeed = 0;
+				SetDeltaSpeed();
+				owner->isMoving = false;
+				owner->cob->Call(COBFN_StopMoving);
 			}
-		}
+			short deltaHeading = 0;
+			if (owner->directControl->left) {
+				deltaHeading += (short) turnRate;
+			}
+			if (owner->directControl->right) {
+				deltaHeading -= (short) turnRate;
+			}
 
-		//Set direction to waypoint.
-		float3 waypointDir = waypoint - owner->pos;
-		waypointDir.y = 0;
-		waypointDir.Normalize();
+			ENTER_UNSYNCED;
+			if (gu->directControl == owner)
+				camera->rot.y += deltaHeading * PI / 32768;
+			ENTER_SYNCED;
+
+			ChangeHeading(owner->heading + deltaHeading);
+		} else
+#endif
+
+		if (pathId || currentSpeed > 0.0f) {
+			// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
+			// Initial calculations.
+			currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
+
+			if (pathId && !atGoal && gs->frameNum > etaWaypoint) {
+				etaFailures += 10;
+				etaWaypoint = INT_MAX;
+				if (DEBUG_CONTROLLER)
+					logOutput.Print("eta failure %i %i %i %i %i", owner->id, pathId, !atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
+			}
+			if (pathId && !atGoal && gs->frameNum > etaWaypoint2) {
+				if (owner->pos.distance2D(goal) > 200 || CheckGoalFeasability()) {
+					etaWaypoint2 += 100;
+				} else {
+					if (DEBUG_CONTROLLER)
+						logOutput.Print("Goal clogged up2 %i", owner->id);
+					Fail();
+				}
+			}
+
+			// Set direction to waypoint.
+			float3 waypointDir = waypoint - owner->pos;
+			waypointDir.y = 0;
+			waypointDir.Normalize();
 
 
-		//Has reached the waypoint? (=> arrived at goal)
-		if(pathId && !atGoal && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE*SQUARE_SIZE*2)
-			Arrived();
+			// Has reached the waypoint? (=> arrived at goal)
+			if (pathId && !atGoal && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE * SQUARE_SIZE * 2) {
+				Arrived();
+			}
 
+			//-- Steering --//
+			// Apply obstacle avoidance.
+			float3 desiredVelocity = /* waypointDir / */ ObstacleAvoidance(waypointDir);
 
-		//-- Steering --//
-		//Apply obstacle avoidance.
-		float3 desiredVelocity = /*waypointDir/*/ObstacleAvoidance(waypointDir)/**/;
+			if(desiredVelocity != ZeroVector){
+				ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
+			} else {
+				SetMainHeading();
+			}
 
-		if(desiredVelocity != ZeroVector){
-			ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
+			if (nextDeltaSpeedUpdate <= gs->frameNum) {
+				wantedSpeed = pathId? requestedSpeed: 0;
+				// If arriving at waypoint, then need to slow down, or may pass it.
+				if (!owner->commandAI->HasMoreMoveCommands()
+						&& currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+					wantedSpeed = std::min((float) wantedSpeed, (float) (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+				}
+				wantedSpeed *= max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
+				SetDeltaSpeed();
+			}
 		} else {
 			SetMainHeading();
 		}
 
-		if(nextDeltaSpeedUpdate<=gs->frameNum){
-			wantedSpeed = pathId ? requestedSpeed : 0;
-			//If arriving at waypoint, then need to slow down, or may pass it.
-			if(!owner->commandAI->HasMoreMoveCommands()
-                    && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-				wantedSpeed = std::min((float)wantedSpeed, (float)(sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+		if (wantedSpeed > 0 || currentSpeed > 0) {
+			currentSpeed += deltaSpeed;
+			float3 tempSpeed = flatFrontDir * currentSpeed;
+			owner->pos += tempSpeed;
+
+			float wh;
+			if (floatOnWater) {
+				wh = ground->GetHeight(owner->pos.x, owner->pos.z);
+				if (wh == 0)
+					wh =- owner->unitDef->waterline;
+			} else {
+				wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 			}
-			wantedSpeed*=max(0.f,std::min(1.f,desiredVelocity.dot(owner->frontdir)+0.1f));
-			SetDeltaSpeed();
-		}
-	} else {
-		SetMainHeading();
-	}
 
-	if(wantedSpeed>0 || currentSpeed>0) {
-
-		currentSpeed += deltaSpeed;
-		float3 tempSpeed = flatFrontDir * currentSpeed;
-
-		owner->pos += tempSpeed;
-
-		float wh;
-		if(floatOnWater){
-			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-			if(wh==0)
-				wh=-owner->unitDef->waterline;
-		} else {
-			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
-		}
-
-		//need this to stop jitter when falling
-		if (!(owner->falling || flying)) {
-			owner->pos.y=wh;
+			// need this to stop jitter when falling
+			if (!(owner->falling || flying)) {
+				owner->pos.y = wh;
+			}
 		}
 	}
 
-	if(owner->pos!=oldPos){
+
+	if (owner->pos != oldPos) {
+		// these checks must be executed even when we are stunned
 		TestNewTerrainSquare();
 		CheckCollision();
 		float wh;
-		if(floatOnWater){
+
+		if (floatOnWater) {
 			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-			if(wh==0)
+			if (wh == 0)
 				wh=-owner->unitDef->waterline;
 		} else {
 			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
 		}
 
 		if (!(owner->falling || flying))
-			owner->pos.y=wh;
+			owner->pos.y = wh;
 
-		owner->speed=owner->pos-oldPos;
+		owner->speed = owner->pos-oldPos;
 		owner->midPos = owner->pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
-		oldPos=owner->pos;
+		oldPos = owner->pos;
 
-		if(groundDecals && owner->unitDef->leaveTracks && lastTrackUpdate<gs->frameNum-7 && ((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
-			lastTrackUpdate=gs->frameNum;
+		if (groundDecals && owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
+			((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
+			lastTrackUpdate = gs->frameNum;
 			groundDecals->UnitMoved(owner);
 		}
 	} else {
-		owner->speed=ZeroVector;
+		owner->speed = ZeroVector;
 	}
 }
 
@@ -931,39 +938,44 @@ const float AVOIDANCE_STRENGTH = 2.0f;				//How strongly an object should be avo
 const float FORCE_FIELD_DISTANCE = 50;				//How faar away a unit may be affected by the force-field. Multiplied with speed of the unit.
 const float FORCE_FIELD_STRENGTH = 0.4f;				//Maximum strenght of the force-field.
 
+
+
 /*
 Dynamic obstacle avoidance.
 Helps the unit to follow the path even when it's not perfect.
 */
 float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 	//NOTE: Based on the requirement that all objects has symetrical footprints.
-	//		If this is false, then radius has to be calculated in a diffrent way!
+	//		If this is false, then radius has to be calculated in a different way!
 
-	//Obstacle-avoidance-system only need to be runned if the unit want to move.
-	if(pathId) {
+	// Obstacle-avoidance-system only needs to be run if the unit wants to move
+	if (pathId) {
 		float3 avoidanceDir = desiredDir;
 		//Speed-optimizer. Reduces the times this system is runned.
 		if(gs->frameNum>=nextObstacleAvoidanceUpdate) {
-			nextObstacleAvoidanceUpdate=gs->frameNum+4;
+			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
-			//first check if the current waypoint is reachable
-			int wsx=(int)waypoint.x / (SQUARE_SIZE*2);
-			int wsy=(int)waypoint.z / (SQUARE_SIZE*2);
-			int ltx=wsx-moveSquareX+5;
-			int lty=wsy-moveSquareY+5;
-			if(ltx>=0 && ltx<11 && lty>=0 && lty<11){
-				for(std::vector<int2>::iterator li=lineTable[lty][ltx].begin();li!=lineTable[lty][ltx].end();++li){
-					int x=(moveSquareX+li->x)*2;
-					int y=(moveSquareY+li->y)*2;
-					if((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE_BUSY)) || owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x,y)<=0.01f){
-						++etaFailures;		//not reachable, force a new path to be calculated next slowupdate
-						if(DEBUG_CONTROLLER)
-							logOutput.Print("Waypoint path blocked %i",owner->id);
+			// first check if the current waypoint is reachable
+			int wsx = (int) waypoint.x / (SQUARE_SIZE * 2);
+			int wsy = (int) waypoint.z / (SQUARE_SIZE * 2);
+			int ltx = wsx-moveSquareX + 5;
+			int lty = wsy-moveSquareY + 5;
+
+			if (ltx >= 0 && ltx < 11 && lty >= 0 && lty < 11) {
+				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
+					int x = (moveSquareX + li->x) * 2;
+					int y = (moveSquareY + li->y) * 2;
+					if ((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE_BUSY)) || owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x,y)<=0.01f){
+						++etaFailures;		// not reachable, force a new path to be calculated next slowupdate
+
+						if (DEBUG_CONTROLLER)
+							logOutput.Print("Waypoint path blocked %i", owner->id);
 						break;
 					}
 				}
 			}
-			//now we do the obstacle avoidance proper
+
+			// now we do the obstacle avoidance proper
 			float currentDistanceToGoal = owner->pos.distance2D(goal);
 			float3 rightOfPath = desiredDir.cross(float3(0,1,0));
 			float3 rightOfAvoid = rightOfPath;
@@ -972,42 +984,45 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			float avoidLeft = 0;
 			float avoidRight = 0;
 
+
+
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf*35 + 30 + owner->xsize/2);
 			vector<CSolidObject*> objectsOnPath;
-
 			vector<CSolidObject*>::iterator oi;
-			for(oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
+
+			for (oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
 				CSolidObject* object = *oi;
-				//Basic blocking-check.
+				// Basic blocking-check.
 				MoveData* moveData = owner->mobility->moveData;
-				if(object != owner && moveData->moveMath->IsBlocking(*moveData, object) && desiredDir.dot(object->pos-owner->pos)>0) {
-					float3 objectToUnit = (owner->pos - object->pos-object->speed*30);
+
+				if (object != owner && moveData->moveMath->IsBlocking(*moveData, object) && desiredDir.dot(object->pos - owner->pos) > 0) {
+					float3 objectToUnit = (owner->pos - object->pos - object->speed * 30);
 					float distanceToObject = objectToUnit.Length();
-					float radiusSum = (owner->xsize + object->xsize) * SQUARE_SIZE/2;
-					//If object is close enought.
-					if(distanceToObject < speedf*35 + 10 + radiusSum
-					&& distanceToObject < currentDistanceToGoal
-					&& distanceToObject > 0.001f) { // Don't divide by zero. TODO figure out why this can actually happen.
+					float radiusSum = (owner->xsize + object->xsize) * SQUARE_SIZE / 2;
+
+					// if object is close enough
+					if (distanceToObject < speedf * 35 + 10 + radiusSum && distanceToObject < currentDistanceToGoal && distanceToObject > 0.001f) {
+						// Don't divide by zero. TODO figure out why this can actually happen.
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);	//Positive value means "to right".
-						//If object and unit in relative motion are closing in to each other (or not yet fully apart),
-						//the object are in path of the unit and they are not collided.
-						if(objectToUnit.dot(avoidanceDir) < radiusSum
-						&& fabs(objectDistToAvoidDirCenter) < radiusSum
-						&& (object->mobility || Distance2D(owner, object) >= 0)) {
-							//Avoid collision by turning the heading to left or right.
-							//Using the one who need most adjustment.
-							if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
-								geometricObjects->AddLine(owner->pos+UpVector*20,object->pos+UpVector*20,3,1,4);
-							if(objectDistToAvoidDirCenter > 0) {
+						// If object and unit in relative motion are closing in to each other (or not yet fully apart),
+						// the object are in path of the unit and they are not collided.
+
+						if (objectToUnit.dot(avoidanceDir) < radiusSum && fabs(objectDistToAvoidDirCenter) < radiusSum && (object->mobility || Distance2D(owner, object) >= 0)) {
+							// Avoid collision by turning the heading to left or right.
+							// Using the one who need most adjustment.
+							if (DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
+								geometricObjects->AddLine(owner->pos + UpVector * 20, object->pos + UpVector * 20, 3, 1, 4);
+
+							if (objectDistToAvoidDirCenter > 0) {
 								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0,1,0));
+								rightOfAvoid = avoidanceDir.cross(float3(0, 1, 0));
 							} else {
 								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter)) * AVOIDANCE_STRENGTH / distanceToObject;
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
-								rightOfAvoid = avoidanceDir.cross(float3(0,1,0));
+								rightOfAvoid = avoidanceDir.cross(float3(0, 1, 0));
 							}
 							objectsOnPath.push_back(object);
 						}
@@ -1016,20 +1031,22 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				}
 			}
 
-			//Sum up avoidance.
-			avoidanceVec = (desiredDir.cross(float3(0,1,0)) * (avoidRight - avoidLeft));
-			if(DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-				int a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+avoidanceVec*40,7,1,4);
-				geometricObjects->SetColor(a,1,0.3f,0.3f,0.6f);
 
-				a=geometricObjects->AddLine(owner->pos+UpVector*20,owner->pos+UpVector*20+desiredDir*40,7,1,4);
-				geometricObjects->SetColor(a,0.3f,0.3f,1,0.6f);
+
+			// Sum up avoidance.
+			avoidanceVec = (desiredDir.cross(float3(0, 1, 0)) * (avoidRight - avoidLeft));
+			if (DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+				int a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + avoidanceVec * 40, 7, 1, 4);
+				geometricObjects->SetColor(a, 1, 0.3f, 0.3f, 0.6f);
+
+				a=geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
+				geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
 			}
 		}
 
-		//Return the resulting recommended velocity.
+		// Return the resulting recommended velocity.
 		avoidanceDir = desiredDir + avoidanceVec;
-		if(avoidanceDir.Length2D() > 1.0f)
+		if (avoidanceDir.Length2D() > 1.0f)
 			avoidanceDir.Normalize();
 
 		return avoidanceDir;
@@ -1037,6 +1054,8 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 		return ZeroVector;
 	}
 }
+
+
 
 /*
 Calculates an aproximation of the physical 2D-distance
@@ -1390,12 +1409,14 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 				// adjust our own position a
 				// bit so we have to turn less
+				// FIXME CAN PLACE US IN BUILDING
 				owner->pos -= dif * (1 - part);
 				// safe cast (only units can be mobile)
 				CUnit* u = (CUnit*) c;
 
 				if (!u->unitDef->pushResistant) {
 					// push the blocking unit out of the way
+					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					u->pos += dif * (part);
 					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
 				}
@@ -1415,6 +1436,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 			}
 
 			// hack to make units find openings easier until the pathfinder can do it itself
+			// FIXME CAN PLACE US IN BUILDING
 			if (readmap->groundBlockingObjectMap[y1 * gs->mapx + x] == 0)
 				owner->pos.z -= fabs(owner->pos.x - xmove) * 0.5f;
 			if (readmap->groundBlockingObjectMap[y2 * gs->mapx + x] == 0)
@@ -1449,12 +1471,14 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 				// adjust our own position a
 				// bit so we have to turn less
+				// FIXME CAN PLACE US IN BUILDING
 				owner->pos -= dif * (1 - part);
 				// safe cast (only units can be mobile)
 				CUnit* u = (CUnit*) c;
 
 				if (!u->unitDef->pushResistant) {
 					// push the blocking unit out of the way
+					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					c->pos += dif * (part);
 					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
 				}
@@ -1474,6 +1498,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 			}
 
 			// hack to make units find openings easier until the pathfinder can do it itself
+			// FIXME CAN PLACE US IN BUILDING
 			if (readmap->groundBlockingObjectMap[y * gs->mapx + x1] == 0)
 				owner->pos.x -= fabs(owner->pos.z - zmove) * 0.5f;
 			if (readmap->groundBlockingObjectMap[y * gs->mapx + x2] == 0)
