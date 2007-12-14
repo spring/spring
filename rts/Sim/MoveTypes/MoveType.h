@@ -12,9 +12,9 @@ public:
 	CMoveType(CUnit* owner);
 	virtual ~CMoveType(void);
 
-	virtual void StartMoving(const float3& pos, float goalRadius){};
-	virtual void StartMoving(const float3& pos, float goalRadius, float speed){};
-	virtual void KeepPointingTo(const float3& pos, float distance, bool aggressive) {};
+	virtual void StartMoving(float3 pos, float goalRadius){};
+	virtual void StartMoving(float3 pos, float goalRadius, float speed){};
+	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) {};
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving(){};
 	virtual void Idle(unsigned int frames){};
@@ -25,7 +25,7 @@ public:
 //	virtual float GetSpeedMod(int square){return 1;};
 //	virtual float GetSpeedMod(float avrHeight, float maxHeight, float maxDepth, float avrSlope, float maxSlope) {return 1;};
 
-	virtual void SetGoal(const float3& pos){};
+	virtual void SetGoal(float3 pos) {};
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport(void);
