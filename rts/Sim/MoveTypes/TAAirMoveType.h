@@ -78,9 +78,9 @@ public:
 	//MoveType interface	
 	virtual void Update();
 	virtual void SlowUpdate();
-	virtual void StartMoving(const float3& pos, float goalRadius);
-	virtual void StartMoving(const float3& pos, float goalRadius, float speed);
-	virtual void KeepPointingTo(const float3& pos, float distance, bool aggressive);
+	virtual void StartMoving(float3 pos, float goalRadius);
+	virtual void StartMoving(float3 pos, float goalRadius, float speed);
+	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	virtual void StopMoving();
 	virtual void Idle();
 
@@ -98,10 +98,10 @@ public:
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 	
-	void SetGoal(const float3& newPos, float distance);
+	void SetGoal(float3 newPos, float distance);
 	void SetState(AircraftState newState);
 
-	bool CanLandAt(const float3& pos);
+	bool CanLandAt(float3 pos);
 	void ExecuteStop();
 	void ForceHeading(short h);
 	void SetWantedAltitude(float altitude);
