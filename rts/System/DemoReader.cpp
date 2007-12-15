@@ -3,15 +3,17 @@
 #include <limits.h>
 #include <stdexcept>
 
+#ifndef DEDICATED
 #include "Sync/Syncify.h"
 #include "Game/GameSetup.h"
+#endif
 #include "Game/GameVersion.h"
 
 
 /////////////////////////////////////
 // CDemoReader implementation
 
-CDemoReader::CDemoReader(const std::string& filename)
+CDemoReader::CDemoReader(const std::string& filename, float curTime)
 {
 	std::string firstTry = "demos/" + filename;
 
@@ -48,6 +50,7 @@ CDemoReader::CDemoReader(const std::string& filename)
 	}
 
 	if (fileHeader.scriptSize != 0) {
+#ifndef DEDICATED
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo->Read(buf, fileHeader.scriptSize);
 
@@ -56,13 +59,14 @@ CDemoReader::CDemoReader(const std::string& filename)
 			gameSetup->Init(buf, fileHeader.scriptSize);
 		}
 		delete[] buf;
+#endif
 	}
 
 	playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 
-	demoTimeOffset = gu->modGameTime - chunkHeader.modGameTime - 0.1f;
-	nextDemoRead = gu->modGameTime - 0.01f;
+	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
+	nextDemoRead = curTime - 0.01f;
 
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize - sizeof(chunkHeader);
@@ -72,13 +76,13 @@ CDemoReader::CDemoReader(const std::string& filename)
 	}
 }
 
-unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length)
+unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length, float curTime)
 {
 	if (ReachedEnd())
 		return 0;
 
 	// when paused, modGameTime wont increase so no seperate check needed
-	if (nextDemoRead < gu->modGameTime) {
+	if (nextDemoRead < curTime) {
 		playbackDemo->Read((void*)(buf), chunkHeader.length);
 		unsigned ret = chunkHeader.length;
 		bytesRemaining -= chunkHeader.length;

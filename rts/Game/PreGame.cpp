@@ -110,8 +110,8 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
 				gameServer = SAFE_NEW CGameServer(8452, mapName, modArchive, scriptName, demoFile);
-				net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+				net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");

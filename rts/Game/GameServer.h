@@ -119,6 +119,8 @@ private:
 	unsigned lastTick;
 	float timeLeft;
 	unsigned lastPlayerInfo;
+	unsigned lastUpdate;
+	float modGameTime;
 	
 	bool IsPaused;
 	float userSpeedFactor;

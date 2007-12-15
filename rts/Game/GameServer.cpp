@@ -34,6 +34,8 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	serverframenum=0;
 	timeLeft=0;
 	gameEndTime=0;
+	lastUpdate = SDL_GetTicks();
+	modGameTime = 0.0f;
 	quitServer=false;
 #ifdef DEBUG
 	gameClientUpdated=false;
@@ -48,7 +50,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
-		play = new CDemoReader(demoName);
+		play = new CDemoReader(demoName, modGameTime+0.01f);
 	}
 	else // no demo, so set map and mod and calculate checksums
 	{
@@ -234,6 +236,12 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
+	if (!IsPaused/* && !WaitsOnCon()*/)
+	{
+		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
+	}
+	lastUpdate = SDL_GetTicks();
+	
 	if(lastPlayerInfo < (SDL_GetTicks() - 2000)){
 		lastPlayerInfo = SDL_GetTicks();
 
@@ -270,7 +278,7 @@ void CGameServer::Update()
 		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 		unsigned length = 0;
 
-		while ( (length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE)) > 0 ) {
+		while ( (length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 ) {
 			if (demobuffer[0] == NETMSG_NEWFRAME)
 			{
 				// we can't use CreateNewFrame() here
@@ -597,6 +605,7 @@ void CGameServer::ServerReadNet()
 		{
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
+			SendSystemMsg("Lost connection to player %i (timeout)", a);
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
@@ -611,6 +620,7 @@ void CGameServer::ServerReadNet()
 		{
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
+			SendSystemMsg("Lost connection to player %i (timeout)", a);
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
