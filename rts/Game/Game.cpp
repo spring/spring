@@ -1872,7 +1872,7 @@ bool CGame::Update()
 		chatting = false;
 		userWriting = false;
 		writingPos = 0;
-		gameServer->StartGame();
+		    net->SendStartPlaying();
 	}
 
 	return true;
@@ -2867,11 +2867,9 @@ bool CGame::ClientReadNet()
 				}
 				SimFrame();
 #ifdef SYNCCHECK
-				if (!net->localDemoPlayback) {
-					net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
-					if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
-						CSyncChecker::NewFrame();
-				}
+				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
+					CSyncChecker::NewFrame();
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 

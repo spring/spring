@@ -15,7 +15,6 @@
 #include "System/BaseNetProtocol.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
-#include "System/Sync/Syncify.h"
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
@@ -41,6 +40,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 #endif
 	play = 0;
 	IsPaused = false;
+	gamePausable = true;
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
@@ -139,14 +139,14 @@ void CGameServer::SkipTo(int targetframe)
 
 std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 {
-	std::string players;
+	std::string playerstring;
 	std::vector<int>::const_iterator p = indices.begin();
 	for (; p != indices.end(); ++p) {
-		if (!players.empty())
-			players += ", ";
-		players += gs->players[*p]->playerName;
+		if (!playerstring.empty())
+			playerstring += ", ";
+		playerstring += players[*p]->name;
 	}
-	return players;
+	return playerstring;
 }
 
 void CGameServer::CheckSync()
@@ -197,7 +197,7 @@ void CGameServer::CheckSync()
 				syncErrorFrame = *f;
 
 				// TODO enable this when we have resync
-				//serverNet->SendPause(gu->myPlayerNum, true);
+				//serverNet->SendPause(SERVER_PLAYER, true);
 
 				//For each group, output a message with list of playernames in it.
 				// TODO this should be linked to the resync system so it can roundrobin
@@ -233,9 +233,6 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if(play)
-		serverframenum=gs->frameNum;
-
 	if(lastPlayerInfo < (SDL_GetTicks() - 2000)){
 		lastPlayerInfo = SDL_GetTicks();
 
@@ -270,12 +267,24 @@ void CGameServer::Update()
 	// when hosting a demo, read from file and broadcast data
 	if (play != 0) {
 		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-		unsigned length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
+		unsigned length = 0;
 
-		while (length > 0) {
-			if (demobuffer[0] != NETMSG_SETPLAYERNUM && demobuffer[0] != NETMSG_USER_SPEED && demobuffer[0] != NETMSG_INTERNAL_SPEED && demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+		while ( (length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE)) > 0 ) {
+			if (demobuffer[0] == NETMSG_NEWFRAME)
+			{
+				// we can't use CreateNewFrame() here
+				CheckSync();
+				lastTick = SDL_GetTicks();
+				serverframenum++;
+				serverNet->SendNewFrame(serverframenum);
+#ifdef SYNCCHECK
+				outstandingSyncFrames.push_back(serverframenum);
+#endif
+			}
+			else if (demobuffer[0] != NETMSG_SETPLAYERNUM && demobuffer[0] != NETMSG_USER_SPEED && demobuffer[0] != NETMSG_INTERNAL_SPEED && demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+			{
 				serverNet->RawSend(demobuffer, length);
-			length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE);
+			}
 		}
 
 		if (play->ReachedEnd())
@@ -394,14 +403,16 @@ void CGameServer::ServerReadNet()
 
 					case NETMSG_PLAYERNAME: {
 						unsigned char playerNum = inbuf[2];
-						if(playerNum!=a && a!=0){
+						if(playerNum!=a){
 							SendSystemMsg("Server: Warning got playername msg from %i claiming to be from %i",a,playerNum);
 						} else {
-							SendSystemMsg("Player %s joined as %i",&inbuf[3],playerNum);
-							serverNet->SendPlayerName(playerNum,gs->players[playerNum]->playerName);
+							players[playerNum]->name = (std::string)((char*)inbuf+3);
+							players[playerNum]->readyToStart = true;
+							SendSystemMsg("Player %s joined as %i", players[playerNum]->name.c_str(), playerNum);
+							serverNet->SendPlayerName(playerNum, players[playerNum]->name);
 							if (hostif)
 							{
-								hostif->SendPlayerJoined(a, gs->players[playerNum]->playerName);
+								hostif->SendPlayerJoined(playerNum, players[playerNum]->name);
 							}
 						}
 						break;
@@ -491,15 +502,13 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got syncresponse msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!play){
-								int frameNum = *(int*)&inbuf[2];
-								if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-									players[a]->syncResponse[frameNum] = *(unsigned*)&inbuf[6];
-								else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
-									delayedSyncResponseFrame = serverframenum;
-									SendSystemMsg("Delayed response from %s for frame %d (current %d)",
-											gs->players[a]->playerName.c_str(), frameNum, serverframenum);
-								}
+							int frameNum = *(int*)&inbuf[2];
+							if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+								players[a]->syncResponse[frameNum] = *(unsigned*)&inbuf[6];
+							else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
+								delayedSyncResponseFrame = serverframenum;
+								SendSystemMsg("Delayed response from %s for frame %d (current %d)",
+										players[a]->name.c_str(), frameNum, serverframenum);
 							}
 						}
 #endif
@@ -555,6 +564,13 @@ void CGameServer::ServerReadNet()
 						break;
 #endif
 
+					case NETMSG_STARTPLAYING:
+					{
+						if (players[a]->hasRights)
+							StartGame();
+						break;
+					}
+					
 					// CGameServer should never get these messages
 					case NETMSG_RANDSEED:
 					case NETMSG_GAMEID:
@@ -654,17 +670,15 @@ void CGameServer::GenerateAndSendGameID()
 
 void CGameServer::StartGame()
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->Listening(false);
 
 	serverNet->SendRandSeed(gs->randSeed);
 
 	GenerateAndSendGameID();
 
-	for(unsigned a=0;a<gs->activePlayers;a++){
-		if(!gs->players[a]->active)
-			continue;
-		serverNet->SendPlayerName(a, gs->players[a]->playerName);
+	for(unsigned a=0; a < MAX_PLAYERS;a++){
+		if(players[a])
+			serverNet->SendPlayerName(a, players[a]->name);
 	}
 	if(gameSetup){
 		for(unsigned a=0;a<gs->activeTeams;a++){
@@ -819,9 +833,9 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	if (!modName.empty())
 		serverNet->SendModName(modChecksum, modName);
 	
-	for(unsigned a=0;a<gs->activePlayers;a++){
-		if(gs->players[a]->readyToStart)
-			serverNet->SendPlayerName(a, gs->players[a]->playerName);
+	for(unsigned a=0;a < MAX_PLAYERS; ++a){
+		if(players[a] && players[a]->readyToStart)
+			serverNet->SendPlayerName(a, players[a]->name);
 	}
 	if(gameSetup){
 		for(unsigned a=0;a<gs->activeTeams;a++){
@@ -829,7 +843,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		}
 	}
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
-	SendSystemMsg("Client initialised on number %i", hisNewNumber);
+	SendSystemMsg("Client connected on slot %i", hisNewNumber);
 	serverNet->FlushNet();
 }
 
@@ -871,9 +885,9 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			std::string name = msg.substr(6,string::npos);
 			if (!name.empty()){
 				StringToLowerInPlace(name);
-				for (unsigned a=1;a<gs->activePlayers;++a){
-					if (gs->players[a]->active){
-						std::string playerLower = StringToLower(gs->players[a]->playerName);
+				for (unsigned a=1; a < MAX_PLAYERS;++a){
+					if (players[a]){
+						std::string playerLower = StringToLower(players[a]->name);
 						if (playerLower.find(name)==0) {               //can kick on substrings of name
 							KickPlayer(a);
 						}
