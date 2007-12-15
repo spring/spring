@@ -333,7 +333,7 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	for(unsigned a=0; a <= serverNet->MaxConnectionID(); a++)
+	for(unsigned a=0; (int)a <= serverNet->MaxConnectionID(); a++)
 	{
 		if (serverNet->IsActiveConnection(a))
 		{
@@ -681,7 +681,7 @@ void CGameServer::StartGame()
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
 	if(gameSetup){
-		for(unsigned a=0;a<gs->activeTeams;a++){
+		for(unsigned a=0; (int)a < gs->activeTeams;a++){
 			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
@@ -728,14 +728,14 @@ void CGameServer::CheckForGameEnd()
 	}
 
 	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
-	unsigned numActiveAllyTeams = 0, a;
+	unsigned numActiveAllyTeams = 0;
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 
-	for (a = 0; a < gs->activeTeams; ++a)
+	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia)
 			++numActiveTeams[gs->AllyTeam(a)];
 
-	for (a = 0; a < gs->activeAllyTeams; ++a)
+	for (unsigned a = 0; (int)a < gs->activeAllyTeams; ++a)
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 
@@ -838,7 +838,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
 	if(gameSetup){
-		for(unsigned a=0;a<gs->activeTeams;a++){
+		for(unsigned a=0; (int)a < gs->activeTeams;a++){
 			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
