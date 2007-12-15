@@ -74,9 +74,15 @@ public:
 	@param wantedNumber The number this connection should get
 	@return Like in InitClient, this will return the number thi connection was assigned to
 	
-	To increase performance, use this for local communication. This has to be called in server and in client mode.
+	To increase performance, use this for local communication. You need to call ServerInitLocalClient() from inside the server too.
 	*/
 	unsigned InitLocalClient(const unsigned wantedNumber);
+	
+	/** 
+	@brief Init a local client (call from inside the server)
+	@todo This is only a workaround because we have no listener for local connections
+	 */
+	void ServerInitLocalClient();
 	
 	/**
 	@brief register a new message type to the networking layer

@@ -27,7 +27,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_DC_UPDATE, 7);
 	RegisterMessage(NETMSG_ATTEMPTCONNECT, 3);
 	RegisterMessage(NETMSG_SHARE, 12);
-	RegisterMessage(NETMSG_SETSHARE, 10);
+	RegisterMessage(NETMSG_SETSHARE, 11);
 	RegisterMessage(NETMSG_SENDPLAYERSTAT, 1);
 	RegisterMessage(NETMSG_PLAYERSTAT, 2+sizeof(CPlayer::Statistics));
 	RegisterMessage(NETMSG_GAMEOVER, 1);
@@ -218,11 +218,11 @@ void CBaseNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShar
 	SendData<uchar, uchar, uchar, float, float> (NETMSG_SHARE, myPlayerNum, shareTeam, bShareUnits, shareMetal, shareEnergy);
 }
 
-//  NETMSG_SETSHARE         = 27, // uchar myTeam; float metalShareFraction, energyShareFraction;
+//  NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
 
-void CBaseNetProtocol::SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction)
+void CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction)
 {
-	SendData<uchar, float, float>(NETMSG_SETSHARE, myTeam, metalShareFraction, energyShareFraction);
+	SendData<uchar, uchar, float, float>(NETMSG_SETSHARE, myPlayerNum, myTeam, metalShareFraction, energyShareFraction);
 }
 
 //  NETMSG_SENDPLAYERSTAT   = 28, //

@@ -44,6 +44,8 @@ public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();
 	
+	void AddLocalClient(unsigned wantedNumber);
+	
 	/**
 	@brief Set frame after loading
 	WARNING! No checks are done, so be carefull

@@ -105,19 +105,13 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			state = WAIT_CONNECTING;
 		} else {
 			if (hasDemo) {
-				/*
-				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
-				Default settings: spectating
-				*/
-				gu->spectating           = true;
-				gu->spectatingFullView   = true;
-				gu->spectatingFullSelect = true;
 				net->localDemoPlayback = true;
 				
 				state = WAIT_ON_SCRIPT;
 				good_fpu_control_registers("before CGameServer creation");
 				gameServer = SAFE_NEW CGameServer(8452, mapName, modArchive, scriptName, demoFile);
 				net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
@@ -150,6 +144,14 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 						gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 					}
 				}
+				
+				/*
+				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
+				Default settings: spectating
+				*/
+				gu->spectating           = true;
+				gu->spectatingFullView   = true;
+				gu->spectatingFullSelect = true;
 			}
 			else {
 				userInput=configHandler.GetString("address","");
@@ -367,6 +369,7 @@ bool CPreGame::Update()
 			if (server && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
 				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
+				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}
 

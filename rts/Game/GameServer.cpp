@@ -91,14 +91,8 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		internalSpeed = 1.0f;
 	}
 
-	{
-		// initialise a local client
-		//TODO make local connecting like from remote (and make it possible to have no local conn)
-		unsigned wantedNumber = (gameSetup ? gameSetup->myPlayerNum : 0 );
-		serverNet->InitServer(port, wantedNumber);
-		BindConnection(wantedNumber, true);
-	}
-
+	serverNet->InitServer(port);
+	
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -123,6 +117,13 @@ CGameServer::~CGameServer()
 		hostif->SendQuit();
 		delete hostif;
 	}
+}
+
+void CGameServer::AddLocalClient(unsigned wantedNumber)
+{
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	serverNet->ServerInitLocalClient();
+	BindConnection(wantedNumber, true);
 }
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
@@ -308,7 +309,7 @@ void CGameServer::Update()
 		std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty())
-			GotChatMessage(msg, gameSetup ? gameSetup->myPlayerNum : 0);
+			GotChatMessage(msg, SERVER_PLAYER);
 	}
 	CheckForGameEnd();
 }
@@ -524,11 +525,11 @@ void CGameServer::ServerReadNet()
 						break;
 
 					case NETMSG_SETSHARE:
-						if(inbuf[1]!=gs->players[a]->team){
-							SendSystemMsg("Server: Warning got setshare msg from player %i claiming to be from team %i",a,inbuf[1]);
+						if(inbuf[1]!= a){
+							SendSystemMsg("Server: Warning got setshare msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
 							if(!play)
-								serverNet->SendSetShare(inbuf[1], *((float*)&inbuf[2]), *((float*)&inbuf[6]));
+								serverNet->SendSetShare(inbuf[1], inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7]));
 						}
 						break;
 
@@ -570,9 +571,14 @@ void CGameServer::ServerReadNet()
 							StartGame();
 						break;
 					}
+					case NETMSG_RANDSEED:
+					{
+						if (players[a]->hasRights)
+							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
+						break;
+					}
 					
 					// CGameServer should never get these messages
-					case NETMSG_RANDSEED:
 					case NETMSG_GAMEID:
 					case NETMSG_INTERNAL_SPEED:
 					case NETMSG_ATTEMPTCONNECT:
@@ -671,8 +677,6 @@ void CGameServer::GenerateAndSendGameID()
 void CGameServer::StartGame()
 {
 	serverNet->Listening(false);
-
-	serverNet->SendRandSeed(gs->randSeed);
 
 	GenerateAndSendGameID();
 
