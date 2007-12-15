@@ -1109,7 +1109,7 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection,unsigned int overrid
 
 
 
-void CBFGroundDrawer::AddFrustumRestraint(float3 side)
+void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 {
 	fline temp;
 	float3 up(0,1,0);

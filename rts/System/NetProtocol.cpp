@@ -57,4 +57,14 @@ RawPacket* CNetProtocol::GetData(const unsigned conNum)
 	return ret;
 }
 
+void CNetProtocol::UpdateLoop()
+{
+	loading = true;
+	while (loading)
+	{
+		Update();
+		sleep(1);
+	}
+}
+
 CNetProtocol* net=0;

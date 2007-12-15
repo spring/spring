@@ -57,7 +57,7 @@ protected:
 	void SetupTextureUnits(bool drawReflection,unsigned int overrideVP);
 	void ResetTextureUnits(bool drawReflection,unsigned int overrideVP);
 
-	void AddFrustumRestraint(float3 side);
+	void AddFrustumRestraint(const float3& side);
 	void UpdateCamRestraints();
 	void Update(){}
 public:

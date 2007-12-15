@@ -141,6 +141,8 @@
 #endif
 
 #include "mmgr.h"
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
 
 GLfloat LightDiffuseLand[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat LightAmbientLand[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -200,6 +202,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
   drawGround(true)
 {
 	game = this;
+	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	infoConsole = ic;
 
@@ -321,7 +324,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
 
-	net->Update();  // Prevent timeout while loading
 	ENTER_UNSYNCED;
 	shadowHandler = SAFE_NEW CShadowHandler();
 
@@ -333,7 +335,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	groundDecals = SAFE_NEW CGroundDecalHandler();
 	ReColorTeams();
 
-	net->Update();  // Prevent timeout while loading
 	ENTER_UNSYNCED;
 
 	guihandler = SAFE_NEW CGuiHandler();
@@ -346,7 +347,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	sensorHandler = SAFE_NEW CSensorHandler();
 	damageArrayHandler = SAFE_NEW CDamageArrayHandler();
 	unitDefHandler = SAFE_NEW CUnitDefHandler();
-	net->Update();  // Prevent timeout while loading
 
 	ENTER_UNSYNCED;
 	inMapDrawer = SAFE_NEW CInMapDraw();
@@ -370,7 +370,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = SAFE_NEW CLosHandler();
 	radarhandler = SAFE_NEW CRadarHandler(false);
-	net->Update();  // Prevent timeout while loading
 
 	ENTER_MIXED;
 	uh = SAFE_NEW CUnitHandler();
@@ -394,7 +393,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	keyBindings = SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 
-	net->Update();  // Prevent timeout while loading
 	water=CBaseWater::GetWater();
 	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
@@ -412,6 +410,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 		CLuaGaia::LoadHandler();
 	}
 	PrintLoadMsg("Finalizing...");
+	net->loading = false;
+	thread.join();
 
 	ENTER_MIXED;
 	if (true || !shadowHandler->drawShadows) { // FIXME ?
