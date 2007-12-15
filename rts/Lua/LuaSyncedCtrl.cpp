@@ -1410,17 +1410,17 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 	if (args >= 4) {
 		float radius = 0.0f;
 		float speed = unit->maxSpeed * 2.0f;
-		const float3 pos((float)lua_tonumber(L, 2),
-		                 (float)lua_tonumber(L, 3),
-		                 (float)lua_tonumber(L, 4));
+		const float3 pos((float)luaL_checknumber(L, 2),
+		                 (float)luaL_checknumber(L, 3),
+		                 (float)luaL_checknumber(L, 4));
 		if (args >= 5) {
-			radius = (float)lua_tonumber(L, 5);
+			radius = (float)luaL_checknumber(L, 5);
 		}
 		if (args >= 6) {
-			speed = (float)lua_tonumber(L, 6);
+			speed = (float)luaL_checknumber(L, 6);
 		}
 
-		if (unit->moveType == NULL) return 0;
+		if (unit->moveType == NULL) return 0; //dropped quietly so the user doesn't have to check for buildings
 
 		unit->moveType->StartMoving(pos, radius, speed);
 	}
