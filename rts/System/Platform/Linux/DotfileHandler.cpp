@@ -11,7 +11,6 @@
 
 #include "StdAfx.h"
 #include "DotfileHandler.h"
-#include "Platform/errorhandler.h"
 #include <sstream>
 #include <fcntl.h>
 #include <math.h>
@@ -110,7 +109,7 @@ DotfileHandler::DotfileHandler(const std::string& fname) : filename(fname)
 		Read(file);
 	} else {
 		if (!(file = fopen(fname.c_str(), "a")))
-			handleerror(0, "Could not write to config file", "DotfileHandler", 0);
+			throw std::runtime_error("DotfileHandler: Could not write to config file");
 	}
 	fclose(file);
 }

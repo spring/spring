@@ -409,9 +409,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
+
 	PrintLoadMsg("Finalizing...");
-	net->loading = false;
-	thread.join();
 
 	ENTER_MIXED;
 	if (true || !shadowHandler->drawShadows) { // FIXME ?
@@ -461,6 +460,9 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	tracefile.NewInterval();
 	tracefile.NewInterval();
 #endif
+
+	net->loading = false;
+	thread.join();
 
 	activeController = this;
 

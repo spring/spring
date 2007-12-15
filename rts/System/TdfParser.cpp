@@ -14,7 +14,6 @@
 #include "tdf_grammar.hpp"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "Platform/errorhandler.h"
 
 using boost::spirit::parse;
 using boost::spirit::space_p;
@@ -199,7 +198,11 @@ std::string TdfParser::SGetValueMSG(std::string const& location) const
 	std::string value;
 	bool found = SGetValue(value, lowerd);
 	if(!found)
-		handleerror(hWnd, value.c_str(), "TDF parsing error", MBF_OK);
+	{
+		std::string error = "TDF parsing error: ";
+		error += value;
+		throw content_error(error);
+	}
 	return value;
 }
 

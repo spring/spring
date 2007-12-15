@@ -14,13 +14,13 @@ public:
 	@brief Open a demofile for reading
 	@throw std::runtime_error Demofile not found / header corrupt / outdated
 	*/
-	CDemoReader(const std::string& filename);
+	CDemoReader(const std::string& filename, float curTime);
 	
 	/**
 	@brief read from demo file
 	@return Amount of data read (bytes)
 	*/
-	unsigned GetData(unsigned char *buf, const unsigned length);
+	unsigned GetData(unsigned char *buf, const unsigned length, float curTime);
 
 	/**
 	@brief Wether the demo has reached the end

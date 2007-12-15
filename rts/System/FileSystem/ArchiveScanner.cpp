@@ -508,7 +508,7 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 {
 	// Protect against circular dependencies
 	// (worst case depth is if all archives form one huge dependency chain)
-	if (depth > archiveInfo.size()) {
+	if ((unsigned)depth > archiveInfo.size()) {
 		throw content_error("Circular dependency");
 	}
 
@@ -618,7 +618,9 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 	vector<string> ars = GetArchives(root);
 
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+	{
 		checksum ^= GetArchiveChecksum(*i);
+	}
 	return checksum;
 }
 
