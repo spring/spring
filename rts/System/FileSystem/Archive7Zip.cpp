@@ -25,9 +25,9 @@ SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 }
 
 CArchive7Zip::CArchive7Zip(const string& name) :
-	CArchiveBuffered(name), 
-	isOpen(false),
-	curSearchHandle(1)
+	CArchiveBuffered(name),
+	curSearchHandle(1),
+	isOpen(false)
 {
 	SZ_RESULT res;
 
@@ -53,7 +53,7 @@ CArchive7Zip::CArchive7Zip(const string& name) :
 	isOpen = true;
 
 	// Get contents of archive and store name->int mapping
-	for (int i = 0; i < db.Database.NumFiles; ++i) {
+	for (unsigned i = 0; i < db.Database.NumFiles; ++i) {
 		CFileItem* fi = db.Database.Files + i;
 		if (fi->Size > 0) {
 			string name = fi->Name;

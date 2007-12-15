@@ -158,7 +158,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					}
 				}*/
 
-				if (info.st_mtime == aii->second.modified && fpath == aii->second.path) {
+				if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
 					cached = true;
 					aii->second.updated = true;
 				}
