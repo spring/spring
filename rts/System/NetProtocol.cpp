@@ -1,4 +1,7 @@
 #include "NetProtocol.h"
+
+#include <SDL_timer.h>
+
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
@@ -63,7 +66,7 @@ void CNetProtocol::UpdateLoop()
 	while (loading)
 	{
 		Update();
-		sleep(1);
+		SDL_Delay(1000);
 	}
 }
 
