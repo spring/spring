@@ -16,10 +16,14 @@ class AutohostInterface;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
 
+//TODO: move to seperate file
 class GameParticipant
 {
 public:
-	GameParticipant(bool willHaveRights) {hasRights = willHaveRights;}
+	GameParticipant(bool willHaveRights) {hasRights = willHaveRights; name = "unnamed"; readyToStart = false; cpuUsage = 0.0f;}
+	
+	std::string name;
+	bool readyToStart;
 	float cpuUsage;
 	int ping;
 	
@@ -32,7 +36,6 @@ public:
 /**
 @brief Server class for game handling
 This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
-@TODO Make this class work without CGame to make dedicated hosting possible
 */
 class CGameServer
 {
@@ -61,8 +64,6 @@ public:
 	void PlayerDefeated(const int playerNum) const;
 	
 	void SetGamePausable(const bool arg);
-
-	void StartGame();
 	
 #ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
@@ -86,6 +87,7 @@ private:
 	
 	void BindConnection(unsigned wantedNumber, bool grantRights=false);
 	
+	void StartGame();
 	void UpdateLoop();
 	void Update();
 	void CheckSync();
