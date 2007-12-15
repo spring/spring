@@ -568,6 +568,7 @@ namespace NTaiToolkit
             this.Movestatecombo = new System.Windows.Forms.ComboBox();
             this.modTDFtab = new System.Windows.Forms.TabPage();
             this.groupBox12 = new System.Windows.Forms.GroupBox();
+            this.label73 = new System.Windows.Forms.Label();
             this.label69 = new System.Windows.Forms.Label();
             this.maxAttackSize = new System.Windows.Forms.NumericUpDown();
             this.label43 = new System.Windows.Forms.Label();
@@ -602,6 +603,7 @@ namespace NTaiToolkit
             this.spacemod = new System.Windows.Forms.CheckBox();
             this.Antistall = new System.Windows.Forms.CheckBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.label72 = new System.Windows.Forms.Label();
             this.label64 = new System.Windows.Forms.Label();
             this.Author = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -609,6 +611,48 @@ namespace NTaiToolkit
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.Version = new System.Windows.Forms.TextBox();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.groupBox13 = new System.Windows.Forms.GroupBox();
+            this.interpolate = new System.Windows.Forms.CheckBox();
+            this.MaxAntiStallBox = new System.Windows.Forms.GroupBox();
+            this.label41 = new System.Windows.Forms.Label();
+            this.StallTimeMobile = new System.Windows.Forms.NumericUpDown();
+            this.StallTimeImMobile = new System.Windows.Forms.NumericUpDown();
+            this.label15 = new System.Windows.Forms.Label();
+            this.label17 = new System.Windows.Forms.Label();
+            this.antistallwindow = new System.Windows.Forms.NumericUpDown();
+            this.label52 = new System.Windows.Forms.Label();
+            this.groupBox9 = new System.Windows.Forms.GroupBox();
+            this.groupBox10 = new System.Windows.Forms.GroupBox();
+            this.powerRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.factorymetalRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.factoryenergyRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.factorymetalgapRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.metalstorageRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.energystorageRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.mexRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.makermetalRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.makerenergyRuleEx = new System.Windows.Forms.NumericUpDown();
+            this.label42 = new System.Windows.Forms.Label();
+            this.groupBox8 = new System.Windows.Forms.GroupBox();
+            this.powerRule = new System.Windows.Forms.NumericUpDown();
+            this.factorymetalRule = new System.Windows.Forms.NumericUpDown();
+            this.metalstorageRule = new System.Windows.Forms.NumericUpDown();
+            this.makermetalRule = new System.Windows.Forms.NumericUpDown();
+            this.mexRule = new System.Windows.Forms.NumericUpDown();
+            this.makerenergyRule = new System.Windows.Forms.NumericUpDown();
+            this.energystorageRule = new System.Windows.Forms.NumericUpDown();
+            this.factorymetalgapRule = new System.Windows.Forms.NumericUpDown();
+            this.factoryenergyRule = new System.Windows.Forms.NumericUpDown();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label26 = new System.Windows.Forms.Label();
+            this.label22 = new System.Windows.Forms.Label();
+            this.label25 = new System.Windows.Forms.Label();
+            this.label23 = new System.Windows.Forms.Label();
+            this.label24 = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.button8 = new System.Windows.Forms.Button();
@@ -649,50 +693,6 @@ namespace NTaiToolkit
             this.debugsave = new System.Windows.Forms.RichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.groupBox9 = new System.Windows.Forms.GroupBox();
-            this.groupBox10 = new System.Windows.Forms.GroupBox();
-            this.powerRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.factorymetalRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.factoryenergyRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.factorymetalgapRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.metalstorageRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.energystorageRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.mexRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.makermetalRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.makerenergyRuleEx = new System.Windows.Forms.NumericUpDown();
-            this.label42 = new System.Windows.Forms.Label();
-            this.groupBox8 = new System.Windows.Forms.GroupBox();
-            this.powerRule = new System.Windows.Forms.NumericUpDown();
-            this.factorymetalRule = new System.Windows.Forms.NumericUpDown();
-            this.metalstorageRule = new System.Windows.Forms.NumericUpDown();
-            this.makermetalRule = new System.Windows.Forms.NumericUpDown();
-            this.mexRule = new System.Windows.Forms.NumericUpDown();
-            this.makerenergyRule = new System.Windows.Forms.NumericUpDown();
-            this.energystorageRule = new System.Windows.Forms.NumericUpDown();
-            this.factorymetalgapRule = new System.Windows.Forms.NumericUpDown();
-            this.factoryenergyRule = new System.Windows.Forms.NumericUpDown();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label26 = new System.Windows.Forms.Label();
-            this.label22 = new System.Windows.Forms.Label();
-            this.label25 = new System.Windows.Forms.Label();
-            this.label23 = new System.Windows.Forms.Label();
-            this.label24 = new System.Windows.Forms.Label();
-            this.MaxAntiStallBox = new System.Windows.Forms.GroupBox();
-            this.label41 = new System.Windows.Forms.Label();
-            this.StallTimeMobile = new System.Windows.Forms.NumericUpDown();
-            this.StallTimeImMobile = new System.Windows.Forms.NumericUpDown();
-            this.label15 = new System.Windows.Forms.Label();
-            this.label17 = new System.Windows.Forms.Label();
-            this.antistallwindow = new System.Windows.Forms.NumericUpDown();
-            this.label52 = new System.Windows.Forms.Label();
-            this.groupBox13 = new System.Windows.Forms.GroupBox();
-            this.interpolate = new System.Windows.Forms.CheckBox();
-            this.label72 = new System.Windows.Forms.Label();
-            this.label73 = new System.Windows.Forms.Label();
             this.mainTabs.SuspendLayout();
             this.StartTab.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -722,17 +722,12 @@ namespace NTaiToolkit
             ((System.ComponentModel.ISupportInitialize)(this.PowerSpacing)).BeginInit();
             this.groupBox5.SuspendLayout();
             this.groupBox4.SuspendLayout();
-            this.tabPage3.SuspendLayout();
-            this.groupBox3.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.keywords.SuspendLayout();
-            this.tabPage8.SuspendLayout();
-            this.tabPage9.SuspendLayout();
-            this.tabPage5.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
-            this.tabPage4.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.groupBox13.SuspendLayout();
+            this.MaxAntiStallBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StallTimeMobile)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.StallTimeImMobile)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.antistallwindow)).BeginInit();
             this.groupBox9.SuspendLayout();
             this.groupBox10.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.powerRuleEx)).BeginInit();
@@ -754,11 +749,16 @@ namespace NTaiToolkit
             ((System.ComponentModel.ISupportInitialize)(this.energystorageRule)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.factorymetalgapRule)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.factoryenergyRule)).BeginInit();
-            this.MaxAntiStallBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.StallTimeMobile)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StallTimeImMobile)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.antistallwindow)).BeginInit();
-            this.groupBox13.SuspendLayout();
+            this.tabPage3.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            this.keywords.SuspendLayout();
+            this.tabPage8.SuspendLayout();
+            this.tabPage9.SuspendLayout();
+            this.tabPage5.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
+            this.tabPage4.SuspendLayout();
             this.SuspendLayout();
             // 
             // Units
@@ -1343,7 +1343,7 @@ namespace NTaiToolkit
             // 
             // AttackCheck
             // 
-            this.AttackCheck.Location = new System.Drawing.Point(437, 477);
+            this.AttackCheck.Location = new System.Drawing.Point(437, 444);
             this.AttackCheck.Name = "AttackCheck";
             this.AttackCheck.Size = new System.Drawing.Size(241, 18);
             this.AttackCheck.TabIndex = 0;
@@ -1352,7 +1352,7 @@ namespace NTaiToolkit
             // 
             // SolobuildCheck
             // 
-            this.SolobuildCheck.Location = new System.Drawing.Point(437, 501);
+            this.SolobuildCheck.Location = new System.Drawing.Point(437, 468);
             this.SolobuildCheck.Name = "SolobuildCheck";
             this.SolobuildCheck.Size = new System.Drawing.Size(241, 40);
             this.SolobuildCheck.TabIndex = 2;
@@ -1361,27 +1361,27 @@ namespace NTaiToolkit
             // 
             // SinglebuildCheck
             // 
-            this.SinglebuildCheck.Location = new System.Drawing.Point(437, 547);
+            this.SinglebuildCheck.Location = new System.Drawing.Point(437, 514);
             this.SinglebuildCheck.Name = "SinglebuildCheck";
-            this.SinglebuildCheck.Size = new System.Drawing.Size(241, 18);
+            this.SinglebuildCheck.Size = new System.Drawing.Size(241, 29);
             this.SinglebuildCheck.TabIndex = 3;
             this.SinglebuildCheck.Text = "Dont build multiple units of this type if possible";
             this.SinglebuildCheck.CheckedChanged += new System.EventHandler(this.SinglebuildCheck_CheckedChanged);
             // 
             // AlwaysantistallCheck
             // 
-            this.AlwaysantistallCheck.Location = new System.Drawing.Point(437, 571);
+            this.AlwaysantistallCheck.Location = new System.Drawing.Point(437, 549);
             this.AlwaysantistallCheck.Name = "AlwaysantistallCheck";
-            this.AlwaysantistallCheck.Size = new System.Drawing.Size(241, 20);
+            this.AlwaysantistallCheck.Size = new System.Drawing.Size(241, 32);
             this.AlwaysantistallCheck.TabIndex = 4;
             this.AlwaysantistallCheck.Text = "Always run the antistall algorithm on this if on";
             this.AlwaysantistallCheck.CheckedChanged += new System.EventHandler(this.AlwaysantistallCheck_CheckedChanged);
             // 
             // NeverantistallCheck
             // 
-            this.NeverantistallCheck.Location = new System.Drawing.Point(437, 597);
+            this.NeverantistallCheck.Location = new System.Drawing.Point(437, 587);
             this.NeverantistallCheck.Name = "NeverantistallCheck";
-            this.NeverantistallCheck.Size = new System.Drawing.Size(241, 38);
+            this.NeverantistallCheck.Size = new System.Drawing.Size(241, 48);
             this.NeverantistallCheck.TabIndex = 5;
             this.NeverantistallCheck.Text = "This unit is a basic resource unit, never run\r\nthe antistall algorithm on this";
             this.NeverantistallCheck.CheckedChanged += new System.EventHandler(this.NeverantistallCheck_CheckedChanged);
@@ -1468,6 +1468,15 @@ namespace NTaiToolkit
             this.groupBox12.TabIndex = 73;
             this.groupBox12.TabStop = false;
             this.groupBox12.Text = "Attack Groups";
+            // 
+            // label73
+            // 
+            this.label73.AutoSize = true;
+            this.label73.Location = new System.Drawing.Point(8, 97);
+            this.label73.Name = "label73";
+            this.label73.Size = new System.Drawing.Size(143, 20);
+            this.label73.TabIndex = 9;
+            this.label73.Text = "When NTai attacks";
             // 
             // label69
             // 
@@ -1853,6 +1862,16 @@ namespace NTaiToolkit
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Version + Credits";
             // 
+            // label72
+            // 
+            this.label72.AutoSize = true;
+            this.label72.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.label72.Location = new System.Drawing.Point(5, 136);
+            this.label72.Name = "label72";
+            this.label72.Size = new System.Drawing.Size(339, 13);
+            this.label72.TabIndex = 66;
+            this.label72.Text = "When NTai starts it will display the message above in the chat console";
+            // 
             // label64
             // 
             this.label64.AutoSize = true;
@@ -1920,463 +1939,6 @@ namespace NTaiToolkit
             this.Version.TabIndex = 5;
             this.Version.TextChanged += new System.EventHandler(this.Version_TextChanged);
             // 
-            // tabPage3
-            // 
-            this.tabPage3.BackColor = System.Drawing.SystemColors.Window;
-            this.tabPage3.Controls.Add(this.groupBox3);
-            this.tabPage3.Controls.Add(this.groupBox2);
-            this.tabPage3.Controls.Add(this.groupBox1);
-            this.tabPage3.Controls.Add(this.label51);
-            this.tabPage3.Controls.Add(this.label50);
-            this.tabPage3.Controls.Add(this.label49);
-            this.tabPage3.Controls.Add(this.label36);
-            this.tabPage3.Controls.Add(this.label35);
-            this.tabPage3.Controls.Add(this.currentqueue);
-            this.tabPage3.Controls.Add(this.keywords);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(967, 666);
-            this.tabPage3.TabIndex = 5;
-            this.tabPage3.Text = "Create/Edit TaskLists";
-            this.tabPage3.UseVisualStyleBackColor = true;
-            this.tabPage3.Click += new System.EventHandler(this.tabPage3_Click);
-            // 
-            // groupBox3
-            // 
-            this.groupBox3.Controls.Add(this.button8);
-            this.groupBox3.Controls.Add(this.InsertWord);
-            this.groupBox3.Controls.Add(this.button2);
-            this.groupBox3.Controls.Add(this.button3);
-            this.groupBox3.Controls.Add(this.button6);
-            this.groupBox3.Controls.Add(this.button7);
-            this.groupBox3.Controls.Add(this.button4);
-            this.groupBox3.Controls.Add(this.button5);
-            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.ForeColor = System.Drawing.Color.Black;
-            this.groupBox3.Location = new System.Drawing.Point(805, 238);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(154, 246);
-            this.groupBox3.TabIndex = 26;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "List Actions";
-            // 
-            // button8
-            // 
-            this.button8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button8.Location = new System.Drawing.Point(13, 29);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(135, 23);
-            this.button8.TabIndex = 12;
-            this.button8.Text = "Insert At Start";
-            this.button8.UseVisualStyleBackColor = true;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
-            // 
-            // InsertWord
-            // 
-            this.InsertWord.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.InsertWord.Location = new System.Drawing.Point(13, 55);
-            this.InsertWord.Name = "InsertWord";
-            this.InsertWord.Size = new System.Drawing.Size(135, 23);
-            this.InsertWord.TabIndex = 5;
-            this.InsertWord.Text = "Insert At End";
-            this.InsertWord.UseVisualStyleBackColor = true;
-            this.InsertWord.Click += new System.EventHandler(this.InsertWord_Click);
-            // 
-            // button2
-            // 
-            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button2.Location = new System.Drawing.Point(13, 81);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(135, 23);
-            this.button2.TabIndex = 6;
-            this.button2.Text = "Move Up";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // button3
-            // 
-            this.button3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button3.Location = new System.Drawing.Point(13, 107);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(135, 23);
-            this.button3.TabIndex = 7;
-            this.button3.Text = "Move Down";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // button6
-            // 
-            this.button6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button6.Location = new System.Drawing.Point(13, 133);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(135, 23);
-            this.button6.TabIndex = 10;
-            this.button6.Text = "Move to Start";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
-            // 
-            // button7
-            // 
-            this.button7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button7.Location = new System.Drawing.Point(13, 159);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(135, 23);
-            this.button7.TabIndex = 11;
-            this.button7.Text = "Move to End";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
-            // 
-            // button4
-            // 
-            this.button4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button4.Location = new System.Drawing.Point(13, 185);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(135, 23);
-            this.button4.TabIndex = 8;
-            this.button4.Text = "Remove selected task";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // button5
-            // 
-            this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button5.Location = new System.Drawing.Point(13, 211);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(135, 23);
-            this.button5.TabIndex = 9;
-            this.button5.Text = "Clear all tasks";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.currentbuildqueue);
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox2.ForeColor = System.Drawing.Color.Black;
-            this.groupBox2.Location = new System.Drawing.Point(805, 7);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(154, 92);
-            this.groupBox2.TabIndex = 25;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Change TaskList";
-            // 
-            // currentbuildqueue
-            // 
-            this.currentbuildqueue.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.currentbuildqueue.FormattingEnabled = true;
-            this.currentbuildqueue.Location = new System.Drawing.Point(6, 44);
-            this.currentbuildqueue.MaxDropDownItems = 20;
-            this.currentbuildqueue.Name = "currentbuildqueue";
-            this.currentbuildqueue.Size = new System.Drawing.Size(132, 21);
-            this.currentbuildqueue.Sorted = true;
-            this.currentbuildqueue.TabIndex = 3;
-            this.currentbuildqueue.SelectedIndexChanged += new System.EventHandler(this.currentbuildqueue_SelectedIndexChanged);
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.Controls.Add(this.newtasklistbox);
-            this.groupBox1.Controls.Add(this.button11);
-            this.groupBox1.Controls.Add(this.btn_CreateNewTaskList);
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.ForeColor = System.Drawing.Color.Black;
-            this.groupBox1.Location = new System.Drawing.Point(805, 119);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(154, 113);
-            this.groupBox1.TabIndex = 24;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "New TaskList";
-            // 
-            // newtasklistbox
-            // 
-            this.newtasklistbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.newtasklistbox.Location = new System.Drawing.Point(13, 23);
-            this.newtasklistbox.Name = "newtasklistbox";
-            this.newtasklistbox.Size = new System.Drawing.Size(135, 22);
-            this.newtasklistbox.TabIndex = 0;
-            this.newtasklistbox.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.newtasklistbox_PreviewKeyDown);
-            this.newtasklistbox.TextChanged += new System.EventHandler(this.newtasklistbox_TextChanged);
-            this.newtasklistbox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.newtasklistbox_KeyDown);
-            // 
-            // button11
-            // 
-            this.button11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button11.Location = new System.Drawing.Point(13, 77);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(135, 23);
-            this.button11.TabIndex = 23;
-            this.button11.Text = "Create New list from File";
-            this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.button11_Click);
-            // 
-            // btn_CreateNewTaskList
-            // 
-            this.btn_CreateNewTaskList.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_CreateNewTaskList.Location = new System.Drawing.Point(13, 54);
-            this.btn_CreateNewTaskList.Name = "btn_CreateNewTaskList";
-            this.btn_CreateNewTaskList.Size = new System.Drawing.Size(135, 23);
-            this.btn_CreateNewTaskList.TabIndex = 1;
-            this.btn_CreateNewTaskList.Text = "Create New TaskList";
-            this.btn_CreateNewTaskList.UseVisualStyleBackColor = true;
-            this.btn_CreateNewTaskList.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // label51
-            // 
-            this.label51.AutoSize = true;
-            this.label51.Location = new System.Drawing.Point(443, 59);
-            this.label51.Name = "label51";
-            this.label51.Size = new System.Drawing.Size(316, 13);
-            this.label51.TabIndex = 22;
-            this.label51.Text = "Always check logfiles for reasons why tasks fail at /AI/NTai/logs/";
-            // 
-            // label50
-            // 
-            this.label50.AutoSize = true;
-            this.label50.Location = new System.Drawing.Point(443, 46);
-            this.label50.Name = "label50";
-            this.label50.Size = new System.Drawing.Size(242, 13);
-            this.label50.TabIndex = 21;
-            this.label50.Text = "the bottom, skipping any that fail/cannot be done.";
-            // 
-            // label49
-            // 
-            this.label49.AutoSize = true;
-            this.label49.Location = new System.Drawing.Point(443, 33);
-            this.label49.Name = "label49";
-            this.label49.Size = new System.Drawing.Size(337, 13);
-            this.label49.TabIndex = 20;
-            this.label49.Text = "Units following this tasklist will execute each task from the top down to";
-            // 
-            // label36
-            // 
-            this.label36.AutoSize = true;
-            this.label36.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label36.Location = new System.Drawing.Point(439, 3);
-            this.label36.Name = "label36";
-            this.label36.Size = new System.Drawing.Size(169, 20);
-            this.label36.TabIndex = 16;
-            this.label36.Text = "Current TaskList Items";
-            // 
-            // label35
-            // 
-            this.label35.AutoSize = true;
-            this.label35.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label35.Location = new System.Drawing.Point(6, 3);
-            this.label35.Name = "label35";
-            this.label35.Size = new System.Drawing.Size(167, 20);
-            this.label35.TabIndex = 15;
-            this.label35.Text = "Task List Items to Add";
-            // 
-            // currentqueue
-            // 
-            this.currentqueue.FormattingEnabled = true;
-            this.currentqueue.Items.AddRange(new object[] {
-            "please create a new tasklist to begin, type in the name of the",
-            "tasklist to the right and click create new tasklist to begin.",
-            "",
-            "Then add tasks using the two tabs to the left.",
-            "Todo this select a task item, then insert it using the buttons",
-            "on the right.",
-            "",
-            "When you\'re done, goto the units tab, pick a unit, and give",
-            "this tasklist to it.",
-            "",
-            "Its not enough for a tasklist to exist, you have to \'assign\'/\'give\'",
-            "it to a unit, you need to tell the unit \"this is what your doing",
-            "in this list, this list  and this list\"."});
-            this.currentqueue.Location = new System.Drawing.Point(443, 79);
-            this.currentqueue.Name = "currentqueue";
-            this.currentqueue.Size = new System.Drawing.Size(356, 576);
-            this.currentqueue.TabIndex = 4;
-            // 
-            // keywords
-            // 
-            this.keywords.Controls.Add(this.tabPage8);
-            this.keywords.Controls.Add(this.tabPage9);
-            this.keywords.Location = new System.Drawing.Point(3, 28);
-            this.keywords.Multiline = true;
-            this.keywords.Name = "keywords";
-            this.keywords.SelectedIndex = 0;
-            this.keywords.Size = new System.Drawing.Size(434, 632);
-            this.keywords.TabIndex = 2;
-            // 
-            // tabPage8
-            // 
-            this.tabPage8.Controls.Add(this.universalkeywordsList);
-            this.tabPage8.Location = new System.Drawing.Point(4, 22);
-            this.tabPage8.Name = "tabPage8";
-            this.tabPage8.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage8.Size = new System.Drawing.Size(426, 606);
-            this.tabPage8.TabIndex = 0;
-            this.tabPage8.Text = "Universal Keywords";
-            this.tabPage8.ToolTipText = "Mod independant rule based keywords";
-            this.tabPage8.UseVisualStyleBackColor = true;
-            // 
-            // universalkeywordsList
-            // 
-            this.universalkeywordsList.FormattingEnabled = true;
-            this.universalkeywordsList.Location = new System.Drawing.Point(1, 3);
-            this.universalkeywordsList.Name = "universalkeywordsList";
-            this.universalkeywordsList.Size = new System.Drawing.Size(422, 602);
-            this.universalkeywordsList.TabIndex = 0;
-            // 
-            // tabPage9
-            // 
-            this.tabPage9.Controls.Add(this.unitkeywords);
-            this.tabPage9.Location = new System.Drawing.Point(4, 22);
-            this.tabPage9.Name = "tabPage9";
-            this.tabPage9.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage9.Size = new System.Drawing.Size(426, 606);
-            this.tabPage9.TabIndex = 1;
-            this.tabPage9.Text = "Build Unit";
-            this.tabPage9.ToolTipText = "Units in the mod";
-            this.tabPage9.UseVisualStyleBackColor = true;
-            // 
-            // unitkeywords
-            // 
-            this.unitkeywords.FormattingEnabled = true;
-            this.unitkeywords.HorizontalScrollbar = true;
-            this.unitkeywords.Location = new System.Drawing.Point(3, 4);
-            this.unitkeywords.Name = "unitkeywords";
-            this.unitkeywords.Size = new System.Drawing.Size(420, 602);
-            this.unitkeywords.Sorted = true;
-            this.unitkeywords.TabIndex = 0;
-            // 
-            // tabPage5
-            // 
-            this.tabPage5.Controls.Add(this.label27);
-            this.tabPage5.Controls.Add(this.toolStrip1);
-            this.tabPage5.Controls.Add(this.quicksetchecks);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(967, 666);
-            this.tabPage5.TabIndex = 9;
-            this.tabPage5.Text = "Set several unit properties at once";
-            this.tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // label27
-            // 
-            this.label27.AutoSize = true;
-            this.label27.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label27.Location = new System.Drawing.Point(8, 28);
-            this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(824, 16);
-            this.label27.TabIndex = 2;
-            this.label27.Text = "Use this page to set settings for lots of units at once, select a property in the" +
-                " combo box above and make your changes, then apply settings";
-            // 
-            // toolStrip1
-            // 
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripLabel1,
-            this.QuicksetCombo,
-            this.toolStripButton1});
-            this.toolStrip1.Location = new System.Drawing.Point(3, 3);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(961, 25);
-            this.toolStrip1.TabIndex = 1;
-            this.toolStrip1.Text = "toolStrip1";
-            // 
-            // toolStripLabel1
-            // 
-            this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(154, 22);
-            this.toolStripLabel1.Text = "Select a property to change:";
-            // 
-            // QuicksetCombo
-            // 
-            this.QuicksetCombo.Items.AddRange(new object[] {
-            "Attackers",
-            "Kamikaze",
-            "Fire at will",
-            "Return Fire",
-            "Hold Fire",
-            "Roam",
-            "Maneouvre",
-            "Hold Position",
-            "NeverAntistall"});
-            this.QuicksetCombo.Name = "QuicksetCombo";
-            this.QuicksetCombo.Size = new System.Drawing.Size(121, 25);
-            this.QuicksetCombo.SelectedIndexChanged += new System.EventHandler(this.QuicksetCombo_SelectedIndexChanged);
-            this.QuicksetCombo.Click += new System.EventHandler(this.QuicksetCombo_Click);
-            // 
-            // toolStripButton1
-            // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(135, 22);
-            this.toolStripButton1.Text = "Apply Changes to Units";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
-            // 
-            // quicksetchecks
-            // 
-            this.quicksetchecks.FormattingEnabled = true;
-            this.quicksetchecks.Location = new System.Drawing.Point(8, 62);
-            this.quicksetchecks.Name = "quicksetchecks";
-            this.quicksetchecks.Size = new System.Drawing.Size(951, 589);
-            this.quicksetchecks.TabIndex = 0;
-            // 
-            // tabPage4
-            // 
-            this.tabPage4.Controls.Add(this.label65);
-            this.tabPage4.Controls.Add(this.refresh);
-            this.tabPage4.Controls.Add(this.debugsave);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(967, 666);
-            this.tabPage4.TabIndex = 7;
-            this.tabPage4.Text = "Debug";
-            this.tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // label65
-            // 
-            this.label65.AutoSize = true;
-            this.label65.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label65.Location = new System.Drawing.Point(3, 609);
-            this.label65.Name = "label65";
-            this.label65.Size = new System.Drawing.Size(267, 20);
-            this.label65.TabIndex = 2;
-            this.label65.Text = "This Page is for debug purposes";
-            // 
-            // refresh
-            // 
-            this.refresh.Location = new System.Drawing.Point(839, 609);
-            this.refresh.Name = "refresh";
-            this.refresh.Size = new System.Drawing.Size(91, 24);
-            this.refresh.TabIndex = 1;
-            this.refresh.Text = "refresh";
-            this.refresh.UseVisualStyleBackColor = true;
-            this.refresh.Click += new System.EventHandler(this.refresh_Click);
-            this.refresh.MouseClick += new System.Windows.Forms.MouseEventHandler(this.refresh_MouseClick);
-            // 
-            // debugsave
-            // 
-            this.debugsave.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.debugsave.BackColor = System.Drawing.Color.White;
-            this.debugsave.Location = new System.Drawing.Point(3, 3);
-            this.debugsave.Name = "debugsave";
-            this.debugsave.ReadOnly = true;
-            this.debugsave.Size = new System.Drawing.Size(956, 603);
-            this.debugsave.TabIndex = 0;
-            this.debugsave.Text = "";
-            // 
-            // openFileDialog
-            // 
-            this.openFileDialog.DefaultExt = "tdf";
-            this.openFileDialog.Filter = "TDF configs (*.tdf)|*.tdf";
-            this.openFileDialog.Title = "Open config";
-            this.openFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
-            // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.DefaultExt = "txt";
-            this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "commar seperated list (*.txt)|*.txt";
-            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.groupBox13);
@@ -2389,6 +1951,132 @@ namespace NTaiToolkit
             this.tabPage2.TabIndex = 10;
             this.tabPage2.Text = "Adv Config Options";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // groupBox13
+            // 
+            this.groupBox13.Controls.Add(this.interpolate);
+            this.groupBox13.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox13.ForeColor = System.Drawing.Color.Black;
+            this.groupBox13.Location = new System.Drawing.Point(8, 334);
+            this.groupBox13.Name = "groupBox13";
+            this.groupBox13.Size = new System.Drawing.Size(553, 74);
+            this.groupBox13.TabIndex = 75;
+            this.groupBox13.TabStop = false;
+            this.groupBox13.Text = "Task List Options";
+            // 
+            // interpolate
+            // 
+            this.interpolate.AutoSize = true;
+            this.interpolate.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.interpolate.Location = new System.Drawing.Point(13, 33);
+            this.interpolate.Name = "interpolate";
+            this.interpolate.Size = new System.Drawing.Size(281, 17);
+            this.interpolate.TabIndex = 0;
+            this.interpolate.Text = "Insert b_rule_extreme_nofact between every task item";
+            this.interpolate.UseVisualStyleBackColor = true;
+            // 
+            // MaxAntiStallBox
+            // 
+            this.MaxAntiStallBox.Controls.Add(this.label41);
+            this.MaxAntiStallBox.Controls.Add(this.StallTimeMobile);
+            this.MaxAntiStallBox.Controls.Add(this.StallTimeImMobile);
+            this.MaxAntiStallBox.Controls.Add(this.label15);
+            this.MaxAntiStallBox.Controls.Add(this.label17);
+            this.MaxAntiStallBox.Controls.Add(this.antistallwindow);
+            this.MaxAntiStallBox.Controls.Add(this.label52);
+            this.MaxAntiStallBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.MaxAntiStallBox.ForeColor = System.Drawing.Color.Black;
+            this.MaxAntiStallBox.Location = new System.Drawing.Point(8, 414);
+            this.MaxAntiStallBox.Name = "MaxAntiStallBox";
+            this.MaxAntiStallBox.Size = new System.Drawing.Size(553, 186);
+            this.MaxAntiStallBox.TabIndex = 73;
+            this.MaxAntiStallBox.TabStop = false;
+            this.MaxAntiStallBox.Text = "Max Allowed NanoStall (secs)";
+            // 
+            // label41
+            // 
+            this.label41.AutoSize = true;
+            this.label41.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.label41.Location = new System.Drawing.Point(11, 22);
+            this.label41.Name = "label41";
+            this.label41.Size = new System.Drawing.Size(364, 26);
+            this.label41.TabIndex = 62;
+            this.label41.Text = "Stalling is when you have no more resources, these values dictate how long\r\nthe a" +
+                "ntistaller algorithm can stall for. (you can use negative values too)";
+            // 
+            // StallTimeMobile
+            // 
+            this.StallTimeMobile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.StallTimeMobile.Location = new System.Drawing.Point(295, 80);
+            this.StallTimeMobile.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.StallTimeMobile.Minimum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            -2147483648});
+            this.StallTimeMobile.Name = "StallTimeMobile";
+            this.StallTimeMobile.Size = new System.Drawing.Size(80, 20);
+            this.StallTimeMobile.TabIndex = 20;
+            // 
+            // StallTimeImMobile
+            // 
+            this.StallTimeImMobile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.StallTimeImMobile.Location = new System.Drawing.Point(295, 106);
+            this.StallTimeImMobile.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.StallTimeImMobile.Minimum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            -2147483648});
+            this.StallTimeImMobile.Name = "StallTimeImMobile";
+            this.StallTimeImMobile.Size = new System.Drawing.Size(80, 20);
+            this.StallTimeImMobile.TabIndex = 21;
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(12, 80);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(183, 13);
+            this.label15.TabIndex = 22;
+            this.label15.Text = "Max allowed stall time for Mobile units";
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label17.Location = new System.Drawing.Point(12, 106);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(177, 13);
+            this.label17.TabIndex = 23;
+            this.label17.Text = "Max allowed stall time for static units";
+            // 
+            // antistallwindow
+            // 
+            this.antistallwindow.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.antistallwindow.Location = new System.Drawing.Point(295, 132);
+            this.antistallwindow.Name = "antistallwindow";
+            this.antistallwindow.Size = new System.Drawing.Size(80, 20);
+            this.antistallwindow.TabIndex = 60;
+            // 
+            // label52
+            // 
+            this.label52.AutoSize = true;
+            this.label52.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label52.Location = new System.Drawing.Point(12, 132);
+            this.label52.Name = "label52";
+            this.label52.Size = new System.Drawing.Size(157, 13);
+            this.label52.TabIndex = 61;
+            this.label52.Text = "Ignore Antistaller At Startup time";
             // 
             // groupBox9
             // 
@@ -2883,150 +2571,462 @@ namespace NTaiToolkit
             this.label24.TabIndex = 48;
             this.label24.Text = "Factory Energy";
             // 
-            // MaxAntiStallBox
+            // tabPage3
             // 
-            this.MaxAntiStallBox.Controls.Add(this.label41);
-            this.MaxAntiStallBox.Controls.Add(this.StallTimeMobile);
-            this.MaxAntiStallBox.Controls.Add(this.StallTimeImMobile);
-            this.MaxAntiStallBox.Controls.Add(this.label15);
-            this.MaxAntiStallBox.Controls.Add(this.label17);
-            this.MaxAntiStallBox.Controls.Add(this.antistallwindow);
-            this.MaxAntiStallBox.Controls.Add(this.label52);
-            this.MaxAntiStallBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.MaxAntiStallBox.ForeColor = System.Drawing.Color.Black;
-            this.MaxAntiStallBox.Location = new System.Drawing.Point(8, 414);
-            this.MaxAntiStallBox.Name = "MaxAntiStallBox";
-            this.MaxAntiStallBox.Size = new System.Drawing.Size(553, 186);
-            this.MaxAntiStallBox.TabIndex = 73;
-            this.MaxAntiStallBox.TabStop = false;
-            this.MaxAntiStallBox.Text = "Max Allowed NanoStall (secs)";
+            this.tabPage3.BackColor = System.Drawing.SystemColors.Window;
+            this.tabPage3.Controls.Add(this.groupBox3);
+            this.tabPage3.Controls.Add(this.groupBox2);
+            this.tabPage3.Controls.Add(this.groupBox1);
+            this.tabPage3.Controls.Add(this.label51);
+            this.tabPage3.Controls.Add(this.label50);
+            this.tabPage3.Controls.Add(this.label49);
+            this.tabPage3.Controls.Add(this.label36);
+            this.tabPage3.Controls.Add(this.label35);
+            this.tabPage3.Controls.Add(this.currentqueue);
+            this.tabPage3.Controls.Add(this.keywords);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(967, 666);
+            this.tabPage3.TabIndex = 5;
+            this.tabPage3.Text = "Create/Edit TaskLists";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            this.tabPage3.Click += new System.EventHandler(this.tabPage3_Click);
             // 
-            // label41
+            // groupBox3
             // 
-            this.label41.AutoSize = true;
-            this.label41.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.label41.Location = new System.Drawing.Point(11, 22);
-            this.label41.Name = "label41";
-            this.label41.Size = new System.Drawing.Size(364, 26);
-            this.label41.TabIndex = 62;
-            this.label41.Text = "Stalling is when you have no more resources, these values dictate how long\r\nthe a" +
-                "ntistaller algorithm can stall for. (you can use negative values too)";
+            this.groupBox3.Controls.Add(this.button8);
+            this.groupBox3.Controls.Add(this.InsertWord);
+            this.groupBox3.Controls.Add(this.button2);
+            this.groupBox3.Controls.Add(this.button3);
+            this.groupBox3.Controls.Add(this.button6);
+            this.groupBox3.Controls.Add(this.button7);
+            this.groupBox3.Controls.Add(this.button4);
+            this.groupBox3.Controls.Add(this.button5);
+            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox3.ForeColor = System.Drawing.Color.Black;
+            this.groupBox3.Location = new System.Drawing.Point(805, 238);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(154, 246);
+            this.groupBox3.TabIndex = 26;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "List Actions";
             // 
-            // StallTimeMobile
+            // button8
             // 
-            this.StallTimeMobile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.StallTimeMobile.Location = new System.Drawing.Point(295, 80);
-            this.StallTimeMobile.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.StallTimeMobile.Minimum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            -2147483648});
-            this.StallTimeMobile.Name = "StallTimeMobile";
-            this.StallTimeMobile.Size = new System.Drawing.Size(80, 20);
-            this.StallTimeMobile.TabIndex = 20;
+            this.button8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button8.Location = new System.Drawing.Point(13, 29);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(135, 23);
+            this.button8.TabIndex = 12;
+            this.button8.Text = "Insert At Start";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
-            // StallTimeImMobile
+            // InsertWord
             // 
-            this.StallTimeImMobile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.StallTimeImMobile.Location = new System.Drawing.Point(295, 106);
-            this.StallTimeImMobile.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.StallTimeImMobile.Minimum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            -2147483648});
-            this.StallTimeImMobile.Name = "StallTimeImMobile";
-            this.StallTimeImMobile.Size = new System.Drawing.Size(80, 20);
-            this.StallTimeImMobile.TabIndex = 21;
+            this.InsertWord.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.InsertWord.Location = new System.Drawing.Point(13, 55);
+            this.InsertWord.Name = "InsertWord";
+            this.InsertWord.Size = new System.Drawing.Size(135, 23);
+            this.InsertWord.TabIndex = 5;
+            this.InsertWord.Text = "Insert At End";
+            this.InsertWord.UseVisualStyleBackColor = true;
+            this.InsertWord.Click += new System.EventHandler(this.InsertWord_Click);
             // 
-            // label15
+            // button2
             // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(12, 80);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(183, 13);
-            this.label15.TabIndex = 22;
-            this.label15.Text = "Max allowed stall time for Mobile units";
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.Location = new System.Drawing.Point(13, 81);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(135, 23);
+            this.button2.TabIndex = 6;
+            this.button2.Text = "Move Up";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // label17
+            // button3
             // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(12, 106);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(177, 13);
-            this.label17.TabIndex = 23;
-            this.label17.Text = "Max allowed stall time for static units";
+            this.button3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button3.Location = new System.Drawing.Point(13, 107);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(135, 23);
+            this.button3.TabIndex = 7;
+            this.button3.Text = "Move Down";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
-            // antistallwindow
+            // button6
             // 
-            this.antistallwindow.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.antistallwindow.Location = new System.Drawing.Point(295, 132);
-            this.antistallwindow.Name = "antistallwindow";
-            this.antistallwindow.Size = new System.Drawing.Size(80, 20);
-            this.antistallwindow.TabIndex = 60;
+            this.button6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button6.Location = new System.Drawing.Point(13, 133);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(135, 23);
+            this.button6.TabIndex = 10;
+            this.button6.Text = "Move to Start";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
-            // label52
+            // button7
             // 
-            this.label52.AutoSize = true;
-            this.label52.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label52.Location = new System.Drawing.Point(12, 132);
-            this.label52.Name = "label52";
-            this.label52.Size = new System.Drawing.Size(157, 13);
-            this.label52.TabIndex = 61;
-            this.label52.Text = "Ignore Antistaller At Startup time";
+            this.button7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button7.Location = new System.Drawing.Point(13, 159);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(135, 23);
+            this.button7.TabIndex = 11;
+            this.button7.Text = "Move to End";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
-            // groupBox13
+            // button4
             // 
-            this.groupBox13.Controls.Add(this.interpolate);
-            this.groupBox13.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox13.ForeColor = System.Drawing.Color.Black;
-            this.groupBox13.Location = new System.Drawing.Point(8, 334);
-            this.groupBox13.Name = "groupBox13";
-            this.groupBox13.Size = new System.Drawing.Size(553, 74);
-            this.groupBox13.TabIndex = 75;
-            this.groupBox13.TabStop = false;
-            this.groupBox13.Text = "Task List Options";
+            this.button4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button4.Location = new System.Drawing.Point(13, 185);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(135, 23);
+            this.button4.TabIndex = 8;
+            this.button4.Text = "Remove selected task";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
-            // interpolate
+            // button5
             // 
-            this.interpolate.AutoSize = true;
-            this.interpolate.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.interpolate.Location = new System.Drawing.Point(13, 33);
-            this.interpolate.Name = "interpolate";
-            this.interpolate.Size = new System.Drawing.Size(281, 17);
-            this.interpolate.TabIndex = 0;
-            this.interpolate.Text = "Insert b_rule_extreme_nofact between every task item";
-            this.interpolate.UseVisualStyleBackColor = true;
+            this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button5.Location = new System.Drawing.Point(13, 211);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(135, 23);
+            this.button5.TabIndex = 9;
+            this.button5.Text = "Clear all tasks";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
-            // label72
+            // groupBox2
             // 
-            this.label72.AutoSize = true;
-            this.label72.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.label72.Location = new System.Drawing.Point(5, 136);
-            this.label72.Name = "label72";
-            this.label72.Size = new System.Drawing.Size(339, 13);
-            this.label72.TabIndex = 66;
-            this.label72.Text = "When NTai starts it will display the message above in the chat console";
+            this.groupBox2.Controls.Add(this.currentbuildqueue);
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.ForeColor = System.Drawing.Color.Black;
+            this.groupBox2.Location = new System.Drawing.Point(805, 7);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(154, 92);
+            this.groupBox2.TabIndex = 25;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Change TaskList";
             // 
-            // label73
+            // currentbuildqueue
             // 
-            this.label73.AutoSize = true;
-            this.label73.Location = new System.Drawing.Point(8, 97);
-            this.label73.Name = "label73";
-            this.label73.Size = new System.Drawing.Size(143, 20);
-            this.label73.TabIndex = 9;
-            this.label73.Text = "When NTai attacks";
+            this.currentbuildqueue.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.currentbuildqueue.FormattingEnabled = true;
+            this.currentbuildqueue.Location = new System.Drawing.Point(6, 44);
+            this.currentbuildqueue.MaxDropDownItems = 20;
+            this.currentbuildqueue.Name = "currentbuildqueue";
+            this.currentbuildqueue.Size = new System.Drawing.Size(132, 21);
+            this.currentbuildqueue.Sorted = true;
+            this.currentbuildqueue.TabIndex = 3;
+            this.currentbuildqueue.SelectedIndexChanged += new System.EventHandler(this.currentbuildqueue_SelectedIndexChanged);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.newtasklistbox);
+            this.groupBox1.Controls.Add(this.button11);
+            this.groupBox1.Controls.Add(this.btn_CreateNewTaskList);
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox1.ForeColor = System.Drawing.Color.Black;
+            this.groupBox1.Location = new System.Drawing.Point(805, 119);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(154, 113);
+            this.groupBox1.TabIndex = 24;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "New TaskList";
+            // 
+            // newtasklistbox
+            // 
+            this.newtasklistbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.newtasklistbox.Location = new System.Drawing.Point(13, 23);
+            this.newtasklistbox.Name = "newtasklistbox";
+            this.newtasklistbox.Size = new System.Drawing.Size(135, 22);
+            this.newtasklistbox.TabIndex = 0;
+            this.newtasklistbox.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.newtasklistbox_PreviewKeyDown);
+            this.newtasklistbox.TextChanged += new System.EventHandler(this.newtasklistbox_TextChanged);
+            this.newtasklistbox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.newtasklistbox_KeyDown);
+            // 
+            // button11
+            // 
+            this.button11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button11.Location = new System.Drawing.Point(13, 77);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(135, 23);
+            this.button11.TabIndex = 23;
+            this.button11.Text = "Create New list from File";
+            this.button11.UseVisualStyleBackColor = true;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
+            // btn_CreateNewTaskList
+            // 
+            this.btn_CreateNewTaskList.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_CreateNewTaskList.Location = new System.Drawing.Point(13, 54);
+            this.btn_CreateNewTaskList.Name = "btn_CreateNewTaskList";
+            this.btn_CreateNewTaskList.Size = new System.Drawing.Size(135, 23);
+            this.btn_CreateNewTaskList.TabIndex = 1;
+            this.btn_CreateNewTaskList.Text = "Create New TaskList";
+            this.btn_CreateNewTaskList.UseVisualStyleBackColor = true;
+            this.btn_CreateNewTaskList.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // label51
+            // 
+            this.label51.AutoSize = true;
+            this.label51.Location = new System.Drawing.Point(443, 59);
+            this.label51.Name = "label51";
+            this.label51.Size = new System.Drawing.Size(316, 13);
+            this.label51.TabIndex = 22;
+            this.label51.Text = "Always check logfiles for reasons why tasks fail at /AI/NTai/logs/";
+            // 
+            // label50
+            // 
+            this.label50.AutoSize = true;
+            this.label50.Location = new System.Drawing.Point(443, 46);
+            this.label50.Name = "label50";
+            this.label50.Size = new System.Drawing.Size(242, 13);
+            this.label50.TabIndex = 21;
+            this.label50.Text = "the bottom, skipping any that fail/cannot be done.";
+            // 
+            // label49
+            // 
+            this.label49.AutoSize = true;
+            this.label49.Location = new System.Drawing.Point(443, 33);
+            this.label49.Name = "label49";
+            this.label49.Size = new System.Drawing.Size(337, 13);
+            this.label49.TabIndex = 20;
+            this.label49.Text = "Units following this tasklist will execute each task from the top down to";
+            // 
+            // label36
+            // 
+            this.label36.AutoSize = true;
+            this.label36.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label36.Location = new System.Drawing.Point(439, 3);
+            this.label36.Name = "label36";
+            this.label36.Size = new System.Drawing.Size(169, 20);
+            this.label36.TabIndex = 16;
+            this.label36.Text = "Current TaskList Items";
+            // 
+            // label35
+            // 
+            this.label35.AutoSize = true;
+            this.label35.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label35.Location = new System.Drawing.Point(6, 3);
+            this.label35.Name = "label35";
+            this.label35.Size = new System.Drawing.Size(167, 20);
+            this.label35.TabIndex = 15;
+            this.label35.Text = "Task List Items to Add";
+            // 
+            // currentqueue
+            // 
+            this.currentqueue.FormattingEnabled = true;
+            this.currentqueue.Items.AddRange(new object[] {
+            "please create a new tasklist to begin, type in the name of the",
+            "tasklist to the right and click create new tasklist to begin.",
+            "",
+            "Then add tasks using the two tabs to the left.",
+            "Todo this select a task item, then insert it using the buttons",
+            "on the right.",
+            "",
+            "When you\'re done, goto the units tab, pick a unit, and give",
+            "this tasklist to it.",
+            "",
+            "Its not enough for a tasklist to exist, you have to \'assign\'/\'give\'",
+            "it to a unit, you need to tell the unit \"this is what your doing",
+            "in this list, this list  and this list\"."});
+            this.currentqueue.Location = new System.Drawing.Point(443, 79);
+            this.currentqueue.Name = "currentqueue";
+            this.currentqueue.Size = new System.Drawing.Size(356, 576);
+            this.currentqueue.TabIndex = 4;
+            // 
+            // keywords
+            // 
+            this.keywords.Controls.Add(this.tabPage8);
+            this.keywords.Controls.Add(this.tabPage9);
+            this.keywords.Location = new System.Drawing.Point(3, 28);
+            this.keywords.Multiline = true;
+            this.keywords.Name = "keywords";
+            this.keywords.SelectedIndex = 0;
+            this.keywords.Size = new System.Drawing.Size(434, 632);
+            this.keywords.TabIndex = 2;
+            // 
+            // tabPage8
+            // 
+            this.tabPage8.Controls.Add(this.universalkeywordsList);
+            this.tabPage8.Location = new System.Drawing.Point(4, 22);
+            this.tabPage8.Name = "tabPage8";
+            this.tabPage8.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage8.Size = new System.Drawing.Size(426, 606);
+            this.tabPage8.TabIndex = 0;
+            this.tabPage8.Text = "Universal Keywords";
+            this.tabPage8.ToolTipText = "Mod independant rule based keywords";
+            this.tabPage8.UseVisualStyleBackColor = true;
+            // 
+            // universalkeywordsList
+            // 
+            this.universalkeywordsList.FormattingEnabled = true;
+            this.universalkeywordsList.Location = new System.Drawing.Point(1, 3);
+            this.universalkeywordsList.Name = "universalkeywordsList";
+            this.universalkeywordsList.Size = new System.Drawing.Size(422, 602);
+            this.universalkeywordsList.TabIndex = 0;
+            // 
+            // tabPage9
+            // 
+            this.tabPage9.Controls.Add(this.unitkeywords);
+            this.tabPage9.Location = new System.Drawing.Point(4, 22);
+            this.tabPage9.Name = "tabPage9";
+            this.tabPage9.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage9.Size = new System.Drawing.Size(426, 606);
+            this.tabPage9.TabIndex = 1;
+            this.tabPage9.Text = "Build Unit";
+            this.tabPage9.ToolTipText = "Units in the mod";
+            this.tabPage9.UseVisualStyleBackColor = true;
+            // 
+            // unitkeywords
+            // 
+            this.unitkeywords.FormattingEnabled = true;
+            this.unitkeywords.HorizontalScrollbar = true;
+            this.unitkeywords.Location = new System.Drawing.Point(3, 4);
+            this.unitkeywords.Name = "unitkeywords";
+            this.unitkeywords.Size = new System.Drawing.Size(420, 602);
+            this.unitkeywords.Sorted = true;
+            this.unitkeywords.TabIndex = 0;
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.label27);
+            this.tabPage5.Controls.Add(this.toolStrip1);
+            this.tabPage5.Controls.Add(this.quicksetchecks);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(967, 666);
+            this.tabPage5.TabIndex = 9;
+            this.tabPage5.Text = "Set several unit properties at once";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // label27
+            // 
+            this.label27.AutoSize = true;
+            this.label27.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label27.Location = new System.Drawing.Point(8, 28);
+            this.label27.Name = "label27";
+            this.label27.Size = new System.Drawing.Size(824, 16);
+            this.label27.TabIndex = 2;
+            this.label27.Text = "Use this page to set settings for lots of units at once, select a property in the" +
+                " combo box above and make your changes, then apply settings";
+            // 
+            // toolStrip1
+            // 
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripLabel1,
+            this.QuicksetCombo,
+            this.toolStripButton1});
+            this.toolStrip1.Location = new System.Drawing.Point(3, 3);
+            this.toolStrip1.Name = "toolStrip1";
+            this.toolStrip1.Size = new System.Drawing.Size(961, 25);
+            this.toolStrip1.TabIndex = 1;
+            this.toolStrip1.Text = "toolStrip1";
+            // 
+            // toolStripLabel1
+            // 
+            this.toolStripLabel1.Name = "toolStripLabel1";
+            this.toolStripLabel1.Size = new System.Drawing.Size(154, 22);
+            this.toolStripLabel1.Text = "Select a property to change:";
+            // 
+            // QuicksetCombo
+            // 
+            this.QuicksetCombo.Items.AddRange(new object[] {
+            "Attackers",
+            "Kamikaze",
+            "Fire at will",
+            "Return Fire",
+            "Hold Fire",
+            "Roam",
+            "Maneouvre",
+            "Hold Position",
+            "NeverAntistall"});
+            this.QuicksetCombo.Name = "QuicksetCombo";
+            this.QuicksetCombo.Size = new System.Drawing.Size(121, 25);
+            this.QuicksetCombo.SelectedIndexChanged += new System.EventHandler(this.QuicksetCombo_SelectedIndexChanged);
+            this.QuicksetCombo.Click += new System.EventHandler(this.QuicksetCombo_Click);
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(135, 22);
+            this.toolStripButton1.Text = "Apply Changes to Units";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            // 
+            // quicksetchecks
+            // 
+            this.quicksetchecks.FormattingEnabled = true;
+            this.quicksetchecks.Location = new System.Drawing.Point(8, 62);
+            this.quicksetchecks.Name = "quicksetchecks";
+            this.quicksetchecks.Size = new System.Drawing.Size(951, 589);
+            this.quicksetchecks.TabIndex = 0;
+            // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.label65);
+            this.tabPage4.Controls.Add(this.refresh);
+            this.tabPage4.Controls.Add(this.debugsave);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(967, 666);
+            this.tabPage4.TabIndex = 7;
+            this.tabPage4.Text = "Debug";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // label65
+            // 
+            this.label65.AutoSize = true;
+            this.label65.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label65.Location = new System.Drawing.Point(3, 609);
+            this.label65.Name = "label65";
+            this.label65.Size = new System.Drawing.Size(267, 20);
+            this.label65.TabIndex = 2;
+            this.label65.Text = "This Page is for debug purposes";
+            // 
+            // refresh
+            // 
+            this.refresh.Location = new System.Drawing.Point(839, 609);
+            this.refresh.Name = "refresh";
+            this.refresh.Size = new System.Drawing.Size(91, 24);
+            this.refresh.TabIndex = 1;
+            this.refresh.Text = "refresh";
+            this.refresh.UseVisualStyleBackColor = true;
+            this.refresh.Click += new System.EventHandler(this.refresh_Click);
+            this.refresh.MouseClick += new System.Windows.Forms.MouseEventHandler(this.refresh_MouseClick);
+            // 
+            // debugsave
+            // 
+            this.debugsave.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.debugsave.BackColor = System.Drawing.Color.White;
+            this.debugsave.Location = new System.Drawing.Point(3, 3);
+            this.debugsave.Name = "debugsave";
+            this.debugsave.ReadOnly = true;
+            this.debugsave.Size = new System.Drawing.Size(956, 603);
+            this.debugsave.TabIndex = 0;
+            this.debugsave.Text = "";
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.DefaultExt = "tdf";
+            this.openFileDialog.Filter = "TDF configs (*.tdf)|*.tdf";
+            this.openFileDialog.Title = "Open config";
+            this.openFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.DefaultExt = "txt";
+            this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.Filter = "commar seperated list (*.txt)|*.txt";
             // 
             // Form1
             // 
@@ -3078,22 +3078,14 @@ namespace NTaiToolkit
             this.groupBox5.PerformLayout();
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
-            this.tabPage3.ResumeLayout(false);
-            this.tabPage3.PerformLayout();
-            this.groupBox3.ResumeLayout(false);
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            this.keywords.ResumeLayout(false);
-            this.tabPage8.ResumeLayout(false);
-            this.tabPage9.ResumeLayout(false);
-            this.tabPage5.ResumeLayout(false);
-            this.tabPage5.PerformLayout();
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
-            this.tabPage4.ResumeLayout(false);
-            this.tabPage4.PerformLayout();
             this.tabPage2.ResumeLayout(false);
+            this.groupBox13.ResumeLayout(false);
+            this.groupBox13.PerformLayout();
+            this.MaxAntiStallBox.ResumeLayout(false);
+            this.MaxAntiStallBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StallTimeMobile)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.StallTimeImMobile)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.antistallwindow)).EndInit();
             this.groupBox9.ResumeLayout(false);
             this.groupBox9.PerformLayout();
             this.groupBox10.ResumeLayout(false);
@@ -3116,13 +3108,21 @@ namespace NTaiToolkit
             ((System.ComponentModel.ISupportInitialize)(this.energystorageRule)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.factorymetalgapRule)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.factoryenergyRule)).EndInit();
-            this.MaxAntiStallBox.ResumeLayout(false);
-            this.MaxAntiStallBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.StallTimeMobile)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StallTimeImMobile)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.antistallwindow)).EndInit();
-            this.groupBox13.ResumeLayout(false);
-            this.groupBox13.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
+            this.tabPage3.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.keywords.ResumeLayout(false);
+            this.tabPage8.ResumeLayout(false);
+            this.tabPage9.ResumeLayout(false);
+            this.tabPage5.ResumeLayout(false);
+            this.tabPage5.PerformLayout();
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.ResumeLayout(false);
 
         }
