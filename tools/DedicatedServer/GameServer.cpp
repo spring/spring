@@ -10,7 +10,12 @@
 #include "Game.h"
 #endif
 
-//#include "GameSetup.h"
+#ifndef DEDICATED
+#include "GameSetup.h"
+#else
+#include "GameSetupData.h"
+extern CGameSetupData* gameSetup;
+#endif
 #include "System/StdAfx.h"
 #include "System/BaseNetProtocol.h"
 #include "System/DemoReader.h"
@@ -83,13 +88,13 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		hostif = 0;
 	}
 
-	/*if (gameSetup) {
+	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
-		userSpeedFactor = gs->userSpeedFactor;
-		internalSpeed = gs->speedFactor;
+		/*userSpeedFactor = gs->userSpeedFactor;
+		internalSpeed = gs->speedFactor;*/
 	}
-	else*/
+	else
 	{
 		maxUserSpeed=3;
 		minUserSpeed=0.3f;
@@ -675,11 +680,11 @@ void CGameServer::GenerateAndSendGameID()
 
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
-	/*if (gameSetup != NULL) {
+	if (gameSetup != NULL) {
 		CRC crc;
 		crc.UpdateData((const unsigned char*)gameSetup->gameSetupText, gameSetup->gameSetupTextLength);
 		gameID.intArray[2] = crc.GetCRC();
-	}*/
+	}
 
 	// Fourth dword is CRC of the network buffer, which should be pretty random.
 	// (depends on start positions, chat messages, user input, etc.)
@@ -698,11 +703,11 @@ void CGameServer::StartGame()
 		if(players[a])
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
-	/*if(gameSetup){
-		for(unsigned a=0; (int)a < gs->activeTeams;a++){
+	if(gameSetup){
+		/*for(unsigned a=0; (int)a < gs->activeTeams;a++){
 			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-		}
-	}*/
+		}*/
+	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(userSpeedFactor>maxUserSpeed)
@@ -855,11 +860,11 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
-	/*if(gameSetup){
-		for(unsigned a=0; (int)a < gs->activeTeams;a++){
+	if(gameSetup){
+		/*for(unsigned a=0; (int)a < gs->activeTeams;a++){
 			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-		}
-	}*/
+		}*/
+	}
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
 	SendSystemMsg("Client connected on slot %i", hisNewNumber);
 	serverNet->FlushNet();

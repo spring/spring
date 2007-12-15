@@ -1,5 +1,7 @@
 #include "Game/GameServer.h"
+#include "GameSetupData.h"
 
+CGameSetupData* gameSetup = 0;
 
 int main(int argc, char *argv[])
 {
