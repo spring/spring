@@ -32,7 +32,16 @@ CDemoReader::CDemoReader(const std::string& filename)
 	playbackDemo->Read((void*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
-	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) || fileHeader.version != DEMOFILE_VERSION || fileHeader.headerSize != sizeof(fileHeader) || strcmp(fileHeader.versionString, VERSION_STRING)) {
+	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
+		|| fileHeader.version != DEMOFILE_VERSION
+		|| fileHeader.headerSize != sizeof(fileHeader)
+		// Don't compare spring version in debug mode: we don't want to make
+		// debugging SVN demos impossible (because VERSION_STRING is different
+		// each build.)
+#ifndef DEBUG
+		|| strcmp(fileHeader.versionString, VERSION_STRING)
+#endif
+	) {
 		delete playbackDemo;
 		playbackDemo = NULL;
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
