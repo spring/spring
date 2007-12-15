@@ -742,8 +742,8 @@ void CGameServer::CheckForGameEnd()
 	}
 
 	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
-	unsigned numActiveAllyTeams = 0;
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
+	unsigned numActiveAllyTeams = 0;
 
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia)

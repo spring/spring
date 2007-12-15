@@ -81,7 +81,7 @@ vector<string> CSimpleParser::Tokenize(const string& line, int minWords)
 			break;
 		}
 		string word;
-		if ((minWords > 0) && (words.size() >= minWords)) {
+		if ((minWords > 0) && ((int)words.size() >= minWords)) {
 			word = line.substr(start);
 			// strip trailing whitespace
 			string::size_type pos = word.find_last_not_of(" \t");

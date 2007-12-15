@@ -46,7 +46,7 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	of->size = f->size;
 	of->data = (char*)malloc(of->size);
 
-	if (HPIGet(of->data, f, 0, of->size) != of->size) {
+	if (HPIGet(of->data, f, 0, of->size) != (unsigned)of->size) {
 		free(of->data);
 		delete of;
 		return 0;

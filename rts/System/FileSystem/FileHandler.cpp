@@ -15,15 +15,13 @@ using namespace std;
 /******************************************************************************/
 /******************************************************************************/
 
-CFileHandler::CFileHandler(const char* filename, const char* modes)
-: hpiFileBuffer(NULL), hpiOffset(0), filesize(-1), ifs(NULL)
+CFileHandler::CFileHandler(const char* filename, const char* modes) : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
 	Init(filename, modes);
 }
 
 
-CFileHandler::CFileHandler(const string& filename, const string& modes)
-: hpiFileBuffer(NULL), hpiOffset(0), filesize(-1), ifs(NULL)
+CFileHandler::CFileHandler(const string& filename, const string& modes) : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
 	Init(filename, modes);
 }
@@ -409,7 +407,7 @@ bool CFileHandler::InsertBaseDirs(set<string>& dirSet,
 string CFileHandler::AllowModes(const string& modes, const string& allowed)
 {
 	string newModes;
-	for (int i = 0; i < modes.size(); i++) {
+	for (unsigned i = 0; i < modes.size(); i++) {
 		if (allowed.find(modes[i]) != string::npos) {
 			newModes += modes[i];
 		}
@@ -421,7 +419,7 @@ string CFileHandler::AllowModes(const string& modes, const string& allowed)
 string CFileHandler::ForbidModes(const string& modes, const string& forbidden)
 {
 	string newModes;
-	for (int i = 0; i < modes.size(); i++) {
+	for (unsigned i = 0; i < modes.size(); i++) {
 		if (forbidden.find(modes[i]) == string::npos) {
 			newModes += modes[i];
 		}
