@@ -37,6 +37,9 @@ public:
 	RawPacket* GetData(const unsigned conNum);
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
+	
+	bool loading;
+	void UpdateLoop();
 
 private:
 	CDemoRecorder* record;

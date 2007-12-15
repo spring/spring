@@ -142,17 +142,17 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 	float3 losPos=unit->pos;
 	losPos.CheckInBounds();
 
-	int allyteam=unit->allyteam;
+	const int allyteam=unit->allyteam;
 	unit->lastLosUpdate=gs->frameNum;
 
 	if(unit->losRadius<=0){
 		return;
 	}
-	int xmap=(int)(losPos.x*invLosDiv);
-	int ymap=(int)(losPos.z*invLosDiv);
-	int baseSquare=max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
-	int baseX=max(0,min(losSizeX-1,xmap));
-	int baseY=max(0,min(losSizeY-1,(ymap)));
+	const int xmap=(int)(losPos.x*invLosDiv);
+	const int ymap=(int)(losPos.z*invLosDiv);
+	const int baseSquare=max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
+	const int baseX=max(0,min(losSizeX-1,xmap));
+	const int baseY=max(0,min(losSizeY-1,(ymap)));
 
 	LosInstance* instance;
 	if(redoCurrent){
@@ -198,8 +198,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	assert(instance->allyteam < gs->activeAllyTeams);
 	assert(instance->allyteam >= 0);
 
-	int allyteam=instance->allyteam;
-	int mapSquare=instance->baseSquare;
+	const int allyteam=instance->allyteam;
+	const int mapSquare=instance->baseSquare;
 
 	LosAddAir(instance);
 
@@ -214,7 +214,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	for(LosTable::iterator li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
-		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
+		const float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
 		float maxAng1=-1000;
 		float maxAng2=-1000;
 		float maxAng3=-1000;
