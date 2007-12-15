@@ -13,13 +13,12 @@ namespace ntai {
 		bool IsValid(){
 			return valid;
 		}
-		bool HasBuilder(int i);
+		//bool HasBuilder(int i);
 		void AddBuilder(int i);
 		bool HasBuilders();
 		void RemoveBuilder(int i);
 		void RemoveAllBuilders();
 		int GetBuilderCount();
-		int* GetBuilders();
 
 		uint id;
 
@@ -32,8 +31,9 @@ namespace ntai {
 		bool inFactory;
 	private:
 		bool valid;
-		boost::mutex plan_mutex;
-		set<int> builders;				// the builder
+		int bcount;
+		//boost::mutex plan_mutex;
+		//set<int> builders;				// the builder
 
 	};
 
@@ -72,11 +72,11 @@ namespace ntai {
 
 		deque<CBPlan* >* BPlans;
 
-		void WipePlansForBuilder(int unit);
+		//bool WipePlansForBuilder(int unit);
 
-		int WhatIsUnitBuilding(int builder);
+		//int WhatIsUnitBuilding(int builder);
 
-		bool UnitTargetStartedBuilding(int builder);
+		//bool UnitTargetStartedBuilding(int builder);
 
 		deque<CBPlan* >::iterator OverlappingPlans(float3 pos,const UnitDef* ud);
 

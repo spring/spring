@@ -90,7 +90,7 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			if(qi == G->Manufacturer->BPlans->end()){
 				NLOG("CKeywordConstructionTask::RecieveMessage :: WipePlansForBuilder");
 				G->L.print("CKeywordConstructionTask::RecieveMessage wiping and creaiing the plan :: " + building->GetUnitDef()->name);
-				G->Manufacturer->WipePlansForBuilder(unit);
+
 
 				CBPlan* Bplan = new CBPlan();
 				Bplan->started = false;

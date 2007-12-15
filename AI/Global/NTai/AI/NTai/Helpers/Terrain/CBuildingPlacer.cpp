@@ -357,14 +357,7 @@ namespace ntai {
 								//
 								if(!i->started){
 
-									if(i->HasBuilders()){
-										int* a = i->GetBuilders();
-										for(int j = 0; j < i->GetBuilderCount(); j++){
-											G->Manufacturer->WipePlansForBuilder(a[j]);
-										}
-										delete [] a;
-										i->RemoveAllBuilders();
-									}
+									i->RemoveAllBuilders();
 									delete i;
 
 									G->Manufacturer->BPlans->erase(k);
