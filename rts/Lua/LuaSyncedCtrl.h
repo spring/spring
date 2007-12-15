@@ -63,6 +63,7 @@ class LuaSyncedCtrl {
 		static int SetUnitBlocking(lua_State* L);
 		static int SetUnitShieldState(lua_State* L);
 		static int SetUnitTravel(lua_State* L);
+		static int SetUnitMoveGoal(lua_State* L);
 		static int SetUnitLineage(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
 		static int SetUnitTarget(lua_State* L);

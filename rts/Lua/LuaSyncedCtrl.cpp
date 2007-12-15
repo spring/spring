@@ -122,6 +122,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
+	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
@@ -1393,6 +1394,38 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
 		const bool dgun = lua_isboolean(L, 3) && lua_toboolean(L, 3);
 		unit->AttackUnit(target, dgun);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L);
+	if (args >= 4) {
+		float radius = 0.0f;
+		float speed = unit->maxSpeed * 2.0f;
+		const float3 pos((float)lua_tonumber(L, 2),
+		                 (float)lua_tonumber(L, 3),
+		                 (float)lua_tonumber(L, 4));
+		if (args >= 5) {
+			radius = (float)lua_tonumber(L, 5);
+		}
+		if (args >= 6) {
+			speed = (float)lua_tonumber(L, 6);
+		}
+
+		if (unit->moveType == NULL) return 0;
+
+		unit->moveType->StartMoving(pos, radius, speed);
+	}
+	else {
+		luaL_error(L, "Too few arguments to SetUnitMoveGoal(unit, posx, posy, posz[, radius[, speed]])");
 	}
 	return 0;
 }
