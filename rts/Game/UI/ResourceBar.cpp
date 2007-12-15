@@ -264,12 +264,12 @@ bool CResourceBar::MousePress(int x, int y, int button)
 			if(InBox(mx,my,box+metalBox)){
 				moveBox=false;
 				float metalShare=max(0.f,min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
-				net->SendSetShare(gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
+				net->SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 			}
 			if(InBox(mx,my,box+energyBox)){
 				moveBox=false;
 				float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
-				net->SendSetShare(gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
+				net->SendSetShare(gu->myPlayerNum, gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
 			}
 		}
 		return true;

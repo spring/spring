@@ -47,7 +47,7 @@ enum NETMSG {
 	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
 	NETMSG_ATTEMPTCONNECT   = 25, // uchar myPlayerNum, networkVersion;
 	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
-	NETMSG_SETSHARE         = 27, // uchar myTeam; float metalShareFraction, energyShareFraction;
+	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
 	NETMSG_SENDPLAYERSTAT   = 28, //
 	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
 	NETMSG_GAMEOVER         = 30, //
@@ -113,7 +113,7 @@ public:
 	void SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	void SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
 	void SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
-	void SendSetShare(uchar myTeam, float metalShareFraction, float energyShareFraction);
+	void SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	void SendSendPlayerStat();
 	void SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
 	void SendGameOver();

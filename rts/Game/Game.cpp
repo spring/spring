@@ -1867,12 +1867,13 @@ bool CGame::Update()
 		}
 	}
 
-	if (gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback && allReady &&
-	    (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup)) {
+	if (gameServer && gameServer->WaitsOnCon() && !net->localDemoPlayback && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup))
+	{
 		chatting = false;
 		userWriting = false;
 		writingPos = 0;
-		    net->SendStartPlaying();
+		net->SendRandSeed(gs->randSeed);
+		net->SendStartPlaying();
 	}
 
 	return true;
@@ -3057,12 +3058,13 @@ bool CGame::ClientReadNet()
 			}
 
 			case NETMSG_SETSHARE: {
-				int team=inbuf[1];
+				int player=inbuf[1];
+				int team=inbuf[2];
 				if(team>=gs->activeTeams || team<0){
 					logOutput.Print("Got invalid team num %i in setshare msg",team);
 				} else {
-					float metalShare=*(float*)&inbuf[2];
-					float energyShare=*(float*)&inbuf[6];
+					float metalShare=*(float*)&inbuf[3];
+					float energyShare=*(float*)&inbuf[7];
 
 					if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
 						gs->Team(team)->metalShare  = metalShare;
@@ -3071,7 +3073,7 @@ bool CGame::ClientReadNet()
 						gs->Team(team)->energyShare = energyShare;
 					}
 				}
-				AddTraffic(-1000 - team, packetCode, dataLength); // NOTE: team code
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 			case NETMSG_MAPDRAW:{
