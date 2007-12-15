@@ -691,6 +691,9 @@ namespace ntai {
 
 	void Global::UnitDestroyed(int unit, int attacker){
 
+		if(!(ValidUnitID(unit)&&ValidUnitID(attacker))){
+			return;
+		}
 		units.erase(unit);
 
 		idlenextframe.erase(unit);

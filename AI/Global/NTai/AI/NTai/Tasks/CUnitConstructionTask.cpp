@@ -91,7 +91,7 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 			if(qi == G->Manufacturer->BPlans->end()){
 				NLOG("CUnitConstructionTask::RecieveMessage :: WipePlansForBuilder");
 				G->L.print("CUnitConstructionTask::RecieveMessage wiping and creaiing the plan :: " + builder->GetUnitDef()->name);
-				G->Manufacturer->WipePlansForBuilder(unit);
+
 				CBPlan* Bplan = new CBPlan();
 				Bplan->started = false;
 				Bplan->AddBuilder(unit);

@@ -471,8 +471,6 @@ bool CActions::DGunNearby(int uid){
             int k = en[i];
             delete [] en;
 
-            G->Manufacturer->WipePlansForBuilder(uid);
-
             if(edt->GetUnitDef()->canDGun){
 
                 int r = (int)G->Pl->ReclaimTime(utd->GetUnitDef(), edt->GetUnitDef(), G->chcb->GetUnitHealth(k));
