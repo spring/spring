@@ -182,6 +182,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
+	CR_MEMBER(crossSize),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
 
@@ -241,6 +242,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	showFPS   = !!configHandler.GetInt("ShowFPS",   0);
 	showClock = !!configHandler.GetInt("ShowClock", 1);
+
+	crossSize = configHandler.GetFloat("CrossSize", 10.0f);
 
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
@@ -1488,6 +1491,14 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		configHandler.SetInt("ShowClock", showClock ? 1 : 0);
 	}
+	else if (cmd == "cross") {
+		if (action.extra.empty()) {
+			crossSize = (crossSize > 0.0f) ? 0.0f : 10.0f;
+		} else {
+			crossSize = atof(action.extra.c_str());
+		}
+		configHandler.SetFloat("CrossSize", crossSize);
+	}
 	else if (cmd == "fps") {
 		if (action.extra.empty()) {
 			showFPS = !showFPS;
@@ -2125,15 +2136,15 @@ bool CGame::Draw()
 
 	luaCallIns.DrawScreenEffects();
 
-	if(mouse->locked){
-		glColor4f(1,1,1,0.5f);
+	if (mouse->locked && (crossSize > 0.0f)) {
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 		glLineWidth(1.49f);
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-		glVertex2f(0.5f-10.0f/gu->viewSizeX,0.5f);
-		glVertex2f(0.5f+10.0f/gu->viewSizeX,0.5f);
-		glVertex2f(0.5f,0.5f-10.0f/gu->viewSizeY);
-		glVertex2f(0.5f,0.5f+10.0f/gu->viewSizeY);
+		glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
+		glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
+		glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
+		glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
 		glLineWidth(1.0f);
 		glEnd();
 	}
