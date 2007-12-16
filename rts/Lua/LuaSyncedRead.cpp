@@ -3838,23 +3838,27 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	}
 
 	// send the values
-	bool inLos = false;
-	bool radar = false;
+	bool inLos    = false;
+	bool inAirLos = false;
+	bool radar    = false;
 	if (allyTeamID >= 0) {
-		inLos = loshandler->InLos(pos, allyTeamID);
-		radar = radarhandler->InRadar(pos, allyTeamID);
+		inLos    = loshandler->InLos(pos, allyTeamID);
+		inAirLos = loshandler->InAirLos(pos, allyTeamID);
+		radar    = radarhandler->InRadar(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < gs->activeAllyTeams; at++) {
-			inLos = inLos || loshandler->InLos(pos, at);
-			radar = radar || radarhandler->InRadar(pos, at);
+			inLos    = inLos    || loshandler->InLos(pos, at);
+			inAirLos = inAirLos || loshandler->InAirLos(pos, at);
+			radar    = radar    || radarhandler->InRadar(pos, at);
 		}
 	}
 	lua_pushboolean(L, inLos || radar);
 	lua_pushboolean(L, inLos);
+	lua_pushboolean(L, inAirLos);
 	lua_pushboolean(L, radar);
 
-	return 3;
+	return 4;
 }
 
 
