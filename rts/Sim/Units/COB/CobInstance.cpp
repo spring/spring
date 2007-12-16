@@ -106,6 +106,7 @@
 #define CEG_DAMAGE                99 // set
 #define COB_ID                   100 // get
 #define PLAY_SOUND				 101 // get, so multiple args can be passed
+#define KILL_UNIT                102 // get KILL_UNIT(unitId, SelfDestruct=true, Reclaimed=false)
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
 #define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
@@ -117,7 +118,6 @@
 #define FLANK_B_MOBILITY_ADD     122 // set or get
 #define FLANK_B_MAX_DAMAGE       123 // set or get
 #define FLANK_B_MIN_DAMAGE       124 // set or get
-
 
 // NOTE: shared variables use codes [1024 - 5119]
 
@@ -1260,6 +1260,18 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int((unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage) * COBSCALE);
 	case FLANK_B_MIN_DAMAGE:
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
+	case KILL_UNIT: {
+		if (p1 >= 0 && p1 < MAX_UNITS) {
+			CUnit *u = p1 ? uh->units[p1] : unit;
+			if (!u) {
+				return 0;
+			}
+			if (u->beingBuilt) u->KillUnit(false, true, NULL); // no explosions and no corpse for units under construction
+			else u->KillUnit(p2!=0, p3!=0, NULL);
+			return 1;
+		}
+		return 0;
+	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
 			return globalVars[val - GLOBAL_VAR_START];
