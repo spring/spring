@@ -1667,7 +1667,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
-	else if (cmd == "pastetext") {
+	// Break up the if/else chain to workaround MSVC compiler limit
+	// "fatal error C1061: compiler limit : blocks nested too deeply"
+	else notfound1=true;
+	if (notfound1)
+	if (cmd == "pastetext") {
 		if (userWriting){
 			if (!action.extra.empty()) {
 				userInput.insert(writingPos, action.extra);
@@ -1681,8 +1685,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			return 0;
 		}
 	}
-	else notfound1=true;
-	if (notfound1) if (cmd == "buffertext") {
+	else if (cmd == "buffertext") {
 		if (!action.extra.empty()) {
 			consoleHistory->AddLine(action.extra);
 		}
