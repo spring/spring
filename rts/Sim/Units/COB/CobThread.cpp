@@ -83,7 +83,7 @@ const string &CCobThread::GetName()
     @returns min(size, stack.size()) */
 int CCobThread::CheckStack(int size)
 {
-	if ((unsigned)size >= stack.size()) {
+	if ((unsigned)size > stack.size()) {
 		std::stringstream s;
 		s << "stack not large enough, need: " << size << ", have: "
 			<< stack.size() << " (too few arguments passed to function?)";
