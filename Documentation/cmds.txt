@@ -75,7 +75,6 @@ clock    [0|1]
 fps      [0|1]
 endgraph [0|1]
 
-
 quit
 quitwarn
 pause
@@ -141,6 +140,8 @@ trackmode [0|1|2]
 
 gameinfo
 gameinfoclose
+
+cross <size>  -- locked mouse cross size
 
 volume <float>  -- 0.0 to 1.0
 
