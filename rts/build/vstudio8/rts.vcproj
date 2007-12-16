@@ -69,7 +69,7 @@
 				OutputFile="../../../game/debug.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
-				IgnoreDefaultLibraryNames="libc.lib"
+				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/spring.pdb"
 				SubSystem="2"

@@ -293,10 +293,13 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 		t->SetCallback(cb, p1, p2);
 
 	if (res == -1) {
+		unsigned int i = 0, argc = t->CheckStack(args.size());
 		//Retrieve parameter values from stack
-		for (unsigned int i = 0; i < args.size(); ++i) {
+		for (; i < argc; ++i)
 			args[i] = t->GetStackVal(i);
-		}
+		//Set erroneous parameters to 0
+		for (; i < args.size(); ++i)
+			args[i] = 0;
 		delete t;
 		return 0;
 	}

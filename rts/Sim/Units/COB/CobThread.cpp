@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <sstream>
 #include "CobThread.h"
 #include "CobFile.h"
 #include "CobInstance.h"
@@ -78,7 +79,21 @@ const string &CCobThread::GetName()
 	return script.scriptNames[callStack[0].functionId];
 }
 
-//Returns the value at pos in the stack. Neater than exposing the actual stack
+/** @brief Checks whether the stack has at least size items.
+    @returns min(size, stack.size()) */
+int CCobThread::CheckStack(int size)
+{
+	if ((unsigned)size >= stack.size()) {
+		std::stringstream s;
+		s << "stack not large enough, need: " << size << ", have: "
+			<< stack.size() << " (too few arguments passed to function?)";
+		ShowError(s.str());
+		return stack.size();
+	}
+	return size;
+}
+
+/** @brief Returns the value at pos in the stack. Neater than exposing the actual stack */
 int CCobThread::GetStackVal(int pos)
 {
 	return stack[pos];
@@ -746,6 +761,9 @@ int CCobThread::Tick(int deltaTime)
 // Shows an errormessage which includes the current state of the script interpreter
 void CCobThread::ShowError(const string& msg)
 {
+	static int spamPrevention = 100;
+	if (spamPrevention < 0) return;
+	--spamPrevention;
 	if (callStack.size() == 0)
 		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
 	else
