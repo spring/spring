@@ -376,7 +376,7 @@ void CTAAirMoveType::UpdateFlying()
 						}
 					} else {
 						wantedSpeed = ZeroVector;
-						SetState(AIRCRAFT_HOVERING);
+						// SetState(AIRCRAFT_HOVERING);
 					}
 				} else {
 					wantedHeight = orgWantedHeight;
@@ -635,7 +635,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	if (lastColWarningType == 2) {
 		const float3 dir = lastColWarning->midPos - owner->midPos;
 		const float3 sdir = lastColWarning->speed - speed;
-		// const float3 OLD = lastColWarning->midPos + lastColWarning->speed * 20 - owner->midPos-speed * 20;
+
 		if (speed.dot(dir + sdir * 20.0f) < 0.0f) {
 			if (lastColWarning->midPos.y > owner->pos.y) {
 				wh -= 30;
