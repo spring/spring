@@ -442,8 +442,9 @@ void CTAAirMoveType::UpdateFlying()
 	// don't slow down except if near ground level
 
 	/// if ((flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) || (pos.y - ground->GetHeight(pos.x, pos.z) < orgWantedHeight / 2)) {
+	if (flyState != FLY_ATTACKING && dist < breakDistance) {
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
-	/// }
+	}
 
 	wantedSpeed = dir.Normalize() * realMax;
 
@@ -753,44 +754,42 @@ void CTAAirMoveType::Update()
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
 				float3 relPos = unit->localmodel->GetPiecePos(reservedPad->GetPiece());
-				float3 pos=unit->pos + unit->frontdir*relPos.z + unit->updir*relPos.y + unit->rightdir*relPos.x;
-				if(padStatus==0){
-					if(aircraftState!=AIRCRAFT_FLYING && aircraftState!=AIRCRAFT_TAKEOFF)
+				float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+
+				if (padStatus == 0) {
+					if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
 						SetState(AIRCRAFT_FLYING);
 
-					goalPos=pos;
+					goalPos = pos;
 
-					if(pos.distance2D(owner->pos)<400){
-						padStatus=1;
+					if (pos.distance2D(owner->pos) < 400) {
+						padStatus = 1;
 					}
-					//geometricObjects->AddLine(owner->pos,pos,1,0,1);
 				} else if (padStatus == 1) {
-					if(aircraftState!=AIRCRAFT_FLYING)
+					if (aircraftState != AIRCRAFT_FLYING)
 						SetState(AIRCRAFT_FLYING);
-					flyState=FLY_LANDING;
+					flyState = FLY_LANDING;
 
-					goalPos=pos;
-					reservedLandingPos=pos;
-					wantedHeight=pos.y-ground->GetHeight(pos.x,pos.z);
+					goalPos = pos;
+					reservedLandingPos = pos;
+					wantedHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 
-					if(owner->pos.distance(pos)<3 || aircraftState==AIRCRAFT_LANDED){
-						padStatus=2;
+					if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED) {
+						padStatus = 2;
 					}
-					//geometricObjects->AddLine(owner->pos,pos,10,0,1);
 				} else {
-					if (aircraftState!=AIRCRAFT_LANDED)
+					if (aircraftState != AIRCRAFT_LANDED)
 						SetState(AIRCRAFT_LANDED);
 
-					owner->pos=pos;
+					owner->pos = pos;
+					owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
+					owner->currentFuel = min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
-					owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
-					owner->currentFuel = min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
-
-					if(owner->health>=owner->maxHealth-1 && owner->currentFuel >= owner->unitDef->maxFuel){
+					if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
 						airBaseHandler->LeaveLandingPad(reservedPad);
-						reservedPad=0;
-						padStatus=0;
-						goalPos=oldGoalPos;
+						reservedPad = 0;
+						padStatus = 0;
+						goalPos = oldGoalPos;
 						SetState(AIRCRAFT_TAKEOFF);
 					}
 				}
@@ -818,8 +817,10 @@ void CTAAirMoveType::Update()
 			}
 		}
 	}
+
+	// Banking requires deltaSpeed.y = 0
 	deltaSpeed = speed - lastSpeed;
-	deltaSpeed.y = 0;					// Banking requires this
+	deltaSpeed.y = 0;
 
 	// Turn and bank and move
 	UpdateHeading();
@@ -829,32 +830,35 @@ void CTAAirMoveType::Update()
 	// Push other units out of the way
 	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
 		oldpos=pos;
-		if(!dontCheckCol){
-			vector<CUnit*> nearUnits=qf->GetUnitsExact(pos,owner->radius+6);
+		if (!dontCheckCol) {
+			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 			vector<CUnit*>::iterator ui;
-			for(ui=nearUnits.begin();ui!=nearUnits.end();++ui){
-				if((*ui)->transporter)
+
+			for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+				if ((*ui)->transporter)
 					continue;
-				float sqDist=(pos-(*ui)->pos).SqLength();
-				float totRad=owner->radius+(*ui)->radius;
-				if(sqDist<totRad*totRad && sqDist!=0){
-					float dist=sqrt(sqDist);
-					float3 dif=pos-(*ui)->pos;
-					dif/=dist;
-					if((*ui)->mass>=100000 || (*ui)->immobile){
-						pos-=dif*(dist-totRad);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;
-						owner->speed*=0.99f;
+
+				float sqDist = (pos-(*ui)->pos).SqLength();
+				float totRad = owner->radius + (*ui)->radius;
+				if (sqDist < totRad * totRad && sqDist != 0) {
+					float dist = sqrt(sqDist);
+					float3 dif = pos - (*ui)->pos;
+					dif /= dist;
+
+					if ((*ui)->mass >= 100000 || (*ui)->immobile) {
+						pos -= dif * (dist - totRad);
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->speed *= 0.99f;
 					} else {
-						float part=owner->mass/(owner->mass+(*ui)->mass);
-						pos-=dif*(dist-totRad)*(1-part);
-						owner->midPos=pos+owner->frontdir*owner->relMidPos.z + owner->updir*owner->relMidPos.y + owner->rightdir*owner->relMidPos.x;
-						CUnit* u=(CUnit*)(*ui);
-						u->pos+=dif*(dist-totRad)*(part);
-						u->midPos=u->pos+u->frontdir*u->relMidPos.z + u->updir*u->relMidPos.y + u->rightdir*u->relMidPos.x;
-						float colSpeed=-owner->speed.dot(dif)+u->speed.dot(dif);
-						owner->speed+=dif*colSpeed*(1-part);
-						u->speed-=dif*colSpeed*(part);
+						float part = owner->mass / (owner->mass + (*ui)->mass);
+						pos -= dif * (dist - totRad) * (1 - part);
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						CUnit* u = (CUnit*) (*ui);
+						u->pos += dif * (dist - totRad) * (part);
+						u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+						float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
+						owner->speed += dif * colSpeed * (1 - part);
+						u->speed -= dif * colSpeed * (part);
 					}
 				}
 			}
