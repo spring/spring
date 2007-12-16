@@ -64,6 +64,7 @@ public:
 	void SetCallback(CBCobThreadFinish cb, void *p1, void *p2);
 	string GetOpcodeName(int opcode);
 	void DependentDied(CObject* o);
+	int CheckStack(int size);
 	int GetStackVal(int pos);
 	const string &GetName();
 	int GetWakeTime() const;

@@ -40,7 +40,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// Don't compare spring version in debug mode: we don't want to make
 		// debugging SVN demos impossible (because VERSION_STRING is different
 		// each build.)
-#ifndef DEBUG
+#ifndef _DEBUG
 		|| strcmp(fileHeader.versionString, VERSION_STRING)
 #endif
 	) {

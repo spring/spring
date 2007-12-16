@@ -639,7 +639,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 						c2.params = ci->params;
 						c2.options = c.options;
 						commandQue.push_back(c2);
-						ci=commandQue.begin();
+						break;
 					} else if(ci==commandQue.begin()){
 						Command c2;
 						c2.id = CMD_PATROL;
@@ -648,6 +648,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 						c2.params.push_back(owner->pos.z);
 						c2.options = c.options;
 						commandQue.push_back(c2);
+						break;
 					}
 				} while(ci!=commandQue.begin());
 			}
