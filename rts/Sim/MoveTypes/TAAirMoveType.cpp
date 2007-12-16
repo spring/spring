@@ -151,7 +151,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
 			if (padStatus == 0) {
-				// dont set us as on ground if we are on pad
+				// don't set us as on ground if we are on pad
 				owner->physicalState = CSolidObject::OnGround;
 				owner->Block();
 			}
@@ -330,9 +330,11 @@ void CTAAirMoveType::UpdateHovering()
 	float driftSpeed = owner->unitDef->dlHoverFactor;	
 	float3 dir = goalPos - owner->pos;
 
-	// move towards goal position if its not immediately behind us when we have more waypoints to get to
-	/// if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() && dir.Length2D() < 120) && (goalPos - owner->pos).Normalize().distance(dir) > 1)
-	///	dir = owner->frontdir;
+	// move towards goal position if it's not immediately behind us when we have more waypoints to get to
+	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
+		dir.Length2D() < 120) && (goalPos - owner->pos).Normalize().distance(dir) > 1) {
+		dir = owner->frontdir;
+	}
 
 	wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
 	// damping
@@ -353,9 +355,11 @@ void CTAAirMoveType::UpdateFlying()
 	float3 dir = goalPos - pos;
 	owner->restTime = 0;
 
-	// dont change direction for waypoints we just flew over and missed slightly
-	/// if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() && dir.Length2D() < 100) && (goalPos - pos).Normalize().distance(dir) < 1)
-	///	dir = owner->frontdir;
+	// don't change direction for waypoints we just flew over and missed slightly
+	if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
+		dir.Length2D() < 100) && (goalPos - pos).Normalize().distance(dir) < 1) {
+		dir = owner->frontdir;
+	}
 
 	// are we there yet?
 	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift) && (fabs(ground->GetHeight(pos.x, pos.z) - pos.y + wantedHeight) < maxDrift);
@@ -438,25 +442,23 @@ void CTAAirMoveType::UpdateFlying()
 	float dist = dir.Length2D();
 
 	// If we are close to our goal, we should go slow enough to be able to break in time
-	// new additional rule: if in attack mode or if have more this is an intermediate waypoint,
-	// don't slow down except if near ground level
+	// new additional rule: if in attack mode or if we have more move orders then this is
+	// an intermediate waypoint, don't slow down (FIXME)
 
-	/// if ((flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) || (pos.y - ground->GetHeight(pos.x, pos.z) < orgWantedHeight / 2)) {
+	/// if (flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) {
 	if (flyState != FLY_ATTACKING && dist < breakDistance) {
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 
 	wantedSpeed = dir.Normalize() * realMax;
-
 	UpdateAirPhysics();
-
 
 	// Point toward goal or forward - unless we just passed it to get to another goal
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
-///	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() && dist < 120) && (goalPos - pos).Normalize().distance(dir) > 1 ) {
-///		dir = owner->frontdir;
-///	} else {
+	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
+			   dist < 120) && (goalPos - pos).Normalize().distance(dir) > 1) {
+		dir = owner->frontdir;
 	} else {
 		dir = goalPos - pos;
 	}
@@ -1006,15 +1008,15 @@ void CTAAirMoveType::CheckForCollision(void)
 		AddDeathDependence(lastColWarning);
 		return;
 	}
-	for(std::vector<CUnit*>::iterator ui=others.begin();ui!=others.end();++ui){
-		if(*ui==owner)
+	for (std::vector<CUnit*>::iterator ui = others.begin(); ui != others.end(); ++ui) {
+		if (*ui == owner)
 			continue;
-		if(((*ui)->midPos-pos).SqLength()<dist*dist){
-			lastColWarning=*ui;
+		if (((*ui)->midPos - pos).SqLength() < dist * dist) {
+			lastColWarning = *ui;
 		}
 	}
-	if(lastColWarning){
-		lastColWarningType=1;
+	if (lastColWarning) {
+		lastColWarningType = 1;
 		AddDeathDependence(lastColWarning);
 	}
 	return;
