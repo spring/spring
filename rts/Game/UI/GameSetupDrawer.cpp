@@ -27,7 +27,10 @@ void GameSetupDrawer::Enable()
 void GameSetupDrawer::Disable()
 {
 	if (instance)
+	{
 		delete instance;
+		instance = 0;
+	}
 }
 
 GameSetupDrawer::GameSetupDrawer()
