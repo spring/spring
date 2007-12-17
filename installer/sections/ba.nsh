@@ -4,8 +4,6 @@
   inetc::get \
              "http://buildbot.no-ip.org/~lordmatt/mods/BA_Installer_Version.sd7" "$INSTDIR\mods\BA_Installer_Version.sd7" 
 
-;  File "..\game\mods\BA_Installer_Version.sd7"
-
 !else
 
   Delete "$INSTDIR\mods\BA_Installer_Version.sd7"

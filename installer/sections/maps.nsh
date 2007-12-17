@@ -1,16 +1,18 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\maps"  
-  File "..\game\maps\SmallDivide.sd7"
-  File "..\game\maps\Mars.sd7"
-  File "..\game\maps\Islands_In_War_1.0.sdz"
+  inetc::get \
+             "http://buildbot.no-ip.org/~lordmatt/maps/SmallDivide.sd7" "$INSTDIR\maps\SmallDivide.sd7" \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/Comet_Catcher_Redux.sd7" "$INSTDIR\maps\Comet_Catcher_Redux.sd7" \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/Sands_of_War_v2.sd7" "$INSTDIR\maps\Sands_of_War_v2.sd7" 
+
 !else
   ; Maps
-  Delete "$INSTDIR\maps\paths\SmallDivide.*"
-  Delete "$INSTDIR\maps\paths\Mars.*"
-  Delete "$INSTDIR\maps\paths\Islands_In_War_1.0.*"
   Delete "$INSTDIR\maps\SmallDivide.sd7"
-  Delete "$INSTDIR\maps\Mars.sd7"
-  Delete "$INSTDIR\maps\Islands_In_War_1.0.sdz"
+  Delete "$INSTDIR\maps\paths\SmallDivide.*"
+  Delete "$INSTDIR\maps\Comet_Catcher_Redux.sd7"
+  Delete "$INSTDIR\maps\paths\Comet_Catcher_Redux.*"
+  Delete "$INSTDIR\maps\Sands_of_War_v2.sd7"
+  Delete "$INSTDIR\maps\paths\Sands_of_War_v2.*"
   RmDir "$INSTDIR\maps\paths"
   RmDir "$INSTDIR\maps"
 !endif
