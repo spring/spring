@@ -109,6 +109,7 @@ CGameServer::~CGameServer()
 {
 	quitServer=true;
 	thread->join();
+	delete thread;
 	if (play)
 		delete play;
 
@@ -340,6 +341,7 @@ void CGameServer::ServerReadNet()
 			SendSystemMsg("Client AttemptConnect rejected: NETMSG: %i VERSION: %i Length: %i", inbuf[0], inbuf[2], packet->length);
 			serverNet->RejectIncomingConnection();
 		}
+		delete packet;
 	}
 
 	for(unsigned a=0; (int)a <= serverNet->MaxConnectionID(); a++)
@@ -362,10 +364,10 @@ void CGameServer::ServerReadNet()
 						} else {
 							if (!inbuf[2])  // reset sync checker
 								syncErrorFrame = 0;
-							if(gamePausable || a==0) // allow host to pause even if nopause is set
+							if(gamePausable || players[a]->hasRights) // allow host to pause even if nopause is set
 							{
 								timeLeft=0;
-								if (IsPaused!=!!inbuf[2]) {
+								if (IsPaused != !!inbuf[2]) {
 									IsPaused ? IsPaused = false : IsPaused = true;
 								}
 								serverNet->SendPause(inbuf[1],inbuf[2]);

@@ -270,6 +270,7 @@ UnixFileSystemHandler::UnixFileSystemHandler(bool verbose)
 
 UnixFileSystemHandler::~UnixFileSystemHandler()
 {
+	configHandler.Deallocate();
 }
 
 /**
