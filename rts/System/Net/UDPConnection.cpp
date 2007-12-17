@@ -62,6 +62,12 @@ UDPConnection::~UDPConnection()
 {
 	if (fragmentBuffer)
 		delete fragmentBuffer;
+	
+	while (!msgQueue.empty())
+	{
+		delete msgQueue.front();
+		msgQueue.pop();
+	}
 }
 
 void UDPConnection::SendData(const unsigned char *data, const unsigned length)
