@@ -118,6 +118,12 @@
 #define FLANK_B_MOBILITY_ADD     122 // set or get
 #define FLANK_B_MAX_DAMAGE       123 // set or get
 #define FLANK_B_MIN_DAMAGE       124 // set or get
+#define WEAPON_RELOADSTATE       125 // get (with fake set)
+#define WEAPON_RELOADTIME        126 // get (with fake set)
+#define WEAPON_ACCURACY          127 // get (with fake set)
+#define WEAPON_SPRAY             128 // get (with fake set)
+#define WEAPON_RANGE             129 // get (with fake set)
+#define WEAPON_PROJECTILE_SPEED  130 // get (with fake set)
 
 // NOTE: shared variables use codes [1024 - 5119]
 
@@ -1274,6 +1280,84 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 1;
 		}
 		return 0;
+	}
+	case WEAPON_RELOADSTATE: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return unit->weapons[p1-1]->reloadStatus;
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = unit->weapons[-p1-1]->reloadStatus;
+			unit->weapons[-p1-1]->reloadStatus = p2;
+			return old;
+		}
+		else {
+			return -1;
+		}
+	}
+	case WEAPON_RELOADTIME: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return unit->weapons[p1-1]->reloadTime;
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = unit->weapons[-p1-1]->reloadTime;
+			unit->weapons[-p1-1]->reloadTime = p2;
+			return old;
+		}
+		else {
+			return -1;
+		}
+	}
+	case WEAPON_ACCURACY: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return int(unit->weapons[p1-1]->accuracy * COBSCALE);
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = int(unit->weapons[-p1-1]->accuracy * COBSCALE);
+			unit->weapons[-p1-1]->accuracy = float(p2) / COBSCALE;
+			return old;
+		}
+		else {
+			return -1;
+		}
+	}
+	case WEAPON_SPRAY: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return int(unit->weapons[p1-1]->sprayangle * COBSCALE);
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = int(unit->weapons[-p1-1]->sprayangle * COBSCALE);
+			unit->weapons[-p1-1]->sprayangle = float(p2) / COBSCALE;
+			return old;
+		}
+		else {
+			return -1;
+		}
+	}
+	case WEAPON_RANGE: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return int(unit->weapons[p1-1]->range * COBSCALE);
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = int(unit->weapons[-p1-1]->range * COBSCALE);
+			unit->weapons[-p1-1]->range = float(p2) / COBSCALE;
+			return old;
+		}
+		else {
+			return -1;
+		}
+	}
+	case WEAPON_PROJECTILE_SPEED: {
+		if (p1 > 0 && p1 <= unit->weapons.size()) {
+			return int(unit->weapons[p1-1]->projectileSpeed * COBSCALE);
+		}
+		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+			int old = int(unit->weapons[-p1-1]->projectileSpeed * COBSCALE);
+			unit->weapons[-p1-1]->projectileSpeed = float(p2) / COBSCALE;
+			return old;
+		}
+		else {
+			return -1;
+		}
 	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
