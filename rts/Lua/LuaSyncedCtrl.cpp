@@ -113,6 +113,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitHealth);
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
+	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitCloak);
 	REGISTER_LUA_CFUNC(SetUnitStealth);
@@ -1141,6 +1142,47 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 		unit->stockpileWeapon->buildPercent = percent;
 	}
 
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	int weapon = (int)luaL_checknumber(L,2);
+	if (weapon < 0 || weapon >= unit->weapons.size()) {
+		return 0;
+	}
+	if (lua_istable(L,3)) {
+		const int table = 3;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
+				const string key = lua_tostring(L, -2);
+				const float value = (float)lua_tonumber(L, -1);
+				if (key == "reloadstate") {
+					unit->weapons[weapon]->reloadStatus=value;
+				}
+				else if (key == "reloadtime") {
+					unit->weapons[weapon]->reloadTime=value*GAME_SPEED;
+				}
+				else if (key == "accuracy") {
+					unit->weapons[weapon]->accuracy=value;
+				}
+				else if (key == "sprayangle") {
+					unit->weapons[weapon]->sprayangle=value;
+				}
+				else if (key == "range") {
+					unit->weapons[weapon]->range=value;
+				}
+				else if (key == "projectilespeed") {
+					unit->weapons[weapon]->projectileSpeed=value;
+				}
+			}
+		}
+	}
 	return 0;
 }
 
