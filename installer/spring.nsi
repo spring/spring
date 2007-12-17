@@ -37,19 +37,27 @@ SetCompressor lzma
 !insertmacro MUI_PAGE_INSTFILES
 
 ; Finish page
-!ifndef SP_UPDATE
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
-!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed on your computer. It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
-
 !define MUI_FINISHPAGE_RUN "$INSTDIR\settings.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
+!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed or updated from a previous version.  It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
 
-!else
+; Finish page
+;!ifndef SP_UPDATE
 
-!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully updated from a previous version."
+;!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
+;!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed on your computer. It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
 
-!endif
+;!define MUI_FINISHPAGE_RUN "$INSTDIR\settings.exe"
+;!define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
+
+;!else
+
+;!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully updated from a previous version."
+
+;!endif
+
 
 !define MUI_FINISHPAGE_LINK "The ${PRODUCT_NAME} website"
 !define MUI_FINISHPAGE_LINK_LOCATION ${PRODUCT_WEB_SITE}
@@ -67,17 +75,17 @@ SetCompressor lzma
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
-!ifdef SP_UPDATE
-!define SP_OUTSUFFIX1 "_update"
-!else
+;!ifdef SP_UPDATE
+;!define SP_OUTSUFFIX1 "_update"
+;!else
 !define SP_OUTSUFFIX1 ""
-!endif
+;!endif
 
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
-ShowInstDetails show
-ShowUnInstDetails show
+;ShowInstDetails show ;fix graphical glitch
+;ShowUnInstDetails show ;fix graphical glitch
 
 !include fileassoc.nsh
 
@@ -195,13 +203,26 @@ Section "Multiplayer battleroom" SEC_BATTLEROOM
 SectionEnd
 
 
-!ifndef SP_UPDATE
-Section "Maps" SEC_MAPS
-  !define INSTALL
-  !include "sections\maps.nsh"
-  !undef INSTALL
-SectionEnd
-!endif
+SectionGroup "Maps"
+	Section "Defualt Maps" SEC_MAPS
+	!define INSTALL
+	!include "sections\maps.nsh"
+	!undef INSTALL
+	SectionEnd
+
+        Section "1 vs 1 Maps" SEC_1V1MAPS
+	!define INSTALL
+	!include "sections\1v1maps.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "Teamplay Maps" SEC_TEAMMAPS
+	!define INSTALL
+	!include "sections\teammaps.nsh"
+	!undef INSTALL
+	SectionEnd
+SectionGroupEnd
+
 
 SectionGroup "Mods (The Games You Can Play)"
 	Section "Balanced Annihilation (BA)" SEC_BA
@@ -264,7 +285,6 @@ Section -Documentation
   !undef INSTALL
 SectionEnd
 
-
 Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
   WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\springclient.exe"
@@ -291,6 +311,9 @@ FunctionEnd
 Section Uninstall
 
   !include "sections\maps.nsh"
+  !include "sections\1v1maps.nsh"
+  !include "sections\teammaps.nsh"
+
   !include "sections\main.nsh"
 
   !include "sections\docs.nsh"

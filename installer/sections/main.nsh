@@ -6,6 +6,7 @@
   ; Main stuff
   File "..\game\spring.exe"
   File "..\game\spring.def"
+  File "..\game\unitsync.dll"
 
   ; DLLs (updated in mingwlibs-v8)
   File "..\mingwlibs\dll\glew32.dll"
@@ -19,13 +20,8 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   
-!ifndef SP_UPDATE
+;!ifndef SP_UPDATE
   File "..\game\settings.exe"
-  File "..\game\selectkeys.txt"
-  File "..\game\uikeys.txt"
-  File "..\game\cmdcolors.txt"
-  File "..\game\ctrlpanel.txt"
-
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
 
@@ -37,7 +33,31 @@
 
   File "..\game\PALETTE.PAL"
 
-!endif ; SP_UPDATE
+${If} ${FileExists} "$INSTDIR\selectkeys.txt"
+  ; Do nothing
+${Else}
+  File "..\game\selectkeys.txt"
+${EndIf}
+
+${If} ${FileExists} "$INSTDIR\uikeys.txt"
+  ; Do nothing
+${Else}
+  File "..\game\uikeys.txt"
+${EndIf}
+
+${If} ${FileExists} "$INSTDIR\cmdcolors.txt"
+  ; Do nothing
+${Else}
+  File "..\game\cmdcolors.txt"
+${EndIf}
+
+${If} ${FileExists} "$INSTDIR\ctrlpanel.txt"
+  ; Do nothing
+${Else}
+  File "..\game\ctrlpanel.txt"
+${EndIf}
+
+;!endif ; SP_UPDATE
 
   SetOutPath "$INSTDIR\startscripts"
   File "..\game\startscripts\*.lua"
@@ -76,19 +96,35 @@
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
 
-!ifndef SP_UPDATE
-
+;!ifndef SP_UPDATE
+${If} ${FileExists} "$INSTDIR\spring.exe"
+  ; Do nothing
+${Else}
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC 
+${EndIf}
+;!endif ; SP_UPDATE
 
-!endif ; SP_UPDATE
+; Fix issue with riverdale maps by deleting old versions and installing the latest one (if riverdale is already present)
+${If} ${FileExists} "$INSTDIR\maps\River_Dalev01.sd7"
+  Delete "$INSTDIR\maps\River_Dalev01.sd7"
+${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+  inetc::get \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+${OrIf} ${FileExists} "$INSTDIR\maps\River_Dale-v01.sd7"
+  Delete "$INSTDIR\maps\River_Dale-v01.sd7"
+${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+  inetc::get \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+${EndIf}
 
 !else
 
   ; Main files
   Delete "$INSTDIR\spring.exe"
   Delete "$INSTDIR\spring.def"
+  Delete "$INSTDIR\unitsync.dll"
   Delete "$INSTDIR\PALETTE.PAL"
   Delete "$INSTDIR\SelectionEditor.exe"
   Delete "$INSTDIR\selectkeys.txt"
@@ -140,11 +176,13 @@
   RmDir "$INSTDIR\startscripts"
 
   ; base content
-
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
+
+  ; XTA from previous installer
+  Delete "$INSTDIR\mods\XTAPE.sdz"
 
   ; Generated stuff from the installer
   Delete "$INSTDIR\${PRODUCT_NAME}.url"

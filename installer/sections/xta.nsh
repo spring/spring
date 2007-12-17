@@ -4,8 +4,6 @@
   inetc::get \
              "http://buildbot.no-ip.org/~lordmatt/mods/XTA_Installer_Version.sdz" "$INSTDIR\mods\XTA_Installer_Version.sdz" 
 
-;  File "..\game\mods\XTA_Installer_Version.sdz"
-
 !else
 
   Delete "$INSTDIR\mods\XTA_Installer_Version.sdz"
