@@ -1462,8 +1462,11 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
 
 	for (int index = 1; root.KeyExists(index); index++) {
 		const string map = root.GetString(index, "");
-		if (!map.empty()) {
-			modValidMaps.push_back(map);
+		if (map.length() > 4) {
+			const string ext = StringToLower(map).substr(map.length() - 4);
+			if ((ext == ".smf") || (ext == ".sm3")) {
+				modValidMaps.push_back(map);
+			}
 		}
 	}
 
