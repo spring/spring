@@ -592,7 +592,7 @@ void CBuilder::DependentDied(CObject *o)
 
 void CBuilder::SetBuildStanceToward(float3 pos)
 {
-	float3 wantedDir=(pos-this->pos).Normalize();
+	float3 wantedDir=(pos-this->midPos).Normalize();
 	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
 	short int p=(short int) (asin(wantedDir.dot(updir))*(32768/PI));
 	short int pitch=(short int) (asin(frontdir.dot(updir))*(32768/PI));
