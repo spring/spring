@@ -17,9 +17,12 @@ std::deque<CInputReceiver*>& GetInputReceivers()
 	return s_inputReceivers;
 }
 
-CInputReceiver::CInputReceiver()
+CInputReceiver::CInputReceiver(Where w)
 {
-	GetInputReceivers().push_front(this);
+	if (w == FRONT)
+		GetInputReceivers().push_front(this);
+	else if (w == BACK)
+		GetInputReceivers().push_back(this);
 }
 
 CInputReceiver::~CInputReceiver()

@@ -17,7 +17,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "GuiHandler.h"
-#include "InfoConsole.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
@@ -69,7 +68,8 @@ extern Uint8* keys;
 
 
 CMiniMap::CMiniMap()
-: fullProxy(false),
+: CInputReceiver(BACK),
+  fullProxy(false),
   proxyMode(false),
   selecting(false),
   mouseMove(false),
@@ -821,7 +821,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 	// is this really needed?
 	CCamera *c = camera;
 	camera = new CCamera(*c);
-	
+
 	const float3 tmpMouseDir = mouse->dir;
 
 	float3 mapPos = GetMapPosition(x, y);

@@ -2166,8 +2166,6 @@ bool CGame::Draw()
 			guihandler->Update();
 		}
 		else {
-			infoConsole->Draw();
-
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 			if (!inputReceivers.empty()) {
 				std::deque<CInputReceiver*>::reverse_iterator ri;
@@ -2620,11 +2618,11 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-	
+
 	const unsigned myPlayerNum = gameSetup ? (unsigned)gameSetup->myPlayerNum : 0;
 	if (!net->IsActiveConnection(myPlayerNum))
 		return gameOver;
-	
+
 	RawPacket* packet = 0;
 	while ((packet = net->GetData(myPlayerNum)))
 	{

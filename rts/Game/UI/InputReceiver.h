@@ -10,10 +10,15 @@
 class CInputReceiver :
 	public CObject
 {
-public:
-	CInputReceiver();
+protected:
+	enum Where {
+		FRONT, BACK
+	};
+
+	CInputReceiver(Where w = FRONT);
 	virtual ~CInputReceiver();
 
+public:
 	virtual bool KeyPressed(unsigned short key, bool isRepeat) { return false; };
 	virtual bool KeyReleased(unsigned short key) { return false; };
 

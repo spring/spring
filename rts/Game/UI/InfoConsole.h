@@ -10,9 +10,10 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <SDL_types.h>
 #include "float3.h"
+#include "InputReceiver.h"
 #include "LogOutput.h"
 
-class CInfoConsole : public ILogSubscriber
+class CInfoConsole : public CInputReceiver, public ILogSubscriber
 {
 public:
 	CInfoConsole();

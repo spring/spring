@@ -13,7 +13,7 @@
 #ifndef FPUCHECK_H
 #define FPUCHECK_H
 
-#include "Game/UI/InfoConsole.h"
+#include "LogOutput.h"
 
 /**
 	@brief checks FPU control registers.
