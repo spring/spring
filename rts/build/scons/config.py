@@ -16,7 +16,7 @@ def check_zip_version(env, conf):
 	finally:
 		f.close()
 	if version:
-		version = re.search('Zip [0-9]\.[0-9]\.?[0-9]', version).group()
+		version = re.search('Zip [0-9]\.*[0-9]*\.*[0-9]*', version).group()
 		print version, "found"
 	else:
 		print "not found"
