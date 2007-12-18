@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "unitsync.h"
 
+#include "LuaInclude.h"
 #include "FileSystem/ArchiveFactory.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
@@ -1444,6 +1445,18 @@ DLL_EXPORT const char* __stdcall GetOptionListItemDesc(int optIndex, int itemInd
 static vector<string> modValidMaps;
 
 
+static int LuaGetMapList(lua_State* L)
+{
+	lua_newtable(L);
+	const int mapCount = GetMapCount();
+	for (int i = 0; i < mapCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushstring(L, GetMapName(i));
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
 // A return value of 0 means that any map can be selected
 // Map names should be complete  (including the .smf or .sm3 extension)
 DLL_EXPORT int __stdcall GetModValidMapCount()
@@ -1451,6 +1464,9 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
 	modValidMaps.clear();
 
 	LuaParser luaParser("ValidMaps.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+	luaParser.GetTable("Spring");
+	luaParser.AddFunc("GetMapList", LuaGetMapList);
+	luaParser.EndTable();
 	if (!luaParser.Execute()) {
 		return 0;
 	}
@@ -1462,11 +1478,8 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
 
 	for (int index = 1; root.KeyExists(index); index++) {
 		const string map = root.GetString(index, "");
-		if (map.length() > 4) {
-			const string ext = StringToLower(map).substr(map.length() - 4);
-			if ((ext == ".smf") || (ext == ".sm3")) {
-				modValidMaps.push_back(map);
-			}
+		if (!map.empty()) {
+			modValidMaps.push_back(map);
 		}
 	}
 
