@@ -1441,6 +1441,48 @@ DLL_EXPORT const char* __stdcall GetOptionListItemDesc(int optIndex, int itemInd
 //////////////////////////
 //////////////////////////
 
+static vector<string> modValidMaps;
+
+
+// A return value of 0 means that any map can be selected
+// Map names should be complete  (including the .smf or .sm3 extension)
+DLL_EXPORT int __stdcall GetModValidMapCount()
+{
+	modValidMaps.clear();
+
+	LuaParser luaParser("ValidMaps.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+	if (!luaParser.Execute()) {
+		return 0;
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		return 0;
+	}
+
+	for (int index = 1; root.KeyExists(index); index++) {
+		const string map = root.GetString(index, "");
+		if (!map.empty()) {
+			modValidMaps.push_back(map);
+		}
+	}
+
+	return (int)modValidMaps.size();
+}
+
+
+DLL_EXPORT const char* __stdcall GetModValidMap(int index)
+{
+	if ((index < 0) || (index >= modValidMaps.size())) {
+		return NULL;
+	}
+	return GetStr(modValidMaps[index]);
+}
+
+
+//////////////////////////
+//////////////////////////
+
 // Map the wanted archives into the VFS with AddArchive before using these functions
 
 static map<int, CFileHandler*> openFiles;
