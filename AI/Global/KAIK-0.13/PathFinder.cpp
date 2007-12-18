@@ -15,9 +15,9 @@ CPathFinder::CPathFinder(AIClasses* ai) {
 }
 
 CPathFinder::~CPathFinder() {
-	delete SlopeMap;
-	delete HeightMap;
-	delete TestMoveArray;
+	delete[] SlopeMap;
+	delete[] HeightMap;
+	delete[] TestMoveArray;
 
 	for (unsigned int i = 0; i != MoveArrays.size(); i++) {
 		delete[] MoveArrays[i];
@@ -389,7 +389,7 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		int x, y;
 		// L("Added: x: " << f.x << ", z: " << f.z);
 		// TODO: make the circle here
-		
+
 		ai->math->F3MapBound(&f);
 		void * node = Pos2Node(f);
 		Node2XY(node, &x, &y);
@@ -405,7 +405,7 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 
 	ai->math->F3MapBound(startPos);
 	delete[] offsets;
-	
+
 	if (micropather->FindBestPathToAnyGivenPoint(Pos2Node(*startPos), endNodes, &path, &totalcost) == MicroPather::SOLVED) {
         posPath->reserve(path.size());
 
