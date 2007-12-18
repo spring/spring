@@ -115,6 +115,9 @@ DLL_EXPORT const char*  __stdcall GetOptionListItemKey(int optIndex, int itemInd
 DLL_EXPORT const char*  __stdcall GetOptionListItemName(int optIndex, int itemIndex);
 DLL_EXPORT const char*  __stdcall GetOptionListItemDesc(int optIndex, int itemIndex);
 
+DLL_EXPORT int          __stdcall GetModValidMapCount();
+DLL_EXPORT const char*  __stdcall GetModValidMap(int index);
+
 DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
 DLL_EXPORT void         __stdcall CloseFileVFS(int handle);
 DLL_EXPORT void         __stdcall ReadFileVFS(int handle, void* buf, int length);
@@ -216,6 +219,13 @@ int main(int argc, char** argv)
   printf("  ModOptions\n");
   const int modOptCount = GetModOptionCount();
   DisplayOptions(modOptCount);
+
+  // ModValidMaps
+  printf("  ModValidMaps\n");
+  const int modValidMapCount = GetModValidMapCount();
+  for (int i = 0; i < modValidMapCount; i++) {
+    printf("    %i: %s\n", i, GetModValidMap(i));
+  }
 
   UnInit();
 
