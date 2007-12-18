@@ -12,7 +12,6 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "CommandColors.h"
-#include "InfoConsole.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "LuaUI.h"
@@ -87,7 +86,7 @@ CMouseHandler::CMouseHandler()
 CMouseHandler::~CMouseHandler()
 {
 	SDL_ShowCursor(SDL_ENABLE);
-	
+
 	std::map<std::string, CMouseCursor*>::iterator ci;
 	for (ci = cursorFileMap.begin(); ci != cursorFileMap.end(); ++ci) {
 		delete ci->second;
@@ -763,7 +762,7 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 	}
 
 	CMouseCursor* oldCursor = fileIt->second;
-	
+
 	std::map<std::string, CMouseCursor*>& cmdMap = cursorCommandMap;
 	std::map<std::string, CMouseCursor*>::iterator cmdIt;
 	for (cmdIt = cmdMap.begin(); cmdIt != cmdMap.end(); ++cmdIt) {

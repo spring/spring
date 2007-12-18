@@ -1,13 +1,13 @@
 #include "StdAfx.h"
-#include "MouseCursor.h"
+#include "bitops.h"
 #include "CommandColors.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
-#include "InfoConsole.h"
+#include "LogOutput.h"
+#include "MouseCursor.h"
+#include "myMath.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "myMath.h"
-#include "bitops.h"
 #include "mmgr.h"
 
 

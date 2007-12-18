@@ -10,7 +10,6 @@
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
-#include "InfoConsole.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
 #include "LuaUI.h"
@@ -2688,10 +2687,10 @@ static inline bool ParseTextures(const string& texString,
 	const char* c = texString.c_str() + 1;
 	xscale = strtod(c, &endPtr);
 	if ((endPtr == c) || (endPtr[0] != 'x')) { return false; }
-	c = endPtr + 1; 
+	c = endPtr + 1;
 	yscale = strtod(c, &endPtr);
 	if ((endPtr == c) || (endPtr[0] != '&')) { return false; }
-	c = endPtr + 1; 
+	c = endPtr + 1;
 	const char* tex1Start = c;
 	while ((c[0] != 0) && (c[0] != '&')) { c++; }
 	if (c[0] != '&') { return false; }
@@ -2745,8 +2744,8 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 
 	string tex1;
 	string tex2;
-	float xscale;
-	float yscale;
+	float xscale = 1.0f;
+	float yscale = 1.0f;
 
 	// double texture?
 	if (texName[0] == '&') {
@@ -2757,7 +2756,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 		tex1 = texName;
 	}
 
-	// bind the texture for the full size quad	
+	// bind the texture for the full size quad
 	if (!BindTextureString(tex1)) {
 		if (tex2.empty()) {
 			return false;
@@ -2769,7 +2768,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 			}
 		}
 	}
-			
+
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
 
@@ -2786,7 +2785,7 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 		return true; // success, no second texture to draw
 	}
 
-	// bind the texture for the scaled quad	
+	// bind the texture for the scaled quad
 	if (!BindTextureString(tex2)) {
 		return false;
 	}
