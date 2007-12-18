@@ -8,6 +8,7 @@ SetCompressor lzma
 
 !include "springsettings.nsh"
 !include "LogicLib.nsh"
+!include "Sections.nsh"
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -99,6 +100,12 @@ Function .onInit
   
   Pop $0 ; Delete variable $0
 
+  !insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
+  !insertmacro UnselectSection 4 ; unselect 1v1maps section (4) by default
+  !insertmacro UnselectSection 5 ; unselect teammaps section by (5) default
+  !insertmacro SetSectionFlag 7 32 ; expand (32) mods section (7)
+  !insertmacro UnselectSection 7 ; unselect BA section (7) by default 
+  !insertmacro UnselectSection 8 ; unselect XTA section (8) by default
 FunctionEnd
 
 ; Only allow installation if spring.exe is from version 0.75
@@ -203,7 +210,7 @@ SectionEnd
 
 
 SectionGroup "Maps"
-	Section "Defualt Maps" SEC_MAPS
+	Section "Default Maps" SEC_MAPS
 	!define INSTALL
 	!include "sections\maps.nsh"
 	!undef INSTALL
