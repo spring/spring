@@ -26,6 +26,8 @@
   ;File "..\game\settingstemplate.xml"
 
   ; DLLs
+  File "..\game\MSVCR71.dll"
+  File "..\game\MSVCP71.dll"
   File "..\mingwlibs\dll\DevIL.dll"
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\ILU.dll"

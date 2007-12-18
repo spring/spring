@@ -90,15 +90,14 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include fileassoc.nsh
 
 Function .onInit
-  Push $0
+  Push $0 ; Create variable $0
 
   ; The core cannot be deselected
-  SectionGetFlags 0 $0
-;  IntOp $0 $0 & 14
-  IntOp $0 $0 | 16
-  SectionSetFlags 0 $0
+  SectionGetFlags 0 $0 ; Get the current selection of the first component and store in variable $0
+  IntOp $0 $0 | 16 ; Change the selection flag in variable $0 to read only (16)
+  SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
   
-  Pop $0
+  Pop $0 ; Delete variable $0
 
 FunctionEnd
 
