@@ -223,8 +223,13 @@ int main(int argc, char** argv)
   // ModValidMaps
   printf("  ModValidMaps\n");
   const int modValidMapCount = GetModValidMapCount();
-  for (int i = 0; i < modValidMapCount; i++) {
-    printf("    %i: %s\n", i, GetModValidMap(i));
+  if (modValidMapCount == 0) {
+    printf("    * ALL MAPS *\n");
+  }
+  else {
+    for (int i = 0; i < modValidMapCount; i++) {
+      printf("    %i: %s\n", i, GetModValidMap(i));
+    }
   }
 
   UnInit();
