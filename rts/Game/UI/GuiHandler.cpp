@@ -1051,8 +1051,11 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 		activeMousePress=true;
 	}
 	else if (AboveGui(x,y)) {
-		activeMousePress=true;
+		activeMousePress = true;
 		return true;
+	}
+	else if (minimap && minimap->IsAbove(x, y)) {
+		return false; // let the minimap do its job
 	}
 
 	if (inCommand >= 0) {
@@ -2970,6 +2973,9 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 
 void CGuiHandler::DrawButtons()
 {
+	glLineWidth(1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
 	if (alpha > 0.0f) {
