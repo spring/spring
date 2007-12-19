@@ -23,6 +23,7 @@ public:
 	void Update();
 	void DependentDied(CObject* o);
 	void FinishedBuilding(void);
+	void CreateNanoParticle(void);
 
 	float3 CalcBuildPos(int buildPiece=-1); // supply the build piece to speed up
 	int GetBuildPiece();
