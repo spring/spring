@@ -1493,7 +1493,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "cross") {
 		if (action.extra.empty()) {
-			crossSize = (crossSize > 0.0f) ? 0.0f : 10.0f;
+			if (crossSize > 0.0f) {
+				crossSize = -crossSize;
+			} else {
+				crossSize = max(1.0f, -crossSize);
+			}
 		} else {
 			crossSize = atof(action.extra.c_str());
 		}
@@ -1942,7 +1946,6 @@ bool CGame::DrawWorld()
 
 	luaCallIns.DrawWorld();
 
-	lineDrawer.UpdateLineStipple();
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
@@ -2050,6 +2053,8 @@ bool CGame::Draw()
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
+
+	lineDrawer.UpdateLineStipple();
 
 //	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
