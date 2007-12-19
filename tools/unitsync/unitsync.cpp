@@ -419,6 +419,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	}
 
 	string err("");
+
 	try {
 		parser.LoadFile(maptdf);
 	} catch (const std::exception& e) {
@@ -426,60 +427,70 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	}
 
 	// Retrieve the map header as well
-	if (extension == "smf") {
-		MapHeader mh;
-		string origName = name;
-		mh.mapx = -1;
-
-		{
-			CFileHandler in("maps/" + origName);
-			if (in.FileExists())
-				in.Read(&mh, sizeof(mh));
+	if (err.empty()) {
+		if (extension == "smf") {
+			MapHeader mh;
+			string origName = name;
+			mh.mapx = -1;
+			{
+				CFileHandler in("maps/" + origName);
+				if (in.FileExists()) {
+					in.Read(&mh, sizeof(mh));
+				}
+			}
+			outInfo->width  = mh.mapx * SQUARE_SIZE;
+			outInfo->height = mh.mapy * SQUARE_SIZE;
 		}
-		outInfo->width = mh.mapx * SQUARE_SIZE;
-		outInfo->height = mh.mapy * SQUARE_SIZE;
-	}
-	else {
-		int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
-		int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
+		else {
+			int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
+			int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
 
-		outInfo->width = w * SQUARE_SIZE;
-		outInfo->height = h * SQUARE_SIZE;
+			outInfo->width  = w * SQUARE_SIZE;
+			outInfo->height = h * SQUARE_SIZE;
+		}
+
+		// Make sure we found stuff in both the smd and the header
+		if (!parser.SectionExist("MAP")) {
+			err = "Could not parse map";
+		}
+		else if (outInfo->width <= 0) {
+			err = "Bad map width";
+		}
+		else if (outInfo->height <= 0) {
+			err = "Bad map height";
+		}
 	}
 
 	// If the map didn't parse, say so now
 	if (err.length() > 0) {
-
-		if (err.length() > 254)
+		if (err.length() > 254) {
 			err = err.substr(0, 254);
+		}
 		strcpy(outInfo->description, err.c_str());
 
 		// Fill in stuff so tasclient won't crash
 		outInfo->posCount = 0;
-		return 1;
-	}
-
-	// Make sure we found stuff in both the smd and the header
-	if (!parser.SectionExist("MAP")) {
-		return 0;
-	}
-	if (outInfo->width < 0) {
+		if (version >= 1) {
+			outInfo->author[0] = 0;
+		}
 		return 0;
 	}
 
 	map<string, string> values = parser.GetAllValues("MAP");
 
 	string tmpdesc = values["description"];
-	if (tmpdesc.length() > 254)
+	if (tmpdesc.length() > 254) {
 		tmpdesc = tmpdesc.substr(0, 254);
+	}
 	strcpy(outInfo->description, tmpdesc.c_str());
 	outInfo->tidalStrength = atoi(values["tidalstrength"].c_str());
 	outInfo->gravity = atoi(values["gravity"].c_str());
 	outInfo->maxMetal = atof(values["maxmetal"].c_str());
 	outInfo->extractorRadius = atoi(values["extractorradius"].c_str());
 
-	if(version >= 1)
+	if (version >= 1) {
 		strncpy(outInfo->author, values["author"].c_str(), 200);
+	}
 
 	values = parser.GetAllValues("MAP\\ATMOSPHERE");
 
@@ -491,10 +502,11 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	for (curPos = 0; curPos < 16; ++curPos) {
 		char buf[50];
 		sprintf(buf, "MAP\\TEAM%d", curPos);
-		string section(buf);
+		const string section(buf);
 
-		if (!parser.SectionExist(section))
+		if (!parser.SectionExist(section)) {
 			break;
+		}
 
 		parser.GetDef(outInfo->positions[curPos].x, "-1", section + "\\StartPosX");
 		parser.GetDef(outInfo->positions[curPos].z, "-1", section + "\\StartPosZ");
@@ -1457,6 +1469,69 @@ static int LuaGetMapList(lua_State* L)
 	return 1;
 }
 
+
+static void LuaPushNamedString(lua_State* L,
+                              const string& key, const string& value)
+{
+	lua_pushstring(L, key.c_str());
+	lua_pushstring(L, value.c_str());
+	lua_rawset(L, -3);
+}
+
+
+static void LuaPushNamedNumber(lua_State* L, const string& key, float value)
+{
+	lua_pushstring(L, key.c_str());
+	lua_pushnumber(L, value);
+	lua_rawset(L, -3);
+}
+
+
+static int LuaGetMapInfo(lua_State* L)
+{
+	const string mapName = luaL_checkstring(L, 1);
+
+	MapInfo mi;
+	char auth[256];
+	char desc[256];
+	mi.author = auth;
+ 	mi.author[0] = 0;
+	mi.description = desc;
+	mi.description[0] = 0;
+
+	if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
+		return 0;
+	}
+
+	lua_newtable(L);
+
+	LuaPushNamedString(L, "author", mi.author);
+	LuaPushNamedString(L, "desc",   mi.description);
+
+	LuaPushNamedNumber(L, "tidal",   mi.tidalStrength);
+	LuaPushNamedNumber(L, "gravity", mi.gravity);
+	LuaPushNamedNumber(L, "metal",   mi.maxMetal);
+	LuaPushNamedNumber(L, "windMin", mi.minWind);
+	LuaPushNamedNumber(L, "windMax", mi.maxWind);
+	LuaPushNamedNumber(L, "mapX",    mi.width);
+	LuaPushNamedNumber(L, "mapY",    mi.height);
+	LuaPushNamedNumber(L, "extractorRadius", mi.extractorRadius);
+
+	lua_pushstring(L, "startPos");
+	lua_newtable(L);
+	for (int i = 0; i < mi.posCount; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_newtable(L);
+		LuaPushNamedNumber(L, "x", mi.positions[i].x);
+		LuaPushNamedNumber(L, "z", mi.positions[i].z);
+		lua_rawset(L, -3);
+	}
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+
 // A return value of 0 means that any map can be selected
 // Map names should be complete  (including the .smf or .sm3 extension)
 DLL_EXPORT int __stdcall GetModValidMapCount()
@@ -1466,6 +1541,7 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
 	LuaParser luaParser("ValidMaps.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
 	luaParser.GetTable("Spring");
 	luaParser.AddFunc("GetMapList", LuaGetMapList);
+	luaParser.AddFunc("GetMapInfo", LuaGetMapInfo);
 	luaParser.EndTable();
 	if (!luaParser.Execute()) {
 		return 0;
