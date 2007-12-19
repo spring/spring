@@ -55,8 +55,6 @@ public:
 	*/
 	void InitServer(unsigned portnum);
 	
-	void InitServer(unsigned portnum, unsigned localClientNumber);
-	
 	/**
 	@brief Initialise Client
 	@param server Address of the server, either IP or hostname
