@@ -53,6 +53,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "mapHumanName",    readmap->mapHumanName);
 	LuaPushNamedNumber(L, "mapX",            readmap->width  / 64);
 	LuaPushNamedNumber(L, "mapY",            readmap->height / 64);
+	LuaPushNamedNumber(L, "mapSizeX",        readmap->width  * SQUARE_SIZE);
+	LuaPushNamedNumber(L, "mapSizeZ",        readmap->height * SQUARE_SIZE);
 	LuaPushNamedBool(L,   "mapDamage",       !mapDamage->disabled);
 	LuaPushNamedBool(L,   "mapWaterVoid",    readmap->voidWater);
 	LuaPushNamedBool(L,   "mapWaterPlane",   readmap->hasWaterPlane);
