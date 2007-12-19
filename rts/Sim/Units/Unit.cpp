@@ -148,6 +148,8 @@ CUnit::CUnit ()
 	armoredMultiple(1),
 	curArmorMultiple(1),
 	buildProgress(0),
+	groundLevelled(false),
+	terraformLeft(0),
 	realLosRadius(0),
 	realAirLosRadius(0),
 	inBuildStance(false),
@@ -1707,7 +1709,7 @@ bool CUnit::SetGroup(CGroup* newGroup)
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
-	if (amount > 0.0f) { //  build / repair
+	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
 		}
@@ -2252,6 +2254,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(transporter),
 				CR_MEMBER(toBeTransported),
 				CR_MEMBER(buildProgress),
+				CR_MEMBER(groundLevelled),
+				CR_MEMBER(terraformLeft),
 				CR_MEMBER(realLosRadius),
 				CR_MEMBER(realAirLosRadius),
 				CR_MEMBER(losStatus),
