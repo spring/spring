@@ -174,6 +174,8 @@ public:
 	CTransportUnit *transporter;		//transport that the unit is currently in
 	bool toBeTransported;			//unit is about to be picked up by a transport
 	float buildProgress;			//0.0-1.0
+	bool groundLevelled;            //whether the ground below this unit has been terraformed
+	float terraformLeft;            //how much terraforming is left to do
 	int realLosRadius;				//set los to this when finished building
 	int realAirLosRadius;
 	int losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit

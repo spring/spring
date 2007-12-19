@@ -40,7 +40,7 @@ public:
 	void DependentDied(CObject* o);
 
 	bool StartBuild(BuildInfo& buildInfo);
-	void CalculateBuildTerraformCost(BuildInfo& buildInfo);
+	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript=true);
 	void SetRepairTarget(CUnit* target);
 	void SetReclaimTarget(CSolidObject* object);
@@ -71,8 +71,8 @@ public:
 	CBuilder* helpTerraform;
 
 	bool terraforming;
-	float terraformLeft;
 	float terraformHelp;
+	float myTerraformLeft;
 	enum {
 		Terraform_Building,
 		Terraform_Restore
