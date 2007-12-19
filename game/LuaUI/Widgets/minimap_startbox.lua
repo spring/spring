@@ -45,8 +45,8 @@ local drawGroundQuads = (gl.CreateShader ~= nil)
 
 local gl = gl  --  use a local copy for faster access
 
-local msx = Game.mapX * 512.0
-local msz = Game.mapY * 512.0
+local msx = Game.mapSizeX
+local msz = Game.mapSizeZ
 
 local xformList = 0
 local coneList = 0

@@ -62,8 +62,8 @@ local model, scale, fixYZ = "s4.luac",       100,    false
 local model, scale, fixYZ = "colors.lua",    100,    false
 
 
-local msx = Game.mapX * 512.0
-local msz = Game.mapY * 512.0
+local msx = Game.mapSizeX
+local msz = Game.mapSizeZ
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 function widget:ViewResize(viewSizeX, viewSizeY)
@@ -175,8 +175,8 @@ end
 function widget:Update()
   py = 500
   local r = 1000
-  local cx = 0.5 * (Game.mapX * 512)
-  local cz = 0.5 * (Game.mapY * 512)
+  local cx = 0.5 * Game.mapSizeX
+  local cz = 0.5 * Game.mapSizeZ
   local time = widgetHandler:GetHourTimer()
   radians = math.mod(math.pi * 2 * time * 0.1, math.pi * 2)
   if (revolve) then
