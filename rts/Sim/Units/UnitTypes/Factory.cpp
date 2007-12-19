@@ -354,7 +354,7 @@ void CFactory::CreateNanoParticle(void)
 			float3 dif = (curBuild->midPos - weaponPos);
 			const float l = dif.Length();
 			dif /= l;
-			dif += gs->randVector() * 0.15f;
+			dif += gu->usRandVector() * 0.15f;
 			float3 color = unitDef->nanoColor;
 
 			if (gu->teamNanospray) {
