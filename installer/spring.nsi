@@ -23,6 +23,8 @@ SetCompressor lzma
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
+;!define MUI_COMPONENTSPAGE_SMALLDESC ;puts description on the bottom, but much shorter.
+!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "Some of these components (e.g. mods or maps) must be downloaded during the install process.  If you are new to spring, you should select at least one mod and one map pack."
 
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
@@ -109,11 +111,11 @@ Function .onInit
 FunctionEnd
 
 ; Only allow installation if spring.exe is from version 0.75
-Function CheckVersion
-  ClearErrors
-  FileOpen $0 "$INSTDIR\spring.exe" r
-  IfErrors Fail
-  FileSeek $0 0 END $1
+;Function CheckVersion
+  ;ClearErrors
+  ;FileOpen $0 "$INSTDIR\spring.exe" r
+  ;IfErrors Fail
+  ;FileSeek $0 0 END $1
 ;  IntCmp $1 2637824 Done             ; 0.60b1
 ;  IntCmp $1 2650112 Done             ; 0.61b1
 ;  IntCmp $1 2670592 Done             ; 0.61b2
@@ -130,17 +132,17 @@ Function CheckVersion
 ;  IntCmp $1 5438464 Done             ; 0.74b1
 ;  IntCmp $1 5487104 Done             ; 0.74b2
 ;  IntCmp $1 5478912 Done             ; 0.74b3
-  IntCmp $1 7470080 Done              ; 0.75b1
-  IntCmp $1 7471104 Done              ; 0.75b2
-Fail:
-  MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.75. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
-  Abort "Unable to upgrade, version 0.75b1 or 0.75b2 not found.."
-  Goto done
+  ;IntCmp $1 7470080 Done              ; 0.75b1
+  ;IntCmp $1 7471104 Done              ; 0.75b2
+;Fail:
+  ;MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.75. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
+  ;Abort "Unable to upgrade, version 0.75b1 or 0.75b2 not found.."
+  ;Goto done
 
-Done:
-  FileClose $0
+;Done:
+  ;FileClose $0
 
-FunctionEnd
+;FunctionEnd
 
 ;Three functions which check to make sure OTA Content is installed before installing Mods that depend on it.
 Function CheckTATextures
@@ -209,7 +211,7 @@ Section "Multiplayer battleroom" SEC_BATTLEROOM
 SectionEnd
 
 
-SectionGroup "Maps"
+SectionGroup "Map Packs"
 	Section "Default Maps" SEC_MAPS
 	!define INSTALL
 	!include "sections\maps.nsh"
@@ -230,8 +232,8 @@ SectionGroup "Maps"
 SectionGroupEnd
 
 
-SectionGroup "Mods (The Games You Can Play)"
-	Section "Balanced Annihilation (BA)" SEC_BA
+SectionGroup "Mods"
+	Section "BA" SEC_BA
 	!define INSTALL
         Call CheckTATextures
         Call CheckOTAContent
