@@ -15,6 +15,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -177,30 +178,7 @@ void CFactory::Update()
 
 		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
 			if (curBuild->AddBuildPower(buildSpeed, this)) {
-				std::vector<int> args;
-				args.push_back(0);
-				cob->Call("QueryNanoPiece", args);
-
-				if (unitDef->showNanoSpray) {
-					const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
-					const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
-																			 + (updir    * relWeaponFirePos.y)
-																			 + (rightdir * relWeaponFirePos.x);
-					float3 dif = (curBuild->midPos - weaponPos);
-					const float l = dif.Length();
-					dif /= l;
-					dif += gs->randVector() * 0.15f;
-					float3 color = unitDef->nanoColor;
-
-					if (gu->teamNanospray) {
-						unsigned char* tcol = gs->Team(team)->color;
-						color = float3(tcol[0] * (1.0f / 255.0f),
-													 tcol[1] * (1.0f / 255.0f),
-													 tcol[2] * (1.0f / 255.0f));
-					}
-
-					SAFE_NEW CGfxProjectile(weaponPos, dif, (int) l, color);
-				}
+				CreateNanoParticle();
 			}
 		}
 
@@ -356,4 +334,37 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 {
 	StopBuild();
 	return CBuilding::ChangeTeam(newTeam, type);
+}
+
+
+void CFactory::CreateNanoParticle(void)
+{
+	std::vector<int> args;
+	args.push_back(0);
+	cob->Call("QueryNanoPiece", args);
+
+	ENTER_UNSYNCED;
+
+	if (ph->currentParticles < ph->maxParticles) {
+		if (unitDef->showNanoSpray) {
+			const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+			const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
+										 + (updir    * relWeaponFirePos.y)
+										 + (rightdir * relWeaponFirePos.x);
+			float3 dif = (curBuild->midPos - weaponPos);
+			const float l = dif.Length();
+			dif /= l;
+			dif += gs->randVector() * 0.15f;
+			float3 color = unitDef->nanoColor;
+
+			if (gu->teamNanospray) {
+				unsigned char* tcol = gs->Team(team)->color;
+				color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
+			}
+
+			SAFE_NEW CGfxProjectile(weaponPos, dif, (int) l, color);
+		}
+	}
+
+	ENTER_SYNCED;
 }
