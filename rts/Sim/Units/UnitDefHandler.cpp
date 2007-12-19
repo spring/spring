@@ -49,9 +49,12 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	rootTable.GetKeys(unitDefNames);
 
 	numUnitDefs = unitDefNames.size();
-	if (gameSetup) {
-		numUnitDefs -= gameSetup->restrictedUnits.size();
-	}
+
+//	if (gameSetup) {
+//		// ?? "restricted" does not automatically mean "cannot be built
+//		// at all, so we don't need the unitdef for this unit" -- Kloot
+//		numUnitDefs -= gameSetup->restrictedUnits.size();
+//	}
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
@@ -59,14 +62,13 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	unsigned int id = 1;  // Start at unitdef id 1
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
-
 		const string unitName = unitDefNames[a];
 
 		// Restrictions may tell us not to use this unit at all
 		if (gameSetup) {
 			const std::map<std::string, int>& resUnits = gameSetup->restrictedUnits;
-		  if ((resUnits.find(unitName) != resUnits.end()) &&
-			    (resUnits.find(unitName)->second == 0)) {
+			if ((resUnits.find(unitName) != resUnits.end()) &&
+				(resUnits.find(unitName)->second == 0)) {
 				continue;
 			}
 		}
@@ -412,6 +414,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	if (gameSetup) {
 		string lname = StringToLower(ud.name);
+
 		if (gameSetup->restrictedUnits.find(lname) != gameSetup->restrictedUnits.end()) {
 			ud.maxThisUnit = min(ud.maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
 		}
