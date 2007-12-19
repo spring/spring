@@ -648,13 +648,12 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
+	std::vector<int> args;
+	args.push_back(0);
+	cob->Call("QueryNanoPiece", args);
 	ENTER_UNSYNCED;
 
 	if (ph->currentParticles < ph->maxParticles) {
-		std::vector<int> args;
-		args.push_back(0);
-		cob->Call("QueryNanoPiece", args);
-
 		if (!unitDef->showNanoSpray)
 			return;
 
