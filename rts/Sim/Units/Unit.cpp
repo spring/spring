@@ -148,7 +148,7 @@ CUnit::CUnit ()
 	armoredMultiple(1),
 	curArmorMultiple(1),
 	buildProgress(0),
-	groundLevelled(false),
+	groundLevelled(true),
 	terraformLeft(0),
 	realLosRadius(0),
 	realAirLosRadius(0),

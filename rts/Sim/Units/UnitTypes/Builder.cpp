@@ -523,6 +523,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 		tz2 = min(gs->mapy,tz1+b->unitDef->ysize);
 
 		b->terraformLeft = CalculateBuildTerraformCost(buildInfo);
+		b->groundLevelled=false;
 
 		terraforming=true;
 		terraformType=Terraform_Building;
