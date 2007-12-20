@@ -1723,7 +1723,7 @@ int CLuaUI::GetCmdDescIndex(lua_State* L)
 	if (guihandler == NULL) {
 		return 0;
 	}
-	const int cmdId = (int)lua_tonumber(L, 1);
+	const int cmdId = (int)luaL_checknumber(L, 1);
 
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
