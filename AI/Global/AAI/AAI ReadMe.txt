@@ -105,6 +105,16 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.84	- AAI will remove sectors where it lost all its buildings from base (may add them again at any time later though)
+
+		- More defence building tweaks
+
+		- Added DONT_BUILD keyword to mod cfg files, it works like SCOUTS or ATTACKERS, units listed after DONT_BUILD will 
+		  not be build by AAI in any case (and will not been taken into account for internal statistics)
+
+		- Fixed a bug introduced in AAI 0.83 when AAI was upgrading extractors of allied teams (e.g. replacing allied mex 
+		  with own moho mine)
+
 
 AAI v0.83 	- Completly redone defence building placement (AAI will now take terrain into account as well as already existing 
 		  defences) It should give much better results now especially on maps that dont have rather flat terrain

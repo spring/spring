@@ -141,41 +141,6 @@ void AAISector::Update()
 		lost_units[i] *= 0.92f;
 }
 
-// return null pointer if no empty spot found
-AAIMetalSpot* AAISector::GetFreeMetalSpot(float3 pos)
-{
-	// just some high value 
-	float dist;
-	float shortest_dist = 100000000.0f;
-	AAIMetalSpot *nearest = 0;
-
-	// look for the first unoccupied metalspot
-	for(list<AAIMetalSpot*>::iterator i = metalSpots.begin(); i != metalSpots.end(); i++)
-	{
-		// if metalspot is occupied, try next one
-		if(!(*i)->occupied)
-		{
-			// get distance to pos
-			dist = sqrt( pow(((*i)->pos.x - pos.x), 2) + pow(((*i)->pos.z - pos.z),2) );
-
-			if(dist < shortest_dist)
-			{
-				nearest = *i;
-				shortest_dist = dist;
-			}
-		}
-	}
-	
-	if(!nearest)
-	{
-		// no empty metalspot found in that sector
-		this->freeMetalSpots = false;
-		return 0;
-	}
-	else
-		return nearest;
-}
-
 AAIMetalSpot* AAISector::GetFreeMetalSpot()
 {
 	// look for the first unoccupied metalspot
@@ -221,7 +186,7 @@ void AAISector::FreeMetalSpot(float3 pos, const UnitDef *extractor)
 	}
 }
 
-void AAISector::AddExtractor(int unit_id, int def_id, float3 pos)
+void AAISector::AddExtractor(int unit_id, int def_id, float3 *pos)
 {
 	float3 spot_pos;
 
@@ -235,7 +200,7 @@ void AAISector::AddExtractor(int unit_id, int def_id, float3 pos)
 			spot_pos = (*spot)->pos;
 			ai->map->Pos2FinalBuildPos(&spot_pos, ai->bt->unitList[def_id-1]);
 
-			if(pos.x == spot_pos.x && pos.z == spot_pos.z)	
+			if(pos->x == spot_pos.x && pos->z == spot_pos.z)	
 			{
 				(*spot)->extractor = unit_id;
 				(*spot)->extractor_def = def_id;
@@ -559,34 +524,11 @@ void AAISector::RemoveDefence(int unit_id)
 	}
 }
 
-void AAISector::AddDefence(int unit_id, int def_id, float3 pos)
+void AAISector::AddDefence(int unit_id, int def_id)
 {
 	AAIDefence def;
 	def.unit_id = unit_id;
 	def.def_id = def_id;
-
-	if(pos.x >= left && pos.x <= (left + ai->map->xSectorSize/6))
-	{
-		def.direction = WEST;
-		//ai->cb->SendTextMsg("new defence: west",0);
-	}
-	else if(pos.z >= top && pos.z <= (top + ai->map->ySectorSize/6))
-	{
-		def.direction = NORTH;
-		//ai->cb->SendTextMsg("new defence: north",0);
-	}
-	else if(pos.x >= (right - ai->map->xSectorSize/6) && pos.x <= right)
-	{
-		def.direction = EAST;
-		//ai->cb->SendTextMsg("new defence: east",0);
-	}
-	else if(pos.z >= (bottom - ai->map->xSectorSize/6) && pos.x <= bottom)
-	{
-		def.direction = SOUTH;
-		//ai->cb->SendTextMsg("new defence: south",0);
-	}
-	else
-		def.direction = CENTER;
 
 	defences.push_back(def);
 }
@@ -693,4 +635,24 @@ float AAISector::GetAreaCombatPowerVs(int combat_category, float neighbour_impor
 		result += neighbour_importance * ai->map->sector[x][y+1].mobile_combat_power[combat_category];
 
 	return result;
+}
+
+int AAISector::GetNumberOfBuildings()
+{
+	int result = 0;
+
+	for(int i = STATIONARY_DEF; i <= METAL_MAKER; ++i)
+		result += unitsOfType[i];
+
+	return result;
+}
+
+bool AAISector::PosInSector(float3 *pos)
+{
+	if(pos->x < left || pos->x > right)
+		return false;
+	else if(pos->z < top || pos->z > bottom)
+		return false;
+	else
+		return true;
 }

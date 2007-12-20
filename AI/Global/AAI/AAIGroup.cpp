@@ -204,7 +204,7 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 						int unit = GetRandomUnit();
 
 						if(unit)
-							ai->execute->DefendUnitVS(unit, cb->GetUnitDef(unit), category, ZeroVector, 110);
+							ai->execute->DefendUnitVS(unit, cb->GetUnitDef(unit), category, NULL, 110);
 					}
 				}
 			}
@@ -329,20 +329,20 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 	task = GROUP_ATTACKING;			
 }
 
-void AAIGroup::Defend(int unit, float3 enemy_pos, int importance)
+void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 {
 	Command cmd;
 
-	if(enemy_pos.x > 0)
+	if(enemy_pos)
 	{
 		cmd.id = CMD_FIGHT;
-		cmd.params.push_back(enemy_pos.x);
-		cmd.params.push_back(enemy_pos.y);
-		cmd.params.push_back(enemy_pos.z);
+		cmd.params.push_back(enemy_pos->x);
+		cmd.params.push_back(enemy_pos->y);
+		cmd.params.push_back(enemy_pos->z);
 
 		GiveOrder(&cmd, importance, DEFENDING);
 
-		target_sector = ai->map->GetSectorOfPos(&enemy_pos);
+		target_sector = ai->map->GetSectorOfPos(enemy_pos);
 	}
 	else
 	{
@@ -491,4 +491,45 @@ void AAIGroup::UnitIdle(int unit)
 		if(temp == target_sector || !target_sector)
 			task = GROUP_IDLE;
 	}
+}
+
+void AAIGroup::BombTarget(int target_id, float3 *target_pos)
+{
+	Command c;
+	c.id = CMD_ATTACK;
+	c.params.push_back(target_pos->x);
+	c.params.push_back(target_pos->y);
+	c.params.push_back(target_pos->z);
+
+	GiveOrder(&c, 110, UNIT_ATTACKING);
+
+	ai->ut->AssignGroupToEnemy(target_id, this);
+
+	task = GROUP_BOMBING;
+}
+
+void AAIGroup::DefendAirSpace(float3 *pos)
+{
+	Command c;
+	c.id = CMD_PATROL;
+	c.params.push_back(pos->x);
+	c.params.push_back(pos->y);
+	c.params.push_back(pos->z);
+
+	GiveOrder(&c, 110, UNIT_ATTACKING);
+
+	task = GROUP_PATROLING;
+}
+
+void AAIGroup::AirRaidUnit(int unit_id)
+{
+	Command c;
+	c.id = CMD_ATTACK;
+	c.params.push_back(unit_id);
+
+	GiveOrder(&c, 110, UNIT_ATTACKING);
+
+	ai->ut->AssignGroupToEnemy(unit_id, this);
+
+	task = GROUP_ATTACKING;
 }

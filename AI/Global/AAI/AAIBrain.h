@@ -71,6 +71,9 @@ public:
 	// returns pos where scout schould be sent to
 	AAISector* GetNewScoutDest(int scout);
 
+	// returns true if sector is considered to be safe
+	bool IsSafeSector(AAISector *sector);
+
 	// adds new sectors to base
 	bool ExpandBase(SectorType sectorType);
 

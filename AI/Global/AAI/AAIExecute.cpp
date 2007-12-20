@@ -407,14 +407,31 @@ AAIMetalSpot* AAIExecute::FindMetalSpot(bool land, bool water)
 	{
 		for(list<AAISector*>::iterator sector = brain->sectors[sector_dist].begin();sector != brain->sectors[sector_dist].end(); sector++)
 		{
-			if((*sector)->freeMetalSpots && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && (*sector)->threat <= 0)
+			if(sector_dist == 0)
 			{
-				for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
+				if((*sector)->freeMetalSpots)
 				{
-					if(!(*spot)->occupied)	
+					for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
 					{
-						if( (land && (*spot)->pos.y >= 0) ||(water && (*spot)->pos.y < 0) )
-							return *spot;
+						if(!(*spot)->occupied)	
+						{
+							if( (land && (*spot)->pos.y >= 0) ||(water && (*spot)->pos.y < 0) )
+								return *spot;
+						}
+					}
+				}
+			}
+			else
+			{
+				if((*sector)->freeMetalSpots && brain->IsSafeSector(*sector) && map->team_sector_map[(*sector)->x][(*sector)->y] == -1 )
+				{
+					for(list<AAIMetalSpot*>::iterator spot = (*sector)->metalSpots.begin(); spot != (*sector)->metalSpots.end(); ++spot)
+					{
+						if(!(*spot)->occupied)	
+						{
+							if( (land && (*spot)->pos.y >= 0) ||(water && (*spot)->pos.y < 0) )
+								return *spot;
+						}
 					}
 				}
 			}
@@ -1027,11 +1044,6 @@ bool AAIExecute::BuildPowerPlant()
 	else if(ai->activeFactories < 1 && ai->activeUnits[POWER_PLANT] >= 2)
 		return true;
 
-	// one more special case: we have a factory and LOTS of energy stored, and we have negative energy surplus.
-	// that looks like we have a metal stall as well, so more power plants will not help
-	//if(ai->activeFactories > 0 && ai->activeUnits[POWER_PLANT] >= 2 && cb->GetEnergy() > 0.9 * cb->GetEnergyStorage())
-	//	return true;
-
 	// stop building power plants if already to much available energy
 	if(cb->GetEnergyIncome() > 1.5f * cb->GetEnergyUsage() + 200.0)
 		return true;
@@ -1049,7 +1061,7 @@ bool AAIExecute::BuildPowerPlant()
 	float eff;
 	float energy = cb->GetEnergyIncome()+1;
 
-	// check if already one power_plant under cosntruction and energy short 
+	// check if already one power_plant under construction and energy short 
 	if(ai->futureUnits[POWER_PLANT] > 0 && ai->activeUnits[POWER_PLANT] > 9 && averageEnergySurplus < 100)
 	{
 		urgency = 0.4f + GetEnergyUrgency();
@@ -1584,6 +1596,20 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 	if(dest->allied_structures > 50)
 		return BUILDORDER_SUCCESFUL;
 
+	// dont start construction of further defences if expensive defences are already under construction in this sector
+	for(list<AAIBuildTask*>::iterator task = ai->build_tasks.begin(); task != ai->build_tasks.end(); ++task)
+	{
+		if(bt->units_static[(*task)->def_id].category == STATIONARY_DEF)
+		{
+			if(dest->PosInSector(&(*task)->build_pos))
+			{
+				if(bt->units_static[(*task)->def_id].cost > 0.7 * bt->avg_cost[STATIONARY_DEF][ai->side-1])
+					return BUILDORDER_SUCCESFUL;
+			}
+		}
+	}
+
+	
 	double gr_eff = 0, air_eff = 0, hover_eff = 0, sea_eff = 0, submarine_eff = 0;
 	
 	bool checkWater, checkGround;
@@ -1620,17 +1646,22 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 
 	if(dest->defences.size() > 3)
 	{
-		int t = rand()%4;
+		int t = rand()%500;
 
-		if(t == 1)
+		if(t < 70)
 		{
-			range = 3;
+			range = 2.5;
 			terrain = 30.0f; 
 		}
-		else if(t == 2)
-			range = 1.5;
+		else if(t < 200)
+		{
+			range = 1;
+			terrain = 25.0f; 
+		}
 
-		if(t == 3)
+		t = rand()%500;
+
+		if(t < 200)
 			power += 1.5;
 	}
 
@@ -1683,8 +1714,7 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 			if(bt->units_static[building].efficiency[id]  < bt->avg_eff[ai->side-1][5][id])
 				building = 0;
 		}
-
-				
+		
 		if(building)
 		{
 			pos = dest->GetDefenceBuildsite(building, category, terrain, false);
@@ -2301,6 +2331,9 @@ bool AAIExecute::BuildJammer()
 
 void AAIExecute::DefendMex(int mex, int def_id)
 {
+	if(ai->activeFactories < cfg->MIN_FACTORIES_FOR_DEFENCES)
+		return;
+
 	float3 pos = cb->GetUnitPos(mex);
 	float3 base_pos = brain->base_center;
 
@@ -2526,7 +2559,7 @@ void AAIExecute::CheckDefences()
 
 		if(status == BUILDORDER_NOBUILDER)
 		{
-			float temp = 0.5 + 6.0 / ( (float) first->defences.size() + 1.0f); 
+			float temp = 0.3 + 6.0 / ( (float) first->defences.size() + 1.0f); 
 
 			if(urgency[STATIONARY_DEF] < temp)
 				urgency[STATIONARY_DEF] = temp;
@@ -2644,6 +2677,8 @@ void AAIExecute::CheckMexUpgrade()
 	float gain, highest_gain = 0;
 	AAIMetalSpot *best_spot = 0;
 
+	int my_team = cb->GetMyTeam();
+
 	int land_mex = bt->GetMex(ai->side, cost, eff, false, false, false);
 
 	if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
@@ -2679,7 +2714,8 @@ void AAIExecute::CheckMexUpgrade()
 				if(!(*spot)->occupied && (*sector)->enemy_structures <= 0  && (*sector)->lost_units[MOBILE_CONSTRUCTOR-COMMANDER] < 0.2)
 					return;
 				
-				if((*spot)->extractor_def > 0 && (*spot)->extractor > -1 && (*spot)->extractor < cfg->MAX_UNITS)
+				if((*spot)->extractor_def > 0 && (*spot)->extractor > -1 && (*spot)->extractor < cfg->MAX_UNITS 
+					&& cb->GetUnitTeam((*spot)->extractor) == my_team)	// only upgrade own extractors
 				{
 					my_def = bt->unitList[(*spot)->extractor_def-1];
 
@@ -3048,7 +3084,7 @@ bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importa
 		if((*task)->builder_id >= 0)
 			builder = ut->units[(*task)->builder_id].cons;
 		else
-			builder = 0;
+			builder = NULL;
 
 		if(builder && builder->construction_category == category && builder->assistants.size() < cfg->MAX_ASSISTANTS)
 		{
@@ -3351,7 +3387,7 @@ AAIGroup* AAIExecute::GetClosestGroupOfCategory(UnitCategory category, UnitType 
 	return best_group;
 }
 
-void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 enemy_pos, int importance)
+void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 *enemy_pos, int importance)
 {
 	if(unit < 0)
 		return;
@@ -3432,7 +3468,7 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 				if(sector->distance_to_base > 3 && support->category != AIR_ASSAULT)
 					return;
 	
-				support->Defend(unit, ZeroVector, importance);
+				support->Defend(unit, NULL, importance);
 			}
 		}
 		// ground unit attacked

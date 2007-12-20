@@ -409,7 +409,7 @@ void AAIBuildTable::Init()
 		//
 		for(int i = 1; i <= numOfUnits; i++)
 		{
-			if(!units_static[i].side)
+			if(!units_static[i].side || !AllowedToBuild(i))
 			{
 			}
 			// get scouts
@@ -2674,7 +2674,7 @@ bool AAIBuildTable::LoadBuildTable()
 
 		int tmp = 0, bo = 0, bb = 0, cat = 0;
 	
-		// load units if file exists 
+		// load units if file exists
 		if((load_file = fopen(filename, "r")))
 		{
 			// check if correct version
@@ -3469,8 +3469,8 @@ void AAIBuildTable::BuildBuilderFor(int building_id)
 	float best_rating = -100000, my_rating; 
 
 	float cost = ai->brain->Affordable()/4.0f; 
-	float buildspeed = 0.5f;;
-	float urgency = 2.0f;
+	float buildspeed = 0.5f;
+	float urgency = 4.0f;
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0f;
 	
@@ -3520,8 +3520,8 @@ void AAIBuildTable::AddBuilder(int building_id)
 	float best_rating = -10000, my_rating; 
 
 	float cost = ai->brain->Affordable()/2.0; 
-	float buildspeed = sqrt((float) (1 + units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested))/2.0;
-	float urgency = 1.0 / (2 * units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested + 0.2);
+	float buildspeed = sqrt((float) (1.0 + units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested))/2.0;
+	float urgency = 4.0 / (units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested + 0.5);
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0;
 
@@ -3689,7 +3689,7 @@ bool AAIBuildTable::IsScout(int id)
 		return true;
 	else 
 	{
-		for(list<int>::iterator i = cfg->SCOUTS.begin(); i != cfg->SCOUTS.end(); i++)
+		for(list<int>::iterator i = cfg->SCOUTS.begin(); i != cfg->SCOUTS.end(); ++i)
 		{
 			if(*i == id)
 				return true;
@@ -3701,12 +3701,24 @@ bool AAIBuildTable::IsScout(int id)
 
 bool AAIBuildTable::IsAttacker(int id)
 {
-	for(list<int>::iterator i = cfg->ATTACKERS.begin(); i != cfg->ATTACKERS.end(); i++)
+	for(list<int>::iterator i = cfg->ATTACKERS.begin(); i != cfg->ATTACKERS.end(); ++i)
 	{
 		if(*i == id)
 			return true;
 	}
+
 	return false;
+}
+
+bool AAIBuildTable::AllowedToBuild(int id)
+{
+	for(list<int>::iterator i = cfg->DONT_BUILD.begin(); i != cfg->DONT_BUILD.end(); ++i)
+	{
+		if(*i == id)
+			return false;
+	}
+
+	return true;
 }
 
 bool AAIBuildTable::IsMissileLauncher(int def_id)

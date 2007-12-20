@@ -386,27 +386,7 @@ void AAIBrain::UpdateNeighbouringSectors()
 		}
 	}
 
-	// determine interior sectors
-	//for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
-	//{
-	//}
-
-	fprintf(ai->file, "Base has now %i direct neighbouring sectors\n", sectors[1].size());
-
-	// debug
-	/*FILE *my_file = fopen("debug_map.txt", "w+");
-
-	for(int y = 0; y < ai->map->ySectors; ++y)
-	{
-		for(int x = 0; x < ai->map->xSectors; ++x)
-		{
-			fprintf(my_file, "%+2i ", ai->map->sector[x][y].distance_to_base);
-		}
-
-		fprintf(my_file, "\n");
-	}
-
-	fclose(my_file);*/
+	//fprintf(ai->file, "Base has now %i direct neighbouring sectors\n", sectors[1].size());
 }
 
 bool AAIBrain::SectorInList(list<AAISector*> mylist, AAISector *sector)
@@ -470,8 +450,6 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				else
 					my_rating = 0;
 
-				
-				
 			
 				// choose higher rated sector
 				if(my_rating > best_rating)
@@ -489,9 +467,9 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 
 			// debug purposes:
 			if(sectorType == LAND_SECTOR)
-				fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n", best_sector->x, best_sector->y, sectors[0].size());
+				fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
 			else
-				fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i \n", best_sector->x, best_sector->y, sectors[0].size());
+				fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
 
 			// update neighbouring sectors
 			UpdateNeighbouringSectors();
@@ -712,9 +690,9 @@ void AAIBrain::BuildUnits()
 			}
 			else
 			{
-				if(rand()%3 == 1)
+				if(rand()%1024 > 384)
 					category = GROUND_ASSAULT;
-				else if(rand()%3 == 2)
+				else if(rand()%1024 > 384)
 					category = AIR_ASSAULT;
 				else
 					category = HOVER_ASSAULT;
@@ -760,18 +738,18 @@ void AAIBrain::BuildUnits()
 				stat_eff = 0;
 
 				// determine unit type
-				if(rand()%cfg->AIRCRAFT_RATE == 1)
+				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
 					category = AIR_ASSAULT;
 
-					k = rand()%3;
+					k = rand()%1024;
 
-					if(k == 0)
+					if(k < 384)
 					{
 						ground_eff = 4;
 						hover_eff = 1;
 					}
-					else if(k == 1)
+					else if(k < 640)
 					{
 						air_eff = 4;
 					}
@@ -838,17 +816,18 @@ void AAIBrain::BuildUnits()
 				submarine_eff = 0;
 				stat_eff = 0;
 
-				if(rand()%cfg->AIRCRAFT_RATE == 1)
+				
+				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
 					category = AIR_ASSAULT;
 					
-					if(rand()%3 == 1)
+					if(rand()%1000 < 333)
 					{
 						ground_eff = 4;
 						hover_eff = 1;
 						sea_eff = 2;
 					}
-					else if(rand()%3 == 2)
+					else if(rand()%1000 < 333)
 					{
 						air_eff = 4;
 					}
@@ -935,18 +914,18 @@ void AAIBrain::BuildUnits()
 				submarine_eff = 0;
 				stat_eff = 0;
 
-				if(rand()%cfg->AIRCRAFT_RATE == 1)
+				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
 					category = AIR_ASSAULT;
 					anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
 				
 					
-					if(rand()%3 == 1)
+					if(rand()%1000 < 333)
 					{
 						sea_eff = 4;
 						hover_eff = 2;
 					}
-					else if(rand()%3 == 2)
+					else if(rand()%1000 < 333)
 					{
 						air_eff = 4;
 					}
@@ -1051,11 +1030,11 @@ void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float grou
 
 		if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 		{
-			int t = rand()%3;
+			int t = rand()%1000;
 
-			if(t == 1)
+			if(t < 350)
 				range = 0.75;
-			else if(t == 2)
+			else if(t == 700)
 				range = 1.3f;
 			else 
 				t = 1.7f;
@@ -1086,4 +1065,13 @@ int AAIBrain::GetGamePeriod()
 		return 2;
 	else
 		return 3;
+}
+
+bool AAIBrain::IsSafeSector(AAISector *sector)
+{
+	// TODO: improve criteria
+	if(sector->enemy_structures <= 0  && sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && sector->threat <= 0)
+		return true;
+	else 
+		return false;
 }

@@ -61,6 +61,7 @@ public:
 	char **SIDE_NAMES;
 	list<int> SCOUTS;
 	list<int> ATTACKERS;
+	list<int> DONT_BUILD;
 	float METAL_ENERGY_RATIO;
 	int MAX_DEFENCES;
 	float MIN_SECTOR_THREAT;

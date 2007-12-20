@@ -132,6 +132,9 @@ public:
 
 	bool IsDeflectionShieldEmitter(int def_id);
 
+	// returns false if unit is a member of the dont_build list
+	bool AllowedToBuild(int id);
+
 	// return a units eff. against a certain category
 	float GetEfficiencyAgainst(int unit_def_id, UnitCategory category);
 
