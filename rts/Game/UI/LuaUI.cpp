@@ -1723,7 +1723,6 @@ int CLuaUI::GetCmdDescIndex(lua_State* L)
 	if (guihandler == NULL) {
 		return 0;
 	}
-	CheckNoArgs(L, __FUNCTION__);
 	const int cmdId = (int)lua_tonumber(L, 1);
 
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
@@ -2998,10 +2997,12 @@ int CLuaUI::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, (float)lua_tonumber(L, 2)));
 
 	if (shareType == "metal") {
-		net->SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare);
+		net->SendSetShare(gu->myPlayerNum, gu->myTeam,
+		                  shareLevel, gs->Team(gu->myTeam)->energyShare);
 	}
 	else if (shareType == "energy") {
-		net->SendSetShare(gu->myPlayerNum, gu->myTeam, gs->Team(gu->myTeam)->metalShare, shareLevel);
+		net->SendSetShare(gu->myPlayerNum, gu->myTeam,
+		                  gs->Team(gu->myTeam)->metalShare, shareLevel);
 	}
 	else {
 		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
