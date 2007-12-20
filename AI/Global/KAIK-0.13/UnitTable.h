@@ -6,40 +6,45 @@
 
 
 class CUnitTable {
-	public: 
+	public:
+		/// CR_DECLARE(CUnitTable);
+
 		CUnitTable(AIClasses* ai);
 		~CUnitTable();
 
-		// Initialize all unit lists, categories etc
+		// initialize all unit lists, categories etc
 		void Init();
 
-		// Temp stuff
+		// not implemented
 		const UnitDef* GetBestEconomyBuilding(int builder, float minUsefulness);
 
 
-		// returns true, if a builder can build a certain unit (use UnitDef.id)
+		// true if a builder can build a certain unit (use UnitDef.id)
 		bool CanBuildUnit(int id_builder, int id_unit);
+
+		int BuildModSideMap();
+		int ReadTeamSides();
 
 		// returns side of a unit
 		int GetSide(int unit);
-		// Gets the average Damage Per second a unit can cause (provided all weapons are in range)
+		// gets the average Damage Per second a unit can cause (provided all weapons are in range)
 		float GetDPS(const UnitDef* unit);
-		// Finds the actual dps versus a specific enemy unit
+		// finds the actual DPS versus a specific enemy unit
 		float GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim);
 		// checks the combat potential of this unit vs all active enemy units
 		float GetCurrentDamageScore(const UnitDef* unit);
 
 		void UpdateChokePointArray();
 
-		// Gets the category for a particular unit
+		// gets the category for a particular unit
 		int GetCategory(const UnitDef* unitdef);
 		int GetCategory(int unit);
 
 		// returns the ID of the best possible Unit of a given category
 		const UnitDef* GetUnitByScore(int builder, int category);
 
-		// Finds the general score of any given unit
-		float GetScore(const UnitDef* unit);
+		// finds the general score of any given unit
+		float GetScore(const UnitDef* unit, int category);
 
 		// returns max range of all weapons (or 0)
 		float GetMaxRange(const UnitDef* unit);
@@ -60,7 +65,9 @@ class CUnitTable {
 
 		// number of sides
 		int numOfSides;
-		vector<string> sideNames;
+		std::vector<string> sideNames;		// side number (0) to side string ("Arm")
+		std::map<string, int> modSideMap;	// side string ("Arm") to side number (0)
+		std::vector<int> teamSides;			// team numbers to side numbers
 
 		// all the unit defs
 		const UnitDef** unitList;
@@ -69,11 +76,11 @@ class CUnitTable {
 
 	private:
 		// for internal use
-		void CalcBuildTree(int unit);
+		void CalcBuildTree(int unit, int rootSide);
 		void DebugPrint();
 
 		// start units of each side (e.g. commander)
-		vector<int> startUnits;
+		std::vector<int> startUnits;
 
 		FILE* file;
 		AIClasses* ai;

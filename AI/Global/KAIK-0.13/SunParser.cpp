@@ -56,7 +56,7 @@ void CSunParser::LoadRealFile(string filename) {
 	int size = RealFile.tellg();
 	RealFile.seekg(0, ios_base::beg);
 
-	char *filebuf = new char[size+1];
+	char* filebuf = new char[size + 1];
 	RealFile.get(filebuf, size, '\0');
 	RealFile.close();
 	// append newline at end to avoid parsing error at EOF
