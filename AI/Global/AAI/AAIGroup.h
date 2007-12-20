@@ -22,10 +22,19 @@ public:
 	void AttackSector(AAISector *dest, float importance);
 
 	// defend unit vs enemy (0; zerovector if enemy unknown)
-	void Defend(int unit, float3 enemy_pos, int importance);
+	void Defend(int unit, float3 *enemy_pos, int importance);
 
 	// retreat combat groups to pos
 	void Retreat(float3 *pos);
+
+	// bombs target (only for bomber groups)
+	void BombTarget(int target_id, float3 *target_pos);
+
+	// orders fighters to defend air space
+	void DefendAirSpace(float3 *pos);
+
+	// orders air units to attack 
+	void AirRaidUnit(int unit_id);
 
 	int GetRandomUnit();
 

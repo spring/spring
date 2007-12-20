@@ -23,17 +23,26 @@ public:
 	AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt);
 	~AAIAirForceManager(void);
 
-	// checks if a certain unit is worth bombing it and tries to order air units to do it
+	// checks if a certain unit is worth attacking it and tries to order air units to do it (units, stationary defences)
 	void CheckTarget(int unit, const UnitDef *def);
 
-	// erases old targets and adds new ones
-	void AddTarget(float3 pos, int def_id, float cost, float health, UnitCategory category);
+	// checks if target is possible bombing target and adds to list of bomb targets (used for buildings e.g. stationary arty, nuke launchers..)
+	void CheckBombTarget(int unit_id, int def_id);
+
+	// adds new target to bombing targets (if free space in list)
+	void AddTarget(int unit_id, int def_id);
+
+	// removes target from bombing target list
+	void RemoveTarget(int unit_id);
 
 	// tries to attack units of a certain category
 	void BombUnitsOfCategory(UnitCategory category);
 
 	// attacks the most promising target 
 	void BombBestUnit(float cost, float danger);
+
+	// returns true if uni already in target list
+	bool IsTarget(int unit_id);
 
 	// list of possible bombing targets
 	vector<AAIAirTarget> targets;
@@ -44,8 +53,12 @@ public:
 
 private:
 
+
 	IAICallback *cb;
 	AAI *ai;
 	AAIBuildTable *bt;
 	AAIMap *map;
+
+	int my_team;
+	int num_of_targets;
 };

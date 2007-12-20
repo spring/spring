@@ -215,13 +215,13 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 				{
 					// building has been attacked
 					if(cat <= METAL_MAKER)
-						execute->DefendUnitVS(damaged, def, att_cat, pos, 115);
+						execute->DefendUnitVS(damaged, def, att_cat, &pos, 115);
 					// builder
 					else if(ut->IsBuilder(damaged))
-						execute->DefendUnitVS(damaged, def, att_cat, pos, 110);
+						execute->DefendUnitVS(damaged, def, att_cat, &pos, 110);
 					// normal units
 					else 
-						execute->DefendUnitVS(damaged, def, att_cat, pos, 105);
+						execute->DefendUnitVS(damaged, def, att_cat, &pos, 105);
 				}
 			}
 		}
@@ -243,9 +243,9 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 		
 		// building has been attacked
 		if(cat <= METAL_MAKER)
-			execute->DefendUnitVS(damaged, def, att_cat, ZeroVector, 115);
+			execute->DefendUnitVS(damaged, def, att_cat, NULL, 115);
 		else if(ut->IsBuilder(damaged))
-			execute->DefendUnitVS(damaged, def, att_cat, ZeroVector, 110);
+			execute->DefendUnitVS(damaged, def, att_cat, NULL, 110);
 	}
 }
 
@@ -372,14 +372,14 @@ void AAI::UnitCreated(int unit)
 			int y = pos.z/map->ySectorSize;
 
 			if(x >= 0 && y >= 0 && x < map->xSectors && y < map->ySectors)
-				map->sector[x][y].AddDefence(unit, def->id, pos);
+				map->sector[x][y].AddDefence(unit, def->id);
 		}
 		else if(category == EXTRACTOR)
 		{
 			int x = pos.x/map->xSectorSize;
 			int y = pos.z/map->ySectorSize;
 
-			map->sector[x][y].AddExtractor(unit, def->id, pos);
+			map->sector[x][y].AddExtractor(unit, def->id, &pos);
 		}
 	}
 }
@@ -503,6 +503,9 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			{
 				map->sector[x][y].unitsOfType[category] -= 1;
 				map->sector[x][y].own_structures -= bt->units_static[def->id].cost;
+
+				if(map->sector[x][y].own_structures < 0)
+					map->sector[x][y].own_structures = 0;
 			}
 
 			// check if building belongs to one of this groups
@@ -612,6 +615,21 @@ void AAI::UnitDestroyed(int unit, int attacker)
 					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 4);
 					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, true);
 				}
+			}
+
+			// if no buildings left in that sector, remove from base sectors
+			if(map->sector[x][y].GetNumberOfBuildings() == 0 && brain->sectors[0].size() > 0)
+			{
+				map->sector[x][y].SetBase(false);
+
+				brain->sectors[0].remove(&map->sector[x][y]);
+
+				brain->UpdateNeighbouringSectors();
+				brain->UpdateBaseCenter();
+
+				brain->expandable = true;
+
+				fprintf(file, "\nRemoving sector %i,%i from base; base size: %i \n", x, y, brain->sectors[0].size());
 			}
 		}
 		else // finished unit has been killed
@@ -820,11 +838,12 @@ void AAI::UnitMoveFailed(int unit)
 		return;
 
 	pos = map->sector[x][y].GetCenter();
+	pos.x += rand()%4 * map->xSectorSize;
+	pos.z += rand()%4 * map->ySectorSize;
 
-	execute->moveUnitTo(unit, &pos);
-	*/
+	execute->moveUnitTo(unit, &pos);*/
 
-	// 
+	
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	if(ut->units[unit].cons)
@@ -846,6 +865,8 @@ void AAI::UnitMoveFailed(int unit)
 			}
 		}
 	}
+
+
 }
 
 void AAI::EnemyEnterLOS(int enemy) {}
@@ -889,7 +910,7 @@ void AAI::Update()
 	if(!initialized)
 	{
 		if(!(tick%450))
-			cb->SendTextMsg("AAI not properly initialized, please view ai log for further information", 0);
+			cb->SendTextMsg("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this mod", 0);
 
 		return;
 	}
@@ -923,7 +944,7 @@ void AAI::Update()
 	{
 		// check attack
 		am->Update();
-		//af->BombBestUnit(4, 4);
+		af->BombBestUnit(2, 2);
 		return;
 	}
 

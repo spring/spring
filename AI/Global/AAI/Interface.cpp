@@ -39,6 +39,12 @@ DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 	delete (AAI*)i;
 }
 
-DLL_EXPORT int IsCInterface(void) {
-       return 0;
+DLL_EXPORT int IsCInterface(void) 
+{
+	return 0;
 } 
+
+DLL_EXPORT int IsLoadSupported() 
+{
+	return 0;
+}

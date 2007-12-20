@@ -28,7 +28,7 @@ AAIConfig::AAIConfig(void)
 	MAX_SUBMARINE_GROUP_SIZE = 4;
 	MAX_NAVAL_GROUP_SIZE = 4;
 	MAX_ARTY_GROUP_SIZE = 4;
-	MIN_EFFICIENCY = 0.001;
+	MIN_EFFICIENCY = 0.001f;
 	MAX_BUILDERS = 50;
 	MAX_BUILDERS_PER_TYPE = 5;
 	MAX_FACTORIES_PER_TYPE = 3;
@@ -65,27 +65,27 @@ AAIConfig::AAIConfig(void)
 	MIN_FACTORIES_FOR_DEFENCES = 1;
 	MIN_FACTORIES_FOR_STORAGE = 2;
 	MIN_FACTORIES_FOR_RADAR_JAMMER = 2;
-	MIN_AIR_SUPPORT_EFFICIENCY = 2.5;
+	MIN_AIR_SUPPORT_EFFICIENCY = 2.5f;
 	UNIT_SPEED_SUBGROUPS = 3;
 	MIN_SUBMARINE_WATERLINE = 15;
 	MAX_ATTACKS = 4;
 
-	MAX_COST_LIGHT_ASSAULT = 0.025;
-	MAX_COST_MEDIUM_ASSAULT = 0.13;
-	MAX_COST_HEAVY_ASSAULT = 0.55;
+	MAX_COST_LIGHT_ASSAULT = 0.025f;
+	MAX_COST_MEDIUM_ASSAULT = 0.13f;
+	MAX_COST_HEAVY_ASSAULT = 0.55f;
 	
-	LIGHT_ASSAULT_RATIO = 40;
-	MEDIUM_ASSAULT_RATIO = 30;
-	HEAVY_ASSAULT_RATIO = 25;
-	SUPER_HEAVY_ASSAULT_RATIO = 5;
+	LIGHT_ASSAULT_RATIO = 40.0f;
+	MEDIUM_ASSAULT_RATIO = 30.0f;
+	HEAVY_ASSAULT_RATIO = 25.0f;
+	SUPER_HEAVY_ASSAULT_RATIO = 5.0f;
 	
-	LEARN_SPEED = 0.2;
+	LEARN_SPEED = 0.2f;
 	LEARN_RATE = 5;
 	CONSTRUCTION_TIMEOUT = 1500;
-	CLIFF_SLOPE = 0.085;
+	CLIFF_SLOPE = 0.085f;
 	SCOUT_UPDATE_FREQUENCY = 127;
-	WATER_MAP_RATIO = 0.8;
-	LAND_WATER_MAP_RATIO = 0.3;
+	WATER_MAP_RATIO = 0.8f;
+	LAND_WATER_MAP_RATIO = 0.3f;
 	
 	initialized = false;
 }
@@ -165,7 +165,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				// get number of scouts
 				fscanf(file, "%i", &ival);
 
-				for(int i = 0; i < ival; i++)
+				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
@@ -183,7 +183,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				// get number of attackers
 				fscanf(file, "%i", &ival);
 
-				for(int i = 0; i < ival; i++)
+				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
@@ -196,7 +196,24 @@ void AAIConfig::LoadConfig(AAI *ai)
 					}
 				}
 			}
+			else if(!strcmp(keyword, "DONT_BUILD"))
+			{
+				// get number of units that should not be built
+				fscanf(file, "%i", &ival);
 
+				for(int i = 0; i < ival; ++i)
+				{
+					fscanf(file, "%s", filename);
+					if(ai->cb->GetUnitDef(filename))
+						DONT_BUILD.push_back(ai->cb->GetUnitDef(filename)->id);
+					else 
+					{
+						fprintf(ai->file, "ERROR: loading dont_build units - could not find unit %s\n", filename);
+						error = true;
+						break;
+					}
+				}
+			}
 			else if(!strcmp(keyword,"SECTOR_SIZE"))
 			{
 				fscanf(file, "%f", &fval);

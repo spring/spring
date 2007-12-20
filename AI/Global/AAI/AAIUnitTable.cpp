@@ -54,6 +54,13 @@ bool AAIUnitTable::AddUnit(int unit_id, int def_id, AAIGroup *group, AAIConstruc
 			if(units[unit_id].group)
 				units[unit_id].group->TargetUnitKilled();
 		}
+		else if(units[unit_id].status == BOMB_TARGET)
+		{
+			ai->af->RemoveTarget(unit_id);
+
+			if(units[unit_id].group)
+				units[unit_id].group->TargetUnitKilled();
+		}
 
 		units[unit_id].unit_id = unit_id;
 		units[unit_id].def_id = def_id;
@@ -445,6 +452,10 @@ bool AAIUnitTable::IsDefCommander(int def_id)
 
 void AAIUnitTable::EnemyKilled(int unit)
 {
+	if(units[unit].status == BOMB_TARGET)
+		ai->af->RemoveTarget(unit);
+	
+
 	if(units[unit].group)
 		units[unit].group->TargetUnitKilled();
 

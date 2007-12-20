@@ -89,7 +89,7 @@ public:
 	BuildOrderStatus BuildStationaryDefenceVS(UnitCategory category, AAISector *dest);
 
 	// tries to call support vs air (returns true if succesful)
-	void DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 enemy_pos, int importance);
+	void DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 *enemy_pos, int importance);
 
 	// returns true if succesfully assisting construction
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);

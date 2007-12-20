@@ -21,7 +21,6 @@ public:
 	void SetCoordinates(int left, int right, int top, int bottom);
 	void SetGridLocation(int x, int y);
 	void AddMetalSpot(AAIMetalSpot *spot);
-	AAIMetalSpot* GetFreeMetalSpot(float3 pos);
 	AAIMetalSpot* GetFreeMetalSpot();
 	void FreeMetalSpot(float3 pos, const UnitDef *extractor);
 	void Init(AAI *ai, int x, int y, int left, int right, int top, int bottom);
@@ -33,7 +32,7 @@ public:
 	void Update();
 
 	// associates an extractor with a metal spot in that sector
-	void AddExtractor(int unit_id, int def_id, float3 pos);
+	void AddExtractor(int unit_id, int def_id, float3 *pos);
 
 	// returns buildsite for a unit in that sector (or zerovector if nothing found)	
 	float3 GetBuildsite(int building, bool water = false);	
@@ -50,13 +49,16 @@ public:
 	// returns a float ranging from 1 to 2 indicating how close the sector is to the map border (1 is closest)
 	float GetMapBorderDist();
 
+	// returns number of own buildings in that sector
+	int GetNumberOfBuildings();
+
 	// helper functions
 	void Pos2SectorMapPos(float3 *pos, const UnitDef* def);
 	void SectorMapPos2Pos(float3 *pos, const UnitDef* def);
 
 	// add and remove defence buidlings to that sector
 	void RemoveDefence(int unit_id);
-	void AddDefence(int unit_id, int def_id, float3 pos);
+	void AddDefence(int unit_id, int def_id);
 
 	// returns the category with the weakest defence in comparison with threat
 	UnitCategory GetWeakestCategory();
@@ -85,6 +87,9 @@ public:
 	// returns center of the sector
 	float3 GetCenter();			
 
+	// returns true is pos is within sector
+	bool PosInSector(float3 *pos);
+
 	// get water/flat gorund ratio
 	float GetWaterRatio();
 	float GetFlatRatio();
@@ -97,7 +102,7 @@ public:
 	float allied_structures;
 
 	list<AAIDefence> defences;
-	int failed_defences; // how many times aai tried to build defences and couldnt find possible constrcutionsite
+	int failed_defences; // how many times aai tried to build defences and could not find possible constructionsite
 
 	// units in the sector
 	vector<int> enemyUnitsOfType;
@@ -132,7 +137,7 @@ public:
 	float flat_ratio;
 	float water_ratio;
 
-	int left, right, top, bottom;
+	float left, right, top, bottom;
 
 	list<AAIMetalSpot*> metalSpots;
 

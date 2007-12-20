@@ -1786,7 +1786,7 @@ void AAIMap::UpdateRecon()
 
 			if(sector)
 			{
-				if(unitsInSector[sector->x + sector->y*ySectors])
+				if(unitsInSector[sector->x + sector->y*xSectors])
 				{
 					def = cb->GetUnitDef(unitsInLos[i]);
 					cat = bt->units_static[def->id].category;
@@ -1807,10 +1807,16 @@ void AAIMap::UpdateRecon()
 					else	// building or scout etc.
 					{
 						// check if promising bombing target
-						if(targets_checked < 3 && ( cat == STATIONARY_ARTY || cat == STATIONARY_LAUNCHER || cat == COMMANDER) )
+						if(targets_checked < 3 && ( cat ==  EXTRACTOR || cat == STATIONARY_CONSTRUCTOR || cat == STATIONARY_ARTY || cat == STATIONARY_LAUNCHER ) )
 						{
-							ai->af->CheckTarget(unitsInLos[i], def);
-							targets_checked += 1;
+							// dont check targets that are already on bombing list
+							if(ai->ut->units[unitsInLos[i]].status != BOMB_TARGET)
+							{
+								ai->af->CheckBombTarget(unitsInLos[i], def->id);
+								targets_checked += 1;
+
+								cb->SendTextMsg("Checking target", 0);
+							}
 						}
 
 						// count combat power of stat defences
@@ -2020,8 +2026,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		{
 			cell = x + xDefMapSize*y;
 			
-			defence_map[cell] += 32.0f;
-			air_defence_map[cell] += 32.0f;
+			defence_map[cell] += 128.0f;
+			air_defence_map[cell] += 128.0f;
 		}
 	}
 }
@@ -2084,8 +2090,8 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		{
 			cell= x + xDefMapSize*y;
 			
-			defence_map[cell] -= 32.0f;
-			air_defence_map[cell] -= 32.0f;
+			defence_map[cell] -= 128.0f;
+			air_defence_map[cell] -= 128.0f;
 		}
 	}
 
@@ -2148,6 +2154,8 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 	else if(category == AIR_ASSAULT)
 		map = &air_defence_map;
 
+	float range =  bt->units_static[def->id].range / 8.0;
+
 	// check rect
 	for(yPos = yStart; yPos < yEnd; yPos += 4)
 	{
@@ -2172,11 +2180,9 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 				if(yMapSize - yPos < edge_distance)
 					edge_distance = yMapSize - yPos;
 
-				double range =  bt->units_static[def->id].range / 12.0;
-
 				// prevent aai from building defences too close to the edges of the map
 				if( (float)edge_distance < range)
-					my_rating -= 20.0f;
+					my_rating -= (range - (float)edge_distance);	
 
 				if(my_rating > best_rating)
 				{
