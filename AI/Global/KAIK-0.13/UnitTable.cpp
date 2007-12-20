@@ -2,34 +2,38 @@
 
 #include "UnitTable.h"
 
+
+/// CR_BIND(CUnitTable, );
+/// CR_REG_METADATA(CUnitTable, (
+/// 	CR_MEMBER(all_lists),
+/// 	CR_MEMBER(ground_factories),
+/// 	CR_MEMBER(ground_builders),
+/// 	CR_MEMBER(ground_attackers),
+/// 	CR_MEMBER(metal_extractors),
+/// 	CR_MEMBER(metal_makers),
+/// 	CR_MEMBER(ground_energy),
+/// 	CR_MEMBER(ground_defences),
+/// 	CR_MEMBER(metal_storages),
+/// 	CR_MEMBER(energy_storages),
+/// 	CR_MEMBER(nuke_silos),
+/// 
+/// 	CR_MEMBER(numOfSides),
+/// 	CR_MEMBER(sideNames),
+/// 	CR_MEMBER(modSideMap),
+/// 	CR_MEMBER(teamSides),
+/// 
+/// 	CR_MEMBER(unitTypes)
+/// ));
+
+
 CUnitTable::CUnitTable(AIClasses* ai) {
 	this->ai = ai;
 
 	numOfUnits = 0;
 	unitList = 0;
 
-	// get all sides and commanders
-	string sideStr = "SIDE";
-	string errorString = "-1";
-	string valueString;
-	char k[64];
-	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
-
-	// look at SIDE0 through SIDE9
-	// (should be enough for any mod)
-	for (int i = 0; i < 10; i++) {
-		sprintf(k, "%i", i);
-		ai->parser->GetDef(valueString, errorString, string(sideStr + k + "\\commander"));
-
-		const UnitDef* udef = ai->cb->GetUnitDef(valueString.c_str());
-
-		if (udef) {
-			startUnits.push_back(udef->id);
-			ai->parser->GetDef(valueString, errorString, string(sideStr + k + "\\name"));
-			sideNames.push_back(valueString);
-			numOfSides = i + 1;
-		}
-	}
+	BuildModSideMap();
+	ReadTeamSides();
 
 	// now set up the unit lists
 	ground_factories = new vector<int>[numOfSides];
@@ -72,10 +76,79 @@ CUnitTable::~CUnitTable() {
 }
 
 
+int CUnitTable::BuildModSideMap() {
+	// get all sides and commanders
+	std::string commKey;	// eg. "SIDE4\\commander"
+	std::string commName;	// eg. "arm_commander"
+	std::string sideKey;	// eg. "SIDE4\\name"
+	std::string sideName;	// eg. "Arm"
+	char sideNum[64] = {0};
 
-int CUnitTable::GetSide(int unit) {
-	assert(ai->cb->GetUnitDef(unit) != NULL);
-	return unitTypes[ai->cb->GetUnitDef(unit)->id].side;
+	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
+
+	// look at SIDE0 through SIDE9
+	// (should be enough for any mod)
+	for (int i = 0; i < 10; i++) {
+		sprintf(sideNum, "%i", i);
+
+		commKey = "SIDE" + std::string(sideNum) + "\\commander";
+		sideKey = "SIDE" + std::string(sideNum) + "\\name";
+
+		ai->parser->GetDef(commName, "-1", commKey);
+		const UnitDef* udef = ai->cb->GetUnitDef(commName.c_str());
+
+		if (udef) {
+			// if this unit exists, the side is valid too
+			startUnits.push_back(udef->id);
+			ai->parser->GetDef(sideName, "-1", sideKey);
+			sideNames.push_back(sideName);
+			modSideMap[sideName] = i;
+			numOfSides = i + 1;
+		}
+	}
+
+	return numOfSides;
+}
+
+int CUnitTable::ReadTeamSides() {
+	char scriptFileName[1024] = {0};
+	ai->cb->GetValue(AIVAL_SCRIPT_FILENAME_CSTR, scriptFileName);
+
+	teamSides.resize(MAX_TEAMS, 0);
+	teamSides[0] = 0;	// team 0 defaults to side 0
+	teamSides[1] = 1;	// team 1 defaults to side 1
+
+	if (scriptFileName[0] > 0) {
+		// got a GameSetup script
+		char sideKey[128] = {0};
+		char sideName[128] = {0};
+
+		CSunParser scriptFileParser(ai);
+		scriptFileParser.LoadRealFile(scriptFileName);
+
+		for (int i = 0; i < MAX_TEAMS; i++) {
+			sideName[0] = 0;
+			snprintf(sideKey, 127, "GAME\\TEAM%d\\Side", i);
+			scriptFileParser.GetDef(sideName, "", sideKey);
+
+			if (sideName[0] > 0) {
+				// FIXME: Gaia-team side?
+				teamSides[i] = modSideMap[std::string(sideName)];
+			}
+		}
+
+		return teamSides[ai->cb->GetMyTeam()];
+	} else {
+		return teamSides[1];
+	}
+}
+
+
+int CUnitTable::GetSide(int unitID) {
+	int team = ai->cb->GetUnitTeam(unitID);
+	int side = teamSides[team];
+
+	return side;
 }
 
 int CUnitTable::GetCategory(const UnitDef* unitdef) {
@@ -179,7 +252,6 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 					float u = unit->weapons[i].def->projectilespeed * 30;
 
 					if (unit->weapons[i].def->type == string("Cannon")) {
-						// L("u = " << u << " distancetravelled * gravity) / (u * u) = " << (distancetravelled * gravity) / (u * u));
 						float sinoid = (distancetravelled * gravity) / (u * u);
 						sinoid = min(sinoid, 1.0f);
 						firingangle = asin(sinoid) / 2;
@@ -237,26 +309,30 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int enemies[MAX_UNITS];
 	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
-	vector<int> enemyunitsoftype;
+	vector<int> enemiesOfType;
 	float score = 0.01f;
-	float totalcost = 0.01f;
-	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
+	float totalCost = 0.01f;
+	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < numEnemies; i++) {
-		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
+		const UnitDef* udef = ai->cheat->GetUnitDef(enemies[i]);
+
+		if (udef) {
+			enemiesOfType[udef->id]++;
+		}
 	}
 
-	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
+	for (unsigned int i = 1; i < enemiesOfType.size(); i++) {
 		bool b1 = unitTypes[i].def->builder;
-		bool b2 = enemyunitsoftype[i] > 0;
-		bool b3 = unitTypes[i].side != -1;
-	//	bool b4 = (!unit->speed && !unitTypes[i].def->speed);
+		bool b2 = (enemiesOfType[i] > 0);
+		bool b3 = (unitTypes[i].sides.size() > 0);
+		// bool b4 = (!unit->speed && !unitTypes[i].def->speed);
 
 		if (!b1 && b2 && b3 /* && !b4 */) {
-			float currentscore = 0.0f;
-			float costofenemiesofthistype = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * enemyunitsoftype[i];
-			currentscore = unitTypes[unit->id].DPSvsUnit[i] * costofenemiesofthistype;
-			totalcost += costofenemiesofthistype;
+			float currentScore = 0.0f;
+			float costOfEnemiesOfThisType = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * enemiesOfType[i];
+			currentScore = unitTypes[unit->id].DPSvsUnit[i] * costOfEnemiesOfThisType;
+			totalCost += costOfEnemiesOfThisType;
 
 			/*
 			if (unitTypes[i].DPSvsUnit[unit->id] * costofenemiesofthistype > 0) {
@@ -264,14 +340,14 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 			}
 			*/
 
-			score += currentscore;
+			score += currentScore;
 		}
 	}
 
-	if (totalcost <= 0)
+	if (totalCost <= 0)
 		return 0.0f;
 
-	return (score / totalcost);
+	return (score / totalCost);
 }
 
 
@@ -280,11 +356,11 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 void CUnitTable::UpdateChokePointArray() {
 	vector<float> EnemyCostsByMoveType;
 	EnemyCostsByMoveType.resize(ai->pather->NumOfMoveTypes);
-	vector<int> enemyunitsoftype;
-	float totalcosts = 1;
+	vector<int> enemiesOfType;
+	float totalCost = 1.0f;
 	int enemies[MAX_UNITS];
 	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
-	enemyunitsoftype.resize(ai->cb->GetNumUnitDefs() + 1, 0);
+	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < ai->pather->totalcells; i++) {
 		ai->dm->ChokePointArray[i] = 0;
@@ -293,19 +369,19 @@ void CUnitTable::UpdateChokePointArray() {
 		EnemyCostsByMoveType[i] = 0;
 	}
 	for (int i = 0; i < numEnemies; i++) {
-		enemyunitsoftype[ai->cheat->GetUnitDef(enemies[i])->id]++;
+		enemiesOfType[ai->cheat->GetUnitDef(enemies[i])->id]++;
 	}
 
-	for (unsigned int i = 1; i != enemyunitsoftype.size(); i++) {
-		if (unitTypes[i].side != -1 && !unitTypes[i].def->canfly && unitTypes[i].def->speed > 0) {
-			float currentcosts = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * (enemyunitsoftype[i]);
+	for (unsigned int i = 1; i < enemiesOfType.size(); i++) {
+		if (unitTypes[i].sides.size() > 0 && !unitTypes[i].def->canfly && unitTypes[i].def->speed > 0) {
+			float currentcosts = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * (enemiesOfType[i]);
 			EnemyCostsByMoveType[unitTypes[i].def->moveType] += currentcosts;
-			totalcosts += currentcosts;
+			totalCost += currentcosts;
 		}
 	}
 
 	for (int i = 0; i < ai->pather->NumOfMoveTypes; i++) {
-		EnemyCostsByMoveType[i] /= totalcosts;
+		EnemyCostsByMoveType[i] /= totalCost;
 
 		for (int c = 0; c < ai->pather->totalcells; c++) {
 			ai->dm->ChokePointArray[c] += ai->dm->ChokeMapsByMovetype[i][c] * EnemyCostsByMoveType[i];
@@ -318,7 +394,7 @@ void CUnitTable::UpdateChokePointArray() {
 
 
 
-float CUnitTable::GetScore(const UnitDef* udef) {
+float CUnitTable::GetScore(const UnitDef* udef, int category) {
 	int m = (ai->uh->AllUnitsByType[udef->id]).size();
 	int n = udef->maxThisUnit;
 
@@ -341,7 +417,6 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 
 	float RandNum = ai->math->RandNormal(4, 3, 1) + 1;
 	float randMult = float((rand() % 2) + 1);
-	int category = GetCategory(udef);
 
 	switch (category) {
 		case CAT_ENERGY: {
@@ -443,8 +518,12 @@ float CUnitTable::GetScore(const UnitDef* udef) {
 				int buildOptionCategory = unitTypes[buildOption].category;
 
 				if (buildOptionCategory == CAT_G_ATTACK || buildOptionCategory == CAT_FACTORY) {
-					benefit += GetScore(unitTypes[buildOption].def);
-					unitcounter++;
+					if (unitTypes[buildOption].def != udef) {
+						// KLOOTNOTE: guard against infinite recursion (BuildTowers in
+						// PURE trigger this since they are able to build themselves)
+						benefit += GetScore(unitTypes[buildOption].def, buildOptionCategory);
+						unitcounter++;
+					}
 				}
 			}
 
@@ -538,7 +617,7 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 		// if our builder can build the i-th unit
 		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
 			// get the unit's heuristic score (based on current income)
-			tempScore = GetScore(unitTypes[tempUnitDefID].def);
+			tempScore = GetScore(unitTypes[tempUnitDefID].def, category);
 
 			if (tempScore > bestScore) {
 				bestScore = tempScore;
@@ -567,10 +646,7 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
  */
 /*
 const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulness) {
-	builder = builder;
-	minUsefulness = minUsefulness;
-
-	return NULL;
+	return 0;
 }
 */
 
@@ -578,22 +654,19 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 
 
 void CUnitTable::Init() {
+	// get unit defs from game and stick them in the unitTypes[] array
 	numOfUnits = ai->cb->GetNumUnitDefs();
+	unitList = new const UnitDef*[numOfUnits];
+	ai->cb->GetUnitDefList(unitList);
 
 	// one more than needed because 0 is dummy object (so
 	// UnitDef->id can be used to adress that unit in array)
 	unitTypes = new UnitType[numOfUnits + 1];
-	unitTypes[0].side = -1;
-
-	// get unit defs from game and stick them in the unitTypes[] array
-	unitList = new const UnitDef*[numOfUnits];
-	ai->cb->GetUnitDefList(unitList);
 
 	// add units to UnitTable
 	for (int i = 1; i <= numOfUnits; i++) {
 		unitTypes[i].def = unitList[i - 1];
 		// side has not been assigned - will be done later
-		unitTypes[i].side = -1;
 		unitTypes[i].category = -1;
 
 		// get build options
@@ -606,10 +679,11 @@ void CUnitTable::Init() {
 	// now set sides and create buildtree for each
 	for (int s = 0; s < numOfSides; s++) {
 		// set side of start unit (eg. commander) and continue recursively
-		unitTypes[startUnits[s]].side = s;
-		unitTypes[startUnits[s]].techLevel = 0;
+		int unitDefID = startUnits[s];
+		unitTypes[unitDefID].sides.insert(s);
+		unitTypes[unitDefID].techLevel = 0;
 
-		CalcBuildTree(startUnits[s]);
+		CalcBuildTree(unitDefID, s);
 	}
 
 
@@ -617,8 +691,8 @@ void CUnitTable::Init() {
 	for (int i = 1; i <= numOfUnits; i++) {
 		UnitType* me = &unitTypes[i];
 
-		// filter out neutral units
-		if (me->side != -1) {
+		for (std::set<int>::iterator it = me->sides.begin(); it != me->sides.end(); it++) {
+			int mySide = *it;
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 
 			CSunParser attackerParser(ai);
@@ -641,11 +715,11 @@ void CUnitTable::Init() {
 
 			if (me->def->speed && me->def->minWaterDepth <= 0) {
 				if (me->def->buildOptions.size()) {
-					ground_builders[me->side].push_back(i);
+					ground_builders[mySide].push_back(i);
 					me->category = CAT_BUILDER;
 				}
 				else if (!me->def->weapons.empty() && !me->def->weapons.begin()->def->stockpile) {
-					ground_attackers[me->side].push_back(i);
+					ground_attackers[mySide].push_back(i);
 					me->category = CAT_G_ATTACK;
 				}
 			}
@@ -661,7 +735,7 @@ void CUnitTable::Init() {
 							me->isHub = true;
 						}
 
-						ground_factories[me->side].push_back(i);
+						ground_factories[mySide].push_back(i);
 						me->category = CAT_FACTORY;
 					}
 					else {
@@ -670,7 +744,7 @@ void CUnitTable::Init() {
 						if (weapon && !weapon->stockpile) {
 							if (!weapon->waterweapon) {
 								// filter out depth-charge launchers etc
-								ground_defences[me->side].push_back(i);
+								ground_defences[mySide].push_back(i);
 								me->category = CAT_DEFENCE;
 							}
 						}
@@ -678,7 +752,7 @@ void CUnitTable::Init() {
 						if (me->def->stockpileWeaponDef) {
 							if (me->def->stockpileWeaponDef->targetable) {
 								// nuke
-								nuke_silos[me->side].push_back(i);
+								nuke_silos[mySide].push_back(i);
 								me->category = CAT_NUKE;
 							}
 							if (me->def->stockpileWeaponDef->interceptor) {
@@ -692,26 +766,26 @@ void CUnitTable::Init() {
 						}
 
 						if (me->def->makesMetal) {
-							metal_makers[me->side].push_back(i);
+							metal_makers[mySide].push_back(i);
 							me->category = CAT_MMAKER;
 						}
 						if (me->def->extractsMetal > 0.0f) {
-							metal_extractors[me->side].push_back(i);
+							metal_extractors[mySide].push_back(i);
 							me->category = CAT_MEX;
 						}
 						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
 							if (me->def->minWaterDepth <= 0 && !me->def->needGeo) {
 								// filter tidals and geothermals
-								ground_energy[me->side].push_back(i);
+								ground_energy[mySide].push_back(i);
 								me->category = CAT_ENERGY;
 							}
 						}
 						if (me->def->energyStorage / UnitCost > 0.2) {
-							energy_storages[me->side].push_back(i);
+							energy_storages[mySide].push_back(i);
 							me->category = CAT_ESTOR;
 						}
 						if (me->def->metalStorage / UnitCost > 0.1) {
-							metal_storages[me->side].push_back(i);
+							metal_storages[mySide].push_back(i);
 							me->category = CAT_MSTOR;
 						}
 					}
@@ -720,8 +794,8 @@ void CUnitTable::Init() {
 		}
 	}
 
-	// KLOOTNOTE: dump generated unit table to file
-	this->DebugPrint();
+	// dump generated unit table to file
+	DebugPrint();
 }
 
 
@@ -740,8 +814,8 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 }
 
 // determines sides of unitTypes by recursion
-void CUnitTable::CalcBuildTree(int unit) {
-	UnitType* utype = &unitTypes[unit];
+void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
+	UnitType* utype = &unitTypes[unitDefID];
 
 	// go through all possible build options and set side if necessary
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
@@ -752,15 +826,16 @@ void CUnitTable::CalcBuildTree(int unit) {
 		// KLOOTNOTE: techLevel will not make much sense if
 		// unit has multiple ancestors at different depths
 		// in tree (eg. Adv. Vehicle Plants in XTA)
-		buildOptionType->builtByList.push_back(unit);
 		buildOptionType->techLevel = utype->techLevel;
-		/// buildOptionType->techLevel = utype->def->techLevel;
+		// buildOptionType->techLevel = utype->def->techLevel;
+		// FIXME: causes duplicated entries in PURE
+		// buildOptionType->builtByList.push_back(unitDefID);
 
-		if (buildOptionType->side == -1) {
+		if (buildOptionType->sides.find(rootSide) == buildOptionType->sides.end()) {
 			// unit has not been checked yet, set side
 			// as side of its builder and continue
-			buildOptionType->side = utype->side;
-			CalcBuildTree(buildOptionIndex);
+			buildOptionType->sides.insert(rootSide);
+			CalcBuildTree(buildOptionIndex, rootSide);
 		}
 	}
 }
@@ -778,39 +853,54 @@ void CUnitTable::DebugPrint() {
 		"ENERGY-STORAGE", "NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
 	};
 
-	// for debugging
 	char filename[1024] = ROOTFOLDER"CUnitTable.log";
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w");
 
 	for (int i = 1; i <= numOfUnits; i++) {
-		int side = unitTypes[i].side;
+		UnitType* utype = &unitTypes[i];
 
-		if (side != -1) {
-			fprintf(file, "UnitDef ID: %i\n", i);
-			fprintf(file, "Name:       %s\n", unitList[i - 1]->humanName.c_str());
-			fprintf(file, "Side:       %s (%d)\n", sideNames[side].c_str(), side);
-			fprintf(file, "Can Build:  ");
+		fprintf(file, "UnitDef ID: %i\n", i);
+		fprintf(file, "Name:       %s\n", unitList[i - 1]->humanName.c_str());
+		fprintf(file, "Sides:      ");
 
-			for (unsigned int j = 0; j != unitTypes[i].canBuildList.size(); j++) {
-				fprintf(file, "'%s' ", unitTypes[unitTypes[i].canBuildList[j]].def->humanName.c_str());
-			}
-
-			fprintf(file, "\n");
-			fprintf(file, "Built by:   ");
-
-			for (unsigned int k = 0; k != unitTypes[i].builtByList.size(); k++) {
-				fprintf(file, "'%s' ", unitTypes[unitTypes[i].builtByList[k]].def->humanName.c_str());
-			}
-
-			fprintf(file, "\nTech-Level: %d", unitTypes[i].techLevel);
-			fprintf(file, "\n\n");
+		for (std::set<int>::iterator it = utype->sides.begin(); it != utype->sides.end(); it++) {
+			fprintf(file, "%d (%s) ", *it, sideNames[*it].c_str());
 		}
+
+		fprintf(file, "\n");
+		fprintf(file, "Can Build:  ");
+
+		for (unsigned int j = 0; j != utype->canBuildList.size(); j++) {
+			UnitType* buildOption = &unitTypes[utype->canBuildList[j]];
+
+			for (std::set<int>::iterator it = buildOption->sides.begin(); it != buildOption->sides.end(); it++) {
+				const char* sideName = sideNames[*it].c_str();
+				const char* buildOptionName = buildOption->def->humanName.c_str();
+				fprintf(file, "'(%s) %s' ", sideName, buildOptionName);
+			}
+		}
+
+		fprintf(file, "\n");
+		fprintf(file, "Built by:   ");
+
+		for (unsigned int k = 0; k != utype->builtByList.size(); k++) {
+			UnitType* parent = &unitTypes[utype->builtByList[k]];
+
+			for (std::set<int>::iterator it = parent->sides.begin(); it != parent->sides.end(); it++) {
+				const char* sideName = sideNames[*it].c_str();
+				const char* parentName = parent->def->humanName.c_str();
+				fprintf(file, "'(%s) %s' ", sideName, parentName);
+			}
+		}
+
+		fprintf(file, "\nTech-Level: %d", utype->techLevel);
+		fprintf(file, "\n\n");
 	}
 
 	for (int s = 0; s < numOfSides; s++) {
 		for (unsigned int l = 0; l != all_lists.size(); l++) {
-			fprintf(file, "\n\n%s (side: %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
+			fprintf(file, "\n\n%s (side %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
 
 			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
 				fprintf(file, "\t%s\n", unitTypes[all_lists[l][s][i]].def->humanName.c_str());
