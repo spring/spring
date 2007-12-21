@@ -984,10 +984,10 @@ end
 
 
 function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
-                                    cmdID, cmdParams, cmdOptions)
+                                    cmdID, cmdParams, cmdOptions, synced)
   for _,g in ipairs(self.AllowCommandList) do
     if (not g:AllowCommand(unitID, unitDefID, unitTeam,
-                           cmdID, cmdParams, cmdOptions)) then
+                           cmdID, cmdParams, cmdOptions, synced)) then
       return false
     end
   end

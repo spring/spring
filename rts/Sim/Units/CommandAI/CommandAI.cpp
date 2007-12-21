@@ -450,9 +450,9 @@ bool CCommandAI::AllowedCommand(const Command& c)
 }
 
 
-void CCommandAI::GiveCommand(const Command& c)
+void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 {
-	if (luaRules && !luaRules->AllowCommand(owner, c)) {
+	if (luaRules && !luaRules->AllowCommand(owner, c, fromSynced)) {
 		return;
 	}
 	this->GiveCommandReal(c); // send to the sub-classes

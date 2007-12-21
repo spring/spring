@@ -313,7 +313,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 }
 
 
-bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
+bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced)
 {
 	if (!haveAllowCommand) {
 		return true; // the call is not defined
@@ -349,8 +349,10 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd)
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
+   	lua_pushboolean(L, fromSynced);
+
 	// call the function
-	if (!RunCallIn(cmdStr, 6, 1)) {
+	if (!RunCallIn(cmdStr, 7, 1)) {
 		return true;
 	}
 
