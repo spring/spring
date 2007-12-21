@@ -24,7 +24,7 @@ public:
 	void PostLoad();
 
 	void DependentDied(CObject* o);
-	void GiveCommand(const Command& c); // feeds into GiveCommandReal()
+	void GiveCommand(const Command& c, bool fromSynced = true); // feeds into GiveCommandReal()
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c);

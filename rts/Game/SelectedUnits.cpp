@@ -630,7 +630,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 void CSelectedUnits::AiOrder(int unitid, Command &c)
 {
 	if(uh->units[unitid]!=0)
-		uh->units[unitid]->commandAI->GiveCommand(c);
+		uh->units[unitid]->commandAI->GiveCommand(c,false);
 }
 
 

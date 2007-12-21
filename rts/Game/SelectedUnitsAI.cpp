@@ -69,7 +69,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 		c.id = CMD_SET_WANTED_MAX_SPEED;
 		c.options = options;
 		c.params.push_back(unit->maxSpeed);
-		cai->GiveCommand(c);
+		cai->GiveCommand(c, false);
 	}
 }
 
@@ -86,7 +86,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 		c.id = CMD_SET_WANTED_MAX_SPEED;
 		c.options = options;
 		c.params.push_back(minMaxSpeed);
-		cai->GiveCommand(c);
+		cai->GiveCommand(c, false);
 	}
 }
 
@@ -128,7 +128,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
-			unit->commandAI->GiveCommand(c);
+			unit->commandAI->GiveCommand(c, false);
 			if (MayRequireSetMaxSpeedCommand(c)) {
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
@@ -228,7 +228,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 				uc.params[CMDPARAM_MOVE_X] += midPos.x - centerCoor.x;
 				uc.params[CMDPARAM_MOVE_Y] += midPos.y - centerCoor.y;
 				uc.params[CMDPARAM_MOVE_Z] += midPos.z - centerCoor.z;
-				unit->commandAI->GiveCommand(uc);
+				unit->commandAI->GiveCommand(uc, false);
 
 				if (groupSpeed) {
 					AddGroupSetMaxSpeedCommand(unit, c.options);
@@ -244,7 +244,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
 			if (unit) {
 				// appending a CMD_SET_WANTED_MAX_SPEED command to
 				// every command is a little bit wasteful, n'est pas?
-				unit->commandAI->GiveCommand(c);
+				unit->commandAI->GiveCommand(c, false);
 				if (MayRequireSetMaxSpeedCommand(c)) {
 					AddUnitSetMaxSpeedCommand(unit, c.options);
 				}
@@ -331,7 +331,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 		for(vector<int>::iterator ui = selectedUnits.netSelected[player].begin(); ui != selectedUnits.netSelected[player].end(); ++ui) {
 			CUnit* unit=uh->units[*ui];
 			if(unit){
-				unit->commandAI->GiveCommand(*c);
+				unit->commandAI->GiveCommand(*c, false);
 			}
 		}
 		return;
@@ -409,7 +409,7 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	c.params.push_back(pos.z);
 	c.options = command->options;
 
-	uh->units[unit]->commandAI->GiveCommand(c);
+	uh->units[unit]->commandAI->GiveCommand(c, false);
 	return retPos;
 }
 
@@ -459,7 +459,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 			for (int t = 0; t < targetsCount; t++) {
 				attackCmd.params[0] = targets[t];
 				if (commandAI->WillCancelQueued(attackCmd)) {
-					commandAI->GiveCommand(attackCmd);
+					commandAI->GiveCommand(attackCmd, false);
 				}
 			}
 		}
@@ -515,7 +515,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		for (t = 0; t < targetsCount; t++) {
 			attackCmd.params[0] = distVec[t].unitID;
 			if (!queueing || !commandAI->WillCancelQueued(attackCmd)) {
-				commandAI->GiveCommand(attackCmd);
+				commandAI->GiveCommand(attackCmd, false);
 				AddUnitSetMaxSpeedCommand(unit, attackCmd.options);
 				// following commands are always queued
 				attackCmd.options |= SHIFT_KEY;
