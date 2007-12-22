@@ -805,36 +805,37 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
 	ADD_FLOAT("terraformSpeed", ud.terraformSpeed);
 
-	ADD_BOOL("canSubmerge", ud.canSubmerge);
-	ADD_BOOL("canFly",      ud.canfly);
-	ADD_BOOL("canMove",     ud.canmove);
-	ADD_BOOL("canHover",    ud.canhover);
-	ADD_BOOL("floater",     ud.floater);
-	ADD_BOOL("builder",     ud.builder);
-	ADD_BOOL("onOffable",   ud.onoffable);
+	ADD_BOOL("canSubmerge",       ud.canSubmerge);
+	ADD_BOOL("canFly",            ud.canfly);
+	ADD_BOOL("canMove",           ud.canmove);
+	ADD_BOOL("canHover",          ud.canhover);
+	ADD_BOOL("floater",           ud.floater);
+	ADD_BOOL("builder",           ud.builder);
+	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
 
-	ADD_BOOL("reclaimable",       ud.reclaimable);
+	ADD_BOOL("reclaimable",           ud.reclaimable);
 
-	ADD_BOOL("canDGun",           ud.canDGun);
-	ADD_BOOL("canCloak",          ud.canCloak);
-	ADD_BOOL("canRestore",        ud.canRestore);
-	ADD_BOOL("canRepair",         ud.canRepair);
-	ADD_BOOL("canSelfRepair",     ud.canSelfRepair);
-	ADD_BOOL("canReclaim",        ud.canReclaim);
-	ADD_BOOL("noAutoFire",        ud.noAutoFire);
-	ADD_BOOL("canAttack",         ud.canAttack);
-	ADD_BOOL("canPatrol",         ud.canPatrol);
-	ADD_BOOL("canFight",          ud.canFight);
-	ADD_BOOL("canGuard",          ud.canGuard);
-	ADD_BOOL("canBuild",          ud.canBuild);
-	ADD_BOOL("canAssist",         ud.canAssist);
-	ADD_BOOL("canBeAssisted",     ud.canBeAssisted);
-	ADD_BOOL("canRepeat",         ud.canRepeat);
-	ADD_BOOL("canCapture",        ud.canCapture);
-	ADD_BOOL("canResurrect",      ud.canResurrect);
-	ADD_BOOL("canLoopbackAttack", ud.canLoopbackAttack);
-	ADD_BOOL("fullHealthFactory", ud.fullHealthFactory);
+	ADD_BOOL("canDGun",               ud.canDGun);
+	ADD_BOOL("canCloak",              ud.canCloak);
+	ADD_BOOL("canRestore",            ud.canRestore);
+	ADD_BOOL("canRepair",             ud.canRepair);
+	ADD_BOOL("canSelfRepair",         ud.canSelfRepair);
+	ADD_BOOL("canReclaim",            ud.canReclaim);
+	ADD_BOOL("noAutoFire",            ud.noAutoFire);
+	ADD_BOOL("canAttack",             ud.canAttack);
+	ADD_BOOL("canPatrol",             ud.canPatrol);
+	ADD_BOOL("canFight",              ud.canFight);
+	ADD_BOOL("canGuard",              ud.canGuard);
+	ADD_BOOL("canBuild",              ud.canBuild);
+	ADD_BOOL("canAssist",             ud.canAssist);
+	ADD_BOOL("canBeAssisted",         ud.canBeAssisted);
+	ADD_BOOL("canRepeat",             ud.canRepeat);
+	ADD_BOOL("canCapture",            ud.canCapture);
+	ADD_BOOL("canResurrect",          ud.canResurrect);
+	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
+	ADD_BOOL("fullHealthFactory",     ud.fullHealthFactory);
+	ADD_BOOL("factoryHeadingTakeoff", ud.factoryHeadingTakeoff);
 
 	//aircraft stuff
 	ADD_FLOAT("wingDrag",     ud.wingDrag);

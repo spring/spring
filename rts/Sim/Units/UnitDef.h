@@ -243,6 +243,7 @@ struct UnitDef
 	bool activateWhenBuilt;
 	bool onoffable;
 	bool fullHealthFactory;
+	bool factoryHeadingTakeoff;
 
 	bool reclaimable;
 	bool canRestore;
@@ -284,14 +285,14 @@ struct UnitDef
 
 	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
-	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
+	unsigned char* yardmaps[4];						// Iterations of the Ymap for building rotation
 
-	int xsize;									//each size is 8 units
-	int ysize;									//each size is 8 units
+	int xsize;										// each size is 8 units
+	int ysize;										// each size is 8 units
 
 	int buildangle;
 
-	float loadingRadius;	//for transports
+	float loadingRadius;							// for transports
 	float unloadSpread;
 	int transportCapacity;
 	int transportSize;
@@ -303,19 +304,19 @@ struct UnitDef
 	bool releaseHeld;
 	bool cantBeTransported;
 	bool transportByEnemy;
-	int transportUnloadMethod;	//0 - land unload, 1 - flyover drop, 2 - land flood
-	float fallSpeed;			//dictates fall speed of all transported units
-	float unitFallSpeed;		//sets the transported units fbi, overrides fallSpeed
+	int transportUnloadMethod;						// 0 - land unload, 1 - flyover drop, 2 - land flood
+	float fallSpeed;								// dictates fall speed of all transported units
+	float unitFallSpeed;							// sets the transported units fbi, overrides fallSpeed
 
-	bool canCloak;							//if the unit can cloak
-	bool startCloaked;					//if the units want to start out cloaked
-	float cloakCost;						//energy cost per second to stay cloaked when stationary
-	float cloakCostMoving;			//energy cost per second when moving
-	float decloakDistance;			//if enemy unit come within this range decloaking is forced
-	bool decloakSpherical;			//use a spherical test instead of a cylindrical test?
-	bool decloakOnFire;					//should the unit decloak upon firing
+	bool canCloak;									// if the unit can cloak
+	bool startCloaked;								// if the units want to start out cloaked
+	float cloakCost;								// energy cost per second to stay cloaked when stationary
+	float cloakCostMoving;							// energy cost per second when moving
+	float decloakDistance;							// if enemy unit come within this range decloaking is forced
+	bool decloakSpherical;							// use a spherical test instead of a cylindrical test?
+	bool decloakOnFire;								// should the unit decloak upon firing
 
-	bool canKamikaze;						//self destruct if enemy come to close
+	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
 
 	bool targfac;
@@ -328,7 +329,7 @@ struct UnitDef
 
 	bool canResurrect;
 	bool canCapture;
-	int highTrajectoryType;			//0(default)=only low,1=only high,2=choose
+	int highTrajectoryType;							// 0 (default) = only low, 1 = only high, 2 = choose
 
 	unsigned int noChaseCategory;
 
