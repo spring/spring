@@ -308,7 +308,6 @@ void CTAAirMoveType::UpdateTakeoff()
 	wantedSpeed = ZeroVector;
 	wantedHeight = orgWantedHeight;
 
-	// TODO: don't rotate to wanted heading if tag set
 	UpdateAirPhysics();
 
 	float h = 0.0f;
