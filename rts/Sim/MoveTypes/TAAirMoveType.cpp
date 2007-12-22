@@ -308,6 +308,7 @@ void CTAAirMoveType::UpdateTakeoff()
 	wantedSpeed = ZeroVector;
 	wantedHeight = orgWantedHeight;
 
+	// TODO: don't rotate to wanted heading if tag set
 	UpdateAirPhysics();
 
 	float h = 0.0f;
@@ -538,6 +539,10 @@ void CTAAirMoveType::UpdateLanding()
 
 void CTAAirMoveType::UpdateHeading()
 {
+	if (aircraftState == AIRCRAFT_TAKEOFF && !owner->unitDef->factoryHeadingTakeoff) {
+		return;
+	}
+
 	short& heading = owner->heading;
 	short deltaHeading = wantedHeading - heading;
 
@@ -546,9 +551,9 @@ void CTAAirMoveType::UpdateHeading()
 	}
 
 	if (deltaHeading > 0) {
-		heading += deltaHeading > (short int)turnRate ? (short int)turnRate : deltaHeading;		//min(deltaHeading, turnRate);
+		heading += deltaHeading > (short int) turnRate ? (short int) turnRate : deltaHeading;
 	} else {
-		heading += deltaHeading > (short int)(-turnRate) ? deltaHeading : (short int)(-turnRate);  //max(-turnRate, deltaHeading);
+		heading += deltaHeading > (short int) (-turnRate) ? deltaHeading : (short int) (-turnRate);
 	}
 }
 
@@ -626,7 +631,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	speed.y = yspeed;
 	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),
-	                      ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
+						  ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
 
 	if (h < 4) {
 		speed.x *= 0.95f;
@@ -831,7 +836,8 @@ void CTAAirMoveType::Update()
 
 	// Push other units out of the way
 	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
-		oldpos=pos;
+		oldpos = pos;
+
 		if (!dontCheckCol) {
 			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 			vector<CUnit*>::iterator ui;

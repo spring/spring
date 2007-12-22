@@ -271,6 +271,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canBeAssisted = udTable.GetBool("canBeAssisted", true);
 	ud.canSelfRepair = udTable.GetBool("canSelfRepair", false);
 	ud.fullHealthFactory = udTable.GetBool("fullHealthFactory", false);
+	ud.factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
 	ud.upright = udTable.GetBool("upright", false);
 	ud.onoffable = udTable.GetBool("onoffable", false);
