@@ -15,7 +15,7 @@
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_START} "This creates shortcuts on the start menu to all the applications provided."
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "This creates a shortcut on the desktop to the multiplayer battleroom for quick access to multiplayer games."
 
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_BA} "Balanced Annihilation is a mod of Total Annihilation, and is currently the most popular game. Balanced Annihilation claims to have the most finely tuned balance of all the TA mods.  (10.4MB Download)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_BA} "Balanced Annihilation is a mod of Total Annihilation, and is currently the most popular game. Balanced Annihilation claims to have the most finely tuned balance of all the TA mods.  (9.1MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_XTA} "XTA is a mod of Total Annihilation originally developed by the Swedish Yankspankers.  It claims to have the most similar gameplay to the original game Total Annihilation (9.0MB Download)"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

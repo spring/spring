@@ -7,6 +7,8 @@
   File "..\game\spring.exe"
   File "..\game\spring.def"
   File "..\game\unitsync.dll"
+  CreateDirectory "$INSTDIR\maps"
+  CreateDirectory "$INSTDIR\mods"
 
   ; DLLs (updated in mingwlibs-v8)
   File "..\mingwlibs\dll\glew32.dll"
@@ -35,27 +37,19 @@
 
   File "..\game\PALETTE.PAL"
 
-${If} ${FileExists} "$INSTDIR\selectkeys.txt"
-  ; Do nothing
-${Else}
+${IfNot} ${FileExists} "$INSTDIR\selectkeys.txt"
   File "..\game\selectkeys.txt"
 ${EndIf}
 
-${If} ${FileExists} "$INSTDIR\uikeys.txt"
-  ; Do nothing
-${Else}
+${IfNot} ${FileExists} "$INSTDIR\uikeys.txt"
   File "..\game\uikeys.txt"
 ${EndIf}
 
-${If} ${FileExists} "$INSTDIR\cmdcolors.txt"
-  ; Do nothing
-${Else}
+${IfNot} ${FileExists} "$INSTDIR\cmdcolors.txt"
   File "..\game\cmdcolors.txt"
 ${EndIf}
 
-${If} ${FileExists} "$INSTDIR\ctrlpanel.txt"
-  ; Do nothing
-${Else}
+${IfNot} ${FileExists} "$INSTDIR\ctrlpanel.txt"
   File "..\game\ctrlpanel.txt"
 ${EndIf}
 
@@ -99,9 +93,7 @@ ${EndIf}
   File "..\game\base\spring\bitmaps.sdz"
 
 ;!ifndef SP_UPDATE
-${If} ${FileExists} "$INSTDIR\spring.exe"
-  ; Do nothing
-${Else}
+${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC 

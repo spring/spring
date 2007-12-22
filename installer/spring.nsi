@@ -24,7 +24,9 @@ SetCompressor lzma
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 ;!define MUI_COMPONENTSPAGE_SMALLDESC ;puts description on the bottom, but much shorter.
-!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "Some of these components (e.g. mods or maps) must be downloaded during the install process.  If you are new to spring, you should select at least one mod and one map pack."
+!define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components (e.g. mods or maps) must be downloaded during the install process.  These downloads are provided by www.unknown-files.net. Thanks IaMaCuP!"
+!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "New users should select at least one mod and one map pack.  Selecting Total Annihilation mods will result in an automatic 9.0MB extra content download (if needed). Currently installed mods will be updated."
+
 
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
@@ -93,21 +95,34 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include fileassoc.nsh
 
 Function .onInit
-  Push $0 ; Create variable $0
+  ;Push $0 ; Create variable $0
 
   ; The core cannot be deselected
-  SectionGetFlags 0 $0 ; Get the current selection of the first component and store in variable $0
-  IntOp $0 $0 | 16 ; Change the selection flag in variable $0 to read only (16)
-  SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
+  ;SectionGetFlags 0 $0 ; Get the current selection of the first component and store in variable $0
+  ;IntOp $0 $0 | 16 ; Change the selection flag in variable $0 to read only (16)
+  ;SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
   
-  Pop $0 ; Delete variable $0
-
-  !insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
+  ;Pop $0 ; Delete variable $0
+  !insertmacro SetSectionFlag 0 16 ; make the core section read only
+  ;!insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
   !insertmacro UnselectSection 4 ; unselect 1v1maps section (4) by default
   !insertmacro UnselectSection 5 ; unselect teammaps section by (5) default
-  !insertmacro SetSectionFlag 7 32 ; expand (32) mods section (7)
-  !insertmacro UnselectSection 7 ; unselect BA section (7) by default 
+  ;!insertmacro SetSectionFlag 7 32 ; expand (32) mods section (7)
+  !insertmacro UnselectSection 7 ; unselect BA section (7) by default
+  ${If} ${FileExists} "$INSTDIR\mods\BA591.sd7"
+    !insertmacro SelectSection 7 ; Select BA section (7) if BA is already installed
+  ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
+    !insertmacro SelectSection 7 ; Select BA section (7) if BA is already installed
+  ${EndIf}
   !insertmacro UnselectSection 8 ; unselect XTA section (8) by default
+  ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
+    !insertmacro SelectSection 8 ; Select XTA section (8) if XTA is already installed
+  ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
+    !insertmacro SelectSection 8 ; Select XTA section (8) if XTA is already installed
+  ${EndIf}
+  ${If} ${FileExists} "$INSTDIR\spring.exe"
+    !insertmacro UnselectSection 3 ; unselect default section (3) by default
+  ${EndIf}
 FunctionEnd
 
 ; Only allow installation if spring.exe is from version 0.75
@@ -214,18 +229,21 @@ SectionEnd
 SectionGroup "Map Packs"
 	Section "Default Maps" SEC_MAPS
 	!define INSTALL
+        AddSize 9000
 	!include "sections\maps.nsh"
 	!undef INSTALL
 	SectionEnd
 
         Section "1 vs 1 Maps" SEC_1V1MAPS
 	!define INSTALL
+        AddSize 87300
 	!include "sections\1v1maps.nsh"
 	!undef INSTALL
 	SectionEnd
 
 	Section "Teamplay Maps" SEC_TEAMMAPS
 	!define INSTALL
+        AddSize 170100
 	!include "sections\teammaps.nsh"
 	!undef INSTALL
 	SectionEnd
@@ -238,6 +256,7 @@ SectionGroup "Mods"
         Call CheckTATextures
         Call CheckOTAContent
         Call CheckTAContent
+        AddSize 9100
 	!include "sections\ba.nsh"
 	!undef INSTALL
 	SectionEnd
@@ -247,6 +266,7 @@ SectionGroup "Mods"
         Call CheckTATextures
         Call CheckOTAContent
         Call CheckTAContent
+        AddSize 9000
 	!include "sections\xta.nsh"
 	!undef INSTALL
 	SectionEnd
