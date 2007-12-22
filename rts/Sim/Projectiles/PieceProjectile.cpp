@@ -44,7 +44,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(age),
 	CR_MEMBER(colorTeam),
 	CR_MEMBER(ceg),
-	CR_RESERVED(28)
+	CR_RESERVED(36)
 	));
 
 void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
