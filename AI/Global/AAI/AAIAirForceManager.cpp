@@ -52,7 +52,7 @@ void AAIAirForceManager::CheckTarget(int unit_id, const UnitDef *def)
 		if(x >= 0 && x < map->xSectors && y >= 0 && y < map->ySectors)
 		{
 			// check for anti air defences if low on units
-			if(map->sector[x][y].lost_units[AIR_ASSAULT] >= cfg->MAX_AIR_GROUP_SIZE && ai->group_list[AIR_ASSAULT].size() < 5)
+			if(map->sector[x][y].lost_units[AIR_ASSAULT-COMMANDER] >= cfg->MAX_AIR_GROUP_SIZE && ai->group_list[AIR_ASSAULT].size() < 5)
 				return;
 
 			AAIGroup *group;

@@ -97,7 +97,7 @@ void AAIConstructor::Update()
 			int def_id = (*buildque->begin());
 			UnitCategory cat = ai->bt->units_static[def_id].category;
 
-			if(ai->bt->IsBuilder(def_id) || ai->bt->IsScout(cat) || ai->cb->GetMetal() > 50 
+			if(ai->bt->IsBuilder(def_id) || cat == SCOUT || ai->cb->GetMetal() > 50 
 				|| ai->bt->units_static[def_id].cost < ai->bt->avg_cost[ai->bt->units_static[def_id].category][ai->side-1])
 			{
 				// check if mobile or stationary builder
@@ -592,7 +592,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 		int y = pos.z / ai->map->ySectorSize;
 		
 		// attacked by scout
-		if(ai->bt->IsScout(attacked_by))
+		if(attacked_by == SCOUT)
 		{
 			// dont flee from scouts in your own base
 			if(x >= 0 && y >= 0 && x < ai->map->xSectors && y < ai->map->ySectors)

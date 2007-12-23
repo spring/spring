@@ -196,6 +196,24 @@ void AAIConfig::LoadConfig(AAI *ai)
 					}
 				}
 			}
+			else if(!strcmp(keyword, "TRANSPORTERS"))
+			{
+				// get number of transporters
+				fscanf(file, "%i", &ival);
+
+				for(int i = 0; i < ival; ++i)
+				{
+					fscanf(file, "%s", filename);
+					if(ai->cb->GetUnitDef(filename))
+						TRANSPORTERS.push_back(ai->cb->GetUnitDef(filename)->id);
+					else 
+					{
+						fprintf(ai->file, "ERROR: loading transporters - could not find unit %s\n", filename);
+						error = true;
+						break;
+					}
+				}
+			}
 			else if(!strcmp(keyword, "DONT_BUILD"))
 			{
 				// get number of units that should not be built

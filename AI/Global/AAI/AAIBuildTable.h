@@ -81,8 +81,7 @@ public:
 	int GetStationaryArty(int side, float cost, float range, float efficiency, bool water, bool canBuild);
 
 	// returns a scout
-	int GetScout(int side, float speed, float los, float cost, UnitCategory category, int randomness, bool canBuild);
-	int GetScout(int side, float speed, float los, float cost, UnitCategory category1, UnitCategory category2, int randomness, bool canBuild);
+	int GetScout(int side, float los, float cost, unsigned int allowed_movement_types, int randomness, bool cloakable, bool canBuild);
 
 	int GetRadar(int side, float cost, float range, bool water, bool canBuild);
 
@@ -123,7 +122,6 @@ public:
 
 	// returns true, if unit is a scout
 	bool IsScout(int id);
-	bool IsScout(UnitCategory category);
 
 	// returns true if the unit is marked as attacker (so that it won't be classed as something else even if it can build etc.)
 	bool IsAttacker(int id);
@@ -134,6 +132,9 @@ public:
 
 	// returns false if unit is a member of the dont_build list
 	bool AllowedToBuild(int id);
+
+	// returns true, if unit is a transporter
+	bool IsTransporter(int id);
 
 	// return a units eff. against a certain category
 	float GetEfficiencyAgainst(int unit_def_id, UnitCategory category);

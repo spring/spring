@@ -415,26 +415,14 @@ void AAIBuildTable::Init()
 			// get scouts
 			else if(IsScout(i))
 			{
-				if(units_static[i].movement_type & MOVE_TYPE_GROUND)
-				{
-						units_of_category[GROUND_SCOUT][units_static[i].side-1].push_back(unitList[i-1]->id);
-						units_static[i].category = GROUND_SCOUT;
-				}
-				else if(units_static[i].movement_type & MOVE_TYPE_HOVER)
-				{
-						units_of_category[HOVER_SCOUT][units_static[i].side-1].push_back(unitList[i-1]->id);
-						units_static[i].category = HOVER_SCOUT;
-				}
-				else if(units_static[i].movement_type & MOVE_TYPE_SEA)
-				{	
-						units_of_category[SEA_SCOUT][units_static[i].side-1].push_back(unitList[i-1]->id);
-						units_static[i].category = SEA_SCOUT;
-				}
-				else if(units_static[i].movement_type & MOVE_TYPE_AIR)
-				{
-					units_of_category[AIR_SCOUT][units_static[i].side-1].push_back(unitList[i-1]->id);
-					units_static[i].category = AIR_SCOUT;
-				}
+				units_of_category[SCOUT][units_static[i].side-1].push_back(unitList[i-1]->id);
+				units_static[i].category = SCOUT;
+			}
+			// get mobile transport
+			else if(IsTransporter(i))
+			{
+				units_of_category[MOBILE_TRANSPORT][units_static[i].side-1].push_back(unitList[i-1]->id);
+				units_static[i].category = MOBILE_TRANSPORT;
 			}
 			// check if builder or factory
 			else if(unitList[i-1]->buildOptions.size() > 0 && !IsAttacker(i))
@@ -999,14 +987,11 @@ void AAIBuildTable::Init()
 
 		float temp;
 
-//		def_power = new double*[numOfSides];
 		def_power.resize(numOfSides);
-//		max_pplant_eff = new double[numOfSides];
 		max_pplant_eff.resize(numOfSides);
 
 		for(int s = 0; s < numOfSides; ++s)
 		{
-//			def_power[s] = new double[units_of_category[STATIONARY_DEF][s].size()];
 			def_power[s].resize(units_of_category[STATIONARY_DEF][s].size());
 
 			// power plant max eff
@@ -1078,13 +1063,13 @@ void AAIBuildTable::PrecacheStats()
 			units_static[*i].efficiency[0] = unitList[*i-1]->extractsMetal;
 
 		// precache efficiency of metalmakers
-		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i)
 			units_static[*i].efficiency[0] = unitList[*i-1]->makesMetal/(unitList[*i-1]->energyUpkeep+1);
 
 
 		// precache average metal and energy consumption of factories
 		float average_metal, average_energy;
-		for(list<int>::iterator i = units_of_category[STATIONARY_CONSTRUCTOR][s].begin(); i != units_of_category[STATIONARY_CONSTRUCTOR][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[STATIONARY_CONSTRUCTOR][s].begin(); i != units_of_category[STATIONARY_CONSTRUCTOR][s].end(); ++i)
 		{
 			average_metal = average_energy = 0;
 
@@ -1099,7 +1084,7 @@ void AAIBuildTable::PrecacheStats()
 		}
 
 		// precache range of arty
-		for(list<int>::iterator i = units_of_category[STATIONARY_ARTY][s].begin(); i != units_of_category[STATIONARY_ARTY][s].end(); i++)
+		for(list<int>::iterator i = units_of_category[STATIONARY_ARTY][s].begin(); i != units_of_category[STATIONARY_ARTY][s].end(); ++i)
 		{
 			units_static[*i].efficiency[1] = GetMaxRange(*i);
 			units_static[*i].efficiency[0] = 1 + units_static[*i].cost/100.0;
@@ -1300,6 +1285,31 @@ void AAIBuildTable::PrecacheStats()
 			min_value[STATIONARY_ARTY][s] = -1;
 			avg_value[STATIONARY_ARTY][s] = -1;
 			max_value[STATIONARY_ARTY][s] = -1;
+		}
+
+		// precache scout los
+		min_value[SCOUT][s] = 100000;
+		avg_value[SCOUT][s] = 0;
+		max_value[SCOUT][s] = 0;	
+
+		for(list<int>::iterator unit = units_of_category[SCOUT][s].begin(); unit != units_of_category[SCOUT][s].end(); ++unit)
+		{
+			avg_value[SCOUT][s] += unitList[*unit-1]->losRadius;
+
+			if(unitList[*unit-1]->losRadius > max_value[SCOUT][s])
+				max_value[SCOUT][s] = unitList[*unit-1]->losRadius;
+
+			if(unitList[*unit-1]->losRadius < min_value[SCOUT][s])
+				min_value[SCOUT][s] = unitList[*unit-1]->losRadius;
+		}
+
+		if(units_of_category[SCOUT][s].size() > 0)
+			avg_value[SCOUT][s] /= units_of_category[SCOUT][s].size();
+		else
+		{
+			min_value[SCOUT][s] = -1;
+			avg_value[SCOUT][s] = -1;
+			max_value[SCOUT][s] = -1;
 		}
 
 		// precache stationary defences weapon range
@@ -1939,68 +1949,39 @@ int AAIBuildTable::GetJammer(int side, float cost, float range, bool water, bool
 	return best_jammer;
 }
 
-
-int AAIBuildTable::GetScout(int side, float speed, float los, float cost, UnitCategory category, int randomness, bool canBuild)
+int AAIBuildTable::GetScout(int side, float los, float cost, unsigned int allowed_movement_types, int randomness, bool cloakable, bool canBuild)
 {
-	float best_ranking = 0, my_ranking;
+	side -= 1;
+
+	float best_ranking =  -10000, my_ranking;
 	int best_scout = 0;
 
-	for(list<int>::iterator i = units_of_category[category][side-1].begin(); i != units_of_category[category][side-1].end(); i++)
+	for(list<int>::iterator i = units_of_category[SCOUT][side].begin(); i != units_of_category[SCOUT][side].end(); ++i)
 	{
-		if(!canBuild || (canBuild && units_dynamic[*i].buildersAvailable > 0))
+		if(units_static[*i].movement_type & allowed_movement_types)
 		{
-			my_ranking = (speed * unitList[*i-1]->speed  + los * unitList[*i-1]->losRadius) / (cost * units_static[*i].cost);
-			my_ranking /= (float)(1 + cfg->MAX_SCOUTS + units_dynamic[*i].active + units_dynamic[*i].requested);
-			my_ranking *= (1 + 0.05 * ((float)(rand()%randomness)));
-
-			if(my_ranking > best_ranking)
+			if(!canBuild || (canBuild && units_dynamic[*i].buildersAvailable > 0))
 			{
-				best_ranking = my_ranking;
-				best_scout = *i;
+				my_ranking = los * ( unitList[*i-1]->losRadius - avg_value[SCOUT][side]) / max_value[SCOUT][side];
+				my_ranking += cost * (avg_cost[SCOUT][side] - units_static[*i].cost) / max_cost[SCOUT][side];
+
+				if(cloakable && unitList[*i-1]->canCloak)
+					my_ranking += 8.0f;
+		
+				my_ranking *= (1 + 0.05 * ((float)(rand()%randomness)));
+
+				if(my_ranking > best_ranking)
+				{
+					best_ranking = my_ranking;
+					best_scout = *i;
+				}
 			}
 		}
 	}
+	
 
 	return best_scout;
 }
-
-int AAIBuildTable::GetScout(int side, float speed, float los, float cost, UnitCategory category1, UnitCategory category2, int randomness, bool canBuild)
-{
-	float best_ranking = 0, my_ranking;
-	int best_scout = 0;
-
-	for(list<int>::iterator i = units_of_category[category1][side-1].begin(); i != units_of_category[category1][side-1].end(); i++)
-	{
-		if(!canBuild || (canBuild && units_dynamic[*i].buildersAvailable > 0))
-		{
-			my_ranking = (speed * unitList[*i-1]->speed  + los * unitList[*i-1]->losRadius) / (cost * units_static[*i].cost);
-			my_ranking /= (float)(0.1 + cfg->MAX_SCOUTS + units_dynamic[*i].active + units_dynamic[*i].requested);
-			my_ranking *= (1 + 0.05 * ((float)(rand()%randomness)));
-
-			if(my_ranking > best_ranking)
-			{
-				best_ranking = my_ranking;
-				best_scout = *i;
-			}
-		}
-	}
-	for(list<int>::iterator i = units_of_category[category2][side-1].begin(); i != units_of_category[category2][side-1].end(); i++)
-	{	
-		if(!canBuild || (canBuild && units_dynamic[*i].buildersAvailable > 0))
-		{
-			my_ranking = (((float)(rand()%randomness)+1) * 10.0) / (cost * (units_static[*i].cost + units_static[*i].builder_cost));
-
-			if(my_ranking > best_ranking)
-			{
-				best_ranking = my_ranking;
-				best_scout = *i;
-			}
-		}
-	}
-
-	return best_scout;
-}
-
 
 int AAIBuildTable::GetBuilder(int unit_id)
 {
@@ -3419,8 +3400,6 @@ void AAIBuildTable::BuildFactoryFor(int def_id)
 
 	if(best_factory)
 	{
-			
-
 		if(IsStatic(best_factory))
 		{
 			units_dynamic[best_factory].requested += 1;
@@ -3433,7 +3412,10 @@ void AAIBuildTable::BuildFactoryFor(int def_id)
 			}
 
 			if(units_dynamic[best_factory].buildersAvailable <= 0)
-				BuildBuilderFor(best_factory);
+			{
+				fprintf(ai->file, "BuildFactory() is requesting builder for %s\n", unitList[best_factory-1]->humanName.c_str()); 	
+				BuildBuilderFor(best_factory);	
+			}
 
 			// debug
 			fprintf(ai->file, "Added %s to buildque\n", unitList[best_factory-1]->humanName.c_str()); 		
@@ -3463,8 +3445,6 @@ void AAIBuildTable::BuildFactoryFor(int def_id)
 
 void AAIBuildTable::BuildBuilderFor(int building_id)
 {
-	//fprintf(ai->file, "Looking for builder to build %s\n", unitList[building_id-1]->humanName.c_str());
-
 	int builder = 0;
 	float best_rating = -100000, my_rating; 
 
@@ -3485,6 +3465,10 @@ void AAIBuildTable::BuildBuilderFor(int building_id)
 
 			my_rating += GetBuilderRating(*unit);
 
+			// prefer builders that can be built atm
+			if(units_dynamic[*unit].buildersAvailable > 0)
+				my_rating += 50.0f;
+
 			if(my_rating > best_rating)
 			{	
 				best_rating = my_rating;
@@ -3498,6 +3482,7 @@ void AAIBuildTable::BuildBuilderFor(int building_id)
 		// build factory if necessary
 		if(units_dynamic[builder].buildersAvailable <= 0)
 			BuildFactoryFor(builder);
+		
 
 		if(ai->execute->AddUnitToBuildque(builder))
 		{
@@ -3509,7 +3494,7 @@ void AAIBuildTable::BuildBuilderFor(int building_id)
 			units_dynamic[*j].buildersRequested += 1; 
 
 			// debug
-			fprintf(ai->file, "BuildBuilderFor() requested: %s %i\n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);	
+			//fprintf(ai->file, "BuildBuilderFor() requested: %s %i\n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);	
 		}
 	}
 }
@@ -3710,6 +3695,18 @@ bool AAIBuildTable::IsAttacker(int id)
 	return false;
 }
 
+
+bool AAIBuildTable::IsTransporter(int id)
+{
+	for(list<int>::iterator i = cfg->TRANSPORTERS.begin(); i != cfg->TRANSPORTERS.end(); ++i)
+	{
+		if(*i == id)
+			return true;
+	}
+
+	return false;
+}
+
 bool AAIBuildTable::AllowedToBuild(int id)
 {
 	for(list<int>::iterator i = cfg->DONT_BUILD.begin(); i != cfg->DONT_BUILD.end(); ++i)
@@ -3876,14 +3873,10 @@ const char* AAIBuildTable::GetCategoryString(int def_id)
 	else if(def_id == MOBILE_CONSTRUCTOR)
 		return "builder";
 
-	else if(def_id== GROUND_SCOUT)
-		return "ground scout";
-	else if(def_id == AIR_SCOUT)
-		return "air scout";
-	else if(def_id == HOVER_SCOUT)
-		return "hover scout";
-	else if(def_id == SEA_SCOUT)
-		return "sea scout";
+	else if(def_id == SCOUT)
+		return "scout";
+	else if(def_id == MOBILE_TRANSPORT)
+		return "transport";
 	else if(def_id == GROUND_ARTY)
 	{
 		if(cfg->AIR_ONLY_MOD)
@@ -3960,14 +3953,10 @@ const char* AAIBuildTable::GetCategoryString2(UnitCategory category)
 		return "submarine assault";
 	else if(category == MOBILE_CONSTRUCTOR) 
 		return "builder";
-	else if(category == GROUND_SCOUT)
-		return "ground scout";
-	else if(category == AIR_SCOUT)
-		return "air scout";
-	else if(category == HOVER_SCOUT)
-		return "hover scout";
-	else if(category == SEA_SCOUT)
-		return "sea scout";
+	else if(category == SCOUT)
+		return "scout";
+	else if(category == MOBILE_TRANSPORT)
+		return "transport";
 	else if(category == GROUND_ARTY)
 	{
 		if(cfg->AIR_ONLY_MOD)
@@ -4040,14 +4029,6 @@ bool AAIBuildTable::IsFactory(int def_id)
 		return false;
 }
 
-bool AAIBuildTable::IsScout(UnitCategory category)
-{
-	if(category >= GROUND_SCOUT && category <= SEA_SCOUT)
-		return true;
-	else 
-		return false;
-}
-
 int AAIBuildTable::GetIDOfAssaultCategory(UnitCategory category)
 {
 	if(category == GROUND_ASSAULT)
@@ -4061,7 +4042,6 @@ int AAIBuildTable::GetIDOfAssaultCategory(UnitCategory category)
 	else if(category == SUBMARINE_ASSAULT)
 		return 4;
 	else if(category >= STATIONARY_DEF && category <= METAL_MAKER)
-	//else if(category == STATIONARY_DEF)
 		return 5;
 	else
 		return -1;
