@@ -176,15 +176,9 @@ AAISector* AAIBrain::GetNewScoutDest(int scout)
 	// TODO: take scouts pos into account
 	float my_rating, best_rating = 0;
 	AAISector *scout_sector = 0, *sector;
-	UnitCategory category;
-
+	
 	const UnitDef *def = cb->GetUnitDef(scout);
 	
-	if(def)
-		 category = bt->units_static[def->id].category;
-	else 
-		return 0;
-
 	for(int x = 0; x < map->xSectors; x++)
 	{
 		for(int y = 0; y < map->ySectors; y++)
@@ -196,7 +190,7 @@ AAISector* AAIBrain::GetNewScoutDest(int scout)
 				// land sector
 				if(sector->water_ratio > 0.7)
 				{
-					if(category != GROUND_SCOUT)
+					if(! (bt->units_static[def->id].movement_type & MOVE_TYPE_GROUND))
 					{
 						my_rating = sector->importance_this_game * sector->last_scout;
 						++sector->last_scout;
@@ -207,7 +201,7 @@ AAISector* AAIBrain::GetNewScoutDest(int scout)
 				// water sector
 				else if(sector->water_ratio < 0.3)
 				{
-					if(category != SEA_SCOUT)
+					if(! (bt->units_static[def->id].movement_type & MOVE_TYPE_SEA))
 					{
 						my_rating = sector->importance_this_game * sector->last_scout;
 						++sector->last_scout;

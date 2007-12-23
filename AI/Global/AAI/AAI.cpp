@@ -446,7 +446,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		// unfinished unit
 		else
 		{
-			if(bt->IsScout(category))
+			if(category == SCOUT)
 				--futureScouts;	
 
 			if(bt->IsBuilder(def->id))
@@ -635,7 +635,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		else // finished unit has been killed
 		{
 			// scout
-			if(bt->IsScout(category))
+			if(category == SCOUT)
 			{
 				--activeScouts;
 
@@ -772,12 +772,22 @@ void AAI::UnitFinished(int unit)
 			ut->SetUnitStatus(unit, HEADING_TO_RALLYPOINT);
 		}
 		// scout
-		else if(bt->IsScout(category))
+		else if(category == SCOUT)
 		{
 			++activeScouts;
 			--futureScouts;
 
 			scouts.push_back(unit);
+
+			// cloak scout if cloakable
+			if(def->canCloak)
+			{
+				Command c;
+				c.id = CMD_CLOAK;
+				c.params.push_back(1);
+
+				cb->GiveOrder(unit, &c);
+			}
 		}
 		// builder 
 		else if(bt->IsBuilder(def->id))

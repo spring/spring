@@ -151,134 +151,57 @@ void AAIExecute::UpdateRecon()
 	// check number of scouts and order new ones if necessary
 	if(ai->activeScouts + ai->futureScouts < cfg->MAX_SCOUTS)
 	{
-		int scout;
+		int scout = 0;
 
-		float speed = 1; 
-		float los = 0.1f;
+		
+		float cost; 
+		float los;
 
-		// get new scout according to map type
-		if(cfg->AIR_ONLY_MOD || map->mapType == AIR_MAP)
+		int period = brain->GetGamePeriod();
+
+		if(period == 0)
 		{
-			scout = bt->GetScout(ai->side, speed, los,  brain->Affordable(), AIR_SCOUT, 5, true);
-
-			if(!scout)	
-			{
-				scout = bt->GetScout(ai->side, speed, los,  brain->Affordable(), AIR_SCOUT, 5, false);
-				
-				if(scout && bt->units_dynamic[scout].requested <= 0)
-					bt->BuildFactoryFor(scout);
-				else 
-					scout = 0;
-			}
+			cost = 2;
+			los = 0.5;
 		}
+		else if(period == 1)
+		{
+			cost = 1;
+			los = 2;
+		}
+		else 
+		{
+			cost = 0.5;
+			los = 4.0;
+		}
+
+		// determine movement type of scout based on map
+		unsigned int allowed_movement_types = 0;
+	
+		allowed_movement_types |= MOVE_TYPE_AIR;
+		
+		if(map->mapType == LAND_MAP)
+		{
+			allowed_movement_types |= MOVE_TYPE_GROUND;
+			allowed_movement_types |= MOVE_TYPE_HOVER;
+		}
+		else if(map->mapType == LAND_WATER_MAP)
+		{
+			allowed_movement_types |= MOVE_TYPE_GROUND;
+			allowed_movement_types |= MOVE_TYPE_SEA;
+			allowed_movement_types |= MOVE_TYPE_HOVER;
+		}
+		else if(map->mapType == WATER_MAP)
+		{
+			allowed_movement_types |= MOVE_TYPE_SEA;
+			allowed_movement_types |= MOVE_TYPE_HOVER;
+		}
+
+		// request cloakable scouts from time to time
+		if(rand()%5 == 1)
+			scout = bt->GetScout(ai->side, los, cost, allowed_movement_types, 10, true, true);
 		else
-		{
-			int random;
-
-			if(map->mapType == LAND_MAP)
-			{
-				random = rand()%2;
-
-				if(random)
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), AIR_SCOUT, 5, true);
-
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los,  brain->Affordable(), AIR_SCOUT, 5, false);
-						
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-				else
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, true);
-				
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, false);
-						
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-			}
-			else if (map->mapType == LAND_WATER_MAP)
-			{
-				random = rand()%3;
-
-				if(random == 0)
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), AIR_SCOUT, 5, true);
-				}
-				else if(random == 1)
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), SEA_SCOUT, HOVER_SCOUT, 5, true);
-
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(),  SEA_SCOUT, HOVER_SCOUT, 5, false);
-					
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-				else
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, true);
-				
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), GROUND_SCOUT, HOVER_SCOUT, 5, false);
-						
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-			}
-			else
-			{
-				random = rand()%2;
-
-				if(random)
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), AIR_SCOUT, 5, true);
-
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), AIR_SCOUT, 5, false);
-						
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-				else
-				{
-					scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), SEA_SCOUT, HOVER_SCOUT, 5, true);
-
-					if(!scout)	
-					{
-						scout = bt->GetScout(ai->side, speed, los, brain->Affordable(), SEA_SCOUT, HOVER_SCOUT, 5, false);
-						
-						if(scout && bt->units_dynamic[scout].requested <= 0)
-							bt->BuildFactoryFor(scout);
-						else 
-							scout = 0;
-					}
-				}
-			}
-		}
+			scout = bt->GetScout(ai->side, los, cost, allowed_movement_types, 10, false, true);
 
 		if(scout)
 		{
@@ -292,7 +215,6 @@ void AAIExecute::UpdateRecon()
 				//cb->SendTextMsg(c, 0);
 			}
 		}
-		
 	}
 
 	AAISector *dest;
@@ -572,19 +494,19 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 		}
 	}
 
+	
+
 	// determine position
 	if(buildque)
 	{
+		//fprintf(ai->file, "Found builque for %s\n", bt->unitList[def_id-1]->humanName.c_str());
+
 		if(bt->IsBuilder(def_id))
 		{	
-			// insert after the last builder
-			for(list<int>::iterator unit = buildque->begin(); unit != buildque->end();  ++unit)
-			{	
-				buildque->insert(buildque->begin(), number, def_id);
-				return true;
-			}
+			buildque->insert(buildque->begin(), number, def_id);
+			return true;	
 		}
-		else if(bt->IsScout(category))
+		else if(category == SCOUT)
 		{
 			if(ai->activeScouts < 2)
 			{
@@ -938,7 +860,8 @@ bool AAIExecute::BuildExtractor()
 				// choose mex dependend on safety
 				bool armed = false;
 
-				if(map->sector[x][y].lost_units[EXTRACTOR] > 0.01f || map->sector[x][y].distance_to_base > 2)
+				//if(map->sector[x][y].lost_units[EXTRACTOR-COMMANDER] > 0.01f || map->sector[x][y].distance_to_base > 2)
+				if(map->sector[x][y].distance_to_base > 2)
 				{
 					cost = 6.0f;
 					armed = true;

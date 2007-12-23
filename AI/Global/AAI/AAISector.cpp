@@ -69,7 +69,7 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	attacked_by_this_game.resize(categories, 0);
 	attacked_by_learned.resize(categories, 0);
 
-	lost_units.resize((int)MOBILE_CONSTRUCTOR-(int)COMMANDER + 1, 0);
+	lost_units.resize((int)MOBILE_CONSTRUCTOR-(int)COMMANDER+1.0);
 
 	enemyUnitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
 	unitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
