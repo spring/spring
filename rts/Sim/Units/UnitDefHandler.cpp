@@ -50,11 +50,13 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 
 	numUnitDefs = unitDefNames.size();
 
-//	if (gameSetup) {
-//		// ?? "restricted" does not automatically mean "cannot be built
-//		// at all, so we don't need the unitdef for this unit" -- Kloot
-//		numUnitDefs -= gameSetup->restrictedUnits.size();
-//	}
+	/*
+	if (gameSetup) {
+		// ?? "restricted" does not automatically mean "cannot be built
+		// at all, so we don't need the unitdef for this unit" -- Kloot
+		numUnitDefs -= gameSetup->restrictedUnits.size();
+	}
+	*/
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
@@ -64,14 +66,20 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string unitName = unitDefNames[a];
 
-		// Restrictions may tell us not to use this unit at all
+		/*
 		if (gameSetup) {
+			// Restrictions may tell us not to use this unit at all
+			// FIXME: causes mod errors when a unit is restricted to
+			// 0, since GetUnitByName() will return NULL if its UnitDef
+			// has not been loaded -- Kloot
 			const std::map<std::string, int>& resUnits = gameSetup->restrictedUnits;
+
 			if ((resUnits.find(unitName) != resUnits.end()) &&
 				(resUnits.find(unitName)->second == 0)) {
 				continue;
 			}
 		}
+		*/
 
 		// Seems ok, load it
 		unitDefs[id].valid = false;
