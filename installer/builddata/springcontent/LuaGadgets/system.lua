@@ -29,7 +29,9 @@ if (System == nil) then
     UnitDefs     = UnitDefs,
     UnitDefNames = UnitDefNames,
     FeatureDefs  = FeatureDefs,
+    FeatureDefNames  = FeatureDefNames,
     WeaponDefs   = WeaponDefs,
+    WeaponDefNames   = WeaponDefNames,
 
     --
     -- Custom Constants
