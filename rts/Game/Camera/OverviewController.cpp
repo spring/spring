@@ -53,18 +53,23 @@ float3 COverviewController::SwitchFrom() const
 	float length=ground->LineGroundCol(pos,pos+dir*50000);
 	float3 rpos=pos+dir*length;
 
-	minimap->SetMinimized(minimizeMinimap);
+	if (!gu->dualScreenMode) {
+		minimap->SetMinimized(minimizeMinimap);
+	}
 
 	return rpos;
 }
 
 void COverviewController::SwitchTo(bool showText)
 {
-	if(showText)
+	if (showText) {
 		logOutput.Print("Switching to Overview style camera");
+	}
 
-	minimizeMinimap = minimap->GetMinimized();
-	minimap->SetMinimized(true);
+	if (!gu->dualScreenMode) {
+		minimizeMinimap = minimap->GetMinimized();
+		minimap->SetMinimized(true);
+	}
 }
 
 void COverviewController::GetState(std::vector<float>& fv) const
