@@ -30,7 +30,7 @@ struct MapInfo
 	StartPos positions[16];		// I'd rather not allocate memory, this should be enough
 
 	// VERSION>=1
-	char *author; // max 200 chars
+	char* author; // max 200 chars
 };
 
 
