@@ -51,6 +51,12 @@ void CModInfo::Init(const char* modname)
 		gu->teamNanospray = !!configHandler.GetInt("TeamNanoSpray", 0);
 	}
 
+	// constructions
+	const LuaTable constructionTbl = root.SubTable("construction");
+	constructionDecay       = constructionTbl.GetBool("constructionDecay",  true);
+	constructionDecayTime   = constructionTbl.GetFloat("constructionDecayTime",  6.66) * 30;
+	constructionDecaySpeed  = constructionTbl.GetFloat("constructionDecaySpeed",  0.03);
+
 	// reclaim
 	const LuaTable reclaimTbl = root.SubTable("reclaim");
 	multiReclaim  = reclaimTbl.GetInt("multiReclaim",  0);

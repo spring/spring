@@ -19,6 +19,11 @@ public:
 	std::string description;
 
 	bool allowTeamColors;
+	
+	//Build behaviour
+	bool constructionDecay;     //Should constructions without builders decay?
+	int constructionDecayTime;  //How long until they start decaying?
+	float constructionDecaySpeed; //How fast do they decay?
 
 	// Reclaim behaviour
 	int multiReclaim;	// 0 = 1 reclaimer per feature max, otherwise unlimited

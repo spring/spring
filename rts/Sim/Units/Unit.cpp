@@ -596,8 +596,8 @@ void CUnit::SlowUpdate()
 	}
 
 	if (beingBuilt) {
-		if (lastNanoAdd < gs->frameNum - 200) {
-			const float buildDecay = 1.0f / (buildTime * 0.03f);
+		if (modInfo.constructionDecay && lastNanoAdd < gs->frameNum - modInfo.constructionDecayTime) {
+			const float buildDecay = 1.0f / (buildTime * modInfo.constructionDecaySpeed);
 			health -= maxHealth * buildDecay;
 			buildProgress -= buildDecay;
 			AddMetal(metalCost * buildDecay);
