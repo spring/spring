@@ -16,7 +16,6 @@
 #include "OpenALSound.h"
 #include "mmgr.h"
 
-
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
 
@@ -288,11 +287,11 @@ struct WAVHeader
 #pragma pack(pop)
 
 
-bool COpenALSound::ReadWAV(const char *name, Uint8 *buf, int size, ALuint albuffer)
+bool COpenALSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer)
 {
-	WAVHeader *header = (WAVHeader *)buf;
+	WAVHeader* header = (WAVHeader*) buf;
 
-	if (memcmp (header->riff, "RIFF",4) || memcmp (header->wavefmt, "WAVEfmt", 7)) {
+	if (memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
 		if (hardFail) {
 			handleerror(0, "ReadWAV: invalid header.", name, 0);
 		}
@@ -327,58 +326,86 @@ bool COpenALSound::ReadWAV(const char *name, Uint8 *buf, int size, ALuint albuff
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
 			if (hardFail) {
-				handleerror(0,"ReadWAV: invalid number of bits per sample (mono).",name,0);
+				handleerror(0,"ReadWAV: invalid number of bits per sample (mono).", name, 0);
 			}
 			return false;
 		}
 	}
-	else if(header->channels == 2) {
+	else if (header->channels == 2) {
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
 			if (hardFail) {
-				handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name,0);
+				handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name, 0);
 			}
 			return false;
 		}
 	}
 	else {
 		if (hardFail) {
-			handleerror(0,"ReadWAV (%s): invalid number of channels.", name,0);
+			handleerror(0, "ReadWAV (%s): invalid number of channels.", name, 0);
 		}
 		return false;
 	}
 
-	alBufferData(albuffer,format,buf+sizeof(WAVHeader),header->datalen > size-sizeof(WAVHeader) ? size-sizeof(WAVHeader) : header->datalen,header->SamplesPerSec);
+	if (header->datalen > size - sizeof(WAVHeader)) {
+		logOutput.Print("\n");
+		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %d\n",
+			name, header->datalen, size - sizeof(WAVHeader));
+		logOutput.Print("OpenAL: size %d\n", size);
+		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
+		logOutput.Print("OpenAL: format_tag %d\n", header->format_tag);
+		logOutput.Print("OpenAL: channels %d\n", header->channels);
+		logOutput.Print("OpenAL: BlockAlign %d\n", header->BlockAlign);
+		logOutput.Print("OpenAL: BitsPerSample %d\n", header->BitsPerSample);
+		logOutput.Print("OpenAL: totalLength %d\n", header->totalLength);
+		logOutput.Print("OpenAL: length %d\n", header->length);
+		logOutput.Print("OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
+		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
+
+		// FIXME: setting datalen to size - sizeof(WAVHeader) only
+		// works for some files that have a garbage datalen field
+		// in their header, others cause SEGV's inside alBufferData()
+		// (eg. ionbeam.wav in XTA 9.2) -- Kloot
+		// header->datalen = size - sizeof(WAVHeader);
+		header->datalen = 1;
+	}
+
+	alBufferData(albuffer, format, buf + sizeof(WAVHeader), header->datalen, header->SamplesPerSec);
 	return CheckError("ReadWAV");
 }
 
 
 ALuint COpenALSound::LoadALBuffer(const string& path)
 {
-	Uint8 *buf;
+	Uint8* buf = 0;
 	ALuint buffer;
-	alGenBuffers(1,&buffer);
+	alGenBuffers(1, &buffer);
+
 	if (!CheckError("error generating OpenAL sound buffer"))
 		return 0;
+
 	CFileHandler file(path);
-	if(file.FileExists()){
+
+	if (file.FileExists()) {
 		buf = SAFE_NEW Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
 	} else {
 		if (hardFail) {
-			handleerror(0, "Couldnt open wav file",path.c_str(),0);
+			handleerror(0, "Couldn't open wav file", path.c_str(),0);
 		}
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
-	const bool success = ReadWAV (path.c_str(), buf, file.FileSize(), buffer);
+
+	const bool success = ReadWAV(path.c_str(), buf, file.FileSize(), buffer);
 	delete[] buf;
 
 	if (!success) {
 		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
+
 	return buffer;
 }
 
@@ -389,6 +416,7 @@ ALuint COpenALSound::GetWaveId(const string& path, bool _hardFail)
 	if (it != soundMap.end()) {
 		return it->second;
 	}
+
 	hardFail = _hardFail;
 	const ALuint buffer = LoadALBuffer(path);
 	soundMap[path] = buffer;
