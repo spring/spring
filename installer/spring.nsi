@@ -105,24 +105,29 @@ Function .onInit
   ;Pop $0 ; Delete variable $0
   !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ;!insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
-  !insertmacro UnselectSection 4 ; unselect 1v1maps section (4) by default
-  !insertmacro UnselectSection 5 ; unselect teammaps section by (5) default
-  ;!insertmacro SetSectionFlag 7 32 ; expand (32) mods section (7)
-  !insertmacro UnselectSection 7 ; unselect BA section (7) by default
-  ${If} ${FileExists} "$INSTDIR\mods\BA591.sd7"
-    !insertmacro SelectSection 7 ; Select BA section (7) if BA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
-    !insertmacro SelectSection 7 ; Select BA section (7) if BA is already installed
-  ${EndIf}
-  !insertmacro UnselectSection 8 ; unselect XTA section (8) by default
-  ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
-    !insertmacro SelectSection 8 ; Select XTA section (8) if XTA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
-    !insertmacro SelectSection 8 ; Select XTA section (8) if XTA is already installed
-  ${EndIf}
   ${If} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro UnselectSection 3 ; unselect default section (3) by default
   ${EndIf}
+  !insertmacro UnselectSection 4 ; unselect 1v1maps section (4) by default
+  !insertmacro UnselectSection 5 ; unselect teammaps section by (5) default
+  ;!insertmacro SetSectionFlag 8 32 ; expand (32) mods section (8)
+  !insertmacro UnselectSection 8 ; unselect BA section (8) by default
+  ${If} ${FileExists} "$INSTDIR\mods\BA591.sd7"
+    !insertmacro SelectSection 8 ; Select BA section (8) if BA is already installed
+  ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
+    !insertmacro SelectSection 8 ; Select BA section (8) if BA is already installed
+  ${EndIf}
+  !insertmacro UnselectSection 9 ; unselect XTA section (9) by default
+  ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
+    !insertmacro SelectSection 9 ; Select XTA section (9) if XTA is already installed
+  ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
+    !insertmacro SelectSection 9 ; Select XTA section (9) if XTA is already installed
+  ${EndIf}
+  !insertmacro UnselectSection 10 ; unselect Gundam section (10) by default
+  !insertmacro UnselectSection 11 ; unselect Kernel Panic section (11) by default
+  !insertmacro UnselectSection 12 ; unselect EvolutionRTS section (12) by default
+  !insertmacro UnselectSection 13 ; unselect Spring:1944 section (13) by default
+  !insertmacro UnselectSection 14 ; unselect Simbase section (14) by default
 FunctionEnd
 
 ; Only allow installation if spring.exe is from version 0.75
@@ -243,7 +248,7 @@ SectionGroup "Map Packs"
 
 	Section "Teamplay Maps" SEC_TEAMMAPS
 	!define INSTALL
-        AddSize 170100
+        AddSize 199100
 	!include "sections\teammaps.nsh"
 	!undef INSTALL
 	SectionEnd

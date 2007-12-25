@@ -13,6 +13,7 @@
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Tabula-v2.sd7" "$INSTDIR\maps\Tabula-v2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Victoria_Crater.sd7" "$INSTDIR\maps\Victoria_Crater.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/XantheTerra_v3.sd7" "$INSTDIR\maps\XantheTerra_v3.sd7" \
+             "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Zeus05_A.sd7" "$INSTDIR\maps\Zeus05_A.sd7" 
 
 !else
   ; Maps
@@ -42,6 +43,8 @@
   Delete "$INSTDIR\maps\Victoria_Crater.sd7"
   Delete "$INSTDIR\maps\paths\XantheTerra_v3.*"
   Delete "$INSTDIR\maps\XantheTerra_v3.sd7"
+  Delete "$INSTDIR\maps\paths\Zeus05_A.*"
+  Delete "$INSTDIR\maps\Zeus05_A.sd7"
   RmDir "$INSTDIR\maps\paths"
   RmDir "$INSTDIR\maps"
 !endif

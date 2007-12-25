@@ -5,7 +5,7 @@
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAPS} "Includes 3 default maps to play Spring with.These maps are called Small Divide, Comet Catcher Redux, and Sands of War. (9.0MB download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_1V1MAPS} "A pack of 14 maps that are good for 1v1 play. (87.3MB download)"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_TEAMMAPS} "A pack of 12 maps that are good for team play. (170.1MB download)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_TEAMMAPS} "A pack of 13 maps that are good for team play. (199.1MB download)"
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
 
