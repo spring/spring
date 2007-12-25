@@ -266,8 +266,43 @@ SectionGroup "Mods"
         Call CheckTATextures
         Call CheckOTAContent
         Call CheckTAContent
-        AddSize 9000
+        AddSize 12600
 	!include "sections\xta.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "Gundam" SEC_GUNDAM
+	!define INSTALL
+	AddSize 51000
+	!include "sections\gundam.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "Kernel Panic" SEC_KP
+	!define INSTALL
+	AddSize 6400
+	!include "sections\kp.nsh"
+	!undef INSTALL
+	SectionEnd
+	
+	Section "EvolutionRTS Chapter 1" SEC_EVOLUTION
+	!define INSTALL
+	AddSize 34000
+	!include "sections\evolution.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "Spring:1944" SEC_S44
+	!define INSTALL
+	AddSize 28000
+	!include "sections\s44.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "Simbase" SEC_SIMBASE
+	!define INSTALL
+	AddSize 3500
+	!include "sections\simbase.nsh"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -354,6 +389,11 @@ Section Uninstall
 
   !include "sections\BA.nsh"
   !include "sections\XTA.nsh"
+  !include "sections\gundam.nsh"
+  !include "sections\kp.nsh"
+  !include "sections\evolution.nsh"
+  !include "sections\s44.nsh"
+  !include "sections\simbase.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
 
