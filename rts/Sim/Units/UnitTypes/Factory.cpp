@@ -152,33 +152,35 @@ void CFactory::Update()
 	}
 
 
-	if (curBuild && !beingBuilt && !stunned) {
-		// factory not under construction and
-		// nanolathing unit: continue building
-		lastBuild = gs->frameNum;
-
-		// buildPiece is the rotating platform
-		const int buildPiece = GetBuildPiece();
-		CMatrix44f mat = localmodel->GetPieceMatrix(buildPiece);
-		const int h = GetHeadingFromVector(mat[2], mat[10]);
-
-		// rotate unit nanoframe with platform
-		curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;
-
-		const float3 buildPos = CalcBuildPos(buildPiece);
-		curBuild->pos = buildPos;
-
-		if (curBuild->floatOnWater) {
-			curBuild->pos.y  = ground->GetHeight(buildPos.x, buildPos.z);
-			curBuild->pos.y -= curBuild->unitDef->waterline;
-		}
-		curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
-
-		const CCommandQueue& queue = commandAI->commandQue;
-
-		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
-			if (curBuild->AddBuildPower(buildSpeed, this)) {
-				CreateNanoParticle();
+	if (curBuild && !beingBuilt) {
+		if (!stunned) {
+			// factory not under construction and
+			// nanolathing unit: continue building
+			lastBuild = gs->frameNum;
+	
+			// buildPiece is the rotating platform
+			const int buildPiece = GetBuildPiece();
+			CMatrix44f mat = localmodel->GetPieceMatrix(buildPiece);
+			const int h = GetHeadingFromVector(mat[2], mat[10]);
+	
+			// rotate unit nanoframe with platform
+			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;
+	
+			const float3 buildPos = CalcBuildPos(buildPiece);
+			curBuild->pos = buildPos;
+	
+			if (curBuild->floatOnWater) {
+				curBuild->pos.y  = ground->GetHeight(buildPos.x, buildPos.z);
+				curBuild->pos.y -= curBuild->unitDef->waterline;
+			}
+			curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
+	
+			const CCommandQueue& queue = commandAI->commandQue;
+	
+			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
+				if (curBuild->AddBuildPower(buildSpeed, this)) {
+					CreateNanoParticle();
+				}
 			}
 		}
 
