@@ -54,6 +54,21 @@ Spring change log
 - Bumped to ArchiveCache version to 6 ... ArchiveCacheV6.txt 
 - Support for up to 2^31 players 
 - Negative damage now allowed.
+- Applied patch by tc making Spring's configuration variables available through 
+  unitsync.
+- Log the version of some of the major libraries (SDL, GL, GLEW, AL) 
+- Disabled recursive directory scanning for .sdd and omitted files within  .../hidden/*  directories from the scan 
+- Added ai unloading after team is destroyed. 
+- Installer greatly improved - all content is downloaded from the internet based on which mods and maps you 
+  choose to install. No more updating installer.
+- allow GlobalAIs to send a startposition 
+- Bump the unit-limit to 10000
+- Added the following unitsync calls:
+               int GetModValidMapCount()
+       const char* GetModValidMapCount(int index)
+ - Valid maps are listed in the mod's "ValidMaps.lua" file
+ - A valid map count of 0 means that any map can be used with the mod
+ - This can be used in concert with LuaRules to setup multi-player scenarios and tutorials 
 
 User Interface:
 - Added the CTRL modifier to area reclaims to allow reclaiming your own wrecks 
@@ -105,6 +120,8 @@ User Interface:
 - Change savegame default keybinding from Any+F8 to Ctrl+Shift+F8,
   for the same reason as the createvideo keybind change.
 - Improved view centering for the Free Camera mode 
+- Made nano-particles unsynced (and respect maxParticles)
+* Added '/cross [size]'
 
 Unit / Weapon / Feature Definition Tags:
 
@@ -245,7 +262,7 @@ Unit / Weapon / Feature Definition Tags:
       healthScale=0.7;
       reloadScale=0.4;
     }
-- Added optional 3D ranging for all builder operations (build, repair, reclaim, etc...) 
+- Added optional 3D ranging for all builder operations (build, repair, reclaim, etc...) (per-unitdef buildRange3D=true)
 - adds [experience] { experienceMult = 1.0; } to modrules
 - adds [flankingBonus] { defaultMode = 1; }   to modrules
 - replaces the old bonus shield system with flanking bonus
@@ -261,6 +278,39 @@ Unit / Weapon / Feature Definition Tags:
     FLANK_B_MOBILITY_ADD 122 // set or get
     FLANK_B_MAX_DAMAGE   123 // set or get
     FLANK_B_MIN_DAMAGE   124 // set or get
+- Adds three opcodes to the CEG definitions:
+ - m (modulo or sawtooth wave) returns the remainder of
+    the runing value divided by m's parameter (100 m24
+    returns 4)
+ - s (sine) returns the sine of the running value with
+   the parameter acting as the amplitude
+ - k (discrete) returns the running value floored to an
+   integral multiple of the parameter 
+- All weapon projectiles that have a TTL now supply their
+  remaining ttl-value as the damage param to their trail
+  CEG (Flame projectiles use curTime instead). 
+- Added the "canSelfDestruct = true" unitDef tag 
+- Added alwaysVisible weapon tag, makes the projectile visible, even without LOS.
+- Enable CEGs to be tied to pieces of exploding units
+ (CEG replaces the default smoke if used, but not the miniscule fire-effect)
+- added CEG opcodes y, x, a, p and q. Except for p those operate on a set of 16 buffers that store a float value each.
+  y# - Yank: Stores the running value in the buffer # and returns 0.
+  x# - Multiply: Multiplies the value with the contents of buffer #.
+  a# - Add: Adds the contents of buffer #.
+  p# - Pow: Returns the #th power of the value.
+  q# - Buffer Pow: Like Pow but uses the contents of buffer # as the exponent.
+- added the weapon tag leadLimit that limits the maximum distance a unit will lead a target 
+  (default is -1 which means infinite).
+- added the weapon tag leadbonus which is multiplied with the unit's experience and added to the lead limit.
+- added the weapon tag predictBoost (default 0 for non-burnblow, 0.5 for burnblow weapons) which fixes the 
+  "this should be turned into a separate tag" comment in Weapon.cpp. No idea what it does but it doesn't 
+  break anything.
+- Add a tag "factoryHeadingTakeoff" (on request of the SWS
+  folks to prevent some clipping issues) which controls the
+  takeoff behavior of TAAirMoveType aircraft. True (default)
+  means planes start matching their factory's heading right
+  after taking off from the pad, false means they maintain
+  the heading of the pad until reaching wantedHeight. 
 
 Bugfixes:
 
@@ -375,6 +425,48 @@ Bugfixes:
 - Used the decoyDef ghost building models when appropriate 
 - Fixed CAirMoveType planes not rotating on factory pads 
 - Fixed CTAAirMoveType planes always taking off from labs facing south.
+- Fixed missile-gunships from being unable to force-attack ground
+- Fixed CTRL-MOVE group orders causing units to move at snail's pace
+- Fixed mid-air explosions that occur over water triggering a water splash effect
+- Fixed the isAttackCapable() check
+- Prevent CMissileProjectile weapons with trajectoryHeight from over- or undershooting when firing at targets 
+  below or above attack position. Based the angular correction factor on missile speed
+- Not being able to lock the config file on linux is not a fatal error anymore 
+- Remove the (bestDist < radius) bugs 
+- Make sure the (paralyzeDamageTime >= 0) 
+- Added bestDist method for all area searches 
+- Added a check for immobile builders that will stop internal
+  commands for when the unit has moved out of the build range 
+- Fixed FlareProjectile. (flare projectile was always removed after one Update.) 
+- Allow for "non-decloakable" units 
+- CGameHelper::GetClosestEnemyUnitNoLosTest() now
+  includes the target's radius for spherical tests 
+- Stunned factories don't open, build, or close. 
+- Players from demo once again can't change speed / pause 
+- Factored out some glGetDoublev() calls (may be faster on certain GPU architectures)
+- Fixed issue that some people can only get sound when hosting
+- Fixed bug in map damage loading from savegame.
+- Fixed possible bug in explosions map damage.
+- Fixed crash with saving after nuke was intercepted.
+- Fixed ground-transports being unable to unload units on certain maps
+- Units that are still inside a non-firebase transport do not destun
+- Fixed units whose state is floating but are not in water taking water-damage
+- Print "spectator <name> left" rather than "player <name> left" if the guy leaving is
+  a spectator 
+- Added serializing for InMapDraw .
+- Fixed bug with saving builders that terraform ground
+- Fixed stunned units being unhittable if pushed 
+- Made a seperate update thread while the game loads to prevent network timeouts on slow computers 
+ (thread is joined when loading finished) 
+- CCobInstance::RealCall now checks if stack is big enough before getting
+  arguments from stack. 
+- made StartBuilding measure the pitch from the center of the unit instead of the 
+  base to deal with units with large vertical offset
+- Put CMinimap always on back
+- Moved the QueryNanoPiece COB call into synced code to hopefully fix a desync.
+- Fixed the bug where a repair order on a construction whose terraforming is 
+  incomplete will start construction anyway. 
+- Fixed units terraforming the ground under units being built by factories.
 
 Lua:
 - Added call-in gl.Smoothing(point, line, polygon)
@@ -498,6 +590,36 @@ synced lua scripts as the third parameter to SetUnitCloak()
 - Added the Spring.SetUnitTarget(unitID, targetID | <x,y,z>, bool userTarget) call-out 
 - Added the Spring.SetExperienceGrade(number) call-out (sets the experience steps that will trigger the UnitExperience() call-in, based on the limExperience varible value  (exp / (exp + 1)))
 - Added the UnitExperience() lua call-in 
+- Added VFS.UseArchive(filename, function(...) ... end, ...)
+ - allows for packaged widgets (source, textures, sounds, etc...)
+ - currently only works for raw filesystem access (limited to LuaUI) 
+- Added the following lua call-outs to allow unsynced read access to COB global variables:
+   GetCOBUnitVar(unitID, varID)
+   GetCOBTeamVar(teamID, varID)
+   GetCOBAllyTeamVar(allyTeamID, varID)
+   GetCOBGlobalVar(varID)
+ (varIDs start at 0) 
+- Added FBO objects to lua GL, with MRT (multiple render targets) capability, and blitting
+- Added RBO objects to lua GL, which should allow for depth + stencil format   
+- Added lua Scream objects, which can call a function when they are garbage collected
+- Added VFS.SubDirs(), to get a list of subdirectories
+- Spring.SendMessage() and friends can now be used by unsynced lua code
+- added Lua SyncedCtrl function Spring.SetUnitMoveGoal(unitID, posX, posY, posZ[, radius[, speed]]), 
+  this makes the unit move closer to the target location, to a distance of <radius> (default 0). 
+  This is mostly for custom commands that should have the unit moving into range, 
+  it doesn't affect the order queue. It's marked as unsafe.
+- New Lua call-out (SyncedCtrl): Spring.SetUnitWeaponState(unitID, weaponNum, stateTable)
+  StateTable is a table containing one or more of reloadstate, reloadtime (this time in seconds), 
+  accuracy, sprayangle, range, projectilespeed. Obviously the values will be assigned to the 
+  variables the keys refer to.
+- Added the Spring.GetMapList() call-out to the mod ValidMaps.lua script 
+- Added the Spring.GetMapInfo() call-out for the ValidMaps.lua script 
+- Added mapSizeX and mapSizeZ to the lua Game table 
+- Fix GetCmdDescIndex() 
+- Added a seventh parameter to AllowCommand, "synced". It's a bool that is true 
+  when the command was sent by either a Spring-internal action or synced Lua and 
+  it's false if the command came from the user or LuaUI. This should facilitate preventing user 
+  commands to a unit while allowing LuaRules commands 
 
 COB
 - Give a COB error instead of crashing for invalid explosion generator indices
@@ -528,6 +650,26 @@ COB
    -  GET  SET_WEAPON_UNIT_TARGET    weaponID  unitID          userTarget
    -  GET  SET_WEAPON_GROUND_TARGET  weaponID  xzCoord yCoord  userTarget 
 - Added TargetWeightX COB call-in and CHANGE_TARGET cob set var. COB call-in TargetWeightX(targetID, weight), weight defaults to 65536 which represents 1.0 and is multiplied with the target's value to determine priorities. Set CHANGE_TARGET to Y makes weaponY pick a new target.
+- Adds the COB set constant CEG_DAMAGE (99), which defines
+ the damage value for all CEGs triggered by emit-sfx 1024 + x
+ to allow for some variability in the emitted effects (to e.g.
+ make a charging energy ball grow larger or have smoke get
+ progressively darker as the unit's HP decreases).
+- Added a new get call, PLAY_SOUND, to play a sound that can be heard only by allies, enemy, in los, etc.
+  GET PLAY_SOUND(sound number, volume, who hears the sound, where to play the sound) (see r4974 for full docs)
+- get health now allows a unit ID to be passed 
+- Added COB and Lua access to some more weapon variables.
+  New COB constants, all get-only (but not read-only):
+  WEAPON_RELOADSTATE 125 (frame number of the next shot/burst)
+  WEAPON_RELOADTIME 126 (in frames)
+  WEAPON_ACCURACY 127
+  WEAPON_SPRAY 128
+  WEAPON_RANGE 129
+  WEAPON_PROJECTILESPEED 130
+  All of these use the first param (starting at 1) as the weapon index whereby positive 
+  means read and negative means write the second param to the value. In the latter case
+  the previous value is returned. 
+
 
 TASServer/Protocol
 - Don't crash on quit if helpUDPsrvr == null.
