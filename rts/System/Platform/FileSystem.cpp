@@ -1,5 +1,5 @@
 /**
- * @file FileSystemHandler.cpp
+ * @file FileSystem.cpp
  * @brief Abstracts locating of content on different platforms
  * @author Tobi Vollebregt
  *

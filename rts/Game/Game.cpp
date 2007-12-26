@@ -4479,12 +4479,12 @@ void CGame::ReColorTeams()
 	luaParser.EndTable(); // players
 
 	if (!luaParser.Execute()) {
-		printf("teamcolors.lua: luaParser.Execute() failed\n");
+		logOutput.Print("teamcolors.lua: luaParser.Execute() failed\n");
 		return;
 	}
 	LuaTable root = luaParser.GetRoot();
 	if (!root.IsValid()) {
-		printf("teamcolors.lua: root table is not valid\n");
+		logOutput.Print("teamcolors.lua: root table is not valid\n");
 	}
 
 	for (int t = 0; t < gs->activeTeams; ++t) {

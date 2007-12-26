@@ -22,6 +22,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "LogOutput.h"
 
 using namespace std;
 
@@ -643,8 +644,8 @@ int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
 
 static void PrintUnitLOD(const CUnit* unit, int lod)
 {
-	printf("  LOD %i:\n", lod);
-	printf("    LodLength = %f\n", unit->lodLengths[lod]);
+	logOutput.Print("  LOD %i:\n", lod);
+	logOutput.Print("    LodLength = %f\n", unit->lodLengths[lod]);
 	for (int type = 0; type < LUAMAT_TYPE_COUNT; type++) {
 		const LuaUnitMaterial& luaMat = unit->luaMats[type];
 		const LuaUnitLODMaterial* lodMat = luaMat.GetMaterial(lod);
@@ -667,24 +668,24 @@ int LuaUnitRendering::Debug(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	printf("\n");
-	printf("UnitID      = %i\n", unit->id);
-	printf("UnitDefID   = %i\n", unit->unitDef->id);
-	printf("UnitDefName = %s\n", unit->unitDef->name.c_str());
-	printf("LodCount    = %i\n", unit->lodCount);
-	printf("CurrentLod  = %i\n", unit->currentLOD);
-	printf("\n");
+	logOutput.Print("\n");
+	logOutput.Print("UnitID      = %i\n", unit->id);
+	logOutput.Print("UnitDefID   = %i\n", unit->unitDef->id);
+	logOutput.Print("UnitDefName = %s\n", unit->unitDef->name.c_str());
+	logOutput.Print("LodCount    = %i\n", unit->lodCount);
+	logOutput.Print("CurrentLod  = %i\n", unit->currentLOD);
+	logOutput.Print("\n");
 
 	const LuaUnitMaterial& alphaMat      = unit->luaMats[LUAMAT_ALPHA];
 	const LuaUnitMaterial& opaqueMat     = unit->luaMats[LUAMAT_OPAQUE];
 	const LuaUnitMaterial& alphaReflMat  = unit->luaMats[LUAMAT_ALPHA_REFLECT];
 	const LuaUnitMaterial& opaqueReflMat = unit->luaMats[LUAMAT_OPAQUE_REFLECT];
 	const LuaUnitMaterial& shadowMat     = unit->luaMats[LUAMAT_SHADOW];
-	printf("LUAMAT_ALPHA          lastLOD = %i\n", alphaMat.GetLastLOD());
-	printf("LUAMAT_OPAQUE         lastLOD = %i\n", opaqueMat.GetLastLOD());
-	printf("LUAMAT_ALPHA_REFLECT  lastLOD = %i\n", alphaReflMat.GetLastLOD());
-	printf("LUAMAT_OPAQUE_REFLECT lastLOD = %i\n", opaqueReflMat.GetLastLOD());
-	printf("LUAMAT_SHADOW         lastLOD = %i\n", shadowMat.GetLastLOD());
+	logOutput.Print("LUAMAT_ALPHA          lastLOD = %i\n", alphaMat.GetLastLOD());
+	logOutput.Print("LUAMAT_OPAQUE         lastLOD = %i\n", opaqueMat.GetLastLOD());
+	logOutput.Print("LUAMAT_ALPHA_REFLECT  lastLOD = %i\n", alphaReflMat.GetLastLOD());
+	logOutput.Print("LUAMAT_OPAQUE_REFLECT lastLOD = %i\n", opaqueReflMat.GetLastLOD());
+	logOutput.Print("LUAMAT_SHADOW         lastLOD = %i\n", shadowMat.GetLastLOD());
 
 	for (int lod = 0; lod < unit->lodCount; lod++) {
 		PrintUnitLOD(unit, lod);

@@ -254,7 +254,7 @@ void CUnitHandler::Update()
 		if (!(gs->frameNum & 15)) {
 			slowUpdateIterator=activeUnits.begin();
 		}
-	
+
 		int numToUpdate=activeUnits.size()/16+1;
 		for(;slowUpdateIterator!=activeUnits.end() && numToUpdate!=0;++slowUpdateIterator){
 			(*slowUpdateIterator)->SlowUpdate();
@@ -412,6 +412,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBegin(GL_QUADS);
+
 	int xsize=buildInfo.GetXSize();
 	int ysize=buildInfo.GetYSize();
 	const float3& pos = buildInfo.pos;

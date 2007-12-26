@@ -1,5 +1,5 @@
 /**
- * @file FileSystemHandler.h
+ * @file FileSystem.h
  * @brief Abstracts locating of content on different platforms
  * @author Tobi Vollebregt
  *
