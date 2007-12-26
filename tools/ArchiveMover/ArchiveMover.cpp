@@ -306,6 +306,25 @@ static int run(int argc, wchar_t** argv){
 			return 1;
 		}
 
+		// stash existing files away
+		if (fs::exists(target_dir / source_file.leaf())) {
+			int i = 0;
+			fs::wpath target_test;
+			do {
+				std::wstring stashed = (source_file.leaf() + L".old");
+				if (i > 0) {
+					std::wstringstream tmp;
+					tmp << i;
+					stashed += L"."+tmp.str();
+				}
+				target_test = target_dir / stashed;
+				++i;
+			} while (fs::exists(target_test));
+			fs::rename(target_dir / source_file.leaf(), target_test);
+			message << "File with same name found. It has been moved to " << endl
+				<< target_test << endl << endl;
+		}                
+
 		target_dir /= source_file.leaf();
 		fs::rename(source_file, target_dir);
 
