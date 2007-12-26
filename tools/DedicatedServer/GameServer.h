@@ -20,13 +20,13 @@ const unsigned SERVER_PLAYER = 255; //server generated message which needs a pla
 class GameParticipant
 {
 public:
-	GameParticipant(bool willHaveRights) {hasRights = willHaveRights; name = "unnamed"; readyToStart = false; cpuUsage = 0.0f;}
-	
+	GameParticipant(bool willHaveRights);
+
 	std::string name;
 	bool readyToStart;
 	float cpuUsage;
 	int ping;
-	
+
 	bool hasRights;
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
@@ -43,34 +43,34 @@ class CGameServer
 public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName="");
 	~CGameServer();
-	
+
 	void AddLocalClient(unsigned wantedNumber);
-	
+
 	/**
 	@brief Set frame after loading
 	WARNING! No checks are done, so be carefull
 	*/
 	void PostLoad(unsigned lastTick, int serverframenum);
-	
+
 	/**
 	@brief skip frames
 	@todo skipping is buggy and could need some improvements
 	Currently only sets serverframenum
 	*/
 	void SkipTo(int targetframe);
-	
+
 	void CreateNewFrame(bool fromServerThread=false);
 
 	bool WaitsOnCon() const;
-	
+
 	void PlayerDefeated(const int playerNum) const;
-	
+
 	void SetGamePausable(const bool arg);
-	
+
 #ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 #endif
-	
+
 private:
 	/**
 	@brief catch commands from chat messages and handle them
@@ -79,16 +79,16 @@ private:
 	@param player The playernumber which sent the message
 	*/
 	void GotChatMessage(const std::string& msg, unsigned player);
-	
+
 	void SendSystemMsg(const char* fmt,...);
-	
+
 	/**
 	@brief kick the specified player from the battle
 	*/
 	void KickPlayer(const int playerNum);
-	
+
 	void BindConnection(unsigned wantedNumber, bool grantRights=false);
-	
+
 	void StartGame();
 	void UpdateLoop();
 	void Update();
@@ -98,22 +98,22 @@ private:
 
 	/// Class for network communication
 	CBaseNetProtocol* serverNet;
-	
+
 	CDemoReader* play;
-	
+
 	/// Inform 3. party programms about events
 	AutohostInterface* hostif;
 
 	void GenerateAndSendGameID();
 	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
-	
+
 	/////////////////// game status variables ///////////////////
-	
+
 	bool quitServer;
 	int serverframenum;
 	int nextserverframenum; //For loading game
-	
+
 	unsigned gameEndTime;	//Tick when game end was detected
 	bool sentGameOverMsg;
 	unsigned lastTick;
@@ -121,30 +121,30 @@ private:
 	unsigned lastPlayerInfo;
 	unsigned lastUpdate;
 	float modGameTime;
-	
+
 	bool IsPaused;
 	float userSpeedFactor;
 	float internalSpeed;
-	
+
 	boost::scoped_ptr<GameParticipant> players[MAX_PLAYERS];
-	
+
 	/////////////////// game settings ///////////////////
 	/// Wheter the game is pausable for others than the host
 	bool gamePausable;
-	
+
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
-	
+
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
-	
+
 	std::string scriptName;
 	unsigned int mapChecksum;
 	std::string mapName;
 	unsigned int modChecksum;
 	std::string modName;
-	
-	
+
+
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
 	std::deque<int> outstandingSyncFrames;
@@ -152,7 +152,7 @@ private:
 	int syncErrorFrame;
 	int syncWarningFrame;
 	int delayedSyncResponseFrame;
-	
+
 	boost::thread* thread;
 	mutable boost::mutex gameServerMutex;
 };
