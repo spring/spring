@@ -704,13 +704,13 @@ void CGameServer::StartGame()
 
 	GenerateAndSendGameID();
 
-	for(unsigned a=0; a < MAX_PLAYERS;a++){
+	for(unsigned a=0; a < MAX_PLAYERS; ++a){
 		if(players[a])
 			serverNet->SendPlayerName(a, players[a]->name);
-	}
-	if(gameSetup){
-		for(unsigned a=0; (int)a < gs->activeTeams;a++){
-			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+		
+		if(gameSetup){
+			if (gs->Team(a)->active)
+				serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
 
@@ -864,10 +864,10 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
-	}
-	if (gameSetup) {
-		for(unsigned a = 0; (int)a < gs->activeTeams; a++) {
-			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+		
+		if (gameSetup) {
+			if (gs->Team(a)->active)
+				serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
