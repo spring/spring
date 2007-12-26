@@ -7,6 +7,7 @@
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/Aquatic_Divide_TNM05-V2.sd7" "$INSTDIR\maps\Aquatic_Divide_TNM05-V2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/ArcticPlainsV2.sd7" "$INSTDIR\maps\ArcticPlainsV2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/Battle for PlanetXVII-v01.sd7" "$INSTDIR\maps\Battle for PlanetXVII-v01.sd7" \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/Barren.sd7" "$INSTDIR\maps\Barren.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/BlueBend-v01.sd7" "$INSTDIR\maps\BlueBend-v01.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/Brazillian_BattlefieldV2.sd7" "$INSTDIR\maps\Brazillian_BattlefieldV2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/1v1maps/CoastToCoastRemakeV2.sd7" "$INSTDIR\maps\CoastToCoastRemakeV2.sd7" \
@@ -31,6 +32,8 @@
   Delete "$INSTDIR\maps\Battle for PlanetXVII-v01.sd7"
   Delete "$INSTDIR\maps\paths\Battle for PlanetXVII-v01.*"
   Delete "$INSTDIR\maps\BlueBend-v01.sd7"
+  Delete "$INSTDIR\maps\paths\Barren.*"
+  Delete "$INSTDIR\maps\Barren.sd7"
   Delete "$INSTDIR\maps\paths\BlueBend-v01.*"
   Delete "$INSTDIR\maps\Brazillian_BattlefieldV2.sd7"
   Delete "$INSTDIR\maps\paths\Brazillian_BattlefieldV2.*"
