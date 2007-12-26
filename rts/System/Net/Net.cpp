@@ -170,10 +170,10 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 	}
 #endif
 
-	for (unsigned a = 0; int(a) <= MaxConnectionID(); ++a)
+	for (connVec::iterator it = connections.begin(); it != connections.end(); ++it)
 	{
-		if(connections[a]){
-			SendData(data,length, a);
+		if(*it){
+			(*it)->SendData(data,length);
 		}
 	}
 }
