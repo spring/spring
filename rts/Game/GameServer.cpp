@@ -59,7 +59,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
-		play = new CDemoReader(demoName, modGameTime+0.01f);
+		play = new CDemoReader(demoName, modGameTime+0.5f);
 	}
 	else // no demo, so set map and mod and calculate checksums
 	{
