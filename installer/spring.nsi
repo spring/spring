@@ -299,7 +299,7 @@ SectionGroup "Mods"
 
 	Section "Spring:1944" SEC_S44
 	!define INSTALL
-	AddSize 28000
+	AddSize 33700
 	!include "sections\s44.nsh"
 	!undef INSTALL
 	SectionEnd
