@@ -20,7 +20,7 @@
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_GUNDAM} "Gundam RTS, Giant stomping robots fighting across a vast landscape. Battles focus more on combat then base construction, economy is minimalized allowing you to spend more time fighting. (51.0MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_KP} "Kernel Panic is a mod about computers, where bits and bytes wage war in a matrix of DOOM! KP makes for a very fast-paced, action-oriented game, and has a very unique graphical style. (6.4MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_EVOLUTION} "Evolution RTS is a dynamic strategy game which merges fluidity and simplicity, where the outcome of each battle impacts the advancement of the factions and the direction of the story. (34.0MB Download)"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_S44} "Spring: 1944 (S44) is a reproduction of the Second World War which balances the demands of realism, historical accuracy and gameplay to produce a fast-paced, aggressive game of strategy. (28.0MB Download)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_S44} "Spring: 1944 (S44) is a reproduction of the Second World War which balances the demands of realism, historical accuracy and gameplay to produce a fast-paced, aggressive game of strategy. (33.7MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_SIMBASE} "Simbase focuses on base-building and resource production. It allows players to take their time and enjoy the game, while constructing a base and an army to destroy their opponents. (3.5MB Download)"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
