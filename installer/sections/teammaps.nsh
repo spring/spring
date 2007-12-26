@@ -2,7 +2,7 @@
   SetOutPath "$INSTDIR\maps"  
   inetc::get \
              "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Altored_Divide.sd7" "$INSTDIR\maps\Altored_Divide.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Charlie_in_the_Hills.sd7" "$INSTDIR\maps\Charlie_in_the_Hills.sd7" \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/charlieinthehillsv21.sd7" "$INSTDIR\maps\charlieinthehillsv21.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Crossing_4_final.sd7" "$INSTDIR\maps\Crossing_4_final.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/FrostBiteV2.sd7" "$INSTDIR\maps\FrostBiteV2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/GreenHaven_Remake.sd7" "$INSTDIR\maps\GreenHaven_Remake.sd7" \
@@ -19,8 +19,8 @@
   ; Maps
   Delete "$INSTDIR\maps\paths\Altored_Divide.*"
   Delete "$INSTDIR\maps\Altored_Divide.sd7"
-  Delete "$INSTDIR\maps\paths\Charlie_in_the_Hills.*"
-  Delete "$INSTDIR\maps\Charlie_in_the_Hills.sd7"
+  Delete "$INSTDIR\maps\paths\charlieinthehillsv21.*"
+  Delete "$INSTDIR\maps\charlieinthehillsv21.sd7"
   Delete "$INSTDIR\maps\paths\Crossing_4_final.*"
   Delete "$INSTDIR\maps\Crossing_4_final.sd7"
   Delete "$INSTDIR\maps\paths\FrostBiteV2.*"

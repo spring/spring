@@ -241,14 +241,14 @@ SectionGroup "Map Packs"
 
         Section "1 vs 1 Maps" SEC_1V1MAPS
 	!define INSTALL
-        AddSize 87300
+        AddSize 90000
 	!include "sections\1v1maps.nsh"
 	!undef INSTALL
 	SectionEnd
 
 	Section "Teamplay Maps" SEC_TEAMMAPS
 	!define INSTALL
-        AddSize 199100
+        AddSize 201000
 	!include "sections\teammaps.nsh"
 	!undef INSTALL
 	SectionEnd
