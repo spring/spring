@@ -104,26 +104,28 @@ void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 
 void CLogOutput::Print(int zone, const char *fmt, ...)
 {
+	va_list argp;
+
+	va_start(argp, fmt);
+	Printv(zone, fmt, argp);
+	va_end(argp);
+}
+
+void CLogOutput::Printv(int zone, const char *fmt, va_list argp)
+{
 	char text[bufferSize];
-	va_list	ap;
 
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-
-	Output (zone, text);
+	VSNPRINTF(text, sizeof(text), fmt, argp);
+	Output(zone, text);
 }
 
 void CLogOutput::Print(const char *fmt, ...)
 {
-	char text[bufferSize];
-	va_list	ap;
+	va_list argp;
 
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-
-	Output(0, text);
+	va_start(argp, fmt);
+	Printv(0, fmt, argp);
+	va_end(argp);
 }
 
 void CLogOutput::Print(const std::string& text)

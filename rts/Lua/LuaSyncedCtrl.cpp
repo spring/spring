@@ -1163,22 +1163,22 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 				const string key = lua_tostring(L, -2);
 				const float value = (float)lua_tonumber(L, -1);
 				if (key == "reloadstate") {
-					unit->weapons[weapon]->reloadStatus=value;
+					unit->weapons[weapon]->reloadStatus = (int)value;
 				}
 				else if (key == "reloadtime") {
-					unit->weapons[weapon]->reloadTime=value*GAME_SPEED;
+					unit->weapons[weapon]->reloadTime = (int)(value*GAME_SPEED);
 				}
 				else if (key == "accuracy") {
-					unit->weapons[weapon]->accuracy=value;
+					unit->weapons[weapon]->accuracy = value;
 				}
 				else if (key == "sprayangle") {
-					unit->weapons[weapon]->sprayangle=value;
+					unit->weapons[weapon]->sprayangle = value;
 				}
 				else if (key == "range") {
-					unit->weapons[weapon]->range=value;
+					unit->weapons[weapon]->range = value;
 				}
 				else if (key == "projectilespeed") {
-					unit->weapons[weapon]->projectileSpeed=value;
+					unit->weapons[weapon]->projectileSpeed = value;
 				}
 			}
 		}

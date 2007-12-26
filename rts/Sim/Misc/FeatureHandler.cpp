@@ -295,6 +295,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->modelType = 0;
 			fd->energy = 0;
 			fd->metal = 0;
+			fd->reclaimTime = 0;
 			fd->maxHealth = 0;
 			fd->xsize = 0;
 			fd->ysize = 0;

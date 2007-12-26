@@ -1224,7 +1224,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const int weaponID = p1 - 1;
 		const int targetID = p2;
 		const bool userTarget = !!p3;
-		printf("SET_WEAPON_UNIT_TARGET: %i %i %i\n", weaponID, targetID, p3);		 // FIXME
+		//logOutput.Print("SET_WEAPON_UNIT_TARGET: %i %i %i\n", weaponID, targetID, p3);		 // FIXME
 		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
 			return 0;
 		}
@@ -1232,7 +1232,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (weapon == NULL) { return 0; }
 		if ((targetID < 0) || (targetID >= MAX_UNITS)) { return 0; }
 		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
-		printf("SET_WEAPON_UNIT_TARGET2\n");		 // FIXME
+		//logOutput.Print("SET_WEAPON_UNIT_TARGET2\n");		 // FIXME
 		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
 	}
 	case SET_WEAPON_GROUND_TARGET: {
@@ -1241,7 +1241,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		                          float(p3) / float(COBSCALE),
 		                          float(UNPACKZ(p2)));
 		const bool userTarget = !!p4;
-		printf("SET_WEAPON_GROUND_TARGET: %i %f %f %f\n", weaponID, pos.x, pos.y, pos.z);//FIXME
+		//logOutput.Print("SET_WEAPON_GROUND_TARGET: %i %f %f %f\n", weaponID, pos.x, pos.y, pos.z);//FIXME
 		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
 			return 0;
 		}

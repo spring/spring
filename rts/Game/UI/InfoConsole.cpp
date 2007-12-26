@@ -181,6 +181,7 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 			w += font->CalcCharWidth (text[pos]);
 			temp[pos-line_start] = text[pos];
 		}
+		temp[pos-line_start] = 0;
 
 		// if needed, find a breaking position
 		if (w > maxWidth) {
@@ -193,7 +194,6 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 			pos = line_start;
 			temp[break_pos] = 0;
 		} else {
-			temp[pos-line_start] = 0;
 			line_start = pos;
 		}
 

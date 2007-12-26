@@ -23,6 +23,15 @@
 #define SYNCCHECK_TIMEOUT 300 //frames
 #define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
 
+GameParticipant::GameParticipant(bool willHaveRights)
+: name("unnamed")
+, readyToStart(false)
+, cpuUsage (0.0f)
+, ping (0)
+, hasRights(willHaveRights)
+{
+}
+
 CGameServer* gameServer=0;
 
 CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
@@ -94,7 +103,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	}
 
 	serverNet->InitServer(port);
-	
+
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -242,23 +251,23 @@ void CGameServer::Update()
 		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
 	}
 	lastUpdate = SDL_GetTicks();
-	
+
 	if(lastPlayerInfo < (SDL_GetTicks() - 2000)){
 		lastPlayerInfo = SDL_GetTicks();
 
 		if (serverframenum > 0) {
 			//send info about the players
-			float maxCpu=0;
-			for(int a = 0; a < MAX_PLAYERS; ++a){
-				if(players[a]){
+			float maxCpu = 0.0f;
+			for (int a = 0; a < MAX_PLAYERS; ++a) {
+				if (players[a]) {
 					serverNet->SendPlayerInfo(a, players[a]->cpuUsage, players[a]->ping);
-					if(players[a]->cpuUsage > maxCpu){
+					if (players[a]->cpuUsage > maxCpu) {
 						maxCpu = players[a]->cpuUsage;
 					}
 				}
 			}
 
-			if (maxCpu != 0) {
+			if (maxCpu != 0.0f) {
 				float wantedCpu=0.35f+(1-internalSpeed/userSpeedFactor)*0.5f;
 				//float speedMod=1+wantedCpu-maxCpu;
 				float newSpeed=internalSpeed*wantedCpu/maxCpu;
@@ -587,7 +596,7 @@ void CGameServer::ServerReadNet()
 							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
 						break;
 					}
-					
+
 					// CGameServer should never get these messages
 					case NETMSG_GAMEID:
 					case NETMSG_INTERNAL_SPEED:
@@ -668,8 +677,11 @@ void CGameServer::GenerateAndSendGameID()
 
 	CRC entropy;
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
-	unsigned char buffer[128];	// uninitialised bytes (should be very random)
-	entropy.UpdateData(buffer, 128);
+
+	// Probably not that random since it's always the stuff that was on the
+	// stack previously.  Also it's VERY frustrating with e.g. valgrind...
+	//unsigned char buffer[128];	// uninitialised bytes (should be very random)
+	//entropy.UpdateData(buffer, 128);
 
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
@@ -834,27 +846,27 @@ void CGameServer::KickPlayer(const int playerNum)
 
 void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 {
-	if (play)
-	{
+	if (play) {
 		wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
 	}
 	unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
-	
+
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
-		// send game data for demo recording
+
+	// send game data for demo recording
 	if (!scriptName.empty())
 		serverNet->SendScript(scriptName);
 	if (!mapName.empty())
 		serverNet->SendMapName(mapChecksum, mapName);
 	if (!modName.empty())
 		serverNet->SendModName(modChecksum, modName);
-	
-	for(unsigned a=0;a < MAX_PLAYERS; ++a){
+
+	for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
-	if(gameSetup){
-		for(unsigned a=0; (int)a < gs->activeTeams;a++){
+	if (gameSetup) {
+		for(unsigned a = 0; (int)a < gs->activeTeams; a++) {
 			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}

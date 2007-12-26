@@ -75,7 +75,7 @@ void CLuaHandle::KillLua()
 	}
 	L = NULL;
 }
-		
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -157,7 +157,7 @@ void CLuaHandle::CheckStack()
 {
 	const int top = lua_gettop(L);
 	if (top != 0) {
-		printf("WARNING: %s stack check: top = %i\n", name.c_str(), top);
+		logOutput.Print("WARNING: %s stack check: top = %i\n", name.c_str(), top);
 		lua_settop(L, 0);
 	}
 }
@@ -168,7 +168,7 @@ void CLuaHandle::CheckStack()
 
 bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
-//	printf("RunCallIn: %s %s\n", hs.GetString().c_str(), name.c_str());fflush(stdout);//FIXME
+//	logOutput.Print("RunCallIn: %s %s\n", hs.GetString().c_str(), name.c_str());fflush(stdout);//FIXME
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
 	const int error = lua_pcall(L, inArgs, outArgs, 0);
@@ -760,7 +760,7 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 		}
 	}
 }
-	
+
 
 /******************************************************************************/
 

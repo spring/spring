@@ -63,11 +63,11 @@ void COggStream::play(const std::string& path, const float3& pos, float volume) 
 void COggStream::display() {
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
-	logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
-	logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
-	logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
-	logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
-	logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
+	logOutput.Print("rate (Hz):         %ld", vorbisInfo->rate);
+	logOutput.Print("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
+	logOutput.Print("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
+	logOutput.Print("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
+	logOutput.Print("bitrate (window):  %ld", vorbisInfo->bitrate_window);
 	logOutput.Print("vendor:            %s", vorbisComment->vendor);
 
 	for (int i = 0; i < vorbisComment->comments; i++) {

@@ -35,6 +35,7 @@ public:
 	void Print(const char *fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
 	void Print(int zone, const std::string& text);
+	void Printv(int zone, const char* fmt, va_list argp);
 
 	CLogOutput& operator<<(const int i);
 	CLogOutput& operator<<(const float f);
