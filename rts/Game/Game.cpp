@@ -431,7 +431,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	logOutput.Print("Spring %s",VERSION_STRING);
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
-	if(!gameSetup) {
+	if(!gameSetup || net->localDemoPlayback) {
 		p->playerName = configHandler.GetString("name", "");
 	}
 	else
