@@ -1,3 +1,5 @@
+// Thread safety is copyright 2007, Tobi Vollebregt.
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Copyright 2000, Paul Nettle. All rights reserved.
 //
@@ -36,7 +38,7 @@
 // 4. With MFC applications, you will need to comment out any occurance of "#define new DEBUG_NEW" from all source files.
 //
 // 5. Include file dependencies are _very_important_ for getting the MMGR to integrate nicely into your application. Be careful if
-//    you're including standard includes from within your own project inclues; that will break this very specific dependency order. 
+//    you're including standard includes from within your own project inclues; that will break this very specific dependency order.
 //    It should look like this:
 //
 //		#include <stdio.h>   // Standard includes MUST come first
@@ -55,6 +57,7 @@
 
 #ifdef USE_MMGR
 
+#include <boost/thread/recursive_mutex.hpp>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +72,11 @@ using std::new_handler;
 #include <unistd.h>
 #endif
 
+#ifdef __linux__
+// for backtrace/backtrace_symbols/backtrace_symbols_fd
+#include <execinfo.h>
+#endif
+
 #include "mmgr.h"
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -79,7 +87,7 @@ using std::new_handler;
 //
 // Whether this software causes your application to crash, or if it reports errors, you need to be able to TRUST this software. To
 // this end, you are given some very simple debugging tools.
-// 
+//
 // The quickest way to locate problems is to enable the STRESS_TEST macro (below.) This should catch 95% of the crashes before they
 // occur by validating every allocation each time this memory manager performs an allocation function. If that doesn't work, keep
 // reading...
@@ -129,19 +137,19 @@ using std::new_handler;
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 #ifdef	STRESS_TEST
-static	const	unsigned int	hashBits               = 12;
-static		bool		randomWipe             = true;
-static		bool		alwaysValidateAll      = true;
-static		bool		alwaysLogAll           = true;
-static		bool		alwaysWipeAll          = true;
+static	const	unsigned int	hashBits               = 16;
+static __thread		bool		randomWipe             = true;
+static __thread		bool		alwaysValidateAll      = true;
+static __thread		bool		alwaysLogAll           = true;
+static __thread		bool		alwaysWipeAll          = true;
 static		bool		cleanupLogOnFirstRun   = true;
 static	const	unsigned int	paddingSize            = 1024; // An extra 8K per allocation!
 #else
-static	const	unsigned int	hashBits               = 12;
-static		bool		randomWipe             = true;
-static		bool		alwaysValidateAll      = false;
-static		bool		alwaysLogAll           = false;
-static		bool		alwaysWipeAll          = true;
+static	const	unsigned int	hashBits               = 16;
+static __thread		bool		randomWipe             = true;
+static __thread		bool		alwaysValidateAll      = false;
+static __thread		bool		alwaysLogAll           = false;
+static __thread		bool		alwaysWipeAll          = true;
 static		bool		cleanupLogOnFirstRun   = true;
 static	const	unsigned int	paddingSize            = 32;
 #endif
@@ -158,7 +166,13 @@ static	const	unsigned int	paddingSize            = 32;
 	#define	m_assert(x) {}
 	#endif
 #else	// Linux uses assert, which we can use safely, since it doesn't bring up a dialog within the program.
-	#define	m_assert assert
+	// Except that assert sends a SIGABRT, which is not continuable AFAIK --tvo
+	//#define	m_assert assert
+	#ifdef	_DEBUG
+	#define	m_assert(x) if ((x) == false) asm volatile ("int3")
+	#else
+	#define	m_assert(x) {}
+	#endif
 #endif
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -191,17 +205,17 @@ const		unsigned int	m_alloc_free           = 8;
 // -DOC- Get to know these values. They represent the values that will be used to fill unused and deallocated RAM.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-static		unsigned int	prefixPattern          = 0xbaadf00d; // Fill pattern for bytes preceeding allocated blocks
-static		unsigned int	postfixPattern         = 0xdeadc0de; // Fill pattern for bytes following allocated blocks
-static		unsigned int	unusedPattern          = 0xfeedface; // Fill pattern for freshly allocated blocks
-static		unsigned int	releasedPattern        = 0xdeadbeef; // Fill pattern for deallocated blocks
+static const		unsigned int	prefixPattern          = 0xbaadf00d; // Fill pattern for bytes preceeding allocated blocks
+static const		unsigned int	postfixPattern         = 0xdeadc0de; // Fill pattern for bytes following allocated blocks
+static const		unsigned int	unusedPattern          = 0xfeedface; // Fill pattern for freshly allocated blocks
+static const		unsigned int	releasedPattern        = 0xdeadbeef; // Fill pattern for deallocated blocks
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Other locals
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 static	const	unsigned int	hashSize               = 1 << hashBits;
-static	const	char		*allocationTypes[]     = {"Unknown",
+static	const	char		*const allocationTypes[]     = {"Unknown",
 							  "new",     "new[]",  "malloc",   "calloc",
 							  "realloc", "delete", "delete[]", "free"};
 static		sAllocUnit	*hashTable[hashSize];
@@ -209,12 +223,20 @@ static		sAllocUnit	*reservoir;
 static		unsigned int	currentAllocationCount = 0;
 static		unsigned int	breakOnAllocationCount = 0;
 static		sMStats		stats;
-static	const	char		*sourceFile            = "??";
-static	const	char		*sourceFunc            = "??";
-static		unsigned int	sourceLine             = 0;
+static __thread	const	char		*sourceFile            = "??";
+static __thread	const	char		*sourceFunc            = "??";
+static __thread		unsigned int	sourceLine             = 0;
 static		bool		staticDeinitTime       = false;
 static		sAllocUnit	**reservoirBuffer      = NULL;
 static		unsigned int	reservoirBufferSize    = 0;
+
+// this guarantees the mutex object is initialized before the first use
+// (during static initialization)
+static boost::recursive_mutex& get_mutex()
+{
+	static boost::recursive_mutex mutex;
+	return mutex;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Local functions only
@@ -413,6 +435,7 @@ static	void	resetGlobals()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+static FILE *fp_log;
 
 static	void	log(const char *format, ...)
 {
@@ -430,27 +453,29 @@ static	void	log(const char *format, ...)
 
 	// Open the log file
 
-	FILE	*fp = fopen("memory.log", "ab");
+	if (!fp_log)
+		fp_log = fopen("memory.log", "a");
 
 	// If you hit this assert, then the memory logger is unable to log information to a file (can't open the file for some
 	// reason.) You can interrogate the variable 'buffer' to see what was supposed to be logged (but won't be.)
-	m_assert(fp);
+	m_assert(fp_log);
 
-	if (!fp) return;
+	if (!fp_log) return;
 
 	// Spit out the data to the log
 
-	fprintf(fp, "%s\r\n", buffer);
-	fclose(fp);
+	fprintf(fp_log, "%s\n", buffer);
+	fflush(fp_log);
+	//fclose(fp_log);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 static	void	dumpAllocations(FILE *fp)
 {
-	fprintf(fp, "Alloc.   Addr       Size       Addr       Size                        BreakOn BreakOn              \r\n");
-	fprintf(fp, "Number Reported   Reported    Actual     Actual     Unused    Method  Dealloc Realloc Allocated by \r\n");
-	fprintf(fp, "------ ---------- ---------- ---------- ---------- ---------- -------- ------- ------- --------------------------------------------------- \r\n");
+	fprintf(fp, "Alloc.   Addr       Size       Addr       Size                        BreakOn BreakOn              \n");
+	fprintf(fp, "Number Reported   Reported    Actual     Actual     Unused    Method  Dealloc Realloc Allocated by \n");
+	fprintf(fp, "------ ---------- ---------- ---------- ---------- ---------- -------- ------- ------- --------------------------------------------------- \n");
 
 
 	for (unsigned int i = 0; i < hashSize; i++)
@@ -458,7 +483,7 @@ static	void	dumpAllocations(FILE *fp)
 		sAllocUnit *ptr = hashTable[i];
 		while(ptr)
 		{
-			fprintf(fp, "%06d 0x%08lX 0x%08X 0x%08lX 0x%08X 0x%08X %-8s    %c       %c    %s\r\n",
+			fprintf(fp, "%06d 0x%08lX 0x%08X 0x%08lX 0x%08X 0x%08X %-8s    %c       %c    %s\n",
 				ptr->allocationNumber,
 				(unsigned long) ptr->reportedAddress, ptr->reportedSize,
 				(unsigned long) ptr->actualAddress, ptr->actualSize,
@@ -493,18 +518,18 @@ static	void	dumpLeakReport()
 	memset(timeString, 0, sizeof(timeString));
 	time_t  t = time(NULL);
 	struct  tm *tme = localtime(&t);
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "|                                          Memory leak report for:  %02d/%02d/%04d %02d:%02d:%02d                                            |\r\n", tme->tm_mon + 1, tme->tm_mday, tme->tm_year + 1900, tme->tm_hour, tme->tm_min, tme->tm_sec);
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "\r\n");
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "|                                          Memory leak report for:  %02d/%02d/%04d %02d:%02d:%02d                                            |\n", tme->tm_mon + 1, tme->tm_mday, tme->tm_year + 1900, tme->tm_hour, tme->tm_min, tme->tm_sec);
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "\n");
+	fprintf(fp, "\n");
 	if (stats.totalAllocUnitCount)
 	{
-		fprintf(fp, "%d memory leak%s found:\r\n", stats.totalAllocUnitCount, stats.totalAllocUnitCount == 1 ? "":"s");
+		fprintf(fp, "%d memory leak%s found:\n", stats.totalAllocUnitCount, stats.totalAllocUnitCount == 1 ? "":"s");
 	}
 	else
 	{
-		fprintf(fp, "Congratulations! No memory leaks found!\r\n");
+		fprintf(fp, "Congratulations! No memory leaks found!\n");
 
 		// We can finally free up our own memory allocations
 
@@ -520,7 +545,7 @@ static	void	dumpLeakReport()
 			reservoir = NULL;
 		}
 	}
-	fprintf(fp, "\r\n");
+	fprintf(fp, "\n");
 
 	if (stats.totalAllocUnitCount)
 	{
@@ -583,6 +608,8 @@ bool	&m_randomeWipe()
 
 bool	&m_breakOnRealloc(void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Locate the existing allocation unit
 
 	sAllocUnit	*au = findAllocUnit(reportedAddress);
@@ -607,6 +634,8 @@ bool	&m_breakOnRealloc(void *reportedAddress)
 
 bool	&m_breakOnDealloc(void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Locate the existing allocation unit
 
 	sAllocUnit	*au = findAllocUnit(reportedAddress);
@@ -624,6 +653,8 @@ bool	&m_breakOnDealloc(void *reportedAddress)
 
 void	m_breakOnAllocation(unsigned int count)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	breakOnAllocationCount = count;
 }
 
@@ -633,6 +664,8 @@ void	m_breakOnAllocation(unsigned int count)
 
 void	m_setOwner(const char *file, const unsigned int line, const char *func)
 {
+	// thread local storage -> no lock
+
 	sourceFile = file;
 	sourceLine = line;
 	sourceFunc = func;
@@ -647,7 +680,9 @@ void	m_setOwner(const char *file, const unsigned int line, const char *func)
 
 void	*operator new(size_t reportedSize)
 {
-	#ifdef TEST_MEMORY_MANAGER
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
+  #ifdef TEST_MEMORY_MANAGER
 	log("ENTER: new");
 	#endif
 
@@ -699,6 +734,8 @@ void	*operator new(size_t reportedSize)
 
 void	*operator new[](size_t reportedSize)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	#ifdef TEST_MEMORY_MANAGER
 	log("ENTER: new[]");
 	#endif
@@ -757,6 +794,8 @@ void	*operator new[](size_t reportedSize)
 
 void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	#ifdef TEST_MEMORY_MANAGER
 	log("ENTER: new");
 	#endif
@@ -809,6 +848,8 @@ void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine)
 
 void	*operator new[](size_t reportedSize, const char *sourceFile, int sourceLine)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	#ifdef TEST_MEMORY_MANAGER
 	log("ENTER: new[]");
 	#endif
@@ -866,6 +907,8 @@ void	*operator new[](size_t reportedSize, const char *sourceFile, int sourceLine
 
 void	operator delete(void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	#ifdef TEST_MEMORY_MANAGER
 	log("ENTER: delete");
 	#endif
@@ -885,6 +928,8 @@ void	operator delete(void *reportedAddress)
 
 void	operator delete[](void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	#ifdef TEST_MEMORY_MANAGER
 	log("ENTER: delete[]");
 	#endif
@@ -906,6 +951,8 @@ void	operator delete[](void *reportedAddress)
 
 void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int allocationType, const size_t reportedSize)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	try
 	{
 		#ifdef TEST_MEMORY_MANAGER
@@ -918,7 +965,15 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 		// Log the request
 
-		if (alwaysLogAll) log("%05d %-40s %8s            : %s", currentAllocationCount, ownerString(sourceFile, sourceLine, sourceFunc), allocationTypes[allocationType], memorySizeString(reportedSize));
+		if (alwaysLogAll) {
+			log("%05d %-40s %8s            : %s", currentAllocationCount, ownerString(sourceFile, sourceLine, sourceFunc), allocationTypes[allocationType], memorySizeString(reportedSize));
+
+#ifdef __linux__
+			void* buffer[10];
+			int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
+			backtrace_symbols_fd(buffer, size, fileno(fp_log));
+#endif
+		}
 
 		// If you hit this assert, you requested a breakpoint on a specific allocation count
 		m_assert(currentAllocationCount != breakOnAllocationCount);
@@ -1085,6 +1140,8 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int reallocationType, const size_t reportedSize, void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	try
 	{
 		#ifdef TEST_MEMORY_MANAGER
@@ -1282,6 +1339,8 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 
 void	m_deallocator(const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int deallocationType, const void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	try
 	{
 		#ifdef TEST_MEMORY_MANAGER
@@ -1388,6 +1447,8 @@ void	m_deallocator(const char *sourceFile, const unsigned int sourceLine, const 
 
 bool	m_validateAddress(const void *reportedAddress)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Just see if the address exists in our allocation routines
 
 	return findAllocUnit(reportedAddress) != NULL;
@@ -1397,6 +1458,8 @@ bool	m_validateAddress(const void *reportedAddress)
 
 bool	m_validateAllocUnit(const sAllocUnit *allocUnit)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Make sure the padding is untouched
 
 	unsigned int	*pre = (unsigned int *) allocUnit->actualAddress;
@@ -1438,6 +1501,8 @@ bool	m_validateAllocUnit(const sAllocUnit *allocUnit)
 
 bool	m_validateAllAllocUnits()
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Just go through each allocation unit in the hash table and count the ones that have errors
 
 	unsigned int	errors = 0;
@@ -1487,6 +1552,8 @@ bool	m_validateAllAllocUnits()
 
 unsigned int	m_calcUnused(const sAllocUnit *allocUnit)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	const unsigned int	*ptr = (const unsigned int *) allocUnit->reportedAddress;
 	unsigned int		count = 0;
 
@@ -1502,6 +1569,8 @@ unsigned int	m_calcUnused(const sAllocUnit *allocUnit)
 
 unsigned int	m_calcAllUnused()
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Just go through each allocation unit in the hash table and count the unused RAM
 
 	unsigned int	total = 0;
@@ -1524,6 +1593,8 @@ unsigned int	m_calcAllUnused()
 
 void	m_dumpAllocUnit(const sAllocUnit *allocUnit, const char *prefix)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	log("%sAddress (reported): %010p",       prefix, allocUnit->reportedAddress);
 	log("%sAddress (actual)  : %010p",       prefix, allocUnit->actualAddress);
 	log("%sSize (reported)   : 0x%08X (%s)", prefix, allocUnit->reportedSize, memorySizeString(allocUnit->reportedSize));
@@ -1537,10 +1608,12 @@ void	m_dumpAllocUnit(const sAllocUnit *allocUnit, const char *prefix)
 
 void	m_dumpMemoryReport(const char *filename, const bool overwrite)
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	// Open the report file
 
 	FILE	*fp = NULL;
-	
+
 	if (overwrite)	fp = fopen(filename, "w+b");
 	else		fp = fopen(filename, "ab");
 
@@ -1555,45 +1628,45 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
         memset(timeString, 0, sizeof(timeString));
         time_t  t = time(NULL);
         struct  tm *tme = localtime(&t);
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-        fprintf(fp, "|                                             Memory report for: %02d/%02d/%04d %02d:%02d:%02d                                               |\r\n", tme->tm_mon + 1, tme->tm_mday, tme->tm_year + 1900, tme->tm_hour, tme->tm_min, tme->tm_sec);
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "\r\n");
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+        fprintf(fp, "|                                             Memory report for: %02d/%02d/%04d %02d:%02d:%02d                                               |\n", tme->tm_mon + 1, tme->tm_mday, tme->tm_year + 1900, tme->tm_hour, tme->tm_min, tme->tm_sec);
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "\n");
+	fprintf(fp, "\n");
 
 	// Report summary
 
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "|                                                           T O T A L S                                                            |\r\n");
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "              Allocation unit count: %10s\r\n", insertCommas(stats.totalAllocUnitCount));
-	fprintf(fp, "            Reported to application: %s\r\n", memorySizeString(stats.totalReportedMemory));
-	fprintf(fp, "         Actual total memory in use: %s\r\n", memorySizeString(stats.totalActualMemory));
-	fprintf(fp, "           Memory tracking overhead: %s\r\n", memorySizeString(stats.totalActualMemory - stats.totalReportedMemory));
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "|                                                           T O T A L S                                                            |\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "              Allocation unit count: %10s\n", insertCommas(stats.totalAllocUnitCount));
+	fprintf(fp, "            Reported to application: %s\n", memorySizeString(stats.totalReportedMemory));
+	fprintf(fp, "         Actual total memory in use: %s\n", memorySizeString(stats.totalActualMemory));
+	fprintf(fp, "           Memory tracking overhead: %s\n", memorySizeString(stats.totalActualMemory - stats.totalReportedMemory));
+	fprintf(fp, "\n");
 
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "|                                                            P E A K S                                                             |\r\n");
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "              Allocation unit count: %10s\r\n", insertCommas(stats.peakAllocUnitCount));
-	fprintf(fp, "            Reported to application: %s\r\n", memorySizeString(stats.peakReportedMemory));
-	fprintf(fp, "                             Actual: %s\r\n", memorySizeString(stats.peakActualMemory));
-	fprintf(fp, "           Memory tracking overhead: %s\r\n", memorySizeString(stats.peakActualMemory - stats.peakReportedMemory));
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "|                                                            P E A K S                                                             |\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "              Allocation unit count: %10s\n", insertCommas(stats.peakAllocUnitCount));
+	fprintf(fp, "            Reported to application: %s\n", memorySizeString(stats.peakReportedMemory));
+	fprintf(fp, "                             Actual: %s\n", memorySizeString(stats.peakActualMemory));
+	fprintf(fp, "           Memory tracking overhead: %s\n", memorySizeString(stats.peakActualMemory - stats.peakReportedMemory));
+	fprintf(fp, "\n");
 
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "|                                                      A C C U M U L A T E D                                                       |\r\n");
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "              Allocation unit count: %s\r\n", memorySizeString(stats.accumulatedAllocUnitCount));
-	fprintf(fp, "            Reported to application: %s\r\n", memorySizeString(stats.accumulatedReportedMemory));
-	fprintf(fp, "                             Actual: %s\r\n", memorySizeString(stats.accumulatedActualMemory));
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "|                                                      A C C U M U L A T E D                                                       |\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "              Allocation unit count: %s\n", memorySizeString(stats.accumulatedAllocUnitCount));
+	fprintf(fp, "            Reported to application: %s\n", memorySizeString(stats.accumulatedReportedMemory));
+	fprintf(fp, "                             Actual: %s\n", memorySizeString(stats.accumulatedActualMemory));
+	fprintf(fp, "\n");
 
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "|                                                           U N U S E D                                                            |\r\n");
-	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
-	fprintf(fp, "    Memory allocated but not in use: %s\r\n", memorySizeString(m_calcAllUnused()));
-	fprintf(fp, "\r\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "|                                                           U N U S E D                                                            |\n");
+	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \n");
+	fprintf(fp, "    Memory allocated but not in use: %s\n", memorySizeString(m_calcAllUnused()));
+	fprintf(fp, "\n");
 
 	dumpAllocations(fp);
 
@@ -1604,6 +1677,8 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
 
 sMStats	m_getMemoryStatistics()
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
+
 	return stats;
 }
 
