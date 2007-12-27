@@ -359,6 +359,48 @@ static void CacheMaps(){
 		const string mapName = GetMapName(i);
 		o.push_back(Pair("mapname",mapName));
 
+		int hash = GetMapChecksum(i);
+		o.push_back(Pair("crchash",hash));
+
+		MapInfo mi;
+		mi.description = new char[100];
+		strcpy(mi.description,"");
+		mi.author = new char[50];
+		GetMapInfo(mapName.c_str(),&mi);
+		strcpy(mi.author,"");
+
+		o.push_back(Pair("author",mi.author));
+
+		o.push_back(Pair("description",mi.description));
+
+		o.push_back(Pair("extractorradius",mi.extractorRadius));
+		o.push_back(Pair("gravity",mi.gravity));
+		o.push_back(Pair("height",mi.height));
+		o.push_back(Pair("maxmetal",mi.maxMetal));
+		o.push_back(Pair("maxwind",mi.maxWind));
+		o.push_back(Pair("minwind",mi.minWind));
+		o.push_back(Pair("tidalstrength",mi.tidalStrength));
+		o.push_back(Pair("width",mi.width));
+
+		o.push_back(Pair("positioncount",mi.posCount));
+
+		Array positions;
+
+		for(int k = 0; k <mi.posCount;k++){
+			
+			Object sp;
+			
+			StartPos p = mi.positions[k];
+
+			sp.push_back(Pair("x",p.x));
+			sp.push_back(Pair("z",p.z));
+			
+			positions.push_back(sp);
+		}
+
+		o.push_back(Pair("positions",positions));
+
+
 		o2.push_back(Pair(mapName,o));
 		printf("    [map %3i]   %s\n", i, mapName.c_str());
 	}
@@ -428,7 +470,7 @@ static void CacheIndex(){
 		m.push_back(Pair("game",		modGame));
 		m.push_back(Pair("shortgame",	modShortGame));
 
-		m.push_back(Pair("crcchecksum",	(int)GetPrimaryModChecksum(i)));
+		m.push_back(Pair("crchash",	(int)GetPrimaryModChecksum(i)));
 
 		while (true) {
 			int left = ProcessUnitsNoChecksum();
@@ -439,7 +481,6 @@ static void CacheIndex(){
 
 		printf("processed units\n");
 
-		
 		
 		Array sides;
 		int sidecount = GetSideCount();
