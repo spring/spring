@@ -409,7 +409,7 @@ bool CGameSetup::Update()
 	if (forceReady)
 		allReady = true;
 	if (allReady) {
-		if (readyTime == 0 && !net->localDemoPlayback) {
+		if (readyTime == 0) {
 			int mode = configHandler.GetInt("CamMode", 1);
 			camHandler->SetCameraMode(mode);
 			readyTime = SDL_GetTicks();

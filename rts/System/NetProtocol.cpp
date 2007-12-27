@@ -9,6 +9,7 @@
 
 CNetProtocol::CNetProtocol()
 {
+	serverSlot = 0;
 	record = 0;
 	localDemoPlayback = false;
 }
@@ -19,7 +20,7 @@ CNetProtocol::~CNetProtocol()
 		delete record;
 }
 
-unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
+void CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
 {
 	unsigned myNum = CNet::InitClient(server, portnum, sourceport,wantedNumber);
 	Listening(false);
@@ -33,10 +34,10 @@ unsigned CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned 
 	
 	logOutput.Print("Connected to %s:%i using number %i", server, portnum, myNum);
 
-	return myNum;
+	serverSlot = myNum;
 }
 
-unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
+void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
 	if (!localDemoPlayback)
 	{
@@ -45,12 +46,17 @@ unsigned CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 
 	unsigned myNum = CNet::InitLocalClient(wantedNumber);
 	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
-	return myNum;
+	serverSlot = myNum;
 }
 
-RawPacket* CNetProtocol::GetData(const unsigned conNum)
+bool CNetProtocol::IsActiveConnection() const
 {
-	RawPacket* ret = CBaseNetProtocol::GetData(conNum);
+	return CNet::IsActiveConnection(serverSlot);
+}
+
+RawPacket* CNetProtocol::GetData()
+{
+	RawPacket* ret = CBaseNetProtocol::GetData(serverSlot);
 	
 	if (record && ret)
 	{

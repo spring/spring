@@ -475,6 +475,9 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	//sending your playername to the server indicates that you are finished loading
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
+	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
+		net->SendStartPlaying();
+
 	lastCpuUsageTime = gu->gameTime + 10;
 }
 
@@ -2624,12 +2627,12 @@ bool CGame::ClientReadNet()
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 
-	const unsigned myPlayerNum = gameSetup ? (unsigned)gameSetup->myPlayerNum : 0;
-	if (!net->IsActiveConnection(myPlayerNum))
+	if (!net->IsActiveConnection())
 		return gameOver;
 
+	unsigned iterations = 0;
 	RawPacket* packet = 0;
-	while ((packet = net->GetData(myPlayerNum)))
+	while ((packet = net->GetData()) && (++iterations) < 20)
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
