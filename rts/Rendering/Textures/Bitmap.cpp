@@ -335,7 +335,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
 		// create mipmapped texture
-		if (strcmp(reinterpret_cast<const char*>(glGetString(GL_VERSION)), "1.4") >= 0) {
+		if (GLEW_VERSION_1_4) {
 			// This required GL-1.4
 			// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
 			glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);

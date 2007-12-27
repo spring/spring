@@ -105,7 +105,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	haveGL20 = !!glewIsSupported("GL_VERSION_2_0");
+	haveGL20 = !!GLEW_VERSION_2_0;
 
 	if (haveGL20 && !!configHandler.GetInt("LuaShaders", 1)) {
 		canUseShaders = true;
