@@ -46,6 +46,9 @@ public:
 	CLoadSaveHandler *savefile;
 private:
 	CInfoConsole* infoConsole;
+	
+	/// reads out map, mod and script from demos (with or without a gameSetupScript)
+	void ReadDataFromDemo(const std::string& demoName);
 
 	void ShowScriptList();
 	void ShowMapList();

@@ -13,6 +13,7 @@
 #include "GameVersion.h"
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
+#include "System/DemoReader.h"
 #include "LoadSaveHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
@@ -69,9 +70,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	}
 
 	if(server){
-		// create local client
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
@@ -106,20 +105,15 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 		} else {
 			if (hasDemo) {
 				net->localDemoPlayback = true;
-				
-				state = WAIT_ON_SCRIPT;
-				good_fpu_control_registers("before CGameServer creation");
-				gameServer = SAFE_NEW CGameServer(8452, mapName, modArchive, scriptName, demoFile);
-				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-				net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-				good_fpu_control_registers("after CGameServer creation");
+				state = WAIT_CONNECTING;
+				ReadDataFromDemo(demoFile);
+				net->InitLocalClient(0);
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
 					SelectMap(gameSetup->mapName);
 					SelectMod(gameSetup->baseMod);
 					CScriptHandler::SelectScript(gameSetup->scriptName);
 					SelectScript(gameSetup->scriptName);
-					state = WAIT_CONNECTING;
 				}
 				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 				{
@@ -366,9 +360,11 @@ bool CPreGame::Update()
 			// fall through
 
 		case WAIT_CONNECTING:
-			if (server && !gameServer) {
+			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
+				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName);
+				if (hasDemo)
+					gameServer->StartDemoPlayback(demoFile);
 				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}
@@ -546,7 +542,40 @@ void CPreGame::UpdateClientNet()
 	}
 }
 
+void CPreGame::ReadDataFromDemo(const std::string& demoName)
+{
+	logOutput.Print("Pre-scanning demo file for game data...");
+	CDemoReader scanner(demoName, 0);
+	
+	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
+	unsigned length = 0;
+	mapName = "";
+	modName = "";
+	scriptName = "";
 
+	while ( (length = scanner.GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, INT_MAX)) > 0 && (mapName.empty() || modName.empty() || scriptName.empty())) {
+		if (demobuffer[0] == NETMSG_MAPNAME)
+		{
+			SelectMap((char*) (demobuffer + 6));
+			archiveScanner->CheckMap(mapName, *(unsigned*) (demobuffer + 2));
+		}
+		else if (demobuffer[0] == NETMSG_MODNAME)
+		{
+			SelectMod((char*) (demobuffer + 6));
+			archiveScanner->CheckMod(modArchive, *(unsigned*) (demobuffer + 2));
+		}
+		else if (demobuffer[0] == NETMSG_SCRIPT)
+		{
+			CScriptHandler::SelectScript((char*) (demobuffer+2));
+			SelectScript((char*) (demobuffer+2));
+		}
+		
+		if (scanner.ReachedEnd())
+		{
+			logOutput.Print("End of demo reached and no data found");
+		}
+	}
+}
 
 /** Called by the script-selecting CglList. */
 void CPreGame::SelectScript(std::string s)
