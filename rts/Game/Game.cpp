@@ -2632,7 +2632,7 @@ bool CGame::ClientReadNet()
 
 	unsigned iterations = 0;
 	RawPacket* packet = 0;
-	while ((packet = net->GetData()) && (++iterations) < 20)
+	while ((++iterations) < 20 && (packet = net->GetData()))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
