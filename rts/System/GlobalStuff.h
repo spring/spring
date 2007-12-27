@@ -72,8 +72,6 @@
  */
 #define NEAR_PLANE 2.8f
 
-void SendChat(char* c);
-
 #include <list>
 #include "float3.h"
 
@@ -149,7 +147,7 @@ class CGlobalSyncedStuff
 public:
 	CR_DECLARE(CGlobalSyncedStuff);
 	CGlobalSyncedStuff(); 		//!< Constructor
-	virtual ~CGlobalSyncedStuff(); 	//!< Destructor
+	~CGlobalSyncedStuff(); 	//!< Destructor
 
 	int randInt();			//!< synced random int
 	float randFloat(); 		//!< synced random float
@@ -465,7 +463,7 @@ class CGlobalUnsyncedStuff
 public:
 	CR_DECLARE(CGlobalUnsyncedStuff);
 	CGlobalUnsyncedStuff(); 		//!< Constructor
-	virtual ~CGlobalUnsyncedStuff(); 	//!< Destructor
+	~CGlobalUnsyncedStuff(); 	//!< Destructor
 
 	int usRandInt(); 			//!< Unsynced random int
 	float usRandFloat(); 			//!< Unsynced random float

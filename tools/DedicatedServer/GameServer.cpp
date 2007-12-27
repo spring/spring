@@ -39,7 +39,7 @@ GameParticipant::GameParticipant(bool willHaveRights)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
+CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName)
 {
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
@@ -61,23 +61,15 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
 
-	if (!demoName.empty())
-	{
-		SendSystemMsg("Playing demo %s", demoName.c_str());
-		play = new CDemoReader(demoName, modGameTime+0.5f);
-	}
-	else // no demo, so set map and mod and calculate checksums
-	{
-		SendSystemMsg("Starting server on port %i", port);
-		mapName = newMapName;
-		mapChecksum = archiveScanner->GetMapChecksum(mapName);
+	SendSystemMsg("Starting server on port %i", port);
+	mapName = newMapName;
+	mapChecksum = archiveScanner->GetMapChecksum(mapName);
 
-		modName = newModName;
-		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
-		modChecksum = archiveScanner->GetModChecksum(modArchive);
+	modName = newModName;
+	std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+	modChecksum = archiveScanner->GetModChecksum(modArchive);
 
-		scriptName = newScriptName;
-	}
+	scriptName = newScriptName;
 
 	lastTick = SDL_GetTicks();
 
@@ -145,13 +137,22 @@ void CGameServer::AddLocalClient(unsigned wantedNumber)
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	lastTick = newlastTick;
 //	serverframenum = newserverframenum;
 	nextserverframenum = newserverframenum+1;
 }
 
+void CGameServer::StartDemoPlayback(const std::string& demoName)
+{
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	SendSystemMsg("Playing demo %s", demoName.c_str());
+	play = new CDemoReader(demoName, modGameTime+0.1f);
+}
+
 void CGameServer::SkipTo(int targetframe)
 {
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverframenum = targetframe;
 }
 
@@ -251,7 +252,7 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if (!IsPaused/* && !WaitsOnCon()*/)
+	if (!IsPaused && !WaitsOnCon())
 	{
 		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
 	}
@@ -305,7 +306,11 @@ void CGameServer::Update()
 				outstandingSyncFrames.push_back(serverframenum);
 #endif
 			}
-			else if (demobuffer[0] != NETMSG_SETPLAYERNUM && demobuffer[0] != NETMSG_USER_SPEED && demobuffer[0] != NETMSG_INTERNAL_SPEED && demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+			else if (
+			          demobuffer[0] != NETMSG_SETPLAYERNUM && 
+			          demobuffer[0] != NETMSG_USER_SPEED && 
+			          demobuffer[0] != NETMSG_INTERNAL_SPEED && 
+			          demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
 			{
 				serverNet->RawSend(demobuffer, length);
 			}
@@ -597,7 +602,7 @@ void CGameServer::ServerReadNet()
 					}
 					case NETMSG_RANDSEED:
 					{
-						if (players[a]->hasRights)
+						if (players[a]->hasRights && !play)
 							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
 						break;
 					}
@@ -707,8 +712,9 @@ void CGameServer::StartGame()
 {
 	serverNet->Listening(false);
 
-	GenerateAndSendGameID();
-	
+	if (!play)
+		GenerateAndSendGameID();
+
 	for(unsigned a=0; a < MAX_PLAYERS; ++a){
 		if(players[a])
 			serverNet->SendPlayerName(a, players[a]->name);
@@ -860,15 +866,13 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
-		// send game data for demo recording
-	if (!scriptName.empty())
-		serverNet->SendScript(scriptName);
-	if (!mapName.empty())
-		serverNet->SendMapName(mapChecksum, mapName);
-	if (!modName.empty())
-		serverNet->SendModName(modChecksum, modName);
 
-	for(unsigned a=0; a < MAX_PLAYERS; ++a){
+	// send game data for demo recording
+	serverNet->SendScript(scriptName);
+	serverNet->SendMapName(mapChecksum, mapName);
+	serverNet->SendModName(modChecksum, modName);
+
+	for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}

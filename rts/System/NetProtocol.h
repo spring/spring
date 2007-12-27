@@ -19,12 +19,14 @@ public:
 	/**
 	@brief Initialise in client mode (remote server)
 	*/
-	unsigned InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
+	void InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
 	
 	/**
 	@brief Initialise in client mode (local server)
 	 */
-	unsigned InitLocalClient(const unsigned wantedNumber);
+	void InitLocalClient(const unsigned wantedNumber);
+
+	bool IsActiveConnection() const;
 
 	bool localDemoPlayback;
 
@@ -34,7 +36,7 @@ public:
 	@todo Throw exceptions
 	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
-	RawPacket* GetData(const unsigned conNum);
+	RawPacket* GetData();
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 	
@@ -42,6 +44,7 @@ public:
 	void UpdateLoop();
 
 private:
+	unsigned serverSlot;
 	CDemoRecorder* record;
 };
 

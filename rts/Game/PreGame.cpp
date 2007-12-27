@@ -323,7 +323,7 @@ bool CPreGame::Update()
 
 			if (saveAddress)
 				configHandler.SetString("address",userInput);
-			net->InitClient(userInput.c_str(),8452,0, gameSetup? gameSetup->myPlayerNum : 0);
+			net->InitClient(userInput.c_str(),8452,0, 0);
 			state = WAIT_ON_SCRIPT;
 			// fall trough
 		}
@@ -365,7 +365,7 @@ bool CPreGame::Update()
 				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName);
 				if (hasDemo)
 					gameServer->StartDemoPlayback(demoFile);
-				gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+				gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}
 
@@ -413,7 +413,7 @@ bool CPreGame::Update()
 
 void CPreGame::UpdateClientNet()
 {
-	if (!net->IsActiveConnection(gameSetup ? gameSetup->myPlayerNum : 0))
+	if (!net->IsActiveConnection())
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;
@@ -421,7 +421,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	RawPacket* packet = 0;
-	while ((packet = net->GetData(gameSetup ? gameSetup->myPlayerNum : 0)))
+	while (packet = net->GetData())
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {

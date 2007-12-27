@@ -305,10 +305,7 @@ void CGameServer::Update()
 			          demobuffer[0] != NETMSG_SETPLAYERNUM && 
 			          demobuffer[0] != NETMSG_USER_SPEED && 
 			          demobuffer[0] != NETMSG_INTERNAL_SPEED && 
-			          demobuffer[0] != NETMSG_PAUSE && 
-			          demobuffer[0] != NETMSG_MAPNAME && 
-			          demobuffer[0] != NETMSG_MODNAME && 
-			          demobuffer[0] != NETMSG_SCRIPT) // dont send these from demo
+			          demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
 			{
 				serverNet->RawSend(demobuffer, length);
 			}
@@ -600,7 +597,7 @@ void CGameServer::ServerReadNet()
 					}
 					case NETMSG_RANDSEED:
 					{
-						if (players[a]->hasRights)
+						if (players[a]->hasRights && !play)
 							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
 						break;
 					}
