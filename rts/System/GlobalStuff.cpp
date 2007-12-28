@@ -130,8 +130,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	activeTeams=2;
 	activeAllyTeams=2;
 	activePlayers=MAX_PLAYERS;
-	teams[0]->active=true;
-	teams[1]->active=true;
 
 	sunVector=float3(0,1,2).Normalize();
 
