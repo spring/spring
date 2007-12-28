@@ -334,7 +334,7 @@ function widgetHandler:Initialize()
 
     local name = w.whInfo.name
     local basename = w.whInfo.basename
-    print(string.format("Loaded widget:  %-18s  <%s>", name, basename))
+    Spring.Echo(string.format("Loaded widget:  %-18s  <%s>", name, basename))
   end
 
   -- save the active widgets, and their ordering
@@ -387,7 +387,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   local knownInfo = self.knownWidgets[name]
   if (knownInfo) then
     if (knownInfo.active) then
-      print('Failed to load: ' .. basename .. '  (duplicate name)')
+      Spring.Echo('Failed to load: ' .. basename .. '  (duplicate name)')
       return nil
     end
   else
@@ -405,7 +405,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   knownInfo.active = true
 
   if (widget.GetInfo == nil) then
-    print('Failed to load: ' .. basename .. '  (no GetInfo() call)')
+    Spring.Echo('Failed to load: ' .. basename .. '  (no GetInfo() call)')
     return nil
   end
 
@@ -751,7 +751,7 @@ function widgetHandler:UpdateWidgetCallIn(name, w)
     end
     self:UpdateCallIn(name)
   else
-    print('UpdateWidgetCallIn: bad name: ' .. name)
+    Spring.Echo('UpdateWidgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -763,7 +763,7 @@ function widgetHandler:RemoveWidgetCallIn(name, w)
     ArrayRemove(ciList, w)
     self:UpdateCallIn(name)
   else
-    print('RemoveWidgetCallIn: bad name: ' .. name)
+    Spring.Echo('RemoveWidgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -784,7 +784,7 @@ function widgetHandler:EnableWidget(name)
     return false
   end
   if (not ki.active) then
-    print('Loading:  '..ki.filename)
+    Spring.Echo('Loading:  '..ki.filename)
     local order = widgetHandler.orderList[name]
     if (not order or (order <= 0)) then
       self.orderList[name] = 1
@@ -807,7 +807,7 @@ function widgetHandler:DisableWidget(name)
   if (ki.active) then
     local w = self:FindWidget(name)
     if (not w) then return false end
-    print('Removed:  '..ki.filename)
+    Spring.Echo('Removed:  '..ki.filename)
     self:RemoveWidget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
     self:SaveOrderList()
