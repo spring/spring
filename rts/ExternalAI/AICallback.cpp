@@ -62,10 +62,22 @@ CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
 CAICallback::~CAICallback(void)
 {}
 
-void CAICallback::SendStartPos(bool ready, const float3& pos)
+void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
+	if(startPos.z<gameSetup->startRectTop[GetMyAllyTeam()]*gs->mapy*8)
+		startPos.z=gameSetup->startRectTop[GetMyAllyTeam()]*gs->mapy*8;
+
+	if(startPos.z>gameSetup->startRectBottom[GetMyAllyTeam()]*gs->mapy*8)
+		startPos.z=gameSetup->startRectBottom[GetMyAllyTeam()]*gs->mapy*8;
+
+	if(startPos.x<gameSetup->startRectLeft[GetMyAllyTeam()]*gs->mapx*8)
+		startPos.x=gameSetup->startRectLeft[GetMyAllyTeam()]*gs->mapx*8;
+
+	if(startPos.x>gameSetup->startRectRight[GetMyAllyTeam()]*gs->mapx*8)
+		startPos.x=gameSetup->startRectRight[GetMyAllyTeam()]*gs->mapx*8;
+
 	unsigned char readyness = ready ? 1 : 0;
-	net->SendStartPos(gu->myPlayerNum, team, readyness, pos.x, pos.y, pos.z);
+	net->SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z);
 }
 
 void CAICallback::SendTextMsg(const char* text, int zone)

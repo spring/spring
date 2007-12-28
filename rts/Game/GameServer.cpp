@@ -719,7 +719,6 @@ void CGameServer::StartGame()
 		for (unsigned a = 0; a < gs->activeTeams; ++a)
 		{
 			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-			SendSystemMsg("SendStartpos: %i", a);
 		}
 	}
 
