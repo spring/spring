@@ -166,7 +166,7 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 }
 
 /**
-@brief Load players
+@brief Load players and remove gaps in the player numbering.
 @pre numPlayers initialized
 @post players loaded, numDemoPlayers initialized
 @todo don't store in global variables directly
@@ -209,7 +209,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 }
 
 /**
-@brief Load teams
+@brief Load teams and remove gaps in the team numbering.
 @pre numTeams, hostDemo initialized
 @post teams loaded
 @todo don't store in global variables directly
@@ -267,7 +267,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 }
 
 /**
-@brief Load allyteams
+@brief Load allyteams and remove gaps in the allyteam numbering.
 @pre numAllyTeams initialized
 @post allyteams loaded
 @todo don't store in global variables directly
@@ -344,8 +344,8 @@ void CGameSetup::RemapAllyteams()
 	}
 
 	// relocate gs->allies matrix
-	for (int a = 0; a < numAllyTeams; ++a) {
-		for (int b = 0; b < numAllyTeams; ++b) {
+	for (int a = 0; a < MAX_TEAMS; ++a) {
+		for (int b = 0; b < MAX_TEAMS; ++b) {
 			if (allyteamRemap.find(a) != allyteamRemap.end() &&
 				allyteamRemap.find(b) != allyteamRemap.end()) {
 				gs->SetAlly(allyteamRemap[a], allyteamRemap[b], gs->Ally(a, b));
