@@ -1,5 +1,23 @@
-//Send a file formated like this as the only command line argument to the spring executable
-//All players must get the exact same file except MyPlayerNum (and possibly HostIP)
+// Send a file formated like this as the only command line argument to the
+// spring executable.  All players must get the exact same file except
+// MyPlayerNum, HostIP, SourcePort, PLAYER\CountryCode, PLAYER\Rank,
+// and possibly TEAM\AIDLL.
+
+// Since december 2007 the restrictions on player/team/allyteam numbering are
+// loosened:
+
+// Players and teams must be in the same order on each client, but the
+// numbering does not need to be consecutive, or even identical on each client:
+// the sequences of players/teams/allyteams may contain gaps.
+
+// For example, one may define NumPlayers=2 and add a PLAYER10 and PLAYER14
+// section to the script, and Spring will automatically compress this
+// internally to PLAYER0 and PLAYER1. Same applies to teams and allyteams.
+
+// The used numbers must be lower than the maximum number of those sections.
+// At the time of this writing this is: 32/17/17 for players/teams/allyteams
+// respectively.
+
 [GAME]
 {
 	Mapname=;           //with .smf extension
@@ -42,6 +60,7 @@
 		Team=number;
 		IsFromDemo=0;   // use only in combination with Demofile (see above)
 		CountryCode=;   // country of the player, if known (nl/de/it etc.)
+		Rank=-1;
 	}
 	//more players
 

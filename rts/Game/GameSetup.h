@@ -27,6 +27,10 @@ private:
 	void LoadPlayers(const TdfParser& file);
 	void LoadTeams(const TdfParser& file);
 	void LoadAllyTeams(const TdfParser& file);
+
+	void RemapPlayers();
+	void RemapTeams();
+	void RemapAllyteams();
 };
 
 extern CGameSetup* gameSetup;
