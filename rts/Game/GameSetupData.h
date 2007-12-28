@@ -80,6 +80,12 @@ public:
 	
 	int gameMode;
 	int noHelperAIs;
+
+protected:
+
+	std::map<int, int> playerRemap;
+	std::map<int, int> teamRemap;
+	std::map<int, int> allyteamRemap;
 };
 
 #endif // __GAME_SETUP_DATA_H__
