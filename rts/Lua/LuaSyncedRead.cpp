@@ -948,7 +948,6 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->leader);
-	lua_pushboolean(L, team->active);
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, isAiTeam);
 	lua_pushstring(L,  team->side.c_str());

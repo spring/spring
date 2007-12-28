@@ -4454,7 +4454,6 @@ void CGame::ReColorTeams()
 			luaParser.AddParam("allyTeam", gs->AllyTeam(t));
 			luaParser.AddParam("gaia",     team->gaia);
 			luaParser.AddParam("leader",   team->leader);
-			luaParser.AddParam("active",   team->active);
 			luaParser.AddParam("side",     team->side);
 			luaParser.GetTable("color"); {
 				luaParser.AddParam(1, float(color[0]) / 255.0f);

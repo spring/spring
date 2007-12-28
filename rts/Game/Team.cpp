@@ -24,7 +24,6 @@ CR_BIND(CTeam,);
 
 CR_REG_METADATA(CTeam, (
 				CR_MEMBER(teamNum),
-				CR_MEMBER(active),
 				CR_MEMBER(isDead),
 				CR_MEMBER(gaia),
 				CR_MEMBER(color),
@@ -102,8 +101,7 @@ CR_REG_METADATA_SUB(CTeam, Statistics, (
 //////////////////////////////////////////////////////////////////////
 
 CTeam::CTeam()
-: active(false),
-	gaia(false),
+: 	gaia(false),
 	metal(200000),
 	energy(900000),
 	metalPull(0),     prevMetalPull(0),

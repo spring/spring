@@ -716,10 +716,10 @@ void CGameServer::StartGame()
 	}
 
 	if (gameSetup) {
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		for (unsigned a = 0; a < gs->activeTeams; ++a)
 		{
-			if (gs->Team(a)->active)
-				serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			SendSystemMsg("SendStartpos: %i", a);
 		}
 	}
 
@@ -873,10 +873,9 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	}
 	
 	if (gameSetup) {
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		for (unsigned a = 0; a < gs->activeTeams; ++a)
 		{
-			if (gs->Team(a)->active)
-				serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
 	
