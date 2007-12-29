@@ -7,6 +7,7 @@
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/FrostBiteV2.sd7" "$INSTDIR\maps\FrostBiteV2.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/GreenHaven_Remake.sd7" "$INSTDIR\maps\GreenHaven_Remake.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Islands_In_War_1.0.SDZ" "$INSTDIR\maps\Islands_In_War_1.0.sdz" \
+	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Metalheck.sdz" "$INSTDIR\maps\Metalheck.sdz" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/MoonQ20x.sd7" "$INSTDIR\maps\MoonQ20x.sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" \
 	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Small_Supreme_Battlefield_V2.sd7" "$INSTDIR\maps\Small_Supreme_Battlefield_V2.sd7" \
@@ -29,10 +30,10 @@
   Delete "$INSTDIR\maps\GreenHaven_Remake.sd7"
   Delete "$INSTDIR\maps\paths\Islands_In_War_1.0.*"
   Delete "$INSTDIR\maps\Islands_In_War_1.0.sdz"
+  Delete "$INSTDIR\maps\paths\Metalheck.*"
+  Delete "$INSTDIR\maps\Metalheck.sdz"
   Delete "$INSTDIR\maps\paths\MoonQ20x.*"
   Delete "$INSTDIR\maps\MoonQ20x.sd7"
-  Delete "$INSTDIR\maps\paths\Islands_In_War_1.0.*"
-  Delete "$INSTDIR\maps\Islands_In_War_1.0.sdz"
   Delete "$INSTDIR\maps\paths\River_Dale-V01(onlyRiverdale).*"
   Delete "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7"
   Delete "$INSTDIR\maps\paths\Small_Supreme_Battlefield_V2.*"
