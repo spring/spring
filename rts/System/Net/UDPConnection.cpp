@@ -242,7 +242,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 void UDPConnection::Flush(const bool forced)
 {
 	const float curTime = SDL_GetTicks();
-	if (forced || (outgoingLength>0 && (lastSendTime < (curTime - 180 + outgoingLength * 15))))
+	if (forced || (outgoingLength>0 && (lastSendTime < (curTime - 200 + outgoingLength * 10))))
 	{
 		ProtocolDef* proto = ProtocolDef::instance();
 		lastSendTime=SDL_GetTicks();

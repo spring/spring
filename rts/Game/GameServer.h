@@ -62,7 +62,7 @@ public:
 	*/
 	void SkipTo(int targetframe);
 
-	void CreateNewFrame(bool fromServerThread=false);
+	bool CreateNewFrame(bool fromServerThread=false);
 
 	bool WaitsOnCon() const;
 
