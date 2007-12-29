@@ -34,7 +34,7 @@ GameParticipant::GameParticipant(bool willHaveRights)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName)
+CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
 {
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
@@ -55,6 +55,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
+	serverNet->InitServer(port);
 
 	SendSystemMsg("Starting server on port %i", port);
 	mapName = newMapName;
@@ -93,8 +94,12 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		userSpeedFactor = 1.0f;
 		internalSpeed = 1.0f;
 	}
-
-	serverNet->InitServer(port);
+	
+	if (!demoName.empty())
+	{
+		SendSystemMsg("Playing demo %s", demoName.c_str());
+		play = new CDemoReader(demoName, modGameTime+0.1f);
+	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -136,13 +141,6 @@ void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 	lastTick = newlastTick;
 //	serverframenum = newserverframenum;
 	nextserverframenum = newserverframenum+1;
-}
-
-void CGameServer::StartDemoPlayback(const std::string& demoName)
-{
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-	SendSystemMsg("Playing demo %s", demoName.c_str());
-	play = new CDemoReader(demoName, modGameTime+0.1f);
 }
 
 void CGameServer::SkipTo(int targetframe)
@@ -783,7 +781,15 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 
-	if (numActiveAllyTeams <= 1) {
+	if (numActiveAllyTeams == 0)
+	{
+		// no ally left, end game
+		gameEndTime=SDL_GetTicks();
+		serverNet->SendSendPlayerStat();
+	}
+	else if (numActiveAllyTeams == 1 && !play)
+	{
+		// 1 ally left, end game only if we are not watching a demo
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}

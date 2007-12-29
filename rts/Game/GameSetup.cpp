@@ -487,10 +487,10 @@ bool CGameSetup::Update()
 	if (!gameServer && net->Connected())
 		return false;
 	for (int a = 0; a < numPlayers; a++) {
-		if (!gs->players[a]->readyToStart) {
+		if (gs->players[a]->active && !gs->players[a]->readyToStart) {
 			allReady = false;
 			break;
-		} else if (!readyTeams[gs->players[a]->team]) {
+		} else if (gs->players[a]->active && !readyTeams[gs->players[a]->team]) {
 			allReady = false;
 			break;
 		}
