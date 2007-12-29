@@ -41,7 +41,7 @@ class CGameServer
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName);
+	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName = "");
 	~CGameServer();
 
 	void AddLocalClient(unsigned wantedNumber);
@@ -51,9 +51,6 @@ public:
 	WARNING! No checks are done, so be carefull
 	*/
 	void PostLoad(unsigned lastTick, int serverframenum);
-	
-	/// Tell the server to play a demofile
-	void StartDemoPlayback(const std::string& demoName);
 
 	/**
 	@brief skip frames

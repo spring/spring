@@ -362,9 +362,7 @@ bool CPreGame::Update()
 		case WAIT_CONNECTING:
 			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName);
-				if (hasDemo)
-					gameServer->StartDemoPlayback(demoFile);
+				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
 				gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}
