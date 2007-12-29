@@ -35,7 +35,7 @@ UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const socka
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
 {
 	LPHOSTENT lpHostEntry;
-	
+
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 
@@ -62,7 +62,7 @@ UDPConnection::~UDPConnection()
 {
 	if (fragmentBuffer)
 		delete fragmentBuffer;
-	
+
 	while (!msgQueue.empty())
 	{
 		delete msgQueue.front();
@@ -97,20 +97,20 @@ void UDPConnection::Update()
 {
 	const unsigned curTime = SDL_GetTicks();
 	bool force = false;	// should we force to send a packet?
-	
+
 	if((dataRecv == 0) && lastSendTime < curTime-1000 && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime = curTime;
 		force = true;
 	}
-	
+
 	if (lastSendTime<curTime-5000 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
 		force = true;
 	}
 	else if(lastSendTime<curTime-200 && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		force = true;
 	}
-	
+
 	Flush(force);
 }
 
@@ -147,35 +147,36 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 		return;
 	}
 
-	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));	
+	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));
 	delete packet;
-	
+	packet = NULL;
+
 	packetMap::iterator wpi;
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
 		unsigned char buf[8000];
 		unsigned bufLength = 0;
-		
+
 		if (fragmentBuffer)
 		{
 			// combine with fragment buffer
 			bufLength += fragmentBuffer->length;
 			memcpy(buf, fragmentBuffer->data, bufLength);
 			delete fragmentBuffer;
-			fragmentBuffer = 0;
+			fragmentBuffer = NULL;
 		}
-		
+
 		lastInOrder++;
 #if (BOOST_VERSION >= 103400)
-		memcpy(buf+bufLength,wpi->second->data,wpi->second->length);
+		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
 		bufLength += (wpi->second)->length;
 #else
 		memcpy(buf + bufLength, (*wpi).data, (*wpi).length);
 		bufLength += (*wpi).length;
-#endif		
+#endif
 		waitingPackets.erase(wpi);
-		
+
 		for (unsigned pos = 0; pos < bufLength;)
 		{
 			char msgid = buf[pos];
@@ -190,24 +191,42 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 				else
 				{
 					int length_t = proto->GetLength(msgid);
-					if (length_t == -1)
+
+					// got enough data in the buffer to read the length of the message?
+					if (bufLength >= pos + -length_t)
 					{
-						msglength = buf[pos+1];
+						// yes => read the length (as byte or word)
+						if (length_t == -1)
+						{
+							msglength = buf[pos+1];
+						}
+						else if (length_t == -2)
+						{
+							msglength = *(short*)(buf+pos+1);
+						}
 					}
-					else if (length_t == -2)
+					else
 					{
-						msglength = *(short*)(buf+pos+1);
+						// no => store the fragment and break
+						fragmentBuffer = new RawPacket(buf + pos, bufLength - pos);
+						break;
 					}
 				}
-				
+
+				// if this isn't true we'll loop infinitely while filling up memory
+				assert(msglength != 0);
+
+				// got the complete message in the buffer?
 				if (bufLength >= pos + msglength)
 				{
+					// yes => add to msgQueue and keep going
 					msgQueue.push(new RawPacket(buf + pos, msglength));
 					pos += msglength;
 				}
 				else
 				{
-					fragmentBuffer = new RawPacket(buf + pos, bufLength-pos);
+					// no => store the fragment and break
+					fragmentBuffer = new RawPacket(buf + pos, bufLength - pos);
 					break;
 				}
 			}
@@ -324,7 +343,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	memcpy(tempbuf+hsize, data, length);
 	mySocket->SendTo(tempbuf, length+hsize, &addr);
 	delete[] tempbuf;
-	
+
 	dataSent += length;
 	sentOverhead += hsize;
 }
