@@ -323,7 +323,8 @@ void CGameServer::Update()
 
 	if (serverframenum > 0 && !play)
 	{
-		CreateNewFrame(true);
+		if (CreateNewFrame(true))
+			serverNet->FlushNet();
 	}
 	serverNet->Update();
 
@@ -781,7 +782,7 @@ void CGameServer::CheckForGameEnd()
 	}
 }
 
-void CGameServer::CreateNewFrame(bool fromServerThread)
+bool CGameServer::CreateNewFrame(bool fromServerThread)
 {
 	CheckSync();
 
@@ -800,6 +801,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 
 	timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
 	lastTick=currentTick;
+	bool newFrameCreated = false;
 
 	while((timeLeft>0) && !IsPaused)
 	{
@@ -814,12 +816,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 			} else
 				serverframenum++;
 			serverNet->SendNewFrame(serverframenum);
+			newFrameCreated = true;
 #ifdef SYNCCHECK
 			outstandingSyncFrames.push_back(serverframenum);
 #endif
 		}
 		timeLeft--;
 	}
+	return newFrameCreated;
 }
 
 void CGameServer::UpdateLoop()

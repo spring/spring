@@ -421,7 +421,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	RawPacket* packet = 0;
-	while (packet = net->GetData())
+	while ( (packet = net->GetData()) )
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
