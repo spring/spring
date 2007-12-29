@@ -24,6 +24,7 @@ CR_BIND(CTeam,);
 
 CR_REG_METADATA(CTeam, (
 				CR_MEMBER(teamNum),
+				CR_RESERVED(1),
 				CR_MEMBER(isDead),
 				CR_MEMBER(gaia),
 				CR_MEMBER(color),
