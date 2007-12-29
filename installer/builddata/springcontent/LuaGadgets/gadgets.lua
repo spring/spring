@@ -209,12 +209,12 @@ function gadgetHandler:Initialize()
 --  table.sort(gadgetFiles)
 
   for k,gf in ipairs(gadgetFiles) do
-    print('gf1 = ' .. gf) -- FIXME
+    Spring.Echo('gf1 = ' .. gf) -- FIXME
   end
 
   -- stuff the gadgets into unsortedGadgets
   for k,gf in ipairs(gadgetFiles) do
-    print('gf2 = ' .. gf) -- FIXME
+    Spring.Echo('gf2 = ' .. gf) -- FIXME
     local gadget = self:LoadGadget(gf)
     if (gadget) then
       table.insert(unsortedGadgets, gadget)
@@ -245,7 +245,7 @@ function gadgetHandler:Initialize()
 
     local name = g.ghInfo.name
     local basename = g.ghInfo.basename
-    print(string.format("Loaded gadget:  %-18s  <%s>", name, basename))
+    Spring.Echo(string.format("Loaded gadget:  %-18s  <%s>", name, basename))
   end
 end
 
@@ -287,7 +287,7 @@ function gadgetHandler:LoadGadget(filename)
   local knownInfo = self.knownGadgets[name]
   if (knownInfo) then
     if (knownInfo.active) then
-      print('Failed to load: ' .. basename .. '  (duplicate name)')
+      Spring.Echo('Failed to load: ' .. basename .. '  (duplicate name)')
       return nil
     end
   else
@@ -583,7 +583,7 @@ function gadgetHandler:UpdateGadgetCallIn(name, g)
     end
     self:UpdateCallIn(name)
   else
-    print('UpdateGadgetCallIn: bad name: ' .. name)
+    Spring.Echo('UpdateGadgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -595,7 +595,7 @@ function gadgetHandler:RemoveGadgetCallIn(name, g)
     ArrayRemove(ciList, g)
     self:UpdateCallIn(name)
   else
-    print('RemoveGadgetCallIn: bad name: ' .. name)
+    Spring.Echo('RemoveGadgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -617,7 +617,7 @@ function gadgetHandler:EnableGadget(name)
     return false
   end
   if (not ki.active) then
-    print('Loading:  '..ki.filename)
+    Spring.Echo('Loading:  '..ki.filename)
     local order = gadgetHandler.orderList[name]
     if (not order or (order <= 0)) then
       self.orderList[name] = 1
@@ -639,7 +639,7 @@ function gadgetHandler:DisableGadget(name)
   if (ki.active) then
     local w = self:FindGadget(name)
     if (not w) then return false end
-    print('Removed:  '..ki.filename)
+    Spring.Echo('Removed:  '..ki.filename)
     self:RemoveGadget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
   end
