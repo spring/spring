@@ -709,22 +709,12 @@ void CGameServer::GenerateAndSendGameID()
 void CGameServer::StartGame()
 {
 	serverNet->Listening(false);
-
-	if (!play)
-		GenerateAndSendGameID();
-
-	for(unsigned a=0; a < MAX_PLAYERS; ++a){
-		if(players[a])
-			serverNet->SendPlayerName(a, players[a]->name);
+	
+	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
+			if(players[a])
+				serverNet->SendPlayerName(a, players[a]->name);
 	}
-
-	if (gameSetup) {
-		for (unsigned a = 0; a < gs->activeTeams; ++a)
-		{
-			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
-		}
-	}
-
+	
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(userSpeedFactor>maxUserSpeed)
 	{
@@ -735,6 +725,21 @@ void CGameServer::StartGame()
 	{
 		serverNet->SendUserSpeed(0,minUserSpeed);
 		userSpeedFactor = minUserSpeed;
+	}
+
+	if (play) {
+		// the client told us to start a demo
+		// no need to send startpos and startplaying since its in the demo
+		return;
+	}
+		
+	GenerateAndSendGameID();
+
+	if (gameSetup) {
+		for (unsigned a = 0; a < gs->activeTeams; ++a)
+		{
+			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+		}
 	}
 
 	serverNet->SendStartPlaying();
