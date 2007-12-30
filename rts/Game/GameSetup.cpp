@@ -488,11 +488,12 @@ bool CGameSetup::Update()
 	bool allReady = true;
 	if (!gameServer && net->Connected())
 		return false;
-	for (int a = 0; a < numPlayers; a++) {
-		if (gs->players[a]->active && !gs->players[a]->readyToStart) {
+	for (int a = numDemoPlayers; a < numPlayers; a++) {
+		if (!gs->players[a]->readyToStart) {
 			allReady = false;
 			break;
-		} else if (gs->players[a]->active && !readyTeams[gs->players[a]->team]) {
+		} else if (!readyTeams[gs->players[a]->team] && numDemoPlayers == 0) // no need to ready up when hosting demo
+		{
 			allReady = false;
 			break;
 		}
