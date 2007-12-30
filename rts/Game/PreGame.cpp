@@ -138,7 +138,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 						gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 					}
 				}
-				
+
 				/*
 				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
 				Default settings: spectating
@@ -544,7 +544,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	logOutput.Print("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
-	
+
 	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 	unsigned length = 0;
 	mapName = "";
@@ -567,7 +567,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			CScriptHandler::SelectScript((char*) (demobuffer+2));
 			SelectScript((char*) (demobuffer+2));
 		}
-		
+
 		if (scanner.ReachedEnd())
 		{
 			logOutput.Print("End of demo reached and no data found");
@@ -607,10 +607,10 @@ void CPreGame::SelectMap(std::string s)
 	if (!f->FileExists()) {
 		vector<string> ars = archiveScanner->GetArchivesForMap(s);
 		if (ars.empty())
-			logOutput.Print("Warning: map archive \"%s\" is missing?\n", s.c_str());
+			throw content_error("Couldn't find any archives for map '" + s + "'.");
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 			if (!hpiHandler->AddArchive(*i, false))
-				logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
+				throw content_error("Couldn't load archive '" + *i + "' for map '" + s + "'.");
 		}
 	}
 	delete f;
@@ -664,10 +664,10 @@ void CPreGame::SelectMod(std::string s)
 	// Map all required archives depending on selected mod(s)
 	vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
 	if (ars.empty())
-		logOutput.Print("Warning: mod archive \"%s\" is missing?\n", pregame->modArchive.c_str());
+		throw content_error("Couldn't find any archives for mod '" + pregame->modArchive + "'");
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 		if (!hpiHandler->AddArchive(*i, false))
-			logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
+			throw content_error("Couldn't load archive '" + *i + "' for mod '" + pregame->modArchive + "'.");
 
 	// always load springcontent.sdz
 	hpiHandler->AddArchive("base/springcontent.sdz", false);

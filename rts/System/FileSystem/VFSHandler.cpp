@@ -1,8 +1,5 @@
 #include "StdAfx.h"
 #include "VFSHandler.h"
-#ifdef _WIN32
-#include <io.h>
-#endif
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include <algorithm>
@@ -33,7 +30,7 @@ bool CVFSHandler::AddArchive(string arName, bool override)
 
 	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
 		StringToLowerInPlace(name);
-		if ((!override) && (files.find(name) != files.end())) 
+		if ((!override) && (files.find(name) != files.end()))
 			continue;
 
 		FileData d;
@@ -101,7 +98,7 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 		filesStart = files.lower_bound(dir);
 		filesEnd   = files.upper_bound(dirEnd);
 	}
-	
+
 	while (filesStart != filesEnd) {
 		const string path = filesystem.GetDirectory(filesStart->first);
 
@@ -149,7 +146,7 @@ vector<string> CVFSHandler::GetDirsInDir(string dir)
 	}
 
 	set<string> dirs;
-	
+
 	while (filesStart != filesEnd) {
 		const string path = filesystem.GetDirectory(filesStart->first);
 		// Test to see if this file start with the dir path
@@ -157,7 +154,7 @@ vector<string> CVFSHandler::GetDirsInDir(string dir)
 			// Strip pathname
 			const string name = filesStart->first.substr(dir.length());
 			const string::size_type slash = name.find_first_of("/\\");
-			if (slash != string::npos) {			
+			if (slash != string::npos) {
 				dirs.insert(name.substr(0, slash + 1));
 			}
 		}

@@ -74,9 +74,11 @@ void CGameSetup::LoadMap()
 	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 	if (!f->FileExists()) {
 		vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+		if (ars.empty())
+			throw content_error("Couldn't find any map archives for map '" + mapName + "'.");
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 			if (!hpiHandler->AddArchive(*i, false))
-				logOutput.Print("Warning: Couldn't load archive '%s'.", i->c_str());
+				throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
 		}
 	}
 	delete f;
