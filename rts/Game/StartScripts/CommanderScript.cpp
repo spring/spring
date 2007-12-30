@@ -7,11 +7,15 @@
 #include <map>
 #include "Game/Team.h"
 #include "Game/GameSetup.h"
+#include "Game/Game.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
+
+#include "Game/UI/MiniMap.h"
+#include "Game/UI/InfoConsole.h"
 
 
 extern std::string stupidGlobalMapname;
@@ -79,6 +83,13 @@ void CCommanderScript::Update(void)
 				CUnit* unit = unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
 
 				team->lineageRoot = unit->id;
+
+				// FIXME this shouldn't be here, but no better place exists currently
+				if (a == gu->myTeam) {
+					minimap->AddNotification(team->startPos,
+							float3(1.0f, 1.0f, 1.0f), 1.0f);
+					game->infoConsole->SetLastMsgPos(team->startPos);
+				}
 			}
 		}
 	}
@@ -100,6 +111,11 @@ void CCommanderScript::Update(void)
 
 		unitLoader.LoadUnit(s0, float3(x0, 80.0f, z0), 0, false, 0, NULL);
 		unitLoader.LoadUnit(s1, float3(x1, 80.0f, z1), 1, false, 0, NULL);
+
+		// FIXME this shouldn't be here, but no better place exists currently
+		minimap->AddNotification(float3(x0, 80.0f, z0),
+				float3(1.0f, 1.0f, 1.0f), 1.0f);
+		game->infoConsole->SetLastMsgPos(float3(x0, 80.0f, z0));
 	}
 }
 
