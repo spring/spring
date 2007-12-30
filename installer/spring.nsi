@@ -174,7 +174,7 @@ Function CheckTATextures
   IntCmp $1 1245637 Done              
 Fail:
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/base/tatextures_v062.sdz" "$INSTDIR\base\tatextures_v062.sdz" 
+             "http://installer.clan-sy.com/base/tatextures_v062.sdz" "$INSTDIR\base\tatextures_v062.sdz" 
 Done:
   FileClose $0
 
@@ -189,7 +189,7 @@ Function CheckOTAContent
   IntCmp $1 7421640 Done              
 Fail:
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/base/otacontent.sdz" "$INSTDIR\base\otacontent.sdz" 
+             "http://installer.clan-sy.com/base/otacontent.sdz" "$INSTDIR\base\otacontent.sdz" 
 Done:
   FileClose $0
 
@@ -204,7 +204,7 @@ Function CheckTAContent
   IntCmp $1 284 Done              
 Fail:
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/base/tacontent_v2.sdz" "$INSTDIR\base\tacontent_v2.sdz"
+             "http://installer.clan-sy.com/base/tacontent_v2.sdz" "$INSTDIR\base\tacontent_v2.sdz"
 Done:
   FileClose $0
 
