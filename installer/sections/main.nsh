@@ -13,9 +13,11 @@
   ; DLLs (updated in mingwlibs-v8)
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\SDL.dll"
   File "..\mingwlibs\dll\zlib1.dll"
-  
+
+  ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
+  File "..\game\SDL.dll"
+
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
   Delete "$INSTDIR\python24.dll"
