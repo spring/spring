@@ -1,20 +1,20 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\maps"  
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Altored_Divide.sd7" "$INSTDIR\maps\Altored_Divide.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/charlieinthehillsv21.sd7" "$INSTDIR\maps\charlieinthehillsv21.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Crossing_4_final.sd7" "$INSTDIR\maps\Crossing_4_final.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/FrostBiteV2.sd7" "$INSTDIR\maps\FrostBiteV2.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/GreenHaven_Remake.sd7" "$INSTDIR\maps\GreenHaven_Remake.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Islands_In_War_1.0.SDZ" "$INSTDIR\maps\Islands_In_War_1.0.sdz" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Metalheck.sdz" "$INSTDIR\maps\Metalheck.sdz" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/MoonQ20x.sd7" "$INSTDIR\maps\MoonQ20x.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Small_Supreme_Battlefield_V2.sd7" "$INSTDIR\maps\Small_Supreme_Battlefield_V2.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Tabula-v2.sd7" "$INSTDIR\maps\Tabula-v2.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Victoria_Crater.sd7" "$INSTDIR\maps\Victoria_Crater.sd7" \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/XantheTerra_v3.sd7" "$INSTDIR\maps\XantheTerra_v3.sd7" \
-             "http://buildbot.no-ip.org/~lordmatt/maps/teammaps/Zeus05_A.sd7" "$INSTDIR\maps\Zeus05_A.sd7" 
+             "http://installer.clan-sy.com/maps/teammaps/Altored_Divide.sd7" "$INSTDIR\maps\Altored_Divide.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/charlieinthehillsv21.sd7" "$INSTDIR\maps\charlieinthehillsv21.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/Crossing_4_final.sd7" "$INSTDIR\maps\Crossing_4_final.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/FrostBiteV2.sd7" "$INSTDIR\maps\FrostBiteV2.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/GreenHaven_Remake.sd7" "$INSTDIR\maps\GreenHaven_Remake.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/Islands_In_War_1.0.SDZ" "$INSTDIR\maps\Islands_In_War_1.0.sdz" \
+	     "http://installer.clan-sy.com/maps/teammaps/Metalheck.sdz" "$INSTDIR\maps\Metalheck.sdz" \
+	     "http://installer.clan-sy.com/maps/teammaps/MoonQ20x.sd7" "$INSTDIR\maps\MoonQ20x.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/Small_Supreme_Battlefield_V2.sd7" "$INSTDIR\maps\Small_Supreme_Battlefield_V2.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/Tabula-v2.sd7" "$INSTDIR\maps\Tabula-v2.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/Victoria_Crater.sd7" "$INSTDIR\maps\Victoria_Crater.sd7" \
+	     "http://installer.clan-sy.com/maps/teammaps/XantheTerra_v3.sd7" "$INSTDIR\maps\XantheTerra_v3.sd7" \
+             "http://installer.clan-sy.com/maps/teammaps/Zeus05_A.sd7" "$INSTDIR\maps\Zeus05_A.sd7" 
 
 !else
   ; Maps

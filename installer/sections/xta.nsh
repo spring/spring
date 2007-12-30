@@ -2,7 +2,7 @@
 
   SetOutPath "$INSTDIR\mods"
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/mods/XTA_Installer_Version.sdz" "$INSTDIR\mods\XTA_Installer_Version.sdz" 
+             "http://installer.clan-sy.com/mods/XTA_Installer_Version.sdz" "$INSTDIR\mods\XTA_Installer_Version.sdz" 
 
 !else
 

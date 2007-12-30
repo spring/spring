@@ -1,7 +1,7 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\mods"
   inetc::get \
-             "http://buildbot.no-ip.org/~lordmatt/mods/SimBase_Installer_Version.sd7" "$INSTDIR\mods\SimBase_Installer_Version.sd7" 
+             "http://installer.clan-sy.com/mods/SimBase_Installer_Version.sd7" "$INSTDIR\mods\SimBase_Installer_Version.sd7" 
 
 !else
 

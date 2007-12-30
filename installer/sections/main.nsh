@@ -107,12 +107,12 @@ ${If} ${FileExists} "$INSTDIR\maps\River_Dalev01.sd7"
   Delete "$INSTDIR\maps\River_Dalev01.sd7"
 ${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
   inetc::get \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+	     "http://installer.clan-sy.com/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
 ${OrIf} ${FileExists} "$INSTDIR\maps\River_Dale-v01.sd7"
   Delete "$INSTDIR\maps\River_Dale-v01.sd7"
 ${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
   inetc::get \
-	     "http://buildbot.no-ip.org/~lordmatt/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
+	     "http://installer.clan-sy.com/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
 ${EndIf}
 
 !else
