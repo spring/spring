@@ -797,6 +797,7 @@ void CGameServer::CheckForGameEnd()
 
 bool CGameServer::CreateNewFrame(bool fromServerThread)
 {
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	CheckSync();
 
 	// Send out new frame messages.
@@ -822,7 +823,6 @@ bool CGameServer::CreateNewFrame(bool fromServerThread)
 		if((!game || !game->creatingVideo) || !fromServerThread)
 #endif
 		{
-			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 			if (nextserverframenum!=0) {
 				serverframenum = nextserverframenum;
 				nextserverframenum = 0;

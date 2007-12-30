@@ -1126,7 +1126,8 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 	}
 	else if (cmd == "singlestep") {
-		gameServer->CreateNewFrame(false);
+		if (gameServer && gs->paused)
+			gameServer->CreateNewFrame(false);
 	}
 	else if (cmd == "debug") {
 		gu->drawdebug = !gu->drawdebug;
