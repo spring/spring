@@ -969,9 +969,14 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 			log("%05d %-40s %8s            : %s", currentAllocationCount, ownerString(sourceFile, sourceLine, sourceFunc), allocationTypes[allocationType], memorySizeString(reportedSize));
 
 #ifdef __linux__
-			void* buffer[10];
-			int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
-			backtrace_symbols_fd(buffer, size, fileno(fp_log));
+			if (fp_log) {
+				void* buffer[10];
+				int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
+				for (int i = 0; i < size; ++i)
+					fprintf(fp_log, " %p", buffer[i]);
+				fputc('\n', fp_log);
+				fflush(fp_log);
+			}
 #endif
 		}
 
