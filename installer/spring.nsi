@@ -292,7 +292,7 @@ SectionGroup "Mods"
 	
 	Section "EvolutionRTS Chapter 1" SEC_EVOLUTION
 	!define INSTALL
-	AddSize 34000
+	AddSize 38700
 	!include "sections\evolution.nsh"
 	!undef INSTALL
 	SectionEnd
