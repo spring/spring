@@ -60,7 +60,13 @@ Spring change log
 - Disabled recursive directory scanning for .sdd and omitted files within  .../hidden/*  directories from the scan 
 - Added ai unloading after team is destroyed. 
 - Installer greatly improved - all content is downloaded from the internet based on which mods and maps you 
-  choose to install. No more updating installer.
+  choose to install. No more updating installer. 
+- Added the following original content mods to the installer (downloads):
+  -Gundam
+  -Kernel Panic
+  -Evolution
+  -Spring: 1944
+  -Simbase 
 - allow GlobalAIs to send a startposition 
 - Bump the unit-limit to 10000
 - Added the following unitsync calls:
@@ -69,6 +75,9 @@ Spring change log
  - Valid maps are listed in the mod's "ValidMaps.lua" file
  - A valid map count of 0 means that any map can be used with the mod
  - This can be used in concert with LuaRules to setup multi-player scenarios and tutorials 
+- Gap removal in GameSetup, players/teams/allyteams can now be given\
+  with gaps in the numbering, e.g. PLAYER10 and PLAYER14 in an  1 vs 1.
+  Ordering does still matter.
 
 User Interface:
 - Added the CTRL modifier to area reclaims to allow reclaiming your own wrecks 
@@ -311,6 +320,11 @@ Unit / Weapon / Feature Definition Tags:
   means planes start matching their factory's heading right
   after taking off from the pad, false means they maintain
   the heading of the pad until reaching wantedHeight. 
+- added [CONSTRUCTION] section to Modruless.tdf:
+  constructionDecay (bool, default true): Should constructions decay if noone is working on them?
+  constructionDecayTime (float, default 6.66): How long until the decay starts?
+  constructionDecaySpeed (float, default 0.03): The speed of the decay, 
+  whereby buildTime*decaySpeed = time for a total decay so higher = slower decay
 
 Bugfixes:
 
@@ -467,6 +481,17 @@ Bugfixes:
 - Fixed the bug where a repair order on a construction whose terraforming is 
   incomplete will start construction anyway. 
 - Fixed units terraforming the ground under units being built by factories.
+- Added some protection against .wav's whose headers contain a garbage datalen 
+  (was causing SEGV's with XTA 9.2)
+- Change lots of printf calls to logOutput.Print
+- Server flushes the network buffer after each new frame created to decrease lag and stuttering units 
+- Don't send NETMSG_GAMEOVER when watching a demo with only 1 allyteam left 
+- Throw content_error if a mod/map archive can not be found instead of only
+  printing a warning in the log.  This should stop the 'missing default cursor'
+  message actually meaning 'missing a mod archive'
+- Added minimap ping on game start and set lastMsgPos to something meaningful.
+  Notably this fixes F3 zooming to top left corner before something interesting happens.
+- Fixed crash when singlestep was executed in client mode 
 
 Lua:
 - Added call-in gl.Smoothing(point, line, polygon)
@@ -683,6 +708,8 @@ TASServer/Protocol
 - Added protection against brute force attacks on accounts
 - New ban system using MySQL	
 - No more autoban on flooding - just a kick
+- Added protection against "CLIENTSTATUS command spam" exploit
+
 
 0.75b2
 
