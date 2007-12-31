@@ -14,7 +14,7 @@
 CStartPosSelecter* CStartPosSelecter::selector = NULL;
 
 
-CStartPosSelecter::CStartPosSelecter(void)
+CStartPosSelecter::CStartPosSelecter(void) : CInputReceiver(BACK)
 {
 	showReady = true;
 	startPosSet = false;
