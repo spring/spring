@@ -4313,7 +4313,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("reloadcob can only be used if cheating is enabled");
 		return;
 	}
-	const string unitName = msg.substr(11);
+	const string unitName = (msg.size() >= 12)? msg.substr(11): "";
 	if (unitName.empty()) {
 		logOutput.Print("Missing unit name");
 		return;
