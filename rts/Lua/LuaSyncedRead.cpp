@@ -953,7 +953,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushstring(L,  team->side.c_str());
 	lua_pushnumber(L,  gs->AllyTeam(team->teamNum));
 
-	return 7;
+	return 6;
 }
 
 
