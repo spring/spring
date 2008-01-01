@@ -57,6 +57,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 
 	CR_MEMBER(lastColWarning),
 	CR_MEMBER(lastColWarningType),
+	CR_MEMBER(collide),
 
 	CR_MEMBER(repairBelowHealth),
 	CR_MEMBER(reservedPad),
@@ -80,6 +81,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontCheckCol(false),
 	dontLand(false),
+	collide(true),
 	lastMoveRate(0),
 	waitCounter(0),
 	deltaSpeed(ZeroVector),
@@ -837,7 +839,7 @@ void CTAAirMoveType::Update()
 	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
 		oldpos = pos;
 
-		if (!dontCheckCol) {
+		if (!dontCheckCol && collide) {
 			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 			vector<CUnit*>::iterator ui;
 
@@ -974,6 +976,8 @@ void CTAAirMoveType::SetWantedAltitude(float altitude)
 
 void CTAAirMoveType::CheckForCollision(void)
 {
+	if (!collide) return;
+
 	SyncedFloat3& pos = owner->midPos;
 	SyncedFloat3 forward = owner->speed;
 	forward.Normalize();

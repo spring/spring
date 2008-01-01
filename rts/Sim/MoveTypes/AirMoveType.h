@@ -49,6 +49,7 @@ public:
 
 	bool loopbackAttack;
 	bool isFighter;
+	bool collide;
 
 	float wingDrag;
 	float wingAngle;
