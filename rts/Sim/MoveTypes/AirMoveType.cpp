@@ -31,6 +31,7 @@ CR_REG_METADATA(CAirMoveType, (
 
 		CR_MEMBER(loopbackAttack),
 		CR_MEMBER(isFighter),
+		CR_MEMBER(collide),
 
 		CR_MEMBER(wingDrag),
 		CR_MEMBER(wingAngle),
@@ -119,6 +120,7 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	myGravity(0.8f),
 	mySide(1),
 	isFighter(false),
+	collide(true),
 	oldpos(0,0,0),
 	oldGoalPos(0,1,0),
 	maneuver(0),
@@ -315,7 +317,7 @@ EndNormalControl:
 		oldpos = pos;
 		bool hitBuilding = false;
 
-		if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING) {
+		if (collide && (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING)) {
 			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 			vector<CUnit*>::iterator ui;
 
@@ -1119,6 +1121,8 @@ float3 CAirMoveType::FindLandingPos(void)
 
 void CAirMoveType::CheckForCollision(void)
 {
+	if (!collide) return;
+
 	SyncedFloat3& pos=owner->midPos;
 	SyncedFloat3& forward=owner->frontdir;
 	float3 midTestPos=pos+forward*121;

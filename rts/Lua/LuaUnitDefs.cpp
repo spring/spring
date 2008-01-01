@@ -750,6 +750,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("speed",    ud.speed);
 	ADD_FLOAT("turnRate", ud.turnRate);
 	ADD_BOOL("upright",   ud.upright);
+	ADD_BOOL("collide", ud.collide);
 
 	ADD_FLOAT("losHeight",     ud.losHeight);
 	ADD_FLOAT("losRadius",     ud.losRadius);

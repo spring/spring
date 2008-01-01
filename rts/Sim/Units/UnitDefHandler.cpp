@@ -282,6 +282,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
 	ud.upright = udTable.GetBool("upright", false);
+	ud.collide = udTable.GetBool("collide", true);
 	ud.onoffable = udTable.GetBool("onoffable", false);
 
 	ud.maxSlope = udTable.GetFloat("maxSlope", 0.0f);

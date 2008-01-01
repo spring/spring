@@ -26,6 +26,7 @@ public:
 	} flyState;
 
 	bool dontCheckCol;			//needed to get transport close enough to what is going to be transported, better way ?
+	bool collide;             //mods can use this to disable plane collisions
 
 	float3 goalPos;
 	float3 oldpos;

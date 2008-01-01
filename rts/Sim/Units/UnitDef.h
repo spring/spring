@@ -136,6 +136,7 @@ struct UnitDef
 	float turnRate;
 	int moveType;
 	bool upright;
+	bool collide;
 
 	float controlRadius;
 	float losRadius;

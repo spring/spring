@@ -258,6 +258,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 			mt->wantedHeight = ud->wantedHeight+gs->randFloat()*5;
 			mt->orgWantedHeight=mt->wantedHeight;
 			mt->dontLand = ud->DontLand ();
+			mt->collide = ud->collide;
 
 			unit->moveType = mt;
 		}
@@ -266,6 +267,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 
 			if(type=="Fighter")
 				mt->isFighter=true;
+
+			mt->collide = ud->collide;
 
 			mt->wingAngle = ud->wingAngle;
 			mt->invDrag = 1 - ud->drag;
