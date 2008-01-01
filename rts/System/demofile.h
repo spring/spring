@@ -21,6 +21,8 @@ may change every Spring release without notice).
 appending stuff to DemoFileHeader is not sufficient. */
 #define DEMOFILE_VERSION 3
 
+#pragma pack(push, 1)
+
 /**
 @brief Spring demo file main header
 
@@ -111,5 +113,7 @@ struct DemoStreamChunkHeader
 		length = swabdword(length);
 	}
 };
+
+#pragma pack(pop)
 
 #endif // DEMOFILE_H
