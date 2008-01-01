@@ -1323,7 +1323,7 @@ void CGroundMoveType::Fail()
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}
 
-		if (owner->pos.distance(goal) > goalRadius + 150) {
+		if (!owner->commandAI->unimportantMove && owner->pos.distance(goal) > goalRadius + 150) {
 			logOutput << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
 			logOutput.SetLastMsgPos(owner->pos);
 		}
