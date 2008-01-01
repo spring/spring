@@ -1405,12 +1405,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 #ifndef _CONSOLE
 	switch(val) {
 		case ACTIVATION: {
-			if (param == 0 || param == 1) {
-				Command c;
-				c.id = CMD_ONOFF;
-				c.params.push_back(param);
-				unit->commandAI->GiveCommand(c);
-			}
+			Command c;
+			c.id = CMD_ONOFF;
+			c.params.push_back(param == 0 ? 0 : 1);
+			unit->commandAI->GiveCommand(c);
 			break;
 		}
 		case STANDINGMOVEORDERS: {
