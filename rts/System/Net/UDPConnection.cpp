@@ -66,7 +66,7 @@ UDPConnection::~UDPConnection()
 	while (!msgQueue.empty())
 	{
 		delete msgQueue.front();
-		msgQueue.pop();
+		msgQueue.pop_front();
 	}
 }
 
@@ -79,18 +79,24 @@ void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 	outgoingLength+=length;
 }
 
+const RawPacket* UDPConnection::Peek(int ahead) const
+{
+	if (ahead < msgQueue.size())
+		return msgQueue[ahead];
+
+	return NULL;
+}
+
 RawPacket* UDPConnection::GetData()
 {
 	if (!msgQueue.empty())
 	{
 		RawPacket* msg = msgQueue.front();
-		msgQueue.pop();
+		msgQueue.pop_front();
 		return msg;
 	}
 	else
-	{
-		return 0;
-	}
+		return NULL;
 }
 
 void UDPConnection::Update()
@@ -220,7 +226,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 				if (bufLength >= pos + msglength)
 				{
 					// yes => add to msgQueue and keep going
-					msgQueue.push(new RawPacket(buf + pos, msglength));
+					msgQueue.push_back(new RawPacket(buf + pos, msglength));
 					pos += msglength;
 				}
 				else

@@ -205,6 +205,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
+	leastQue = 0;
+	timeLeft = 0.0f;
+	consumeSpeed = 1.0f;
+
 	infoConsole = ic;
 
 	script = NULL;
@@ -439,11 +443,11 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 		GameSetupDrawer::Enable();
 	}
 
-	lastModGameTimeMeasure = SDL_GetTicks();
 	lastframe = SDL_GetTicks();
-	lastUpdate = SDL_GetTicks();
-	lastMoveUpdate = SDL_GetTicks();
-	lastUpdateRaw = SDL_GetTicks();
+	lastModGameTimeMeasure = lastframe;
+	lastUpdate = lastframe;
+	lastMoveUpdate = lastframe;
+	lastUpdateRaw = lastframe;
 	updateDeltaSeconds = 0.0f;
 
 	glFogfv(GL_FOG_COLOR,FogLand);
@@ -1850,6 +1854,12 @@ bool CGame::Update()
 		starttime=fpstimer;
 		oldframenum=gs->frameNum;
 
+		if (!gameServer) {
+			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
+			leastQue = 10000;
+			timeLeft = 0.0f;
+		}
+
 #ifdef TRACE_SYNC
 		tracefile.DeleteInterval();
 		tracefile.NewInterval();
@@ -2623,17 +2633,47 @@ bool CGame::ClientReadNet()
 	}
 #endif
 
-	lastframe = SDL_GetTicks();
-
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 
 	if (!net->IsActiveConnection())
 		return gameOver;
 
-	unsigned iterations = 0;
-	RawPacket* packet = 0;
-	while ((++iterations) < 20 && (packet = net->GetData()))
+	const RawPacket* packet = NULL;
+
+	// compute new timeLeft to "smooth" out SimFrame() calls
+	if(!gameServer){
+		unsigned int currentFrame = SDL_GetTicks();
+
+		if (timeLeft > 1.0f)
+			timeLeft -= 1.0f;
+		timeLeft += consumeSpeed * ((float)(currentFrame - lastframe) / 1000.f);
+		if (skipping)
+			timeLeft = 0.01f;
+		lastframe = currentFrame;
+
+		// read ahead to calculate the number of NETMSG_NEWFRAMES
+		// we still have to process (in variable "que")
+		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
+		unsigned ahead = 0;
+		while ((packet = net->Peek(ahead)) != NULL)
+		{
+			if (packet->data[0] == NETMSG_NEWFRAME)
+				++que;
+			++ahead;
+		}
+
+		if(que < leastQue)
+			leastQue = que;
+	}
+
+	// make sure ClientReadNet returns at least every 15 game frames
+	// so CGame can process keyboard input, and render etc.
+	if (gameServer || net->localDemoPlayback)
+		timeLeft = 15.0f;
+
+	// really process the messages
+	while (timeLeft > 0.0f && (packet = net->GetData()) != NULL)
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -2885,6 +2925,7 @@ bool CGame::ClientReadNet()
 			}
 
 			case NETMSG_NEWFRAME: {
+				timeLeft -= 1.0f;
 				if ((gs->frameNum % 8) == 0) {
 					// only answer every 8th newframe (~3 times per second are enought for ping calculation)
 					net->SendNewFrame(gs->frameNum);

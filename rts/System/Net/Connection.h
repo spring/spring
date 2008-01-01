@@ -16,6 +16,14 @@ public:
 	virtual ~CConnection();
 	
 	virtual void SendData(const unsigned char *data, const unsigned length)=0;
+
+	/**
+	@brief Take a look at the messages that will be returned by GetData().
+	@return A RawPacket holding the data, or 0 if no data
+	@param ahead How many packets to look ahead. A typical usage would be:
+	for (int ahead = 0; (packet = conn->Peek(ahead)) != NULL; ++ahead) {}
+	*/
+	virtual const RawPacket* Peek(int ahead) const = 0;
 	
 	/**
 	@brief New method of data gathering

@@ -125,13 +125,23 @@ bool CNet::IsActiveConnection(const unsigned number) const
 	return connections[number];
 }
 
+const RawPacket* CNet::Peek(const unsigned conNum, unsigned ahead) const
+{
+	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
+	{
+		return connections[conNum]->Peek(ahead);
+	}
+	else
+	{
+		throw network_error(str( boost::format("Wrong connection ID in CNet::Peek(): %1%") %conNum ));
+	}
+}
+
 RawPacket* CNet::GetData(const unsigned conNum)
 {
 	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
 	{
-		///TODO make the engine take RawPackets to avoid the memcpy'ing
-		RawPacket* data = connections[conNum]->GetData();
-		return data;
+		return connections[conNum]->GetData();
 	}
 	else
 	{
