@@ -85,6 +85,19 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 		md.replaces.push_back(p->SGetValueDef("", key));
 	}
 
+	// HACK needed until lobbies, lobbyserver and unitsync are sorted out
+	// so they can uniquely identify different versions of the same mod.
+	// (at time of this writing they use name only)
+
+	// NOTE when changing this, this function is used both by the code that
+	// reads ArchiveCache.txt and the code that reads modinfo.tdf from the mod.
+	// so make sure it doesn't keep adding stuff to the name everytime
+	// Spring/unitsync is loaded.
+
+	if (md.name.find(md.version) == string::npos) {
+		md.name += " " + md.version;
+	}
+
 	return md;
 }
 
