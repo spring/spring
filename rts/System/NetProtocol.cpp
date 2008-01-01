@@ -54,9 +54,14 @@ bool CNetProtocol::IsActiveConnection() const
 	return CNet::IsActiveConnection(serverSlot);
 }
 
+const RawPacket* CNetProtocol::Peek(unsigned ahead) const
+{
+	return CNet::Peek(serverSlot, ahead);
+}
+
 RawPacket* CNetProtocol::GetData()
 {
-	RawPacket* ret = CBaseNetProtocol::GetData(serverSlot);
+	RawPacket* ret = CNet::GetData(serverSlot);
 	
 	if (record && ret)
 	{

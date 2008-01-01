@@ -323,8 +323,12 @@ void CGameServer::Update()
 	{
 		// Flushing the server after each new frame will result in smoother gameplay
 		// don't need flushing at faster gameplay, we can save bandwith and lower the packet count
-		if (CreateNewFrame(true) && internalSpeed < 1.2f)
-			serverNet->FlushNet();
+		// NOTE: smoother gameplay should be handled now by CGame, by smoothing
+		// out network buffer reads if the packets arrive in short bursts.
+		// (lots of packets have more chance to congest network stream)
+		//if (CreateNewFrame(true) && internalSpeed < 1.2f)
+		//	serverNet->FlushNet();
+		CreateNewFrame(true);
 	}
 	serverNet->Update();
 

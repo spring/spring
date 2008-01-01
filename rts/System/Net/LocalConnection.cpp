@@ -8,7 +8,7 @@ namespace netcode {
 
 // static stuff
 unsigned CLocalConnection::Instances = 0;
-std::queue<RawPacket*> CLocalConnection::Data[2];
+CLocalConnection::MsgQueue CLocalConnection::Data[2];
 boost::mutex CLocalConnection::Mutex[2];
 
 CLocalConnection::CLocalConnection()
@@ -27,7 +27,7 @@ CLocalConnection::~CLocalConnection()
 	while (!Data[instance].empty())
 	{
 		delete Data[instance].front();
-		Data[instance].pop();
+		Data[instance].pop_front();
 	}
 }
 
@@ -36,8 +36,18 @@ void CLocalConnection::SendData(const unsigned char *data, const unsigned length
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 
 	dataSent += length;
-	Data[OtherInstance()].push(new RawPacket(data, length));
+	Data[OtherInstance()].push_back(new RawPacket(data, length));
 	dataSent += length;
+}
+
+const RawPacket* CLocalConnection::Peek(int ahead) const
+{
+	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
+
+	if (ahead < Data[instance].size())
+		return Data[instance][ahead];
+
+	return NULL;
 }
 
 RawPacket* CLocalConnection::GetData()
@@ -47,12 +57,12 @@ RawPacket* CLocalConnection::GetData()
 	if (!Data[instance].empty())
 	{
 		RawPacket* next = Data[instance].front();
-		Data[instance].pop();
+		Data[instance].pop_front();
 		dataRecv += next->length;
 		return next;
 	}
 	else
-		return 0;
+		return NULL;
 }
 
 void CLocalConnection::Flush(const bool forced)

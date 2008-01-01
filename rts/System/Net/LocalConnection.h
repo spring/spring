@@ -2,7 +2,7 @@
 #define _LOCALCONNECTION
 
 #include <boost/thread/mutex.hpp>
-#include <queue>
+#include <deque>
 
 #include "Connection.h"
 #include "RawPacket.h"
@@ -28,7 +28,9 @@ public:
 	@brief Send data to other instance
 	*/
 	virtual void SendData(const unsigned char *data, const unsigned length);
-	
+
+	virtual const RawPacket* Peek(int ahead) const;
+
 	/**
 	@brief Get data
 	*/
@@ -41,7 +43,9 @@ public:
 	virtual bool CheckTimeout() const;
 
 private:
-	static std::queue<RawPacket*> Data[2];
+	typedef std::deque<RawPacket*> MsgQueue;
+
+	static MsgQueue Data[2];
 	static boost::mutex Mutex[2];
 
 	unsigned OtherInstance() const;

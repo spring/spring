@@ -31,6 +31,14 @@ public:
 	bool localDemoPlayback;
 
 	/**
+	@brief Take a look at the messages that will be returned by GetData().
+	@return A RawPacket holding the data, or 0 if no data
+	@param ahead How many packets to look ahead. A typical usage would be:
+	for (int ahead = 0; (packet = net->Peek(ahead)) != NULL; ++ahead) {}
+	*/
+	const RawPacket* Peek(unsigned ahead) const;
+
+	/**
 	@brief Recieve data from Client
 	@return The amount of data recieved, or -1 if connection did not exists
 	@todo Throw exceptions

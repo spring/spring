@@ -79,7 +79,6 @@ public:
 	unsigned lastUpdateRaw;
 	float updateDeltaSeconds;
 
-	unsigned lastframe;
 	float totalGameTime;			//time in seconds, stops at game end
 
 	std::string userInputPrefix;
@@ -168,6 +167,15 @@ protected:
 	void AddTraffic(int playerID, int packetCode, int length);
 	// <playerID, <packetCode, total bytes> >
 	std::map<int, PlayerTrafficInfo> playerTraffic;
+
+private:
+
+	// to smooth out SimFrame calls
+	int leastQue;       ///< Lowest value of que in the past second.
+	float timeLeft;     ///< How many SimFrame() calls we still may do.
+	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
+	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
+
 };
 
 

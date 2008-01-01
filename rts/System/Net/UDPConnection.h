@@ -9,7 +9,7 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
-#include <queue>
+#include <deque>
 
 namespace netcode {
 
@@ -33,12 +33,13 @@ public:
 
 	/// use this if you want data to be sent
 	virtual void SendData(const unsigned char *data, const unsigned length);
-	
+
+	virtual const RawPacket* Peek(int ahead) const;
+
 	/**
 	@brief use this to recieve ready data
-	Will read all waiting in-order packages from waitingPackets, copy their  data to buf and deleting them
-	@return bytes of data read, or -1 on error
-	@param buf buffer to hold the data
+	@return a network message encapsulated in a RawPacket,
+	or NULL if there are no more messages available.
 	*/
 	virtual RawPacket* GetData();
 
@@ -66,6 +67,8 @@ public:
 	static const unsigned hsize;
 
 private:
+	typedef std::deque<RawPacket*> MsgQueue;
+
 	void Init();
 	
 	unsigned lastSendTime;
@@ -93,7 +96,7 @@ private:
 	int lastInOrder;
 	int lastNak;
 	unsigned lastNakTime;
-	std::queue<RawPacket*> msgQueue;
+	MsgQueue msgQueue;
 
 	/** Our socket.
 	*/
