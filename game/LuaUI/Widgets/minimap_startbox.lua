@@ -220,11 +220,11 @@ function widget:DrawWorld()
 
   -- show the team start positions
   for _, teamID in ipairs(Spring.GetTeamList()) do
-    if (teamID ~= gaiaTeamID) then
-      local _,leader = Spring.GetTeamInfo(teamID)
-      local name = Spring.GetPlayerInfo(leader)
+    local _,leader = Spring.GetTeamInfo(teamID)
+    local _,_,spec = Spring.GetPlayerInfo(leader)
+    if ((not spec) and (teamID ~= gaiaTeamID)) then
       local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
+      if (x and (y ~= -500)) then
         local color = GetTeamColor(teamID)
         local alpha = 0.5 + math.abs(((time * 3) % 1) - 0.5)
         gl.PushMatrix()
@@ -250,14 +250,12 @@ function widget:DrawScreen()
     local _,leader = Spring.GetTeamInfo(teamID)
     local name,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
-      local _,leader = Spring.GetTeamInfo(teamID)
       local colorStr, outlineStr = GetTeamColorStr(teamID)
-      name = colorStr .. name
       local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
+      if (x and (y ~= -500)) then
         local sx, sy, sz = Spring.WorldToScreenCoords(x, y + 135, z)
         if (sz < 1) then
-          gl.Text(name, sx, sy + 12, 12, outlineStr .. 'c')
+          gl.Text(colorStr .. name, sx, sy + 12, 12, outlineStr .. 'c')
         end
       end
     end
@@ -317,7 +315,7 @@ function widget:DrawInMiniMap(sx, sz)
     local _,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
       local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x and ((x ~= 0) or (y ~= -500) or (z ~= 0))) then
+      if (x and (y ~= -500)) then
         local color = GetTeamColor(teamID)
         local r, g, b = color[1], color[2], color[3]
         local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
