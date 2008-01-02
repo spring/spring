@@ -242,19 +242,10 @@ bool CPreGame::Draw()
 				PrintLoadMsg("Waiting on mod", false);
 				break;
 			case WAIT_CONNECTING:
-			{
-				char text[400];
 				if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-					sprintf(text,"Connecting to server .");
+					PrintLoadMsg("Connecting to server .");
 				else
-					sprintf(text,"Connecting to server  ");
-
-				glColor4f(1,1,1,1);
-				glTranslatef(0.5f-0.01f*strlen(text),0.48f,0.0f);
-				glScalef(0.03f,0.04f,0.1f);
-				font->glPrintRaw(text);
-				glLoadIdentity();
-			}
+					PrintLoadMsg("Connecting to server  ");
 				break;
 			case UNKNOWN:
 			case WAIT_ON_ADDRESS:
