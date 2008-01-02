@@ -44,9 +44,9 @@ SetCompressor lzma
 ; Finish page
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\springsettings.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\settings.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
-!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed or updated from a previous version.  It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems."
+!define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed or updated from a previous version.  It is recommended that you configure Spring settings now if this is a fresh installation, otherwise you may encounter problems.  If you did not install spring to C:\Program Files\Spring you will need to point the settings program to the install location."
 
 ; Finish page
 ;!ifndef SP_UPDATE
