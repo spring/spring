@@ -29,7 +29,7 @@ public:
 	*/
 	virtual void SendData(const unsigned char *data, const unsigned length);
 
-	virtual const RawPacket* Peek(int ahead) const;
+	virtual const RawPacket* Peek(unsigned ahead) const;
 
 	/**
 	@brief Get data
