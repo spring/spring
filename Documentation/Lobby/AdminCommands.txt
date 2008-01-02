@@ -136,3 +136,7 @@ killall [reason]
   will disconnect all clients from the server
 retrievelatestbanlist
   forces server to retrieve latest ban list from the database
+retrievelatestbanlist
+  forces server to update ban entries from the database. Note: you never
+  need to call this command manually, it is automatically called by the web
+  interface once a ban entry is added.
