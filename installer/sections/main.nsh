@@ -25,12 +25,12 @@
   Delete "$INSTDIR\MSVCR71.dll"
   
 ;!ifndef SP_UPDATE
-  File "..\game\settings.exe"
+  Delete "..\game\settings.exe"
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
 
 ;New Settings Program
-  File "..\game\springsettings.exe"
+  File "..\game\settings.exe"
   File "..\game\mingwm10.dll"
   File "..\game\wxbase28u_gcc_custom.dll"
   File "..\game\wxbase28u_net_gcc_custom.dll"
@@ -135,11 +135,11 @@ ${EndIf}
   Delete "$INSTDIR\uikeys.txt"
   Delete "$INSTDIR\cmdcolors.txt"
   Delete "$INSTDIR\ctrlpanel.txt"
-  Delete "$INSTDIR\settings.exe"
+  ;Delete "$INSTDIR\settings.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
   ;New Settings Program
-  Delete "$INSTDIR\springsettings.exe"
+  Delete "$INSTDIR\settings.exe"
   Delete "$INSTDIR\mingwm10.dll"
   Delete "$INSTDIR\wxbase28u_gcc_custom.dll"
   Delete "$INSTDIR\wxbase28u_net_gcc_custom.dll"
