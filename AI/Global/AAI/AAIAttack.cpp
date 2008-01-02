@@ -156,12 +156,12 @@ void AAIAttack::AttackSector(AAISector *sector, AttackType type)
 
 void AAIAttack::AddGroup(AAIGroup *group)
 {
-	if(group->group_type == ASSAULT_UNIT)
+	if(group->group_unit_type == ASSAULT_UNIT)
 	{
 		combat_groups.insert(group);
 		group->attack = this;
 	}
-	else if(group->group_type == ANTI_AIR_UNIT)
+	else if(group->group_unit_type == ANTI_AIR_UNIT)
 	{
 		aa_groups.insert(group);
 		group->attack = this;
@@ -175,12 +175,12 @@ void AAIAttack::AddGroup(AAIGroup *group)
 
 void AAIAttack::RemoveGroup(AAIGroup *group)
 {
-	if(group->group_type == ASSAULT_UNIT)
+	if(group->group_unit_type == ASSAULT_UNIT)
 	{
 		group->attack = 0;
 		combat_groups.erase(group);
 	}
-	else if(group->group_type == ANTI_AIR_UNIT)	
+	else if(group->group_unit_type == ANTI_AIR_UNIT)	
 	{
 		group->attack = 0;
 		aa_groups.erase(group);		

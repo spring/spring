@@ -198,7 +198,7 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 
 		if(group)
 		{	
-			ai->cb->SendTextMsg("Bombing...", 0);
+			//ai->cb->SendTextMsg("Bombing...", 0);
 
 			group->BombTarget(targets[i].unit_id, &targets[i].pos);
 			
@@ -214,7 +214,7 @@ AAIGroup* AAIAirForceManager::GetAirGroup(float importance, UnitType group_type)
 	{
 		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
 		{
-			if((*group)->task_importance < importance && group_type == (*group)->group_type  && (*group)->units.size() > (*group)->maxSize/2)
+			if((*group)->task_importance < importance && group_type == (*group)->group_unit_type  && (*group)->units.size() > (*group)->maxSize/2)
 				return *group;
 		}
 	}
@@ -223,7 +223,7 @@ AAIGroup* AAIAirForceManager::GetAirGroup(float importance, UnitType group_type)
 		
 		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
 		{
-			if((*group)->task_importance < importance && group_type == (*group)->group_type && (*group)->units.size() >= (*group)->maxSize)
+			if((*group)->task_importance < importance && group_type == (*group)->group_unit_type && (*group)->units.size() >= (*group)->maxSize)
 				return *group;
 		}
 	}
