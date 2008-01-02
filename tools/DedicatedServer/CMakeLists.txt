@@ -35,4 +35,4 @@ TARGET_LINK_LIBRARIES(fileops hpiutil2 7zip minizip boost_regex)
 
 ADD_EXECUTABLE(server main GameServer ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol)
 TARGET_LINK_LIBRARIES(server SDL boost_thread net fileops)
-INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System ../unitsync)
+INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
