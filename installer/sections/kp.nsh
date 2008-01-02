@@ -1,8 +1,8 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\mods"
   inetc::get \
-             "http://installer.clan-sy.com/mods/Kernel_Panic_Installer_Version.sd7" "$INSTDIR\mods\Kernel_Panic_Installer_Version.sd7" \
-	     "http://installer.clan-sy.com/mods/Kernel_Panic_Evilless_Installer_Version.sd7" "$INSTDIR\mods\Kernel_Panic_Evilless_Installer_Version.sd7" \
+             "http://installer.clan-sy.com/mods/Kernel_Panic.sd7" "$INSTDIR\mods\Kernel_Panic.sd7" \
+	     "http://installer.clan-sy.com/mods/Kernel_Panic_Evilless.sd7" "$INSTDIR\mods\Kernel_Panic_Evilless.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Direct_Memory_Access_0.5c_beta.sd7" "$INSTDIR\maps\Direct_Memory_Access_0.5c_beta.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Direct_Memory_Access_0.5e_beta.sd7" "$INSTDIR\maps\Direct_Memory_Access_0.5e_beta.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Major_Madness3.0.sd7" "$INSTDIR\maps\Major_Madness3.0.sd7" \
@@ -18,8 +18,8 @@
 	     "http://installer.clan-sy.com/AI/NTai/configs/Kernel_Panic.tdf" "$INSTDIR\AI\NTai\configs\Kernel_Panic.tdf" 
 !else
 
-  Delete "$INSTDIR\mods\Kernel_Panic_Installer_Version.sd7"
-  Delete "$INSTDIR\mods\Kernel_Panic_Evilless_Installer_Version.sd7"
+  Delete "$INSTDIR\mods\Kernel_Panic.sd7"
+  Delete "$INSTDIR\mods\Kernel_Panic_Evilless.sd7"
   Delete "$INSTDIR\AI\NTai\configs\Kernel_Panic.tdf"
   Delete "$INSTDIR\AI\NTai\Kernel_Panic.tdf"
   Delete "$INSTDIR\maps\Direct_Memory_Access_0.5c_beta.sd7"
