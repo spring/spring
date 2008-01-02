@@ -9,7 +9,6 @@
 #endif
 #include "Game/GameVersion.h"
 
-
 /////////////////////////////////////
 // CDemoReader implementation
 
@@ -50,16 +49,16 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	}
 
 	if (fileHeader.scriptSize != 0) {
-#ifndef DEDICATED
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo->Read(buf, fileHeader.scriptSize);
 
+#ifndef DEDICATED
 		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
 			gameSetup = SAFE_NEW CGameSetup();
 			gameSetup->Init(buf, fileHeader.scriptSize);
 		}
-		delete[] buf;
 #endif
+		delete[] buf;
 	}
 
 	playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));

@@ -319,7 +319,7 @@ void UDPConnection::Init()
 
 void UDPConnection::AckPackets(const int nextAck)
 {
-	while(nextAck>=firstUnacked){
+	while(nextAck>=firstUnacked && !unackedPackets.empty()){
 		unackedPackets.pop_front();
 		firstUnacked++;
 	}
