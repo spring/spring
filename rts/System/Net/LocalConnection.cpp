@@ -40,7 +40,7 @@ void CLocalConnection::SendData(const unsigned char *data, const unsigned length
 	dataSent += length;
 }
 
-const RawPacket* CLocalConnection::Peek(int ahead) const
+const RawPacket* CLocalConnection::Peek(unsigned ahead) const
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
 

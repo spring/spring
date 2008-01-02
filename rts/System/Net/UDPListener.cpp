@@ -1,7 +1,6 @@
 #include "UDPListener.h"
 
 #include <boost/weak_ptr.hpp>
-#include <iostream>
 
 #include "ProtocolDef.h"
 

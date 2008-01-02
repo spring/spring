@@ -34,7 +34,7 @@ public:
 	/// use this if you want data to be sent
 	virtual void SendData(const unsigned char *data, const unsigned length);
 
-	virtual const RawPacket* Peek(int ahead) const;
+	virtual const RawPacket* Peek(unsigned ahead) const;
 
 	/**
 	@brief use this to recieve ready data

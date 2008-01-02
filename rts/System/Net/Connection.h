@@ -23,7 +23,7 @@ public:
 	@param ahead How many packets to look ahead. A typical usage would be:
 	for (int ahead = 0; (packet = conn->Peek(ahead)) != NULL; ++ahead) {}
 	*/
-	virtual const RawPacket* Peek(int ahead) const = 0;
+	virtual const RawPacket* Peek(unsigned ahead) const = 0;
 	
 	/**
 	@brief New method of data gathering

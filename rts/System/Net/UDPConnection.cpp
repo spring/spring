@@ -79,7 +79,7 @@ void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 	outgoingLength+=length;
 }
 
-const RawPacket* UDPConnection::Peek(int ahead) const
+const RawPacket* UDPConnection::Peek(unsigned ahead) const
 {
 	if (ahead < msgQueue.size())
 		return msgQueue[ahead];
