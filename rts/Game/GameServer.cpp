@@ -627,7 +627,6 @@ void CGameServer::ServerReadNet()
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
 			SendSystemMsg("Lost connection to player %i (timeout)", a);
-			serverNet->SendQuit(a);
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
@@ -643,7 +642,6 @@ void CGameServer::ServerReadNet()
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
 			SendSystemMsg("Lost connection to player %i (timeout)", a);
-			serverNet->SendQuit(a);
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
