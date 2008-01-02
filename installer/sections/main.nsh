@@ -25,9 +25,17 @@
   Delete "$INSTDIR\MSVCR71.dll"
   
 ;!ifndef SP_UPDATE
-  File "..\game\settings.exe"
+  ;File "..\game\settings.exe"
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
+
+;New Settings Program
+  File "..\game\springsettings.exe"
+  File "..\game\mingwm10.dll"
+  File "..\game\wxbase28u_gcc_custom.dll"
+  File "..\game\wxbase28u_net_gcc_custom.dll"
+  File "..\game\wxmsw28u_adv_gcc_custom.dll"
+  File "..\game\wxmsw28u_core_gcc_custom.dll"
 
   ; DLLs
   File "..\game\MSVCR71.dll"
