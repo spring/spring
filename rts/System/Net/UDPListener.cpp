@@ -55,7 +55,9 @@ void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQu
 		if (interrupt)
 			continue;
 		
-		if (acceptNewConnections)
+		const int packetNumber = *(int*)(data->data);
+		const int lastInOrder = *(int*)(data->data+4);
+		if (acceptNewConnections && packetNumber == 0 && lastInOrder == -1)
 		{
 			// new client wants to connect
 			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr));
