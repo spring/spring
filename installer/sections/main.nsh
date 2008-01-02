@@ -25,7 +25,7 @@
   Delete "$INSTDIR\MSVCR71.dll"
   
 ;!ifndef SP_UPDATE
-  ;File "..\game\settings.exe"
+  File "..\game\settings.exe"
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
 
