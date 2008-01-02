@@ -1953,7 +1953,7 @@ int AAIBuildTable::GetScout(int side, float los, float cost, unsigned int allowe
 {
 	side -= 1;
 
-	float best_ranking =  -10000, my_ranking;
+	float best_ranking = -10000, my_ranking;
 	int best_scout = 0;
 
 	for(list<int>::iterator i = units_of_category[SCOUT][side].begin(); i != units_of_category[SCOUT][side].end(); ++i)
@@ -1981,52 +1981,6 @@ int AAIBuildTable::GetScout(int side, float los, float cost, unsigned int allowe
 	
 
 	return best_scout;
-}
-
-int AAIBuildTable::GetBuilder(int unit_id)
-{
-	return *(units_static[unit_id].builtByList.begin());
-}
-
-int AAIBuildTable::GetBuilder(int unit_id, UnitMoveType moveType)
-{
-	if(moveType == GROUND)
-	{
-		for(list<int>::iterator builder = units_static[unit_id].builtByList.begin(); builder != units_static[unit_id].builtByList.end(); builder++)
-		{
-			if(unitList[*builder-1]->movedata->moveType == MoveData::Ground_Move)
-					return *builder;
-		}
-	}
-	else if(moveType == AIR)
-	{
-		for(list<int>::iterator builder = units_static[unit_id].builtByList.begin(); builder != units_static[unit_id].builtByList.end(); builder++)
-		{
-			if(unitList[*builder-1]->canfly)
-				return *builder;
-		}
-	}
-	else if(moveType == SEA)
-	{
-		for(list<int>::iterator builder = units_static[unit_id].builtByList.begin(); builder != units_static[unit_id].builtByList.end(); builder++)
-		{
-			if(unitList[*builder-1]->movedata->moveType == MoveData::Ship_Move)
-				return *builder;
-		}
-	}
-	else if(moveType == HOVER)
-	{
-		for(list<int>::iterator builder = units_static[unit_id].builtByList.begin(); builder != units_static[unit_id].builtByList.end(); builder++)
-		{
-			if(unitList[*builder-1]->movedata->moveType == MoveData::Hover_Move)
-				return *builder;
-		}
-	}
-	else
-		return 0;
-
-	// no builder of that type found
-	return 0;
 }
 
 int AAIBuildTable::GetRandomUnit(list<int> unit_list)

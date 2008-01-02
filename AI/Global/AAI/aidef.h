@@ -32,7 +32,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.85"
+#define AAI_VERSION "0.851"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_85"
 #define MAP_DATA_VERSION "MAP_DATA_0_83"
@@ -68,6 +68,7 @@ public:
 #define MOVE_TYPE_AIR (unsigned int) 2
 #define MOVE_TYPE_HOVER (unsigned int) 4
 #define MOVE_TYPE_SEA (unsigned int) 8
+#define MOVE_TYPE_UNIT (unsigned int) 15	// used to filter out unit movement typ (e.g. only MOVE_TYPE_SEA for sumarines (that also have MOVE_TYPE_UNDERWATER set))
 #define MOVE_TYPE_STATIC (unsigned int) 16
 #define MOVE_TYPE_FLOATER (unsigned int) 32
 #define MOVE_TYPE_UNDERWATER (unsigned int) 64
@@ -89,8 +90,6 @@ public:
 #define UNIT_TYPE_GUNSHIP (unsigned int) 1024
 
 enum Direction {WEST, EAST, SOUTH, NORTH, CENTER, NO_DIRECTION};
-
-enum UnitMoveType {GROUND, AIR, HOVER,  SEA};
 
 enum MapType {UNKNOWN_MAP, LAND_MAP, AIR_MAP, LAND_WATER_MAP, WATER_MAP};
 
@@ -165,7 +164,6 @@ struct AAIUnit
 	AAIConstructor *cons;
 	UnitTask status;
 };
-
 
 struct ProductionRequest
 {

@@ -23,28 +23,18 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 	category = bt->units_static[def->id].category;
 	combat_category = bt->GetIDOfAssaultCategory(category);
 
-	// get type of group
-	group_type = unit_type;
+	// set unit type of group
+	group_unit_type = unit_type;
 
-	if(bt->unitList[def->id-1]->movedata) // ship, hover, ground units
-	{
-		if(bt->unitList[def->id-1]->movedata->moveType == MoveData::Ground_Move)
-			move_type = GROUND;
-		else if(bt->unitList[def->id-1]->movedata->moveType == MoveData::Hover_Move)
-			move_type = HOVER;
-		else if(bt->unitList[def->id-1]->movedata->moveType == MoveData::Ship_Move)
-			move_type = SEA;
-
-	}
-	else  // aircraft unit
-		move_type = AIR;
+	// set movement type of group (filter out add. movement info like underwater, floater, etc.)
+	group_movement_type = bt->units_static[def->id].movement_type & MOVE_TYPE_UNIT;
 
 	// now we know type and category, determine max group size
 	if(cfg->AIR_ONLY_MOD)
 	{
 		maxSize = cfg->MAX_AIR_GROUP_SIZE;
 	}
-	else if(group_type == ANTI_AIR_UNIT)
+	else if(group_unit_type == ANTI_AIR_UNIT)
 			maxSize = cfg->MAX_ANTI_AIR_GROUP_SIZE;	
 	else
 	{
@@ -110,7 +100,7 @@ AAIGroup::~AAIGroup(void)
 bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
 {
 	// check the type match && current size
-	if(type == group_type && units.size() < maxSize && !attack && (task == GROUP_IDLE || task == GROUP_RETREATING))
+	if(type == group_unit_type && units.size() < maxSize && !attack && (task == GROUP_IDLE || task == GROUP_RETREATING))
 	{
 		// check if speed group is matching
 		if(cfg->AIR_ONLY_MOD)
@@ -165,13 +155,13 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 			// remove from list of attacks groups if too less units
 			if(attack)
 			{
-				if(group_type == ASSAULT_UNIT)
+				if(group_unit_type == ASSAULT_UNIT)
 				{
 					// todo: improve criteria
 					if(size < 2)
 						attack->RemoveGroup(this);	
 				}
-				else if(group_type == ANTI_AIR_UNIT)
+				else if(group_unit_type == ANTI_AIR_UNIT)
 				{
 					if(size < 1)
 						attack->RemoveGroup(this);
@@ -405,7 +395,7 @@ bool AAIGroup::SufficientAttackPower()
 	
 	return false;*/
 
-	if(group_type == ASSAULT_UNIT)
+	if(group_unit_type == ASSAULT_UNIT)
 	{
 		if(size > maxSize/3)
 			return true;
@@ -445,13 +435,13 @@ void AAIGroup::UnitIdle(int unit)
 		if(temp == target_sector || !target_sector)
 		{
 			// combat groups 
-			if(group_type == ASSAULT_UNIT && attack->dest->enemy_structures <= 0)
+			if(group_unit_type == ASSAULT_UNIT && attack->dest->enemy_structures <= 0)
 			{
 				ai->am->GetNextDest(attack);
 				return;
 			}
 			// unit the aa groups was guarding has been killed
-			else if(group_type == ANTI_AIR_UNIT)
+			else if(group_unit_type == ANTI_AIR_UNIT)
 			{
 				if(!attack->combat_groups.empty())
 				{

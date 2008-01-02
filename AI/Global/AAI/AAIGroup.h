@@ -67,9 +67,9 @@ public:
 	UnitCategory category;
 	int combat_category;
 
-	UnitType group_type;
+	UnitType group_unit_type;
 
-	UnitMoveType move_type;
+	unsigned int group_movement_type;
 
 	AAISector *target_sector;
 

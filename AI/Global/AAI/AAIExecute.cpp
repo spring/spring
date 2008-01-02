@@ -3289,7 +3289,7 @@ AAIGroup* AAIExecute::GetClosestGroupOfCategory(UnitCategory category, UnitType 
 
 	for(list<AAIGroup*>::iterator group = ai->group_list[category].begin(); group != ai->group_list[category].end(); ++group)
 	{
-		if((*group)->group_type == type && !(*group)->attack)
+		if((*group)->group_unit_type == type && !(*group)->attack)
 		{
 			if((*group)->task == GROUP_IDLE || (*group)->task_importance < importance)
 			{

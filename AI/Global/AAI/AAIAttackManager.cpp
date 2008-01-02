@@ -146,17 +146,17 @@ void AAIAttackManager::LaunchAttack()
 					// check movement type first
 					suitable = true;
 	
-					if(land && (*group)->move_type == SEA)
+					if(land && (*group)->group_movement_type & MOVE_TYPE_SEA)
 						suitable = false;
 
-					if(water && (*group)->move_type == GROUND)
+					if(water && (*group)->group_movement_type & MOVE_TYPE_GROUND)
 						suitable = false;
 
 					if(suitable && !(*group)->attack && (*group)->task == GROUP_IDLE )
 					{
-						if((*group)->group_type == ASSAULT_UNIT && (*group)->SufficientAttackPower())
+						if((*group)->group_unit_type == ASSAULT_UNIT && (*group)->SufficientAttackPower())
 							combat_available.insert(*group);
-						else if((*group)->group_type == ANTI_AIR_UNIT)
+						else if((*group)->group_unit_type == ANTI_AIR_UNIT)
 							aa_available.insert(*group);
 					}
 				}
