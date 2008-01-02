@@ -138,6 +138,14 @@ ${EndIf}
   Delete "$INSTDIR\settings.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
+  ;New Settings Program
+  Delete "$INSTDIR\springsettings.exe"
+  Delete "$INSTDIR\mingwm10.dll"
+  Delete "$INSTDIR\wxbase28u_gcc_custom.dll"
+  Delete "$INSTDIR\wxbase28u_net_gcc_custom.dll"
+  Delete "$INSTDIR\wxmsw28u_adv_gcc_custom.dll"
+  Delete "$INSTDIR\wxmsw28u_core_gcc_custom.dll"
+
   ; DLLs
   Delete "$INSTDIR\DevIL.dll"
   Delete "$INSTDIR\freetype6.dll"
