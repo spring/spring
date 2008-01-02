@@ -21,16 +21,15 @@ UDPListener::~UDPListener()
 
 void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQueue)
 {
-	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
+	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); )
 	{
 		if (i->expired())
-		{
 			i = conn.erase(i);
-			--i;
-		}
+		else
+			++i;
 	}
-	
-	do 
+
+	do
 	{
 		unsigned char buffer[4096];
 		sockaddr_in fromAddr;

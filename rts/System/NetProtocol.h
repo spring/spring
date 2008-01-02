@@ -48,7 +48,7 @@ public:
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 	
-	bool loading;
+	volatile bool loading;
 	void UpdateLoop();
 
 private:
