@@ -937,17 +937,7 @@ bool AAIExecute::BuildPowerPlant()
 				// try to assist
 				if(builder->assistants.size() < cfg->MAX_ASSISTANTS)
 				{
-					AAIConstructor *assistant;
-
-					if(bt->unitList[builder->construction_def_id-1]->minWaterDepth > 0)
-					{
-						if(bt->unitList[builder->construction_def_id-1]->floater)
-							assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, true);
-						else
-							assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, false);
-					}
-						else
-							assistant = ut->FindClosestAssister(builder->build_pos, 5, true, false, false);
+					AAIConstructor *assistant = ut->FindClosestAssister(builder->build_pos, 5, true, bt->GetAllowedMovementTypesForAssister(builder->construction_def_id));
 
 					if(assistant)
 					{
@@ -2669,12 +2659,7 @@ void AAIExecute::CheckMexUpgrade()
 
 	if(best_spot)
 	{
-		AAIConstructor *builder; 
-
-		if(bt->unitList[best_spot->extractor_def-1]->minWaterDepth > 0)
-			builder = ut->FindClosestAssister(best_spot->pos, 10, true, true, bt->unitList[best_spot->extractor_def-1]->floater);
-		else
-			builder = ut->FindClosestAssister(best_spot->pos, 10, true, false, false);
+		AAIConstructor *builder = ut->FindClosestAssister(best_spot->pos, 10, true, bt->GetAllowedMovementTypesForAssister(best_spot->extractor_def) ); 
 
 		if(builder)
 			builder->GiveReclaimOrder(best_spot->extractor);
@@ -2717,7 +2702,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(land_def && my_def->radarRadius < land_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, false, false);
+						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
 
 						if(builder)
 						{
@@ -2731,7 +2716,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(water_def && my_def->radarRadius < water_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, true, my_def->floater);
+						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
 
 						if(builder)
 						{
@@ -2778,7 +2763,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(land_def && my_def->jammerRadius < land_def->jammerRadius)
 				{
 					// better jammer found, clear buildpos
-					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, false, false);
+					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
 
 					if(builder)
 					{
@@ -2792,7 +2777,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(water_def && my_def->jammerRadius < water_def->jammerRadius)
 				{
 					// better radar found, clear buildpos
-					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, true, my_def->floater);
+					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
 				
 					if(builder)
 					{
@@ -3011,15 +2996,7 @@ bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importa
 
 		if(builder && builder->construction_category == category && builder->assistants.size() < cfg->MAX_ASSISTANTS)
 		{
-			if(bt->unitList[builder->construction_def_id-1]->minWaterDepth > 0)
-			{
-				if(bt->unitList[builder->construction_def_id-1]->floater)
-					assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, true);
-				else
-					assistant = ut->FindClosestAssister(builder->build_pos, 5, true, true, false);
-			}
-			else
-				assistant = ut->FindClosestAssister(builder->build_pos, 5, true, false, false);
+			assistant = ut->FindClosestAssister(builder->build_pos, 5, true, bt->GetAllowedMovementTypesForAssister(builder->construction_def_id));
 
 			if(assistant)
 			{

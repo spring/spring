@@ -3507,45 +3507,41 @@ void AAIBuildTable::AddBuilder(int building_id)
 }
 
 
-void AAIBuildTable::AddAssister(bool water, bool floater, bool canBuild)
+void AAIBuildTable::AddAssister(unsigned int allowed_movement_types, bool canBuild)
 {
 	int builder = 0;
 	float best_rating = -10000, my_rating; 
 
 	int side = ai->side-1;
-	bool check_unit;
 
 	float cost = ai->brain->Affordable()/2.0; 
-	float buildspeed = sqrt((float) (1 + ai->activeBuilders + ai->futureBuilders))/2.0;
+	float buildspeed = 3.0;
 	float urgency = 9.0 / (ai->activeBuilders + ai->futureBuilders + 3);
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0;
 		
 	for(list<int>::iterator unit = units_of_category[MOBILE_CONSTRUCTOR][side].begin();  unit != units_of_category[MOBILE_CONSTRUCTOR][side].end(); ++unit)
 	{
-		check_unit = true;
-
-		if( (water && !CanMoveWater(*unit) ) || ( !water && ! CanMoveLand(*unit)) )
-			check_unit = false;
-		else if( (canBuild && units_dynamic[*unit].buildersAvailable <= 0)
-			|| units_dynamic[*unit].active >= cfg->MAX_BUILDERS_PER_TYPE
-			|| units_dynamic[*unit].requested > 0
-			|| unitList[*unit-1]->buildSpeed < (float)cfg->MIN_ASSISTANCE_BUILDTIME
-			|| !unitList[*unit-1]->canAssist)
-			check_unit = false;
-
-		if(check_unit)
+		if(units_static[*unit].movement_type & allowed_movement_types)
 		{
-			my_rating = cost * (units_static[*unit].cost / max_builder_cost[side]) 
-						+ buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[side]) 
-						- urgency * (unitList[*unit-1]->buildTime / max_buildtime);
+			if( (!canBuild || units_dynamic[*unit].buildersAvailable > 0)
+				&& units_dynamic[*unit].active < cfg->MAX_BUILDERS_PER_TYPE
+				&& units_dynamic[*unit].requested <= 0)
+			{
+				if( unitList[*unit-1]->buildSpeed >= (float)cfg->MIN_ASSISTANCE_BUILDTIME && unitList[*unit-1]->canAssist)
+				{
+					my_rating = cost * (units_static[*unit].cost / max_builder_cost[side]) 
+								+ buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[side]) 
+								- urgency * (unitList[*unit-1]->buildTime / max_buildtime);
 
-			my_rating -=  0.5 * ((float)(units_dynamic[*unit].requested + units_dynamic[*unit].active)) / (float)cfg->MAX_BUILDERS_PER_TYPE;
+					my_rating -=  0.5 * ((float)(units_dynamic[*unit].requested + units_dynamic[*unit].active)) / (float)cfg->MAX_BUILDERS_PER_TYPE;
 	
-			if(my_rating > best_rating)
-			{	
-				best_rating = my_rating;
-				builder = *unit;
+					if(my_rating > best_rating)
+					{	
+						best_rating = my_rating;
+						builder = *unit;
+					}
+				}
 			}
 		}
 	}
@@ -3562,7 +3558,7 @@ void AAIBuildTable::AddAssister(bool water, bool floater, bool canBuild)
 			ai->futureBuilders += 1;
 
 			// increase number of reqeusted builders of all buildoptions
-			for(list<int>::iterator j = units_static[builder].canBuildList.begin(); j != units_static[builder].canBuildList.end(); j++)
+			for(list<int>::iterator j = units_static[builder].canBuildList.begin(); j != units_static[builder].canBuildList.end(); ++j)
 				units_dynamic[*j].buildersRequested += 1;
 
 			fprintf(ai->file, "AddAssister() requested: %s %i \n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);
@@ -4017,4 +4013,25 @@ UnitCategory AAIBuildTable::GetAssaultCategoryOfID(int id)
 		return STATIONARY_DEF;
 	else
 		return UNKNOWN;
+}
+
+unsigned int AAIBuildTable::GetAllowedMovementTypesForAssister(int building)
+{
+	// determine allowed movement types
+	unsigned int allowed_movement_types = 0;
+
+	if(units_static[building].movement_type & MOVE_TYPE_STATIC_LAND)
+	{
+		allowed_movement_types |= MOVE_TYPE_AIR;
+		allowed_movement_types |= MOVE_TYPE_GROUND;
+		allowed_movement_types |= MOVE_TYPE_HOVER;
+	}
+	else
+	{
+		allowed_movement_types |= MOVE_TYPE_AIR;
+		allowed_movement_types |= MOVE_TYPE_SEA;
+		allowed_movement_types |= MOVE_TYPE_HOVER;	
+	}
+
+	return allowed_movement_types;
 }

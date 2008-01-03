@@ -250,18 +250,7 @@ void AAIConstructor::CheckAssistance()
 		
 			if(assist)
 			{
-				AAIConstructor* assistant;
-
-				// call idle builder
-				if(bt->CanPlacedWater(def_id))
-				{
-					if(ai->bt->unitList[def_id-1]->floater)
-						assistant = ai->ut->FindClosestAssister(ai->cb->GetUnitPos(unit_id), 5, true, true, true);
-					else
-						assistant = ai->ut->FindClosestAssister(ai->cb->GetUnitPos(unit_id), 5, true, true, false);
-				}
-				else
-					assistant = ai->ut->FindClosestAssister(ai->cb->GetUnitPos(unit_id), 5, true, false, false);
+				AAIConstructor* assistant = ai->ut->FindClosestAssister(ai->cb->GetUnitPos(unit_id), 5, true, bt->GetAllowedMovementTypesForAssister(def_id) );
 
 				if(assistant)
 				{
@@ -309,14 +298,8 @@ void AAIConstructor::CheckAssistance()
 					commander = true;
 			}
 
-			AAIConstructor* assistant; 
-
-			// call idle builder
-			if(ai->bt->unitList[construction_def_id-1]->minWaterDepth > 0)
-				assistant = ai->ut->FindClosestAssister(build_pos, 5, commander, true, ai->bt->unitList[construction_def_id-1]->floater);
-			else
-				assistant = ai->ut->FindClosestAssister(build_pos, 5, commander, false, false);
-
+			AAIConstructor* assistant = ai->ut->FindClosestAssister(build_pos, 5, commander, bt->GetAllowedMovementTypesForAssister(construction_def_id) );
+			
 			if(assistant)
 			{
 				assistants.insert(assistant->unit_id);

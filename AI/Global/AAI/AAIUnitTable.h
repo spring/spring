@@ -40,7 +40,7 @@ public:
 
 	AAIConstructor* FindBuilder(int building, bool commander, int importance);
 	AAIConstructor* FindClosestBuilder(int building, float3 pos, bool commander, int importance);
-	AAIConstructor* FindClosestAssister(float3 pos, int importance, bool commander, bool water, bool floater);
+	AAIConstructor* FindClosestAssister(float3 pos, int importance, bool commander, unsigned int allowed_movement_types);
 
 	void EnemyKilled(int unit);
 
