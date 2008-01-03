@@ -11,6 +11,31 @@ class CLoadSaveHandler;
 class CPreGame : public CGameController
 {
 public:
+	CPreGame(bool server, const std::string& demo, const std::string& save);
+	virtual ~CPreGame();
+
+	bool Draw();
+	int KeyPressed(unsigned short k, bool isRepeat);
+	bool Update();
+
+private:
+	/// reads out map, mod and script from demos (with or without a gameSetupScript)
+	void ReadDataFromDemo(const std::string& demoName);
+
+	/// receive network traffic
+	void UpdateClientNet();
+
+	CInfoConsole* infoConsole;
+
+	void ShowScriptList();
+	void ShowMapList();
+	void ShowModList();
+	CglList* showList;
+	static void SelectScript(std::string s);
+	static void SelectMap(std::string s);
+	static void SelectMod(std::string s);
+	
+	const bool server;
 	enum State {
 		UNKNOWN,
 		WAIT_ON_ADDRESS,
@@ -20,42 +45,16 @@ public:
 		WAIT_CONNECTING,
 		ALL_READY,
 	};
-	CPreGame(bool server, const std::string& demo, const std::string& save);
-	virtual ~CPreGame();
-
-	CglList* showList;
-
-	bool Draw();
-	int KeyPressed(unsigned short k, bool isRepeat);
-	bool Update();
-
-	bool server;
 	State state;
-	bool saveAddress;
 
-	bool hasDemo,hasSave;
+	const bool hasDemo,hasSave;
 
 	std::string mapName;
 	std::string modName;
 	std::string modArchive;
 	std::string scriptName;
 	std::string demoFile;
-
-	void UpdateClientNet();
-
 	CLoadSaveHandler *savefile;
-private:
-	CInfoConsole* infoConsole;
-	
-	/// reads out map, mod and script from demos (with or without a gameSetupScript)
-	void ReadDataFromDemo(const std::string& demoName);
-
-	void ShowScriptList();
-	void ShowMapList();
-	void ShowModList();
-	static void SelectScript(std::string s);
-	static void SelectMap(std::string s);
-	static void SelectMod(std::string s);
 };
 
 extern CPreGame* pregame;

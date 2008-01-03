@@ -803,7 +803,6 @@ void SpringApp::CreateGameSetup ()
 
 	if (!gameSetup && demofile.empty()) {
 		gs->noHelperAIs = !!configHandler.GetInt("NoHelperAIs", 0);
-		//FIXME: duplicated in Net.cpp
 		const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
 		const string luaRulesStr = configHandler.GetString("LuaRules", "1");
 		gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
