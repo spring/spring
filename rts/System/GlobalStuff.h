@@ -13,7 +13,7 @@
  *
  * Defines PI as a float
  */
-#define PI 3.141592654f
+const float PI = 3.141592654f;
 
 /**
  * @brief maximum world size
@@ -72,7 +72,6 @@
  */
 #define NEAR_PLANE 2.8f
 
-#include <list>
 #include "float3.h"
 
 /**

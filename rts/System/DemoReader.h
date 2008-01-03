@@ -2,7 +2,8 @@
 #define DEMO_READER
 
 #include "Demo.h"
-#include "FileSystem/FileHandler.h"
+
+class CFileHandler;
 
 /**
 @brief Utility class for reading demofiles

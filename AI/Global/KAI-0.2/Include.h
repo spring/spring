@@ -6,6 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <deque>
+#include <list>
 #include <sstream>
 #include <stdarg.h>
 #include <functional>

@@ -39,6 +39,7 @@
 #include "bitops.h"
 
 #include <fstream>
+#include <list>
 
 namespace terrain {
 using namespace std;

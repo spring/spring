@@ -5,6 +5,7 @@
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
+#include <list>
 
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
