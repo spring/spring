@@ -45,13 +45,8 @@ void AAIBuildTask::BuilderDestroyed()
 	}
 	
 	// look for new builder 
-	AAIConstructor *new_builder;
-
-	if(ai->bt->unitList[def_id-1]->minWaterDepth <= 0)
-		new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, false, false);
-	else
-		new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, false, ai->bt->unitList[def_id-1]->floater);
-
+	AAIConstructor* new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, ai->bt->GetAllowedMovementTypesForAssister(def_id) );
+	
 	if(new_builder)
 	{
 		new_builder->TakeOverConstruction(this);

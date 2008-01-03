@@ -368,13 +368,11 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool 
 	return best_builder;
 }
 
-AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bool commander, bool water, bool floater)
+AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bool commander, unsigned int allowed_movement_types)
 {
 	AAIConstructor *best_assister = 0, *assister;
 	float best_rating = 0, my_rating;
 	float3 builder_pos;
-	bool suitable;
-	UnitCategory category;
 	float temp;
 
 	// find idle builder
@@ -387,44 +385,32 @@ AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bo
 
 			if(assister->task == UNIT_IDLE)
 			{
-				category = bt->units_static[assister->def_id].category;
-				suitable = false;
-
-				if(!water && bt->CanMoveLand(assister->def_id))
-					suitable = true;
-				else if(water && floater && bt->CanMoveWater(assister->def_id))
-					suitable = true;
-				else if(water && !floater && bt->IsSea(assister->def_id))
-					suitable = true;
-
-				if(!commander && bt->units_static[assister->def_id].category == COMMANDER)
-					suitable = false;
-
-				if(suitable)
+				if(bt->units_static[assister->def_id].movement_type & allowed_movement_types)
 				{
-					builder_pos = cb->GetUnitPos(assister->unit_id);
-					temp = pow(pos.x - builder_pos.x, 2) + pow(pos.z - builder_pos.z, 2);
-				
-					if(temp > 0)
-						my_rating = assister->buildspeed / sqrt(temp);
-					else
-						my_rating = 10;
-		
-					if(my_rating > best_rating)
+					if(!commander || bt->units_static[assister->def_id].category != COMMANDER)
 					{
-						best_rating = my_rating;
-						best_assister = assister;
+						builder_pos = cb->GetUnitPos(assister->unit_id);
+						temp = pow(pos.x - builder_pos.x, 2) + pow(pos.z - builder_pos.z, 2);
+				
+						if(temp > 0)
+							my_rating = assister->buildspeed / sqrt(temp);
+						else
+							my_rating = 10;
+		
+						if(my_rating > best_rating)
+						{
+							best_rating = my_rating;
+							best_assister = assister;
+						}
 					}
 				}
 			}
 		}
 	}
 		
-	// no builder found 
+	// no assister found -> request one 
 	if(!best_assister)
-	{
-		bt->AddAssister(water, floater, true);
-	}
+		bt->AddAssister(allowed_movement_types, true);	
 
 	return best_assister;
 }
