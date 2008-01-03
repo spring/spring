@@ -763,6 +763,7 @@ void CGameServer::CheckForGameEnd()
 {
 	if(gameEndTime > 0){
 		if(gameEndTime < SDL_GetTicks()-2000 && !sentGameOverMsg){
+			SendSystemMsg("Server: Game has ended");
 			serverNet->SendGameOver();
 			if (hostif)
 			{

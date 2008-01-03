@@ -10,10 +10,9 @@
 #include "FPUCheck.h"
 #include "GameServer.h"
 #include "GameSetup.h"
-#include "GameVersion.h"
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
-#include "System/DemoReader.h"
+#include "DemoReader.h"
 #include "LoadSaveHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
@@ -22,7 +21,6 @@
 #include "Lua/LuaRules.h"
 #include "Platform/Clipboard.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glList.h"
@@ -32,7 +30,6 @@
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
 #include "mmgr.h"
-#include "DemoRecorder.h"
 
 
 CPreGame* pregame=0;
@@ -45,7 +42,6 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 : showList(0),
   server(server),
   state(UNKNOWN),
-  saveAddress(true),
   hasDemo(!demo.empty()),
   hasSave(!save.empty()),
   savefile(NULL)
@@ -312,8 +308,7 @@ bool CPreGame::Update()
 			if (userWriting)
 				break;
 
-			if (saveAddress)
-				configHandler.SetString("address",userInput);
+			configHandler.SetString("address",userInput);
 			net->InitClient(userInput.c_str(),8452,0, 0);
 			state = WAIT_ON_SCRIPT;
 			// fall trough
@@ -617,7 +612,7 @@ void CPreGame::ShowMapList()
 	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
-		handleerror(0, "Couldn't find any map files", "PreGame error", 0);
+		throw content_error("PreGame couldn't find any map files");
 		return;
 	}
 
@@ -670,7 +665,7 @@ void CPreGame::ShowModList()
 	CglList* list = SAFE_NEW CglList("Select mod", SelectMod, 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
-		handleerror(0, "Couldn't find any mod files", "PreGame error", 0);
+		throw content_error("PreGame couldn't find any mod files");
 		return;
 	}
 

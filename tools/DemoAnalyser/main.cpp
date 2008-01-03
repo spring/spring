@@ -58,6 +58,9 @@ int main (int argc, char* argv[])
 			case NETMSG_SYSTEMMSG:
 				cout << "SYSTEMMSG: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+3) << endl;
 				break;
+			case NETMSG_CHAT:
+				cout << "CHAT: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+3) << endl;
+				break;
 			default:
 				unknownMessages++;
 		}
