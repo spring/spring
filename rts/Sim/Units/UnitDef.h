@@ -5,13 +5,13 @@
 #include <vector>
 #include <map>
 
-#include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
 
 struct MoveData;
 struct WeaponDef;
 struct S3DOModel;
+struct UnitImage;
 class CExplosionGenerator;
 
 const int MAX_UNITS = 10000;
@@ -91,12 +91,12 @@ struct UnitDef
 	~UnitDef();
 	S3DOModel* LoadModel(int team) const;
 
+	UnitImage* unitImage;	// wrapper for a GLuint pointing to build-pic of this unit-type
 	bool valid;
 	std::string name;
 	std::string humanName;
 	std::string filename;
-	int id;                 //unique id for this type of unit
-	GLuint unitimage; // don't read this directly use CUnitDefHandler::GetUnitImage instead
+	int id;					// unique id for this type of unit
 	int imageSizeX;
 	int imageSizeY;
 	std::string buildpicname;
@@ -104,15 +104,15 @@ struct UnitDef
 	const UnitDef* decoyDef;
 
 	int aihint;
-	int cobID;  // associated with the COB <GET COB_ID unitID> call 
+	int cobID;				// associated with the COB <GET COB_ID unitID> call 
 
 	int techLevel;
 	std::string gaia;
 
 	float metalUpkeep;
 	float energyUpkeep;
-	float metalMake;	//metal will allways be created
-	float makesMetal;	//metal will be created when unit is on and enough energy can be drained
+	float metalMake;		// metal will always be created
+	float makesMetal;		// metal will be created when unit is on and enough energy can be drained
 	float energyMake;
 	float metalCost;
 	float energyCost;

@@ -32,6 +32,10 @@ CR_BIND(UnitDef, );
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
+struct UnitImage {
+	GLuint textureID;
+};
+
 CUnitDefHandler* unitDefHandler;
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
@@ -86,7 +90,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].name = unitName;
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
-		unitDefs[id].unitimage  = 0;
+		unitDefs[id].unitImage  = 0;
 		unitDefs[id].imageSizeX = -1;
 		unitDefs[id].imageSizeY = -1;
 		unitDefs[id].techLevel  = -1;
@@ -117,14 +121,14 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 
 CUnitDefHandler::~CUnitDefHandler(void)
 {
-	//Deleting eventual yeardmaps.
-	for(int i = 1; i <= numUnitDefs; i++){
+	// delete any eventual yeardmaps
+	for (int i = 1; i <= numUnitDefs; i++) {
 		for (int u = 0; u < 4; u++)
 			delete[] unitDefs[i].yardmaps[u];
 
-		if (unitDefs[i].unitimage) {
-			glDeleteTextures(1,&unitDefs[i].unitimage);
-			unitDefs[i].unitimage = 0;
+		if (unitDefs[i].unitImage) {
+			glDeleteTextures(1, &unitDefs[i].unitImage->textureID);
+			unitDefs[i].unitImage = 0;
 		}
 	}
 	delete[] unitDefs;
@@ -883,8 +887,8 @@ static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
 
 unsigned int CUnitDefHandler::GetUnitImage(const UnitDef *unitdef)
 {
-	if (unitdef->unitimage != 0) {
-		return unitdef->unitimage;
+	if (unitdef->unitImage != 0) {
+		return (unitdef->unitImage->textureID);
 	}
 
 	CBitmap bitmap;
@@ -904,12 +908,13 @@ unsigned int CUnitDefHandler::GetUnitImage(const UnitDef *unitdef)
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 	UnitDef& ud = unitDefs[unitdef->id]; // get away with the const
-	ud.unitimage  = texID;
+	ud.unitImage = SAFE_NEW UnitImage;
+	ud.unitImage->textureID = texID;
 	ud.imageSizeX = bitmap.xsize;
 	ud.imageSizeY = bitmap.ysize;
 	POP_CODE_MODE;
 
-	return unitdef->unitimage;
+	return (unitdef->unitImage->textureID);
 }
 
 
