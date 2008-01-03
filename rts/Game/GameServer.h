@@ -99,7 +99,7 @@ private:
 	/// Class for network communication
 	CBaseNetProtocol* serverNet;
 
-	CDemoReader* play;
+	CDemoReader* demoReader;
 
 	/// Inform 3. party programms about events
 	AutohostInterface* hostif;

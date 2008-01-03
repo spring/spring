@@ -1084,6 +1084,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
 				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon() && allReady))) {
+
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
 		if (cmd == "chatspec") { userInputPrefix = "s:"; }
@@ -1092,9 +1093,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		userInput = userInputPrefix;
 		writingPos = (int)userInput.length();
 		chatting = true;
-		if (ks.Key()!=SDLK_RETURN) {
+
+		if (ks.Key() != SDLK_RETURN) {
 			ignoreNextChar = true;
 		}
+
 		consoleHistory->ResetPosition();
 	}
 	else if (cmd == "track") {
@@ -3679,7 +3682,7 @@ void CGame::HandleChatMsg(std::string s, int player)
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 
-	if ((s.find(".cheat") == 0) && (player == 0)) {
+	if ((s.find(".cheat") == 0) && (player == 0 || net->localDemoPlayback)) {
 		SetBoolArg(gs->cheatEnabled, s, ".cheat");
 		if (gs->cheatEnabled) {
 			logOutput.Print("Cheating!");
@@ -4001,10 +4004,10 @@ void CGame::HandleChatMsg(std::string s, int player)
 		                gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (s.find(".skip") == 0) {
-		if (((player != 0) || !gs->cheatEnabled)) {
+		if (((player != 0) || !gs->cheatEnabled) && !net->localDemoPlayback) {
 			logOutput.Print(".skip only works in replay, and when cheating\n");
 		} else if (gs->frameNum < 1) {
-			logOutput.Print(".skip only works after the game has started\n");
+			logOutput.Print(".skip only works after the demo has started\n");
 		} else if (s.size() <= 6) {
 			logOutput.Print("missing argument to .skip\n");
 		} else {
