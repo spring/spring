@@ -4007,7 +4007,7 @@ void CGame::HandleChatMsg(std::string s, int player)
 		if (((player != 0) || !gs->cheatEnabled) && !net->localDemoPlayback) {
 			logOutput.Print(".skip only works in replay, and when cheating\n");
 		} else if (gs->frameNum < 1) {
-			logOutput.Print(".skip only works after the demo has started\n");
+			logOutput.Print(".skip only works after every demo-player has readied\n");
 		} else if (s.size() <= 6) {
 			logOutput.Print("missing argument to .skip\n");
 		} else {
@@ -4262,7 +4262,9 @@ void CGame::Skip(const std::string& msg)
 		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
 
 		while (endFrame > gs->frameNum) {
-			SimFrame();
+			// FIXME: messes up the how-many-frames-are-left bar
+			Update();
+
 			if (gameServer) {
 				gameServer->SkipTo(gs->frameNum);
 			}
