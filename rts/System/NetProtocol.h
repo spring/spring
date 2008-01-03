@@ -7,7 +7,7 @@ class CDemoRecorder;
 
 /**
 @brief Even higher level network code layer
-@todo remove this since its mostly specific to other classes, not to network
+
 The top of the networking stack.
 */
 class CNetProtocol : public CBaseNetProtocol
@@ -42,16 +42,19 @@ public:
 	@brief Recieve data from Client
 	@return The amount of data recieved, or -1 if connection did not exists
 	@todo Throw exceptions
+	
 	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
 	RawPacket* GetData();
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
-	
-	volatile bool loading;
+
+	/// updates our network while the game loads to prevent timeouts
 	void UpdateLoop();
+	volatile bool loading;
 
 private:
+	/// the connection number used for communicating with the server
 	unsigned serverSlot;
 	CDemoRecorder* record;
 };

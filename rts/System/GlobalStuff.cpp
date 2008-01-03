@@ -86,8 +86,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
 	hmapx=256;
 	hmapy=256;
-	Uint64 li;
-	li = SDL_GetTicks();
 	randSeed=18655;//li.LowPart;
 	frameNum=0;
 	speedFactor=1;

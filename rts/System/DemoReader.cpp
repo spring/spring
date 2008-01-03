@@ -8,6 +8,7 @@
 #include "Game/GameSetup.h"
 #endif
 #include "Game/GameVersion.h"
+#include "FileSystem/FileHandler.h"
 
 /////////////////////////////////////
 // CDemoReader implementation
@@ -51,7 +52,6 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo->Read(buf, fileHeader.scriptSize);
-
 #ifndef DEDICATED
 		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
 			gameSetup = SAFE_NEW CGameSetup();

@@ -1,5 +1,6 @@
 #include "ArchiveScanner.h"
 
+#include <list>
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>

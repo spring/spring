@@ -6,6 +6,7 @@
 #define __ADV_TREE_DRAWER_H__
 
 #include <map>
+#include <list>
 #include "BaseTreeDrawer.h"
 
 class CVertexArray;
