@@ -8,10 +8,10 @@
 #include <string>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 
 class CUnit;
 class CBuilding;
+class CVertexArray;
 
 struct TrackPart {
 	float3 pos1;
@@ -63,6 +63,7 @@ public:
 
 	GLuint scarTex;
 	int decalLevel;
+	int groundScarAlphaFade;
 
 	struct TrackType {
 		std::string name;

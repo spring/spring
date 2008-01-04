@@ -22,7 +22,8 @@ using namespace std;
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
 	drawDecals = false;
-	decalLevel = configHandler.GetInt("GroundDecals",1);
+	decalLevel = configHandler.GetInt("GroundDecals", 1);
+	groundScarAlphaFade = configHandler.GetInt("GroundScarAlphaFade", 0);
 
 	if (decalLevel == 0) {
 		return;
@@ -312,8 +313,7 @@ void CGroundDecalHandler::Draw(void)
 				}
 			}
 			else {
-				// TODO: make this a real user-configurable setting ("PrettyScars"?)
-				if (decalLevel > 1) {
+				if (groundScarAlphaFade == 1) {
 					if (scar->creationTime + 10 > gs->frameNum) {
 						color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
 					} else {
