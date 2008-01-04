@@ -208,6 +208,7 @@ CUnit::CUnit ()
 	delayedWreckLevel(-1),
 	paralyzeDamage(0),
 	captureProgress(0),
+	repairAmount(0.0f),
 	myTrack(0),
 	lastFlareDrop(0),
 	dontFire(false),
@@ -546,6 +547,8 @@ void CUnit::SlowUpdate()
 			}
 		}
 	}
+	
+	repairAmount=0.0f;
 
 	if (paralyzeDamage > 0) {
 		paralyzeDamage -= maxHealth * (16.0f / 30.0f / 40.0f);
@@ -1748,6 +1751,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		}
 		else {
 			if (health < maxHealth) {
+				repairAmount += amount;
 				health += maxHealth * part;
 				if (health > maxHealth) {
 					health = maxHealth;
@@ -2251,6 +2255,7 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(soloBuilder),
 				CR_MEMBER(beingBuilt),
 				CR_MEMBER(lastNanoAdd),
+				CR_MEMBER(repairAmount),
 				CR_MEMBER(transporter),
 				CR_MEMBER(toBeTransported),
 				CR_MEMBER(buildProgress),

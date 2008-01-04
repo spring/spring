@@ -320,6 +320,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.buildSpeed = udTable.GetFloat("workerTime", 0.0f);
 
 	ud.repairSpeed    = udTable.GetFloat("repairSpeed",    ud.buildSpeed);
+	ud.maxRepairSpeed = udTable.GetFloat("maxRepairSpeed", 1e20f);
 	ud.reclaimSpeed   = udTable.GetFloat("reclaimSpeed",   ud.buildSpeed);
 	ud.resurrectSpeed = udTable.GetFloat("resurrectSpeed", ud.buildSpeed);
 	ud.captureSpeed   = udTable.GetFloat("captureSpeed",   ud.buildSpeed);

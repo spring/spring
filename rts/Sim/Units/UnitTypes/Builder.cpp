@@ -240,14 +240,14 @@ void CBuilder::Update()
 					curCloakTimeout = gs->frameNum + cloakTimeout;
 				}
 
-  			float adjBuildSpeed; // adjusted build speed
-  			if (curBuild->buildProgress < 1.0f) {
-  				adjBuildSpeed = buildSpeed;  // new build
-  			} else {
-  				adjBuildSpeed = repairSpeed; // repair
+	  			float adjBuildSpeed; // adjusted build speed
+	  			if (curBuild->buildProgress < 1.0f) {
+	  				adjBuildSpeed = buildSpeed;  // new build
+	  			} else {
+  					adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0 - curBuild->repairAmount, repairSpeed); // repair
 				}
 
-				if (curBuild->AddBuildPower(adjBuildSpeed, this)) {
+				if (adjBuildSpeed > 0 and curBuild->AddBuildPower(adjBuildSpeed, this)) {
 					CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 				} else {
 					if(!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {

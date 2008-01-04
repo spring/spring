@@ -156,6 +156,7 @@ struct UnitDef
 	float buildSpeed;
 	float reclaimSpeed;
 	float repairSpeed;
+	float maxRepairSpeed;
 	float resurrectSpeed;
 	float captureSpeed;
 	float terraformSpeed;
