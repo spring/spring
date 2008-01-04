@@ -41,6 +41,8 @@ public:
 	
 	/// is always false
 	virtual bool CheckTimeout() const;
+	
+	virtual std::string Statistics() const;
 
 private:
 	typedef std::deque<RawPacket*> MsgQueue;

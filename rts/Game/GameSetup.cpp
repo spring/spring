@@ -492,7 +492,7 @@ bool CGameSetup::Update()
 		if (!gs->players[a]->readyToStart) {
 			allReady = false;
 			break;
-		} else if (!readyTeams[gs->players[a]->team] && numDemoPlayers == 0) // no need to ready up when hosting demo
+		} else if (!readyTeams[gs->players[a]->team])
 		{
 			allReady = false;
 			break;

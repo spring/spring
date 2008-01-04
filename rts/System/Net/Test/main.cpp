@@ -43,6 +43,7 @@ bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 	}
 	delete ret; ret = 0;
 	
+	std::cout << localclient->GetConnectionStatistics(0);
 	delete localclient;
 	server->Kill(freeNumber);
 	
@@ -137,6 +138,7 @@ int main()
 	
 	std::cout << "Deleting server and client..." << std::endl;
 	delete server;
+	std::cout << client->GetConnectionStatistics(1);
 	delete client;
 	
 	delete data1; delete data2; // so valgrind doesn't complain

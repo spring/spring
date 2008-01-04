@@ -138,6 +138,12 @@ public:
 	@throw network_error When number is bigger then MaxConenctionID
 	*/
 	bool IsActiveConnection(const unsigned number) const;
+	
+	/**
+	@brief Gives some usefull statistics
+	@return string with statistics
+	 */
+	std::string GetConnectionStatistics(const unsigned number) const;
 
 	/**
 	@brief Take a look at the messages that will be returned by GetData().

@@ -59,6 +59,8 @@ public:
 	virtual void Flush(const bool forced = false);
 	
 	virtual bool CheckTimeout() const;
+	
+	virtual std::string Statistics() const;
 
 	/// do we have these address?
 	bool CheckAddress(const sockaddr_in&) const;
@@ -106,12 +108,15 @@ private:
 
 	// Traffic statistics and stuff //
 	/// number of calls to Flush() that needed to sent multiple packets because of mtu
-	int fragmentedFlushes;
+	unsigned fragmentedFlushes;
 	
 	/// packets that are resent
-	int resentPackets;
+	unsigned resentPackets;
+	
+	unsigned droppedPackets;
 	
 	unsigned sentOverhead, recvOverhead;
+	unsigned sentPackets, recvPackets;
 };
 
 } //namespace netcode
