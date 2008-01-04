@@ -16,7 +16,7 @@
 #include "ShadowHandler.h"
 #include "mmgr.h"
 
-CGroundDecalHandler* groundDecals=0;
+CGroundDecalHandler* groundDecals = 0;
 using namespace std;
 
 CGroundDecalHandler::CGroundDecalHandler(void)
@@ -262,63 +262,79 @@ void CGroundDecalHandler::Draw(void)
 	}
 
 	glBindTexture(GL_TEXTURE_2D, scarTex);
+
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	glPolygonOffset(-10, -400);
 
-
-
-	// "draw" ground scars
+	// create the 16x16 quads for each ground scar
 	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
 		Scar* scar = *si;
+
 		if (scar->lifeTime < gs->frameNum) {
+			delete scar->scarQuads;
 			RemoveScar(*si, false);
 			si = scars.erase(si);
 			continue;
 		}
 
 		if (camera->InView(scar->pos, scar->radius + 16)) {
-			float3 pos = scar->pos;
-			float radius = scar->radius;
-			float tx = scar->texOffsetX;
-			float ty = scar->texOffsetY;
+			if (!scar->scarQuads) {
+				scar->scarQuads = SAFE_NEW CVertexArray();
+				scar->scarQuads->Initialize();
 
-			if (scar->creationTime + 10 > gs->frameNum)
-				color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
-			else
-				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
+				float3 pos = scar->pos;
+				float radius = scar->radius;
+				float tx = scar->texOffsetX;
+				float ty = scar->texOffsetY;
 
-			int sx = (int) max(0.f,                  (pos.x - radius) / 16.0f);
-			int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
-			int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
-			int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f);
-			float* heightmap = readmap->GetHeightmap();
+				if (scar->creationTime + 10 > gs->frameNum)
+					color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
+				else
+					color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 
-			for (int x = sx; x <= ex; ++x) {
-				for (int z = sz; z <= ez; ++z) {
-					float px1 = x * 16;
-					float pz1 = z * 16;
-					float px2 = px1 + 16;
-					float pz2 = pz1 + 16;
+				color[3] = 95;
+				int sx = (int) max(0.f,                  (pos.x - radius) / 16.0f);
+				int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
+				int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
+				int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f);
+				float* heightmap = readmap->GetHeightmap();
 
-					float tx1 = min(0.5f, (pos.x - px1) / (radius * 4.0f) + 0.25f);
-					float tx2 = max(0.0f, (pos.x - px2) / (radius * 4.0f) + 0.25f);
-					float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
-					float tz2 = max(0.0f, (pos.z - pz2) / (radius * 4.0f) + 0.25f);
+				// create the scar texture-quads
+				for (int x = sx; x <= ex; ++x) {
+					for (int z = sz; z <= ez; ++z) {
+						float px1 = x * 16;
+						float pz1 = z * 16;
+						float px2 = px1 + 16;
+						float pz2 = pz1 + 16;
+	
+						float tx1 = min(0.5f, (pos.x - px1) / (radius * 4.0f) + 0.25f);
+						float tx2 = max(0.0f, (pos.x - px2) / (radius * 4.0f) + 0.25f);
+						float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
+						float tz2 = max(0.0f, (pos.z - pz2) / (radius * 4.0f) + 0.25f);
 
-					va->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
-					va->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
-					va->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
-					va->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
+						va->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
+						va->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
+						va->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
+						va->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
+
+						scar->scarQuads->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
+						scar->scarQuads->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
+						scar->scarQuads->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
+						scar->scarQuads->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
+					}
 				}
 			}
+			else {
+				scar->scarQuads->DrawArrayTC(GL_QUADS);
+			}
 		}
+
 		++si;
 	}
-	va->DrawArrayTC(GL_QUADS);
+
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-//	glDisable(GL_ALPHA_TEST);
 	glDepthMask(1);
 	glDisable(GL_BLEND);
 
