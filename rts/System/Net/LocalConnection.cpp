@@ -1,6 +1,7 @@
 #include "LocalConnection.h"
 
 #include <string.h>
+#include <boost/format.hpp>
 
 #include "Exception.h"
 
@@ -72,6 +73,14 @@ void CLocalConnection::Flush(const bool forced)
 bool CLocalConnection::CheckTimeout() const
 {
 	return false;
+}
+
+std::string CLocalConnection::Statistics() const
+{
+	std::string msg = "Statistics for local connection:\n";
+	msg += str( boost::format("Recieved: %1% bytes\n") %dataRecv );
+	msg += str( boost::format("Sent: %1% bytes\n") %dataSent );
+	return msg;
 }
 
 unsigned CLocalConnection::OtherInstance() const

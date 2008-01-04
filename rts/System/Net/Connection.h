@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include <string>
 
 namespace netcode
 {
@@ -35,6 +36,8 @@ public:
 	virtual bool CheckTimeout() const = 0;
 	
 	unsigned GetDataRecieved() const;
+	
+	virtual std::string Statistics() const = 0;
 
 protected:
 	unsigned dataSent;

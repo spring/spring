@@ -2,6 +2,7 @@
 
 #include <SDL_timer.h>
 #include <boost/version.hpp>
+#include <boost/format.hpp>
 
 #ifdef _WIN32
  #include "Platform/Win/win32.h"
@@ -125,6 +126,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	lastReceiveTime=SDL_GetTicks();
 	dataRecv += packet->length;
 	recvOverhead += hsize;
+	++recvPackets;
 
 	int packetNum = *(int*)packet->data;
 	int ack = *(int*)(packet->data+4);
@@ -149,6 +151,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 	if(lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
 	{
+		++droppedPackets;
 		delete packet;
 		return;
 	}
@@ -284,6 +287,17 @@ bool UDPConnection::CheckTimeout() const
 		return false;
 }
 
+std::string UDPConnection::Statistics() const
+{
+	std::string msg = "Statistics for UDP connection:\n";
+	msg += str( boost::format("Recieved: %1% bytes in %2% packets (%3% bytes/package)\n") %dataRecv %recvPackets %((float)dataRecv / (float)recvPackets));
+	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n") %dataSent %sentPackets %((float)dataSent / (float)sentPackets));
+	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n") %((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
+	msg += str( boost::format("%1% incoming packets had been dropped, %2% outgoing packets had to be resent\n") %droppedPackets %resentPackets);
+	msg += str( boost::format("%1% packets were splitted due to MTU\n") %fragmentedFlushes);
+	return msg;
+}
+
 bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 {
 	if(
@@ -315,6 +329,8 @@ void UDPConnection::Init()
 	fragmentedFlushes = 0;
 	fragmentBuffer = 0;
 	resentPackets = 0;
+	sentPackets = recvPackets = 0;
+	droppedPackets = 0;
 }
 
 void UDPConnection::AckPackets(const int nextAck)
@@ -352,6 +368,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 
 	dataSent += length;
 	sentOverhead += hsize;
+	++sentPackets;
 }
 
 
