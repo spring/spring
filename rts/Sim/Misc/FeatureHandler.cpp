@@ -105,7 +105,7 @@ CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
-	
+
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("FeatureDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading FeatureDefs");
@@ -485,8 +485,8 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 //	logOutput.Print("Checking feature pos %i",quads.size());
 
 	for(vector<int>::iterator qi=quads.begin();qi!=quads.end();++qi){
-		list<CFeature*>::iterator fi;
-		list<CFeature*>& features = qf->baseQuads[*qi].features;
+		list<CFeature*>::const_iterator fi;
+		const list<CFeature*>& features = qf->GetQuad(*qi).features;
 		for(fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;

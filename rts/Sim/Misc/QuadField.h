@@ -22,6 +22,9 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad);
 
 public:
+	CQuadField();
+	~CQuadField();
+
 	std::vector<int> GetQuadsOnRay(const float3& start, float3 dir, float length);
 	std::vector<CUnit*> GetUnits(const float3& pos, float radius);
 	std::vector<CUnit*> GetUnitsExact(const float3& pos, float radius);
@@ -43,26 +46,22 @@ public:
 
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad);
-		float startx;
-		float starty;
 		std::list<CUnit*> units;
 		std::list<CUnit*> teamUnits[MAX_TEAMS];
 		std::list<CFeature*> features;
 	};
 
-	CQuadField();
-	~CQuadField();
-
-	std::vector<Quad> baseQuads;
-	int numQuadsX;
-	int numQuadsZ;
-
-	std::vector<CUnit*> tempUnitsArray;//unused
-	std::vector<CFeature*> tempFeaturesArray;//unused
+	const Quad& GetQuad(int i) const { return baseQuads[i]; }
+	const Quad& GetQuadAt(int x, int z) const { return baseQuads[numQuadsX * z + x]; }
+	int GetNumQuadsX() const { return numQuadsX; }
+	int GetNumQuadsZ() const { return numQuadsZ; }
 
 private:
 	void Serialize(creg::ISerializer& s);
 
+	std::vector<Quad> baseQuads;
+	int numQuadsX;
+	int numQuadsZ;
 	int* tempQuads;
 };
 

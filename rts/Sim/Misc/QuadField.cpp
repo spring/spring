@@ -25,9 +25,9 @@ CR_REG_METADATA(CQuadField, (
 void CQuadField::Serialize(creg::ISerializer& s)
 {
 	// no need to alloc quad array, this has already been done in constructor
-	for(int y=0;y<numQuadsZ;++y)
-		for(int x=0;x<numQuadsX;++x)
-			s.SerializeObjectInstance(&baseQuads[y*numQuadsX+x], Quad::StaticClass());
+	for (int z = 0; z < numQuadsZ; ++z)
+		for (int x = 0; x < numQuadsX; ++x)
+			s.SerializeObjectInstance(&baseQuads[z*numQuadsX+x], Quad::StaticClass());
 }
 
 
@@ -35,8 +35,6 @@ void CQuadField::Serialize(creg::ISerializer& s)
 CR_BIND(CQuadField::Quad, );
 
 CR_REG_METADATA_SUB(CQuadField, Quad, (
-		//float startx;  // constant, assigned in constructor
-		//float starty;
 		CR_MEMBER(units),
 		CR_MEMBER(teamUnits),
 		CR_MEMBER(features)
@@ -51,21 +49,12 @@ CQuadField* qf;
 
 CQuadField::CQuadField()
 {
-	numQuadsX=gs->mapx*SQUARE_SIZE/QUAD_SIZE;
-	numQuadsZ=gs->mapy*SQUARE_SIZE/QUAD_SIZE;
+	numQuadsX = gs->mapx * SQUARE_SIZE / QUAD_SIZE;
+	numQuadsZ = gs->mapy * SQUARE_SIZE / QUAD_SIZE;
 
-	baseQuads.resize(numQuadsX*numQuadsZ);
-
-	for(int y=0;y<numQuadsZ;++y){
-		for(int x=0;x<numQuadsX;++x){
-			baseQuads[y*numQuadsX+x].startx=x*QUAD_SIZE;
-			baseQuads[y*numQuadsX+x].starty=y*QUAD_SIZE;
-		}
-	}
+	baseQuads.resize(numQuadsX * numQuadsZ);
 
 	tempQuads = new int[1000];
-//	tempUnitsArray.resize(MAX_UNITS);
-//	tempFeaturesArray.resize(MAX_UNITS);
 }
 
 CQuadField::~CQuadField()
@@ -78,21 +67,21 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	pos.CheckInBounds();
 
 	vector<int> ret;
-	int maxx=min(((int)(pos.x+radius))/QUAD_SIZE+1,numQuadsX-1);
-	int maxy=min(((int)(pos.z+radius))/QUAD_SIZE+1,numQuadsZ-1);
+	int maxx = min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
+	int maxz = min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
 
-	int minx=max(((int)(pos.x-radius))/QUAD_SIZE,0);
-	int miny=max(((int)(pos.z-radius))/QUAD_SIZE,0);
+	int minx = max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
+	int minz = max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
 
-	if(maxy<miny || maxx<minx)
+	if (maxz < minz || maxx < minx)
 		return ret;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
-	ret.reserve((maxy-miny)*(maxx-minx));
-	for(int y=miny;y<=maxy;++y)
-		for(int x=minx;x<=maxx;++x)
-			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5f,0,y*QUAD_SIZE+QUAD_SIZE*0.5f)).SqLength2D()<maxSqLength)
-				ret.push_back(y*numQuadsX+x);
+	float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
+	ret.reserve((maxz - minz) * (maxx - minx));
+	for (int z = minz; z <= maxz; ++z)
+		for (int x = minx; x <= maxx; ++x)
+			if ((pos - float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f)).SqLength2D() < maxSqLength)
+				ret.push_back(z * numQuadsX + x);
 
 	return ret;
 }
@@ -102,25 +91,23 @@ void CQuadField::GetQuads(float3 pos,float radius, int*& dst)
 {
 	pos.CheckInBounds();
 
-	int maxx=min(((int)(pos.x+radius))/QUAD_SIZE+1,numQuadsX-1);
-	int maxy=min(((int)(pos.z+radius))/QUAD_SIZE+1,numQuadsZ-1);
+	int maxx = min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
+	int maxz = min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
 
-	int minx=max(((int)(pos.x-radius))/QUAD_SIZE,0);
-	int miny=max(((int)(pos.z-radius))/QUAD_SIZE,0);
+	int minx = max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
+	int minz = max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
 
-	if(maxy<miny || maxx<minx)
+	if (maxz < minz || maxx < minx)
 		return;
 
-	float maxSqLength=(radius+QUAD_SIZE*0.72f)*(radius+QUAD_SIZE*0.72f);
-	for(int y=miny;y<=maxy;++y)
-		for(int x=minx;x<=maxx;++x)
-			if((pos-float3(x*QUAD_SIZE+QUAD_SIZE*0.5f,0,y*QUAD_SIZE+QUAD_SIZE*0.5f)).SqLength2D()<maxSqLength)
-			{
-				*dst = y*numQuadsX+x;
+	float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
+	for (int z = minz; z <= maxz; ++z)
+		for (int x = minx; x <= maxx; ++x)
+			if ((pos - float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f)).SqLength2D() < maxSqLength) {
+				*dst = z * numQuadsX + x;
 				++dst;
 			}
 }
-
 
 void CQuadField::MovedUnit(CUnit *unit)
 {
@@ -238,7 +225,6 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 
 vector<int> CQuadField::GetQuadsOnRay(const float3& start, float3 dir, float length)
 {
-
 	int* end = tempQuads;
 	GetQuadsOnRay(start,dir,length,end);
 
@@ -518,22 +504,21 @@ vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
 {
 	vector<int> ret;
 
-	int maxx=max(0,min(((int)(pos2.x))/QUAD_SIZE+1,numQuadsX-1));
-	int maxy=max(0,min(((int)(pos2.z))/QUAD_SIZE+1,numQuadsZ-1));
+	int maxx = max(0, min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
+	int maxz = max(0, min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
 
-	int minx=max(0,min(((int)(pos.x))/QUAD_SIZE,numQuadsX-1));
-	int miny=max(0,min(((int)(pos.z))/QUAD_SIZE,numQuadsZ-1));
+	int minx = max(0, min(((int)(pos.x)) / QUAD_SIZE, numQuadsX - 1));
+	int minz = max(0, min(((int)(pos.z)) / QUAD_SIZE, numQuadsZ - 1));
 
-	if(maxy<miny || maxx<minx)
+	if (maxz < minz || maxx < minx)
 		return ret;
 
-	ret.reserve((maxy-miny)*(maxx-minx));
-	for(int y=miny;y<=maxy;++y)
-		for(int x=minx;x<=maxx;++x)
-			ret.push_back(y*numQuadsX+x);
+	ret.reserve((maxz - minz) * (maxx - minx));
+	for(int z = minz; z <= maxz; ++z)
+		for(int x = minx; x <= maxx; ++x)
+			ret.push_back(z * numQuadsX + x);
 
 	return ret;
-
 }
 
 // optimization specifically for projectile collisions
