@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <deque>
+#include <list>
 #include <SDL_types.h>
 
 #include "OggStream.h"
