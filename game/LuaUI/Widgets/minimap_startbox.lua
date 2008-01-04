@@ -36,8 +36,8 @@ end
 --  config options
 --
 
--- assumes that cards which support GL 2.0 don't suck
-local drawGroundQuads = (gl.CreateShader ~= nil)
+-- disable the loathed demo feature
+local drawGroundQuads = false
 
 
 --------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ function widget:Initialize()
   -- get the gaia teamID and allyTeamID
   gaiaTeamID = Spring.GetGaiaTeamID()
   if (gaiaTeamID) then
-    local _,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
+    local _,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
     gaiaAllyTeamID = atid
   end
 
@@ -281,7 +281,7 @@ function widget:DrawInMiniMap(sx, sz)
   local gaiaAllyTeamID
   local gaiaTeamID = Spring.GetGaiaTeamID()
   if (gaiaTeamID) then
-    local _,_,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
+    local _,_,_,_,_,atid = Spring.GetTeamInfo(gaiaTeamID)
     gaiaAllyTeamID = atid
   end
 
