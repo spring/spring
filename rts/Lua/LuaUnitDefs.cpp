@@ -35,6 +35,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitImage.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -710,7 +711,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
 
-	ADD_STRING("buildpicname", ud.buildpicname);
+	ADD_STRING("buildpicname", ud.unitImage->buildPicName);
 
 	ADD_INT("aihint", ud.aihint);
 	ADD_INT("cobID",  ud.cobID);

@@ -91,15 +91,12 @@ struct UnitDef
 	~UnitDef();
 	S3DOModel* LoadModel(int team) const;
 
-	UnitImage* unitImage;	// wrapper for a GLuint pointing to build-pic of this unit-type
+	UnitImage* unitImage;	// GLuint wrapper pointing to build-pic data of this unit type
 	bool valid;
 	std::string name;
 	std::string humanName;
 	std::string filename;
 	int id;					// unique id for this type of unit
-	int imageSizeX;
-	int imageSizeY;
-	std::string buildpicname;
 
 	const UnitDef* decoyDef;
 

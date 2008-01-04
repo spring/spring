@@ -37,7 +37,7 @@ public:
 	void AssignTechLevels();
 	const UnitDef* GetUnitByName(std::string name);
 	const UnitDef* GetUnitByID(int id);
-	unsigned int GetUnitImage(const UnitDef *unitdef);
+	unsigned int GetUnitImage(const UnitDef* unitdef, std::string buildPicName = "");
 	bool SaveTechLevels(const std::string& filename, const std::string& modname);
 
 	bool noCost;
