@@ -285,12 +285,6 @@ void CGroundDecalHandler::Draw(void)
 				float tx = scar->texOffsetX;
 				float ty = scar->texOffsetY;
 
-				if (scar->creationTime + 10 > gs->frameNum)
-					color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
-				else
-					color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
-
-				color[3] = 95;
 				int sx = (int) max(0.f,                  (pos.x - radius) / 16.0f);
 				int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
 				int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
@@ -318,6 +312,21 @@ void CGroundDecalHandler::Draw(void)
 				}
 			}
 			else {
+				// TODO: make this a real user-configurable setting ("PrettyScars"?)
+				if (decalLevel > 1) {
+					if (scar->creationTime + 10 > gs->frameNum) {
+						color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
+					} else {
+						color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
+					}
+
+					const float c = *((float*) (color));
+
+					for (int i = 5; i < scar->scarQuads->drawIndex; i += 6) {
+						scar->scarQuads->drawArray[i] = c;
+					}
+				}
+
 				scar->scarQuads->DrawArrayTC(GL_QUADS);
 			}
 		}
