@@ -2929,15 +2929,14 @@ bool CGame::ClientReadNet()
 
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
-				if ((gs->frameNum % 8) == 0) {
-					// only answer every 8th newframe (~3 times per second are enought for ping calculation)
-					net->SendNewFrame(gs->frameNum);
-				}
 				SimFrame();
+				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
 				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
+#else
+				net->SendNewFrame(gs->frameNum);
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 

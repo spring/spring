@@ -94,7 +94,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		userSpeedFactor = 1.0f;
 		internalSpeed = 1.0f;
 	}
-	
+
 	if (!demoName.empty())
 	{
 		SendSystemMsg("Playing demo %s", demoName.c_str());
@@ -300,9 +300,9 @@ void CGameServer::Update()
 #endif
 			}
 			else if (
-			          demobuffer[0] != NETMSG_SETPLAYERNUM && 
-			          demobuffer[0] != NETMSG_USER_SPEED && 
-			          demobuffer[0] != NETMSG_INTERNAL_SPEED && 
+			          demobuffer[0] != NETMSG_SETPLAYERNUM &&
+			          demobuffer[0] != NETMSG_USER_SPEED &&
+			          demobuffer[0] != NETMSG_INTERNAL_SPEED &&
 			          demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
 			{
 				serverNet->RawSend(demobuffer, length);
@@ -539,6 +539,8 @@ void CGameServer::ServerReadNet()
 								SendSystemMsg("Delayed response from %s for frame %d (current %d)",
 										players[a]->name.c_str(), frameNum, serverframenum);
 							}
+							// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_NEWFRAME)
+							players[a]->ping = serverframenum - frameNum;
 						}
 #endif
 						break;
@@ -710,12 +712,12 @@ void CGameServer::GenerateAndSendGameID()
 void CGameServer::StartGame()
 {
 	serverNet->Listening(false);
-	
+
 	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
 			if(players[a])
 				serverNet->SendPlayerName(a, players[a]->name);
 	}
-	
+
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(userSpeedFactor>maxUserSpeed)
 	{
@@ -733,7 +735,7 @@ void CGameServer::StartGame()
 		// no need to send startpos and startplaying since its in the demo
 		return;
 	}
-		
+
 	GenerateAndSendGameID();
 
 	if (gameSetup) {
@@ -890,14 +892,14 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
-	
+
 	if (gameSetup) {
 		for (unsigned a = 0; a < gs->activeTeams; ++a)
 		{
 			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}
 	}
-	
+
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
 	SendSystemMsg("Client connected on slot %i", hisNewNumber);
 	serverNet->FlushNet();

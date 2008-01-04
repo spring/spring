@@ -53,9 +53,9 @@ void CModInfo::Init(const char* modname)
 
 	// constructions
 	const LuaTable constructionTbl = root.SubTable("construction");
-	constructionDecay       = constructionTbl.GetBool("constructionDecay",  true);
-	constructionDecayTime   = constructionTbl.GetFloat("constructionDecayTime",  6.66) * 30;
-	constructionDecaySpeed  = constructionTbl.GetFloat("constructionDecaySpeed",  0.03);
+	constructionDecay = constructionTbl.GetBool("constructionDecay", true);
+	constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * 30);
+	constructionDecaySpeed = constructionTbl.GetFloat("constructionDecaySpeed", 0.03);
 
 	// reclaim
 	const LuaTable reclaimTbl = root.SubTable("reclaim");
