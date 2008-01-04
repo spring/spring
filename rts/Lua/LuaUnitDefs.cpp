@@ -801,6 +801,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("buildDistance",  ud.buildDistance);
 	ADD_FLOAT("buildSpeed",     ud.buildSpeed);
 	ADD_FLOAT("repairSpeed",    ud.repairSpeed);
+	ADD_FLOAT("maxRepairSpeed",    ud.repairSpeed);
 	ADD_FLOAT("reclaimSpeed",   ud.reclaimSpeed);
 	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);

@@ -171,6 +171,7 @@ public:
 	CUnit* soloBuilder;
 	bool beingBuilt;
 	int lastNanoAdd;					//if we arent built on for a while start decaying
+	float repairAmount;                 //How much reapir power has been added to this recently
 	CTransportUnit *transporter;		//transport that the unit is currently in
 	bool toBeTransported;			//unit is about to be picked up by a transport
 	float buildProgress;			//0.0-1.0
