@@ -19,7 +19,9 @@ std::string CClipboard::GetContents() const
 		contents = (char*)p;
 	}
 	CloseClipboard();
-#else // _WIN32
+#elif defined(__APPLE__)
+	// Nothing for now
+#else
 	// only works with the cut-buffer method (xterm)
 	// (and not with the more recent selections method)
 	SDL_SysWMinfo sdlinfo;

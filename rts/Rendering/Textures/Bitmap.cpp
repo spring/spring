@@ -3,11 +3,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef __APPLE__
+/* The QuickTime loader is outdated and disabled for the moment. 
+   Its only purpose seems to be to get rid of some dependencies.
+   Maybe it should be removed. */
+//#define USE_QUICKTIME
+#endif
+
 #include "Rendering/GL/myGL.h"
 #include <ostream>
 #include <fstream>
 #include "FileSystem/FileHandler.h"
-#if defined(__APPLE__)
+#if defined(USE_QUICKTIME)
 #include <QuickTime/ImageCompression.h>
 #include <QuickTime/QuickTimeComponents.h>
 #else
@@ -23,7 +30,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(__APPLE__)
+#if !defined(USE_QUICKTIME)
 struct InitializeOpenIL {
 	InitializeOpenIL() {
 		ilInit();
@@ -130,7 +137,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	unsigned char *buffer = SAFE_NEW unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
-#if defined(__APPLE__) // Use QuickTime to load images on Mac
+#if defined(USE_QUICKTIME) // Use QuickTime to load images on Mac
 
 	mem = LoadTextureData(filename, buffer, file.FileSize(),
 		xsize, ysize, noAlpha);
@@ -148,7 +155,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[1] = 0;
 		mem[2] = 0;
 		mem[3] = 255; // Non Transparent
-		return;
+		return true;
 	}
 
 	// Because most of the algorithms that work on our texture are not generalized yet
@@ -215,6 +222,8 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 
 bool CBitmap::LoadGrayscale (const string& filename)
 {
+#if !defined(USE_QUICKTIME) // Temporary fix to allow testing of everything
+						// else until i get a quicktime image loader written
 	type = BitmapTypeStandardAlpha;
 
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
@@ -237,22 +246,22 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(success == false)
 		return false;
 
-#if !defined(__APPLE__) // Temporary fix to allow testing of everything
-						// else until i get a quicktime image loader written
+
 	ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
 	mem = SAFE_NEW unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
+	
+	ilDeleteImages(1, &ImageName);
 #else
 	xsize = 4;
 	ysize = 4;
 
 	mem = SAFE_NEW unsigned char[xsize * ysize];
 #endif
-
-	ilDeleteImages(1, &ImageName);
+	
 	return true;
 }
 
@@ -264,7 +273,7 @@ void CBitmap::Save(string const& filename)
 		return;
 	}
 
-#if !defined(__APPLE__) // Use devil on Windows/Linux/...
+#if !defined(USE_QUICKTIME) // Use devil on Windows/Linux/...
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -321,7 +330,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 		return bm.CreateTexture(mipmaps);
 	}
 
-	unsigned int texture;
+	GLuint texture;
 
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -645,12 +654,15 @@ void CBitmap::GrayScale()
 	}
 }
 
-
+#if !defined(USE_QUICKTIME) 
 static ILubyte TintByte(ILubyte value, float tint)
+#else
+static unsigned char TintByte(unsigned char value, float tint)
+#endif
 {
 	float f = (float)value;
 	f = std::max(0.0f, std::min(255.0f, f * tint));
-	return (ILubyte)f;
+	return (unsigned char)f;
 }
 
 
@@ -688,7 +700,7 @@ void CBitmap::ReverseYAxis()
 }
 
 
-#if defined(__APPLE__)
+#if defined(USE_QUICKTIME)
 
 Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	const std::string &filename)
@@ -836,4 +848,4 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 
 }
 
-#endif /* __APPLE__ */
+#endif /* USE_QUICKTIME */

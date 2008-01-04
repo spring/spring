@@ -37,10 +37,8 @@
 
 #include "LogOutput.h"
 
-#ifndef __APPLE__
 #include <IL/il.h>
 #define TERRAIN_USE_IL
-#endif
 
 typedef unsigned int uint;
 typedef unsigned short ushort;

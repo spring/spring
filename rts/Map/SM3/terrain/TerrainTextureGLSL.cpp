@@ -47,7 +47,8 @@ using namespace std;
 static void ShowInfoLog(GLhandleARB handle)
 {
 	d_trace("Shader failed to compile, showing info log:\n");
-	int infoLogLen, actualLength;
+	GLint infoLogLen;
+	GLsizei actualLength;
 	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &infoLogLen);
 	char *infoLog = new char[infoLogLen];
 	glGetInfoLogARB(handle, infoLogLen, &actualLength, infoLog);
@@ -79,7 +80,7 @@ struct Shader
 	{
 		handle = glCreateShaderObjectARB(shaderType);
 
-		vector<int> lengths(texts.size());
+		vector<GLint> lengths(texts.size());
 		vector<const GLcharARB*> strings(texts.size());
 		int index=0;
 		for (list<string>::iterator i=texts.begin(); i != texts.end(); ++i, index++) {
@@ -94,7 +95,7 @@ struct Shader
 		glCompileShaderARB(handle);
 
 		// Check compile status and show info log if failed
-		int isCompiled;
+		GLint isCompiled;
 		glGetObjectParameterivARB(handle, GL_OBJECT_COMPILE_STATUS_ARB, &isCompiled);
 		if (!isCompiled)
 		{
@@ -209,7 +210,7 @@ struct ShaderBuilder
 	struct TexReq
 	{
 		TexReq() { coords=units=0; }
-		int coords, units;
+		GLint coords, units;
 		void GetFromGL();
 		bool Fits(TexReq maxrq) {
 			return coords <= maxrq.coords && units <= maxrq.units;
@@ -344,7 +345,7 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glAttachObjectARB(nodeShader->program, nodeShader->fragmentShader);
 
 	glLinkProgramARB(nodeShader->program);
-	int isLinked;
+	GLint isLinked;
 	glGetObjectParameterivARB(nodeShader->program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 	if (!isLinked)
 	{
@@ -827,14 +828,14 @@ void GLSLShaderHandler::BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *rende
 
 int GLSLShaderHandler::MaxTextureUnits ()
 {
-	int n;
+	GLint n;
 	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
 	return n;
 }
 
 int GLSLShaderHandler::MaxTextureCoords ()
 {
-	int n;
+	GLint n;
 	glGetIntegerv (GL_MAX_TEXTURE_COORDS_ARB, &n);
 	return n;
 }
@@ -859,7 +860,7 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 	glAttachObjectARB(program, fragmentShader);
 
 	glLinkProgramARB(program);
-	int isLinked;
+	GLint isLinked;
 	glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 	if (!isLinked)
 	{

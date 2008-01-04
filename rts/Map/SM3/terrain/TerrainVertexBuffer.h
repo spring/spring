@@ -51,7 +51,7 @@ namespace terrain {
 
 	protected:
 		char *data;
-		uint id;
+		GLuint id;
 		uint size;
 		uint type;
 

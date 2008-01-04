@@ -40,6 +40,7 @@
 
 #include <deque>
 #include <fstream>
+#include <IL/il.h>
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
 #include "FileSystem/FileHandler.h"

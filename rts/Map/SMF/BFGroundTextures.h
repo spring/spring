@@ -4,6 +4,9 @@
 #ifndef __BF_GROUND_TEXTURES_H__
 #define __BF_GROUND_TEXTURES_H__
 
+#define GLEW_STATIC
+#include <GL/glew.h>
+
 class CFileHandler;
 class CSmfReadMap;
 
@@ -26,7 +29,7 @@ protected:
 
 	struct GroundSquare{
 		int texLevel;
-		unsigned int texture;
+		GLuint texture;
 		int lastUsed;
 	};
 

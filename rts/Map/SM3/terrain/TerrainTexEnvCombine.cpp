@@ -108,13 +108,13 @@ TexEnvSetupHandler::TexEnvSetupHandler()
 
 int TexEnvSetupHandler::MaxTextureUnits ()
 {
-	int m;
+	GLint m;
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &m);
 	return m;
 }
 int TexEnvSetupHandler::MaxTextureCoords ()
 {
-	int m;
+	GLint m;
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &m);
 	return m;
 }
