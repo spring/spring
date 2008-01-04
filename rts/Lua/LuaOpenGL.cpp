@@ -50,6 +50,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitImage.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -3304,8 +3305,8 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 				return 0;
 			}
 			lua_newtable(L);
-			HSTR_PUSH_NUMBER(L, "xsize", ud->imageSizeX);
-			HSTR_PUSH_NUMBER(L, "ysize", ud->imageSizeY);
+			HSTR_PUSH_NUMBER(L, "xsize", ud->unitImage->imageSizeX);
+			HSTR_PUSH_NUMBER(L, "ysize", ud->unitImage->imageSizeY);
 			// HSTR_PUSH_BOOL(L,   "alpha", texInfo->alpha);  FIXME
 			// HSTR_PUSH_NUMBER(L, "type",  texInfo->type);
 		}

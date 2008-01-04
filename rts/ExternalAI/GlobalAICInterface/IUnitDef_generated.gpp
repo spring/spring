@@ -28,7 +28,7 @@ AICALLBACK_API int UnitDef_get_id( const UnitDef *self )
 
 AICALLBACK_API const char * UnitDef_get_buildpicname( const UnitDef *self )
 {
-   return ( ( UnitDef *) self)->buildpicname.c_str();
+   return ""; //( ( UnitDef *) self)->buildpicname.c_str();
 }
 
 

@@ -6,6 +6,7 @@
 #include <locale>
 #include <cctype>
 #include "UnitDef.h"
+#include "UnitImage.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -14,7 +15,6 @@
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -32,9 +32,6 @@ CR_BIND(UnitDef, );
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
-struct UnitImage {
-	GLuint textureID;
-};
 
 CUnitDefHandler* unitDefHandler;
 
@@ -91,8 +88,6 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
 		unitDefs[id].unitImage  = 0;
-		unitDefs[id].imageSizeX = -1;
-		unitDefs[id].imageSizeY = -1;
 		unitDefs[id].techLevel  = -1;
 		unitDefs[id].decoyDef   = NULL;
 		unitID[unitName] = id;
@@ -184,6 +179,9 @@ void CUnitDefHandler::FindCommanders()
 void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitName, int id)
 {
 	UnitDef& ud = unitDefs[id];
+
+	// allocate and fill ud->unitImage
+	GetUnitImage(&unitDefs[id], udTable.GetString("buildPic", ""));
 
 	ud.humanName = udTable.GetString("name", "");
 	if (ud.humanName.empty()) {
@@ -607,8 +605,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.deathExplosion = udTable.GetString("explodeAs", "");
 	ud.selfDExplosion = udTable.GetString("selfDestructAs", "");
 
-	ud.buildpicname = udTable.GetString("buildPic", "");
-
 	//ud.power = (ud.metalCost + ud.energyCost/60.0f);
 	ud.power = udTable.GetFloat("power", (ud.metalCost + (ud.energyCost / 60.0f)));
 
@@ -887,36 +883,39 @@ static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
 }
 
 
-unsigned int CUnitDefHandler::GetUnitImage(const UnitDef *unitdef)
+unsigned int CUnitDefHandler::GetUnitImage(const UnitDef* unitdef, std::string buildPicName)
 {
 	if (unitdef->unitImage != 0) {
 		return (unitdef->unitImage->textureID);
 	}
 
 	CBitmap bitmap;
-	if (!unitdef->buildpicname.empty()) {
-		bitmap.Load("unitpics/" + unitdef->buildpicname);
+
+	if (!buildPicName.empty()) {
+		bitmap.Load("unitpics/" + buildPicName);
 	}
 	else {
 		if (!LoadBuildPic("unitpics/" + unitdef->name + ".dds", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
+			!LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
+			!LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
+			!LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
 			bitmap.Alloc(1, 1); // last resort
 		}
 	}
 
 	const unsigned int texID = bitmap.CreateTexture(false);
+
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 	UnitDef& ud = unitDefs[unitdef->id]; // get away with the const
 	ud.unitImage = SAFE_NEW UnitImage;
+	ud.unitImage->buildPicName = buildPicName;
 	ud.unitImage->textureID = texID;
-	ud.imageSizeX = bitmap.xsize;
-	ud.imageSizeY = bitmap.ysize;
+	ud.unitImage->imageSizeX = bitmap.xsize;
+	ud.unitImage->imageSizeY = bitmap.ysize;
 	POP_CODE_MODE;
 
-	return (unitdef->unitImage->textureID);
+	return texID;
 }
 
 
