@@ -18,7 +18,7 @@
 
 static const float Smoke_Time=70;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0));
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0,float3(0,0,0)));
 
 CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(tracking),
@@ -37,6 +37,7 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(curCallback),
 	CR_MEMBER(missileAge),
 	CR_MEMBER(distanceToTravel),
+	CR_MEMBER(aimError),
 	CR_RESERVED(16)
 	));
 
@@ -51,7 +52,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 
 CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
-		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance):
+		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError):
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
@@ -65,7 +66,8 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	numCallback(0),
 	missileAge(0),
 	areaOfEffect(areaOfEffect),
-	distanceToTravel(maxdistance)
+	distanceToTravel(maxdistance),
+	aimError(aimError)
 {
 	this->uptime=uptime;
 	if (weaponDef) {
@@ -165,6 +167,8 @@ void CStarburstProjectile::Update(void)
 		speed = dir * curSpeed;
 	} else if (doturn && ttl > 0 && distanceToTravel > 0) {
 		float3 dif(targetPos-pos);
+		dif.Normalize();
+		dif += aimError;
 		dif.Normalize();
 		if (dif.dot(dir) > 0.99f) {
 			dir = dif;
