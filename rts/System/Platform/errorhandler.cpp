@@ -39,6 +39,9 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
 
+#elif defined(__APPLE__)
+	// Need a Mac-like dialog here
+	std::cout << caption << " " << msg << std::endl;
 #else
 	// X implementation
 

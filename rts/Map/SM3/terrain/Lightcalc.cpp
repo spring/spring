@@ -35,6 +35,7 @@
 #include "Map/ReadMap.h"
 
 #include <SDL.h>
+#include <IL/il.h>
 
 namespace terrain {
 

@@ -69,7 +69,7 @@ void CVerticalSync::SetFrames(int f)
 
 void CVerticalSync::Delay()
 {
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__APPLE__)
 	if (frames > 0) {
 		if (!GLXEW_SGI_video_sync) {
 			frames = 0; // disable

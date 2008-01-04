@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "Rendering/GL/myGL.h"
 
 #include "creg/creg.h"
 
@@ -35,7 +36,7 @@ public:
 	/// set to true to write finalized texture atlas to disk
 	static bool debug;
 
-	unsigned int gltex;
+	GLuint gltex;
 
 	CTextureAtlas(int maxxSize, int maxySize);
 	~CTextureAtlas(void);

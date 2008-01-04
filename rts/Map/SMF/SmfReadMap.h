@@ -16,8 +16,8 @@ public:
 	~CSmfReadMap(void);
 
 	void HeightmapUpdated(int x1, int x2, int y1, int y2);
-	unsigned int GetShadingTexture () { return shadowTex; }
-	unsigned int GetGrassShadingTexture () { return minimapTex; }
+	GLuint GetShadingTexture () { return shadowTex; }
+	GLuint GetGrassShadingTexture () { return minimapTex; }
 	void DrawMinimap ();
 	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
 	CBaseGroundDrawer* GetGroundDrawer();
@@ -32,7 +32,7 @@ public:
 	void FreeInfoMap(const std::string& name, unsigned char *data);
 
 	std::string detailTexName;
-	unsigned int detailTex;
+	GLuint detailTex;
 	MapHeader header;
 	CFileHandler *ifs;
 
@@ -45,8 +45,8 @@ protected:
 
 	void ConfigureAnisotropy();
 
-	unsigned int shadowTex;
-	unsigned int minimapTex;
+	GLuint shadowTex;
+	GLuint minimapTex;
 
 	float* heightmap;
 

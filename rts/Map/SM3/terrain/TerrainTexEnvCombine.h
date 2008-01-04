@@ -95,7 +95,7 @@ namespace terrain {
 		int maxtu;
 		bool hasDot3;
 		// Used when enabling texture units without actual texture
-		uint whiteTexture;
+		GLuint whiteTexture;
 		NodeTexEnvSetup *lastShader;
 
 		NodeTexEnvSetup* curSetup;

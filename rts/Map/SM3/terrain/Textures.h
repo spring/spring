@@ -87,7 +87,7 @@ namespace terrain {
 		virtual bool ShareTexCoordUnit () { return true; }
 
 		std::string name;
-		uint id;
+		GLuint id;
 		float2 tilesize;
 
 		// the "texgen vector" is defined as:

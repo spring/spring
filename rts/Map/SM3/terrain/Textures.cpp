@@ -315,9 +315,9 @@ namespace terrain {
 
 	// Util functions
 
-	uint GenSphereBumpmap ()
+	GLuint GenSphereBumpmap ()
 	{
-		uint id;
+		GLuint id;
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 

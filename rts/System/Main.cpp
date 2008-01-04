@@ -542,7 +542,9 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-#ifndef _WIN32
+#ifdef __APPLE__
+	return false;
+#elif !defined(_WIN32)
 	info.info.x11.lock_func();
 	{
 		Display* display = info.info.x11.display;
