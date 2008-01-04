@@ -17,8 +17,9 @@
 
 CBasicMapDamage::CBasicMapDamage(void)
 {
-	inRelosQue=SAFE_NEW bool[qf->numQuadsX*qf->numQuadsZ];
-	for(int a=0;a<qf->numQuadsX*qf->numQuadsZ;++a){
+	const int numQuads = qf->GetNumQuadsX() * qf->GetNumQuadsZ();
+	inRelosQue = SAFE_NEW bool[numQuads];
+	for (int a = 0; a < numQuads; ++a) {
 		inRelosQue[a]=false;
 	}
 	relosSize=0;
@@ -213,21 +214,21 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	readmap->HeightmapUpdated(x1,x2,y1,y2);
 
 	decy=max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incy=min(qf->numQuadsZ-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	incy=min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
 	decx=max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incx=min(qf->numQuadsX-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	incx=min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
 
 	for(int y=decy;y<=incy;y++){
 		for(int x=decx;x<=incx;x++){
-			if(inRelosQue[y*qf->numQuadsX+x])
+			if(inRelosQue[y*qf->GetNumQuadsX()+x])
 				continue;
 			RelosSquare rs;
 			rs.x=x;
 			rs.y=y;
 			rs.neededUpdate=gs->frameNum;
-			rs.numUnits=qf->baseQuads[y*qf->numQuadsX+x].units.size();
+			rs.numUnits = qf->GetQuadAt(x, y).units.size();
 			relosSize+=rs.numUnits;
-			inRelosQue[y*qf->numQuadsX+x]=true;
+			inRelosQue[y*qf->GetNumQuadsX()+x]=true;
 			relosQue.push_back(rs);
 		}
 	}
@@ -343,13 +344,13 @@ void CBasicMapDamage::UpdateLos(void)
 			return;
 		RelosSquare* rs=&relosQue.front();
 
-		std::list<CUnit*>* q=&qf->baseQuads[rs->y*qf->numQuadsX+rs->x].units;
-		for(std::list<CUnit*>::iterator ui=q->begin();ui!=q->end();++ui){
+		const std::list<CUnit*>& units = qf->GetQuadAt(rs->x, rs->y).units;
+		for (std::list<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			relosUnits.push_back((*ui)->id);
 		}
 		relosSize-=rs->numUnits;
 		neededLosUpdate=rs->neededUpdate;
-		inRelosQue[rs->y*qf->numQuadsX+rs->x]=false;
+		inRelosQue[rs->y*qf->GetNumQuadsX()+rs->x]=false;
 		relosQue.pop_front();
 	}
 	for(int a=0;a<updateSpeed;++a){
