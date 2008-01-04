@@ -8,6 +8,7 @@
 #include <string>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 
 class CUnit;
 class CBuilding;
@@ -78,6 +79,7 @@ public:
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 
 	struct Scar {
+		Scar() { scarQuads = 0; }
 		float3 pos;
 		float radius;
 		int creationTime;
@@ -94,10 +96,11 @@ public:
 		float overdrawn;
 
 		int lastTest;
+		CVertexArray* scarQuads;
 	};
 
 	std::list<Scar*> scars;
-	
+
 	int lastTest;
 	float maxOverlap;
 
