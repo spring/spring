@@ -123,6 +123,8 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yeardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
+		delete unitDefs[i].unitImage;
+
 		for (int u = 0; u < 4; u++)
 			delete[] unitDefs[i].yardmaps[u];
 
