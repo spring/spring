@@ -123,13 +123,12 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yeardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
-		delete unitDefs[i].unitImage;
-
 		for (int u = 0; u < 4; u++)
 			delete[] unitDefs[i].yardmaps[u];
 
 		if (unitDefs[i].unitImage) {
 			glDeleteTextures(1, &unitDefs[i].unitImage->textureID);
+			delete unitDefs[i].unitImage;
 			unitDefs[i].unitImage = 0;
 		}
 	}
