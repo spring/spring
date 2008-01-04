@@ -263,8 +263,8 @@ void CGroundDecalHandler::Draw(void)
 
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+//	CVertexArray* va = GetVertexArray();
+//	va->Initialize();
 	glPolygonOffset(-10, -400);
 
 	// create the 16x16 quads for each ground scar
@@ -313,10 +313,10 @@ void CGroundDecalHandler::Draw(void)
 						float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
 						float tz2 = max(0.0f, (pos.z - pz2) / (radius * 4.0f) + 0.25f);
 
-						va->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
-						va->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
-						va->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
-						va->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
+//						va->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
+//						va->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
+//						va->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
+//						va->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
 
 						scar->scarQuads->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
 						scar->scarQuads->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
