@@ -100,6 +100,7 @@ public:
 	bool showClock;
 	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
 	bool drawFpsHUD;
+	bool drawMapMarks;
 	float crossSize; // locked mouse indicator size	
 
 	bool drawSky;

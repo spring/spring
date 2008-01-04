@@ -239,6 +239,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	skipping = 0;
 
 	drawFpsHUD = true;
+	drawMapMarks = true;
 	hideInterface = false;
 
 	windowedEdgeMove   = !!configHandler.GetInt("WindowedEdgeMove",   1);
@@ -1642,7 +1643,14 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		if (action.extra.empty()) {
 			drawFpsHUD = !drawFpsHUD;
 		} else {
-			drawFpsHUD = !atoi(action.extra.c_str());
+			drawFpsHUD = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "mapmarks") {
+		if (action.extra.empty()) {
+			drawMapMarks = !drawMapMarks;
+		} else {
+			drawMapMarks = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "luaui") {
@@ -1974,7 +1982,9 @@ bool CGame::DrawWorld()
 
 	guihandler->DrawMapStuff(0);
 
-	inMapDrawer->Draw();
+	if (drawMapMarks) {
+		inMapDrawer->Draw();
+	}
 
 	// underwater overlay
 	if (camera->pos.y < 0.0f) {
