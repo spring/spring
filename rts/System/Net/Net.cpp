@@ -91,12 +91,6 @@ void CNet::Kill(const unsigned connNumber)
 	
 	connections[connNumber]->Flush(true);
 	connections[connNumber].reset();
-	
-	if (int(connNumber) == MaxConnectionID())
-	{
-		//TODO remove other connections when neccesary
-		connections.pop_back();
-	}
 }
 
 bool CNet::Connected() const
@@ -222,13 +216,18 @@ void CNet::Update()
 		udplistener->Update(waitingQueue);
 	}
 	
-	for (connVec::iterator  i = connections.begin(); i < connections.end(); ++i)
+	for (connVec::iterator i = connections.begin(); i < connections.end(); ++i)
 	{
 		if((*i) && (*i)->CheckTimeout())
 		{
+			(*i)->Flush(true);
 			i->reset();
 		}
 	}
+	
+	// remove the last pointer from the vector if it doesn't store a connection
+	if (connections.size() > 0 && !(connections.back()))
+		connections.pop_back();
 }
 
 unsigned CNet::InitNewConn(const connPtr& newClient, const unsigned wantedNumber)
