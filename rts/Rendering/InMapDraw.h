@@ -12,6 +12,7 @@ class CInMapDraw
 	CR_DECLARE_SUB(MapPoint);
 	CR_DECLARE_SUB(MapLine);
 	CR_DECLARE_SUB(DrawQuad);
+
 public:
 	CInMapDraw(void);
 	~CInMapDraw(void);
@@ -20,8 +21,10 @@ public:
 
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
+	void MouseMove(int x, int y, int dx, int dy, int button);
 	void GotNetMsg(const unsigned char* msg);
+	void ToggleAllVisible() { drawAll = !drawAll; }
+	void SetAllVisible(bool b) { drawAll = b; }
 
 	float3 GetMouseMapPos(void);
 	void ErasePos(const float3& pos);
@@ -34,6 +37,7 @@ public:
 		float3 pos;
 		unsigned char* color;
 		std::string label;
+		int senderAllyTeam;
 	};
 
 	struct MapLine {
@@ -42,6 +46,7 @@ public:
 		float3 pos;
 		float3 pos2;
 		unsigned char* color;
+		int senderAllyTeam;
 	};
 
 	struct DrawQuad {
@@ -56,7 +61,7 @@ public:
 	int drawQuadsY;
 	int numQuads;
 
-	enum NetTypes{
+	enum NetTypes {
 		NET_POINT,
 		NET_ERASE,
 		NET_LINE
@@ -69,6 +74,7 @@ public:
 	bool wantLabel;
 	float3 waitingPoint;
 	int blippSound;
+	bool drawAll;
 
 	static void InMapDrawVisCallback (int x,int y,void *userData);
 	void CreatePoint(const float3& pos, std::string label);
