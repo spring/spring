@@ -80,6 +80,9 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
 
 	for (int x = 0; x < ai->pather->PathMapXSize / CACHEFACTOR; x++) {
 		for (int y = 0; y < ai->pather->PathMapYSize / CACHEFACTOR; y++) {
+			// KLOOTNOTE: RETURNS UNINITIALIZED CRAP IN CERTAIN MODS?
+			// (gdb) print cachePoint->y   $2 = 219024104
+			// (gdb) print cachePoint->x   $3 = -1215908928
 			CachePoint* cachePoint = spotFinder->GetBestCachePoint(x, y);
 			float bestScoreInThisBox = cachePoint->maxValueInBox;
 

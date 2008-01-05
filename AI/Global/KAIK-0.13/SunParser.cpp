@@ -407,8 +407,8 @@ vector<string> CSunParser::GetLocationVector(string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
 	vector<string> loclist;
 
-	unsigned int start = 0;
-	unsigned int next = 0;
+	unsigned long start = 0;
+	unsigned long next = 0;
 
 	while ((next = location.find_first_of("\\", start)) != std::string::npos) {
 		loclist.push_back(location.substr(start, next - start));
