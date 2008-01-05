@@ -54,6 +54,7 @@ CR_REG_METADATA(CBuilderCAI , (
 
 // not adding to members, should repopulate itself
 CUnitSet CBuilderCAI::reclaimers;
+CUnitSet CBuilderCAI::featureReclaimers;
 
 
 CBuilderCAI::CBuilderCAI()
@@ -176,6 +177,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 CBuilderCAI::~CBuilderCAI()
 {
 	RemoveUnitFromReclaimers(owner);
+	RemoveUnitFromFeatureReclaimers(owner);
 	uh->RemoveBuilderCAI(this);
 }
 
@@ -688,10 +690,14 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				if(!ReclaimObject(feature)){
 					StopMove();
 					FinishCommand();
+					RemoveUnitFromFeatureReclaimers(owner);
+				} else {
+					AddUnitToFeatureReclaimers(owner);
 				}
 			} else {
 				StopMove();
 				FinishCommand();
+				RemoveUnitFromFeatureReclaimers(owner);
 			}
 			RemoveUnitFromReclaimers(owner);
 
@@ -708,12 +714,14 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				RemoveUnitFromReclaimers(owner);
 				FinishCommand();
 			}
+			RemoveUnitFromFeatureReclaimers(owner);
 		}
 	} else if(c.params.size()==4){//area reclaim
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
+		RemoveUnitFromFeatureReclaimers(owner);
 		if (FindReclaimableFeatureAndReclaim(pos, radius, c.options, true, recAnyTeam)) {
 			inCommand=false;
 			SlowUpdate();
@@ -724,6 +732,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		}
 	} else {	//wrong number of parameters
 		RemoveUnitFromReclaimers(owner);
+		RemoveUnitFromFeatureReclaimers(owner);
 		FinishCommand();
 	}
 	return;
@@ -958,6 +967,17 @@ void CBuilderCAI::RemoveUnitFromReclaimers(CUnit* unit)
 }
 
 
+void CBuilderCAI::AddUnitToFeatureReclaimers(CUnit* unit)
+{
+	featureReclaimers.insert(unit);
+}
+
+void CBuilderCAI::RemoveUnitFromFeatureReclaimers(CUnit* unit)
+{
+	featureReclaimers.erase(unit);
+}
+
+
 /** check if a unit is being reclaimed by a friendly con.
 
 we assume that there won't be a lot of reclaimers because performance would suck
@@ -994,6 +1014,37 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 	}
 	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
 		RemoveUnitFromReclaimers(*it);
+	return retval;
+}
+
+
+bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId)
+{
+	bool retval = false;
+	std::list<CUnit*> rm;
+
+	for (CUnitSet::iterator it = featureReclaimers.begin(); it != featureReclaimers.end(); ++it) {
+		// check wheter reclaimers are valid
+		assert(*it);
+		assert((*it)->commandAI);
+		if ((*it)->commandAI->commandQue.empty()) {
+			rm.push_back(*it);
+			continue;
+		}
+		const Command& c = (*it)->commandAI->commandQue.front();
+		if (c.id != CMD_RECLAIM || c.params.size() != 1) {
+			rm.push_back(*it);
+			continue;
+		}
+
+		const int cmdFeatureId = (int)c.params[0];
+		if (cmdFeatureId-MAX_UNITS == featureId) {
+			retval = true;
+			break;
+		}
+	}
+	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
+		RemoveUnitFromFeatureReclaimers(*it);
 	return retval;
 }
 
