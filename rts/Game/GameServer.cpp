@@ -689,11 +689,6 @@ void CGameServer::GenerateAndSendGameID()
 	CRC entropy;
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
 
-	// Probably not that random since it's always the stuff that was on the
-	// stack previously.  Also it's VERY frustrating with e.g. valgrind...
-	//unsigned char buffer[128];	// uninitialised bytes (should be very random)
-	//entropy.UpdateData(buffer, 128);
-
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
 	if (gameSetup != NULL) {
@@ -702,8 +697,6 @@ void CGameServer::GenerateAndSendGameID()
 		gameID.intArray[2] = crc.GetCRC();
 	}
 
-	// Fourth dword is CRC of the network buffer, which should be pretty random.
-	// (depends on start positions, chat messages, user input, etc.)
 	gameID.intArray[3] = entropy.GetCRC();
 
 	serverNet->SendGameID(gameID.charArray);
@@ -883,7 +876,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 
-	// send game data for demo recording
+	// send game data (in case he didn't know or for checksumming)
 	serverNet->SendScript(scriptName);
 	serverNet->SendMapName(mapChecksum, mapName);
 	serverNet->SendModName(modChecksum, modName);
@@ -901,7 +894,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	}
 
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
-	SendSystemMsg("Client connected on slot %i", hisNewNumber);
+	SendSystemMsg("Client connected on slot %i (wanted number was %i)", hisNewNumber, wantedNumber);
 	serverNet->FlushNet();
 }
 
