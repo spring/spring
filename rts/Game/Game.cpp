@@ -1646,6 +1646,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			drawFpsHUD = !!atoi(action.extra.c_str());
 		}
 	}
+
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
 			drawMapMarks = !drawMapMarks;
@@ -1653,6 +1654,16 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			drawMapMarks = !!atoi(action.extra.c_str());
 		}
 	}
+	else if (cmd == "allmapmarks") {
+		if (gs->cheatEnabled && !net->localDemoPlayback) {
+			if (action.extra.empty()) {
+				inMapDrawer->ToggleAllVisible();
+			} else {
+				inMapDrawer->SetAllVisible(!!atoi(action.extra.c_str()));
+			}
+		}
+	}
+
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
