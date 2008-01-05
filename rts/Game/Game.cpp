@@ -1902,6 +1902,9 @@ bool CGame::Update()
 
 	if(gameSetup && !playing) {
 		allReady=gameSetup->Update();
+		if (allReady && gameSetup->hostDemo)
+			// the NETMSG_STARTPLAYING may arrive later so don't show negative time until start
+			GameSetupDrawer::Disable();
 	} else if( gameServer && gameServer->WaitsOnCon()) {
 		allReady=true;
 		for(int a=0;a<gs->activePlayers;a++) {

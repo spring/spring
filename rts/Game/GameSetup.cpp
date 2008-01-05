@@ -486,13 +486,13 @@ bool CGameSetup::Init(const char* buf, int size)
 bool CGameSetup::Update()
 {
 	bool allReady = true;
-	if (!gameServer && net->Connected())
+	if (!gameServer) // let the server/host start the game
 		return false;
 	for (int a = numDemoPlayers; a < numPlayers; a++) {
 		if (!gs->players[a]->readyToStart) {
 			allReady = false;
 			break;
-		} else if (!readyTeams[gs->players[a]->team])
+		} else if (!readyTeams[gs->players[a]->team] && !hostDemo)
 		{
 			allReady = false;
 			break;

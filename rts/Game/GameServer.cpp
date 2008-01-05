@@ -726,6 +726,7 @@ void CGameServer::StartGame()
 	if (demoReader) {
 		// the client told us to start a demo
 		// no need to send startpos and startplaying since its in the demo
+		SendSystemMsg("Starting demo playback...");
 		return;
 	}
 

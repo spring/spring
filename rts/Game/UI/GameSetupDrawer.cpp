@@ -35,7 +35,7 @@ void GameSetupDrawer::Disable()
 
 GameSetupDrawer::GameSetupDrawer()
 {
-	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
 		new CStartPosSelecter();
 	}
 	lctrl_pressed = false;
