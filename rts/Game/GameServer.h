@@ -59,7 +59,7 @@ public:
 	*/
 	void SkipTo(int targetframe);
 
-	bool CreateNewFrame(bool fromServerThread=false);
+	void CreateNewFrame(bool fromServerThread=false);
 
 	bool WaitsOnCon() const;
 
@@ -138,12 +138,12 @@ private:
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 
+	bool noHelperAIs;
 	std::string scriptName;
 	unsigned int mapChecksum;
 	std::string mapName;
 	unsigned int modChecksum;
 	std::string modName;
-
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK

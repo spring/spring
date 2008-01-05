@@ -51,7 +51,10 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 #endif
 	demoReader = 0;
 	IsPaused = false;
+	userSpeedFactor = 1.0f;
+	internalSpeed = 1.0f;
 	gamePausable = true;
+	noHelperAIs = false;
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
@@ -84,15 +87,12 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
-		userSpeedFactor = gs->userSpeedFactor;
-		internalSpeed = gs->speedFactor;
+		noHelperAIs = (bool)gameSetup->noHelperAIs;
 	}
 	else
 	{
 		maxUserSpeed=3;
 		minUserSpeed=0.3f;
-		userSpeedFactor = 1.0f;
-		internalSpeed = 1.0f;
 	}
 
 	if (!demoName.empty())
@@ -320,13 +320,6 @@ void CGameServer::Update()
 
 	if (serverframenum > 0 && !demoReader)
 	{
-		// Flushing the server after each new frame will result in smoother gameplay
-		// don't need flushing at faster gameplay, we can save bandwith and lower the packet count
-		// NOTE: smoother gameplay should be handled now by CGame, by smoothing
-		// out network buffer reads if the packets arrive in short bursts.
-		// (lots of packets have more chance to congest network stream)
-		//if (CreateNewFrame(true) && internalSpeed < 1.2f)
-		//	serverNet->FlushNet();
 		CreateNewFrame(true);
 	}
 	serverNet->Update();
@@ -497,7 +490,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[3]);
 						}
-						else if (gs->noHelperAIs) {
+						else if (noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
 						}
 						else if (!demoReader) {
@@ -509,7 +502,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[3]);
 						}
-						else if (gs->noHelperAIs) {
+						else if (noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
 						}
 						else if (!demoReader) {
@@ -707,8 +700,8 @@ void CGameServer::StartGame()
 	serverNet->Listening(false);
 
 	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
-			if(players[a])
-				serverNet->SendPlayerName(a, players[a]->name);
+		if(players[a])
+			serverNet->SendPlayerName(a, players[a]->name);
 	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -731,7 +724,6 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
-
 	if (gameSetup) {
 		for (unsigned a = 0; a < gs->activeTeams; ++a)
 		{
@@ -794,7 +786,7 @@ void CGameServer::CheckForGameEnd()
 	}
 }
 
-bool CGameServer::CreateNewFrame(bool fromServerThread)
+void CGameServer::CreateNewFrame(bool fromServerThread)
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	CheckSync();
@@ -814,7 +806,6 @@ bool CGameServer::CreateNewFrame(bool fromServerThread)
 
 	timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
 	lastTick=currentTick;
-	bool newFrameCreated = false;
 
 	while((timeLeft>0) && !IsPaused)
 	{
@@ -828,14 +819,12 @@ bool CGameServer::CreateNewFrame(bool fromServerThread)
 			} else
 				serverframenum++;
 			serverNet->SendNewFrame(serverframenum);
-			newFrameCreated = true;
 #ifdef SYNCCHECK
 			outstandingSyncFrames.push_back(serverframenum);
 #endif
 		}
 		timeLeft--;
 	}
-	return newFrameCreated;
 }
 
 void CGameServer::UpdateLoop()
@@ -950,6 +939,11 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	}
 	else if ((msg.find(".nopause") == 0) && (players[player]->hasRights)) {
 		SetBoolArg(gamePausable, msg, ".nopause");
+	}
+	else if ((msg.find(".nohelp") == 0) && (players[player]->hasRights)) {
+		SetBoolArg(noHelperAIs, msg, ".nohelp");
+		// sent it because clients have to do stuff when this changes
+		serverNet->SendChat(player, msg);
 	}
 	else if ((msg.find(".setmaxspeed") == 0) && (players[player]->hasRights)) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
