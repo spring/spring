@@ -41,6 +41,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool UnsyncedUpdateCallIn(const string& name);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
+		bool BuilderTerraformComplete(const CUnit* unit, const CUnit* build);
 		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
 		bool AllowUnitCreation(const UnitDef* unitDef,
 		                       const CUnit* builder, const float3* pos);
@@ -95,6 +96,7 @@ class CLuaRules : public CLuaHandleSynced
 
 	private:
 		bool haveCommandFallback;
+		bool haveBuilderTerraformComplete;
 		bool haveAllowCommand;
 		bool haveAllowUnitCreation;
 		bool haveAllowUnitTransfer;

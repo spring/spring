@@ -65,6 +65,7 @@ CallInsList = {
   "CobCallback",
   "AllowCommand",
   "CommandFallback",
+  "BuilderTerraformComplete",
   "AllowUnitCreation",
   "AllowUnitTransfer",
   "AllowUnitBuildStep",
