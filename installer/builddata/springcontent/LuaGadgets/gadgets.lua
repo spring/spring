@@ -122,6 +122,7 @@ local callInLists = {
 
   -- LuaRules CallIns
   'CommandFallback',
+  'BuilderTerraformComplete',
   'AllowCommand',
   'AllowUnitCreation',
   'AllowUnitTransfer',
@@ -980,6 +981,19 @@ function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
     end
   end
   return true  -- remove the command
+end
+
+
+function gadgetHandler:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+                                       buildUnitID, buildUnitDefID, buildUnitTeam)
+  for _,g in ipairs(self.BuilderTerraformCompleteList) do
+    local stop = g:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+                                       buildUnitID, buildUnitDefID, buildUnitTeam)
+    if (stop) then
+      return true
+    end
+  end
+  return false
 end
 
 

@@ -106,6 +106,7 @@ CLuaRules::CLuaRules()
 	}
 
 	haveCommandFallback        = HasCallIn("CommandFallback");
+	haveBuilderTerraformComplete=HasCallIn("BuilderTerraformComplete");
 	haveAllowCommand           = HasCallIn("AllowCommand");
 	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
 	haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
@@ -218,6 +219,8 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
 	if (name == "CommandFallback") {
 		haveCommandFallback       = HasCallIn("CommandFallback");
+	} else if (name == "BuilderTerraformComplete") {
+		haveBuilderTerraformComplete=HasCallIn("BuilderTerraformComplete");
 	} else if (name == "AllowCommand") {
 		haveAllowCommand          = HasCallIn("AllowCommand");
 	} else if (name == "AllowUnitCreation") {
@@ -303,6 +306,50 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		                cmdStr.GetString().c_str(), args);
 		lua_pop(L, 1);
 		return true;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
+	// return 'true' to remove the command
+	return retval;
+}
+
+
+bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
+{
+	if (!haveBuilderTerraformComplete) {
+		logOutput.Print("No func");
+		return false; // the call is not defined
+	}
+
+	static const LuaHashString cmdStr("BuilderTerraformComplete");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return false; // the call is not defined
+	}
+
+	// push the unit info
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// push the construction info
+	lua_pushnumber(L, build->id);
+	lua_pushnumber(L, build->unitDef->id);
+	lua_pushnumber(L, build->team);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 6, 1)) {
+		return false;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_pop(L, 1);
+		return false;
 	}
 
 	const bool retval = !!lua_toboolean(L, -1);
