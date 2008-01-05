@@ -75,6 +75,7 @@ public:
 
 public:
 	static CUnitSet reclaimers;
+	static CUnitSet featureReclaimers;
 
 private:
 
@@ -86,6 +87,14 @@ private:
 	static void AddUnitToReclaimers(CUnit*);
 	static void RemoveUnitFromReclaimers(CUnit*);
 	static bool IsUnitBeingReclaimedByFriend(CUnit*);
+
+	// fix for cons wandering away from their target circle
+	static void AddUnitToFeatureReclaimers(CUnit*);
+	static void RemoveUnitFromFeatureReclaimers(CUnit*);
+public:
+	static bool IsFeatureBeingReclaimed(int);
+
+private:
 };
 
 #endif // __BUILDER_CAI_H__

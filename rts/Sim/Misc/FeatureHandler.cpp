@@ -22,6 +22,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/TimeProfiler.h"
 #include <GL/glu.h> // after myGL.h
 #include "mmgr.h"
@@ -411,8 +412,18 @@ void CFeatureHandler::Update()
 	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Feature::Update");
 
-	if ((gs->frameNum & 31) == 0)	// let all areareclaimers choose a target with a different id
-		freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
+	if ((gs->frameNum & 31) == 0) {	// let all areareclaimers choose a target with a different id
+		bool dontClear = false;
+		for (list<int>::iterator it = toBeFreedIDs.begin(); it != toBeFreedIDs.end(); ++it) {
+			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
+				// postpone recycling
+				dontClear = true;
+				break;
+			}
+		}
+		if (!dontClear)
+			freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
+	}
 
 	while (!toBeRemoved.empty()) {
 		CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
