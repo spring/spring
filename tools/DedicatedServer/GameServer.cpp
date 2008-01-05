@@ -39,7 +39,7 @@ GameParticipant::GameParticipant(bool willHaveRights)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName)
+CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const std::string& demoName)
 {
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
@@ -54,12 +54,16 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 #ifdef DEBUG
 	gameClientUpdated=false;
 #endif
-	play = 0;
+	demoReader = 0;
 	IsPaused = false;
+	userSpeedFactor = 1.0f;
+	internalSpeed = 1.0f;
 	gamePausable = true;
+	noHelperAIs = false;
 	sentGameOverMsg = false;
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
+	serverNet->InitServer(port);
 
 	SendSystemMsg("Starting server on port %i", port);
 	mapName = newMapName;
@@ -88,18 +92,19 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
-		/*userSpeedFactor = gs->userSpeedFactor;
-		internalSpeed = gs->speedFactor;*/
+		noHelperAIs = (bool)gameSetup->noHelperAIs;
 	}
 	else
 	{
 		maxUserSpeed=3;
 		minUserSpeed=0.3f;
-		userSpeedFactor = 1.0f;
-		internalSpeed = 1.0f;
 	}
 
-	serverNet->InitServer(port);
+	if (!demoName.empty())
+	{
+		SendSystemMsg("Playing demo %s", demoName.c_str());
+		demoReader = new CDemoReader(demoName, modGameTime+0.1f);
+	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -116,8 +121,8 @@ CGameServer::~CGameServer()
 	quitServer=true;
 	thread->join();
 	delete thread;
-	if (play)
-		delete play;
+	if (demoReader)
+		delete demoReader;
 
 	delete serverNet;
 	serverNet=0;
@@ -141,13 +146,6 @@ void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 	lastTick = newlastTick;
 //	serverframenum = newserverframenum;
 	nextserverframenum = newserverframenum+1;
-}
-
-void CGameServer::StartDemoPlayback(const std::string& demoName)
-{
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-	SendSystemMsg("Playing demo %s", demoName.c_str());
-	play = new CDemoReader(demoName, modGameTime+0.1f);
 }
 
 void CGameServer::SkipTo(int targetframe)
@@ -290,11 +288,11 @@ void CGameServer::Update()
 	}
 
 	// when hosting a demo, read from file and broadcast data
-	if (play != 0) {
+	if (demoReader != 0) {
 		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 		unsigned length = 0;
 
-		while ( (length = play->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 ) {
+		while ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 ) {
 			if (demobuffer[0] == NETMSG_NEWFRAME)
 			{
 				// we can't use CreateNewFrame() here
@@ -307,26 +305,25 @@ void CGameServer::Update()
 #endif
 			}
 			else if (
-			          demobuffer[0] != NETMSG_SETPLAYERNUM && 
-			          demobuffer[0] != NETMSG_USER_SPEED && 
-			          demobuffer[0] != NETMSG_INTERNAL_SPEED && 
+			          demobuffer[0] != NETMSG_SETPLAYERNUM &&
+			          demobuffer[0] != NETMSG_USER_SPEED &&
+			          demobuffer[0] != NETMSG_INTERNAL_SPEED &&
 			          demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
 			{
 				serverNet->RawSend(demobuffer, length);
 			}
 		}
 
-		if (play->ReachedEnd())
-		{
-			delete play;
-			play=0;
+		if (demoReader->ReachedEnd()) {
+			delete demoReader;
+			demoReader = 0;
 			SendSystemMsg("End of demo reached");
 		}
 	}
 
 	ServerReadNet();
 
-	if (serverframenum > 0 && !play)
+	if (serverframenum > 0 && !demoReader)
 	{
 		CreateNewFrame(true);
 	}
@@ -480,7 +477,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got command msg from %i claiming to be from %i",a,inbuf[3]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -489,7 +486,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got select msg from %i claiming to be from %i",a,inbuf[3]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -498,10 +495,10 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got aicommand msg from %i claiming to be from %i",a,inbuf[3]);
 						}
-						/*else if (gs->noHelperAIs) {
+						else if (noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
-						}*/
-						else if(!play) {
+						}
+						else if (!demoReader) {
 							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -510,10 +507,10 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got aicommands msg from %i claiming to be from %i",a,inbuf[3]);
 						}
-						/*else if (gs->noHelperAIs) {
+						else if (noHelperAIs) {
 							SendSystemMsg("Server: Player %i is using a helper AI illegally", a);
-						}*/
-						else if(!play) {
+						}
+						else if (!demoReader) {
 							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -522,7 +519,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[3]!=a){
 							SendSystemMsg("Server: Warning got LuaMsg from %i claiming to be from %i",a,inbuf[3]);
 						}
-						else if(!play) {
+						else if (!demoReader) {
 							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
 						}
 						break;
@@ -540,6 +537,8 @@ void CGameServer::ServerReadNet()
 								SendSystemMsg("Delayed response from %s for frame %d (current %d)",
 										players[a]->name.c_str(), frameNum, serverframenum);
 							}
+							// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_NEWFRAME)
+							players[a]->ping = serverframenum - frameNum;
 						}
 #endif
 						break;
@@ -548,7 +547,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got share msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]));
 						}
 						break;
@@ -557,7 +556,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!= a){
 							SendSystemMsg("Server: Warning got setshare msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->SendSetShare(inbuf[1], inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7]));
 						}
 						break;
@@ -579,7 +578,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got direct control msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->SendDirectControl(inbuf[1]);
 						}
 						break;
@@ -588,7 +587,7 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							SendSystemMsg("Server: Warning got dc update msg from %i claiming to be from %i",a,inbuf[1]);
 						} else {
-							if(!play)
+							if (!demoReader)
 								serverNet->SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5]));
 						}
 						break;
@@ -602,11 +601,11 @@ void CGameServer::ServerReadNet()
 					}
 					case NETMSG_RANDSEED:
 					{
-						if (players[a]->hasRights && !play)
+						if (players[a]->hasRights && !demoReader)
 							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
 						break;
 					}
-					
+
 					// CGameServer should never get these messages
 					case NETMSG_GAMEID:
 					case NETMSG_INTERNAL_SPEED:
@@ -687,11 +686,6 @@ void CGameServer::GenerateAndSendGameID()
 
 	CRC entropy;
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
-	
-	// Probably not that random since it's always the stuff that was on the
-	// stack previously.  Also it's VERY frustrating with e.g. valgrind...
-	//unsigned char buffer[128];	// uninitialised bytes (should be very random)
-	//entropy.UpdateData(buffer, 128);
 
 	// Third dword is CRC of gameSetupText (if there is a gameSetup)
 	// or pseudo random bytes (if there is no gameSetup)
@@ -701,8 +695,6 @@ void CGameServer::GenerateAndSendGameID()
 		gameID.intArray[2] = crc.GetCRC();
 	}
 
-	// Fourth dword is CRC of the network buffer, which should be pretty random.
-	// (depends on start positions, chat messages, user input, etc.)
 	gameID.intArray[3] = entropy.GetCRC();
 
 	serverNet->SendGameID(gameID.charArray);
@@ -712,20 +704,9 @@ void CGameServer::StartGame()
 {
 	serverNet->Listening(false);
 
-	if (!play)
-		GenerateAndSendGameID();
-
-	for(unsigned a=0; a < MAX_PLAYERS; ++a){
+	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
 		if(players[a])
 			serverNet->SendPlayerName(a, players[a]->name);
-	}
-	
-	if (gameSetup) {
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
-		{
-			/*if (gs->Team(a)->active)
-				serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);*/
-		}
 	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -738,6 +719,21 @@ void CGameServer::StartGame()
 	{
 		serverNet->SendUserSpeed(0,minUserSpeed);
 		userSpeedFactor = minUserSpeed;
+	}
+
+	if (demoReader) {
+		// the client told us to start a demo
+		// no need to send startpos and startplaying since its in the demo
+		SendSystemMsg("Starting demo playback...");
+		return;
+	}
+
+	GenerateAndSendGameID();
+	if (gameSetup) {
+		/*for (unsigned a = 0; a < gs->activeTeams; ++a)
+		{
+			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+		}*/
 	}
 
 	serverNet->SendStartPlaying();
@@ -757,11 +753,11 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::CheckForGameEnd()
 {
-	if(gameEndTime > 0){
-		if(gameEndTime < SDL_GetTicks()-2000 && !sentGameOverMsg){
+	if (gameEndTime > 0) {
+		if (gameEndTime < SDL_GetTicks() - 2000 && !sentGameOverMsg) {
+			SendSystemMsg("Server: Game has ended");
 			serverNet->SendGameOver();
-			if (hostif)
-			{
+			if (hostif) {
 				hostif->SendGameOver();
 			}
 			sentGameOverMsg = true;
@@ -769,9 +765,9 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
+	/*unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
-	/*unsigned numActiveAllyTeams = 0;
+	unsigned numActiveAllyTeams = 0;
 
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia)
@@ -781,7 +777,15 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 
-	if (numActiveAllyTeams <= 1) {
+	if (numActiveAllyTeams == 0)
+	{
+		// no ally left, end game
+		gameEndTime=SDL_GetTicks();
+		serverNet->SendSendPlayerStat();
+	}
+	else if (numActiveAllyTeams == 1 && !demoReader)
+	{
+		// 1 ally left, end game only if we are not watching a demo
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}*/
@@ -789,6 +793,7 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
 {
+	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	CheckSync();
 
 	// Send out new frame messages.
@@ -813,7 +818,6 @@ void CGameServer::CreateNewFrame(bool fromServerThread)
 		if((!game || !game->creatingVideo) || !fromServerThread)
 #endif
 		{
-			boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 			if (nextserverframenum!=0) {
 				serverframenum = nextserverframenum;
 				nextserverframenum = 0;
@@ -860,14 +864,14 @@ void CGameServer::KickPlayer(const int playerNum)
 
 void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 {
-	if (play) {
-		wantedNumber = std::max(wantedNumber, (unsigned)play->GetFileHeader().maxPlayerNum+1);
+	if (demoReader) {
+		wantedNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
 	}
 	unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 
-	// send game data for demo recording
+	// send game data (in case he didn't know or for checksumming)
 	serverNet->SendScript(scriptName);
 	serverNet->SendMapName(mapChecksum, mapName);
 	serverNet->SendModName(modChecksum, modName);
@@ -876,13 +880,16 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
-	if(gameSetup){
-		/*for(unsigned a=0; a < MAX_TEAMS; ++a){
+
+	if (gameSetup) {
+		/*for(unsigned a=0; a < gs->activeTeams; ++a)
+		{
 			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
 		}*/
 	}
+
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
-	SendSystemMsg("Client connected on slot %i", hisNewNumber);
+	SendSystemMsg("Client connected on slot %i (wanted number was %i)", hisNewNumber, wantedNumber);
 	serverNet->FlushNet();
 }
 
@@ -939,6 +946,11 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	}
 	else if ((msg.find(".nopause") == 0) && (players[player]->hasRights)) {
 		SetBoolArg(gamePausable, msg, ".nopause");
+	}
+	else if ((msg.find(".nohelp") == 0) && (players[player]->hasRights)) {
+		SetBoolArg(noHelperAIs, msg, ".nohelp");
+		// sent it because clients have to do stuff when this changes
+		serverNet->SendChat(player, msg);
 	}
 	else if ((msg.find(".setmaxspeed") == 0) && (players[player]->hasRights)) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
