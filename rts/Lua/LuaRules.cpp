@@ -319,7 +319,6 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
 {
 	if (!haveBuilderTerraformComplete) {
-		logOutput.Print("No func");
 		return false; // the call is not defined
 	}
 
