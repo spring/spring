@@ -137,19 +137,25 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	if (nak > 0)	// we have lost $nak packets
 	{
 		int nak_abs = nak + firstUnacked - 1;
-		if (nak_abs!=lastNak || lastNakTime < lastReceiveTime-100)
+		if (nak_abs >= currentNum)
+		{
+			// we got a nak for packets which never got sent
+			//TODO give error message
+		}
+		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-100)
 		{
 			// resend all packets from firstUnacked till nak_abs
 			lastNak=nak_abs;
 			lastNakTime=lastReceiveTime;
-			for(int b=firstUnacked;b<=nak_abs;++b){
+			for (int b = firstUnacked; b <= nak_abs; ++b)
+			{
 				SendRawPacket(unackedPackets[b-firstUnacked].data,unackedPackets[b-firstUnacked].length,b);
 				++resentPackets;
 			}
 		}
 	}
 
-	if(lastInOrder>=packetNum || waitingPackets.find(packetNum)!=waitingPackets.end())
+	if (lastInOrder >= packetNum || waitingPackets.find(packetNum) != waitingPackets.end())
 	{
 		++droppedPackets;
 		delete packet;
@@ -335,7 +341,7 @@ void UDPConnection::Init()
 
 void UDPConnection::AckPackets(const int nextAck)
 {
-	while(nextAck>=firstUnacked && !unackedPackets.empty()){
+	while (nextAck >= firstUnacked && !unackedPackets.empty()){
 		unackedPackets.pop_front();
 		firstUnacked++;
 	}
