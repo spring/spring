@@ -37,7 +37,9 @@ public:
 		float3 pos;
 		unsigned char* color;
 		std::string label;
+
 		int senderAllyTeam;
+		bool senderSpectator;
 	};
 
 	struct MapLine {
@@ -46,7 +48,9 @@ public:
 		float3 pos;
 		float3 pos2;
 		unsigned char* color;
+
 		int senderAllyTeam;
+		bool senderSpectator;
 	};
 
 	struct DrawQuad {

@@ -37,6 +37,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapPoint, (
 	CR_MEMBER(pos),
 	CR_MEMBER(label),
 	CR_MEMBER(senderAllyTeam),
+	CR_MEMBER(senderSpectator),
 	CR_RESERVED(4),
 	CR_SERIALIZER(Serialize)
 ));
@@ -47,6 +48,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapLine, (
 	CR_MEMBER(pos),
 	CR_MEMBER(pos2),
 	CR_MEMBER(senderAllyTeam),
+	CR_MEMBER(senderSpectator),
 	CR_RESERVED(4),
 	CR_SERIALIZER(Serialize)
 ));
@@ -201,9 +203,10 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 	// draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		int allyteam = pi->senderAllyTeam;
+		const int allyteam = pi->senderAllyTeam;
+		const bool spec = pi->senderSpectator;
 		const bool allied = gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam);
-		const bool maySee = (gu->spectating || allied || imd->drawAll);
+		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
 			float3 pos = pi->pos;
@@ -254,9 +257,10 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 	// draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		int allyteam = li->senderAllyTeam;
+		const int allyteam = li->senderAllyTeam;
+		const bool spec = pi->senderSpectator;
 		const bool allied = gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam);
-		const bool maySee = (gu->spectating || allied || imd->drawAll);
+		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
 			lineva->AddVertexC(li->pos - (li->pos - camera->pos).Normalize() * 26, li->color);
@@ -373,10 +377,10 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 	}
 	const int team = sender->team;
 	const int allyteam = gs->AllyTeam(team);
-	const bool enemyMsg = (!gs->Ally(gu->myAllyTeam, allyteam) || !gs->Ally(allyteam, gu->myAllyTeam));
+	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam));
 	bool allowed = true;
 
-	if (!gu->spectating && (sender->spectator || enemyMsg)) {
+	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
 		// we are playing and the guy sending the
 		// net-msg is a spectator or not an ally;
 		// cannot just ignore the message due to
@@ -402,6 +406,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 			p.color = gs->Team(team)->color;
 			p.label = label;
 			p.senderAllyTeam = allyteam;
+			p.senderSpectator = sender->spectator;
 
 			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
 			drawQuads[quad].points.push_back(p);
@@ -477,6 +482,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 			l.pos2 = pos2;
 			l.color = gs->Team(team)->color;
 			l.senderAllyTeam = allyteam;
+			l.senderSpectator = sender->spectator;
 
 			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
 			drawQuads[quad].lines.push_back(l);
@@ -507,10 +513,10 @@ void CInMapDraw::AddLine(const float3& pos, const float3& pos2)
 
 void CInMapDraw::PromptLabel (const float3& pos)
 {
-	waitingPoint=pos;
-	game->userWriting=true;
-	wantLabel=true;
-	game->userPrompt="Label: ";
-	game->ignoreChar='\xA7';		//should do something better here
+	waitingPoint = pos;
+	game->userWriting = true;
+	wantLabel = true;
+	game->userPrompt = "Label: ";
+	game->ignoreChar = '\xA7';		//should do something better here
 }
 
