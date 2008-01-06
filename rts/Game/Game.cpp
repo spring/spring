@@ -1307,7 +1307,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		net->SendUserSpeed(gu->myPlayerNum, speed);
 	}
 
-
 #ifdef DIRECT_CONTROL_ALLOWED
 	else if (cmd == "controlunit") {
 		Command c;
@@ -1318,7 +1317,11 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 #endif
 
-	else if (cmd == "showshadowmap") {
+	// Break up the if/else chain to workaround MSVC compiler limit
+	// "fatal error C1061: compiler limit : blocks nested too deeply"
+	else notfound1=true;
+	if (notfound1)
+	if (cmd == "showshadowmap") {
 		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
 	}
 	else if (cmd == "showstandard") {
@@ -1701,11 +1704,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			}
 		}
 	}
-	// Break up the if/else chain to workaround MSVC compiler limit
-	// "fatal error C1061: compiler limit : blocks nested too deeply"
-	else notfound1=true;
-	if (notfound1)
-	if (cmd == "pastetext") {
+	else if (cmd == "pastetext") {
 		if (userWriting){
 			if (!action.extra.empty()) {
 				userInput.insert(writingPos, action.extra);

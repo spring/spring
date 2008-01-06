@@ -22,7 +22,7 @@ using namespace std;
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
 	drawDecals = false;
-	decalLevel = configHandler.GetInt("GroundDecals", 1);
+	decalLevel = std::max(0, std::min(5, configHandler.GetInt("GroundDecals", 1)));
 	groundScarAlphaFade = configHandler.GetInt("GroundScarAlphaFade", 0);
 
 	if (decalLevel == 0) {
