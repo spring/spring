@@ -46,6 +46,8 @@ public:
 
 	void AddLocalClient(unsigned wantedNumber);
 
+	void AddAutohostInterface(const int usePort, const int remotePort);
+
 	/**
 	@brief Set frame after loading
 	WARNING! No checks are done, so be carefull

@@ -348,7 +348,11 @@ bool CPreGame::Update()
 		case WAIT_CONNECTING:
 			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
-				gameServer = new CGameServer(gameSetup? gameSetup->hostport : 8452, mapName, modArchive, scriptName, demoFile);
+				int myPort = gameSetup? gameSetup->hostport : 8452;
+				gameServer = new CGameServer(myPort, mapName, modArchive, scriptName, demoFile);
+				int autohostport = configHandler.GetInt("Autohost", 0);
+				if (autohostport > 0)
+					gameServer->AddAutohostInterface(myPort+1, autohostport);
 				gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}

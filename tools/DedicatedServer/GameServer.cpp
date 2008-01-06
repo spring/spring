@@ -55,6 +55,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	gameClientUpdated=false;
 #endif
 	demoReader = 0;
+	hostif = 0;
 	IsPaused = false;
 	userSpeedFactor = 1.0f;
 	internalSpeed = 1.0f;
@@ -77,18 +78,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 
 	lastTick = SDL_GetTicks();
 
-	/*int autohostport = configHandler.GetInt("Autohost", 0);
-	if (autohostport > 0)
-	{
-		SendSystemMsg("Connecting to autohost on port %i", autohostport);
-		hostif = new AutohostInterface(port+10, autohostport);
-		hostif->SendStart();
-	}
-	else*/
-	{
-		hostif = 0;
-	}
-
 	if (gameSetup) {
 		maxUserSpeed = gameSetup->maxSpeed;
 		minUserSpeed = gameSetup->minSpeed;
@@ -96,7 +85,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	}
 	else
 	{
-		maxUserSpeed=3;
+		maxUserSpeed=5;
 		minUserSpeed=0.3f;
 	}
 
@@ -138,6 +127,17 @@ void CGameServer::AddLocalClient(unsigned wantedNumber)
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->ServerInitLocalClient();
 	BindConnection(wantedNumber, true);
+}
+
+void CGameServer::AddAutohostInterface(const int usePort, const int remotePort)
+{
+	if (hostif == 0)
+	{
+		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+		SendSystemMsg("Connecting to autohost on port %i", remotePort);
+		hostif = new AutohostInterface(usePort, remotePort);
+		hostif->SendStart();
+	}
 }
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
@@ -318,6 +318,7 @@ void CGameServer::Update()
 			delete demoReader;
 			demoReader = 0;
 			SendSystemMsg("End of demo reached");
+			gameEndTime = SDL_GetTicks();
 		}
 	}
 
@@ -336,7 +337,8 @@ void CGameServer::Update()
 		if (!msg.empty())
 			GotChatMessage(msg, SERVER_PLAYER);
 	}
-	CheckForGameEnd();
+	if (!demoReader && !sentGameOverMsg)
+		CheckForGameEnd();
 }
 
 void CGameServer::ServerReadNet()
@@ -777,15 +779,8 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 
-	if (numActiveAllyTeams == 0)
+	if (numActiveAllyTeams =< 1)
 	{
-		// no ally left, end game
-		gameEndTime=SDL_GetTicks();
-		serverNet->SendSendPlayerStat();
-	}
-	else if (numActiveAllyTeams == 1 && !demoReader)
-	{
-		// 1 ally left, end game only if we are not watching a demo
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}*/
