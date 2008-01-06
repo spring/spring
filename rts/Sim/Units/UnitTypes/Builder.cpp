@@ -248,10 +248,10 @@ void CBuilder::Update()
 	  			if (curBuild->buildProgress < 1.0f) {
 	  				adjBuildSpeed = buildSpeed;  // new build
 	  			} else {
-  					adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0 - curBuild->repairAmount, repairSpeed); // repair
+  					adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed); // repair
 				}
 
-				if (adjBuildSpeed > 0 and curBuild->AddBuildPower(adjBuildSpeed, this)) {
+				if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
 					CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 				} else {
 					if(!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
