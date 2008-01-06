@@ -20,6 +20,9 @@ public:
 
 	// precaches speed/cost/buildtime/range stats
 	void PrecacheStats();
+	
+	// only precaches costs (called after possible cost multipliers have been assigned)
+	void PrecacheCosts();
 
 	// returns true, if a builder can build a certain unit (use UnitDef.id)
 	bool CanBuildUnit(int id_builder, int id_unit);

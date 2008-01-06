@@ -255,7 +255,7 @@ void AAIBuildTable::Init()
 	// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array) 
 	units_dynamic.resize(numOfUnits+1);
 
-	for(int i = 0; i <= numOfUnits; i++)
+	for(int i = 0; i <= numOfUnits; ++i)
 	{
 		units_dynamic[i].active = 0;
 		units_dynamic[i].requested = 0;
@@ -309,9 +309,7 @@ void AAIBuildTable::Init()
 		
 			// get build options
 			for(map<int, string>::const_iterator j = unitList[i-1]->buildOptions.begin(); j != unitList[i-1]->buildOptions.end(); ++j)
-			{
-				units_static[i].canBuildList.push_back(cb->GetUnitDef(j->second.c_str())->id);
-			}
+				units_static[i].canBuildList.push_back(cb->GetUnitDef(j->second.c_str())->id);		
 		}
 
 		// now set the sides and create buildtree
@@ -332,7 +330,6 @@ void AAIBuildTable::Init()
 				units_static[i].range = GetMaxRange(i);
 
 				// get memory for eff
-//				units_static[i].efficiency = new float[combat_categories];
 				units_static[i].efficiency.resize(combat_categories);
 
 				eff = 5 + 25 * (units_static[i].cost - min_cost)/(max_cost - min_cost);
@@ -348,7 +345,6 @@ void AAIBuildTable::Init()
 				units_static[i].range = 0;
 				
 				// get memory for eff
-//				units_static[i].efficiency = new float[combat_categories];
 				units_static[i].efficiency.resize(combat_categories);
 				
 				for(int k = 0; k < combat_categories; ++k)
@@ -960,7 +956,6 @@ void AAIBuildTable::Init()
 				}
 			}
 			}
-		
 		}
 
 		// set up attacked_by table
@@ -983,6 +978,16 @@ void AAIBuildTable::Init()
 	// only once
 	if(aai_instances == 1)
 	{
+		// apply possible cost multipliers
+		if(cfg->cost_multipliers.size() > 0)
+		{
+			for(int i = 0; i < cfg->cost_multipliers.size(); ++i)
+				units_static[cfg->cost_multipliers[i].id].cost *= cfg->cost_multipliers[i].multiplier;
+		
+			// recalculate costs
+			PrecacheCosts();
+		}
+
 		UpdateMinMaxAvgEfficiency();
 
 		float temp;
@@ -1443,6 +1448,40 @@ void AAIBuildTable::PrecacheStats()
 					group_speed[cat][s] = -1;
 					avg_speed[cat][s] = -1;	
 				}
+			}
+		}
+	}
+}
+
+void AAIBuildTable::PrecacheCosts()
+{
+	for(int s = 0; s < numOfSides; ++s)
+	{
+		for(int i = 1; i <= MOBILE_CONSTRUCTOR; ++i)
+		{
+			// precache costs
+			avg_cost[i][s] = 0;
+			this->min_cost[i][s] = 10000;
+			this->max_cost[i][s] = 0;	
+
+			for(list<int>::iterator unit = units_of_category[i][s].begin(); unit != units_of_category[i][s].end(); ++unit)
+			{
+				avg_cost[i][s] += units_static[*unit].cost;
+
+				if(units_static[*unit].cost > this->max_cost[i][s])
+					this->max_cost[i][s] = units_static[*unit].cost;
+							
+				if(units_static[*unit].cost < this->min_cost[i][s] )
+					this->min_cost[i][s] = units_static[*unit].cost;
+			}
+
+			if(units_of_category[i][s].size() > 0)
+				avg_cost[i][s] /= units_of_category[i][s].size();
+			else
+			{
+				avg_cost[i][s] = -1;
+				this->min_cost[i][s] = -1;
+				this->max_cost[i][s] = -1;
 			}
 		}
 	}
@@ -3557,7 +3596,7 @@ void AAIBuildTable::AddAssister(unsigned int allowed_movement_types, bool canBui
 			units_dynamic[builder].requested += 1;
 			ai->futureBuilders += 1;
 
-			// increase number of reqeusted builders of all buildoptions
+			// increase number of requested builders of all buildoptions
 			for(list<int>::iterator j = units_static[builder].canBuildList.begin(); j != units_static[builder].canBuildList.end(); ++j)
 				units_dynamic[*j].buildersRequested += 1;
 

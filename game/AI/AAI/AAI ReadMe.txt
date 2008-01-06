@@ -105,6 +105,12 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.853	- Added COST_MULTIPLIER key word to mod cfg file, it allows to override the costs of a unit, e.g. 
+		  COST_MULTIPLIER armzeus 0.5 causes AAI to treat Arm Zeus as if it would cost half as much as it really does
+		  This feature has been requested by Argh to porperly deal with unit squads (building a single unit will provide 
+	          the player with several independent units)
+
+		- Internal code cleaning
 
 AAI v0.85	- Added TRANSPORTERS keyword to mod cfg file, works like SCOUTS or ATTACKERS. Note that AAI does not use transporters
 		  yet, but it may be used in future times
@@ -116,11 +122,7 @@ AAI v0.85	- Added TRANSPORTERS keyword to mod cfg file, works like SCOUTS or ATT
 
 		- Fixed a bug that prevented AAI from building builders under certain conditions (S44 was suffering from that)
 
-
-AAI v0.84	- AAI will remove sectors where it lost all its buildings from base (may add them again at any time later though)
-
-		- Added DONT_BUILD keyword to mod cfg files, it works like SCOUTS or ATTACKERS, units listed after DONT_BUILD will 
-		  not be build by AAI in any case (and will not been taken into account for internal statistics)
+		- AAI will remove sectors where it lost all its buildings from base (may add them again at any time later though)
 
 		- Completly redone defence building placement (AAI will now take terrain into account as well as already existing 
 		  defences) It should give much better results now especially on maps that dont have rather flat terrain
@@ -131,6 +133,8 @@ AAI v0.84	- AAI will remove sectors where it lost all its buildings from base (m
 		- Different instances of AAI now share several kind of map information (saves ram space) and do not expand to 
 		  sectors occupied by allied AAIs anymore
 
+		- Added DONT_BUILD keyword to mod cfg files, it works like SCOUTS or ATTACKERS, units listed after DONT_BUILD will 		  not be build by AAI in any case (and will not been taken into account for internal statistics)			
+
 		- Added ATTACKERS keyword to mod cfg file to force AAI to use specified units as combat units despite all other 
 		  capabilities of the unit (e.g. buildoptions)  (implemented by Yuritch)
 
@@ -139,13 +143,10 @@ AAI v0.84	- AAI will remove sectors where it lost all its buildings from base (m
 
 		- Improved mex and power plant building rules a bit
 
-		- Fixed a few potential crash bugs
-
-
-AAI v0.81	- AAI will upgrade the least effective metal extractors first (only important if a mod has more than two metal 
+		- AAI will upgrade the least effective metal extractors first (only important if a mod has more than two metal 
 		  extractors with different efficiencies)
 
-		- Better prevention from sending builders to potentially dangerous buildsites outside of the main base
+		- Fixed a few potential crash bugs
 
 
 AAI v0.80	- Improved/tweaked/fixed attack behaviour, AAI will try to withdraw when facing much stronger enemy forces
@@ -460,4 +461,3 @@ AAI v0.10: 	(internal version)
 
 
 
- 
