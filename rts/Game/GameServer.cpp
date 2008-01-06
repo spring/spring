@@ -751,7 +751,7 @@ void CGameServer::SetGamePausable(const bool arg)
 void CGameServer::CheckForGameEnd()
 {
 	if (gameEndTime > 0) {
-		if (gameEndTime < SDL_GetTicks() - 2000 && !sentGameOverMsg) {
+		if (gameEndTime < SDL_GetTicks() - 2000) {
 			SendSystemMsg("Server: Game has ended");
 			serverNet->SendGameOver();
 			if (hostif) {
