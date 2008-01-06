@@ -205,7 +205,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
 		const int allyteam = pi->senderAllyTeam;
 		const bool spec = pi->senderSpectator;
-		const bool allied = gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam);
+		const bool allied = (gs->Ally(gu->myAllyTeam, allyteam) && gs->Ally(allyteam, gu->myAllyTeam));
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
@@ -259,7 +259,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		const int allyteam = li->senderAllyTeam;
 		const bool spec = li->senderSpectator;
-		const bool allied = gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam);
+		const bool allied = (gs->Ally(gu->myAllyTeam, allyteam) && gs->Ally(allyteam, gu->myAllyTeam));
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
@@ -377,7 +377,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 	}
 	const int team = sender->team;
 	const int allyteam = gs->AllyTeam(team);
-	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam));
+	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) && gs->Ally(allyteam, gu->myAllyTeam));
 	bool allowed = true;
 
 	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
