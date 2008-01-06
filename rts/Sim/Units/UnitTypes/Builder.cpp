@@ -158,7 +158,7 @@ void CBuilder::Update()
 						terraforming=false;
 						mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
 						curBuild->groundLevelled = true;
-						if (luaRules->BuilderTerraformComplete(this, curBuild)) {
+						if (luaRules && luaRules->BuilderTerraformComplete(this, curBuild)) {
 							StopBuild();
 						}
 					}
