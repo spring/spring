@@ -226,7 +226,7 @@ void CNet::Update()
 	}
 	
 	// remove the last pointer from the vector if it doesn't store a connection
-	if (connections.size() > 0 && !(connections.back()))
+	if (!connections.empty() && !(connections.back()))
 		connections.pop_back();
 }
 
