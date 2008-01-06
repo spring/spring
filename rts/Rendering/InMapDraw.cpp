@@ -258,7 +258,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	// draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		const int allyteam = li->senderAllyTeam;
-		const bool spec = pi->senderSpectator;
+		const bool spec = li->senderSpectator;
 		const bool allied = gs->Ally(gu->myAllyTeam, allyteam) || gs->Ally(allyteam, gu->myAllyTeam);
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
