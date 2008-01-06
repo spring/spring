@@ -32,7 +32,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.852"
+#define AAI_VERSION "0.853"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_85"
 #define MAP_DATA_VERSION "MAP_DATA_0_83"
@@ -141,7 +141,7 @@ struct UnitTypeStatic
 	list<int> canBuildList;
 	list<int> builtByList;
 	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
-							// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
+									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
 	float range;
 	float cost;
 	float builder_cost;
@@ -170,6 +170,14 @@ struct ProductionRequest
 	int builder_id;		// id of that building/builder/mine layer etc.
 	int built;			// how many facs/builder of that type have been build
 	int requested;		// how many units/buildings need this fac. to be built
+};
+
+struct AAIContinent
+{
+	int id;
+	int size;			// number of cells
+
+	bool water;
 };
 
 typedef unsigned char uchar;

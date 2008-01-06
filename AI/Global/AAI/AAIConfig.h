@@ -3,8 +3,16 @@
 #include "ExternalAI/IAICallback.h"
 #include <stdio.h>
 #include <list>
+#include <vector>
+//#include "aidef.h"
 
 class AAI;
+
+struct CostMultiplier
+{
+	int id;
+	float multiplier;
+};
 
 class AAIConfig
 {
@@ -91,6 +99,8 @@ public:
 	float SUPER_HEAVY_ASSAULT_RATIO;
 	int MIN_SUBMARINE_WATERLINE;
 	int MAX_ATTACKS;
+
+	vector<CostMultiplier> cost_multipliers;
 
 	// internal
 	float CLIFF_SLOPE;  // cells with greater slope will be considered to be cliffs

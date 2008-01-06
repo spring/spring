@@ -118,6 +118,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	char keyword[50];
 	int ival;
 	float fval;
+	const UnitDef *def;
 	
 	bool error = false;
 	bool loaded = false;
@@ -230,6 +231,29 @@ void AAIConfig::LoadConfig(AAI *ai)
 						error = true;
 						break;
 					}
+				}
+			}
+			else if(!strcmp(keyword, "COST_MULTIPLIER"))
+			{
+				// get the unit def
+				fscanf(file, "%s", filename);
+				def = ai->cb->GetUnitDef(filename);
+				
+				if(def)
+				{
+					fscanf(file, "%f", &fval);
+
+					CostMultiplier temp;
+					temp.id = def->id;
+					temp.multiplier = fval;
+
+					cost_multipliers.push_back(temp);
+				}
+				else 
+				{
+					fprintf(ai->file, "ERROR: could not set cost multiplier - could not find unit %s\n", filename);
+					error = true;
+					break;
 				}
 			}
 			else if(!strcmp(keyword,"SECTOR_SIZE"))
