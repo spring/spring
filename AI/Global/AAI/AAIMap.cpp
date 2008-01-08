@@ -17,7 +17,9 @@ int AAIMap::aai_instances = 0;
 int AAIMap::xMapSize;
 int AAIMap::yMapSize;				
 int AAIMap::xDefMapSize;
-int AAIMap::yDefMapSize;		
+int AAIMap::yDefMapSize;
+int AAIMap::xContMapSize;
+int AAIMap::yContMapSize;	
 int AAIMap::xSectors;
 int AAIMap::ySectors;				
 int AAIMap::xSectorSize; 
@@ -34,6 +36,13 @@ vector< vector<int> > AAIMap::team_sector_map;
 vector<int> AAIMap::buildmap;	
 vector<int> AAIMap::blockmap;	
 vector<float> AAIMap::plateau_map;
+vector<int> AAIMap::continent_map;	
+
+vector<AAIContinent> AAIMap::continents;
+int AAIMap::land_continents;
+int AAIMap::water_continents;
+int AAIMap::avg_land_continent_size;
+int AAIMap::avg_water_continent_size;
 
 list<UnitCategory> AAIMap::map_categories;
 list<int> AAIMap::map_categories_id;
@@ -57,11 +66,6 @@ AAIMap::AAIMap(AAI *ai)
 	// set all values to 0 (to be able to detect num. of enemies in los later
 	for(int i = 0; i < cfg->MAX_UNITS; i++)
 		unitsInLos[i] = 0;
-
-	/*map_usefulness.resize(bt->assault_categories.size());
-
-	for(int i = 0; i < bt->assault_categories.size(); ++i)
-		map_usefulness[i].resize(cfg->SIDES);*/
 
 	units_spotted.resize(bt->combat_categories);
 }
@@ -150,6 +154,7 @@ AAIMap::~AAIMap(void)
 		defence_map.clear();
 		air_defence_map.clear();
 		plateau_map.clear();
+		continent_map.clear();
 	}
 }
 
@@ -164,8 +169,11 @@ void AAIMap::Init()
 		xMapSize = cb->GetMapWidth();
 		yMapSize = cb->GetMapHeight();
 
-		xDefMapSize = xMapSize / 2;
-		yDefMapSize = yMapSize / 2;
+		xDefMapSize = xMapSize / 4;
+		yDefMapSize = yMapSize / 4;
+
+		xContMapSize = xMapSize / 4;
+		yContMapSize = yMapSize / 4;
 
 		// calculate number of sectors
 		xSectors = floor(0.5f + ((float) xMapSize)/cfg->SECTOR_SIZE);
@@ -178,8 +186,10 @@ void AAIMap::Init()
 		xSectorSize = 8 * xSectorSizeMap;
 		ySectorSize = 8 * ySectorSizeMap;
 
+		buildmap.resize(xMapSize*yMapSize, 0);
 		blockmap.resize(xMapSize*yMapSize, 0);
-		plateau_map.resize(xMapSize*yMapSize / 4, 0);
+		continent_map.resize(xContMapSize*yContMapSize, -1);
+		plateau_map.resize(xContMapSize*yContMapSize, 0);
 		
 		// create map that stores which aai player has occupied which sector (visible to all aai players)
 		team_sector_map.resize(xSectors);
@@ -188,6 +198,8 @@ void AAIMap::Init()
 			team_sector_map[x].resize(ySectors, -1);
 
 		ReadCacheFile();
+
+		ReadContinentFile();
 	}
 
 	// create field of sectors
@@ -233,6 +245,10 @@ void AAIMap::Init()
 	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
 	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
 	fprintf(ai->file, "%i metal spots found \n \n",metal_spots.size());
+	fprintf(ai->file, "%i continents found on map\n", continents.size());
+	fprintf(ai->file, "%i land and %i water continents\n", land_continents, water_continents);
+	fprintf(ai->file, "Average land continent size is %i\n", avg_land_continent_size);
+	fprintf(ai->file, "Average water continent size is %i\n", avg_water_continent_size);
 
 	//debug
 	/*float3 my_pos;
@@ -255,6 +271,7 @@ void AAIMap::ReadCacheFile()
 {
 	// try to read cache file
 	bool loaded = false;
+	
 	char filename[500];
 	char buffer[500];
 	strcpy(buffer, MAIN_PATH);
@@ -275,6 +292,7 @@ void AAIMap::ReadCacheFile()
 		{
 			cb->SendTextMsg("Mapcache out of date - creating new one", 0);
 			fprintf(ai->file, "Map cache-file out of date - new one has been created\n");
+			fclose(file);
 		}
 		else
 		{
@@ -290,21 +308,21 @@ void AAIMap::ReadCacheFile()
 			{
 				//fread(&temp, sizeof(int), 1, file);
 				fscanf(file, "%i ", &temp); 
-				buildmap.push_back(temp);
+				buildmap[i] = temp;
 			}
 		
 			// load plateau map
-			for(int i = 0; i < xMapSize*yMapSize/4; ++i)
+			for(int i = 0; i < xMapSize*yMapSize/16; ++i)
 			{
 				//fread(&temp_float, sizeof(float), 1, file);
 				fscanf(file, "%f ", &temp_float); 
-				buildmap.push_back(temp_float);
+				plateau_map[i] = temp_float;
 			}
 
+			// load mex spots
 			AAIMetalSpot spot;
 			fscanf(file, "%i ", &temp);
 
-			// load mex spots
 			for(int i = 0; i < temp; ++i)
 			{
 				fscanf(file, "%f %f %f %f ", &(spot.pos.x), &(spot.pos.y), &(spot.pos.z), &(spot.amount));
@@ -312,22 +330,24 @@ void AAIMap::ReadCacheFile()
 				metal_spots.push_back(spot);
 			}
 
+			fclose(file);
+
 			fprintf(ai->file, "Map cache file succesfully loaded\n");
 
 			loaded = true;
-
-			fclose(file);
 		}
 	}
+
 	if(!loaded)  // create new map data
 	{
-		buildmap.resize(xMapSize*yMapSize, 0);
-
 		// look for metalspots
 		SearchMetalSpots();
 	
+		// detect cliffs/water and create plateau map
 		AnalyseMap();
 
+		//////////////////////////////////////////////////////////////////////////////////////////////////////
+		// save mod independent map data
 		strcpy(buffer, MAIN_PATH);
 		strcat(buffer, MAP_CACHE_PATH);
 		strcat(buffer, cb->GetMapName());
@@ -335,26 +355,25 @@ void AAIMap::ReadCacheFile()
 
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
-		// save data
 		file = fopen(filename, "w+");
 
-		fprintf(file, "%s\n",  MAP_DATA_VERSION);
+		fprintf(file, "%s\n", MAP_DATA_VERSION);
 
 		// save if its a metal map
 		fprintf(file, "%i\n", (int)metalMap);
 
 		// save buildmap
 		for(int i = 0; i < xMapSize*yMapSize; ++i)
-		//	fwrite(&buildmap[i], sizeof(int), 1, file);
 			fprintf(file, "%i ", buildmap[i]); 
-		
+
+		fprintf(file, "\n");
+
 		// save plateau map
-		for(int i = 0; i < xMapSize*yMapSize/4; ++i)
-		//	fwrite(&plateau_map[i], sizeof(float), 1, file);
+		for(int i = 0; i < xMapSize*yMapSize/16; ++i)
 			fprintf(file, "%f ", plateau_map[i]); 
 
 		// save mex spots
-		fprintf(file, "\n %i \n", metal_spots.size());
+		fprintf(file, "\n%i \n", metal_spots.size());
 
 		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); spot++)
 			fprintf(file, "%f %f %f %f \n", spot->pos.x, spot->pos.y, spot->pos.z, spot->amount);
@@ -510,7 +529,113 @@ void AAIMap::ReadCacheFile()
 
 			map_categories_id.push_back(1);
 		}
+	}		
+}
+
+void AAIMap::ReadContinentFile()
+{
+	char filename[500];
+	char buffer[500];
+	strcpy(buffer, MAIN_PATH);
+	strcat(buffer, MAP_CACHE_PATH);
+	strcat(buffer, cb->GetMapName());
+	strcat(buffer, "_");
+	strcat(buffer, cb->GetModName());
+	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+
+	FILE *file;
+
+	if(file = fopen(filename, "r"))
+	{
+		// check if correct version
+		fscanf(file, "%s ", buffer);
+
+		if(strcmp(buffer, CONTINENT_DATA_VERSION))
+		{
+			cb->SendTextMsg("Continent cache out of date - creating new one", 0);
+			fprintf(ai->file, "Continent cache-file out of date - new one has been created\n");
+			fclose(file);
+		}
+		else
+		{	
+			int temp, temp2;
+
+			// load continent map 
+			for(int j = 0; j < yContMapSize; ++j)
+			{
+				for(int i = 0; i < xContMapSize; ++i)
+				{
+					fscanf(file, "%i ", &temp); 
+					continent_map[j * xContMapSize + i] = temp;
+				}
+			}
+
+			// load continents
+			fscanf(file, "%i ", &temp);
+
+			continents.resize(temp);
+
+			for(int i = 0; i < temp; ++i)
+			{
+				fscanf(file, "%i %i ", &continents[i].size, &temp2);
+
+				continents[i].water = (bool) temp2;
+				continents[i].id = i;
+			}
+
+			// load statistical data
+			fscanf(file, "%i %i %i %i", &land_continents, &water_continents, &avg_land_continent_size, &avg_water_continent_size);
+
+			fclose(file);
+
+			fprintf(ai->file, "Continent cache file succesfully loaded\n");
+
+			return;
+		}
 	}
+
+
+	// loading has not been succesful -> create new continent maps
+	
+	// create continent/movement map
+	CalculateContinentMaps();
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	// save movement maps
+	strcpy(buffer, MAIN_PATH);
+	strcat(buffer, MAP_CACHE_PATH);
+	strcat(buffer, cb->GetMapName());
+	strcat(buffer, "_");
+	strcat(buffer, cb->GetModName());
+	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+
+	file = fopen(filename, "w+");
+		
+	fprintf(file, "%s\n",  CONTINENT_DATA_VERSION);
+
+	// save continent map
+	for(int j = 0; j < yContMapSize; ++j)
+	{
+		for(int i = 0; i < xContMapSize; ++i)
+			fprintf(file, "%i ", continent_map[j * xContMapSize + i]); 
+
+		fprintf(file, "\n");
+	}
+
+	// save continents
+	fprintf(file, "\n%i \n", continents.size());
+
+	for(int c = 0; c < continents.size(); ++c)
+		fprintf(file, "%i %i \n", continents[c].size, (int)continents[c].water);
+
+	// save statistical data
+	fprintf(file, "%i %i %i %i\n", land_continents, water_continents, avg_land_continent_size, avg_water_continent_size);
+
+	fclose(file);
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)
@@ -1406,6 +1531,7 @@ void AAIMap::AnalyseMap()
 
 	const float *height_map = cb->GetHeightMap();
 
+	// get water/cliffs
 	for(int x = 0; x < xMapSize; ++x)
 	{
 		for(int y = 0; y < yMapSize; ++y)
@@ -1432,27 +1558,28 @@ void AAIMap::AnalyseMap()
 		}
 	}
 
-	int xSize = xMapSize/2;
-	int ySize = yMapSize/2;
+	// calculate plateu map 
+	int xSize = xMapSize/4;
+	int ySize = yMapSize/4;
 
-	int TERRAIN_DETECTION_RANGE = 10;
+	int TERRAIN_DETECTION_RANGE = 6;
 	float my_height, diff;
 
 	for(int x = TERRAIN_DETECTION_RANGE; x < xSize - TERRAIN_DETECTION_RANGE; ++x)
 	{
 		for(int y = TERRAIN_DETECTION_RANGE; y < ySize - TERRAIN_DETECTION_RANGE; ++y)
 		{
-			my_height = height_map[2 * x + 4 * y * xSize];
+			my_height = height_map[4 * (x + y * xMapSize)];
 
 			for(int i = x - TERRAIN_DETECTION_RANGE; i < x + TERRAIN_DETECTION_RANGE; ++i)
 			{
 				for(int j = y - TERRAIN_DETECTION_RANGE; j < y + TERRAIN_DETECTION_RANGE; ++j)
 				{
-					 diff = (height_map[2 * i + 4 * j * xSize] - my_height);
+					 diff = (height_map[4 * (i + j * xMapSize)] - my_height);
 
 					 if(diff > 0)
 					 {
-						 if(buildmap[2 * i + 4 * j * xSize] != 3)
+						 if(buildmap[4 * (i + j * xMapSize)] != 3)
 							 plateau_map[i + j * xSize] += diff;
 					 }
 					 else
@@ -1464,23 +1591,263 @@ void AAIMap::AnalyseMap()
 
 	for(int x = 0; x < xSize; ++x)
 	{
-		for(int y = 0; y < yMapSize/2; ++y)
+		for(int y = 0; y < ySize; ++y)
 		{
 			if(plateau_map[x + y * xSize] >= 0)
 				plateau_map[x + y * xSize] = sqrt(plateau_map[x + y * xSize]);
 			else
 				plateau_map[x + y * xSize] = -1.0f * sqrt((-1.0f) * plateau_map[x + y * xSize]);
-			
-			// debug 
-			//if(plateau_map[x + y * xSize] >= 0)
-			//{
-			//	my_pos.x = x * 16;
-			//	my_pos.z = y * 16;
-			//	my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-			//	cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), false, true);
-			//}
 		}
 	}
+}
+
+void AAIMap::CalculateContinentMaps()
+{
+	vector<int> *new_edge_cells;
+	vector<int> *old_edge_cells;
+
+	vector<int> a, b;
+
+	old_edge_cells = &a;
+	new_edge_cells = &b;
+
+	const float *height_map = cb->GetHeightMap();
+
+	int x, y;
+
+	AAIContinent temp;
+	int continent_id = 0;
+
+	
+	for(int i = 0; i < xContMapSize; i += 1)
+	{
+		for(int j = 0; j < yContMapSize; j += 1)
+		{
+			// add new continent if cell has not been visited yet
+			if(continent_map[j * xContMapSize + i] < 0 && height_map[4 * (j * xMapSize + i)] >= 0)
+			{		
+				temp.id = continent_id;
+				temp.size = 1;
+				temp.water = false;
+		
+				continents.push_back(temp);
+				
+				continent_map[j * xContMapSize + i] = continent_id;
+				
+				old_edge_cells->push_back(j * xContMapSize + i);
+
+				// check edges of the continent as long as new cells have been added to the continent during the last loop
+				while(old_edge_cells->size() > 0)
+				{
+					for(vector<int>::iterator cell = old_edge_cells->begin(); cell != old_edge_cells->end(); ++cell)
+					{
+						// get cell indizes
+						x = (*cell)%xContMapSize;
+						y = ((*cell) - x) / xContMapSize;
+
+						// check edges
+						if(x > 0 && continent_map[y * xContMapSize + x - 1] == -1)
+						{
+							if(height_map[4 * (y * xMapSize + x - 1)] >= 0)
+							{
+								continent_map[y * xContMapSize + x - 1] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( y * xContMapSize + x - 1 );
+							}
+							else if(height_map[4 * (y * xMapSize + x - 1)] >= - cfg->NON_AMPHIB_MAX_WATERDEPTH)
+							{
+								continent_map[y * xContMapSize + x - 1] = -2;
+								new_edge_cells->push_back( y * xContMapSize + x - 1 );
+							}
+						}
+
+						if(x < xContMapSize-1 && continent_map[y * xContMapSize + x + 1] == -1)
+						{
+							if(height_map[4 * (y * xMapSize + x + 1)] >= 0)
+							{
+								continent_map[y * xContMapSize + x + 1] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( y * xContMapSize + x + 1 );
+							}
+							else if(height_map[4 * (y * xMapSize + x + 1)] >= - cfg->NON_AMPHIB_MAX_WATERDEPTH)
+							{
+								continent_map[y * xContMapSize + x + 1] = -2;
+								new_edge_cells->push_back( y * xContMapSize + x + 1 );
+							}
+						}
+
+						if(y > 0 && continent_map[(y - 1) * xContMapSize + x] == -1)
+						{
+							if(height_map[4 * ( (y - 1) * xMapSize + x)] >= 0)
+							{
+								continent_map[(y - 1) * xContMapSize + x] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( (y - 1) * xContMapSize + x);
+							}
+							else if(height_map[4 * ( (y - 1) * xMapSize + x)] >= - cfg->NON_AMPHIB_MAX_WATERDEPTH)
+							{
+								continent_map[(y - 1) * xContMapSize + x] = -2;
+								new_edge_cells->push_back( (y - 1) * xContMapSize + x );
+							}
+						}
+
+						if(y < yContMapSize-1 && continent_map[(y + 1 ) * xContMapSize + x] == -1)
+						{
+							if(height_map[4 * ( (y + 1) * xMapSize + x)] >= 0)
+							{
+								continent_map[(y + 1) * xContMapSize + x] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( (y + 1) * xContMapSize + x );
+							}
+							else if(height_map[4 * ( (y + 1) * xMapSize + x)] >= - cfg->NON_AMPHIB_MAX_WATERDEPTH)
+							{
+								continent_map[(y + 1) * xContMapSize + x] = -2;
+								new_edge_cells->push_back( (y + 1) * xContMapSize + x );
+							}
+						}	
+					}
+					
+					old_edge_cells->clear();
+				
+					// invert pointers to new/old edge cells
+					if(new_edge_cells == &a)
+					{
+						new_edge_cells = &b;
+						old_edge_cells = &a;
+					}
+					else
+					{
+						new_edge_cells = &a;
+						old_edge_cells = &b;
+					}		
+				}
+
+				// finished adding continent
+				++continent_id;
+				old_edge_cells->clear();
+				new_edge_cells->clear();
+			}
+		}
+	}
+
+	// water continents
+	for(int i = 0; i < xContMapSize; i += 1)
+	{
+		for(int j = 0; j < yContMapSize; j += 1)
+		{
+			// add new continent if cell has not been visited yet
+			if(continent_map[j * xContMapSize + i] < 0)
+			{		
+				temp.id = continent_id;
+				temp.size = 1;
+				temp.water = true;
+
+				continents.push_back(temp);
+				
+				continent_map[j * xContMapSize + i] = continent_id;
+				
+				old_edge_cells->push_back(j * xContMapSize + i);
+
+				// check edges of the continent as long as new cells have been added to the continent during the last loop
+				while(old_edge_cells->size() > 0)
+				{
+					for(vector<int>::iterator cell = old_edge_cells->begin(); cell != old_edge_cells->end(); ++cell)
+					{
+						// get cell indizes
+						x = (*cell)%xContMapSize;
+						y = ((*cell) - x) / xContMapSize;
+
+						// check edges
+						
+						if(x > 0 && continent_map[y * xContMapSize + x - 1] < 0)
+						{
+							if(height_map[4 * (y * xMapSize + x - 1)] < 0)
+								{
+								continent_map[y * xContMapSize + x - 1] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( y * xContMapSize + x - 1 );
+							}	
+						}
+
+						if(x < xContMapSize-1 && continent_map[y * xContMapSize + x + 1] < 0)
+						{
+							if(height_map[4 * (y * xMapSize + x + 1)] < 0)
+							{
+								continent_map[y * xContMapSize + x + 1] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( y * xContMapSize + x + 1 );
+							}
+						}
+
+						if(y > 0 && continent_map[(y - 1) * xContMapSize + x ] < 0)
+						{
+							if(height_map[4 * ( (y - 1) * xMapSize + x )] < 0)
+							{
+								continent_map[(y - 1) * xContMapSize + x ] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( (y - 1) * xContMapSize + x );
+							}
+						}
+
+						if(y < yContMapSize-1 && continent_map[(y + 1) * xContMapSize + x ] < 0)
+						{
+							if(height_map[4 * ( (y + 1) * xMapSize + x)] < 0)
+							{
+								continent_map[(y + 1) * xContMapSize + x ] = continent_id;
+								continents[continent_id].size += 1;
+								new_edge_cells->push_back( (y + 1) * xContMapSize + x  );
+							}
+						}
+					}
+
+					old_edge_cells->clear();
+				
+					// invert pointers to new/old edge cells
+					if(new_edge_cells == &a)
+					{
+						new_edge_cells = &b;
+						old_edge_cells = &a;
+					}
+					else
+					{
+						new_edge_cells = &a;
+						old_edge_cells = &b;
+					}		
+				}
+
+				// finished adding continent
+				++continent_id;
+				old_edge_cells->clear();
+				new_edge_cells->clear();
+			}
+		}
+	}
+
+	// calculate some statistical data
+	land_continents = 0;
+	water_continents = 0;
+	avg_land_continent_size = 0;
+	avg_water_continent_size = 0;
+
+	for(int i = 0; i < continents.size(); ++i)
+	{
+		if(continents[i].water)
+		{
+			++water_continents;
+			avg_water_continent_size += continents[i].size;
+		}
+		else
+		{
+			++land_continents;
+			avg_land_continent_size += continents[i].size;
+		}
+	}
+
+	if(water_continents > 0)
+		avg_water_continent_size /= water_continents;
+
+	if(land_continents > 0)
+		avg_land_continent_size /= land_continents;
 }
 
 // algorithm more or less by krogothe
@@ -1939,7 +2306,7 @@ AAISector* AAIMap::GetSectorOfPos(float3 *pos)
 
 void AAIMap::AddDefence(float3 *pos, int defence)
 {
-	int range = bt->units_static[defence].range / 16;
+	int range = bt->units_static[defence].range / 32;
 	int cell;
 
 	float power;
@@ -1960,8 +2327,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		air_power = bt->fixed_eff[defence][1];
 	}
 
-	int xPos = pos->x / 16;
-	int yPos = pos->z / 16;
+	int xPos = pos->x / 32;
+	int yPos = pos->z / 32;
 
 	// x range will change from line to line 
 	int xStart;
@@ -2001,8 +2368,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 	// further increase values close around the bulding (to prevent aai from packing buildings too close together)
 	// y range is const
-	yStart = yPos - 6;
-	yEnd = yPos + 6;
+	yStart = yPos - 4;
+	yEnd = yPos + 4;
 
 	if(yStart < 0)
 		yStart = 0;
@@ -2012,7 +2379,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	for(int y = yStart; y <= yEnd; ++y)
 	{
 		// determine x-range
-		xRange = (int) floor( sqrt( (float) ( 36 - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		xRange = (int) floor( sqrt( (float) ( 16 - (y - yPos) * (y - yPos) ) ) + 0.5f );
 		
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
@@ -2035,7 +2402,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 void AAIMap::RemoveDefence(float3 *pos, int defence)
 {
 	int cell;
-	int range = bt->units_static[defence].range / 16;
+	int range = bt->units_static[defence].range / 32;
 
 	float power;
 	float air_power;
@@ -2055,8 +2422,8 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		air_power = bt->fixed_eff[defence][1];
 	}
 	
-	int xPos = pos->x / 16;
-	int yPos = pos->z / 16;
+	int xPos = pos->x / 32;
+	int yPos = pos->z / 32;
 
 	// x range will change from line to line 
 	int xStart;
@@ -2065,8 +2432,8 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 
 	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
 	// y range is const
-	int yStart = yPos - 6;
-	int yEnd = yPos + 8;
+	int yStart = yPos - 4;
+	int yEnd = yPos + 4;
 
 	if(yStart < 0)
 		yStart = 0;
@@ -2076,7 +2443,7 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 	for(int y = yStart; y <= yEnd; ++y)
 	{
 		// determine x-range
-		xRange = (int) floor( sqrt( (float) ( 36 - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		xRange = (int) floor( sqrt( (float) ( 16 - (y - yPos) * (y - yPos) ) ) + 0.5f );
 		
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
@@ -2164,7 +2531,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 			// check if buildmap allows construction
 			if(CanBuildAt(xPos, yPos, xSize, ySize, water))
 			{
-				cell = xPos/2 + xDefMapSize * (yPos/2);
+				cell = (xPos + xDefMapSize * yPos) / 4;
 
 				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.15f * ((float) (rand()%20));
 
@@ -2204,4 +2571,9 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 	}
 
 	return best_rating;
+}
+
+int AAIMap::GetContinentID(int x, int y)
+{
+	return continent_map[(y/4) * xContMapSize + x / 4];
 }

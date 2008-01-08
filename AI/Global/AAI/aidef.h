@@ -32,10 +32,11 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.853"
+#define AAI_VERSION "0.86"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_85"
-#define MAP_DATA_VERSION "MAP_DATA_0_83"
+#define MAP_DATA_VERSION "MAP_DATA_0_86"
+#define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_86"
 
 // all paths 
 #define MAIN_PATH "AI/AAI/"
@@ -74,6 +75,7 @@ public:
 #define MOVE_TYPE_UNDERWATER (unsigned int) 64
 #define MOVE_TYPE_STATIC_LAND (unsigned int) 128
 #define MOVE_TYPE_STATIC_WATER (unsigned int) 256
+#define MOVE_TYPE_AMPHIB (unsigned int) 512
 
 
 // unit types (for bitfield)

@@ -22,6 +22,9 @@ public:
 	void BuildMapPos2Pos(float3 *pos, const UnitDef* def);
 	void Pos2FinalBuildPos(float3 *pos, const UnitDef *def);
 
+	// returns id of continent the cell belongs to
+	int GetContinentID(int x, int y);
+
 	// true if x/y are a valid sector
 	bool ValidSector(int x, int y);
 
@@ -70,8 +73,11 @@ public:
 	// returns true if buildmap allows construction
 	bool CanBuildAt(int xPos, int yPos, int xSize, int ySize, bool water = false);
 
-	// reads map cahce file (and creates new one if necessary)
+	// reads map cache file (and creates new one if necessary)
 	void ReadCacheFile();
+
+	// reads continent cache file (and creates new one if necessary)
+	void ReadContinentFile();
 
 	// if auto_set == true, the loaded values are assigned to the current sectordata as well 
 	void ReadMapLearnFile(bool auto_set);
@@ -84,6 +90,8 @@ public:
 
 	// get water, high slopes, defence map
 	void AnalyseMap();
+
+	void CalculateContinentMaps();
 
 	// adds/removes a defence buidling to the defence map (air == true -> add to air defence map)
 	void AddDefence(float3 *pos, int defence);
@@ -98,8 +106,8 @@ public:
 	bool initialized;
 
 	// defence maps
-	vector<float> defence_map;	// defence map has 1/2 of resolution of blockmap/buildmap
-	vector<float> air_defence_map; // air defence map has 1/2 of resolution of blockmap/buildmap
+	vector<float> defence_map;	// defence map has 1/4 of resolution of blockmap/buildmap
+	vector<float> air_defence_map; // air defence map has 1/4 of resolution of blockmap/buildmap
 
 	// temp for scouting
 	vector<float> units_spotted;
@@ -121,7 +129,8 @@ public:
 	static int aai_instances;	// how many aai instances have been initialized
 
 	static int xMapSize, yMapSize;				// x and y size of the map
-	static int xDefMapSize, yDefMapSize;		// x and y size of the defence maps (1/2 resolution of map)
+	static int xDefMapSize, yDefMapSize;		// x and y size of the defence maps (1/4 resolution of map)
+	static int xContMapSize, yContMapSize;		// x and y size of the defence maps (1/4 resolution of map)
 	static int xSectors, ySectors;				// number of sectors
 	static int xSectorSize, ySectorSize;		// size of sectors (in unit pos coordinates)
 	static int xSectorSizeMap, ySectorSizeMap;	// size of sectors (in map coodrinates = 1/8 xSize)
@@ -145,7 +154,20 @@ public:
 							// 4 water
 							// 5 occupied water
 	static vector<int> blockmap;		// number of buildings which ordered a cell to blocked
-	static vector<float> plateau_map;	// positive values indicate plateaus, 1/2 of resolution of blockmap/buildmap
+	static vector<float> plateau_map;	// positive values indicate plateaus, 1/4 of resolution of blockmap/buildmap
+	static vector<int> continent_map;	// id of continent a cell belongs to
+	
+	static vector<int> ship_movement_map;	// movement maps for different categories, 1/4 of resolution of blockmap/buildmap
+	static vector<int> kbot_movement_map;
+	static vector<int> vehicle_movement_map;
+	static vector<int> hover_movement_map;
+	
+
+	static vector<AAIContinent> continents;
+	static int land_continents;
+	static int water_continents;
+	static int avg_land_continent_size;
+	static int avg_water_continent_size;
 
 	static list<UnitCategory> map_categories;
 	static list<int> map_categories_id;

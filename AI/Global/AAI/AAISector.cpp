@@ -656,3 +656,24 @@ bool AAISector::PosInSector(float3 *pos)
 	else
 		return true;
 }
+
+bool AAISector::ConnectedToOcean()
+{
+	if(water_ratio < 0.2)
+		return false;
+
+	// find water cell
+	int x_cell = (left + right) / 16.0f; 
+	int y_cell = (top + bottom) / 16.0f; 
+
+	// get continent
+	int cont = map->GetContinentID(x_cell, y_cell);
+
+	if(map->continents[cont].water)
+	{
+		if(map->continents[cont].size > 1200 && map->continents[cont].size > 0.5f * (float)map->avg_water_continent_size )
+			return true;	
+	}
+
+	return false;
+}
