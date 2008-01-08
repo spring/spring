@@ -295,7 +295,7 @@ void AAI::UnitCreated(int unit)
 			y = map->ySectors-1;
 		
 		// set sector as part of the base
-		if(map->sector[x][y].SetBase(true))
+		if(map->team_sector_map[x][y] < 0)
 		{
 			brain->AddSector(&map->sector[x][y]);
 			brain->start_pos = pos;
@@ -308,8 +308,6 @@ void AAI::UnitCreated(int unit)
 			// choose next free sector
 			execute->ChooseDifferentStartingSector(x, y);
 		}
-
-	
 
 		if(map->mapType == WATER_MAP)
 			brain->ExpandBase(WATER_SECTOR);
@@ -620,9 +618,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			// if no buildings left in that sector, remove from base sectors
 			if(map->sector[x][y].GetNumberOfBuildings() == 0 && brain->sectors[0].size() > 0)
 			{
-				map->sector[x][y].SetBase(false);
-
-				brain->sectors[0].remove(&map->sector[x][y]);
+				brain->RemoveSector(&map->sector[x][y]);
 
 				brain->UpdateNeighbouringSectors();
 				brain->UpdateBaseCenter();

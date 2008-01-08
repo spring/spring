@@ -69,6 +69,8 @@ AAIConfig::AAIConfig(void)
 	UNIT_SPEED_SUBGROUPS = 3;
 	MIN_SUBMARINE_WATERLINE = 15;
 	MAX_ATTACKS = 4;
+	
+	NON_AMPHIB_MAX_WATERDEPTH = 15;
 
 	MAX_COST_LIGHT_ASSAULT = 0.025f;
 	MAX_COST_MEDIUM_ASSAULT = 0.13f;
@@ -476,6 +478,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 			{
 				fscanf(file, "%f", &fval);
 				METAL_ENERGY_RATIO = fval;
+			}
+			else if(!strcmp(keyword, "NON_AMPHIB_MAX_WATERDEPTH"))
+			{
+				fscanf(file, "%f", &fval);
+				NON_AMPHIB_MAX_WATERDEPTH = fval;
 			}
 			else if(!strcmp(keyword, "MAX_METAL_MAKERS"))
 			{

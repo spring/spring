@@ -1041,22 +1041,7 @@ bool AAIExecute::BuildPowerPlant()
 
 		if(checkGround && ground_plant)
 		{
-			if(ut->constructors.size() > 1 || ai->activeUnits[POWER_PLANT] >= 2)
-				pos = (*sector)->GetBuildsite(ground_plant, false);
-			else 
-			{
-				builder = ut->FindBuilder(ground_plant, true, 10);
-
-				if(builder)
-				{
-					pos = map->GetClosestBuildsite(bt->unitList[ground_plant-1], cb->GetUnitPos(builder->unit_id), 40, false);
-
-					if(pos.x <= 0)
-						pos = (*sector)->GetBuildsite(ground_plant, false);
-				}
-				else
-					pos = (*sector)->GetBuildsite(ground_plant, false);
-			}
+			pos = (*sector)->GetBuildsite(ground_plant, false);
 
 			if(pos.x > 0)
 			{
@@ -1900,24 +1885,29 @@ bool AAIExecute::BuildFactory()
 
 			brain->sectors[0].sort(suitable_for_sea_factory);
 
-
 			// find buildpos
 			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 			{
-				pos = (*sector)->GetRandomBuildsite(building, 20, true);
+				if((*sector)->ConnectedToOcean())
+				{
+					pos = (*sector)->GetRandomBuildsite(building, 20, true);
 
-				if(pos.x > 0)
-					break;
+					if(pos.x > 0)
+						break;
+				}
 			}
 
 			if(pos.x == 0)
 			{
 				for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 				{
-					pos = (*sector)->GetBuildsite(building, true);
-	
-					if(pos.x > 0)
-						break;
+					if((*sector)->ConnectedToOcean())
+					{
+						pos = (*sector)->GetBuildsite(building, true);
+		
+						if(pos.x > 0)
+							break;
+					}
 				}
 			}
 		}
@@ -3544,8 +3534,6 @@ void AAIExecute::ChooseDifferentStartingSector(int x, int y)
 	// add best sector to base
 	if(best_sector)
 	{
-		best_sector->SetBase(true);
-
 		brain->AddSector(best_sector);
 		brain->start_pos = best_sector->GetCenter();
 

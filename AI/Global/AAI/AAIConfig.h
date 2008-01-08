@@ -73,6 +73,12 @@ public:
 	list<int> TRANSPORTERS;
 	list<int> DONT_BUILD;
 
+	//float KBOT_MAX_SLOPE;
+	//float VEHICLE_MAX_SLOPE;
+	//float HOVER_MAX_SLOPE;
+	float NON_AMPHIB_MAX_WATERDEPTH;
+	float SHIP_MIN_WATERDEPTH;
+
 	float METAL_ENERGY_RATIO;
 	int MAX_DEFENCES;
 	float MIN_SECTOR_THREAT;

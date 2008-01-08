@@ -233,9 +233,6 @@ void AAIUnitTable::AddPowerPlant(int unit_id, int def_id)
 	float output = bt->units_static[def_id].efficiency[0];
 			
 	ai->execute->futureAvailableEnergy -= output;
-
-	if(output > ai->brain->best_power_plant_output)
-		ai->brain->best_power_plant_output = output; 
 }
 
 void AAIUnitTable::RemovePowerPlant(int unit_id)
@@ -393,6 +390,7 @@ AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bo
 						temp = pow(pos.x - builder_pos.x, 2) + pow(pos.z - builder_pos.z, 2);
 				
 						if(temp > 0)
+							//my_rating = assister->buildspeed * bt->unitList[assister->def_id-1]->speed / sqrt(temp);
 							my_rating = assister->buildspeed / sqrt(temp);
 						else
 							my_rating = 10;

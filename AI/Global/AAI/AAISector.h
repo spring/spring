@@ -94,6 +94,9 @@ public:
 	float GetWaterRatio();
 	float GetFlatRatio();
 
+	// returns true if sector is connected with a big ocean (and not only a small pond)
+	bool ConnectedToOcean();
+
 	// sector number
 	int x, y;  
 

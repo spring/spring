@@ -21,20 +21,19 @@ AAIBrain::AAIBrain(AAI *ai)
 	freeBaseSpots = false;
 	expandable = true;
 
+	land_sectors = 0;
+	water_sectors = 0;
+
 	// initialize random numbers generator
 	srand ( time(NULL) );
 
 	max_distance = ai->map->xSectors + ai->map->ySectors - 2;
-//	sectors = new list<AAISector*>[max_distance];
 	sectors.resize(max_distance);
 
 	base_center = ZeroVector;
 
-//	max_units_spotted = new float[bt->combat_categories];
 	max_units_spotted.resize(bt->combat_categories);
-//	attacked_by = new float[bt->combat_categories];
 	attacked_by.resize(bt->combat_categories);
-//	defence_power_vs = new float[bt->combat_categories];
 	defence_power_vs.resize(bt->combat_categories);
 
 	for(int i = 0; i < bt->combat_categories; ++i)
@@ -47,10 +46,6 @@ AAIBrain::AAIBrain(AAI *ai)
 
 AAIBrain::~AAIBrain(void)
 {
-//	delete [] sectors;
-//	delete [] max_units_spotted;
-//	delete [] attacked_by;
-//	delete [] defence_power_vs;
 }
 
 
@@ -263,7 +258,6 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	int energy =  bt->unitList[unit-1]->buildTime * (cb->GetEnergyIncome()-(cb->GetEnergyUsage()/2));
 
 	return true;
-	//return (energy > bt->unitList[unit-1]->energyCost);
 }
 
 bool AAIBrain::RessourcesForConstr(int unit, int wokertime)
@@ -278,10 +272,39 @@ bool AAIBrain::RessourcesForConstr(int unit, int wokertime)
 
 void AAIBrain::AddSector(AAISector *sector)
 {
+	if(sector->water_ratio < 0.4)
+		++land_sectors;
+	else if(sector->water_ratio < 0.6)
+	{
+		++land_sectors;
+		++water_sectors;
+	}
+	else
+		++water_sectors;
+
 	sectors[0].push_back(sector);
 	
 	sector->SetBase(true);
 }
+
+void AAIBrain::RemoveSector(AAISector *sector)
+{
+	if(sector->water_ratio < 0.4)
+		--land_sectors;
+	else if(sector->water_ratio < 0.6)
+	{
+		--land_sectors;
+		--water_sectors;
+	}
+	else
+		--water_sectors;
+
+
+	sectors[0].remove(sector);
+	
+	sector->SetBase(false);
+}
+
 
 void AAIBrain::DefendCommander(int attacker)
 {
@@ -396,21 +419,25 @@ bool AAIBrain::SectorInList(list<AAISector*> mylist, AAISector *sector)
 
 bool AAIBrain::ExpandBase(SectorType sectorType)
 {
-	// TODO: improve expansion algorithm
-	//if(expandable)
-	if(sectors[0].size() < cfg->MAX_BASE_SIZE)
+	if(sectors[0].size() >= cfg->MAX_BASE_SIZE)
+		return false;
+
+	// now targets should contain all neighbouring sectors that are not currently part of the base
+	// only once; select the sector with most metalspots and least danger
+	AAISector *best_sector = 0; 
+	float best_rating  = 0, my_rating;
+	int spots;
+	float dist;
+
+	int max_search_dist = 1;
+
+	// if aai is looking for a water sector to expand into ocean, allow bigger serach_dist
+	if(sectorType == WATER_SECTOR &&  water_sectors == 0 && land_sectors > 1)
+		max_search_dist = 2;
+
+	for(int search_dist = 1; search_dist <= max_search_dist; ++search_dist)
 	{
-		// debug purposes:
-		//fprintf(ai->file, "Found %i possible target sectors \n", neighbouring_sectors.size());
-
-		// now targets should contain all neighbouring sectors that are not currently part of the base
-		// only once; select the sector with most metalspots and least danger
-		AAISector *best_sector = 0; 
-		float best_rating  = 0, my_rating;
-		int spots;
-		float dist;
-
-		for(list<AAISector*>::iterator t = sectors[1].begin(); t != sectors[1].end(); ++t)
+		for(list<AAISector*>::iterator t = sectors[search_dist].begin(); t != sectors[search_dist].end(); ++t)
 		{
 			// dont expand if enemy structures in sector && check for allied buildings 
 			if((*t)->enemy_structures <= 0 && (*t)->allied_structures < 200 && map->team_sector_map[(*t)->x][(*t)->y] == -1)
@@ -430,7 +457,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				
 				dist *= 3.0f;
 				
-				if(sectorType = LAND_SECTOR)
+				if(sectorType == LAND_SECTOR)
 				{
 					// prefer flat sectors without water
 					my_rating += ((*t)->flat_ratio - (*t)->water_ratio) * 8.0f;
@@ -440,6 +467,10 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				{
 					my_rating += 8.0f * (*t)->water_ratio;
 					my_rating /= dist;
+
+					// check for continent size (to prevent aai to expand into little ponds instead of big ocean)
+					if((*t)->water_ratio > 0.3 && !(*t)->ConnectedToOcean())
+						my_rating = 0;
 				}
 				else
 					my_rating = 0;
@@ -453,31 +484,32 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				}
 			}
 		}
-
-		if(best_sector)
-		{
-			// add this sector to base
-			AddSector(best_sector);
-
-			// debug purposes:
-			if(sectorType == LAND_SECTOR)
-				fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
-			else
-				fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
-
-			// update neighbouring sectors
-			UpdateNeighbouringSectors();
-			UpdateBaseCenter();
-
-			// check if further expansion possible
-			if(sectors[0].size() == cfg->MAX_BASE_SIZE)
-				expandable = false;
-
-			freeBaseSpots = true;
-
-			return true;
-		}
 	}
+
+	if(best_sector)
+	{
+		// add this sector to base
+		AddSector(best_sector);
+
+		// debug purposes:
+		if(sectorType == LAND_SECTOR)
+			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
+		else
+			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
+
+		// update neighbouring sectors
+		UpdateNeighbouringSectors();
+		UpdateBaseCenter();
+
+		// check if further expansion possible
+		if(sectors[0].size() == cfg->MAX_BASE_SIZE)
+			expandable = false;
+
+		freeBaseSpots = true;
+
+		return true;
+	}
+
 	
 	return false;
 }

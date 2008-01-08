@@ -362,7 +362,13 @@ void AAIBuildTable::Init()
 			if(unitList[i-1]->movedata)
 			{
 				if(unitList[i-1]->movedata->moveType == MoveData::Ground_Move)
+				{
 					units_static[i].movement_type |= MOVE_TYPE_GROUND;
+
+					// check for amphibious units
+					if(unitList[i-1]->maxWaterDepth >= 250)
+						units_static[i].movement_type |= MOVE_TYPE_AMPHIB;
+				}
 				else if(unitList[i-1]->movedata->moveType == MoveData::Hover_Move)
 					units_static[i].movement_type |= MOVE_TYPE_HOVER;	
 				// ship
@@ -3022,6 +3028,9 @@ void AAIBuildTable::DebugPrint()
 			if(IsCommander(i))
 				fprintf(file, " commander");
 
+			if(units_static[i].movement_type & MOVE_TYPE_AMPHIB)
+				fprintf(file, " amphibious");
+
 			fprintf(file, "\n");
 		}
 
@@ -4070,6 +4079,7 @@ unsigned int AAIBuildTable::GetAllowedMovementTypesForAssister(int building)
 		allowed_movement_types |= MOVE_TYPE_AIR;
 		allowed_movement_types |= MOVE_TYPE_SEA;
 		allowed_movement_types |= MOVE_TYPE_HOVER;	
+		allowed_movement_types |= MOVE_TYPE_AMPHIB;
 	}
 
 	return allowed_movement_types;

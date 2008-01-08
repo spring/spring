@@ -1,4 +1,3 @@
-
 Author: 	Alexander 'submarine' Seizinger		icq: 138100896		alexander.seizinger@gmx.net
 
 
@@ -85,7 +84,8 @@ Limitations:	  to buildings/objects)
 
 
 Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
-		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions
+
+		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions
 		  and coding contributions (since AAI v0.83) 
 
 		- TA Spring devs for creating the best open source rts game I know
@@ -105,12 +105,26 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
-AAI v0.853	- Added COST_MULTIPLIER key word to mod cfg file, it allows to override the costs of a unit, e.g. 
-		  COST_MULTIPLIER armzeus 0.5 causes AAI to treat Arm Zeus as if it would cost half as much as it really does
-		  This feature has been requested by Argh to porperly deal with unit squads (building a single unit will provide 
-	          the player with several independent units)
+AAI v0.86	- Added NON_AMPHIB_MAX_WATERDEPTH float (default is 15) statement to mod cfg file, specifies the max water depth 
+		  non amphibious ground units can cross
 
-		- Internal code cleaning
+		- Added detection of amphibious units 
+
+		- Added new continent detection system: AAI will divide the map into continents marking connected land(water)masses
+		  AAI will make a lot of use of this knowledge in future versions
+		  -> map cache file version bumped to 0.86
+
+		- Improved base expansion on water maps (e.g. AAI should no longer expand into a small pond on Small Supreme Battlefield
+		  rather than the big ocean next to it) 
+
+		- Added COST_MULTIPLIER key word to mod cfg file, it allows to override the costs of a unit, e.g. 
+		  COST_MULTIPLIER armzeus 0.5 causes AAI to treat Arm Zeus as if it would cost half as much as it really does
+		  This feature has been requested by Argh to porperly deal with unit squads (building a single unit will 
+		  provide the player with several independent units)
+
+		- Fixed a stupid bug that prevented AAI from placing static defences according to terrain if map has already 
+		  been played before (bug in loading routine of map cache file)  
+
 
 AAI v0.85	- Added TRANSPORTERS keyword to mod cfg file, works like SCOUTS or ATTACKERS. Note that AAI does not use transporters
 		  yet, but it may be used in future times
@@ -133,7 +147,8 @@ AAI v0.85	- Added TRANSPORTERS keyword to mod cfg file, works like SCOUTS or ATT
 		- Different instances of AAI now share several kind of map information (saves ram space) and do not expand to 
 		  sectors occupied by allied AAIs anymore
 
-		- Added DONT_BUILD keyword to mod cfg files, it works like SCOUTS or ATTACKERS, units listed after DONT_BUILD will 		  not be build by AAI in any case (and will not been taken into account for internal statistics)			
+		- Added DONT_BUILD keyword to mod cfg files, it works like SCOUTS or ATTACKERS, units listed after DONT_BUILD will 
+		  not be build by AAI in any case (and will not been taken into account for internal statistics)			
 
 		- Added ATTACKERS keyword to mod cfg file to force AAI to use specified units as combat units despite all other 
 		  capabilities of the unit (e.g. buildoptions)  (implemented by Yuritch)
@@ -160,9 +175,8 @@ AAI v0.80	- Improved/tweaked/fixed attack behaviour, AAI will try to withdraw wh
 
 		- Extended mod learning about usage of different unit categories with respect to elapsed game time	
 
-		- Reduced unit categories: LAND/SEA/HOVER/AIR_BUILDER are now in the same category 
-					   GROUND/SEA_FACTORY are now in the same category
-		  (slight performace increase and nicer code)
+		- Reduced unit categories: LAND/SEA/HOVER/AIR_BUILDER are now in the same category GROUND/SEA_FACTORY 
+		  are now in the same category (slight performace increase and nicer code)
 
 		- Improved mex spot selection (to prevent unnecessary long ways for builders), AAI will now also build better 
 		  extractors (e.g. moho mines) outside the base (according to safety)
@@ -310,7 +324,6 @@ AAI v0.63	- AAI now upgrades radars/jammers
 
 		- Fixed various crashbugs (big thank you to nicke for helping me finding them)
 
-			
 
 AAI v0.60:	(AAI's folder structure changed as well as all cache/learning files - i heavily recommend deleting old 
 		 AAI versions before installing AAI 0.60)
@@ -357,7 +370,6 @@ AAI v0.60:	(AAI's folder structure changed as well as all cache/learning files -
 		- Extended memory sharing between multiple instances of AAI and fixed a shared memory related crashbug
 		
 
-
 AAI v0.55:	- AAI is now compatible with the modified ai interface of spring 0.70	
 	
 		- Extended map learning files/every mod now creates own map learing files
@@ -371,7 +383,6 @@ AAI v0.55:	- AAI is now compatible with the modified ai interface of spring 0.70
 		- Fixed a bug causing AAI to build rows of sensor towers in SW:TA			
 
 		- Fixed several bugs in the energy management causing aai not to build any further power plants
-
 
 
 AAI v0.50:	- Completly new ressource management system (will be further improved in future versions)
@@ -400,8 +411,7 @@ AAI v0.50:	- Completly new ressource management system (will be further improved
 		- Fixed a few crashbugs
 
 		- Added mod support: Final Frontier, Gundam Annihilation
-
-		  
+	  
 
 AAI v0.40:	- Scouting redone
  
@@ -409,7 +419,7 @@ AAI v0.40:	- Scouting redone
 
 		- Added support for mods with more than two sides -> cfg files changed, replace with new ones
 		
-		- Improved building placement (aai now prevents "diagonal rows"), fixed a building placement 
+		- Improved building placement (AAI now prevents "diagonal rows"), fixed a building placement 
 		  related crashbug as well
 
 		- AAI now uses radar

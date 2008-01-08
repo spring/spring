@@ -25,8 +25,9 @@ public:
 	AAIBrain(AAI *ai);
 	~AAIBrain(void);
 	
-	// adds sector to the base
+	// adds/removes sector to the base
 	void AddSector(AAISector *sector);
+	void RemoveSector(AAISector *sector);
 
 	// for internal use
 	bool SectorInList(list<AAISector*> mylist, AAISector *sector);
@@ -91,6 +92,10 @@ public:
 
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
 	vector<list<AAISector*> > sectors; 
+
+	int land_sectors;
+	int water_sectors;
+
 	int max_distance;
 
 	float3 base_center;
@@ -106,8 +111,6 @@ public:
 
 	// pos where com spawned
 	float3 start_pos;
-
-	float best_power_plant_output;
 		
 	AAIExecute *execute;
 
