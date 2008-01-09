@@ -265,6 +265,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canmove     = udTable.GetBool("canMove",     false);
 	ud.noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.reclaimable = udTable.GetBool("reclaimable", true);
+	ud.capturable  = udTable.GetBool("capturable",  false);
 	ud.canAttack   = udTable.GetBool("canAttack",   true);
 	ud.canFight    = udTable.GetBool("canFight",    true);
 	ud.canPatrol   = udTable.GetBool("canPatrol",   true);
