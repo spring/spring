@@ -535,17 +535,19 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 void CBuilderCAI::ExecuteCapture(Command& c)
 {
 	assert(owner->unitDef->canCapture);
-	CBuilder* fac=(CBuilder*)owner;
+	CBuilder* fac = (CBuilder*) owner;
+
 	if (c.params.size() == 1) { //capture unit
-		CUnit* unit=uh->units[(int)c.params[0]];
-		if (unit && unit->team!=owner->team && UpdateTargetLostTimer((int)c.params[0])) {
-			if (f3Dist(unit->pos, fac->pos) < fac->buildDistance+unit->radius-8) {
+		CUnit* unit = uh->units[(int)c.params[0]];
+
+		if (unit && unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer((int) c.params[0])) {
+			if (f3Dist(unit->pos, fac->pos) < fac->buildDistance + unit->radius - 8) {
 				StopMove();
 				fac->SetCaptureTarget(unit);
-				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
+				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance * 0.9f + unit->radius, false);
 			} else {
 				if (f3Dist(goalPos, unit->pos) > 1) {
-					SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
+					SetGoal(unit->pos,owner->pos, fac->buildDistance * 0.9f + unit->radius);
 				}
 			}
 		} else {
@@ -1171,9 +1173,11 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
-		if (!gs->Ally(myAllyteam, unit->allyteam) &&
-		    (unit != owner) && !unit->beingBuilt) {
+
+		if (!gs->Ally(myAllyteam, unit->allyteam) && (unit != owner) &&
+			!unit->beingBuilt && unit->unitDef->capturable) {
 			const float dist = f3Dist(unit->pos, owner->pos);
+
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
 				if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {

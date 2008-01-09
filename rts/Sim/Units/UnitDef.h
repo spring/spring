@@ -245,6 +245,8 @@ struct UnitDef
 	bool factoryHeadingTakeoff;
 
 	bool reclaimable;
+	bool capturable;
+
 	bool canRestore;
 	bool canRepair;
 	bool canSelfRepair;
