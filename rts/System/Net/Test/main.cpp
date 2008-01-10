@@ -51,7 +51,7 @@ bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 	return true;
 }
 
-int main()
+int main(int argc, const char* const* argv)
 {
 	// prepare test packets:
 	unsigned char buffer[10];
@@ -83,7 +83,7 @@ int main()
 	std::cout << "Testing UDP networking..." << std::endl;
 	
 	netcode::CNet* client = new netcode::CNet();
-	client->InitClient("localhost", serverportnum, 5001, 1);
+	client->InitClient(argc > 1 ? argv[1] : "localhost", serverportnum, 5001, 1);
 	
 	client->RegisterMessage((unsigned char)0, 10);
 	client->RegisterMessage((unsigned char)1, 100);
