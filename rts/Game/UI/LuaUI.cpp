@@ -1498,25 +1498,35 @@ int CLuaUI::SendCommands(lua_State* L)
 	if ((guihandler == NULL) || gs->noHelperAIs) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, -1)) {
-		luaL_error(L, "Incorrect arguments to SendCommands()");
-	}
 
 	vector<string> cmds;
-	const int table = lua_gettop(L);
-	lua_pushnil(L);
-	while (lua_next(L, table) != 0) {
-		if (lua_israwstring(L, -1)) {
-			string action = lua_tostring(L, -1);
+
+	if (lua_istable(L, 1)) { // old style -- table
+		const int table = 1;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -1)) {
+				string action = lua_tostring(L, -1);
+				if (action[0] != '@') {
+					action = "@@" + action;
+				}
+				cmds.push_back(action);
+			}
+		}
+	}
+	else if (lua_israwstring(L, 1)) { // new style -- function parameters
+		for (int i = 1; lua_israwstring(L, i); i++) {
+			string action = lua_tostring(L, i);
 			if (action[0] != '@') {
 				action = "@@" + action;
 			}
 			cmds.push_back(action);
 		}
-		lua_pop(L, 1);
 	}
-	lua_settop(L, 0);
+	else {
+		luaL_error(L, "Incorrect arguments to SendCommands()");
+	}
+
+	lua_settop(L, 0); // pop the input arguments
 
 	guihandler->RunCustomCommands(cmds, false);
 
