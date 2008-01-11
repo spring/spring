@@ -314,10 +314,10 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 }
 
 
-bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter)
+bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
 {
 	if (weaponDef->shieldPower > 0) {
-		curPower -= emitter->weaponDef->damages[0] / emitter->salvoSize;
+		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
 }

@@ -219,7 +219,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,curPos,dir,length,newDir,shieldHit);
 		if(shieldLength<length){
 			length=shieldLength;
-			bool repulsed=shieldHit->BeamIntercepted(this);
+			bool repulsed=shieldHit->BeamIntercepted(this, damageMul);
 			if(repulsed){
 				tryAgain=true;
 			}
