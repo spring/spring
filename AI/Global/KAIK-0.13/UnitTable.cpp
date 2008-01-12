@@ -157,11 +157,10 @@ void CUnitTable::ReadUnitCostMultipliers() {
 		float value = 1.0f;
 
 		while (fgets(str, 1024, f) != 0x0) {
-			sscanf(str, "%s %f", name, &value);
-			printf("costMultiplier for %s: %f\n", name, value);
+			int i = sscanf(str, "%s %f", name, &value);
 			const UnitDef* udef = ai->cb->GetUnitDef(name);
 
-			if (udef) {
+			if ((i == 2) && udef) {
 				unitTypes[udef->id].costMultiplier = value;
 			}
 		}
@@ -173,7 +172,7 @@ void CUnitTable::ReadUnitCostMultipliers() {
 		f = fopen(configFileName, "w");
 
 		for (int i = 1; i <= numOfUnits; i++) {
-			fprintf(f, "%s %f\n", unitTypes[i].def->name.c_str(), 1.0f);
+			fprintf(f, "%s %f\n", unitTypes[i].def->name.c_str(), unitTypes[i].costMultiplier);
 		}
 
 		fclose(f);
