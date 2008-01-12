@@ -1893,10 +1893,8 @@ bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
 						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
 					}
 				}
-				else if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
-					if (action.extra.find("queued") != string::npos) {
-						c.options |= SHIFT_KEY;
-					}
+				else if (action.extra.find("queued") != string::npos) {
+					c.options |= SHIFT_KEY;
 				}
 				GiveCommand(c);
 				break;
