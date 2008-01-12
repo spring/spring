@@ -715,15 +715,17 @@ void CUnit::SlowUpdate()
 	}
 
 	if (uh->waterDamage) {
-		bool inWater = (pos.y <= -3);
-		bool isFloating = (physicalState == CSolidObject::Floating);
-		bool onGround = (physicalState == CSolidObject::OnGround);
-		bool waterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
+		if (pos.x >= 0.0f && pos.x <= float3::maxxpos && pos.z >= 0.0f && pos.z <= float3::maxzpos) {
+			bool inWater = (pos.y <= -3);
+			bool isFloating = (physicalState == CSolidObject::Floating);
+			bool onGround = (physicalState == CSolidObject::OnGround);
+			bool waterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
 
-		// old: "floating or (on ground and height < -3 and mapheight < -1)"
-		// new: "height < -3 and (floating or on ground) and mapheight < -1"
-		if (inWater && (isFloating || onGround) && waterSquare) {
-			DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+			// old: "floating or (on ground and height < -3 and mapheight < -1)"
+			// new: "height < -3 and (floating or on ground) and mapheight < -1"
+			if (inWater && (isFloating || onGround) && waterSquare) {
+				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+			}
 		}
 	}
 
@@ -735,9 +737,9 @@ void CUnit::SlowUpdate()
 				KillUnit(true, false, NULL);
 			}
 		}
-		if(userTarget && userTarget->pos.distance(pos)<unitDef->kamikazeDist)
+		if (userTarget && userTarget->pos.distance(pos) < unitDef->kamikazeDist)
 			KillUnit(true, false, NULL);
-		if(userAttackGround && userAttackPos.distance(pos)<unitDef->kamikazeDist)
+		if (userAttackGround && userAttackPos.distance(pos) < unitDef->kamikazeDist)
 			KillUnit(true, false, NULL);
 	}
 
