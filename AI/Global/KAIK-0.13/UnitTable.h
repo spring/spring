@@ -24,6 +24,7 @@ class CUnitTable {
 
 		int BuildModSideMap();
 		int ReadTeamSides();
+		void ReadUnitCostMultipliers();
 
 		// returns side of a unit
 		int GetSide(int unit);
@@ -65,9 +66,9 @@ class CUnitTable {
 
 		// number of sides
 		int numOfSides;
-		std::vector<string> sideNames;		// side number (0) to side string ("Arm")
-		std::map<string, int> modSideMap;	// side string ("Arm") to side number (0)
-		std::vector<int> teamSides;			// team numbers to side numbers
+		std::vector<string> sideNames;			// side number (0) to side string ("Arm")
+		std::map<string, int> modSideMap;		// side string ("Arm") to side number (0)
+		std::vector<int> teamSides;				// team numbers to side numbers
 
 		// all the unit defs
 		const UnitDef** unitList;

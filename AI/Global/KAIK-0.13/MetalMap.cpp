@@ -4,8 +4,8 @@
 CMetalMap::CMetalMap(AIClasses* ai) {
 	this->ai = ai;
 
-	// from 0-255, the minimum percentage of metal a spot needs to have
-	// from the maximum to be saved, prevents crappier spots in between taken spaces
+	// from 0-255, the minimum percentage of metal a spot needs to have from
+	// the maximum to be saved, prevents crappier spots in between taken spaces
 	// (they are still perfectly valid and will generate metal mind you!)
 	MinMetalForSpot = 50;
 	// if more spots than that are found the map is considered a metalmap, tweak this as needed
@@ -39,6 +39,8 @@ CMetalMap::~CMetalMap() {
 }
 
 
+
+// KLOOTNOTE: this needs to ignore spots already taken by allies
 float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 	float TempScore = 0.0f;
 	float MaxDivergence = 16.0f;
